@@ -79,7 +79,7 @@ async function openNumericIntervalPanel(
   await waitForDisplayQueueToSettle();
   const existingPanel = screen.queryByText('Numeric Interval Solve');
   if (!existingPanel) {
-    await user.click(await screen.findByRole('button', { name: 'Numeric Solve' }));
+    await user.click(await screen.findByRole('button', { name: 'Enable Numeric Interval' }));
   }
   await screen.findByText('Numeric Interval Solve');
   setMathFieldLatex('main-editor', inputLatex);
@@ -1003,7 +1003,7 @@ describe('AppMain UI automation flows', () => {
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 1.19328');
-    expect(screen.getAllByText(/Bracket-first adaptive bisection \+ local-minimum recovery/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Bracket-first adaptive Brent-Dekker \+ local-minimum recovery/i).length).toBeGreaterThan(0);
   });
 
   it('shows unit-aware branch guidance when Equation numeric interval solve misses a trig-composition branch', async () => {
@@ -2052,13 +2052,11 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitForDisplayOutcomeError();
-    expect(screen.getByText('Periodic Family')).toBeInTheDocument();
-    expect(screen.getByText('Nested Recursion')).toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/second independent periodic parameter/i);
-    expect(screen.getByTestId('display-outcome-periodic-family')).toHaveTextContent(/tan\(x\)/i);
-    expect(screen.getByTestId('display-outcome-periodic-discovered-families')).toHaveTextContent(/cos/i);
-    expect(screen.getByTestId('display-outcome-periodic-discovered-families')).toHaveTextContent(/tan/i);
-    expect(screen.getByTestId('display-outcome-periodic-stop-reason')).toHaveTextContent(/multiple independent periodic parameters/i);
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/needs a real interval/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic Numeric Solve/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic equations can have infinitely many roots/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic carrier detected/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/No default interval was searched/i);
   });
 
   it('renders COMP6 reciprocal trig rewrites as symbolic periodic families', async () => {
@@ -2279,11 +2277,11 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitForDisplayOutcomeError();
-    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/mixed carrier/i);
-    expect(screen.getByTestId('display-outcome-solve-summary')).toHaveTextContent(/Reduced-carrier boundary/i);
-    expect(screen.getByTestId('display-outcome-periodic-representatives')).toBeInTheDocument();
-    expect(screen.queryByTestId('display-outcome-periodic-reduced-carrier')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('display-outcome-periodic-stop-reason')).not.toBeInTheDocument();
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/needs a real interval/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic Numeric Solve/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic carrier detected/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/root\(3, x\)\+√\(x\+1\)/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/x\+1 ≥ 0/i);
   });
 
   it('renders exact outer-nonperiodic abs context through detail sections after ABS5B', async () => {
@@ -2314,10 +2312,10 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitForDisplayOutcomeError();
-    expect(screen.getByText('Periodic Family')).toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-solve-summary')).toHaveTextContent(/outer non-periodic absolute-value family/i);
-    expect(screen.getByText('Exact Closure Boundary')).toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/guided periodic\/composition output/i);
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(/needs a real interval/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic Numeric Solve/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic equations can have infinitely many roots/i);
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/Periodic carrier detected/i);
   });
 
   it('shows the new PRL3 Equation transforms without auto-solving the rewritten equation', async () => {

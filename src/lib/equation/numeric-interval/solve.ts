@@ -80,6 +80,38 @@ function appendLocalMinSeeds(
   }
 }
 
+function estimateUnresolvedSignChangeSeed(
+  zeroFormLatex: string,
+  left: SamplePoint,
+  right: SamplePoint,
+  angleUnit: AngleUnit,
+  target: string,
+  evaluator?: NumericValueEvaluator,
+) {
+  let lo = left.x;
+  let hi = right.x;
+  let loValue = left.value;
+
+  for (let iteration = 0; iteration < 40; iteration += 1) {
+    const midpoint = (lo + hi) / 2;
+    const midpointValue = finiteValue(zeroFormLatex, midpoint, angleUnit, target, evaluator);
+    if (midpointValue === null) {
+      return midpoint;
+    }
+    if (Math.abs(hi - lo) <= 1e-8) {
+      return midpoint;
+    }
+    if (loValue * midpointValue <= 0) {
+      hi = midpoint;
+    } else {
+      lo = midpoint;
+      loValue = midpointValue;
+    }
+  }
+
+  return (lo + hi) / 2;
+}
+
 function collectCandidateEvidence(
   grid: GridPoint[],
   zeroFormLatex: string,
@@ -89,6 +121,7 @@ function collectCandidateEvidence(
 ) {
   const sampleHits: number[] = [];
   const signBracketRoots: number[] = [];
+  const unresolvedBracketSeeds: number[] = [];
   const localMinSeeds: number[] = [];
   let previousFinite: SamplePoint | null = null;
   let contiguousSamples: SamplePoint[] = [];
@@ -112,6 +145,15 @@ function collectCandidateEvidence(
       const root = bisectRoot(zeroFormLatex, previousFinite.x, point.x, angleUnit, target, evaluator);
       if (root !== null) {
         signBracketRoots.push(root);
+      } else {
+        unresolvedBracketSeeds.push(estimateUnresolvedSignChangeSeed(
+          zeroFormLatex,
+          previousFinite,
+          sample,
+          angleUnit,
+          target,
+          evaluator,
+        ));
       }
     }
 
@@ -123,6 +165,7 @@ function collectCandidateEvidence(
   return {
     sampleHits,
     signBracketRoots,
+    unresolvedBracketSeeds,
     localMinSeeds,
   };
 }
@@ -258,12 +301,14 @@ export function runNumericIntervalSolve(
   const {
     sampleHits,
     signBracketRoots,
+    unresolvedBracketSeeds,
     localMinSeeds,
   } = collectCandidateEvidence(grid, zeroFormLatex, angleUnit, target, evaluator);
 
   const allCandidates = dedupeNumericRoots([
     ...sampleHits,
     ...signBracketRoots,
+    ...unresolvedBracketSeeds,
     ...localMinSeeds,
   ]);
 

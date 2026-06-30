@@ -15,7 +15,7 @@ describe('runNumericIntervalSolve', () => {
     }
     expect(result.roots[0]).toBeGreaterThan(0.73);
     expect(result.roots[0]).toBeLessThan(0.75);
-    expect(result.method).toContain('Bracket-first');
+    expect(result.method).toContain('Brent-Dekker');
   });
 
   it('respects degree angle mode for direct trig equations', () => {
