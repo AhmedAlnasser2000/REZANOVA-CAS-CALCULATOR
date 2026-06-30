@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-06-30 - NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1
+
+- [agent: codex | model: gpt-5-codex] Cross-domain numeric policy is locked as contracts plus neutral primitives, not shared orchestration. Equation owns equation root solving, branch/root validation, target protection, stored-value consent, and Equation numeric readback. Statistics owns simulation, resampling, confidence intervals, and Monte Carlo workflows. Limits own directional/local approach semantics and asymptote confidence. Differentiation owns derivative-at-point approximation, finite-difference policy, step-size adaptation, and error estimates. Calculus owns quadrature, improper-integral policy, and integration-specific safety/readback; the integration pipeline Layer 5 numeric fallback is adaptive quadrature for definite integrals and must not import Equation root-solving orchestration.
+
 ## 2026-06-30 - EQUATION-NUMERIC-SEARCH-UX-DISCIPLINE1
 
 - Equation nonlinear numeric fallback should search progressively and stop after a wider pass adds no new accepted roots or unique extraneous values; it must still state bounded-search limits and never claim global completeness.

@@ -31,6 +31,8 @@ Updated for `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1` on 2026-06-29: periodic/t
 
 Updated for `EQUATION-NUMERIC-SEARCH-UX-DISCIPLINE1` on 2026-06-30: nonlinear auto-search now searches progressively and stops when a wider pass adds no new accepted roots or unique extraneous values. Periodic interval guidance auto-surfaces the existing Numeric Interval Solve panel while keeping the normal Solve/Run entry, no auto-run, and strong guidance. Numeric details now separate hard domain/exclusion facts from capped probe/search diagnostics and keep textbook `Extraneous Solutions` with representative dropped values and repeat counts.
 
+Updated for `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1` on 2026-06-30: cross-domain numeric ownership is now policy-locked. Equation owns equation root solving and target protection; the shared layer may offer neutral primitives only; Statistics, Limits, Differentiation, and Calculus keep their own orchestration and readback. The integration pipeline Layer 5 numeric fallback is adaptive quadrature for definite integrals, not Equation numeric root solving.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose
@@ -75,6 +77,8 @@ This roadmap is grounded in:
 - Cardano and Ferrari remain symbolic exact formula/readback routes. Numeric degree-3/4 solving must use numeric polynomial/root methods or existing guided polynomial numeric fallback, not Cardano/Ferrari formula expansion.
 - Future step-by-step output must preserve that distinction: simple/factorable/special-form numeric polynomials should explain factor/inversion/numeric-root methods; Cardano/Ferrari derivations should be advanced/collapsed symbolic exact material, never the default numeric teaching path.
 - Real numeric solving comes first. Complex numeric solving needs a separate later policy for two-real-variable residual systems, branch cuts, seed strategy, and confidence wording.
+- The Calculus integration pipeline's Layer 5 numeric fallback is not a shared root solver. It is adaptive quadrature for definite integrals with numeric bounds and must not import Equation orchestration or Equation result semantics.
+- Cross-domain numeric work may share primitive mechanics and policy language, but each domain owns its own target/variable meaning, validation standard, result wording, and user workflow.
 
 ## Architecture Boundary
 
@@ -97,14 +101,21 @@ Shared numeric toolbox candidates:
 Domain-owned orchestration stays separate:
 
 - Equation owns equation root solving, branch enumeration, target protection, and root validation.
-- Calculus owns definite integration quadrature, improper-integral safety, local limit approach, and derivative approximation policy.
+- Calculus owns quadrature, finite definite-integral numeric fallback, improper-integral numeric policy, and integration-specific safety/readback.
 - Statistics owns sampling distributions, simulation, resampling, confidence intervals, and any Monte Carlo workflow.
-- Limits own directional/local approach semantics and indeterminate-form honesty.
-- Differentiation owns derivative-at-point approximation, finite-difference stencil policy, symbolic derivative fallback, and error estimates.
+- Limits own directional/local approach semantics, local sampling, asymptote confidence, and indeterminate-form honesty.
+- Differentiation owns derivative-at-point approximation, finite-difference stencil policy, symbolic derivative fallback, step-size adaptation, and error estimates.
 
 This Equation track may enforce shared numeric policies and contracts for those other domains, but it must not implement their domain-specific algorithms, UI flows, runtime behavior, or result schemas. Other agents may work Statistics, Limits, Differentiation, and Calculus against these contracts in their own lanes.
 
 The shared toolbox may remove duplicated mechanics, but it must not merge workspace runtimes, OOE capabilities, result schemas, or user-facing responsibilities.
+
+Integration pipeline Layer 5 boundary:
+
+- Layer 5 belongs to symbolic/numeric integration only.
+- It is approximate adaptive quadrature for definite integrals with numeric bounds; indefinite integrals do not gain numeric antiderivatives from Layer 5.
+- It may consume neutral numeric primitives such as evaluators, interval subdivision, tolerance policy, and diagnostics, but it must not import Equation's root-finding orchestration, Equation stored-value consent flow, Equation branch enumeration, or Equation readback sections.
+- If Calculus later widens improper-integral or high-dimensional numeric policy, that remains a Calculus-owned lane with its own safety wording and workflow.
 
 ## Current Assets
 
@@ -121,7 +132,7 @@ Live assets that the numeric track should reuse:
 - The live `EQUATION-NUMERIC-SEARCH-UX-DISCIPLINE1` polish: nonlinear auto-search stops after stable wider windows, Equation search loops reuse cached target-aware evaluators, periodic guidance auto-surfaces the existing interval panel without auto-running, and numeric diagnostic detail sections use compact/default versus Detailed Facts caps.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
-- Calculus adaptive Simpson numeric definite integration.
+- Calculus adaptive Simpson numeric definite integration, which is Integration Layer 5 quadrature and not Equation root solving.
 - Calculus finite-limit and symbolic limits surfaces.
 - Symbolic differentiation and derivative-at-point workflow surfaces.
 - Statistics runtime and inference surfaces.
@@ -213,14 +224,14 @@ Make periodic and interval solving intentional:
 - local completeness wording;
 - final Equation numeric readback closeout for residuals, methods, values used, exclusions, and candidate validation.
 
-### 8. `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1`
+### 8. `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1` - policy locked
 
 Enforce numeric policy and contracts beyond Equation without turning Equation's solver into a shared authority or implementing other domains:
 
 - Statistics: lock where simulation, random sampling, resampling, and Monte Carlo belong, but do not implement them in this Equation session.
 - Limits: lock shared wording and contract expectations for local numeric approach, directional sampling, asymptote handling, and confidence, but leave limit algorithms to the Limits/Calculus lane.
 - Differentiation: lock shared wording and contract expectations for derivative-at-point approximation, finite-difference stencil policy, step-size adaptation, and error estimates, but leave implementation to the Differentiation/Calculus lane.
-- Calculus integration: record how existing adaptive Simpson and future high-dimensional/Monte Carlo possibilities relate to the shared numeric toolbox, but leave integration implementation to the Calculus lane.
+- Calculus integration: record that existing adaptive Simpson is Integration Layer 5 quadrature for definite integrals, not Equation root solving. Future improper-integral or high-dimensional numeric possibilities may share primitives, but orchestration, safety wording, and UX stay in the Calculus lane.
 - Produce policy/contract handoff notes for other agents instead of editing their domain implementations.
 
 ## Stop Rules
@@ -232,9 +243,10 @@ Enforce numeric policy and contracts beyond Equation without turning Equation's 
 - Do not weaken `hasUnsafeSymbolicOutput` or symbolic guarded solving to make numeric easier.
 - Do not put Monte Carlo into ordinary Equation root solving.
 - Do not make Calculus, Statistics, Limits, or Differentiation depend on Equation numeric orchestration.
+- Do not treat integration Layer 5 as Equation numeric root solving, and do not route Equation roots through integration quadrature.
 - Do not implement Statistics, Limits, Differentiation, or Calculus capability inside this Equation numeric session; enforce only policies, contracts, and handoff notes for those lanes.
 - Do not add public schema/runtime changes unless a later implementation milestone explicitly approves them.
 
 ## Next Planning Gate
 
-The next implementation move is `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1`. It should be policy/contract enforcement only: record shared numeric expectations for Statistics, Limits, Differentiation, and Calculus without implementing those domains or merging their runtimes/schemas with Equation.
+The Equation numeric pivot described here is now policy-complete for the agreed Real numeric foundation. Future numeric work should be planned as a new, user-approved slice, such as Complex numeric root policy, additional Equation numeric methods, or separate domain-owned Statistics/Limits/Differentiation/Calculus numeric work against these contracts.

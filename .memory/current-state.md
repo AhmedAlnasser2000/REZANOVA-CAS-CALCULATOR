@@ -31,6 +31,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 - Memory convention: meaningful code/tooling/UX/workflow commits need same-commit memory records or an explicit no-memory-needed note.
 - Daily catch-up is enforced: `.memory/current-state.md` must be at least as new as the newest journal/session day before meaningful commits pass `npm run test:memory-protocol`.
 - Current Equation numeric UX posture: nonlinear numeric fallback now searches progressively and stops after a wider pass adds no new accepted roots or unique extraneous values; numeric details split hard domain/exclusion facts from capped probe/search diagnostics and textbook `Extraneous Solutions`; periodic interval guidance auto-surfaces the existing Numeric Interval Solve panel without auto-running or adding another solve action.
+- Current numeric domain policy posture: `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1` locks shared numeric work as neutral primitives and contracts only. Equation owns root solving and target protection; Statistics owns simulation/resampling/Monte Carlo; Limits own directional/local approach semantics; Differentiation owns derivative-at-point approximation; Calculus owns quadrature, improper-integral policy, and integration-specific safety/readback. The integration pipeline Layer 5 fallback is adaptive quadrature for definite integrals, not Equation root solving.
 
 ## Agent Ownership
 
