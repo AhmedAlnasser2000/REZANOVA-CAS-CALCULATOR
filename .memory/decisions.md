@@ -1367,3 +1367,7 @@
 ## 2026-06-30 - CALCULUS-MIXED-PARTIALS1
 
 - [agent: codex | model: gpt-5-codex] Guided Partial Derivative now evaluates compact higher/mixed partial operators from the derivative rail up to order `10`. The typed/written operator order is preserved for readback, while computation follows the existing rightmost-first applied path exactly; v1 does not reorder by Clairaut/symmetry assumptions.
+
+## 2026-06-30 - EQUATION-NUMERIC-INTERVAL-VALIDATION-DISCIPLINE1
+
+- [agent: codex | model: gpt-5-codex] Numeric Interval Solve is a permanent compact Equation control, not an auto-open panel and not a second solve action. Run/F1/EXE uses interval solving only after `Enable Numeric Interval` is active. Interval runs are explicit numeric intent: they may substitute stored non-target parameter values, must protect the selected target, and must stop with missing-value guidance when non-target parameters lack stored numeric values.

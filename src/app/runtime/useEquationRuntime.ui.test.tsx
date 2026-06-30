@@ -265,7 +265,7 @@ describe('useEquationRuntime', () => {
     });
   });
 
-  it('auto-opens and can dismiss numeric interval panel for periodic numeric guidance', () => {
+  it('keeps periodic numeric guidance compact until numeric interval is enabled', () => {
     const periodicGuidance: DisplayOutcome = {
       kind: 'error',
       title: 'Solve',
@@ -284,20 +284,20 @@ describe('useEquationRuntime', () => {
     });
 
     expect(hook.result.current.equationWorkspaceProps.shouldAllowNumericSolve).toBe(true);
-    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(true);
-    expect(hook.result.current.equationNumericSolvePanel.enabled).toBe(true);
-
-    act(() => {
-      hook.result.current.equationWorkspaceProps.onSetNumericSolvePanelEnabled(false);
-    });
-
     expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(false);
+    expect(hook.result.current.equationNumericSolvePanel.enabled).toBe(false);
 
     act(() => {
       hook.result.current.equationWorkspaceProps.onSetNumericSolvePanelEnabled(true);
     });
 
     expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(true);
+
+    act(() => {
+      hook.result.current.equationWorkspaceProps.onSetNumericSolvePanelEnabled(false);
+    });
+
+    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(false);
   });
 
   it('keeps exact periodic symbolic output from opening numeric interval panel', () => {

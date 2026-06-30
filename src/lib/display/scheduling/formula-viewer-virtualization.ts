@@ -83,7 +83,11 @@ export function buildFormulaViewerVirtualItems(
   const items: FormulaViewerVirtualItem[] = [];
 
   blocks.forEach((block) => {
-    if (block.kind === 'detail' || block.kind === 'periodicFamily') {
+    const isCollapsibleBlock =
+      block.collapsible === true
+      || block.kind === 'detail'
+      || block.kind === 'periodicFamily';
+    if (isCollapsibleBlock) {
       const key = formulaViewerBlockKey(block);
       const opened = openedBlockIds.has(key) || block.collapsible === false;
       if (block.collapsible !== false) {

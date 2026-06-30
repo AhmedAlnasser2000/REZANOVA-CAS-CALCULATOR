@@ -29,7 +29,7 @@ function caseBlock(id: string, kind: DisplayBlock['kind'], rows: DisplayBlockLin
     text: String.raw`z\in`,
     lines: rows,
     rawContent: rows.map((row) => row.latex ?? ''),
-    collapsible: kind === 'detail',
+    collapsible: kind === 'detail' || kind === 'answer',
     defaultCollapsed: kind === 'detail',
     testId: kind === 'detail' ? 'viewer-trig-detail' : 'viewer-answer',
   };
@@ -127,6 +127,29 @@ describe('FormulaViewerPage virtualization', () => {
     expect(detailHeader).toHaveAttribute('aria-expanded', 'true');
     const visibleItems = within(scroll).getAllByTestId('formula-viewer-virtual-item');
     expect(visibleItems.length).toBeLessThan(90);
+  });
+
+  it('lets the primary answer collapse in the virtualized viewer', () => {
+    render(
+      <FormulaViewerPage
+        artifact={artifact({ primaryRows: 12, detailRows: 1 })}
+        onCopyResult={vi.fn()}
+        sourceAvailable
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const scroll = screen.getByTestId('formula-viewer-scroll');
+    const answerHeader = within(scroll).getByRole('button', { name: /Answer/u });
+    expect(answerHeader).toHaveAttribute('aria-expanded', 'true');
+    expect(within(scroll).getAllByRole('button', { name: 'Show formula row' }).length)
+      .toBeGreaterThan(0);
+
+    fireEvent.click(answerHeader);
+
+    expect(answerHeader).toHaveAttribute('aria-expanded', 'false');
+    expect(within(scroll).queryByRole('button', { name: 'Show formula row' }))
+      .not.toBeInTheDocument();
   });
 
   it('offers viewer-local math sizing without changing copy output', () => {

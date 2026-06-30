@@ -194,8 +194,9 @@ export function FormulaViewerVirtualizedContent({
 }
 
 function defaultOpenedBlockIds(artifact: FormulaViewerArtifact): ReadonlySet<string> {
+  const blocks = [artifact.primaryBlock, ...artifact.globalFactBlocks, ...artifact.detailBlocks];
   return new Set(
-    artifact.detailBlocks
+    blocks
       .filter((block) => block.collapsible === false || block.defaultCollapsed === false)
       .map((block) => formulaViewerBlockKey(block)),
   );

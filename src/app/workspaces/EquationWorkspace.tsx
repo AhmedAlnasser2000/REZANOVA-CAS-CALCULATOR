@@ -386,23 +386,14 @@ export function EquationWorkspace({
           </div>
           {shouldAllowNumericSolve ? (
             <div className="workspace-action-row">
-              {!shouldShowNumericSolvePanel ? (
-                <button
-                  type="button"
-                  className="workspace-action-button"
-                  onClick={() => onSetNumericSolvePanelEnabled(true)}
-                >
-                  Numeric Interval
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="workspace-action-button"
-                  onClick={() => onSetNumericSolvePanelEnabled(false)}
-                >
-                  Hide Numeric Interval
-                </button>
-              )}
+              <button
+                type="button"
+                className={`workspace-action-button ${shouldShowNumericSolvePanel ? 'workspace-action-button--primary' : ''}`}
+                aria-pressed={shouldShowNumericSolvePanel}
+                onClick={() => onSetNumericSolvePanelEnabled(!shouldShowNumericSolvePanel)}
+              >
+                {shouldShowNumericSolvePanel ? 'Disable Numeric Interval' : 'Enable Numeric Interval'}
+              </button>
             </div>
           ) : null}
           {shouldShowNumericSolvePanel && shouldAllowNumericSolve ? (

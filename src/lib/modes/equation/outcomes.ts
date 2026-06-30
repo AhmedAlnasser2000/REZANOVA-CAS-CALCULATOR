@@ -123,7 +123,7 @@ export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: st
         title: 'What To Try',
         lines: [
           ...storeLines,
-          'Then run Numeric Solve again.',
+          'Then run Numeric Interval Solve again with Run / F1 / EXE.',
           'Use Exact or Isolate when you want symbolic parameters preserved.',
         ],
       },

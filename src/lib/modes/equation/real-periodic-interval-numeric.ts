@@ -78,11 +78,14 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
     },
   ];
 
-  if (input.sharedOutcome.exactLatex) {
+  const reducedFamilyLatex =
+    input.sharedOutcome.kind === 'success' ? input.sharedOutcome.exactLatex : undefined;
+
+  if (reducedFamilyLatex) {
     detailSections.push({
       title: 'Reduced Periodic Family',
       lines: [
-        input.sharedOutcome.exactLatex,
+        reducedFamilyLatex,
         'This reduced family is route evidence only; it is not being presented as a complete solved answer.',
       ],
     });

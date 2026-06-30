@@ -79,7 +79,7 @@ describe('Equation mode answer modes', () => {
     expect(symbolicParameters.error).toContain('Missing numeric values: b, n, v');
     expect(symbolicParameters.error).not.toContain('values: b, m');
     expect(symbolicParameters.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Store a numeric value for b in Variables.');
-    expect(symbolicParameters.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Then run Numeric Solve again.');
+    expect(symbolicParameters.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('Then run Numeric Interval Solve again with Run / F1 / EXE.');
 
     expect(substitutedNumeric.kind).toBe('success');
     expect(protectedTarget.kind).toBe('success');

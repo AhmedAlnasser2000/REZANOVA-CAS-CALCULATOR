@@ -207,10 +207,6 @@ function buildCalculateWorkbenchError(
   };
 }
 
-function equationNumericSolveAdvisory(outcome: DisplayOutcome | null) {
-  return outcome?.runtimeAdvisories?.equationNumericSolve;
-}
-
 function buildRuntimeLoadError(title: string, error: unknown): DisplayOutcome {
   return {
     kind: 'error',
@@ -846,34 +842,7 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       return false;
     }
 
-    if (deps.equationNumericSolvePanel.enabled) {
-      return true;
-    }
-
-    if (deps.currentMode !== 'equation') {
-      return false;
-    }
-
-    if (deps.displayOutcome) {
-      const advisory = equationNumericSolveAdvisory(deps.displayOutcome);
-      if (advisory?.kind === 'blocked') {
-        return false;
-      }
-
-      if (deps.displayOutcome.kind !== 'prompt' && deps.displayOutcome.periodicFamily?.suggestedIntervals?.length) {
-        return true;
-      }
-
-      if (advisory?.kind === 'suggest-on-error') {
-        return true;
-      }
-    }
-
-    if (deps.equationSolveTarget) {
-      return true;
-    }
-
-    return false;
+    return deps.currentMode === 'equation';
   }
 
   function shouldShowEquationNumericSolvePanel() {

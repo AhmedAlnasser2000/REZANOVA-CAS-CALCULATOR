@@ -738,6 +738,8 @@ function renderScheduledBlock(
       <ResultSummaryBlock
         key={block.id}
         className={answerBlockClassName(block)}
+        collapsible={block.collapsible}
+        defaultCollapsed={block.defaultCollapsed}
         label={block.label}
         summaryText={displayBlockCountSummary(block)?.text}
         testId="display-outcome-answer-block"

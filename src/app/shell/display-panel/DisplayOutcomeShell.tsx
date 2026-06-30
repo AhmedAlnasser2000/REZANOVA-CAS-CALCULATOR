@@ -13,6 +13,16 @@ import { DetailLineContent, ScheduledOutcomeBlocks } from './DisplayResultBlocks
 
 type DisplayOutcomeShellProps = Record<string, any>;
 
+const SOLVE_SUMMARY_SPLIT_PATTERN =
+  /;\s*(?=(?:Composition branch|Periodic family|Exact reduced-carrier|Sawtooth closure|Range guard|Reciprocal rewrite|Principal range|Inverted|Lifted|Substituted|Combined|Normalized|Reduced)\b)/gu;
+
+function solveSummaryLines(summary: string): string[] {
+  return summary
+    .split(SOLVE_SUMMARY_SPLIT_PATTERN)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
 export function DisplayOutcomeShell({
   activeAlgebraTransforms,
   activeExpressionLatex,
@@ -325,12 +335,17 @@ export function DisplayOutcomeShell({
       && displayOutcome.solveSummaryText ? (
         <div className="result-summary-block" data-testid="display-outcome-solve-summary">
           <div className="result-summary-label">Solve note</div>
-          <div className="result-approx result-summary-text">
-            <DetailLineContent
-              line={displayOutcome.solveSummaryText}
-              symbolicDisplayPrefs={symbolicDisplayPrefs}
-            />
-          </div>
+          {solveSummaryLines(displayOutcome.solveSummaryText).map((line: string, index: number) => (
+            <div
+              key={`${line}-${index}`}
+              className="result-approx result-summary-text result-detail-line"
+            >
+              <DetailLineContent
+                line={line}
+                symbolicDisplayPrefs={symbolicDisplayPrefs}
+              />
+            </div>
+          ))}
         </div>
       ) : null}
       {!isLauncherOpen
