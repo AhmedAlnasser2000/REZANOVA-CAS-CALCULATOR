@@ -171,12 +171,26 @@ describe('calculus integrals', () => {
       bodyLatex: 'e^{a*x^2+b*x+c}',
     });
     expect(symbolic.error).toBeUndefined();
-    expect(symbolic.exactLatex).toContain('No elementary antiderivative');
+    expect(symbolic.exactLatex).toContain('\\begin{cases}');
+    expect(symbolic.exactLatex).toContain('\\operatorname{erf}');
+    expect(symbolic.exactLatex).toContain('\\operatorname{erfi}');
+    expect(symbolic.exactLatex).toContain('a<0');
+    expect(symbolic.exactLatex).toContain('a>0');
     expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
     expect(symbolic.detailSections?.map((section) => section.title)).toContain('Liouville Obstruction');
     expect(symbolic.detailSections?.flatMap((section) => section.lines).join(' ')).toContain(
       'not a condition on the original input',
     );
+
+    const selectedVariable = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'e^{a*t^2+x*t+b}',
+      integrationVariable: 't',
+    });
+    expect(selectedVariable.error).toBeUndefined();
+    expect(selectedVariable.exactLatex).toContain('\\operatorname{erf}');
+    expect(selectedVariable.exactLatex).toContain('\\operatorname{erfi}');
+    expect(selectedVariable.exactLatex).toContain('t+\\frac{x}{2a}');
+    expect(selectedVariable.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
   });
 
   it('keeps elementary exponential and substitution overlaps ahead of certificates', () => {

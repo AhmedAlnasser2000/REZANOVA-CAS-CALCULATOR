@@ -5,8 +5,8 @@ import { buildExpQuadraticSpecialFunctionCertificateFromProof } from './integrat
 
 const ce = new ComputeEngine();
 
-function certificate(latex: string) {
-  const proof = proveExpQuadraticNonElementary(ce.parse(latex).json, 'x');
+function certificate(latex: string, variable = 'x') {
+  const proof = proveExpQuadraticNonElementary(ce.parse(latex).json, variable);
   if (proof.kind !== 'proof-ready') {
     throw new Error(`expected proof-ready certificate for ${latex}`);
   }
@@ -17,7 +17,7 @@ function certificate(latex: string) {
   return result;
 }
 
-describe('transcendental special-function readback for exact quadratic exponentials', () => {
+describe('transcendental special-function readback for quadratic exponentials', () => {
   it('returns erf and erfi formulas for exact-rational quadratic exponentials', () => {
     const positive = certificate('e^{x^2}');
     const negative = certificate('e^{-x^2}');
@@ -31,12 +31,26 @@ describe('transcendental special-function readback for exact quadratic exponenti
     expect(positive.detailSections.map((section) => section.title)).toContain('Special-Function Readback');
   });
 
-  it('keeps symbolic leading coefficients out of the exact-rational formula slice', () => {
-    const proof = proveExpQuadraticNonElementary(ce.parse('e^{a*x^2+b*x+c}').json, 'x');
-    expect(proof.kind).toBe('proof-ready');
-    if (proof.kind !== 'proof-ready') {
-      throw new Error('expected proof-ready symbolic certificate');
-    }
-    expect(buildExpQuadraticSpecialFunctionCertificateFromProof(proof)).toBeUndefined();
+  it('returns casewise erf and erfi formulas for symbolic leading coefficients', () => {
+    const symbolic = certificate('e^{a*x^2+b*x+c}');
+
+    expect(symbolic.antiderivativeKind).toBe('special-function');
+    expect(symbolic.exactLatex).toContain('\\begin{cases}');
+    expect(symbolic.exactLatex).toContain('\\operatorname{erf}');
+    expect(symbolic.exactLatex).toContain('\\operatorname{erfi}');
+    expect(symbolic.exactLatex).toContain('a<0');
+    expect(symbolic.exactLatex).toContain('a>0');
+    expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
+    expect(symbolic.detailSections.map((section) => section.title)).toContain('Non-Elementary Certificate');
+  });
+
+  it('honors arbitrary selected variables in symbolic casewise formulas', () => {
+    const symbolic = certificate('e^{a*t^2+x*t+b}', 't');
+
+    expect(symbolic.exactLatex).toContain('\\begin{cases}');
+    expect(symbolic.exactLatex).toContain('\\operatorname{erf}');
+    expect(symbolic.exactLatex).toContain('\\operatorname{erfi}');
+    expect(symbolic.exactLatex).toContain('t+\\frac{x}{2a}');
+    expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
   });
 });

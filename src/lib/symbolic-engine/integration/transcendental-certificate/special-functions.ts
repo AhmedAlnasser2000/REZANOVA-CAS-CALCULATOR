@@ -10,8 +10,13 @@ import {
   subtractExactScalars,
   type ExactScalar,
 } from '../../../algebra/polynomial-core';
-import { parseSymbolicPolynomial } from '../../primitives/symbolic-polynomial';
-import { boxLatex } from '../../patterns';
+import { isSymbolicCoefficientZero } from '../../primitives/coefficient-domain';
+import {
+  getSymbolicPolynomialCoefficient,
+  parseSymbolicPolynomial,
+} from '../../primitives/symbolic-polynomial';
+import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
+import { boxLatex, wrapGroupedLatex } from '../../patterns';
 import type { ExpQuadraticCertificateProof } from './proof';
 import {
   buildTranscendentalNonElementaryCertificateFromProof,
@@ -142,6 +147,118 @@ function exactQuadraticSpecialFunctionLatex(proof: ExpQuadraticCertificateProof)
   return String.raw`${prefactorLatex(absA, completedSquareConstant)}\cdot \operatorname{${fn}}\left(${argument}\right)`;
 }
 
+function casewiseLatex(rows: Array<{ valueLatex: string; conditionLatex: string }>) {
+  return `\\begin{cases}${rows
+    .map((row) => `${row.valueLatex},&${row.conditionLatex}`)
+    .join('\\\\')}\\end{cases}`;
+}
+
+function symbolicCompletedSquareConstantLatex(input: {
+  aLatex: string;
+  bLatex: string;
+  cLatex: string;
+  bIsZero: boolean;
+  cIsZero: boolean;
+}) {
+  if (input.bIsZero) {
+    return input.cLatex;
+  }
+
+  const correction = String.raw`\frac{${wrapGroupedLatex(input.bLatex)}^{2}}{4${wrapGroupedLatex(input.aLatex)}}`;
+  return input.cIsZero
+    ? `-${correction}`
+    : `${input.cLatex}-${correction}`;
+}
+
+function symbolicQuadraticArgumentLatex(input: {
+  sqrtRadicandLatex: string;
+  aLatex: string;
+  bLatex: string;
+  bIsZero: boolean;
+  variable: string;
+}) {
+  const sqrtFactor = String.raw`\sqrt{${input.sqrtRadicandLatex}}`;
+  if (input.bIsZero) {
+    return `${sqrtFactor}${input.variable}`;
+  }
+
+  return String.raw`${sqrtFactor}\left(${input.variable}+\frac{${input.bLatex}}{2${wrapGroupedLatex(input.aLatex)}}\right)`;
+}
+
+function symbolicSpecialFunctionBranchLatex(input: {
+  fn: 'erf' | 'erfi';
+  sqrtRadicandLatex: string;
+  aLatex: string;
+  bLatex: string;
+  cLatex: string;
+  bIsZero: boolean;
+  cIsZero: boolean;
+  variable: string;
+}) {
+  const completedSquareConstant = symbolicCompletedSquareConstantLatex(input);
+  const exponentialFactor = completedSquareConstant === '0'
+    ? ''
+    : String.raw`\cdot e^{${completedSquareConstant}}`;
+  const argument = symbolicQuadraticArgumentLatex(input);
+
+  return String.raw`\frac{\sqrt{\pi}}{2\sqrt{${input.sqrtRadicandLatex}}}${exponentialFactor}\cdot \operatorname{${input.fn}}\left(${argument}\right)`;
+}
+
+function symbolicQuadraticSpecialFunctionLatex(proof: ExpQuadraticCertificateProof) {
+  const parsed = parseSymbolicPolynomial(proof.exponentNode, proof.variable, 2);
+  if (parsed.kind !== 'success' || parsed.polynomial.degree !== 2) {
+    return undefined;
+  }
+
+  const a = getSymbolicPolynomialCoefficient(parsed.polynomial, 2);
+  const b = getSymbolicPolynomialCoefficient(parsed.polynomial, 1);
+  const c = getSymbolicPolynomialCoefficient(parsed.polynomial, 0);
+  const exactA = readExactScalarNode(a.node);
+  if (exactA) {
+    return undefined;
+  }
+
+  const aLatex = a.latex;
+  const bLatex = b.latex;
+  const cLatex = c.latex;
+  const bIsZero = isSymbolicCoefficientZero(b);
+  const cIsZero = isSymbolicCoefficientZero(c);
+  const positiveBranch = symbolicSpecialFunctionBranchLatex({
+    fn: 'erfi',
+    sqrtRadicandLatex: aLatex,
+    aLatex,
+    bLatex,
+    cLatex,
+    bIsZero,
+    cIsZero,
+    variable: proof.variable,
+  });
+  const negativeBranch = symbolicSpecialFunctionBranchLatex({
+    fn: 'erf',
+    sqrtRadicandLatex: `-${wrapGroupedLatex(aLatex)}`,
+    aLatex,
+    bLatex,
+    cLatex,
+    bIsZero,
+    cIsZero,
+    variable: proof.variable,
+  });
+
+  return normalizeGeneratedIntegrationLatex(
+    casewiseLatex([
+      {
+        valueLatex: negativeBranch,
+        conditionLatex: `${wrapGroupedLatex(aLatex)}<0`,
+      },
+      {
+        valueLatex: positiveBranch,
+        conditionLatex: `${wrapGroupedLatex(aLatex)}>0`,
+      },
+    ]),
+    proof.variable,
+  );
+}
+
 function specialFunctionDetail(functionLatex: string): TranscendentalNonElementaryCertificate['detailSections'][number] {
   return {
     title: 'Special-Function Readback',
@@ -175,7 +292,9 @@ function updateProofScopeForSpecialFunction(
 export function buildExpQuadraticSpecialFunctionCertificateFromProof(
   proof: ExpQuadraticCertificateProof,
 ): TranscendentalNonElementaryCertificate | undefined {
-  const functionLatex = exactQuadraticSpecialFunctionLatex(proof);
+  const functionLatex =
+    exactQuadraticSpecialFunctionLatex(proof)
+    ?? symbolicQuadraticSpecialFunctionLatex(proof);
   if (!functionLatex) {
     return undefined;
   }
