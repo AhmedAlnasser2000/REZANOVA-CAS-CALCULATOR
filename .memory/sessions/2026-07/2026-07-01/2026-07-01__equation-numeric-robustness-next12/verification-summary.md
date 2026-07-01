@@ -109,3 +109,14 @@
 - `npm run test:file-sizes` passed.
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
+
+## EQUATION-COMPLEX-NUMERIC-EVALUATOR1
+
+- Focused Complex evaluator gate passed:
+  - `npm run test:unit -- src/lib/equation/complex/numeric-evaluator.test.ts src/lib/equation/complex/branch-cut-policy.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts`
+- Evidence: 3 test files passed, 16 tests passed.
+- `npm run lint` passed.
+- `npm run build` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
