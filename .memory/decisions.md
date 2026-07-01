@@ -1557,6 +1557,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Live transcendental certificate adoption should use one integration-owned proof chooser after Tier-I/RN misses. Calculus may render the resulting certificate evaluation, but it should not hand-pick individual Risch/special-function proof builders.
 
+## 2026-07-01 - TRANSCENDENTAL-RISCH-PRACTICAL-FORMAL-CHECKPOINT0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] After the 12-milestone formal push, Calcwiz should proceed with benchmark-driven validation and targeted formal gaps rather than claiming unrestricted formal Risch. Depth-3 towers, algebraic function-field Risch, broad RDE solving, and complex branch constants need separate prerequisite audits before live adoption.
+
 ## 2026-07-01 - CALCULUS-LIMITS-NATURAL-PARSER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits natural requests are parsed into structured variable, target, direction, body, and canonical request evidence before UI adoption. V1 accepts numeric finite targets, one-sided finite targets, `+/-infinity`, and simple exact `pi`/`e` constants, while symbolic targets such as `a` remain deferred.
