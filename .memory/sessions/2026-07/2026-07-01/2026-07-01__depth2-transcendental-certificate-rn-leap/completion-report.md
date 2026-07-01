@@ -35,3 +35,10 @@
 - Sine quotient answers render as `Si` with affine-slope scaling, including derivative-present cases such as `2 sin(2x+1)/(2x+1) -> Si(2x+1)`.
 - Cosine quotient answers render real-domain `Ci` casewise rows for `u>0` and `u<0`, with `u=0` excluded by visible supplement facts.
 - Public strategy labels, result schemas, Display, History, OOE, Tauri, and persistence remain unchanged.
+
+## Milestone 4 - SPECIAL-FUNCTION-EI-LI-SUBSTRATE1
+
+- Added behavior-invisible `Ei` and `li` support to direct symbolic differentiation and derivative preflight.
+- Certificate proof-local differentiation now accepts `Ei` and `li` without Compute Engine fallback.
+- The exact rules are `d Ei(u)/dx = e^u u'/u` and `d li(u)/dx = u'/ln(u)`.
+- Live integration adoption remains deferred to the next milestone.

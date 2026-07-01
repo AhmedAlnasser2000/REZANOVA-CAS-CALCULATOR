@@ -55,6 +55,21 @@ describe('symbolic-engine differentiation', () => {
     expect(JSON.stringify(internalCi.ast)).toContain('"Cos"')
   })
 
+  it('supports exact Ei and li special-function derivatives', () => {
+    const ei = differentiateLatexWithMetadata('\\operatorname{Ei}(2x+1)', 'x')
+    const li = differentiateLatexWithMetadata('\\operatorname{li}(2x+1)', 'x')
+    const internalEi = differentiateAstWithMetadata(['Ei', 'x'], 'x', { computeEngineFallback: 'deny' })
+    const internalLi = differentiateAstWithMetadata(['li', 'x'], 'x', { computeEngineFallback: 'deny' })
+
+    expect(ei.strategies).not.toContain('compute-engine')
+    expect(ei.latex).toContain('2x+1')
+    expect(ei.latex).toMatch(/(?:e\^\{2x\+1\}|\\exp\(2x\+1\))/)
+    expect(li.strategies).not.toContain('compute-engine')
+    expect(li.latex).toContain('\\ln(2x+1)')
+    expect(JSON.stringify(internalEi.ast)).toContain('ExponentialE')
+    expect(JSON.stringify(internalLi.ast)).toContain('"Ln"')
+  })
+
   it('supports direct trig reciprocal derivative families', () => {
     expect(differentiateLatex('\\tan(2x+1)', 'x')).toContain('\\sec')
     expect(differentiateLatex('\\cot(2x+1)', 'x')).toContain('\\csc')

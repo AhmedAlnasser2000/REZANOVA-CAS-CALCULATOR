@@ -19,12 +19,20 @@ describe('differentiation preflight', () => {
     expect(chain.kind).toBe('direct-symbolic');
   });
 
-  it('classifies erf and erfi as direct symbolic special functions', () => {
+  it('classifies named special functions with exact rules as direct symbolic', () => {
     const result = classifyDerivativePreflight(node('\\operatorname{erf}(x)'), 'x');
     const erfi = classifyDerivativePreflight(node('\\operatorname{erfi}(x)'), 'x');
+    const si = classifyDerivativePreflight(node('\\operatorname{Si}(x)'), 'x');
+    const ci = classifyDerivativePreflight(node('\\operatorname{Ci}(x)'), 'x');
+    const ei = classifyDerivativePreflight(node('\\operatorname{Ei}(x)'), 'x');
+    const li = classifyDerivativePreflight(node('\\operatorname{li}(x)'), 'x');
 
     expect(result.kind).toBe('direct-symbolic');
     expect(erfi.kind).toBe('direct-symbolic');
+    expect(si.kind).toBe('direct-symbolic');
+    expect(ci.kind).toBe('direct-symbolic');
+    expect(ei.kind).toBe('direct-symbolic');
+    expect(li.kind).toBe('direct-symbolic');
     expect(result.computeEngineFallbackHeads).toEqual([]);
     expect(result.unsupportedHeads).toEqual([]);
   });

@@ -67,3 +67,22 @@
   - Result: pass.
 - `git diff --check`
   - Result: pass.
+
+## SPECIAL-FUNCTION-EI-LI-SUBSTRATE1
+
+- Gate label: backend
+- Focused tests:
+  - `npx vitest run src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/differentiation-preflight.test.ts src/lib/symbolic-engine/integration-transcendental-certificate-proof-diff.test.ts`
+  - Result: pass, 3 files / 21 tests.
+- Regression tests:
+  - `npx vitest run src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/differentiation-preflight.test.ts src/lib/symbolic-engine/integration-transcendental-certificate-proof-diff.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/engine/core.test.ts src/lib/calculus/workspace/integrals.test.ts`
+  - Result: pass, 6 files / 113 tests.
+- `npx tsc -b --pretty false`
+  - Result: blocked by the same unrelated Surface Protocol lane error in `src/lib/surface-protocol/dto.test.ts` referencing `RuntimeAdvisories.advisories`.
+  - Action: not edited or staged for this integration milestone.
+- `node tools/validate-file-sizes.mjs`
+  - Result: pass.
+- `npm run test:memory-protocol`
+  - Result: pass.
+- `git diff --check`
+  - Result: pass.

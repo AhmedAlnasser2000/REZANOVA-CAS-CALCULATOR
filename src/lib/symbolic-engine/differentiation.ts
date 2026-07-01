@@ -47,6 +47,9 @@ const FUNCTION_POWER_HEADS = new Set([
   'si',
   'Ci',
   'ci',
+  'Ei',
+  'ei',
+  'li',
 ]);
 
 type DifferentiationContext = {
@@ -496,6 +499,28 @@ function differentiateNodeInternal(
       'Multiply',
       ['Divide', ['Cos', children[0]], children[0]],
       childPrime,
+    ]);
+  }
+
+  if ((head === 'Ei' || head === 'ei') && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Multiply',
+      ['Divide', ['Power', 'ExponentialE', children[0]], children[0]],
+      childPrime,
+    ]);
+  }
+
+  if (head === 'li' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Divide',
+      childPrime,
+      ['Ln', children[0]],
     ]);
   }
 
