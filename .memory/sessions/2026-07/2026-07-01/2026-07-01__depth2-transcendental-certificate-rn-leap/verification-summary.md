@@ -145,3 +145,15 @@
   - Result: pass.
 - `git diff --check`
   - Result: pass.
+
+## TRANSCENDENTAL-PRACTICAL-CERTIFICATE-CHECKPOINT0
+
+- Gate label: backend/docs
+- Audit artifact:
+  - `.memory/research/audits/transcendental-practical-certificate-checkpoint0-2026-07-01.md`
+- Runtime/code tests:
+  - Not rerun for this audit-only gate. No runtime source, solver route, Display schema, History, OOE, Tauri, persistence, public Calculus schema, or public strategy-label file changed.
+- `npm run test:memory-protocol`
+  - Result: pass.
+- `git diff --check` over checkpoint files
+  - Result: pass.

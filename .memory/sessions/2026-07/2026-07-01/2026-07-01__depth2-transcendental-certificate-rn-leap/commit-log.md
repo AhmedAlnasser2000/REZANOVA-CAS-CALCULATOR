@@ -10,13 +10,19 @@
 - verified_by_agent: codex
 - verified_by_agent_model: gpt-5-codex
 - attribution_basis: live
+- committed_by_agent: codex
+- committed_by_agent_model: gpt-5-codex
 
-## Pending
+## Commits
 
-- `TRANSCENDENTAL-DEPTH2-TOWER-SUBSTRATE1`: verified and ready for commit. Typecheck is blocked by unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
-- `SPECIAL-FUNCTION-SI-CI-SUBSTRATE1`: verified and ready for commit. Typecheck is blocked by the same unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
-- `TRANSCENDENTAL-SI-CI-AFFINE-QUOTIENT-CERTIFICATE1`: verified and ready for commit. Typecheck is blocked by the same unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
-- `SPECIAL-FUNCTION-EI-LI-SUBSTRATE1`: verified and ready for commit. Typecheck is blocked by the same unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
-- `TRANSCENDENTAL-EI-LI-AFFINE-CERTIFICATE1`: verified and ready for commit. Typecheck is blocked by unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
-- `RN-DEPTH2-DERIVATIVE-SUBSTITUTION1`: verified and ready for commit. Focused and regression tests pass; typecheck and file-size validation are blocked by unrelated dirty app runtime work in `src/app/runtime/useHistoryDisplayRuntime.ts` and are recorded in `verification-summary.md`.
-- `SPECIAL-FUNCTION-FRESNEL-SUBSTRATE1`: verified and ready for commit. Focused and regression tests pass; typecheck/file-size validation are blocked by unrelated Surface/app-shell dirty work and are recorded in `verification-summary.md`.
+- `0ead53aa` - `TRANSCENDENTAL-DEPTH2-TOWER-SUBSTRATE1`
+- `75e75432` - `SPECIAL-FUNCTION-SI-CI-SUBSTRATE1`
+- `70354ace` - `TRANSCENDENTAL-SI-CI-AFFINE-QUOTIENT-CERTIFICATE1`
+- `a0720d23` - `SPECIAL-FUNCTION-EI-LI-SUBSTRATE1`
+- `52bb87d6` - `TRANSCENDENTAL-EI-LI-AFFINE-CERTIFICATE1`
+- `b64b9e6d` - `RN-DEPTH2-DERIVATIVE-SUBSTITUTION1`
+- `71be1ed8` - `SPECIAL-FUNCTION-FRESNEL-SUBSTRATE1`
+
+## Pending Commit
+
+- `TRANSCENDENTAL-PRACTICAL-CERTIFICATE-CHECKPOINT0`: audit-only checkpoint verified. Runtime/code tests are not rerun because no runtime files changed; memory protocol and checkpoint diff checks are recorded in `verification-summary.md`.

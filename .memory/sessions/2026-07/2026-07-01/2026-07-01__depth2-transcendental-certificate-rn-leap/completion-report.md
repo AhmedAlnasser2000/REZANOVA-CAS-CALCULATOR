@@ -63,3 +63,11 @@
 - Added preflight and certificate proof-local differentiation support for the same heads without enabling live integration adoption.
 - `sin(x^2)` and `cos(x^2)` remain controlled unsupported/deferred as integration inputs; future live adoption still needs certificate/readback policy, scaling normalization, and real/complex branch decisions.
 - Readiness detail is recorded in `.memory/research/readiness/special-function-fresnel-substrate1-2026-07-01.md`.
+
+## Milestone 8 - TRANSCENDENTAL-PRACTICAL-CERTIFICATE-CHECKPOINT0
+
+- Added audit-only closeout at `.memory/research/audits/transcendental-practical-certificate-checkpoint0-2026-07-01.md`.
+- Recorded the completed live practical certificate scope: exp-quadratic `erf/erfi`, affine `Si/Ci`, affine `Ei/li`, and RN-owned elementary depth-2 derivative substitutions.
+- Recorded that `FresnelS/FresnelC` remain substrate/readiness only, with `sin(x^2)` and `cos(x^2)` live adoption deferred.
+- Recorded remaining formal transcendental Risch gaps: general depth-2 towers, depth-3+, Risch differential equations, algebraic extensions, complex branch cuts, broad proof-field solving, and formal certificates outside scoped families.
+- No runtime behavior, public strategy, public schema, Display, History, OOE, Tauri, or persistence changes were made.
