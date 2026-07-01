@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-CAPABILITY-MANIFEST1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol capability exposure is locked to Calculate and Equation for the first hostless spine. The manifest may advertise compact result summaries, lifecycle events, and current-result queries, while host commands, mounting, History, Variables, Graphing, tabs, plugins, remote compute, and external software development kit surfaces remain unavailable until later dedicated milestones.
+
 ## 2026-07-01 - SURFACE-DTO-FIREWALL1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol now begins as hostless infrastructure under `src/lib/surface-protocol/`. The first DTO firewall exposes versioned compact result summaries and wrapper DTOs for Calculate and Equation only, mapped from committed `DisplayOutcome` values without exposing Display block trees, solver/runtime objects, diagnostics, History, Variables, Graphing, mount contracts, host commands, plugins, remote compute, or an external software development kit.

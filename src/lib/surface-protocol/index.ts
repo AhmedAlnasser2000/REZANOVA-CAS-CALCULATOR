@@ -1,4 +1,15 @@
 export {
+  SURFACE_SUPPORTED_WORKSPACE_KINDS,
+  buildSurfaceCapabilityManifest,
+  getSurfaceWorkspaceCapability,
+  isSurfaceWorkspaceKind,
+  listSurfaceWorkspaceCapabilities,
+  type SurfaceCapabilityFlags,
+  type SurfaceCapabilityManifestDto,
+  type SurfaceWorkspaceCapabilityDto,
+} from './capabilities';
+
+export {
   SURFACE_PROTOCOL_VERSION,
   displayOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
