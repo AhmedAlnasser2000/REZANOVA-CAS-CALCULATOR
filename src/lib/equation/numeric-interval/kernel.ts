@@ -1,4 +1,4 @@
-export type RealRootKernelMethodId = 'brent-dekker';
+export type RealRootKernelMethodId = 'itp';
 
 export type RealRootKernelTermination =
   | 'residual'
@@ -53,6 +53,10 @@ export type RealRootKernelResult = RealRootKernelSuccess | RealRootKernelError;
 
 type EvaluatedCandidate = { x: number; value: number };
 
+const ITP_K1 = 0.2;
+const ITP_K2 = 2;
+const ITP_N0 = 1;
+
 function signChanged(left: number, right: number): boolean {
   return left === 0 || right === 0 || left * right < 0;
 }
@@ -63,30 +67,49 @@ function isInsideOpenInterval(value: number, left: number, right: number): boole
   return Number.isFinite(value) && value > lo && value < hi;
 }
 
-function inverseQuadraticCandidate(
-  a: number,
-  fa: number,
-  b: number,
-  fb: number,
-  c: number,
-  fc: number,
-): number | null {
-  if (fa === fb || fa === fc || fb === fc) {
+function regulaFalsiCandidate(left: number, leftValue: number, right: number, rightValue: number): number | null {
+  if (leftValue === rightValue) {
     return null;
   }
-
-  return (
-    (a * fb * fc) / ((fa - fb) * (fa - fc))
-    + (b * fa * fc) / ((fb - fa) * (fb - fc))
-    + (c * fa * fb) / ((fc - fa) * (fc - fb))
-  );
+  const candidate = (rightValue * left - leftValue * right) / (rightValue - leftValue);
+  return Number.isFinite(candidate) ? candidate : null;
 }
 
-function secantCandidate(a: number, fa: number, b: number, fb: number): number | null {
-  if (fa === fb) {
-    return null;
+function initialBisectionBudget(width: number, tolerance: number): number {
+  if (!Number.isFinite(width) || !Number.isFinite(tolerance) || width <= 0 || tolerance <= 0) {
+    return 0;
   }
-  return b - (fb * (b - a)) / (fb - fa);
+  return Math.max(0, Math.ceil(Math.log2(width / (2 * tolerance))));
+}
+
+function itpCandidate(
+  left: number,
+  leftValue: number,
+  right: number,
+  rightValue: number,
+  iteration: number,
+  bisectionBudget: number,
+  tolerance: number,
+): number {
+  const midpoint = (left + right) / 2;
+  const interpolation = regulaFalsiCandidate(left, leftValue, right, rightValue);
+  if (interpolation === null) {
+    return midpoint;
+  }
+
+  const width = Math.abs(right - left);
+  const midpointDelta = midpoint - interpolation;
+  const sigma = midpointDelta >= 0 ? 1 : -1;
+  const truncationRadius = ITP_K1 * Math.pow(width, ITP_K2);
+  const truncationDelta = Math.min(truncationRadius, Math.abs(midpointDelta));
+  const truncated = interpolation + sigma * truncationDelta;
+  const remainingBudget = Math.max(0, bisectionBudget + ITP_N0 - iteration);
+  const projectionRadius = Math.max(0, tolerance * Math.pow(2, remainingBudget) - width / 2);
+
+  if (Math.abs(truncated - midpoint) <= projectionRadius) {
+    return truncated;
+  }
+  return midpoint - sigma * projectionRadius;
 }
 
 function fallbackMidpointCandidate(
@@ -118,7 +141,7 @@ function evaluateCandidate(
 }
 
 export function refineRealRootBracket(request: RealRootKernelRequest): RealRootKernelResult {
-  const methodId: RealRootKernelMethodId = 'brent-dekker';
+  const methodId: RealRootKernelMethodId = 'itp';
   let evaluations = 0;
   let lo = request.interval.left;
   let hi = request.interval.right;
@@ -184,10 +207,9 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
     };
   }
 
-  let previousX = lo;
-  let previousValue = loValue;
   let bestX = Math.abs(loValue) <= Math.abs(hiValue) ? lo : hi;
   let bestValue = Math.abs(loValue) <= Math.abs(hiValue) ? loValue : hiValue;
+  const bisectionBudget = initialBisectionBudget(Math.abs(hi - lo), request.tolerance);
 
   for (let iteration = 0; iteration < request.maxEvaluations; iteration += 1) {
     const width = Math.abs(hi - lo);
@@ -216,16 +238,15 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
       };
     }
 
-    const midpoint = (lo + hi) / 2;
-    const interpolation = inverseQuadraticCandidate(
-      previousX,
-      previousValue,
+    const candidate = itpCandidate(
       lo,
       loValue,
       hi,
       hiValue,
-    ) ?? secantCandidate(lo, loValue, hi, hiValue);
-    const candidate = interpolation ?? midpoint;
+      iteration,
+      bisectionBudget,
+      request.tolerance,
+    );
     const evaluated = evaluateCandidate(evaluate, candidate, lo, hi)
       ?? fallbackMidpointCandidate(evaluate, lo, hi);
 
@@ -259,9 +280,6 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
         termination: 'residual',
       };
     }
-
-    previousX = Math.abs(loValue) > Math.abs(hiValue) ? lo : hi;
-    previousValue = Math.abs(loValue) > Math.abs(hiValue) ? loValue : hiValue;
 
     if (signChanged(loValue, evaluated.value)) {
       hi = evaluated.x;

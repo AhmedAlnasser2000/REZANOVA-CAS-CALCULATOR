@@ -9,13 +9,13 @@ describe('numeric interval sampling refinement', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected kernel success');
     }
-    expect(result.methodId).toBe('brent-dekker');
+    expect(result.methodId).toBe('itp');
     expect(result.root).toBeCloseTo(Math.SQRT2, 8);
     expect(result.residual).toBeLessThan(1e-8);
     expect(result.evaluations).toBeGreaterThan(0);
   });
 
-  it('refines a bracketed nonlinear root with Brent-Dekker style interpolation', () => {
+  it('refines a bracketed nonlinear root with ITP', () => {
     const root = refineBracketRoot('x^3-x-2', 1, 2, 'rad');
 
     expect(root).not.toBeNull();

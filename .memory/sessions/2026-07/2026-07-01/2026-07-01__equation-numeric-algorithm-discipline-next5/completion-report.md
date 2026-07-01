@@ -14,6 +14,7 @@
 ## Completed Gates
 
 - `EQUATION-NUMERIC-KERNEL-CONTRACT1`: added an internal real root-refinement kernel contract and routed the existing numeric interval sampler through it while preserving visible Brent-Dekker-style behavior.
+- `EQUATION-NUMERIC-ITP-KERNEL1`: replaced the sign-change bracket refiner under the kernel contract with ITP and updated numeric method wording while preserving route order, interval/manual/auto-search eligibility, validation, and local-minimum recovery.
 
 ## Notes
 

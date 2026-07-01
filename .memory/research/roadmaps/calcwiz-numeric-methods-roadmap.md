@@ -37,6 +37,8 @@ Updated for `EQUATION-NUMERIC-ROUTE-ORCHESTRATION-CLOSEOUT1` on 2026-06-30: the 
 
 Updated for `EQUATION-NUMERIC-KERNEL-CONTRACT1` on 2026-07-01: bracketed real root refinement now has an internal kernel contract before the ITP algorithm swap. It preserves the current Brent-Dekker-style behavior while exposing method id, termination, residual, iteration, and evaluation evidence so future kernels plug into one disciplined seam.
 
+Updated for `EQUATION-NUMERIC-ITP-KERNEL1` on 2026-07-01: ITP is now the live bracketed sign-change refinement method under the Equation numeric kernel contract. Numeric interval/manual/auto-search route eligibility stays unchanged; the swap only changes the maintained refinement kernel and visible method wording.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

@@ -16,6 +16,14 @@
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol now begins as hostless infrastructure under `src/lib/surface-protocol/`. The first DTO firewall exposes versioned compact result summaries and wrapper DTOs for Calculate and Equation only, mapped from committed `DisplayOutcome` values without exposing Display block trees, solver/runtime objects, diagnostics, History, Variables, Graphing, mount contracts, host commands, plugins, remote compute, or an external software development kit.
 
+## 2026-07-01 - EQUATION-NUMERIC-KERNEL-CONTRACT1
+
+- [agent: codex | model: gpt-5-codex] Equation real numeric root refinement now has an internal kernel contract before the ITP replacement. The contract reports method id, interval, candidate root, residual, termination reason, iteration count, and evaluation count while preserving the existing Brent-Dekker-style behavior for user-visible interval/manual/auto-search routes. Future numeric algorithms must plug into this contract instead of adding route-local refinement loops.
+
+## 2026-07-01 - EQUATION-NUMERIC-ITP-KERNEL1
+
+- [agent: codex | model: gpt-5-codex] Equation numeric interval/manual/auto-search sign-change brackets now refine through ITP as the maintained real bracketed root kernel. TOMS 748 remains off the planned path unless future benchmarks prove a specific need, and route-local Brent-Dekker/TOMS variants should not be introduced outside the kernel contract.
+
 ## 2026-06-30 - PUBLIC-IDENTITY-LOCK1
 
 - [agent: codex | model: gpt-5-codex] The primary current-facing public identity is `REZANOVA CLASSWIZ CALCULATOR`. `Calcwiz` and `Classwiz` are allowed as friendly aliases, but they must not replace the primary identity in release/GitHub positioning. Technical slugs such as `calcwiz-desktop`, `calcwiz_desktop`, and `com.ahmed.calcwizdesktop` stay unchanged for compatibility, and historical memory keeps old names as evidence rather than being rewritten.

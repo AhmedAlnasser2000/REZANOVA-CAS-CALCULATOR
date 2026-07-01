@@ -54,7 +54,7 @@ describe('Equation real periodic interval numeric fallback', () => {
       throw new Error('Expected numeric interval success');
     }
     expect(result.solutionKind).toBe('approximate-numeric');
-    expect(result.numericMethod).toBe('Bracket-first adaptive Brent-Dekker + local-minimum recovery');
+    expect(result.numericMethod).toBe('Bracket-first adaptive ITP + local-minimum recovery');
     expect(result.approxText).toContain('x ~= 0, 3.141593, 6.283185, 9.424778');
     expect(collectOutcomeText(result)).toContain('Roots are local to this chosen interval; this is not a claim of all real roots.');
   });
