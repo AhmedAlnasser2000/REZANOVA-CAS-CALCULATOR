@@ -1,4 +1,7 @@
-import type { ModeId } from '../../types/calculator';
+import type {
+  CalculusScreen,
+  ModeId,
+} from '../../types/calculator';
 
 export type SoftAction = {
   id: string;
@@ -34,6 +37,11 @@ export type KeypadButton = {
   latex?: string;
   command?: KeypadCommand;
   layers?: Partial<Record<Exclude<KeypadLayer, 'base'>, KeypadLayerAction>>;
+};
+
+export type WorkspaceKeypadContext = {
+  mode: ModeId;
+  calculusScreen?: CalculusScreen;
 };
 
 export function getKeypadLayerAction(button: KeypadButton, layer: KeypadLayer) {
@@ -404,3 +412,61 @@ export const KEYPAD_ROWS: KeypadButton[][] = [
     { id: 'derivative', label: 'd/dx', secondary: 'int', alpha: 'z', variant: 'function', latex: '\\frac{d}{dx}#0', layers: { shift: { label: 'int', latex: '\\int #0\\,dx' }, alpha: { label: 'z', latex: 'z' } } },
   ],
 ];
+
+const DERIVATIVE_KEYPAD_SCREENS = new Set<CalculusScreen>([
+  'derivative',
+  'derivativePoint',
+  'partialDerivative',
+  'implicitDerivative',
+]);
+
+const DERIVATIVE_OPERATOR_TEMPLATE_ROW: KeypadButton[] = [
+  {
+    id: 'derivative-partial-symbol',
+    label: '∂',
+    variant: 'function',
+    latex: '\\partial',
+  },
+  {
+    id: 'derivative-ordinary-template',
+    label: 'd/dx',
+    variant: 'function',
+    latex: '\\frac{d}{dx}\\left(#0\\right)',
+  },
+  {
+    id: 'derivative-higher-template',
+    label: 'dⁿ/dxⁿ',
+    variant: 'function',
+    latex: '\\frac{d^{#0}}{dx^{#0}}\\left(#?\\right)',
+  },
+  {
+    id: 'derivative-partial-template',
+    label: '∂/∂x',
+    variant: 'function',
+    latex: '\\frac{\\partial}{\\partial x}\\left(#0\\right)',
+  },
+  {
+    id: 'derivative-mixed-partial-template',
+    label: '∂ⁿ/(...)',
+    variant: 'function',
+    latex: '\\frac{\\partial^{#0}}{\\partial x\\partial y}\\left(#?\\right)',
+  },
+  {
+    id: 'derivative-implicit-template',
+    label: 'dy/dx',
+    variant: 'function',
+    latex: '\\frac{dy}{dx}',
+  },
+];
+
+export function getWorkspaceKeypadRows(
+  rows: KeypadButton[][],
+  context: WorkspaceKeypadContext,
+) {
+  if (context.mode !== 'calculus' || !DERIVATIVE_KEYPAD_SCREENS.has(context.calculusScreen ?? 'home')) {
+    return rows;
+  }
+
+  return rows.map((row, index) =>
+    index === rows.length - 1 ? DERIVATIVE_OPERATOR_TEMPLATE_ROW : row);
+}

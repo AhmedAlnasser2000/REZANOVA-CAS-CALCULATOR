@@ -52,6 +52,30 @@ async function openDerivativeStepsCard() {
 }
 
 describe('Calculus derivative editor source', () => {
+  it('uses derivative keypad templates only after entering a derivative screen', async () => {
+    const { user } = await renderAppMain();
+
+    expect(screen.getByTestId('keypad-00')).toBeInTheDocument();
+    expect(screen.queryByTestId('keypad-derivative-partial-symbol')).not.toBeInTheDocument();
+
+    await openCalculusTool(user, 'Derivatives', 'Derivative');
+
+    expect(screen.queryByTestId('keypad-00')).not.toBeInTheDocument();
+    expect(screen.getByTestId('keypad-derivative-partial-symbol')).toHaveTextContent('∂');
+    expect(screen.getByTestId('keypad-derivative-ordinary-template')).toHaveTextContent('d/dx');
+    expect(screen.getByTestId('keypad-derivative-higher-template')).toHaveTextContent('dⁿ/dxⁿ');
+    expect(screen.getByTestId('keypad-derivative-partial-template')).toHaveTextContent('∂/∂x');
+    expect(screen.getByTestId('keypad-derivative-mixed-partial-template')).toHaveTextContent('∂ⁿ/(...)');
+    expect(screen.getByTestId('keypad-derivative-implicit-template')).toHaveTextContent('dy/dx');
+
+    await user.click(screen.getByTestId('soft-action-toEditor'));
+    await user.click(screen.getByTestId('keypad-derivative-partial-template'));
+    expect(screen.getByTestId('main-editor')).toHaveAttribute(
+      'data-value',
+      '\\frac{\\partial}{\\partial x}\\left(#0\\right)',
+    );
+  });
+
   it('edits natural derivative requests through the main editor and copies the request', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');

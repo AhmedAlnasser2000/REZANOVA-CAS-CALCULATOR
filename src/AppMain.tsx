@@ -92,6 +92,7 @@ import {
   KEYPAD_ROWS,
   MODE_LABELS,
   SOFT_MENU_BY_MODE,
+  getWorkspaceKeypadRows,
   resolveKeypadButtonForLayer,
   type KeypadButton,
   type KeypadLayer,
@@ -1206,6 +1207,13 @@ export default function App() {
     : currentMode === 'equation'
       ? equationSoftActions
       : SOFT_MENU_BY_MODE[currentMode];
+  const keypadRows = useMemo(
+    () => getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: currentMode,
+      calculusScreen,
+    }),
+    [currentMode, calculusScreen],
+  );
   const analyzeExpressionTransforms = useCallback(async (source: string) => {
     const { getEligibleExpressionTransforms } = await import('./lib/algebra/algebra-transform');
     return getEligibleExpressionTransforms(source);
@@ -3264,7 +3272,7 @@ export default function App() {
           </div>
         </main>
         <KeypadPanel
-          rows={KEYPAD_ROWS}
+          rows={keypadRows}
           activeLayer={effectiveKeypadLayer}
           layerLocked={keypadLayerLocked}
           onKeypad={handleKeypad}

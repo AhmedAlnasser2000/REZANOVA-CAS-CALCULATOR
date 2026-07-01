@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { KEYPAD_ROWS, resolveKeypadButtonForLayer } from './menu';
+import {
+  KEYPAD_ROWS,
+  getWorkspaceKeypadRows,
+  resolveKeypadButtonForLayer,
+} from './menu';
 
 function keypadButton(id: string) {
   const button = KEYPAD_ROWS.flat().find((candidate) => candidate.id === id);
@@ -25,5 +29,31 @@ describe('keypad layer actions', () => {
     expect(resolveKeypadButtonForLayer(keypadButton('sin'), 'base').latex).toBe(
       '\\sin\\left(#0\\right)',
     );
+  });
+});
+
+describe('workspace keypad overlays', () => {
+  it('uses derivative operator templates only on derivative-family Calculus screens', () => {
+    const derivativeRows = getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: 'calculus',
+      calculusScreen: 'partialDerivative',
+    });
+    const finiteLimitRows = getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: 'calculus',
+      calculusScreen: 'finiteLimit',
+    });
+    const calculateRows = getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: 'calculate',
+    });
+
+    expect(derivativeRows.flat().find((button) => button.id === '00')).toBeUndefined();
+    expect(derivativeRows.flat().find((button) => button.id === 'derivative-partial-symbol')?.latex)
+      .toBe('\\partial');
+    expect(derivativeRows.flat().find((button) => button.id === 'derivative-higher-template')?.latex)
+      .toBe('\\frac{d^{#0}}{dx^{#0}}\\left(#?\\right)');
+    expect(derivativeRows.flat().find((button) => button.id === 'derivative-mixed-partial-template')?.latex)
+      .toBe('\\frac{\\partial^{#0}}{\\partial x\\partial y}\\left(#?\\right)');
+    expect(finiteLimitRows.flat().find((button) => button.id === '00')).toBeDefined();
+    expect(calculateRows.flat().find((button) => button.id === '00')).toBeDefined();
   });
 });
