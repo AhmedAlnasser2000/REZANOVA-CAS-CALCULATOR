@@ -11,6 +11,7 @@ import {
   extraneousEvidenceFromRejectedCandidates,
 } from '../candidate/extraneous';
 import { formatApproxNumber } from '../../display/format';
+import { buildNumericConfidenceSection } from '../numeric-confidence-readback';
 import { createLatexTargetEvaluator, equationToZeroFormLatex } from '../domain-guards';
 import {
   buildEquationNumericSegmentationPlan,
@@ -427,6 +428,29 @@ function numericConditioningDetailSections(input: {
   }];
 }
 
+function numericConfidenceDetailSections(input: {
+  segmentation: EquationNumericSegmentationPlan;
+  diagnostics: NumericDiagnostics;
+  acceptedRootCount: number;
+  rejectedCandidateCount: number;
+}): DisplayDetailSection[] {
+  const hasSegmentationEvidence = input.segmentation.boundaries.length > 0
+    || input.segmentation.excludedBoundaryCandidates.length > 0
+    || input.segmentation.intervalArithmetic.splitRequiredCount > 0
+    || input.segmentation.intervalArithmetic.invalidCount > 0
+    || input.diagnostics.discontinuityCellCount > 0;
+  const needsPrecisionGuidance = input.rejectedCandidateCount > 0
+    || input.diagnostics.discontinuityCellCount > 0
+    || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
+  const section = buildNumericConfidenceSection([
+    ...(input.acceptedRootCount > 0 ? ['All roots in this interval.'] : []),
+    ...(hasSegmentationEvidence ? ['Domain segmented around exclusions.'] : []),
+    'Candidate roots validated against original equation.',
+    ...(needsPrecisionGuidance ? ['Higher precision recommended.'] : []),
+  ]);
+  return section ? [section] : [];
+}
+
 export function runNumericIntervalSolve(
   equationLatex: string,
   interval: NumericSolveInterval,
@@ -552,6 +576,12 @@ export function runNumericIntervalSolve(
             end: parsed.end,
             acceptedRootCount: 0,
           }),
+          ...numericConfidenceDetailSections({
+            segmentation,
+            diagnostics,
+            acceptedRootCount: 0,
+            rejectedCandidateCount: validated.rejected.length,
+          }),
           ...numericSegmentationDetailSections(segmentation),
           ...numericConditioningDetailSections({ segmentation, diagnostics }),
         ],
@@ -578,6 +608,12 @@ export function runNumericIntervalSolve(
           start: parsed.start,
           end: parsed.end,
           acceptedRootCount: accepted.length,
+        }),
+        ...numericConfidenceDetailSections({
+          segmentation,
+          diagnostics,
+          acceptedRootCount: accepted.length,
+          rejectedCandidateCount: validated.rejected.length,
         }),
         ...numericSegmentationDetailSections(segmentation),
         ...numericConditioningDetailSections({ segmentation, diagnostics }),

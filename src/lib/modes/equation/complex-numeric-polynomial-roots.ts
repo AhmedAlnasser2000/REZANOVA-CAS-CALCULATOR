@@ -9,6 +9,7 @@ import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
 import { buildExtraneousSolutionsDetailSection } from '../../equation/candidate/extraneous';
 import { equationTargetLatex } from '../../equation/equation-target';
+import { buildNumericConfidenceSection } from '../../equation/numeric-confidence-readback';
 import {
   complex,
   complexAbs,
@@ -239,6 +240,15 @@ function detailSectionsFor(input: {
   complexExactForm: ComplexExactForm;
 }): DisplayDetailSection[] {
   const method = input.polynomial.kind === 'rational' ? NUMERIC_METHOD_RATIONAL : NUMERIC_METHOD_POLYNOMIAL;
+  const factLines = uniqueLines(hardDomainFactLines(input.classification.domainFacts));
+  const confidenceSection = buildNumericConfidenceSection([
+    'Candidate roots validated against original equation.',
+    ...(factLines.length > 0 ? ['Domain segmented around exclusions.'] : []),
+    ...(input.diagnostics?.warningLines.some((line) => /higher precision/i.test(line))
+      || input.diagnostics?.decimalRevalidation.performed
+      ? ['Higher precision recommended.']
+      : []),
+  ]);
   const sections: DisplayDetailSection[] = [
     {
       title: 'Complex Numeric Method',
@@ -252,8 +262,10 @@ function detailSectionsFor(input: {
       ],
     },
   ];
+  if (confidenceSection) {
+    sections.push(confidenceSection);
+  }
 
-  const factLines = uniqueLines(hardDomainFactLines(input.classification.domainFacts));
   if (factLines.length > 0) {
     sections.push({
       title: 'Domain and Exclusions',

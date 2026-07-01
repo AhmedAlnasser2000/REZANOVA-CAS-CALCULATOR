@@ -5,6 +5,7 @@ import type {
   EquationDomainIntent,
   NumericSolveInterval,
 } from '../../../types/calculator';
+import { buildNumericConfidenceSection } from '../../equation/numeric-confidence-readback';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import { hardDomainFactLines } from './numeric-search-diagnostics';
 
@@ -77,6 +78,13 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
       ],
     },
   ];
+  const confidenceSection = buildNumericConfidenceSection([
+    'Search may be incomplete until a finite real interval is chosen.',
+    'All roots in this interval can be reported after Numeric Interval Solve runs.',
+  ]);
+  if (confidenceSection) {
+    detailSections.push(confidenceSection);
+  }
 
   const reducedFamilyLatex =
     input.sharedOutcome.kind === 'success' ? input.sharedOutcome.exactLatex : undefined;

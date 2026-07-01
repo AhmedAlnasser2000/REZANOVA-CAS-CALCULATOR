@@ -111,7 +111,10 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.resultOrigin).toBe('numeric-fallback');
     expect(trace.answerDomain).toBe('real');
     expect(trace.numericMethod).toBe('Deterministic numeric polynomial roots');
+    expect(trace.detailTitles).toContain('Numeric Confidence');
     expect(trace.detailTitles).toContain('Polynomial Diagnostics');
+    expect(trace.detailText).toContain('All real polynomial roots certified.');
+    expect(trace.detailText).toContain('Candidate roots validated against original equation.');
     expect(trace.text).toContain('Root engine: aberth-ehrlich');
     expect(trace.text).not.toContain('Real Cardano Cases');
     expect(trace.text).not.toContain('Real Ferrari Cases');
@@ -128,6 +131,8 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.kind).toBe('success');
     expect(trace.numericMethod).toBe('Deterministic numeric rational roots');
     expect(trace.solveBadges).toEqual(expect.arrayContaining(['LCD Clear', 'Candidate Checked']));
+    expect(trace.detailTitles).toContain('Numeric Confidence');
+    expect(trace.detailText).toContain('Domain segmented around exclusions.');
     expect(trace.detailTitles).toContain('Domain and Exclusions');
     expect(trace.detailText).toContain('x-2 \\ne0');
     expect(trace.detailText).toContain('x\\ne 2');
@@ -143,6 +148,9 @@ describe('Equation numeric golden trace harness', () => {
     expectSoftTraceBudgets(trace);
     expect(trace.kind).toBe('success');
     expect(trace.numericMethod).toBe('Real nonlinear bounded numeric search');
+    expect(trace.detailTitles).toContain('Numeric Confidence');
+    expect(trace.detailText).toContain('Validated roots from bounded search.');
+    expect(trace.detailText).toContain('Search may be incomplete outside the searched windows.');
     expect(trace.detailTitles).toContain('Search Diagnostics');
     expect(trace.detailText).toContain('Searched windows: [-10, 10], [-100, 100].');
     expect(trace.detailText).toContain('Residual tolerance: 1e-8.');
@@ -160,11 +168,14 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.kind).toBe('success');
     expect(trace.numericMethod).toBe('Real nonlinear bounded numeric search');
     expect(trace.detailTitles).toEqual(expect.arrayContaining([
+      'Numeric Confidence',
       'Domain and Exclusions',
       'Domain Probe',
       'Search Diagnostics',
       'Extraneous Solutions',
     ]));
+    expect(trace.detailText).toContain('Domain segmented around exclusions.');
+    expect(trace.detailText).toContain('Higher precision recommended.');
     expect(trace.detailText).toContain('x-1 >0');
     expect(trace.detailText).toContain('x-2 \\ne0');
     expect(trace.detailText).toContain('Candidate approximately 2');
@@ -186,6 +197,8 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.solutionKind).toBe('approximate-numeric');
     expect(trace.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
     expect(trace.solveBadges).toContain('Numeric Interval');
+    expect(trace.detailTitles).toContain('Numeric Confidence');
+    expect(trace.detailText).toContain('All roots in this interval.');
     expect(trace.detailTitles).toContain('Periodic Interval Summary');
     expect(trace.detailText).toContain('Roots are local to this chosen interval');
     expect(trace.detailText).toContain('Sin(x) carrier repeats every about 6.283185');
@@ -206,6 +219,7 @@ describe('Equation numeric golden trace harness', () => {
     expectSoftTraceBudgets(trace);
     expect(trace.kind).toBe('success');
     expect(trace.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
+    expect(trace.detailTitles).toContain('Numeric Confidence');
     expect(trace.detailTitles).toContain('Periodic Interval Summary');
     expect(trace.detailText).toContain('Tan(x) carrier repeats every about 3.141593');
     expect(trace.detailText).toContain(String.raw`\cos\left(x\right) \ne0`);
@@ -250,6 +264,8 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.answerDomain).toBe('complex');
     expect(trace.numericMethod).toBe('Complex numeric polynomial roots');
     expect(trace.rootCount).toBe(6);
+    expect(trace.detailTitles).toContain('Numeric Confidence');
+    expect(trace.detailText).toContain('Candidate roots validated against original equation.');
     expect(trace.detailTitles).toContain('Complex Numeric Method');
     expect(trace.detailTitles).toContain('Polynomial Diagnostics');
     expect(trace.text).not.toContain('Real Cardano Cases');

@@ -83,3 +83,17 @@
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.
+
+## EQUATION-NUMERIC-CONFIDENCE-READBACK1
+
+- Focused numeric confidence gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/numeric-golden-trace-harness.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts src/lib/modes/equation/real-piecewise-abs-hybrid.test.ts`
+- Evidence: 7 test files passed, 63 tests passed.
+- Route regression gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts src/lib/modes/equation/answer-modes.test.ts src/lib/equation/guarded/stage-routing.test.ts`
+- Evidence: 3 test files passed, 54 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` is blocked by unrelated current repo Symbolic/Risch work: `src/lib/symbolic-engine/integration/transcendental-certificate/special-functions.ts` has 1118 lines, exceeding its cap of 900.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.

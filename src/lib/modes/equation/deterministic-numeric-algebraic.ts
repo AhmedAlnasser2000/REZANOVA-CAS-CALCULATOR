@@ -11,6 +11,7 @@ import {
   appendExtraneousSolutionsDetailSection,
   extraneousEvidenceFromRejectedCandidates,
 } from '../../equation/candidate/extraneous';
+import { buildNumericConfidenceSection } from '../../equation/numeric-confidence-readback';
 import { evaluateLatexAtTarget } from '../../equation/domain-guards';
 import { equationTargetLatex } from '../../equation/equation-target';
 import type { AngleUnit, DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
@@ -85,6 +86,19 @@ function detailSectionsFor(input: {
   zeroFormLatex: string;
 }): DisplayDetailSection[] {
   const method = input.kind === 'rational' ? NUMERIC_METHOD_RATIONAL : NUMERIC_METHOD_POLYNOMIAL;
+  const factLines = uniqueLines(hardDomainFactLines(input.classification.domainFacts));
+  const certificationMatches = input.sturmCertification?.kind === 'certified'
+    && input.roots.length === input.sturmCertification.distinctRealRootCount
+    && input.roots.every((root) => rootInSturmIntervals(root, input.sturmCertification?.intervals ?? []));
+  const confidenceSection = buildNumericConfidenceSection([
+    ...(certificationMatches ? ['All real polynomial roots certified.'] : []),
+    ...(factLines.length > 0 ? ['Domain segmented around exclusions.'] : []),
+    'Candidate roots validated against original equation.',
+    ...(input.rootDiagnostics?.warningLines.some((line) => /higher precision/i.test(line))
+      || input.rootDiagnostics?.decimalRevalidation.performed
+      ? ['Higher precision recommended.']
+      : []),
+  ]);
   const sections: DisplayDetailSection[] = [
     {
       title: 'Numeric Method',
@@ -98,8 +112,10 @@ function detailSectionsFor(input: {
       ],
     },
   ];
+  if (confidenceSection) {
+    sections.push(confidenceSection);
+  }
 
-  const factLines = uniqueLines(hardDomainFactLines(input.classification.domainFacts));
   if (factLines.length > 0) {
     sections.push({
       title: 'Domain and Exclusions',

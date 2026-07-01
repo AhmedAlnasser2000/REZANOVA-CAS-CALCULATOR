@@ -1,6 +1,7 @@
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
 import { dedupeNumericRoots } from '../../equation/candidate-validation';
+import { buildNumericConfidenceSection } from '../../equation/numeric-confidence-readback';
 import {
   buildDomainProbeSection,
   buildExtraneousDiagnosticsSection,
@@ -153,6 +154,9 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   const accepted = dedupeNumericRoots(acceptedRoots);
   const factLines = hardDomainFactLines(classification.domainFacts);
   const rejectedCandidateCount = rejectedCandidatesAcrossWindows.length;
+  const hasDomainSegmentationEvidence = factLines.length > 0
+    || Boolean(classification.sampleProbe && classification.sampleProbe.undefinedSampleCount > 0)
+    || windowDiagnostics.some((window) => window.diagnostics.discontinuityCellCount > 0);
   const baseSections: DisplayDetailSection[] = [
     {
       title: 'Numeric Method',
@@ -163,6 +167,16 @@ export function tryRealNonlinearNumericSearchFallback(input: {
       ],
     },
   ];
+  const confidenceSection = buildNumericConfidenceSection([
+    ...(accepted.length > 0 ? ['Validated roots from bounded search.'] : []),
+    'Search may be incomplete outside the searched windows.',
+    ...(hasDomainSegmentationEvidence ? ['Domain segmented around exclusions.'] : []),
+    'Candidate roots validated against original equation.',
+    ...(rejectedCandidateCount > 0 || hasDomainSegmentationEvidence ? ['Higher precision recommended.'] : []),
+  ]);
+  if (confidenceSection) {
+    baseSections.push(confidenceSection);
+  }
 
   if (classification.routeEvidence.length > 0) {
     baseSections.push({

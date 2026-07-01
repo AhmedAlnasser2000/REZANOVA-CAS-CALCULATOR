@@ -7,6 +7,7 @@ import {
   appendExtraneousSolutionsDetailSection,
   extraneousEvidenceFromRejectedCandidates,
 } from '../../equation/candidate/extraneous';
+import { buildNumericConfidenceSection } from '../../equation/numeric-confidence-readback';
 import { equationToZeroFormLatex, evaluateLatexAtTarget } from '../../equation/domain-guards';
 import { equationTargetLatex } from '../../equation/equation-target';
 import { normalizeAst } from '../../symbolic-engine/normalize';
@@ -358,6 +359,13 @@ function detailSectionsFor(input: {
   roots: readonly number[];
   rejected: readonly CandidateValidationResult[];
 }): DisplayDetailSection[] {
+  const factLines = hardDomainFactLines(input.classification.domainFacts);
+  const confidenceSection = buildNumericConfidenceSection([
+    ...(input.roots.length > 0 ? ['Validated roots from bounded search.'] : []),
+    'Domain segmented around exclusions.',
+    'Candidate roots validated against original equation.',
+    ...(input.rejected.length > 0 ? ['Higher precision recommended.'] : []),
+  ]);
   const sections: DisplayDetailSection[] = [
     {
       title: 'Numeric Method',
@@ -367,6 +375,7 @@ function detailSectionsFor(input: {
         'Contained abs/min/max carriers were rewritten into guarded numeric branches before polynomial solving.',
       ],
     },
+    ...(confidenceSection ? [confidenceSection] : []),
     {
       title: 'Piecewise Branch Rewrite',
       lines: input.expansion.kind === 'cap-exceeded'
@@ -388,7 +397,6 @@ function detailSectionsFor(input: {
     },
   ];
 
-  const factLines = hardDomainFactLines(input.classification.domainFacts);
   if (factLines.length > 0) {
     sections.push({
       title: 'Domain and Exclusions',
