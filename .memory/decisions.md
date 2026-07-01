@@ -1515,3 +1515,7 @@
 ## 2026-07-01 - WORKSPACE-TABS-APP-CHROME1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Workspace Tabs now render as full-stage app chrome above `.calculator-shell`, not inside it. The shared app-frame owns UI scaling for both tabs and calculator body, while `.calculator-shell` keeps the side-surface geometry ref and remains the renderer for calculator-like workspaces.
+
+## 2026-07-01 - WORKSPACE-ACTIVE-SURFACE-HOST1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Active workspace rendering now goes through an explicit `ActiveSurfaceHost`. Calculator-like workspaces still render through `.calculator-shell`, while Formula Viewer renders as a page surface outside the calculator chassis without gaining an Order of Execution runtime context or changing `currentMode`.

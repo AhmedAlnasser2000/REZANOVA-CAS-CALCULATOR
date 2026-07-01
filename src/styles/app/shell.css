@@ -66,6 +66,19 @@
   position: relative;
 }
 
+.active-surface {
+  width: 100%;
+  min-width: 0;
+}
+
+.active-surface--calculator {
+  display: grid;
+}
+
+.active-surface--page {
+  min-height: min(900px, calc(100vh - 150px));
+}
+
 .calculator-shell {
   width: min(1480px, 100%);
   margin-inline: auto;

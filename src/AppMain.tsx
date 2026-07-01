@@ -13,9 +13,9 @@ import type { MathfieldElement } from 'mathlive';
 import { MathNotationProvider } from './components/MathNotationContext';
 import { LanguageProvider } from './lib/language/language-context';
 import { CalculateWorkspace } from './app/workspaces/CalculateWorkspace';
+import { ActiveSurfaceHost } from './app/shell/ActiveSurfaceHost';
 import { CompartmentErrorBoundary } from './app/shell/CompartmentErrorBoundary';
 import { DisplayPanel } from './app/shell/DisplayPanel';
-import { FormulaViewerWorkspaceGate } from './app/shell/FormulaViewerWorkspaceGate';
 import { formulaViewerSourceContextForWorkspaceInstance } from './app/runtime/formula-viewer-source-context';
 import { KeypadPanel } from './app/shell/KeypadPanel';
 import { LauncherWorkspace } from './app/shell/LauncherWorkspace';
@@ -2791,13 +2791,17 @@ export default function App() {
         style={appFrameStyle}
       >
         <WorkspaceTabs {...workspaceTabsRuntime} />
+        <ActiveSurfaceHost
+          activeInstance={workspaceInstancesRuntime.activeInstance}
+          onCopyResult={(latex) => void copyText(latex, 'Result copied')}
+          onFocusTab={workspaceTabsRuntime.onFocusTab}
+          renderCalculatorSurface={() => (
       <div
         className={`calculator-shell${settings.highContrast ? ' is-high-contrast' : ''}`}
         data-testid="calculator-shell"
         ref={calculatorShellRef}
         style={calculatorShellStyle}
       >
-        <FormulaViewerWorkspaceGate activeInstance={workspaceInstancesRuntime.activeInstance} onCopyResult={(latex) => void copyText(latex, 'Result copied')} onFocusTab={workspaceTabsRuntime.onFocusTab} symbolicDisplayPrefs={symbolicDisplayPrefs} workspaceInstances={workspaceInstancesRuntime.workspaceInstances}>
         <ModeStrip
           MODE_LABELS={MODE_LABELS}
           currentMode={currentMode}
@@ -3284,8 +3288,12 @@ export default function App() {
           onKeypad={handleKeypad}
           onSelectLayer={selectKeypadLayer}
           onToggleLayerLock={toggleKeypadLayerLock}
-        /></FormulaViewerWorkspaceGate>
+        />
       </div>
+          )}
+          symbolicDisplayPrefs={symbolicDisplayPrefs}
+          workspaceInstances={workspaceInstancesRuntime.workspaceInstances}
+        />
       </div>
 
         <Suspense fallback={<LazySideSurfaceFallback />}>
