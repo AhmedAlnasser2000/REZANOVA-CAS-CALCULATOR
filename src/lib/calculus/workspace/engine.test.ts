@@ -141,6 +141,25 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.exactLatex).toBe('-\\sin(t)');
   });
 
+  it('normalizes higher-order derivative output and step lines', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
+      derivative: { bodyLatex: 'd^4/dt^4(\\sin(t^2)+a*t)', variable: 't' },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toBe('16\\sin(t^2)t^4-48\\cos(t^2)t^2-12\\sin(t^2)');
+    expect(result.exactLatex).not.toContain('tt');
+    expect(result.exactLatex).not.toContain('\\times');
+    const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
+    expect(steps?.lines).toContain('D_{2}=2\\cos(t^2)-4\\sin(t^2)t^2');
+    expect(steps?.lines).toContain('D_{3}=-8\\cos(t^2)t^3-12t\\sin(t^2)');
+    expect(steps?.lines).toContain('D_{4}=16\\sin(t^2)t^4-48\\cos(t^2)t^2-12\\sin(t^2)');
+    expect(steps?.lines.join('\\n')).not.toContain('tt');
+  });
+
   it('protects the higher-order derivative variable while substituting parameters', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
       derivative: { bodyLatex: 'a t^3+c t', variable: 't', operatorLatex: 'd^2/dt^2' },

@@ -13,6 +13,7 @@ import {
   type DerivativePreflightResult,
 } from '../../symbolic-engine/differentiation-preflight';
 import { normalizeAst } from '../../symbolic-engine/normalize';
+import { normalizeDerivativeOutputNode } from '../../symbolic-engine/differentiation-normalization';
 import type {
   CalculusDerivativeStrategy,
   DerivativeVariable,
@@ -77,7 +78,7 @@ function derivativeFallbackMode(preflight: DerivativePreflightResult) {
 }
 
 function renderNodeLatex(node: unknown) {
-  return boxNode(normalizeAst(simplifyNode(node))).latex;
+  return boxNode(normalizeAst(normalizeDerivativeOutputNode(simplifyNode(node)))).latex;
 }
 
 function parseLatexNode(latex: string) {

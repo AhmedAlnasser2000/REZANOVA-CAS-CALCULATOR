@@ -1492,6 +1492,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The keypad remains one shared component. Derivative-family Calculus screens apply a workspace-aware row overlay for derivative operator templates; non-derivative screens keep the base keypad unchanged.
 
+## 2026-07-01 - SYMBOLIC-DERIVATIVE-NORMALIZATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Derivative display normalization is output-side and bounded: compact repeated factors, distribute only small products over sums, and collect identical terms before rendering final derivative answers and step lines. The differentiation rule engine itself remains unchanged.
+
 ## 2026-07-01 - EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex On numeric polynomial/rational fallback is live after exact symbolic routes miss. It uses the shared Aberth-Ehrlich polynomial engine through degree `64`, preserves real and non-real roots, honors `complexExactForm` for approximate rectangular/polar/cis readback, validates residuals and denominator exclusions, and keeps Complex nonlinear numeric solving plus generated Complex Cardano/Ferrari formula output deferred.
