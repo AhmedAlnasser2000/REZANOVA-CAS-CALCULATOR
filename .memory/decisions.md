@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-CONTRACT-FIXTURES1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol v1 has canonical hostless contract fixtures for the current capability manifest, current-result query, safe-settings query, lifecycle event, and structured failure outputs. Fixtures must stay JSON-serializable and match live helpers, and they remain Surface contract fixtures rather than broad math golden cases.
+
 ## 2026-07-01 - SURFACE-POLICY-VOCAB-REGISTRY1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol field exposure and result-summary vocabulary classification now live as internal policy registries, not DTO response metadata. Current DTO fields are classified exactly once, blocked future/internal areas remain sensitive-gated or internal-forbidden, and existing fact/count vocabulary is cataloged without exposing richer facts, History, Variables, Graphing, mounting, host commands, plugins, remote compute, or external software development kit behavior.
