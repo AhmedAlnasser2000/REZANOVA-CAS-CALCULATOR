@@ -142,3 +142,14 @@
 - `npm run test:file-sizes` passed.
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
+
+## EQUATION-COMPLEX-CONTOUR-WINDING-VERIFICATION1
+
+- Focused Complex contour/winding gate passed:
+  - `npm run test:unit -- src/lib/equation/complex/contour-winding.test.ts src/lib/equation/complex/seed-grid-newton.test.ts src/lib/equation/complex/numeric-evaluator.test.ts src/lib/equation/complex/branch-cut-policy.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts`
+- Evidence: 5 test files passed, 29 tests passed.
+- `npm run lint` passed.
+- `npm run build` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
