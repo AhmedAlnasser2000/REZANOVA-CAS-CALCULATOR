@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import { exactScalarToNumber, readExactScalarNode } from '../../algebra/polynomial-core';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { mathDetailSection } from '../../display/result-detail-lines';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
@@ -418,6 +419,11 @@ function dedupe(entries: string[]) {
   return [...new Set(entries.filter(Boolean))];
 }
 
+function exactNumericValue(node: MathJson): number | null {
+  const scalar = readExactScalarNode(simplifyNode(node));
+  return scalar ? exactScalarToNumber(scalar) : null;
+}
+
 function branchEquationsForCarrier(carrier: CarrierProfile, value: MathJson) {
   if (carrier.kind === 'square-root') {
     return [latexForNode(carrier.inner) + '=' + latexForNode(simplifyNode(['Power', value, 2] as MathJson))];
@@ -431,6 +437,13 @@ function branchEquationsForCarrier(carrier: CarrierProfile, value: MathJson) {
     ];
   }
 
+  const exactValue = exactNumericValue(value);
+  if (exactValue !== null && exactValue < 0) {
+    return [];
+  }
+  if (exactValue !== null && Math.abs(exactValue) <= 1e-12) {
+    return [latexForNode(carrier.inner) + '=' + latexForNode(value)];
+  }
   return [
     latexForNode(carrier.inner) + '=' + latexForNode(value),
     latexForNode(carrier.inner) + '=' + latexForNode(negateNode(value)),
@@ -518,6 +531,14 @@ export function solveParameterizedCarrierEquation(
 
   const carrierValue = divideNodes(negateNode(normalized.affine.constant), normalized.affine.coefficient);
   const branchEquations = dedupe(branchEquationsForCarrier(carrier, carrierValue));
+  if (branchEquations.length === 0) {
+    return stop(
+      'branch-unsupported',
+      'No real solutions because absolute values are always nonnegative.',
+      target,
+      parameterNames,
+    );
+  }
   const branchFamilies: GeneratedBranchHandoffFamily[] = [
     {
       family: 'linear',

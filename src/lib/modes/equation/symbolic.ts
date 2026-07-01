@@ -396,13 +396,15 @@ export function solveSymbolicEquation(
     const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
       ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
       : parameterizedSourceLatex;
-    const specialFormRoots = solveParameterizedSpecialFormRootsEquation(
-      parameterizedEquationLatex,
-      targetResolution.selectedTarget,
-      parameterizedOptions,
-    );
+    const specialFormRoots = containsTargetedAbsLatex(parameterizedEquationLatex, targetResolution.selectedTarget)
+      ? undefined
+      : solveParameterizedSpecialFormRootsEquation(
+        parameterizedEquationLatex,
+        targetResolution.selectedTarget,
+        parameterizedOptions,
+      );
 
-    if (specialFormRoots.kind === 'success') {
+    if (specialFormRoots?.kind === 'success') {
       const outcome: DisplayOutcome = {
         kind: 'success',
         title: 'Solve',
@@ -604,7 +606,13 @@ export function solveSymbolicEquation(
     }
   }
 
-  if (activeAnswerMode === 'exact' && equationDomainIntent === 'real' && !numericInterval && solveTarget === 'x') {
+  if (
+    activeAnswerMode === 'exact'
+    && equationDomainIntent === 'real'
+    && !numericInterval
+    && solveTarget === 'x'
+    && !containsTargetedAbsLatex(planner.resolvedLatex, solveTarget)
+  ) {
     try {
       const carrierAttempt = solveBoundedPolynomialCarrierEquationAst(ce.parse(planner.resolvedLatex).json);
       if (carrierAttempt.kind === 'solved') {

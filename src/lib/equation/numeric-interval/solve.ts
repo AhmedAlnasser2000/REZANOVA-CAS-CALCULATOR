@@ -46,6 +46,11 @@ function isNearAny(value: number, pool: number[], tolerance = 1e-6) {
   return pool.some((candidate) => Math.abs(candidate - value) <= tolerance);
 }
 
+function acceptedRootClusterTolerance(start: number, end: number, subdivisions: number) {
+  const cellWidth = Math.abs(end - start) / Math.max(1, subdivisions);
+  return Math.max(1e-6, Math.min(2e-3, cellWidth / 16));
+}
+
 function isDensePeriodicCandidate(equationLatex: string) {
   return /\\(?:sin|cos|tan|ln|log)\b/.test(equationLatex);
 }
@@ -593,7 +598,10 @@ export function runNumericIntervalSolve(
     };
   }
 
-  const accepted = dedupeNumericRoots(validated.accepted);
+  const accepted = dedupeNumericRoots(
+    validated.accepted,
+    acceptedRootClusterTolerance(parsed.start, parsed.end, parsed.subdivisions),
+  );
   return {
     kind: 'success',
     roots: accepted,

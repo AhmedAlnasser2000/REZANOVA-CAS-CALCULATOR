@@ -1517,6 +1517,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex nonlinear numeric solving is a separate future track from Real ITP interval solving. It must not adapt one-dimensional real interval search directly; prerequisites include branch-cut policy, seed-grid or contour/argument-principle boundaries, duplicate and cluster handling, two-real-variable residual validation, and explicit confidence/completeness wording before visible Complex nonlinear roots are enabled.
 
+## 2026-07-01 - EQUATION-SOLVER-CONSISTENCY-HARNESS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation exact/fallback and explicit Numeric Interval routes must agree on validated roots inside a chosen interval. Numeric interval repeated-root candidates are clustered after original-equation validation so repeated factors display one representative root instead of duplicate nearby approximations.
+
 ## 2026-07-01 - WORKSPACE-APP-FRAME-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Workspace Tabs are app chrome, not calculator-shell chrome. The next tab layout milestone should lift `WorkspaceTabs` out of `.calculator-shell`; calculator-like workspaces may keep the calculator shell as their active renderer, while full Settings, full History/Records, Variables, Formula Viewer expansion, and future Graphing/Spreadsheet surfaces must be able to bypass it through an active surface host.

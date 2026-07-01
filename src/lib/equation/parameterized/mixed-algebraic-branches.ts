@@ -1,4 +1,5 @@
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
+import { exactScalarToNumber, readExactScalarNode } from '../../algebra/polynomial-core';
 import {
   type GeneratedBranchHandoffAttempt,
   type GeneratedBranchHandoffFamily,
@@ -102,6 +103,16 @@ function branchEquationsForCarrier(
       `${innerLatex}=-\\sqrt{${valueLatex}}`,
     ];
   }
+  const exactValue = readExactScalarNode(value);
+  if (exactValue) {
+    const numericValue = exactScalarToNumber(exactValue);
+    if (numericValue < 0) {
+      return [];
+    }
+    if (Math.abs(numericValue) <= 1e-12) {
+      return [`${innerLatex}=${valueLatex}`];
+    }
+  }
   return [
     `${innerLatex}=${valueLatex}`,
     `${innerLatex}=${helpers.latexForNode(helpers.negateNode(value))}`,
@@ -153,6 +164,13 @@ function solveSingleCarrierAffine(
 
   const value = helpers.divideNodes(helpers.negateNode(constant), coefficient);
   const branchEquations = branchEquationsForCarrier(carrier, value, helpers);
+  if (branchEquations.length === 0) {
+    return {
+      kind: 'unsupported',
+      reason: 'unsupported-branch',
+      message: 'No real solutions because absolute values are always nonnegative.',
+    };
+  }
   if (branchEquations.length > MAX_GENERATED_BRANCHES) {
     return {
       kind: 'unsupported',

@@ -132,6 +132,22 @@ describe('runNumericIntervalSolve', () => {
     expect(result.summaryText).toContain('Recovered');
   });
 
+  it('clusters repeated-root interval candidates to one representative root', () => {
+    const result = runNumericIntervalSolve('\\left(x-1\\right)^3\\left(x+2\\right)^2=0', {
+      start: '-5',
+      end: '5',
+      subdivisions: 256,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    expect(result.roots).toHaveLength(2);
+    expect(result.roots[0]).toBeCloseTo(-2, 6);
+    expect(result.roots[1]).toBeCloseTo(1, 3);
+  });
+
   it('rejects invalid intervals', () => {
     const result = runNumericIntervalSolve('x=0', {
       start: '1',
