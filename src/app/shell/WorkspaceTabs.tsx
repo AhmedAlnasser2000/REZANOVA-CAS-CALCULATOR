@@ -9,11 +9,17 @@ import type {
   WorkspaceInstanceId,
   WorkspaceKind,
 } from '../runtime/workspace-instances';
+import type {
+  WorkspaceSurfaceKind,
+  WorkspaceTabActionPolicy,
+} from '../runtime/workspace-surfaces';
 
 export type WorkspaceTabItem = {
   id: WorkspaceInstanceId;
   title: string;
   workspaceKind: WorkspaceKind;
+  surfaceKind: WorkspaceSurfaceKind;
+  actionPolicy: WorkspaceTabActionPolicy;
   compartmentLabel: string;
   isActive: boolean;
   activeJobCount: number;
@@ -143,6 +149,7 @@ export function WorkspaceTabs({
               key={tab.id}
               className={`workspace-tab ${tab.isActive ? 'is-active' : ''} ${tabIsBusy ? 'is-busy' : ''}`}
               data-testid="workspace-tab"
+              data-surface-kind={tab.surfaceKind}
               data-workspace-kind={tab.workspaceKind}
               onContextMenu={(event) => {
                 event.preventDefault();
@@ -229,43 +236,49 @@ export function WorkspaceTabs({
           <button type="button" role="menuitem" onClick={() => beginRename(openMenuTab)}>
             {tabText.rename}
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpenMenuTabId(null);
-              onDuplicateTab(openMenuTab.id);
-            }}
-          >
-            {tabText.duplicate}
-          </button>
+          {openMenuTab.actionPolicy.canDuplicate ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpenMenuTabId(null);
+                onDuplicateTab(openMenuTab.id);
+              }}
+            >
+              {tabText.duplicate}
+            </button>
+          ) : null}
           <button type="button" role="menuitem" onClick={() => requestClose(openMenuTab)}>
             {tabText.close}
           </button>
           <button type="button" role="menuitem" onClick={() => requestCloseOthers(openMenuTab)}>
             {tabText.closeOthers}
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setOpenMenuTabId(null);
-              onClearTabState(openMenuTab.id);
-            }}
-          >
-            {tabText.clearTabState}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            disabled={!isBusy(openMenuTab) || openMenuTab.stoppingTicketCount > 0}
-            onClick={() => {
-              setOpenMenuTabId(null);
-              onStopJobsInTab(openMenuTab.id);
-            }}
-          >
-            {tabText.stopJobsInThisTab}
-          </button>
+          {openMenuTab.actionPolicy.canClearState ? (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setOpenMenuTabId(null);
+                onClearTabState(openMenuTab.id);
+              }}
+            >
+              {tabText.clearTabState}
+            </button>
+          ) : null}
+          {openMenuTab.actionPolicy.canStopJobs ? (
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!isBusy(openMenuTab) || openMenuTab.stoppingTicketCount > 0}
+              onClick={() => {
+                setOpenMenuTabId(null);
+                onStopJobsInTab(openMenuTab.id);
+              }}
+            >
+              {tabText.stopJobsInThisTab}
+            </button>
+          ) : null}
         </div>
       ) : null}
 

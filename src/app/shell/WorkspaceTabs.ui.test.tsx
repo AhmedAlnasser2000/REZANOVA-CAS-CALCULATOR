@@ -11,17 +11,23 @@ import {
   vi,
 } from 'vitest';
 import { WorkspaceTabs, type WorkspaceTabItem } from './WorkspaceTabs';
+import {
+  CALCULATOR_WORKSPACE_TAB_ACTION_POLICY,
+  FORMULA_VIEWER_PAGE_TAB_ACTION_POLICY,
+} from '../runtime/workspace-surfaces';
 import '../../styles/app/shell.css';
 
 function tab(input: Partial<WorkspaceTabItem> & Pick<WorkspaceTabItem, 'id'>): WorkspaceTabItem {
   const { id, ...rest } = input;
   return {
     activeJobCount: 0,
+    actionPolicy: CALCULATOR_WORKSPACE_TAB_ACTION_POLICY,
     compartmentLabel: 'Calculate',
     id,
     isActive: false,
     pendingTicketCount: 0,
     stoppingTicketCount: 0,
+    surfaceKind: 'calculator',
     title: 'Calculate',
     workspaceKind: 'calculate',
     ...rest,
@@ -181,5 +187,29 @@ describe('WorkspaceTabs', () => {
     fireEvent.contextMenu(screen.getByTestId('workspace-tab'));
 
     expect(screen.getByTestId('workspace-tab-menu')).toHaveTextContent('Calculate');
+  });
+
+  it('protects Formula Viewer page tabs from duplicate, clear, and stop actions', () => {
+    renderTabs([
+      tab({
+        actionPolicy: FORMULA_VIEWER_PAGE_TAB_ACTION_POLICY,
+        compartmentLabel: 'Formula Viewer',
+        id: 'formula-viewer.2',
+        isActive: true,
+        surfaceKind: 'page',
+        title: 'Formula Viewer',
+        workspaceKind: 'formula-viewer',
+      }),
+    ]);
+
+    openMenu('Formula Viewer');
+
+    expect(screen.getByTestId('workspace-tab')).toHaveAttribute('data-surface-kind', 'page');
+    expect(screen.getByRole('menuitem', { name: 'Rename' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Close' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Close Others' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Duplicate' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Clear Tab State' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Stop Jobs in This Tab' })).not.toBeInTheDocument();
   });
 });

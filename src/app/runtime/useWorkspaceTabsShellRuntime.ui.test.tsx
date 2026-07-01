@@ -45,6 +45,7 @@ import type {
 } from './workspace-instances';
 import {
   buildFormulaViewerArtifact,
+  formulaViewerArtifactFromSurfaceState,
   type FormulaViewerArtifact,
 } from './formula-viewer-artifacts';
 import type { DisplayBlock } from '../../lib/display/result/display-blocks';
@@ -280,6 +281,33 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
     expect(hook.result.current.workspaceInstances.workspaceInstances
       .filter((instance) => instance.workspaceKind === 'formula-viewer'))
       .toHaveLength(2);
+  });
+
+  it('ignores protected Formula Viewer duplicate, clear, and stop tab actions', () => {
+    const { hook, setEditorRuntimeStatusOverride } = renderWorkspaceTabsShell();
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenFormulaViewerTab(
+        createFormulaViewerArtifact('one'),
+      );
+    });
+
+    const viewerId = hook.result.current.workspaceInstances.activeInstance?.id;
+    expect(viewerId).toBe('formula-viewer.2');
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onDuplicateTab(viewerId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onClearTabState(viewerId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onStopJobsInTab(viewerId ?? '');
+    });
+
+    expect(hook.result.current.workspaceInstances.workspaceInstances
+      .filter((instance) => instance.workspaceKind === 'formula-viewer'))
+      .toHaveLength(1);
+    expect(formulaViewerArtifactFromSurfaceState(
+      hook.result.current.workspaceInstances.activeInstance?.surfaceState,
+    )).not.toBeNull();
+    expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
   });
 
   it('does not cancel the origin tab job when focusing a different tab', () => {

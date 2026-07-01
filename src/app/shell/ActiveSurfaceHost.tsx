@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
 import type { WorkspaceInstance } from '../runtime/workspace-instances';
 import { formulaViewerArtifactFromSurfaceState } from '../runtime/formula-viewer-artifacts';
+import { resolveWorkspaceSurfaceDescriptor } from '../runtime/workspace-surfaces';
 import { FormulaViewerPage } from './FormulaViewerPage';
 
 type ActiveSurfaceHostProps = {
@@ -21,11 +22,14 @@ export function ActiveSurfaceHost({
   symbolicDisplayPrefs,
   workspaceInstances,
 }: ActiveSurfaceHostProps) {
+  const surfaceDescriptor = activeInstance
+    ? resolveWorkspaceSurfaceDescriptor(activeInstance.workspaceKind)
+    : null;
   const formulaViewerArtifact = formulaViewerArtifactFromSurfaceState(
     activeInstance?.surfaceState ?? null,
   );
 
-  if (!formulaViewerArtifact) {
+  if (surfaceDescriptor?.surfaceKind !== 'page' || !formulaViewerArtifact) {
     return (
       <section
         className="active-surface active-surface--calculator"

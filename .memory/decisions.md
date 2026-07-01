@@ -1519,3 +1519,7 @@
 ## 2026-07-01 - WORKSPACE-ACTIVE-SURFACE-HOST1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Active workspace rendering now goes through an explicit `ActiveSurfaceHost`. Calculator-like workspaces still render through `.calculator-shell`, while Formula Viewer renders as a page surface outside the calculator chassis without gaining an Order of Execution runtime context or changing `currentMode`.
+
+## 2026-07-01 - WORKSPACE-PAGE-SURFACE-MODEL1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Page surfaces are separate from calculator `ModeId` values. Formula Viewer is the only live page surface and uses a protected tab-action policy; future Settings and History are documented as singleton page surfaces, while future Graphing must arrive later as a canvas/page-class surface rather than a calculator-shell panel.

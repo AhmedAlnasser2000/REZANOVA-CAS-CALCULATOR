@@ -15,6 +15,11 @@ import {
   requestWorkspaceTabJobCancellation,
   summarizeWorkspaceTabJobs,
 } from './workspaceTabJobs';
+import {
+  resolveWorkspaceSurfaceDescriptor,
+  type WorkspaceSurfaceKind,
+  type WorkspaceTabActionPolicy,
+} from './workspace-surfaces';
 
 type WorkspaceInstancesRuntime = ReturnType<typeof useWorkspaceInstancesRuntime>;
 type WorkspaceDisplayStateHostRuntime = ReturnType<typeof useWorkspaceDisplayStateHostRuntime>;
@@ -25,6 +30,8 @@ type WorkspaceTabItem = {
   id: WorkspaceInstanceId;
   title: string;
   workspaceKind: WorkspaceKind;
+  surfaceKind: WorkspaceSurfaceKind;
+  actionPolicy: WorkspaceTabActionPolicy;
   compartmentLabel: string;
   isActive: boolean;
   activeJobCount: number;
@@ -100,10 +107,13 @@ export function useWorkspaceTabsRuntime({
         pendingTicketCount: 0,
         stoppingTicketCount: 0,
       };
+      const surfaceDescriptor = resolveWorkspaceSurfaceDescriptor(instance.workspaceKind);
       return {
+        actionPolicy: surfaceDescriptor.tabActionPolicy,
         id: instance.id,
         title: instance.title,
         workspaceKind: instance.workspaceKind,
+        surfaceKind: surfaceDescriptor.surfaceKind,
         compartmentLabel: instance.compartmentLabel,
         isActive: instance.id === workspaceInstances.activeInstanceId,
         activeJobCount: summary.activeJobCount,
@@ -145,6 +155,9 @@ export function useWorkspaceTabsRuntime({
   const duplicateTab = useCallback((instanceId: WorkspaceInstanceId) => {
     const source = workspaceInstances.workspaceInstances.find((instance) => instance.id === instanceId);
     if (!source || (source.workspaceKind === 'labs' && !labsEnabled)) {
+      return;
+    }
+    if (!resolveWorkspaceSurfaceDescriptor(source.workspaceKind).tabActionPolicy.canDuplicate) {
       return;
     }
 
@@ -236,6 +249,11 @@ export function useWorkspaceTabsRuntime({
   ]);
 
   const clearTabState = useCallback((instanceId: WorkspaceInstanceId) => {
+    const target = workspaceInstances.workspaceInstances.find((instance) => instance.id === instanceId);
+    if (!target || !resolveWorkspaceSurfaceDescriptor(target.workspaceKind).tabActionPolicy.canClearState) {
+      return;
+    }
+
     if (instanceId === workspaceInstances.activeInstanceId) {
       workspaceStateHost.restoreActiveSurfaceState(null);
       workspaceDisplayHost.restoreActiveDisplayState(null);
@@ -245,6 +263,11 @@ export function useWorkspaceTabsRuntime({
   }, [workspaceDisplayHost, workspaceInstances, workspaceRuntimeHost, workspaceStateHost]);
 
   const stopTabJobs = useCallback((instanceId: WorkspaceInstanceId) => {
+    const target = workspaceInstances.workspaceInstances.find((instance) => instance.id === instanceId);
+    if (!target || !resolveWorkspaceSurfaceDescriptor(target.workspaceKind).tabActionPolicy.canStopJobs) {
+      return;
+    }
+
     const cancelled = cancelTabJobs(instanceId, 'Workspace tab Stop requested.');
     if (cancelled > 0) {
       markPendingHistoryTicketsForWorkspaceInstanceAsStopping(instanceId);
@@ -257,6 +280,7 @@ export function useWorkspaceTabsRuntime({
     markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
     setEditorRuntimeStatusOverride,
     workspaceInstances.activeInstanceId,
+    workspaceInstances.workspaceInstances,
   ]);
 
   const openFormulaViewerTab = useCallback((artifact: FormulaViewerArtifact) => {
