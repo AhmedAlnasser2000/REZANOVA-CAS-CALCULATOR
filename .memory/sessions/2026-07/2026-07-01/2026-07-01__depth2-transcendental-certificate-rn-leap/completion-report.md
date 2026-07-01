@@ -21,3 +21,10 @@
 ## Memory Notes
 
 - `.memory/current-state.md` had active unstaged Surface-lane edits before this milestone. This gate records completion in the session dossier and journal while intentionally not staging that other-lane current-state hunk.
+
+## Milestone 2 - SPECIAL-FUNCTION-SI-CI-SUBSTRATE1
+
+- Added behavior-invisible `Si` and `Ci` support to the direct symbolic differentiator and derivative preflight allowlist.
+- Certificate proof-local differentiation now accepts `Si`/`Ci` without Compute Engine fallback.
+- The exact rules are `d Si(u)/dx = sin(u)u'/u` and `d Ci(u)/dx = cos(u)u'/u`.
+- Integration adoption remains deferred to the next milestone.

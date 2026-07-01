@@ -43,6 +43,10 @@ const FUNCTION_POWER_HEADS = new Set([
   'erf',
   'Erfi',
   'erfi',
+  'Si',
+  'si',
+  'Ci',
+  'ci',
 ]);
 
 type DifferentiationContext = {
@@ -469,6 +473,28 @@ function differentiateNodeInternal(
       'Multiply',
       ['Divide', 2, ['Sqrt', 'Pi']],
       ['Power', 'ExponentialE', ['Power', children[0], 2]],
+      childPrime,
+    ]);
+  }
+
+  if ((head === 'Si' || head === 'si') && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Multiply',
+      ['Divide', ['Sin', children[0]], children[0]],
+      childPrime,
+    ]);
+  }
+
+  if ((head === 'Ci' || head === 'ci') && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Multiply',
+      ['Divide', ['Cos', children[0]], children[0]],
       childPrime,
     ]);
   }

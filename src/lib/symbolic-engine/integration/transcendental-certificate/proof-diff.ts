@@ -45,10 +45,6 @@ const SPECIAL_FUNCTION_HEADS = new Set([
   'Erfc',
   'Ei',
   'ei',
-  'Si',
-  'si',
-  'Ci',
-  'ci',
   'FresnelS',
   'FresnelC',
 ]);

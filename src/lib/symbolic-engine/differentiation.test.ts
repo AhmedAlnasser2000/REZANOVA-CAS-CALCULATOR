@@ -39,6 +39,22 @@ describe('symbolic-engine differentiation', () => {
     expect(JSON.stringify(internalErf.ast)).toContain('ExponentialE')
   })
 
+  it('supports exact Si and Ci special-function derivatives', () => {
+    const si = differentiateLatexWithMetadata('\\operatorname{Si}(2x+1)', 'x')
+    const ci = differentiateLatexWithMetadata('\\operatorname{Ci}(2x+1)', 'x')
+    const internalSi = differentiateAstWithMetadata(['Si', 'x'], 'x', { computeEngineFallback: 'deny' })
+    const internalCi = differentiateAstWithMetadata(['Ci', 'x'], 'x', { computeEngineFallback: 'deny' })
+
+    expect(si.strategies).not.toContain('compute-engine')
+    expect(si.latex).toContain('\\sin(2x+1)')
+    expect(si.latex).toContain('2x+1')
+    expect(ci.strategies).not.toContain('compute-engine')
+    expect(ci.latex).toContain('\\cos(2x+1)')
+    expect(ci.latex).toContain('2x+1')
+    expect(JSON.stringify(internalSi.ast)).toContain('"Sin"')
+    expect(JSON.stringify(internalCi.ast)).toContain('"Cos"')
+  })
+
   it('supports direct trig reciprocal derivative families', () => {
     expect(differentiateLatex('\\tan(2x+1)', 'x')).toContain('\\sec')
     expect(differentiateLatex('\\cot(2x+1)', 'x')).toContain('\\csc')
