@@ -59,8 +59,11 @@ export function useSideSurfaceRuntime({
   const leftInspectorOutboardOpen =
     leftInspectorSurface !== 'none' && leftInspectorPresentation === 'outboard';
 
-  const calculatorShellStyle = {
+  const appFrameStyle = {
     '--ui-scale': `${uiScale / 100}`,
+  } as CSSProperties;
+
+  const calculatorShellStyle = {
     '--math-scale': `${mathScale / 100}`,
     '--result-scale': `${resultScale / 100}`,
   } as CSSProperties;
@@ -202,6 +205,7 @@ export function useSideSurfaceRuntime({
   }
 
   return {
+    appFrameStyle,
     calculatorShellStyle,
     closeHistoryPanel,
     closeLeftInspector,

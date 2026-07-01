@@ -1511,3 +1511,7 @@
 ## 2026-07-01 - WORKSPACE-APP-FRAME-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Workspace Tabs are app chrome, not calculator-shell chrome. The next tab layout milestone should lift `WorkspaceTabs` out of `.calculator-shell`; calculator-like workspaces may keep the calculator shell as their active renderer, while full Settings, full History/Records, Variables, Formula Viewer expansion, and future Graphing/Spreadsheet surfaces must be able to bypass it through an active surface host.
+
+## 2026-07-01 - WORKSPACE-TABS-APP-CHROME1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Workspace Tabs now render as full-stage app chrome above `.calculator-shell`, not inside it. The shared app-frame owns UI scaling for both tabs and calculator body, while `.calculator-shell` keeps the side-surface geometry ref and remains the renderer for calculator-like workspaces.

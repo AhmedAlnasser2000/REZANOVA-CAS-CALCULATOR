@@ -338,6 +338,7 @@ export default function App() {
   const resetTrigonometryRuntimeRef = useRef<() => void>(() => {});
 
   const {
+    appFrameStyle,
     calculatorShellStyle,
     closeHistoryPanel,
     closeLeftInspector,
@@ -2785,12 +2786,17 @@ export default function App() {
         ref={appStageRef}
       >
       <div
+        className="app-frame"
+        data-testid="app-frame"
+        style={appFrameStyle}
+      >
+        <WorkspaceTabs {...workspaceTabsRuntime} />
+      <div
         className={`calculator-shell${settings.highContrast ? ' is-high-contrast' : ''}`}
         data-testid="calculator-shell"
         ref={calculatorShellRef}
         style={calculatorShellStyle}
       >
-        <WorkspaceTabs {...workspaceTabsRuntime} />
         <FormulaViewerWorkspaceGate activeInstance={workspaceInstancesRuntime.activeInstance} onCopyResult={(latex) => void copyText(latex, 'Result copied')} onFocusTab={workspaceTabsRuntime.onFocusTab} symbolicDisplayPrefs={symbolicDisplayPrefs} workspaceInstances={workspaceInstancesRuntime.workspaceInstances}>
         <ModeStrip
           MODE_LABELS={MODE_LABELS}
@@ -3279,6 +3285,7 @@ export default function App() {
           onSelectLayer={selectKeypadLayer}
           onToggleLayerLock={toggleKeypadLayerLock}
         /></FormulaViewerWorkspaceGate>
+      </div>
       </div>
 
         <Suspense fallback={<LazySideSurfaceFallback />}>

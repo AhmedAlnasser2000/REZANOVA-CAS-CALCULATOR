@@ -58,6 +58,14 @@
   position: relative;
 }
 
+.app-frame {
+  width: 100%;
+  display: grid;
+  gap: 18px;
+  zoom: var(--ui-scale);
+  position: relative;
+}
+
 .calculator-shell {
   width: min(1480px, 100%);
   margin-inline: auto;
@@ -72,7 +80,6 @@
   gap: 18px;
   animation: shell-rise 500ms ease-out;
   position: relative;
-  zoom: var(--ui-scale);
 }
 
 .calculator-shell.is-high-contrast {
@@ -146,43 +153,111 @@ math-field:focus-visible {
 
 .workspace-tabs-shell {
   position: relative;
-  border-radius: 20px 20px 12px 12px;
-  background: rgba(9, 24, 25, 0.82);
-  border: 1px solid rgba(228, 236, 220, 0.12);
-  padding: 8px 10px;
-  min-height: 52px;
+  width: 100%;
+  border-radius: 28px 28px 18px 18px;
+  background:
+    linear-gradient(180deg, rgba(43, 58, 60, 0.94), rgba(10, 22, 23, 0.96)),
+    rgba(9, 24, 25, 0.9);
+  border: 1px solid rgba(228, 236, 220, 0.14);
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 12px 14px 0;
+  min-height: 72px;
+  overflow: visible;
+}
+
+.workspace-tabs-shell::before {
+  content: '';
+  position: absolute;
+  inset: 8px 10px auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(215, 223, 171, 0.34), transparent);
+  pointer-events: none;
+}
+
+.workspace-tabs-shell::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 12px;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, rgba(4, 14, 15, 0.72), rgba(4, 12, 13, 0.94));
+  border-top: 1px solid rgba(228, 236, 220, 0.08);
+  pointer-events: none;
 }
 
 .workspace-tabs-list {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-end;
+  gap: 8px;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: visible;
+  padding: 8px 4px 10px;
   scrollbar-width: thin;
+  position: relative;
+  z-index: 1;
 }
 
 .workspace-tab {
-  flex: 0 1 220px;
-  min-width: 132px;
-  max-width: 240px;
-  height: 36px;
+  flex: 0 1 230px;
+  min-width: 142px;
+  max-width: 260px;
+  height: 48px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 30px 28px;
+  grid-template-columns: minmax(0, 1fr) 34px 32px;
   align-items: stretch;
-  border: 1px solid rgba(228, 236, 220, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(228, 236, 220, 0.12);
+  border-bottom-color: rgba(0, 0, 0, 0.28);
+  border-radius: 20px 20px 10px 10px;
+  background:
+    linear-gradient(180deg, rgba(62, 76, 78, 0.66), rgba(22, 34, 36, 0.86)),
+    rgba(255, 255, 255, 0.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 24px rgba(0, 0, 0, 0.18);
   overflow: hidden;
+  position: relative;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
 }
 
 .workspace-tab.is-active {
-  background: rgba(201, 214, 164, 0.23);
-  border-color: rgba(201, 214, 164, 0.42);
+  height: 54px;
+  transform: translateY(2px);
+  border-color: rgba(215, 223, 171, 0.52);
+  background:
+    linear-gradient(180deg, rgba(77, 94, 75, 0.9), rgba(47, 62, 50, 0.96)),
+    rgba(201, 214, 164, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 16px 34px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(215, 223, 171, 0.08);
 }
 
 .workspace-tab.is-busy {
-  border-color: rgba(217, 192, 118, 0.48);
+  border-color: rgba(218, 188, 112, 0.58);
+}
+
+.workspace-tab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18px 14px, rgba(215, 223, 171, 0.2), transparent 28px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08), transparent 34%);
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+.workspace-tab.is-active::before {
+  opacity: 0.82;
 }
 
 .workspace-tab-main,
@@ -196,14 +271,16 @@ math-field:focus-visible {
   color: var(--control-text);
   background: transparent;
   cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
 .workspace-tab-main {
   min-width: 0;
   display: grid;
   align-content: center;
-  gap: 1px;
-  padding: 5px 8px;
+  gap: 2px;
+  padding: 7px 10px 7px 12px;
   text-align: left;
 }
 
@@ -217,11 +294,12 @@ math-field:focus-visible {
 
 .workspace-tab-title {
   font-weight: 700;
+  font-size: 0.94rem;
 }
 
 .workspace-tab-meta {
-  color: rgba(244, 248, 232, 0.62);
-  font-size: 0.76rem;
+  color: rgba(244, 248, 232, 0.64);
+  font-size: 0.72rem;
 }
 
 .workspace-tab-menu-button,
@@ -229,7 +307,7 @@ math-field:focus-visible {
 .workspace-tab-add {
   display: grid;
   place-items: center;
-  border-left: 1px solid rgba(228, 236, 220, 0.08);
+  border-left: 1px solid rgba(228, 236, 220, 0.09);
   font-family: var(--font-mono);
 }
 
@@ -240,11 +318,16 @@ math-field:focus-visible {
 }
 
 .workspace-tab-add {
-  flex: 0 0 38px;
-  height: 36px;
-  border: 1px solid rgba(228, 236, 220, 0.14);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
+  flex: 0 0 48px;
+  height: 48px;
+  border: 1px solid rgba(228, 236, 220, 0.18);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
+    rgba(14, 27, 29, 0.86);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.18);
   font-size: 1.25rem;
 }
 
@@ -619,4 +702,31 @@ math-field:focus-visible {
   .app-shell {
       padding: 16px;
     }
+
+  .workspace-tabs-shell {
+    border-radius: 22px 22px 15px 15px;
+    min-height: 64px;
+    padding-inline: 10px;
+  }
+
+  .workspace-tabs-list {
+    gap: 6px;
+    padding-inline: 2px;
+  }
+
+  .workspace-tab {
+    flex-basis: 190px;
+    min-width: 126px;
+    height: 44px;
+    grid-template-columns: minmax(0, 1fr) 30px 28px;
+  }
+
+  .workspace-tab.is-active {
+    height: 50px;
+  }
+
+  .workspace-tab-add {
+    flex-basis: 44px;
+    height: 44px;
+  }
 }

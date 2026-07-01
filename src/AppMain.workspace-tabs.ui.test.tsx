@@ -50,6 +50,19 @@ describe('AppMain workspace tabs', () => {
     vi.clearAllMocks();
   });
 
+  it('renders workspace tabs as app chrome outside the calculator shell', async () => {
+    await renderAppMain();
+
+    const appFrame = screen.getByTestId('app-frame');
+    const calculatorShell = screen.getByTestId('calculator-shell');
+    const tabList = screen.getByRole('tablist', { name: 'Open workspaces' });
+
+    expect(appFrame).toContainElement(tabList);
+    expect(appFrame).toContainElement(calculatorShell);
+    expect(calculatorShell).not.toContainElement(tabList);
+    expect(calculatorShell.querySelector('.mode-strip')).toBeTruthy();
+  });
+
   it('retargets the active workspace tab for normal mode selection', async () => {
     const { user } = await renderAppMain();
 
