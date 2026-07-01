@@ -179,6 +179,19 @@ describe('runNumericIntervalSolve', () => {
     expect(result.error).toContain('increase subdivisions for dense or nested periodic cases');
   });
 
+  it('records interval Newton pruning when derivative evidence excludes cells', () => {
+    const result = runNumericIntervalSolve('e^x+1=0', {
+      start: '0',
+      end: '1',
+      subdivisions: 64,
+    });
+
+    expect(result.kind).toBe('error');
+    expect(result.diagnostics.newtonPrunedCellCount).toBeGreaterThan(0);
+    const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    expect(details).toContain('interval-Newton pruned cell');
+  });
+
   it('explains rejected candidates as domain or validation evidence', () => {
     const result = runNumericIntervalSolve('x=1', {
       start: '0',

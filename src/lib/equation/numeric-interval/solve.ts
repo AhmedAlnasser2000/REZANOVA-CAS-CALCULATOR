@@ -18,6 +18,7 @@ import {
   type EquationNumericSegmentationPlan,
 } from '../numeric-domain-segmentation';
 import { numericSummary, parseInterval } from './interval';
+import { intervalNewtonPruneCell } from './newton-pruning';
 import { bisectRoot, finiteValue, localAbsMinimumCandidate, type NumericValueEvaluator } from './sampling';
 import { buildTrigNoRootGuidance } from './trig-guidance';
 import {
@@ -238,6 +239,7 @@ function buildAdaptiveGrid(
   const densePeriodic = isDensePeriodicCandidate(equationLatex);
   let adaptiveSampleCount = 0;
   let refinedCellCount = 0;
+  let newtonPrunedCellCount = 0;
   let discontinuityCellCount = 0;
 
   for (let index = 0; index < baseGrid.length - 1; index += 1) {
@@ -246,6 +248,19 @@ function buildAdaptiveGrid(
     const discontinuityLike = left.value === null || right.value === null;
     if (discontinuityLike) {
       discontinuityCellCount += 1;
+    }
+    if (!densePeriodic && left.value !== null && right.value !== null && left.value * right.value >= 0) {
+      const pruned = intervalNewtonPruneCell({
+        left: left.x,
+        right: right.x,
+        leftValue: left.value,
+        rightValue: right.value,
+        evaluator: (value) => finiteValue(zeroFormLatex, value, angleUnit, target, evaluator),
+      });
+      if (pruned.kind === 'pruned') {
+        newtonPrunedCellCount += 1;
+        continue;
+      }
     }
     if (!shouldRefineCell(left, right, densePeriodic)) {
       continue;
@@ -276,6 +291,7 @@ function buildAdaptiveGrid(
     grid,
     adaptiveSampleCount,
     refinedCellCount,
+    newtonPrunedCellCount,
     discontinuityCellCount,
   };
 }
@@ -376,7 +392,7 @@ function numericConditioningDetailSections(input: {
   const complexityLines = [
     `Segment complexity: ${boundaryCount} boundary probe${boundaryCount === 1 ? '' : 's'}, ${excludedCount} excluded boundary candidate${excludedCount === 1 ? '' : 's'}.`,
     `Interval arithmetic complexity: ${intervalSplitCount} split-required, ${intervalInvalidCount} invalid, ${intervalUnknownCount} unknown domain check${intervalSplitCount + intervalInvalidCount + intervalUnknownCount === 1 ? '' : 's'}.`,
-    `Adaptive complexity: ${input.diagnostics.refinedCellCount} refined cell${input.diagnostics.refinedCellCount === 1 ? '' : 's'}, ${input.diagnostics.adaptiveSampleCount} adaptive sample${input.diagnostics.adaptiveSampleCount === 1 ? '' : 's'}.`,
+    `Adaptive complexity: ${input.diagnostics.refinedCellCount} refined cell${input.diagnostics.refinedCellCount === 1 ? '' : 's'}, ${input.diagnostics.adaptiveSampleCount} adaptive sample${input.diagnostics.adaptiveSampleCount === 1 ? '' : 's'}, ${input.diagnostics.newtonPrunedCellCount} interval-Newton pruned cell${input.diagnostics.newtonPrunedCellCount === 1 ? '' : 's'}.`,
     `Discontinuity cells: ${input.diagnostics.discontinuityCellCount}.`,
   ];
   const needsGuidance =
@@ -385,6 +401,7 @@ function numericConditioningDetailSections(input: {
     || intervalSplitCount > 0
     || intervalInvalidCount > 0
     || input.diagnostics.discontinuityCellCount > 0
+    || input.diagnostics.newtonPrunedCellCount > 0
     || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
 
   if (
@@ -393,6 +410,7 @@ function numericConditioningDetailSections(input: {
     && intervalInvalidCount === 0
     && intervalUnknownCount === 0
     && input.diagnostics.refinedCellCount === 0
+    && input.diagnostics.newtonPrunedCellCount === 0
     && input.diagnostics.discontinuityCellCount === 0
   ) {
     return [];
@@ -446,6 +464,7 @@ export function runNumericIntervalSolve(
     grid,
     adaptiveSampleCount,
     refinedCellCount,
+    newtonPrunedCellCount,
     discontinuityCellCount,
   } = buildAdaptiveGrid(
     zeroFormLatex,
@@ -490,6 +509,7 @@ export function runNumericIntervalSolve(
     localMinSeedCount: localMinSeeds.length,
     adaptiveSampleCount,
     refinedCellCount,
+    newtonPrunedCellCount,
     discontinuityCellCount,
     recoveredCandidateCount,
   };

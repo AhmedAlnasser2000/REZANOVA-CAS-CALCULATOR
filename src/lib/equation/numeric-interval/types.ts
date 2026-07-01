@@ -22,6 +22,7 @@ export type NumericDiagnostics = {
   localMinSeedCount: number;
   adaptiveSampleCount: number;
   refinedCellCount: number;
+  newtonPrunedCellCount: number;
   discontinuityCellCount: number;
   recoveredCandidateCount: number;
 };
@@ -73,6 +74,7 @@ export const EMPTY_NUMERIC_DIAGNOSTICS: NumericDiagnostics = {
   localMinSeedCount: 0,
   adaptiveSampleCount: 0,
   refinedCellCount: 0,
+  newtonPrunedCellCount: 0,
   discontinuityCellCount: 0,
   recoveredCandidateCount: 0,
 };

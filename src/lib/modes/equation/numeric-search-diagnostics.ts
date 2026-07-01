@@ -142,6 +142,8 @@ export function buildSearchDiagnosticsSection(input: {
     total + window.diagnostics.adaptiveSampleCount, 0);
   const totalRefinedCells = input.windows.reduce((total, window) =>
     total + window.diagnostics.refinedCellCount, 0);
+  const totalNewtonPrunedCells = input.windows.reduce((total, window) =>
+    total + window.diagnostics.newtonPrunedCellCount, 0);
   const totalDiscontinuityCells = input.windows.reduce((total, window) =>
     total + window.diagnostics.discontinuityCellCount, 0);
   const lines = [
@@ -150,13 +152,13 @@ export function buildSearchDiagnosticsSection(input: {
       ? 'Stopped after a wider window added no new validated roots or unique extraneous values.'
       : 'Used all configured bounded search windows.',
     `Search passes produced ${totalAccepted} accepted root attempt${totalAccepted === 1 ? '' : 's'} and ${totalRejected} extraneous candidate attempt${totalRejected === 1 ? '' : 's'}.`,
-    `Search complexity: ${totalRefinedCells} refined cell${totalRefinedCells === 1 ? '' : 's'}, ${totalAdaptiveSamples} adaptive sample${totalAdaptiveSamples === 1 ? '' : 's'}, ${totalDiscontinuityCells} discontinuity cell${totalDiscontinuityCells === 1 ? '' : 's'}.`,
+    `Search complexity: ${totalRefinedCells} refined cell${totalRefinedCells === 1 ? '' : 's'}, ${totalAdaptiveSamples} adaptive sample${totalAdaptiveSamples === 1 ? '' : 's'}, ${totalNewtonPrunedCells} interval-Newton pruned cell${totalNewtonPrunedCells === 1 ? '' : 's'}, ${totalDiscontinuityCells} discontinuity cell${totalDiscontinuityCells === 1 ? '' : 's'}.`,
     ...(totalDiscontinuityCells > 0
       ? ['Higher precision or a narrower interval is recommended if nearby discontinuities or clustered candidates affect the result.']
       : []),
     ...input.windows.map((window) => {
       const rejectedCount = rejectedCandidates(window.rejectedCandidates).length;
-      return `Window ${window.label}: accepted ${window.roots.length}, extraneous ${rejectedCount}, adaptive samples ${window.diagnostics.adaptiveSampleCount}, discontinuity cells ${window.diagnostics.discontinuityCellCount}.`;
+      return `Window ${window.label}: accepted ${window.roots.length}, extraneous ${rejectedCount}, adaptive samples ${window.diagnostics.adaptiveSampleCount}, interval-Newton pruned cells ${window.diagnostics.newtonPrunedCellCount}, discontinuity cells ${window.diagnostics.discontinuityCellCount}.`;
     }),
   ];
 

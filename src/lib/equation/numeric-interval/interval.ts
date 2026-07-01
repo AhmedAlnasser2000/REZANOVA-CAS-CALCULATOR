@@ -28,5 +28,5 @@ export function numericSummary(
   subdivisions: number,
   diagnostics: NumericDiagnostics,
 ) {
-  return `Numeric solve on [${interval.start}, ${interval.end}] with ${subdivisions} subdivisions (${NUMERIC_METHOD_LABEL}; sample hits: ${diagnostics.sampleHitCount}, sign brackets: ${diagnostics.signBracketCount}, local-min seeds: ${diagnostics.localMinSeedCount}, adaptive samples: ${diagnostics.adaptiveSampleCount}, refined cells: ${diagnostics.refinedCellCount}, discontinuity cells: ${diagnostics.discontinuityCellCount}).`;
+  return `Numeric solve on [${interval.start}, ${interval.end}] with ${subdivisions} subdivisions (${NUMERIC_METHOD_LABEL}; sample hits: ${diagnostics.sampleHitCount}, sign brackets: ${diagnostics.signBracketCount}, local-min seeds: ${diagnostics.localMinSeedCount}, adaptive samples: ${diagnostics.adaptiveSampleCount}, refined cells: ${diagnostics.refinedCellCount}, interval-Newton pruned cells: ${diagnostics.newtonPrunedCellCount}, discontinuity cells: ${diagnostics.discontinuityCellCount}).`;
 }

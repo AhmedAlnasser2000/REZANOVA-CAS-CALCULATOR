@@ -69,3 +69,17 @@
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.
+
+## EQUATION-REAL-INTERVAL-NEWTON-PRUNING1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/equation/numeric-interval/newton-pruning.test.ts src/lib/equation/numeric-interval/sampling.test.ts src/lib/equation/numeric-interval/solve.test.ts`
+- Evidence: 3 test files passed, 34 tests passed.
+- Route regression unit gate passed:
+  - `npm run test:unit -- src/lib/equation/numeric-interval/newton-pruning.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts src/lib/modes/equation/numeric-golden-trace-harness.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
+- Evidence: 6 test files passed, 57 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.

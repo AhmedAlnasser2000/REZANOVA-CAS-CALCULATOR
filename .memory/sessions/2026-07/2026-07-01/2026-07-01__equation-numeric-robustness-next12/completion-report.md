@@ -17,10 +17,10 @@
 - `EQUATION-REAL-INTERVAL-ARITHMETIC-DOMAIN1`: added an internal real interval-arithmetic domain substrate and threaded its safe/invalid/split-required/unknown evidence into numeric segmentation details. Explicit Numeric Interval and bounded auto-search continue to use the existing segmentation route; symbolic-only cases are left on symbolic facts.
 - `EQUATION-NUMERIC-PRECISION-ESCALATION1`: promoted the decimal.js validation helper into an internal precision engine seam. Risk-triggered polynomial diagnostics now name the decimal.js backend, keep 80-digit residual checks, and report decimal root-polish evidence without adding MPFR/WASM or widening solve routes.
 - `EQUATION-REAL-PIECEWISE-ABS-HYBRID1`: added a real numeric piecewise fallback for contained `abs`/`min`/`max` carriers after exact symbolic routes miss. The route rewrites capped branches, solves generated polynomial/rational branch equations numerically, validates candidates against the original equation, and adds piecewise breakpoint evidence to Numeric Interval segmentation.
+- `EQUATION-REAL-INTERVAL-NEWTON-PRUNING1`: added conservative interval-Newton-style pruning evidence to the shared real interval/search substrate. Manual Numeric Interval and bounded auto-search now count finite derivative-safe cells pruned before adaptive refinement while keeping ITP as the final bracket refiner and local-minimum recovery for tangent roots.
 
 ## Pending Gates
 
-- `EQUATION-REAL-INTERVAL-NEWTON-PRUNING1`
 - `EQUATION-NUMERIC-CONFIDENCE-READBACK1`
 - `EQUATION-COMPLEX-BRANCH-CUT-POLICY1`
 - `EQUATION-COMPLEX-NUMERIC-EVALUATOR1`
