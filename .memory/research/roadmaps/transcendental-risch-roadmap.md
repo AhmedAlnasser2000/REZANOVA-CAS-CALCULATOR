@@ -206,6 +206,8 @@ Lift already live affine quotient special-function families:
 - Gate C: exact facts and singularity exclusions.
 - Gate D: controlled stops for over-cap powers and non-affine kernels.
 
+Status: implemented 2026-07-01 for bounded affine quotient powers. Calculus now returns certificate-backed `Si/Ci/Ei` recurrence answers for `sin(u)/u^n`, `cos(u)/u^n`, and `e^u/u^n` when `u` is affine and `2 <= n <= 6`, with affine-slope and `u\ne0` facts. Power-one base families remain owned by the earlier affine quotient builders; over-cap powers, non-affine kernels, decimals, and branch-sensitive carriers remain controlled stops.
+
 ## Post-Batch Checkpoint
 
 After the ten moves above, add a docs-only checkpoint such as `TRANSCENDENTAL-RISCH-CHECKPOINT0`.
@@ -224,7 +226,7 @@ After these moves, Calcwiz should be much stronger than the current practical ce
 
 - special-function input and derivative surfaces should be trustworthy
 - Fresnel-style quadratic trig answers should be live
-- quotient-power recurrences should reduce many engineering/asymptotic examples
+- quotient-power recurrences reduce many engineering/asymptotic examples through bounded `Si/Ci/Ei` recurrences
 - formal proof infrastructure should have real field/tower, RDE, reduced-equation, constant-field/fact, and Liouville pieces rather than family-only detectors
 - branch/fact readback should be strong enough that certificate rows do not look like ordinary input conditions
 

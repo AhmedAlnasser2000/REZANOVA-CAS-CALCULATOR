@@ -20,6 +20,7 @@ import {
   buildSiCiAffineQuotientSpecialFunctionCertificate,
 } from '../../symbolic-engine/integration/transcendental-certificate/special-functions';
 import { buildFresnelQuadraticSpecialFunctionCertificate } from '../../symbolic-engine/integration/transcendental-certificate/fresnel';
+import { buildQuotientPowerSpecialFunctionCertificate } from '../../symbolic-engine/integration/transcendental-certificate/quotient-powers';
 import { transcendentalCertificateToCalculusEvaluation } from './transcendental-certificate';
 import {
   antiderivativeTrustFacts,
@@ -192,6 +193,7 @@ function resolvedTranscendentalCertificate(
   const certificate =
     buildSiCiAffineQuotientSpecialFunctionCertificate(body, variable)
     ?? buildEiLiAffineSpecialFunctionCertificate(body, variable)
+    ?? buildQuotientPowerSpecialFunctionCertificate(body, variable)
     ?? buildDepth2ExpCompositionSpecialFunctionCertificate(body, variable)
     ?? buildFresnelQuadraticSpecialFunctionCertificate(body, variable);
   return certificate

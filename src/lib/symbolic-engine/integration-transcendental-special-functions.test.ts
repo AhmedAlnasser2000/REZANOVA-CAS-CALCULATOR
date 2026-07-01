@@ -8,6 +8,7 @@ import {
   buildSiCiAffineQuotientSpecialFunctionCertificate,
 } from './integration/transcendental-certificate/special-functions';
 import { buildFresnelQuadraticSpecialFunctionCertificate } from './integration/transcendental-certificate/fresnel';
+import { buildQuotientPowerSpecialFunctionCertificate } from './integration/transcendental-certificate/quotient-powers';
 
 const ce = new ComputeEngine();
 
@@ -51,6 +52,14 @@ function fresnelCertificate(latex: string, variable = 'x') {
   const result = buildFresnelQuadraticSpecialFunctionCertificate(ce.parse(latex).json, variable);
   if (!result) {
     throw new Error(`expected Fresnel special-function certificate for ${latex}`);
+  }
+  return result;
+}
+
+function quotientPowerCertificate(latex: string, variable = 'x') {
+  const result = buildQuotientPowerSpecialFunctionCertificate(ce.parse(latex).json, variable);
+  if (!result) {
+    throw new Error(`expected quotient-power special-function certificate for ${latex}`);
   }
   return result;
 }
@@ -168,6 +177,51 @@ describe('transcendental special-function readback for Ei/li quotient families',
     expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{li}\left(2x+1\right)`);
     expect(shifted.exactLatex).toContain('2x+1>1');
     expect(shifted.exactLatex).toContain('0<2x+1<1');
+  });
+});
+
+describe('transcendental special-function readback for affine quotient powers', () => {
+  it('returns recurrence formulas for sine and cosine quotient powers', () => {
+    const sineSquaredDenominator = quotientPowerCertificate('\\sin(x)/x^2');
+    const cosineSquaredDenominator = quotientPowerCertificate('\\cos(x)/x^2');
+    const affineScaled = quotientPowerCertificate('2\\sin(2x+1)/(2x+1)^2');
+
+    expect(sineSquaredDenominator.antiderivativeKind).toBe('special-function');
+    expect(sineSquaredDenominator.exactLatex).toContain('\\begin{cases}');
+    expect(sineSquaredDenominator.exactLatex).toContain(String.raw`\operatorname{Ci}\left(x\right)`);
+    expect(sineSquaredDenominator.exactLatex).toContain(String.raw`\operatorname{Ci}\left(-x\right)`);
+    expect(sineSquaredDenominator.exactLatex).toContain(String.raw`\frac{\sin\left(x\right)}{x}`);
+    expect(sineSquaredDenominator.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+    expect(sineSquaredDenominator.detailSections.map((section) => section.title)).toContain('Proof Obligations');
+
+    expect(cosineSquaredDenominator.exactLatex).toContain(String.raw`-\frac{\cos\left(x\right)}{x}`);
+    expect(cosineSquaredDenominator.exactLatex).toContain(String.raw`\operatorname{Si}\left(x\right)`);
+    expect(cosineSquaredDenominator.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+
+    expect(affineScaled.exactLatex).toContain(String.raw`\operatorname{Ci}\left(2x+1\right)`);
+    expect(affineScaled.exactLatex).toContain(String.raw`\frac{\sin\left(2x+1\right)}{\left(2x+1\right)}`);
+    expect(affineScaled.exactSupplementLatex?.join(' ')).toContain('2x+1\\ne0');
+  });
+
+  it('returns recurrence formulas for exponential quotient powers', () => {
+    const exponentialSquaredDenominator = quotientPowerCertificate('e^x/x^2');
+    const affineScaled = quotientPowerCertificate('e^{2x+1}/(2x+1)^3');
+
+    expect(exponentialSquaredDenominator.antiderivativeKind).toBe('special-function');
+    expect(exponentialSquaredDenominator.exactLatex).toContain('\\begin{cases}');
+    expect(exponentialSquaredDenominator.exactLatex).toContain(String.raw`\operatorname{Ei}\left(x\right)`);
+    expect(exponentialSquaredDenominator.exactLatex).toContain(String.raw`\frac{e^{x}}{x}`);
+    expect(exponentialSquaredDenominator.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+
+    expect(affineScaled.exactLatex).toContain(String.raw`\frac{1}{4}\cdot \operatorname{Ei}\left(2x+1\right)`);
+    expect(affineScaled.exactLatex).toContain(String.raw`\frac{e^{2x+1}}{4\left(2x+1\right)}`);
+    expect(affineScaled.exactLatex).toContain(String.raw`\frac{e^{2x+1}}{4\left(2x+1\right)^{2}}`);
+    expect(affineScaled.exactSupplementLatex?.join(' ')).toContain('2x+1\\ne0');
+  });
+
+  it('leaves over-cap and non-affine quotient powers unclaimed', () => {
+    expect(buildQuotientPowerSpecialFunctionCertificate(ce.parse('\\sin(x)/x^7').json)).toBeUndefined();
+    expect(buildQuotientPowerSpecialFunctionCertificate(ce.parse('\\sin(x^2)/(x^2)^2').json)).toBeUndefined();
   });
 });
 

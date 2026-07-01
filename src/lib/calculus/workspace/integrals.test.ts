@@ -281,6 +281,25 @@ describe('calculus integrals', () => {
     expect(shiftedLogarithmicIntegral.exactLatex).toContain('\\frac{1}{2}\\cdot \\operatorname{li}\\left(2x+1\\right)');
   });
 
+  it('renders recurrence-backed special-function answers for quotient powers', () => {
+    const sinePower = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '\\sin(x)/x^2',
+    });
+    expect(sinePower.error).toBeUndefined();
+    expect(sinePower.resultOrigin).toBe('rule-based-symbolic');
+    expect(sinePower.integrationStrategy).toBeUndefined();
+    expect(sinePower.exactLatex).toContain('\\operatorname{Ci}\\left(x\\right)');
+    expect(sinePower.exactLatex).toContain('\\frac{\\sin\\left(x\\right)}{x}');
+    expect(sinePower.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+
+    const exponentialPower = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'e^x/x^2',
+    });
+    expect(exponentialPower.error).toBeUndefined();
+    expect(exponentialPower.exactLatex).toContain('\\operatorname{Ei}\\left(x\\right)');
+    expect(exponentialPower.exactLatex).toContain('\\frac{e^{x}}{x}');
+  });
+
   it('canonicalizes typed symbolic quotient products before RN log-derivative routing', () => {
     const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'k*(2a*x+b)/(a*x^2+b*x+c)',

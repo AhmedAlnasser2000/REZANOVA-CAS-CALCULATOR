@@ -205,6 +205,35 @@ describe('calculus core', () => {
     expect(sine.detailSections?.map((section) => section.title)).toContain('Special-Function Readback');
   });
 
+  it('returns recurrence-backed special-function certificates for affine quotient powers', () => {
+    const sine = resolveIndefiniteIntegralFromAst({
+      body: parse('\\sin(x)/x^2').json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+    const exponential = resolveIndefiniteIntegralFromAst({
+      body: parse('e^x/x^2').json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+
+    expect(sine.error).toBeUndefined();
+    expect(sine.resultOrigin).toBe('rule-based-symbolic');
+    expect(sine.integrationStrategy).toBeUndefined();
+    expect(sine.exactLatex).toContain(String.raw`\operatorname{Ci}`);
+    expect(sine.exactLatex).toContain(String.raw`\frac{\sin\left(x\right)}{x}`);
+    expect(sine.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+
+    expect(exponential.error).toBeUndefined();
+    expect(exponential.exactLatex).toContain(String.raw`\operatorname{Ei}`);
+    expect(exponential.exactLatex).toContain(String.raw`\frac{e^{x}}{x}`);
+    expect(exponential.detailSections?.map((section) => section.title)).toContain('Proof Obligations');
+  });
+
   it('preserves the controlled relation-integrand error before fallback', () => {
     const body = parse('a x+b y=e');
 
