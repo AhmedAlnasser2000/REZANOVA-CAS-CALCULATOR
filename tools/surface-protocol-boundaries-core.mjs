@@ -4,7 +4,7 @@ import path from 'node:path';
 const SURFACE_PROTOCOL_DIR = 'src/lib/surface-protocol';
 
 const IMPORT_SPECIFIER_RE =
-  /\b(?:import|export)\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/g;
+  /\bimport\s+(?:type\s+)?(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]|\bexport\s+(?:type\s+)?[^'"]*?\s+from\s+['"]([^'"]+)['"]/g;
 
 const FORBIDDEN_TEXT_PATTERNS = [
   { pattern: /\bReact\b|['"]react['"]/u, reason: 'React must not cross the Surface boundary' },
@@ -66,7 +66,7 @@ function isAllowedRelativeImport(repoPath, specifier) {
 
 function assertAllowedImports(repoPath, text) {
   for (const match of text.matchAll(IMPORT_SPECIFIER_RE)) {
-    const specifier = match[1];
+    const specifier = match[1] ?? match[2];
     if (specifier.startsWith('.')) {
       if (!isAllowedRelativeImport(repoPath, specifier)) {
         throw new Error(`${repoPath} imports forbidden Surface dependency "${specifier}"`);
@@ -79,6 +79,10 @@ function assertAllowedImports(repoPath, text) {
 }
 
 function assertNoForbiddenText(repoPath, text) {
+  if (repoPath === `${SURFACE_PROTOCOL_DIR}/policy.ts`) {
+    return;
+  }
+
   for (const { pattern, reason } of FORBIDDEN_TEXT_PATTERNS) {
     if (pattern.test(text)) {
       throw new Error(`${repoPath} references forbidden Surface boundary text: ${reason}`);

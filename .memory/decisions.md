@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-POLICY-VOCAB-REGISTRY1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol field exposure and result-summary vocabulary classification now live as internal policy registries, not DTO response metadata. Current DTO fields are classified exactly once, blocked future/internal areas remain sensitive-gated or internal-forbidden, and existing fact/count vocabulary is cataloged without exposing richer facts, History, Variables, Graphing, mounting, host commands, plugins, remote compute, or external software development kit behavior.
+
 ## 2026-07-01 - SURFACE-CONFORMANCE-TESTS1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol has a dedicated conformance gate. `test:surface-protocol` must validate the production import boundary and runtime DTO serialization/no-leak behavior, and `test:gate` must include it before broader repo gates. The sanctioned Order of Execution dependency remains limited to the read-only event adapter; app-state schemas, React/DOM objects, Display block trees, solver objects, MathJSON trees, local paths, host commands, History payloads, Variables payloads, Graphing, mounting, plugins, remote compute, and external software development kit surfaces remain outside the boundary.

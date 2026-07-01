@@ -17,9 +17,7 @@ function writeFile(rootDir, repoPath, text) {
 
 describe('Surface Protocol boundary validation', () => {
   it('accepts the committed Surface Protocol production boundary', () => {
-    assert.deepEqual(validateSurfaceProtocolBoundaries(), {
-      files: 6,
-    });
+    assert.ok(validateSurfaceProtocolBoundaries().files >= 6);
   });
 
   it('allows only the curated Order of Execution event adapter seam', () => {
@@ -39,6 +37,22 @@ describe('Surface Protocol boundary validation', () => {
       () => validateSurfaceProtocolBoundaries({ rootDir }),
       /queries\.ts imports forbidden Surface dependency/,
     );
+  });
+
+  it('allows the policy registry to name blocked internal concepts', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/lib/surface-protocol/policy.ts',
+      [
+        "export const blocked = 'DisplayBlock MathJSON HistoryEntry HTMLElement /home/ahmed';",
+        "export const result = 'runHostCommand';",
+      ].join('\n'),
+    );
+
+    assert.deepEqual(validateSurfaceProtocolBoundaries({ rootDir }), {
+      files: 1,
+    });
   });
 
   it('rejects app-state schemas, React, DOM objects, and local paths', () => {

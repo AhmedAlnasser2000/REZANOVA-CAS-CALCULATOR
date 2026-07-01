@@ -34,6 +34,25 @@ export {
 } from './events';
 
 export {
+  SURFACE_BLOCKED_FIELD_IDS,
+  SURFACE_CURRENT_DTO_FIELD_IDS,
+  SURFACE_EXPOSURE_CLASSES,
+  SURFACE_FIELD_POLICIES,
+  SURFACE_RESULT_SUMMARY_COUNT_VOCABULARY_IDS,
+  SURFACE_RESULT_SUMMARY_FACT_VOCABULARY_IDS,
+  SURFACE_RESULT_SUMMARY_VOCABULARY,
+  getSurfaceFieldPolicy,
+  getSurfaceResultSummaryVocabularyEntry,
+  listSurfaceFieldPolicies,
+  listSurfaceResultSummaryVocabulary,
+  type SurfaceExposureClass,
+  type SurfaceFieldPolicyEntry,
+  type SurfacePolicyDisposition,
+  type SurfaceResultSummaryVocabularyEntry,
+  type SurfaceResultSummaryVocabularyKind,
+} from './policy';
+
+export {
   querySurfaceCurrentResult,
   querySurfaceSafeSettings,
   querySurfaceSnapshot,
