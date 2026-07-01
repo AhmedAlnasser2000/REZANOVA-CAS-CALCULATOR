@@ -419,6 +419,14 @@ Post-V1 audit record, 2026-06-18:
 - Full Settings is likely the safest first page implementation candidate after the page-surface model; History/Records should audit richer record concepts before introducing artifact families.
 - Graphing and Spreadsheet remain deferred to their own artifact, storage, replay, and history audits.
 
+App-frame audit record, 2026-07-01:
+
+- `WORKSPACE-APP-FRAME-AUDIT0` tightens the page-surface prerequisite: the current tab strip is mounted inside `.calculator-shell`, so visually every tab belongs to the calculator chassis.
+- The next implementation must lift `WorkspaceTabs` into app-level chrome before any full Settings, full History/Records, Variables manager, Formula Viewer expansion, Graphing, or Spreadsheet work.
+- The calculator shell should become one active surface renderer for calculator-like workspaces, not the owner of every tabbed surface.
+- The next safe sequence is `WORKSPACE-TABS-APP-CHROME1`, then `WORKSPACE-ACTIVE-SURFACE-HOST1`, then `WORKSPACE-PAGE-SURFACE-MODEL1`.
+- Graphing remains later and should be a full canvas/scene surface that can bypass the calculator shell entirely.
+
 ## Deferred Follow-Ups
 
 These are intentionally out of V1:
