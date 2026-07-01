@@ -45,6 +45,8 @@ Updated for `EQUATION-NUMERIC-POLYNOMIAL-ABERTH1` on 2026-07-01: the shared nume
 
 Updated for `EQUATION-NUMERIC-PRECISION-CONDITIONING1` on 2026-07-01: precision v1 is diagnostics/readback hardening only. Equation numeric results now expose coefficient scale, nearest-root separation, repeated/clustered signals, residual risk, search/segment complexity, and higher-precision or narrower-interval guidance where appropriate; arbitrary-precision runtime escalation remains deferred.
 
+Updated for `EQUATION-NUMERIC-GOLDEN-TRACE-HARNESS1` on 2026-07-01: Equation numeric route discipline now has a unit-level golden trace harness. It records route/method/root/residual/detail evidence plus soft timing and count guards for deterministic, rational, nonlinear, periodic interval, discontinuity-heavy, stored-value, and Complex-boundary fixtures without changing runtime behavior.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

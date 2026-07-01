@@ -56,6 +56,10 @@
 
 - [agent: codex | model: gpt-5-codex] Equation numeric precision v1 is diagnostics-only. Polynomial roots report coefficient scale, nearest-root separation, close/repeated-root signals, residuals, and higher-precision guidance when risk signals appear; interval/manual/auto-search reports search/segment complexity and narrower-interval or higher-precision guidance for discontinuity-heavy cases. Arbitrary-precision execution remains deferred.
 
+## 2026-07-01 - EQUATION-NUMERIC-GOLDEN-TRACE-HARNESS1
+
+- [agent: codex | model: gpt-5-codex] Equation numeric route changes now require a golden trace harness to protect route/method/root/residual/detail evidence with soft timing and count guards. The harness is unit-level and should remain stable enough for CI; hard per-fixture performance budgets remain deferred.
+
 ## 2026-06-30 - PUBLIC-IDENTITY-LOCK1
 
 - [agent: codex | model: gpt-5-codex] The primary current-facing public identity is `REZANOVA CLASSWIZ CALCULATOR`. `Calcwiz` and `Classwiz` are allowed as friendly aliases, but they must not replace the primary identity in release/GitHub positioning. Technical slugs such as `calcwiz-desktop`, `calcwiz_desktop`, and `com.ahmed.calcwizdesktop` stay unchanged for compatibility, and historical memory keeps old names as evidence rather than being rewritten.

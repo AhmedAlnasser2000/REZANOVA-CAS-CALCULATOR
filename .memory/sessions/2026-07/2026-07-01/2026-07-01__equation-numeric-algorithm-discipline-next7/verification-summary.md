@@ -1,0 +1,26 @@
+# Verification Summary
+
+## Attribution
+
+- primary_agent: codex
+- primary_agent_model: gpt-5-codex
+- contributors: []
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5-codex
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5-codex
+- attribution_basis: live
+
+## EQUATION-NUMERIC-GOLDEN-TRACE-HARNESS1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/numeric-golden-trace-harness.test.ts`
+- Evidence: 1 test file passed, 8 tests passed.
+- Regression unit gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/numeric-golden-trace-harness.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
+- Evidence: 5 test files passed, 33 tests passed.
+- `npm run lint` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo errors in `src/AppMain.tsx`, `src/app/logic/launcherWorkspaceActions.ts`, `src/app/runtime/useCalculateRuntime.ts`, and `src/lib/surface-protocol/*`.
+- `npm run test:file-sizes` is blocked by unrelated current repo file-size drift: `src/AppMain.tsx` has 3396 lines against cap 3357.
