@@ -56,6 +56,13 @@ export type EquationNumericSegmentationPlan = {
   excludedBoundaryCandidates: number[];
 };
 
+export type EquationNumericPeriodicIntervalSummary = {
+  operator: string;
+  carrierLatex: string;
+  targetPeriod: number;
+  intervalPeriodCount: number;
+};
+
 const ce = new ComputeEngine();
 const PERIODIC_OPERATORS = new Set(['Sin', 'Cos', 'Tan', 'Cot', 'Sec', 'Csc']);
 const SAMPLE_POINTS = [-10, -2, -1, 0, 1, 2, 3, 10];
@@ -649,6 +656,95 @@ function collectTrigPoleBoundaries(input: {
   for (const operand of operands) {
     collectTrigPoleBoundaries({ ...input, node: operand });
   }
+}
+
+function periodicCarrierBasePeriod(operator: string, angleUnit: 'rad' | 'deg' | 'grad') {
+  if (operator === 'Sin' || operator === 'Cos' || operator === 'Sec' || operator === 'Csc') {
+    if (angleUnit === 'deg') {
+      return 360;
+    }
+    if (angleUnit === 'grad') {
+      return 400;
+    }
+    return Math.PI * 2;
+  }
+  if (operator === 'Tan' || operator === 'Cot') {
+    if (angleUnit === 'deg') {
+      return 180;
+    }
+    if (angleUnit === 'grad') {
+      return 200;
+    }
+    return Math.PI;
+  }
+  return null;
+}
+
+function collectReliablePeriodicCarriers(input: {
+  node: unknown;
+  target: string;
+  angleUnit: 'rad' | 'deg' | 'grad';
+  start: number;
+  end: number;
+  summaries: EquationNumericPeriodicIntervalSummary[];
+}) {
+  if (!isArrayNode(input.node) || input.node.length === 0) {
+    return;
+  }
+
+  const [operator, ...operands] = input.node;
+  if (
+    typeof operator === 'string'
+    && PERIODIC_OPERATORS.has(operator)
+    && operands.length >= 1
+    && containsTarget(operands[0], input.target)
+  ) {
+    const model = affineNumericModel(operands[0], input.target);
+    const basePeriod = periodicCarrierBasePeriod(operator, input.angleUnit);
+    if (model && basePeriod !== null && Math.abs(model.coefficient) > 1e-12) {
+      const targetPeriod = Math.abs(basePeriod / model.coefficient);
+      const carrierLatex = nodeLatex(operands[0]) ?? input.target;
+      const duplicate = input.summaries.some((summary) =>
+        summary.operator === operator
+        && summary.carrierLatex === carrierLatex
+        && Math.abs(summary.targetPeriod - targetPeriod) <= BOUNDARY_DEDUPE_TOLERANCE);
+      if (!duplicate) {
+        input.summaries.push({
+          operator,
+          carrierLatex,
+          targetPeriod,
+          intervalPeriodCount: Math.abs(input.end - input.start) / targetPeriod,
+        });
+      }
+    }
+  }
+
+  for (const operand of operands) {
+    collectReliablePeriodicCarriers({ ...input, node: operand });
+  }
+}
+
+export function detectEquationNumericPeriodicIntervalSummaries(input: {
+  equationLatex: string;
+  target: string;
+  start: number;
+  end: number;
+  angleUnit: 'rad' | 'deg' | 'grad';
+}): EquationNumericPeriodicIntervalSummary[] {
+  const summaries: EquationNumericPeriodicIntervalSummary[] = [];
+  try {
+    collectReliablePeriodicCarriers({
+      node: ce.parse(input.equationLatex).json,
+      target: input.target,
+      angleUnit: input.angleUnit,
+      start: input.start,
+      end: input.end,
+      summaries,
+    });
+  } catch {
+    return [];
+  }
+  return summaries.sort((left, right) => left.targetPeriod - right.targetPeriod);
 }
 
 function uniqueSortedNumbers(values: readonly number[]) {

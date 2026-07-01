@@ -1471,3 +1471,7 @@
 ## 2026-07-01 - EQUATION-NUMERIC-SMOOTH-ACCELERATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] ITP remains the maintained real bracketed root-refinement kernel. Smooth Newton/secant acceleration is allowed only as a guarded in-bracket accelerator under that kernel, with unsafe probes falling back to ITP/bisection and local-minimum recovery.
+
+## 2026-07-01 - EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric Interval results may show reliable affine trig carrier period summaries as diagnostic interval evidence. These summaries do not claim global completeness or that the whole equation is periodic; all displayed roots remain local to the chosen interval and validated against the original equation.

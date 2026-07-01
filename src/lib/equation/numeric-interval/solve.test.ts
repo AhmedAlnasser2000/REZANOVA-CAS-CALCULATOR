@@ -91,6 +91,13 @@ describe('runNumericIntervalSolve', () => {
     expect(firstWindow.roots[0]).toBeLessThan(3.2);
     expect(secondWindow.roots[0]).toBeGreaterThan(6.2);
     expect(secondWindow.roots[0]).toBeLessThan(6.4);
+    const details = firstWindow.detailSections?.flatMap((section) => [
+      section.title,
+      ...section.lines,
+    ]).join(' ') ?? '';
+    expect(details).toContain('Periodic Interval Summary');
+    expect(details).toContain('Sin(x) carrier repeats every about 6.283185');
+    expect(details).toContain('validated local root');
   });
 
   it('uses bounded refinement to stabilize dense nested periodic windows', () => {
@@ -256,6 +263,7 @@ describe('runNumericIntervalSolve', () => {
     const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
     expect(details).toContain('trig-pole');
     expect(details).toContain('1.570796');
+    expect(details).toContain('Tan(x) carrier repeats every about 3.141593');
   });
 
   it('adds unit-aware branch guidance for direct trig composition failures in degree mode', () => {

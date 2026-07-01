@@ -56,7 +56,9 @@ describe('Equation real periodic interval numeric fallback', () => {
     expect(result.solutionKind).toBe('approximate-numeric');
     expect(result.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
     expect(result.approxText).toContain('x ~= 0, 3.141593, 6.283185, 9.424778');
-    expect(collectOutcomeText(result)).toContain('Roots are local to this chosen interval; this is not a claim of all real roots.');
+    const text = collectOutcomeText(result);
+    expect(text).toContain('Roots are local to this chosen interval; this is not a claim of all real roots.');
+    expect(text).toContain('Sin(x) carrier repeats every about 6.283185');
   });
 
   it('records trig pole facts while enumerating tangent roots in a chosen interval', () => {
@@ -71,7 +73,9 @@ describe('Equation real periodic interval numeric fallback', () => {
     expect(result.approxText).toContain('0.785398');
     expect(result.approxText).toContain('3.926991');
     expect(result.approxText).toContain('7.068583');
-    expect(collectOutcomeText(result)).toContain('\\cos\\left(x\\right) \\ne0');
+    const text = collectOutcomeText(result);
+    expect(text).toContain('\\cos\\left(x\\right) \\ne0');
+    expect(text).toContain('Tan(x) carrier repeats every about 3.141593');
   });
 
   it('rejects discontinuity candidates in periodic quotient interval searches', () => {
@@ -88,6 +92,7 @@ describe('Equation real periodic interval numeric fallback', () => {
     const text = collectOutcomeText(result);
     expect(text).toContain('x \\ne0');
     expect(text).toContain('x\\ne 0');
+    expect(text).toContain('Sin(x) carrier repeats every about 6.283185');
   });
 
   it('keeps interval solving target-aware for non-x targets', () => {

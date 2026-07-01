@@ -14,6 +14,7 @@ import { formatApproxNumber } from '../../display/format';
 import { createLatexTargetEvaluator, equationToZeroFormLatex } from '../domain-guards';
 import {
   buildEquationNumericSegmentationPlan,
+  detectEquationNumericPeriodicIntervalSummaries,
   type EquationNumericSegmentationPlan,
 } from '../numeric-domain-segmentation';
 import { numericSummary, parseInterval } from './interval';
@@ -309,6 +310,40 @@ function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan
   }];
 }
 
+function numericPeriodicIntervalDetailSections(input: {
+  equationLatex: string;
+  target: string;
+  angleUnit: AngleUnit;
+  start: number;
+  end: number;
+  acceptedRootCount: number;
+}): DisplayDetailSection[] {
+  const summaries = detectEquationNumericPeriodicIntervalSummaries({
+    equationLatex: input.equationLatex,
+    target: input.target,
+    angleUnit: input.angleUnit,
+    start: input.start,
+    end: input.end,
+  });
+  if (summaries.length === 0) {
+    return [];
+  }
+
+  const visible = summaries.slice(0, 4);
+  return [{
+    title: 'Periodic Interval Summary',
+    lines: [
+      ...visible.map((summary) =>
+        `${summary.operator}(${summary.carrierLatex}) carrier repeats every about ${formatApproxNumber(summary.targetPeriod)} in ${input.target}; this interval spans about ${formatApproxNumber(summary.intervalPeriodCount)} carrier period(s).`),
+      ...(summaries.length > visible.length
+        ? [`${summaries.length - visible.length} additional periodic carrier summary item(s) omitted.`]
+        : []),
+      `Accepted ${input.acceptedRootCount} validated local root(s) in the chosen interval.`,
+      'Carrier periods guide interval sampling only; roots are still checked against the original equation.',
+    ],
+  }];
+}
+
 function numericConditioningDetailSections(input: {
   segmentation: EquationNumericSegmentationPlan;
   diagnostics: NumericDiagnostics;
@@ -456,6 +491,14 @@ export function runNumericIntervalSolve(
       rejectedCandidates: validated.rejected,
       detailSections: appendExtraneousSolutionsDetailSection(
         [
+          ...numericPeriodicIntervalDetailSections({
+            equationLatex,
+            target,
+            angleUnit,
+            start: parsed.start,
+            end: parsed.end,
+            acceptedRootCount: 0,
+          }),
           ...numericSegmentationDetailSections(segmentation),
           ...numericConditioningDetailSections({ segmentation, diagnostics }),
         ],
@@ -475,6 +518,14 @@ export function runNumericIntervalSolve(
     rejectedCandidates: validated.rejected,
     detailSections: appendExtraneousSolutionsDetailSection(
       [
+        ...numericPeriodicIntervalDetailSections({
+          equationLatex,
+          target,
+          angleUnit,
+          start: parsed.start,
+          end: parsed.end,
+          acceptedRootCount: accepted.length,
+        }),
         ...numericSegmentationDetailSections(segmentation),
         ...numericConditioningDetailSections({ segmentation, diagnostics }),
       ],

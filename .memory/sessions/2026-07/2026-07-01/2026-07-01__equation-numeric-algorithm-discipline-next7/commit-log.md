@@ -27,3 +27,4 @@
 - `EQUATION-NUMERIC-DECIMAL-PRECISION-SUBSTRATE1`: committed in this checkpoint.
 - `EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1`: committed in this checkpoint.
 - `EQUATION-NUMERIC-SMOOTH-ACCELERATION1`: committed in this checkpoint.
+- `EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1`: committed in this checkpoint.

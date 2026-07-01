@@ -53,6 +53,8 @@ Updated for `EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1` on 2026-07-01: the 
 
 Updated for `EQUATION-NUMERIC-SMOOTH-ACCELERATION1` on 2026-07-01: guarded Newton/secant acceleration now runs inside the maintained ITP kernel seam for safe smooth brackets. ITP remains the bracket discipline and fallback backbone; unsafe derivative probes, out-of-bracket candidates, discontinuities, and tangent cases still rely on ITP/bisection/local-minimum recovery rather than route-local Newton machinery.
 
+Updated for `EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1` on 2026-07-01: periodic numeric interval results now include a `Periodic Interval Summary` when the solver can prove reliable affine trig carrier periods. The summary is diagnostic interval evidence only; it does not claim global completeness or whole-equation periodicity. Periodic/dense equations remain exact-family-first and explicit-interval-local, and regressions lock that they do not fall into fixed-window nonlinear enumeration.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose
