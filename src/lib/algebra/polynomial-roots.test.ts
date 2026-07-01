@@ -74,6 +74,7 @@ describe('solvePolynomialRoots', () => {
       '0.7071,0.7071',
     ]);
     expect(result.diagnostics.method).toBe('aberth-ehrlich');
+    expect(result.diagnostics.warningLines.join(' ')).not.toContain('Higher precision');
   });
 
   it('dedupes repeated numeric roots while recording the cluster signal', () => {
@@ -98,7 +99,22 @@ describe('solvePolynomialRoots', () => {
 
     expect(result.roots).toHaveLength(2);
     expect(result.diagnostics.clusteredRootCount).toBeGreaterThan(0);
+    expect(result.diagnostics.minimumRootSeparation).not.toBeNull();
+    expect(result.diagnostics.minimumRootSeparation ?? 1).toBeLessThan(1e-3);
     expect(result.diagnostics.warningLines.join(' ')).toContain('Repeated or tightly clustered');
+    expect(result.diagnostics.warningLines.join(' ')).toContain('Higher precision');
+  });
+
+  it('reports conditioning warnings for badly scaled coefficients', () => {
+    const result = solvePolynomialRoots({ coefficients: [1e15, 0, -1] });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success result');
+    }
+
+    expect(result.diagnostics.coefficientScaleRatio).toBeGreaterThan(1e12);
+    expect(result.diagnostics.warningLines.join(' ')).toContain('Large coefficient scale ratio');
+    expect(result.diagnostics.warningLines.join(' ')).toContain('Higher precision');
   });
 
   it('rejects a zero leading coefficient', () => {

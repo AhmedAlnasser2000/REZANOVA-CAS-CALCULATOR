@@ -43,6 +43,8 @@ Updated for `EQUATION-NUMERIC-SEGMENTATION-HARDEN1` on 2026-07-01: the domain se
 
 Updated for `EQUATION-NUMERIC-POLYNOMIAL-ABERTH1` on 2026-07-01: the shared numeric polynomial helper now uses Aberth-Ehrlich for degree-3+ roots while preserving direct linear/quadratic paths, degree cap 64, real-output filtering for Equation fallback, denominator validation, and deferred visible Complex numeric Equation output.
 
+Updated for `EQUATION-NUMERIC-PRECISION-CONDITIONING1` on 2026-07-01: precision v1 is diagnostics/readback hardening only. Equation numeric results now expose coefficient scale, nearest-root separation, repeated/clustered signals, residual risk, search/segment complexity, and higher-precision or narrower-interval guidance where appropriate; arbitrary-precision runtime escalation remains deferred.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

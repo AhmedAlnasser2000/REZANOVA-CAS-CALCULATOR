@@ -56,6 +56,13 @@ function approximateText(target: string, roots: readonly number[]) {
     : `${target} ~= ${formatted.join(', ')}`;
 }
 
+function formatDiagnosticNumber(value: number) {
+  const magnitude = Math.abs(value);
+  return magnitude > 0 && (magnitude < 1e-4 || magnitude >= 1e6)
+    ? value.toExponential(2)
+    : formatApproxNumber(value);
+}
+
 function residualLines(zeroFormLatex: string, target: string, roots: readonly number[]) {
   return roots.map((root) => {
     const evaluated = evaluateLatexAtTarget(zeroFormLatex, target, root);
@@ -105,9 +112,15 @@ function detailSectionsFor(input: {
         `Iterations: ${diagnostics.iterations}.`,
         `Largest polynomial residual after polishing: ${formatApproxNumber(diagnostics.maxResidual)}.`,
         `Coefficient scale ratio: ${diagnostics.coefficientScaleRatio.toExponential(2)}.`,
+        diagnostics.minimumRootSeparation === null
+          ? 'Nearest root separation: not applicable.'
+          : `Nearest root separation: ${formatDiagnosticNumber(diagnostics.minimumRootSeparation)}.`,
         `Roots before dedupe: ${diagnostics.rootCountBeforeDedupe}; after dedupe: ${diagnostics.rootCountAfterDedupe}.`,
         ...(diagnostics.clusteredRootCount > 0
           ? [`Clustered/repeated root signals: ${diagnostics.clusteredRootCount}.`]
+          : []),
+        ...(diagnostics.closeRootSeparationCount > 0
+          ? [`Close root-separation pairs: ${diagnostics.closeRootSeparationCount}.`]
           : []),
         ...diagnostics.warningLines,
       ],

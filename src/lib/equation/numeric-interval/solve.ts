@@ -309,6 +309,38 @@ function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan
   }];
 }
 
+function numericConditioningDetailSections(input: {
+  segmentation: EquationNumericSegmentationPlan;
+  diagnostics: NumericDiagnostics;
+}): DisplayDetailSection[] {
+  const boundaryCount = input.segmentation.boundaries.length;
+  const excludedCount = input.segmentation.excludedBoundaryCandidates.length;
+  const complexityLines = [
+    `Segment complexity: ${boundaryCount} boundary probe${boundaryCount === 1 ? '' : 's'}, ${excludedCount} excluded boundary candidate${excludedCount === 1 ? '' : 's'}.`,
+    `Adaptive complexity: ${input.diagnostics.refinedCellCount} refined cell${input.diagnostics.refinedCellCount === 1 ? '' : 's'}, ${input.diagnostics.adaptiveSampleCount} adaptive sample${input.diagnostics.adaptiveSampleCount === 1 ? '' : 's'}.`,
+    `Discontinuity cells: ${input.diagnostics.discontinuityCellCount}.`,
+  ];
+  const needsGuidance =
+    boundaryCount >= 4
+    || excludedCount > 0
+    || input.diagnostics.discontinuityCellCount > 0
+    || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
+
+  if (boundaryCount === 0 && input.diagnostics.refinedCellCount === 0 && input.diagnostics.discontinuityCellCount === 0) {
+    return [];
+  }
+
+  return [{
+    title: 'Numeric Conditioning',
+    lines: [
+      ...complexityLines,
+      ...(needsGuidance
+        ? ['Higher precision or a narrower interval is recommended if nearby discontinuities or clustered candidates affect the result.']
+        : []),
+    ],
+  }];
+}
+
 export function runNumericIntervalSolve(
   equationLatex: string,
   interval: NumericSolveInterval,
@@ -423,7 +455,10 @@ export function runNumericIntervalSolve(
       rejectedCandidateCount: validated.rejected.length,
       rejectedCandidates: validated.rejected,
       detailSections: appendExtraneousSolutionsDetailSection(
-        numericSegmentationDetailSections(segmentation),
+        [
+          ...numericSegmentationDetailSections(segmentation),
+          ...numericConditioningDetailSections({ segmentation, diagnostics }),
+        ],
         extraneousEvidenceFromRejectedCandidates(validated.rejected),
       ),
       summaryText: summary,
@@ -439,7 +474,10 @@ export function runNumericIntervalSolve(
     rejectedCandidateCount: validated.rejected.length,
     rejectedCandidates: validated.rejected,
     detailSections: appendExtraneousSolutionsDetailSection(
-      numericSegmentationDetailSections(segmentation),
+      [
+        ...numericSegmentationDetailSections(segmentation),
+        ...numericConditioningDetailSections({ segmentation, diagnostics }),
+      ],
       extraneousEvidenceFromRejectedCandidates(validated.rejected),
     ),
     summaryText: `${summary} Accepted ${accepted.length} root(s)${validated.rejected.length > 0 ? `, rejected ${validated.rejected.length}.` : '.'}${recoveredCandidateCount > 0 ? ` Recovered ${recoveredCandidateCount} non-bracket root(s).` : ''}`,

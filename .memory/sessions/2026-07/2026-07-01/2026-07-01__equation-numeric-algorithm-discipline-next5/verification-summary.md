@@ -33,6 +33,20 @@
 - `git diff --check` passed.
 - `npm run build` remains blocked by unrelated Surface Protocol work: `src/lib/surface-protocol/dto.test.ts` passes an `advisories` object that no longer matches `RuntimeAdvisories`.
 
+## EQUATION-NUMERIC-PRECISION-CONDITIONING1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/algebra/polynomial-roots.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
+- Evidence: 5 test files passed, 55 tests passed.
+- Regression unit gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/numeric-shape-classifier.test.ts src/lib/modes/equation/stored-values-targets.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts src/lib/equation/candidate/validation.test.ts src/lib/equation/numeric-interval/sampling.test.ts src/lib/equation/numeric-interval/solve.test.ts`
+- Evidence: 6 test files passed, 74 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` remains blocked by unrelated Surface Protocol work: `src/lib/surface-protocol/dto.test.ts` passes an `advisories` object that no longer matches `RuntimeAdvisories`.
+
 ## EQUATION-NUMERIC-SEGMENTATION-HARDEN1
 
 - Focused unit gate passed:

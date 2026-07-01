@@ -16,6 +16,7 @@ const CONVERGENCE_EPSILON = 1e-10;
 const RESIDUAL_EPSILON = 1e-9;
 const DEDUPE_EPSILON = 1e-4;
 const CLUSTER_WARNING_EPSILON = 1e-3;
+const CLOSE_SEPARATION_WARNING_EPSILON = 1e-3;
 const MAX_ITERATIONS = 500;
 const SEED_ANGLE_OFFSETS = [0.25, 0.43, 0.67, 0.91] as const;
 const MAX_DEGREE = 64;
@@ -30,9 +31,11 @@ export type PolynomialRootDiagnostics = {
   iterations: number;
   maxResidual: number;
   coefficientScaleRatio: number;
+  minimumRootSeparation: number | null;
   rootCountBeforeDedupe: number;
   rootCountAfterDedupe: number;
   clusteredRootCount: number;
+  closeRootSeparationCount: number;
   warningLines: string[];
 };
 
@@ -94,24 +97,30 @@ function polishRoots(coefficients: number[], roots: readonly ComplexValue[]) {
   return roots.map((root) => polishRoot(coefficients, root));
 }
 
-function rootClusterCount(roots: readonly ComplexValue[], tolerance: number) {
-  let clusters = 0;
-  const sorted = roots
-    .map((root) => normalizeComplex(root))
-    .sort((left, right) => {
-      const leftReal = Number(left.re.toFixed(6));
-      const rightReal = Number(right.re.toFixed(6));
-      if (leftReal !== rightReal) {
-        return leftReal - rightReal;
+function rootSeparationStats(roots: readonly ComplexValue[], tolerance: number) {
+  if (roots.length < 2) {
+    return {
+      minimum: null,
+      closePairCount: 0,
+    };
+  }
+
+  let minimum = Number.POSITIVE_INFINITY;
+  let closePairCount = 0;
+  for (let leftIndex = 0; leftIndex < roots.length - 1; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < roots.length; rightIndex += 1) {
+      const separation = complexAbs(complexSub(roots[leftIndex], roots[rightIndex]));
+      minimum = Math.min(minimum, separation);
+      if (separation <= tolerance) {
+        closePairCount += 1;
       }
-      return Number(left.im.toFixed(6)) - Number(right.im.toFixed(6));
-    });
-  for (let index = 1; index < sorted.length; index += 1) {
-    if (areComplexClose(sorted[index], sorted[index - 1], tolerance)) {
-      clusters += 1;
     }
   }
-  return clusters;
+
+  return {
+    minimum: Number.isFinite(minimum) ? minimum : null,
+    closePairCount,
+  };
 }
 
 function sortAndDedupeRoots(roots: ComplexValue[]) {
@@ -146,7 +155,9 @@ function diagnosticsFor(input: {
   const degree = input.coefficients.length - 1;
   const maxResidual = maxPolynomialResidual(input.coefficients, input.roots);
   const scaleRatio = coefficientScaleRatio(input.coefficients);
-  const clusteredRootCount = rootClusterCount(input.roots, CLUSTER_WARNING_EPSILON);
+  const separationStats = rootSeparationStats(input.roots, CLUSTER_WARNING_EPSILON);
+  const closeSeparationStats = rootSeparationStats(input.roots, CLOSE_SEPARATION_WARNING_EPSILON);
+  const clusteredRootCount = separationStats.closePairCount;
   const warningLines: string[] = [];
   if (clusteredRootCount > 0 || input.rootsBeforeDedupe > input.roots.length) {
     warningLines.push(
@@ -163,6 +174,11 @@ function diagnosticsFor(input: {
       `Largest polynomial residual after polishing is ${maxResidual.toExponential(2)}.`,
     );
   }
+  if (warningLines.length > 0) {
+    warningLines.push(
+      'Higher precision is recommended if these roots are used in a sensitive downstream calculation.',
+    );
+  }
 
   return {
     degree,
@@ -170,9 +186,11 @@ function diagnosticsFor(input: {
     iterations: input.iterations,
     maxResidual,
     coefficientScaleRatio: scaleRatio,
+    minimumRootSeparation: separationStats.minimum,
     rootCountBeforeDedupe: input.rootsBeforeDedupe,
     rootCountAfterDedupe: input.roots.length,
     clusteredRootCount,
+    closeRootSeparationCount: closeSeparationStats.closePairCount,
     warningLines,
   } satisfies PolynomialRootDiagnostics;
 }
