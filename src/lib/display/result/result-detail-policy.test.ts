@@ -145,4 +145,20 @@ describe('displayDetailSectionsForPolicy', () => {
       textPart('.'),
     ]);
   });
+
+  it('splits crowded solve notes at solver narrative boundaries', () => {
+    const [section] = displayDetailSectionsForPolicy([
+      {
+        title: 'Solve Note',
+        lines: [
+          'Composition branch: sin(ln(x)+1) stays in [-1, 1], so tan(sin(ln(x)+1))=1 reduces to sin(ln(x)+1)=\\frac{\\pi}{4}.; Periodic family: sin(ln(x)+1)=\\frac{\\pi}{4} yields x\\in\\left\\{e^{2\\pi k-1}\\right\\}.',
+        ],
+      },
+    ], { detailedFactsEnabled: false }) ?? [];
+
+    expect(section?.lines).toEqual([
+      'Composition branch: sin(ln(x)+1) stays in [-1, 1], so tan(sin(ln(x)+1))=1 reduces to sin(ln(x)+1)=\\frac{\\pi}{4}.',
+      'Periodic family: sin(ln(x)+1)=\\frac{\\pi}{4} yields x\\in\\left\\{e^{2\\pi k-1}\\right\\}.',
+    ]);
+  });
 });

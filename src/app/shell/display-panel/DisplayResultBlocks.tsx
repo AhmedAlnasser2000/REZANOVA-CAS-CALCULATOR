@@ -2,7 +2,7 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { MathStatic } from '../../../components/MathStatic';
 import { NotationText } from '../../../components/NotationText';
 import {
-  displayBlockCountSummary,
+  displayBlockSummaryText,
   type DisplayBlock,
   type DisplayBlockLine,
 } from '../../../lib/display/result/display-blocks';
@@ -741,7 +741,7 @@ function renderScheduledBlock(
         collapsible={block.collapsible}
         defaultCollapsed={block.defaultCollapsed}
         label={block.label}
-        summaryText={displayBlockCountSummary(block)?.text}
+        summaryText={displayBlockSummaryText(block)}
         testId="display-outcome-answer-block"
       >
         <div data-testid="display-outcome-exact">

@@ -249,6 +249,7 @@ describe('DisplayPanel result shell', () => {
           title: 'Symbolic',
           warnings: [],
           exactLatex,
+          resultOrigin: 'symbolic',
         }}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
@@ -264,7 +265,7 @@ describe('DisplayPanel result shell', () => {
       screen.getByTestId('display-outcome-exact-branch-0'),
       's=a+b',
     ));
-    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('5 roots');
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('Exact roots · 5 roots');
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact-branch-3'), /s=/);
     expect(screen.queryByTestId('display-outcome-exact-branch-4')).not.toBeInTheDocument();
 

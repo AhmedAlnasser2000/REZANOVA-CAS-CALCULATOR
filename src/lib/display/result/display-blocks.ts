@@ -16,6 +16,7 @@ import {
   extractFiniteBranchReadback,
   normalizeFiniteBranchReadback,
 } from './branch-readback';
+import { trustSummaryForDisplayOutcome } from './display-trust-summary';
 
 export type DisplayBlockKind =
   | 'answer'
@@ -73,6 +74,7 @@ export type DisplayBlock = {
   rawContent: string[];
   testId?: string;
   text?: string;
+  trustSummary?: string;
 };
 
 export type BuildDisplayBlocksOptions = {
@@ -190,6 +192,13 @@ export function displayBlockCountSummary(block: DisplayBlock): DisplayBlockCount
   }
 
   return undefined;
+}
+
+export function displayBlockSummaryText(block: DisplayBlock): string | undefined {
+  return [
+    block.trustSummary,
+    displayBlockCountSummary(block)?.text,
+  ].filter(Boolean).join(' · ') || undefined;
 }
 
 function caseMathSectionFromOutcome(outcome: DisplayOutcome) {
@@ -696,6 +705,7 @@ export function buildDisplayBlocks(
 
   const blocks: DisplayBlock[] = [];
   const primaryApproximateBlock = primaryApproximateAnswerBlock(outcome);
+  const trustSummary = trustSummaryForDisplayOutcome(outcome);
 
   if (outcome.kind === 'error') {
     blocks.push({
@@ -710,20 +720,29 @@ export function buildDisplayBlocks(
   }
 
   if (primaryApproximateBlock) {
-    blocks.push(primaryApproximateBlock);
+    blocks.push({
+      ...primaryApproximateBlock,
+      trustSummary,
+    });
   }
 
   for (const section of buildResultReadbackSections(outcome)) {
     if (section.kind === 'answer') {
       const caseMathBlock = caseMathAnswerBlockFromOutcome(outcome, section.latex, section.label);
       if (caseMathBlock) {
-        blocks.push(caseMathBlock);
+        blocks.push({
+          ...caseMathBlock,
+          trustSummary,
+        });
         continue;
       }
 
       const replayedCaseMathBlock = caseMathAnswerBlockFromLatex(section.latex, section.label);
       if (replayedCaseMathBlock) {
-        blocks.push(replayedCaseMathBlock);
+        blocks.push({
+          ...replayedCaseMathBlock,
+          trustSummary,
+        });
         continue;
       }
 
@@ -757,6 +776,7 @@ export function buildDisplayBlocks(
           })),
           rawContent: [section.latex],
           testId: 'display-outcome-answer-block',
+          trustSummary,
         });
         continue;
       }
@@ -771,6 +791,7 @@ export function buildDisplayBlocks(
         latex: section.latex,
         rawContent: [section.latex],
         testId: 'display-outcome-answer-block',
+        trustSummary,
       });
       continue;
     }

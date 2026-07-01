@@ -14,6 +14,7 @@ function caseMathBlock(): DisplayBlock {
     rawContent: [],
     renderKind: 'caseMath',
     text: 'z\\in',
+    trustSummary: 'Exact roots',
     lines: [
       {
         conditionLatex: String.raw`\Delta>0`,
@@ -82,6 +83,7 @@ describe('formula viewer artifacts', () => {
       sourceWorkspaceInstanceId: 'equation.1',
       sourceWorkspaceKind: 'equation',
       sourceWorkspaceTitle: 'Equation',
+      trustSummary: 'Exact roots',
     });
     expect(artifact.id).toBe(`formula-viewer.${artifact.resultSignature}`);
     expect(artifact.primaryBlock).toBe(answer);

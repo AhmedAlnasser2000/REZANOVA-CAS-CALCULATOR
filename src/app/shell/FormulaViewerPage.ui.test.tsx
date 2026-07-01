@@ -32,6 +32,7 @@ function caseBlock(id: string, kind: DisplayBlock['kind'], rows: DisplayBlockLin
     collapsible: kind === 'detail' || kind === 'answer',
     defaultCollapsed: kind === 'detail',
     testId: kind === 'detail' ? 'viewer-trig-detail' : 'viewer-answer',
+    trustSummary: kind === 'answer' ? 'Exact roots' : undefined,
   };
 }
 
@@ -78,6 +79,7 @@ function artifact(options: { primaryRows?: number; detailRows?: number; signatur
     },
     latexLength: 4000,
     createdAt: 1,
+    trustSummary: 'Exact roots',
   };
 }
 
@@ -168,7 +170,7 @@ describe('FormulaViewerPage virtualization', () => {
     fireEvent.click(screen.getByRole('button', { name: '200%' }));
     expect(page).toHaveClass('formula-viewer-page--math-200');
     expect(screen.queryByRole('button', { name: 'Inspect row' })).not.toBeInTheDocument();
-    expect(screen.getByText(/2 branch families · 60 guarded rows, 4,000 characters\./u))
+    expect(screen.getByText(/Exact roots · 2 branch families · 60 guarded rows, 4,000 characters\./u))
       .toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy Result' }));

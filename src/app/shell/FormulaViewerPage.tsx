@@ -38,6 +38,17 @@ function formulaViewerCountText(artifact: FormulaViewerArtifact) {
   return `${artifact.rowCount.toLocaleString()} guarded ${plural(artifact.rowCount, 'row')}`;
 }
 
+function formulaViewerMetaText(artifact: FormulaViewerArtifact) {
+  const resultShapeText = [
+    artifact.trustSummary,
+    formulaViewerCountText(artifact),
+  ].filter(Boolean).join(' · ');
+  return [
+    resultShapeText,
+    `${artifact.latexLength.toLocaleString()} characters`,
+  ].filter(Boolean).join(', ');
+}
+
 export function FormulaViewerPage({
   artifact,
   onBackToSource,
@@ -48,7 +59,7 @@ export function FormulaViewerPage({
   const [mathSize, setMathSize] = useState<FormulaViewerMathSize>(
     DEFAULT_FORMULA_VIEWER_MATH_SIZE,
   );
-  const countText = formulaViewerCountText(artifact);
+  const metaText = formulaViewerMetaText(artifact);
   const pageClassName = `formula-viewer-page formula-viewer-page--math-${mathSize}`;
 
   return (
@@ -59,7 +70,7 @@ export function FormulaViewerPage({
           <h1>{artifact.resultTitle}</h1>
           <NotationText
             className="formula-viewer-meta"
-            text={`${countText}, ${artifact.latexLength.toLocaleString()} characters.`}
+            text={`${metaText}.`}
           />
           {artifact.sourceWorkspaceTitle ? (
             <NotationText

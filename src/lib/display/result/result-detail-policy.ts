@@ -109,6 +109,25 @@ function cappedNumericDiagnosticSection(
   };
 }
 
+function splitReadableSolveNoteLine(line: string) {
+  return line
+    .split(/;\s+(?=(?:Composition branch|Periodic family|Parameterized family|Nested recursion|Exact reduced|Reduced carrier|Branch):)/u)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function readableSolveNoteSection(section: DisplayDetailSection): DisplayDetailSection {
+  const lines = section.lines.flatMap(splitReadableSolveNoteLine);
+  if (lines.length === section.lines.length) {
+    return cloneDisplayDetailSection(section);
+  }
+
+  return {
+    title: section.title,
+    lines,
+  };
+}
+
 export function displayDetailSectionsForPolicy(
   sections: readonly DisplayDetailSection[] | undefined,
   policy: ResultDetailPolicy,
@@ -121,12 +140,18 @@ export function displayDetailSectionsForPolicy(
     return sections.map((section) =>
       NUMERIC_DIAGNOSTIC_SECTION_TITLES.has(section.title)
         ? cappedNumericDiagnosticSection(section, policy)
+        : section.title === 'Solve Note'
+          ? readableSolveNoteSection(section)
         : cloneDisplayDetailSection(section));
   }
 
   const visibleSections = sections.flatMap((section) => {
     if (NUMERIC_DIAGNOSTIC_SECTION_TITLES.has(section.title)) {
       return cappedNumericDiagnosticSection(section, policy);
+    }
+
+    if (section.title === 'Solve Note') {
+      return readableSolveNoteSection(section);
     }
 
     if (section.title === 'Partial Fractions') {

@@ -38,6 +38,7 @@ export type FormulaViewerArtifact = {
   countSummary?: DisplayBlockCountSummary;
   latexLength: number;
   createdAt: number;
+  trustSummary?: string;
 };
 
 export type FormulaViewerSurfaceState = {
@@ -151,5 +152,6 @@ export function buildFormulaViewerArtifact({
     sourceWorkspaceInstanceId: source?.sourceWorkspaceInstanceId ?? null,
     sourceWorkspaceKind: source?.sourceWorkspaceKind ?? null,
     sourceWorkspaceTitle: source?.sourceWorkspaceTitle ?? null,
+    trustSummary: block.trustSummary,
   };
 }

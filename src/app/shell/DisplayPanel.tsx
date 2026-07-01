@@ -15,7 +15,7 @@ function DisplayPanel({
   activeResultCopyText,
   activeResultEditorLatex,
   calculusMainEditorActive,
-  calculusMainEditorLatex,
+  calculusMainEditorLatex = '',
   calculusMainEditorVariable,
   calculusKeyboardLayouts,
   calculusMenuFooterText,

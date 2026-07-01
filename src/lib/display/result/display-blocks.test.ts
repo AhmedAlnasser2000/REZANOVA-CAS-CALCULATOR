@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator';
-import { buildDisplayBlocks } from './display-blocks';
+import { buildDisplayBlocks, displayBlockSummaryText } from './display-blocks';
 
 describe('display block adapter', () => {
   it('builds answer, approx, valid-when, detail, and warning blocks', () => {
@@ -235,6 +235,103 @@ describe('display block adapter', () => {
       rootLabel: 'candidateRoots',
       text: '2 candidate roots',
     });
+  });
+
+  it('adds route-specific trust wording to answer summaries', () => {
+    const exact = buildDisplayBlocks({
+      kind: 'success',
+      title: 'Symbolic',
+      resultOrigin: 'symbolic',
+      exactLatex: 'x\\in\\left\\{-1,5\\right\\}',
+      warnings: [],
+    }).find((block) => block.id === 'answer');
+    expect(displayBlockSummaryText(exact!)).toBe('Exact roots · 2 roots');
+
+    const certified = buildDisplayBlocks({
+      kind: 'success',
+      title: 'Symbolic',
+      solutionKind: 'approximate-numeric',
+      resultOrigin: 'numeric-fallback',
+      approxText: 'x ≈ 1.300766',
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '\\approx',
+        branchesLatex: ['1.300766'],
+      },
+      detailSections: [{
+        title: 'Numeric Confidence',
+        lines: [
+          'All real polynomial roots certified.',
+          'Candidate roots validated against original equation.',
+        ],
+      }],
+      warnings: [],
+    }).find((block) => block.id === 'answer');
+    expect(displayBlockSummaryText(certified!)).toBe('Certified polynomial roots');
+
+    const interval = buildDisplayBlocks({
+      kind: 'success',
+      title: 'Symbolic',
+      solutionKind: 'approximate-numeric',
+      resultOrigin: 'numeric-fallback',
+      approxText: 'x ≈ 0, 3.141593',
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '\\approx',
+        branchesLatex: ['0', '3.141593'],
+      },
+      detailSections: [
+        {
+          title: 'Numeric Confidence',
+          lines: ['All roots in this interval.'],
+        },
+        {
+          title: 'Numeric Interval Scope',
+          lines: ['Searched real interval [0, 10] with 256 subdivisions.'],
+        },
+      ],
+      warnings: [],
+    }).find((block) => block.id === 'answer');
+    expect(displayBlockSummaryText(interval!)).toBe('Local numeric roots in [0, 10] · 2 roots');
+
+    const bounded = buildDisplayBlocks({
+      kind: 'success',
+      title: 'Symbolic',
+      solutionKind: 'approximate-numeric',
+      resultOrigin: 'numeric-fallback',
+      approxText: 'x ≈ 0.567143',
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '\\approx',
+        branchesLatex: ['0.567143'],
+      },
+      detailSections: [{
+        title: 'Numeric Confidence',
+        lines: ['Validated roots from bounded search.'],
+      }],
+      warnings: [],
+    }).find((block) => block.id === 'answer');
+    expect(displayBlockSummaryText(bounded!))
+      .toBe('Validated approximate roots from bounded search');
+
+    const complexRegion = buildDisplayBlocks({
+      kind: 'success',
+      title: 'Symbolic',
+      solutionKind: 'approximate-numeric',
+      resultOrigin: 'numeric-fallback',
+      approxText: 'z ≈ 0+0i',
+      branchReadback: {
+        targetLatex: 'z',
+        relationLatex: '\\approx',
+        branchesLatex: ['0+0i'],
+      },
+      detailSections: [{
+        title: 'Numeric Confidence',
+        lines: ['roots found in this complex region.'],
+      }],
+      warnings: [],
+    }).find((block) => block.id === 'answer');
+    expect(displayBlockSummaryText(complexRegion!)).toBe('Region-local complex roots');
   });
 
   it('renders compact Cardano exact roots as branch rows', () => {
