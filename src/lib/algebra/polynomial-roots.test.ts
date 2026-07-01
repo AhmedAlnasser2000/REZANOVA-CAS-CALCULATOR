@@ -107,6 +107,7 @@ describe('solvePolynomialRoots', () => {
     expect(result.diagnostics.warningLines.join(' ')).toContain('Repeated or tightly clustered');
     expect(result.diagnostics.warningLines.join(' ')).toContain('Higher precision');
     expect(result.diagnostics.decimalRevalidation.performed).toBe(true);
+    expect(result.diagnostics.decimalRevalidation.backend).toBe('decimal.js');
     expect(result.diagnostics.decimalRevalidation.triggeredBy).toEqual(expect.arrayContaining(['clustered-roots']));
   });
 
@@ -122,6 +123,8 @@ describe('solvePolynomialRoots', () => {
     expect(result.diagnostics.warningLines.join(' ')).toContain('Large coefficient scale ratio');
     expect(result.diagnostics.warningLines.join(' ')).toContain('Higher precision');
     expect(result.diagnostics.decimalRevalidation.performed).toBe(true);
+    expect(result.diagnostics.decimalRevalidation.backend).toBe('decimal.js');
+    expect(result.diagnostics.decimalRevalidation.rootsPolished).toBeGreaterThanOrEqual(0);
     expect(result.diagnostics.decimalRevalidation.triggeredBy).toContain('coefficient-scale');
   });
 

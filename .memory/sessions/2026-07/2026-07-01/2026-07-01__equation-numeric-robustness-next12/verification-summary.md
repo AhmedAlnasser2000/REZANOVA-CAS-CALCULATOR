@@ -38,3 +38,17 @@
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.
+
+## EQUATION-NUMERIC-PRECISION-ESCALATION1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/numeric/decimal-precision.test.ts src/lib/algebra/polynomial-roots.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts`
+- Evidence: 4 test files passed, 27 tests passed.
+- Regression unit gate passed:
+  - `npm run test:unit -- src/lib/numeric/decimal-precision.test.ts src/lib/algebra/polynomial-roots.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts src/lib/modes/equation/numeric-golden-trace-harness.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts`
+- Evidence: 8 test files passed, 55 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.

@@ -66,8 +66,10 @@ function decimalRevalidationLines(diagnostics: PolynomialRootDiagnostics) {
   }
 
   return [
-    `Decimal revalidation: checked ${revalidation.rootsChecked} root${revalidation.rootsChecked === 1 ? '' : 's'} at ${revalidation.precisionDigits} digits.`,
+    `Precision escalation backend: ${revalidation.backend}.`,
+    `Decimal precision escalation: checked ${revalidation.rootsChecked} root${revalidation.rootsChecked === 1 ? '' : 's'} at ${revalidation.precisionDigits} digits.`,
     `Decimal residual check: ${formatDiagnosticNumber(revalidation.maxResidual)}.`,
+    `Decimal root polish: ${revalidation.rootsPolished} supported root${revalidation.rootsPolished === 1 ? '' : 's'}; max shift ${formatDiagnosticNumber(revalidation.maxRootShift)}.`,
     `Precision risk triggers: ${revalidation.triggeredBy.join(', ')}.`,
   ];
 }

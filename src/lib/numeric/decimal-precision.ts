@@ -31,18 +31,30 @@ export type DecimalRevalidationInput = {
 export type DecimalRevalidationResult =
   | {
       performed: false;
+      backend: 'decimal.js';
       precisionDigits: number;
       triggeredBy: DecimalRevalidationTrigger[];
       rootsChecked: 0;
       maxResidual: null;
+      rootsPolished: 0;
+      maxRootShift: null;
     }
   | {
       performed: true;
+      backend: 'decimal.js';
       precisionDigits: number;
       triggeredBy: DecimalRevalidationTrigger[];
       rootsChecked: number;
       maxResidual: number;
+      rootsPolished: number;
+      maxRootShift: number;
     };
+
+export type PrecisionEngine = {
+  backend: 'decimal.js';
+  precisionDigits: number;
+  validatePolynomialRoots(input: DecimalRevalidationInput): DecimalRevalidationResult;
+};
 
 type DecimalComplexValue = {
   re: Decimal;
@@ -79,6 +91,13 @@ function decimalComplexAdd(left: DecimalComplexValue, right: DecimalComplexValue
   };
 }
 
+function decimalComplexSub(left: DecimalComplexValue, right: DecimalComplexValue) {
+  return {
+    re: left.re.minus(right.re),
+    im: left.im.minus(right.im),
+  };
+}
+
 function decimalComplexMul(left: DecimalComplexValue, right: DecimalComplexValue) {
   return {
     re: left.re.times(right.re).minus(left.im.times(right.im)),
@@ -86,8 +105,25 @@ function decimalComplexMul(left: DecimalComplexValue, right: DecimalComplexValue
   };
 }
 
+function decimalComplexDiv(left: DecimalComplexValue, right: DecimalComplexValue) {
+  const denominator = right.re.times(right.re).plus(right.im.times(right.im));
+  if (denominator.isZero()) {
+    return null;
+  }
+  return {
+    re: left.re.times(right.re).plus(left.im.times(right.im)).dividedBy(denominator),
+    im: left.im.times(right.re).minus(left.re.times(right.im)).dividedBy(denominator),
+  };
+}
+
 function decimalComplexAbs(value: DecimalComplexValue) {
   return value.re.times(value.re).plus(value.im.times(value.im)).sqrt();
+}
+
+function decimalComplexToNumber(value: DecimalComplexValue): ComplexValue | null {
+  const re = value.re.toNumber();
+  const im = value.im.toNumber();
+  return Number.isFinite(re) && Number.isFinite(im) ? { re, im } : null;
 }
 
 export function parseDecimalScalar(value: number | string) {
@@ -119,12 +155,7 @@ export function decimalCoefficientScaleRatio(coefficients: readonly number[]) {
   };
 }
 
-export function evaluatePolynomialDecimal(coefficients: readonly number[], root: ComplexValue) {
-  const decimalRoot = decimalComplexFromNumber(root);
-  if (!decimalRoot) {
-    return null;
-  }
-
+function evaluatePolynomialDecimalValue(coefficients: readonly number[], decimalRoot: DecimalComplexValue) {
   let current = decimalComplex(0);
   for (const coefficient of coefficients) {
     const decimalCoefficient = decimalFromNumber(coefficient);
@@ -139,6 +170,18 @@ export function evaluatePolynomialDecimal(coefficients: readonly number[], root:
   return current;
 }
 
+export function evaluatePolynomialDecimal(coefficients: readonly number[], root: ComplexValue) {
+  const decimalRoot = decimalComplexFromNumber(root);
+  return decimalRoot ? evaluatePolynomialDecimalValue(coefficients, decimalRoot) : null;
+}
+
+function derivativeCoefficients(coefficients: readonly number[]) {
+  const degree = coefficients.length - 1;
+  return coefficients
+    .slice(0, -1)
+    .map((coefficient, index) => coefficient * (degree - index));
+}
+
 export function decimalPolynomialResidualMagnitude(
   coefficients: readonly number[],
   root: ComplexValue,
@@ -149,6 +192,49 @@ export function decimalPolynomialResidualMagnitude(
   }
   const magnitude = decimalComplexAbs(value).toNumber();
   return Number.isFinite(magnitude) ? magnitude : null;
+}
+
+function decimalPolishPolynomialRoot(coefficients: readonly number[], root: ComplexValue) {
+  let current = decimalComplexFromNumber(root);
+  if (!current) {
+    return null;
+  }
+  const derivative = derivativeCoefficients(coefficients);
+  const initialResidual = decimalPolynomialResidualMagnitude(coefficients, root);
+  if (initialResidual === null) {
+    return null;
+  }
+
+  for (let iteration = 0; iteration < 4; iteration += 1) {
+    const value = evaluatePolynomialDecimalValue(coefficients, current);
+    const slope = evaluatePolynomialDecimalValue(derivative, current);
+    if (!value || !slope) {
+      return null;
+    }
+    const correction = decimalComplexDiv(value, slope);
+    if (!correction) {
+      return null;
+    }
+    current = decimalComplexSub(current, correction);
+    if (decimalComplexAbs(correction).lt(new DecimalHighPrecision('1e-40'))) {
+      break;
+    }
+  }
+
+  const polished = decimalComplexToNumber(current);
+  if (!polished) {
+    return null;
+  }
+  const polishedResidual = decimalPolynomialResidualMagnitude(coefficients, polished);
+  if (polishedResidual === null || polishedResidual > initialResidual) {
+    return null;
+  }
+  const shift = Math.hypot(polished.re - root.re, polished.im - root.im);
+  return {
+    root: polished,
+    shift: Number.isFinite(shift) ? shift : 0,
+    residual: polishedResidual,
+  };
 }
 
 export function decimalRevalidationTriggers(input: DecimalRevalidationInput['diagnostics']) {
@@ -168,27 +254,55 @@ export function decimalRevalidationTriggers(input: DecimalRevalidationInput['dia
   return triggers;
 }
 
-export function decimalRevalidatePolynomialRoots(input: DecimalRevalidationInput): DecimalRevalidationResult {
-  const triggeredBy = decimalRevalidationTriggers(input.diagnostics);
-  if (triggeredBy.length === 0) {
-    return {
-      performed: false,
-      precisionDigits: DEFAULT_PRECISION_DIGITS,
-      triggeredBy,
-      rootsChecked: 0,
-      maxResidual: null,
-    };
-  }
-
-  const residuals = input.roots
-    .map((root) => decimalPolynomialResidualMagnitude(input.coefficients, root))
-    .filter((value): value is number => value !== null);
-
+export function createDecimalPrecisionEngine(): PrecisionEngine {
   return {
-    performed: true,
+    backend: 'decimal.js',
     precisionDigits: DEFAULT_PRECISION_DIGITS,
-    triggeredBy,
-    rootsChecked: residuals.length,
-    maxResidual: residuals.reduce((maximum, value) => Math.max(maximum, value), 0),
+    validatePolynomialRoots(input) {
+      const triggeredBy = decimalRevalidationTriggers(input.diagnostics);
+      if (triggeredBy.length === 0) {
+        return {
+          performed: false,
+          backend: 'decimal.js',
+          precisionDigits: DEFAULT_PRECISION_DIGITS,
+          triggeredBy,
+          rootsChecked: 0,
+          maxResidual: null,
+          rootsPolished: 0,
+          maxRootShift: null,
+        };
+      }
+
+      let rootsPolished = 0;
+      let maxRootShift = 0;
+      const residuals = input.roots
+        .map((root) => {
+          const polished = decimalPolishPolynomialRoot(input.coefficients, root);
+          if (polished && polished.shift > 0) {
+            rootsPolished += 1;
+            maxRootShift = Math.max(maxRootShift, polished.shift);
+            return polished.residual;
+          }
+          return decimalPolynomialResidualMagnitude(input.coefficients, root);
+        })
+        .filter((value): value is number => value !== null);
+
+      return {
+        performed: true,
+        backend: 'decimal.js',
+        precisionDigits: DEFAULT_PRECISION_DIGITS,
+        triggeredBy,
+        rootsChecked: residuals.length,
+        maxResidual: residuals.reduce((maximum, value) => Math.max(maximum, value), 0),
+        rootsPolished,
+        maxRootShift,
+      };
+    },
   };
+}
+
+export const decimalPrecisionEngine = createDecimalPrecisionEngine();
+
+export function decimalRevalidatePolynomialRoots(input: DecimalRevalidationInput): DecimalRevalidationResult {
+  return decimalPrecisionEngine.validatePolynomialRoots(input);
 }
