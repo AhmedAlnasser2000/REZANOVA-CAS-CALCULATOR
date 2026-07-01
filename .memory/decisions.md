@@ -1,5 +1,14 @@
 # Decisions
 
+## 2026-07-01 - CALCULUS-LIMITS-AUDIT0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Differentiation expansion is paused until Vector/Matrix are upgraded enough for symbolic vector/matrix outputs and multivariable readback. Gradient, Jacobian, Hessian, divergence, curl, and Laplacian should not be implemented as scalar/list-only Calculus features before that foundation exists.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits are the next active Calculus lane. The first Limits work should start from source/UX and request/variable parsing over the existing finite/infinite heuristic baseline, then add route preflight before widening L'Hospital, series, squeeze, or Gruntz-style algorithms.
+
+## 2026-07-01 - EQUATION-EXACT-BRANCH-CORRECTNESS1
+
+- [agent: codex | model: gpt-5-codex] Real Exact `|F|=R` is a guarded branch family: positive comparisons preserve both branches, exact-zero comparisons collapse to the single branch, negative comparisons stop as no-real-solution cases, and `sqrt(F^2)` / `sqrt((F)^2)` must route through absolute-value semantics before generic power lifting.
+
 ## 2026-07-01 - SURFACE-SPEC-EXAMPLES1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol hostless v1 has an internal-agent contract reference backed by canonical fixtures. The old `SURFACE0` audit now reflects the landed hostless spine while keeping mounting, Graphing, event/query pagination and cursors, History, Variables, Model Context Protocol adapters, plugins, remote compute, and external software development kit behavior deferred until dedicated milestones.

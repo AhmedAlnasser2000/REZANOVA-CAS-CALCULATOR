@@ -396,6 +396,10 @@ function buildOuterNonPeriodicDepthError(familyLabel: string) {
   return `This recognized ${familyLabel} would require more than one extra bounded non-periodic outer layer over \\left|u\\right|. Use Numeric Solve with an interval in Equation mode.`;
 }
 
+function buildDirectNegativeComparisonError(familyLabel: string, comparisonLatex: string) {
+  return `This recognized ${familyLabel} has no real solutions because \\left|u\\right| cannot equal ${comparisonLatex}<0.`;
+}
+
 type AffineAbsoluteValueSide = {
   target: AbsoluteValueTargetDescriptor;
   offset: AbsoluteValueExactScalar;
@@ -502,14 +506,45 @@ export function buildAbsoluteValueEquationFamily(
   const effectiveComparison = pureComparisonAbs
     ? buildScaledNode(pureComparisonAbs.base, pureComparisonAbs.coefficient)
     : normalizedComparison;
-  const branchSet = createTwoBranchSet(
-    `${boxLatex(normalizedBase)}=${boxLatex(effectiveComparison)}`,
-    `${boxLatex(normalizedBase)}=${boxLatex(negateNode(effectiveComparison))}`,
-    pureComparisonAbs
-      ? []
-      : [buildAbsoluteValueNonnegativeConstraint(normalizedComparison)],
-    { provenance: 'abs-core' },
-  );
+  const exactComparison = pureComparisonAbs ? null : readExactScalar(normalizedComparison);
+  const familyLabel = isStrongerAbsoluteValueCarrierKind(classifyAbsoluteValueExpressionSupport(normalizedBase, variable))
+    ? 'stronger absolute-value carrier family'
+    : 'absolute-value family';
+  const constraints = pureComparisonAbs || exactComparison
+    ? []
+    : [buildAbsoluteValueNonnegativeConstraint(normalizedComparison)];
+
+  if (exactComparison && exactComparison.numerator < 0) {
+    return {
+      kind,
+      variable,
+      target: {
+        targetNode: buildScaledNode(buildAbsoluteValueNode(normalizedBase), target.coefficient),
+        base: normalizedBase,
+        coefficient: target.coefficient,
+      },
+      comparisonNode: normalizedComparison,
+      comparisonTarget: pureComparisonAbs,
+      branchEquations: [],
+      branchConstraints: [],
+      normalizationKind: 'direct',
+      emptyBranchError: buildDirectNegativeComparisonError(familyLabel, boxLatex(normalizedComparison)),
+    };
+  }
+
+  const primaryBranch = `${boxLatex(normalizedBase)}=${boxLatex(effectiveComparison)}`;
+  const branchSet = exactComparison && exactComparison.numerator === 0
+    ? createBranchSet({
+        equations: [primaryBranch],
+        constraints,
+        provenance: 'abs-core',
+      })
+    : createTwoBranchSet(
+        primaryBranch,
+        `${boxLatex(normalizedBase)}=${boxLatex(negateNode(effectiveComparison))}`,
+        constraints,
+        { provenance: 'abs-core' },
+      );
 
   return {
     kind,

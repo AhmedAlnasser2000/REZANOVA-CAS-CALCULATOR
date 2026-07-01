@@ -274,11 +274,11 @@ function algebraTransformSolve(
     }
   }
 
-  const directPowerTransform = matchDirectRationalPowerTransform(request);
-  if (directPowerTransform) {
+  const perfectSquareAbsTransform = matchPerfectSquareAbsoluteValueTransform(request);
+  if (perfectSquareAbsTransform) {
     const recursive = recurseTransform(
       request,
-      directPowerTransform,
+      perfectSquareAbsTransform,
       depth,
       trail,
       executionBudget,
@@ -289,11 +289,11 @@ function algebraTransformSolve(
     }
   }
 
-  const perfectSquareAbsTransform = matchPerfectSquareAbsoluteValueTransform(request);
-  if (perfectSquareAbsTransform) {
+  const directPowerTransform = matchDirectRationalPowerTransform(request);
+  if (directPowerTransform) {
     const recursive = recurseTransform(
       request,
-      perfectSquareAbsTransform,
+      directPowerTransform,
       depth,
       trail,
       executionBudget,
