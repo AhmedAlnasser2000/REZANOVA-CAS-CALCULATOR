@@ -1,13 +1,4 @@
-import { ComputeEngine } from '@cortex-js/compute-engine';
 import { solvePolynomialRoots, type PolynomialRootDiagnostics } from '../../algebra/polynomial-roots';
-import {
-  exactPolynomialCoefficientArray,
-  exactPolynomialDegree,
-  exactPolynomialIsZero,
-  exactScalarToNumber,
-  parseExactPolynomial,
-} from '../../algebra/polynomial-core';
-import { normalizeExactRationalFunctionNode } from '../../algebra/rational-function';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
 import { dedupeNumericRoots, validateCandidateRoots } from '../../equation/candidate-validation';
@@ -20,23 +11,15 @@ import { equationTargetLatex } from '../../equation/equation-target';
 import type { AngleUnit, DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import { hardDomainFactLines } from './numeric-search-diagnostics';
+import {
+  NUMERIC_FALLBACK_ELIGIBLE_ERRORS,
+  polynomialFromZeroForm,
+} from './numeric-polynomial-extraction';
 
-const ce = new ComputeEngine();
-const MAX_DEGREE = 64;
 const REAL_ROOT_IMAGINARY_TOLERANCE = 1e-7;
 const NUMERIC_RESIDUAL_TOLERANCE = 1e-8;
 const NUMERIC_METHOD_POLYNOMIAL = 'Deterministic numeric polynomial roots';
 const NUMERIC_METHOD_RATIONAL = 'Deterministic numeric rational roots';
-const NUMERIC_FALLBACK_ELIGIBLE_ERRORS = new Set([
-  'This equation is outside the supported exact symbolic solve families.',
-  'This recognized quotient-zero family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
-]);
-
-type SolvablePolynomial = {
-  coefficients: number[];
-  degree: number;
-  kind: 'polynomial' | 'rational';
-};
 
 function uniqueLines(lines: readonly string[]) {
   return [...new Set(lines.filter((line) => line.trim().length > 0))];
@@ -153,43 +136,6 @@ function detailSectionsFor(input: {
   });
 
   return sections;
-}
-
-function polynomialFromZeroForm(zeroFormLatex: string, target: string): SolvablePolynomial | null {
-  const parsed = ce.parse(zeroFormLatex).json;
-  const rational = normalizeExactRationalFunctionNode(parsed, {
-    variable: target,
-    maxDegree: MAX_DEGREE,
-  });
-  if (rational.kind === 'success') {
-    if (exactPolynomialIsZero(rational.rational.numerator)) {
-      return null;
-    }
-    const degree = exactPolynomialDegree(rational.rational.numerator);
-    if (degree > MAX_DEGREE) {
-      return null;
-    }
-    return {
-      coefficients: exactPolynomialCoefficientArray(rational.rational.numerator).map(exactScalarToNumber),
-      degree,
-      kind: rational.denominatorLatex ? 'rational' : 'polynomial',
-    };
-  }
-
-  const polynomial = parseExactPolynomial(parsed, target, MAX_DEGREE);
-  if (!polynomial || exactPolynomialIsZero(polynomial)) {
-    return null;
-  }
-  const degree = exactPolynomialDegree(polynomial);
-  if (degree > MAX_DEGREE) {
-    return null;
-  }
-
-  return {
-    coefficients: exactPolynomialCoefficientArray(polynomial).map(exactScalarToNumber),
-    degree,
-    kind: 'polynomial',
-  };
 }
 
 function realRootsFromPolynomial(coefficients: readonly number[]) {

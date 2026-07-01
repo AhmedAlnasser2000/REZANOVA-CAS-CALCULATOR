@@ -237,15 +237,27 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.text).toContain('x ~= 3');
   });
 
-  it('locks the current Complex numeric polynomial boundary before visible catchup', () => {
-    const { trace } = runGoldenTrace({
+  it('records Complex numeric polynomial roots after exact symbolic routes miss', () => {
+    const { result, trace } = runGoldenTrace({
       equationLatex: 'x^6+x+1=0',
       equationDomainIntent: 'complex',
     });
 
     expectSoftTraceBudgets(trace);
+    expect(trace.kind).toBe('success');
+    expect(trace.solutionKind).toBe('approximate-numeric');
+    expect(trace.resultOrigin).toBe('numeric-fallback');
+    expect(trace.answerDomain).toBe('complex');
+    expect(trace.numericMethod).toBe('Complex numeric polynomial roots');
+    expect(trace.rootCount).toBe(6);
+    expect(trace.detailTitles).toContain('Complex Numeric Method');
+    expect(trace.detailTitles).toContain('Polynomial Diagnostics');
     expect(trace.text).not.toContain('Real Cardano Cases');
     expect(trace.text).not.toContain('Real Ferrari Cases');
     expect(trace.text).not.toContain('RootOf');
+    if (result.kind !== 'success') {
+      throw new Error('Expected Complex numeric polynomial success');
+    }
+    expect(result.branchReadback?.branchesLatex).toHaveLength(6);
   });
 });

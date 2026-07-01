@@ -55,6 +55,8 @@ Updated for `EQUATION-NUMERIC-SMOOTH-ACCELERATION1` on 2026-07-01: guarded Newto
 
 Updated for `EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1` on 2026-07-01: periodic numeric interval results now include a `Periodic Interval Summary` when the solver can prove reliable affine trig carrier periods. The summary is diagnostic interval evidence only; it does not claim global completeness or whole-equation periodicity. Periodic/dense equations remain exact-family-first and explicit-interval-local, and regressions lock that they do not fall into fixed-window nonlinear enumeration.
 
+Updated for `EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1` on 2026-07-01: Complex On now has visible numeric polynomial/rational roots after exact symbolic routes miss. The route reuses the shared Aberth-Ehrlich polynomial engine through degree `64`, preserves real and non-real roots, honors rectangular/polar/cis approximate readback, validates denominator exclusions, and keeps Complex nonlinear numeric solving as a separate future policy track.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose
@@ -98,7 +100,7 @@ This roadmap is grounded in:
 - Monte Carlo is not an ordinary one-variable Equation root-finding method. It belongs later to Statistics/probability/simulation and possibly high-dimensional numerical integration after separate policy.
 - Cardano and Ferrari remain symbolic exact formula/readback routes. Numeric degree-3/4 solving must use numeric polynomial/root methods or existing guided polynomial numeric fallback, not Cardano/Ferrari formula expansion.
 - Future step-by-step output must preserve that distinction: simple/factorable/special-form numeric polynomials should explain factor/inversion/numeric-root methods; Cardano/Ferrari derivations should be advanced/collapsed symbolic exact material, never the default numeric teaching path.
-- Real numeric solving comes first. Complex numeric solving needs a separate later policy for two-real-variable residual systems, branch cuts, seed strategy, and confidence wording.
+- Real numeric solving came first. Complex numeric polynomial/rational fallback is now live through the shared polynomial engine, while Complex nonlinear numeric solving still needs a separate later policy for two-real-variable residual systems, branch cuts, seed strategy, and confidence wording.
 - The Calculus integration pipeline's Layer 5 numeric fallback is not a shared root solver. It is adaptive quadrature for definite integrals with numeric bounds and must not import Equation orchestration or Equation result semantics.
 - Cross-domain numeric work may share primitive mechanics and policy language, but each domain owns its own target/variable meaning, validation standard, result wording, and user workflow.
 
@@ -153,6 +155,7 @@ Live assets that the numeric track should reuse:
 - The live `EQUATION-REAL-PERIODIC-INTERVAL-NUMERIC1` route: periodic/trig fallback without an interval returns guidance for a finite real window, and numeric interval runs enumerate validated local roots with selected-target-aware output, interval-local completeness wording, and domain/exclusion detail facts.
 - The live `EQUATION-NUMERIC-SEARCH-UX-DISCIPLINE1` polish: nonlinear auto-search stops after stable wider windows, Equation search loops reuse cached target-aware evaluators, periodic guidance auto-surfaces the existing interval panel without auto-running, and numeric diagnostic detail sections use compact/default versus Detailed Facts caps.
 - The live `EQUATION-NUMERIC-ROUTE-ORCHESTRATION-CLOSEOUT1` lock: focused regressions protect exact-first behavior, deterministic numeric algebraic fallback before nonlinear search, interval-first periodic/dense routing, explicit interval-local root wording, and normalized approximate-real-root guidance.
+- The live `EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1` route: after exact symbolic Complex routes miss, numeric-ready polynomial/rational equations return validated approximate Complex roots through degree `64`, preserving real and non-real roots, `complexExactForm` rectangular/polar/cis readback, denominator exclusions, residual diagnostics, and progressive branch-list display.
 - Numeric evaluators under `src/lib/numeric/`.
 - Guided polynomial numeric fallback for degree 3/4 UI cases, separate from symbolic Cardano/Ferrari.
 - Calculus adaptive Simpson numeric definite integration, which is Integration Layer 5 quadrature and not Equation root solving.

@@ -18,8 +18,8 @@
 - `EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1`: added final conditioning polish and residual-aware dedupe to the shared numeric polynomial engine, exposed conditioning-pass diagnostics, and kept degree-3/4 fallback numeric-only.
 - `EQUATION-NUMERIC-SMOOTH-ACCELERATION1`: added guarded Newton/secant acceleration inside the ITP bracket kernel, updated method wording, and kept unsafe/discontinuous/tangent cases on ITP/bisection/local-minimum recovery.
 - `EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1`: added shared affine trig carrier period detection for numeric intervals, surfaced `Periodic Interval Summary` details on explicit interval runs, and locked that periodic/dense cases remain exact-first or explicit-window-local instead of fixed-window global enumeration.
+- `EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1`: added visible Complex On numeric polynomial/rational fallback after exact symbolic routes miss. The route reuses shared polynomial extraction and Aberth-Ehrlich roots through degree `64`, preserves real and non-real roots, honors rectangular/polar/cis approximate readback, and validates denominator exclusions without enabling Complex nonlinear numeric solving.
 
 ## Pending Gates
 
-- `EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1`
 - `EQUATION-COMPLEX-NUMERIC-NONLINEAR-POLICY0`

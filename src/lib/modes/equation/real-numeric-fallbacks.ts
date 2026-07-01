@@ -3,6 +3,7 @@ import type {
   AngleUnit,
   DisplayOutcome,
   EquationDomainIntent,
+  ComplexExactForm,
   NumericSolveInterval,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -11,6 +12,7 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
 import { tryDeterministicNumericAlgebraicFallback } from './deterministic-numeric-algebraic';
+import { tryComplexNumericPolynomialFallback } from './complex-numeric-polynomial-roots';
 import { tryRealNonlinearNumericSearchFallback } from './real-nonlinear-numeric-search';
 import { tryRealPeriodicIntervalNumericFallback } from './real-periodic-interval-numeric';
 
@@ -20,30 +22,39 @@ export function tryRealNumericFallbackOutcome(input: {
   angleUnit: AngleUnit;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
+  complexExactForm: ComplexExactForm;
   sharedOutcome: DisplayOutcome;
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
 }) {
-  const fallback = tryDeterministicNumericAlgebraicFallback({
-    equationLatex: input.equationLatex,
-    equationSolveTarget: input.equationSolveTarget,
-    angleUnit: input.angleUnit,
-    sharedOutcome: input.sharedOutcome,
-  }) ?? tryRealPeriodicIntervalNumericFallback({
-    equationLatex: input.equationLatex,
-    equationSolveTarget: input.equationSolveTarget,
-    angleUnit: input.angleUnit,
-    equationDomainIntent: input.equationDomainIntent,
-    numericInterval: input.numericInterval,
-    sharedOutcome: input.sharedOutcome,
-  }) ?? tryRealNonlinearNumericSearchFallback({
-    equationLatex: input.equationLatex,
-    equationSolveTarget: input.equationSolveTarget,
-    angleUnit: input.angleUnit,
-    equationDomainIntent: input.equationDomainIntent,
-    numericInterval: input.numericInterval,
-    sharedOutcome: input.sharedOutcome,
-  });
+  const fallback = input.equationDomainIntent === 'complex'
+    ? tryComplexNumericPolynomialFallback({
+      equationLatex: input.equationLatex,
+      equationSolveTarget: input.equationSolveTarget,
+      angleUnit: input.angleUnit,
+      complexExactForm: input.complexExactForm,
+      sharedOutcome: input.sharedOutcome,
+    })
+    : tryDeterministicNumericAlgebraicFallback({
+      equationLatex: input.equationLatex,
+      equationSolveTarget: input.equationSolveTarget,
+      angleUnit: input.angleUnit,
+      sharedOutcome: input.sharedOutcome,
+    }) ?? tryRealPeriodicIntervalNumericFallback({
+      equationLatex: input.equationLatex,
+      equationSolveTarget: input.equationSolveTarget,
+      angleUnit: input.angleUnit,
+      equationDomainIntent: input.equationDomainIntent,
+      numericInterval: input.numericInterval,
+      sharedOutcome: input.sharedOutcome,
+    }) ?? tryRealNonlinearNumericSearchFallback({
+      equationLatex: input.equationLatex,
+      equationSolveTarget: input.equationSolveTarget,
+      angleUnit: input.angleUnit,
+      equationDomainIntent: input.equationDomainIntent,
+      numericInterval: input.numericInterval,
+      sharedOutcome: input.sharedOutcome,
+    });
 
   if (!fallback) {
     return undefined;
