@@ -26,7 +26,7 @@ export type PolynomialRootsRequest = {
 
 export type PolynomialRootDiagnostics = {
   degree: number;
-  method: 'linear' | 'quadratic' | 'durand-kerner';
+  method: 'linear' | 'quadratic' | 'aberth-ehrlich';
   iterations: number;
   maxResidual: number;
   coefficientScaleRatio: number;
@@ -201,35 +201,55 @@ function initialSeeds(degree: number, radius: number, angleOffset: number) {
   });
 }
 
-type DurandKernerSuccess = {
+type AberthEhrlichSuccess = {
   roots: ComplexValue[];
   iterations: number;
   maxResidual: number;
 };
 
-function runDurandKernerAttempt(coefficients: number[], angleOffset: number): DurandKernerSuccess | null {
+function reciprocalSeparationSum(roots: readonly ComplexValue[], root: ComplexValue, index: number) {
+  return roots.reduce<ComplexValue>((current, otherRoot, otherIndex) => {
+    if (index === otherIndex) {
+      return current;
+    }
+    const separation = complexSub(root, otherRoot);
+    if (complexAbs(separation) < LEADING_EPSILON) {
+      throw new Error('Numeric root search produced an unstable clustered-root denominator.');
+    }
+    return complexAdd(current, complexDiv(complex(1, 0), separation));
+  }, complex(0, 0));
+}
+
+function runAberthEhrlichAttempt(coefficients: number[], angleOffset: number): AberthEhrlichSuccess | null {
   const degree = coefficients.length - 1;
   const monic = normalizeCoefficients(coefficients);
+  const derivative = derivativeCoefficients(monic);
   const radius = 1 + Math.max(...monic.slice(1).map((coefficient) => Math.abs(coefficient)));
   let roots = initialSeeds(degree, radius, angleOffset);
+  let bestRoots = roots;
+  let bestResidual = Number.POSITIVE_INFINITY;
+  let bestIteration = 0;
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration += 1) {
     let maxCorrection = 0;
     const nextRoots = roots.map((root, index) => {
-      const numerator = evaluatePolynomial(monic, root);
-      const denominator = roots.reduce<ComplexValue>((current, otherRoot, otherIndex) => {
-        if (index === otherIndex) {
-          return current;
-        }
-
-        return complexMul(current, complexSub(root, otherRoot));
-      }, complex(1, 0));
-
-      if (complexAbs(denominator) < LEADING_EPSILON) {
-        throw new Error('Numeric root search produced an unstable repeated-root denominator.');
+      const value = evaluatePolynomial(monic, root);
+      const slope = evaluatePolynomial(derivative, root);
+      if (complexAbs(value) < RESIDUAL_EPSILON) {
+        return root;
       }
-
-      const correction = complexDiv(numerator, denominator);
+      if (complexAbs(slope) < LEADING_EPSILON) {
+        throw new Error('Numeric root search produced an unstable derivative near a candidate root.');
+      }
+      const newtonCorrection = complexDiv(value, slope);
+      const denominator = complexSub(
+        complex(1, 0),
+        complexMul(newtonCorrection, reciprocalSeparationSum(roots, root, index)),
+      );
+      if (complexAbs(denominator) < LEADING_EPSILON) {
+        throw new Error('Numeric root search produced an unstable Aberth correction denominator.');
+      }
+      const correction = complexDiv(newtonCorrection, denominator);
       maxCorrection = Math.max(maxCorrection, complexAbs(correction));
       return normalizeComplex(complexSub(root, correction));
     });
@@ -237,6 +257,11 @@ function runDurandKernerAttempt(coefficients: number[], angleOffset: number): Du
     roots = nextRoots;
     const polished = polishRoots(monic, roots);
     const maxResidual = maxPolynomialResidual(monic, polished);
+    if (maxResidual < bestResidual) {
+      bestResidual = maxResidual;
+      bestRoots = polished;
+      bestIteration = iteration + 1;
+    }
 
     const hasExpectedDistinctRoots = sortAndDedupeRoots(polished).length === degree;
     if (
@@ -251,16 +276,22 @@ function runDurandKernerAttempt(coefficients: number[], angleOffset: number): Du
     }
   }
 
-  return null;
+  return bestResidual < RESIDUAL_EPSILON
+    ? {
+        roots: bestRoots,
+        iterations: bestIteration,
+        maxResidual: bestResidual,
+      }
+    : null;
 }
 
-function solveWithDurandKerner(coefficients: number[]): PolynomialRootsResult {
+function solveWithAberthEhrlich(coefficients: number[]): PolynomialRootsResult {
   const monic = normalizeCoefficients(coefficients);
-  let best: DurandKernerSuccess | null = null;
+  let best: AberthEhrlichSuccess | null = null;
 
   for (const offset of SEED_ANGLE_OFFSETS) {
     try {
-      const attempt = runDurandKernerAttempt(coefficients, offset);
+      const attempt = runAberthEhrlichAttempt(coefficients, offset);
       if (attempt && (!best || attempt.maxResidual < best.maxResidual)) {
         best = attempt;
       }
@@ -287,7 +318,7 @@ function solveWithDurandKerner(coefficients: number[]): PolynomialRootsResult {
       coefficients: monic,
       roots: deduped,
       rootsBeforeDedupe: best.roots.length,
-      method: 'durand-kerner',
+      method: 'aberth-ehrlich',
       iterations: best.iterations,
     }),
   };
@@ -345,7 +376,7 @@ export function solvePolynomialRoots({
   }
 
   try {
-    return solveWithDurandKerner(normalized);
+    return solveWithAberthEhrlich(normalized);
   } catch (error) {
     return {
       kind: 'error',

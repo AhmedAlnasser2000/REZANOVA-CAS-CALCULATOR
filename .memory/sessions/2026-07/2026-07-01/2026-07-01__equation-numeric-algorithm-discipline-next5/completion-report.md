@@ -16,6 +16,7 @@
 - `EQUATION-NUMERIC-KERNEL-CONTRACT1`: added an internal real root-refinement kernel contract and routed the existing numeric interval sampler through it while preserving visible Brent-Dekker-style behavior.
 - `EQUATION-NUMERIC-ITP-KERNEL1`: replaced the sign-change bracket refiner under the kernel contract with ITP and updated numeric method wording while preserving route order, interval/manual/auto-search eligibility, validation, and local-minimum recovery.
 - `EQUATION-NUMERIC-SEGMENTATION-HARDEN1`: added bounded segmentation probes for denominator exclusions, log/root/fractional-power boundaries, affine trig poles, and sampled hazards; interval/manual/auto-search now uses those probes while keeping hard facts and diagnostic evidence in separate detail sections.
+- `EQUATION-NUMERIC-POLYNOMIAL-ABERTH1`: replaced the degree-3+ simultaneous numeric polynomial iteration with Aberth-Ehrlich while keeping direct linear/quadratic paths, Equation real-output filtering, denominator validation, and Complex numeric display deferral.
 
 ## Notes
 

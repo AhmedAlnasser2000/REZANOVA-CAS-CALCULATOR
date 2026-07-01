@@ -41,6 +41,8 @@ Updated for `EQUATION-NUMERIC-ITP-KERNEL1` on 2026-07-01: ITP is now the live br
 
 Updated for `EQUATION-NUMERIC-SEGMENTATION-HARDEN1` on 2026-07-01: the domain segmentation substrate now feeds interval sampling with bounded probes for solved denominator exclusions, log/root/fractional-power boundaries, affine trig poles, and sampled discontinuity hazards. Hard domain facts stay separate from diagnostic probe/segmentation evidence, and excluded boundary candidates are validated as extraneous rather than accepted.
 
+Updated for `EQUATION-NUMERIC-POLYNOMIAL-ABERTH1` on 2026-07-01: the shared numeric polynomial helper now uses Aberth-Ehrlich for degree-3+ roots while preserving direct linear/quadratic paths, degree cap 64, real-output filtering for Equation fallback, denominator validation, and deferred visible Complex numeric Equation output.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

@@ -45,3 +45,17 @@
 - `npm run test:file-sizes` passed.
 - `git diff --check` passed.
 - `npm run build` remains blocked by unrelated Surface Protocol work: `src/lib/surface-protocol/dto.test.ts` passes an `advisories` object that no longer matches `RuntimeAdvisories`.
+
+## EQUATION-NUMERIC-POLYNOMIAL-ABERTH1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/algebra/polynomial-roots.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
+- Evidence: 3 test files passed, 21 tests passed.
+- Guided polynomial regression gate passed:
+  - `npm run test:unit -- src/lib/algebra/polynomial-roots.test.ts src/lib/modes/equation/systems-guided-polynomial.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
+- Evidence: 4 test files passed, 32 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` remains blocked by unrelated Surface Protocol work: `src/lib/surface-protocol/dto.test.ts` passes an `advisories` object that no longer matches `RuntimeAdvisories`.

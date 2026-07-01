@@ -55,8 +55,25 @@ describe('solvePolynomialRoots', () => {
     const realRoots = result.roots.filter((root) => Math.abs(root.im) < 1e-7);
     expect(realRoots).toHaveLength(1);
     expect(realRoots[0].re).toBeCloseTo(1.3007656097, 9);
-    expect(result.diagnostics.method).toBe('durand-kerner');
+    expect(result.diagnostics.method).toBe('aberth-ehrlich');
     expect(result.diagnostics.maxResidual).toBeLessThan(1e-8);
+  });
+
+  it('computes complex roots internally for quartics without real roots', () => {
+    const result = solvePolynomialRoots({ coefficients: [1, 0, 0, 0, 1] });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success result');
+    }
+
+    const formatted = result.roots.map((root) => `${root.re.toFixed(4)},${root.im.toFixed(4)}`);
+    expect(formatted).toEqual([
+      '-0.7071,-0.7071',
+      '-0.7071,0.7071',
+      '0.7071,-0.7071',
+      '0.7071,0.7071',
+    ]);
+    expect(result.diagnostics.method).toBe('aberth-ehrlich');
   });
 
   it('dedupes repeated numeric roots while recording the cluster signal', () => {

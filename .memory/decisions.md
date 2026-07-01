@@ -36,6 +36,10 @@
 
 - [agent: codex | model: gpt-5-codex] Equation numeric interval/manual/auto-search now uses bounded segmentation probes for solved denominator exclusions, log boundaries, even-root/fractional-power boundaries, affine trig poles, and sampled discontinuity hazards. Hard domain facts stay in `Domain and Exclusions`; sampled and segmentation evidence stays in diagnostic detail sections; excluded boundary candidates remain validation-visible extraneous evidence instead of accepted roots.
 
+## 2026-07-01 - EQUATION-NUMERIC-POLYNOMIAL-ABERTH1
+
+- [agent: codex | model: gpt-5-codex] The shared numeric polynomial root helper now uses Aberth-Ehrlich for degree-3+ simultaneous complex roots while keeping direct linear/quadratic paths. Equation deterministic numeric fallback still filters visible output to validated real roots, preserves denominator validation, and keeps Complex numeric Equation display deferred.
+
 ## 2026-06-30 - PUBLIC-IDENTITY-LOCK1
 
 - [agent: codex | model: gpt-5-codex] The primary current-facing public identity is `REZANOVA CLASSWIZ CALCULATOR`. `Calcwiz` and `Classwiz` are allowed as friendly aliases, but they must not replace the primary identity in release/GitHub positioning. Technical slugs such as `calcwiz-desktop`, `calcwiz_desktop`, and `com.ahmed.calcwizdesktop` stay unchanged for compatibility, and historical memory keeps old names as evidence rather than being rewritten.

@@ -31,7 +31,7 @@ describe('Equation deterministic numeric algebraic fallback', () => {
     const text = collectOutcomeText(result);
     expect(text).toContain('No supported exact form was found; showing validated approximate real roots.');
     expect(result.detailSections?.map((section) => section.title)).toContain('Polynomial Diagnostics');
-    expect(text).toContain('Root engine: durand-kerner');
+    expect(text).toContain('Root engine: aberth-ehrlich');
     expect(text).not.toContain('Real Cardano Cases');
     expect(text).not.toContain('Real Ferrari Cases');
   });
