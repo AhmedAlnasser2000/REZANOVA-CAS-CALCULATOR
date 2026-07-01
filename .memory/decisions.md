@@ -1463,3 +1463,7 @@
 ## 2026-07-01 - EQUATION-NUMERIC-DECIMAL-PRECISION-SUBSTRATE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation numeric precision v1 uses `decimal.js` as an internal diagnostics substrate for polynomial residual revalidation when existing scale, residual, repeated/clustered-root, or close-separation diagnostics signal risk. This does not make Equation fallback arbitrary-precision by default and does not widen supported numeric routes.
+
+## 2026-07-01 - EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The shared Equation numeric polynomial engine keeps Aberth-Ehrlich as the degree-3+ solver and adds producer-side conditioning polish plus residual-aware dedupe before readback/validation. Degree-3/4 numeric fallback remains numeric-method output, not Cardano/Ferrari formula readback.

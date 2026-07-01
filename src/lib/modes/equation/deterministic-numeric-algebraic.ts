@@ -123,6 +123,7 @@ function detailSectionsFor(input: {
       lines: [
         `Root engine: ${diagnostics.method}.`,
         `Iterations: ${diagnostics.iterations}.`,
+        `Conditioning passes: ${diagnostics.conditioningPasses}.`,
         `Largest polynomial residual after polishing: ${formatApproxNumber(diagnostics.maxResidual)}.`,
         `Coefficient scale ratio: ${diagnostics.coefficientScaleRatio.toExponential(2)}.`,
         diagnostics.minimumRootSeparation === null

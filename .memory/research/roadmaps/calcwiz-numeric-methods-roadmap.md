@@ -49,6 +49,8 @@ Updated for `EQUATION-NUMERIC-GOLDEN-TRACE-HARNESS1` on 2026-07-01: Equation num
 
 Updated for `EQUATION-NUMERIC-DECIMAL-PRECISION-SUBSTRATE1` on 2026-07-01: `decimal.js` is now the internal high-precision scalar substrate for polynomial residual recomputation, coefficient-scale checks, and risk-triggered root revalidation. It is diagnostics infrastructure only in this slice; Equation does not run arbitrary precision for every solve and does not widen route eligibility.
 
+Updated for `EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1` on 2026-07-01: the shared numeric polynomial engine keeps Aberth-Ehrlich as the main degree-3+ method and now applies a final conditioning polish plus residual-aware dedupe before diagnostics/readback. This strengthens repeated/clustered-root handling without reintroducing symbolic Cardano/Ferrari readback into numeric fallback.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

@@ -7,6 +7,8 @@
 - contributors: []
 - recorded_by_agent: codex
 - recorded_by_agent_model: gpt-5-codex
+- committed_by_agent: codex
+- committed_by_agent_model: gpt-5-codex
 - attribution_basis: live
 
 ## Planned Commits
@@ -23,3 +25,4 @@
 
 - `EQUATION-NUMERIC-GOLDEN-TRACE-HARNESS1`: `0c494a66`
 - `EQUATION-NUMERIC-DECIMAL-PRECISION-SUBSTRATE1`: committed in this checkpoint.
+- `EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1`: committed in this checkpoint.

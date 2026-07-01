@@ -40,6 +40,7 @@ export type PolynomialRootDiagnostics = {
   rootCountAfterDedupe: number;
   clusteredRootCount: number;
   closeRootSeparationCount: number;
+  conditioningPasses: number;
   warningLines: string[];
   decimalRevalidation: DecimalRevalidationResult;
 };
@@ -128,8 +129,22 @@ function rootSeparationStats(roots: readonly ComplexValue[], tolerance: number) 
   };
 }
 
-function sortAndDedupeRoots(roots: ComplexValue[]) {
-  const sorted = roots
+function residualForDedupe(root: ComplexValue, coefficients?: readonly number[]) {
+  return coefficients ? complexAbs(evaluatePolynomial([...coefficients], root)) : 0;
+}
+
+function chooseDedupeRepresentative(
+  roots: readonly ComplexValue[],
+  coefficients?: readonly number[],
+) {
+  return roots.reduce((best, root) =>
+    residualForDedupe(root, coefficients) < residualForDedupe(best, coefficients)
+      ? root
+      : best);
+}
+
+function sortRoots(roots: readonly ComplexValue[]) {
+  return roots
     .map((root) => normalizeComplex(root))
     .sort((left, right) => {
       const leftReal = Number(left.re.toFixed(6));
@@ -140,14 +155,37 @@ function sortAndDedupeRoots(roots: ComplexValue[]) {
 
       return Number(left.im.toFixed(6)) - Number(right.im.toFixed(6));
     });
+}
 
-  return sorted.filter((root, index) => {
-    if (index === 0) {
-      return true;
+function sortAndDedupeRoots(
+  roots: ComplexValue[],
+  options: {
+    residualCoefficients?: readonly number[];
+  } = {},
+) {
+  const sorted = roots
+    .map((root) => normalizeComplex(root));
+  const deduped: ComplexValue[] = [];
+  let currentGroup: ComplexValue[] = [];
+
+  for (const root of sortRoots(sorted)) {
+    if (currentGroup.length === 0) {
+      currentGroup = [root];
+      continue;
     }
+    if (areComplexClose(root, currentGroup[currentGroup.length - 1], DEDUPE_EPSILON)) {
+      currentGroup.push(root);
+      continue;
+    }
+    deduped.push(chooseDedupeRepresentative(currentGroup, options.residualCoefficients));
+    currentGroup = [root];
+  }
 
-    return !areComplexClose(root, sorted[index - 1], DEDUPE_EPSILON);
-  }).map((root) => normalizeComplex(root, DEDUPE_EPSILON));
+  if (currentGroup.length > 0) {
+    deduped.push(chooseDedupeRepresentative(currentGroup, options.residualCoefficients));
+  }
+
+  return sortRoots(deduped).map((root) => normalizeComplex(root, DEDUPE_EPSILON));
 }
 
 function diagnosticsFor(input: {
@@ -156,6 +194,7 @@ function diagnosticsFor(input: {
   rootsBeforeDedupe: number;
   method: PolynomialRootDiagnostics['method'];
   iterations: number;
+  conditioningPasses: number;
 }) {
   const degree = input.coefficients.length - 1;
   const maxResidual = maxPolynomialResidual(input.coefficients, input.roots);
@@ -196,6 +235,7 @@ function diagnosticsFor(input: {
     rootCountAfterDedupe: input.roots.length,
     clusteredRootCount,
     closeRootSeparationCount: closeSeparationStats.closePairCount,
+    conditioningPasses: input.conditioningPasses,
     warningLines,
   };
 
@@ -219,6 +259,15 @@ function solveQuadratic(coefficients: number[]): ComplexValue[] {
     complexDiv(complexAdd(complex(-b, 0), sqrtDiscriminant), denominator),
     complexDiv(complexSub(complex(-b, 0), sqrtDiscriminant), denominator),
   ]);
+}
+
+function conditionRoots(coefficients: number[], roots: readonly ComplexValue[]) {
+  return roots.map((root) => {
+    const polished = polishRoot(coefficients, root);
+    return complexAbs(evaluatePolynomial(coefficients, polished)) <= complexAbs(evaluatePolynomial(coefficients, root))
+      ? polished
+      : root;
+  });
 }
 
 function solveLinear(coefficients: number[]): ComplexValue[] {
@@ -342,7 +391,8 @@ function solveWithAberthEhrlich(coefficients: number[]): PolynomialRootsResult {
     };
   }
 
-  const deduped = sortAndDedupeRoots(best.roots);
+  const conditioned = conditionRoots(monic, best.roots);
+  const deduped = sortAndDedupeRoots(conditioned, { residualCoefficients: monic });
   return {
     kind: 'success',
     roots: deduped,
@@ -352,6 +402,7 @@ function solveWithAberthEhrlich(coefficients: number[]): PolynomialRootsResult {
       rootsBeforeDedupe: best.roots.length,
       method: 'aberth-ehrlich',
       iterations: best.iterations,
+      conditioningPasses: 1,
     }),
   };
 }
@@ -388,6 +439,7 @@ export function solvePolynomialRoots({
         rootsBeforeDedupe: roots.length,
         method: 'linear',
         iterations: 1,
+        conditioningPasses: 0,
       }),
     };
   }
@@ -403,6 +455,7 @@ export function solvePolynomialRoots({
         rootsBeforeDedupe: roots.length,
         method: 'quadratic',
         iterations: 1,
+        conditioningPasses: 0,
       }),
     };
   }

@@ -56,6 +56,7 @@ describe('solvePolynomialRoots', () => {
     expect(realRoots).toHaveLength(1);
     expect(realRoots[0].re).toBeCloseTo(1.3007656097, 9);
     expect(result.diagnostics.method).toBe('aberth-ehrlich');
+    expect(result.diagnostics.conditioningPasses).toBe(1);
     expect(result.diagnostics.maxResidual).toBeLessThan(1e-8);
   });
 
@@ -88,6 +89,7 @@ describe('solvePolynomialRoots', () => {
     const formatted = result.roots.map((root) => `${root.re.toFixed(4)},${root.im.toFixed(4)}`);
     expect(formatted).toEqual(['-2.0000,0.0000', '1.0000,0.0000']);
     expect(result.diagnostics.rootCountBeforeDedupe).toBeGreaterThan(result.diagnostics.rootCountAfterDedupe);
+    expect(result.diagnostics.conditioningPasses).toBe(1);
     expect(result.diagnostics.warningLines.join(' ')).toContain('Repeated or tightly clustered');
   });
 
@@ -116,6 +118,7 @@ describe('solvePolynomialRoots', () => {
     }
 
     expect(result.diagnostics.coefficientScaleRatio).toBeGreaterThan(1e12);
+    expect(result.diagnostics.conditioningPasses).toBe(0);
     expect(result.diagnostics.warningLines.join(' ')).toContain('Large coefficient scale ratio');
     expect(result.diagnostics.warningLines.join(' ')).toContain('Higher precision');
     expect(result.diagnostics.decimalRevalidation.performed).toBe(true);
