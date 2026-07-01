@@ -29,6 +29,7 @@ import {
   buildTranscendentalNonElementaryCertificateFromProof,
   type TranscendentalNonElementaryCertificate,
 } from './result-shape';
+import { certificateUxDetailSections } from './certificate-ux';
 
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };
 const TWO: ExactScalar = { numerator: 2, denominator: 1 };
@@ -420,6 +421,14 @@ function depth2SpecialFunctionDetail(input: {
         'The quotient argument is affine in the selected variable and the denominator branch excludes zero.',
       ],
     },
+    ...certificateUxDetailSections({
+      inputFacts: input.profile.requiredFacts,
+      branchFacts: input.profile.branchFacts,
+      proofObligations: [{
+        summary: 'The named special-function derivative rule is the proof obligation used for readback verification.',
+        latex: derivativeLine,
+      }],
+    }),
     {
       title: 'Special-Function Readback',
       lineKinds: ['math', 'math', 'text'],
@@ -519,6 +528,14 @@ function depth2EiLiSpecialFunctionDetail(input: {
         'The real-domain branch rows intentionally avoid adding complex branch constants to the main answer.',
       ],
     },
+    ...certificateUxDetailSections({
+      inputFacts: input.profile.requiredFacts,
+      branchFacts: input.profile.branchFacts,
+      proofObligations: [{
+        summary: 'The named special-function derivative rule is the proof obligation used for readback verification.',
+        latex: derivativeLine,
+      }],
+    }),
     {
       title: 'Special-Function Readback',
       lineKinds: ['math', 'math', 'text'],

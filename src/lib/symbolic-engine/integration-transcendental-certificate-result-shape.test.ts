@@ -27,8 +27,14 @@ describe('transcendental Risch certificate result shape', () => {
     expect(certificate.detailSections.map((section) => section.title)).toEqual([
       'Non-Elementary Certificate',
       'Proof Scope',
+      'Input Facts',
+      'Branch Facts',
     ]);
     expect(certificate.detailSections[1].lines[0]).toContain('e^{');
+    expect(certificate.detailSections.find((section) => section.title === 'Input Facts')?.lines.join(' '))
+      .toContain('a\\ne0');
+    expect(certificate.detailSections.find((section) => section.title === 'Branch Facts')?.lines.join(' '))
+      .toContain('No real-branch split');
   });
 
   it('does not build certificates for elementary-owned affine exponentials', () => {

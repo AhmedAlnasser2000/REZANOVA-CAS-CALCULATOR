@@ -63,6 +63,10 @@ describe('transcendental special-function readback for quadratic exponentials', 
     expect(symbolic.exactLatex).toContain('a>0');
     expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
     expect(symbolic.detailSections.map((section) => section.title)).toContain('Non-Elementary Certificate');
+    expect(symbolic.detailSections.map((section) => section.title)).toContain('Input Facts');
+    expect(symbolic.detailSections.map((section) => section.title)).toContain('Proof Obligations');
+    expect(symbolic.detailSections.find((section) => section.title === 'Input Facts')?.lines.join(' '))
+      .toContain('a\\ne0');
   });
 
   it('honors arbitrary selected variables in symbolic casewise formulas', () => {
@@ -89,6 +93,10 @@ describe('transcendental special-function readback for Si/Ci quotient families',
     expect(derivativePresent.exactLatex).toBe(String.raw`\operatorname{Si}\left(2x+1\right)`);
     expect(plain.detailSections.map((section) => section.title)).toContain('Non-Elementary Certificate');
     expect(plain.detailSections.map((section) => section.title)).toContain('Special-Function Readback');
+    expect(plain.detailSections.map((section) => section.title)).toContain('Branch Facts');
+    expect(plain.detailSections.map((section) => section.title)).toContain('Proof Obligations');
+    expect(plain.detailSections.find((section) => section.title === 'Branch Facts')?.lines.join(' '))
+      .toContain('x\\ne0');
   });
 
   it('returns real-branch cosine-integral formulas for affine cosine quotients', () => {
@@ -123,6 +131,10 @@ describe('transcendental special-function readback for Ei/li quotient families',
     expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{Ei}\left(2x+1\right)`);
     expect(derivativePresent.exactLatex).toContain(String.raw`\operatorname{Ei}\left(2x+1\right)`);
     expect(plain.detailSections.map((section) => section.title)).toContain('Non-Elementary Certificate');
+    expect(plain.detailSections.map((section) => section.title)).toContain('Branch Facts');
+    expect(plain.detailSections.map((section) => section.title)).toContain('Proof Obligations');
+    expect(plain.detailSections.find((section) => section.title === 'Branch Facts')?.lines.join(' '))
+      .toContain('x\\ne0');
   });
 
   it('returns logarithmic-integral formulas for affine logarithmic reciprocals', () => {

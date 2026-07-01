@@ -8,6 +8,7 @@ import type {
   TranscendentalCertificateTowerProfile,
   TranscendentalCertificateTowerReady,
 } from './profile';
+import { certificateUxDetailSections } from './certificate-ux';
 
 export type TranscendentalNonElementaryCertificate = {
   kind: 'non-elementary-certificate';
@@ -66,6 +67,10 @@ function detailSectionsFor(profile: TranscendentalCertificateTowerReady): Displa
         'Special-function readback such as erf/erfi is intentionally deferred.',
       ],
     },
+    ...certificateUxDetailSections({
+      inputFacts: profile.requiredFacts,
+      branchFacts: [],
+    }),
   ];
 }
 

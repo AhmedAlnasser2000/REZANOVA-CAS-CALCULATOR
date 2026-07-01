@@ -167,6 +167,8 @@ Major gated milestone.
 
 This is not a Display schema change; it is producer/readback discipline for the certificate families.
 
+Status: implemented 2026-07-01 as producer-side certificate detail discipline. Certificate builders now add explicit `Input Facts`, `Branch Facts`, and `Proof Obligations` sections for exp-quadratic certificates and affine `Si/Ci` / `Ei/li` quotient special-function certificates. The change does not alter Display schemas, public Calculus result schemas, strategy labels, or dispatch behavior.
+
 ### 8. `TRANSCENDENTAL-DEPTH2-COMPOSITION-CERTIFICATES1`
 
 Major gated milestone.

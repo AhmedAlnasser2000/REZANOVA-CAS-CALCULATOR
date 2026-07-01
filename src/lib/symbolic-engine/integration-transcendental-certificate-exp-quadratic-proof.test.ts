@@ -35,12 +35,14 @@ describe('transcendental Risch exp-quadratic proof evidence', () => {
       expect(result.integrandDifferentiation.strategies).not.toContain('compute-engine');
       expect(result.requiredFacts).toEqual([]);
       expect(result.proofDetails.map((section) => section.title)).toEqual([
+        'Proof Obligations',
         'Certificate Proof Evidence',
         'Liouville Obstruction',
       ]);
-      expect(result.proofDetails[0]?.lines.join(' ')).toContain('auxiliary rational function');
+      expect(result.proofDetails[0]?.lines.join(' ')).toContain('auxiliary rational certificate');
       expect(result.proofDetails[0]?.lines.join(' ')).toContain('Required equation');
-      expect(result.proofDetails[1]?.lines.join(' ')).toContain('not a condition on the original input');
+      expect(result.proofDetails[1]?.lines.join(' ')).toContain('auxiliary rational function');
+      expect(result.proofDetails[2]?.lines.join(' ')).toContain('not a condition on the original input');
       expect(result.liouvilleEquationLatex).toContain('= 1');
     }
   });

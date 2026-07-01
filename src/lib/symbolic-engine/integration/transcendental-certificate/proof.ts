@@ -16,6 +16,7 @@ import {
   type TranscendentalCertificateTowerStop,
   type TranscendentalCertificateTowerStopReason,
 } from './profile';
+import { certificateProofObligationSection } from './certificate-ux';
 
 export type ExpQuadraticCertificateProofStopReason =
   | TranscendentalCertificateTowerStopReason
@@ -124,6 +125,10 @@ function proofDetailsFor(
     `it would require an auxiliary rational function r(${profile.variable}).`,
   ].join(' ');
   return [
+    certificateProofObligationSection([{
+      summary: `Rule out an auxiliary rational certificate r(${profile.variable}) in the stated exponential field.`,
+      latex: liouvilleEquationLatex,
+    }]),
     {
       title: 'Certificate Proof Evidence',
       lines: [
