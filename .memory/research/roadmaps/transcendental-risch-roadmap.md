@@ -113,6 +113,8 @@ Harden the constant-field and fact layer that formal transcendental Risch needs:
 
 Textbook elementary families such as `z*(ln(z))^2` should be deferred to the later benchmark-driven batch unless a formal proof milestone needs them as regression consumers.
 
+Status: implemented 2026-07-01 as behavior-invisible infrastructure. The constant-field substrate classifies exact-rational and target-free symbolic constants relative to the selected variable, translates denominator/nonzero/positive/negative/nonunit/branch/interval facts into existing exact supplement entries, and stops on decimals, branch-sensitive carriers, selected-variable-dependent constants, unsupported coefficient-side transcendental carriers, zero denominators, and unrepresentable facts. No Equation consumer, dispatch adoption, or public schema change was added.
+
 ### 4. `TRANSCENDENTAL-RDE-SOLVER-CORE1`
 
 Major gated milestone.
