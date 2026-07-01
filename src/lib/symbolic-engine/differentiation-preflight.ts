@@ -69,6 +69,8 @@ const DIRECT_ARITY = new Map<string, number | 'variadic'>([
   ['Ei', 1],
   ['ei', 1],
   ['li', 1],
+  ['FresnelS', 1],
+  ['FresnelC', 1],
 ]);
 
 const HARD_UNSUPPORTED_HEADS = new Set([

@@ -125,3 +125,23 @@
   - Result: pass.
 - `git diff --check`
   - Result: pass.
+
+## SPECIAL-FUNCTION-FRESNEL-SUBSTRATE1
+
+- Gate label: backend
+- Focused tests:
+  - `npx vitest run src/lib/symbolic-engine/differentiation.test.ts src/lib/symbolic-engine/differentiation-preflight.test.ts src/lib/symbolic-engine/integration-transcendental-certificate-proof-diff.test.ts src/lib/symbolic-engine/integration-transcendental-special-functions.test.ts`
+  - Result: pass, 4 files / 30 tests.
+- Regression tests:
+  - `npx vitest run src/lib/symbolic-engine/integration-risch-norman-depth2-substitution.test.ts src/lib/symbolic-engine/integration-transcendental-depth2-profile.test.ts src/lib/symbolic-engine/integration-transcendental-special-functions.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/engine/core.test.ts src/lib/calculus/workspace/integrals.test.ts`
+  - Result: pass, 6 files / 107 tests.
+- `npx tsc -b --pretty false`
+  - Result: blocked by unrelated Surface Protocol lane errors in `src/lib/surface-protocol/dto.test.ts` referencing `RuntimeAdvisories.advisories` and `src/lib/surface-protocol/spec-examples.test.ts` missing `node:fs` type resolution.
+  - Action: not edited or staged for this integration milestone.
+- `node tools/validate-file-sizes.mjs`
+  - Result: blocked by unrelated dirty app shell work; `src/AppMain.tsx` is 3449 lines against its 3357-line cap.
+  - Action: not edited or staged for this integration milestone.
+- `npm run test:memory-protocol`
+  - Result: pass.
+- `git diff --check`
+  - Result: pass.

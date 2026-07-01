@@ -70,6 +70,24 @@ describe('symbolic-engine differentiation', () => {
     expect(JSON.stringify(internalLi.ast)).toContain('"Ln"')
   })
 
+  it('supports exact Fresnel special-function derivatives', () => {
+    const fresnelS = differentiateLatexWithMetadata('\\operatorname{FresnelS}(2x+1)', 'x')
+    const fresnelC = differentiateLatexWithMetadata('\\operatorname{FresnelC}(2x+1)', 'x')
+    const internalS = differentiateAstWithMetadata(['FresnelS', 'x'], 'x', { computeEngineFallback: 'deny' })
+    const internalC = differentiateAstWithMetadata(['FresnelC', 'x'], 'x', { computeEngineFallback: 'deny' })
+
+    expect(fresnelS.strategies).not.toContain('compute-engine')
+    expect(fresnelS.latex).toContain('\\sin')
+    expect(fresnelS.latex).toContain('\\pi')
+    expect(fresnelC.strategies).not.toContain('compute-engine')
+    expect(fresnelC.latex).toContain('\\cos')
+    expect(fresnelC.latex).toContain('\\pi')
+    expect(JSON.stringify(internalS.ast)).toContain('"Sin"')
+    expect(JSON.stringify(internalS.ast)).toContain('"Pi"')
+    expect(JSON.stringify(internalC.ast)).toContain('"Cos"')
+    expect(JSON.stringify(internalC.ast)).toContain('"Pi"')
+  })
+
   it('supports direct trig reciprocal derivative families', () => {
     expect(differentiateLatex('\\tan(2x+1)', 'x')).toContain('\\sec')
     expect(differentiateLatex('\\cot(2x+1)', 'x')).toContain('\\csc')

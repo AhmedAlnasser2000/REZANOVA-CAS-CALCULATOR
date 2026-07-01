@@ -50,6 +50,8 @@ const FUNCTION_POWER_HEADS = new Set([
   'Ei',
   'ei',
   'li',
+  'FresnelS',
+  'FresnelC',
 ]);
 
 type DifferentiationContext = {
@@ -521,6 +523,28 @@ function differentiateNodeInternal(
       'Divide',
       childPrime,
       ['Ln', children[0]],
+    ]);
+  }
+
+  if (head === 'FresnelS' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Multiply',
+      ['Sin', ['Divide', ['Multiply', 'Pi', ['Power', children[0], 2]], 2]],
+      childPrime,
+    ]);
+  }
+
+  if (head === 'FresnelC' && children.length === 1) {
+    const childPrime = differentiateNodeInternal(children[0], variable, context);
+    markChainRuleIfNeeded(context, childPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Multiply',
+      ['Cos', ['Divide', ['Multiply', 'Pi', ['Power', children[0], 2]], 2]],
+      childPrime,
     ]);
   }
 

@@ -26,6 +26,8 @@ describe('differentiation preflight', () => {
     const ci = classifyDerivativePreflight(node('\\operatorname{Ci}(x)'), 'x');
     const ei = classifyDerivativePreflight(node('\\operatorname{Ei}(x)'), 'x');
     const li = classifyDerivativePreflight(node('\\operatorname{li}(x)'), 'x');
+    const fresnelS = classifyDerivativePreflight(node('\\operatorname{FresnelS}(x)'), 'x');
+    const fresnelC = classifyDerivativePreflight(node('\\operatorname{FresnelC}(x)'), 'x');
 
     expect(result.kind).toBe('direct-symbolic');
     expect(erfi.kind).toBe('direct-symbolic');
@@ -33,6 +35,8 @@ describe('differentiation preflight', () => {
     expect(ci.kind).toBe('direct-symbolic');
     expect(ei.kind).toBe('direct-symbolic');
     expect(li.kind).toBe('direct-symbolic');
+    expect(fresnelS.kind).toBe('direct-symbolic');
+    expect(fresnelC.kind).toBe('direct-symbolic');
     expect(result.computeEngineFallbackHeads).toEqual([]);
     expect(result.unsupportedHeads).toEqual([]);
   });

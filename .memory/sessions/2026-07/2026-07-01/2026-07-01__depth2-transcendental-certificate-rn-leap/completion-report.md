@@ -56,3 +56,10 @@
 - The helper consumes the depth-2 tower profiler for elementary nested forms such as `e^x e^(e^x)` and `cos(x)e^(sin(x))`, and directly recognizes `e^x/(1+e^x)` and `1/(x ln(x))`.
 - Results keep the public strategy label `u-substitution`, use exact rule-proof verification, and do not introduce a public RN/Risch strategy or schema change.
 - Focused tests live in `src/lib/symbolic-engine/integration-risch-norman-depth2-substitution.test.ts` so the large integration regression file stays under the file-size ratchet.
+
+## Milestone 7 - SPECIAL-FUNCTION-FRESNEL-SUBSTRATE1
+
+- Added behavior-invisible exact differentiation support for `FresnelS(u)` and `FresnelC(u)` using the standard convention `d FresnelS(u)/dx = sin(pi*u^2/2)u'` and `d FresnelC(u)/dx = cos(pi*u^2/2)u'`.
+- Added preflight and certificate proof-local differentiation support for the same heads without enabling live integration adoption.
+- `sin(x^2)` and `cos(x^2)` remain controlled unsupported/deferred as integration inputs; future live adoption still needs certificate/readback policy, scaling normalization, and real/complex branch decisions.
+- Readiness detail is recorded in `.memory/research/readiness/special-function-fresnel-substrate1-2026-07-01.md`.

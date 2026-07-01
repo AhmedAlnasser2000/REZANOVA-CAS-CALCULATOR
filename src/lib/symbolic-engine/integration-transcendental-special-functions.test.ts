@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
+import { resolveSymbolicIntegralFromLatex } from './integration';
 import { proveExpQuadraticNonElementary } from './integration/transcendental-certificate/proof';
 import {
   buildEiLiAffineSpecialFunctionCertificate,
@@ -138,5 +139,15 @@ describe('transcendental special-function readback for Ei/li quotient families',
     expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{li}\left(2x+1\right)`);
     expect(shifted.exactLatex).toContain('2x+1>1');
     expect(shifted.exactLatex).toContain('0<2x+1<1');
+  });
+});
+
+describe('transcendental Fresnel readiness boundary', () => {
+  it('keeps quadratic sine/cosine Fresnel integrals deferred for now', () => {
+    const sine = resolveSymbolicIntegralFromLatex('\\sin(x^2)');
+    const cosine = resolveSymbolicIntegralFromLatex('\\cos(x^2)');
+
+    expect(sine.kind).toBe('error');
+    expect(cosine.kind).toBe('error');
   });
 });

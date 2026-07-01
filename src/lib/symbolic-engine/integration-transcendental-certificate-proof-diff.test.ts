@@ -65,8 +65,10 @@ describe('transcendental Risch certificate proof differentiation', () => {
     const ci = diff('\\operatorname{Ci}(2x+1)');
     const ei = diff('\\operatorname{Ei}(2x+1)');
     const li = diff('\\operatorname{li}(2x+1)');
+    const fresnelS = diff('\\operatorname{FresnelS}(2x+1)');
+    const fresnelC = diff('\\operatorname{FresnelC}(2x+1)');
 
-    for (const result of [logLog, sineRatio, erf, erfi, si, ci, ei, li]) {
+    for (const result of [logLog, sineRatio, erf, erfi, si, ci, ei, li, fresnelS, fresnelC]) {
       expect(result.kind).toBe('success');
       if (result.kind !== 'success') {
         throw new Error('expected proof-safe derivative');
@@ -96,7 +98,7 @@ describe('transcendental Risch certificate proof differentiation', () => {
       proofSafe: false,
       reason: 'inexact-number',
     });
-    expect(differentiateForCertificateProof(['FresnelS', 'x'], 'x')).toMatchObject({
+    expect(differentiateForCertificateProof(['Erfc', 'x'], 'x')).toMatchObject({
       kind: 'stop',
       proofSafe: false,
       reason: 'unsupported-head',
