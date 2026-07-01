@@ -2,7 +2,9 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 import {
   algebraicRootLogTermLatex,
+  createAlgebraicConstantDescriptor,
   createAlgebraicRootDescriptor,
+  createAlgebraicTraceEvidence,
 } from './algebraic-root-descriptor';
 import { parseSymbolicPolynomial } from './symbolic-polynomial';
 
@@ -54,6 +56,33 @@ describe('algebraic root descriptors', () => {
 
     expect(term).toBe('2\\cdot \\alpha_{1}\\cdot\\ln\\left|x-\\alpha_{1}\\right|');
     expect(term).not.toMatch(/RootOf|rootof/i);
+  });
+
+  it('describes algebraic constants and trace readback without raw RootOf leakage', () => {
+    const descriptor = createAlgebraicRootDescriptor(polynomial('λ^3+λ+1'));
+    expect(descriptor.kind).toBe('success');
+    if (descriptor.kind !== 'success') {
+      throw new Error('expected descriptor');
+    }
+
+    const constant = createAlgebraicConstantDescriptor(descriptor, {
+      baseFieldLatex: '\\mathbb{Q}',
+    });
+    const trace = createAlgebraicTraceEvidence(descriptor, {
+      baseFieldLatex: '\\mathbb{Q}',
+      traceBodyLatex: '\\alpha\\cdot\\ln\\left|S\\left(\\alpha,x\\right)\\right|',
+      expandedTermsLatex: descriptor.roots.map((root) =>
+        algebraicRootLogTermLatex(root, `S_{${root.index}}\\left(x\\right)`)),
+    });
+
+    expect(constant.extensionFieldLatex).toBe('\\mathbb{Q}\\left(\\alpha\\right)');
+    expect(trace.traceLatex).toContain('\\operatorname{Tr}_{\\mathbb{Q}\\left(\\alpha\\right)/\\mathbb{Q}}');
+    expect(trace.expandedTraceLatex).toContain('\\alpha_{1}\\cdot\\ln');
+    expect([
+      ...constant.definitionLatex,
+      ...trace.definitionLatex,
+      ...trace.detailSection.lines,
+    ].join('\n')).not.toMatch(/RootOf|rootof/i);
   });
 
   it('stops on constants, zero polynomials, and descriptor degree over cap', () => {

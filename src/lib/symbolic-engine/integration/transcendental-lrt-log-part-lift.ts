@@ -2,6 +2,11 @@ import {
   constructRischNormanLrtLogPart,
   type RischNormanLrtLogPartStopReason,
 } from './risch-norman/lrt-log-part';
+import {
+  algebraicRootLogTermLatex,
+  createAlgebraicTraceEvidence,
+  type AlgebraicTraceEvidence,
+} from '../primitives/algebraic-root-descriptor';
 import { TRANSCENDENTAL_TOWER_FORMAL_CAPS } from './transcendental-tower-normal-form';
 
 export type TranscendentalLrtLogPartLiftSuccess = {
@@ -13,6 +18,7 @@ export type TranscendentalLrtLogPartLiftSuccess = {
   definitionsLatex: string[];
   resultantLatex: string;
   descriptorDegree: number;
+  algebraicTraceEvidence: AlgebraicTraceEvidence;
   proofSteps: string[];
   capEvidence: {
     polynomialDegreeCap: number;
@@ -105,6 +111,12 @@ export function liftTranscendentalRationalLogPartLrt(
     definitionsLatex: lrt.definitionsLatex,
     resultantLatex: lrt.resultantLatex,
     descriptorDegree: lrt.rootDescriptor.degree,
+    algebraicTraceEvidence: createAlgebraicTraceEvidence(lrt.rootDescriptor, {
+      familyId: 'transcendental-lrt-logarithmic-completion',
+      traceBodyLatex: `\\alpha\\cdot\\ln\\left|S\\left(\\alpha,${variable}\\right)\\right|`,
+      expandedTermsLatex: lrt.rootDescriptor.roots.map((root) =>
+        algebraicRootLogTermLatex(root, `S_{${root.index}}\\left(${variable}\\right)`)),
+    }),
     proofSteps: [
       lrt.proofEvidence.resultantDefinitionLatex,
       ...lrt.rootDescriptor.definitionLatex,

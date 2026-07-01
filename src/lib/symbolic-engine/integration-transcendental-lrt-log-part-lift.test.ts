@@ -33,8 +33,11 @@ describe('transcendental Risch LRT logarithmic-part lift', () => {
     expect(result.descriptorDegree).toBeLessThanOrEqual(8);
     expect(result.exactLatex).toContain('\\alpha_{1}\\cdot\\ln');
     expect(result.proofSteps[0]).toContain('\\operatorname{Res}_{x}');
+    expect(result.algebraicTraceEvidence.traceLatex).toContain('\\operatorname{Tr}_');
+    expect(result.algebraicTraceEvidence.expandedTraceLatex).toContain('\\alpha_{1}\\cdot\\ln');
     expect(result.ownership.method).toBe('integration-risch-norman-owned');
     expect(allText(result)).not.toMatch(/RootOf|rootof/i);
+    expect(result.algebraicTraceEvidence.definitionLatex.join('\n')).not.toMatch(/RootOf|rootof/i);
 
     const liveDefault = tryRischNormanLrtRationalIntegrationRule(
       node('\\frac{1}{x^4+x+1}'),

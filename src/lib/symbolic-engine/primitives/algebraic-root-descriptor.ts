@@ -38,6 +38,36 @@ export type AlgebraicRootDescriptor = {
   };
 };
 
+export type AlgebraicConstantDescriptor = {
+  kind: 'success';
+  familyId: string;
+  baseFieldLatex: string;
+  generatorLatex: string;
+  extensionFieldLatex: string;
+  definingEquationLatex: string;
+  degree: number;
+  definitionLatex: string[];
+  detailSection: {
+    title: string;
+    lines: string[];
+  };
+};
+
+export type AlgebraicTraceEvidence = {
+  kind: 'success';
+  familyId: string;
+  baseFieldLatex: string;
+  extensionFieldLatex: string;
+  generatorLatex: string;
+  traceLatex: string;
+  expandedTraceLatex: string;
+  definitionLatex: string[];
+  detailSection: {
+    title: string;
+    lines: string[];
+  };
+};
+
 export type AlgebraicRootDescriptorResult =
   | AlgebraicRootDescriptor
   | AlgebraicRootDescriptorStop;
@@ -60,6 +90,13 @@ function rootSymbol(prefix: string, index: number) {
 
 function rawRootOfLeaks(lines: string[]) {
   return lines.some((line) => /RootOf|rootof/i.test(line));
+}
+
+function joinsRootFree(lines: string[]) {
+  if (rawRootOfLeaks(lines)) {
+    throw new Error('Algebraic descriptor readback must not leak RootOf text');
+  }
+  return lines;
 }
 
 export function createAlgebraicRootDescriptor(
@@ -123,4 +160,84 @@ export function algebraicRootLogTermLatex(
     ? `${coefficientLatex}\\cdot ${root.symbolLatex}`
     : root.symbolLatex;
   return `${rootFactor}\\cdot\\ln\\left|${argumentLatex}\\right|`;
+}
+
+export function createAlgebraicConstantDescriptor(
+  descriptor: AlgebraicRootDescriptor,
+  options: {
+    baseFieldLatex?: string;
+    generatorLatex?: string;
+    familyId?: string;
+  } = {},
+): AlgebraicConstantDescriptor {
+  const baseFieldLatex = options.baseFieldLatex ?? '\\mathbb{K}';
+  const generatorLatex = options.generatorLatex ?? '\\alpha';
+  const familyId = options.familyId ?? `${descriptor.familyId}-algebraic-constant`;
+  const extensionFieldLatex = `${baseFieldLatex}\\left(${generatorLatex}\\right)`;
+  const definingEquationLatex =
+    `${descriptor.polynomialLatex}\\big|_{${descriptor.variableLatex}=${generatorLatex}}=0`;
+  const definitionLatex = joinsRootFree([
+    `${generatorLatex}\\text{ is an algebraic constant over }${baseFieldLatex}`,
+    `${generatorLatex}\\text{ satisfies }${definingEquationLatex}`,
+    `${extensionFieldLatex}\\text{ is the descriptor field used for trace readback}`,
+  ]);
+
+  return {
+    kind: 'success',
+    familyId,
+    baseFieldLatex,
+    generatorLatex,
+    extensionFieldLatex,
+    definingEquationLatex,
+    degree: descriptor.degree,
+    definitionLatex,
+    detailSection: {
+      title: 'Algebraic Constant Descriptor',
+      lines: definitionLatex,
+    },
+  };
+}
+
+export function createAlgebraicTraceEvidence(
+  descriptor: AlgebraicRootDescriptor,
+  options: {
+    baseFieldLatex?: string;
+    generatorLatex?: string;
+    traceBodyLatex: string;
+    expandedTermsLatex: string[];
+    familyId?: string;
+  },
+): AlgebraicTraceEvidence {
+  const constant = createAlgebraicConstantDescriptor(descriptor, {
+    baseFieldLatex: options.baseFieldLatex,
+    generatorLatex: options.generatorLatex,
+    familyId: options.familyId ? `${options.familyId}-constant` : undefined,
+  });
+  const familyId = options.familyId ?? `${descriptor.familyId}-trace`;
+  const traceLatex =
+    `\\operatorname{Tr}_{${constant.extensionFieldLatex}/${constant.baseFieldLatex}}\\left(${options.traceBodyLatex}\\right)`;
+  const expandedTraceLatex = options.expandedTermsLatex.join('+');
+  const definitionLatex = joinsRootFree([
+    ...constant.definitionLatex,
+    traceLatex,
+    expandedTraceLatex,
+  ]);
+
+  return {
+    kind: 'success',
+    familyId,
+    baseFieldLatex: constant.baseFieldLatex,
+    extensionFieldLatex: constant.extensionFieldLatex,
+    generatorLatex: constant.generatorLatex,
+    traceLatex,
+    expandedTraceLatex,
+    definitionLatex,
+    detailSection: {
+      title: 'Algebraic Trace Readback',
+      lines: [
+        ...constant.detailSection.lines,
+        `${traceLatex}=${expandedTraceLatex}`,
+      ],
+    },
+  };
 }
