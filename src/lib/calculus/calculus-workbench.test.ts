@@ -21,6 +21,9 @@ describe('calculus workbench builders', () => {
     expect(buildDerivativeLatex('t^5', 't', 'd^3/dt^3')).toBe(
       '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
     );
+    expect(buildDerivativeLatex('d^4/dt^4(sin(t^2)+a*t)')).toBe(
+      '\\frac{d^{4}}{dt^{4}}\\left(sin(t^2)+a*t\\right)',
+    );
     expect(buildDerivativeLatex('x^2', 'xy')).toBe('');
   });
 
@@ -33,6 +36,9 @@ describe('calculus workbench builders', () => {
     );
     expect(buildDerivativeAtPointLatex('t^5', '3', 't', 'd^3/dt^3')).toBe(
       '\\left.\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)\\right|_{t=3}',
+    );
+    expect(buildDerivativeAtPointLatex('d^2/dx^2(x^3)', '2')).toBe(
+      '\\left.\\frac{d^{2}}{dx^{2}}\\left(x^3\\right)\\right|_{x=2}',
     );
     expect(buildDerivativeAtPointLatex('\\theta^2', '3', 'theta')).toBe(
       '\\left.\\frac{d}{d\\theta}\\left(\\theta^2\\right)\\right|_{\\theta=3}',

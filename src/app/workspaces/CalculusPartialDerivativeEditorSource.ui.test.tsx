@@ -47,7 +47,7 @@ async function openDerivativeStepsCard() {
 }
 
 describe('Calculus partial derivative editor source', () => {
-  it('edits partial derivative bodies through the main editor and uses the selected variable', async () => {
+  it('edits natural partial derivative requests through the main editor', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
@@ -57,20 +57,12 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.getByTestId('calculus-operator-rail')).toBeInTheDocument();
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂/∂x');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(x, ...)');
-    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('Differentiate with respect to');
-    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('Written');
-    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('Applied');
-    expect(screen.getByTestId('calculus-partial-derivative-target')).toBeInTheDocument();
+    expect(screen.queryByTestId('calculus-partial-derivative-target')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
-    const targetInput = screen.getByTestId('calculus-partial-derivative-target-input');
-    await user.clear(targetInput);
-    await user.type(targetInput, 'partial/partial y');
-
+    setMathFieldLatex('main-editor', '∂/∂y(x^2y+y^3)');
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂/∂y');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(y, ...)');
-
-    setMathFieldLatex('main-editor', 'x^2y+y^3');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();
@@ -85,7 +77,7 @@ describe('Calculus partial derivative editor source', () => {
       '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
     );
 
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'x^2y+y^3');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '∂/∂y(x^2y+y^3)');
     expect(fireEvent.keyDown(screen.getByTestId('main-editor'), { key: 'Enter' })).toBe(false);
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());
@@ -102,22 +94,17 @@ describe('Calculus partial derivative editor source', () => {
     expect(rawLatex).toContain('D_{1}=x^2+3y^2');
   });
 
-  it('previews and evaluates mixed partial operators from the rail', async () => {
+  it('previews and evaluates mixed partial requests from the editor', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
     await openCalculusTool(user, 'Derivatives', 'Partial Derivative');
 
-    const operatorInput = screen.getByTestId('calculus-partial-derivative-target-input');
-    fireEvent.change(operatorInput, {
-      target: { value: '\\frac{\\partial^3}{\\partial x\\partial y^2}' },
-    });
-
+    setMathFieldLatex(
+      'main-editor',
+      '\\frac{\\partial^3}{\\partial x\\partial y^2}\\left(x^3y^2+z\\right)',
+    );
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂³/∂x∂y²');
-    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('x, y^2');
-    expect(screen.getByTestId('calculus-partial-derivative-target-readback')).toHaveTextContent('y → y → x');
-
-    setMathFieldLatex('main-editor', 'x^3y^2+z');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();

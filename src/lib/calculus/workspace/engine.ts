@@ -26,9 +26,10 @@ import {
   storedValueReadbackSections,
 } from '../../algebra/variable-memory';
 import {
-  buildDerivativeAtPointLatex,
-  buildDerivativeLatex,
-} from '../calculus-workbench';
+  formatSignedNumberInput,
+  parseSignedNumberInput,
+} from '../../numeric/signed-number';
+import { buildDerivativeLatex } from '../calculus-workbench';
 import {
   buildCalculusDerivativeStepsDetail,
   evaluateCalculusHigherOrderDerivative,
@@ -36,10 +37,14 @@ import {
   evaluateCalculusMixedPartialDerivative,
 } from './derivatives';
 import {
+  buildDerivativeAtPointRequestLatex,
+  buildDerivativeRequestLatex,
   firstOrderDerivativeOperator,
   parseDerivativeOperator,
   type DerivativeOperatorKind,
+  type DerivativeOperatorSpec,
 } from '../derivative-operator';
+import { parseNaturalDerivativeRequest } from '../derivative-request';
 import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
 import type {
@@ -192,6 +197,59 @@ function calculusOperatorForState(
     : firstOrderDerivativeOperator(kind, variable);
 }
 
+type ParsedCalculusDerivativeInput =
+  | {
+      ok: true;
+      bodyLatex: string;
+      operator: DerivativeOperatorSpec;
+      canonicalLatex: string;
+    }
+  | { ok: false; error: string };
+
+function calculusDerivativeInputForState(
+  kind: DerivativeOperatorKind,
+  bodyLatex: string,
+  variable: string | undefined,
+  operatorLatex: string | undefined,
+): ParsedCalculusDerivativeInput {
+  const natural = parseNaturalDerivativeRequest(bodyLatex, kind);
+  if (natural.ok) {
+    return {
+      ok: true,
+      bodyLatex: natural.request.bodyLatex,
+      operator: natural.request.operator,
+      canonicalLatex: natural.request.canonicalLatex,
+    };
+  }
+  if (natural.looksLikeDerivativeRequest) {
+    return { ok: false, error: natural.error };
+  }
+
+  const operator = calculusOperatorForState(kind, variable, operatorLatex);
+  if (!operator.ok) {
+    return { ok: false, error: operator.error };
+  }
+
+  const canonicalLatex = kind === 'derivative'
+    ? buildDerivativeLatex(bodyLatex, variable, operatorLatex)
+    : buildDerivativeRequestLatex(bodyLatex.trim(), operator.operator);
+  if (!canonicalLatex) {
+    return { ok: false, error: 'Enter an expression before evaluating the derivative.' };
+  }
+
+  return {
+    ok: true,
+    bodyLatex,
+    operator: operator.operator,
+    canonicalLatex,
+  };
+}
+
+function normalizePointDraft(pointLatex: string) {
+  const parsed = parseSignedNumberInput(pointLatex);
+  return parsed === null ? '' : formatSignedNumberInput(parsed);
+}
+
 function withDerivativeSteps(
   outcome: DisplayOutcome,
   detailSection: DisplayDetailSection | undefined,
@@ -229,33 +287,33 @@ export async function runCalculusWorkspaceMode(
   switch (request.screen) {
     case 'derivative': {
       const derivative = request.derivative ?? { bodyLatex: '' };
-      const operator = calculusOperatorForState('derivative', derivative.variable, derivative.operatorLatex);
-      if (!operator.ok) {
-        outcome = { kind: 'error', title: 'Derivative', error: operator.error, warnings: [] };
-        break;
-      }
-      const latex = buildDerivativeLatex(derivative.bodyLatex, derivative.variable, derivative.operatorLatex);
-      if (!latex) {
+      const derivativeInput = calculusDerivativeInputForState(
+        'derivative',
+        derivative.bodyLatex,
+        derivative.variable,
+        derivative.operatorLatex,
+      );
+      if (!derivativeInput.ok) {
         outcome = {
           kind: 'error',
           title: 'Derivative',
-          error: 'Enter an expression before evaluating the derivative.',
+          error: derivativeInput.error,
           warnings: [],
         };
         break;
       }
-      if (operator.operator.order > 1) {
-        const variable = operator.operator.writtenFactors[0]?.variable ?? derivative.variable ?? 'x';
+      if (derivativeInput.operator.order > 1) {
+        const variable = derivativeInput.operator.writtenFactors[0]?.variable ?? derivative.variable ?? 'x';
         setProtectedDescriptions([variable], 'the derivative variable');
         outcome = toOutcome('Derivative', evaluateCalculusHigherOrderDerivative({
-          bodyLatex: substituteBody(derivative.bodyLatex, [variable]),
-          operator: operator.operator,
+          bodyLatex: substituteBody(derivativeInput.bodyLatex, [variable]),
+          operator: derivativeInput.operator,
         }));
       } else {
         outcome = withDerivativeSteps(
           runCalculateMode({
             action: 'evaluate',
-            latex,
+            latex: derivativeInput.canonicalLatex,
             calculateScreen: 'derivative',
             angleUnit: request.angleUnit ?? 'rad',
             outputStyle: request.outputStyle ?? 'exact',
@@ -264,8 +322,8 @@ export async function runCalculusWorkspaceMode(
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
           }),
           buildCalculusDerivativeStepsDetail({
-            bodyLatex: derivative.bodyLatex,
-            operator: operator.operator,
+            bodyLatex: derivativeInput.bodyLatex,
+            operator: derivativeInput.operator,
           }),
         );
       }
@@ -273,20 +331,21 @@ export async function runCalculusWorkspaceMode(
     }
     case 'derivativePoint': {
       const derivativePoint = request.derivativePoint ?? { bodyLatex: '', point: '' };
-      const operator = calculusOperatorForState(
+      const derivativeInput = calculusDerivativeInputForState(
         'derivative',
+        derivativePoint.bodyLatex,
         derivativePoint.variable,
         derivativePoint.operatorLatex,
       );
-      if (!operator.ok) {
-        outcome = { kind: 'error', title: 'Derivative at Point', error: operator.error, warnings: [] };
+      if (!derivativeInput.ok) {
+        outcome = { kind: 'error', title: 'Derivative at Point', error: derivativeInput.error, warnings: [] };
         break;
       }
-      const latex = buildDerivativeAtPointLatex(
-        derivativePoint.bodyLatex,
-        derivativePoint.point,
-        derivativePoint.variable,
-        derivativePoint.operatorLatex,
+      const normalizedPoint = normalizePointDraft(derivativePoint.point);
+      const latex = buildDerivativeAtPointRequestLatex(
+        derivativeInput.bodyLatex,
+        normalizedPoint,
+        derivativeInput.operator,
       );
       if (!latex) {
         outcome = {
@@ -297,13 +356,13 @@ export async function runCalculusWorkspaceMode(
         };
         break;
       }
-      if (operator.operator.order > 1) {
-        const variable = operator.operator.writtenFactors[0]?.variable ?? derivativePoint.variable ?? 'x';
+      if (derivativeInput.operator.order > 1) {
+        const variable = derivativeInput.operator.writtenFactors[0]?.variable ?? derivativePoint.variable ?? 'x';
         setProtectedDescriptions([variable], 'the derivative variable');
         outcome = toOutcome('Derivative at Point', evaluateCalculusHigherOrderDerivativeAtPoint({
-          bodyLatex: substituteBody(derivativePoint.bodyLatex, [variable]),
-          pointLatex: derivativePoint.point,
-          operator: operator.operator,
+          bodyLatex: substituteBody(derivativeInput.bodyLatex, [variable]),
+          pointLatex: normalizedPoint,
+          operator: derivativeInput.operator,
         }));
       } else {
         outcome = withDerivativeSteps(
@@ -318,9 +377,9 @@ export async function runCalculusWorkspaceMode(
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
           }),
           buildCalculusDerivativeStepsDetail({
-            bodyLatex: derivativePoint.bodyLatex,
-            operator: operator.operator,
-            pointLatex: derivativePoint.point,
+            bodyLatex: derivativeInput.bodyLatex,
+            operator: derivativeInput.operator,
+            pointLatex: normalizedPoint,
           }),
         );
       }
@@ -403,41 +462,42 @@ export async function runCalculusWorkspaceMode(
       break;
     }
     case 'partialDerivative': {
-      const operator = calculusOperatorForState(
+      const partialInput = calculusDerivativeInputForState(
         'partial',
+        request.partialDerivative.bodyLatex,
         request.partialDerivative.variable,
         request.partialDerivative.operatorLatex,
       );
-      if (!operator.ok) {
+      if (!partialInput.ok) {
         outcome = {
           kind: 'error',
           title: 'Partial Derivative',
-          error: operator.error,
+          error: partialInput.error,
           warnings: [],
         };
         break;
       }
-      if (operator.operator.order > 1) {
-        const partialVariables = [...new Set(operator.operator.appliedPath)];
+      if (partialInput.operator.order > 1) {
+        const partialVariables = [...new Set(partialInput.operator.appliedPath)];
         setProtectedDescriptions(partialVariables, 'a partial derivative variable');
         outcome = toOutcome('Partial Derivative', evaluateCalculusMixedPartialDerivative({
-          bodyLatex: substituteBody(request.partialDerivative.bodyLatex, partialVariables),
-          operator: operator.operator,
+          bodyLatex: substituteBody(partialInput.bodyLatex, partialVariables),
+          operator: partialInput.operator,
         }));
         break;
       }
-      const partialVariable = operator.operator.writtenFactors[0]?.variable ?? request.partialDerivative.variable;
+      const partialVariable = partialInput.operator.writtenFactors[0]?.variable ?? request.partialDerivative.variable;
       setProtectedDescriptions([partialVariable], 'the partial derivative variable');
       const state = {
         ...request.partialDerivative,
         variable: partialVariable,
-        bodyLatex: substituteBody(request.partialDerivative.bodyLatex, [partialVariable]),
+        bodyLatex: substituteBody(partialInput.bodyLatex, [partialVariable]),
       };
       outcome = withDerivativeSteps(
         toOutcome('Partial Derivative', evaluateCalculusPartialDerivative(state)),
         buildCalculusDerivativeStepsDetail({
           bodyLatex: state.bodyLatex,
-          operator: operator.operator,
+          operator: partialInput.operator,
         }),
       );
       break;

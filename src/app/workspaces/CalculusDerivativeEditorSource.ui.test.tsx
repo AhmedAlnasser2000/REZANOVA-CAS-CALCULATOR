@@ -52,7 +52,7 @@ async function openDerivativeStepsCard() {
 }
 
 describe('Calculus derivative editor source', () => {
-  it('edits derivative bodies through the main editor and copies the generated request', async () => {
+  it('edits natural derivative requests through the main editor and copies the request', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
@@ -62,20 +62,11 @@ describe('Calculus derivative editor source', () => {
     expect(screen.getByTestId('calculus-operator-rail')).toBeInTheDocument();
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dx');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(x)');
-    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('Differentiate with respect to');
-    expect(screen.getByTestId('calculus-derivative-target-readback')).toHaveTextContent('Written');
-    expect(screen.getByTestId('calculus-derivative-target-readback')).toHaveTextContent('Applied');
-    expect(screen.getByTestId('calculus-derivative-target')).toBeInTheDocument();
+    expect(screen.queryByTestId('calculus-derivative-target')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
-    const targetInput = screen.getByTestId('calculus-derivative-target-input');
-    await user.clear(targetInput);
-    await user.type(targetInput, 'd/dt');
-
-    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt');
-    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(t)');
-
-    setMathFieldLatex('main-editor', 't^3+2t');
+    setMathFieldLatex('main-editor', 'd/dt(t^3+2t)');
+    await waitFor(() => expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt'));
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();
@@ -90,7 +81,7 @@ describe('Calculus derivative editor source', () => {
 
     await user.click(screen.getByTestId('soft-action-toEditor'));
     expect(screen.getByTestId('display-status')).toHaveTextContent('Calculus editor focused');
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 't^3+2t');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'd/dt(t^3+2t)');
 
     const editor = screen.getByTestId('main-editor');
     expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(false);
@@ -107,7 +98,7 @@ describe('Calculus derivative editor source', () => {
     expect(rawLatex).toContain('D_{1}=3t^2+2');
   });
 
-  it('keeps derivative-at-point body in the main editor while the point remains editable', async () => {
+  it('keeps derivative-at-point request in the main editor while the point remains editable', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
@@ -118,16 +109,11 @@ describe('Calculus derivative editor source', () => {
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dx');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(x)');
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('calculus-derivative-point-target')).not.toBeInTheDocument();
 
-    const targetInput = screen.getByTestId('calculus-derivative-point-target-input');
-    await user.clear(targetInput);
-    await user.type(targetInput, 'd/dt');
-
-    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt');
-    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(t)');
-
-    setMathFieldLatex('main-editor', 't^2');
-    const pointInput = screen.getByLabelText('Point t =');
+    setMathFieldLatex('main-editor', 'd/dt(t^2)');
+    await waitFor(() => expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt'));
+    const pointInput = await screen.findByLabelText('Point t =');
     await user.clear(pointInput);
     await user.type(pointInput, '3');
 
@@ -144,7 +130,7 @@ describe('Calculus derivative editor source', () => {
       '\\left.\\frac{d}{dt}\\left(t^2\\right)\\right|_{t=3}',
     );
 
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 't^2');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'd/dt(t^2)');
     expect(pointInput).toHaveValue('3');
 
     const editor = screen.getByTestId('main-editor');
@@ -162,21 +148,15 @@ describe('Calculus derivative editor source', () => {
     expect(rawLatex).toContain('D_{1}\\big|_{t=3}=6');
   });
 
-  it('previews and evaluates higher-order operators from the rail', async () => {
+  it('previews and evaluates higher-order natural derivative requests', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
     await openCalculusTool(user, 'Derivatives', 'Derivative');
 
-    const operatorInput = screen.getByTestId('calculus-derivative-target-input');
-    await user.clear(operatorInput);
-    await user.type(operatorInput, 'd^3/dt^3');
-
+    setMathFieldLatex('main-editor', 'd^3/dt^3(t^5)');
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d³/dt³');
-    expect(screen.getByTestId('calculus-derivative-target-readback')).toHaveTextContent('t → t → t');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(t)');
-
-    setMathFieldLatex('main-editor', 't^5');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();

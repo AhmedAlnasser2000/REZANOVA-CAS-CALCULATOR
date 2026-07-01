@@ -328,9 +328,11 @@ function parseSlashOperator(input: string): DerivativeOperatorParseResult | null
 
   const partialOrder = parseNumerator(numerator.replace(/^partial/, '\\partial'), 'partial');
   if (partialOrder !== null) {
-    const normalizedDenominator = denominator
-      .replace(/partial/g, '\\partial')
-      .replace(/\\partial\\partial/g, '\\partial');
+    const normalizedDenominator = denominator.startsWith('\\partial')
+      ? denominator
+      : denominator
+        .replace(/partial/g, '\\partial')
+        .replace(/\\partial\\partial/g, '\\partial');
     const factors = parsePartialDenominator(normalizedDenominator);
     return factors ? makeOperator('partial', factors, partialOrder) : null;
   }

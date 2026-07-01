@@ -4,6 +4,7 @@ import {
   firstOrderDerivativeOperator,
   parseDerivativeOperator,
 } from '../derivative-operator';
+import { parseNaturalDerivativeRequest } from '../derivative-request';
 import { derivativeVariableLatex } from '../derivative-target';
 import { finiteLimitTargetLatex } from '../engine/finite-limit-target';
 import { DEFAULT_INTEGRAL_VARIABLE, integralVariableOrDefault } from './integral-variable';
@@ -223,6 +224,14 @@ export function buildNumericIvpLatex(state: NumericIvpState) {
 
 export function buildPartialDerivativeLatex(state: PartialDerivativeWorkbenchState) {
   const body = state.bodyLatex.trim();
+  const natural = parseNaturalDerivativeRequest(body, 'partial');
+  if (natural.ok) {
+    return natural.request.canonicalLatex;
+  }
+  if (natural.looksLikeDerivativeRequest) {
+    return '';
+  }
+
   const operator = state.operatorLatex !== undefined
     ? parseDerivativeOperator(state.operatorLatex, 'partial')
     : firstOrderDerivativeOperator('partial', state.variable);

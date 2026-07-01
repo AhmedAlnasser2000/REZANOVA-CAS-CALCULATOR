@@ -1475,3 +1475,7 @@
 ## 2026-07-01 - EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric Interval results may show reliable affine trig carrier period summaries as diagnostic interval evidence. These summaries do not claim global completeness or that the whole equation is periodic; all displayed roots remain local to the chosen interval and validated against the original equation.
+
+## 2026-07-01 - CALCULUS-DERIVATIVE-NATURAL-EDITOR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guided derivative UX source is natural main-editor entry: users type the complete derivative request, while the operator/body split remains internal parser evidence rather than a separate editable rail control.

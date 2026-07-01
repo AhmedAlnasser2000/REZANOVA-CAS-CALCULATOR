@@ -114,7 +114,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
 
   it('evaluates higher-order ordinary derivatives from the parsed operator', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
-      derivative: { bodyLatex: 't^5', variable: 't', operatorLatex: 'd^3/dt^3' },
+      derivative: { bodyLatex: 'd^3/dt^3(t^5)', variable: 'x' },
     }));
 
     expect(result.kind).toBe('success');
@@ -185,7 +185,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
 
   it('evaluates higher-order derivative-at-point by symbolic differentiation then substitution', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
-      derivativePoint: { bodyLatex: 'x^3', point: '2', variable: 'x', operatorLatex: 'd^2/dx^2' },
+      derivativePoint: { bodyLatex: 'd^2/dx^2(x^3)', point: '2', variable: 'x' },
     }));
 
     expect(result.kind).toBe('success');
@@ -203,9 +203,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
   it('evaluates mixed partials from the parsed applied path', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('partialDerivative', {
       partialDerivative: {
-        bodyLatex: 'x^3y^2+z',
+        bodyLatex: '\\frac{\\partial^3}{\\partial x\\partial y^2}\\left(x^3y^2+z\\right)',
         variable: 'x',
-        operatorLatex: '\\frac{\\partial^3}{\\partial x\\partial y^2}',
       },
     }));
 

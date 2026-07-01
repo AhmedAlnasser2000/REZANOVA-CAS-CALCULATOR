@@ -7,6 +7,7 @@ import {
   firstOrderDerivativeOperator,
   parseDerivativeOperator,
 } from './derivative-operator';
+import { parseNaturalDerivativeRequest } from './derivative-request';
 import {
   formatSignedNumberInput,
   parseSignedNumberInput,
@@ -101,6 +102,14 @@ export function buildDerivativeLatex(
   operatorLatex?: string,
 ) {
   const body = trimmedBody(bodyLatex);
+  const natural = parseNaturalDerivativeRequest(body, 'derivative');
+  if (natural.ok) {
+    return natural.request.canonicalLatex;
+  }
+  if (natural.looksLikeDerivativeRequest) {
+    return '';
+  }
+
   const operator = derivativeOperatorForBuilder(variable, operatorLatex);
   if (!body || !operator) {
     return '';
@@ -117,6 +126,20 @@ export function buildDerivativeAtPointLatex(
 ) {
   const body = trimmedBody(bodyLatex);
   const normalizedPoint = normalizeNumberDraft(point);
+  const natural = parseNaturalDerivativeRequest(body, 'derivative');
+  if (natural.ok) {
+    return normalizedPoint
+      ? buildDerivativeAtPointRequestLatex(
+        natural.request.bodyLatex,
+        normalizedPoint,
+        natural.request.operator,
+      )
+      : '';
+  }
+  if (natural.looksLikeDerivativeRequest) {
+    return '';
+  }
+
   const operator = derivativeOperatorForBuilder(variable, operatorLatex);
   if (!body || !normalizedPoint || !operator) {
     return '';

@@ -21,6 +21,10 @@ describe('calculus partials', () => {
       variable: 'x',
       operatorLatex: '\\frac{\\partial^3}{\\partial x\\partial y^2}',
     })).toBe('\\frac{\\partial^{3}}{\\partial x\\partial y^{2}}\\left(x^3y^2+z\\right)');
+    expect(buildPartialDerivativeLatex({
+      bodyLatex: '∂/∂y(x^2y+y^3)',
+      variable: 'x',
+    })).toBe('\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)');
     expect(buildPartialDerivativeLatex({ bodyLatex: 'xy', variable: 'xy' })).toBe('');
   });
 
