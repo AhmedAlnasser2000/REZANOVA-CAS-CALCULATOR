@@ -1523,3 +1523,7 @@
 ## 2026-07-01 - WORKSPACE-PAGE-SURFACE-MODEL1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Page surfaces are separate from calculator `ModeId` values. Formula Viewer is the only live page surface and uses a protected tab-action policy; future Settings and History are documented as singleton page surfaces, while future Graphing must arrive later as a canvas/page-class surface rather than a calculator-shell panel.
+
+## 2026-07-01 - TRANSCENDENTAL-RISCH-CHECKPOINT0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The next formal transcendental Risch push should be method-level infrastructure rather than more isolated special-function family patches. Textbook elementary catchup should wait for the Stewart/Thomas benchmark sweep unless a case is needed as a regression for tower normal forms, RDE/Liouville, or certificate orchestration.

@@ -220,6 +220,8 @@ It should record what the track covers, what is still not full formal Risch, whi
 - formal non-existence certificates for another family
 - textbook-benchmark-driven cleanup
 
+Status: completed 2026-07-01 as `TRANSCENDENTAL-RISCH-CHECKPOINT0`. The checkpoint records the current practical certificate/RN/LRT position, marks unrestricted formal transcendental Risch as still incomplete, and recommends the next push as method-level Risch infrastructure: tower normal forms, proof-local derivation closure, parametric RDE solving, primitive/exponential-extension Risch, Liouville-as-solver, LRT lifting, algebraic constants/traces, degeneracy branching, and broader depth-2 orchestration.
+
 ## Expected Position After The Immediate Roadmap
 
 After these moves, Calcwiz should be much stronger than the current practical certificate layer:
