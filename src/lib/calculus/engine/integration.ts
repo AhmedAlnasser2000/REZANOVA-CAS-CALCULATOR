@@ -13,7 +13,10 @@ import { integrateAdaptiveSimpson } from './adaptive-simpson';
 import { backcheckAntiderivative } from './verification';
 import { proveExpQuadraticNonElementary } from '../../symbolic-engine/integration/transcendental-certificate/proof';
 import { buildTranscendentalNonElementaryCertificateFromProof } from '../../symbolic-engine/integration/transcendental-certificate/result-shape';
-import { buildExpQuadraticSpecialFunctionCertificateFromProof } from '../../symbolic-engine/integration/transcendental-certificate/special-functions';
+import {
+  buildExpQuadraticSpecialFunctionCertificateFromProof,
+  buildSiCiAffineQuotientSpecialFunctionCertificate,
+} from '../../symbolic-engine/integration/transcendental-certificate/special-functions';
 import { transcendentalCertificateToCalculusEvaluation } from './transcendental-certificate';
 import {
   antiderivativeTrustFacts,
@@ -174,13 +177,16 @@ function resolvedTranscendentalCertificate(
   variable: string,
 ): CalculusCoreEvaluation | undefined {
   const proof = proveExpQuadraticNonElementary(body, variable);
-  if (proof.kind !== 'proof-ready') {
-    return undefined;
+  if (proof.kind === 'proof-ready') {
+    const certificate =
+      buildExpQuadraticSpecialFunctionCertificateFromProof(proof)
+      ?? buildTranscendentalNonElementaryCertificateFromProof(proof);
+    return certificate
+      ? transcendentalCertificateToCalculusEvaluation(certificate)
+      : undefined;
   }
 
-  const certificate =
-    buildExpQuadraticSpecialFunctionCertificateFromProof(proof)
-    ?? buildTranscendentalNonElementaryCertificateFromProof(proof);
+  const certificate = buildSiCiAffineQuotientSpecialFunctionCertificate(body, variable);
   return certificate
     ? transcendentalCertificateToCalculusEvaluation(certificate)
     : undefined;

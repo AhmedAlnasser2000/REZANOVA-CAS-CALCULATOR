@@ -28,3 +28,10 @@
 - Certificate proof-local differentiation now accepts `Si`/`Ci` without Compute Engine fallback.
 - The exact rules are `d Si(u)/dx = sin(u)u'/u` and `d Ci(u)/dx = cos(u)u'/u`.
 - Integration adoption remains deferred to the next milestone.
+
+## Milestone 3 - TRANSCENDENTAL-SI-CI-AFFINE-QUOTIENT-CERTIFICATE1
+
+- Added live certificate-backed special-function answers for affine `sin(u)/u` and `cos(u)/u` quotient families after existing elementary routes miss.
+- Sine quotient answers render as `Si` with affine-slope scaling, including derivative-present cases such as `2 sin(2x+1)/(2x+1) -> Si(2x+1)`.
+- Cosine quotient answers render real-domain `Ci` casewise rows for `u>0` and `u<0`, with `u=0` excluded by visible supplement facts.
+- Public strategy labels, result schemas, Display, History, OOE, Tauri, and persistence remain unchanged.

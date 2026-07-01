@@ -10,6 +10,8 @@ import {
   subtractExactScalars,
   type ExactScalar,
 } from '../../../algebra/polynomial-core';
+import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
 import { isSymbolicCoefficientZero } from '../../primitives/coefficient-domain';
 import {
   getSymbolicPolynomialCoefficient,
@@ -17,6 +19,11 @@ import {
 } from '../../primitives/symbolic-polynomial';
 import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import { boxLatex, wrapGroupedLatex } from '../../patterns';
+import {
+  profileDepth2TranscendentalTower,
+  type Depth2TowerFact,
+  type Depth2TowerProfileReady,
+} from './depth2-profile';
 import type { ExpQuadraticCertificateProof } from './proof';
 import {
   buildTranscendentalNonElementaryCertificateFromProof,
@@ -287,6 +294,187 @@ function updateProofScopeForSpecialFunction(
           : line),
     };
   });
+}
+
+function depth2FactEntry(fact: Depth2TowerFact): ExactSupplementEntry {
+  return {
+    kind: fact.relation === '\\ne0' ? 'exclusion' : 'condition',
+    expressionLatex: fact.expressionLatex,
+    relation: fact.relation === '0<expr<1' || fact.relation === '>1'
+      ? '>0'
+      : fact.relation,
+    source: 'candidate-validation',
+  };
+}
+
+function depth2SupplementLatex(profile: Depth2TowerProfileReady) {
+  const entries = [
+    ...profile.requiredFacts,
+    ...profile.branchFacts,
+  ].map(depth2FactEntry);
+  const lines = mergeExactSupplementLatex({
+    entries,
+    source: 'candidate-validation',
+  });
+  return lines.length > 0 ? lines : undefined;
+}
+
+function coefficientNodeOrOne(profile: Depth2TowerProfileReady) {
+  return profile.coefficientNode ?? 1;
+}
+
+function ratioPrefactorLatex(profile: Depth2TowerProfileReady) {
+  if (profile.derivativeCarrier.kind !== 'affine-slope') {
+    return undefined;
+  }
+
+  const coefficientNode = coefficientNodeOrOne(profile);
+  const coefficientScalar = readExactScalarNode(coefficientNode);
+  const slopeScalar = readExactScalarNode(profile.derivativeCarrier.slopeNode);
+  if (coefficientScalar && slopeScalar) {
+    const ratio = divideExactScalars(coefficientScalar, slopeScalar);
+    if (!ratio) {
+      return undefined;
+    }
+    const normalized = normalizeExactScalar(ratio);
+    return exactScalarEquals(normalized, ONE) ? undefined : scalarLatex(normalized);
+  }
+
+  const coefficientLatex = profile.coefficientNode === undefined
+    ? '1'
+    : boxLatex(profile.coefficientNode);
+  const slopeLatex = profile.derivativeCarrier.slopeLatex;
+  if (coefficientLatex === slopeLatex) {
+    return undefined;
+  }
+  if (slopeLatex === '1') {
+    return coefficientLatex === '1' ? undefined : coefficientLatex;
+  }
+
+  return String.raw`\frac{${coefficientLatex}}{${slopeLatex}}`;
+}
+
+function multiplyPrefactorByFunction(prefactorLatex: string | undefined, functionLatex: string) {
+  if (!prefactorLatex || prefactorLatex === '1') {
+    return functionLatex;
+  }
+  if (prefactorLatex === '-1') {
+    return `-${functionLatex}`;
+  }
+
+  return String.raw`${prefactorLatex}\cdot ${functionLatex}`;
+}
+
+function operatorFunctionLatex(name: 'Si' | 'Ci', argumentLatex: string) {
+  return String.raw`\operatorname{${name}}\left(${argumentLatex}\right)`;
+}
+
+function negatedArgumentLatex(profile: Depth2TowerProfileReady) {
+  return boxLatex(['Negate', profile.coreArgumentNode]);
+}
+
+function depth2CasewiseLatex(
+  rows: Array<{ valueLatex: string; conditionLatex: string }>,
+  variable: string,
+) {
+  return normalizeGeneratedIntegrationLatex(casewiseLatex(rows), variable);
+}
+
+function depth2FieldLatex(profile: Depth2TowerProfileReady) {
+  return String.raw`K\left(${profile.variable}, \sin\left(${profile.coreArgumentLatex}\right), \cos\left(${profile.coreArgumentLatex}\right)\right)`;
+}
+
+function depth2SpecialFunctionDetail(input: {
+  functionLatex: string;
+  profile: Depth2TowerProfileReady;
+  functionName: 'Si' | 'Ci';
+}): TranscendentalNonElementaryCertificate['detailSections'] {
+  const familyLine = input.functionName === 'Si'
+    ? 'Family: affine sine quotient, reduced to the sine integral special function.'
+    : 'Family: affine cosine quotient, reduced to the cosine integral special function on real-domain branches.';
+  const derivativeLine = input.functionName === 'Si'
+    ? String.raw`\frac{d}{dx}\operatorname{Si}\left(u\right)=\frac{\sin(u)u'}{u}`
+    : String.raw`\frac{d}{dx}\operatorname{Ci}\left(u\right)=\frac{\cos(u)u'}{u}`;
+
+  return [
+    {
+      title: 'Non-Elementary Certificate',
+      lines: [
+        'No elementary antiderivative exists for this affine quotient in the stated elementary differential field.',
+        'The main answer uses a named special function rather than reporting a heuristic failure.',
+      ],
+    },
+    {
+      title: 'Proof Scope',
+      lineKinds: ['math', 'text', 'text'],
+      lines: [
+        depth2FieldLatex(input.profile),
+        familyLine,
+        'The quotient argument is affine in the selected variable and the denominator branch excludes zero.',
+      ],
+    },
+    {
+      title: 'Special-Function Readback',
+      lineKinds: ['math', 'math', 'text'],
+      lines: [
+        input.functionLatex,
+        derivativeLine,
+        'The named special-function formula differentiates back to the integrand; the certificate records that no elementary formula exists in the stated field.',
+      ],
+    },
+  ];
+}
+
+export function buildSiCiAffineQuotientSpecialFunctionCertificate(
+  node: unknown,
+  variable = 'x',
+): TranscendentalNonElementaryCertificate | undefined {
+  const profile = profileDepth2TranscendentalTower(node, variable);
+  if (
+    profile.kind !== 'ready'
+    || profile.consumer !== 'certificate-special-function'
+    || (
+      profile.family !== 'sine-integral-affine-quotient'
+      && profile.family !== 'cosine-integral-affine-quotient'
+    )
+    || profile.derivativeCarrier.kind !== 'affine-slope'
+  ) {
+    return undefined;
+  }
+
+  const prefactor = ratioPrefactorLatex(profile);
+  const exactLatex = profile.family === 'sine-integral-affine-quotient'
+    ? multiplyPrefactorByFunction(prefactor, operatorFunctionLatex('Si', profile.coreArgumentLatex))
+    : depth2CasewiseLatex([
+      {
+        valueLatex: multiplyPrefactorByFunction(prefactor, operatorFunctionLatex('Ci', profile.coreArgumentLatex)),
+        conditionLatex: `${profile.coreArgumentLatex}>0`,
+      },
+      {
+        valueLatex: multiplyPrefactorByFunction(prefactor, operatorFunctionLatex('Ci', negatedArgumentLatex(profile))),
+        conditionLatex: `${profile.coreArgumentLatex}<0`,
+      },
+    ], profile.variable);
+  const functionName = profile.family === 'sine-integral-affine-quotient'
+    ? 'Si'
+    : 'Ci';
+
+  return {
+    kind: 'non-elementary-certificate',
+    family: 'depth2-affine-quotient',
+    variable: profile.variable,
+    exactLatex,
+    antiderivativeKind: 'special-function',
+    fieldLatex: depth2FieldLatex(profile),
+    theorem: 'depth2-affine-quotient-transcendental-risch',
+    proofSummary: `${functionName} affine quotient non-elementarity certificate with named special-function readback.`,
+    exactSupplementLatex: depth2SupplementLatex(profile),
+    detailSections: depth2SpecialFunctionDetail({
+      functionLatex: exactLatex,
+      profile,
+      functionName,
+    }),
+  };
 }
 
 export function buildExpQuadraticSpecialFunctionCertificateFromProof(

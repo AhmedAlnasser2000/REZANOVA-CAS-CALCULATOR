@@ -209,6 +209,41 @@ describe('calculus integrals', () => {
     expect(substitution.exactLatex).not.toContain('No elementary antiderivative');
   });
 
+  it('renders certificate-backed Si and Ci answers for affine quotient families', () => {
+    const sine = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '\\sin(x)/x',
+    });
+    expect(sine.error).toBeUndefined();
+    expect(sine.resultOrigin).toBe('rule-based-symbolic');
+    expect(sine.integrationStrategy).toBeUndefined();
+    expect(sine.antiderivativeBackcheck).toBeUndefined();
+    expect(sine.exactLatex).toContain('\\operatorname{Si}\\left(x\\right)');
+    expect(sine.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+    expect(sine.detailSections?.map((section) => section.title)).toContain('Non-Elementary Certificate');
+
+    const shiftedSine = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '\\sin(2x+1)/(2x+1)',
+    });
+    expect(shiftedSine.error).toBeUndefined();
+    expect(shiftedSine.exactLatex).toContain('\\frac{1}{2}\\cdot \\operatorname{Si}\\left(2x+1\\right)');
+
+    const derivativePresent = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '2\\sin(2x+1)/(2x+1)',
+    });
+    expect(derivativePresent.error).toBeUndefined();
+    expect(derivativePresent.exactLatex).toBe('\\operatorname{Si}\\left(2x+1\\right)');
+
+    const cosine = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '\\cos(x)/x',
+    });
+    expect(cosine.error).toBeUndefined();
+    expect(cosine.exactLatex).toContain('\\begin{cases}');
+    expect(cosine.exactLatex).toContain('\\operatorname{Ci}\\left(x\\right)');
+    expect(cosine.exactLatex).toContain('\\operatorname{Ci}\\left(-x\\right)');
+    expect(cosine.exactLatex).toContain('x>0');
+    expect(cosine.exactLatex).toContain('x<0');
+  });
+
   it('canonicalizes typed symbolic quotient products before RN log-derivative routing', () => {
     const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'k*(2a*x+b)/(a*x^2+b*x+c)',

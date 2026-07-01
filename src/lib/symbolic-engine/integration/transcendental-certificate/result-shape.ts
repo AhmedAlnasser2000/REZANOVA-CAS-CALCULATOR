@@ -11,12 +11,14 @@ import type {
 
 export type TranscendentalNonElementaryCertificate = {
   kind: 'non-elementary-certificate';
-  family: 'exp-quadratic';
+  family: 'exp-quadratic' | 'depth2-affine-quotient';
   variable: string;
   exactLatex: string;
   antiderivativeKind?: 'special-function';
   fieldLatex: string;
-  theorem: 'quadratic-exponential-transcendental-risch';
+  theorem:
+    | 'quadratic-exponential-transcendental-risch'
+    | 'depth2-affine-quotient-transcendental-risch';
   proofSummary: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];

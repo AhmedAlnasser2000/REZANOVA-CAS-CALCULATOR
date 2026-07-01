@@ -1,7 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 import { proveExpQuadraticNonElementary } from './integration/transcendental-certificate/proof';
-import { buildExpQuadraticSpecialFunctionCertificateFromProof } from './integration/transcendental-certificate/special-functions';
+import {
+  buildExpQuadraticSpecialFunctionCertificateFromProof,
+  buildSiCiAffineQuotientSpecialFunctionCertificate,
+} from './integration/transcendental-certificate/special-functions';
 
 const ce = new ComputeEngine();
 
@@ -13,6 +16,14 @@ function certificate(latex: string, variable = 'x') {
   const result = buildExpQuadraticSpecialFunctionCertificateFromProof(proof);
   if (!result) {
     throw new Error(`expected special-function certificate for ${latex}`);
+  }
+  return result;
+}
+
+function depth2Certificate(latex: string, variable = 'x') {
+  const result = buildSiCiAffineQuotientSpecialFunctionCertificate(ce.parse(latex).json, variable);
+  if (!result) {
+    throw new Error(`expected depth-2 special-function certificate for ${latex}`);
   }
   return result;
 }
@@ -52,5 +63,37 @@ describe('transcendental special-function readback for quadratic exponentials', 
     expect(symbolic.exactLatex).toContain('\\operatorname{erfi}');
     expect(symbolic.exactLatex).toContain('t+\\frac{x}{2a}');
     expect(symbolic.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
+  });
+});
+
+describe('transcendental special-function readback for Si/Ci quotient families', () => {
+  it('returns sine-integral formulas for affine sine quotients', () => {
+    const plain = depth2Certificate('\\sin(x)/x');
+    const scaled = depth2Certificate('\\sin(2x+1)/(2x+1)');
+    const derivativePresent = depth2Certificate('2\\sin(2x+1)/(2x+1)');
+
+    expect(plain.antiderivativeKind).toBe('special-function');
+    expect(plain.exactLatex).toContain(String.raw`\operatorname{Si}\left(x\right)`);
+    expect(plain.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+    expect(scaled.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{Si}\left(2x+1\right)`);
+    expect(derivativePresent.exactLatex).toBe(String.raw`\operatorname{Si}\left(2x+1\right)`);
+    expect(plain.detailSections.map((section) => section.title)).toContain('Non-Elementary Certificate');
+    expect(plain.detailSections.map((section) => section.title)).toContain('Special-Function Readback');
+  });
+
+  it('returns real-branch cosine-integral formulas for affine cosine quotients', () => {
+    const plain = depth2Certificate('\\cos(x)/x');
+    const shifted = depth2Certificate('\\cos(2x+1)/(2x+1)');
+
+    expect(plain.antiderivativeKind).toBe('special-function');
+    expect(plain.exactLatex).toContain('\\begin{cases}');
+    expect(plain.exactLatex).toContain(String.raw`\operatorname{Ci}\left(x\right)`);
+    expect(plain.exactLatex).toContain(String.raw`\operatorname{Ci}\left(-x\right)`);
+    expect(plain.exactLatex).toContain('x>0');
+    expect(plain.exactLatex).toContain('x<0');
+    expect(plain.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+    expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{Ci}\left(2x+1\right)`);
+    expect(shifted.exactLatex).toContain('2x+1>0');
+    expect(shifted.exactLatex).toContain('2x+1<0');
   });
 });
