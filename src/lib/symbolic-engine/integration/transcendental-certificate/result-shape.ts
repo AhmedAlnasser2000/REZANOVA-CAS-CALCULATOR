@@ -12,14 +12,15 @@ import { certificateUxDetailSections } from './certificate-ux';
 
 export type TranscendentalNonElementaryCertificate = {
   kind: 'non-elementary-certificate';
-  family: 'exp-quadratic' | 'depth2-affine-quotient';
+  family: 'exp-quadratic' | 'depth2-affine-quotient' | 'depth2-exp-composition';
   variable: string;
   exactLatex: string;
   antiderivativeKind?: 'special-function';
   fieldLatex: string;
   theorem:
     | 'quadratic-exponential-transcendental-risch'
-    | 'depth2-affine-quotient-transcendental-risch';
+    | 'depth2-affine-quotient-transcendental-risch'
+    | 'depth2-exp-composition-transcendental-risch';
   proofSummary: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];

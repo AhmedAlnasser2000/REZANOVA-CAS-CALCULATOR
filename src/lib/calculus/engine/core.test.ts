@@ -146,6 +146,38 @@ describe('calculus core', () => {
     expect(result.detailSections?.map((section) => section.title)).toContain('Non-Elementary Certificate');
   });
 
+  it('returns depth-2 composition special-function certificates before Compute Engine fallback', () => {
+    const expExp = resolveIndefiniteIntegralFromAst({
+      body: parse('e^{e^x}').json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+    const sineExp = resolveIndefiniteIntegralFromAst({
+      body: parse('\\sin(e^x)').json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+    const cosineExp = resolveIndefiniteIntegralFromAst({
+      body: parse('\\cos(e^x)').json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+
+    expect(expExp.error).toBeUndefined();
+    expect(expExp.resultOrigin).toBe('rule-based-symbolic');
+    expect(expExp.integrationStrategy).toBeUndefined();
+    expect(expExp.exactLatex).toBe(String.raw`\operatorname{Ei}\left(e^{x}\right)`);
+    expect(expExp.exactSupplementLatex?.join(' ')).toContain('e^{x}>0');
+    expect(sineExp.exactLatex).toBe(String.raw`\operatorname{Si}\left(e^{x}\right)`);
+    expect(cosineExp.exactLatex).toBe(String.raw`\operatorname{Ci}\left(e^{x}\right)`);
+  });
+
   it('preserves the controlled relation-integrand error before fallback', () => {
     const body = parse('a x+b y=e');
 

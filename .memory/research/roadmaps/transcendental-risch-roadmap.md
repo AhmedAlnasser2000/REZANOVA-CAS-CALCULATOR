@@ -180,6 +180,8 @@ First research-push depth-2 adoption using the formal substrate:
 - Gate C: ensure RN can reuse the tower profile without changing public labels.
 - Gate D: preserve honest stops for `e^(sin(x))`, depth-3 towers, and unresolved nested logarithms.
 
+Status: implemented 2026-07-01 for the first live depth-2 composition certificate slice. The depth-2 profiler now recognizes `e^(e^u)`, `sin(e^u)`, and `cos(e^u)` when `u` is affine in the selected variable, and Calculus returns `Ei(e^u)`, `Si(e^u)`, or `Ci(e^u)` main answers with slope prefactors plus `e^u>0` branch facts. Existing RN derivative-present substitutions keep precedence, while `e^(sin(x))`, depth-3 towers, and unresolved nested logs remain controlled future-scope stops.
+
 ### 9. `TRANSCENDENTAL-FRESNEL-LIVE1`
 
 Major gated milestone.

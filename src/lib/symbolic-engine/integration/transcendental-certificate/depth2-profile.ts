@@ -61,6 +61,9 @@ export type Depth2TowerProfileReady = {
     | 'cosine-integral-affine-quotient'
     | 'exponential-integral-affine-quotient'
     | 'logarithmic-integral-affine-reciprocal'
+    | 'sine-integral-exp-composition'
+    | 'cosine-integral-exp-composition'
+    | 'exponential-integral-exp-composition'
     | 'nested-exp-derivative-substitution'
     | 'nested-sin-exp-derivative-substitution';
   consumer: 'certificate-special-function' | 'risch-norman-substitution';
@@ -371,6 +374,97 @@ function quotientProfile(
   return undefined;
 }
 
+function expCompositionProfile(
+  normalizedInput: unknown,
+  variable: string,
+): Depth2TowerProfile | undefined {
+  const factors = isNodeArray(normalizedInput) && normalizedInput[0] === 'Multiply'
+    ? flattenMultiply(normalizedInput)
+    : [normalizedInput];
+
+  for (const [head, family] of [
+    ['Sin', 'sine-integral-exp-composition'],
+    ['Cos', 'cosine-integral-exp-composition'],
+    ['Power', 'exponential-integral-exp-composition'],
+  ] as const) {
+    const hasCandidateCarrier = factors.some((factor) => {
+      if (head === 'Power') {
+        return isExp(factor) && isExp(factor[2]);
+      }
+      return isNodeArray(factor)
+        && factor[0] === head
+        && factor.length === 2
+        && isExp(factor[1]);
+    });
+    if (!hasCandidateCarrier) {
+      continue;
+    }
+
+    const split = splitScalarCarrierProduct(normalizedInput, head, variable);
+    if (split.kind === 'stop') {
+      return stop(
+        variable,
+        split.reason,
+        'Depth-2 composition profiling found a selected-variable-dependent or unsupported coefficient factor.',
+        normalizedInput,
+      );
+    }
+    if (split.kind !== 'success') {
+      continue;
+    }
+
+    const argument = head === 'Power'
+      ? (isExp(split.carrier) ? split.carrier[2] : undefined)
+      : (isNodeArray(split.carrier) ? split.carrier[1] : undefined);
+    if (!isExp(argument)) {
+      continue;
+    }
+
+    const innerAffine = parseSymbolicAffine(argument[2], variable);
+    if (!innerAffine) {
+      return stop(
+        variable,
+        'non-affine-argument',
+        'Depth-2 exp-composition certificates currently require an affine inner exponential exponent.',
+        normalizedInput,
+      );
+    }
+
+    const coreArgumentLatex = String.raw`e^{${innerAffine.latex}}`;
+    const outerKind = head === 'Power'
+      ? 'exp'
+      : head === 'Sin'
+        ? 'sin'
+        : 'cos';
+
+    return {
+      kind: 'ready',
+      variable,
+      family,
+      consumer: 'certificate-special-function',
+      coefficientScope: 'exact-rational-target-free-symbolic',
+      normalizedInput,
+      coreArgumentNode: argument,
+      coreArgumentLatex,
+      coefficientNode: split.coefficientNode,
+      coefficientLatex: split.coefficientNode === undefined ? undefined : boxLatex(split.coefficientNode),
+      extensionChain: [
+        { kind: 'exp', argumentLatex: innerAffine.latex },
+        { kind: outerKind, argumentLatex: coreArgumentLatex },
+      ],
+      derivativeCarrier: {
+        kind: 'affine-slope',
+        slopeNode: innerAffine.slope,
+        slopeLatex: innerAffine.slopeLatex,
+      },
+      requiredFacts: factsForAffineSlope(innerAffine.slope, innerAffine.slopeLatex),
+      branchFacts: [positiveFact(coreArgumentLatex)],
+    };
+  }
+
+  return undefined;
+}
+
 function nestedDerivativeSubstitutionProfile(
   normalizedInput: unknown,
   variable: string,
@@ -495,6 +589,11 @@ export function profileDepth2TranscendentalTower(
   const quotient = quotientProfile(normalizedInput, variable);
   if (quotient) {
     return quotient;
+  }
+
+  const expComposition = expCompositionProfile(normalizedInput, variable);
+  if (expComposition) {
+    return expComposition;
   }
 
   const nestedSubstitution = nestedDerivativeSubstitutionProfile(normalizedInput, variable);

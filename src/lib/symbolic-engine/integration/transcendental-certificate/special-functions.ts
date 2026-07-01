@@ -548,6 +548,122 @@ function depth2EiLiSpecialFunctionDetail(input: {
   ];
 }
 
+function depth2CompositionFunctionName(profile: Depth2TowerProfileReady): 'Si' | 'Ci' | 'Ei' | undefined {
+  switch (profile.family) {
+    case 'sine-integral-exp-composition':
+      return 'Si';
+    case 'cosine-integral-exp-composition':
+      return 'Ci';
+    case 'exponential-integral-exp-composition':
+      return 'Ei';
+    default:
+      return undefined;
+  }
+}
+
+function depth2CompositionFieldLatex(profile: Depth2TowerProfileReady) {
+  const outer = profile.family === 'sine-integral-exp-composition'
+    ? String.raw`\sin\left(${profile.coreArgumentLatex}\right)`
+    : profile.family === 'cosine-integral-exp-composition'
+      ? String.raw`\cos\left(${profile.coreArgumentLatex}\right)`
+      : String.raw`e^{${profile.coreArgumentLatex}}`;
+  return String.raw`K\left(${profile.variable}, ${profile.coreArgumentLatex}, ${outer}\right)`;
+}
+
+function depth2CompositionSpecialFunctionDetail(input: {
+  functionLatex: string;
+  profile: Depth2TowerProfileReady;
+  functionName: 'Si' | 'Ci' | 'Ei';
+}): TranscendentalNonElementaryCertificate['detailSections'] {
+  const familyLine = input.functionName === 'Si'
+    ? 'Family: sine of an exponential extension, reduced to the sine integral after the substitution u=e^(affine).'
+    : input.functionName === 'Ci'
+      ? 'Family: cosine of an exponential extension, reduced to the cosine integral after the substitution u=e^(affine).'
+      : 'Family: exponential of an exponential extension, reduced to the exponential integral after the substitution u=e^(affine).';
+  const derivativeLine = input.functionName === 'Si'
+    ? String.raw`\frac{d}{dx}\operatorname{Si}\left(u\right)=\frac{\sin(u)u'}{u}`
+    : input.functionName === 'Ci'
+      ? String.raw`\frac{d}{dx}\operatorname{Ci}\left(u\right)=\frac{\cos(u)u'}{u}`
+      : String.raw`\frac{d}{dx}\operatorname{Ei}\left(u\right)=\frac{e^{u}u'}{u}`;
+
+  return [
+    {
+      title: 'Non-Elementary Certificate',
+      lines: [
+        'No elementary antiderivative exists for this depth-2 composition in the stated elementary differential field.',
+        'The main answer uses a named special function rather than reporting a heuristic failure.',
+      ],
+    },
+    {
+      title: 'Proof Scope',
+      lineKinds: ['math', 'text', 'text'],
+      lines: [
+        depth2CompositionFieldLatex(input.profile),
+        familyLine,
+        'The inner exponential is positive, so the real special-function branch is fixed without adding complex branch constants.',
+      ],
+    },
+    ...certificateUxDetailSections({
+      inputFacts: input.profile.requiredFacts,
+      branchFacts: input.profile.branchFacts,
+      proofObligations: [{
+        summary: 'The named special-function derivative rule is applied after the exponential substitution.',
+        latex: derivativeLine,
+      }],
+    }),
+    {
+      title: 'Special-Function Readback',
+      lineKinds: ['math', 'math', 'text'],
+      lines: [
+        input.functionLatex,
+        derivativeLine,
+        'The named special-function formula differentiates back to the integrand; the certificate records that no elementary formula exists in the stated field.',
+      ],
+    },
+  ];
+}
+
+export function buildDepth2ExpCompositionSpecialFunctionCertificate(
+  node: unknown,
+  variable = 'x',
+): TranscendentalNonElementaryCertificate | undefined {
+  const profile = profileDepth2TranscendentalTower(node, variable);
+  if (
+    profile.kind !== 'ready'
+    || profile.consumer !== 'certificate-special-function'
+    || profile.derivativeCarrier.kind !== 'affine-slope'
+  ) {
+    return undefined;
+  }
+
+  const functionName = depth2CompositionFunctionName(profile);
+  if (!functionName) {
+    return undefined;
+  }
+
+  const exactLatex = multiplyPrefactorByFunction(
+    ratioPrefactorLatex(profile),
+    namedSpecialFunctionLatex(functionName, profile.coreArgumentLatex),
+  );
+
+  return {
+    kind: 'non-elementary-certificate',
+    family: 'depth2-exp-composition',
+    variable: profile.variable,
+    exactLatex,
+    antiderivativeKind: 'special-function',
+    fieldLatex: depth2CompositionFieldLatex(profile),
+    theorem: 'depth2-exp-composition-transcendental-risch',
+    proofSummary: `${functionName} depth-2 exponential-composition non-elementarity certificate with named special-function readback.`,
+    exactSupplementLatex: depth2SupplementLatex(profile),
+    detailSections: depth2CompositionSpecialFunctionDetail({
+      functionLatex: exactLatex,
+      profile,
+      functionName,
+    }),
+  };
+}
+
 export function buildEiLiAffineSpecialFunctionCertificate(
   node: unknown,
   variable = 'x',

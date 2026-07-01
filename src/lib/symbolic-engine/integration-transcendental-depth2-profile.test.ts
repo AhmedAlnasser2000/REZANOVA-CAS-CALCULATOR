@@ -73,6 +73,34 @@ describe('depth-2 transcendental tower profile', () => {
     });
   });
 
+  it('profiles depth-2 exponential compositions for certificate special functions', () => {
+    const expExp = ready('e^{e^x}');
+    expect(expExp.family).toBe('exponential-integral-exp-composition');
+    expect(expExp.consumer).toBe('certificate-special-function');
+    expect(expExp.coreArgumentLatex).toBe('e^{x}');
+    expect(expExp.extensionChain).toEqual([
+      { kind: 'exp', argumentLatex: 'x' },
+      { kind: 'exp', argumentLatex: 'e^{x}' },
+    ]);
+    expect(expExp.branchFacts).toContainEqual({
+      kind: 'positive',
+      expressionLatex: 'e^{x}',
+      relation: '>0',
+    });
+
+    const sine = ready('\\sin(e^{2x+1})');
+    expect(sine.family).toBe('sine-integral-exp-composition');
+    expect(sine.requiredFacts).toEqual([]);
+
+    const symbolicSlope = ready('\\cos(e^{a*t+x})', 't');
+    expect(symbolicSlope.family).toBe('cosine-integral-exp-composition');
+    expect(symbolicSlope.requiredFacts).toContainEqual({
+      kind: 'nonzero',
+      expressionLatex: 'a',
+      relation: '\\ne0',
+    });
+  });
+
   it('keeps arbitrary selected variables target-aware', () => {
     const result = ready('\\sin(2*t+x)/(2*t+x)', 't');
 

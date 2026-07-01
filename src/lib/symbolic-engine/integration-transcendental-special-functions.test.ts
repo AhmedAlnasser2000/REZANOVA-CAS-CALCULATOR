@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveSymbolicIntegralFromLatex } from './integration';
 import { proveExpQuadraticNonElementary } from './integration/transcendental-certificate/proof';
 import {
+  buildDepth2ExpCompositionSpecialFunctionCertificate,
   buildEiLiAffineSpecialFunctionCertificate,
   buildExpQuadraticSpecialFunctionCertificateFromProof,
   buildSiCiAffineQuotientSpecialFunctionCertificate,
@@ -34,6 +35,14 @@ function eiLiCertificate(latex: string, variable = 'x') {
   const result = buildEiLiAffineSpecialFunctionCertificate(ce.parse(latex).json, variable);
   if (!result) {
     throw new Error(`expected Ei/li special-function certificate for ${latex}`);
+  }
+  return result;
+}
+
+function compositionCertificate(latex: string, variable = 'x') {
+  const result = buildDepth2ExpCompositionSpecialFunctionCertificate(ce.parse(latex).json, variable);
+  if (!result) {
+    throw new Error(`expected depth-2 composition special-function certificate for ${latex}`);
   }
   return result;
 }
@@ -151,6 +160,34 @@ describe('transcendental special-function readback for Ei/li quotient families',
     expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{li}\left(2x+1\right)`);
     expect(shifted.exactLatex).toContain('2x+1>1');
     expect(shifted.exactLatex).toContain('0<2x+1<1');
+  });
+});
+
+describe('transcendental special-function readback for depth-2 exponential compositions', () => {
+  it('returns Ei, Si, and Ci formulas after the exponential substitution', () => {
+    const expExp = compositionCertificate('e^{e^x}');
+    const sine = compositionCertificate('\\sin(e^x)');
+    const cosine = compositionCertificate('\\cos(e^x)');
+
+    expect(expExp.antiderivativeKind).toBe('special-function');
+    expect(expExp.exactLatex).toBe(String.raw`\operatorname{Ei}\left(e^{x}\right)`);
+    expect(sine.exactLatex).toBe(String.raw`\operatorname{Si}\left(e^{x}\right)`);
+    expect(cosine.exactLatex).toBe(String.raw`\operatorname{Ci}\left(e^{x}\right)`);
+    expect(expExp.exactSupplementLatex?.join(' ')).toContain('e^{x}>0');
+    expect(expExp.detailSections.map((section) => section.title)).toContain('Branch Facts');
+    expect(expExp.detailSections.map((section) => section.title)).toContain('Proof Obligations');
+  });
+
+  it('carries exact affine-slope prefactors and arbitrary selected variables', () => {
+    const scaled = compositionCertificate('\\sin(e^{2x+1})');
+    const derivativeScaled = compositionCertificate('2\\sin(e^{2x+1})');
+    const symbolicSlope = compositionCertificate('\\cos(e^{a*t+x})', 't');
+
+    expect(scaled.exactLatex).toBe(String.raw`\frac{1}{2}\cdot \operatorname{Si}\left(e^{2x+1}\right)`);
+    expect(derivativeScaled.exactLatex).toBe(String.raw`\operatorname{Si}\left(e^{2x+1}\right)`);
+    expect(symbolicSlope.exactLatex).toBe(String.raw`\frac{1}{a}\cdot \operatorname{Ci}\left(e^{at+x}\right)`);
+    expect(symbolicSlope.exactSupplementLatex?.join(' ')).toContain('a\\ne0');
+    expect(symbolicSlope.exactSupplementLatex?.join(' ')).toContain('e^{at+x}>0');
   });
 });
 
