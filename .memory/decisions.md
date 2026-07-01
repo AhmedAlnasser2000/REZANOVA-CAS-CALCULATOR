@@ -1556,3 +1556,7 @@
 ## 2026-07-01 - MATRIX-EXACT-READBACK1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix exact readback is adopted only for determinant and inverse over safe-integer numeric grid inputs when the internal exact rational Matrix core succeeds. Decimal, unsafe, over-cap, unsupported, and Vector requests remain on the existing numeric readback path; the Matrix notation pad is still template-only, not executable symbolic matrix CAS.
+
+## 2026-07-01 - CALCULUS-LIMITS-EDITOR-SOURCE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guided Calculus Limits now expose one visible `Limit` screen whose main editor stores the full natural limit request. Legacy `finiteLimit` and `infiniteLimit` routes/seeds remain loadable as hidden compatibility paths that convert into the canonical request source; the Answer card remains the sole result owner.

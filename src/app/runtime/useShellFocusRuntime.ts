@@ -275,6 +275,12 @@ export function useShellFocusRuntime({
           return;
         }
 
+        if (calculusScreen === 'limit') {
+          mainFieldRef.current?.focus?.();
+          activeFieldRef.current = mainFieldRef.current;
+          return;
+        }
+
         if (calculusScreen === 'laplace') {
           mainFieldRef.current?.focus?.();
           activeFieldRef.current = mainFieldRef.current;

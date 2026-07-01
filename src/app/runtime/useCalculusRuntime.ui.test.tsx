@@ -242,12 +242,10 @@ describe('useCalculusRuntime', () => {
     const { hook } = renderCalculusRuntime();
 
     act(() => {
-      hook.result.current.openCalculusScreen('finiteLimit');
-      hook.result.current.setCalculusFiniteLimit({
-        bodyLatex: '\\frac{\\sin x}{x}',
-        target: '0',
-        direction: 'two-sided',
-      });
+      hook.result.current.openCalculusScreen('limit');
+    });
+    act(() => {
+      hook.result.current.setCalculusMainEditorLatex('\\lim_{x\\to 0}\\frac{\\sin x}{x}');
       hook.result.current.setDerivativeWorkbench({
         bodyLatex: '\\frac{d^{2}}{dt^{2}}\\left(t^4\\right)',
         variable: 't',
@@ -265,11 +263,9 @@ describe('useCalculusRuntime', () => {
     act(() => {
       hook.result.current.restoreCalculusSurfaceState(snapshot);
     });
-    expect(hook.result.current.calculusScreen).toBe('finiteLimit');
-    expect(hook.result.current.calculusFiniteLimit).toMatchObject({
-      bodyLatex: '\\frac{\\sin x}{x}',
-      target: '0',
-      direction: 'two-sided',
+    expect(hook.result.current.calculusScreen).toBe('limit');
+    expect(hook.result.current.calculusLimit).toEqual({
+      requestLatex: '\\lim_{x\\to 0}\\frac{\\sin x}{x}',
     });
     expect(hook.result.current.derivativeWorkbench).toMatchObject({
       bodyLatex: '\\frac{d^{2}}{dt^{2}}\\left(t^4\\right)',
@@ -459,12 +455,17 @@ describe('useCalculusRuntime', () => {
       hook.result.current.restoreCalculusHistoryEntry(entry);
     });
 
-    expect(hook.result.current.calculusScreen).toBe('finiteLimit');
-    expect(hook.result.current.calculusFiniteLimit).toMatchObject({
-      bodyLatex: '\\frac{\\sin x}{x}',
-      target: '0',
-      direction: 'two-sided',
+    expect(hook.result.current.calculusScreen).toBe('limit');
+    expect(hook.result.current.calculusLimit).toEqual({
+      requestLatex: '\\lim_{x\\to 0}\\left(\\frac{\\sin x}{x}\\right)',
     });
+    expect(hook.result.current.calculusMainEditorActive).toBe(true);
+    expect(hook.result.current.calculusMainEditorLatex).toBe(
+      '\\lim_{x\\to 0}\\left(\\frac{\\sin x}{x}\\right)',
+    );
+    expect(hook.result.current.calculusWorkbenchExpression).toBe(
+      '\\lim_{x\\to 0}\\left(\\frac{\\sin x}{x}\\right)',
+    );
   });
 
   it('roundtrips integral integrationVariable through preview, history context, and runtime request', async () => {

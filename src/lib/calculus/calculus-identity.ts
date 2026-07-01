@@ -50,9 +50,7 @@ export function mapLegacyCalculateScreenToCalculusScreen(
   }
 
   if (screen === 'limit') {
-    return seed && 'targetKind' in seed && (seed.targetKind === 'posInfinity' || seed.targetKind === 'negInfinity')
-      ? 'infiniteLimit'
-      : 'finiteLimit';
+    return 'limit';
   }
 
   return null;

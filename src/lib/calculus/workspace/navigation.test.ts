@@ -31,6 +31,7 @@ describe('calculus navigation', () => {
     expect(getCalculusRouteMeta('derivative').guideArticleId).toBe('calculus-derivatives');
     expect(getCalculusRouteMeta('derivativePoint').guideArticleId).toBe('calculus-derivatives');
     expect(getCalculusRouteMeta('indefiniteIntegral').guideArticleId).toBe('calculus-integrals');
+    expect(getCalculusRouteMeta('limit').guideArticleId).toBe('calculus-limits');
     expect(getCalculusRouteMeta('finiteLimit').guideArticleId).toBe('calculus-limits');
     expect(getCalculusRouteMeta('maclaurin').guideArticleId).toBe('calculus-series');
     expect(getCalculusRouteMeta('laplace').guideArticleId).toBe('calculus-odes');
@@ -42,7 +43,7 @@ describe('calculus navigation', () => {
     expect(moveCalculusMenuIndex('home', 0, -1)).toBe(0);
     expect(moveCalculusMenuIndex('home', 2, 10)).toBe(5);
     expect(moveCalculusMenuIndex('derivativesHome', 0, 10)).toBe(3);
-    expect(moveCalculusMenuIndex('limitsHome', 1, 10)).toBe(1);
+    expect(moveCalculusMenuIndex('limitsHome', 1, 10)).toBe(0);
     expect(moveCalculusMenuIndex('partialsHome', 0, 10)).toBe(0);
   });
 
@@ -56,6 +57,10 @@ describe('calculus navigation', () => {
     ]);
   });
 
+  it('shows one merged Limit entry under the Limits menu', () => {
+    expect(getCalculusMenuEntries('limitsHome').map((entry) => entry.label)).toEqual(['Limit']);
+  });
+
   it('returns expected parent routes', () => {
     expect(getCalculusParentScreen('home')).toBeNull();
     expect(getCalculusParentScreen('derivativesHome')).toBe('home');
@@ -63,6 +68,7 @@ describe('calculus navigation', () => {
     expect(getCalculusParentScreen('derivativePoint')).toBe('derivativesHome');
     expect(getCalculusParentScreen('integralsHome')).toBe('home');
     expect(getCalculusParentScreen('improperIntegral')).toBe('integralsHome');
+    expect(getCalculusParentScreen('limit')).toBe('limitsHome');
     expect(getCalculusParentScreen('laplace')).toBe('home');
     expect(getCalculusParentScreen('partialsHome')).toBe('home');
     expect(getCalculusParentScreen('partialDerivative')).toBe('derivativesHome');
@@ -87,6 +93,8 @@ describe('calculus navigation', () => {
     expect(getCalculusSoftActions('indefiniteIntegral').find((action) => action.id === 'toEditor')?.label)
       .toBe('Focus Editor');
     expect(getCalculusSoftActions('laplace').find((action) => action.id === 'toEditor')?.label)
+      .toBe('Focus Editor');
+    expect(getCalculusSoftActions('limit').find((action) => action.id === 'toEditor')?.label)
       .toBe('Focus Editor');
     expect(getCalculusSoftActions('derivative').find((action) => action.id === 'toEditor')?.label)
       .toBe('Focus Editor');

@@ -6,10 +6,12 @@ import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
 } from '../engine/limits';
+import { parseNaturalLimitRequest } from '../limit-request';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
   CalculusFiniteLimitState,
   CalculusInfiniteLimitState,
+  CalculusLimitState,
   LimitDirection,
 } from '../../../types/calculator';
 
@@ -103,5 +105,33 @@ export function evaluateCalculusInfiniteLimit(
       unstableError: 'This limit could not be stabilized numerically in Calculus.',
       numericFallbackWarning: 'Symbolic limit unavailable; showing a numeric infinite-target approximation.',
     },
+  });
+}
+
+export function evaluateCalculusLimit(
+  state: CalculusLimitState,
+): AdvancedLimitEvaluation {
+  const parsed = parseNaturalLimitRequest(state.requestLatex);
+  if (!parsed.ok) {
+    return {
+      warnings: [],
+      error: parsed.error,
+    };
+  }
+
+  const { request } = parsed;
+  if (request.target.kind === 'finite') {
+    return evaluateCalculusFiniteLimit({
+      bodyLatex: request.bodyLatex,
+      target: request.target.normalizedTargetLatex,
+      direction: request.target.direction,
+      variable: request.variable,
+    });
+  }
+
+  return evaluateCalculusInfiniteLimit({
+    bodyLatex: request.bodyLatex,
+    targetKind: request.target.targetKind,
+    variable: request.variable,
   });
 }

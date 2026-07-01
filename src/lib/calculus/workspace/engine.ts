@@ -8,6 +8,7 @@ import { evaluateCalculusLaplaceTransform } from './laplace';
 import {
   evaluateCalculusFiniteLimit,
   evaluateCalculusInfiniteLimit,
+  evaluateCalculusLimit,
 } from './limits';
 import { evaluateCalculusImplicitDerivative } from './implicit-derivative';
 import {
@@ -45,6 +46,10 @@ import {
   type DerivativeOperatorSpec,
 } from '../derivative-operator';
 import { parseNaturalDerivativeRequest } from '../derivative-request';
+import {
+  buildNaturalLimitRequestLatex,
+  parseNaturalLimitRequest,
+} from '../limit-request';
 import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
 import type {
@@ -52,6 +57,7 @@ import type {
   CalculusDefiniteIntegralState,
   CalculusFiniteLimitState,
   CalculusInfiniteLimitState,
+  CalculusLimitState,
   CalculusImproperIntegralState,
   CalculusIndefiniteIntegralState,
   AngleUnit,
@@ -81,6 +87,7 @@ export type RunCalculusWorkspaceModeRequest = {
   improperIntegral: CalculusImproperIntegralState;
   finiteLimit: CalculusFiniteLimitState;
   infiniteLimit: CalculusInfiniteLimitState;
+  limit: CalculusLimitState;
   maclaurin: SeriesState;
   taylor: SeriesState;
   laplace: LaplaceTransformState;
@@ -415,20 +422,42 @@ export async function runCalculusWorkspaceMode(
       outcome = toOutcome('Improper Integral', evaluateCalculusImproperIntegral(state));
       break;
     }
+    case 'limit': {
+      const parsedLimit = parseNaturalLimitRequest(request.limit.requestLatex);
+      if (!parsedLimit.ok) {
+        outcome = {
+          kind: 'error',
+          title: 'Limit',
+          error: parsedLimit.error,
+          warnings: [],
+        };
+        break;
+      }
+      const variable = parsedLimit.request.variable;
+      setProtectedDescriptions([variable], 'the limit variable');
+      const requestLatex = buildNaturalLimitRequestLatex({
+        ...parsedLimit.request,
+        bodyLatex: substituteBody(parsedLimit.request.bodyLatex, [variable]),
+      });
+      outcome = toOutcome('Limit', evaluateCalculusLimit({ requestLatex }));
+      break;
+    }
     case 'finiteLimit': {
-      setProtectedDescriptions(['x'], 'the limit variable');
+      const variable = request.finiteLimit.variable ?? 'x';
+      setProtectedDescriptions([variable], 'the limit variable');
       const state = {
         ...request.finiteLimit,
-        bodyLatex: substituteBody(request.finiteLimit.bodyLatex, ['x']),
+        bodyLatex: substituteBody(request.finiteLimit.bodyLatex, [variable]),
       };
       outcome = toOutcome('Finite Limit', evaluateCalculusFiniteLimit(state));
       break;
     }
     case 'infiniteLimit': {
-      setProtectedDescriptions(['x'], 'the limit variable');
+      const variable = request.infiniteLimit.variable ?? 'x';
+      setProtectedDescriptions([variable], 'the limit variable');
       const state = {
         ...request.infiniteLimit,
-        bodyLatex: substituteBody(request.infiniteLimit.bodyLatex, ['x']),
+        bodyLatex: substituteBody(request.infiniteLimit.bodyLatex, [variable]),
       };
       outcome = toOutcome('Infinite Limit', evaluateCalculusInfiniteLimit(state));
       break;

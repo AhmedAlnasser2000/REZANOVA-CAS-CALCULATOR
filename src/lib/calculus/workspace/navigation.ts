@@ -34,6 +34,7 @@ export function isCalculusMainEditorScreen(screen: CalculusScreen) {
     || screen === 'derivativePoint'
     || screen === 'implicitDerivative'
     || isCalculusIntegralScreen(screen)
+    || screen === 'limit'
     || screen === 'laplace'
     || screen === 'partialDerivative';
 }
@@ -140,18 +141,11 @@ const INTEGRAL_ENTRIES: CalculusMenuEntry[] = [
 
 const LIMIT_ENTRIES: CalculusMenuEntry[] = [
   {
-    id: 'finiteLimit',
-    label: 'Finite Target',
-    description: 'Directional and two-sided limits near a numeric target',
+    id: 'limit',
+    label: 'Limit',
+    description: 'Natural finite, one-sided, and infinite-target limits',
     hotkey: '1',
-    target: 'finiteLimit',
-  },
-  {
-    id: 'infiniteLimit',
-    label: 'Infinite Target',
-    description: 'Limits as x approaches +∞ or -∞',
-    hotkey: '2',
-    target: 'infiniteLimit',
+    target: 'limit',
   },
 ];
 
@@ -314,14 +308,27 @@ const ROUTE_META: Record<CalculusScreen, CalculusRouteMeta> = {
     screen: 'limitsHome',
     label: 'Limits',
     breadcrumb: ['Calculus', 'Limits'],
-    description: 'Choose a finite or infinite-target limit workflow.',
-    helpText: 'Choose Finite or Infinite target. F5 or Esc goes back.',
+    description: 'Open the natural limit editor.',
+    helpText: 'Open Limit. F5 or Esc goes back.',
     previewTitle: 'Limits Menu',
-    previewSubtitle: 'Choose a finite-target or infinity-target workflow.',
+    previewSubtitle: 'Build a full limit request in one editor.',
     emptyStateTitle: 'Choose a limit workflow.',
-    emptyStateDescription: 'Open Finite Target or Infinite Target to build a guided limit request.',
+    emptyStateDescription: 'Open Limit to enter a natural limit request.',
     guideArticleId: 'calculus-limits',
     focusTarget: 'menu',
+  },
+  limit: {
+    screen: 'limit',
+    label: 'Limit',
+    breadcrumb: ['Calculus', 'Limits', 'Limit'],
+    description: 'Evaluate a full natural limit request.',
+    helpText: 'Enter a limit request such as lim x->0 sin(x)/x, then press EXE or F1.',
+    previewTitle: 'Generated Limit',
+    previewSubtitle: 'Natural finite, one-sided, and infinite-target limit request',
+    emptyStateTitle: 'Limit request needed',
+    emptyStateDescription: 'Enter a full limit request such as lim x->0 sin(x)/x.',
+    guideArticleId: 'calculus-limits',
+    focusTarget: 'body',
   },
   finiteLimit: {
     screen: 'finiteLimit',
@@ -578,6 +585,7 @@ export function getCalculusParentScreen(screen: CalculusScreen): CalculusScreen 
     case 'definiteIntegral':
     case 'improperIntegral':
       return 'integralsHome';
+    case 'limit':
     case 'finiteLimit':
     case 'infiniteLimit':
       return 'limitsHome';
@@ -637,7 +645,7 @@ export function getCalculusMenuFooterText(screen: CalculusScreen) {
     case 'integralsHome':
       return '1-3: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'limitsHome':
-      return '1-2: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
+      return '1: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'seriesHome':
       return '1-2: Open | EXE/F1: Select | F5/Esc: Back | F6: Exit';
     case 'odeHome':

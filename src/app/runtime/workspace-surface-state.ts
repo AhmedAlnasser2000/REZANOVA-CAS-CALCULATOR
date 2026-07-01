@@ -8,6 +8,7 @@ import type {
   CalculusImproperIntegralState,
   CalculusIndefiniteIntegralState,
   CalculusInfiniteLimitState,
+  CalculusLimitState,
   CalculusScreen,
   CircleState,
   ConeState,
@@ -121,6 +122,7 @@ export type CalculusSurfaceState = {
   calculusImproperIntegral: CalculusImproperIntegralState;
   calculusFiniteLimit: CalculusFiniteLimitState;
   calculusInfiniteLimit: CalculusInfiniteLimitState;
+  calculusLimit: CalculusLimitState;
   maclaurinState: SeriesState;
   taylorState: SeriesState;
   laplaceState: LaplaceTransformState;

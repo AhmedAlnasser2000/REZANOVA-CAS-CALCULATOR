@@ -104,6 +104,7 @@ const calculusScreenSchema = z.enum([
   'definiteIntegral',
   'improperIntegral',
   'limitsHome',
+  'limit',
   'finiteLimit',
   'infiniteLimit',
   'seriesHome',
@@ -530,6 +531,7 @@ const derivativeVariableSchema = z.string().transform((value, ctx) => {
   return z.NEVER;
 });
 const calculusSeedSchema = z.object({
+  requestLatex: z.string().optional(),
   bodyLatex: z.string().optional(),
   point: z.string().optional(),
   lower: z.string().optional(),

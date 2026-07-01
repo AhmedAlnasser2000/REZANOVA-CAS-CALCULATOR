@@ -4,6 +4,7 @@ import type {
   CalculusImproperIntegralState,
   CalculusIndefiniteIntegralState,
   CalculusInfiniteLimitState,
+  CalculusLimitState,
   CalculusScreen,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
@@ -40,6 +41,7 @@ export type ActiveCalculusRuntimeState = {
   improperIntegral: CalculusImproperIntegralState;
   finiteLimit: CalculusFiniteLimitState;
   infiniteLimit: CalculusInfiniteLimitState;
+  limit: CalculusLimitState;
   maclaurin: SeriesState;
   taylor: SeriesState;
   laplace: LaplaceTransformState;
@@ -87,6 +89,8 @@ export function calculusHistoryContextFromState(
       return { calculusScreen: state.screen, calculusSeed: { ...state.definiteIntegral } };
     case 'improperIntegral':
       return { calculusScreen: state.screen, calculusSeed: { ...state.improperIntegral } };
+    case 'limit':
+      return { calculusScreen: state.screen, calculusSeed: { ...state.limit } };
     case 'finiteLimit':
       return { calculusScreen: state.screen, calculusSeed: { ...state.finiteLimit } };
     case 'infiniteLimit':

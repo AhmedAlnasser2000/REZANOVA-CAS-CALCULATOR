@@ -20,6 +20,7 @@ import {
   DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE,
   DEFAULT_CALCULUS_INDEFINITE_INTEGRAL_STATE,
   DEFAULT_CALCULUS_INFINITE_LIMIT_STATE,
+  DEFAULT_CALCULUS_LIMIT_STATE,
   DEFAULT_FIRST_ORDER_ODE_STATE,
   DEFAULT_IMPLICIT_DERIVATIVE_STATE,
   DEFAULT_LAPLACE_TRANSFORM_STATE,
@@ -56,10 +57,12 @@ import {
   type CommitCalculusOutcome,
   type ReplayVariableSubstitutions,
 } from './calculus-runtime-state';
-import type {
-  CalculusMenuSelectionState,
-  CalculusSurfaceState,
-} from './workspace-surface-state';
+import {
+  calculusLimitRequestFromSeed,
+  copyCalculusMenuSelection,
+  defaultCalculusMenuSelection,
+} from './calculus-runtime-helpers';
+import type { CalculusSurfaceState } from './workspace-surface-state';
 import type { WorkspaceInstance } from './workspace-instances';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
@@ -70,6 +73,7 @@ import type {
   CalculusImproperIntegralState,
   CalculusIndefiniteIntegralState,
   CalculusInfiniteLimitState,
+  CalculusLimitState,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
   DisplayOutcome,
@@ -115,22 +119,6 @@ type UseCalculusRuntimeOptions = {
   clearReplayVariableSubstitutions: () => void;
 };
 
-function defaultCalculusMenuSelection() {
-  return {
-    home: 0,
-    derivativesHome: 0,
-    integralsHome: 0,
-    limitsHome: 0,
-    seriesHome: 0,
-    partialsHome: 0,
-    odeHome: 0,
-  };
-}
-
-function copyCalculusMenuSelection(selection: CalculusMenuSelectionState) {
-  return { ...selection };
-}
-
 export function useCalculusRuntime({
   ansLatex,
   commitOutcome,
@@ -169,6 +157,8 @@ export function useCalculusRuntime({
     useState<CalculusFiniteLimitState>(DEFAULT_CALCULUS_FINITE_LIMIT_STATE);
   const [calculusInfiniteLimit, setCalculusInfiniteLimit] =
     useState<CalculusInfiniteLimitState>(DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
+  const [calculusLimit, setCalculusLimit] =
+    useState<CalculusLimitState>(DEFAULT_CALCULUS_LIMIT_STATE);
   const [maclaurinState, setMaclaurinState] = useState<SeriesState>(DEFAULT_MACLAURIN_STATE);
   const [taylorState, setTaylorState] = useState<SeriesState>(DEFAULT_TAYLOR_STATE);
   const [laplaceState, setLaplaceState] = useState<LaplaceTransformState>(DEFAULT_LAPLACE_TRANSFORM_STATE);
@@ -234,6 +224,7 @@ export function useCalculusRuntime({
     improperIntegral: calculusImproperIntegral,
     finiteLimit: calculusFiniteLimit,
     infiniteLimit: calculusInfiniteLimit,
+    limit: calculusLimit,
     maclaurin: maclaurinState,
     taylor: taylorState,
     laplace: laplaceState,
@@ -248,22 +239,30 @@ export function useCalculusRuntime({
     !isLauncherOpen
     && isCalculusMode(currentMode)
     && isCalculusMainEditorScreen(calculusScreen);
-  const calculusMainEditorLatex =
-    calculusScreen === 'derivative'
-      ? derivativeWorkbench.bodyLatex
-      : calculusScreen === 'derivativePoint'
-        ? derivativePointWorkbench.bodyLatex
-        : calculusScreen === 'implicitDerivative'
-          ? implicitDerivativeState.relationLatex
-        : calculusScreen === 'indefiniteIntegral'
-          ? calculusIndefiniteIntegral.bodyLatex
-          : calculusScreen === 'definiteIntegral'
-            ? calculusDefiniteIntegral.bodyLatex
-            : calculusScreen === 'improperIntegral'
-              ? calculusImproperIntegral.bodyLatex
-              : calculusScreen === 'laplace'
-                ? laplaceState.bodyLatex
-                : calculusScreen === 'partialDerivative' ? partialDerivativeState.bodyLatex : '';
+  const calculusMainEditorLatex = (() => {
+    switch (calculusScreen) {
+      case 'derivative':
+        return derivativeWorkbench.bodyLatex;
+      case 'derivativePoint':
+        return derivativePointWorkbench.bodyLatex;
+      case 'implicitDerivative':
+        return implicitDerivativeState.relationLatex;
+      case 'indefiniteIntegral':
+        return calculusIndefiniteIntegral.bodyLatex;
+      case 'definiteIntegral':
+        return calculusDefiniteIntegral.bodyLatex;
+      case 'improperIntegral':
+        return calculusImproperIntegral.bodyLatex;
+      case 'limit':
+        return calculusLimit.requestLatex;
+      case 'laplace':
+        return laplaceState.bodyLatex;
+      case 'partialDerivative':
+        return partialDerivativeState.bodyLatex;
+      default:
+        return '';
+    }
+  })();
   const calculusMainEditorVariable = calculusScreen === 'derivative'
     ? derivativeEditorVariableForState('derivative', derivativeWorkbench)
     : calculusScreen === 'derivativePoint'
@@ -325,6 +324,11 @@ export function useCalculusRuntime({
 
     if (calculusScreen === 'improperIntegral') {
       setCalculusImproperIntegral((currentState) => ({ ...currentState, bodyLatex }));
+      return;
+    }
+
+    if (calculusScreen === 'limit') {
+      setCalculusLimit({ requestLatex: bodyLatex });
       return;
     }
 
@@ -429,12 +433,23 @@ export function useCalculusRuntime({
       return;
     }
 
+    if (screen === 'limit') {
+      setCalculusLimit((currentState) => ({
+        requestLatex: calculusLimitRequestFromSeed(seed, currentState.requestLatex),
+      }));
+      return;
+    }
+
     if (screen === 'finiteLimit') {
       setCalculusFiniteLimit((currentState) => ({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
         target: seed.target ?? currentState.target,
         direction: seed.direction ?? currentState.direction,
+        variable: seed.variable ?? currentState.variable,
+      }));
+      setCalculusLimit((currentState) => ({
+        requestLatex: calculusLimitRequestFromSeed(seed, currentState.requestLatex),
       }));
       return;
     }
@@ -444,6 +459,10 @@ export function useCalculusRuntime({
         ...currentState,
         bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
         targetKind: seed.targetKind ?? currentState.targetKind,
+        variable: seed.variable ?? currentState.variable,
+      }));
+      setCalculusLimit((currentState) => ({
+        requestLatex: calculusLimitRequestFromSeed(seed, currentState.requestLatex),
       }));
       return;
     }
@@ -523,8 +542,11 @@ export function useCalculusRuntime({
     const replayScreen = entry.calculusScreen;
     const replaySeed = entry.calculusSeed;
     if (replayScreen) {
-      openCalculusScreen(replayScreen);
+      openCalculusScreen(replayScreen === 'finiteLimit' || replayScreen === 'infiniteLimit' ? 'limit' : replayScreen);
       applyCalculusSeed(replayScreen, replaySeed);
+      if ((replayScreen === 'limit' || replayScreen === 'finiteLimit' || replayScreen === 'infiniteLimit') && !replaySeed) {
+        setCalculusLimit({ requestLatex: entry.inputLatex });
+      }
     } else if (
       entry.inputLatex.startsWith('\\left.\\frac{d}')
       || entry.inputLatex.startsWith('\\left.\\frac{\\mathrm{d}}')
@@ -544,12 +566,11 @@ export function useCalculusRuntime({
     } else if (entry.inputLatex.startsWith('\\int')) {
       openCalculusScreen('indefiniteIntegral');
     } else if (
-      entry.inputLatex.startsWith('\\lim_{x\\to \\infty}')
-      || entry.inputLatex.startsWith('\\lim_{x\\to -\\infty}')
+      entry.inputLatex.startsWith('\\lim_')
+      || /^lim\b/u.test(entry.inputLatex)
     ) {
-      openCalculusScreen('infiniteLimit');
-    } else if (entry.inputLatex.startsWith('\\lim_')) {
-      openCalculusScreen('finiteLimit');
+      openCalculusScreen('limit');
+      setCalculusLimit({ requestLatex: entry.inputLatex });
     } else if (entry.inputLatex.startsWith('\\text{Maclaurin}')) {
       openCalculusScreen('maclaurin');
     } else if (entry.inputLatex.startsWith('\\text{Taylor}')) {
@@ -582,6 +603,8 @@ export function useCalculusRuntime({
       setCalculusDefiniteIntegral(DEFAULT_CALCULUS_DEFINITE_INTEGRAL_STATE);
     } else if (calculusScreen === 'improperIntegral') {
       setCalculusImproperIntegral(DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE);
+    } else if (calculusScreen === 'limit') {
+      setCalculusLimit(DEFAULT_CALCULUS_LIMIT_STATE);
     } else if (calculusScreen === 'finiteLimit') {
       setCalculusFiniteLimit(DEFAULT_CALCULUS_FINITE_LIMIT_STATE);
     } else if (calculusScreen === 'infiniteLimit') {
@@ -614,6 +637,7 @@ export function useCalculusRuntime({
     setCalculusImproperIntegral(DEFAULT_CALCULUS_IMPROPER_INTEGRAL_STATE);
     setCalculusFiniteLimit(DEFAULT_CALCULUS_FINITE_LIMIT_STATE);
     setCalculusInfiniteLimit(DEFAULT_CALCULUS_INFINITE_LIMIT_STATE);
+    setCalculusLimit(DEFAULT_CALCULUS_LIMIT_STATE);
     setMaclaurinState(DEFAULT_MACLAURIN_STATE);
     setTaylorState(DEFAULT_TAYLOR_STATE);
     setLaplaceState(DEFAULT_LAPLACE_TRANSFORM_STATE);
@@ -635,6 +659,7 @@ export function useCalculusRuntime({
       calculusImproperIntegral: { ...calculusImproperIntegral },
       calculusFiniteLimit: { ...calculusFiniteLimit },
       calculusInfiniteLimit: { ...calculusInfiniteLimit },
+      calculusLimit: { ...calculusLimit },
       maclaurinState: { ...maclaurinState },
       taylorState: { ...taylorState },
       laplaceState: { ...laplaceState },
@@ -661,6 +686,7 @@ export function useCalculusRuntime({
     setCalculusImproperIntegral({ ...state.calculusImproperIntegral });
     setCalculusFiniteLimit({ ...state.calculusFiniteLimit });
     setCalculusInfiniteLimit({ ...state.calculusInfiniteLimit });
+    setCalculusLimit({ ...(state.calculusLimit ?? DEFAULT_CALCULUS_LIMIT_STATE) });
     setMaclaurinState({ ...state.maclaurinState });
     setTaylorState({ ...state.taylorState });
     setLaplaceState({ ...state.laplaceState });
@@ -800,6 +826,7 @@ export function useCalculusRuntime({
     calculusIndefiniteIntegral,
     calculusInfiniteLimit,
     calculusInfiniteLimitFieldRef,
+    calculusLimit,
     calculusImproperFieldRef,
     calculusImproperIntegral,
     calculusImproperLowerRef,
@@ -848,6 +875,7 @@ export function useCalculusRuntime({
     setCalculusMainEditorLatex,
     setCalculusIndefiniteIntegral,
     setCalculusInfiniteLimit,
+    setCalculusLimit,
     setCurrentCalculusMenuIndex,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,

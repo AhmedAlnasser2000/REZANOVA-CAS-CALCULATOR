@@ -384,6 +384,15 @@ export function CalculusWorkspace({
             onCopyExpr={onCopyWorkbenchExpression}
           />
         </div>
+      ) : screen === 'limit' ? (
+        <GeneratedPreviewCard
+          title={routeMeta?.previewTitle ?? 'Generated Limit'}
+          subtitle={routeMeta?.previewSubtitle ?? 'Natural finite, one-sided, and infinite-target limit request'}
+          latex={workbenchLatex}
+          emptyTitle={routeMeta?.emptyStateTitle ?? 'Limit request needed'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a full limit request such as lim x->0 sin(x)/x.'}
+          onCopyExpr={onCopyWorkbenchExpression}
+        />
       ) : screen === 'finiteLimit' ? (
         <div className="grid-two">
           <div className="editor-card">

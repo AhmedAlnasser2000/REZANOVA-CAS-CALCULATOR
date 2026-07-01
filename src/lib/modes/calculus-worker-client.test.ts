@@ -26,6 +26,7 @@ function makeRequest(): RunCalculusModeRequest {
     },
     finiteLimit: { bodyLatex: 'x^2', target: '2', direction: 'two-sided' },
     infiniteLimit: { bodyLatex: '', targetKind: 'posInfinity' },
+    limit: { requestLatex: '' },
     maclaurin: { bodyLatex: '', kind: 'maclaurin', center: '0', order: 3 },
     taylor: { bodyLatex: '', kind: 'taylor', center: '0', order: 3 },
     laplace: { bodyLatex: '' },

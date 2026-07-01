@@ -10,6 +10,7 @@ function makeRequest(screen: CalculusScreen, overrides = {}) {
     improperIntegral: { bodyLatex: '', lowerKind: 'finite' as const, lower: '1', upperKind: 'posInfinity' as const, upper: '' },
     finiteLimit: { bodyLatex: '', target: '0', direction: 'two-sided' as const },
     infiniteLimit: { bodyLatex: '', targetKind: 'posInfinity' as const },
+    limit: { requestLatex: '' },
     maclaurin: { bodyLatex: '', kind: 'maclaurin' as const, center: '0', order: 3 },
     taylor: { bodyLatex: '', kind: 'taylor' as const, center: '0', order: 3 },
     laplace: { bodyLatex: '' },
@@ -91,6 +92,28 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.detailSections?.[1]).toEqual({
       title: 'Variable Policy',
       lines: ['Kept y symbolic as the partial derivative variable.'],
+    });
+  });
+
+  it('evaluates natural limit requests and protects the parsed variable', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('limit', {
+      limit: { requestLatex: '\\lim_{t\\to 0}\\frac{\\sin(t)}{t}' },
+      storedVariables: [
+        { name: 'a', valueLatex: '4', numericValue: 4 },
+        { name: 't', valueLatex: '9', numericValue: 9 },
+      ],
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.title).toBe('Limit');
+    expect(result.exactLatex).toBe('1');
+    expect(result.variableSubstitutions).toBeUndefined();
+    expect(result.detailSections?.[0]).toEqual({
+      title: 'Variable Policy',
+      lines: ['Kept t symbolic as the limit variable.'],
     });
   });
 

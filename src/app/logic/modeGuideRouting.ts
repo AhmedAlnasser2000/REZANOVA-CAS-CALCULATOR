@@ -37,7 +37,7 @@ export function createModeGuideOpeners(deps: {
       return;
     }
 
-    if (screen === 'limitsHome' || screen === 'finiteLimit' || screen === 'infiniteLimit') {
+    if (screen === 'limitsHome' || screen === 'limit' || screen === 'finiteLimit' || screen === 'infiniteLimit') {
       deps.openGuideArticle('calculus-limits');
       return;
     }

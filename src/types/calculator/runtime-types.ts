@@ -186,7 +186,7 @@ export type GuideExampleLaunch =
         & ImplicitDerivativeState
         & CalculusIndefiniteIntegralState
         & CalculusDefiniteIntegralState
-        & CalculusImproperIntegralState
+        & CalculusImproperIntegralState & CalculusLimitState
         & CalculusFiniteLimitState
         & CalculusInfiniteLimitState
         & SeriesState
@@ -249,7 +249,7 @@ export type GuideExampleLaunch =
         & ImplicitDerivativeState
         & CalculusIndefiniteIntegralState
         & CalculusDefiniteIntegralState
-        & CalculusImproperIntegralState
+        & CalculusImproperIntegralState & CalculusLimitState
         & CalculusFiniteLimitState
         & CalculusInfiniteLimitState
         & SeriesState
@@ -901,7 +901,7 @@ export type HistoryEntry = {
     & ImplicitDerivativeState
     & CalculusIndefiniteIntegralState
     & CalculusDefiniteIntegralState
-    & CalculusImproperIntegralState
+    & CalculusImproperIntegralState & CalculusLimitState
     & CalculusFiniteLimitState
     & CalculusInfiniteLimitState
     & SeriesState

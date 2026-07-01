@@ -62,6 +62,10 @@ function wrapBody(latex: string) {
     return '';
   }
 
+  if (/^\\left\(.+\\right\)$/u.test(trimmed)) {
+    return trimmed;
+  }
+
   return /^[-+]?[\w\\]+$/u.test(trimmed) ? trimmed : `\\left(${trimmed}\\right)`;
 }
 

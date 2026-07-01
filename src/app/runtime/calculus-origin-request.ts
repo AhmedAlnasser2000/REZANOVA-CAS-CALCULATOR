@@ -2,6 +2,7 @@ import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 import {
   buildCalculusFiniteLimitLatex,
   buildCalculusInfiniteLimitLatex,
+  buildCalculusLimitLatex,
   buildAdvancedIntegralLatex,
   buildFirstOrderOdeLatex,
   buildImplicitDerivativeLatex,
@@ -46,6 +47,7 @@ type CalculusWorkbenchExpressionState = Pick<
   | 'improperIntegral'
   | 'finiteLimit'
   | 'infiniteLimit'
+  | 'limit'
   | 'maclaurin'
   | 'taylor'
   | 'laplace'
@@ -102,6 +104,8 @@ export function buildCalculusWorkbenchExpression(
         state.definiteIntegral,
         state.improperIntegral,
       );
+    case 'limit':
+      return buildCalculusLimitLatex(state.limit);
     case 'finiteLimit':
       return buildCalculusFiniteLimitLatex(state.finiteLimit);
     case 'infiniteLimit':
@@ -138,6 +142,7 @@ export function buildCalculusRequestFromState(
     improperIntegral: state.improperIntegral,
     finiteLimit: state.finiteLimit,
     infiniteLimit: state.infiniteLimit,
+    limit: state.limit,
     maclaurin: state.maclaurin,
     taylor: state.taylor,
     laplace: state.laplace,
@@ -167,6 +172,7 @@ export function calculusRevisionRequestFromSurfaceState(
   }
 
   const displayState = normalizeWorkspaceDisplayState(instance.displayState);
+  const calculusLimit = surfaceState.calculusLimit ?? { requestLatex: '' };
   const generatedLatex = trimHarmlessTrailingMathSpacing(buildCalculusWorkbenchExpression(
     surfaceState.calculusScreen,
     {
@@ -178,6 +184,7 @@ export function calculusRevisionRequestFromSurfaceState(
       improperIntegral: surfaceState.calculusImproperIntegral,
       finiteLimit: surfaceState.calculusFiniteLimit,
       infiniteLimit: surfaceState.calculusInfiniteLimit,
+      limit: calculusLimit,
       maclaurin: surfaceState.maclaurinState,
       taylor: surfaceState.taylorState,
       laplace: surfaceState.laplaceState,
@@ -202,6 +209,7 @@ export function calculusRevisionRequestFromSurfaceState(
     improperIntegral: surfaceState.calculusImproperIntegral,
     finiteLimit: surfaceState.calculusFiniteLimit,
     infiniteLimit: surfaceState.calculusInfiniteLimit,
+    limit: calculusLimit,
     maclaurin: surfaceState.maclaurinState,
     taylor: surfaceState.taylorState,
     laplace: surfaceState.laplaceState,

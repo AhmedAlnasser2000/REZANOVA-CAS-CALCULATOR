@@ -7,6 +7,7 @@ import {
 import { parseNaturalDerivativeRequest } from '../derivative-request';
 import { derivativeVariableLatex } from '../derivative-target';
 import { finiteLimitTargetLatex } from '../engine/finite-limit-target';
+import { parseNaturalLimitRequest } from '../limit-request';
 import { DEFAULT_INTEGRAL_VARIABLE, integralVariableOrDefault } from './integral-variable';
 import type {
   CalculusDefiniteIntegralState,
@@ -14,6 +15,7 @@ import type {
   CalculusImproperIntegralState,
   CalculusInfiniteLimitState,
   CalculusIndefiniteIntegralState,
+  CalculusLimitState,
   AdvancedIntegralKind,
   LaplaceTransformState,
   NumericIvpState,
@@ -55,6 +57,10 @@ export const DEFAULT_CALCULUS_FINITE_LIMIT_STATE: CalculusFiniteLimitState = {
 export const DEFAULT_CALCULUS_INFINITE_LIMIT_STATE: CalculusInfiniteLimitState = {
   bodyLatex: '',
   targetKind: 'posInfinity',
+};
+
+export const DEFAULT_CALCULUS_LIMIT_STATE: CalculusLimitState = {
+  requestLatex: '',
 };
 
 export const DEFAULT_MACLAURIN_STATE: SeriesState = {
@@ -114,6 +120,10 @@ function wrapBody(latex: string) {
     return '';
   }
 
+  if (/^\\left\(.+\\right\)$/.test(trimmed)) {
+    return trimmed;
+  }
+
   return /^[-+]?[\w\\]+$/.test(trimmed) ? trimmed : `\\left(${trimmed}\\right)`;
 }
 
@@ -163,13 +173,25 @@ export function buildAdvancedIntegralLatex(
 export function buildCalculusFiniteLimitLatex(state: CalculusFiniteLimitState) {
   const body = state.bodyLatex.trim();
   const target = finiteLimitTargetLatex(state.target, state.direction);
-  return body && target ? `\\lim_{x\\to ${target}}${wrapBody(body)}` : '';
+  const variable = derivativeVariableLatex(state.variable ?? 'x');
+  return body && target ? `\\lim_{${variable}\\to ${target}}${wrapBody(body)}` : '';
 }
 
 export function buildCalculusInfiniteLimitLatex(state: CalculusInfiniteLimitState) {
   const body = state.bodyLatex.trim();
   const target = state.targetKind === 'posInfinity' ? '\\infty' : '-\\infty';
-  return body ? `\\lim_{x\\to ${target}}${wrapBody(body)}` : '';
+  const variable = derivativeVariableLatex(state.variable ?? 'x');
+  return body ? `\\lim_{${variable}\\to ${target}}${wrapBody(body)}` : '';
+}
+
+export function buildCalculusLimitLatex(state: CalculusLimitState) {
+  const request = state.requestLatex.trim();
+  if (!request) {
+    return '';
+  }
+
+  const parsed = parseNaturalLimitRequest(request);
+  return parsed.ok ? parsed.request.canonicalLatex : request;
 }
 
 export function buildSeriesPreviewLatex(state: SeriesState) {

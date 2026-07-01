@@ -106,13 +106,14 @@ describe('guide content', () => {
     if (limitExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected calculus limit example to load into a tool')
     }
-    expect(limitExample.launch.calculusScreen).toBe('finiteLimit')
-    expect(limitExample.launch.calculusSeed?.target).toBe('0')
+    expect(limitExample.launch.calculusScreen).toBe('limit')
+    expect(limitExample.launch.calculusSeed?.requestLatex).toContain('\\lim_{x\\to 0}')
     expect(directionalLimitExample?.launch.kind).toBe('load-expression')
     if (directionalLimitExample?.launch.kind !== 'load-expression') {
       throw new Error('Expected directional limit example to load into a tool')
     }
-    expect(directionalLimitExample.launch.calculusSeed?.direction).toBe('right')
+    expect(directionalLimitExample.launch.calculusScreen).toBe('limit')
+    expect(directionalLimitExample.launch.calculusSeed?.requestLatex).toContain('0^+')
   })
 
   it('exposes guided Calculus articles under the canonical Guide domain', () => {
@@ -129,7 +130,7 @@ describe('guide content', () => {
     }
     expect(quadraticPartialFractionExample.launch.calculusScreen).toBe('indefiniteIntegral')
     expect(quadraticPartialFractionExample.launch.calculusSeed?.bodyLatex).toContain('x^2+1')
-    expect(getGuideArticle('calculus-limits')?.summary).toContain('shared finite/infinite limit backend')
+    expect(getGuideArticle('calculus-limits')?.summary).toContain('natural limit requests')
     expect(getGuideArticle('calculus-series')?.examples[0]?.launch.calculusScreen).toBe('maclaurin')
     expect(getGuideArticle('calculus-partials')?.examples[0]?.launch.calculusScreen).toBe('partialDerivative')
   })

@@ -70,6 +70,7 @@ export type CalculusScreen =
   | 'definiteIntegral'
   | 'improperIntegral'
   | 'limitsHome'
+  | 'limit'
   | 'finiteLimit'
   | 'infiniteLimit'
   | 'seriesHome'

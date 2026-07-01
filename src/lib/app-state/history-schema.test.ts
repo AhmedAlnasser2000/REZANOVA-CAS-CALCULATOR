@@ -148,6 +148,7 @@ describe('history entry schema', () => {
     ['improperIntegral', { bodyLatex: '\\frac{1}{x^2}', lowerKind: 'finite', lower: '1', upperKind: 'posInfinity' }],
     ['derivative', { bodyLatex: '\\frac{d}{dt}\\left(t^2\\right)' }],
     ['derivativePoint', { bodyLatex: '\\frac{d}{d\\theta}\\left(\\theta^2\\right)', point: '3' }],
+    ['limit', { requestLatex: '\\lim_{x\\to 0}\\frac{\\sin(x)}{x}' }],
     ['finiteLimit', { bodyLatex: '\\frac{1}{x}', target: '0', direction: 'left' }],
     ['infiniteLimit', { bodyLatex: '\\frac{2x}{x+1}', targetKind: 'posInfinity' }],
     ['maclaurin', { bodyLatex: '\\sin(x)', kind: 'maclaurin', center: '0', order: 5 }],
