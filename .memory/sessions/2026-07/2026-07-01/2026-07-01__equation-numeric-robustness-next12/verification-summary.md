@@ -120,3 +120,14 @@
 - `npm run test:file-sizes` passed.
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
+
+## EQUATION-COMPLEX-POLYNOMIAL-CONDITIONING-LIFT1
+
+- Focused Complex polynomial conditioning gate passed:
+  - `npm run test:unit -- src/lib/algebra/polynomial-roots.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts src/lib/equation/complex/numeric-evaluator.test.ts src/lib/equation/complex/branch-cut-policy.test.ts`
+- Evidence: 4 test files passed, 29 tests passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run lint` is blocked by unrelated untracked Symbolic/Risch work in `src/lib/symbolic-engine/integration/transcendental-certificate/quotient-powers.ts` (`scalarLatex` unused).
+- `npm run build` is blocked by the same unrelated `quotient-powers.ts` TypeScript error.

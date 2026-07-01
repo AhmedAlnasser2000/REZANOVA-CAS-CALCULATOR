@@ -21,10 +21,10 @@
 - `EQUATION-NUMERIC-CONFIDENCE-READBACK1`: added route-specific numeric confidence detail cards across deterministic real polynomial/rational fallback, explicit interval solving, bounded nonlinear search, piecewise numeric branches, periodic interval guidance, and existing Complex numeric polynomial output. The labels stay in detail sections and do not add public result schema.
 - `EQUATION-COMPLEX-BRANCH-CUT-POLICY1`: added an internal Complex principal-branch policy helper for future nonlinear numeric solving. It detects principal log, principal root, fractional-power, and inverse-trig branch-sensitive nodes, records exact constant branch-cut contact, and marks simple direct-target rectangular regions unsafe when they cross principal cuts or branch points. No visible solver route was widened.
 - `EQUATION-COMPLEX-NUMERIC-EVALUATOR1`: added a dedicated internal Complex numeric evaluator contract. It evaluates target-aware complex zero forms, reports finite/undefined/overflow/unsupported status, residual norm, evaluation count, unresolved-symbol diagnostics, and principal branch-cut/domain diagnostics for log, roots, fractional powers, trig, and inverse trig. It remains internal/test-facing and does not enable visible Complex nonlinear solving.
+- `EQUATION-COMPLEX-POLYNOMIAL-CONDITIONING-LIFT1`: hardened visible Complex polynomial/rational numeric fallback diagnostics while keeping Aberth-Ehrlich as the maintained polynomial engine. Shared polynomial diagnostics now carry numeric multiplicity estimates from dedupe groups, Complex readback reports repeated/cluster evidence, decimal.js revalidation, and large-degree display guidance, and rectangular/polar/cis output remains honored.
 
 ## Pending Gates
 
-- `EQUATION-COMPLEX-POLYNOMIAL-CONDITIONING-LIFT1`
 - `EQUATION-COMPLEX-SEED-GRID-NEWTON1`
 - `EQUATION-COMPLEX-CONTOUR-WINDING-VERIFICATION1`
 - `EQUATION-COMPLEX-REGION-NONLINEAR-SOLVE1`

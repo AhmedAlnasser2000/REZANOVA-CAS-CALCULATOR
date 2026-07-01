@@ -180,6 +180,23 @@ function decimalRevalidationLines(diagnostics: PolynomialRootDiagnostics) {
   ];
 }
 
+function multiplicityEstimateLines(
+  diagnostics: PolynomialRootDiagnostics,
+  complexExactForm: ComplexExactForm,
+) {
+  const repeated = diagnostics.multiplicityEstimates
+    .filter((entry) => entry.estimatedMultiplicity > 1);
+  if (repeated.length === 0) {
+    return [];
+  }
+
+  return [
+    ...repeated.map((entry) =>
+      `Estimated multiplicity near ${formatComplexRootText(entry.root, complexExactForm)}: ${entry.estimatedMultiplicity}.`),
+    'Multiplicity estimates are numeric cluster evidence, not certified disks.',
+  ];
+}
+
 function validateComplexRoots(
   polynomial: SolvableNumericPolynomial,
   roots: readonly ComplexValue[],
@@ -259,6 +276,9 @@ function detailSectionsFor(input: {
         input.polynomial.kind === 'rational'
           ? 'Cleared numeric polynomial denominators, then rejected pole candidates and validated residuals.'
           : 'Solved the numeric polynomial globally, preserving real and non-real roots for Complex On.',
+        ...(input.polynomial.degree > 16
+          ? ['Large-degree root lists use progressive/capped branch rendering; narrow or factor the equation when individual roots need inspection.']
+          : []),
       ],
     },
   ];
@@ -293,6 +313,7 @@ function detailSectionsFor(input: {
         ...(diagnostics.closeRootSeparationCount > 0
           ? [`Close root-separation pairs: ${diagnostics.closeRootSeparationCount}.`]
           : []),
+        ...multiplicityEstimateLines(diagnostics, input.complexExactForm),
         ...decimalRevalidationLines(diagnostics),
         ...diagnostics.warningLines,
       ],

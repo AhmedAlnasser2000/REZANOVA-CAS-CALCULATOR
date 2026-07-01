@@ -89,6 +89,10 @@ describe('solvePolynomialRoots', () => {
     const formatted = result.roots.map((root) => `${root.re.toFixed(4)},${root.im.toFixed(4)}`);
     expect(formatted).toEqual(['-2.0000,0.0000', '1.0000,0.0000']);
     expect(result.diagnostics.rootCountBeforeDedupe).toBeGreaterThan(result.diagnostics.rootCountAfterDedupe);
+    expect(result.diagnostics.multiplicityEstimates).toEqual([
+      expect.objectContaining({ estimatedMultiplicity: 1 }),
+      expect.objectContaining({ estimatedMultiplicity: 2 }),
+    ]);
     expect(result.diagnostics.conditioningPasses).toBe(1);
     expect(result.diagnostics.warningLines.join(' ')).toContain('Repeated or tightly clustered');
   });

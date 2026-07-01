@@ -97,6 +97,47 @@ describe('Equation Complex numeric polynomial roots', () => {
     expect(text).toContain('x \\ne0');
   });
 
+  it('reports numeric multiplicity evidence and decimal revalidation for clustered Complex roots', () => {
+    const result = tryComplexNumericPolynomialFallback({
+      equationLatex: 'x^3-3*x+2=0',
+      equationSolveTarget: 'x',
+      angleUnit: 'rad',
+      complexExactForm: 'rectangular',
+      sharedOutcome: unsupportedExactOutcome,
+    });
+
+    expect(result?.kind).toBe('success');
+    if (!result || result.kind !== 'success') {
+      throw new Error('Expected Complex repeated-root numeric success');
+    }
+    const text = collectOutcomeText(result);
+    expect(result.branchReadback?.branchesLatex).toHaveLength(2);
+    expect(text).toContain('Roots before dedupe: 3; after dedupe: 2.');
+    expect(text).toContain('Estimated multiplicity near');
+    expect(text).toContain('Multiplicity estimates are numeric cluster evidence');
+    expect(text).toContain('Precision escalation backend: decimal.js');
+  });
+
+  it('adds large-degree display guidance without replacing Aberth-Ehrlich', () => {
+    const result = tryComplexNumericPolynomialFallback({
+      equationLatex: 'x^{20}-1=0',
+      equationSolveTarget: 'x',
+      angleUnit: 'rad',
+      complexExactForm: 'cis',
+      sharedOutcome: unsupportedExactOutcome,
+    });
+
+    expect(result?.kind).toBe('success');
+    if (!result || result.kind !== 'success') {
+      throw new Error('Expected Complex large-degree numeric success');
+    }
+    expect(result.branchReadback?.branchesLatex).toHaveLength(20);
+    const text = collectOutcomeText(result);
+    expect(text).toContain('Large-degree root lists use progressive/capped branch rendering');
+    expect(text).toContain('Root engine: aberth-ehrlich');
+    expect(text).toContain('cis');
+  });
+
   it('keeps exact Complex symbolic routes ahead of numeric fallback', () => {
     const result = solve('x^2+1=0');
 

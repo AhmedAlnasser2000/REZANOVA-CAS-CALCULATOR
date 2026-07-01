@@ -41,6 +41,10 @@ export type PolynomialRootDiagnostics = {
   clusteredRootCount: number;
   closeRootSeparationCount: number;
   conditioningPasses: number;
+  multiplicityEstimates: Array<{
+    root: ComplexValue;
+    estimatedMultiplicity: number;
+  }>;
   warningLines: string[];
   decimalRevalidation: DecimalRevalidationResult;
 };
@@ -147,14 +151,18 @@ function sortRoots(roots: readonly ComplexValue[]) {
   return roots
     .map((root) => normalizeComplex(root))
     .sort((left, right) => {
-      const leftReal = Number(left.re.toFixed(6));
-      const rightReal = Number(right.re.toFixed(6));
-      if (leftReal !== rightReal) {
-        return leftReal - rightReal;
-      }
-
-      return Number(left.im.toFixed(6)) - Number(right.im.toFixed(6));
+      return compareRoots(left, right);
     });
+}
+
+function compareRoots(left: ComplexValue, right: ComplexValue) {
+  const leftReal = Number(left.re.toFixed(6));
+  const rightReal = Number(right.re.toFixed(6));
+  if (leftReal !== rightReal) {
+    return leftReal - rightReal;
+  }
+
+  return Number(left.im.toFixed(6)) - Number(right.im.toFixed(6));
 }
 
 function sortAndDedupeRoots(
@@ -163,9 +171,20 @@ function sortAndDedupeRoots(
     residualCoefficients?: readonly number[];
   } = {},
 ) {
-  const sorted = roots
-    .map((root) => normalizeComplex(root));
-  const deduped: ComplexValue[] = [];
+  return sortAndDedupeRootGroups(roots, options).roots;
+}
+
+function sortAndDedupeRootGroups(
+  roots: ComplexValue[],
+  options: {
+    residualCoefficients?: readonly number[];
+  } = {},
+) {
+  const sorted = roots.map((root) => normalizeComplex(root));
+  const groups: Array<{
+    representative: ComplexValue;
+    count: number;
+  }> = [];
   let currentGroup: ComplexValue[] = [];
 
   for (const root of sortRoots(sorted)) {
@@ -177,15 +196,31 @@ function sortAndDedupeRoots(
       currentGroup.push(root);
       continue;
     }
-    deduped.push(chooseDedupeRepresentative(currentGroup, options.residualCoefficients));
+    groups.push({
+      representative: chooseDedupeRepresentative(currentGroup, options.residualCoefficients),
+      count: currentGroup.length,
+    });
     currentGroup = [root];
   }
 
   if (currentGroup.length > 0) {
-    deduped.push(chooseDedupeRepresentative(currentGroup, options.residualCoefficients));
+    groups.push({
+      representative: chooseDedupeRepresentative(currentGroup, options.residualCoefficients),
+      count: currentGroup.length,
+    });
   }
 
-  return sortRoots(deduped).map((root) => normalizeComplex(root, DEDUPE_EPSILON));
+  const normalizedGroups = groups
+    .map((group) => ({
+      representative: normalizeComplex(group.representative, DEDUPE_EPSILON),
+      count: group.count,
+    }))
+    .sort((left, right) => compareRoots(left.representative, right.representative));
+
+  return {
+    roots: normalizedGroups.map((group) => group.representative),
+    groups: normalizedGroups,
+  };
 }
 
 function diagnosticsFor(input: {
@@ -195,6 +230,7 @@ function diagnosticsFor(input: {
   method: PolynomialRootDiagnostics['method'];
   iterations: number;
   conditioningPasses: number;
+  multiplicityEstimates?: PolynomialRootDiagnostics['multiplicityEstimates'];
 }) {
   const degree = input.coefficients.length - 1;
   const maxResidual = maxPolynomialResidual(input.coefficients, input.roots);
@@ -236,6 +272,8 @@ function diagnosticsFor(input: {
     clusteredRootCount,
     closeRootSeparationCount: closeSeparationStats.closePairCount,
     conditioningPasses: input.conditioningPasses,
+    multiplicityEstimates: input.multiplicityEstimates
+      ?? input.roots.map((root) => ({ root, estimatedMultiplicity: 1 })),
     warningLines,
   };
 
@@ -392,17 +430,21 @@ function solveWithAberthEhrlich(coefficients: number[]): PolynomialRootsResult {
   }
 
   const conditioned = conditionRoots(monic, best.roots);
-  const deduped = sortAndDedupeRoots(conditioned, { residualCoefficients: monic });
+  const deduped = sortAndDedupeRootGroups(conditioned, { residualCoefficients: monic });
   return {
     kind: 'success',
-    roots: deduped,
+    roots: deduped.roots,
     diagnostics: diagnosticsFor({
       coefficients: monic,
-      roots: deduped,
+      roots: deduped.roots,
       rootsBeforeDedupe: best.roots.length,
       method: 'aberth-ehrlich',
       iterations: best.iterations,
       conditioningPasses: 1,
+      multiplicityEstimates: deduped.groups.map((group) => ({
+        root: group.representative,
+        estimatedMultiplicity: group.count,
+      })),
     }),
   };
 }
