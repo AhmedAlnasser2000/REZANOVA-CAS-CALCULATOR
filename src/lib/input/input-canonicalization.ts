@@ -8,40 +8,13 @@ import {
   EQUATION_IMAGINARY_UNIT_SYMBOL,
 } from '../equation/complex-input-policy';
 import { isDerivativeShortcutContext } from './derivative-shortcuts';
-
-const FUNCTION_COMMANDS: Record<string, string> = {
-  sin: '\\sin',
-  cos: '\\cos',
-  tan: '\\tan',
-  sec: '\\sec',
-  csc: '\\csc',
-  cot: '\\cot',
-  asin: '\\arcsin',
-  acos: '\\arccos',
-  atan: '\\arctan',
-  ln: '\\ln',
-  log: '\\log',
-  abs: '\\operatorname{abs}',
-};
-const COMMAND_FUNCTION_NAMES = new Map(
-  Object.entries(FUNCTION_COMMANDS).map(([name, command]) => [command, name]),
-);
-
-const RESERVED_FUNCTIONS = new Set([
-  'sin',
-  'cos',
-  'tan',
-  'sec',
-  'csc',
-  'cot',
-  'asin',
-  'acos',
-  'atan',
-  'ln',
-  'log',
-  'sqrt',
-  'abs',
-]);
+import {
+  COMMAND_FUNCTION_NAMES,
+  canonicalCommandFor,
+  isReservedCanonicalFunction,
+  isSpecialFunctionContext,
+  normalizeSplitFunctionTokens,
+} from './function-canonicalization';
 
 const DERIVATIVE_PATTERN = /(^|[^\\A-Za-z])d\s*\/\s*d([xyz])\b/g;
 const DISPLAY_DERIVATIVE_PATTERN = /\\frac\{\\mathrm\{d\}\}\{\\mathrm\{d\}([xyz])\}/g;
@@ -239,7 +212,8 @@ function collectSimpleArgument(source: string, start: number) {
     if (
       command.value === '\\pi'
       || command.value === '\\infty'
-      || RESERVED_FUNCTIONS.has(command.value.slice(1))
+      || command.value === '\\sqrt'
+      || COMMAND_FUNCTION_NAMES.has(command.value)
       || command.value.startsWith('\\operatorname')
     ) {
       index = command.nextIndex;
@@ -457,21 +431,6 @@ function normalizeExponentialEBase(source: string, changes: CanonicalizationChan
   return result;
 }
 
-function normalizeSplitFunctionTokens(source: string, changes: CanonicalizationChange[]) {
-  return source.replace(
-    /(^|[^\\A-Za-z])l(?:\s|\\,|\\:|\\;|\\!|\\thinspace|\\medspace|\\quad|\\qquad)+n(?=\s*(?:\\left\s*)?\()/g,
-    (match, prefix: string) => {
-      const after = `${prefix}ln`;
-      changes.push({
-        kind: 'function-token',
-        before: match,
-        after,
-      });
-      return after;
-    },
-  );
-}
-
 function isEmptyIntegralBound(content: string) {
   const normalized = content
     .replace(/\\placeholder\s*\{\s*\}/g, '')
@@ -606,10 +565,23 @@ export function normalizeLiveInputOperatorLatex(
   context?: Pick<CanonicalizationContext, 'mode' | 'screenHint'>,
 ) {
   const changes: CanonicalizationChange[] = [];
+  const specialFunctionContext = isSpecialFunctionContext(context);
+  const splitFunctionNormalized = normalizeSplitFunctionTokens(latex, changes, {
+    enableSpecialFunctions: specialFunctionContext,
+  });
   const derivativeShortcutNormalized = isDerivativeShortcutContext(context)
-    ? normalizeDerivativeShortcuts(latex, changes)
-    : latex;
-  return normalizeUngroupedNumericPowers(normalizeRelationOperatorLatex(derivativeShortcutNormalized), changes);
+    ? normalizeDerivativeShortcuts(splitFunctionNormalized, changes)
+    : splitFunctionNormalized;
+  const operatorNormalized = normalizeUngroupedNumericPowers(
+    normalizeRelationOperatorLatex(derivativeShortcutNormalized),
+    changes,
+  );
+  return specialFunctionContext
+    ? canonicalizeSegment(operatorNormalized, changes, {
+      enableSpecialFunctions: true,
+      canonicalizationScope: 'special-functions',
+    })
+    : operatorNormalized;
 }
 
 function normalizeRelationOperatorTokens(source: string, changes: CanonicalizationChange[]) {
@@ -641,15 +613,13 @@ export function normalizeHarmlessMathSpacing(latex: string) {
   return next;
 }
 
-function canonicalCommandFor(name: string) {
-  return FUNCTION_COMMANDS[name] ?? '';
-}
-
 function canonicalizeFunctionArgumentBody(
   body: string,
   changes: CanonicalizationChange[],
   options: {
     normalizeImaginaryUnit?: boolean;
+    enableSpecialFunctions?: boolean;
+    canonicalizationScope?: 'all' | 'special-functions';
   },
 ) {
   const quotient = collectExplicitGroupedQuotient(body);
@@ -662,6 +632,8 @@ function canonicalizeExplicitGroupedQuotient(
   changes: CanonicalizationChange[],
   options: {
     normalizeImaginaryUnit?: boolean;
+    enableSpecialFunctions?: boolean;
+    canonicalizationScope?: 'all' | 'special-functions';
   },
 ) {
   if (!quotient) {
@@ -691,6 +663,8 @@ function canonicalizeSegment(
   changes: CanonicalizationChange[],
   options: {
     normalizeImaginaryUnit?: boolean;
+    enableSpecialFunctions?: boolean;
+    canonicalizationScope?: 'all' | 'special-functions';
   } = {},
 ): string {
   let result = '';
@@ -746,7 +720,12 @@ function canonicalizeSegment(
     const previous = index > 0 ? source[index - 1] : undefined;
     const next = source[nextIndex];
 
-    if (tokenLower === 'pi' && isBoundaryChar(previous) && isBoundaryChar(next)) {
+    if (
+      options.canonicalizationScope !== 'special-functions'
+      && tokenLower === 'pi'
+      && isBoundaryChar(previous)
+      && isBoundaryChar(next)
+    ) {
       changes.push({
         kind: 'constant-token',
         before: token,
@@ -758,7 +737,8 @@ function canonicalizeSegment(
     }
 
     if (
-      options.normalizeImaginaryUnit
+      options.canonicalizationScope !== 'special-functions'
+      && options.normalizeImaginaryUnit
       && token === EQUATION_IMAGINARY_UNIT_SYMBOL
       && isBoundaryChar(previous)
       && isBoundaryChar(next)
@@ -773,7 +753,7 @@ function canonicalizeSegment(
       continue;
     }
 
-    if (!RESERVED_FUNCTIONS.has(tokenLower) || !isBoundaryChar(previous)) {
+    if (!isReservedCanonicalFunction(tokenLower, options) || !isBoundaryChar(previous)) {
       result += token;
       index = nextIndex;
       continue;
@@ -861,9 +841,12 @@ export function canonicalizeMathInput(
   }
 
   const changes: CanonicalizationChange[] = [];
+  const specialFunctionContext = isSpecialFunctionContext(context);
   const integralBoundsNormalized = normalizeEmptyIntegralBounds(trimmed, changes);
   const integralSpacingNormalized = normalizeIntegralSpacing(integralBoundsNormalized);
-  const splitFunctionsNormalized = normalizeSplitFunctionTokens(integralSpacingNormalized, changes);
+  const splitFunctionsNormalized = normalizeSplitFunctionTokens(integralSpacingNormalized, changes, {
+    enableSpecialFunctions: specialFunctionContext,
+  });
   const derivativeShortcutNormalized = isDerivativeShortcutContext(context)
     ? normalizeDerivativeShortcuts(splitFunctionsNormalized, changes)
     : splitFunctionsNormalized;
@@ -876,6 +859,7 @@ export function canonicalizeMathInput(
   const spacingNormalized = normalizeHarmlessMathSpacing(groupedPowerNormalized);
   const canonicalLatex = canonicalizeSegment(spacingNormalized, changes, {
     normalizeImaginaryUnit: context.mode === 'equation',
+    enableSpecialFunctions: specialFunctionContext,
   });
 
   return {

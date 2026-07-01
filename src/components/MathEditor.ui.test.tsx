@@ -128,7 +128,7 @@ describe('MathEditor typing behavior', () => {
         onChange={() => {}}
         dataTestId="math-editor"
         modeId="calculus"
-        screenHint="indefinite-integral"
+        screenHint="indefiniteIntegral"
       />,
     );
 
@@ -138,12 +138,12 @@ describe('MathEditor typing behavior', () => {
 
     fireEvent.paste(field, {
       clipboardData: {
-        getData: () => 'csc(2x+3)^2+e^(x/2+1)+(1/2)^(3x-1)',
+        getData: () => 'csc(2x+3)^2+e^(x/2+1)+(1/2)^(3x-1)+Si(2x+1)+FresnelC(x)',
       },
     });
 
     expect(field.getValue()).toBe(
-      '\\csc(2x+3)^2+\\exponentialE^{x/2+1}+(1/2)^{3x-1}',
+      '\\csc(2x+3)^2+\\exponentialE^{x/2+1}+(1/2)^{3x-1}+\\operatorname{Si}(2x+1)+\\operatorname{FresnelC}(x)',
     );
   });
 

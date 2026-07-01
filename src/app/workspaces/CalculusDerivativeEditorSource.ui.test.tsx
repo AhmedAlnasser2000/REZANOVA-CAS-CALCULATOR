@@ -148,6 +148,30 @@ describe('Calculus derivative editor source', () => {
     );
   });
 
+  it('canonicalizes special-function names before derivative evaluation', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Derivatives', 'Derivative');
+
+    setMathFieldLatex('main-editor', 'Si(2x+1)');
+    await waitFor(() => {
+      expect(screen.getByTestId('main-editor')).toHaveAttribute(
+        'data-value',
+        '\\operatorname{Si}(2x+1)',
+      );
+    });
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeSuccess();
+    const answerLatex = screen
+      .getByTestId('display-outcome-answer-block')
+      .querySelector('[data-raw-latex]')
+      ?.getAttribute('data-raw-latex') ?? '';
+    expect(answerLatex).toContain('\\sin');
+    expect(answerLatex).toContain('2x+1');
+    expect(answerLatex).not.toContain('(2i)^S');
+  });
+
   it('keeps derivative-at-point request in the main editor while the point remains editable', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');

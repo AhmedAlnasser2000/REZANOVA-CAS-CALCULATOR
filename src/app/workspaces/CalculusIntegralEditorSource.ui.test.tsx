@@ -93,6 +93,29 @@ describe('Calculus integral editor source', () => {
     });
   });
 
+  it('canonicalizes special-function names in the main integral editor before evaluation', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Integrals', 'Indefinite');
+    setMathFieldLatex('main-editor', 'Si(2x+1)');
+    await waitFor(() => {
+      expect(screen.getByTestId('main-editor')).toHaveAttribute(
+        'data-value',
+        '\\operatorname{Si}(2x+1)',
+      );
+    });
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
+      'This antiderivative could not be determined symbolically in Calculus.',
+    );
+    expect(screen.getByTestId('main-editor')).toHaveAttribute(
+      'data-value',
+      '\\operatorname{Si}(2x+1)',
+    );
+  });
+
   it('copies and replays special-function integral answers without degrading notation', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');

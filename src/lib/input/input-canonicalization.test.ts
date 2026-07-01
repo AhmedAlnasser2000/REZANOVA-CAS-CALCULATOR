@@ -84,7 +84,7 @@ describe('canonicalizeMathInput', () => {
   it('canonicalizes pasted reciprocal trig function names', () => {
     const result = canonicalizeMathInput('csc(2x+3)^2+sec(x)tan(x)+cot(x)', {
       mode: 'calculus',
-      screenHint: 'indefinite-integral',
+      screenHint: 'indefiniteIntegral',
       liveAssist: true,
     });
 
@@ -93,6 +93,50 @@ describe('canonicalizeMathInput', () => {
       throw new Error('Expected a canonicalization result');
     }
     expect(result.canonicalLatex).toBe('\\csc(2x+3)^2+\\sec(x)\\tan(x)+\\cot(x)');
+  });
+
+  it('canonicalizes Calculus special-function names without changing Equation shorthand', () => {
+    const calculus = canonicalizeMathInput(
+      'erf(x)+erfi(x)+Si(2x+1)+Ci(x)+Ei(x)+li(x)+FresnelS(x)+FresnelC(x)',
+      {
+        mode: 'calculus',
+        screenHint: 'derivative',
+        liveAssist: true,
+      },
+    );
+    const splitPaste = canonicalizeMathInput('S i\\left(2x+1\\right)+Fresnel S(x)', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+      liveAssist: true,
+    });
+    const equation = canonicalizeMathInput('Si(x)=1', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      liveAssist: true,
+    });
+
+    expect(calculus.ok && calculus.canonicalLatex).toBe(
+      '\\operatorname{erf}(x)+\\operatorname{erfi}(x)+\\operatorname{Si}(2x+1)+\\operatorname{Ci}(x)+\\operatorname{Ei}(x)+\\operatorname{li}(x)+\\operatorname{FresnelS}(x)+\\operatorname{FresnelC}(x)',
+    );
+    expect(splitPaste.ok && splitPaste.canonicalLatex).toBe(
+      '\\operatorname{Si}(2x+1)+\\operatorname{FresnelS}(x)',
+    );
+    expect(equation.ok && equation.canonicalLatex).toBe('Si(x)=1');
+  });
+
+  it('normalizes Calculus live special-function input before workspace state sees it', () => {
+    expect(normalizeLiveInputOperatorLatex('Si(2x+1)', {
+      mode: 'calculus',
+      screenHint: 'derivative',
+    })).toBe('\\operatorname{Si}(2x+1)');
+    expect(normalizeLiveInputOperatorLatex('Fresnel C(x)', {
+      mode: 'calculus',
+      screenHint: 'indefinite-integral',
+    })).toBe('\\operatorname{FresnelC}(x)');
+    expect(normalizeLiveInputOperatorLatex('Si(x)=1', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    })).toBe('Si(x)=1');
   });
 
   it('canonicalizes pi but leaves bare e alone', () => {
