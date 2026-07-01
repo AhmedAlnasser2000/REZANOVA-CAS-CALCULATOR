@@ -244,6 +244,7 @@ Current shape:
 - `TRANSCENDENTAL-ALGEBRAIC-CONSTANTS-AND-TRACE1` adds behavior-invisible algebraic-constant and trace readback evidence on top of named-root descriptors. Formal LRT lift results now carry trace evidence for named-root logarithmic sums without raw `RootOf` leakage, while live integration dispatch and public schemas remain unchanged.
 - `TRANSCENDENTAL-DEGENERACY-BRANCH-SOLVER1` adds a behavior-invisible proof branch-row solver for vanished pivots, slopes, discriminant signs, repeated resultants, and special parameters. It emits bounded generic/degenerate branch evidence up to the formal row cap `12` and stops cleanly when combinations exceed the cap.
 - `TRANSCENDENTAL-DEPTH2-GENERALIZATION1` generalizes behavior-invisible depth-2 tower proof evidence. Depth-2 compositions such as exp-over-trig, trig-over-log, and log-over-exp now get explicit readiness labels and reduce to deterministic deferred reduced-equation stops, while depth-3 remains capped unsupported evidence.
+- `TRANSCENDENTAL-CERTIFICATE-ORCHESTRATOR1` wires a single internal certificate chooser after existing Tier-I/RN routes miss. It consumes the Liouville proof record and selects named special-function answers, non-elementary certificates, elementary route-owned outcomes, or controlled proof stops without adding a public `risch` strategy or schema.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 

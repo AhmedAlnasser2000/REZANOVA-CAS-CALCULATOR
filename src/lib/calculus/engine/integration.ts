@@ -11,16 +11,9 @@ import {
 import type { DisplayDetailSection, ResultOrigin } from '../../../types/calculator';
 import { integrateAdaptiveSimpson } from './adaptive-simpson';
 import { backcheckAntiderivative } from './verification';
-import { proveExpQuadraticNonElementary } from '../../symbolic-engine/integration/transcendental-certificate/proof';
-import { buildTranscendentalNonElementaryCertificateFromProof } from '../../symbolic-engine/integration/transcendental-certificate/result-shape';
 import {
-  buildDepth2ExpCompositionSpecialFunctionCertificate,
-  buildEiLiAffineSpecialFunctionCertificate,
-  buildExpQuadraticSpecialFunctionCertificateFromProof,
-  buildSiCiAffineQuotientSpecialFunctionCertificate,
-} from '../../symbolic-engine/integration/transcendental-certificate/special-functions';
-import { buildFresnelQuadraticSpecialFunctionCertificate } from '../../symbolic-engine/integration/transcendental-certificate/fresnel';
-import { buildQuotientPowerSpecialFunctionCertificate } from '../../symbolic-engine/integration/transcendental-certificate/quotient-powers';
+  orchestrateTranscendentalCertificateCandidate,
+} from '../../symbolic-engine/integration/transcendental-certificate/orchestrator';
 import { transcendentalCertificateToCalculusEvaluation } from './transcendental-certificate';
 import {
   antiderivativeTrustFacts,
@@ -180,24 +173,9 @@ function resolvedTranscendentalCertificate(
   body: unknown,
   variable: string,
 ): CalculusCoreEvaluation | undefined {
-  const proof = proveExpQuadraticNonElementary(body, variable);
-  if (proof.kind === 'proof-ready') {
-    const certificate =
-      buildExpQuadraticSpecialFunctionCertificateFromProof(proof)
-      ?? buildTranscendentalNonElementaryCertificateFromProof(proof);
-    return certificate
-      ? transcendentalCertificateToCalculusEvaluation(certificate)
-      : undefined;
-  }
-
-  const certificate =
-    buildSiCiAffineQuotientSpecialFunctionCertificate(body, variable)
-    ?? buildEiLiAffineSpecialFunctionCertificate(body, variable)
-    ?? buildQuotientPowerSpecialFunctionCertificate(body, variable)
-    ?? buildDepth2ExpCompositionSpecialFunctionCertificate(body, variable)
-    ?? buildFresnelQuadraticSpecialFunctionCertificate(body, variable);
-  return certificate
-    ? transcendentalCertificateToCalculusEvaluation(certificate)
+  const orchestrated = orchestrateTranscendentalCertificateCandidate(body, variable);
+  return orchestrated.kind === 'success'
+    ? transcendentalCertificateToCalculusEvaluation(orchestrated.certificate)
     : undefined;
 }
 
