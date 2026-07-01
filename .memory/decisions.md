@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-DTO-FIREWALL1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol now begins as hostless infrastructure under `src/lib/surface-protocol/`. The first DTO firewall exposes versioned compact result summaries and wrapper DTOs for Calculate and Equation only, mapped from committed `DisplayOutcome` values without exposing Display block trees, solver/runtime objects, diagnostics, History, Variables, Graphing, mount contracts, host commands, plugins, remote compute, or an external software development kit.
+
 ## 2026-06-30 - PUBLIC-IDENTITY-LOCK1
 
 - [agent: codex | model: gpt-5-codex] The primary current-facing public identity is `REZANOVA CLASSWIZ CALCULATOR`. `Calcwiz` and `Classwiz` are allowed as friendly aliases, but they must not replace the primary identity in release/GitHub positioning. Technical slugs such as `calcwiz-desktop`, `calcwiz_desktop`, and `com.ahmed.calcwizdesktop` stay unchanged for compatibility, and historical memory keeps old names as evidence rather than being rewritten.
