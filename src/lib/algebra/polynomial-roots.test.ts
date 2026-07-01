@@ -75,6 +75,7 @@ describe('solvePolynomialRoots', () => {
     ]);
     expect(result.diagnostics.method).toBe('aberth-ehrlich');
     expect(result.diagnostics.warningLines.join(' ')).not.toContain('Higher precision');
+    expect(result.diagnostics.decimalRevalidation.performed).toBe(false);
   });
 
   it('dedupes repeated numeric roots while recording the cluster signal', () => {
@@ -103,6 +104,8 @@ describe('solvePolynomialRoots', () => {
     expect(result.diagnostics.minimumRootSeparation ?? 1).toBeLessThan(1e-3);
     expect(result.diagnostics.warningLines.join(' ')).toContain('Repeated or tightly clustered');
     expect(result.diagnostics.warningLines.join(' ')).toContain('Higher precision');
+    expect(result.diagnostics.decimalRevalidation.performed).toBe(true);
+    expect(result.diagnostics.decimalRevalidation.triggeredBy).toEqual(expect.arrayContaining(['clustered-roots']));
   });
 
   it('reports conditioning warnings for badly scaled coefficients', () => {
@@ -115,6 +118,8 @@ describe('solvePolynomialRoots', () => {
     expect(result.diagnostics.coefficientScaleRatio).toBeGreaterThan(1e12);
     expect(result.diagnostics.warningLines.join(' ')).toContain('Large coefficient scale ratio');
     expect(result.diagnostics.warningLines.join(' ')).toContain('Higher precision');
+    expect(result.diagnostics.decimalRevalidation.performed).toBe(true);
+    expect(result.diagnostics.decimalRevalidation.triggeredBy).toContain('coefficient-scale');
   });
 
   it('rejects a zero leading coefficient', () => {

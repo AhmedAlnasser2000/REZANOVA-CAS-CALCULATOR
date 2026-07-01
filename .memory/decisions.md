@@ -1459,3 +1459,7 @@
 ## 2026-07-01 - WORKSPACE-DESTINATION-ROUTING1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Destination routing in Workspace Tabs must settle the active workspace retarget or explicit new-tab activation before applying per-mode payloads. History replay, Auto Equation handoff, launcher/guide sends, and display action sends use this bridge so the first user action lands on the intended workspace destination instead of a default menu page.
+
+## 2026-07-01 - EQUATION-NUMERIC-DECIMAL-PRECISION-SUBSTRATE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation numeric precision v1 uses `decimal.js` as an internal diagnostics substrate for polynomial residual revalidation when existing scale, residual, repeated/clustered-root, or close-separation diagnostics signal risk. This does not make Equation fallback arbitrary-precision by default and does not widen supported numeric routes.

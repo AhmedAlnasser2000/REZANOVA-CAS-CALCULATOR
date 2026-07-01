@@ -47,6 +47,8 @@ Updated for `EQUATION-NUMERIC-PRECISION-CONDITIONING1` on 2026-07-01: precision 
 
 Updated for `EQUATION-NUMERIC-GOLDEN-TRACE-HARNESS1` on 2026-07-01: Equation numeric route discipline now has a unit-level golden trace harness. It records route/method/root/residual/detail evidence plus soft timing and count guards for deterministic, rational, nonlinear, periodic interval, discontinuity-heavy, stored-value, and Complex-boundary fixtures without changing runtime behavior.
 
+Updated for `EQUATION-NUMERIC-DECIMAL-PRECISION-SUBSTRATE1` on 2026-07-01: `decimal.js` is now the internal high-precision scalar substrate for polynomial residual recomputation, coefficient-scale checks, and risk-triggered root revalidation. It is diagnostics infrastructure only in this slice; Equation does not run arbitrary precision for every solve and does not widen route eligibility.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

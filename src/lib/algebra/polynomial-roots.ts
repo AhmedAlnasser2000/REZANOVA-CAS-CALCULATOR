@@ -10,6 +10,10 @@ import {
   normalizeComplex,
   type ComplexValue,
 } from '../numeric/complex';
+import {
+  decimalRevalidatePolynomialRoots,
+  type DecimalRevalidationResult,
+} from '../numeric/decimal-precision';
 
 const LEADING_EPSILON = 1e-10;
 const CONVERGENCE_EPSILON = 1e-10;
@@ -37,6 +41,7 @@ export type PolynomialRootDiagnostics = {
   clusteredRootCount: number;
   closeRootSeparationCount: number;
   warningLines: string[];
+  decimalRevalidation: DecimalRevalidationResult;
 };
 
 export type PolynomialRootsResult =
@@ -180,7 +185,7 @@ function diagnosticsFor(input: {
     );
   }
 
-  return {
+  const baseDiagnostics = {
     degree,
     method: input.method,
     iterations: input.iterations,
@@ -192,6 +197,15 @@ function diagnosticsFor(input: {
     clusteredRootCount,
     closeRootSeparationCount: closeSeparationStats.closePairCount,
     warningLines,
+  };
+
+  return {
+    ...baseDiagnostics,
+    decimalRevalidation: decimalRevalidatePolynomialRoots({
+      coefficients: input.coefficients,
+      roots: input.roots,
+      diagnostics: baseDiagnostics,
+    }),
   } satisfies PolynomialRootDiagnostics;
 }
 

@@ -71,6 +71,19 @@ function residualLines(zeroFormLatex: string, target: string, roots: readonly nu
   });
 }
 
+function decimalRevalidationLines(diagnostics: PolynomialRootDiagnostics) {
+  const revalidation = diagnostics.decimalRevalidation;
+  if (!revalidation.performed) {
+    return [];
+  }
+
+  return [
+    `Decimal revalidation: checked ${revalidation.rootsChecked} root${revalidation.rootsChecked === 1 ? '' : 's'} at ${revalidation.precisionDigits} digits.`,
+    `Decimal residual check: ${formatDiagnosticNumber(revalidation.maxResidual)}.`,
+    `Precision risk triggers: ${revalidation.triggeredBy.join(', ')}.`,
+  ];
+}
+
 function detailSectionsFor(input: {
   classification: ReturnType<typeof classifyEquationNumericShape>;
   degree: number;
@@ -122,6 +135,7 @@ function detailSectionsFor(input: {
         ...(diagnostics.closeRootSeparationCount > 0
           ? [`Close root-separation pairs: ${diagnostics.closeRootSeparationCount}.`]
           : []),
+        ...decimalRevalidationLines(diagnostics),
         ...diagnostics.warningLines,
       ],
     });
