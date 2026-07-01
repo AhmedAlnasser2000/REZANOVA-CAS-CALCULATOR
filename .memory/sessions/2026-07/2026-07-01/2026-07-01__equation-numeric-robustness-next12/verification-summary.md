@@ -97,3 +97,15 @@
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.
+
+## EQUATION-COMPLEX-BRANCH-CUT-POLICY1
+
+- Focused branch-cut policy gate passed:
+  - `npm run test:unit -- src/lib/equation/complex/branch-cut-policy.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts`
+- Evidence: 2 test files passed, 10 tests passed.
+- Broader `complex-domain` regression was probed and found pre-existing/stale against current Complex numeric/readback policy; failures include older direct Complex Cardano/Ferrari expectations and older exact-only stop wording. This branch-cut milestone does not change those routes.
+- `npm run lint` passed.
+- `npm run build` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
