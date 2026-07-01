@@ -11,6 +11,7 @@ import {
   type SymbolicPolynomialStopReason,
 } from '../primitives/symbolic-polynomial';
 import {
+  addSymbolicCoefficients,
   divideSymbolicCoefficients,
   isSymbolicCoefficientZero,
   mergeSymbolicCoefficientFacts,
@@ -27,6 +28,7 @@ import {
   transcendentalConstantFieldFact,
   type TranscendentalConstantFieldFact,
 } from './transcendental-constant-field';
+import { solveRischNormanLinearSystem } from './risch-norman/linear-solver';
 
 export type TranscendentalRdeStopReason =
   | 'branch-sensitive-carrier'
@@ -100,11 +102,10 @@ export type TranscendentalRdeSolveResult =
   | TranscendentalRdeObstruction
   | TranscendentalRdeBuildStop;
 
-const RDE_POLYNOMIAL_CAP = 8;
+const RDE_EXACT_RATIONAL_POLYNOMIAL_CAP = 12;
+const RDE_TARGET_FREE_SYMBOLIC_POLYNOMIAL_CAP = 10;
 
-function isRdeBuildStop(
-  value: SymbolicPolynomial | TranscendentalRdeBuildStop,
-): value is TranscendentalRdeBuildStop {
+function isRdeBuildStop(value: unknown): value is TranscendentalRdeBuildStop {
   return (value as TranscendentalRdeBuildStop).kind === 'stop';
 }
 
@@ -163,8 +164,19 @@ function mapPolynomialStop(
 }
 
 function parsePolynomialForRde(node: unknown, variable: string, label: 'coefficient' | 'right-hand side') {
-  const parsed = parseSymbolicPolynomial(node, variable, RDE_POLYNOMIAL_CAP);
+  const parsed = parseSymbolicPolynomial(node, variable, RDE_EXACT_RATIONAL_POLYNOMIAL_CAP);
   if (parsed.kind === 'success') {
+    if (
+      parsed.polynomial.degree > RDE_TARGET_FREE_SYMBOLIC_POLYNOMIAL_CAP
+      && polynomialUsesTargetFreeSymbolicCoefficients(parsed.polynomial)
+    ) {
+      return stop(
+        variable,
+        'over-cap-degree',
+        `RDE ${label} polynomial degree ${parsed.polynomial.degree} exceeds the target-free symbolic cap ${RDE_TARGET_FREE_SYMBOLIC_POLYNOMIAL_CAP}.`,
+        { polynomialReason: 'over-cap-degree' },
+      );
+    }
     return parsed.polynomial;
   }
 
@@ -177,6 +189,10 @@ function parsePolynomialForRde(node: unknown, variable: string, label: 'coeffici
       polynomialReason: parsed.reason,
     },
   );
+}
+
+function polynomialUsesTargetFreeSymbolicCoefficients(polynomial: SymbolicPolynomial) {
+  return polynomial.coefficients.some((coefficient) => !readExactScalarNode(coefficient.node));
 }
 
 function nonzeroFactForCoefficient(
@@ -227,6 +243,21 @@ function zeroCoefficient(variable: string): SymbolicCoefficient {
 function coefficientForInteger(value: number, variable: string) {
   const parsed = parseSymbolicCoefficient(value, variable);
   return parsed.kind === 'success' ? parsed.coefficient : undefined;
+}
+
+function checkedCoefficient(
+  variable: string,
+  result:
+    | ReturnType<typeof addSymbolicCoefficients>
+    | ReturnType<typeof subtractSymbolicCoefficients>
+    | ReturnType<typeof multiplySymbolicCoefficients>
+    | ReturnType<typeof divideSymbolicCoefficients>,
+  detail: string,
+): SymbolicCoefficient | TranscendentalRdeBuildStop {
+  if (result.kind === 'success') {
+    return result.coefficient;
+  }
+  return stop(variable, mapCoefficientStop(result.reason), detail, { coefficientReason: result.reason });
 }
 
 function buildSolution(
@@ -364,6 +395,234 @@ function solveConstantCoefficientRde(
   );
 }
 
+type RdeLinearRow = {
+  degree: number;
+  entries: SymbolicCoefficient[];
+  rhs: SymbolicCoefficient;
+};
+
+function addToMatrixEntry(
+  variable: string,
+  existing: SymbolicCoefficient,
+  contribution: SymbolicCoefficient,
+) {
+  return checkedCoefficient(
+    variable,
+    addSymbolicCoefficients(existing, contribution, variable),
+    'RDE coefficient-comparison stopped while adding matrix contributions.',
+  );
+}
+
+function buildCoefficientComparisonRows(
+  equation: TranscendentalRdeEquation,
+  solutionDegree: number,
+): RdeLinearRow[] | TranscendentalRdeBuildStop {
+  const variable = equation.variable;
+  const coefficient = normalizeSymbolicPolynomial(equation.coefficientPolynomial);
+  const rhs = normalizeSymbolicPolynomial(equation.rhsPolynomial);
+  const equationDegree = Math.max(
+    rhs.degree,
+    coefficient.degree + solutionDegree,
+    solutionDegree > 0 ? solutionDegree - 1 : 0,
+  );
+  const zero = zeroCoefficient(variable);
+  const rows: RdeLinearRow[] = [];
+
+  for (let degree = 0; degree <= equationDegree; degree += 1) {
+    const entries: SymbolicCoefficient[] = Array.from({ length: solutionDegree + 1 }, () => zero);
+    for (let unknownDegree = 0; unknownDegree <= solutionDegree; unknownDegree += 1) {
+      let entry = entries[unknownDegree];
+      if (unknownDegree > 0 && degree === unknownDegree - 1) {
+        const derivativeFactor = coefficientForInteger(unknownDegree, variable);
+        if (!derivativeFactor) {
+          return stop(variable, 'coefficient-stop', 'Unable to build exact derivative factor for RDE coefficient comparison.');
+        }
+        const combined = addToMatrixEntry(variable, entry, derivativeFactor);
+        if (isRdeBuildStop(combined)) {
+          return combined;
+        }
+        entry = combined;
+      }
+
+      const coefficientDegree = degree - unknownDegree;
+      if (coefficientDegree >= 0 && coefficientDegree <= coefficient.degree) {
+        const combined = addToMatrixEntry(
+          variable,
+          entry,
+          getSymbolicPolynomialCoefficient(coefficient, coefficientDegree),
+        );
+        if (isRdeBuildStop(combined)) {
+          return combined;
+        }
+        entry = combined;
+      }
+
+      entries[unknownDegree] = entry;
+    }
+
+    rows.push({
+      degree,
+      entries,
+      rhs: getSymbolicPolynomialCoefficient(rhs, degree),
+    });
+  }
+
+  return rows;
+}
+
+function rowHasMatrixEntry(row: RdeLinearRow) {
+  return row.entries.some((entry) => !isSymbolicCoefficientZero(entry));
+}
+
+function rowIsInconsistent(row: RdeLinearRow) {
+  return !rowHasMatrixEntry(row) && !isSymbolicCoefficientZero(row.rhs);
+}
+
+function candidateRowSelections(rows: RdeLinearRow[], size: number) {
+  const active = rows.filter(rowHasMatrixEntry);
+  if (active.length < size) {
+    return [];
+  }
+
+  const selections: RdeLinearRow[][] = [];
+  const seen = new Set<string>();
+  const addSelection = (selection: RdeLinearRow[]) => {
+    if (selection.length !== size) {
+      return;
+    }
+    const key = selection.map((row) => row.degree).join(',');
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    selections.push(selection);
+  };
+
+  addSelection(active.slice(0, size));
+  addSelection(active.slice(-size));
+  for (let start = 0; start <= active.length - size; start += 1) {
+    addSelection(active.slice(start, start + size));
+  }
+
+  return selections;
+}
+
+function verifyCoefficientComparisonSolution(
+  rows: RdeLinearRow[],
+  solution: SymbolicCoefficient[],
+  variable: string,
+) {
+  const zero = zeroCoefficient(variable);
+  for (const row of rows) {
+    let sum = zero;
+    for (let index = 0; index < row.entries.length; index += 1) {
+      if (isSymbolicCoefficientZero(row.entries[index]) || isSymbolicCoefficientZero(solution[index])) {
+        continue;
+      }
+      const product = checkedCoefficient(
+        variable,
+        multiplySymbolicCoefficients(row.entries[index], solution[index], variable),
+        'RDE coefficient-comparison stopped while verifying a solved row product.',
+      );
+      if (isRdeBuildStop(product)) {
+        return product;
+      }
+      const combined = checkedCoefficient(
+        variable,
+        addSymbolicCoefficients(sum, product, variable),
+        'RDE coefficient-comparison stopped while verifying a solved row sum.',
+      );
+      if (isRdeBuildStop(combined)) {
+        return combined;
+      }
+      sum = combined;
+    }
+
+    const residual = checkedCoefficient(
+      variable,
+      subtractSymbolicCoefficients(sum, row.rhs, variable),
+      'RDE coefficient-comparison stopped while verifying the solved residual.',
+    );
+    if (isRdeBuildStop(residual)) {
+      return residual;
+    }
+    if (!isSymbolicCoefficientZero(residual)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function solveParametricCoefficientComparisonRde(
+  equation: TranscendentalRdeEquation,
+): TranscendentalRdeSolveResult | undefined {
+  const variable = equation.variable;
+  const coefficient = normalizeSymbolicPolynomial(equation.coefficientPolynomial);
+  const rhs = normalizeSymbolicPolynomial(equation.rhsPolynomial);
+  const cap = polynomialUsesTargetFreeSymbolicCoefficients(equation.coefficientPolynomial)
+    || polynomialUsesTargetFreeSymbolicCoefficients(equation.rhsPolynomial)
+    ? RDE_TARGET_FREE_SYMBOLIC_POLYNOMIAL_CAP
+    : RDE_EXACT_RATIONAL_POLYNOMIAL_CAP;
+  const maxSolutionDegree = rhs.degree - coefficient.degree;
+  if (maxSolutionDegree < 0) {
+    return undefined;
+  }
+
+  let lastStop: TranscendentalRdeBuildStop | undefined;
+  for (let solutionDegree = 0; solutionDegree <= Math.min(cap, maxSolutionDegree); solutionDegree += 1) {
+    const rows = buildCoefficientComparisonRows(equation, solutionDegree);
+    if (isRdeBuildStop(rows)) {
+      return rows;
+    }
+    if (rows.some(rowIsInconsistent)) {
+      continue;
+    }
+
+    const unknownCount = solutionDegree + 1;
+    for (const selection of candidateRowSelections(rows, unknownCount)) {
+      const solved = solveRischNormanLinearSystem(
+        selection.map((row) => row.entries),
+        selection.map((row) => row.rhs),
+        variable,
+        RDE_EXACT_RATIONAL_POLYNOMIAL_CAP + 1,
+      );
+      if (solved.kind === 'stop') {
+        if (solved.reason === 'coefficient-stop') {
+          lastStop = stop(
+            variable,
+            solved.coefficientReason ? mapCoefficientStop(solved.coefficientReason) : 'coefficient-stop',
+            solved.detail ?? 'RDE coefficient-comparison linear solve stopped on coefficient arithmetic.',
+            { coefficientReason: solved.coefficientReason },
+          );
+          continue;
+        }
+        continue;
+      }
+
+      const verified = verifyCoefficientComparisonSolution(rows, solved.solution, variable);
+      if (isRdeBuildStop(verified)) {
+        return verified;
+      }
+      if (!verified) {
+        continue;
+      }
+
+      return buildSolution(
+        equation,
+        solved.solution,
+        'Solved the first-order RDE by bounded parametric coefficient comparison.',
+        [
+          `Used a polynomial ansatz for r(${variable}) of degree ${solutionDegree}.`,
+          'Matched coefficients in r\'(v)+A(v)r(v)=B(v) and solved the resulting exact linear system.',
+          'Verified every coefficient equation exactly before accepting the polynomial certificate.',
+        ],
+      );
+    }
+  }
+
+  return lastStop;
+}
+
 function obstructionForPolynomialCoefficient(
   equation: TranscendentalRdeEquation,
 ): TranscendentalRdeObstruction {
@@ -447,6 +706,11 @@ export function solveTranscendentalRdeEquation(
     );
   }
 
+  const parametric = solveParametricCoefficientComparisonRde(equation);
+  if (parametric) {
+    return parametric;
+  }
+
   if (rhs.degree === 0) {
     return obstructionForPolynomialCoefficient(equation);
   }
@@ -454,7 +718,7 @@ export function solveTranscendentalRdeEquation(
   return stop(
     equation.variable,
     'unsupported-nonconstant-rhs',
-    'The first RDE core only solves nonzero constant-coefficient polynomial RHS cases and constant-RHS obstruction cases for nonconstant coefficients.',
+    'The bounded RDE coefficient-comparison solver did not find a supported polynomial certificate within the active cap.',
   );
 }
 
@@ -476,20 +740,12 @@ export function buildLiouvilleRationalCertificateRde(input: {
   rhsNode?: unknown;
 }): TranscendentalRdeBuildResult {
   const variable = input.variable ?? 'x';
-  const exponent = parseSymbolicPolynomial(input.exponentNode, variable, RDE_POLYNOMIAL_CAP);
-  if (exponent.kind === 'stop') {
-    return stop(
-      variable,
-      mapPolynomialStop(exponent.reason, exponent.coefficientReason),
-      `Liouville RDE exponent parsing stopped: ${exponent.detail ?? exponent.reason}.`,
-      {
-        coefficientReason: exponent.coefficientReason,
-        polynomialReason: exponent.reason,
-      },
-    );
+  const exponent = parsePolynomialForRde(input.exponentNode, variable, 'coefficient');
+  if (isRdeBuildStop(exponent)) {
+    return exponent;
   }
 
-  const derivative = derivativeSymbolicPolynomial(exponent.polynomial);
+  const derivative = derivativeSymbolicPolynomial(exponent);
   if (derivative.kind === 'stop') {
     return stop(
       variable,
