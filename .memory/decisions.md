@@ -1484,6 +1484,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The derivative operator rail is read-only parse feedback. It may display written operator, applied order, and parsed body, but must not be the primary editable source for derivative or partial-derivative operators.
 
+## 2026-07-01 - CALCULUS-DERIVATIVE-SHORTCUTS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Derivative text shortcuts are scoped to guided derivative screens. `pd` normalizes to the partial symbol, `ddx`-style shortcuts normalize to ordinary derivative operators, and `pdx`-style shortcuts normalize to partial derivative operators before evaluation state consumes the input.
+
 ## 2026-07-01 - EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex On numeric polynomial/rational fallback is live after exact symbolic routes miss. It uses the shared Aberth-Ehrlich polynomial engine through degree `64`, preserves real and non-real roots, honors `complexExactForm` for approximate rectangular/polar/cis readback, validates residuals and denominator exclusions, and keeps Complex nonlinear numeric solving plus generated Complex Cardano/Ferrari formula output deferred.

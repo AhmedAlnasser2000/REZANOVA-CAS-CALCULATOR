@@ -7,6 +7,7 @@ import {
   EQUATION_IMAGINARY_UNIT_LATEX,
   EQUATION_IMAGINARY_UNIT_SYMBOL,
 } from '../equation/complex-input-policy';
+import { isDerivativeShortcutContext } from './derivative-shortcuts';
 
 const FUNCTION_COMMANDS: Record<string, string> = {
   sin: '\\sin',
@@ -44,6 +45,16 @@ const RESERVED_FUNCTIONS = new Set([
 
 const DERIVATIVE_PATTERN = /(^|[^\\A-Za-z])d\s*\/\s*d([xyz])\b/g;
 const DISPLAY_DERIVATIVE_PATTERN = /\\frac\{\\mathrm\{d\}\}\{\\mathrm\{d\}([xyz])\}/g;
+const DERIVATIVE_SHORTCUT_VARIABLE_SOURCE = '(?:theta|alpha|beta|gamma|delta|lambda|mu|[A-Za-z])';
+const ORDINARY_DERIVATIVE_SHORTCUT_PATTERN = new RegExp(
+  `(^|[^\\\\A-Za-z])dd(${DERIVATIVE_SHORTCUT_VARIABLE_SOURCE})\\b`,
+  'g',
+);
+const PARTIAL_DERIVATIVE_SHORTCUT_PATTERN = new RegExp(
+  `(^|[^\\\\A-Za-z])pd(${DERIVATIVE_SHORTCUT_VARIABLE_SOURCE})\\b`,
+  'g',
+);
+const PARTIAL_SYMBOL_SHORTCUT_PATTERN = /(^|[^\\A-Za-z])pd\b/g;
 const MATH_SPACING_PATTERN_SOURCE = '(?:\\\\[,;:! ]|\\\\thinspace|\\\\medspace|\\\\quad|\\\\qquad|~|\\s)+';
 const TRAILING_MATH_SPACING_PATTERN = new RegExp(`${MATH_SPACING_PATTERN_SOURCE}$`);
 const INFIX_OPERATOR_PATTERN_SOURCE = '([+\\-*/=,;:<>^_])';
@@ -289,6 +300,50 @@ function normalizeDerivativeDisplay(source: string) {
 function normalizeDerivativeTokens(source: string, changes: CanonicalizationChange[]) {
   return source.replace(DERIVATIVE_PATTERN, (match, prefix: string, variable: string) => {
     const after = `${prefix}\\frac{d}{d${variable}}`;
+    changes.push({
+      kind: 'derivative-token',
+      before: match,
+      after,
+    });
+    return after;
+  });
+}
+
+function derivativeShortcutVariableLatex(variable: string) {
+  return variable.length === 1 ? variable : `\\${variable}`;
+}
+
+function normalizeDerivativeShortcuts(source: string, changes: CanonicalizationChange[]) {
+  let next = source.replace(
+    ORDINARY_DERIVATIVE_SHORTCUT_PATTERN,
+    (match, prefix: string, variable: string) => {
+      const variableLatex = derivativeShortcutVariableLatex(variable);
+      const after = `${prefix}\\frac{d}{d${variableLatex}}`;
+      changes.push({
+        kind: 'derivative-token',
+        before: match,
+        after,
+      });
+      return after;
+    },
+  );
+
+  next = next.replace(
+    PARTIAL_DERIVATIVE_SHORTCUT_PATTERN,
+    (match, prefix: string, variable: string) => {
+      const variableLatex = derivativeShortcutVariableLatex(variable);
+      const after = `${prefix}\\frac{\\partial}{\\partial ${variableLatex}}`;
+      changes.push({
+        kind: 'derivative-token',
+        before: match,
+        after,
+      });
+      return after;
+    },
+  );
+
+  return next.replace(PARTIAL_SYMBOL_SHORTCUT_PATTERN, (match, prefix: string) => {
+    const after = `${prefix}\\partial`;
     changes.push({
       kind: 'derivative-token',
       before: match,
@@ -546,9 +601,15 @@ export function normalizeRelationOperatorLatex(latex: string) {
     .replace(/!\s*=/g, '\\ne');
 }
 
-export function normalizeLiveInputOperatorLatex(latex: string) {
+export function normalizeLiveInputOperatorLatex(
+  latex: string,
+  context?: Pick<CanonicalizationContext, 'mode' | 'screenHint'>,
+) {
   const changes: CanonicalizationChange[] = [];
-  return normalizeUngroupedNumericPowers(normalizeRelationOperatorLatex(latex), changes);
+  const derivativeShortcutNormalized = isDerivativeShortcutContext(context)
+    ? normalizeDerivativeShortcuts(latex, changes)
+    : latex;
+  return normalizeUngroupedNumericPowers(normalizeRelationOperatorLatex(derivativeShortcutNormalized), changes);
 }
 
 function normalizeRelationOperatorTokens(source: string, changes: CanonicalizationChange[]) {
@@ -803,7 +864,10 @@ export function canonicalizeMathInput(
   const integralBoundsNormalized = normalizeEmptyIntegralBounds(trimmed, changes);
   const integralSpacingNormalized = normalizeIntegralSpacing(integralBoundsNormalized);
   const splitFunctionsNormalized = normalizeSplitFunctionTokens(integralSpacingNormalized, changes);
-  const derivativeDisplayNormalized = normalizeDerivativeDisplay(splitFunctionsNormalized);
+  const derivativeShortcutNormalized = isDerivativeShortcutContext(context)
+    ? normalizeDerivativeShortcuts(splitFunctionsNormalized, changes)
+    : splitFunctionsNormalized;
+  const derivativeDisplayNormalized = normalizeDerivativeDisplay(derivativeShortcutNormalized);
   const derivativeNormalized = normalizeDerivativeTokens(derivativeDisplayNormalized, changes);
   const relationNormalized = normalizeRelationOperatorTokens(derivativeNormalized, changes);
   const exponentialNormalized = normalizeExponentialEBase(relationNormalized, changes);

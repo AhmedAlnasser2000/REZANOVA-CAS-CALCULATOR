@@ -1,7 +1,18 @@
 import type { InlineShortcutDefinitions } from 'mathlive';
+import type { ModeId } from '../types/calculator';
+import {
+  derivativeInlineShortcuts,
+  isDerivativeShortcutContext,
+} from '../lib/input/derivative-shortcuts';
+
+type InlineShortcutContext = {
+  modeId?: ModeId;
+  screenHint?: string;
+};
 
 export function buildInlineShortcutOverrides(
   existing: InlineShortcutDefinitions | undefined,
+  context?: InlineShortcutContext,
 ): InlineShortcutDefinitions {
   return {
     ...(existing ?? {}),
@@ -17,5 +28,6 @@ export function buildInlineShortcutOverrides(
     sqrt: '\\sqrt{#?}',
     abs: '\\left|#?\\right|',
     pi: '\\pi',
+    ...(isDerivativeShortcutContext(context) ? derivativeInlineShortcuts() : {}),
   };
 }

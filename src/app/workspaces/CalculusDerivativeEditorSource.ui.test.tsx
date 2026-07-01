@@ -101,6 +101,29 @@ describe('Calculus derivative editor source', () => {
     expect(rawLatex).toContain('D_{1}=3t^2+2');
   });
 
+  it('normalizes derivative editor shortcuts into natural requests', async () => {
+    const { user } = await renderAppMain();
+    const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
+
+    await openCalculusTool(user, 'Derivatives', 'Derivative');
+
+    setMathFieldLatex('main-editor', 'ddt(t^3+2t)');
+
+    await waitFor(() => expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt'));
+    expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Body t^3+2t');
+
+    const generatedPreview = document.querySelector('.generated-preview-card');
+    expect(generatedPreview).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }))
+        .toBeInTheDocument();
+    });
+    await user.click(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(
+      '\\frac{d}{dt}\\left(t^3+2t\\right)',
+    );
+  });
+
   it('keeps derivative-at-point request in the main editor while the point remains editable', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');

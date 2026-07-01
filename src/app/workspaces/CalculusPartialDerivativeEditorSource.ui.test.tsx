@@ -97,6 +97,31 @@ describe('Calculus partial derivative editor source', () => {
     expect(rawLatex).toContain('D_{1}=x^2+3y^2');
   });
 
+  it('normalizes partial derivative shortcuts into real partial operators', async () => {
+    const { user } = await renderAppMain();
+    const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
+
+    await openCalculusTool(user, 'Derivatives', 'Partial Derivative');
+
+    setMathFieldLatex('main-editor', 'pdy(x^2y+y^3)');
+
+    await waitFor(() =>
+      expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂/∂y'));
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Written ∂/∂y');
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Body x^2y+y^3');
+
+    const generatedPreview = document.querySelector('.generated-preview-card');
+    expect(generatedPreview).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }))
+        .toBeInTheDocument();
+    });
+    await user.click(within(generatedPreview as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(
+      '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
+    );
+  });
+
   it('previews and evaluates mixed partial requests from the editor', async () => {
     const { user } = await renderAppMain();
     const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');

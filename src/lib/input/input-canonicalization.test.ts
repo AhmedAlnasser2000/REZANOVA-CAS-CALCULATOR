@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canonicalizeMathInput,
   normalizeHarmlessMathSpacing,
+  normalizeLiveInputOperatorLatex,
   normalizeRelationOperatorLatex,
   trimHarmlessTrailingMathSpacing,
 } from './input-canonicalization';
@@ -33,6 +34,51 @@ describe('canonicalizeMathInput', () => {
     }
     expect(result.canonicalLatex).toContain('\\cos');
     expect(result.canonicalLatex).toContain('(x)');
+  });
+
+  it('canonicalizes derivative shortcuts only in guided derivative contexts', () => {
+    const ordinary = canonicalizeMathInput('ddt(sin(t))', {
+      mode: 'calculus',
+      screenHint: 'derivative',
+      liveAssist: true,
+    });
+    const partial = canonicalizeMathInput('pdy(x^2y+y^3)', {
+      mode: 'calculus',
+      screenHint: 'partialDerivative',
+      liveAssist: true,
+    });
+    const plainPartial = canonicalizeMathInput('pd', {
+      mode: 'calculus',
+      screenHint: 'partialDerivative',
+      liveAssist: true,
+    });
+    const nonDerivative = canonicalizeMathInput('pdy(x)', {
+      mode: 'calculus',
+      screenHint: 'finiteLimit',
+      liveAssist: true,
+    });
+
+    expect(ordinary.ok && ordinary.canonicalLatex).toBe('\\frac{d}{dt}(\\sin(t))');
+    expect(partial.ok && partial.canonicalLatex).toBe(
+      '\\frac{\\partial}{\\partial y}(x^2y+y^3)',
+    );
+    expect(plainPartial.ok && plainPartial.canonicalLatex).toBe('\\partial');
+    expect(nonDerivative.ok && nonDerivative.canonicalLatex).toBe('pdy(x)');
+  });
+
+  it('normalizes live derivative shortcut input before derivative evaluation state sees it', () => {
+    expect(normalizeLiveInputOperatorLatex('pdx(x^2y)', {
+      mode: 'calculus',
+      screenHint: 'partialDerivative',
+    })).toBe('\\frac{\\partial}{\\partial x}(x^2y)');
+    expect(normalizeLiveInputOperatorLatex('ddtheta(sin(\\theta))', {
+      mode: 'calculus',
+      screenHint: 'derivative',
+    })).toBe('\\frac{d}{d\\theta}(sin(\\theta))');
+    expect(normalizeLiveInputOperatorLatex('pdx(x^2y)', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    })).toBe('pdx(x^2y)');
   });
 
   it('canonicalizes pasted reciprocal trig function names', () => {

@@ -23,6 +23,24 @@ describe('MathEditor inline shortcuts', () => {
     expect(shortcuts.sin).toBe('\\sin');
     expect(shortcuts.ln).toBe('\\ln');
     expect(shortcuts.sqrt).toBe('\\sqrt{#?}');
+    expect(shortcuts.pd).toBeUndefined();
+  });
+
+  it('adds derivative shortcuts only on guided derivative screens', () => {
+    const derivativeShortcuts = buildInlineShortcutOverrides(undefined, {
+      modeId: 'calculus',
+      screenHint: 'partialDerivative',
+    });
+    const limitShortcuts = buildInlineShortcutOverrides(undefined, {
+      modeId: 'calculus',
+      screenHint: 'finiteLimit',
+    });
+
+    expect(derivativeShortcuts.pd).toBe('\\partial');
+    expect(derivativeShortcuts.ddx).toBe('\\frac{d}{dx}');
+    expect(derivativeShortcuts.pdx).toBe('\\frac{\\partial}{\\partial x}');
+    expect(derivativeShortcuts.pdtheta).toBe('\\frac{\\partial}{\\partial \\theta}');
+    expect(limitShortcuts.pd).toBeUndefined();
   });
 });
 

@@ -127,14 +127,20 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       field.readOnly = readOnly;
       field.smartFence = true;
       field.smartSuperscript = false;
-      field.inlineShortcuts = buildInlineShortcutOverrides(field.inlineShortcuts);
+      field.inlineShortcuts = buildInlineShortcutOverrides(field.inlineShortcuts, {
+        modeId,
+        screenHint,
+      });
       field.placeholder = placeholder ?? '';
       field.setAttribute('data-placeholder', placeholder ?? '');
       field.mathVirtualKeyboardPolicy = 'auto';
 
       const handleInput = () => {
         const rawLatex = field.getValue('latex');
-        onChange(normalizeLiveInputOperatorLatex(rawLatex));
+        onChange(normalizeLiveInputOperatorLatex(rawLatex, modeId ? {
+          mode: modeId,
+          screenHint,
+        } : undefined));
       };
 
       const handleFocus = () => {
