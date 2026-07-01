@@ -1548,3 +1548,7 @@
 ## 2026-07-01 - EQUATION-NUMERIC-FACT-TAXONOMY-POLISH1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric result details must keep hard invalid-domain facts, piecewise breakpoints, periodic structure, probe samples, algorithm diagnostics, conditioning warnings, and extraneous candidate evidence in separate cards. Breakpoints are not domain exclusions, probe samples are not proofs, and clean breakpoint/domain-boundary cases must not imply higher precision risk without stronger rejection or instability evidence.
+
+## 2026-07-01 - MATRIX-EXACT-READBACK1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix exact readback is adopted only for determinant and inverse over safe-integer numeric grid inputs when the internal exact rational Matrix core succeeds. Decimal, unsafe, over-cap, unsupported, and Vector requests remain on the existing numeric readback path; the Matrix notation pad is still template-only, not executable symbolic matrix CAS.

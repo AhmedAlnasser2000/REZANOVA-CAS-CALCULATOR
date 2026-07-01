@@ -26,7 +26,17 @@ describe('runMatrixOperation', () => {
 
     expect(determinant.resultLatex).toBe('-2');
     expect(determinant.approxText).toBe('-2');
-    expect(inverse.resultLatex).toBe('\\begin{bmatrix}-2 & 1\\\\1.5 & -0.5\\end{bmatrix}');
+    expect(inverse.resultLatex).toBe('\\begin{bmatrix}-2 & 1\\\\\\frac{3}{2} & -\\frac{1}{2}\\end{bmatrix}');
+  });
+
+  it('keeps decimal Matrix inverse output on the numeric readback path', () => {
+    const inverse = runMatrixOperation({
+      operation: 'inverseA',
+      matrixA: [[0.5, 0], [0, 2]],
+      matrixB,
+    });
+
+    expect(inverse.resultLatex).toBe('\\begin{bmatrix}2 & 0\\\\0 & 0.5\\end{bmatrix}');
   });
 
   it('stops on incomplete, mismatched, singular, and non-square requests', () => {

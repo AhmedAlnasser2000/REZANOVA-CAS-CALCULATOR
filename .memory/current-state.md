@@ -48,6 +48,8 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 
 Calcwiz is a desktop math workbench, not a generic quick calculator. Calculate remains the compact quickform evaluator. Rich guided workflows belong in their visible workspaces such as Equation, Calculus, Trigonometry, Statistics, Geometry, Matrix/Vector, Table, and Guide.
 
+Matrix remains a numeric-grid workspace with a template-only notation pad, but safe-integer determinant and inverse results now use the internal exact rational Matrix core for exact readback. Decimal, unsafe, over-cap, and unsupported Matrix requests keep the existing numeric readback path. Vector is unchanged.
+
 Calculate's visible `Simplify`, `Factor`, and `Expand` soft keys are public product actions, not automatic aliases for private Symbolic Primitives. Symbolic Primitives may supply reusable bounded mechanics only after explicit bridge/parity work proves visible Calculate behavior remains correct.
 
 Graphing remains intentionally deferred. It should be planned as a scene/runtime surface over trustworthy solver outputs, domains, restrictions, branches, discontinuities, parameter ranges, and failure reasons. There is no current graphing compartment, route, workspace, pack, or Surface candidate.
