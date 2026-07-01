@@ -85,8 +85,8 @@ describe('Equation real nonlinear numeric search fallback', () => {
     expect(text).toContain('x\\ne 2');
     expect(domainProbe).toBeDefined();
     expect(text).toContain('Derived real search regions: (1, 2), (2, \\infty).');
-    expect(text).toContain('Extraneous candidate attempts: 2.');
-    expect(text).toContain('Candidate approximately 2 rejected in 2 search passes');
+    expect(text).toContain('Extraneous candidate attempts: 3.');
+    expect(text).toContain('Candidate approximately 2 rejected in 3 search passes');
     expect(domainAndExclusions?.lines.join(' ')).not.toContain('Sample probe found');
     expect(extraneous?.lines.join(' ')).toContain('Candidate approximately 2');
     expect(result.candidateValues?.some((root) => Math.abs(root - 2) < 1e-5)).toBe(false);

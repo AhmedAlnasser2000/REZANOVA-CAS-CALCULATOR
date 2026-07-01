@@ -205,6 +205,57 @@ describe('runNumericIntervalSolve', () => {
     expect(result.error).toContain('domain holes');
   });
 
+  it('segments around log boundaries and denominator exclusions', () => {
+    const result = runNumericIntervalSolve('\\ln(x-1)+\\frac{1}{x-2}=3', {
+      start: '0',
+      end: '25',
+      subdivisions: 256,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    expect(result.roots.some((root) => Math.abs(root - 2.372685) < 1e-5)).toBe(true);
+    expect(result.roots.some((root) => Math.abs(root - 20.00011) < 1e-5)).toBe(true);
+    const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    expect(details).toContain('log-boundary');
+    expect(details).toContain('denominator-exclusion');
+    expect(details).toContain('Candidate approximately 2');
+  });
+
+  it('records even-root boundaries as segmentation probes', () => {
+    const result = runNumericIntervalSolve('\\sqrt{x+1}=2', {
+      start: '-2',
+      end: '5',
+      subdivisions: 128,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    expect(details).toContain('root-boundary');
+    expect(details).toContain('-1');
+  });
+
+  it('segments around affine tangent poles', () => {
+    const result = runNumericIntervalSolve('\\tan(x)=1', {
+      start: '0',
+      end: '10',
+      subdivisions: 256,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    expect(details).toContain('trig-pole');
+    expect(details).toContain('1.570796');
+  });
+
   it('adds unit-aware branch guidance for direct trig composition failures in degree mode', () => {
     const result = runNumericIntervalSolve('\\tan\\left(\\ln\\left(x+1\\right)\\right)=1', {
       start: '0',

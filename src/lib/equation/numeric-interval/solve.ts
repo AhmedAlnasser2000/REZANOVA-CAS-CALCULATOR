@@ -1,11 +1,21 @@
-import type { AngleUnit, NumericSolveInterval, SolveDomainConstraint } from '../../../types/calculator';
+import type {
+  AngleUnit,
+  DisplayDetailSection,
+  NumericSolveInterval,
+  SolveDomainConstraint,
+} from '../../../types/calculator';
 import { buildAbsoluteValueNumericGuidance } from '../../algebra/abs-core';
 import { dedupeNumericRoots, validateCandidateRoots } from '../candidate-validation';
 import {
   appendExtraneousSolutionsDetailSection,
   extraneousEvidenceFromRejectedCandidates,
 } from '../candidate/extraneous';
+import { formatApproxNumber } from '../../display/format';
 import { createLatexTargetEvaluator, equationToZeroFormLatex } from '../domain-guards';
+import {
+  buildEquationNumericSegmentationPlan,
+  type EquationNumericSegmentationPlan,
+} from '../numeric-domain-segmentation';
 import { numericSummary, parseInterval } from './interval';
 import { bisectRoot, finiteValue, localAbsMinimumCandidate, type NumericValueEvaluator } from './sampling';
 import { buildTrigNoRootGuidance } from './trig-guidance';
@@ -202,6 +212,7 @@ function buildAdaptiveGrid(
   angleUnit: AngleUnit,
   target: string,
   evaluator?: NumericValueEvaluator,
+  extraSamplePoints: readonly number[] = [],
 ) {
   const step = (end - start) / subdivisions;
   const gridByX = new Map<string, GridPoint>();
@@ -211,6 +222,16 @@ function buildAdaptiveGrid(
     const point = sampleGridPoint(zeroFormLatex, start + step * index, angleUnit, target, evaluator);
     baseGrid.push(point);
     gridByX.set(point.x.toPrecision(17), point);
+  }
+
+  for (const samplePoint of extraSamplePoints) {
+    if (samplePoint <= start || samplePoint >= end) {
+      continue;
+    }
+    const key = samplePoint.toPrecision(17);
+    if (!gridByX.has(key)) {
+      gridByX.set(key, sampleGridPoint(zeroFormLatex, samplePoint, angleUnit, target, evaluator));
+    }
   }
 
   const densePeriodic = isDensePeriodicCandidate(equationLatex);
@@ -258,6 +279,36 @@ function buildAdaptiveGrid(
   };
 }
 
+function formatBoundaryValues(values: readonly number[]) {
+  const visible = values.slice(0, 8).map((value) => formatApproxNumber(value));
+  return values.length > visible.length
+    ? `${visible.join(', ')}; ${values.length - visible.length} more`
+    : visible.join(', ');
+}
+
+function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan): DisplayDetailSection[] {
+  if (plan.boundaries.length === 0) {
+    return [];
+  }
+
+  const grouped = new Map<string, number[]>();
+  for (const boundary of plan.boundaries) {
+    grouped.set(boundary.kind, [...(grouped.get(boundary.kind) ?? []), boundary.value]);
+  }
+
+  return [{
+    title: 'Numeric Segmentation',
+    lines: [
+      `Boundary probes inside the interval: ${formatBoundaryValues(plan.gridBreakpoints)}.`,
+      ...[...grouped.entries()].map(([kind, values]) =>
+        `${kind}: ${formatBoundaryValues(values)}.`),
+      plan.excludedBoundaryCandidates.length > 0
+        ? `Excluded boundary candidates checked by validation: ${formatBoundaryValues(plan.excludedBoundaryCandidates)}.`
+        : 'Boundary probes guide interval splitting and sampling; they are not global domain proofs.',
+    ],
+  }];
+}
+
 export function runNumericIntervalSolve(
   equationLatex: string,
   interval: NumericSolveInterval,
@@ -283,6 +334,14 @@ export function runNumericIntervalSolve(
     const evaluated = parsedEvaluator(value);
     return evaluated.value !== null && Number.isFinite(evaluated.value) ? evaluated.value : null;
   };
+  const segmentation = buildEquationNumericSegmentationPlan({
+    equationLatex,
+    zeroFormLatex,
+    target,
+    start: parsed.start,
+    end: parsed.end,
+    angleUnit,
+  });
   const {
     grid,
     adaptiveSampleCount,
@@ -297,6 +356,7 @@ export function runNumericIntervalSolve(
     angleUnit,
     target,
     evaluator,
+    segmentation.gridBreakpoints,
   );
   const {
     sampleHits,
@@ -308,6 +368,7 @@ export function runNumericIntervalSolve(
   const allCandidates = dedupeNumericRoots([
     ...sampleHits,
     ...signBracketRoots,
+    ...segmentation.excludedBoundaryCandidates,
     ...unresolvedBracketSeeds,
     ...localMinSeeds,
   ]);
@@ -362,7 +423,7 @@ export function runNumericIntervalSolve(
       rejectedCandidateCount: validated.rejected.length,
       rejectedCandidates: validated.rejected,
       detailSections: appendExtraneousSolutionsDetailSection(
-        undefined,
+        numericSegmentationDetailSections(segmentation),
         extraneousEvidenceFromRejectedCandidates(validated.rejected),
       ),
       summaryText: summary,
@@ -378,7 +439,7 @@ export function runNumericIntervalSolve(
     rejectedCandidateCount: validated.rejected.length,
     rejectedCandidates: validated.rejected,
     detailSections: appendExtraneousSolutionsDetailSection(
-      undefined,
+      numericSegmentationDetailSections(segmentation),
       extraneousEvidenceFromRejectedCandidates(validated.rejected),
     ),
     summaryText: `${summary} Accepted ${accepted.length} root(s)${validated.rejected.length > 0 ? `, rejected ${validated.rejected.length}.` : '.'}${recoveredCandidateCount > 0 ? ` Recovered ${recoveredCandidateCount} non-bracket root(s).` : ''}`,

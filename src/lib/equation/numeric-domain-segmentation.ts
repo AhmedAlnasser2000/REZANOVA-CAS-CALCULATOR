@@ -2,7 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { solvePolynomialRoots } from '../algebra/polynomial-roots';
 import { exactPolynomialCoefficientArray, exactScalarToNumber, parseExactPolynomial } from '../algebra/polynomial-core';
 import { formatApproxNumber } from '../display/format';
-import { evaluateLatexAtTarget } from './domain-guards';
+import { evaluateLatexAtTarget, readNumericNode } from './domain-guards';
 
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -33,11 +33,35 @@ export type EquationNumericSampleProbe = {
   undefinedSampleCount: number;
 };
 
+export type EquationNumericSegmentationBoundaryKind =
+  | 'denominator-exclusion'
+  | 'log-boundary'
+  | 'root-boundary'
+  | 'fractional-power-boundary'
+  | 'trig-pole'
+  | 'sampled-discontinuity';
+
+export type EquationNumericSegmentationBoundary = {
+  kind: EquationNumericSegmentationBoundaryKind;
+  value: number;
+  message: string;
+  excludedCandidate: boolean;
+};
+
+export type EquationNumericSegmentationPlan = {
+  facts: EquationNumericDomainFact[];
+  sampleProbe: EquationNumericSampleProbe;
+  boundaries: EquationNumericSegmentationBoundary[];
+  gridBreakpoints: number[];
+  excludedBoundaryCandidates: number[];
+};
+
 const ce = new ComputeEngine();
 const PERIODIC_OPERATORS = new Set(['Sin', 'Cos', 'Tan', 'Cot', 'Sec', 'Csc']);
 const SAMPLE_POINTS = [-10, -2, -1, 0, 1, 2, 3, 10];
 const REAL_ROOT_IMAGINARY_TOLERANCE = 1e-7;
 const MAX_BOUNDARY_DEGREE = 64;
+const BOUNDARY_DEDUPE_TOLERANCE = 1e-7;
 
 function isArrayNode(node: unknown): node is unknown[] {
   return Array.isArray(node);
@@ -49,6 +73,164 @@ function nodeLatex(node: unknown) {
   } catch {
     return undefined;
   }
+}
+
+function numericConstant(node: unknown): number | null {
+  const direct = readNumericNode(node);
+  if (direct !== null) {
+    return direct;
+  }
+  if (typeof node === 'string') {
+    if (node === 'Pi') {
+      return Math.PI;
+    }
+    if (node === 'ExponentialE') {
+      return Math.E;
+    }
+    return null;
+  }
+  if (!isArrayNode(node) || node.length === 0) {
+    return null;
+  }
+
+  const [operator, ...operands] = node;
+  if (operator === 'Rational' && operands.length === 2) {
+    const numerator = numericConstant(operands[0]);
+    const denominator = numericConstant(operands[1]);
+    return numerator !== null && denominator !== null && denominator !== 0
+      ? numerator / denominator
+      : null;
+  }
+  if (operator === 'Negate' && operands.length === 1) {
+    const value = numericConstant(operands[0]);
+    return value === null ? null : -value;
+  }
+  if (operator === 'Add') {
+    let total = 0;
+    for (const operand of operands) {
+      const value = numericConstant(operand);
+      if (value === null) {
+        return null;
+      }
+      total += value;
+    }
+    return total;
+  }
+  if (operator === 'Multiply') {
+    let product = 1;
+    for (const operand of operands) {
+      const value = numericConstant(operand);
+      if (value === null) {
+        return null;
+      }
+      product *= value;
+    }
+    return product;
+  }
+  if (operator === 'Divide' && operands.length === 2) {
+    const numerator = numericConstant(operands[0]);
+    const denominator = numericConstant(operands[1]);
+    return numerator !== null && denominator !== null && denominator !== 0
+      ? numerator / denominator
+      : null;
+  }
+  if (operator === 'Power' && operands.length === 2) {
+    const base = numericConstant(operands[0]);
+    const exponent = numericConstant(operands[1]);
+    return base !== null && exponent !== null ? Math.pow(base, exponent) : null;
+  }
+
+  return null;
+}
+
+type AffineNumericModel = {
+  coefficient: number;
+  offset: number;
+};
+
+function addAffineModels(models: readonly AffineNumericModel[]): AffineNumericModel | null {
+  let coefficient = 0;
+  let offset = 0;
+  for (const model of models) {
+    coefficient += model.coefficient;
+    offset += model.offset;
+  }
+  return { coefficient, offset };
+}
+
+function affineNumericModel(node: unknown, target: string): AffineNumericModel | null {
+  if (typeof node === 'string') {
+    return node === target
+      ? { coefficient: 1, offset: 0 }
+      : null;
+  }
+  const constant = numericConstant(node);
+  if (constant !== null) {
+    return { coefficient: 0, offset: constant };
+  }
+  if (!isArrayNode(node) || node.length === 0) {
+    return null;
+  }
+
+  const [operator, ...operands] = node;
+  if (operator === 'Add') {
+    const models = operands.map((operand) => affineNumericModel(operand, target));
+    return models.every((model): model is AffineNumericModel => model !== null)
+      ? addAffineModels(models)
+      : null;
+  }
+  if (operator === 'Subtract' && operands.length === 2) {
+    const left = affineNumericModel(operands[0], target);
+    const right = affineNumericModel(operands[1], target);
+    return left && right
+      ? { coefficient: left.coefficient - right.coefficient, offset: left.offset - right.offset }
+      : null;
+  }
+  if (operator === 'Negate' && operands.length === 1) {
+    const model = affineNumericModel(operands[0], target);
+    return model
+      ? { coefficient: -model.coefficient, offset: -model.offset }
+      : null;
+  }
+  if (operator === 'Multiply') {
+    const affineOperands = operands.map((operand) => affineNumericModel(operand, target));
+    const nonConstant = affineOperands.filter((model) => model && Math.abs(model.coefficient) > 0);
+    if (nonConstant.length > 1) {
+      return null;
+    }
+    if (nonConstant.length === 0) {
+      const value = numericConstant(node);
+      return value === null ? null : { coefficient: 0, offset: value };
+    }
+    let constantProduct = 1;
+    for (const operand of operands) {
+      const model = affineNumericModel(operand, target);
+      if (model && Math.abs(model.coefficient) > 0) {
+        continue;
+      }
+      const value = numericConstant(operand);
+      if (value === null) {
+        return null;
+      }
+      constantProduct *= value;
+    }
+    const affine = nonConstant[0];
+    return affine
+      ? {
+          coefficient: affine.coefficient * constantProduct,
+          offset: affine.offset * constantProduct,
+        }
+      : null;
+  }
+  if (operator === 'Divide' && operands.length === 2) {
+    const numerator = affineNumericModel(operands[0], target);
+    const denominator = numericConstant(operands[1]);
+    return numerator && denominator !== null && denominator !== 0
+      ? { coefficient: numerator.coefficient / denominator, offset: numerator.offset / denominator }
+      : null;
+  }
+
+  return null;
 }
 
 function containsTarget(node: unknown, target: string): boolean {
@@ -320,4 +502,260 @@ export function addSampledDiscontinuityFact(
     message: `Sample probe found ${sampleProbe.undefinedSampleCount} undefined point(s) across ${sampleProbe.samplePoints.length} numeric target samples.`,
     source: 'sample-probe',
   });
+}
+
+function isInsideInterval(value: number, start: number, end: number) {
+  const left = Math.min(start, end);
+  const right = Math.max(start, end);
+  return Number.isFinite(value) && value > left && value < right;
+}
+
+function addBoundary(
+  boundaries: EquationNumericSegmentationBoundary[],
+  boundary: EquationNumericSegmentationBoundary,
+  start: number,
+  end: number,
+) {
+  if (!isInsideInterval(boundary.value, start, end)) {
+    return;
+  }
+  const existing = boundaries.find((entry) =>
+    entry.kind === boundary.kind && Math.abs(entry.value - boundary.value) <= BOUNDARY_DEDUPE_TOLERANCE);
+  if (!existing) {
+    boundaries.push(boundary);
+  }
+}
+
+function readSolvedTargetBoundary(fact: EquationNumericDomainFact, target: string) {
+  if (fact.expressionLatex !== target || !fact.relationLatex) {
+    return null;
+  }
+  const compact = fact.relationLatex.replace(/\s+/gu, '');
+  const match = compact.match(/^\\ne(-?\d+(?:\.\d+)?)$/u);
+  if (!match) {
+    return null;
+  }
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value : null;
+}
+
+function addPolynomialExpressionBoundaries(input: {
+  boundaries: EquationNumericSegmentationBoundary[];
+  fact: EquationNumericDomainFact;
+  target: string;
+  start: number;
+  end: number;
+  kind: EquationNumericSegmentationBoundaryKind;
+  excludedCandidate: boolean;
+}) {
+  for (const root of realRootsForPolynomialLatex(input.fact.expressionLatex, input.target)) {
+    addBoundary(input.boundaries, {
+      kind: input.kind,
+      value: root,
+      excludedCandidate: input.excludedCandidate,
+      message: `${input.fact.message}; boundary ${input.target}≈${formatApproxNumber(root)}.`,
+    }, input.start, input.end);
+  }
+}
+
+function trigPoleBaseAndPeriod(operator: string, angleUnit: 'rad' | 'deg' | 'grad') {
+  if (operator !== 'Tan' && operator !== 'Sec' && operator !== 'Cot' && operator !== 'Csc') {
+    return null;
+  }
+  if (operator === 'Tan' || operator === 'Sec') {
+    if (angleUnit === 'deg') {
+      return { base: 90, period: 180 };
+    }
+    if (angleUnit === 'grad') {
+      return { base: 100, period: 200 };
+    }
+    return { base: Math.PI / 2, period: Math.PI };
+  }
+  if (angleUnit === 'deg') {
+    return { base: 0, period: 180 };
+  }
+  if (angleUnit === 'grad') {
+    return { base: 0, period: 200 };
+  }
+  return { base: 0, period: Math.PI };
+}
+
+function addAffineTrigPoleBoundaries(input: {
+  boundaries: EquationNumericSegmentationBoundary[];
+  operator: string;
+  carrier: unknown;
+  target: string;
+  start: number;
+  end: number;
+  angleUnit: 'rad' | 'deg' | 'grad';
+}) {
+  const model = affineNumericModel(input.carrier, input.target);
+  const pole = trigPoleBaseAndPeriod(input.operator, input.angleUnit);
+  if (!model || !pole || Math.abs(model.coefficient) <= 1e-12) {
+    return;
+  }
+
+  const intervalCarrierValues = [
+    model.coefficient * input.start + model.offset,
+    model.coefficient * input.end + model.offset,
+  ];
+  const minCarrier = Math.min(...intervalCarrierValues);
+  const maxCarrier = Math.max(...intervalCarrierValues);
+  const firstK = Math.ceil((minCarrier - pole.base) / pole.period) - 1;
+  const lastK = Math.floor((maxCarrier - pole.base) / pole.period) + 1;
+  const carrierLatex = nodeLatex(input.carrier) ?? input.target;
+
+  for (let k = firstK; k <= lastK; k += 1) {
+    const carrierPole = pole.base + pole.period * k;
+    const targetValue = (carrierPole - model.offset) / model.coefficient;
+    addBoundary(input.boundaries, {
+      kind: 'trig-pole',
+      value: targetValue,
+      excludedCandidate: true,
+      message: `${input.operator} pole from ${carrierLatex}; ${input.target}≈${formatApproxNumber(targetValue)}.`,
+    }, input.start, input.end);
+  }
+}
+
+function collectTrigPoleBoundaries(input: {
+  node: unknown;
+  boundaries: EquationNumericSegmentationBoundary[];
+  target: string;
+  start: number;
+  end: number;
+  angleUnit: 'rad' | 'deg' | 'grad';
+}) {
+  if (!isArrayNode(input.node) || input.node.length === 0) {
+    return;
+  }
+  const [operator, ...operands] = input.node;
+  if (
+    typeof operator === 'string'
+    && (operator === 'Tan' || operator === 'Sec' || operator === 'Cot' || operator === 'Csc')
+    && operands.length >= 1
+    && containsTarget(operands[0], input.target)
+  ) {
+    addAffineTrigPoleBoundaries({
+      boundaries: input.boundaries,
+      operator,
+      carrier: operands[0],
+      target: input.target,
+      start: input.start,
+      end: input.end,
+      angleUnit: input.angleUnit,
+    });
+  }
+
+  for (const operand of operands) {
+    collectTrigPoleBoundaries({ ...input, node: operand });
+  }
+}
+
+function uniqueSortedNumbers(values: readonly number[]) {
+  const sorted = values
+    .filter((value) => Number.isFinite(value))
+    .sort((left, right) => left - right);
+  const unique: number[] = [];
+  for (const value of sorted) {
+    if (!unique.some((existing) => Math.abs(existing - value) <= BOUNDARY_DEDUPE_TOLERANCE)) {
+      unique.push(value);
+    }
+  }
+  return unique;
+}
+
+export function buildEquationNumericSegmentationPlan(input: {
+  equationLatex: string;
+  zeroFormLatex: string;
+  target: string;
+  start: number;
+  end: number;
+  angleUnit: 'rad' | 'deg' | 'grad';
+}): EquationNumericSegmentationPlan {
+  const facts = collectEquationNumericDomainFacts(input.equationLatex, input.target);
+  const sampleProbe = probeEquationZeroForm(input.zeroFormLatex, input.target, input.angleUnit);
+  addSampledDiscontinuityFact(facts, sampleProbe);
+  const boundaries: EquationNumericSegmentationBoundary[] = [];
+
+  for (const fact of facts) {
+    if (fact.kind === 'solved-denominator-exclusion') {
+      const boundary = readSolvedTargetBoundary(fact, input.target);
+      if (boundary !== null) {
+        addBoundary(boundaries, {
+          kind: 'denominator-exclusion',
+          value: boundary,
+          excludedCandidate: true,
+          message: fact.message,
+        }, input.start, input.end);
+      }
+    }
+    if (fact.kind === 'log-domain') {
+      addPolynomialExpressionBoundaries({
+        boundaries,
+        fact,
+        target: input.target,
+        start: input.start,
+        end: input.end,
+        kind: 'log-boundary',
+        excludedCandidate: false,
+      });
+    }
+    if (fact.kind === 'root-domain') {
+      addPolynomialExpressionBoundaries({
+        boundaries,
+        fact,
+        target: input.target,
+        start: input.start,
+        end: input.end,
+        kind: 'root-boundary',
+        excludedCandidate: false,
+      });
+    }
+    if (fact.kind === 'fractional-power-domain') {
+      addPolynomialExpressionBoundaries({
+        boundaries,
+        fact,
+        target: input.target,
+        start: input.start,
+        end: input.end,
+        kind: 'fractional-power-boundary',
+        excludedCandidate: false,
+      });
+    }
+  }
+
+  try {
+    collectTrigPoleBoundaries({
+      node: ce.parse(input.equationLatex).json,
+      boundaries,
+      target: input.target,
+      start: input.start,
+      end: input.end,
+      angleUnit: input.angleUnit,
+    });
+  } catch {
+    // Keep symbolic facts and sample probes when the optional pole pass cannot parse.
+  }
+
+  for (const point of sampleProbe.undefinedPoints) {
+    addBoundary(boundaries, {
+      kind: 'sampled-discontinuity',
+      value: point,
+      excludedCandidate: false,
+      message: `Probe found ${input.target}≈${formatApproxNumber(point)} undefined or non-real.`,
+    }, input.start, input.end);
+  }
+
+  const ordered = boundaries.sort((left, right) => left.value - right.value);
+  return {
+    facts,
+    sampleProbe,
+    boundaries: ordered,
+    gridBreakpoints: uniqueSortedNumbers(ordered.map((boundary) => boundary.value)),
+    excludedBoundaryCandidates: uniqueSortedNumbers(
+      ordered
+        .filter((boundary) => boundary.excludedCandidate)
+        .map((boundary) => boundary.value),
+    ),
+  };
 }

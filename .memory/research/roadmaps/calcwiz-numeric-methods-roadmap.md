@@ -39,6 +39,8 @@ Updated for `EQUATION-NUMERIC-KERNEL-CONTRACT1` on 2026-07-01: bracketed real ro
 
 Updated for `EQUATION-NUMERIC-ITP-KERNEL1` on 2026-07-01: ITP is now the live bracketed sign-change refinement method under the Equation numeric kernel contract. Numeric interval/manual/auto-search route eligibility stays unchanged; the swap only changes the maintained refinement kernel and visible method wording.
 
+Updated for `EQUATION-NUMERIC-SEGMENTATION-HARDEN1` on 2026-07-01: the domain segmentation substrate now feeds interval sampling with bounded probes for solved denominator exclusions, log/root/fractional-power boundaries, affine trig poles, and sampled discontinuity hazards. Hard domain facts stay separate from diagnostic probe/segmentation evidence, and excluded boundary candidates are validated as extraneous rather than accepted.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

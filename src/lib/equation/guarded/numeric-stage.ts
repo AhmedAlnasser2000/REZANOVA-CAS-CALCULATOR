@@ -6,7 +6,6 @@ import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
 import { equationToZeroFormLatex } from '../domain-guards';
 import {
-  addSampledDiscontinuityFact,
   collectEquationNumericDomainFacts,
   probeEquationZeroForm,
 } from '../numeric-domain-segmentation';
@@ -26,8 +25,12 @@ function numericIntervalDetailSections(request: GuardedSolveRequest) {
   const target = request.solveTarget ?? 'x';
   const facts = collectEquationNumericDomainFacts(request.resolvedLatex, target);
   const zeroFormLatex = equationToZeroFormLatex(request.resolvedLatex);
-  addSampledDiscontinuityFact(facts, probeEquationZeroForm(zeroFormLatex, target, request.angleUnit));
-  const factLines = uniqueLines(facts.map((fact) => fact.message));
+  const sampleProbe = probeEquationZeroForm(zeroFormLatex, target, request.angleUnit);
+  const factLines = uniqueLines(
+    facts
+      .filter((fact) => fact.kind !== 'sampled-discontinuity')
+      .map((fact) => fact.message),
+  );
   const interval = request.numericInterval;
   return [
     {
@@ -43,6 +46,16 @@ function numericIntervalDetailSections(request: GuardedSolveRequest) {
       ? [{
           title: 'Domain and Exclusions',
           lines: factLines,
+        }]
+      : []),
+    ...(sampleProbe.undefinedSampleCount > 0
+      ? [{
+          title: 'Domain Probe',
+          lines: [
+            `Probe set: ${sampleProbe.samplePoints.length} fixed numeric ${target} samples.`,
+            `Undefined or non-real samples: ${sampleProbe.undefinedSampleCount}; finite samples: ${sampleProbe.finiteSampleCount}.`,
+            'Probe evidence guides segmentation; it is not a complete domain proof.',
+          ],
         }]
       : []),
   ];

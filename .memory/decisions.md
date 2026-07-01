@@ -32,6 +32,10 @@
 
 - [agent: codex | model: gpt-5-codex] Equation numeric interval/manual/auto-search sign-change brackets now refine through ITP as the maintained real bracketed root kernel. TOMS 748 remains off the planned path unless future benchmarks prove a specific need, and route-local Brent-Dekker/TOMS variants should not be introduced outside the kernel contract.
 
+## 2026-07-01 - EQUATION-NUMERIC-SEGMENTATION-HARDEN1
+
+- [agent: codex | model: gpt-5-codex] Equation numeric interval/manual/auto-search now uses bounded segmentation probes for solved denominator exclusions, log boundaries, even-root/fractional-power boundaries, affine trig poles, and sampled discontinuity hazards. Hard domain facts stay in `Domain and Exclusions`; sampled and segmentation evidence stays in diagnostic detail sections; excluded boundary candidates remain validation-visible extraneous evidence instead of accepted roots.
+
 ## 2026-06-30 - PUBLIC-IDENTITY-LOCK1
 
 - [agent: codex | model: gpt-5-codex] The primary current-facing public identity is `REZANOVA CLASSWIZ CALCULATOR`. `Calcwiz` and `Classwiz` are allowed as friendly aliases, but they must not replace the primary identity in release/GitHub positioning. Technical slugs such as `calcwiz-desktop`, `calcwiz_desktop`, and `com.ahmed.calcwizdesktop` stay unchanged for compatibility, and historical memory keeps old names as evidence rather than being rewritten.
