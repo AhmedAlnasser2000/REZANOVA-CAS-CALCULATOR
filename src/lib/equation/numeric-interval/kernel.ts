@@ -35,6 +35,7 @@ export type RealRootKernelSuccess = {
   interval: RealRootKernelInterval;
   iterations: number;
   evaluations: number;
+  accelerationSteps: number;
   termination: RealRootKernelTermination;
 };
 
@@ -45,6 +46,7 @@ export type RealRootKernelError = {
   interval: RealRootKernelInterval;
   iterations: number;
   evaluations: number;
+  accelerationSteps: number;
   bestCandidate?: number;
   bestResidual?: number;
 };
@@ -52,6 +54,11 @@ export type RealRootKernelError = {
 export type RealRootKernelResult = RealRootKernelSuccess | RealRootKernelError;
 
 type EvaluatedCandidate = { x: number; value: number };
+
+type AccelerationProbe = {
+  candidate: number;
+  sampled: EvaluatedCandidate[];
+};
 
 const ITP_K1 = 0.2;
 const ITP_K2 = 2;
@@ -140,9 +147,63 @@ function evaluateCandidate(
   return { x: candidate, value: candidateValue };
 }
 
+function derivativeProbeStep(left: number, right: number) {
+  const width = Math.abs(right - left);
+  return Math.max(1e-6, width * 1e-4);
+}
+
+function guardedNewtonCandidate(
+  evaluator: (value: number) => number | null,
+  left: number,
+  right: number,
+): AccelerationProbe | null {
+  const midpoint = (left + right) / 2;
+  const width = Math.abs(right - left);
+  const step = derivativeProbeStep(left, right);
+  const probeLeft = midpoint - step;
+  const probeRight = midpoint + step;
+  if (
+    width <= 0
+    || !isInsideOpenInterval(probeLeft, left, right)
+    || !isInsideOpenInterval(probeRight, left, right)
+  ) {
+    return null;
+  }
+
+  const midpointValue = evaluator(midpoint);
+  const leftValue = evaluator(probeLeft);
+  const rightValue = evaluator(probeRight);
+  if (midpointValue === null || leftValue === null || rightValue === null) {
+    return null;
+  }
+
+  const slope = (rightValue - leftValue) / (2 * step);
+  if (!Number.isFinite(slope) || Math.abs(slope) < 1e-12) {
+    return null;
+  }
+
+  const candidate = midpoint - midpointValue / slope;
+  const guardBand = width * 0.05;
+  const lo = Math.min(left, right) + guardBand;
+  const hi = Math.max(left, right) - guardBand;
+  if (!Number.isFinite(candidate) || candidate <= lo || candidate >= hi) {
+    return null;
+  }
+
+  return {
+    candidate,
+    sampled: [
+      { x: midpoint, value: midpointValue },
+      { x: probeLeft, value: leftValue },
+      { x: probeRight, value: rightValue },
+    ],
+  };
+}
+
 export function refineRealRootBracket(request: RealRootKernelRequest): RealRootKernelResult {
   const methodId: RealRootKernelMethodId = 'itp';
   let evaluations = 0;
+  let accelerationSteps = 0;
   let lo = request.interval.left;
   let hi = request.interval.right;
 
@@ -167,6 +228,7 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
       interval: currentInterval(),
       iterations: 0,
       evaluations,
+      accelerationSteps,
     };
   }
 
@@ -181,6 +243,7 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
       interval: currentInterval(),
       iterations: 0,
       evaluations,
+      accelerationSteps,
       termination: 'residual',
     };
   }
@@ -193,6 +256,7 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
       interval: currentInterval(),
       iterations: 0,
       evaluations,
+      accelerationSteps,
       termination: 'residual',
     };
   }
@@ -204,11 +268,18 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
       interval: currentInterval(),
       iterations: 0,
       evaluations,
+      accelerationSteps,
     };
   }
 
   let bestX = Math.abs(loValue) <= Math.abs(hiValue) ? lo : hi;
   let bestValue = Math.abs(loValue) <= Math.abs(hiValue) ? loValue : hiValue;
+  const updateBest = (candidate: EvaluatedCandidate) => {
+    if (Math.abs(candidate.value) < Math.abs(bestValue)) {
+      bestX = candidate.x;
+      bestValue = candidate.value;
+    }
+  };
   const bisectionBudget = initialBisectionBudget(Math.abs(hi - lo), request.tolerance);
 
   for (let iteration = 0; iteration < request.maxEvaluations; iteration += 1) {
@@ -223,6 +294,7 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
           interval: currentInterval(),
           iterations: iteration,
           evaluations,
+          accelerationSteps,
           termination: 'interval',
         };
       }
@@ -233,12 +305,15 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
         interval: currentInterval(),
         iterations: iteration,
         evaluations,
+        accelerationSteps,
         bestCandidate: bestX,
         bestResidual: Math.abs(bestValue),
       };
     }
 
-    const candidate = itpCandidate(
+    const accelerated = guardedNewtonCandidate(evaluate, lo, hi);
+    accelerated?.sampled.forEach(updateBest);
+    const candidate = accelerated?.candidate ?? itpCandidate(
       lo,
       loValue,
       hi,
@@ -249,6 +324,9 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
     );
     const evaluated = evaluateCandidate(evaluate, candidate, lo, hi)
       ?? fallbackMidpointCandidate(evaluate, lo, hi);
+    if (accelerated && evaluated && Math.abs(evaluated.value) < Math.abs(bestValue)) {
+      accelerationSteps += 1;
+    }
 
     if (!evaluated) {
       return {
@@ -258,15 +336,13 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
         interval: currentInterval(),
         iterations: iteration + 1,
         evaluations,
+        accelerationSteps,
         bestCandidate: bestX,
         bestResidual: Math.abs(bestValue),
       };
     }
 
-    if (Math.abs(evaluated.value) < Math.abs(bestValue)) {
-      bestX = evaluated.x;
-      bestValue = evaluated.value;
-    }
+    updateBest(evaluated);
 
     if (Math.abs(evaluated.value) <= request.tolerance) {
       return {
@@ -277,6 +353,7 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
         interval: currentInterval(),
         iterations: iteration + 1,
         evaluations,
+        accelerationSteps,
         termination: 'residual',
       };
     }
@@ -299,6 +376,7 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
       interval: currentInterval(),
       iterations: request.maxEvaluations,
       evaluations,
+      accelerationSteps,
       termination: 'best-residual',
     };
   }
@@ -310,6 +388,7 @@ export function refineRealRootBracket(request: RealRootKernelRequest): RealRootK
     interval: currentInterval(),
     iterations: request.maxEvaluations,
     evaluations,
+    accelerationSteps,
     bestCandidate: bestX,
     bestResidual: Math.abs(bestValue),
   };

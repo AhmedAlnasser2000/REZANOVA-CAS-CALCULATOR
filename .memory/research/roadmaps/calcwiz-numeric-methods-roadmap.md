@@ -51,6 +51,8 @@ Updated for `EQUATION-NUMERIC-DECIMAL-PRECISION-SUBSTRATE1` on 2026-07-01: `deci
 
 Updated for `EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1` on 2026-07-01: the shared numeric polynomial engine keeps Aberth-Ehrlich as the main degree-3+ method and now applies a final conditioning polish plus residual-aware dedupe before diagnostics/readback. This strengthens repeated/clustered-root handling without reintroducing symbolic Cardano/Ferrari readback into numeric fallback.
 
+Updated for `EQUATION-NUMERIC-SMOOTH-ACCELERATION1` on 2026-07-01: guarded Newton/secant acceleration now runs inside the maintained ITP kernel seam for safe smooth brackets. ITP remains the bracket discipline and fallback backbone; unsafe derivative probes, out-of-bracket candidates, discontinuities, and tangent cases still rely on ITP/bisection/local-minimum recovery rather than route-local Newton machinery.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose

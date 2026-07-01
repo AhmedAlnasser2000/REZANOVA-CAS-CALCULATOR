@@ -101,7 +101,7 @@ describe('Equation numeric route orchestration closeout', () => {
       throw new Error('Expected interval numeric success');
     }
     expect(result.solutionKind).toBe('approximate-numeric');
-    expect(result.numericMethod).toBe('Bracket-first adaptive ITP + local-minimum recovery');
+    expect(result.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
     const text = collectOutcomeText(result);
     expect(text).toContain('Roots are local to this chosen interval');
     expect(text).toContain('\\cos\\left(x\\right) \\ne0');

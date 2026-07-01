@@ -52,3 +52,14 @@
 - `npm run test:memory-protocol` passed after adding `committed_by_agent` metadata to the session commit log.
 - `git diff --check` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol type errors in `src/lib/surface-protocol/dto.test.ts` and `src/lib/surface-protocol/spec-examples.test.ts`.
+
+## EQUATION-NUMERIC-SMOOTH-ACCELERATION1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/equation/numeric-interval/sampling.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts src/lib/modes/equation/numeric-golden-trace-harness.test.ts`
+- Evidence: 6 test files passed, 59 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo Surface Protocol type errors in `src/lib/surface-protocol/dto.test.ts` and `src/lib/surface-protocol/spec-examples.test.ts`.

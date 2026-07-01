@@ -1467,3 +1467,7 @@
 ## 2026-07-01 - EQUATION-NUMERIC-POLYNOMIAL-CONDITIONED-SOLVE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The shared Equation numeric polynomial engine keeps Aberth-Ehrlich as the degree-3+ solver and adds producer-side conditioning polish plus residual-aware dedupe before readback/validation. Degree-3/4 numeric fallback remains numeric-method output, not Cardano/Ferrari formula readback.
+
+## 2026-07-01 - EQUATION-NUMERIC-SMOOTH-ACCELERATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] ITP remains the maintained real bracketed root-refinement kernel. Smooth Newton/secant acceleration is allowed only as a guarded in-bracket accelerator under that kernel, with unsafe probes falling back to ITP/bisection and local-minimum recovery.

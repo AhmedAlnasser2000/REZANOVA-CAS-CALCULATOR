@@ -22,6 +22,18 @@ describe('numeric interval sampling refinement', () => {
     expect(root ?? 0).toBeCloseTo(1.5213797068, 8);
   });
 
+  it('uses guarded smooth acceleration inside the ITP bracket discipline', () => {
+    const result = refineBracketRootKernel('e^{-x}-x', 0, 1, 'rad');
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected kernel success');
+    }
+    expect(result.methodId).toBe('itp');
+    expect(result.root).toBeCloseTo(0.5671432904, 8);
+    expect(result.accelerationSteps).toBeGreaterThan(0);
+  });
+
   it('does not turn a discontinuity sign change into a root', () => {
     const result = refineBracketRootKernel('\\frac{1}{x-2}', 1, 3, 'rad');
 

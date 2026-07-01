@@ -184,7 +184,7 @@ describe('Equation numeric golden trace harness', () => {
     expectSoftTraceBudgets(trace);
     expect(trace.kind).toBe('success');
     expect(trace.solutionKind).toBe('approximate-numeric');
-    expect(trace.numericMethod).toBe('Bracket-first adaptive ITP + local-minimum recovery');
+    expect(trace.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
     expect(trace.solveBadges).toContain('Numeric Interval');
     expect(trace.detailText).toContain('Roots are local to this chosen interval');
     expect(trace.detailText).toContain('x \\ne0');
@@ -203,7 +203,7 @@ describe('Equation numeric golden trace harness', () => {
 
     expectSoftTraceBudgets(trace);
     expect(trace.kind).toBe('success');
-    expect(trace.numericMethod).toBe('Bracket-first adaptive ITP + local-minimum recovery');
+    expect(trace.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
     expect(trace.detailText).toContain(String.raw`\cos\left(x\right) \ne0`);
     if (result.kind !== 'success') {
       throw new Error('Expected tangent interval success');
