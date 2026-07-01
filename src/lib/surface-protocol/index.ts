@@ -34,6 +34,20 @@ export {
 } from './events';
 
 export {
+  querySurfaceCurrentResult,
+  querySurfaceSafeSettings,
+  querySurfaceSnapshot,
+  querySurfaceWorkspaceInfo,
+  type SurfaceCurrentResultDto,
+  type SurfaceQueryResponseDto,
+  type SurfaceSafeSettingsSummaryDto,
+  type SurfaceSettingsSnapshotInput,
+  type SurfaceSnapshotQueryInput,
+  type SurfaceWorkspaceInfoDto,
+  type SurfaceWorkspaceSnapshotInput,
+} from './queries';
+
+export {
   SURFACE_PROTOCOL_VERSION,
   displayOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
