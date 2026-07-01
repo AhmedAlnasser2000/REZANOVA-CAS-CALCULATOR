@@ -1549,6 +1549,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Formal transcendental proof branching must stay bounded. Vanished pivots, slopes, discriminants, resultants, and special-parameter cases may produce direct-test branch rows up to the formal cap `12`; larger branch products must stop with proof-scope evidence instead of generating unreadable case explosions.
 
+## 2026-07-01 - TRANSCENDENTAL-DEPTH2-GENERALIZATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Depth-2 tower compositions should be recognized as method-level proof candidates even when no live certificate route owns them yet. They now carry explicit readiness labels and defer at the reduced-equation layer; depth-3 remains over-cap evidence until an approved depth-3 milestone exists.
+
 ## 2026-07-01 - CALCULUS-LIMITS-NATURAL-PARSER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits natural requests are parsed into structured variable, target, direction, body, and canonical request evidence before UI adoption. V1 accepts numeric finite targets, one-sided finite targets, `+/-infinity`, and simple exact `pi`/`e` constants, while symbolic targets such as `a` remain deferred.

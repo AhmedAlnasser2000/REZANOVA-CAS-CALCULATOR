@@ -66,7 +66,13 @@ export type TranscendentalFieldTowerReadiness =
   | 'depth1-log-or-trig'
   | 'depth1-special-function'
   | 'depth2-exp-exp-candidate'
+  | 'depth2-exp-log-candidate'
+  | 'depth2-exp-trig-candidate'
+  | 'depth2-general-composition-candidate'
+  | 'depth2-log-exp-candidate'
   | 'depth2-trig-exp-candidate'
+  | 'depth2-trig-log-candidate'
+  | 'depth2-trig-trig-candidate'
   | 'depth2-log-log-candidate'
   | 'depth2-special-exp-candidate'
   | 'linear-combination-profile';
@@ -461,26 +467,28 @@ function readinessFor(extensions: TranscendentalFieldTowerExtension[]): Transcen
     const inner = extensions.find((entry) => entry.depth === 1);
     if (outer.family === 'exp' && inner?.family === 'exp') {
       readiness.push('depth2-exp-exp-candidate');
+    } else if (outer.family === 'exp' && inner?.family === 'log') {
+      readiness.push('depth2-exp-log-candidate');
+    } else if (outer.family === 'exp' && inner?.family === 'trig') {
+      readiness.push('depth2-exp-trig-candidate');
     } else if (outer.family === 'trig' && inner?.family === 'exp') {
       readiness.push('depth2-trig-exp-candidate');
+    } else if (outer.family === 'trig' && inner?.family === 'log') {
+      readiness.push('depth2-trig-log-candidate');
+    } else if (outer.family === 'trig' && inner?.family === 'trig') {
+      readiness.push('depth2-trig-trig-candidate');
     } else if (outer.family === 'special-function' && inner?.family === 'exp') {
       readiness.push('depth2-special-exp-candidate');
+    } else if (outer.family === 'log' && inner?.family === 'exp') {
+      readiness.push('depth2-log-exp-candidate');
     } else if (outer.family === 'log' && inner?.family === 'log') {
       readiness.push('depth2-log-log-candidate');
+    } else {
+      readiness.push('depth2-general-composition-candidate');
     }
   }
 
   return readiness.length === 0 ? ['linear-combination-profile'] : Array.from(new Set(readiness));
-}
-
-function unsupportedDepth2Composition(scan: ExtensionScan) {
-  if (scan.depth !== 2) {
-    return false;
-  }
-
-  const outer = scan.extensions.find((entry) => entry.depth === 2);
-  const inner = scan.extensions.find((entry) => entry.depth === 1);
-  return outer?.family === 'exp' && inner?.family === 'trig';
 }
 
 function containsArgumentStop(variable: string, scan: ExtensionScan) {
@@ -566,16 +574,6 @@ export function profileTranscendentalFieldTower(
       variable,
       'depth-over-cap',
       'Depth-3 and deeper transcendental towers are outside the current bounded field profile.',
-      normalizedInput,
-      scan,
-    );
-  }
-
-  if (unsupportedDepth2Composition(scan)) {
-    return stop(
-      variable,
-      'unsupported-depth2-composition',
-      'This depth-2 tower is recognized, but its outer exponential over trig extension is not in the current proof scope.',
       normalizedInput,
       scan,
     );

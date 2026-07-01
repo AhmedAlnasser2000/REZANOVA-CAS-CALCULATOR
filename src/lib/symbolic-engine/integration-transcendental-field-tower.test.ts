@@ -109,6 +109,25 @@ describe('transcendental field tower core profile', () => {
     expect(logLog.readiness).toContain('depth2-log-log-candidate');
   });
 
+  it('generalizes method evidence for deferred depth-2 tower compositions', () => {
+    const expTrig = ready('e^{\\sin(x)}');
+    expect(expTrig.depth).toBe(2);
+    expect(expTrig.readiness).toContain('depth2-exp-trig-candidate');
+    expect(expTrig.extensions.map((entry) => entry.family)).toEqual(['trig', 'exp']);
+
+    const trigLog = ready('\\sin(\\ln(x))');
+    expect(trigLog.readiness).toContain('depth2-trig-log-candidate');
+    expect(trigLog.branchFacts).toContainEqual({
+      kind: 'positive',
+      expressionLatex: 'x',
+      relation: '>0',
+    });
+
+    const logExp = ready('\\ln(e^x)');
+    expect(logExp.readiness).toContain('depth2-log-exp-candidate');
+    expect(logExp.extensions.map((entry) => entry.family)).toEqual(['exp', 'log']);
+  });
+
   it('keeps arbitrary selected variables target-aware', () => {
     const result = ready('e^{a*t^2+x*t+b}', 't');
 
@@ -122,11 +141,6 @@ describe('transcendental field tower core profile', () => {
   });
 
   it('stops unsafe or deferred towers with explicit reasons', () => {
-    expect(profile('e^{\\sin(x)}')).toMatchObject({
-      kind: 'stop',
-      reason: 'unsupported-depth2-composition',
-      depth: 2,
-    });
     expect(profile('\\ln(\\ln(\\ln(x)))')).toMatchObject({
       kind: 'stop',
       reason: 'depth-over-cap',

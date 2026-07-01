@@ -102,7 +102,7 @@ describe('transcendental Risch reduced-equation proof layer', () => {
 
     expect(reduce('e^{\\sin(x)}')).toMatchObject({
       kind: 'stop',
-      reason: 'unsupported-depth2-composition',
+      reason: 'depth2-reduced-equation-deferred',
     });
 
     expect(reduce('\\ln(\\ln(\\ln(x)))')).toMatchObject({
