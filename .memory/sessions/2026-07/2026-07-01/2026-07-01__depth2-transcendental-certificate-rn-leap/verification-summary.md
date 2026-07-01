@@ -105,3 +105,23 @@
   - Result: pass.
 - `git diff --check`
   - Result: pass.
+
+## RN-DEPTH2-DERIVATIVE-SUBSTITUTION1
+
+- Gate label: backend
+- Focused tests:
+  - `npx vitest run src/lib/symbolic-engine/integration-risch-norman-depth2-substitution.test.ts`
+  - Result: pass, 1 test.
+- Regression tests:
+  - `npx vitest run src/lib/symbolic-engine/integration-risch-norman-depth2-substitution.test.ts src/lib/symbolic-engine/integration-transcendental-depth2-profile.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/engine/core.test.ts src/lib/calculus/workspace/integrals.test.ts`
+  - Result: pass, 5 files / 99 tests.
+- `npx tsc -b --pretty false`
+  - Result: blocked by unrelated dirty app runtime work in `src/app/runtime/useHistoryDisplayRuntime.ts` with TS1128 parse errors.
+  - Action: not edited or staged for this integration milestone.
+- `node tools/validate-file-sizes.mjs`
+  - Result: blocked by the same unrelated dirty app runtime work; `src/app/runtime/useHistoryDisplayRuntime.ts` is 939 lines against its 900-line cap.
+  - Action: not edited or staged for this integration milestone.
+- `npm run test:memory-protocol`
+  - Result: pass.
+- `git diff --check`
+  - Result: pass.

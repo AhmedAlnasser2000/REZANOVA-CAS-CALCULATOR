@@ -23,6 +23,7 @@ import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { tryRationalPartialFractionRule } from './rational';
 import { tryRischNormanOrchestrator } from './risch-norman/orchestrator';
+import { tryRischNormanDepth2DerivativeSubstitutionRule } from './risch-norman/depth2-substitution';
 import { tryRischNormanSymbolicTrigProductToSumRule } from './risch-norman/symbolic-trig-products';
 import {
   derivativeRatioIntegral,
@@ -186,6 +187,18 @@ function tryRoute(
     const trigDerivativeProduct = tryTrigDerivativeProductRule(node, variable);
     if (trigDerivativeProduct) {
       return symbolicSuccess(node, variable, trigDerivativeProduct, 'u-substitution');
+    }
+
+    const depth2Substitution = tryRischNormanDepth2DerivativeSubstitutionRule(node, variable);
+    if (depth2Substitution) {
+      return symbolicSuccess(
+        node,
+        variable,
+        depth2Substitution.exactLatex,
+        'u-substitution',
+        depth2Substitution.verification,
+        depth2Substitution.exactSupplementLatex,
+      );
     }
 
     const substitution = trySubstitutionRule(node, variable);

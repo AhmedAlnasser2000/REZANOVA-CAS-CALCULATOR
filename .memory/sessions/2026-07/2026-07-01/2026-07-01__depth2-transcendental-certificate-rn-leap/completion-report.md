@@ -49,3 +49,10 @@
 - Exponential-integral answers render `Ei` with real-domain `u>0` and `u<0` rows and visible denominator exclusions.
 - Logarithmic-integral answers render `li` with real-domain `u>1` and `0<u<1` rows plus visible `u>0` and `ln(u) != 0` facts.
 - Public strategy labels, result schemas, Display, History, OOE, Tauri, and persistence remain unchanged.
+
+## Milestone 6 - RN-DEPTH2-DERIVATIVE-SUBSTITUTION1
+
+- Added a guarded RN-owned depth-2 derivative-substitution helper under `src/lib/symbolic-engine/integration/risch-norman/depth2-substitution.ts`.
+- The helper consumes the depth-2 tower profiler for elementary nested forms such as `e^x e^(e^x)` and `cos(x)e^(sin(x))`, and directly recognizes `e^x/(1+e^x)` and `1/(x ln(x))`.
+- Results keep the public strategy label `u-substitution`, use exact rule-proof verification, and do not introduce a public RN/Risch strategy or schema change.
+- Focused tests live in `src/lib/symbolic-engine/integration-risch-norman-depth2-substitution.test.ts` so the large integration regression file stays under the file-size ratchet.
