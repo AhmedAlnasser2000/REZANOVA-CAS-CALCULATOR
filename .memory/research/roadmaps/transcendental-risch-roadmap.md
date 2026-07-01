@@ -98,6 +98,8 @@ Major gated milestone.
 
 No live integration adoption.
 
+Status: implemented 2026-07-01 as behavior-invisible infrastructure. The profiler records selected variable, coefficient scope, exp/positive-base-exp/log/trig/special-function descriptors, depth-1/depth-2 readiness, depth-over-cap and unsupported-composition stops, and proof-safe exponential spelling normalization without changing dispatch.
+
 ### 3. `TRANSCENDENTAL-CONSTANT-FIELD-AND-FACTS1`
 
 Major gated milestone.
