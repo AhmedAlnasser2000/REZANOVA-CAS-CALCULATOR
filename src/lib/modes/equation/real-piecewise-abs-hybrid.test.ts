@@ -87,8 +87,11 @@ describe('Equation real piecewise/abs numeric hybrid fallback', () => {
     expect(result.roots[0]).toBeCloseTo(-2, 6);
     expect(result.roots[1]).toBeCloseTo(2, 6);
     const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
-    expect(details).toContain('piecewise-breakpoint');
+    const titles = result.detailSections?.map((section) => section.title) ?? [];
+    expect(titles).toContain('Piecewise Breakpoints');
+    expect(titles).not.toContain('Domain and Exclusions');
     expect(details).toContain('-1');
     expect(details).toContain('1');
+    expect(details).not.toContain('Higher precision recommended');
   });
 });

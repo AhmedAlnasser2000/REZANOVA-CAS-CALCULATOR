@@ -95,7 +95,7 @@ describe('runNumericIntervalSolve', () => {
       section.title,
       ...section.lines,
     ]).join(' ') ?? '';
-    expect(details).toContain('Periodic Interval Summary');
+    expect(details).toContain('Periodic Structure');
     expect(details).toContain('Sin(x) carrier repeats every about 6.283185');
     expect(details).toContain('validated local root');
   });
@@ -255,8 +255,17 @@ describe('runNumericIntervalSolve', () => {
     expect(result.roots.some((root) => Math.abs(root - 2.372685) < 1e-5)).toBe(true);
     expect(result.roots.some((root) => Math.abs(root - 20.00011) < 1e-5)).toBe(true);
     const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    const titles = result.detailSections?.map((section) => section.title) ?? [];
+    expect(titles).toEqual(expect.arrayContaining([
+      'Domain and Exclusions',
+      'Domain Probe',
+      'Search Diagnostics',
+      'Extraneous Solutions',
+    ]));
     expect(details).toContain('log-boundary');
     expect(details).toContain('denominator-exclusion');
+    expect(details).toContain('x-1 > 0');
+    expect(details).toContain('x-2\\ne 0');
     expect(details).toContain('Interval arithmetic domain status: split-required');
     expect(details).toContain('Interval arithmetic complexity:');
     expect(details).toContain('Segment complexity:');
@@ -276,9 +285,13 @@ describe('runNumericIntervalSolve', () => {
       throw new Error('Expected numeric solve success');
     }
     const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    const titles = result.detailSections?.map((section) => section.title) ?? [];
+    expect(titles).toContain('Domain and Exclusions');
     expect(details).toContain('root-boundary');
+    expect(details).toContain('x+1\\ge 0');
     expect(details).toContain('Interval arithmetic domain status: split-required');
     expect(details).toContain('-1');
+    expect(details).not.toContain('Higher precision recommended');
   });
 
   it('segments around affine tangent poles', () => {
@@ -293,6 +306,9 @@ describe('runNumericIntervalSolve', () => {
       throw new Error('Expected numeric solve success');
     }
     const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    const titles = result.detailSections?.map((section) => section.title) ?? [];
+    expect(titles).toContain('Domain and Exclusions');
+    expect(titles).toContain('Periodic Structure');
     expect(details).toContain('trig-pole');
     expect(details).toContain('1.570796');
     expect(details).toContain('Tan(x) carrier repeats every about 3.141593');

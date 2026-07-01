@@ -16,7 +16,11 @@ import { evaluateLatexAtTarget } from '../../equation/domain-guards';
 import { equationTargetLatex } from '../../equation/equation-target';
 import type { AngleUnit, DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
-import { hardDomainFactLines } from './numeric-search-diagnostics';
+import {
+  buildFactSection,
+  hardDomainFactLines,
+  piecewiseBreakpointLines,
+} from './numeric-search-diagnostics';
 import {
   NUMERIC_FALLBACK_ELIGIBLE_ERRORS,
   polynomialFromZeroForm,
@@ -87,6 +91,7 @@ function detailSectionsFor(input: {
 }): DisplayDetailSection[] {
   const method = input.kind === 'rational' ? NUMERIC_METHOD_RATIONAL : NUMERIC_METHOD_POLYNOMIAL;
   const factLines = uniqueLines(hardDomainFactLines(input.classification.domainFacts));
+  const breakpointLines = uniqueLines(piecewiseBreakpointLines(input.classification.domainFacts));
   const certificationMatches = input.sturmCertification?.kind === 'certified'
     && input.roots.length === input.sturmCertification.distinctRealRootCount
     && input.roots.every((root) => rootInSturmIntervals(root, input.sturmCertification?.intervals ?? []));
@@ -117,10 +122,15 @@ function detailSectionsFor(input: {
   }
 
   if (factLines.length > 0) {
-    sections.push({
-      title: 'Domain and Exclusions',
-      lines: factLines,
-    });
+    const section = buildFactSection('Domain and Exclusions', factLines);
+    if (section) {
+      sections.push(section);
+    }
+  }
+
+  const breakpointSection = buildFactSection('Piecewise Breakpoints', breakpointLines);
+  if (breakpointSection) {
+    sections.push(breakpointSection);
   }
 
   if (input.rootDiagnostics) {

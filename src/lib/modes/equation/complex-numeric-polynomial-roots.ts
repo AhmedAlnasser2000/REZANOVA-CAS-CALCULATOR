@@ -26,7 +26,10 @@ import type {
   DisplayOutcome,
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
-import { hardDomainFactLines } from './numeric-search-diagnostics';
+import {
+  buildFactSection,
+  hardDomainFactLines,
+} from './numeric-search-diagnostics';
 import {
   NUMERIC_FALLBACK_ELIGIBLE_ERRORS,
   polynomialFromZeroForm,
@@ -287,10 +290,10 @@ function detailSectionsFor(input: {
   }
 
   if (factLines.length > 0) {
-    sections.push({
-      title: 'Domain and Exclusions',
-      lines: factLines,
-    });
+    const section = buildFactSection('Domain and Exclusions', factLines);
+    if (section) {
+      sections.push(section);
+    }
   }
 
   if (input.diagnostics) {

@@ -5,8 +5,11 @@ import { buildNumericConfidenceSection } from '../../equation/numeric-confidence
 import {
   buildDomainProbeSection,
   buildExtraneousDiagnosticsSection,
+  buildFactSection,
   buildSearchDiagnosticsSection,
   hardDomainFactLines,
+  periodicStructureLines,
+  piecewiseBreakpointLines,
   type NumericSearchWindowDiagnostic,
 } from './numeric-search-diagnostics';
 import { evaluateLatexAtTarget } from '../../equation/domain-guards';
@@ -153,6 +156,8 @@ export function tryRealNonlinearNumericSearchFallback(input: {
 
   const accepted = dedupeNumericRoots(acceptedRoots);
   const factLines = hardDomainFactLines(classification.domainFacts);
+  const breakpointLines = piecewiseBreakpointLines(classification.domainFacts);
+  const periodicLines = periodicStructureLines(classification.domainFacts);
   const rejectedCandidateCount = rejectedCandidatesAcrossWindows.length;
   const hasDomainSegmentationEvidence = factLines.length > 0
     || Boolean(classification.sampleProbe && classification.sampleProbe.undefinedSampleCount > 0)
@@ -172,7 +177,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
     'Search may be incomplete outside the searched windows.',
     ...(hasDomainSegmentationEvidence ? ['Domain segmented around exclusions.'] : []),
     'Candidate roots validated against original equation.',
-    ...(rejectedCandidateCount > 0 || hasDomainSegmentationEvidence ? ['Higher precision recommended.'] : []),
+    ...(rejectedCandidateCount > 0 ? ['Higher precision recommended.'] : []),
   ]);
   if (confidenceSection) {
     baseSections.push(confidenceSection);
@@ -186,10 +191,20 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   }
 
   if (factLines.length > 0) {
-    baseSections.push({
-      title: 'Domain and Exclusions',
-      lines: factLines,
-    });
+    const section = buildFactSection('Domain and Exclusions', factLines);
+    if (section) {
+      baseSections.push(section);
+    }
+  }
+
+  const breakpointSection = buildFactSection('Piecewise Breakpoints', breakpointLines);
+  if (breakpointSection) {
+    baseSections.push(breakpointSection);
+  }
+
+  const periodicSection = buildFactSection('Periodic Structure', periodicLines);
+  if (periodicSection) {
+    baseSections.push(periodicSection);
   }
 
   const domainProbeSection = buildDomainProbeSection(classification);

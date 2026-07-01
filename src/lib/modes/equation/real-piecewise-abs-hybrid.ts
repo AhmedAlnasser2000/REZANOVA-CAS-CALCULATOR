@@ -22,7 +22,11 @@ import type {
   SolveDomainConstraint,
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
-import { hardDomainFactLines } from './numeric-search-diagnostics';
+import {
+  buildFactSection,
+  hardDomainFactLines,
+  piecewiseBreakpointLines,
+} from './numeric-search-diagnostics';
 import {
   NUMERIC_FALLBACK_ELIGIBLE_ERRORS,
   polynomialFromZeroForm,
@@ -360,11 +364,11 @@ function detailSectionsFor(input: {
   rejected: readonly CandidateValidationResult[];
 }): DisplayDetailSection[] {
   const factLines = hardDomainFactLines(input.classification.domainFacts);
+  const breakpointLines = piecewiseBreakpointLines(input.classification.domainFacts);
   const confidenceSection = buildNumericConfidenceSection([
     ...(input.roots.length > 0 ? ['Validated roots from bounded search.'] : []),
-    'Domain segmented around exclusions.',
+    ...(factLines.length > 0 ? ['Domain segmented around exclusions.'] : []),
     'Candidate roots validated against original equation.',
-    ...(input.rejected.length > 0 ? ['Higher precision recommended.'] : []),
   ]);
   const sections: DisplayDetailSection[] = [
     {
@@ -398,10 +402,15 @@ function detailSectionsFor(input: {
   ];
 
   if (factLines.length > 0) {
-    sections.push({
-      title: 'Domain and Exclusions',
-      lines: factLines,
-    });
+    const section = buildFactSection('Domain and Exclusions', factLines);
+    if (section) {
+      sections.push(section);
+    }
+  }
+
+  const breakpointSection = buildFactSection('Piecewise Breakpoints', breakpointLines);
+  if (breakpointSection) {
+    sections.push(breakpointSection);
   }
 
   const polynomialLines = polynomialDiagnosticSummary(input.diagnostics);

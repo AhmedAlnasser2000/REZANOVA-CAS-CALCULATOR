@@ -24,6 +24,30 @@ function uniqueLines(lines: readonly string[]) {
   return [...new Set(lines.filter((line) => line.trim().length > 0))];
 }
 
+function normalizeFactLine(line: string) {
+  return line
+    .replace(/\s+/gu, ' ')
+    .replace(/\s*\\ne\s*/gu, '\\ne ')
+    .replace(/\s*\\ge\s*/gu, '\\ge ')
+    .replace(/\s*\\le\s*/gu, '\\le ')
+    .replace(/\s*>=\s*/gu, ' >= ')
+    .replace(/\s*<=\s*/gu, ' <= ')
+    .replace(/\s*>\s*/gu, ' > ')
+    .replace(/\s*<\s*/gu, ' < ')
+    .trim();
+}
+
+function factLinesOfKind(
+  facts: readonly EquationNumericDomainFact[],
+  kinds: ReadonlySet<EquationNumericDomainFact['kind']>,
+) {
+  return uniqueLines(
+    facts
+      .filter((fact) => kinds.has(fact.kind))
+      .map((fact) => normalizeFactLine(fact.message)),
+  );
+}
+
 function rejectedCandidates(rejected: readonly CandidateValidationResult[]) {
   return rejected.filter((candidate): candidate is Extract<CandidateValidationResult, { kind: 'rejected' }> =>
     candidate.kind === 'rejected');
@@ -36,11 +60,37 @@ function rejectedKey(candidate: Extract<CandidateValidationResult, { kind: 'reje
 export function hardDomainFactLines(
   facts: readonly EquationNumericDomainFact[],
 ) {
-  return uniqueLines(
-    facts
-      .filter((fact) => fact.kind !== 'sampled-discontinuity' && fact.kind !== 'piecewise-breakpoint')
-      .map((fact) => fact.message),
-  );
+  return factLinesOfKind(facts, new Set([
+    'denominator-exclusion',
+    'solved-denominator-exclusion',
+    'log-domain',
+    'root-domain',
+    'fractional-power-domain',
+    'trig-pole',
+    'inverse-trig-domain',
+  ]));
+}
+
+export function piecewiseBreakpointLines(
+  facts: readonly EquationNumericDomainFact[],
+) {
+  return factLinesOfKind(facts, new Set(['piecewise-breakpoint']));
+}
+
+export function periodicStructureLines(
+  facts: readonly EquationNumericDomainFact[],
+) {
+  return factLinesOfKind(facts, new Set(['periodic-carrier']));
+}
+
+export function buildFactSection(
+  title: string,
+  lines: readonly string[],
+): DisplayDetailSection | null {
+  const deduped = uniqueLines(lines.map(normalizeFactLine));
+  return deduped.length > 0
+    ? { title, lines: deduped }
+    : null;
 }
 
 function escapedRegex(input: string) {

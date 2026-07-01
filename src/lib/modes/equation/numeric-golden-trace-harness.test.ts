@@ -134,7 +134,7 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.detailTitles).toContain('Numeric Confidence');
     expect(trace.detailText).toContain('Domain segmented around exclusions.');
     expect(trace.detailTitles).toContain('Domain and Exclusions');
-    expect(trace.detailText).toContain('x-2 \\ne0');
+    expect(trace.detailText).toContain('x-2\\ne 0');
     expect(trace.detailText).toContain('x\\ne 2');
     if (result.kind !== 'success') {
       throw new Error('Expected deterministic rational success');
@@ -176,8 +176,8 @@ describe('Equation numeric golden trace harness', () => {
     ]));
     expect(trace.detailText).toContain('Domain segmented around exclusions.');
     expect(trace.detailText).toContain('Higher precision recommended.');
-    expect(trace.detailText).toContain('x-1 >0');
-    expect(trace.detailText).toContain('x-2 \\ne0');
+    expect(trace.detailText).toContain('x-1 > 0');
+    expect(trace.detailText).toContain('x-2\\ne 0');
     expect(trace.detailText).toContain('Candidate approximately 2');
     if (result.kind !== 'success') {
       throw new Error('Expected discontinuity-heavy numeric success');
@@ -199,10 +199,10 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.solveBadges).toContain('Numeric Interval');
     expect(trace.detailTitles).toContain('Numeric Confidence');
     expect(trace.detailText).toContain('All roots in this interval.');
-    expect(trace.detailTitles).toContain('Periodic Interval Summary');
+    expect(trace.detailTitles).toContain('Periodic Structure');
     expect(trace.detailText).toContain('Roots are local to this chosen interval');
     expect(trace.detailText).toContain('Sin(x) carrier repeats every about 6.283185');
-    expect(trace.detailText).toContain('x \\ne0');
+    expect(trace.detailText).toContain('x\\ne 0');
     if (result.kind !== 'success') {
       throw new Error('Expected periodic interval success');
     }
@@ -220,7 +220,7 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.kind).toBe('success');
     expect(trace.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
     expect(trace.detailTitles).toContain('Numeric Confidence');
-    expect(trace.detailTitles).toContain('Periodic Interval Summary');
+    expect(trace.detailTitles).toContain('Periodic Structure');
     expect(trace.detailText).toContain('Tan(x) carrier repeats every about 3.141593');
     expect(trace.detailText).toContain(String.raw`\cos\left(x\right) \ne0`);
     if (result.kind !== 'success') {

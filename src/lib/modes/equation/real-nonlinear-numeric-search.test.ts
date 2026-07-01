@@ -57,7 +57,7 @@ describe('Equation real nonlinear numeric search fallback', () => {
     if (logResult.kind !== 'success') {
       throw new Error('Expected log numeric fallback success');
     }
-    expect(collectOutcomeText(logResult)).toContain('x >0');
+    expect(collectOutcomeText(logResult)).toContain('x > 0');
 
     const radicalExpResult = solve('\\sqrt{x+1}+e^{-x}=2');
     expectApproxRoots(radicalExpResult, [0, 2.74784], 5);
@@ -65,7 +65,7 @@ describe('Equation real nonlinear numeric search fallback', () => {
       throw new Error('Expected radical/exp numeric fallback success');
     }
     const radicalText = collectOutcomeText(radicalExpResult);
-    expect(radicalText).toContain('x+1 \\ge0');
+    expect(radicalText).toContain('x+1\\ge 0');
     expect(radicalText).toContain('No supported exact form was found; showing validated approximate real roots.');
   });
 
@@ -80,8 +80,8 @@ describe('Equation real nonlinear numeric search fallback', () => {
     const domainAndExclusions = result.detailSections?.find((section) => section.title === 'Domain and Exclusions');
     const domainProbe = result.detailSections?.find((section) => section.title === 'Domain Probe');
     const extraneous = result.detailSections?.find((section) => section.title === 'Extraneous Solutions');
-    expect(text).toContain('x-1 >0');
-    expect(text).toContain('x-2 \\ne0');
+    expect(text).toContain('x-1 > 0');
+    expect(text).toContain('x-2\\ne 0');
     expect(text).toContain('x\\ne 2');
     expect(domainProbe).toBeDefined();
     expect(text).toContain('Derived real search regions: (1, 2), (2, \\infty).');

@@ -309,6 +309,54 @@ function formatBoundaryValues(values: readonly number[]) {
     : visible.join(', ');
 }
 
+function uniqueLines(lines: readonly string[]) {
+  return [...new Set(lines.filter((line) => line.trim().length > 0))];
+}
+
+function normalizeFactLine(line: string) {
+  return line
+    .replace(/\s+/gu, ' ')
+    .replace(/\s*\\ne\s*/gu, '\\ne ')
+    .replace(/\s*\\ge\s*/gu, '\\ge ')
+    .replace(/\s*\\le\s*/gu, '\\le ')
+    .replace(/\s*>=\s*/gu, ' >= ')
+    .replace(/\s*<=\s*/gu, ' <= ')
+    .replace(/\s*>\s*/gu, ' > ')
+    .replace(/\s*<\s*/gu, ' < ')
+    .trim();
+}
+
+function domainAndExclusionDetailSections(plan: EquationNumericSegmentationPlan): DisplayDetailSection[] {
+  const lines = uniqueLines(
+    plan.facts
+      .filter((fact) =>
+        fact.kind === 'denominator-exclusion'
+        || fact.kind === 'solved-denominator-exclusion'
+        || fact.kind === 'log-domain'
+        || fact.kind === 'root-domain'
+        || fact.kind === 'fractional-power-domain'
+        || fact.kind === 'trig-pole'
+        || fact.kind === 'inverse-trig-domain')
+      .map((fact) => normalizeFactLine(fact.message)),
+  );
+  return lines.length > 0
+    ? [{ title: 'Domain and Exclusions', lines }]
+    : [];
+}
+
+function piecewiseBreakpointDetailSections(plan: EquationNumericSegmentationPlan): DisplayDetailSection[] {
+  const factLines = plan.facts
+    .filter((fact) => fact.kind === 'piecewise-breakpoint')
+    .map((fact) => normalizeFactLine(fact.message));
+  const boundaryLines = plan.boundaries
+    .filter((boundary) => boundary.kind === 'piecewise-breakpoint')
+    .map((boundary) => `${formatApproxNumber(boundary.value)} (${normalizeFactLine(boundary.message)}).`);
+  const lines = uniqueLines([...factLines, ...boundaryLines]);
+  return lines.length > 0
+    ? [{ title: 'Piecewise Breakpoints', lines }]
+    : [];
+}
+
 function intervalArithmeticLines(plan: EquationNumericSegmentationPlan) {
   const summary = plan.intervalArithmetic;
   if (summary.classifications.length === 0) {
@@ -327,6 +375,31 @@ function intervalArithmeticLines(plan: EquationNumericSegmentationPlan) {
   ];
 }
 
+function domainProbeDetailSections(plan: EquationNumericSegmentationPlan): DisplayDetailSection[] {
+  const probe = plan.sampleProbe;
+  const hasProbeEvidence = probe.undefinedSampleCount > 0 || probe.finiteSampleCount > 0;
+  if (!hasProbeEvidence) {
+    return [];
+  }
+  const undefinedVisible = probe.undefinedPoints.slice(0, 8).map((point) =>
+    `Undefined/non-real sample: ${formatApproxNumber(point)}.`);
+  const finiteVisible = probe.finitePoints.slice(0, 8).map((point) =>
+    `Finite sample: ${formatApproxNumber(point)}.`);
+  return [{
+    title: 'Domain Probe',
+    lines: [
+      `Probe set: ${probe.samplePoints.length} fixed numeric target sample${probe.samplePoints.length === 1 ? '' : 's'}.`,
+      `Undefined or non-real samples: ${probe.undefinedSampleCount}; finite samples: ${probe.finiteSampleCount}.`,
+      ...undefinedVisible,
+      ...finiteVisible,
+      ...(probe.undefinedPoints.length > undefinedVisible.length || probe.finitePoints.length > finiteVisible.length
+        ? ['Additional probe values omitted.']
+        : []),
+      'Probe evidence guides segmentation; it is not a complete domain proof.',
+    ],
+  }];
+}
+
 function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan): DisplayDetailSection[] {
   const arithmeticLines = intervalArithmeticLines(plan);
   if (plan.boundaries.length === 0 && arithmeticLines.length === 0) {
@@ -339,7 +412,7 @@ function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan
   }
 
   return [{
-    title: 'Numeric Segmentation',
+    title: 'Search Diagnostics',
     lines: [
       ...arithmeticLines,
       `Boundary probes inside the interval: ${formatBoundaryValues(plan.gridBreakpoints)}.`,
@@ -373,7 +446,7 @@ function numericPeriodicIntervalDetailSections(input: {
 
   const visible = summaries.slice(0, 4);
   return [{
-    title: 'Periodic Interval Summary',
+    title: 'Periodic Structure',
     lines: [
       ...visible.map((summary) =>
         `${summary.operator}(${summary.carrierLatex}) carrier repeats every about ${formatApproxNumber(summary.targetPeriod)} in ${input.target}; this interval spans about ${formatApproxNumber(summary.intervalPeriodCount)} carrier period(s).`),
@@ -390,6 +463,8 @@ function numericConditioningDetailSections(input: {
   segmentation: EquationNumericSegmentationPlan;
   diagnostics: NumericDiagnostics;
 }): DisplayDetailSection[] {
+  const hazardBoundaryCount = input.segmentation.boundaries
+    .filter((boundary) => boundary.kind !== 'piecewise-breakpoint').length;
   const boundaryCount = input.segmentation.boundaries.length;
   const excludedCount = input.segmentation.excludedBoundaryCandidates.length;
   const intervalSplitCount = input.segmentation.intervalArithmetic.splitRequiredCount;
@@ -402,12 +477,16 @@ function numericConditioningDetailSections(input: {
     `Discontinuity cells: ${input.diagnostics.discontinuityCellCount}.`,
   ];
   const needsGuidance =
-    boundaryCount >= 4
+    hazardBoundaryCount >= 4
     || excludedCount > 0
     || intervalSplitCount > 0
     || intervalInvalidCount > 0
     || input.diagnostics.discontinuityCellCount > 0
     || input.diagnostics.newtonPrunedCellCount > 0
+    || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
+  const needsPrecisionGuidance =
+    excludedCount > 0
+    || intervalInvalidCount > 0
     || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
 
   if (
@@ -426,7 +505,7 @@ function numericConditioningDetailSections(input: {
     title: 'Numeric Conditioning',
     lines: [
       ...complexityLines,
-      ...(needsGuidance
+      ...(needsGuidance && needsPrecisionGuidance
         ? ['Higher precision or a narrower interval is recommended if nearby discontinuities or clustered candidates affect the result.']
         : []),
     ],
@@ -439,13 +518,16 @@ function numericConfidenceDetailSections(input: {
   acceptedRootCount: number;
   rejectedCandidateCount: number;
 }): DisplayDetailSection[] {
-  const hasSegmentationEvidence = input.segmentation.boundaries.length > 0
+  const hasHazardBoundary = input.segmentation.boundaries
+    .some((boundary) => boundary.kind !== 'piecewise-breakpoint');
+  const hasSegmentationEvidence = hasHazardBoundary
     || input.segmentation.excludedBoundaryCandidates.length > 0
     || input.segmentation.intervalArithmetic.splitRequiredCount > 0
     || input.segmentation.intervalArithmetic.invalidCount > 0
     || input.diagnostics.discontinuityCellCount > 0;
   const needsPrecisionGuidance = input.rejectedCandidateCount > 0
-    || input.diagnostics.discontinuityCellCount > 0
+    || input.segmentation.excludedBoundaryCandidates.length > 0
+    || input.segmentation.intervalArithmetic.invalidCount > 0
     || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
   const section = buildNumericConfidenceSection([
     ...(input.acceptedRootCount > 0 ? ['All roots in this interval.'] : []),
@@ -587,6 +669,9 @@ export function runNumericIntervalSolve(
             acceptedRootCount: 0,
             rejectedCandidateCount: validated.rejected.length,
           }),
+          ...domainAndExclusionDetailSections(segmentation),
+          ...piecewiseBreakpointDetailSections(segmentation),
+          ...domainProbeDetailSections(segmentation),
           ...numericSegmentationDetailSections(segmentation),
           ...numericConditioningDetailSections({ segmentation, diagnostics }),
         ],
@@ -623,6 +708,9 @@ export function runNumericIntervalSolve(
           acceptedRootCount: accepted.length,
           rejectedCandidateCount: validated.rejected.length,
         }),
+        ...domainAndExclusionDetailSections(segmentation),
+        ...piecewiseBreakpointDetailSections(segmentation),
+        ...domainProbeDetailSections(segmentation),
         ...numericSegmentationDetailSections(segmentation),
         ...numericConditioningDetailSections({ segmentation, diagnostics }),
       ],

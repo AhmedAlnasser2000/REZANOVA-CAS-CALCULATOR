@@ -94,7 +94,7 @@ describe('Equation Complex numeric polynomial roots', () => {
     expect(result.branchReadback?.branchesLatex).not.toContain('0');
     expect(result.detailSections?.map((section) => section.title)).toContain('Domain and Exclusions');
     const text = collectOutcomeText(result);
-    expect(text).toContain('x \\ne0');
+    expect(text).toContain('x\\ne 0');
   });
 
   it('reports numeric multiplicity evidence and decimal revalidation for clustered Complex roots', () => {

@@ -1544,3 +1544,7 @@
 ## 2026-07-01 - CALCULUS-LIMITS-NATURAL-PARSER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits natural requests are parsed into structured variable, target, direction, body, and canonical request evidence before UI adoption. V1 accepts numeric finite targets, one-sided finite targets, `+/-infinity`, and simple exact `pi`/`e` constants, while symbolic targets such as `a` remain deferred.
+
+## 2026-07-01 - EQUATION-NUMERIC-FACT-TAXONOMY-POLISH1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric result details must keep hard invalid-domain facts, piecewise breakpoints, periodic structure, probe samples, algorithm diagnostics, conditioning warnings, and extraneous candidate evidence in separate cards. Breakpoints are not domain exclusions, probe samples are not proofs, and clean breakpoint/domain-boundary cases must not imply higher precision risk without stronger rejection or instability evidence.

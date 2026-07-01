@@ -87,7 +87,7 @@ describe('Equation deterministic numeric algebraic fallback', () => {
     expect(result.solveBadges).toEqual(expect.arrayContaining(['LCD Clear', 'Candidate Checked']));
     expect(result.candidateValues?.[0]).toBeCloseTo(1.3007656097, 9);
     const text = collectOutcomeText(result);
-    expect(text).toContain('x-2 \\ne0');
+    expect(text).toContain('x-2\\ne 0');
     expect(text).toContain('x\\ne 2');
     expect(text).toContain('Cleared numeric polynomial denominators');
     expect(result.detailSections?.map((section) => section.title)).toContain('Real Root Certification');

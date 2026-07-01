@@ -7,7 +7,11 @@ import type {
 } from '../../../types/calculator';
 import { buildNumericConfidenceSection } from '../../equation/numeric-confidence-readback';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
-import { hardDomainFactLines } from './numeric-search-diagnostics';
+import {
+  buildFactSection,
+  hardDomainFactLines,
+  periodicStructureLines,
+} from './numeric-search-diagnostics';
 
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
@@ -62,11 +66,9 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
   }
 
   const factLines = uniqueLines(hardDomainFactLines(classification.domainFacts));
+  const periodicLines = uniqueLines(periodicStructureLines(classification.domainFacts));
   const routeEvidence = uniqueLines([
     ...classification.routeEvidence,
-    ...classification.domainFacts
-      .filter((fact) => fact.kind === 'periodic-carrier')
-      .map((fact) => fact.message),
   ]);
   const detailSections: DisplayDetailSection[] = [
     {
@@ -107,10 +109,15 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
   }
 
   if (factLines.length > 0) {
-    detailSections.push({
-      title: 'Domain and Exclusions',
-      lines: factLines,
-    });
+    const section = buildFactSection('Domain and Exclusions', factLines);
+    if (section) {
+      detailSections.push(section);
+    }
+  }
+
+  const periodicSection = buildFactSection('Periodic Structure', periodicLines);
+  if (periodicSection) {
+    detailSections.push(periodicSection);
   }
 
   detailSections.push({
