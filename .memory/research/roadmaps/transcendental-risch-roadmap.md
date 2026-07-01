@@ -139,6 +139,8 @@ Major gated milestone.
 
 No broad full-Risch claim yet.
 
+Status: implemented 2026-07-01 as behavior-invisible proof-object infrastructure. The Liouville layer now creates typed decomposition evidence for exp-quadratic certificate candidates, including the RDE rational-certificate part and polynomial-degree obstruction; it also records ordinary rational log-derivative residuals and reuses existing RN Hermite and LRT rational proof helpers where valid. It does not change integration dispatch, public Calculus result schemas, public strategy labels, or Equation behavior.
+
 ### 6. `TRANSCENDENTAL-RISCH-REDUCED-EQUATION1`
 
 Major gated milestone.
