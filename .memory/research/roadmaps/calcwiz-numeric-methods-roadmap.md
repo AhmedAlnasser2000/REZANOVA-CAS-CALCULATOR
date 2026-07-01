@@ -35,6 +35,8 @@ Updated for `NUMERIC-METHODS-DOMAIN-POLICY-WIDENING1` on 2026-06-30: cross-domai
 
 Updated for `EQUATION-NUMERIC-ROUTE-ORCHESTRATION-CLOSEOUT1` on 2026-06-30: the Real Equation numeric foundation now has a locked route order and focused regressions. Exact symbolic results win first; deterministic algebraic numeric fallback runs before search; periodic/dense cases stay on exact family readback or explicit Numeric Interval Solve; non-periodic nonlinear cases may use bounded auto-search; unsupported cases stop with guidance.
 
+Updated for `EQUATION-NUMERIC-KERNEL-CONTRACT1` on 2026-07-01: bracketed real root refinement now has an internal kernel contract before the ITP algorithm swap. It preserves the current Brent-Dekker-style behavior while exposing method id, termination, residual, iteration, and evaluation evidence so future kernels plug into one disciplined seam.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose
@@ -72,7 +74,7 @@ This roadmap is grounded in:
 - Single-target equations such as `x^2+x+1=0` do not need substitution consent. The normal Solve/Run path should classify and solve them under the established symbolic/numeric boundaries.
 - Numeric interval solving is for local/windowed roots, periodic/trig families, discontinuities, dense roots, and cases where the user needs roots in a region. It is not the default way to solve simple algebraic equations such as `x+5=8`.
 - Deterministic numeric algebraic methods should handle numeric polynomial/rational/algebraic cases without asking for an arbitrary interval when a global finite-root method is available.
-- Bracketed methods such as Brent or TOMS748-style search should be the reliability core for one-dimensional real nonlinear roots. Newton/secant methods may accelerate after bracketing or with guarded fallback; they should not be the only proof of a root.
+- ITP is the preferred maintained real bracketed root-refinement kernel for one-dimensional Equation numeric roots. TOMS 748 is not on the planned path unless future benchmarks prove a specific need. Newton/secant methods may accelerate after bracketing or with guarded fallback; they should not be the only proof of a root.
 - Residual minimization is needed for even-multiplicity/tangent roots that do not produce sign changes.
 - Domain segmentation must split around denominator zeros, log/root domain boundaries, trig poles, and detected discontinuities before search.
 - Monte Carlo is not an ordinary one-variable Equation root-finding method. It belongs later to Statistics/probability/simulation and possibly high-dimensional numerical integration after separate policy.
@@ -211,7 +213,7 @@ Add the domain and segmentation layer:
 
 Add robust one-dimensional real nonlinear search:
 
-- bracketed Brent/TOMS748-style core;
+- bracketed ITP core;
 - guarded Newton/secant acceleration;
 - residual minimization for tangent/even-multiplicity roots;
 - adaptive sampling with route-specific density;

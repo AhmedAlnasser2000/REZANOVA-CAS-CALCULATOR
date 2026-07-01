@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { refineBracketRoot } from './sampling';
+import { refineBracketRoot, refineBracketRootKernel } from './sampling';
 
 describe('numeric interval sampling refinement', () => {
+  it('returns kernel diagnostics for a bracketed nonlinear root', () => {
+    const result = refineBracketRootKernel('x^2-2', 1, 2, 'rad');
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected kernel success');
+    }
+    expect(result.methodId).toBe('brent-dekker');
+    expect(result.root).toBeCloseTo(Math.SQRT2, 8);
+    expect(result.residual).toBeLessThan(1e-8);
+    expect(result.evaluations).toBeGreaterThan(0);
+  });
+
   it('refines a bracketed nonlinear root with Brent-Dekker style interpolation', () => {
     const root = refineBracketRoot('x^3-x-2', 1, 2, 'rad');
 
@@ -10,9 +23,14 @@ describe('numeric interval sampling refinement', () => {
   });
 
   it('does not turn a discontinuity sign change into a root', () => {
-    const root = refineBracketRoot('\\frac{1}{x-2}', 1, 3, 'rad');
+    const result = refineBracketRootKernel('\\frac{1}{x-2}', 1, 3, 'rad');
 
-    expect(root).toBeNull();
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected kernel error');
+    }
+    expect(result.reason).toBe('unsafe-evaluation');
+    expect(refineBracketRoot('\\frac{1}{x-2}', 1, 3, 'rad')).toBeNull();
   });
 
   it('keeps refinement target-aware instead of assuming x', () => {
