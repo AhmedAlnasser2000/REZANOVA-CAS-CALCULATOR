@@ -159,6 +159,10 @@
 - Focused Complex region solve gate passed:
   - `npm run test:unit -- src/lib/modes/equation/complex-region-nonlinear-solve.test.ts src/lib/equation/complex/contour-winding.test.ts src/lib/equation/complex/seed-grid-newton.test.ts src/lib/equation/complex/numeric-evaluator.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts`
 - Evidence: 5 test files passed, 30 tests passed.
+- UI/runtime panel gate passed:
+  - `npm run test:unit -- src/app/logic/runtimeControllers.test.ts src/lib/modes/equation/ooe-runtime.test.ts src/lib/modes/equation/complex-region-nonlinear-solve.test.ts`
+  - `npm run test:ui -- src/app/runtime/useEquationRuntime.ui.test.tsx`
+- Evidence: controller/runtime/OOE/backend unit gate passed 3 files and 24 tests; hook UI gate passed 1 file and 10 tests.
 - Route regression gate passed:
   - `npm run test:unit -- src/lib/modes/equation/complex-region-nonlinear-solve.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
 - Evidence: 3 test files passed, 19 tests passed.

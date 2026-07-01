@@ -4,7 +4,11 @@ import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input
 import type { RunEquationModeRequest } from './types';
 
 function equationOoeRoute(request: RunEquationModeRequest) {
-  return request.numericInterval ? 'numeric-interval' : 'symbolic';
+  return request.complexRegion
+    ? 'complex-region'
+    : request.numericInterval
+      ? 'numeric-interval'
+      : 'symbolic';
 }
 
 export function buildEquationOoeSnapshot(request: RunEquationModeRequest) {

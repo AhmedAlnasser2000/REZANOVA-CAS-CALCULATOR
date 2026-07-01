@@ -686,6 +686,64 @@ describe('runtimeControllers', () => {
     expect(outcome.solutionKind).toBe('approximate-numeric');
   });
 
+  it('routes the primary Equation action through the Complex region pilot when that panel is visible', async () => {
+    const commitOutcome = createCommitOutcomeSpy();
+    const controller = createEquationRuntimeController({
+      equationScreen: 'symbolic',
+      equationLatex: 'e^z+z=0',
+      equationInputLatex: 'e^z+z=0',
+      equationSolveTarget: 'z',
+      quadraticCoefficients: [1, 0, 0],
+      cubicCoefficients: [1, 0, 0, 0],
+      quarticCoefficients: [1, 0, 0, 0, 0],
+      polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
+      system2: [[0, 0, 0], [0, 0, 0]],
+      system3: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+      equationNumericSolvePanel: { enabled: false, start: '0', end: '3', subdivisions: 32 },
+      equationComplexRegionPanel: {
+        enabled: true,
+        reMin: '-1',
+        reMax: '1',
+        imMin: '-1',
+        imMax: '1',
+        gridSize: 9,
+      },
+      currentMode: 'equation',
+      displayOutcome: null,
+      ansLatex: '0',
+      settings: {
+        angleUnit: 'rad',
+        outputStyle: 'both',
+        equationDomainIntent: 'complex',
+        complexExactForm: 'rectangular',
+      },
+      variableMemory: [],
+      startTransition: (callback) => callback(),
+      commitOutcome,
+      switchToEquationWithLatex: vi.fn<(latex: string) => void>(),
+      isSimultaneousEquationScreen: () => false,
+    });
+
+    controller.runEquationAction();
+
+    await waitForCommit(commitOutcome);
+    const [outcome, inputLatex, mode, replayContext] = commitOutcome.mock.calls[0];
+    expect(inputLatex).toBe('e^z+z=0');
+    expect(mode).toBe('equation');
+    expect(replayContext).toMatchObject({
+      equationSolveTarget: 'z',
+      equationAnswerMode: 'exact',
+      equationDomainIntent: 'complex',
+    });
+    expect(replayContext).not.toHaveProperty('numericInterval');
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') {
+      throw new Error('Expected Complex region solve success');
+    }
+    expect(outcome.solutionKind).toBe('approximate-numeric');
+    expect(outcome.answerDomain).toBe('complex');
+  });
+
   it('skips stale Equation numeric OOE commits without clearing replay substitutions', async () => {
     const commitOutcome = createCommitOutcomeSpy();
     const clearReplayVariableSubstitutions = vi.fn();

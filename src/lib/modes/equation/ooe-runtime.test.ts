@@ -37,11 +37,22 @@ describe('Equation mode OOE runtime', () => {
       ...first,
       equationDomainIntent: 'complex' as const,
     };
+    const complexRegion = {
+      ...first,
+      numericInterval: undefined,
+      equationDomainIntent: 'complex' as const,
+      complexRegion: { reMin: '-1', reMax: '1', imMin: '-1', imMax: '1', gridSize: 9 },
+    };
 
     expect(buildEquationOoeSnapshot(first)).toEqual({
       route: 'numeric-interval',
       explicitImaginaryInput: false,
       request: first,
+    });
+    expect(buildEquationOoeSnapshot(complexRegion)).toEqual({
+      route: 'complex-region',
+      explicitImaginaryInput: false,
+      request: complexRegion,
     });
     expect(buildEquationOoeSnapshot({
       ...first,
@@ -56,6 +67,7 @@ describe('Equation mode OOE runtime', () => {
       equationLatex: '\\ln(x+1)=\\ln(2x-3)',
     }));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changed));
+    expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(complexRegion));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changedAnswerMode));
     expect(buildEquationOoeInputRevisionId(first)).not.toBe(buildEquationOoeInputRevisionId(changedDomainIntent));
     expect(buildEquationOoeInputRevisionId(first)).toMatch(/^input\.equation\.solve\.[a-z0-9]+$/u);

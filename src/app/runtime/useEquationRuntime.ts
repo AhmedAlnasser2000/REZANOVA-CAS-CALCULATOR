@@ -49,6 +49,7 @@ import {
   createEquationRuntimeController,
 } from '../logic/runtimeControllers';
 import {
+  defaultEquationComplexRegionPanelState,
   defaultEquationNumericSolvePanelState,
   emptySystem,
   menuIndexForEquationScreen,
@@ -60,7 +61,16 @@ import {
   buildEquationRequestFromState,
   equationRequestFromSurfaceState,
 } from './equation-origin-request';
+import type {
+  ActiveEquationRuntimeState,
+  EquationRequestKind,
+  ReplayVariableSubstitutions,
+} from './equation-runtime-types';
 import { useEquationAlgebraActions } from './equation-algebra-actions';
+import {
+  buildEquationExplicitNumericPanelWorkspaceProps,
+  useEquationComplexRegionPanelState,
+} from './equation-explicit-numeric-panels';
 import { useEquationNumericSolvePanelState } from './equation-numeric-panel-visibility';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 import type {
@@ -74,45 +84,9 @@ import type {
   SettingsPatch,
   SimultaneousEquationView,
   StoredVariableValue,
-  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
-
 type TransitionFn = (callback: () => void) => void;
 type EquationMenuScreen = 'home' | 'polynomialMenu' | 'simultaneousMenu';
-
-type ReplayVariableSubstitutions = {
-  mode: ModeId;
-  inputLatex: string;
-  substitutions: VariableSubstitutionSnapshot[];
-} | null;
-
-export type EquationRequestKind = 'symbolic' | 'numeric-interval';
-
-export type ActiveEquationRuntimeState = {
-  equationLatex: string;
-  equationInputLatex: string;
-  equationScreen: EquationScreen;
-  equationSolveTarget: string | null;
-  quadraticCoefficients: number[];
-  cubicCoefficients: number[];
-  quarticCoefficients: number[];
-  polynomialSystem2Latex: readonly [string, string];
-  system2: number[][];
-  system3: number[][];
-  equationNumericSolvePanel: ReturnType<typeof defaultEquationNumericSolvePanelState>;
-  settings: Pick<
-    Settings,
-    | 'angleUnit'
-    | 'outputStyle'
-    | 'equationAnswerMode'
-    | 'equationDomainIntent'
-    | 'complexExactForm'
-  >;
-  ansLatex: string;
-  variableMemory: StoredVariableValue[];
-  replayVariableSubstitutions: ReplayVariableSubstitutions;
-};
-
 type CommitEquationOutcome = (
   outcome: DisplayOutcome,
   inputLatex: string,
@@ -131,7 +105,6 @@ type CommitEquationOutcome = (
     suppressDisplayCommit?: boolean;
   },
 ) => void;
-
 type UseEquationRuntimeOptions = {
   activeFieldRef: MutableRefObject<MathfieldElement | null>;
   ansLatex: string;
@@ -176,7 +149,6 @@ type UseEquationRuntimeOptions = {
 function copySystem(system: number[][]) {
   return system.map((row) => [...row]);
 }
-
 export function useEquationRuntime({
   activeFieldRef,
   ansLatex,
@@ -295,6 +267,21 @@ export function useEquationRuntime({
   const equationNumericSolvePanel = numericSolvePanel.panel;
   const effectiveEquationNumericSolvePanel = numericSolvePanel.effectivePanel;
   const setEquationNumericSolvePanel = numericSolvePanel.setPanel;
+  const complexRegionPanel = useEquationComplexRegionPanelState({
+    currentMode,
+    equationScreen,
+    equationDomainIntent: settings.equationDomainIntent,
+    disableNumericPanel: () => numericSolvePanel.setPanelEnabled(false),
+  });
+  const equationComplexRegionPanel = complexRegionPanel.panel;
+  const effectiveEquationComplexRegionPanel = complexRegionPanel.effectivePanel;
+  const setEquationComplexRegionPanel = complexRegionPanel.setPanel;
+  function setEquationNumericSolvePanelEnabled(enabled: boolean) {
+    numericSolvePanel.setPanelEnabled(enabled);
+    if (enabled) {
+      complexRegionPanel.updatePanel({ enabled: false });
+    }
+  }
   const equationMenuFooterText =
     currentMode === 'equation' && isEquationMenuOpen
       ? getEquationMenuFooterText(equationScreen)
@@ -435,6 +422,7 @@ export function useEquationRuntime({
     setEquationScreen(screen);
     if (screen !== 'symbolic') {
       setEquationNumericSolvePanel(defaultEquationNumericSolvePanelState());
+      setEquationComplexRegionPanel(defaultEquationComplexRegionPanelState());
       setEquationSolveTarget(null);
     }
     setDisplayOutcome(null);
@@ -488,6 +476,10 @@ export function useEquationRuntime({
         ...currentPanel,
         enabled: options?.openNumericSolve ?? false,
       }));
+      setEquationComplexRegionPanel((currentPanel) => ({
+        ...currentPanel,
+        enabled: false,
+      }));
       setDisplayOutcome(null);
     };
 
@@ -526,6 +518,7 @@ export function useEquationRuntime({
     setEquationScreen('home');
     setEquationAlgebraTrayOpen(false);
     setEquationNumericSolvePanel(defaultEquationNumericSolvePanelState());
+    setEquationComplexRegionPanel(defaultEquationComplexRegionPanelState());
     setEquationMenuSelection({
       home: 0,
       polynomialMenu: 0,
@@ -553,6 +546,7 @@ export function useEquationRuntime({
       equationScreen,
       equationAlgebraTrayOpen,
       equationNumericSolvePanel: { ...equationNumericSolvePanel },
+      equationComplexRegionPanel: { ...equationComplexRegionPanel },
       equationMenuSelection: { ...equationMenuSelection },
       quadraticCoefficients: [...quadraticCoefficients],
       cubicCoefficients: [...cubicCoefficients],
@@ -574,6 +568,10 @@ export function useEquationRuntime({
     setEquationScreen(state.equationScreen);
     setEquationAlgebraTrayOpen(state.equationAlgebraTrayOpen);
     setEquationNumericSolvePanel({ ...state.equationNumericSolvePanel });
+    setEquationComplexRegionPanel({
+      ...defaultEquationComplexRegionPanelState(),
+      ...state.equationComplexRegionPanel,
+    });
     setEquationMenuSelection({ ...state.equationMenuSelection });
     setQuadraticCoefficients([...state.quadraticCoefficients]);
     setCubicCoefficients([...state.cubicCoefficients]);
@@ -702,6 +700,7 @@ export function useEquationRuntime({
     system2,
     system3,
     equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
+    equationComplexRegionPanel: effectiveEquationComplexRegionPanel,
     settings,
     ansLatex,
     variableMemory: storedVariables,
@@ -752,6 +751,7 @@ export function useEquationRuntime({
     system2,
     system3,
     equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
+    equationComplexRegionPanel: effectiveEquationComplexRegionPanel,
     currentMode,
     displayOutcome,
     ansLatex,
@@ -812,16 +812,15 @@ export function useEquationRuntime({
     solveTargetMessage: equationSolveTargetResolution?.message,
     onSelectSolveTarget: setEquationSolveTarget,
     onSetAnswerMode: (mode: EquationAnswerMode) => patchSettings({ equationAnswerMode: mode }),
-    shouldAllowNumericSolve: equationRuntimeController.shouldAllowEquationNumericSolve(),
-    shouldShowNumericSolvePanel: equationRuntimeController.shouldShowEquationNumericSolvePanel(),
-    equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
-    numericIntervalSuggestions: displayOutcome && 'periodicFamily' in displayOutcome ? displayOutcome.periodicFamily?.suggestedIntervals ?? [] : [],
-    onSetNumericSolvePanelEnabled: numericSolvePanel.setPanelEnabled,
-    onApplyNumericIntervalSuggestion: (start: string, end: string) => numericSolvePanel.updatePanel({ start, end }),
-    onUpdateNumericStart: (nextValue: number) => numericSolvePanel.updatePanel({ start: String(nextValue) }),
-    onUpdateNumericEnd: (nextValue: number) => numericSolvePanel.updatePanel({ end: String(nextValue) }),
-    onUpdateNumericSubdivisions: (nextValue: number) =>
-      numericSolvePanel.updatePanel({ subdivisions: nextValue || 0 }),
+    ...buildEquationExplicitNumericPanelWorkspaceProps({
+      controller: equationRuntimeController,
+      displayOutcome,
+      setNumericPanelEnabled: setEquationNumericSolvePanelEnabled,
+      numericPanel: effectiveEquationNumericSolvePanel,
+      updateNumericPanel: numericSolvePanel.updatePanel,
+      complexRegionPanel: effectiveEquationComplexRegionPanel,
+      complexRegionControls: complexRegionPanel,
+    }),
     onOpenGuideArticle: openGuideArticle,
     onOpenGuideMode: () => openGuideMode('equation'),
     storedVariables,
@@ -847,6 +846,7 @@ export function useEquationRuntime({
     equationMenuPanelRef,
     equationMenuSelection,
     equationNumericSolvePanel: effectiveEquationNumericSolvePanel,
+    equationComplexRegionPanel: effectiveEquationComplexRegionPanel,
     equationResultBadges,
     equationResultTitle,
     equationRouteMeta,

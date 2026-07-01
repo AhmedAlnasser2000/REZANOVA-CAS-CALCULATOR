@@ -38,6 +38,14 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import {
+  runEquationComplexRegionRuntimeAction,
+  type EquationComplexRegionPanelState,
+} from './equationComplexRegionRuntime';
+import {
+  runEquationNumericIntervalRuntimeAction,
+  type EquationNumericSolvePanelState,
+} from './equationNumericIntervalRuntime';
 
 type TransitionFn = (callback: () => void) => void;
 
@@ -50,14 +58,7 @@ type CommitOutcomeFn = (
 
 type RetitleOutcomeFn = (outcome: DisplayOutcome, title: string) => DisplayOutcome;
 
-type EquationNumericSolvePanelState = {
-  enabled: boolean;
-  start: string;
-  end: string;
-  subdivisions: number;
-};
-
-type EquationOoeRouteKind = 'symbolic' | 'numeric-interval';
+type EquationOoeRouteKind = 'symbolic' | 'numeric-interval' | 'complex-region';
 
 type EquationStoredValueSolveOptions = {
   variableSubstitutionSnapshot?: VariableSubstitutionSnapshot[];
@@ -136,6 +137,7 @@ type EquationRuntimeDeps = {
   system2: number[][];
   system3: number[][];
   equationNumericSolvePanel: EquationNumericSolvePanelState;
+  equationComplexRegionPanel?: EquationComplexRegionPanelState;
   currentMode: ModeId;
   displayOutcome: DisplayOutcome | null;
   ansLatex: string;
@@ -488,6 +490,17 @@ export function createCalculateRuntimeController(deps: CalculateRuntimeDeps) {
 }
 
 export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
+  function currentComplexRegionPanel(): EquationComplexRegionPanelState {
+    return deps.equationComplexRegionPanel ?? {
+      enabled: false,
+      reMin: '-2',
+      reMax: '2',
+      imMin: '-2',
+      imMax: '2',
+      gridSize: 7,
+    };
+  }
+
   function getLaunchEquationSnapshot() {
     return deps.getLiveEquationSnapshot?.() ?? {
       equationLatex: deps.equationLatex,
@@ -538,6 +551,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
   }
 
   function runEquationAction(options: EquationStoredValueSolveOptions = {}) {
+    if (shouldShowEquationComplexRegionPanel()) {
+      runEquationComplexRegionSolveAction(options);
+      return;
+    }
+
     if (shouldShowEquationNumericSolvePanel()) {
       runEquationNumericSolveAction(options);
       return;
@@ -717,123 +735,29 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
   }
 
   function runEquationNumericSolveAction(options: EquationStoredValueSolveOptions = {}) {
-    if (deps.equationScreen !== 'symbolic') {
-      return;
-    }
+    runEquationNumericIntervalRuntimeAction({
+      deps,
+      options,
+      buildInputRevisionIdForRun: buildEquationInputRevisionIdForRun,
+      replayedEquationSubstitutionSnapshot: replayedEquationSubstitutionSnapshot,
+      shouldSuppressVisibleCommit: (input) => shouldSuppressEquationVisibleCommit(deps, input),
+      handleCancelledEnvelope: handleCancelledEquationEnvelope,
+      buildRuntimeLoadError,
+    });
+  }
 
-    deps.startTransition(() => {
-      const launchSnapshot = getLaunchEquationSnapshot();
-      const launchWorkspaceInstance = deps.getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
-      const executionLatex = trimHarmlessTrailingMathSpacing(launchSnapshot.equationLatex);
-      const committedInput = trimHarmlessTrailingMathSpacing(launchSnapshot.equationInputLatex);
-      const interval: NumericSolveInterval = {
-        start: deps.equationNumericSolvePanel.start,
-        end: deps.equationNumericSolvePanel.end,
-        subdivisions: deps.equationNumericSolvePanel.subdivisions,
-      };
-      let launchedHistoryTicket: PendingHistoryTicketReservation | null = null;
-
-      void (async () => {
-        try {
-          const request: RunEquationModeRequest = {
-            equationScreen: deps.equationScreen,
-            equationLatex: executionLatex,
-            equationSolveTarget: deps.equationSolveTarget,
-            equationAnswerMode: 'exact',
-            equationDomainIntent: 'real',
-            complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
-            quadraticCoefficients: deps.quadraticCoefficients,
-            cubicCoefficients: deps.cubicCoefficients,
-            quarticCoefficients: deps.quarticCoefficients,
-            polynomialSystem2Latex: deps.polynomialSystem2Latex,
-            system2: deps.system2,
-            system3: deps.system3,
-            angleUnit: deps.settings.angleUnit,
-            outputStyle: deps.settings.outputStyle,
-            ansLatex: deps.ansLatex,
-            numericInterval: interval,
-            storedVariables: deps.variableMemory,
-            variableSubstitutionSnapshot:
-              options.variableSubstitutionSnapshot ?? replayedEquationSubstitutionSnapshot(committedInput),
-            useStoredValueSubstitution: options.useStoredValueSubstitution,
-          };
-          const inputRevisionId = buildEquationInputRevisionIdForRun(request, options);
-          const historyTicket = deps.reserveHistoryTicket?.({
-            mode: 'equation',
-            inputLatex: committedInput,
-            capabilityId: 'equation.solve',
-            inputRevisionId,
-            workspaceInstance: launchWorkspaceInstance,
-          }) ?? null;
-          launchedHistoryTicket = historyTicket;
-          const suppressDisplayCommit = shouldSuppressEquationVisibleCommit(deps, {
-            routeKind: 'numeric-interval',
-            inputRevisionId,
-          });
-          const envelope = await runEquationModeWithOoePilot(
-            request,
-            {
-              ...(deps.getActiveEquationRequest
-                ? {
-                    activeInputRevisionId: (job: OoeJobIdentity) =>
-                      deps.resolveActiveEquationInputRevision
-                        ? deps.resolveActiveEquationInputRevision(
-                          'numeric-interval',
-                          job,
-                          (activeRequest) => buildEquationInputRevisionIdForRun(activeRequest, options),
-                        )
-                        : (() => {
-                            const activeRequest = deps.getActiveEquationRequest?.('numeric-interval');
-                            return activeRequest
-                              ? buildEquationInputRevisionIdForRun(activeRequest, options)
-                              : null;
-                          })(),
-                  }
-                : {}),
-              ...ooeJobContextFromHistoryTicket(historyTicket),
-            },
-          );
-
-          if (handleCancelledEquationEnvelope(envelope)) {
-            deps.discardHistoryTicket?.(historyTicket?.id);
-            return;
-          }
-
-          if (!isOoeCommitAllowed(envelope.ooe.commitAssessment)) {
-            deps.discardHistoryTicket?.(historyTicket?.id);
-            return;
-          }
-
-          deps.commitOutcome(
-            envelope.payload,
-            committedInput,
-            'equation',
-            {
-              ...(envelope.payload.kind === 'success'
-                && envelope.payload.solveBadges?.includes('Numeric Interval')
-                ? { numericInterval: interval }
-                : {}),
-              ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
-              equationAnswerMode: 'exact',
-              equationDomainIntent: 'real',
-              complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
-              ...(historyTicket
-                ? {
-                    historyTicketId: historyTicket.id,
-                    historyLaunchOrder: historyTicket.historyLaunchOrder,
-                  }
-                : {}),
-              ...(suppressDisplayCommit ? { suppressDisplayCommit: true } : {}),
-            },
-          );
-          if (!suppressDisplayCommit) {
-            deps.clearReplayVariableSubstitutions?.();
-          }
-        } catch (error: unknown) {
-          deps.discardHistoryTicket?.(launchedHistoryTicket?.id);
-          deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
-        }
-      })();
+  function runEquationComplexRegionSolveAction(options: EquationStoredValueSolveOptions = {}) {
+    runEquationComplexRegionRuntimeAction({
+      deps: {
+        ...deps,
+        equationComplexRegionPanel: currentComplexRegionPanel(),
+      },
+      options,
+      buildInputRevisionIdForRun: buildEquationInputRevisionIdForRun,
+      replayedEquationSubstitutionSnapshot: replayedEquationSubstitutionSnapshot,
+      shouldSuppressVisibleCommit: (input) => shouldSuppressEquationVisibleCommit(deps, input),
+      handleCancelledEnvelope: handleCancelledEquationEnvelope,
+      buildRuntimeLoadError,
     });
   }
 
@@ -857,6 +781,27 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
     return deps.equationNumericSolvePanel.enabled;
   }
 
+  function shouldAllowEquationComplexRegionSolve() {
+    if (deps.equationScreen !== 'symbolic') {
+      return false;
+    }
+
+    return deps.currentMode === 'equation'
+      && deps.settings.equationDomainIntent === 'complex';
+  }
+
+  function shouldShowEquationComplexRegionPanel() {
+    if (deps.equationScreen !== 'symbolic') {
+      return false;
+    }
+
+    if (!shouldAllowEquationComplexRegionSolve()) {
+      return false;
+    }
+
+    return currentComplexRegionPanel().enabled;
+  }
+
   function openPromptTarget() {
     if (deps.displayOutcome?.kind !== 'prompt' || deps.displayOutcome.targetMode !== 'equation') {
       return;
@@ -869,8 +814,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
     openPromptTarget,
     runEquationAction,
     runEquationAlgebraTransformAction,
+    runEquationComplexRegionSolveAction,
     runEquationNumericSolveAction,
     shouldAllowEquationNumericSolve,
+    shouldAllowEquationComplexRegionSolve,
+    shouldShowEquationComplexRegionPanel,
     shouldShowEquationNumericSolvePanel,
   };
 }

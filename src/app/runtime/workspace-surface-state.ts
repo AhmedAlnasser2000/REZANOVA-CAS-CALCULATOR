@@ -58,7 +58,10 @@ import type {
   VariableSubstitutionSnapshot,
   EquationScreen,
 } from '../../types/calculator';
-import type { defaultEquationNumericSolvePanelState } from '../logic/appUtils';
+import type {
+  defaultEquationComplexRegionPanelState,
+  defaultEquationNumericSolvePanelState,
+} from '../logic/appUtils';
 
 type CalculateReplayVariableSubstitutions = {
   inputLatex: string;
@@ -83,6 +86,7 @@ export type EquationSurfaceState = {
   equationScreen: EquationScreen;
   equationAlgebraTrayOpen: boolean;
   equationNumericSolvePanel: ReturnType<typeof defaultEquationNumericSolvePanelState>;
+  equationComplexRegionPanel: ReturnType<typeof defaultEquationComplexRegionPanelState>;
   equationMenuSelection: {
     home: number;
     polynomialMenu: number;

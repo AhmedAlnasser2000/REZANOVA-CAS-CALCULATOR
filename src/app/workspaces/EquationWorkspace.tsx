@@ -77,6 +77,22 @@ type EquationWorkspaceProps = {
   onUpdateNumericStart: (value: number) => void;
   onUpdateNumericEnd: (value: number) => void;
   onUpdateNumericSubdivisions: (value: number) => void;
+  shouldAllowComplexRegionSolve: boolean;
+  shouldShowComplexRegionPanel: boolean;
+  equationComplexRegionPanel: {
+    enabled: boolean;
+    reMin: string;
+    reMax: string;
+    imMin: string;
+    imMax: string;
+    gridSize: number;
+  };
+  onSetComplexRegionPanelEnabled: (enabled: boolean) => void;
+  onUpdateComplexRegionReMin: (value: number) => void;
+  onUpdateComplexRegionReMax: (value: number) => void;
+  onUpdateComplexRegionImMin: (value: number) => void;
+  onUpdateComplexRegionImMax: (value: number) => void;
+  onUpdateComplexRegionGridSize: (value: number) => void;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: () => void;
   storedVariables: readonly StoredVariableValue[];
@@ -123,6 +139,15 @@ export function EquationWorkspace({
   onUpdateNumericStart,
   onUpdateNumericEnd,
   onUpdateNumericSubdivisions,
+  shouldAllowComplexRegionSolve,
+  shouldShowComplexRegionPanel,
+  equationComplexRegionPanel,
+  onSetComplexRegionPanelEnabled,
+  onUpdateComplexRegionReMin,
+  onUpdateComplexRegionReMax,
+  onUpdateComplexRegionImMin,
+  onUpdateComplexRegionImMax,
+  onUpdateComplexRegionGridSize,
   onOpenGuideArticle,
   onOpenGuideMode,
   storedVariables,
@@ -384,16 +409,28 @@ export function EquationWorkspace({
               ))}
             </div>
           </div>
-          {shouldAllowNumericSolve ? (
+          {shouldAllowNumericSolve || shouldAllowComplexRegionSolve ? (
             <div className="workspace-action-row">
-              <button
-                type="button"
-                className={`workspace-action-button ${shouldShowNumericSolvePanel ? 'workspace-action-button--primary' : ''}`}
-                aria-pressed={shouldShowNumericSolvePanel}
-                onClick={() => onSetNumericSolvePanelEnabled(!shouldShowNumericSolvePanel)}
-              >
-                {shouldShowNumericSolvePanel ? 'Disable Numeric Interval' : 'Enable Numeric Interval'}
-              </button>
+              {shouldAllowNumericSolve ? (
+                <button
+                  type="button"
+                  className={`workspace-action-button ${shouldShowNumericSolvePanel ? 'workspace-action-button--primary' : ''}`}
+                  aria-pressed={shouldShowNumericSolvePanel}
+                  onClick={() => onSetNumericSolvePanelEnabled(!shouldShowNumericSolvePanel)}
+                >
+                  {shouldShowNumericSolvePanel ? 'Disable Numeric Interval' : 'Enable Numeric Interval'}
+                </button>
+              ) : null}
+              {shouldAllowComplexRegionSolve ? (
+                <button
+                  type="button"
+                  className={`workspace-action-button ${shouldShowComplexRegionPanel ? 'workspace-action-button--primary' : ''}`}
+                  aria-pressed={shouldShowComplexRegionPanel}
+                  onClick={() => onSetComplexRegionPanelEnabled(!shouldShowComplexRegionPanel)}
+                >
+                  {shouldShowComplexRegionPanel ? 'Disable Complex Region' : 'Enable Complex Region'}
+                </button>
+              ) : null}
             </div>
           ) : null}
           {shouldShowNumericSolvePanel && shouldAllowNumericSolve ? (
@@ -448,6 +485,57 @@ export function EquationWorkspace({
                     step={1}
                     value={equationNumericSolvePanel.subdivisions}
                     onChange={(event) => onUpdateNumericSubdivisions(Number(event.target.value) || 0)}
+                  />
+                </label>
+              </div>
+            </div>
+          ) : null}
+          {shouldShowComplexRegionPanel && shouldAllowComplexRegionSolve ? (
+            <div className="equation-numeric-panel">
+              <div className="card-title-row">
+                <strong>Complex Region Solve</strong>
+                <span className="equation-origin-badge">Local region</span>
+              </div>
+              <p className="equation-hint">
+                Set rectangular complex bounds, then press Run / F1 / EXE. Complex solve searches principal-branch roots in that region and reports local contour evidence when the boundary is safe.
+              </p>
+              <div className="grid-three">
+                <label className="field-group">
+                  <span>Re min</span>
+                  <SignedNumberInput
+                    value={Number(equationComplexRegionPanel.reMin)}
+                    onValueChange={onUpdateComplexRegionReMin}
+                  />
+                </label>
+                <label className="field-group">
+                  <span>Re max</span>
+                  <SignedNumberInput
+                    value={Number(equationComplexRegionPanel.reMax)}
+                    onValueChange={onUpdateComplexRegionReMax}
+                  />
+                </label>
+                <label className="field-group">
+                  <span>Grid</span>
+                  <input
+                    type="number"
+                    min={3}
+                    step={2}
+                    value={equationComplexRegionPanel.gridSize}
+                    onChange={(event) => onUpdateComplexRegionGridSize(Number(event.target.value) || 0)}
+                  />
+                </label>
+                <label className="field-group">
+                  <span>Im min</span>
+                  <SignedNumberInput
+                    value={Number(equationComplexRegionPanel.imMin)}
+                    onValueChange={onUpdateComplexRegionImMin}
+                  />
+                </label>
+                <label className="field-group">
+                  <span>Im max</span>
+                  <SignedNumberInput
+                    value={Number(equationComplexRegionPanel.imMax)}
+                    onValueChange={onUpdateComplexRegionImMax}
                   />
                 </label>
               </div>

@@ -51,6 +51,17 @@ export function defaultEquationNumericSolvePanelState() {
   };
 }
 
+export function defaultEquationComplexRegionPanelState() {
+  return {
+    enabled: false,
+    reMin: '-2',
+    reMax: '2',
+    imMin: '-2',
+    imMax: '2',
+    gridSize: 7,
+  };
+}
+
 export function menuIndexForEquationScreen(screen: EquationScreen) {
   if (screen === 'symbolic') {
     return { menu: 'home' as const, index: 0 };

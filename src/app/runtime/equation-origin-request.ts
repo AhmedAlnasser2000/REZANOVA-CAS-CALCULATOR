@@ -4,7 +4,7 @@ import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonical
 import type {
   ActiveEquationRuntimeState,
   EquationRequestKind,
-} from './useEquationRuntime';
+} from './equation-runtime-types';
 import { normalizeWorkspaceDisplayState } from './workspace-display-state';
 import type { EquationSurfaceState } from './workspace-surface-state';
 import type {
@@ -52,6 +52,10 @@ export function buildEquationRequestFromState(
     return null;
   }
 
+  if (kind === 'complex-region' && !active.equationComplexRegionPanel.enabled) {
+    return null;
+  }
+
   const snapshot = liveSnapshot ?? {
     equationLatex: active.equationLatex,
     equationInputLatex: active.equationInputLatex,
@@ -65,6 +69,15 @@ export function buildEquationRequestFromState(
         subdivisions: active.equationNumericSolvePanel.subdivisions,
       }
     : undefined;
+  const complexRegion = kind === 'complex-region'
+    ? {
+        reMin: active.equationComplexRegionPanel.reMin,
+        reMax: active.equationComplexRegionPanel.reMax,
+        imMin: active.equationComplexRegionPanel.imMin,
+        imMax: active.equationComplexRegionPanel.imMax,
+        gridSize: active.equationComplexRegionPanel.gridSize,
+      }
+    : undefined;
 
   return {
     equationScreen: active.equationScreen,
@@ -75,6 +88,8 @@ export function buildEquationRequestFromState(
       : active.settings.equationAnswerMode ?? 'exact',
     equationDomainIntent: kind === 'numeric-interval'
       ? 'real'
+      : kind === 'complex-region'
+        ? 'complex'
       : active.settings.equationDomainIntent ?? 'real',
     complexExactForm: active.settings.complexExactForm ?? 'rectangular',
     quadraticCoefficients: active.quadraticCoefficients,
@@ -87,9 +102,10 @@ export function buildEquationRequestFromState(
     outputStyle: active.settings.outputStyle,
     ansLatex: active.ansLatex,
     numericInterval,
+    complexRegion,
     storedVariables: active.variableMemory,
     variableSubstitutionSnapshot:
-      kind === 'numeric-interval'
+      (kind === 'numeric-interval' || kind === 'complex-region')
       && active.replayVariableSubstitutions?.mode === 'equation'
       && active.replayVariableSubstitutions.inputLatex === committedInput
         ? active.replayVariableSubstitutions.substitutions
@@ -129,6 +145,7 @@ export function equationRequestFromSurfaceState(
     system2: surfaceState.system2,
     system3: surfaceState.system3,
     equationNumericSolvePanel: surfaceState.equationNumericSolvePanel,
+    equationComplexRegionPanel: surfaceState.equationComplexRegionPanel,
     settings: context.settings,
     ansLatex: displayState.ansLatex,
     variableMemory: context.storedVariables,

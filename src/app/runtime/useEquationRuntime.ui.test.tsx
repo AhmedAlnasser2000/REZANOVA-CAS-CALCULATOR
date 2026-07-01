@@ -26,6 +26,8 @@ function renderEquationRuntime(
     mainFieldLatex?: string;
     storedVariables?: StoredVariableValue[];
     displayOutcome?: DisplayOutcome | null;
+    equationDomainIntent?: 'real' | 'complex';
+    complexExactForm?: 'rectangular' | 'polar' | 'cis';
   } = {},
 ) {
   const currentModeRef = {
@@ -85,8 +87,8 @@ function renderEquationRuntime(
           angleUnit: 'rad',
           outputStyle: 'exact',
           equationAnswerMode: 'exact',
-          equationDomainIntent: 'real',
-          complexExactForm: 'rectangular',
+          equationDomainIntent: initialProps.equationDomainIntent ?? 'real',
+          complexExactForm: initialProps.complexExactForm ?? 'rectangular',
         },
         setDisplayOutcome,
         setMode,
@@ -263,6 +265,58 @@ describe('useEquationRuntime', () => {
       },
       variableSubstitutionSnapshot: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
     });
+  });
+
+  it('builds active complex region requests and keeps explicit numeric panels mutually exclusive', () => {
+    const { hook } = renderEquationRuntime({
+      equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
+      mainFieldLatex: 'e^z+z=0',
+      replayVariableSubstitutions: {
+        mode: 'equation',
+        inputLatex: 'e^z+z=0',
+        substitutions: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+      },
+    });
+
+    act(() => {
+      hook.result.current.switchToEquationWithLatex('z=0');
+      hook.result.current.setEquationSolveTarget('z');
+      hook.result.current.equationWorkspaceProps.onSetNumericSolvePanelEnabled(true);
+    });
+    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(true);
+
+    act(() => {
+      hook.result.current.equationWorkspaceProps.onSetComplexRegionPanelEnabled(true);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionReMin(-1);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionReMax(1);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionImMin(-2);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionImMax(2);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionGridSize(9);
+    });
+
+    expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(false);
+    expect(hook.result.current.equationWorkspaceProps.shouldShowComplexRegionPanel).toBe(true);
+
+    const request = hook.result.current.getActiveEquationRequest('complex-region');
+
+    expect(request).toMatchObject({
+      equationScreen: 'symbolic',
+      equationLatex: 'e^z+z=0',
+      equationSolveTarget: 'z',
+      equationAnswerMode: 'exact',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'cis',
+      complexRegion: {
+        reMin: '-1',
+        reMax: '1',
+        imMin: '-2',
+        imMax: '2',
+        gridSize: 9,
+      },
+      variableSubstitutionSnapshot: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
+    });
+    expect(request?.numericInterval).toBeUndefined();
   });
 
   it('keeps periodic numeric guidance compact until numeric interval is enabled', () => {
