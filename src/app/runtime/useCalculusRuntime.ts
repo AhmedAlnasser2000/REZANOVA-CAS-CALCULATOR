@@ -45,6 +45,12 @@ import {
   calculusRevisionRequestFromSurfaceState,
 } from './calculus-origin-request';
 import {
+  derivativeEditorVariableForState,
+  normalizeDerivativePointWorkbenchForEditor,
+  normalizeDerivativeWorkbenchForEditor,
+  normalizePartialDerivativeWorkbenchForEditor,
+} from './calculus-derivative-source';
+import {
   calculusHistoryContextFromState,
   type ActiveCalculusRuntimeState,
   type CommitCalculusOutcome,
@@ -259,13 +265,14 @@ export function useCalculusRuntime({
                 ? laplaceState.bodyLatex
                 : calculusScreen === 'partialDerivative' ? partialDerivativeState.bodyLatex : '';
   const calculusMainEditorVariable = calculusScreen === 'derivative'
-      ? derivativeVariableOrDefault(derivativeWorkbench.variable)
-      : calculusScreen === 'derivativePoint'
-        ? derivativeVariableOrDefault(derivativePointWorkbench.variable)
-        : calculusScreen === 'implicitDerivative'
-          ? derivativeVariableOrDefault(implicitDerivativeState.independentVariable)
-      : calculusScreen === 'partialDerivative' ? derivativeVariableOrDefault(partialDerivativeState.variable)
-      : calculusScreen === 'laplace' ? 't' : 'x';
+    ? derivativeEditorVariableForState('derivative', derivativeWorkbench)
+    : calculusScreen === 'derivativePoint'
+      ? derivativeEditorVariableForState('derivativePoint', derivativePointWorkbench)
+      : calculusScreen === 'implicitDerivative'
+        ? derivativeVariableOrDefault(implicitDerivativeState.independentVariable)
+        : calculusScreen === 'partialDerivative'
+          ? derivativeEditorVariableForState('partialDerivative', partialDerivativeState)
+          : calculusScreen === 'laplace' ? 't' : 'x';
   const activeCalculusRuntimeState: ActiveCalculusRuntimeState = {
     screen: calculusScreen,
     generatedLatex: trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression),
@@ -368,12 +375,14 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'derivative') {
-      setDerivativeWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, variable: seed.variable ?? currentState.variable, operatorLatex: seed.operatorLatex ?? currentState.operatorLatex }));
+      setDerivativeWorkbench((currentState) =>
+        normalizeDerivativeWorkbenchForEditor(seed, currentState));
       return;
     }
 
     if (screen === 'derivativePoint') {
-      setDerivativePointWorkbench((currentState) => ({ ...currentState, bodyLatex: seed.bodyLatex ?? currentState.bodyLatex, point: seed.point ?? currentState.point, variable: seed.variable ?? currentState.variable, operatorLatex: seed.operatorLatex ?? currentState.operatorLatex }));
+      setDerivativePointWorkbench((currentState) =>
+        normalizeDerivativePointWorkbenchForEditor(seed, currentState));
       return;
     }
 
@@ -467,12 +476,8 @@ export function useCalculusRuntime({
     }
 
     if (screen === 'partialDerivative') {
-      setPartialDerivativeState((currentState) => ({
-        ...currentState,
-        bodyLatex: seed.bodyLatex ?? currentState.bodyLatex,
-        variable: seed.variable ?? currentState.variable,
-        operatorLatex: seed.operatorLatex ?? currentState.operatorLatex,
-      }));
+      setPartialDerivativeState((currentState) =>
+        normalizePartialDerivativeWorkbenchForEditor(seed, currentState));
       return;
     }
 

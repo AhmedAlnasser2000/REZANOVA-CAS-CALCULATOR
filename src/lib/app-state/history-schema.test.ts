@@ -146,14 +146,14 @@ describe('history entry schema', () => {
     ['indefiniteIntegral', { bodyLatex: '\\frac{1}{1+x^2}' }],
     ['definiteIntegral', { bodyLatex: '2x', lower: '0', upper: '1' }],
     ['improperIntegral', { bodyLatex: '\\frac{1}{x^2}', lowerKind: 'finite', lower: '1', upperKind: 'posInfinity' }],
-    ['derivative', { bodyLatex: 't^2', variable: 't' }],
-    ['derivativePoint', { bodyLatex: '\\theta^2', point: '3', variable: 'theta' }],
+    ['derivative', { bodyLatex: '\\frac{d}{dt}\\left(t^2\\right)' }],
+    ['derivativePoint', { bodyLatex: '\\frac{d}{d\\theta}\\left(\\theta^2\\right)', point: '3' }],
     ['finiteLimit', { bodyLatex: '\\frac{1}{x}', target: '0', direction: 'left' }],
     ['infiniteLimit', { bodyLatex: '\\frac{2x}{x+1}', targetKind: 'posInfinity' }],
     ['maclaurin', { bodyLatex: '\\sin(x)', kind: 'maclaurin', center: '0', order: 5 }],
     ['taylor', { bodyLatex: '\\cos(x)', kind: 'taylor', center: '1', order: 4 }],
     ['laplace', { bodyLatex: 't^2' }],
-    ['partialDerivative', { bodyLatex: '\\theta^2+x\\theta', variable: 'theta' }],
+    ['partialDerivative', { bodyLatex: '\\frac{\\partial}{\\partial \\theta}\\left(\\theta^2+x\\theta\\right)' }],
     ['implicitDerivative', { relationLatex: 'x^2+y^2=25', independentVariable: 'x', dependentVariable: 'y' }],
     ['odeFirstOrder', { lhsLatex: '\\frac{dy}{dx}', rhsLatex: 'xy', classification: 'separable' }],
     ['odeSecondOrder', { a2: '1', a1: '0', a0: '1', forcingLatex: '0' }],
@@ -172,20 +172,19 @@ describe('history entry schema', () => {
     expect(parsed.calculusSeed).toMatchObject(calculusSeed);
   });
 
-  it('canonicalizes and validates Calculus derivative target variables in seeds', () => {
+  it('accepts natural Calculus derivative request seeds and still validates optional side variables', () => {
     const parsed = historyEntrySchema.parse({
       id: 'calculus-derivative-target-canonical',
       mode: 'calculus',
       inputLatex: '\\frac{d}{d\\theta}\\left(\\theta^2\\right)',
       calculusScreen: 'derivative',
       calculusSeed: {
-        bodyLatex: '\\theta^2',
-        variable: '\\theta',
+        bodyLatex: '\\frac{d}{d\\theta}\\left(\\theta^2\\right)',
       },
       timestamp: '2026-06-29T00:00:00.000Z',
     });
 
-    expect(parsed.calculusSeed?.variable).toBe('theta');
+    expect(parsed.calculusSeed?.bodyLatex).toBe('\\frac{d}{d\\theta}\\left(\\theta^2\\right)');
     expect(() =>
       historyEntrySchema.parse({
         id: 'calculus-derivative-target-invalid',
@@ -201,25 +200,22 @@ describe('history entry schema', () => {
     ).toThrow();
   });
 
-  it('accepts Calculus derivative operator seeds for replay', () => {
+  it('accepts natural higher-order Calculus derivative request seeds for replay', () => {
     const parsed = historyEntrySchema.parse({
       id: 'calculus-derivative-operator-seed',
       mode: 'calculus',
       inputLatex: '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
       calculusScreen: 'derivative',
       calculusSeed: {
-        bodyLatex: 't^5',
-        variable: 't',
-        operatorLatex: 'd^3/dt^3',
+        bodyLatex: '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
       },
       timestamp: '2026-06-30T00:00:00.000Z',
     });
 
     expect(parsed.calculusSeed).toMatchObject({
-      bodyLatex: 't^5',
-      variable: 't',
-      operatorLatex: 'd^3/dt^3',
+      bodyLatex: '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
     });
+    expect(parsed.calculusSeed?.operatorLatex).toBeUndefined();
   });
 
   it('canonicalizes and validates Calculus implicit derivative variables in seeds', () => {

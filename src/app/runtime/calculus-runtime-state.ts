@@ -21,6 +21,7 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import { derivativeHistorySeedFromState } from './calculus-derivative-source';
 
 export type ReplayVariableSubstitutions = {
   mode: ModeId;
@@ -69,9 +70,15 @@ export function calculusHistoryContextFromState(
 ): Pick<HistoryEntry, 'calculusScreen'> & Partial<Pick<HistoryEntry, 'calculusSeed'>> {
   switch (state.screen) {
     case 'derivative':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.derivative } };
+      return {
+        calculusScreen: state.screen,
+        calculusSeed: derivativeHistorySeedFromState('derivative', state.derivative),
+      };
     case 'derivativePoint':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.derivativePoint } };
+      return {
+        calculusScreen: state.screen,
+        calculusSeed: derivativeHistorySeedFromState('derivativePoint', state.derivativePoint),
+      };
     case 'implicitDerivative':
       return { calculusScreen: state.screen, calculusSeed: { ...state.implicitDerivative } };
     case 'indefiniteIntegral':
@@ -91,7 +98,10 @@ export function calculusHistoryContextFromState(
     case 'laplace':
       return { calculusScreen: state.screen, calculusSeed: { ...state.laplace } };
     case 'partialDerivative':
-      return { calculusScreen: state.screen, calculusSeed: { ...state.partialDerivative } };
+      return {
+        calculusScreen: state.screen,
+        calculusSeed: derivativeHistorySeedFromState('partialDerivative', state.partialDerivative),
+      };
     case 'odeFirstOrder':
       return { calculusScreen: state.screen, calculusSeed: { ...state.firstOrderOde } };
     case 'odeSecondOrder':

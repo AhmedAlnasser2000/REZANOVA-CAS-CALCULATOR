@@ -15,6 +15,7 @@ import {
   buildDerivativeAtPointLatex,
   buildDerivativeLatex,
 } from '../../lib/calculus/calculus-workbench';
+import { derivativeRequestStateFromEditor } from './calculus-derivative-source';
 import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonicalization';
 import type { RunCalculusModeRequest } from '../../lib/modes/calculus';
 import type { ActiveCalculusRuntimeState } from './calculus-runtime-state';
@@ -129,8 +130,8 @@ export function buildCalculusRequestFromState(
 ): RunCalculusModeRequest {
   return {
     screen: state.screen,
-    derivative: state.derivative,
-    derivativePoint: state.derivativePoint,
+    derivative: derivativeRequestStateFromEditor('derivative', state.derivative),
+    derivativePoint: derivativeRequestStateFromEditor('derivativePoint', state.derivativePoint),
     implicitDerivative: state.implicitDerivative,
     indefiniteIntegral: state.indefiniteIntegral,
     definiteIntegral: state.definiteIntegral,
@@ -140,7 +141,7 @@ export function buildCalculusRequestFromState(
     maclaurin: state.maclaurin,
     taylor: state.taylor,
     laplace: state.laplace,
-    partialDerivative: state.partialDerivative,
+    partialDerivative: derivativeRequestStateFromEditor('partialDerivative', state.partialDerivative),
     firstOrderOde: state.firstOrderOde,
     secondOrderOde: state.secondOrderOde,
     numericIvp: state.numericIvp,

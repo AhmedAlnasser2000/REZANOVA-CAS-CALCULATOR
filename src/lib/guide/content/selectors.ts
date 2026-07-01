@@ -525,7 +525,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         explanation: 'Function-power notation such as sin^2(cos^3(x)) stays readable while the derivative core applies the chain rule.',
         steps: [
           'Open Calculus > Derivative.',
-          'Enter sin^2(cos^3(x)) as the body.',
+          'Enter d/dx(sin^2(cos^3(x))).',
           'Press EXE or F1 and read the Function power and Chain rule badges.',
         ],
         expected: 'The expression opens in Calculus > Derivative and returns a symbolic derivative with chain-rule factors.',
@@ -534,7 +534,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           targetMode: 'calculus',
           calculusScreen: 'derivative',
           calculusSeed: {
-            bodyLatex: '\\sin^2\\left(\\cos^3\\left(x\\right)\\right)',
+            bodyLatex: '\\frac{d}{dx}\\left(\\sin^2\\left(\\cos^3\\left(x\\right)\\right)\\right)',
           },
           latex: '\\frac{d}{dx}\\sin^2\\left(\\cos^3\\left(x\\right)\\right)',
           label: 'Open in Derivative Tool',
@@ -547,7 +547,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         explanation: 'Use d/dx when you want a symbolic derivative expression.',
         steps: [
           'Open Calculus > Derivative.',
-          'Enter x^3+2x as the body.',
+          'Enter d/dx(x^3+2x).',
           'Press EXE or F1 to return the symbolic derivative.',
         ],
         expected: 'The expression opens in Calculus > Derivative ready for EXE.',
@@ -556,7 +556,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           targetMode: 'calculus',
           calculusScreen: 'derivative',
           calculusSeed: {
-            bodyLatex: 'x^3+2x',
+            bodyLatex: '\\frac{d}{dx}\\left(x^3+2x\\right)',
           },
           latex: '\\frac{d}{dx}\\left(x^3+2x\\right)',
           label: 'Open in Derivative Tool',
@@ -569,7 +569,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         explanation: 'General-power derivatives stay bounded but can handle supported forms such as cos^(2x)(x).',
         steps: [
           'Open Calculus > Derivative.',
-          'Enter cos^(2x)(x) as the body.',
+          'Enter d/dx(cos^(2x)(x)).',
           'Press EXE or F1 and read the General power badge.',
         ],
         expected: 'The expression opens in Calculus > Derivative and returns a symbolic derivative containing ln(cos(x)).',
@@ -578,7 +578,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           targetMode: 'calculus',
           calculusScreen: 'derivative',
           calculusSeed: {
-            bodyLatex: '\\cos^{2x}\\left(x\\right)',
+            bodyLatex: '\\frac{d}{dx}\\left(\\cos^{2x}\\left(x\\right)\\right)',
           },
           latex: '\\frac{d}{dx}\\left(\\cos^{2x}\\left(x\\right)\\right)',
           label: 'Open in Derivative Tool',
@@ -590,7 +590,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         explanation: 'Use the derivative-at-point template when you need a numeric slope at one point.',
         steps: [
           'Open Calculus > Derivative at Point.',
-          'Enter x^2 as the body and 3 as the point.',
+          'Enter d/dx(x^2) and 3 as the point.',
           'Press EXE or F1 to evaluate the slope at that point.',
         ],
         expected: 'The expression opens in Calculus > Derivative at Point ready for EXE.',
@@ -599,7 +599,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           targetMode: 'calculus',
           calculusScreen: 'derivativePoint',
           calculusSeed: {
-            bodyLatex: 'x^2',
+            bodyLatex: '\\frac{d}{dx}\\left(x^2\\right)',
             point: '3',
           },
           latex: '\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}',
@@ -611,8 +611,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Partial derivative with respect to x',
         explanation: 'Use partial-derivative notation when the expression contains more than one variable and you only want the x-change.',
         steps: [
-          'Open Calculus > Partials > First Order.',
-          'Leave the variable on ∂/∂x and enter x^2y+y^3 as the body.',
+          'Open Calculus > Derivatives > Partial Derivative.',
+          'Enter ∂/∂x(x^2y+y^3).',
           'Press EXE or F1 to evaluate the first-order partial derivative.',
         ],
         expected: 'The partial derivative treats y as a constant and returns 2xy.',
@@ -621,8 +621,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           targetMode: 'calculus',
           calculusScreen: 'partialDerivative',
           calculusSeed: {
-            bodyLatex: 'x^2y+y^3',
-            variable: 'x',
+            bodyLatex: '\\frac{\\partial}{\\partial x}\\left(x^2y+y^3\\right)',
           },
           label: 'Open in Calculus',
         },
@@ -1276,8 +1275,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         title: 'Differentiate with respect to x',
         explanation: 'Use ∂/∂x when x changes and the other variables stay constant.',
         steps: [
-          'Open Calculus > Partials > First Order.',
-          'Leave the variable on ∂/∂x and enter x^2y+y^3 as the body.',
+          'Open Calculus > Derivatives > Partial Derivative.',
+          'Enter ∂/∂x(x^2y+y^3).',
           'Press EXE or F1 and read the symbolic result.',
         ],
         expected: 'The tool treats y as a constant and returns 2xy.',
@@ -1286,8 +1285,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           targetMode: 'calculus',
           calculusScreen: 'partialDerivative',
           calculusSeed: {
-            bodyLatex: 'x^2y+y^3',
-            variable: 'x',
+            bodyLatex: '\\frac{\\partial}{\\partial x}\\left(x^2y+y^3\\right)',
           },
           label: 'Open in Calculus',
         },
@@ -1296,10 +1294,10 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       {
         id: 'calculus-partials-y',
         title: 'Differentiate with respect to y',
-        explanation: 'Switch the variable chip when you want the y-change instead of the x-change.',
+        explanation: 'Change the operator in the request when you want the y-change instead of the x-change.',
         steps: [
-          'Open Calculus > Partials > First Order.',
-          'Choose ∂/∂y and enter x^2y+y^3 as the body.',
+          'Open Calculus > Derivatives > Partial Derivative.',
+          'Enter ∂/∂y(x^2y+y^3).',
           'Press EXE or F1 to treat x as a constant and differentiate in y.',
         ],
         expected: 'The tool returns x^2+3y^2.',
@@ -1308,8 +1306,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
           targetMode: 'calculus',
           calculusScreen: 'partialDerivative',
           calculusSeed: {
-            bodyLatex: 'x^2y+y^3',
-            variable: 'y',
+            bodyLatex: '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
           },
           label: 'Open in Calculus',
         },
@@ -1317,8 +1314,8 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       },
     ],
     pitfalls: [
-      'The Partials tool is limited to first-order partial derivatives in x, y, or z.',
-      'Mixed partials, higher-order partials, and multivariable integrals are out of scope in this milestone.',
+      'The Partial Derivative tool reads the operator you type, so ∂/∂x and ∂/∂y are different requests.',
+      'Multivariable integrals are out of scope in this milestone.',
     ],
     exactVsNumeric: [
       'Partial derivatives are symbolic-first in this milestone.',

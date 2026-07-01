@@ -165,13 +165,16 @@ describe('useCalculusRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculusScreen('derivative');
-      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 't^2', variable: 't' });
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: DERIVATIVE_LATEX });
     });
 
     expect(hook.result.current.calculusScreen).toBe('derivative');
-    expect(hook.result.current.derivativeWorkbench).toMatchObject({ bodyLatex: 't^2', variable: 't' });
+    expect(hook.result.current.derivativeWorkbench).toMatchObject({
+      bodyLatex: DERIVATIVE_LATEX,
+      variable: 't',
+    });
     expect(hook.result.current.calculusMainEditorActive).toBe(true);
-    expect(hook.result.current.calculusMainEditorLatex).toBe('t^2');
+    expect(hook.result.current.calculusMainEditorLatex).toBe(DERIVATIVE_LATEX);
     expect(hook.result.current.calculusMainEditorVariable).toBe('t');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(DERIVATIVE_LATEX);
 
@@ -184,24 +187,22 @@ describe('useCalculusRuntime', () => {
     });
 
     expect(hook.result.current.derivativeWorkbench).toMatchObject({
-      bodyLatex: 't^5',
+      bodyLatex: '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
       variable: 't',
-      operatorLatex: 'd^3/dt^3',
     });
     expect(hook.result.current.calculusWorkbenchExpression).toBe(
       '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
     );
 
     act(() => {
-      hook.result.current.setCalculusMainEditorLatex('sin(t)');
+      hook.result.current.setCalculusMainEditorLatex('d^3/dt^3(sin(t))');
     });
 
     expect(hook.result.current.derivativeWorkbench).toMatchObject({
-      bodyLatex: 'sin(t)',
+      bodyLatex: 'd^3/dt^3(sin(t))',
       variable: 't',
-      operatorLatex: 'd^3/dt^3',
     });
-    expect(hook.result.current.calculusMainEditorLatex).toBe('sin(t)');
+    expect(hook.result.current.calculusMainEditorLatex).toBe('d^3/dt^3(sin(t))');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(
       '\\frac{d^{3}}{dt^{3}}\\left(sin(t)\\right)',
     );
@@ -213,9 +214,8 @@ describe('useCalculusRuntime', () => {
       resultLatex: '6',
       calculusScreen: 'derivativePoint',
       calculusSeed: {
-        bodyLatex: 't^2',
+        bodyLatex: DERIVATIVE_LATEX,
         point: '3',
-        variable: 't',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
     } satisfies HistoryEntry;
@@ -226,12 +226,12 @@ describe('useCalculusRuntime', () => {
 
     expect(hook.result.current.calculusScreen).toBe('derivativePoint');
     expect(hook.result.current.derivativePointWorkbench).toMatchObject({
-      bodyLatex: 't^2',
+      bodyLatex: DERIVATIVE_LATEX,
       point: '3',
       variable: 't',
     });
     expect(hook.result.current.calculusMainEditorActive).toBe(true);
-    expect(hook.result.current.calculusMainEditorLatex).toBe('t^2');
+    expect(hook.result.current.calculusMainEditorLatex).toBe(DERIVATIVE_LATEX);
     expect(hook.result.current.calculusMainEditorVariable).toBe('t');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(
       '\\left.\\frac{d}{dt}\\left(t^2\\right)\\right|_{t=3}',
@@ -248,7 +248,10 @@ describe('useCalculusRuntime', () => {
         target: '0',
         direction: 'two-sided',
       });
-      hook.result.current.setDerivativeWorkbench({ bodyLatex: 't^4', variable: 't', operatorLatex: 'd^2/dt^2' });
+      hook.result.current.setDerivativeWorkbench({
+        bodyLatex: '\\frac{d^{2}}{dt^{2}}\\left(t^4\\right)',
+        variable: 't',
+      });
     });
 
     const snapshot = hook.result.current.captureCalculusSurfaceState();
@@ -269,9 +272,8 @@ describe('useCalculusRuntime', () => {
       direction: 'two-sided',
     });
     expect(hook.result.current.derivativeWorkbench).toMatchObject({
-      bodyLatex: 't^4',
+      bodyLatex: '\\frac{d^{2}}{dt^{2}}\\left(t^4\\right)',
       variable: 't',
-      operatorLatex: 'd^2/dt^2',
     });
   });
 
@@ -293,7 +295,7 @@ describe('useCalculusRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculusScreen('derivative');
-      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 't^2', variable: 't' });
+      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: DERIVATIVE_LATEX });
     });
     act(() => {
       hook.result.current.runCalculusAction();
@@ -312,7 +314,7 @@ describe('useCalculusRuntime', () => {
     expect(runCalculusModeWithOoePilot).toHaveBeenCalledWith(
       expect.objectContaining({
         screen: 'derivative',
-        derivative: { bodyLatex: 't^2', variable: 't' },
+        derivative: { bodyLatex: DERIVATIVE_LATEX },
       }),
       expect.objectContaining({
         generatedLatex: DERIVATIVE_LATEX,
@@ -328,7 +330,7 @@ describe('useCalculusRuntime', () => {
       'calculus',
       {
         calculusScreen: 'derivative',
-        calculusSeed: { bodyLatex: 't^2', variable: 't' },
+        calculusSeed: { bodyLatex: DERIVATIVE_LATEX },
         historyTicketId: 'ticket.calculus.success',
         historyLaunchOrder: 71,
         suppressDisplayCommit: false,
@@ -355,7 +357,9 @@ describe('useCalculusRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculusScreen('derivative');
-      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x' });
+      hook.result.current.applyCalculusSeed('derivative', {
+        bodyLatex: '\\frac{d}{dx}\\left(x\\right)',
+      });
     });
     act(() => {
       hook.result.current.runCalculusAction();
@@ -385,7 +389,9 @@ describe('useCalculusRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculusScreen('derivative');
-      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x' });
+      hook.result.current.applyCalculusSeed('derivative', {
+        bodyLatex: '\\frac{d}{dx}\\left(x\\right)',
+      });
     });
     act(() => {
       hook.result.current.runCalculusAction();
@@ -403,7 +409,9 @@ describe('useCalculusRuntime', () => {
 
     act(() => {
       hook.result.current.openCalculusScreen('derivative');
-      hook.result.current.applyCalculusSeed('derivative', { bodyLatex: 'x^3' });
+      hook.result.current.applyCalculusSeed('derivative', {
+        bodyLatex: '\\frac{d}{dx}\\left(x^3\\right)',
+      });
     });
     act(() => {
       hook.result.current.resetCurrentCalculusScreen();
@@ -562,8 +570,7 @@ describe('useCalculusRuntime', () => {
       resultLatex: 'x^2+3y^2',
       calculusScreen: 'partialDerivative',
       calculusSeed: {
-        bodyLatex: 'x^2y+y^3',
-        variable: 'y',
+        bodyLatex: '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
       },
       timestamp: '2026-06-29T00:00:00.000Z',
     } satisfies HistoryEntry;
@@ -574,29 +581,30 @@ describe('useCalculusRuntime', () => {
 
     expect(hook.result.current.calculusScreen).toBe('partialDerivative');
     expect(hook.result.current.partialDerivativeState).toEqual({
-      bodyLatex: 'x^2y+y^3',
+      bodyLatex: '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
       variable: 'y',
     });
     expect(hook.result.current.calculusMainEditorActive).toBe(true);
-    expect(hook.result.current.calculusMainEditorLatex).toBe('x^2y+y^3');
+    expect(hook.result.current.calculusMainEditorLatex).toBe(
+      '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
+    );
     expect(hook.result.current.calculusMainEditorVariable).toBe('y');
     expect(hook.result.current.calculusWorkbenchExpression).toBe(
       '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
     );
 
     act(() => {
-      hook.result.current.setCalculusMainEditorLatex('xy+y^2');
+      hook.result.current.setCalculusMainEditorLatex('\\frac{\\partial}{\\partial y}\\left(xy+y^2\\right)');
     });
 
     expect(hook.result.current.partialDerivativeState).toEqual({
-      bodyLatex: 'xy+y^2',
+      bodyLatex: '\\frac{\\partial}{\\partial y}\\left(xy+y^2\\right)',
       variable: 'y',
     });
     expect(hook.result.current.currentCalculusHistoryContext()).toEqual({
       calculusScreen: 'partialDerivative',
       calculusSeed: {
-        bodyLatex: 'xy+y^2',
-        variable: 'y',
+        bodyLatex: '\\frac{\\partial}{\\partial y}\\left(xy+y^2\\right)',
       },
     });
   });
