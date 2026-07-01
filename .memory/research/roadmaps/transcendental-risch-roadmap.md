@@ -22,7 +22,7 @@ Calcwiz already has a useful practical certificate layer:
 - `e^(a*v^2+b*v+c)` can produce certificate-backed `erf`/`erfi` answers.
 - Affine quotient families can produce `Si/Ci` and `Ei/li` answers.
 - Bounded RN owns selected elementary depth-2 substitutions such as `e^x e^(e^x)`, `cos(x)e^(sin(x))`, `e^x/(1+e^x)`, and `1/(x ln(x))`.
-- `FresnelS/FresnelC` have proof-safe differentiation/readiness substrate, but live Fresnel integration is deferred.
+- `FresnelS/FresnelC` have proof-safe differentiation/readiness substrate and are live for exact-rational quadratic trig integrals; symbolic-coefficient Fresnel branches remain deferred.
 - General formal Risch remains future: broad tower solving, Risch differential equations, algebraic extensions, complex branch constants, and formal non-existence certificates outside the admitted families are not complete.
 
 There was no dedicated transcendental Risch roadmap before this file. The previous source of truth was scattered across certificate audits/checkpoints and the broader Calculus/Rubi/RN memory notes.
@@ -192,6 +192,8 @@ Make Fresnel answers live for quadratic trig families:
 - Gate B: exact-rational quadratic trig cases.
 - Gate C: target-free symbolic quadratic leading coefficient branch/readback policy if it stays proof-clean.
 - Gate D: certificate details plus notation-safe copy/history coverage.
+
+Status: implemented 2026-07-01 for the exact-rational live slice. Calculus now returns certificate-backed `FresnelS/FresnelC` main answers for `sin(q(v))` and `cos(q(v))` when `q` is a nonconstant exact-rational quadratic, including shifted/scaled completed-square phases and proof/readback detail sections. Symbolic quadratic coefficient Fresnel branches remain deferred until branch facts/readback are proof-clean.
 
 ### 10. `TRANSCENDENTAL-QUOTIENT-POWER-RECURRENCES1`
 

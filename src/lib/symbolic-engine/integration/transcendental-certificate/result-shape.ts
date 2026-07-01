@@ -12,7 +12,11 @@ import { certificateUxDetailSections } from './certificate-ux';
 
 export type TranscendentalNonElementaryCertificate = {
   kind: 'non-elementary-certificate';
-  family: 'exp-quadratic' | 'depth2-affine-quotient' | 'depth2-exp-composition';
+  family:
+    | 'exp-quadratic'
+    | 'depth2-affine-quotient'
+    | 'depth2-exp-composition'
+    | 'fresnel-quadratic';
   variable: string;
   exactLatex: string;
   antiderivativeKind?: 'special-function';
@@ -20,7 +24,8 @@ export type TranscendentalNonElementaryCertificate = {
   theorem:
     | 'quadratic-exponential-transcendental-risch'
     | 'depth2-affine-quotient-transcendental-risch'
-    | 'depth2-exp-composition-transcendental-risch';
+    | 'depth2-exp-composition-transcendental-risch'
+    | 'fresnel-quadratic-transcendental-risch';
   proofSummary: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];

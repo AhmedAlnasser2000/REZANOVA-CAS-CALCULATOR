@@ -107,7 +107,7 @@ describe('calculus core', () => {
   });
 
   it('keeps unsupported indefinite integrals on a controlled stop', () => {
-    const body = parse('\\sin(x^2)');
+    const body = parse('\\sin(x^3)');
 
     const result = resolveIndefiniteIntegralFromAst({
       body: body.json,
@@ -176,6 +176,33 @@ describe('calculus core', () => {
     expect(expExp.exactSupplementLatex?.join(' ')).toContain('e^{x}>0');
     expect(sineExp.exactLatex).toBe(String.raw`\operatorname{Si}\left(e^{x}\right)`);
     expect(cosineExp.exactLatex).toBe(String.raw`\operatorname{Ci}\left(e^{x}\right)`);
+  });
+
+  it('returns Fresnel special-function certificates for exact-rational quadratic trig inputs', () => {
+    const sine = resolveIndefiniteIntegralFromAst({
+      body: parse('\\sin(x^2)').json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+    const shiftedCosine = resolveIndefiniteIntegralFromAst({
+      body: parse('\\cos((2x+1)^2)').json,
+      variable: 'x',
+      unresolvedComputeEngine: true,
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+    });
+
+    expect(sine.error).toBeUndefined();
+    expect(sine.resultOrigin).toBe('rule-based-symbolic');
+    expect(sine.integrationStrategy).toBeUndefined();
+    expect(sine.exactLatex).toContain(String.raw`\operatorname{FresnelS}`);
+    expect(sine.exactLatex).toContain(String.raw`\sqrt{\frac{\pi}{2}}`);
+    expect(shiftedCosine.exactLatex).toContain(String.raw`\operatorname{FresnelC}`);
+    expect(shiftedCosine.exactLatex).toContain(String.raw`\sqrt{\frac{8}{\pi}}\left(x+\frac{1}{2}\right)`);
+    expect(sine.detailSections?.map((section) => section.title)).toContain('Non-Elementary Certificate');
+    expect(sine.detailSections?.map((section) => section.title)).toContain('Special-Function Readback');
   });
 
   it('preserves the controlled relation-integrand error before fallback', () => {
@@ -307,7 +334,7 @@ describe('calculus core', () => {
 
   it('preserves numeric fallback for safe unsupported definite integrals', () => {
     const result = evaluateDefiniteIntegralFromAst({
-      body: parse('\\sin(x^2)').json,
+      body: parse('\\sin(x^3)').json,
       variable: 'x',
       lower: 0,
       upper: 1,
@@ -319,7 +346,7 @@ describe('calculus core', () => {
     expect(result.integrationCandidate?.method).toBe('unsupported');
     expect(result.integrationCandidate?.controlledFailureClass).toBe('missing-derivative-factor');
     expect(result.warnings).toContain('Symbolic integral unavailable; showing a numeric definite integral.');
-    expect(Number(result.exactLatex)).toBeCloseTo(0.310268, 4);
+    expect(Number(result.exactLatex)).toBeCloseTo(0.233845, 4);
     expect(result.detailSections?.[0]?.title).toBe('Integral Method');
     expect(result.detailSections?.[1]?.title).toBe('Interval Safety');
   });

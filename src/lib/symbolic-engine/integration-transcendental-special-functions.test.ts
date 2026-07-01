@@ -1,6 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
-import { resolveSymbolicIntegralFromLatex } from './integration';
 import { proveExpQuadraticNonElementary } from './integration/transcendental-certificate/proof';
 import {
   buildDepth2ExpCompositionSpecialFunctionCertificate,
@@ -8,6 +7,7 @@ import {
   buildExpQuadraticSpecialFunctionCertificateFromProof,
   buildSiCiAffineQuotientSpecialFunctionCertificate,
 } from './integration/transcendental-certificate/special-functions';
+import { buildFresnelQuadraticSpecialFunctionCertificate } from './integration/transcendental-certificate/fresnel';
 
 const ce = new ComputeEngine();
 
@@ -43,6 +43,14 @@ function compositionCertificate(latex: string, variable = 'x') {
   const result = buildDepth2ExpCompositionSpecialFunctionCertificate(ce.parse(latex).json, variable);
   if (!result) {
     throw new Error(`expected depth-2 composition special-function certificate for ${latex}`);
+  }
+  return result;
+}
+
+function fresnelCertificate(latex: string, variable = 'x') {
+  const result = buildFresnelQuadraticSpecialFunctionCertificate(ce.parse(latex).json, variable);
+  if (!result) {
+    throw new Error(`expected Fresnel special-function certificate for ${latex}`);
   }
   return result;
 }
@@ -191,12 +199,34 @@ describe('transcendental special-function readback for depth-2 exponential compo
   });
 });
 
-describe('transcendental Fresnel readiness boundary', () => {
-  it('keeps quadratic sine/cosine Fresnel integrals deferred for now', () => {
-    const sine = resolveSymbolicIntegralFromLatex('\\sin(x^2)');
-    const cosine = resolveSymbolicIntegralFromLatex('\\cos(x^2)');
+describe('transcendental Fresnel readback for exact-rational quadratic trig families', () => {
+  it('returns FresnelS and FresnelC formulas for pure quadratic trig inputs', () => {
+    const sine = fresnelCertificate('\\sin(x^2)');
+    const cosine = fresnelCertificate('\\cos(x^2)');
+    const negative = fresnelCertificate('\\sin(-x^2)');
 
-    expect(sine.kind).toBe('error');
-    expect(cosine.kind).toBe('error');
+    expect(sine.antiderivativeKind).toBe('special-function');
+    expect(sine.exactLatex).toContain(String.raw`\sqrt{\frac{\pi}{2}}\cdot \operatorname{FresnelS}`);
+    expect(sine.exactLatex).toContain(String.raw`\sqrt{\frac{2}{\pi}}x`);
+    expect(cosine.exactLatex).toContain(String.raw`\sqrt{\frac{\pi}{2}}\cdot \operatorname{FresnelC}`);
+    expect(negative.exactLatex).toContain(String.raw`\sqrt{\frac{\pi}{2}}\cdot \left(-\operatorname{FresnelS}`);
+    expect(sine.detailSections.map((section) => section.title)).toContain('Non-Elementary Certificate');
+    expect(sine.detailSections.map((section) => section.title)).toContain('Special-Function Readback');
+  });
+
+  it('completes shifted/scaled exact-rational quadratics', () => {
+    const shifted = fresnelCertificate('\\sin((2x+1)^2)');
+    const phaseSplit = fresnelCertificate('\\sin(2*x^2+3*x+1)');
+
+    expect(shifted.exactLatex).toContain(String.raw`\sqrt{\frac{\pi}{8}}\cdot \operatorname{FresnelS}`);
+    expect(shifted.exactLatex).toContain(String.raw`\sqrt{\frac{8}{\pi}}\left(x+\frac{1}{2}\right)`);
+    expect(phaseSplit.exactLatex).toContain(String.raw`\operatorname{FresnelS}`);
+    expect(phaseSplit.exactLatex).toContain(String.raw`\operatorname{FresnelC}`);
+    expect(phaseSplit.exactLatex).toContain(String.raw`\cos\left({\frac{1}{8}}\right)`);
+    expect(phaseSplit.exactLatex).toContain(String.raw`\sin\left({\frac{1}{8}}\right)`);
+  });
+
+  it('rejects symbolic quadratic coefficients in the first live Fresnel slice', () => {
+    expect(buildFresnelQuadraticSpecialFunctionCertificate(ce.parse('\\sin(a*x^2+b*x+c)').json)).toBeUndefined();
   });
 });

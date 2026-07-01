@@ -327,7 +327,7 @@ describe('calculus integrals', () => {
 
   it('fails cleanly for unsupported antiderivatives', () => {
     const result = evaluateCalculusIndefiniteIntegral({
-      bodyLatex: '\\sin(x^2)',
+      bodyLatex: '\\sin(x^3)',
     });
     expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
   });
