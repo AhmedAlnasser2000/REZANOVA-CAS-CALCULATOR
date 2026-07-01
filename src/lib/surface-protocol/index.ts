@@ -10,6 +10,21 @@ export {
 } from './capabilities';
 
 export {
+  SURFACE_SUPPORTED_PROTOCOL_VERSIONS,
+  SURFACE_SUPPORTED_QUERY_KINDS,
+  isSurfaceProtocolVersion,
+  isSurfaceQueryKind,
+  surfaceError,
+  validateSurfaceProtocolVersion,
+  validateSurfaceQueryKind,
+  validateSurfaceRequest,
+  validateSurfaceWorkspaceKind,
+  type SurfaceErrorCode,
+  type SurfaceQueryKind,
+  type SurfaceValidatedRequest,
+} from './errors';
+
+export {
   SURFACE_PROTOCOL_VERSION,
   displayOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,

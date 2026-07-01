@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-VERSIONING-ERRORS1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol v1 is the only supported protocol version in the hostless spine. Version, workspace, query, and field validation must return structured Surface result/error DTOs instead of throwing, and unsupported Graphing, History, Variables, tabs, mount, commands, plugin, remote-compute, or external software development kit requests must fail closed until dedicated milestones authorize them.
+
 ## 2026-07-01 - SURFACE-CAPABILITY-MANIFEST1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol capability exposure is locked to Calculate and Equation for the first hostless spine. The manifest may advertise compact result summaries, lifecycle events, and current-result queries, while host commands, mounting, History, Variables, Graphing, tabs, plugins, remote compute, and external software development kit surfaces remain unavailable until later dedicated milestones.
