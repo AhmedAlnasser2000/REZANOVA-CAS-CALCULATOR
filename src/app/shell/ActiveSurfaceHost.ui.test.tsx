@@ -20,7 +20,7 @@ function answerBlock(): DisplayBlock {
     label: 'Symbolic',
     latex: 'x=1',
     rawContent: ['x=1'],
-    renderKind: 'latex',
+    renderKind: 'math',
   };
 }
 

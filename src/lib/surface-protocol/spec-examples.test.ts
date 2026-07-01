@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import contractDoc from '../../../docs/architecture/surface-protocol/hostless-v1-contract.md?raw';
+import boundaryAudit from '../../../docs/architecture/surface-protocol/surface-protocol-boundary-audit.md?raw';
 import {
   SURFACE_CONTRACT_CURRENT_RESULT_FIXTURE,
   SURFACE_CONTRACT_FAILURE_FIXTURE,
@@ -7,16 +8,6 @@ import {
   SURFACE_CONTRACT_MANIFEST_FIXTURE,
   SURFACE_CONTRACT_SAFE_SETTINGS_FIXTURE,
 } from './fixtures';
-
-const contractDoc = readFileSync(
-  new URL('../../../docs/architecture/surface-protocol/hostless-v1-contract.md', import.meta.url),
-  'utf8',
-);
-
-const boundaryAudit = readFileSync(
-  new URL('../../../docs/architecture/surface-protocol/surface-protocol-boundary-audit.md', import.meta.url),
-  'utf8',
-);
 
 function jsonBlock(value: unknown): string {
   return `\`\`\`json\n${JSON.stringify(value, null, 2)}\n\`\`\``;

@@ -31,6 +31,8 @@ import {
 } from './result-shape';
 import { certificateUxDetailSections } from './certificate-ux';
 
+export { buildFresnelQuadraticSpecialFunctionCertificate } from './fresnel';
+
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };
 const TWO: ExactScalar = { numerator: 2, denominator: 1 };
 const FOUR: ExactScalar = { numerator: 4, denominator: 1 };

@@ -61,7 +61,9 @@ describe('Surface Protocol DTO firewall', () => {
       error: 'No route.',
       warnings: [],
       detailSections: [{ title: 'Diagnostics', lines: ['internal route missed'] }],
-      runtimeAdvisories: { advisories: [{ code: 'internal', message: 'hidden' }] },
+      runtimeAdvisories: {
+        stopReason: { kind: 'unsupported-family', source: 'host' },
+      },
     });
 
     const serialized = JSON.stringify(summary);
