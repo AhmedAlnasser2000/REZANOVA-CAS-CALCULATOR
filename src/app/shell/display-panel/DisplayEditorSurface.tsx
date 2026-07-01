@@ -16,10 +16,27 @@ import {
   type DerivativeOperatorKind,
 } from '../../../lib/calculus/derivative-operator';
 import { parseNaturalDerivativeRequest } from '../../../lib/calculus/derivative-request';
+import {
+  parseNaturalLimitRequest,
+  type NaturalLimitTarget,
+} from '../../../lib/calculus/limit-request';
 import type { LabRunnerInputKind } from '../../../lib/labs/runner-types';
 import { LAB_INPUT_KIND_LABELS } from '../../runtime/useLabsRuntime';
 
 type DisplayEditorSurfaceProps = Record<string, any>;
+
+function limitTargetReadbackLatex(target: NaturalLimitTarget) {
+  if (target.kind === 'infinite') {
+    return target.normalizedTargetLatex;
+  }
+  if (target.direction === 'left') {
+    return `${target.normalizedTargetLatex}^{-}`;
+  }
+  if (target.direction === 'right') {
+    return `${target.normalizedTargetLatex}^{+}`;
+  }
+  return target.normalizedTargetLatex;
+}
 
 export function DisplayEditorSurface({
   activeFieldRef,
@@ -141,6 +158,7 @@ export function DisplayEditorSurface({
   const calculusDerivativeRailActive = calculusScreen === 'derivative'
     || calculusScreen === 'derivativePoint'
     || calculusScreen === 'partialDerivative';
+  const calculusLimitRailActive = calculusScreen === 'limit';
   const calculusImplicitRailActive = calculusScreen === 'implicitDerivative';
   const calculusRailKind: DerivativeOperatorKind =
     calculusScreen === 'partialDerivative' ? 'partial' : 'derivative';
@@ -186,6 +204,19 @@ export function DisplayEditorSurface({
     : calculusScreen === 'derivativePoint'
       ? 'calculus-derivative-point-readback'
       : 'calculus-derivative-readback';
+  const calculusLimitRailRequest = calculusLimitRailActive
+    ? parseNaturalLimitRequest(calculusMainEditorLatex)
+    : null;
+  const calculusLimitRailParsed = calculusLimitRailRequest?.ok ? calculusLimitRailRequest.request : null;
+  const calculusLimitRailTarget = calculusLimitRailParsed
+    ? limitTargetReadbackLatex(calculusLimitRailParsed.target)
+    : '';
+  const calculusLimitRailWritten = calculusLimitRailParsed
+    ? `\\lim_{${calculusLimitRailParsed.variableLatex}\\to ${calculusLimitRailTarget}}`
+    : '';
+  const calculusLimitRailApproaches = calculusLimitRailParsed
+    ? `${calculusLimitRailParsed.variableLatex}\\to ${calculusLimitRailTarget}`
+    : '';
   const setImplicitVariable = (
     field: 'independentVariable' | 'dependentVariable',
     value: string,
@@ -497,6 +528,48 @@ export function DisplayEditorSurface({
                   />
                 </label>
               ) : null}
+            </div>
+          ) : calculusLimitRailActive ? (
+            <div className="calculus-operator-rail" data-testid="calculus-limit-readback-rail">
+              <span
+                className="equation-badge calculus-operator-badge"
+                data-testid="calculus-main-editor-context"
+              >
+                lim
+              </span>
+              <span className="variable-hint">full limit request</span>
+              <div className="calculus-operator-readback" data-testid="calculus-limit-readback">
+                {calculusLimitRailParsed ? (
+                  <>
+                    <span>
+                      Written{' '}
+                      <MathStatic
+                        className="calculus-readback-math"
+                        latex={calculusLimitRailWritten}
+                        deferRender
+                      />
+                    </span>
+                    <span>
+                      Approaches{' '}
+                      <MathStatic
+                        className="calculus-readback-math"
+                        latex={calculusLimitRailApproaches}
+                        deferRender
+                      />
+                    </span>
+                    <span>
+                      Body{' '}
+                      <MathStatic
+                        className="calculus-readback-math"
+                        latex={calculusLimitRailParsed.bodyLatex}
+                        deferRender
+                      />
+                    </span>
+                  </>
+                ) : (
+                  <span>Limit request needed</span>
+                )}
+              </div>
             </div>
           ) : calculusImplicitRailActive ? (
             <div className="calculus-operator-rail calculus-implicit-rail" data-testid="calculus-operator-rail">

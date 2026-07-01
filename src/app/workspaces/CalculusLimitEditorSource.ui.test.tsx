@@ -56,6 +56,12 @@ describe('Calculus limit editor source', () => {
         '\\lim_{t\\to \\infty}\\frac{3t^2+1}{2t^2-5}',
       );
     });
+    await waitFor(() => {
+      expect(screen.getByTestId('calculus-limit-readback')).toHaveTextContent('Written');
+      expect(screen.getByTestId('calculus-limit-readback')).toHaveTextContent('Approaches');
+      expect(screen.getByTestId('calculus-limit-readback')).toHaveTextContent('Body');
+    });
+    expect(screen.getByTestId('calculus-limit-readback')).not.toHaveTextContent('\\frac{3t^2+1}{2t^2-5}');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();

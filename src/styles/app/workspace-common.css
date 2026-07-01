@@ -204,6 +204,17 @@
   text-transform: none;
 }
 
+.calculus-readback-math {
+  display: inline-flex;
+  align-items: center;
+  max-width: 28rem;
+  overflow: hidden;
+  color: inherit;
+  font-family: inherit;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
 .calculus-operator-rail {
   display: flex;
   flex-wrap: wrap;
