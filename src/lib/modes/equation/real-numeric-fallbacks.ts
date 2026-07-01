@@ -4,6 +4,7 @@ import type {
   DisplayOutcome,
   EquationDomainIntent,
   ComplexExactForm,
+  ComplexSolveRegion,
   NumericSolveInterval,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -13,6 +14,7 @@ import {
 } from './outcomes';
 import { tryDeterministicNumericAlgebraicFallback } from './deterministic-numeric-algebraic';
 import { tryComplexNumericPolynomialFallback } from './complex-numeric-polynomial-roots';
+import { tryComplexRegionNonlinearSolveFallback } from './complex-region-nonlinear-solve';
 import { tryRealPiecewiseAbsHybridFallback } from './real-piecewise-abs-hybrid';
 import { tryRealNonlinearNumericSearchFallback } from './real-nonlinear-numeric-search';
 import { tryRealPeriodicIntervalNumericFallback } from './real-periodic-interval-numeric';
@@ -23,6 +25,7 @@ export function tryRealNumericFallbackOutcome(input: {
   angleUnit: AngleUnit;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
+  complexRegion?: ComplexSolveRegion;
   complexExactForm: ComplexExactForm;
   sharedOutcome: DisplayOutcome;
   sharedResolvedLatex: string;
@@ -34,6 +37,13 @@ export function tryRealNumericFallbackOutcome(input: {
       equationSolveTarget: input.equationSolveTarget,
       angleUnit: input.angleUnit,
       complexExactForm: input.complexExactForm,
+      sharedOutcome: input.sharedOutcome,
+    }) ?? tryComplexRegionNonlinearSolveFallback({
+      equationLatex: input.equationLatex,
+      equationSolveTarget: input.equationSolveTarget,
+      angleUnit: input.angleUnit,
+      complexExactForm: input.complexExactForm,
+      complexRegion: input.complexRegion,
       sharedOutcome: input.sharedOutcome,
     })
     : tryDeterministicNumericAlgebraicFallback({

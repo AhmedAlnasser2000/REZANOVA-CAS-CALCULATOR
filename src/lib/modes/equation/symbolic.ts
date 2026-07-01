@@ -25,7 +25,7 @@ import {
 } from '../../equation/equation-target';
 import { normalizeExactPowerLogNode } from '../../symbolic-engine/power-log';
 import { classifyEquationRuntimeAdvisories, classifyPlannerBlockedRuntimeAdvisories } from '../../kernel/runtime-policy';
-import type { AngleUnit, ComplexExactForm, DisplayOutcome, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, PlannerBadge, SolveDomainConstraint } from '../../../types/calculator';
+import type { AngleUnit, ComplexExactForm, ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, PlannerBadge, SolveDomainConstraint } from '../../../types/calculator';
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
@@ -133,6 +133,7 @@ export function solveSymbolicEquation(
   answerMode: LegacyEquationAnswerMode = 'exact',
   equationDomainIntent: EquationDomainIntent = 'real',
   complexExactForm: ComplexExactForm = 'rectangular',
+  complexRegion: ComplexSolveRegion | undefined = undefined,
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
   const activeAnswerMode = answerMode === 'isolate' ? 'isolate' : 'exact';
@@ -538,7 +539,7 @@ export function solveSymbolicEquation(
       complexExactForm,
       plannerResolvedLatex: planner.resolvedLatex,
       plannerBadges: planner.badges,
-      stopOnRecognizedPreimageUnsupported: true,
+      stopOnRecognizedPreimageUnsupported: !complexRegion,
     });
     if (complexWrapperOutcome) {
       return complexWrapperOutcome;
@@ -589,7 +590,7 @@ export function solveSymbolicEquation(
     }
 
     if (
-      containsEquationImaginaryUnitLatex(parameterizedEquationLatex)
+      (!complexRegion && containsEquationImaginaryUnitLatex(parameterizedEquationLatex))
       || containsTargetedAbsLatex(parameterizedEquationLatex, solveTarget)
     ) {
       const boundaryOutcome = unsupportedComplexPreimageOutcome();
@@ -749,6 +750,7 @@ export function solveSymbolicEquation(
     angleUnit,
     equationDomainIntent,
     numericInterval,
+    complexRegion,
     complexExactForm,
     sharedOutcome,
     sharedResolvedLatex,
@@ -779,6 +781,7 @@ export async function solveSymbolicEquationAsync(
   answerMode: LegacyEquationAnswerMode,
   equationDomainIntent: EquationDomainIntent,
   complexExactForm: ComplexExactForm,
+  complexRegion: ComplexSolveRegion | undefined,
   sharedSolveRunner: AsyncSharedEquationSolveRunner,
 ): Promise<DisplayOutcome> {
   const activeAnswerMode = answerMode === 'isolate' ? 'isolate' : 'exact';
@@ -793,6 +796,7 @@ export async function solveSymbolicEquationAsync(
       activeAnswerMode,
       equationDomainIntent,
       complexExactForm,
+      complexRegion,
       (request) => {
         throw new AsyncSharedSolveCapture(request);
       },
@@ -845,6 +849,7 @@ export async function solveSymbolicEquationAsync(
       angleUnit,
       equationDomainIntent,
       numericInterval,
+      complexRegion,
       complexExactForm,
       sharedOutcome,
       sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,

@@ -18,6 +18,7 @@ import type { DisplayOutcome } from '../../../types/calculator';
 import { solveSystem, solvePolynomial } from './guided-polynomial';
 import { buildEquationOoeRevisionSnapshot } from './ooe-snapshot';
 import {
+  complexRegionSolveNeedsNumericParametersOutcome,
   numericIntervalSolveNeedsIntervalOutcome,
   numericIntervalSolveNeedsNumericParametersOutcome,
   withEquationAnswerMode,
@@ -52,6 +53,7 @@ export function runEquationMode({
   outputStyle,
   ansLatex,
   numericInterval,
+  complexRegion,
   storedVariables,
   variableSubstitutionSnapshot,
   useStoredValueSubstitution,
@@ -86,13 +88,15 @@ export function runEquationMode({
   if (equationScreen === 'symbolic') {
     const hasTopLevelInequality = isTopLevelInequalityLatex(equationLatex);
     const isNumericIntervalRoute = Boolean(numericInterval) && !hasTopLevelInequality;
-    if (equationAnswerMode === 'approximate' && !numericInterval && !hasTopLevelInequality) {
+    const isComplexRegionRoute = Boolean(complexRegion) && equationDomainIntent === 'complex' && !hasTopLevelInequality;
+    if (equationAnswerMode === 'approximate' && !numericInterval && !isComplexRegionRoute && !hasTopLevelInequality) {
       return numericIntervalSolveNeedsIntervalOutcome();
     }
 
     const { protectedTarget, substitution, ignoredLines } = prepareEquationStoredValueSubstitution({
       equationLatex,
       equationSolveTarget,
+      forceNumericPolicy: isComplexRegionRoute,
       forceStoredValueSubstitution: useStoredValueSubstitution,
       numericInterval,
       storedVariables,
@@ -101,18 +105,23 @@ export function runEquationMode({
     const additionalPolicyLines = useStoredValueSubstitution && protectedTarget
       ? [`Kept ${protectedTarget} symbolic as the solve target.`]
       : undefined;
-    if (isNumericIntervalRoute) {
+    if (isNumericIntervalRoute || isComplexRegionRoute) {
       const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
       if (remainingParameters.length > 0) {
-        return withStoredValueDetails(numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters), {
-          substitution,
-          target: protectedTarget,
-          interval: numericInterval,
-          originalLatex: equationLatex,
-          replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
-          ignoredLines,
-          additionalPolicyLines,
-        });
+        return withStoredValueDetails(
+          isComplexRegionRoute
+            ? complexRegionSolveNeedsNumericParametersOutcome(remainingParameters, protectedTarget)
+            : numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters),
+          {
+            substitution,
+            target: protectedTarget,
+            interval: numericInterval,
+            originalLatex: equationLatex,
+            replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
+            ignoredLines,
+            additionalPolicyLines,
+          },
+        );
       }
     }
     const outcome = solveSymbolicEquation(
@@ -125,6 +134,7 @@ export function runEquationMode({
       equationAnswerMode,
       equationDomainIntent,
       complexExactForm,
+      complexRegion,
       sharedSolveRunner,
     );
 
@@ -169,6 +179,7 @@ export async function runEquationModeWithAsyncSharedSolve(
     outputStyle,
     ansLatex,
     numericInterval,
+    complexRegion,
     storedVariables,
     variableSubstitutionSnapshot,
     useStoredValueSubstitution,
@@ -176,13 +187,15 @@ export async function runEquationModeWithAsyncSharedSolve(
 
   const hasTopLevelInequality = isTopLevelInequalityLatex(equationLatex);
   const isNumericIntervalRoute = Boolean(numericInterval) && !hasTopLevelInequality;
-  if (equationAnswerMode === 'approximate' && !numericInterval && !hasTopLevelInequality) {
+  const isComplexRegionRoute = Boolean(complexRegion) && equationDomainIntent === 'complex' && !hasTopLevelInequality;
+  if (equationAnswerMode === 'approximate' && !numericInterval && !isComplexRegionRoute && !hasTopLevelInequality) {
     return numericIntervalSolveNeedsIntervalOutcome();
   }
 
   const { protectedTarget, substitution, ignoredLines } = prepareEquationStoredValueSubstitution({
     equationLatex,
     equationSolveTarget,
+    forceNumericPolicy: isComplexRegionRoute,
     forceStoredValueSubstitution: useStoredValueSubstitution,
     numericInterval,
     storedVariables,
@@ -191,18 +204,23 @@ export async function runEquationModeWithAsyncSharedSolve(
   const additionalPolicyLines = useStoredValueSubstitution && protectedTarget
     ? [`Kept ${protectedTarget} symbolic as the solve target.`]
     : undefined;
-  if (isNumericIntervalRoute) {
+  if (isNumericIntervalRoute || isComplexRegionRoute) {
     const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
     if (remainingParameters.length > 0) {
-      return withStoredValueDetails(numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters), {
-        substitution,
-        target: protectedTarget,
-        interval: numericInterval,
-        originalLatex: equationLatex,
-        replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
-        ignoredLines,
-        additionalPolicyLines,
-      });
+      return withStoredValueDetails(
+        isComplexRegionRoute
+          ? complexRegionSolveNeedsNumericParametersOutcome(remainingParameters, protectedTarget)
+          : numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters),
+        {
+          substitution,
+          target: protectedTarget,
+          interval: numericInterval,
+          originalLatex: equationLatex,
+          replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
+          ignoredLines,
+          additionalPolicyLines,
+        },
+      );
     }
   }
 
@@ -216,6 +234,7 @@ export async function runEquationModeWithAsyncSharedSolve(
     equationAnswerMode,
     equationDomainIntent,
     complexExactForm,
+    complexRegion,
     asyncSharedSolveRunner,
   );
 

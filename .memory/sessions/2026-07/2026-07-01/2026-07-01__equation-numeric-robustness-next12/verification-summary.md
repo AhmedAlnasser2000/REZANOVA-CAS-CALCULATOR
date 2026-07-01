@@ -153,3 +153,17 @@
 - `npm run test:file-sizes` passed.
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
+
+## EQUATION-COMPLEX-REGION-NONLINEAR-SOLVE1
+
+- Focused Complex region solve gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/complex-region-nonlinear-solve.test.ts src/lib/equation/complex/contour-winding.test.ts src/lib/equation/complex/seed-grid-newton.test.ts src/lib/equation/complex/numeric-evaluator.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts`
+- Evidence: 5 test files passed, 30 tests passed.
+- Route regression gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/complex-region-nonlinear-solve.test.ts src/lib/modes/equation/complex-numeric-polynomial-roots.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
+- Evidence: 3 test files passed, 19 tests passed.
+- `npm run lint` passed.
+- `npm run build` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.

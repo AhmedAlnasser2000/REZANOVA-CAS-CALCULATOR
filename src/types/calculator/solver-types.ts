@@ -123,6 +123,16 @@ export type NumericSolveInterval = {
   subdivisions: number;
 };
 
+export type ComplexSolveRegion = {
+  reMin: string;
+  reMax: string;
+  imMin: string;
+  imMax: string;
+  gridSize?: number;
+  randomSeedCount?: number;
+  samplesPerEdge?: number;
+};
+
 export type SolveDomainConstraint =
   | { kind: 'interval'; variable: 'x'; min?: number; minInclusive: boolean; max?: number; maxInclusive: boolean }
   | { kind: 'nonzero'; expressionLatex: string }

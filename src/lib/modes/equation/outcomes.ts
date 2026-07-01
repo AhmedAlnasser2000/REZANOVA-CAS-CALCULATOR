@@ -131,6 +131,46 @@ export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: st
   };
 }
 
+export function complexRegionSolveNeedsNumericParametersOutcome(parameters: string[], protectedTarget?: string): DisplayOutcome {
+  const missingParameters = [...new Set(parameters)];
+  const parameterText = missingParameters.join(', ');
+  const missingValueLabel = missingParameters.length === 1 ? 'value' : 'values';
+  const storeLines = missingParameters.map((parameter) =>
+    `Store a numeric value for ${parameter} in Variables.`);
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: `Complex Region Solve needs numeric values for every non-target parameter before it can search a bounded complex region. Missing numeric ${missingValueLabel}: ${parameterText}.`,
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Complex Region Solve',
+        lines: [
+          'Complex region solving needs a one-variable complex-valued equation after stored-value substitution.',
+          `Protected solve target: ${protectedTarget ?? 'none'}.`,
+        ],
+      },
+      {
+        title: 'Why It Stopped',
+        lines: [
+          'At least one non-target symbol has no stored numeric value.',
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          ...storeLines,
+          'Then run the bounded Complex region solve again.',
+          'Use Exact or Isolate when you want symbolic parameters preserved.',
+        ],
+      },
+    ],
+    solutionKind: 'approximate-numeric',
+    answerDomain: 'complex',
+    numericMethod: 'Complex region nonlinear solve',
+  };
+}
+
 export function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
   return {
     kind: 'error',

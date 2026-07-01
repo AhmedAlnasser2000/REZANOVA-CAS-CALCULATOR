@@ -3,6 +3,7 @@ import type { EquationOoePilotMetadata } from '../../ooe/pilots/equation-pilot';
 import type {
   AngleUnit,
   ComplexExactForm,
+  ComplexSolveRegion,
   DisplayOutcome,
   EquationDomainIntent,
   EquationScreen,
@@ -33,6 +34,7 @@ export type RunEquationModeRequest = {
   outputStyle: OutputStyle;
   ansLatex: string;
   numericInterval?: NumericSolveInterval;
+  complexRegion?: ComplexSolveRegion;
   storedVariables?: readonly StoredVariableValue[];
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
   useStoredValueSubstitution?: boolean;
