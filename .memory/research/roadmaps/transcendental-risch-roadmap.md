@@ -154,6 +154,8 @@ Add the reduced-equation layer used after tower profiling and Liouville decompos
 
 Practical log-substitution textbook cases such as `sin(ln(x))` and `cos(ln(x))` can later use this substrate, but they are not the reason to build it now.
 
+Status: implemented 2026-07-01 as behavior-invisible proof infrastructure. The reduced-equation layer profiles the bounded transcendental field, delegates to Liouville decomposition, and returns typed proof obligations for exp-quadratic RDE obstructions, ordinary rational log derivatives, Hermite rational corrections, and LRT algebraic-log residuals. It also records deterministic stops for deferred depth-2/depth-3/algebraic cases without changing live integration dispatch, public strategy labels, or public schemas.
+
 ### 7. `TRANSCENDENTAL-BRANCH-FACT-AND-CERTIFICATE-UX1`
 
 Major gated milestone.
