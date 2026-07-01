@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-EVENT-ADAPTER1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol may observe the Order of Execution event outbox only through a read-only curated adapter. The adapter maps job started, result committed, stale result dropped, job cancelled, and job failed lifecycle facts for Calculate and Equation into Surface DTOs, while dropping host selection, preflight, unsupported workspaces, raw payloads, diagnostics, plan/host internals, host commands, mount behavior, Graphing, History, Variables, plugins, remote compute, and external software development kit surfaces.
+
 ## 2026-07-01 - SURFACE-VERSIONING-ERRORS1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol v1 is the only supported protocol version in the hostless spine. Version, workspace, query, and field validation must return structured Surface result/error DTOs instead of throwing, and unsupported Graphing, History, Variables, tabs, mount, commands, plugin, remote-compute, or external software development kit requests must fail closed until dedicated milestones authorize them.

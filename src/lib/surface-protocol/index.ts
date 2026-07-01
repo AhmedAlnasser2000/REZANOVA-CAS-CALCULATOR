@@ -25,6 +25,15 @@ export {
 } from './errors';
 
 export {
+  listSurfaceLifecycleEvents,
+  mapOoeEventToSurfaceLifecycleEvent,
+  subscribeToSurfaceLifecycleEvents,
+  type SurfaceLifecycleEventDto,
+  type SurfaceLifecycleEventType,
+  type SurfaceLifecycleStatus,
+} from './events';
+
+export {
   SURFACE_PROTOCOL_VERSION,
   displayOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
