@@ -8,6 +8,7 @@ import {
   useState,
   useTransition,
 } from 'react';
+import { flushSync } from 'react-dom';
 import type { MathfieldElement } from 'mathlive';
 import { MathNotationProvider } from './components/MathNotationContext';
 import { LanguageProvider } from './lib/language/language-context';
@@ -119,6 +120,7 @@ import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
 import { handleKeypadWithDeps } from './app/logic/keypadRouter';
 import { handleWindowKeydownWithDeps } from './app/logic/windowKeyRouter';
 import { launchWorkspaceEntryFromLauncher } from './app/logic/launcherWorkspaceActions';
+import { launchGuideExampleDestination } from './app/logic/guideExampleLaunchActions';
 import {
   DEFAULT_SETTINGS,
   type CalculusResultOrigin,
@@ -127,6 +129,8 @@ import {
   type EquationScreen,
   type DisplayOutcomeAction,
   type GuideExample,
+  type LauncherAppEntry,
+  type LauncherLaunchIntent,
   type ModeId,
   type GeometryScreen,
   type PeriodicFamilyInfo,
@@ -402,6 +406,7 @@ export default function App() {
       openGeometryScreen: openGeometryScreenRef.current,
       openStatisticsScreen,
       openTrigScreen: openTrigScreenRef.current,
+      routeWorkspaceDestination: routeLauncherWorkspaceDestination,
       setMode,
     }),
   });
@@ -449,6 +454,7 @@ export default function App() {
     restoreLinearAlgebraTableHistoryEntry: (entry) => restoreLinearAlgebraTableHistoryEntry(entry),
     restoreStatisticsHistoryEntry: (entry) => restoreStatisticsHistoryEntry(entry),
     restoreTrigHistoryEntry: (entry) => restoreTrigHistoryEntry(entry),
+    routeToModeDestination,
     setClipboardNotice,
     setLauncherSurfaceApp: () => {
       setLauncherState((currentLauncherState) => ({
@@ -612,6 +618,7 @@ export default function App() {
     openCalculusScreen,
     openLegacyCalculateCalculusInCalculus,
     reserveHistoryTicket: reservePendingHistoryTicket,
+    routeToModeDestination,
     settings,
     setDerivativePointWorkbench,
     setDerivativeWorkbench,
@@ -1048,6 +1055,7 @@ export default function App() {
     patchSettings,
     replayVariableSubstitutions,
     reserveHistoryTicket: reservePendingHistoryTicket,
+    routeToModeDestination,
     settings,
     setDisplayOutcome,
     setMode,
@@ -1531,132 +1539,36 @@ export default function App() {
       return false;
     }
 
-    openCalculusScreen(calculusScreen);
-    applyCalculusSeed(calculusScreen, seed as GuideExample['launch']['calculusSeed']);
-    return true;
+    return routeToModeDestination('calculus', () => {
+      openCalculusScreen(calculusScreen);
+      applyCalculusSeed(calculusScreen, seed as GuideExample['launch']['calculusSeed']);
+    });
   }
 
   function launchGuideExample(example: GuideExample | undefined) {
-    if (!example) {
-      return;
-    }
-
-    closeLauncher();
-    closeHistoryPanel();
-
-    if (example.launch.kind === 'open-tool') {
-      if (example.launch.targetMode === 'calculate') {
-        const screen = example.launch.calculateScreen ?? 'standard';
-        if (openLegacyCalculateCalculusInCalculus(screen, example.launch.calculateSeed)) {
-          setDisplayOutcome(null);
-          setMode('calculus');
-          setClipboardNotice(example.launch.label ?? 'Opened in Calculus');
-          return;
-        }
-        openCalculateScreen(screen);
-        applyCalculateSeed(screen, example.launch.calculateSeed);
-      }
-      if (isCalculusMode(example.launch.targetMode)) {
-        const screen = example.launch.calculusScreen ?? 'home';
-        openCalculusScreen(screen);
-        applyCalculusSeed(screen, example.launch.calculusSeed);
-      }
-      if (example.launch.targetMode === 'equation') {
-        setEquationSolveTarget(null);
-        openEquationScreen(example.launch.equationScreen ?? 'home');
-      }
-      if (example.launch.targetMode === 'trigonometry') {
-        const screen = example.launch.trigScreen ?? 'home';
-        openTrigScreen(screen);
-        applyTrigSeed(screen, example.launch.trigSeed);
-      }
-      if (example.launch.targetMode === 'statistics') {
-        const screen = example.launch.statisticsScreen ?? 'home';
-        openStatisticsScreen(screen);
-      }
-      if (example.launch.targetMode === 'geometry') {
-        const screen = example.launch.geometryScreen ?? 'home';
-        loadGeometryExample(screen, '', example.launch.geometrySeed);
-      }
-      setDisplayOutcome(null);
-      setMode(example.launch.targetMode);
-      setClipboardNotice(example.launch.label ?? 'Opened in tool');
-      return;
-    }
-
-    const latex = example.launch.latex.trim();
-    if (!latex) {
-      return;
-    }
-
-    if (example.launch.targetMode === 'calculate') {
-      const screen = example.launch.calculateScreen ?? 'standard';
-      if (openLegacyCalculateCalculusInCalculus(screen, example.launch.calculateSeed)) {
-        setDisplayOutcome(null);
-        setMode('calculus');
-        setClipboardNotice(example.launch.label ?? 'Example loaded in Calculus');
-        return;
-      }
-      setCalculateLatex(latex);
-      openCalculateScreen(screen);
-      applyCalculateSeed(screen, example.launch.calculateSeed);
-      setDisplayOutcome(null);
-      setMode('calculate');
-      setClipboardNotice(example.launch.label ?? 'Example loaded');
-      return;
-    }
-
-    if (example.launch.targetMode === 'equation') {
-      setEquationLatex(latex);
-      setEquationSolveTarget(example.launch.equationSolveTarget ?? null);
-      openEquationScreen(example.launch.equationScreen ?? 'symbolic');
-      setDisplayOutcome(null);
-      setMode('equation');
-      setClipboardNotice(example.launch.label ?? 'Example loaded');
-      return;
-    }
-
-    if (isCalculusMode(example.launch.targetMode)) {
-      const screen = example.launch.calculusScreen ?? 'home';
-      openCalculusScreen(screen);
-      applyCalculusSeed(screen, example.launch.calculusSeed);
-      setDisplayOutcome(null);
-      setMode('calculus');
-      setClipboardNotice(example.launch.label ?? 'Example loaded');
-      return;
-    }
-
-    if (example.launch.targetMode === 'trigonometry') {
-      const screen = example.launch.trigScreen ?? 'functions';
-      loadTrigExample(screen, latex, example.launch.trigSeed);
-      setDisplayOutcome(null);
-      setMode('trigonometry');
-      setClipboardNotice(example.launch.label ?? 'Example loaded');
-      return;
-    }
-
-    if (example.launch.targetMode === 'statistics') {
-      const screen = example.launch.statisticsScreen ?? 'home';
-      loadStatisticsExample(screen, latex);
-      setDisplayOutcome(null);
-      setMode('statistics');
-      setClipboardNotice(example.launch.label ?? 'Example loaded');
-      return;
-    }
-
-    if (example.launch.targetMode === 'geometry') {
-      const screen = example.launch.geometryScreen ?? 'home';
-      loadGeometryExample(screen, latex, example.launch.geometrySeed);
-      setDisplayOutcome(null);
-      setMode('geometry');
-      setClipboardNotice(example.launch.label ?? 'Example loaded');
-      return;
-    }
-
-    loadTablePrimaryLatex(latex);
-    setDisplayOutcome(null);
-    setMode('table');
-    setClipboardNotice(example.launch.label ?? 'Example loaded');
+    launchGuideExampleDestination(example, {
+      applyCalculateSeed,
+      applyCalculusSeed,
+      applyTrigSeed,
+      clearDisplayOutcome: () => setDisplayOutcome(null),
+      closeHistoryPanel,
+      closeLauncher,
+      loadGeometryExample,
+      loadStatisticsExample,
+      loadTablePrimaryLatex,
+      loadTrigExample,
+      openCalculateScreen,
+      openCalculusScreen,
+      openEquationScreen,
+      openLegacyCalculateCalculusInCalculus,
+      openStatisticsScreen,
+      openTrigScreen,
+      routeToModeDestination,
+      setCalculateLatex,
+      setClipboardNotice,
+      setEquationLatex,
+      setEquationSolveTarget,
+    });
   }
 
   function openCalculusGuideForScreen(screen: CalculusScreen = calculusScreen) {
@@ -1890,10 +1802,11 @@ export default function App() {
 
     closeLauncher();
 
-    setCalculateLatex(trimmed);
-    openCalculateScreen('standard');
-    setDisplayOutcome(null);
-    setMode('calculate');
+    routeToModeDestination('calculate', () => {
+      setCalculateLatex(trimmed);
+      openCalculateScreen('standard');
+      setDisplayOutcome(null);
+    });
     setClipboardNotice('Loaded into Calculate');
   }
 
@@ -1957,19 +1870,19 @@ export default function App() {
     }
 
     if (action.mode === 'geometry') {
-      loadGeometryDraft(action.latex, 'guided', true);
-      setMode('geometry');
+      routeToModeDestination('geometry', () =>
+        loadGeometryDraft(action.latex, 'guided', true));
       return;
     }
 
     if (action.mode === 'statistics') {
-      loadStatisticsDraftForLatex(action.latex);
-      setMode('statistics');
+      routeToModeDestination('statistics', () =>
+        loadStatisticsDraftForLatex(action.latex));
       return;
     }
 
-    loadTrigDraft(action.latex, 'guided', true);
-    setMode('trigonometry');
+    routeToModeDestination('trigonometry', () =>
+      loadTrigDraft(action.latex, 'guided', true));
   }
 
   async function pasteIntoEditor() {
@@ -2043,6 +1956,40 @@ export default function App() {
     }
     retargetActiveWorkspaceKind(mode);
     commitVisibleModeSelection(mode);
+  }
+
+  function routeToModeDestination(mode: ModeId, applyDestination: () => void) {
+    if (mode === 'labs' && !labsEnabled) {
+      return false;
+    }
+
+    flushSync(() => {
+      setMode(mode);
+    });
+    applyDestination();
+    return true;
+  }
+
+  function routeLauncherWorkspaceDestination(
+    entry: LauncherAppEntry,
+    intent: LauncherLaunchIntent,
+    applyDestination: () => void,
+  ) {
+    if (intent !== 'new-tab') {
+      return routeToModeDestination(entry.launch.mode, applyDestination);
+    }
+
+    const createWorkspaceKindTab = createWorkspaceKindTabRef.current;
+    if (!createWorkspaceKindTab) {
+      return false;
+    }
+
+    flushSync(() => {
+      createWorkspaceKindTab(entry.launch.mode);
+      commitVisibleModeSelection(entry.launch.mode);
+    });
+    applyDestination();
+    return true;
   }
 
   function insertLatex(latex: string) {

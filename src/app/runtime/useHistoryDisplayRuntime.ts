@@ -101,6 +101,7 @@ type UseHistoryDisplayRuntimeOptions = {
   restoreLinearAlgebraTableHistoryEntry: (entry: HistoryEntry) => void;
   restoreStatisticsHistoryEntry: (entry: HistoryEntry) => void;
   restoreTrigHistoryEntry: (entry: HistoryEntry) => void;
+  routeToModeDestination?: (mode: ModeId, applyDestination: () => void) => boolean;
   setClipboardNotice: (notice: string | null) => void;
   setLauncherSurfaceApp: () => void;
   setMode: (mode: ModeId) => void;
@@ -143,6 +144,7 @@ export function useHistoryDisplayRuntime({
   restoreLinearAlgebraTableHistoryEntry,
   restoreStatisticsHistoryEntry,
   restoreTrigHistoryEntry,
+  routeToModeDestination,
   setClipboardNotice,
   setLauncherSurfaceApp,
   setMode,
@@ -518,73 +520,84 @@ export function useHistoryDisplayRuntime({
     );
   }
 
+  function routeHistoryDestination(mode: ModeId, applyDestination: () => void) {
+    if (routeToModeDestination) {
+      routeToModeDestination(mode, applyDestination);
+      return;
+    }
+
+    setMode(mode);
+    applyDestination();
+  }
+
   function replayHistoryEntry(entry: HistoryEntry) {
     setLauncherSurfaceApp();
-    setMode(entry.mode);
-    if (entry.mode !== 'calculate') {
-      clearCalculateReplayVariableSubstitutions();
-    }
-    setReplayVariableSubstitutions(
-      entry.mode !== 'calculate' && entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-        ? { mode: entry.mode, inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
-        : null,
-    );
-    if (entry.mode === 'calculate') {
-      const legacyCalculusScreen = mapLegacyCalculateScreenToCalculusScreen(
+
+    const legacyCalculusScreen = entry.mode === 'calculate'
+      ? mapLegacyCalculateScreenToCalculusScreen(
         entry.calculateScreen,
         entry.calculateSeed,
-      );
-      if (legacyCalculusScreen) {
-        setMode('calculus');
-        openCalculusScreen(legacyCalculusScreen);
-        applyCalculusSeed(
-          legacyCalculusScreen,
-          entry.calculateSeed as GuideExample['launch']['calculusSeed'],
-        );
+      )
+      : null;
+    const replayMode: ModeId = legacyCalculusScreen ? 'calculus' : entry.mode;
+
+    routeHistoryDestination(replayMode, () => {
+      if (replayMode !== 'calculate') {
         clearCalculateReplayVariableSubstitutions();
-        setReplayVariableSubstitutions(
-          entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-            ? { mode: 'calculus', inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
-            : null,
-        );
-      } else {
-        restoreCalculateHistoryEntry(entry);
       }
-    }
 
-    restoreLinearAlgebraTableHistoryEntry(entry);
+      setReplayVariableSubstitutions(
+        replayMode !== 'calculate' && entry.variableSubstitutions && entry.variableSubstitutions.length > 0
+          ? { mode: replayMode, inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
+          : null,
+      );
 
-    if (entry.mode === 'equation') {
-      restoreEquationHistoryEntry(entry);
-    }
+      if (entry.mode === 'calculate') {
+        if (legacyCalculusScreen) {
+          openCalculusScreen(legacyCalculusScreen);
+          applyCalculusSeed(
+            legacyCalculusScreen,
+            entry.calculateSeed as GuideExample['launch']['calculusSeed'],
+          );
+        } else {
+          restoreCalculateHistoryEntry(entry);
+        }
+      }
 
-    if (isCalculusMode(entry.mode)) {
-      restoreCalculusHistoryEntry(entry);
-    }
+      restoreLinearAlgebraTableHistoryEntry(entry);
 
-    if (entry.mode === 'trigonometry') {
-      restoreTrigHistoryEntry(entry);
-    }
+      if (entry.mode === 'equation') {
+        restoreEquationHistoryEntry(entry);
+      }
 
-    if (entry.mode === 'statistics') {
-      restoreStatisticsHistoryEntry(entry);
-    }
+      if (isCalculusMode(entry.mode)) {
+        restoreCalculusHistoryEntry(entry);
+      }
 
-    if (entry.mode === 'geometry') {
-      restoreGeometryHistoryEntry(entry);
-    }
+      if (entry.mode === 'trigonometry') {
+        restoreTrigHistoryEntry(entry);
+      }
 
-    setDisplayOutcome({
-      kind: 'success',
-      title: 'History',
-      exactLatex: entry.resultLatex,
-      exactSupplementLatex: entry.exactSupplementLatex,
-      approxText: entry.approxText,
-      answerDomain: entry.answerDomain,
-      solutionKind: entry.solutionKind,
-      warnings: [],
+      if (entry.mode === 'statistics') {
+        restoreStatisticsHistoryEntry(entry);
+      }
+
+      if (entry.mode === 'geometry') {
+        restoreGeometryHistoryEntry(entry);
+      }
+
+      setDisplayOutcome({
+        kind: 'success',
+        title: 'History',
+        exactLatex: entry.resultLatex,
+        exactSupplementLatex: entry.exactSupplementLatex,
+        approxText: entry.approxText,
+        answerDomain: entry.answerDomain,
+        solutionKind: entry.solutionKind,
+        warnings: [],
+      });
+      closeHistoryPanel();
     });
-    closeHistoryPanel();
   }
 
   function restoreHistoryDisplayMemorySnapshot(snapshot: CalculatorMemorySnapshot) {

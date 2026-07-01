@@ -22,6 +22,11 @@ type LauncherWorkspaceLaunchDeps = {
   openGeometryScreen: (screen: GeometryScreen) => void;
   openStatisticsScreen: (screen: StatisticsScreen) => void;
   openTrigScreen: (screen: TrigScreen) => void;
+  routeWorkspaceDestination?: (
+    entry: LauncherAppEntry,
+    intent: LauncherLaunchIntent,
+    applyDestination: () => void,
+  ) => boolean;
   setMode: (mode: ModeId) => void;
 };
 
@@ -55,59 +60,82 @@ function commitLauncherMode(
   deps.setMode(mode);
 }
 
+function openLauncherDestination(
+  entry: LauncherAppEntry,
+  intent: LauncherLaunchIntent,
+  deps: LauncherWorkspaceLaunchDeps,
+  applyDestination: () => void,
+) {
+  if (deps.routeWorkspaceDestination) {
+    if (intent === 'new-tab' && !canOpenLauncherEntryInNewTab(entry)) {
+      return false;
+    }
+    return deps.routeWorkspaceDestination(entry, intent, applyDestination);
+  }
+
+  if (!prepareWorkspaceLaunch(entry, intent, deps)) {
+    return false;
+  }
+
+  applyDestination();
+  commitLauncherMode(entry.launch.mode, intent, deps);
+  return true;
+}
+
 export function launchWorkspaceEntryFromLauncher(
   entry: LauncherAppEntry,
   intent: LauncherLaunchIntent = 'current-tab',
   deps: LauncherWorkspaceLaunchDeps,
 ) {
-  if (!prepareWorkspaceLaunch(entry, intent, deps)) {
-    return;
-  }
-
   if (entry.launch.mode === 'calculate') {
-    deps.openCalculateScreen(entry.launch.calculateScreen ?? 'standard');
-    commitLauncherMode('calculate', intent, deps);
+    const screen = entry.launch.calculateScreen ?? 'standard';
+    openLauncherDestination(entry, intent, deps, () =>
+      deps.openCalculateScreen(screen));
     return;
   }
 
   if (entry.launch.mode === 'equation') {
-    deps.clearEquationSolveTarget();
-    deps.openEquationScreen(entry.launch.equationScreen ?? 'home');
-    deps.clearDisplayOutcome();
-    commitLauncherMode('equation', intent, deps);
+    const screen = entry.launch.equationScreen ?? 'home';
+    openLauncherDestination(entry, intent, deps, () => {
+      deps.clearEquationSolveTarget();
+      deps.openEquationScreen(screen);
+      deps.clearDisplayOutcome();
+    });
     return;
   }
 
   if (entry.launch.mode === 'matrix' || entry.launch.mode === 'vector' || entry.launch.mode === 'table') {
-    deps.clearDisplayOutcome();
-    commitLauncherMode(entry.launch.mode, intent, deps);
+    openLauncherDestination(entry, intent, deps, () => deps.clearDisplayOutcome());
     return;
   }
 
   if (entry.launch.mode === 'calculus') {
-    deps.openCalculusScreen(entry.launch.calculusScreen ?? 'home');
-    commitLauncherMode('calculus', intent, deps);
+    const screen = entry.launch.calculusScreen ?? 'home';
+    openLauncherDestination(entry, intent, deps, () =>
+      deps.openCalculusScreen(screen));
     return;
   }
 
   if (entry.launch.mode === 'trigonometry') {
-    deps.openTrigScreen(entry.launch.trigScreen ?? 'home');
-    commitLauncherMode('trigonometry', intent, deps);
+    const screen = entry.launch.trigScreen ?? 'home';
+    openLauncherDestination(entry, intent, deps, () =>
+      deps.openTrigScreen(screen));
     return;
   }
 
   if (entry.launch.mode === 'statistics') {
-    deps.openStatisticsScreen(entry.launch.statisticsScreen ?? 'home');
-    commitLauncherMode('statistics', intent, deps);
+    const screen = entry.launch.statisticsScreen ?? 'home';
+    openLauncherDestination(entry, intent, deps, () =>
+      deps.openStatisticsScreen(screen));
     return;
   }
 
   if (entry.launch.mode === 'labs') {
-    deps.clearDisplayOutcome();
-    commitLauncherMode('labs', intent, deps);
+    openLauncherDestination(entry, intent, deps, () => deps.clearDisplayOutcome());
     return;
   }
 
-  deps.openGeometryScreen(entry.launch.geometryScreen ?? 'home');
-  commitLauncherMode('geometry', intent, deps);
+  const screen = entry.launch.geometryScreen ?? 'home';
+  openLauncherDestination(entry, intent, deps, () =>
+    deps.openGeometryScreen(screen));
 }

@@ -10,10 +10,16 @@ import {
   it,
   vi,
 } from 'vitest';
+import { WEB_PREVIEW_APP_STATE_STORAGE_KEY } from './lib/app-state/tauri';
+import {
+  DEFAULT_SETTINGS,
+  type HistoryEntry,
+} from './types/calculator';
 import {
   openLauncherApp,
   type AppUser,
   renderAppMain,
+  setMathFieldLatex,
 } from './test/renderAppMain';
 
 function setViewportWidth(width: number) {
@@ -83,6 +89,55 @@ describe('AppMain workspace tabs', () => {
       const activeTab = tabs.find((tab) => tab.classList.contains('is-active'));
       expect(activeTab).toHaveAttribute('data-workspace-kind', 'calculate');
       expect(within(activeTab as HTMLElement).getByRole('tab')).toHaveTextContent('Calculate');
+    });
+  });
+
+  it('replays an Equation history card into its destination on the first click', async () => {
+    const historyEntry: HistoryEntry = {
+      id: 'history.equation.destination',
+      mode: 'equation',
+      inputLatex: 'x+1=2',
+      resultLatex: 'x=1',
+      equationSolveTarget: 'x',
+      timestamp: '2026-07-01T00:00:00.000Z',
+    };
+    window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
+      currentMode: 'calculate',
+      settings: DEFAULT_SETTINGS,
+      history: [historyEntry],
+      variableMemory: [],
+    }));
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('history-toggle'));
+    await user.click((await screen.findAllByTestId('history-entry'))[0]);
+
+    await waitFor(() => {
+      const activeTab = screen.getAllByTestId('workspace-tab')
+        .find((tab) => tab.classList.contains('is-active'));
+      expect(activeTab).toHaveAttribute('data-workspace-kind', 'equation');
+      const editor = screen.getByTestId('main-editor') as HTMLElement & {
+        getValue: (format?: string) => string;
+      };
+      expect(editor.getValue('latex')).toBe('x+1=2');
+    });
+  });
+
+  it('auto-switches Calculate equation prompts directly into symbolic Equation', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('quick-setting-auto-equation'));
+    setMathFieldLatex('main-editor', 'x+1=2');
+    await user.click(screen.getByTestId('keypad-execute'));
+
+    await waitFor(() => {
+      const activeTab = screen.getAllByTestId('workspace-tab')
+        .find((tab) => tab.classList.contains('is-active'));
+      expect(activeTab).toHaveAttribute('data-workspace-kind', 'equation');
+      const editor = screen.getByTestId('main-editor') as HTMLElement & {
+        getValue: (format?: string) => string;
+      };
+      expect(editor.getValue('latex')).toBe('x+1=2');
     });
   });
 });

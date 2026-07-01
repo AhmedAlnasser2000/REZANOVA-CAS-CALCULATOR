@@ -134,6 +134,7 @@ type UseCalculateRuntimeOptions = {
     inputRevisionId?: string;
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
+  routeToModeDestination?: (mode: ModeId, applyDestination: () => void) => boolean;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
   setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
   setMode: (mode: ModeId) => void;
@@ -263,6 +264,7 @@ export function useCalculateRuntime({
   openCalculusScreen,
   openLegacyCalculateCalculusInCalculus,
   reserveHistoryTicket,
+  routeToModeDestination,
   settings,
   setDisplayOutcome,
   setMode,
@@ -370,6 +372,16 @@ export function useCalculateRuntime({
     setDisplayOutcome(null);
   }
 
+  function openModeDestination(mode: ModeId, applyDestination: () => void) {
+    if (routeToModeDestination) {
+      routeToModeDestination(mode, applyDestination);
+      return;
+    }
+
+    setMode(mode);
+    applyDestination();
+  }
+
   function moveCurrentCalculateMenuSelection(delta: number) {
     setCalculateMenuSelection((currentSelection) =>
       moveCalculateMenuIndex(calculateScreen, currentSelection, delta),
@@ -378,18 +390,17 @@ export function useCalculateRuntime({
 
   function openCalculateMenuEntry(entry: CalculateMenuEntry) {
     if (entry.target.kind === 'calculus') {
-      openCalculusScreen(entry.target.screen);
-      setMode('calculus');
+      const screen = entry.target.screen;
+      openModeDestination('calculus', () => openCalculusScreen(screen));
       return;
     }
 
-    if (openLegacyCalculateCalculusInCalculus(entry.target.screen, undefined)) {
-      setMode('calculus');
+    const screen = entry.target.screen;
+    if (openLegacyCalculateCalculusInCalculus(screen, undefined)) {
       return;
     }
 
-    openCalculateScreen(entry.target.screen);
-    setMode('calculate');
+    openModeDestination('calculate', () => openCalculateScreen(screen));
   }
 
   function openCalculateMenuDigitEntry(digit: string) {

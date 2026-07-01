@@ -1455,3 +1455,7 @@
 ## 2026-06-30 - EQUATION-IMPLICIT-DERIVATIVE-SOLVE-SEAM1
 
 - [agent: codex | model: gpt-5-codex] Calculus implicit differentiation must consume the Equation-owned `implicit-derivative-solve` seam rather than importing Equation isolation internals or adding a private solver. The seam delegates to selected-target isolation for an internal single-letter derivative placeholder, maps only one clean placeholder equality to display `dy/dx`-style output, and returns controlled unsupported stops for missing placeholders, unsupported Equation routes, or multi-branch derivative outputs.
+
+## 2026-07-01 - WORKSPACE-DESTINATION-ROUTING1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Destination routing in Workspace Tabs must settle the active workspace retarget or explicit new-tab activation before applying per-mode payloads. History replay, Auto Equation handoff, launcher/guide sends, and display action sends use this bridge so the first user action lands on the intended workspace destination instead of a default menu page.

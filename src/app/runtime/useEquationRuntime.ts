@@ -157,6 +157,7 @@ type UseEquationRuntimeOptions = {
     inputRevisionId?: string;
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
+  routeToModeDestination?: (mode: ModeId, applyDestination: () => void) => boolean;
   settings: Pick<
     Settings,
     | 'angleUnit'
@@ -195,6 +196,7 @@ export function useEquationRuntime({
   patchSettings,
   replayVariableSubstitutions,
   reserveHistoryTicket,
+  routeToModeDestination,
   settings,
   setDisplayOutcome,
   setMode,
@@ -478,15 +480,24 @@ export function useEquationRuntime({
   }
 
   function switchToEquationWithLatex(latex: string, options?: { openNumericSolve?: boolean }) {
-    setEquationScreen('symbolic');
-    setEquationLatex(latex);
-    setEquationSolveTarget(null);
-    setEquationNumericSolvePanel((currentPanel) => ({
-      ...currentPanel,
-      enabled: options?.openNumericSolve ?? false,
-    }));
-    setDisplayOutcome(null);
+    const applyDestination = () => {
+      setEquationScreen('symbolic');
+      setEquationLatex(latex);
+      setEquationSolveTarget(null);
+      setEquationNumericSolvePanel((currentPanel) => ({
+        ...currentPanel,
+        enabled: options?.openNumericSolve ?? false,
+      }));
+      setDisplayOutcome(null);
+    };
+
+    if (routeToModeDestination) {
+      routeToModeDestination('equation', applyDestination);
+      return;
+    }
+
     setMode('equation');
+    applyDestination();
   }
 
   function resetCurrentEquationScreen() {
