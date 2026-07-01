@@ -126,6 +126,8 @@ Major gated milestone.
 
 This is a prerequisite for moving beyond named family recognition.
 
+Status: implemented 2026-07-01 as behavior-invisible proof infrastructure. The core builds bounded first-order equations of the form `r'(v)+A(v)r(v)=B(v)` over symbolic polynomials, solves zero-coefficient and constant-coefficient polynomial cases exactly, records nonzero pivot facts through the constant-field supplement path, proves the polynomial-degree obstruction shape needed by quadratic-exponential certificates, and stops on decimals, branch-sensitive carriers, unsupported coefficient-side transcendental constants, selected-variable dependency, and unsupported nonconstant RHS cases. Dispatch and public Calculus behavior remain unchanged.
+
 ### 5. `TRANSCENDENTAL-LIOUVILLE-DECOMPOSITION1`
 
 Major gated milestone.
