@@ -1545,6 +1545,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Algebraic constant and trace helpers are domain-neutral primitive readback/proof evidence; LRT orchestration and method naming remain Integration/RN-owned, and Equation must not expose these trace/LRT steps through Equation-owned workflows.
 
+## 2026-07-01 - TRANSCENDENTAL-DEGENERACY-BRANCH-SOLVER1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Formal transcendental proof branching must stay bounded. Vanished pivots, slopes, discriminants, resultants, and special-parameter cases may produce direct-test branch rows up to the formal cap `12`; larger branch products must stop with proof-scope evidence instead of generating unreadable case explosions.
+
 ## 2026-07-01 - CALCULUS-LIMITS-NATURAL-PARSER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits natural requests are parsed into structured variable, target, direction, body, and canonical request evidence before UI adoption. V1 accepts numeric finite targets, one-sided finite targets, `+/-infinity`, and simple exact `pi`/`e` constants, while symbolic targets such as `a` remain deferred.
