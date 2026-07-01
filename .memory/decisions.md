@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-CONFORMANCE-TESTS1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol has a dedicated conformance gate. `test:surface-protocol` must validate the production import boundary and runtime DTO serialization/no-leak behavior, and `test:gate` must include it before broader repo gates. The sanctioned Order of Execution dependency remains limited to the read-only event adapter; app-state schemas, React/DOM objects, Display block trees, solver objects, MathJSON trees, local paths, host commands, History payloads, Variables payloads, Graphing, mounting, plugins, remote compute, and external software development kit surfaces remain outside the boundary.
+
 ## 2026-07-01 - SURFACE-QUERY1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol queries are pure snapshot-input infrastructure, not app-global facades. The first query set is limited to current result summary, workspace info, and safe settings with optional angle unit for Calculate and Equation; History, Variables, host commands, mounting, Graphing, tabs, plugins, remote compute, raw Display schemas, and external software development kit behavior remain outside the query surface.
