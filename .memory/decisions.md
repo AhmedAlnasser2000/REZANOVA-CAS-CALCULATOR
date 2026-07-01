@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-01 - SURFACE-SPEC-EXAMPLES1
+
+- [agent: codex | model: gpt-5-codex] Surface Protocol hostless v1 has an internal-agent contract reference backed by canonical fixtures. The old `SURFACE0` audit now reflects the landed hostless spine while keeping mounting, Graphing, event/query pagination and cursors, History, Variables, Model Context Protocol adapters, plugins, remote compute, and external software development kit behavior deferred until dedicated milestones.
+
 ## 2026-07-01 - SURFACE-CONTRACT-FIXTURES1
 
 - [agent: codex | model: gpt-5-codex] Surface Protocol v1 has canonical hostless contract fixtures for the current capability manifest, current-result query, safe-settings query, lifecycle event, and structured failure outputs. Fixtures must stay JSON-serializable and match live helpers, and they remain Surface contract fixtures rather than broad math golden cases.

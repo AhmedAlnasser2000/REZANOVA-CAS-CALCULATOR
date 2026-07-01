@@ -1,18 +1,19 @@
 # SURFACE0 - Surface Protocol Boundary Audit
 
-Status: docs and memory boundary audit only.
+Status: hostless spine landed; website mounting and host embedding remain deferred.
 
 Reviewed source handoff: `/home/ahmed/Downloads/codex-handoff-surface-protocol.md`.
 
 ## Purpose
 
-Surface Protocol is the future external embedding and integration contract for REZANOVA CLASSWIZ CALCULATOR. Its job is to let a host, such as a website, learning management system, documentation page, or another app, mount a bounded REZANOVA workspace, observe stable lifecycle/result events, and query committed state without depending on internal React, Order of Execution, solver, diagnostics, or workspace-instance objects.
+Surface Protocol is the external embedding and integration contract track for REZANOVA CLASSWIZ CALCULATOR. Its eventual job is to let a host, such as a website, learning management system, documentation page, or another app, mount a bounded REZANOVA workspace, observe stable lifecycle/result events, and query committed state without depending on internal React, Order of Execution, solver, diagnostics, or workspace-instance objects.
 
-This audit starts the Surface Protocol track by defining the boundary. It does not implement the protocol.
+This audit started the Surface Protocol track by defining the boundary. The current repo now has the first hostless read-only spine, while mounting and host embedding remain out of scope.
 
 ## Current Repo Reality
 
-- Surface Protocol does not exist yet.
+- Surface Protocol now exists as hostless infrastructure under `src/lib/surface-protocol/`.
+- The landed spine includes DTOs, a Calculate/Equation-only capability manifest, versioned structured errors, a read-only lifecycle adapter over the Order of Execution event outbox, pure snapshot-input queries, internal policy/vocabulary registries, contract fixtures, and `test:surface-protocol`.
 - Current files that contain `surface` in their names are internal UI, workspace state, diagnostics, or presentation seams. They are not the external Surface Protocol and should not be modified for this track.
 - Order of Execution is the runtime traffic controller: launches, host selection, cancellation, stale gates, commit/drop legality, diagnostics, runtime envelopes, and history tickets.
 - The Order of Execution event outbox reports lifecycle facts after Order of Execution decisions. It is not a command bus, app-wide event framework, Surface Protocol, plugin layer, or external API.
@@ -25,18 +26,27 @@ Standing separation:
 Order of Execution decides.
 Order of Execution event outbox reports.
 Supercarrier contains and organizes.
-Surface Protocol exposes stable external summaries later.
+Surface Protocol exposes stable hostless summaries now and mount behavior later.
 ```
 
 ## What Surface Protocol Is
 
-Surface Protocol should be a versioned firewall between hosts and REZANOVA internals.
+Surface Protocol should remain a versioned firewall between hosts and REZANOVA internals.
 
-It may eventually provide:
+It currently provides:
+
+- a compact result-summary DTO;
+- a Calculate/Equation-only capability manifest;
+- a read-only lifecycle event adapter;
+- read-only snapshot-input queries for current result, workspace info, and safe settings;
+- internal policy/vocabulary registries and contract fixtures.
+
+It may later provide:
 
 - a mount contract: host supplies validated, versioned configuration;
-- a read-only event stream: host receives filtered, stable event DTOs derived from existing facts;
-- a query interface: host reads committed state through stable DTOs.
+- a host-facing event stream over the existing read-only event DTOs;
+- a host-facing query interface over the existing snapshot DTOs;
+- a future Model Context Protocol adapter layered on top of Surface Protocol.
 
 The contract layer should adapt to internals. Hosts should not depend on internal event shapes, diagnostics records, solver result objects, React props, DOM nodes, workspace state objects, app-state schemas, local filesystem paths, or source mirror paths.
 
@@ -127,14 +137,14 @@ Breaking changes must create a new protocol version rather than mutating a shipp
 
 ## Event Adapter Boundary
 
-The first Surface event adapter should subscribe to the existing Order of Execution event outbox and map only a curated subset into stable Surface events.
+The current Surface event adapter observes the existing Order of Execution event outbox and maps only a curated subset into stable Surface events.
 
-Safe first candidates:
+Current curated events:
 
-- surface ready;
-- compute started;
+- job started;
 - result committed;
-- compute stopped or failed;
+- job cancelled;
+- job failed;
 - result stale-dropped.
 
 Rules:
@@ -147,13 +157,16 @@ Rules:
 
 ## Query Boundary
 
-The first query interface should be read-only and committed-state-only.
+The current query interface is read-only, hostless, and committed-state-only.
 
-Safe first candidates:
+Current safe query set:
 
 - current committed result summary;
 - active workspace kind;
 - selected safe settings such as angle unit;
+
+Deferred query candidates:
+
 - stored variables only if a privacy/storage policy is explicit.
 
 Rules:
@@ -162,6 +175,7 @@ Rules:
 - Queries must not return partial in-flight results.
 - Queries must not read hidden developer diagnostics unless a later developer-only protocol is explicitly approved.
 - Query results must be stable DTOs with caps for large result surfaces.
+- Event/query pagination and cursors remain deferred until a real host use case creates volume or replay requirements.
 
 ## Graphing Deferral
 
@@ -174,36 +188,41 @@ Future Graphing should be planned as a scene/runtime surface over validated solv
 ## Recommended Sequence
 
 1. `SURFACE0 - Surface Protocol Boundary Audit`
-   - This document.
-   - No runtime behavior.
+   - Completed as the initial boundary document.
 
 2. `SURFACE-DTO-FIREWALL1`
-   - Add pure DTO schemas and mappers for one committed result summary and one Order of Execution lifecycle event.
-   - No host mount, no query dispatcher, no external API.
-   - Tests prove raw internal objects do not pass through.
+   - Completed with compact result DTOs and `DisplayOutcome` summary mapping.
 
 3. `SURFACE-EVENT-ADAPTER1`
-   - Read-only adapter from the Order of Execution event outbox to stable Surface events.
-   - No host commands.
+   - Completed as a read-only adapter from the Order of Execution event outbox.
 
 4. `SURFACE-QUERY1`
-   - Read-only committed-state queries for the first approved workspace set.
-   - No computation trigger.
+   - Completed with pure snapshot-input current-result, workspace-info, and safe-settings queries.
 
-5. `SURFACE-MOUNT1`
+5. `SURFACE-POLICY-VOCAB-REGISTRY1`
+   - Completed with internal field exposure and result-summary vocabulary registries.
+
+6. `SURFACE-CONTRACT-FIXTURES1`
+   - Completed with canonical hostless v1 contract fixtures.
+
+7. `SURFACE-SPEC-EXAMPLES1`
+   - Hostless v1 internal-agent spec examples and audit refresh.
+
+8. `SURFACE-MOUNT1`
    - Validated mount contract only after workspace-instance, storage, language, branding, and capability-gating choices are settled.
 
-6. `SURFACE-HOST-PROOF1`
+9. `SURFACE-HOST-PROOF1`
    - A tiny local host/demo proof, not a plugin system, network layer, graphing surface, or external software development kit.
 
-## Open Questions Before Implementation
+## Open Questions Before Mounting
 
 - Which first host use case matters most: docs/demo embed, learning management system embed, app-to-app integration, or developer tooling?
 - Should first mount be single-workspace only, or should it expose Workspace Tabs?
 - Are host-provided stored variables session-only, or can they write through calculator memory?
-- What is the first stable result summary shape that is useful without exposing Display internals?
 - Should Surface Protocol ever expose History, or should History wait for the richer full History/Records tab surface?
 - Which fields, if any, need privacy or user-consent gates before external exposure?
+- What volume or replay use case would justify event/query pagination or cursors?
+- What exact host need would justify a Model Context Protocol adapter over the existing Surface contract?
 
 ## Stop Rules
 

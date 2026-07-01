@@ -94,6 +94,7 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 
 ## Surface Protocol
 - `surface-protocol/surface-protocol-boundary-audit.md`: `SURFACE0` boundary audit for the future external embedding/integration contract, DTO firewall, read-only event/query posture, and graphing deferral.
+- `surface-protocol/hostless-v1-contract.md`: internal-agent contract reference for the landed hostless Surface Protocol v1 fixtures, examples, deferred mount, deferred Graphing, and future Model Context Protocol adapter posture.
 
 ## Symbolic Engine
 - `symbolic-engine/symbolic-engine-root-surface-audit.md`: audit map for the Symbolic Engine shared backend surface
