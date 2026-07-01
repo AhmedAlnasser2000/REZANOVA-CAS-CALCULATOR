@@ -103,6 +103,26 @@ describe('calculus limits', () => {
     expect(unbounded.error).toContain('unbounded');
   });
 
+  it('handles parsed variable and exact-constant finite targets', () => {
+    const theta = evaluateCalculusFiniteLimit({
+      bodyLatex: '\\sin(\\theta)',
+      target: '\\pi/2',
+      direction: 'two-sided',
+      variable: 'theta',
+    });
+    expect(theta.error).toBeUndefined();
+    expect(Number(theta.approxText)).toBeCloseTo(1, 6);
+
+    const tAtE = evaluateCalculusFiniteLimit({
+      bodyLatex: '\\ln(t)',
+      target: 'e',
+      direction: 'two-sided',
+      variable: 't',
+    });
+    expect(tAtE.error).toBeUndefined();
+    expect(Number(tAtE.approxText)).toBeCloseTo(1, 6);
+  });
+
   it('surfaces CALC-LIM3 finite-limit detail notes', () => {
     const rational = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{3x}{x+x^2}',

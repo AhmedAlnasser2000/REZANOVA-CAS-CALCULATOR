@@ -19,7 +19,113 @@ function compactTargetDraft(value: string) {
     .replaceAll('\\left', '')
     .replaceAll('\\right', '')
     .replaceAll('\\,', '')
+    .replaceAll('π', '\\pi')
+    .replaceAll('∞', '\\infty')
     .replace(/\s+/g, '');
+}
+
+function parseFracTarget(compact: string) {
+  const match = compact.match(/^\\frac\{(.+)\}\{([1-9]\d*)\}$/u);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    numerator: match[1],
+    denominator: Number(match[2]),
+  };
+}
+
+function parsePiNumerator(value: string) {
+  if (value === '\\pi' || value === 'pi') {
+    return 1;
+  }
+
+  if (value === '-\\pi' || value === '-pi') {
+    return -1;
+  }
+
+  const match = value.match(/^([+-]?\d+)\\?pi$/u);
+  if (!match) {
+    return null;
+  }
+
+  return Number(match[1]);
+}
+
+function parseExactConstantTarget(compact: string) {
+  if (compact === 'e' || compact === '\\mathrm{e}') {
+    return {
+      value: Math.E,
+      normalizedTargetLatex: 'e',
+    };
+  }
+
+  if (compact === '-e' || compact === '-\\mathrm{e}') {
+    return {
+      value: -Math.E,
+      normalizedTargetLatex: '-e',
+    };
+  }
+
+  const frac = parseFracTarget(compact);
+  if (frac) {
+    const piNumerator = parsePiNumerator(frac.numerator);
+    if (piNumerator !== null) {
+      const sign = piNumerator < 0 ? '-' : '';
+      const magnitude = Math.abs(piNumerator);
+      const numeratorLatex = magnitude === 1 ? '\\pi' : `${magnitude}\\pi`;
+      return {
+        value: (piNumerator * Math.PI) / frac.denominator,
+        normalizedTargetLatex: `${sign}\\frac{${numeratorLatex}}{${frac.denominator}}`,
+      };
+    }
+    return null;
+  }
+
+  const slashPi = compact.match(/^([+-]?(?:\d+)?)\\?pi\/([1-9]\d*)$/u);
+  if (slashPi) {
+    const rawCoefficient = slashPi[1];
+    const coefficient =
+      rawCoefficient === '' || rawCoefficient === '+'
+        ? 1
+        : rawCoefficient === '-'
+          ? -1
+          : Number(rawCoefficient);
+    const denominator = Number(slashPi[2]);
+    if (!Number.isFinite(coefficient) || !Number.isFinite(denominator)) {
+      return null;
+    }
+    const sign = coefficient < 0 ? '-' : '';
+    const magnitude = Math.abs(coefficient);
+    const numeratorLatex = magnitude === 1 ? '\\pi' : `${magnitude}\\pi`;
+    return {
+      value: (coefficient * Math.PI) / denominator,
+      normalizedTargetLatex: `${sign}\\frac{${numeratorLatex}}{${denominator}}`,
+    };
+  }
+
+  const piCoefficient = parsePiNumerator(compact);
+  if (piCoefficient !== null) {
+    if (piCoefficient === 1) {
+      return {
+        value: Math.PI,
+        normalizedTargetLatex: '\\pi',
+      };
+    }
+    if (piCoefficient === -1) {
+      return {
+        value: -Math.PI,
+        normalizedTargetLatex: '-\\pi',
+      };
+    }
+    return {
+      value: piCoefficient * Math.PI,
+      normalizedTargetLatex: `${piCoefficient}\\pi`,
+    };
+  }
+
+  return null;
 }
 
 export function parseFiniteLimitTargetDraft(value: string): ParsedFiniteLimitTarget | null {
@@ -31,14 +137,20 @@ export function parseFiniteLimitTargetDraft(value: string): ParsedFiniteLimitTar
   const directionalMatch = compact.match(DIRECTIONAL_TARGET_PATTERN);
   const numericDraft = directionalMatch ? directionalMatch[1] : compact;
   const directionMark = directionalMatch?.[2] ?? directionalMatch?.[3];
-  const parsed = parseSignedNumberInput(numericDraft);
+  const parsedNumber = parseSignedNumberInput(numericDraft);
+  const parsed = parsedNumber === null
+    ? parseExactConstantTarget(numericDraft)
+    : {
+        value: parsedNumber,
+        normalizedTargetLatex: formatSignedNumberInput(parsedNumber),
+      };
   if (parsed === null) {
     return null;
   }
 
   return {
-    value: parsed,
-    normalizedTargetLatex: formatSignedNumberInput(parsed),
+    value: parsed.value,
+    normalizedTargetLatex: parsed.normalizedTargetLatex,
     directionOverride:
       directionMark === '+'
         ? 'right'

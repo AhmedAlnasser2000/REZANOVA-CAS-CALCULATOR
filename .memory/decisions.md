@@ -1540,3 +1540,7 @@
 ## 2026-07-01 - TRANSCENDENTAL-RISCH-CHECKPOINT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The next formal transcendental Risch push should be method-level infrastructure rather than more isolated special-function family patches. Textbook elementary catchup should wait for the Stewart/Thomas benchmark sweep unless a case is needed as a regression for tower normal forms, RDE/Liouville, or certificate orchestration.
+
+## 2026-07-01 - CALCULUS-LIMITS-NATURAL-PARSER1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits natural requests are parsed into structured variable, target, direction, body, and canonical request evidence before UI adoption. V1 accepts numeric finite targets, one-sided finite targets, `+/-infinity`, and simple exact `pi`/`e` constants, while symbolic targets such as `a` remain deferred.

@@ -789,11 +789,14 @@ export type CalculusFiniteLimitState = {
   bodyLatex: string;
   target: string;
   direction: LimitDirection;
+  variable?: string;
 };
 export type CalculusInfiniteLimitState = {
   bodyLatex: string;
   targetKind: 'posInfinity' | 'negInfinity';
+  variable?: string;
 };
+export type CalculusLimitState = { requestLatex: string };
 export type SeriesState = {
   bodyLatex: string;
   kind: SeriesKind;

@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { latexToApproxText } from '../../display/format';
+import { derivativeVariableLatex, derivativeVariableOrDefault } from '../derivative-target';
 import { parseFiniteLimitTargetDraft } from '../engine/finite-limit-target';
 import {
   evaluateFiniteLimitFromAst,
@@ -32,6 +33,8 @@ export function evaluateCalculusFiniteLimit(
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const parsedTarget = parseFiniteLimitTargetDraft(state.target);
+  const variable = derivativeVariableOrDefault(state.variable);
+  const variableLatex = derivativeVariableLatex(variable);
   if (!bodyLatex || !parsedTarget) {
     return {
       warnings: [],
@@ -42,7 +45,7 @@ export function evaluateCalculusFiniteLimit(
   const direction = parsedTarget.directionOverride ?? state.direction;
 
   try {
-    const parsed = ce.parse(`\\lim_{x\\to ${target}}\\left(${bodyLatex}\\right)`) as BoxedLike;
+    const parsed = ce.parse(`\\lim_{${variableLatex}\\to ${target}}\\left(${bodyLatex}\\right)`) as BoxedLike;
     const body = ce.parse(bodyLatex) as BoxedLike;
     const exact = parsed.evaluate();
     if (exact.latex !== parsed.latex && !exact.latex.includes('\\lim')) {
@@ -56,7 +59,7 @@ export function evaluateCalculusFiniteLimit(
 
     return evaluateFiniteLimitFromAst({
       body: body.json,
-      variable: 'x',
+      variable,
       target,
       direction,
       messages: {
@@ -82,6 +85,7 @@ export function evaluateCalculusInfiniteLimit(
   state: CalculusInfiniteLimitState,
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
+  const variable = derivativeVariableOrDefault(state.variable);
   if (!bodyLatex) {
     return {
       warnings: [],
@@ -92,7 +96,7 @@ export function evaluateCalculusInfiniteLimit(
   const body = ce.parse(bodyLatex).json;
   return evaluateInfiniteLimitFromAst({
     body,
-    variable: 'x',
+    variable,
     targetKind: state.targetKind,
     messages: {
       targetLabel: (kind) => (kind === 'posInfinity' ? '+infinity' : '-infinity'),

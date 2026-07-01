@@ -30,12 +30,25 @@ describe('finite limit target parsing', () => {
       normalizedTargetLatex: '0',
       directionOverride: 'left',
     });
+    expect(parseFiniteLimitTargetDraft('\\pi/2')).toMatchObject({
+      value: Math.PI / 2,
+      normalizedTargetLatex: '\\frac{\\pi}{2}',
+    });
+    expect(parseFiniteLimitTargetDraft('3\\pi/2')).toMatchObject({
+      value: (3 * Math.PI) / 2,
+      normalizedTargetLatex: '\\frac{3\\pi}{2}',
+    });
+    expect(parseFiniteLimitTargetDraft('e')).toMatchObject({
+      value: Math.E,
+      normalizedTargetLatex: 'e',
+    });
   });
 
   it('rejects symbolic and malformed target drafts', () => {
     expect(parseFiniteLimitTargetDraft('x')).toBeNull();
     expect(parseFiniteLimitTargetDraft('0^x')).toBeNull();
     expect(parseFiniteLimitTargetDraft('0++')).toBeNull();
+    expect(parseFiniteLimitTargetDraft('\\sin(1)')).toBeNull();
   });
 
   it('renders directional finite targets for generated limits', () => {
