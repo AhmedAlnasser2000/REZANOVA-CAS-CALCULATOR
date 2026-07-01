@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 import { proveExpQuadraticNonElementary } from './integration/transcendental-certificate/proof';
 import {
+  buildEiLiAffineSpecialFunctionCertificate,
   buildExpQuadraticSpecialFunctionCertificateFromProof,
   buildSiCiAffineQuotientSpecialFunctionCertificate,
 } from './integration/transcendental-certificate/special-functions';
@@ -24,6 +25,14 @@ function depth2Certificate(latex: string, variable = 'x') {
   const result = buildSiCiAffineQuotientSpecialFunctionCertificate(ce.parse(latex).json, variable);
   if (!result) {
     throw new Error(`expected depth-2 special-function certificate for ${latex}`);
+  }
+  return result;
+}
+
+function eiLiCertificate(latex: string, variable = 'x') {
+  const result = buildEiLiAffineSpecialFunctionCertificate(ce.parse(latex).json, variable);
+  if (!result) {
+    throw new Error(`expected Ei/li special-function certificate for ${latex}`);
   }
   return result;
 }
@@ -95,5 +104,39 @@ describe('transcendental special-function readback for Si/Ci quotient families',
     expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{Ci}\left(2x+1\right)`);
     expect(shifted.exactLatex).toContain('2x+1>0');
     expect(shifted.exactLatex).toContain('2x+1<0');
+  });
+});
+
+describe('transcendental special-function readback for Ei/li quotient families', () => {
+  it('returns exponential-integral formulas for affine exponential quotients', () => {
+    const plain = eiLiCertificate('e^x/x');
+    const shifted = eiLiCertificate('e^{2x+1}/(2x+1)');
+    const derivativePresent = eiLiCertificate('2e^{2x+1}/(2x+1)');
+
+    expect(plain.antiderivativeKind).toBe('special-function');
+    expect(plain.exactLatex).toContain('\\begin{cases}');
+    expect(plain.exactLatex).toContain(String.raw`\operatorname{Ei}\left(x\right)`);
+    expect(plain.exactLatex).toContain('x>0');
+    expect(plain.exactLatex).toContain('x<0');
+    expect(plain.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+    expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{Ei}\left(2x+1\right)`);
+    expect(derivativePresent.exactLatex).toContain(String.raw`\operatorname{Ei}\left(2x+1\right)`);
+    expect(plain.detailSections.map((section) => section.title)).toContain('Non-Elementary Certificate');
+  });
+
+  it('returns logarithmic-integral formulas for affine logarithmic reciprocals', () => {
+    const plain = eiLiCertificate('1/\\ln(x)');
+    const shifted = eiLiCertificate('1/\\ln(2x+1)');
+
+    expect(plain.antiderivativeKind).toBe('special-function');
+    expect(plain.exactLatex).toContain('\\begin{cases}');
+    expect(plain.exactLatex).toContain(String.raw`\operatorname{li}\left(x\right)`);
+    expect(plain.exactLatex).toContain('x>1');
+    expect(plain.exactLatex).toContain('0<x<1');
+    expect(plain.exactSupplementLatex?.join(' ')).toContain('x>0');
+    expect(plain.exactSupplementLatex?.join(' ')).toContain('\\ln\\left(x\\right)\\ne0');
+    expect(shifted.exactLatex).toContain(String.raw`\frac{1}{2}\cdot \operatorname{li}\left(2x+1\right)`);
+    expect(shifted.exactLatex).toContain('2x+1>1');
+    expect(shifted.exactLatex).toContain('0<2x+1<1');
   });
 });

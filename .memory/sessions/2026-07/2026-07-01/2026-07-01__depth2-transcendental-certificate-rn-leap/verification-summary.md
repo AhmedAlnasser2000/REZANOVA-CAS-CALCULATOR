@@ -86,3 +86,22 @@
   - Result: pass.
 - `git diff --check`
   - Result: pass.
+
+## TRANSCENDENTAL-EI-LI-AFFINE-CERTIFICATE1
+
+- Gate label: backend
+- Focused tests:
+  - `npx vitest run src/lib/symbolic-engine/integration-transcendental-special-functions.test.ts src/lib/calculus/workspace/integrals.test.ts`
+  - Result: pass, 2 files / 30 tests.
+- Regression tests:
+  - `npx vitest run src/lib/symbolic-engine/integration-transcendental-special-functions.test.ts src/lib/symbolic-engine/integration.test.ts src/lib/calculus/engine/core.test.ts src/lib/calculus/workspace/integrals.test.ts`
+  - Result: pass, 4 files / 100 tests.
+- `npx tsc -b --pretty false`
+  - Result: blocked by unrelated Surface Protocol lane errors in `src/lib/surface-protocol/dto.test.ts` referencing `RuntimeAdvisories.advisories` and `src/lib/surface-protocol/spec-examples.test.ts` missing `node:fs` type resolution.
+  - Action: not edited or staged for this integration milestone.
+- `node tools/validate-file-sizes.mjs`
+  - Result: pass.
+- `npm run test:memory-protocol`
+  - Result: pass.
+- `git diff --check`
+  - Result: pass.

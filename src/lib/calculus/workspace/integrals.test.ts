@@ -244,6 +244,43 @@ describe('calculus integrals', () => {
     expect(cosine.exactLatex).toContain('x<0');
   });
 
+  it('renders certificate-backed Ei and li answers for affine quotient families', () => {
+    const exponential = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'e^x/x',
+    });
+    expect(exponential.error).toBeUndefined();
+    expect(exponential.resultOrigin).toBe('rule-based-symbolic');
+    expect(exponential.integrationStrategy).toBeUndefined();
+    expect(exponential.antiderivativeBackcheck).toBeUndefined();
+    expect(exponential.exactLatex).toContain('\\begin{cases}');
+    expect(exponential.exactLatex).toContain('\\operatorname{Ei}\\left(x\\right)');
+    expect(exponential.exactLatex).toContain('x>0');
+    expect(exponential.exactLatex).toContain('x<0');
+    expect(exponential.exactSupplementLatex?.join(' ')).toContain('x\\ne0');
+
+    const shiftedExponential = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: 'e^{2x+1}/(2x+1)',
+    });
+    expect(shiftedExponential.error).toBeUndefined();
+    expect(shiftedExponential.exactLatex).toContain('\\frac{1}{2}\\cdot \\operatorname{Ei}\\left(2x+1\\right)');
+
+    const logarithmicIntegral = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '1/\\ln(x)',
+    });
+    expect(logarithmicIntegral.error).toBeUndefined();
+    expect(logarithmicIntegral.exactLatex).toContain('\\begin{cases}');
+    expect(logarithmicIntegral.exactLatex).toContain('\\operatorname{li}\\left(x\\right)');
+    expect(logarithmicIntegral.exactLatex).toContain('x>1');
+    expect(logarithmicIntegral.exactLatex).toContain('0<x<1');
+    expect(logarithmicIntegral.exactSupplementLatex?.join(' ')).toContain('\\ln\\left(x\\right)\\ne0');
+
+    const shiftedLogarithmicIntegral = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: '1/\\ln(2x+1)',
+    });
+    expect(shiftedLogarithmicIntegral.error).toBeUndefined();
+    expect(shiftedLogarithmicIntegral.exactLatex).toContain('\\frac{1}{2}\\cdot \\operatorname{li}\\left(2x+1\\right)');
+  });
+
   it('canonicalizes typed symbolic quotient products before RN log-derivative routing', () => {
     const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: 'k*(2a*x+b)/(a*x^2+b*x+c)',

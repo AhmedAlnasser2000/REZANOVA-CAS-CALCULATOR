@@ -369,6 +369,13 @@ function operatorFunctionLatex(name: 'Si' | 'Ci', argumentLatex: string) {
   return String.raw`\operatorname{${name}}\left(${argumentLatex}\right)`;
 }
 
+function namedSpecialFunctionLatex(
+  name: 'Si' | 'Ci' | 'Ei' | 'li',
+  argumentLatex: string,
+) {
+  return String.raw`\operatorname{${name}}\left(${argumentLatex}\right)`;
+}
+
 function negatedArgumentLatex(profile: Depth2TowerProfileReady) {
   return boxLatex(['Negate', profile.coreArgumentNode]);
 }
@@ -470,6 +477,118 @@ export function buildSiCiAffineQuotientSpecialFunctionCertificate(
     proofSummary: `${functionName} affine quotient non-elementarity certificate with named special-function readback.`,
     exactSupplementLatex: depth2SupplementLatex(profile),
     detailSections: depth2SpecialFunctionDetail({
+      functionLatex: exactLatex,
+      profile,
+      functionName,
+    }),
+  };
+}
+
+function depth2EiLiFieldLatex(profile: Depth2TowerProfileReady) {
+  return profile.family === 'logarithmic-integral-affine-reciprocal'
+    ? String.raw`K\left(${profile.variable}, \ln\left(${profile.coreArgumentLatex}\right)\right)`
+    : String.raw`K\left(${profile.variable}, e^{${profile.coreArgumentLatex}}\right)`;
+}
+
+function depth2EiLiSpecialFunctionDetail(input: {
+  functionLatex: string;
+  profile: Depth2TowerProfileReady;
+  functionName: 'Ei' | 'li';
+}): TranscendentalNonElementaryCertificate['detailSections'] {
+  const familyLine = input.functionName === 'Ei'
+    ? 'Family: affine exponential quotient, reduced to the exponential integral special function.'
+    : 'Family: affine logarithmic reciprocal, reduced to the logarithmic integral special function.';
+  const derivativeLine = input.functionName === 'Ei'
+    ? String.raw`\frac{d}{dx}\operatorname{Ei}\left(u\right)=\frac{e^{u}u'}{u}`
+    : String.raw`\frac{d}{dx}\operatorname{li}\left(u\right)=\frac{u'}{\ln(u)}`;
+
+  return [
+    {
+      title: 'Non-Elementary Certificate',
+      lines: [
+        'No elementary antiderivative exists for this affine quotient in the stated elementary differential field.',
+        'The main answer uses a named special function rather than reporting a heuristic failure.',
+      ],
+    },
+    {
+      title: 'Proof Scope',
+      lineKinds: ['math', 'text', 'text'],
+      lines: [
+        depth2EiLiFieldLatex(input.profile),
+        familyLine,
+        'The real-domain branch rows intentionally avoid adding complex branch constants to the main answer.',
+      ],
+    },
+    {
+      title: 'Special-Function Readback',
+      lineKinds: ['math', 'math', 'text'],
+      lines: [
+        input.functionLatex,
+        derivativeLine,
+        'The named special-function formula differentiates back to the integrand; the certificate records that no elementary formula exists in the stated field.',
+      ],
+    },
+  ];
+}
+
+export function buildEiLiAffineSpecialFunctionCertificate(
+  node: unknown,
+  variable = 'x',
+): TranscendentalNonElementaryCertificate | undefined {
+  const profile = profileDepth2TranscendentalTower(node, variable);
+  if (
+    profile.kind !== 'ready'
+    || profile.consumer !== 'certificate-special-function'
+    || (
+      profile.family !== 'exponential-integral-affine-quotient'
+      && profile.family !== 'logarithmic-integral-affine-reciprocal'
+    )
+    || profile.derivativeCarrier.kind !== 'affine-slope'
+  ) {
+    return undefined;
+  }
+
+  const prefactor = ratioPrefactorLatex(profile);
+  const functionName = profile.family === 'exponential-integral-affine-quotient'
+    ? 'Ei'
+    : 'li';
+  const functionLatex = multiplyPrefactorByFunction(
+    prefactor,
+    namedSpecialFunctionLatex(functionName, profile.coreArgumentLatex),
+  );
+  const exactLatex = profile.family === 'exponential-integral-affine-quotient'
+    ? depth2CasewiseLatex([
+      {
+        valueLatex: functionLatex,
+        conditionLatex: `${profile.coreArgumentLatex}>0`,
+      },
+      {
+        valueLatex: functionLatex,
+        conditionLatex: `${profile.coreArgumentLatex}<0`,
+      },
+    ], profile.variable)
+    : depth2CasewiseLatex([
+      {
+        valueLatex: functionLatex,
+        conditionLatex: `${profile.coreArgumentLatex}>1`,
+      },
+      {
+        valueLatex: functionLatex,
+        conditionLatex: `0<${profile.coreArgumentLatex}<1`,
+      },
+    ], profile.variable);
+
+  return {
+    kind: 'non-elementary-certificate',
+    family: 'depth2-affine-quotient',
+    variable: profile.variable,
+    exactLatex,
+    antiderivativeKind: 'special-function',
+    fieldLatex: depth2EiLiFieldLatex(profile),
+    theorem: 'depth2-affine-quotient-transcendental-risch',
+    proofSummary: `${functionName} affine quotient non-elementarity certificate with named special-function readback.`,
+    exactSupplementLatex: depth2SupplementLatex(profile),
+    detailSections: depth2EiLiSpecialFunctionDetail({
       functionLatex: exactLatex,
       profile,
       functionName,

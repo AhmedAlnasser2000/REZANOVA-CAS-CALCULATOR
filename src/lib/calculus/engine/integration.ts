@@ -14,6 +14,7 @@ import { backcheckAntiderivative } from './verification';
 import { proveExpQuadraticNonElementary } from '../../symbolic-engine/integration/transcendental-certificate/proof';
 import { buildTranscendentalNonElementaryCertificateFromProof } from '../../symbolic-engine/integration/transcendental-certificate/result-shape';
 import {
+  buildEiLiAffineSpecialFunctionCertificate,
   buildExpQuadraticSpecialFunctionCertificateFromProof,
   buildSiCiAffineQuotientSpecialFunctionCertificate,
 } from '../../symbolic-engine/integration/transcendental-certificate/special-functions';
@@ -186,7 +187,9 @@ function resolvedTranscendentalCertificate(
       : undefined;
   }
 
-  const certificate = buildSiCiAffineQuotientSpecialFunctionCertificate(body, variable);
+  const certificate =
+    buildSiCiAffineQuotientSpecialFunctionCertificate(body, variable)
+    ?? buildEiLiAffineSpecialFunctionCertificate(body, variable);
   return certificate
     ? transcendentalCertificateToCalculusEvaluation(certificate)
     : undefined;

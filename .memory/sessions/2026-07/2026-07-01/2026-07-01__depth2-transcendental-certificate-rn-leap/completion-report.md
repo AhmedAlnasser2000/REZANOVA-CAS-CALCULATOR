@@ -42,3 +42,10 @@
 - Certificate proof-local differentiation now accepts `Ei` and `li` without Compute Engine fallback.
 - The exact rules are `d Ei(u)/dx = e^u u'/u` and `d li(u)/dx = u'/ln(u)`.
 - Live integration adoption remains deferred to the next milestone.
+
+## Milestone 5 - TRANSCENDENTAL-EI-LI-AFFINE-CERTIFICATE1
+
+- Added live certificate-backed special-function answers for affine `e^u/u` and `1/ln(u)` quotient families after existing elementary routes miss.
+- Exponential-integral answers render `Ei` with real-domain `u>0` and `u<0` rows and visible denominator exclusions.
+- Logarithmic-integral answers render `li` with real-domain `u>1` and `0<u<1` rows plus visible `u>0` and `ln(u) != 0` facts.
+- Public strategy labels, result schemas, Display, History, OOE, Tauri, and persistence remain unchanged.

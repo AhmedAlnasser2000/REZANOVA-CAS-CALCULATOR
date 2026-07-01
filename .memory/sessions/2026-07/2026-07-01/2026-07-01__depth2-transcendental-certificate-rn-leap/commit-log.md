@@ -17,3 +17,4 @@
 - `SPECIAL-FUNCTION-SI-CI-SUBSTRATE1`: verified and ready for commit. Typecheck is blocked by the same unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
 - `TRANSCENDENTAL-SI-CI-AFFINE-QUOTIENT-CERTIFICATE1`: verified and ready for commit. Typecheck is blocked by the same unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
 - `SPECIAL-FUNCTION-EI-LI-SUBSTRATE1`: verified and ready for commit. Typecheck is blocked by the same unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
+- `TRANSCENDENTAL-EI-LI-AFFINE-CERTIFICATE1`: verified and ready for commit. Typecheck is blocked by unrelated Surface Protocol dirty work and is recorded in `verification-summary.md`.
