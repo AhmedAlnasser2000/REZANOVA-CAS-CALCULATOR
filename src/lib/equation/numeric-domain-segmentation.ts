@@ -7,6 +7,7 @@ import {
   classifyRealDomainFactsOverInterval,
   type RealIntervalDomainSummary,
 } from './real-interval-arithmetic';
+import { collectEquationNumericPiecewiseBreakpointFacts } from './numeric-piecewise-breakpoints';
 
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -16,6 +17,7 @@ export type EquationNumericDomainFactKind =
   | 'log-domain'
   | 'root-domain'
   | 'fractional-power-domain'
+  | 'piecewise-breakpoint'
   | 'periodic-carrier'
   | 'trig-pole'
   | 'inverse-trig-domain'
@@ -42,6 +44,7 @@ export type EquationNumericSegmentationBoundaryKind =
   | 'log-boundary'
   | 'root-boundary'
   | 'fractional-power-boundary'
+  | 'piecewise-breakpoint'
   | 'trig-pole'
   | 'sampled-discontinuity';
 
@@ -467,6 +470,9 @@ export function collectEquationNumericDomainFacts(equationLatex: string, target:
   try {
     const parsed = ce.parse(equationLatex);
     collectSymbolicFacts(parsed.json as MathJson, facts, target);
+    for (const fact of collectEquationNumericPiecewiseBreakpointFacts(parsed.json, target)) {
+      addFact(facts, fact);
+    }
   } catch {
     return facts;
   }
@@ -826,6 +832,17 @@ export function buildEquationNumericSegmentationPlan(input: {
         start: input.start,
         end: input.end,
         kind: 'fractional-power-boundary',
+        excludedCandidate: false,
+      });
+    }
+    if (fact.kind === 'piecewise-breakpoint') {
+      addPolynomialExpressionBoundaries({
+        boundaries,
+        fact,
+        target: input.target,
+        start: input.start,
+        end: input.end,
+        kind: 'piecewise-breakpoint',
         excludedCandidate: false,
       });
     }

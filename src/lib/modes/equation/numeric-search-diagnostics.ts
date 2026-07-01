@@ -38,7 +38,7 @@ export function hardDomainFactLines(
 ) {
   return uniqueLines(
     facts
-      .filter((fact) => fact.kind !== 'sampled-discontinuity')
+      .filter((fact) => fact.kind !== 'sampled-discontinuity' && fact.kind !== 'piecewise-breakpoint')
       .map((fact) => fact.message),
   );
 }

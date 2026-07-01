@@ -52,3 +52,20 @@
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.
+
+## EQUATION-REAL-PIECEWISE-ABS-HYBRID1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/real-piecewise-abs-hybrid.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/modes/equation/numeric-shape-classifier.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts`
+- Evidence: 4 test files passed, 47 tests passed.
+- Regression unit gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/real-piecewise-abs-hybrid.test.ts src/lib/modes/equation/numeric-golden-trace-harness.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts src/lib/equation/numeric-interval/solve.test.ts`
+- Evidence: 6 test files passed, 58 tests passed.
+- Post-extraction regression gate passed:
+  - `npm run test:unit -- src/lib/modes/equation/real-piecewise-abs-hybrid.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/modes/equation/numeric-shape-classifier.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/numeric-golden-trace-harness.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts`
+- Evidence: 6 test files passed, 61 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed after extracting `src/lib/equation/numeric-piecewise-breakpoints.ts`.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.

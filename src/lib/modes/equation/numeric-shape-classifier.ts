@@ -162,6 +162,7 @@ function routeFromProfile(input: {
   const hasDenominator = facts.some((fact) => fact.kind === 'denominator-exclusion');
   const hasLog = facts.some((fact) => fact.kind === 'log-domain');
   const hasRoot = facts.some((fact) => fact.kind === 'root-domain');
+  const hasPiecewiseBreakpoint = facts.some((fact) => fact.kind === 'piecewise-breakpoint');
   const hasPeriodic = facts.some((fact) => fact.kind === 'periodic-carrier');
   const hasSampledDiscontinuity = facts.some((fact) => fact.kind === 'sampled-discontinuity')
     || Boolean(sampleProbe && sampleProbe.undefinedSampleCount > 0 && sampleProbe.finiteSampleCount > 0);
@@ -173,6 +174,11 @@ function routeFromProfile(input: {
 
   if (hasPeriodic) {
     evidence.push('Mixed periodic/non-periodic target occurrence needs nonlinear numeric search.');
+    return { route: 'nonlinear-search', intervalNeed: 'recommended', evidence };
+  }
+
+  if (hasPiecewiseBreakpoint) {
+    evidence.push('Piecewise abs/min/max breakpoints require branch-aware numeric solving or segmented search.');
     return { route: 'nonlinear-search', intervalNeed: 'recommended', evidence };
   }
 

@@ -13,6 +13,7 @@ import {
 } from './outcomes';
 import { tryDeterministicNumericAlgebraicFallback } from './deterministic-numeric-algebraic';
 import { tryComplexNumericPolynomialFallback } from './complex-numeric-polynomial-roots';
+import { tryRealPiecewiseAbsHybridFallback } from './real-piecewise-abs-hybrid';
 import { tryRealNonlinearNumericSearchFallback } from './real-nonlinear-numeric-search';
 import { tryRealPeriodicIntervalNumericFallback } from './real-periodic-interval-numeric';
 
@@ -39,6 +40,13 @@ export function tryRealNumericFallbackOutcome(input: {
       equationLatex: input.equationLatex,
       equationSolveTarget: input.equationSolveTarget,
       angleUnit: input.angleUnit,
+      sharedOutcome: input.sharedOutcome,
+    }) ?? tryRealPiecewiseAbsHybridFallback({
+      equationLatex: input.equationLatex,
+      equationSolveTarget: input.equationSolveTarget,
+      angleUnit: input.angleUnit,
+      equationDomainIntent: input.equationDomainIntent,
+      numericInterval: input.numericInterval,
       sharedOutcome: input.sharedOutcome,
     }) ?? tryRealPeriodicIntervalNumericFallback({
       equationLatex: input.equationLatex,
