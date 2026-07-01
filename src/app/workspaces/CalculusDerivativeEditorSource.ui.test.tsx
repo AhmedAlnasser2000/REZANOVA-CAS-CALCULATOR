@@ -67,6 +67,9 @@ describe('Calculus derivative editor source', () => {
 
     setMathFieldLatex('main-editor', 'd/dt(t^3+2t)');
     await waitFor(() => expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt'));
+    expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Written d/dt');
+    expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Applied t');
+    expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Body t^3+2t');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();
@@ -113,6 +116,9 @@ describe('Calculus derivative editor source', () => {
 
     setMathFieldLatex('main-editor', 'd/dt(t^2)');
     await waitFor(() => expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d/dt'));
+    expect(screen.getByTestId('calculus-derivative-point-readback')).toHaveTextContent('Written d/dt');
+    expect(screen.getByTestId('calculus-derivative-point-readback')).toHaveTextContent('Applied t');
+    expect(screen.getByTestId('calculus-derivative-point-readback')).toHaveTextContent('Body t^2');
     const pointInput = await screen.findByLabelText('Point t =');
     await user.clear(pointInput);
     await user.type(pointInput, '3');
@@ -157,6 +163,8 @@ describe('Calculus derivative editor source', () => {
     setMathFieldLatex('main-editor', 'd^3/dt^3(t^5)');
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d³/dt³');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(t)');
+    expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Applied t → t → t');
+    expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Body t^5');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();

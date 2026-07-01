@@ -10,6 +10,7 @@ import {
 } from '../../../lib/calculus/derivative-target';
 import {
   firstOrderDerivativeOperator,
+  formatDerivativeAppliedPath,
   formatDerivativeOperator,
   parseDerivativeOperator,
   type DerivativeOperatorKind,
@@ -171,9 +172,20 @@ export function DisplayEditorSurface({
   const calculusRailOperatorLabel = calculusRailOperator?.ok
     ? formatDerivativeOperator(calculusRailOperator.operator, settings?.mathNotationDisplay ?? 'rendered')
     : 'Invalid operator';
+  const calculusRailAppliedPath = calculusRailOperator?.ok
+    ? formatDerivativeAppliedPath(calculusRailOperator.operator)
+    : '';
+  const calculusRailBodyLatex = calculusRailNaturalRequest?.ok
+    ? calculusRailNaturalRequest.request.bodyLatex
+    : calculusMainEditorLatex.trim();
   const calculusRailFunctionHint = calculusScreen === 'partialDerivative'
     ? `f(${calculusRailVariableLatex}, ...)`
     : `f(${calculusRailVariableLatex})`;
+  const calculusRailReadbackTestId = calculusScreen === 'partialDerivative'
+    ? 'calculus-partial-derivative-readback'
+    : calculusScreen === 'derivativePoint'
+      ? 'calculus-derivative-point-readback'
+      : 'calculus-derivative-readback';
   const setImplicitVariable = (
     field: 'independentVariable' | 'dependentVariable',
     value: string,
@@ -453,6 +465,23 @@ export function DisplayEditorSurface({
                 {calculusRailOperatorLabel}
               </span>
               <span className="variable-hint">{calculusRailFunctionHint}</span>
+              <div className="calculus-operator-readback" data-testid={calculusRailReadbackTestId}>
+                <span>
+                  Written <strong>{calculusRailOperatorLabel}</strong>
+                </span>
+                {calculusRailAppliedPath ? (
+                  <span>
+                    Applied <strong>{calculusRailAppliedPath}</strong>
+                  </span>
+                ) : null}
+                {calculusRailBodyLatex ? (
+                  <span>
+                    Body <strong>{calculusRailBodyLatex}</strong>
+                  </span>
+                ) : (
+                  <span>Body needed</span>
+                )}
+              </div>
               {calculusScreen === 'derivativePoint' ? (
                 <label className="range-field calculus-operator-rail__point">
                   <span>{`Point ${calculusRailVariableLatex} =`}</span>

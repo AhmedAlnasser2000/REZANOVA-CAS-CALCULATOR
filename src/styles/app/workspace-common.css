@@ -200,6 +200,8 @@
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .calculus-operator-rail {

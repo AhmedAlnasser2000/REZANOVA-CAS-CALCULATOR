@@ -1479,3 +1479,7 @@
 ## 2026-07-01 - CALCULUS-DERIVATIVE-NATURAL-EDITOR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guided derivative UX source is natural main-editor entry: users type the complete derivative request, while the operator/body split remains internal parser evidence rather than a separate editable rail control.
+
+## 2026-07-01 - CALCULUS-DERIVATIVE-READBACK-STRIP1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The derivative operator rail is read-only parse feedback. It may display written operator, applied order, and parsed body, but must not be the primary editable source for derivative or partial-derivative operators.

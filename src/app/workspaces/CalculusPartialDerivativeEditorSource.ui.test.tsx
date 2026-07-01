@@ -63,6 +63,9 @@ describe('Calculus partial derivative editor source', () => {
     setMathFieldLatex('main-editor', '∂/∂y(x^2y+y^3)');
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂/∂y');
     expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(y, ...)');
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Written ∂/∂y');
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Applied y');
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Body x^2y+y^3');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();
@@ -105,6 +108,9 @@ describe('Calculus partial derivative editor source', () => {
       '\\frac{\\partial^3}{\\partial x\\partial y^2}\\left(x^3y^2+z\\right)',
     );
     expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂³/∂x∂y²');
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Written ∂³/∂x∂y²');
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Applied y → y → x');
+    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Body x^3y^2+z');
 
     const generatedPreview = document.querySelector('.generated-preview-card');
     expect(generatedPreview).toBeInTheDocument();
