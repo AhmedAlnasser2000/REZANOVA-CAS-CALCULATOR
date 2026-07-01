@@ -28,4 +28,5 @@
 
 ## Completed Commits
 
-- `EQUATION-REAL-POLYNOMIAL-STURM-CERTIFICATION1`: pending commit in this checkpoint.
+- `EQUATION-REAL-POLYNOMIAL-STURM-CERTIFICATION1`: `1565282a`
+- `EQUATION-REAL-INTERVAL-ARITHMETIC-DOMAIN1`: pending commit in this checkpoint.

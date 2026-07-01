@@ -228,6 +228,8 @@ describe('runNumericIntervalSolve', () => {
     const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
     expect(details).toContain('log-boundary');
     expect(details).toContain('denominator-exclusion');
+    expect(details).toContain('Interval arithmetic domain status: split-required');
+    expect(details).toContain('Interval arithmetic complexity:');
     expect(details).toContain('Segment complexity:');
     expect(details).toContain('Higher precision or a narrower interval is recommended');
     expect(details).toContain('Candidate approximately 2');
@@ -246,6 +248,7 @@ describe('runNumericIntervalSolve', () => {
     }
     const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
     expect(details).toContain('root-boundary');
+    expect(details).toContain('Interval arithmetic domain status: split-required');
     expect(details).toContain('-1');
   });
 

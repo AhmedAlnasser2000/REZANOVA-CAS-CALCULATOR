@@ -3,6 +3,10 @@ import { solvePolynomialRoots } from '../algebra/polynomial-roots';
 import { exactPolynomialCoefficientArray, exactScalarToNumber, parseExactPolynomial } from '../algebra/polynomial-core';
 import { formatApproxNumber } from '../display/format';
 import { evaluateLatexAtTarget, readNumericNode } from './domain-guards';
+import {
+  classifyRealDomainFactsOverInterval,
+  type RealIntervalDomainSummary,
+} from './real-interval-arithmetic';
 
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -51,6 +55,7 @@ export type EquationNumericSegmentationBoundary = {
 export type EquationNumericSegmentationPlan = {
   facts: EquationNumericDomainFact[];
   sampleProbe: EquationNumericSampleProbe;
+  intervalArithmetic: RealIntervalDomainSummary;
   boundaries: EquationNumericSegmentationBoundary[];
   gridBreakpoints: number[];
   excludedBoundaryCandidates: number[];
@@ -771,6 +776,12 @@ export function buildEquationNumericSegmentationPlan(input: {
   const facts = collectEquationNumericDomainFacts(input.equationLatex, input.target);
   const sampleProbe = probeEquationZeroForm(input.zeroFormLatex, input.target, input.angleUnit);
   addSampledDiscontinuityFact(facts, sampleProbe);
+  const intervalArithmetic = classifyRealDomainFactsOverInterval({
+    facts,
+    target: input.target,
+    start: input.start,
+    end: input.end,
+  });
   const boundaries: EquationNumericSegmentationBoundary[] = [];
 
   for (const fact of facts) {
@@ -846,6 +857,7 @@ export function buildEquationNumericSegmentationPlan(input: {
   return {
     facts,
     sampleProbe,
+    intervalArithmetic,
     boundaries: ordered,
     gridBreakpoints: uniqueSortedNumbers(ordered.map((boundary) => boundary.value)),
     excludedBoundaryCandidates: uniqueSortedNumbers(

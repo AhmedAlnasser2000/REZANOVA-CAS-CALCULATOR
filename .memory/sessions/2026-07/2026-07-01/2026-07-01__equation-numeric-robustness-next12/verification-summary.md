@@ -24,3 +24,17 @@
 - `npm run test:memory-protocol` passed.
 - `git diff --check` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.
+
+## EQUATION-REAL-INTERVAL-ARITHMETIC-DOMAIN1
+
+- Focused unit gate passed:
+  - `npm run test:unit -- src/lib/equation/real-interval-arithmetic.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/numeric-golden-trace-harness.test.ts`
+- Evidence: 4 test files passed, 44 tests passed.
+- Regression unit gate passed:
+  - `npm run test:unit -- src/lib/equation/real-interval-arithmetic.test.ts src/lib/equation/numeric-interval/solve.test.ts src/lib/equation/numeric-interval/sampling.test.ts src/lib/modes/equation/numeric-shape-classifier.test.ts src/lib/modes/equation/deterministic-numeric-algebraic.test.ts src/lib/modes/equation/real-nonlinear-numeric-search.test.ts src/lib/modes/equation/real-periodic-interval-numeric.test.ts src/lib/modes/equation/numeric-route-orchestration-closeout.test.ts src/lib/modes/equation/numeric-golden-trace-harness.test.ts`
+- Evidence: 9 test files passed, 79 tests passed.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo Surface Protocol/UI test type errors in `src/app/shell/ActiveSurfaceHost.ui.test.tsx`, `src/lib/surface-protocol/dto.test.ts`, and `src/lib/surface-protocol/spec-examples.test.ts`.

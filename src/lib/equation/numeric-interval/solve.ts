@@ -287,8 +287,27 @@ function formatBoundaryValues(values: readonly number[]) {
     : visible.join(', ');
 }
 
+function intervalArithmeticLines(plan: EquationNumericSegmentationPlan) {
+  const summary = plan.intervalArithmetic;
+  if (summary.classifications.length === 0) {
+    return [];
+  }
+  const visibleEvidence = summary.classifications
+    .filter((classification) => classification.status !== 'safe')
+    .slice(0, 4)
+    .map((classification) => classification.evidence);
+  return [
+    `Interval arithmetic domain status: ${summary.status} (${summary.safeCount} safe, ${summary.splitRequiredCount} split-required, ${summary.invalidCount} invalid, ${summary.unknownCount} unknown).`,
+    ...visibleEvidence,
+    ...(summary.classifications.length > visibleEvidence.length + summary.safeCount
+      ? [`${summary.classifications.length - visibleEvidence.length - summary.safeCount} additional interval domain check(s) omitted.`]
+      : []),
+  ];
+}
+
 function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan): DisplayDetailSection[] {
-  if (plan.boundaries.length === 0) {
+  const arithmeticLines = intervalArithmeticLines(plan);
+  if (plan.boundaries.length === 0 && arithmeticLines.length === 0) {
     return [];
   }
 
@@ -300,6 +319,7 @@ function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan
   return [{
     title: 'Numeric Segmentation',
     lines: [
+      ...arithmeticLines,
       `Boundary probes inside the interval: ${formatBoundaryValues(plan.gridBreakpoints)}.`,
       ...[...grouped.entries()].map(([kind, values]) =>
         `${kind}: ${formatBoundaryValues(values)}.`),
@@ -350,18 +370,31 @@ function numericConditioningDetailSections(input: {
 }): DisplayDetailSection[] {
   const boundaryCount = input.segmentation.boundaries.length;
   const excludedCount = input.segmentation.excludedBoundaryCandidates.length;
+  const intervalSplitCount = input.segmentation.intervalArithmetic.splitRequiredCount;
+  const intervalInvalidCount = input.segmentation.intervalArithmetic.invalidCount;
+  const intervalUnknownCount = input.segmentation.intervalArithmetic.unknownCount;
   const complexityLines = [
     `Segment complexity: ${boundaryCount} boundary probe${boundaryCount === 1 ? '' : 's'}, ${excludedCount} excluded boundary candidate${excludedCount === 1 ? '' : 's'}.`,
+    `Interval arithmetic complexity: ${intervalSplitCount} split-required, ${intervalInvalidCount} invalid, ${intervalUnknownCount} unknown domain check${intervalSplitCount + intervalInvalidCount + intervalUnknownCount === 1 ? '' : 's'}.`,
     `Adaptive complexity: ${input.diagnostics.refinedCellCount} refined cell${input.diagnostics.refinedCellCount === 1 ? '' : 's'}, ${input.diagnostics.adaptiveSampleCount} adaptive sample${input.diagnostics.adaptiveSampleCount === 1 ? '' : 's'}.`,
     `Discontinuity cells: ${input.diagnostics.discontinuityCellCount}.`,
   ];
   const needsGuidance =
     boundaryCount >= 4
     || excludedCount > 0
+    || intervalSplitCount > 0
+    || intervalInvalidCount > 0
     || input.diagnostics.discontinuityCellCount > 0
     || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
 
-  if (boundaryCount === 0 && input.diagnostics.refinedCellCount === 0 && input.diagnostics.discontinuityCellCount === 0) {
+  if (
+    boundaryCount === 0
+    && intervalSplitCount === 0
+    && intervalInvalidCount === 0
+    && intervalUnknownCount === 0
+    && input.diagnostics.refinedCellCount === 0
+    && input.diagnostics.discontinuityCellCount === 0
+  ) {
     return [];
   }
 
