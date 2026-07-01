@@ -42,10 +42,13 @@ export type TranscendentalTowerGenerator = {
   extensionKind: TranscendentalTowerExtensionKind;
   sourceFamily: TranscendentalFieldTowerExtension['family'];
   head: string;
+  sourceNode?: unknown;
   depth: number;
   argumentKind: TranscendentalFieldTowerExtension['argumentKind'];
+  argumentNode?: unknown;
   argumentLatex?: string;
   polynomialDegree?: number;
+  baseNode?: unknown;
   baseLatex?: string;
   requiredFacts: TranscendentalFieldTowerFact[];
   branchFacts: TranscendentalFieldTowerFact[];
@@ -188,15 +191,31 @@ function mapGenerators(extensions: TranscendentalFieldTowerExtension[], variable
     extensionKind: extensionKindFor(extension),
     sourceFamily: extension.family,
     head: extension.head,
+    sourceNode: buildGeneratorSourceNode(extension),
     depth: extension.depth,
     argumentKind: extension.argumentKind,
+    argumentNode: extension.argumentNode,
     argumentLatex: extension.argumentLatex,
     polynomialDegree: extension.polynomialDegree,
+    baseNode: extension.baseNode,
     baseLatex: extension.baseLatex,
     requiredFacts: extension.requiredFacts,
     branchFacts: extension.branchFacts,
     derivativeRule: derivativeRuleFor(extension, index, variable),
   }));
+}
+
+function buildGeneratorSourceNode(extension: TranscendentalFieldTowerExtension) {
+  if (extension.argumentNode === undefined) {
+    return undefined;
+  }
+  if (extension.family === 'exp') {
+    return ['Power', 'ExponentialE', extension.argumentNode];
+  }
+  if (extension.family === 'positive-base-exp' && extension.baseNode !== undefined) {
+    return ['Power', extension.baseNode, extension.argumentNode];
+  }
+  return [extension.head, extension.argumentNode];
 }
 
 export function buildTranscendentalTowerNormalForm(
