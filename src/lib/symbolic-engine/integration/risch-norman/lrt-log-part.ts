@@ -100,6 +100,10 @@ function polynomialLatex(polynomial: SymbolicPolynomial) {
   return boxLatex(buildSymbolicPolynomialNode(polynomial));
 }
 
+function denominatorDegreeCapForResultant(maxDescriptorDegree: number) {
+  return Math.floor((maxDescriptorDegree + 1) / 2);
+}
+
 function proof(): AntiderivativeBackcheck {
   return {
     status: 'verified-exact',
@@ -396,7 +400,7 @@ export function constructRischNormanLrtLogPart(
   if (denominator.polynomial.degree < 3) {
     return { kind: 'stop', reason: 'unsupported-denominator' };
   }
-  if (denominator.polynomial.degree > 3) {
+  if (denominator.polynomial.degree > denominatorDegreeCapForResultant(maxDescriptorDegree)) {
     return {
       kind: 'stop',
       reason: 'resultant-stop',

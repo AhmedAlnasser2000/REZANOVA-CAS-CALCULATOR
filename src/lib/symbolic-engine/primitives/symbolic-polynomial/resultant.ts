@@ -3,6 +3,7 @@ import {
   mergeSymbolicCoefficientFacts,
   multiplySymbolicCoefficients,
   negateSymbolicCoefficient,
+  isSymbolicCoefficientZero,
   zeroSymbolicCoefficient,
   type SymbolicCoefficient,
 } from '../coefficient-domain';
@@ -98,6 +99,9 @@ function determinantSymbolicMatrix(
 
   let sum = zero(variable);
   for (let column = 0; column < matrix.length; column += 1) {
+    if (isSymbolicCoefficientZero(matrix[0][column])) {
+      continue;
+    }
     counter.terms += 1;
     if (counter.terms > options.maxDeterminantTerms) {
       return { kind: 'stop', reason: 'determinant-cap' };
