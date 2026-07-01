@@ -1,4 +1,9 @@
 import { solvePolynomialRoots, type PolynomialRootDiagnostics } from '../../algebra/polynomial-roots';
+import {
+  certifyRealPolynomialRootsSturm,
+  rootInSturmIntervals,
+  type SturmRealRootCertification,
+} from '../../algebra/sturm-real-roots';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
 import { dedupeNumericRoots, validateCandidateRoots } from '../../equation/candidate-validation';
@@ -72,6 +77,7 @@ function detailSectionsFor(input: {
   degree: number;
   kind: 'polynomial' | 'rational';
   rootDiagnostics?: PolynomialRootDiagnostics;
+  sturmCertification?: SturmRealRootCertification;
   roots: readonly number[];
   rejectedCount: number;
   zeroFormLatex: string;
@@ -125,6 +131,25 @@ function detailSectionsFor(input: {
     });
   }
 
+  if (input.sturmCertification) {
+    const certification = input.sturmCertification;
+    sections.push({
+      title: 'Real Root Certification',
+      lines: certification.kind === 'certified'
+        ? [
+            `Sturm sequence certified ${certification.distinctRealRootCount} distinct real root${certification.distinctRealRootCount === 1 ? '' : 's'}.`,
+            `Isolated intervals: ${certification.intervals.length}.`,
+            ...(input.roots.length === certification.distinctRealRootCount
+              ? ['All real polynomial roots certified and validated against the original equation.']
+              : [`Validated ${input.roots.length} accepted root${input.roots.length === 1 ? '' : 's'} after original-equation checks.`]),
+          ]
+        : [
+            `Sturm certification inconclusive: ${certification.reason ?? 'unknown reason'}.`,
+            `Sturm counted ${certification.distinctRealRootCount} distinct real root${certification.distinctRealRootCount === 1 ? '' : 's'} before isolation stopped.`,
+          ],
+    });
+  }
+
   sections.push({
     title: 'Numeric Validation',
     lines: [
@@ -139,6 +164,7 @@ function detailSectionsFor(input: {
 }
 
 function realRootsFromPolynomial(coefficients: readonly number[]) {
+  const sturmCertification = certifyRealPolynomialRootsSturm(coefficients);
   const roots = solvePolynomialRoots({ coefficients: [...coefficients] });
   if (roots.kind === 'error') {
     return roots;
@@ -152,6 +178,7 @@ function realRootsFromPolynomial(coefficients: readonly number[]) {
         .map((root) => root.re),
     ),
     diagnostics: roots.diagnostics,
+    sturmCertification,
   };
 }
 
@@ -203,6 +230,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         degree: polynomial.degree,
         kind: polynomial.kind,
         rootDiagnostics: undefined,
+        sturmCertification: undefined,
         roots: [],
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
@@ -226,6 +254,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         degree: polynomial.degree,
         kind: polynomial.kind,
         rootDiagnostics: undefined,
+        sturmCertification: undefined,
         roots: [],
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
@@ -248,6 +277,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         degree: polynomial.degree,
         kind: polynomial.kind,
         rootDiagnostics: roots.diagnostics,
+        sturmCertification: roots.sturmCertification,
         roots: [],
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
@@ -270,6 +300,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         degree: polynomial.degree,
         kind: polynomial.kind,
         rootDiagnostics: roots.diagnostics,
+        sturmCertification: roots.sturmCertification,
         roots: [],
         rejectedCount: validation.rejected.length,
         zeroFormLatex: classification.zeroFormLatex,
@@ -295,13 +326,14 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
   const formattedRoots = accepted.map((value) => formatApproxNumber(value));
   const detailSections = appendExtraneousSolutionsDetailSection(
     detailSectionsFor({
-    classification,
-    degree: polynomial.degree,
-    kind: polynomial.kind,
-    rootDiagnostics: roots.diagnostics,
-    roots: accepted,
-    rejectedCount: validation.rejected.length,
-    zeroFormLatex: classification.zeroFormLatex,
+      classification,
+      degree: polynomial.degree,
+      kind: polynomial.kind,
+      rootDiagnostics: roots.diagnostics,
+      sturmCertification: roots.sturmCertification,
+      roots: accepted,
+      rejectedCount: validation.rejected.length,
+      zeroFormLatex: classification.zeroFormLatex,
     }),
     extraneousEvidenceFromRejectedCandidates(validation.rejected),
   );
@@ -322,7 +354,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
     resultOrigin: 'numeric-fallback',
     answerDomain: 'real',
     solveBadges: polynomial.kind === 'rational' ? ['LCD Clear', 'Candidate Checked'] : ['Candidate Checked'],
-    solveSummaryText: `${method}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${validation.rejected.length > 0 ? `, rejected ${validation.rejected.length}.` : '.'}`,
+    solveSummaryText: `${method}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${roots.sturmCertification.kind === 'certified' && accepted.every((root) => rootInSturmIntervals(root, roots.sturmCertification.intervals)) ? ' with Sturm certification' : ''}${validation.rejected.length > 0 ? `, rejected ${validation.rejected.length}.` : '.'}`,
     candidateValues: accepted,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     numericMethod: method,

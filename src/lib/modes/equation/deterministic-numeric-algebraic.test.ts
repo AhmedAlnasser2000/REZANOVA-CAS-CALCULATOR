@@ -31,7 +31,11 @@ describe('Equation deterministic numeric algebraic fallback', () => {
     const text = collectOutcomeText(result);
     expect(text).toContain('No supported exact form was found; showing validated approximate real roots.');
     expect(result.detailSections?.map((section) => section.title)).toContain('Polynomial Diagnostics');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Real Root Certification');
     expect(text).toContain('Root engine: aberth-ehrlich');
+    expect(text).toContain('Sturm sequence certified 1 distinct real root.');
+    expect(text).toContain('All real polynomial roots certified and validated against the original equation.');
+    expect(result.solveSummaryText).toContain('with Sturm certification');
     expect(text).toContain('Conditioning passes: 1.');
     expect(text).toContain('Nearest root separation:');
     expect(text).not.toContain('Higher precision is recommended');
@@ -86,6 +90,7 @@ describe('Equation deterministic numeric algebraic fallback', () => {
     expect(text).toContain('x-2 \\ne0');
     expect(text).toContain('x\\ne 2');
     expect(text).toContain('Cleared numeric polynomial denominators');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Real Root Certification');
   });
 
   it('keeps exact symbolic wins ahead of numeric fallback for simple supported forms', () => {
