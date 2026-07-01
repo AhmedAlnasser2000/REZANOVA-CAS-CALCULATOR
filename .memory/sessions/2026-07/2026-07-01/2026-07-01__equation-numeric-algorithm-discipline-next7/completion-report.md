@@ -19,7 +19,8 @@
 - `EQUATION-NUMERIC-SMOOTH-ACCELERATION1`: added guarded Newton/secant acceleration inside the ITP bracket kernel, updated method wording, and kept unsafe/discontinuous/tangent cases on ITP/bisection/local-minimum recovery.
 - `EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1`: added shared affine trig carrier period detection for numeric intervals, surfaced `Periodic Interval Summary` details on explicit interval runs, and locked that periodic/dense cases remain exact-first or explicit-window-local instead of fixed-window global enumeration.
 - `EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1`: added visible Complex On numeric polynomial/rational fallback after exact symbolic routes miss. The route reuses shared polynomial extraction and Aberth-Ehrlich roots through degree `64`, preserves real and non-real roots, honors rectangular/polar/cis approximate readback, and validates denominator exclusions without enabling Complex nonlinear numeric solving.
+- `EQUATION-COMPLEX-NUMERIC-NONLINEAR-POLICY0`: policy-locked Complex nonlinear numeric solving as a future track separate from Real ITP interval solving, with branch-cut, seed-grid/contour, duplicate/cluster, two-real-variable residual, and confidence/completeness prerequisites.
 
 ## Pending Gates
 
-- `EQUATION-COMPLEX-NUMERIC-NONLINEAR-POLICY0`
+- None.

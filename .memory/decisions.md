@@ -1487,3 +1487,7 @@
 ## 2026-07-01 - EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex On numeric polynomial/rational fallback is live after exact symbolic routes miss. It uses the shared Aberth-Ehrlich polynomial engine through degree `64`, preserves real and non-real roots, honors `complexExactForm` for approximate rectangular/polar/cis readback, validates residuals and denominator exclusions, and keeps Complex nonlinear numeric solving plus generated Complex Cardano/Ferrari formula output deferred.
+
+## 2026-07-01 - EQUATION-COMPLEX-NUMERIC-NONLINEAR-POLICY0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex nonlinear numeric solving is a separate future track from Real ITP interval solving. It must not adapt one-dimensional real interval search directly; prerequisites include branch-cut policy, seed-grid or contour/argument-principle boundaries, duplicate and cluster handling, two-real-variable residual validation, and explicit confidence/completeness wording before visible Complex nonlinear roots are enabled.

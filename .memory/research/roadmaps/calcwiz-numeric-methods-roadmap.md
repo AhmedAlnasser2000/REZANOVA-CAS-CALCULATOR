@@ -57,6 +57,8 @@ Updated for `EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1` on 2026-07-01: per
 
 Updated for `EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1` on 2026-07-01: Complex On now has visible numeric polynomial/rational roots after exact symbolic routes miss. The route reuses the shared Aberth-Ehrlich polynomial engine through degree `64`, preserves real and non-real roots, honors rectangular/polar/cis approximate readback, validates denominator exclusions, and keeps Complex nonlinear numeric solving as a separate future policy track.
 
+Updated for `EQUATION-COMPLEX-NUMERIC-NONLINEAR-POLICY0` on 2026-07-01: Complex nonlinear numeric solving is policy-locked as a later, separate track from Real ITP interval solving. Future work must first define branch-cut semantics, seed-grid and contour strategy, duplicate/cluster handling, two-real-variable residual validation, and confidence/completeness wording before any visible Complex nonlinear roots are returned.
+
 The roadmap itself is documentation. Live implementation changes are recorded above by milestone status; roadmap edits do not by themselves authorize Display, Formula Viewer, Copy Result, History, OOE, app-state, Tauri, persisted schema, or public runtime contract changes.
 
 ## Purpose
@@ -101,6 +103,7 @@ This roadmap is grounded in:
 - Cardano and Ferrari remain symbolic exact formula/readback routes. Numeric degree-3/4 solving must use numeric polynomial/root methods or existing guided polynomial numeric fallback, not Cardano/Ferrari formula expansion.
 - Future step-by-step output must preserve that distinction: simple/factorable/special-form numeric polynomials should explain factor/inversion/numeric-root methods; Cardano/Ferrari derivations should be advanced/collapsed symbolic exact material, never the default numeric teaching path.
 - Real numeric solving came first. Complex numeric polynomial/rational fallback is now live through the shared polynomial engine, while Complex nonlinear numeric solving still needs a separate later policy for two-real-variable residual systems, branch cuts, seed strategy, and confidence wording.
+- Complex nonlinear numeric solving must not reuse Real interval-root logic as if complex roots were one-dimensional. It needs explicit branch-cut policy, seed-grid or contour/argument-principle boundaries, duplicate and cluster handling, residual validation over real/imaginary components, and honest local/global completeness language.
 - The Calculus integration pipeline's Layer 5 numeric fallback is not a shared root solver. It is adaptive quadrature for definite integrals with numeric bounds and must not import Equation orchestration or Equation result semantics.
 - Cross-domain numeric work may share primitive mechanics and policy language, but each domain owns its own target/variable meaning, validation standard, result wording, and user workflow.
 

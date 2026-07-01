@@ -90,3 +90,14 @@
 - `npm run test:file-sizes` passed.
 - `npm run build` is blocked by unrelated current repo Surface Protocol type errors in `src/lib/surface-protocol/dto.test.ts` and `src/lib/surface-protocol/spec-examples.test.ts`; a rerun after fixing this slice's local TypeScript issue showed only those Surface Protocol errors.
 - Full `src/lib/modes/equation/complex-domain.test.ts` currently has stale/unrelated expectation failures around existing Complex exact symbolic boundaries and old Complex numeric deferral wording; this milestone did not edit that test file.
+
+## EQUATION-COMPLEX-NUMERIC-NONLINEAR-POLICY0
+
+- Policy-only gate: updated numeric roadmap, current-state, decisions, journal, and active session dossier.
+- Locked that Complex nonlinear numeric solving is not a reuse of Real one-dimensional ITP interval search.
+- Future prerequisites recorded: branch-cut policy, seed-grid or contour/argument-principle boundaries, duplicate/root-cluster handling, two-real-variable residual validation, confidence/completeness wording, and separation from visible Complex polynomial numeric fallback.
+- `npm run lint` passed.
+- `npm run test:file-sizes` passed.
+- `npm run test:memory-protocol` passed.
+- `git diff --check` passed.
+- `npm run build` is blocked by unrelated current repo Surface Protocol type errors in `src/lib/surface-protocol/dto.test.ts` and `src/lib/surface-protocol/spec-examples.test.ts`.

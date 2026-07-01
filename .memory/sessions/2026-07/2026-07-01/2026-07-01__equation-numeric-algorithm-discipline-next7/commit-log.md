@@ -29,3 +29,4 @@
 - `EQUATION-NUMERIC-SMOOTH-ACCELERATION1`: committed in this checkpoint.
 - `EQUATION-NUMERIC-PERIODIC-FAMILY-INTERVAL-LIFT1`: committed in this checkpoint.
 - `EQUATION-COMPLEX-NUMERIC-POLYNOMIAL-ROOTS1`: committed in this checkpoint.
+- `EQUATION-COMPLEX-NUMERIC-NONLINEAR-POLICY0`: committed in this checkpoint.
