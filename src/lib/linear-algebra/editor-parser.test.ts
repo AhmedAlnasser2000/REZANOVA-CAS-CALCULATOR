@@ -70,6 +70,24 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
   });
 
+  it('parses structured Matrix systems', () => {
+    expect(parsed('Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}', 'matrix')).toEqual({
+      kind: 'linearSystem',
+      form: 'Ax=b',
+      coefficients: { kind: 'named', name: 'A' },
+      constants: { kind: 'vectorLiteral', value: [5, 11] },
+    });
+    expect(parsed(
+      'A x + \\begin{bmatrix}-5\\\\-11\\end{bmatrix}=0',
+      'matrix',
+    )).toEqual({
+      kind: 'linearSystem',
+      form: 'Ax+b=0',
+      coefficients: { kind: 'named', name: 'A' },
+      constants: { kind: 'vectorLiteral', value: [5, 11] },
+    });
+  });
+
   it('returns controlled errors for empty, template, malformed, and unsupported forms', () => {
     expect(parseLinearAlgebraEditorLatex('', { mode: 'matrix' })).toMatchObject({
       ok: false,
@@ -85,7 +103,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
     expect(parseLinearAlgebraEditorLatex('A=b', { mode: 'matrix' })).toMatchObject({
       ok: false,
-      reason: 'unsupported-expression',
+      reason: 'unsupported-equation-shape',
     });
   });
 });

@@ -233,6 +233,34 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     ));
   });
 
+  it('runs structured Matrix systems from the main editor', async () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}');
+    });
+    act(() => {
+      hook.result.current.runMatrixEditorAction();
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        exactLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+        solveSummaryText: 'Unique solution.',
+      }),
+      'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      'matrix',
+      expect.objectContaining({
+        matrixSeed: expect.objectContaining({
+          operation: 'linearSystem',
+          systemRhs: [5, 11],
+          systemForm: 'Ax=b',
+        }),
+      }),
+    ));
+  });
+
   it('commits controlled errors for unsupported Matrix editor expressions', () => {
     const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 
@@ -250,6 +278,28 @@ describe('useLinearAlgebraTableShellRuntime', () => {
         error: expect.stringContaining('Rank and RREF'),
       }),
       '\\operatorname{rank}\\left(A\\right)',
+      'matrix',
+    );
+  });
+
+  it('offers explicit Equation handoff for unsupported Matrix equations', () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('A=b');
+    });
+    act(() => {
+      hook.result.current.runMatrixEditorAction();
+    });
+
+    expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'error',
+        title: 'Matrix',
+        error: expect.stringContaining('Open it in Equation'),
+        actions: [{ kind: 'send', target: 'equation', latex: 'A=b' }],
+      }),
+      'A=b',
       'matrix',
     );
   });

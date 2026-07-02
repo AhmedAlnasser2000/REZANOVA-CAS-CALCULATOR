@@ -400,7 +400,7 @@ export function DisplayOutcomeShell({
               >
                 {action.kind === 'send'
                   ? action.target === 'equation'
-                    ? 'Send to Equation'
+                    ? 'Open in Equation'
                     : 'Send to Calc'
                   : action.mode === 'geometry'
                     ? 'Use in Geometry'

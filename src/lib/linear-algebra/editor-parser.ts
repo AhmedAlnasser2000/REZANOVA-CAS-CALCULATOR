@@ -7,6 +7,8 @@ export type LinearAlgebraValueExpression =
   | { kind: 'matrixLiteral'; value: number[][] }
   | { kind: 'vectorLiteral'; value: number[] };
 
+export type LinearAlgebraSystemForm = 'Ax=b' | 'Ax+b=0';
+
 export type LinearAlgebraUnaryOperator =
   | 'determinant'
   | 'rank'
@@ -26,13 +28,20 @@ export type LinearAlgebraEditorExpression =
   | LinearAlgebraValueExpression
   | { kind: 'unary'; operator: LinearAlgebraUnaryOperator; value: LinearAlgebraEditorExpression }
   | { kind: 'binary'; operator: LinearAlgebraBinaryOperator; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
-  | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression };
+  | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
+  | {
+      kind: 'linearSystem';
+      form: LinearAlgebraSystemForm;
+      coefficients: LinearAlgebraValueExpression;
+      constants: LinearAlgebraValueExpression;
+    };
 
 export type LinearAlgebraEditorParseErrorReason =
   | 'empty-expression'
   | 'placeholder'
   | 'invalid-matrix-literal'
   | 'invalid-number'
+  | 'unsupported-equation-shape'
   | 'unsupported-expression';
 
 export type LinearAlgebraEditorParseResult =
@@ -187,6 +196,114 @@ function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null 
     : { kind: 'matrixLiteral', value: matrix };
 }
 
+function isMatrixCoefficientExpression(
+  expression: LinearAlgebraEditorExpression | null,
+): expression is LinearAlgebraValueExpression {
+  return expression !== null && (
+    expression.kind === 'matrixLiteral'
+    || (expression.kind === 'named' && (expression.name === 'A' || expression.name === 'B'))
+  );
+}
+
+function isInlineVectorExpression(
+  expression: LinearAlgebraEditorExpression | null,
+): expression is LinearAlgebraValueExpression {
+  return expression !== null && expression.kind === 'vectorLiteral';
+}
+
+function negateVectorExpression(expression: LinearAlgebraValueExpression): LinearAlgebraValueExpression {
+  return expression.kind === 'vectorLiteral'
+    ? { kind: 'vectorLiteral', value: expression.value.map((value) => -value) }
+    : expression;
+}
+
+function stripWrappedParens(input: string): string {
+  return input.startsWith('(') && input.endsWith(')') ? input.slice(1, -1) : input;
+}
+
+function tryParseExpression(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+): LinearAlgebraEditorExpression | null {
+  try {
+    return parseExpression(input, options);
+  } catch (error) {
+    if (error instanceof ParseFailure) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+function parseCoefficientTimesX(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+): LinearAlgebraValueExpression | null {
+  const normalized = stripWrappedParens(input);
+  const suffixes = ['\\timesx', '\\cdotx', '*x', 'x'];
+  const suffix = suffixes.find((candidate) => normalized.endsWith(candidate));
+  if (!suffix) {
+    return null;
+  }
+
+  const coefficientLatex = normalized.slice(0, -suffix.length);
+  if (!coefficientLatex) {
+    return null;
+  }
+
+  const coefficient = tryParseExpression(coefficientLatex, options);
+  return isMatrixCoefficientExpression(coefficient) ? coefficient : null;
+}
+
+function parseLinearSystemExpression(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+): LinearAlgebraEditorExpression | null {
+  const equation = splitTopLevel(input, ['=']);
+  if (!equation || !equation.left || !equation.right) {
+    return null;
+  }
+
+  const directCoefficients = parseCoefficientTimesX(equation.left, options);
+  if (directCoefficients) {
+    const constants = tryParseExpression(equation.right, options);
+    return isInlineVectorExpression(constants)
+      ? {
+          kind: 'linearSystem',
+          form: 'Ax=b',
+          coefficients: directCoefficients,
+          constants,
+        }
+      : null;
+  }
+
+  if (equation.right !== '0') {
+    return null;
+  }
+
+  const leftOffset = splitTopLevel(equation.left, ['+', '-']);
+  if (!leftOffset || !leftOffset.left || !leftOffset.right) {
+    return null;
+  }
+
+  const coefficients = parseCoefficientTimesX(leftOffset.left, options);
+  if (!coefficients) {
+    return null;
+  }
+
+  const offset = tryParseExpression(leftOffset.right, options);
+  if (!isInlineVectorExpression(offset)) {
+    return null;
+  }
+
+  return {
+    kind: 'linearSystem',
+    form: 'Ax+b=0',
+    coefficients,
+    constants: leftOffset.token === '+' ? negateVectorExpression(offset) : offset,
+  };
+}
+
 function parseSuffixUnary(input: string, options: LinearAlgebraEditorParseOptions): LinearAlgebraEditorExpression | null {
   const suffixes: Array<[string, LinearAlgebraUnaryOperator]> = [
     ['^{\\mathsf{T}}', 'transpose'],
@@ -314,6 +431,22 @@ export function parseLinearAlgebraEditorLatex(
     }
     if (normalized.includes('#')) {
       fail('placeholder', 'Fill every Matrix/Vector template slot before running it.');
+    }
+
+    if (normalized.includes('=')) {
+      if (options.mode === 'matrix') {
+        const system = parseLinearSystemExpression(normalized, options);
+        if (system) {
+          return {
+            ok: true,
+            expression: system,
+          };
+        }
+      }
+      fail(
+        'unsupported-equation-shape',
+        'This equation is outside Matrix/Vector structured forms. Open it in Equation for free-form solving.',
+      );
     }
 
     return {

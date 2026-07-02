@@ -1,4 +1,5 @@
 import { runMatrixOperation } from '../linear-algebra/matrix';
+import { runMatrixLinearSystem } from '../linear-algebra/matrix-system';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
@@ -14,15 +15,18 @@ import {
 import type {
   DisplayOutcome,
   MatrixOperation,
+  MatrixSystemForm,
 } from '../../types/calculator';
 
 export type RunMatrixModeRequest = {
   operation: MatrixOperation;
   matrixA: number[][];
   matrixB: number[][];
+  systemRhs?: number[];
+  systemForm?: MatrixSystemForm;
 };
 
-export function matrixOperationLabel(operation: MatrixOperation) {
+export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSystemForm) {
   switch (operation) {
     case 'add':
       return 'A+B';
@@ -42,17 +46,27 @@ export function matrixOperationLabel(operation: MatrixOperation) {
       return 'Inverse A';
     case 'inverseB':
       return 'Inverse B';
+    case 'linearSystem':
+      return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
     default:
       return 'Matrix';
   }
 }
 
-export function runMatrixMode({ operation, matrixA, matrixB }: RunMatrixModeRequest): DisplayOutcome {
+export function runMatrixMode({ operation, matrixA, matrixB, systemRhs, systemForm }: RunMatrixModeRequest): DisplayOutcome {
+  if (operation === 'linearSystem') {
+    return runMatrixLinearSystem({
+      coefficients: matrixA,
+      constants: systemRhs ?? [],
+      form: systemForm ?? 'Ax=b',
+    });
+  }
+
   const response = runMatrixOperation({ operation, matrixA, matrixB });
   if (response.error) {
     return {
       kind: 'error',
-      title: matrixOperationLabel(operation),
+      title: matrixOperationLabel(operation, systemForm),
       error: response.error,
       warnings: response.warnings,
       exactLatex: response.resultLatex,
@@ -62,7 +76,7 @@ export function runMatrixMode({ operation, matrixA, matrixB }: RunMatrixModeRequ
 
   return {
     kind: 'success',
-    title: matrixOperationLabel(operation),
+    title: matrixOperationLabel(operation, systemForm),
     exactLatex: response.resultLatex,
     approxText: response.approxText,
     warnings: response.warnings,
@@ -78,6 +92,8 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       rowsB: request.matrixB.length,
       matrixA: request.matrixA,
       matrixB: request.matrixB,
+      systemRhs: request.systemRhs,
+      systemForm: request.systemForm,
     },
   };
 }

@@ -1004,20 +1004,19 @@ export type ModeState = {
 };
 
 export type MatrixOperation =
-  | 'add'
-  | 'subtract'
-  | 'multiply'
-  | 'transposeA'
-  | 'transposeB'
-  | 'detA'
-  | 'detB'
-  | 'inverseA'
-  | 'inverseB';
+  | 'add' | 'subtract' | 'multiply'
+  | 'transposeA' | 'transposeB'
+  | 'detA' | 'detB'
+  | 'inverseA' | 'inverseB' | 'linearSystem';
+
+export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 
 export type MatrixRequest = {
   operation: MatrixOperation;
   matrixA: number[][];
   matrixB?: number[][];
+  systemRhs?: number[];
+  systemForm?: MatrixSystemForm;
 };
 
 export type MatrixReplaySeed = MatrixRequest;

@@ -20,6 +20,7 @@ import {
   dispatchMatrixEditorLatex,
   dispatchVectorEditorLatex,
 } from '../../lib/linear-algebra/editor-dispatch';
+import type { LinearAlgebraEquationHandoff } from '../../lib/linear-algebra/equation-handoff';
 import type {
   MatrixSurfaceState,
   VectorSurfaceState,
@@ -27,6 +28,7 @@ import type {
 import type {
   AngleUnit,
   DisplayOutcome,
+  DisplayOutcomeAction,
   MatrixOperation,
   ModeId,
   VectorOperation,
@@ -107,21 +109,37 @@ export function useLinearAlgebraRuntime({
     vectorStateRef.current = { vectorA, vectorB, angleUnit };
   }, [angleUnit, vectorA, vectorB]);
 
-  function commitMatrixEditorError(inputLatex: string, message: string) {
+  function handoffActions(handoff?: LinearAlgebraEquationHandoff): DisplayOutcomeAction[] | undefined {
+    return handoff
+      ? [{ kind: 'send', target: 'equation', latex: handoff.latex }]
+      : undefined;
+  }
+
+  function commitMatrixEditorError(
+    inputLatex: string,
+    message: string,
+    handoff?: LinearAlgebraEquationHandoff,
+  ) {
     commitOutcome({
       kind: 'error',
       title: 'Matrix',
       error: message,
       warnings: [],
+      actions: handoffActions(handoff),
     }, inputLatex, 'matrix');
   }
 
-  function commitVectorEditorError(inputLatex: string, message: string) {
+  function commitVectorEditorError(
+    inputLatex: string,
+    message: string,
+    handoff?: LinearAlgebraEquationHandoff,
+  ) {
     commitOutcome({
       kind: 'error',
       title: 'Vector',
       error: message,
       warnings: [],
+      actions: handoffActions(handoff),
     }, inputLatex, 'vector');
   }
 
@@ -215,7 +233,7 @@ export function useLinearAlgebraRuntime({
       matrixB,
     });
     if (!dispatched.ok) {
-      commitMatrixEditorError(inputLatex, dispatched.message);
+      commitMatrixEditorError(inputLatex, dispatched.message, dispatched.handoff);
       return;
     }
 
@@ -315,7 +333,7 @@ export function useLinearAlgebraRuntime({
       angleUnit,
     });
     if (!dispatched.ok) {
-      commitVectorEditorError(inputLatex, dispatched.message);
+      commitVectorEditorError(inputLatex, dispatched.message, dispatched.handoff);
       return;
     }
 

@@ -1620,3 +1620,7 @@
 ## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.
+
+## 2026-07-02 - MATRIX-AX-B-SYSTEM1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix structured systems are limited to editor-entered `Ax=b` and `Ax+b=0` forms with local vector placeholder `x` and inline RHS/offset vectors. Matrix classifies solution count with Matrix-owned exact rank/RREF facts and commits through the existing `linearAlgebra.matrix` OOE path/history seed. Unsupported equation-shaped Matrix/Vector input must expose an explicit `Open in Equation` action and must not import Equation solver internals or auto-route.

@@ -3,18 +3,21 @@ import type {
   MatrixResponse,
 } from '../../types/calculator';
 import { formatApproxNumber, matrixToLatex, scalarToLatex } from '../display/format';
-import type { ExactScalar } from '../algebra/polynomial-core';
 import {
   determinantExactMatrix,
   inverseExactMatrix,
-  scalar,
-  type ExactMatrix,
 } from './exact-matrix-core';
+import {
+  exactMatrixFromNumeric,
+  exactMatrixToLatex,
+  exactScalarToLatex,
+} from './exact-matrix-format';
 import {
   runNumericMatrixOperation,
   solveNumericLinearSystem,
   type MatrixCoreResult,
   type MatrixCoreStopReason,
+  type NumericMatrixRequest,
 } from './matrix-core';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
@@ -38,38 +41,6 @@ function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
     case 'unsupported-operation':
       return 'Unsupported matrix operation.';
   }
-}
-
-function exactScalarToLatex(value: ExactScalar): string {
-  if (value.denominator === 1) {
-    return `${value.numerator}`;
-  }
-
-  const sign = value.numerator < 0 ? '-' : '';
-  return `${sign}\\frac{${Math.abs(value.numerator)}}{${value.denominator}}`;
-}
-
-function exactMatrixToLatex(matrix: ExactMatrix): string {
-  const body = matrix
-    .map((row) => row.map(exactScalarToLatex).join(' & '))
-    .join('\\\\');
-
-  return `\\begin{bmatrix}${body}\\end{bmatrix}`;
-}
-
-function exactMatrixFromNumeric(matrix: number[][]): ExactMatrix | null {
-  const exact: ExactMatrix = [];
-  for (const row of matrix) {
-    const exactRow: ExactScalar[] = [];
-    for (const value of row) {
-      if (!Number.isSafeInteger(value)) {
-        return null;
-      }
-      exactRow.push(scalar(value));
-    }
-    exact.push(exactRow);
-  }
-  return exact;
 }
 
 function exactMatrixReadback(req: MatrixRequest): string | null {
@@ -132,5 +103,17 @@ export function solveLinearSystem(coefficients: number[][], constants: number[])
 }
 
 export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
-  return matrixCoreResultToResponse(req, runNumericMatrixOperation(req));
+  if (req.operation === 'linearSystem') {
+    return {
+      warnings: [],
+      error: 'Structured Matrix systems run through the Matrix editor.',
+    };
+  }
+
+  const numericRequest: NumericMatrixRequest = {
+    operation: req.operation as NumericMatrixRequest['operation'],
+    matrixA: req.matrixA,
+    matrixB: req.matrixB,
+  };
+  return matrixCoreResultToResponse(req, runNumericMatrixOperation(numericRequest));
 }

@@ -7,6 +7,10 @@ import {
   parseLinearAlgebraEditorLatex,
   type LinearAlgebraEditorExpression,
 } from './editor-parser';
+import {
+  buildLinearAlgebraEquationHandoff,
+  type LinearAlgebraEquationHandoff,
+} from './equation-handoff';
 
 type MatrixOperand = {
   matrix: number[][];
@@ -36,11 +40,11 @@ type ExecutableVectorRequest = VectorRequest & { vectorB: number[] };
 
 export type MatrixEditorDispatchResult =
   | { ok: true; request: ExecutableMatrixRequest }
-  | { ok: false; message: string };
+  | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
 
 export type VectorEditorDispatchResult =
   | { ok: true; request: ExecutableVectorRequest }
-  | { ok: false; message: string };
+  | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
 
 function cloneMatrix(matrix: number[][]) {
   return matrix.map((row) => [...row]);
@@ -120,6 +124,30 @@ function matrixPairRequest(
       operation: expression.operator,
       matrixA: left.matrix,
       matrixB: right.matrix,
+    },
+  };
+}
+
+function matrixSystemRequest(
+  input: MatrixEditorDispatchInput,
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'linearSystem' }>,
+): MatrixEditorDispatchResult {
+  const coefficients = matrixOperand(expression.coefficients, input);
+  if (!coefficients || expression.constants.kind !== 'vectorLiteral') {
+    return {
+      ok: false,
+      message: 'Matrix systems need Matrix A/B or an inline matrix, plus an inline RHS vector.',
+    };
+  }
+
+  return {
+    ok: true,
+    request: {
+      operation: 'linearSystem',
+      matrixA: coefficients.matrix,
+      matrixB: cloneMatrix(input.matrixB),
+      systemRhs: cloneVector(expression.constants.value),
+      systemForm: expression.form,
     },
   };
 }
@@ -252,10 +280,26 @@ function vectorNormRequest(
 export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): MatrixEditorDispatchResult {
   const parsed = parseLinearAlgebraEditorLatex(input.latex, { mode: 'matrix' });
   if (!parsed.ok) {
-    return { ok: false, message: parsed.message };
+    return {
+      ok: false,
+      message: parsed.message,
+      ...(parsed.reason === 'unsupported-equation-shape'
+        ? {
+            handoff: buildLinearAlgebraEquationHandoff({
+              sourceMode: 'matrix',
+              latex: input.latex,
+              reason: 'unsupported-equation-shape',
+              suggestedTarget: 'x',
+            }),
+          }
+        : {}),
+    };
   }
 
   const expression = parsed.expression;
+  if (expression.kind === 'linearSystem') {
+    return matrixSystemRequest(input, expression);
+  }
   if (expression.kind === 'binary') {
     return matrixPairRequest(input, expression);
   }
@@ -272,7 +316,19 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
 export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): VectorEditorDispatchResult {
   const parsed = parseLinearAlgebraEditorLatex(input.latex, { mode: 'vector' });
   if (!parsed.ok) {
-    return { ok: false, message: parsed.message };
+    return {
+      ok: false,
+      message: parsed.message,
+      ...(parsed.reason === 'unsupported-equation-shape'
+        ? {
+            handoff: buildLinearAlgebraEquationHandoff({
+              sourceMode: 'vector',
+              latex: input.latex,
+              reason: 'unsupported-equation-shape',
+            }),
+          }
+        : {}),
+    };
   }
 
   const expression = parsed.expression;

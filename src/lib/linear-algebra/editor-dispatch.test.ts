@@ -37,6 +37,53 @@ describe('linear algebra editor dispatch', () => {
     });
   });
 
+  it('maps structured Matrix systems to Matrix system requests', () => {
+    expect(dispatchMatrixEditorLatex({
+      latex: 'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: {
+        operation: 'linearSystem',
+        matrixA,
+        matrixB,
+        systemRhs: [5, 11],
+        systemForm: 'Ax=b',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'A x + \\begin{bmatrix}-5\\\\-11\\end{bmatrix}=0',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'linearSystem',
+        systemRhs: [5, 11],
+        systemForm: 'Ax+b=0',
+      },
+    });
+  });
+
+  it('returns explicit Equation handoffs for unsupported equation-shaped editor input', () => {
+    expect(dispatchMatrixEditorLatex({
+      latex: 'A=b',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: false,
+      message: 'This equation is outside Matrix/Vector structured forms. Open it in Equation for free-form solving.',
+      handoff: {
+        source: 'linear-algebra',
+        sourceMode: 'matrix',
+        latex: 'A=b',
+        reason: 'unsupported-equation-shape',
+        suggestedTarget: 'x',
+      },
+    });
+  });
+
   it('maps Vector editor expressions to existing Vector requests', () => {
     expect(dispatchVectorEditorLatex({
       latex: 'u\\cdot v',
@@ -82,7 +129,7 @@ describe('linear algebra editor dispatch', () => {
       matrixB,
     })).toMatchObject({
       ok: false,
-      message: 'Unsupported Matrix/Vector editor expression.',
+      message: expect.stringContaining('Open it in Equation'),
     });
     expect(dispatchVectorEditorLatex({
       latex: '\\det\\left(A\\right)',
