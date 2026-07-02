@@ -984,7 +984,6 @@ export default function App() {
     patchSettings,
     replayVariableSubstitutions,
     reserveHistoryTicket: reservePendingHistoryTicket,
-    setClipboardNotice,
     setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
     storedVariables: variableMemory,
     clearReplayVariableSubstitutions: () => setReplayVariableSubstitutions(null),
@@ -992,15 +991,14 @@ export default function App() {
   const {
     buildWorkspaceHostProps: buildLinearAlgebraTableWorkspaceHostProps,
     clearActiveLinearAlgebraTableDraft,
-    isLinearAlgebraTableMode,
-    loadTablePrimaryLatex,
+    isLinearAlgebraTableMode, linearAlgebraRuntime, loadTablePrimaryLatex, matrixKeyboardLayouts,
     persistenceState: linearAlgebraTablePersistenceState,
     resetLinearAlgebraTableRuntime,
     restoreLinearAlgebraTableHistoryEntry,
     runMatrixAction,
     runTableAction,
     runVectorAction,
-    toggleTableSecondary,
+    toggleTableSecondary, vectorKeyboardLayouts,
   } = linearAlgebraTableShellRuntime;
   resetLinearAlgebraTableRuntimeRef.current = resetLinearAlgebraTableRuntime;
 
@@ -1176,6 +1174,8 @@ export default function App() {
         ? statisticsDraftLatex
       : currentMode === 'geometry'
         ? geometryDraftLatex
+      : currentMode === 'matrix' ? linearAlgebraRuntime.matrixEditorLatex
+      : currentMode === 'vector' ? linearAlgebraRuntime.vectorEditorLatex
       : currentMode === 'equation' && isEquationWorkScreen
         ? equationInputLatex
         : '';
@@ -1737,7 +1737,7 @@ export default function App() {
       return geometryDraftLatex;
     }
 
-    if (currentMode === 'table') {
+    if (currentMode === 'table' || currentMode === 'matrix' || currentMode === 'vector') {
       return linearAlgebraTableShellRuntime.activeExpressionLatex;
     }
 
@@ -2068,7 +2068,7 @@ export default function App() {
       resetCurrentCalculateScreen();
     } else if (currentMode === 'equation') {
       resetCurrentEquationScreen();
-    } else if (currentMode === 'table') {
+    } else if (currentMode === 'table' || currentMode === 'matrix' || currentMode === 'vector') {
       clearActiveLinearAlgebraTableDraft();
     }
 
@@ -2927,7 +2927,7 @@ export default function App() {
           launchGuideExample={launchGuideExample}
           launcherState={launcherState}
           loadLatexIntoEditor={loadLatexIntoEditor}
-          mainFieldRef={mainFieldRef} onOpenFormulaViewer={workspaceTabsRuntime.onOpenFormulaViewerTab}
+          mainFieldRef={mainFieldRef} matrixEditorLatex={linearAlgebraRuntime.matrixEditorLatex} matrixKeyboardLayouts={matrixKeyboardLayouts} onOpenFormulaViewer={workspaceTabsRuntime.onOpenFormulaViewerTab}
           onRestartEditorAnalysis={restartEditorAnalysis}
           onRunEditor={runEditorPrimaryAction}
           onStopEditorAnalysis={stopEditorAnalysis}
@@ -2948,8 +2948,7 @@ export default function App() {
           setCalculateLatex={setCalculateLatex}
           setCalculusMainEditorLatex={setCalculusMainEditorLatex}
           setDerivativePointWorkbench={setDerivativePointWorkbench} setDerivativeWorkbench={setDerivativeWorkbench} setImplicitDerivativeState={setImplicitDerivativeState}
-          setEquationLatex={setEquationLatex}
-          setGuideQuery={setGuideQuery}
+          setEquationLatex={setEquationLatex} setGuideQuery={setGuideQuery} setMatrixEditorLatex={linearAlgebraRuntime.setMatrixEditorLatex}
           settings={settings}
           showEditorRuntimeControls={showEditorRuntimeControls}
           shouldShowCalculateAlgebraTray={shouldShowCalculateAlgebraTray}
@@ -2972,7 +2971,7 @@ export default function App() {
           updateGeometryDraft={updateGeometryDraft}
           updateStatisticsDraft={updateStatisticsDraft}
           updateTrigDraft={updateTrigDraft}
-          variableMemory={variableMemory}
+          variableMemory={variableMemory} vectorEditorLatex={linearAlgebraRuntime.vectorEditorLatex} vectorKeyboardLayouts={vectorKeyboardLayouts} setVectorEditorLatex={linearAlgebraRuntime.setVectorEditorLatex}
         />
         <SoftMenu actions={activeSoftMenu} onAction={handleSoftAction} />
         <main className="workspace">
@@ -3303,7 +3302,6 @@ export default function App() {
             {isLinearAlgebraTableMode ? (
               <LinearAlgebraTableWorkspaceHost
                 {...buildLinearAlgebraTableWorkspaceHostProps({
-                  onCopyText: copyText,
                   onOpenGuideArticle: openGuideArticle,
                   onOpenGuideMode: openGuideMode,
                 })}

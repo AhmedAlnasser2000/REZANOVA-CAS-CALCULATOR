@@ -31,7 +31,6 @@ function renderLinearAlgebraTableShell(
   const discardHistoryTicket = vi.fn();
   const patchSettings = vi.fn();
   const reserveHistoryTicket = vi.fn(() => null);
-  const setClipboardNotice = vi.fn();
   const setRuntimeStatusOverride = vi.fn();
 
   const hook = renderHook(
@@ -51,7 +50,6 @@ function renderLinearAlgebraTableShell(
         patchSettings,
         replayVariableSubstitutions: null,
         reserveHistoryTicket,
-        setClipboardNotice,
         setRuntimeStatusOverride,
         storedVariables: [],
       });
@@ -70,7 +68,6 @@ function renderLinearAlgebraTableShell(
     hook,
     patchSettings,
     reserveHistoryTicket,
-    setClipboardNotice,
     setRuntimeStatusOverride,
   };
 }
@@ -78,45 +75,42 @@ function renderLinearAlgebraTableShell(
 describe('useLinearAlgebraTableShellRuntime', () => {
   it('builds host props for the active Linear/Table workspace', () => {
     const { hook } = renderLinearAlgebraTableShell({ currentMode: 'table' });
-    const onCopyText = vi.fn();
     const onOpenGuideArticle = vi.fn();
     const onOpenGuideMode = vi.fn();
 
     const props = hook.result.current.buildWorkspaceHostProps({
-      onCopyText,
       onOpenGuideArticle,
       onOpenGuideMode,
     });
 
     expect(props.currentMode).toBe('table');
     expect(props.tableRuntime.tablePrimaryLatex).toBe('x^2');
-    expect(props.matrixKeyboardLayouts.length).toBeGreaterThan(0);
     expect(props.tableKeyboardLayouts.length).toBeGreaterThan(0);
-    expect(props.vectorKeyboardLayouts.length).toBeGreaterThan(0);
-    expect(props.onCopyText).toBe(onCopyText);
     expect(props.onOpenGuideArticle).toBe(onOpenGuideArticle);
     expect(props.onOpenGuideMode).toBe(onOpenGuideMode);
+    expect(hook.result.current.matrixKeyboardLayouts.length).toBeGreaterThan(0);
+    expect(hook.result.current.vectorKeyboardLayouts.length).toBeGreaterThan(0);
   });
 
   it('clears the active draft for Table, Matrix, and Vector modes', () => {
     const { hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 
     act(() => {
-      hook.result.current.linearAlgebraRuntime.setMatrixNotationLatex('A+B');
+      hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('A+B');
       hook.result.current.clearActiveLinearAlgebraTableDraft();
     });
 
-    expect(hook.result.current.linearAlgebraRuntime.matrixNotationLatex).toBe('');
+    expect(hook.result.current.linearAlgebraRuntime.matrixEditorLatex).toBe('');
 
     act(() => {
-      hook.result.current.linearAlgebraRuntime.setVectorNotationLatex('u+v');
+      hook.result.current.linearAlgebraRuntime.setVectorEditorLatex('u+v');
     });
     hook.rerender({ currentMode: 'vector' });
     act(() => {
       hook.result.current.clearActiveLinearAlgebraTableDraft();
     });
 
-    expect(hook.result.current.linearAlgebraRuntime.vectorNotationLatex).toBe('');
+    expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe('');
 
     act(() => {
       hook.result.current.tableRuntime.setTablePrimaryLatex('x+1');
@@ -157,14 +151,14 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     act(() => {
       hook.result.current.linearAlgebraRuntime.setMatrixA([[9, 8], [7, 6]]);
       hook.result.current.linearAlgebraRuntime.setMatrixB([[5, 4], [3, 2]]);
-      hook.result.current.linearAlgebraRuntime.setMatrixNotationLatex('A+B');
+      hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('A+B');
     });
     const matrixSnapshot = hook.result.current.captureMatrixSurfaceState();
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.setVectorA([4, 5, 6]);
       hook.result.current.linearAlgebraRuntime.setVectorB([7, 8, 9]);
-      hook.result.current.linearAlgebraRuntime.setVectorNotationLatex('u\\cdot v');
+      hook.result.current.linearAlgebraRuntime.setVectorEditorLatex('u\\cdot v');
     });
     const vectorSnapshot = hook.result.current.captureVectorSurfaceState();
 
@@ -177,9 +171,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       [1, 2],
       [3, 4],
     ]);
-    expect(hook.result.current.linearAlgebraRuntime.matrixNotationLatex).toBe('');
+    expect(hook.result.current.linearAlgebraRuntime.matrixEditorLatex).toBe('');
     expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([1, 2, 3]);
-    expect(hook.result.current.linearAlgebraRuntime.vectorNotationLatex).toBe('');
+    expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe('');
 
     act(() => {
       hook.result.current.restoreMatrixSurfaceState(matrixSnapshot);
@@ -188,10 +182,10 @@ describe('useLinearAlgebraTableShellRuntime', () => {
 
     expect(hook.result.current.linearAlgebraRuntime.matrixA).toEqual([[9, 8], [7, 6]]);
     expect(hook.result.current.linearAlgebraRuntime.matrixB).toEqual([[5, 4], [3, 2]]);
-    expect(hook.result.current.linearAlgebraRuntime.matrixNotationLatex).toBe('A+B');
+    expect(hook.result.current.linearAlgebraRuntime.matrixEditorLatex).toBe('A+B');
     expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([4, 5, 6]);
     expect(hook.result.current.linearAlgebraRuntime.vectorB).toEqual([7, 8, 9]);
-    expect(hook.result.current.linearAlgebraRuntime.vectorNotationLatex).toBe('u\\cdot v');
+    expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe('u\\cdot v');
   });
 
   it('restores Table and Matrix history entries through the shell', () => {

@@ -213,11 +213,11 @@ export type TableSurfaceState = {
 export type MatrixSurfaceState = {
   matrixA: number[][];
   matrixB: number[][];
-  matrixNotationLatex: string;
+  matrixEditorLatex: string;
 };
 
 export type VectorSurfaceState = {
   vectorA: number[];
   vectorB: number[];
-  vectorNotationLatex: string;
+  vectorEditorLatex: string;
 };

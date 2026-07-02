@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  buildMatrixNotationLatex,
-  buildVectorNotationLatex,
-  type MatrixNotationPreset,
-  type VectorNotationPreset,
-} from '../../lib/linear-algebra/linear-algebra-workbench';
-import {
   buildMatrixOoeInputRevisionId,
   matrixOperationLabel,
   runMatrixModeWithOoePilot,
@@ -52,8 +46,6 @@ type UseLinearAlgebraRuntimeOptions = {
   commitOutcome: CommitLinearAlgebraOutcome;
   discardHistoryTicket?: (ticketId?: string | null) => void;
   getCurrentMode?: () => ModeId;
-  onMatrixNotationLoaded: () => void;
-  onVectorNotationLoaded: () => void;
   reserveHistoryTicket?: (input: {
     mode: ModeId;
     inputLatex: string;
@@ -89,17 +81,15 @@ export function useLinearAlgebraRuntime({
   commitOutcome,
   discardHistoryTicket,
   getCurrentMode,
-  onMatrixNotationLoaded,
-  onVectorNotationLoaded,
   reserveHistoryTicket,
   setRuntimeStatusOverride,
 }: UseLinearAlgebraRuntimeOptions) {
   const [matrixA, setMatrixA] = useState(() => cloneMatrix(DEFAULT_MATRIX_A));
   const [matrixB, setMatrixB] = useState(() => cloneMatrix(DEFAULT_MATRIX_B));
-  const [matrixNotationLatex, setMatrixNotationLatex] = useState('');
+  const [matrixEditorLatex, setMatrixEditorLatex] = useState('');
   const [vectorA, setVectorA] = useState(() => cloneVector(DEFAULT_VECTOR_A));
   const [vectorB, setVectorB] = useState(() => cloneVector(DEFAULT_VECTOR_B));
-  const [vectorNotationLatex, setVectorNotationLatex] = useState('');
+  const [vectorEditorLatex, setVectorEditorLatex] = useState('');
   const matrixStateRef = useRef({ matrixA, matrixB });
   const vectorStateRef = useRef({ vectorA, vectorB, angleUnit });
   const latestMatrixRunRevisionRef = useRef<string | null>(null);
@@ -271,52 +261,40 @@ export function useLinearAlgebraRuntime({
     );
   }
 
-  function loadMatrixNotationPreset(preset: MatrixNotationPreset) {
-    setMatrixNotationLatex(buildMatrixNotationLatex(preset, matrixA, matrixB));
-    onMatrixNotationLoaded();
-  }
-
-  function loadVectorNotationPreset(preset: VectorNotationPreset) {
-    setVectorNotationLatex(buildVectorNotationLatex(preset, vectorA, vectorB));
-    onVectorNotationLoaded();
-  }
-
   function captureMatrixSurfaceState(): MatrixSurfaceState {
     return {
       matrixA: cloneMatrix(matrixA),
       matrixB: cloneMatrix(matrixB),
-      matrixNotationLatex,
+      matrixEditorLatex,
     };
   }
 
   function restoreMatrixSurfaceState(state: MatrixSurfaceState | null) {
     setMatrixA(cloneMatrix(state?.matrixA ?? DEFAULT_MATRIX_A));
     setMatrixB(cloneMatrix(state?.matrixB ?? DEFAULT_MATRIX_B));
-    setMatrixNotationLatex(state?.matrixNotationLatex ?? '');
+    setMatrixEditorLatex(state?.matrixEditorLatex ?? '');
   }
 
   function captureVectorSurfaceState(): VectorSurfaceState {
     return {
       vectorA: cloneVector(vectorA),
       vectorB: cloneVector(vectorB),
-      vectorNotationLatex,
+      vectorEditorLatex,
     };
   }
 
   function restoreVectorSurfaceState(state: VectorSurfaceState | null) {
     setVectorA(cloneVector(state?.vectorA ?? DEFAULT_VECTOR_A));
     setVectorB(cloneVector(state?.vectorB ?? DEFAULT_VECTOR_B));
-    setVectorNotationLatex(state?.vectorNotationLatex ?? '');
+    setVectorEditorLatex(state?.vectorEditorLatex ?? '');
   }
 
   return {
     captureMatrixSurfaceState,
     captureVectorSurfaceState,
-    loadMatrixNotationPreset,
-    loadVectorNotationPreset,
     matrixA,
     matrixB,
-    matrixNotationLatex,
+    matrixEditorLatex,
     runMatrixAction,
     runVectorAction,
     restoreMatrixSurfaceState,
@@ -324,13 +302,13 @@ export function useLinearAlgebraRuntime({
     setMatrixA,
     setMatrixB,
     setMatrixCell,
-    setMatrixNotationLatex,
+    setMatrixEditorLatex,
     setVectorA,
     setVectorB,
     setVectorCell,
-    setVectorNotationLatex,
+    setVectorEditorLatex,
     vectorA,
     vectorB,
-    vectorNotationLatex,
+    vectorEditorLatex,
   };
 }

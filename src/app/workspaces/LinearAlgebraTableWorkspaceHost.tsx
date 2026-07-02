@@ -1,12 +1,11 @@
-import type { MathfieldElement } from 'mathlive';
-import type { VirtualKeyboardLayout } from 'mathlive';
-import type { MutableRefObject, RefObject } from 'react';
+import type { MutableRefObject } from 'react';
 import { MatrixWorkspace } from './MatrixWorkspace';
 import { TableWorkspace } from './TableWorkspace';
 import { VectorWorkspace } from './VectorWorkspace';
 import type { useLinearAlgebraRuntime } from '../runtime/useLinearAlgebraRuntime';
 import type { useTableRuntime } from '../runtime/useTableRuntime';
 import type { ModeId, StoredVariableValue } from '../../types/calculator';
+import type { MathfieldElement, VirtualKeyboardLayout } from 'mathlive';
 
 type LinearAlgebraRuntime = ReturnType<typeof useLinearAlgebraRuntime>;
 type TableRuntime = ReturnType<typeof useTableRuntime>;
@@ -16,16 +15,11 @@ type LinearAlgebraTableWorkspaceHostProps = {
   currentMode: ModeId;
   isLauncherOpen: boolean;
   linearAlgebraRuntime: LinearAlgebraRuntime;
-  matrixKeyboardLayouts: readonly VirtualKeyboardLayout[];
-  matrixNotationFieldRef: RefObject<MathfieldElement | null>;
-  onCopyText: (text: string, message: string) => Promise<void>;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: (mode: 'matrix' | 'vector' | 'table') => void;
   tableKeyboardLayouts: readonly VirtualKeyboardLayout[];
   tableRuntime: TableRuntime;
   variableMemory: StoredVariableValue[];
-  vectorKeyboardLayouts: readonly VirtualKeyboardLayout[];
-  vectorNotationFieldRef: RefObject<MathfieldElement | null>;
 };
 
 export function LinearAlgebraTableWorkspaceHost({
@@ -33,16 +27,11 @@ export function LinearAlgebraTableWorkspaceHost({
   currentMode,
   isLauncherOpen,
   linearAlgebraRuntime,
-  matrixKeyboardLayouts,
-  matrixNotationFieldRef,
-  onCopyText,
   onOpenGuideArticle,
   onOpenGuideMode,
   tableKeyboardLayouts,
   tableRuntime,
   variableMemory,
-  vectorKeyboardLayouts,
-  vectorNotationFieldRef,
 }: LinearAlgebraTableWorkspaceHostProps) {
   if (isLauncherOpen) {
     return null;
@@ -53,16 +42,9 @@ export function LinearAlgebraTableWorkspaceHost({
       <MatrixWorkspace
         matrixA={linearAlgebraRuntime.matrixA}
         matrixB={linearAlgebraRuntime.matrixB}
-        matrixNotationLatex={linearAlgebraRuntime.matrixNotationLatex}
-        matrixKeyboardLayouts={matrixKeyboardLayouts}
-        matrixNotationFieldRef={matrixNotationFieldRef}
-        activeFieldRef={activeFieldRef}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
         onSetMatrixCell={linearAlgebraRuntime.setMatrixCell}
-        onLoadMatrixNotationPreset={linearAlgebraRuntime.loadMatrixNotationPreset}
-        onCopyText={onCopyText}
-        onSetMatrixNotationLatex={linearAlgebraRuntime.setMatrixNotationLatex}
       />
     );
   }
@@ -72,16 +54,9 @@ export function LinearAlgebraTableWorkspaceHost({
       <VectorWorkspace
         vectorA={linearAlgebraRuntime.vectorA}
         vectorB={linearAlgebraRuntime.vectorB}
-        vectorNotationLatex={linearAlgebraRuntime.vectorNotationLatex}
-        vectorKeyboardLayouts={vectorKeyboardLayouts}
-        vectorNotationFieldRef={vectorNotationFieldRef}
-        activeFieldRef={activeFieldRef}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
         onSetVectorCell={linearAlgebraRuntime.setVectorCell}
-        onLoadVectorNotationPreset={linearAlgebraRuntime.loadVectorNotationPreset}
-        onCopyText={onCopyText}
-        onSetVectorNotationLatex={linearAlgebraRuntime.setVectorNotationLatex}
       />
     );
   }

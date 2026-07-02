@@ -1,13 +1,11 @@
 .linear-algebra-panel-header,
 .linear-algebra-badge-row,
-.linear-algebra-panel-copy,
-.notation-pad-footer {
+.linear-algebra-panel-copy {
   display: flex;
   gap: 10px;
 }
 
-.linear-algebra-panel-header,
-.notation-pad-footer {
+.linear-algebra-panel-header {
   justify-content: space-between;
   align-items: start;
 }
@@ -28,8 +26,7 @@
   font-size: 1.08rem;
 }
 
-.linear-algebra-panel-copy p,
-.notation-pad-footer p {
+.linear-algebra-panel-copy p {
   margin: 0;
   line-height: 1.5;
 }
@@ -39,31 +36,12 @@
   justify-content: end;
 }
 
-.linear-algebra-info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.linear-algebra-info-card,
-.notation-pad-card {
-  display: grid;
-  gap: 12px;
-}
-
-@media (max-width: 1180px) {
-  .linear-algebra-info-grid {
-      grid-template-columns: 1fr;
-    }
-}
-
 @media (max-width: 840px) {
-  .linear-algebra-panel-header,
-    .notation-pad-footer {
-      flex-direction: column;
-    }
+  .linear-algebra-panel-header {
+    flex-direction: column;
+  }
 
   .linear-algebra-badge-row {
-      justify-content: start;
-    }
+    justify-content: start;
+  }
 }

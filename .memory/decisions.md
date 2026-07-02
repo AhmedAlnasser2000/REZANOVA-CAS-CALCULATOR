@@ -1588,3 +1588,7 @@
 ## 2026-07-02 - SETTINGS-HISTORY-PAGE-POLISH1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Settings full-page categories must be functional scopes over the existing settings controls, not decorative labels over one long inspector clone. History full-page rows are selection-first: single click focuses/selects, Shift-click range-selects, Ctrl/Cmd-click toggles, and double-click is the direct-open/replay gesture; explicit inspector buttons remain the primary visible commands.
+
+## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-SOURCE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix and Vector editor drafts are owned by the main display editor, not secondary notation pads. Matrix surface state stores `matrixEditorLatex`, Vector surface state stores `vectorEditorLatex`, and existing Matrix/Vector OOE capability IDs plus replay seeds remain separate.

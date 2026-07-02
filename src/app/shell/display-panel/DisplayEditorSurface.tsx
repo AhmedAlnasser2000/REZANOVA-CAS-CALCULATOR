@@ -80,6 +80,8 @@ export function DisplayEditorSurface({
   labsRuntime,
   launcherState,
   mainFieldRef,
+  matrixEditorLatex,
+  matrixKeyboardLayouts,
   onRunEditor,
   selectedCalculusMenuEntry,
   selectedEquationMenuEntry,
@@ -93,6 +95,7 @@ export function DisplayEditorSurface({
   setDerivativePointWorkbench,
   setEquationLatex,
   setImplicitDerivativeState,
+  setMatrixEditorLatex,
   settings,
   statisticsDraftFieldRef,
   statisticsDraftLatex,
@@ -108,6 +111,9 @@ export function DisplayEditorSurface({
   updateStatisticsDraft,
   updateTrigDraft,
   variableMemory,
+  vectorEditorLatex,
+  vectorKeyboardLayouts,
+  setVectorEditorLatex,
 }: DisplayEditorSurfaceProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
   const labsInputLatex = labsRuntime
@@ -470,6 +476,56 @@ export function DisplayEditorSurface({
           />
         </div>
       ) : null}
+      {!isLauncherOpen && currentMode === 'matrix' ? (
+        <div className="main-editor-stack">
+          <MathEditor
+            ref={mainFieldRef}
+            dataTestId="main-editor"
+            className="main-mathfield"
+            value={matrixEditorLatex}
+            modeId="matrix"
+            screenHint="matrix"
+            onSubmit={onRunEditor}
+            onChange={setMatrixEditorLatex}
+            keyboardLayouts={matrixKeyboardLayouts}
+            onFocus={(field) => {
+              activeFieldRef.current = field;
+            }}
+            placeholder="Enter a Matrix expression"
+          />
+          <VariableHintStrip
+            latex={matrixEditorLatex}
+            mode="matrix"
+            screenHint="matrix"
+            storedVariables={variableMemory}
+          />
+        </div>
+      ) : null}
+      {!isLauncherOpen && currentMode === 'vector' ? (
+        <div className="main-editor-stack">
+          <MathEditor
+            ref={mainFieldRef}
+            dataTestId="main-editor"
+            className="main-mathfield"
+            value={vectorEditorLatex}
+            modeId="vector"
+            screenHint="vector"
+            onSubmit={onRunEditor}
+            onChange={setVectorEditorLatex}
+            keyboardLayouts={vectorKeyboardLayouts}
+            onFocus={(field) => {
+              activeFieldRef.current = field;
+            }}
+            placeholder="Enter a Vector expression"
+          />
+          <VariableHintStrip
+            latex={vectorEditorLatex}
+            mode="vector"
+            screenHint="vector"
+            storedVariables={variableMemory}
+          />
+        </div>
+      ) : null}
       {!isLauncherOpen && calculusMainEditorActive ? (
         <div className="main-editor-stack">
           <MathEditor
@@ -679,7 +735,7 @@ export function DisplayEditorSurface({
           />
         </div>
       ) : null}
-      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && !calculusMainEditorActive && (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
+      {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && !isGeometryMenuOpen && !calculusMainEditorActive && (currentMode === 'table' || isCalculusMode(currentMode) || currentMode === 'statistics' || (currentMode === 'equation' && equationScreen !== 'symbolic')) ? (
         <div className="display-standby">
           <MathStatic
             className="standby-math"

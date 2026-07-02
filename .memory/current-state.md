@@ -48,7 +48,7 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 
 Calcwiz is a desktop math workbench, not a generic quick calculator. Calculate remains the compact quickform evaluator. Rich guided workflows belong in their visible workspaces such as Equation, Calculus, Trigonometry, Statistics, Geometry, Matrix/Vector, Table, and Guide.
 
-Matrix remains a numeric-grid workspace with a template-only notation pad, but safe-integer determinant and inverse results now use the internal exact rational Matrix core for exact readback. Decimal, unsafe, over-cap, and unsupported Matrix requests keep the existing numeric readback path. Vector is unchanged.
+Matrix and Vector are editor-primary linear-algebra workspaces. Matrix keeps editable numeric A/B grids and Vector keeps editable numeric A/B inputs for the current sequence, but both now store their structured expression draft in the main display editor as `matrixEditorLatex` and `vectorEditorLatex`; the old secondary notation pads and preset helper are removed. Existing soft-key operations, OOE capability IDs, replay seeds, and Matrix exact determinant/inverse readback remain intact. Parser/dispatch and structured system solving are still the next planned linear-algebra moves.
 
 Calculate's visible `Simplify`, `Factor`, and `Expand` soft keys are public product actions, not automatic aliases for private Symbolic Primitives. Symbolic Primitives may supply reusable bounded mechanics only after explicit bridge/parity work proves visible Calculate behavior remains correct.
 

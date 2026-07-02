@@ -862,11 +862,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
   {
     id: 'linear-algebra-matrix-vector',
     domainId: 'linearAlgebra',
-    title: 'Matrix and Vector Notation',
-    summary: 'Use the MatrixVec keyboard page and notation pads for structured notation, but rely on Matrix and Vector modes for actual operations.',
+    title: 'Matrix and Vector Editor',
+    summary: 'Use the Matrix and Vector editors with their named inputs for structured linear-algebra operations.',
     whatItIs: [
       'Matrix and Vector are dedicated numeric workspaces for linear-algebra operations in this app.',
-      'The notation pads are drafting surfaces for structured textbook notation, copying, and reuse.',
+      'The main editor is the source for structured Matrix and Vector expressions while the named inputs hold reusable values.',
     ],
     whatItMeans: [
       'det(A) means the determinant of A, which is a scalar tied to properties like invertibility.',
@@ -876,19 +876,19 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     howToUse: [
       'Open Matrix for matrix operations and Vector for vector operations.',
-      'Use the quick notation-pad buttons when you want to draft or copy A, B, and common operator forms.',
-      'Treat the notation pads as structured drafting surfaces, not as a promise of full free-form symbolic matrix CAS.',
+      'Use the main editor and soft keys for A, B, and common operator forms.',
+      'Treat the Matrix and Vector editors as structured operation surfaces, not as a promise of full free-form symbolic matrix CAS.',
     ],
     concepts: [
       'Matrix and Vector modes are the operational tools for matrix and vector calculations in this milestone.',
       'The MatrixVec keyboard page inserts structured notation templates and operator symbols.',
-      'Notation pads in Matrix and Vector help you draft, copy, and reuse structured linear-algebra expressions without promising full free-form matrix CAS.',
-      'Quick actions can load the current Matrix A/B or Vector A/B values into the notation pad for reuse.',
+      'The main editor in Matrix and Vector helps you draft, copy, and reuse structured linear-algebra expressions without promising full free-form matrix CAS.',
+      'Soft keys keep the current Matrix A/B or Vector A/B values available for operations.',
     ],
     whereToFindIt: [
       'Virtual keyboard page: MatrixVec',
-      'Matrix mode notation pad',
-      'Vector mode notation pad',
+      'Matrix mode main editor',
+      'Vector mode main editor',
     ],
     bestModes: ['matrix', 'vector'],
     symbols: [
@@ -905,13 +905,13 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       {
         id: 'linear-open-matrix',
         title: 'Open Matrix mode',
-        explanation: 'Use Matrix mode for determinant, inverse, transpose, multiplication, and reusing the current A/B values inside the notation pad.',
+        explanation: 'Use Matrix mode for determinant, inverse, transpose, multiplication, and reusing the current A/B values from the editor.',
         steps: [
           'Open Matrix from the launcher.',
           'Enter the numeric values for Matrix A and Matrix B.',
-          'Use the soft keys or the notation-pad quick buttons to run or draft the operation you want.',
+          'Use the soft keys or the main editor to run or draft the operation you want.',
         ],
-        expected: 'Matrix mode opens and keeps the notation pad available for template entry and copy/reuse.',
+        expected: 'Matrix mode opens with the main editor available for structured entry and copy/reuse.',
         launch: {
           kind: 'open-tool',
           targetMode: 'matrix',
@@ -925,9 +925,9 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         steps: [
           'Open Vector from the launcher.',
           'Enter the numeric values for Vector A and Vector B.',
-          'Run dot, cross, norm, or angle from Vector mode, then use the notation pad when you want to copy the structured form.',
+          'Run dot, cross, norm, or angle from Vector mode, then use the main editor when you want to copy the structured form.',
         ],
-        expected: 'Vector mode opens and keeps the notation pad available for template entry and copy/reuse.',
+        expected: 'Vector mode opens with the main editor available for structured entry and copy/reuse.',
         launch: {
           kind: 'open-tool',
           targetMode: 'vector',
@@ -941,7 +941,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     exactVsNumeric: [
       'Matrix and Vector modes use their dedicated operation flows.',
-      'Notation pads are primarily for structured entry, copying, and reuse.',
+      'Matrix and Vector editor expressions are structured operation inputs, not a full symbolic linear-algebra CAS.',
     ],
     relatedArticleIds: [],
   },
@@ -2323,7 +2323,7 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
   {
     modeId: 'matrix',
     title: 'Matrix',
-    summary: 'Use Matrix for actual numeric matrix operations; use the notation pad only for drafting and copy/reuse.',
+    summary: 'Use Matrix for actual numeric matrix operations from the named inputs and main editor.',
     bestFor: [
       'A+B, A-B, A×B',
       'det(A), inverse, transpose',
@@ -2331,14 +2331,14 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
     avoidFor: [
       'General symbolic algebra',
       'Free-form equation solving',
-      'Assuming the notation pad is full symbolic matrix CAS',
+      'Assuming the Matrix editor is full symbolic matrix CAS',
     ],
     articleIds: ['linear-algebra-matrix-vector'],
   },
   {
     modeId: 'vector',
     title: 'Vector',
-    summary: 'Use Vector for actual numeric vector operations; use the notation pad for drafting and copy/reuse.',
+    summary: 'Use Vector for actual numeric vector operations from the named inputs and main editor.',
     bestFor: [
       'Dot product, cross product, norms, and angle',
       'Reusing Vector A and B inside structured notation',
@@ -2346,7 +2346,7 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
     avoidFor: [
       'General symbolic algebra',
       'Matrix workflows',
-      'Treating the notation pad as full free-form symbolic vector CAS',
+      'Treating the Vector editor as full free-form symbolic vector CAS',
     ],
     articleIds: ['linear-algebra-matrix-vector'],
   },

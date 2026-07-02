@@ -1,6 +1,5 @@
 import {
   useMemo,
-  useRef,
   type MutableRefObject,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
@@ -57,14 +56,12 @@ type UseLinearAlgebraTableShellRuntimeOptions = {
     inputRevisionId?: string;
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
-  setClipboardNotice: (notice: string | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   storedVariables: StoredVariableValue[];
   clearReplayVariableSubstitutions: () => void;
 };
 
 type WorkspaceHostCallbacks = {
-  onCopyText: (text: string, message: string) => Promise<void>;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: (mode: 'matrix' | 'vector' | 'table') => void;
 };
@@ -94,31 +91,15 @@ export function useLinearAlgebraTableShellRuntime({
   patchSettings,
   replayVariableSubstitutions,
   reserveHistoryTicket,
-  setClipboardNotice,
   setRuntimeStatusOverride,
   storedVariables,
   clearReplayVariableSubstitutions,
 }: UseLinearAlgebraTableShellRuntimeOptions) {
-  const matrixNotationFieldRef = useRef<MathfieldElement | null>(null);
-  const vectorNotationFieldRef = useRef<MathfieldElement | null>(null);
-
   const linearAlgebraRuntime = useLinearAlgebraRuntime({
     angleUnit,
     commitOutcome,
     discardHistoryTicket,
     getCurrentMode: () => currentModeRef.current,
-    onMatrixNotationLoaded: () => {
-      setClipboardNotice('Matrix notation loaded');
-      setTimeout(() => {
-        matrixNotationFieldRef.current?.focus();
-      }, 0);
-    },
-    onVectorNotationLoaded: () => {
-      setClipboardNotice('Vector notation loaded');
-      setTimeout(() => {
-        vectorNotationFieldRef.current?.focus();
-      }, 0);
-    },
     reserveHistoryTicket,
     setRuntimeStatusOverride,
   });
@@ -145,18 +126,18 @@ export function useLinearAlgebraTableShellRuntime({
       tableStep: tableRuntime.tableStep,
       matrixA: linearAlgebraRuntime.matrixA,
       matrixB: linearAlgebraRuntime.matrixB,
-      matrixNotationLatex: linearAlgebraRuntime.matrixNotationLatex,
+      matrixEditorLatex: linearAlgebraRuntime.matrixEditorLatex,
       vectorA: linearAlgebraRuntime.vectorA,
       vectorB: linearAlgebraRuntime.vectorB,
-      vectorNotationLatex: linearAlgebraRuntime.vectorNotationLatex,
+      vectorEditorLatex: linearAlgebraRuntime.vectorEditorLatex,
     }),
     [
       linearAlgebraRuntime.matrixA,
       linearAlgebraRuntime.matrixB,
-      linearAlgebraRuntime.matrixNotationLatex,
+      linearAlgebraRuntime.matrixEditorLatex,
       linearAlgebraRuntime.vectorA,
       linearAlgebraRuntime.vectorB,
-      linearAlgebraRuntime.vectorNotationLatex,
+      linearAlgebraRuntime.vectorEditorLatex,
       tableRuntime.tableEnd,
       tableRuntime.tablePrimaryLatex,
       tableRuntime.tableSecondaryEnabled,
@@ -167,7 +148,13 @@ export function useLinearAlgebraTableShellRuntime({
   );
 
   const activeExpressionLatex =
-    currentMode === 'table' ? tableRuntime.tablePrimaryLatex : '';
+    currentMode === 'matrix'
+      ? linearAlgebraRuntime.matrixEditorLatex
+      : currentMode === 'vector'
+        ? linearAlgebraRuntime.vectorEditorLatex
+        : currentMode === 'table'
+          ? tableRuntime.tablePrimaryLatex
+          : '';
   const isLinearAlgebraTableMode =
     currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table';
 
@@ -180,10 +167,10 @@ export function useLinearAlgebraTableShellRuntime({
       [5, 6],
       [7, 8],
     ]);
-    linearAlgebraRuntime.setMatrixNotationLatex('');
+    linearAlgebraRuntime.setMatrixEditorLatex('');
     linearAlgebraRuntime.setVectorA([1, 2, 3]);
     linearAlgebraRuntime.setVectorB([4, 5, 6]);
-    linearAlgebraRuntime.setVectorNotationLatex('');
+    linearAlgebraRuntime.setVectorEditorLatex('');
   }
 
   function resetTableRuntime() {
@@ -204,9 +191,9 @@ export function useLinearAlgebraTableShellRuntime({
     if (currentMode === 'table') {
       tableRuntime.clearTable();
     } else if (currentMode === 'matrix') {
-      linearAlgebraRuntime.setMatrixNotationLatex('');
+      linearAlgebraRuntime.setMatrixEditorLatex('');
     } else if (currentMode === 'vector') {
-      linearAlgebraRuntime.setVectorNotationLatex('');
+      linearAlgebraRuntime.setVectorEditorLatex('');
     }
   }
 
@@ -244,7 +231,6 @@ export function useLinearAlgebraTableShellRuntime({
   }
 
   function buildWorkspaceHostProps({
-    onCopyText,
     onOpenGuideArticle,
     onOpenGuideMode,
   }: WorkspaceHostCallbacks) {
@@ -253,16 +239,11 @@ export function useLinearAlgebraTableShellRuntime({
       currentMode,
       isLauncherOpen,
       linearAlgebraRuntime,
-      matrixKeyboardLayouts: MATRIX_KEYBOARD_LAYOUTS,
-      matrixNotationFieldRef,
-      onCopyText,
       onOpenGuideArticle,
       onOpenGuideMode,
       tableKeyboardLayouts: TABLE_KEYBOARD_LAYOUTS,
       tableRuntime,
       variableMemory: storedVariables,
-      vectorKeyboardLayouts: VECTOR_KEYBOARD_LAYOUTS,
-      vectorNotationFieldRef,
     };
   }
 
@@ -277,7 +258,6 @@ export function useLinearAlgebraTableShellRuntime({
     linearAlgebraRuntime,
     loadTablePrimaryLatex,
     matrixKeyboardLayouts: MATRIX_KEYBOARD_LAYOUTS,
-    matrixNotationFieldRef,
     persistenceState,
     resetLinearAlgebraTableRuntime,
     restoreMatrixSurfaceState: linearAlgebraRuntime.restoreMatrixSurfaceState,
@@ -291,6 +271,5 @@ export function useLinearAlgebraTableShellRuntime({
     tableRuntime,
     toggleTableSecondary: tableRuntime.toggleTableSecondary,
     vectorKeyboardLayouts: VECTOR_KEYBOARD_LAYOUTS,
-    vectorNotationFieldRef,
   };
 }

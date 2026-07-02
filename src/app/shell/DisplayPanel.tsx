@@ -77,6 +77,8 @@ function DisplayPanel({
   launcherState,
   loadLatexIntoEditor,
   mainFieldRef,
+  matrixEditorLatex,
+  matrixKeyboardLayouts,
   onRestartEditorAnalysis,
   onRunEditor,
   onOpenFormulaViewer,
@@ -102,6 +104,7 @@ function DisplayPanel({
   setEquationLatex,
   setGuideQuery,
   setImplicitDerivativeState,
+  setMatrixEditorLatex,
   settings,
   showEditorRuntimeControls = false,
   shouldShowCalculateAlgebraTray,
@@ -126,6 +129,9 @@ function DisplayPanel({
   updateStatisticsDraft,
   updateTrigDraft,
   variableMemory,
+  vectorEditorLatex,
+  vectorKeyboardLayouts,
+  setVectorEditorLatex,
 }: DisplayPanelProps) {
   const { strings } = useLanguage();
   const runtimeText = strings.shell.runtimeControls;
@@ -233,6 +239,8 @@ function DisplayPanel({
       labsRuntime={labsRuntime}
       launcherState={launcherState}
       mainFieldRef={mainFieldRef}
+      matrixEditorLatex={matrixEditorLatex}
+      matrixKeyboardLayouts={matrixKeyboardLayouts}
       onRunEditor={onRunEditor}
       selectedCalculusMenuEntry={selectedCalculusMenuEntry}
       selectedEquationMenuEntry={selectedEquationMenuEntry}
@@ -247,6 +255,7 @@ function DisplayPanel({
       setDerivativeWorkbench={setDerivativeWorkbench}
       setEquationLatex={setEquationLatex}
       setImplicitDerivativeState={setImplicitDerivativeState}
+      setMatrixEditorLatex={setMatrixEditorLatex}
       settings={settings}
       statisticsDraftFieldRef={statisticsDraftFieldRef}
       statisticsDraftLatex={statisticsDraftLatex}
@@ -263,6 +272,9 @@ function DisplayPanel({
       updateStatisticsDraft={updateStatisticsDraft}
       updateTrigDraft={updateTrigDraft}
       variableMemory={variableMemory}
+      vectorEditorLatex={vectorEditorLatex}
+      vectorKeyboardLayouts={vectorKeyboardLayouts}
+      setVectorEditorLatex={setVectorEditorLatex}
     />
     <DisplayPreviewSurface
       activeExpressionLatex={activeExpressionLatex}

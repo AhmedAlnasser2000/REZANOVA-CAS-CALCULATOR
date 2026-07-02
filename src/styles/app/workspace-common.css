@@ -326,8 +326,6 @@
 .statistics-summary-card,
 .trig-reference-card,
 .geometry-point-card,
-.linear-algebra-info-card,
-.notation-pad-card,
 .generated-preview-card,
 .settings-preview-card,
 .labs-boundary-card,
@@ -461,8 +459,7 @@
   gap: 10px;
 }
 
-.quick-template-grid button,
-.notation-pad-footer .guide-chip {
+.quick-template-grid button {
   border: 1px solid var(--control-border);
   border-radius: 14px;
   padding: 10px 12px;
@@ -474,19 +471,16 @@
   font-weight: 600;
 }
 
-.quick-template-grid button:hover,
-.notation-pad-footer .guide-chip:hover {
+.quick-template-grid button:hover {
   background: var(--control-surface-hover);
   border-color: var(--control-border-strong);
 }
 
-.quick-template-grid button:active:not(:disabled),
-.notation-pad-footer .guide-chip:active:not(:disabled) {
+.quick-template-grid button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
-.quick-template-grid button:disabled,
-.notation-pad-footer .guide-chip:disabled {
+.quick-template-grid button:disabled {
   opacity: 0.52;
   border-color: rgba(228, 236, 220, 0.12);
   background: rgba(255, 255, 255, 0.04);
