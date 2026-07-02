@@ -65,13 +65,14 @@ const SYMBOLIC_DISPLAY_OPTIONS: Array<Settings['symbolicDisplayMode']> = ['roots
 const NOTATION_OPTIONS: Array<Settings['numericNotationMode']> = ['decimal', 'scientific', 'auto'];
 const SCIENTIFIC_STYLE_OPTIONS: Array<Settings['scientificNotationStyle']> = ['times10', 'e'];
 const MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS = 20;
+const SYMBOLIC_PREVIEW_INPUT_LATEX = '\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}';
 
 function formatScale(value: number) {
   return `${value}%`;
 }
 
 function symbolicPreviewLatex(settings: Settings) {
-  return normalizeSymbolicDisplayLatex('\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}', settings)
+  return normalizeSymbolicDisplayLatex(SYMBOLIC_PREVIEW_INPUT_LATEX, settings)
     ?? '\\sqrt[3]{\\sqrt{x}}';
 }
 
@@ -323,6 +324,13 @@ export function SettingsPage({
 
   const numericPreviewValue = formatApproxNumber(1234567.891234, settings);
   const approxDigits = clampApproxDigits(settings.approxDigits);
+  const symbolicPreviewSummary = settings.flattenNestedRootsWhenSafe
+    ? settingsText.previews.symbolicSummary.flattenedRoots
+    : settings.symbolicDisplayMode === 'roots'
+      ? settingsText.previews.symbolicSummary.nestedRoots
+      : settings.symbolicDisplayMode === 'powers'
+        ? settingsText.previews.symbolicSummary.powers
+        : settingsText.previews.symbolicSummary.auto;
   const autosaveSeconds = Math.max(
     MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS,
     settings.calculatorMemoryAutosaveIntervalSeconds,
@@ -511,9 +519,20 @@ export function SettingsPage({
               onChange={(checked) => onPatch({ flattenNestedRootsWhenSafe: checked })}
             />
           </SettingsRow>
-          <div className="settings-page-preview-strip" data-testid="settings-symbolic-preview-result">
-            <span>{settingsText.previews.previewOutput}</span>
-            <MathStatic latex={symbolicPreviewLatex(settings)} />
+          <div className="settings-page-symbolic-preview" data-testid="settings-symbolic-preview-result">
+            <div className="settings-page-symbolic-preview-row">
+              <span>{settingsText.previews.previewInput}</span>
+              <div className="settings-page-symbolic-preview-math">
+                <MathStatic latex={SYMBOLIC_PREVIEW_INPUT_LATEX} />
+              </div>
+            </div>
+            <div className="settings-page-symbolic-preview-row is-output">
+              <span>{settingsText.previews.previewOutput}</span>
+              <div className="settings-page-symbolic-preview-math">
+                <MathStatic latex={symbolicPreviewLatex(settings)} />
+              </div>
+            </div>
+            <p>{symbolicPreviewSummary}</p>
           </div>
         </SettingsSection>
         <SettingsSection title="Equation / Complex">

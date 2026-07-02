@@ -49,7 +49,7 @@
   min-height: 100vh;
   padding: 28px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
@@ -76,6 +76,9 @@
 }
 
 .active-surface--page {
+  --page-ui-scale: 1;
+  --math-scale: 1;
+  --result-scale: 1;
   min-height: min(900px, calc(100vh - 150px));
 }
 
@@ -108,6 +111,28 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   color: var(--page-ink);
   overflow: hidden;
+}
+
+.active-surface--page .app-page {
+  zoom: var(--page-ui-scale, 1);
+}
+
+.active-surface--page.is-high-contrast .app-page {
+  --page-bg: #071112;
+  --page-bg-raised: #101d1e;
+  --page-bg-soft: #182829;
+  --page-bg-strong: #020809;
+  --page-border: rgba(242, 246, 236, 0.26);
+  --page-border-strong: rgba(236, 255, 215, 0.58);
+  --page-ink: #ffffff;
+  --page-muted: #e4eee2;
+  --page-subtle: #cad8c8;
+  --page-accent: #d3f6b0;
+  --page-green: #3d5f36;
+  box-shadow:
+    0 28px 86px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(236, 255, 215, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .app-page-shell-header,
@@ -598,7 +623,7 @@
   min-height: 36px;
 }
 
-.settings-page-preview-strip,
+.settings-page-symbolic-preview,
 .settings-page-note,
 .settings-page-status-row {
   border-radius: 8px;
@@ -607,10 +632,37 @@
   padding: 12px;
 }
 
-.settings-page-preview-strip {
+.settings-page-symbolic-preview {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+  min-height: 156px;
+  overflow: hidden;
+}
+
+.settings-page-symbolic-preview-row {
   display: grid;
   gap: 8px;
-  margin-top: 12px;
+  min-width: 0;
+}
+
+.settings-page-symbolic-preview-row.is-output {
+  min-height: 68px;
+}
+
+.settings-page-symbolic-preview-math {
+  min-width: 0;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border: 1px solid rgba(214, 225, 205, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.025);
+  scrollbar-width: thin;
+}
+
+.settings-page-symbolic-preview p {
+  margin: 0;
+  color: var(--page-muted);
 }
 
 .settings-page-history-notation {
@@ -678,7 +730,7 @@
   color: #ffe3dc;
 }
 
-.settings-page-preview-strip span,
+.settings-page-symbolic-preview-row span,
 .settings-page-impact-card h3 {
   color: rgba(184, 212, 156, 0.82);
   font-family: var(--font-mono);

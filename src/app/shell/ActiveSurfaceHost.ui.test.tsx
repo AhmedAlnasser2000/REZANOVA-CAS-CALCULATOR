@@ -146,6 +146,29 @@ describe('ActiveSurfaceHost', () => {
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 
+  it('applies page scale and high contrast to page surfaces without calculator context', () => {
+    render(
+      <ActiveSurfaceHost
+        {...activeSurfaceHostProps()}
+        activeInstance={createWorkspaceInstance('settings', 2)}
+        settings={{
+          ...DEFAULT_SETTINGS,
+          highContrast: true,
+          mathScale: 130,
+          resultScale: 115,
+          uiScale: 145,
+        }}
+      />,
+    );
+
+    const pageSurface = screen.getByTestId('active-surface-page');
+    expect(pageSurface).toHaveClass('is-high-contrast');
+    expect(pageSurface.getAttribute('style') ?? '').toContain('--page-ui-scale: 1.45');
+    expect(pageSurface.getAttribute('style') ?? '').toContain('--math-scale: 1.3');
+    expect(pageSurface.getAttribute('style') ?? '').toContain('--result-scale: 1.15');
+    expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
+  });
+
   it('renders History as a page surface outside the calculator shell', () => {
     render(
       <ActiveSurfaceHost

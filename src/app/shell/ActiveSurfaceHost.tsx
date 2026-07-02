@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
 import type { WorkspaceInstance } from '../runtime/workspace-instances';
 import { formulaViewerArtifactFromSurfaceState } from '../runtime/formula-viewer-artifacts';
@@ -65,6 +65,13 @@ export function ActiveSurfaceHost({
   const formulaViewerArtifact = formulaViewerArtifactFromSurfaceState(
     activeInstance?.surfaceState ?? null,
   );
+  const pageSurfaceStyle = {
+    '--page-ui-scale': `${settings.uiScale / 100}`,
+    '--math-scale': `${settings.mathScale / 100}`,
+    '--result-scale': `${settings.resultScale / 100}`,
+  } as CSSProperties;
+  const pageSurfaceClassName =
+    `active-surface active-surface--page${settings.highContrast ? ' is-high-contrast' : ''}`;
 
   if (surfaceDescriptor?.surfaceKind !== 'page') {
     return (
@@ -80,9 +87,10 @@ export function ActiveSurfaceHost({
   if (surfaceDescriptor.pageKind === SETTINGS_PAGE_WORKSPACE_KIND) {
     return (
       <section
-        className="active-surface active-surface--page active-surface--settings"
+        className={`${pageSurfaceClassName} active-surface--settings`}
         data-surface-kind="settings"
         data-testid="active-surface-page"
+        style={pageSurfaceStyle}
       >
         <SettingsPage
           settings={settings}
@@ -97,9 +105,10 @@ export function ActiveSurfaceHost({
   if (surfaceDescriptor.pageKind === HISTORY_PAGE_WORKSPACE_KIND) {
     return (
       <section
-        className="active-surface active-surface--page active-surface--history"
+        className={`${pageSurfaceClassName} active-surface--history`}
         data-surface-kind="history"
         data-testid="active-surface-page"
+        style={pageSurfaceStyle}
       >
         <HistoryPage
           history={history}
@@ -129,9 +138,10 @@ export function ActiveSurfaceHost({
 
   return (
     <section
-      className="active-surface active-surface--page active-surface--formula-viewer"
+      className={`${pageSurfaceClassName} active-surface--formula-viewer`}
       data-surface-kind="formula-viewer"
       data-testid="active-surface-page"
+      style={pageSurfaceStyle}
     >
       <FormulaViewerPage
         artifact={formulaViewerArtifact}

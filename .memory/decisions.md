@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-02 - PAGE-SURFACE-CHROME-SCALE-PREVIEW1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] App chrome remains outside page/workspace scaling: Workspace Tabs stay top-anchored and unscaled, while active page surfaces receive their own UI scale, math scale, result scale, and high-contrast styling. Settings symbolic rewrite previews should use a readable input/output preview card rather than a tiny strip.
+
 ## 2026-07-02 - HISTORY-ROW-NOTATION-PREFERENCES1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] History row notation is user-configurable separately for the quick inspector and full page. Quick inspector rows default to Rendered Math for readability under the existing 20-row cap; full page ledger rows default to LaTeX for responsiveness. Rendered Math row modes require an explicit warning confirmation and remain bounded to capped quick rows or visible virtualized full-page rows.

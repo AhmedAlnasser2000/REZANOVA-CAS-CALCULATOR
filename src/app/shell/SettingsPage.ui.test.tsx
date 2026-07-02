@@ -44,6 +44,10 @@ describe('SettingsPage', () => {
 
     fireEvent.click(screen.getByTestId('settings-category-math'));
     expect(screen.getByTestId('settings-active-category')).toHaveTextContent('Math');
+    const symbolicPreview = screen.getByTestId('settings-symbolic-preview-result');
+    expect(symbolicPreview).toHaveTextContent(settingsText.previews.previewInput);
+    expect(symbolicPreview).toHaveTextContent(settingsText.previews.previewOutput);
+    expect(symbolicPreview).toHaveTextContent(settingsText.previews.symbolicSummary.flattenedRoots);
     fireEvent.click(screen.getByRole('button', {
       name: settingsText.options.angleUnit.deg,
     }));
