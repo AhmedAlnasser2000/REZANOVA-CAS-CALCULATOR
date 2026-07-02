@@ -74,6 +74,7 @@ export type EquationNumericPeriodicIntervalSummary = {
   carrierLatex: string;
   targetPeriod: number;
   intervalPeriodCount: number;
+  fullEquationPeriodic: boolean;
 };
 
 const ce = new ComputeEngine();
@@ -687,6 +688,7 @@ function collectReliablePeriodicCarriers(input: {
           carrierLatex,
           targetPeriod,
           intervalPeriodCount: Math.abs(input.end - input.start) / targetPeriod,
+          fullEquationPeriodic: false,
         });
       }
     }
@@ -695,6 +697,32 @@ function collectReliablePeriodicCarriers(input: {
   for (const operand of operands) {
     collectReliablePeriodicCarriers({ ...input, node: operand });
   }
+}
+
+function targetOutsidePeriodicCarrier(node: unknown, target: string, insidePeriodicCarrier = false): boolean {
+  if (typeof node === 'string') {
+    return node === target && !insidePeriodicCarrier;
+  }
+  if (!isArrayNode(node) || node.length === 0) {
+    if (!node || typeof node !== 'object') {
+      return false;
+    }
+    return Object.values(node).some((entry) => targetOutsidePeriodicCarrier(entry, target, insidePeriodicCarrier));
+  }
+
+  const [operator, ...operands] = node;
+  const entersPeriodicCarrier =
+    typeof operator === 'string'
+    && PERIODIC_OPERATORS.has(operator)
+    && operands.length >= 1
+    && containsTarget(operands[0], target);
+
+  return operands.some((operand, index) =>
+    targetOutsidePeriodicCarrier(
+      operand,
+      target,
+      insidePeriodicCarrier || (entersPeriodicCarrier && index === 0),
+    ));
 }
 
 export function detectEquationNumericPeriodicIntervalSummaries(input: {
@@ -706,14 +734,19 @@ export function detectEquationNumericPeriodicIntervalSummaries(input: {
 }): EquationNumericPeriodicIntervalSummary[] {
   const summaries: EquationNumericPeriodicIntervalSummary[] = [];
   try {
+    const parsed = ce.parse(input.equationLatex).json;
     collectReliablePeriodicCarriers({
-      node: ce.parse(input.equationLatex).json,
+      node: parsed,
       target: input.target,
       angleUnit: input.angleUnit,
       start: input.start,
       end: input.end,
       summaries,
     });
+    const hasOutsideTarget = targetOutsidePeriodicCarrier(parsed, input.target);
+    for (const summary of summaries) {
+      summary.fullEquationPeriodic = !hasOutsideTarget;
+    }
   } catch {
     return [];
   }

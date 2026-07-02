@@ -21,6 +21,7 @@ function numericIntervalDetailSections(request: GuardedSolveRequest) {
         interval
           ? `Searched real interval [${interval.start}, ${interval.end}] with ${interval.subdivisions} subdivisions.`
           : 'Searched the chosen real interval.',
+        `Angle unit: ${request.angleUnit.toUpperCase()}.`,
         'Roots are local to this chosen interval; this is not a claim of all real roots.',
       ],
     },

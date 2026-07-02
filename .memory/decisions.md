@@ -1621,6 +1621,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric result detail taxonomy is solver-owned, not wrapper-owned: Numeric Interval wrappers may add scope only, while domain facts, periodic structure, probes, diagnostics, breakpoints, and extraneous candidates stay in their dedicated cards. Equivalent fact strings are canonicalized before display dedupe, and `Solve Note` cards collapse by default in main Display and Formula Viewer.
 
+## 2026-07-02 - EQUATION-NUMERIC-INTERVAL-TRIG-SEMANTICS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric Interval trig evidence must state the active angle unit and must not blur periodic-carrier evidence with full-equation periodicity. Affine direct trig equations may say equation periodicity is established; mixed equations such as quotient or algebraic-plus-trig forms only expose carrier periodicity, and excluded branch candidates remain validation evidence rather than accepted roots.
+
 ## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.

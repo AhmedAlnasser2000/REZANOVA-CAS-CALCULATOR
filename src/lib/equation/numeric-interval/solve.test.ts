@@ -96,8 +96,52 @@ describe('runNumericIntervalSolve', () => {
       ...section.lines,
     ]).join(' ') ?? '';
     expect(details).toContain('Periodic Structure');
-    expect(details).toContain('Sin(x) carrier repeats every about 6.283185');
+    expect(details).toContain('Angle unit: RAD');
+    expect(details).toContain('Equation periodicity: Sin(x) carrier repeats every about 6.283185');
     expect(details).toContain('validated local root');
+  });
+
+  it('explains degree-mode periodic carrier candidates excluded by the original equation', () => {
+    const result = runNumericIntervalSolve('\\frac{\\sin\\left(x\\right)}{x}=0', {
+      start: '-10',
+      end: '10',
+      subdivisions: 256,
+    }, [], 'deg');
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected numeric solve error');
+    }
+    const details = result.detailSections?.flatMap((section) => [
+      section.title,
+      ...section.lines,
+    ]).join(' ') ?? '';
+    expect(result.error).toContain('rejected after substitution');
+    expect(details).toContain('Angle unit: DEG');
+    expect(details).toContain('Periodic carrier: Sin(x) carrier repeats every about 360');
+    expect(details).toContain('not a claim that the whole equation is periodic');
+    expect(details).toContain('x\\ne 0');
+    expect(details).toContain('Candidate approximately 0 rejected');
+  });
+
+  it('finds radian local roots for periodic quotient equations while excluding the hole', () => {
+    const result = runNumericIntervalSolve('\\frac{\\sin\\left(x\\right)}{x}=0', {
+      start: '-10',
+      end: '10',
+      subdivisions: 256,
+    }, [], 'rad');
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    expect(result.roots).toHaveLength(6);
+    expect(result.roots.some((root) => Math.abs(root) < 1e-6)).toBe(false);
+    expect(result.roots.some((root) => Math.abs(root - Math.PI) < 1e-5)).toBe(true);
+    const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    expect(details).toContain('Angle unit: RAD');
+    expect(details).toContain('Periodic carrier: Sin(x) carrier repeats every about 6.283185');
+    expect(details).toContain('Candidate approximately 0 rejected');
   });
 
   it('uses bounded refinement to stabilize dense nested periodic windows', () => {
@@ -311,7 +355,43 @@ describe('runNumericIntervalSolve', () => {
     expect(titles).toContain('Periodic Structure');
     expect(details).toContain('trig-pole');
     expect(details).toContain('1.570796');
-    expect(details).toContain('Tan(x) carrier repeats every about 3.141593');
+    expect(details).toContain('Angle unit: RAD');
+    expect(details).toContain('Equation periodicity: Tan(x) carrier repeats every about 3.141593');
+  });
+
+  it('makes degree-mode direct tangent interval misses understandable', () => {
+    const result = runNumericIntervalSolve('\\tan(x)=1', {
+      start: '-10',
+      end: '10',
+      subdivisions: 256,
+    }, [], 'deg');
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected numeric solve error');
+    }
+    expect(result.error).toContain('in DEG');
+    expect(result.error).toContain('45 deg + 180 deg * k');
+    const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    expect(details).toContain('Angle unit: DEG');
+    expect(details).toContain('Equation periodicity: Tan(x) carrier repeats every about 180');
+  });
+
+  it('marks mixed algebraic trig intervals as carrier-only periodic evidence', () => {
+    const result = runNumericIntervalSolve('x^2+\\sin\\left(x\\right)=2', {
+      start: '-10',
+      end: '10',
+      subdivisions: 256,
+    }, [], 'rad');
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected numeric solve success');
+    }
+    expect(result.roots).toHaveLength(2);
+    const details = result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    expect(details).toContain('Periodic carrier: Sin(x) carrier repeats every about 6.283185');
+    expect(details).toContain('not a claim that the whole equation is periodic');
   });
 
   it('adds unit-aware branch guidance for direct trig composition failures in degree mode', () => {

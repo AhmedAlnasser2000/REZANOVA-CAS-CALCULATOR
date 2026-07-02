@@ -326,6 +326,10 @@ function normalizeFactLine(line: string) {
     .trim();
 }
 
+function angleUnitLabel(angleUnit: AngleUnit) {
+  return angleUnit.toUpperCase();
+}
+
 function domainAndExclusionDetailSections(plan: EquationNumericSegmentationPlan): DisplayDetailSection[] {
   const lines = uniqueLines(
     plan.facts
@@ -448,13 +452,16 @@ function numericPeriodicIntervalDetailSections(input: {
   return [{
     title: 'Periodic Structure',
     lines: [
+      `Angle unit: ${angleUnitLabel(input.angleUnit)}.`,
       ...visible.map((summary) =>
-        `${summary.operator}(${summary.carrierLatex}) carrier repeats every about ${formatApproxNumber(summary.targetPeriod)} in ${input.target}; this interval spans about ${formatApproxNumber(summary.intervalPeriodCount)} carrier period(s).`),
+        `${summary.fullEquationPeriodic ? 'Equation periodicity' : 'Periodic carrier'}: ${summary.operator}(${summary.carrierLatex}) carrier repeats every about ${formatApproxNumber(summary.targetPeriod)} in ${input.target}; this interval spans about ${formatApproxNumber(summary.intervalPeriodCount)} carrier period(s).`),
       ...(summaries.length > visible.length
         ? [`${summaries.length - visible.length} additional periodic carrier summary item(s) omitted.`]
         : []),
       `Accepted ${input.acceptedRootCount} validated local root(s) in the chosen interval.`,
-      'Carrier periods guide interval sampling only; roots are still checked against the original equation.',
+      summaries.some((summary) => !summary.fullEquationPeriodic)
+        ? 'Carrier periodicity is not a claim that the whole equation is periodic; roots are still checked against the original equation.'
+        : 'Periodic structure guides interval sampling; roots are still checked against the original equation.',
     ],
   }];
 }
