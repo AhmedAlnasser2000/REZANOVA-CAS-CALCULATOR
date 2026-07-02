@@ -340,6 +340,8 @@ const matrixOperationSchema = z.enum([
   'eigenB',
   'diagonalizeA',
   'diagonalizeB',
+  'spectralPowerA',
+  'spectralPowerB',
   'linearSystem',
 ]);
 const matrixSystemFormSchema = z.enum(['Ax=b', 'Ax+b=0']);
@@ -374,6 +376,7 @@ const matrixReplaySeedSchema = z.object({
   matrixB: numericMatrixSchema.optional(),
   systemRhs: numericVectorSchema.optional(),
   coordinateVector: numericVectorSchema.optional(),
+  matrixPowerExponent: z.number().int().safe().optional(),
   systemForm: matrixSystemFormSchema.optional(),
   exactMatrixA: exactMatrixWireSchema.optional(),
   exactMatrixB: exactMatrixWireSchema.optional(),
@@ -384,6 +387,7 @@ const matrixReplaySeedSchema = z.object({
   matrixOperandLatexB: z.string().optional(),
   systemRhsLatex: z.string().optional(),
   coordinateVectorLatex: z.string().optional(),
+  matrixPowerExponentLatex: z.string().optional(),
 });
 const vectorReplaySeedSchema = z.object({
   operation: vectorOperationSchema,

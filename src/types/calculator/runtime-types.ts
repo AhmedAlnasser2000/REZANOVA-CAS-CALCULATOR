@@ -1006,7 +1006,7 @@ export type ModeState = {
 };
 
 export type MatrixOperation =
-  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'leastSquaresA' | 'leastSquaresB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'diagonalizeA' | 'diagonalizeB' | 'linearSystem';
+  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'leastSquaresA' | 'leastSquaresB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'diagonalizeA' | 'diagonalizeB' | 'spectralPowerA' | 'spectralPowerB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 
@@ -1015,10 +1015,10 @@ export type MatrixRequest = {
   matrixA: number[][];
   matrixB?: number[][];
   systemRhs?: number[];
-  coordinateVector?: number[];
+  coordinateVector?: number[]; matrixPowerExponent?: number;
   systemForm?: MatrixSystemForm;
   exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[]; exactCoordinateVector?: ExactScalarWire[];
-  editorExpressionLatex?: string; matrixOperandLatexA?: string; matrixOperandLatexB?: string; systemRhsLatex?: string; coordinateVectorLatex?: string;
+  editorExpressionLatex?: string; matrixOperandLatexA?: string; matrixOperandLatexB?: string; systemRhsLatex?: string; coordinateVectorLatex?: string; matrixPowerExponentLatex?: string;
 };
 
 export type MatrixReplaySeed = MatrixRequest;

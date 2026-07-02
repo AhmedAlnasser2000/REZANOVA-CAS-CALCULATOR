@@ -50,6 +50,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'coordinates'; basis: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'columnProjection'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'leastSquares'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
+  | { kind: 'matrixPower'; matrix: LinearAlgebraEditorExpression; exponent: number; exponentLatex: string }
   | { kind: 'factorSolve'; method: 'lu' | 'plu'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'changeOfBasis'; source: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | {
@@ -136,6 +137,8 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{colproj\}/g, 'projcol')
     .replace(/\\operatorname\{ColProj\}/g, 'projcol')
     .replace(/\\operatorname\{ls\}/g, 'ls')
+    .replace(/\\operatorname\{mpow\}/g, 'mpow')
+    .replace(/\\operatorname\{MPow\}/g, 'mpow')
     .replace(/\\operatorname\{least\}/g, 'ls')
     .replace(/\\operatorname\{Least\}/g, 'ls')
     .replace(/\\operatorname\{lstsq\}/g, 'ls')
@@ -331,6 +334,17 @@ function parseLatexNumber(input: string): { value: number; exactValue: ExactScal
     value: exactWireToNumber(exactValue),
     exactValue,
   };
+}
+
+function parseMatrixPowerExponent(input: string): { exponent: number; exponentLatex: string } {
+  if (!/^-?\d+$/.test(input)) {
+    fail('invalid-number', 'Matrix powers need an integer exponent.');
+  }
+  const exponent = Number(input);
+  if (!Number.isSafeInteger(exponent)) {
+    fail('invalid-number', 'Matrix power exponent is outside the safe integer range.');
+  }
+  return { exponent, exponentLatex: input };
 }
 
 function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null {
@@ -704,6 +718,21 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       kind: 'leastSquares',
       matrix: parseExpression(parts[0], options),
       vector: parseExpression(parts[1], options),
+    };
+  }
+
+  const matrixPowerArgument = functionArgument(input, 'mpow');
+  if (matrixPowerArgument !== null) {
+    const parts = splitTopLevelComma(matrixPowerArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Matrix powers require a matrix and an integer exponent.');
+    }
+    const exponent = parseMatrixPowerExponent(parts[1]);
+    return {
+      kind: 'matrixPower',
+      matrix: parseExpression(parts[0], options),
+      exponent: exponent.exponent,
+      exponentLatex: exponent.exponentLatex,
     };
   }
 

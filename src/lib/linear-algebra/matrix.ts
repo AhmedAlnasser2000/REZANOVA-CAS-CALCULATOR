@@ -24,7 +24,7 @@ import {
 import { runMatrixBasis } from './matrix-basis';
 import { runMatrixChangeOfBasis } from './matrix-change-of-basis';
 import { runMatrixCoordinates } from './matrix-coordinates';
-import { runMatrixDiagonalization } from './matrix-diagonalization';
+import { runMatrixDiagonalization, runMatrixSpectralPower } from './matrix-diagonalization';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
@@ -546,6 +546,33 @@ function exactDiagonalizationResponse(req: MatrixRequest): MatrixResponse | null
   return null;
 }
 
+function exactSpectralPowerResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'spectralPowerA') {
+    return runMatrixSpectralPower({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+      exponent: req.matrixPowerExponent ?? Number.NaN,
+    });
+  }
+
+  if (req.operation === 'spectralPowerB') {
+    return req.matrixB
+      ? runMatrixSpectralPower({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+          exponent: req.matrixPowerExponent ?? Number.NaN,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult): MatrixResponse {
   if (result.kind === 'error') {
     return {
@@ -653,6 +680,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const diagonalizationResponse = exactDiagonalizationResponse(req);
   if (diagonalizationResponse) {
     return diagonalizationResponse;
+  }
+
+  const spectralPowerResponse = exactSpectralPowerResponse(req);
+  if (spectralPowerResponse) {
+    return spectralPowerResponse;
   }
 
   const numericRequest: NumericMatrixRequest = {

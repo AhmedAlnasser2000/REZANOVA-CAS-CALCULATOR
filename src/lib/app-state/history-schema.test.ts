@@ -491,6 +491,21 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('diagonalizeA');
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-spectral-power',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{mpow}\\left(A,3\\right)',
+      resultLatex: 'A^{3}=\\begin{bmatrix}14 & 13\\\\13 & 14\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'spectralPowerA',
+        matrixA: [[2, 1], [1, 2]],
+        matrixB: [[5, 6], [7, 8]],
+        matrixPowerExponent: 3,
+        matrixPowerExponentLatex: '3',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('spectralPowerA');
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-system',
       mode: 'matrix',
       inputLatex: 'Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}',

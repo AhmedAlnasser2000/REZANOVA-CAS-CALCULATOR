@@ -98,6 +98,12 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{invertible}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'invertibility' });
     expect(parsed('\\operatorname{eigen}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'eigen' });
     expect(parsed('\\operatorname{diag}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'diagonalization' });
+    expect(parsed('\\operatorname{mpow}\\left(A,3\\right)', 'matrix')).toMatchObject({
+      kind: 'matrixPower',
+      matrix: { kind: 'named', name: 'A' },
+      exponent: 3,
+      exponentLatex: '3',
+    });
   });
 
   it('parses named Vector operations with u/v labels', () => {

@@ -419,6 +419,22 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{mpow}\\left(B,3\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'spectralPowerB',
+        matrixA,
+        matrixB,
+        matrixPowerExponent: 3,
+        matrixPowerExponentLatex: '3',
+        editorExpressionLatex: '\\operatorname{mpow}\\left(B,3\\right)',
+        matrixOperandLatexB: 'B',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{qr}\\left(\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}\\right)',
       matrixA,
       matrixB,

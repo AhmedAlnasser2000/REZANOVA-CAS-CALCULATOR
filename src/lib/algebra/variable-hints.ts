@@ -101,6 +101,7 @@ const MATRIX_EDITOR_FUNCTIONS = new Set([
   'ls',
   'lstsq',
   'lusolve',
+  'mpow',
   'null',
   'plu',
   'plusolve',

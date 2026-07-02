@@ -24,6 +24,19 @@ export type MatrixDiagonalizationInput = {
   exactMatrix?: ExactScalarWire[][];
 };
 
+export type MatrixSpectralPowerInput = MatrixDiagonalizationInput & {
+  exponent: number;
+};
+
+type MatrixDiagonalizationFactors = {
+  analysis: MatrixEigenAnalysis;
+  p: ExactMatrix;
+  d: ExactMatrix;
+  pInverse: ExactMatrix;
+  ap: ExactMatrix;
+  pd: ExactMatrix;
+};
+
 const ZERO = scalar(0);
 
 function matrixStop(message: string, detailSections?: DisplayDetailSection[]): MatrixResponse {
@@ -98,6 +111,19 @@ function multiplyExactMatrices(left: ExactMatrix, right: ExactMatrix): ExactMatr
         sum,
         multiplyExactScalars(value, right[pivot][columnIndex]),
       )), ZERO)));
+}
+
+function exactScalarPower(value: ExactScalar, exponent: number): ExactScalar {
+  let result = scalar(1);
+  for (let index = 0; index < exponent; index += 1) {
+    result = normalizeExactScalar(multiplyExactScalars(result, value));
+  }
+  return result;
+}
+
+function identityMatrix(size: number): ExactMatrix {
+  return Array.from({ length: size }, (_, row) =>
+    Array.from({ length: size }, (_, column) => (row === column ? scalar(1) : ZERO)));
 }
 
 function exactMatricesEqual(left: ExactMatrix, right: ExactMatrix) {
@@ -194,48 +220,138 @@ function diagonalizationDetails(input: {
   ];
 }
 
-export function runMatrixDiagonalization(input: MatrixDiagonalizationInput): MatrixResponse {
+function computeDiagonalizationFactors(
+  input: MatrixDiagonalizationInput,
+): { kind: 'success'; factors: MatrixDiagonalizationFactors } | { kind: 'stop'; response: MatrixResponse } {
   const analyzed = analyzeMatrixEigen2x2(input);
   if (analyzed.kind === 'stop') {
-    return diagonalizationStopFromEigen(analyzed.response);
+    return { kind: 'stop', response: diagonalizationStopFromEigen(analyzed.response) };
   }
 
   const { analysis } = analyzed;
   const selected = selectDiagonalizationColumns(analysis);
   if (selected.kind === 'defective') {
-    return matrixStop(
-      'This matrix is not diagonalizable because it does not have enough independent eigenvectors.',
-      defectiveDetails(analysis, selected.root),
-    );
+    return {
+      kind: 'stop',
+      response: matrixStop(
+        'This matrix is not diagonalizable because it does not have enough independent eigenvectors.',
+        defectiveDetails(analysis, selected.root),
+      ),
+    };
   }
 
   if (selected.columns.length !== 2 || selected.eigenvalues.length !== 2) {
-    return matrixStop('Diagonalization V1 needs exactly two eigenvector columns.');
+    return { kind: 'stop', response: matrixStop('Diagonalization V1 needs exactly two eigenvector columns.') };
   }
 
   const p = matrixFromColumns(selected.columns);
   const d = diagonalMatrix(selected.eigenvalues);
   const pInverse = inverseExactMatrix(p);
   if (pInverse.kind === 'stop') {
-    return matrixStop(
-      'This matrix is not diagonalizable because the eigenvector matrix is singular.',
-      defectiveDetails(analysis, analysis.roots[0]),
-    );
+    return {
+      kind: 'stop',
+      response: matrixStop(
+        'This matrix is not diagonalizable because the eigenvector matrix is singular.',
+        defectiveDetails(analysis, analysis.roots[0]),
+      ),
+    };
   }
 
   const ap = multiplyExactMatrices(analysis.exactMatrix, p);
   const pd = multiplyExactMatrices(p, d);
 
   return {
-    resultLatex: `\\operatorname{diag}(${analysis.label})=${analysis.label}=PDP^{-1}`,
-    approxText: `diagonalizable; eigenvalues ${rootsSummary(analysis.roots)}`,
-    detailSections: diagonalizationDetails({
+    kind: 'success',
+    factors: {
       analysis,
       p,
       d,
       pInverse: pInverse.inverse,
       ap,
       pd,
+    },
+  };
+}
+
+export function runMatrixDiagonalization(input: MatrixDiagonalizationInput): MatrixResponse {
+  const computed = computeDiagonalizationFactors(input);
+  if (computed.kind === 'stop') {
+    return computed.response;
+  }
+  const { factors } = computed;
+
+  return {
+    resultLatex: `\\operatorname{diag}(${factors.analysis.label})=${factors.analysis.label}=PDP^{-1}`,
+    approxText: `diagonalizable; eigenvalues ${rootsSummary(factors.analysis.roots)}`,
+    detailSections: diagonalizationDetails(factors),
+    warnings: [],
+  };
+}
+
+function spectralPowerDetails(input: {
+  factors: MatrixDiagonalizationFactors;
+  exponent: number;
+  dPower: ExactMatrix;
+  result: ExactMatrix;
+}): DisplayDetailSection[] {
+  const { factors, exponent, dPower, result } = input;
+  const powerLabel = `${factors.analysis.label}^{${exponent}}`;
+  return [
+    characteristicSection(factors.analysis),
+    {
+      title: 'Power Factors',
+      lines: [
+        `P=${exactMatrixToLatex(factors.p)}`,
+        `D=${exactMatrixToLatex(factors.d)}`,
+        `P^{-1}=${exactMatrixToLatex(factors.pInverse)}`,
+      ],
+      lineKind: 'math',
+    },
+    {
+      title: 'Power via Diagonalization',
+      lines: [
+        `D^{${exponent}}=${exactMatrixToLatex(dPower)}`,
+        `${powerLabel}=PD^{${exponent}}P^{-1}=${exactMatrixToLatex(result)}`,
+        'Because A=PDP^{-1}, repeated multiplication gives A^n=PD^nP^{-1}.',
+      ],
+      lineKinds: ['math', 'math', 'text'],
+    },
+    {
+      title: 'Diagonalization Proof',
+      lines: [
+        `${factors.analysis.label}=PDP^{-1}`,
+        `(${factors.analysis.label})P=PD=${exactMatrixToLatex(factors.ap)}`,
+        'The same eigenvector coordinates that diagonalize the matrix make powers easy: only the diagonal entries of D need to be powered.',
+      ],
+      lineKinds: ['math', 'math', 'text'],
+    },
+  ];
+}
+
+export function runMatrixSpectralPower(input: MatrixSpectralPowerInput): MatrixResponse {
+  if (!Number.isSafeInteger(input.exponent) || input.exponent < 0 || input.exponent > 12) {
+    return matrixStop('Matrix power via diagonalization supports nonnegative integer exponents up to 12 in this move.');
+  }
+
+  const computed = computeDiagonalizationFactors(input);
+  if (computed.kind === 'stop') {
+    return computed.response;
+  }
+
+  const { factors } = computed;
+  const dPower = input.exponent === 0
+    ? identityMatrix(factors.d.length)
+    : diagonalMatrix(factors.d.map((row, index) => exactScalarPower(row[index], input.exponent)));
+  const result = multiplyExactMatrices(multiplyExactMatrices(factors.p, dPower), factors.pInverse);
+
+  return {
+    resultLatex: `${factors.analysis.label}^{${input.exponent}}=${exactMatrixToLatex(result)}`,
+    approxText: `power via diagonalization; eigenvalues ${rootsSummary(factors.analysis.roots)}`,
+    detailSections: spectralPowerDetails({
+      factors,
+      exponent: input.exponent,
+      dPower,
+      result,
     }),
     warnings: [],
   };

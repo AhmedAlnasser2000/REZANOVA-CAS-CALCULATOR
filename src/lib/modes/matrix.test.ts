@@ -214,6 +214,22 @@ describe('runMatrixMode', () => {
     }
   });
 
+  it('labels spectral power runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'spectralPowerA',
+      matrixA: [[2, 1], [1, 2]],
+      matrixB: [[5, 6], [7, 8]],
+      matrixPowerExponent: 3,
+    });
+
+    expect(result.title).toBe('mpow(A,n)');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.exactLatex).toBe('A^{3}=\\begin{bmatrix}14 & 13\\\\13 & 14\\end{bmatrix}');
+      expect(result.detailSections?.[1]?.title).toBe('Power Factors');
+    }
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

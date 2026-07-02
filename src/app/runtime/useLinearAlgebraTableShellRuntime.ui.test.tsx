@@ -423,6 +423,17 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     });
     expect(diagonalized.kind === 'success' ? diagonalized.detailSections?.map((section) => section.title) : [])
       .toEqual(['Characteristic Polynomial', 'Diagonalization Factors', 'Diagonalization Proof', 'Eigenvector Columns', 'Eigenspaces']);
+
+    const powerLatex = '\\operatorname{mpow}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix},3\\right)';
+    const power = await runMatrixExpression(powerLatex);
+    expect(power).toMatchObject({
+      kind: 'success',
+      title: powerLatex,
+      approxText: 'power via diagonalization; eigenvalues 3, 1',
+      sourceMode: 'matrix',
+    });
+    expect(power.kind === 'success' ? power.detailSections?.map((section) => section.title) : [])
+      .toEqual(['Characteristic Polynomial', 'Power Factors', 'Power via Diagonalization', 'Diagonalization Proof']);
   });
 
   it('keeps Vector editor cards mode-owned and rejects Matrix-only inputs cleanly', async () => {

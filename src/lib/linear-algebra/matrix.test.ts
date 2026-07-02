@@ -604,6 +604,34 @@ describe('runMatrixOperation', () => {
     expect(response.detailSections?.[1]?.lines).toContain('\\text{independent eigenvectors found}=1');
   });
 
+  it('computes matrix powers through exact diagonalization factors', () => {
+    const response = runMatrixOperation({
+      operation: 'spectralPowerA',
+      matrixA: [[2, 1], [1, 2]],
+      matrixB,
+      matrixPowerExponent: 3,
+    });
+
+    expect(response.resultLatex).toBe('A^{3}=\\begin{bmatrix}14 & 13\\\\13 & 14\\end{bmatrix}');
+    expect(response.approxText).toBe('power via diagonalization; eigenvalues 3, 1');
+    expect(response.detailSections?.map((section) => section.title)).toEqual([
+      'Characteristic Polynomial',
+      'Power Factors',
+      'Power via Diagonalization',
+      'Diagonalization Proof',
+    ]);
+    expect(response.detailSections?.[1]?.lines).toContain('D=\\begin{bmatrix}3 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(response.detailSections?.[2]?.lines).toContain('D^{3}=\\begin{bmatrix}27 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(response.detailSections?.[2]?.lines).toContain('A^{3}=PD^{3}P^{-1}=\\begin{bmatrix}14 & 13\\\\13 & 14\\end{bmatrix}');
+
+    expect(runMatrixOperation({
+      operation: 'spectralPowerA',
+      matrixA: [[2, 1], [0, 2]],
+      matrixB,
+      matrixPowerExponent: 3,
+    }).error).toBe('This matrix is not diagonalizable because it does not have enough independent eigenvectors.');
+  });
+
   it('computes exact QR factors when Gram-Schmidt lengths stay rational', () => {
     const response = runMatrixOperation({
       operation: 'qrA',

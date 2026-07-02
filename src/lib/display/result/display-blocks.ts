@@ -146,6 +146,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Orthonormal Basis',
   'Rank/Nullity Guidance',
   'System Proof', 'Multi-RHS Proof', 'Inverse Comparison', 'Why It Cannot Diagonalize',
+  'Power Factors', 'Power via Diagonalization',
 ]);
 
 const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([

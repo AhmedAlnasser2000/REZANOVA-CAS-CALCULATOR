@@ -68,6 +68,7 @@ function matrixMetadata(
     operandB?: MatrixOperand;
     systemRhs?: LinearAlgebraEditorExpression;
     coordinateVector?: LinearAlgebraEditorExpression;
+    matrixPowerExponentLatex?: string;
   } = {},
 ) {
   return {
@@ -80,6 +81,7 @@ function matrixMetadata(
     ...(operands.coordinateVector && operands.coordinateVector.kind === 'vectorLiteral'
       ? { coordinateVectorLatex: operands.coordinateVector.displayLatex }
       : {}),
+    ...(operands.matrixPowerExponentLatex ? { matrixPowerExponentLatex: operands.matrixPowerExponentLatex } : {}),
   };
 }
 
@@ -426,6 +428,40 @@ function matrixChangeOfBasisRequest(
   };
 }
 
+function matrixPowerRequest(
+  input: MatrixEditorDispatchInput,
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'matrixPower' }>,
+): MatrixEditorDispatchResult {
+  const matrix = matrixOperand(expression.matrix, input);
+  if (!matrix) {
+    return {
+      ok: false,
+      message: 'Matrix powers need Matrix A/B or an inline matrix literal, plus an integer exponent.',
+    };
+  }
+
+  return {
+    ok: true,
+    request: matrix.named === 'B'
+      ? {
+          operation: 'spectralPowerB',
+          matrixA: cloneMatrix(input.matrixA),
+          matrixB: matrix.matrix,
+          matrixPowerExponent: expression.exponent,
+          ...(matrix.exactMatrix ? { exactMatrixB: matrix.exactMatrix } : {}),
+          ...matrixMetadata(input, { operandB: matrix, matrixPowerExponentLatex: expression.exponentLatex }),
+        }
+      : {
+          operation: 'spectralPowerA',
+          matrixA: matrix.matrix,
+          matrixB: cloneMatrix(input.matrixB),
+          matrixPowerExponent: expression.exponent,
+          ...(matrix.exactMatrix ? { exactMatrixA: matrix.exactMatrix } : {}),
+          ...matrixMetadata(input, { operandA: matrix, matrixPowerExponentLatex: expression.exponentLatex }),
+        },
+  };
+}
+
 function matrixUnaryRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
@@ -655,6 +691,9 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   }
   if (expression.kind === 'leastSquares') {
     return matrixLeastSquaresRequest(input, expression);
+  }
+  if (expression.kind === 'matrixPower') {
+    return matrixPowerRequest(input, expression);
   }
   if (expression.kind === 'factorSolve') {
     return matrixFactorSolveRequest(input, expression);

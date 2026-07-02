@@ -94,6 +94,12 @@ describe('variable hints', () => {
       storedVariables: stored,
     })).toEqual([]);
 
+    expect(hintKinds('\\operatorname{mpow}\\left(A,3\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
+
     expect(hintKinds('\\operatorname{lu}\\left(A\\right)', {
       mode: 'matrix',
       screenHint: 'matrix',
