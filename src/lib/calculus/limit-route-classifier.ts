@@ -7,6 +7,7 @@ import {
 } from '../symbolic-engine/limits/evaluation';
 import { parseNaturalLimitRequest, type NaturalLimitRequest } from './limit-request';
 import { resolveInfiniteLimitHeuristic } from './engine/limit-heuristics';
+import { resolveInfiniteExactLocalAlgebraLimit } from '../symbolic-engine/limits';
 
 const ce = new ComputeEngine();
 const MAX_LIMIT_ROUTE_NODES = 180;
@@ -17,6 +18,7 @@ export type LimitRouteKind =
   | 'removable-rational'
   | 'local-equivalent'
   | 'finite-pole'
+  | 'exact-local-algebra'
   | 'infinity-asymptotic'
   | 'lhospital-candidate'
   | 'taylor-series-candidate'
@@ -92,6 +94,19 @@ function containsTranscendentalLike(node: unknown): boolean {
   }
 
   return node.slice(1).some(containsTranscendentalLike);
+}
+
+function containsFiniteExactLocalAlgebraCandidate(node: unknown): boolean {
+  if (!isNodeArray(node) || node[0] !== 'Add') {
+    return false;
+  }
+
+  return node.slice(1).some((term) =>
+    isNodeArray(term)
+    && (
+      term[0] === 'Divide'
+      || (term[0] === 'Negate' && isNodeArray(term[1]) && term[1][0] === 'Divide')
+    ));
 }
 
 function isPolynomialLike(node: unknown, variable: string): boolean {
@@ -185,6 +200,14 @@ function classifyFiniteNode(node: unknown, request: NaturalLimitRequest): LimitR
     return divided;
   }
 
+  if (containsFiniteExactLocalAlgebraCandidate(node)) {
+    return {
+      kind: 'exact-local-algebra',
+      reason: 'A local algebra rewrite may combine terms before comparing leading behavior.',
+      request,
+    };
+  }
+
   return {
     kind: 'unsupported',
     reason: 'No supported finite-limit route matched this request.',
@@ -202,6 +225,15 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     return {
       kind: 'infinity-asymptotic',
       reason: 'Dominant end behavior resolves the infinite-target limit.',
+      request,
+    };
+  }
+
+  const exactLocalAlgebra = resolveInfiniteExactLocalAlgebraLimit(node, request.target.targetKind, request.variable);
+  if (exactLocalAlgebra) {
+    return {
+      kind: 'exact-local-algebra',
+      reason: 'An exact algebra rewrite resolves the infinite-target expression before numeric sampling.',
       request,
     };
   }

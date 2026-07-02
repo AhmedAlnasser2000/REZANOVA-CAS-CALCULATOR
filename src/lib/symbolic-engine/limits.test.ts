@@ -160,6 +160,18 @@ describe('symbolic-engine limits', () => {
     expect(mismatched.kind).toBe('unhandled')
   })
 
+  it('rewrites finite local algebra over a common denominator before leading-order comparison', () => {
+    const result = resolveFiniteLimitRule(ce.parse('\\frac{1}{x}-\\frac{1}{\\sin(x)}').json, 0, 'x')
+
+    expect(result.kind).toBe('success')
+    if (result.kind === 'success') {
+      expect(result.origin).toBe('rule-based-symbolic')
+      expect(result.value).toBeCloseTo(0, 8)
+      expect(result.exactLatex).toBe('0')
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('common denominator')
+    }
+  })
+
   it('resolves supported one-sided log boundary behavior', () => {
     const right = resolveFiniteLimitRule(ce.parse('\\ln(x)').json, 0, 'x', 'right')
     const left = resolveFiniteLimitRule(ce.parse('\\ln(x)').json, 0, 'x', 'left')

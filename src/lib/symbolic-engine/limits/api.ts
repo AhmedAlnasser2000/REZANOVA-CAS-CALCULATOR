@@ -1,6 +1,7 @@
 import type { LimitDirection } from '../../../types/calculator';
 import { box, latexToNumber, success } from './evaluation';
 import { resolveKnownFiniteLimitRule } from './known-rules';
+import { resolveExactLocalAlgebraLimit } from './exact-local-algebra';
 import { attemptLHospital } from './lhospital';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import { resolveLogBoundaryLimit, resolveSignedPoleLimit } from './poles';
@@ -34,6 +35,11 @@ export function resolveFiniteLimitRule(
   const rationalLocal = resolveRationalLocalLimit(node, target, variable, direction);
   if (rationalLocal) {
     return rationalLocal;
+  }
+
+  const exactLocalAlgebra = resolveExactLocalAlgebraLimit(node, target, variable, direction);
+  if (exactLocalAlgebra) {
+    return exactLocalAlgebra;
   }
 
   const localEquivalentLimit = resolveLocalEquivalentLimit(

@@ -214,4 +214,21 @@ describe('calculus limits', () => {
     expect(equivalent.exactLatex).toBe('1');
     expect(equivalent.detailSections?.[0]?.lines.join(' ')).toContain('local orders');
   });
+
+  it('resolves exact local algebra natural limit expressions', () => {
+    const finite = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 1/x - 1/sin(x)',
+    });
+    const infinity = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity sqrt(x^2+x)-x',
+    });
+
+    expect(finite.error).toBeUndefined();
+    expect(finite.exactLatex).toBe('0');
+    expect(finite.detailSections?.[0]?.lines.join(' ')).toContain('common denominator');
+
+    expect(infinity.error).toBeUndefined();
+    expect(infinity.exactLatex).toBe('\\frac{1}{2}');
+    expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('conjugate');
+  });
 });

@@ -22,6 +22,10 @@ describe('natural limit request parsing', () => {
     });
     expect(plain.canonicalLatex).toBe('\\lim_{x\\to 0}\\left(\\sin(x)/x\\right)');
 
+    const sqrt = expectParsed('lim x -> infinity sqrt(x^2+x)-x');
+    expect(sqrt.bodyLatex).toBe('\\sqrt{x^2+x}-x');
+    expect(sqrt.canonicalLatex).toContain('\\sqrt{x^2+x}-x');
+
     const latex = expectParsed('\\lim_{x\\to0}\\frac{\\sin(x)}{x}');
     expect(latex.variable).toBe('x');
     expect(latex.bodyLatex).toBe('\\frac{\\sin(x)}{x}');

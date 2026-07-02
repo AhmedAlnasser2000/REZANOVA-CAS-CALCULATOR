@@ -79,9 +79,48 @@ function compactTarget(input: string) {
     .replace(/\s+/g, '');
 }
 
+function normalizePlainSqrtGroups(input: string) {
+  let output = '';
+  let index = 0;
+
+  while (index < input.length) {
+    const match = input.slice(index).match(/^sqrt\s*\(/iu);
+    if (!match) {
+      output += input[index];
+      index += 1;
+      continue;
+    }
+
+    const groupStart = index + match[0].length - 1;
+    let depth = 0;
+    let groupEnd = -1;
+    for (let scan = groupStart; scan < input.length; scan += 1) {
+      if (input[scan] === '(') {
+        depth += 1;
+      } else if (input[scan] === ')') {
+        depth -= 1;
+        if (depth === 0) {
+          groupEnd = scan;
+          break;
+        }
+      }
+    }
+
+    if (groupEnd < 0) {
+      output += input[index];
+      index += 1;
+      continue;
+    }
+
+    output += `\\sqrt{${input.slice(groupStart + 1, groupEnd)}}`;
+    index = groupEnd + 1;
+  }
+
+  return output;
+}
+
 function normalizePlainBody(input: string) {
-  return input
-    .trim()
+  return normalizePlainSqrtGroups(input.trim())
     .replace(/\b(sin|cos|tan|ln|log|sqrt)(?=\s*\()/gu, '\\$1')
     .replace(/\bpi\b/gu, '\\pi');
 }

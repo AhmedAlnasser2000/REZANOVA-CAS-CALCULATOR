@@ -3,7 +3,7 @@ import {
   checkOneSidedRealDomain,
   collectRealDomainConstraints,
 } from '../../algebra/domain-range-core';
-import { attemptInfiniteLHospital } from '../../symbolic-engine/limits';
+import { attemptInfiniteLHospital, resolveInfiniteExactLocalAlgebraLimit } from '../../symbolic-engine/limits';
 import { resolveFiniteLimitRule } from '../../symbolic-engine/limits';
 import type {
   DisplayDetailSection,
@@ -470,6 +470,17 @@ export function evaluateInfiniteLimitFromAst(input: {
   allowNumericFallback?: boolean;
   messages: InfiniteLimitMessages;
 }): CalculusCoreEvaluation {
+  const exactLocalAlgebra = resolveInfiniteExactLocalAlgebraLimit(input.body, input.targetKind, input.variable);
+  if (exactLocalAlgebra) {
+    return {
+      exactLatex: exactLocalAlgebra.exactLatex ?? limitValueToLatex(exactLocalAlgebra.value),
+      approxText: limitValueToApproxText(exactLocalAlgebra.value),
+      warnings: [],
+      resultOrigin: 'rule-based-symbolic',
+      detailSections: exactLocalAlgebra.detailSections,
+    };
+  }
+
   const heuristic = resolveInfiniteLimitHeuristic(input.body, input.variable, input.targetKind);
   if (heuristic.kind === 'success') {
     return {

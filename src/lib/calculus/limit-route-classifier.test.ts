@@ -32,6 +32,15 @@ describe('natural limit route classifier', () => {
     });
   });
 
+  it('classifies exact local algebra routes', () => {
+    expect(classifyNaturalLimitRoute('lim x -> 0 1/x - 1/sin(x)')).toMatchObject({
+      kind: 'exact-local-algebra',
+    });
+    expect(classifyNaturalLimitRoute('lim x -> infinity sqrt(x^2+x)-x')).toMatchObject({
+      kind: 'exact-local-algebra',
+    });
+  });
+
   it('returns controlled unsupported and malformed routes', () => {
     expect(classifyNaturalLimitRoute('lim x -> 0 sin(1/x)')).toMatchObject({
       kind: 'unsupported',
