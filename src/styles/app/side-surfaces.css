@@ -898,8 +898,23 @@
   min-height: 38px;
   display: flex;
   align-items: center;
+  gap: 8px;
   overflow-x: auto;
   padding-block: 4px;
+}
+
+.history-entry-preview--result {
+  min-height: 24px;
+  color: rgba(237, 241, 229, 0.58);
+  font-size: 0.78rem;
+  padding-block: 0;
+}
+
+.history-entry-preview-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .history-entry-expanded {

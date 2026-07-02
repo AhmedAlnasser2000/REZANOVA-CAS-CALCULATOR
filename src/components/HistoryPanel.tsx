@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { MathStatic } from './MathStatic';
+import { useEffect, useMemo, useState } from 'react';
 import type { HistoryEntry, ModeId, PendingHistoryTicket } from '../types/calculator';
 import { buildHistoryLaunchRows } from './history-launch-rows';
 import {
@@ -7,7 +6,10 @@ import {
   formatRuntimeElapsedRunning,
   runtimeElapsedMs,
 } from '../app/runtime/runtimeElapsedTime';
+import { latexToVisibleText } from '../lib/display/math-notation';
 import { useLanguage } from '../lib/language/language-context';
+
+const QUICK_HISTORY_COMMITTED_ROW_LIMIT = 20;
 
 type HistoryPanelPresentation = 'outboard' | 'overlay';
 
@@ -24,6 +26,10 @@ type HistoryPanelProps = {
   onStopPending?: (ticket: PendingHistoryTicket) => void;
 };
 
+function quickHistoryPreviewText(latex: string) {
+  return latexToVisibleText(latex, 'plainText').trim() || latex;
+}
+
 export function HistoryPanel({
   presentation,
   history,
@@ -38,9 +44,20 @@ export function HistoryPanel({
 }: HistoryPanelProps) {
   const { strings } = useLanguage();
   const historyText = strings.history;
-  const [expandedEntryIds, setExpandedEntryIds] = useState<Set<string>>(() => new Set());
   const [elapsedNowMs, setElapsedNowMs] = useState(() => Date.now());
-  const rows = buildHistoryLaunchRows(history, pendingHistory);
+  const rows = useMemo(() => {
+    let committedRows = 0;
+    return buildHistoryLaunchRows(history, pendingHistory).filter((row) => {
+      if (row.kind === 'pending') {
+        return true;
+      }
+      if (committedRows >= QUICK_HISTORY_COMMITTED_ROW_LIMIT) {
+        return false;
+      }
+      committedRows += 1;
+      return true;
+    });
+  }, [history, pendingHistory]);
   const hasTimedPendingRows = pendingHistory.some((ticket) =>
     typeof ticket.startedAtMs === 'number');
 
@@ -55,18 +72,6 @@ export function HistoryPanel({
 
     return () => window.clearInterval(intervalId);
   }, [hasTimedPendingRows]);
-
-  function toggleEntry(entryId: string) {
-    setExpandedEntryIds((currentIds) => {
-      const nextIds = new Set(currentIds);
-      if (nextIds.has(entryId)) {
-        nextIds.delete(entryId);
-      } else {
-        nextIds.add(entryId);
-      }
-      return nextIds;
-    });
-  }
 
   return (
     <aside
@@ -150,7 +155,9 @@ export function HistoryPanel({
                     </div>
                     <div className="history-entry-body history-entry-body--pending">
                       <div className="history-entry-preview" data-testid="history-entry-preview">
-                        <MathStatic className="history-math" latex={ticket.inputLatex} />
+                        <span className="history-entry-preview-text">
+                          {quickHistoryPreviewText(ticket.inputLatex)}
+                        </span>
                       </div>
                     </div>
                   </article>
@@ -158,15 +165,13 @@ export function HistoryPanel({
               }
 
               const entry = row.entry;
-              const isExpanded = expandedEntryIds.has(entry.id);
-              const hasExpandedContent =
-                Boolean(entry.resultLatex)
-                || Boolean(entry.approxText)
-                || Boolean(entry.exactSupplementLatex && entry.exactSupplementLatex.length > 0);
+              const resultPreview = entry.resultLatex
+                ? quickHistoryPreviewText(entry.resultLatex)
+                : entry.approxText;
               return (
                 <article
                   key={entry.id}
-                  className={`history-entry ${isExpanded ? 'is-expanded' : ''}`}
+                  className="history-entry"
                   data-testid="history-entry"
                   onClick={(event) => {
                     if ((event.target as HTMLElement).closest('button')) {
@@ -197,18 +202,6 @@ export function HistoryPanel({
                       <button
                         type="button"
                         className="history-entry-icon"
-                        data-testid="history-entry-toggle"
-                        aria-label={isExpanded
-                          ? historyText.aria.collapseEntry
-                          : historyText.aria.expandEntry}
-                        aria-expanded={isExpanded}
-                        onClick={() => toggleEntry(entry.id)}
-                      >
-                        {isExpanded ? '^' : 'v'}
-                      </button>
-                      <button
-                        type="button"
-                        className="history-entry-icon"
                         data-testid="history-entry-delete"
                         aria-label={historyText.aria.deleteEntry}
                         onClick={() => onDelete(entry.id)}
@@ -224,70 +217,19 @@ export function HistoryPanel({
                     onClick={() => onReplay(entry)}
                   >
                     <div className="history-entry-preview" data-testid="history-entry-preview">
-                      <MathStatic className="history-math" latex={entry.inputLatex} />
+                      <span className="history-entry-preview-text">
+                        {quickHistoryPreviewText(entry.inputLatex)}
+                      </span>
                     </div>
-                    {isExpanded ? (
-                      <div className="history-entry-expanded" data-testid="history-entry-expanded">
-                        {entry.resultLatex ? (
-                          <div className="history-entry-section">
-                            <span className="history-entry-section-label">
-                              {historyText.labels.answer}
-                            </span>
-                            <MathStatic className="history-math result" latex={entry.resultLatex} />
-                          </div>
-                        ) : null}
-                        {entry.approxText ? (
-                          <div className="history-entry-section">
-                            <span className="history-entry-section-label">
-                              {historyText.labels.approx}
-                            </span>
-                            <span className="history-entry-text">{entry.approxText}</span>
-                          </div>
-                        ) : null}
-                        {entry.answerDomain === 'complex' ? (
-                          <div className="history-entry-section">
-                            <span className="history-entry-section-label">
-                              {historyText.labels.domain}
-                            </span>
-                            <span className="history-entry-text">
-                              {historyText.labels.complex}
-                            </span>
-                          </div>
-                        ) : null}
-                        {entry.solutionKind === 'inequality-solution-set' ? (
-                          <div className="history-entry-section">
-                            <span className="history-entry-section-label">
-                              {historyText.labels.solution}
-                            </span>
-                            <span className="history-entry-text">
-                              {historyText.labels.inequalitySet}
-                            </span>
-                          </div>
-                        ) : null}
-                        {entry.exactSupplementLatex && entry.exactSupplementLatex.length > 0 ? (
-                          <div className="history-entry-section">
-                            <span className="history-entry-section-label">
-                              {historyText.labels.validWhen}
-                            </span>
-                            {entry.exactSupplementLatex.map((line, index) => (
-                              <MathStatic
-                                key={`${entry.id}-valid-${index}`}
-                                className="history-math result"
-                                latex={line}
-                              />
-                            ))}
-                          </div>
-                        ) : null}
-                        {!hasExpandedContent ? (
-                          <div className="history-entry-section">
-                            <span className="history-entry-section-label">
-                              {historyText.labels.answer}
-                            </span>
-                            <span className="history-entry-text">
-                              {historyText.staleAnswer}
-                            </span>
-                          </div>
-                        ) : null}
+                    {resultPreview ? (
+                      <div
+                        className="history-entry-preview history-entry-preview--result"
+                        data-testid="history-entry-result-preview"
+                      >
+                        <span className="history-entry-section-label">
+                          {entry.resultLatex ? historyText.labels.answer : historyText.labels.approx}
+                        </span>
+                        <span className="history-entry-preview-text">{resultPreview}</span>
                       </div>
                     ) : null}
                   </button>

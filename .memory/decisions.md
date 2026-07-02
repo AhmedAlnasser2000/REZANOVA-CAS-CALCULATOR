@@ -1605,6 +1605,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Workspace surface descriptors own quick-inspector permission. Calculator-like workspaces allow quick Settings, History, Variables, and Order of Execution diagnostics; app/page surfaces such as Settings, History, Formula Viewer, and future page/canvas surfaces default to no global quick inspectors. App chrome and full page surfaces stay stable under calculator UI scale.
 
+## 2026-07-02 - HISTORY-QUICK-PANEL-LIGHTWEIGHT1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The quick History inspector is a recent-summary surface, not a rich ledger. It renders all pending tickets plus at most 20 committed entries, uses text previews, and must not mount row-level `MathStatic`, exact supplements, or facts; full History owns deep browsing and rich selected-entry rendering.
+
 ## 2026-07-02 - MATHSTATIC-MARKUP-LRU1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Rendered `MathStatic` markup is cached as bounded strings only, keyed by display LaTeX plus block/inline mode. The cache is internal Display infrastructure and must not store React nodes, DOM objects, solver objects, Display block trees, History entries, or public schema payloads.

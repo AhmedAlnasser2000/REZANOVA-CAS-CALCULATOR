@@ -64,7 +64,7 @@ describe('HistoryPanel', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('expands, replays, and deletes individual history cards', () => {
+  it('renders lightweight summaries, replays, and deletes individual history cards', () => {
     const onDelete = vi.fn();
     const onReplay = vi.fn();
 
@@ -83,17 +83,9 @@ describe('HistoryPanel', () => {
     const entries = screen.getAllByTestId('history-entry');
     expect(entries).toHaveLength(2);
     expect(within(entries[0]).getByTestId('history-entry-preview')).toBeInTheDocument();
-    expect(within(entries[0]).queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
-
-    fireEvent.click(within(entries[0]).getByTestId('history-entry-toggle'));
-    expect(within(entries[0]).getByTestId('history-entry-toggle')).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    );
-    expect(within(entries[0]).getByTestId('history-entry-expanded')).toBeInTheDocument();
-    expect(within(entries[0]).getByText(historyText.labels.answer)).toBeInTheDocument();
-    expect(within(entries[0]).getByText(historyText.labels.validWhen)).toBeInTheDocument();
-    expect(within(entries[0]).getByLabelText(historyText.aria.collapseEntry)).toBeInTheDocument();
+    expect(within(entries[0]).getByTestId('history-entry-result-preview')).toBeInTheDocument();
+    expect(screen.queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
+    expect(screen.getByTestId('history-panel').querySelector('[data-raw-latex]')).toBeNull();
 
     fireEvent.click(within(entries[0]).getByTestId('history-entry-body'));
     expect(onReplay).toHaveBeenCalledWith(historyEntry('2'));
@@ -102,7 +94,7 @@ describe('HistoryPanel', () => {
     expect(onDelete).toHaveBeenCalledWith('2');
   });
 
-  it('keeps many restored history entries compact and non-shrinking until expanded', () => {
+  it('caps committed quick-panel rows while keeping summaries compact', () => {
     render(
       <HistoryPanel
         presentation="outboard"
@@ -121,20 +113,13 @@ describe('HistoryPanel', () => {
     expect(getComputedStyle(list as Element).overflowY).toBe('auto');
 
     const entries = screen.getAllByTestId('history-entry');
-    expect(entries).toHaveLength(48);
+    expect(entries).toHaveLength(20);
     for (const entry of entries.slice(0, 8)) {
       expect(getComputedStyle(entry).flexShrink).toBe('0');
       expect(within(entry).getByTestId('history-entry-preview')).toBeInTheDocument();
-      expect(within(entry).queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
+      expect(within(entry).getByTestId('history-entry-result-preview')).toBeInTheDocument();
     }
-
-    fireEvent.click(within(entries[0]).getByTestId('history-entry-toggle'));
-    const expanded = within(entries[0]).getByTestId('history-entry-expanded');
-    expect(expanded).toBeInTheDocument();
-    expect(getComputedStyle(expanded).overflowY).toBe('auto');
-    expect(within(entries[0]).getByText(historyText.labels.answer)).toBeInTheDocument();
-    expect(within(entries[0]).getByText(historyText.labels.validWhen)).toBeInTheDocument();
-    expect(within(entries[1]).queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
+    expect(screen.getByTestId('history-panel').querySelector('[data-raw-latex]')).toBeNull();
   });
 
   it('renders pending tickets in launch order with a Stop action only', () => {
@@ -172,6 +157,7 @@ describe('HistoryPanel', () => {
     const pendingEntries = screen.getAllByTestId('history-entry-pending');
     expect(finalizedEntries).toHaveLength(2);
     expect(pendingEntries).toHaveLength(1);
+    expect(screen.getByTestId('history-panel').querySelector('[data-raw-latex]')).toBeNull();
 
     const rows = screen.getByTestId('history-panel').querySelectorAll('.history-entry');
     expect(within(rows[0] as HTMLElement).getByText(historyText.replay)).toBeInTheDocument();
