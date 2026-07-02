@@ -81,6 +81,10 @@ export function trustSummaryForDisplayOutcome(outcome: DisplayOutcome): string |
     return undefined;
   }
 
+  if (outcome.sourceMode === 'matrix' || outcome.sourceMode === 'vector') {
+    return undefined;
+  }
+
   const evidenceSummary = trustSummaryFromEvidence(outcome);
   if (evidenceSummary) {
     return evidenceSummary;

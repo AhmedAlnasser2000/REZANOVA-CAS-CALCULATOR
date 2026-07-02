@@ -36,6 +36,7 @@ function matrixSystemStop(reason: string): DisplayOutcome {
     title: 'Matrix system',
     error: reason,
     warnings: [],
+    sourceMode: 'matrix',
   };
 }
 function exactStopReasonToMessage(reason: ExactMatrixStopReason): string {
@@ -316,6 +317,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
+      sourceMode: 'matrix',
     };
   }
 
@@ -335,6 +337,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
+      sourceMode: 'matrix',
     };
   }
 
@@ -354,5 +357,6 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       rowOperationDetailSection(augmentedRref.rowOperations),
     ],
     warnings: [],
+    sourceMode: 'matrix',
   };
 }

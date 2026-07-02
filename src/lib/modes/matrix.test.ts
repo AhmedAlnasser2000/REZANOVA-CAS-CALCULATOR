@@ -13,6 +13,11 @@ describe('runMatrixMode', () => {
     });
 
     expect(result.title).toBe(expressionLatex);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.sourceMode).toBe('matrix');
   });
 
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {

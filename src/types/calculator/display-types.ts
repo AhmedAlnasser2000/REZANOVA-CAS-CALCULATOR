@@ -114,6 +114,7 @@ export type DisplayOutcome =
       rejectedCandidateCount?: number;
       substitutionDiagnostics?: SubstitutionSolveDiagnostics;
       numericMethod?: string;
+      sourceMode?: ModeId;
       runtimeAdvisories?: RuntimeAdvisories;
       variableSubstitutions?: VariableSubstitutionSnapshot[];
     }
@@ -151,5 +152,6 @@ export type DisplayOutcome =
       rejectedCandidateCount?: number;
       substitutionDiagnostics?: SubstitutionSolveDiagnostics;
       numericMethod?: string;
+      sourceMode?: ModeId;
       runtimeAdvisories?: RuntimeAdvisories;
     };

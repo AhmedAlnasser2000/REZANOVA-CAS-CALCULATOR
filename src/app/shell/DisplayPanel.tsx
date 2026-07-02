@@ -151,6 +151,7 @@ function DisplayPanel({
     detailedFactsEnabled: Boolean(settings?.detailedFactsEnabled),
     getPeriodicStopReasonText,
     showApproxReadback,
+    sourceMode: currentMode,
   });
   const displayStatus = clipboardNotice ?? (
     hasDisplayRenderQueue

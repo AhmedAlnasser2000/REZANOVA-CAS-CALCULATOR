@@ -279,6 +279,61 @@ describe('display block adapter', () => {
     ]);
   });
 
+  it('does not describe Linear Algebra finite sets as roots', () => {
+    const vectorOutcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'gram(u,v)',
+      exactLatex: [
+        '\\text{orthogonal basis}=\\left\\{',
+        '\\begin{bmatrix}1\\\\2\\\\3\\end{bmatrix},',
+        '\\begin{bmatrix}2\\\\0\\\\-1\\end{bmatrix}',
+        '\\right\\}',
+      ].join(''),
+      sourceMode: 'vector',
+      warnings: [],
+    };
+    const vectorAnswer = buildDisplayBlocks(vectorOutcome).find((block) => block.id === 'answer');
+
+    expect(vectorAnswer).toMatchObject({
+      kind: 'answer',
+      renderKind: 'math',
+      latex: vectorOutcome.exactLatex,
+    });
+    expect(vectorAnswer?.countSummary).toBeUndefined();
+    expect(displayBlockSummaryText(vectorAnswer!)).toBeUndefined();
+
+    const matrixOutcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'eigen(A)',
+      exactLatex: 'eigen(A)=\\left\\{\\lambda=3,\\lambda=1\\right\\}',
+      sourceMode: 'matrix',
+      warnings: [],
+    };
+    const matrixAnswer = buildDisplayBlocks(matrixOutcome).find((block) => block.id === 'answer');
+
+    expect(matrixAnswer).toMatchObject({
+      kind: 'answer',
+      renderKind: 'math',
+      latex: matrixOutcome.exactLatex,
+    });
+    expect(displayBlockSummaryText(matrixAnswer!)).toBeUndefined();
+  });
+
+  it('uses source-mode options to protect older Linear Algebra outcomes', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'gram(u,v)',
+      exactLatex: '\\text{orthogonal basis}=\\left\\{u,v\\right\\}',
+      warnings: [],
+    };
+
+    const answerBlock = buildDisplayBlocks(outcome, { sourceMode: 'vector' })
+      .find((block) => block.id === 'answer');
+
+    expect(answerBlock?.renderKind).toBe('math');
+    expect(answerBlock?.countSummary).toBeUndefined();
+  });
+
   it('uses candidate-root count wording for guarded finite branch metadata', () => {
     const exactLatex = 'z\\in\\left\\{b-\\sqrt{a},\\ b+\\sqrt{a}\\right\\}';
     const outcome: DisplayOutcome = {

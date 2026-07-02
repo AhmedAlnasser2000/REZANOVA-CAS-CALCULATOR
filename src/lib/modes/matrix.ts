@@ -147,6 +147,7 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
       approxText: response.approxText,
       detailSections: response.detailSections,
       actions,
+      sourceMode: 'matrix',
     };
   }
 
@@ -158,6 +159,7 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
     detailSections: response.detailSections,
     warnings: response.warnings,
     actions,
+    sourceMode: 'matrix',
   };
 }
 

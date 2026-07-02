@@ -4,6 +4,7 @@ import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
   DisplayOutcome,
+  ModeId,
   PeriodicFamilyInfo,
 } from '../../../types/calculator';
 import { detailLineKindAt, detailLinePartsAt } from './result-detail-lines';
@@ -83,6 +84,7 @@ export type BuildDisplayBlocksOptions = {
     reason: NonNullable<PeriodicFamilyInfo['structuredStopReason']>,
   ) => string;
   showApproxReadback?: boolean;
+  sourceMode?: ModeId;
 };
 
 type SuccessDisplayOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -705,6 +707,20 @@ function primaryApproximateAnswerBlock(outcome: DisplayOutcome): DisplayBlock | 
   };
 }
 
+function isLinearAlgebraSourceMode(mode: ModeId | undefined) {
+  return mode === 'matrix' || mode === 'vector';
+}
+
+function displayOutcomeSourceMode(outcome: DisplayOutcome) {
+  return outcome.kind === 'success' || outcome.kind === 'error'
+    ? outcome.sourceMode
+    : undefined;
+}
+
+function allowsImplicitBranchReadback(outcome: DisplayOutcome, options: BuildDisplayBlocksOptions) {
+  return !isLinearAlgebraSourceMode(options.sourceMode ?? displayOutcomeSourceMode(outcome));
+}
+
 export function buildDisplayBlocks(
   outcome: DisplayOutcome | null | undefined,
   options: BuildDisplayBlocksOptions = {},
@@ -760,7 +776,10 @@ export function buildDisplayBlocks(
         outcome.branchReadback,
         section.latex,
       );
-      const branchReadback = metadataBranchReadback ?? extractFiniteBranchReadback(section.latex);
+      const branchReadback = metadataBranchReadback
+        ?? (allowsImplicitBranchReadback(outcome, options)
+          ? extractFiniteBranchReadback(section.latex)
+          : null);
       if (branchReadback) {
         blocks.push({
           id: 'answer',

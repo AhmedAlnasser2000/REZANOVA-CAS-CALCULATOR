@@ -15,6 +15,11 @@ describe('runVectorMode', () => {
     });
 
     expect(result.title).toBe(expressionLatex);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.sourceMode).toBe('vector');
   });
 
   it('keeps vector operation ids working with u/v readback labels', () => {

@@ -100,6 +100,7 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
       warnings: response.warnings,
       exactLatex: response.resultLatex,
       approxText: response.approxText,
+      sourceMode: 'vector',
     };
   }
 
@@ -110,6 +111,7 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     approxText: response.approxText,
     detailSections: response.detailSections,
     warnings: response.warnings,
+    sourceMode: 'vector',
   };
 }
 

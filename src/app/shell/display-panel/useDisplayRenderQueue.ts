@@ -12,12 +12,14 @@ import {
   orderDisplayBlocksForReveal,
 } from '../../../lib/display/scheduling/display-render-scheduler';
 import type { DisplayOutcome } from '../../../types/calculator';
+import type { ModeId } from '../../../types/calculator/mode-types';
 
 type UseDisplayRenderQueueOptions = {
   displayOutcome: DisplayOutcome | null | undefined;
   detailedFactsEnabled: boolean;
   getPeriodicStopReasonText: (reason: string) => string;
   showApproxReadback: boolean;
+  sourceMode?: ModeId;
 };
 
 function displayBlockSignature(blocks: readonly DisplayBlock[]) {
@@ -48,6 +50,7 @@ export function useDisplayRenderQueue({
   detailedFactsEnabled,
   getPeriodicStopReasonText,
   showApproxReadback,
+  sourceMode,
 }: UseDisplayRenderQueueOptions) {
   const displayBlocks = buildDisplayBlocks(displayOutcome, {
     detailPolicy: {
@@ -55,6 +58,7 @@ export function useDisplayRenderQueue({
     },
     getPeriodicStopReasonText,
     showApproxReadback,
+    sourceMode,
   });
   const signature = displayBlockSignature(displayBlocks);
   const scheduledDisplayBlocks = useMemo(
