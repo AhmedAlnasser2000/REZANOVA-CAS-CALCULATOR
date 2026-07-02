@@ -314,6 +314,8 @@ const matrixOperationSchema = z.enum([
   'columnSpaceB',
   'invertibilityA',
   'invertibilityB',
+  'eigenA',
+  'eigenB',
   'linearSystem',
 ]);
 const matrixSystemFormSchema = z.enum(['Ax=b', 'Ax+b=0']);

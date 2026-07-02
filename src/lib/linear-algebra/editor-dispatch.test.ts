@@ -111,6 +111,30 @@ describe('linear algebra editor dispatch', () => {
         ],
       },
     });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{eigen}\\left(B\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: { operation: 'eigenB', matrixA, matrixB },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: {
+        operation: 'eigenA',
+        matrixA: [[2, 1], [1, 2]],
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 1 }],
+          [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+        ],
+      },
+    });
   });
 
   it('preserves inline Matrix fractions and finite decimals as exact sidecars', () => {

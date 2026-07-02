@@ -272,6 +272,25 @@ function matrixUnaryRequest(
     };
   }
 
+  if (expression.operator === 'eigen') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? {
+            operation: 'eigenB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'eigenA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
+    };
+  }
+
   if (expression.operator === 'determinant') {
     return {
       ok: true,

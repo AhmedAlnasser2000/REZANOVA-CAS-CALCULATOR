@@ -174,6 +174,48 @@ describe('runMatrixOperation', () => {
     expect(response.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)+\\operatorname{nullity}(A)=3');
   });
 
+  it('computes 2x2 rational eigenvalues and eigenspaces through the Equation boundary', () => {
+    const response = runMatrixOperation({
+      operation: 'eigenA',
+      matrixA: [[2, 1], [1, 2]],
+      matrixB,
+    });
+
+    expect(response.resultLatex).toBe(
+      '\\operatorname{eigen}(A)=\\left\\{\\lambda=3:E_{3}=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\},\\lambda=1:E_{1}=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}\\right\\}',
+    );
+    expect(response.approxText).toBe('eigenvalues 3, 1');
+    expect(response.detailSections?.[0]?.lines).toContain('\\lambda^{2}-4\\lambda+3=0');
+    expect(response.detailSections?.[1]?.lines).toContain(
+      'Equation solved the exact characteristic polynomial through the typed quadratic boundary.',
+    );
+    expect(response.detailSections?.[2]?.lines).toContain(
+      'E_{3}=\\operatorname{Null}(A-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
+    );
+  });
+
+  it('hands deferred irrational and complex eigenvalue cases to Equation explicitly', () => {
+    const irrational = runMatrixOperation({
+      operation: 'eigenA',
+      matrixA: [[0, 2], [1, 0]],
+      matrixB,
+    });
+    const complex = runMatrixOperation({
+      operation: 'eigenA',
+      matrixA: [[0, -1], [1, 0]],
+      matrixB,
+    });
+
+    expect(irrational).toMatchObject({
+      error: 'Irrational eigenvalue vector readback is deferred for Matrix V1.',
+      handoffEquationLatex: '\\lambda^{2}-2=0',
+    });
+    expect(complex).toMatchObject({
+      error: 'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.',
+      handoffEquationLatex: '\\lambda^{2}+1=0',
+    });
+  });
+
   it('stops on incomplete, mismatched, singular, and non-square requests', () => {
     expect(runMatrixOperation({ operation: 'add', matrixA: [], matrixB }).error).toBe(
       'Matrix A is incomplete.',

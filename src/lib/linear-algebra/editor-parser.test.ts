@@ -37,6 +37,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{null}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'nullSpace' });
     expect(parsed('\\operatorname{col}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'columnSpace' });
     expect(parsed('\\operatorname{invertible}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'invertibility' });
+    expect(parsed('\\operatorname{eigen}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'eigen' });
   });
 
   it('parses named Vector operations with u/v labels', () => {

@@ -1708,3 +1708,7 @@
 ## 2026-07-02 - MATRIX-INVERTIBILITY-THEOREM1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns finite square-matrix invertibility theorem readback through determinant, rank, pivot, and nullity facts from the exact Matrix substrate. `invertible(A/B)` may run for named or inline matrices; rectangular inputs produce rank/nullity guidance instead of invertibility claims. This does not add Equation solving, symbolic Matrix CAS, or automatic Equation routing.
+
+## 2026-07-02 - MATRIX-EIGEN-2X2-EQUATION-BOUNDARY1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns 2x2 characteristic-polynomial construction and rational-eigenvalue eigenspace presentation for `eigen(A/B)`, while Equation owns the typed exact quadratic polynomial root boundary. Matrix may consume only the boundary's rational real eigenvalues; irrational or complex roots return controlled Matrix guidance with an explicit `Open in Equation` action instead of importing Equation solver internals or auto-routing workspaces.

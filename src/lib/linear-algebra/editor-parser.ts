@@ -18,6 +18,7 @@ export type LinearAlgebraUnaryOperator =
   | 'nullSpace'
   | 'columnSpace'
   | 'invertibility'
+  | 'eigen'
   | 'transpose'
   | 'inverse'
   | 'norm'
@@ -101,6 +102,8 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{Col\}/g, 'col')
     .replace(/\\operatorname\{invertible\}/g, 'invertible')
     .replace(/\\operatorname\{Invertible\}/g, 'invertible')
+    .replace(/\\operatorname\{eigen\}/g, 'eigen')
+    .replace(/\\operatorname\{Eigen\}/g, 'eigen')
     .replace(/\\operatorname\{proj\}_\{u\}/g, 'proj_u')
     .replace(/\\operatorname\{proj\}_u/g, 'proj_u')
     .replace(/\\operatorname\{proj\}_\{v\}/g, 'proj_v')
@@ -486,6 +489,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['null', 'nullSpace'],
     ['col', 'columnSpace'],
     ['invertible', 'invertibility'],
+    ['eigen', 'eigen'],
     ['norm', 'norm'],
     ['proj_u', 'projectionOntoU'],
     ['proj_v', 'projectionOntoV'],

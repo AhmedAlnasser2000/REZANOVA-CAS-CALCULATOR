@@ -70,6 +70,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'invertible(A)';
     case 'invertibilityB':
       return 'invertible(B)';
+    case 'eigenA':
+      return 'eigen(A)';
+    case 'eigenB':
+      return 'eigen(B)';
     case 'linearSystem':
       return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
     default:
@@ -98,6 +102,9 @@ export function runMatrixMode({
   }
 
   const response = runMatrixOperation({ operation, matrixA, matrixB, exactMatrixA, exactMatrixB });
+  const actions = response.handoffEquationLatex
+    ? [{ kind: 'send' as const, target: 'equation' as const, latex: response.handoffEquationLatex }]
+    : undefined;
   if (response.error) {
     return {
       kind: 'error',
@@ -107,6 +114,7 @@ export function runMatrixMode({
       exactLatex: response.resultLatex,
       approxText: response.approxText,
       detailSections: response.detailSections,
+      actions,
     };
   }
 
@@ -117,6 +125,7 @@ export function runMatrixMode({
     approxText: response.approxText,
     detailSections: response.detailSections,
     warnings: response.warnings,
+    actions,
   };
 }
 
