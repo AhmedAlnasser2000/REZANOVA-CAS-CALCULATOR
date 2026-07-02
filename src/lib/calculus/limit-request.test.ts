@@ -40,6 +40,13 @@ describe('natural limit request parsing', () => {
       direction: 'right',
     });
 
+    const plainRight = expectParsed('lim x -> 0+ 1/x');
+    expect(plainRight.target).toMatchObject({
+      kind: 'finite',
+      value: 0,
+      direction: 'right',
+    });
+
     const infinity = expectParsed('\\lim_{t\\to-\\infty}\\frac{1}{t}');
     expect(infinity.variable).toBe('t');
     expect(infinity.target).toMatchObject({

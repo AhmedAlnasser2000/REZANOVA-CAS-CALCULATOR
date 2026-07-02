@@ -12,6 +12,8 @@ export type ParsedFiniteLimitTarget = {
 
 const DIRECTIONAL_TARGET_PATTERN =
   /^(.+?)\^\s*(?:\{\s*([+-])\s*\}|([+-]))$/;
+const PLAIN_DIRECTIONAL_TARGET_PATTERN =
+  /^(.+?)([+-])$/;
 
 function compactTargetDraft(value: string) {
   return value
@@ -135,11 +137,15 @@ export function parseFiniteLimitTargetDraft(value: string): ParsedFiniteLimitTar
   }
 
   const directionalMatch = compact.match(DIRECTIONAL_TARGET_PATTERN);
+  const plainDirectionalMatch = directionalMatch
+    ? null
+    : compact.match(PLAIN_DIRECTIONAL_TARGET_PATTERN);
   const numericDraft = directionalMatch ? directionalMatch[1] : compact;
-  const directionMark = directionalMatch?.[2] ?? directionalMatch?.[3];
-  const parsedNumber = parseSignedNumberInput(numericDraft);
+  const effectiveDraft = plainDirectionalMatch ? plainDirectionalMatch[1] : numericDraft;
+  const directionMark = directionalMatch?.[2] ?? directionalMatch?.[3] ?? plainDirectionalMatch?.[2];
+  const parsedNumber = parseSignedNumberInput(effectiveDraft);
   const parsed = parsedNumber === null
-    ? parseExactConstantTarget(numericDraft)
+    ? parseExactConstantTarget(effectiveDraft)
     : {
         value: parsedNumber,
         normalizedTargetLatex: formatSignedNumberInput(parsedNumber),
