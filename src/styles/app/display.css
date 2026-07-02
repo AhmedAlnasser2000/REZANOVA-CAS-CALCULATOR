@@ -390,8 +390,23 @@
 .result-title {
   font-size: 0.85rem;
   letter-spacing: 0.08em;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
   text-transform: uppercase;
   opacity: 0.65;
+}
+
+.result-title--math {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.result-title-math,
+.result-title-math .katex {
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .result-prompt,

@@ -23,6 +23,15 @@ function solveSummaryLines(summary: string): string[] {
     .filter((line) => line.length > 0);
 }
 
+const MATH_TITLE_OPERATION_PATTERN =
+  /(?:^|[\s([{,])(?:basis|change|col|coords|det|diag|eigen|gram|invertible|ls|lu|mpow|null|orthogonal|plu|proj|qr|rank|rref|unit)\s*(?:_[A-Za-z])?\s*\(/iu;
+
+function shouldRenderTitleAsMath(title: string) {
+  return /\\[A-Za-z]+|[{}^_]/u.test(title)
+    || MATH_TITLE_OPERATION_PATTERN.test(title)
+    || /^[A-Za-z]\s*[-+*/=]/u.test(title);
+}
+
 export function DisplayOutcomeShell({
   activeAlgebraTransforms,
   activeExpressionLatex,
@@ -87,6 +96,29 @@ export function DisplayOutcomeShell({
       || calculusScreen === 'partialDerivative'
       || calculusScreen === 'implicitDerivative'
     );
+  const resultTitle = isLauncherOpen
+    ? launcherState.level === 'root'
+      ? 'Menu'
+      : `Menu > ${activeLauncherCategory?.label ?? ''}`
+    : currentMode === 'guide' && guideRouteMeta
+      ? guideRouteMeta.title
+    : currentMode === 'labs'
+      ? 'Labs preview'
+    : currentMode === 'statistics' && statisticsRouteMeta
+      ? statisticsRouteMeta.label
+    : isCalculusMode(currentMode) && calculusRouteMeta
+      ? calculusRouteMeta.label
+    : currentMode === 'trigonometry' && trigRouteMeta
+      ? displayOutcome?.title ?? trigRouteMeta.label
+    : currentMode === 'geometry' && geometryRouteMeta
+      ? displayOutcome?.title ?? geometryRouteMeta.label
+    : currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta
+      ? calculateRouteMeta.label
+    : currentMode === 'equation' && equationResultTitle
+      ? equationResultTitle
+      : displayOutcome?.title ?? 'Result';
+  const titleText = typeof resultTitle === 'string' ? resultTitle : String(resultTitle);
+  const renderTitleAsMath = shouldRenderTitleAsMath(titleText);
   const openFormulaViewerFromBlock = useCallback((block: DisplayBlock) => {
     if (typeof onOpenFormulaViewer !== 'function') {
       return;
@@ -118,28 +150,18 @@ export function DisplayOutcomeShell({
   return (
     <div className="display-result" data-testid="display-outcome-root">
       <div className="result-title-row">
-        <div className="result-title">
-          {isLauncherOpen
-            ? launcherState.level === 'root'
-              ? 'Menu'
-              : `Menu > ${activeLauncherCategory?.label ?? ''}`
-            : currentMode === 'guide' && guideRouteMeta
-              ? guideRouteMeta.title
-            : currentMode === 'labs'
-              ? 'Labs preview'
-            : currentMode === 'statistics' && statisticsRouteMeta
-              ? statisticsRouteMeta.label
-            : isCalculusMode(currentMode) && calculusRouteMeta
-              ? calculusRouteMeta.label
-            : currentMode === 'trigonometry' && trigRouteMeta
-              ? displayOutcome?.title ?? trigRouteMeta.label
-            : currentMode === 'geometry' && geometryRouteMeta
-              ? displayOutcome?.title ?? geometryRouteMeta.label
-            : currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta
-              ? calculateRouteMeta.label
-            : currentMode === 'equation' && equationResultTitle
-              ? equationResultTitle
-              : displayOutcome?.title ?? 'Result'}
+        <div
+          className={`result-title${renderTitleAsMath ? ' result-title--math' : ''}`}
+          data-testid="display-outcome-title"
+        >
+          {renderTitleAsMath ? (
+            <MathStatic
+              block={false}
+              className="result-title-math"
+              latex={titleText}
+              normalizeDisplay={false}
+            />
+          ) : titleText}
         </div>
         {displayResultBadges.length > 0 ? (
           <div className="result-badges">
