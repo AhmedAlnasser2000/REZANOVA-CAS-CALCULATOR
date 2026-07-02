@@ -36,6 +36,7 @@ import type {
   NumericSolveInterval,
 } from './solver-types';
 import type {
+  DisplayDetailSection,
   VariableSubstitutionSnapshot,
 } from './display-types';
 import {
@@ -1005,11 +1006,7 @@ export type ModeState = {
 };
 
 export type MatrixOperation =
-  | 'add' | 'subtract' | 'multiply'
-  | 'transposeA' | 'transposeB'
-  | 'detA' | 'detB'
-  | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB'
-  | 'linearSystem';
+  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 
@@ -1025,6 +1022,7 @@ export type MatrixReplaySeed = MatrixRequest;
 export type MatrixResponse = {
   resultLatex?: string;
   approxText?: string;
+  detailSections?: DisplayDetailSection[];
   warnings: string[];
   error?: string;
 };

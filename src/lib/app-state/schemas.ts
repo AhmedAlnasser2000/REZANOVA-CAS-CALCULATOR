@@ -308,6 +308,10 @@ const matrixOperationSchema = z.enum([
   'rankB',
   'rrefA',
   'rrefB',
+  'nullSpaceA',
+  'nullSpaceB',
+  'columnSpaceA',
+  'columnSpaceB',
   'linearSystem',
 ]);
 const matrixSystemFormSchema = z.enum(['Ax=b', 'Ax+b=0']);

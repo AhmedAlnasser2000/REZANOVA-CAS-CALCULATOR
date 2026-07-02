@@ -58,6 +58,14 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'rref(A)';
     case 'rrefB':
       return 'rref(B)';
+    case 'nullSpaceA':
+      return 'null(A)';
+    case 'nullSpaceB':
+      return 'null(B)';
+    case 'columnSpaceA':
+      return 'col(A)';
+    case 'columnSpaceB':
+      return 'col(B)';
     case 'linearSystem':
       return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
     default:
@@ -94,6 +102,7 @@ export function runMatrixMode({
       warnings: response.warnings,
       exactLatex: response.resultLatex,
       approxText: response.approxText,
+      detailSections: response.detailSections,
     };
   }
 
@@ -102,6 +111,7 @@ export function runMatrixMode({
     title: matrixOperationLabel(operation, systemForm),
     exactLatex: response.resultLatex,
     approxText: response.approxText,
+    detailSections: response.detailSections,
     warnings: response.warnings,
   };
 }

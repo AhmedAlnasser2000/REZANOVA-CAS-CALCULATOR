@@ -15,6 +15,8 @@ export type LinearAlgebraUnaryOperator =
   | 'determinant'
   | 'rank'
   | 'rref'
+  | 'nullSpace'
+  | 'columnSpace'
   | 'transpose'
   | 'inverse'
   | 'norm';
@@ -85,6 +87,10 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{Rank\}/g, 'rank')
     .replace(/\\operatorname\{rref\}/g, 'rref')
     .replace(/\\operatorname\{RREF\}/g, 'rref')
+    .replace(/\\operatorname\{null\}/g, 'null')
+    .replace(/\\operatorname\{Null\}/g, 'null')
+    .replace(/\\operatorname\{col\}/g, 'col')
+    .replace(/\\operatorname\{Col\}/g, 'col')
     .replace(/\\operatorname\{angle\}/g, 'angle')
     .replace(/\\det/g, 'det')
     .replace(/\\angle/g, 'angle')
@@ -456,6 +462,8 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['det', 'determinant'],
     ['rank', 'rank'],
     ['rref', 'rref'],
+    ['null', 'nullSpace'],
+    ['col', 'columnSpace'],
     ['norm', 'norm'],
   ] as const) {
     const argument = functionArgument(input, name);

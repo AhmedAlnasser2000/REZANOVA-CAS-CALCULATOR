@@ -21,6 +21,7 @@ import {
   type MatrixCoreStopReason,
   type NumericMatrixRequest,
 } from './matrix-core';
+import { runMatrixSpaceOperation } from './matrix-spaces';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {
@@ -133,6 +134,33 @@ function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
   };
 }
 
+function exactSpaceResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'nullSpaceA' || req.operation === 'columnSpaceA') {
+    return runMatrixSpaceOperation({
+      kind: req.operation === 'nullSpaceA' ? 'nullSpace' : 'columnSpace',
+      label: 'A',
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+
+  if (req.operation === 'nullSpaceB' || req.operation === 'columnSpaceB') {
+    return req.matrixB
+      ? runMatrixSpaceOperation({
+          kind: req.operation === 'nullSpaceB' ? 'nullSpace' : 'columnSpace',
+          label: 'B',
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult): MatrixResponse {
   if (result.kind === 'error') {
     return {
@@ -170,6 +198,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const exactResponse = exactRankRrefResponse(req);
   if (exactResponse) {
     return exactResponse;
+  }
+
+  const spaceResponse = exactSpaceResponse(req);
+  if (spaceResponse) {
+    return spaceResponse;
   }
 
   const numericRequest: NumericMatrixRequest = {

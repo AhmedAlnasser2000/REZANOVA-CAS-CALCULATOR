@@ -63,6 +63,30 @@ describe('linear algebra editor dispatch', () => {
         ],
       },
     });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{null}\\left(B\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: { operation: 'nullSpaceB', matrixA, matrixB },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{col}\\left(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: {
+        operation: 'columnSpaceA',
+        matrixA: [[1, 1], [2, 2]],
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
+          [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 1 }],
+        ],
+      },
+    });
   });
 
   it('preserves inline Matrix fractions and finite decimals as exact sidecars', () => {

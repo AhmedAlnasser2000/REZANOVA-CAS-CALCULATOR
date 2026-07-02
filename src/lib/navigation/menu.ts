@@ -480,9 +480,9 @@ const MATRIX_OPERATOR_ROW: KeypadButton[] = [
 const MATRIX_MODIFIER_ROW: KeypadButton[] = [
   { id: 'linear-transpose', label: 'Aᵀ', variant: 'function', latex: '^{\\mathsf{T}}' },
   { id: 'linear-inverse', label: 'A⁻¹', variant: 'function', latex: '^{-1}' },
-  { id: 'linear-dot', label: 'dot', variant: 'function', latex: '\\cdot' },
-  { id: 'linear-cross', label: 'cross', variant: 'function', latex: '\\times' },
-  { id: 'linear-norm', label: 'norm', variant: 'function', latex: '\\left\\lVert#0\\right\\rVert' },
+  { id: 'linear-null', label: 'null', variant: 'function', latex: '\\operatorname{null}\\left(#0\\right)' },
+  { id: 'linear-col', label: 'col', variant: 'function', latex: '\\operatorname{col}\\left(#0\\right)' },
+  { id: 'linear-cross', label: '×', variant: 'function', latex: '\\times' },
   { id: 'linear-equals', label: '=', alpha: 'h', variant: 'function', latex: '=', layers: { alpha: { label: 'h', latex: 'h' } } },
 ];
 

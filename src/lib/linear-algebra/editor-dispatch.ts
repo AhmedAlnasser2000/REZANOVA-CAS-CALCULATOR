@@ -215,6 +215,44 @@ function matrixUnaryRequest(
     };
   }
 
+  if (expression.operator === 'nullSpace') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? {
+            operation: 'nullSpaceB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'nullSpaceA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
+    };
+  }
+
+  if (expression.operator === 'columnSpace') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? {
+            operation: 'columnSpaceB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'columnSpaceA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
+    };
+  }
+
   if (expression.operator === 'determinant') {
     return {
       ok: true,

@@ -88,6 +88,46 @@ describe('runMatrixOperation', () => {
     expect(rref.resultLatex).toBe('\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}');
   });
 
+  it('computes Matrix null space and column space bases from RREF pivots', () => {
+    const nullSpace = runMatrixOperation({
+      operation: 'nullSpaceA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB,
+    });
+    const columnSpace = runMatrixOperation({
+      operation: 'columnSpaceA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB,
+    });
+
+    expect(nullSpace.resultLatex).toBe(
+      '\\operatorname{Null}(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}',
+    );
+    expect(nullSpace.approxText).toBe('dimension 1');
+    expect(nullSpace.detailSections?.[0]?.lines).toContain('\\operatorname{nullity}(A)=1');
+    expect(columnSpace.resultLatex).toBe(
+      '\\operatorname{Col}(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\2\\end{bmatrix}\\right\\}',
+    );
+    expect(columnSpace.approxText).toBe('dimension 1');
+    expect(columnSpace.detailSections?.[0]?.lines).toContain('\\dim\\operatorname{Col}(A)=\\operatorname{rank}(A)=1');
+  });
+
+  it('reports zero-subspace Matrix spaces cleanly', () => {
+    const nullSpace = runMatrixOperation({
+      operation: 'nullSpaceA',
+      matrixA: [[1, 0], [0, 1]],
+      matrixB,
+    });
+    const columnSpace = runMatrixOperation({
+      operation: 'columnSpaceA',
+      matrixA: [[0, 0], [0, 0]],
+      matrixB,
+    });
+
+    expect(nullSpace.resultLatex).toBe('\\operatorname{Null}(A)=\\{0\\}');
+    expect(columnSpace.resultLatex).toBe('\\operatorname{Col}(A)=\\{0\\}');
+  });
+
   it('stops on incomplete, mismatched, singular, and non-square requests', () => {
     expect(runMatrixOperation({ operation: 'add', matrixA: [], matrixB }).error).toBe(
       'Matrix A is incomplete.',

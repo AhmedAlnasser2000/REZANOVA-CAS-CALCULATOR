@@ -74,6 +74,10 @@ describe('workspace keypad overlays', () => {
       .toBe('\\operatorname{rank}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-rref')?.latex)
       .toBe('\\operatorname{rref}\\left(#0\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-null')?.latex)
+      .toBe('\\operatorname{null}\\left(#0\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-col')?.latex)
+      .toBe('\\operatorname{col}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'left')?.command).toBe('cursor-left');
     expect(matrixRows.flat().find((button) => button.id === 'execute')?.command).toBe('evaluate');
 
@@ -87,6 +91,8 @@ describe('workspace keypad overlays', () => {
     expect(vectorRows.flat().find((button) => button.id === 'linear-norm')?.latex)
       .toBe('\\left\\lVert#0\\right\\rVert');
     expect(vectorRows.flat().find((button) => button.id === 'linear-rank')).toBeUndefined();
+    expect(vectorRows.flat().find((button) => button.id === 'linear-null')).toBeUndefined();
+    expect(vectorRows.flat().find((button) => button.id === 'linear-col')).toBeUndefined();
 
     expect(calculateRows.flat().find((button) => button.id === 'sqrt')).toBeDefined();
     expect(calculateRows.flat().find((button) => button.id === 'linear-rank')).toBeUndefined();
