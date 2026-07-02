@@ -192,6 +192,10 @@ export function resolveIndefiniteIntegralFromAst(input: {
   const symbolicEngine = resolveSymbolicIntegralFromAst(input.body, input.variable);
   if (symbolicEngine.kind === 'success') {
     const partialFractionDetail = partialFractionReadbackDetail(symbolicEngine.candidate);
+    const integrationDetails = [
+      ...(symbolicEngine.detailSections ?? []),
+      ...(partialFractionDetail ? [partialFractionDetail] : []),
+    ];
     const shouldNormalizeRuleLatex =
       input.normalizeRuleLatex && symbolicEngine.candidate?.method !== 'partial-fractions';
     return {
@@ -205,7 +209,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
       integrationCandidate: symbolicEngine.candidate,
       antiderivativeBackcheck: symbolicEngine.verification,
       detailSections: mergeCalculusAssumptionDetails(
-        partialFractionDetail ? [partialFractionDetail] : undefined,
+        integrationDetails.length > 0 ? integrationDetails : undefined,
         antiderivativeTrustFacts(symbolicEngine.verification),
       ),
     };

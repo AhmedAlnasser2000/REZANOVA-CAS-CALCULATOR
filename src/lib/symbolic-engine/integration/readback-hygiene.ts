@@ -76,12 +76,19 @@ function normalizeWrappedSimpleFractions(latex: string) {
 }
 
 function normalizeExplicitFunctionProducts(latex: string) {
-  const functionCommand = String.raw`(?:\\(?:sin|cos|tan|cot|sec|csc|arctan|arcsin|arccos|ln|log)\b|e\^|\\exponentialE\^)`;
+  const functionCommand = String.raw`(?:\\(?:sin|cos|tan|cot|sec|csc|arctan|arcsin|arccos|ln|log)\b|\\operatorname\{(?:EllipticF|EllipticE|EllipticPi)\}|e\^|\\exponentialE\^)`;
   const leftFactor = String.raw`(\\right\)|\)|\}|[A-Za-z0-9])`;
 
   return latex.replace(
     new RegExp(`${leftFactor}(?=${functionCommand})`, 'g'),
     '$1\\cdot ',
+  );
+}
+
+function normalizeEllipticFunctionHeads(latex: string) {
+  return latex.replace(
+    /\\mathrm\{(Elliptic(?:F|E|Pi))\}/g,
+    '\\operatorname{$1}',
   );
 }
 
@@ -103,7 +110,9 @@ export function normalizeGeneratedIntegrationLatex(latex: string, variable = 'x'
               normalizeRepeatedSimpleMonomials(
                 normalizeSingleSymbolNegatedFactors(
                   normalizeDoubleNegatives(
-                    normalizeWrappedSimpleFractions(latex),
+                    normalizeEllipticFunctionHeads(
+                      normalizeWrappedSimpleFractions(latex),
+                    ),
                   ),
                 ),
               ),

@@ -8,6 +8,7 @@ import {
 import { divideExactPolynomials, exactPolynomialIsZero } from '../../algebra/polynomial-core';
 import { isNodeArray } from '../patterns';
 import { numericNodeValue, sameNode } from './node-helpers';
+import type { DisplayDetailSection } from '../../../types/calculator';
 import type {
   IntegralResolution,
   IntegralStrategy,
@@ -22,6 +23,7 @@ export function symbolicSuccess(
   strategy: IntegralStrategy,
   precomputedVerification?: AntiderivativeBackcheck,
   exactSupplementLatex?: string[],
+  detailSections?: DisplayDetailSection[],
 ): IntegralResolution {
   const verification = precomputedVerification
     ?? backcheckAntiderivative({
@@ -38,6 +40,7 @@ export function symbolicSuccess(
     verification,
     candidate: buildSuccessfulCandidateMetadata(node, strategy, verification),
     exactSupplementLatex,
+    detailSections,
   };
 }
 

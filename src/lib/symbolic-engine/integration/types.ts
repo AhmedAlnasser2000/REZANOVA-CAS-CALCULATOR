@@ -1,5 +1,5 @@
 import type { AntiderivativeBackcheck, AntiderivativeBackcheckStatus } from '../../calculus/engine/verification';
-import type { CalculusIntegrationStrategy } from '../../../types/calculator';
+import type { CalculusIntegrationStrategy, DisplayDetailSection } from '../../../types/calculator';
 
 export const BY_PARTS_POLYNOMIAL_DEGREE_CAP = 6;
 export const LOG_BY_PARTS_POLYNOMIAL_DEGREE_CAP = 4;
@@ -47,6 +47,7 @@ export type IntegralResolution =
       verification: AntiderivativeBackcheck;
       candidate: IntegrationCandidateMetadata;
       exactSupplementLatex?: string[];
+      detailSections?: DisplayDetailSection[];
     }
   | {
       kind: 'error';

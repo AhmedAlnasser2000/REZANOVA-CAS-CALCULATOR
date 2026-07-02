@@ -68,6 +68,14 @@ export async function expectAnswerLatex(page: Page, ...snippets: string[]) {
 }
 
 export async function expectValidWhenLatex(page: Page, ...snippets: string[]) {
+  const block = page.getByTestId('display-outcome-valid-when');
+  await expect(block).toBeVisible();
+  const isCollapsed = await block.evaluate((element) =>
+    element instanceof HTMLDetailsElement ? !element.open : false,
+  );
+  if (isCollapsed) {
+    await block.locator('summary').click();
+  }
   const validWhen = page.locator('[data-testid^="display-outcome-supplement"]');
   await expect(validWhen.first()).toBeVisible();
   for (const snippet of snippets) {

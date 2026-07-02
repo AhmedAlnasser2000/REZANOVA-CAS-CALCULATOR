@@ -588,6 +588,7 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
       'u-substitution',
       algebraicGenus1EllipticKinds.verification,
       algebraicGenus1EllipticKinds.exactSupplementLatex,
+      algebraicGenus1EllipticKinds.detailSections,
     );
   }
 
@@ -603,6 +604,7 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
       'u-substitution',
       algebraicGenus1RationalInRadicalHermite.verification,
       algebraicGenus1RationalInRadicalHermite.exactSupplementLatex,
+      algebraicGenus1RationalInRadicalHermite.detailSections,
     );
   }
 

@@ -1,11 +1,13 @@
 import type { AntiderivativeBackcheck } from '../../../calculus/engine/verification';
 import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
+import type { DisplayDetailSection } from '../../../../types/calculator';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
 
 export type AlgebraicGenus1EllipticKindsRule = {
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
+  detailSections: DisplayDetailSection[];
   kind: 'first-kind' | 'second-kind' | 'third-kind';
 };
 
@@ -37,6 +39,7 @@ export function tryAlgebraicGenus1EllipticKindsRule(
       entries: proof.exactSupplementEntries,
       source: 'candidate-validation',
     }),
+    detailSections: proof.detailSections,
     kind: obligation.basisKind,
   };
 }

@@ -1,5 +1,6 @@
 import type { AntiderivativeBackcheck } from '../../../calculus/engine/verification';
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import type { DisplayDetailSection } from '../../../../types/calculator';
 import {
   exactScalarIsZero,
   readExactScalarNode,
@@ -25,6 +26,7 @@ export type AlgebraicGenus1RationalInRadicalHermiteRule = {
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
+  detailSections: DisplayDetailSection[];
   basisKinds: Array<'first-kind' | 'second-kind' | 'third-kind'>;
 };
 
@@ -467,6 +469,13 @@ function buildRule(input: {
       entries: input.facts,
       source: 'candidate-validation',
     }),
+    detailSections: [{
+      title: 'Genus-1 Hermite Reduction',
+      lines: [
+        `Reduced the rational-in-radical input to ${input.basisKinds.join(' and ')} Legendre elliptic obligations plus target-free coefficient facts.`,
+        'The generated antiderivative is accepted only through bounded genus-1 Hermite reduction with exact proof evidence.',
+      ],
+    }],
     basisKinds: input.basisKinds,
   };
 }
