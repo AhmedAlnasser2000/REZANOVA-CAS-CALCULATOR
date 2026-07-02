@@ -27,9 +27,9 @@ function uniqueLines(lines: readonly string[]) {
 function normalizeFactLine(line: string) {
   return line
     .replace(/\s+/gu, ' ')
-    .replace(/\s*\\ne\s*/gu, '\\ne ')
-    .replace(/\s*\\ge\s*/gu, '\\ge ')
-    .replace(/\s*\\le\s*/gu, '\\le ')
+    .replace(/\s*\\ne(?![A-Za-z])\s*/gu, '\\ne ')
+    .replace(/\s*\\ge(?![A-Za-z])\s*/gu, '\\ge ')
+    .replace(/\s*\\le(?![A-Za-z])\s*/gu, '\\le ')
     .replace(/\s*>=\s*/gu, ' >= ')
     .replace(/\s*<=\s*/gu, ' <= ')
     .replace(/\s*>\s*/gu, ' > ')

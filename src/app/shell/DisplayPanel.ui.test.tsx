@@ -82,6 +82,36 @@ describe('DisplayPanel result shell', () => {
     expect(onStopEditorAnalysis).toHaveBeenCalledTimes(1);
   });
 
+  it('collapses top-level solve notes by default', () => {
+    render(
+      <DisplayPanel
+        activeResultCopyText={() => ''}
+        activeResultEditorLatex={() => ''}
+        calculateLatex=""
+        copyText={() => undefined}
+        currentMode="equation"
+        displayHeaderLabel="Equation"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Symbolic',
+          warnings: [],
+          exactLatex: 'x=1',
+          solveSummaryText: 'Composition branch: reduced carrier; Periodic family: generated branches.',
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        settings={DEFAULT_SETTINGS}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    const solveNote = screen.getByTestId('display-outcome-solve-summary') as HTMLDetailsElement;
+    expect(solveNote.tagName.toLowerCase()).toBe('details');
+    expect(solveNote.open).toBe(false);
+    expect(within(solveNote).getByText('Solve Note')).toBeInTheDocument();
+  });
+
   it('renders math-marked result detail lines through the shared math display path', async () => {
     render(
       <DisplayPanel

@@ -9,7 +9,7 @@ import {
 } from '../../runtime/formula-viewer-artifacts';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import type { DisplayBlock } from '../../../lib/display/result/display-blocks';
-import { DetailLineContent, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
+import { DetailLineContent, ResultSummaryBlock, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
 
 type DisplayOutcomeShellProps = Record<string, any>;
 
@@ -338,8 +338,12 @@ export function DisplayOutcomeShell({
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && displayOutcome.solveSummaryText ? (
-        <div className="result-summary-block" data-testid="display-outcome-solve-summary">
-          <div className="result-summary-label">Solve note</div>
+        <ResultSummaryBlock
+          collapsible
+          defaultCollapsed
+          label="Solve Note"
+          testId="display-outcome-solve-summary"
+        >
           {solveSummaryLines(displayOutcome.solveSummaryText).map((line: string, index: number) => (
             <div
               key={`${line}-${index}`}
@@ -351,7 +355,7 @@ export function DisplayOutcomeShell({
               />
             </div>
           ))}
-        </div>
+        </ResultSummaryBlock>
       ) : null}
       {!isLauncherOpen
       && !isEquationMenuOpen

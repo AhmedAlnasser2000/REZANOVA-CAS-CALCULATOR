@@ -175,6 +175,26 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps solve notes collapsed by default even when the prose is short', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Symbolic',
+      exactLatex: 'x=3',
+      detailSections: [{
+        title: 'Solve Note',
+        lines: ['Composition branch reduced to a periodic carrier family.'],
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Solve Note');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      defaultCollapsed: true,
+    });
+  });
+
   it('adapts safe finite answer sets into branch-list blocks', () => {
     const exactLatex = 's\\in\\left\\{\\frac{d}{4}+r+\\sqrt{x+j},\\ \\frac{d}{4}-r-\\sqrt{x+j}\\right\\}';
     const outcome: DisplayOutcome = {

@@ -487,6 +487,11 @@ function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: num
       text: line,
     };
   });
+  const defaultCollapsed = section.title === 'Solve Note'
+    || (
+      !DETAIL_TITLES_VISIBLE_BY_DEFAULT.has(section.title)
+      && (CASE_MATH_DETAIL_TITLES.has(section.title) || isVerboseDisplayBlockLines(section.lines))
+    );
 
   return {
     id: `detail-${sectionIndex}`,
@@ -494,8 +499,7 @@ function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: num
     label: section.title,
     renderKind: 'mixed',
     collapsible: true,
-    defaultCollapsed: !DETAIL_TITLES_VISIBLE_BY_DEFAULT.has(section.title)
-      && (CASE_MATH_DETAIL_TITLES.has(section.title) || isVerboseDisplayBlockLines(section.lines)),
+    defaultCollapsed,
     lines,
     rawContent: [...section.lines],
     testId: `display-outcome-detail-section-${sectionIndex}`,

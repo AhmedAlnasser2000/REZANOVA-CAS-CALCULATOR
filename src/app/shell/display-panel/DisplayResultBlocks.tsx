@@ -620,7 +620,7 @@ function RenderDisplayBlockPlaceholder({ block }: { block: DisplayBlock }) {
   );
 }
 
-function ResultSummaryBlock({
+export function ResultSummaryBlock({
   children,
   className = '',
   collapsible = false,

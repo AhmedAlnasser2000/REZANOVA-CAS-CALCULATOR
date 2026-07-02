@@ -1,6 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { solvePolynomialRoots } from '../algebra/polynomial-roots';
-import { exactPolynomialCoefficientArray, exactScalarToNumber, parseExactPolynomial } from '../algebra/polynomial-core';
+import type { SolveDomainConstraint } from '../../types/calculator';
 import { formatApproxNumber } from '../display/format';
 import { evaluateLatexAtTarget, readNumericNode } from './domain-guards';
 import {
@@ -8,6 +7,11 @@ import {
   type RealIntervalDomainSummary,
 } from './real-interval-arithmetic';
 import { collectEquationNumericPiecewiseBreakpointFacts } from './numeric-piecewise-breakpoints';
+import {
+  addDomainConstraintFacts,
+  addSolvedDenominatorExclusions,
+  realRootsForPolynomialLatex,
+} from './numeric-domain-constraint-facts';
 
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -56,6 +60,7 @@ export type EquationNumericSegmentationBoundary = {
 };
 
 export type EquationNumericSegmentationPlan = {
+  target: string;
   facts: EquationNumericDomainFact[];
   sampleProbe: EquationNumericSampleProbe;
   intervalArithmetic: RealIntervalDomainSummary;
@@ -74,8 +79,6 @@ export type EquationNumericPeriodicIntervalSummary = {
 const ce = new ComputeEngine();
 const PERIODIC_OPERATORS = new Set(['Sin', 'Cos', 'Tan', 'Cot', 'Sec', 'Csc']);
 const SAMPLE_POINTS = [-10, -2, -1, 0, 1, 2, 3, 10];
-const REAL_ROOT_IMAGINARY_TOLERANCE = 1e-7;
-const MAX_BOUNDARY_DEGREE = 64;
 const BOUNDARY_DEDUPE_TOLERANCE = 1e-7;
 
 function isArrayNode(node: unknown): node is unknown[] {
@@ -287,47 +290,6 @@ function exactRationalExponent(node: unknown) {
     }
   }
   return null;
-}
-
-function realRootsForPolynomialLatex(latex: string | undefined, target: string) {
-  if (!latex) {
-    return [];
-  }
-  try {
-    const polynomial = parseExactPolynomial(ce.parse(latex).json, target, MAX_BOUNDARY_DEGREE);
-    if (!polynomial) {
-      return [];
-    }
-    const coefficients = exactPolynomialCoefficientArray(polynomial).map(exactScalarToNumber);
-    if (coefficients.length < 2) {
-      return [];
-    }
-    const roots = solvePolynomialRoots({ coefficients });
-    if (roots.kind !== 'success') {
-      return [];
-    }
-    return roots.roots
-      .filter((root) => Math.abs(root.im) <= REAL_ROOT_IMAGINARY_TOLERANCE)
-      .map((root) => root.re);
-  } catch {
-    return [];
-  }
-}
-
-function addSolvedDenominatorExclusions(
-  facts: EquationNumericDomainFact[],
-  denominatorLatex: string | undefined,
-  target: string,
-) {
-  for (const root of realRootsForPolynomialLatex(denominatorLatex, target)) {
-    addFact(facts, {
-      kind: 'solved-denominator-exclusion',
-      expressionLatex: target,
-      relationLatex: `\\ne ${formatApproxNumber(root)}`,
-      message: `${target}\\ne ${formatApproxNumber(root)}`,
-      source: 'polynomial-boundary',
-    });
-  }
 }
 
 function addTrigPoleFact(
@@ -778,8 +740,10 @@ export function buildEquationNumericSegmentationPlan(input: {
   start: number;
   end: number;
   angleUnit: 'rad' | 'deg' | 'grad';
+  constraints?: readonly SolveDomainConstraint[];
 }): EquationNumericSegmentationPlan {
   const facts = collectEquationNumericDomainFacts(input.equationLatex, input.target);
+  addDomainConstraintFacts(facts, input.constraints ?? [], input.target);
   const sampleProbe = probeEquationZeroForm(input.zeroFormLatex, input.target, input.angleUnit);
   addSampledDiscontinuityFact(facts, sampleProbe);
   const intervalArithmetic = classifyRealDomainFactsOverInterval({
@@ -872,6 +836,7 @@ export function buildEquationNumericSegmentationPlan(input: {
 
   const ordered = boundaries.sort((left, right) => left.value - right.value);
   return {
+    target: input.target,
     facts,
     sampleProbe,
     intervalArithmetic,

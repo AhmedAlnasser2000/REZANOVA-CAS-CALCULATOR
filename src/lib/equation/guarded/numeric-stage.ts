@@ -4,11 +4,6 @@ import type {
 } from '../../../types/calculator';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { formatApproxNumber } from '../../display/format';
-import { equationToZeroFormLatex } from '../domain-guards';
-import {
-  collectEquationNumericDomainFacts,
-  probeEquationZeroForm,
-} from '../numeric-domain-segmentation';
 import { runNumericIntervalSolve } from '../numeric-interval-solve';
 import {
   errorOutcome,
@@ -17,20 +12,7 @@ import {
 
 const MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS = 64;
 
-function uniqueLines(lines: readonly string[]) {
-  return [...new Set(lines.filter((line) => line.trim().length > 0))];
-}
-
 function numericIntervalDetailSections(request: GuardedSolveRequest) {
-  const target = request.solveTarget ?? 'x';
-  const facts = collectEquationNumericDomainFacts(request.resolvedLatex, target);
-  const zeroFormLatex = equationToZeroFormLatex(request.resolvedLatex);
-  const sampleProbe = probeEquationZeroForm(zeroFormLatex, target, request.angleUnit);
-  const factLines = uniqueLines(
-    facts
-      .filter((fact) => fact.kind !== 'sampled-discontinuity')
-      .map((fact) => fact.message),
-  );
   const interval = request.numericInterval;
   return [
     {
@@ -42,22 +24,6 @@ function numericIntervalDetailSections(request: GuardedSolveRequest) {
         'Roots are local to this chosen interval; this is not a claim of all real roots.',
       ],
     },
-    ...(factLines.length > 0
-      ? [{
-          title: 'Domain and Exclusions',
-          lines: factLines,
-        }]
-      : []),
-    ...(sampleProbe.undefinedSampleCount > 0
-      ? [{
-          title: 'Domain Probe',
-          lines: [
-            `Probe set: ${sampleProbe.samplePoints.length} fixed numeric ${target} samples.`,
-            `Undefined or non-real samples: ${sampleProbe.undefinedSampleCount}; finite samples: ${sampleProbe.finiteSampleCount}.`,
-            'Probe evidence guides segmentation; it is not a complete domain proof.',
-          ],
-        }]
-      : []),
   ];
 }
 

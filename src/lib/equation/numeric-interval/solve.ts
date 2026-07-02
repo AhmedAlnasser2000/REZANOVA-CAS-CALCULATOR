@@ -316,9 +316,9 @@ function uniqueLines(lines: readonly string[]) {
 function normalizeFactLine(line: string) {
   return line
     .replace(/\s+/gu, ' ')
-    .replace(/\s*\\ne\s*/gu, '\\ne ')
-    .replace(/\s*\\ge\s*/gu, '\\ge ')
-    .replace(/\s*\\le\s*/gu, '\\le ')
+    .replace(/\s*\\ne(?![A-Za-z])\s*/gu, '\\ne ')
+    .replace(/\s*\\ge(?![A-Za-z])\s*/gu, '\\ge ')
+    .replace(/\s*\\le(?![A-Za-z])\s*/gu, '\\le ')
     .replace(/\s*>=\s*/gu, ' >= ')
     .replace(/\s*<=\s*/gu, ' <= ')
     .replace(/\s*>\s*/gu, ' > ')
@@ -350,7 +350,7 @@ function piecewiseBreakpointDetailSections(plan: EquationNumericSegmentationPlan
     .map((fact) => normalizeFactLine(fact.message));
   const boundaryLines = plan.boundaries
     .filter((boundary) => boundary.kind === 'piecewise-breakpoint')
-    .map((boundary) => `${formatApproxNumber(boundary.value)} (${normalizeFactLine(boundary.message)}).`);
+    .map((boundary) => `${plan.target}=${formatApproxNumber(boundary.value)}`);
   const lines = uniqueLines([...factLines, ...boundaryLines]);
   return lines.length > 0
     ? [{ title: 'Piecewise Breakpoints', lines }]
@@ -570,6 +570,7 @@ export function runNumericIntervalSolve(
     start: parsed.start,
     end: parsed.end,
     angleUnit,
+    constraints,
   });
   const {
     grid,

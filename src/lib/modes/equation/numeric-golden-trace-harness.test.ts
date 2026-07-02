@@ -222,7 +222,7 @@ describe('Equation numeric golden trace harness', () => {
     expect(trace.detailTitles).toContain('Numeric Confidence');
     expect(trace.detailTitles).toContain('Periodic Structure');
     expect(trace.detailText).toContain('Tan(x) carrier repeats every about 3.141593');
-    expect(trace.detailText).toContain(String.raw`\cos\left(x\right) \ne0`);
+    expect(trace.detailText).toContain(String.raw`\cos\left(x\right)\ne 0`);
     if (result.kind !== 'success') {
       throw new Error('Expected tangent interval success');
     }

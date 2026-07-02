@@ -23,6 +23,7 @@ import {
   classifyCandidateRejections,
 } from '../candidate-rejection';
 import type {
+  DisplayDetailSection,
   DisplayOutcome,
   GuardedSolveRequest,
   SolveDomainConstraint,
@@ -92,6 +93,109 @@ function branchReadbackForAcceptedCandidates(
   });
 }
 
+function normalizeDisplayFactLine(line: string) {
+  return line
+    .replace(/\s+/gu, ' ')
+    .replace(/\s*\\ne(?![A-Za-z])\s*/gu, '\\ne ')
+    .replace(/\s*\\ge(?![A-Za-z])\s*/gu, '\\ge ')
+    .replace(/\s*\\le(?![A-Za-z])\s*/gu, '\\le ')
+    .replace(/\s*>=\s*/gu, ' >= ')
+    .replace(/\s*<=\s*/gu, ' <= ')
+    .replace(/\s*>\s*/gu, ' > ')
+    .replace(/\s*<\s*/gu, ' < ')
+    .trim();
+}
+
+function intervalConstraintLatex(input: {
+  min?: number;
+  minInclusive: boolean;
+  max?: number;
+  maxInclusive: boolean;
+}) {
+  const lower = input.min === undefined ? '-\\infty' : `${input.min}`;
+  const upper = input.max === undefined ? '\\infty' : `${input.max}`;
+  return `${input.minInclusive ? '[' : '('}${lower}, ${upper}${input.maxInclusive ? ']' : ')'}`;
+}
+
+function domainConstraintLine(constraint: SolveDomainConstraint) {
+  switch (constraint.kind) {
+    case 'nonzero':
+      return `${constraint.expressionLatex}\\ne 0`;
+    case 'positive':
+      return `${constraint.expressionLatex}>0`;
+    case 'nonnegative':
+      return `${constraint.expressionLatex}\\ge 0`;
+    case 'expression-interval':
+      return `${constraint.expressionLatex}\\in ${intervalConstraintLatex(constraint)}`;
+    case 'interval':
+      return `${constraint.variable}\\in ${intervalConstraintLatex(constraint)}`;
+    case 'carrier-range':
+      return `${constraint.carrier} carrier stays in [-1, 1]`;
+    case 'carrier-square-range':
+      return `${constraint.carrier} carrier stays in [0, 1]`;
+    case 'exp-positive':
+      return 'exponential output >0';
+  }
+}
+
+function uniqueDisplayFactLines(lines: readonly string[]) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const line of lines) {
+    const normalized = normalizeDisplayFactLine(line);
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    result.push(normalized);
+  }
+  return result;
+}
+
+function usesNumericTrustTaxonomy(outcome: DisplayOutcome) {
+  return outcome.kind !== 'prompt'
+    && (
+      Boolean(outcome.numericMethod)
+      || outcome.solveBadges?.includes('Numeric Interval')
+      || outcome.solveBadges?.includes('Range Guard')
+    );
+}
+
+function mergeDomainConstraintDetailSection(
+  detailSections: readonly DisplayDetailSection[] | undefined,
+  constraints: readonly SolveDomainConstraint[] = [],
+) {
+  const incoming = uniqueDisplayFactLines(constraints.map(domainConstraintLine));
+  const sections = (detailSections ?? []).filter((section) => section.title !== 'Domain Facts');
+  if (incoming.length === 0) {
+    return sections.length > 0 ? sections : undefined;
+  }
+
+  const existingIndex = sections.findIndex((section) => section.title === 'Domain and Exclusions');
+  if (existingIndex >= 0) {
+    return sections.map((section, index) =>
+      index === existingIndex
+        ? {
+            ...section,
+            lines: uniqueDisplayFactLines([...section.lines, ...incoming]),
+          }
+        : section);
+  }
+
+  const insertionIndex = sections.findIndex((section) =>
+    section.title === 'Numeric Confidence'
+    || section.title === 'Numeric Interval Scope');
+  const domainSection = { title: 'Domain and Exclusions', lines: incoming };
+  if (insertionIndex < 0) {
+    return [...sections, domainSection];
+  }
+  return [
+    ...sections.slice(0, insertionIndex + 1),
+    domainSection,
+    ...sections.slice(insertionIndex + 1),
+  ];
+}
+
 function isApproximateOnlySolutionLatex(latex: string) {
   const normalized = latex.replaceAll('\\,', '').replaceAll(' ', '').trim();
   return /^[+-]?(?:\d+\.\d*|\d*\.\d+|\d+e[+-]?\d+)$/i.test(normalized);
@@ -128,7 +232,9 @@ function attachAlgebraMetadata(
   return {
     ...outcome,
     exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
-    detailSections: mergeAssumptionDetailSections(outcome.detailSections, assumptionFacts),
+    detailSections: usesNumericTrustTaxonomy(outcome)
+      ? mergeDomainConstraintDetailSection(outcome.detailSections, request.domainConstraints)
+      : mergeAssumptionDetailSections(outcome.detailSections, assumptionFacts),
     resolvedInputLatex:
       outcome.resolvedInputLatex
       ?? (request.resolvedLatex !== originalResolvedLatex ? request.resolvedLatex : undefined),

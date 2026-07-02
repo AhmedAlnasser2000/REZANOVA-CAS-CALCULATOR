@@ -74,7 +74,7 @@ describe('Equation real periodic interval numeric fallback', () => {
     expect(result.approxText).toContain('3.926991');
     expect(result.approxText).toContain('7.068583');
     const text = collectOutcomeText(result);
-    expect(text).toContain('\\cos\\left(x\\right) \\ne0');
+    expect(text).toContain('\\cos\\left(x\\right)\\ne 0');
     expect(text).toContain('Tan(x) carrier repeats every about 3.141593');
   });
 
@@ -90,7 +90,6 @@ describe('Equation real periodic interval numeric fallback', () => {
     expect(result.approxText).not.toContain('x ~= 0');
     expect(result.approxText).toContain('3.141593');
     const text = collectOutcomeText(result);
-    expect(text).toContain('x \\ne0');
     expect(text).toContain('x\\ne 0');
     expect(text).toContain('Sin(x) carrier repeats every about 6.283185');
   });
@@ -105,7 +104,7 @@ describe('Equation real periodic interval numeric fallback', () => {
       throw new Error('Expected numeric interval success');
     }
     expect(result.approxText).toContain('z ~= 0.739085');
-    expect(collectOutcomeText(result)).toContain('Periodic carrier detected: Cos(z).');
+    expect(collectOutcomeText(result)).toContain('Cos(z) carrier repeats every about 6.283185');
   });
 
   it('caps very dense interval root readback and recommends narrowing the window', () => {
