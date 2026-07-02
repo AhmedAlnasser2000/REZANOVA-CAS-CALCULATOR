@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   evaluateCalculusFiniteLimit,
   evaluateCalculusInfiniteLimit,
+  evaluateCalculusLimit,
 } from './limits';
 import { buildCalculusFiniteLimitLatex } from './examples';
 
@@ -102,6 +103,14 @@ describe('calculus limits', () => {
       targetKind: 'posInfinity',
     });
     expect(unbounded.error).toContain('unbounded');
+
+    const lHospital = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity x/e^x',
+    });
+    expect(lHospital.error).toBeUndefined();
+    expect(lHospital.resultOrigin).toBe('heuristic-symbolic');
+    expect(lHospital.exactLatex).toBe('0');
+    expect(lHospital.detailSections?.[0]?.lines.join(' ')).toContain("L'Hospital");
   });
 
   it('handles parsed variable and exact-constant finite targets', () => {

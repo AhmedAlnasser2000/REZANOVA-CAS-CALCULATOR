@@ -6,6 +6,7 @@ import {
   evaluateFiniteLimitFromAst,
   evaluateInfiniteLimitFromAst,
 } from '../engine/limits';
+import { classifyNaturalLimitRoute } from '../limit-route-classifier';
 import { parseNaturalLimitRequest } from '../limit-request';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
@@ -31,7 +32,7 @@ function finiteTargetLabel(direction: LimitDirection) {
 }
 
 export function evaluateCalculusFiniteLimit(
-  state: CalculusFiniteLimitState,
+  state: CalculusFiniteLimitState & { routeKind?: string },
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const parsedTarget = parseFiniteLimitTargetDraft(state.target);
@@ -64,6 +65,7 @@ export function evaluateCalculusFiniteLimit(
       variable,
       target,
       direction,
+      routeKind: state.routeKind,
       messages: {
         mismatchError: 'Left and right behavior do not agree near the target.',
         unstableError: 'This limit could not be stabilized numerically in Calculus.',
@@ -84,7 +86,7 @@ export function evaluateCalculusFiniteLimit(
 }
 
 export function evaluateCalculusInfiniteLimit(
-  state: CalculusInfiniteLimitState,
+  state: CalculusInfiniteLimitState & { routeKind?: string },
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const variable = derivativeVariableOrDefault(state.variable);
@@ -100,6 +102,7 @@ export function evaluateCalculusInfiniteLimit(
     body,
     variable,
     targetKind: state.targetKind,
+    routeKind: state.routeKind,
     messages: {
       targetLabel: (kind) => (kind === 'posInfinity' ? '+infinity' : '-infinity'),
       unstableError: 'This limit could not be stabilized numerically in Calculus.',
@@ -120,12 +123,14 @@ export function evaluateCalculusLimit(
   }
 
   const { request } = parsed;
+  const route = classifyNaturalLimitRoute(state.requestLatex);
   if (request.target.kind === 'finite') {
     return evaluateCalculusFiniteLimit({
       bodyLatex: request.bodyLatex,
       target: request.target.normalizedTargetLatex,
       direction: request.target.direction,
       variable: request.variable,
+      routeKind: route.kind,
     });
   }
 
@@ -133,5 +138,6 @@ export function evaluateCalculusLimit(
     bodyLatex: request.bodyLatex,
     targetKind: request.target.targetKind,
     variable: request.variable,
+    routeKind: route.kind,
   });
 }

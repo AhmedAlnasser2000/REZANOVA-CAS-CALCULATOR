@@ -6,6 +6,7 @@ export type FiniteLimitRuleOrigin = Extract<ResultOrigin, 'symbolic' | 'rule-bas
 export type FiniteLimitRuleSuccess = {
   kind: 'success';
   value: FiniteLimitRuleValue;
+  exactLatex?: string;
   origin: FiniteLimitRuleOrigin;
   detailSections?: DisplayDetailSection[];
 };

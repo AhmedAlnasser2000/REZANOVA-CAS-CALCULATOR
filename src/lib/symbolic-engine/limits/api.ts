@@ -58,10 +58,14 @@ export function resolveFiniteLimitRule(
   }
 
   const byLHospital = attemptLHospital(node, target, variable);
-  if (byLHospital !== undefined) {
-    return success(byLHospital, 'heuristic-symbolic', [
-      'Used capped LHopital fallback after direct bounded rules did not resolve the form.',
-    ]);
+  if (byLHospital.kind === 'success') {
+    return {
+      kind: 'success' as const,
+      value: byLHospital.value,
+      exactLatex: byLHospital.exactLatex,
+      origin: 'heuristic-symbolic' as const,
+      detailSections: byLHospital.detailSections,
+    };
   }
 
   return { kind: 'unhandled' as const };

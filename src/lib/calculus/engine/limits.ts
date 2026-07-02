@@ -3,6 +3,7 @@ import {
   checkOneSidedRealDomain,
   collectRealDomainConstraints,
 } from '../../algebra/domain-range-core';
+import { attemptInfiniteLHospital } from '../../symbolic-engine/limits';
 import { resolveFiniteLimitRule } from '../../symbolic-engine/limits';
 import type {
   LimitDirection,
@@ -215,6 +216,7 @@ export function evaluateFiniteLimitFromAst(input: {
   variable: string;
   target: number;
   direction: LimitDirection;
+  routeKind?: string;
   messages: FiniteLimitMessages;
 }): CalculusCoreEvaluation {
   if (containsFiniteDomainBoundary(input.body)) {
@@ -255,7 +257,7 @@ export function evaluateFiniteLimitFromAst(input: {
 
   const symbolic = resolveFiniteLimitRule(input.body, input.target, input.variable, input.direction);
   if (symbolic.kind === 'success') {
-    const exactLatex = limitValueToLatex(symbolic.value);
+    const exactLatex = symbolic.exactLatex ?? limitValueToLatex(symbolic.value);
     const approxText = limitValueToApproxText(symbolic.value);
     return {
       exactLatex,
@@ -354,6 +356,7 @@ export function evaluateInfiniteLimitFromAst(input: {
   body: unknown;
   variable: string;
   targetKind: Exclude<LimitTargetKind, 'finite'>;
+  routeKind?: string;
   messages: InfiniteLimitMessages;
 }): CalculusCoreEvaluation {
   const heuristic = resolveInfiniteLimitHeuristic(input.body, input.variable, input.targetKind);
@@ -364,6 +367,25 @@ export function evaluateInfiniteLimitFromAst(input: {
       warnings: [],
       resultOrigin: 'rule-based-symbolic',
       detailSections: heuristic.detailSections,
+    };
+  }
+
+  if (input.routeKind === 'lhospital-candidate') {
+    const lHospital = attemptInfiniteLHospital(input.body, input.targetKind, input.variable);
+    if (lHospital.kind === 'success') {
+      return {
+        exactLatex: lHospital.exactLatex ?? limitValueToLatex(lHospital.value),
+        approxText: limitValueToApproxText(lHospital.value),
+        warnings: ["Rule-based limit resolution used capped L'Hopital on a supported quotient at infinity."],
+        resultOrigin: 'heuristic-symbolic',
+        detailSections: lHospital.detailSections,
+      };
+    }
+
+    return {
+      warnings: [],
+      error: lHospital.reason,
+      detailSections: lHospital.detailSections,
     };
   }
 
