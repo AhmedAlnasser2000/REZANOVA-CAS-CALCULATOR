@@ -45,6 +45,8 @@ Inserted prerequisite note: `ALGEBRAIC-GENUS1-COMPLEX-PAIR-FIRST-KIND-LIVE1` mak
 
 Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-BASIS-READINESS1` is required before generic raw radical adoption. It makes the root-chart pullback equation explicit as `C_F dF + C_E dE + C_\Pi d\Pi + dS` evidence for exact real-root cubic radicals, while keeping live `sqrt(P3/P4)` adoption deferred until the coefficient identity and rational correction are solved and proof-checked.
 
+Inserted frontier note: `ALGEBRAIC-GENUS2-HYPERELLIPTIC-BOUNDARY1` names the next algebraic boundary before broader genus-1 widening continues. Degree-5-or-higher one-radical square-root curves now stop as hyperelliptic/genus-2 territory instead of generic unsupported failures; this does not implement genus-2 functions or certificates.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

@@ -13,6 +13,7 @@ import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standa
 import { tryAlgebraicGenus0SymbolicStandardRadicalRule } from './algebraic-genus0/symbolic-standard-radicals';
 import { tryAlgebraicGenus0Genus1BoundaryStop } from './algebraic-genus0/genus1-boundary';
 import { tryAlgebraicGenus1EllipticKindsRule } from './algebraic-genus1/elliptic-kinds-live';
+import { tryAlgebraicHyperellipticBoundaryStop } from './algebraic-genus1/hyperelliptic-boundary';
 import { tryAlgebraicGenus1RationalInRadicalHermiteRule } from './algebraic-genus1/rational-in-radical-hermite';
 import {
   tryBinomialDerivativeSubstitutionRule,
@@ -606,6 +607,15 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
       algebraicGenus1RationalInRadicalHermite.exactSupplementLatex,
       algebraicGenus1RationalInRadicalHermite.detailSections,
     );
+  }
+
+  const algebraicHyperellipticBoundary = tryAlgebraicHyperellipticBoundaryStop(node, variable);
+  if (algebraicHyperellipticBoundary) {
+    return {
+      kind: 'error',
+      error: algebraicHyperellipticBoundary.error,
+      candidate: algebraicHyperellipticBoundary.candidate,
+    };
   }
 
   const algebraicGenus1Boundary = tryAlgebraicGenus0Genus1BoundaryStop(node, variable);
