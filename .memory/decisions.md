@@ -1617,6 +1617,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Pending elapsed timers are local presentation concerns. History page/panel parents must not own 250ms elapsed state for committed rows; only pending rows and pending detail inspectors may subscribe to the elapsed ticker.
 
+## 2026-07-02 - HISTORY-PERF-CONFORMANCE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] History responsiveness is a tested UI contract. Quick History stays capped to pending rows plus 20 committed summaries, full History rows stay virtualized/plain-text for scanning, rich math remains in selected inspectors/details, pending elapsed updates stay local, and page surfaces must suppress quick inspector overlays.
+
 ## 2026-07-02 - MATHSTATIC-MARKUP-LRU1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Rendered `MathStatic` markup is cached as bounded strings only, keyed by display LaTeX plus block/inline mode. The cache is internal Display infrastructure and must not store React nodes, DOM objects, solver objects, Display block trees, History entries, or public schema payloads.
