@@ -311,11 +311,13 @@ describe('calculus limits', () => {
 
     expect(finite.error).toBeUndefined();
     expect(finite.exactLatex).toBe('0');
+    expect(finite.detailSections?.[0]?.lines.join(' ')).toContain('rewrite/cancellation spine');
     expect(finite.detailSections?.[0]?.lines.join(' ')).toContain('common denominator');
     expect(finite.detailSections?.[0]?.lines.join(' ')).toContain('Form detected');
 
     expect(infinity.error).toBeUndefined();
     expect(infinity.exactLatex).toBe('\\frac{1}{2}');
+    expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('rewrite/cancellation spine');
     expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('conjugate');
     expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
   });
@@ -357,12 +359,14 @@ describe('calculus limits', () => {
 
     expect(product.error).toBeUndefined();
     expect(product.exactLatex).toBe('0');
+    expect(product.detailSections?.[0]?.lines.join(' ')).toContain('rewrite/cancellation spine');
     expect(product.detailSections?.[0]?.lines.join(' ')).toContain('0 times infinity');
     expect(product.detailSections?.[0]?.lines.join(' ')).toContain('Rewrite/equivalent');
 
     expect(power.error).toBeUndefined();
     expect(power.exactLatex).toBe('e');
     expect(Number(power.approxText)).toBeCloseTo(Math.E, 6);
+    expect(power.detailSections?.[0]?.lines.join(' ')).toContain('rewrite/cancellation spine');
     expect(power.detailSections?.[0]?.lines.join(' ')).toContain('1^infinity');
     expect(power.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
   });

@@ -8,8 +8,7 @@ import {
   resolveFiniteComplexDomainLimit,
   resolveFiniteLimitRule,
   resolveFiniteSqueezeOscillationLimit,
-  resolveInfiniteExactLocalAlgebraLimit,
-  resolveInfiniteIndeterminateTransformLimit,
+  resolveInfiniteRewriteCancellationLimit,
   resolveInfiniteScaleLimit,
   unsupportedComplexDomainLimit,
 } from '../../symbolic-engine/limits';
@@ -669,35 +668,24 @@ export function evaluateInfiniteLimitFromAst(input: {
   allowNumericFallback?: boolean;
   messages: InfiniteLimitMessages;
 }): CalculusCoreEvaluation {
-  const indeterminateTransform = resolveInfiniteIndeterminateTransformLimit(
+  const rewriteCancellation = resolveInfiniteRewriteCancellationLimit(
     input.body,
     input.targetKind,
     input.variable,
   );
-  if (indeterminateTransform) {
-    const exactLatex = indeterminateTransform.exactLatex ?? (
-      indeterminateTransform.value === undefined ? undefined : limitValueToLatex(indeterminateTransform.value)
+  if (rewriteCancellation) {
+    const exactLatex = rewriteCancellation.exactLatex ?? (
+      rewriteCancellation.value === undefined ? undefined : limitValueToLatex(rewriteCancellation.value)
     );
-    const approxText = indeterminateTransform.approxText ?? (
-      indeterminateTransform.value === undefined ? undefined : limitValueToApproxText(indeterminateTransform.value)
+    const approxText = rewriteCancellation.approxText ?? (
+      rewriteCancellation.value === undefined ? undefined : limitValueToApproxText(rewriteCancellation.value)
     );
     return {
       exactLatex,
       approxText,
       warnings: [],
-      resultOrigin: indeterminateTransform.origin,
-      detailSections: indeterminateTransform.detailSections,
-    };
-  }
-
-  const exactLocalAlgebra = resolveInfiniteExactLocalAlgebraLimit(input.body, input.targetKind, input.variable);
-  if (exactLocalAlgebra) {
-    return {
-      exactLatex: exactLocalAlgebra.exactLatex ?? limitValueToLatex(exactLocalAlgebra.value),
-      approxText: limitValueToApproxText(exactLocalAlgebra.value),
-      warnings: [],
-      resultOrigin: 'rule-based-symbolic',
-      detailSections: exactLocalAlgebra.detailSections,
+      resultOrigin: rewriteCancellation.origin,
+      detailSections: rewriteCancellation.detailSections,
     };
   }
 

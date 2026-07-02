@@ -4,6 +4,7 @@ import {
   resolveFiniteLimitRule,
   resolveFiniteSqueezeOscillationLimit,
   resolveInfiniteIndeterminateTransformLimit,
+  resolveInfiniteRewriteCancellationLimit,
 } from './limits'
 
 const ce = new ComputeEngine()
@@ -174,6 +175,25 @@ describe('symbolic-engine limits', () => {
       expect(result.value).toBeCloseTo(0, 8)
       expect(result.exactLatex).toBe('0')
       expect(result.detailSections?.[0]?.lines.join(' ')).toContain('common denominator')
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('rewrite/cancellation spine')
+    }
+  })
+
+  it('uses the rewrite spine to rationalize infinity radical cancellation before scale comparison', () => {
+    const result = resolveInfiniteRewriteCancellationLimit(
+      ce.parse('\\sqrt{x^2+x}-x').json,
+      'posInfinity',
+      'x',
+    )
+
+    expect(result?.kind).toBe('success')
+    if (result?.kind === 'success') {
+      expect(result.value).toBeCloseTo(0.5, 8)
+      expect(result.exactLatex).toBe('\\frac{1}{2}')
+      const method = result.detailSections?.[0]?.lines.join(' ') ?? ''
+      expect(method).toContain('rewrite/cancellation spine')
+      expect(method).toContain('rationalized the radical difference')
+      expect(method).toContain('infinity scale comparison')
     }
   })
 
@@ -189,6 +209,7 @@ describe('symbolic-engine limits', () => {
     if (product.kind === 'success') {
       expect(product.value).toBe(0)
       expect(product.exactLatex).toBe('0')
+      expect(product.detailSections?.[0]?.lines.join(' ')).toContain('rewrite/cancellation spine')
       expect(product.detailSections?.[0]?.lines.join(' ')).toContain('0 times infinity')
     }
 

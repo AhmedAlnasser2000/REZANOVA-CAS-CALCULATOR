@@ -8,15 +8,12 @@ import {
 import { parseNaturalLimitRequest, type NaturalLimitRequest } from './limit-request';
 import { resolveInfiniteLimitHeuristic } from './engine/limit-heuristics';
 import {
+  classifyFiniteRewriteCancellationCandidate,
+  classifyInfiniteRewriteCancellationCandidate,
   hasFiniteRecursiveLeadingTermCandidate,
   hasFiniteSqueezeOscillationCandidate,
   hasInfiniteScaleCandidate,
-  resolveInfiniteExactLocalAlgebraLimit,
 } from '../symbolic-engine/limits';
-import {
-  hasFiniteIndeterminateTransformCandidate,
-  hasInfiniteIndeterminateTransformCandidate,
-} from '../symbolic-engine/limits/indeterminate-transforms';
 
 const ce = new ComputeEngine();
 const MAX_LIMIT_ROUTE_NODES = 180;
@@ -211,18 +208,24 @@ function classifyFiniteNode(node: unknown, request: NaturalLimitRequest): LimitR
     return divided;
   }
 
-  if (containsFiniteExactLocalAlgebraCandidate(node)) {
+  const finiteRewrite = classifyFiniteRewriteCancellationCandidate(
+    node,
+    request.target.value,
+    request.variable,
+    request.target.direction,
+  );
+  if (finiteRewrite === 'common-denominator' || containsFiniteExactLocalAlgebraCandidate(node)) {
     return {
       kind: 'exact-local-algebra',
-      reason: 'A local algebra rewrite may combine terms before comparing leading behavior.',
+      reason: 'The rewrite/cancellation spine can combine local algebra before retrying leading behavior.',
       request,
     };
   }
 
-  if (hasFiniteIndeterminateTransformCandidate(node, request.target.value, request.variable, request.target.direction)) {
+  if (finiteRewrite === 'finite-log-power-transform') {
     return {
       kind: 'indeterminate-transform',
-      reason: 'A safe indeterminate-form rewrite can turn the expression into a supported sub-limit.',
+      reason: 'The rewrite/cancellation spine can apply a safe log-power transform before retrying the sub-limit.',
       request,
     };
   }
@@ -264,11 +267,15 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     };
   }
 
-  const exactLocalAlgebra = resolveInfiniteExactLocalAlgebraLimit(node, request.target.targetKind, request.variable);
-  if (exactLocalAlgebra) {
+  const infiniteRewrite = classifyInfiniteRewriteCancellationCandidate(
+    node,
+    request.target.targetKind,
+    request.variable,
+  );
+  if (infiniteRewrite === 'radical-conjugate') {
     return {
       kind: 'exact-local-algebra',
-      reason: 'An exact algebra rewrite resolves the infinite-target expression before numeric sampling.',
+      reason: 'The rewrite/cancellation spine can rationalize the radical before comparing infinity scales.',
       request,
     };
   }
@@ -281,10 +288,10 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     };
   }
 
-  if (hasInfiniteIndeterminateTransformCandidate(node, request.target.targetKind, request.variable)) {
+  if (infiniteRewrite === 'infinite-log-power-transform') {
     return {
       kind: 'indeterminate-transform',
-      reason: 'A safe log-transform rewrite can resolve the indeterminate power form.',
+      reason: 'The rewrite/cancellation spine can apply a safe log-transform before retrying the sub-limit.',
       request,
     };
   }

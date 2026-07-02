@@ -46,3 +46,11 @@ export {
   hasFiniteSqueezeOscillationCandidate,
   resolveFiniteSqueezeOscillationLimit,
 } from './limits/squeeze-oscillation';
+export {
+  classifyFiniteRewriteCancellationCandidate,
+  classifyInfiniteRewriteCancellationCandidate,
+  hasFiniteRewriteCancellationCandidate,
+  hasInfiniteRewriteCancellationCandidate,
+  resolveFiniteRewriteCancellationLimit,
+  resolveInfiniteRewriteCancellationLimit,
+} from './limits/rewrite-cancellation-spine';

@@ -1,13 +1,12 @@
 import type { LimitDirection } from '../../../types/calculator';
 import { box, latexToNumber, success } from './evaluation';
 import { resolveKnownFiniteLimitRule } from './known-rules';
-import { resolveExactLocalAlgebraLimit } from './exact-local-algebra';
-import { resolveFiniteIndeterminateTransformLimit } from './indeterminate-transforms';
 import { resolveFiniteRecursiveLeadingTermLimit } from './finite-leading-terms';
 import { attemptLHospital } from './lhospital';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import { resolveLogBoundaryLimit, resolveSignedPoleLimit } from './poles';
 import { resolveRationalLocalLimit } from './rational-local';
+import { resolveFiniteRewriteCancellationLimit } from './rewrite-cancellation-spine';
 import { resolveFiniteSqueezeOscillationLimit } from './squeeze-oscillation';
 
 export function resolveFiniteLimitRule(
@@ -40,9 +39,9 @@ export function resolveFiniteLimitRule(
     return rationalLocal;
   }
 
-  const exactLocalAlgebra = resolveExactLocalAlgebraLimit(node, target, variable, direction);
-  if (exactLocalAlgebra) {
-    return exactLocalAlgebra;
+  const rewriteCancellation = resolveFiniteRewriteCancellationLimit(node, target, variable, direction);
+  if (rewriteCancellation) {
+    return rewriteCancellation;
   }
 
   const squeezeOscillation = resolveFiniteSqueezeOscillationLimit(node, target, variable, direction);
@@ -64,11 +63,6 @@ export function resolveFiniteLimitRule(
   );
   if (localEquivalentLimit) {
     return localEquivalentLimit;
-  }
-
-  const indeterminateTransform = resolveFiniteIndeterminateTransformLimit(node, target, variable, direction);
-  if (indeterminateTransform) {
-    return indeterminateTransform;
   }
 
   const signedPole = resolveSignedPoleLimit(node, target, variable, direction);
