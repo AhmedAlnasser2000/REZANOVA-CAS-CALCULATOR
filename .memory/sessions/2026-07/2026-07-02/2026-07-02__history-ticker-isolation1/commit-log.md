@@ -16,7 +16,8 @@
 ## Commit
 
 - message: `HISTORY-TICKER-ISOLATION1`
-- hash: recorded in git history after this checkpoint commit is created.
+- landed code/memory hash: `8d69f968` (`MATRIX-NULL-COLUMN-SPACE1`)
+- recovery note: a concurrent agent commit swept the staged ticker-isolation files into the Matrix commit before the milestone commit could be created. A marker commit with the intended milestone message records this recovery without rewriting shared history.
 
 ## Scope
 
