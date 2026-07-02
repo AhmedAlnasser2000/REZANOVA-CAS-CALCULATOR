@@ -357,6 +357,21 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('changeBasis');
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-lu',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{lu}\\left(A\\right)',
+      resultLatex: 'A=LU',
+      matrixSeed: {
+        operation: 'luA',
+        matrixA: [[2, 1], [4, 3]],
+        matrixB: [[5, 6], [7, 8]],
+        editorExpressionLatex: '\\operatorname{lu}\\left(A\\right)',
+        matrixOperandLatexA: 'A',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('luA');
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',

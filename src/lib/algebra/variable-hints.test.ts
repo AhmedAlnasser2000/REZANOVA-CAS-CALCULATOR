@@ -81,6 +81,12 @@ describe('variable hints', () => {
       screenHint: 'matrix',
       storedVariables: stored,
     })).toEqual([]);
+
+    expect(hintKinds('\\operatorname{lu}\\left(A\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
   });
 
   it('does not turn Vector editor functions and named vectors into variable hints', () => {

@@ -72,6 +72,22 @@ describe('runMatrixMode', () => {
     expect(result.detailSections?.[1]?.lines).toContain('P_{B\\leftarrow A}=B^{-1}A');
   });
 
+  it('labels LU factorization runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'luA',
+      matrixA: [[2, 1], [4, 3]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('lu(A)');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.exactLatex).toBe('A=LU');
+    expect(result.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'LU Proof']);
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

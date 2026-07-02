@@ -306,6 +306,39 @@ describe('runMatrixOperation', () => {
     );
   });
 
+  it('computes exact LU factorization when no row swaps are needed', () => {
+    const lu = runMatrixOperation({
+      operation: 'luA',
+      matrixA: [[2, 1], [4, 3]],
+      matrixB,
+    });
+
+    expect(lu.resultLatex).toBe('A=LU');
+    expect(lu.approxText).toBe('det(A) = 2');
+    expect(lu.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'LU Proof']);
+    expect(lu.detailSections?.[0]?.lines).toContain('L=\\begin{bmatrix}1 & 0\\\\2 & 1\\end{bmatrix}');
+    expect(lu.detailSections?.[0]?.lines).toContain('U=\\begin{bmatrix}2 & 1\\\\0 & 1\\end{bmatrix}');
+    expect(lu.detailSections?.[1]?.lines).toContain('LU=\\begin{bmatrix}2 & 1\\\\4 & 3\\end{bmatrix}');
+    expect(lu.detailSections?.[1]?.lines).toContain('\\det(A)=\\prod_i U_{ii}=2');
+  });
+
+  it('stops LU without row swaps when a pivot swap is needed', () => {
+    const lu = runMatrixOperation({
+      operation: 'luA',
+      matrixA: [[0, 1], [1, 0]],
+      matrixB,
+    });
+
+    expect(lu.error).toBe('LU without row swaps stopped at pivot 1. Use plu(...) to keep the row swap visible.');
+    expect(lu.detailSections?.[0]).toMatchObject({
+      title: 'LU Proof',
+      lines: [
+        'pivot 1 is zero before elimination.',
+        'Plain LU does not swap rows. PLU is the row-swap-aware factorization.',
+      ],
+    });
+  });
+
   it('explains invertibility theorem facts for square matrices', () => {
     const invertible = runMatrixOperation({
       operation: 'invertibilityA',

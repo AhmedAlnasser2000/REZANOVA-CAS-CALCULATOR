@@ -141,6 +141,8 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Gram-Schmidt Proof',
   'How Eigenvalues Were Found',
   'Invertibility Theorem',
+  'LU Factors',
+  'LU Proof',
   'Null Space Proof',
   'Orthonormal Basis',
   'Rank/Nullity Guidance',

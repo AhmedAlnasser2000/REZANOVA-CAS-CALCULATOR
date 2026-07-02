@@ -26,6 +26,7 @@ import { runMatrixChangeOfBasis } from './matrix-change-of-basis';
 import { runMatrixCoordinates } from './matrix-coordinates';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
+import { runMatrixLu } from './matrix-lu';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
 
@@ -277,6 +278,31 @@ function exactChangeOfBasisResponse(req: MatrixRequest): MatrixResponse | null {
       };
 }
 
+function exactLuResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'luA') {
+    return runMatrixLu({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+
+  if (req.operation === 'luB') {
+    return req.matrixB
+      ? runMatrixLu({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -364,6 +390,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const changeOfBasisResponse = exactChangeOfBasisResponse(req);
   if (changeOfBasisResponse) {
     return changeOfBasisResponse;
+  }
+
+  const luResponse = exactLuResponse(req);
+  if (luResponse) {
+    return luResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

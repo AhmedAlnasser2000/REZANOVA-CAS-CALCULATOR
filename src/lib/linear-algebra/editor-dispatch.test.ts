@@ -136,6 +136,38 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{lu}\\left(B\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'luB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{lu}\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{lu}\\left(\\begin{bmatrix}2&1\\\\4&3\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'luA',
+        matrixA: [[2, 1], [4, 3]],
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 1 }],
+          [{ numerator: 4, denominator: 1 }, { numerator: 3, denominator: 1 }],
+        ],
+        editorExpressionLatex: '\\operatorname{lu}\\left(\\begin{bmatrix}2&1\\\\4&3\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}2&1\\\\4&3\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
       matrixA,
       matrixB,

@@ -83,6 +83,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'coords(B, v)';
     case 'changeBasis':
       return 'change(A,B)';
+    case 'luA':
+      return 'lu(A)';
+    case 'luB':
+      return 'lu(B)';
     case 'invertibilityA':
       return 'invertible(A)';
     case 'invertibilityB':

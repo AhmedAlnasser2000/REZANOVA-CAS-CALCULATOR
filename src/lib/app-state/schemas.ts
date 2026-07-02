@@ -319,6 +319,8 @@ const matrixOperationSchema = z.enum([
   'coordinatesA',
   'coordinatesB',
   'changeBasis',
+  'luA',
+  'luB',
   'invertibilityA',
   'invertibilityB',
   'eigenA',

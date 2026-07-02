@@ -93,6 +93,7 @@ const MATRIX_EDITOR_FUNCTIONS = new Set([
   'det',
   'eigen',
   'invertible',
+  'lu',
   'null',
   'rank',
   'rref',
