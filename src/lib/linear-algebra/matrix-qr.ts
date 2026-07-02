@@ -7,13 +7,27 @@ import {
   type ExactScalar,
 } from '../algebra/polynomial-core';
 import { scalar, validateExactMatrix, type ExactMatrix, type ExactMatrixStopReason, type ExactVector } from './exact-matrix-core';
-import { exactMatrixFromNumeric, exactMatrixFromWire, exactMatrixToLatex, exactScalarToLatex, exactVectorToColumnLatex } from './exact-matrix-format';
+import {
+  exactMatrixFromNumeric,
+  exactMatrixFromWire,
+  exactMatrixToLatex,
+  exactScalarToLatex,
+  exactVectorFromNumeric,
+  exactVectorFromWire,
+  exactVectorToColumnLatex,
+} from './exact-matrix-format';
 import { exactDotVectors, exactScalarSquareRoot, exactScaleVector, exactSubtractVectors } from './exact-vector-core';
 
 export type MatrixQrInput = {
   label: string;
   matrix: number[][];
   exactMatrix?: ExactScalarWire[][];
+};
+
+export type MatrixColumnProjectionInput = MatrixQrInput & {
+  vector: number[];
+  exactVector?: ExactScalarWire[];
+  vectorLabel: string;
 };
 
 type QrResult =
@@ -52,6 +66,14 @@ function multiplyExactMatrices(left: ExactMatrix, right: ExactMatrix): ExactMatr
         (sum, value, pivot) => addExactScalars(sum, multiplyExactScalars(value, right[pivot][column])),
         scalar(0),
       ),
+    ));
+}
+
+function multiplyMatrixVector(matrix: ExactMatrix, vector: ExactVector): ExactVector {
+  return matrix.map((row) =>
+    row.reduce(
+      (sum, value, index) => addExactScalars(sum, multiplyExactScalars(value, vector[index])),
+      scalar(0),
     ));
 }
 
@@ -164,6 +186,43 @@ function qrDetails(result: Extract<QrResult, { kind: 'success' }>): DisplayDetai
   ];
 }
 
+function columnProjectionLabel(input: MatrixColumnProjectionInput) {
+  return `\\operatorname{proj}_{\\operatorname{Col}(${input.label})}(${input.vectorLabel})`;
+}
+
+function columnProjectionDetails(
+  input: MatrixColumnProjectionInput,
+  result: Extract<QrResult, { kind: 'success' }>,
+  coordinates: ExactVector,
+  projected: ExactVector,
+  residual: ExactVector,
+  residualCheck: ExactVector,
+): DisplayDetailSection[] {
+  const label = columnProjectionLabel(input);
+  return [
+    {
+      title: 'Column Projection Facts',
+      lines: [
+        `Q=${exactMatrixToLatex(result.q)}`,
+        `Q^{T}Q=${exactMatrixToLatex(result.qtq)}`,
+        `Q^{T}${input.vectorLabel}=${exactVectorToColumnLatex(coordinates)}`,
+      ],
+      lineKind: 'math',
+    },
+    {
+      title: 'Column Projection Proof',
+      lines: [
+        `${label}=QQ^{T}${input.vectorLabel}`,
+        `${label}=${exactVectorToColumnLatex(projected)}`,
+        `${input.vectorLabel}-${label}=${exactVectorToColumnLatex(residual)}`,
+        `Q^{T}(${input.vectorLabel}-${label})=${exactVectorToColumnLatex(residualCheck)}`,
+        'The residual is orthogonal to every column of Q, so the projection lies in the column space.',
+      ],
+      lineKinds: ['math', 'math', 'math', 'math', 'text'],
+    },
+  ];
+}
+
 export function runMatrixQr(input: MatrixQrInput): MatrixResponse {
   const exactMatrix = exactInputMatrix(input);
   if (!exactMatrix) {
@@ -180,6 +239,36 @@ export function runMatrixQr(input: MatrixQrInput): MatrixResponse {
     resultLatex: `${input.label}=QR`,
     approxText: `${columns} QR ${columns === 1 ? 'column' : 'columns'}`,
     detailSections: qrDetails(result),
+    warnings: [],
+  };
+}
+
+export function runMatrixColumnProjection(input: MatrixColumnProjectionInput): MatrixResponse {
+  const exactMatrix = exactInputMatrix(input);
+  const vector = exactVectorFromWire(input.exactVector) ?? exactVectorFromNumeric(input.vector);
+  if (!exactMatrix || !vector) {
+    return stop('Column projection needs exact Matrix and vector entries in this move.');
+  }
+
+  if (exactMatrix.length !== vector.length) {
+    return stop('Column projection needs the vector length to match the Matrix row count.');
+  }
+
+  const qr = exactQr(exactMatrix);
+  if (qr.kind === 'stop') {
+    return stop(qrStopMessage(qr));
+  }
+
+  const qTranspose = transposeMatrix(qr.q);
+  const coordinates = multiplyMatrixVector(qTranspose, vector);
+  const projected = multiplyMatrixVector(qr.q, coordinates);
+  const residual = exactSubtractVectors(vector, projected);
+  const residualCheck = multiplyMatrixVector(qTranspose, residual);
+
+  return {
+    resultLatex: `${columnProjectionLabel(input)}=${exactVectorToColumnLatex(projected)}`,
+    approxText: `projection in \\mathbb{R}^{${vector.length}}`,
+    detailSections: columnProjectionDetails(input, qr, coordinates, projected, residual, residualCheck),
     warnings: [],
   };
 }

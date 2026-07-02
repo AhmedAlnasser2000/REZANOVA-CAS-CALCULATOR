@@ -47,6 +47,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'coordinates'; basis: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
+  | { kind: 'columnProjection'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'factorSolve'; method: 'lu' | 'plu'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'changeOfBasis'; source: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | {
@@ -128,6 +129,10 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{PLU\}/g, 'plu')
     .replace(/\\operatorname\{qr\}/g, 'qr')
     .replace(/\\operatorname\{QR\}/g, 'qr')
+    .replace(/\\operatorname\{projcol\}/g, 'projcol')
+    .replace(/\\operatorname\{ProjCol\}/g, 'projcol')
+    .replace(/\\operatorname\{colproj\}/g, 'projcol')
+    .replace(/\\operatorname\{ColProj\}/g, 'projcol')
     .replace(/\\operatorname\{lusolve\}/g, 'lusolve')
     .replace(/\\operatorname\{LUSolve\}/g, 'lusolve')
     .replace(/\\operatorname\{plusolve\}/g, 'plusolve')
@@ -660,6 +665,19 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return {
       kind: 'coordinates',
       basis: parseExpression(parts[0], options),
+      vector: parseExpression(parts[1], options),
+    };
+  }
+
+  const columnProjectionArgument = functionArgument(input, 'projcol');
+  if (columnProjectionArgument !== null) {
+    const parts = splitTopLevelComma(columnProjectionArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Column projection requires a matrix and an inline vector.');
+    }
+    return {
+      kind: 'columnProjection',
+      matrix: parseExpression(parts[0], options),
       vector: parseExpression(parts[1], options),
     };
   }

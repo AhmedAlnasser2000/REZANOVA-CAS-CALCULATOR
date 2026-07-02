@@ -287,6 +287,42 @@ function matrixCoordinatesRequest(
   };
 }
 
+function matrixColumnProjectionRequest(
+  input: MatrixEditorDispatchInput,
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'columnProjection' }>,
+): MatrixEditorDispatchResult {
+  const matrix = matrixOperand(expression.matrix, input);
+  if (!matrix || expression.vector.kind !== 'vectorLiteral') {
+    return {
+      ok: false,
+      message: 'Column projection needs Matrix A/B or an inline matrix, plus an inline vector.',
+    };
+  }
+
+  return {
+    ok: true,
+    request: matrix.named === 'B'
+      ? {
+          operation: 'columnProjectionB',
+          matrixA: cloneMatrix(input.matrixA),
+          matrixB: matrix.matrix,
+          systemRhs: cloneVector(expression.vector.value),
+          ...(matrix.exactMatrix ? { exactMatrixB: matrix.exactMatrix } : {}),
+          exactSystemRhs: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandB: matrix, systemRhs: expression.vector }),
+        }
+      : {
+          operation: 'columnProjectionA',
+          matrixA: matrix.matrix,
+          matrixB: cloneMatrix(input.matrixB),
+          systemRhs: cloneVector(expression.vector.value),
+          ...(matrix.exactMatrix ? { exactMatrixA: matrix.exactMatrix } : {}),
+          exactSystemRhs: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandA: matrix, systemRhs: expression.vector }),
+        },
+  };
+}
+
 function matrixFactorSolveRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'factorSolve' }>,
@@ -576,6 +612,9 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   if (expression.kind === 'multiRhsSystem') return matrixMultiRhsSystemRequest(input, expression);
   if (expression.kind === 'coordinates') {
     return matrixCoordinatesRequest(input, expression);
+  }
+  if (expression.kind === 'columnProjection') {
+    return matrixColumnProjectionRequest(input, expression);
   }
   if (expression.kind === 'factorSolve') {
     return matrixFactorSolveRequest(input, expression);

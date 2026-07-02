@@ -77,6 +77,11 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{coord}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toMatchObject({
       kind: 'coordinates',
     });
+    expect(parsed('\\operatorname{projcol}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toMatchObject({
+      kind: 'columnProjection',
+      matrix: { kind: 'named', name: 'A' },
+      vector: { kind: 'vectorLiteral', value: [5, 11] },
+    });
     expect(parsed('\\operatorname{change}\\left(A,B\\right)', 'matrix')).toEqual({
       kind: 'changeOfBasis',
       source: { kind: 'named', name: 'A', displayLatex: 'A' },

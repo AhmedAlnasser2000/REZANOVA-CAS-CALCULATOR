@@ -105,6 +105,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'qr(A)';
     case 'qrB':
       return 'qr(B)';
+    case 'columnProjectionA':
+      return 'projCol(A,b)';
+    case 'columnProjectionB':
+      return 'projCol(B,b)';
     case 'invertibilityA':
       return 'invertible(A)';
     case 'invertibilityB':

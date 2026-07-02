@@ -330,6 +330,8 @@ const matrixOperationSchema = z.enum([
   'multiRhsSolve',
   'qrA',
   'qrB',
+  'columnProjectionA',
+  'columnProjectionB',
   'invertibilityA',
   'invertibilityB',
   'eigenA',

@@ -375,6 +375,17 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(qr.kind === 'success' ? qr.detailSections?.map((section) => section.title) : [])
       .toEqual(['QR Factors', 'QR Proof', 'QR Column Steps']);
 
+    const projectionLatex = '\\operatorname{projcol}\\left(\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix},\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)';
+    const projection = await runMatrixExpression(projectionLatex);
+    expect(projection).toMatchObject({
+      kind: 'success',
+      title: projectionLatex,
+      approxText: 'projection in \\mathbb{R}^{3}',
+      sourceMode: 'matrix',
+    });
+    expect(projection.kind === 'success' ? projection.detailSections?.map((section) => section.title) : [])
+      .toEqual(['Column Projection Facts', 'Column Projection Proof']);
+
     const eigenLatex = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
     const eigen = await runMatrixExpression(eigenLatex);
     expect(eigen).toMatchObject({

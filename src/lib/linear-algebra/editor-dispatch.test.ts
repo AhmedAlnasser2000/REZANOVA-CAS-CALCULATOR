@@ -264,6 +264,26 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{projcol}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'columnProjectionA',
+        matrixA,
+        matrixB,
+        systemRhs: [5, 11],
+        exactSystemRhs: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        editorExpressionLatex: '\\operatorname{projcol}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+        matrixOperandLatexA: 'A',
+        systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{change}\\left(A,B\\right)',
       matrixA,
       matrixB,

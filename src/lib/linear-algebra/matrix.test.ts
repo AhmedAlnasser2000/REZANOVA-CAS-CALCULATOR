@@ -589,6 +589,34 @@ describe('runMatrixOperation', () => {
     }).error).toBe('Exact QR readback needs rational Gram-Schmidt lengths here; column 1 has a non-rational norm.');
   });
 
+  it('projects vectors onto Matrix column spaces through exact QR', () => {
+    const response = runMatrixOperation({
+      operation: 'columnProjectionA',
+      matrixA: [[1, 0], [0, 1], [0, 0]],
+      matrixB,
+      systemRhs: [2, 3, 4],
+    });
+
+    expect(response.resultLatex).toBe(
+      '\\operatorname{proj}_{\\operatorname{Col}(A)}(b)=\\begin{bmatrix}2\\\\3\\\\0\\end{bmatrix}',
+    );
+    expect(response.approxText).toBe('projection in \\mathbb{R}^{3}');
+    expect(response.detailSections?.map((section) => section.title)).toEqual([
+      'Column Projection Facts',
+      'Column Projection Proof',
+    ]);
+    expect(response.detailSections?.[0]?.lines).toContain('Q^{T}b=\\begin{bmatrix}2\\\\3\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('b-\\operatorname{proj}_{\\operatorname{Col}(A)}(b)=\\begin{bmatrix}0\\\\0\\\\4\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('Q^{T}(b-\\operatorname{proj}_{\\operatorname{Col}(A)}(b))=\\begin{bmatrix}0\\\\0\\end{bmatrix}');
+
+    expect(runMatrixOperation({
+      operation: 'columnProjectionA',
+      matrixA: [[1, 0], [0, 1], [0, 0]],
+      matrixB,
+      systemRhs: [2, 3],
+    }).error).toBe('Column projection needs the vector length to match the Matrix row count.');
+  });
+
   it('hands deferred irrational and complex eigenvalue cases to Equation explicitly', () => {
     const irrational = runMatrixOperation({
       operation: 'eigenA',

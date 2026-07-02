@@ -28,7 +28,7 @@ import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
 import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
-import { runMatrixQr } from './matrix-qr';
+import { runMatrixColumnProjection, runMatrixQr } from './matrix-qr';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
 
@@ -433,6 +433,37 @@ function exactQrResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactColumnProjectionResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'columnProjectionA') {
+    return runMatrixColumnProjection({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+      vector: req.systemRhs ?? [],
+      exactVector: req.exactSystemRhs,
+      vectorLabel: req.systemRhsLatex ?? 'b',
+    });
+  }
+
+  if (req.operation === 'columnProjectionB') {
+    return req.matrixB
+      ? runMatrixColumnProjection({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+          vector: req.systemRhs ?? [],
+          exactVector: req.exactSystemRhs,
+          vectorLabel: req.systemRhsLatex ?? 'b',
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -545,6 +576,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const qrResponse = exactQrResponse(req);
   if (qrResponse) {
     return qrResponse;
+  }
+
+  const columnProjectionResponse = exactColumnProjectionResponse(req);
+  if (columnProjectionResponse) {
+    return columnProjectionResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

@@ -1006,7 +1006,7 @@ export type ModeState = {
 };
 
 export type MatrixOperation =
-  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'linearSystem';
+  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 

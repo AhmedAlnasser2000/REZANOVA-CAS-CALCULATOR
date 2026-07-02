@@ -437,6 +437,20 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('qrA');
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-column-projection',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{projcol}\\left(A,\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)',
+      resultLatex: '\\operatorname{proj}_{\\operatorname{Col}(A)}(b)',
+      matrixSeed: {
+        operation: 'columnProjectionA',
+        matrixA: [[1, 0], [0, 1], [0, 0]],
+        matrixB: [[5, 6], [7, 8]],
+        systemRhs: [2, 3, 4],
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('columnProjectionA');
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',
