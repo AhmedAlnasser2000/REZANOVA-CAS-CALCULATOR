@@ -11,7 +11,7 @@ export function wrapGroupedLatex(latex: string) {
     return latex;
   }
 
-  if (/^\\(?:sin|cos|tan|cot|sec|csc|ln|log|arcsin|arccos|arctan|arcsec|arccsc|arccot)\\left\(.+\\right\)(?:\^\{?[-+]?\d+\}?)?$/.test(latex)) {
+  if (/^\\(?:sin|cos|tan|cot|sec|csc|ln|log|arcsin|arccos|arctan|arcsec|arccsc|arccot|mathrm\{arsinh\}|mathrm\{arcosh\}|mathrm\{artanh\})\\left\(.+\\right\)(?:\^\{?[-+]?\d+\}?)?$/.test(latex)) {
     return latex;
   }
 

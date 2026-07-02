@@ -77,6 +77,10 @@ describe('algebraic genus-0 radical profiler', () => {
       kind: 'stop',
       reason: 'branch-sensitive',
     });
+    expect(profile('\\operatorname{arsinh}(x)\\sqrt{x+1}')).toMatchObject({
+      kind: 'stop',
+      reason: 'unsupported-transcendental-carrier',
+    });
   });
 
   it('keeps cubic and quartic radicands outside the genus-0 live scope for now', () => {
