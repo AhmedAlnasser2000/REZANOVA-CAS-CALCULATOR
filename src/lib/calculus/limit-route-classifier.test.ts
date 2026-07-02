@@ -41,6 +41,15 @@ describe('natural limit route classifier', () => {
     });
   });
 
+  it('classifies safe indeterminate transform routes', () => {
+    expect(classifyNaturalLimitRoute('lim x -> 0+ x ln(x)')).toMatchObject({
+      kind: 'indeterminate-transform',
+    });
+    expect(classifyNaturalLimitRoute('lim x -> infinity (1+1/x)^x')).toMatchObject({
+      kind: 'indeterminate-transform',
+    });
+  });
+
   it('returns controlled unsupported and malformed routes', () => {
     expect(classifyNaturalLimitRoute('lim x -> 0 sin(1/x)')).toMatchObject({
       kind: 'unsupported',

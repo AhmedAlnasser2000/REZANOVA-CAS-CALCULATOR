@@ -10,6 +10,7 @@
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limit side-behavior explanations are educational readback over existing finite-limit evidence. They must not change final Answer ownership, auto-correct user input, or claim broader theorem-prover coverage.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Natural Limit evaluation is classifier-planned: supported route kinds may run exact symbolic evaluation, malformed/too-complex/unsupported routes stop with diagnostics, and numeric fallback is route-owned rather than globally attempted. Direct-substitution and finite-pole side-evidence plans are the first routes allowed to fall back.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Exact local algebra for Limits is a Limits-owned adapter over existing symbolic simplification/local-equivalent/asymptotic primitives. It must not import Equation solving logic or become a separate algebra engine.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Indeterminate transforms for Limits are bounded pattern routes with explicit method details. They may use safe product/log and log-power rewrites, but must not become a broad theorem prover or a replacement for Taylor/Gruntz-style asymptotics.
 
 ## 2026-07-01 - EQUATION-EXACT-BRANCH-CORRECTNESS1
 

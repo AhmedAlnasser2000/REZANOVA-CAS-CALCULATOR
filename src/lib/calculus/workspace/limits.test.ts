@@ -231,4 +231,22 @@ describe('calculus limits', () => {
     expect(infinity.exactLatex).toBe('\\frac{1}{2}');
     expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('conjugate');
   });
+
+  it('resolves safe indeterminate transform natural limit expressions', () => {
+    const product = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0+ x ln(x)',
+    });
+    const power = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (1+1/x)^x',
+    });
+
+    expect(product.error).toBeUndefined();
+    expect(product.exactLatex).toBe('0');
+    expect(product.detailSections?.[0]?.lines.join(' ')).toContain('0 times infinity');
+
+    expect(power.error).toBeUndefined();
+    expect(power.exactLatex).toBe('e');
+    expect(Number(power.approxText)).toBeCloseTo(Math.E, 6);
+    expect(power.detailSections?.[0]?.lines.join(' ')).toContain('1^infinity');
+  });
 });

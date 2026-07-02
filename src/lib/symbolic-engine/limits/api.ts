@@ -2,6 +2,7 @@ import type { LimitDirection } from '../../../types/calculator';
 import { box, latexToNumber, success } from './evaluation';
 import { resolveKnownFiniteLimitRule } from './known-rules';
 import { resolveExactLocalAlgebraLimit } from './exact-local-algebra';
+import { resolveFiniteIndeterminateTransformLimit } from './indeterminate-transforms';
 import { attemptLHospital } from './lhospital';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import { resolveLogBoundaryLimit, resolveSignedPoleLimit } from './poles';
@@ -51,6 +52,11 @@ export function resolveFiniteLimitRule(
   );
   if (localEquivalentLimit) {
     return localEquivalentLimit;
+  }
+
+  const indeterminateTransform = resolveFiniteIndeterminateTransformLimit(node, target, variable, direction);
+  if (indeterminateTransform) {
+    return indeterminateTransform;
   }
 
   const signedPole = resolveSignedPoleLimit(node, target, variable, direction);

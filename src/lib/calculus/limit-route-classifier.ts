@@ -8,6 +8,10 @@ import {
 import { parseNaturalLimitRequest, type NaturalLimitRequest } from './limit-request';
 import { resolveInfiniteLimitHeuristic } from './engine/limit-heuristics';
 import { resolveInfiniteExactLocalAlgebraLimit } from '../symbolic-engine/limits';
+import {
+  hasFiniteIndeterminateTransformCandidate,
+  hasInfiniteIndeterminateTransformCandidate,
+} from '../symbolic-engine/limits/indeterminate-transforms';
 
 const ce = new ComputeEngine();
 const MAX_LIMIT_ROUTE_NODES = 180;
@@ -19,6 +23,7 @@ export type LimitRouteKind =
   | 'local-equivalent'
   | 'finite-pole'
   | 'exact-local-algebra'
+  | 'indeterminate-transform'
   | 'infinity-asymptotic'
   | 'lhospital-candidate'
   | 'taylor-series-candidate'
@@ -208,6 +213,14 @@ function classifyFiniteNode(node: unknown, request: NaturalLimitRequest): LimitR
     };
   }
 
+  if (hasFiniteIndeterminateTransformCandidate(node, request.target.value, request.variable, request.target.direction)) {
+    return {
+      kind: 'indeterminate-transform',
+      reason: 'A safe indeterminate-form rewrite can turn the expression into a supported sub-limit.',
+      request,
+    };
+  }
+
   return {
     kind: 'unsupported',
     reason: 'No supported finite-limit route matched this request.',
@@ -234,6 +247,14 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     return {
       kind: 'exact-local-algebra',
       reason: 'An exact algebra rewrite resolves the infinite-target expression before numeric sampling.',
+      request,
+    };
+  }
+
+  if (hasInfiniteIndeterminateTransformCandidate(node, request.target.targetKind, request.variable)) {
+    return {
+      kind: 'indeterminate-transform',
+      reason: 'A safe log-transform rewrite can resolve the indeterminate power form.',
       request,
     };
   }

@@ -3,7 +3,11 @@ import {
   checkOneSidedRealDomain,
   collectRealDomainConstraints,
 } from '../../algebra/domain-range-core';
-import { attemptInfiniteLHospital, resolveInfiniteExactLocalAlgebraLimit } from '../../symbolic-engine/limits';
+import {
+  attemptInfiniteLHospital,
+  resolveInfiniteExactLocalAlgebraLimit,
+  resolveInfiniteIndeterminateTransformLimit,
+} from '../../symbolic-engine/limits';
 import { resolveFiniteLimitRule } from '../../symbolic-engine/limits';
 import type {
   DisplayDetailSection,
@@ -470,6 +474,21 @@ export function evaluateInfiniteLimitFromAst(input: {
   allowNumericFallback?: boolean;
   messages: InfiniteLimitMessages;
 }): CalculusCoreEvaluation {
+  const indeterminateTransform = resolveInfiniteIndeterminateTransformLimit(
+    input.body,
+    input.targetKind,
+    input.variable,
+  );
+  if (indeterminateTransform) {
+    return {
+      exactLatex: indeterminateTransform.exactLatex ?? limitValueToLatex(indeterminateTransform.value),
+      approxText: limitValueToApproxText(indeterminateTransform.value),
+      warnings: [],
+      resultOrigin: indeterminateTransform.origin,
+      detailSections: indeterminateTransform.detailSections,
+    };
+  }
+
   const exactLocalAlgebra = resolveInfiniteExactLocalAlgebraLimit(input.body, input.targetKind, input.variable);
   if (exactLocalAlgebra) {
     return {

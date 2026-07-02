@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ComputeEngine } from '@cortex-js/compute-engine'
-import { resolveFiniteLimitRule } from './limits'
+import { resolveFiniteLimitRule, resolveInfiniteIndeterminateTransformLimit } from './limits'
 
 const ce = new ComputeEngine()
 
@@ -169,6 +169,29 @@ describe('symbolic-engine limits', () => {
       expect(result.value).toBeCloseTo(0, 8)
       expect(result.exactLatex).toBe('0')
       expect(result.detailSections?.[0]?.lines.join(' ')).toContain('common denominator')
+    }
+  })
+
+  it('resolves safe indeterminate transforms', () => {
+    const product = resolveFiniteLimitRule(ce.parse('x\\ln(x)').json, 0, 'x', 'right')
+    const power = resolveInfiniteIndeterminateTransformLimit(
+      ce.parse('(1+1/x)^x').json,
+      'posInfinity',
+      'x',
+    )
+
+    expect(product.kind).toBe('success')
+    if (product.kind === 'success') {
+      expect(product.value).toBe(0)
+      expect(product.exactLatex).toBe('0')
+      expect(product.detailSections?.[0]?.lines.join(' ')).toContain('0 times infinity')
+    }
+
+    expect(power?.kind).toBe('success')
+    if (power?.kind === 'success') {
+      expect(power.exactLatex).toBe('e')
+      expect(power.value).toBeCloseTo(Math.E, 8)
+      expect(power.detailSections?.[0]?.lines.join(' ')).toContain('Log transform')
     }
   })
 
