@@ -3,6 +3,7 @@ import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
 import { solvePolynomialSystem2x2 } from '../../equation/equation-polynomial-system';
 import {
   attachEquationAnalysisEvidence,
+  buildEquationDomainFactEvidence,
   buildEquationRouteEvidence,
 } from '../../equation/analysis-evidence';
 import { runSharedEquationSolveWithTraceAsync } from '../../equation/shared-solve';
@@ -33,12 +34,50 @@ import {
   remainingApproximateModeParameters,
   withStoredValueDetails,
 } from './stored-values';
+import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import { solveSymbolicEquation, solveSymbolicEquationAsync } from './symbolic';
 import type {
   AsyncSharedEquationSolveRunner,
   EquationModeIsolatedWorkerRunResult,
   RunEquationModeRequest,
 } from './types';
+
+function buildEquationRunEvidence(input: {
+  outcome: DisplayOutcome;
+  equationLatex: string;
+  target?: string | null;
+  angleUnit: RunEquationModeRequest['angleUnit'];
+  numericInterval?: RunEquationModeRequest['numericInterval'];
+  complexRegion?: RunEquationModeRequest['complexRegion'];
+  equationDomainIntent: RunEquationModeRequest['equationDomainIntent'];
+}) {
+  const routeEvidence = buildEquationRouteEvidence({
+    outcome: input.outcome,
+    target: input.target ?? undefined,
+    numericInterval: input.numericInterval,
+    complexRegion: input.complexRegion,
+    equationDomainIntent: input.equationDomainIntent ?? 'real',
+  });
+  const route = routeEvidence[0]?.sourceRoute ?? 'equation';
+  const selectedTarget = input.target ?? routeEvidence[0]?.target;
+  if (!selectedTarget) {
+    return routeEvidence;
+  }
+  const classification = classifyEquationNumericShape({
+    equationLatex: input.equationLatex,
+    equationSolveTarget: selectedTarget,
+    angleUnit: input.angleUnit,
+  });
+
+  return [
+    ...routeEvidence,
+    ...buildEquationDomainFactEvidence({
+      facts: classification.domainFacts,
+      target: selectedTarget,
+      sourceRoute: route,
+    }),
+  ];
+}
 
 export function runEquationMode({
   equationScreen,
@@ -128,9 +167,11 @@ export function runEquationMode({
         );
         return attachEquationAnalysisEvidence(
           missingParameterOutcome,
-          buildEquationRouteEvidence({
+          buildEquationRunEvidence({
             outcome: missingParameterOutcome,
+            equationLatex: substitution.latex,
             target: protectedTarget ?? equationSolveTarget ?? undefined,
+            angleUnit,
             numericInterval,
             complexRegion,
             equationDomainIntent,
@@ -167,9 +208,11 @@ export function runEquationMode({
       : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
     return attachEquationAnalysisEvidence(
       finalOutcome,
-      buildEquationRouteEvidence({
+      buildEquationRunEvidence({
         outcome: finalOutcome,
+        equationLatex: substitution.latex,
         target: protectedTarget ?? equationSolveTarget ?? undefined,
+        angleUnit,
         numericInterval,
         complexRegion,
         equationDomainIntent,
@@ -247,9 +290,11 @@ export async function runEquationModeWithAsyncSharedSolve(
       );
       return attachEquationAnalysisEvidence(
         missingParameterOutcome,
-        buildEquationRouteEvidence({
+        buildEquationRunEvidence({
           outcome: missingParameterOutcome,
+          equationLatex: substitution.latex,
           target: protectedTarget ?? equationSolveTarget ?? undefined,
+          angleUnit,
           numericInterval,
           complexRegion,
           equationDomainIntent,
@@ -287,9 +332,11 @@ export async function runEquationModeWithAsyncSharedSolve(
     : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
   return attachEquationAnalysisEvidence(
     finalOutcome,
-    buildEquationRouteEvidence({
+    buildEquationRunEvidence({
       outcome: finalOutcome,
+      equationLatex: substitution.latex,
       target: protectedTarget ?? equationSolveTarget ?? undefined,
+      angleUnit,
       numericInterval,
       complexRegion,
       equationDomainIntent,

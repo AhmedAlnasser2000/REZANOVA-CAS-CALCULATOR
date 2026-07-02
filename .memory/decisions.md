@@ -1629,6 +1629,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation analysis evidence v1 is internal and symbol-backed, not a public graphing API or persisted result schema. It may travel with `DisplayOutcome` objects inside the app while remaining absent from JSON serialization; later graphing-foundation milestones should extend this DTO instead of scraping Display prose.
 
+## 2026-07-02 - EQUATION-DOMAIN-FACT-EVIDENCE-EXPORT1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation hard domain facts are exported through the internal analysis evidence contract from the numeric classifier/fact model, not from Display text. Denominator, log/root/fractional-power, inverse-trig, and trig-pole facts may be consumed structurally by future Equation-owned consumers while periodic carrier, sample-probe, singularity, interval-validity, certified-feature, range, and trust evidence stay in their own planned categories.
+
 ## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.

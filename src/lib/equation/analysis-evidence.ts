@@ -1,4 +1,5 @@
 import type { ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, NumericSolveInterval } from '../../types/calculator';
+import type { EquationNumericDomainFact } from './numeric-domain-segmentation';
 
 export type EquationAnalysisEvidenceCategory =
   | 'route'
@@ -144,4 +145,50 @@ export function buildEquationRouteEvidence(input: {
       }
       : undefined,
   }];
+}
+
+const DOMAIN_FACT_KINDS = new Set<EquationNumericDomainFact['kind']>([
+  'denominator-exclusion',
+  'solved-denominator-exclusion',
+  'log-domain',
+  'root-domain',
+  'fractional-power-domain',
+  'trig-pole',
+  'inverse-trig-domain',
+]);
+
+function latexForDomainFact(fact: EquationNumericDomainFact) {
+  return fact.expressionLatex && fact.relationLatex
+    ? `${fact.expressionLatex}${fact.relationLatex}`
+    : fact.expressionLatex;
+}
+
+function confidenceForDomainFact(fact: EquationNumericDomainFact): EquationAnalysisEvidenceConfidence {
+  return fact.source === 'sample-probe' ? 'heuristic' : 'proven';
+}
+
+export function buildEquationDomainFactEvidence(input: {
+  facts: readonly EquationNumericDomainFact[];
+  target: string;
+  sourceRoute: string;
+}): EquationAnalysisEvidence[] {
+  return input.facts
+    .filter((fact) => DOMAIN_FACT_KINDS.has(fact.kind))
+    .map((fact) => ({
+      id: [
+        'domain',
+        input.sourceRoute,
+        input.target,
+        fact.kind,
+        fact.expressionLatex ?? '',
+        fact.relationLatex ?? '',
+        fact.message,
+      ].join(':'),
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      category: 'domain' as const,
+      confidence: confidenceForDomainFact(fact),
+      latex: latexForDomainFact(fact),
+      text: fact.message,
+    }));
 }
