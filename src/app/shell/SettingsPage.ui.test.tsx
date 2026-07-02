@@ -9,7 +9,7 @@ import '../../styles/app/side-surfaces.css';
 const settingsText = getLanguageCatalog('en').settings;
 
 describe('SettingsPage', () => {
-  it('renders a full app page with the existing settings controls', () => {
+  it('segments full-page settings into active categories with existing controls', () => {
     const onPatch = vi.fn();
 
     render(
@@ -22,14 +22,26 @@ describe('SettingsPage', () => {
     );
 
     expect(screen.getByTestId('settings-page')).toBeInTheDocument();
-    expect(screen.getAllByText(settingsText.sections.display).length).toBeGreaterThan(1);
-    expect(screen.getAllByText(settingsText.sections.numericOutput).length).toBeGreaterThan(1);
-    expect(screen.getAllByText(settingsText.sections.symbolicDisplay).length).toBeGreaterThan(1);
+    expect(screen.getByTestId('settings-active-category')).toHaveTextContent(
+      settingsText.sections.display,
+    );
     expect(screen.getByTestId('settings-panel')).toHaveAttribute(
       'data-settings-presentation',
       'page',
     );
+    expect(screen.getByTestId('settings-section-display')).toBeInTheDocument();
+    expect(screen.queryByTestId('settings-section-numeric-output')).not.toBeInTheDocument();
 
+    fireEvent.click(screen.getByTestId('settings-category-math-output'));
+    expect(screen.getByTestId('settings-active-category')).toHaveTextContent(
+      settingsText.sections.numericOutput,
+    );
+    expect(screen.queryByTestId('settings-section-display')).not.toBeInTheDocument();
+    expect(screen.getByTestId('settings-section-numeric-output')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('settings-category-equation-complex'));
+    expect(screen.getByTestId('settings-section-general')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-section-complex')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('settings-output-style-both'));
     expect(onPatch).toHaveBeenCalledWith({ outputStyle: 'both' });
   });

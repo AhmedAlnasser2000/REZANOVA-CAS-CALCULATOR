@@ -1584,3 +1584,7 @@
 ## 2026-07-01 - SETTINGS-HISTORY-PAGE-SURFACES1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Settings and History are live singleton app-page workspace kinds, not calculator `ModeId`s. Quick Settings and History inspectors remain first-class fast-access side panels; full pages are additive app surfaces outside `.calculator-shell`, use null Order of Execution runtime context, and protected page tab actions. History V1 stays over existing `HistoryEntry` plus pending-ticket data and must not expose Formula Viewer actions from persisted records.
+
+## 2026-07-02 - SETTINGS-HISTORY-PAGE-POLISH1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Settings full-page categories must be functional scopes over the existing settings controls, not decorative labels over one long inspector clone. History full-page rows are selection-first: single click focuses/selects, Shift-click range-selects, Ctrl/Cmd-click toggles, and double-click is the direct-open/replay gesture; explicit inspector buttons remain the primary visible commands.

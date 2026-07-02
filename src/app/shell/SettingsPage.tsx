@@ -1,4 +1,8 @@
-import { SettingsPanel } from '../../components/SettingsPanel';
+import { useMemo, useState } from 'react';
+import {
+  SettingsPanel,
+  type SettingsPanelSectionId,
+} from '../../components/SettingsPanel';
 import { useLanguage } from '../../lib/language/language-context';
 import type { Settings, SettingsPatch } from '../../types/calculator';
 
@@ -17,15 +21,48 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const { strings } = useLanguage();
   const settingsText = strings.settings;
-  const categories = [
-    settingsText.sections.display,
-    settingsText.sections.numericOutput,
-    settingsText.sections.symbolicDisplay,
-    settingsText.sections.complex,
-    settingsText.sections.general,
-    settingsText.sections.history,
-    settingsText.sections.calculatorMemory,
-  ];
+  const categories = useMemo(() => [
+    {
+      id: 'display',
+      label: settingsText.sections.display,
+      sections: ['display'] satisfies SettingsPanelSectionId[],
+      value: `${settings.uiScale}% UI`,
+    },
+    {
+      id: 'math-output',
+      label: settingsText.sections.numericOutput,
+      sections: ['numericOutput'] satisfies SettingsPanelSectionId[],
+      value: `${settings.approxDigits} digits`,
+    },
+    {
+      id: 'symbolic-display',
+      label: settingsText.sections.symbolicDisplay,
+      sections: ['symbolicDisplay'] satisfies SettingsPanelSectionId[],
+      value: settingsText.options.symbolicDisplay[settings.symbolicDisplayMode],
+    },
+    {
+      id: 'equation-complex',
+      label: 'Equation / Complex',
+      sections: ['general', 'complex'] satisfies SettingsPanelSectionId[],
+      value: settings.complexExactForm,
+    },
+    {
+      id: 'memory-data',
+      label: 'Memory / Data',
+      sections: ['history', 'calculatorMemory'] satisfies SettingsPanelSectionId[],
+      value: settings.historyEnabled ? 'History on' : 'History off',
+    },
+  ], [
+    settings.approxDigits,
+    settings.complexExactForm,
+    settings.historyEnabled,
+    settings.symbolicDisplayMode,
+    settings.uiScale,
+    settingsText,
+  ]);
+  const [activeCategoryId, setActiveCategoryId] = useState(categories[0].id);
+  const activeCategory = categories.find((category) => category.id === activeCategoryId)
+    ?? categories[0];
 
   return (
     <section className="app-page app-page--settings" data-testid="settings-page">
@@ -45,18 +82,34 @@ export function SettingsPage({
       <div className="settings-page-grid">
         <nav className="settings-page-rail" aria-label="Settings categories">
           {categories.map((category) => (
-            <span key={category}>{category}</span>
+            <button
+              key={category.id}
+              type="button"
+              className={category.id === activeCategory.id ? 'is-active' : ''}
+              data-testid={`settings-category-${category.id}`}
+              onClick={() => setActiveCategoryId(category.id)}
+            >
+              <span>{category.label}</span>
+              <small>{category.value}</small>
+            </button>
           ))}
         </nav>
-        <SettingsPanel
-          presentation="page"
-          settings={settings}
-          onClose={() => undefined}
-          onPatch={onPatch}
-          onClearHistory={onClearHistory}
-          onResetCalculatorMemory={onResetCalculatorMemory}
-          showHeader={false}
-        />
+        <div className="settings-page-content">
+          <div className="settings-page-content-header" data-testid="settings-active-category">
+            <span>{activeCategory.label}</span>
+            <strong>{activeCategory.value}</strong>
+          </div>
+          <SettingsPanel
+            presentation="page"
+            settings={settings}
+            onClose={() => undefined}
+            onPatch={onPatch}
+            onClearHistory={onClearHistory}
+            onResetCalculatorMemory={onResetCalculatorMemory}
+            showHeader={false}
+            visibleSections={activeCategory.sections}
+          />
+        </div>
       </div>
     </section>
   );

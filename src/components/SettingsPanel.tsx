@@ -14,6 +14,15 @@ import type {
   SettingsPatch,
 } from '../types/calculator';
 
+export type SettingsPanelSectionId =
+  | 'display'
+  | 'numericOutput'
+  | 'symbolicDisplay'
+  | 'complex'
+  | 'general'
+  | 'history'
+  | 'calculatorMemory';
+
 type SettingsPanelPresentation = 'outboard' | 'overlay' | 'page';
 
 type SettingsPanelProps = {
@@ -25,6 +34,7 @@ type SettingsPanelProps = {
   onClearHistory: () => void;
   onResetCalculatorMemory: () => void;
   showHeader?: boolean;
+  visibleSections?: readonly SettingsPanelSectionId[];
 };
 
 const MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS = 20;
@@ -70,6 +80,7 @@ export function SettingsPanel({
   onClearHistory,
   onResetCalculatorMemory,
   showHeader = true,
+  visibleSections,
 }: SettingsPanelProps) {
   const { strings } = useLanguage();
   const settingsText = strings.settings;
@@ -132,6 +143,8 @@ export function SettingsPanel({
   }
 
   const numericPreviewValue = formatApproxNumber(1234567.891234, settings);
+  const shouldShowSection = (sectionId: SettingsPanelSectionId) =>
+    !visibleSections || visibleSections.includes(sectionId);
 
   return (
     <aside
@@ -169,7 +182,8 @@ export function SettingsPanel({
       ) : null}
 
       <div className="settings-panel-body">
-        <section className="settings-section">
+        {shouldShowSection('display') ? (
+        <section className="settings-section" data-testid="settings-section-display">
           <div className="settings-section-title">{settingsText.sections.display}</div>
           <div className="settings-field">
             <span>{settingsText.fields.uiScale}</span>
@@ -241,8 +255,10 @@ export function SettingsPanel({
             {settingsText.help.detailedFacts}
           </p>
         </section>
+        ) : null}
 
-        <section className="settings-section">
+        {shouldShowSection('numericOutput') ? (
+        <section className="settings-section" data-testid="settings-section-numeric-output">
           <div className="settings-section-title">{settingsText.sections.numericOutput}</div>
           <label className="settings-field">
             <span>{settingsText.fields.approximateDigits}</span>
@@ -299,8 +315,10 @@ export function SettingsPanel({
             </p>
           </div>
         </section>
+        ) : null}
 
-        <section className="settings-section">
+        {shouldShowSection('symbolicDisplay') ? (
+        <section className="settings-section" data-testid="settings-section-symbolic-display">
           <div className="settings-section-title">{settingsText.sections.symbolicDisplay}</div>
           <div className="settings-field">
             <span>{settingsText.fields.powerRootStyle}</span>
@@ -341,8 +359,10 @@ export function SettingsPanel({
             </p>
           </div>
         </section>
+        ) : null}
 
-        <section className="settings-section">
+        {shouldShowSection('complex') ? (
+        <section className="settings-section" data-testid="settings-section-complex">
           <div className="settings-section-title">{settingsText.sections.complex}</div>
           <div className="settings-field">
             <span>{settingsText.fields.exactBranchForm}</span>
@@ -364,8 +384,10 @@ export function SettingsPanel({
             {settingsText.help.complex}
           </p>
         </section>
+        ) : null}
 
-        <section className="settings-section">
+        {shouldShowSection('general') ? (
+        <section className="settings-section" data-testid="settings-section-general">
           <div className="settings-section-title">{settingsText.sections.general}</div>
           <div className="settings-field">
             <span>{settingsText.fields.language}</span>
@@ -462,8 +484,10 @@ export function SettingsPanel({
             />
           </label>
         </section>
+        ) : null}
 
-        <section className="settings-section">
+        {shouldShowSection('history') ? (
+        <section className="settings-section" data-testid="settings-section-history">
           <div className="settings-section-title">{settingsText.sections.history}</div>
           <label className="settings-toggle-row">
             <span>{settingsText.fields.historyEnabled}</span>
@@ -486,8 +510,10 @@ export function SettingsPanel({
             {settingsText.actions.resetHistory}
           </button>
         </section>
+        ) : null}
 
-        <section className="settings-section">
+        {shouldShowSection('calculatorMemory') ? (
+        <section className="settings-section" data-testid="settings-section-calculator-memory">
           <div className="settings-section-title">{settingsText.sections.calculatorMemory}</div>
           <label className="settings-toggle-row">
             <span>{settingsText.fields.saveCalculatorMemory}</span>
@@ -548,6 +574,7 @@ export function SettingsPanel({
             {settingsText.actions.resetCalculatorMemory}
           </button>
         </section>
+        ) : null}
       </div>
     </aside>
   );

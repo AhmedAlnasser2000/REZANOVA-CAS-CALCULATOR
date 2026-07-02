@@ -2,6 +2,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  type MouseEvent,
   type UIEvent,
 } from 'react';
 import { MathStatic } from '../../components/MathStatic';
@@ -183,6 +184,7 @@ export function HistoryPage({
   const [scrollTop, setScrollTop] = useState(0);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(() => new Set());
+  const [selectionAnchorRowId, setSelectionAnchorRowId] = useState<string | null>(null);
   const [elapsedNowMs, setElapsedNowMs] = useState(() => Date.now());
   const allRows = useMemo(() =>
     buildHistoryLedgerRows({ history, modeLabels, pendingHistory }),
@@ -224,13 +226,60 @@ export function HistoryPage({
     return () => window.clearInterval(intervalId);
   }, [pendingHistory]);
 
-  function toggleSelectedEntry(entryId: string) {
+  function entryIdsInRange(fromRowId: string, toRowId: string) {
+    const fromIndex = rows.findIndex((row) => row.id === fromRowId);
+    const toIndex = rows.findIndex((row) => row.id === toRowId);
+    if (fromIndex < 0 || toIndex < 0) {
+      return [];
+    }
+
+    const [startIndex, endIndex] = fromIndex <= toIndex
+      ? [fromIndex, toIndex]
+      : [toIndex, fromIndex];
+    return rows.slice(startIndex, endIndex + 1)
+      .filter((row): row is Extract<HistoryLedgerRow, { kind: 'entry' }> => row.kind === 'entry')
+      .map((row) => row.entry.id);
+  }
+
+  function focusEntryRow(
+    event: MouseEvent<HTMLElement>,
+    row: Extract<HistoryLedgerRow, { kind: 'entry' }>,
+  ) {
+    setSelectedRowId(row.id);
+
+    if (event.shiftKey && selectionAnchorRowId) {
+      const rangeIds = entryIdsInRange(selectionAnchorRowId, row.id);
+      setSelectedEntryIds(new Set(rangeIds));
+      return;
+    }
+
+    if (event.ctrlKey || event.metaKey) {
+      setSelectedEntryIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        if (nextIds.has(row.entry.id)) {
+          nextIds.delete(row.entry.id);
+        } else {
+          nextIds.add(row.entry.id);
+        }
+        return nextIds;
+      });
+      setSelectionAnchorRowId(row.id);
+      return;
+    }
+
+    setSelectedEntryIds(new Set([row.entry.id]));
+    setSelectionAnchorRowId(row.id);
+  }
+
+  function toggleSelectedEntry(row: Extract<HistoryLedgerRow, { kind: 'entry' }>) {
+    setSelectedRowId(row.id);
+    setSelectionAnchorRowId(row.id);
     setSelectedEntryIds((currentIds) => {
       const nextIds = new Set(currentIds);
-      if (nextIds.has(entryId)) {
-        nextIds.delete(entryId);
+      if (nextIds.has(row.entry.id)) {
+        nextIds.delete(row.entry.id);
       } else {
-        nextIds.add(entryId);
+        nextIds.add(row.entry.id);
       }
       return nextIds;
     });
@@ -370,24 +419,21 @@ export function HistoryPage({
                       className={`history-page-row ${isSelected ? 'is-selected' : ''}`}
                       data-testid="history-page-row"
                       style={{ height: HISTORY_PAGE_ROW_HEIGHT }}
-                      onClick={() => setSelectedRowId(row.id)}
+                      onClick={(event) => focusEntryRow(event, row)}
+                      onDoubleClick={() => onReplay(row.entry)}
                     >
                       <label onClick={(event) => event.stopPropagation()}>
                         <input
                           type="checkbox"
                           aria-label={historyText.actions.selectEntry}
                           checked={selectedEntryIds.has(row.entry.id)}
-                          onChange={() => toggleSelectedEntry(row.entry.id)}
+                          onChange={() => toggleSelectedEntry(row)}
                         />
                       </label>
-                      <button
-                        type="button"
-                        className="history-page-row-main"
-                        onClick={() => onReplay(row.entry)}
-                      >
+                      <div className="history-page-row-main">
                         <span>{modeLabels[row.mode]} · {rowTimestamp(row)}</span>
                         <MathStatic latex={row.entry.inputLatex} />
-                      </button>
+                      </div>
                       <span className="history-page-chip">{rowStatus(row, elapsedNowMs)}</span>
                     </article>
                   );

@@ -122,7 +122,7 @@
 
 .settings-page-grid {
   display: grid;
-  grid-template-columns: minmax(170px, 0.22fr) minmax(0, 1fr);
+  grid-template-columns: minmax(230px, 0.26fr) minmax(0, 1fr);
   gap: 18px;
   min-height: 0;
 }
@@ -141,17 +141,49 @@
 .settings-page-rail {
   display: grid;
   align-content: start;
-  gap: 8px;
-  padding: 14px;
+  gap: 10px;
+  padding: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 16px 34px rgba(0, 0, 0, 0.18);
 }
 
-.settings-page-rail span,
+.settings-page-rail button,
 .settings-page-status span {
-  border-radius: 999px;
+  border: 1px solid rgba(228, 236, 220, 0.1);
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--surface-muted);
-  padding: 8px 10px;
+  padding: 10px 12px;
   font-size: 0.84rem;
+}
+
+.settings-page-rail button {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-page-rail button span {
+  color: var(--surface-ink);
+  font-weight: 700;
+}
+
+.settings-page-rail button small {
+  color: rgba(244, 248, 232, 0.56);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.settings-page-rail button.is-active {
+  border-color: rgba(215, 223, 171, 0.58);
+  background:
+    linear-gradient(180deg, rgba(215, 223, 171, 0.18), rgba(255, 255, 255, 0.07)),
+    rgba(52, 68, 53, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 24px rgba(0, 0, 0, 0.2);
 }
 
 .settings-page-status {
@@ -159,6 +191,40 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 10px;
+}
+
+.settings-page-content {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.settings-page-content-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(228, 236, 220, 0.12);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035)),
+    rgba(255, 255, 255, 0.04);
+  padding: 14px 16px;
+}
+
+.settings-page-content-header span {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.settings-page-content-header strong {
+  border: 1px solid rgba(228, 236, 220, 0.12);
+  border-radius: 999px;
+  color: rgba(244, 248, 232, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  padding: 6px 10px;
 }
 
 .app-page--history {
@@ -267,6 +333,7 @@
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.055);
   color: var(--surface-ink);
+  cursor: default;
   padding: 10px;
 }
 
@@ -275,8 +342,10 @@
 }
 
 .history-page-row.is-selected {
-  border-color: rgba(125, 207, 255, 0.55);
-  background: rgba(125, 207, 255, 0.08);
+  border-color: rgba(215, 223, 171, 0.6);
+  background:
+    linear-gradient(180deg, rgba(215, 223, 171, 0.12), rgba(125, 207, 255, 0.07)),
+    rgba(255, 255, 255, 0.055);
 }
 
 .history-page-row-main {
@@ -287,7 +356,6 @@
   background: transparent;
   color: inherit;
   text-align: left;
-  cursor: pointer;
 }
 
 .history-page-row-main span,

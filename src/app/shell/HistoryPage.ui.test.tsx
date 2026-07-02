@@ -106,13 +106,15 @@ describe('HistoryPage', () => {
     expect(renderedRows.length).toBeGreaterThan(5);
   });
 
-  it('supports selected-entry replay, new-tab replay, copy, delete, and bulk delete', () => {
+  it('selects rows on click, opens on double click, and keeps inspector actions explicit', () => {
     const handlers = renderHistoryPage({
       history: [entry('1'), entry('2')],
     });
     const firstRenderedRow = screen.getAllByTestId('history-page-row')[0];
 
     fireEvent.click(firstRenderedRow);
+    expect(handlers.onReplay).not.toHaveBeenCalled();
+
     fireEvent.click(screen.getByRole('button', { name: historyText.actions.replayCurrentTab }));
     fireEvent.click(screen.getByRole('button', { name: historyText.actions.openInNewTab }));
     fireEvent.click(screen.getByRole('button', { name: historyText.actions.copyResult }));
@@ -124,10 +126,32 @@ describe('HistoryPage', () => {
     expect(handlers.onDelete).toHaveBeenCalledWith('2');
     expect(screen.queryByRole('button', { name: /Formula Viewer/i })).not.toBeInTheDocument();
 
-    fireEvent.click(within(firstRenderedRow).getByLabelText(historyText.actions.selectEntry));
+    fireEvent.doubleClick(firstRenderedRow);
+    expect(handlers.onReplay).toHaveBeenCalledTimes(2);
+    expect(handlers.onReplay).toHaveBeenLastCalledWith(entry('2'));
+
     fireEvent.click(screen.getByRole('button', { name: historyText.actions.deleteSelected }));
 
     expect(handlers.onDeleteSelected).toHaveBeenCalledWith(['2']);
+  });
+
+  it('supports Shift range selection and Ctrl toggled multi-selection', () => {
+    const handlers = renderHistoryPage({
+      history: [entry('1'), entry('2'), entry('3')],
+    });
+    const rows = screen.getAllByTestId('history-page-row');
+
+    fireEvent.click(rows[0]);
+    fireEvent.click(rows[2], { shiftKey: true });
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.deleteSelected }));
+
+    expect(handlers.onDeleteSelected).toHaveBeenCalledWith(['3', '2', '1']);
+
+    fireEvent.click(rows[0]);
+    fireEvent.click(rows[1], { ctrlKey: true });
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.deleteSelected }));
+
+    expect(handlers.onDeleteSelected).toHaveBeenLastCalledWith(['3', '2']);
   });
 
   it('renders pending rows with stop controls', () => {
