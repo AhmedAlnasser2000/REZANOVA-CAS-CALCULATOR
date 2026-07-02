@@ -31,6 +31,7 @@ import {
   numericLimitAtInfinity,
   resolveInfiniteLimitHeuristic,
 } from './limit-heuristics';
+import { derivativeVariableLatex } from '../derivative-target';
 import {
   limitDetailSection,
   limitDetailSectionFromLines,
@@ -231,17 +232,65 @@ function oneSidedEvidenceLatex(result: TwoSidedMismatchEvidence['left']) {
   return limitValueToLatex(result.value);
 }
 
-function twoSidedMismatchDetails(evidence: TwoSidedMismatchEvidence): DisplayDetailSection[] {
+function finiteTargetSideLatex(target: number, direction: Exclude<LimitDirection, 'two-sided'>) {
+  const targetLatex = limitValueToLatex(target);
+  return `${targetLatex}^{${direction === 'right' ? '+' : '-'}}`;
+}
+
+function oneSidedApproachLatex(input: {
+  variable: string;
+  target: number;
+  direction: Exclude<LimitDirection, 'two-sided'>;
+}) {
+  return `${derivativeVariableLatex(input.variable)}\\to ${finiteTargetSideLatex(input.target, input.direction)}`;
+}
+
+function oneSidedLimitCalculationLatex(input: {
+  variable: string;
+  target: number;
+  direction: Exclude<LimitDirection, 'two-sided'>;
+  valueLatex: string;
+}) {
+  const variableLatex = derivativeVariableLatex(input.variable);
+  return `\\lim_{${oneSidedApproachLatex(input)}} f(${variableLatex})=${input.valueLatex}`;
+}
+
+function twoSidedMismatchDetails(input: {
+  evidence: TwoSidedMismatchEvidence;
+  target: number;
+  variable: string;
+}): DisplayDetailSection[] {
+  const leftLatex = oneSidedEvidenceLatex(input.evidence.left);
+  const rightLatex = oneSidedEvidenceLatex(input.evidence.right);
+
   return [
     limitDetailSection('Why This Limit Fails', [
       [
-        limitTextPart('Left side tends to '),
-        limitMathPart(oneSidedEvidenceLatex(evidence.left)),
+        limitTextPart('Left calculation: '),
+        limitMathPart(oneSidedLimitCalculationLatex({
+          variable: input.variable,
+          target: input.target,
+          direction: 'left',
+          valueLatex: leftLatex,
+        })),
         limitTextPart('.'),
       ],
       [
+        limitTextPart('Right calculation: '),
+        limitMathPart(oneSidedLimitCalculationLatex({
+          variable: input.variable,
+          target: input.target,
+          direction: 'right',
+          valueLatex: rightLatex,
+        })),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Left side tends to '),
+        limitMathPart(leftLatex),
+        limitTextPart(', while '),
         limitTextPart('Right side tends to '),
-        limitMathPart(oneSidedEvidenceLatex(evidence.right)),
+        limitMathPart(rightLatex),
         limitTextPart('.'),
       ],
       [
@@ -262,13 +311,10 @@ function appendLimitDetails(
       : undefined;
 }
 
-function finiteTargetSideLatex(target: number, direction: Exclude<LimitDirection, 'two-sided'>) {
-  return `${limitValueToLatex(target)}${direction === 'right' ? '+' : '-'}`;
-}
-
 function signedFiniteLimitBehaviorDetails(input: {
   direction: LimitDirection;
   target: number;
+  variable: string;
   value: LimitValue;
 }): DisplayDetailSection[] {
   if (input.value !== 'posInfinity' && input.value !== 'negInfinity') {
@@ -279,15 +325,33 @@ function signedFiniteLimitBehaviorDetails(input: {
   if (input.direction === 'left' || input.direction === 'right') {
     const side = input.direction === 'right' ? 'right-hand' : 'left-hand';
     const comparison = input.direction === 'right' ? 'greater than' : 'less than';
+    const sign = input.value === 'posInfinity' ? 'positive' : 'negative';
     return [{
       ...limitDetailSection('Side Behavior', [
         [
           limitTextPart(`This is a ${side} limit: `),
-          limitMathPart(`x\\to ${finiteTargetSideLatex(input.target, input.direction)}`),
+          limitMathPart(oneSidedApproachLatex({
+            variable: input.variable,
+            target: input.target,
+            direction: input.direction,
+          })),
           limitTextPart(` using values ${comparison} the target.`),
         ],
         [
-          limitTextPart('On that side, the expression grows without bound toward '),
+          limitTextPart(`On that side, sample values stay ${sign} and grow without bound.`),
+        ],
+        [
+          limitTextPart('Calculation: '),
+          limitMathPart(oneSidedLimitCalculationLatex({
+            variable: input.variable,
+            target: input.target,
+            direction: input.direction,
+            valueLatex,
+          })),
+          limitTextPart('.'),
+        ],
+        [
+          limitTextPart(`Conclusion: the ${side} limit is `),
           limitMathPart(valueLatex),
           limitTextPart('.'),
         ],
@@ -297,6 +361,26 @@ function signedFiniteLimitBehaviorDetails(input: {
 
   return [{
     ...limitDetailSection('Side Behavior', [
+      [
+        limitTextPart('Left calculation: '),
+        limitMathPart(oneSidedLimitCalculationLatex({
+          variable: input.variable,
+          target: input.target,
+          direction: 'left',
+          valueLatex,
+        })),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Right calculation: '),
+        limitMathPart(oneSidedLimitCalculationLatex({
+          variable: input.variable,
+          target: input.target,
+          direction: 'right',
+          valueLatex,
+        })),
+        limitTextPart('.'),
+      ],
       [
         limitTextPart('Left-hand and right-hand behavior share the same signed divergence '),
         limitMathPart(valueLatex),
@@ -433,6 +517,7 @@ export function evaluateFiniteLimitFromAst(input: {
         ...signedFiniteLimitBehaviorDetails({
           direction: input.direction,
           target: input.target,
+          variable: input.variable,
           value: symbolic.value,
         }),
       ),
@@ -476,6 +561,7 @@ export function evaluateFiniteLimitFromAst(input: {
         ...signedFiniteLimitBehaviorDetails({
           direction: input.direction,
           target: input.target,
+          variable: input.variable,
           value: signToInfiniteLimit(numeric.sign),
         }),
       ),
@@ -509,6 +595,7 @@ export function evaluateFiniteLimitFromAst(input: {
         ...signedFiniteLimitBehaviorDetails({
           direction: input.direction,
           target: input.target,
+          variable: input.variable,
           value: signToInfiniteLimit(numeric.sign),
         }),
       ),
@@ -526,7 +613,11 @@ export function evaluateFiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: input.messages.mismatchError,
-      detailSections: twoSidedMismatchDetails(numeric),
+      detailSections: twoSidedMismatchDetails({
+        evidence: numeric,
+        target: input.target,
+        variable: input.variable,
+      }),
     };
   }
   if (numeric.kind !== 'success') {

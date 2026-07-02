@@ -57,19 +57,24 @@ describe('calculus limits', () => {
       direction: 'two-sided',
     });
     expect(poleMismatch.error).toBe('Left and right behavior do not agree near the target.');
-    expect(poleMismatch.detailSections?.[0]).toMatchObject({
-      title: 'Why This Limit Fails',
-      lines: [
-        'Left side tends to -\\infty.',
-        'Right side tends to \\infty.',
-        'The two one-sided limits are different, so the two-sided limit does not exist.',
-      ],
+    const mismatchProof = poleMismatch.detailSections?.[0];
+    expect(mismatchProof?.title).toBe('Why This Limit Fails');
+    expect(mismatchProof?.lines.join(' ')).toContain('Left calculation');
+    expect(mismatchProof?.lines.join(' ')).toContain('Right calculation');
+    expect(mismatchProof?.lines.join(' ')).toContain('two-sided limit does not exist');
+    expect(mismatchProof?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{-}} f(x)=-\\infty',
     });
-    expect(poleMismatch.detailSections?.[0]?.lineParts?.[0]).toContainEqual({
+    expect(mismatchProof?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{+}} f(x)=\\infty',
+    });
+    expect(mismatchProof?.lineParts?.flat()).toContainEqual({
       kind: 'math',
       latex: '-\\infty',
     });
-    expect(poleMismatch.detailSections?.[0]?.lineParts?.[1]).toContainEqual({
+    expect(mismatchProof?.lineParts?.flat()).toContainEqual({
       kind: 'math',
       latex: '\\infty',
     });
@@ -91,7 +96,14 @@ describe('calculus limits', () => {
     expect(targetOverride.error).toBeUndefined();
     expect(targetOverride.exactLatex).toBe('\\infty');
     expect(targetOverride.detailSections?.map((section) => section.title)).toContain('Side Behavior');
-    expect(targetOverride.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('right-hand limit');
+    const rightSideBehavior = targetOverride.detailSections
+      ?.find((section) => section.title === 'Side Behavior');
+    expect(rightSideBehavior?.lines.join(' ')).toContain('right-hand limit');
+    expect(rightSideBehavior?.lines.join(' ')).toContain('Calculation');
+    expect(rightSideBehavior?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{+}} f(x)=\\infty',
+    });
 
     const leftTargetOverride = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x}',
@@ -100,7 +112,13 @@ describe('calculus limits', () => {
     });
     expect(leftTargetOverride.exactLatex).toBe('-\\infty');
     expect(leftTargetOverride.detailSections?.map((section) => section.title)).toContain('Side Behavior');
-    expect(leftTargetOverride.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('left-hand limit');
+    const leftSideBehavior = leftTargetOverride.detailSections
+      ?.find((section) => section.title === 'Side Behavior');
+    expect(leftSideBehavior?.lines.join(' ')).toContain('left-hand limit');
+    expect(leftSideBehavior?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{-}} f(x)=-\\infty',
+    });
 
     const sameSignDivergence = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x^2}',
@@ -110,8 +128,18 @@ describe('calculus limits', () => {
     expect(sameSignDivergence.error).toBeUndefined();
     expect(sameSignDivergence.exactLatex).toBe('\\infty');
     expect(sameSignDivergence.detailSections?.map((section) => section.title)).toContain('Side Behavior');
-    expect(sameSignDivergence.detailSections?.flatMap((section) => section.lines).join(' '))
+    const sameSignBehavior = sameSignDivergence.detailSections
+      ?.find((section) => section.title === 'Side Behavior');
+    expect(sameSignBehavior?.lines.join(' '))
       .toContain('two-sided limit is \\infty');
+    expect(sameSignBehavior?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{-}} f(x)=\\infty',
+    });
+    expect(sameSignBehavior?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{+}} f(x)=\\infty',
+    });
 
     const domainGap = evaluateCalculusFiniteLimit({
       bodyLatex: '\\sqrt{x}',
