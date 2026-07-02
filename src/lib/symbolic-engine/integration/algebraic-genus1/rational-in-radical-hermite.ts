@@ -1,13 +1,8 @@
 import type { AntiderivativeBackcheck } from '../../../calculus/engine/verification';
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
 import {
-  buildExactScalarNode,
   exactScalarIsZero,
-  getExactPolynomialCoefficient,
-  normalizeExactScalar,
-  parseExactPolynomial,
   readExactScalarNode,
-  type ExactScalar,
 } from '../../../algebra/polynomial-core';
 import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
 import {
@@ -39,13 +34,9 @@ type SignedNode = {
 };
 
 type EvenQuadratic = {
-  constant: ExactScalar;
-  square: ExactScalar;
+  constant?: unknown;
+  square: unknown;
 };
-
-function exactNode(value: ExactScalar) {
-  return buildExactScalarNode(normalizeExactScalar(value));
-}
 
 function proof(): AntiderivativeBackcheck {
   return {
@@ -92,6 +83,26 @@ function isVariableSquared(node: unknown, variable: string) {
     && node[2] === 2;
 }
 
+function variablePowerDegree(node: unknown, variable: string) {
+  if (node === variable) {
+    return 1;
+  }
+
+  if (
+    isNodeArray(node)
+    && node[0] === 'Power'
+    && node.length === 3
+    && node[1] === variable
+  ) {
+    const scalar = readExactScalarNode(node[2]);
+    return scalar && scalar.denominator === 1 && scalar.numerator >= 0
+      ? scalar.numerator
+      : undefined;
+  }
+
+  return undefined;
+}
+
 function scaledVariableSquareCoefficient(node: unknown, variable: string) {
   if (isVariableSquared(node, variable)) {
     return 1;
@@ -120,6 +131,160 @@ function scaledVariableSquareCoefficient(node: unknown, variable: string) {
   return coefficientFactors.length === 0
     ? 1
     : multiplyMathJsonNodes(...coefficientFactors);
+}
+
+const DISALLOWED_COEFFICIENT_HEADS = new Set([
+  'Abs',
+  'Arccos',
+  'Arcsin',
+  'Arctan',
+  'Cos',
+  'Cosh',
+  'Csc',
+  'Cot',
+  'Exp',
+  'Ln',
+  'Log',
+  'Sec',
+  'Sin',
+  'Sinh',
+  'Sqrt',
+  'Tan',
+  'Tanh',
+]);
+
+function isTargetFreeCoefficientNode(node: unknown, variable: string): boolean {
+  if (dependsOnVariable(node, variable)) {
+    return false;
+  }
+
+  if (readExactScalarNode(node)) {
+    return true;
+  }
+
+  if (typeof node === 'number') {
+    return Number.isInteger(node);
+  }
+
+  if (typeof node === 'string') {
+    return true;
+  }
+
+  if (!isNodeArray(node) || node.length === 0 || typeof node[0] !== 'string') {
+    return false;
+  }
+
+  const [head, ...children] = node;
+  if (DISALLOWED_COEFFICIENT_HEADS.has(head)) {
+    return false;
+  }
+
+  if (head === 'Power') {
+    if (children.length !== 2) {
+      return false;
+    }
+    const exponent = readExactScalarNode(children[1]);
+    return Boolean(
+      exponent
+      && exponent.denominator === 1
+      && exponent.numerator >= 0
+      && isTargetFreeCoefficientNode(children[0], variable),
+    );
+  }
+
+  if (head === 'Divide' && children.length === 2 && isExactZero(children[1])) {
+    return false;
+  }
+
+  if (
+    head === 'Add'
+    || head === 'Subtract'
+    || head === 'Multiply'
+    || head === 'Negate'
+    || head === 'Divide'
+    || head === 'Rational'
+  ) {
+    return children.every((child) => isTargetFreeCoefficientNode(child, variable));
+  }
+
+  return false;
+}
+
+function collectCoefficientDenominatorFacts(
+  node: unknown | undefined,
+  variable: string,
+): ExactSupplementEntry[] {
+  if (node === undefined || !isNodeArray(node)) {
+    return [];
+  }
+
+  const [head, ...children] = node;
+  const childFacts = children.flatMap((child) => collectCoefficientDenominatorFacts(child, variable));
+  if (
+    head !== 'Divide'
+    || children.length !== 2
+    || !isTargetFreeCoefficientNode(children[1], variable)
+    || readExactScalarNode(children[1])
+  ) {
+    return childFacts;
+  }
+
+  return [
+    ...childFacts,
+    {
+      kind: 'exclusion',
+      expressionLatex: boxLatex(children[1]),
+      relation: '\\ne0',
+      source: 'denominator',
+    },
+  ];
+}
+
+function coefficientProduct(factors: unknown[], variable: string) {
+  if (factors.some((factor) => !isTargetFreeCoefficientNode(factor, variable))) {
+    return undefined;
+  }
+  return factors.length === 0
+    ? 1
+    : simplifyMathJsonNodeOrOriginal(multiplyMathJsonNodes(...factors));
+}
+
+function termDegreeAndCoefficient(node: unknown, variable: string) {
+  const directDegree = variablePowerDegree(node, variable);
+  if (directDegree !== undefined) {
+    return { degree: directDegree, coefficient: 1 };
+  }
+
+  if (!dependsOnVariable(node, variable)) {
+    return isTargetFreeCoefficientNode(node, variable)
+      ? { degree: 0, coefficient: node }
+      : undefined;
+  }
+
+  const factors = isNodeArray(node) && node[0] === 'Multiply'
+    ? flattenMultiply(node)
+    : [node];
+  const coefficientFactors: unknown[] = [];
+  let degree = 0;
+
+  for (const factor of factors) {
+    const factorDegree = variablePowerDegree(factor, variable);
+    if (factorDegree !== undefined) {
+      degree += factorDegree;
+      continue;
+    }
+    if (dependsOnVariable(factor, variable)) {
+      return undefined;
+    }
+    coefficientFactors.push(factor);
+  }
+
+  if (degree > 2) {
+    return undefined;
+  }
+
+  const coefficient = coefficientProduct(coefficientFactors, variable);
+  return coefficient === undefined ? undefined : { degree, coefficient };
 }
 
 function unitMinusScaledSquareParameter(node: unknown, variable: string) {
@@ -176,25 +341,30 @@ function unitMinusPairFromProduct(node: unknown, variable: string) {
 }
 
 function parseEvenQuadraticNumerator(node: unknown, variable: string): EvenQuadratic | undefined {
-  const polynomial = parseExactPolynomial(node, variable, 2);
-  if (!polynomial) {
+  let constant: unknown | undefined;
+  let square: unknown | undefined;
+
+  for (const term of signedAddTerms(node)) {
+    const parsed = termDegreeAndCoefficient(term.node, variable);
+    if (!parsed || parsed.degree === 1 || parsed.degree > 2) {
+      return undefined;
+    }
+
+    const coefficient = term.sign === 1
+      ? parsed.coefficient
+      : negateMathJsonNode(parsed.coefficient);
+    if (parsed.degree === 0) {
+      constant = addOptionalTerms([constant, coefficient]);
+      continue;
+    }
+    square = addOptionalTerms([square, coefficient]);
+  }
+
+  if (square === undefined || isKnownZeroCoefficient(square)) {
     return undefined;
   }
 
-  const linear = getExactPolynomialCoefficient(polynomial, 1);
-  if (!exactScalarIsZero(linear)) {
-    return undefined;
-  }
-
-  return {
-    constant: getExactPolynomialCoefficient(polynomial, 0),
-    square: getExactPolynomialCoefficient(polynomial, 2),
-  };
-}
-
-function scalarCoefficientNode(value: ExactScalar) {
-  const normalized = normalizeExactScalar(value);
-  return exactScalarIsZero(normalized) ? undefined : exactNode(normalized);
+  return { constant, square };
 }
 
 function nonzeroParameterFact(parameter: unknown): ExactSupplementEntry | undefined {
@@ -213,15 +383,22 @@ function nonzeroParameterFact(parameter: unknown): ExactSupplementEntry | undefi
   };
 }
 
-function scalarOverParameter(value: ExactScalar, parameter: unknown) {
-  const normalized = normalizeExactScalar(value);
-  if (exactScalarIsZero(normalized)) {
+function isKnownZeroCoefficient(coefficient: unknown | undefined) {
+  if (coefficient === undefined) {
+    return true;
+  }
+  const scalar = readExactScalarNode(coefficient);
+  return Boolean(scalar && exactScalarIsZero(scalar));
+}
+
+function coefficientOverParameter(coefficient: unknown, parameter: unknown) {
+  if (isKnownZeroCoefficient(coefficient)) {
     return undefined;
   }
   if (isExactZero(parameter)) {
     return undefined;
   }
-  return simplifyMathJsonNodeOrOriginal(divideMathJsonNodes(exactNode(normalized), parameter));
+  return simplifyMathJsonNodeOrOriginal(divideMathJsonNodes(coefficient, parameter));
 }
 
 function addOptionalTerms(terms: Array<unknown | undefined>) {
@@ -306,17 +483,17 @@ function tryFirstKindEvenNumerator(
 
   const pair = unitMinusPairFromProduct(product, variable);
   const numerator = parseEvenQuadraticNumerator(fraction.numerator, variable);
-  if (!pair || !numerator || exactScalarIsZero(numerator.square)) {
+  if (!pair || !numerator) {
     return undefined;
   }
 
-  const squareOverParameter = scalarOverParameter(numerator.square, pair.parameter);
+  const squareOverParameter = coefficientOverParameter(numerator.square, pair.parameter);
   if (!squareOverParameter) {
     return undefined;
   }
 
   const fCoefficient = addOptionalTerms([
-    scalarCoefficientNode(numerator.constant),
+    numerator.constant,
     squareOverParameter,
   ]);
   const eCoefficient = negateMathJsonNode(squareOverParameter);
@@ -333,6 +510,8 @@ function tryFirstKindEvenNumerator(
     antiderivativeNode,
     facts: [
       ...firstKindFacts(product, variable),
+      ...collectCoefficientDenominatorFacts(numerator.constant, variable),
+      ...collectCoefficientDenominatorFacts(numerator.square, variable),
       ...(parameterFact ? [parameterFact] : []),
     ],
     basisKinds: ['first-kind', 'second-kind'],
@@ -387,17 +566,17 @@ function tryThirdKindEvenNumerator(
   }
 
   const numerator = parseEvenQuadraticNumerator(parts.numerator, variable);
-  if (!numerator || exactScalarIsZero(numerator.square)) {
+  if (!numerator) {
     return undefined;
   }
 
-  const squareOverCharacteristic = scalarOverParameter(numerator.square, parts.characteristic);
+  const squareOverCharacteristic = coefficientOverParameter(numerator.square, parts.characteristic);
   if (!squareOverCharacteristic) {
     return undefined;
   }
 
   const piCoefficient = addOptionalTerms([
-    scalarCoefficientNode(numerator.constant),
+    numerator.constant,
     squareOverCharacteristic,
   ]);
   const fCoefficient = negateMathJsonNode(squareOverCharacteristic);
@@ -417,6 +596,8 @@ function tryThirdKindEvenNumerator(
     antiderivativeNode,
     facts: [
       ...thirdKindFacts(parts.product, parts.characteristicFactor, variable),
+      ...collectCoefficientDenominatorFacts(numerator.constant, variable),
+      ...collectCoefficientDenominatorFacts(numerator.square, variable),
       ...(characteristicFact ? [characteristicFact] : []),
     ],
     basisKinds: ['third-kind', 'first-kind'],

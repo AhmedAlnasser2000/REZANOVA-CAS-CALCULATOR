@@ -41,11 +41,37 @@ describe('algebraic genus-1 rational-in-radical Hermite reduction', () => {
     expect(result.exactSupplementLatex?.join('\n')).toContain('1-nx^2');
   });
 
+  it('admits target-free symbolic even numerators over the first-kind radical', () => {
+    const result = success('\\frac{A*x^2+B}{\\sqrt{(1-x^2)(1-m*x^2)}}');
+
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.exactLatex).toContain('EllipticF');
+    expect(result.exactLatex).toContain('EllipticE');
+    expect(result.exactLatex).toContain('A');
+    expect(result.exactLatex).toContain('B');
+    expect(result.exactSupplementLatex?.join('\n')).toContain('m\\ne0');
+  });
+
+  it('admits target-free symbolic even numerators over the third-kind radical', () => {
+    const result = success('\\frac{A*x^2+B}{(1-n*x^2)\\sqrt{(1-x^2)(1-m*x^2)}}');
+
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.exactLatex).toContain('EllipticPi');
+    expect(result.exactLatex).toContain('EllipticF');
+    expect(result.exactLatex).toContain('A');
+    expect(result.exactLatex).toContain('B');
+    expect(result.exactSupplementLatex?.join('\n')).toContain('n\\ne0');
+  });
+
   it('leaves odd numerator and generic cubic radical cases outside this Hermite slice', () => {
     const odd = resolveSymbolicIntegralFromLatex('\\frac{x}{\\sqrt{(1-x^2)(1-m*x^2)}}');
+    const symbolicOdd = resolveSymbolicIntegralFromLatex('\\frac{A*x+B}{\\sqrt{(1-x^2)(1-m*x^2)}}');
     const cubic = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');
 
     expect(odd.kind).toBe('error');
+    expect(symbolicOdd.kind).toBe('error');
     expect(cubic.kind).toBe('error');
   });
 });
