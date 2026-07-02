@@ -15,6 +15,7 @@ export type LocalEquivalent = {
   coefficient: number;
   order: number;
   reason: string;
+  notes?: string[];
 };
 
 export type BoxedLike = {

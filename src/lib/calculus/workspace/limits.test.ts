@@ -249,4 +249,21 @@ describe('calculus limits', () => {
     expect(Number(power.approxText)).toBeCloseTo(Math.E, 6);
     expect(power.detailSections?.[0]?.lines.join(' ')).toContain('1^infinity');
   });
+
+  it('resolves capped Taylor leading-term natural limit expressions', () => {
+    const tangent = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 (tan(x)-x)/x^3',
+    });
+    const exponential = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 (e^x-1-x-x^2/2)/x^3',
+    });
+
+    expect(tangent.error).toBeUndefined();
+    expect(tangent.exactLatex).toBe('\\frac{1}{3}');
+    expect(tangent.detailSections?.[0]?.lines.join(' ')).toContain('Taylor leading term');
+
+    expect(exponential.error).toBeUndefined();
+    expect(exponential.exactLatex).toBe('\\frac{1}{6}');
+    expect(exponential.detailSections?.[0]?.lines.join(' ')).toContain('first nonzero derivative order 3');
+  });
 });

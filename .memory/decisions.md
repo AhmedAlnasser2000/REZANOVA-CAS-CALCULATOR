@@ -1715,3 +1715,7 @@
 ## 2026-07-02 - MATRIX-EIGEN-2X2-EQUATION-BOUNDARY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns 2x2 characteristic-polynomial construction and rational-eigenvalue eigenspace presentation for `eigen(A/B)`, while Equation owns the typed exact quadratic polynomial root boundary. Matrix may consume only the boundary's rational real eigenvalues; irrational or complex roots return controlled Matrix guidance with an explicit `Open in Equation` action instead of importing Equation solver internals or auto-routing workspaces.
+
+## 2026-07-02 - CALCULUS-LIMITS-TAYLOR-LEADING-TERMS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may use a capped Taylor leading-term probe through derivative order `10` for local additive cancellations, exposed through existing method detail cards. This is not Gruntz, symbolic targets, or a general public series engine.

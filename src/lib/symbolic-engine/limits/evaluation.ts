@@ -23,6 +23,15 @@ export function evaluateNodeAt(node: unknown, value: number, variable = 'x') {
     if (typeof evaluated.json === 'number' && Number.isFinite(evaluated.json)) {
       return evaluated.json;
     }
+    if (
+      Array.isArray(evaluated.json)
+      && evaluated.json[0] === 'Rational'
+      && typeof evaluated.json[1] === 'number'
+      && typeof evaluated.json[2] === 'number'
+      && evaluated.json[2] !== 0
+    ) {
+      return evaluated.json[1] / evaluated.json[2];
+    }
     return latexToNumber((evaluated.N?.() ?? evaluated).latex);
   } catch {
     return undefined;

@@ -195,6 +195,29 @@ describe('symbolic-engine limits', () => {
     }
   })
 
+  it('uses capped Taylor leading terms for additive cancellations', () => {
+    const tangent = resolveFiniteLimitRule(ce.parse('\\frac{\\tan(x)-x}{x^3}').json, 0, 'x')
+    const exponential = resolveFiniteLimitRule(
+      ce.parse('\\frac{e^x-1-x-x^2/2}{x^3}').json,
+      0,
+      'x',
+    )
+
+    expect(tangent.kind).toBe('success')
+    if (tangent.kind === 'success') {
+      expect(tangent.value).toBeCloseTo(1 / 3, 8)
+      expect(tangent.exactLatex).toBe('\\frac{1}{3}')
+      expect(tangent.detailSections?.[0]?.lines.join(' ')).toContain('Taylor leading term')
+    }
+
+    expect(exponential.kind).toBe('success')
+    if (exponential.kind === 'success') {
+      expect(exponential.value).toBeCloseTo(1 / 6, 8)
+      expect(exponential.exactLatex).toBe('\\frac{1}{6}')
+      expect(exponential.detailSections?.[0]?.lines.join(' ')).toContain('first nonzero derivative order 3')
+    }
+  })
+
   it('resolves supported one-sided log boundary behavior', () => {
     const right = resolveFiniteLimitRule(ce.parse('\\ln(x)').json, 0, 'x', 'right')
     const left = resolveFiniteLimitRule(ce.parse('\\ln(x)').json, 0, 'x', 'left')

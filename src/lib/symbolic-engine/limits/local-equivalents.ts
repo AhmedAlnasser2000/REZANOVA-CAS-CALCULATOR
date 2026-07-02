@@ -17,7 +17,11 @@ import {
 } from './known-rules';
 import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue, LocalEquivalent } from './types';
 
-const LOCAL_EQUIVALENT_MAX_DERIVATIVE_ORDER = 4;
+const LOCAL_EQUIVALENT_MAX_DERIVATIVE_ORDER = 10;
+
+function combineEquivalentNotes(...equivalents: (LocalEquivalent | undefined)[]) {
+  return equivalents.flatMap((equivalent) => equivalent?.notes ?? []);
+}
 
 function matchOneMinusExp(node: unknown) {
   if (!isNodeArray(node) || node[0] !== 'Add') {
@@ -54,6 +58,16 @@ function isLocalEquivalentEligible(node: unknown, variable: string): boolean {
 
   if (!isNodeArray(node) || node.length === 0 || typeof node[0] !== 'string') {
     return false;
+  }
+
+  if (
+    node[0] === 'Rational'
+    && node.length === 3
+    && typeof node[1] === 'number'
+    && typeof node[2] === 'number'
+    && node[2] !== 0
+  ) {
+    return true;
   }
 
   if (![
@@ -100,10 +114,14 @@ function boundedDerivativeEquivalent(
     }
 
     if (!isZeroish(derivativeValue)) {
+      const coefficient = derivativeValue / factorial(order);
       return {
-        coefficient: derivativeValue / factorial(order),
+        coefficient,
         order,
-        reason: `Taylor-order check found first nonzero derivative of order ${order}`,
+        reason: `Taylor leading-term check found first nonzero derivative of order ${order}`,
+        notes: [
+          `Taylor leading term: first nonzero derivative order ${order}, coefficient ${coefficient}.`,
+        ],
       };
     }
   }
@@ -228,6 +246,7 @@ function localEquivalent(
           coefficient: -child.coefficient,
           order: child.order,
           reason: child.reason,
+          notes: child.notes,
         }
       : undefined;
   }
@@ -240,6 +259,7 @@ function localEquivalent(
         coefficient: equivalents.reduce((product, factor) => product * factor.coefficient, 1),
         order: equivalents.reduce((sum, factor) => sum + factor.order, 0),
         reason: 'combined local equivalent factors in a product',
+        notes: combineEquivalentNotes(...equivalents),
       };
     }
   }
@@ -252,6 +272,7 @@ function localEquivalent(
         coefficient: numerator.coefficient / denominator.coefficient,
         order: numerator.order - denominator.order,
         reason: 'combined local equivalent orders in a quotient',
+        notes: combineEquivalentNotes(numerator, denominator),
       };
     }
   }
@@ -263,11 +284,19 @@ function localEquivalent(
         coefficient: base.coefficient ** node[2],
         order: base.order * node[2],
         reason: 'raised a local equivalent factor to an integer power',
+        notes: base.notes,
       };
     }
   }
 
   if (node[0] === 'Add') {
+    if (isZeroish(direct)) {
+      const taylor = boundedDerivativeEquivalent(node, target, variable);
+      if (taylor) {
+        return taylor;
+      }
+    }
+
     const terms = node.slice(1).map((child) => localEquivalent(child, target, variable));
     if (terms.every(Boolean)) {
       const equivalents = terms as LocalEquivalent[];
@@ -283,6 +312,7 @@ function localEquivalent(
             coefficient,
             order,
             reason: 'combined same-order local equivalent terms in a sum',
+            notes: combineEquivalentNotes(...equivalents),
           };
         }
       }
@@ -332,6 +362,7 @@ export function resolveLocalEquivalentLimit(
 
   const baseLines = [
     intro,
+    ...(equivalent.notes ?? []),
     `Equivalent used: coefficient ${equivalent.coefficient} with net order ${equivalent.order}.`,
     `Order comparison: net order ${equivalent.order}.`,
     `Reason: ${equivalent.reason}.`,
