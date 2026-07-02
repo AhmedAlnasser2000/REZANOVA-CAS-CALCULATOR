@@ -35,6 +35,7 @@ const routeLabels: Record<LimitRouteKind, string> = {
   'taylor-series-candidate': 'Taylor leading terms',
   'squeeze-oscillation': 'squeeze or oscillation',
   piecewise: 'piecewise branch analysis',
+  'abs-side-behavior': 'absolute-value side behavior',
   unsupported: 'unsupported route',
   malformed: 'malformed expression',
   'too-complex': 'over-budget expression',

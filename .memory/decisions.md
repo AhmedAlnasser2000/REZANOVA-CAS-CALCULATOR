@@ -24,6 +24,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a narrow Piecewise branch-selection layer for simple comparison conditions in friendly `piecewise(...)` and LaTeX `cases` input. Branches feed existing finite/infinity limit engines; Equation inequality solving, broad Boolean condition proving, and Piecewise theorem proving remain out of scope.
 
+## 2026-07-03 - CALCULUS-LIMITS-ABS-SIDE-BEHAVIOR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a narrow absolute-value side-behavior route for affine absolute-value carriers at their zero. It may prove one-sided signs and two-sided disagreement through detail cards; broad Piecewise/inequality solving and non-affine absolute-value theorem proving remain out of scope.
+
 ## 2026-07-02 - EQUATION-SOLVER-CARD-CREDIBILITY-CONSISTENCY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation Real mode must not display complex-only roots; it should stop with no-real-root guidance and point to Complex On. Numeric/detail card taxonomy must keep hard domain facts, periodic structure, probe evidence, search diagnostics, breakpoints, extraneous candidates, and confidence wording in their own categories, with target-dependent branch guards scoped to branch/candidate details when safe.

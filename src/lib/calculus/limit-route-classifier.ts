@@ -10,6 +10,7 @@ import { resolveInfiniteLimitHeuristic } from './engine/limit-heuristics';
 import {
   classifyFiniteRewriteCancellationCandidate,
   classifyInfiniteRewriteCancellationCandidate,
+  hasFiniteAbsSideBehaviorCandidate,
   hasFiniteRecursiveLeadingTermCandidate,
   hasFiniteSqueezeOscillationCandidate,
   hasInfiniteScaleCandidate,
@@ -32,6 +33,7 @@ export type LimitRouteKind =
   | 'taylor-series-candidate'
   | 'squeeze-oscillation'
   | 'piecewise'
+  | 'abs-side-behavior'
   | 'unsupported'
   | 'malformed'
   | 'too-complex';
@@ -201,6 +203,14 @@ function classifyFiniteNode(node: unknown, request: NaturalLimitRequest): LimitR
     return {
       kind: 'direct-substitution',
       reason: 'Direct substitution produced a finite target value.',
+      request,
+    };
+  }
+
+  if (hasFiniteAbsSideBehaviorCandidate(node, request.target.value, request.variable)) {
+    return {
+      kind: 'abs-side-behavior',
+      reason: 'An absolute-value carrier changes sign at the target, so one-sided behavior must be compared.',
       request,
     };
   }

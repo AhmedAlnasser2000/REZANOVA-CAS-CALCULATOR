@@ -77,6 +77,15 @@ describe('natural limit route classifier', () => {
     });
   });
 
+  it('classifies absolute-value side behavior before generic quotient routes', () => {
+    expect(classifyNaturalLimitRoute('lim x -> 0 |x|/x')).toMatchObject({
+      kind: 'abs-side-behavior',
+    });
+    expect(classifyNaturalLimitRoute('lim x -> 2 |x-2|/(x-2)')).toMatchObject({
+      kind: 'abs-side-behavior',
+    });
+  });
+
   it('returns controlled unsupported and malformed routes', () => {
     expect(classifyNaturalLimitRoute('lim x -> 0 floor(1/x)')).toMatchObject({
       kind: 'unsupported',

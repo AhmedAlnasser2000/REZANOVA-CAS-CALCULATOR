@@ -6,6 +6,7 @@ import {
 import {
   attemptInfiniteLHospital,
   resolveFiniteComplexDomainLimit,
+  resolveFiniteAbsSideBehaviorLimit,
   resolveFiniteLimitRule,
   resolveFiniteSqueezeOscillationLimit,
   resolveInfiniteRewriteCancellationLimit,
@@ -480,6 +481,29 @@ export function evaluateFiniteLimitFromAst(input: {
         };
       }
     }
+  }
+
+  const absSideBehavior = resolveFiniteAbsSideBehaviorLimit(
+    input.body,
+    input.target,
+    input.variable,
+    input.direction,
+  );
+  if (absSideBehavior?.kind === 'success') {
+    return {
+      exactLatex: absSideBehavior.exactLatex,
+      approxText: absSideBehavior.approxText,
+      warnings: [],
+      resultOrigin: absSideBehavior.origin,
+      detailSections: absSideBehavior.detailSections,
+    };
+  }
+  if (absSideBehavior?.kind === 'failure') {
+    return {
+      warnings: [],
+      error: absSideBehavior.error,
+      detailSections: absSideBehavior.detailSections,
+    };
   }
 
   const squeezeOscillation = resolveFiniteSqueezeOscillationLimit(

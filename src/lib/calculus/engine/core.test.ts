@@ -464,7 +464,12 @@ describe('calculus core', () => {
       messages: finiteMessages,
     });
 
-    expect(mismatch.error).toBe('Left and right behavior do not agree near the target.');
+    expect(mismatch.error).toBe('Left and right absolute-value behavior do not agree near the target.');
+    expect(mismatch.detailSections?.[0]?.title).toBe('Why This Limit Fails');
+    expect(mismatch.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{-}}\\frac{\\vert x\\vert}{x}=-1',
+    });
 
     const left = evaluateFiniteLimitFromAst({
       body: parse('\\frac{|x|}{x}').json,
@@ -482,7 +487,10 @@ describe('calculus core', () => {
     });
 
     expect(left.exactLatex).toBe('-1');
+    expect(left.resultOrigin).toBe('rule-based-symbolic');
+    expect(left.detailSections?.[0]?.title).toBe('Side Behavior');
     expect(right.exactLatex).toBe('1');
+    expect(right.resultOrigin).toBe('rule-based-symbolic');
   });
 
   it('carries local limit method details for rational and equivalent-form wins', () => {

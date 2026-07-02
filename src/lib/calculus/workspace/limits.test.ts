@@ -47,9 +47,13 @@ describe('calculus limits', () => {
       target: '0',
       direction: 'two-sided',
     });
-    expect(mismatch.error).toBe('Left and right behavior do not agree near the target.');
+    expect(mismatch.error).toBe('Left and right absolute-value behavior do not agree near the target.');
     expect(mismatch.detailSections?.[0]?.title).toBe('Why This Limit Fails');
-    expect(mismatch.detailSections?.[0]?.lines.join(' ')).toContain('two one-sided limits');
+    expect(mismatch.detailSections?.[0]?.lines.join(' ')).toContain('absolute-value quotient');
+    expect(mismatch.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{-}}\\frac{\\vert x\\vert}{x}=-1',
+    });
 
     const poleMismatch = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x}',
@@ -140,6 +144,15 @@ describe('calculus limits', () => {
       kind: 'math',
       latex: '\\lim_{x\\to 0^{+}} f(x)=\\infty',
     });
+
+    const shiftedAbs = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 2+ |x-2|/(x-2)',
+    });
+    expect(shiftedAbs.error).toBeUndefined();
+    expect(shiftedAbs.exactLatex).toBe('1');
+    expect(shiftedAbs.resultOrigin).toBe('rule-based-symbolic');
+    expect(shiftedAbs.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('absolute-value side behavior');
 
     const domainGap = evaluateCalculusFiniteLimit({
       bodyLatex: '\\sqrt{x}',

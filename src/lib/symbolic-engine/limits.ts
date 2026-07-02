@@ -63,3 +63,8 @@ export {
   type PiecewiseLimitParseResult,
   type PiecewiseLimitResolution,
 } from './limits/piecewise-limits';
+export {
+  hasFiniteAbsSideBehaviorCandidate,
+  resolveFiniteAbsSideBehaviorLimit,
+  type FiniteAbsSideBehaviorResult,
+} from './limits/abs-side-behavior';
