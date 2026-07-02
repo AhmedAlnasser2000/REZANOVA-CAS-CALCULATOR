@@ -21,6 +21,8 @@ The current boundary example `sqrt(x^3+x+1)` is a correct genus-1 candidate. Its
 
 Inserted prerequisite note: after `ALGEBRAIC-GENUS1-GENERIC-FIRST-KIND-LIVE1`, `ALGEBRAIC-GENUS1-LEGENDRE-CHANGE-OF-VARIABLE-PROOF1` was added before further generic second-kind/rational-in-radical widening. The reason is architectural: root-based Legendre formulas now need explicit substitution and kernel-pullback proof evidence, not only named-root readback and live first-kind formulas.
 
+Inserted prerequisite note: after the change-of-variable proof, `ALGEBRAIC-GENUS1-ROOT-BASIS-COEFFICIENT-OBLIGATIONS1` was added before generic second-kind/third-kind live work. The reason is architectural: later `EllipticE` and `EllipticPi` adoption must know the named-root coefficient field and basis templates it is solving in, rather than treating `EllipticE/Pi` as display strings.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

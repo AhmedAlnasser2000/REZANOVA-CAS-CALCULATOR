@@ -54,6 +54,8 @@ describe('algebraic genus-1 exact-rational root Legendre data', () => {
     expect(result.firstKindPrototypeLatex).toContain('EllipticF');
     expect(result.secondKindBasisLatex).toContain('EllipticE');
     expect(result.thirdKindCharacteristicTemplateLatex).toContain('n(p)');
+    expect(result.rootBasisCoefficientProof.proofStatus).toBe('root-basis-coefficients-ready');
+    expect(result.rootBasisCoefficientProof.obligations).toHaveLength(3);
     expect(text(result)).not.toMatch(/RootOf|rootof/i);
 
     const integration = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');

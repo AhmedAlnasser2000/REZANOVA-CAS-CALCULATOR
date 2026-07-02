@@ -15,6 +15,10 @@ import {
   buildAlgebraicGenus1LegendreChangeOfVariableProofFromData,
   type AlgebraicGenus1LegendreChangeOfVariableProof,
 } from './legendre-change-of-variable-proof';
+import {
+  buildAlgebraicGenus1RootBasisCoefficientProofFromData,
+  type AlgebraicGenus1RootBasisCoefficientProof,
+} from './root-basis-coefficient-obligations';
 import { profileAlgebraicGenus1CurveCandidate } from './curve-profile';
 import {
   buildAlgebraicGenus1NamedRootReadback,
@@ -40,6 +44,7 @@ export type AlgebraicGenus1RootLegendreData = {
   secondKindBasisLatex: string;
   thirdKindCharacteristicTemplateLatex: string;
   changeOfVariableProof: AlgebraicGenus1LegendreChangeOfVariableProof;
+  rootBasisCoefficientProof: AlgebraicGenus1RootBasisCoefficientProof;
   branchFactsLatex: string[];
   realDomainLatex: string[];
   detailSections: DisplayDetailSection[];
@@ -200,6 +205,8 @@ function buildResult(input: {
     readinessNotes: [] as string[],
   };
   const changeOfVariableProof = buildAlgebraicGenus1LegendreChangeOfVariableProofFromData(baseResult);
+  const rootBasisCoefficientProof =
+    buildAlgebraicGenus1RootBasisCoefficientProofFromData(baseResult);
 
   const detailSections: DisplayDetailSection[] = [
     mixedDetailSection(
@@ -227,11 +234,13 @@ function buildResult(input: {
   return {
     ...baseResult,
     changeOfVariableProof,
+    rootBasisCoefficientProof,
     detailSections,
     readinessNotes: [
       'Exact-rational named-root Legendre data is behavior-invisible evidence for generic genus-1 adoption.',
       'The displayed branch chooses one real Legendre chart; later live routes must add chart selection or casewise branches before adoption.',
       ...changeOfVariableProof.readinessNotes,
+      ...rootBasisCoefficientProof.readinessNotes,
     ],
   };
 }

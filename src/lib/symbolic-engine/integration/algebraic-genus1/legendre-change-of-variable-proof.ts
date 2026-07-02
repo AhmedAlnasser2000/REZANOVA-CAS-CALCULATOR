@@ -36,7 +36,10 @@ export type AlgebraicGenus1LegendreChangeOfVariableProofResult =
     };
 
 type RootLegendreProofInput =
-  Omit<AlgebraicGenus1RootLegendreData, 'changeOfVariableProof'> & {
+  Omit<
+    AlgebraicGenus1RootLegendreData,
+    'changeOfVariableProof' | 'rootBasisCoefficientProof'
+  > & {
     changeOfVariableProof?: AlgebraicGenus1LegendreChangeOfVariableProof;
   };
 
