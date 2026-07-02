@@ -1,5 +1,11 @@
 import type { LimitDirection, DisplayDetailSection } from '../../../types/calculator';
-import { evaluateNodeAt, success } from './evaluation';
+import {
+  limitDetailSection,
+  limitMathPart,
+  limitMethodSection,
+  limitTextPart,
+} from './detail-readback';
+import { box, evaluateNodeAt, success } from './evaluation';
 import type { FiniteLimitRuleSuccess } from './types';
 
 type SqueezeOscillationFailure = {
@@ -48,6 +54,14 @@ function multiplyNode(nodes: unknown[]) {
   return ['Multiply', ...nodes];
 }
 
+function nodeLatex(node: unknown) {
+  try {
+    return box(node).latex;
+  } catch {
+    return undefined;
+  }
+}
+
 function resolveSqueezeProduct(node: unknown, variable: string) {
   if (!isNodeArray(node) || node[0] !== 'Multiply') {
     return undefined;
@@ -75,6 +89,8 @@ function resolveSqueezeProduct(node: unknown, variable: string) {
 
   return {
     oscillatorLabels: oscillators.map((entry) => entry.label),
+    productLatex: nodeLatex(node) ?? 'product',
+    vanishingLatex: nodeLatex(vanishingFactor) ?? 'g(x)',
   };
 }
 
@@ -89,17 +105,58 @@ function sidePhrase(direction: LimitDirection) {
 }
 
 function oscillationFailure(label: string, variable: string, direction: LimitDirection): SqueezeOscillationFailure {
+  const sequenceRows = label.startsWith('\\cos')
+    ? [
+        [
+          limitTextPart('Choose '),
+          limitMathPart(`${variable}_n=1/(2\\pi n)`),
+          limitTextPart('; then '),
+          limitMathPart(`${label.replace(`1/${variable}`, `1/${variable}_n`)}=1`),
+          limitTextPart('.'),
+        ],
+        [
+          limitTextPart('Choose '),
+          limitMathPart(`y_n=1/(\\pi+2\\pi n)`),
+          limitTextPart('; then '),
+          limitMathPart(`${label.replace(`1/${variable}`, '1/y_n')}=-1`),
+          limitTextPart('.'),
+        ],
+      ]
+    : [
+        [
+          limitTextPart('Choose '),
+          limitMathPart(`${variable}_n=1/(\\pi/2+2\\pi n)`),
+          limitTextPart('; then '),
+          limitMathPart(`${label.replace(`1/${variable}`, `1/${variable}_n`)}=1`),
+          limitTextPart('.'),
+        ],
+        [
+          limitTextPart('Choose '),
+          limitMathPart(`y_n=1/(3\\pi/2+2\\pi n)`),
+          limitTextPart('; then '),
+          limitMathPart(`${label.replace(`1/${variable}`, '1/y_n')}=-1`),
+          limitTextPart('.'),
+        ],
+      ];
+
   return {
     kind: 'failure',
     error: 'The expression oscillates near the target, so this limit does not exist.',
-    detailSections: [{
-      title: 'Why This Limit Fails',
-      lines: [
-        `The factor ${label} is sampled as ${variable} approaches 0 ${sidePhrase(direction)}.`,
-        `The inner term 1/${variable} grows without settling, so the trigonometric factor keeps taking different values between -1 and 1.`,
-        'Because the expression does not approach one number, the limit does not exist.',
-      ],
-    }],
+    detailSections: [
+      limitDetailSection('Why This Limit Fails', [
+        [
+          limitTextPart('The factor '),
+          limitMathPart(label),
+          limitTextPart(` is sampled as ${variable} approaches 0 ${sidePhrase(direction)}.`),
+        ],
+        ...sequenceRows,
+        [
+          limitTextPart('Both sequences approach '),
+          limitMathPart('0'),
+          limitTextPart(', but the function values approach different numbers. Because the expression does not approach one number, the limit does not exist.'),
+        ],
+      ]),
+    ],
   };
 }
 
@@ -123,11 +180,22 @@ export function resolveFiniteSqueezeOscillationLimit(
     return undefined;
   }
 
-  return success(0, 'rule-based-symbolic', [
-    `Bounded oscillation: ${product.oscillatorLabels.join(' and ')} stays between -1 and 1.`,
-    `The remaining factor tends to 0 as ${variable} approaches 0.`,
-    'By the squeeze theorem, the product tends to 0.',
-  ]);
+  return {
+    ...success(0, 'rule-based-symbolic', [
+      `Squeeze bound: -\\left|${product.vanishingLatex}\\right|\\le ${product.productLatex}\\le \\left|${product.vanishingLatex}\\right|.`,
+      `Bounded oscillation: ${product.oscillatorLabels.join(' and ')} stays between -1 and 1.`,
+      `The remaining factor tends to 0 as ${variable} approaches 0.`,
+      'By the squeeze theorem, the product tends to 0.',
+      'Final limit: 0.',
+    ]),
+    detailSections: limitMethodSection(
+      `Squeeze bound: -\\left|${product.vanishingLatex}\\right|\\le ${product.productLatex}\\le \\left|${product.vanishingLatex}\\right|.`,
+      `Bounded oscillation: ${product.oscillatorLabels.join(' and ')} stays between -1 and 1.`,
+      `The remaining factor tends to 0 as ${variable} approaches 0.`,
+      'By the squeeze theorem, the product tends to 0.',
+      'Final limit: 0.',
+    ),
+  };
 }
 
 export function hasFiniteSqueezeOscillationCandidate(

@@ -11,6 +11,7 @@ import type {
   IntegrationCandidateMetadata,
   IntegralStrategy,
 } from '../../symbolic-engine/integration';
+import { limitMethodSection } from '../../symbolic-engine/limits/detail-readback';
 import type {
   CalculusDerivativeStrategy,
   DisplayDetailSection,
@@ -115,10 +116,7 @@ export function limitValueToApproxText(value: LimitValue) {
 }
 
 export function numericFallbackDetail(...lines: string[]): DisplayDetailSection[] {
-  return [{
-    title: 'Limit Method',
-    lines,
-  }];
+  return limitMethodSection(...lines);
 }
 
 export function integralMethodDetail(...lines: string[]): DisplayDetailSection {

@@ -1,4 +1,5 @@
 import type { DisplayDetailSection } from '../../types/calculator';
+import { limitDetailSectionFromLines } from '../symbolic-engine/limits/detail-readback';
 import type { LimitRouteClassification, LimitRouteKind } from './limit-route-classifier';
 
 export type LimitRoutePlan =
@@ -26,10 +27,7 @@ function routeDiagnostic(classification: LimitRouteClassification): DisplayDetai
     lines.push(`Route profile: ${classification.nodeCount} nodes, depth ${classification.maxDepth}.`);
   }
 
-  return [{
-    title: 'Limit Diagnostic',
-    lines,
-  }];
+  return [limitDetailSectionFromLines('Limit Diagnostic', lines)];
 }
 
 function blockedRoute(

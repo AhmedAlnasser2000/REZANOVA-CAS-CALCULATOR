@@ -1,5 +1,6 @@
 import { MAX_RESULT_MAGNITUDE } from '../../engine/result-guard';
 import type { DisplayDetailSection, LimitTargetKind } from '../../../types/calculator';
+import { limitMethodSection } from '../../symbolic-engine/limits/detail-readback';
 
 const LIMIT_TOLERANCE = 1e-4;
 const INFINITE_SAMPLES = [10, 20, 50, 100, 200, 500, 1000];
@@ -65,13 +66,6 @@ function rationalRatioLatex(numerator: number, denominator: number): string | un
   }
 
   return `\\frac{${reducedNumerator}}{${reducedDenominator}}`;
-}
-
-function limitMethodSection(...lines: string[]): DisplayDetailSection[] {
-  return [{
-    title: 'Limit Method',
-    lines,
-  }];
 }
 
 function rationalDominanceDetail(...lines: string[]) {

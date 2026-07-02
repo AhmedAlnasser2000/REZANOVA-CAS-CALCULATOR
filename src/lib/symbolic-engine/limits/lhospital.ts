@@ -1,6 +1,8 @@
 import { differentiateAst } from '../differentiation';
 import { simplifyNode } from '../differentiation';
 import { isNodeArray } from '../patterns';
+import type { DisplayDetailSection } from '../../../types/calculator';
+import { limitMethodSection } from './detail-readback';
 import {
   box,
   evaluateNodeAt,
@@ -26,19 +28,19 @@ export type LHospitalAttempt =
       kind: 'success';
       value: FiniteLimitRuleValue;
       exactLatex?: string;
-      detailSections: { title: string; lines: string[] }[];
+      detailSections: DisplayDetailSection[];
       iterations: number;
     }
   | {
       kind: 'unsupported';
       reason: string;
-      detailSections: { title: string; lines: string[] }[];
+      detailSections: DisplayDetailSection[];
       iterations: number;
     }
   | {
       kind: 'too-complex';
       reason: string;
-      detailSections: { title: string; lines: string[] }[];
+      detailSections: DisplayDetailSection[];
       iterations: number;
     };
 
@@ -65,18 +67,11 @@ function optionsWithDefaults(options: LHospitalAttemptOptions | undefined) {
   };
 }
 
-function limitMethodDetail(...lines: string[]) {
-  return [{
-    title: 'Limit Method',
-    lines,
-  }];
-}
-
 function unsupported(reason: string, lines: string[], iterations: number): LHospitalAttempt {
   return {
     kind: 'unsupported',
     reason,
-    detailSections: limitMethodDetail(...lines, reason),
+    detailSections: limitMethodSection(...lines, reason),
     iterations,
   };
 }
@@ -85,7 +80,7 @@ function tooComplex(reason: string, lines: string[], iterations: number): LHospi
   return {
     kind: 'too-complex',
     reason,
-    detailSections: limitMethodDetail(...lines, reason),
+    detailSections: limitMethodSection(...lines, reason),
     iterations,
   };
 }
@@ -269,7 +264,7 @@ export function attemptLHospital(
         kind: 'success',
         value: evaluated.value,
         exactLatex: evaluated.exactLatex,
-        detailSections: limitMethodDetail(
+        detailSections: limitMethodSection(
           ...lines,
           `The differentiated quotient evaluates to ${evaluated.exactLatex} at the target.`,
         ),
@@ -327,7 +322,7 @@ export function attemptInfiniteLHospital(
         kind: 'success',
         value: evaluated.value,
         exactLatex: evaluated.exactLatex,
-        detailSections: limitMethodDetail(
+        detailSections: limitMethodSection(
           ...lines,
           `The differentiated quotient stabilizes to ${evaluated.exactLatex ?? evaluated.value} at infinity.`,
         ),

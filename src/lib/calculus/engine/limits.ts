@@ -28,6 +28,13 @@ import {
   numericLimitAtInfinity,
   resolveInfiniteLimitHeuristic,
 } from './limit-heuristics';
+import {
+  limitDetailSection,
+  limitDetailSectionFromLines,
+  limitMathPart,
+  limitTextPart,
+  withLimitDetailLineParts,
+} from '../../symbolic-engine/limits/detail-readback';
 
 const LIMIT_TOLERANCE = 1e-4;
 const LIMIT_STEPS = [1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4];
@@ -222,14 +229,23 @@ function oneSidedEvidenceLatex(result: TwoSidedMismatchEvidence['left']) {
 }
 
 function twoSidedMismatchDetails(evidence: TwoSidedMismatchEvidence): DisplayDetailSection[] {
-  return [{
-    title: 'Why This Limit Fails',
-    lines: [
-      `Left side tends to ${oneSidedEvidenceLatex(evidence.left)}.`,
-      `Right side tends to ${oneSidedEvidenceLatex(evidence.right)}.`,
-      'The two one-sided limits are different, so the two-sided limit does not exist.',
-    ],
-  }];
+  return [
+    limitDetailSection('Why This Limit Fails', [
+      [
+        limitTextPart('Left side tends to '),
+        limitMathPart(oneSidedEvidenceLatex(evidence.left)),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Right side tends to '),
+        limitMathPart(oneSidedEvidenceLatex(evidence.right)),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('The two one-sided limits are different, so the two-sided limit does not exist.'),
+      ],
+    ]),
+  ];
 }
 
 function appendLimitDetails(
@@ -261,20 +277,34 @@ function signedFiniteLimitBehaviorDetails(input: {
     const side = input.direction === 'right' ? 'right-hand' : 'left-hand';
     const comparison = input.direction === 'right' ? 'greater than' : 'less than';
     return [{
-      title: 'Side Behavior',
-      lines: [
-        `This is a ${side} limit: x approaches ${finiteTargetSideLatex(input.target, input.direction)} using values ${comparison} the target.`,
-        `On that side, the expression grows without bound toward ${valueLatex}.`,
-      ],
+      ...limitDetailSection('Side Behavior', [
+        [
+          limitTextPart(`This is a ${side} limit: `),
+          limitMathPart(`x\\to ${finiteTargetSideLatex(input.target, input.direction)}`),
+          limitTextPart(` using values ${comparison} the target.`),
+        ],
+        [
+          limitTextPart('On that side, the expression grows without bound toward '),
+          limitMathPart(valueLatex),
+          limitTextPart('.'),
+        ],
+      ]),
     }];
   }
 
   return [{
-    title: 'Side Behavior',
-    lines: [
-      `Left-hand and right-hand behavior share the same signed divergence ${valueLatex}.`,
-      `Because the two sides agree, the two-sided limit is ${valueLatex}.`,
-    ],
+    ...limitDetailSection('Side Behavior', [
+      [
+        limitTextPart('Left-hand and right-hand behavior share the same signed divergence '),
+        limitMathPart(valueLatex),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Because the two sides agree, the two-sided limit is '),
+        limitMathPart(valueLatex),
+        limitTextPart('.'),
+      ],
+    ]),
   }];
 }
 
@@ -307,7 +337,7 @@ export function evaluateFiniteLimitFromAst(input: {
       return {
         warnings: [],
         error: input.messages.oneSidedDomainError?.(domainProbe.side) ?? input.messages.unstableError,
-        detailSections: domainCheckDetails(undefined, domainProbe.result),
+        detailSections: withLimitDetailLineParts(domainCheckDetails(undefined, domainProbe.result)),
       };
     }
 
@@ -317,7 +347,7 @@ export function evaluateFiniteLimitFromAst(input: {
         return {
           warnings: [],
           error: input.messages.oneSidedDomainError?.('left') ?? input.messages.unstableError,
-          detailSections: domainCheckDetails(undefined, left),
+          detailSections: withLimitDetailLineParts(domainCheckDetails(undefined, left)),
         };
       }
       const right = checkOneSidedRealDomain({ node: input.body, variable: input.variable, target: input.target, direction: 'right' });
@@ -325,7 +355,7 @@ export function evaluateFiniteLimitFromAst(input: {
         return {
           warnings: [],
           error: input.messages.oneSidedDomainError?.('right') ?? input.messages.unstableError,
-          detailSections: domainCheckDetails(undefined, right),
+          detailSections: withLimitDetailLineParts(domainCheckDetails(undefined, right)),
         };
       }
     }
@@ -382,13 +412,13 @@ export function evaluateFiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: `The ${input.routeKind ?? 'selected'} limit route did not resolve this expression within the current symbolic rules.`,
-      detailSections: [{
-        title: 'Limit Diagnostic',
-        lines: [
+      detailSections: [limitDetailSectionFromLines(
+        'Limit Diagnostic',
+        [
           `Route classification: ${input.routeKind ?? 'unknown'}.`,
           'Numeric fallback was skipped because this route needs an exact symbolic decision.',
         ],
-      }],
+      )],
     };
   }
 
@@ -567,13 +597,13 @@ export function evaluateInfiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: `The ${input.routeKind ?? 'selected'} limit route did not resolve this expression within the current symbolic rules.`,
-      detailSections: [{
-        title: 'Limit Diagnostic',
-        lines: [
+      detailSections: [limitDetailSectionFromLines(
+        'Limit Diagnostic',
+        [
           `Route classification: ${input.routeKind ?? 'unknown'}.`,
           'Numeric fallback was skipped because this route needs an exact symbolic decision.',
         ],
-      }],
+      )],
     };
   }
 

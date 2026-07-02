@@ -9,6 +9,7 @@ import {
   isZeroish,
   success,
 } from './evaluation';
+import { formatLimitNumberLatex, formatLimitValueLatex } from './detail-readback';
 import {
   matchExpMinusOne,
   matchFunctionMinusOne,
@@ -120,7 +121,7 @@ function boundedDerivativeEquivalent(
         order,
         reason: `Taylor leading-term check found first nonzero derivative of order ${order}`,
         notes: [
-          `Taylor leading term: first nonzero derivative order ${order}, coefficient ${coefficient}.`,
+          `Taylor leading term: first nonzero derivative order ${order}, coefficient ${formatLimitNumberLatex(coefficient)}.`,
         ],
       };
     }
@@ -363,7 +364,7 @@ export function resolveLocalEquivalentLimit(
   const baseLines = [
     intro,
     ...(equivalent.notes ?? []),
-    `Equivalent used: coefficient ${equivalent.coefficient} with net order ${equivalent.order}.`,
+    `Equivalent used: coefficient ${formatLimitNumberLatex(equivalent.coefficient)} with net order ${equivalent.order}.`,
     `Order comparison: net order ${equivalent.order}.`,
     `Reason: ${equivalent.reason}.`,
   ];
@@ -371,7 +372,7 @@ export function resolveLocalEquivalentLimit(
   if (equivalent.order === 0) {
     return success(equivalent.coefficient, 'rule-based-symbolic', [
       ...baseLines,
-      `Final limit: ${equivalent.coefficient}.`,
+      `Final limit: ${formatLimitNumberLatex(equivalent.coefficient)}.`,
     ]);
   }
 
@@ -388,6 +389,7 @@ export function resolveLocalEquivalentLimit(
     ? success(infinity, 'rule-based-symbolic', [
         ...baseLines,
         'Negative net order creates a pole; the requested direction determines the signed infinity when signs agree.',
+        `Final limit: ${formatLimitValueLatex(infinity) ?? 'undefined'}.`,
       ])
     : undefined;
 }

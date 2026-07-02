@@ -128,6 +128,8 @@ describe('Calculus limit editor source', () => {
     );
     const detail = await screen.findByTestId('display-outcome-detail-section-0');
     expect(detail).toHaveTextContent('Why This Limit Fails');
+    fireEvent.click(detail.querySelector('summary') as HTMLElement);
+    await waitFor(() => expect(detail).toHaveTextContent('Left side tends to'));
     expect(detail).toHaveTextContent('Left side tends to');
     expect(detail).toHaveTextContent('Right side tends to');
     expect(detail).toHaveTextContent('two-sided limit does not exist');

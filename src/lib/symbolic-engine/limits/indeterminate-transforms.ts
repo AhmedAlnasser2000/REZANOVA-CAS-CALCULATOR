@@ -1,14 +1,8 @@
 import type { LimitDirection, LimitTargetKind } from '../../../types/calculator';
 import { isNodeArray } from '../patterns';
+import { formatLimitNumberLatex, limitMethodSection } from './detail-readback';
 import { box, evaluateNodeAt } from './evaluation';
 import type { FiniteLimitRuleSuccess } from './types';
-
-function limitMethodSection(...lines: string[]) {
-  return [{
-    title: 'Limit Method',
-    lines,
-  }];
-}
 
 function nodeLatex(node: unknown) {
   try {
@@ -16,23 +10,6 @@ function nodeLatex(node: unknown) {
   } catch {
     return undefined;
   }
-}
-
-function smallNumberLatex(value: number) {
-  const rounded = Math.round(value);
-  if (Math.abs(value - rounded) < 1e-10) {
-    return `${rounded}`;
-  }
-
-  for (let denominator = 2; denominator <= 24; denominator += 1) {
-    const numerator = Math.round(value * denominator);
-    if (Math.abs(value - numerator / denominator) < 1e-10) {
-      const sign = numerator < 0 ? '-' : '';
-      return `${sign}\\frac{${Math.abs(numerator)}}{${denominator}}`;
-    }
-  }
-
-  return undefined;
 }
 
 function expLatex(exponent: number) {
@@ -43,7 +20,7 @@ function expLatex(exponent: number) {
     return 'e';
   }
 
-  return `e^{${smallNumberLatex(exponent) ?? exponent}}`;
+  return `e^{${formatLimitNumberLatex(exponent)}}`;
 }
 
 function success(
@@ -283,7 +260,7 @@ function resolveOneToInfinityPower(
     'Detected the indeterminate power form 1^infinity.',
     `Original form: ${nodeLatex(node) ?? 'power'}.`,
     'Log transform: ln(y) = exponent * ln(base).',
-    `Sub-limit: ${nodeLatex(node[2]) ?? 'exponent'}\\ln(1+${smallNumberLatex(reciprocalCoefficient) ?? reciprocalCoefficient}/${variable}) -> ${smallNumberLatex(subLimit) ?? subLimit}.`,
+    `Sub-limit: ${nodeLatex(node[2]) ?? 'exponent'}\\ln(1+${formatLimitNumberLatex(reciprocalCoefficient)}/${variable}) -> ${formatLimitNumberLatex(subLimit)}.`,
     `Exponentiating the sub-limit gives ${expLatex(subLimit)}.`,
   ]);
 }
@@ -311,7 +288,7 @@ function resolveInfinityToZeroPower(
   return success(1, '1', [
     'Detected the indeterminate power form infinity^0.',
     `Original form: ${nodeLatex(node) ?? 'power'}.`,
-    `Log transform: \\ln(y)=(${smallNumberLatex(reciprocalCoefficient) ?? reciprocalCoefficient}/${variable})\\ln(${variable}).`,
+    `Log transform: \\ln(y)=(${formatLimitNumberLatex(reciprocalCoefficient)}/${variable})\\ln(${variable}).`,
     `Sub-limit: \\ln(${variable})/${variable} tends to 0 as ${variable}->\\infty.`,
     'Exponentiating the sub-limit gives e^0=1.',
   ]);

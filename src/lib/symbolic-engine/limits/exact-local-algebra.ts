@@ -1,4 +1,4 @@
-import type { DisplayDetailSection, LimitDirection, LimitTargetKind } from '../../../types/calculator';
+import type { LimitDirection, LimitTargetKind } from '../../../types/calculator';
 import {
   addMathJsonNodes,
   multiplyMathJsonNodes,
@@ -6,6 +6,7 @@ import {
   simplifyMathJsonNodeOrOriginal,
 } from '../primitives/simplification/simplification';
 import { isNodeArray } from '../patterns';
+import { formatLimitNumberLatex, limitMethodSection } from './detail-readback';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import type { FiniteLimitRuleSuccess } from './types';
 
@@ -173,30 +174,6 @@ function polynomialCoefficientsUpTo2(node: unknown, variable: string): Map<numbe
   return undefined;
 }
 
-function smallRationalLatex(value: number) {
-  const rounded = Math.round(value);
-  if (Math.abs(value - rounded) < 1e-10) {
-    return `${rounded}`;
-  }
-
-  for (let denominator = 2; denominator <= 24; denominator += 1) {
-    const numerator = Math.round(value * denominator);
-    if (Math.abs(value - numerator / denominator) < 1e-10) {
-      const sign = numerator < 0 ? '-' : '';
-      return `${sign}\\frac{${Math.abs(numerator)}}{${denominator}}`;
-    }
-  }
-
-  return undefined;
-}
-
-function limitMethodSection(...lines: string[]): DisplayDetailSection[] {
-  return [{
-    title: 'Limit Method',
-    lines,
-  }];
-}
-
 export function resolveInfiniteExactLocalAlgebraLimit(
   node: unknown,
   targetKind: Exclude<LimitTargetKind, 'finite'>,
@@ -232,11 +209,11 @@ export function resolveInfiniteExactLocalAlgebraLimit(
   return {
     kind: 'success' as const,
     value,
-    exactLatex: smallRationalLatex(value),
+    exactLatex: formatLimitNumberLatex(value),
     detailSections: limitMethodSection(
       'Rationalized the radical difference by multiplying by the conjugate.',
       'At positive infinity, the leading denominator behaves like 2x.',
-      `Final limit: ${smallRationalLatex(value) ?? value}.`,
+      `Final limit: ${formatLimitNumberLatex(value)}.`,
     ),
   };
 }

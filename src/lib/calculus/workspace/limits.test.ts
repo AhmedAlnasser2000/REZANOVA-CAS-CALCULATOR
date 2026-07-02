@@ -57,13 +57,21 @@ describe('calculus limits', () => {
       direction: 'two-sided',
     });
     expect(poleMismatch.error).toBe('Left and right behavior do not agree near the target.');
-    expect(poleMismatch.detailSections?.[0]).toEqual({
+    expect(poleMismatch.detailSections?.[0]).toMatchObject({
       title: 'Why This Limit Fails',
       lines: [
         'Left side tends to -\\infty.',
         'Right side tends to \\infty.',
         'The two one-sided limits are different, so the two-sided limit does not exist.',
       ],
+    });
+    expect(poleMismatch.detailSections?.[0]?.lineParts?.[0]).toContainEqual({
+      kind: 'math',
+      latex: '-\\infty',
+    });
+    expect(poleMismatch.detailSections?.[0]?.lineParts?.[1]).toContainEqual({
+      kind: 'math',
+      latex: '\\infty',
     });
 
     const unbounded = evaluateCalculusFiniteLimit({
@@ -197,6 +205,14 @@ describe('calculus limits', () => {
     expect(oscillation.exactLatex).toBeUndefined();
     expect(oscillation.detailSections?.[0]?.title).toBe('Why This Limit Fails');
     expect(oscillation.detailSections?.[0]?.lines.join(' ')).toContain('does not approach one number');
+    expect(oscillation.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: 'x_n=1/(\\pi/2+2\\pi n)',
+    });
+    expect(oscillation.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: 'y_n=1/(3\\pi/2+2\\pi n)',
+    });
   });
 
   it('handles parsed variable and exact-constant finite targets', () => {
