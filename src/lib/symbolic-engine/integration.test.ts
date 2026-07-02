@@ -858,8 +858,10 @@ describe('symbolic-engine integration', () => {
 
     expect(result.kind).toBe('error')
     if (result.kind === 'error') {
-      expect(result.error).toContain('could not be determined symbolically')
-      expect(result.candidate.controlledFailureClass).toBe('missing-derivative-factor')
+      expect(result.error).toContain('genus-1')
+      expect(result.error).toContain('elliptic')
+      expect(result.candidate.controlledFailureClass).toBe('unsupported-family')
+      expect(result.candidate.blockedPrerequisites).toContain('risch-liouville')
       expect(result.candidate.domainHazards).toContain('root-radicand-nonnegative')
     }
 

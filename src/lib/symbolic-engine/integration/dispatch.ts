@@ -11,6 +11,7 @@ import { tryAffinePowerRule } from './affine-power';
 import { tryAlgebraicGenus0RationalInRadicalRule } from './algebraic-genus0/rational-in-radical';
 import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standard-radicals';
 import { tryAlgebraicGenus0SymbolicStandardRadicalRule } from './algebraic-genus0/symbolic-standard-radicals';
+import { tryAlgebraicGenus0Genus1BoundaryStop } from './algebraic-genus0/genus1-boundary';
 import {
   tryBinomialDerivativeSubstitutionRule,
   tryReciprocalBinomialDerivativeSubstitutionRule,
@@ -574,6 +575,15 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
   const linearCombination = tryLinearCombinationFallback(node, variable);
   if (linearCombination) {
     return linearCombination;
+  }
+
+  const algebraicGenus1Boundary = tryAlgebraicGenus0Genus1BoundaryStop(node, variable);
+  if (algebraicGenus1Boundary) {
+    return {
+      kind: 'error',
+      error: algebraicGenus1Boundary.error,
+      candidate: algebraicGenus1Boundary.candidate,
+    };
   }
 
   return {
