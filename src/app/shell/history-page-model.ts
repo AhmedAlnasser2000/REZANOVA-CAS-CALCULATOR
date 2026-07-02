@@ -1,7 +1,9 @@
 import { buildHistoryLaunchRows } from '../../components/history-launch-rows';
 import { latexToVisibleText } from '../../lib/display/math-notation';
+import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
 import type {
   HistoryEntry,
+  MathNotationDisplay,
   ModeId,
   PendingHistoryTicket,
 } from '../../types/calculator';
@@ -87,17 +89,26 @@ function pendingSearchText(ticket: PendingHistoryTicket, modeLabel: string) {
   ].filter(Boolean).join(' ').toLowerCase();
 }
 
-function historyPreviewText(latex: string) {
-  return latexToVisibleText(latex, 'plainText').trim() || latex;
+function historyPreviewText(
+  latex: string,
+  notationMode: MathNotationDisplay,
+  displayPrefs?: SymbolicDisplayPrefs,
+) {
+  const textNotationMode = notationMode === 'rendered' ? 'plainText' : notationMode;
+  return latexToVisibleText(latex, textNotationMode, displayPrefs).trim() || latex;
 }
 
 export function buildHistoryLedgerRows({
+  displayPrefs,
   history,
   modeLabels,
+  notationMode,
   pendingHistory,
 }: {
+  displayPrefs?: SymbolicDisplayPrefs;
   history: readonly HistoryEntry[];
   modeLabels: Record<ModeId, string>;
+  notationMode: MathNotationDisplay;
   pendingHistory: readonly PendingHistoryTicket[];
 }): HistoryLedgerRow[] {
   return buildHistoryLaunchRows(history, pendingHistory).map((row) => {
@@ -106,7 +117,7 @@ export function buildHistoryLedgerRows({
       return {
         dateKey: historyLocalDateKey(ticket.timestamp),
         id: `pending:${ticket.id}`,
-        inputPreviewText: historyPreviewText(ticket.inputLatex),
+        inputPreviewText: historyPreviewText(ticket.inputLatex, notationMode, displayPrefs),
         kind: 'pending' as const,
         mode: ticket.mode,
         order: row.order,
@@ -121,12 +132,12 @@ export function buildHistoryLedgerRows({
       dateKey: historyLocalDateKey(entry.timestamp),
       entry,
       id: entry.id,
-      inputPreviewText: historyPreviewText(entry.inputLatex),
+      inputPreviewText: historyPreviewText(entry.inputLatex, notationMode, displayPrefs),
       kind: 'entry' as const,
       mode: entry.mode,
       order: row.order,
       resultPreviewText: entry.resultLatex
-        ? historyPreviewText(entry.resultLatex)
+        ? historyPreviewText(entry.resultLatex, notationMode, displayPrefs)
         : entry.approxText,
       searchText: entrySearchText(entry, modeLabels[entry.mode]),
       timestamp: entry.timestamp,

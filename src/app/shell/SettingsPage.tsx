@@ -46,6 +46,8 @@ type SettingsCategoryId =
   | 'privacy'
   | 'language';
 
+type HistoryNotationField = 'historyInspectorNotationMode' | 'historyPageNotationMode';
+
 type SettingsCategory = {
   description: string;
   id: SettingsCategoryId;
@@ -143,6 +145,40 @@ function SegmentedControl<T extends string>({
   );
 }
 
+function historyNotationPatch(field: HistoryNotationField, value: MathNotationDisplay): SettingsPatch {
+  return field === 'historyInspectorNotationMode'
+    ? { historyInspectorNotationMode: value }
+    : { historyPageNotationMode: value };
+}
+
+function HistoryNotationControl({
+  label,
+  onChange,
+  value,
+  warning,
+}: {
+  label: string;
+  onChange: (option: MathNotationDisplay) => void;
+  value: MathNotationDisplay;
+  warning: string;
+}) {
+  return (
+    <div className="settings-page-history-notation" data-testid={`${label}-control`}>
+      <SegmentedControl
+        value={value}
+        options={MATH_NOTATION_OPTIONS}
+        getLabel={(option) => option === 'rendered' ? 'Rendered Math' : option === 'plainText' ? 'Plain Text' : 'LaTeX'}
+        onChange={onChange}
+      />
+      {value === 'rendered' ? (
+        <p className="settings-page-warning" data-testid={`${label}-warning`}>
+          {warning}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function ScaleControl({
   label,
   onChange,
@@ -235,6 +271,8 @@ export function SettingsPage({
   const settingsText = strings.settings;
   const languageOptions = listLanguageMetadata();
   const [activeCategoryId, setActiveCategoryId] = useState<SettingsCategoryId>('general');
+  const [pendingRenderedHistoryField, setPendingRenderedHistoryField] =
+    useState<HistoryNotationField | null>(null);
 
   const categories: SettingsCategory[] = [
     {
@@ -289,6 +327,24 @@ export function SettingsPage({
     MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS,
     settings.calculatorMemoryAutosaveIntervalSeconds,
   );
+
+  function requestHistoryNotationChange(field: HistoryNotationField, value: MathNotationDisplay) {
+    if (value === 'rendered' && settings[field] !== 'rendered') {
+      setPendingRenderedHistoryField(field);
+      return;
+    }
+
+    onPatch(historyNotationPatch(field, value));
+  }
+
+  function confirmRenderedHistoryMath() {
+    if (!pendingRenderedHistoryField) {
+      return;
+    }
+
+    onPatch(historyNotationPatch(pendingRenderedHistoryField, 'rendered'));
+    setPendingRenderedHistoryField(null);
+  }
 
   function renderGeneral() {
     return (
@@ -526,33 +582,63 @@ export function SettingsPage({
 
   function renderPrivacy() {
     return (
-      <SettingsSection title="Local Data" eyebrow="Privacy">
-        <SettingsRow icon={History} label={settingsText.fields.historyEnabled}>
-          <ToggleControl
-            label={settingsText.fields.historyEnabled}
-            checked={settings.historyEnabled}
-            onChange={(checked) => onPatch({ historyEnabled: checked })}
-          />
-        </SettingsRow>
-        <SettingsRow icon={Database} label={settingsText.fields.saveCalculatorMemory}>
-          <ToggleControl
-            label={settingsText.fields.saveCalculatorMemory}
-            checked={settings.calculatorMemoryEnabled}
-            onChange={(checked) => onPatch({ calculatorMemoryEnabled: checked })}
-          />
-        </SettingsRow>
-        <p className="settings-page-note">
-          History and calculator memory are stored locally for this preview build.
-        </p>
-        <div className="settings-page-danger-row">
-          <button type="button" onClick={onClearHistory}>
-            {settingsText.actions.resetHistory}
-          </button>
-          <button type="button" onClick={onResetCalculatorMemory}>
-            {settingsText.actions.resetCalculatorMemory}
-          </button>
-        </div>
-      </SettingsSection>
+      <>
+        <SettingsSection title="History Records" eyebrow="Privacy">
+          <SettingsRow icon={History} label={settingsText.fields.historyEnabled}>
+            <ToggleControl
+              label={settingsText.fields.historyEnabled}
+              checked={settings.historyEnabled}
+              onChange={(checked) => onPatch({ historyEnabled: checked })}
+            />
+          </SettingsRow>
+          <SettingsRow
+            icon={History}
+            label={settingsText.fields.historyInspectorNotation}
+            hint="Controls quick History inspector row previews."
+          >
+            <HistoryNotationControl
+              label="history-inspector-notation"
+              value={settings.historyInspectorNotationMode}
+              warning={settingsText.help.renderedHistoryMathWarning}
+              onChange={(value) =>
+                requestHistoryNotationChange('historyInspectorNotationMode', value)}
+            />
+          </SettingsRow>
+          <SettingsRow
+            icon={History}
+            label={settingsText.fields.historyPageNotation}
+            hint="Controls full History page ledger row previews."
+          >
+            <HistoryNotationControl
+              label="history-page-notation"
+              value={settings.historyPageNotationMode}
+              warning={settingsText.help.renderedHistoryMathWarning}
+              onChange={(value) =>
+                requestHistoryNotationChange('historyPageNotationMode', value)}
+            />
+          </SettingsRow>
+        </SettingsSection>
+        <SettingsSection title="Local Data" eyebrow="Privacy">
+          <SettingsRow icon={Database} label={settingsText.fields.saveCalculatorMemory}>
+            <ToggleControl
+              label={settingsText.fields.saveCalculatorMemory}
+              checked={settings.calculatorMemoryEnabled}
+              onChange={(checked) => onPatch({ calculatorMemoryEnabled: checked })}
+            />
+          </SettingsRow>
+          <p className="settings-page-note">
+            History and calculator memory are stored locally for this preview build.
+          </p>
+          <div className="settings-page-danger-row">
+            <button type="button" onClick={onClearHistory}>
+              {settingsText.actions.resetHistory}
+            </button>
+            <button type="button" onClick={onResetCalculatorMemory}>
+              {settingsText.actions.resetCalculatorMemory}
+            </button>
+          </div>
+        </SettingsSection>
+      </>
     );
   }
 
@@ -689,6 +775,29 @@ export function SettingsPage({
           </section>
         </aside>
       </div>
+      {pendingRenderedHistoryField ? (
+        <div className="settings-page-confirm-layer">
+          <section
+            className="settings-page-confirm"
+            role="alertdialog"
+            aria-label={settingsText.confirmations.renderedHistoryMathTitle}
+          >
+            <strong>{settingsText.confirmations.renderedHistoryMathTitle}</strong>
+            <p>{settingsText.help.renderedHistoryMathConfirmation}</p>
+            <div>
+              <button type="button" onClick={confirmRenderedHistoryMath}>
+                {settingsText.actions.useRenderedMath}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingRenderedHistoryField(null)}
+              >
+                {strings.common.actions.cancel}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
       <footer className="app-page-shell-footer">
         <span><CheckCircle2 aria-hidden="true" size={14} /> Ready</span>
         <span>Workspace: Settings</span>

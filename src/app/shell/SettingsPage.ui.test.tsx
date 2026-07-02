@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_SETTINGS, type Settings } from '../../types/calculator';
 import { getLanguageCatalog } from '../../lib/language';
@@ -73,5 +73,51 @@ describe('SettingsPage', () => {
     expect(screen.getByTestId('settings-impact-output')).toHaveTextContent('BOTH');
     expect(screen.getByTestId('settings-impact-digits')).toHaveTextContent('8');
     expect(screen.getByText(/History:/)).toHaveTextContent('Off');
+  });
+
+  it('exposes full-page History notation controls with rendered-math confirmation', () => {
+    const onPatch = vi.fn();
+
+    render(
+      <SettingsPage
+        settings={DEFAULT_SETTINGS}
+        onPatch={onPatch}
+        onClearHistory={vi.fn()}
+        onResetCalculatorMemory={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('settings-category-privacy'));
+
+    expect(screen.getByText(settingsText.fields.historyInspectorNotation)).toBeInTheDocument();
+    expect(screen.getByText(settingsText.fields.historyPageNotation)).toBeInTheDocument();
+    expect(screen.getByTestId('history-inspector-notation-warning')).toHaveTextContent(
+      settingsText.help.renderedHistoryMathWarning,
+    );
+    expect(screen.queryByTestId('history-page-notation-warning')).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByTestId('history-page-notation-control')).getByRole('button', {
+        name: 'Rendered Math',
+      }),
+    );
+
+    expect(screen.getByRole('alertdialog', {
+      name: settingsText.confirmations.renderedHistoryMathTitle,
+    })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+
+    expect(onPatch).not.toHaveBeenCalledWith({ historyPageNotationMode: 'rendered' });
+
+    fireEvent.click(
+      within(screen.getByTestId('history-page-notation-control')).getByRole('button', {
+        name: 'Rendered Math',
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: settingsText.actions.useRenderedMath }));
+
+    expect(onPatch).toHaveBeenCalledWith({ historyPageNotationMode: 'rendered' });
   });
 });

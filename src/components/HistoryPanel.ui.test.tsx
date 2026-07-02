@@ -44,6 +44,7 @@ describe('HistoryPanel', () => {
         presentation="overlay"
         history={[]}
         modeLabels={modeLabels}
+        notationMode="plainText"
         onClear={onClear}
         onClose={onClose}
         onDelete={vi.fn()}
@@ -73,6 +74,7 @@ describe('HistoryPanel', () => {
         presentation="overlay"
         history={[historyEntry('1'), historyEntry('2')]}
         modeLabels={modeLabels}
+        notationMode="plainText"
         onClear={vi.fn()}
         onClose={vi.fn()}
         onDelete={onDelete}
@@ -100,6 +102,7 @@ describe('HistoryPanel', () => {
         presentation="outboard"
         history={Array.from({ length: 48 }, (_, index) => historyEntry(`${index + 1}`))}
         modeLabels={modeLabels}
+        notationMode="plainText"
         onClear={vi.fn()}
         onClose={vi.fn()}
         onDelete={vi.fn()}
@@ -120,6 +123,24 @@ describe('HistoryPanel', () => {
       expect(within(entry).getByTestId('history-entry-result-preview')).toBeInTheDocument();
     }
     expect(screen.getByTestId('history-panel').querySelector('[data-raw-latex]')).toBeNull();
+  });
+
+  it('renders quick-panel row math only when the inspector notation asks for it', () => {
+    render(
+      <HistoryPanel
+        presentation="outboard"
+        history={Array.from({ length: 30 }, (_, index) => historyEntry(`${index + 1}`))}
+        modeLabels={modeLabels}
+        notationMode="rendered"
+        onClear={vi.fn()}
+        onClose={vi.fn()}
+        onDelete={vi.fn()}
+        onReplay={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByTestId('history-entry')).toHaveLength(20);
+    expect(screen.getByTestId('history-panel').querySelector('[data-raw-latex]')).not.toBeNull();
   });
 
   it('renders pending tickets in launch order with a Stop action only', () => {
@@ -145,6 +166,7 @@ describe('HistoryPanel', () => {
         ]}
         pendingHistory={[pendingTicket]}
         modeLabels={modeLabels}
+        notationMode="plainText"
         onClear={vi.fn()}
         onClose={vi.fn()}
         onDelete={vi.fn()}
@@ -203,6 +225,7 @@ describe('HistoryPanel', () => {
             timestamp: '2026-07-02T12:00:00Z',
           }]}
           modeLabels={modeLabels}
+          notationMode="plainText"
           onClear={vi.fn()}
           onClose={vi.fn()}
           onDelete={vi.fn()}
@@ -235,6 +258,7 @@ describe('HistoryPanel', () => {
           historyEntry('2'),
         ]}
         modeLabels={modeLabels}
+        notationMode="plainText"
         onClear={vi.fn()}
         onClose={vi.fn()}
         onDelete={vi.fn()}

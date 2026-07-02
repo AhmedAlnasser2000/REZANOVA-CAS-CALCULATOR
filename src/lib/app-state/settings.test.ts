@@ -24,6 +24,8 @@ describe('settings schema', () => {
       equationDomainIntent: 'complex',
       complexExactForm: 'polar',
       mathNotationDisplay: 'latex',
+      historyInspectorNotationMode: 'plainText',
+      historyPageNotationMode: 'rendered',
       historyEnabled: false,
       autoSwitchToEquation: true,
       uiScale: 130,
@@ -47,6 +49,8 @@ describe('settings schema', () => {
     expect(parsed.equationDomainIntent).toBe('complex');
     expect(parsed.complexExactForm).toBe('polar');
     expect(parsed.mathNotationDisplay).toBe('latex');
+    expect(parsed.historyInspectorNotationMode).toBe('plainText');
+    expect(parsed.historyPageNotationMode).toBe('rendered');
     expect(parsed.symbolicDisplayMode).toBe('powers');
     expect(parsed.flattenNestedRootsWhenSafe).toBe(false);
     expect(parsed.approxDigits).toBe(12);

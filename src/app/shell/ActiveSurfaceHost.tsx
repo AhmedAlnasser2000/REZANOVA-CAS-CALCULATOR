@@ -103,6 +103,7 @@ export function ActiveSurfaceHost({
       >
         <HistoryPage
           history={history}
+          historyNotationMode={settings.historyPageNotationMode}
           pendingHistory={pendingHistory}
           modeLabels={modeLabels}
           onCopyResult={onCopyResult}
@@ -111,6 +112,7 @@ export function ActiveSurfaceHost({
           onReplay={onReplayHistoryEntry}
           onReplayInNewTab={onReplayHistoryEntryInNewTab}
           onStopPending={onStopPendingHistoryTicket}
+          symbolicDisplayPrefs={symbolicDisplayPrefs}
         />
       </section>
     );

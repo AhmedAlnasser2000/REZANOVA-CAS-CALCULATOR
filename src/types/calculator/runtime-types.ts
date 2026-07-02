@@ -956,7 +956,7 @@ export type Settings = {
   equationAnswerMode: EquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   complexExactForm: ComplexExactForm;
-  mathNotationDisplay: MathNotationDisplay;
+  mathNotationDisplay: MathNotationDisplay; historyInspectorNotationMode: MathNotationDisplay; historyPageNotationMode: MathNotationDisplay;
   historyEnabled: boolean;
   calculatorMemoryEnabled: boolean;
   calculatorMemoryAutosaveMode: 'settled' | 'interval';
@@ -1082,7 +1082,7 @@ export const DEFAULT_SETTINGS: Settings = {
   equationAnswerMode: 'exact',
   equationDomainIntent: 'real',
   complexExactForm: 'rectangular',
-  mathNotationDisplay: 'rendered',
+  mathNotationDisplay: 'rendered', historyInspectorNotationMode: 'rendered', historyPageNotationMode: 'latex',
   historyEnabled: true,
   calculatorMemoryEnabled: true,
   calculatorMemoryAutosaveMode: 'settled',

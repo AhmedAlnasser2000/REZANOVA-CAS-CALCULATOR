@@ -91,6 +91,7 @@
   --page-subtle: #819186;
   --page-accent: #b8d49c;
   --page-green: #324831;
+  position: relative;
   width: min(1668px, calc(100vw - 36px));
   margin-inline: auto;
   height: min(900px, calc(100vh - 154px));
@@ -612,6 +613,71 @@
   margin-top: 12px;
 }
 
+.settings-page-history-notation {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-page-warning {
+  margin: 0;
+  border: 1px solid rgba(255, 122, 122, 0.4);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(92, 22, 22, 0.34);
+  color: #ffb6a8;
+  font-size: 0.8rem;
+}
+
+.settings-page-confirm-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(4, 11, 12, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.settings-page-confirm {
+  width: min(420px, 100%);
+  border: 1px solid rgba(255, 122, 122, 0.32);
+  border-radius: 12px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(52, 27, 25, 0.98), rgba(13, 24, 24, 0.98));
+  box-shadow: 0 22px 58px rgba(0, 0, 0, 0.4);
+}
+
+.settings-page-confirm strong {
+  color: #ffd1c7;
+}
+
+.settings-page-confirm p {
+  margin: 8px 0 16px;
+  color: rgba(255, 224, 218, 0.82);
+}
+
+.settings-page-confirm div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.settings-page-confirm button {
+  border: 1px solid rgba(255, 214, 201, 0.18);
+  border-radius: 9px;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--page-ink);
+}
+
+.settings-page-confirm button:first-child {
+  border-color: rgba(255, 145, 125, 0.42);
+  background: rgba(114, 45, 38, 0.78);
+  color: #ffe3dc;
+}
+
 .settings-page-preview-strip span,
 .settings-page-impact-card h3 {
   color: rgba(184, 212, 156, 0.82);
@@ -1065,6 +1131,19 @@
 .history-page-row-preview {
   display: block;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-page-row-math {
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.history-entry-preview-math {
+  display: block;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

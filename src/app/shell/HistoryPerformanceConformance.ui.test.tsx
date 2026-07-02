@@ -64,6 +64,7 @@ describe('History performance conformance', () => {
           pendingTicket('pending.low', -1),
         ]}
         modeLabels={modeLabels}
+        notationMode="plainText"
         onClear={vi.fn()}
         onClose={vi.fn()}
         onDelete={vi.fn()}
@@ -80,6 +81,7 @@ describe('History performance conformance', () => {
     render(
       <HistoryPage
         history={Array.from({ length: 80 }, (_, index) => historyEntry(index + 1))}
+        historyNotationMode="plainText"
         pendingHistory={[]}
         modeLabels={modeLabels}
         onCopyResult={vi.fn()}
@@ -110,6 +112,7 @@ describe('History performance conformance', () => {
       render(
         <HistoryPage
           history={[historyEntry(1)]}
+          historyNotationMode="plainText"
           pendingHistory={[pendingTicket('pending.elapsed', 2, startedAtMs)]}
           modeLabels={modeLabels}
           onCopyResult={vi.fn()}

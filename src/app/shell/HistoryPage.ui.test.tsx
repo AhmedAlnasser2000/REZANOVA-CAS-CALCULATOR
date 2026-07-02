@@ -8,6 +8,7 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 import type {
   HistoryEntry,
+  MathNotationDisplay,
   ModeId,
   PendingHistoryTicket,
 } from '../../types/calculator';
@@ -47,6 +48,7 @@ function entry(id: string, inputLatex = `x+${id}=5`): HistoryEntry {
 
 function renderHistoryPage(options: {
   history?: HistoryEntry[];
+  historyNotationMode?: MathNotationDisplay;
   pendingHistory?: PendingHistoryTicket[];
 } = {}) {
   const handlers = {
@@ -61,6 +63,7 @@ function renderHistoryPage(options: {
   render(
     <HistoryPage
       history={options.history ?? [entry('1'), entry('2')]}
+      historyNotationMode={options.historyNotationMode ?? 'latex'}
       pendingHistory={options.pendingHistory ?? []}
       modeLabels={modeLabels}
       {...handlers}
@@ -115,6 +118,17 @@ describe('HistoryPage', () => {
     expect(
       screen.getByTestId('history-page-inspector').querySelector('[data-raw-latex]'),
     ).not.toBeNull();
+  });
+
+  it('can render visible ledger rows as math when explicitly selected', () => {
+    renderHistoryPage({
+      history: Array.from({ length: 24 }, (_, index) => entry(`${index + 1}`)),
+      historyNotationMode: 'rendered',
+    });
+
+    const renderedRows = screen.getAllByTestId('history-page-row');
+    expect(renderedRows.length).toBeLessThan(24);
+    expect(renderedRows.some((row) => row.querySelector('[data-raw-latex]'))).toBe(true);
   });
 
   it('selects rows on click, opens on double click, and keeps inspector actions explicit', () => {

@@ -1,5 +1,12 @@
 import { useMemo } from 'react';
-import type { HistoryEntry, ModeId, PendingHistoryTicket } from '../types/calculator';
+import type {
+  HistoryEntry,
+  MathNotationDisplay,
+  ModeId,
+  PendingHistoryTicket,
+} from '../types/calculator';
+import { MathNotationProvider } from './MathNotationContext';
+import { MathStatic } from './MathStatic';
 import { buildHistoryLaunchRows } from './history-launch-rows';
 import {
   formatRuntimeElapsedFinal,
@@ -8,6 +15,7 @@ import {
 } from '../app/runtime/runtimeElapsedTime';
 import { usePendingElapsedNow } from '../app/runtime/usePendingElapsedNow';
 import { latexToVisibleText } from '../lib/display/math-notation';
+import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
 import { useLanguage } from '../lib/language/language-context';
 
 const QUICK_HISTORY_COMMITTED_ROW_LIMIT = 20;
@@ -19,25 +27,63 @@ type HistoryPanelProps = {
   history: HistoryEntry[];
   pendingHistory?: PendingHistoryTicket[];
   modeLabels: Record<ModeId, string>;
+  notationMode: MathNotationDisplay;
   onClear: () => void;
   onClose: () => void;
   onDelete: (id: string) => void;
   onOpenFullPage?: () => void;
   onReplay: (entry: HistoryEntry) => void;
   onStopPending?: (ticket: PendingHistoryTicket) => void;
+  symbolicDisplayPrefs?: SymbolicDisplayPrefs;
 };
 
-function quickHistoryPreviewText(latex: string) {
-  return latexToVisibleText(latex, 'plainText').trim() || latex;
+function quickHistoryPreviewText(
+  latex: string,
+  notationMode: MathNotationDisplay,
+  displayPrefs?: SymbolicDisplayPrefs,
+) {
+  const textNotationMode = notationMode === 'rendered' ? 'plainText' : notationMode;
+  return latexToVisibleText(latex, textNotationMode, displayPrefs).trim() || latex;
+}
+
+function HistoryPanelPreview({
+  displayPrefs,
+  latex,
+  notationMode,
+  text,
+}: {
+  displayPrefs?: SymbolicDisplayPrefs;
+  latex?: string;
+  notationMode: MathNotationDisplay;
+  text: string;
+}) {
+  if (notationMode === 'rendered' && latex) {
+    return (
+      <MathNotationProvider notationMode="rendered" displayPrefs={displayPrefs}>
+        <MathStatic
+          block={false}
+          className="history-entry-preview-text history-entry-preview-math"
+          displayPrefs={displayPrefs}
+          latex={latex}
+        />
+      </MathNotationProvider>
+    );
+  }
+
+  return <span className="history-entry-preview-text">{text}</span>;
 }
 
 function HistoryPanelPendingEntry({
+  notationMode,
   modeLabel,
   onStopPending,
+  symbolicDisplayPrefs,
   ticket,
 }: {
+  notationMode: MathNotationDisplay;
   modeLabel: string;
   onStopPending?: (ticket: PendingHistoryTicket) => void;
+  symbolicDisplayPrefs?: SymbolicDisplayPrefs;
   ticket: PendingHistoryTicket;
 }) {
   const { strings } = useLanguage();
@@ -91,9 +137,12 @@ function HistoryPanelPendingEntry({
       </div>
       <div className="history-entry-body history-entry-body--pending">
         <div className="history-entry-preview" data-testid="history-entry-preview">
-          <span className="history-entry-preview-text">
-            {quickHistoryPreviewText(ticket.inputLatex)}
-          </span>
+          <HistoryPanelPreview
+            displayPrefs={symbolicDisplayPrefs}
+            latex={ticket.inputLatex}
+            notationMode={notationMode}
+            text={quickHistoryPreviewText(ticket.inputLatex, notationMode, symbolicDisplayPrefs)}
+          />
         </div>
       </div>
     </article>
@@ -105,12 +154,14 @@ export function HistoryPanel({
   history,
   pendingHistory = [],
   modeLabels,
+  notationMode,
   onClear,
   onClose,
   onDelete,
   onOpenFullPage,
   onReplay,
   onStopPending,
+  symbolicDisplayPrefs,
 }: HistoryPanelProps) {
   const { strings } = useLanguage();
   const historyText = strings.history;
@@ -165,7 +216,9 @@ export function HistoryPanel({
                   <HistoryPanelPendingEntry
                     key={ticket.id}
                     modeLabel={modeLabels[ticket.mode]}
+                    notationMode={notationMode}
                     onStopPending={onStopPending}
+                    symbolicDisplayPrefs={symbolicDisplayPrefs}
                     ticket={ticket}
                   />
                 );
@@ -173,8 +226,13 @@ export function HistoryPanel({
 
               const entry = row.entry;
               const resultPreview = entry.resultLatex
-                ? quickHistoryPreviewText(entry.resultLatex)
+                ? quickHistoryPreviewText(entry.resultLatex, notationMode, symbolicDisplayPrefs)
                 : entry.approxText;
+              const inputPreview = quickHistoryPreviewText(
+                entry.inputLatex,
+                notationMode,
+                symbolicDisplayPrefs,
+              );
               return (
                 <article
                   key={entry.id}
@@ -224,9 +282,12 @@ export function HistoryPanel({
                     onClick={() => onReplay(entry)}
                   >
                     <div className="history-entry-preview" data-testid="history-entry-preview">
-                      <span className="history-entry-preview-text">
-                        {quickHistoryPreviewText(entry.inputLatex)}
-                      </span>
+                      <HistoryPanelPreview
+                        displayPrefs={symbolicDisplayPrefs}
+                        latex={entry.inputLatex}
+                        notationMode={notationMode}
+                        text={inputPreview}
+                      />
                     </div>
                     {resultPreview ? (
                       <div
@@ -236,7 +297,12 @@ export function HistoryPanel({
                         <span className="history-entry-section-label">
                           {entry.resultLatex ? historyText.labels.answer : historyText.labels.approx}
                         </span>
-                        <span className="history-entry-preview-text">{resultPreview}</span>
+                        <HistoryPanelPreview
+                          displayPrefs={symbolicDisplayPrefs}
+                          latex={entry.resultLatex}
+                          notationMode={notationMode}
+                          text={resultPreview}
+                        />
                       </div>
                     ) : null}
                   </button>

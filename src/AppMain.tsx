@@ -2736,15 +2736,16 @@ export default function App() {
       return (
         <HistoryPanel
           presentation={presentation}
-          history={history}
-          pendingHistory={pendingHistoryTickets}
+          history={history} pendingHistory={pendingHistoryTickets}
           modeLabels={MODE_LABELS}
+          notationMode={settings.historyInspectorNotationMode}
           onClear={resetHistory}
           onClose={closeHistoryPanel}
           onDelete={deleteHistoryEntryById}
           onOpenFullPage={() => workspaceTabsRuntime.onOpenAppPageTab(HISTORY_PAGE_WORKSPACE_KIND)}
           onReplay={replayHistoryEntry}
           onStopPending={stopPendingHistoryTicket}
+          symbolicDisplayPrefs={symbolicDisplayPrefs}
         />
       );
     }

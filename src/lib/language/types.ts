@@ -166,6 +166,8 @@ export type SettingsLanguageCatalog = {
     language: string;
     angleUnit: string;
     mathNotation: string;
+    historyInspectorNotation: string;
+    historyPageNotation: string;
     outputStyle: string;
     equationAnswerMode: string;
     autoSwitchToEquation: string;
@@ -237,12 +239,18 @@ export type SettingsLanguageCatalog = {
     language: string;
     complex: string;
     history: string;
+    renderedHistoryMathWarning: string;
+    renderedHistoryMathConfirmation: string;
     calculatorMemory: string;
   };
   actions: {
     openFullPage: string;
     resetHistory: string;
     resetCalculatorMemory: string;
+    useRenderedMath: string;
+  };
+  confirmations: {
+    renderedHistoryMathTitle: string;
   };
 };
 

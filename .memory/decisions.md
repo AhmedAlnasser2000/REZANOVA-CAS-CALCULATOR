@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-02 - HISTORY-ROW-NOTATION-PREFERENCES1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] History row notation is user-configurable separately for the quick inspector and full page. Quick inspector rows default to Rendered Math for readability under the existing 20-row cap; full page ledger rows default to LaTeX for responsiveness. Rendered Math row modes require an explicit warning confirmation and remain bounded to capped quick rows or visible virtualized full-page rows.
+
 ## 2026-07-01 - CALCULUS-LIMITS-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Differentiation expansion is paused until Vector/Matrix are upgraded enough for symbolic vector/matrix outputs and multivariable readback. Gradient, Jacobian, Hessian, divergence, curl, and Laplacian should not be implemented as scalar/list-only Calculus features before that foundation exists.

@@ -27,6 +27,8 @@ export const englishSettings = {
     language: 'Language',
     angleUnit: 'Angle Unit',
     mathNotation: 'Math Notation',
+    historyInspectorNotation: 'History Inspector Notation',
+    historyPageNotation: 'History Page Notation',
     outputStyle: 'Output Style',
     equationAnswerMode: 'Equation Answer Mode',
     autoSwitchToEquation: 'Auto Switch to Equation',
@@ -101,6 +103,10 @@ export const englishSettings = {
       'Controls exact complex branch display. The top Complex button still controls whether Equation may use complex answers.',
     history:
       'Controls whether new history entries are recorded. The top-row history button still only opens or closes the history panel.',
+    renderedHistoryMathWarning:
+      'Rendered math in history records may slow down dense or large histories.',
+    renderedHistoryMathConfirmation:
+      'Rendered math makes history rows easier to read, but it may slow down dense or large histories.',
     calculatorMemory:
       'Stores work, variables, Ans, history, and safe result cards. The interval cannot go below 20 seconds.',
   },
@@ -108,5 +114,9 @@ export const englishSettings = {
     openFullPage: 'Open Full Settings',
     resetHistory: 'Reset History',
     resetCalculatorMemory: 'Reset Calculator Memory',
+    useRenderedMath: 'Use Rendered Math',
+  },
+  confirmations: {
+    renderedHistoryMathTitle: 'Rendered History Math May Lag',
   },
 } satisfies LanguageCatalog['settings'];

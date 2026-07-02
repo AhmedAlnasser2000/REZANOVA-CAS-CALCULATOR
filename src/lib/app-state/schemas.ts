@@ -54,6 +54,8 @@ export const settingsSchema = z.object({
   equationDomainIntent: equationDomainIntentSchema.default('real'),
   complexExactForm: complexExactFormSchema.default('rectangular'),
   mathNotationDisplay: mathNotationDisplaySchema.default('rendered'),
+  historyInspectorNotationMode: mathNotationDisplaySchema.default('rendered'),
+  historyPageNotationMode: mathNotationDisplaySchema.default('latex'),
   historyEnabled: z.boolean(),
   calculatorMemoryEnabled: z.boolean().default(true),
   calculatorMemoryAutosaveMode: calculatorMemoryAutosaveModeSchema.default('settled'),

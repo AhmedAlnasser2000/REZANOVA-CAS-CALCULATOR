@@ -25,10 +25,13 @@ import {
   type MouseEvent,
   type UIEvent,
 } from 'react';
+import { MathNotationProvider } from '../../components/MathNotationContext';
 import { MathStatic } from '../../components/MathStatic';
+import type { SymbolicDisplayPrefs } from '../../lib/display/symbolic-display';
 import { useLanguage } from '../../lib/language/language-context';
 import type {
   HistoryEntry,
+  MathNotationDisplay,
   ModeId,
   PendingHistoryTicket,
 } from '../../types/calculator';
@@ -48,6 +51,7 @@ import {
 
 type HistoryPageProps = {
   history: HistoryEntry[];
+  historyNotationMode: MathNotationDisplay;
   pendingHistory?: PendingHistoryTicket[];
   modeLabels: Record<ModeId, string>;
   onCopyResult: (text: string) => void;
@@ -56,6 +60,7 @@ type HistoryPageProps = {
   onReplay: (entry: HistoryEntry) => void;
   onReplayInNewTab: (entry: HistoryEntry) => void;
   onStopPending?: (ticket: PendingHistoryTicket) => void;
+  symbolicDisplayPrefs?: SymbolicDisplayPrefs;
 };
 
 const HISTORY_PAGE_ROW_HEIGHT = 66;
@@ -134,22 +139,59 @@ function ModeChip({
   return <span className={`history-page-mode-chip is-${modeTone(mode)}`}>{label}</span>;
 }
 
+function HistoryRowPreview({
+  className = 'history-page-row-preview',
+  displayPrefs,
+  latex,
+  notationMode,
+  text,
+}: {
+  className?: string;
+  displayPrefs?: SymbolicDisplayPrefs;
+  latex?: string;
+  notationMode: MathNotationDisplay;
+  text: string;
+}) {
+  if (notationMode === 'rendered' && latex) {
+    return (
+      <MathNotationProvider notationMode="rendered" displayPrefs={displayPrefs}>
+        <MathStatic
+          block={false}
+          className={`${className} history-page-row-math`}
+          displayPrefs={displayPrefs}
+          latex={latex}
+        />
+      </MathNotationProvider>
+    );
+  }
+
+  return (
+    <span className={className} title={text}>
+      {text}
+    </span>
+  );
+}
+
 const HistoryPendingLedgerRow = memo(function HistoryPendingLedgerRow({
   isSelected,
   modeLabel,
+  notationMode,
   onSelect,
   onStopPending,
   row,
   rowHeight,
   stopLabel,
+  symbolicDisplayPrefs,
 }: {
   isSelected: boolean;
   modeLabel: string;
+  notationMode: MathNotationDisplay;
   onSelect: (rowId: string) => void;
   onStopPending?: (ticket: PendingHistoryTicket) => void;
   row: PendingHistoryLedgerRow;
   rowHeight: number;
   stopLabel: string;
+  symbolicDisplayPrefs?: SymbolicDisplayPrefs;
 }) {
   const elapsedNowMs = usePendingElapsedNow(typeof row.ticket.startedAtMs === 'number');
 
@@ -163,9 +205,12 @@ const HistoryPendingLedgerRow = memo(function HistoryPendingLedgerRow({
       <span />
       <ModeChip label={modeLabel} mode={row.mode} />
       <div className="history-page-row-expression">
-        <strong className="history-page-row-preview" title={row.inputPreviewText}>
-          {row.inputPreviewText}
-        </strong>
+        <HistoryRowPreview
+          displayPrefs={symbolicDisplayPrefs}
+          latex={row.ticket.inputLatex}
+          notationMode={notationMode}
+          text={row.inputPreviewText}
+        />
       </div>
       <span className="history-page-muted">Pending</span>
       <span>{rowTimestamp(row)}</span>
@@ -189,6 +234,7 @@ const HistoryEntryLedgerRow = memo(function HistoryEntryLedgerRow({
   isChecked,
   isSelected,
   modeLabel,
+  notationMode,
   onFocus,
   onReplay,
   onToggleSelected,
@@ -196,10 +242,12 @@ const HistoryEntryLedgerRow = memo(function HistoryEntryLedgerRow({
   rowHeight,
   selectEntryLabel,
   staleAnswer,
+  symbolicDisplayPrefs,
 }: {
   isChecked: boolean;
   isSelected: boolean;
   modeLabel: string;
+  notationMode: MathNotationDisplay;
   onFocus: (event: MouseEvent<HTMLElement>, row: EntryHistoryLedgerRow) => void;
   onReplay: (entry: HistoryEntry) => void;
   onToggleSelected: (row: EntryHistoryLedgerRow) => void;
@@ -207,6 +255,7 @@ const HistoryEntryLedgerRow = memo(function HistoryEntryLedgerRow({
   rowHeight: number;
   selectEntryLabel: string;
   staleAnswer: string;
+  symbolicDisplayPrefs?: SymbolicDisplayPrefs;
 }) {
   return (
     <article
@@ -229,14 +278,20 @@ const HistoryEntryLedgerRow = memo(function HistoryEntryLedgerRow({
       </label>
       <ModeChip label={modeLabel} mode={row.mode} />
       <div className="history-page-row-expression">
-        <span className="history-page-row-preview" title={row.inputPreviewText}>
-          {row.inputPreviewText}
-        </span>
+        <HistoryRowPreview
+          displayPrefs={symbolicDisplayPrefs}
+          latex={row.entry.inputLatex}
+          notationMode={notationMode}
+          text={row.inputPreviewText}
+        />
       </div>
       <div className="history-page-row-result">
-        <span className="history-page-row-preview" title={row.resultPreviewText ?? staleAnswer}>
-          {row.resultPreviewText ?? staleAnswer}
-        </span>
+        <HistoryRowPreview
+          displayPrefs={symbolicDisplayPrefs}
+          latex={row.entry.resultLatex}
+          notationMode={notationMode}
+          text={row.resultPreviewText ?? staleAnswer}
+        />
       </div>
       <span>{rowTimestamp(row)}</span>
       <span className="history-page-chip is-status">{rowResultKind(row)}</span>
@@ -405,6 +460,7 @@ function HistoryDetailInspector({
 
 export function HistoryPage({
   history,
+  historyNotationMode,
   pendingHistory = [],
   modeLabels,
   onCopyResult,
@@ -413,6 +469,7 @@ export function HistoryPage({
   onReplay,
   onReplayInNewTab,
   onStopPending,
+  symbolicDisplayPrefs,
 }: HistoryPageProps) {
   const { strings } = useLanguage();
   const historyText = strings.history;
@@ -424,8 +481,14 @@ export function HistoryPage({
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(() => new Set());
   const [selectionAnchorRowId, setSelectionAnchorRowId] = useState<string | null>(null);
   const allRows = useMemo(() =>
-    buildHistoryLedgerRows({ history, modeLabels, pendingHistory }),
-  [history, modeLabels, pendingHistory]);
+    buildHistoryLedgerRows({
+      displayPrefs: symbolicDisplayPrefs,
+      history,
+      modeLabels,
+      notationMode: historyNotationMode,
+      pendingHistory,
+    }),
+  [history, historyNotationMode, modeLabels, pendingHistory, symbolicDisplayPrefs]);
   const dateGroups = useMemo(() => buildHistoryDateGroups(allRows), [allRows]);
   const modesInRows = useMemo(() =>
     [...new Set(allRows.map((row) => row.mode))],
@@ -702,11 +765,13 @@ export function HistoryPage({
                           key={row.id}
                           isSelected={isSelected}
                           modeLabel={modeLabels[row.mode]}
+                          notationMode={historyNotationMode}
                           onSelect={selectPendingRow}
                           onStopPending={onStopPending}
                           row={row}
                           rowHeight={HISTORY_PAGE_ROW_HEIGHT}
                           stopLabel={historyText.actions.stop}
+                          symbolicDisplayPrefs={symbolicDisplayPrefs}
                         />
                       );
                     }
@@ -717,6 +782,7 @@ export function HistoryPage({
                         isChecked={selectedEntryIds.has(row.entry.id)}
                         isSelected={isSelected}
                         modeLabel={modeLabels[row.mode]}
+                        notationMode={historyNotationMode}
                         onFocus={focusEntryRow}
                         onReplay={onReplay}
                         onToggleSelected={toggleSelectedEntry}
@@ -724,6 +790,7 @@ export function HistoryPage({
                         rowHeight={HISTORY_PAGE_ROW_HEIGHT}
                         selectEntryLabel={historyText.actions.selectEntry}
                         staleAnswer={historyText.staleAnswer}
+                        symbolicDisplayPrefs={symbolicDisplayPrefs}
                       />
                     );
                   })}
