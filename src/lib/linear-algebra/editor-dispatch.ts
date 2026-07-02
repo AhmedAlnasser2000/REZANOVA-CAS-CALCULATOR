@@ -65,6 +65,7 @@ function matrixMetadata(
     operandA?: MatrixOperand;
     operandB?: MatrixOperand;
     systemRhs?: LinearAlgebraEditorExpression;
+    coordinateVector?: LinearAlgebraEditorExpression;
   } = {},
 ) {
   return {
@@ -73,6 +74,9 @@ function matrixMetadata(
     ...(operands.operandB ? { matrixOperandLatexB: operands.operandB.displayLatex } : {}),
     ...(operands.systemRhs && operands.systemRhs.kind === 'vectorLiteral'
       ? { systemRhsLatex: operands.systemRhs.displayLatex }
+      : {}),
+    ...(operands.coordinateVector && operands.coordinateVector.kind === 'vectorLiteral'
+      ? { coordinateVectorLatex: operands.coordinateVector.displayLatex }
       : {}),
   };
 }
@@ -209,6 +213,42 @@ function matrixSystemRequest(
       exactSystemRhs: expression.constants.exactValue,
       ...matrixMetadata(input, { operandA: coefficients, systemRhs: expression.constants }),
     },
+  };
+}
+
+function matrixCoordinatesRequest(
+  input: MatrixEditorDispatchInput,
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'coordinates' }>,
+): MatrixEditorDispatchResult {
+  const basis = matrixOperand(expression.basis, input);
+  if (!basis || expression.vector.kind !== 'vectorLiteral') {
+    return {
+      ok: false,
+      message: 'Coordinates need Matrix A/B or an inline basis matrix, plus an inline vector.',
+    };
+  }
+
+  return {
+    ok: true,
+    request: basis.named === 'B'
+      ? {
+          operation: 'coordinatesB',
+          matrixA: cloneMatrix(input.matrixA),
+          matrixB: basis.matrix,
+          coordinateVector: cloneVector(expression.vector.value),
+          ...(basis.exactMatrix ? { exactMatrixB: basis.exactMatrix } : {}),
+          exactCoordinateVector: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandB: basis, coordinateVector: expression.vector }),
+        }
+      : {
+          operation: 'coordinatesA',
+          matrixA: basis.matrix,
+          matrixB: cloneMatrix(input.matrixB),
+          coordinateVector: cloneVector(expression.vector.value),
+          ...(basis.exactMatrix ? { exactMatrixA: basis.exactMatrix } : {}),
+          exactCoordinateVector: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandA: basis, coordinateVector: expression.vector }),
+        },
   };
 }
 
@@ -618,6 +658,9 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   const expression = parsed.expression;
   if (expression.kind === 'linearSystem') {
     return matrixSystemRequest(input, expression);
+  }
+  if (expression.kind === 'coordinates') {
+    return matrixCoordinatesRequest(input, expression);
   }
   if (expression.kind === 'binary') {
     return matrixPairRequest(input, expression);

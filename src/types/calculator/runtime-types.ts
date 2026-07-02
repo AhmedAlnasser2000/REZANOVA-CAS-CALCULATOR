@@ -1006,7 +1006,7 @@ export type ModeState = {
 };
 
 export type MatrixOperation =
-  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'linearSystem';
+  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 
@@ -1015,9 +1015,10 @@ export type MatrixRequest = {
   matrixA: number[][];
   matrixB?: number[][];
   systemRhs?: number[];
+  coordinateVector?: number[];
   systemForm?: MatrixSystemForm;
-  exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[];
-  editorExpressionLatex?: string; matrixOperandLatexA?: string; matrixOperandLatexB?: string; systemRhsLatex?: string;
+  exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[]; exactCoordinateVector?: ExactScalarWire[];
+  editorExpressionLatex?: string; matrixOperandLatexA?: string; matrixOperandLatexB?: string; systemRhsLatex?: string; coordinateVectorLatex?: string;
 };
 
 export type MatrixReplaySeed = MatrixRequest;

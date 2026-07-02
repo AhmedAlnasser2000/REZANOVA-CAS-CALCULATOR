@@ -24,14 +24,17 @@ export type RunMatrixModeRequest = {
   matrixA: number[][];
   matrixB: number[][];
   systemRhs?: number[];
+  coordinateVector?: number[];
   systemForm?: MatrixSystemForm;
   exactMatrixA?: ExactScalarWire[][];
   exactMatrixB?: ExactScalarWire[][];
   exactSystemRhs?: ExactScalarWire[];
+  exactCoordinateVector?: ExactScalarWire[];
   editorExpressionLatex?: string;
   matrixOperandLatexA?: string;
   matrixOperandLatexB?: string;
   systemRhsLatex?: string;
+  coordinateVectorLatex?: string;
 };
 
 export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSystemForm) {
@@ -74,6 +77,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'basis(A)';
     case 'basisB':
       return 'basis(B)';
+    case 'coordinatesA':
+      return 'coords(A, v)';
+    case 'coordinatesB':
+      return 'coords(B, v)';
     case 'invertibilityA':
       return 'invertible(A)';
     case 'invertibilityB':
@@ -93,7 +100,8 @@ function matrixResultTitle(request: RunMatrixModeRequest) {
   const usesInlineOperand =
     (request.matrixOperandLatexA !== undefined && request.matrixOperandLatexA !== 'A')
     || (request.matrixOperandLatexB !== undefined && request.matrixOperandLatexB !== 'B')
-    || request.systemRhsLatex !== undefined;
+    || request.systemRhsLatex !== undefined
+    || request.coordinateVectorLatex !== undefined;
   return usesInlineOperand && request.editorExpressionLatex
     ? request.editorExpressionLatex
     : matrixOperationLabel(request.operation, request.systemForm);
@@ -105,14 +113,17 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
     matrixA,
     matrixB,
     systemRhs,
+    coordinateVector,
     systemForm,
     exactMatrixA,
     exactMatrixB,
     exactSystemRhs,
+    exactCoordinateVector,
     editorExpressionLatex,
     matrixOperandLatexA,
     matrixOperandLatexB,
     systemRhsLatex,
+    coordinateVectorLatex,
   } = request;
   if (operation === 'linearSystem') {
     return runMatrixLinearSystem({
@@ -131,12 +142,15 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
     operation,
     matrixA,
     matrixB,
+    coordinateVector,
     exactMatrixA,
     exactMatrixB,
+    exactCoordinateVector,
     editorExpressionLatex,
     matrixOperandLatexA,
     matrixOperandLatexB,
     systemRhsLatex,
+    coordinateVectorLatex,
   });
   const actions = response.handoffEquationLatex
     ? [{ kind: 'send' as const, target: 'equation' as const, latex: response.handoffEquationLatex }]
@@ -177,14 +191,17 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       matrixA: request.matrixA,
       matrixB: request.matrixB,
       systemRhs: request.systemRhs,
+      coordinateVector: request.coordinateVector,
       systemForm: request.systemForm,
       exactMatrixA: request.exactMatrixA,
       exactMatrixB: request.exactMatrixB,
       exactSystemRhs: request.exactSystemRhs,
+      exactCoordinateVector: request.exactCoordinateVector,
       editorExpressionLatex: request.editorExpressionLatex,
       matrixOperandLatexA: request.matrixOperandLatexA,
       matrixOperandLatexB: request.matrixOperandLatexB,
       systemRhsLatex: request.systemRhsLatex,
+      coordinateVectorLatex: request.coordinateVectorLatex,
     },
   };
 }

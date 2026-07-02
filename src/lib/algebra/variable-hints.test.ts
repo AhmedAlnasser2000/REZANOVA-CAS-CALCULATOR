@@ -69,6 +69,12 @@ describe('variable hints', () => {
       screenHint: 'matrix',
       storedVariables: stored,
     })).toEqual([]);
+
+    expect(hintKinds('\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
   });
 
   it('does not turn Vector editor functions and named vectors into variable hints', () => {

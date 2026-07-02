@@ -201,6 +201,33 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix coordinate proof details visible but collapsible by default', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: '\\operatorname{coords}(A,v)',
+      exactLatex: '[v]_{A}=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+      sourceMode: 'matrix',
+      detailSections: [{
+        title: 'Coordinate Proof',
+        lines: [
+          'Ac=v',
+          'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+          'The basis matrix has one pivot in every column, so the coordinate vector is unique.',
+        ],
+        lineKinds: ['math', 'math', 'text'],
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Coordinate Proof');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      collapsible: true,
+      defaultCollapsed: false,
+    });
+  });
+
   it('keeps solve notes collapsed by default even when the prose is short', () => {
     const outcome: DisplayOutcome = {
       kind: 'success',

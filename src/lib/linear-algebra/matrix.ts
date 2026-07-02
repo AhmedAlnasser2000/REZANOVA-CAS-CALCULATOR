@@ -22,6 +22,7 @@ import {
   type NumericMatrixRequest,
 } from './matrix-core';
 import { runMatrixBasis } from './matrix-basis';
+import { runMatrixCoordinates } from './matrix-coordinates';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixSpaceOperation } from './matrix-spaces';
@@ -224,6 +225,37 @@ function exactBasisResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactCoordinatesResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'coordinatesA') {
+    return runMatrixCoordinates({
+      basisLabel: matrixLabelA(req),
+      vectorLabel: req.coordinateVectorLatex ?? 'v',
+      basisMatrix: req.matrixA,
+      vector: req.coordinateVector ?? [],
+      exactBasisMatrix: req.exactMatrixA,
+      exactVector: req.exactCoordinateVector,
+    });
+  }
+
+  if (req.operation === 'coordinatesB') {
+    return req.matrixB
+      ? runMatrixCoordinates({
+          basisLabel: matrixLabelB(req),
+          vectorLabel: req.coordinateVectorLatex ?? 'v',
+          basisMatrix: req.matrixB,
+          vector: req.coordinateVector ?? [],
+          exactBasisMatrix: req.exactMatrixB,
+          exactVector: req.exactCoordinateVector,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -301,6 +333,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const basisResponse = exactBasisResponse(req);
   if (basisResponse) {
     return basisResponse;
+  }
+
+  const coordinatesResponse = exactCoordinatesResponse(req);
+  if (coordinatesResponse) {
+    return coordinatesResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

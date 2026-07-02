@@ -136,6 +136,49 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'coordinatesA',
+        matrixA,
+        matrixB,
+        coordinateVector: [5, 11],
+        exactCoordinateVector: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        editorExpressionLatex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+        matrixOperandLatexA: 'A',
+        coordinateVectorLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{coords}\\left(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix},\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'coordinatesA',
+        matrixA,
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+          [{ numerator: 3, denominator: 1 }, { numerator: 4, denominator: 1 }],
+        ],
+        coordinateVector: [5, 11],
+        exactCoordinateVector: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        matrixOperandLatexA: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
+        coordinateVectorLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{invertible}\\left(B\\right)',
       matrixA,
       matrixB,

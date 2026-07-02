@@ -320,6 +320,27 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('basisA');
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-coordinates',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+      resultLatex: '[\\begin{bmatrix}5\\\\11\\end{bmatrix}]_{A}=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'coordinatesA',
+        matrixA: [[1, 2], [3, 4]],
+        matrixB: [[5, 6], [7, 8]],
+        coordinateVector: [5, 11],
+        exactCoordinateVector: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        editorExpressionLatex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+        matrixOperandLatexA: 'A',
+        coordinateVectorLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.coordinateVector).toEqual([5, 11]);
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',

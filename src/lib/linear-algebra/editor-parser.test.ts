@@ -37,6 +37,22 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{null}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'nullSpace' });
     expect(parsed('\\operatorname{col}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'columnSpace' });
     expect(parsed('\\operatorname{basis}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'basis' });
+    expect(parsed('\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toEqual({
+      kind: 'coordinates',
+      basis: { kind: 'named', name: 'A', displayLatex: 'A' },
+      vector: {
+        kind: 'vectorLiteral',
+        value: [5, 11],
+        exactValue: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        displayLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(parsed('\\operatorname{coord}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toMatchObject({
+      kind: 'coordinates',
+    });
     expect(parsed('\\operatorname{invertible}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'invertibility' });
     expect(parsed('\\operatorname{eigen}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'eigen' });
   });

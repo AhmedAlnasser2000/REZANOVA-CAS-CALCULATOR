@@ -43,6 +43,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
+  | { kind: 'coordinates'; basis: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | {
       kind: 'linearSystem';
       form: LinearAlgebraSystemForm;
@@ -103,6 +104,10 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{Col\}/g, 'col')
     .replace(/\\operatorname\{basis\}/g, 'basis')
     .replace(/\\operatorname\{Basis\}/g, 'basis')
+    .replace(/\\operatorname\{coords\}/g, 'coords')
+    .replace(/\\operatorname\{Coords\}/g, 'coords')
+    .replace(/\\operatorname\{coord\}/g, 'coords')
+    .replace(/\\operatorname\{Coord\}/g, 'coords')
     .replace(/\\operatorname\{invertible\}/g, 'invertible')
     .replace(/\\operatorname\{Invertible\}/g, 'invertible')
     .replace(/\\operatorname\{eigen\}/g, 'eigen')
@@ -575,6 +580,19 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       kind: 'gramSchmidt',
       left: parseExpression(parts[0], options),
       right: parseExpression(parts[1], options),
+    };
+  }
+
+  const coordsArgument = functionArgument(input, 'coords');
+  if (coordsArgument !== null) {
+    const parts = splitTopLevelComma(coordsArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Coordinates require a basis matrix and a vector.');
+    }
+    return {
+      kind: 'coordinates',
+      basis: parseExpression(parts[0], options),
+      vector: parseExpression(parts[1], options),
     };
   }
 

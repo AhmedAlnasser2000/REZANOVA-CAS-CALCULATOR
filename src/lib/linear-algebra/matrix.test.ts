@@ -225,6 +225,48 @@ describe('runMatrixOperation', () => {
     expect(basis.detailSections?.[0]?.lines).toContain(`\\operatorname{rank}(${label})=2`);
   });
 
+  it('computes exact coordinates of a vector in a basis matrix', () => {
+    const coordinates = runMatrixOperation({
+      operation: 'coordinatesA',
+      matrixA,
+      matrixB,
+      coordinateVector: [5, 11],
+      exactCoordinateVector: [
+        { numerator: 5, denominator: 1 },
+        { numerator: 11, denominator: 1 },
+      ],
+      coordinateVectorLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+    });
+
+    expect(coordinates.resultLatex).toBe('[\\begin{bmatrix}5\\\\11\\end{bmatrix}]_{A}=\\begin{bmatrix}1\\\\2\\end{bmatrix}');
+    expect(coordinates.approxText).toBe('2 coordinates');
+    expect(coordinates.detailSections?.map((section) => section.title)).toEqual(['Coordinate Facts', 'Coordinate Proof']);
+    expect(coordinates.detailSections?.[0]?.lines).toContain('\\det(A)=-2');
+    expect(coordinates.detailSections?.[1]?.lines).toContain('Ac=\\begin{bmatrix}5\\\\11\\end{bmatrix}');
+    expect(coordinates.detailSections?.[1]?.lines).toContain(
+      '\\operatorname{rref}\\left([A|\\begin{bmatrix}5\\\\11\\end{bmatrix}]\\right)=\\begin{bmatrix}1 & 0 & 1\\\\0 & 1 & 2\\end{bmatrix}',
+    );
+    expect(coordinates.detailSections?.[1]?.lines).toContain(
+      'The basis matrix has one pivot in every column, so the coordinate vector is unique.',
+    );
+  });
+
+  it('stops coordinates on non-basis matrices with proof cards', () => {
+    const coordinates = runMatrixOperation({
+      operation: 'coordinatesA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB,
+      coordinateVector: [2, 4],
+    });
+
+    expect(coordinates.error).toBe('Coordinates need a square full-rank basis matrix. Run basis(...) to inspect this matrix.');
+    expect(coordinates.detailSections?.map((section) => section.title)).toEqual(['Coordinate Facts', 'Coordinate Proof']);
+    expect(coordinates.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)=1');
+    expect(coordinates.detailSections?.[1]?.lines).toContain(
+      'At least one column is not a pivot, so the columns do not form a basis. Coordinates are only unique when the basis matrix has one pivot in every column.',
+    );
+  });
+
   it('explains invertibility theorem facts for square matrices', () => {
     const invertible = runMatrixOperation({
       operation: 'invertibilityA',

@@ -86,6 +86,8 @@ const RESERVED_UNITS = new Set(['i', 'imaginaryi']);
 
 const MATRIX_EDITOR_FUNCTIONS = new Set([
   'col',
+  'coord',
+  'coords',
   'det',
   'eigen',
   'invertible',
