@@ -242,6 +242,30 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Linear Algebra proof cards visible even when their math is long', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'gram(u,v)',
+      exactLatex: '\\operatorname{orthogonal\\ basis}=\\left\\{u,v\\right\\}',
+      sourceMode: 'vector',
+      detailSections: [{
+        title: 'Gram-Schmidt Proof',
+        lines: [
+          'w_{2}=\\begin{bmatrix}4\\\\5\\\\6\\end{bmatrix}-\\operatorname{proj}_{w_{1}}(\\begin{bmatrix}4\\\\5\\\\6\\end{bmatrix})=\\begin{bmatrix}1.714286\\\\0.428571\\\\-0.857143\\end{bmatrix}',
+        ],
+        lineKind: 'math',
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Gram-Schmidt Proof');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      defaultCollapsed: false,
+    });
+  });
+
   it('adapts safe finite answer sets into branch-list blocks', () => {
     const exactLatex = 's\\in\\left\\{\\frac{d}{4}+r+\\sqrt{x+j},\\ \\frac{d}{4}-r-\\sqrt{x+j}\\right\\}';
     const outcome: DisplayOutcome = {

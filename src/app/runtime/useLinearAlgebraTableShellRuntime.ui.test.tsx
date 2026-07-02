@@ -14,6 +14,7 @@ import {
   type MutableRefObject,
 } from 'react';
 import type {
+  DisplayOutcome,
   HistoryEntry,
   ModeId,
 } from '../../types/calculator';
@@ -296,6 +297,119 @@ describe('useLinearAlgebraTableShellRuntime', () => {
         matrixSeed: expect.objectContaining({ operation: 'rankA' }),
       }),
     ));
+  });
+
+  it('keeps Matrix inline editor titles and cards tied to the typed expression', async () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    async function runMatrixExpression(latex: string) {
+      commitOutcome.mockClear();
+      act(() => {
+        hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex(latex);
+      });
+      act(() => {
+        hook.result.current.runMatrixEditorAction();
+      });
+
+      await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
+      return commitOutcome.mock.calls.at(-1)?.[0] as DisplayOutcome;
+    }
+
+    const detLatex = '\\det\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&\\frac{1}{3}\\end{bmatrix}\\right)';
+    const det = await runMatrixExpression(detLatex);
+    expect(det).toMatchObject({
+      kind: 'success',
+      title: detLatex,
+      exactLatex: '\\frac{1}{6}',
+      sourceMode: 'matrix',
+    });
+
+    const rrefLatex = '\\operatorname{rref}\\left(\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}\\right)';
+    const rref = await runMatrixExpression(rrefLatex);
+    expect(rref).toMatchObject({
+      kind: 'success',
+      title: rrefLatex,
+      exactLatex: '\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}',
+    });
+    expect(rref.kind === 'success' ? rref.detailSections?.[0] : undefined).toMatchObject({
+      title: 'Row Reduction Steps',
+      lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
+    });
+
+    const nullLatex = '\\operatorname{null}\\left(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}\\right)';
+    const nullSpace = await runMatrixExpression(nullLatex);
+    expect(nullSpace.kind === 'success' ? nullSpace.exactLatex : '').toContain(
+      '\\operatorname{Null}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})',
+    );
+    expect(nullSpace.kind === 'success' ? nullSpace.detailSections?.[0]?.lines : []).toContain(
+      '\\operatorname{rank}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})=1',
+    );
+
+    const colLatex = '\\operatorname{col}\\left(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}\\right)';
+    const columnSpace = await runMatrixExpression(colLatex);
+    expect(columnSpace.kind === 'success' ? columnSpace.exactLatex : '').toContain(
+      '\\operatorname{Col}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})',
+    );
+    expect(columnSpace.kind === 'success' ? columnSpace.detailSections?.[1]?.lines : []).toContain(
+      'The pivot columns of the original matrix form a basis for its column space.',
+    );
+
+    const eigenLatex = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
+    const eigen = await runMatrixExpression(eigenLatex);
+    expect(eigen).toMatchObject({
+      kind: 'success',
+      title: eigenLatex,
+      approxText: 'eigenvalues 3, 1',
+      sourceMode: 'matrix',
+    });
+    expect(eigen.kind === 'success' ? eigen.detailSections?.map((section) => section.title) : [])
+      .toContain('How Eigenvalues Were Found');
+    expect(eigen.kind === 'success' ? eigen.detailSections?.map((section) => section.title) : [])
+      .not.toContain('Equation Boundary');
+    expect(eigen.kind === 'success' ? eigen.detailSections?.[2]?.lines : []).toContain(
+      'E_{3}=\\operatorname{Null}(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
+    );
+  });
+
+  it('keeps Vector editor cards mode-owned and rejects Matrix-only inputs cleanly', async () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'vector' });
+
+    async function runVectorExpression(latex: string) {
+      commitOutcome.mockClear();
+      act(() => {
+        hook.result.current.linearAlgebraRuntime.setVectorEditorLatex(latex);
+      });
+      act(() => {
+        hook.result.current.runVectorEditorAction();
+      });
+
+      await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
+      return commitOutcome.mock.calls.at(-1)?.[0] as DisplayOutcome;
+    }
+
+    const projection = await runVectorExpression('\\operatorname{proj}_{u}\\left(v\\right)');
+    expect(projection).toMatchObject({
+      kind: 'success',
+      title: 'proj_u(v)',
+      sourceMode: 'vector',
+    });
+
+    const gram = await runVectorExpression('\\operatorname{gram}\\left(u,v\\right)');
+    expect(gram).toMatchObject({
+      kind: 'success',
+      title: 'gram(u,v)',
+      approxText: '2 basis directions',
+      sourceMode: 'vector',
+    });
+    expect(gram.kind === 'success' ? gram.detailSections?.map((section) => section.title) : [])
+      .toEqual(['Orthonormal Basis', 'Gram-Schmidt Proof']);
+
+    const unsupported = await runVectorExpression('\\operatorname{invertible}\\left(A\\right)');
+    expect(unsupported).toMatchObject({
+      kind: 'error',
+      title: 'Vector',
+      error: 'This Vector editor expression is not executable in Vector mode.',
+    });
   });
 
   it('offers explicit Equation handoff for unsupported Matrix equations', () => {

@@ -81,7 +81,7 @@ function rankFacts(
   const augmented = augmentedLabel(labels.coefficient, labels.rhs);
   return [
     {
-      title: 'Rank facts',
+      title: 'Rank Facts',
       lines: [
         `\\operatorname{rank}(${labels.coefficient})=${rankA}`,
         `\\operatorname{rank}(${augmented})=${rankAugmented}`,
