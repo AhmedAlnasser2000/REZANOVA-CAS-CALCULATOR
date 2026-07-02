@@ -1645,6 +1645,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation singularity evidence is conservative and internal: solved denominator exclusions may be classified as removable candidates or pole/asymptote candidates by local zero-form probing, log/root/fractional-power/inverse-trig facts become branch/domain boundary candidates, trig-pole facts become trig-pole candidates, and uncertain exclusions stay `unknown`. These labels are not Display prose, proof certificates, graphing API, or public schema.
 
+## 2026-07-02 - EQUATION-INTERVAL-VALIDITY-EVIDENCE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric interval validity evidence is exported from the existing interval arithmetic and segmentation substrate as internal symbol-backed evidence. Consumers may read `safe`, `invalid`, `split-required`, `unknown`, and interval-local boundary evidence structurally, but Display cards remain the user-facing explanation and no public graphing API or persisted schema is introduced.
+
 ## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.

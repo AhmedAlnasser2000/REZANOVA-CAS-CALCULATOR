@@ -4,6 +4,7 @@ import { solvePolynomialSystem2x2 } from '../../equation/equation-polynomial-sys
 import {
   attachEquationAnalysisEvidence,
   buildEquationDomainFactEvidence,
+  buildEquationIntervalValidityEvidence,
   buildEquationRouteEvidence,
   buildEquationSingularityEvidence,
 } from '../../equation/analysis-evidence';
@@ -83,6 +84,13 @@ function buildEquationRunEvidence(input: {
       target: selectedTarget,
       sourceRoute: route,
       angleUnit: input.angleUnit,
+    }),
+    ...buildEquationIntervalValidityEvidence({
+      equationLatex: input.equationLatex,
+      target: selectedTarget,
+      sourceRoute: route,
+      angleUnit: input.angleUnit,
+      numericInterval: input.numericInterval,
     }),
   ];
 }

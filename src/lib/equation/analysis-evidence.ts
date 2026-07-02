@@ -1,6 +1,11 @@
 import type { AngleUnit, ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, NumericSolveInterval } from '../../types/calculator';
 import { equationToZeroFormLatex, evaluateLatexAtTarget } from './domain-guards';
-import type { EquationNumericDomainFact } from './numeric-domain-segmentation';
+import {
+  buildEquationNumericSegmentationPlan,
+  type EquationNumericDomainFact,
+  type EquationNumericSegmentationBoundary,
+} from './numeric-domain-segmentation';
+import type { RealIntervalDomainClassification } from './real-interval-arithmetic';
 
 export type EquationAnalysisEvidenceCategory =
   | 'route'
@@ -361,4 +366,126 @@ export function buildEquationSingularityEvidence(input: {
         : { value: pointValue, role: 'singularity' as const },
     }];
   });
+}
+
+function intervalFromNumericInterval(interval: NumericSolveInterval) {
+  const start = Number(interval.start);
+  const end = Number(interval.end);
+  const subdivisions = Number(interval.subdivisions);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) {
+    return null;
+  }
+  return {
+    start,
+    end,
+    subdivisions: Number.isInteger(subdivisions) ? subdivisions : undefined,
+  };
+}
+
+function intervalClassificationEvidence(input: {
+  classification: RealIntervalDomainClassification;
+  target: string;
+  sourceRoute: string;
+  interval: NumericSolveInterval;
+}): EquationAnalysisEvidence {
+  return {
+    id: [
+      'interval-validity',
+      input.sourceRoute,
+      input.target,
+      input.classification.status,
+      input.classification.factKind,
+      input.classification.expressionLatex ?? '',
+      input.classification.relationLatex ?? '',
+      input.classification.message,
+    ].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'interval-validity',
+    classification: input.classification.status,
+    confidence: input.classification.status === 'unknown' ? 'unknown' : 'reported',
+    latex: input.classification.expressionLatex && input.classification.relationLatex
+      ? `${input.classification.expressionLatex}${input.classification.relationLatex}`
+      : input.classification.expressionLatex,
+    text: input.classification.evidence,
+    interval: {
+      start: input.interval.start,
+      end: input.interval.end,
+      subdivisions: input.interval.subdivisions,
+      local: true,
+    },
+  };
+}
+
+function boundaryEvidence(input: {
+  boundary: EquationNumericSegmentationBoundary;
+  target: string;
+  sourceRoute: string;
+  interval: NumericSolveInterval;
+}): EquationAnalysisEvidence {
+  return {
+    id: [
+      'interval-boundary',
+      input.sourceRoute,
+      input.target,
+      input.boundary.kind,
+      input.boundary.value.toPrecision(12),
+    ].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'interval-validity',
+    classification: `boundary:${input.boundary.kind}`,
+    confidence: input.boundary.kind === 'sampled-discontinuity' ? 'heuristic' : 'reported',
+    text: input.boundary.message,
+    interval: {
+      start: input.interval.start,
+      end: input.interval.end,
+      subdivisions: input.interval.subdivisions,
+      local: true,
+    },
+    point: {
+      value: input.boundary.value,
+      role: input.boundary.excludedCandidate ? 'singularity' : 'boundary',
+    },
+  };
+}
+
+export function buildEquationIntervalValidityEvidence(input: {
+  equationLatex: string;
+  target: string;
+  sourceRoute: string;
+  angleUnit: AngleUnit;
+  numericInterval?: NumericSolveInterval;
+}): EquationAnalysisEvidence[] {
+  if (!input.numericInterval) {
+    return [];
+  }
+  const parsed = intervalFromNumericInterval(input.numericInterval);
+  if (!parsed) {
+    return [];
+  }
+  const plan = buildEquationNumericSegmentationPlan({
+    equationLatex: input.equationLatex,
+    zeroFormLatex: equationToZeroFormLatex(input.equationLatex),
+    target: input.target,
+    start: parsed.start,
+    end: parsed.end,
+    angleUnit: input.angleUnit,
+  });
+  return [
+    ...plan.intervalArithmetic.classifications.map((classification) =>
+      intervalClassificationEvidence({
+        classification,
+        target: input.target,
+        sourceRoute: input.sourceRoute,
+        interval: input.numericInterval as NumericSolveInterval,
+      })),
+    ...plan.boundaries.map((boundary) =>
+      boundaryEvidence({
+        boundary,
+        target: input.target,
+        sourceRoute: input.sourceRoute,
+        interval: input.numericInterval as NumericSolveInterval,
+      })),
+  ];
 }
