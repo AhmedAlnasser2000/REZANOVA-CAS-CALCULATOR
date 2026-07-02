@@ -89,8 +89,13 @@ describe('algebraic genus-1 normal-form readiness', () => {
     const result = success('\\sqrt{x^3-x}');
 
     expect(result.normalFormKind).toBe('root-based-readiness');
+    expect(result.rootLegendreData).toMatchObject({
+      dataKind: 'cubic-three-real-roots',
+      preferredBranchLatex: 'x>\\alpha_{3}',
+    });
     expect(result.detailSections[0].title).toBe('Genus-1 Root Definitions');
     expect(result.detailSections[0].lines.join('\n')).toContain('\\alpha_{1}');
+    expect(result.detailSections.some((section) => section.title === 'Root Legendre Data')).toBe(true);
     expect(result.readinessNotes.join('\n')).toContain('differential-basis reduction');
   });
 

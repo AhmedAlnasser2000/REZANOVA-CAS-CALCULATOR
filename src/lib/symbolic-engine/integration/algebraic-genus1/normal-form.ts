@@ -23,6 +23,10 @@ import {
   type AlgebraicGenus1NamedRootReadbackDetail,
   type AlgebraicGenus1NamedRootReadbackResult,
 } from './named-root-readback';
+import {
+  buildAlgebraicGenus1RootLegendreData,
+  type AlgebraicGenus1RootLegendreData,
+} from './root-legendre-data';
 
 export type AlgebraicGenus1NormalFormKind =
   | 'legendre-first-kind'
@@ -52,6 +56,7 @@ export type AlgebraicGenus1NormalFormResult =
       variable: string;
       normalFormKind: AlgebraicGenus1NormalFormKind;
       legendreData?: AlgebraicGenus1LegendreData;
+      rootLegendreData?: AlgebraicGenus1RootLegendreData;
       exactSupplementEntries: ExactSupplementEntry[];
       detailSections: AlgebraicGenus1NamedRootReadbackDetail[];
       readinessNotes: string[];
@@ -414,14 +419,25 @@ function rootBasedReadiness(node: unknown, variable: string) {
     };
   }
 
+  const rootLegendre = buildAlgebraicGenus1RootLegendreData(node, variable);
+  const rootLegendreData = rootLegendre.kind === 'success' ? rootLegendre : undefined;
+  const rootLegendreDetailSections = rootLegendreData?.detailSections ?? [];
+  const rootLegendreReadinessNotes = rootLegendreData?.readinessNotes
+    ?? (rootLegendre.kind === 'stop' ? [rootLegendre.detail] : []);
+
   return {
     kind: 'success' as const,
     variable,
     normalFormKind: 'root-based-readiness' as const,
+    rootLegendreData,
     exactSupplementEntries: named.endpointExclusionFacts,
-    detailSections: named.detailSections,
+    detailSections: [
+      ...named.detailSections,
+      ...rootLegendreDetailSections,
+    ],
     readinessNotes: [
       ...named.readinessNotes,
+      ...rootLegendreReadinessNotes,
       'Root-based Legendre substitution data waits for the differential-basis reduction milestone.',
     ],
   };
