@@ -65,6 +65,18 @@ describe('natural limit route classifier', () => {
     });
   });
 
+  it('classifies Piecewise branch routes before general body parsing', () => {
+    expect(classifyNaturalLimitRoute('lim x -> 0 piecewise(x if x<0, x^2 otherwise)')).toMatchObject({
+      kind: 'piecewise',
+      reason: expect.stringContaining('Piecewise'),
+    });
+    expect(classifyNaturalLimitRoute(
+      '\\lim_{x\\to0}\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}',
+    )).toMatchObject({
+      kind: 'piecewise',
+    });
+  });
+
   it('returns controlled unsupported and malformed routes', () => {
     expect(classifyNaturalLimitRoute('lim x -> 0 floor(1/x)')).toMatchObject({
       kind: 'unsupported',

@@ -22,6 +22,7 @@ import {
   limitVariableMismatchDetails,
   limitVariableMismatchError,
 } from '../limit-variable-analysis';
+import { resolvePiecewiseLimit } from '../../symbolic-engine/limits';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
   CalculusFiniteLimitState,
@@ -115,6 +116,45 @@ function appendRouteExplanation(
 
 function finiteTargetLabel(direction: LimitDirection) {
   return direction === 'left' ? 'Left-hand' : 'Right-hand';
+}
+
+function evaluatePiecewiseLimitRequest(
+  request: NaturalLimitRequest,
+): AdvancedLimitEvaluation | undefined {
+  const piecewise = resolvePiecewiseLimit({
+    bodyLatex: request.bodyLatex,
+    variable: request.variable,
+    target: request.target.kind === 'finite'
+      ? {
+          kind: 'finite',
+          value: request.target.value,
+          direction: request.target.direction,
+        }
+      : {
+          kind: 'infinite',
+          targetKind: request.target.targetKind,
+        },
+  });
+
+  if (piecewise.kind === 'not-piecewise') {
+    return undefined;
+  }
+
+  if (piecewise.kind === 'failure') {
+    return {
+      warnings: [],
+      error: piecewise.error,
+      detailSections: piecewise.detailSections,
+    };
+  }
+
+  return {
+    exactLatex: piecewise.exactLatex,
+    approxText: piecewise.approxText,
+    warnings: [],
+    resultOrigin: piecewise.origin,
+    detailSections: piecewise.detailSections,
+  };
 }
 
 export function evaluateCalculusFiniteLimit(
@@ -232,6 +272,11 @@ export function evaluateCalculusLimit(
   }
 
   const evaluate = (): AdvancedLimitEvaluation => {
+    const piecewise = evaluatePiecewiseLimitRequest(request);
+    if (piecewise) {
+      return piecewise;
+    }
+
     if (request.target.kind === 'finite') {
       return evaluateCalculusFiniteLimit({
         bodyLatex: request.bodyLatex,

@@ -13,6 +13,7 @@ import {
   hasFiniteRecursiveLeadingTermCandidate,
   hasFiniteSqueezeOscillationCandidate,
   hasInfiniteScaleCandidate,
+  parsePiecewiseLimitExpression,
 } from '../symbolic-engine/limits';
 
 const ce = new ComputeEngine();
@@ -30,6 +31,7 @@ export type LimitRouteKind =
   | 'lhospital-candidate'
   | 'taylor-series-candidate'
   | 'squeeze-oscillation'
+  | 'piecewise'
   | 'unsupported'
   | 'malformed'
   | 'too-complex';
@@ -324,6 +326,24 @@ export function classifyNaturalLimitRoute(input: string): LimitRouteClassificati
     return {
       kind: 'malformed',
       reason: parsed.error,
+    };
+  }
+
+  const piecewise = parsePiecewiseLimitExpression(parsed.request.bodyLatex);
+  if (piecewise.kind === 'malformed') {
+    return {
+      kind: 'malformed',
+      reason: piecewise.error,
+      request: parsed.request,
+    };
+  }
+  if (piecewise.kind === 'piecewise') {
+    return {
+      kind: 'piecewise',
+      reason: 'A Piecewise expression can be resolved by selecting one-sided or infinity branches.',
+      request: parsed.request,
+      nodeCount: piecewise.branches.length,
+      maxDepth: 2,
     };
   }
 

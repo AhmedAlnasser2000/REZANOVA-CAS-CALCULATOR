@@ -54,3 +54,12 @@ export {
   resolveFiniteRewriteCancellationLimit,
   resolveInfiniteRewriteCancellationLimit,
 } from './limits/rewrite-cancellation-spine';
+export {
+  collectPiecewiseLimitVariables,
+  parsePiecewiseLimitExpression,
+  resolvePiecewiseLimit,
+  type PiecewiseLimitBranch,
+  type PiecewiseLimitCondition,
+  type PiecewiseLimitParseResult,
+  type PiecewiseLimitResolution,
+} from './limits/piecewise-limits';

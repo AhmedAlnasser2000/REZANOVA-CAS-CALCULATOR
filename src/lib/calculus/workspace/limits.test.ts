@@ -192,6 +192,43 @@ describe('calculus limits', () => {
     expect(scale.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
   });
 
+  it('handles natural Piecewise limit expressions', () => {
+    const friendly = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 piecewise(x if x<0, x^2 otherwise)',
+    });
+    expect(friendly.error).toBeUndefined();
+    expect(friendly.exactLatex).toBe('0');
+    expect(friendly.resultOrigin).toBe('symbolic');
+    expect(friendly.detailSections?.[0]?.title).toBe('Limit Method');
+    expect(friendly.detailSections?.[0]?.lines.join(' ')).toContain('piecewise branch analysis');
+    expect(friendly.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('Route chosen: piecewise branch analysis');
+
+    const mismatch = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 piecewise(-1 if x<0, 1 otherwise)',
+    });
+    expect(mismatch.error).toContain('do not agree');
+    expect(mismatch.detailSections?.[0]?.title).toBe('Why This Limit Fails');
+    expect(mismatch.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0^{-}}-1=-1',
+    });
+    expect(mismatch.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('did not resolve the expression within the current exact rules');
+
+    const cases = evaluateCalculusLimit({
+      requestLatex: '\\lim_{x\\to0}\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}',
+    });
+    expect(cases.error).toBeUndefined();
+    expect(cases.exactLatex).toBe('0');
+
+    const infinity = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity piecewise(1 if x<0, 2 otherwise)',
+    });
+    expect(infinity.error).toBeUndefined();
+    expect(infinity.exactLatex).toBe('2');
+  });
+
   it('stops variable mismatches with a correction suggestion', () => {
     const result = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity (3t^2+1)/(2t^2-5)',

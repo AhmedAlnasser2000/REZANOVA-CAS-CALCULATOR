@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../types/calculator';
+import { collectPiecewiseLimitVariables } from '../symbolic-engine/limits';
 import {
   derivativeVariableLatex,
   parseDerivativeVariable,
@@ -48,6 +49,11 @@ function collectVariablesFromNode(node: unknown, variables: Set<string>) {
 }
 
 export function collectNaturalLimitBodyVariables(bodyLatex: string): string[] {
+  const piecewiseVariables = collectPiecewiseLimitVariables(bodyLatex);
+  if (piecewiseVariables !== undefined) {
+    return piecewiseVariables;
+  }
+
   const variables = new Set<string>();
   try {
     collectVariablesFromNode(ce.parse(bodyLatex).json, variables);
