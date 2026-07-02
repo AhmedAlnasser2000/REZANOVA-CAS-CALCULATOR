@@ -20,6 +20,17 @@ describe('runMatrixMode', () => {
     expect(result.sourceMode).toBe('matrix');
   });
 
+  it('labels Matrix basis operations for direct runs', () => {
+    const result = runMatrixMode({
+      operation: 'basisA',
+      matrixA: [[1, 2], [3, 4]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('basis(A)');
+    expect(result.kind).toBe('success');
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

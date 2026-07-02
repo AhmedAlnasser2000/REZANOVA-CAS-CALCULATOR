@@ -21,6 +21,7 @@ import {
   type MatrixCoreStopReason,
   type NumericMatrixRequest,
 } from './matrix-core';
+import { runMatrixBasis } from './matrix-basis';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixSpaceOperation } from './matrix-spaces';
@@ -198,6 +199,31 @@ function exactInvertibilityResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactBasisResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'basisA') {
+    return runMatrixBasis({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+
+  if (req.operation === 'basisB') {
+    return req.matrixB
+      ? runMatrixBasis({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -270,6 +296,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const invertibilityResponse = exactInvertibilityResponse(req);
   if (invertibilityResponse) {
     return invertibilityResponse;
+  }
+
+  const basisResponse = exactBasisResponse(req);
+  if (basisResponse) {
+    return basisResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

@@ -308,6 +308,27 @@ function matrixUnaryRequest(
     };
   }
 
+  if (expression.operator === 'basis') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? {
+            operation: 'basisB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
+          }
+        : {
+            operation: 'basisA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
+          },
+    };
+  }
+
   if (expression.operator === 'invertibility') {
     return {
       ok: true,

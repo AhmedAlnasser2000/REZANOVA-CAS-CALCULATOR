@@ -70,6 +70,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'col(A)';
     case 'columnSpaceB':
       return 'col(B)';
+    case 'basisA':
+      return 'basis(A)';
+    case 'basisB':
+      return 'basis(B)';
     case 'invertibilityA':
       return 'invertible(A)';
     case 'invertibilityB':

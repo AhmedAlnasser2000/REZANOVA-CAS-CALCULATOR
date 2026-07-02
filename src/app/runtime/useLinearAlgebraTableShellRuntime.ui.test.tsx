@@ -354,6 +354,16 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       'The pivot columns of the original matrix form a basis for its column space.',
     );
 
+    const basisLatex = '\\operatorname{basis}\\left(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}\\right)';
+    const basis = await runMatrixExpression(basisLatex);
+    expect(basis).toMatchObject({
+      kind: 'success',
+      title: basisLatex,
+      exactLatex: '\\operatorname{basis}(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix})=\\text{Yes}',
+    });
+    expect(basis.kind === 'success' ? basis.detailSections?.map((section) => section.title) : [])
+      .toContain('Basis Proof');
+
     const eigenLatex = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
     const eigen = await runMatrixExpression(eigenLatex);
     expect(eigen).toMatchObject({

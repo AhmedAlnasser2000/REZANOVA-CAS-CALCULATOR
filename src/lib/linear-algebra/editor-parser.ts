@@ -17,6 +17,7 @@ export type LinearAlgebraUnaryOperator =
   | 'rref'
   | 'nullSpace'
   | 'columnSpace'
+  | 'basis'
   | 'invertibility'
   | 'eigen'
   | 'transpose'
@@ -100,6 +101,8 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{Null\}/g, 'null')
     .replace(/\\operatorname\{col\}/g, 'col')
     .replace(/\\operatorname\{Col\}/g, 'col')
+    .replace(/\\operatorname\{basis\}/g, 'basis')
+    .replace(/\\operatorname\{Basis\}/g, 'basis')
     .replace(/\\operatorname\{invertible\}/g, 'invertible')
     .replace(/\\operatorname\{Invertible\}/g, 'invertible')
     .replace(/\\operatorname\{eigen\}/g, 'eigen')
@@ -520,6 +523,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['rref', 'rref'],
     ['null', 'nullSpace'],
     ['col', 'columnSpace'],
+    ['basis', 'basis'],
     ['invertible', 'invertibility'],
     ['eigen', 'eigen'],
     ['norm', 'norm'],

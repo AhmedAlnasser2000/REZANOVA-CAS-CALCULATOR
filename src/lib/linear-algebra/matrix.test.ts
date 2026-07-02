@@ -173,6 +173,58 @@ describe('runMatrixOperation', () => {
     expect(columnSpace.resultLatex).toBe('\\operatorname{Col}(A)=\\{0\\}');
   });
 
+  it('validates whether matrix columns form a basis', () => {
+    const basis = runMatrixOperation({
+      operation: 'basisA',
+      matrixA,
+      matrixB,
+    });
+    const singular = runMatrixOperation({
+      operation: 'basisA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB,
+    });
+    const rectangular = runMatrixOperation({
+      operation: 'basisA',
+      matrixA: [[1, 2, 3], [4, 5, 6]],
+      matrixB,
+    });
+
+    expect(basis.resultLatex).toBe('\\operatorname{basis}(A)=\\text{Yes}');
+    expect(basis.approxText).toBe('det(A) = -2');
+    expect(basis.detailSections?.map((section) => section.title)).toEqual(['Basis Facts', 'Basis Proof']);
+    expect(basis.detailSections?.[0]?.lines).toContain('\\operatorname{pivot\\ columns}=\\{1, 2\\}');
+    expect(basis.detailSections?.[1]?.lines).toContain(
+      'The matrix is square and every column is a pivot, so its columns form a basis for \\mathbb{R}^{2}.',
+    );
+
+    expect(singular.resultLatex).toBe('\\operatorname{basis}(A)=\\text{No}');
+    expect(singular.approxText).toBe('det(A) = 0');
+    expect(singular.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)=1');
+    expect(singular.detailSections?.[1]?.lines).toContain(
+      'The matrix is square, but at least one column is not a pivot, so the columns are dependent and do not form a basis.',
+    );
+
+    expect(rectangular.resultLatex).toBe('\\operatorname{basis}(A)=\\text{No}');
+    expect(rectangular.approxText).toBe('rank 2, 3 column vectors in R^2');
+    expect(rectangular.detailSections?.[1]?.lines).toContain(
+      'A basis for \\mathbb{R}^{2} needs exactly 2 independent vectors. This matrix has 3 column vectors and rank 2.',
+    );
+  });
+
+  it('uses inline Matrix operand labels in basis readback', () => {
+    const label = '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}';
+    const basis = runMatrixOperation({
+      operation: 'basisA',
+      matrixA,
+      matrixB,
+      matrixOperandLatexA: label,
+    });
+
+    expect(basis.resultLatex).toBe(`\\operatorname{basis}(${label})=\\text{Yes}`);
+    expect(basis.detailSections?.[0]?.lines).toContain(`\\operatorname{rank}(${label})=2`);
+  });
+
   it('explains invertibility theorem facts for square matrices', () => {
     const invertible = runMatrixOperation({
       operation: 'invertibilityA',

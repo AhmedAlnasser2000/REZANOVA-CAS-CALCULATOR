@@ -36,6 +36,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{RREF}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'rref' });
     expect(parsed('\\operatorname{null}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'nullSpace' });
     expect(parsed('\\operatorname{col}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'columnSpace' });
+    expect(parsed('\\operatorname{basis}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'basis' });
     expect(parsed('\\operatorname{invertible}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'invertibility' });
     expect(parsed('\\operatorname{eigen}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'eigen' });
   });
