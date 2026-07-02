@@ -12,6 +12,21 @@ import {
   type WorkspaceInstance,
 } from '../runtime/workspace-instances';
 import { ActiveSurfaceHost } from './ActiveSurfaceHost';
+import type { ModeId } from '../../types/calculator';
+
+const modeLabels: Record<ModeId, string> = {
+  calculate: 'Calculate',
+  calculus: 'Calculus',
+  equation: 'Equation',
+  geometry: 'Geometry',
+  guide: 'Guide',
+  labs: 'Labs',
+  matrix: 'Matrix',
+  statistics: 'Statistics',
+  table: 'Table',
+  trigonometry: 'Trigonometry',
+  vector: 'Vector',
+};
 
 function answerBlock(): DisplayBlock {
   return {
@@ -48,18 +63,36 @@ function formulaViewerInstance(): WorkspaceInstance {
   };
 }
 
+function activeSurfaceHostProps() {
+  return {
+    history: [],
+    modeLabels,
+    onCopyResult: vi.fn(),
+    onDeleteHistoryEntry: vi.fn(),
+    onDeleteSelectedHistoryEntries: vi.fn(),
+    onFocusTab: vi.fn(),
+    onPatchSettings: vi.fn(),
+    onReplayHistoryEntry: vi.fn(),
+    onReplayHistoryEntryInNewTab: vi.fn(),
+    onResetCalculatorMemory: vi.fn(),
+    onResetHistory: vi.fn(),
+    onStopPendingHistoryTicket: vi.fn(),
+    pendingHistory: [],
+    renderCalculatorSurface: () => (
+      <div data-testid="calculator-shell">Calculator body</div>
+    ),
+    settings: DEFAULT_SETTINGS,
+    symbolicDisplayPrefs: DEFAULT_SETTINGS,
+    workspaceInstances: [],
+  };
+}
+
 describe('ActiveSurfaceHost', () => {
   it('renders calculator workspaces through the calculator surface slot', () => {
     render(
       <ActiveSurfaceHost
+        {...activeSurfaceHostProps()}
         activeInstance={createWorkspaceInstance('calculate', 1)}
-        onCopyResult={vi.fn()}
-        onFocusTab={vi.fn()}
-        renderCalculatorSurface={() => (
-          <div data-testid="calculator-shell">Calculator body</div>
-        )}
-        symbolicDisplayPrefs={DEFAULT_SETTINGS}
-        workspaceInstances={[]}
       />,
     );
 
@@ -79,13 +112,10 @@ describe('ActiveSurfaceHost', () => {
 
     render(
       <ActiveSurfaceHost
+        {...activeSurfaceHostProps()}
         activeInstance={formulaViewerInstance()}
         onCopyResult={onCopyResult}
         onFocusTab={onFocusTab}
-        renderCalculatorSurface={() => (
-          <div data-testid="calculator-shell">Calculator body</div>
-        )}
-        symbolicDisplayPrefs={DEFAULT_SETTINGS}
         workspaceInstances={[source]}
       />,
     );
@@ -100,5 +130,42 @@ describe('ActiveSurfaceHost', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to source' }));
     expect(onFocusTab).toHaveBeenCalledWith('equation.1');
+  });
+
+  it('renders Settings as a page surface outside the calculator shell', () => {
+    render(
+      <ActiveSurfaceHost
+        {...activeSurfaceHostProps()}
+        activeInstance={createWorkspaceInstance('settings', 2)}
+      />,
+    );
+
+    const pageSurface = screen.getByTestId('active-surface-page');
+    expect(pageSurface).toHaveAttribute('data-surface-kind', 'settings');
+    expect(pageSurface).toContainElement(screen.getByTestId('settings-page'));
+    expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
+  });
+
+  it('renders History as a page surface outside the calculator shell', () => {
+    render(
+      <ActiveSurfaceHost
+        {...activeSurfaceHostProps()}
+        activeInstance={createWorkspaceInstance('history', 3)}
+        history={[
+          {
+            id: 'history.1',
+            inputLatex: 'x+1=2',
+            mode: 'equation',
+            resultLatex: 'x=1',
+            timestamp: '2026-07-01T10:00:00Z',
+          },
+        ]}
+      />,
+    );
+
+    const pageSurface = screen.getByTestId('active-surface-page');
+    expect(pageSurface).toHaveAttribute('data-surface-kind', 'history');
+    expect(pageSurface).toContainElement(screen.getByTestId('history-page'));
+    expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 });

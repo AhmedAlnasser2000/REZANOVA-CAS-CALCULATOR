@@ -15,9 +15,14 @@ import {
   type FormulaViewerArtifact,
   type FormulaViewerWorkspaceKind,
 } from './formula-viewer-artifacts';
+import {
+  appPageWorkspaceTitle,
+  isAppPageWorkspaceKind,
+  type AppPageWorkspaceKind,
+} from './app-page-workspaces';
 
 export type { WorkspaceInstanceId, WorkspaceInstanceRuntimeContext };
-export type WorkspaceKind = ModeId | FormulaViewerWorkspaceKind;
+export type WorkspaceKind = ModeId | FormulaViewerWorkspaceKind | AppPageWorkspaceKind;
 
 export type WorkspaceInstanceStateSlot = Readonly<Record<string, unknown>> | null;
 export type WorkspaceInstanceTitleSource = 'default' | 'custom';
@@ -81,6 +86,9 @@ export function defaultWorkspaceInstanceTitle(workspaceKind: WorkspaceKind) {
   if (isFormulaViewerWorkspaceKind(workspaceKind)) {
     return 'Formula Viewer';
   }
+  if (isAppPageWorkspaceKind(workspaceKind)) {
+    return appPageWorkspaceTitle(workspaceKind);
+  }
   return MODE_LABELS[workspaceKind];
 }
 
@@ -91,15 +99,23 @@ export function isFormulaViewerWorkspaceKind(
 }
 
 export function isWorkspaceModeKind(workspaceKind: WorkspaceKind): workspaceKind is ModeId {
-  return !isFormulaViewerWorkspaceKind(workspaceKind);
+  return !isFormulaViewerWorkspaceKind(workspaceKind) && !isAppPageWorkspaceKind(workspaceKind);
 }
 
 export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind) {
   if (isFormulaViewerWorkspaceKind(workspaceKind)) {
     return {
-      compartmentId: 'calculate' as CompartmentId,
+      compartmentId: 'app-shell' as CompartmentId,
       compartmentLabel: 'Formula Viewer',
       surfaceLabel: 'Formula Viewer',
+    };
+  }
+
+  if (isAppPageWorkspaceKind(workspaceKind)) {
+    return {
+      compartmentId: 'app-shell' as CompartmentId,
+      compartmentLabel: 'App Page',
+      surfaceLabel: `${appPageWorkspaceTitle(workspaceKind)} page`,
     };
   }
 
@@ -128,7 +144,10 @@ export function resolveWorkspaceInstanceCompartment(workspaceKind: WorkspaceKind
 export function workspaceInstanceRuntimeContext(
   instance: WorkspaceInstance,
 ): WorkspaceInstanceRuntimeContext | null {
-  if (isFormulaViewerWorkspaceKind(instance.workspaceKind)) {
+  if (
+    isFormulaViewerWorkspaceKind(instance.workspaceKind)
+    || isAppPageWorkspaceKind(instance.workspaceKind)
+  ) {
     return null;
   }
 
@@ -293,6 +312,14 @@ export function openFormulaViewerWorkspaceInstance(
     instances: [...state.instances, instance],
     nextOrder: state.nextOrder + 1,
   };
+}
+
+export function openAppPageWorkspaceInstance(
+  state: WorkspaceInstancesState,
+  workspaceKind: AppPageWorkspaceKind,
+  options: WorkspaceInstanceFactoryOptions = {},
+): WorkspaceInstancesState {
+  return focusLatestWorkspaceKindOrCreate(state, workspaceKind, options);
 }
 
 export function retargetActiveWorkspaceInstanceKind(

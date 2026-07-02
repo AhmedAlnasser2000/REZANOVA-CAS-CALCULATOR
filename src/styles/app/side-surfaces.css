@@ -268,13 +268,28 @@
   font-size: 0.92rem;
 }
 
-.settings-panel-close {
+.settings-panel-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.settings-panel-close,
+.settings-panel-open-full {
   border: 1px solid var(--control-border);
   border-radius: 14px;
   background: var(--control-surface);
   color: var(--control-text);
   padding: 10px 14px;
   cursor: pointer;
+}
+
+.settings-panel--page {
+  border: 1px solid rgba(228, 236, 220, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 14px;
 }
 
 .settings-panel-body {

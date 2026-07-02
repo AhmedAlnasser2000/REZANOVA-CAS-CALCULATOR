@@ -105,6 +105,7 @@ export const englishSettings = {
       'Stores work, variables, Ans, history, and safe result cards. The interval cannot go below 20 seconds.',
   },
   actions: {
+    openFullPage: 'Open Full Settings',
     resetHistory: 'Reset History',
     resetCalculatorMemory: 'Reset Calculator Memory',
   },

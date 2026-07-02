@@ -102,6 +102,7 @@ type UseHistoryDisplayRuntimeOptions = {
   restoreStatisticsHistoryEntry: (entry: HistoryEntry) => void;
   restoreTrigHistoryEntry: (entry: HistoryEntry) => void;
   routeToModeDestination?: (mode: ModeId, applyDestination: () => void) => boolean;
+  routeToModeDestinationInNewTab?: (mode: ModeId, applyDestination: () => void) => boolean;
   setClipboardNotice: (notice: string | null) => void;
   setLauncherSurfaceApp: () => void;
   setMode: (mode: ModeId) => void;
@@ -145,6 +146,7 @@ export function useHistoryDisplayRuntime({
   restoreStatisticsHistoryEntry,
   restoreTrigHistoryEntry,
   routeToModeDestination,
+  routeToModeDestinationInNewTab,
   setClipboardNotice,
   setLauncherSurfaceApp,
   setMode,
@@ -520,7 +522,19 @@ export function useHistoryDisplayRuntime({
     );
   }
 
-  function routeHistoryDestination(mode: ModeId, applyDestination: () => void) {
+  function routeHistoryDestination(
+    mode: ModeId,
+    applyDestination: () => void,
+    options: { openInNewTab?: boolean } = {},
+  ) {
+    if (
+      options.openInNewTab
+      && routeToModeDestinationInNewTab
+      && routeToModeDestinationInNewTab(mode, applyDestination)
+    ) {
+      return;
+    }
+
     if (routeToModeDestination) {
       routeToModeDestination(mode, applyDestination);
       return;
@@ -530,7 +544,10 @@ export function useHistoryDisplayRuntime({
     applyDestination();
   }
 
-  function replayHistoryEntry(entry: HistoryEntry) {
+  function replayHistoryEntryToDestination(
+    entry: HistoryEntry,
+    options: { openInNewTab?: boolean } = {},
+  ) {
     setLauncherSurfaceApp();
 
     const legacyCalculusScreen = entry.mode === 'calculate'
@@ -597,7 +614,15 @@ export function useHistoryDisplayRuntime({
         warnings: [],
       });
       closeHistoryPanel();
-    });
+    }, options);
+  }
+
+  function replayHistoryEntry(entry: HistoryEntry) {
+    replayHistoryEntryToDestination(entry);
+  }
+
+  function replayHistoryEntryInNewTab(entry: HistoryEntry) {
+    replayHistoryEntryToDestination(entry, { openInNewTab: true });
   }
 
   function restoreHistoryDisplayMemorySnapshot(snapshot: CalculatorMemorySnapshot) {
@@ -727,6 +752,7 @@ export function useHistoryDisplayRuntime({
     markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
     pendingHistoryTickets,
     replayHistoryEntry,
+    replayHistoryEntryInNewTab,
     reservePendingHistoryTicket,
     resetHistory,
     resetHistoryDisplayMemory,

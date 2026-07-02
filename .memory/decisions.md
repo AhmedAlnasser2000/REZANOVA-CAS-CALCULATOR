@@ -1580,3 +1580,7 @@
 ## 2026-07-01 - CALCULUS-LIMITS-EDITOR-SOURCE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guided Calculus Limits now expose one visible `Limit` screen whose main editor stores the full natural limit request. Legacy `finiteLimit` and `infiniteLimit` routes/seeds remain loadable as hidden compatibility paths that convert into the canonical request source; the Answer card remains the sole result owner.
+
+## 2026-07-01 - SETTINGS-HISTORY-PAGE-SURFACES1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Settings and History are live singleton app-page workspace kinds, not calculator `ModeId`s. Quick Settings and History inspectors remain first-class fast-access side panels; full pages are additive app surfaces outside `.calculator-shell`, use null Order of Execution runtime context, and protected page tab actions. History V1 stays over existing `HistoryEntry` plus pending-ticket data and must not expose Formula Viewer actions from persisted records.

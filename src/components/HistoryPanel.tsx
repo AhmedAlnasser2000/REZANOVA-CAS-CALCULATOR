@@ -19,6 +19,7 @@ type HistoryPanelProps = {
   onClear: () => void;
   onClose: () => void;
   onDelete: (id: string) => void;
+  onOpenFullPage?: () => void;
   onReplay: (entry: HistoryEntry) => void;
   onStopPending?: (ticket: PendingHistoryTicket) => void;
 };
@@ -31,6 +32,7 @@ export function HistoryPanel({
   onClear,
   onClose,
   onDelete,
+  onOpenFullPage,
   onReplay,
   onStopPending,
 }: HistoryPanelProps) {
@@ -75,6 +77,15 @@ export function HistoryPanel({
       <div className="history-header">
         <strong>{historyText.title}</strong>
         <div className="history-actions">
+          {onOpenFullPage ? (
+            <button
+              type="button"
+              data-testid="history-open-full-page"
+              onClick={onOpenFullPage}
+            >
+              {historyText.actions.openFullPage}
+            </button>
+          ) : null}
           <button type="button" onClick={onClear}>
             {historyText.actions.clear}
           </button>

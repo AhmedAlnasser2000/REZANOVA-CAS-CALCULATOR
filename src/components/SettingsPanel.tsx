@@ -14,15 +14,17 @@ import type {
   SettingsPatch,
 } from '../types/calculator';
 
-type SettingsPanelPresentation = 'outboard' | 'overlay';
+type SettingsPanelPresentation = 'outboard' | 'overlay' | 'page';
 
 type SettingsPanelProps = {
   presentation: SettingsPanelPresentation;
   settings: Settings;
   onClose: () => void;
+  onOpenFullPage?: () => void;
   onPatch: (patch: SettingsPatch) => void;
   onClearHistory: () => void;
   onResetCalculatorMemory: () => void;
+  showHeader?: boolean;
 };
 
 const MIN_CALCULATOR_MEMORY_AUTOSAVE_SECONDS = 20;
@@ -63,9 +65,11 @@ export function SettingsPanel({
   presentation,
   settings,
   onClose,
+  onOpenFullPage,
   onPatch,
   onClearHistory,
   onResetCalculatorMemory,
+  showHeader = true,
 }: SettingsPanelProps) {
   const { strings } = useLanguage();
   const settingsText = strings.settings;
@@ -135,20 +139,34 @@ export function SettingsPanel({
       data-testid="settings-panel"
       data-settings-presentation={presentation}
     >
-      <div className="settings-panel-header">
-        <div>
-          <strong>{settingsText.title}</strong>
-          <p>{settingsText.description}</p>
+      {showHeader ? (
+        <div className="settings-panel-header">
+          <div>
+            <strong>{settingsText.title}</strong>
+            <p>{settingsText.description}</p>
+          </div>
+          <div className="settings-panel-actions">
+            {onOpenFullPage ? (
+              <button
+                type="button"
+                className="settings-panel-open-full"
+                data-testid="settings-open-full-page"
+                onClick={onOpenFullPage}
+              >
+                {settingsText.actions.openFullPage}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="settings-panel-close"
+              data-testid="settings-close"
+              onClick={onClose}
+            >
+              {strings.common.actions.close}
+            </button>
+          </div>
         </div>
-        <button
-          type="button"
-          className="settings-panel-close"
-          data-testid="settings-close"
-          onClick={onClose}
-        >
-          {strings.common.actions.close}
-        </button>
-      </div>
+      ) : null}
 
       <div className="settings-panel-body">
         <section className="settings-section">

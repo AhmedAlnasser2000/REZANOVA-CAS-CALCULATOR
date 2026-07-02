@@ -37,6 +37,7 @@ describe('HistoryPanel', () => {
   it('renders panel chrome and empty state from the language catalog', () => {
     const onClear = vi.fn();
     const onClose = vi.fn();
+    const onOpenFullPage = vi.fn();
 
     render(
       <HistoryPanel
@@ -46,6 +47,7 @@ describe('HistoryPanel', () => {
         onClear={onClear}
         onClose={onClose}
         onDelete={vi.fn()}
+        onOpenFullPage={onOpenFullPage}
         onReplay={vi.fn()}
       />,
     );
@@ -54,9 +56,11 @@ describe('HistoryPanel', () => {
     expect(screen.getByText(historyText.empty)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: historyText.actions.clear }));
+    fireEvent.click(screen.getByTestId('history-open-full-page'));
     fireEvent.click(screen.getByRole('button', { name: historyText.actions.close }));
 
     expect(onClear).toHaveBeenCalledTimes(1);
+    expect(onOpenFullPage).toHaveBeenCalledTimes(1);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

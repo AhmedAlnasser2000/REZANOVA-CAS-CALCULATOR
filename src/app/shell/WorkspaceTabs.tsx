@@ -13,6 +13,11 @@ import type {
   WorkspaceSurfaceKind,
   WorkspaceTabActionPolicy,
 } from '../runtime/workspace-surfaces';
+import {
+  HISTORY_PAGE_WORKSPACE_KIND,
+  SETTINGS_PAGE_WORKSPACE_KIND,
+  type AppPageWorkspaceKind,
+} from '../runtime/app-page-workspaces';
 
 export type WorkspaceTabItem = {
   id: WorkspaceInstanceId;
@@ -35,6 +40,7 @@ type WorkspaceTabsProps = {
   onCreateBlankTab: () => void;
   onDuplicateTab: (tabId: WorkspaceInstanceId) => void;
   onFocusTab: (tabId: WorkspaceInstanceId) => void;
+  onOpenAppPageTab: (workspaceKind: AppPageWorkspaceKind) => void;
   onRenameTab: (tabId: WorkspaceInstanceId, title: string) => void;
   onStopJobsInTab: (tabId: WorkspaceInstanceId) => void;
 };
@@ -65,6 +71,7 @@ export function WorkspaceTabs({
   onCreateBlankTab,
   onDuplicateTab,
   onFocusTab,
+  onOpenAppPageTab,
   onRenameTab,
   onStopJobsInTab,
   tabs,
@@ -72,6 +79,7 @@ export function WorkspaceTabs({
   const { strings } = useLanguage();
   const tabText = strings.shell.workspaceTabs;
   const [openMenuTabId, setOpenMenuTabId] = useState<WorkspaceInstanceId | null>(null);
+  const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const [renamingTabId, setRenamingTabId] = useState<WorkspaceInstanceId | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
@@ -86,9 +94,23 @@ export function WorkspaceTabs({
   }
 
   function beginRename(tab: WorkspaceTabItem) {
+    if (!tab.actionPolicy.canRename) {
+      setOpenMenuTabId(null);
+      return;
+    }
     setRenameDraft(tab.title);
     setRenamingTabId(tab.id);
     setOpenMenuTabId(null);
+  }
+
+  function createBlankTabFromMenu() {
+    setCreateMenuOpen(false);
+    onCreateBlankTab();
+  }
+
+  function openAppPageFromMenu(workspaceKind: AppPageWorkspaceKind) {
+    setCreateMenuOpen(false);
+    onOpenAppPageTab(workspaceKind);
   }
 
   function submitRename(event: FormEvent<HTMLFormElement>) {
@@ -198,6 +220,7 @@ export function WorkspaceTabs({
                     data-testid="workspace-tab-menu-button"
                     onClick={(event) => {
                       stopEvent(event);
+                      setCreateMenuOpen(false);
                       setOpenMenuTabId((currentId) => currentId === tab.id ? null : tab.id);
                     }}
                   >
@@ -224,18 +247,63 @@ export function WorkspaceTabs({
           className="workspace-tab-add"
           aria-label={tabText.newCalculateTab}
           data-testid="workspace-tab-add"
-          onClick={onCreateBlankTab}
+          onClick={() => {
+            setCreateMenuOpen(false);
+            onCreateBlankTab();
+          }}
         >
           +
         </button>
+        <button
+          type="button"
+          className="workspace-tab-add-menu"
+          aria-label={tabText.openCreateMenu}
+          aria-expanded={createMenuOpen}
+          data-testid="workspace-tab-add-menu"
+          onClick={() => {
+            setOpenMenuTabId(null);
+            setCreateMenuOpen((currentValue) => !currentValue);
+          }}
+        >
+          ...
+        </button>
       </div>
+
+      {createMenuOpen ? (
+        <div
+          className="workspace-tab-menu workspace-tab-create-menu"
+          role="menu"
+          data-testid="workspace-tab-create-menu"
+        >
+          <strong>{tabText.createMenuTitle}</strong>
+          <button type="button" role="menuitem" onClick={createBlankTabFromMenu}>
+            {tabText.newCalculateTab}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => openAppPageFromMenu(SETTINGS_PAGE_WORKSPACE_KIND)}
+          >
+            {tabText.openSettingsPage}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => openAppPageFromMenu(HISTORY_PAGE_WORKSPACE_KIND)}
+          >
+            {tabText.openHistoryPage}
+          </button>
+        </div>
+      ) : null}
 
       {openMenuTab ? (
         <div className="workspace-tab-menu" role="menu" data-testid="workspace-tab-menu">
           <strong>{openMenuTab.title}</strong>
-          <button type="button" role="menuitem" onClick={() => beginRename(openMenuTab)}>
-            {tabText.rename}
-          </button>
+          {openMenuTab.actionPolicy.canRename ? (
+            <button type="button" role="menuitem" onClick={() => beginRename(openMenuTab)}>
+              {tabText.rename}
+            </button>
+          ) : null}
           {openMenuTab.actionPolicy.canDuplicate ? (
             <button
               type="button"

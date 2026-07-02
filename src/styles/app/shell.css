@@ -79,6 +79,269 @@
   min-height: min(900px, calc(100vh - 150px));
 }
 
+.app-page {
+  width: min(1480px, 100%);
+  margin-inline: auto;
+  display: grid;
+  gap: 18px;
+  min-height: min(900px, calc(100vh - 150px));
+  border: 1px solid var(--shell-border);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(28, 41, 43, 0.96), rgba(10, 18, 19, 0.98)),
+    rgba(14, 19, 20, 0.92);
+  box-shadow: var(--shell-shadow);
+  padding: 24px;
+  color: var(--surface-ink);
+}
+
+.app-page-header {
+  display: flex;
+  gap: 18px;
+  align-items: start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.app-page-header h1 {
+  margin: 2px 0 6px;
+  font-size: clamp(1.45rem, 2vw, 2.2rem);
+}
+
+.app-page-header p {
+  margin: 0;
+  color: var(--surface-subtle);
+}
+
+.app-page-kicker {
+  color: rgba(215, 223, 171, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+}
+
+.settings-page-grid {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.22fr) minmax(0, 1fr);
+  gap: 18px;
+  min-height: 0;
+}
+
+.settings-page-rail,
+.history-page-timeline,
+.history-page-inspector,
+.settings-page-status,
+.history-page-toolbar,
+.history-page-bulk-actions {
+  border: 1px solid rgba(228, 236, 220, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.settings-page-rail {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 14px;
+}
+
+.settings-page-rail span,
+.settings-page-status span {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--surface-muted);
+  padding: 8px 10px;
+  font-size: 0.84rem;
+}
+
+.settings-page-status {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px;
+}
+
+.app-page--history {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+.history-page-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 0.32fr);
+  gap: 12px;
+  padding: 12px;
+}
+
+.history-page-toolbar label {
+  display: grid;
+  gap: 6px;
+  color: var(--surface-subtle);
+  font-size: 0.78rem;
+}
+
+.history-page-toolbar input,
+.history-page-toolbar select {
+  min-width: 0;
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  background: rgba(5, 16, 17, 0.86);
+  color: var(--control-text);
+  padding: 10px 12px;
+}
+
+.history-page-layout {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.2fr) minmax(0, 1fr) minmax(260px, 0.28fr);
+  gap: 14px;
+  min-height: 0;
+}
+
+.history-page-timeline,
+.history-page-inspector {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  scrollbar-width: thin;
+}
+
+.history-page-timeline {
+  align-content: start;
+  display: grid;
+  gap: 8px;
+}
+
+.history-page-timeline button,
+.history-page-bulk-actions button,
+.history-page-inspector button {
+  border: 1px solid var(--control-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--control-text);
+  cursor: pointer;
+  padding: 9px 10px;
+}
+
+.history-page-timeline button {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+}
+
+.history-page-timeline button span:last-child {
+  color: rgba(244, 248, 232, 0.58);
+  font-size: 0.74rem;
+}
+
+.history-page-timeline button.is-active {
+  border-color: rgba(215, 223, 171, 0.5);
+  background: rgba(215, 223, 171, 0.12);
+}
+
+.history-page-ledger {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid rgba(228, 236, 220, 0.12);
+  border-radius: 18px;
+  background: rgba(5, 14, 15, 0.46);
+  scrollbar-width: thin;
+}
+
+.history-page-ledger-spacer {
+  position: relative;
+}
+
+.history-page-ledger-window {
+  position: absolute;
+  inset: 0 0 auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.history-page-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid rgba(228, 236, 220, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--surface-ink);
+  padding: 10px;
+}
+
+.history-page-row--pending {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.history-page-row.is-selected {
+  border-color: rgba(125, 207, 255, 0.55);
+  background: rgba(125, 207, 255, 0.08);
+}
+
+.history-page-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.history-page-row-main span,
+.history-page-row--pending span {
+  color: rgba(244, 248, 232, 0.58);
+  font-size: 0.74rem;
+}
+
+.history-page-row .math-static,
+.history-page-inspector .math-static {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.history-page-chip {
+  border: 1px solid rgba(228, 236, 220, 0.12);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.14);
+  color: rgba(244, 248, 232, 0.72);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
+.history-page-inspector {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.history-page-inspector section {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.history-page-inspector section > span {
+  color: rgba(244, 248, 232, 0.58);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.history-page-inspector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.history-page-empty {
+  padding: 18px;
+  color: var(--surface-subtle);
+}
+
 .calculator-shell {
   width: min(1480px, 100%);
   margin-inline: auto;
@@ -277,6 +540,7 @@ math-field:focus-visible {
 .workspace-tab-menu-button,
 .workspace-tab-close,
 .workspace-tab-add,
+.workspace-tab-add-menu,
 .workspace-tab-menu button,
 .workspace-tab-confirm button,
 .workspace-tab-rename button {
@@ -317,7 +581,8 @@ math-field:focus-visible {
 
 .workspace-tab-menu-button,
 .workspace-tab-close,
-.workspace-tab-add {
+.workspace-tab-add,
+.workspace-tab-add-menu {
   display: grid;
   place-items: center;
   border-left: 1px solid rgba(228, 236, 220, 0.09);
@@ -326,11 +591,13 @@ math-field:focus-visible {
 
 .workspace-tab-menu-button:hover,
 .workspace-tab-close:hover,
-.workspace-tab-add:hover {
+.workspace-tab-add:hover,
+.workspace-tab-add-menu:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.workspace-tab-add {
+.workspace-tab-add,
+.workspace-tab-add-menu {
   flex: 0 0 48px;
   height: 48px;
   border: 1px solid rgba(228, 236, 220, 0.18);
@@ -342,6 +609,11 @@ math-field:focus-visible {
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 10px 24px rgba(0, 0, 0, 0.18);
   font-size: 1.25rem;
+}
+
+.workspace-tab-add-menu {
+  flex-basis: 42px;
+  font-size: 0.9rem;
 }
 
 .workspace-tab-rename {
@@ -386,6 +658,12 @@ math-field:focus-visible {
   display: grid;
   gap: 4px;
   padding: 10px;
+}
+
+.workspace-tab-create-menu {
+  left: auto;
+  right: 10px;
+  width: min(260px, calc(100% - 20px));
 }
 
 .workspace-tab-menu strong {
@@ -741,5 +1019,25 @@ math-field:focus-visible {
   .workspace-tab-add {
     flex-basis: 44px;
     height: 44px;
+  }
+
+  .workspace-tab-add-menu {
+    flex-basis: 38px;
+    height: 44px;
+  }
+
+  .app-page {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .settings-page-grid,
+  .history-page-layout,
+  .history-page-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .history-page-layout {
+    grid-template-rows: auto minmax(420px, 1fr) auto;
   }
 }

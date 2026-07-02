@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
 import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
+import type { AppPageWorkspaceKind } from './app-page-workspaces';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
 import type { useWorkspaceDisplayStateHostRuntime } from './useWorkspaceDisplayStateHostRuntime';
 import type { useWorkspaceRuntimeStateHostRuntime } from './useWorkspaceRuntimeStateHostRuntime';
@@ -295,6 +296,26 @@ export function useWorkspaceTabsRuntime({
     workspaceStateHost,
   ]);
 
+  const openAppPageTab = useCallback((workspaceKind: AppPageWorkspaceKind) => {
+    workspaceDisplayHost.captureActiveDisplayState();
+    workspaceRuntimeHost.captureActiveRuntimeState();
+    workspaceStateHost.captureActiveSurfaceState();
+    workspaceInstances.openAppPageInstance(workspaceKind);
+  }, [
+    workspaceDisplayHost,
+    workspaceInstances,
+    workspaceRuntimeHost,
+    workspaceStateHost,
+  ]);
+
+  const renameTab = useCallback((instanceId: WorkspaceInstanceId, title: string) => {
+    const target = workspaceInstances.workspaceInstances.find((instance) => instance.id === instanceId);
+    if (!target || !resolveWorkspaceSurfaceDescriptor(target.workspaceKind).tabActionPolicy.canRename) {
+      return;
+    }
+    workspaceInstances.renameInstance(instanceId, title);
+  }, [workspaceInstances]);
+
   return useMemo(() => ({
     onClearTabState: clearTabState,
     onCloseOtherTabs: closeOtherTabs,
@@ -302,8 +323,9 @@ export function useWorkspaceTabsRuntime({
     onCreateBlankTab: createTab,
     onDuplicateTab: duplicateTab,
     onFocusTab: focusTab,
+    onOpenAppPageTab: openAppPageTab,
     onOpenFormulaViewerTab: openFormulaViewerTab,
-    onRenameTab: workspaceInstances.renameInstance,
+    onRenameTab: renameTab,
     onStopJobsInTab: stopTabJobs,
     tabs,
   }), [
@@ -313,9 +335,10 @@ export function useWorkspaceTabsRuntime({
     createTab,
     duplicateTab,
     focusTab,
+    openAppPageTab,
     openFormulaViewerTab,
+    renameTab,
     stopTabJobs,
     tabs,
-    workspaceInstances.renameInstance,
   ]);
 }

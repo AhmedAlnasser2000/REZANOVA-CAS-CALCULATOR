@@ -24,6 +24,7 @@ import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
 import { WorkspaceTabs } from './app/shell/WorkspaceTabs';
+import { HISTORY_PAGE_WORKSPACE_KIND, SETTINGS_PAGE_WORKSPACE_KIND } from './app/runtime/app-page-workspaces';
 import { resolveWorkspaceCompartment } from './app/shell/workspaceCompartment';
 import {
   useSideSurfaceRuntime,
@@ -427,6 +428,7 @@ export default function App() {
     markPendingHistoryTicketsForWorkspaceInstanceAsStopping,
     pendingHistoryTickets,
     replayHistoryEntry,
+    replayHistoryEntryInNewTab,
     reservePendingHistoryTicket,
     resetHistory,
     resetHistoryDisplayMemory,
@@ -457,6 +459,7 @@ export default function App() {
     restoreStatisticsHistoryEntry: (entry) => restoreStatisticsHistoryEntry(entry),
     restoreTrigHistoryEntry: (entry) => restoreTrigHistoryEntry(entry),
     routeToModeDestination,
+    routeToModeDestinationInNewTab,
     setClipboardNotice,
     setLauncherSurfaceApp: () => {
       setLauncherState((currentLauncherState) => ({
@@ -1982,6 +1985,24 @@ export default function App() {
     return true;
   }
 
+  function routeToModeDestinationInNewTab(mode: ModeId, applyDestination: () => void) {
+    if (mode === 'guide' || mode === 'labs') {
+      return false;
+    }
+
+    const createWorkspaceKindTab = createWorkspaceKindTabRef.current;
+    if (!createWorkspaceKindTab) {
+      return false;
+    }
+
+    flushSync(() => {
+      createWorkspaceKindTab(mode);
+      commitVisibleModeSelection(mode);
+    });
+    applyDestination();
+    return true;
+  }
+
   function routeLauncherWorkspaceDestination(
     entry: LauncherAppEntry,
     intent: LauncherLaunchIntent,
@@ -2700,6 +2721,7 @@ export default function App() {
           presentation={presentation}
           settings={settings}
           onClose={closeSettingsPanel}
+          onOpenFullPage={() => workspaceTabsRuntime.onOpenAppPageTab(SETTINGS_PAGE_WORKSPACE_KIND)}
           onPatch={patchSettings}
           onClearHistory={resetHistory}
           onResetCalculatorMemory={resetCalculatorMemory}
@@ -2717,6 +2739,7 @@ export default function App() {
           onClear={resetHistory}
           onClose={closeHistoryPanel}
           onDelete={deleteHistoryEntryById}
+          onOpenFullPage={() => workspaceTabsRuntime.onOpenAppPageTab(HISTORY_PAGE_WORKSPACE_KIND)}
           onReplay={replayHistoryEntry}
           onStopPending={stopPendingHistoryTicket}
         />
@@ -2796,8 +2819,14 @@ export default function App() {
         <WorkspaceTabs {...workspaceTabsRuntime} />
         <ActiveSurfaceHost
           activeInstance={workspaceInstancesRuntime.activeInstance}
+          history={history} modeLabels={MODE_LABELS}
           onCopyResult={(latex) => void copyText(latex, 'Result copied')}
+          onDeleteHistoryEntry={deleteHistoryEntryById} onDeleteSelectedHistoryEntries={(ids) => ids.forEach(deleteHistoryEntryById)}
           onFocusTab={workspaceTabsRuntime.onFocusTab}
+          onPatchSettings={patchSettings} onReplayHistoryEntry={replayHistoryEntry}
+          onReplayHistoryEntryInNewTab={replayHistoryEntryInNewTab} onResetCalculatorMemory={resetCalculatorMemory}
+          onResetHistory={resetHistory} onStopPendingHistoryTicket={stopPendingHistoryTicket}
+          pendingHistory={pendingHistoryTickets} settings={settings}
           renderCalculatorSurface={() => (
       <div
         className={`calculator-shell${settings.highContrast ? ' is-high-contrast' : ''}`}

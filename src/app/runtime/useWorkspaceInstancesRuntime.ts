@@ -7,6 +7,7 @@ import {
 } from 'react';
 import type { ModeId } from '../../types/calculator';
 import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
+import type { AppPageWorkspaceKind } from './app-page-workspaces';
 import {
   clearWorkspaceInstanceState,
   closeOtherWorkspaceInstances,
@@ -17,7 +18,8 @@ import {
   focusLatestWorkspaceKindOrCreate,
   focusWorkspaceInstance,
   getActiveWorkspaceInstance,
-  isFormulaViewerWorkspaceKind,
+  isWorkspaceModeKind,
+  openAppPageWorkspaceInstance,
   openFormulaViewerWorkspaceInstance,
   renameWorkspaceInstance,
   retargetActiveWorkspaceInstanceKind,
@@ -57,7 +59,7 @@ export function useWorkspaceInstancesRuntime(
   const syncSingletonMode = useCallback((mode: ModeId) => {
     setState((currentState) => {
       const activeInstance = getActiveWorkspaceInstance(currentState);
-      if (activeInstance && isFormulaViewerWorkspaceKind(activeInstance.workspaceKind)) {
+      if (activeInstance && !isWorkspaceModeKind(activeInstance.workspaceKind)) {
         return currentState;
       }
       return activeInstance?.workspaceKind === mode
@@ -144,6 +146,11 @@ export function useWorkspaceInstancesRuntime(
       openFormulaViewerWorkspaceInstance(currentState, artifact, factoryOptions()));
   }, [factoryOptions]);
 
+  const openAppPageInstance = useCallback((workspaceKind: AppPageWorkspaceKind) => {
+    setState((currentState) =>
+      openAppPageWorkspaceInstance(currentState, workspaceKind, factoryOptions()));
+  }, [factoryOptions]);
+
   const activeInstance = getActiveWorkspaceInstance(state);
   const activeRuntimeContext = activeInstance
     ? workspaceInstanceRuntimeContext(activeInstance)
@@ -174,6 +181,7 @@ export function useWorkspaceInstancesRuntime(
     focusInstance,
     isWorkspaceInstanceOpen,
     openFormulaViewerInstance,
+    openAppPageInstance,
     renameInstance,
     retargetActiveWorkspaceKind,
     syncSingletonMode,
@@ -193,6 +201,7 @@ export function useWorkspaceInstancesRuntime(
     focusInstance,
     isWorkspaceInstanceOpen,
     openFormulaViewerInstance,
+    openAppPageInstance,
     renameInstance,
     retargetActiveWorkspaceKind,
     state.activeInstanceId,

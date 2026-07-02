@@ -29,6 +29,29 @@ describe('SettingsPanel', () => {
     expect(onPatch).toHaveBeenCalledWith({ languageCode: 'en' });
   });
 
+  it('keeps the quick inspector while offering a full page affordance', () => {
+    const onOpenFullPage = vi.fn();
+    render(
+      <SettingsPanel
+        presentation="overlay"
+        settings={DEFAULT_SETTINGS}
+        onClose={vi.fn()}
+        onOpenFullPage={onOpenFullPage}
+        onPatch={vi.fn()}
+        onClearHistory={vi.fn()}
+        onResetCalculatorMemory={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId('settings-open-full-page'));
+
+    expect(onOpenFullPage).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('settings-panel')).toHaveAttribute(
+      'data-settings-presentation',
+      'overlay',
+    );
+  });
+
   it('renders panel-owned settings copy from the language catalog', () => {
     render(
       <SettingsPanel

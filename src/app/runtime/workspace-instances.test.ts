@@ -9,6 +9,7 @@ import {
   focusLatestWorkspaceKindOrCreate,
   focusWorkspaceInstance,
   openFormulaViewerWorkspaceInstance,
+  openAppPageWorkspaceInstance,
   getActiveWorkspaceInstance,
   renameWorkspaceInstance,
   retargetActiveWorkspaceInstanceKind,
@@ -155,7 +156,7 @@ describe('workspace instance model', () => {
       id: 'formula-viewer.2',
       workspaceKind: 'formula-viewer',
       title: 'Formula Viewer',
-      compartmentId: 'calculate',
+      compartmentId: 'app-shell',
       compartmentLabel: 'Formula Viewer',
       surfaceLabel: 'Formula Viewer',
     });
@@ -174,6 +175,41 @@ describe('workspace instance model', () => {
     expect(state.instances.map((instance) => instance.workspaceKind))
       .toEqual(['calculate', 'formula-viewer', 'formula-viewer']);
     expect(state.activeInstanceId).toBe('formula-viewer.3');
+  });
+
+  it('opens Settings and History as singleton app pages without OOE runtime context', () => {
+    const options = createDeterministicOptions();
+    let state = createInitialWorkspaceInstancesState(options);
+
+    state = openAppPageWorkspaceInstance(state, 'settings', options);
+    const settingsPage = getActiveWorkspaceInstance(state);
+
+    expect(settingsPage).toMatchObject({
+      id: 'settings.2',
+      workspaceKind: 'settings',
+      title: 'Settings',
+      compartmentId: 'app-shell',
+      compartmentLabel: 'App Page',
+      surfaceLabel: 'Settings page',
+    });
+    expect(settingsPage ? workspaceInstanceRuntimeContext(settingsPage) : null).toBeNull();
+
+    state = focusWorkspaceInstance(state, 'calculate.1', options);
+    state = openAppPageWorkspaceInstance(state, 'settings', options);
+
+    expect(state.instances.filter((instance) => instance.workspaceKind === 'settings'))
+      .toHaveLength(1);
+    expect(state.activeInstanceId).toBe('settings.2');
+
+    state = openAppPageWorkspaceInstance(state, 'history', options);
+
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      id: 'history.3',
+      workspaceKind: 'history',
+      title: 'History',
+      compartmentId: 'app-shell',
+    });
+    expect(workspaceInstanceRuntimeContext(getActiveWorkspaceInstance(state)!)).toBeNull();
   });
 
   it('renames with trimmed titles and falls back to the default label', () => {

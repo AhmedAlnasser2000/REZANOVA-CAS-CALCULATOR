@@ -1,0 +1,155 @@
+import {
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type {
+  HistoryEntry,
+  ModeId,
+  PendingHistoryTicket,
+} from '../../types/calculator';
+import { getLanguageCatalog } from '../../lib/language';
+import { HistoryPage } from './HistoryPage';
+import '../../styles/app/shell.css';
+
+const historyText = getLanguageCatalog('en').history;
+
+const modeLabels: Record<ModeId, string> = {
+  calculate: 'Calculate',
+  calculus: 'Calculus',
+  equation: 'Equation',
+  geometry: 'Geometry',
+  guide: 'Guide',
+  labs: 'Labs',
+  matrix: 'Matrix',
+  statistics: 'Statistics',
+  table: 'Table',
+  trigonometry: 'Trigonometry',
+  vector: 'Vector',
+};
+
+function entry(id: string, inputLatex = `x+${id}=5`): HistoryEntry {
+  return {
+    id,
+    historyLaunchOrder: Number(id),
+    inputLatex,
+    mode: Number(id) % 2 === 0 ? 'equation' : 'calculate',
+    resultLatex: `x=${id}`,
+    runtimeElapsedMs: 42,
+    timestamp: Number(id) % 2 === 0
+      ? '2026-07-01T12:00:00Z'
+      : '2026-06-30T12:00:00Z',
+  };
+}
+
+function renderHistoryPage(options: {
+  history?: HistoryEntry[];
+  pendingHistory?: PendingHistoryTicket[];
+} = {}) {
+  const handlers = {
+    onCopyResult: vi.fn(),
+    onDelete: vi.fn(),
+    onDeleteSelected: vi.fn(),
+    onReplay: vi.fn(),
+    onReplayInNewTab: vi.fn(),
+    onStopPending: vi.fn(),
+  };
+
+  render(
+    <HistoryPage
+      history={options.history ?? [entry('1'), entry('2')]}
+      pendingHistory={options.pendingHistory ?? []}
+      modeLabels={modeLabels}
+      {...handlers}
+    />,
+  );
+
+  return handlers;
+}
+
+describe('HistoryPage', () => {
+  it('groups rows by local date and filters by search and workspace', () => {
+    renderHistoryPage({
+      history: [
+        entry('1', 'alpha+1'),
+        entry('2', 'beta+2'),
+        entry('3', 'gamma+3'),
+      ],
+    });
+
+    expect(screen.getByTestId('history-page')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /All dates/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /item/ }).length).toBeGreaterThan(1);
+
+    fireEvent.change(screen.getByLabelText(historyText.filters.search), {
+      target: { value: 'beta' },
+    });
+
+    expect(screen.getAllByTestId('history-page-row')).toHaveLength(1);
+
+    fireEvent.change(screen.getByLabelText(historyText.filters.allWorkspaces), {
+      target: { value: 'calculate' },
+    });
+
+    expect(screen.getAllByText(historyText.empty).length).toBeGreaterThan(0);
+  });
+
+  it('virtualizes dense rows and keeps offscreen math unmounted', () => {
+    renderHistoryPage({
+      history: Array.from({ length: 80 }, (_, index) => entry(`${index + 1}`)),
+    });
+
+    const renderedRows = screen.getAllByTestId('history-page-row');
+    expect(renderedRows.length).toBeLessThan(80);
+    expect(renderedRows.length).toBeGreaterThan(5);
+  });
+
+  it('supports selected-entry replay, new-tab replay, copy, delete, and bulk delete', () => {
+    const handlers = renderHistoryPage({
+      history: [entry('1'), entry('2')],
+    });
+    const firstRenderedRow = screen.getAllByTestId('history-page-row')[0];
+
+    fireEvent.click(firstRenderedRow);
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.replayCurrentTab }));
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.openInNewTab }));
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.copyResult }));
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.deleteEntry }));
+
+    expect(handlers.onReplay).toHaveBeenCalledWith(entry('2'));
+    expect(handlers.onReplayInNewTab).toHaveBeenCalledWith(entry('2'));
+    expect(handlers.onCopyResult).toHaveBeenCalledWith('x=2');
+    expect(handlers.onDelete).toHaveBeenCalledWith('2');
+    expect(screen.queryByRole('button', { name: /Formula Viewer/i })).not.toBeInTheDocument();
+
+    fireEvent.click(within(firstRenderedRow).getByLabelText(historyText.actions.selectEntry));
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.deleteSelected }));
+
+    expect(handlers.onDeleteSelected).toHaveBeenCalledWith(['2']);
+  });
+
+  it('renders pending rows with stop controls', () => {
+    const pendingTicket: PendingHistoryTicket = {
+      id: 'ticket.1',
+      historyLaunchOrder: 3,
+      inputLatex: 'x^4+1=0',
+      mode: 'equation',
+      startedAtMs: Date.now() - 1000,
+      timestamp: '2026-07-01T12:00:00Z',
+      workspaceInstanceLabel: 'Equation tab',
+    };
+    const handlers = renderHistoryPage({
+      history: [entry('1')],
+      pendingHistory: [pendingTicket],
+    });
+
+    const pendingRow = screen.getByTestId('history-page-row-pending');
+    expect(pendingRow).toHaveTextContent('Running');
+
+    fireEvent.click(within(pendingRow).getByRole('button', { name: historyText.actions.stop }));
+
+    expect(handlers.onStopPending).toHaveBeenCalledWith(pendingTicket);
+  });
+});

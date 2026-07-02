@@ -68,6 +68,10 @@ export type ShellLanguageCatalog = {
     workspaceTabs: string;
     openWorkspaces: string;
     newCalculateTab: string;
+    openCreateMenu: string;
+    createMenuTitle: string;
+    openSettingsPage: string;
+    openHistoryPage: string;
     openActions: string;
     workspaceTabName: string;
     save: string;
@@ -236,6 +240,7 @@ export type SettingsLanguageCatalog = {
     calculatorMemory: string;
   };
   actions: {
+    openFullPage: string;
     resetHistory: string;
     resetCalculatorMemory: string;
   };
@@ -246,9 +251,21 @@ export type HistoryLanguageCatalog = {
   empty: string;
   replay: string;
   actions: {
+    openFullPage: string;
     clear: string;
     close: string;
     stop: string;
+    replayCurrentTab: string;
+    openInNewTab: string;
+    copyResult: string;
+    deleteEntry: string;
+    deleteSelected: string;
+    selectEntry: string;
+  };
+  filters: {
+    search: string;
+    allWorkspaces: string;
+    allDates: string;
   };
   pending: {
     running: string;
@@ -269,6 +286,15 @@ export type HistoryLanguageCatalog = {
     solution: string;
     inequalitySet: string;
     validWhen: string;
+    details: string;
+    input: string;
+    result: string;
+    status: string;
+  };
+  timeline: {
+    pending: string;
+    selected: string;
+    entries: LanguageStringFactory<[count: number]>;
   };
   staleAnswer: string;
 };

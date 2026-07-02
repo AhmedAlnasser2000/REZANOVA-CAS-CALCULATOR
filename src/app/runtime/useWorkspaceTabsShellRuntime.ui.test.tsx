@@ -48,6 +48,7 @@ import {
   formulaViewerArtifactFromSurfaceState,
   type FormulaViewerArtifact,
 } from './formula-viewer-artifacts';
+import { SETTINGS_PAGE_WORKSPACE_KIND } from './app-page-workspaces';
 import type { DisplayBlock } from '../../lib/display/result/display-blocks';
 
 const definition: OoeJobIdentityDefinition = {
@@ -307,6 +308,47 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
     expect(formulaViewerArtifactFromSurfaceState(
       hook.result.current.workspaceInstances.activeInstance?.surfaceState,
     )).not.toBeNull();
+    expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
+  });
+
+  it('opens protected Settings page tabs as singleton app pages', () => {
+    const { hook, setEditorRuntimeStatusOverride } = renderWorkspaceTabsShell();
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenAppPageTab(SETTINGS_PAGE_WORKSPACE_KIND);
+    });
+
+    const settingsId = hook.result.current.workspaceInstances.activeInstance?.id;
+    expect(settingsId).toBe('settings.2');
+    expect(hook.result.current.currentMode).toBe('calculate');
+    expect(hook.result.current.workspaceInstances.activeRuntimeContext).toBeNull();
+    expect(hook.result.current.shell.workspaceTabsRuntime.tabs[1]).toMatchObject({
+      actionPolicy: {
+        canClearState: false,
+        canDuplicate: false,
+        canRename: false,
+        canStopJobs: false,
+      },
+      surfaceKind: 'page',
+      workspaceKind: 'settings',
+    });
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenAppPageTab(SETTINGS_PAGE_WORKSPACE_KIND);
+      hook.result.current.shell.workspaceTabsRuntime.onDuplicateTab(settingsId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onClearTabState(settingsId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onStopJobsInTab(settingsId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onRenameTab(settingsId ?? '', 'Custom Settings');
+    });
+
+    expect(hook.result.current.workspaceInstances.workspaceInstances
+      .filter((instance) => instance.workspaceKind === SETTINGS_PAGE_WORKSPACE_KIND))
+      .toHaveLength(1);
+    expect(hook.result.current.workspaceInstances.activeInstance).toMatchObject({
+      id: settingsId,
+      title: 'Settings',
+      workspaceKind: SETTINGS_PAGE_WORKSPACE_KIND,
+    });
     expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
   });
 

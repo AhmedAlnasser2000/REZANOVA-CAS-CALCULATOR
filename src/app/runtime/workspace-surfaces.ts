@@ -2,11 +2,14 @@ import {
   FORMULA_VIEWER_WORKSPACE_KIND,
   type FormulaViewerWorkspaceKind,
 } from './formula-viewer-artifacts';
+import {
+  isAppPageWorkspaceKind,
+  type AppPageWorkspaceKind,
+} from './app-page-workspaces';
 import type { WorkspaceKind } from './workspace-instances';
 
 export type WorkspaceSurfaceKind = 'calculator' | 'page';
-export type LivePageSurfaceKind = FormulaViewerWorkspaceKind;
-export type FutureSingletonPageSurfaceKind = 'settings' | 'history';
+export type LivePageSurfaceKind = FormulaViewerWorkspaceKind | AppPageWorkspaceKind;
 
 export type WorkspaceTabActionPolicy = {
   canClearState: boolean;
@@ -28,8 +31,8 @@ export type WorkspaceSurfaceDescriptor =
       tabActionPolicy: WorkspaceTabActionPolicy;
     };
 
-export type FutureSingletonPageSurfacePolicy = {
-  pageKind: FutureSingletonPageSurfaceKind;
+export type SingletonPageSurfacePolicy = {
+  pageKind: AppPageWorkspaceKind;
   singleton: true;
 };
 
@@ -51,7 +54,16 @@ export const FORMULA_VIEWER_PAGE_TAB_ACTION_POLICY: WorkspaceTabActionPolicy = {
   canStopJobs: false,
 };
 
-export const FUTURE_SINGLETON_PAGE_SURFACE_POLICIES: readonly FutureSingletonPageSurfacePolicy[] = [
+export const APP_PAGE_TAB_ACTION_POLICY: WorkspaceTabActionPolicy = {
+  canClearState: false,
+  canClose: true,
+  canCloseOthers: true,
+  canDuplicate: false,
+  canRename: false,
+  canStopJobs: false,
+};
+
+export const SINGLETON_PAGE_SURFACE_POLICIES: readonly SingletonPageSurfacePolicy[] = [
   {
     pageKind: 'settings',
     singleton: true,
@@ -70,6 +82,14 @@ export function resolveWorkspaceSurfaceDescriptor(
       pageKind: FORMULA_VIEWER_WORKSPACE_KIND,
       surfaceKind: 'page',
       tabActionPolicy: FORMULA_VIEWER_PAGE_TAB_ACTION_POLICY,
+    };
+  }
+
+  if (isAppPageWorkspaceKind(workspaceKind)) {
+    return {
+      pageKind: workspaceKind,
+      surfaceKind: 'page',
+      tabActionPolicy: APP_PAGE_TAB_ACTION_POLICY,
     };
   }
 

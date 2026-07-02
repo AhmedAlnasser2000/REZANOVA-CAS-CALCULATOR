@@ -12,6 +12,7 @@ import {
 } from 'vitest';
 import { WorkspaceTabs, type WorkspaceTabItem } from './WorkspaceTabs';
 import {
+  APP_PAGE_TAB_ACTION_POLICY,
   CALCULATOR_WORKSPACE_TAB_ACTION_POLICY,
   FORMULA_VIEWER_PAGE_TAB_ACTION_POLICY,
 } from '../runtime/workspace-surfaces';
@@ -42,6 +43,7 @@ function renderTabs(tabs: WorkspaceTabItem[]) {
     onCreateBlankTab: vi.fn(),
     onDuplicateTab: vi.fn(),
     onFocusTab: vi.fn(),
+    onOpenAppPageTab: vi.fn(),
     onRenameTab: vi.fn(),
     onStopJobsInTab: vi.fn(),
   };
@@ -77,6 +79,26 @@ describe('WorkspaceTabs', () => {
     expect(screen.getByLabelText('New Calculate tab')).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('workspace-tab-add'));
+    expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens Settings and History singleton pages from the adjacent plus menu', () => {
+    const handlers = renderTabs([
+      tab({ id: 'workspace.calculate.1', isActive: true }),
+    ]);
+
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
+    expect(screen.getByTestId('workspace-tab-create-menu')).toHaveTextContent('New workspace');
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Open Settings Page' }));
+    expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('settings');
+
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Open History Page' }));
+    expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('history');
+
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New Calculate tab' }));
     expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
   });
 
@@ -206,6 +228,30 @@ describe('WorkspaceTabs', () => {
 
     expect(screen.getByTestId('workspace-tab')).toHaveAttribute('data-surface-kind', 'page');
     expect(screen.getByRole('menuitem', { name: 'Rename' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Close' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Close Others' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Duplicate' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Clear Tab State' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Stop Jobs in This Tab' })).not.toBeInTheDocument();
+  });
+
+  it('protects Settings and History app page tabs from rename and solver actions', () => {
+    renderTabs([
+      tab({
+        actionPolicy: APP_PAGE_TAB_ACTION_POLICY,
+        compartmentLabel: 'App Page',
+        id: 'settings.2',
+        isActive: true,
+        surfaceKind: 'page',
+        title: 'Settings',
+        workspaceKind: 'settings',
+      }),
+    ]);
+
+    openMenu('Settings');
+
+    expect(screen.getByTestId('workspace-tab')).toHaveAttribute('data-surface-kind', 'page');
+    expect(screen.queryByRole('menuitem', { name: 'Rename' })).not.toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Close' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Close Others' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Duplicate' })).not.toBeInTheDocument();
