@@ -46,12 +46,12 @@ describe('runMatrixOperation', () => {
     expect(rref.resultLatex).toBe('\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}');
   });
 
-  it('keeps rank and RREF on exact Matrix entries in this move', () => {
+  it('keeps rank and RREF off decimal grids without exact sidecars', () => {
     expect(runMatrixOperation({
       operation: 'rankA',
       matrixA: [[0.5, 1]],
       matrixB,
-    }).error).toBe('Rank and RREF need exact integer Matrix entries in this move.');
+    }).error).toBe('Rank and RREF need exact Matrix entries in this move.');
   });
 
   it('keeps decimal Matrix inverse output on the numeric readback path', () => {
@@ -62,6 +62,30 @@ describe('runMatrixOperation', () => {
     });
 
     expect(inverse.resultLatex).toBe('\\begin{bmatrix}2 & 0\\\\0 & 0.5\\end{bmatrix}');
+  });
+
+  it('uses exact sidecars for editor-entered fractions and finite decimals', () => {
+    const determinant = runMatrixOperation({
+      operation: 'detA',
+      matrixA: [[0.5, 0], [0, 1 / 3]],
+      matrixB,
+      exactMatrixA: [
+        [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 3 }],
+      ],
+    });
+    const rref = runMatrixOperation({
+      operation: 'rrefA',
+      matrixA: [[0.5, 1], [1, 2]],
+      matrixB,
+      exactMatrixA: [
+        [{ numerator: 1, denominator: 2 }, { numerator: 1, denominator: 1 }],
+        [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+      ],
+    });
+
+    expect(determinant.resultLatex).toBe('\\frac{1}{6}');
+    expect(rref.resultLatex).toBe('\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}');
   });
 
   it('stops on incomplete, mismatched, singular, and non-square requests', () => {

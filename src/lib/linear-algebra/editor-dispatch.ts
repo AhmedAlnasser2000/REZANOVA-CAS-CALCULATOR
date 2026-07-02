@@ -1,4 +1,5 @@
 import type {
+  ExactScalarWire,
   AngleUnit,
   MatrixRequest,
   VectorRequest,
@@ -14,11 +15,13 @@ import {
 
 type MatrixOperand = {
   matrix: number[][];
+  exactMatrix?: ExactScalarWire[][];
   named?: 'A' | 'B';
 };
 
 type VectorOperand = {
   vector: number[];
+  exactVector?: ExactScalarWire[];
   named?: 'u' | 'v';
 };
 
@@ -46,11 +49,11 @@ export type VectorEditorDispatchResult =
   | { ok: true; request: ExecutableVectorRequest }
   | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
 
-function cloneMatrix(matrix: number[][]) {
+function cloneMatrix<T>(matrix: T[][]): T[][] {
   return matrix.map((row) => [...row]);
 }
 
-function cloneVector(vector: number[]) {
+function cloneVector<T>(vector: T[]): T[] {
   return [...vector];
 }
 
@@ -59,7 +62,10 @@ function matrixOperand(
   input: MatrixEditorDispatchInput,
 ): MatrixOperand | null {
   if (expression.kind === 'matrixLiteral') {
-    return { matrix: cloneMatrix(expression.value) };
+    return {
+      matrix: cloneMatrix(expression.value),
+      exactMatrix: cloneMatrix(expression.exactValue),
+    };
   }
 
   if (expression.kind === 'named') {
@@ -79,7 +85,10 @@ function vectorOperand(
   input: VectorEditorDispatchInput,
 ): VectorOperand | null {
   if (expression.kind === 'vectorLiteral') {
-    return { vector: cloneVector(expression.value) };
+    return {
+      vector: cloneVector(expression.value),
+      exactVector: cloneVector(expression.exactValue),
+    };
   }
 
   if (expression.kind === 'named') {
@@ -124,6 +133,8 @@ function matrixPairRequest(
       operation: expression.operator,
       matrixA: left.matrix,
       matrixB: right.matrix,
+      ...(left.exactMatrix ? { exactMatrixA: left.exactMatrix } : {}),
+      ...(right.exactMatrix ? { exactMatrixB: right.exactMatrix } : {}),
     },
   };
 }
@@ -148,6 +159,8 @@ function matrixSystemRequest(
       matrixB: cloneMatrix(input.matrixB),
       systemRhs: cloneVector(expression.constants.value),
       systemForm: expression.form,
+      ...(coefficients.exactMatrix ? { exactMatrixA: coefficients.exactMatrix } : {}),
+      exactSystemRhs: expression.constants.exactValue,
     },
   };
 }
@@ -168,8 +181,18 @@ function matrixUnaryRequest(
     return {
       ok: true,
       request: value.named === 'B'
-        ? { operation: 'rankB', matrixA: cloneMatrix(input.matrixA), matrixB: value.matrix }
-        : { operation: 'rankA', matrixA: value.matrix, matrixB: cloneMatrix(input.matrixB) },
+        ? {
+            operation: 'rankB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'rankA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
     };
   }
 
@@ -177,8 +200,18 @@ function matrixUnaryRequest(
     return {
       ok: true,
       request: value.named === 'B'
-        ? { operation: 'rrefB', matrixA: cloneMatrix(input.matrixA), matrixB: value.matrix }
-        : { operation: 'rrefA', matrixA: value.matrix, matrixB: cloneMatrix(input.matrixB) },
+        ? {
+            operation: 'rrefB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'rrefA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
     };
   }
 
@@ -186,8 +219,18 @@ function matrixUnaryRequest(
     return {
       ok: true,
       request: value.named === 'B'
-        ? { operation: 'detB', matrixA: cloneMatrix(input.matrixA), matrixB: value.matrix }
-        : { operation: 'detA', matrixA: value.matrix, matrixB: cloneMatrix(input.matrixB) },
+        ? {
+            operation: 'detB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'detA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
     };
   }
 
@@ -195,8 +238,18 @@ function matrixUnaryRequest(
     return {
       ok: true,
       request: value.named === 'B'
-        ? { operation: 'transposeB', matrixA: cloneMatrix(input.matrixA), matrixB: value.matrix }
-        : { operation: 'transposeA', matrixA: value.matrix, matrixB: cloneMatrix(input.matrixB) },
+        ? {
+            operation: 'transposeB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'transposeA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
     };
   }
 
@@ -204,8 +257,18 @@ function matrixUnaryRequest(
     return {
       ok: true,
       request: value.named === 'B'
-        ? { operation: 'inverseB', matrixA: cloneMatrix(input.matrixA), matrixB: value.matrix }
-        : { operation: 'inverseA', matrixA: value.matrix, matrixB: cloneMatrix(input.matrixB) },
+        ? {
+            operation: 'inverseB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'inverseA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
     };
   }
 

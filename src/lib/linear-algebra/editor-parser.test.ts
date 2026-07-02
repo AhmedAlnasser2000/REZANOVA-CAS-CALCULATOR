@@ -58,15 +58,39 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\begin{bmatrix}1 & 2\\\\3 & 4\\end{bmatrix}', 'matrix')).toEqual({
       kind: 'matrixLiteral',
       value: [[1, 2], [3, 4]],
+      exactValue: [
+        [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+        [{ numerator: 3, denominator: 1 }, { numerator: 4, denominator: 1 }],
+      ],
     });
     expect(parsed('\\begin{bmatrix}1\\\\-2\\\\\\frac{3}{2}\\end{bmatrix}', 'vector')).toEqual({
       kind: 'vectorLiteral',
       value: [1, -2, 1.5],
+      exactValue: [
+        { numerator: 1, denominator: 1 },
+        { numerator: -2, denominator: 1 },
+        { numerator: 3, denominator: 2 },
+      ],
+    });
+    expect(parsed('\\begin{bmatrix}0.125&\\frac{1.5}{3}\\\\-.25&1\\end{bmatrix}', 'matrix')).toMatchObject({
+      kind: 'matrixLiteral',
+      value: [[0.125, 0.5], [-0.25, 1]],
+      exactValue: [
+        [{ numerator: 1, denominator: 8 }, { numerator: 1, denominator: 2 }],
+        [{ numerator: -1, denominator: 4 }, { numerator: 1, denominator: 1 }],
+      ],
     });
     expect(parsed('\\det\\left(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}\\right)', 'matrix')).toEqual({
       kind: 'unary',
       operator: 'determinant',
-      value: { kind: 'matrixLiteral', value: [[1, 2], [3, 4]] },
+      value: {
+        kind: 'matrixLiteral',
+        value: [[1, 2], [3, 4]],
+        exactValue: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+          [{ numerator: 3, denominator: 1 }, { numerator: 4, denominator: 1 }],
+        ],
+      },
     });
   });
 
@@ -75,7 +99,14 @@ describe('parseLinearAlgebraEditorLatex', () => {
       kind: 'linearSystem',
       form: 'Ax=b',
       coefficients: { kind: 'named', name: 'A' },
-      constants: { kind: 'vectorLiteral', value: [5, 11] },
+      constants: {
+        kind: 'vectorLiteral',
+        value: [5, 11],
+        exactValue: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+      },
     });
     expect(parsed(
       'A x + \\begin{bmatrix}-5\\\\-11\\end{bmatrix}=0',
@@ -84,7 +115,14 @@ describe('parseLinearAlgebraEditorLatex', () => {
       kind: 'linearSystem',
       form: 'Ax+b=0',
       coefficients: { kind: 'named', name: 'A' },
-      constants: { kind: 'vectorLiteral', value: [5, 11] },
+      constants: {
+        kind: 'vectorLiteral',
+        value: [5, 11],
+        exactValue: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+      },
     });
   });
 

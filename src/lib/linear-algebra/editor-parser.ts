@@ -1,11 +1,13 @@
+import type { ExactScalarWire } from '../../types/calculator';
+
 export type LinearAlgebraEditorMode = 'matrix' | 'vector';
 
 export type LinearAlgebraNamedValue = 'A' | 'B' | 'u' | 'v';
 
 export type LinearAlgebraValueExpression =
   | { kind: 'named'; name: LinearAlgebraNamedValue }
-  | { kind: 'matrixLiteral'; value: number[][] }
-  | { kind: 'vectorLiteral'; value: number[] };
+  | { kind: 'matrixLiteral'; value: number[][]; exactValue: ExactScalarWire[][] }
+  | { kind: 'vectorLiteral'; value: number[]; exactValue: ExactScalarWire[] };
 
 export type LinearAlgebraSystemForm = 'Ax=b' | 'Ax+b=0';
 
@@ -151,22 +153,84 @@ function functionArgument(input: string, name: string): string | null {
     : null;
 }
 
-function parseLatexNumber(input: string): number {
-  if (/^-?(?:\d+\.?\d*|\.\d+)$/.test(input)) {
-    return Number(input);
+function gcd(left: number, right: number): number {
+  let a = Math.abs(left);
+  let b = Math.abs(right);
+  while (b !== 0) {
+    const next = a % b;
+    a = b;
+    b = next;
+  }
+  return a || 1;
+}
+
+function normalizeExactWire(value: ExactScalarWire): ExactScalarWire {
+  if (value.numerator === 0) {
+    return { numerator: 0, denominator: 1 };
+  }
+
+  const sign = value.denominator < 0 ? -1 : 1;
+  const numerator = value.numerator * sign;
+  const denominator = Math.abs(value.denominator);
+  const divisor = gcd(numerator, denominator);
+  return {
+    numerator: numerator / divisor,
+    denominator: denominator / divisor,
+  };
+}
+
+function exactWireToNumber(value: ExactScalarWire): number {
+  return value.numerator / value.denominator;
+}
+
+function parseFiniteDecimalExact(input: string): ExactScalarWire | null {
+  const match = input.match(/^(-)?(?:(\d+)(?:\.(\d*))?|\.(\d+))$/);
+  if (!match) {
+    return null;
+  }
+
+  const sign = match[1] ? -1 : 1;
+  const whole = match[2] ?? '0';
+  const fractional = match[3] ?? match[4] ?? '';
+  const denominator = 10 ** fractional.length;
+  const numerator = sign * Number(`${whole}${fractional || ''}`);
+  if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) {
+    fail('invalid-number', `Unsupported numeric entry "${input}".`);
+  }
+  return normalizeExactWire({ numerator, denominator });
+}
+
+function parseScalarAtom(input: string): ExactScalarWire {
+  const decimal = parseFiniteDecimalExact(input);
+  if (decimal) {
+    return decimal;
   }
 
   const fraction = input.match(/^(-)?\\frac\{(-?(?:\d+\.?\d*|\.\d+))\}\{(-?(?:\d+\.?\d*|\.\d+))\}$/);
   if (fraction) {
-    const numerator = Number(fraction[2]);
-    const denominator = Number(fraction[3]);
-    if (denominator === 0) {
+    const numerator = parseScalarAtom(fraction[2]);
+    const denominator = parseScalarAtom(fraction[3]);
+    if (denominator.numerator === 0) {
       fail('invalid-number', 'Matrix and vector entries cannot divide by zero.');
     }
-    return (fraction[1] ? -1 : 1) * numerator / denominator;
+    const signedNumerator = fraction[1] ? -numerator.numerator : numerator.numerator;
+    const exactNumerator = signedNumerator * denominator.denominator;
+    const exactDenominator = numerator.denominator * denominator.numerator;
+    if (!Number.isSafeInteger(exactNumerator) || !Number.isSafeInteger(exactDenominator)) {
+      fail('invalid-number', `Unsupported numeric entry "${input}".`);
+    }
+    return normalizeExactWire({ numerator: exactNumerator, denominator: exactDenominator });
   }
 
   fail('invalid-number', `Unsupported numeric entry "${input}".`);
+}
+
+function parseLatexNumber(input: string): { value: number; exactValue: ExactScalarWire } {
+  const exactValue = parseScalarAtom(input);
+  return {
+    value: exactWireToNumber(exactValue),
+    exactValue,
+  };
 }
 
 function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null {
@@ -180,20 +244,26 @@ function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null 
   }
 
   const rows = body.split('\\\\').map((row) => row.trim());
-  const matrix = rows.map((row) => {
+  const parsedRows = rows.map((row) => {
     if (!row) {
       fail('invalid-matrix-literal', 'Matrix/vector literals cannot contain empty rows.');
     }
     return row.split('&').map((cell) => parseLatexNumber(cell));
   });
+  const matrix = parsedRows.map((row) => row.map((cell) => cell.value));
+  const exactMatrix = parsedRows.map((row) => row.map((cell) => cell.exactValue));
   const columns = matrix[0]?.length ?? 0;
   if (columns === 0 || matrix.some((row) => row.length !== columns)) {
     fail('invalid-matrix-literal', 'Matrix rows must have a consistent number of columns.');
   }
 
   return columns === 1
-    ? { kind: 'vectorLiteral', value: matrix.map((row) => row[0]) }
-    : { kind: 'matrixLiteral', value: matrix };
+    ? {
+        kind: 'vectorLiteral',
+        value: matrix.map((row) => row[0]),
+        exactValue: exactMatrix.map((row) => row[0]),
+      }
+    : { kind: 'matrixLiteral', value: matrix, exactValue: exactMatrix };
 }
 
 function isMatrixCoefficientExpression(
@@ -213,7 +283,14 @@ function isInlineVectorExpression(
 
 function negateVectorExpression(expression: LinearAlgebraValueExpression): LinearAlgebraValueExpression {
   return expression.kind === 'vectorLiteral'
-    ? { kind: 'vectorLiteral', value: expression.value.map((value) => -value) }
+    ? {
+        kind: 'vectorLiteral',
+        value: expression.value.map((value) => -value),
+        exactValue: expression.exactValue.map((value) => ({
+          numerator: -value.numerator,
+          denominator: value.denominator,
+        })),
+      }
     : expression;
 }
 

@@ -33,6 +33,10 @@ describe('linear algebra editor dispatch', () => {
         operation: 'detA',
         matrixA: [[2, 0], [0, 3]],
         matrixB,
+        exactMatrixA: [
+          [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 3, denominator: 1 }],
+        ],
       },
     });
     expect(dispatchMatrixEditorLatex({
@@ -53,6 +57,29 @@ describe('linear algebra editor dispatch', () => {
         operation: 'rrefA',
         matrixA: [[1, 2], [2, 4]],
         matrixB,
+        exactMatrixA: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+          [{ numerator: 2, denominator: 1 }, { numerator: 4, denominator: 1 }],
+        ],
+      },
+    });
+  });
+
+  it('preserves inline Matrix fractions and finite decimals as exact sidecars', () => {
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\det\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: {
+        operation: 'detA',
+        matrixA: [[0.5, 0], [0, 0.125]],
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 8 }],
+        ],
       },
     });
   });
@@ -70,6 +97,10 @@ describe('linear algebra editor dispatch', () => {
         matrixB,
         systemRhs: [5, 11],
         systemForm: 'Ax=b',
+        exactSystemRhs: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
       },
     });
     expect(dispatchMatrixEditorLatex({
@@ -82,6 +113,10 @@ describe('linear algebra editor dispatch', () => {
         operation: 'linearSystem',
         systemRhs: [5, 11],
         systemForm: 'Ax+b=0',
+        exactSystemRhs: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
       },
     });
   });

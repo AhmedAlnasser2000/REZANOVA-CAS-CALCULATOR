@@ -10,6 +10,7 @@ import {
 } from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
+  exactMatrixFromWire,
   exactMatrixToLatex,
   exactScalarToLatex,
 } from './exact-matrix-format';
@@ -51,11 +52,17 @@ function exactMatrixReadback(req: MatrixRequest): string | null {
       : req.operation === 'detB' || req.operation === 'inverseB'
         ? req.matrixB
         : undefined;
+  const targetExactMatrix =
+    req.operation === 'detA' || req.operation === 'inverseA'
+      ? req.exactMatrixA
+      : req.operation === 'detB' || req.operation === 'inverseB'
+        ? req.exactMatrixB
+        : undefined;
   if (!targetMatrix) {
     return null;
   }
 
-  const exactMatrix = exactMatrixFromNumeric(targetMatrix);
+  const exactMatrix = exactMatrixFromWire(targetExactMatrix) ?? exactMatrixFromNumeric(targetMatrix);
   if (!exactMatrix) {
     return null;
   }
@@ -84,15 +91,21 @@ function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
       : req.operation === 'rankB' || req.operation === 'rrefB'
         ? req.matrixB
         : undefined;
+  const targetExactMatrix =
+    req.operation === 'rankA' || req.operation === 'rrefA'
+      ? req.exactMatrixA
+      : req.operation === 'rankB' || req.operation === 'rrefB'
+        ? req.exactMatrixB
+        : undefined;
   if (!targetMatrix) {
     return null;
   }
 
-  const exactMatrix = exactMatrixFromNumeric(targetMatrix);
+  const exactMatrix = exactMatrixFromWire(targetExactMatrix) ?? exactMatrixFromNumeric(targetMatrix);
   if (!exactMatrix) {
     return {
       warnings: [],
-      error: 'Rank and RREF need exact integer Matrix entries in this move.',
+      error: 'Rank and RREF need exact Matrix entries in this move.',
     };
   }
 

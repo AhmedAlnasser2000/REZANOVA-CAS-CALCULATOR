@@ -1,24 +1,29 @@
 import type { DisplayOutcome, MatrixSystemForm } from '../../types/calculator';
+import type { ExactScalar } from '../algebra/polynomial-core';
 import {
   rrefExactMatrix,
   solveExactLinearSystem,
   type ExactMatrix,
-  type ExactScalar,
   type ExactMatrixStopReason,
   type ExactVector,
 } from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
+  exactMatrixFromWire,
   exactMatrixToLatex,
   exactScalarToLatex,
   exactVectorFromNumeric,
+  exactVectorFromWire,
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
+import type { ExactScalarWire } from '../../types/calculator';
 
 export type MatrixSystemRunInput = {
   coefficients: number[][];
   constants: number[];
   form: MatrixSystemForm;
+  exactCoefficients?: ExactScalarWire[][];
+  exactConstants?: ExactScalarWire[];
 };
 
 function matrixSystemStop(reason: string): DisplayOutcome {
@@ -245,10 +250,10 @@ function systemTitle(form: MatrixSystemForm) {
 }
 
 export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutcome {
-  const coefficients = exactMatrixFromNumeric(input.coefficients);
-  const constants = exactVectorFromNumeric(input.constants);
+  const coefficients = exactMatrixFromWire(input.exactCoefficients) ?? exactMatrixFromNumeric(input.coefficients);
+  const constants = exactVectorFromWire(input.exactConstants) ?? exactVectorFromNumeric(input.constants);
   if (!coefficients || !constants) {
-    return matrixSystemStop('Structured Matrix systems need exact integer entries in this move.');
+    return matrixSystemStop('Structured Matrix systems need exact Matrix entries in this move.');
   }
 
   if (coefficients.length === 0 || coefficients[0]?.length === 0) {

@@ -25,6 +25,7 @@ import type {
   StatisticsScreen,
   TrigScreen,
 } from './mode-types';
+import type { ExactScalarWire } from './exact-scalar-types';
 import type {
   CoreDraftSource,
   CoreDraftStyle,
@@ -1015,9 +1016,8 @@ export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 export type MatrixRequest = {
   operation: MatrixOperation;
   matrixA: number[][];
-  matrixB?: number[][];
-  systemRhs?: number[];
-  systemForm?: MatrixSystemForm;
+  matrixB?: number[][]; systemRhs?: number[];
+  systemForm?: MatrixSystemForm; exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[];
 };
 
 export type MatrixReplaySeed = MatrixRequest;

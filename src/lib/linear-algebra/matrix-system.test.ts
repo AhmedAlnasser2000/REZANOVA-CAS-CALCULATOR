@@ -26,6 +26,27 @@ describe('runMatrixLinearSystem', () => {
     });
   });
 
+  it('solves structured systems with exact fraction and decimal sidecars', () => {
+    const outcome = runMatrixLinearSystem({
+      coefficients: [[0.5, 0], [0, 1 / 3]],
+      constants: [1, 1],
+      form: 'Ax=b',
+      exactCoefficients: [
+        [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 3 }],
+      ],
+      exactConstants: [
+        { numerator: 1, denominator: 1 },
+        { numerator: 1, denominator: 1 },
+      ],
+    });
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind === 'success') {
+      expect(outcome.exactLatex).toBe('x=\\begin{bmatrix}2\\\\3\\end{bmatrix}');
+    }
+  });
+
   it('classifies inconsistent structured Matrix systems', () => {
     expect(runMatrixLinearSystem({
       coefficients: [[1, 1], [2, 2]],
@@ -98,7 +119,7 @@ describe('runMatrixLinearSystem', () => {
       form: 'Ax=b',
     })).toMatchObject({
       kind: 'error',
-      error: 'Structured Matrix systems need exact integer entries in this move.',
+      error: 'Structured Matrix systems need exact Matrix entries in this move.',
     });
   });
 });

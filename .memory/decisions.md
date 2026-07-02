@@ -1660,3 +1660,7 @@
 ## 2026-07-02 - MATRIX-AX-B-SYSTEM1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix structured systems are limited to editor-entered `Ax=b` and `Ax+b=0` forms with local vector placeholder `x` and inline RHS/offset vectors. Matrix classifies solution count with Matrix-owned exact rank/RREF facts and commits through the existing `linearAlgebra.matrix` OOE path/history seed. Unsupported equation-shaped Matrix/Vector input must expose an explicit `Open in Equation` action and must not import Equation solver internals or auto-route.
+
+## 2026-07-02 - MATRIX-EXACT-SCALAR-SIDECAR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix exact scalar widening uses optional `ExactScalarWire` sidecars on Matrix requests/replay seeds instead of replacing numeric grids. Editor-entered inline Matrix literals and structured-system RHS vectors may carry exact fractions and finite decimals through OOE/replay for determinant, rank/RREF, and structured-system exact paths; numeric grids and legacy numeric seeds remain compatible, and the decimal numeric engine remains the owner of approximate/numeric workflows.

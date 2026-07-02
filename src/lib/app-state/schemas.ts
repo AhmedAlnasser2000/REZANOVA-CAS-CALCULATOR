@@ -322,12 +322,21 @@ const vectorOperationSchema = z.enum([
 ]);
 const numericMatrixSchema = z.array(z.array(z.number().finite()));
 const numericVectorSchema = z.array(z.number().finite());
+const exactScalarWireSchema = z.object({
+  numerator: z.number().int().safe(),
+  denominator: z.number().int().safe().positive(),
+});
+const exactMatrixWireSchema = z.array(z.array(exactScalarWireSchema));
+const exactVectorWireSchema = z.array(exactScalarWireSchema);
 const matrixReplaySeedSchema = z.object({
   operation: matrixOperationSchema,
   matrixA: numericMatrixSchema,
   matrixB: numericMatrixSchema.optional(),
   systemRhs: numericVectorSchema.optional(),
   systemForm: matrixSystemFormSchema.optional(),
+  exactMatrixA: exactMatrixWireSchema.optional(),
+  exactMatrixB: exactMatrixWireSchema.optional(),
+  exactSystemRhs: exactVectorWireSchema.optional(),
 });
 const vectorReplaySeedSchema = z.object({
   operation: vectorOperationSchema,

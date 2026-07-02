@@ -14,6 +14,7 @@ import {
 } from './worker-clients/linear-algebra-worker-client';
 import type {
   DisplayOutcome,
+  ExactScalarWire,
   MatrixOperation,
   MatrixSystemForm,
 } from '../../types/calculator';
@@ -24,6 +25,9 @@ export type RunMatrixModeRequest = {
   matrixB: number[][];
   systemRhs?: number[];
   systemForm?: MatrixSystemForm;
+  exactMatrixA?: ExactScalarWire[][];
+  exactMatrixB?: ExactScalarWire[][];
+  exactSystemRhs?: ExactScalarWire[];
 };
 
 export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSystemForm) {
@@ -61,16 +65,27 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
   }
 }
 
-export function runMatrixMode({ operation, matrixA, matrixB, systemRhs, systemForm }: RunMatrixModeRequest): DisplayOutcome {
+export function runMatrixMode({
+  operation,
+  matrixA,
+  matrixB,
+  systemRhs,
+  systemForm,
+  exactMatrixA,
+  exactMatrixB,
+  exactSystemRhs,
+}: RunMatrixModeRequest): DisplayOutcome {
   if (operation === 'linearSystem') {
     return runMatrixLinearSystem({
       coefficients: matrixA,
       constants: systemRhs ?? [],
       form: systemForm ?? 'Ax=b',
+      exactCoefficients: exactMatrixA,
+      exactConstants: exactSystemRhs,
     });
   }
 
-  const response = runMatrixOperation({ operation, matrixA, matrixB });
+  const response = runMatrixOperation({ operation, matrixA, matrixB, exactMatrixA, exactMatrixB });
   if (response.error) {
     return {
       kind: 'error',
@@ -102,6 +117,9 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       matrixB: request.matrixB,
       systemRhs: request.systemRhs,
       systemForm: request.systemForm,
+      exactMatrixA: request.exactMatrixA,
+      exactMatrixB: request.exactMatrixB,
+      exactSystemRhs: request.exactSystemRhs,
     },
   };
 }
