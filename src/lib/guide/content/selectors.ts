@@ -872,18 +872,18 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'det(A) means the determinant of A, which is a scalar tied to properties like invertibility.',
       'A transpose means swapping rows and columns.',
       'A inverse means the matrix that undoes A when the inverse exists.',
-      'A dot B is the dot product, A cross B is the cross product, and norm(A) is the length of a vector.',
+      'u dot v is the dot product, u cross v is the cross product, and norm(u) is the length of a vector.',
     ],
     howToUse: [
       'Open Matrix for matrix operations and Vector for vector operations.',
-      'Use the main editor and soft keys for A, B, and common operator forms.',
+      'Use the main editor and soft keys for Matrix A/B, Vector u/v, and common operator forms.',
       'Treat the Matrix and Vector editors as structured operation surfaces, not as a promise of full free-form symbolic matrix CAS.',
     ],
     concepts: [
       'Matrix and Vector modes are the operational tools for matrix and vector calculations in this milestone.',
       'The MatrixVec keyboard page inserts structured notation templates and operator symbols.',
       'The main editor in Matrix and Vector helps you draft, copy, and reuse structured linear-algebra expressions without promising full free-form matrix CAS.',
-      'Soft keys keep the current Matrix A/B or Vector A/B values available for operations.',
+      'Soft keys keep the current Matrix A/B or Vector u/v values available for operations.',
     ],
     whereToFindIt: [
       'Virtual keyboard page: MatrixVec',
@@ -924,7 +924,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
         explanation: 'Use Vector mode for dot, cross, norm, angle, and reusing the current vectors inside textbook notation.',
         steps: [
           'Open Vector from the launcher.',
-          'Enter the numeric values for Vector A and Vector B.',
+          'Enter the numeric values for Vector u and Vector v.',
           'Run dot, cross, norm, or angle from Vector mode, then use the main editor when you want to copy the structured form.',
         ],
         expected: 'Vector mode opens with the main editor available for structured entry and copy/reuse.',
@@ -2341,7 +2341,7 @@ export const GUIDE_MODE_REFS: GuideModeRef[] = [
     summary: 'Use Vector for actual numeric vector operations from the named inputs and main editor.',
     bestFor: [
       'Dot product, cross product, norms, and angle',
-      'Reusing Vector A and B inside structured notation',
+      'Reusing Vector u and v inside structured notation',
     ],
     avoidFor: [
       'General symbolic algebra',

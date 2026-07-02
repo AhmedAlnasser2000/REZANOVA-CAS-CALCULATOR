@@ -31,13 +31,18 @@ describe('Linear algebra editor source', () => {
 
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-placeholder', 'Enter a Vector expression');
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '');
+    expect(screen.getByText('Vector u')).toBeInTheDocument();
+    expect(screen.getByText('Vector v')).toBeInTheDocument();
+    expect(screen.queryByText('Vector A')).not.toBeInTheDocument();
     expect(screen.getByTestId('keypad-linear-vector-template')).toHaveTextContent('vec');
+    expect(screen.getByTestId('keypad-linear-vector-u')).toHaveTextContent('u');
+    expect(screen.getByTestId('keypad-linear-vector-v')).toHaveTextContent('v');
     expect(screen.getByTestId('keypad-linear-dot')).toHaveTextContent('dot');
     expect(screen.getByTestId('keypad-linear-cross')).toHaveTextContent('cross');
     expect(screen.queryByTestId('keypad-linear-rank')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.queryByText('Vector Notation Pad')).not.toBeInTheDocument();
-    setMathFieldLatex('main-editor', 'A\\cdot B');
-    await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'A\\cdot B'));
+    setMathFieldLatex('main-editor', 'u\\cdot v');
+    await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'u\\cdot v'));
   });
 });

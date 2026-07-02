@@ -79,6 +79,9 @@ describe('workspace keypad overlays', () => {
 
     expect(vectorRows.flat().find((button) => button.id === 'linear-vector-template')?.latex)
       .toBe('\\begin{bmatrix}#0\\\\#?\\\\#?\\end{bmatrix}');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-vector-u')?.latex).toBe('u');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-vector-v')?.latex).toBe('v');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-vector-a')).toBeUndefined();
     expect(vectorRows.flat().find((button) => button.id === 'linear-dot')?.latex).toBe('\\cdot');
     expect(vectorRows.flat().find((button) => button.id === 'linear-cross')?.latex).toBe('\\times');
     expect(vectorRows.flat().find((button) => button.id === 'linear-norm')?.latex)

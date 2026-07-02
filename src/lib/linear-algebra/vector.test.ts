@@ -54,12 +54,12 @@ describe('runVectorOperation', () => {
       vectorA: [],
       vectorB: [],
       angleUnit: 'deg',
-    }).error).toBe('Vector A is incomplete.');
+    }).error).toBe('Vector u is incomplete.');
     expect(runVectorOperation({
       operation: 'dot',
       vectorA: [1, 2],
       angleUnit: 'deg',
-    }).error).toBe('Vector B is required for this operation.');
+    }).error).toBe('Vector v is required for this operation.');
     expect(runVectorOperation({
       operation: 'dot',
       vectorA: [1, 2],

@@ -27,19 +27,19 @@ export type RunVectorModeRequest = {
 export function vectorOperationLabel(operation: VectorOperation) {
   switch (operation) {
     case 'dot':
-      return 'Dot';
+      return 'u·v';
     case 'cross':
-      return 'Cross';
+      return 'u×v';
     case 'normA':
-      return 'Norm A';
+      return '‖u‖';
     case 'normB':
-      return 'Norm B';
+      return '‖v‖';
     case 'angle':
-      return 'Angle';
+      return '∠(u,v)';
     case 'add':
-      return 'A+B';
+      return 'u+v';
     case 'subtract':
-      return 'A-B';
+      return 'u-v';
     default:
       return 'Vector';
   }

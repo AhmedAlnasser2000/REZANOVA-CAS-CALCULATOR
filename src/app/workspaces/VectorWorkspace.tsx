@@ -21,13 +21,13 @@ function VectorWorkspace({
         <div className="linear-algebra-panel-copy">
           <strong>Vector Workspace</strong>
           <p>
-            Edit named vectors below, then use the main editor above or the soft keys to
-            build Vector operations.
+            Edit named vectors u and v below, then use the main editor above or the
+            soft keys to build Vector operations.
           </p>
         </div>
         <div className="linear-algebra-badge-row">
           <span className="equation-badge">Editor source</span>
-          <span className="equation-origin-badge">A/B vectors</span>
+          <span className="equation-origin-badge">u/v vectors</span>
         </div>
       </div>
       <div className="guide-related-links">
@@ -36,7 +36,7 @@ function VectorWorkspace({
       </div>
       <div className="grid-two">
         <div className="editor-card">
-          <strong>Vector A</strong>
+          <strong>Vector u</strong>
           <div className="vector-grid">
             {vectorA.map((value, index) => (
               <SignedNumberInput key={`va-${index}`} value={value} onValueChange={(nextValue) => onSetVectorCell('A', index, nextValue)} />
@@ -44,7 +44,7 @@ function VectorWorkspace({
           </div>
         </div>
         <div className="editor-card">
-          <strong>Vector B</strong>
+          <strong>Vector v</strong>
           <div className="vector-grid">
             {vectorB.map((value, index) => (
               <SignedNumberInput key={`vb-${index}`} value={value} onValueChange={(nextValue) => onSetVectorCell('B', index, nextValue)} />

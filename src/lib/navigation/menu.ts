@@ -102,12 +102,12 @@ export const SOFT_MENU_BY_MODE: Record<ModeId, SoftAction[]> = {
     { id: 'transposeA', label: 'Aᵀ', hotkey: 'F6' },
   ],
   vector: [
-    { id: 'dot', label: 'Dot', hotkey: 'F1' },
-    { id: 'cross', label: 'Cross', hotkey: 'F2' },
-    { id: 'normA', label: '‖A‖', hotkey: 'F3' },
-    { id: 'angle', label: '∠', hotkey: 'F4' },
-    { id: 'add', label: 'A+B', hotkey: 'F5' },
-    { id: 'subtract', label: 'A-B', hotkey: 'F6' },
+    { id: 'dot', label: 'u·v', hotkey: 'F1' },
+    { id: 'cross', label: 'u×v', hotkey: 'F2' },
+    { id: 'normA', label: '‖u‖', hotkey: 'F3' },
+    { id: 'angle', label: '∠(u,v)', hotkey: 'F4' },
+    { id: 'add', label: 'u+v', hotkey: 'F5' },
+    { id: 'subtract', label: 'u-v', hotkey: 'F6' },
   ],
   table: [
     { id: 'build', label: 'Build', hotkey: 'F1' },
@@ -487,8 +487,8 @@ const MATRIX_MODIFIER_ROW: KeypadButton[] = [
 ];
 
 const VECTOR_OPERATOR_ROW: KeypadButton[] = [
-  { id: 'linear-vector-a', label: 'A', variant: 'function', latex: 'A' },
-  { id: 'linear-vector-b', label: 'B', variant: 'function', latex: 'B' },
+  { id: 'linear-vector-u', label: 'u', variant: 'function', latex: 'u' },
+  { id: 'linear-vector-v', label: 'v', variant: 'function', latex: 'v' },
   { id: 'linear-dot', label: 'dot', variant: 'function', latex: '\\cdot' },
   { id: 'linear-cross', label: 'cross', variant: 'function', latex: '\\times' },
   { id: 'linear-norm', label: 'norm', variant: 'function', latex: '\\left\\lVert#0\\right\\rVert' },

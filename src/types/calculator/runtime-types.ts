@@ -1146,12 +1146,12 @@ export const DEFAULT_MODE_TREE: MenuNode[] = [
     label: 'Vector',
     hotkey: 'Ctrl+4',
     children: [
-      { id: 'dot', label: 'Dot', hotkey: 'F1' },
-      { id: 'cross', label: 'Cross', hotkey: 'F2' },
-      { id: 'normA', label: '?A?', hotkey: 'F3' },
-      { id: 'angle', label: '?', hotkey: 'F4' },
-      { id: 'add', label: 'A+B', hotkey: 'F5' },
-      { id: 'subtract', label: 'A-B', hotkey: 'F6' },
+      { id: 'dot', label: 'u.v', hotkey: 'F1' },
+      { id: 'cross', label: 'u x v', hotkey: 'F2' },
+      { id: 'normA', label: 'norm(u)', hotkey: 'F3' },
+      { id: 'angle', label: 'angle(u,v)', hotkey: 'F4' },
+      { id: 'add', label: 'u+v', hotkey: 'F5' },
+      { id: 'subtract', label: 'u-v', hotkey: 'F6' },
     ],
   },
   {

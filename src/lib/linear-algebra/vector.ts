@@ -12,9 +12,9 @@ import {
 function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
   switch (reason) {
     case 'vector-a-incomplete':
-      return 'Vector A is incomplete.';
+      return 'Vector u is incomplete.';
     case 'vector-b-required':
-      return 'Vector B is required for this operation.';
+      return 'Vector v is required for this operation.';
     case 'dimension-mismatch':
       return 'Vector dimensions must match.';
     case 'cross-requires-3d':
