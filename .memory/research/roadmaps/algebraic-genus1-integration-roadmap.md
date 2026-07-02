@@ -31,6 +31,8 @@ Inserted prerequisite note: after coefficient-system evidence, `ALGEBRAIC-GENUS1
 
 Inserted prerequisite note: after rational-form evidence, `ALGEBRAIC-GENUS1-ROOT-PULLBACK-COEFFICIENT-SPECIALIZATION1` was added as a small proof-readback tightening step. The reason is that later solving should see the actual named-root multiplier in radical and rational-in-radical coefficients instead of placeholder notation.
 
+Inserted prerequisite note: after coefficient specialization, `ALGEBRAIC-GENUS1-ROOT-BASIS-COEFFICIENT-SOLVER1` was added before generic second-kind/third-kind live work. The reason is safety: the constant first-kind coefficient can be marked live-adoptable, while radical and rational-in-radical pullbacks must expose explicit elliptic-basis or Hermite proof obligations instead of appearing solved.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
