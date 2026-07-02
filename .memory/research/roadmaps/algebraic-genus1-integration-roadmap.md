@@ -33,6 +33,8 @@ Inserted prerequisite note: after rational-form evidence, `ALGEBRAIC-GENUS1-ROOT
 
 Inserted prerequisite note: after coefficient specialization, `ALGEBRAIC-GENUS1-ROOT-BASIS-COEFFICIENT-SOLVER1` was added before generic second-kind/third-kind live work. The reason is safety: the constant first-kind coefficient can be marked live-adoptable, while radical and rational-in-radical pullbacks must expose explicit elliptic-basis or Hermite proof obligations instead of appearing solved.
 
+Inserted prerequisite note: after coefficient-solver evidence, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-ROOT-CHART1` was added before broader generic live work. The reason is coverage: common exact cubic genus-1 curves such as `x^3+x+1` have one real root plus a complex-conjugate pair, so they need a separate real Legendre chart instead of the three-real-root chart.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

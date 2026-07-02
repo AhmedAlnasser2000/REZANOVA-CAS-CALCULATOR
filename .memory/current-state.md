@@ -289,6 +289,7 @@ Current shape:
 - Inserted prerequisite `ALGEBRAIC-GENUS1-ROOT-PULLBACK-RATIONAL-FORM1` records behavior-invisible rational pullback forms in the Legendre chart. Reciprocal radicals expose a constant first-kind coefficient, radical pullbacks expose the rational coefficient multiplying the first-kind kernel before F/E/Pi basis solving, and rational-in-radical pullbacks expose the Hermite-plus-elliptic rational coefficient; live dispatch remains unchanged.
 - Inserted prerequisite `ALGEBRAIC-GENUS1-ROOT-PULLBACK-COEFFICIENT-SPECIALIZATION1` tightens that pullback evidence so radical and rational-in-radical coefficients carry the actual named-root first-kind multiplier instead of placeholder notation; live dispatch remains unchanged.
 - Inserted prerequisite `ALGEBRAIC-GENUS1-ROOT-BASIS-COEFFICIENT-SOLVER1` adds behavior-invisible coefficient-solver evidence: constant first-kind pullbacks are marked live-adoptable, while radical and rational-in-radical pullbacks expose explicit elliptic-basis or Hermite proof obligations and remain non-adoptable.
+- Inserted prerequisite `ALGEBRAIC-GENUS1-COMPLEX-PAIR-ROOT-CHART1` records behavior-invisible readiness for exact one-real-root cubic genus-1 radicals such as `sqrt(x^3+x+1)`: it names the real root, irreducible quadratic cofactor, real branch, and missing real Legendre chart data without changing live dispatch.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 
