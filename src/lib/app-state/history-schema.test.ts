@@ -408,6 +408,22 @@ describe('history entry schema', () => {
     }).matrixSeed?.systemRhs).toEqual([5, 11]);
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-multi-rhs',
+      mode: 'matrix',
+      inputLatex: 'A X = B',
+      resultLatex: 'X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'multiRhsSolve',
+        matrixA: [[1, 2], [3, 4]],
+        matrixB: [[5, 6], [11, 14]],
+        editorExpressionLatex: 'A X = B',
+        matrixOperandLatexA: 'A',
+        matrixOperandLatexB: 'B',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('multiRhsSolve');
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',

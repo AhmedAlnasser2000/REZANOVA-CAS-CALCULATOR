@@ -207,6 +207,24 @@ describe('parseLinearAlgebraEditorLatex', () => {
         displayLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
     });
+    expect(parsed('A X = B', 'matrix')).toEqual({
+      kind: 'multiRhsSystem',
+      coefficients: { kind: 'named', name: 'A', displayLatex: 'A' },
+      constants: { kind: 'named', name: 'B', displayLatex: 'B' },
+    });
+    expect(parsed('A X = \\begin{bmatrix}5&6\\\\11&14\\end{bmatrix}', 'matrix')).toEqual({
+      kind: 'multiRhsSystem',
+      coefficients: { kind: 'named', name: 'A', displayLatex: 'A' },
+      constants: {
+        kind: 'matrixLiteral',
+        value: [[5, 6], [11, 14]],
+        exactValue: [
+          [{ numerator: 5, denominator: 1 }, { numerator: 6, denominator: 1 }],
+          [{ numerator: 11, denominator: 1 }, { numerator: 14, denominator: 1 }],
+        ],
+        displayLatex: '\\begin{bmatrix}5&6\\\\11&14\\end{bmatrix}',
+      },
+    });
   });
 
   it('returns controlled errors for empty, template, malformed, and unsupported forms', () => {

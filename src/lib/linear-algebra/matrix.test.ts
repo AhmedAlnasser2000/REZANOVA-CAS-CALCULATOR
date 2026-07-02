@@ -431,6 +431,56 @@ describe('runMatrixOperation', () => {
     expect(solve.error).toBe('LU solve stopped at pivot 1. Use plusolve(...) to keep the row swap visible.');
   });
 
+  it('solves exact multi-RHS Matrix systems through augmented RREF', () => {
+    const solve = runMatrixOperation({
+      operation: 'multiRhsSolve',
+      matrixA,
+      matrixB: [[5, 6], [11, 14]],
+    });
+
+    expect(solve.resultLatex).toBe('X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}');
+    expect(solve.approxText).toBe('unique 2-column solution');
+    expect(solve.detailSections?.map((section) => section.title)).toEqual([
+      'Multi-RHS Proof',
+      'Rank Facts',
+      'Augmented RREF',
+      'Row Reduction Steps',
+    ]);
+    expect(solve.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)=\\operatorname{rank}([A|B])=2');
+    expect(solve.detailSections?.[0]?.lines).toContain('\\operatorname{RHS\\ columns}=2');
+    expect(solve.detailSections?.[0]?.lines).toContain(
+      'Each RHS column has exactly one solution vector. Those solution vectors are collected as the columns of X.',
+    );
+    expect(solve.detailSections?.[2]?.lines).toContain(
+      '\\operatorname{rref}\\left([A|B]\\right)=\\begin{bmatrix}1 & 0 & 1 & 2\\\\0 & 1 & 2 & 2\\end{bmatrix}',
+    );
+  });
+
+  it('classifies no-solution and non-unique multi-RHS Matrix systems', () => {
+    const noSolution = runMatrixOperation({
+      operation: 'multiRhsSolve',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[1, 2], [3, 4]],
+    });
+    const nonUnique = runMatrixOperation({
+      operation: 'multiRhsSolve',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[2, 4], [4, 8]],
+    });
+
+    expect(noSolution.resultLatex).toBe('\\text{No solution matrix}');
+    expect(noSolution.approxText).toBe('no solution matrix');
+    expect(noSolution.detailSections?.[0]?.lines).toContain(
+      'At least one RHS column creates a contradiction, so no single matrix X satisfies all RHS columns.',
+    );
+
+    expect(nonUnique.resultLatex).toBe('\\text{Infinitely many solution matrices}');
+    expect(nonUnique.approxText).toBe('not unique');
+    expect(nonUnique.detailSections?.[0]?.lines).toContain(
+      'The ranks match, but the coefficient matrix has fewer pivots than unknowns. The solution matrix is not unique.',
+    );
+  });
+
   it('stops PLU when no nonzero pivot is available', () => {
     const plu = runMatrixOperation({
       operation: 'pluA',

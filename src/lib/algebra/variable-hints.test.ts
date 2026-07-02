@@ -64,6 +64,12 @@ describe('variable hints', () => {
       storedVariables: stored,
     })).toEqual([]);
 
+    expect(hintKinds('A X = B', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
+
     expect(hintKinds('rref\\left(\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}\\right)', {
       mode: 'matrix',
       screenHint: 'matrix',

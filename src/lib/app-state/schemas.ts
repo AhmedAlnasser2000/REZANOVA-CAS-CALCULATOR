@@ -327,6 +327,7 @@ const matrixOperationSchema = z.enum([
   'luSolveB',
   'pluSolveA',
   'pluSolveB',
+  'multiRhsSolve',
   'invertibilityA',
   'invertibilityB',
   'eigenA',

@@ -139,6 +139,22 @@ describe('runMatrixMode', () => {
     ]);
   });
 
+  it('labels multi-RHS solve runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'multiRhsSolve',
+      matrixA: [[1, 2], [3, 4]],
+      matrixB: [[5, 6], [11, 14]],
+    });
+
+    expect(result.title).toBe('AX=B');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.exactLatex).toBe('X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}');
+    expect(result.detailSections?.[0]?.title).toBe('Multi-RHS Proof');
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

@@ -99,6 +99,8 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'plusolve(A,b)';
     case 'pluSolveB':
       return 'plusolve(B,b)';
+    case 'multiRhsSolve':
+      return 'AX=B';
     case 'invertibilityA':
       return 'invertible(A)';
     case 'invertibilityB':

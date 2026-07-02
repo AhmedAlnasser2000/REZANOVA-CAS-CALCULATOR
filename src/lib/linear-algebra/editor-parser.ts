@@ -49,6 +49,11 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'factorSolve'; method: 'lu' | 'plu'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'changeOfBasis'; source: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | {
+      kind: 'multiRhsSystem';
+      coefficients: LinearAlgebraValueExpression;
+      constants: LinearAlgebraValueExpression;
+    }
+  | {
       kind: 'linearSystem';
       form: LinearAlgebraSystemForm;
       coefficients: LinearAlgebraValueExpression;
@@ -363,6 +368,15 @@ function isInlineVectorExpression(
   return expression !== null && expression.kind === 'vectorLiteral';
 }
 
+function isMatrixRhsExpression(
+  expression: LinearAlgebraEditorExpression | null,
+): expression is LinearAlgebraValueExpression {
+  return expression !== null && (
+    expression.kind === 'matrixLiteral'
+    || (expression.kind === 'named' && (expression.name === 'A' || expression.name === 'B'))
+  );
+}
+
 function negateVectorExpression(expression: LinearAlgebraValueExpression): LinearAlgebraValueExpression {
   if (expression.kind !== 'vectorLiteral') {
     return expression;
@@ -418,6 +432,26 @@ function parseCoefficientTimesX(
   return isMatrixCoefficientExpression(coefficient) ? coefficient : null;
 }
 
+function parseCoefficientTimesUnknownMatrix(
+  input: string,
+  options: LinearAlgebraEditorParseOptions,
+): LinearAlgebraValueExpression | null {
+  const normalized = stripWrappedParens(input);
+  const suffixes = ['\\timesX', '\\cdotX', '*X', 'X'];
+  const suffix = suffixes.find((candidate) => normalized.endsWith(candidate));
+  if (!suffix) {
+    return null;
+  }
+
+  const coefficientLatex = normalized.slice(0, -suffix.length);
+  if (!coefficientLatex) {
+    return null;
+  }
+
+  const coefficient = tryParseExpression(coefficientLatex, options);
+  return isMatrixCoefficientExpression(coefficient) ? coefficient : null;
+}
+
 function parseLinearSystemExpression(
   input: string,
   options: LinearAlgebraEditorParseOptions,
@@ -435,6 +469,18 @@ function parseLinearSystemExpression(
           kind: 'linearSystem',
           form: 'Ax=b',
           coefficients: directCoefficients,
+          constants,
+        }
+      : null;
+  }
+
+  const multiRhsCoefficients = parseCoefficientTimesUnknownMatrix(equation.left, options);
+  if (multiRhsCoefficients) {
+    const constants = tryParseExpression(equation.right, options);
+    return isMatrixRhsExpression(constants)
+      ? {
+          kind: 'multiRhsSystem',
+          coefficients: multiRhsCoefficients,
           constants,
         }
       : null;

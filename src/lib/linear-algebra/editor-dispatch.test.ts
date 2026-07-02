@@ -428,6 +428,40 @@ describe('linear algebra editor dispatch', () => {
         systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
     });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'A X = B',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'multiRhsSolve',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: 'A X = B',
+        matrixOperandLatexA: 'A',
+        matrixOperandLatexB: 'B',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'A X = \\begin{bmatrix}5&6\\\\11&14\\end{bmatrix}',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'multiRhsSolve',
+        matrixA,
+        matrixB: [[5, 6], [11, 14]],
+        exactMatrixB: [
+          [{ numerator: 5, denominator: 1 }, { numerator: 6, denominator: 1 }],
+          [{ numerator: 11, denominator: 1 }, { numerator: 14, denominator: 1 }],
+        ],
+        editorExpressionLatex: 'A X = \\begin{bmatrix}5&6\\\\11&14\\end{bmatrix}',
+        matrixOperandLatexA: 'A',
+        matrixOperandLatexB: '\\begin{bmatrix}5&6\\\\11&14\\end{bmatrix}',
+      },
+    });
   });
 
   it('returns explicit Equation handoffs for unsupported equation-shaped editor input', () => {

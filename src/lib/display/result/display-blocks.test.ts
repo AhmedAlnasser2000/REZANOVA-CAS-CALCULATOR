@@ -201,6 +201,33 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix multi-RHS proof details visible but collapsible by default', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'AX=B',
+      exactLatex: 'X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}',
+      sourceMode: 'matrix',
+      detailSections: [{
+        title: 'Multi-RHS Proof',
+        lines: [
+          '\\operatorname{rank}(A)=\\operatorname{rank}([A|B])=2',
+          '\\operatorname{RHS\\ columns}=2',
+          'Each RHS column has exactly one solution vector.',
+        ],
+        lineKinds: ['math', 'math', 'text'],
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Multi-RHS Proof');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      collapsible: true,
+      defaultCollapsed: false,
+    });
+  });
+
   it('keeps Matrix coordinate proof details visible but collapsible by default', () => {
     const outcome: DisplayOutcome = {
       kind: 'success',

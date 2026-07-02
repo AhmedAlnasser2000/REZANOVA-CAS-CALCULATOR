@@ -27,6 +27,7 @@ import { runMatrixCoordinates } from './matrix-coordinates';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
+import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
 
@@ -386,6 +387,26 @@ function exactFactorSolveResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactMultiRhsResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation !== 'multiRhsSolve') {
+    return null;
+  }
+
+  return req.matrixB
+    ? runMatrixMultiRhsSolve({
+        coefficientLabel: matrixLabelA(req),
+        rhsLabel: matrixLabelB(req),
+        coefficients: req.matrixA,
+        rhs: req.matrixB,
+        exactCoefficients: req.exactMatrixA,
+        exactRhs: req.exactMatrixB,
+      })
+    : {
+        warnings: [],
+        error: 'Multi-RHS solve needs a RHS matrix.',
+      };
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -488,6 +509,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const factorSolveResponse = exactFactorSolveResponse(req);
   if (factorSolveResponse) {
     return factorSolveResponse;
+  }
+
+  const multiRhsResponse = exactMultiRhsResponse(req);
+  if (multiRhsResponse) {
+    return multiRhsResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

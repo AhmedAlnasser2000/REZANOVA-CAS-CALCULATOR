@@ -297,7 +297,7 @@ function isLinearAlgebraEditorFunction(raw: string, context: VariableHintContext
 
 function isLinearAlgebraStructuralSymbol(raw: string, context: VariableHintContext) {
   if (context.mode === 'matrix') {
-    return raw === 'A' || raw === 'B' || raw === 'x';
+    return raw === 'A' || raw === 'B' || raw === 'x' || raw === 'X';
   }
   if (context.mode === 'vector') {
     return raw === 'u' || raw === 'v';

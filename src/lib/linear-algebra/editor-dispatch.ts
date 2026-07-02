@@ -216,6 +216,23 @@ function matrixSystemRequest(
   };
 }
 
+function matrixMultiRhsSystemRequest(input: MatrixEditorDispatchInput, expression: Extract<LinearAlgebraEditorExpression, { kind: 'multiRhsSystem' }>): MatrixEditorDispatchResult {
+  const coefficients = matrixOperand(expression.coefficients, input), constants = matrixOperand(expression.constants, input);
+  if (!coefficients || !constants) {
+    return { ok: false, message: 'Multi-RHS Matrix systems need Matrix A/B or inline matrices on both sides of AX=B.' };
+  }
+
+  return {
+    ok: true,
+    request: {
+      operation: 'multiRhsSolve', matrixA: coefficients.matrix, matrixB: constants.matrix,
+      ...(coefficients.exactMatrix ? { exactMatrixA: coefficients.exactMatrix } : {}),
+      ...(constants.exactMatrix ? { exactMatrixB: constants.exactMatrix } : {}),
+      ...matrixMetadata(input, { operandA: coefficients, operandB: constants }),
+    },
+  };
+}
+
 function matrixCoordinatesRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'coordinates' }>,
@@ -767,6 +784,7 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   if (expression.kind === 'linearSystem') {
     return matrixSystemRequest(input, expression);
   }
+  if (expression.kind === 'multiRhsSystem') return matrixMultiRhsSystemRequest(input, expression);
   if (expression.kind === 'coordinates') {
     return matrixCoordinatesRequest(input, expression);
   }
