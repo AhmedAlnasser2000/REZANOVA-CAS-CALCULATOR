@@ -39,6 +39,10 @@ export {
   resolveInfiniteScaleLimit,
 } from './limits/infinity-scale-terms';
 export {
+  hasSymbolicInfinityCaseCandidate,
+  resolveSymbolicInfinityCaseLimit,
+} from './limits/symbolic-infinity-cases';
+export {
   hasMrvLiteCandidate,
   resolveMrvLiteLimit,
 } from './limits/mrv-lite';

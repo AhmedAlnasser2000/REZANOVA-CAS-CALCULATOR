@@ -15,6 +15,7 @@ import {
   hasFiniteSqueezeOscillationCandidate,
   hasInfiniteScaleCandidate,
   hasMrvLiteCandidate,
+  hasSymbolicInfinityCaseCandidate,
   parsePiecewiseLimitExpression,
 } from '../symbolic-engine/limits';
 
@@ -298,6 +299,14 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     return {
       kind: 'infinity-asymptotic',
       reason: 'A direct infinity scale comparison resolves the infinite-target expression.',
+      request,
+    };
+  }
+
+  if (hasSymbolicInfinityCaseCandidate(node, request.target.targetKind, request.variable)) {
+    return {
+      kind: 'infinity-asymptotic',
+      reason: 'A symbolic leading coefficient needs sign cases at the infinite target.',
       request,
     };
   }

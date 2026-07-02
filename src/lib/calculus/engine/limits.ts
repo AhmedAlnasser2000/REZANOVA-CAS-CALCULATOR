@@ -12,6 +12,7 @@ import {
   resolveInfiniteRewriteCancellationLimit,
   resolveInfiniteScaleLimit,
   resolveMrvLiteLimit,
+  resolveSymbolicInfinityCaseLimit,
   unsupportedComplexDomainLimit,
 } from '../../symbolic-engine/limits';
 import type {
@@ -728,6 +729,21 @@ export function evaluateInfiniteLimitFromAst(input: {
       warnings: [],
       resultOrigin: infinityScale.origin,
       detailSections: infinityScale.detailSections,
+    };
+  }
+
+  const symbolicInfinityCases = resolveSymbolicInfinityCaseLimit(
+    input.body,
+    input.targetKind,
+    input.variable,
+  );
+  if (symbolicInfinityCases) {
+    return {
+      exactLatex: symbolicInfinityCases.exactLatex,
+      approxText: symbolicInfinityCases.approxText,
+      warnings: [],
+      resultOrigin: symbolicInfinityCases.origin,
+      detailSections: symbolicInfinityCases.detailSections,
     };
   }
 

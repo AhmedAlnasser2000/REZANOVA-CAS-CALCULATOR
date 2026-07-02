@@ -514,4 +514,27 @@ describe('calculus limits', () => {
     expect(iteratedLog.error).toBeUndefined();
     expect(iteratedLog.exactLatex).toBe('0');
   });
+
+  it('resolves symbolic infinity cases for target-free leading coefficients', () => {
+    const linear = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity a*x',
+    });
+    const quadraticThenLinear = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (b*x^2+a*x)',
+    });
+
+    expect(linear.error).toBeUndefined();
+    expect(linear.exactLatex).toContain('\\infty,&\\substack{a>0}');
+    expect(linear.exactLatex).toContain('0,&\\substack{a=0}');
+    expect(linear.exactLatex).toContain('-\\infty,&\\substack{a<0}');
+    expect(linear.detailSections?.map((section) => section.title)).toContain('Limit Cases');
+    expect(linear.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('infinity asymptotic comparison');
+
+    expect(quadraticThenLinear.error).toBeUndefined();
+    expect(quadraticThenLinear.exactLatex).toContain('\\infty,&\\substack{b>0}');
+    expect(quadraticThenLinear.exactLatex).toContain('-\\infty,&\\substack{b<0}');
+    expect(quadraticThenLinear.exactLatex).toContain('\\infty,&\\substack{b=0,\\ a>0}');
+    expect(quadraticThenLinear.exactLatex).toContain('0,&\\substack{b=0,\\ a=0}');
+  });
 });

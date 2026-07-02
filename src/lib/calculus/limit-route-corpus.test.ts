@@ -68,6 +68,9 @@ describe('frontier limit route corpus', () => {
     const expRatio = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity (e^x+x^3)/(e^x-1)',
     });
+    const symbolicCases = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity a*x',
+    });
     const mrvQuotient = evaluateCalculusLimit({
       requestLatex: '\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{e^x}',
     });
@@ -83,6 +86,11 @@ describe('frontier limit route corpus', () => {
     expectRoute('lim x -> infinity (e^x+x^3)/(e^x-1)', 'infinity-asymptotic');
     expect(expRatio.error).toBeUndefined();
     expect(expRatio.exactLatex).toBe('1');
+
+    expectRoute('lim x -> infinity a*x', 'infinity-asymptotic');
+    expect(symbolicCases.error).toBeUndefined();
+    expect(symbolicCases.exactLatex).toContain('\\substack{a>0}');
+    expect(routeLines(symbolicCases)).toContain('infinity asymptotic comparison');
 
     expectRoute('\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{e^x}', 'mrv-lite');
     expect(mrvQuotient.error).toBeUndefined();

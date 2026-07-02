@@ -18,6 +18,10 @@ describe('natural limit route classifier', () => {
     expect(classifyNaturalLimitRoute('lim x -> infinity (3x^2+1)/(2x^2-5)')).toMatchObject({
       kind: 'infinity-asymptotic',
     });
+    expect(classifyNaturalLimitRoute('lim x -> infinity a*x')).toMatchObject({
+      kind: 'infinity-asymptotic',
+      reason: expect.stringContaining('symbolic leading coefficient'),
+    });
   });
 
   it('classifies local-equivalent, Taylor, and L’Hospital candidates', () => {

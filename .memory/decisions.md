@@ -40,6 +40,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Natural Limit numeric fallback is explicitly route-owned and narrow: direct substitution and finite-pole side-evidence routes may use controlled numeric fallback, while exact symbolic/proof routes such as local-equivalent, exact-local-algebra, infinity-asymptotic, Piecewise, absolute-value side behavior, squeeze/oscillation, and MRV-lite must resolve symbolically or stop with controlled proof/diagnostic details.
 
+## 2026-07-03 - CALCULUS-LIMITS-CONDITIONAL-INFINITY-CASES1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may branch on target-free symbolic leading coefficients for narrow infinity polynomial-scale cases, using the existing conditional case surface. This is limited to coefficient signs/zero fallthrough for powers of the limit variable and must not import Equation inequality solving or claim broad symbolic target/Gruntz behavior.
+
 ## 2026-07-02 - EQUATION-SOLVER-CARD-CREDIBILITY-CONSISTENCY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation Real mode must not display complex-only roots; it should stop with no-real-root guidance and point to Complex On. Numeric/detail card taxonomy must keep hard domain facts, periodic structure, probe evidence, search diagnostics, breakpoints, extraneous candidates, and confidence wording in their own categories, with target-dependent branch guards scoped to branch/candidate details when safe.
