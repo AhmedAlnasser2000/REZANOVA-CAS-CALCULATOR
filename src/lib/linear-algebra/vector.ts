@@ -3,7 +3,26 @@ import type {
   VectorRequest,
   VectorResponse,
 } from '../../types/calculator';
+import {
+  exactScalarIsZero,
+  exactScalarToNumber,
+} from '../algebra/polynomial-core';
 import { formatApproxNumber, scalarToLatex, vectorToLatex } from '../display/format';
+import type { ExactVector } from './exact-matrix-core';
+import {
+  exactScalarToLatex,
+  exactVectorFromNumeric,
+  exactVectorFromWire,
+  exactVectorToColumnLatex,
+} from './exact-matrix-format';
+import {
+  exactDotVectors,
+  exactGramSchmidtTwoVectors,
+  exactOrthogonalComponentToVector,
+  exactProjectionOntoVector,
+  exactScalarSquareRoot,
+  exactUnitVector,
+} from './exact-vector-core';
 import {
   dotVectors,
   runNumericVectorOperation,
@@ -38,6 +57,10 @@ function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
 
 function vectorSetLatex(label: string, vectors: readonly number[][]) {
   return `${label}=\\left\\{${vectors.map(vectorToLatex).join(',')}\\right\\}`;
+}
+
+function exactVectorSetLatex(label: string, vectors: readonly ExactVector[]) {
+  return `${label}=\\left\\{${vectors.map(exactVectorToColumnLatex).join(',')}\\right\\}`;
 }
 
 function gramSchmidtDetailSections(
@@ -84,6 +107,164 @@ function gramSchmidtDetailSections(
   return sections;
 }
 
+function exactGramSchmidtDetailSections(
+  req: VectorRequest,
+  result: NonNullable<ReturnType<typeof exactGramSchmidtTwoVectors>>,
+  numericResult: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>,
+): DisplayDetailSection[] {
+  const sections: DisplayDetailSection[] = [];
+  const secondInputLatex = req.vectorOperandLatexB ?? 'v';
+
+  if (result.orthonormalBasis?.length === result.orthogonalBasis.length) {
+    sections.push({
+      title: 'Orthonormal Basis',
+      lineKind: 'math',
+      lines: [
+        exactVectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis),
+      ],
+    });
+  } else if (numericResult.orthonormalBasis.length === numericResult.orthogonalBasis.length) {
+    sections.push({
+      title: 'Orthonormal Basis',
+      lineKind: 'math',
+      lines: [
+        vectorSetLatex('\\operatorname{orthonormal\\ basis}', numericResult.orthonormalBasis),
+      ],
+    });
+  }
+
+  const proofLines = [
+    `w_{1}=${exactVectorToColumnLatex(result.orthogonalBasis[0])}`,
+    ...(result.orthogonalBasis[1]
+      ? [
+          `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${exactVectorToColumnLatex(result.orthogonalBasis[1])}`,
+          `w_{1}\\cdot w_{2}=${exactScalarToLatex(exactDotVectors(result.orthogonalBasis[0], result.orthogonalBasis[1]))}`,
+        ]
+      : []),
+  ];
+
+  sections.push({
+    title: 'Gram-Schmidt Proof',
+    lineKind: 'math',
+    lines: proofLines,
+  });
+
+  if (result.notes.length > 0) {
+    sections.push({
+      title: 'Dependency Note',
+      lineKind: 'text',
+      lines: result.notes,
+    });
+  }
+
+  return sections;
+}
+
+function exactRequestVector(numericVector: number[] | undefined, exactWire: VectorRequest['exactVectorA']) {
+  if (!numericVector) {
+    return null;
+  }
+
+  const exactFromWire = exactVectorFromWire(exactWire);
+  if (exactFromWire && exactVectorMatchesNumeric(exactFromWire, numericVector)) {
+    return exactFromWire;
+  }
+
+  return exactVectorFromNumeric(numericVector);
+}
+
+function exactVectorMatchesNumeric(exactVector: ExactVector, numericVector: number[]) {
+  return exactVector.length === numericVector.length
+    && exactVector.every((value, index) => Math.abs(exactScalarToNumber(value) - numericVector[index]) <= 1e-12);
+}
+
+function exactVectorInputs(req: VectorRequest) {
+  return {
+    vectorA: exactRequestVector(req.vectorA, req.exactVectorA),
+    vectorB: exactRequestVector(req.vectorB, req.exactVectorB),
+  };
+}
+
+function exactScalarResponse(value: ReturnType<typeof exactDotVectors>): VectorResponse {
+  return {
+    resultLatex: exactScalarToLatex(value),
+    approxText: formatApproxNumber(exactScalarToNumber(value)),
+    warnings: [],
+  };
+}
+
+function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): VectorResponse | null {
+  if (result.kind === 'error') {
+    return null;
+  }
+
+  const { vectorA, vectorB } = exactVectorInputs(req);
+
+  switch (req.operation) {
+    case 'dot':
+      return vectorA && vectorB ? exactScalarResponse(exactDotVectors(vectorA, vectorB)) : null;
+    case 'normA':
+    case 'normB': {
+      const vector = req.operation === 'normA' ? vectorA : vectorB;
+      if (!vector) {
+        return null;
+      }
+
+      const norm = exactScalarSquareRoot(exactDotVectors(vector, vector));
+      return norm ? exactScalarResponse(norm) : null;
+    }
+    case 'projectionUofV': {
+      const vector = vectorA && vectorB ? exactProjectionOntoVector(vectorA, vectorB) : null;
+      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+    }
+    case 'projectionVofU': {
+      const vector = vectorA && vectorB ? exactProjectionOntoVector(vectorB, vectorA) : null;
+      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+    }
+    case 'orthogonalToU': {
+      const vector = vectorA && vectorB ? exactOrthogonalComponentToVector(vectorA, vectorB) : null;
+      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+    }
+    case 'orthogonalToV': {
+      const vector = vectorA && vectorB ? exactOrthogonalComponentToVector(vectorB, vectorA) : null;
+      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+    }
+    case 'unitA':
+    case 'unitB': {
+      const vector = req.operation === 'unitA' ? vectorA : vectorB;
+      const unit = vector ? exactUnitVector(vector) : null;
+      return unit ? { resultLatex: exactVectorToColumnLatex(unit), warnings: [] } : null;
+    }
+    case 'orthogonalCheck': {
+      if (!vectorA || !vectorB) {
+        return null;
+      }
+      const dot = exactDotVectors(vectorA, vectorB);
+      return {
+        resultLatex: exactScalarIsZero(dot) ? '\\text{Orthogonal}' : '\\text{Not orthogonal}',
+        approxText: `dot = ${exactScalarToLatex(dot)}`,
+        warnings: [],
+      };
+    }
+    case 'gramSchmidtUV': {
+      if (!vectorA || !vectorB || result.kind !== 'gramSchmidt') {
+        return null;
+      }
+      const exactResult = exactGramSchmidtTwoVectors(vectorA, vectorB);
+      return exactResult ? {
+        resultLatex: exactVectorSetLatex('\\operatorname{orthogonal\\ basis}', exactResult.orthogonalBasis),
+        approxText: result.notes.length > 0
+          ? `${exactResult.orthogonalBasis.length} basis direction${exactResult.orthogonalBasis.length === 1 ? '' : 's'}; dependent input skipped`
+          : `${exactResult.orthogonalBasis.length} basis directions`,
+        detailSections: exactGramSchmidtDetailSections(req, exactResult, result),
+        warnings: [],
+      } : null;
+    }
+    default:
+      return null;
+  }
+}
+
 function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult): VectorResponse {
   if (result.kind === 'error') {
     return {
@@ -127,5 +308,6 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
 }
 
 export function runVectorOperation(req: VectorRequest): VectorResponse {
-  return vectorCoreResultToResponse(req, runNumericVectorOperation(req));
+  const result = runNumericVectorOperation(req);
+  return exactVectorResponse(req, result) ?? vectorCoreResultToResponse(req, result);
 }

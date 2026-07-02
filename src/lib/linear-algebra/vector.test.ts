@@ -65,7 +65,7 @@ describe('runVectorOperation', () => {
       operation: 'unitA',
       vectorA: [3, 4],
       angleUnit: 'deg',
-    }).resultLatex).toBe('\\begin{bmatrix}0.6\\\\0.8\\end{bmatrix}');
+    }).resultLatex).toBe('\\begin{bmatrix}\\frac{3}{5}\\\\\\frac{4}{5}\\end{bmatrix}');
     const orthogonal = runVectorOperation({
       operation: 'orthogonalCheck',
       vectorA: [1, 0],
@@ -74,6 +74,17 @@ describe('runVectorOperation', () => {
     });
     expect(orthogonal.resultLatex).toBe('\\text{Orthogonal}');
     expect(orthogonal.approxText).toBe('dot = 0');
+
+    expect(runVectorOperation({
+      operation: 'projectionUofV',
+      vectorA: [1, 0],
+      vectorB: [0.5, 3],
+      exactVectorB: [
+        { numerator: 3, denominator: 1 },
+        { numerator: 3, denominator: 1 },
+      ],
+      angleUnit: 'deg',
+    }).resultLatex).toBe('\\begin{bmatrix}0.5\\\\0\\end{bmatrix}');
   });
 
   it('runs two-vector Gram-Schmidt with orthonormal and dependency details', () => {
@@ -84,7 +95,7 @@ describe('runVectorOperation', () => {
       angleUnit: 'deg',
     });
     expect(independent.resultLatex).toBe(
-      '\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix},\\begin{bmatrix}0.5\\\\-0.5\\end{bmatrix}\\right\\}',
+      '\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix},\\begin{bmatrix}\\frac{1}{2}\\\\-\\frac{1}{2}\\end{bmatrix}\\right\\}',
     );
     expect(independent.detailSections?.map((section) => section.title)).toEqual([
       'Orthonormal Basis',
@@ -98,7 +109,7 @@ describe('runVectorOperation', () => {
       vectorOperandLatexB: '\\begin{bmatrix}1\\\\0\\end{bmatrix}',
     });
     expect(inlineSecond.detailSections?.find((section) => section.title === 'Gram-Schmidt Proof')?.lines).toContain(
-      'w_{2}=\\begin{bmatrix}1\\\\0\\end{bmatrix}-\\operatorname{proj}_{w_{1}}(\\begin{bmatrix}1\\\\0\\end{bmatrix})=\\begin{bmatrix}0.5\\\\-0.5\\end{bmatrix}',
+      'w_{2}=\\begin{bmatrix}1\\\\0\\end{bmatrix}-\\operatorname{proj}_{w_{1}}(\\begin{bmatrix}1\\\\0\\end{bmatrix})=\\begin{bmatrix}\\frac{1}{2}\\\\-\\frac{1}{2}\\end{bmatrix}',
     );
 
     const dependent = runVectorOperation({
@@ -111,6 +122,40 @@ describe('runVectorOperation', () => {
     expect(dependent.detailSections?.find((section) => section.title === 'Dependency Note')?.lines).toEqual([
       'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.',
     ]);
+  });
+
+  it('uses exact vector sidecars for finite-decimal projection and orthogonality readback', () => {
+    expect(runVectorOperation({
+      operation: 'projectionUofV',
+      vectorA: [1, 0],
+      vectorB: [0.5, 3],
+      exactVectorB: [
+        { numerator: 1, denominator: 2 },
+        { numerator: 3, denominator: 1 },
+      ],
+      angleUnit: 'deg',
+    }).resultLatex).toBe('\\begin{bmatrix}\\frac{1}{2}\\\\0\\end{bmatrix}');
+
+    const orthogonal = runVectorOperation({
+      operation: 'orthogonalCheck',
+      vectorA: [0.5, 1],
+      vectorB: [2, -1],
+      exactVectorA: [
+        { numerator: 1, denominator: 2 },
+        { numerator: 1, denominator: 1 },
+      ],
+      angleUnit: 'deg',
+    });
+    expect(orthogonal.resultLatex).toBe('\\text{Orthogonal}');
+    expect(orthogonal.approxText).toBe('dot = 0');
+  });
+
+  it('falls back to numeric unit readback when the exact norm is irrational', () => {
+    expect(runVectorOperation({
+      operation: 'unitA',
+      vectorA: [1, 1],
+      angleUnit: 'deg',
+    }).resultLatex).toBe('\\begin{bmatrix}0.707107\\\\0.707107\\end{bmatrix}');
   });
 
   it('stops on incomplete, mismatched, non-3D cross, and zero-vector angle requests', () => {
