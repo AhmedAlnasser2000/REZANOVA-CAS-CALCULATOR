@@ -3,6 +3,7 @@ import {
   rrefExactMatrix,
   solveExactLinearSystem,
   type ExactMatrix,
+  type ExactScalar,
   type ExactMatrixStopReason,
   type ExactVector,
 } from './exact-matrix-core';
@@ -80,6 +81,95 @@ function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
   return count === 1 ? singular : pluralLabel;
 }
 
+function scalarIsZero(value: ExactScalar) {
+  return value.numerator === 0;
+}
+
+function negateScalar(value: ExactScalar): ExactScalar {
+  return { numerator: -value.numerator, denominator: value.denominator };
+}
+
+function parameterName(index: number, total: number) {
+  return total === 1 ? 't' : `t_{${index + 1}}`;
+}
+
+function formatParameterTerm(coefficient: ExactScalar, parameter: string) {
+  if (scalarIsZero(coefficient)) {
+    return null;
+  }
+
+  if (coefficient.denominator === 1 && coefficient.numerator === 1) {
+    return parameter;
+  }
+  if (coefficient.denominator === 1 && coefficient.numerator === -1) {
+    return `-${parameter}`;
+  }
+
+  return `${exactScalarToLatex(coefficient)}${parameter}`;
+}
+
+function joinExpressionTerms(constant: ExactScalar, terms: string[]) {
+  const pieces = scalarIsZero(constant) ? [] : [exactScalarToLatex(constant)];
+  for (const term of terms) {
+    pieces.push(pieces.length > 0 && !term.startsWith('-') ? `+${term}` : term);
+  }
+  return pieces.length > 0 ? pieces.join('') : '0';
+}
+
+function expressionColumnLatex(entries: string[]) {
+  return `\\begin{bmatrix}${entries.join('\\\\')}\\end{bmatrix}`;
+}
+
+function solutionFamilyFromRref(
+  rref: ExactMatrix,
+  pivotColumns: number[],
+  unknowns: number,
+) {
+  const coefficientPivots = pivotColumns.filter((column) => column < unknowns);
+  const freeColumns = Array.from({ length: unknowns }, (_, index) => index)
+    .filter((column) => !coefficientPivots.includes(column));
+  if (freeColumns.length === 0) {
+    return null;
+  }
+
+  const parameterByColumn = new Map<number, string>();
+  freeColumns.forEach((column, index) => {
+    parameterByColumn.set(column, parameterName(index, freeColumns.length));
+  });
+
+  const entries = Array.from({ length: unknowns }, () => '0');
+  freeColumns.forEach((column) => {
+    entries[column] = parameterByColumn.get(column) ?? 't';
+  });
+
+  coefficientPivots.forEach((pivotColumn, pivotRow) => {
+    const row = rref[pivotRow];
+    if (!row) {
+      return;
+    }
+
+    const constant = row[unknowns];
+    const terms = freeColumns
+      .map((freeColumn) => {
+        const parameter = parameterByColumn.get(freeColumn) ?? 't';
+        return formatParameterTerm(negateScalar(row[freeColumn]), parameter);
+      })
+      .filter((term): term is string => Boolean(term));
+    entries[pivotColumn] = joinExpressionTerms(constant, terms);
+  });
+
+  const parameters = freeColumns.map((column) => parameterByColumn.get(column) ?? 't');
+  const domain = parameters.length === 1
+    ? `${parameters[0]}\\in\\mathbb{R}`
+    : `${parameters.join(',')}\\in\\mathbb{R}`;
+  const vectorLatex = expressionColumnLatex(entries);
+  return {
+    domain,
+    exactLatex: `x=${vectorLatex}\\quad ${domain}`,
+    vectorLatex,
+  };
+}
+
 function inconsistentRowLatex(rref: ExactMatrix, coefficientColumns: number) {
   const row = rref.find((candidate) =>
     candidate
@@ -139,6 +229,17 @@ function systemProofDetails(
   };
 }
 
+function solutionFamilyDetails(family: NonNullable<ReturnType<typeof solutionFamilyFromRref>>) {
+  return {
+    title: 'Solution Family',
+    lines: [
+      `x=${family.vectorLatex}`,
+      family.domain,
+    ],
+    lineKind: 'math' as const,
+  };
+}
+
 function systemTitle(form: MatrixSystemForm) {
   return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
 }
@@ -188,12 +289,16 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
   }
 
   if (rankA < unknowns) {
+    const family = solutionFamilyFromRref(augmentedRref.matrix, augmentedRref.pivotColumns, unknowns);
     return {
       kind: 'success',
       title,
-      exactLatex: '\\text{Infinitely many solutions}',
-      solveSummaryText: 'Infinitely many solutions.',
+      exactLatex: family?.exactLatex ?? '\\text{Infinitely many solutions}',
+      solveSummaryText: family
+        ? 'Infinitely many solutions. The parameterized vector describes all solution vectors.'
+        : 'Infinitely many solutions.',
       detailSections: [
+        ...(family ? [solutionFamilyDetails(family)] : []),
         systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix),
         ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
       ],

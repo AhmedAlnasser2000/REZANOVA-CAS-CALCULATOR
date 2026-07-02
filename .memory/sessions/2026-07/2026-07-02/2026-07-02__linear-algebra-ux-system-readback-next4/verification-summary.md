@@ -46,3 +46,15 @@
   - `npm run test:file-sizes`
   - `git diff --check`
 - shared-memory-note: Shared memory files still contain unrelated dirty work from other agents; this session dossier remains the durable memory artifact for this sequential Matrix/Vector track.
+
+### 2026-07-02 - MATRIX-SYSTEM-PARAMETRIC-READBACK1
+
+- gate: backend
+- status: complete
+- summary: Infinitely-many structured Matrix systems now derive a parameterized solution vector from the augmented RREF when free variables are present, using Matrix-owned exact RREF data. The main answer and a `Solution Family` detail card show the family, while the rank proof card remains intact.
+- tests:
+  - `npm test -- --run src/lib/linear-algebra/matrix-system.test.ts src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/editor-dispatch.test.ts src/lib/display/result/display-blocks.test.ts`
+  - `npm run test:ui -- --run src/app/runtime/useLinearAlgebraTableShellRuntime.ui.test.tsx src/app/workspaces/LinearAlgebraEditorSource.ui.test.tsx`
+  - `npm run test:file-sizes`
+  - `git diff --check`
+- shared-memory-note: Shared memory files remain dirty from unrelated work; this dossier records completion for the fourth committed gate.
