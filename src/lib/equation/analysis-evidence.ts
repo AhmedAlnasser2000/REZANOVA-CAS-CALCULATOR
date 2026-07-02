@@ -774,3 +774,104 @@ export function buildEquationCertifiedFeatureEvidence(input: {
     }),
   ];
 }
+
+function hasLatexFunction(equationLatex: string, name: 'sin' | 'cos' | 'tan') {
+  const escaped = new RegExp(`\\\\${name}\\b`, 'u');
+  const plain = new RegExp(`(?:^|[^A-Za-z])${name}\\s*\\(`, 'u');
+  return escaped.test(equationLatex) || plain.test(equationLatex);
+}
+
+function hasAbsoluteValue(equationLatex: string) {
+  return /(?:^|[^A-Za-z])abs\s*\(/u.test(equationLatex)
+    || /\\(?:left)?\|/u.test(equationLatex)
+    || /\\lvert\b/u.test(equationLatex)
+    || /\|[^|]+\|/u.test(equationLatex);
+}
+
+function tanPoleSpacingText(angleUnit: AngleUnit) {
+  switch (angleUnit) {
+    case 'deg':
+      return 'Tan poles repeat every 180 degrees in the carrier angle.';
+    case 'grad':
+      return 'Tan poles repeat every 200 grads in the carrier angle.';
+    case 'rad':
+    default:
+      return 'Tan poles repeat every pi radians in the carrier angle.';
+  }
+}
+
+function rangeBehaviorEvidence(input: {
+  target: string;
+  sourceRoute: string;
+  classification: string;
+  latex?: string;
+  text: string;
+  confidence?: EquationAnalysisEvidenceConfidence;
+}): EquationAnalysisEvidence {
+  return {
+    id: ['range-behavior', input.sourceRoute, input.target, input.classification, input.latex ?? input.text].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'range-behavior',
+    classification: input.classification,
+    confidence: input.confidence ?? 'proven',
+    latex: input.latex,
+    text: input.text,
+  };
+}
+
+export function buildEquationRangeBehaviorEvidence(input: {
+  equationLatex: string;
+  target: string;
+  sourceRoute: string;
+  angleUnit: AngleUnit;
+  equationDomainIntent: EquationDomainIntent;
+}): EquationAnalysisEvidence[] {
+  const evidence: EquationAnalysisEvidence[] = [];
+  if (hasLatexFunction(input.equationLatex, 'sin')) {
+    evidence.push(rangeBehaviorEvidence({
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      classification: 'bounded-sine-carrier',
+      latex: String.raw`-1\le\sin(\cdot)\le1`,
+      text: 'Sine carrier values stay in [-1, 1] on the real line.',
+    }));
+  }
+  if (hasLatexFunction(input.equationLatex, 'cos')) {
+    evidence.push(rangeBehaviorEvidence({
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      classification: 'bounded-cosine-carrier',
+      latex: String.raw`-1\le\cos(\cdot)\le1`,
+      text: 'Cosine carrier values stay in [-1, 1] on the real line.',
+    }));
+  }
+  if (hasAbsoluteValue(input.equationLatex)) {
+    evidence.push(rangeBehaviorEvidence({
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      classification: 'absolute-value-nonnegative',
+      latex: String.raw`\left|\cdot\right|\ge0`,
+      text: 'Absolute-value carriers are nonnegative.',
+    }));
+  }
+  if (input.equationDomainIntent === 'real' && /\\sqrt\b/u.test(input.equationLatex)) {
+    evidence.push(rangeBehaviorEvidence({
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      classification: 'real-principal-square-root-nonnegative',
+      latex: String.raw`\sqrt{\cdot}\ge0`,
+      text: 'Real principal square-root carrier values are nonnegative.',
+    }));
+  }
+  if (hasLatexFunction(input.equationLatex, 'tan')) {
+    evidence.push(rangeBehaviorEvidence({
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      classification: 'tangent-pole-spacing',
+      text: tanPoleSpacingText(input.angleUnit),
+      confidence: 'reported',
+    }));
+  }
+  return evidence;
+}

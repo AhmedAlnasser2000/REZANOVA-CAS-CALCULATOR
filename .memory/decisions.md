@@ -1665,6 +1665,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Certified Equation features are exported through internal analysis evidence: validated roots, interval-local scope, extraneous candidates, Sturm-certified real-root intervals, and visible Complex numeric polynomial branch roots are structured facts for future Equation-owned consumers. The evidence remains symbol-backed and internal; it is not a public graphing API, persisted result schema, Copy Result, History, OOE, app-state, or Tauri contract.
 
+## 2026-07-02 - EQUATION-RANGE-BEHAVIOR-HINTS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation range behavior hints are conservative internal evidence only. The supported v1 hints are real sine/cosine boundedness, absolute-value nonnegativity, real principal square-root nonnegativity, and angle-unit-aware tangent pole spacing. Derivative-based monotonicity, graph shape inference, Graphing UI, and public schema contracts remain out of scope.
+
 ## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.

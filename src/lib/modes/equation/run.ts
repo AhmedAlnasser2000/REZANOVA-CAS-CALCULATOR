@@ -6,6 +6,7 @@ import {
   buildEquationCertifiedFeatureEvidence,
   buildEquationDomainFactEvidence,
   buildEquationIntervalValidityEvidence,
+  buildEquationRangeBehaviorEvidence,
   buildEquationRouteEvidence,
   buildEquationSingularityEvidence,
 } from '../../equation/analysis-evidence';
@@ -99,6 +100,13 @@ function buildEquationRunEvidence(input: {
       sourceRoute: route,
       numericInterval: input.numericInterval,
       complexRegion: input.complexRegion,
+    }),
+    ...buildEquationRangeBehaviorEvidence({
+      equationLatex: input.equationLatex,
+    target: selectedTarget,
+    sourceRoute: route,
+    angleUnit: input.angleUnit,
+      equationDomainIntent: input.equationDomainIntent ?? 'real',
     }),
   ];
 }
