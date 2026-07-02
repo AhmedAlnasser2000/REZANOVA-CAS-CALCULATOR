@@ -1673,6 +1673,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation range behavior hints are conservative internal evidence only. The supported v1 hints are real sine/cosine boundedness, absolute-value nonnegativity, real principal square-root nonnegativity, and angle-unit-aware tangent pole spacing. Derivative-based monotonicity, graph shape inference, Graphing UI, and public schema contracts remain out of scope.
 
+## 2026-07-02 - EQUATION-CONSUMER-TRUST-READBACK1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation trust labels are internal structured evidence first. Display and Formula Viewer should prefer symbol-backed trust evidence for exact roots, certified polynomial roots, local Numeric Interval roots, bounded-search approximate roots, and region-local Complex roots, with legacy confidence prose only as fallback. This is not a public graphing API, persisted result schema, Copy Result, History, OOE, app-state, or Tauri contract.
+
 ## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.

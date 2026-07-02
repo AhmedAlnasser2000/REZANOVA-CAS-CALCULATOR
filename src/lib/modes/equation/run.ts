@@ -11,6 +11,7 @@ import {
   buildEquationSingularityEvidence,
 } from '../../equation/analysis-evidence';
 import { runSharedEquationSolveWithTraceAsync } from '../../equation/shared-solve';
+import { buildEquationTrustEvidence } from '../../equation/trust-evidence';
 import {
   buildEquationOoePilotMetadata,
   buildEquationProvenance,
@@ -73,7 +74,7 @@ function buildEquationRunEvidence(input: {
     angleUnit: input.angleUnit,
   });
 
-  return [
+  const evidence = [
     ...routeEvidence,
     ...buildEquationDomainFactEvidence({
       facts: classification.domainFacts,
@@ -105,8 +106,18 @@ function buildEquationRunEvidence(input: {
       equationLatex: input.equationLatex,
     target: selectedTarget,
     sourceRoute: route,
-    angleUnit: input.angleUnit,
+      angleUnit: input.angleUnit,
       equationDomainIntent: input.equationDomainIntent ?? 'real',
+    }),
+  ];
+  return [
+    ...evidence,
+    ...buildEquationTrustEvidence({
+      outcome: input.outcome,
+      target: selectedTarget,
+      sourceRoute: route,
+      evidence,
+      numericInterval: input.numericInterval,
     }),
   ];
 }

@@ -1,5 +1,60 @@
 import type { DisplayOutcome } from '../../../types/calculator';
 
+type InternalEquationEvidence = {
+  category?: string;
+  classification?: string;
+  text?: string;
+  interval?: {
+    start?: string;
+    end?: string;
+  };
+};
+
+const EQUATION_ANALYSIS_EVIDENCE = Symbol.for('calcwiz.equation.analysisEvidence');
+
+function equationTrustEvidence(outcome: DisplayOutcome): InternalEquationEvidence[] {
+  const evidence = (outcome as { [EQUATION_ANALYSIS_EVIDENCE]?: unknown })[EQUATION_ANALYSIS_EVIDENCE];
+  return Array.isArray(evidence)
+    ? evidence.filter((entry): entry is InternalEquationEvidence =>
+      Boolean(entry)
+      && typeof entry === 'object'
+      && (entry as InternalEquationEvidence).category === 'trust')
+    : [];
+}
+
+function intervalTextFromEvidence(entry: InternalEquationEvidence) {
+  return entry.interval?.start && entry.interval.end
+    ? `[${entry.interval.start}, ${entry.interval.end}]`
+    : null;
+}
+
+function trustSummaryFromEvidence(outcome: DisplayOutcome) {
+  const trustEvidence = equationTrustEvidence(outcome);
+  for (const entry of trustEvidence) {
+    switch (entry.classification) {
+      case 'exact-roots':
+        return 'Exact roots';
+      case 'certified-polynomial-roots':
+        return 'Certified polynomial roots';
+      case 'local-numeric-roots': {
+        const interval = intervalTextFromEvidence(entry);
+        return entry.text && entry.text !== 'Local numeric roots'
+          ? entry.text
+          : interval
+            ? `Local numeric roots in ${interval}`
+            : 'Local numeric roots';
+      }
+      case 'bounded-search-approximate-roots':
+        return 'Validated approximate roots from bounded search';
+      case 'region-local-complex-roots':
+        return 'Region-local complex roots';
+      default:
+        break;
+    }
+  }
+  return undefined;
+}
+
 function numericConfidenceLines(outcome: DisplayOutcome) {
   return outcome.kind === 'success'
     ? outcome.detailSections?.find((section) => section.title === 'Numeric Confidence')?.lines ?? []
@@ -24,6 +79,11 @@ function searchedIntervalText(outcome: DisplayOutcome) {
 export function trustSummaryForDisplayOutcome(outcome: DisplayOutcome): string | undefined {
   if (outcome.kind !== 'success') {
     return undefined;
+  }
+
+  const evidenceSummary = trustSummaryFromEvidence(outcome);
+  if (evidenceSummary) {
+    return evidenceSummary;
   }
 
   const confidenceLines = numericConfidenceLines(outcome);

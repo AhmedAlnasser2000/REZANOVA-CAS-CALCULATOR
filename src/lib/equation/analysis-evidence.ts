@@ -450,7 +450,7 @@ function boundaryEvidence(input: {
   };
 }
 
-function numericIntervalEvidence(interval?: NumericSolveInterval): EquationAnalysisEvidenceInterval | undefined {
+export function numericIntervalEvidence(interval?: NumericSolveInterval): EquationAnalysisEvidenceInterval | undefined {
   return interval
     ? {
       start: interval.start,
