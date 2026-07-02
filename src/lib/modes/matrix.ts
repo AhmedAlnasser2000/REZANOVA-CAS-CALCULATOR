@@ -46,6 +46,14 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'Inverse A';
     case 'inverseB':
       return 'Inverse B';
+    case 'rankA':
+      return 'rank(A)';
+    case 'rankB':
+      return 'rank(B)';
+    case 'rrefA':
+      return 'rref(A)';
+    case 'rrefB':
+      return 'rref(B)';
     case 'linearSystem':
       return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
     default:

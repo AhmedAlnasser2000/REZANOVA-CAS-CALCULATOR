@@ -156,18 +156,29 @@ function matrixUnaryRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
 ): MatrixEditorDispatchResult {
-  if (expression.operator === 'rank' || expression.operator === 'rref') {
-    return {
-      ok: false,
-      message: 'Rank and RREF are parsed, but Matrix editor execution for them is not enabled in this move.',
-    };
-  }
-
   const value = matrixOperand(expression.value, input);
   if (!value) {
     return {
       ok: false,
       message: 'Matrix editor unary operations need Matrix A/B values or an inline matrix literal.',
+    };
+  }
+
+  if (expression.operator === 'rank') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? { operation: 'rankB', matrixA: cloneMatrix(input.matrixA), matrixB: value.matrix }
+        : { operation: 'rankA', matrixA: value.matrix, matrixB: cloneMatrix(input.matrixB) },
+    };
+  }
+
+  if (expression.operator === 'rref') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? { operation: 'rrefB', matrixA: cloneMatrix(input.matrixA), matrixB: value.matrix }
+        : { operation: 'rrefA', matrixA: value.matrix, matrixB: cloneMatrix(input.matrixB) },
     };
   }
 

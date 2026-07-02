@@ -29,6 +29,31 @@ describe('runMatrixOperation', () => {
     expect(inverse.resultLatex).toBe('\\begin{bmatrix}-2 & 1\\\\\\frac{3}{2} & -\\frac{1}{2}\\end{bmatrix}');
   });
 
+  it('runs exact rank and RREF operations', () => {
+    const rank = runMatrixOperation({
+      operation: 'rankA',
+      matrixA: [[1, 2], [2, 4]],
+      matrixB,
+    });
+    const rref = runMatrixOperation({
+      operation: 'rrefA',
+      matrixA: [[1, 2], [2, 4]],
+      matrixB,
+    });
+
+    expect(rank.resultLatex).toBe('1');
+    expect(rank.approxText).toBe('1');
+    expect(rref.resultLatex).toBe('\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}');
+  });
+
+  it('keeps rank and RREF on exact Matrix entries in this move', () => {
+    expect(runMatrixOperation({
+      operation: 'rankA',
+      matrixA: [[0.5, 1]],
+      matrixB,
+    }).error).toBe('Rank and RREF need exact integer Matrix entries in this move.');
+  });
+
   it('keeps decimal Matrix inverse output on the numeric readback path', () => {
     const inverse = runMatrixOperation({
       operation: 'inverseA',

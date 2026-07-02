@@ -273,6 +273,34 @@ describe('history entry schema', () => {
       matrixA: [[1, 2], [3, 4]],
       matrixB: [[5, 6], [7, 8]],
     });
+
+    expect(historyEntrySchema.parse({
+      id: 'matrix-seed-rref',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{rref}\\left(A\\right)',
+      resultLatex: '\\begin{bmatrix}1&2\\\\0&0\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'rrefA',
+        matrixA: [[1, 2], [2, 4]],
+        matrixB: [[5, 6], [7, 8]],
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('rrefA');
+
+    expect(historyEntrySchema.parse({
+      id: 'matrix-seed-system',
+      mode: 'matrix',
+      inputLatex: 'Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      resultLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'linearSystem',
+        matrixA: [[1, 2], [3, 4]],
+        matrixB: [[5, 6], [7, 8]],
+        systemRhs: [5, 11],
+        systemForm: 'Ax=b',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.systemRhs).toEqual([5, 11]);
   });
 
   it('accepts typed Vector replay seeds', () => {

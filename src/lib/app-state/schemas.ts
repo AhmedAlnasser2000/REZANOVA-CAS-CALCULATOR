@@ -304,7 +304,13 @@ const matrixOperationSchema = z.enum([
   'detB',
   'inverseA',
   'inverseB',
+  'rankA',
+  'rankB',
+  'rrefA',
+  'rrefB',
+  'linearSystem',
 ]);
+const matrixSystemFormSchema = z.enum(['Ax=b', 'Ax+b=0']);
 const vectorOperationSchema = z.enum([
   'dot',
   'cross',
@@ -320,6 +326,8 @@ const matrixReplaySeedSchema = z.object({
   operation: matrixOperationSchema,
   matrixA: numericMatrixSchema,
   matrixB: numericMatrixSchema.optional(),
+  systemRhs: numericVectorSchema.optional(),
+  systemForm: matrixSystemFormSchema.optional(),
 });
 const vectorReplaySeedSchema = z.object({
   operation: vectorOperationSchema,

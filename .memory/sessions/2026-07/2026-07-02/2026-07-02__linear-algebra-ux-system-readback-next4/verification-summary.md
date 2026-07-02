@@ -34,3 +34,15 @@
   - `npm run test:file-sizes`
   - `git diff --check`
 - shared-memory-note: Shared `.memory/current-state.md`, `.memory/decisions.md`, and journal files remain reserved for unrelated dirty work from other agents; this dossier carries the gate evidence for this commit.
+
+### 2026-07-02 - MATRIX-RANK-RREF-EXEC1
+
+- gate: backend
+- status: complete
+- summary: Matrix editor `rank(...)` and `rref(...)` now dispatch to Matrix-owned exact operations, with replay schema support for rank/RREF and structured system seeds. Exact integer matrices return rank scalars or RREF matrices; non-integer rank/RREF inputs stop with a controlled Matrix error.
+- tests:
+  - `npm test -- --run src/lib/linear-algebra/matrix.test.ts src/lib/linear-algebra/editor-dispatch.test.ts src/lib/linear-algebra/editor-parser.test.ts src/lib/app-state/history-schema.test.ts src/lib/modes/linear-algebra-worker-runtime.test.ts`
+  - `npm run test:ui -- --run src/app/runtime/useLinearAlgebraTableShellRuntime.ui.test.tsx src/app/workspaces/LinearAlgebraEditorSource.ui.test.tsx`
+  - `npm run test:file-sizes`
+  - `git diff --check`
+- shared-memory-note: Shared memory files still contain unrelated dirty work from other agents; this session dossier remains the durable memory artifact for this sequential Matrix/Vector track.

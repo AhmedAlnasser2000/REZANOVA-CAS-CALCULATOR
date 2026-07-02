@@ -261,7 +261,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     ));
   });
 
-  it('commits controlled errors for unsupported Matrix editor expressions', () => {
+  it('runs Matrix rank from the main editor', async () => {
     const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 
     act(() => {
@@ -271,15 +271,18 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       hook.result.current.runMatrixEditorAction();
     });
 
-    expect(commitOutcome).toHaveBeenCalledWith(
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: 'error',
-        title: 'Matrix',
-        error: expect.stringContaining('Rank and RREF'),
+        kind: 'success',
+        title: 'rank(A)',
+        exactLatex: '2',
       }),
       '\\operatorname{rank}\\left(A\\right)',
       'matrix',
-    );
+      expect.objectContaining({
+        matrixSeed: expect.objectContaining({ operation: 'rankA' }),
+      }),
+    ));
   });
 
   it('offers explicit Equation handoff for unsupported Matrix equations', () => {

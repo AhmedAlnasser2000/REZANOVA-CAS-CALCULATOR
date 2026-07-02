@@ -6,6 +6,7 @@ import { formatApproxNumber, matrixToLatex, scalarToLatex } from '../display/for
 import {
   determinantExactMatrix,
   inverseExactMatrix,
+  rrefExactMatrix,
 } from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
@@ -76,6 +77,49 @@ function exactMatrixReadback(req: MatrixRequest): string | null {
   return null;
 }
 
+function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
+  const targetMatrix =
+    req.operation === 'rankA' || req.operation === 'rrefA'
+      ? req.matrixA
+      : req.operation === 'rankB' || req.operation === 'rrefB'
+        ? req.matrixB
+        : undefined;
+  if (!targetMatrix) {
+    return null;
+  }
+
+  const exactMatrix = exactMatrixFromNumeric(targetMatrix);
+  if (!exactMatrix) {
+    return {
+      warnings: [],
+      error: 'Rank and RREF need exact integer Matrix entries in this move.',
+    };
+  }
+
+  const reduced = rrefExactMatrix(exactMatrix);
+  if (reduced.kind === 'stop') {
+    return {
+      warnings: [],
+      error: reduced.reason === 'dimension-limit'
+        ? 'Rank and RREF currently support matrices up to 6 by 6.'
+        : 'Rank and RREF need a complete rectangular Matrix.',
+    };
+  }
+
+  if (req.operation === 'rankA' || req.operation === 'rankB') {
+    return {
+      resultLatex: `${reduced.rank}`,
+      approxText: formatApproxNumber(reduced.rank),
+      warnings: [],
+    };
+  }
+
+  return {
+    resultLatex: exactMatrixToLatex(reduced.matrix),
+    warnings: [],
+  };
+}
+
 function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult): MatrixResponse {
   if (result.kind === 'error') {
     return {
@@ -108,6 +152,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
       warnings: [],
       error: 'Structured Matrix systems run through the Matrix editor.',
     };
+  }
+
+  const exactResponse = exactRankRrefResponse(req);
+  if (exactResponse) {
+    return exactResponse;
   }
 
   const numericRequest: NumericMatrixRequest = {

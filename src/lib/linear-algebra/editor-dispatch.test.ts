@@ -35,6 +35,26 @@ describe('linear algebra editor dispatch', () => {
         matrixB,
       },
     });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{rank}\\left(B\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: { operation: 'rankB', matrixA, matrixB },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{rref}\\left(\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: {
+        operation: 'rrefA',
+        matrixA: [[1, 2], [2, 4]],
+        matrixB,
+      },
+    });
   });
 
   it('maps structured Matrix systems to Matrix system requests', () => {
@@ -115,14 +135,6 @@ describe('linear algebra editor dispatch', () => {
   });
 
   it('returns controlled stops for parsed but unsupported editor forms', () => {
-    expect(dispatchMatrixEditorLatex({
-      latex: '\\operatorname{rank}\\left(A\\right)',
-      matrixA,
-      matrixB,
-    })).toMatchObject({
-      ok: false,
-      message: expect.stringContaining('Rank and RREF'),
-    });
     expect(dispatchMatrixEditorLatex({
       latex: 'A=b',
       matrixA,

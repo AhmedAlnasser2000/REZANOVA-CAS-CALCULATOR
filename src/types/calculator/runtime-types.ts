@@ -1007,7 +1007,8 @@ export type MatrixOperation =
   | 'add' | 'subtract' | 'multiply'
   | 'transposeA' | 'transposeB'
   | 'detA' | 'detB'
-  | 'inverseA' | 'inverseB' | 'linearSystem';
+  | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB'
+  | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 
