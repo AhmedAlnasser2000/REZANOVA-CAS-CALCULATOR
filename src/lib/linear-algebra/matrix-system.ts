@@ -25,6 +25,9 @@ export type MatrixSystemRunInput = {
   form: MatrixSystemForm;
   exactCoefficients?: ExactScalarWire[][];
   exactConstants?: ExactScalarWire[];
+  editorExpressionLatex?: string;
+  coefficientMatrixLatex?: string;
+  rhsVectorLatex?: string;
 };
 
 function matrixSystemStop(reason: string): DisplayOutcome {

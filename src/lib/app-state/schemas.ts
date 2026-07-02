@@ -353,12 +353,19 @@ const matrixReplaySeedSchema = z.object({
   exactMatrixA: exactMatrixWireSchema.optional(),
   exactMatrixB: exactMatrixWireSchema.optional(),
   exactSystemRhs: exactVectorWireSchema.optional(),
+  editorExpressionLatex: z.string().optional(),
+  matrixOperandLatexA: z.string().optional(),
+  matrixOperandLatexB: z.string().optional(),
+  systemRhsLatex: z.string().optional(),
 });
 const vectorReplaySeedSchema = z.object({
   operation: vectorOperationSchema,
   vectorA: numericVectorSchema,
   vectorB: numericVectorSchema.optional(),
   angleUnit: angleUnitSchema,
+  editorExpressionLatex: z.string().optional(),
+  vectorOperandLatexA: z.string().optional(),
+  vectorOperandLatexB: z.string().optional(),
 });
 const geometryScreenSchema = z.enum([
   'home',

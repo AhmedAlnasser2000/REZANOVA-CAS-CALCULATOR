@@ -17,12 +17,14 @@ type MatrixOperand = {
   matrix: number[][];
   exactMatrix?: ExactScalarWire[][];
   named?: 'A' | 'B';
+  displayLatex: string;
 };
 
 type VectorOperand = {
   vector: number[];
   exactVector?: ExactScalarWire[];
   named?: 'u' | 'v';
+  displayLatex: string;
 };
 
 export type MatrixEditorDispatchInput = {
@@ -57,6 +59,41 @@ function cloneVector<T>(vector: T[]): T[] {
   return [...vector];
 }
 
+function matrixMetadata(
+  input: MatrixEditorDispatchInput,
+  operands: {
+    operandA?: MatrixOperand;
+    operandB?: MatrixOperand;
+    systemRhs?: LinearAlgebraEditorExpression;
+  } = {},
+) {
+  return {
+    editorExpressionLatex: input.latex,
+    ...(operands.operandA ? { matrixOperandLatexA: operands.operandA.displayLatex } : {}),
+    ...(operands.operandB ? { matrixOperandLatexB: operands.operandB.displayLatex } : {}),
+    ...(operands.systemRhs && operands.systemRhs.kind === 'vectorLiteral'
+      ? { systemRhsLatex: operands.systemRhs.displayLatex }
+      : {}),
+  };
+}
+
+function vectorMetadata(
+  input: VectorEditorDispatchInput,
+  operands: {
+    operandA?: VectorOperand | string;
+    operandB?: VectorOperand | string;
+  } = {},
+) {
+  const operandLatex = (operand: VectorOperand | string | undefined) =>
+    typeof operand === 'string' ? operand : operand?.displayLatex;
+
+  return {
+    editorExpressionLatex: input.latex,
+    ...(operandLatex(operands.operandA) ? { vectorOperandLatexA: operandLatex(operands.operandA) } : {}),
+    ...(operandLatex(operands.operandB) ? { vectorOperandLatexB: operandLatex(operands.operandB) } : {}),
+  };
+}
+
 function matrixOperand(
   expression: LinearAlgebraEditorExpression,
   input: MatrixEditorDispatchInput,
@@ -65,15 +102,16 @@ function matrixOperand(
     return {
       matrix: cloneMatrix(expression.value),
       exactMatrix: cloneMatrix(expression.exactValue),
+      displayLatex: expression.displayLatex,
     };
   }
 
   if (expression.kind === 'named') {
     if (expression.name === 'A') {
-      return { matrix: cloneMatrix(input.matrixA), named: 'A' };
+      return { matrix: cloneMatrix(input.matrixA), named: 'A', displayLatex: expression.displayLatex };
     }
     if (expression.name === 'B') {
-      return { matrix: cloneMatrix(input.matrixB), named: 'B' };
+      return { matrix: cloneMatrix(input.matrixB), named: 'B', displayLatex: expression.displayLatex };
     }
   }
 
@@ -88,15 +126,16 @@ function vectorOperand(
     return {
       vector: cloneVector(expression.value),
       exactVector: cloneVector(expression.exactValue),
+      displayLatex: expression.displayLatex,
     };
   }
 
   if (expression.kind === 'named') {
     if (expression.name === 'u') {
-      return { vector: cloneVector(input.vectorA), named: 'u' };
+      return { vector: cloneVector(input.vectorA), named: 'u', displayLatex: expression.displayLatex };
     }
     if (expression.name === 'v') {
-      return { vector: cloneVector(input.vectorB), named: 'v' };
+      return { vector: cloneVector(input.vectorB), named: 'v', displayLatex: expression.displayLatex };
     }
   }
 
@@ -135,6 +174,7 @@ function matrixPairRequest(
       matrixB: right.matrix,
       ...(left.exactMatrix ? { exactMatrixA: left.exactMatrix } : {}),
       ...(right.exactMatrix ? { exactMatrixB: right.exactMatrix } : {}),
+      ...matrixMetadata(input, { operandA: left, operandB: right }),
     },
   };
 }
@@ -161,6 +201,7 @@ function matrixSystemRequest(
       systemForm: expression.form,
       ...(coefficients.exactMatrix ? { exactMatrixA: coefficients.exactMatrix } : {}),
       exactSystemRhs: expression.constants.exactValue,
+      ...matrixMetadata(input, { operandA: coefficients, systemRhs: expression.constants }),
     },
   };
 }
@@ -186,12 +227,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'rankA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -205,12 +248,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'rrefA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -224,12 +269,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'nullSpaceA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -243,12 +290,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'columnSpaceA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -262,12 +311,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'invertibilityA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -281,12 +332,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'eigenA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -300,12 +353,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'detA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -319,12 +374,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'transposeA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -338,12 +395,14 @@ function matrixUnaryRequest(
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
           }
         : {
             operation: 'inverseA',
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
           },
     };
   }
@@ -386,6 +445,7 @@ function vectorPairRequest(
       vectorA: left.vector,
       vectorB: right.vector,
       angleUnit: input.angleUnit,
+      ...vectorMetadata(input, { operandA: left, operandB: right }),
     },
   };
 }
@@ -424,6 +484,7 @@ function vectorUnaryRequest(
         vectorA: cloneVector(input.vectorA),
         vectorB: value.vector,
         angleUnit: input.angleUnit,
+        ...vectorMetadata(input, { operandA: 'u', operandB: value }),
       },
     };
   }
@@ -436,6 +497,7 @@ function vectorUnaryRequest(
         vectorA: value.vector,
         vectorB: cloneVector(input.vectorB),
         angleUnit: input.angleUnit,
+        ...vectorMetadata(input, { operandA: value, operandB: 'v' }),
       },
     };
   }
@@ -448,6 +510,7 @@ function vectorUnaryRequest(
         vectorA: cloneVector(input.vectorA),
         vectorB: value.vector,
         angleUnit: input.angleUnit,
+        ...vectorMetadata(input, { operandA: 'u', operandB: value }),
       },
     };
   }
@@ -460,6 +523,7 @@ function vectorUnaryRequest(
         vectorA: value.vector,
         vectorB: cloneVector(input.vectorB),
         angleUnit: input.angleUnit,
+        ...vectorMetadata(input, { operandA: value, operandB: 'v' }),
       },
     };
   }
@@ -473,12 +537,14 @@ function vectorUnaryRequest(
             vectorA: cloneVector(input.vectorA),
             vectorB: value.vector,
             angleUnit: input.angleUnit,
+            ...vectorMetadata(input, { operandB: value }),
           }
         : {
             operation: 'unitA',
             vectorA: value.vector,
             vectorB: cloneVector(input.vectorB),
             angleUnit: input.angleUnit,
+            ...vectorMetadata(input, { operandA: value }),
           },
     };
   }
@@ -491,12 +557,14 @@ function vectorUnaryRequest(
           vectorA: cloneVector(input.vectorA),
           vectorB: value.vector,
           angleUnit: input.angleUnit,
+          ...vectorMetadata(input, { operandB: value }),
         }
       : {
           operation: 'normA',
           vectorA: value.vector,
           vectorB: cloneVector(input.vectorB),
           angleUnit: input.angleUnit,
+          ...vectorMetadata(input, { operandA: value }),
         },
   };
 }
@@ -578,6 +646,7 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
         vectorA: left.vector,
         vectorB: right.vector,
         angleUnit: input.angleUnit,
+        ...vectorMetadata(input, { operandA: left, operandB: right }),
       },
     };
   }
@@ -597,6 +666,7 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
         vectorA: left.vector,
         vectorB: right.vector,
         angleUnit: input.angleUnit,
+        ...vectorMetadata(input, { operandA: left, operandB: right }),
       },
     };
   }
@@ -616,6 +686,7 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
         vectorA: left.vector,
         vectorB: right.vector,
         angleUnit: input.angleUnit,
+        ...vectorMetadata(input, { operandA: left, operandB: right }),
       },
     };
   }

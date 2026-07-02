@@ -213,6 +213,7 @@ export function useLinearAlgebraTableShellRuntime({
       if (entry.matrixSeed.matrixB) {
         linearAlgebraRuntime.setMatrixB(cloneMatrix(entry.matrixSeed.matrixB));
       }
+      linearAlgebraRuntime.setMatrixEditorLatex(entry.matrixSeed.editorExpressionLatex ?? entry.inputLatex);
       return true;
     }
 
@@ -224,6 +225,7 @@ export function useLinearAlgebraTableShellRuntime({
       if (entry.vectorSeed.angleUnit !== angleUnit) {
         patchSettings({ angleUnit: entry.vectorSeed.angleUnit });
       }
+      linearAlgebraRuntime.setVectorEditorLatex(entry.vectorSeed.editorExpressionLatex ?? entry.inputLatex);
       return true;
     }
 

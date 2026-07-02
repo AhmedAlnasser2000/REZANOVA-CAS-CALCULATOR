@@ -28,6 +28,10 @@ export type RunMatrixModeRequest = {
   exactMatrixA?: ExactScalarWire[][];
   exactMatrixB?: ExactScalarWire[][];
   exactSystemRhs?: ExactScalarWire[];
+  editorExpressionLatex?: string;
+  matrixOperandLatexA?: string;
+  matrixOperandLatexB?: string;
+  systemRhsLatex?: string;
 };
 
 export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSystemForm) {
@@ -90,6 +94,10 @@ export function runMatrixMode({
   exactMatrixA,
   exactMatrixB,
   exactSystemRhs,
+  editorExpressionLatex,
+  matrixOperandLatexA,
+  matrixOperandLatexB,
+  systemRhsLatex,
 }: RunMatrixModeRequest): DisplayOutcome {
   if (operation === 'linearSystem') {
     return runMatrixLinearSystem({
@@ -98,10 +106,23 @@ export function runMatrixMode({
       form: systemForm ?? 'Ax=b',
       exactCoefficients: exactMatrixA,
       exactConstants: exactSystemRhs,
+      editorExpressionLatex,
+      coefficientMatrixLatex: matrixOperandLatexA,
+      rhsVectorLatex: systemRhsLatex,
     });
   }
 
-  const response = runMatrixOperation({ operation, matrixA, matrixB, exactMatrixA, exactMatrixB });
+  const response = runMatrixOperation({
+    operation,
+    matrixA,
+    matrixB,
+    exactMatrixA,
+    exactMatrixB,
+    editorExpressionLatex,
+    matrixOperandLatexA,
+    matrixOperandLatexB,
+    systemRhsLatex,
+  });
   const actions = response.handoffEquationLatex
     ? [{ kind: 'send' as const, target: 'equation' as const, latex: response.handoffEquationLatex }]
     : undefined;
@@ -143,6 +164,10 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       exactMatrixA: request.exactMatrixA,
       exactMatrixB: request.exactMatrixB,
       exactSystemRhs: request.exactSystemRhs,
+      editorExpressionLatex: request.editorExpressionLatex,
+      matrixOperandLatexA: request.matrixOperandLatexA,
+      matrixOperandLatexB: request.matrixOperandLatexB,
+      systemRhsLatex: request.systemRhsLatex,
     },
   };
 }

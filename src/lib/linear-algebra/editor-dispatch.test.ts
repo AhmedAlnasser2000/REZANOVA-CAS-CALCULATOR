@@ -11,23 +11,36 @@ const vectorB = [4, 5, 6];
 
 describe('linear algebra editor dispatch', () => {
   it('maps Matrix editor expressions to existing Matrix requests', () => {
-    expect(dispatchMatrixEditorLatex({ latex: 'A+B', matrixA, matrixB })).toEqual({
+    expect(dispatchMatrixEditorLatex({ latex: 'A+B', matrixA, matrixB })).toMatchObject({
       ok: true,
-      request: { operation: 'add', matrixA, matrixB },
+      request: {
+        operation: 'add',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: 'A+B',
+        matrixOperandLatexA: 'A',
+        matrixOperandLatexB: 'B',
+      },
     });
     expect(dispatchMatrixEditorLatex({ latex: 'A\\times B', matrixA, matrixB })).toMatchObject({
       ok: true,
       request: { operation: 'multiply' },
     });
-    expect(dispatchMatrixEditorLatex({ latex: '\\det\\left(B\\right)', matrixA, matrixB })).toEqual({
+    expect(dispatchMatrixEditorLatex({ latex: '\\det\\left(B\\right)', matrixA, matrixB })).toMatchObject({
       ok: true,
-      request: { operation: 'detB', matrixA, matrixB },
+      request: {
+        operation: 'detB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\det\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\det\\left(\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
       request: {
         operation: 'detA',
@@ -37,21 +50,29 @@ describe('linear algebra editor dispatch', () => {
           [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }],
           [{ numerator: 0, denominator: 1 }, { numerator: 3, denominator: 1 }],
         ],
+        editorExpressionLatex: '\\det\\left(\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}',
       },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{rank}\\left(B\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'rankB', matrixA, matrixB },
+      request: {
+        operation: 'rankB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{rank}\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{rref}\\left(\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
       request: {
         operation: 'rrefA',
@@ -61,21 +82,29 @@ describe('linear algebra editor dispatch', () => {
           [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
           [{ numerator: 2, denominator: 1 }, { numerator: 4, denominator: 1 }],
         ],
+        editorExpressionLatex: '\\operatorname{rref}\\left(\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}',
       },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{null}\\left(B\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'nullSpaceB', matrixA, matrixB },
+      request: {
+        operation: 'nullSpaceB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{null}\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{col}\\left(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
       request: {
         operation: 'columnSpaceA',
@@ -85,21 +114,29 @@ describe('linear algebra editor dispatch', () => {
           [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
           [{ numerator: 2, denominator: 1 }, { numerator: 2, denominator: 1 }],
         ],
+        editorExpressionLatex: '\\operatorname{col}\\left(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}',
       },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{invertible}\\left(B\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'invertibilityB', matrixA, matrixB },
+      request: {
+        operation: 'invertibilityB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{invertible}\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{invertible}\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
       request: {
         operation: 'invertibilityA',
@@ -109,21 +146,29 @@ describe('linear algebra editor dispatch', () => {
           [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
           [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 8 }],
         ],
+        editorExpressionLatex: '\\operatorname{invertible}\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}',
       },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{eigen}\\left(B\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'eigenB', matrixA, matrixB },
+      request: {
+        operation: 'eigenB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{eigen}\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
     });
     expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
       request: {
         operation: 'eigenA',
@@ -133,6 +178,8 @@ describe('linear algebra editor dispatch', () => {
           [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 1 }],
           [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
         ],
+        editorExpressionLatex: '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}',
       },
     });
   });
@@ -142,7 +189,7 @@ describe('linear algebra editor dispatch', () => {
       latex: '\\det\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}\\right)',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
       request: {
         operation: 'detA',
@@ -152,6 +199,8 @@ describe('linear algebra editor dispatch', () => {
           [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
           [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 8 }],
         ],
+        editorExpressionLatex: '\\det\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}',
       },
     });
   });
@@ -161,7 +210,7 @@ describe('linear algebra editor dispatch', () => {
       latex: 'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
       matrixA,
       matrixB,
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
       request: {
         operation: 'linearSystem',
@@ -173,6 +222,9 @@ describe('linear algebra editor dispatch', () => {
           { numerator: 5, denominator: 1 },
           { numerator: 11, denominator: 1 },
         ],
+        editorExpressionLatex: 'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
+        matrixOperandLatexA: 'A',
+        systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
     });
     expect(dispatchMatrixEditorLatex({
@@ -189,6 +241,9 @@ describe('linear algebra editor dispatch', () => {
           { numerator: 5, denominator: 1 },
           { numerator: 11, denominator: 1 },
         ],
+        editorExpressionLatex: 'A x + \\begin{bmatrix}-5\\\\-11\\end{bmatrix}=0',
+        matrixOperandLatexA: 'A',
+        systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
     });
   });
@@ -217,18 +272,33 @@ describe('linear algebra editor dispatch', () => {
       vectorA,
       vectorB,
       angleUnit: 'deg',
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'dot', vectorA, vectorB, angleUnit: 'deg' },
+      request: {
+        operation: 'dot',
+        vectorA,
+        vectorB,
+        angleUnit: 'deg',
+        editorExpressionLatex: 'u\\cdot v',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: 'v',
+      },
     });
     expect(dispatchVectorEditorLatex({
       latex: '\\left\\lVert v\\right\\rVert',
       vectorA,
       vectorB,
       angleUnit: 'rad',
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'normB', vectorA, vectorB, angleUnit: 'rad' },
+      request: {
+        operation: 'normB',
+        vectorA,
+        vectorB,
+        angleUnit: 'rad',
+        editorExpressionLatex: '\\left\\lVert v\\right\\rVert',
+        vectorOperandLatexB: 'v',
+      },
     });
     expect(dispatchVectorEditorLatex({
       latex: '\\angle\\left(u,v\\right)',
@@ -244,45 +314,84 @@ describe('linear algebra editor dispatch', () => {
       vectorA,
       vectorB,
       angleUnit: 'deg',
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'projectionUofV', vectorA, vectorB, angleUnit: 'deg' },
+      request: {
+        operation: 'projectionUofV',
+        vectorA,
+        vectorB,
+        angleUnit: 'deg',
+        editorExpressionLatex: '\\operatorname{proj}_{u}\\left(v\\right)',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: 'v',
+      },
     });
     expect(dispatchVectorEditorLatex({
       latex: '\\operatorname{orth}_{u}\\left(v\\right)',
       vectorA,
       vectorB,
       angleUnit: 'deg',
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'orthogonalToU', vectorA, vectorB, angleUnit: 'deg' },
+      request: {
+        operation: 'orthogonalToU',
+        vectorA,
+        vectorB,
+        angleUnit: 'deg',
+        editorExpressionLatex: '\\operatorname{orth}_{u}\\left(v\\right)',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: 'v',
+      },
     });
     expect(dispatchVectorEditorLatex({
       latex: '\\operatorname{unit}\\left(v\\right)',
       vectorA,
       vectorB,
       angleUnit: 'rad',
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'unitB', vectorA, vectorB, angleUnit: 'rad' },
+      request: {
+        operation: 'unitB',
+        vectorA,
+        vectorB,
+        angleUnit: 'rad',
+        editorExpressionLatex: '\\operatorname{unit}\\left(v\\right)',
+        vectorOperandLatexB: 'v',
+      },
     });
     expect(dispatchVectorEditorLatex({
       latex: '\\operatorname{orthogonal}\\left(u,v\\right)',
       vectorA,
       vectorB,
       angleUnit: 'deg',
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'orthogonalCheck', vectorA, vectorB, angleUnit: 'deg' },
+      request: {
+        operation: 'orthogonalCheck',
+        vectorA,
+        vectorB,
+        angleUnit: 'deg',
+        editorExpressionLatex: '\\operatorname{orthogonal}\\left(u,v\\right)',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: 'v',
+      },
     });
     expect(dispatchVectorEditorLatex({
       latex: '\\operatorname{gram}\\left(u,v\\right)',
       vectorA,
       vectorB,
       angleUnit: 'deg',
-    })).toEqual({
+    })).toMatchObject({
       ok: true,
-      request: { operation: 'gramSchmidtUV', vectorA, vectorB, angleUnit: 'deg' },
+      request: {
+        operation: 'gramSchmidtUV',
+        vectorA,
+        vectorB,
+        angleUnit: 'deg',
+        editorExpressionLatex: '\\operatorname{gram}\\left(u,v\\right)',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: 'v',
+      },
     });
   });
 

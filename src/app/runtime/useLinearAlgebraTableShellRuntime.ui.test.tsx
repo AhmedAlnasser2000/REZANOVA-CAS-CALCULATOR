@@ -207,7 +207,12 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       'A+B',
       'matrix',
       expect.objectContaining({
-        matrixSeed: expect.objectContaining({ operation: 'add' }),
+        matrixSeed: expect.objectContaining({
+          operation: 'add',
+          editorExpressionLatex: 'A+B',
+          matrixOperandLatexA: 'A',
+          matrixOperandLatexB: 'B',
+        }),
       }),
     ));
 
@@ -228,7 +233,12 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       'u\\cdot v',
       'vector',
       expect.objectContaining({
-        vectorSeed: expect.objectContaining({ operation: 'dot' }),
+        vectorSeed: expect.objectContaining({
+          operation: 'dot',
+          editorExpressionLatex: 'u\\cdot v',
+          vectorOperandLatexA: 'u',
+          vectorOperandLatexB: 'v',
+        }),
       }),
     ));
   });
@@ -256,6 +266,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
           operation: 'linearSystem',
           systemRhs: [5, 11],
           systemForm: 'Ax=b',
+          editorExpressionLatex: 'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
+          matrixOperandLatexA: 'A',
+          systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
         }),
       }),
     ));
@@ -324,6 +337,8 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       matrixSeed: {
         operation: 'detA',
         matrixA: [[2, 0], [0, 2]],
+        editorExpressionLatex: '\\det\\left(A\\right)',
+        matrixOperandLatexA: 'A',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
     } satisfies HistoryEntry;
@@ -337,6 +352,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       hook.result.current.restoreLinearAlgebraTableHistoryEntry(matrixEntry);
     });
     expect(hook.result.current.linearAlgebraRuntime.matrixA).toEqual([[2, 0], [0, 2]]);
+    expect(hook.result.current.linearAlgebraRuntime.matrixEditorLatex).toBe('\\det\\left(A\\right)');
   });
 
   it('restores Vector history and patches the saved angle unit', () => {
@@ -351,6 +367,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
         vectorA: [1, 0, 0],
         vectorB: [0, 1, 0],
         angleUnit: 'deg',
+        editorExpressionLatex: '\\angle\\left(u,v\\right)',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: 'v',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
     } satisfies HistoryEntry;
@@ -361,6 +380,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
 
     expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([1, 0, 0]);
     expect(hook.result.current.linearAlgebraRuntime.vectorB).toEqual([0, 1, 0]);
+    expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe('\\angle\\left(u,v\\right)');
     expect(patchSettings).toHaveBeenCalledWith({ angleUnit: 'deg' });
   });
 });

@@ -14,8 +14,8 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('A+B', 'matrix')).toEqual({
       kind: 'binary',
       operator: 'add',
-      left: { kind: 'named', name: 'A' },
-      right: { kind: 'named', name: 'B' },
+      left: { kind: 'named', name: 'A', displayLatex: 'A' },
+      right: { kind: 'named', name: 'B', displayLatex: 'B' },
     });
     expect(parsed('A-B', 'matrix')).toMatchObject({ kind: 'binary', operator: 'subtract' });
     expect(parsed('A\\times B', 'matrix')).toMatchObject({ kind: 'binary', operator: 'multiply' });
@@ -23,12 +23,12 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('A^{\\mathsf{T}}', 'matrix')).toEqual({
       kind: 'unary',
       operator: 'transpose',
-      value: { kind: 'named', name: 'A' },
+      value: { kind: 'named', name: 'A', displayLatex: 'A' },
     });
     expect(parsed('A^{-1}', 'matrix')).toEqual({
       kind: 'unary',
       operator: 'inverse',
-      value: { kind: 'named', name: 'A' },
+      value: { kind: 'named', name: 'A', displayLatex: 'A' },
     });
     expect(parsed('\\det\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'determinant' });
     expect(parsed('\\operatorname{rank}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'rank' });
@@ -48,18 +48,18 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\left\\lVert u\\right\\rVert', 'vector')).toEqual({
       kind: 'unary',
       operator: 'norm',
-      value: { kind: 'named', name: 'u' },
+      value: { kind: 'named', name: 'u', displayLatex: 'u' },
     });
     expect(parsed('\\angle\\left(u,v\\right)', 'vector')).toEqual({
       kind: 'angle',
-      left: { kind: 'named', name: 'u' },
-      right: { kind: 'named', name: 'v' },
+      left: { kind: 'named', name: 'u', displayLatex: 'u' },
+      right: { kind: 'named', name: 'v', displayLatex: 'v' },
     });
     expect(parsed('\\operatorname{angle}\\left(u,v\\right)', 'vector')).toMatchObject({ kind: 'angle' });
     expect(parsed('\\operatorname{proj}_{u}\\left(v\\right)', 'vector')).toEqual({
       kind: 'unary',
       operator: 'projectionOntoU',
-      value: { kind: 'named', name: 'v' },
+      value: { kind: 'named', name: 'v', displayLatex: 'v' },
     });
     expect(parsed('\\operatorname{proj}_{v}\\left(u\\right)', 'vector')).toMatchObject({
       kind: 'unary',
@@ -75,13 +75,13 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
     expect(parsed('\\operatorname{orthogonal}\\left(u,v\\right)', 'vector')).toEqual({
       kind: 'orthogonality',
-      left: { kind: 'named', name: 'u' },
-      right: { kind: 'named', name: 'v' },
+      left: { kind: 'named', name: 'u', displayLatex: 'u' },
+      right: { kind: 'named', name: 'v', displayLatex: 'v' },
     });
     expect(parsed('\\operatorname{gram}\\left(u,v\\right)', 'vector')).toEqual({
       kind: 'gramSchmidt',
-      left: { kind: 'named', name: 'u' },
-      right: { kind: 'named', name: 'v' },
+      left: { kind: 'named', name: 'u', displayLatex: 'u' },
+      right: { kind: 'named', name: 'v', displayLatex: 'v' },
     });
   });
 
@@ -93,6 +93,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
         [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
         [{ numerator: 3, denominator: 1 }, { numerator: 4, denominator: 1 }],
       ],
+      displayLatex: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
     });
     expect(parsed('\\begin{bmatrix}1\\\\-2\\\\\\frac{3}{2}\\end{bmatrix}', 'vector')).toEqual({
       kind: 'vectorLiteral',
@@ -102,6 +103,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
         { numerator: -2, denominator: 1 },
         { numerator: 3, denominator: 2 },
       ],
+      displayLatex: '\\begin{bmatrix}1\\\\-2\\\\\\frac{3}{2}\\end{bmatrix}',
     });
     expect(parsed('\\begin{bmatrix}0.125&\\frac{1.5}{3}\\\\-.25&1\\end{bmatrix}', 'matrix')).toMatchObject({
       kind: 'matrixLiteral',
@@ -121,6 +123,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
           [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
           [{ numerator: 3, denominator: 1 }, { numerator: 4, denominator: 1 }],
         ],
+        displayLatex: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
       },
     });
   });
@@ -129,7 +132,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}', 'matrix')).toEqual({
       kind: 'linearSystem',
       form: 'Ax=b',
-      coefficients: { kind: 'named', name: 'A' },
+      coefficients: { kind: 'named', name: 'A', displayLatex: 'A' },
       constants: {
         kind: 'vectorLiteral',
         value: [5, 11],
@@ -137,6 +140,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
           { numerator: 5, denominator: 1 },
           { numerator: 11, denominator: 1 },
         ],
+        displayLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
     });
     expect(parsed(
@@ -145,7 +149,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
     )).toEqual({
       kind: 'linearSystem',
       form: 'Ax+b=0',
-      coefficients: { kind: 'named', name: 'A' },
+      coefficients: { kind: 'named', name: 'A', displayLatex: 'A' },
       constants: {
         kind: 'vectorLiteral',
         value: [5, 11],
@@ -153,6 +157,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
           { numerator: 5, denominator: 1 },
           { numerator: 11, denominator: 1 },
         ],
+        displayLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
     });
   });

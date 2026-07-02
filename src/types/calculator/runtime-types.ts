@@ -1013,8 +1013,11 @@ export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 export type MatrixRequest = {
   operation: MatrixOperation;
   matrixA: number[][];
-  matrixB?: number[][]; systemRhs?: number[];
-  systemForm?: MatrixSystemForm; exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[];
+  matrixB?: number[][];
+  systemRhs?: number[];
+  systemForm?: MatrixSystemForm;
+  exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[];
+  editorExpressionLatex?: string; matrixOperandLatexA?: string; matrixOperandLatexB?: string; systemRhsLatex?: string;
 };
 
 export type MatrixReplaySeed = MatrixRequest;
@@ -1037,6 +1040,7 @@ export type VectorRequest = {
   vectorA: number[];
   vectorB?: number[];
   angleUnit: AngleUnit;
+  editorExpressionLatex?: string; vectorOperandLatexA?: string; vectorOperandLatexB?: string;
 };
 
 export type VectorReplaySeed = VectorRequest;

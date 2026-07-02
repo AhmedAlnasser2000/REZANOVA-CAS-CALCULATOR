@@ -5,9 +5,9 @@ export type LinearAlgebraEditorMode = 'matrix' | 'vector';
 export type LinearAlgebraNamedValue = 'A' | 'B' | 'u' | 'v';
 
 export type LinearAlgebraValueExpression =
-  | { kind: 'named'; name: LinearAlgebraNamedValue }
-  | { kind: 'matrixLiteral'; value: number[][]; exactValue: ExactScalarWire[][] }
-  | { kind: 'vectorLiteral'; value: number[]; exactValue: ExactScalarWire[] };
+  | { kind: 'named'; name: LinearAlgebraNamedValue; displayLatex: string }
+  | { kind: 'matrixLiteral'; value: number[][]; exactValue: ExactScalarWire[][]; displayLatex: string }
+  | { kind: 'vectorLiteral'; value: number[]; exactValue: ExactScalarWire[]; displayLatex: string };
 
 export type LinearAlgebraSystemForm = 'Ax=b' | 'Ax+b=0';
 
@@ -213,6 +213,28 @@ function exactWireToNumber(value: ExactScalarWire): number {
   return value.numerator / value.denominator;
 }
 
+function exactWireToLatex(value: ExactScalarWire): string {
+  if (value.denominator === 1) {
+    return `${value.numerator}`;
+  }
+  if (value.numerator < 0) {
+    return `-\\frac{${Math.abs(value.numerator)}}{${value.denominator}}`;
+  }
+  return `\\frac{${value.numerator}}{${value.denominator}}`;
+}
+
+function exactVectorWireToLatex(vector: ExactScalarWire[]): string {
+  return `\\begin{bmatrix}${vector.map(exactWireToLatex).join('\\\\')}\\end{bmatrix}`;
+}
+
+function namedValueExpression(name: LinearAlgebraNamedValue): LinearAlgebraValueExpression {
+  return {
+    kind: 'named',
+    name,
+    displayLatex: name,
+  };
+}
+
 function parseFiniteDecimalExact(input: string): ExactScalarWire | null {
   const match = input.match(/^(-)?(?:(\d+)(?:\.(\d*))?|\.(\d+))$/);
   if (!match) {
@@ -292,8 +314,14 @@ function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null 
         kind: 'vectorLiteral',
         value: matrix.map((row) => row[0]),
         exactValue: exactMatrix.map((row) => row[0]),
+        displayLatex: input,
       }
-    : { kind: 'matrixLiteral', value: matrix, exactValue: exactMatrix };
+    : {
+        kind: 'matrixLiteral',
+        value: matrix,
+        exactValue: exactMatrix,
+        displayLatex: input,
+      };
 }
 
 function isMatrixCoefficientExpression(
@@ -312,16 +340,20 @@ function isInlineVectorExpression(
 }
 
 function negateVectorExpression(expression: LinearAlgebraValueExpression): LinearAlgebraValueExpression {
-  return expression.kind === 'vectorLiteral'
-    ? {
-        kind: 'vectorLiteral',
-        value: expression.value.map((value) => -value),
-        exactValue: expression.exactValue.map((value) => ({
-          numerator: -value.numerator,
-          denominator: value.denominator,
-        })),
-      }
-    : expression;
+  if (expression.kind !== 'vectorLiteral') {
+    return expression;
+  }
+
+  const exactValue = expression.exactValue.map((value) => ({
+    numerator: -value.numerator,
+    denominator: value.denominator,
+  }));
+  return {
+    kind: 'vectorLiteral',
+    value: expression.value.map((value) => -value),
+    exactValue,
+    displayLatex: exactVectorWireToLatex(exactValue),
+  };
 }
 
 function stripWrappedParens(input: string): string {
@@ -472,8 +504,8 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return {
       kind: 'binary',
       operator: 'multiply',
-      left: { kind: 'named', name: 'A' },
-      right: { kind: 'named', name: 'B' },
+      left: namedValueExpression('A'),
+      right: namedValueExpression('B'),
     };
   }
 
@@ -556,7 +588,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
   }
 
   if (input === 'A' || input === 'B' || input === 'u' || input === 'v') {
-    return { kind: 'named', name: input };
+    return namedValueExpression(input);
   }
 
   fail('unsupported-expression', 'Unsupported Matrix/Vector editor expression.');

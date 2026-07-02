@@ -22,6 +22,9 @@ export type RunVectorModeRequest = {
   vectorA: number[];
   vectorB: number[];
   angleUnit: AngleUnit;
+  editorExpressionLatex?: string;
+  vectorOperandLatexA?: string;
+  vectorOperandLatexB?: string;
 };
 
 export function vectorOperationLabel(operation: VectorOperation) {
@@ -61,8 +64,24 @@ export function vectorOperationLabel(operation: VectorOperation) {
   }
 }
 
-export function runVectorMode({ operation, vectorA, vectorB, angleUnit }: RunVectorModeRequest): DisplayOutcome {
-  const response = runVectorOperation({ operation, vectorA, vectorB, angleUnit });
+export function runVectorMode({
+  operation,
+  vectorA,
+  vectorB,
+  angleUnit,
+  editorExpressionLatex,
+  vectorOperandLatexA,
+  vectorOperandLatexB,
+}: RunVectorModeRequest): DisplayOutcome {
+  const response = runVectorOperation({
+    operation,
+    vectorA,
+    vectorB,
+    angleUnit,
+    editorExpressionLatex,
+    vectorOperandLatexA,
+    vectorOperandLatexB,
+  });
   if (response.error) {
     return {
       kind: 'error',
@@ -94,6 +113,9 @@ export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
       angleUnit: request.angleUnit,
       vectorA: request.vectorA,
       vectorB: request.vectorB,
+      editorExpressionLatex: request.editorExpressionLatex,
+      vectorOperandLatexA: request.vectorOperandLatexA,
+      vectorOperandLatexB: request.vectorOperandLatexB,
     },
   };
 }

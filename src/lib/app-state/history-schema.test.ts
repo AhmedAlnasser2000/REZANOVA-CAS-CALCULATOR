@@ -264,6 +264,9 @@ describe('history entry schema', () => {
         operation: 'multiply',
         matrixA: [[1, 2], [3, 4]],
         matrixB: [[5, 6], [7, 8]],
+        editorExpressionLatex: 'A\\times B',
+        matrixOperandLatexA: 'A',
+        matrixOperandLatexB: 'B',
       },
       timestamp: '2026-06-08T00:00:00.000Z',
     });
@@ -272,6 +275,9 @@ describe('history entry schema', () => {
       operation: 'multiply',
       matrixA: [[1, 2], [3, 4]],
       matrixB: [[5, 6], [7, 8]],
+      editorExpressionLatex: 'A\\times B',
+      matrixOperandLatexA: 'A',
+      matrixOperandLatexB: 'B',
     });
 
     expect(historyEntrySchema.parse({
@@ -324,6 +330,9 @@ describe('history entry schema', () => {
         matrixB: [[5, 6], [7, 8]],
         systemRhs: [5, 11],
         systemForm: 'Ax=b',
+        editorExpressionLatex: 'Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+        matrixOperandLatexA: 'A',
+        systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.systemRhs).toEqual([5, 11]);
@@ -340,6 +349,9 @@ describe('history entry schema', () => {
         vectorA: [1, 0, 0],
         vectorB: [0, 1, 0],
         angleUnit: 'deg',
+        editorExpressionLatex: '\\angle(u,v)',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: 'v',
       },
       timestamp: '2026-06-08T00:00:00.000Z',
     });
@@ -349,6 +361,9 @@ describe('history entry schema', () => {
       vectorA: [1, 0, 0],
       vectorB: [0, 1, 0],
       angleUnit: 'deg',
+      editorExpressionLatex: '\\angle(u,v)',
+      vectorOperandLatexA: 'u',
+      vectorOperandLatexB: 'v',
     });
 
     expect(historyEntrySchema.parse({

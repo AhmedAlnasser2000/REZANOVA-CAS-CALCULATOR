@@ -1727,3 +1727,7 @@
 ## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-TRUST-MILESTONE1 gate A
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector variable hints are mode-aware UI analysis: supported linear-algebra functions, LaTeX matrix environments, and structural operands (`A/B/x`, `u/v`) are editor syntax, not generic variables. Equation and Calculate keep their existing raw adjacent-letter ambiguity warnings.
+
+## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-TRUST-MILESTONE1 gate B
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Full-expression Linear Algebra readback metadata belongs on the existing Matrix/Vector request and replay shapes as optional transport fields (`editorExpressionLatex` plus operand display labels). This preserves F-key compatibility and avoids creating a parallel history, display, or Equation-owned expression mechanism.
