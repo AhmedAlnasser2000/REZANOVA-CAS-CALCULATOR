@@ -593,7 +593,8 @@ describe('calculus core', () => {
     });
 
     expect(result.error).toBeUndefined();
-    expect(result.exactLatex).toBe('1.5');
+    expect(result.exactLatex).toBe('\\frac{3}{2}');
+    expect(Number(result.approxText)).toBeCloseTo(1.5, 6);
     expect(result.resultOrigin).toBe('rule-based-symbolic');
     expect(result.detailSections?.[0]?.lines.join(' ')).toContain('rational dominance');
   });

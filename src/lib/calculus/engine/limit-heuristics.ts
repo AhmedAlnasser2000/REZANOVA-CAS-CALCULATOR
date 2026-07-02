@@ -6,7 +6,12 @@ const INFINITE_SAMPLES = [10, 20, 50, 100, 200, 500, 1000];
 const LIMIT_UNBOUNDED_THRESHOLD = 1e4;
 
 export type LimitResolution =
-  | { kind: 'success'; value: number | 'posInfinity' | 'negInfinity'; detailSections?: DisplayDetailSection[] }
+  | {
+      kind: 'success';
+      value: number | 'posInfinity' | 'negInfinity';
+      exactLatex?: string;
+      detailSections?: DisplayDetailSection[];
+    }
   | { kind: 'unbounded' }
   | { kind: 'mismatch' }
   | { kind: 'unstable' };
@@ -21,6 +26,45 @@ function isFiniteNumber(node: unknown): node is number {
 
 function normalizeZero(value: number) {
   return Math.abs(value) < 1e-10 ? 0 : value;
+}
+
+function integerLike(value: number) {
+  const rounded = Math.round(value);
+  return Math.abs(value - rounded) < 1e-10 ? rounded : undefined;
+}
+
+function gcd(a: number, b: number): number {
+  let left = Math.abs(a);
+  let right = Math.abs(b);
+
+  while (right !== 0) {
+    const next = left % right;
+    left = right;
+    right = next;
+  }
+
+  return left || 1;
+}
+
+function rationalRatioLatex(numerator: number, denominator: number): string | undefined {
+  const integerNumerator = integerLike(numerator);
+  const integerDenominator = integerLike(denominator);
+  if (integerNumerator === undefined || integerDenominator === undefined || integerDenominator === 0) {
+    return undefined;
+  }
+
+  const sign = integerDenominator < 0 ? -1 : 1;
+  const normalizedNumerator = integerNumerator * sign;
+  const normalizedDenominator = integerDenominator * sign;
+  const divisor = gcd(normalizedNumerator, normalizedDenominator);
+  const reducedNumerator = normalizedNumerator / divisor;
+  const reducedDenominator = normalizedDenominator / divisor;
+
+  if (reducedDenominator === 1) {
+    return `${reducedNumerator}`;
+  }
+
+  return `\\frac{${reducedNumerator}}{${reducedDenominator}}`;
 }
 
 function limitMethodSection(...lines: string[]): DisplayDetailSection[] {
@@ -282,6 +326,7 @@ export function resolveInfiniteLimitHeuristic(
       return {
         kind: 'success',
         value: 0,
+        exactLatex: '0',
         detailSections: rationalDominanceDetail(
           `Numerator degree ${numerator.degree} is lower than denominator degree ${denominator.degree}, so the ratio tends to 0.`,
         ),
@@ -292,6 +337,7 @@ export function resolveInfiniteLimitHeuristic(
       return {
         kind: 'success',
         value: normalizeZero(numerator.leadingCoefficient / denominator.leadingCoefficient),
+        exactLatex: rationalRatioLatex(numerator.leadingCoefficient, denominator.leadingCoefficient),
         detailSections: rationalDominanceDetail(
           `Degrees match at ${numerator.degree}; the limit is the leading-coefficient ratio.`,
         ),

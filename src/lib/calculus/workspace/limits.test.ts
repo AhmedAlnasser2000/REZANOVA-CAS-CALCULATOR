@@ -86,6 +86,7 @@ describe('calculus limits', () => {
     });
     expect(sameDegree.error).toBeUndefined();
     expect(sameDegree.resultOrigin).toBe('rule-based-symbolic');
+    expect(sameDegree.exactLatex).toBe('\\frac{3}{2}');
     expect(Number(sameDegree.approxText)).toBeCloseTo(1.5, 6);
     expect(sameDegree.detailSections?.[0]?.title).toBe('Limit Method');
 

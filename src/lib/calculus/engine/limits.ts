@@ -359,7 +359,7 @@ export function evaluateInfiniteLimitFromAst(input: {
   const heuristic = resolveInfiniteLimitHeuristic(input.body, input.variable, input.targetKind);
   if (heuristic.kind === 'success') {
     return {
-      exactLatex: limitValueToLatex(heuristic.value),
+      exactLatex: heuristic.exactLatex ?? limitValueToLatex(heuristic.value),
       approxText: limitValueToApproxText(heuristic.value),
       warnings: [],
       resultOrigin: 'rule-based-symbolic',

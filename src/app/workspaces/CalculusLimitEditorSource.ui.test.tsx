@@ -96,7 +96,7 @@ describe('Calculus limit editor source', () => {
         .getByTestId('display-outcome-answer-block')
         .querySelector('[data-raw-latex]')
         ?.getAttribute('data-raw-latex') ?? '';
-      expect(renderedLatex).toBe('1.5');
+      expect(renderedLatex).toBe('\\frac{3}{2}');
     });
   });
 

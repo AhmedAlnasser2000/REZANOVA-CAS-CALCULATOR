@@ -13,6 +13,6 @@
 
 ## Commit
 
-- Gate: `CALCULUS-LIMITS-UI-POLISH1`
+- Gate: `CALCULUS-LIMITS-ASYMPTOTIC-COMPARISON1`
 - Commit hash: pending commit creation
-- Notes: Commit should include only Limits UI polish code/tests/styles and this scoped session dossier, not unrelated Equation, page, display, or Linear Algebra dirty work.
+- Notes: Commit should include exact-ratio infinity limit code/tests, the Gate 1 commit-log metadata repair, and this scoped session dossier only.

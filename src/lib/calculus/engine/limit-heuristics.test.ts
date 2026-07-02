@@ -33,6 +33,7 @@ describe('limit heuristics', () => {
     expect(sameDegree.kind).toBe('success');
     if (sameDegree.kind === 'success') {
       expect(sameDegree.value).toBe(1.5);
+      expect(sameDegree.exactLatex).toBe('\\frac{3}{2}');
       expect(sameDegree.detailSections?.[0]?.lines.join(' ')).toContain('leading-coefficient ratio');
     }
     expect(lowerDegree.kind).toBe('success');
