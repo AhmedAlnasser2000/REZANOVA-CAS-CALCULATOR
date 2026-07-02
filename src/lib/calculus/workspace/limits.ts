@@ -8,6 +8,7 @@ import {
   evaluateInfiniteLimitFromAst,
 } from '../engine/limits';
 import { classifyNaturalLimitRoute } from '../limit-route-classifier';
+import { planNaturalLimitRoute } from '../limit-route-orchestrator';
 import {
   parseNaturalLimitRequest,
   type NaturalLimitRequest,
@@ -35,6 +36,11 @@ type BoxedLike = {
 };
 
 export type AdvancedLimitEvaluation = CalculusCoreEvaluation;
+
+type LimitRouteOptions = {
+  routeKind?: string;
+  allowNumericFallback?: boolean;
+};
 
 function formatBodyVariables(bodyVariables: readonly string[]) {
   return bodyVariables.length > 0
@@ -79,7 +85,7 @@ function finiteTargetLabel(direction: LimitDirection) {
 }
 
 export function evaluateCalculusFiniteLimit(
-  state: CalculusFiniteLimitState & { routeKind?: string },
+  state: CalculusFiniteLimitState & LimitRouteOptions,
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const parsedTarget = parseFiniteLimitTargetDraft(state.target);
@@ -113,6 +119,7 @@ export function evaluateCalculusFiniteLimit(
       target,
       direction,
       routeKind: state.routeKind,
+      allowNumericFallback: state.allowNumericFallback,
       messages: {
         mismatchError: 'Left and right behavior do not agree near the target.',
         unstableError: 'This limit could not be stabilized numerically in Calculus.',
@@ -133,7 +140,7 @@ export function evaluateCalculusFiniteLimit(
 }
 
 export function evaluateCalculusInfiniteLimit(
-  state: CalculusInfiniteLimitState & { routeKind?: string },
+  state: CalculusInfiniteLimitState & LimitRouteOptions,
 ): AdvancedLimitEvaluation {
   const bodyLatex = state.bodyLatex.trim();
   const variable = derivativeVariableOrDefault(state.variable);
@@ -150,6 +157,7 @@ export function evaluateCalculusInfiniteLimit(
     variable,
     targetKind: state.targetKind,
     routeKind: state.routeKind,
+    allowNumericFallback: state.allowNumericFallback,
     messages: {
       targetLabel: (kind) => (kind === 'posInfinity' ? '+infinity' : '-infinity'),
       unstableError: 'This limit could not be stabilized numerically in Calculus.',
@@ -180,6 +188,15 @@ export function evaluateCalculusLimit(
   }
 
   const route = classifyNaturalLimitRoute(state.requestLatex);
+  const routePlan = planNaturalLimitRoute(route);
+  if (routePlan.kind === 'blocked') {
+    return {
+      warnings: [],
+      error: routePlan.error,
+      detailSections: routePlan.detailSections,
+    };
+  }
+
   const evaluate = (): AdvancedLimitEvaluation => {
     if (request.target.kind === 'finite') {
       return evaluateCalculusFiniteLimit({
@@ -187,7 +204,8 @@ export function evaluateCalculusLimit(
         target: request.target.normalizedTargetLatex,
         direction: request.target.direction,
         variable: request.variable,
-        routeKind: route.kind,
+        routeKind: routePlan.routeKind,
+        allowNumericFallback: routePlan.allowNumericFallback,
       });
     }
 
@@ -195,14 +213,15 @@ export function evaluateCalculusLimit(
       bodyLatex: request.bodyLatex,
       targetKind: request.target.targetKind,
       variable: request.variable,
-      routeKind: route.kind,
+      routeKind: routePlan.routeKind,
+      allowNumericFallback: routePlan.allowNumericFallback,
     });
   };
 
   return appendUnstableLimitDiagnostic({
     evaluation: evaluate(),
     request,
-    routeKind: route.kind,
+    routeKind: routePlan.routeKind,
     bodyVariables: variableAnalysis.bodyVariables,
   });
 }

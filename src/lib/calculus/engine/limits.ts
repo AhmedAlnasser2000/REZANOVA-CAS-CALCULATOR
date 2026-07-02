@@ -287,6 +287,7 @@ export function evaluateFiniteLimitFromAst(input: {
   target: number;
   direction: LimitDirection;
   routeKind?: string;
+  allowNumericFallback?: boolean;
   messages: FiniteLimitMessages;
 }): CalculusCoreEvaluation {
   if (containsFiniteDomainBoundary(input.body)) {
@@ -345,6 +346,20 @@ export function evaluateFiniteLimitFromAst(input: {
           value: symbolic.value,
         }),
       ),
+    };
+  }
+
+  if (input.allowNumericFallback === false) {
+    return {
+      warnings: [],
+      error: `The ${input.routeKind ?? 'selected'} limit route did not resolve this expression within the current symbolic rules.`,
+      detailSections: [{
+        title: 'Limit Diagnostic',
+        lines: [
+          `Route classification: ${input.routeKind ?? 'unknown'}.`,
+          'Numeric fallback was skipped because this route needs an exact symbolic decision.',
+        ],
+      }],
     };
   }
 
@@ -452,6 +467,7 @@ export function evaluateInfiniteLimitFromAst(input: {
   variable: string;
   targetKind: Exclude<LimitTargetKind, 'finite'>;
   routeKind?: string;
+  allowNumericFallback?: boolean;
   messages: InfiniteLimitMessages;
 }): CalculusCoreEvaluation {
   const heuristic = resolveInfiniteLimitHeuristic(input.body, input.variable, input.targetKind);
@@ -489,6 +505,20 @@ export function evaluateInfiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: `The limit appears unbounded as x approaches ${targetLabel}.`,
+    };
+  }
+
+  if (input.allowNumericFallback === false) {
+    return {
+      warnings: [],
+      error: `The ${input.routeKind ?? 'selected'} limit route did not resolve this expression within the current symbolic rules.`,
+      detailSections: [{
+        title: 'Limit Diagnostic',
+        lines: [
+          `Route classification: ${input.routeKind ?? 'unknown'}.`,
+          'Numeric fallback was skipped because this route needs an exact symbolic decision.',
+        ],
+      }],
     };
   }
 

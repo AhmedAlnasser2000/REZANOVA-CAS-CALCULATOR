@@ -164,16 +164,15 @@ describe('calculus limits', () => {
     expect(result.detailSections?.[0]?.title).toBe('Limit Variable Check');
   });
 
-  it('adds diagnostics when no supported route stabilizes the limit', () => {
+  it('blocks unsupported natural limit routes with diagnostics', () => {
     const result = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0 sin(1/x)',
     });
 
-    expect(result.error).toContain('could not be stabilized');
+    expect(result.error).toContain('outside the supported Calculus limit routes');
     const diagnostic = result.detailSections?.find((section) => section.title === 'Limit Diagnostic');
-    expect(diagnostic?.lines.join(' ')).toContain('Parsed variable: x');
-    expect(diagnostic?.lines.join(' ')).toContain('Expression variables: x');
     expect(diagnostic?.lines.join(' ')).toContain('Route classification:');
+    expect(diagnostic?.lines.join(' ')).toContain('unsupported');
   });
 
   it('handles parsed variable and exact-constant finite targets', () => {
