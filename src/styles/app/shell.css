@@ -54,6 +54,7 @@
 }
 
 .app-stage {
+  --app-chrome-clearance: 94px;
   width: 100%;
   position: relative;
 }
@@ -62,7 +63,6 @@
   width: 100%;
   display: grid;
   gap: 18px;
-  zoom: var(--ui-scale);
   position: relative;
 }
 
@@ -512,48 +512,64 @@
   text-align: right;
 }
 
-.settings-page-toggle {
-  justify-self: end;
+.settings-switch {
+  --settings-switch-off-bg: rgba(4, 13, 14, 0.72);
+  --settings-switch-on-bg: rgba(82, 112, 72, 0.86);
+  --settings-switch-border: rgba(214, 225, 205, 0.18);
+  --settings-switch-on-border: rgba(184, 212, 156, 0.62);
+  display: inline-grid;
+  align-items: center;
+  cursor: pointer;
   position: relative;
-  width: 46px;
-  height: 24px;
+  width: 48px;
+  height: 26px;
 }
 
-.settings-page-toggle input {
+.settings-page-toggle {
+  justify-self: end;
+}
+
+.settings-switch input {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
 
-.settings-page-toggle span {
+.settings-switch-track {
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(214, 225, 205, 0.18);
+  border: 1px solid var(--settings-switch-border);
   border-radius: 999px;
-  background: rgba(4, 13, 14, 0.72);
+  background: var(--settings-switch-off-bg);
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
 }
 
-.settings-page-toggle span::after {
-  content: '';
+.settings-switch-thumb {
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: rgba(242, 246, 236, 0.78);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.34);
   transition: transform 140ms ease, background 140ms ease;
 }
 
-.settings-page-toggle input:checked + span {
-  border-color: rgba(184, 212, 156, 0.5);
-  background: rgba(82, 112, 72, 0.76);
+.settings-switch input:checked + .settings-switch-track {
+  border-color: var(--settings-switch-on-border);
+  background: var(--settings-switch-on-bg);
+  box-shadow: inset 0 0 0 1px rgba(236, 255, 215, 0.06);
 }
 
-.settings-page-toggle input:checked + span::after {
+.settings-switch input:checked + .settings-switch-track .settings-switch-thumb {
   transform: translateX(22px);
   background: #f3ffe2;
+}
+
+.settings-switch input:focus-visible + .settings-switch-track {
+  outline: 2px solid rgba(184, 212, 156, 0.76);
+  outline-offset: 3px;
 }
 
 .settings-page-stepper {
@@ -1197,6 +1213,7 @@
 .calculator-shell {
   width: min(1480px, 100%);
   margin-inline: auto;
+  zoom: var(--ui-scale, 1);
   border: 1px solid var(--shell-border);
   border-radius: 32px;
   background:
@@ -1871,6 +1888,10 @@ math-field:focus-visible {
 @media (max-width: 840px) {
   .app-shell {
     padding: 14px;
+  }
+
+  .app-stage {
+    --app-chrome-clearance: 88px;
   }
 
   .workspace-tabs-shell {

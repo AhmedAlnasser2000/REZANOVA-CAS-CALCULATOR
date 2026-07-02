@@ -63,6 +63,48 @@ describe('AppMain workspace tabs', () => {
     expect(calculatorShell.querySelector('.mode-strip')).toBeTruthy();
   });
 
+  it('keeps app chrome stable while applying UI scale to the calculator surface', async () => {
+    window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
+      currentMode: 'calculate',
+      settings: {
+        ...DEFAULT_SETTINGS,
+        uiScale: 145,
+      },
+      history: [],
+      variableMemory: [],
+    }));
+
+    await renderAppMain();
+
+    expect(screen.getByTestId('app-frame').getAttribute('style') ?? '')
+      .not.toContain('--ui-scale');
+    expect(screen.getByTestId('calculator-shell').getAttribute('style') ?? '')
+      .toContain('--ui-scale: 1.45');
+  });
+
+  it('suppresses quick inspectors when a page surface becomes active', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('keypad-menu'));
+    expect(await screen.findByTestId('left-menu-inspector')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('settings-toggle'));
+    const settingsPanel = await screen.findByTestId('settings-panel');
+    await user.click(within(settingsPanel).getByTestId('settings-open-full-page'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-surface-page')).toHaveAttribute(
+        'data-surface-kind',
+        'settings',
+      );
+    });
+    await waitFor(() => {
+      expect(screen.queryByTestId('side-surface-host')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('side-surface-overlay-backdrop')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument();
+    });
+  });
+
   it('retargets the active workspace tab for normal mode selection', async () => {
     const { user } = await renderAppMain();
 

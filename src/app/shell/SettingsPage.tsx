@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { MathStatic } from '../../components/MathStatic';
+import { SettingsSwitch } from '../../components/SettingsSwitch';
 import { clampApproxDigits, formatApproxNumber } from '../../lib/display/numeric-output';
 import { normalizeSymbolicDisplayLatex } from '../../lib/display/symbolic-display';
 import { listLanguageMetadata } from '../../lib/language';
@@ -177,15 +178,12 @@ function ToggleControl({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="settings-page-toggle">
-      <input
-        aria-label={label}
-        checked={checked}
-        type="checkbox"
-        onChange={(event) => onChange(event.currentTarget.checked)}
-      />
-      <span />
-    </label>
+    <SettingsSwitch
+      checked={checked}
+      className="settings-page-toggle"
+      label={label}
+      onChange={onChange}
+    />
   );
 }
 

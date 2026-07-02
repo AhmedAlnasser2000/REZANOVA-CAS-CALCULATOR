@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MathStatic } from './MathStatic';
+import { SettingsSwitch } from './SettingsSwitch';
 import { normalizeSymbolicDisplayLatex } from '../lib/display/symbolic-display';
 import { clampApproxDigits, formatApproxNumber } from '../lib/display/numeric-output';
 import { listLanguageMetadata, type SettingsLanguageCatalog } from '../lib/language';
@@ -69,6 +70,30 @@ function symbolicPreviewSummary(settings: Settings, settingsText: SettingsLangua
   }
 
   return summaryText.nestedRoots;
+}
+
+function SettingsToggleRow({
+  checked,
+  label,
+  onChange,
+  testId,
+}: {
+  checked: boolean;
+  label: string;
+  onChange: (checked: boolean) => void;
+  testId: string;
+}) {
+  return (
+    <div className="settings-toggle-row">
+      <span>{label}</span>
+      <SettingsSwitch
+        checked={checked}
+        label={label}
+        onChange={onChange}
+        testId={testId}
+      />
+    </div>
+  );
 }
 
 export function SettingsPanel({
@@ -233,24 +258,18 @@ export function SettingsPanel({
               ))}
             </div>
           </div>
-          <label className="settings-toggle-row">
-            <span>{settingsText.fields.highContrast}</span>
-            <input
-              type="checkbox"
-              data-testid="settings-high-contrast"
-              checked={settings.highContrast}
-              onChange={(event) => onPatch({ highContrast: event.currentTarget.checked })}
-            />
-          </label>
-          <label className="settings-toggle-row">
-            <span>{settingsText.fields.detailedFacts}</span>
-            <input
-              type="checkbox"
-              data-testid="settings-detailed-facts"
-              checked={settings.detailedFactsEnabled}
-              onChange={(event) => onPatch({ detailedFactsEnabled: event.currentTarget.checked })}
-            />
-          </label>
+          <SettingsToggleRow
+            checked={settings.highContrast}
+            label={settingsText.fields.highContrast}
+            testId="settings-high-contrast"
+            onChange={(checked) => onPatch({ highContrast: checked })}
+          />
+          <SettingsToggleRow
+            checked={settings.detailedFactsEnabled}
+            label={settingsText.fields.detailedFacts}
+            testId="settings-detailed-facts"
+            onChange={(checked) => onPatch({ detailedFactsEnabled: checked })}
+          />
           <p className="settings-help-text">
             {settingsText.help.detailedFacts}
           </p>
@@ -336,17 +355,12 @@ export function SettingsPanel({
               ))}
             </div>
           </div>
-          <label className="settings-toggle-row">
-            <span>{settingsText.fields.flattenNestedRootsWhenSafe}</span>
-            <input
-              type="checkbox"
-              data-testid="settings-flatten-nested-roots"
-              checked={settings.flattenNestedRootsWhenSafe}
-              onChange={(event) =>
-                onPatch({ flattenNestedRootsWhenSafe: event.currentTarget.checked })
-              }
-            />
-          </label>
+          <SettingsToggleRow
+            checked={settings.flattenNestedRootsWhenSafe}
+            label={settingsText.fields.flattenNestedRootsWhenSafe}
+            testId="settings-flatten-nested-roots"
+            onChange={(checked) => onPatch({ flattenNestedRootsWhenSafe: checked })}
+          />
           <div className="settings-preview-card">
             <div className="settings-preview-label">{settingsText.previews.previewInput}</div>
             <MathStatic className="preview-math" latex="\\left(\\sqrt{x}\\right)^{\\frac{1}{3}}" />
@@ -472,32 +486,24 @@ export function SettingsPanel({
               ))}
             </div>
           </div>
-          <label className="settings-toggle-row">
-            <span>{settingsText.fields.autoSwitchToEquation}</span>
-            <input
-              type="checkbox"
-              data-testid="settings-auto-switch-equation"
-              checked={settings.autoSwitchToEquation}
-              onChange={(event) =>
-                onPatch({ autoSwitchToEquation: event.currentTarget.checked })
-              }
-            />
-          </label>
+          <SettingsToggleRow
+            checked={settings.autoSwitchToEquation}
+            label={settingsText.fields.autoSwitchToEquation}
+            testId="settings-auto-switch-equation"
+            onChange={(checked) => onPatch({ autoSwitchToEquation: checked })}
+          />
         </section>
         ) : null}
 
         {shouldShowSection('history') ? (
         <section className="settings-section" data-testid="settings-section-history">
           <div className="settings-section-title">{settingsText.sections.history}</div>
-          <label className="settings-toggle-row">
-            <span>{settingsText.fields.historyEnabled}</span>
-            <input
-              type="checkbox"
-              data-testid="settings-history-enabled"
-              checked={settings.historyEnabled}
-              onChange={(event) => onPatch({ historyEnabled: event.currentTarget.checked })}
-            />
-          </label>
+          <SettingsToggleRow
+            checked={settings.historyEnabled}
+            label={settingsText.fields.historyEnabled}
+            testId="settings-history-enabled"
+            onChange={(checked) => onPatch({ historyEnabled: checked })}
+          />
           <p className="settings-help-text">
             {settingsText.help.history}
           </p>
@@ -515,17 +521,12 @@ export function SettingsPanel({
         {shouldShowSection('calculatorMemory') ? (
         <section className="settings-section" data-testid="settings-section-calculator-memory">
           <div className="settings-section-title">{settingsText.sections.calculatorMemory}</div>
-          <label className="settings-toggle-row">
-            <span>{settingsText.fields.saveCalculatorMemory}</span>
-            <input
-              type="checkbox"
-              data-testid="settings-calculator-memory-enabled"
-              checked={settings.calculatorMemoryEnabled}
-              onChange={(event) =>
-                onPatch({ calculatorMemoryEnabled: event.currentTarget.checked })
-              }
-            />
-          </label>
+          <SettingsToggleRow
+            checked={settings.calculatorMemoryEnabled}
+            label={settingsText.fields.saveCalculatorMemory}
+            testId="settings-calculator-memory-enabled"
+            onChange={(checked) => onPatch({ calculatorMemoryEnabled: checked })}
+          />
           <div className="settings-field">
             <span>{settingsText.fields.autosaveMode}</span>
             <div className="settings-chip-row">

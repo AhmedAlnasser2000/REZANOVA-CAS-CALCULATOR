@@ -22,10 +22,12 @@ export type WorkspaceTabActionPolicy = {
 
 export type WorkspaceSurfaceDescriptor =
   | {
+      allowsQuickInspectors: true;
       surfaceKind: 'calculator';
       tabActionPolicy: WorkspaceTabActionPolicy;
     }
   | {
+      allowsQuickInspectors: false;
       pageKind: LivePageSurfaceKind;
       surfaceKind: 'page';
       tabActionPolicy: WorkspaceTabActionPolicy;
@@ -79,6 +81,7 @@ export function resolveWorkspaceSurfaceDescriptor(
 ): WorkspaceSurfaceDescriptor {
   if (workspaceKind === FORMULA_VIEWER_WORKSPACE_KIND) {
     return {
+      allowsQuickInspectors: false,
       pageKind: FORMULA_VIEWER_WORKSPACE_KIND,
       surfaceKind: 'page',
       tabActionPolicy: FORMULA_VIEWER_PAGE_TAB_ACTION_POLICY,
@@ -87,6 +90,7 @@ export function resolveWorkspaceSurfaceDescriptor(
 
   if (isAppPageWorkspaceKind(workspaceKind)) {
     return {
+      allowsQuickInspectors: false,
       pageKind: workspaceKind,
       surfaceKind: 'page',
       tabActionPolicy: APP_PAGE_TAB_ACTION_POLICY,
@@ -94,6 +98,7 @@ export function resolveWorkspaceSurfaceDescriptor(
   }
 
   return {
+    allowsQuickInspectors: true,
     surfaceKind: 'calculator',
     tabActionPolicy: CALCULATOR_WORKSPACE_TAB_ACTION_POLICY,
   };

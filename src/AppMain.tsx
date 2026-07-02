@@ -25,6 +25,7 @@ import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
 import { WorkspaceTabs } from './app/shell/WorkspaceTabs';
 import { HISTORY_PAGE_WORKSPACE_KIND, SETTINGS_PAGE_WORKSPACE_KIND } from './app/runtime/app-page-workspaces';
+import { useQuickInspectorPolicy } from './app/runtime/useQuickInspectorPolicy';
 import { resolveWorkspaceCompartment } from './app/shell/workspaceCompartment';
 import {
   useSideSurfaceRuntime,
@@ -377,6 +378,21 @@ export default function App() {
     uiScale: settings.uiScale,
     mathScale: settings.mathScale,
     resultScale: settings.resultScale,
+  });
+  const quickInspectorPolicy = useQuickInspectorPolicy({
+    activeWorkspaceKind: workspaceInstancesRuntime.activeInstance?.workspaceKind ?? null,
+    closeLeftInspector,
+    closeSideSurface,
+    historyOpen,
+    leftInspectorOutboardOpen,
+    leftInspectorOverlayOpen,
+    leftInspectorSurface,
+    ooeDiagnosticsOpen,
+    settingsOpen,
+    sideSurface,
+    sideSurfaceOutboardOpen,
+    sideSurfaceOverlayOpen,
+    variablesOpen,
   });
 
   const {
@@ -2790,11 +2806,9 @@ export default function App() {
       <div
         className="app-stage"
         data-testid="app-stage"
-        data-side-surface={
-          sideSurface === 'none' ? undefined : sideSurface
-        }
+        data-side-surface={quickInspectorPolicy.effectiveSideSurface === 'none' ? undefined : quickInspectorPolicy.effectiveSideSurface}
         data-side-surface-presentation={
-          sideSurface === 'none' ? 'none' : sideSurfacePresentation
+          quickInspectorPolicy.effectiveSideSurface === 'none' ? 'none' : sideSurfacePresentation
         }
         ref={appStageRef}
       >
@@ -2825,11 +2839,11 @@ export default function App() {
           MODE_LABELS={MODE_LABELS}
           currentMode={currentMode}
           cycleAngleUnit={cycleAngleUnit}
-          historyOpen={historyOpen}
+          historyOpen={quickInspectorPolicy.effectiveHistoryOpen}
           isLauncherOpen={isLauncherOpen}
           labsEnabled={labsEnabled}
           ooeDiagnosticsEnabled={ooeDiagnosticsEnabled}
-          ooeDiagnosticsOpen={ooeDiagnosticsOpen}
+          ooeDiagnosticsOpen={quickInspectorPolicy.effectiveOoeDiagnosticsOpen}
           openCalculusScreen={openCalculusScreen}
           openGeometryScreen={openGeometryScreen}
           openGuideHome={openGuideHome}
@@ -2840,13 +2854,13 @@ export default function App() {
           setGuideRoute={openGuideRoute}
           setMode={setMode}
           settings={settings}
-          settingsOpen={settingsOpen}
+          settingsOpen={quickInspectorPolicy.effectiveSettingsOpen}
           showModeTabs={showModeTabs}
           toggleHistoryPanel={toggleHistoryPanel}
           toggleOoeDiagnosticsPanel={toggleOoeDiagnosticsPanel}
           toggleSettingsPanel={toggleSettingsPanel}
           toggleVariablesPanel={toggleVariablesPanel}
-          variablesOpen={variablesOpen}
+          variablesOpen={quickInspectorPolicy.effectiveVariablesOpen}
         />
         <DisplayPanel
           activeAlgebraTransforms={activeAlgebraTransforms}
@@ -3315,20 +3329,20 @@ export default function App() {
 
         <Suspense fallback={<LazySideSurfaceFallback />}>
           <SideSurfaceHost
-            sideSurface={leftInspectorSurface}
+            sideSurface={quickInspectorPolicy.effectiveLeftInspectorSurface}
             side={leftInspectorSide}
             hostStyle={leftInspectorHostStyle}
-            outboardOpen={leftInspectorOutboardOpen}
-            overlayOpen={leftInspectorOverlayOpen}
+            outboardOpen={quickInspectorPolicy.effectiveLeftInspectorOutboardOpen}
+            overlayOpen={quickInspectorPolicy.effectiveLeftInspectorOverlayOpen}
             onClose={closeLeftInspector}
             renderSurface={renderActiveLeftInspector}
           />
           <SideSurfaceHost
-            sideSurface={sideSurface}
+            sideSurface={quickInspectorPolicy.effectiveSideSurface}
             side={sideSurfaceSide}
             hostStyle={sideSurfaceHostStyle}
-            outboardOpen={sideSurfaceOutboardOpen}
-            overlayOpen={sideSurfaceOverlayOpen}
+            outboardOpen={quickInspectorPolicy.effectiveSideSurfaceOutboardOpen}
+            overlayOpen={quickInspectorPolicy.effectiveSideSurfaceOverlayOpen}
             onClose={closeSideSurface}
             renderSurface={renderActiveSideSurface}
           />

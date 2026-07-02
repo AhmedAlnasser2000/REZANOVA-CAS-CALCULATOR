@@ -8,6 +8,7 @@ import {
 describe('workspace surface descriptors', () => {
   it('keeps calculator workspaces on the calculator surface with full tab actions', () => {
     expect(resolveWorkspaceSurfaceDescriptor('calculate')).toEqual({
+      allowsQuickInspectors: true,
       surfaceKind: 'calculator',
       tabActionPolicy: {
         canClearState: true,
@@ -22,6 +23,7 @@ describe('workspace surface descriptors', () => {
 
   it('classifies Formula Viewer as a live page surface with viewer-safe actions', () => {
     expect(resolveWorkspaceSurfaceDescriptor('formula-viewer')).toEqual({
+      allowsQuickInspectors: false,
       pageKind: 'formula-viewer',
       surfaceKind: 'page',
       tabActionPolicy: {
@@ -48,6 +50,7 @@ describe('workspace surface descriptors', () => {
     ]);
 
     expect(resolveWorkspaceSurfaceDescriptor('settings')).toEqual({
+      allowsQuickInspectors: false,
       pageKind: 'settings',
       surfaceKind: 'page',
       tabActionPolicy: {

@@ -169,7 +169,7 @@
 
 .side-surface-host {
   position: absolute;
-  top: 0;
+  top: var(--app-chrome-clearance, 94px);
   z-index: 20;
 }
 
@@ -196,7 +196,7 @@
 .ooe-diagnostics-panel--overlay,
 .variables-panel--overlay {
   position: fixed;
-  top: 16px;
+  top: calc(var(--app-chrome-clearance, 94px) + 8px);
   right: 16px;
   bottom: 16px;
   width: min(420px, calc(100vw - 32px));
@@ -207,7 +207,7 @@
 
 .left-inspector-panel--overlay {
   position: fixed;
-  top: 16px;
+  top: calc(var(--app-chrome-clearance, 94px) + 8px);
   left: 16px;
   bottom: 16px;
   width: min(420px, calc(100vw - 32px));
@@ -218,7 +218,7 @@
 
 .side-surface-overlay-backdrop {
   position: fixed;
-  inset: 0;
+  inset: var(--app-chrome-clearance, 94px) 0 0;
   border: 0;
   padding: 0;
   background: rgba(5, 9, 10, 0.46);
@@ -668,7 +668,7 @@
 }
 
 .settings-chip-row button,
-.settings-toggle-row input {
+.settings-toggle-row .settings-switch {
   accent-color: #d7dfab;
 }
 
