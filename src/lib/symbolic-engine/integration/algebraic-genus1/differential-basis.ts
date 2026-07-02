@@ -20,6 +20,7 @@ export type AlgebraicGenus1EllipticBasisObligation = {
   kind: AlgebraicGenus1EllipticBasisKind;
   head?: EllipticFunctionHead;
   status: 'reduced' | 'pending-root-normalization' | 'pending-symbolic-branching';
+  prototypeAntiderivativeNode?: unknown;
   prototypeAntiderivativeLatex?: string;
   amplitudeLatex?: string;
   parameterLatex?: string;
@@ -87,6 +88,7 @@ function legendreTemplateReduction(
     kind,
     head: normalForm.legendreData.head,
     status: 'reduced',
+    prototypeAntiderivativeNode: normalForm.legendreData.prototypeAntiderivativeNode,
     prototypeAntiderivativeLatex: normalForm.legendreData.prototypeAntiderivativeLatex,
     amplitudeLatex: normalForm.legendreData.amplitudeLatex,
     parameterLatex: normalForm.legendreData.parameterLatex,
