@@ -27,6 +27,8 @@ Inserted prerequisite note: after root-basis coefficient obligations, `ALGEBRAIC
 
 Inserted prerequisite note: after pullback basis profiling, `ALGEBRAIC-GENUS1-ROOT-BASIS-COEFFICIENT-SYSTEM1` was added before generic second-kind/third-kind live work. The reason is proof discipline: later live routes must solve an explicit coefficient system over the named-root Legendre coefficient field, with rational/log residual unknowns separated for rational-in-radical pullbacks.
 
+Inserted prerequisite note: after coefficient-system evidence, `ALGEBRAIC-GENUS1-ROOT-PULLBACK-RATIONAL-FORM1` was added before generic second-kind/third-kind live work. The reason is implementation discipline: the solver needs an explicit rational coefficient in the Legendre chart, not only the abstract basis equation, before it can prove F/E/Pi coefficients.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
