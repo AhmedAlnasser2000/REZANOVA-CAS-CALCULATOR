@@ -80,6 +80,10 @@ describe('HistoryPage', () => {
     });
 
     expect(screen.getByTestId('history-page')).toBeInTheDocument();
+    expect(screen.getByTestId('history-page-table-header')).toHaveTextContent('Workspace');
+    expect(screen.getByTestId('history-page-table-header')).toHaveTextContent('Expression / Input');
+    expect(screen.getByTestId('history-page-table-header')).toHaveTextContent('Result preview');
+    expect(screen.queryByRole('button', { name: /export/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /All dates/ })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /item/ }).length).toBeGreaterThan(1);
 
@@ -89,9 +93,9 @@ describe('HistoryPage', () => {
 
     expect(screen.getAllByTestId('history-page-row')).toHaveLength(1);
 
-    fireEvent.change(screen.getByLabelText(historyText.filters.allWorkspaces), {
-      target: { value: 'calculate' },
-    });
+    fireEvent.click(within(screen.getByTestId('history-page-workspace-filters')).getByRole('button', {
+      name: modeLabels.calculate,
+    }));
 
     expect(screen.getAllByText(historyText.empty).length).toBeGreaterThan(0);
   });

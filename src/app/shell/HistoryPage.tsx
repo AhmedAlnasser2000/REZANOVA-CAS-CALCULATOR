@@ -1,4 +1,22 @@
 import {
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Clock3,
+  Copy,
+  Database,
+  History as HistoryIcon,
+  PanelRight,
+  Play,
+  Plus,
+  Search,
+  Shield,
+  Square,
+  StopCircle,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-react';
+import {
   useEffect,
   useMemo,
   useState,
@@ -6,17 +24,17 @@ import {
   type UIEvent,
 } from 'react';
 import { MathStatic } from '../../components/MathStatic';
-import {
-  formatRuntimeElapsedFinal,
-  formatRuntimeElapsedRunning,
-  runtimeElapsedMs,
-} from '../runtime/runtimeElapsedTime';
 import { useLanguage } from '../../lib/language/language-context';
 import type {
   HistoryEntry,
   ModeId,
   PendingHistoryTicket,
 } from '../../types/calculator';
+import {
+  formatRuntimeElapsedFinal,
+  formatRuntimeElapsedRunning,
+  runtimeElapsedMs,
+} from '../runtime/runtimeElapsedTime';
 import {
   buildHistoryDateGroups,
   buildHistoryLedgerRows,
@@ -37,7 +55,7 @@ type HistoryPageProps = {
   onStopPending?: (ticket: PendingHistoryTicket) => void;
 };
 
-const HISTORY_PAGE_ROW_HEIGHT = 86;
+const HISTORY_PAGE_ROW_HEIGHT = 66;
 const HISTORY_PAGE_DEFAULT_VIEWPORT_HEIGHT = 560;
 
 function rowTimestamp(row: HistoryLedgerRow) {
@@ -47,7 +65,14 @@ function rowTimestamp(row: HistoryLedgerRow) {
   });
 }
 
-function rowStatus(row: HistoryLedgerRow, elapsedNowMs: number) {
+function rowDateTime(row: HistoryLedgerRow) {
+  return new Date(row.timestamp).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+function rowElapsed(row: HistoryLedgerRow, elapsedNowMs: number) {
   if (row.kind === 'pending') {
     const status = row.ticket.status === 'stopping' ? 'Stopping' : 'Running';
     return typeof row.ticket.startedAtMs === 'number'
@@ -60,12 +85,71 @@ function rowStatus(row: HistoryLedgerRow, elapsedNowMs: number) {
     : 'Stored';
 }
 
+function rowResultKind(row: HistoryLedgerRow) {
+  if (row.kind === 'pending') {
+    return row.ticket.status === 'stopping' ? 'Stopping' : 'Running';
+  }
+
+  if (row.entry.resultLatex) {
+    return 'Exact';
+  }
+
+  if (row.entry.approxText) {
+    return 'Numeric';
+  }
+
+  return 'Stored';
+}
+
 function entryCopyText(entry: HistoryEntry) {
   return entry.resultLatex || entry.approxText || entry.inputLatex;
 }
 
+function modeTone(mode: ModeId) {
+  if (mode === 'equation') {
+    return 'blue';
+  }
+  if (mode === 'calculus') {
+    return 'amber';
+  }
+  if (mode === 'matrix' || mode === 'vector') {
+    return 'violet';
+  }
+  return 'green';
+}
+
+function ModeChip({
+  label,
+  mode,
+}: {
+  label: string;
+  mode: ModeId;
+}) {
+  return <span className={`history-page-mode-chip is-${modeTone(mode)}`}>{label}</span>;
+}
+
+function InspectorButton({
+  children,
+  icon: Icon,
+  onClick,
+  tone = 'neutral',
+}: {
+  children: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  tone?: 'danger' | 'neutral' | 'primary';
+}) {
+  return (
+    <button type="button" className={`history-page-inspector-action is-${tone}`} onClick={onClick}>
+      <Icon aria-hidden="true" size={16} />
+      <span>{children}</span>
+    </button>
+  );
+}
+
 function HistoryDetailInspector({
   row,
+  elapsedNowMs,
   modeLabels,
   onCopyResult,
   onDelete,
@@ -74,6 +158,7 @@ function HistoryDetailInspector({
   onStopPending,
 }: {
   row: HistoryLedgerRow | null;
+  elapsedNowMs: number;
   modeLabels: Record<ModeId, string>;
   onCopyResult: (text: string) => void;
   onDelete: (id: string) => void;
@@ -87,7 +172,9 @@ function HistoryDetailInspector({
   if (!row) {
     return (
       <aside className="history-page-inspector" data-testid="history-page-inspector">
-        <strong>{historyText.labels.details}</strong>
+        <header className="history-page-inspector-header">
+          <strong>{historyText.labels.details}</strong>
+        </header>
         <p>{historyText.empty}</p>
       </aside>
     );
@@ -96,8 +183,14 @@ function HistoryDetailInspector({
   if (row.kind === 'pending') {
     return (
       <aside className="history-page-inspector" data-testid="history-page-inspector">
-        <strong>{modeLabels[row.ticket.mode]}</strong>
-        <span className="history-page-chip">{historyText.pending.running}</span>
+        <header className="history-page-inspector-header">
+          <span>Selected result</span>
+          <strong>{modeLabels[row.ticket.mode]}</strong>
+        </header>
+        <div className="history-page-inspector-meta">
+          <ModeChip label={modeLabels[row.ticket.mode]} mode={row.ticket.mode} />
+          <span><Clock3 aria-hidden="true" size={14} /> {rowElapsed(row, elapsedNowMs)}</span>
+        </div>
         <section>
           <span>{historyText.labels.input}</span>
           <MathStatic latex={row.ticket.inputLatex} />
@@ -108,13 +201,17 @@ function HistoryDetailInspector({
             <p>{historyText.pending.tabLabel(row.ticket.workspaceInstanceLabel)}</p>
           </section>
         ) : null}
-        <button
-          type="button"
-          disabled={row.ticket.status === 'stopping'}
-          onClick={() => onStopPending?.(row.ticket)}
-        >
-          {historyText.actions.stop}
-        </button>
+        <div className="history-page-inspector-actions">
+          <button
+            type="button"
+            className="history-page-inspector-action is-danger"
+            disabled={row.ticket.status === 'stopping'}
+            onClick={() => onStopPending?.(row.ticket)}
+          >
+            <StopCircle aria-hidden="true" size={16} />
+            <span>{historyText.actions.stop}</span>
+          </button>
+        </div>
       </aside>
     );
   }
@@ -122,29 +219,28 @@ function HistoryDetailInspector({
   const entry = row.entry;
   return (
     <aside className="history-page-inspector" data-testid="history-page-inspector">
-      <strong>{modeLabels[entry.mode]}</strong>
-      <div className="history-page-inspector-actions">
-        <button type="button" onClick={() => onReplay(entry)}>
-          {historyText.actions.replayCurrentTab}
-        </button>
-        <button type="button" onClick={() => onReplayInNewTab(entry)}>
-          {historyText.actions.openInNewTab}
-        </button>
-        <button type="button" onClick={() => onCopyResult(entryCopyText(entry))}>
-          {historyText.actions.copyResult}
-        </button>
-        <button type="button" onClick={() => onDelete(entry.id)}>
-          {historyText.actions.deleteEntry}
-        </button>
+      <header className="history-page-inspector-header">
+        <span>Selected result</span>
+        <strong>{modeLabels[entry.mode]}</strong>
+      </header>
+      <div className="history-page-inspector-meta">
+        <ModeChip label={modeLabels[entry.mode]} mode={entry.mode} />
+        <span>{rowDateTime(row)}</span>
+        <span><Clock3 aria-hidden="true" size={14} /> {rowElapsed(row, elapsedNowMs)}</span>
+        <span className="history-page-chip is-status">{rowResultKind(row)}</span>
       </div>
       <section>
         <span>{historyText.labels.input}</span>
-        <MathStatic latex={entry.inputLatex} />
+        <div className="history-page-inspector-math">
+          <MathStatic latex={entry.inputLatex} />
+        </div>
       </section>
       {entry.resultLatex ? (
         <section>
           <span>{historyText.labels.result}</span>
-          <MathStatic latex={entry.resultLatex} />
+          <div className="history-page-inspector-math">
+            <MathStatic latex={entry.resultLatex} />
+          </div>
         </section>
       ) : null}
       {entry.approxText ? (
@@ -155,12 +251,37 @@ function HistoryDetailInspector({
       ) : null}
       {entry.exactSupplementLatex?.length ? (
         <section>
-          <span>{historyText.labels.validWhen}</span>
-          {entry.exactSupplementLatex.map((latex, index) => (
-            <MathStatic key={`${entry.id}.supplement.${index}`} latex={latex} />
-          ))}
+          <span>Facts</span>
+          <ul className="history-page-facts">
+            {entry.exactSupplementLatex.map((latex, index) => (
+              <li key={`${entry.id}.supplement.${index}`}>
+                <MathStatic latex={latex} />
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
+      <section>
+        <span>Actions</span>
+        <div className="history-page-inspector-actions">
+          <InspectorButton icon={Play} tone="primary" onClick={() => onReplay(entry)}>
+            {historyText.actions.replayCurrentTab}
+          </InspectorButton>
+          <InspectorButton icon={Plus} onClick={() => onReplayInNewTab(entry)}>
+            {historyText.actions.openInNewTab}
+          </InspectorButton>
+          <InspectorButton icon={Copy} onClick={() => onCopyResult(entryCopyText(entry))}>
+            {historyText.actions.copyResult}
+          </InspectorButton>
+          <InspectorButton icon={Trash2} tone="danger" onClick={() => onDelete(entry.id)}>
+            {historyText.actions.deleteEntry}
+          </InspectorButton>
+        </div>
+      </section>
+      <footer>
+        <Shield aria-hidden="true" size={15} />
+        <span>History is stored locally on this device.</span>
+      </footer>
     </aside>
   );
 }
@@ -211,6 +332,7 @@ export function HistoryPage({
     viewportHeight: HISTORY_PAGE_DEFAULT_VIEWPORT_HEIGHT,
   });
   const visibleRows = rows.slice(visibleRange.startIndex, visibleRange.endIndex);
+  const shownStart = rows.length === 0 ? 0 : visibleRange.startIndex + 1;
 
   useEffect(() => {
     if (!selectedRowId && rows[0]) {
@@ -298,153 +420,247 @@ export function HistoryPage({
     setScrollTop(event.currentTarget.scrollTop);
   }
 
+  function updateDateFilter(nextDateFilter: string) {
+    setDateFilter(nextDateFilter);
+    setScrollTop(0);
+  }
+
   return (
     <section className="app-page app-page--history" data-testid="history-page">
-      <header className="app-page-header">
+      <div className="app-page-shell-header">
+        <span>REZANOVA CLASSWIZ CALCULATOR</span>
+      </div>
+      <header className="history-page-hero">
         <div>
-          <span className="app-page-kicker">App Page</span>
-          <h1>{historyText.title}</h1>
-          <p>{historyText.timeline.entries(rows.length)}</p>
+          <HistoryIcon aria-hidden="true" size={28} />
+          <div>
+            <h1>{historyText.title}</h1>
+            <p>Review and manage your past calculations</p>
+          </div>
         </div>
-        <div className="history-page-bulk-actions">
-          <button
-            type="button"
-            disabled={selectedEntryIds.size === 0}
-            onClick={deleteSelectedEntries}
-          >
-            {historyText.actions.deleteSelected}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="history-page-delete-selected"
+          disabled={selectedEntryIds.size === 0}
+          onClick={deleteSelectedEntries}
+        >
+          <Trash2 aria-hidden="true" size={16} />
+          <span>{historyText.actions.deleteSelected}</span>
+        </button>
       </header>
 
       <div className="history-page-toolbar">
-        <label>
+        <label className="history-page-search">
           <span>{historyText.filters.search}</span>
+          <Search aria-hidden="true" size={17} />
           <input
             value={query}
+            placeholder="Search history..."
             onChange={(event) => {
               setQuery(event.currentTarget.value);
               setScrollTop(0);
             }}
           />
         </label>
-        <label>
-          <span>{historyText.filters.allWorkspaces}</span>
-          <select
-            value={modeFilter}
-            onChange={(event) => {
-              setModeFilter(event.currentTarget.value as ModeId | 'all');
+        <div
+          className="history-page-filter-chips"
+          role="group"
+          aria-label={historyText.filters.allWorkspaces}
+          data-testid="history-page-workspace-filters"
+        >
+          <button
+            type="button"
+            className={modeFilter === 'all' ? 'is-active' : ''}
+            onClick={() => {
+              setModeFilter('all');
               setScrollTop(0);
             }}
           >
-            <option value="all">{historyText.filters.allWorkspaces}</option>
-            {modesInRows.map((mode) => (
-              <option key={mode} value={mode}>{modeLabels[mode]}</option>
+            All
+          </button>
+          {modesInRows.map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className={modeFilter === mode ? 'is-active' : ''}
+              onClick={() => {
+                setModeFilter(mode);
+                setScrollTop(0);
+              }}
+            >
+              {modeLabels[mode]}
+            </button>
+          ))}
+        </div>
+        <label className="history-page-date-select">
+          <span>Date range</span>
+          <CalendarDays aria-hidden="true" size={16} />
+          <select value={dateFilter} onChange={(event) => updateDateFilter(event.currentTarget.value)}>
+            <option value="all">All time</option>
+            {dateGroups.map((group) => (
+              <option key={group.key} value={group.key}>{group.label}</option>
             ))}
           </select>
+          <ChevronDown className="history-page-select-chevron" aria-hidden="true" size={16} />
         </label>
       </div>
 
       <div className="history-page-layout">
-        <nav className="history-page-timeline" aria-label="History timeline">
+        <aside className="history-page-timeline" aria-label="History timeline">
+          <header>
+            <strong>Timeline</strong>
+            <PanelRight aria-hidden="true" size={16} />
+          </header>
           <button
             type="button"
             className={dateFilter === 'all' ? 'is-active' : ''}
-            onClick={() => setDateFilter('all')}
+            onClick={() => updateDateFilter('all')}
           >
             <span>{historyText.filters.allDates}</span>
-            <span>{historyText.timeline.entries(allRows.length)}</span>
+            <strong>{historyText.timeline.entries(allRows.length)}</strong>
           </button>
           {dateGroups.map((group) => (
             <button
               key={group.key}
               type="button"
               className={dateFilter === group.key ? 'is-active' : ''}
-              onClick={() => {
-                setDateFilter(group.key);
-                setScrollTop(0);
-              }}
+              onClick={() => updateDateFilter(group.key)}
             >
               <span>{group.label}</span>
-              <span>{historyText.timeline.entries(group.count)}</span>
+              <strong>{historyText.timeline.entries(group.count)}</strong>
             </button>
           ))}
-        </nav>
+          <footer>
+            <Database aria-hidden="true" size={15} />
+            <span>Local history</span>
+            <strong>{historyText.timeline.entries(allRows.length)}</strong>
+          </footer>
+        </aside>
 
-        <div className="history-page-ledger" data-testid="history-page-ledger" onScroll={handleScroll}>
-          {rows.length === 0 ? (
-            <div className="history-page-empty">{historyText.empty}</div>
-          ) : (
-            <div
-              className="history-page-ledger-spacer"
-              style={{ height: rows.length * HISTORY_PAGE_ROW_HEIGHT }}
-            >
+        <main className="history-page-ledger-panel">
+          <header className="history-page-ledger-title">
+            <label>
+              <input
+                aria-label="Select visible entries"
+                type="checkbox"
+                checked={visibleRows
+                  .filter((row) => row.kind === 'entry')
+                  .every((row) => selectedEntryIds.has(row.entry.id)) && visibleRows.some((row) => row.kind === 'entry')}
+                onChange={(event) => {
+                  const visibleEntryIds = visibleRows
+                    .filter((row): row is Extract<HistoryLedgerRow, { kind: 'entry' }> => row.kind === 'entry')
+                    .map((row) => row.entry.id);
+                  if (event.currentTarget.checked) {
+                    setSelectedEntryIds(new Set([...selectedEntryIds, ...visibleEntryIds]));
+                  } else {
+                    setSelectedEntryIds(new Set([...selectedEntryIds].filter((id) => !visibleEntryIds.includes(id))));
+                  }
+                }}
+              />
+              <span>Results ({rows.length})</span>
+            </label>
+          </header>
+          <div className="history-page-table-header" data-testid="history-page-table-header">
+            <span />
+            <span>Workspace</span>
+            <span>Expression / Input</span>
+            <span>Result preview</span>
+            <span>Time</span>
+            <span>Status</span>
+          </div>
+          <div className="history-page-ledger" data-testid="history-page-ledger" onScroll={handleScroll}>
+            {rows.length === 0 ? (
+              <div className="history-page-empty">{historyText.empty}</div>
+            ) : (
               <div
-                className="history-page-ledger-window"
-                style={{ transform: `translateY(${visibleRange.offsetTop}px)` }}
+                className="history-page-ledger-spacer"
+                style={{ height: rows.length * HISTORY_PAGE_ROW_HEIGHT }}
               >
-                {visibleRows.map((row) => {
-                  const isSelected = selectedRow?.id === row.id;
-                  if (row.kind === 'pending') {
+                <div
+                  className="history-page-ledger-window"
+                  style={{ transform: `translateY(${visibleRange.offsetTop}px)` }}
+                >
+                  {visibleRows.map((row) => {
+                    const isSelected = selectedRow?.id === row.id;
+                    if (row.kind === 'pending') {
+                      return (
+                        <article
+                          key={row.id}
+                          className={`history-page-row history-page-row--pending ${isSelected ? 'is-selected' : ''}`}
+                          data-testid="history-page-row-pending"
+                          style={{ height: HISTORY_PAGE_ROW_HEIGHT }}
+                          onClick={() => setSelectedRowId(row.id)}
+                        >
+                          <span />
+                          <ModeChip label={modeLabels[row.mode]} mode={row.mode} />
+                          <div className="history-page-row-expression">
+                            <strong>{row.ticket.inputLatex}</strong>
+                          </div>
+                          <span className="history-page-muted">Pending</span>
+                          <span>{rowTimestamp(row)}</span>
+                          <span className="history-page-chip is-status">{rowElapsed(row, elapsedNowMs)}</span>
+                          <button
+                            type="button"
+                            disabled={row.ticket.status === 'stopping'}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              onStopPending?.(row.ticket);
+                            }}
+                          >
+                            <StopCircle aria-hidden="true" size={16} />
+                            <span>{historyText.actions.stop}</span>
+                          </button>
+                        </article>
+                      );
+                    }
+
                     return (
                       <article
                         key={row.id}
-                        className={`history-page-row history-page-row--pending ${isSelected ? 'is-selected' : ''}`}
-                        data-testid="history-page-row-pending"
+                        className={`history-page-row ${isSelected ? 'is-selected' : ''}`}
+                        data-testid="history-page-row"
                         style={{ height: HISTORY_PAGE_ROW_HEIGHT }}
-                        onClick={() => setSelectedRowId(row.id)}
+                        onClick={(event) => focusEntryRow(event, row)}
+                        onDoubleClick={() => onReplay(row.entry)}
                       >
-                        <div>
-                          <span>{modeLabels[row.mode]}</span>
-                          <strong>{row.ticket.inputLatex}</strong>
+                        <label onClick={(event) => event.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            aria-label={historyText.actions.selectEntry}
+                            checked={selectedEntryIds.has(row.entry.id)}
+                            onChange={() => toggleSelectedEntry(row)}
+                          />
+                          {selectedEntryIds.has(row.entry.id)
+                            ? <Check aria-hidden="true" size={14} />
+                            : <Square aria-hidden="true" size={14} />}
+                        </label>
+                        <ModeChip label={modeLabels[row.mode]} mode={row.mode} />
+                        <div className="history-page-row-expression">
+                          <MathStatic latex={row.entry.inputLatex} />
                         </div>
-                        <span className="history-page-chip">{rowStatus(row, elapsedNowMs)}</span>
-                        <button
-                          type="button"
-                          disabled={row.ticket.status === 'stopping'}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onStopPending?.(row.ticket);
-                          }}
-                        >
-                          {historyText.actions.stop}
-                        </button>
+                        <div className="history-page-row-result">
+                          {row.entry.resultLatex
+                            ? <MathStatic latex={row.entry.resultLatex} />
+                            : <span>{row.entry.approxText ?? historyText.staleAnswer}</span>}
+                        </div>
+                        <span>{rowTimestamp(row)}</span>
+                        <span className="history-page-chip is-status">{rowResultKind(row)}</span>
                       </article>
                     );
-                  }
-
-                  return (
-                    <article
-                      key={row.id}
-                      className={`history-page-row ${isSelected ? 'is-selected' : ''}`}
-                      data-testid="history-page-row"
-                      style={{ height: HISTORY_PAGE_ROW_HEIGHT }}
-                      onClick={(event) => focusEntryRow(event, row)}
-                      onDoubleClick={() => onReplay(row.entry)}
-                    >
-                      <label onClick={(event) => event.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          aria-label={historyText.actions.selectEntry}
-                          checked={selectedEntryIds.has(row.entry.id)}
-                          onChange={() => toggleSelectedEntry(row)}
-                        />
-                      </label>
-                      <div className="history-page-row-main">
-                        <span>{modeLabels[row.mode]} · {rowTimestamp(row)}</span>
-                        <MathStatic latex={row.entry.inputLatex} />
-                      </div>
-                      <span className="history-page-chip">{rowStatus(row, elapsedNowMs)}</span>
-                    </article>
-                  );
-                })}
+                  })}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+          <footer className="history-page-ledger-footer">
+            <span>Showing {shownStart}-{visibleRange.endIndex} of {rows.length} results</span>
+            <span>Virtualized ledger</span>
+          </footer>
+        </main>
 
         <HistoryDetailInspector
           row={selectedRow}
+          elapsedNowMs={elapsedNowMs}
           modeLabels={modeLabels}
           onCopyResult={onCopyResult}
           onDelete={onDelete}
@@ -453,6 +669,11 @@ export function HistoryPage({
           onStopPending={onStopPending}
         />
       </div>
+      <footer className="app-page-shell-footer">
+        <span><Check aria-hidden="true" size={14} /> Ready</span>
+        <span>Workspace: History</span>
+        <span>{historyText.timeline.entries(allRows.length)}</span>
+      </footer>
     </section>
   );
 }

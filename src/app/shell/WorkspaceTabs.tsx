@@ -4,6 +4,26 @@ import {
   type FormEvent,
   type MouseEvent,
 } from 'react';
+import {
+  BarChart3,
+  Calculator,
+  FileText,
+  FlaskConical,
+  FunctionSquare,
+  Grid3X3,
+  History,
+  LineChart,
+  MoreHorizontal,
+  PenTool,
+  Plus,
+  Settings,
+  Shapes,
+  Sigma,
+  Table2,
+  Triangle,
+  X,
+  type LucideIcon,
+} from 'lucide-react';
 import { useLanguage } from '../../lib/language/language-context';
 import type {
   WorkspaceInstanceId,
@@ -62,6 +82,43 @@ function runningCount(tab: WorkspaceTabItem) {
 
 function isBusy(tab: WorkspaceTabItem) {
   return runningCount(tab) > 0;
+}
+
+function workspaceTabIcon(tab: WorkspaceTabItem): LucideIcon {
+  if (tab.workspaceKind === SETTINGS_PAGE_WORKSPACE_KIND) {
+    return Settings;
+  }
+  if (tab.workspaceKind === HISTORY_PAGE_WORKSPACE_KIND) {
+    return History;
+  }
+
+  switch (tab.workspaceKind) {
+    case 'calculus':
+      return FunctionSquare;
+    case 'equation':
+      return Sigma;
+    case 'formula-viewer':
+      return FileText;
+    case 'geometry':
+      return Shapes;
+    case 'guide':
+      return PenTool;
+    case 'labs':
+      return FlaskConical;
+    case 'matrix':
+      return Grid3X3;
+    case 'statistics':
+      return BarChart3;
+    case 'table':
+      return Table2;
+    case 'trigonometry':
+      return Triangle;
+    case 'vector':
+      return LineChart;
+    case 'calculate':
+    default:
+      return Calculator;
+  }
 }
 
 export function WorkspaceTabs({
@@ -165,6 +222,7 @@ export function WorkspaceTabs({
           const tabRunningCount = runningCount(tab);
           const tabIsBusy = tabRunningCount > 0;
           const isRenaming = renamingTabId === tab.id;
+          const TabIcon = workspaceTabIcon(tab);
 
           return (
             <div
@@ -207,10 +265,13 @@ export function WorkspaceTabs({
                     aria-selected={tab.isActive}
                     onClick={() => onFocusTab(tab.id)}
                   >
-                    <span className="workspace-tab-title">{tab.title}</span>
-                    <span className="workspace-tab-meta">
-                      {tab.compartmentLabel}
-                      {tabIsBusy ? ` · ${tab.stoppingTicketCount > 0 ? tabText.stoppingMeta : tabText.runningMeta}` : ''}
+                    <TabIcon aria-hidden="true" size={17} />
+                    <span>
+                      <span className="workspace-tab-title">{tab.title}</span>
+                      <span className="workspace-tab-meta">
+                        {tab.compartmentLabel}
+                        {tabIsBusy ? ` · ${tab.stoppingTicketCount > 0 ? tabText.stoppingMeta : tabText.runningMeta}` : ''}
+                      </span>
                     </span>
                   </button>
                   <button
@@ -224,7 +285,7 @@ export function WorkspaceTabs({
                       setOpenMenuTabId((currentId) => currentId === tab.id ? null : tab.id);
                     }}
                   >
-                    ...
+                    <MoreHorizontal aria-hidden="true" size={17} />
                   </button>
                   <button
                     type="button"
@@ -235,7 +296,7 @@ export function WorkspaceTabs({
                       requestClose(tab);
                     }}
                   >
-                    x
+                    <X aria-hidden="true" size={16} />
                   </button>
                 </>
               )}
@@ -252,7 +313,7 @@ export function WorkspaceTabs({
             onCreateBlankTab();
           }}
         >
-          +
+          <Plus aria-hidden="true" size={19} />
         </button>
         <button
           type="button"
@@ -265,7 +326,7 @@ export function WorkspaceTabs({
             setCreateMenuOpen((currentValue) => !currentValue);
           }}
         >
-          ...
+          <MoreHorizontal aria-hidden="true" size={17} />
         </button>
       </div>
 
