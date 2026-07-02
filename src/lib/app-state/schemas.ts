@@ -365,6 +365,8 @@ const vectorReplaySeedSchema = z.object({
   vectorA: numericVectorSchema,
   vectorB: numericVectorSchema.optional(),
   angleUnit: angleUnitSchema,
+  exactVectorA: exactVectorWireSchema.optional(),
+  exactVectorB: exactVectorWireSchema.optional(),
   editorExpressionLatex: z.string().optional(),
   vectorOperandLatexA: z.string().optional(),
   vectorOperandLatexB: z.string().optional(),

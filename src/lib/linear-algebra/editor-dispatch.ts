@@ -86,9 +86,15 @@ function vectorMetadata(
 ) {
   const operandLatex = (operand: VectorOperand | string | undefined) =>
     typeof operand === 'string' ? operand : operand?.displayLatex;
+  const operandExactVector = (operand: VectorOperand | string | undefined) =>
+    typeof operand === 'string' ? undefined : operand?.exactVector;
+  const exactVectorA = operandExactVector(operands.operandA);
+  const exactVectorB = operandExactVector(operands.operandB);
 
   return {
     editorExpressionLatex: input.latex,
+    ...(exactVectorA ? { exactVectorA: cloneVector(exactVectorA) } : {}),
+    ...(exactVectorB ? { exactVectorB: cloneVector(exactVectorB) } : {}),
     ...(operandLatex(operands.operandA) ? { vectorOperandLatexA: operandLatex(operands.operandA) } : {}),
     ...(operandLatex(operands.operandB) ? { vectorOperandLatexB: operandLatex(operands.operandB) } : {}),
   };

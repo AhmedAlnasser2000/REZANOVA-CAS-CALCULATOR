@@ -14,6 +14,7 @@ import {
 import type {
   AngleUnit,
   DisplayOutcome,
+  ExactScalarWire,
   VectorOperation,
 } from '../../types/calculator';
 
@@ -22,6 +23,8 @@ export type RunVectorModeRequest = {
   vectorA: number[];
   vectorB: number[];
   angleUnit: AngleUnit;
+  exactVectorA?: ExactScalarWire[];
+  exactVectorB?: ExactScalarWire[];
   editorExpressionLatex?: string;
   vectorOperandLatexA?: string;
   vectorOperandLatexB?: string;
@@ -79,6 +82,8 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     vectorA,
     vectorB,
     angleUnit,
+    exactVectorA,
+    exactVectorB,
     editorExpressionLatex,
     vectorOperandLatexA,
     vectorOperandLatexB,
@@ -88,6 +93,8 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     vectorA,
     vectorB,
     angleUnit,
+    exactVectorA,
+    exactVectorB,
     editorExpressionLatex,
     vectorOperandLatexA,
     vectorOperandLatexB,
@@ -125,6 +132,8 @@ export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
       angleUnit: request.angleUnit,
       vectorA: request.vectorA,
       vectorB: request.vectorB,
+      exactVectorA: request.exactVectorA,
+      exactVectorB: request.exactVectorB,
       editorExpressionLatex: request.editorExpressionLatex,
       vectorOperandLatexA: request.vectorOperandLatexA,
       vectorOperandLatexB: request.vectorOperandLatexB,

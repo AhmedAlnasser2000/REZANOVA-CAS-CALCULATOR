@@ -375,10 +375,20 @@ describe('history entry schema', () => {
         operation: 'projectionUofV',
         vectorA: [1, 0],
         vectorB: [2, 3],
+        exactVectorB: [
+          { numerator: 2, denominator: 1 },
+          { numerator: 3, denominator: 1 },
+        ],
         angleUnit: 'deg',
       },
       timestamp: '2026-06-08T00:00:00.000Z',
-    }).vectorSeed?.operation).toBe('projectionUofV');
+    }).vectorSeed).toMatchObject({
+      operation: 'projectionUofV',
+      exactVectorB: [
+        { numerator: 2, denominator: 1 },
+        { numerator: 3, denominator: 1 },
+      ],
+    });
 
     expect(historyEntrySchema.parse({
       id: 'vector-seed-gram',

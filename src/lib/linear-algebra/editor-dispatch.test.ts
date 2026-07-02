@@ -327,6 +327,27 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchVectorEditorLatex({
+      latex: '\\operatorname{proj}_{u}\\left(\\begin{bmatrix}\\frac{1}{2}\\\\3\\end{bmatrix}\\right)',
+      vectorA: [1, 0],
+      vectorB,
+      angleUnit: 'deg',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'projectionUofV',
+        vectorA: [1, 0],
+        vectorB: [0.5, 3],
+        exactVectorB: [
+          { numerator: 1, denominator: 2 },
+          { numerator: 3, denominator: 1 },
+        ],
+        angleUnit: 'deg',
+        editorExpressionLatex: '\\operatorname{proj}_{u}\\left(\\begin{bmatrix}\\frac{1}{2}\\\\3\\end{bmatrix}\\right)',
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: '\\begin{bmatrix}\\frac{1}{2}\\\\3\\end{bmatrix}',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
       latex: '\\operatorname{orth}_{u}\\left(v\\right)',
       vectorA,
       vectorB,
@@ -391,6 +412,28 @@ describe('linear algebra editor dispatch', () => {
         editorExpressionLatex: '\\operatorname{gram}\\left(u,v\\right)',
         vectorOperandLatexA: 'u',
         vectorOperandLatexB: 'v',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: '\\operatorname{gram}\\left(\\begin{bmatrix}1\\\\1\\end{bmatrix},\\begin{bmatrix}1\\\\0\\end{bmatrix}\\right)',
+      vectorA,
+      vectorB,
+      angleUnit: 'deg',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'gramSchmidtUV',
+        vectorA: [1, 1],
+        vectorB: [1, 0],
+        exactVectorA: [
+          { numerator: 1, denominator: 1 },
+          { numerator: 1, denominator: 1 },
+        ],
+        exactVectorB: [
+          { numerator: 1, denominator: 1 },
+          { numerator: 0, denominator: 1 },
+        ],
+        angleUnit: 'deg',
       },
     });
   });

@@ -1040,7 +1040,7 @@ export type VectorRequest = {
   vectorA: number[];
   vectorB?: number[];
   angleUnit: AngleUnit;
-  editorExpressionLatex?: string; vectorOperandLatexA?: string; vectorOperandLatexB?: string;
+  exactVectorA?: ExactScalarWire[]; exactVectorB?: ExactScalarWire[]; editorExpressionLatex?: string; vectorOperandLatexA?: string; vectorOperandLatexB?: string;
 };
 
 export type VectorReplaySeed = VectorRequest;

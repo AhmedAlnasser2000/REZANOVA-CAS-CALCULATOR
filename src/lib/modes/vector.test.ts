@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { runVectorMode } from './vector';
+import { buildVectorOoeSnapshot, runVectorMode } from './vector';
 
 describe('runVectorMode', () => {
   it('uses editor expressions as Vector result titles when present', () => {
@@ -68,5 +68,31 @@ describe('runVectorMode', () => {
     if (gram.kind === 'success') {
       expect(gram.detailSections?.map((section) => section.title)).toContain('Gram-Schmidt Proof');
     }
+  });
+
+  it('carries exact vector sidecars through OOE snapshots', () => {
+    const snapshot = buildVectorOoeSnapshot({
+      operation: 'projectionUofV',
+      vectorA: [1, 0],
+      vectorB: [0.5, 3],
+      exactVectorB: [
+        { numerator: 1, denominator: 2 },
+        { numerator: 3, denominator: 1 },
+      ],
+      angleUnit: 'deg',
+      editorExpressionLatex: '\\operatorname{proj}_{u}\\left(\\begin{bmatrix}\\frac{1}{2}\\\\3\\end{bmatrix}\\right)',
+      vectorOperandLatexA: 'u',
+      vectorOperandLatexB: '\\begin{bmatrix}\\frac{1}{2}\\\\3\\end{bmatrix}',
+    });
+
+    expect(snapshot.request).toMatchObject({
+      operation: 'projectionUofV',
+      lengthA: 2,
+      lengthB: 2,
+      exactVectorB: [
+        { numerator: 1, denominator: 2 },
+        { numerator: 3, denominator: 1 },
+      ],
+    });
   });
 });
