@@ -90,6 +90,16 @@ describe('runVectorOperation', () => {
       'Orthonormal Basis',
       'Gram-Schmidt Proof',
     ]);
+    const inlineSecond = runVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 1],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+      vectorOperandLatexB: '\\begin{bmatrix}1\\\\0\\end{bmatrix}',
+    });
+    expect(inlineSecond.detailSections?.find((section) => section.title === 'Gram-Schmidt Proof')?.lines).toContain(
+      'w_{2}=\\begin{bmatrix}1\\\\0\\end{bmatrix}-\\operatorname{proj}_{w_{1}}(\\begin{bmatrix}1\\\\0\\end{bmatrix})=\\begin{bmatrix}0.5\\\\-0.5\\end{bmatrix}',
+    );
 
     const dependent = runVectorOperation({
       operation: 'gramSchmidtUV',

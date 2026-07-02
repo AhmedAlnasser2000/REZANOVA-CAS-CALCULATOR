@@ -66,13 +66,24 @@ function augmentedMatrix(coefficients: ExactMatrix, constants: ExactVector): Exa
   return coefficients.map((row, rowIndex) => [...row, constants[rowIndex]]);
 }
 
-function rankFacts(rankA: number, rankAugmented: number, unknowns: number, rref: ExactMatrix) {
+function augmentedLabel(coefficientLabel: string, rhsLabel: string) {
+  return `[${coefficientLabel}|${rhsLabel}]`;
+}
+
+function rankFacts(
+  rankA: number,
+  rankAugmented: number,
+  unknowns: number,
+  rref: ExactMatrix,
+  labels: { coefficient: string; rhs: string },
+) {
+  const augmented = augmentedLabel(labels.coefficient, labels.rhs);
   return [
     {
       title: 'Rank facts',
       lines: [
-        `rank(A) = ${rankA}`,
-        `rank([A|b]) = ${rankAugmented}`,
+        `\\operatorname{rank}(${labels.coefficient})=${rankA}`,
+        `\\operatorname{rank}(${augmented})=${rankAugmented}`,
         `unknowns = ${unknowns}`,
       ],
     },
@@ -80,7 +91,7 @@ function rankFacts(rankA: number, rankAugmented: number, unknowns: number, rref:
       title: 'Augmented RREF',
       lineKind: 'math' as const,
       lines: [
-        `\\operatorname{rref}\\left([A|b]\\right)=${exactMatrixToLatex(rref)}`,
+        `\\operatorname{rref}\\left(${augmented}\\right)=${exactMatrixToLatex(rref)}`,
       ],
     },
   ];
@@ -198,12 +209,14 @@ function systemProofDetails(
   rankAugmented: number,
   unknowns: number,
   rref: ExactMatrix,
+  labels: { coefficient: string; rhs: string },
 ) {
+  const augmented = augmentedLabel(labels.coefficient, labels.rhs);
   if (kind === 'unique') {
     return {
       title: 'System Proof',
       lines: [
-        `\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=${rankA}`,
+        `\\operatorname{rank}(${labels.coefficient})=\\operatorname{rank}(${augmented})=${rankA}`,
         `\\operatorname{unknowns}=${unknowns}`,
         'The ranks match, so the system is consistent. Because the shared rank equals the number of unknowns, every unknown is fixed by a pivot. Only this vector x satisfies the system.',
       ],
@@ -216,9 +229,9 @@ function systemProofDetails(
     return {
       title: 'System Proof',
       lines: [
-        `\\operatorname{rank}(A)=${rankA}`,
-        `\\operatorname{rank}([A|b])=${rankAugmented}`,
-        contradiction ?? '\\operatorname{rank}(A)<\\operatorname{rank}([A|b])',
+        `\\operatorname{rank}(${labels.coefficient})=${rankA}`,
+        `\\operatorname{rank}(${augmented})=${rankAugmented}`,
+        contradiction ?? `\\operatorname{rank}(${labels.coefficient})<\\operatorname{rank}(${augmented})`,
         'The augmented matrix has more pivots than the coefficient matrix, so the RHS column creates a contradiction. No vector x can satisfy the system.',
       ],
       lineKinds: ['math' as const, 'math' as const, 'math' as const, 'text' as const],
@@ -229,7 +242,7 @@ function systemProofDetails(
   return {
     title: 'System Proof',
     lines: [
-      `\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=${rankA}`,
+      `\\operatorname{rank}(${labels.coefficient})=\\operatorname{rank}(${augmented})=${rankA}`,
       `\\operatorname{unknowns}=${unknowns}`,
       `\\operatorname{free\\ variables}=${freeCount}`,
       `The ranks match, so the system is consistent. Because the shared rank is smaller than the number of unknowns, ${freeCount} ${plural(freeCount, 'variable')} can vary freely. That creates infinitely many solution vectors.`,
@@ -251,6 +264,13 @@ function solutionFamilyDetails(family: NonNullable<ReturnType<typeof solutionFam
 
 function systemTitle(form: MatrixSystemForm) {
   return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
+}
+
+function systemDisplayLabels(input: MatrixSystemRunInput) {
+  return {
+    coefficient: input.coefficientMatrixLatex ?? 'A',
+    rhs: input.rhsVectorLatex ?? 'b',
+  };
 }
 
 export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutcome {
@@ -281,7 +301,8 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
   const rankA = coefficientRref.rank;
   const rankAugmented = augmentedRref.rank;
   const unknowns = coefficients[0].length;
-  const title = systemTitle(input.form);
+  const title = input.editorExpressionLatex ?? systemTitle(input.form);
+  const labels = systemDisplayLabels(input);
 
   if (rankA < rankAugmented) {
     return {
@@ -290,8 +311,8 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       exactLatex: '\\text{No solution}',
       solveSummaryText: 'No solution.',
       detailSections: [
-        systemProofDetails('none', rankA, rankAugmented, unknowns, augmentedRref.matrix),
-        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        systemProofDetails('none', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
+        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
@@ -309,8 +330,8 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
         : 'Infinitely many solutions.',
       detailSections: [
         ...(family ? [solutionFamilyDetails(family)] : []),
-        systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix),
-        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
+        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
@@ -328,8 +349,8 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
     exactLatex: `x=${exactVectorToColumnLatex(solved.solution)}`,
     solveSummaryText: 'Exactly one solution. Only this vector x satisfies the system.',
     detailSections: [
-      systemProofDetails('unique', rankA, rankAugmented, unknowns, augmentedRref.matrix),
-      ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+      systemProofDetails('unique', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
+      ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
       rowOperationDetailSection(augmentedRref.rowOperations),
     ],
     warnings: [],

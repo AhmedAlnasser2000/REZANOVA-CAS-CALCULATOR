@@ -64,15 +64,25 @@ export function vectorOperationLabel(operation: VectorOperation) {
   }
 }
 
-export function runVectorMode({
-  operation,
-  vectorA,
-  vectorB,
-  angleUnit,
-  editorExpressionLatex,
-  vectorOperandLatexA,
-  vectorOperandLatexB,
-}: RunVectorModeRequest): DisplayOutcome {
+function vectorResultTitle(request: RunVectorModeRequest) {
+  const usesInlineOperand =
+    (request.vectorOperandLatexA !== undefined && request.vectorOperandLatexA !== 'u')
+    || (request.vectorOperandLatexB !== undefined && request.vectorOperandLatexB !== 'v');
+  return usesInlineOperand && request.editorExpressionLatex
+    ? request.editorExpressionLatex
+    : vectorOperationLabel(request.operation);
+}
+
+export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
+  const {
+    operation,
+    vectorA,
+    vectorB,
+    angleUnit,
+    editorExpressionLatex,
+    vectorOperandLatexA,
+    vectorOperandLatexB,
+  } = request;
   const response = runVectorOperation({
     operation,
     vectorA,
@@ -85,7 +95,7 @@ export function runVectorMode({
   if (response.error) {
     return {
       kind: 'error',
-      title: vectorOperationLabel(operation),
+      title: vectorResultTitle(request),
       error: response.error,
       warnings: response.warnings,
       exactLatex: response.resultLatex,
@@ -95,7 +105,7 @@ export function runVectorMode({
 
   return {
     kind: 'success',
-    title: vectorOperationLabel(operation),
+    title: vectorResultTitle(request),
     exactLatex: response.resultLatex,
     approxText: response.approxText,
     detailSections: response.detailSections,

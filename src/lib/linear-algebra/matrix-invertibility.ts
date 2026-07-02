@@ -7,7 +7,7 @@ import {
 } from './exact-matrix-format';
 
 export type MatrixInvertibilityInput = {
-  label: 'A' | 'B';
+  label: string;
   matrix: number[][];
   exactMatrix?: ExactScalarWire[][];
 };
@@ -30,7 +30,7 @@ function matrixStop(message: string): MatrixResponse {
 }
 
 function rankNullityGuidance(
-  label: 'A' | 'B',
+  label: string,
   rank: number,
   nullity: number,
   columns: number,
@@ -52,7 +52,7 @@ function rankNullityGuidance(
 }
 
 function theoremDetails(input: {
-  label: 'A' | 'B';
+  label: string;
   determinantLatex: string;
   rank: number;
   size: number;
@@ -75,8 +75,8 @@ function theoremDetails(input: {
       title: 'Invertibility Theorem',
       lines: [
         input.invertible
-          ? `${input.label} is square and its determinant is nonzero, so the inverse exists.`
-          : `${input.label} is square but its determinant is zero, so the inverse does not exist.`,
+          ? 'The matrix is square and its determinant is nonzero, so the inverse exists.'
+          : 'The matrix is square but its determinant is zero, so the inverse does not exist.',
         input.invertible
           ? `\\operatorname{rank}(${input.label})=${input.size}`
           : `\\operatorname{rank}(${input.label})<${input.size}`,
@@ -84,8 +84,8 @@ function theoremDetails(input: {
           ? `\\operatorname{nullity}(${input.label})=0`
           : `\\operatorname{nullity}(${input.label})=${nullity}`,
         input.invertible
-          ? 'Every column is a pivot. For every RHS b, Ax=b has exactly one solution.'
-          : 'At least one column is free, so Ax=b cannot have exactly one solution for every RHS b.',
+          ? 'Every column is a pivot. For every RHS b, this matrix times x equals b has exactly one solution.'
+          : 'At least one column is free, so this matrix cannot have exactly one solution for every RHS b.',
       ],
       lineKinds: ['text', 'math', 'math', 'text'],
     },

@@ -13,7 +13,7 @@ type MatrixSpaceKind = 'nullSpace' | 'columnSpace';
 
 export type MatrixSpaceInput = {
   kind: MatrixSpaceKind;
-  label: 'A' | 'B';
+  label: string;
   matrix: number[][];
   exactMatrix?: ExactScalarWire[][];
 };
@@ -59,7 +59,7 @@ function columnSpaceBasis(matrix: ExactMatrix, pivotColumns: number[]) {
 }
 
 function nullSpaceDetails(
-  label: 'A' | 'B',
+  label: string,
   rref: ExactMatrix,
   rank: number,
   pivotColumns: number[],
@@ -82,8 +82,8 @@ function nullSpaceDetails(
         `\\operatorname{rref}(${label})=${exactMatrixToLatex(rref)}`,
         `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(pivotColumns)}\\}`,
         nullity === 0
-          ? 'Every column is a pivot column, so the only solution to Ax=0 is the zero vector.'
-          : 'Each free variable creates one basis vector for the homogeneous system Ax=0.',
+          ? 'Every column is a pivot column, so the only homogeneous solution is the zero vector.'
+          : 'Each free variable creates one basis vector for the homogeneous system.',
       ],
       lineKinds: ['math', 'math', 'text'],
     },
@@ -91,7 +91,7 @@ function nullSpaceDetails(
 }
 
 function columnSpaceDetails(
-  label: 'A' | 'B',
+  label: string,
   rref: ExactMatrix,
   rank: number,
   pivotColumns: number[],

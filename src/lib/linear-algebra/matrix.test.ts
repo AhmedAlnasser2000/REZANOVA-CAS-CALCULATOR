@@ -117,6 +117,46 @@ describe('runMatrixOperation', () => {
     expect(columnSpace.detailSections?.[0]?.lines).toContain('\\dim\\operatorname{Col}(A)=\\operatorname{rank}(A)=1');
   });
 
+  it('uses inline Matrix operand labels in space, invertibility, and eigen readback', () => {
+    const singularLabel = '\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}';
+    const nullSpace = runMatrixOperation({
+      operation: 'nullSpaceA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB,
+      matrixOperandLatexA: singularLabel,
+    });
+
+    expect(nullSpace.resultLatex).toBe(
+      `\\operatorname{Null}(${singularLabel})=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}`,
+    );
+    expect(nullSpace.detailSections?.[0]?.lines).toContain(`\\operatorname{rank}(${singularLabel})=1`);
+
+    const invertibleLabel = '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}';
+    const invertible = runMatrixOperation({
+      operation: 'invertibilityA',
+      matrixA,
+      matrixB,
+      matrixOperandLatexA: invertibleLabel,
+    });
+
+    expect(invertible.resultLatex).toBe(`\\operatorname{invertible}(${invertibleLabel})=\\text{Yes}`);
+    expect(invertible.detailSections?.[0]?.lines).toContain(`\\det(${invertibleLabel})=-2`);
+
+    const eigenLabel = '\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}';
+    const eigen = runMatrixOperation({
+      operation: 'eigenA',
+      matrixA: [[2, 1], [1, 2]],
+      matrixB,
+      matrixOperandLatexA: eigenLabel,
+    });
+
+    expect(eigen.resultLatex).toContain(`\\operatorname{eigen}(${eigenLabel})=`);
+    expect(eigen.detailSections?.[0]?.lines).toContain(`\\operatorname{tr}(${eigenLabel})=4`);
+    expect(eigen.detailSections?.[2]?.lines).toContain(
+      `E_{3}=\\operatorname{Null}(${eigenLabel}-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}`,
+    );
+  });
+
   it('reports zero-subspace Matrix spaces cleanly', () => {
     const nullSpace = runMatrixOperation({
       operation: 'nullSpaceA',
@@ -150,14 +190,14 @@ describe('runMatrixOperation', () => {
     expect(invertible.detailSections?.[0]?.lines).toContain('\\det(A)=-2');
     expect(invertible.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)=2');
     expect(invertible.detailSections?.[1]?.lines).toContain(
-      'Every column is a pivot. For every RHS b, Ax=b has exactly one solution.',
+      'Every column is a pivot. For every RHS b, this matrix times x equals b has exactly one solution.',
     );
 
     expect(singular.resultLatex).toBe('\\operatorname{invertible}(A)=\\text{No}');
     expect(singular.approxText).toBe('det(A) = 0');
     expect(singular.detailSections?.[0]?.lines).toContain('\\operatorname{nullity}(A)=1');
     expect(singular.detailSections?.[1]?.lines).toContain(
-      'At least one column is free, so Ax=b cannot have exactly one solution for every RHS b.',
+      'At least one column is free, so this matrix cannot have exactly one solution for every RHS b.',
     );
   });
 

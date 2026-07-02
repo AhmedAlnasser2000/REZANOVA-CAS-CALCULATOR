@@ -1732,6 +1732,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Full-expression Linear Algebra readback metadata belongs on the existing Matrix/Vector request and replay shapes as optional transport fields (`editorExpressionLatex` plus operand display labels). This preserves F-key compatibility and avoids creating a parallel history, display, or Equation-owned expression mechanism.
 
+## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-TRUST-MILESTONE1 gate C
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Linear Algebra readback should consume full expression metadata only when it adds trust: inline operands and structured systems show the typed expression/operand in titles and math cards, while named A/B and u/v requests keep compact labels. Prose cards should avoid raw LaTeX labels by saying "the matrix" or equivalent learner-facing wording.
+
 ## 2026-07-02 - ALGEBRAIC-DETAIL-CARD-NOTATION-NORMALIZATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Algebraic/genus proof details that contain math must use structured `lineKind`/`lineParts` metadata and preserve it through detail-section merging. Display should render that structured metadata according to the active math notation mode rather than receiving plain prose-like LaTeX fragments.

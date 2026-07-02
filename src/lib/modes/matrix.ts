@@ -85,20 +85,31 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
   }
 }
 
-export function runMatrixMode({
-  operation,
-  matrixA,
-  matrixB,
-  systemRhs,
-  systemForm,
-  exactMatrixA,
-  exactMatrixB,
-  exactSystemRhs,
-  editorExpressionLatex,
-  matrixOperandLatexA,
-  matrixOperandLatexB,
-  systemRhsLatex,
-}: RunMatrixModeRequest): DisplayOutcome {
+function matrixResultTitle(request: RunMatrixModeRequest) {
+  const usesInlineOperand =
+    (request.matrixOperandLatexA !== undefined && request.matrixOperandLatexA !== 'A')
+    || (request.matrixOperandLatexB !== undefined && request.matrixOperandLatexB !== 'B')
+    || request.systemRhsLatex !== undefined;
+  return usesInlineOperand && request.editorExpressionLatex
+    ? request.editorExpressionLatex
+    : matrixOperationLabel(request.operation, request.systemForm);
+}
+
+export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
+  const {
+    operation,
+    matrixA,
+    matrixB,
+    systemRhs,
+    systemForm,
+    exactMatrixA,
+    exactMatrixB,
+    exactSystemRhs,
+    editorExpressionLatex,
+    matrixOperandLatexA,
+    matrixOperandLatexB,
+    systemRhsLatex,
+  } = request;
   if (operation === 'linearSystem') {
     return runMatrixLinearSystem({
       coefficients: matrixA,
@@ -129,7 +140,7 @@ export function runMatrixMode({
   if (response.error) {
     return {
       kind: 'error',
-      title: matrixOperationLabel(operation, systemForm),
+      title: matrixResultTitle(request),
       error: response.error,
       warnings: response.warnings,
       exactLatex: response.resultLatex,
@@ -141,7 +152,7 @@ export function runMatrixMode({
 
   return {
     kind: 'success',
-    title: matrixOperationLabel(operation, systemForm),
+    title: matrixResultTitle(request),
     exactLatex: response.resultLatex,
     approxText: response.approxText,
     detailSections: response.detailSections,

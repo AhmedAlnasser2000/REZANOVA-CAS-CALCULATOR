@@ -2,6 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { runMatrixMode } from './matrix';
 
 describe('runMatrixMode', () => {
+  it('uses editor expressions as Matrix result titles when present', () => {
+    const expressionLatex = '\\det\\left(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}\\right)';
+    const result = runMatrixMode({
+      operation: 'detA',
+      matrixA: [[1, 2], [3, 4]],
+      matrixB: [[5, 6], [7, 8]],
+      editorExpressionLatex: expressionLatex,
+      matrixOperandLatexA: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
+    });
+
+    expect(result.title).toBe(expressionLatex);
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

@@ -2,6 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { runVectorMode } from './vector';
 
 describe('runVectorMode', () => {
+  it('uses editor expressions as Vector result titles when present', () => {
+    const expressionLatex = '\\operatorname{proj}_{u}\\left(\\begin{bmatrix}2\\\\3\\end{bmatrix}\\right)';
+    const result = runVectorMode({
+      operation: 'projectionUofV',
+      vectorA: [1, 0],
+      vectorB: [2, 3],
+      angleUnit: 'deg',
+      editorExpressionLatex: expressionLatex,
+      vectorOperandLatexA: 'u',
+      vectorOperandLatexB: '\\begin{bmatrix}2\\\\3\\end{bmatrix}',
+    });
+
+    expect(result.title).toBe(expressionLatex);
+  });
+
   it('keeps vector operation ids working with u/v readback labels', () => {
     expect(runVectorMode({
       operation: 'dot',

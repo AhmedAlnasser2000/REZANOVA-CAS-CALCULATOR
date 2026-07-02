@@ -47,6 +47,31 @@ describe('runMatrixLinearSystem', () => {
     }
   });
 
+  it('uses editor expression and inline operand labels in structured-system cards', () => {
+    const coefficientLatex = '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}';
+    const rhsLatex = '\\begin{bmatrix}5\\\\11\\end{bmatrix}';
+    const expressionLatex = `${coefficientLatex}x=${rhsLatex}`;
+    const outcome = runMatrixLinearSystem({
+      coefficients: [[1, 2], [3, 4]],
+      constants: [5, 11],
+      form: 'Ax=b',
+      editorExpressionLatex: expressionLatex,
+      coefficientMatrixLatex: coefficientLatex,
+      rhsVectorLatex: rhsLatex,
+    });
+
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind === 'success') {
+      expect(outcome.title).toBe(expressionLatex);
+      expect(outcome.detailSections?.[0]?.lines).toContain(
+        `\\operatorname{rank}(${coefficientLatex})=\\operatorname{rank}([${coefficientLatex}|${rhsLatex}])=2`,
+      );
+      expect(outcome.detailSections?.[1]?.lines).toContain(
+        `\\operatorname{rank}([${coefficientLatex}|${rhsLatex}])=2`,
+      );
+    }
+  });
+
   it('classifies inconsistent structured Matrix systems', () => {
     expect(runMatrixLinearSystem({
       coefficients: [[1, 1], [2, 2]],

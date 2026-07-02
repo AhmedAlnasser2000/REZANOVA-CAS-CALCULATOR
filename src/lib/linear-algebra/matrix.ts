@@ -88,6 +88,14 @@ function exactMatrixReadback(req: MatrixRequest): string | null {
   return null;
 }
 
+function matrixLabelA(req: MatrixRequest) {
+  return req.matrixOperandLatexA ?? 'A';
+}
+
+function matrixLabelB(req: MatrixRequest) {
+  return req.matrixOperandLatexB ?? 'B';
+}
+
 function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
   const targetMatrix =
     req.operation === 'rankA' || req.operation === 'rrefA'
@@ -142,7 +150,7 @@ function exactSpaceResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'nullSpaceA' || req.operation === 'columnSpaceA') {
     return runMatrixSpaceOperation({
       kind: req.operation === 'nullSpaceA' ? 'nullSpace' : 'columnSpace',
-      label: 'A',
+      label: matrixLabelA(req),
       matrix: req.matrixA,
       exactMatrix: req.exactMatrixA,
     });
@@ -152,7 +160,7 @@ function exactSpaceResponse(req: MatrixRequest): MatrixResponse | null {
     return req.matrixB
       ? runMatrixSpaceOperation({
           kind: req.operation === 'nullSpaceB' ? 'nullSpace' : 'columnSpace',
-          label: 'B',
+          label: matrixLabelB(req),
           matrix: req.matrixB,
           exactMatrix: req.exactMatrixB,
         })
@@ -168,7 +176,7 @@ function exactSpaceResponse(req: MatrixRequest): MatrixResponse | null {
 function exactInvertibilityResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'invertibilityA') {
     return runMatrixInvertibility({
-      label: 'A',
+      label: matrixLabelA(req),
       matrix: req.matrixA,
       exactMatrix: req.exactMatrixA,
     });
@@ -177,7 +185,7 @@ function exactInvertibilityResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'invertibilityB') {
     return req.matrixB
       ? runMatrixInvertibility({
-          label: 'B',
+          label: matrixLabelB(req),
           matrix: req.matrixB,
           exactMatrix: req.exactMatrixB,
         })
@@ -193,7 +201,7 @@ function exactInvertibilityResponse(req: MatrixRequest): MatrixResponse | null {
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
-      label: 'A',
+      label: matrixLabelA(req),
       matrix: req.matrixA,
       exactMatrix: req.exactMatrixA,
     });
@@ -202,7 +210,7 @@ function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenB') {
     return req.matrixB
       ? runMatrixEigen({
-          label: 'B',
+          label: matrixLabelB(req),
           matrix: req.matrixB,
           exactMatrix: req.exactMatrixB,
         })

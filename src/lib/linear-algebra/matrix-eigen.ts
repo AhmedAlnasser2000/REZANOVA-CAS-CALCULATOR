@@ -19,7 +19,7 @@ import {
 } from './exact-matrix-format';
 
 export type MatrixEigenInput = {
-  label: 'A' | 'B';
+  label: string;
   matrix: number[][];
   exactMatrix?: ExactScalarWire[][];
 };
@@ -94,7 +94,7 @@ function shiftedMatrix(matrix: ExactMatrix, eigenvalue: ExactScalar): ExactMatri
 }
 
 function characteristicDetails(input: {
-  label: 'A' | 'B';
+  label: string;
   trace: ExactScalar;
   determinant: ExactScalar;
   equationLatex: string;

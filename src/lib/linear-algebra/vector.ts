@@ -40,8 +40,12 @@ function vectorSetLatex(label: string, vectors: readonly number[][]) {
   return `${label}=\\left\\{${vectors.map(vectorToLatex).join(',')}\\right\\}`;
 }
 
-function gramSchmidtDetailSections(result: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>): DisplayDetailSection[] {
+function gramSchmidtDetailSections(
+  req: VectorRequest,
+  result: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>,
+): DisplayDetailSection[] {
   const sections: DisplayDetailSection[] = [];
+  const secondInputLatex = req.vectorOperandLatexB ?? 'v';
 
   if (result.orthonormalBasis.length === result.orthogonalBasis.length) {
     sections.push({
@@ -57,7 +61,7 @@ function gramSchmidtDetailSections(result: Extract<VectorCoreResult, { kind: 'gr
     `w_{1}=${vectorToLatex(result.orthogonalBasis[0])}`,
     ...(result.orthogonalBasis[1]
       ? [
-          `w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=${vectorToLatex(result.orthogonalBasis[1])}`,
+          `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${vectorToLatex(result.orthogonalBasis[1])}`,
           `w_{1}\\cdot w_{2}=${scalarToLatex(dotVectors(result.orthogonalBasis[0], result.orthogonalBasis[1]))}`,
         ]
       : []),
@@ -80,7 +84,7 @@ function gramSchmidtDetailSections(result: Extract<VectorCoreResult, { kind: 'gr
   return sections;
 }
 
-function vectorCoreResultToResponse(result: VectorCoreResult): VectorResponse {
+function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult): VectorResponse {
   if (result.kind === 'error') {
     return {
       warnings: [],
@@ -111,7 +115,7 @@ function vectorCoreResultToResponse(result: VectorCoreResult): VectorResponse {
       approxText: result.notes.length > 0
         ? `${result.orthogonalBasis.length} basis direction${result.orthogonalBasis.length === 1 ? '' : 's'}; dependent input skipped`
         : `${result.orthogonalBasis.length} basis directions`,
-      detailSections: gramSchmidtDetailSections(result),
+      detailSections: gramSchmidtDetailSections(req, result),
       warnings: [],
     };
   }
@@ -123,5 +127,5 @@ function vectorCoreResultToResponse(result: VectorCoreResult): VectorResponse {
 }
 
 export function runVectorOperation(req: VectorRequest): VectorResponse {
-  return vectorCoreResultToResponse(runNumericVectorOperation(req));
+  return vectorCoreResultToResponse(req, runNumericVectorOperation(req));
 }
