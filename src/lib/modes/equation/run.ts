@@ -3,6 +3,7 @@ import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
 import { solvePolynomialSystem2x2 } from '../../equation/equation-polynomial-system';
 import {
   attachEquationAnalysisEvidence,
+  buildEquationCertifiedFeatureEvidence,
   buildEquationDomainFactEvidence,
   buildEquationIntervalValidityEvidence,
   buildEquationRouteEvidence,
@@ -91,6 +92,13 @@ function buildEquationRunEvidence(input: {
       sourceRoute: route,
       angleUnit: input.angleUnit,
       numericInterval: input.numericInterval,
+    }),
+    ...buildEquationCertifiedFeatureEvidence({
+      outcome: input.outcome,
+      target: selectedTarget,
+      sourceRoute: route,
+      numericInterval: input.numericInterval,
+      complexRegion: input.complexRegion,
     }),
   ];
 }

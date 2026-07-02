@@ -450,6 +450,17 @@ function boundaryEvidence(input: {
   };
 }
 
+function numericIntervalEvidence(interval?: NumericSolveInterval): EquationAnalysisEvidenceInterval | undefined {
+  return interval
+    ? {
+      start: interval.start,
+      end: interval.end,
+      subdivisions: interval.subdivisions,
+      local: true,
+    }
+    : undefined;
+}
+
 export function buildEquationIntervalValidityEvidence(input: {
   equationLatex: string;
   target: string;
@@ -486,6 +497,280 @@ export function buildEquationIntervalValidityEvidence(input: {
         target: input.target,
         sourceRoute: input.sourceRoute,
         interval: input.numericInterval as NumericSolveInterval,
-      })),
+    })),
+  ];
+}
+
+function outcomeDetailSection(outcome: DisplayOutcome, title: string) {
+  return outcome.kind !== 'prompt'
+    ? outcome.detailSections?.find((section) => section.title === title)
+    : undefined;
+}
+
+function outcomeDetailLines(outcome: DisplayOutcome, title: string) {
+  return outcomeDetailSection(outcome, title)?.lines ?? [];
+}
+
+function hasSturmCertifiedRoots(outcome: DisplayOutcome) {
+  if (outcome.kind === 'prompt') {
+    return false;
+  }
+  const summary = outcome.solveSummaryText ?? '';
+  const certificationLines = outcomeDetailLines(outcome, 'Real Root Certification').join(' ');
+  return /with Sturm certification/u.test(summary)
+    || /All real polynomial roots certified/u.test(certificationLines);
+}
+
+function numericRootClassification(input: {
+  sourceRoute: string;
+  outcome: DisplayOutcome;
+  numericInterval?: NumericSolveInterval;
+}) {
+  if (hasSturmCertifiedRoots(input.outcome)) {
+    return {
+      classification: 'sturm-certified-root',
+      confidence: 'certified' as const,
+    };
+  }
+  if (input.numericInterval || input.sourceRoute === 'numeric-interval') {
+    return {
+      classification: 'interval-local-root',
+      confidence: 'validated' as const,
+    };
+  }
+  return {
+    classification: input.sourceRoute === 'real-nonlinear-numeric-search'
+      ? 'bounded-search-root'
+      : 'validated-real-root',
+    confidence: 'validated' as const,
+  };
+}
+
+function rootValueEvidence(input: {
+  value: number;
+  target: string;
+  sourceRoute: string;
+  classification: string;
+  confidence: EquationAnalysisEvidenceConfidence;
+  interval?: NumericSolveInterval;
+}): EquationAnalysisEvidence {
+  const roundedId = input.value.toPrecision(12);
+  return {
+    id: ['root', input.sourceRoute, input.target, input.classification, roundedId].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'root',
+    classification: input.classification,
+    confidence: input.confidence,
+    text: `Validated root candidate ${input.target}≈${input.value}.`,
+    interval: numericIntervalEvidence(input.interval),
+    point: {
+      value: input.value,
+      role: 'root',
+    },
+  };
+}
+
+const APPROX_REAL_BRANCH_PATTERN = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?$/iu;
+
+function approximateRealBranchValues(outcome: DisplayOutcome) {
+  if (
+    outcome.kind !== 'success'
+    || outcome.answerDomain === 'complex'
+    || outcome.branchReadback?.relationLatex !== '\\approx'
+  ) {
+    return [];
+  }
+  return outcome.branchReadback.branchesLatex.flatMap((branchLatex): number[] => {
+    const trimmed = branchLatex.trim();
+    if (!APPROX_REAL_BRANCH_PATTERN.test(trimmed)) {
+      return [];
+    }
+    const value = Number(trimmed);
+    return Number.isFinite(value) ? [value] : [];
+  });
+}
+
+const EXTRANEOUS_APPROX_PATTERN = /^Candidate approximately\s+(-?(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?)\s+rejected/iu;
+
+function extraneousEvidenceFromOutcome(input: {
+  outcome: DisplayOutcome;
+  target: string;
+  sourceRoute: string;
+  interval?: NumericSolveInterval;
+}): EquationAnalysisEvidence[] {
+  if (input.outcome.kind === 'prompt') {
+    return [];
+  }
+  const lines = outcomeDetailLines(input.outcome, 'Extraneous Solutions');
+  const entries = lines.map((line, index): EquationAnalysisEvidence => {
+    const approxMatch = line.match(EXTRANEOUS_APPROX_PATTERN);
+    const approxValue = approxMatch ? Number(approxMatch[1]) : null;
+    return {
+      id: [
+        'candidate',
+        input.sourceRoute,
+        input.target,
+        'extraneous',
+        approxValue === null ? index : approxValue.toPrecision(12),
+        line,
+      ].join(':'),
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      category: 'candidate',
+      classification: 'extraneous-candidate',
+      confidence: 'validated',
+      text: line,
+      interval: numericIntervalEvidence(input.interval),
+      point: approxValue === null || !Number.isFinite(approxValue)
+        ? undefined
+        : {
+          value: approxValue,
+          role: 'extraneous',
+        },
+    };
+  });
+  if (entries.length > 0 || !input.outcome.rejectedCandidateCount) {
+    return entries;
+  }
+  return [{
+    id: ['candidate', input.sourceRoute, input.target, 'extraneous-count', input.outcome.rejectedCandidateCount].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'candidate',
+    classification: 'extraneous-candidate-count',
+    confidence: 'reported',
+    text: `Rejected ${input.outcome.rejectedCandidateCount} extraneous candidate${input.outcome.rejectedCandidateCount === 1 ? '' : 's'}.`,
+    interval: numericIntervalEvidence(input.interval),
+  }];
+}
+
+function sturmCertificationEvidence(input: {
+  outcome: DisplayOutcome;
+  target: string;
+  sourceRoute: string;
+}): EquationAnalysisEvidence[] {
+  if (!hasSturmCertifiedRoots(input.outcome)) {
+    return [];
+  }
+  const lines = outcomeDetailLines(input.outcome, 'Real Root Certification');
+  return [{
+    id: ['root', input.sourceRoute, input.target, 'sturm-certification'].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'root',
+    classification: 'sturm-certified-intervals',
+    confidence: 'certified',
+    text: lines.length > 0
+      ? lines.join(' ')
+      : 'Sturm certification matched validated real polynomial roots.',
+  }];
+}
+
+function complexBranchRootEvidence(input: {
+  outcome: DisplayOutcome;
+  target: string;
+  sourceRoute: string;
+}): EquationAnalysisEvidence[] {
+  if (
+    input.outcome.kind !== 'success'
+    || input.outcome.answerDomain !== 'complex'
+    || !input.outcome.branchReadback
+  ) {
+    return [];
+  }
+  const isPolynomial = input.outcome.numericMethod?.toLowerCase().includes('polynomial') === true
+    || input.outcome.branchReadback.source === 'equation-complex-numeric-polynomial';
+  const classification = isPolynomial
+    ? 'complex-polynomial-root'
+    : input.sourceRoute === 'complex-region'
+      ? 'region-local-complex-root'
+      : 'validated-complex-root';
+  return input.outcome.branchReadback.branchesLatex.map((branchLatex, index) => ({
+    id: ['root', input.sourceRoute, input.target, classification, index, branchLatex].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'root' as const,
+    classification,
+    confidence: 'validated' as const,
+    latex: branchLatex,
+    text: `${classification === 'region-local-complex-root' ? 'Region-local' : 'Validated'} complex root ${branchLatex}.`,
+  }));
+}
+
+function intervalScopeEvidence(input: {
+  outcome: DisplayOutcome;
+  target: string;
+  sourceRoute: string;
+  interval?: NumericSolveInterval;
+}): EquationAnalysisEvidence[] {
+  if (!input.interval || input.outcome.kind === 'prompt') {
+    return [];
+  }
+  return [{
+    id: ['diagnostic', input.sourceRoute, input.target, 'interval-local-scope', input.interval.start, input.interval.end].join(':'),
+    target: input.target,
+    sourceRoute: input.sourceRoute,
+    category: 'diagnostic',
+    classification: 'interval-local-scope',
+    confidence: 'reported',
+    text: `Roots are local to the chosen interval [${input.interval.start}, ${input.interval.end}].`,
+    interval: numericIntervalEvidence(input.interval),
+  }];
+}
+
+export function buildEquationCertifiedFeatureEvidence(input: {
+  outcome: DisplayOutcome;
+  target: string;
+  sourceRoute: string;
+  numericInterval?: NumericSolveInterval;
+  complexRegion?: ComplexSolveRegion;
+}): EquationAnalysisEvidence[] {
+  const rootClassification = numericRootClassification({
+    sourceRoute: input.sourceRoute,
+    outcome: input.outcome,
+    numericInterval: input.numericInterval,
+  });
+  const candidateValues = input.outcome.kind === 'success'
+    ? input.outcome.candidateValues ?? []
+    : [];
+  const realRootValues = candidateValues.length > 0
+    ? candidateValues
+    : approximateRealBranchValues(input.outcome);
+  const realRootEvidence = input.outcome.kind === 'success'
+    ? realRootValues.map((value) =>
+      rootValueEvidence({
+        value,
+        target: input.target,
+        sourceRoute: input.sourceRoute,
+        classification: rootClassification.classification,
+        confidence: rootClassification.confidence,
+        interval: input.numericInterval,
+      }))
+    : [];
+  return [
+    ...realRootEvidence,
+    ...complexBranchRootEvidence({
+      outcome: input.outcome,
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+    }),
+    ...sturmCertificationEvidence({
+      outcome: input.outcome,
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+    }),
+    ...intervalScopeEvidence({
+      outcome: input.outcome,
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      interval: input.numericInterval,
+    }),
+    ...extraneousEvidenceFromOutcome({
+      outcome: input.outcome,
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      interval: input.numericInterval,
+    }),
   ];
 }

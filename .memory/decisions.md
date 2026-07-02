@@ -1657,6 +1657,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Numeric interval validity evidence is exported from the existing interval arithmetic and segmentation substrate as internal symbol-backed evidence. Consumers may read `safe`, `invalid`, `split-required`, `unknown`, and interval-local boundary evidence structurally, but Display cards remain the user-facing explanation and no public graphing API or persisted schema is introduced.
 
+## 2026-07-02 - EQUATION-CERTIFIED-FEATURE-EVIDENCE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Certified Equation features are exported through internal analysis evidence: validated roots, interval-local scope, extraneous candidates, Sturm-certified real-root intervals, and visible Complex numeric polynomial branch roots are structured facts for future Equation-owned consumers. The evidence remains symbol-backed and internal; it is not a public graphing API, persisted result schema, Copy Result, History, OOE, app-state, or Tauri contract.
+
 ## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.
@@ -1668,3 +1672,7 @@
 ## 2026-07-02 - MATRIX-EXACT-SCALAR-SIDECAR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix exact scalar widening uses optional `ExactScalarWire` sidecars on Matrix requests/replay seeds instead of replacing numeric grids. Editor-entered inline Matrix literals and structured-system RHS vectors may carry exact fractions and finite decimals through OOE/replay for determinant, rank/RREF, and structured-system exact paths; numeric grids and legacy numeric seeds remain compatible, and the decimal numeric engine remains the owner of approximate/numeric workflows.
+
+## 2026-07-02 - MATRIX-NULL-COLUMN-SPACE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns null-space and column-space basis readback for finite exact matrices through the existing Matrix RREF pivot substrate. `null(...)` and `col(...)` may run for named A/B or inline matrices and produce exact bases, dimensions, pivot-column facts, and rank-nullity proof details; this does not add Equation solving, symbolic matrix CAS, automatic Equation routing, or Vector-space merging.
