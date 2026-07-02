@@ -128,6 +128,7 @@ const GROUPED_FORMULA_CASE_DETAIL_TITLES = new Set([
 
 const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Extraneous Solutions',
+  'System Proof',
 ]);
 
 function plural(count: number, singular: string, pluralLabel = `${singular}s`) {

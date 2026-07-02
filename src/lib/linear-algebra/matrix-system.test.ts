@@ -10,7 +10,19 @@ describe('runMatrixLinearSystem', () => {
     })).toMatchObject({
       kind: 'success',
       exactLatex: 'x=\\begin{bmatrix}2\\\\1\\end{bmatrix}',
-      solveSummaryText: 'Unique solution.',
+      solveSummaryText: 'Exactly one solution. Only this vector x satisfies the system.',
+    });
+    const outcome = runMatrixLinearSystem({
+      coefficients: [[2, 1], [1, -1]],
+      constants: [5, 1],
+      form: 'Ax=b',
+    });
+    expect(outcome.kind === 'success' ? outcome.detailSections?.[0] : undefined).toMatchObject({
+      title: 'System Proof',
+      lines: expect.arrayContaining([
+        '\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=2',
+        '\\operatorname{unknowns}=2',
+      ]),
     });
   });
 
@@ -24,6 +36,19 @@ describe('runMatrixLinearSystem', () => {
       exactLatex: '\\text{No solution}',
       solveSummaryText: 'No solution.',
     });
+    const outcome = runMatrixLinearSystem({
+      coefficients: [[1, 1], [2, 2]],
+      constants: [1, 3],
+      form: 'Ax=b',
+    });
+    expect(outcome.kind === 'success' ? outcome.detailSections?.[0] : undefined).toMatchObject({
+      title: 'System Proof',
+      lines: expect.arrayContaining([
+        '\\operatorname{rank}(A)=1',
+        '\\operatorname{rank}([A|b])=2',
+        '0=1',
+      ]),
+    });
   });
 
   it('classifies underdetermined structured Matrix systems', () => {
@@ -35,6 +60,19 @@ describe('runMatrixLinearSystem', () => {
       kind: 'success',
       exactLatex: '\\text{Infinitely many solutions}',
       solveSummaryText: 'Infinitely many solutions.',
+    });
+    const outcome = runMatrixLinearSystem({
+      coefficients: [[1, 1], [2, 2]],
+      constants: [2, 4],
+      form: 'Ax+b=0',
+    });
+    expect(outcome.kind === 'success' ? outcome.detailSections?.[0] : undefined).toMatchObject({
+      title: 'System Proof',
+      lines: expect.arrayContaining([
+        '\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=1',
+        '\\operatorname{unknowns}=2',
+        '\\operatorname{free\\ variables}=1',
+      ]),
     });
   });
 

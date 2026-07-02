@@ -247,7 +247,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       expect.objectContaining({
         kind: 'success',
         exactLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
-        solveSummaryText: 'Unique solution.',
+        solveSummaryText: 'Exactly one solution. Only this vector x satisfies the system.',
       }),
       'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
       'matrix',

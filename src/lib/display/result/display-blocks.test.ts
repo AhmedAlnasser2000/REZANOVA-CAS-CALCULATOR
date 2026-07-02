@@ -175,6 +175,32 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix system proof details visible but collapsible by default', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'Ax=b',
+      exactLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+      detailSections: [{
+        title: 'System Proof',
+        lines: [
+          '\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=2',
+          '\\operatorname{unknowns}=2',
+          'Only this vector x satisfies the system.',
+        ],
+        lineKinds: ['math', 'math', 'text'],
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'System Proof');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      collapsible: true,
+      defaultCollapsed: false,
+    });
+  });
+
   it('keeps solve notes collapsed by default even when the prose is short', () => {
     const outcome: DisplayOutcome = {
       kind: 'success',

@@ -9,6 +9,7 @@ import {
 import {
   exactMatrixFromNumeric,
   exactMatrixToLatex,
+  exactScalarToLatex,
   exactVectorFromNumeric,
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
@@ -75,6 +76,69 @@ function rankFacts(rankA: number, rankAugmented: number, unknowns: number, rref:
   ];
 }
 
+function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
+  return count === 1 ? singular : pluralLabel;
+}
+
+function inconsistentRowLatex(rref: ExactMatrix, coefficientColumns: number) {
+  const row = rref.find((candidate) =>
+    candidate
+      .slice(0, coefficientColumns)
+      .every((value) => value.numerator === 0)
+    && candidate[coefficientColumns]?.numerator !== 0);
+  if (!row) {
+    return null;
+  }
+
+  return `0=${exactScalarToLatex(row[coefficientColumns])}`;
+}
+
+function systemProofDetails(
+  kind: 'unique' | 'none' | 'infinite',
+  rankA: number,
+  rankAugmented: number,
+  unknowns: number,
+  rref: ExactMatrix,
+) {
+  if (kind === 'unique') {
+    return {
+      title: 'System Proof',
+      lines: [
+        `\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=${rankA}`,
+        `\\operatorname{unknowns}=${unknowns}`,
+        'The ranks match, so the system is consistent. Because the shared rank equals the number of unknowns, every unknown is fixed by a pivot. Only this vector x satisfies the system.',
+      ],
+      lineKinds: ['math' as const, 'math' as const, 'text' as const],
+    };
+  }
+
+  if (kind === 'none') {
+    const contradiction = inconsistentRowLatex(rref, unknowns);
+    return {
+      title: 'System Proof',
+      lines: [
+        `\\operatorname{rank}(A)=${rankA}`,
+        `\\operatorname{rank}([A|b])=${rankAugmented}`,
+        contradiction ?? '\\operatorname{rank}(A)<\\operatorname{rank}([A|b])',
+        'The augmented matrix has more pivots than the coefficient matrix, so the RHS column creates a contradiction. No vector x can satisfy the system.',
+      ],
+      lineKinds: ['math' as const, 'math' as const, 'math' as const, 'text' as const],
+    };
+  }
+
+  const freeCount = unknowns - rankA;
+  return {
+    title: 'System Proof',
+    lines: [
+      `\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=${rankA}`,
+      `\\operatorname{unknowns}=${unknowns}`,
+      `\\operatorname{free\\ variables}=${freeCount}`,
+      `The ranks match, so the system is consistent. Because the shared rank is smaller than the number of unknowns, ${freeCount} ${plural(freeCount, 'variable')} can vary freely. That creates infinitely many solution vectors.`,
+    ],
+    lineKinds: ['math' as const, 'math' as const, 'math' as const, 'text' as const],
+  };
+}
+
 function systemTitle(form: MatrixSystemForm) {
   return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
 }
@@ -107,7 +171,6 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
   const rankA = coefficientRref.rank;
   const rankAugmented = augmentedRref.rank;
   const unknowns = coefficients[0].length;
-  const details = rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix);
   const title = systemTitle(input.form);
 
   if (rankA < rankAugmented) {
@@ -116,7 +179,10 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       title,
       exactLatex: '\\text{No solution}',
       solveSummaryText: 'No solution.',
-      detailSections: details,
+      detailSections: [
+        systemProofDetails('none', rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+      ],
       warnings: [],
     };
   }
@@ -127,7 +193,10 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       title,
       exactLatex: '\\text{Infinitely many solutions}',
       solveSummaryText: 'Infinitely many solutions.',
-      detailSections: details,
+      detailSections: [
+        systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+      ],
       warnings: [],
     };
   }
@@ -141,8 +210,11 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
     kind: 'success',
     title,
     exactLatex: `x=${exactVectorToColumnLatex(solved.solution)}`,
-    solveSummaryText: 'Unique solution.',
-    detailSections: details,
+    solveSummaryText: 'Exactly one solution. Only this vector x satisfies the system.',
+    detailSections: [
+      systemProofDetails('unique', rankA, rankAugmented, unknowns, augmentedRref.matrix),
+      ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+    ],
     warnings: [],
   };
 }
