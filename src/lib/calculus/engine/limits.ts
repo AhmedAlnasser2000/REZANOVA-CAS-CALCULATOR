@@ -5,10 +5,11 @@ import {
 } from '../../algebra/domain-range-core';
 import {
   attemptInfiniteLHospital,
+  resolveFiniteLimitRule,
+  resolveFiniteSqueezeOscillationLimit,
   resolveInfiniteExactLocalAlgebraLimit,
   resolveInfiniteIndeterminateTransformLimit,
 } from '../../symbolic-engine/limits';
-import { resolveFiniteLimitRule } from '../../symbolic-engine/limits';
 import type {
   DisplayDetailSection,
   LimitDirection,
@@ -328,6 +329,30 @@ export function evaluateFiniteLimitFromAst(input: {
         };
       }
     }
+  }
+
+  const squeezeOscillation = resolveFiniteSqueezeOscillationLimit(
+    input.body,
+    input.target,
+    input.variable,
+    input.direction,
+  );
+  if (squeezeOscillation?.kind === 'success') {
+    const exactLatex = squeezeOscillation.exactLatex ?? limitValueToLatex(squeezeOscillation.value);
+    return {
+      exactLatex,
+      approxText: limitValueToApproxText(squeezeOscillation.value),
+      warnings: [],
+      resultOrigin: squeezeOscillation.origin,
+      detailSections: squeezeOscillation.detailSections,
+    };
+  }
+  if (squeezeOscillation?.kind === 'failure') {
+    return {
+      warnings: [],
+      error: squeezeOscillation.error,
+      detailSections: squeezeOscillation.detailSections,
+    };
   }
 
   const symbolic = resolveFiniteLimitRule(input.body, input.target, input.variable, input.direction);

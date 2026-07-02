@@ -7,6 +7,7 @@ import { attemptLHospital } from './lhospital';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import { resolveLogBoundaryLimit, resolveSignedPoleLimit } from './poles';
 import { resolveRationalLocalLimit } from './rational-local';
+import { resolveFiniteSqueezeOscillationLimit } from './squeeze-oscillation';
 
 export function resolveFiniteLimitRule(
   node: unknown,
@@ -41,6 +42,11 @@ export function resolveFiniteLimitRule(
   const exactLocalAlgebra = resolveExactLocalAlgebraLimit(node, target, variable, direction);
   if (exactLocalAlgebra) {
     return exactLocalAlgebra;
+  }
+
+  const squeezeOscillation = resolveFiniteSqueezeOscillationLimit(node, target, variable, direction);
+  if (squeezeOscillation?.kind === 'success') {
+    return squeezeOscillation;
   }
 
   const localEquivalentLimit = resolveLocalEquivalentLimit(

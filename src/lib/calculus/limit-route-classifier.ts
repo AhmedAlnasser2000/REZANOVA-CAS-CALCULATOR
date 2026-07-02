@@ -7,7 +7,10 @@ import {
 } from '../symbolic-engine/limits/evaluation';
 import { parseNaturalLimitRequest, type NaturalLimitRequest } from './limit-request';
 import { resolveInfiniteLimitHeuristic } from './engine/limit-heuristics';
-import { resolveInfiniteExactLocalAlgebraLimit } from '../symbolic-engine/limits';
+import {
+  hasFiniteSqueezeOscillationCandidate,
+  resolveInfiniteExactLocalAlgebraLimit,
+} from '../symbolic-engine/limits';
 import {
   hasFiniteIndeterminateTransformCandidate,
   hasInfiniteIndeterminateTransformCandidate,
@@ -27,6 +30,7 @@ export type LimitRouteKind =
   | 'infinity-asymptotic'
   | 'lhospital-candidate'
   | 'taylor-series-candidate'
+  | 'squeeze-oscillation'
   | 'unsupported'
   | 'malformed'
   | 'too-complex';
@@ -217,6 +221,14 @@ function classifyFiniteNode(node: unknown, request: NaturalLimitRequest): LimitR
     return {
       kind: 'indeterminate-transform',
       reason: 'A safe indeterminate-form rewrite can turn the expression into a supported sub-limit.',
+      request,
+    };
+  }
+
+  if (hasFiniteSqueezeOscillationCandidate(node, request.target.value, request.variable, request.target.direction)) {
+    return {
+      kind: 'squeeze-oscillation',
+      reason: 'A bounded oscillation or squeeze-theorem pattern is present near the target.',
       request,
     };
   }

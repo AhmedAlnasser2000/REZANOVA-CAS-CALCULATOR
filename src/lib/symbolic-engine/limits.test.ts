@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { ComputeEngine } from '@cortex-js/compute-engine'
-import { resolveFiniteLimitRule, resolveInfiniteIndeterminateTransformLimit } from './limits'
+import {
+  resolveFiniteLimitRule,
+  resolveFiniteSqueezeOscillationLimit,
+  resolveInfiniteIndeterminateTransformLimit,
+} from './limits'
 
 const ce = new ComputeEngine()
 
@@ -215,6 +219,29 @@ describe('symbolic-engine limits', () => {
       expect(exponential.value).toBeCloseTo(1 / 6, 8)
       expect(exponential.exactLatex).toBe('\\frac{1}{6}')
       expect(exponential.detailSections?.[0]?.lines.join(' ')).toContain('first nonzero derivative order 3')
+    }
+  })
+
+  it('uses squeeze and oscillation proofs for bounded oscillation patterns', () => {
+    const squeeze = resolveFiniteLimitRule(ce.parse('x\\sin(1/x)').json, 0, 'x')
+    const secondOrder = resolveFiniteLimitRule(ce.parse('x^2\\cos(1/x)').json, 0, 'x')
+    const oscillation = resolveFiniteSqueezeOscillationLimit(ce.parse('\\sin(1/x)').json, 0, 'x')
+
+    expect(squeeze.kind).toBe('success')
+    if (squeeze.kind === 'success') {
+      expect(squeeze.value).toBe(0)
+      expect(squeeze.detailSections?.[0]?.lines.join(' ')).toContain('squeeze theorem')
+    }
+
+    expect(secondOrder.kind).toBe('success')
+    if (secondOrder.kind === 'success') {
+      expect(secondOrder.value).toBe(0)
+    }
+
+    expect(oscillation?.kind).toBe('failure')
+    if (oscillation?.kind === 'failure') {
+      expect(oscillation.error).toContain('oscillates')
+      expect(oscillation.detailSections?.[0]?.title).toBe('Why This Limit Fails')
     }
   })
 

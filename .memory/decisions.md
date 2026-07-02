@@ -1719,3 +1719,7 @@
 ## 2026-07-02 - CALCULUS-LIMITS-TAYLOR-LEADING-TERMS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may use a capped Taylor leading-term probe through derivative order `10` for local additive cancellations, exposed through existing method detail cards. This is not Gruntz, symbolic targets, or a general public series engine.
+
+## 2026-07-02 - CALCULUS-LIMITS-SQUEEZE-OSCILLATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may use a pattern-based `squeeze-oscillation` route for classic finite-target bounded-oscillation forms. Successful products expose squeeze-theorem method details, and unsupported pure oscillation examples expose proof cards; this remains educational pattern handling, not a broad theorem prover.

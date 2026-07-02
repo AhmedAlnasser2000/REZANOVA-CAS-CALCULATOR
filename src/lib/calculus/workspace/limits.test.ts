@@ -166,13 +166,37 @@ describe('calculus limits', () => {
 
   it('blocks unsupported natural limit routes with diagnostics', () => {
     const result = evaluateCalculusLimit({
-      requestLatex: 'lim x -> 0 sin(1/x)',
+      requestLatex: 'lim x -> 0 floor(1/x)',
     });
 
     expect(result.error).toContain('outside the supported Calculus limit routes');
     const diagnostic = result.detailSections?.find((section) => section.title === 'Limit Diagnostic');
     expect(diagnostic?.lines.join(' ')).toContain('Route classification:');
     expect(diagnostic?.lines.join(' ')).toContain('unsupported');
+  });
+
+  it('resolves squeeze and oscillation natural limit expressions', () => {
+    const squeeze = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 x sin(1/x)',
+    });
+    const secondOrder = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 x^2 cos(1/x)',
+    });
+    const oscillation = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 sin(1/x)',
+    });
+
+    expect(squeeze.error).toBeUndefined();
+    expect(squeeze.exactLatex).toBe('0');
+    expect(squeeze.detailSections?.[0]?.lines.join(' ')).toContain('squeeze theorem');
+
+    expect(secondOrder.error).toBeUndefined();
+    expect(secondOrder.exactLatex).toBe('0');
+
+    expect(oscillation.error).toContain('oscillates near the target');
+    expect(oscillation.exactLatex).toBeUndefined();
+    expect(oscillation.detailSections?.[0]?.title).toBe('Why This Limit Fails');
+    expect(oscillation.detailSections?.[0]?.lines.join(' ')).toContain('does not approach one number');
   });
 
   it('handles parsed variable and exact-constant finite targets', () => {

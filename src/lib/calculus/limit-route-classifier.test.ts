@@ -50,8 +50,17 @@ describe('natural limit route classifier', () => {
     });
   });
 
-  it('returns controlled unsupported and malformed routes', () => {
+  it('classifies bounded oscillation and squeeze routes', () => {
+    expect(classifyNaturalLimitRoute('lim x -> 0 x sin(1/x)')).toMatchObject({
+      kind: 'squeeze-oscillation',
+    });
     expect(classifyNaturalLimitRoute('lim x -> 0 sin(1/x)')).toMatchObject({
+      kind: 'squeeze-oscillation',
+    });
+  });
+
+  it('returns controlled unsupported and malformed routes', () => {
+    expect(classifyNaturalLimitRoute('lim x -> 0 floor(1/x)')).toMatchObject({
       kind: 'unsupported',
     });
     expect(classifyNaturalLimitRoute('sin(x)/x')).toMatchObject({

@@ -3,3 +3,7 @@ export { evaluateNodeAt } from './limits/evaluation';
 export { resolveFiniteLimitRule } from './limits/api';
 export { resolveInfiniteExactLocalAlgebraLimit } from './limits/exact-local-algebra';
 export { resolveInfiniteIndeterminateTransformLimit } from './limits/indeterminate-transforms';
+export {
+  hasFiniteSqueezeOscillationCandidate,
+  resolveFiniteSqueezeOscillationLimit,
+} from './limits/squeeze-oscillation';
