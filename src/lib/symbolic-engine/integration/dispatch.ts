@@ -8,6 +8,7 @@ import {
   wrapGroupedLatex,
 } from '../patterns';
 import { tryAffinePowerRule } from './affine-power';
+import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standard-radicals';
 import {
   tryBinomialDerivativeSubstitutionRule,
   tryReciprocalBinomialDerivativeSubstitutionRule,
@@ -220,6 +221,18 @@ function tryRoute(
         'u-substitution',
         symbolicBinomial.verification,
         symbolicBinomial.exactSupplementLatex,
+      );
+    }
+
+    const algebraicGenus0StandardRadical = tryAlgebraicGenus0StandardRadicalRule(node, variable);
+    if (algebraicGenus0StandardRadical) {
+      return symbolicSuccess(
+        node,
+        variable,
+        algebraicGenus0StandardRadical.exactLatex,
+        'u-substitution',
+        algebraicGenus0StandardRadical.verification,
+        algebraicGenus0StandardRadical.exactSupplementLatex,
       );
     }
 

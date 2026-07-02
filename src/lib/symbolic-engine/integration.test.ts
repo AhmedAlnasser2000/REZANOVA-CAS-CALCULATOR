@@ -765,7 +765,7 @@ describe('symbolic-engine integration', () => {
     expect(minus.strategy).toBe('u-substitution')
     expect(minus.verification.status).toBe('verified-exact')
     expect(minus.exactLatex).toContain('\\arcsin')
-    expect(minus.exactSupplementLatex?.join(' ')).toContain('4-x^{2}\\ge0')
+    expect(minus.exactSupplementLatex?.join(' ')).toContain('4-x^2\\ge0')
 
     const shiftedMinus = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\sqrt{9-(2x+1)^2}'))
     expect(shiftedMinus.strategy).toBe('u-substitution')
@@ -775,8 +775,8 @@ describe('symbolic-engine integration', () => {
     const plus = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\sqrt{4+x^2}'))
     expect(plus.strategy).toBe('u-substitution')
     expect(plus.verification.status).toBe('verified-exact')
-    expect(plus.exactLatex).toContain('\\ln')
-    expect(plus.exactLatex).toContain('\\sqrt{4+x^{2}}')
+    expect(plus.exactLatex).toContain('arsinh')
+    expect(plus.exactLatex).toContain('\\sqrt{x^2+4}')
 
     const outside = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex('\\sqrt{(2x+1)^2-9}'))
     expect(outside.strategy).toBe('u-substitution')
