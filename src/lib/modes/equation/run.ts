@@ -1,6 +1,10 @@
 import { runGuardedDirectSymbolicFallback } from '../../equation/guarded-solve';
 import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
 import { solvePolynomialSystem2x2 } from '../../equation/equation-polynomial-system';
+import {
+  attachEquationAnalysisEvidence,
+  buildEquationRouteEvidence,
+} from '../../equation/analysis-evidence';
 import { runSharedEquationSolveWithTraceAsync } from '../../equation/shared-solve';
 import {
   buildEquationOoePilotMetadata,
@@ -108,7 +112,7 @@ export function runEquationMode({
     if (isNumericIntervalRoute || isComplexRegionRoute) {
       const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
       if (remainingParameters.length > 0) {
-        return withStoredValueDetails(
+        const missingParameterOutcome = withStoredValueDetails(
           isComplexRegionRoute
             ? complexRegionSolveNeedsNumericParametersOutcome(remainingParameters, protectedTarget)
             : numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters),
@@ -121,6 +125,16 @@ export function runEquationMode({
             ignoredLines,
             additionalPolicyLines,
           },
+        );
+        return attachEquationAnalysisEvidence(
+          missingParameterOutcome,
+          buildEquationRouteEvidence({
+            outcome: missingParameterOutcome,
+            target: protectedTarget ?? equationSolveTarget ?? undefined,
+            numericInterval,
+            complexRegion,
+            equationDomainIntent,
+          }),
         );
       }
     }
@@ -148,9 +162,19 @@ export function runEquationMode({
       additionalPolicyLines,
     });
 
-    return isNumericIntervalRoute
+    const finalOutcome = isNumericIntervalRoute
       ? withEquationNumericRouteKind(storedValueOutcome)
       : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
+    return attachEquationAnalysisEvidence(
+      finalOutcome,
+      buildEquationRouteEvidence({
+        outcome: finalOutcome,
+        target: protectedTarget ?? equationSolveTarget ?? undefined,
+        numericInterval,
+        complexRegion,
+        equationDomainIntent,
+      }),
+    );
   }
 
   return {
@@ -207,7 +231,7 @@ export async function runEquationModeWithAsyncSharedSolve(
   if (isNumericIntervalRoute || isComplexRegionRoute) {
     const remainingParameters = remainingApproximateModeParameters(substitution.latex, protectedTarget);
     if (remainingParameters.length > 0) {
-      return withStoredValueDetails(
+      const missingParameterOutcome = withStoredValueDetails(
         isComplexRegionRoute
           ? complexRegionSolveNeedsNumericParametersOutcome(remainingParameters, protectedTarget)
           : numericIntervalSolveNeedsNumericParametersOutcome(remainingParameters),
@@ -220,6 +244,16 @@ export async function runEquationModeWithAsyncSharedSolve(
           ignoredLines,
           additionalPolicyLines,
         },
+      );
+      return attachEquationAnalysisEvidence(
+        missingParameterOutcome,
+        buildEquationRouteEvidence({
+          outcome: missingParameterOutcome,
+          target: protectedTarget ?? equationSolveTarget ?? undefined,
+          numericInterval,
+          complexRegion,
+          equationDomainIntent,
+        }),
       );
     }
   }
@@ -248,9 +282,19 @@ export async function runEquationModeWithAsyncSharedSolve(
     additionalPolicyLines,
   });
 
-  return isNumericIntervalRoute
+  const finalOutcome = isNumericIntervalRoute
     ? withEquationNumericRouteKind(storedValueOutcome)
     : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
+  return attachEquationAnalysisEvidence(
+    finalOutcome,
+    buildEquationRouteEvidence({
+      outcome: finalOutcome,
+      target: protectedTarget ?? equationSolveTarget ?? undefined,
+      numericInterval,
+      complexRegion,
+      equationDomainIntent,
+    }),
+  );
 }
 
 export async function runEquationModeForIsolatedWorker(
