@@ -1,4 +1,5 @@
 import { buildHistoryLaunchRows } from '../../components/history-launch-rows';
+import { latexToVisibleText } from '../../lib/display/math-notation';
 import type {
   HistoryEntry,
   ModeId,
@@ -11,13 +12,16 @@ export type HistoryLedgerRow =
       kind: 'entry';
       entry: HistoryEntry;
       id: string;
+      inputPreviewText: string;
       mode: ModeId;
       order: number;
+      resultPreviewText?: string;
       searchText: string;
       timestamp: string;
     }
   | {
       dateKey: string;
+      inputPreviewText: string;
       kind: 'pending';
       id: string;
       mode: ModeId;
@@ -83,6 +87,10 @@ function pendingSearchText(ticket: PendingHistoryTicket, modeLabel: string) {
   ].filter(Boolean).join(' ').toLowerCase();
 }
 
+function historyPreviewText(latex: string) {
+  return latexToVisibleText(latex, 'plainText').trim() || latex;
+}
+
 export function buildHistoryLedgerRows({
   history,
   modeLabels,
@@ -98,6 +106,7 @@ export function buildHistoryLedgerRows({
       return {
         dateKey: historyLocalDateKey(ticket.timestamp),
         id: `pending:${ticket.id}`,
+        inputPreviewText: historyPreviewText(ticket.inputLatex),
         kind: 'pending' as const,
         mode: ticket.mode,
         order: row.order,
@@ -112,9 +121,13 @@ export function buildHistoryLedgerRows({
       dateKey: historyLocalDateKey(entry.timestamp),
       entry,
       id: entry.id,
+      inputPreviewText: historyPreviewText(entry.inputLatex),
       kind: 'entry' as const,
       mode: entry.mode,
       order: row.order,
+      resultPreviewText: entry.resultLatex
+        ? historyPreviewText(entry.resultLatex)
+        : entry.approxText,
       searchText: entrySearchText(entry, modeLabels[entry.mode]),
       timestamp: entry.timestamp,
     };

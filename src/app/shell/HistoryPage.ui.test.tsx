@@ -108,6 +108,12 @@ describe('HistoryPage', () => {
     const renderedRows = screen.getAllByTestId('history-page-row');
     expect(renderedRows.length).toBeLessThan(80);
     expect(renderedRows.length).toBeGreaterThan(5);
+    for (const row of renderedRows) {
+      expect(row.querySelector('[data-raw-latex]')).toBeNull();
+    }
+    expect(
+      screen.getByTestId('history-page-inspector').querySelector('[data-raw-latex]'),
+    ).not.toBeNull();
   });
 
   it('selects rows on click, opens on double click, and keeps inspector actions explicit', () => {
@@ -175,6 +181,7 @@ describe('HistoryPage', () => {
 
     const pendingRow = screen.getByTestId('history-page-row-pending');
     expect(pendingRow).toHaveTextContent('Running');
+    expect(pendingRow.querySelector('[data-raw-latex]')).toBeNull();
 
     fireEvent.click(within(pendingRow).getByRole('button', { name: historyText.actions.stop }));
 

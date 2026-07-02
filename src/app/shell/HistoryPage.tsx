@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import {
   useEffect,
+  useCallback,
+  memo,
   useMemo,
   useState,
   type MouseEvent,
@@ -57,6 +59,9 @@ type HistoryPageProps = {
 
 const HISTORY_PAGE_ROW_HEIGHT = 66;
 const HISTORY_PAGE_DEFAULT_VIEWPORT_HEIGHT = 560;
+
+type EntryHistoryLedgerRow = Extract<HistoryLedgerRow, { kind: 'entry' }>;
+type PendingHistoryLedgerRow = Extract<HistoryLedgerRow, { kind: 'pending' }>;
 
 function rowTimestamp(row: HistoryLedgerRow) {
   return new Date(row.timestamp).toLocaleTimeString(undefined, {
@@ -127,6 +132,116 @@ function ModeChip({
 }) {
   return <span className={`history-page-mode-chip is-${modeTone(mode)}`}>{label}</span>;
 }
+
+const HistoryPendingLedgerRow = memo(function HistoryPendingLedgerRow({
+  elapsedNowMs,
+  isSelected,
+  modeLabel,
+  onSelect,
+  onStopPending,
+  row,
+  rowHeight,
+  stopLabel,
+}: {
+  elapsedNowMs: number;
+  isSelected: boolean;
+  modeLabel: string;
+  onSelect: (rowId: string) => void;
+  onStopPending?: (ticket: PendingHistoryTicket) => void;
+  row: PendingHistoryLedgerRow;
+  rowHeight: number;
+  stopLabel: string;
+}) {
+  return (
+    <article
+      className={`history-page-row history-page-row--pending ${isSelected ? 'is-selected' : ''}`}
+      data-testid="history-page-row-pending"
+      style={{ height: rowHeight }}
+      onClick={() => onSelect(row.id)}
+    >
+      <span />
+      <ModeChip label={modeLabel} mode={row.mode} />
+      <div className="history-page-row-expression">
+        <strong className="history-page-row-preview" title={row.inputPreviewText}>
+          {row.inputPreviewText}
+        </strong>
+      </div>
+      <span className="history-page-muted">Pending</span>
+      <span>{rowTimestamp(row)}</span>
+      <span className="history-page-chip is-status">{rowElapsed(row, elapsedNowMs)}</span>
+      <button
+        type="button"
+        disabled={row.ticket.status === 'stopping'}
+        onClick={(event) => {
+          event.stopPropagation();
+          onStopPending?.(row.ticket);
+        }}
+      >
+        <StopCircle aria-hidden="true" size={16} />
+        <span>{stopLabel}</span>
+      </button>
+    </article>
+  );
+});
+
+const HistoryEntryLedgerRow = memo(function HistoryEntryLedgerRow({
+  isChecked,
+  isSelected,
+  modeLabel,
+  onFocus,
+  onReplay,
+  onToggleSelected,
+  row,
+  rowHeight,
+  selectEntryLabel,
+  staleAnswer,
+}: {
+  isChecked: boolean;
+  isSelected: boolean;
+  modeLabel: string;
+  onFocus: (event: MouseEvent<HTMLElement>, row: EntryHistoryLedgerRow) => void;
+  onReplay: (entry: HistoryEntry) => void;
+  onToggleSelected: (row: EntryHistoryLedgerRow) => void;
+  row: EntryHistoryLedgerRow;
+  rowHeight: number;
+  selectEntryLabel: string;
+  staleAnswer: string;
+}) {
+  return (
+    <article
+      className={`history-page-row ${isSelected ? 'is-selected' : ''}`}
+      data-testid="history-page-row"
+      style={{ height: rowHeight }}
+      onClick={(event) => onFocus(event, row)}
+      onDoubleClick={() => onReplay(row.entry)}
+    >
+      <label onClick={(event) => event.stopPropagation()}>
+        <input
+          type="checkbox"
+          aria-label={selectEntryLabel}
+          checked={isChecked}
+          onChange={() => onToggleSelected(row)}
+        />
+        {isChecked
+          ? <Check aria-hidden="true" size={14} />
+          : <Square aria-hidden="true" size={14} />}
+      </label>
+      <ModeChip label={modeLabel} mode={row.mode} />
+      <div className="history-page-row-expression">
+        <span className="history-page-row-preview" title={row.inputPreviewText}>
+          {row.inputPreviewText}
+        </span>
+      </div>
+      <div className="history-page-row-result">
+        <span className="history-page-row-preview" title={row.resultPreviewText ?? staleAnswer}>
+          {row.resultPreviewText ?? staleAnswer}
+        </span>
+      </div>
+      <span>{rowTimestamp(row)}</span>
+      <span className="history-page-chip is-status">{rowResultKind(row)}</span>
+    </article>
+  );
+});
 
 function InspectorButton({
   children,
@@ -331,7 +446,9 @@ export function HistoryPage({
     scrollTop,
     viewportHeight: HISTORY_PAGE_DEFAULT_VIEWPORT_HEIGHT,
   });
-  const visibleRows = rows.slice(visibleRange.startIndex, visibleRange.endIndex);
+  const visibleRows = useMemo(() =>
+    rows.slice(visibleRange.startIndex, visibleRange.endIndex),
+  [rows, visibleRange.endIndex, visibleRange.startIndex]);
   const shownStart = rows.length === 0 ? 0 : visibleRange.startIndex + 1;
 
   useEffect(() => {
@@ -348,7 +465,7 @@ export function HistoryPage({
     return () => window.clearInterval(intervalId);
   }, [pendingHistory]);
 
-  function entryIdsInRange(fromRowId: string, toRowId: string) {
+  const entryIdsInRange = useCallback((fromRowId: string, toRowId: string) => {
     const fromIndex = rows.findIndex((row) => row.id === fromRowId);
     const toIndex = rows.findIndex((row) => row.id === toRowId);
     if (fromIndex < 0 || toIndex < 0) {
@@ -359,14 +476,14 @@ export function HistoryPage({
       ? [fromIndex, toIndex]
       : [toIndex, fromIndex];
     return rows.slice(startIndex, endIndex + 1)
-      .filter((row): row is Extract<HistoryLedgerRow, { kind: 'entry' }> => row.kind === 'entry')
+      .filter((row): row is EntryHistoryLedgerRow => row.kind === 'entry')
       .map((row) => row.entry.id);
-  }
+  }, [rows]);
 
-  function focusEntryRow(
+  const focusEntryRow = useCallback((
     event: MouseEvent<HTMLElement>,
-    row: Extract<HistoryLedgerRow, { kind: 'entry' }>,
-  ) {
+    row: EntryHistoryLedgerRow,
+  ) => {
     setSelectedRowId(row.id);
 
     if (event.shiftKey && selectionAnchorRowId) {
@@ -391,9 +508,9 @@ export function HistoryPage({
 
     setSelectedEntryIds(new Set([row.entry.id]));
     setSelectionAnchorRowId(row.id);
-  }
+  }, [entryIdsInRange, selectionAnchorRowId]);
 
-  function toggleSelectedEntry(row: Extract<HistoryLedgerRow, { kind: 'entry' }>) {
+  const toggleSelectedEntry = useCallback((row: EntryHistoryLedgerRow) => {
     setSelectedRowId(row.id);
     setSelectionAnchorRowId(row.id);
     setSelectedEntryIds((currentIds) => {
@@ -405,7 +522,11 @@ export function HistoryPage({
       }
       return nextIds;
     });
-  }
+  }, []);
+
+  const selectPendingRow = useCallback((rowId: string) => {
+    setSelectedRowId(rowId);
+  }, []);
 
   function deleteSelectedEntries() {
     const ids = [...selectedEntryIds];
@@ -584,68 +705,34 @@ export function HistoryPage({
                     const isSelected = selectedRow?.id === row.id;
                     if (row.kind === 'pending') {
                       return (
-                        <article
+                        <HistoryPendingLedgerRow
                           key={row.id}
-                          className={`history-page-row history-page-row--pending ${isSelected ? 'is-selected' : ''}`}
-                          data-testid="history-page-row-pending"
-                          style={{ height: HISTORY_PAGE_ROW_HEIGHT }}
-                          onClick={() => setSelectedRowId(row.id)}
-                        >
-                          <span />
-                          <ModeChip label={modeLabels[row.mode]} mode={row.mode} />
-                          <div className="history-page-row-expression">
-                            <strong>{row.ticket.inputLatex}</strong>
-                          </div>
-                          <span className="history-page-muted">Pending</span>
-                          <span>{rowTimestamp(row)}</span>
-                          <span className="history-page-chip is-status">{rowElapsed(row, elapsedNowMs)}</span>
-                          <button
-                            type="button"
-                            disabled={row.ticket.status === 'stopping'}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              onStopPending?.(row.ticket);
-                            }}
-                          >
-                            <StopCircle aria-hidden="true" size={16} />
-                            <span>{historyText.actions.stop}</span>
-                          </button>
-                        </article>
+                          elapsedNowMs={elapsedNowMs}
+                          isSelected={isSelected}
+                          modeLabel={modeLabels[row.mode]}
+                          onSelect={selectPendingRow}
+                          onStopPending={onStopPending}
+                          row={row}
+                          rowHeight={HISTORY_PAGE_ROW_HEIGHT}
+                          stopLabel={historyText.actions.stop}
+                        />
                       );
                     }
 
                     return (
-                      <article
+                      <HistoryEntryLedgerRow
                         key={row.id}
-                        className={`history-page-row ${isSelected ? 'is-selected' : ''}`}
-                        data-testid="history-page-row"
-                        style={{ height: HISTORY_PAGE_ROW_HEIGHT }}
-                        onClick={(event) => focusEntryRow(event, row)}
-                        onDoubleClick={() => onReplay(row.entry)}
-                      >
-                        <label onClick={(event) => event.stopPropagation()}>
-                          <input
-                            type="checkbox"
-                            aria-label={historyText.actions.selectEntry}
-                            checked={selectedEntryIds.has(row.entry.id)}
-                            onChange={() => toggleSelectedEntry(row)}
-                          />
-                          {selectedEntryIds.has(row.entry.id)
-                            ? <Check aria-hidden="true" size={14} />
-                            : <Square aria-hidden="true" size={14} />}
-                        </label>
-                        <ModeChip label={modeLabels[row.mode]} mode={row.mode} />
-                        <div className="history-page-row-expression">
-                          <MathStatic latex={row.entry.inputLatex} />
-                        </div>
-                        <div className="history-page-row-result">
-                          {row.entry.resultLatex
-                            ? <MathStatic latex={row.entry.resultLatex} />
-                            : <span>{row.entry.approxText ?? historyText.staleAnswer}</span>}
-                        </div>
-                        <span>{rowTimestamp(row)}</span>
-                        <span className="history-page-chip is-status">{rowResultKind(row)}</span>
-                      </article>
+                        isChecked={selectedEntryIds.has(row.entry.id)}
+                        isSelected={isSelected}
+                        modeLabel={modeLabels[row.mode]}
+                        onFocus={focusEntryRow}
+                        onReplay={onReplay}
+                        onToggleSelected={toggleSelectedEntry}
+                        row={row}
+                        rowHeight={HISTORY_PAGE_ROW_HEIGHT}
+                        selectEntryLabel={historyText.actions.selectEntry}
+                        staleAnswer={historyText.staleAnswer}
+                      />
                     );
                   })}
                 </div>

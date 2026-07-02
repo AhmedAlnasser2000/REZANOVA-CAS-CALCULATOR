@@ -1062,8 +1062,14 @@
   overflow: hidden;
 }
 
-.history-page-row-expression .math-static,
-.history-page-row-result .math-static,
+.history-page-row-preview {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .history-page-inspector .math-static {
   min-width: 0;
   max-width: 100%;
