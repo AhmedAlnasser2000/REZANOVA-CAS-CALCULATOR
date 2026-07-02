@@ -4,6 +4,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits frontier symbolic work starts with an internal asymptotic term/series IR instead of route-local mini-algorithms. V1 caps are Taylor order `10`, branch drivers `2`, and displayed conditional rows `12`; live evaluation remains unchanged until later orchestration gates adopt the IR.
 
+## 2026-07-03 - CALCULUS-LIMITS-CONDITIONAL-CASE-SURFACE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits conditional answers use a Limits-owned helper that emits capped `L\in\begin{cases}...\end{cases}` LaTeX plus normal detail-section proof rows. Conditional branching remains capped at `12` rows and `2` symbolic branch drivers, and live limit evaluation is not widened until later route adoption gates.
+
 ## 2026-07-02 - PAGE-SURFACE-CHROME-SCALE-PREVIEW1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] App chrome remains outside page/workspace scaling: Workspace Tabs stay top-anchored and unscaled, while active page surfaces receive their own UI scale, math scale, result scale, and high-contrast styling. Settings symbolic rewrite previews should use a readable input/output preview card rather than a tiny strip.

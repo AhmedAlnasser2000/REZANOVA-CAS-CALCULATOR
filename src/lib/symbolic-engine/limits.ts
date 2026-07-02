@@ -26,6 +26,12 @@ export {
   type LimitAsymptoticTerm,
   type LimitAsymptoticTermSource,
 } from './limits/asymptotic-terms';
+export {
+  buildLimitConditionalCases,
+  limitConditionLatex,
+  type LimitConditionalCaseRow,
+  type LimitConditionalCasesResult,
+} from './limits/conditional-cases';
 export { resolveInfiniteExactLocalAlgebraLimit } from './limits/exact-local-algebra';
 export { resolveInfiniteIndeterminateTransformLimit } from './limits/indeterminate-transforms';
 export {
