@@ -184,6 +184,21 @@ describe('runMatrixMode', () => {
     }
   });
 
+  it('labels least-squares runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'leastSquaresA',
+      matrixA: [[1, 0], [0, 1], [0, 0]],
+      matrixB: [[5, 6], [7, 8]],
+      systemRhs: [2, 3, 4],
+    });
+
+    expect(result.title).toBe('ls(A,b)');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.detailSections?.[0]?.title).toBe('Least-Squares Solution');
+    }
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

@@ -386,6 +386,17 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(projection.kind === 'success' ? projection.detailSections?.map((section) => section.title) : [])
       .toEqual(['Column Projection Facts', 'Column Projection Proof']);
 
+    const leastSquaresLatex = '\\operatorname{ls}\\left(\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix},\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)';
+    const leastSquares = await runMatrixExpression(leastSquaresLatex);
+    expect(leastSquares).toMatchObject({
+      kind: 'success',
+      title: leastSquaresLatex,
+      approxText: 'least-squares solution',
+      sourceMode: 'matrix',
+    });
+    expect(leastSquares.kind === 'success' ? leastSquares.detailSections?.map((section) => section.title) : [])
+      .toEqual(['Least-Squares Solution', 'Residual Vector', 'Least-Squares Proof']);
+
     const eigenLatex = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
     const eigen = await runMatrixExpression(eigenLatex);
     expect(eigen).toMatchObject({

@@ -142,7 +142,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'How Eigenvalues Were Found',
   'Invertibility Theorem',
   'Null Space Proof',
-  'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof', 'QR Factors', 'QR Proof', 'Column Projection Facts', 'Column Projection Proof',
+  'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof', 'QR Factors', 'QR Proof', 'Column Projection Facts', 'Column Projection Proof', 'Least-Squares Solution', 'Residual Vector', 'Least-Squares Proof',
   'Orthonormal Basis',
   'Rank/Nullity Guidance',
   'System Proof', 'Multi-RHS Proof', 'Inverse Comparison',

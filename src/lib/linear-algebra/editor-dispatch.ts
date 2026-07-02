@@ -323,6 +323,42 @@ function matrixColumnProjectionRequest(
   };
 }
 
+function matrixLeastSquaresRequest(
+  input: MatrixEditorDispatchInput,
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'leastSquares' }>,
+): MatrixEditorDispatchResult {
+  const matrix = matrixOperand(expression.matrix, input);
+  if (!matrix || expression.vector.kind !== 'vectorLiteral') {
+    return {
+      ok: false,
+      message: 'Least squares needs Matrix A/B or an inline matrix, plus an inline vector.',
+    };
+  }
+
+  return {
+    ok: true,
+    request: matrix.named === 'B'
+      ? {
+          operation: 'leastSquaresB',
+          matrixA: cloneMatrix(input.matrixA),
+          matrixB: matrix.matrix,
+          systemRhs: cloneVector(expression.vector.value),
+          ...(matrix.exactMatrix ? { exactMatrixB: matrix.exactMatrix } : {}),
+          exactSystemRhs: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandB: matrix, systemRhs: expression.vector }),
+        }
+      : {
+          operation: 'leastSquaresA',
+          matrixA: matrix.matrix,
+          matrixB: cloneMatrix(input.matrixB),
+          systemRhs: cloneVector(expression.vector.value),
+          ...(matrix.exactMatrix ? { exactMatrixA: matrix.exactMatrix } : {}),
+          exactSystemRhs: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandA: matrix, systemRhs: expression.vector }),
+        },
+  };
+}
+
 function matrixFactorSolveRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'factorSolve' }>,
@@ -615,6 +651,9 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   }
   if (expression.kind === 'columnProjection') {
     return matrixColumnProjectionRequest(input, expression);
+  }
+  if (expression.kind === 'leastSquares') {
+    return matrixLeastSquaresRequest(input, expression);
   }
   if (expression.kind === 'factorSolve') {
     return matrixFactorSolveRequest(input, expression);

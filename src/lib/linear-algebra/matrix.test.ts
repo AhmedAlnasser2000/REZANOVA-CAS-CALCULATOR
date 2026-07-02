@@ -617,6 +617,28 @@ describe('runMatrixOperation', () => {
     }).error).toBe('Column projection needs the vector length to match the Matrix row count.');
   });
 
+  it('solves least-squares systems through exact QR', () => {
+    const response = runMatrixOperation({
+      operation: 'leastSquaresA',
+      matrixA: [[1, 0], [0, 1], [0, 0]],
+      matrixB,
+      systemRhs: [2, 3, 4],
+    });
+
+    expect(response.resultLatex).toBe('x_{\\mathrm{LS}}=\\begin{bmatrix}2\\\\3\\end{bmatrix}');
+    expect(response.approxText).toBe('least-squares solution');
+    expect(response.detailSections?.map((section) => section.title)).toEqual([
+      'Least-Squares Solution',
+      'Residual Vector',
+      'Least-Squares Proof',
+    ]);
+    expect(response.detailSections?.[0]?.lines).toContain('Q^{T}b=\\begin{bmatrix}2\\\\3\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('\\hat{b}=Ax_{\\mathrm{LS}}=\\begin{bmatrix}2\\\\3\\\\0\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('r=b-\\hat{b}=\\begin{bmatrix}0\\\\0\\\\4\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('\\left\\|r\\right\\|^{2}=16');
+    expect(response.detailSections?.[2]?.lines).toContain('Q^{T}(b-Ax_{\\mathrm{LS}})=\\begin{bmatrix}0\\\\0\\end{bmatrix}');
+  });
+
   it('hands deferred irrational and complex eigenvalue cases to Equation explicitly', () => {
     const irrational = runMatrixOperation({
       operation: 'eigenA',

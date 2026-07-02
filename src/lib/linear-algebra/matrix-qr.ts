@@ -7,6 +7,7 @@ import {
   type ExactScalar,
 } from '../algebra/polynomial-core';
 import { scalar, validateExactMatrix, type ExactMatrix, type ExactMatrixStopReason, type ExactVector } from './exact-matrix-core';
+import { solveExactLinearSystem } from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
   exactMatrixFromWire,
@@ -29,6 +30,8 @@ export type MatrixColumnProjectionInput = MatrixQrInput & {
   exactVector?: ExactScalarWire[];
   vectorLabel: string;
 };
+
+export type MatrixLeastSquaresInput = MatrixColumnProjectionInput;
 
 type QrResult =
   | { kind: 'success'; q: ExactMatrix; r: ExactMatrix; product: ExactMatrix; qtq: ExactMatrix; steps: string[] }
@@ -223,6 +226,50 @@ function columnProjectionDetails(
   ];
 }
 
+function leastSquaresDetails(
+  input: MatrixLeastSquaresInput,
+  qr: Extract<QrResult, { kind: 'success' }>,
+  coordinates: ExactVector,
+  solution: ExactVector,
+  fitted: ExactVector,
+  residual: ExactVector,
+): DisplayDetailSection[] {
+  const residualSquared = exactDotVectors(residual, residual);
+  const residualNorm = exactScalarSquareRoot(residualSquared);
+  const residualLines = [
+    `\\hat{b}=${input.label}x_{\\mathrm{LS}}=${exactVectorToColumnLatex(fitted)}`,
+    `r=${input.vectorLabel}-\\hat{b}=${exactVectorToColumnLatex(residual)}`,
+    `\\left\\|r\\right\\|^{2}=${exactScalarToLatex(residualSquared)}`,
+    ...(residualNorm ? [`\\left\\|r\\right\\|=${exactScalarToLatex(residualNorm)}`] : []),
+  ];
+
+  return [
+    {
+      title: 'Least-Squares Solution',
+      lines: [
+        `${input.label}=QR`,
+        `R x=Q^{T}${input.vectorLabel}`,
+        `Q^{T}${input.vectorLabel}=${exactVectorToColumnLatex(coordinates)}`,
+        `x_{\\mathrm{LS}}=${exactVectorToColumnLatex(solution)}`,
+      ],
+      lineKind: 'math',
+    },
+    {
+      title: 'Residual Vector',
+      lines: residualLines,
+      lineKind: 'math',
+    },
+    {
+      title: 'Least-Squares Proof',
+      lines: [
+        `Q^{T}(${input.vectorLabel}-${input.label}x_{\\mathrm{LS}})=${exactVectorToColumnLatex(multiplyMatrixVector(transposeMatrix(qr.q), residual))}`,
+        'The residual is orthogonal to the column space, so this x minimizes the squared residual.',
+      ],
+      lineKinds: ['math', 'text'],
+    },
+  ];
+}
+
 export function runMatrixQr(input: MatrixQrInput): MatrixResponse {
   const exactMatrix = exactInputMatrix(input);
   if (!exactMatrix) {
@@ -269,6 +316,39 @@ export function runMatrixColumnProjection(input: MatrixColumnProjectionInput): M
     resultLatex: `${columnProjectionLabel(input)}=${exactVectorToColumnLatex(projected)}`,
     approxText: `projection in \\mathbb{R}^{${vector.length}}`,
     detailSections: columnProjectionDetails(input, qr, coordinates, projected, residual, residualCheck),
+    warnings: [],
+  };
+}
+
+export function runMatrixLeastSquares(input: MatrixLeastSquaresInput): MatrixResponse {
+  const exactMatrix = exactInputMatrix(input);
+  const vector = exactVectorFromWire(input.exactVector) ?? exactVectorFromNumeric(input.vector);
+  if (!exactMatrix || !vector) {
+    return stop('Least squares needs exact Matrix and vector entries in this move.');
+  }
+
+  if (exactMatrix.length !== vector.length) {
+    return stop('Least squares needs the vector length to match the Matrix row count.');
+  }
+
+  const qr = exactQr(exactMatrix);
+  if (qr.kind === 'stop') {
+    return stop(qrStopMessage(qr));
+  }
+
+  const coordinates = multiplyMatrixVector(transposeMatrix(qr.q), vector);
+  const solved = solveExactLinearSystem(qr.r, coordinates);
+  if (solved.kind === 'stop') {
+    return stop('Least squares could not solve the triangular QR system exactly.');
+  }
+
+  const fitted = multiplyMatrixVector(exactMatrix, solved.solution);
+  const residual = exactSubtractVectors(vector, fitted);
+
+  return {
+    resultLatex: `x_{\\mathrm{LS}}=${exactVectorToColumnLatex(solved.solution)}`,
+    approxText: 'least-squares solution',
+    detailSections: leastSquaresDetails(input, qr, coordinates, solved.solution, fitted, residual),
     warnings: [],
   };
 }

@@ -86,6 +86,8 @@ describe('workspace keypad overlays', () => {
       .toBe('\\operatorname{invertible}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-qr')?.latex)
       .toBe('\\operatorname{qr}\\left(#0\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-qr')?.layers?.shift?.latex)
+      .toBe('\\operatorname{ls}\\left(#0,#?\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'left')?.command).toBe('cursor-left');
     expect(matrixRows.flat().find((button) => button.id === 'execute')?.command).toBe('evaluate');
 

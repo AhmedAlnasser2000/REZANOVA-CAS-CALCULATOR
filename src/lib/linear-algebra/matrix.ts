@@ -28,7 +28,7 @@ import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
 import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
-import { runMatrixColumnProjection, runMatrixQr } from './matrix-qr';
+import { runMatrixColumnProjection, runMatrixLeastSquares, runMatrixQr } from './matrix-qr';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
 
@@ -464,6 +464,37 @@ function exactColumnProjectionResponse(req: MatrixRequest): MatrixResponse | nul
   return null;
 }
 
+function exactLeastSquaresResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'leastSquaresA') {
+    return runMatrixLeastSquares({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+      vector: req.systemRhs ?? [],
+      exactVector: req.exactSystemRhs,
+      vectorLabel: req.systemRhsLatex ?? 'b',
+    });
+  }
+
+  if (req.operation === 'leastSquaresB') {
+    return req.matrixB
+      ? runMatrixLeastSquares({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+          vector: req.systemRhs ?? [],
+          exactVector: req.exactSystemRhs,
+          vectorLabel: req.systemRhsLatex ?? 'b',
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -581,6 +612,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const columnProjectionResponse = exactColumnProjectionResponse(req);
   if (columnProjectionResponse) {
     return columnProjectionResponse;
+  }
+
+  const leastSquaresResponse = exactLeastSquaresResponse(req);
+  if (leastSquaresResponse) {
+    return leastSquaresResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

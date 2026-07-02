@@ -82,6 +82,11 @@ describe('parseLinearAlgebraEditorLatex', () => {
       matrix: { kind: 'named', name: 'A' },
       vector: { kind: 'vectorLiteral', value: [5, 11] },
     });
+    expect(parsed('\\operatorname{ls}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toMatchObject({
+      kind: 'leastSquares',
+      matrix: { kind: 'named', name: 'A' },
+      vector: { kind: 'vectorLiteral', value: [5, 11] },
+    });
     expect(parsed('\\operatorname{change}\\left(A,B\\right)', 'matrix')).toEqual({
       kind: 'changeOfBasis',
       source: { kind: 'named', name: 'A', displayLatex: 'A' },

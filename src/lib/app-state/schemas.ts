@@ -332,6 +332,8 @@ const matrixOperationSchema = z.enum([
   'qrB',
   'columnProjectionA',
   'columnProjectionB',
+  'leastSquaresA',
+  'leastSquaresB',
   'invertibilityA',
   'invertibilityB',
   'eigenA',

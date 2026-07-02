@@ -48,6 +48,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'coordinates'; basis: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'columnProjection'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
+  | { kind: 'leastSquares'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'factorSolve'; method: 'lu' | 'plu'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'changeOfBasis'; source: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | {
@@ -133,6 +134,11 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{ProjCol\}/g, 'projcol')
     .replace(/\\operatorname\{colproj\}/g, 'projcol')
     .replace(/\\operatorname\{ColProj\}/g, 'projcol')
+    .replace(/\\operatorname\{ls\}/g, 'ls')
+    .replace(/\\operatorname\{least\}/g, 'ls')
+    .replace(/\\operatorname\{Least\}/g, 'ls')
+    .replace(/\\operatorname\{lstsq\}/g, 'ls')
+    .replace(/\\operatorname\{LSTSQ\}/g, 'ls')
     .replace(/\\operatorname\{lusolve\}/g, 'lusolve')
     .replace(/\\operatorname\{LUSolve\}/g, 'lusolve')
     .replace(/\\operatorname\{plusolve\}/g, 'plusolve')
@@ -677,6 +683,19 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     }
     return {
       kind: 'columnProjection',
+      matrix: parseExpression(parts[0], options),
+      vector: parseExpression(parts[1], options),
+    };
+  }
+
+  const leastSquaresArgument = functionArgument(input, 'ls');
+  if (leastSquaresArgument !== null) {
+    const parts = splitTopLevelComma(leastSquaresArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Least squares requires a matrix and an inline vector.');
+    }
+    return {
+      kind: 'leastSquares',
       matrix: parseExpression(parts[0], options),
       vector: parseExpression(parts[1], options),
     };
