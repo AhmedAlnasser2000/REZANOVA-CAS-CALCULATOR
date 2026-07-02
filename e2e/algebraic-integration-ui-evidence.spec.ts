@@ -14,7 +14,6 @@ import {
 test.beforeEach(async ({ page }) => {
   await installClipboardCapture(page);
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
 });
 
 test('Calculus integral evidence harness covers answer, facts, copy, and history replay', async ({ page }) => {

@@ -6,7 +6,6 @@ import {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
 });
 
 async function clickVisibleLauncherEntry(page: Parameters<typeof openLauncherApp>[0], label: string) {

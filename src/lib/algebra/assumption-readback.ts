@@ -1,4 +1,8 @@
-import type { DisplayDetailSection } from '../../types/calculator';
+import type {
+  DisplayDetailLineKind,
+  DisplayDetailLinePart,
+  DisplayDetailSection,
+} from '../../types/calculator';
 import type {
   AssumptionFact,
   AssumptionFactKind,
@@ -88,25 +92,69 @@ function lineForFact(fact: AssumptionFact) {
   return `${fact.message} ${suffix}`;
 }
 
+type MergedDetailLine = {
+  line: string;
+  lineKind?: DisplayDetailLineKind;
+  lineParts?: DisplayDetailLinePart[];
+};
+
+function cloneLineParts(parts: readonly DisplayDetailLinePart[] | undefined) {
+  return parts?.map((part) => ({ ...part }));
+}
+
+function detailLineKindAt(section: DisplayDetailSection, index: number) {
+  return section.lineKinds?.[index] ?? section.lineKind;
+}
+
+function detailLinePartsAt(section: DisplayDetailSection, index: number) {
+  return cloneLineParts(section.lineParts?.[index]);
+}
+
 function mergeSections(
   sections: readonly DisplayDetailSection[],
 ): DisplayDetailSection[] {
-  const merged = new Map<string, string[]>();
+  const merged = new Map<string, MergedDetailLine[]>();
 
   for (const section of sections) {
     const lines = merged.get(section.title) ?? [];
-    for (const line of section.lines) {
+    for (const [index, line] of section.lines.entries()) {
       const trimmed = line.trim();
-      if (trimmed && !lines.includes(trimmed)) {
-        lines.push(trimmed);
+      if (!trimmed) {
+        continue;
       }
+
+      const existing = lines.find((entry) => entry.line === trimmed);
+      if (existing) {
+        existing.lineKind ??= detailLineKindAt(section, index);
+        existing.lineParts ??= detailLinePartsAt(section, index);
+        continue;
+      }
+
+      lines.push({
+        line: trimmed,
+        lineKind: detailLineKindAt(section, index),
+        lineParts: detailLinePartsAt(section, index),
+      });
     }
     if (lines.length > 0) {
       merged.set(section.title, lines);
     }
   }
 
-  return [...merged.entries()].map(([title, lines]) => ({ title, lines }));
+  return [...merged.entries()].map(([title, entries]) => {
+    const hasLineKind = entries.some((entry) => entry.lineKind);
+    const hasLineParts = entries.some((entry) => entry.lineParts);
+    return {
+      title,
+      lines: entries.map((entry) => entry.line),
+      lineKinds: hasLineKind
+        ? entries.map((entry) => entry.lineKind ?? 'text')
+        : undefined,
+      lineParts: hasLineParts
+        ? entries.map((entry) => entry.lineParts ?? [])
+        : undefined,
+    };
+  });
 }
 
 export function assumptionFactsToDetailSections(

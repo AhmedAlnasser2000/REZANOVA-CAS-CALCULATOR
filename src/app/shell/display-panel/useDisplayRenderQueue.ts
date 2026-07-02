@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   buildDisplayBlocks,
   type DisplayBlock,
+  type DisplayBlockLine,
 } from '../../../lib/display/result/display-blocks';
 import {
   DISPLAY_BLOCK_REVEAL_DELAY_MS,
@@ -20,11 +21,25 @@ type UseDisplayRenderQueueOptions = {
 };
 
 function displayBlockSignature(blocks: readonly DisplayBlock[]) {
+  const lineSignature = (line: DisplayBlockLine) => [
+    line.id,
+    line.lineKind ?? '',
+    line.latex ?? '',
+    line.text ?? '',
+    line.parts?.map((part) => (
+      part.kind === 'math'
+        ? `math:${part.latex}`
+        : `text:${part.text}`
+    )).join('\u001b') ?? '',
+  ].join('\u001c');
+
   return blocks.map((block) => [
     block.id,
     block.kind,
     block.renderKind,
+    block.latex ?? '',
     block.rawContent.join('\u001f'),
+    block.lines?.map(lineSignature).join('\u001f') ?? '',
   ].join('\u001e')).join('\u001d');
 }
 

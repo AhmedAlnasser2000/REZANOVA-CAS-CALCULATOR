@@ -1,4 +1,10 @@
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import {
+  mathDetailSection,
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../../../display/result-detail-lines';
 import { readExactScalarNode } from '../../../algebra/polynomial-core';
 import {
   boxLatex,
@@ -276,15 +282,15 @@ function legendreSuccess(input: {
       characteristicNode: input.characteristicNode,
     }),
     detailSections: [
-      {
-        title: 'Legendre Normal Form',
-        lines: [
+      mathDetailSection(
+        'Legendre Normal Form',
+        [
           `\\phi=${data.amplitudeLatex}`,
           `m=${data.parameterLatex}`,
           ...(data.characteristicLatex ? [`n=${data.characteristicLatex}`] : []),
           `${data.inverseMapLatex}`,
         ],
-      },
+      ),
     ],
     readinessNotes: [
       'Canonical Legendre data is behavior-invisible evidence for the later elliptic live route.',
@@ -381,13 +387,13 @@ function symbolicReadiness(
     normalFormKind: 'symbolic-generic-readiness' as const,
     exactSupplementEntries: degeneration.exactSupplementEntries,
     detailSections: [
-      {
-        title: 'Symbolic Genus-1 Readiness',
-        lines: [
-          `P\\left(${variable}\\right)=${degeneration.radicandLatex}`,
-          'Generic symbolic squarefree facts are available for later Legendre normalization.',
+      mixedDetailSection(
+        'Symbolic Genus-1 Readiness',
+        [
+          [mathPart(`P\\left(${variable}\\right)=${degeneration.radicandLatex}`)],
+          [textPart('Generic symbolic squarefree facts are available for later Legendre normalization.')],
         ],
-      },
+      ),
     ],
     readinessNotes: [
       ...degeneration.readinessNotes,

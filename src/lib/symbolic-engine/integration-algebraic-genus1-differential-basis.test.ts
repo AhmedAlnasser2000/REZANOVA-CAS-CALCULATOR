@@ -32,6 +32,11 @@ describe('algebraic genus-1 differential-basis reduction readiness', () => {
     });
     expect(result.rationalResidualsLatex).toEqual([]);
     expect(result.logarithmicResidualsLatex).toEqual([]);
+    const basisSection = result.detailSections.find((section) =>
+      section.title === 'Genus-1 Differential Basis');
+    expect(basisSection?.lineParts?.[0]?.some((part) =>
+      part.kind === 'math' && part.latex.includes('EllipticF'))).toBe(true);
+    expect(basisSection?.lines[0]).not.toContain('\\quad');
   });
 
   it('reduces canonical second-kind Legendre templates to second-kind obligations', () => {

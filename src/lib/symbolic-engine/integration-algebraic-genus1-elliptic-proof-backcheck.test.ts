@@ -32,6 +32,11 @@ describe('algebraic genus-1 elliptic proof backcheck readiness', () => {
     expect(result.proofObligations[0].expectedIntegrandLatex).toContain('1-mx^2');
     expect(result.proofObligations[0].derivativeLatex).toContain('\\sqrt');
     expect(result.proofObligations[0].proofDifferentiation?.kind).toBe('success');
+    const proofSection = result.detailSections.find((section) =>
+      section.title === 'Genus-1 Elliptic Proof Backcheck');
+    expect(proofSection?.lineParts?.[0]?.some((part) =>
+      part.kind === 'math' && part.latex.includes('EllipticF'))).toBe(true);
+    expect(proofSection?.lines[0]).not.toContain('\\quad');
   });
 
   it('proves canonical second-kind Legendre templates by exact elliptic differentiation', () => {

@@ -50,6 +50,8 @@ describe('algebraic genus-1 normal-form readiness', () => {
       inverseMapLatex: 'x=\\sin\\phi',
       prototypeAntiderivativeLatex: '\\operatorname{EllipticF}\\left(\\arcsin(x),m\\right)',
     });
+    expect(result.detailSections.find((section) =>
+      section.title === 'Legendre Normal Form')?.lineKind).toBe('math');
     expect(result.exactSupplementEntries.map(entryExpression)).toContain('1-x^2');
     expect(result.exactSupplementEntries.map(entryExpression)).toContain('1-mx^2');
   });

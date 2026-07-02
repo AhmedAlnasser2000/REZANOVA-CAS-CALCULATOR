@@ -1,4 +1,6 @@
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import type { DisplayDetailSection } from '../../../../types/calculator';
+import { mathDetailSection } from '../../../display/result-detail-lines';
 import {
   buildAlgebraicGenus1RealBranchFacts,
   type AlgebraicGenus1RadicandSignBranch,
@@ -6,10 +8,7 @@ import {
   type AlgebraicGenus1RealRootEvidence,
 } from './real-branch-facts';
 
-export type AlgebraicGenus1NamedRootReadbackDetail = {
-  title: string;
-  lines: string[];
-};
+export type AlgebraicGenus1NamedRootReadbackDetail = DisplayDetailSection;
 
 export type AlgebraicGenus1NamedRootReadbackResult =
   | {
@@ -86,21 +85,12 @@ function buildDetails(input: {
   ];
   const branchLines = input.branchRows.map((row) => branchLine(row, input.variable));
   const details: AlgebraicGenus1NamedRootReadbackDetail[] = [
-    {
-      title: 'Genus-1 Root Definitions',
-      lines: rootLines,
-    },
-    {
-      title: 'Real Branch Rows',
-      lines: branchLines,
-    },
+    mathDetailSection('Genus-1 Root Definitions', rootLines),
+    mathDetailSection('Real Branch Rows', branchLines),
   ];
 
   if (input.endpointExclusionFacts.length > 0) {
-    details.push({
-      title: 'Endpoint Exclusions',
-      lines: input.endpointExclusionFacts.map(endpointLine),
-    });
+    details.push(mathDetailSection('Endpoint Exclusions', input.endpointExclusionFacts.map(endpointLine)));
   }
 
   return details;

@@ -1,4 +1,10 @@
 import { boxLatex } from '../../patterns';
+import type { DisplayDetailSection } from '../../../../types/calculator';
+import {
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../../../display/result-detail-lines';
 import {
   certificateProofNodeLatex,
   differentiateForCertificateProof,
@@ -25,7 +31,7 @@ export type AlgebraicGenus1EllipticProofBackcheckResult =
         AlgebraicGenus1DifferentialBasisReductionResult,
         { kind: 'success' }
       >['exactSupplementEntries'];
-      detailSections: { title: string; lines: string[] }[];
+      detailSections: DisplayDetailSection[];
       readinessNotes: string[];
     }
   | {
@@ -69,15 +75,22 @@ function templateMatches(
   );
 }
 
-function proofLine(obligation: AlgebraicGenus1EllipticProofObligation) {
-  const pieces = [
-    `${obligation.basisKind}: ${obligation.proofStatus}`,
-    obligation.prototypeAntiderivativeLatex
-      ? `prototype ${obligation.prototypeAntiderivativeLatex}`
-      : undefined,
-    obligation.derivativeLatex ? `derivative ${obligation.derivativeLatex}` : undefined,
-  ].filter(Boolean);
-  return pieces.join('\\quad ');
+function proofLineParts(obligation: AlgebraicGenus1EllipticProofObligation) {
+  return [
+    textPart(`${obligation.basisKind}: ${obligation.proofStatus}`),
+    ...(obligation.prototypeAntiderivativeLatex
+      ? [
+          textPart('; prototype '),
+          mathPart(obligation.prototypeAntiderivativeLatex),
+        ]
+      : []),
+    ...(obligation.derivativeLatex
+      ? [
+          textPart('; derivative '),
+          mathPart(obligation.derivativeLatex),
+        ]
+      : []),
+  ];
 }
 
 export function buildAlgebraicGenus1EllipticProofBackcheck(
@@ -185,13 +198,13 @@ export function buildAlgebraicGenus1EllipticProofBackcheck(
     exactSupplementEntries: basisReduction.exactSupplementEntries,
     detailSections: [
       ...basisReduction.detailSections,
-      {
-        title: 'Genus-1 Elliptic Proof Backcheck',
-        lines: [
-          ...proofObligations.map(proofLine),
-          'Proof-local differentiation used the internal elliptic derivative rules with Compute Engine fallback denied.',
+      mixedDetailSection(
+        'Genus-1 Elliptic Proof Backcheck',
+        [
+          ...proofObligations.map(proofLineParts),
+          [textPart('Proof-local differentiation used the internal elliptic derivative rules with Compute Engine fallback denied.')],
         ],
-      },
+      ),
     ],
     readinessNotes: [
       ...basisReduction.readinessNotes,

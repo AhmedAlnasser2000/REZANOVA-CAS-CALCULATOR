@@ -1,4 +1,10 @@
 import type { ExactSupplementEntry } from '../../../../types/calculator/exact-supplement-types';
+import type { DisplayDetailSection } from '../../../../types/calculator';
+import {
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../../../display/result-detail-lines';
 import type { EllipticFunctionHead } from './elliptic-functions';
 import {
   buildAlgebraicGenus1NormalForm,
@@ -38,7 +44,7 @@ export type AlgebraicGenus1DifferentialBasisReductionResult =
       rationalResidualsLatex: string[];
       logarithmicResidualsLatex: string[];
       exactSupplementEntries: ExactSupplementEntry[];
-      detailSections: { title: string; lines: string[] }[];
+      detailSections: DisplayDetailSection[];
       readinessNotes: string[];
     }
   | {
@@ -69,12 +75,16 @@ function legendreBasisNote(kind: AlgebraicGenus1EllipticBasisKind) {
   return 'The differential is already in Legendre third-kind form.';
 }
 
-function basisLine(obligation: AlgebraicGenus1EllipticBasisObligation) {
-  const pieces = [
-    `${obligation.kind}: ${obligation.status}`,
-    obligation.prototypeAntiderivativeLatex ? `prototype ${obligation.prototypeAntiderivativeLatex}` : undefined,
-  ].filter(Boolean);
-  return pieces.join('\\quad ');
+function basisLineParts(obligation: AlgebraicGenus1EllipticBasisObligation) {
+  return [
+    textPart(`${obligation.kind}: ${obligation.status}`),
+    ...(obligation.prototypeAntiderivativeLatex
+      ? [
+          textPart('; prototype '),
+          mathPart(obligation.prototypeAntiderivativeLatex),
+        ]
+      : []),
+  ];
 }
 
 function legendreTemplateReduction(
@@ -107,13 +117,13 @@ function legendreTemplateReduction(
     exactSupplementEntries: normalForm.exactSupplementEntries,
     detailSections: [
       ...normalForm.detailSections,
-      {
-        title: 'Genus-1 Differential Basis',
-        lines: [
-          basisLine(obligation),
-          'No rational or logarithmic residual is produced for this canonical template.',
+      mixedDetailSection(
+        'Genus-1 Differential Basis',
+        [
+          basisLineParts(obligation),
+          [textPart('No rational or logarithmic residual is produced for this canonical template.')],
         ],
-      },
+      ),
     ],
     readinessNotes: [
       ...normalForm.readinessNotes,

@@ -63,7 +63,10 @@ export function executeLatexEditorCommand(
   mainFieldRef: MathfieldRef,
   command: string,
 ) {
-  focusLatexEditorTarget(activeFieldRef, mainFieldRef)?.executeCommand(command);
+  const field = focusLatexEditorTarget(activeFieldRef, mainFieldRef) as
+    | ({ executeCommand?: (command: string) => unknown })
+    | null;
+  field?.executeCommand?.(command);
 }
 
 export function insertLatexIntoEditor(
@@ -76,12 +79,18 @@ export function insertLatexIntoEditor(
     return;
   }
 
-  if (isLatexInsertTarget(field)) {
-    field.insert(latex);
+  const insertTarget = isLatexInsertTarget(field) ? field : null;
+  if (insertTarget) {
+    insertTarget.insert(latex);
     return;
   }
 
-  const currentLatex = field.getValue?.('latex') ?? '';
-  field.setValue(`${currentLatex}${latex}`);
-  field.dispatchEvent?.(new Event('input', { bubbles: true }));
+  const valueTarget = isLatexValueTarget(field) ? field : null;
+  if (!valueTarget) {
+    return;
+  }
+
+  const currentLatex = valueTarget.getValue?.('latex') ?? '';
+  valueTarget.setValue(`${currentLatex}${latex}`);
+  valueTarget.dispatchEvent?.(new Event('input', { bubbles: true }));
 }

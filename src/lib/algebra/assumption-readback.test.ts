@@ -4,6 +4,7 @@ import {
   assumptionFactsToDetailSections,
   mergeAssumptionDetailSections,
 } from './assumption-readback';
+import { mathPart, textPart } from '../display/result/result-detail-lines';
 
 describe('assumption readback', () => {
   it('groups assumption facts into stable visible detail sections', () => {
@@ -92,6 +93,41 @@ describe('assumption readback', () => {
           'A real-domain constraint failed on [0, 2]. Trust: blocked via domain/range core.',
         ],
       },
+    ]);
+  });
+
+  it('preserves structured math detail metadata while merging facts', () => {
+    const fact = buildAssumptionFact({
+      kind: 'equivalence-trust',
+      source: 'calculus-verification',
+      trust: 'proved',
+      scope: 'result',
+      message: 'Antiderivative backcheck status: verified-exact.',
+    });
+
+    const merged = mergeAssumptionDetailSections([
+      {
+        title: 'Genus-1 Elliptic Proof Backcheck',
+        lines: [
+          'first-kind: template-proved; prototype \\operatorname{EllipticF}(\\arcsin(x),m).',
+        ],
+        lineParts: [[
+          textPart('first-kind: template-proved; prototype '),
+          mathPart('\\operatorname{EllipticF}\\left(\\arcsin(x),m\\right)'),
+          textPart('.'),
+        ]],
+      },
+    ], [fact]);
+
+    expect(merged?.find((section) => section.title === 'Genus-1 Elliptic Proof Backcheck')).toMatchObject({
+      lineParts: [[
+        textPart('first-kind: template-proved; prototype '),
+        mathPart('\\operatorname{EllipticF}\\left(\\arcsin(x),m\\right)'),
+        textPart('.'),
+      ]],
+    });
+    expect(merged?.find((section) => section.title === 'Trust')?.lines).toEqual([
+      'Antiderivative backcheck status: verified-exact. Trust: proved via calculus verification.',
     ]);
   });
 });

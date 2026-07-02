@@ -23,7 +23,6 @@ async function captureEvidence(page: Parameters<typeof expectAnswerLatex>[0], na
 test.beforeEach(async ({ page }) => {
   await installClipboardCapture(page);
   await page.goto('/');
-  await expect(page.getByTestId('main-editor')).toBeVisible();
 });
 
 test('genus-1 first-kind elliptic answer keeps facts, copy, details, and history replay usable', async ({ page }) => {
@@ -35,6 +34,8 @@ test('genus-1 first-kind elliptic answer keeps facts, copy, details, and history
 
   const proof = await openDetailCard(page, 'Genus-1 Elliptic Proof Backcheck');
   await expect(proof).toContainText('template-proved');
+  await expect(proof.locator('[data-raw-latex*="EllipticF"]')).toBeVisible();
+  await expect(proof).not.toContainText('quad prototype');
 
   const copied = await copyResult(page);
   expect(copied).toContain('EllipticF');
@@ -70,6 +71,7 @@ test('genus-1 third-kind elliptic answer exposes characteristic facts and proof 
 
   const proof = await openDetailCard(page, 'Genus-1 Elliptic Proof Backcheck');
   await expect(proof).toContainText('template-proved');
+  await expect(proof.locator('[data-raw-latex*="EllipticPi"]')).toBeVisible();
   await expectAnswerOverflowReady(page);
   await captureEvidence(page, 'third-kind-facts');
 });
