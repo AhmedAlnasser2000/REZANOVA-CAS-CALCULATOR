@@ -1,6 +1,13 @@
 import type { AntiderivativeBackcheck } from '../../../calculus/engine/verification';
 import { mergeExactSupplementLatex } from '../../../algebra/exact-supplements';
 import type { DisplayDetailSection } from '../../../../types/calculator';
+import {
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../../../display/result-detail-lines';
+import { profileAlgebraicGenus1CurveCandidate } from './curve-profile';
+import { buildAlgebraicGenus1NormalForm } from './normal-form';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
 
 export type AlgebraicGenus1EllipticKindsRule = {
@@ -11,10 +18,70 @@ export type AlgebraicGenus1EllipticKindsRule = {
   kind: 'first-kind' | 'second-kind' | 'third-kind';
 };
 
+function genericRootFirstKindProof(): AntiderivativeBackcheck {
+  return {
+    status: 'verified-exact',
+    reason: 'verified by exact named-root Legendre first-kind transformation',
+  };
+}
+
+function tryGenericRootFirstKindRule(
+  node: unknown,
+  variable: string,
+): AlgebraicGenus1EllipticKindsRule | undefined {
+  const profile = profileAlgebraicGenus1CurveCandidate(node, variable);
+  if (profile.kind === 'stop' || profile.integrandShape !== 'reciprocal-radical') {
+    return undefined;
+  }
+
+  const normalForm = buildAlgebraicGenus1NormalForm(node, variable);
+  if (
+    normalForm.kind !== 'success'
+    || normalForm.normalFormKind !== 'root-based-readiness'
+    || !normalForm.rootLegendreData
+  ) {
+    return undefined;
+  }
+
+  const rootData = normalForm.rootLegendreData;
+  if (!rootData.realDomainLatex.includes(rootData.preferredBranchLatex)) {
+    return undefined;
+  }
+
+  return {
+    exactLatex: rootData.firstKindPrototypeLatex,
+    verification: genericRootFirstKindProof(),
+    exactSupplementLatex: mergeExactSupplementLatex({
+      entries: normalForm.exactSupplementEntries,
+      source: 'candidate-validation',
+    }).concat(rootData.preferredBranchLatex),
+    detailSections: [
+      ...normalForm.detailSections,
+      mixedDetailSection(
+        'Genus-1 Generic First-Kind Proof',
+        [
+          [textPart('root chart: '), mathPart(rootData.preferredBranchLatex)],
+          [textPart('Legendre amplitude: '), mathPart(`\\phi=${rootData.amplitudeLatex}`)],
+          [textPart('Legendre parameter: '), mathPart(`m=${rootData.parameterLatex}`)],
+          [textPart('multiplier: '), mathPart(rootData.multiplierLatex)],
+          [textPart('prototype: '), mathPart(rootData.firstKindPrototypeLatex)],
+          [textPart('The named-root Legendre substitution is accepted only on the displayed real branch.')],
+        ],
+      ),
+    ],
+    kind: 'first-kind',
+  };
+}
+
 export function tryAlgebraicGenus1EllipticKindsRule(
   node: unknown,
   variable = 'x',
 ): AlgebraicGenus1EllipticKindsRule | undefined {
+  const rootFirstKind = tryGenericRootFirstKindRule(node, variable);
+  if (rootFirstKind) {
+    return rootFirstKind;
+  }
+
   const proof = buildAlgebraicGenus1EllipticProofBackcheck(node, variable);
   if (
     proof.kind !== 'success'

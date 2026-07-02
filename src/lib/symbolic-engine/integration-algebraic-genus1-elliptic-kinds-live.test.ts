@@ -38,7 +38,30 @@ describe('algebraic genus-1 live Legendre elliptic kinds', () => {
     expect(result.exactSupplementLatex?.join('\n')).toContain('1-nx^2');
   });
 
-  it('keeps generic exact cubic radicals on the deferred genus-1 boundary', () => {
+  it('adopts generic exact-rational cubic reciprocal radicals as first-kind named-root charts', () => {
+    const result = success('\\frac{1}{\\sqrt{x^3-x}}');
+
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.verification.reason).toContain('named-root Legendre first-kind');
+    expect(result.exactLatex).toContain('EllipticF');
+    expect(result.exactLatex).toContain('\\alpha_{3}-\\alpha_{1}');
+    expect(result.exactSupplementLatex?.join('\n')).toContain('x>\\alpha_{3}');
+    expect(result.detailSections?.some((section) => section.title === 'Genus-1 Generic First-Kind Proof')).toBe(true);
+  });
+
+  it('adopts generic exact-rational quartic reciprocal radicals as first-kind named-root charts', () => {
+    const result = success('\\frac{1}{\\sqrt{(x-1)(x-2)(x-3)(x-4)}}');
+
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.exactLatex).toContain('EllipticF');
+    expect(result.exactLatex).toContain('\\alpha_{4}-\\alpha_{2}');
+    expect(result.exactSupplementLatex?.join('\n')).toContain('\\alpha_{2}<x<\\alpha_{3}');
+    expect(result.detailSections?.some((section) => section.title === 'Root Legendre Data')).toBe(true);
+  });
+
+  it('keeps generic exact cubic radicals on the deferred second-kind boundary', () => {
     const result = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');
 
     expect(result.kind).toBe('error');
