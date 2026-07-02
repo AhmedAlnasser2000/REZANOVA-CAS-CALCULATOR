@@ -995,9 +995,9 @@ export default function App() {
     persistenceState: linearAlgebraTablePersistenceState,
     resetLinearAlgebraTableRuntime,
     restoreLinearAlgebraTableHistoryEntry,
-    runMatrixAction,
+    runMatrixAction, runMatrixEditorAction,
     runTableAction,
-    runVectorAction,
+    runVectorAction, runVectorEditorAction,
     toggleTableSecondary, vectorKeyboardLayouts,
   } = linearAlgebraTableShellRuntime;
   resetLinearAlgebraTableRuntimeRef.current = resetLinearAlgebraTableRuntime;
@@ -2106,6 +2106,7 @@ export default function App() {
       runCalculateActionEvaluate: () => runCalculateAction('evaluate'),
       openSelectedEquationMenuEntry,
       runEquationAction,
+      runMatrixEditorAction, runVectorEditorAction,
       runTableAction,
     });
   }

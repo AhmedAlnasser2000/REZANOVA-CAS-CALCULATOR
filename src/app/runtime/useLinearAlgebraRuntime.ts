@@ -16,6 +16,10 @@ import {
   ooeJobContextFromHistoryTicket,
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
+import {
+  dispatchMatrixEditorLatex,
+  dispatchVectorEditorLatex,
+} from '../../lib/linear-algebra/editor-dispatch';
 import type {
   MatrixSurfaceState,
   VectorSurfaceState,
@@ -103,15 +107,32 @@ export function useLinearAlgebraRuntime({
     vectorStateRef.current = { vectorA, vectorB, angleUnit };
   }, [angleUnit, vectorA, vectorB]);
 
-  function runMatrixAction(operation: MatrixOperation) {
-    const launchedRequest: RunMatrixModeRequest = {
-      operation,
-      matrixA: cloneMatrix(matrixA),
-      matrixB: cloneMatrix(matrixB),
-    };
-    const inputLatex = matrixOperationLabel(operation);
+  function commitMatrixEditorError(inputLatex: string, message: string) {
+    commitOutcome({
+      kind: 'error',
+      title: 'Matrix',
+      error: message,
+      warnings: [],
+    }, inputLatex, 'matrix');
+  }
+
+  function commitVectorEditorError(inputLatex: string, message: string) {
+    commitOutcome({
+      kind: 'error',
+      title: 'Vector',
+      error: message,
+      warnings: [],
+    }, inputLatex, 'vector');
+  }
+
+  function runMatrixRequest(
+    launchedRequest: RunMatrixModeRequest,
+    inputLatex: string,
+    visibleRequestForCommit: () => RunMatrixModeRequest,
+  ) {
     const inputRevisionId = buildMatrixOoeInputRevisionId(launchedRequest);
-    latestMatrixRunRevisionRef.current = inputRevisionId;
+    const launchToken = `${inputRevisionId}:${inputLatex}`;
+    latestMatrixRunRevisionRef.current = launchToken;
     const historyTicket = reserveHistoryTicket?.({
       mode: 'matrix',
       inputLatex,
@@ -134,16 +155,11 @@ export function useLinearAlgebraRuntime({
         return;
       }
 
-      const active = matrixStateRef.current;
-      const activeRevision = buildMatrixOoeInputRevisionId({
-        operation,
-        matrixA: active.matrixA,
-        matrixB: active.matrixB,
-      });
+      const activeRevision = buildMatrixOoeInputRevisionId(visibleRequestForCommit());
       const visibleStillMatrix =
         (getCurrentMode?.() ?? 'matrix') === 'matrix'
         && activeRevision === inputRevisionId
-        && latestMatrixRunRevisionRef.current === inputRevisionId;
+        && latestMatrixRunRevisionRef.current === launchToken;
 
       commitOutcome(result.payload, inputLatex, 'matrix', {
         matrixSeed: launchedRequest,
@@ -171,16 +187,49 @@ export function useLinearAlgebraRuntime({
     });
   }
 
-  function runVectorAction(operation: VectorOperation) {
-    const launchedRequest: RunVectorModeRequest = {
+  function runMatrixAction(operation: MatrixOperation) {
+    const launchedRequest: RunMatrixModeRequest = {
       operation,
-      vectorA: cloneVector(vectorA),
-      vectorB: cloneVector(vectorB),
-      angleUnit,
+      matrixA: cloneMatrix(matrixA),
+      matrixB: cloneMatrix(matrixB),
     };
-    const inputLatex = vectorOperationLabel(operation);
+    runMatrixRequest(
+      launchedRequest,
+      matrixOperationLabel(operation),
+      () => {
+        const active = matrixStateRef.current;
+        return {
+          operation,
+          matrixA: active.matrixA,
+          matrixB: active.matrixB,
+        };
+      },
+    );
+  }
+
+  function runMatrixEditorAction() {
+    const inputLatex = matrixEditorLatex;
+    const dispatched = dispatchMatrixEditorLatex({
+      latex: inputLatex,
+      matrixA,
+      matrixB,
+    });
+    if (!dispatched.ok) {
+      commitMatrixEditorError(inputLatex, dispatched.message);
+      return;
+    }
+
+    runMatrixRequest(dispatched.request, inputLatex, () => dispatched.request);
+  }
+
+  function runVectorRequest(
+    launchedRequest: RunVectorModeRequest,
+    inputLatex: string,
+    visibleRequestForCommit: () => RunVectorModeRequest,
+  ) {
     const inputRevisionId = buildVectorOoeInputRevisionId(launchedRequest);
-    latestVectorRunRevisionRef.current = inputRevisionId;
+    const launchToken = `${inputRevisionId}:${inputLatex}`;
+    latestVectorRunRevisionRef.current = launchToken;
     const historyTicket = reserveHistoryTicket?.({
       mode: 'vector',
       inputLatex,
@@ -203,17 +252,11 @@ export function useLinearAlgebraRuntime({
         return;
       }
 
-      const active = vectorStateRef.current;
-      const activeRevision = buildVectorOoeInputRevisionId({
-        operation,
-        vectorA: active.vectorA,
-        vectorB: active.vectorB,
-        angleUnit: active.angleUnit,
-      });
+      const activeRevision = buildVectorOoeInputRevisionId(visibleRequestForCommit());
       const visibleStillVector =
         (getCurrentMode?.() ?? 'vector') === 'vector'
         && activeRevision === inputRevisionId
-        && latestVectorRunRevisionRef.current === inputRevisionId;
+        && latestVectorRunRevisionRef.current === launchToken;
 
       commitOutcome(result.payload, inputLatex, 'vector', {
         vectorSeed: launchedRequest,
@@ -239,6 +282,44 @@ export function useLinearAlgebraRuntime({
       });
       setRuntimeStatusOverride?.('Vector runtime failed');
     });
+  }
+
+  function runVectorAction(operation: VectorOperation) {
+    const launchedRequest: RunVectorModeRequest = {
+      operation,
+      vectorA: cloneVector(vectorA),
+      vectorB: cloneVector(vectorB),
+      angleUnit,
+    };
+    runVectorRequest(
+      launchedRequest,
+      vectorOperationLabel(operation),
+      () => {
+        const active = vectorStateRef.current;
+        return {
+          operation,
+          vectorA: active.vectorA,
+          vectorB: active.vectorB,
+          angleUnit: active.angleUnit,
+        };
+      },
+    );
+  }
+
+  function runVectorEditorAction() {
+    const inputLatex = vectorEditorLatex;
+    const dispatched = dispatchVectorEditorLatex({
+      latex: inputLatex,
+      vectorA,
+      vectorB,
+      angleUnit,
+    });
+    if (!dispatched.ok) {
+      commitVectorEditorError(inputLatex, dispatched.message);
+      return;
+    }
+
+    runVectorRequest(dispatched.request, inputLatex, () => dispatched.request);
   }
 
   function setMatrixCell(which: 'A' | 'B', row: number, column: number, value: number) {
@@ -295,7 +376,9 @@ export function useLinearAlgebraRuntime({
     matrixA,
     matrixB,
     matrixEditorLatex,
+    runMatrixEditorAction,
     runMatrixAction,
+    runVectorEditorAction,
     runVectorAction,
     restoreMatrixSurfaceState,
     restoreVectorSurfaceState,

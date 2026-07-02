@@ -1608,3 +1608,7 @@
 ## 2026-07-02 - LINEAR-ALGEBRA-LATEX-PARSER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector editor LaTeX parsing is a local linear-algebra AST parser only. It recognizes named values, inline `bmatrix` literals, and approved Matrix/Vector operators without importing Equation internals, running operations, solving equations, or routing unsupported forms.
+
+## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-DISPATCH1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector main editor execution must dispatch parsed executable forms through the existing Matrix/Vector request runners, OOE capability IDs, history seeds, and result readback. F-keys remain current named-input shortcuts. Parsed forms without an existing operation, including rank/RREF for now, stop with controlled local errors instead of creating a second solver or importing Equation internals.

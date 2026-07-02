@@ -32,6 +32,8 @@ function createDeps(): Parameters<typeof executePrimaryActionWithDeps>[0] {
     runCalculateActionEvaluate: vi.fn(),
     openSelectedEquationMenuEntry: vi.fn(),
     runEquationAction: vi.fn(),
+    runMatrixEditorAction: vi.fn(),
+    runVectorEditorAction: vi.fn(),
     runTableAction: vi.fn(),
   };
 }
@@ -60,5 +62,17 @@ describe('primaryActionRouter', () => {
     deps.currentMode = 'table';
     executePrimaryActionWithDeps(deps);
     expect(deps.runTableAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs Matrix and Vector editor actions from primary action', () => {
+    const deps = createDeps();
+
+    deps.currentMode = 'matrix';
+    executePrimaryActionWithDeps(deps);
+    expect(deps.runMatrixEditorAction).toHaveBeenCalledTimes(1);
+
+    deps.currentMode = 'vector';
+    executePrimaryActionWithDeps(deps);
+    expect(deps.runVectorEditorAction).toHaveBeenCalledTimes(1);
   });
 });

@@ -37,6 +37,8 @@ type PrimaryActionDeps = {
   runCalculateActionEvaluate: () => void;
   openSelectedEquationMenuEntry: () => void;
   runEquationAction: () => void;
+  runMatrixEditorAction: () => void;
+  runVectorEditorAction: () => void;
   runTableAction: () => void;
 };
 
@@ -121,6 +123,16 @@ export function executePrimaryActionWithDeps(deps: PrimaryActionDeps) {
     }
 
     deps.runEquationAction();
+    return;
+  }
+
+  if (deps.currentMode === 'matrix') {
+    deps.runMatrixEditorAction();
+    return;
+  }
+
+  if (deps.currentMode === 'vector') {
+    deps.runVectorEditorAction();
     return;
   }
 

@@ -1,6 +1,7 @@
 import {
   act,
   renderHook,
+  waitFor,
 } from '@testing-library/react';
 import {
   describe,
@@ -186,6 +187,71 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([4, 5, 6]);
     expect(hook.result.current.linearAlgebraRuntime.vectorB).toEqual([7, 8, 9]);
     expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe('u\\cdot v');
+  });
+
+  it('runs Matrix and Vector editor expressions through existing operations', async () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('A+B');
+    });
+    act(() => {
+      hook.result.current.runMatrixEditorAction();
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        exactLatex: '\\begin{bmatrix}6 & 8\\\\10 & 12\\end{bmatrix}',
+      }),
+      'A+B',
+      'matrix',
+      expect.objectContaining({
+        matrixSeed: expect.objectContaining({ operation: 'add' }),
+      }),
+    ));
+
+    commitOutcome.mockClear();
+    hook.rerender({ currentMode: 'vector' });
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setVectorEditorLatex('u\\cdot v');
+    });
+    act(() => {
+      hook.result.current.runVectorEditorAction();
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        exactLatex: '32',
+      }),
+      'u\\cdot v',
+      'vector',
+      expect.objectContaining({
+        vectorSeed: expect.objectContaining({ operation: 'dot' }),
+      }),
+    ));
+  });
+
+  it('commits controlled errors for unsupported Matrix editor expressions', () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('\\operatorname{rank}\\left(A\\right)');
+    });
+    act(() => {
+      hook.result.current.runMatrixEditorAction();
+    });
+
+    expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'error',
+        title: 'Matrix',
+        error: expect.stringContaining('Rank and RREF'),
+      }),
+      '\\operatorname{rank}\\left(A\\right)',
+      'matrix',
+    );
   });
 
   it('restores Table and Matrix history entries through the shell', () => {
