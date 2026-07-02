@@ -252,6 +252,32 @@ function matrixCoordinatesRequest(
   };
 }
 
+function matrixChangeOfBasisRequest(
+  input: MatrixEditorDispatchInput,
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'changeOfBasis' }>,
+): MatrixEditorDispatchResult {
+  const source = matrixOperand(expression.source, input);
+  const target = matrixOperand(expression.target, input);
+  if (!source || !target) {
+    return {
+      ok: false,
+      message: 'Change of basis needs Matrix A/B values or inline matrix literals for both bases.',
+    };
+  }
+
+  return {
+    ok: true,
+    request: {
+      operation: 'changeBasis',
+      matrixA: source.matrix,
+      matrixB: target.matrix,
+      ...(source.exactMatrix ? { exactMatrixA: source.exactMatrix } : {}),
+      ...(target.exactMatrix ? { exactMatrixB: target.exactMatrix } : {}),
+      ...matrixMetadata(input, { operandA: source, operandB: target }),
+    },
+  };
+}
+
 function matrixUnaryRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
@@ -661,6 +687,9 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   }
   if (expression.kind === 'coordinates') {
     return matrixCoordinatesRequest(input, expression);
+  }
+  if (expression.kind === 'changeOfBasis') {
+    return matrixChangeOfBasisRequest(input, expression);
   }
   if (expression.kind === 'binary') {
     return matrixPairRequest(input, expression);

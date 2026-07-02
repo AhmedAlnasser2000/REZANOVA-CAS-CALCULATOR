@@ -179,6 +179,43 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{change}\\left(A,B\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'changeBasis',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{change}\\left(A,B\\right)',
+        matrixOperandLatexA: 'A',
+        matrixOperandLatexB: 'B',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{change}\\left(\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix},\\begin{bmatrix}1&1\\\\0&1\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'changeBasis',
+        matrixA: [[1, 0], [0, 1]],
+        matrixB: [[1, 1], [0, 1]],
+        exactMatrixA: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }],
+        ],
+        exactMatrixB: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }],
+        ],
+        matrixOperandLatexA: '\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}',
+        matrixOperandLatexB: '\\begin{bmatrix}1&1\\\\0&1\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{invertible}\\left(B\\right)',
       matrixA,
       matrixB,

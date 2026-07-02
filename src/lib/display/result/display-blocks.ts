@@ -133,6 +133,8 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Column Space Proof',
   'Coordinate Facts',
   'Coordinate Proof',
+  'Change-of-Basis Facts',
+  'Change-of-Basis Proof',
   'Basis Facts',
   'Basis Proof',
   'Eigenspaces',

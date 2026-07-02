@@ -22,6 +22,7 @@ import {
   type NumericMatrixRequest,
 } from './matrix-core';
 import { runMatrixBasis } from './matrix-basis';
+import { runMatrixChangeOfBasis } from './matrix-change-of-basis';
 import { runMatrixCoordinates } from './matrix-coordinates';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
@@ -256,6 +257,26 @@ function exactCoordinatesResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactChangeOfBasisResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation !== 'changeBasis') {
+    return null;
+  }
+
+  return req.matrixB
+    ? runMatrixChangeOfBasis({
+        sourceLabel: matrixLabelA(req),
+        targetLabel: matrixLabelB(req),
+        sourceMatrix: req.matrixA,
+        targetMatrix: req.matrixB,
+        exactSourceMatrix: req.exactMatrixA,
+        exactTargetMatrix: req.exactMatrixB,
+      })
+    : {
+        warnings: [],
+        error: 'Matrix B is incomplete.',
+      };
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -338,6 +359,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const coordinatesResponse = exactCoordinatesResponse(req);
   if (coordinatesResponse) {
     return coordinatesResponse;
+  }
+
+  const changeOfBasisResponse = exactChangeOfBasisResponse(req);
+  if (changeOfBasisResponse) {
+    return changeOfBasisResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

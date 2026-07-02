@@ -341,6 +341,22 @@ describe('history entry schema', () => {
     }).matrixSeed?.coordinateVector).toEqual([5, 11]);
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-change-basis',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{change}\\left(A,B\\right)',
+      resultLatex: 'P_{B\\leftarrow A}=\\begin{bmatrix}1 & -1\\\\0 & 1\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'changeBasis',
+        matrixA: [[1, 0], [0, 1]],
+        matrixB: [[1, 1], [0, 1]],
+        editorExpressionLatex: '\\operatorname{change}\\left(A,B\\right)',
+        matrixOperandLatexA: 'A',
+        matrixOperandLatexB: 'B',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('changeBasis');
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',

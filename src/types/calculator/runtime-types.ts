@@ -1006,7 +1006,7 @@ export type ModeState = {
 };
 
 export type MatrixOperation =
-  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'linearSystem';
+  | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
 

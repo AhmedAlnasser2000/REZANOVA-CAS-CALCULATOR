@@ -56,6 +56,22 @@ describe('runMatrixMode', () => {
     expect(result.detailSections?.map((section) => section.title)).toEqual(['Coordinate Facts', 'Coordinate Proof']);
   });
 
+  it('labels change-of-basis runs with their conversion direction', () => {
+    const result = runMatrixMode({
+      operation: 'changeBasis',
+      matrixA: [[1, 0], [0, 1]],
+      matrixB: [[1, 1], [0, 1]],
+    });
+
+    expect(result.title).toBe('change(A,B)');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.exactLatex).toBe('P_{B\\leftarrow A}=\\begin{bmatrix}1 & -1\\\\0 & 1\\end{bmatrix}');
+    expect(result.detailSections?.[1]?.lines).toContain('P_{B\\leftarrow A}=B^{-1}A');
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

@@ -267,6 +267,45 @@ describe('runMatrixOperation', () => {
     );
   });
 
+  it('computes exact change-of-basis matrices with direction readback', () => {
+    const change = runMatrixOperation({
+      operation: 'changeBasis',
+      matrixA: [[1, 0], [0, 1]],
+      matrixB: [[1, 1], [0, 1]],
+    });
+
+    expect(change.resultLatex).toBe('P_{B\\leftarrow A}=\\begin{bmatrix}1 & -1\\\\0 & 1\\end{bmatrix}');
+    expect(change.approxText).toBe('2 by 2 coordinate conversion');
+    expect(change.detailSections?.map((section) => section.title)).toEqual([
+      'Change-of-Basis Facts',
+      'Change-of-Basis Proof',
+    ]);
+    expect(change.detailSections?.[0]?.lines).toContain('\\det(A)=1');
+    expect(change.detailSections?.[0]?.lines).toContain('\\det(B)=1');
+    expect(change.detailSections?.[1]?.lines).toContain('P_{B\\leftarrow A}=B^{-1}A');
+    expect(change.detailSections?.[1]?.lines).toContain(
+      '\\text{If }[v]_{A}\\text{ is known, then }[v]_{B}=P_{B\\leftarrow A}[v]_{A}.',
+    );
+  });
+
+  it('stops change of basis on non-basis operands with proof cards', () => {
+    const change = runMatrixOperation({
+      operation: 'changeBasis',
+      matrixA: [[1, 0], [0, 1]],
+      matrixB: [[1, 1], [2, 2]],
+    });
+
+    expect(change.error).toBe('Change of basis needs two square full-rank basis matrices. Run basis(...) to inspect the target matrix.');
+    expect(change.detailSections?.map((section) => section.title)).toEqual([
+      'Change-of-Basis Facts',
+      'Change-of-Basis Proof',
+    ]);
+    expect(change.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(B)=1');
+    expect(change.detailSections?.[1]?.lines).toContain(
+      'At least one column is not a pivot, so this matrix is not a basis and cannot define unique coordinate conversion.',
+    );
+  });
+
   it('explains invertibility theorem facts for square matrices', () => {
     const invertible = runMatrixOperation({
       operation: 'invertibilityA',

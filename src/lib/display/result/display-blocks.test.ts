@@ -228,6 +228,32 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix change-of-basis proof details visible but collapsible by default', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: '\\operatorname{change}(A,B)',
+      exactLatex: 'P_{B\\leftarrow A}=\\begin{bmatrix}1 & -1\\\\0 & 1\\end{bmatrix}',
+      sourceMode: 'matrix',
+      detailSections: [{
+        title: 'Change-of-Basis Proof',
+        lines: [
+          'P_{B\\leftarrow A}=B^{-1}A',
+          '\\text{If }[v]_{A}\\text{ is known, then }[v]_{B}=P_{B\\leftarrow A}[v]_{A}.',
+        ],
+        lineKind: 'math',
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Change-of-Basis Proof');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      collapsible: true,
+      defaultCollapsed: false,
+    });
+  });
+
   it('keeps solve notes collapsed by default even when the prose is short', () => {
     const outcome: DisplayOutcome = {
       kind: 'success',

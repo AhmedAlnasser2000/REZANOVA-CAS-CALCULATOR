@@ -53,6 +53,14 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{coord}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toMatchObject({
       kind: 'coordinates',
     });
+    expect(parsed('\\operatorname{change}\\left(A,B\\right)', 'matrix')).toEqual({
+      kind: 'changeOfBasis',
+      source: { kind: 'named', name: 'A', displayLatex: 'A' },
+      target: { kind: 'named', name: 'B', displayLatex: 'B' },
+    });
+    expect(parsed('\\operatorname{changebasis}\\left(A,B\\right)', 'matrix')).toMatchObject({
+      kind: 'changeOfBasis',
+    });
     expect(parsed('\\operatorname{invertible}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'invertibility' });
     expect(parsed('\\operatorname{eigen}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'eigen' });
   });

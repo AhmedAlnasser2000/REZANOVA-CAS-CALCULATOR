@@ -44,6 +44,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'coordinates'; basis: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
+  | { kind: 'changeOfBasis'; source: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | {
       kind: 'linearSystem';
       form: LinearAlgebraSystemForm;
@@ -108,6 +109,10 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{Coords\}/g, 'coords')
     .replace(/\\operatorname\{coord\}/g, 'coords')
     .replace(/\\operatorname\{Coord\}/g, 'coords')
+    .replace(/\\operatorname\{change\}/g, 'change')
+    .replace(/\\operatorname\{Change\}/g, 'change')
+    .replace(/\\operatorname\{changebasis\}/g, 'changebasis')
+    .replace(/\\operatorname\{ChangeBasis\}/g, 'changebasis')
     .replace(/\\operatorname\{invertible\}/g, 'invertible')
     .replace(/\\operatorname\{Invertible\}/g, 'invertible')
     .replace(/\\operatorname\{eigen\}/g, 'eigen')
@@ -593,6 +598,19 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       kind: 'coordinates',
       basis: parseExpression(parts[0], options),
       vector: parseExpression(parts[1], options),
+    };
+  }
+
+  const changeArgument = functionArgument(input, 'change') ?? functionArgument(input, 'changebasis');
+  if (changeArgument !== null) {
+    const parts = splitTopLevelComma(changeArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Change of basis requires source and target basis matrices.');
+    }
+    return {
+      kind: 'changeOfBasis',
+      source: parseExpression(parts[0], options),
+      target: parseExpression(parts[1], options),
     };
   }
 

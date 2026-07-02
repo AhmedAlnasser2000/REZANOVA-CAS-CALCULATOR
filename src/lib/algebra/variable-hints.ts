@@ -85,6 +85,8 @@ const RESERVED_CONSTANTS = new Set(['e', 'pi', 'infinity', 'nan']);
 const RESERVED_UNITS = new Set(['i', 'imaginaryi']);
 
 const MATRIX_EDITOR_FUNCTIONS = new Set([
+  'change',
+  'changebasis',
   'col',
   'coord',
   'coords',
