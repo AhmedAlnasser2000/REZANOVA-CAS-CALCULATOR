@@ -176,11 +176,11 @@ function resolveZeroTimesLogInfinity(
 
   const powerLatex = zeroOrder === 1 ? variable : `${variable}^{${zeroOrder}}`;
   return success(0, '0', [
-    'Detected the indeterminate product 0 times infinity.',
+    'Form detected: indeterminate product 0 times infinity.',
     `Original form: ${nodeLatex(node) ?? 'product'}.`,
-    `Rewrite: ${powerLatex}\\ln(${variable}) = \\ln(${variable})/(1/${powerLatex}).`,
-    `Sub-limit: 1/${powerLatex} grows faster than \\ln(${variable}) as ${variable}->0+.`,
-    'Final limit: 0.',
+    `Rewrite/equivalent: ${powerLatex}\\ln(${variable}) = \\ln(${variable})/(1/${powerLatex}).`,
+    `Key calculation: 1/${powerLatex} grows faster than \\ln(${variable}) as ${variable}->0+.`,
+    'Conclusion: final limit is 0.',
   ]);
 }
 
@@ -207,11 +207,12 @@ function resolveFinitePowerTransform(
   }
 
   return success(1, '1', [
-    'Detected the indeterminate power form 0^0.',
+    'Form detected: indeterminate power form 0^0.',
     `Original form: ${nodeLatex(node) ?? 'power'}.`,
-    `Log transform: \\ln(y)=${nodeLatex(node[2]) ?? variable}\\ln(${variable}).`,
-    `Sub-limit: ${variable}\\ln(${variable}) tends to 0 as ${variable}->0+; multiplying by a finite coefficient keeps it 0.`,
-    'Exponentiating the sub-limit gives e^0=1.',
+    `Rewrite/equivalent: \\ln(y)=${nodeLatex(node[2]) ?? variable}\\ln(${variable}).`,
+    `Key calculation: ${variable}\\ln(${variable}) tends to 0 as ${variable}->0+; multiplying by a finite coefficient keeps it 0.`,
+    'Conclusion: exponentiating the sub-limit gives e^0=1.',
+    'Conclusion: final limit is 1.',
   ]);
 }
 
@@ -257,11 +258,12 @@ function resolveOneToInfinityPower(
   const subLimit = reciprocalCoefficient * exponentCoefficient;
   const value = Math.exp(subLimit);
   return success(value, expLatex(subLimit), [
-    'Detected the indeterminate power form 1^infinity.',
+    'Form detected: indeterminate power form 1^infinity.',
     `Original form: ${nodeLatex(node) ?? 'power'}.`,
-    'Log transform: ln(y) = exponent * ln(base).',
-    `Sub-limit: ${nodeLatex(node[2]) ?? 'exponent'}\\ln(1+${formatLimitNumberLatex(reciprocalCoefficient)}/${variable}) -> ${formatLimitNumberLatex(subLimit)}.`,
-    `Exponentiating the sub-limit gives ${expLatex(subLimit)}.`,
+    'Rewrite/equivalent: ln(y) = exponent * ln(base).',
+    `Key calculation: ${nodeLatex(node[2]) ?? 'exponent'}\\ln(1+${formatLimitNumberLatex(reciprocalCoefficient)}/${variable}) -> ${formatLimitNumberLatex(subLimit)}.`,
+    `Conclusion: exponentiating the sub-limit gives ${expLatex(subLimit)}.`,
+    `Conclusion: final limit is ${expLatex(subLimit)}.`,
   ]);
 }
 
@@ -286,11 +288,12 @@ function resolveInfinityToZeroPower(
   }
 
   return success(1, '1', [
-    'Detected the indeterminate power form infinity^0.',
+    'Form detected: indeterminate power form infinity^0.',
     `Original form: ${nodeLatex(node) ?? 'power'}.`,
-    `Log transform: \\ln(y)=(${formatLimitNumberLatex(reciprocalCoefficient)}/${variable})\\ln(${variable}).`,
-    `Sub-limit: \\ln(${variable})/${variable} tends to 0 as ${variable}->\\infty.`,
-    'Exponentiating the sub-limit gives e^0=1.',
+    `Rewrite/equivalent: \\ln(y)=(${formatLimitNumberLatex(reciprocalCoefficient)}/${variable})\\ln(${variable}).`,
+    `Key calculation: \\ln(${variable})/${variable} tends to 0 as ${variable}->\\infty.`,
+    'Conclusion: exponentiating the sub-limit gives e^0=1.',
+    'Conclusion: final limit is 1.',
   ]);
 }
 

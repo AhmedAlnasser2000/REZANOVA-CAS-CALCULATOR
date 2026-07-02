@@ -137,6 +137,8 @@ describe('calculus limits', () => {
     expect(sameDegree.exactLatex).toBe('\\frac{3}{2}');
     expect(Number(sameDegree.approxText)).toBeCloseTo(1.5, 6);
     expect(sameDegree.detailSections?.[0]?.title).toBe('Limit Method');
+    expect(sameDegree.detailSections?.[0]?.lines.join(' ')).toContain('Form detected');
+    expect(sameDegree.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
 
     const toZero = evaluateCalculusInfiniteLimit({
       bodyLatex: '\\frac{x+1}{x^2+5}',
@@ -158,6 +160,7 @@ describe('calculus limits', () => {
     expect(lHospital.resultOrigin).toBe('heuristic-symbolic');
     expect(lHospital.exactLatex).toBe('0');
     expect(lHospital.detailSections?.[0]?.lines.join(' ')).toContain("L'Hospital");
+    expect(lHospital.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
   });
 
   it('stops variable mismatches with a correction suggestion', () => {
@@ -266,10 +269,12 @@ describe('calculus limits', () => {
     expect(finite.error).toBeUndefined();
     expect(finite.exactLatex).toBe('0');
     expect(finite.detailSections?.[0]?.lines.join(' ')).toContain('common denominator');
+    expect(finite.detailSections?.[0]?.lines.join(' ')).toContain('Form detected');
 
     expect(infinity.error).toBeUndefined();
     expect(infinity.exactLatex).toBe('\\frac{1}{2}');
     expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('conjugate');
+    expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
   });
 
   it('uses proof-first complex domain handling for recognized radical limits', () => {
@@ -310,11 +315,13 @@ describe('calculus limits', () => {
     expect(product.error).toBeUndefined();
     expect(product.exactLatex).toBe('0');
     expect(product.detailSections?.[0]?.lines.join(' ')).toContain('0 times infinity');
+    expect(product.detailSections?.[0]?.lines.join(' ')).toContain('Rewrite/equivalent');
 
     expect(power.error).toBeUndefined();
     expect(power.exactLatex).toBe('e');
     expect(Number(power.approxText)).toBeCloseTo(Math.E, 6);
     expect(power.detailSections?.[0]?.lines.join(' ')).toContain('1^infinity');
+    expect(power.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
   });
 
   it('resolves capped Taylor leading-term natural limit expressions', () => {
@@ -328,6 +335,7 @@ describe('calculus limits', () => {
     expect(tangent.error).toBeUndefined();
     expect(tangent.exactLatex).toBe('\\frac{1}{3}');
     expect(tangent.detailSections?.[0]?.lines.join(' ')).toContain('Taylor leading term');
+    expect(tangent.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
 
     expect(exponential.error).toBeUndefined();
     expect(exponential.exactLatex).toBe('\\frac{1}{6}');

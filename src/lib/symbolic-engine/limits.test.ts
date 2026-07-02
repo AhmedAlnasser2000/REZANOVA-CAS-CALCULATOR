@@ -101,9 +101,10 @@ describe('symbolic-engine limits', () => {
     if (result.kind === 'success') {
       const method = result.detailSections?.[0]?.lines.join(' ') ?? ''
       expect(result.exactLatex).toBe('-\\frac{1}{2}')
-      expect(method).toContain('Equivalent used')
-      expect(method).toContain('Order comparison')
-      expect(method).toContain('Final limit')
+      expect(method).toContain('Form detected')
+      expect(method).toContain('Rewrite/equivalent')
+      expect(method).toContain('Key calculation')
+      expect(method).toContain('Conclusion')
     }
   })
 
@@ -152,7 +153,7 @@ describe('symbolic-engine limits', () => {
     expect(postCancelPole.kind).toBe('success')
     if (postCancelPole.kind === 'success') {
       expect(postCancelPole.value).toBe('posInfinity')
-      expect(postCancelPole.detailSections?.[0]?.lines.join(' ')).toContain('Negative net order')
+      expect(postCancelPole.detailSections?.[0]?.lines.join(' ')).toContain('negative net order')
     }
     expect(mismatchAfterCancel.kind).toBe('unhandled')
 
@@ -195,7 +196,7 @@ describe('symbolic-engine limits', () => {
     if (power?.kind === 'success') {
       expect(power.exactLatex).toBe('e')
       expect(power.value).toBeCloseTo(Math.E, 8)
-      expect(power.detailSections?.[0]?.lines.join(' ')).toContain('Log transform')
+      expect(power.detailSections?.[0]?.lines.join(' ')).toContain('Rewrite/equivalent')
     }
   })
 

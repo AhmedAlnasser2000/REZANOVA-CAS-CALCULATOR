@@ -211,9 +211,10 @@ export function resolveInfiniteExactLocalAlgebraLimit(
     value,
     exactLatex: formatLimitNumberLatex(value),
     detailSections: limitMethodSection(
-      'Rationalized the radical difference by multiplying by the conjugate.',
-      'At positive infinity, the leading denominator behaves like 2x.',
-      `Final limit: ${formatLimitNumberLatex(value)}.`,
+      'Form detected: radical difference at positive infinity.',
+      'Rewrite/equivalent: rationalized the radical difference by multiplying by the conjugate.',
+      'Key calculation: at positive infinity, the leading denominator behaves like 2x.',
+      `Conclusion: final limit is ${formatLimitNumberLatex(value)}.`,
     ),
   };
 }

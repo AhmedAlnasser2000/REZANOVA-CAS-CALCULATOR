@@ -237,7 +237,7 @@ export function attemptLHospital(
   options?: LHospitalAttemptOptions,
 ): LHospitalAttempt {
   const budget = optionsWithDefaults(options);
-  const lines = ["L'Hospital route selected for an indeterminate quotient."];
+  const lines = ["Form detected: L'Hospital route selected for an indeterminate quotient."];
 
   if (!isFiniteIndeterminateQuotient(node, target, variable)) {
     return unsupported("L'Hospital needs a finite 0/0 or infinity/infinity quotient.", lines, 0);
@@ -266,7 +266,8 @@ export function attemptLHospital(
         exactLatex: evaluated.exactLatex,
         detailSections: limitMethodSection(
           ...lines,
-          `The differentiated quotient evaluates to ${evaluated.exactLatex} at the target.`,
+          `Key calculation: the differentiated quotient evaluates to ${evaluated.exactLatex} at the target.`,
+          `Conclusion: final limit is ${evaluated.exactLatex}.`,
         ),
         iterations: iteration,
       };
@@ -295,7 +296,7 @@ export function attemptInfiniteLHospital(
   options?: LHospitalAttemptOptions,
 ): LHospitalAttempt {
   const budget = optionsWithDefaults(options);
-  const lines = ["L'Hospital route selected for a quotient at infinity."];
+  const lines = ["Form detected: L'Hospital route selected for a quotient at infinity."];
 
   if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
     return unsupported("L'Hospital at infinity needs a quotient.", lines, 0);
@@ -324,7 +325,8 @@ export function attemptInfiniteLHospital(
         exactLatex: evaluated.exactLatex,
         detailSections: limitMethodSection(
           ...lines,
-          `The differentiated quotient stabilizes to ${evaluated.exactLatex ?? evaluated.value} at infinity.`,
+          `Key calculation: the differentiated quotient stabilizes to ${evaluated.exactLatex ?? evaluated.value} at infinity.`,
+          `Conclusion: final limit is ${evaluated.exactLatex ?? evaluated.value}.`,
         ),
         iterations: iteration,
       };

@@ -70,6 +70,10 @@ function stripFinalPeriod(text: string) {
   return text.endsWith('.') ? text.slice(0, -1) : text;
 }
 
+function looksLikeMathValue(text: string) {
+  return /[\\=^/]/u.test(text);
+}
+
 function mathValueLineParts(
   prefix: string,
   value: string,
@@ -96,6 +100,14 @@ function inferLimitDetailLineParts(line: string): DisplayDetailLinePart[] | unde
   const rewrite = line.match(/^Rewrite:\s*(.+)\.$/u);
   if (rewrite) {
     return mathValueLineParts('Rewrite: ', rewrite[1]);
+  }
+
+  const rewriteEquivalent = line.match(/^Rewrite\/equivalent:\s*(.+)\.$/u);
+  if (rewriteEquivalent) {
+    const value = rewriteEquivalent[1];
+    return looksLikeMathValue(value)
+      ? mathValueLineParts('Rewrite/equivalent: ', value)
+      : undefined;
   }
 
   const logTransform = line.match(/^Log transform:\s*(.+)\.$/u);
@@ -137,6 +149,22 @@ function inferLimitDetailLineParts(line: string): DisplayDetailLinePart[] | unde
       limitMathPart(normalizeSmallNumericLatex(taylor[2])),
       limitTextPart('.'),
     ];
+  }
+
+  const keyEquivalent = line.match(/^Key calculation: coefficient\s+(.+)\s+with net order\s+(-?\d+)\.$/u);
+  if (keyEquivalent) {
+    return [
+      limitTextPart('Key calculation: coefficient '),
+      limitMathPart(normalizeSmallNumericLatex(keyEquivalent[1])),
+      limitTextPart(' with net order '),
+      limitMathPart(keyEquivalent[2]),
+      limitTextPart('.'),
+    ];
+  }
+
+  const conclusionLimit = line.match(/^Conclusion: final limit is\s+(.+)\.$/u);
+  if (conclusionLimit) {
+    return mathValueLineParts('Conclusion: final limit is ', conclusionLimit[1]);
   }
 
   const sideLimit = line.match(/^(Left side|Right side) tends to\s+(.+)\.$/u);

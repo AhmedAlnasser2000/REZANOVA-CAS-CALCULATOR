@@ -362,25 +362,25 @@ export function resolveLocalEquivalentLimit(
   }
 
   const baseLines = [
-    intro,
+    'Form detected: finite local equivalent comparison of local orders.',
+    `Rewrite/equivalent: ${intro}`,
     ...(equivalent.notes ?? []),
-    `Equivalent used: coefficient ${formatLimitNumberLatex(equivalent.coefficient)} with net order ${equivalent.order}.`,
-    `Order comparison: net order ${equivalent.order}.`,
+    `Key calculation: coefficient ${formatLimitNumberLatex(equivalent.coefficient)} with net order ${equivalent.order}.`,
     `Reason: ${equivalent.reason}.`,
   ];
 
   if (equivalent.order === 0) {
     return success(equivalent.coefficient, 'rule-based-symbolic', [
       ...baseLines,
-      `Final limit: ${formatLimitNumberLatex(equivalent.coefficient)}.`,
+      `Conclusion: final limit is ${formatLimitNumberLatex(equivalent.coefficient)}.`,
     ]);
   }
 
   if (equivalent.order > 0) {
     return success(0, 'rule-based-symbolic', [
       ...baseLines,
-      'Positive net order means the expression tends to 0 at the target.',
-      'Final limit: 0.',
+      'Conclusion: positive net order means the expression tends to 0 at the target.',
+      'Conclusion: final limit is 0.',
     ]);
   }
 
@@ -388,8 +388,8 @@ export function resolveLocalEquivalentLimit(
   return infinity
     ? success(infinity, 'rule-based-symbolic', [
         ...baseLines,
-        'Negative net order creates a pole; the requested direction determines the signed infinity when signs agree.',
-        `Final limit: ${formatLimitValueLatex(infinity) ?? 'undefined'}.`,
+        'Conclusion: negative net order creates a pole; the requested direction determines the signed infinity when signs agree.',
+        `Conclusion: final limit is ${formatLimitValueLatex(infinity) ?? 'undefined'}.`,
       ])
     : undefined;
 }

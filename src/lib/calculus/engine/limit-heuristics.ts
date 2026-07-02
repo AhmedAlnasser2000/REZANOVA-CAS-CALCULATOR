@@ -70,7 +70,8 @@ function rationalRatioLatex(numerator: number, denominator: number): string | un
 
 function rationalDominanceDetail(...lines: string[]) {
   return limitMethodSection(
-    'Compared polynomial degrees and leading coefficients for bounded rational dominance at infinity.',
+    'Form detected: asymptotic comparison at infinity.',
+    'Rewrite/equivalent: compare dominant polynomial terms and leading coefficients.',
     ...lines,
   );
 }
@@ -287,7 +288,11 @@ export function resolveInfiniteLimitHeuristic(
     return {
       kind: 'success',
       value: constant,
-      detailSections: limitMethodSection('The expression is constant with respect to the limit variable.'),
+      detailSections: limitMethodSection(
+        'Form detected: constant expression at infinity.',
+        'Key calculation: the expression is constant with respect to the limit variable.',
+        `Conclusion: final limit is ${constant}.`,
+      ),
     };
   }
 
@@ -297,14 +302,18 @@ export function resolveInfiniteLimitHeuristic(
       return {
         kind: 'success',
         value: polynomial.leadingCoefficient,
-        detailSections: rationalDominanceDetail('The polynomial has degree 0, so the constant term is the limit.'),
+        detailSections: rationalDominanceDetail(
+          'Key calculation: the polynomial has degree 0, so the constant term is the limit.',
+          `Conclusion: final limit is ${polynomial.leadingCoefficient}.`,
+        ),
       };
     }
     return {
       kind: 'success',
       value: signedInfinity(signAtInfinity(polynomial.leadingCoefficient, polynomial.degree)),
       detailSections: rationalDominanceDetail(
-        `The polynomial degree is ${polynomial.degree}; its leading term determines signed divergence.`,
+        `Key calculation: the polynomial degree is ${polynomial.degree}; its leading term determines signed divergence.`,
+        `Conclusion: final limit is ${signedInfinity(signAtInfinity(polynomial.leadingCoefficient, polynomial.degree)) === 'posInfinity' ? '\\infty' : '-\\infty'}.`,
       ),
     };
   }
@@ -322,29 +331,35 @@ export function resolveInfiniteLimitHeuristic(
         value: 0,
         exactLatex: '0',
         detailSections: rationalDominanceDetail(
-          `Numerator degree ${numerator.degree} is lower than denominator degree ${denominator.degree}, so the ratio tends to 0.`,
+          `Key calculation: numerator degree ${numerator.degree} is lower than denominator degree ${denominator.degree}, so the ratio tends to 0.`,
+          'Conclusion: final limit is 0.',
         ),
       };
     }
 
     if (numerator.degree === denominator.degree) {
+      const exactLatex = rationalRatioLatex(numerator.leadingCoefficient, denominator.leadingCoefficient);
+      const value = normalizeZero(numerator.leadingCoefficient / denominator.leadingCoefficient);
       return {
         kind: 'success',
-        value: normalizeZero(numerator.leadingCoefficient / denominator.leadingCoefficient),
-        exactLatex: rationalRatioLatex(numerator.leadingCoefficient, denominator.leadingCoefficient),
+        value,
+        exactLatex,
         detailSections: rationalDominanceDetail(
-          `Degrees match at ${numerator.degree}; the limit is the leading-coefficient ratio.`,
+          `Key calculation: degrees match at ${numerator.degree}; the limit is the leading-coefficient ratio.`,
+          `Conclusion: final limit is ${exactLatex ?? value}.`,
         ),
       };
     }
 
     const degreeGap = numerator.degree - denominator.degree;
     const leadingRatio = numerator.leadingCoefficient / denominator.leadingCoefficient;
+    const infinity = signedInfinity(signAtInfinity(leadingRatio, degreeGap));
     return {
       kind: 'success',
-      value: signedInfinity(signAtInfinity(leadingRatio, degreeGap)),
+      value: infinity,
       detailSections: rationalDominanceDetail(
-        `Numerator degree ${numerator.degree} exceeds denominator degree ${denominator.degree}; the leading ratio and target side determine signed infinity.`,
+        `Key calculation: numerator degree ${numerator.degree} exceeds denominator degree ${denominator.degree}; the leading ratio and target side determine signed infinity.`,
+        `Conclusion: final limit is ${infinity === 'posInfinity' ? '\\infty' : '-\\infty'}.`,
       ),
     };
   }
