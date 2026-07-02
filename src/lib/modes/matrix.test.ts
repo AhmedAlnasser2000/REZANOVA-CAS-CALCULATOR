@@ -85,7 +85,11 @@ describe('runMatrixMode', () => {
       return;
     }
     expect(result.exactLatex).toBe('A=LU');
-    expect(result.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'LU Proof']);
+    expect(result.detailSections?.map((section) => section.title)).toEqual([
+      'LU Factors',
+      'Factorization Row Steps',
+      'LU Proof',
+    ]);
   });
 
   it('labels PLU factorization runs directly', () => {
@@ -104,6 +108,7 @@ describe('runMatrixMode', () => {
     expect(result.detailSections?.map((section) => section.title)).toEqual([
       'PLU Factors',
       'PLU Row Swaps',
+      'Factorization Row Steps',
       'PLU Proof',
     ]);
   });
@@ -127,7 +132,11 @@ describe('runMatrixMode', () => {
       return;
     }
     expect(result.exactLatex).toBe('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}');
-    expect(result.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'Factor Solve Proof']);
+    expect(result.detailSections?.map((section) => section.title)).toEqual([
+      'LU Factors',
+      'Factorization Row Steps',
+      'Factor Solve Proof',
+    ]);
   });
 
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {

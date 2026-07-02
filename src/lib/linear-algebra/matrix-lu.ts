@@ -13,6 +13,7 @@ import {
   scalar,
   type ExactMatrix,
   type ExactMatrixStopReason,
+  type ExactRowOperation,
   type ExactVector,
 } from './exact-matrix-core';
 import {
@@ -24,6 +25,7 @@ import {
   exactVectorFromWire,
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
+import { formatRowOperation } from './row-operation-readback';
 
 export type MatrixLuInput = {
   label: string;
@@ -40,7 +42,7 @@ export type MatrixFactorSolveInput = MatrixLuInput & {
 };
 
 type LuResult =
-  | { kind: 'success'; lower: ExactMatrix; upper: ExactMatrix; determinant: ExactScalar }
+  | { kind: 'success'; lower: ExactMatrix; upper: ExactMatrix; determinant: ExactScalar; rowOperations: ExactRowOperation[] }
   | { kind: 'needs-pivot'; pivotIndex: number }
   | { kind: 'stop'; reason: ExactMatrixStopReason | 'non-square-matrix' };
 type LuStopReason = Extract<LuResult, { kind: 'stop' }>['reason'];
@@ -52,6 +54,7 @@ type PluResult =
       upper: ExactMatrix;
       determinant: ExactScalar;
       swaps: Array<{ rowA: number; rowB: number }>;
+      rowOperations: ExactRowOperation[];
     }
   | { kind: 'needs-pivot'; pivotIndex: number }
   | { kind: 'stop'; reason: ExactMatrixStopReason | 'non-square-matrix' };
@@ -152,6 +155,7 @@ function factorLuNoPivot(matrix: ExactMatrix): LuResult {
   const size = validated.shape.rows;
   const lower = identityMatrix(size);
   const upper = zeroMatrix(size);
+  const rowOperations: ExactRowOperation[] = [];
 
   for (let pivot = 0; pivot < size; pivot += 1) {
     for (let column = pivot; column < size; column += 1) {
@@ -175,6 +179,9 @@ function factorLuNoPivot(matrix: ExactMatrix): LuResult {
         return { kind: 'needs-pivot', pivotIndex: pivot };
       }
       lower[row][pivot] = divided;
+      if (!exactScalarIsZero(divided)) {
+        rowOperations.push({ kind: 'eliminate', targetRow: row, pivotRow: pivot, factor: divided });
+      }
     }
   }
 
@@ -183,6 +190,20 @@ function factorLuNoPivot(matrix: ExactMatrix): LuResult {
     lower,
     upper,
     determinant: diagonalProduct(upper),
+    rowOperations,
+  };
+}
+
+function factorizationRowStepsSection(rowOperations: readonly ExactRowOperation[]): DisplayDetailSection {
+  const lines = rowOperations
+    .map(formatRowOperation)
+    .filter((line): line is string => Boolean(line));
+  return {
+    title: 'Factorization Row Steps',
+    lines: lines.length > 0
+      ? lines
+      : ['No row operations were needed to reach the upper factor.'],
+    lineKind: lines.length > 0 ? 'math' : 'text',
   };
 }
 
@@ -192,6 +213,7 @@ function luDetails(input: {
   upper: ExactMatrix;
   product: ExactMatrix;
   determinant: ExactScalar;
+  rowOperations: ExactRowOperation[];
 }): DisplayDetailSection[] {
   return [
     {
@@ -202,6 +224,7 @@ function luDetails(input: {
       ],
       lineKind: 'math',
     },
+    factorizationRowStepsSection(input.rowOperations),
     {
       title: 'LU Proof',
       lines: [
@@ -233,6 +256,7 @@ function pluFactorization(matrix: ExactMatrix): PluResult {
   const permutation = identityMatrix(size);
   const lower = identityMatrix(size);
   const swaps: Array<{ rowA: number; rowB: number }> = [];
+  const rowOperations: ExactRowOperation[] = [];
 
   for (let pivot = 0; pivot < size; pivot += 1) {
     let pivotRow = pivot;
@@ -250,6 +274,7 @@ function pluFactorization(matrix: ExactMatrix): PluResult {
         [lower[pivot][column], lower[pivotRow][column]] = [lower[pivotRow][column], lower[pivot][column]];
       }
       swaps.push({ rowA: pivot, rowB: pivotRow });
+      rowOperations.push({ kind: 'swap', rowA: pivot, rowB: pivotRow });
     }
 
     for (let row = pivot + 1; row < size; row += 1) {
@@ -258,6 +283,9 @@ function pluFactorization(matrix: ExactMatrix): PluResult {
         return { kind: 'needs-pivot', pivotIndex: pivot };
       }
       lower[row][pivot] = divided;
+      if (!exactScalarIsZero(divided)) {
+        rowOperations.push({ kind: 'eliminate', targetRow: row, pivotRow: pivot, factor: divided });
+      }
       for (let column = pivot; column < size; column += 1) {
         working[row][column] = subtractExactScalars(
           working[row][column],
@@ -276,6 +304,7 @@ function pluFactorization(matrix: ExactMatrix): PluResult {
     upper,
     determinant: determinantFromUpper(upper, swaps.length),
     swaps,
+    rowOperations,
   };
 }
 
@@ -295,6 +324,7 @@ function pluDetails(input: {
   upper: ExactMatrix;
   determinant: ExactScalar;
   swaps: Array<{ rowA: number; rowB: number }>;
+  rowOperations: ExactRowOperation[];
 }): DisplayDetailSection[] {
   const permutedLabel = prefixedMatrixLabel('P', input.label);
   return [
@@ -314,6 +344,7 @@ function pluDetails(input: {
         : ['\\text{No row swaps were needed.}'],
       lineKind: 'math',
     },
+    factorizationRowStepsSection(input.rowOperations),
     {
       title: 'PLU Proof',
       lines: [
@@ -368,6 +399,7 @@ export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
       upper: factored.upper,
       product,
       determinant: factored.determinant,
+      rowOperations: factored.rowOperations,
     }),
     warnings: [],
   };
@@ -407,6 +439,7 @@ export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
       upper: factored.upper,
       determinant: factored.determinant,
       swaps: factored.swaps,
+      rowOperations: factored.rowOperations,
     }),
     warnings: [],
   };
@@ -460,6 +493,7 @@ function luSolveDetails(input: {
   upper: ExactMatrix;
   intermediate: ExactVector;
   solution: ExactVector;
+  rowOperations: ExactRowOperation[];
 }): DisplayDetailSection[] {
   return [
     {
@@ -470,6 +504,7 @@ function luSolveDetails(input: {
       ],
       lineKind: 'math',
     },
+    factorizationRowStepsSection(input.rowOperations),
     {
       title: 'Factor Solve Proof',
       lines: [
@@ -494,6 +529,7 @@ function pluSolveDetails(input: {
   intermediate: ExactVector;
   solution: ExactVector;
   swaps: Array<{ rowA: number; rowB: number }>;
+  rowOperations: ExactRowOperation[];
 }): DisplayDetailSection[] {
   return [
     {
@@ -512,6 +548,7 @@ function pluSolveDetails(input: {
         : ['\\text{No row swaps were needed.}'],
       lineKind: 'math',
     },
+    factorizationRowStepsSection(input.rowOperations),
     {
       title: 'Factor Solve Proof',
       lines: [
@@ -561,6 +598,7 @@ export function runMatrixLuSolve(input: MatrixFactorSolveInput): MatrixResponse 
       upper: factored.upper,
       intermediate,
       solution,
+      rowOperations: factored.rowOperations,
     }),
     warnings: [],
   };
@@ -604,6 +642,7 @@ export function runMatrixPluSolve(input: MatrixFactorSolveInput): MatrixResponse
       intermediate,
       solution,
       swaps: factored.swaps,
+      rowOperations: factored.rowOperations,
     }),
     warnings: [],
   };

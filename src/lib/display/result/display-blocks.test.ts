@@ -374,6 +374,27 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix factorization row steps collapsed by default even when short', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'lu(A)',
+      exactLatex: 'A=LU',
+      detailSections: [{
+        title: 'Factorization Row Steps',
+        lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
+        lineKind: 'math',
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Factorization Row Steps');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      defaultCollapsed: true,
+    });
+  });
+
   it('keeps Linear Algebra proof cards visible even when their math is long', () => {
     const outcome: DisplayOutcome = {
       kind: 'success',

@@ -315,11 +315,16 @@ describe('runMatrixOperation', () => {
 
     expect(lu.resultLatex).toBe('A=LU');
     expect(lu.approxText).toBe('det(A) = 2');
-    expect(lu.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'LU Proof']);
+    expect(lu.detailSections?.map((section) => section.title)).toEqual([
+      'LU Factors',
+      'Factorization Row Steps',
+      'LU Proof',
+    ]);
     expect(lu.detailSections?.[0]?.lines).toContain('L=\\begin{bmatrix}1 & 0\\\\2 & 1\\end{bmatrix}');
     expect(lu.detailSections?.[0]?.lines).toContain('U=\\begin{bmatrix}2 & 1\\\\0 & 1\\end{bmatrix}');
-    expect(lu.detailSections?.[1]?.lines).toContain('LU=\\begin{bmatrix}2 & 1\\\\4 & 3\\end{bmatrix}');
-    expect(lu.detailSections?.[1]?.lines).toContain('\\det(A)=\\prod_i U_{ii}=2');
+    expect(lu.detailSections?.[1]?.lines).toEqual(['R_{2}\\leftarrow R_{2}-2R_{1}']);
+    expect(lu.detailSections?.[2]?.lines).toContain('LU=\\begin{bmatrix}2 & 1\\\\4 & 3\\end{bmatrix}');
+    expect(lu.detailSections?.[2]?.lines).toContain('\\det(A)=\\prod_i U_{ii}=2');
   });
 
   it('stops LU without row swaps when a pivot swap is needed', () => {
@@ -351,15 +356,17 @@ describe('runMatrixOperation', () => {
     expect(plu.detailSections?.map((section) => section.title)).toEqual([
       'PLU Factors',
       'PLU Row Swaps',
+      'Factorization Row Steps',
       'PLU Proof',
     ]);
     expect(plu.detailSections?.[0]?.lines).toContain('P=\\begin{bmatrix}0 & 1\\\\1 & 0\\end{bmatrix}');
     expect(plu.detailSections?.[0]?.lines).toContain('L=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
     expect(plu.detailSections?.[0]?.lines).toContain('U=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
     expect(plu.detailSections?.[1]?.lines).toEqual(['R_{1}\\leftrightarrow R_{2}']);
-    expect(plu.detailSections?.[2]?.lines).toContain('PA=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
-    expect(plu.detailSections?.[2]?.lines).toContain('LU=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
-    expect(plu.detailSections?.[2]?.lines).toContain('\\det(A)=(-1)^{1}\\prod_i U_{ii}=-1');
+    expect(plu.detailSections?.[2]?.lines).toEqual(['R_{1}\\leftrightarrow R_{2}']);
+    expect(plu.detailSections?.[3]?.lines).toContain('PA=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(plu.detailSections?.[3]?.lines).toContain('LU=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(plu.detailSections?.[3]?.lines).toContain('\\det(A)=(-1)^{1}\\prod_i U_{ii}=-1');
   });
 
   it('solves systems by reusing visible exact LU factors', () => {
@@ -377,12 +384,17 @@ describe('runMatrixOperation', () => {
 
     expect(solve.resultLatex).toBe('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}');
     expect(solve.approxText).toBe('LU solve');
-    expect(solve.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'Factor Solve Proof']);
+    expect(solve.detailSections?.map((section) => section.title)).toEqual([
+      'LU Factors',
+      'Factorization Row Steps',
+      'Factor Solve Proof',
+    ]);
     expect(solve.detailSections?.[0]?.lines).toContain('L=\\begin{bmatrix}1 & 0\\\\2 & 1\\end{bmatrix}');
     expect(solve.detailSections?.[0]?.lines).toContain('U=\\begin{bmatrix}2 & 1\\\\0 & 1\\end{bmatrix}');
-    expect(solve.detailSections?.[1]?.lines).toContain('Ly=\\begin{bmatrix}5\\\\11\\end{bmatrix}');
-    expect(solve.detailSections?.[1]?.lines).toContain('y=\\begin{bmatrix}5\\\\1\\end{bmatrix}');
-    expect(solve.detailSections?.[1]?.lines).toContain('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}');
+    expect(solve.detailSections?.[1]?.lines).toEqual(['R_{2}\\leftarrow R_{2}-2R_{1}']);
+    expect(solve.detailSections?.[2]?.lines).toContain('Ly=\\begin{bmatrix}5\\\\11\\end{bmatrix}');
+    expect(solve.detailSections?.[2]?.lines).toContain('y=\\begin{bmatrix}5\\\\1\\end{bmatrix}');
+    expect(solve.detailSections?.[2]?.lines).toContain('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}');
   });
 
   it('solves systems by reusing visible exact PLU factors and row swaps', () => {
@@ -399,11 +411,13 @@ describe('runMatrixOperation', () => {
     expect(solve.detailSections?.map((section) => section.title)).toEqual([
       'PLU Factors',
       'PLU Row Swaps',
+      'Factorization Row Steps',
       'Factor Solve Proof',
     ]);
     expect(solve.detailSections?.[1]?.lines).toEqual(['R_{1}\\leftrightarrow R_{2}']);
-    expect(solve.detailSections?.[2]?.lines).toContain('P\\left(\\begin{bmatrix}3\\\\4\\end{bmatrix}\\right)=\\begin{bmatrix}4\\\\3\\end{bmatrix}');
-    expect(solve.detailSections?.[2]?.lines).toContain('x=\\begin{bmatrix}4\\\\3\\end{bmatrix}');
+    expect(solve.detailSections?.[2]?.lines).toEqual(['R_{1}\\leftrightarrow R_{2}']);
+    expect(solve.detailSections?.[3]?.lines).toContain('P\\left(\\begin{bmatrix}3\\\\4\\end{bmatrix}\\right)=\\begin{bmatrix}4\\\\3\\end{bmatrix}');
+    expect(solve.detailSections?.[3]?.lines).toContain('x=\\begin{bmatrix}4\\\\3\\end{bmatrix}');
   });
 
   it('stops LU solve when a row swap is required', () => {

@@ -150,7 +150,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
 
 const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([
   'Solve Note',
-  'Row Reduction Steps',
+  'Row Reduction Steps', 'Factorization Row Steps',
 ]);
 
 function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
