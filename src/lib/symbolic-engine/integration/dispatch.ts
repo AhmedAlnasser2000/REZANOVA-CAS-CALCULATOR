@@ -13,6 +13,7 @@ import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standa
 import { tryAlgebraicGenus0SymbolicStandardRadicalRule } from './algebraic-genus0/symbolic-standard-radicals';
 import { tryAlgebraicGenus0Genus1BoundaryStop } from './algebraic-genus0/genus1-boundary';
 import { tryAlgebraicGenus1EllipticKindsRule } from './algebraic-genus1/elliptic-kinds-live';
+import { tryAlgebraicGenus1RationalInRadicalHermiteRule } from './algebraic-genus1/rational-in-radical-hermite';
 import {
   tryBinomialDerivativeSubstitutionRule,
   tryReciprocalBinomialDerivativeSubstitutionRule,
@@ -587,6 +588,21 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
       'u-substitution',
       algebraicGenus1EllipticKinds.verification,
       algebraicGenus1EllipticKinds.exactSupplementLatex,
+    );
+  }
+
+  const algebraicGenus1RationalInRadicalHermite = tryAlgebraicGenus1RationalInRadicalHermiteRule(
+    node,
+    variable,
+  );
+  if (algebraicGenus1RationalInRadicalHermite) {
+    return symbolicSuccess(
+      node,
+      variable,
+      algebraicGenus1RationalInRadicalHermite.exactLatex,
+      'u-substitution',
+      algebraicGenus1RationalInRadicalHermite.verification,
+      algebraicGenus1RationalInRadicalHermite.exactSupplementLatex,
     );
   }
 
