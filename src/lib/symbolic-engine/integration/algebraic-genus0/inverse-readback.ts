@@ -79,11 +79,12 @@ type RadicalShape =
   | { kind: 'reciprocal-radical'; radicand: unknown }
   | { kind: 'quotient-radical'; numerator: unknown; radicand: unknown };
 
-type StandardQuadratic = {
+export type AlgebraicGenus0StandardQuadratic = {
   family: 'minus' | 'outside' | 'plus';
   radicand: unknown;
   radius: ExactScalar;
   rootAbsLeading: ExactScalar;
+  shift: ExactScalar;
   shiftedVariable: unknown;
 };
 
@@ -235,7 +236,10 @@ function affineReadback(
   };
 }
 
-function standardQuadratic(radicand: unknown, variable: string): StandardQuadratic | undefined {
+export function parseAlgebraicGenus0StandardQuadratic(
+  radicand: unknown,
+  variable: string,
+): AlgebraicGenus0StandardQuadratic | undefined {
   const polynomial = parseExactPolynomial(radicand, variable, 2);
   if (!polynomial || exactPolynomialDegree(polynomial) !== 2) {
     return undefined;
@@ -273,7 +277,7 @@ function standardQuadratic(radicand: unknown, variable: string): StandardQuadrat
 
   const leadingSign = exactScalarToNumber(leading) > 0 ? 1 : -1;
   const completedSign = exactScalarToNumber(completedConstant) > 0 ? 1 : -1;
-  let family: StandardQuadratic['family'];
+  let family: AlgebraicGenus0StandardQuadratic['family'];
   if (leadingSign > 0 && completedSign > 0) {
     family = 'plus';
   } else if (leadingSign < 0 && completedSign < 0) {
@@ -294,11 +298,12 @@ function standardQuadratic(radicand: unknown, variable: string): StandardQuadrat
     radicand,
     radius,
     rootAbsLeading,
+    shift,
     shiftedVariable,
   };
 }
 
-function inverseFunctionFor(family: StandardQuadratic['family']) {
+function inverseFunctionFor(family: AlgebraicGenus0StandardQuadratic['family']) {
   if (family === 'minus') {
     return 'Arcsin';
   }
@@ -312,7 +317,7 @@ function quadraticRadicalReadback(
   shape: Exclude<RadicalShape, { kind: 'quotient-radical' }>,
   variable: string,
 ): InverseReadbackPlan | undefined {
-  const parsed = standardQuadratic(shape.radicand, variable);
+  const parsed = parseAlgebraicGenus0StandardQuadratic(shape.radicand, variable);
   if (!parsed) {
     return undefined;
   }

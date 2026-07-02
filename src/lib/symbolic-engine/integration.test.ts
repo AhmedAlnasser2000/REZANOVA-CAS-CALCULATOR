@@ -598,7 +598,7 @@ describe('symbolic-engine integration', () => {
       { latex: '2x\\ln(x^2+1)', contains: '\\ln' },
       { latex: '2x\\log(x^2+1)', contains: '\\ln(10)' },
       { latex: '2x\\sqrt{x^2+1}', contains: '\\frac{2' },
-      { latex: '\\frac{2x}{\\sqrt{x^2+1}}', contains: '\\frac{1}{2}' },
+      { latex: '\\frac{2x}{\\sqrt{x^2+1}}', contains: '2\\sqrt{x^2+1}' },
       { latex: '\\cos(\\sin(x))\\cos(x)', contains: '\\sin' },
     ]
 

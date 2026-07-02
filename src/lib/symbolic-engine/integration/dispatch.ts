@@ -8,6 +8,7 @@ import {
   wrapGroupedLatex,
 } from '../patterns';
 import { tryAffinePowerRule } from './affine-power';
+import { tryAlgebraicGenus0RationalInRadicalRule } from './algebraic-genus0/rational-in-radical';
 import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standard-radicals';
 import {
   tryBinomialDerivativeSubstitutionRule,
@@ -76,6 +77,18 @@ function tryRoute(
     const reciprocalBinomial = tryReciprocalBinomialDerivativeSubstitutionRule(node, variable);
     if (reciprocalBinomial) {
       return symbolicSuccess(node, variable, reciprocalBinomial, 'u-substitution');
+    }
+
+    const algebraicGenus0RationalInRadical = tryAlgebraicGenus0RationalInRadicalRule(node, variable);
+    if (algebraicGenus0RationalInRadical) {
+      return symbolicSuccess(
+        node,
+        variable,
+        algebraicGenus0RationalInRadical.exactLatex,
+        'u-substitution',
+        algebraicGenus0RationalInRadical.verification,
+        algebraicGenus0RationalInRadical.exactSupplementLatex,
+      );
     }
 
     const symbolicLogDerivative = tryRischNormanOrchestrator(node, variable, {
@@ -233,6 +246,18 @@ function tryRoute(
         'u-substitution',
         algebraicGenus0StandardRadical.verification,
         algebraicGenus0StandardRadical.exactSupplementLatex,
+      );
+    }
+
+    const algebraicGenus0RationalInRadical = tryAlgebraicGenus0RationalInRadicalRule(node, variable);
+    if (algebraicGenus0RationalInRadical) {
+      return symbolicSuccess(
+        node,
+        variable,
+        algebraicGenus0RationalInRadical.exactLatex,
+        'u-substitution',
+        algebraicGenus0RationalInRadical.verification,
+        algebraicGenus0RationalInRadical.exactSupplementLatex,
       );
     }
 
