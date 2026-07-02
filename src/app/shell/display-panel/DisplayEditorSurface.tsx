@@ -153,7 +153,7 @@ export function DisplayEditorSurface({
     calculusScreen === 'laplace'
       ? 'Enter f(t)'
       : calculusScreen === 'limit'
-        ? '\\text{Enter a limit request}'
+        ? '\\text{Enter a limit expression}'
       : calculusScreen === 'implicitDerivative'
         ? `Enter relation in ${implicitIndependentLatex} and ${implicitDependentLatex}`
       : calculusScreen === 'partialDerivative'
@@ -595,7 +595,7 @@ export function DisplayEditorSurface({
               >
                 lim
               </span>
-              <span className="variable-hint">full limit request</span>
+              <span className="variable-hint">full limit expression</span>
               <div className="calculus-limit-readback" data-testid="calculus-limit-readback">
                 {calculusLimitRailParsed ? (
                   <>
@@ -625,7 +625,7 @@ export function DisplayEditorSurface({
                     </span>
                   </>
                 ) : (
-                  <span className="calculus-limit-readback__empty">Limit request needed</span>
+                  <span className="calculus-limit-readback__empty">Limit expression needed</span>
                 )}
               </div>
             </div>

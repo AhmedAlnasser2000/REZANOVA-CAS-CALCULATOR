@@ -48,9 +48,10 @@ describe('Calculus limit editor source', () => {
 
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-placeholder', '\\text{Enter a limit request}');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-placeholder', '\\text{Enter a limit expression}');
     expect(screen.getByTestId('main-editor').getAttribute('data-placeholder')).not.toContain('integrand');
-    expect(screen.getByText('Enter a full limit request such as lim x -> 0 sin(x)/x.')).toBeInTheDocument();
+    expect(screen.getByText('Enter a full limit expression such as lim x -> 0 sin(x)/x.')).toBeInTheDocument();
+    expect(screen.queryByText(/limit request/iu)).not.toBeInTheDocument();
     expect(screen.queryByText(/lim x->0/u)).not.toBeInTheDocument();
 
     setMathFieldLatex('main-editor', '\\lim_{t\\to \\infty}\\frac{3t^2+1}{2t^2-5}');
@@ -105,7 +106,7 @@ describe('Calculus limit editor source', () => {
 
     await openCalculusTool(user, 'Limits', 'Limit');
 
-    expect(screen.getByText('Evaluate a full natural limit request.')).toBeInTheDocument();
+    expect(screen.getByText('Evaluate a full natural limit expression.')).toBeInTheDocument();
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
   });
 });

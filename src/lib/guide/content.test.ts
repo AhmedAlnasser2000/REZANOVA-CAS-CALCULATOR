@@ -130,7 +130,7 @@ describe('guide content', () => {
     }
     expect(quadraticPartialFractionExample.launch.calculusScreen).toBe('indefiniteIntegral')
     expect(quadraticPartialFractionExample.launch.calculusSeed?.bodyLatex).toContain('x^2+1')
-    expect(getGuideArticle('calculus-limits')?.summary).toContain('natural limit requests')
+    expect(getGuideArticle('calculus-limits')?.summary).toContain('natural limit expressions')
     expect(getGuideArticle('calculus-series')?.examples[0]?.launch.calculusScreen).toBe('maclaurin')
     expect(getGuideArticle('calculus-partials')?.examples[0]?.launch.calculusScreen).toBe('partialDerivative')
   })

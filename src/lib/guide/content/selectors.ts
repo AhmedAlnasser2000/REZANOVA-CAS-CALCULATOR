@@ -1058,10 +1058,10 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     id: 'calculus-limits',
     domainId: 'calculus',
     title: 'Limit Workflows',
-    summary: 'Use Calculus for natural limit requests backed by finite and infinite-target limit analysis.',
+    summary: 'Use Calculus for natural limit expressions backed by finite and infinite-target limit analysis.',
     whatItIs: [
       'Limit Workflows is the stronger single-variable limit workspace for harder finite and infinite-target cases.',
-      'It shares the same finite and infinite limit backend while letting you type the full limit request naturally.',
+      'It shares the same finite and infinite limit backend while letting you type the full limit expression naturally.',
     ],
     whatItMeans: [
       'A removable singularity is a point where the formula looks broken even though the nearby behavior approaches a finite value.',
@@ -1071,7 +1071,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     howToUse: [
       'Open Calculus > Limits > Limit.',
-      'Type a full request such as lim x->0 sin(x)/x, lim x->0+ 1/x, or lim x->infinity (3x^2+1)/(2x^2-5).',
+      'Type a full limit expression such as lim x -> 0 sin(x)/x, lim x -> 0+ 1/x, or lim x -> infinity (3x^2+1)/(2x^2-5).',
       'Read the provenance badge and warnings together to tell whether the answer was symbolic, heuristic, or numeric fallback.',
       'Use Calculus for finite, one-sided, and infinity targets before expecting a general theorem-prover style limit engine.',
     ],

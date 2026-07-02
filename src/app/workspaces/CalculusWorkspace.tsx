@@ -387,10 +387,10 @@ export function CalculusWorkspace({
       ) : screen === 'limit' ? (
         <GeneratedPreviewCard
           title={routeMeta?.previewTitle ?? 'Generated Limit'}
-          subtitle={routeMeta?.previewSubtitle ?? 'Natural finite, one-sided, and infinite-target limit request'}
+          subtitle={routeMeta?.previewSubtitle ?? 'Natural finite, one-sided, and infinite-target limit expression'}
           latex={workbenchLatex}
-          emptyTitle={routeMeta?.emptyStateTitle ?? 'Limit request needed'}
-          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a full limit request such as lim x -> 0 sin(x)/x.'}
+          emptyTitle={routeMeta?.emptyStateTitle ?? 'Limit expression needed'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a full limit expression such as lim x -> 0 sin(x)/x.'}
           onCopyExpr={onCopyWorkbenchExpression}
         />
       ) : screen === 'finiteLimit' ? (

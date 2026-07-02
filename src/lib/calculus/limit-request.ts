@@ -210,7 +210,7 @@ export function parseNaturalLimitRequest(input: string | null | undefined): Natu
   if (!source) {
     return {
       ok: false,
-      error: 'Enter a limit request.',
+      error: 'Enter a limit expression.',
       looksLikeLimitRequest: false,
     };
   }
@@ -220,7 +220,7 @@ export function parseNaturalLimitRequest(input: string | null | undefined): Natu
   if (!split) {
     return {
       ok: false,
-      error: 'Enter a limit request such as lim x -> 0 sin(x)/x or \\lim_{x\\to0}\\frac{\\sin(x)}{x}.',
+      error: 'Enter a limit expression such as lim x -> 0 sin(x)/x or \\lim_{x\\to0}\\frac{\\sin(x)}{x}.',
       looksLikeLimitRequest: requestLike,
     };
   }
@@ -229,7 +229,7 @@ export function parseNaturalLimitRequest(input: string | null | undefined): Natu
   if (!subscript) {
     return {
       ok: false,
-      error: 'Limit requests need a variable and approach target.',
+      error: 'Limit expressions need a variable and approach target.',
       looksLikeLimitRequest: true,
     };
   }

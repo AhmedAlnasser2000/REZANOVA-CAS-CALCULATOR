@@ -260,7 +260,7 @@ export function classifyNaturalLimitRoute(input: string): LimitRouteClassificati
   if (profile.nodeCount > MAX_LIMIT_ROUTE_NODES || profile.maxDepth > MAX_LIMIT_ROUTE_DEPTH) {
     return {
       kind: 'too-complex',
-      reason: 'The limit request exceeds the route classifier budget.',
+      reason: 'The limit expression exceeds the route classifier budget.',
       request: parsed.request,
       ...profile,
     };
