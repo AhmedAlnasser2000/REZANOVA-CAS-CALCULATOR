@@ -54,6 +54,7 @@ describe('algebraic genus-1 complex-pair Legendre data', () => {
     expect(result.amplitudeLatex).toContain('2\\arctan\\sqrt');
     expect(result.parameterLatex).toContain('A_{\\alpha_{1}}-\\alpha_{1}+\\beta_{\\alpha_{1}}');
     expect(result.multiplierLatex).toContain('\\sqrt{A_{\\alpha_{1}}}');
+    expect(result.inverseMapLatex).toContain('\\tan^2\\left(\\frac{\\phi}{2}\\right)');
     expect(result.firstKindPrototypeLatex).toContain('\\cdot \\operatorname{EllipticF}');
     expect(result.preferredBranchLatex).toBe('x>\\alpha_{1}');
     expect(text(result)).not.toMatch(/RootOf|rootof/i);

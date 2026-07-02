@@ -94,15 +94,17 @@ describe('algebraic genus-1 root-basis coefficient system', () => {
     expect(text(result)).toContain('Live adoption waits');
   });
 
-  it('stops when root Legendre pullback profiling is not supported', () => {
-    const result = system('\\sqrt{x^3+x+1}');
+  it('builds the linear basis system for complex-pair cubic charts', () => {
+    const result = success('\\sqrt{x^3+x+1}');
 
-    expect(result).toMatchObject({
-      kind: 'stop',
-      reason: 'pullback-profile-stop',
-    });
-    if (result.kind === 'stop') {
-      expect(result.detail).toContain('complex-pair');
-    }
+    expect(result.status).toBe('linear-basis-system-required');
+    expect(result.requiredBasisKinds).toEqual([
+      'first-kind',
+      'second-kind',
+      'third-kind',
+    ]);
+    expect(result.rootLegendreData.dataKind).toBe('cubic-one-real-root-complex-pair');
+    expect(result.rootLegendreData.multiplierLatex).toContain('A_{\\alpha_{1}}');
+    expect(text(result)).toContain('\\beta_{\\alpha_{1}}');
   });
 });

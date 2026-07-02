@@ -13,12 +13,25 @@ import {
   type AlgebraicGenus1RootLegendreData,
   type AlgebraicGenus1RootLegendreDataResult,
 } from './root-legendre-data';
+import {
+  buildAlgebraicGenus1ComplexPairLegendreData,
+  type AlgebraicGenus1ComplexPairLegendreData,
+  type AlgebraicGenus1ComplexPairLegendreDataResult,
+} from './complex-pair-legendre-data';
 
 export type AlgebraicGenus1RootPullbackBasisKind =
   | 'first-kind'
   | 'second-kind'
   | 'third-kind'
   | 'rational-log-residual';
+
+export type AlgebraicGenus1RootPullbackLegendreData =
+  | AlgebraicGenus1RootLegendreData
+  | AlgebraicGenus1ComplexPairLegendreData;
+
+type AlgebraicGenus1RootPullbackLegendreDataResult =
+  | AlgebraicGenus1RootLegendreDataResult
+  | AlgebraicGenus1ComplexPairLegendreDataResult;
 
 export type AlgebraicGenus1RootPullbackBasisProfileStatus =
   | 'first-kind-ready'
@@ -29,11 +42,11 @@ export type AlgebraicGenus1RootPullbackBasisProfile = {
   kind: 'success';
   variable: string;
   integrandShape: AlgebraicGenus1IntegrandShape;
-  dataKind: AlgebraicGenus1RootLegendreData['dataKind'];
+  dataKind: AlgebraicGenus1RootPullbackLegendreData['dataKind'];
   status: AlgebraicGenus1RootPullbackBasisProfileStatus;
   pullbackLatex: string;
   requiredBasisKinds: AlgebraicGenus1RootPullbackBasisKind[];
-  rootLegendreData: AlgebraicGenus1RootLegendreData;
+  rootLegendreData: AlgebraicGenus1RootPullbackLegendreData;
   detailSections: DisplayDetailSection[];
   readinessNotes: string[];
 };
@@ -48,7 +61,7 @@ export type AlgebraicGenus1RootPullbackBasisProfileResult =
         | 'root-legendre-stop'
         | 'unsupported-shape';
       detail: string;
-      rootLegendreData?: AlgebraicGenus1RootLegendreDataResult;
+      rootLegendreData?: AlgebraicGenus1RootPullbackLegendreDataResult;
     };
 
 function radicandName(variable: string) {
@@ -94,6 +107,7 @@ function pullbackLatex(input: {
 }
 
 function detailSection(result: {
+  dataKind: AlgebraicGenus1RootPullbackLegendreData['dataKind'];
   status: AlgebraicGenus1RootPullbackBasisProfileStatus;
   pullbackLatex: string;
   requiredBasisKinds: AlgebraicGenus1RootPullbackBasisKind[];
@@ -101,6 +115,7 @@ function detailSection(result: {
   return mixedDetailSection(
     'Genus-1 Root Pullback Basis Profile',
     [
+      [textPart('root chart: '), textPart(result.dataKind)],
       [textPart('status: '), textPart(result.status)],
       [textPart('pullback form: '), mathPart(result.pullbackLatex)],
       [
@@ -109,6 +124,23 @@ function detailSection(result: {
       ],
     ],
   );
+}
+
+function legendreDataFor(
+  node: unknown,
+  variable: string,
+): AlgebraicGenus1RootPullbackLegendreDataResult {
+  const rootLegendre = buildAlgebraicGenus1RootLegendreData(node, variable);
+  if (rootLegendre.kind === 'success') {
+    return rootLegendre;
+  }
+
+  const complexPair = buildAlgebraicGenus1ComplexPairLegendreData(node, variable);
+  if (complexPair.kind === 'success') {
+    return complexPair;
+  }
+
+  return rootLegendre;
 }
 
 export function profileAlgebraicGenus1RootPullbackBasis(
@@ -125,7 +157,7 @@ export function profileAlgebraicGenus1RootPullbackBasis(
     };
   }
 
-  const rootLegendre = buildAlgebraicGenus1RootLegendreData(node, variable);
+  const rootLegendre = legendreDataFor(node, variable);
   if (rootLegendre.kind === 'stop') {
     return {
       kind: 'stop',
@@ -168,6 +200,7 @@ export function profileAlgebraicGenus1RootPullbackBasis(
     rootLegendreData: rootLegendre,
     detailSections: [
       detailSection({
+        dataKind: rootLegendre.dataKind,
         status: basis.status,
         pullbackLatex: pullback,
         requiredBasisKinds: basis.requiredBasisKinds,

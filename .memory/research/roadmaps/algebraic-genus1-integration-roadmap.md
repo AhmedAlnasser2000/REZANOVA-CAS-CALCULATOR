@@ -37,6 +37,8 @@ Inserted prerequisite note: after coefficient-solver evidence, `ALGEBRAIC-GENUS1
 
 Inserted prerequisite note: after the complex-pair chart, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-LEGENDRE-DATA1` was added before live generic first-kind adoption. The reason is proof discipline: one-real-root cubic charts need explicit beta/rho/A parameter descriptors, amplitude, parameter, and multiplier evidence before any live elliptic antiderivative can rely on them.
 
+Inserted prerequisite note: after complex-pair Legendre data, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-PULLBACK-BASIS-PROFILE1` was added before generic one-real-root cubic adoption. The reason is pipeline consistency: the pullback/basis and coefficient-system evidence must consume complex-pair charts the same way they consume three-real-root and four-real-root charts.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

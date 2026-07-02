@@ -79,15 +79,13 @@ describe('algebraic genus-1 root pullback rational form', () => {
     expect(text(result)).toContain('basis coefficient solving');
   });
 
-  it('stops when coefficient-system evidence cannot be built', () => {
-    const result = rationalForm('\\sqrt{x^3+x+1}');
+  it('records complex-pair chart rational forms without live adoption', () => {
+    const result = success('\\frac{1}{\\sqrt{x^3+x+1}}');
 
-    expect(result).toMatchObject({
-      kind: 'stop',
-      reason: 'coefficient-system-stop',
-    });
-    if (result.kind === 'stop') {
-      expect(result.detail).toContain('complex-pair');
-    }
+    expect(result.status).toBe('constant-first-kind-rational-form');
+    expect(result.chartVariableLatex).toContain('\\tan^2');
+    expect(result.selectedVariableInChartLatex).toContain('A_{\\alpha_{1}}');
+    expect(result.rationalCoefficientLatex).toContain('A_{\\alpha_{1}}');
+    expect(text(result)).toContain('cubic-one-real-root-complex-pair');
   });
 });

@@ -55,6 +55,12 @@ function firstKindKernel(parameterLatex: string) {
   return `\\frac{d\\phi}{\\sqrt{1-${parameterLatex}\\sin^2\\phi}}`;
 }
 
+function chartVariableLatex(dataKind: string) {
+  return dataKind === 'cubic-one-real-root-complex-pair'
+    ? 'z=\\tan^2\\left(\\frac{\\phi}{2}\\right)'
+    : 'z=\\sin^2\\phi';
+}
+
 function statusForSystem(
   system: AlgebraicGenus1RootBasisCoefficientSystem,
 ): AlgebraicGenus1RootPullbackRationalFormStatus {
@@ -135,6 +141,7 @@ export function buildAlgebraicGenus1RootPullbackRationalForm(
   const status = statusForSystem(system);
   const coefficientFieldLatex = fieldFromSystem(system);
   const kernelLatex = firstKindKernel(rootLegendreData.parameterLatex);
+  const chartVariable = chartVariableLatex(rootLegendreData.dataKind);
   const rationalCoefficientLatex = rationalCoefficient({
     system,
     selectedVariableInChartLatex,
@@ -149,7 +156,7 @@ export function buildAlgebraicGenus1RootPullbackRationalForm(
     kind: 'success',
     variable,
     status,
-    chartVariableLatex: 'z=\\sin^2\\phi',
+    chartVariableLatex: chartVariable,
     selectedVariableInChartLatex,
     coefficientFieldLatex,
     kernelLatex,
@@ -160,7 +167,7 @@ export function buildAlgebraicGenus1RootPullbackRationalForm(
       ...system.detailSections,
       detailSection({
         status,
-        chartVariableLatex: 'z=\\sin^2\\phi',
+        chartVariableLatex: chartVariable,
         selectedVariableInChartLatex,
         coefficientFieldLatex,
         rationalCoefficientLatex,

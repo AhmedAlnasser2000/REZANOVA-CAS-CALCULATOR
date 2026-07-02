@@ -88,15 +88,13 @@ describe('algebraic genus-1 root-basis coefficient solver evidence', () => {
     expect(result.rationalCoefficientLatex).toContain('\\alpha_{3}');
   });
 
-  it('stops unsupported root charts without creating fake coefficients', () => {
-    const result = solve('\\sqrt{x^3+x+1}');
+  it('blocks complex-pair radical charts until elliptic-basis reduction is solved', () => {
+    const result = success('\\sqrt{x^3+x+1}');
 
-    expect(result).toMatchObject({
-      kind: 'stop',
-      reason: 'pullback-rational-form-stop',
-    });
-    if (result.kind === 'stop') {
-      expect(result.detail).toContain('complex-pair');
-    }
+    expect(result.status).toBe('elliptic-basis-reduction-required');
+    expect(result.canAdoptLive).toBe(false);
+    expect(result.unresolvedBasisKinds).toEqual(['first-kind', 'second-kind', 'third-kind']);
+    expect(result.rationalCoefficientLatex).toContain('A_{\\alpha_{1}}');
+    expect(text(result)).toContain('\\beta_{\\alpha_{1}}');
   });
 });

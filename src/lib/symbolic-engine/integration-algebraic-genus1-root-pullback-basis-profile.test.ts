@@ -85,15 +85,19 @@ describe('algebraic genus-1 root pullback basis profile', () => {
     expect(result.rootLegendreData.variable).toBe('t');
   });
 
-  it('stops unsupported root charts without claiming live elliptic adoption', () => {
-    const result = profile('\\sqrt{x^3+x+1}');
+  it('profiles complex-pair cubic charts without claiming live elliptic adoption', () => {
+    const result = success('\\sqrt{x^3+x+1}');
 
-    expect(result).toMatchObject({
-      kind: 'stop',
-      reason: 'root-legendre-stop',
-    });
-    if (result.kind === 'stop') {
-      expect(result.detail).toContain('complex-pair');
-    }
+    expect(result.dataKind).toBe('cubic-one-real-root-complex-pair');
+    expect(result.integrandShape).toBe('radical');
+    expect(result.status).toBe('coefficient-solve-required');
+    expect(result.requiredBasisKinds).toEqual([
+      'first-kind',
+      'second-kind',
+      'third-kind',
+    ]);
+    expect(result.rootLegendreData.firstKindPrototypeLatex).toContain('EllipticF');
+    expect(text(result)).toContain('cubic-one-real-root-complex-pair');
+    expect(text(result)).not.toMatch(/RootOf|rootof/i);
   });
 });

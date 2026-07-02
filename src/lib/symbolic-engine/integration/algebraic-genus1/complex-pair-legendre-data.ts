@@ -21,15 +21,18 @@ export type AlgebraicGenus1ComplexPairLegendreData = {
   kind: 'success';
   variable: string;
   dataKind: 'cubic-one-real-root-complex-pair';
+  rootSymbolsLatex: string[];
   realRootLatex: string;
   betaLatex: string;
   rhoLatex: string;
+  scaleSymbolLatex: string;
   scaleLatex: string;
   leadingCoefficientLatex: string;
   completedSquareCofactorLatex: string;
   amplitudeLatex: string;
   parameterLatex: string;
   multiplierLatex: string;
+  inverseMapLatex: string;
   firstKindPrototypeLatex: string;
   preferredBranchLatex: string;
   detailSections: DisplayDetailSection[];
@@ -72,6 +75,7 @@ function dataDetailSection(input: {
   amplitudeLatex: string;
   parameterLatex: string;
   multiplierLatex: string;
+  inverseMapLatex: string;
   firstKindPrototypeLatex: string;
 }) {
   return mixedDetailSection(
@@ -84,6 +88,7 @@ function dataDetailSection(input: {
       [textPart('amplitude: '), mathPart(`\\phi=${input.amplitudeLatex}`)],
       [textPart('parameter: '), mathPart(`m=${input.parameterLatex}`)],
       [textPart('multiplier: '), mathPart(input.multiplierLatex)],
+      [textPart('inverse map: '), mathPart(input.inverseMapLatex)],
       [textPart('first kind: '), mathPart(input.firstKindPrototypeLatex)],
     ],
   );
@@ -142,6 +147,8 @@ export function buildAlgebraicGenus1ComplexPairLegendreData(
     `\\frac{${scaleSymbolLatex}-${realRootLatex}+${betaLatex}}{2${scaleSymbolLatex}}`;
   const multiplierLatex =
     `\\frac{1}{\\sqrt{${scaledFactor(leadingCoefficientLatex, scaleSymbolLatex)}}}`;
+  const inverseMapLatex =
+    `${variable}=${realRootLatex}+${scaleSymbolLatex}\\tan^2\\left(\\frac{\\phi}{2}\\right)`;
   const firstKindPrototypeLatex =
     `${multiplierLatex}\\cdot ${ellipticF(amplitudeLatex, parameterLatex)}`;
 
@@ -149,15 +156,23 @@ export function buildAlgebraicGenus1ComplexPairLegendreData(
     kind: 'success',
     variable,
     dataKind: 'cubic-one-real-root-complex-pair',
+    rootSymbolsLatex: [
+      realRootLatex,
+      betaLatex,
+      rhoLatex,
+      scaleSymbolLatex,
+    ],
     realRootLatex,
     betaLatex,
     rhoLatex,
+    scaleSymbolLatex,
     scaleLatex,
     leadingCoefficientLatex,
     completedSquareCofactorLatex,
     amplitudeLatex,
     parameterLatex,
     multiplierLatex,
+    inverseMapLatex,
     firstKindPrototypeLatex,
     preferredBranchLatex: chart.realBranchLatex,
     detailSections: [
@@ -171,6 +186,7 @@ export function buildAlgebraicGenus1ComplexPairLegendreData(
         amplitudeLatex,
         parameterLatex,
         multiplierLatex,
+        inverseMapLatex,
         firstKindPrototypeLatex,
       }),
     ],

@@ -6,7 +6,7 @@ import {
 } from '../../../display/result-detail-lines';
 import type { AlgebraicGenus1RootPullbackBasisKind } from './root-pullback-basis-profile';
 import { profileAlgebraicGenus1RootPullbackBasis } from './root-pullback-basis-profile';
-import type { AlgebraicGenus1RootLegendreData } from './root-legendre-data';
+import type { AlgebraicGenus1RootPullbackLegendreData } from './root-pullback-basis-profile';
 
 export type AlgebraicGenus1RootBasisCoefficientSystemStatus =
   | 'first-kind-coefficient-solved'
@@ -28,7 +28,7 @@ export type AlgebraicGenus1RootBasisCoefficientSystem = {
   solvedCoefficientLatex?: string;
   unknowns: AlgebraicGenus1RootBasisCoefficientUnknown[];
   requiredBasisKinds: AlgebraicGenus1RootPullbackBasisKind[];
-  rootLegendreData: AlgebraicGenus1RootLegendreData;
+  rootLegendreData: AlgebraicGenus1RootPullbackLegendreData;
   detailSections: DisplayDetailSection[];
   readinessNotes: string[];
 };
@@ -182,6 +182,7 @@ export function buildAlgebraicGenus1RootBasisCoefficientSystem(
     requiredBasisKinds: profile.requiredBasisKinds,
     rootLegendreData: profile.rootLegendreData,
     detailSections: [
+      ...profile.detailSections,
       detailSection({
         status,
         equationLatex,
