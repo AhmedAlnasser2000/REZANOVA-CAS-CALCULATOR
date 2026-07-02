@@ -387,6 +387,27 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('pluA');
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-lu-solve',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{lusolve}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+      resultLatex: 'x=\\begin{bmatrix}2\\\\1\\end{bmatrix}',
+      matrixSeed: {
+        operation: 'luSolveA',
+        matrixA: [[2, 1], [4, 3]],
+        matrixB: [[5, 6], [7, 8]],
+        systemRhs: [5, 11],
+        exactSystemRhs: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        editorExpressionLatex: '\\operatorname{lusolve}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+        matrixOperandLatexA: 'A',
+        systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.systemRhs).toEqual([5, 11]);
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',

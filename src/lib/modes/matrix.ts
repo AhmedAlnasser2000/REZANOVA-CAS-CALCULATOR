@@ -91,6 +91,14 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'plu(A)';
     case 'pluB':
       return 'plu(B)';
+    case 'luSolveA':
+      return 'lusolve(A,b)';
+    case 'luSolveB':
+      return 'lusolve(B,b)';
+    case 'pluSolveA':
+      return 'plusolve(A,b)';
+    case 'pluSolveB':
+      return 'plusolve(B,b)';
     case 'invertibilityA':
       return 'invertible(A)';
     case 'invertibilityB':
@@ -152,7 +160,9 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
     operation,
     matrixA,
     matrixB,
+    systemRhs,
     coordinateVector,
+    exactSystemRhs,
     exactMatrixA,
     exactMatrixB,
     exactCoordinateVector,

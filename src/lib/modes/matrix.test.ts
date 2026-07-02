@@ -108,6 +108,28 @@ describe('runMatrixMode', () => {
     ]);
   });
 
+  it('labels factor solve runs directly while carrying RHS readback', () => {
+    const result = runMatrixMode({
+      operation: 'luSolveA',
+      matrixA: [[2, 1], [4, 3]],
+      matrixB: [[5, 6], [7, 8]],
+      systemRhs: [5, 11],
+      exactSystemRhs: [
+        { numerator: 5, denominator: 1 },
+        { numerator: 11, denominator: 1 },
+      ],
+      systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+    });
+
+    expect(result.title).toBe('lusolve(A,b)');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.exactLatex).toBe('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}');
+    expect(result.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'Factor Solve Proof']);
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

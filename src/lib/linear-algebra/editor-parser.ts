@@ -46,6 +46,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'coordinates'; basis: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
+  | { kind: 'factorSolve'; method: 'lu' | 'plu'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'changeOfBasis'; source: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | {
       kind: 'linearSystem';
@@ -119,6 +120,10 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{LU\}/g, 'lu')
     .replace(/\\operatorname\{plu\}/g, 'plu')
     .replace(/\\operatorname\{PLU\}/g, 'plu')
+    .replace(/\\operatorname\{lusolve\}/g, 'lusolve')
+    .replace(/\\operatorname\{LUSolve\}/g, 'lusolve')
+    .replace(/\\operatorname\{plusolve\}/g, 'plusolve')
+    .replace(/\\operatorname\{PLUSolve\}/g, 'plusolve')
     .replace(/\\operatorname\{invertible\}/g, 'invertible')
     .replace(/\\operatorname\{Invertible\}/g, 'invertible')
     .replace(/\\operatorname\{eigen\}/g, 'eigen')
@@ -607,6 +612,25 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       basis: parseExpression(parts[0], options),
       vector: parseExpression(parts[1], options),
     };
+  }
+
+  for (const [name, method] of [
+    ['lusolve', 'lu'],
+    ['plusolve', 'plu'],
+  ] as const) {
+    const solveArgument = functionArgument(input, name);
+    if (solveArgument !== null) {
+      const parts = splitTopLevelComma(solveArgument);
+      if (!parts) {
+        fail('unsupported-expression', 'Factor solve requires a matrix and an inline RHS vector.');
+      }
+      return {
+        kind: 'factorSolve',
+        method,
+        matrix: parseExpression(parts[0], options),
+        vector: parseExpression(parts[1], options),
+      };
+    }
   }
 
   const changeArgument = functionArgument(input, 'change') ?? functionArgument(input, 'changebasis');

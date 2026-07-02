@@ -252,6 +252,46 @@ function matrixCoordinatesRequest(
   };
 }
 
+function matrixFactorSolveRequest(
+  input: MatrixEditorDispatchInput,
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'factorSolve' }>,
+): MatrixEditorDispatchResult {
+  const matrix = matrixOperand(expression.matrix, input);
+  if (!matrix || expression.vector.kind !== 'vectorLiteral') {
+    return {
+      ok: false,
+      message: 'Factor solve needs Matrix A/B or an inline matrix, plus an inline RHS vector.',
+    };
+  }
+
+  const operation = expression.method === 'lu'
+    ? (matrix.named === 'B' ? 'luSolveB' : 'luSolveA')
+    : (matrix.named === 'B' ? 'pluSolveB' : 'pluSolveA');
+
+  return {
+    ok: true,
+    request: matrix.named === 'B'
+      ? {
+          operation,
+          matrixA: cloneMatrix(input.matrixA),
+          matrixB: matrix.matrix,
+          systemRhs: cloneVector(expression.vector.value),
+          ...(matrix.exactMatrix ? { exactMatrixB: matrix.exactMatrix } : {}),
+          exactSystemRhs: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandB: matrix, systemRhs: expression.vector }),
+        }
+      : {
+          operation,
+          matrixA: matrix.matrix,
+          matrixB: cloneMatrix(input.matrixB),
+          systemRhs: cloneVector(expression.vector.value),
+          ...(matrix.exactMatrix ? { exactMatrixA: matrix.exactMatrix } : {}),
+          exactSystemRhs: cloneVector(expression.vector.exactValue),
+          ...matrixMetadata(input, { operandA: matrix, systemRhs: expression.vector }),
+        },
+  };
+}
+
 function matrixChangeOfBasisRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'changeOfBasis' }>,
@@ -729,6 +769,9 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   }
   if (expression.kind === 'coordinates') {
     return matrixCoordinatesRequest(input, expression);
+  }
+  if (expression.kind === 'factorSolve') {
+    return matrixFactorSolveRequest(input, expression);
   }
   if (expression.kind === 'changeOfBasis') {
     return matrixChangeOfBasisRequest(input, expression);

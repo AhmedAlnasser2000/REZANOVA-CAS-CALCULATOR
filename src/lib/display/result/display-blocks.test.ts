@@ -306,6 +306,33 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix factor solve proof details visible but collapsible by default', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: '\\operatorname{lusolve}(A,b)',
+      exactLatex: 'x=\\begin{bmatrix}2\\\\1\\end{bmatrix}',
+      sourceMode: 'matrix',
+      detailSections: [{
+        title: 'Factor Solve Proof',
+        lines: [
+          'Ly=\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+          'Ux=y',
+          'x=\\begin{bmatrix}2\\\\1\\end{bmatrix}',
+        ],
+        lineKind: 'math',
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Factor Solve Proof');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      collapsible: true,
+      defaultCollapsed: false,
+    });
+  });
+
   it('keeps solve notes collapsed by default even when the prose is short', () => {
     const outcome: DisplayOutcome = {
       kind: 'success',

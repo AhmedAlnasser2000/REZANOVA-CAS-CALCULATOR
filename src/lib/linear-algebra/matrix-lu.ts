@@ -13,12 +13,16 @@ import {
   scalar,
   type ExactMatrix,
   type ExactMatrixStopReason,
+  type ExactVector,
 } from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
   exactMatrixFromWire,
   exactMatrixToLatex,
   exactScalarToLatex,
+  exactVectorFromNumeric,
+  exactVectorFromWire,
+  exactVectorToColumnLatex,
 } from './exact-matrix-format';
 
 export type MatrixLuInput = {
@@ -28,6 +32,12 @@ export type MatrixLuInput = {
 };
 
 export type MatrixPluInput = MatrixLuInput;
+
+export type MatrixFactorSolveInput = MatrixLuInput & {
+  rhs: number[];
+  exactRhs?: ExactScalarWire[];
+  rhsLabel: string;
+};
 
 type LuResult =
   | { kind: 'success'; lower: ExactMatrix; upper: ExactMatrix; determinant: ExactScalar }
@@ -71,6 +81,10 @@ function exactInputMatrix(input: MatrixLuInput): ExactMatrix | null {
   return exactMatrixFromWire(input.exactMatrix) ?? exactMatrixFromNumeric(input.matrix);
 }
 
+function exactInputVector(input: MatrixFactorSolveInput): ExactVector | null {
+  return exactVectorFromWire(input.exactRhs) ?? exactVectorFromNumeric(input.rhs);
+}
+
 function exactStopReasonToMessage(reason: LuStopReason): string {
   switch (reason) {
     case 'dimension-limit':
@@ -106,6 +120,14 @@ function multiplyExactMatrices(left: ExactMatrix, right: ExactMatrix): ExactMatr
         (sum, value, pivot) => addExactScalars(sum, multiplyExactScalars(value, right[pivot][column])),
         scalar(0),
       ),
+    ));
+}
+
+function multiplyMatrixVector(matrix: ExactMatrix, vector: ExactVector): ExactVector {
+  return matrix.map((row) =>
+    row.reduce(
+      (sum, value, index) => addExactScalars(sum, multiplyExactScalars(value, vector[index])),
+      scalar(0),
     ));
 }
 
@@ -261,6 +283,10 @@ function prefixedMatrixLabel(prefix: string, label: string) {
   return /^[A-Z]$/.test(label) ? `${prefix}${label}` : `${prefix}\\left(${label}\\right)`;
 }
 
+function prefixedVectorLabel(prefix: string, label: string) {
+  return /^[a-z]$/.test(label) ? `${prefix}${label}` : `${prefix}\\left(${label}\\right)`;
+}
+
 function pluDetails(input: {
   label: string;
   original: ExactMatrix;
@@ -380,6 +406,203 @@ export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
       lower: factored.lower,
       upper: factored.upper,
       determinant: factored.determinant,
+      swaps: factored.swaps,
+    }),
+    warnings: [],
+  };
+}
+
+function forwardSubstitute(lower: ExactMatrix, rhs: ExactVector): ExactVector | null {
+  const solution: ExactVector = [];
+  for (let row = 0; row < lower.length; row += 1) {
+    let total = scalar(0);
+    for (let column = 0; column < row; column += 1) {
+      total = addExactScalars(total, multiplyExactScalars(lower[row][column], solution[column]));
+    }
+    const numerator = subtractExactScalars(rhs[row], total);
+    const value = divideExactScalars(numerator, lower[row][row]);
+    if (!value) {
+      return null;
+    }
+    solution.push(value);
+  }
+  return solution;
+}
+
+function backSubstitute(upper: ExactMatrix, rhs: ExactVector): ExactVector | null {
+  const solution = Array.from({ length: upper.length }, () => scalar(0));
+  for (let row = upper.length - 1; row >= 0; row -= 1) {
+    let total = scalar(0);
+    for (let column = row + 1; column < upper.length; column += 1) {
+      total = addExactScalars(total, multiplyExactScalars(upper[row][column], solution[column]));
+    }
+    const numerator = subtractExactScalars(rhs[row], total);
+    const value = divideExactScalars(numerator, upper[row][row]);
+    if (!value) {
+      return null;
+    }
+    solution[row] = value;
+  }
+  return solution;
+}
+
+function factorSolveStop(message: string): MatrixResponse {
+  return {
+    warnings: [],
+    error: message,
+  };
+}
+
+function luSolveDetails(input: {
+  label: string;
+  rhsLabel: string;
+  lower: ExactMatrix;
+  upper: ExactMatrix;
+  intermediate: ExactVector;
+  solution: ExactVector;
+}): DisplayDetailSection[] {
+  return [
+    {
+      title: 'LU Factors',
+      lines: [
+        `L=${exactMatrixToLatex(input.lower)}`,
+        `U=${exactMatrixToLatex(input.upper)}`,
+      ],
+      lineKind: 'math',
+    },
+    {
+      title: 'Factor Solve Proof',
+      lines: [
+        `${input.label}=LU`,
+        `Ly=${input.rhsLabel}`,
+        `y=${exactVectorToColumnLatex(input.intermediate)}`,
+        'Ux=y',
+        `x=${exactVectorToColumnLatex(input.solution)}`,
+      ],
+      lineKinds: ['math', 'math', 'math', 'math', 'math'],
+    },
+  ];
+}
+
+function pluSolveDetails(input: {
+  label: string;
+  rhsLabel: string;
+  permutation: ExactMatrix;
+  lower: ExactMatrix;
+  upper: ExactMatrix;
+  permutedRhs: ExactVector;
+  intermediate: ExactVector;
+  solution: ExactVector;
+  swaps: Array<{ rowA: number; rowB: number }>;
+}): DisplayDetailSection[] {
+  return [
+    {
+      title: 'PLU Factors',
+      lines: [
+        `P=${exactMatrixToLatex(input.permutation)}`,
+        `L=${exactMatrixToLatex(input.lower)}`,
+        `U=${exactMatrixToLatex(input.upper)}`,
+      ],
+      lineKind: 'math',
+    },
+    {
+      title: 'PLU Row Swaps',
+      lines: input.swaps.length > 0
+        ? input.swaps.map((swap) => formatSwap(swap.rowA, swap.rowB))
+        : ['\\text{No row swaps were needed.}'],
+      lineKind: 'math',
+    },
+    {
+      title: 'Factor Solve Proof',
+      lines: [
+        `${prefixedMatrixLabel('P', input.label)}=LU`,
+        `${prefixedVectorLabel('P', input.rhsLabel)}=${exactVectorToColumnLatex(input.permutedRhs)}`,
+        `Ly=${prefixedVectorLabel('P', input.rhsLabel)}`,
+        `y=${exactVectorToColumnLatex(input.intermediate)}`,
+        'Ux=y',
+        `x=${exactVectorToColumnLatex(input.solution)}`,
+      ],
+      lineKinds: ['math', 'math', 'math', 'math', 'math', 'math'],
+    },
+  ];
+}
+
+export function runMatrixLuSolve(input: MatrixFactorSolveInput): MatrixResponse {
+  const exactMatrix = exactInputMatrix(input);
+  const rhs = exactInputVector(input);
+  if (!exactMatrix || !rhs) {
+    return factorSolveStop('LU solve needs exact Matrix and RHS vector entries in this move.');
+  }
+  if (rhs.length !== exactMatrix.length) {
+    return factorSolveStop('The RHS vector length must match the matrix row count.');
+  }
+
+  const factored = factorLuNoPivot(exactMatrix);
+  if (factored.kind === 'stop') {
+    return factorSolveStop(exactStopReasonToMessage(factored.reason));
+  }
+  if (factored.kind === 'needs-pivot') {
+    return factorSolveStop(`LU solve stopped at pivot ${factored.pivotIndex + 1}. Use plusolve(...) to keep the row swap visible.`);
+  }
+
+  const intermediate = forwardSubstitute(factored.lower, rhs);
+  const solution = intermediate ? backSubstitute(factored.upper, intermediate) : null;
+  if (!intermediate || !solution) {
+    return factorSolveStop('LU solve stopped because the factorization has a zero pivot.');
+  }
+
+  return {
+    resultLatex: `x=${exactVectorToColumnLatex(solution)}`,
+    approxText: 'LU solve',
+    detailSections: luSolveDetails({
+      label: input.label,
+      rhsLabel: input.rhsLabel,
+      lower: factored.lower,
+      upper: factored.upper,
+      intermediate,
+      solution,
+    }),
+    warnings: [],
+  };
+}
+
+export function runMatrixPluSolve(input: MatrixFactorSolveInput): MatrixResponse {
+  const exactMatrix = exactInputMatrix(input);
+  const rhs = exactInputVector(input);
+  if (!exactMatrix || !rhs) {
+    return factorSolveStop('PLU solve needs exact Matrix and RHS vector entries in this move.');
+  }
+  if (rhs.length !== exactMatrix.length) {
+    return factorSolveStop('The RHS vector length must match the matrix row count.');
+  }
+
+  const factored = pluFactorization(exactMatrix);
+  if (factored.kind === 'stop') {
+    return factorSolveStop(exactStopReasonToMessage(factored.reason));
+  }
+  if (factored.kind === 'needs-pivot') {
+    return factorSolveStop(`PLU solve stopped at pivot ${factored.pivotIndex + 1} because no nonzero pivot was available in that column.`);
+  }
+
+  const permutedRhs = multiplyMatrixVector(factored.permutation, rhs);
+  const intermediate = forwardSubstitute(factored.lower, permutedRhs);
+  const solution = intermediate ? backSubstitute(factored.upper, intermediate) : null;
+  if (!intermediate || !solution) {
+    return factorSolveStop('PLU solve stopped because the factorization has a zero pivot.');
+  }
+
+  return {
+    resultLatex: `x=${exactVectorToColumnLatex(solution)}`,
+    approxText: 'PLU solve',
+    detailSections: pluSolveDetails({
+      label: input.label,
+      rhsLabel: input.rhsLabel,
+      permutation: factored.permutation,
+      lower: factored.lower,
+      upper: factored.upper,
+      permutedRhs,
+      intermediate,
+      solution,
       swaps: factored.swaps,
     }),
     warnings: [],

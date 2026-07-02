@@ -182,6 +182,45 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{lusolve}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'luSolveA',
+        matrixA,
+        matrixB,
+        systemRhs: [5, 11],
+        exactSystemRhs: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        editorExpressionLatex: '\\operatorname{lusolve}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
+        matrixOperandLatexA: 'A',
+        systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{plusolve}\\left(B,\\begin{bmatrix}3\\\\4\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'pluSolveB',
+        matrixA,
+        matrixB,
+        systemRhs: [3, 4],
+        exactSystemRhs: [
+          { numerator: 3, denominator: 1 },
+          { numerator: 4, denominator: 1 },
+        ],
+        matrixOperandLatexB: 'B',
+        systemRhsLatex: '\\begin{bmatrix}3\\\\4\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
       matrixA,
       matrixB,

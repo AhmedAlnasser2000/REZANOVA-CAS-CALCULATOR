@@ -94,8 +94,10 @@ const MATRIX_EDITOR_FUNCTIONS = new Set([
   'eigen',
   'invertible',
   'lu',
+  'lusolve',
   'null',
   'plu',
+  'plusolve',
   'rank',
   'rref',
 ]);

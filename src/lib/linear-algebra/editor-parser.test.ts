@@ -41,6 +41,24 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{LU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
     expect(parsed('\\operatorname{plu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });
     expect(parsed('\\operatorname{PLU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });
+    expect(parsed('\\operatorname{lusolve}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toEqual({
+      kind: 'factorSolve',
+      method: 'lu',
+      matrix: { kind: 'named', name: 'A', displayLatex: 'A' },
+      vector: {
+        kind: 'vectorLiteral',
+        value: [5, 11],
+        exactValue: [
+          { numerator: 5, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        displayLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(parsed('\\operatorname{plusolve}\\left(B,\\begin{bmatrix}3\\\\4\\end{bmatrix}\\right)', 'matrix')).toMatchObject({
+      kind: 'factorSolve',
+      method: 'plu',
+    });
     expect(parsed('\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toEqual({
       kind: 'coordinates',
       basis: { kind: 'named', name: 'A', displayLatex: 'A' },

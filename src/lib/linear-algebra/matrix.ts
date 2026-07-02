@@ -26,7 +26,7 @@ import { runMatrixChangeOfBasis } from './matrix-change-of-basis';
 import { runMatrixCoordinates } from './matrix-coordinates';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
-import { runMatrixLu, runMatrixPlu } from './matrix-lu';
+import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
 
@@ -328,6 +328,64 @@ function exactPluResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactFactorSolveResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'luSolveA') {
+    return runMatrixLuSolve({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+      rhs: req.systemRhs ?? [],
+      exactRhs: req.exactSystemRhs,
+      rhsLabel: req.systemRhsLatex ?? 'b',
+    });
+  }
+
+  if (req.operation === 'luSolveB') {
+    return req.matrixB
+      ? runMatrixLuSolve({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+          rhs: req.systemRhs ?? [],
+          exactRhs: req.exactSystemRhs,
+          rhsLabel: req.systemRhsLatex ?? 'b',
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  if (req.operation === 'pluSolveA') {
+    return runMatrixPluSolve({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+      rhs: req.systemRhs ?? [],
+      exactRhs: req.exactSystemRhs,
+      rhsLabel: req.systemRhsLatex ?? 'b',
+    });
+  }
+
+  if (req.operation === 'pluSolveB') {
+    return req.matrixB
+      ? runMatrixPluSolve({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+          rhs: req.systemRhs ?? [],
+          exactRhs: req.exactSystemRhs,
+          rhsLabel: req.systemRhsLatex ?? 'b',
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -425,6 +483,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const pluResponse = exactPluResponse(req);
   if (pluResponse) {
     return pluResponse;
+  }
+
+  const factorSolveResponse = exactFactorSolveResponse(req);
+  if (factorSolveResponse) {
+    return factorSolveResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

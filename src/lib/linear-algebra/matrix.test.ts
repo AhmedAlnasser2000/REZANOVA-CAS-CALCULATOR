@@ -362,6 +362,61 @@ describe('runMatrixOperation', () => {
     expect(plu.detailSections?.[2]?.lines).toContain('\\det(A)=(-1)^{1}\\prod_i U_{ii}=-1');
   });
 
+  it('solves systems by reusing visible exact LU factors', () => {
+    const solve = runMatrixOperation({
+      operation: 'luSolveA',
+      matrixA: [[2, 1], [4, 3]],
+      matrixB,
+      systemRhs: [5, 11],
+      exactSystemRhs: [
+        { numerator: 5, denominator: 1 },
+        { numerator: 11, denominator: 1 },
+      ],
+      systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+    });
+
+    expect(solve.resultLatex).toBe('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}');
+    expect(solve.approxText).toBe('LU solve');
+    expect(solve.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'Factor Solve Proof']);
+    expect(solve.detailSections?.[0]?.lines).toContain('L=\\begin{bmatrix}1 & 0\\\\2 & 1\\end{bmatrix}');
+    expect(solve.detailSections?.[0]?.lines).toContain('U=\\begin{bmatrix}2 & 1\\\\0 & 1\\end{bmatrix}');
+    expect(solve.detailSections?.[1]?.lines).toContain('Ly=\\begin{bmatrix}5\\\\11\\end{bmatrix}');
+    expect(solve.detailSections?.[1]?.lines).toContain('y=\\begin{bmatrix}5\\\\1\\end{bmatrix}');
+    expect(solve.detailSections?.[1]?.lines).toContain('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}');
+  });
+
+  it('solves systems by reusing visible exact PLU factors and row swaps', () => {
+    const solve = runMatrixOperation({
+      operation: 'pluSolveA',
+      matrixA: [[0, 1], [1, 0]],
+      matrixB,
+      systemRhs: [3, 4],
+      systemRhsLatex: '\\begin{bmatrix}3\\\\4\\end{bmatrix}',
+    });
+
+    expect(solve.resultLatex).toBe('x=\\begin{bmatrix}4\\\\3\\end{bmatrix}');
+    expect(solve.approxText).toBe('PLU solve');
+    expect(solve.detailSections?.map((section) => section.title)).toEqual([
+      'PLU Factors',
+      'PLU Row Swaps',
+      'Factor Solve Proof',
+    ]);
+    expect(solve.detailSections?.[1]?.lines).toEqual(['R_{1}\\leftrightarrow R_{2}']);
+    expect(solve.detailSections?.[2]?.lines).toContain('P\\left(\\begin{bmatrix}3\\\\4\\end{bmatrix}\\right)=\\begin{bmatrix}4\\\\3\\end{bmatrix}');
+    expect(solve.detailSections?.[2]?.lines).toContain('x=\\begin{bmatrix}4\\\\3\\end{bmatrix}');
+  });
+
+  it('stops LU solve when a row swap is required', () => {
+    const solve = runMatrixOperation({
+      operation: 'luSolveA',
+      matrixA: [[0, 1], [1, 0]],
+      matrixB,
+      systemRhs: [3, 4],
+    });
+
+    expect(solve.error).toBe('LU solve stopped at pivot 1. Use plusolve(...) to keep the row swap visible.');
+  });
+
   it('stops PLU when no nonzero pivot is available', () => {
     const plu = runMatrixOperation({
       operation: 'pluA',
