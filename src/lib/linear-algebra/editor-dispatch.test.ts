@@ -364,6 +364,24 @@ describe('linear algebra editor dispatch', () => {
         matrixOperandLatexA: '\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}',
       },
     });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{qr}\\left(\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'qrA',
+        matrixA: [[3, 0], [4, 5]],
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 3, denominator: 1 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 4, denominator: 1 }, { numerator: 5, denominator: 1 }],
+        ],
+        editorExpressionLatex: '\\operatorname{qr}\\left(\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}',
+      },
+    });
   });
 
   it('preserves inline Matrix fractions and finite decimals as exact sidecars', () => {

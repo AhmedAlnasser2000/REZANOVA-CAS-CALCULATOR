@@ -142,7 +142,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'How Eigenvalues Were Found',
   'Invertibility Theorem',
   'Null Space Proof',
-  'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof',
+  'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof', 'QR Factors', 'QR Proof',
   'Orthonormal Basis',
   'Rank/Nullity Guidance',
   'System Proof', 'Multi-RHS Proof', 'Inverse Comparison',
@@ -150,7 +150,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
 
 const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([
   'Solve Note',
-  'Row Reduction Steps', 'Factorization Row Steps',
+  'Row Reduction Steps', 'Factorization Row Steps', 'QR Column Steps',
 ]);
 
 function plural(count: number, singular: string, pluralLabel = `${singular}s`) {

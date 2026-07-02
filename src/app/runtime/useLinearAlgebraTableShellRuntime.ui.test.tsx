@@ -364,6 +364,17 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(basis.kind === 'success' ? basis.detailSections?.map((section) => section.title) : [])
       .toContain('Basis Proof');
 
+    const qrLatex = '\\operatorname{qr}\\left(\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}\\right)';
+    const qr = await runMatrixExpression(qrLatex);
+    expect(qr).toMatchObject({
+      kind: 'success',
+      title: qrLatex,
+      approxText: '2 QR columns',
+      sourceMode: 'matrix',
+    });
+    expect(qr.kind === 'success' ? qr.detailSections?.map((section) => section.title) : [])
+      .toEqual(['QR Factors', 'QR Proof', 'QR Column Steps']);
+
     const eigenLatex = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
     const eigen = await runMatrixExpression(eigenLatex);
     expect(eigen).toMatchObject({

@@ -483,7 +483,7 @@ const MATRIX_MODIFIER_ROW: KeypadButton[] = [
   { id: 'linear-null', label: 'null', variant: 'function', latex: '\\operatorname{null}\\left(#0\\right)' },
   { id: 'linear-col', label: 'col', variant: 'function', latex: '\\operatorname{col}\\left(#0\\right)' },
   { id: 'linear-invertible', label: 'inv?', variant: 'function', latex: '\\operatorname{invertible}\\left(#0\\right)' },
-  { id: 'linear-equals', label: '=', alpha: 'h', variant: 'function', latex: '=', layers: { alpha: { label: 'h', latex: 'h' } } },
+  { id: 'linear-qr', label: 'qr', variant: 'function', latex: '\\operatorname{qr}\\left(#0\\right)', layers: { shift: { label: '=', latex: '=' } } },
 ];
 
 const VECTOR_OPERATOR_ROW: KeypadButton[] = [

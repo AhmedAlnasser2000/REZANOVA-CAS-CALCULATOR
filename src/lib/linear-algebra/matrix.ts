@@ -28,6 +28,7 @@ import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
 import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
+import { runMatrixQr } from './matrix-qr';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
 
@@ -407,6 +408,31 @@ function exactMultiRhsResponse(req: MatrixRequest): MatrixResponse | null {
       };
 }
 
+function exactQrResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'qrA') {
+    return runMatrixQr({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+
+  if (req.operation === 'qrB') {
+    return req.matrixB
+      ? runMatrixQr({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'eigenA') {
     return runMatrixEigen({
@@ -514,6 +540,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const multiRhsResponse = exactMultiRhsResponse(req);
   if (multiRhsResponse) {
     return multiRhsResponse;
+  }
+
+  const qrResponse = exactQrResponse(req);
+  if (qrResponse) {
+    return qrResponse;
   }
 
   const eigenResponse = exactEigenResponse(req);

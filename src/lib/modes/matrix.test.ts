@@ -155,6 +155,20 @@ describe('runMatrixMode', () => {
     expect(result.detailSections?.[0]?.title).toBe('Multi-RHS Proof');
   });
 
+  it('labels QR runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'qrA',
+      matrixA: [[3, 0], [4, 5]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('qr(A)');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.detailSections?.[0]?.title).toBe('QR Factors');
+    }
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

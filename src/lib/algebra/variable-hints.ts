@@ -98,6 +98,7 @@ const MATRIX_EDITOR_FUNCTIONS = new Set([
   'null',
   'plu',
   'plusolve',
+  'qr',
   'rank',
   'rref',
 ]);

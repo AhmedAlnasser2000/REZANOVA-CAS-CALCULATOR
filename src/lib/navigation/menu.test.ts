@@ -82,6 +82,8 @@ describe('workspace keypad overlays', () => {
       .toBe('\\operatorname{col}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-invertible')?.latex)
       .toBe('\\operatorname{invertible}\\left(#0\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-qr')?.latex)
+      .toBe('\\operatorname{qr}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'left')?.command).toBe('cursor-left');
     expect(matrixRows.flat().find((button) => button.id === 'execute')?.command).toBe('evaluate');
 
@@ -110,6 +112,7 @@ describe('workspace keypad overlays', () => {
     expect(vectorRows.flat().find((button) => button.id === 'linear-null')).toBeUndefined();
     expect(vectorRows.flat().find((button) => button.id === 'linear-col')).toBeUndefined();
     expect(vectorRows.flat().find((button) => button.id === 'linear-invertible')).toBeUndefined();
+    expect(vectorRows.flat().find((button) => button.id === 'linear-qr')).toBeUndefined();
     expect(vectorRows.flat().find((button) => button.id === 'linear-eigen')).toBeUndefined();
     expect(matrixRows.flat().find((button) => button.id === 'linear-proj-u')).toBeUndefined();
 

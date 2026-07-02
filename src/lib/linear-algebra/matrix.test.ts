@@ -562,6 +562,33 @@ describe('runMatrixOperation', () => {
     );
   });
 
+  it('computes exact QR factors when Gram-Schmidt lengths stay rational', () => {
+    const response = runMatrixOperation({
+      operation: 'qrA',
+      matrixA: [[3, 0], [4, 5]],
+      matrixB,
+    });
+
+    expect(response.resultLatex).toBe('A=QR');
+    expect(response.approxText).toBe('2 QR columns');
+    expect(response.detailSections?.map((section) => section.title)).toEqual([
+      'QR Factors',
+      'QR Proof',
+      'QR Column Steps',
+    ]);
+    expect(response.detailSections?.[0]?.lines).toContain('Q=\\begin{bmatrix}\\frac{3}{5} & -\\frac{4}{5}\\\\\\frac{4}{5} & \\frac{3}{5}\\end{bmatrix}');
+    expect(response.detailSections?.[0]?.lines).toContain('R=\\begin{bmatrix}5 & 4\\\\0 & 3\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('Q^{T}Q=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('QR=\\begin{bmatrix}3 & 0\\\\4 & 5\\end{bmatrix}');
+    expect(response.detailSections?.[2]?.lines).toContain('r_{12}=q_{1}^{T}a_{2}=4');
+
+    expect(runMatrixOperation({
+      operation: 'qrA',
+      matrixA: [[1, 0], [1, 1]],
+      matrixB,
+    }).error).toBe('Exact QR readback needs rational Gram-Schmidt lengths here; column 1 has a non-rational norm.');
+  });
+
   it('hands deferred irrational and complex eigenvalue cases to Equation explicitly', () => {
     const irrational = runMatrixOperation({
       operation: 'eigenA',

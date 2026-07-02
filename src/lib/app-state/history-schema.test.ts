@@ -424,6 +424,19 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('multiRhsSolve');
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-qr',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{qr}\\left(A\\right)',
+      resultLatex: 'A=QR',
+      matrixSeed: {
+        operation: 'qrA',
+        matrixA: [[3, 0], [4, 5]],
+        matrixB: [[5, 6], [7, 8]],
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('qrA');
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',

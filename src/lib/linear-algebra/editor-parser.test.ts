@@ -41,6 +41,8 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{LU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
     expect(parsed('\\operatorname{plu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });
     expect(parsed('\\operatorname{PLU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });
+    expect(parsed('\\operatorname{qr}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'qr' });
+    expect(parsed('\\operatorname{QR}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'qr' });
     expect(parsed('\\operatorname{lusolve}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toEqual({
       kind: 'factorSolve',
       method: 'lu',

@@ -1,12 +1,14 @@
 import type {
   ExactScalarWire,
   AngleUnit,
+  MatrixOperation,
   MatrixRequest,
   VectorRequest,
 } from '../../types/calculator';
 import {
   parseLinearAlgebraEditorLatex,
   type LinearAlgebraEditorExpression,
+  type LinearAlgebraUnaryOperator,
 } from './editor-parser';
 import {
   buildLinearAlgebraEquationHandoff,
@@ -151,6 +153,22 @@ function vectorOperand(
 
   return null;
 }
+
+const MATRIX_UNARY_OPERATIONS: Partial<Record<LinearAlgebraUnaryOperator, readonly [MatrixOperation, MatrixOperation]>> = {
+  determinant: ['detA', 'detB'],
+  rank: ['rankA', 'rankB'],
+  rref: ['rrefA', 'rrefB'],
+  nullSpace: ['nullSpaceA', 'nullSpaceB'],
+  columnSpace: ['columnSpaceA', 'columnSpaceB'],
+  basis: ['basisA', 'basisB'],
+  lu: ['luA', 'luB'],
+  plu: ['pluA', 'pluB'],
+  qr: ['qrA', 'qrB'],
+  invertibility: ['invertibilityA', 'invertibilityB'],
+  eigen: ['eigenA', 'eigenB'],
+  transpose: ['transposeA', 'transposeB'],
+  inverse: ['inverseA', 'inverseB'],
+};
 
 function matrixPairRequest(
   input: MatrixEditorDispatchInput,
@@ -347,250 +365,21 @@ function matrixUnaryRequest(
     };
   }
 
-  if (expression.operator === 'rank') {
+  const operations = MATRIX_UNARY_OPERATIONS[expression.operator];
+  if (operations) {
+    const [operationA, operationB] = operations;
     return {
       ok: true,
       request: value.named === 'B'
         ? {
-            operation: 'rankB',
+            operation: operationB,
             matrixA: cloneMatrix(input.matrixA),
             matrixB: value.matrix,
             ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
             ...matrixMetadata(input, { operandB: value }),
           }
         : {
-            operation: 'rankA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'rref') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'rrefB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'rrefA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'nullSpace') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'nullSpaceB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'nullSpaceA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'columnSpace') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'columnSpaceB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'columnSpaceA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'basis') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'basisB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'basisA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'lu') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'luB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'luA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'plu') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'pluB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'pluA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'invertibility') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'invertibilityB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'invertibilityA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'eigen') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'eigenB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'eigenA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'determinant') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'detB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'detA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'transpose') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'transposeB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'transposeA',
-            matrixA: value.matrix,
-            matrixB: cloneMatrix(input.matrixB),
-            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandA: value }),
-          },
-    };
-  }
-
-  if (expression.operator === 'inverse') {
-    return {
-      ok: true,
-      request: value.named === 'B'
-        ? {
-            operation: 'inverseB',
-            matrixA: cloneMatrix(input.matrixA),
-            matrixB: value.matrix,
-            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
-            ...matrixMetadata(input, { operandB: value }),
-          }
-        : {
-            operation: 'inverseA',
+            operation: operationA,
             matrixA: value.matrix,
             matrixB: cloneMatrix(input.matrixB),
             ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
