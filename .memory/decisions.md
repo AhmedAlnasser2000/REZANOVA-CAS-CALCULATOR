@@ -1723,3 +1723,7 @@
 ## 2026-07-02 - CALCULUS-LIMITS-SQUEEZE-OSCILLATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may use a pattern-based `squeeze-oscillation` route for classic finite-target bounded-oscillation forms. Successful products expose squeeze-theorem method details, and unsupported pure oscillation examples expose proof cards; this remains educational pattern handling, not a broad theorem prover.
+
+## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-TRUST-MILESTONE1 gate A
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector variable hints are mode-aware UI analysis: supported linear-algebra functions, LaTeX matrix environments, and structural operands (`A/B/x`, `u/v`) are editor syntax, not generic variables. Equation and Calculate keep their existing raw adjacent-letter ambiguity warnings.

@@ -32,6 +32,11 @@ export function collectMathJsonIdentifiers(
 
   if (isNodeArray(node)) {
     const [operator, ...operands] = node;
+    if (operator === 'Matrix') {
+      collectMathJsonIdentifiers(operands[0], symbols, reserved, explicitNamedVariables);
+      return;
+    }
+
     if (typeof operator === 'string' && RESERVED_FUNCTION_OPERATORS.has(operator)) {
       const current = reserved.get(operator);
       reserved.set(operator, {
@@ -62,4 +67,3 @@ export function collectMathJsonIdentifiers(
     }
   }
 }
-

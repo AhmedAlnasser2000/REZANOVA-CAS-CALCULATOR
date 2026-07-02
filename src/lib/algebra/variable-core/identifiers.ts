@@ -63,6 +63,8 @@ const GREEK_SYMBOL_NAMES = new Set([
 ]);
 
 const LATEX_COMMANDS_WITH_LITERAL_TEXT_ARGUMENT = new Set([
+  '\\begin',
+  '\\end',
   '\\mathbb',
   '\\mathcal',
   '\\mathbf',
@@ -117,4 +119,3 @@ export function classifySymbolName(
 
   return 'unsupported-symbol';
 }
-

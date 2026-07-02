@@ -84,6 +84,31 @@ const RESERVED_FUNCTIONS = new Set([
 const RESERVED_CONSTANTS = new Set(['e', 'pi', 'infinity', 'nan']);
 const RESERVED_UNITS = new Set(['i', 'imaginaryi']);
 
+const MATRIX_EDITOR_FUNCTIONS = new Set([
+  'col',
+  'det',
+  'eigen',
+  'invertible',
+  'null',
+  'rank',
+  'rref',
+]);
+
+const VECTOR_EDITOR_FUNCTIONS = new Set([
+  'angle',
+  'cross',
+  'dot',
+  'gram',
+  'norm',
+  'orth',
+  'orth_u',
+  'orth_v',
+  'proj',
+  'proj_u',
+  'proj_v',
+  'unit',
+]);
+
 type ReservedHintKind = 'reserved-function' | 'reserved-constant' | 'reserved-unit';
 
 type HintSymbol = {
@@ -245,12 +270,34 @@ function hintsFromSymbols(
 
 function stripKnownLatexCommands(latex: string) {
   return latex
+    .replace(/\\(?:begin|end)\{[A-Za-z*]+\}/g, ' ')
     .replace(/\\mathrm\{[A-Za-z][A-Za-z0-9_]*\}/g, ' ')
     .replace(/\\operatorname\{[A-Za-z][A-Za-z0-9_]*\}/g, ' ')
     .replace(/\\[A-Za-z]+/g, ' ');
 }
 
-function collectLightVariableAnalysis(latex: string) {
+function isLinearAlgebraEditorFunction(raw: string, context: VariableHintContext) {
+  const normalized = raw.toLowerCase();
+  if (context.mode === 'matrix') {
+    return MATRIX_EDITOR_FUNCTIONS.has(normalized);
+  }
+  if (context.mode === 'vector') {
+    return VECTOR_EDITOR_FUNCTIONS.has(normalized);
+  }
+  return false;
+}
+
+function isLinearAlgebraStructuralSymbol(raw: string, context: VariableHintContext) {
+  if (context.mode === 'matrix') {
+    return raw === 'A' || raw === 'B' || raw === 'x';
+  }
+  if (context.mode === 'vector') {
+    return raw === 'u' || raw === 'v';
+  }
+  return false;
+}
+
+function collectLightVariableAnalysis(latex: string, context: VariableHintContext) {
   const normalized = normalizeExplicitNamedVariablesInLatex(latex);
   const reservedIdentifiers: Array<{
     name: string;
@@ -279,6 +326,13 @@ function collectLightVariableAnalysis(latex: string) {
   for (const match of searchable.matchAll(/[A-Za-z][A-Za-z0-9_]*/g)) {
     const raw = match[0];
     if (normalized.explicitNames.has(raw)) {
+      continue;
+    }
+
+    if (
+      isLinearAlgebraEditorFunction(raw, context)
+      || isLinearAlgebraStructuralSymbol(raw, context)
+    ) {
       continue;
     }
 
@@ -338,6 +392,6 @@ export function buildVariableHints(
     return [];
   }
 
-  const analysis = collectLightVariableAnalysis(latex);
+  const analysis = collectLightVariableAnalysis(latex, context);
   return hintsFromSymbols(analysis, context);
 }

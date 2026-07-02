@@ -51,6 +51,40 @@ describe('variable hints', () => {
     ]);
   });
 
+  it('does not turn Matrix editor functions and bmatrix syntax into variable hints', () => {
+    expect(hintKinds('\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
+
+    expect(hintKinds('A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
+
+    expect(hintKinds('rref\\left(\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
+  });
+
+  it('does not turn Vector editor functions and named vectors into variable hints', () => {
+    expect(hintKinds('\\operatorname{proj}_{u}\\left(v\\right)', {
+      mode: 'vector',
+      screenHint: 'vector',
+      storedVariables: stored,
+    })).toEqual([]);
+
+    expect(hintKinds('gram(u,v)', {
+      mode: 'vector',
+      screenHint: 'vector',
+      storedVariables: stored,
+    })).toEqual([]);
+  });
+
   it('marks the imaginary unit as a reserved unit in Equation analysis', () => {
     const hints = buildVariableHints('x+i+\\imaginaryI=0', {
       mode: 'equation',

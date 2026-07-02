@@ -55,6 +55,14 @@ describe('variable-core', () => {
     expect(result.reservedIdentifiers.map((entry) => entry.name)).toEqual(['ExponentialE']);
   });
 
+  it('does not treat LaTeX environment names as implicit character products', () => {
+    const result = analyzeVariablesFromLatex('\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}');
+
+    expect(result.symbols).toEqual([]);
+    expect(result.implicitCharacterProducts).toEqual([]);
+    expect(result.stops).toEqual([]);
+  });
+
   it('expands acknowledged raw products without turning commands into variables', () => {
     expect(expandImplicitCharacterProductsInLatex('(v)(c^4a^3)+uy\\sqrt{k}+\\ln(m)'))
       .toBe('v c^4 a^3+u y\\sqrt{k}+\\ln(m)');
@@ -62,6 +70,8 @@ describe('variable-core', () => {
       .toBe('v c^4 a^3+\\mathrm{mass}');
     expect(expandImplicitCharacterProductsInLatex('A\\operatorname{atan2}(B,A)+\\mathbb{Z}'))
       .toBe('A\\operatorname{atan2}(B,A)+\\mathbb{Z}');
+    expect(expandImplicitCharacterProductsInLatex('\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}'))
+      .toBe('\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}');
     expect(expandImplicitCharacterProductsInLatex('vc^4+uy', { separator: '\\,' }))
       .toBe('v\\,c^4+u\\,y');
   });
