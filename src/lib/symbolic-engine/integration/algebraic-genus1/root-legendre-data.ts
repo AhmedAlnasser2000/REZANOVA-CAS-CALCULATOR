@@ -11,6 +11,10 @@ import {
 } from '../../../display/result-detail-lines';
 import { getSymbolicPolynomialCoefficient } from '../../primitives/symbolic-polynomial';
 import { boxLatex } from '../../patterns';
+import {
+  buildAlgebraicGenus1LegendreChangeOfVariableProofFromData,
+  type AlgebraicGenus1LegendreChangeOfVariableProof,
+} from './legendre-change-of-variable-proof';
 import { profileAlgebraicGenus1CurveCandidate } from './curve-profile';
 import {
   buildAlgebraicGenus1NamedRootReadback,
@@ -35,6 +39,7 @@ export type AlgebraicGenus1RootLegendreData = {
   firstKindPrototypeLatex: string;
   secondKindBasisLatex: string;
   thirdKindCharacteristicTemplateLatex: string;
+  changeOfVariableProof: AlgebraicGenus1LegendreChangeOfVariableProof;
   branchFactsLatex: string[];
   realDomainLatex: string[];
   detailSections: DisplayDetailSection[];
@@ -175,6 +180,27 @@ function buildResult(input: {
     ...realDomainLatex,
   ];
 
+  const baseResult = {
+    kind: 'success' as const,
+    dataKind: input.dataKind,
+    variable: input.variable,
+    rootSymbolsLatex: input.named.rootSymbolsLatex,
+    leadingCoefficientLatex: input.leadingCoefficientLatex,
+    preferredBranchLatex: input.preferredBranchLatex,
+    amplitudeLatex: input.amplitudeLatex,
+    parameterLatex: input.parameterLatex,
+    multiplierLatex: input.multiplierLatex,
+    inverseMapLatex: input.inverseMapLatex,
+    firstKindPrototypeLatex: input.firstKindPrototypeLatex,
+    secondKindBasisLatex: input.secondKindBasisLatex,
+    thirdKindCharacteristicTemplateLatex: input.thirdKindCharacteristicTemplateLatex,
+    branchFactsLatex,
+    realDomainLatex,
+    detailSections: [] as DisplayDetailSection[],
+    readinessNotes: [] as string[],
+  };
+  const changeOfVariableProof = buildAlgebraicGenus1LegendreChangeOfVariableProofFromData(baseResult);
+
   const detailSections: DisplayDetailSection[] = [
     mixedDetailSection(
       'Root Legendre Data',
@@ -195,28 +221,17 @@ function buildResult(input: {
         [textPart('third-kind characteristic template: '), mathPart(input.thirdKindCharacteristicTemplateLatex)],
       ],
     ),
+    ...changeOfVariableProof.detailSections,
   ];
 
   return {
-    kind: 'success',
-    dataKind: input.dataKind,
-    variable: input.variable,
-    rootSymbolsLatex: input.named.rootSymbolsLatex,
-    leadingCoefficientLatex: input.leadingCoefficientLatex,
-    preferredBranchLatex: input.preferredBranchLatex,
-    amplitudeLatex: input.amplitudeLatex,
-    parameterLatex: input.parameterLatex,
-    multiplierLatex: input.multiplierLatex,
-    inverseMapLatex: input.inverseMapLatex,
-    firstKindPrototypeLatex: input.firstKindPrototypeLatex,
-    secondKindBasisLatex: input.secondKindBasisLatex,
-    thirdKindCharacteristicTemplateLatex: input.thirdKindCharacteristicTemplateLatex,
-    branchFactsLatex,
-    realDomainLatex,
+    ...baseResult,
+    changeOfVariableProof,
     detailSections,
     readinessNotes: [
       'Exact-rational named-root Legendre data is behavior-invisible evidence for generic genus-1 adoption.',
       'The displayed branch chooses one real Legendre chart; later live routes must add chart selection or casewise branches before adoption.',
+      ...changeOfVariableProof.readinessNotes,
     ],
   };
 }

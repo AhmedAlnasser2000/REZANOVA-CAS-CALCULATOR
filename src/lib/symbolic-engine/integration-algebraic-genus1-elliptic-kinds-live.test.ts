@@ -48,6 +48,8 @@ describe('algebraic genus-1 live Legendre elliptic kinds', () => {
     expect(result.exactLatex).toContain('\\alpha_{3}-\\alpha_{1}');
     expect(result.exactSupplementLatex?.join('\n')).toContain('x>\\alpha_{3}');
     expect(result.detailSections?.some((section) => section.title === 'Genus-1 Generic First-Kind Proof')).toBe(true);
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Genus-1 Legendre Change Of Variable Proof')).toBe(true);
   });
 
   it('adopts generic exact-rational quartic reciprocal radicals as first-kind named-root charts', () => {
@@ -59,6 +61,8 @@ describe('algebraic genus-1 live Legendre elliptic kinds', () => {
     expect(result.exactLatex).toContain('\\alpha_{4}-\\alpha_{2}');
     expect(result.exactSupplementLatex?.join('\n')).toContain('\\alpha_{2}<x<\\alpha_{3}');
     expect(result.detailSections?.some((section) => section.title === 'Root Legendre Data')).toBe(true);
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Genus-1 Legendre Change Of Variable Proof')).toBe(true);
   });
 
   it('keeps generic exact cubic radicals on the deferred second-kind boundary', () => {

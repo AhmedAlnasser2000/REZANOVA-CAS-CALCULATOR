@@ -19,6 +19,8 @@ The current boundary example `sqrt(x^3+x+1)` is a correct genus-1 candidate. Its
 
 `ALGEBRAIC-GENUS1-READINESS-AUDIT0` is complete. The roadmap below counts the next sixteen moves after that audit, not seventeen moves including it.
 
+Inserted prerequisite note: after `ALGEBRAIC-GENUS1-GENERIC-FIRST-KIND-LIVE1`, `ALGEBRAIC-GENUS1-LEGENDRE-CHANGE-OF-VARIABLE-PROOF1` was added before further generic second-kind/rational-in-radical widening. The reason is architectural: root-based Legendre formulas now need explicit substitution and kernel-pullback proof evidence, not only named-root readback and live first-kind formulas.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
