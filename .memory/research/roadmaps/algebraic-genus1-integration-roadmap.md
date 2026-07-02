@@ -25,6 +25,8 @@ Inserted prerequisite note: after the change-of-variable proof, `ALGEBRAIC-GENUS
 
 Inserted prerequisite note: after root-basis coefficient obligations, `ALGEBRAIC-GENUS1-ROOT-PULLBACK-BASIS-PROFILE1` was added before generic second-kind/third-kind live work. The reason is mathematical: reciprocal radicals are first-kind-ready, but generic radical pullbacks require coefficient solving against first/second/third-kind basis terms, and rational-in-radical pullbacks require a Hermite residual split before live adoption.
 
+Inserted prerequisite note: after pullback basis profiling, `ALGEBRAIC-GENUS1-ROOT-BASIS-COEFFICIENT-SYSTEM1` was added before generic second-kind/third-kind live work. The reason is proof discipline: later live routes must solve an explicit coefficient system over the named-root Legendre coefficient field, with rational/log residual unknowns separated for rational-in-radical pullbacks.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
