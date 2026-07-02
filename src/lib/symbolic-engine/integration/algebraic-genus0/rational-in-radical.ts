@@ -20,6 +20,7 @@ import {
   simplifyMathJsonNodeOrOriginal,
 } from '../../primitives/simplification/simplification';
 import { boxLatex, isNodeArray } from '../../patterns';
+import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import {
   algebraicGenus0BranchValidityFact,
   algebraicGenus0FactsToExactSupplementLatex,
@@ -226,7 +227,7 @@ function tryQuadraticNumeratorOverStandardRadical(
   }
 
   return {
-    exactLatex: boxLatex(antiderivativeNode),
+    exactLatex: normalizeGeneratedIntegrationLatex(boxLatex(antiderivativeNode), variable),
     verification: proof(),
     exactSupplementLatex: radicandSupplements(shape.radicand),
   };

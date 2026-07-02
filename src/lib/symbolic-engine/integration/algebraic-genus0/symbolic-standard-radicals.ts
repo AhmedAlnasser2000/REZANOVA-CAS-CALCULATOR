@@ -16,7 +16,9 @@ import {
 import {
   boxLatex,
   isNodeArray,
+  wrapGroupedLatex,
 } from '../../patterns';
+import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import {
   algebraicGenus0BranchValidityFact,
   algebraicGenus0CoefficientDenominatorFact,
@@ -105,10 +107,15 @@ function radicandLatex(radicand: unknown) {
 function finish(input: {
   node: unknown;
   exactSupplementFacts: AlgebraicGenus0Fact[];
+  exactLatex?: string;
+  variable: string;
 }): AlgebraicGenus0SymbolicStandardRadicalRule {
   const antiderivativeNode = simplifyMathJsonNodeOrOriginal(input.node);
   return {
-    exactLatex: boxLatex(antiderivativeNode),
+    exactLatex: normalizeGeneratedIntegrationLatex(
+      input.exactLatex ?? boxLatex(antiderivativeNode),
+      input.variable,
+    ),
     verification: proof(),
     exactSupplementLatex: algebraicGenus0FactsToExactSupplementLatex(input.exactSupplementFacts),
   };
@@ -134,21 +141,33 @@ function tryAffineRadical(
     algebraicGenus0BranchValidityFact(radicandLatex(shape.radicand), '\\ge0'),
   ];
   if (shape.kind === 'radical') {
+    const slopeLatex = boxLatex(simplifyMathJsonNodeOrOriginal(slope.node));
+    const groupedRadicandLatex = wrapGroupedLatex(radicandLatex(shape.radicand));
     return finish({
       node: divideMathJsonNodes(
         multiplyMathJsonNodes(2, power(shape.radicand, THREE_HALVES)),
         multiplyMathJsonNodes(3, slope.node),
       ),
+      exactLatex: slopeLatex === '1'
+        ? `\\frac{2}{3}${groupedRadicandLatex}^{\\frac{3}{2}}`
+        : `\\frac{2${groupedRadicandLatex}^{\\frac{3}{2}}}{3${wrapGroupedLatex(slopeLatex)}}`,
       exactSupplementFacts: facts,
+      variable,
     });
   }
 
+  const slopeLatex = boxLatex(simplifyMathJsonNodeOrOriginal(slope.node));
+  const radicandRootLatex = `\\sqrt{${radicandLatex(shape.radicand)}}`;
   return finish({
     node: divideMathJsonNodes(
       multiplyMathJsonNodes(2, sqrt(shape.radicand)),
       slope.node,
     ),
+    exactLatex: slopeLatex === '1'
+      ? `2${radicandRootLatex}`
+      : `\\frac{2}{${wrapGroupedLatex(slopeLatex)}}${radicandRootLatex}`,
     exactSupplementFacts: facts,
+    variable,
   });
 }
 
@@ -237,7 +256,7 @@ function tryCenteredQuadraticRadical(
     algebraicGenus0BranchValidityFact(radicandLatex(shape.radicand), '\\ge0'),
   ];
   if (shape.kind === 'reciprocal-radical') {
-    return finish({ node: inverse, exactSupplementFacts: facts });
+    return finish({ node: inverse, exactSupplementFacts: facts, variable });
   }
 
   const variableRadical = multiplyMathJsonNodes(variable, sqrt(shape.radicand));
@@ -251,6 +270,7 @@ function tryCenteredQuadraticRadical(
       2,
     ),
     exactSupplementFacts: facts,
+    variable,
   });
 }
 

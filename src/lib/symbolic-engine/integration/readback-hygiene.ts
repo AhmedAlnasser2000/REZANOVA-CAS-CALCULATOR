@@ -85,24 +85,34 @@ function normalizeExplicitFunctionProducts(latex: string) {
   );
 }
 
+function normalizeScalarReciprocalProducts(latex: string) {
+  const functionFactor = String.raw`(?:\\sqrt\{[^{}]+\}|\\(?:arcsin|arccos|arctan)\b|\\operatorname\{(?:arsinh|arcosh|atanh|EllipticF|EllipticE|EllipticPi)\})`;
+  return latex.replace(
+    new RegExp(`(?<![A-Za-z])([2-9]|\\d{2,})\\\\frac\\{1\\}\\{([^{}]+)\\}(?=${functionFactor})`, 'g'),
+    '\\frac{$1}{$2}',
+  );
+}
+
 export function normalizeGeneratedIntegrationLatex(latex: string, variable = 'x') {
   return normalizeDoubleNegatives(
     normalizeExplicitFunctionProducts(
-      normalizeFractionSigns(
-        normalizeInlineDivision(
-          normalizeVariableRightProducts(
-            normalizeRepeatedSimpleMonomials(
-              normalizeSingleSymbolNegatedFactors(
-                normalizeDoubleNegatives(
-                  normalizeWrappedSimpleFractions(latex),
+      normalizeScalarReciprocalProducts(
+        normalizeFractionSigns(
+          normalizeInlineDivision(
+            normalizeVariableRightProducts(
+              normalizeRepeatedSimpleMonomials(
+                normalizeSingleSymbolNegatedFactors(
+                  normalizeDoubleNegatives(
+                    normalizeWrappedSimpleFractions(latex),
+                  ),
                 ),
               ),
+              variable,
             ),
-            variable,
           ),
-        ),
-      )
-        .replace(/\\left\(-\\frac\{([^{}]+)\}\{([^{}]+)\}\\right\)/g, '-\\frac{$1}{$2}'),
+        )
+          .replace(/\\left\(-\\frac\{([^{}]+)\}\{([^{}]+)\}\\right\)/g, '-\\frac{$1}{$2}'),
+      ),
     ),
   );
 }

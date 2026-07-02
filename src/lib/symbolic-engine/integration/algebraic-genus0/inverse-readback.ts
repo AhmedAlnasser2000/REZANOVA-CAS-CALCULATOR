@@ -30,6 +30,7 @@ import {
   isNodeArray,
   wrapGroupedLatex,
 } from '../../patterns';
+import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import {
   pullbackAlgebraicGenus0Integral,
   type AlgebraicGenus0PullbackSuccess,
@@ -128,7 +129,10 @@ function finish(input: {
     parameter: input.pullback.parameter,
     source: input.source,
     antiderivativeNode,
-    exactLatex: input.exactLatex ?? boxLatex(antiderivativeNode),
+    exactLatex: normalizeGeneratedIntegrationLatex(
+      input.exactLatex ?? boxLatex(antiderivativeNode),
+      input.variable,
+    ),
     verification: proof(input.source),
     exactSupplementLatex: input.pullback.exactSupplementLatex,
     pullback: input.pullback,

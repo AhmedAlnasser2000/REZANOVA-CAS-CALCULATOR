@@ -22,7 +22,7 @@ describe('algebraic genus-0 symbolic branch coverage', () => {
     const radical = success('\\sqrt{a*x+b}');
     expect(radical.strategy).toBe('u-substitution');
     expect(radical.verification.status).toBe('verified-exact');
-    expect(radical.exactLatex).toContain('\\sqrt{ax+b}^{3}');
+    expect(compact(radical.exactLatex)).toContain('\\frac{2\\left(ax+b\\right)^{\\frac{3}{2}}}{3a}');
     expect(compact(radical.exactSupplementLatex?.join('\n'))).toContain('a\\ne0');
     expect(compact(radical.exactSupplementLatex?.join('\n'))).toContain('ax+b\\ge0');
 
@@ -30,6 +30,8 @@ describe('algebraic genus-0 symbolic branch coverage', () => {
     expect(reciprocal.strategy).toBe('u-substitution');
     expect(reciprocal.verification.status).toBe('verified-exact');
     expect(reciprocal.exactLatex).toContain('\\sqrt{ax+b}');
+    expect(compact(reciprocal.exactLatex)).toContain('\\frac{2}{a}\\sqrt{ax+b}');
+    expect(compact(reciprocal.exactLatex)).not.toContain('2\\frac{1}{a}');
     expect(compact(reciprocal.exactSupplementLatex?.join('\n'))).toContain('a\\ne0');
   });
 
