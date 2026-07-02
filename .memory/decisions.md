@@ -1704,3 +1704,7 @@
 ## 2026-07-02 - VECTOR-GRAM-SCHMIDT1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector owns two-vector `gram(u,v)` as a Vector numeric operation over existing `u`/`v` and inline vector operands. V1 returns orthogonal basis readback, orthonormal basis details when finite, proof details, and dependency/zero-span notes; Matrix-column QR, matrix-column Gram-Schmidt, least squares, and Equation solving remain deferred.
+
+## 2026-07-02 - MATRIX-INVERTIBILITY-THEOREM1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns finite square-matrix invertibility theorem readback through determinant, rank, pivot, and nullity facts from the exact Matrix substrate. `invertible(A/B)` may run for named or inline matrices; rectangular inputs produce rank/nullity guidance instead of invertibility claims. This does not add Equation solving, symbolic Matrix CAS, or automatic Equation routing.

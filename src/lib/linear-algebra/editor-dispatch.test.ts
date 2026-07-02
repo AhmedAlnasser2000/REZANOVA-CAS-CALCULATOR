@@ -87,6 +87,30 @@ describe('linear algebra editor dispatch', () => {
         ],
       },
     });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{invertible}\\left(B\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: { operation: 'invertibilityB', matrixA, matrixB },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{invertible}\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}\\right)',
+      matrixA,
+      matrixB,
+    })).toEqual({
+      ok: true,
+      request: {
+        operation: 'invertibilityA',
+        matrixA: [[0.5, 0], [0, 0.125]],
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 8 }],
+        ],
+      },
+    });
   });
 
   it('preserves inline Matrix fractions and finite decimals as exact sidecars', () => {

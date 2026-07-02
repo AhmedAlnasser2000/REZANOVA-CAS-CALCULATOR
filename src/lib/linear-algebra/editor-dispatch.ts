@@ -253,6 +253,25 @@ function matrixUnaryRequest(
     };
   }
 
+  if (expression.operator === 'invertibility') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? {
+            operation: 'invertibilityB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+          }
+        : {
+            operation: 'invertibilityA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+          },
+    };
+  }
+
   if (expression.operator === 'determinant') {
     return {
       ok: true,

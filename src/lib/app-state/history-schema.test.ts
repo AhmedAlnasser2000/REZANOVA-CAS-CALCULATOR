@@ -288,6 +288,19 @@ describe('history entry schema', () => {
     }).matrixSeed?.operation).toBe('rrefA');
 
     expect(historyEntrySchema.parse({
+      id: 'matrix-seed-invertible',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{invertible}\\left(A\\right)',
+      resultLatex: '\\operatorname{invertible}(A)=\\text{Yes}',
+      matrixSeed: {
+        operation: 'invertibilityA',
+        matrixA: [[1, 2], [3, 4]],
+        matrixB: [[5, 6], [7, 8]],
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('invertibilityA');
+
+    expect(historyEntrySchema.parse({
       id: 'matrix-seed-system',
       mode: 'matrix',
       inputLatex: 'Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}',

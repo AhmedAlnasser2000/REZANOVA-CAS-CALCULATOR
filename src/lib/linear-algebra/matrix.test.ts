@@ -133,6 +133,47 @@ describe('runMatrixOperation', () => {
     expect(columnSpace.resultLatex).toBe('\\operatorname{Col}(A)=\\{0\\}');
   });
 
+  it('explains invertibility theorem facts for square matrices', () => {
+    const invertible = runMatrixOperation({
+      operation: 'invertibilityA',
+      matrixA,
+      matrixB,
+    });
+    const singular = runMatrixOperation({
+      operation: 'invertibilityA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB,
+    });
+
+    expect(invertible.resultLatex).toBe('\\operatorname{invertible}(A)=\\text{Yes}');
+    expect(invertible.approxText).toBe('det(A) = -2');
+    expect(invertible.detailSections?.[0]?.lines).toContain('\\det(A)=-2');
+    expect(invertible.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)=2');
+    expect(invertible.detailSections?.[1]?.lines).toContain(
+      'Every column is a pivot. For every RHS b, Ax=b has exactly one solution.',
+    );
+
+    expect(singular.resultLatex).toBe('\\operatorname{invertible}(A)=\\text{No}');
+    expect(singular.approxText).toBe('det(A) = 0');
+    expect(singular.detailSections?.[0]?.lines).toContain('\\operatorname{nullity}(A)=1');
+    expect(singular.detailSections?.[1]?.lines).toContain(
+      'At least one column is free, so Ax=b cannot have exactly one solution for every RHS b.',
+    );
+  });
+
+  it('redirects rectangular invertibility requests to rank/nullity guidance', () => {
+    const response = runMatrixOperation({
+      operation: 'invertibilityA',
+      matrixA: [[1, 2, 3], [4, 5, 6]],
+      matrixB,
+    });
+
+    expect(response.resultLatex).toBe('\\text{Invertibility applies only to square matrices}');
+    expect(response.approxText).toBe('rank 2, nullity 1');
+    expect(response.detailSections?.[0]?.title).toBe('Rank/Nullity Guidance');
+    expect(response.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)+\\operatorname{nullity}(A)=3');
+  });
+
   it('stops on incomplete, mismatched, singular, and non-square requests', () => {
     expect(runMatrixOperation({ operation: 'add', matrixA: [], matrixB }).error).toBe(
       'Matrix A is incomplete.',

@@ -21,6 +21,7 @@ import {
   type MatrixCoreStopReason,
   type NumericMatrixRequest,
 } from './matrix-core';
+import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
 
@@ -163,6 +164,31 @@ function exactSpaceResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactInvertibilityResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'invertibilityA') {
+    return runMatrixInvertibility({
+      label: 'A',
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+
+  if (req.operation === 'invertibilityB') {
+    return req.matrixB
+      ? runMatrixInvertibility({
+          label: 'B',
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult): MatrixResponse {
   if (result.kind === 'error') {
     return {
@@ -205,6 +231,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const spaceResponse = exactSpaceResponse(req);
   if (spaceResponse) {
     return spaceResponse;
+  }
+
+  const invertibilityResponse = exactInvertibilityResponse(req);
+  if (invertibilityResponse) {
+    return invertibilityResponse;
   }
 
   const numericRequest: NumericMatrixRequest = {

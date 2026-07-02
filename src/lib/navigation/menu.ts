@@ -482,7 +482,7 @@ const MATRIX_MODIFIER_ROW: KeypadButton[] = [
   { id: 'linear-inverse', label: 'A⁻¹', variant: 'function', latex: '^{-1}' },
   { id: 'linear-null', label: 'null', variant: 'function', latex: '\\operatorname{null}\\left(#0\\right)' },
   { id: 'linear-col', label: 'col', variant: 'function', latex: '\\operatorname{col}\\left(#0\\right)' },
-  { id: 'linear-cross', label: '×', variant: 'function', latex: '\\times' },
+  { id: 'linear-invertible', label: 'inv?', variant: 'function', latex: '\\operatorname{invertible}\\left(#0\\right)' },
   { id: 'linear-equals', label: '=', alpha: 'h', variant: 'function', latex: '=', layers: { alpha: { label: 'h', latex: 'h' } } },
 ];
 

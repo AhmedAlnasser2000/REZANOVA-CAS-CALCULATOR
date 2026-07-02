@@ -66,6 +66,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'col(A)';
     case 'columnSpaceB':
       return 'col(B)';
+    case 'invertibilityA':
+      return 'invertible(A)';
+    case 'invertibilityB':
+      return 'invertible(B)';
     case 'linearSystem':
       return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
     default:
