@@ -41,6 +41,8 @@ Inserted prerequisite note: after complex-pair Legendre data, `ALGEBRAIC-GENUS1-
 
 Inserted prerequisite note: after complex-pair pullback/basis evidence, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-CHANGE-OF-VARIABLE-PROOF1` was added before live one-real-root cubic adoption. The reason is proof discipline: the tan-half-angle chart needs its own substitution identity and first-kind differential identity before it can safely feed a live elliptic answer.
 
+Inserted prerequisite note: `ALGEBRAIC-GENUS1-COMPLEX-PAIR-FIRST-KIND-LIVE1` makes exact one-real-root cubic reciprocal radicals live through the complex-pair first-kind chart after the proof prerequisite. This stays narrow: radical, second-kind, and rational-in-radical complex-pair cases still wait for later basis-reduction gates.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

@@ -75,3 +75,22 @@ test('genus-1 third-kind elliptic answer exposes characteristic facts and proof 
   await expectAnswerOverflowReady(page);
   await captureEvidence(page, 'third-kind-facts');
 });
+
+test('genus-1 one-real-root cubic first-kind answer keeps complex-pair details usable', async ({ page }) => {
+  await openIndefiniteIntegral(page);
+  await runIndefiniteIntegral(page, '\\frac{1}{\\sqrt{x^3+x+1}}');
+
+  await expectAnswerLatex(page, '\\operatorname{EllipticF}', 'A_{\\alpha_{1}}');
+  await expectValidWhenLatex(page, 'x>\\alpha_{1}');
+
+  const data = await openDetailCard(page, 'Complex-Pair Legendre Data');
+  await expect(data.locator('[data-raw-latex*="A_{\\\\alpha_{1}}"]').first()).toBeVisible();
+  const proof = await openDetailCard(page, 'Genus-1 Legendre Change Of Variable Proof');
+  await expect(proof.locator('[data-raw-latex*="tan"]').first()).toBeVisible();
+  await expectAnswerOverflowReady(page);
+
+  const copied = await copyResult(page);
+  expect(copied).toContain('EllipticF');
+  expect(copied).toContain('A_{\\alpha_{1}}');
+  await captureEvidence(page, 'complex-pair-first-kind');
+});

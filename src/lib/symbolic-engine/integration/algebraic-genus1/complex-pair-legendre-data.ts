@@ -208,7 +208,7 @@ export function buildAlgebraicGenus1ComplexPairLegendreData(
       ...chart.readinessNotes,
       ...changeOfVariableProof.readinessNotes,
       'Complex-pair Legendre data now carries first-kind change-of-variable proof evidence.',
-      'Live adoption remains deferred until the derivative proof and branch facts use this chart.',
+      'The live first-kind reciprocal-radical route may adopt this chart on the displayed real branch.',
     ],
   };
 }

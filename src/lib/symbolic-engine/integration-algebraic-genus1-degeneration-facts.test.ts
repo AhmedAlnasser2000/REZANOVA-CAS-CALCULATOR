@@ -95,12 +95,20 @@ describe('algebraic genus-1 degeneration facts', () => {
     });
   });
 
-  it('does not change current live integration routing for genus-1 radical candidates', () => {
+  it('preserves the staged live boundary for exact genus-1 radical candidates', () => {
     const result = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{x^3+x+1}}');
-    expect(result.kind).toBe('error');
-    if (result.kind === 'error') {
-      expect(result.error).toContain('genus-1');
-      expect(result.error).toContain('elliptic');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.strategy).toBe('u-substitution');
+      expect(result.exactLatex).toContain('EllipticF');
+      expect(result.exactLatex).toContain('A_{\\alpha_{1}}');
+    }
+
+    const rawRadical = resolveSymbolicIntegralFromLatex('\\sqrt{x^3+x+1}');
+    expect(rawRadical.kind).toBe('error');
+    if (rawRadical.kind === 'error') {
+      expect(rawRadical.error).toContain('genus-1');
+      expect(rawRadical.error).toContain('elliptic');
     }
   });
 });

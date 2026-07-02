@@ -1,6 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
-import { resolveSymbolicIntegralFromLatex } from './integration';
 import { buildAlgebraicGenus1ComplexPairLegendreData } from './integration/algebraic-genus1/complex-pair-legendre-data';
 
 const ce = new ComputeEngine();
@@ -63,8 +62,7 @@ describe('algebraic genus-1 complex-pair Legendre data', () => {
     expect(text(result)).toContain('Genus-1 Legendre Change Of Variable Proof');
     expect(text(result)).not.toMatch(/RootOf|rootof/i);
 
-    const integration = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{x^3+x+1}}');
-    expect(integration.kind).toBe('error');
+    expect(text(result)).toContain('live first-kind reciprocal-radical route may adopt');
   });
 
   it('threads selected variables through complex-pair Legendre data', () => {

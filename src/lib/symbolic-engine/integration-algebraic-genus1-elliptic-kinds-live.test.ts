@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { resolveSymbolicIntegralFromLatex } from './integration';
 
-function success(latex: string) {
-  const result = resolveSymbolicIntegralFromLatex(latex);
+function success(latex: string, variable = 'x') {
+  const result = resolveSymbolicIntegralFromLatex(latex, variable);
   expect(result.kind).toBe('success');
   if (result.kind !== 'success') {
     throw new Error(`expected live genus-1 elliptic integration for ${latex}`);
@@ -65,8 +65,41 @@ describe('algebraic genus-1 live Legendre elliptic kinds', () => {
       section.title === 'Genus-1 Legendre Change Of Variable Proof')).toBe(true);
   });
 
+  it('adopts one-real-root exact-rational cubic reciprocal radicals through complex-pair charts', () => {
+    const result = success('\\frac{1}{\\sqrt{x^3+x+1}}');
+
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.verification.reason).toContain('named-root Legendre first-kind');
+    expect(result.exactLatex).toContain('EllipticF');
+    expect(result.exactLatex).toContain('A_{\\alpha_{1}}');
+    expect(result.exactSupplementLatex?.join('\n')).toContain('x>\\alpha_{1}');
+    expect(result.detailSections?.some((section) => section.title === 'Complex-Pair Legendre Data')).toBe(true);
+    expect(result.detailSections?.some((section) =>
+      section.title === 'Genus-1 Legendre Change Of Variable Proof')).toBe(true);
+    expect(result.exactLatex).not.toMatch(/RootOf|rootof/i);
+  });
+
+  it('adopts one-real-root cubic complex-pair reciprocal radicals in selected variables', () => {
+    const result = success('\\frac{1}{\\sqrt{t^3+t+1}}', 't');
+
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.exactLatex).toContain('t-\\alpha_{1}');
+    expect(result.exactSupplementLatex?.join('\n')).toContain('t>\\alpha_{1}');
+  });
+
   it('keeps generic exact cubic radicals on the deferred second-kind boundary', () => {
     const result = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');
+
+    expect(result.kind).toBe('error');
+    if (result.kind === 'error') {
+      expect(result.error).toContain('elliptic/genus-1 analysis');
+    }
+  });
+
+  it('keeps one-real-root exact cubic radicals on the deferred second-kind boundary', () => {
+    const result = resolveSymbolicIntegralFromLatex('\\sqrt{x^3+x+1}');
 
     expect(result.kind).toBe('error');
     if (result.kind === 'error') {

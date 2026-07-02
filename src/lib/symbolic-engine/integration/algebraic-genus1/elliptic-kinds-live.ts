@@ -6,6 +6,7 @@ import {
   mixedDetailSection,
   textPart,
 } from '../../../display/result-detail-lines';
+import { buildAlgebraicGenus1ComplexPairLegendreData } from './complex-pair-legendre-data';
 import { profileAlgebraicGenus1CurveCandidate } from './curve-profile';
 import { buildAlgebraicGenus1NormalForm } from './normal-form';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
@@ -73,6 +74,45 @@ function tryGenericRootFirstKindRule(
   };
 }
 
+function tryComplexPairRootFirstKindRule(
+  node: unknown,
+  variable: string,
+): AlgebraicGenus1EllipticKindsRule | undefined {
+  const profile = profileAlgebraicGenus1CurveCandidate(node, variable);
+  if (profile.kind === 'stop' || profile.integrandShape !== 'reciprocal-radical') {
+    return undefined;
+  }
+
+  const rootData = buildAlgebraicGenus1ComplexPairLegendreData(node, variable);
+  if (
+    rootData.kind !== 'success'
+    || rootData.changeOfVariableProof.proofStatus !== 'change-of-variable-proved'
+  ) {
+    return undefined;
+  }
+
+  return {
+    exactLatex: rootData.firstKindPrototypeLatex,
+    verification: genericRootFirstKindProof(),
+    exactSupplementLatex: [rootData.preferredBranchLatex],
+    detailSections: [
+      ...rootData.detailSections,
+      mixedDetailSection(
+        'Genus-1 Generic First-Kind Proof',
+        [
+          [textPart('root chart: '), mathPart(rootData.preferredBranchLatex)],
+          [textPart('Legendre amplitude: '), mathPart(`\\phi=${rootData.amplitudeLatex}`)],
+          [textPart('Legendre parameter: '), mathPart(`m=${rootData.parameterLatex}`)],
+          [textPart('multiplier: '), mathPart(rootData.multiplierLatex)],
+          [textPart('prototype: '), mathPart(rootData.firstKindPrototypeLatex)],
+          [textPart('The complex-pair tan-half-angle substitution is accepted only on the displayed real branch.')],
+        ],
+      ),
+    ],
+    kind: 'first-kind',
+  };
+}
+
 export function tryAlgebraicGenus1EllipticKindsRule(
   node: unknown,
   variable = 'x',
@@ -80,6 +120,11 @@ export function tryAlgebraicGenus1EllipticKindsRule(
   const rootFirstKind = tryGenericRootFirstKindRule(node, variable);
   if (rootFirstKind) {
     return rootFirstKind;
+  }
+
+  const complexPairFirstKind = tryComplexPairRootFirstKindRule(node, variable);
+  if (complexPairFirstKind) {
+    return complexPairFirstKind;
   }
 
   const proof = buildAlgebraicGenus1EllipticProofBackcheck(node, variable);
