@@ -425,9 +425,15 @@ export function evaluateFiniteLimitFromAst(input: {
       );
 
       if (complexLimit.kind === 'success') {
+        const exactLatex = complexLimit.exactLatex ?? (
+          complexLimit.value === undefined ? undefined : limitValueToLatex(complexLimit.value)
+        );
+        const approxText = complexLimit.approxText ?? (
+          complexLimit.value === undefined ? undefined : limitValueToApproxText(complexLimit.value)
+        );
         return {
-          exactLatex: complexLimit.exactLatex ?? limitValueToLatex(complexLimit.value),
-          approxText: limitValueToApproxText(complexLimit.value),
+          exactLatex,
+          approxText,
           warnings: [],
           resultOrigin: complexLimit.origin,
           detailSections: complexLimit.detailSections,
@@ -483,10 +489,15 @@ export function evaluateFiniteLimitFromAst(input: {
     input.direction,
   );
   if (squeezeOscillation?.kind === 'success') {
-    const exactLatex = squeezeOscillation.exactLatex ?? limitValueToLatex(squeezeOscillation.value);
+    const exactLatex = squeezeOscillation.exactLatex ?? (
+      squeezeOscillation.value === undefined ? undefined : limitValueToLatex(squeezeOscillation.value)
+    );
+    const approxText = squeezeOscillation.approxText ?? (
+      squeezeOscillation.value === undefined ? undefined : limitValueToApproxText(squeezeOscillation.value)
+    );
     return {
       exactLatex,
-      approxText: limitValueToApproxText(squeezeOscillation.value),
+      approxText,
       warnings: [],
       resultOrigin: squeezeOscillation.origin,
       detailSections: squeezeOscillation.detailSections,
@@ -502,8 +513,12 @@ export function evaluateFiniteLimitFromAst(input: {
 
   const symbolic = resolveFiniteLimitRule(input.body, input.target, input.variable, input.direction);
   if (symbolic.kind === 'success') {
-    const exactLatex = symbolic.exactLatex ?? limitValueToLatex(symbolic.value);
-    const approxText = limitValueToApproxText(symbolic.value);
+    const exactLatex = symbolic.exactLatex ?? (
+      symbolic.value === undefined ? undefined : limitValueToLatex(symbolic.value)
+    );
+    const approxText = symbolic.approxText ?? (
+      symbolic.value === undefined ? undefined : limitValueToApproxText(symbolic.value)
+    );
     return {
       exactLatex,
       approxText,
@@ -514,12 +529,14 @@ export function evaluateFiniteLimitFromAst(input: {
       resultOrigin: symbolic.origin,
       detailSections: appendLimitDetails(
         symbolic.detailSections,
-        ...signedFiniteLimitBehaviorDetails({
-          direction: input.direction,
-          target: input.target,
-          variable: input.variable,
-          value: symbolic.value,
-        }),
+        ...(symbolic.value === undefined
+          ? []
+          : signedFiniteLimitBehaviorDetails({
+              direction: input.direction,
+              target: input.target,
+              variable: input.variable,
+              value: symbolic.value,
+            })),
       ),
     };
   }
@@ -657,9 +674,15 @@ export function evaluateInfiniteLimitFromAst(input: {
     input.variable,
   );
   if (indeterminateTransform) {
+    const exactLatex = indeterminateTransform.exactLatex ?? (
+      indeterminateTransform.value === undefined ? undefined : limitValueToLatex(indeterminateTransform.value)
+    );
+    const approxText = indeterminateTransform.approxText ?? (
+      indeterminateTransform.value === undefined ? undefined : limitValueToApproxText(indeterminateTransform.value)
+    );
     return {
-      exactLatex: indeterminateTransform.exactLatex ?? limitValueToLatex(indeterminateTransform.value),
-      approxText: limitValueToApproxText(indeterminateTransform.value),
+      exactLatex,
+      approxText,
       warnings: [],
       resultOrigin: indeterminateTransform.origin,
       detailSections: indeterminateTransform.detailSections,

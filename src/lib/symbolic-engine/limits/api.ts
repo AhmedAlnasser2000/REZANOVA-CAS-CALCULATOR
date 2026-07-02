@@ -3,6 +3,7 @@ import { box, latexToNumber, success } from './evaluation';
 import { resolveKnownFiniteLimitRule } from './known-rules';
 import { resolveExactLocalAlgebraLimit } from './exact-local-algebra';
 import { resolveFiniteIndeterminateTransformLimit } from './indeterminate-transforms';
+import { resolveFiniteRecursiveLeadingTermLimit } from './finite-leading-terms';
 import { attemptLHospital } from './lhospital';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import { resolveLogBoundaryLimit, resolveSignedPoleLimit } from './poles';
@@ -47,6 +48,11 @@ export function resolveFiniteLimitRule(
   const squeezeOscillation = resolveFiniteSqueezeOscillationLimit(node, target, variable, direction);
   if (squeezeOscillation?.kind === 'success') {
     return squeezeOscillation;
+  }
+
+  const recursiveLeadingTerm = resolveFiniteRecursiveLeadingTermLimit(node, target, variable, direction);
+  if (recursiveLeadingTerm) {
+    return recursiveLeadingTerm;
   }
 
   const localEquivalentLimit = resolveLocalEquivalentLimit(

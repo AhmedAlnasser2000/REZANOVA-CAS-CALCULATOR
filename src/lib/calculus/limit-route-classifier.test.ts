@@ -24,6 +24,9 @@ describe('natural limit route classifier', () => {
     expect(classifyNaturalLimitRoute('lim x -> 0 sin(x)/x')).toMatchObject({
       kind: 'local-equivalent',
     });
+    expect(classifyNaturalLimitRoute('lim x -> 0 a*sin(x)/x')).toMatchObject({
+      kind: 'local-equivalent',
+    });
     expect(classifyNaturalLimitRoute('lim x -> 0 (sin(x)-x)/x^3')).toMatchObject({
       kind: 'taylor-series-candidate',
     });

@@ -596,7 +596,7 @@ describe('calculus core', () => {
     expect(result.exactLatex).toBe('\\frac{3}{2}');
     expect(Number(result.approxText)).toBeCloseTo(1.5, 6);
     expect(result.resultOrigin).toBe('rule-based-symbolic');
-    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('rational dominance');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('dominant polynomial terms');
   });
 
   it('backchecks antiderivatives with exact proof before numeric confidence', () => {

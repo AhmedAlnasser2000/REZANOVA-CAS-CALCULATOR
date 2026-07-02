@@ -367,12 +367,21 @@ describe('calculus limits', () => {
   });
 
   it('resolves capped Taylor leading-term natural limit expressions', () => {
+    const symbolicCoefficient = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 a*sin(x)/x',
+    });
     const tangent = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0 (tan(x)-x)/x^3',
     });
     const exponential = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0 (e^x-1-x-x^2/2)/x^3',
     });
+
+    expect(symbolicCoefficient.error).toBeUndefined();
+    expect(symbolicCoefficient.exactLatex).toBe('a');
+    expect(symbolicCoefficient.approxText).toBeUndefined();
+    expect(symbolicCoefficient.resultOrigin).toBe('rule-based-symbolic');
+    expect(symbolicCoefficient.detailSections?.[0]?.lines.join(' ')).toContain('recursive finite leading-term');
 
     expect(tangent.error).toBeUndefined();
     expect(tangent.exactLatex).toBe('\\frac{1}{3}');
@@ -382,5 +391,16 @@ describe('calculus limits', () => {
     expect(exponential.error).toBeUndefined();
     expect(exponential.exactLatex).toBe('\\frac{1}{6}');
     expect(exponential.detailSections?.[0]?.lines.join(' ')).toContain('first nonzero derivative order 3');
+  });
+
+  it('resolves recursive composed finite leading terms', () => {
+    const logarithmicCosine = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 ln(cos(x))/x^2',
+    });
+
+    expect(logarithmicCosine.error).toBeUndefined();
+    expect(logarithmicCosine.exactLatex).toBe('-\\frac{1}{2}');
+    expect(logarithmicCosine.resultOrigin).toBe('rule-based-symbolic');
+    expect(logarithmicCosine.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
   });
 });

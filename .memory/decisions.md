@@ -8,6 +8,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits conditional answers use a Limits-owned helper that emits capped `L\in\begin{cases}...\end{cases}` LaTeX plus normal detail-section proof rows. Conditional branching remains capped at `12` rows and `2` symbolic branch drivers, and live limit evaluation is not widened until later route adoption gates.
 
+## 2026-07-03 - CALCULUS-LIMITS-FINITE-RECURSIVE-LEADING-TERMS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits finite local symbolic evaluation may now use a recursive leading-term route that preserves target-free symbolic coefficients and exact finite answers without requiring numeric approximations. The route is Limits-owned and remains capped to local carriers, products, quotients, integer powers, sums/cancellations, and selected standard compositions; broader infinity scales, Piecewise, abs side behavior, MRV-lite, and Gruntz remain deferred.
+
 ## 2026-07-02 - EQUATION-SOLVER-CARD-CREDIBILITY-CONSISTENCY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation Real mode must not display complex-only roots; it should stop with no-real-root guidance and point to Complex On. Numeric/detail card taxonomy must keep hard domain facts, periodic structure, probe evidence, search diagnostics, breakpoints, extraneous candidates, and confidence wording in their own categories, with target-dependent branch guards scoped to branch/candidate details when safe.

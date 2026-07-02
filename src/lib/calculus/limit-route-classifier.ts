@@ -8,6 +8,7 @@ import {
 import { parseNaturalLimitRequest, type NaturalLimitRequest } from './limit-request';
 import { resolveInfiniteLimitHeuristic } from './engine/limit-heuristics';
 import {
+  hasFiniteRecursiveLeadingTermCandidate,
   hasFiniteSqueezeOscillationCandidate,
   resolveInfiniteExactLocalAlgebraLimit,
 } from '../symbolic-engine/limits';
@@ -229,6 +230,14 @@ function classifyFiniteNode(node: unknown, request: NaturalLimitRequest): LimitR
     return {
       kind: 'squeeze-oscillation',
       reason: 'A bounded oscillation or squeeze-theorem pattern is present near the target.',
+      request,
+    };
+  }
+
+  if (hasFiniteRecursiveLeadingTermCandidate(node, request.target.value, request.variable, request.target.direction)) {
+    return {
+      kind: 'local-equivalent',
+      reason: 'A recursive finite leading-term route can compare local orders with target-free coefficients.',
       request,
     };
   }

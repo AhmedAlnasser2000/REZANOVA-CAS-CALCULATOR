@@ -5,8 +5,9 @@ export type FiniteLimitRuleOrigin = Extract<ResultOrigin, 'symbolic' | 'rule-bas
 
 export type FiniteLimitRuleSuccess = {
   kind: 'success';
-  value: FiniteLimitRuleValue;
+  value?: FiniteLimitRuleValue;
   exactLatex?: string;
+  approxText?: string;
   origin: FiniteLimitRuleOrigin;
   detailSections?: DisplayDetailSection[];
 };
