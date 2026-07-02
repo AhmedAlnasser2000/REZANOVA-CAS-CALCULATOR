@@ -1604,3 +1604,7 @@
 ## 2026-07-02 - SETTINGS-HISTORY-VISUAL-FIDELITY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Settings and History full pages follow the supplied dark desktop-product mockups as the visual target while staying truthful to current capabilities. `lucide-react` is the app-shell/page icon library for this slice. Settings uses existing settings state only, History remains over existing `HistoryEntry` plus pending tickets, and deferred mock-only controls such as Export, import, fake pagination, Formula Viewer-from-records, Graphing, Variables, and new runtime behavior remain excluded.
+
+## 2026-07-02 - LINEAR-ALGEBRA-LATEX-PARSER1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector editor LaTeX parsing is a local linear-algebra AST parser only. It recognizes named values, inline `bmatrix` literals, and approved Matrix/Vector operators without importing Equation internals, running operations, solving equations, or routing unsupported forms.
