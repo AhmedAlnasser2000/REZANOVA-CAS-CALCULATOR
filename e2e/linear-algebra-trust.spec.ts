@@ -35,6 +35,11 @@ async function expectDetailOpen(page: Page, title: string, open: boolean) {
   return card;
 }
 
+async function rawLatexValues(page: Page, testId: string) {
+  return page.getByTestId(testId).locator('[data-raw-latex]').evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute('data-raw-latex') ?? ''));
+}
+
 test.beforeAll(async () => {
   await mkdir(screenshotDir, { recursive: true });
 });
@@ -104,5 +109,27 @@ test('Vector Gram-Schmidt readback avoids root counts and keeps unsupported Matr
   await page.screenshot({
     fullPage: true,
     path: `${screenshotDir}/vector-gram-schmidt-trust-readback.png`,
+  });
+});
+
+test('Vector exact readback preserves inline unit vectors through copy and history replay', async ({ page }) => {
+  await openLauncherApp(page, 'Linear', 'Vector');
+  await runEditor(page, String.raw`\operatorname{unit}\left(\begin{bmatrix}3\\4\end{bmatrix}\right)`);
+
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('variable-hint-strip')).toHaveCount(0);
+  await expect.poll(() => rawLatexValues(page, 'display-outcome-answer-block'))
+    .toContain(String.raw`\begin{bmatrix}\frac{3}{5}\\\frac{4}{5}\end{bmatrix}`);
+
+  const copied = await copyResult(page);
+  expect(copied).toBe(String.raw`\begin{bmatrix}\frac{3}{5}\\\frac{4}{5}\end{bmatrix}`);
+
+  const replayedLatex = await replayLatestHistoryEntry(page);
+  expect(replayedLatex).toContain('\\operatorname{unit}');
+  expect(replayedLatex).toContain('\\begin{bmatrix}3\\\\4\\end{bmatrix}');
+
+  await page.screenshot({
+    fullPage: true,
+    path: `${screenshotDir}/vector-inline-unit-exact-readback.png`,
   });
 });
