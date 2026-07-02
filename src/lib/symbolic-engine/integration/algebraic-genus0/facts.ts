@@ -170,6 +170,28 @@ export function algebraicGenus0SubstitutionDenominatorFact(
   );
 }
 
+export function algebraicGenus0CoefficientDenominatorFact(
+  expressionLatex: string,
+): AlgebraicGenus0Fact {
+  return fact(
+    'coefficient-denominator-nonzero',
+    expressionLatex,
+    '\\ne0',
+    'denominator',
+  );
+}
+
+export function algebraicGenus0SlopeNonzeroFact(
+  expressionLatex: string,
+): AlgebraicGenus0Fact {
+  return fact(
+    'slope-nonzero',
+    expressionLatex,
+    '\\ne0',
+    'candidate-validation',
+  );
+}
+
 export function algebraicGenus0BranchValidityFact(
   expressionLatex: string,
   relation: ExactSupplementRelation = '>0',

@@ -10,6 +10,7 @@ import {
 import { tryAffinePowerRule } from './affine-power';
 import { tryAlgebraicGenus0RationalInRadicalRule } from './algebraic-genus0/rational-in-radical';
 import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standard-radicals';
+import { tryAlgebraicGenus0SymbolicStandardRadicalRule } from './algebraic-genus0/symbolic-standard-radicals';
 import {
   tryBinomialDerivativeSubstitutionRule,
   tryReciprocalBinomialDerivativeSubstitutionRule,
@@ -88,6 +89,18 @@ function tryRoute(
         'u-substitution',
         algebraicGenus0RationalInRadical.verification,
         algebraicGenus0RationalInRadical.exactSupplementLatex,
+      );
+    }
+
+    const symbolicAlgebraicGenus0Standard = tryAlgebraicGenus0SymbolicStandardRadicalRule(node, variable);
+    if (symbolicAlgebraicGenus0Standard) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicAlgebraicGenus0Standard.exactLatex,
+        'u-substitution',
+        symbolicAlgebraicGenus0Standard.verification,
+        symbolicAlgebraicGenus0Standard.exactSupplementLatex,
       );
     }
 
@@ -258,6 +271,18 @@ function tryRoute(
         'u-substitution',
         algebraicGenus0RationalInRadical.verification,
         algebraicGenus0RationalInRadical.exactSupplementLatex,
+      );
+    }
+
+    const symbolicAlgebraicGenus0Standard = tryAlgebraicGenus0SymbolicStandardRadicalRule(node, variable);
+    if (symbolicAlgebraicGenus0Standard) {
+      return symbolicSuccess(
+        node,
+        variable,
+        symbolicAlgebraicGenus0Standard.exactLatex,
+        'u-substitution',
+        symbolicAlgebraicGenus0Standard.verification,
+        symbolicAlgebraicGenus0Standard.exactSupplementLatex,
       );
     }
 
