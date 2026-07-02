@@ -101,11 +101,11 @@ describe('algebraic genus-1 normal-form readiness', () => {
     expect(result.readinessNotes.join('\n')).toContain('Symbolic Legendre data is readiness-only');
   });
 
-  it('preserves current integration behavior until elliptic live gates land', () => {
+  it('keeps generic exact curves non-live while canonical templates are adopted elsewhere', () => {
     const firstKind = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{(1-x^2)(1-m*x^2)}}');
     const cubic = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');
 
-    expect(firstKind.kind).toBe('error');
+    expect(firstKind.kind).toBe('success');
     expect(cubic.kind).toBe('error');
   });
 });

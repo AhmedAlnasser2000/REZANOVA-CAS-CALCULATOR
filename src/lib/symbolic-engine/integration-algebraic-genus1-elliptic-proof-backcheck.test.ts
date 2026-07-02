@@ -77,13 +77,15 @@ describe('algebraic genus-1 elliptic proof backcheck readiness', () => {
     expect(result.readinessNotes.join('\n')).toContain('readiness-only');
   });
 
-  it('keeps live integration dispatch unchanged', () => {
+  it('keeps generic exact curves non-live while canonical templates are adopted elsewhere', () => {
     const firstKind = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{(1-x^2)(1-m*x^2)}}');
     const thirdKind = resolveSymbolicIntegralFromLatex(
       '\\frac{1}{(1-n*x^2)\\sqrt{(1-x^2)(1-m*x^2)}}',
     );
+    const cubic = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');
 
-    expect(firstKind.kind).toBe('error');
-    expect(thirdKind.kind).toBe('error');
+    expect(firstKind.kind).toBe('success');
+    expect(thirdKind.kind).toBe('success');
+    expect(cubic.kind).toBe('error');
   });
 });

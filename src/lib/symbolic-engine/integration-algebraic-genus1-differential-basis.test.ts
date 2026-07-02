@@ -77,11 +77,11 @@ describe('algebraic genus-1 differential-basis reduction readiness', () => {
     expect(result.basisObligations.every((item) => item.status === 'pending-symbolic-branching')).toBe(true);
   });
 
-  it('keeps live integration dispatch unchanged', () => {
+  it('keeps generic exact curves non-live while canonical templates are adopted elsewhere', () => {
     const legendre = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{(1-x^2)(1-m*x^2)}}');
     const cubic = resolveSymbolicIntegralFromLatex('\\sqrt{x^3-x}');
 
-    expect(legendre.kind).toBe('error');
+    expect(legendre.kind).toBe('success');
     expect(cubic.kind).toBe('error');
   });
 });

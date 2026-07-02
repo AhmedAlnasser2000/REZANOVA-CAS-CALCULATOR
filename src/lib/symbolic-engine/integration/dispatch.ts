@@ -12,6 +12,7 @@ import { tryAlgebraicGenus0RationalInRadicalRule } from './algebraic-genus0/rati
 import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standard-radicals';
 import { tryAlgebraicGenus0SymbolicStandardRadicalRule } from './algebraic-genus0/symbolic-standard-radicals';
 import { tryAlgebraicGenus0Genus1BoundaryStop } from './algebraic-genus0/genus1-boundary';
+import { tryAlgebraicGenus1EllipticKindsRule } from './algebraic-genus1/elliptic-kinds-live';
 import {
   tryBinomialDerivativeSubstitutionRule,
   tryReciprocalBinomialDerivativeSubstitutionRule,
@@ -575,6 +576,18 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
   const linearCombination = tryLinearCombinationFallback(node, variable);
   if (linearCombination) {
     return linearCombination;
+  }
+
+  const algebraicGenus1EllipticKinds = tryAlgebraicGenus1EllipticKindsRule(node, variable);
+  if (algebraicGenus1EllipticKinds) {
+    return symbolicSuccess(
+      node,
+      variable,
+      algebraicGenus1EllipticKinds.exactLatex,
+      'u-substitution',
+      algebraicGenus1EllipticKinds.verification,
+      algebraicGenus1EllipticKinds.exactSupplementLatex,
+    );
   }
 
   const algebraicGenus1Boundary = tryAlgebraicGenus0Genus1BoundaryStop(node, variable);
