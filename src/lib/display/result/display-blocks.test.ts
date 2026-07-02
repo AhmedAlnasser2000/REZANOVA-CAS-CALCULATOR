@@ -280,6 +280,32 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix PLU proof details visible but collapsible by default', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: '\\operatorname{plu}(A)',
+      exactLatex: 'PA=LU',
+      sourceMode: 'matrix',
+      detailSections: [{
+        title: 'PLU Proof',
+        lines: [
+          'PA=LU',
+          'LU=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}',
+        ],
+        lineKind: 'math',
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'PLU Proof');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      collapsible: true,
+      defaultCollapsed: false,
+    });
+  });
+
   it('keeps solve notes collapsed by default even when the prose is short', () => {
     const outcome: DisplayOutcome = {
       kind: 'success',

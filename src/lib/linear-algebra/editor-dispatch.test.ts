@@ -168,6 +168,20 @@ describe('linear algebra editor dispatch', () => {
       },
     });
     expect(dispatchMatrixEditorLatex({
+      latex: '\\operatorname{plu}\\left(B\\right)',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'pluB',
+        matrixA,
+        matrixB,
+        editorExpressionLatex: '\\operatorname{plu}\\left(B\\right)',
+        matrixOperandLatexB: 'B',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
       latex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
       matrixA,
       matrixB,

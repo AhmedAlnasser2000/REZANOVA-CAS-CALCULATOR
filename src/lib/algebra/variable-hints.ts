@@ -95,6 +95,7 @@ const MATRIX_EDITOR_FUNCTIONS = new Set([
   'invertible',
   'lu',
   'null',
+  'plu',
   'rank',
   'rref',
 ]);

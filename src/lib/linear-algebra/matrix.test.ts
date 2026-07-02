@@ -339,6 +339,39 @@ describe('runMatrixOperation', () => {
     });
   });
 
+  it('computes exact PLU factorization with visible row swaps', () => {
+    const plu = runMatrixOperation({
+      operation: 'pluA',
+      matrixA: [[0, 1], [1, 0]],
+      matrixB,
+    });
+
+    expect(plu.resultLatex).toBe('PA=LU');
+    expect(plu.approxText).toBe('det(A) = -1');
+    expect(plu.detailSections?.map((section) => section.title)).toEqual([
+      'PLU Factors',
+      'PLU Row Swaps',
+      'PLU Proof',
+    ]);
+    expect(plu.detailSections?.[0]?.lines).toContain('P=\\begin{bmatrix}0 & 1\\\\1 & 0\\end{bmatrix}');
+    expect(plu.detailSections?.[0]?.lines).toContain('L=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(plu.detailSections?.[0]?.lines).toContain('U=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(plu.detailSections?.[1]?.lines).toEqual(['R_{1}\\leftrightarrow R_{2}']);
+    expect(plu.detailSections?.[2]?.lines).toContain('PA=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(plu.detailSections?.[2]?.lines).toContain('LU=\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(plu.detailSections?.[2]?.lines).toContain('\\det(A)=(-1)^{1}\\prod_i U_{ii}=-1');
+  });
+
+  it('stops PLU when no nonzero pivot is available', () => {
+    const plu = runMatrixOperation({
+      operation: 'pluA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB,
+    });
+
+    expect(plu.error).toBe('PLU stopped at pivot 2 because no nonzero pivot was available in that column.');
+  });
+
   it('explains invertibility theorem facts for square matrices', () => {
     const invertible = runMatrixOperation({
       operation: 'invertibilityA',

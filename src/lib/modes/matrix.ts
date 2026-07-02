@@ -87,6 +87,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'lu(A)';
     case 'luB':
       return 'lu(B)';
+    case 'pluA':
+      return 'plu(A)';
+    case 'pluB':
+      return 'plu(B)';
     case 'invertibilityA':
       return 'invertible(A)';
     case 'invertibilityB':

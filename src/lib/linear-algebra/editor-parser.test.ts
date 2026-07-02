@@ -39,6 +39,8 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{basis}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'basis' });
     expect(parsed('\\operatorname{lu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
     expect(parsed('\\operatorname{LU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
+    expect(parsed('\\operatorname{plu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });
+    expect(parsed('\\operatorname{PLU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });
     expect(parsed('\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)', 'matrix')).toEqual({
       kind: 'coordinates',
       basis: { kind: 'named', name: 'A', displayLatex: 'A' },

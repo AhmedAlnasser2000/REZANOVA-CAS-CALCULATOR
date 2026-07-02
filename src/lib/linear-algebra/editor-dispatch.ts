@@ -416,6 +416,27 @@ function matrixUnaryRequest(
     };
   }
 
+  if (expression.operator === 'plu') {
+    return {
+      ok: true,
+      request: value.named === 'B'
+        ? {
+            operation: 'pluB',
+            matrixA: cloneMatrix(input.matrixA),
+            matrixB: value.matrix,
+            ...(value.exactMatrix ? { exactMatrixB: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandB: value }),
+          }
+        : {
+            operation: 'pluA',
+            matrixA: value.matrix,
+            matrixB: cloneMatrix(input.matrixB),
+            ...(value.exactMatrix ? { exactMatrixA: value.exactMatrix } : {}),
+            ...matrixMetadata(input, { operandA: value }),
+          },
+    };
+  }
+
   if (expression.operator === 'invertibility') {
     return {
       ok: true,

@@ -88,6 +88,26 @@ describe('runMatrixMode', () => {
     expect(result.detailSections?.map((section) => section.title)).toEqual(['LU Factors', 'LU Proof']);
   });
 
+  it('labels PLU factorization runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'pluA',
+      matrixA: [[0, 1], [1, 0]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('plu(A)');
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      return;
+    }
+    expect(result.exactLatex).toBe('PA=LU');
+    expect(result.detailSections?.map((section) => section.title)).toEqual([
+      'PLU Factors',
+      'PLU Row Swaps',
+      'PLU Proof',
+    ]);
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

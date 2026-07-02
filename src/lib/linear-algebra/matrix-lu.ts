@@ -4,6 +4,7 @@ import {
   divideExactScalars,
   exactScalarIsZero,
   multiplyExactScalars,
+  negateExactScalar,
   subtractExactScalars,
   type ExactScalar,
 } from '../algebra/polynomial-core';
@@ -26,11 +27,24 @@ export type MatrixLuInput = {
   exactMatrix?: ExactScalarWire[][];
 };
 
+export type MatrixPluInput = MatrixLuInput;
+
 type LuResult =
   | { kind: 'success'; lower: ExactMatrix; upper: ExactMatrix; determinant: ExactScalar }
   | { kind: 'needs-pivot'; pivotIndex: number }
   | { kind: 'stop'; reason: ExactMatrixStopReason | 'non-square-matrix' };
 type LuStopReason = Extract<LuResult, { kind: 'stop' }>['reason'];
+type PluResult =
+  | {
+      kind: 'success';
+      permutation: ExactMatrix;
+      lower: ExactMatrix;
+      upper: ExactMatrix;
+      determinant: ExactScalar;
+      swaps: Array<{ rowA: number; rowB: number }>;
+    }
+  | { kind: 'needs-pivot'; pivotIndex: number }
+  | { kind: 'stop'; reason: ExactMatrixStopReason | 'non-square-matrix' };
 
 function zeroMatrix(size: number): ExactMatrix {
   return Array.from({ length: size }, () =>
@@ -43,6 +57,14 @@ function identityMatrix(size: number): ExactMatrix {
     matrix[index][index] = scalar(1);
   }
   return matrix;
+}
+
+function cloneExactMatrix(matrix: ExactMatrix): ExactMatrix {
+  return matrix.map((row) => [...row]);
+}
+
+function swapRows(matrix: ExactMatrix, left: number, right: number) {
+  [matrix[left], matrix[right]] = [matrix[right], matrix[left]];
 }
 
 function exactInputMatrix(input: MatrixLuInput): ExactMatrix | null {
@@ -89,6 +111,11 @@ function multiplyExactMatrices(left: ExactMatrix, right: ExactMatrix): ExactMatr
 
 function diagonalProduct(matrix: ExactMatrix): ExactScalar {
   return matrix.reduce((product, row, index) => multiplyExactScalars(product, row[index]), scalar(1));
+}
+
+function determinantFromUpper(upper: ExactMatrix, swapCount: number): ExactScalar {
+  const product = diagonalProduct(upper);
+  return swapCount % 2 === 1 ? negateExactScalar(product) : product;
 }
 
 function factorLuNoPivot(matrix: ExactMatrix): LuResult {
@@ -166,6 +193,115 @@ function luDetails(input: {
   ];
 }
 
+function formatSwap(rowA: number, rowB: number) {
+  return `R_{${rowA + 1}}\\leftrightarrow R_{${rowB + 1}}`;
+}
+
+function pluFactorization(matrix: ExactMatrix): PluResult {
+  const validated = validateExactMatrix(matrix);
+  if (validated.kind === 'stop') {
+    return validated;
+  }
+  if (!validated.shape.isSquare) {
+    return { kind: 'stop', reason: 'non-square-matrix' };
+  }
+
+  const size = validated.shape.rows;
+  const working = cloneExactMatrix(validated.matrix);
+  const permutation = identityMatrix(size);
+  const lower = identityMatrix(size);
+  const swaps: Array<{ rowA: number; rowB: number }> = [];
+
+  for (let pivot = 0; pivot < size; pivot += 1) {
+    let pivotRow = pivot;
+    while (pivotRow < size && exactScalarIsZero(working[pivotRow][pivot])) {
+      pivotRow += 1;
+    }
+    if (pivotRow === size) {
+      return { kind: 'needs-pivot', pivotIndex: pivot };
+    }
+
+    if (pivotRow !== pivot) {
+      swapRows(working, pivot, pivotRow);
+      swapRows(permutation, pivot, pivotRow);
+      for (let column = 0; column < pivot; column += 1) {
+        [lower[pivot][column], lower[pivotRow][column]] = [lower[pivotRow][column], lower[pivot][column]];
+      }
+      swaps.push({ rowA: pivot, rowB: pivotRow });
+    }
+
+    for (let row = pivot + 1; row < size; row += 1) {
+      const divided = divideExactScalars(working[row][pivot], working[pivot][pivot]);
+      if (!divided) {
+        return { kind: 'needs-pivot', pivotIndex: pivot };
+      }
+      lower[row][pivot] = divided;
+      for (let column = pivot; column < size; column += 1) {
+        working[row][column] = subtractExactScalars(
+          working[row][column],
+          multiplyExactScalars(divided, working[pivot][column]),
+        );
+      }
+    }
+  }
+
+  const upper = working.map((row, rowIndex) =>
+    row.map((value, columnIndex) => (columnIndex < rowIndex ? scalar(0) : value)));
+  return {
+    kind: 'success',
+    permutation,
+    lower,
+    upper,
+    determinant: determinantFromUpper(upper, swaps.length),
+    swaps,
+  };
+}
+
+function prefixedMatrixLabel(prefix: string, label: string) {
+  return /^[A-Z]$/.test(label) ? `${prefix}${label}` : `${prefix}\\left(${label}\\right)`;
+}
+
+function pluDetails(input: {
+  label: string;
+  original: ExactMatrix;
+  permutation: ExactMatrix;
+  lower: ExactMatrix;
+  upper: ExactMatrix;
+  determinant: ExactScalar;
+  swaps: Array<{ rowA: number; rowB: number }>;
+}): DisplayDetailSection[] {
+  const permutedLabel = prefixedMatrixLabel('P', input.label);
+  return [
+    {
+      title: 'PLU Factors',
+      lines: [
+        `P=${exactMatrixToLatex(input.permutation)}`,
+        `L=${exactMatrixToLatex(input.lower)}`,
+        `U=${exactMatrixToLatex(input.upper)}`,
+      ],
+      lineKind: 'math',
+    },
+    {
+      title: 'PLU Row Swaps',
+      lines: input.swaps.length > 0
+        ? input.swaps.map((swap) => formatSwap(swap.rowA, swap.rowB))
+        : ['\\text{No row swaps were needed.}'],
+      lineKind: 'math',
+    },
+    {
+      title: 'PLU Proof',
+      lines: [
+        `${permutedLabel}=LU`,
+        `${permutedLabel}=${exactMatrixToLatex(multiplyExactMatrices(input.permutation, input.original))}`,
+        `LU=${exactMatrixToLatex(multiplyExactMatrices(input.lower, input.upper))}`,
+        `\\det(${input.label})=(-1)^{${input.swaps.length}}\\prod_i U_{ii}=${exactScalarToLatex(input.determinant)}`,
+        'The permutation matrix P records the row swaps, so the factorization keeps pivoting visible.',
+      ],
+      lineKinds: ['math', 'math', 'math', 'math', 'text'],
+    },
+  ];
+}
+
 export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
   const exactMatrix = exactInputMatrix(input);
   if (!exactMatrix) {
@@ -206,6 +342,45 @@ export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
       upper: factored.upper,
       product,
       determinant: factored.determinant,
+    }),
+    warnings: [],
+  };
+}
+
+export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
+  const exactMatrix = exactInputMatrix(input);
+  if (!exactMatrix) {
+    return {
+      warnings: [],
+      error: 'PLU factorization needs exact Matrix entries in this move.',
+    };
+  }
+
+  const factored = pluFactorization(exactMatrix);
+  if (factored.kind === 'stop') {
+    return {
+      warnings: [],
+      error: exactStopReasonToMessage(factored.reason),
+    };
+  }
+  if (factored.kind === 'needs-pivot') {
+    return {
+      warnings: [],
+      error: `PLU stopped at pivot ${factored.pivotIndex + 1} because no nonzero pivot was available in that column.`,
+    };
+  }
+
+  return {
+    resultLatex: `${prefixedMatrixLabel('P', input.label)}=LU`,
+    approxText: `det(${input.label}) = ${exactScalarToLatex(factored.determinant)}`,
+    detailSections: pluDetails({
+      label: input.label,
+      original: exactMatrix,
+      permutation: factored.permutation,
+      lower: factored.lower,
+      upper: factored.upper,
+      determinant: factored.determinant,
+      swaps: factored.swaps,
     }),
     warnings: [],
   };
