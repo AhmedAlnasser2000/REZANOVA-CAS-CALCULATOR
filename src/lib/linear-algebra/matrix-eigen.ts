@@ -26,6 +26,7 @@ export type MatrixEigenInput = {
 
 const ZERO = scalar(0);
 const ONE = scalar(1);
+const EIGENVALUE_METHOD_TITLE = 'How Eigenvalues Were Found';
 
 function matrixEigenStop(
   message: string,
@@ -114,8 +115,9 @@ function characteristicDetails(input: {
 
   if (input.boundaryLine) {
     sections.push({
-      title: 'Equation Boundary',
+      title: EIGENVALUE_METHOD_TITLE,
       lines: [
+        `Matrix formed ${input.equationLatex} from the characteristic polynomial.`,
         input.boundaryLine,
         'Open the characteristic polynomial in Equation for roots outside Matrix V1 rational eigenvalue readback.',
       ],
@@ -208,10 +210,10 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
         equationLatex: solved.equationLatex,
       }),
       {
-        title: 'Equation Boundary',
+        title: EIGENVALUE_METHOD_TITLE,
         lines: [
-          'Equation solved the exact characteristic polynomial through the typed quadratic boundary.',
-          'Matrix used the returned rational eigenvalues to compute eigenspaces locally.',
+          'Matrix formed the characteristic polynomial, then Equation found the exact eigenvalues.',
+          'Matrix used those rational eigenvalues to compute the eigenspaces locally.',
         ],
         lineKind: 'text',
       },

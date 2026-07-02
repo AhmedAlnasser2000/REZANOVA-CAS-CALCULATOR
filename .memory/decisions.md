@@ -1740,6 +1740,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation-specific root/trust summaries must not be inferred from generic finite-set LaTeX for Matrix/Vector results. Linear Algebra outcomes may carry source-mode provenance so Display renders basis, vector-set, Gram-Schmidt, and eigenspace answers as Linear Algebra math, while Equation keeps branch-list root summaries through Equation-owned evidence and metadata.
 
+## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-TRUST-MILESTONE1 gate E
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix eigen readback should use learner-facing card labels even when it relies on typed cross-owner seams. The visible eigen method card says `How Eigenvalues Were Found`; the internal Equation quadratic boundary remains the polynomial-solving owner, and Matrix keeps eigenspace presentation plus explicit Equation handoff for unsupported roots.
+
 ## 2026-07-02 - ALGEBRAIC-DETAIL-CARD-NOTATION-NORMALIZATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Algebraic/genus proof details that contain math must use structured `lineKind`/`lineParts` metadata and preserve it through detail-section merging. Display should render that structured metadata according to the active math notation mode rather than receiving plain prose-like LaTeX fragments.

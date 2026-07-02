@@ -214,7 +214,7 @@ describe('runMatrixOperation', () => {
     expect(response.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)+\\operatorname{nullity}(A)=3');
   });
 
-  it('computes 2x2 rational eigenvalues and eigenspaces through the Equation boundary', () => {
+  it('computes 2x2 rational eigenvalues and eigenspaces through the typed Equation boundary', () => {
     const response = runMatrixOperation({
       operation: 'eigenA',
       matrixA: [[2, 1], [1, 2]],
@@ -226,8 +226,12 @@ describe('runMatrixOperation', () => {
     );
     expect(response.approxText).toBe('eigenvalues 3, 1');
     expect(response.detailSections?.[0]?.lines).toContain('\\lambda^{2}-4\\lambda+3=0');
+    expect(response.detailSections?.[1]?.title).toBe('How Eigenvalues Were Found');
     expect(response.detailSections?.[1]?.lines).toContain(
-      'Equation solved the exact characteristic polynomial through the typed quadratic boundary.',
+      'Matrix formed the characteristic polynomial, then Equation found the exact eigenvalues.',
+    );
+    expect(response.detailSections?.[1]?.lines).toContain(
+      'Matrix used those rational eigenvalues to compute the eigenspaces locally.',
     );
     expect(response.detailSections?.[2]?.lines).toContain(
       'E_{3}=\\operatorname{Null}(A-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
@@ -250,6 +254,10 @@ describe('runMatrixOperation', () => {
       error: 'Irrational eigenvalue vector readback is deferred for Matrix V1.',
       handoffEquationLatex: '\\lambda^{2}-2=0',
     });
+    expect(irrational.detailSections?.[1]?.title).toBe('How Eigenvalues Were Found');
+    expect(irrational.detailSections?.[1]?.lines).toContain(
+      'Matrix formed \\lambda^{2}-2=0 from the characteristic polynomial.',
+    );
     expect(complex).toMatchObject({
       error: 'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.',
       handoffEquationLatex: '\\lambda^{2}+1=0',
