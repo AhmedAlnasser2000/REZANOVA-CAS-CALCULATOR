@@ -35,6 +35,8 @@ Inserted prerequisite note: after coefficient specialization, `ALGEBRAIC-GENUS1-
 
 Inserted prerequisite note: after coefficient-solver evidence, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-ROOT-CHART1` was added before broader generic live work. The reason is coverage: common exact cubic genus-1 curves such as `x^3+x+1` have one real root plus a complex-conjugate pair, so they need a separate real Legendre chart instead of the three-real-root chart.
 
+Inserted prerequisite note: after the complex-pair chart, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-LEGENDRE-DATA1` was added before live generic first-kind adoption. The reason is proof discipline: one-real-root cubic charts need explicit beta/rho/A parameter descriptors, amplitude, parameter, and multiplier evidence before any live elliptic antiderivative can rely on them.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
