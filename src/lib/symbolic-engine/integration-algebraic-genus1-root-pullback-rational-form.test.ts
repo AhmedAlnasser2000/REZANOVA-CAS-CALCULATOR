@@ -54,6 +54,8 @@ describe('algebraic genus-1 root pullback rational form', () => {
 
     expect(result.status).toBe('basis-coefficient-rational-form');
     expect(result.rationalCoefficientLatex).toContain('P\\left(');
+    expect(result.rationalCoefficientLatex).toContain('\\sqrt{\\alpha_{3}-\\alpha_{1}}');
+    expect(result.rationalCoefficientLatex).not.toContain('C_F');
     expect(result.pullbackIdentityLatex).toContain('F/E/\\Pi');
     expect(text(result)).toContain('\\mathbb{Q}');
     expect(text(result)).toContain('\\alpha_{3}');
@@ -65,6 +67,7 @@ describe('algebraic genus-1 root pullback rational form', () => {
     expect(result.status).toBe('hermite-rational-form');
     expect(result.rationalCoefficientLatex).toContain('R\\left(');
     expect(result.rationalCoefficientLatex).toContain('\\sqrt{P');
+    expect(result.rationalCoefficientLatex).not.toContain('C_F');
     expect(result.pullbackIdentityLatex).toContain('dS+L');
   });
 

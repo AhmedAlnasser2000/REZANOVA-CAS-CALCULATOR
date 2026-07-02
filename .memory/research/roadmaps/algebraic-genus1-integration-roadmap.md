@@ -29,6 +29,8 @@ Inserted prerequisite note: after pullback basis profiling, `ALGEBRAIC-GENUS1-RO
 
 Inserted prerequisite note: after coefficient-system evidence, `ALGEBRAIC-GENUS1-ROOT-PULLBACK-RATIONAL-FORM1` was added before generic second-kind/third-kind live work. The reason is implementation discipline: the solver needs an explicit rational coefficient in the Legendre chart, not only the abstract basis equation, before it can prove F/E/Pi coefficients.
 
+Inserted prerequisite note: after rational-form evidence, `ALGEBRAIC-GENUS1-ROOT-PULLBACK-COEFFICIENT-SPECIALIZATION1` was added as a small proof-readback tightening step. The reason is that later solving should see the actual named-root multiplier in radical and rational-in-radical coefficients instead of placeholder notation.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

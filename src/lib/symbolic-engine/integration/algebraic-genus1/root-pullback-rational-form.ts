@@ -71,13 +71,14 @@ function rationalCoefficient(input: {
   system: AlgebraicGenus1RootBasisCoefficientSystem;
   selectedVariableInChartLatex: string;
 }) {
+  const multiplier = input.system.rootLegendreData.multiplierLatex;
   if (input.system.status === 'first-kind-coefficient-solved') {
     return input.system.solvedCoefficientLatex ?? 'C_F';
   }
   if (input.system.status === 'linear-basis-system-required') {
-    return `C_F\\cdot P\\left(${input.selectedVariableInChartLatex}\\right)`;
+    return `${multiplier}\\cdot P\\left(${input.selectedVariableInChartLatex}\\right)`;
   }
-  return `C_F\\cdot R\\left(${input.selectedVariableInChartLatex},\\sqrt{P\\left(${input.selectedVariableInChartLatex}\\right)}\\right)`;
+  return `${multiplier}\\cdot R\\left(${input.selectedVariableInChartLatex},\\sqrt{P\\left(${input.selectedVariableInChartLatex}\\right)}\\right)`;
 }
 
 function pullbackIdentity(input: {
