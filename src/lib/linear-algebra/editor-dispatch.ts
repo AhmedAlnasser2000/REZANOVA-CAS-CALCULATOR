@@ -562,9 +562,28 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
       },
     };
   }
+  if (expression.kind === 'gramSchmidt') {
+    const left = vectorOperand(expression.left, input);
+    const right = vectorOperand(expression.right, input);
+    if (!left || !right) {
+      return {
+        ok: false,
+        message: 'Vector Gram-Schmidt needs Vector u/v values or inline vector literals.',
+      };
+    }
+    return {
+      ok: true,
+      request: {
+        operation: 'gramSchmidtUV',
+        vectorA: left.vector,
+        vectorB: right.vector,
+        angleUnit: input.angleUnit,
+      },
+    };
+  }
 
   return {
     ok: false,
-    message: 'Enter a Vector operation such as u+v, u·v, proj_u(v), unit(u), or angle(u,v).',
+    message: 'Enter a Vector operation such as u+v, u·v, proj_u(v), gram(u,v), or angle(u,v).',
   };
 }

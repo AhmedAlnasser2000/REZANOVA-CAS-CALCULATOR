@@ -227,6 +227,15 @@ describe('linear algebra editor dispatch', () => {
       ok: true,
       request: { operation: 'orthogonalCheck', vectorA, vectorB, angleUnit: 'deg' },
     });
+    expect(dispatchVectorEditorLatex({
+      latex: '\\operatorname{gram}\\left(u,v\\right)',
+      vectorA,
+      vectorB,
+      angleUnit: 'deg',
+    })).toEqual({
+      ok: true,
+      request: { operation: 'gramSchmidtUV', vectorA, vectorB, angleUnit: 'deg' },
+    });
   });
 
   it('returns controlled stops for parsed but unsupported editor forms', () => {

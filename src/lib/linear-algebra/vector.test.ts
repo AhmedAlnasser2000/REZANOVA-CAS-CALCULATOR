@@ -76,6 +76,33 @@ describe('runVectorOperation', () => {
     expect(orthogonal.approxText).toBe('dot = 0');
   });
 
+  it('runs two-vector Gram-Schmidt with orthonormal and dependency details', () => {
+    const independent = runVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 1],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    });
+    expect(independent.resultLatex).toBe(
+      '\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix},\\begin{bmatrix}0.5\\\\-0.5\\end{bmatrix}\\right\\}',
+    );
+    expect(independent.detailSections?.map((section) => section.title)).toEqual([
+      'Orthonormal Basis',
+      'Gram-Schmidt Proof',
+    ]);
+
+    const dependent = runVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 1],
+      vectorB: [2, 2],
+      angleUnit: 'deg',
+    });
+    expect(dependent.approxText).toBe('1 basis direction; dependent input skipped');
+    expect(dependent.detailSections?.find((section) => section.title === 'Dependency Note')?.lines).toEqual([
+      'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.',
+    ]);
+  });
+
   it('stops on incomplete, mismatched, non-3D cross, and zero-vector angle requests', () => {
     expect(runVectorOperation({
       operation: 'normA',
@@ -117,5 +144,11 @@ describe('runVectorOperation', () => {
       vectorA: [0, 0],
       angleUnit: 'deg',
     }).error).toBe('Unit vector is undefined for the zero vector.');
+    expect(runVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [0, 0],
+      vectorB: [0, 0],
+      angleUnit: 'deg',
+    }).error).toBe('Gram-Schmidt needs at least one nonzero vector.');
   });
 });

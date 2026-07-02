@@ -1,9 +1,11 @@
 import type {
+  DisplayDetailSection,
   VectorRequest,
   VectorResponse,
 } from '../../types/calculator';
 import { formatApproxNumber, scalarToLatex, vectorToLatex } from '../display/format';
 import {
+  dotVectors,
   runNumericVectorOperation,
   type VectorCoreResult,
   type VectorCoreStopReason,
@@ -27,9 +29,55 @@ function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
       return 'Projection needs a nonzero vector to project onto.';
     case 'unit-zero-vector':
       return 'Unit vector is undefined for the zero vector.';
+    case 'gram-schmidt-zero-span':
+      return 'Gram-Schmidt needs at least one nonzero vector.';
     case 'unsupported-operation':
       return 'Unsupported vector operation.';
   }
+}
+
+function vectorSetLatex(label: string, vectors: readonly number[][]) {
+  return `${label}=\\left\\{${vectors.map(vectorToLatex).join(',')}\\right\\}`;
+}
+
+function gramSchmidtDetailSections(result: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>): DisplayDetailSection[] {
+  const sections: DisplayDetailSection[] = [];
+
+  if (result.orthonormalBasis.length === result.orthogonalBasis.length) {
+    sections.push({
+      title: 'Orthonormal Basis',
+      lineKind: 'math',
+      lines: [
+        vectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis),
+      ],
+    });
+  }
+
+  const proofLines = [
+    `w_{1}=${vectorToLatex(result.orthogonalBasis[0])}`,
+    ...(result.orthogonalBasis[1]
+      ? [
+          `w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=${vectorToLatex(result.orthogonalBasis[1])}`,
+          `w_{1}\\cdot w_{2}=${scalarToLatex(dotVectors(result.orthogonalBasis[0], result.orthogonalBasis[1]))}`,
+        ]
+      : []),
+  ];
+
+  sections.push({
+    title: 'Gram-Schmidt Proof',
+    lineKind: 'math',
+    lines: proofLines,
+  });
+
+  if (result.notes.length > 0) {
+    sections.push({
+      title: 'Dependency Note',
+      lineKind: 'text',
+      lines: result.notes,
+    });
+  }
+
+  return sections;
 }
 
 function vectorCoreResultToResponse(result: VectorCoreResult): VectorResponse {
@@ -53,6 +101,17 @@ function vectorCoreResultToResponse(result: VectorCoreResult): VectorResponse {
     return {
       resultLatex: result.orthogonal ? '\\text{Orthogonal}' : '\\text{Not orthogonal}',
       approxText: `dot = ${formatApproxNumber(result.dot)}`,
+      warnings: [],
+    };
+  }
+
+  if (result.kind === 'gramSchmidt') {
+    return {
+      resultLatex: vectorSetLatex('\\operatorname{orthogonal\\ basis}', result.orthogonalBasis),
+      approxText: result.notes.length > 0
+        ? `${result.orthogonalBasis.length} basis direction${result.orthogonalBasis.length === 1 ? '' : 's'}; dependent input skipped`
+        : `${result.orthogonalBasis.length} basis directions`,
+      detailSections: gramSchmidtDetailSections(result),
       warnings: [],
     };
   }

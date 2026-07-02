@@ -338,6 +338,20 @@ describe('history entry schema', () => {
       },
       timestamp: '2026-06-08T00:00:00.000Z',
     }).vectorSeed?.operation).toBe('projectionUofV');
+
+    expect(historyEntrySchema.parse({
+      id: 'vector-seed-gram',
+      mode: 'vector',
+      inputLatex: '\\operatorname{gram}\\left(u,v\\right)',
+      resultLatex: '\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
+      vectorSeed: {
+        operation: 'gramSchmidtUV',
+        vectorA: [1, 1],
+        vectorB: [2, 2],
+        angleUnit: 'deg',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).vectorSeed?.operation).toBe('gramSchmidtUV');
   });
 
   it('accepts typed Trigonometry Period & Phase replay seeds', () => {

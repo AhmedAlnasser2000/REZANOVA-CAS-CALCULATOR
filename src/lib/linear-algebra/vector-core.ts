@@ -20,7 +20,8 @@ export type NumericVectorOperation =
   | 'orthogonalToV'
   | 'unitA'
   | 'unitB'
-  | 'orthogonalCheck';
+  | 'orthogonalCheck'
+  | 'gramSchmidtUV';
 
 export type VectorCoreStopReason =
   | 'vector-a-incomplete'
@@ -31,12 +32,19 @@ export type VectorCoreStopReason =
   | 'angle-zero-vector'
   | 'projection-zero-base'
   | 'unit-zero-vector'
+  | 'gram-schmidt-zero-span'
   | 'unsupported-operation';
 
 export type VectorCoreResult =
   | { kind: 'vector'; value: NumericVector }
   | { kind: 'scalar'; value: number; angleUnit?: NumericAngleUnit }
   | { kind: 'orthogonality'; orthogonal: boolean; dot: number }
+  | {
+      kind: 'gramSchmidt';
+      orthogonalBasis: NumericVector[];
+      orthonormalBasis: NumericVector[];
+      notes: string[];
+    }
   | { kind: 'error'; reason: VectorCoreStopReason };
 
 export type NumericVectorRequest = {
@@ -108,6 +116,46 @@ export function unitVector(vector: NumericVector): NumericVector | null {
   return norm === 0 ? null : scaleVector(vector, 1 / norm);
 }
 
+export function gramSchmidtTwoVectors(first: NumericVector, second: NumericVector) {
+  const orthogonalBasis: NumericVector[] = [];
+  const notes: string[] = [];
+
+  for (const [index, vector] of [first, second].entries()) {
+    let residual = [...vector];
+    for (const basisVector of orthogonalBasis) {
+      const next = orthogonalComponentToVector(basisVector, residual);
+      if (!next) {
+        notes.push(`Basis vector ${orthogonalBasis.indexOf(basisVector) + 1} is zero, so this projection was skipped.`);
+        continue;
+      }
+      residual = next;
+    }
+
+    if (normVector(residual) <= 1e-12) {
+      notes.push(index === 0
+        ? 'The first vector is zero and contributes no basis direction.'
+        : 'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.');
+      continue;
+    }
+
+    orthogonalBasis.push(residual);
+  }
+
+  if (orthogonalBasis.length === 0) {
+    return null;
+  }
+
+  const orthonormalBasis = orthogonalBasis
+    .map(unitVector)
+    .filter((vector): vector is NumericVector => Boolean(vector));
+
+  return {
+    orthogonalBasis,
+    orthonormalBasis,
+    notes,
+  };
+}
+
 function toAngleUnit(radians: number, angleUnit: NumericAngleUnit): number {
   if (angleUnit === 'deg') {
     return radians * (180 / Math.PI);
@@ -148,6 +196,7 @@ function vectorBRequired(operation: NumericVectorOperation) {
     'orthogonalToV',
     'unitB',
     'orthogonalCheck',
+    'gramSchmidtUV',
   ].includes(operation);
 }
 
@@ -167,6 +216,7 @@ function operationUsesBothVectors(operation: NumericVectorOperation) {
     'orthogonalToU',
     'orthogonalToV',
     'orthogonalCheck',
+    'gramSchmidtUV',
   ].includes(operation);
 }
 
@@ -239,6 +289,10 @@ export function runNumericVectorOperation(req: NumericVectorRequest): VectorCore
     case 'orthogonalCheck': {
       const dot = dotVectors(vectorA, vectorB!);
       return { kind: 'orthogonality', dot, orthogonal: Math.abs(dot) <= 1e-12 };
+    }
+    case 'gramSchmidtUV': {
+      const result = gramSchmidtTwoVectors(vectorA, vectorB!);
+      return result ? { kind: 'gramSchmidt', ...result } : { kind: 'error', reason: 'gram-schmidt-zero-span' };
     }
     default:
       return { kind: 'error', reason: 'unsupported-operation' };

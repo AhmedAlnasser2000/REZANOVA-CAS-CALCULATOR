@@ -1700,3 +1700,7 @@
 ## 2026-07-02 - VECTOR-PROJECTION-ORTHOGONALITY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector projection, orthogonal-component, unit-vector, and orthogonality-check capability belongs in the existing Vector numeric operation path and replay seed, not in Matrix or Equation. These operations use visible `u`/`v` labels, accept inline editor vectors where the parser already supports them, and return controlled local errors for zero-vector and dimension cases.
+
+## 2026-07-02 - VECTOR-GRAM-SCHMIDT1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector owns two-vector `gram(u,v)` as a Vector numeric operation over existing `u`/`v` and inline vector operands. V1 returns orthogonal basis readback, orthonormal basis details when finite, proof details, and dependency/zero-span notes; Matrix-column QR, matrix-column Gram-Schmidt, least squares, and Equation solving remain deferred.

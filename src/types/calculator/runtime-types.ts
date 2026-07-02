@@ -1029,7 +1029,7 @@ export type MatrixResponse = {
 
 export type VectorOperation =
   | 'dot' | 'cross' | 'normA' | 'normB' | 'angle' | 'add' | 'subtract'
-  | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck';
+  | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck' | 'gramSchmidtUV';
 
 export type VectorRequest = {
   operation: VectorOperation;
@@ -1043,6 +1043,7 @@ export type VectorReplaySeed = VectorRequest;
 export type VectorResponse = {
   resultLatex?: string;
   approxText?: string;
+  detailSections?: DisplayDetailSection[];
   warnings: string[];
   error?: string;
 };

@@ -5,6 +5,7 @@ import {
   crossVectors,
   dotVectors,
   getVectorShapeFacts,
+  gramSchmidtTwoVectors,
   haveSameVectorDimension,
   normVector,
   orthogonalComponentToVector,
@@ -46,6 +47,19 @@ describe('vector-core operations', () => {
     expect(unitVector([0, 0])).toBeNull();
   });
 
+  it('runs two-vector Gram-Schmidt and skips dependent residuals', () => {
+    const independent = gramSchmidtTwoVectors([1, 1], [1, 0]);
+    expect(independent?.orthogonalBasis).toEqual([[1, 1], [0.5, -0.5]]);
+    expect(independent?.orthonormalBasis[0]?.[0]).toBeCloseTo(Math.SQRT1_2);
+    expect(independent?.notes).toEqual([]);
+
+    const dependent = gramSchmidtTwoVectors([1, 1], [2, 2]);
+    expect(dependent?.orthogonalBasis).toEqual([[1, 1]]);
+    expect(dependent?.notes).toEqual([
+      'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.',
+    ]);
+  });
+
   it('returns typed vector/scalar results from the operation boundary', () => {
     expect(runNumericVectorOperation({
       operation: 'dot',
@@ -83,6 +97,15 @@ describe('vector-core operations', () => {
       kind: 'orthogonality',
       dot: 0,
       orthogonal: true,
+    });
+    expect(runNumericVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 1],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    })).toMatchObject({
+      kind: 'gramSchmidt',
+      orthogonalBasis: [[1, 1], [0.5, -0.5]],
     });
   });
 
@@ -147,6 +170,15 @@ describe('vector-core operations', () => {
     })).toEqual({
       kind: 'error',
       reason: 'unit-zero-vector',
+    });
+    expect(runNumericVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [0, 0],
+      vectorB: [0, 0],
+      angleUnit: 'deg',
+    })).toEqual({
+      kind: 'error',
+      reason: 'gram-schmidt-zero-span',
     });
   });
 });

@@ -37,5 +37,16 @@ describe('runVectorMode', () => {
     if (orthogonality.kind === 'success') {
       expect(orthogonality.exactLatex).toBe('\\text{Orthogonal}');
     }
+    const gram = runVectorMode({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 1],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    });
+    expect(gram.title).toBe('gram(u,v)');
+    expect(gram.kind).toBe('success');
+    if (gram.kind === 'success') {
+      expect(gram.detailSections?.map((section) => section.title)).toContain('Gram-Schmidt Proof');
+    }
   });
 });

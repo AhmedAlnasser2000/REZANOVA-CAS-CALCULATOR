@@ -39,6 +39,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'binary'; operator: LinearAlgebraBinaryOperator; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
+  | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | {
       kind: 'linearSystem';
       form: LinearAlgebraSystemForm;
@@ -107,6 +108,7 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{orth\}_v/g, 'orth_v')
     .replace(/\\operatorname\{unit\}/g, 'unit')
     .replace(/\\operatorname\{orthogonal\}/g, 'orthogonal')
+    .replace(/\\operatorname\{gram\}/g, 'gram')
     .replace(/\\operatorname\{angle\}/g, 'angle')
     .replace(/\\det/g, 'det')
     .replace(/\\angle/g, 'angle')
@@ -514,6 +516,19 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     }
     return {
       kind: 'orthogonality',
+      left: parseExpression(parts[0], options),
+      right: parseExpression(parts[1], options),
+    };
+  }
+
+  const gramArgument = functionArgument(input, 'gram');
+  if (gramArgument !== null) {
+    const parts = splitTopLevelComma(gramArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Gram-Schmidt requires two vector operands.');
+    }
+    return {
+      kind: 'gramSchmidt',
       left: parseExpression(parts[0], options),
       right: parseExpression(parts[1], options),
     };

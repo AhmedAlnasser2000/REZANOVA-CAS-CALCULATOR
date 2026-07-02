@@ -76,6 +76,11 @@ describe('parseLinearAlgebraEditorLatex', () => {
       left: { kind: 'named', name: 'u' },
       right: { kind: 'named', name: 'v' },
     });
+    expect(parsed('\\operatorname{gram}\\left(u,v\\right)', 'vector')).toEqual({
+      kind: 'gramSchmidt',
+      left: { kind: 'named', name: 'u' },
+      right: { kind: 'named', name: 'v' },
+    });
   });
 
   it('parses inline bmatrix matrices and column vectors', () => {

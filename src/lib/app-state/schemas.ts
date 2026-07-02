@@ -330,6 +330,7 @@ const vectorOperationSchema = z.enum([
   'unitA',
   'unitB',
   'orthogonalCheck',
+  'gramSchmidtUV',
 ]);
 const numericMatrixSchema = z.array(z.array(z.number().finite()));
 const numericVectorSchema = z.array(z.number().finite());

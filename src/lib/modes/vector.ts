@@ -54,6 +54,8 @@ export function vectorOperationLabel(operation: VectorOperation) {
       return 'unit(v)';
     case 'orthogonalCheck':
       return 'orthogonal(u,v)';
+    case 'gramSchmidtUV':
+      return 'gram(u,v)';
     default:
       return 'Vector';
   }
@@ -77,6 +79,7 @@ export function runVectorMode({ operation, vectorA, vectorB, angleUnit }: RunVec
     title: vectorOperationLabel(operation),
     exactLatex: response.resultLatex,
     approxText: response.approxText,
+    detailSections: response.detailSections,
     warnings: response.warnings,
   };
 }
