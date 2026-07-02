@@ -1613,6 +1613,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Full History ledger rows are scanning rows, not rich math surfaces. The row model owns plain-text input/result previews, virtualized visible rows render those previews through memoized row components, and rich `MathStatic` stays in the selected inspector or pending/detail areas.
 
+## 2026-07-02 - HISTORY-TICKER-ISOLATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Pending elapsed timers are local presentation concerns. History page/panel parents must not own 250ms elapsed state for committed rows; only pending rows and pending detail inspectors may subscribe to the elapsed ticker.
+
 ## 2026-07-02 - MATHSTATIC-MARKUP-LRU1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Rendered `MathStatic` markup is cached as bounded strings only, keyed by display LaTeX plus block/inline mode. The cache is internal Display infrastructure and must not store React nodes, DOM objects, solver objects, Display block trees, History entries, or public schema payloads.

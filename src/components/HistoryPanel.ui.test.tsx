@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { HistoryPanel } from './HistoryPanel';
 import { getLanguageCatalog } from '../lib/language';
@@ -180,6 +180,50 @@ describe('HistoryPanel', () => {
 
     fireEvent.click(within(pendingEntries[0]).getByTestId('history-entry-stop'));
     expect(onStopPending).toHaveBeenCalledWith(pendingTicket);
+  });
+
+  it('updates pending elapsed labels from the pending row timer', () => {
+    vi.useFakeTimers();
+    const startedAtMs = new Date('2026-07-02T12:00:00Z').getTime();
+    vi.setSystemTime(startedAtMs + 1000);
+
+    try {
+      render(
+        <HistoryPanel
+          presentation="overlay"
+          history={[]}
+          pendingHistory={[{
+            id: 'ticket.elapsed',
+            mode: 'equation',
+            inputLatex: 'x=1',
+            capabilityId: 'equation.solve',
+            inputRevisionId: 'input.elapsed',
+            historyLaunchOrder: 1,
+            startedAtMs,
+            timestamp: '2026-07-02T12:00:00Z',
+          }]}
+          modeLabels={modeLabels}
+          onClear={vi.fn()}
+          onClose={vi.fn()}
+          onDelete={vi.fn()}
+          onReplay={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByTestId('history-entry-pending')).toHaveTextContent(
+        historyText.pending.statusWithElapsed(historyText.pending.running, '1s'),
+      );
+
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(screen.getByTestId('history-entry-pending')).toHaveTextContent(
+        historyText.pending.statusWithElapsed(historyText.pending.running, '2s'),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shows persisted runtime duration as compact finalized history metadata', () => {

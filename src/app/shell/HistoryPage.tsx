@@ -37,6 +37,7 @@ import {
   formatRuntimeElapsedRunning,
   runtimeElapsedMs,
 } from '../runtime/runtimeElapsedTime';
+import { usePendingElapsedNow } from '../runtime/usePendingElapsedNow';
 import {
   buildHistoryDateGroups,
   buildHistoryLedgerRows,
@@ -134,7 +135,6 @@ function ModeChip({
 }
 
 const HistoryPendingLedgerRow = memo(function HistoryPendingLedgerRow({
-  elapsedNowMs,
   isSelected,
   modeLabel,
   onSelect,
@@ -143,7 +143,6 @@ const HistoryPendingLedgerRow = memo(function HistoryPendingLedgerRow({
   rowHeight,
   stopLabel,
 }: {
-  elapsedNowMs: number;
   isSelected: boolean;
   modeLabel: string;
   onSelect: (rowId: string) => void;
@@ -152,6 +151,8 @@ const HistoryPendingLedgerRow = memo(function HistoryPendingLedgerRow({
   rowHeight: number;
   stopLabel: string;
 }) {
+  const elapsedNowMs = usePendingElapsedNow(typeof row.ticket.startedAtMs === 'number');
+
   return (
     <article
       className={`history-page-row history-page-row--pending ${isSelected ? 'is-selected' : ''}`}
@@ -264,7 +265,6 @@ function InspectorButton({
 
 function HistoryDetailInspector({
   row,
-  elapsedNowMs,
   modeLabels,
   onCopyResult,
   onDelete,
@@ -273,7 +273,6 @@ function HistoryDetailInspector({
   onStopPending,
 }: {
   row: HistoryLedgerRow | null;
-  elapsedNowMs: number;
   modeLabels: Record<ModeId, string>;
   onCopyResult: (text: string) => void;
   onDelete: (id: string) => void;
@@ -283,6 +282,9 @@ function HistoryDetailInspector({
 }) {
   const { strings } = useLanguage();
   const historyText = strings.history;
+  const pendingElapsedNowMs = usePendingElapsedNow(
+    row?.kind === 'pending' && typeof row.ticket.startedAtMs === 'number',
+  );
 
   if (!row) {
     return (
@@ -304,7 +306,7 @@ function HistoryDetailInspector({
         </header>
         <div className="history-page-inspector-meta">
           <ModeChip label={modeLabels[row.ticket.mode]} mode={row.ticket.mode} />
-          <span><Clock3 aria-hidden="true" size={14} /> {rowElapsed(row, elapsedNowMs)}</span>
+          <span><Clock3 aria-hidden="true" size={14} /> {rowElapsed(row, pendingElapsedNowMs)}</span>
         </div>
         <section>
           <span>{historyText.labels.input}</span>
@@ -341,7 +343,7 @@ function HistoryDetailInspector({
       <div className="history-page-inspector-meta">
         <ModeChip label={modeLabels[entry.mode]} mode={entry.mode} />
         <span>{rowDateTime(row)}</span>
-        <span><Clock3 aria-hidden="true" size={14} /> {rowElapsed(row, elapsedNowMs)}</span>
+        <span><Clock3 aria-hidden="true" size={14} /> {rowElapsed(row, pendingElapsedNowMs)}</span>
         <span className="history-page-chip is-status">{rowResultKind(row)}</span>
       </div>
       <section>
@@ -421,7 +423,6 @@ export function HistoryPage({
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<string>>(() => new Set());
   const [selectionAnchorRowId, setSelectionAnchorRowId] = useState<string | null>(null);
-  const [elapsedNowMs, setElapsedNowMs] = useState(() => Date.now());
   const allRows = useMemo(() =>
     buildHistoryLedgerRows({ history, modeLabels, pendingHistory }),
   [history, modeLabels, pendingHistory]);
@@ -456,14 +457,6 @@ export function HistoryPage({
       setSelectedRowId(rows[0].id);
     }
   }, [rows, selectedRowId]);
-
-  useEffect(() => {
-    if (!pendingHistory.some((ticket) => typeof ticket.startedAtMs === 'number')) {
-      return undefined;
-    }
-    const intervalId = window.setInterval(() => setElapsedNowMs(Date.now()), 250);
-    return () => window.clearInterval(intervalId);
-  }, [pendingHistory]);
 
   const entryIdsInRange = useCallback((fromRowId: string, toRowId: string) => {
     const fromIndex = rows.findIndex((row) => row.id === fromRowId);
@@ -707,7 +700,6 @@ export function HistoryPage({
                       return (
                         <HistoryPendingLedgerRow
                           key={row.id}
-                          elapsedNowMs={elapsedNowMs}
                           isSelected={isSelected}
                           modeLabel={modeLabels[row.mode]}
                           onSelect={selectPendingRow}
@@ -747,7 +739,6 @@ export function HistoryPage({
 
         <HistoryDetailInspector
           row={selectedRow}
-          elapsedNowMs={elapsedNowMs}
           modeLabels={modeLabels}
           onCopyResult={onCopyResult}
           onDelete={onDelete}

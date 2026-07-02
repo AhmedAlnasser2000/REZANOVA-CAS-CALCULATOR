@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { HistoryEntry, ModeId, PendingHistoryTicket } from '../types/calculator';
 import { buildHistoryLaunchRows } from './history-launch-rows';
 import {
@@ -6,6 +6,7 @@ import {
   formatRuntimeElapsedRunning,
   runtimeElapsedMs,
 } from '../app/runtime/runtimeElapsedTime';
+import { usePendingElapsedNow } from '../app/runtime/usePendingElapsedNow';
 import { latexToVisibleText } from '../lib/display/math-notation';
 import { useLanguage } from '../lib/language/language-context';
 
@@ -30,6 +31,75 @@ function quickHistoryPreviewText(latex: string) {
   return latexToVisibleText(latex, 'plainText').trim() || latex;
 }
 
+function HistoryPanelPendingEntry({
+  modeLabel,
+  onStopPending,
+  ticket,
+}: {
+  modeLabel: string;
+  onStopPending?: (ticket: PendingHistoryTicket) => void;
+  ticket: PendingHistoryTicket;
+}) {
+  const { strings } = useLanguage();
+  const historyText = strings.history;
+  const elapsedNowMs = usePendingElapsedNow(typeof ticket.startedAtMs === 'number');
+  const pendingStatusLabel = ticket.status === 'stopping'
+    ? historyText.pending.stopping
+    : historyText.pending.running;
+  const pendingElapsedLabel = typeof ticket.startedAtMs === 'number'
+    ? formatRuntimeElapsedRunning(runtimeElapsedMs(ticket.startedAtMs, elapsedNowMs))
+    : null;
+
+  return (
+    <article
+      className="history-entry history-entry--pending"
+      data-testid="history-entry-pending"
+    >
+      <div className="history-entry-header">
+        <div className="history-entry-pending-summary">
+          <div className="history-entry-replay history-entry-replay--pending">
+            <span className="history-meta">{modeLabel}</span>
+            <span className="history-entry-hint">
+              {pendingElapsedLabel
+                ? historyText.pending.statusWithElapsed(
+                  pendingStatusLabel,
+                  pendingElapsedLabel,
+                )
+                : pendingStatusLabel}
+            </span>
+          </div>
+          {ticket.workspaceInstanceLabel ? (
+            <span
+              className="history-entry-tab-label"
+              data-testid="history-entry-tab-label"
+            >
+              {historyText.pending.tabLabel(ticket.workspaceInstanceLabel)}
+            </span>
+          ) : null}
+        </div>
+        <div className="history-entry-actions">
+          <button
+            type="button"
+            className="history-entry-stop"
+            data-testid="history-entry-stop"
+            disabled={ticket.status === 'stopping'}
+            onClick={() => onStopPending?.(ticket)}
+          >
+            {historyText.actions.stop}
+          </button>
+        </div>
+      </div>
+      <div className="history-entry-body history-entry-body--pending">
+        <div className="history-entry-preview" data-testid="history-entry-preview">
+          <span className="history-entry-preview-text">
+            {quickHistoryPreviewText(ticket.inputLatex)}
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 export function HistoryPanel({
   presentation,
   history,
@@ -44,7 +114,6 @@ export function HistoryPanel({
 }: HistoryPanelProps) {
   const { strings } = useLanguage();
   const historyText = strings.history;
-  const [elapsedNowMs, setElapsedNowMs] = useState(() => Date.now());
   const rows = useMemo(() => {
     let committedRows = 0;
     return buildHistoryLaunchRows(history, pendingHistory).filter((row) => {
@@ -58,21 +127,6 @@ export function HistoryPanel({
       return true;
     });
   }, [history, pendingHistory]);
-  const hasTimedPendingRows = pendingHistory.some((ticket) =>
-    typeof ticket.startedAtMs === 'number');
-
-  useEffect(() => {
-    if (!hasTimedPendingRows) {
-      return undefined;
-    }
-
-    const intervalId = window.setInterval(() => {
-      setElapsedNowMs(Date.now());
-    }, 250);
-
-    return () => window.clearInterval(intervalId);
-  }, [hasTimedPendingRows]);
-
   return (
     <aside
       className={`history-panel history-panel--${presentation}`}
@@ -107,60 +161,13 @@ export function HistoryPanel({
             .map((row) => {
               if (row.kind === 'pending') {
                 const ticket = row.ticket;
-                const pendingStatusLabel = ticket.status === 'stopping'
-                  ? historyText.pending.stopping
-                  : historyText.pending.running;
-                const pendingElapsedLabel = typeof ticket.startedAtMs === 'number'
-                  ? formatRuntimeElapsedRunning(runtimeElapsedMs(ticket.startedAtMs, elapsedNowMs))
-                  : null;
                 return (
-                  <article
+                  <HistoryPanelPendingEntry
                     key={ticket.id}
-                    className="history-entry history-entry--pending"
-                    data-testid="history-entry-pending"
-                  >
-                    <div className="history-entry-header">
-                      <div className="history-entry-pending-summary">
-                        <div className="history-entry-replay history-entry-replay--pending">
-                          <span className="history-meta">{modeLabels[ticket.mode]}</span>
-                          <span className="history-entry-hint">
-                            {pendingElapsedLabel
-                              ? historyText.pending.statusWithElapsed(
-                                pendingStatusLabel,
-                                pendingElapsedLabel,
-                              )
-                              : pendingStatusLabel}
-                          </span>
-                        </div>
-                        {ticket.workspaceInstanceLabel ? (
-                          <span
-                            className="history-entry-tab-label"
-                            data-testid="history-entry-tab-label"
-                          >
-                            {historyText.pending.tabLabel(ticket.workspaceInstanceLabel)}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="history-entry-actions">
-                        <button
-                          type="button"
-                          className="history-entry-stop"
-                          data-testid="history-entry-stop"
-                          disabled={ticket.status === 'stopping'}
-                          onClick={() => onStopPending?.(ticket)}
-                        >
-                          {historyText.actions.stop}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="history-entry-body history-entry-body--pending">
-                      <div className="history-entry-preview" data-testid="history-entry-preview">
-                        <span className="history-entry-preview-text">
-                          {quickHistoryPreviewText(ticket.inputLatex)}
-                        </span>
-                      </div>
-                    </div>
-                  </article>
+                    modeLabel={modeLabels[ticket.mode]}
+                    onStopPending={onStopPending}
+                    ticket={ticket}
+                  />
                 );
               }
 

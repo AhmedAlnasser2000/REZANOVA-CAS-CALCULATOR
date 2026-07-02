@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -165,26 +166,39 @@ describe('HistoryPage', () => {
   });
 
   it('renders pending rows with stop controls', () => {
+    vi.useFakeTimers();
+    const startedAtMs = new Date('2026-07-02T12:00:00Z').getTime();
+    vi.setSystemTime(startedAtMs + 1000);
     const pendingTicket: PendingHistoryTicket = {
       id: 'ticket.1',
       historyLaunchOrder: 3,
       inputLatex: 'x^4+1=0',
       mode: 'equation',
-      startedAtMs: Date.now() - 1000,
+      startedAtMs,
       timestamp: '2026-07-01T12:00:00Z',
       workspaceInstanceLabel: 'Equation tab',
     };
-    const handlers = renderHistoryPage({
-      history: [entry('1')],
-      pendingHistory: [pendingTicket],
-    });
+    try {
+      const handlers = renderHistoryPage({
+        history: [entry('1')],
+        pendingHistory: [pendingTicket],
+      });
 
-    const pendingRow = screen.getByTestId('history-page-row-pending');
-    expect(pendingRow).toHaveTextContent('Running');
-    expect(pendingRow.querySelector('[data-raw-latex]')).toBeNull();
+      const pendingRow = screen.getByTestId('history-page-row-pending');
+      expect(pendingRow).toHaveTextContent('Running 1s');
+      expect(pendingRow.querySelector('[data-raw-latex]')).toBeNull();
 
-    fireEvent.click(within(pendingRow).getByRole('button', { name: historyText.actions.stop }));
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
 
-    expect(handlers.onStopPending).toHaveBeenCalledWith(pendingTicket);
+      expect(pendingRow).toHaveTextContent('Running 2s');
+
+      fireEvent.click(within(pendingRow).getByRole('button', { name: historyText.actions.stop }));
+
+      expect(handlers.onStopPending).toHaveBeenCalledWith(pendingTicket);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
