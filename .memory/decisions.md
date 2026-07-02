@@ -1612,3 +1612,7 @@
 ## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-DISPATCH1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector main editor execution must dispatch parsed executable forms through the existing Matrix/Vector request runners, OOE capability IDs, history seeds, and result readback. F-keys remain current named-input shortcuts. Parsed forms without an existing operation, including rank/RREF for now, stop with controlled local errors instead of creating a second solver or importing Equation internals.
+
+## 2026-07-02 - LINEAR-SYSTEM-OWNERSHIP-AUDIT0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns only structured finite-dimensional linear systems, rank/RREF facts, and Matrix-local solution-count classification. Equation remains the owner of free-form equation solving, selected targets, nonlinear symbolic solving, branch/domain facts, numeric intervals, and generated routes. Matrix/Vector handoff to Equation must be explicit and typed, never an import of Equation internals or automatic routing.

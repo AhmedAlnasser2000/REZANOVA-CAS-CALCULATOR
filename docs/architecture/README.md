@@ -45,6 +45,9 @@ Architecture notes are grouped by ownership area so the folder stays navigable. 
 - `language/language-compartment-foundation.md`: implementation record for the English-only typed Language compartment foundation, fallback APIs, React seam, and manifest entry
 - `language/language-surface-audit.md`: initial repo-grounded audit of user-facing text surfaces before a Language compartment implementation
 
+## Linear Algebra
+- `linear-algebra/linear-system-ownership-audit.md`: docs-only boundary lock for Matrix-owned structured linear systems, Equation-owned free-form solving, and explicit Equation handoff posture
+
 ## Engine
 - `engine/engine-root-surface-audit.md`: audit map for the Engine execution and planning bridge surface
 - `engine/engine-semantic-planner-district-audit.md`: audit map for the Engine semantic planner surface
