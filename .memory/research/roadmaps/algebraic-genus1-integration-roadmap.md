@@ -47,6 +47,8 @@ Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-BASIS-READINESS1` is r
 
 Inserted frontier note: `ALGEBRAIC-GENUS2-HYPERELLIPTIC-BOUNDARY1` names the next algebraic boundary before broader genus-1 widening continues. Degree-5-or-higher one-radical square-root curves now stop as hyperelliptic/genus-2 territory instead of generic unsupported failures; this does not implement genus-2 functions or certificates.
 
+Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-COEFFICIENT-IDENTITY-SYSTEM1` extends raw radical second-kind readiness before live generic `EllipticE` adoption. Three-real-root cubic and one-real-root complex-pair cubic raw radicals now expose a finite coefficient-comparison identity over the named-root Legendre field, including chart variable, F/E/Pi unknowns, rational correction unknowns, and proof obligations; live `sqrt(P3/P4)` adoption remains deferred until that identity is solved and proof-checked.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

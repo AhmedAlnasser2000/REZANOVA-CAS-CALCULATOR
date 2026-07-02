@@ -7,11 +7,13 @@ import {
 import { profileAlgebraicGenus1CurveCandidate } from './curve-profile';
 import { buildAlgebraicGenus1NormalForm } from './normal-form';
 import { solveAlgebraicGenus1RootBasisCoefficients } from './root-basis-coefficient-solver';
+import type { AlgebraicGenus1RootPullbackLegendreData } from './root-pullback-basis-profile';
 
 export type AlgebraicGenus1SecondKindBasisReadiness = {
   kind: 'success';
   variable: string;
   preferredBranchLatex: string;
+  rootChartKind: AlgebraicGenus1RootPullbackLegendreData['dataKind'];
   amplitudeLatex: string;
   parameterLatex: string;
   multiplierLatex: string;
@@ -92,11 +94,7 @@ export function buildAlgebraicGenus1SecondKindBasisReadiness(
   }
 
   const normalForm = buildAlgebraicGenus1NormalForm(node, variable);
-  if (
-    normalForm.kind !== 'success'
-    || normalForm.normalFormKind !== 'root-based-readiness'
-    || !normalForm.rootLegendreData
-  ) {
+  if (normalForm.kind !== 'success' || normalForm.normalFormKind !== 'root-based-readiness') {
     return {
       kind: 'stop',
       variable,
@@ -124,7 +122,7 @@ export function buildAlgebraicGenus1SecondKindBasisReadiness(
     };
   }
 
-  const rootData = normalForm.rootLegendreData;
+  const rootData = solve.rootLegendreData;
   const basisEquationLatex =
     `${solve.rationalCoefficientLatex}\\frac{d\\phi}{\\sqrt{1-${rootData.parameterLatex}\\sin^2\\phi}}`
     + `=C_F\\,dF+C_E\\,dE+C_{\\Pi}\\,d\\Pi+dS`;
@@ -134,6 +132,7 @@ export function buildAlgebraicGenus1SecondKindBasisReadiness(
     kind: 'success',
     variable,
     preferredBranchLatex: rootData.preferredBranchLatex,
+    rootChartKind: rootData.dataKind,
     amplitudeLatex: rootData.amplitudeLatex,
     parameterLatex: rootData.parameterLatex,
     multiplierLatex: rootData.multiplierLatex,

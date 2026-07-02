@@ -63,15 +63,21 @@ describe('algebraic genus-1 second-kind basis readiness', () => {
     expect(result.basisEquationLatex).toContain('C_F');
   });
 
-  it('does not claim reciprocal radicals or one-real-root complex-pair radical charts yet', () => {
+  it('does not claim reciprocal radicals as second-kind readiness', () => {
     expect(readiness('\\frac{1}{\\sqrt{x^3-x}}')).toMatchObject({
       kind: 'stop',
       reason: 'unsupported-integrand-shape',
     });
-    expect(readiness('\\sqrt{x^3+x+1}')).toMatchObject({
-      kind: 'stop',
-      reason: 'normal-form-stop',
-    });
+  });
+
+  it('builds second-kind readiness for one-real-root complex-pair radical charts', () => {
+    const result = success('\\sqrt{x^3+x+1}');
+
+    expect(result.canAdoptLive).toBe(false);
+    expect(result.rootChartKind).toBe('cubic-one-real-root-complex-pair');
+    expect(result.preferredBranchLatex).toContain('x>\\alpha_{1}');
+    expect(result.rationalCoefficientLatex).toContain('A_{\\alpha_{1}}');
+    expect(text(result)).toContain('\\beta_{\\alpha_{1}}');
   });
 
   it('keeps raw radical integration deferred until the basis equation is solved', () => {

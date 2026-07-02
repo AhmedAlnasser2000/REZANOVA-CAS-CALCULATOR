@@ -8,7 +8,10 @@ import {
   buildAlgebraicGenus1RootPullbackRationalForm,
   type AlgebraicGenus1RootPullbackRationalForm,
 } from './root-pullback-rational-form';
-import type { AlgebraicGenus1RootPullbackBasisKind } from './root-pullback-basis-profile';
+import type {
+  AlgebraicGenus1RootPullbackBasisKind,
+  AlgebraicGenus1RootPullbackLegendreData,
+} from './root-pullback-basis-profile';
 
 export type AlgebraicGenus1RootBasisCoefficientSolverStatus =
   | 'solved-first-kind'
@@ -25,6 +28,7 @@ export type AlgebraicGenus1RootBasisCoefficientSolve = {
     coefficientLatex: string;
   }>;
   unresolvedBasisKinds: AlgebraicGenus1RootPullbackBasisKind[];
+  rootLegendreData: AlgebraicGenus1RootPullbackLegendreData;
   rationalCoefficientLatex: string;
   coefficientFieldLatex: string;
   proofObligations: string[];
@@ -148,6 +152,7 @@ export function solveAlgebraicGenus1RootBasisCoefficients(
     canAdoptLive: status === 'solved-first-kind',
     solvedBasisCoefficients,
     unresolvedBasisKinds: unresolvedKinds(status),
+    rootLegendreData: pullback.coefficientSystem.rootLegendreData,
     rationalCoefficientLatex: pullback.rationalCoefficientLatex,
     coefficientFieldLatex: pullback.coefficientFieldLatex,
     proofObligations: proofObligations({
