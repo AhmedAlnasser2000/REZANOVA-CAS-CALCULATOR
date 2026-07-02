@@ -48,6 +48,23 @@ describe('calculus limits', () => {
       direction: 'two-sided',
     });
     expect(mismatch.error).toBe('Left and right behavior do not agree near the target.');
+    expect(mismatch.detailSections?.[0]?.title).toBe('Why This Limit Fails');
+    expect(mismatch.detailSections?.[0]?.lines.join(' ')).toContain('two one-sided limits');
+
+    const poleMismatch = evaluateCalculusFiniteLimit({
+      bodyLatex: '\\frac{1}{x}',
+      target: '0',
+      direction: 'two-sided',
+    });
+    expect(poleMismatch.error).toBe('Left and right behavior do not agree near the target.');
+    expect(poleMismatch.detailSections?.[0]).toEqual({
+      title: 'Why This Limit Fails',
+      lines: [
+        'Left side tends to -\\infty.',
+        'Right side tends to \\infty.',
+        'The two one-sided limits are different, so the two-sided limit does not exist.',
+      ],
+    });
 
     const unbounded = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x}',

@@ -31,6 +31,11 @@ async function waitForDisplayOutcomeSuccess() {
   await waitForDisplayQueueToSettle();
 }
 
+async function waitForDisplayOutcomeError() {
+  await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toBeInTheDocument());
+  await waitForDisplayQueueToSettle();
+}
+
 describe('Calculus limit editor source', () => {
   it('uses one merged Limit screen with the full request in the main editor', async () => {
     const { user } = await renderAppMain();
@@ -108,5 +113,23 @@ describe('Calculus limit editor source', () => {
 
     expect(screen.getByText('Evaluate a full natural limit expression.')).toBeInTheDocument();
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
+  });
+
+  it('shows a proof detail card when a two-sided limit fails', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 1/x');
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeError();
+    expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
+      'Left and right behavior do not agree near the target.',
+    );
+    const detail = await screen.findByTestId('display-outcome-detail-section-0');
+    expect(detail).toHaveTextContent('Why This Limit Fails');
+    expect(detail).toHaveTextContent('Left side tends to');
+    expect(detail).toHaveTextContent('Right side tends to');
+    expect(detail).toHaveTextContent('two-sided limit does not exist');
   });
 });

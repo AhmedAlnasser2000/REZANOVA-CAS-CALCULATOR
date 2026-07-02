@@ -6,6 +6,7 @@ import {
 import { attemptInfiniteLHospital } from '../../symbolic-engine/limits';
 import { resolveFiniteLimitRule } from '../../symbolic-engine/limits';
 import type {
+  DisplayDetailSection,
   LimitDirection,
   LimitTargetKind,
 } from '../../../types/calculator';
@@ -45,6 +46,11 @@ type InfiniteLimitMessages = {
   targetLabel: (targetKind: Exclude<LimitTargetKind, 'finite'>) => string;
   unstableError: string;
   numericFallbackWarning: string;
+};
+
+type TwoSidedMismatchEvidence = {
+  left: Exclude<OneSidedLimitResult, { kind: 'domain-error' | 'unstable' }>;
+  right: Exclude<OneSidedLimitResult, { kind: 'domain-error' | 'unstable' }>;
 };
 
 function signToInfiniteLimit(sign: 1 | -1): LimitValue {
@@ -181,7 +187,7 @@ function numericFiniteLimit(
   if (left.kind === 'unbounded' && right.kind === 'unbounded') {
     return left.sign === right.sign
       ? { kind: 'infinite' as const, sign: left.sign }
-      : { kind: 'mismatch' as const };
+      : { kind: 'mismatch' as const, left, right };
   }
 
   if (left.kind === 'unbounded') {
@@ -194,13 +200,31 @@ function numericFiniteLimit(
 
   const scale = Math.max(1, Math.abs(left.value), Math.abs(right.value));
   if (Math.abs(left.value - right.value) > LIMIT_TOLERANCE * scale) {
-    return { kind: 'mismatch' as const };
+    return { kind: 'mismatch' as const, left, right };
   }
 
   return {
     kind: 'success' as const,
     value: (left.value + right.value) / 2,
   };
+}
+
+function oneSidedEvidenceLatex(result: TwoSidedMismatchEvidence['left']) {
+  if (result.kind === 'unbounded') {
+    return limitValueToLatex(signToInfiniteLimit(result.sign));
+  }
+  return limitValueToLatex(result.value);
+}
+
+function twoSidedMismatchDetails(evidence: TwoSidedMismatchEvidence): DisplayDetailSection[] {
+  return [{
+    title: 'Why This Limit Fails',
+    lines: [
+      `Left side tends to ${oneSidedEvidenceLatex(evidence.left)}.`,
+      `Right side tends to ${oneSidedEvidenceLatex(evidence.right)}.`,
+      'The two one-sided limits are different, so the two-sided limit does not exist.',
+    ],
+  }];
 }
 
 export function basicFiniteLimitWarning(direction: LimitDirection) {
@@ -327,7 +351,11 @@ export function evaluateFiniteLimitFromAst(input: {
     };
   }
   if (numeric.kind === 'mismatch') {
-    return { warnings: [], error: input.messages.mismatchError };
+    return {
+      warnings: [],
+      error: input.messages.mismatchError,
+      detailSections: twoSidedMismatchDetails(numeric),
+    };
   }
   if (numeric.kind !== 'success') {
     return { warnings: [], error: input.messages.unstableError };
