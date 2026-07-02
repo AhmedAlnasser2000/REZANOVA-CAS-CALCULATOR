@@ -51,6 +51,8 @@ Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-COEFFICIENT-IDENTITY-S
 
 Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-COEFFICIENT-MATRIX1` lowers the raw-radical second-kind coefficient identity into bounded linear-system evidence. The matrix layer records row labels, unknown blocks, matrix shape, right-hand side, and proof obligations for later population/solving, while keeping live `EllipticE` adoption blocked until coefficients and rational correction are solved and backchecked.
 
+Inserted prerequisite note: `ALGEBRAIC-GENUS1-ROOT-PULLBACK-NODE-FORM1` adds node-first Legendre chart evidence before matrix entry population. It records MathJSON nodes for `x(z)`, `dx/dz`, the Legendre parameter, and first/second/third-kind kernels for three-real-root, four-real-root, and one-real-root-complex-pair charts, while keeping all new evidence behavior-invisible and non-live.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
