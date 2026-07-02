@@ -1,4 +1,5 @@
-import type { ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, NumericSolveInterval } from '../../types/calculator';
+import type { AngleUnit, ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, NumericSolveInterval } from '../../types/calculator';
+import { equationToZeroFormLatex, evaluateLatexAtTarget } from './domain-guards';
 import type { EquationNumericDomainFact } from './numeric-domain-segmentation';
 
 export type EquationAnalysisEvidenceCategory =
@@ -41,6 +42,7 @@ export type EquationAnalysisEvidence = {
   sourceRoute: string;
   category: EquationAnalysisEvidenceCategory;
   confidence: EquationAnalysisEvidenceConfidence;
+  classification?: string;
   latex?: string;
   text?: string;
   interval?: EquationAnalysisEvidenceInterval;
@@ -191,4 +193,172 @@ export function buildEquationDomainFactEvidence(input: {
       latex: latexForDomainFact(fact),
       text: fact.message,
     }));
+}
+
+export type EquationSingularityClassification =
+  | 'removable-candidate'
+  | 'pole-asymptote-candidate'
+  | 'branch-domain-boundary'
+  | 'trig-pole'
+  | 'unknown';
+
+const SOLVED_EXCLUSION_PATTERN = /^\\ne\s*(-?(?:\d+(?:\.\d+)?|\.\d+))/u;
+
+function solvedExclusionPoint(fact: EquationNumericDomainFact, target: string) {
+  if (fact.expressionLatex !== target || !fact.relationLatex) {
+    return null;
+  }
+  const match = fact.relationLatex.match(SOLVED_EXCLUSION_PATTERN);
+  if (!match) {
+    return null;
+  }
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value : null;
+}
+
+function finiteNearbyValues(input: {
+  zeroFormLatex: string;
+  target: string;
+  value: number;
+  angleUnit: AngleUnit;
+}) {
+  const scale = Math.max(1, Math.abs(input.value));
+  const offsets = [1e-4, 1e-5, 1e-3].map((offset) => offset * scale);
+  const values: number[] = [];
+  for (const offset of offsets) {
+    for (const direction of [-1, 1]) {
+      const evaluated = evaluateLatexAtTarget(
+        input.zeroFormLatex,
+        input.target,
+        input.value + direction * offset,
+        input.angleUnit,
+      ).value;
+      if (evaluated !== null && Number.isFinite(evaluated)) {
+        values.push(evaluated);
+      }
+    }
+  }
+  return values;
+}
+
+function classifySolvedDenominatorExclusion(input: {
+  equationLatex: string;
+  target: string;
+  value: number;
+  angleUnit: AngleUnit;
+}): EquationSingularityClassification {
+  const zeroFormLatex = equationToZeroFormLatex(input.equationLatex);
+  const nearby = finiteNearbyValues({
+    zeroFormLatex,
+    target: input.target,
+    value: input.value,
+    angleUnit: input.angleUnit,
+  });
+  if (nearby.length < 4) {
+    return 'unknown';
+  }
+  const maxMagnitude = Math.max(...nearby.map((value) => Math.abs(value)));
+  const minMagnitude = Math.min(...nearby.map((value) => Math.abs(value)));
+  if (maxMagnitude >= 1e4) {
+    return 'pole-asymptote-candidate';
+  }
+  if (maxMagnitude / Math.max(minMagnitude, 1e-12) < 1e4) {
+    return 'removable-candidate';
+  }
+  return 'pole-asymptote-candidate';
+}
+
+function singularityClassificationForFact(input: {
+  fact: EquationNumericDomainFact;
+  equationLatex: string;
+  target: string;
+  angleUnit: AngleUnit;
+}): EquationSingularityClassification | null {
+  if (input.fact.kind === 'trig-pole') {
+    return 'trig-pole';
+  }
+  if (
+    input.fact.kind === 'log-domain'
+    || input.fact.kind === 'root-domain'
+    || input.fact.kind === 'fractional-power-domain'
+    || input.fact.kind === 'inverse-trig-domain'
+  ) {
+    return 'branch-domain-boundary';
+  }
+  if (input.fact.kind === 'solved-denominator-exclusion') {
+    const value = solvedExclusionPoint(input.fact, input.target);
+    return value === null
+      ? 'pole-asymptote-candidate'
+      : classifySolvedDenominatorExclusion({
+        equationLatex: input.equationLatex,
+        target: input.target,
+        value,
+        angleUnit: input.angleUnit,
+      });
+  }
+  if (input.fact.kind === 'denominator-exclusion' || input.fact.kind === 'sampled-discontinuity') {
+    return 'unknown';
+  }
+  return null;
+}
+
+function singularityText(classification: EquationSingularityClassification, fact: EquationNumericDomainFact) {
+  const payload = fact.expressionLatex && fact.relationLatex
+    ? `${fact.expressionLatex}${fact.relationLatex}`
+    : fact.message;
+  switch (classification) {
+    case 'removable-candidate':
+      return `${payload} is a removable discontinuity candidate.`;
+    case 'pole-asymptote-candidate':
+      return `${payload} is a pole/asymptote candidate.`;
+    case 'branch-domain-boundary':
+      return `${payload} is a branch/domain boundary candidate.`;
+    case 'trig-pole':
+      return `${payload} is a trigonometric pole candidate.`;
+    case 'unknown':
+      return `${payload} is an excluded or undefined candidate with unknown singularity type.`;
+  }
+}
+
+export function buildEquationSingularityEvidence(input: {
+  facts: readonly EquationNumericDomainFact[];
+  equationLatex: string;
+  target: string;
+  sourceRoute: string;
+  angleUnit: AngleUnit;
+}): EquationAnalysisEvidence[] {
+  return input.facts.flatMap((fact) => {
+    const classification = singularityClassificationForFact({
+      fact,
+      equationLatex: input.equationLatex,
+      target: input.target,
+      angleUnit: input.angleUnit,
+    });
+    if (!classification) {
+      return [];
+    }
+    const pointValue = solvedExclusionPoint(fact, input.target);
+    return [{
+      id: [
+        'singularity',
+        input.sourceRoute,
+        input.target,
+        classification,
+        fact.kind,
+        fact.expressionLatex ?? '',
+        fact.relationLatex ?? '',
+        fact.message,
+      ].join(':'),
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      category: 'singularity' as const,
+      classification,
+      confidence: classification === 'unknown' ? 'unknown' : 'candidate',
+      latex: latexForDomainFact(fact),
+      text: singularityText(classification, fact),
+      point: pointValue === null
+        ? undefined
+        : { value: pointValue, role: 'singularity' as const },
+    }];
+  });
 }

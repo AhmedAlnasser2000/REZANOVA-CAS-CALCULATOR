@@ -5,6 +5,7 @@ import {
   attachEquationAnalysisEvidence,
   buildEquationDomainFactEvidence,
   buildEquationRouteEvidence,
+  buildEquationSingularityEvidence,
 } from '../../equation/analysis-evidence';
 import { runSharedEquationSolveWithTraceAsync } from '../../equation/shared-solve';
 import {
@@ -75,6 +76,13 @@ function buildEquationRunEvidence(input: {
       facts: classification.domainFacts,
       target: selectedTarget,
       sourceRoute: route,
+    }),
+    ...buildEquationSingularityEvidence({
+      facts: classification.domainFacts,
+      equationLatex: input.equationLatex,
+      target: selectedTarget,
+      sourceRoute: route,
+      angleUnit: input.angleUnit,
     }),
   ];
 }
