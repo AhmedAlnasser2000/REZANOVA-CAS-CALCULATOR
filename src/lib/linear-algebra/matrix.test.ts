@@ -44,6 +44,11 @@ describe('runMatrixOperation', () => {
     expect(rank.resultLatex).toBe('1');
     expect(rank.approxText).toBe('1');
     expect(rref.resultLatex).toBe('\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}');
+    expect(rref.detailSections).toEqual([{
+      title: 'Row Reduction Steps',
+      lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
+      lineKind: 'math',
+    }]);
   });
 
   it('keeps rank and RREF off decimal grids without exact sidecars', () => {

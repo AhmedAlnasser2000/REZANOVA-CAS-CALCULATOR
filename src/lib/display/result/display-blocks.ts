@@ -131,6 +131,11 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'System Proof',
 ]);
 
+const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([
+  'Solve Note',
+  'Row Reduction Steps',
+]);
+
 function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
   return count === 1 ? singular : pluralLabel;
 }
@@ -488,7 +493,7 @@ function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: num
       text: line,
     };
   });
-  const defaultCollapsed = section.title === 'Solve Note'
+  const defaultCollapsed = DETAIL_TITLES_COLLAPSED_BY_DEFAULT.has(section.title)
     || (
       !DETAIL_TITLES_VISIBLE_BY_DEFAULT.has(section.title)
       && (CASE_MATH_DETAIL_TITLES.has(section.title) || isVerboseDisplayBlockLines(section.lines))

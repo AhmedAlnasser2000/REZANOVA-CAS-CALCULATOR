@@ -221,6 +221,27 @@ describe('display block adapter', () => {
     });
   });
 
+  it('keeps Matrix row-reduction traces collapsed by default even when short', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'rref(A)',
+      exactLatex: '\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}',
+      detailSections: [{
+        title: 'Row Reduction Steps',
+        lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
+        lineKind: 'math',
+      }],
+      warnings: [],
+    };
+
+    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Row Reduction Steps');
+
+    expect(card).toMatchObject({
+      kind: 'detail',
+      defaultCollapsed: true,
+    });
+  });
+
   it('adapts safe finite answer sets into branch-list blocks', () => {
     const exactLatex = 's\\in\\left\\{\\frac{d}{4}+r+\\sqrt{x+j},\\ \\frac{d}{4}-r-\\sqrt{x+j}\\right\\}';
     const outcome: DisplayOutcome = {

@@ -17,6 +17,7 @@ import {
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
 import type { ExactScalarWire } from '../../types/calculator';
+import { rowOperationDetailSection } from './row-operation-readback';
 
 export type MatrixSystemRunInput = {
   coefficients: number[][];
@@ -288,6 +289,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       detailSections: [
         systemProofDetails('none', rankA, rankAugmented, unknowns, augmentedRref.matrix),
         ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
     };
@@ -306,6 +308,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
         ...(family ? [solutionFamilyDetails(family)] : []),
         systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix),
         ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
     };
@@ -324,6 +327,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
     detailSections: [
       systemProofDetails('unique', rankA, rankAugmented, unknowns, augmentedRref.matrix),
       ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
+      rowOperationDetailSection(augmentedRref.rowOperations),
     ],
     warnings: [],
   };

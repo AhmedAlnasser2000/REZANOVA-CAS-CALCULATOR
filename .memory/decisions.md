@@ -1680,3 +1680,7 @@
 ## 2026-07-02 - MATRIX-NULL-COLUMN-SPACE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix owns null-space and column-space basis readback for finite exact matrices through the existing Matrix RREF pivot substrate. `null(...)` and `col(...)` may run for named A/B or inline matrices and produce exact bases, dimensions, pivot-column facts, and rank-nullity proof details; this does not add Equation solving, symbolic matrix CAS, automatic Equation routing, or Vector-space merging.
+
+## 2026-07-02 - MATRIX-ROW-REDUCTION-STEPS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix row-operation readback is educational detail attached to Matrix-owned exact RREF results. `rref(...)` and structured systems may show row-operation traces from the exact Matrix RREF substrate, but those trace cards default collapsed so primary answers, system proof cards, and rank/RREF facts remain the first readback layer.

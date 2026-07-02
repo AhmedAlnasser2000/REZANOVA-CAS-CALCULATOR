@@ -22,6 +22,7 @@ import {
   type NumericMatrixRequest,
 } from './matrix-core';
 import { runMatrixSpaceOperation } from './matrix-spaces';
+import { rowOperationDetailSection } from './row-operation-readback';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {
@@ -130,6 +131,7 @@ function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
 
   return {
     resultLatex: exactMatrixToLatex(reduced.matrix),
+    detailSections: [rowOperationDetailSection(reduced.rowOperations)],
     warnings: [],
   };
 }

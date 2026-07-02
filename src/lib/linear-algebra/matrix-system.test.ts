@@ -102,6 +102,11 @@ describe('runMatrixLinearSystem', () => {
         '\\operatorname{free\\ variables}=1',
       ]),
     });
+    expect(outcome.kind === 'success' ? outcome.detailSections?.at(-1) : undefined).toMatchObject({
+      title: 'Row Reduction Steps',
+      lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
+      lineKind: 'math',
+    });
   });
 
   it('returns controlled Matrix errors for unsupported system inputs', () => {
