@@ -43,6 +43,8 @@ Inserted prerequisite note: after complex-pair pullback/basis evidence, `ALGEBRA
 
 Inserted prerequisite note: `ALGEBRAIC-GENUS1-COMPLEX-PAIR-FIRST-KIND-LIVE1` makes exact one-real-root cubic reciprocal radicals live through the complex-pair first-kind chart after the proof prerequisite. This stays narrow: radical, second-kind, and rational-in-radical complex-pair cases still wait for later basis-reduction gates.
 
+Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-BASIS-READINESS1` is required before generic raw radical adoption. It makes the root-chart pullback equation explicit as `C_F dF + C_E dE + C_\Pi d\Pi + dS` evidence for exact real-root cubic radicals, while keeping live `sqrt(P3/P4)` adoption deferred until the coefficient identity and rational correction are solved and proof-checked.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
