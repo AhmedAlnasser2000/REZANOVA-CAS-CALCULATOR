@@ -7,7 +7,10 @@ import {
   getVectorShapeFacts,
   haveSameVectorDimension,
   normVector,
+  orthogonalComponentToVector,
+  projectionOntoVector,
   runNumericVectorOperation,
+  unitVector,
   subtractVectors,
 } from './vector-core';
 
@@ -35,6 +38,14 @@ describe('vector-core operations', () => {
     expect(angleBetweenVectors([1, 0], [0, 1], 'rad')).toBeCloseTo(Math.PI / 2);
   });
 
+  it('runs reusable projection, orthogonal component, and unit-vector operations', () => {
+    expect(projectionOntoVector([1, 0], [2, 3])).toEqual([2, 0]);
+    expect(orthogonalComponentToVector([1, 0], [2, 3])).toEqual([0, 3]);
+    expect(unitVector([3, 4])).toEqual([0.6000000000000001, 0.8]);
+    expect(projectionOntoVector([0, 0], [2, 3])).toBeNull();
+    expect(unitVector([0, 0])).toBeNull();
+  });
+
   it('returns typed vector/scalar results from the operation boundary', () => {
     expect(runNumericVectorOperation({
       operation: 'dot',
@@ -53,6 +64,25 @@ describe('vector-core operations', () => {
     })).toEqual({
       kind: 'vector',
       value: [0, 0, 1],
+    });
+    expect(runNumericVectorOperation({
+      operation: 'projectionUofV',
+      vectorA: [1, 0],
+      vectorB: [2, 3],
+      angleUnit: 'deg',
+    })).toEqual({
+      kind: 'vector',
+      value: [2, 0],
+    });
+    expect(runNumericVectorOperation({
+      operation: 'orthogonalCheck',
+      vectorA: [1, 0],
+      vectorB: [0, 3],
+      angleUnit: 'deg',
+    })).toEqual({
+      kind: 'orthogonality',
+      dot: 0,
+      orthogonal: true,
     });
   });
 
@@ -100,6 +130,23 @@ describe('vector-core operations', () => {
     })).toEqual({
       kind: 'error',
       reason: 'angle-zero-vector',
+    });
+    expect(runNumericVectorOperation({
+      operation: 'projectionUofV',
+      vectorA: [0, 0],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    })).toEqual({
+      kind: 'error',
+      reason: 'projection-zero-base',
+    });
+    expect(runNumericVectorOperation({
+      operation: 'unitA',
+      vectorA: [0, 0],
+      angleUnit: 'deg',
+    })).toEqual({
+      kind: 'error',
+      reason: 'unit-zero-vector',
     });
   });
 });

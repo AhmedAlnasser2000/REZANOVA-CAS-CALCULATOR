@@ -191,6 +191,42 @@ describe('linear algebra editor dispatch', () => {
       ok: true,
       request: { operation: 'angle', angleUnit: 'grad' },
     });
+    expect(dispatchVectorEditorLatex({
+      latex: '\\operatorname{proj}_{u}\\left(v\\right)',
+      vectorA,
+      vectorB,
+      angleUnit: 'deg',
+    })).toEqual({
+      ok: true,
+      request: { operation: 'projectionUofV', vectorA, vectorB, angleUnit: 'deg' },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: '\\operatorname{orth}_{u}\\left(v\\right)',
+      vectorA,
+      vectorB,
+      angleUnit: 'deg',
+    })).toEqual({
+      ok: true,
+      request: { operation: 'orthogonalToU', vectorA, vectorB, angleUnit: 'deg' },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: '\\operatorname{unit}\\left(v\\right)',
+      vectorA,
+      vectorB,
+      angleUnit: 'rad',
+    })).toEqual({
+      ok: true,
+      request: { operation: 'unitB', vectorA, vectorB, angleUnit: 'rad' },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: '\\operatorname{orthogonal}\\left(u,v\\right)',
+      vectorA,
+      vectorB,
+      angleUnit: 'deg',
+    })).toEqual({
+      ok: true,
+      request: { operation: 'orthogonalCheck', vectorA, vectorB, angleUnit: 'deg' },
+    });
   });
 
   it('returns controlled stops for parsed but unsupported editor forms', () => {

@@ -1028,13 +1028,8 @@ export type MatrixResponse = {
 };
 
 export type VectorOperation =
-  | 'dot'
-  | 'cross'
-  | 'normA'
-  | 'normB'
-  | 'angle'
-  | 'add'
-  | 'subtract';
+  | 'dot' | 'cross' | 'normA' | 'normB' | 'angle' | 'add' | 'subtract'
+  | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck';
 
 export type VectorRequest = {
   operation: VectorOperation;

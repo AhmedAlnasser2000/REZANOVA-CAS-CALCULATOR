@@ -352,11 +352,18 @@ function vectorPairRequest(
   };
 }
 
-function vectorNormRequest(
+function vectorUnaryRequest(
   input: VectorEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
 ): VectorEditorDispatchResult {
-  if (expression.operator !== 'norm') {
+  if (
+    expression.operator !== 'norm'
+    && expression.operator !== 'unit'
+    && expression.operator !== 'projectionOntoU'
+    && expression.operator !== 'projectionOntoV'
+    && expression.operator !== 'orthogonalComponentToU'
+    && expression.operator !== 'orthogonalComponentToV'
+  ) {
     return {
       ok: false,
       message: 'This Vector editor expression is not executable in Vector mode.',
@@ -367,7 +374,74 @@ function vectorNormRequest(
   if (!value) {
     return {
       ok: false,
-      message: 'Vector norm needs Vector u/v values or an inline vector literal.',
+      message: 'Vector unary operations need Vector u/v values or inline vector literals.',
+    };
+  }
+
+  if (expression.operator === 'projectionOntoU') {
+    return {
+      ok: true,
+      request: {
+        operation: 'projectionUofV',
+        vectorA: cloneVector(input.vectorA),
+        vectorB: value.vector,
+        angleUnit: input.angleUnit,
+      },
+    };
+  }
+
+  if (expression.operator === 'projectionOntoV') {
+    return {
+      ok: true,
+      request: {
+        operation: 'projectionVofU',
+        vectorA: value.vector,
+        vectorB: cloneVector(input.vectorB),
+        angleUnit: input.angleUnit,
+      },
+    };
+  }
+
+  if (expression.operator === 'orthogonalComponentToU') {
+    return {
+      ok: true,
+      request: {
+        operation: 'orthogonalToU',
+        vectorA: cloneVector(input.vectorA),
+        vectorB: value.vector,
+        angleUnit: input.angleUnit,
+      },
+    };
+  }
+
+  if (expression.operator === 'orthogonalComponentToV') {
+    return {
+      ok: true,
+      request: {
+        operation: 'orthogonalToV',
+        vectorA: value.vector,
+        vectorB: cloneVector(input.vectorB),
+        angleUnit: input.angleUnit,
+      },
+    };
+  }
+
+  if (expression.operator === 'unit') {
+    return {
+      ok: true,
+      request: value.named === 'v'
+        ? {
+            operation: 'unitB',
+            vectorA: cloneVector(input.vectorA),
+            vectorB: value.vector,
+            angleUnit: input.angleUnit,
+          }
+        : {
+            operation: 'unitA',
+            vectorA: value.vector,
+            vectorB: cloneVector(input.vectorB),
+            angleUnit: input.angleUnit,
+          },
     };
   }
 
@@ -448,7 +522,7 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
     return vectorPairRequest(input, expression);
   }
   if (expression.kind === 'unary') {
-    return vectorNormRequest(input, expression);
+    return vectorUnaryRequest(input, expression);
   }
   if (expression.kind === 'angle') {
     const left = vectorOperand(expression.left, input);
@@ -469,9 +543,28 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
       },
     };
   }
+  if (expression.kind === 'orthogonality') {
+    const left = vectorOperand(expression.left, input);
+    const right = vectorOperand(expression.right, input);
+    if (!left || !right) {
+      return {
+        ok: false,
+        message: 'Vector orthogonality checks need Vector u/v values or inline vector literals.',
+      };
+    }
+    return {
+      ok: true,
+      request: {
+        operation: 'orthogonalCheck',
+        vectorA: left.vector,
+        vectorB: right.vector,
+        angleUnit: input.angleUnit,
+      },
+    };
+  }
 
   return {
     ok: false,
-    message: 'Enter a Vector operation such as u+v, u·v, u×v, norm(u), or angle(u,v).',
+    message: 'Enter a Vector operation such as u+v, u·v, proj_u(v), unit(u), or angle(u,v).',
   };
 }

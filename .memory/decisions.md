@@ -1692,3 +1692,7 @@
 ## 2026-07-02 - MATRIX-ROW-REDUCTION-STEPS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix row-operation readback is educational detail attached to Matrix-owned exact RREF results. `rref(...)` and structured systems may show row-operation traces from the exact Matrix RREF substrate, but those trace cards default collapsed so primary answers, system proof cards, and rank/RREF facts remain the first readback layer.
+
+## 2026-07-02 - VECTOR-PROJECTION-ORTHOGONALITY1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector projection, orthogonal-component, unit-vector, and orthogonality-check capability belongs in the existing Vector numeric operation path and replay seed, not in Matrix or Equation. These operations use visible `u`/`v` labels, accept inline editor vectors where the parser already supports them, and return controlled local errors for zero-vector and dimension cases.

@@ -19,7 +19,12 @@ export type LinearAlgebraUnaryOperator =
   | 'columnSpace'
   | 'transpose'
   | 'inverse'
-  | 'norm';
+  | 'norm'
+  | 'projectionOntoU'
+  | 'projectionOntoV'
+  | 'orthogonalComponentToU'
+  | 'orthogonalComponentToV'
+  | 'unit';
 
 export type LinearAlgebraBinaryOperator =
   | 'add'
@@ -33,6 +38,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'unary'; operator: LinearAlgebraUnaryOperator; value: LinearAlgebraEditorExpression }
   | { kind: 'binary'; operator: LinearAlgebraBinaryOperator; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
+  | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | {
       kind: 'linearSystem';
       form: LinearAlgebraSystemForm;
@@ -91,6 +97,16 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{Null\}/g, 'null')
     .replace(/\\operatorname\{col\}/g, 'col')
     .replace(/\\operatorname\{Col\}/g, 'col')
+    .replace(/\\operatorname\{proj\}_\{u\}/g, 'proj_u')
+    .replace(/\\operatorname\{proj\}_u/g, 'proj_u')
+    .replace(/\\operatorname\{proj\}_\{v\}/g, 'proj_v')
+    .replace(/\\operatorname\{proj\}_v/g, 'proj_v')
+    .replace(/\\operatorname\{orth\}_\{u\}/g, 'orth_u')
+    .replace(/\\operatorname\{orth\}_u/g, 'orth_u')
+    .replace(/\\operatorname\{orth\}_\{v\}/g, 'orth_v')
+    .replace(/\\operatorname\{orth\}_v/g, 'orth_v')
+    .replace(/\\operatorname\{unit\}/g, 'unit')
+    .replace(/\\operatorname\{orthogonal\}/g, 'orthogonal')
     .replace(/\\operatorname\{angle\}/g, 'angle')
     .replace(/\\det/g, 'det')
     .replace(/\\angle/g, 'angle')
@@ -465,6 +481,11 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['null', 'nullSpace'],
     ['col', 'columnSpace'],
     ['norm', 'norm'],
+    ['proj_u', 'projectionOntoU'],
+    ['proj_v', 'projectionOntoV'],
+    ['orth_u', 'orthogonalComponentToU'],
+    ['orth_v', 'orthogonalComponentToV'],
+    ['unit', 'unit'],
   ] as const) {
     const argument = functionArgument(input, name);
     if (argument !== null) {
@@ -480,6 +501,19 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     }
     return {
       kind: 'angle',
+      left: parseExpression(parts[0], options),
+      right: parseExpression(parts[1], options),
+    };
+  }
+
+  const orthogonalityArgument = functionArgument(input, 'orthogonal');
+  if (orthogonalityArgument !== null) {
+    const parts = splitTopLevelComma(orthogonalityArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Orthogonality check requires two vector operands.');
+    }
+    return {
+      kind: 'orthogonality',
       left: parseExpression(parts[0], options),
       right: parseExpression(parts[1], options),
     };

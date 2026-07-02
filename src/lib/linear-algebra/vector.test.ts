@@ -48,6 +48,34 @@ describe('runVectorOperation', () => {
     expect(angle.approxText).toBe('90');
   });
 
+  it('runs projection, orthogonal component, unit vector, and orthogonality readback', () => {
+    expect(runVectorOperation({
+      operation: 'projectionUofV',
+      vectorA: [1, 0],
+      vectorB: [2, 3],
+      angleUnit: 'deg',
+    }).resultLatex).toBe('\\begin{bmatrix}2\\\\0\\end{bmatrix}');
+    expect(runVectorOperation({
+      operation: 'orthogonalToU',
+      vectorA: [1, 0],
+      vectorB: [2, 3],
+      angleUnit: 'deg',
+    }).resultLatex).toBe('\\begin{bmatrix}0\\\\3\\end{bmatrix}');
+    expect(runVectorOperation({
+      operation: 'unitA',
+      vectorA: [3, 4],
+      angleUnit: 'deg',
+    }).resultLatex).toBe('\\begin{bmatrix}0.6\\\\0.8\\end{bmatrix}');
+    const orthogonal = runVectorOperation({
+      operation: 'orthogonalCheck',
+      vectorA: [1, 0],
+      vectorB: [0, 3],
+      angleUnit: 'deg',
+    });
+    expect(orthogonal.resultLatex).toBe('\\text{Orthogonal}');
+    expect(orthogonal.approxText).toBe('dot = 0');
+  });
+
   it('stops on incomplete, mismatched, non-3D cross, and zero-vector angle requests', () => {
     expect(runVectorOperation({
       operation: 'normA',
@@ -78,5 +106,16 @@ describe('runVectorOperation', () => {
       vectorB: [1, 0],
       angleUnit: 'deg',
     }).error).toBe('Angle is undefined when one vector has zero length.');
+    expect(runVectorOperation({
+      operation: 'projectionUofV',
+      vectorA: [0, 0],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    }).error).toBe('Projection needs a nonzero vector to project onto.');
+    expect(runVectorOperation({
+      operation: 'unitA',
+      vectorA: [0, 0],
+      angleUnit: 'deg',
+    }).error).toBe('Unit vector is undefined for the zero vector.');
   });
 });

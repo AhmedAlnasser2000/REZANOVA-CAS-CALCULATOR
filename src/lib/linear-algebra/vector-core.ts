@@ -13,19 +13,30 @@ export type NumericVectorOperation =
   | 'normB'
   | 'angle'
   | 'add'
-  | 'subtract';
+  | 'subtract'
+  | 'projectionUofV'
+  | 'projectionVofU'
+  | 'orthogonalToU'
+  | 'orthogonalToV'
+  | 'unitA'
+  | 'unitB'
+  | 'orthogonalCheck';
 
 export type VectorCoreStopReason =
   | 'vector-a-incomplete'
+  | 'vector-b-incomplete'
   | 'vector-b-required'
   | 'dimension-mismatch'
   | 'cross-requires-3d'
   | 'angle-zero-vector'
+  | 'projection-zero-base'
+  | 'unit-zero-vector'
   | 'unsupported-operation';
 
 export type VectorCoreResult =
   | { kind: 'vector'; value: NumericVector }
   | { kind: 'scalar'; value: number; angleUnit?: NumericAngleUnit }
+  | { kind: 'orthogonality'; orthogonal: boolean; dot: number }
   | { kind: 'error'; reason: VectorCoreStopReason };
 
 export type NumericVectorRequest = {
@@ -74,6 +85,29 @@ export function subtractVectors(a: NumericVector, b: NumericVector): NumericVect
   return a.map((value, index) => value - b[index]);
 }
 
+export function scaleVector(vector: NumericVector, scalar: number): NumericVector {
+  return vector.map((value) => value * scalar);
+}
+
+export function projectionOntoVector(base: NumericVector, target: NumericVector): NumericVector | null {
+  const denominator = dotVectors(base, base);
+  if (denominator === 0) {
+    return null;
+  }
+
+  return scaleVector(base, dotVectors(target, base) / denominator);
+}
+
+export function orthogonalComponentToVector(base: NumericVector, target: NumericVector): NumericVector | null {
+  const projection = projectionOntoVector(base, target);
+  return projection ? subtractVectors(target, projection) : null;
+}
+
+export function unitVector(vector: NumericVector): NumericVector | null {
+  const norm = normVector(vector);
+  return norm === 0 ? null : scaleVector(vector, 1 / norm);
+}
+
 function toAngleUnit(radians: number, angleUnit: NumericAngleUnit): number {
   if (angleUnit === 'deg') {
     return radians * (180 / Math.PI);
@@ -100,18 +134,58 @@ export function angleBetweenVectors(
   return toAngleUnit(radians, angleUnit);
 }
 
+function vectorBRequired(operation: NumericVectorOperation) {
+  return [
+    'dot',
+    'cross',
+    'angle',
+    'add',
+    'subtract',
+    'normB',
+    'projectionUofV',
+    'projectionVofU',
+    'orthogonalToU',
+    'orthogonalToV',
+    'unitB',
+    'orthogonalCheck',
+  ].includes(operation);
+}
+
+function vectorARequired(operation: NumericVectorOperation) {
+  return operation !== 'normB' && operation !== 'unitB';
+}
+
+function operationUsesBothVectors(operation: NumericVectorOperation) {
+  return [
+    'dot',
+    'cross',
+    'angle',
+    'add',
+    'subtract',
+    'projectionUofV',
+    'projectionVofU',
+    'orthogonalToU',
+    'orthogonalToV',
+    'orthogonalCheck',
+  ].includes(operation);
+}
+
 export function runNumericVectorOperation(req: NumericVectorRequest): VectorCoreResult {
   const { vectorA, vectorB } = req;
 
-  if (getVectorShapeFacts(vectorA).isEmpty) {
+  if (vectorARequired(req.operation) && getVectorShapeFacts(vectorA).isEmpty) {
     return { kind: 'error', reason: 'vector-a-incomplete' };
   }
 
-  if (['dot', 'cross', 'angle', 'add', 'subtract'].includes(req.operation) && !vectorB) {
+  if (vectorBRequired(req.operation) && !vectorB) {
     return { kind: 'error', reason: 'vector-b-required' };
   }
 
-  if (vectorB && !haveSameVectorDimension(vectorA, vectorB)) {
+  if (vectorB && vectorBRequired(req.operation) && getVectorShapeFacts(vectorB).isEmpty) {
+    return { kind: 'error', reason: 'vector-b-incomplete' };
+  }
+
+  if (vectorB && operationUsesBothVectors(req.operation) && !haveSameVectorDimension(vectorA, vectorB)) {
     return { kind: 'error', reason: 'dimension-mismatch' };
   }
 
@@ -138,6 +212,34 @@ export function runNumericVectorOperation(req: NumericVectorRequest): VectorCore
       return { kind: 'vector', value: addVectors(vectorA, vectorB!) };
     case 'subtract':
       return { kind: 'vector', value: subtractVectors(vectorA, vectorB!) };
+    case 'projectionUofV': {
+      const result = projectionOntoVector(vectorA, vectorB!);
+      return result ? { kind: 'vector', value: result } : { kind: 'error', reason: 'projection-zero-base' };
+    }
+    case 'projectionVofU': {
+      const result = projectionOntoVector(vectorB!, vectorA);
+      return result ? { kind: 'vector', value: result } : { kind: 'error', reason: 'projection-zero-base' };
+    }
+    case 'orthogonalToU': {
+      const result = orthogonalComponentToVector(vectorA, vectorB!);
+      return result ? { kind: 'vector', value: result } : { kind: 'error', reason: 'projection-zero-base' };
+    }
+    case 'orthogonalToV': {
+      const result = orthogonalComponentToVector(vectorB!, vectorA);
+      return result ? { kind: 'vector', value: result } : { kind: 'error', reason: 'projection-zero-base' };
+    }
+    case 'unitA': {
+      const result = unitVector(vectorA);
+      return result ? { kind: 'vector', value: result } : { kind: 'error', reason: 'unit-zero-vector' };
+    }
+    case 'unitB': {
+      const result = unitVector(vectorB!);
+      return result ? { kind: 'vector', value: result } : { kind: 'error', reason: 'unit-zero-vector' };
+    }
+    case 'orthogonalCheck': {
+      const dot = dotVectors(vectorA, vectorB!);
+      return { kind: 'orthogonality', dot, orthogonal: Math.abs(dot) <= 1e-12 };
+    }
     default:
       return { kind: 'error', reason: 'unsupported-operation' };
   }

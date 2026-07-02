@@ -86,6 +86,16 @@ describe('workspace keypad overlays', () => {
     expect(vectorRows.flat().find((button) => button.id === 'linear-vector-u')?.latex).toBe('u');
     expect(vectorRows.flat().find((button) => button.id === 'linear-vector-v')?.latex).toBe('v');
     expect(vectorRows.flat().find((button) => button.id === 'linear-vector-a')).toBeUndefined();
+    expect(vectorRows.flat().find((button) => button.id === 'linear-proj-u')?.latex)
+      .toBe('\\operatorname{proj}_{u}\\left(#0\\right)');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-proj-v')?.latex)
+      .toBe('\\operatorname{proj}_{v}\\left(#0\\right)');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-unit')?.latex)
+      .toBe('\\operatorname{unit}\\left(#0\\right)');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-orth-u')?.latex)
+      .toBe('\\operatorname{orth}_{u}\\left(#0\\right)');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-orth-v')?.latex)
+      .toBe('\\operatorname{orth}_{v}\\left(#0\\right)');
     expect(vectorRows.flat().find((button) => button.id === 'linear-dot')?.latex).toBe('\\cdot');
     expect(vectorRows.flat().find((button) => button.id === 'linear-cross')?.latex).toBe('\\times');
     expect(vectorRows.flat().find((button) => button.id === 'linear-norm')?.latex)
@@ -93,6 +103,7 @@ describe('workspace keypad overlays', () => {
     expect(vectorRows.flat().find((button) => button.id === 'linear-rank')).toBeUndefined();
     expect(vectorRows.flat().find((button) => button.id === 'linear-null')).toBeUndefined();
     expect(vectorRows.flat().find((button) => button.id === 'linear-col')).toBeUndefined();
+    expect(matrixRows.flat().find((button) => button.id === 'linear-proj-u')).toBeUndefined();
 
     expect(calculateRows.flat().find((button) => button.id === 'sqrt')).toBeDefined();
     expect(calculateRows.flat().find((button) => button.id === 'linear-rank')).toBeUndefined();

@@ -324,6 +324,20 @@ describe('history entry schema', () => {
       vectorB: [0, 1, 0],
       angleUnit: 'deg',
     });
+
+    expect(historyEntrySchema.parse({
+      id: 'vector-seed-projection',
+      mode: 'vector',
+      inputLatex: '\\operatorname{proj}_{u}\\left(v\\right)',
+      resultLatex: '\\begin{bmatrix}2\\\\0\\end{bmatrix}',
+      vectorSeed: {
+        operation: 'projectionUofV',
+        vectorA: [1, 0],
+        vectorB: [2, 3],
+        angleUnit: 'deg',
+      },
+      timestamp: '2026-06-08T00:00:00.000Z',
+    }).vectorSeed?.operation).toBe('projectionUofV');
   });
 
   it('accepts typed Trigonometry Period & Phase replay seeds', () => {

@@ -323,6 +323,13 @@ const vectorOperationSchema = z.enum([
   'angle',
   'add',
   'subtract',
+  'projectionUofV',
+  'projectionVofU',
+  'orthogonalToU',
+  'orthogonalToV',
+  'unitA',
+  'unitB',
+  'orthogonalCheck',
 ]);
 const numericMatrixSchema = z.array(z.array(z.number().finite()));
 const numericVectorSchema = z.array(z.number().finite());

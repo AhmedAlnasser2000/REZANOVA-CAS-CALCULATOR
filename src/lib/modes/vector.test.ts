@@ -21,5 +21,21 @@ describe('runVectorMode', () => {
       vectorB: [3, 4],
       angleUnit: 'deg',
     }).title).toBe('u+v');
+    expect(runVectorMode({
+      operation: 'projectionUofV',
+      vectorA: [1, 0],
+      vectorB: [2, 3],
+      angleUnit: 'deg',
+    }).title).toBe('proj_u(v)');
+    const orthogonality = runVectorMode({
+      operation: 'orthogonalCheck',
+      vectorA: [1, 0],
+      vectorB: [0, 3],
+      angleUnit: 'deg',
+    });
+    expect(orthogonality.kind).toBe('success');
+    if (orthogonality.kind === 'success') {
+      expect(orthogonality.exactLatex).toBe('\\text{Orthogonal}');
+    }
   });
 });

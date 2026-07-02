@@ -54,6 +54,28 @@ describe('parseLinearAlgebraEditorLatex', () => {
       right: { kind: 'named', name: 'v' },
     });
     expect(parsed('\\operatorname{angle}\\left(u,v\\right)', 'vector')).toMatchObject({ kind: 'angle' });
+    expect(parsed('\\operatorname{proj}_{u}\\left(v\\right)', 'vector')).toEqual({
+      kind: 'unary',
+      operator: 'projectionOntoU',
+      value: { kind: 'named', name: 'v' },
+    });
+    expect(parsed('\\operatorname{proj}_{v}\\left(u\\right)', 'vector')).toMatchObject({
+      kind: 'unary',
+      operator: 'projectionOntoV',
+    });
+    expect(parsed('\\operatorname{orth}_{u}\\left(v\\right)', 'vector')).toMatchObject({
+      kind: 'unary',
+      operator: 'orthogonalComponentToU',
+    });
+    expect(parsed('\\operatorname{unit}\\left(u\\right)', 'vector')).toMatchObject({
+      kind: 'unary',
+      operator: 'unit',
+    });
+    expect(parsed('\\operatorname{orthogonal}\\left(u,v\\right)', 'vector')).toEqual({
+      kind: 'orthogonality',
+      left: { kind: 'named', name: 'u' },
+      right: { kind: 'named', name: 'v' },
+    });
   });
 
   it('parses inline bmatrix matrices and column vectors', () => {

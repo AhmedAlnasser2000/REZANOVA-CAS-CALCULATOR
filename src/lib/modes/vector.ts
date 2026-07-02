@@ -40,6 +40,20 @@ export function vectorOperationLabel(operation: VectorOperation) {
       return 'u+v';
     case 'subtract':
       return 'u-v';
+    case 'projectionUofV':
+      return 'proj_u(v)';
+    case 'projectionVofU':
+      return 'proj_v(u)';
+    case 'orthogonalToU':
+      return 'orth_u(v)';
+    case 'orthogonalToV':
+      return 'orth_v(u)';
+    case 'unitA':
+      return 'unit(u)';
+    case 'unitB':
+      return 'unit(v)';
+    case 'orthogonalCheck':
+      return 'orthogonal(u,v)';
     default:
       return 'Vector';
   }
