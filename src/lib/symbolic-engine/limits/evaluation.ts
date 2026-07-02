@@ -64,6 +64,33 @@ function limitMethodSection(...lines: string[]) {
   }];
 }
 
+function exactLimitValueLatex(value: FiniteLimitRuleValue): string | undefined {
+  if (value === 'posInfinity') {
+    return '\\infty';
+  }
+  if (value === 'negInfinity') {
+    return '-\\infty';
+  }
+  if (!Number.isFinite(value)) {
+    return undefined;
+  }
+
+  const rounded = Math.round(value);
+  if (Math.abs(value - rounded) < 1e-10) {
+    return `${rounded}`;
+  }
+
+  for (let denominator = 2; denominator <= 24; denominator += 1) {
+    const numerator = Math.round(value * denominator);
+    if (Math.abs(value - numerator / denominator) < 1e-10) {
+      const sign = numerator < 0 ? '-' : '';
+      return `${sign}\\frac{${Math.abs(numerator)}}{${denominator}}`;
+    }
+  }
+
+  return undefined;
+}
+
 export function success(
   value: FiniteLimitRuleValue,
   origin: FiniteLimitRuleOrigin,
@@ -72,6 +99,7 @@ export function success(
   return {
     kind: 'success',
     value,
+    exactLatex: exactLimitValueLatex(value),
     origin,
     detailSections: limitMethodSection(...lines),
   };

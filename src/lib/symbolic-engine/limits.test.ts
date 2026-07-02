@@ -71,9 +71,12 @@ describe('symbolic-engine limits', () => {
     const cases = [
       ['\\frac{\\ln(1+x)\\sin(x)}{x^2}', 1],
       ['\\frac{1-\\cos(2x)}{x^2}', 2],
+      ['\\frac{\\cos(x)-1}{x^2}', -0.5],
       ['\\frac{e^{x^2}-1}{x^2}', 1],
+      ['\\frac{1-e^x}{x}', -1],
       ['\\frac{\\arctan(3x)}{x}', 3],
       ['\\frac{\\arcsin(2x)}{x}', 2],
+      ['\\frac{x-\\sin(x)}{x^3}', 1 / 6],
     ] as const
 
     for (const [latex, expected] of cases) {
@@ -84,6 +87,19 @@ describe('symbolic-engine limits', () => {
         expect(result.value).toBeCloseTo(expected, 8)
         expect(result.detailSections?.[0]?.title).toBe('Limit Method')
       }
+    }
+  })
+
+  it('shows readable local-equivalent method lines and exact small fractions', () => {
+    const result = resolveFiniteLimitRule(ce.parse('\\frac{\\cos(x)-1}{x^2}').json, 0, 'x')
+
+    expect(result.kind).toBe('success')
+    if (result.kind === 'success') {
+      const method = result.detailSections?.[0]?.lines.join(' ') ?? ''
+      expect(result.exactLatex).toBe('-\\frac{1}{2}')
+      expect(method).toContain('Equivalent used')
+      expect(method).toContain('Order comparison')
+      expect(method).toContain('Final limit')
     }
   })
 

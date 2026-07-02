@@ -19,6 +19,30 @@ import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue, LocalEquivalent } fr
 
 const LOCAL_EQUIVALENT_MAX_DERIVATIVE_ORDER = 4;
 
+function matchOneMinusExp(node: unknown) {
+  if (!isNodeArray(node) || node[0] !== 'Add') {
+    return null;
+  }
+
+  const terms = node.slice(1);
+  if (terms.length !== 2 || !terms.some((term) => term === 1)) {
+    return null;
+  }
+
+  const negatedExp = terms.find((term) =>
+    isNodeArray(term)
+    && term[0] === 'Negate'
+    && term.length === 2
+    && isNodeArray(term[1])
+    && term[1][0] === 'Power'
+    && term[1].length === 3
+    && term[1][1] === 'ExponentialE');
+
+  return isNodeArray(negatedExp) && isNodeArray(negatedExp[1])
+    ? negatedExp[1][2]
+    : null;
+}
+
 function isLocalEquivalentEligible(node: unknown, variable: string): boolean {
   if (typeof node === 'number') {
     return Number.isFinite(node);
@@ -79,7 +103,7 @@ function boundedDerivativeEquivalent(
       return {
         coefficient: derivativeValue / factorial(order),
         order,
-        reason: `bounded derivative local-order check found first nonzero derivative of order ${order}`,
+        reason: `Taylor-order check found first nonzero derivative of order ${order}`,
       };
     }
   }
@@ -125,6 +149,18 @@ function localEquivalent(
     }
   }
 
+  const cosineMinusOneInner = matchFunctionMinusOne(node, 'Cos');
+  if (cosineMinusOneInner) {
+    const inner = localEquivalent(cosineMinusOneInner, target, variable);
+    if (inner && inner.order > 0) {
+      return {
+        coefficient: -(inner.coefficient ** 2) / 2,
+        order: inner.order * 2,
+        reason: 'used local equivalent cos(u) - 1 ~ -u^2/2',
+      };
+    }
+  }
+
   const expInner = matchExpMinusOne(node);
   if (expInner) {
     const inner = localEquivalent(expInner, target, variable);
@@ -133,6 +169,18 @@ function localEquivalent(
         coefficient: inner.coefficient,
         order: inner.order,
         reason: 'used local equivalent e^u - 1 ~ u',
+      };
+    }
+  }
+
+  const oneMinusExpInner = matchOneMinusExp(node);
+  if (oneMinusExpInner) {
+    const inner = localEquivalent(oneMinusExpInner, target, variable);
+    if (inner && inner.order > 0) {
+      return {
+        coefficient: -inner.coefficient,
+        order: inner.order,
+        reason: 'used local equivalent 1 - e^u ~ -u',
       };
     }
   }
@@ -284,18 +332,23 @@ export function resolveLocalEquivalentLimit(
 
   const baseLines = [
     intro,
-    `Local equivalent summary: coefficient ${equivalent.coefficient} with net order ${equivalent.order}.`,
+    `Equivalent used: coefficient ${equivalent.coefficient} with net order ${equivalent.order}.`,
+    `Order comparison: net order ${equivalent.order}.`,
     `Reason: ${equivalent.reason}.`,
   ];
 
   if (equivalent.order === 0) {
-    return success(equivalent.coefficient, 'rule-based-symbolic', baseLines);
+    return success(equivalent.coefficient, 'rule-based-symbolic', [
+      ...baseLines,
+      `Final limit: ${equivalent.coefficient}.`,
+    ]);
   }
 
   if (equivalent.order > 0) {
     return success(0, 'rule-based-symbolic', [
       ...baseLines,
       'Positive net order means the expression tends to 0 at the target.',
+      'Final limit: 0.',
     ]);
   }
 

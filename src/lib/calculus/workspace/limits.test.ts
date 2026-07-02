@@ -22,6 +22,7 @@ describe('calculus limits', () => {
       direction: 'two-sided',
     });
     expect(cosCase.error).toBeUndefined();
+    expect(cosCase.exactLatex).toBe('\\frac{1}{2}');
     expect(Number(cosCase.approxText)).toBeCloseTo(0.5, 2);
 
     const logKnownForm = evaluateCalculusFiniteLimit({
