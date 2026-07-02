@@ -11,6 +11,7 @@ import {
   resolveFiniteSqueezeOscillationLimit,
   resolveInfiniteRewriteCancellationLimit,
   resolveInfiniteScaleLimit,
+  resolveMrvLiteLimit,
   unsupportedComplexDomainLimit,
 } from '../../symbolic-engine/limits';
 import type {
@@ -727,6 +728,23 @@ export function evaluateInfiniteLimitFromAst(input: {
       warnings: [],
       resultOrigin: infinityScale.origin,
       detailSections: infinityScale.detailSections,
+    };
+  }
+
+  const mrvLite = resolveMrvLiteLimit(input.body, input.targetKind, input.variable);
+  if (mrvLite) {
+    const exactLatex = mrvLite.exactLatex ?? (
+      mrvLite.value === undefined ? undefined : limitValueToLatex(mrvLite.value)
+    );
+    const approxText = mrvLite.approxText ?? (
+      mrvLite.value === undefined ? undefined : limitValueToApproxText(mrvLite.value)
+    );
+    return {
+      exactLatex,
+      approxText,
+      warnings: [],
+      resultOrigin: mrvLite.origin,
+      detailSections: mrvLite.detailSections,
     };
   }
 

@@ -203,6 +203,16 @@ describe('calculus limits', () => {
     expect(scale.exactLatex).toBe('0');
     expect(scale.detailSections?.[0]?.lines.join(' ')).toContain('infinity scale comparison');
     expect(scale.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
+
+    const mrv = evaluateCalculusLimit({
+      requestLatex: '\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{e^x}',
+    });
+    expect(mrv.error).toBeUndefined();
+    expect(mrv.exactLatex).toBe('0');
+    expect(mrv.resultOrigin).toBe('rule-based-symbolic');
+    expect(mrv.detailSections?.[0]?.lines.join(' ')).toContain('MRV-lite');
+    expect(mrv.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('MRV-lite asymptotic comparison');
   });
 
   it('handles natural Piecewise limit expressions', () => {

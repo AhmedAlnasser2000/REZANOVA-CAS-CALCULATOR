@@ -86,6 +86,15 @@ describe('natural limit route classifier', () => {
     });
   });
 
+  it('classifies capped MRV-lite exponential scale routes', () => {
+    expect(classifyNaturalLimitRoute('\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{e^x}')).toMatchObject({
+      kind: 'mrv-lite',
+    });
+    expect(classifyNaturalLimitRoute('\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{x^5}')).toMatchObject({
+      kind: 'mrv-lite',
+    });
+  });
+
   it('returns controlled unsupported and malformed routes', () => {
     expect(classifyNaturalLimitRoute('lim x -> 0 floor(1/x)')).toMatchObject({
       kind: 'unsupported',

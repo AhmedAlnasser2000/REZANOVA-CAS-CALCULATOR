@@ -36,6 +36,7 @@ const routeLabels: Record<LimitRouteKind, string> = {
   'squeeze-oscillation': 'squeeze or oscillation',
   piecewise: 'piecewise branch analysis',
   'abs-side-behavior': 'absolute-value side behavior',
+  'mrv-lite': 'MRV-lite asymptotic comparison',
   unsupported: 'unsupported route',
   malformed: 'malformed expression',
   'too-complex': 'over-budget expression',

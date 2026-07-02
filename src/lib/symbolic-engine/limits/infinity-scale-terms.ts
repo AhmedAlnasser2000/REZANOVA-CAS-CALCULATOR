@@ -10,20 +10,20 @@ import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
 const LOG_DEPTH_CAP = 4;
 const EPSILON = 1e-10;
 
-type InfinityScale = {
+export type InfinityScale = {
   expRate: number;
   power: number;
   logs: number[];
 };
 
-type InfinityScaleTerm = {
+export type InfinityScaleTerm = {
   coefficient: number;
   scale: InfinityScale;
   reason: string;
   notes?: string[];
 };
 
-const zeroScale = (): InfinityScale => ({
+export const zeroInfinityScale = (): InfinityScale => ({
   expRate: 0,
   power: 0,
   logs: Array.from({ length: LOG_DEPTH_CAP }, () => 0),
@@ -37,7 +37,7 @@ function cloneScale(scale: InfinityScale): InfinityScale {
   };
 }
 
-function combineScale(left: InfinityScale, right: InfinityScale, sign: 1 | -1 = 1): InfinityScale {
+export function combineInfinityScale(left: InfinityScale, right: InfinityScale, sign: 1 | -1 = 1): InfinityScale {
   const logs = Array.from({ length: LOG_DEPTH_CAP }, (_, index) =>
     (left.logs[index] ?? 0) + sign * (right.logs[index] ?? 0));
   return {
@@ -47,7 +47,7 @@ function combineScale(left: InfinityScale, right: InfinityScale, sign: 1 | -1 = 
   };
 }
 
-function scaleBy(scale: InfinityScale, factor: number): InfinityScale {
+export function scaleInfinityScaleBy(scale: InfinityScale, factor: number): InfinityScale {
   return {
     expRate: scale.expRate * factor,
     power: scale.power * factor,
@@ -67,7 +67,7 @@ function numericApproxText(value: number) {
   return `${Math.abs(value) < EPSILON ? 0 : value}`;
 }
 
-function compareScale(left: InfinityScale, right: InfinityScale) {
+export function compareInfinityScale(left: InfinityScale, right: InfinityScale) {
   const exp = compareNumber(left.expRate, right.expRate);
   if (exp !== 0) {
     return exp;
@@ -197,7 +197,7 @@ function logDepth(node: unknown, variable: string): number | undefined {
   return inner + 1;
 }
 
-function scaleLabel(scale: InfinityScale) {
+export function infinityScaleLabel(scale: InfinityScale) {
   const factors: string[] = [];
   if (Math.abs(scale.expRate) >= EPSILON) {
     const coefficient = formatLimitNumberLatex(scale.expRate);
@@ -229,7 +229,7 @@ function combineNotes(...terms: (InfinityScaleTerm | undefined)[]) {
 function multiplyTerms(left: InfinityScaleTerm, right: InfinityScaleTerm): InfinityScaleTerm {
   return {
     coefficient: left.coefficient * right.coefficient,
-    scale: combineScale(left.scale, right.scale),
+    scale: combineInfinityScale(left.scale, right.scale),
     reason: 'combined infinity scales in a product',
     notes: combineNotes(left, right),
   };
@@ -241,13 +241,13 @@ function divideTerms(left: InfinityScaleTerm, right: InfinityScaleTerm): Infinit
   }
   return {
     coefficient: left.coefficient / right.coefficient,
-    scale: combineScale(left.scale, right.scale, -1),
+    scale: combineInfinityScale(left.scale, right.scale, -1),
     reason: 'compared infinity scales in a quotient',
     notes: combineNotes(left, right),
   };
 }
 
-function leadingTerm(
+export function leadingInfinityScaleTerm(
   node: unknown,
   variable: string,
   targetKind: Exclude<LimitTargetKind, 'finite'>,
@@ -256,7 +256,7 @@ function leadingTerm(
   if (constant !== undefined) {
     return {
       coefficient: constant,
-      scale: zeroScale(),
+      scale: zeroInfinityScale(),
       reason: 'target-free numeric constant',
     };
   }
@@ -269,7 +269,7 @@ function leadingTerm(
   if (node === variable) {
     return {
       coefficient: targetSign,
-      scale: { ...zeroScale(), power: 1 },
+      scale: { ...zeroInfinityScale(), power: 1 },
       reason: 'the selected variable is the infinity carrier',
     };
   }
@@ -279,7 +279,7 @@ function leadingTerm(
   }
 
   if (node[0] === 'Negate' && node.length === 2) {
-    const child = leadingTerm(node[1], variable, targetKind);
+    const child = leadingInfinityScaleTerm(node[1], variable, targetKind);
     return child
       ? {
           ...child,
@@ -292,13 +292,13 @@ function leadingTerm(
     if (targetKind === 'negInfinity') {
       return undefined;
     }
-    const child = leadingTerm(node[1], variable, targetKind);
+    const child = leadingInfinityScaleTerm(node[1], variable, targetKind);
     if (!child || child.coefficient < 0) {
       return undefined;
     }
     return {
       coefficient: Math.sqrt(child.coefficient),
-      scale: scaleBy(child.scale, 0.5),
+      scale: scaleInfinityScaleBy(child.scale, 0.5),
       reason: 'converted a square root to a half-power infinity scale',
       notes: combineNotes(child),
     };
@@ -309,7 +309,7 @@ function leadingTerm(
     if (targetKind !== 'posInfinity') {
       return undefined;
     }
-    const scale = zeroScale();
+    const scale = zeroInfinityScale();
     scale.logs[depth] = 1;
     return {
       coefficient: 1,
@@ -326,7 +326,7 @@ function leadingTerm(
       }
       return {
         coefficient: 1,
-        scale: { ...zeroScale(), expRate: exponentCoefficient * targetSign },
+        scale: { ...zeroInfinityScale(), expRate: exponentCoefficient * targetSign },
         reason: 'recognized a linear exponential scale',
       };
     }
@@ -344,18 +344,18 @@ function leadingTerm(
         : 1;
       return {
         coefficient,
-        scale: { ...zeroScale(), power: exponent },
+        scale: { ...zeroInfinityScale(), power: exponent },
         reason: 'recognized a power of the selected variable',
       };
     }
 
-    const base = leadingTerm(node[1], variable, targetKind);
+    const base = leadingInfinityScaleTerm(node[1], variable, targetKind);
     if (!base || base.coefficient < 0 || !Number.isInteger(exponent)) {
       return undefined;
     }
     return {
       coefficient: base.coefficient ** exponent,
-      scale: scaleBy(base.scale, exponent),
+      scale: scaleInfinityScaleBy(base.scale, exponent),
       reason: 'raised an infinity scale to a numeric power',
       notes: combineNotes(base),
     };
@@ -364,11 +364,11 @@ function leadingTerm(
   if (node[0] === 'Multiply') {
     let result: InfinityScaleTerm = {
       coefficient: 1,
-      scale: zeroScale(),
+      scale: zeroInfinityScale(),
       reason: 'empty product scale',
     };
     for (const factor of node.slice(1)) {
-      const term = leadingTerm(factor, variable, targetKind);
+      const term = leadingInfinityScaleTerm(factor, variable, targetKind);
       if (!term) {
         return undefined;
       }
@@ -378,20 +378,20 @@ function leadingTerm(
   }
 
   if (node[0] === 'Divide' && node.length === 3) {
-    const numerator = leadingTerm(node[1], variable, targetKind);
-    const denominator = leadingTerm(node[2], variable, targetKind);
+    const numerator = leadingInfinityScaleTerm(node[1], variable, targetKind);
+    const denominator = leadingInfinityScaleTerm(node[2], variable, targetKind);
     return numerator && denominator ? divideTerms(numerator, denominator) : undefined;
   }
 
   if (node[0] === 'Add') {
-    const terms = node.slice(1).map((child) => leadingTerm(child, variable, targetKind));
+    const terms = node.slice(1).map((child) => leadingInfinityScaleTerm(child, variable, targetKind));
     if (!terms.every(Boolean)) {
       return undefined;
     }
-    const ordered = (terms as InfinityScaleTerm[]).sort((left, right) => -compareScale(left.scale, right.scale));
+    const ordered = (terms as InfinityScaleTerm[]).sort((left, right) => -compareInfinityScale(left.scale, right.scale));
     while (ordered.length > 0) {
       const dominant = ordered[0];
-      const sameScale = ordered.filter((term) => compareScale(term.scale, dominant.scale) === 0);
+      const sameScale = ordered.filter((term) => compareInfinityScale(term.scale, dominant.scale) === 0);
       const coefficient = sameScale.reduce((sum, term) => sum + term.coefficient, 0);
       if (Math.abs(coefficient) >= EPSILON) {
         return {
@@ -400,7 +400,7 @@ function leadingTerm(
           reason: 'selected the dominant infinity scale in a sum',
           notes: [
             ...combineNotes(...sameScale),
-            `Dominant scale: ${scaleLabel(dominant.scale)}.`,
+            `Dominant scale: ${infinityScaleLabel(dominant.scale)}.`,
           ],
         };
       }
@@ -408,7 +408,7 @@ function leadingTerm(
     }
     return {
       coefficient: 0,
-      scale: zeroScale(),
+      scale: zeroInfinityScale(),
       reason: 'all leading infinity scales canceled',
     };
   }
@@ -417,12 +417,12 @@ function leadingTerm(
 }
 
 function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | undefined {
-  const comparison = compareScale(term.scale, zeroScale());
+  const comparison = compareInfinityScale(term.scale, zeroInfinityScale());
   const coefficientLatex = formatLimitNumberLatex(term.coefficient);
   const lines = [
     'Form detected: infinity scale comparison.',
-    `Rewrite/equivalent: dominant scale ${scaleLabel(term.scale)} with coefficient ${coefficientLatex}.`,
-    `Key calculation: compare ${scaleLabel(term.scale)} against the constant scale 1.`,
+    `Rewrite/equivalent: dominant scale ${infinityScaleLabel(term.scale)} with coefficient ${coefficientLatex}.`,
+    `Key calculation: compare ${infinityScaleLabel(term.scale)} against the constant scale 1.`,
     ...(term.notes ?? []),
     `Reason: ${term.reason}.`,
   ];
@@ -476,7 +476,7 @@ export function resolveInfiniteScaleLimit(
   targetKind: Exclude<LimitTargetKind, 'finite'>,
   variable: string,
 ): FiniteLimitRuleSuccess | undefined {
-  const term = leadingTerm(node, variable, targetKind);
+  const term = leadingInfinityScaleTerm(node, variable, targetKind);
   return term ? successFromTerm(term) : undefined;
 }
 

@@ -39,6 +39,10 @@ export {
   resolveInfiniteScaleLimit,
 } from './limits/infinity-scale-terms';
 export {
+  hasMrvLiteCandidate,
+  resolveMrvLiteLimit,
+} from './limits/mrv-lite';
+export {
   hasFiniteRecursiveLeadingTermCandidate,
   resolveFiniteRecursiveLeadingTermLimit,
 } from './limits/finite-leading-terms';

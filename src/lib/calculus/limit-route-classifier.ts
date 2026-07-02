@@ -14,6 +14,7 @@ import {
   hasFiniteRecursiveLeadingTermCandidate,
   hasFiniteSqueezeOscillationCandidate,
   hasInfiniteScaleCandidate,
+  hasMrvLiteCandidate,
   parsePiecewiseLimitExpression,
 } from '../symbolic-engine/limits';
 
@@ -34,6 +35,7 @@ export type LimitRouteKind =
   | 'squeeze-oscillation'
   | 'piecewise'
   | 'abs-side-behavior'
+  | 'mrv-lite'
   | 'unsupported'
   | 'malformed'
   | 'too-complex';
@@ -296,6 +298,14 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     return {
       kind: 'infinity-asymptotic',
       reason: 'A direct infinity scale comparison resolves the infinite-target expression.',
+      request,
+    };
+  }
+
+  if (hasMrvLiteCandidate(node, request.target.targetKind, request.variable)) {
+    return {
+      kind: 'mrv-lite',
+      reason: 'A capped MRV-lite comparison can compare the dominant exponential/logarithmic scale.',
       request,
     };
   }
