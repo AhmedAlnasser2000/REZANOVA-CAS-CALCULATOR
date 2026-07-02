@@ -459,10 +459,140 @@ const DERIVATIVE_OPERATOR_TEMPLATE_ROW: KeypadButton[] = [
   },
 ];
 
+const LINEAR_ALGEBRA_TEMPLATE_ROW: KeypadButton[] = [
+  { id: 'menu', label: 'Menu', alpha: '@', ctrl: 'Open', variant: 'utility', command: 'open-menu', layers: { alpha: { label: '@', latex: '@' }, ctrl: { label: 'Open', command: 'open-menu' } } },
+  { id: 'history', label: 'Hist', secondary: 'Ans', variant: 'utility', command: 'history', layers: { shift: { label: 'Ans', latex: 'Ans' } } },
+  { id: 'linear-matrix-template', label: '[ ]', variant: 'function', latex: '\\begin{bmatrix}#0 & #?\\\\#? & #?\\end{bmatrix}' },
+  { id: 'linear-vector-template', label: 'vec', variant: 'function', latex: '\\begin{bmatrix}#0\\\\#?\\\\#?\\end{bmatrix}' },
+  { id: 'linear-row-break', label: 'row', variant: 'function', latex: '\\\\' },
+  { id: 'delete', label: 'DEL', variant: 'utility', command: 'delete', layers: { ctrl: { label: 'AC', command: 'clear' } } },
+];
+
+const MATRIX_OPERATOR_ROW: KeypadButton[] = [
+  { id: 'linear-matrix-a', label: 'A', variant: 'function', latex: 'A' },
+  { id: 'linear-matrix-b', label: 'B', variant: 'function', latex: 'B' },
+  { id: 'linear-det', label: 'det', variant: 'function', latex: '\\det\\left(#0\\right)' },
+  { id: 'linear-rank', label: 'rank', variant: 'function', latex: '\\operatorname{rank}\\left(#0\\right)' },
+  { id: 'linear-rref', label: 'rref', variant: 'function', latex: '\\operatorname{rref}\\left(#0\\right)' },
+  { id: 'linear-clear', label: 'AC', variant: 'utility', command: 'clear' },
+];
+
+const MATRIX_MODIFIER_ROW: KeypadButton[] = [
+  { id: 'linear-transpose', label: 'Aᵀ', variant: 'function', latex: '^{\\mathsf{T}}' },
+  { id: 'linear-inverse', label: 'A⁻¹', variant: 'function', latex: '^{-1}' },
+  { id: 'linear-dot', label: 'dot', variant: 'function', latex: '\\cdot' },
+  { id: 'linear-cross', label: 'cross', variant: 'function', latex: '\\times' },
+  { id: 'linear-norm', label: 'norm', variant: 'function', latex: '\\left\\lVert#0\\right\\rVert' },
+  { id: 'linear-equals', label: '=', alpha: 'h', variant: 'function', latex: '=', layers: { alpha: { label: 'h', latex: 'h' } } },
+];
+
+const VECTOR_OPERATOR_ROW: KeypadButton[] = [
+  { id: 'linear-vector-a', label: 'A', variant: 'function', latex: 'A' },
+  { id: 'linear-vector-b', label: 'B', variant: 'function', latex: 'B' },
+  { id: 'linear-dot', label: 'dot', variant: 'function', latex: '\\cdot' },
+  { id: 'linear-cross', label: 'cross', variant: 'function', latex: '\\times' },
+  { id: 'linear-norm', label: 'norm', variant: 'function', latex: '\\left\\lVert#0\\right\\rVert' },
+  { id: 'linear-clear', label: 'AC', variant: 'utility', command: 'clear' },
+];
+
+const VECTOR_MODIFIER_ROW: KeypadButton[] = [
+  {
+    id: 'linear-left-paren',
+    label: '(',
+    secondary: '[',
+    alpha: 'ell',
+    variant: 'function',
+    latex: '\\left(',
+    layers: {
+      shift: { label: '[', latex: '[' },
+      alpha: { label: 'ell', latex: '\\ell' },
+    },
+  },
+  {
+    id: 'linear-right-paren',
+    label: ')',
+    secondary: ']',
+    alpha: '}',
+    variant: 'function',
+    latex: '\\right)',
+    layers: {
+      shift: { label: ']', latex: ']' },
+      alpha: { label: '}', latex: '}' },
+    },
+  },
+  {
+    id: 'linear-plus',
+    label: '+',
+    secondary: 'or',
+    alpha: 'r',
+    variant: 'function',
+    latex: '+',
+    layers: {
+      shift: { label: 'or', latex: '\\lor' },
+      alpha: { label: 'r', latex: 'r' },
+    },
+  },
+  {
+    id: 'linear-minus',
+    label: '−',
+    secondary: '-/+',
+    alpha: 'm',
+    variant: 'function',
+    latex: '-',
+    layers: {
+      shift: { label: '-/+', latex: '\\mp' },
+      alpha: { label: 'm', latex: 'm' },
+    },
+  },
+  {
+    id: 'linear-multiply',
+    label: '×',
+    secondary: 'dot',
+    alpha: 'g',
+    variant: 'function',
+    latex: '\\times',
+    layers: {
+      shift: { label: 'dot', latex: '\\cdot' },
+      alpha: { label: 'g', latex: 'g' },
+    },
+  },
+  {
+    id: 'linear-equals',
+    label: '=',
+    alpha: 'h',
+    variant: 'function',
+    latex: '=',
+    layers: {
+      alpha: { label: 'h', latex: 'h' },
+    },
+  },
+];
+
+function buildLinearAlgebraKeypadRows(
+  rows: KeypadButton[][],
+  firstOperatorRow: KeypadButton[],
+  secondOperatorRow: KeypadButton[],
+) {
+  return [
+    LINEAR_ALGEBRA_TEMPLATE_ROW,
+    firstOperatorRow,
+    secondOperatorRow,
+    ...rows.slice(3),
+  ];
+}
+
 export function getWorkspaceKeypadRows(
   rows: KeypadButton[][],
   context: WorkspaceKeypadContext,
 ) {
+  if (context.mode === 'matrix') {
+    return buildLinearAlgebraKeypadRows(rows, MATRIX_OPERATOR_ROW, MATRIX_MODIFIER_ROW);
+  }
+
+  if (context.mode === 'vector') {
+    return buildLinearAlgebraKeypadRows(rows, VECTOR_OPERATOR_ROW, VECTOR_MODIFIER_ROW);
+  }
+
   if (context.mode !== 'calculus' || !DERIVATIVE_KEYPAD_SCREENS.has(context.calculusScreen ?? 'home')) {
     return rows;
   }

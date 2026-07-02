@@ -56,4 +56,38 @@ describe('workspace keypad overlays', () => {
     expect(finiteLimitRows.flat().find((button) => button.id === '00')).toBeDefined();
     expect(calculateRows.flat().find((button) => button.id === '00')).toBeDefined();
   });
+
+  it('uses Matrix and Vector operator rows only in linear algebra modes', () => {
+    const matrixRows = getWorkspaceKeypadRows(KEYPAD_ROWS, { mode: 'matrix' });
+    const vectorRows = getWorkspaceKeypadRows(KEYPAD_ROWS, { mode: 'vector' });
+    const calculateRows = getWorkspaceKeypadRows(KEYPAD_ROWS, { mode: 'calculate' });
+    const derivativeRows = getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: 'calculus',
+      calculusScreen: 'derivative',
+    });
+
+    expect(matrixRows.flat().find((button) => button.id === 'sqrt')).toBeUndefined();
+    expect(matrixRows.flat().find((button) => button.id === 'linear-matrix-template')?.latex)
+      .toBe('\\begin{bmatrix}#0 & #?\\\\#? & #?\\end{bmatrix}');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-row-break')?.latex).toBe('\\\\');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-rank')?.latex)
+      .toBe('\\operatorname{rank}\\left(#0\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-rref')?.latex)
+      .toBe('\\operatorname{rref}\\left(#0\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'left')?.command).toBe('cursor-left');
+    expect(matrixRows.flat().find((button) => button.id === 'execute')?.command).toBe('evaluate');
+
+    expect(vectorRows.flat().find((button) => button.id === 'linear-vector-template')?.latex)
+      .toBe('\\begin{bmatrix}#0\\\\#?\\\\#?\\end{bmatrix}');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-dot')?.latex).toBe('\\cdot');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-cross')?.latex).toBe('\\times');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-norm')?.latex)
+      .toBe('\\left\\lVert#0\\right\\rVert');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-rank')).toBeUndefined();
+
+    expect(calculateRows.flat().find((button) => button.id === 'sqrt')).toBeDefined();
+    expect(calculateRows.flat().find((button) => button.id === 'linear-rank')).toBeUndefined();
+    expect(derivativeRows.flat().find((button) => button.id === 'derivative-partial-symbol')).toBeDefined();
+    expect(derivativeRows.flat().find((button) => button.id === 'linear-rank')).toBeUndefined();
+  });
 });

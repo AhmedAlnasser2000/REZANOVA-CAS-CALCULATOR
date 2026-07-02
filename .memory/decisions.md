@@ -1592,3 +1592,7 @@
 ## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-SOURCE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix and Vector editor drafts are owned by the main display editor, not secondary notation pads. Matrix surface state stores `matrixEditorLatex`, Vector surface state stores `vectorEditorLatex`, and existing Matrix/Vector OOE capability IDs plus replay seeds remain separate.
+
+## 2026-07-02 - LINEAR-ALGEBRA-KEYPAD-OVERLAY1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix and Vector keypad overlays are mode-local replacements over the global keypad, following the derivative-screen pattern. They must disappear outside Matrix/Vector and must not alter derivative keypad replacement behavior.

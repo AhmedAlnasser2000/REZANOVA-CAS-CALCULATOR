@@ -10,10 +10,17 @@ describe('Linear algebra editor source', () => {
   it('uses the main editor for Matrix and Vector without secondary notation pads', async () => {
     const { user } = await renderAppMain();
 
+    expect(screen.queryByTestId('keypad-linear-rank')).not.toBeInTheDocument();
+    expect(screen.getByTestId('keypad-sqrt')).toBeInTheDocument();
+
     await openLauncherApp(user, 'Linear', 'Matrix');
     await screen.findByText('Matrix Workspace');
 
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-placeholder', 'Enter a Matrix expression');
+    expect(screen.getByTestId('keypad-linear-matrix-template')).toHaveTextContent('[ ]');
+    expect(screen.getByTestId('keypad-linear-rank')).toHaveTextContent('rank');
+    expect(screen.getByTestId('keypad-linear-rref')).toHaveTextContent('rref');
+    expect(screen.queryByTestId('keypad-sqrt')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.queryByText('Matrix Notation Pad')).not.toBeInTheDocument();
     setMathFieldLatex('main-editor', 'A+B');
@@ -24,6 +31,10 @@ describe('Linear algebra editor source', () => {
 
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-placeholder', 'Enter a Vector expression');
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '');
+    expect(screen.getByTestId('keypad-linear-vector-template')).toHaveTextContent('vec');
+    expect(screen.getByTestId('keypad-linear-dot')).toHaveTextContent('dot');
+    expect(screen.getByTestId('keypad-linear-cross')).toHaveTextContent('cross');
+    expect(screen.queryByTestId('keypad-linear-rank')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.queryByText('Vector Notation Pad')).not.toBeInTheDocument();
     setMathFieldLatex('main-editor', 'A\\cdot B');
