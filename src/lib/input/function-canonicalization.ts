@@ -27,6 +27,9 @@ const SPECIAL_FUNCTION_COMMANDS: Record<string, string> = {
   li: '\\operatorname{li}',
   fresnels: '\\operatorname{FresnelS}',
   fresnelc: '\\operatorname{FresnelC}',
+  ellipticf: '\\operatorname{EllipticF}',
+  elliptice: '\\operatorname{EllipticE}',
+  ellipticpi: '\\operatorname{EllipticPi}',
 };
 
 const ALL_FUNCTION_COMMANDS: Record<string, string> = {
@@ -126,6 +129,9 @@ export function normalizeSplitFunctionTokens(
     { pattern: new RegExp(`(^|[^\\\\A-Za-z])l${spacing}i(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'li' },
     { pattern: new RegExp(`(^|[^\\\\A-Za-z])Fresnel${spacing}S(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'FresnelS' },
     { pattern: new RegExp(`(^|[^\\\\A-Za-z])Fresnel${spacing}C(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'FresnelC' },
+    { pattern: new RegExp(`(^|[^\\\\A-Za-z])Elliptic${spacing}F(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'EllipticF' },
+    { pattern: new RegExp(`(^|[^\\\\A-Za-z])Elliptic${spacing}E(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'EllipticE' },
+    { pattern: new RegExp(`(^|[^\\\\A-Za-z])Elliptic${spacing}Pi(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'EllipticPi' },
   ];
 
   for (const { pattern, joined } of splitSpecials) {

@@ -97,14 +97,14 @@ describe('canonicalizeMathInput', () => {
 
   it('canonicalizes Calculus special-function names without changing Equation shorthand', () => {
     const calculus = canonicalizeMathInput(
-      'erf(x)+erfi(x)+Si(2x+1)+Ci(x)+Ei(x)+li(x)+FresnelS(x)+FresnelC(x)',
+      'erf(x)+erfi(x)+Si(2x+1)+Ci(x)+Ei(x)+li(x)+FresnelS(x)+FresnelC(x)+EllipticF(x,m)+EllipticE(x,m)+EllipticPi(n,x,m)',
       {
         mode: 'calculus',
         screenHint: 'derivative',
         liveAssist: true,
       },
     );
-    const splitPaste = canonicalizeMathInput('S i\\left(2x+1\\right)+Fresnel S(x)', {
+    const splitPaste = canonicalizeMathInput('S i\\left(2x+1\\right)+Fresnel S(x)+Elliptic Pi(n,x,m)', {
       mode: 'calculus',
       screenHint: 'indefiniteIntegral',
       liveAssist: true,
@@ -116,10 +116,10 @@ describe('canonicalizeMathInput', () => {
     });
 
     expect(calculus.ok && calculus.canonicalLatex).toBe(
-      '\\operatorname{erf}(x)+\\operatorname{erfi}(x)+\\operatorname{Si}(2x+1)+\\operatorname{Ci}(x)+\\operatorname{Ei}(x)+\\operatorname{li}(x)+\\operatorname{FresnelS}(x)+\\operatorname{FresnelC}(x)',
+      '\\operatorname{erf}(x)+\\operatorname{erfi}(x)+\\operatorname{Si}(2x+1)+\\operatorname{Ci}(x)+\\operatorname{Ei}(x)+\\operatorname{li}(x)+\\operatorname{FresnelS}(x)+\\operatorname{FresnelC}(x)+\\operatorname{EllipticF}(x,m)+\\operatorname{EllipticE}(x,m)+\\operatorname{EllipticPi}(n,x,m)',
     );
     expect(splitPaste.ok && splitPaste.canonicalLatex).toBe(
-      '\\operatorname{Si}(2x+1)+\\operatorname{FresnelS}(x)',
+      '\\operatorname{Si}(2x+1)+\\operatorname{FresnelS}(x)+\\operatorname{EllipticPi}(n,x,m)',
     );
     expect(equation.ok && equation.canonicalLatex).toBe('Si(x)=1');
   });
@@ -133,6 +133,10 @@ describe('canonicalizeMathInput', () => {
       mode: 'calculus',
       screenHint: 'indefinite-integral',
     })).toBe('\\operatorname{FresnelC}(x)');
+    expect(normalizeLiveInputOperatorLatex('Elliptic F(x,m)', {
+      mode: 'calculus',
+      screenHint: 'derivative',
+    })).toBe('\\operatorname{EllipticF}(x,m)');
     expect(normalizeLiveInputOperatorLatex('Si(x)=1', {
       mode: 'equation',
       screenHint: 'symbolic',

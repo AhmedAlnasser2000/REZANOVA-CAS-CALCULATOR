@@ -138,12 +138,12 @@ describe('MathEditor typing behavior', () => {
 
     fireEvent.paste(field, {
       clipboardData: {
-        getData: () => 'csc(2x+3)^2+e^(x/2+1)+(1/2)^(3x-1)+Si(2x+1)+FresnelC(x)',
+        getData: () => 'csc(2x+3)^2+e^(x/2+1)+(1/2)^(3x-1)+Si(2x+1)+FresnelC(x)+EllipticPi(n,x,m)',
       },
     });
 
     expect(field.getValue()).toBe(
-      '\\csc(2x+3)^2+\\exponentialE^{x/2+1}+(1/2)^{3x-1}+\\operatorname{Si}(2x+1)+\\operatorname{FresnelC}(x)',
+      '\\csc(2x+3)^2+\\exponentialE^{x/2+1}+(1/2)^{3x-1}+\\operatorname{Si}(2x+1)+\\operatorname{FresnelC}(x)+\\operatorname{EllipticPi}(n,x,m)',
     );
   });
 

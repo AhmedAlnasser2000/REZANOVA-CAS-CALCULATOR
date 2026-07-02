@@ -144,6 +144,9 @@ const SPECIAL_FUNCTION_HEADS = new Set([
   'li',
   'FresnelS',
   'FresnelC',
+  'EllipticF',
+  'EllipticE',
+  'EllipticPi',
 ]);
 const ALGEBRAIC_HEADS = new Set(['Sqrt', 'Root']);
 
@@ -339,6 +342,9 @@ function extensionFamily(node: unknown, variable: string): TranscendentalFieldTo
 
 function extensionArgument(node: unknown, family: TranscendentalFieldTowerFamily) {
   if ((family === 'exp' || family === 'positive-base-exp') && isNodeArray(node) && node.length === 3) {
+    return node[2];
+  }
+  if (isNodeArray(node) && node[0] === 'EllipticPi' && node.length === 4) {
     return node[2];
   }
   if (isNodeArray(node) && node.length >= 2) {

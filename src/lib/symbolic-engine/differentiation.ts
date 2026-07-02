@@ -52,6 +52,9 @@ const FUNCTION_POWER_HEADS = new Set([
   'li',
   'FresnelS',
   'FresnelC',
+  'EllipticF',
+  'EllipticE',
+  'EllipticPi',
 ]);
 
 type DifferentiationContext = {
@@ -104,6 +107,21 @@ function markChainRuleIfNeeded(context: DifferentiationContext, childPrime: unkn
   if (!isZero(childPrime) && !isOne(childPrime)) {
     markStrategy(context, 'chain-rule');
   }
+}
+
+function computeEngineDerivativeOrThrow(
+  node: unknown,
+  variable: string,
+  context: DifferentiationContext,
+  head: string,
+) {
+  if (context.computeEngineFallback === 'deny') {
+    throw new UnsupportedDifferentiationFallbackError(head);
+  }
+
+  markStrategy(context, 'compute-engine');
+  const ceDerivative = ce.box((['D', node, variable] as unknown) as Parameters<typeof ce.box>[0]).evaluate();
+  return simplifyNode(ceDerivative.json);
 }
 
 function isFunctionNode(node: unknown) {
@@ -548,6 +566,64 @@ function differentiateNodeInternal(
     ]);
   }
 
+  if (head === 'EllipticF' && children.length === 2) {
+    const [phi, parameter] = children;
+    if (hasVariableDependency(parameter, variable)) {
+      return computeEngineDerivativeOrThrow(node, variable, context, head);
+    }
+    const phiPrime = differentiateNodeInternal(phi, variable, context);
+    markChainRuleIfNeeded(context, phiPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Divide',
+      phiPrime,
+      [
+        'Sqrt',
+        ['Add', 1, ['Negate', ['Multiply', parameter, ['Power', ['Sin', phi], 2]]]],
+      ],
+    ]);
+  }
+
+  if (head === 'EllipticE' && children.length === 2) {
+    const [phi, parameter] = children;
+    if (hasVariableDependency(parameter, variable)) {
+      return computeEngineDerivativeOrThrow(node, variable, context, head);
+    }
+    const phiPrime = differentiateNodeInternal(phi, variable, context);
+    markChainRuleIfNeeded(context, phiPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Multiply',
+      [
+        'Sqrt',
+        ['Add', 1, ['Negate', ['Multiply', parameter, ['Power', ['Sin', phi], 2]]]],
+      ],
+      phiPrime,
+    ]);
+  }
+
+  if (head === 'EllipticPi' && children.length === 3) {
+    const [characteristic, phi, parameter] = children;
+    if (
+      hasVariableDependency(characteristic, variable)
+      || hasVariableDependency(parameter, variable)
+    ) {
+      return computeEngineDerivativeOrThrow(node, variable, context, head);
+    }
+    const phiPrime = differentiateNodeInternal(phi, variable, context);
+    markChainRuleIfNeeded(context, phiPrime);
+    markStrategy(context, 'direct-rule');
+    return simplifyNode([
+      'Divide',
+      phiPrime,
+      [
+        'Multiply',
+        ['Add', 1, ['Negate', ['Multiply', characteristic, ['Power', ['Sin', phi], 2]]]],
+        ['Sqrt', ['Add', 1, ['Negate', ['Multiply', parameter, ['Power', ['Sin', phi], 2]]]]],
+      ],
+    ]);
+  }
+
   if (head === 'Abs' && children.length === 1) {
     const childPrime = differentiateNodeInternal(children[0], variable, context);
     markChainRuleIfNeeded(context, childPrime);
@@ -631,13 +707,7 @@ function differentiateNodeInternal(
     ]);
   }
 
-  if (context.computeEngineFallback === 'deny') {
-    throw new UnsupportedDifferentiationFallbackError(String(head));
-  }
-
-  markStrategy(context, 'compute-engine');
-  const ceDerivative = ce.box((['D', node, variable] as unknown) as Parameters<typeof ce.box>[0]).evaluate();
-  return simplifyNode(ceDerivative.json);
+  return computeEngineDerivativeOrThrow(node, variable, context, String(head));
 }
 
 export function differentiateNode(node: unknown, variable: string): unknown {

@@ -88,6 +88,37 @@ describe('symbolic-engine differentiation', () => {
     expect(JSON.stringify(internalC.ast)).toContain('"Pi"')
   })
 
+  it('supports exact Legendre elliptic special-function derivatives for target-free parameters', () => {
+    const ellipticF = differentiateLatexWithMetadata('\\operatorname{EllipticF}(2x+1,m)', 'x')
+    const ellipticE = differentiateLatexWithMetadata('\\operatorname{EllipticE}(2x+1,m)', 'x')
+    const ellipticPi = differentiateLatexWithMetadata('\\operatorname{EllipticPi}(n,2x+1,m)', 'x')
+    const internalF = differentiateAstWithMetadata(['EllipticF', 'x', 'm'], 'x', { computeEngineFallback: 'deny' })
+    const internalE = differentiateAstWithMetadata(['EllipticE', 'x', 'm'], 'x', { computeEngineFallback: 'deny' })
+    const internalPi = differentiateAstWithMetadata(['EllipticPi', 'n', 'x', 'm'], 'x', { computeEngineFallback: 'deny' })
+
+    expect(ellipticF.strategies).not.toContain('compute-engine')
+    expect(ellipticF.latex).toContain('\\sqrt')
+    expect(ellipticF.latex).toContain('\\sin(2x+1)^2')
+    expect(ellipticE.strategies).not.toContain('compute-engine')
+    expect(ellipticE.latex).toContain('\\sqrt')
+    expect(ellipticPi.strategies).not.toContain('compute-engine')
+    expect(ellipticPi.latex).toContain('\\sin(2x+1)^2')
+    expect(JSON.stringify(internalF.ast)).toContain('"Sqrt"')
+    expect(JSON.stringify(internalF.ast)).toContain('"Sin"')
+    expect(JSON.stringify(internalE.ast)).toContain('"Sqrt"')
+    expect(JSON.stringify(internalPi.ast)).toContain('"Sin"')
+    expect(JSON.stringify(internalPi.ast)).toContain('"n"')
+  })
+
+  it('rejects proof-local elliptic derivatives when parameters depend on the selected variable', () => {
+    expect(() =>
+      differentiateAstWithMetadata(['EllipticF', 'x', 'x'], 'x', { computeEngineFallback: 'deny' }),
+    ).toThrow(UnsupportedDifferentiationFallbackError)
+    expect(() =>
+      differentiateAstWithMetadata(['EllipticPi', 'x', 'x', 'm'], 'x', { computeEngineFallback: 'deny' }),
+    ).toThrow(UnsupportedDifferentiationFallbackError)
+  })
+
   it('supports direct trig reciprocal derivative families', () => {
     expect(differentiateLatex('\\tan(2x+1)', 'x')).toContain('\\sec')
     expect(differentiateLatex('\\cot(2x+1)', 'x')).toContain('\\csc')

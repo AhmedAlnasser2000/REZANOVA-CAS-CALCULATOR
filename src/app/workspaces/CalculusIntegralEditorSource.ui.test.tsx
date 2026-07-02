@@ -97,11 +97,11 @@ describe('Calculus integral editor source', () => {
     const { user } = await renderAppMain();
 
     await openCalculusTool(user, 'Integrals', 'Indefinite');
-    setMathFieldLatex('main-editor', 'Si(2x+1)');
+    setMathFieldLatex('main-editor', 'EllipticE(x,m)');
     await waitFor(() => {
       expect(screen.getByTestId('main-editor')).toHaveAttribute(
         'data-value',
-        '\\operatorname{Si}(2x+1)',
+        '\\operatorname{EllipticE}(x,m)',
       );
     });
     await user.click(screen.getByTestId('soft-action-evaluate'));
@@ -112,7 +112,7 @@ describe('Calculus integral editor source', () => {
     );
     expect(screen.getByTestId('main-editor')).toHaveAttribute(
       'data-value',
-      '\\operatorname{Si}(2x+1)',
+      '\\operatorname{EllipticE}(x,m)',
     );
   });
 
