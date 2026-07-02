@@ -82,6 +82,8 @@ describe('calculus limits', () => {
     });
     expect(targetOverride.error).toBeUndefined();
     expect(targetOverride.exactLatex).toBe('\\infty');
+    expect(targetOverride.detailSections?.map((section) => section.title)).toContain('Side Behavior');
+    expect(targetOverride.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('right-hand limit');
 
     const leftTargetOverride = evaluateCalculusFiniteLimit({
       bodyLatex: '\\frac{1}{x}',
@@ -89,6 +91,19 @@ describe('calculus limits', () => {
       direction: 'two-sided',
     });
     expect(leftTargetOverride.exactLatex).toBe('-\\infty');
+    expect(leftTargetOverride.detailSections?.map((section) => section.title)).toContain('Side Behavior');
+    expect(leftTargetOverride.detailSections?.flatMap((section) => section.lines).join(' ')).toContain('left-hand limit');
+
+    const sameSignDivergence = evaluateCalculusFiniteLimit({
+      bodyLatex: '\\frac{1}{x^2}',
+      target: '0',
+      direction: 'two-sided',
+    });
+    expect(sameSignDivergence.error).toBeUndefined();
+    expect(sameSignDivergence.exactLatex).toBe('\\infty');
+    expect(sameSignDivergence.detailSections?.map((section) => section.title)).toContain('Side Behavior');
+    expect(sameSignDivergence.detailSections?.flatMap((section) => section.lines).join(' '))
+      .toContain('two-sided limit is \\infty');
 
     const domainGap = evaluateCalculusFiniteLimit({
       bodyLatex: '\\sqrt{x}',
@@ -147,6 +162,18 @@ describe('calculus limits', () => {
     expect(result.error).toContain('\\lim_{t\\to \\infty}');
     expect(result.exactLatex).toBeUndefined();
     expect(result.detailSections?.[0]?.title).toBe('Limit Variable Check');
+  });
+
+  it('adds diagnostics when no supported route stabilizes the limit', () => {
+    const result = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 sin(1/x)',
+    });
+
+    expect(result.error).toContain('could not be stabilized');
+    const diagnostic = result.detailSections?.find((section) => section.title === 'Limit Diagnostic');
+    expect(diagnostic?.lines.join(' ')).toContain('Parsed variable: x');
+    expect(diagnostic?.lines.join(' ')).toContain('Expression variables: x');
+    expect(diagnostic?.lines.join(' ')).toContain('Route classification:');
   });
 
   it('handles parsed variable and exact-constant finite targets', () => {

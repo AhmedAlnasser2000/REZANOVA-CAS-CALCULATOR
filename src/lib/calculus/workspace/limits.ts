@@ -1,5 +1,6 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { latexToApproxText } from '../../display/format';
+import type { DisplayDetailSection } from '../../../types/calculator';
 import { derivativeVariableLatex, derivativeVariableOrDefault } from '../derivative-target';
 import { parseFiniteLimitTargetDraft } from '../engine/finite-limit-target';
 import {
@@ -7,7 +8,10 @@ import {
   evaluateInfiniteLimitFromAst,
 } from '../engine/limits';
 import { classifyNaturalLimitRoute } from '../limit-route-classifier';
-import { parseNaturalLimitRequest } from '../limit-request';
+import {
+  parseNaturalLimitRequest,
+  type NaturalLimitRequest,
+} from '../limit-request';
 import {
   analyzeNaturalLimitVariables,
   limitVariableMismatchDetails,
@@ -31,6 +35,44 @@ type BoxedLike = {
 };
 
 export type AdvancedLimitEvaluation = CalculusCoreEvaluation;
+
+function formatBodyVariables(bodyVariables: readonly string[]) {
+  return bodyVariables.length > 0
+    ? bodyVariables.map(derivativeVariableLatex).join(', ')
+    : 'none detected';
+}
+
+function appendUnstableLimitDiagnostic(input: {
+  evaluation: AdvancedLimitEvaluation;
+  request: NaturalLimitRequest;
+  routeKind: string;
+  bodyVariables: readonly string[];
+}): AdvancedLimitEvaluation {
+  if (
+    !input.evaluation.error
+    || !input.evaluation.error.includes('could not be stabilized')
+  ) {
+    return input.evaluation;
+  }
+
+  const diagnostic: DisplayDetailSection = {
+    title: 'Limit Diagnostic',
+    lines: [
+      `Parsed variable: ${input.request.variableLatex}.`,
+      `Expression variables: ${formatBodyVariables(input.bodyVariables)}.`,
+      `Route classification: ${input.routeKind}.`,
+      'No supported symbolic route or stable numeric sample sequence resolved this expression.',
+    ],
+  };
+
+  return {
+    ...input.evaluation,
+    detailSections: [
+      ...(input.evaluation.detailSections ?? []),
+      diagnostic,
+    ],
+  };
+}
 
 function finiteTargetLabel(direction: LimitDirection) {
   return direction === 'left' ? 'Left-hand' : 'Right-hand';
@@ -138,20 +180,29 @@ export function evaluateCalculusLimit(
   }
 
   const route = classifyNaturalLimitRoute(state.requestLatex);
-  if (request.target.kind === 'finite') {
-    return evaluateCalculusFiniteLimit({
+  const evaluate = (): AdvancedLimitEvaluation => {
+    if (request.target.kind === 'finite') {
+      return evaluateCalculusFiniteLimit({
+        bodyLatex: request.bodyLatex,
+        target: request.target.normalizedTargetLatex,
+        direction: request.target.direction,
+        variable: request.variable,
+        routeKind: route.kind,
+      });
+    }
+
+    return evaluateCalculusInfiniteLimit({
       bodyLatex: request.bodyLatex,
-      target: request.target.normalizedTargetLatex,
-      direction: request.target.direction,
+      targetKind: request.target.targetKind,
       variable: request.variable,
       routeKind: route.kind,
     });
-  }
+  };
 
-  return evaluateCalculusInfiniteLimit({
-    bodyLatex: request.bodyLatex,
-    targetKind: request.target.targetKind,
-    variable: request.variable,
+  return appendUnstableLimitDiagnostic({
+    evaluation: evaluate(),
+    request,
     routeKind: route.kind,
+    bodyVariables: variableAnalysis.bodyVariables,
   });
 }

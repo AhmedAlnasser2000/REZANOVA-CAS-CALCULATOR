@@ -7,6 +7,7 @@
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] User-facing Limit UX should call the entered math a "limit expression"; "request" remains acceptable only for internal type/function names.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limit variable mismatches are advisory stops, not auto-corrections. If the approach variable is absent from the expression body, Calculus must not evaluate by treating the expression as constant or substituting stored values; it should suggest a corrected expression when one body variable is clear.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limit failure explanations belong in existing Display `detailSections`; the primary error card should stay concise, and no new public Display schema is needed for proof/explanation cards.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limit side-behavior explanations are educational readback over existing finite-limit evidence. They must not change final Answer ownership, auto-correct user input, or claim broader theorem-prover coverage.
 
 ## 2026-07-01 - EQUATION-EXACT-BRANCH-CORRECTNESS1
 

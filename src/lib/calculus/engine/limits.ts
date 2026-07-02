@@ -227,6 +227,52 @@ function twoSidedMismatchDetails(evidence: TwoSidedMismatchEvidence): DisplayDet
   }];
 }
 
+function appendLimitDetails(
+  existing: readonly DisplayDetailSection[] | undefined,
+  ...sections: DisplayDetailSection[]
+) {
+  return sections.length > 0
+    ? [...(existing ?? []), ...sections]
+    : existing
+      ? [...existing]
+      : undefined;
+}
+
+function finiteTargetSideLatex(target: number, direction: Exclude<LimitDirection, 'two-sided'>) {
+  return `${limitValueToLatex(target)}${direction === 'right' ? '+' : '-'}`;
+}
+
+function signedFiniteLimitBehaviorDetails(input: {
+  direction: LimitDirection;
+  target: number;
+  value: LimitValue;
+}): DisplayDetailSection[] {
+  if (input.value !== 'posInfinity' && input.value !== 'negInfinity') {
+    return [];
+  }
+
+  const valueLatex = limitValueToLatex(input.value);
+  if (input.direction === 'left' || input.direction === 'right') {
+    const side = input.direction === 'right' ? 'right-hand' : 'left-hand';
+    const comparison = input.direction === 'right' ? 'greater than' : 'less than';
+    return [{
+      title: 'Side Behavior',
+      lines: [
+        `This is a ${side} limit: x approaches ${finiteTargetSideLatex(input.target, input.direction)} using values ${comparison} the target.`,
+        `On that side, the expression grows without bound toward ${valueLatex}.`,
+      ],
+    }];
+  }
+
+  return [{
+    title: 'Side Behavior',
+    lines: [
+      `Left-hand and right-hand behavior share the same signed divergence ${valueLatex}.`,
+      `Because the two sides agree, the two-sided limit is ${valueLatex}.`,
+    ],
+  }];
+}
+
 export function basicFiniteLimitWarning(direction: LimitDirection) {
   if (direction === 'two-sided') {
     return 'Symbolic limit unavailable; showing a numeric limit approximation.';
@@ -291,7 +337,14 @@ export function evaluateFiniteLimitFromAst(input: {
           ? ["Rule-based limit resolution used capped L'Hopital on a supported ratio form."]
           : [],
       resultOrigin: symbolic.origin,
-      detailSections: symbolic.detailSections,
+      detailSections: appendLimitDetails(
+        symbolic.detailSections,
+        ...signedFiniteLimitBehaviorDetails({
+          direction: input.direction,
+          target: input.target,
+          value: symbolic.value,
+        }),
+      ),
     };
   }
 
@@ -310,9 +363,16 @@ export function evaluateFiniteLimitFromAst(input: {
       approxText,
       warnings: [input.messages.numericFallbackWarning(input.direction)],
       resultOrigin: 'numeric-fallback',
-      detailSections: numericFallbackDetail(
-        'Symbolic rules did not resolve the limit, so controlled numeric sampling was used.',
-        'Samples indicated same-signed divergence for the requested limit direction.',
+      detailSections: appendLimitDetails(
+        numericFallbackDetail(
+          'Symbolic rules did not resolve the limit, so controlled numeric sampling was used.',
+          'Samples indicated same-signed divergence for the requested limit direction.',
+        ),
+        ...signedFiniteLimitBehaviorDetails({
+          direction: input.direction,
+          target: input.target,
+          value: signToInfiniteLimit(numeric.sign),
+        }),
       ),
     };
   }
@@ -336,9 +396,16 @@ export function evaluateFiniteLimitFromAst(input: {
       approxText,
       warnings: [input.messages.numericFallbackWarning(input.direction)],
       resultOrigin: 'numeric-fallback',
-      detailSections: numericFallbackDetail(
-        'Symbolic rules did not resolve the one-sided limit, so controlled numeric sampling was used.',
-        'Samples indicated signed divergence on the requested side.',
+      detailSections: appendLimitDetails(
+        numericFallbackDetail(
+          'Symbolic rules did not resolve the one-sided limit, so controlled numeric sampling was used.',
+          'Samples indicated signed divergence on the requested side.',
+        ),
+        ...signedFiniteLimitBehaviorDetails({
+          direction: input.direction,
+          target: input.target,
+          value: signToInfiniteLimit(numeric.sign),
+        }),
       ),
     };
   }
