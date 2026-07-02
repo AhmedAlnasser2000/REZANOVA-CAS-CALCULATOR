@@ -23,6 +23,8 @@ Inserted prerequisite note: after `ALGEBRAIC-GENUS1-GENERIC-FIRST-KIND-LIVE1`, `
 
 Inserted prerequisite note: after the change-of-variable proof, `ALGEBRAIC-GENUS1-ROOT-BASIS-COEFFICIENT-OBLIGATIONS1` was added before generic second-kind/third-kind live work. The reason is architectural: later `EllipticE` and `EllipticPi` adoption must know the named-root coefficient field and basis templates it is solving in, rather than treating `EllipticE/Pi` as display strings.
 
+Inserted prerequisite note: after root-basis coefficient obligations, `ALGEBRAIC-GENUS1-ROOT-PULLBACK-BASIS-PROFILE1` was added before generic second-kind/third-kind live work. The reason is mathematical: reciprocal radicals are first-kind-ready, but generic radical pullbacks require coefficient solving against first/second/third-kind basis terms, and rational-in-radical pullbacks require a Hermite residual split before live adoption.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
