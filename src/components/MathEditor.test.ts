@@ -42,6 +42,30 @@ describe('MathEditor inline shortcuts', () => {
     expect(derivativeShortcuts.pdtheta).toBe('\\frac{\\partial}{\\partial \\theta}');
     expect(limitShortcuts.pd).toBeUndefined();
   });
+
+  it('protects Limit infinity typing from the global set-membership shortcut', () => {
+    const equationShortcuts = buildInlineShortcutOverrides({
+      in: '\\in',
+      foo: 'bar',
+    }, {
+      modeId: 'equation',
+      screenHint: 'symbolic',
+    });
+    const limitShortcuts = buildInlineShortcutOverrides({
+      in: '\\in',
+      foo: 'bar',
+    }, {
+      modeId: 'calculus',
+      screenHint: 'limit',
+    });
+
+    expect(equationShortcuts.in).toBe('\\in');
+    expect(limitShortcuts.in).toBeUndefined();
+    expect(limitShortcuts.foo).toBe('bar');
+    expect(limitShortcuts.infinity).toBe('\\infty');
+    expect(limitShortcuts.infinty).toBe('\\infty');
+    expect(limitShortcuts.infty).toBe('\\infty');
+  });
 });
 
 describe('MathEditor cursor keyflow', () => {
