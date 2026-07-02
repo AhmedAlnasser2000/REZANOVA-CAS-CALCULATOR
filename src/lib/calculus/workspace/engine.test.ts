@@ -117,6 +117,24 @@ describe('runCalculusWorkspaceMode stored values', () => {
     });
   });
 
+  it('stops natural limit variable mismatches before stored-value substitution', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('limit', {
+      limit: { requestLatex: 'lim x -> infinity (3t^2+1)/(2t^2-5)' },
+      storedVariables: [
+        { name: 't', valueLatex: '9', numericValue: 9 },
+      ],
+    }));
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected error');
+    }
+    expect(result.error).toContain('approaches x');
+    expect(result.error).toContain('uses t');
+    expect(result.error).toContain('\\lim_{t\\to \\infty}');
+    expect(result.detailSections?.[0]?.title).toBe('Limit Variable Check');
+  });
+
   it('runs unified derivative workflows through Calculus', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
       derivative: { bodyLatex: 't^2', variable: 't' },

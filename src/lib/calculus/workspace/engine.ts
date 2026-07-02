@@ -50,6 +50,11 @@ import {
   buildNaturalLimitRequestLatex,
   parseNaturalLimitRequest,
 } from '../limit-request';
+import {
+  analyzeNaturalLimitVariables,
+  limitVariableMismatchDetails,
+  limitVariableMismatchError,
+} from '../limit-variable-analysis';
 import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
 import type {
@@ -434,6 +439,17 @@ export async function runCalculusWorkspaceMode(
         break;
       }
       const variable = parsedLimit.request.variable;
+      const variableAnalysis = analyzeNaturalLimitVariables(parsedLimit.request);
+      if (variableAnalysis.mismatch) {
+        outcome = {
+          kind: 'error',
+          title: 'Limit',
+          error: limitVariableMismatchError(variableAnalysis.mismatch),
+          warnings: [],
+          detailSections: limitVariableMismatchDetails(variableAnalysis.mismatch),
+        };
+        break;
+      }
       setProtectedDescriptions([variable], 'the limit variable');
       const requestLatex = buildNaturalLimitRequestLatex({
         ...parsedLimit.request,

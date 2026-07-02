@@ -5,6 +5,7 @@
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Differentiation expansion is paused until Vector/Matrix are upgraded enough for symbolic vector/matrix outputs and multivariable readback. Gradient, Jacobian, Hessian, divergence, curl, and Laplacian should not be implemented as scalar/list-only Calculus features before that foundation exists.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits are the next active Calculus lane. The first Limits work should start from source/UX and request/variable parsing over the existing finite/infinite heuristic baseline, then add route preflight before widening L'Hospital, series, squeeze, or Gruntz-style algorithms.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] User-facing Limit UX should call the entered math a "limit expression"; "request" remains acceptable only for internal type/function names.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limit variable mismatches are advisory stops, not auto-corrections. If the approach variable is absent from the expression body, Calculus must not evaluate by treating the expression as constant or substituting stored values; it should suggest a corrected expression when one body variable is clear.
 
 ## 2026-07-01 - EQUATION-EXACT-BRANCH-CORRECTNESS1
 

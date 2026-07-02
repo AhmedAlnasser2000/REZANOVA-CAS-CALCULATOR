@@ -82,6 +82,12 @@ describe('calculus limits', () => {
   });
 
   it('handles infinite target limits', () => {
+    const friendlyInfinity = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinty 1/x',
+    });
+    expect(friendlyInfinity.error).toBeUndefined();
+    expect(friendlyInfinity.exactLatex).toBe('0');
+
     const sameDegree = evaluateCalculusInfiniteLimit({
       bodyLatex: '\\frac{3x^2+1}{2x^2-5}',
       targetKind: 'posInfinity',
@@ -112,6 +118,18 @@ describe('calculus limits', () => {
     expect(lHospital.resultOrigin).toBe('heuristic-symbolic');
     expect(lHospital.exactLatex).toBe('0');
     expect(lHospital.detailSections?.[0]?.lines.join(' ')).toContain("L'Hospital");
+  });
+
+  it('stops variable mismatches with a correction suggestion', () => {
+    const result = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (3t^2+1)/(2t^2-5)',
+    });
+
+    expect(result.error).toContain('approaches x');
+    expect(result.error).toContain('uses t');
+    expect(result.error).toContain('\\lim_{t\\to \\infty}');
+    expect(result.exactLatex).toBeUndefined();
+    expect(result.detailSections?.[0]?.title).toBe('Limit Variable Check');
   });
 
   it('handles parsed variable and exact-constant finite targets', () => {

@@ -8,6 +8,11 @@ import {
 } from '../engine/limits';
 import { classifyNaturalLimitRoute } from '../limit-route-classifier';
 import { parseNaturalLimitRequest } from '../limit-request';
+import {
+  analyzeNaturalLimitVariables,
+  limitVariableMismatchDetails,
+  limitVariableMismatchError,
+} from '../limit-variable-analysis';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type {
   CalculusFiniteLimitState,
@@ -123,6 +128,15 @@ export function evaluateCalculusLimit(
   }
 
   const { request } = parsed;
+  const variableAnalysis = analyzeNaturalLimitVariables(request);
+  if (variableAnalysis.mismatch) {
+    return {
+      warnings: [],
+      error: limitVariableMismatchError(variableAnalysis.mismatch),
+      detailSections: limitVariableMismatchDetails(variableAnalysis.mismatch),
+    };
+  }
+
   const route = classifyNaturalLimitRoute(state.requestLatex);
   if (request.target.kind === 'finite') {
     return evaluateCalculusFiniteLimit({

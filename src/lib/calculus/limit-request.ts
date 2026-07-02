@@ -112,6 +112,7 @@ function parseTarget(input: string): NaturalLimitTarget | null {
   const infinity = compact
     .replace(/^\\\+/u, '+')
     .replace(/^\\-/u, '-')
+    .replace(/infinty/giu, 'infty')
     .replace(/infinity/giu, 'infty');
   if (
     infinity === '\\infty'

@@ -54,6 +54,36 @@ describe('natural limit request parsing', () => {
       targetKind: 'negInfinity',
     });
 
+    for (const input of [
+      'lim x -> infinity 1/x',
+      'lim x -> infinty 1/x',
+      'lim x -> infty 1/x',
+      'lim x -> ∞ 1/x',
+      'lim x -> +∞ 1/x',
+      'lim x -> +\\infty 1/x',
+    ]) {
+      const parsed = expectParsed(input);
+      expect(parsed.target).toMatchObject({
+        kind: 'infinite',
+        targetKind: 'posInfinity',
+        normalizedTargetLatex: '\\infty',
+      });
+      expect(parsed.canonicalLatex).toBe('\\lim_{x\\to \\infty}\\left(1/x\\right)');
+    }
+
+    for (const input of [
+      'lim x -> -∞ 1/x',
+      'lim x -> -\\infty 1/x',
+    ]) {
+      const parsed = expectParsed(input);
+      expect(parsed.target).toMatchObject({
+        kind: 'infinite',
+        targetKind: 'negInfinity',
+        normalizedTargetLatex: '-\\infty',
+      });
+      expect(parsed.canonicalLatex).toBe('\\lim_{x\\to -\\infty}\\left(1/x\\right)');
+    }
+
     const theta = expectParsed('\\lim_{\\theta\\to\\pi/2}\\sin(\\theta)');
     expect(theta.variable).toBe('theta');
     expect(theta.variableLatex).toBe('\\theta');
