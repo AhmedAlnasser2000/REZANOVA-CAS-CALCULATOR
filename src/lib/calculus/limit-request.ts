@@ -220,7 +220,7 @@ export function parseNaturalLimitRequest(input: string | null | undefined): Natu
   if (!split) {
     return {
       ok: false,
-      error: 'Enter a limit request such as lim x->0 sin(x)/x or \\lim_{x\\to0}\\frac{\\sin(x)}{x}.',
+      error: 'Enter a limit request such as lim x -> 0 sin(x)/x or \\lim_{x\\to0}\\frac{\\sin(x)}{x}.',
       looksLikeLimitRequest: requestLike,
     };
   }

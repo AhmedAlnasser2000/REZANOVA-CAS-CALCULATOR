@@ -48,6 +48,10 @@ describe('Calculus limit editor source', () => {
 
     expect(screen.getByTestId('soft-action-toEditor')).toHaveTextContent('Focus Editor');
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
+    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-placeholder', '\\text{Enter a limit request}');
+    expect(screen.getByTestId('main-editor').getAttribute('data-placeholder')).not.toContain('integrand');
+    expect(screen.getByText('Enter a full limit request such as lim x -> 0 sin(x)/x.')).toBeInTheDocument();
+    expect(screen.queryByText(/lim x->0/u)).not.toBeInTheDocument();
 
     setMathFieldLatex('main-editor', '\\lim_{t\\to \\infty}\\frac{3t^2+1}{2t^2-5}');
     await waitFor(() => {
@@ -61,6 +65,8 @@ describe('Calculus limit editor source', () => {
       expect(screen.getByTestId('calculus-limit-readback')).toHaveTextContent('Approaches');
       expect(screen.getByTestId('calculus-limit-readback')).toHaveTextContent('Body');
     });
+    expect(screen.getByTestId('calculus-limit-readback').querySelectorAll('.calculus-limit-readback__cell'))
+      .toHaveLength(3);
     expect(screen.getByTestId('calculus-limit-readback')).not.toHaveTextContent('\\frac{3t^2+1}{2t^2-5}');
 
     const generatedPreview = document.querySelector('.generated-preview-card');

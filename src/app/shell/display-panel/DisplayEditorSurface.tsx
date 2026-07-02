@@ -152,6 +152,8 @@ export function DisplayEditorSurface({
   const calculusMainEditorPlaceholder =
     calculusScreen === 'laplace'
       ? 'Enter f(t)'
+      : calculusScreen === 'limit'
+        ? '\\text{Enter a limit request}'
       : calculusScreen === 'implicitDerivative'
         ? `Enter relation in ${implicitIndependentLatex} and ${implicitDependentLatex}`
       : calculusScreen === 'partialDerivative'
@@ -594,36 +596,36 @@ export function DisplayEditorSurface({
                 lim
               </span>
               <span className="variable-hint">full limit request</span>
-              <div className="calculus-operator-readback" data-testid="calculus-limit-readback">
+              <div className="calculus-limit-readback" data-testid="calculus-limit-readback">
                 {calculusLimitRailParsed ? (
                   <>
-                    <span>
-                      Written{' '}
+                    <span className="calculus-limit-readback__cell">
+                      <span className="calculus-limit-readback__label">Written</span>
                       <MathStatic
-                        className="calculus-readback-math"
+                        className="calculus-readback-math calculus-limit-readback__math"
                         latex={calculusLimitRailWritten}
                         deferRender
                       />
                     </span>
-                    <span>
-                      Approaches{' '}
+                    <span className="calculus-limit-readback__cell">
+                      <span className="calculus-limit-readback__label">Approaches</span>
                       <MathStatic
-                        className="calculus-readback-math"
+                        className="calculus-readback-math calculus-limit-readback__math"
                         latex={calculusLimitRailApproaches}
                         deferRender
                       />
                     </span>
-                    <span>
-                      Body{' '}
+                    <span className="calculus-limit-readback__cell">
+                      <span className="calculus-limit-readback__label">Body</span>
                       <MathStatic
-                        className="calculus-readback-math"
+                        className="calculus-readback-math calculus-limit-readback__math"
                         latex={calculusLimitRailParsed.bodyLatex}
                         deferRender
                       />
                     </span>
                   </>
                 ) : (
-                  <span>Limit request needed</span>
+                  <span className="calculus-limit-readback__empty">Limit request needed</span>
                 )}
               </div>
             </div>

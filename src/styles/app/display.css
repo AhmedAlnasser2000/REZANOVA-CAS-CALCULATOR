@@ -313,6 +313,20 @@
   color: var(--lcd-ink);
 }
 
+.display-panel .calculus-limit-readback__cell {
+  border-color: rgba(21, 37, 27, 0.2);
+  background: rgba(21, 37, 27, 0.045);
+}
+
+.display-panel .calculus-limit-readback__label,
+.display-panel .calculus-limit-readback__empty {
+  color: rgba(21, 37, 27, 0.78);
+}
+
+.display-panel .calculus-limit-readback__math {
+  color: var(--lcd-ink);
+}
+
 .display-panel .calculus-target-error {
   color: #7b2e23;
 }

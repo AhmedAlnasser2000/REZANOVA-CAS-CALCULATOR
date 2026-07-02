@@ -215,6 +215,49 @@
   vertical-align: middle;
 }
 
+.calculus-limit-readback {
+  display: flex;
+  flex: 1 1 540px;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+}
+
+.calculus-limit-readback__cell {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 4px;
+  min-width: 148px;
+  max-width: min(360px, 42vw);
+  padding: 7px 9px;
+  border: 1px solid rgba(237, 241, 229, 0.18);
+  border-radius: 10px;
+  background: rgba(237, 241, 229, 0.06);
+}
+
+.calculus-limit-readback__label,
+.calculus-limit-readback__empty {
+  color: rgba(237, 241, 229, 0.7);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.calculus-limit-readback__math {
+  max-width: 100%;
+  color: var(--surface-ink);
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+.calculus-limit-readback__empty {
+  align-self: center;
+}
+
 .calculus-operator-rail {
   display: flex;
   flex-wrap: wrap;

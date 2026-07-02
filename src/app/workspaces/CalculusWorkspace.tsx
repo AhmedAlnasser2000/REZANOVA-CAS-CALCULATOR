@@ -390,7 +390,7 @@ export function CalculusWorkspace({
           subtitle={routeMeta?.previewSubtitle ?? 'Natural finite, one-sided, and infinite-target limit request'}
           latex={workbenchLatex}
           emptyTitle={routeMeta?.emptyStateTitle ?? 'Limit request needed'}
-          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a full limit request such as lim x->0 sin(x)/x.'}
+          emptyDescription={routeMeta?.emptyStateDescription ?? 'Enter a full limit request such as lim x -> 0 sin(x)/x.'}
           onCopyExpr={onCopyWorkbenchExpression}
         />
       ) : screen === 'finiteLimit' ? (
