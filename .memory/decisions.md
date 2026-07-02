@@ -32,6 +32,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a capped MRV-lite route for positive-infinity exponential/logarithmic scale comparisons. V1 compares collected exponential factors by flattened exponent differences, converts plain logarithmic exponent differences into ordinary powers, and stops short of full MRV-set construction, symbolic targets, or Gruntz.
 
+## 2026-07-03 - CALCULUS-LIMITS-COMPLEX-PRINCIPAL-PROOFS2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Limit mode remains proof-first and narrow. It may prove recognized principal square-root boundary carriers whose radicand tends to zero, plus finite companion terms; unsupported branch, quotient, and non-radical complex boundary forms must stop with controlled guidance rather than numeric guessing.
+
 ## 2026-07-02 - EQUATION-SOLVER-CARD-CREDIBILITY-CONSISTENCY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation Real mode must not display complex-only roots; it should stop with no-real-root guidance and point to Complex On. Numeric/detail card taxonomy must keep hard domain facts, periodic structure, probe evidence, search diagnostics, breakpoints, extraneous candidates, and confidence wording in their own categories, with target-dependent branch guards scoped to branch/candidate details when safe.

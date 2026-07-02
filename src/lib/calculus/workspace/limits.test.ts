@@ -390,7 +390,15 @@ describe('calculus limits', () => {
       equationDomainIntent: 'complex',
     });
     const unsupported = evaluateCalculusLimit({
+      requestLatex: '\\lim_{x\\to 0}\\frac{x}{\\sqrt{x}}',
+      equationDomainIntent: 'complex',
+    });
+    const principalSqrt = evaluateCalculusLimit({
       requestLatex: '\\lim_{x\\to 0}\\sqrt{x}',
+      equationDomainIntent: 'complex',
+    });
+    const shiftedPrincipalSqrt = evaluateCalculusLimit({
+      requestLatex: '\\lim_{x\\to -1}\\sqrt{x+1}',
       equationDomainIntent: 'complex',
     });
 
@@ -402,6 +410,20 @@ describe('calculus limits', () => {
     expect(complexMode.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
       kind: 'math',
       latex: '\\sqrt{x^2+x}',
+    });
+
+    expect(principalSqrt.error).toBeUndefined();
+    expect(principalSqrt.exactLatex).toBe('0');
+    expect(principalSqrt.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to 0}x=0',
+    });
+
+    expect(shiftedPrincipalSqrt.error).toBeUndefined();
+    expect(shiftedPrincipalSqrt.exactLatex).toBe('0');
+    expect(shiftedPrincipalSqrt.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\lim_{x\\to -1}x+1=0',
     });
 
     expect(unsupported.error).toBe('Complex proof is not supported yet for this finite-domain-boundary limit.');

@@ -1,9 +1,12 @@
 import type { DisplayDetailSection, LimitDirection } from '../../../types/calculator';
+import { evaluateNodeAt } from './evaluation';
 import {
+  formatLimitNumberLatex,
   limitDetailSection,
   limitMathPart,
   limitTextPart,
 } from './detail-readback';
+import { boxLatex } from '../patterns/latex';
 import type { FiniteLimitRuleSuccess } from './types';
 
 export type ComplexDomainLimitAttempt =
@@ -16,52 +19,6 @@ export type ComplexDomainLimitAttempt =
 
 function isNodeArray(node: unknown): node is unknown[] {
   return Array.isArray(node);
-}
-
-function isVariable(node: unknown, variable: string) {
-  return node === variable;
-}
-
-function isVariableSquared(node: unknown, variable: string) {
-  return (
-    isNodeArray(node)
-    && node[0] === 'Power'
-    && node.length === 3
-    && node[1] === variable
-    && node[2] === 2
-  );
-}
-
-function isNegatedVariable(node: unknown, variable: string) {
-  return (
-    isNodeArray(node)
-    && node[0] === 'Negate'
-    && node.length === 2
-    && isVariable(node[1], variable)
-  );
-}
-
-function isVariableSquaredPlusVariable(node: unknown, variable: string) {
-  if (!isNodeArray(node) || node[0] !== 'Add' || node.length !== 3) {
-    return false;
-  }
-
-  const terms = node.slice(1);
-  return terms.some((term) => isVariableSquared(term, variable))
-    && terms.some((term) => isVariable(term, variable));
-}
-
-function isPrincipalSqrtBoundaryPattern(node: unknown, variable: string) {
-  if (!isNodeArray(node) || node[0] !== 'Add' || node.length !== 3) {
-    return false;
-  }
-
-  const terms = node.slice(1);
-  const sqrtTerm = terms.find((term) => isNodeArray(term) && term[0] === 'Sqrt' && term.length === 2);
-  return Boolean(sqrtTerm)
-    && terms.some((term) => isNegatedVariable(term, variable))
-    && isNodeArray(sqrtTerm)
-    && isVariableSquaredPlusVariable(sqrtTerm[1], variable);
 }
 
 function complexUnsupportedDetail(reason: string): DisplayDetailSection[] {
@@ -85,56 +42,175 @@ export function unsupportedComplexDomainLimit(reason: string): ComplexDomainLimi
   };
 }
 
+type PrincipalSqrtLimit = {
+  value: number;
+  radicands: string[];
+  radicals: string[];
+};
+
+function isZero(value: number | undefined) {
+  return value !== undefined && Math.abs(value) <= 1e-12;
+}
+
+function combinePrincipalSqrtLimits(parts: PrincipalSqrtLimit[]): PrincipalSqrtLimit {
+  return {
+    value: parts.reduce((sum, part) => sum + part.value, 0),
+    radicands: [...new Set(parts.flatMap((part) => part.radicands))],
+    radicals: [...new Set(parts.flatMap((part) => part.radicals))],
+  };
+}
+
+function principalSqrtTermLimit(input: {
+  node: unknown;
+  variable: string;
+  target: number;
+}): PrincipalSqrtLimit | undefined {
+  if (isNodeArray(input.node) && input.node[0] === 'Sqrt' && input.node.length === 2) {
+    const radicandValue = evaluateNodeAt(input.node[1], input.target, input.variable);
+    if (!isZero(radicandValue)) {
+      return undefined;
+    }
+
+    return {
+      value: 0,
+      radicands: [boxLatex(input.node[1])],
+      radicals: [boxLatex(input.node)],
+    };
+  }
+
+  if (isNodeArray(input.node) && input.node[0] === 'Negate' && input.node.length === 2) {
+    const child = principalSqrtTermLimit({
+      ...input,
+      node: input.node[1],
+    });
+    return child
+      ? {
+          ...child,
+          value: -child.value,
+        }
+      : undefined;
+  }
+
+  if (isNodeArray(input.node) && input.node[0] === 'Multiply') {
+    const childLimits = input.node.slice(1).map((factor) =>
+      principalSqrtTermLimit({
+        ...input,
+        node: factor,
+      }));
+    const sqrtParts = childLimits.filter((part): part is PrincipalSqrtLimit => Boolean(part));
+    if (sqrtParts.length === 0) {
+      return undefined;
+    }
+
+    const finiteFactors = input.node
+      .slice(1)
+      .filter((_, index) => childLimits[index] === undefined)
+      .map((factor) => evaluateNodeAt(factor, input.target, input.variable));
+
+    if (!finiteFactors.every((value) => value !== undefined && Number.isFinite(value))) {
+      return undefined;
+    }
+
+    return {
+      value: 0,
+      radicands: [...new Set(sqrtParts.flatMap((part) => part.radicands))],
+      radicals: [...new Set(sqrtParts.flatMap((part) => part.radicals))],
+    };
+  }
+
+  const direct = evaluateNodeAt(input.node, input.target, input.variable);
+  if (direct === undefined || !Number.isFinite(direct)) {
+    return undefined;
+  }
+
+  return {
+    value: direct,
+    radicands: [],
+    radicals: [],
+  };
+}
+
+function principalSqrtBoundaryLimit(input: {
+  node: unknown;
+  variable: string;
+  target: number;
+}): PrincipalSqrtLimit | undefined {
+  if (isNodeArray(input.node) && input.node[0] === 'Add') {
+    const parts = input.node.slice(1).map((term) =>
+      principalSqrtTermLimit({
+        ...input,
+        node: term,
+      }));
+    if (!parts.every(Boolean)) {
+      return undefined;
+    }
+
+    const combined = combinePrincipalSqrtLimits(parts as PrincipalSqrtLimit[]);
+    return combined.radicals.length > 0 ? combined : undefined;
+  }
+
+  const direct = principalSqrtTermLimit(input);
+  return direct && direct.radicals.length > 0 ? direct : undefined;
+}
+
+function principalSqrtDetails(input: {
+  result: PrincipalSqrtLimit;
+  variable: string;
+  target: number;
+}): DisplayDetailSection[] {
+  const targetLatex = formatLimitNumberLatex(input.target);
+  return [
+    limitDetailSection('Complex Domain', [
+      [
+        limitTextPart('Complex mode uses the principal square-root branch for this recognized boundary form.'),
+      ],
+      ...input.result.radicands.map((radicand, index) => [
+        limitTextPart('Radicand check: '),
+        limitMathPart(`\\lim_{${input.variable}\\to ${targetLatex}}${radicand}=0`),
+        limitTextPart(', so '),
+        limitMathPart(input.result.radicals[index] ?? `\\sqrt{${radicand}}`),
+        limitTextPart(' tends to '),
+        limitMathPart('0'),
+        limitTextPart(' on the principal branch.'),
+      ]),
+      [
+        limitTextPart('Remaining finite terms are evaluated at '),
+        limitMathPart(`${input.variable}=${targetLatex}`),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Conclusion: the complex principal-branch limit is '),
+        limitMathPart(formatLimitNumberLatex(input.result.value)),
+        limitTextPart('.'),
+      ],
+    ]),
+  ];
+}
+
 export function resolveFiniteComplexDomainLimit(input: {
   node: unknown;
   variable: string;
   target: number;
   direction: LimitDirection;
 }): ComplexDomainLimitAttempt | undefined {
-  if (Math.abs(input.target) > 1e-12) {
-    return undefined;
-  }
-
-  if (!isPrincipalSqrtBoundaryPattern(input.node, input.variable)) {
+  const principalSqrt = principalSqrtBoundaryLimit({
+    node: input.node,
+    variable: input.variable,
+    target: input.target,
+  });
+  if (!principalSqrt) {
     return undefined;
   }
 
   return {
     kind: 'success',
-    value: 0,
-    exactLatex: '0',
+    value: principalSqrt.value,
+    exactLatex: formatLimitNumberLatex(principalSqrt.value),
     origin: 'rule-based-symbolic',
-    detailSections: [
-      limitDetailSection('Complex Domain', [
-        [
-          limitTextPart('Complex mode uses the principal square-root branch.'),
-        ],
-        [
-          limitTextPart('Near '),
-          limitMathPart(`${input.variable}=0`),
-          limitTextPart(', the inner expression '),
-          limitMathPart(`${input.variable}^2+${input.variable}`),
-          limitTextPart(' tends to '),
-          limitMathPart('0'),
-          limitTextPart('.'),
-        ],
-        [
-          limitTextPart('Therefore '),
-          limitMathPart(`\\sqrt{${input.variable}^2+${input.variable}}`),
-          limitTextPart(' tends to '),
-          limitMathPart('0'),
-          limitTextPart(' on the recognized principal-branch path.'),
-        ],
-        [
-          limitTextPart('The remaining term '),
-          limitMathPart(`-${input.variable}`),
-          limitTextPart(' also tends to '),
-          limitMathPart('0'),
-          limitTextPart(', so the limit is '),
-          limitMathPart('0'),
-          limitTextPart('.'),
-        ],
-      ]),
-    ],
+    detailSections: principalSqrtDetails({
+      result: principalSqrt,
+      variable: input.variable,
+      target: input.target,
+    }),
   };
 }
