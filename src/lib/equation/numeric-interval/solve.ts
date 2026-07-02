@@ -355,7 +355,7 @@ function piecewiseBreakpointDetailSections(plan: EquationNumericSegmentationPlan
   const boundaryLines = plan.boundaries
     .filter((boundary) => boundary.kind === 'piecewise-breakpoint')
     .map((boundary) => `${plan.target}=${formatApproxNumber(boundary.value)}`);
-  const lines = uniqueLines([...factLines, ...boundaryLines]);
+  const lines = uniqueLines(boundaryLines.length > 0 ? boundaryLines : factLines);
   return lines.length > 0
     ? [{ title: 'Piecewise Breakpoints', lines }]
     : [];
@@ -368,8 +368,10 @@ function intervalArithmeticLines(plan: EquationNumericSegmentationPlan) {
   }
   const visibleEvidence = summary.classifications
     .filter((classification) => classification.status !== 'safe')
+    .map((classification) => normalizeFactLine(classification.evidence))
+    .filter((evidence, index, all) => all.indexOf(evidence) === index)
     .slice(0, 4)
-    .map((classification) => classification.evidence);
+    .filter((evidence) => evidence.trim().length > 0);
   return [
     `Interval arithmetic domain status: ${summary.status} (${summary.safeCount} safe, ${summary.splitRequiredCount} split-required, ${summary.invalidCount} invalid, ${summary.unknownCount} unknown).`,
     ...visibleEvidence,
@@ -492,9 +494,7 @@ function numericConditioningDetailSections(input: {
     || input.diagnostics.newtonPrunedCellCount > 0
     || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
   const needsPrecisionGuidance =
-    excludedCount > 0
-    || intervalInvalidCount > 0
-    || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
+    input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
 
   if (
     boundaryCount === 0
@@ -513,7 +513,9 @@ function numericConditioningDetailSections(input: {
     lines: [
       ...complexityLines,
       ...(needsGuidance && needsPrecisionGuidance
-        ? ['Higher precision or a narrower interval is recommended if nearby discontinuities or clustered candidates affect the result.']
+        ? ['Higher precision or a narrower interval is recommended if clustered candidates affect the result.']
+        : needsGuidance
+          ? ['Use a narrower interval away from exclusions or discontinuities if nearby domain boundaries affect the result.']
         : []),
     ],
   }];
@@ -532,14 +534,15 @@ function numericConfidenceDetailSections(input: {
     || input.segmentation.intervalArithmetic.splitRequiredCount > 0
     || input.segmentation.intervalArithmetic.invalidCount > 0
     || input.diagnostics.discontinuityCellCount > 0;
-  const needsPrecisionGuidance = input.rejectedCandidateCount > 0
-    || input.segmentation.excludedBoundaryCandidates.length > 0
-    || input.segmentation.intervalArithmetic.invalidCount > 0
-    || input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
+  const needsPrecisionGuidance =
+    input.diagnostics.adaptiveSampleCount >= ADAPTIVE_MAX_EXTRA_SAMPLES;
   const section = buildNumericConfidenceSection([
     ...(input.acceptedRootCount > 0 ? ['All roots in this interval.'] : []),
     ...(hasSegmentationEvidence ? ['Domain segmented around exclusions.'] : []),
-    'Candidate roots validated against original equation.',
+    ...(input.acceptedRootCount > 0 ? ['Candidate roots validated against original equation.'] : []),
+    ...(input.acceptedRootCount === 0 && input.rejectedCandidateCount > 0
+      ? ['Rejected candidate roots were checked against the original equation.']
+      : []),
     ...(needsPrecisionGuidance ? ['Higher precision recommended.'] : []),
   ]);
   return section ? [section] : [];

@@ -135,6 +135,72 @@ function numericScalarValue(node: MathJson): number | null {
   return null;
 }
 
+function numericConstantValue(node: MathJson): number | null {
+  if (nodeHasSymbol(node)) {
+    return null;
+  }
+
+  const simplified = simplifyNode(node);
+  const scalar = numericScalarValue(simplified);
+  if (scalar !== null) {
+    return scalar;
+  }
+
+  if (!isArrayNode(simplified)) {
+    return null;
+  }
+
+  if (simplified[0] === 'Negate') {
+    const value = numericConstantValue(simplified[1] as MathJson);
+    return value === null ? null : -value;
+  }
+
+  if (simplified[0] === 'Add') {
+    let sum = 0;
+    for (const term of simplified.slice(1) as MathJson[]) {
+      const value = numericConstantValue(term);
+      if (value === null) {
+        return null;
+      }
+      sum += value;
+    }
+    return Number.isFinite(sum) ? sum : null;
+  }
+
+  if (simplified[0] === 'Multiply') {
+    let product = 1;
+    for (const factor of simplified.slice(1) as MathJson[]) {
+      const value = numericConstantValue(factor);
+      if (value === null) {
+        return null;
+      }
+      product *= value;
+    }
+    return Number.isFinite(product) ? product : null;
+  }
+
+  if (simplified[0] === 'Divide') {
+    const numerator = numericConstantValue(simplified[1] as MathJson);
+    const denominator = numericConstantValue(simplified[2] as MathJson);
+    if (numerator === null || denominator === null || denominator === 0) {
+      return null;
+    }
+    return numerator / denominator;
+  }
+
+  if (simplified[0] === 'Power') {
+    const base = numericConstantValue(simplified[1] as MathJson);
+    const exponent = numericConstantValue(simplified[2] as MathJson);
+    if (base === null || exponent === null) {
+      return null;
+    }
+    const value = Math.pow(base, exponent);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  return null;
+}
+
 function stripNumericFactorForCondition(node: MathJson): { node: MathJson; relation: '\\ge0' | '\\le0' } {
   const simplified = simplifyNode(node);
   if (!isArrayNode(simplified) || simplified[0] !== 'Multiply') {
@@ -210,11 +276,15 @@ function stop(
   };
 }
 
-function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: MathJson) {
-  const discriminant = subtractNodes(
+function quadraticDiscriminantNode(a: MathJson, b: MathJson, c: MathJson) {
+  return subtractNodes(
     simplifyNode(['Power', b, 2] as MathJson),
     multiplyNodes(4, a, c),
   );
+}
+
+function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: MathJson) {
+  const discriminant = quadraticDiscriminantNode(a, b, c);
   const denominator = multiplyNodes(2, a);
   const negativeB = negateNode(b);
   const sqrtDiscriminant = simplifyNode(['Sqrt', discriminant] as MathJson);
@@ -303,7 +373,18 @@ export function solveParameterizedPolynomialEquation(
     );
   }
 
-  const { branchReadback, discriminant, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
+  const discriminant = quadraticDiscriminantNode(a, b, c);
+  const discriminantValue = numericConstantValue(discriminant);
+  if (discriminantValue !== null && discriminantValue < 0) {
+    return stop(
+      'no-real-roots',
+      'This real quadratic has no real roots. Turn Complex On to show the non-real roots.',
+      target,
+      parameterNames,
+    );
+  }
+
+  const { branchReadback, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     nonzeroFactForLeadingCoefficient(a),
     realDiscriminantFact(discriminant),

@@ -425,11 +425,18 @@ function exactNumericValue(node: MathJson): number | null {
 }
 
 function branchEquationsForCarrier(carrier: CarrierProfile, value: MathJson) {
+  const exactValue = exactNumericValue(value);
   if (carrier.kind === 'square-root') {
+    if (exactValue !== null && exactValue < 0) {
+      return [];
+    }
     return [latexForNode(carrier.inner) + '=' + latexForNode(simplifyNode(['Power', value, 2] as MathJson))];
   }
 
   if (carrier.kind === 'square-power') {
+    if (exactValue !== null && exactValue < 0) {
+      return [];
+    }
     const sqrtValue = simplifyNode(['Sqrt', value] as MathJson);
     return [
       latexForNode(carrier.inner) + '=' + latexForNode(sqrtValue),
@@ -437,7 +444,6 @@ function branchEquationsForCarrier(carrier: CarrierProfile, value: MathJson) {
     ];
   }
 
-  const exactValue = exactNumericValue(value);
   if (exactValue !== null && exactValue < 0) {
     return [];
   }
@@ -534,7 +540,7 @@ export function solveParameterizedCarrierEquation(
   if (branchEquations.length === 0) {
     return stop(
       'branch-unsupported',
-      'No real solutions because absolute values are always nonnegative.',
+      'No real solutions because this real carrier cannot equal a negative value.',
       target,
       parameterNames,
     );

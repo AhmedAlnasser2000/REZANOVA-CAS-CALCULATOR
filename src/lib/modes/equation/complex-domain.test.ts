@@ -42,8 +42,29 @@ describe('Equation mode complex domain', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected Complex Off to keep the real-first stop');
     }
+    expect(result.answerDomain).not.toBe('complex');
+    expect(result.error).toContain('no real roots');
+    expect(result.error).toContain('Complex On');
+    expect(result.detailSections?.some((section) => section.title === 'Real Domain')).toBe(true);
+  });
+
+  it('does not leak non-real quadratic roots into Real mode', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'symbolic',
+      equationLatex: 'x^2+1=0',
+      equationSolveTarget: 'x',
+      equationDomainIntent: 'real',
+    });
+
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') {
+      throw new Error('Expected Real mode to reject complex-only quadratic roots');
+    }
     expect(result.answerDomain).toBeUndefined();
-    expect(result.error).toContain('outside the supported exact symbolic solve families');
+    expect(result.error).toContain('no real roots');
+    expect(result.error).toContain('Complex On');
+    expect(JSON.stringify(result)).not.toContain('\\imaginaryI');
   });
 
   it('treats explicit imaginary input as Complex-only Equation intent', () => {

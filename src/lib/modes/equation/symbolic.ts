@@ -776,6 +776,7 @@ export function solveSymbolicEquation(
     sharedResolvedLatex,
     plannerBadges: planner.badges,
     allowNumericOnly: Boolean(numericInterval),
+    realDomainOnly: equationDomainIntent === 'real',
   });
 }
 
@@ -875,6 +876,7 @@ export async function solveSymbolicEquationAsync(
       sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
       plannerBadges,
       allowNumericOnly: Boolean(numericInterval),
+      realDomainOnly: equationDomainIntent === 'real',
     });
   }
 }

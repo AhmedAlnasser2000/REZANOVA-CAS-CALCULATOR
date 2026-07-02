@@ -7,6 +7,8 @@ import { makeRequest } from './test-support';
 function solve(input: {
   equationLatex: string;
   interval?: NumericSolveInterval;
+  angleUnit?: 'rad' | 'deg';
+  domainIntent?: 'real' | 'complex';
 }) {
   return runEquationMode({
     ...makeRequest(),
@@ -14,8 +16,8 @@ function solve(input: {
     equationLatex: input.equationLatex,
     equationSolveTarget: 'x',
     equationAnswerMode: 'exact',
-    equationDomainIntent: 'real',
-    angleUnit: 'rad',
+    equationDomainIntent: input.domainIntent ?? 'real',
+    angleUnit: input.angleUnit ?? 'rad',
     numericInterval: input.interval,
   });
 }
@@ -75,6 +77,36 @@ function expectApproxRoot(result: Extract<DisplayOutcome, { kind: 'success' }>, 
 }
 
 describe('Equation numeric card credibility polish', () => {
+  it('keeps non-real quadratic roots out of Real mode while Complex mode shows them', () => {
+    const real = expectError(solve({ equationLatex: 'x^2+1=0' }));
+    const complex = expectSuccess(solve({
+      equationLatex: 'x^2+1=0',
+      domainIntent: 'complex',
+    }));
+
+    expect(real.error).toContain('no real roots');
+    expect(real.error).toContain('Complex On');
+    expect(JSON.stringify(real)).not.toContain('\\imaginaryI');
+    expect(complex.answerDomain).toBe('complex');
+    expect(complex.exactLatex).toContain('-i');
+    expect(complex.exactLatex).toContain('i');
+  });
+
+  it('scopes target-dependent exact branch guards away from global validity facts', () => {
+    const squareRootSquare = expectSuccess(solve({
+      equationLatex: String.raw`\sqrt{\left(x+1\right)^2}=x+3`,
+    }));
+    const absoluteValue = expectSuccess(solve({
+      equationLatex: String.raw`\left|x+1\right|=x+3`,
+    }));
+
+    for (const result of [squareRootSquare, absoluteValue]) {
+      expect(result.exactLatex).toBe('x=-2');
+      expect(result.exactSupplementLatex ?? []).not.toContain(String.raw`\text{Conditions: } x+3\ge0`);
+      expect(sectionText(result, 'Branch Guards')).toContain(String.raw`x+3\ge0`);
+    }
+  });
+
   it('keeps quotient periodic evidence out of domain facts and dedupes x exclusions', () => {
     const result = expectSuccess(solve({
       equationLatex: String.raw`\frac{\sin(x)}{x}=0`,
@@ -84,8 +116,11 @@ describe('Equation numeric card credibility polish', () => {
     const domain = sectionText(result, 'Domain and Exclusions');
     const periodic = sectionText(result, 'Periodic Structure');
     const xExclusionCount = domain.match(/x\\ne 0/gu)?.length ?? 0;
+    const searchDiagnosticExclusionCount =
+      sectionText(result, 'Search Diagnostics').match(/x\\ne 0/gu)?.length ?? 0;
 
     expect(xExclusionCount).toBe(1);
+    expect(searchDiagnosticExclusionCount).toBeLessThanOrEqual(1);
     expect(domain).not.toContain('Periodic carrier detected');
     expect(periodic).toContain('Sin(x) carrier repeats every about');
     expectApproxRoot(result, -Math.PI);
@@ -100,6 +135,7 @@ describe('Equation numeric card credibility polish', () => {
 
     expect(sectionText(result, 'Domain and Exclusions')).not.toContain('Periodic carrier detected');
     expect(sectionText(result, 'Periodic Structure')).toContain('Sin(x) carrier repeats every about');
+    expect(sectionText(result, 'Numeric Confidence')).not.toContain('Higher precision recommended');
     expectApproxRoot(result, -1.728466);
     expectApproxRoot(result, 1.06155);
   });
@@ -114,6 +150,17 @@ describe('Equation numeric card credibility polish', () => {
     expect(sectionText(result, 'Domain and Exclusions')).not.toContain('Tan(x) carrier repeats');
     expect(sectionText(result, 'Periodic Structure')).toContain('Tan(x) carrier repeats every about');
     expectApproxRoot(result, Math.PI / 4);
+  });
+
+  it('does not claim accepted candidate validation when no interval roots validate', () => {
+    const result = expectError(solve({
+      equationLatex: String.raw`\tan(x)=1`,
+      interval: { start: '-10', end: '10', subdivisions: 256 },
+      angleUnit: 'deg',
+    }));
+
+    expect(sectionText(result, 'Numeric Confidence')).not.toContain('Candidate roots validated');
+    expect(result.error).toContain('No bracketed or near-zero real roots');
   });
 
   it('keeps log/denominator facts, probes, and extraneous pole candidates in their own cards', () => {
@@ -151,6 +198,21 @@ describe('Equation numeric card credibility polish', () => {
     expect(sectionText(result, 'Domain and Exclusions')).not.toContain('x=2');
     expectApproxRoot(result, -1);
     expectApproxRoot(result, 5);
+  });
+
+  it('shows only solved piecewise breakpoint points when interval segmentation proves them', () => {
+    const result = expectSuccess(solve({
+      equationLatex: String.raw`\left|x-1\right|+\left|x+1\right|=4`,
+      interval: { start: '-10', end: '10', subdivisions: 256 },
+    }));
+    const breakpoints = sectionText(result, 'Piecewise Breakpoints');
+
+    expect(breakpoints).toContain('x=-1');
+    expect(breakpoints).toContain('x=1');
+    expect(breakpoints).not.toContain('x-1');
+    expect(breakpoints).not.toContain('x+1');
+    expectApproxRoot(result, -2);
+    expectApproxRoot(result, 2);
   });
 
   it('keeps repeated-root interval output deduped to one representative per root', () => {

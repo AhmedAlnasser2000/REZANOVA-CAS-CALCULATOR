@@ -313,7 +313,7 @@ describe('runNumericIntervalSolve', () => {
     expect(details).toContain('Interval arithmetic domain status: split-required');
     expect(details).toContain('Interval arithmetic complexity:');
     expect(details).toContain('Segment complexity:');
-    expect(details).toContain('Higher precision or a narrower interval is recommended');
+    expect(details).toContain('Use a narrower interval away from exclusions or discontinuities');
     expect(details).toContain('Candidate approximately 2');
   });
 

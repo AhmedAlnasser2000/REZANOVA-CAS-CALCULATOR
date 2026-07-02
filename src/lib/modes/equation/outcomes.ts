@@ -293,6 +293,74 @@ function exactModeShouldRejectNumericOnlyOutcome(outcome: DisplayOutcome) {
     );
 }
 
+function answerPayloadContainsImaginaryUnit(outcome: DisplayOutcome) {
+  if (outcome.kind !== 'success') {
+    return false;
+  }
+  const payload = [
+    outcome.exactLatex,
+    outcome.approxText,
+    ...(outcome.branchReadback?.branchesLatex ?? []),
+  ].filter((entry): entry is string => Boolean(entry)).join(' ');
+  return /\\imaginaryI|(?:^|[^A-Za-z\\])i(?:$|[^A-Za-z])/u.test(payload);
+}
+
+function realDomainComplexRootsOutcome(target: string): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: 'This real equation has no real roots. Turn Complex On to show the non-real roots.',
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Real Domain',
+        lines: [
+          `Selected target: ${target}.`,
+          'Real mode reports real roots only.',
+          'Turn Complex On to show non-real roots for this equation.',
+        ],
+      },
+    ],
+    answerMode: 'exact',
+  };
+}
+
+function conditionTextFromLegacySupplement(fact: string) {
+  return fact.replace(/^\\text\{Conditions:\s*\}\s*/u, '').trim();
+}
+
+function isTargetDependentConditionSupplement(fact: string, target: string) {
+  return fact.includes('\\text{Conditions:')
+    && new RegExp(`(^|[^A-Za-z])${target.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}([^A-Za-z]|$)`, 'u').test(fact);
+}
+
+function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: string): DisplayOutcome {
+  if (outcome.kind !== 'success' || !outcome.exactSupplementLatex?.length) {
+    return outcome;
+  }
+
+  const scoped = outcome.exactSupplementLatex.filter((fact) =>
+    isTargetDependentConditionSupplement(fact, target));
+  if (scoped.length === 0) {
+    return outcome;
+  }
+
+  const remaining = outcome.exactSupplementLatex.filter((fact) =>
+    !isTargetDependentConditionSupplement(fact, target));
+  return {
+    ...outcome,
+    exactSupplementLatex: remaining.length > 0 ? remaining : undefined,
+    detailSections: [
+      ...(outcome.detailSections ?? []),
+      {
+        title: 'Branch Guards',
+        lines: scoped.map((fact) =>
+          `${conditionTextFromLegacySupplement(fact)} was checked against the displayed candidate root(s).`),
+      },
+    ],
+  };
+}
+
 export function finalizeSharedSymbolicOutcome(input: {
   sharedOutcome: DisplayOutcome;
   solveTarget: string;
@@ -301,14 +369,20 @@ export function finalizeSharedSymbolicOutcome(input: {
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
   allowNumericOnly?: boolean;
+  realDomainOnly?: boolean;
 }): DisplayOutcome {
-  const outcome = ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
-    input.sharedOutcome,
+  const outcome = withScopedTargetDependentConditions(
+    ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
+      input.sharedOutcome,
+      input.solveTarget,
+    ), input.solveTarget),
     input.solveTarget,
-  ), input.solveTarget);
-  const finalOutcome = input.answerMode === 'exact' && !input.allowNumericOnly && exactModeShouldRejectNumericOnlyOutcome(outcome)
-    ? exactModeNeedsExactOutcome(input.solveTarget)
-    : outcome;
+  );
+  const finalOutcome = input.realDomainOnly && answerPayloadContainsImaginaryUnit(outcome)
+    ? realDomainComplexRootsOutcome(input.solveTarget)
+    : input.answerMode === 'exact' && !input.allowNumericOnly && exactModeShouldRejectNumericOnlyOutcome(outcome)
+      ? exactModeNeedsExactOutcome(input.solveTarget)
+      : outcome;
 
   return attachEquationRuntimeEnvelope(
     finalOutcome,
