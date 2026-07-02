@@ -444,6 +444,7 @@ describe('runMatrixOperation', () => {
       'Multi-RHS Proof',
       'Rank Facts',
       'Augmented RREF',
+      'Inverse Comparison',
       'Row Reduction Steps',
     ]);
     expect(solve.detailSections?.[0]?.lines).toContain('\\operatorname{rank}(A)=\\operatorname{rank}([A|B])=2');
@@ -454,6 +455,11 @@ describe('runMatrixOperation', () => {
     expect(solve.detailSections?.[2]?.lines).toContain(
       '\\operatorname{rref}\\left([A|B]\\right)=\\begin{bmatrix}1 & 0 & 1 & 2\\\\0 & 1 & 2 & 2\\end{bmatrix}',
     );
+    expect(solve.detailSections?.[3]?.lines).toContain(
+      'A^{-1}=\\begin{bmatrix}-2 & 1\\\\\\frac{3}{2} & -\\frac{1}{2}\\end{bmatrix}',
+    );
+    expect(solve.detailSections?.[3]?.lines).toContain('X=A^{-1}B');
+    expect(solve.detailSections?.[3]?.lines).toContain('A^{-1}B=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}');
   });
 
   it('classifies no-solution and non-unique multi-RHS Matrix systems', () => {

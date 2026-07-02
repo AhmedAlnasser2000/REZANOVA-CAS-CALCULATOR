@@ -207,21 +207,36 @@ describe('display block adapter', () => {
       title: 'AX=B',
       exactLatex: 'X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}',
       sourceMode: 'matrix',
-      detailSections: [{
-        title: 'Multi-RHS Proof',
-        lines: [
-          '\\operatorname{rank}(A)=\\operatorname{rank}([A|B])=2',
-          '\\operatorname{RHS\\ columns}=2',
-          'Each RHS column has exactly one solution vector.',
-        ],
-        lineKinds: ['math', 'math', 'text'],
-      }],
+      detailSections: [
+        {
+          title: 'Multi-RHS Proof',
+          lines: [
+            '\\operatorname{rank}(A)=\\operatorname{rank}([A|B])=2',
+            '\\operatorname{RHS\\ columns}=2',
+            'Each RHS column has exactly one solution vector.',
+          ],
+          lineKinds: ['math', 'math', 'text'],
+        },
+        {
+          title: 'Inverse Comparison',
+          lines: [
+            'A^{-1}=\\begin{bmatrix}-2 & 1\\\\\\frac{3}{2} & -\\frac{1}{2}\\end{bmatrix}',
+            'X=A^{-1}B',
+          ],
+          lineKind: 'math',
+        },
+      ],
       warnings: [],
     };
 
-    const card = buildDisplayBlocks(outcome).find((block) => block.label === 'Multi-RHS Proof');
+    const blocks = buildDisplayBlocks(outcome);
 
-    expect(card).toMatchObject({
+    expect(blocks.find((block) => block.label === 'Multi-RHS Proof')).toMatchObject({
+      kind: 'detail',
+      collapsible: true,
+      defaultCollapsed: false,
+    });
+    expect(blocks.find((block) => block.label === 'Inverse Comparison')).toMatchObject({
       kind: 'detail',
       collapsible: true,
       defaultCollapsed: false,

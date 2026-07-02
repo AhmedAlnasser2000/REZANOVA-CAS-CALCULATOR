@@ -145,7 +145,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof',
   'Orthonormal Basis',
   'Rank/Nullity Guidance',
-  'System Proof', 'Multi-RHS Proof',
+  'System Proof', 'Multi-RHS Proof', 'Inverse Comparison',
 ]);
 
 const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([

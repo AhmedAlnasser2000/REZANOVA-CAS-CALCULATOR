@@ -1,5 +1,12 @@
 import type { DisplayDetailSection, ExactScalarWire, MatrixResponse } from '../../types/calculator';
-import { rrefExactMatrix, type ExactMatrix, type ExactMatrixStopReason } from './exact-matrix-core';
+import { addExactScalars, multiplyExactScalars } from '../algebra/polynomial-core';
+import {
+  inverseExactMatrix,
+  rrefExactMatrix,
+  scalar,
+  type ExactMatrix,
+  type ExactMatrixStopReason,
+} from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
   exactMatrixFromWire,
@@ -18,6 +25,16 @@ export type MatrixMultiRhsInput = {
 
 function augmentedMatrix(coefficients: ExactMatrix, rhs: ExactMatrix): ExactMatrix {
   return coefficients.map((row, rowIndex) => [...row, ...rhs[rowIndex]]);
+}
+
+function multiplyExactMatrices(left: ExactMatrix, right: ExactMatrix): ExactMatrix {
+  return left.map((row) =>
+    right[0].map((_, column) =>
+      row.reduce(
+        (sum, value, index) => addExactScalars(sum, multiplyExactScalars(value, right[index][column])),
+        scalar(0),
+      ),
+    ));
 }
 
 function augmentedLabel(coefficientLabel: string, rhsLabel: string) {
@@ -135,6 +152,30 @@ function uniqueSolutionMatrix(
   return solution;
 }
 
+function inverseComparisonDetails(input: {
+  coefficientLabel: string;
+  rhsLabel: string;
+  coefficients: ExactMatrix;
+  rhs: ExactMatrix;
+  solution: ExactMatrix;
+}): DisplayDetailSection | null {
+  const inverse = inverseExactMatrix(input.coefficients);
+  if (inverse.kind === 'stop') {
+    return null;
+  }
+
+  return {
+    title: 'Inverse Comparison',
+    lines: [
+      `${input.coefficientLabel}^{-1}=${exactMatrixToLatex(inverse.inverse)}`,
+      `X=${input.coefficientLabel}^{-1}${input.rhsLabel}`,
+      `${input.coefficientLabel}^{-1}${input.rhsLabel}=${exactMatrixToLatex(multiplyExactMatrices(inverse.inverse, input.rhs))}`,
+      'Because the coefficient matrix is invertible, solving every RHS column at once matches multiplying by the inverse.',
+    ],
+    lineKinds: ['math', 'math', 'math', 'text'],
+  };
+}
+
 export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixResponse {
   const coefficients = exactMatrixFromWire(input.exactCoefficients) ?? exactMatrixFromNumeric(input.coefficients);
   const rhs = exactMatrixFromWire(input.exactRhs) ?? exactMatrixFromNumeric(input.rhs);
@@ -238,6 +279,13 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
       error: 'This multi-RHS solve could not extract a unique solution matrix from RREF.',
     };
   }
+  const inverseComparison = inverseComparisonDetails({
+    coefficientLabel: input.coefficientLabel,
+    rhsLabel: input.rhsLabel,
+    coefficients,
+    rhs,
+    solution,
+  });
 
   return {
     resultLatex: `X=${exactMatrixToLatex(solution)}`,
@@ -253,6 +301,7 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
         rhsColumns,
       }),
       ...facts,
+      ...(inverseComparison ? [inverseComparison] : []),
       rowOperationDetailSection(augmentedRref.rowOperations),
     ],
     warnings: [],
