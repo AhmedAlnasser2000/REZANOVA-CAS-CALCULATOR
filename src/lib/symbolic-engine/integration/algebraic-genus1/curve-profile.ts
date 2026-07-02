@@ -46,6 +46,8 @@ export type AlgebraicGenus1CurveReadyProfile = {
   variable: string;
   integrandShape: AlgebraicGenus1IntegrandShape;
   radicalCount: number;
+  radicandNode: unknown;
+  radicandPolynomial: SymbolicPolynomial;
   radicandDegree: 3 | 4;
   radicandLatex: string;
   coefficientScope: AlgebraicGenus1CoefficientScope;
@@ -355,6 +357,8 @@ export function profileAlgebraicGenus1CurveCandidate(
     variable,
     integrandShape: classifyShape(node, radical),
     radicalCount: radicals.length,
+    radicandNode: radical.canonicalRadicand,
+    radicandPolynomial: polynomial,
     radicandDegree: polynomial.degree,
     radicandLatex: boxLatex(radical.canonicalRadicand),
     coefficientScope: coefficientScope(polynomial),
