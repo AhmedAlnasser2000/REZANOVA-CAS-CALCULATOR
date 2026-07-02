@@ -5,13 +5,16 @@ import {
 } from '../../algebra/domain-range-core';
 import {
   attemptInfiniteLHospital,
+  resolveFiniteComplexDomainLimit,
   resolveFiniteLimitRule,
   resolveFiniteSqueezeOscillationLimit,
   resolveInfiniteExactLocalAlgebraLimit,
   resolveInfiniteIndeterminateTransformLimit,
+  unsupportedComplexDomainLimit,
 } from '../../symbolic-engine/limits';
 import type {
   DisplayDetailSection,
+  EquationDomainIntent,
   LimitDirection,
   LimitTargetKind,
 } from '../../../types/calculator';
@@ -323,9 +326,37 @@ export function evaluateFiniteLimitFromAst(input: {
   direction: LimitDirection;
   routeKind?: string;
   allowNumericFallback?: boolean;
+  equationDomainIntent?: EquationDomainIntent;
   messages: FiniteLimitMessages;
 }): CalculusCoreEvaluation {
   if (containsFiniteDomainBoundary(input.body)) {
+    if (input.equationDomainIntent === 'complex') {
+      const complexLimit = resolveFiniteComplexDomainLimit({
+        node: input.body,
+        variable: input.variable,
+        target: input.target,
+        direction: input.direction,
+      }) ?? unsupportedComplexDomainLimit(
+        'Complex proof is not supported yet for this finite-domain-boundary limit.',
+      );
+
+      if (complexLimit.kind === 'success') {
+        return {
+          exactLatex: complexLimit.exactLatex ?? limitValueToLatex(complexLimit.value),
+          approxText: limitValueToApproxText(complexLimit.value),
+          warnings: [],
+          resultOrigin: complexLimit.origin,
+          detailSections: complexLimit.detailSections,
+        };
+      }
+
+      return {
+        warnings: [],
+        error: complexLimit.reason,
+        detailSections: complexLimit.detailSections,
+      };
+    }
+
     const domainProbe =
       input.direction === 'left'
         ? { side: 'left' as const, result: checkOneSidedRealDomain({ node: input.body, variable: input.variable, target: input.target, direction: 'left' }) }

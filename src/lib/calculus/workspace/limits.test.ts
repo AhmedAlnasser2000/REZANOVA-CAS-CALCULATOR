@@ -272,6 +272,33 @@ describe('calculus limits', () => {
     expect(infinity.detailSections?.[0]?.lines.join(' ')).toContain('conjugate');
   });
 
+  it('uses proof-first complex domain handling for recognized radical limits', () => {
+    const requestLatex = '\\lim_{x\\to 0}\\left(\\sqrt{x^2+x}-x\\right)';
+    const realMode = evaluateCalculusLimit({ requestLatex });
+    const complexMode = evaluateCalculusLimit({
+      requestLatex,
+      equationDomainIntent: 'complex',
+    });
+    const unsupported = evaluateCalculusLimit({
+      requestLatex: '\\lim_{x\\to 0}\\sqrt{x}',
+      equationDomainIntent: 'complex',
+    });
+
+    expect(realMode.error).toContain('outside the real domain');
+
+    expect(complexMode.error).toBeUndefined();
+    expect(complexMode.exactLatex).toBe('0');
+    expect(complexMode.detailSections?.[0]?.title).toBe('Complex Domain');
+    expect(complexMode.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\sqrt{x^2+x}',
+    });
+
+    expect(unsupported.error).toBe('Complex proof is not supported yet for this finite-domain-boundary limit.');
+    expect(unsupported.detailSections?.[0]?.title).toBe('Complex Domain');
+    expect(unsupported.detailSections?.[0]?.lines.join(' ')).toContain('proof-first');
+  });
+
   it('resolves safe indeterminate transform natural limit expressions', () => {
     const product = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0+ x ln(x)',

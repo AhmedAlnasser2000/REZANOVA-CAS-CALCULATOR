@@ -448,6 +448,7 @@ function runCalculusAction() {
       firstOrderOde: firstOrderOdeState,
       secondOrderOde: secondOrderOdeState,
       numericIvp: numericIvpState,
+      equationDomainIntent: settings.equationDomainIntent ?? 'real',
       storedVariables: variableMemory,
       variableSubstitutionSnapshot:
         replayVariableSubstitutions?.mode === 'calculus'

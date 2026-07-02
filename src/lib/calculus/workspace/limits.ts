@@ -23,6 +23,7 @@ import type {
   CalculusFiniteLimitState,
   CalculusInfiniteLimitState,
   CalculusLimitState,
+  EquationDomainIntent,
   LimitDirection,
 } from '../../../types/calculator';
 
@@ -40,6 +41,7 @@ export type AdvancedLimitEvaluation = CalculusCoreEvaluation;
 type LimitRouteOptions = {
   routeKind?: string;
   allowNumericFallback?: boolean;
+  equationDomainIntent?: EquationDomainIntent;
 };
 
 function formatBodyVariables(bodyVariables: readonly string[]) {
@@ -120,6 +122,7 @@ export function evaluateCalculusFiniteLimit(
       direction,
       routeKind: state.routeKind,
       allowNumericFallback: state.allowNumericFallback,
+      equationDomainIntent: state.equationDomainIntent,
       messages: {
         mismatchError: 'Left and right behavior do not agree near the target.',
         unstableError: 'This limit could not be stabilized numerically in Calculus.',
@@ -167,7 +170,7 @@ export function evaluateCalculusInfiniteLimit(
 }
 
 export function evaluateCalculusLimit(
-  state: CalculusLimitState,
+  state: CalculusLimitState & { equationDomainIntent?: EquationDomainIntent },
 ): AdvancedLimitEvaluation {
   const parsed = parseNaturalLimitRequest(state.requestLatex);
   if (!parsed.ok) {
@@ -206,6 +209,7 @@ export function evaluateCalculusLimit(
         variable: request.variable,
         routeKind: routePlan.routeKind,
         allowNumericFallback: routePlan.allowNumericFallback,
+        equationDomainIntent: state.equationDomainIntent,
       });
     }
 

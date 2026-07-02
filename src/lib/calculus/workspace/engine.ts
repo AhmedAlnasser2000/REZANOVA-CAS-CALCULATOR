@@ -67,6 +67,7 @@ import type {
   CalculusIndefiniteIntegralState,
   AngleUnit,
   DisplayOutcome,
+  EquationDomainIntent,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
   FirstOrderOdeState,
@@ -102,6 +103,7 @@ export type RunCalculusWorkspaceModeRequest = {
   numericIvp: NumericIvpState;
   angleUnit?: AngleUnit;
   outputStyle?: OutputStyle;
+  equationDomainIntent?: EquationDomainIntent;
   ansLatex?: string;
   storedVariables?: readonly StoredVariableValue[];
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
@@ -455,7 +457,10 @@ export async function runCalculusWorkspaceMode(
         ...parsedLimit.request,
         bodyLatex: substituteBody(parsedLimit.request.bodyLatex, [variable]),
       });
-      outcome = toOutcome('Limit', evaluateCalculusLimit({ requestLatex }));
+      outcome = toOutcome('Limit', evaluateCalculusLimit({
+        requestLatex,
+        equationDomainIntent: request.equationDomainIntent,
+      }));
       break;
     }
     case 'finiteLimit': {
@@ -463,6 +468,7 @@ export async function runCalculusWorkspaceMode(
       setProtectedDescriptions([variable], 'the limit variable');
       const state = {
         ...request.finiteLimit,
+        equationDomainIntent: request.equationDomainIntent,
         bodyLatex: substituteBody(request.finiteLimit.bodyLatex, [variable]),
       };
       outcome = toOutcome('Finite Limit', evaluateCalculusFiniteLimit(state));

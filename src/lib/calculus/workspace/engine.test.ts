@@ -135,6 +135,20 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.detailSections?.[0]?.title).toBe('Limit Variable Check');
   });
 
+  it('threads complex domain intent into natural limit evaluation', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('limit', {
+      limit: { requestLatex: '\\lim_{x\\to 0}\\left(\\sqrt{x^2+x}-x\\right)' },
+      equationDomainIntent: 'complex',
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.exactLatex).toBe('0');
+    expect(result.detailSections?.some((section) => section.title === 'Complex Domain')).toBe(true);
+  });
+
   it('runs unified derivative workflows through Calculus', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
       derivative: { bodyLatex: 't^2', variable: 't' },
