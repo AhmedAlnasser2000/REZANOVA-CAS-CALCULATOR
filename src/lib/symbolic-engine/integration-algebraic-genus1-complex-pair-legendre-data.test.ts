@@ -56,7 +56,11 @@ describe('algebraic genus-1 complex-pair Legendre data', () => {
     expect(result.multiplierLatex).toContain('\\sqrt{A_{\\alpha_{1}}}');
     expect(result.inverseMapLatex).toContain('\\tan^2\\left(\\frac{\\phi}{2}\\right)');
     expect(result.firstKindPrototypeLatex).toContain('\\cdot \\operatorname{EllipticF}');
+    expect(result.changeOfVariableProof.proofStatus).toBe('change-of-variable-proved');
+    expect(result.changeOfVariableProof.substitutionLatex).toContain('\\tan^2\\left(\\frac{\\phi}{2}\\right)');
+    expect(result.changeOfVariableProof.differentialIdentityLatex).toContain('\\frac{dx}{\\sqrt{P\\left(x\\right)}}');
     expect(result.preferredBranchLatex).toBe('x>\\alpha_{1}');
+    expect(text(result)).toContain('Genus-1 Legendre Change Of Variable Proof');
     expect(text(result)).not.toMatch(/RootOf|rootof/i);
 
     const integration = resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{x^3+x+1}}');

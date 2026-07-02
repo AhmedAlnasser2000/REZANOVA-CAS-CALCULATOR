@@ -39,6 +39,8 @@ Inserted prerequisite note: after the complex-pair chart, `ALGEBRAIC-GENUS1-COMP
 
 Inserted prerequisite note: after complex-pair Legendre data, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-PULLBACK-BASIS-PROFILE1` was added before generic one-real-root cubic adoption. The reason is pipeline consistency: the pullback/basis and coefficient-system evidence must consume complex-pair charts the same way they consume three-real-root and four-real-root charts.
 
+Inserted prerequisite note: after complex-pair pullback/basis evidence, `ALGEBRAIC-GENUS1-COMPLEX-PAIR-CHANGE-OF-VARIABLE-PROOF1` was added before live one-real-root cubic adoption. The reason is proof discipline: the tan-half-angle chart needs its own substitution identity and first-kind differential identity before it can safely feed a live elliptic answer.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

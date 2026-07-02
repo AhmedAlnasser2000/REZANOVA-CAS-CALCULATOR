@@ -292,6 +292,7 @@ Current shape:
 - Inserted prerequisite `ALGEBRAIC-GENUS1-COMPLEX-PAIR-ROOT-CHART1` records behavior-invisible readiness for exact one-real-root cubic genus-1 radicals such as `sqrt(x^3+x+1)`: it names the real root, irreducible quadratic cofactor, real branch, and missing real Legendre chart data without changing live dispatch.
 - Inserted prerequisite `ALGEBRAIC-GENUS1-COMPLEX-PAIR-LEGENDRE-DATA1` adds behavior-invisible first-kind Legendre descriptors for exact one-real-root cubic genus-1 radicals: beta/rho cofactor notation, A scale, amplitude, parameter, multiplier, and first-kind prototype while live dispatch remains unchanged.
 - Inserted prerequisite `ALGEBRAIC-GENUS1-COMPLEX-PAIR-PULLBACK-BASIS-PROFILE1` threads one-real-root cubic Legendre data through root pullback basis, coefficient-system, rational-form, and solver evidence; live dispatch remains unchanged.
+- Inserted prerequisite `ALGEBRAIC-GENUS1-COMPLEX-PAIR-CHANGE-OF-VARIABLE-PROOF1` adds behavior-invisible tan-half-angle substitution proof evidence for one-real-root cubic complex-pair charts; live dispatch remains unchanged.
 
 The hard-removal policy is intentional: old records are not mapped forward in live source. Historical journals may still mention old names because they document what happened at the time.
 

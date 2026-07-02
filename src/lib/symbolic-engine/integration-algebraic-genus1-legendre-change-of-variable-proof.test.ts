@@ -1,12 +1,18 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 import { buildAlgebraicGenus1LegendreChangeOfVariableProof } from './integration/algebraic-genus1/legendre-change-of-variable-proof';
+import { buildAlgebraicGenus1ComplexPairLegendreData } from './integration/algebraic-genus1/complex-pair-legendre-data';
 import { buildAlgebraicGenus1RootLegendreData } from './integration/algebraic-genus1/root-legendre-data';
 
 const ce = new ComputeEngine();
 
 function proof(latex: string, variable = 'x') {
   const rootData = buildAlgebraicGenus1RootLegendreData(ce.parse(latex).json, variable);
+  return buildAlgebraicGenus1LegendreChangeOfVariableProof(rootData);
+}
+
+function complexPairProof(latex: string, variable = 'x') {
+  const rootData = buildAlgebraicGenus1ComplexPairLegendreData(ce.parse(latex).json, variable);
   return buildAlgebraicGenus1LegendreChangeOfVariableProof(rootData);
 }
 
@@ -71,7 +77,25 @@ describe('algebraic genus-1 Legendre change-of-variable proof', () => {
     expect(result.differentialIdentityLatex).toContain('\\frac{dt}{\\sqrt{P\\left(t\\right)}}');
   });
 
-  it('stops when root Legendre data has no supported real chart', () => {
+  it('proves the one-real-root cubic complex-pair first-kind kernel identity', () => {
+    const result = complexPairProof('\\frac{1}{\\sqrt{x^3+x+1}}');
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('expected complex-pair change-of-variable proof');
+    }
+    expect(result.dataKind).toBe('cubic-one-real-root-complex-pair');
+    expect(result.proofStatus).toBe('change-of-variable-proved');
+    expect(result.substitutionLatex).toContain('\\tan^2\\left(\\frac{\\phi}{2}\\right)');
+    expect(result.substitutionLatex).toContain('x-\\alpha_{1}');
+    expect(result.radicandFactorizationLatex).toContain('Q_{\\alpha_{1}}\\left(x\\right)');
+    expect(result.inverseMapLatex).toContain('\\tan^2\\left(\\frac{\\phi}{2}\\right)');
+    expect(result.differentialIdentityLatex).toContain('\\frac{dx}{\\sqrt{P\\left(x\\right)}}');
+    expect(result.differentialIdentityLatex).toContain('\\cdot');
+    expect(text(result)).not.toMatch(/RootOf|rootof/i);
+  });
+
+  it('still stops root-only Legendre proof when the real-root chart is absent', () => {
     const result = proof('\\frac{1}{\\sqrt{x^3+x+1}}');
 
     expect(result).toMatchObject({

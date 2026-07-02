@@ -16,6 +16,10 @@ import {
   buildAlgebraicGenus1ComplexPairRootChart,
   type AlgebraicGenus1ComplexPairRootChart,
 } from './complex-pair-root-chart';
+import {
+  buildAlgebraicGenus1LegendreChangeOfVariableProofFromData,
+  type AlgebraicGenus1LegendreChangeOfVariableProof,
+} from './legendre-change-of-variable-proof';
 
 export type AlgebraicGenus1ComplexPairLegendreData = {
   kind: 'success';
@@ -34,6 +38,7 @@ export type AlgebraicGenus1ComplexPairLegendreData = {
   multiplierLatex: string;
   inverseMapLatex: string;
   firstKindPrototypeLatex: string;
+  changeOfVariableProof: AlgebraicGenus1LegendreChangeOfVariableProof;
   preferredBranchLatex: string;
   detailSections: DisplayDetailSection[];
   readinessNotes: string[];
@@ -151,11 +156,10 @@ export function buildAlgebraicGenus1ComplexPairLegendreData(
     `${variable}=${realRootLatex}+${scaleSymbolLatex}\\tan^2\\left(\\frac{\\phi}{2}\\right)`;
   const firstKindPrototypeLatex =
     `${multiplierLatex}\\cdot ${ellipticF(amplitudeLatex, parameterLatex)}`;
-
-  return {
-    kind: 'success',
+  const baseResult = {
+    kind: 'success' as const,
     variable,
-    dataKind: 'cubic-one-real-root-complex-pair',
+    dataKind: 'cubic-one-real-root-complex-pair' as const,
     rootSymbolsLatex: [
       realRootLatex,
       betaLatex,
@@ -175,6 +179,15 @@ export function buildAlgebraicGenus1ComplexPairLegendreData(
     inverseMapLatex,
     firstKindPrototypeLatex,
     preferredBranchLatex: chart.realBranchLatex,
+    detailSections: [] as DisplayDetailSection[],
+    readinessNotes: [] as string[],
+  };
+  const changeOfVariableProof =
+    buildAlgebraicGenus1LegendreChangeOfVariableProofFromData(baseResult);
+
+  return {
+    ...baseResult,
+    changeOfVariableProof,
     detailSections: [
       ...chart.detailSections,
       dataDetailSection({
@@ -189,10 +202,12 @@ export function buildAlgebraicGenus1ComplexPairLegendreData(
         inverseMapLatex,
         firstKindPrototypeLatex,
       }),
+      ...changeOfVariableProof.detailSections,
     ],
     readinessNotes: [
       ...chart.readinessNotes,
-      'Complex-pair Legendre data is now explicit enough for a later proof/backcheck gate.',
+      ...changeOfVariableProof.readinessNotes,
+      'Complex-pair Legendre data now carries first-kind change-of-variable proof evidence.',
       'Live adoption remains deferred until the derivative proof and branch facts use this chart.',
     ],
   };

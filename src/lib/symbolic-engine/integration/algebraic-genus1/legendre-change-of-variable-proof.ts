@@ -8,11 +8,23 @@ import type {
   AlgebraicGenus1RootLegendreData,
   AlgebraicGenus1RootLegendreDataResult,
 } from './root-legendre-data';
+import type {
+  AlgebraicGenus1ComplexPairLegendreData,
+  AlgebraicGenus1ComplexPairLegendreDataResult,
+} from './complex-pair-legendre-data';
+
+type SupportedLegendreData =
+  | AlgebraicGenus1RootLegendreData
+  | AlgebraicGenus1ComplexPairLegendreData;
+
+type SupportedLegendreDataResult =
+  | AlgebraicGenus1RootLegendreDataResult
+  | AlgebraicGenus1ComplexPairLegendreDataResult;
 
 export type AlgebraicGenus1LegendreChangeOfVariableProof = {
   kind: 'success';
   variable: string;
-  dataKind: AlgebraicGenus1RootLegendreData['dataKind'];
+  dataKind: SupportedLegendreData['dataKind'];
   proofStatus: 'change-of-variable-proved';
   substitutionLatex: string;
   inverseMapLatex: string;
@@ -32,16 +44,23 @@ export type AlgebraicGenus1LegendreChangeOfVariableProofResult =
       variable: string;
       reason: 'root-legendre-stop' | 'unsupported-root-chart';
       detail: string;
-      rootLegendreData?: AlgebraicGenus1RootLegendreDataResult;
+      rootLegendreData?: SupportedLegendreDataResult;
     };
 
-type RootLegendreProofInput =
+type RealRootLegendreProofInput =
   Omit<
     AlgebraicGenus1RootLegendreData,
     'changeOfVariableProof' | 'rootBasisCoefficientProof'
   > & {
     changeOfVariableProof?: AlgebraicGenus1LegendreChangeOfVariableProof;
   };
+type ComplexPairLegendreProofInput =
+  Omit<AlgebraicGenus1ComplexPairLegendreData, 'changeOfVariableProof'> & {
+    changeOfVariableProof?: AlgebraicGenus1LegendreChangeOfVariableProof;
+  };
+type RootLegendreProofInput =
+  | RealRootLegendreProofInput
+  | ComplexPairLegendreProofInput;
 
 function isOneLatex(latex: string) {
   return latex === '1';
@@ -107,12 +126,47 @@ function quarticProof(data: RootLegendreProofInput) {
   };
 }
 
+function complexPairCubicProof(data: ComplexPairLegendreProofInput) {
+  const variable = data.variable;
+  const substitutionLatex =
+    `\\tan^2\\left(\\frac{\\phi}{2}\\right)=\\frac{${variable}-${data.realRootLatex}}{${data.scaleSymbolLatex}}`;
+  const radicandFactorizationLatex =
+    `${radicandName(variable)}=${scaledProduct(data.leadingCoefficientLatex, [
+      `${variable}-${data.realRootLatex}`,
+      `Q_{${data.realRootLatex}}\\left(${variable}\\right)`,
+    ])}`;
+  const firstKindKernelLatex =
+    `\\frac{d\\phi}{\\sqrt{1-${data.parameterLatex}\\sin^2\\phi}}`;
+  const differentialIdentityLatex =
+    `\\frac{d${variable}}{\\sqrt{${radicandName(variable)}}}=${data.multiplierLatex}\\cdot ${firstKindKernelLatex}`;
+
+  return {
+    substitutionLatex,
+    radicandFactorizationLatex,
+    firstKindKernelLatex,
+    differentialIdentityLatex,
+  };
+}
+
+function isComplexPairProofInput(
+  data: RootLegendreProofInput,
+): data is ComplexPairLegendreProofInput {
+  return data.dataKind === 'cubic-one-real-root-complex-pair';
+}
+
 export function buildAlgebraicGenus1LegendreChangeOfVariableProofFromData(
   data: RootLegendreProofInput,
 ): AlgebraicGenus1LegendreChangeOfVariableProof {
-  const proofParts = data.dataKind === 'cubic-three-real-roots'
-    ? cubicProof(data)
-    : quarticProof(data);
+  let proofParts: ReturnType<typeof cubicProof>;
+  if (data.dataKind === 'cubic-three-real-roots') {
+    proofParts = cubicProof(data);
+  } else if (data.dataKind === 'quartic-four-real-roots') {
+    proofParts = quarticProof(data);
+  } else if (isComplexPairProofInput(data)) {
+    proofParts = complexPairCubicProof(data);
+  } else {
+    proofParts = cubicProof(data);
+  }
   const detailSections: DisplayDetailSection[] = [
     mixedDetailSection(
       'Genus-1 Legendre Change Of Variable Proof',
@@ -147,7 +201,7 @@ export function buildAlgebraicGenus1LegendreChangeOfVariableProofFromData(
 }
 
 export function buildAlgebraicGenus1LegendreChangeOfVariableProof(
-  rootLegendreData: AlgebraicGenus1RootLegendreDataResult,
+  rootLegendreData: SupportedLegendreDataResult,
 ): AlgebraicGenus1LegendreChangeOfVariableProofResult {
   if (rootLegendreData.kind === 'stop') {
     return {
@@ -162,6 +216,7 @@ export function buildAlgebraicGenus1LegendreChangeOfVariableProof(
   if (
     rootLegendreData.dataKind !== 'cubic-three-real-roots'
     && rootLegendreData.dataKind !== 'quartic-four-real-roots'
+    && rootLegendreData.dataKind !== 'cubic-one-real-root-complex-pair'
   ) {
     return {
       kind: 'stop',
