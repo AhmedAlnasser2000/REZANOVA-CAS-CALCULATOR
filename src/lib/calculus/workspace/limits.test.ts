@@ -209,6 +209,9 @@ describe('calculus limits', () => {
     });
 
     expect(result.error).toContain('outside the supported Calculus limit routes');
+    expect(result.detailSections?.[0]?.title).toBe('Limit Route');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Route chosen: unsupported route');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('stopped with a controlled explanation');
     const diagnostic = result.detailSections?.find((section) => section.title === 'Limit Diagnostic');
     expect(diagnostic?.lines.join(' ')).toContain('Route classification:');
     expect(diagnostic?.lines.join(' ')).toContain('unsupported');
@@ -231,6 +234,8 @@ describe('calculus limits', () => {
     expect(squeeze.error).toBeUndefined();
     expect(squeeze.exactLatex).toBe('0');
     expect(squeeze.detailSections?.[0]?.lines.join(' ')).toContain('squeeze theorem');
+    expect(squeeze.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('Route chosen: squeeze or oscillation');
 
     expect(secondOrder.error).toBeUndefined();
     expect(secondOrder.exactLatex).toBe('0');
@@ -243,6 +248,8 @@ describe('calculus limits', () => {
     expect(oscillation.exactLatex).toBeUndefined();
     expect(oscillation.detailSections?.[0]?.title).toBe('Why This Limit Fails');
     expect(oscillation.detailSections?.[0]?.lines.join(' ')).toContain('does not approach one number');
+    expect(oscillation.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('Outcome: the selected route did not resolve');
     expect(oscillation.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
       kind: 'math',
       latex: 'x_n=1/(\\pi/2+2\\pi n)',

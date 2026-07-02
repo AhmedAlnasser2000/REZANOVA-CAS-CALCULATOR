@@ -8,7 +8,11 @@ import {
   evaluateInfiniteLimitFromAst,
 } from '../engine/limits';
 import { classifyNaturalLimitRoute } from '../limit-route-classifier';
-import { planNaturalLimitRoute } from '../limit-route-orchestrator';
+import {
+  limitRouteExplanationSection,
+  planNaturalLimitRoute,
+  type LimitRoutePlan,
+} from '../limit-route-orchestrator';
 import {
   parseNaturalLimitRequest,
   type NaturalLimitRequest,
@@ -78,6 +82,33 @@ function appendUnstableLimitDiagnostic(input: {
     detailSections: [
       ...(input.evaluation.detailSections ?? []),
       diagnostic,
+    ],
+  };
+}
+
+function routeOutcome(evaluation: AdvancedLimitEvaluation) {
+  if (evaluation.resultOrigin === 'numeric-fallback') {
+    return 'numeric-fallback-used' as const;
+  }
+  if (evaluation.error) {
+    return 'controlled-stop' as const;
+  }
+  return 'resolved' as const;
+}
+
+function appendRouteExplanation(
+  evaluation: AdvancedLimitEvaluation,
+  routePlan: Extract<LimitRoutePlan, { kind: 'ready' }>,
+): AdvancedLimitEvaluation {
+  return {
+    ...evaluation,
+    detailSections: [
+      ...(evaluation.detailSections ?? []),
+      limitRouteExplanationSection({
+        classification: routePlan.classification,
+        allowNumericFallback: routePlan.allowNumericFallback,
+        outcome: routeOutcome(evaluation),
+      }),
     ],
   };
 }
@@ -222,8 +253,10 @@ export function evaluateCalculusLimit(
     });
   };
 
+  const withRouteExplanation = appendRouteExplanation(evaluate(), routePlan);
+
   return appendUnstableLimitDiagnostic({
-    evaluation: evaluate(),
+    evaluation: withRouteExplanation,
     request,
     routeKind: routePlan.routeKind,
     bodyVariables: variableAnalysis.bodyVariables,

@@ -47,7 +47,10 @@ describe('natural limit route orchestrator', () => {
 
     if (unsupported.kind === 'blocked') {
       expect(unsupported.error).toContain('outside the supported');
-      expect(unsupported.detailSections[0]?.title).toBe('Limit Diagnostic');
+      expect(unsupported.detailSections[0]?.title).toBe('Limit Route');
+      expect(unsupported.detailSections[0]?.lines.join(' ')).toContain('Route chosen: unsupported route');
+      expect(unsupported.detailSections[0]?.lines.join(' ')).toContain('Fallback policy');
+      expect(unsupported.detailSections[1]?.title).toBe('Limit Diagnostic');
     }
   });
 });
