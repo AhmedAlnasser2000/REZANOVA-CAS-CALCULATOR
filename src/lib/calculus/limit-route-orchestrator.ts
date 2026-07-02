@@ -42,6 +42,15 @@ const routeLabels: Record<LimitRouteKind, string> = {
   'too-complex': 'over-budget expression',
 };
 
+const numericFallbackLimitRoutes = new Set<LimitRouteKind>([
+  'direct-substitution',
+  'finite-pole',
+]);
+
+export function isLimitRouteNumericFallbackAllowed(routeKind: LimitRouteKind): boolean {
+  return numericFallbackLimitRoutes.has(routeKind);
+}
+
 function fallbackPolicyLine(input: {
   classification: LimitRouteClassification;
   allowNumericFallback: boolean;
@@ -152,7 +161,7 @@ export function planNaturalLimitRoute(classification: LimitRouteClassification):
   return {
     kind: 'ready',
     routeKind: classification.kind,
-    allowNumericFallback: classification.kind === 'direct-substitution' || classification.kind === 'finite-pole',
+    allowNumericFallback: isLimitRouteNumericFallbackAllowed(classification.kind),
     classification,
   };
 }

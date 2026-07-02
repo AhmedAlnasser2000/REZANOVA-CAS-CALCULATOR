@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { classifyNaturalLimitRoute } from './limit-route-classifier';
-import { planNaturalLimitRoute } from './limit-route-orchestrator';
+import { classifyNaturalLimitRoute, type LimitRouteKind } from './limit-route-classifier';
+import {
+  isLimitRouteNumericFallbackAllowed,
+  planNaturalLimitRoute,
+} from './limit-route-orchestrator';
 
 describe('natural limit route orchestrator', () => {
   it('turns supported classifications into ready plans', () => {
@@ -33,6 +36,36 @@ describe('natural limit route orchestrator', () => {
       routeKind: 'finite-pole',
       allowNumericFallback: true,
     });
+  });
+
+  it('keeps frontier symbolic routes out of numeric fallback policy', () => {
+    const symbolicRoutes: LimitRouteKind[] = [
+      'removable-rational',
+      'local-equivalent',
+      'exact-local-algebra',
+      'indeterminate-transform',
+      'infinity-asymptotic',
+      'lhospital-candidate',
+      'taylor-series-candidate',
+      'squeeze-oscillation',
+      'piecewise',
+      'abs-side-behavior',
+      'mrv-lite',
+    ];
+
+    expect(isLimitRouteNumericFallbackAllowed('direct-substitution')).toBe(true);
+    expect(isLimitRouteNumericFallbackAllowed('finite-pole')).toBe(true);
+    for (const route of symbolicRoutes) {
+      expect(isLimitRouteNumericFallbackAllowed(route)).toBe(false);
+      expect(planNaturalLimitRoute({
+        kind: route,
+        reason: `test route ${route}`,
+      })).toMatchObject({
+        kind: 'ready',
+        routeKind: route,
+        allowNumericFallback: false,
+      });
+    }
   });
 
   it('blocks unsupported, malformed, and over-budget routes with diagnostics', () => {
