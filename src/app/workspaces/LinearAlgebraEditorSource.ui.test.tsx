@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   openLauncherApp,
@@ -44,5 +44,24 @@ describe('Linear algebra editor source', () => {
     expect(screen.queryByText('Vector Notation Pad')).not.toBeInTheDocument();
     setMathFieldLatex('main-editor', 'u\\cdot v');
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'u\\cdot v'));
+  });
+
+  it('focuses the Matrix editor from keypad clicks and backs out with Escape', async () => {
+    const { user } = await renderAppMain();
+
+    await openLauncherApp(user, 'Linear', 'Matrix');
+    await screen.findByText('Matrix Workspace');
+
+    const editor = screen.getByTestId('main-editor');
+    editor.blur();
+    await user.click(screen.getByTestId('keypad-linear-rank'));
+
+    await waitFor(() => expect(editor).toHaveAttribute(
+      'data-value',
+      '\\operatorname{rank}\\left(#0\\right)',
+    ));
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => expect(document.querySelector('.launcher-panel')).toBeInTheDocument());
   });
 });

@@ -53,7 +53,11 @@ import { useGuideRuntime } from './app/runtime/useGuideRuntime';
 import { useCalculusRuntime } from './app/runtime/useCalculusRuntime';
 import { useCalculateRuntime } from './app/runtime/useCalculateRuntime';
 import { useEquationRuntime } from './app/runtime/useEquationRuntime';
-import { isLatexInsertTarget, isLatexValueTarget } from './app/runtime/editorTargets';
+import {
+  blurLatexEditorTarget,
+  executeLatexEditorCommand,
+  insertLatexIntoEditor,
+} from './app/runtime/editorTargets';
 import { EditorAnalysisControlProvider } from './lib/editor/editor-analysis-control-provider';
 import { EDITOR_ANALYSIS_MAX_LATEX_LENGTH } from './lib/editor/editor-analysis-runtime';
 import { useEditorAnalysis } from './lib/editor/use-editor-analysis';
@@ -2026,26 +2030,7 @@ export default function App() {
   }
 
   function insertLatex(latex: string) {
-    const activeField: unknown = activeFieldRef.current;
-    const mainField: unknown = mainFieldRef.current;
-    const field = isLatexInsertTarget(activeField) || isLatexValueTarget(activeField)
-      ? activeField
-      : isLatexInsertTarget(mainField) || isLatexValueTarget(mainField)
-        ? mainField
-        : null;
-    if (!field) {
-      return;
-    }
-
-    field.focus?.();
-    if (isLatexInsertTarget(field)) {
-      field.insert(latex);
-      return;
-    }
-
-    const currentLatex = field.getValue?.('latex') ?? '';
-    field.setValue(`${currentLatex}${latex}`);
-    field.dispatchEvent?.(new Event('input', { bubbles: true }));
+    insertLatexIntoEditor(activeFieldRef, mainFieldRef, latex);
   }
 
   function clearCurrentMode() {
@@ -2382,9 +2367,9 @@ export default function App() {
       moveCurrentEquationMenuSelection,
       openSelectedEquationMenuEntry,
       insertLatex,
-      deleteBackward: () => activeFieldRef.current?.executeCommand('deleteBackward'),
-      moveToPreviousChar: () => activeFieldRef.current?.executeCommand('moveToPreviousChar'),
-      moveToNextChar: () => activeFieldRef.current?.executeCommand('moveToNextChar'),
+      deleteBackward: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'deleteBackward'),
+      moveToPreviousChar: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'moveToPreviousChar'),
+      moveToNextChar: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'moveToNextChar'),
       cycleAngleUnit: () => patchSettings({ angleUnit: cycleAngleUnit(settings.angleUnit) }),
       openLauncher: openMenuInspector,
     });
@@ -2482,6 +2467,7 @@ export default function App() {
       openSelectedEquationMenuEntry,
       executePrimaryAction,
       insertLatex,
+      blurActiveEditor: () => blurLatexEditorTarget(activeFieldRef),
     });
   });
 

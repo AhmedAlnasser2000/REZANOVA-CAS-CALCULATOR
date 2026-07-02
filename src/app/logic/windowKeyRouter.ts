@@ -121,6 +121,7 @@ type WindowKeyRouterDeps = {
   openSelectedEquationMenuEntry: () => void;
   executePrimaryAction: () => void;
   insertLatex: (latex: string) => void;
+  blurActiveEditor?: () => void;
 };
 
 export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
@@ -195,6 +196,7 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
     openSelectedEquationMenuEntry,
     executePrimaryAction,
     insertLatex,
+    blurActiveEditor,
   } = deps;
   const plainFormTarget = isPlainFormTarget(event.target);
 
@@ -277,6 +279,11 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
   }
 
   if (event.key === 'Escape') {
+    if (isAnyFormTarget(event.target)) {
+      blurActiveEditor?.();
+    }
+    event.preventDefault();
+
     if (settingsOpen) {
       closeSettingsPanel();
       return;
@@ -321,6 +328,10 @@ export function handleWindowKeydownWithDeps(deps: WindowKeyRouterDeps) {
       if (parentScreen) {
         openCalculateScreen(parentScreen);
       }
+    } else if (currentMode === 'calculate') {
+      openLauncher();
+    } else if (currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table') {
+      openLauncher();
     } else if (currentMode === 'statistics') {
       const parentScreen = getStatisticsParentScreen(statisticsScreen);
       if (parentScreen) {
