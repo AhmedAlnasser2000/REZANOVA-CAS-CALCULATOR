@@ -474,7 +474,7 @@ const MATRIX_OPERATOR_ROW: KeypadButton[] = [
   { id: 'linear-det', label: 'det', variant: 'function', latex: '\\det\\left(#0\\right)' },
   { id: 'linear-rank', label: 'rank', variant: 'function', latex: '\\operatorname{rank}\\left(#0\\right)' },
   { id: 'linear-rref', label: 'rref', variant: 'function', latex: '\\operatorname{rref}\\left(#0\\right)' },
-  { id: 'linear-eigen', label: 'eigen', variant: 'function', latex: '\\operatorname{eigen}\\left(#0\\right)' },
+  { id: 'linear-eigen', label: 'eigen', secondary: 'diag', variant: 'function', latex: '\\operatorname{eigen}\\left(#0\\right)', layers: { shift: { label: 'diag', latex: '\\operatorname{diag}\\left(#0\\right)' } } },
 ];
 
 const MATRIX_MODIFIER_ROW: KeypadButton[] = [

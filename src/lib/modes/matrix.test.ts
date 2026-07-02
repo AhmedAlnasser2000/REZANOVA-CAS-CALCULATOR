@@ -199,6 +199,21 @@ describe('runMatrixMode', () => {
     }
   });
 
+  it('labels diagonalization runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'diagonalizeA',
+      matrixA: [[2, 1], [1, 2]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('diag(A)');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.detailSections?.[0]?.title).toBe('Characteristic Polynomial');
+      expect(result.detailSections?.[1]?.title).toBe('Diagonalization Factors');
+    }
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

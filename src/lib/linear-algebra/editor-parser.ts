@@ -23,6 +23,7 @@ export type LinearAlgebraUnaryOperator =
   | 'qr'
   | 'invertibility'
   | 'eigen'
+  | 'diagonalization'
   | 'transpose'
   | 'inverse'
   | 'norm'
@@ -147,6 +148,10 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{Invertible\}/g, 'invertible')
     .replace(/\\operatorname\{eigen\}/g, 'eigen')
     .replace(/\\operatorname\{Eigen\}/g, 'eigen')
+    .replace(/\\operatorname\{diag\}/g, 'diag')
+    .replace(/\\operatorname\{Diag\}/g, 'diag')
+    .replace(/\\operatorname\{diagonalize\}/g, 'diag')
+    .replace(/\\operatorname\{Diagonalize\}/g, 'diag')
     .replace(/\\operatorname\{proj\}_\{u\}/g, 'proj_u')
     .replace(/\\operatorname\{proj\}_u/g, 'proj_u')
     .replace(/\\operatorname\{proj\}_\{v\}/g, 'proj_v')
@@ -610,6 +615,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['qr', 'qr'],
     ['invertible', 'invertibility'],
     ['eigen', 'eigen'],
+    ['diag', 'diagonalization'],
     ['norm', 'norm'],
     ['proj_u', 'projectionOntoU'],
     ['proj_v', 'projectionOntoV'],

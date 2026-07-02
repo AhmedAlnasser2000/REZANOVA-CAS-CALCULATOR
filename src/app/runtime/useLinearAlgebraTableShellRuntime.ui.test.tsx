@@ -412,6 +412,17 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(eigen.kind === 'success' ? eigen.detailSections?.[2]?.lines : []).toContain(
       'E_{3}=\\operatorname{Null}(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
     );
+
+    const diagonalizeLatex = '\\operatorname{diag}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
+    const diagonalized = await runMatrixExpression(diagonalizeLatex);
+    expect(diagonalized).toMatchObject({
+      kind: 'success',
+      title: diagonalizeLatex,
+      approxText: 'diagonalizable; eigenvalues 3, 1',
+      sourceMode: 'matrix',
+    });
+    expect(diagonalized.kind === 'success' ? diagonalized.detailSections?.map((section) => section.title) : [])
+      .toEqual(['Characteristic Polynomial', 'Diagonalization Factors', 'Diagonalization Proof', 'Eigenvector Columns', 'Eigenspaces']);
   });
 
   it('keeps Vector editor cards mode-owned and rejects Matrix-only inputs cleanly', async () => {

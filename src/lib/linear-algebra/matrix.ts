@@ -24,6 +24,7 @@ import {
 import { runMatrixBasis } from './matrix-basis';
 import { runMatrixChangeOfBasis } from './matrix-change-of-basis';
 import { runMatrixCoordinates } from './matrix-coordinates';
+import { runMatrixDiagonalization } from './matrix-diagonalization';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
@@ -520,6 +521,31 @@ function exactEigenResponse(req: MatrixRequest): MatrixResponse | null {
   return null;
 }
 
+function exactDiagonalizationResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'diagonalizeA') {
+    return runMatrixDiagonalization({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+
+  if (req.operation === 'diagonalizeB') {
+    return req.matrixB
+      ? runMatrixDiagonalization({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : {
+          warnings: [],
+          error: 'Matrix B is incomplete.',
+        };
+  }
+
+  return null;
+}
+
 function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult): MatrixResponse {
   if (result.kind === 'error') {
     return {
@@ -622,6 +648,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const eigenResponse = exactEigenResponse(req);
   if (eigenResponse) {
     return eigenResponse;
+  }
+
+  const diagonalizationResponse = exactDiagonalizationResponse(req);
+  if (diagonalizationResponse) {
+    return diagonalizationResponse;
   }
 
   const numericRequest: NumericMatrixRequest = {

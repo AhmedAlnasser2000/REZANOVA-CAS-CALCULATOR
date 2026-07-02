@@ -562,6 +562,48 @@ describe('runMatrixOperation', () => {
     );
   });
 
+  it('diagonalizes rational 2x2 matrices when there are enough eigenvectors', () => {
+    const response = runMatrixOperation({
+      operation: 'diagonalizeA',
+      matrixA: [[2, 1], [1, 2]],
+      matrixB,
+    });
+
+    expect(response.resultLatex).toBe('\\operatorname{diag}(A)=A=PDP^{-1}');
+    expect(response.approxText).toBe('diagonalizable; eigenvalues 3, 1');
+    expect(response.detailSections?.map((section) => section.title)).toEqual([
+      'Characteristic Polynomial',
+      'Diagonalization Factors',
+      'Diagonalization Proof',
+      'Eigenvector Columns',
+      'Eigenspaces',
+    ]);
+    expect(response.detailSections?.[1]?.lines).toContain('P=\\begin{bmatrix}1 & -1\\\\1 & 1\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('D=\\begin{bmatrix}3 & 0\\\\0 & 1\\end{bmatrix}');
+    expect(response.detailSections?.[1]?.lines).toContain('P^{-1}=\\begin{bmatrix}\\frac{1}{2} & \\frac{1}{2}\\\\-\\frac{1}{2} & \\frac{1}{2}\\end{bmatrix}');
+    expect(response.detailSections?.[2]?.lines).toContain('(A)P=PD=\\begin{bmatrix}3 & -1\\\\3 & 1\\end{bmatrix}');
+    expect(response.detailSections?.[4]?.lines).toContain(
+      'E_{3}=\\operatorname{Null}(A-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
+    );
+  });
+
+  it('explains repeated-eigenvalue matrices that are not diagonalizable', () => {
+    const response = runMatrixOperation({
+      operation: 'diagonalizeA',
+      matrixA: [[2, 1], [0, 2]],
+      matrixB,
+    });
+
+    expect(response.error).toBe('This matrix is not diagonalizable because it does not have enough independent eigenvectors.');
+    expect(response.detailSections?.map((section) => section.title)).toEqual([
+      'Characteristic Polynomial',
+      'Why It Cannot Diagonalize',
+    ]);
+    expect(response.detailSections?.[1]?.lines).toContain('\\dim E_{2}=1');
+    expect(response.detailSections?.[1]?.lines).toContain('\\text{independent eigenvectors needed}=2');
+    expect(response.detailSections?.[1]?.lines).toContain('\\text{independent eigenvectors found}=1');
+  });
+
   it('computes exact QR factors when Gram-Schmidt lengths stay rational', () => {
     const response = runMatrixOperation({
       operation: 'qrA',

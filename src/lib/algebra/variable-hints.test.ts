@@ -88,6 +88,12 @@ describe('variable hints', () => {
       storedVariables: stored,
     })).toEqual([]);
 
+    expect(hintKinds('\\operatorname{diag}\\left(A\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      storedVariables: stored,
+    })).toEqual([]);
+
     expect(hintKinds('\\operatorname{lu}\\left(A\\right)', {
       mode: 'matrix',
       screenHint: 'matrix',

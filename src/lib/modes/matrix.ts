@@ -121,6 +121,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'eigen(A)';
     case 'eigenB':
       return 'eigen(B)';
+    case 'diagonalizeA':
+      return 'diag(A)';
+    case 'diagonalizeB':
+      return 'diag(B)';
     case 'linearSystem':
       return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
     default:

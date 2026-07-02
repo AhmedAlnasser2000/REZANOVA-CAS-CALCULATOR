@@ -76,6 +76,8 @@ describe('workspace keypad overlays', () => {
       .toBe('\\operatorname{rref}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-eigen')?.latex)
       .toBe('\\operatorname{eigen}\\left(#0\\right)');
+    expect(matrixRows.flat().find((button) => button.id === 'linear-eigen')?.layers?.shift?.latex)
+      .toBe('\\operatorname{diag}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-null')?.latex)
       .toBe('\\operatorname{null}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-col')?.latex)

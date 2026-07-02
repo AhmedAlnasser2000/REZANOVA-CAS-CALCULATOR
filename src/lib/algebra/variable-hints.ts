@@ -91,6 +91,8 @@ const MATRIX_EDITOR_FUNCTIONS = new Set([
   'colproj',
   'coord',
   'coords',
+  'diag',
+  'diagonalize',
   'det',
   'eigen',
   'invertible',

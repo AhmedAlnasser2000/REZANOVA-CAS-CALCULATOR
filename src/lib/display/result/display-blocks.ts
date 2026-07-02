@@ -137,7 +137,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Change-of-Basis Proof',
   'Basis Facts',
   'Basis Proof',
-  'Eigenspaces',
+  'Characteristic Polynomial', 'Diagonalization Factors', 'Diagonalization Proof', 'Eigenspaces', 'Eigenvector Columns',
   'Gram-Schmidt Proof',
   'How Eigenvalues Were Found',
   'Invertibility Theorem',
@@ -145,7 +145,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof', 'QR Factors', 'QR Proof', 'Column Projection Facts', 'Column Projection Proof', 'Least-Squares Solution', 'Residual Vector', 'Least-Squares Proof',
   'Orthonormal Basis',
   'Rank/Nullity Guidance',
-  'System Proof', 'Multi-RHS Proof', 'Inverse Comparison',
+  'System Proof', 'Multi-RHS Proof', 'Inverse Comparison', 'Why It Cannot Diagonalize',
 ]);
 
 const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([
