@@ -12,6 +12,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits finite local symbolic evaluation may now use a recursive leading-term route that preserves target-free symbolic coefficients and exact finite answers without requiring numeric approximations. The route is Limits-owned and remains capped to local carriers, products, quotients, integer powers, sums/cancellations, and selected standard compositions; broader infinity scales, Piecewise, abs side behavior, MRV-lite, and Gruntz remain deferred.
 
+## 2026-07-03 - CALCULUS-LIMITS-INFINITY-SCALE-TERMS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Infinite-target Limits may now use a direct scale-comparison route before L'Hospital/numeric fallback. V1 compares numeric-coefficient powers/roots, logarithms, iterated logarithms, linear exponentials, products, quotients, and dominant sums; it is a capped pre-Gruntz scale engine, not full MRV/Gruntz or broad symbolic-coefficient branching.
+
 ## 2026-07-02 - EQUATION-SOLVER-CARD-CREDIBILITY-CONSISTENCY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation Real mode must not display complex-only roots; it should stop with no-real-root guidance and point to Complex On. Numeric/detail card taxonomy must keep hard domain facts, periodic structure, probe evidence, search diagnostics, breakpoints, extraneous candidates, and confidence wording in their own categories, with target-dependent branch guards scoped to branch/candidate details when safe.

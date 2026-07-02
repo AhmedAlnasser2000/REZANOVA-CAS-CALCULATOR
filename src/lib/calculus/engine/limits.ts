@@ -10,6 +10,7 @@ import {
   resolveFiniteSqueezeOscillationLimit,
   resolveInfiniteExactLocalAlgebraLimit,
   resolveInfiniteIndeterminateTransformLimit,
+  resolveInfiniteScaleLimit,
   unsupportedComplexDomainLimit,
 } from '../../symbolic-engine/limits';
 import type {
@@ -697,6 +698,23 @@ export function evaluateInfiniteLimitFromAst(input: {
       warnings: [],
       resultOrigin: 'rule-based-symbolic',
       detailSections: exactLocalAlgebra.detailSections,
+    };
+  }
+
+  const infinityScale = resolveInfiniteScaleLimit(input.body, input.targetKind, input.variable);
+  if (infinityScale) {
+    const exactLatex = infinityScale.exactLatex ?? (
+      infinityScale.value === undefined ? undefined : limitValueToLatex(infinityScale.value)
+    );
+    const approxText = infinityScale.approxText ?? (
+      infinityScale.value === undefined ? undefined : limitValueToApproxText(infinityScale.value)
+    );
+    return {
+      exactLatex,
+      approxText,
+      warnings: [],
+      resultOrigin: infinityScale.origin,
+      detailSections: infinityScale.detailSections,
     };
   }
 

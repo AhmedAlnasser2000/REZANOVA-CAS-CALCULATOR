@@ -10,6 +10,7 @@ import { resolveInfiniteLimitHeuristic } from './engine/limit-heuristics';
 import {
   hasFiniteRecursiveLeadingTermCandidate,
   hasFiniteSqueezeOscillationCandidate,
+  hasInfiniteScaleCandidate,
   resolveInfiniteExactLocalAlgebraLimit,
 } from '../symbolic-engine/limits';
 import {
@@ -268,6 +269,14 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     return {
       kind: 'exact-local-algebra',
       reason: 'An exact algebra rewrite resolves the infinite-target expression before numeric sampling.',
+      request,
+    };
+  }
+
+  if (hasInfiniteScaleCandidate(node, request.target.targetKind, request.variable)) {
+    return {
+      kind: 'infinity-asymptotic',
+      reason: 'A direct infinity scale comparison resolves the infinite-target expression.',
       request,
     };
   }

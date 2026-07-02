@@ -31,7 +31,10 @@ describe('natural limit route classifier', () => {
       kind: 'taylor-series-candidate',
     });
     expect(classifyNaturalLimitRoute('lim x -> infinity x/e^x')).toMatchObject({
-      kind: 'lhospital-candidate',
+      kind: 'infinity-asymptotic',
+    });
+    expect(classifyNaturalLimitRoute('lim x -> infinity log(x)/x')).toMatchObject({
+      kind: 'infinity-asymptotic',
     });
   });
 

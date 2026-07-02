@@ -179,16 +179,17 @@ describe('calculus limits', () => {
       bodyLatex: '\\frac{e^x}{x^3}',
       targetKind: 'posInfinity',
     });
-    expect(unbounded.error).toContain('unbounded');
+    expect(unbounded.error).toBeUndefined();
+    expect(unbounded.exactLatex).toBe('\\infty');
 
-    const lHospital = evaluateCalculusLimit({
+    const scale = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity x/e^x',
     });
-    expect(lHospital.error).toBeUndefined();
-    expect(lHospital.resultOrigin).toBe('heuristic-symbolic');
-    expect(lHospital.exactLatex).toBe('0');
-    expect(lHospital.detailSections?.[0]?.lines.join(' ')).toContain("L'Hospital");
-    expect(lHospital.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
+    expect(scale.error).toBeUndefined();
+    expect(scale.resultOrigin).toBe('rule-based-symbolic');
+    expect(scale.exactLatex).toBe('0');
+    expect(scale.detailSections?.[0]?.lines.join(' ')).toContain('infinity scale comparison');
+    expect(scale.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
   });
 
   it('stops variable mismatches with a correction suggestion', () => {
@@ -402,5 +403,29 @@ describe('calculus limits', () => {
     expect(logarithmicCosine.exactLatex).toBe('-\\frac{1}{2}');
     expect(logarithmicCosine.resultOrigin).toBe('rule-based-symbolic');
     expect(logarithmicCosine.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
+  });
+
+  it('resolves infinity scale comparisons for logs powers and exponentials', () => {
+    const logOverPower = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity log(x)/x',
+    });
+    const powerOverExp = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity x^5/e^x',
+    });
+    const expRatio = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (e^x+x^3)/(e^x-1)',
+    });
+    const iteratedLog = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity log(log(x))/log(x)',
+    });
+
+    expect(logOverPower.error).toBeUndefined();
+    expect(logOverPower.exactLatex).toBe('0');
+    expect(powerOverExp.error).toBeUndefined();
+    expect(powerOverExp.exactLatex).toBe('0');
+    expect(expRatio.error).toBeUndefined();
+    expect(expRatio.exactLatex).toBe('1');
+    expect(iteratedLog.error).toBeUndefined();
+    expect(iteratedLog.exactLatex).toBe('0');
   });
 });

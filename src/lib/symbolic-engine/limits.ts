@@ -35,6 +35,10 @@ export {
 export { resolveInfiniteExactLocalAlgebraLimit } from './limits/exact-local-algebra';
 export { resolveInfiniteIndeterminateTransformLimit } from './limits/indeterminate-transforms';
 export {
+  hasInfiniteScaleCandidate,
+  resolveInfiniteScaleLimit,
+} from './limits/infinity-scale-terms';
+export {
   hasFiniteRecursiveLeadingTermCandidate,
   resolveFiniteRecursiveLeadingTermLimit,
 } from './limits/finite-leading-terms';
