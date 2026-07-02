@@ -5,7 +5,8 @@ import {
   limitMethodSection,
   limitTextPart,
 } from './detail-readback';
-import { box, evaluateNodeAt, success } from './evaluation';
+import { box, success } from './evaluation';
+import { resolveLocalEquivalentLimit } from './local-equivalents';
 import type { FiniteLimitRuleSuccess } from './types';
 
 type SqueezeOscillationFailure = {
@@ -35,13 +36,21 @@ function boundedOscillatorLabel(node: unknown, variable: string) {
     return undefined;
   }
 
+  const label = nodeLatex(node);
+  return label ?? (node[0] === 'Sin' ? `\\sin(h(${variable}))` : `\\cos(h(${variable}))`);
+}
+
+function oscillatingAtZeroLabel(node: unknown, variable: string) {
+  if (!isNodeArray(node) || !['Sin', 'Cos'].includes(String(node[0])) || node.length !== 2) {
+    return undefined;
+  }
+
   if (!isReciprocalVariable(node[1], variable)) {
     return undefined;
   }
 
-  return node[0] === 'Sin'
-    ? `\\sin(1/${variable})`
-    : `\\cos(1/${variable})`;
+  return nodeLatex(node)
+    ?? (node[0] === 'Sin' ? `\\sin(1/${variable})` : `\\cos(1/${variable})`);
 }
 
 function multiplyNode(nodes: unknown[]) {
@@ -62,7 +71,7 @@ function nodeLatex(node: unknown) {
   }
 }
 
-function resolveSqueezeProduct(node: unknown, variable: string) {
+function resolveSqueezeProduct(node: unknown, variable: string, direction: LimitDirection) {
   if (!isNodeArray(node) || node[0] !== 'Multiply') {
     return undefined;
   }
@@ -82,8 +91,18 @@ function resolveSqueezeProduct(node: unknown, variable: string) {
     return undefined;
   }
 
-  const vanishingLimit = evaluateNodeAt(vanishingFactor, 0, variable);
-  if (vanishingLimit === undefined || Math.abs(vanishingLimit) >= 1e-8) {
+  const vanishingLimit = resolveLocalEquivalentLimit(
+    vanishingFactor,
+    0,
+    variable,
+    direction,
+    'Proved the non-oscillating factor tends to 0 by local equivalent comparison.',
+  );
+  if (
+    !vanishingLimit
+    || vanishingLimit.kind !== 'success'
+    || vanishingLimit.value !== 0
+  ) {
     return undefined;
   }
 
@@ -91,6 +110,7 @@ function resolveSqueezeProduct(node: unknown, variable: string) {
     oscillatorLabels: oscillators.map((entry) => entry.label),
     productLatex: nodeLatex(node) ?? 'product',
     vanishingLatex: nodeLatex(vanishingFactor) ?? 'g(x)',
+    vanishingProof: 'local equivalent comparison',
   };
 }
 
@@ -170,30 +190,32 @@ export function resolveFiniteSqueezeOscillationLimit(
     return undefined;
   }
 
-  const directOscillator = boundedOscillatorLabel(node, variable);
+  const directOscillator = oscillatingAtZeroLabel(node, variable);
   if (directOscillator) {
     return oscillationFailure(directOscillator, variable, direction);
   }
 
-  const product = resolveSqueezeProduct(node, variable);
+  const product = resolveSqueezeProduct(node, variable, direction);
   if (!product) {
     return undefined;
   }
 
   return {
     ...success(0, 'rule-based-symbolic', [
+      'Form detected: vanishing factor times bounded oscillator.',
       `Squeeze bound: -\\left|${product.vanishingLatex}\\right|\\le ${product.productLatex}\\le \\left|${product.vanishingLatex}\\right|.`,
       `Bounded oscillation: ${product.oscillatorLabels.join(' and ')} stays between -1 and 1.`,
-      `The remaining factor tends to 0 as ${variable} approaches 0.`,
-      'By the squeeze theorem, the product tends to 0.',
-      'Final limit: 0.',
+      `Key calculation: the remaining factor tends to 0 by ${product.vanishingProof}.`,
+      'Conclusion: by the squeeze theorem, the product tends to 0.',
+      'Conclusion: final limit is 0.',
     ]),
     detailSections: limitMethodSection(
+      'Form detected: vanishing factor times bounded oscillator.',
       `Squeeze bound: -\\left|${product.vanishingLatex}\\right|\\le ${product.productLatex}\\le \\left|${product.vanishingLatex}\\right|.`,
       `Bounded oscillation: ${product.oscillatorLabels.join(' and ')} stays between -1 and 1.`,
-      `The remaining factor tends to 0 as ${variable} approaches 0.`,
-      'By the squeeze theorem, the product tends to 0.',
-      'Final limit: 0.',
+      `Key calculation: the remaining factor tends to 0 by ${product.vanishingProof}.`,
+      'Conclusion: by the squeeze theorem, the product tends to 0.',
+      'Conclusion: final limit is 0.',
     ),
   };
 }

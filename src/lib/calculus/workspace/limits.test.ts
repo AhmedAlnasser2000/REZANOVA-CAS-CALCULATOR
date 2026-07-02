@@ -193,6 +193,9 @@ describe('calculus limits', () => {
     const secondOrder = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0 x^2 cos(1/x)',
     });
+    const widened = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 ((1-cos(x))/x) cos(1/x^2)',
+    });
     const oscillation = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0 sin(1/x)',
     });
@@ -203,6 +206,10 @@ describe('calculus limits', () => {
 
     expect(secondOrder.error).toBeUndefined();
     expect(secondOrder.exactLatex).toBe('0');
+
+    expect(widened.error).toBeUndefined();
+    expect(widened.exactLatex).toBe('0');
+    expect(widened.detailSections?.[0]?.lines.join(' ')).toContain('bounded oscillator');
 
     expect(oscillation.error).toContain('oscillates near the target');
     expect(oscillation.exactLatex).toBeUndefined();

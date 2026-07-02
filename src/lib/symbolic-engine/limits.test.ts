@@ -226,6 +226,16 @@ describe('symbolic-engine limits', () => {
   it('uses squeeze and oscillation proofs for bounded oscillation patterns', () => {
     const squeeze = resolveFiniteLimitRule(ce.parse('x\\sin(1/x)').json, 0, 'x')
     const secondOrder = resolveFiniteLimitRule(ce.parse('x^2\\cos(1/x)').json, 0, 'x')
+    const widenedOscillator = resolveFiniteSqueezeOscillationLimit(
+      ce.parse('3x\\sin(1/x^2)').json,
+      0,
+      'x',
+    )
+    const equivalentMultiplier = resolveFiniteLimitRule(
+      ce.parse('\\frac{1-\\cos(x)}{x}\\cos(1/x^2)').json,
+      0,
+      'x',
+    )
     const oscillation = resolveFiniteSqueezeOscillationLimit(ce.parse('\\sin(1/x)').json, 0, 'x')
 
     expect(squeeze.kind).toBe('success')
@@ -237,6 +247,18 @@ describe('symbolic-engine limits', () => {
     expect(secondOrder.kind).toBe('success')
     if (secondOrder.kind === 'success') {
       expect(secondOrder.value).toBe(0)
+    }
+
+    expect(widenedOscillator?.kind).toBe('success')
+    if (widenedOscillator?.kind === 'success') {
+      expect(widenedOscillator.value).toBe(0)
+      expect(widenedOscillator.detailSections?.[0]?.lines.join(' ')).toContain('bounded oscillator')
+    }
+
+    expect(equivalentMultiplier.kind).toBe('success')
+    if (equivalentMultiplier.kind === 'success') {
+      expect(equivalentMultiplier.value).toBe(0)
+      expect(equivalentMultiplier.detailSections?.[0]?.lines.join(' ')).toContain('local equivalent')
     }
 
     expect(oscillation?.kind).toBe('failure')
