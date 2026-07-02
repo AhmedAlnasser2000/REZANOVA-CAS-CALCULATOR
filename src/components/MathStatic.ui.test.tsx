@@ -1,11 +1,20 @@
 import { act, render, screen } from '@testing-library/react';
+import { convertLatexToMarkup } from 'mathlive';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EDITOR_ANALYSIS_DEBOUNCE_MS } from '../lib/editor/editor-analysis-runtime';
 import { MathNotationProvider } from './MathNotationContext';
 import { MathStatic } from './MathStatic';
 
+vi.mock('mathlive', () => ({
+  convertLatexToMarkup: vi.fn((latex: string, options: { defaultMode: string }) =>
+    `<math data-mode="${options.defaultMode}">${latex}</math>`),
+}));
+
+const convertLatexToMarkupMock = vi.mocked(convertLatexToMarkup);
+
 describe('MathStatic editor preview containment', () => {
   afterEach(() => {
+    convertLatexToMarkupMock.mockClear();
     vi.useRealTimers();
   });
 
@@ -87,5 +96,29 @@ describe('MathStatic editor preview containment', () => {
 
     const rendered = screen.getByText('x+i');
     expect(rendered).toHaveAttribute('data-raw-latex', rawLatex);
+  });
+
+  it('only asks MathLive for markup in rendered notation mode', () => {
+    const { rerender } = render(
+      <MathNotationProvider notationMode="latex">
+        <MathStatic className="result-math" latex="x+1" />
+      </MathNotationProvider>,
+    );
+    expect(convertLatexToMarkupMock).not.toHaveBeenCalled();
+
+    rerender(
+      <MathNotationProvider notationMode="plainText">
+        <MathStatic className="result-math" latex="x+1" />
+      </MathNotationProvider>,
+    );
+    expect(convertLatexToMarkupMock).not.toHaveBeenCalled();
+
+    rerender(
+      <MathNotationProvider notationMode="rendered">
+        <MathStatic className="result-math" latex="x+1" />
+      </MathNotationProvider>,
+    );
+
+    expect(convertLatexToMarkupMock).toHaveBeenCalledTimes(1);
   });
 });

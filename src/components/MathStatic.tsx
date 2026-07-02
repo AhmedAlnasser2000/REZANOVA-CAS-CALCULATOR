@@ -1,7 +1,7 @@
-import { convertLatexToMarkup } from 'mathlive';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
 import { latexToVisibleText } from '../lib/display/math-notation';
+import { renderCachedMathStaticMarkup } from '../lib/display/math-static-markup-cache';
 import { useMathNotation } from '../lib/display/math-notation-context';
 import { useEditorAnalysis } from '../lib/editor/use-editor-analysis';
 import {
@@ -113,9 +113,7 @@ function buildMathStaticRender(
     notationMode: 'rendered',
     ariaLabel: renderableDisplayLatex,
     rawLatex: latex,
-    markup: convertLatexToMarkup(renderableDisplayLatex, {
-      defaultMode: block ? 'math' : 'inline-math',
-    }),
+    markup: renderCachedMathStaticMarkup(renderableDisplayLatex, block),
   };
 }
 

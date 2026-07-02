@@ -1601,6 +1601,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix and Vector keypad overlays are mode-local replacements over the global keypad, following the derivative-screen pattern. They must disappear outside Matrix/Vector and must not alter derivative keypad replacement behavior.
 
+## 2026-07-02 - MATHSTATIC-MARKUP-LRU1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Rendered `MathStatic` markup is cached as bounded strings only, keyed by display LaTeX plus block/inline mode. The cache is internal Display infrastructure and must not store React nodes, DOM objects, solver objects, Display block trees, History entries, or public schema payloads.
+
 ## 2026-07-02 - LINEAR-ALGEBRA-NAMED-INPUTS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector's user-facing named vectors are lowercase `u` and `v` in the workspace, soft keys, MatrixVec keypad overlay, guide text, and result/error readback. Runtime state and replay compatibility continue to use the existing `vectorA`/`vectorB` fields.
