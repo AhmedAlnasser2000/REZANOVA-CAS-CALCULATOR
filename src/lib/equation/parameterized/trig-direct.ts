@@ -206,12 +206,7 @@ function periodicBranchFamilies(
     return zeroBranchFamilies(kind, targetLatex);
   }
 
-  const numericValue = numericValueOfNode(value);
-  if (numericValue === null) {
-    return null;
-  }
-
-  const cycleDegrees = exactCycleDegrees(kind, numericValue);
+  const cycleDegrees = exactCycleDegreesForNode(kind, value);
   if (!cycleDegrees) {
     return null;
   }
@@ -259,17 +254,166 @@ function exactCycleDegrees(kind: TrigCarrierKind, value: number): number[] | nul
   return null;
 }
 
+function multiplyExactScalars(
+  left: { numerator: number; denominator: number },
+  right: { numerator: number; denominator: number },
+) {
+  return {
+    numerator: left.numerator * right.numerator,
+    denominator: left.denominator * right.denominator,
+  };
+}
+
+function divideExactScalars(
+  left: { numerator: number; denominator: number },
+  right: { numerator: number; denominator: number },
+) {
+  if (right.numerator === 0) {
+    return null;
+  }
+  return {
+    numerator: left.numerator * right.denominator,
+    denominator: left.denominator * right.numerator,
+  };
+}
+
+function normalizeExactScalarRatio(value: { numerator: number; denominator: number }) {
+  const sign = value.numerator * value.denominator < 0 ? -1 : 1;
+  let numerator = Math.abs(value.numerator);
+  let denominator = Math.abs(value.denominator);
+  while (denominator !== 0) {
+    const next = numerator % denominator;
+    numerator = denominator;
+    denominator = next;
+  }
+  const divisor = numerator || 1;
+  return {
+    numerator: sign * (Math.abs(value.numerator) / divisor),
+    denominator: Math.abs(value.denominator) / divisor,
+  };
+}
+
+function isSqrtNode(node: MathJson, radicand: 2 | 3) {
+  return Array.isArray(node)
+    && node[0] === 'Sqrt'
+    && node.length === 2
+    && node[1] === radicand;
+}
+
+function matchSpecialRadicalValue(node: MathJson): { radicand: 2 | 3; coefficient: { numerator: number; denominator: number } } | null {
+  const simplified = simplifyNode(node);
+  if (Array.isArray(simplified) && (isSqrtNode(simplified, 2) || isSqrtNode(simplified, 3))) {
+    const radicand = simplified[1] as 2 | 3;
+    return {
+      radicand,
+      coefficient: { numerator: 1, denominator: 1 },
+    };
+  }
+
+  if (!Array.isArray(simplified)) {
+    return null;
+  }
+
+  if (simplified[0] === 'Negate' && simplified.length === 2) {
+    const child = matchSpecialRadicalValue(simplified[1] as MathJson);
+    return child
+      ? {
+        ...child,
+        coefficient: {
+          numerator: -child.coefficient.numerator,
+          denominator: child.coefficient.denominator,
+        },
+      }
+      : null;
+  }
+
+  if (simplified[0] === 'Divide' && simplified.length === 3) {
+    const numerator = matchSpecialRadicalValue(simplified[1] as MathJson);
+    const denominator = exactScalarForNode(simplified[2] as MathJson);
+    const coefficient = numerator && denominator
+      ? divideExactScalars(numerator.coefficient, denominator)
+      : null;
+    return numerator && coefficient
+      ? { radicand: numerator.radicand, coefficient: normalizeExactScalarRatio(coefficient) }
+      : null;
+  }
+
+  if (simplified[0] === 'Multiply' && simplified.length >= 3) {
+    let coefficient = { numerator: 1, denominator: 1 };
+    let radical: { radicand: 2 | 3; coefficient: { numerator: number; denominator: number } } | null = null;
+    for (const factor of simplified.slice(1) as MathJson[]) {
+      const scalar = exactScalarForNode(factor);
+      if (scalar) {
+        coefficient = multiplyExactScalars(coefficient, scalar);
+        continue;
+      }
+
+      const radicalFactor = matchSpecialRadicalValue(factor);
+      if (!radicalFactor || radical) {
+        return null;
+      }
+      radical = radicalFactor;
+    }
+    return radical
+      ? {
+        radicand: radical.radicand,
+        coefficient: normalizeExactScalarRatio(multiplyExactScalars(coefficient, radical.coefficient)),
+      }
+      : null;
+  }
+
+  return null;
+}
+
+function exactSpecialAngleNumericValue(value: MathJson) {
+  const scalar = exactScalarForNode(value);
+  if (scalar) {
+    const normalized = normalizeExactScalarRatio(scalar);
+    if (
+      normalized.denominator === 1
+      || (Math.abs(normalized.numerator) === 1 && normalized.denominator === 2)
+    ) {
+      return normalized.numerator / normalized.denominator;
+    }
+  }
+
+  const radical = matchSpecialRadicalValue(value);
+  if (!radical) {
+    return null;
+  }
+  const { numerator, denominator } = normalizeExactScalarRatio(radical.coefficient);
+  const absoluteNumerator = Math.abs(numerator);
+  const supported =
+    (radical.radicand === 2 && absoluteNumerator === 1 && denominator === 2)
+    || (
+      radical.radicand === 3
+      && (
+        (absoluteNumerator === 1 && denominator === 1)
+        || (absoluteNumerator === 1 && denominator === 2)
+        || (absoluteNumerator === 1 && denominator === 3)
+      )
+    );
+  return supported
+    ? (numerator / denominator) * Math.sqrt(radical.radicand)
+    : null;
+}
+
+function exactCycleDegreesForNode(kind: TrigCarrierKind, value: MathJson) {
+  const exactSpecial = exactSpecialAngleNumericValue(value);
+  if (exactSpecial !== null) {
+    return exactCycleDegrees(kind, exactSpecial);
+  }
+
+  const numericValue = numericValueOfNode(value);
+  return numericValue === null ? null : exactCycleDegrees(kind, numericValue);
+}
+
 function specialAngleBranchValues(kind: TrigCarrierKind, value: MathJson, angleUnit: AngleUnit) {
   if (angleUnit !== 'rad') {
     return null;
   }
 
-  const numericValue = numericValueOfNode(value);
-  if (numericValue === null) {
-    return null;
-  }
-
-  const cycleDegrees = exactCycleDegrees(kind, numericValue);
+  const cycleDegrees = exactCycleDegreesForNode(kind, value);
   if (!cycleDegrees) {
     return null;
   }

@@ -144,7 +144,7 @@ describe('solveParameterizedExpLogEquation', () => {
   it('solves numeric-base exponential target equations', () => {
     const result = expectSuccess('2^{z+a}=b', 'z');
 
-    expect(result.exactLatex).toContain('\\log_{2}(b)');
+    expect(result.exactLatex).toContain('\\frac{\\ln(b)}{\\ln(2)}');
     expect(result.exactLatex).toContain('-a');
     expect(result.exactSupplementLatex).toEqual(['b>0']);
   });

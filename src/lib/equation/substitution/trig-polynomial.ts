@@ -36,9 +36,30 @@ function matchSupportedTrigCarrier(node: unknown): TrigCarrier | null {
   };
 }
 
+function closeTo(left: number, right: number) {
+  return Math.abs(left - right) <= 1e-9;
+}
+
+function formatTrigCarrierValue(value: number) {
+  if (closeTo(value, 0)) return '0';
+  if (closeTo(value, 1)) return '1';
+  if (closeTo(value, -1)) return '-1';
+  if (closeTo(value, 0.5)) return '\\frac{1}{2}';
+  if (closeTo(value, -0.5)) return '-\\frac{1}{2}';
+  if (closeTo(value, Math.SQRT1_2)) return '\\frac{\\sqrt{2}}{2}';
+  if (closeTo(value, -Math.SQRT1_2)) return '-\\frac{\\sqrt{2}}{2}';
+  if (closeTo(value, Math.sqrt(3) / 2)) return '\\frac{\\sqrt{3}}{2}';
+  if (closeTo(value, -Math.sqrt(3) / 2)) return '-\\frac{\\sqrt{3}}{2}';
+  if (closeTo(value, Math.sqrt(3) / 3)) return '\\frac{\\sqrt{3}}{3}';
+  if (closeTo(value, -Math.sqrt(3) / 3)) return '-\\frac{\\sqrt{3}}{3}';
+  if (closeTo(value, Math.sqrt(3))) return '\\sqrt{3}';
+  if (closeTo(value, -Math.sqrt(3))) return '-\\sqrt{3}';
+  return formatBranchValue(value);
+}
+
 function trigCarrierEquation(kind: 'sin' | 'cos' | 'tan', argumentLatex: string, value: number) {
   const fn = kind === 'sin' ? '\\sin' : kind === 'cos' ? '\\cos' : '\\tan';
-  return `${fn}\\left(${argumentLatex}\\right)=${formatBranchValue(value)}`;
+  return `${fn}\\left(${argumentLatex}\\right)=${formatTrigCarrierValue(value)}`;
 }
 
 function parseTrigPolynomialTerm(node: unknown) {
@@ -135,7 +156,7 @@ function matchTrigPolynomialSubstitution(nonZeroSide: unknown): SubstitutionSolv
   const equations: string[] = [];
   for (const root of validRoots) {
     if (carrier.kind === 'sin' || carrier.kind === 'cos') {
-      const error = trigCarrierDomainError(carrier.kind, formatBranchValue(root));
+      const error = trigCarrierDomainError(carrier.kind, formatTrigCarrierValue(root));
       if (error) {
         continue;
       }

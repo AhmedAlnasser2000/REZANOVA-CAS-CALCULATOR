@@ -119,6 +119,21 @@ function nodeHasSymbol(node: MathJson) {
   }).symbols.length > 0;
 }
 
+function containsPreservedTranscendental(node: unknown): boolean {
+  if (!isArrayNode(node)) {
+    return false;
+  }
+  const [operator, ...operands] = node;
+  if (operator === 'Ln' || operator === 'Log') {
+    return true;
+  }
+  return operands.some(containsPreservedTranscendental);
+}
+
+function preservedLatexForNode(node: MathJson) {
+  return ce.box(node as Parameters<typeof ce.box>[0]).latex.replace(/\\exponentialE/g, 'e');
+}
+
 function numericScalarValue(node: MathJson): number | null {
   if (typeof node === 'number') {
     return Number.isFinite(node) ? node : null;
@@ -237,11 +252,17 @@ function nonzeroFactForLeadingCoefficient(coefficient: MathJson): string | null 
 }
 
 function realDiscriminantFact(discriminant: MathJson): string | null {
-  if (!nodeHasSymbol(discriminant)) {
+  if (!nodeHasSymbol(discriminant) && !containsPreservedTranscendental(discriminant)) {
     return null;
   }
+  if (containsPreservedTranscendental(discriminant) && !nodeHasSymbol(discriminant)) {
+    return `${preservedLatexForNode(discriminant)}\\ge0`;
+  }
   const condition = stripNumericFactorForCondition(discriminant);
-  return `${latexForNode(condition.node)}${condition.relation}`;
+  const conditionLatex = containsPreservedTranscendental(condition.node)
+    ? preservedLatexForNode(condition.node)
+    : latexForNode(condition.node);
+  return `${conditionLatex}${condition.relation}`;
 }
 
 function hasAmbiguousAdjacentProduct(latex: string) {
@@ -283,8 +304,45 @@ function quadraticDiscriminantNode(a: MathJson, b: MathJson, c: MathJson) {
   );
 }
 
+function buildPureSquareTranscendentalRoots(target: string, a: MathJson, b: MathJson, c: MathJson) {
+  if (!isZeroNode(b)) {
+    return null;
+  }
+
+  const payload = divideNodes(negateNode(c), a);
+  if (!containsPreservedTranscendental(payload)) {
+    return null;
+  }
+
+  const payloadLatex = preservedLatexForNode(payload);
+  const roots = [
+    { latex: `-\\sqrt{${payloadLatex}}` },
+    { latex: `\\sqrt{${payloadLatex}}` },
+  ];
+  const renderedRoots = renderFiniteRootSet(
+    createFiniteRootSet({
+      targetLatex: target,
+      branches: roots,
+      source: 'equation-parameterized-polynomial',
+    }),
+    { preserveOrder: true },
+  );
+  return {
+    exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{\\right\\}`,
+    branchReadback: renderedRoots.branchReadback,
+  };
+}
+
 function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: MathJson) {
   const discriminant = quadraticDiscriminantNode(a, b, c);
+  const pureSquare = buildPureSquareTranscendentalRoots(target, a, b, c);
+  if (pureSquare) {
+    return {
+      discriminant,
+      ...pureSquare,
+    };
+  }
+
   const denominator = multiplyNodes(2, a);
   const negativeB = negateNode(b);
   const sqrtDiscriminant = simplifyNode(['Sqrt', discriminant] as MathJson);

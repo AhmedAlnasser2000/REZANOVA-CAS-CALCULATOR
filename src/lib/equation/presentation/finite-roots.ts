@@ -101,6 +101,17 @@ function isArithmeticScalarNode(node: unknown): boolean {
   return operands.every(isArithmeticScalarNode);
 }
 
+function containsPreservedTranscendental(node: unknown): boolean {
+  if (!Array.isArray(node)) {
+    return false;
+  }
+  const [operator, ...operands] = node;
+  if (operator === 'Ln' || operator === 'Log') {
+    return true;
+  }
+  return operands.some(containsPreservedTranscendental);
+}
+
 function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
   const ferrariLatex = renderQuarticFerrariBranchNode(node);
   if (ferrariLatex) {
@@ -122,6 +133,10 @@ function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
   }
 
   try {
+    if (containsPreservedTranscendental(node)) {
+      return ce.box(node as Parameters<typeof ce.box>[0]).latex.replace(/\\exponentialE/g, 'e');
+    }
+
     const simplified = simplifyMathJsonNodeOrOriginal(node) as MathJson;
     const renderNode = hasSymbol(simplified) || !isArithmeticScalarNode(simplified)
       ? simplified

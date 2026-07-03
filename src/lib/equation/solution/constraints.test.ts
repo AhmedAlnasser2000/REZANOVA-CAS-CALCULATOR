@@ -16,6 +16,8 @@ describe('Equation structured constraints', () => {
     );
     expect(normalizeConstraintLatex('(a+b)^{-1}>0')).toBe('\\frac{1}{a+b}>0');
     expect(normalizeConstraintLatex('\\frac{1}{b}\\ne0')).toBe('b\\ne0');
+    expect(normalizeConstraintLatex('\\frac{-k}{2}\\ne0')).toBe('k\\ne0');
+    expect(normalizeConstraintLatex('y-2\\ne0')).toBe('y\\ne2');
     expect(normalizeEquationConstraintLatex(['a\\ne0', 'a\\ne0', '\\frac{1}{b}\\ne0']))
       .toEqual(['a\\ne0', 'b\\ne0']);
   });

@@ -111,4 +111,80 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
     expect(doubledCosZero.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\frac{\\pi n}{2}\\right\\}');
     expect(doubledTanUnit.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{8}+\\frac{\\pi n}{2}\\right\\}');
   });
+
+  it('normalizes scan3 special-angle and quadratic trig output without decimals', () => {
+    const sineRadical = expectSuccess(String.raw`\sin(x)=\frac{\sqrt{2}}{2}`);
+    const tangentRadical = expectSuccess(String.raw`\tan(x)=-\sqrt{3}`);
+    const nonSpecialSine = expectSuccess(String.raw`\sin(x)=\frac{1}{3}`);
+    const nonSpecialTangent = expectSuccess(String.raw`\tan(x)=\frac{1}{2}`);
+    const sineSquare = expectSuccess(String.raw`2\sin^2(x)-1=0`);
+    const tangentSquare = expectSuccess(String.raw`\tan^2(x)-3=0`);
+    const mixedZero = expectSuccess(String.raw`\sin(x)+\cos(x)=0`);
+    const doubleAngleComposition = expectSuccess(String.raw`\sin(2x)=\cos(x)`);
+
+    expect(sineRadical.exactLatex).toContain('\\frac{\\pi}{4}');
+    expect(sineRadical.exactLatex).toContain('\\frac{3\\pi}{4}');
+    expect(collectOutcomeText(sineRadical)).not.toContain('\\arcsin');
+    expect(tangentRadical.exactLatex).toContain('-\\frac{\\pi}{3}');
+    expect(collectOutcomeText(tangentRadical)).not.toContain('\\arctan');
+    expect(nonSpecialSine.exactLatex).toContain('\\arcsin(\\frac{1}{3})');
+    expect(nonSpecialTangent.exactLatex).toContain('\\arctan(\\frac{1}{2})');
+
+    for (const result of [sineSquare, tangentSquare, mixedZero, doubleAngleComposition]) {
+      const text = collectOutcomeText(result);
+      expect(text).toContain('n\\in\\mathbb{Z}');
+      expect(text).not.toMatch(/\d+\.\d/u);
+      expect(text).not.toContain('\\arcsin(0)');
+      expect(text).not.toContain('\\operatorname{atan2}');
+    }
+    expect(sineSquare.exactLatex).toContain('\\frac{\\pi}{4}');
+    expect(tangentSquare.exactLatex).toContain('\\frac{\\pi}{3}');
+    expect(mixedZero.exactLatex).toContain('\\frac{3\\pi}{4}');
+    expect(doubleAngleComposition.exactLatex).toContain('\\frac{\\pi}{6}');
+  });
+
+  it('renders scan3 exp/log exact forms without decimal leakage', () => {
+    const numericBase = expectSuccess(String.raw`2^x=7`);
+    const affineNumericBase = expectSuccess(String.raw`3^{2x}=11`);
+    const fractionalBase = expectSuccess(String.raw`9^x=27`);
+    const quadraticExponent = expectSuccess(String.raw`e^{x^2}=5`);
+    const nestedLog = expectSuccess(String.raw`\ln(e^x+1)=2`);
+
+    expect(numericBase.exactLatex).toBe('x=\\frac{\\ln(7)}{\\ln(2)}');
+    expect(affineNumericBase.exactLatex).toBe('x=\\frac{\\ln(11)}{2\\ln(3)}');
+    expect(fractionalBase.exactLatex).toBe('x=\\frac{3}{2}');
+    expect(quadraticExponent.exactLatex).toContain('-\\sqrt{\\ln(5)}');
+    expect(quadraticExponent.exactLatex).toContain('\\sqrt{\\ln(5)}');
+    expect(collectOutcomeText(quadraticExponent)).not.toMatch(/\d+\.\d/u);
+    expect(nestedLog.exactLatex).toBe('x=\\ln(e^{2}-1)');
+    expect(collectOutcomeText(nestedLog)).toContain('e^{x}+1>0');
+  });
+
+  it('preserves scan3 formula constraints and radical candidate evidence', () => {
+    const formulaSquare = expectSuccess(String.raw`E=\frac{1}{2}kx^2`);
+    const inverseFormula = expectSuccess(String.raw`y=\frac{2x+3}{x-4}`);
+    const extraneousRadical = expectSuccess(String.raw`\sqrt{x+10}=x+2`);
+    const twoRadicals = expectSuccess(String.raw`\sqrt{2x+1}+\sqrt{x-3}=6`);
+
+    expect(collectOutcomeText(formulaSquare)).toContain('k\\ne0');
+    expect(collectOutcomeText(inverseFormula)).toContain('y\\ne2');
+
+    for (const result of [extraneousRadical, twoRadicals]) {
+      const text = collectOutcomeText(result);
+      expect(text).toContain('Candidate');
+      expect(text).toContain('rejected');
+      expect(text).not.toContain('(approximately');
+    }
+  });
+
+  it('uses concrete scan3 nested composition benchmarks instead of abstract placeholders', () => {
+    const radicalComposition = expectSuccess(String.raw`\sqrt{x^2+3x+2}=0`);
+    const logComposition = expectSuccess(String.raw`\ln(x^2+3x+3)=0`);
+
+    expect(radicalComposition.exactLatex).toContain('-2');
+    expect(radicalComposition.exactLatex).toContain('-1');
+    expect(logComposition.exactLatex).toContain('-2');
+    expect(logComposition.exactLatex).toContain('-1');
+    expect(collectOutcomeText(logComposition)).toContain('x^2+3x+3>0');
+  });
 });

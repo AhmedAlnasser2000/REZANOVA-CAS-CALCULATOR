@@ -20,6 +20,46 @@ describe('Equation mode systems and guided polynomial', () => {
     expect(result.exactLatex).toContain('y=2');
   });
 
+  it('routes scan3 textbook 2x2 systems through the existing linear screen', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'linear2',
+      equationLatex: '',
+      system2: [
+        [1, 1, 7],
+        [1, -1, 1],
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('x=4');
+    expect(result.exactLatex).toContain('y=3');
+  });
+
+  it('routes scan3 textbook 3x3 systems through the existing linear screen', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'linear3',
+      equationLatex: '',
+      system3: [
+        [1, 1, 1, 6],
+        [2, -1, 1, 3],
+        [1, 2, -1, 2],
+      ],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('x=1');
+    expect(result.exactLatex).toContain('y=2');
+    expect(result.exactLatex).toContain('z=3');
+  });
+
   it('solves polynomial 2x2 systems through bounded resultant projection', () => {
     const result = runEquationMode({
       ...makeRequest(),
@@ -35,6 +75,22 @@ describe('Equation mode systems and guided polynomial', () => {
     expect(result.exactLatex).toContain('\\left(-1,1\\right)');
     expect(result.exactLatex).toContain('\\left(1,1\\right)');
     expect(result.detailSections?.map((section) => section.title)).toContain('Resultant Projection');
+  });
+
+  it('routes scan3 textbook nonlinear 2x2 systems through the existing polynomial system screen', () => {
+    const result = runEquationMode({
+      ...makeRequest(),
+      equationScreen: 'polynomialSystem2',
+      equationLatex: '',
+      polynomialSystem2Latex: ['x^2+y=10', 'x-y=2'],
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected a success outcome');
+    }
+    expect(result.exactLatex).toContain('\\left(-4,-6\\right)');
+    expect(result.exactLatex).toContain('\\left(3,1\\right)');
   });
 
   it('solves frontier polynomial 2x2 retained projections through the product route', () => {

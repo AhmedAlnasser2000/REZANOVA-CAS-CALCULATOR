@@ -91,9 +91,6 @@ function formatEvidenceLine(evidence: ExtraneousCandidateEvidence) {
   } else {
     pieces.push('unknown');
   }
-  if (evidence.candidateLatex && evidence.approxValue !== undefined) {
-    pieces.push(`(approximately ${formatApproxNumber(evidence.approxValue)})`);
-  }
   const occurrenceText = evidence.occurrenceCount && evidence.occurrenceCount > 1
     ? ` in ${evidence.occurrenceCount} search passes`
     : '';
@@ -109,9 +106,6 @@ function formatEvidenceParts(evidence: ExtraneousCandidateEvidence): DisplayDeta
     parts.push({ kind: 'text', text: `approximately ${formatApproxNumber(evidence.approxValue)}` });
   } else {
     parts.push({ kind: 'text', text: 'unknown' });
-  }
-  if (evidence.candidateLatex && evidence.approxValue !== undefined) {
-    parts.push({ kind: 'text', text: ` (approximately ${formatApproxNumber(evidence.approxValue)})` });
   }
   const occurrenceText = evidence.occurrenceCount && evidence.occurrenceCount > 1
     ? ` in ${evidence.occurrenceCount} search passes`

@@ -56,6 +56,7 @@ const ALLOWED_SOURCE_RELEVANCE = ['primary', 'secondary', 'reference'];
 const ALLOWED_DOMAINS = ['real', 'complex', 'interval-real', 'mixed-or-unspecified'];
 const ALLOWED_RUN_POLICIES = ['run-once-per-case-per-sweep'];
 const ALLOWED_CASE_STATUSES = ['pending', 'supported', 'unsupported', 'wrong-result', 'needs-upgrade', 'not-run'];
+const ALLOWED_ROUTE_HINTS = ['symbolic', 'linear2', 'linear3', 'polynomialSystem2', 'quadratic', 'cubic', 'quartic'];
 const ALLOWED_RUN_STATUSES = ['supported', 'unsupported', 'wrong-result', 'timeout-or-too-slow', 'not-run'];
 const ALLOWED_FAILURE_KINDS = [
   'none',
@@ -202,6 +203,9 @@ function validateUniqueCases(filePath, sourceIds) {
     assertEnum(record.domain, ALLOWED_DOMAINS, `${context}.domain`);
     assertEnum(record.run_policy, ALLOWED_RUN_POLICIES, `${context}.run_policy`);
     assertEnum(record.status, ALLOWED_CASE_STATUSES, `${context}.status`);
+    if (record.route_hint) {
+      assertEnum(record.route_hint, ALLOWED_ROUTE_HINTS, `${context}.route_hint`);
+    }
 
     if (!sourceIds.has(record.source_id)) {
       throw new Error(`${context} references unknown source_id "${record.source_id}"`);

@@ -4,6 +4,7 @@ import {
 } from '../../symbolic-engine/patterns';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import {
+  matchAffineVariableArgument,
   matchTrigCall,
   normalizeTrigAst,
   sameTrigArgument,
@@ -45,6 +46,40 @@ function matchSameArgumentQuotientRewrite(
   };
 }
 
+function matchSineDoubleEqualsCosineRewrite(
+  expressionNode: unknown,
+  rhsNode: unknown,
+): TrigRewriteSolveCandidate | null {
+  const expression = matchTrigCall(normalizeAst(expressionNode));
+  const rhs = matchTrigCall(normalizeAst(rhsNode));
+  if (!expression || !rhs || expression.kind !== 'sin' || rhs.kind !== 'cos') {
+    return null;
+  }
+
+  const sineArgument = matchAffineVariableArgument(expression.argument, { maxCoefficient: 6 });
+  const cosineArgument = matchAffineVariableArgument(rhs.argument, { maxCoefficient: 6 });
+  if (
+    !sineArgument
+    || !cosineArgument
+    || sineArgument.coefficient !== cosineArgument.coefficient * 2
+    || !isZeroNode(sineArgument.offsetNode)
+    || !isZeroNode(cosineArgument.offsetNode)
+  ) {
+    return null;
+  }
+
+  return {
+    kind: 'split-sum-product',
+    rewriteKind: 'sum-product-split',
+    branchLatex: [
+      `\\cos\\left(${rhs.argumentLatex}\\right)=0`,
+      `\\sin\\left(${rhs.argumentLatex}\\right)=\\frac{1}{2}`,
+    ],
+    normalizedLatex: `\\cos\\left(${rhs.argumentLatex}\\right)\\left(2\\sin\\left(${rhs.argumentLatex}\\right)-1\\right)=0`,
+    summaryText: 'Rewritten with sin(2u)=2sin(u)cos(u), then split by the zero-product property.',
+  };
+}
+
 function matchZeroFormCandidate(nonZeroSide: unknown): TrigRewriteMatchResult {
   const terms = flattenAdd(normalizeAst(nonZeroSide));
   if (terms.length !== 2) {
@@ -75,6 +110,11 @@ function matchZeroFormCandidate(nonZeroSide: unknown): TrigRewriteMatchResult {
 }
 
 function matchDirectCandidate(expressionNode: unknown, rhsNode: unknown): TrigRewriteMatchResult {
+  const sineDoubleCosine = matchSineDoubleEqualsCosineRewrite(expressionNode, rhsNode);
+  if (sineDoubleCosine) {
+    return { kind: 'candidate', candidate: sineDoubleCosine };
+  }
+
   const quotient = matchSameArgumentQuotientRewrite(expressionNode, rhsNode);
   if (quotient) {
     return { kind: 'candidate', candidate: quotient };

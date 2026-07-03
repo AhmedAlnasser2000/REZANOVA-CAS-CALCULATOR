@@ -1,12 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import {
   collectExpLogAffine,
-  complexPreimageEquationForCarrier,
+  cleanLatex,
   containsSelectedExpLog,
   divideNodes,
-  finalizeComplexPreimageExpLogSolve,
-  finalizeGeneratedExpLogSolve,
-  generatedEquationForCarrier,
   hasTarget,
   isArrayNode,
   isZeroNode,
@@ -17,7 +14,17 @@ import {
   stop,
   subtractAffine,
 } from './exp-log-core';
+import {
+  complexPreimageEquationForCarrier,
+  finalizeComplexPreimageExpLogSolve,
+  finalizeGeneratedExpLogSolve,
+  generatedEquationForCarrier,
+} from './exp-log-generated-finalize';
 import { solveTargetBaseDirectEquation } from './exp-log-target-base';
+import {
+  buildParameterizedDetailSections,
+  normalizeParameterizedSupplementLatex,
+} from './readback';
 export type {
   ParameterizedExpLogSolveOptions,
   ParameterizedExpLogSolveResult,
@@ -33,6 +40,114 @@ import type { MathJson } from './math-json';
 import { hasAmbiguousAdjacentProduct, parameterNamesFromLatex } from './target-context';
 
 const ce = new ComputeEngine();
+
+type NestedNaturalLogHandoff = {
+  logNode: MathJson;
+  inner: MathJson;
+  value: MathJson;
+  generatedEquationLatex: string;
+  domainFacts: string[];
+};
+
+function nestedNaturalLogHandoffForSide(
+  side: MathJson,
+  otherSide: MathJson,
+  target: string,
+): NestedNaturalLogHandoff | null {
+  const inner = isArrayNode(side) ? side[1] as MathJson : null;
+  if (
+    !isArrayNode(side)
+    || side[0] !== 'Ln'
+    || side.length !== 2
+    || !inner
+    || !hasTarget(inner, target)
+    || !isSupportedNestedExponentialInner(inner, target)
+    || hasTarget(otherSide, target)
+  ) {
+    return null;
+  }
+
+  const value = otherSide;
+  return {
+    logNode: side,
+    inner,
+    value,
+    generatedEquationLatex: `${latexForNode(inner)}=${latexForNode(['Power', 'ExponentialE', value] as MathJson)}`,
+    domainFacts: [`${latexForNode(inner)}>0`],
+  };
+}
+
+function containsSelectedExponentialCarrier(node: unknown, target: string): boolean {
+  if (!isArrayNode(node)) {
+    return false;
+  }
+  const [operator, ...operands] = node;
+  if (
+    operator === 'Power'
+    && operands.length === 2
+    && !hasTarget(operands[0], target)
+    && hasTarget(operands[1], target)
+  ) {
+    return true;
+  }
+  return operands.some((operand) => containsSelectedExponentialCarrier(operand, target));
+}
+
+function isSupportedNestedExponentialInner(inner: MathJson, target: string) {
+  return isArrayNode(inner)
+    && (inner[0] === 'Add' || inner[0] === 'Subtract')
+    && containsSelectedExponentialCarrier(inner, target);
+}
+
+function nestedNaturalLogHandoff(
+  equationJson: MathJson[],
+  target: string,
+) {
+  return nestedNaturalLogHandoffForSide(equationJson[1], equationJson[2], target)
+    ?? nestedNaturalLogHandoffForSide(equationJson[2], equationJson[1], target);
+}
+
+function solveNestedNaturalLogComposition(
+  handoff: NestedNaturalLogHandoff,
+  target: string,
+  parameterNames: string[],
+  options: ParameterizedExpLogSolveOptions,
+): ParameterizedExpLogSolveResult | null {
+  const solved = solveParameterizedExpLogEquation(
+    handoff.generatedEquationLatex,
+    target,
+    {
+      ...options,
+      allowGeneratedImplicitProducts: true,
+    },
+  );
+  if (solved.kind === 'unsupported') {
+    return null;
+  }
+
+  const exactSupplementLatex = normalizeParameterizedSupplementLatex([
+    ...handoff.domainFacts,
+    ...(solved.exactSupplementLatex ?? []),
+  ].map(cleanLatex));
+
+  return {
+    ...solved,
+    parameterNames,
+    exactSupplementLatex,
+    generatedEquationLatex: handoff.generatedEquationLatex,
+    detailSections: buildParameterizedDetailSections({
+      target,
+      parameterNames,
+      familyTitle: 'Parameterized Exp/Log Solve',
+      familyLines: [
+        `Converted ${latexForNode(handoff.logNode)}=${latexForNode(handoff.value)} to ${handoff.generatedEquationLatex} with a natural-log inverse rule.`,
+        'Delegated the generated exponential equation to existing selected-target parameter solvers.',
+      ],
+      extraSections: solved.detailSections
+        .filter((section) => section.title !== 'Solve Target'),
+    }),
+  };
+}
 
 export function solveParameterizedExpLogEquation(
   equationLatex: string,
@@ -76,6 +191,14 @@ export function solveParameterizedExpLogEquation(
   );
   if (targetBase.kind !== 'none') {
     return targetBase;
+  }
+
+  const nestedLog = nestedNaturalLogHandoff(equationJson, target);
+  if (nestedLog) {
+    const solvedNested = solveNestedNaturalLogComposition(nestedLog, target, parameterNames, options);
+    if (solvedNested) {
+      return solvedNested;
+    }
   }
 
   if (!containsSelectedExpLog(equationJson, target)) {

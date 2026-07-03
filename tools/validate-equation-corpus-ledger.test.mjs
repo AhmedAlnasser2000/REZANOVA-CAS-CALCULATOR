@@ -24,7 +24,7 @@ describe('equation corpus ledger validation', () => {
       sourceCount: 10,
       uniqueCaseCount: 450,
       duplicateCaseCount: 100,
-      runResultCount: 474,
+      runResultCount: 724,
       scanFindingCount: 76,
     });
   });
@@ -43,6 +43,7 @@ describe('equation corpus ledger validation', () => {
         expected_result_kind: 'exact-roots',
         run_policy: 'run-once-per-case-per-sweep',
         status: 'pending',
+        route_hint: 'symbolic',
         source_id: 'openstax-algebra-trig-2e',
         source_locator: '2.5 Quadratic Equations',
       })}\n`,

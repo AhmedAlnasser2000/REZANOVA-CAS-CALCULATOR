@@ -61,8 +61,35 @@ const SOURCE_ORDER: EquationConstraintSource[] = [
   'legacy',
 ];
 
+function normalizeSimpleNonzeroRelation(latex: string) {
+  const scalarFraction = latex.match(/^\\frac\{(-?[A-Za-z])\}\{[1-9]\d*\}\\ne0$/);
+  if (scalarFraction) {
+    return `${scalarFraction[1].replace('-', '')}\\ne0`;
+  }
+
+  const prefixedScalarFraction = latex.match(/^-\\frac\{([A-Za-z])\}\{[1-9]\d*\}\\ne0$/);
+  if (prefixedScalarFraction) {
+    return `${prefixedScalarFraction[1]}\\ne0`;
+  }
+
+  const shiftedNonTarget = latex.match(/^([A-WY-Za-wy-z])([+-])([1-9]\d*)\\ne0$/);
+  if (shiftedNonTarget) {
+    const [, variable, sign, rawConstant] = shiftedNonTarget;
+    return sign === '-'
+      ? `${variable}\\ne${rawConstant}`
+      : `${variable}\\ne-${rawConstant}`;
+  }
+
+  return null;
+}
+
 export function normalizeConstraintLatex(latex: string) {
   const trimmed = latex.trim();
+  const simpleNonzero = normalizeSimpleNonzeroRelation(trimmed);
+  if (simpleNonzero) {
+    return simpleNonzero;
+  }
+
   const reciprocalNonzero = trimmed.match(/^\\frac\{1\}\{(.+)\}\\ne0$/);
   if (reciprocalNonzero) {
     return `${reciprocalNonzero[1]}\\ne0`;
@@ -186,6 +213,10 @@ function parseConstraintLatex(
 
   if (normalized.startsWith(PRINCIPAL_RANGE_PREFIX)) {
     return [noteConstraint('trig-range', 'trig-range', normalized)];
+  }
+
+  if (/^.+\\ne.+$/u.test(normalized) && !normalized.endsWith('\\ne0')) {
+    return [noteConstraint('denominator-exclusion', source, normalized)];
   }
 
   const relational = parseRelationalConstraint(normalized, source);

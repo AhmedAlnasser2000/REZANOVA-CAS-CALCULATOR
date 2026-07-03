@@ -2,7 +2,6 @@ import {
   ZERO,
   EPSILON,
   containsSelectedExpLog,
-  finalizeGeneratedExpLogSolve,
   hasTarget,
   isArrayNode,
   isNegativeOneNode,
@@ -14,6 +13,7 @@ import {
   positiveFactForNode,
   stop,
 } from './exp-log-core';
+import { finalizeGeneratedExpLogSolve } from './exp-log-generated-finalize';
 import {
   logCarrierLatex,
   powerCarrierLatex,

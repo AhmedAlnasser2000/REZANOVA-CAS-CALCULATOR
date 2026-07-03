@@ -83,8 +83,19 @@ Optional fields:
 - `expected_constraints_latex`
 - `canonicalization_notes`
 - `duplicate_notes`
+- `route_hint`
 - `tags`
 - `notes`
+
+Allowed `route_hint` values:
+
+- `symbolic`
+- `linear2`
+- `linear3`
+- `polynomialSystem2`
+- `quadratic`
+- `cubic`
+- `quartic`
 
 ## `ledger/duplicate-cases.jsonl`
 

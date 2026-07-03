@@ -27,6 +27,7 @@ import {
   solveArgumentForTarget,
   subtractLatex,
 } from './trig-direct';
+import { formatDegreesAsUnitLatex } from '../../trigonometry/angles';
 import type { MathJson } from './math-json';
 import type {
   ParameterizedTrigSolveOptions,
@@ -62,11 +63,39 @@ function nodeHasSymbol(node: MathJson) {
   return sharedNodeHasSymbol(node, latexForNode);
 }
 
+function closeTo(left: number, right: number) {
+  return Math.abs(left - right) <= 1e-9;
+}
+
+function exactPhaseDegreesForMixedCoefficients(
+  sinCoefficient: MathJson,
+  cosCoefficient: MathJson,
+) {
+  const sinNumeric = numericValueOfNode(sinCoefficient);
+  const cosNumeric = numericValueOfNode(cosCoefficient);
+  if (sinNumeric === null || cosNumeric === null) {
+    return null;
+  }
+
+  const degrees = Math.atan2(cosNumeric, sinNumeric) * 180 / Math.PI;
+  for (const supported of [-180, -150, -135, -120, -90, -60, -45, -30, 0, 30, 45, 60, 90, 120, 135, 150, 180]) {
+    if (closeTo(degrees, supported)) {
+      return supported;
+    }
+  }
+  return null;
+}
+
 function phaseLatexForMixedCoefficients(
   sinCoefficient: MathJson,
   cosCoefficient: MathJson,
   angleUnit: AngleUnit,
 ) {
+  const exactDegrees = exactPhaseDegreesForMixedCoefficients(sinCoefficient, cosCoefficient);
+  if (exactDegrees !== null) {
+    return formatDegreesAsUnitLatex(exactDegrees, angleUnit);
+  }
+
   const sinLatex = latexForNode(sinCoefficient);
   const cosLatex = latexForNode(cosCoefficient);
   const phase = `\\operatorname{atan2}\\left(${cosLatex},${sinLatex}\\right)`;
@@ -168,6 +197,10 @@ export function solveMixedParameterizedTrigFromJson(
   const amplitude = simplifyNode(['Sqrt', amplitudeSquare] as MathJson);
   const normalizedValue = divideNodes(rhs, amplitude);
   const normalizedValueLatex = latexForNode(normalizedValue);
+  const exactPhaseDegrees = exactPhaseDegreesForMixedCoefficients(
+    normalized.affine.sinCoefficient,
+    normalized.affine.cosCoefficient,
+  );
   const phaseLatex = phaseLatexForMixedCoefficients(
     normalized.affine.sinCoefficient,
     normalized.affine.cosCoefficient,
@@ -189,13 +222,20 @@ export function solveMixedParameterizedTrigFromJson(
     );
   }
 
-  const inverse = scaledInverseLatex('sin', normalizedValueLatex, angleUnit);
+  const inverse = isZeroNode(normalizedValue)
+    ? '0'
+    : scaledInverseLatex('sin', normalizedValueLatex, angleUnit);
   const period = mixedPeriodLatex(angleUnit);
   const halfTurn = mixedHalfTurnLatex(angleUnit);
-  const branchValues = [
-    `${subtractLatex(inverse, phaseLatex)}+${period}`,
-    `${subtractLatex(subtractLatex(halfTurn, inverse), phaseLatex)}+${period}`,
-  ];
+  const branchValues = isZeroNode(normalizedValue) && exactPhaseDegrees !== null
+    ? [
+      `${formatDegreesAsUnitLatex(-exactPhaseDegrees, angleUnit)}+${period}`,
+      `${formatDegreesAsUnitLatex(180 - exactPhaseDegrees, angleUnit)}+${period}`,
+    ]
+    : [
+      `${subtractLatex(inverse, phaseLatex)}+${period}`,
+      `${subtractLatex(subtractLatex(halfTurn, inverse), phaseLatex)}+${period}`,
+    ];
   const rhsLatex = latexForNode(rhs);
   const argumentLatex = latexForNode(normalized.affine.argument);
   const formulaFacts = normalizeParameterizedSupplementLatex(dedupe([
