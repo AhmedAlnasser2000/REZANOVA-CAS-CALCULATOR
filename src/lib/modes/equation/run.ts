@@ -47,6 +47,88 @@ import type {
   RunEquationModeRequest,
 } from './types';
 
+function readLatexBraceGroup(source: string, startIndex: number) {
+  if (source[startIndex] !== '{') {
+    return null;
+  }
+
+  let depth = 0;
+  for (let index = startIndex; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === '{') {
+      depth += 1;
+    } else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return {
+          value: source.slice(startIndex + 1, index),
+          nextIndex: index + 1,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function fractionDenominatorAtStart(source: string) {
+  if (!source.startsWith('\\frac')) {
+    return undefined;
+  }
+
+  const numerator = readLatexBraceGroup(source, '\\frac'.length);
+  if (!numerator) {
+    return undefined;
+  }
+
+  const denominator = readLatexBraceGroup(source, numerator.nextIndex);
+  if (!denominator || denominator.nextIndex !== source.length) {
+    return undefined;
+  }
+
+  return denominator.value;
+}
+
+function topLevelQuotientZeroDenominator(equationLatex: string) {
+  const compact = equationLatex.replace(/\s+/g, '');
+
+  if (compact.endsWith('=0')) {
+    return fractionDenominatorAtStart(compact.slice(0, -2));
+  }
+
+  if (compact.startsWith('0=')) {
+    return fractionDenominatorAtStart(compact.slice(2));
+  }
+
+  return undefined;
+}
+
+function withOriginalQuotientZeroExclusion(outcome: DisplayOutcome, equationLatex: string): DisplayOutcome {
+  if (
+    outcome.kind !== 'success'
+    || (outcome.exactSupplementLatex?.length ?? 0) > 0
+  ) {
+    return outcome;
+  }
+
+  const denominatorLatex = topLevelQuotientZeroDenominator(equationLatex);
+  if (!denominatorLatex) {
+    return outcome;
+  }
+
+  return {
+    ...outcome,
+    exactSupplementLatex: [`${denominatorLatex}\\ne0`],
+    detailSections: [
+      ...(outcome.detailSections ?? []),
+      {
+        title: 'Domain Facts',
+        lines: [`${denominatorLatex} must stay nonzero.`],
+      },
+    ],
+  };
+}
+
 function buildEquationRunEvidence(input: {
   outcome: DisplayOutcome;
   equationLatex: string;
@@ -236,15 +318,18 @@ export function runEquationMode({
       sharedSolveRunner,
     );
 
-    const storedValueOutcome = withStoredValueDetails(outcome, {
-      substitution,
-      target: protectedTarget,
-      interval: numericInterval,
-      originalLatex: equationLatex,
-      replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
-      ignoredLines,
-      additionalPolicyLines,
-    });
+    const storedValueOutcome = withOriginalQuotientZeroExclusion(
+      withStoredValueDetails(outcome, {
+        substitution,
+        target: protectedTarget,
+        interval: numericInterval,
+        originalLatex: equationLatex,
+        replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
+        ignoredLines,
+        additionalPolicyLines,
+      }),
+      equationLatex,
+    );
 
     const finalOutcome = isNumericIntervalRoute
       ? withEquationNumericRouteKind(storedValueOutcome)
@@ -360,15 +445,18 @@ export async function runEquationModeWithAsyncSharedSolve(
     asyncSharedSolveRunner,
   );
 
-  const storedValueOutcome = withStoredValueDetails(outcome, {
-    substitution,
-    target: protectedTarget,
-    interval: numericInterval,
-    originalLatex: equationLatex,
-    replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
-    ignoredLines,
-    additionalPolicyLines,
-  });
+  const storedValueOutcome = withOriginalQuotientZeroExclusion(
+    withStoredValueDetails(outcome, {
+      substitution,
+      target: protectedTarget,
+      interval: numericInterval,
+      originalLatex: equationLatex,
+      replayedSnapshot: Boolean(variableSubstitutionSnapshot) && !useStoredValueSubstitution,
+      ignoredLines,
+      additionalPolicyLines,
+    }),
+    equationLatex,
+  );
 
   const finalOutcome = isNumericIntervalRoute
     ? withEquationNumericRouteKind(storedValueOutcome)

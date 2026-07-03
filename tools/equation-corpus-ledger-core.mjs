@@ -83,6 +83,7 @@ const ALLOWED_FINDING_KINDS = [
   'duplicate-mapping-note',
 ];
 const ALLOWED_UPGRADE_OR_MISSING = ['missing-capability', 'needs-upgrade', 'not-applicable'];
+const ALLOWED_FINDING_RESOLUTION_STATUSES = ['open', 'fixed', 'superseded', 'not-reproduced'];
 
 function normalizeRepoPath(filePath) {
   return filePath.replace(/\\/gu, '/').replace(/^\.\//u, '');
@@ -276,6 +277,14 @@ function validateScanFindings(filePath, sourceIds, caseIds) {
 
     if (record.upgrade_or_missing) {
       assertEnum(record.upgrade_or_missing, ALLOWED_UPGRADE_OR_MISSING, `${context}.upgrade_or_missing`);
+    }
+
+    if (record.resolution_status) {
+      assertEnum(
+        record.resolution_status,
+        ALLOWED_FINDING_RESOLUTION_STATUSES,
+        `${context}.resolution_status`,
+      );
     }
   }
 

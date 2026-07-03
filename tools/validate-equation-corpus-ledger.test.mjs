@@ -19,13 +19,13 @@ function ledgerPath(rootDir, fileName) {
 }
 
 describe('equation corpus ledger validation', () => {
-  it('accepts the committed empty ledger scaffold', () => {
+  it('accepts the committed ledger scaffold', () => {
     assert.deepEqual(validateEquationCorpusLedger(), {
       sourceCount: 10,
-      uniqueCaseCount: 0,
+      uniqueCaseCount: 50,
       duplicateCaseCount: 0,
-      runResultCount: 0,
-      scanFindingCount: 0,
+      runResultCount: 56,
+      scanFindingCount: 6,
     });
   });
 
@@ -70,6 +70,7 @@ describe('equation corpus ledger validation', () => {
         failure_kind: 'none',
       })}\n`,
     );
+    writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
 
     assert.deepEqual(validateEquationCorpusLedger({ rootDir }), {
       sourceCount: 10,

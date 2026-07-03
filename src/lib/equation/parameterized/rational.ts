@@ -36,6 +36,8 @@ import {
   renderRawSupplementLatexFromFacts,
   type EquationBranchDomainFact,
 } from '../facts/branch-domain-facts';
+import { exactRootsFromLatex } from '../roots/representation';
+import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 
 const ce = new ComputeEngine();
 
@@ -340,6 +342,48 @@ function dedupeLatex(entries: string[]) {
   return [...new Set(entries.filter(Boolean))];
 }
 
+function exactLatexForRoots(target: string, roots: string[]) {
+  const unique = dedupeLatex(roots);
+  return unique.length === 1
+    ? `${target}=${unique[0]}`
+    : `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
+}
+
+function numericValueOfLatex(latex: string, target: string, rootLatex: string) {
+  try {
+    const substituted = ce.parse(latex).subs({ [target]: ce.parse(rootLatex) });
+    const numeric = substituted.N?.() ?? substituted.evaluate();
+    const json = numeric.json;
+    return typeof json === 'number' && Number.isFinite(json) ? json : null;
+  } catch {
+    return null;
+  }
+}
+
+function rootViolatesExclusion(rootLatex: string, target: string, fact: EquationBranchDomainFact) {
+  if (
+    fact.entry.kind !== 'exclusion'
+    || fact.entry.relation !== '\\ne0'
+  ) {
+    return false;
+  }
+
+  const value = numericValueOfLatex(fact.entry.expressionLatex, target, rootLatex);
+  return value !== null && Math.abs(value) <= 1e-9;
+}
+
+function filterRootsByExclusions(exactLatex: string, target: string, facts: EquationBranchDomainFact[]) {
+  const roots = exactRootsFromLatex(exactLatex, target);
+  if (!roots) {
+    return null;
+  }
+
+  const accepted = roots
+    .filter((rootLatex) => !facts.some((fact) => rootViolatesExclusion(rootLatex, target, fact)));
+
+  return accepted.length === roots.length ? null : accepted;
+}
+
 function conditionLatexForTargetFreeZero(node: MathJson) {
   const equality = equalityLatexFromDifference(node);
   return equality ?? `${latexForNode(node)}=0`;
@@ -497,6 +541,18 @@ export function solveParameterizedRationalEquation(
     originalExclusionFacts,
     factsFromLegacySupplementLatex(solved.exactSupplementLatex),
   );
+  const filteredRoots = filterRootsByExclusions(solved.exactLatex, target, exactSupplementFacts);
+  if (filteredRoots?.length === 0) {
+    return stop(
+      'cleared-equation-unsupported',
+      'All cleared-equation roots violate the preserved denominator exclusions.',
+      target,
+      parameterNames,
+    );
+  }
+  const exactLatex = filteredRoots
+    ? exactLatexForRoots(target, filteredRoots)
+    : solved.exactLatex;
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupeLatex(
     renderRawSupplementLatexFromFacts(exactSupplementFacts),
   ));
@@ -511,13 +567,20 @@ export function solveParameterizedRationalEquation(
     },
   ]);
 
-  const branchReadback = (solved as { branchReadback?: DisplayBranchReadback }).branchReadback;
+  const branchReadback = filteredRoots
+    ? finiteBranchReadbackForNormalizedBranches({
+        targetLatex: target,
+        branchesLatex: filteredRoots,
+        preserveOrder: true,
+        source: 'equation-parameterized-rational',
+      })
+    : (solved as { branchReadback?: DisplayBranchReadback }).branchReadback;
 
   return {
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: solved.exactLatex,
+    exactLatex,
     branchReadback,
     exactSupplementLatex,
     detailSections,

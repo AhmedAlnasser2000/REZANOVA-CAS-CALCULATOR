@@ -181,6 +181,9 @@ Optional fields:
 - `source_id`
 - `source_locator`
 - `upgrade_or_missing`
+- `resolution_status`
+- `resolution_run_id`
+- `resolution_notes`
 - `notes`
 
 Allowed `upgrade_or_missing` values:
@@ -188,3 +191,10 @@ Allowed `upgrade_or_missing` values:
 - `missing-capability`
 - `needs-upgrade`
 - `not-applicable`
+
+Allowed `resolution_status` values:
+
+- `open`
+- `fixed`
+- `superseded`
+- `not-reproduced`

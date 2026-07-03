@@ -15,7 +15,6 @@ import {
 import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } from '../../equation/equation-complex';
 import { buildBranchReadback } from '../../equation/complex/branches';
 import { solveParameterizedRealCubicCardanoEquation } from '../../equation/parameterized/cubic-cardano';
-import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
 import { solutionsToLatex } from '../../display/format';
 import {
@@ -30,6 +29,7 @@ import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from '
 import { runParameterizedUnsupportedRoute } from './parameterized';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
 import { tryRealNumericFallbackOutcome } from './real-numeric-fallbacks';
+import { trySelectedTargetParameterizedExactSolve } from './symbolic-parameterized-exact';
 import {
   tryRealAlgebraicFormulaPreSharedFallback,
   tryRealAlgebraicFormulaSharedFallback,
@@ -391,40 +391,15 @@ export function solveSymbolicEquation(
   const solveTarget = targetResolution.selectedTarget ?? 'x';
 
   if (activeAnswerMode === 'exact' && equationDomainIntent === 'real' && !numericInterval && targetResolution.selectedTarget) {
-    const parameterizedOptions = parameterizedOptionsFromTargetResolution(targetResolution);
-    const parameterizedSourceLatex = normalizeExplicitNamedVariablesInLatex(equationLatex).latex;
-    const parameterizedEquationLatex = parameterizedOptions.allowGeneratedImplicitProducts
-      ? expandImplicitCharacterProductsInLatex(parameterizedSourceLatex)
-      : parameterizedSourceLatex;
-    const specialFormRoots = containsTargetedAbsLatex(parameterizedEquationLatex, targetResolution.selectedTarget)
-      ? undefined
-      : solveParameterizedSpecialFormRootsEquation(
-        parameterizedEquationLatex,
-        targetResolution.selectedTarget,
-        parameterizedOptions,
-      );
-
-    if (specialFormRoots?.kind === 'success') {
-      const outcome: DisplayOutcome = {
-        kind: 'success',
-        title: 'Solve',
-        exactLatex: specialFormRoots.exactLatex,
-        branchReadback: specialFormRoots.branchReadback,
-        exactSupplementLatex: specialFormRoots.exactSupplementLatex,
-        detailSections: specialFormRoots.detailSections,
-        warnings: [],
-        resultOrigin: 'symbolic',
-      };
-
-      const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
-
-      return attachEquationRuntimeEnvelope(
-        finalOutcome,
-        equationLatex,
-        planner.resolvedLatex,
-        planner.badges,
-        classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-      );
+    const selectedTargetParameterized = trySelectedTargetParameterizedExactSolve({
+      equationLatex,
+      angleUnit,
+      plannerResolvedLatex: planner.resolvedLatex,
+      plannerBadges: planner.badges,
+      targetResolution,
+    });
+    if (selectedTargetParameterized) {
+      return selectedTargetParameterized;
     }
   }
 

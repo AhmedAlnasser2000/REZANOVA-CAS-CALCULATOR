@@ -550,10 +550,21 @@ export function solveParameterizedFactorablePolynomialEquation(
   }
 
   const rawZeroSide = rawZeroSideNode(json);
+  let deferredSymbolicFactorStop: ParameterizedFactorablePolynomialSolveStop | null = null;
   if (rawZeroSide) {
     const symbolicCommonFactor = solveSymbolicFactorPattern(rawZeroSide, target, parameterNames);
-    if (symbolicCommonFactor) {
+    if (symbolicCommonFactor?.kind === 'success') {
       return symbolicCommonFactor;
+    }
+    if (
+      symbolicCommonFactor?.kind === 'unsupported'
+      && symbolicCommonFactor.reason !== 'unsupported-factor'
+      && symbolicCommonFactor.reason !== 'unsupported-expanded-polynomial'
+    ) {
+      return symbolicCommonFactor;
+    }
+    if (symbolicCommonFactor?.kind === 'unsupported') {
+      deferredSymbolicFactorStop = symbolicCommonFactor;
     }
   }
 
@@ -592,6 +603,10 @@ export function solveParameterizedFactorablePolynomialEquation(
       branchReadback: rootReadback.branchReadback,
       detailSections,
     };
+  }
+
+  if (deferredSymbolicFactorStop) {
+    return deferredSymbolicFactorStop;
   }
 
   const zeroForm = zeroFormNode(json);

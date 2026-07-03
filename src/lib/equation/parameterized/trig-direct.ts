@@ -1,6 +1,7 @@
 import type { AngleUnit, DisplayDetailSection } from '../../../types/calculator';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { dedupe, nonzeroFactForNode as sharedNonzeroFactForNode } from './facts';
+import { formatDegreesAsUnitLatex } from '../../trigonometry/angles';
 import { solveParameterizedComplexPreimageCarrierEquation } from './complex-preimage-handoff';
 import {
   collectTargetAffine,
@@ -69,6 +70,9 @@ function divideLatex(numerator: string, denominator: string) {
   if (denominator === '-1') {
     return `-${paren(numerator)}`;
   }
+  if (denominator === '2' && numerator === '\\frac{\\pi}{2}+\\pi n') {
+    return '\\frac{\\pi}{4}+\\frac{\\pi n}{2}';
+  }
   return `\\frac{${numerator}}{${denominator}}`;
 }
 
@@ -127,6 +131,11 @@ function periodicBranchValues(
     return zeroBranchValues(kind, angleUnit);
   }
 
+  const specialBranches = specialAngleBranchValues(kind, value, angleUnit);
+  if (specialBranches) {
+    return specialBranches;
+  }
+
   const inverse = scaledInverseLatex(kind, valueLatex, angleUnit);
 
   if (kind === 'tan') {
@@ -149,10 +158,71 @@ function periodicBranchValues(
   ];
 }
 
+function closeTo(left: number, right: number) {
+  return Math.abs(left - right) <= 1e-9;
+}
+
+function exactCycleDegrees(kind: TrigCarrierKind, value: number): number[] | null {
+  if (kind === 'sin') {
+    if (closeTo(value, 1)) return [90];
+    if (closeTo(value, Math.sqrt(3) / 2)) return [60, 120];
+    if (closeTo(value, Math.SQRT1_2)) return [45, 135];
+    if (closeTo(value, 0.5)) return [30, 150];
+    if (closeTo(value, -0.5)) return [210, 330];
+    if (closeTo(value, -Math.SQRT1_2)) return [225, 315];
+    if (closeTo(value, -Math.sqrt(3) / 2)) return [240, 300];
+    if (closeTo(value, -1)) return [270];
+    return null;
+  }
+
+  if (kind === 'cos') {
+    if (closeTo(value, 1)) return [0];
+    if (closeTo(value, Math.sqrt(3) / 2)) return [30, 330];
+    if (closeTo(value, Math.SQRT1_2)) return [45, 315];
+    if (closeTo(value, 0.5)) return [60, 300];
+    if (closeTo(value, -0.5)) return [120, 240];
+    if (closeTo(value, -Math.SQRT1_2)) return [135, 225];
+    if (closeTo(value, -Math.sqrt(3) / 2)) return [150, 210];
+    if (closeTo(value, -1)) return [180];
+    return null;
+  }
+
+  if (closeTo(value, Math.sqrt(3))) return [60];
+  if (closeTo(value, 1)) return [45];
+  if (closeTo(value, Math.sqrt(3) / 3)) return [30];
+  if (closeTo(value, -Math.sqrt(3) / 3)) return [-30];
+  if (closeTo(value, -1)) return [-45];
+  if (closeTo(value, -Math.sqrt(3))) return [-60];
+  return null;
+}
+
+function specialAngleBranchValues(kind: TrigCarrierKind, value: MathJson, angleUnit: AngleUnit) {
+  if (angleUnit !== 'rad') {
+    return null;
+  }
+
+  const numericValue = numericValueOfNode(value);
+  if (numericValue === null) {
+    return null;
+  }
+
+  const cycleDegrees = exactCycleDegrees(kind, numericValue);
+  if (!cycleDegrees) {
+    return null;
+  }
+
+  const periodLatex = kind === 'tan' ? '\\pi n' : '2\\pi n';
+  return cycleDegrees.map((degrees) => `${formatDegreesAsUnitLatex(degrees, 'rad')}+${periodLatex}`);
+}
+
 export function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
   const unique = dedupe(solutionExpressions);
   if (unique.length === 1) {
-    return `${target}=${unique[0]}`;
+    const expression = unique[0];
+    const bareSymbols = expression.replace(/\\[A-Za-z]+/g, '').replace(/n/g, '');
+    return /n/.test(expression) && !/[A-Za-z]/.test(bareSymbols)
+      ? `${target}\\in\\left\\{${expression}\\right\\}`
+      : `${target}=${expression}`;
   }
   return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
 }
