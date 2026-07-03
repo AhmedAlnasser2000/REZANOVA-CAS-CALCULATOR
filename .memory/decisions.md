@@ -1811,3 +1811,7 @@
 ## 2026-07-03 - ALGEBRAIC-GENUS1-SECOND-KIND-ROW-COEFFICIENT-EXTRACTION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 second-kind row extraction keeps first-kind Legendre multipliers as named target-free coefficient atoms while row equations are populated. This keeps bounded coefficient parsing inside the named-root field and defers concrete multiplier substitution to the later solved antiderivative/proof-backcheck gate.
+
+## 2026-07-03 - ALGEBRAIC-GENUS1-SECOND-KIND-POPULATED-MATRIX-SURFACE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 second-kind matrix population is a proof surface before it is a solver. Populated entries, RHS nodes, and row residual backchecks may be recorded behavior-invisibly, but live EllipticE/Pi adoption still requires a later bounded symbolic solve with pivot facts and an antiderivative backcheck.
