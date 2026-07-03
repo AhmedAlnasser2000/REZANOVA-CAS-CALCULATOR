@@ -490,11 +490,40 @@ describe('calculus limits', () => {
     const logarithmicCosine = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0 ln(cos(x))/x^2',
     });
+    const scaledSine = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 sin(3x)/(3x)',
+    });
+    const exponentialSine = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 (e^{sin(x)}-1)/sin(x)',
+    });
+    const cosineCarrier = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 sin(1-cos(x))/(1-cos(x))',
+    });
 
     expect(logarithmicCosine.error).toBeUndefined();
     expect(logarithmicCosine.exactLatex).toBe('-\\frac{1}{2}');
     expect(logarithmicCosine.resultOrigin).toBe('rule-based-symbolic');
     expect(logarithmicCosine.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
+
+    for (const result of [scaledSine, exponentialSine, cosineCarrier]) {
+      expect(result.error).toBeUndefined();
+      expect(result.exactLatex).toBe('1');
+      expect(result.resultOrigin).toBe('rule-based-symbolic');
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('standard substitution/composition');
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Inner limit');
+    }
+    expect(scaledSine.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\frac{\\sin(u)}{u}\\to 1',
+    });
+    expect(exponentialSine.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\frac{e^u-1}{u}\\to 1',
+    });
+    expect(cosineCarrier.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\frac{\\sin(u)}{u}\\to 1',
+    });
   });
 
   it('resolves infinity scale comparisons for logs powers and exponentials', () => {

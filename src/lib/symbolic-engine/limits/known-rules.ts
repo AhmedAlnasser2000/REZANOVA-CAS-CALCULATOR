@@ -1,10 +1,22 @@
 import { isNodeArray } from '../patterns';
 import {
+  box,
   evaluateNodeAt,
   isEquivalentNode,
   isZeroish,
-  success,
 } from './evaluation';
+import {
+  formatLimitNumberLatex,
+  limitMathPart,
+  limitMethodRowsSection,
+  limitTextPart,
+} from './detail-readback';
+
+type KnownLimitInner = {
+  inner: unknown;
+  standardLatex: string;
+  value: number;
+};
 
 function isNumericOne(node: unknown) {
   return node === 1;
@@ -93,11 +105,16 @@ function matchKnownLimitInner(
   denominator: unknown,
   target: number,
   variable: string,
-): number | undefined {
+): KnownLimitInner | undefined {
   if (isNodeArray(node) && (node[0] === 'Sin' || node[0] === 'Tan') && node.length === 2) {
     const inner = node[1];
+    const functionLatex = node[0] === 'Sin' ? '\\sin' : '\\tan';
     return isEquivalentNode(denominator, inner) && isZeroish(evaluateNodeAt(inner, target, variable))
-      ? 1
+      ? {
+          inner,
+          standardLatex: `\\frac{${functionLatex}(u)}{u}\\to 1`,
+          value: 1,
+        }
       : undefined;
   }
 
@@ -107,7 +124,11 @@ function matchKnownLimitInner(
     && isEquivalentNode(denominator, ['Power', cosineInner, 2])
     && isZeroish(evaluateNodeAt(cosineInner, target, variable))
   ) {
-    return 0.5;
+    return {
+      inner: cosineInner,
+      standardLatex: '\\frac{1-\\cos(u)}{u^2}\\to \\frac{1}{2}',
+      value: 0.5,
+    };
   }
 
   const expInner = matchExpMinusOne(node);
@@ -116,13 +137,21 @@ function matchKnownLimitInner(
     && isEquivalentNode(denominator, expInner)
     && isZeroish(evaluateNodeAt(expInner, target, variable))
   ) {
-    return 1;
+    return {
+      inner: expInner,
+      standardLatex: '\\frac{e^u-1}{u}\\to 1',
+      value: 1,
+    };
   }
 
   if (isNodeArray(node) && node[0] === 'Ln' && node.length === 2) {
     const inner = matchOnePlus(node[1]);
     if (inner && isEquivalentNode(denominator, inner) && isZeroish(evaluateNodeAt(inner, target, variable))) {
-      return 1;
+      return {
+        inner,
+        standardLatex: '\\frac{\\ln(1+u)}{u}\\to 1',
+        value: 1,
+      };
     }
   }
 
@@ -133,10 +162,22 @@ function matchKnownLimitInner(
     && isEquivalentNode(denominator, sqrtInner)
     && isZeroish(evaluateNodeAt(sqrtInner, target, variable))
   ) {
-    return 0.5;
+    return {
+      inner: sqrtInner,
+      standardLatex: '\\frac{\\sqrt{1+u}-1}{u}\\to \\frac{1}{2}',
+      value: 0.5,
+    };
   }
 
   return undefined;
+}
+
+function latexOf(node: unknown) {
+  try {
+    return box(node).latex;
+  } catch {
+    return '?';
+  }
 }
 
 export function resolveKnownFiniteLimitRule(node: unknown, target: number, variable: string) {
@@ -144,11 +185,39 @@ export function resolveKnownFiniteLimitRule(node: unknown, target: number, varia
     return undefined;
   }
 
-  const value = matchKnownLimitInner(node[1], node[2], target, variable);
-  return value === undefined
-    ? undefined
-    : success(value, 'rule-based-symbolic', [
-        'Recognized a bounded standard finite-limit form with an inner expression tending to 0.',
-        'The exact rule was applied before any capped LHopital fallback or numeric sampling.',
-      ]);
+  const match = matchKnownLimitInner(node[1], node[2], target, variable);
+  if (!match) {
+    return undefined;
+  }
+
+  const valueLatex = formatLimitNumberLatex(match.value);
+  const targetLatex = formatLimitNumberLatex(target);
+  const innerLatex = latexOf(match.inner);
+  return {
+    kind: 'success' as const,
+    value: match.value,
+    exactLatex: valueLatex,
+    approxText: `${match.value}`,
+    origin: 'rule-based-symbolic' as const,
+    detailSections: limitMethodRowsSection([
+      [limitTextPart('Form detected: standard substitution/composition limit.')],
+      [
+        limitTextPart('Inner limit: '),
+        limitMathPart(`u=${innerLatex}`),
+        limitTextPart(' and '),
+        limitMathPart(`\\lim_{${variable}\\to ${targetLatex}}u=0`),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Standard equivalent: '),
+        limitMathPart(match.standardLatex),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Conclusion: the composed quotient tends to '),
+        limitMathPart(valueLatex),
+        limitTextPart('.'),
+      ],
+    ]),
+  };
 }
