@@ -8,6 +8,12 @@ function parse(latex: string) {
   return ce.parse(latex).json;
 }
 
+function methodText(result: ReturnType<typeof resolveInfiniteScaleLimit>) {
+  return result?.detailSections?.flatMap((section) =>
+    (section.lineParts ?? []).flatMap((row) =>
+      row.map((part) => part.kind === 'math' ? part.latex : part.text)))?.join(' ') ?? '';
+}
+
 describe('infinity scale terms', () => {
   it('compares logarithms against powers', () => {
     const result = resolveInfiniteScaleLimit(parse(String.raw`\log(x)/x`), 'posInfinity', 'x');
@@ -15,6 +21,9 @@ describe('infinity scale terms', () => {
     expect(result?.kind).toBe('success');
     expect(result?.exactLatex).toBe('0');
     expect(result?.detailSections?.[0]?.lines.join(' ')).toContain('infinity scale comparison');
+    expect(methodText(result)).toContain('\\log(x)');
+    expect(methodText(result)).not.toContain('(i)^');
+    expect(methodText(result)).not.toContain('a^2 c^3');
   });
 
   it('compares powers against exponentials', () => {
@@ -22,6 +31,9 @@ describe('infinity scale terms', () => {
 
     expect(result?.kind).toBe('success');
     expect(result?.exactLatex).toBe('0');
+    expect(methodText(result)).toContain('e^{-x}');
+    expect(methodText(result)).toContain('x^{5}');
+    expect(methodText(result)).not.toContain('(i)^');
   });
 
   it('selects dominant exponential terms in sums before quotient comparison', () => {
@@ -30,6 +42,9 @@ describe('infinity scale terms', () => {
     expect(result?.kind).toBe('success');
     expect(result?.exactLatex).toBe('1');
     expect(result?.value).toBe(1);
+    expect(methodText(result)).toContain('Dominant scale');
+    expect(methodText(result)).toContain('e^{x}');
+    expect(methodText(result)).not.toContain('(i)^');
   });
 
   it('compares iterated logarithms with ordinary logarithms', () => {

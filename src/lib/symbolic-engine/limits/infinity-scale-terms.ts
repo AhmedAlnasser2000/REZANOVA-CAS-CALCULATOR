@@ -1,9 +1,11 @@
-import type { LimitTargetKind } from '../../../types/calculator';
+import type { DisplayDetailLinePart, LimitTargetKind } from '../../../types/calculator';
 import { dependsOnVariable, isNodeArray } from '../patterns';
 import {
   formatLimitNumberLatex,
   formatLimitValueLatex,
-  limitMethodSection,
+  limitMathPart,
+  limitMethodRowsSection,
+  limitTextPart,
 } from './detail-readback';
 import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
 
@@ -419,12 +421,24 @@ export function leadingInfinityScaleTerm(
 function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | undefined {
   const comparison = compareInfinityScale(term.scale, zeroInfinityScale());
   const coefficientLatex = formatLimitNumberLatex(term.coefficient);
-  const lines = [
-    'Form detected: infinity scale comparison.',
-    `Rewrite/equivalent: dominant scale ${infinityScaleLabel(term.scale)} with coefficient ${coefficientLatex}.`,
-    `Key calculation: compare ${infinityScaleLabel(term.scale)} against the constant scale 1.`,
-    ...(term.notes ?? []),
-    `Reason: ${term.reason}.`,
+  const methodRows: DisplayDetailLinePart[][] = [
+    [limitTextPart('Form detected: infinity scale comparison.')],
+    [
+      limitTextPart('Rewrite/equivalent: dominant scale '),
+      limitMathPart(infinityScaleLabel(term.scale)),
+      limitTextPart(' with coefficient '),
+      limitMathPart(coefficientLatex),
+      limitTextPart('.'),
+    ],
+    [
+      limitTextPart('Key calculation: compare '),
+      limitMathPart(infinityScaleLabel(term.scale)),
+      limitTextPart(' against the constant scale '),
+      limitMathPart('1'),
+      limitTextPart('.'),
+    ],
+    ...infinityScaleNoteRows(term.notes),
+    [limitTextPart(`Reason: ${term.reason}.`)],
   ];
 
   if (comparison < 0) {
@@ -434,10 +448,14 @@ function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | unde
       exactLatex: '0',
       approxText: '0',
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        ...lines,
-        'Conclusion: the denominator scale dominates, so the expression tends to 0.',
-      ),
+      detailSections: limitMethodRowsSection([
+        ...methodRows,
+        [
+          limitTextPart('Conclusion: the denominator scale dominates, so the expression tends to '),
+          limitMathPart('0'),
+          limitTextPart('.'),
+        ],
+      ]),
     };
   }
 
@@ -450,10 +468,14 @@ function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | unde
       exactLatex,
       approxText: numericApproxText(value),
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        ...lines,
-        `Conclusion: matching scales leave the coefficient ${exactLatex}.`,
-      ),
+      detailSections: limitMethodRowsSection([
+        ...methodRows,
+        [
+          limitTextPart('Conclusion: matching scales leave the coefficient '),
+          limitMathPart(exactLatex),
+          limitTextPart('.'),
+        ],
+      ]),
     };
   }
 
@@ -464,11 +486,29 @@ function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | unde
     exactLatex: formatLimitValueLatex(infinity),
     approxText: infinity === 'posInfinity' ? 'Infinity' : '-Infinity',
     origin: 'rule-based-symbolic',
-    detailSections: limitMethodSection(
-      ...lines,
-      `Conclusion: the dominant scale grows without bound, so the limit is ${formatLimitValueLatex(infinity)}.`,
-    ),
+    detailSections: limitMethodRowsSection([
+      ...methodRows,
+      [
+        limitTextPart('Conclusion: the dominant scale grows without bound, so the limit is '),
+        limitMathPart(formatLimitValueLatex(infinity) ?? (infinity === 'posInfinity' ? '\\infty' : '-\\infty')),
+        limitTextPart('.'),
+      ],
+    ]),
   };
+}
+
+function infinityScaleNoteRows(notes: readonly string[] | undefined): DisplayDetailLinePart[][] {
+  return (notes ?? []).map((note) => {
+    const dominantScale = note.match(/^Dominant scale:\s*(.+)\.$/u);
+    if (dominantScale) {
+      return [
+        limitTextPart('Dominant scale: '),
+        limitMathPart(dominantScale[1]),
+        limitTextPart('.'),
+      ];
+    }
+    return [limitTextPart(note)];
+  });
 }
 
 export function resolveInfiniteScaleLimit(

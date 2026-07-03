@@ -1,9 +1,11 @@
-import type { LimitTargetKind } from '../../../types/calculator';
+import type { DisplayDetailLinePart, LimitTargetKind } from '../../../types/calculator';
 import { isNodeArray } from '../patterns';
 import {
   formatLimitNumberLatex,
   formatLimitValueLatex,
-  limitMethodSection,
+  limitMathPart,
+  limitMethodRowsSection,
+  limitTextPart,
 } from './detail-readback';
 import {
   combineInfinityScale,
@@ -160,7 +162,7 @@ function exactConstantWithExp(coefficient: number, exponent: number) {
 
 function successFromScale(input: {
   term: InfinityScaleTerm;
-  lines: string[];
+  rows: DisplayDetailLinePart[][];
   finiteMultiplier?: number;
   finiteMultiplierLatex?: string;
 }): FiniteLimitRuleSuccess {
@@ -169,11 +171,17 @@ function successFromScale(input: {
   const coefficientLatex = input.finiteMultiplierLatex
     ? exactConstantWithExp(input.term.coefficient, Math.log(input.finiteMultiplier ?? 1))
     : formatLimitNumberLatex(coefficient);
-  const detailLines = [
-    'Form detected: MRV-lite exponential scale comparison.',
-    ...input.lines,
-    `Residual scale: ${infinityScaleLabel(input.term.scale)} with coefficient ${coefficientLatex}.`,
-    `Reason: ${input.term.reason}.`,
+  const detailRows: DisplayDetailLinePart[][] = [
+    [limitTextPart('Form detected: MRV-lite exponential scale comparison.')],
+    ...input.rows,
+    [
+      limitTextPart('Residual scale: '),
+      limitMathPart(infinityScaleLabel(input.term.scale)),
+      limitTextPart(' with coefficient '),
+      limitMathPart(coefficientLatex),
+      limitTextPart('.'),
+    ],
+    [limitTextPart(`Reason: ${input.term.reason}.`)],
   ];
 
   if (comparison < 0) {
@@ -183,10 +191,14 @@ function successFromScale(input: {
       exactLatex: '0',
       approxText: '0',
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        ...detailLines,
-        'Conclusion: the residual scale tends to 0.',
-      ),
+      detailSections: limitMethodRowsSection([
+        ...detailRows,
+        [
+          limitTextPart('Conclusion: the residual scale tends to '),
+          limitMathPart('0'),
+          limitTextPart('.'),
+        ],
+      ]),
     };
   }
 
@@ -197,10 +209,14 @@ function successFromScale(input: {
       exactLatex: input.finiteMultiplierLatex ?? coefficientLatex,
       approxText: numericApproxText(coefficient),
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        ...detailLines,
-        `Conclusion: matching scales leave ${input.finiteMultiplierLatex ?? coefficientLatex}.`,
-      ),
+      detailSections: limitMethodRowsSection([
+        ...detailRows,
+        [
+          limitTextPart('Conclusion: matching scales leave '),
+          limitMathPart(input.finiteMultiplierLatex ?? coefficientLatex),
+          limitTextPart('.'),
+        ],
+      ]),
     };
   }
 
@@ -211,10 +227,14 @@ function successFromScale(input: {
     exactLatex: formatLimitValueLatex(infinity),
     approxText: infinity === 'posInfinity' ? 'Infinity' : '-Infinity',
     origin: 'rule-based-symbolic',
-    detailSections: limitMethodSection(
-      ...detailLines,
-      `Conclusion: the residual scale grows without bound, so the limit is ${formatLimitValueLatex(infinity)}.`,
-    ),
+    detailSections: limitMethodRowsSection([
+      ...detailRows,
+      [
+        limitTextPart('Conclusion: the residual scale grows without bound, so the limit is '),
+        limitMathPart(formatLimitValueLatex(infinity) ?? (infinity === 'posInfinity' ? '\\infty' : '-\\infty')),
+        limitTextPart('.'),
+      ],
+    ]),
   };
 }
 
@@ -268,9 +288,19 @@ export function resolveMrvLiteLimit(
 
   const exponentScale = infinityScaleLabel(exponentTerm.scale);
   const ordinaryScale = infinityScaleLabel(ordinaryTerm.scale);
-  const baseLines = [
-    `Exponential comparison: exponent difference has dominant scale ${exponentScale} with coefficient ${formatLimitNumberLatex(exponentTerm.coefficient)}.`,
-    `Non-exponential factors reduce to scale ${ordinaryScale}.`,
+  const baseRows: DisplayDetailLinePart[][] = [
+    [
+      limitTextPart('Exponential comparison: exponent difference has dominant scale '),
+      limitMathPart(exponentScale),
+      limitTextPart(' with coefficient '),
+      limitMathPart(formatLimitNumberLatex(exponentTerm.coefficient)),
+      limitTextPart('.'),
+    ],
+    [
+      limitTextPart('Non-exponential factors reduce to scale '),
+      limitMathPart(ordinaryScale),
+      limitTextPart('.'),
+    ],
   ];
 
   if (isPlainLogScale(exponentTerm)) {
@@ -281,9 +311,15 @@ export function resolveMrvLiteLimit(
     );
     return successFromScale({
       term: converted,
-      lines: [
-        ...baseLines,
-        `Rewrite/equivalent: e^{${formatLimitNumberLatex(exponentTerm.coefficient)}\\log(x)} contributes x^{${formatLimitNumberLatex(exponentTerm.coefficient)}}.`,
+      rows: [
+        ...baseRows,
+        [
+          limitTextPart('Rewrite/equivalent: '),
+          limitMathPart(`e^{${formatLimitNumberLatex(exponentTerm.coefficient)}\\log(x)}`),
+          limitTextPart(' contributes '),
+          limitMathPart(`x^{${formatLimitNumberLatex(exponentTerm.coefficient)}}`),
+          limitTextPart('.'),
+        ],
       ],
     });
   }
@@ -298,12 +334,16 @@ export function resolveMrvLiteLimit(
       exactLatex: formatLimitValueLatex(infinity),
       approxText: infinity === 'posInfinity' ? 'Infinity' : '-Infinity',
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        'Form detected: MRV-lite exponential scale comparison.',
-        ...baseLines,
-        'Key calculation: a positive unbounded exponent difference dominates algebraic and logarithmic residual factors.',
-        `Conclusion: the limit is ${formatLimitValueLatex(infinity)}.`,
-      ),
+      detailSections: limitMethodRowsSection([
+        [limitTextPart('Form detected: MRV-lite exponential scale comparison.')],
+        ...baseRows,
+        [limitTextPart('Key calculation: a positive unbounded exponent difference dominates algebraic and logarithmic residual factors.')],
+        [
+          limitTextPart('Conclusion: the limit is '),
+          limitMathPart(formatLimitValueLatex(infinity) ?? '\\infty'),
+          limitTextPart('.'),
+        ],
+      ]),
     };
   }
 
@@ -314,21 +354,31 @@ export function resolveMrvLiteLimit(
       exactLatex: '0',
       approxText: '0',
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        'Form detected: MRV-lite exponential scale comparison.',
-        ...baseLines,
-        'Key calculation: a negative unbounded exponent difference gives exponential decay.',
-        'Conclusion: the limit is 0.',
-      ),
+      detailSections: limitMethodRowsSection([
+        [limitTextPart('Form detected: MRV-lite exponential scale comparison.')],
+        ...baseRows,
+        [limitTextPart('Key calculation: a negative unbounded exponent difference gives exponential decay.')],
+        [
+          limitTextPart('Conclusion: the limit is '),
+          limitMathPart('0'),
+          limitTextPart('.'),
+        ],
+      ]),
     };
   }
 
   if (tendency === 'zero') {
     return successFromScale({
       term: ordinaryTerm,
-      lines: [
-        ...baseLines,
-        'Key calculation: the exponent difference tends to 0, so the exponential factor tends to 1.',
+      rows: [
+        ...baseRows,
+        [
+          limitTextPart('Key calculation: the exponent difference tends to '),
+          limitMathPart('0'),
+          limitTextPart(', so the exponential factor tends to '),
+          limitMathPart('1'),
+          limitTextPart('.'),
+        ],
       ],
     });
   }
@@ -336,9 +386,9 @@ export function resolveMrvLiteLimit(
   if (compareInfinityScale(ordinaryTerm.scale, zeroInfinityScale()) !== 0) {
     return successFromScale({
       term: ordinaryTerm,
-      lines: [
-        ...baseLines,
-        'Key calculation: the exponent difference tends to a finite nonzero constant, so only the residual scale decides zero or infinity.',
+      rows: [
+        ...baseRows,
+        [limitTextPart('Key calculation: the exponent difference tends to a finite nonzero constant, so only the residual scale decides zero or infinity.')],
       ],
     });
   }
@@ -348,9 +398,13 @@ export function resolveMrvLiteLimit(
     term: ordinaryTerm,
     finiteMultiplier,
     finiteMultiplierLatex: exactConstantWithExp(ordinaryTerm.coefficient, exponentTerm.coefficient),
-    lines: [
-      ...baseLines,
-      `Key calculation: the exponent difference tends to ${formatLimitNumberLatex(exponentTerm.coefficient)}.`,
+    rows: [
+      ...baseRows,
+      [
+        limitTextPart('Key calculation: the exponent difference tends to '),
+        limitMathPart(formatLimitNumberLatex(exponentTerm.coefficient)),
+        limitTextPart('.'),
+      ],
     ],
   });
 }

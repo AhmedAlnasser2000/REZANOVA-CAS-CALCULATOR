@@ -211,6 +211,12 @@ export function limitMethodSection(...lines: string[]): DisplayDetailSection[] {
   return [limitDetailSectionFromLines('Limit Method', lines)];
 }
 
+export function limitMethodRowsSection(
+  rows: readonly (readonly DisplayDetailLinePart[])[],
+): DisplayDetailSection[] {
+  return [limitDetailSection('Limit Method', rows)];
+}
+
 export function withLimitDetailLineParts(
   sections: readonly DisplayDetailSection[] | undefined,
 ): DisplayDetailSection[] | undefined {
