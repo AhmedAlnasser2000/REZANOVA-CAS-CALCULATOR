@@ -1,6 +1,8 @@
-# Equation Corpus Ledger Schema
+# Calculus Integration Corpus Ledger Schema
 
 All ledger data is newline-delimited JSON. Blank lines are ignored.
+
+This schema is for indefinite integration only. Definite, improper, multivariable, ODE, and convergence-test cases belong outside this lane.
 
 ## `sources.json`
 
@@ -9,6 +11,8 @@ Top-level shape:
 ```json
 {
   "schema_version": 1,
+  "calculus_lane": "integration",
+  "integral_kind": "indefinite",
   "sources": []
 }
 ```
@@ -19,7 +23,8 @@ Required source fields:
 - `title`
 - `source_type`
 - `access`
-- `equation_relevance`
+- `calculus_lane`
+- `integration_relevance`
 - `license`
 - `locator_policy`
 
@@ -33,21 +38,27 @@ Allowed `access` values:
 - `local`
 - `web`
 
-Allowed `equation_relevance` values:
+Allowed `calculus_lane` values:
+
+- `integration`
+
+Allowed `integration_relevance` values:
 
 - `primary`
 - `secondary`
 - `reference`
+- `deferred`
 
 ## `ledger/unique-cases.jsonl`
 
-One row per runnable mathematical case.
+One row per runnable indefinite integration case.
 
 Required fields:
 
 - `case_id`
-- `canonical_latex`
-- `target`
+- `canonical_integrand_latex`
+- `variable`
+- `integral_kind`
 - `domain`
 - `family`
 - `expected_result_kind`
@@ -56,12 +67,24 @@ Required fields:
 - `source_id`
 - `source_locator`
 
+Allowed `integral_kind` values:
+
+- `indefinite`
+
 Allowed `domain` values:
 
 - `real`
 - `complex`
-- `interval-real`
+- `real-with-conditions`
 - `mixed-or-unspecified`
+
+Allowed `expected_result_kind` values:
+
+- `elementary-antiderivative`
+- `special-function-antiderivative`
+- `controlled-unsupported`
+- `parser-boundary`
+- `proof-boundary`
 
 Allowed `run_policy` values:
 
@@ -75,12 +98,15 @@ Allowed `status` values:
 - `wrong-result`
 - `needs-upgrade`
 - `not-run`
+- `boundary-deferred`
 
 Optional fields:
 
 - `source_expression_latex`
-- `expected_roots_latex`
-- `expected_constraints_latex`
+- `expected_antiderivative_latex`
+- `expected_derivative_check_latex`
+- `expected_facts_latex`
+- `method_expectation`
 - `canonicalization_notes`
 - `duplicate_notes`
 - `tags`
@@ -96,17 +122,18 @@ Required fields:
 - `case_id`
 - `source_id`
 - `source_locator`
-- `source_expression_latex`
+- `source_integrand_latex`
 - `duplicate_reason`
 
 Allowed `duplicate_reason` examples:
 
-- `same-canonical-equation`
+- `same-canonical-integrand`
 - `same-under-variable-rename`
-- `same-after-factoring`
-- `same-after-expansion`
-- `same-after-rational-clearing`
+- `same-after-simplification`
 - `same-after-trig-identity`
+- `same-after-constant-factor`
+- `same-after-affine-substitution`
+- `same-source-reprint`
 
 ## `ledger/run-results.jsonl`
 
@@ -121,6 +148,7 @@ Required fields:
 - `runner`
 - `run_status`
 - `failure_kind`
+- `visual_status`
 
 Allowed `run_status` values:
 
@@ -136,18 +164,28 @@ Allowed `failure_kind` values:
 - `missing-capability`
 - `needs-upgrade`
 - `readback-only-issue`
+- `visual-output-issue`
 - `parser-or-input-grammar-gap`
 - `performance-concern`
 - `unknown`
+
+Allowed `visual_status` values:
+
+- `visually-verified`
+- `visual-blocked`
+- `not-run`
+- `not-applicable-doc-only`
 
 Optional fields:
 
 - `route_observed`
 - `elapsed_ms`
-- `root_count`
-- `rejected_count`
-- `failure_class`
 - `result_summary`
+- `answer_latex`
+- `facts_observed`
+- `playwright_command`
+- `visual_evidence_path`
+- `visual_blocker`
 - `notes`
 
 ## `ledger/scan-findings.jsonl`
@@ -164,19 +202,21 @@ Required fields:
 Allowed `finding_kind` values:
 
 - `missing-capability`
+- `needs-method-coverage`
 - `needs-normalization`
-- `needs-factoring`
+- `needs-substitution-handling`
+- `needs-partial-fraction-handling`
+- `needs-facts-or-assumptions`
 - `needs-domain-handling`
-- `needs-exclusion-handling`
 - `needs-branch-handling`
-- `needs-periodic-output`
-- `needs-numeric-search`
-- `needs-complex-support`
+- `needs-special-function-certificate`
 - `wrong-result`
 - `timeout-or-too-slow`
 - `readback-only-issue`
+- `visual-output-issue`
 - `parser-or-input-grammar-gap`
 - `duplicate-mapping-note`
+- `source-scope-boundary`
 
 Optional fields:
 

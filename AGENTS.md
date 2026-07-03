@@ -61,6 +61,12 @@
 - Every completed task handoff must list which durable memory files were updated.
 - Follow `docs/workflow/commit-first-gates.md` for the detailed gate contract and wrong-branch recovery procedure.
 
+## Visual Output Verification Policy
+- For any task that changes, validates, benchmarks, or discusses app-visible mathematical output, agents must use Playwright to inspect the real app output visually before calling the gate complete.
+- Unit tests, engine tests, and DOM assertions are necessary but not sufficient for app-visible output gates. They may support the work, but they do not replace Playwright visual verification.
+- Playwright evidence must cover the rendered answer/error card, visible facts or assumptions, relevant detail/boundary cards, and obvious overflow/readability problems for the changed or benchmarked surface.
+- If Playwright cannot run, the agent must record the blocker, the command attempted, and the missing visual risk in the active session dossier and final handoff. Do not present the output as visually verified.
+
 ## File-Size Ratchet Policy
 - `tools/validate-file-sizes.mjs` is a hard anti-regrowth gate for TypeScript source files.
 - Baseline caps must ratchet to the current line count after slimming; do not add percentage headroom or soft buffers.

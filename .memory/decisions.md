@@ -1843,3 +1843,11 @@
 ## 2026-07-03 - ALGEBRAIC-RISCH-PRACTICAL-CLOSEOUT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The algebraic frontier push is closed as practical but incomplete. Future widening should be benchmark-driven or start with a generic genus-1 coefficient-vector/backcheck milestone; do not claim full algebraic-function-field Risch, broad symbolic named-root formulas, or generic second/third-kind live adoption until those prerequisites are solved and branch-capped.
+
+## 2026-07-03 - VISUAL-OUTPUT-VERIFICATION-POLICY1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] App-visible mathematical output gates require Playwright visual inspection of the real rendered result, including answer/error cards, visible facts or assumptions, detail or boundary cards, and readability risks. Unit tests and DOM assertions may support the gate but do not replace visual verification. Benchmark duplicate-run rules are intentionally not an `AGENTS.md` policy; keep them scoped to the relevant benchmark corpus docs/schemas unless explicitly promoted later.
+
+## 2026-07-03 - CALCULUS-INTEGRATION-CORPUS-LEDGER1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus benchmark ledgers are lane-scoped. The first Calculus corpus is `benchmarks/calculus-corpus/integration/`, and it is indefinite-only: unique cases are the only runnable targets, duplicate sightings attach to canonical `case_id` rows, and run results must carry visual verification status for app-visible output. Limits, Differentiation, definite integrals, improper integrals, ODE, and advanced genus-heavy batches remain separate future lanes or deferred source slices.

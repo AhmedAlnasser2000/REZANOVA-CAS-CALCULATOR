@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "calculus_lane": "integration",
+  "integral_kind": "indefinite",
+  "sources": [
+    {
+      "source_id": "openstax-calculus-v1-local",
+      "title": "Calculus Volume 1",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "integration",
+      "integration_relevance": "primary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus-volume-1_-_WEB.pdf",
+      "locator_policy": "Use section/page locators and compact integrand metadata only; do not copy full problem statements.",
+      "integration_scope_notes": [
+        "Antiderivatives and indefinite integration",
+        "Substitution for indefinite integrals",
+        "Introductory inverse-trig and simplification cases",
+        "Definite integral exercises are out of scope for this lane"
+      ]
+    },
+    {
+      "source_id": "openstax-calculus-v2-local",
+      "title": "Calculus Volume 2",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "integration",
+      "integration_relevance": "primary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus-volume-2_-_WEB.pdf",
+      "locator_policy": "Use section/page locators and compact integrand metadata only; do not copy full problem statements.",
+      "integration_scope_notes": [
+        "Techniques of integration",
+        "Integration by parts",
+        "Trigonometric integrals and substitution",
+        "Partial fractions",
+        "Improper and definite integral cases are out of scope for this lane"
+      ]
+    },
+    {
+      "source_id": "techniques-of-integration-local",
+      "title": "calculus_08_Techniques_of_Integration",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "integration",
+      "integration_relevance": "primary",
+      "license": "unknown",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus_08_Techniques_of_Integration.pdf",
+      "locator_policy": "Use source locators and compact integrand metadata only; do not copy full problem statements.",
+      "integration_scope_notes": [
+        "Undergraduate techniques of integration",
+        "Good first-pass source for substitution, parts, trig substitution, and partial fractions",
+        "Exclude definite, improper, and application-only cases unless a later lane opens them"
+      ]
+    },
+    {
+      "source_id": "larson-calculus-9e-local",
+      "title": "Calculus, 9th Edition",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "integration",
+      "integration_relevance": "primary",
+      "license": "unknown",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/dokumen.pub_calculus-9th-ed-9780547167022-0547167024-9780538498647-0538498641-9781439030332-1439030332.pdf",
+      "locator_policy": "Use source locators and compact integrand metadata only; do not copy full problem statements.",
+      "integration_scope_notes": [
+        "Undergraduate textbook-style indefinite integration cases",
+        "Useful for cross-textbook duplicates and difficulty calibration",
+        "Do not scan advanced application or definite-only exercises in this lane"
+      ]
+    },
+    {
+      "source_id": "calculus-analytic-geometry-9e-local",
+      "title": "Calculus and Analytic Geometry, Ninth Edition",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "integration",
+      "integration_relevance": "primary",
+      "license": "unknown",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/dokumen.pub_calculus-and-analytic-geometry-ninth-edition-0201400154-9780201400151.pdf",
+      "locator_policy": "Use source locators and compact integrand metadata only; do not copy full problem statements.",
+      "integration_scope_notes": [
+        "Thomas-style classical calculus integration cases",
+        "Useful for cross-textbook duplicate and method coverage checks",
+        "Do not scan definite-only, application-only, or multivariable cases in this lane"
+      ]
+    },
+    {
+      "source_id": "apex-calculus",
+      "title": "APEX Calculus",
+      "source_type": "website",
+      "access": "web",
+      "calculus_lane": "integration",
+      "integration_relevance": "secondary",
+      "license": "open-textbook; verify site terms before quoting",
+      "url": "https://opentext.uleth.ca/apex-calculus/apex-calculus.html",
+      "locator_policy": "Use stable chapter/section locators and compact integrand metadata only.",
+      "integration_scope_notes": [
+        "Antiderivatives and indefinite integration",
+        "Techniques of antidifferentiation",
+        "Use only indefinite cases in the first pass"
+      ]
+    },
+    {
+      "source_id": "libretexts-openstax-calculus",
+      "title": "Calculus (OpenStax) - Mathematics LibreTexts",
+      "source_type": "website",
+      "access": "web",
+      "calculus_lane": "integration",
+      "integration_relevance": "secondary",
+      "license": "CC BY-NC-SA 4.0",
+      "url": "https://math.libretexts.org/Bookshelves/Calculus/Calculus_(OpenStax)",
+      "locator_policy": "Use page/section locators and compact integrand metadata only.",
+      "integration_scope_notes": [
+        "Web mirror/source reference for OpenStax Calculus",
+        "Useful for linkable section locators",
+        "Use only indefinite cases in the first pass"
+      ]
+    },
+    {
+      "source_id": "dlmf",
+      "title": "NIST Digital Library of Mathematical Functions",
+      "source_type": "website",
+      "access": "web",
+      "calculus_lane": "integration",
+      "integration_relevance": "reference",
+      "license": "public-domain-or-government-reference-with-site-terms",
+      "url": "https://dlmf.nist.gov/",
+      "locator_policy": "Use stable DLMF section/equation locators and compact reference metadata only.",
+      "integration_scope_notes": [
+        "Reference source for named special functions and identities",
+        "Do not use for the first undergraduate textbook scan unless a case needs definition-level confirmation",
+        "Advanced genus-heavy benchmark batches remain deferred"
+      ]
+    }
+  ]
+}
