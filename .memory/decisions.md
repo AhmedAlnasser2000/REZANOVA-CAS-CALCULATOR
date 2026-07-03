@@ -1851,3 +1851,7 @@
 ## 2026-07-03 - CALCULUS-INTEGRATION-CORPUS-LEDGER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus benchmark ledgers are lane-scoped. The first Calculus corpus is `benchmarks/calculus-corpus/integration/`, and it is indefinite-only: unique cases are the only runnable targets, duplicate sightings attach to canonical `case_id` rows, and run results must carry visual verification status for app-visible output. Limits, Differentiation, definite integrals, improper integrals, ODE, and advanced genus-heavy batches remain separate future lanes or deferred source slices.
+
+## 2026-07-03 - GUIDE-EDUCATION-PLATFORM-AUDIT0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | contributors: claude, user | attribution_basis: mixed] Future Guide platform work should reject a universal generated step-by-step engine and instead center on authorable notebooks/guidance packs, teacher/community export, learner import, and compact computation/evidence snapshots produced by real solver routes. External content embedding is not a dependency; import/export is the platform boundary, and History remains a personal computation ledger rather than the notebook schema.

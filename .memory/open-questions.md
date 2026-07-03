@@ -1,5 +1,6 @@
 # Open Questions
 
+- 2026-07-03: Before implementing Guide notebook import/export, decide the first package shape, author/attribution metadata, tamper/provenance policy, answer/hint visibility model, and stable computation/evidence snapshot vocabulary.
 - 2026-07-03: Before making generic raw-radical genus-1 second-kind integration live, decide the bounded coefficient-field solve strategy that can finish without coefficient-growth blowups and still produce accepted pivot facts plus an exact antiderivative backcheck.
 - 2026-06-30: Before `SURFACE-DTO-FIREWALL1` or any live Surface Protocol code, decide the first concrete host use case, first supported workspace set, first stable result summary DTO, whether host-provided stored variables are session-only or can touch calculator memory, whether Workspace Tabs are visible to hosts, and what privacy/consent gates are required before exposing History, Variables, or settings through a read-only query interface.
 - 2026-06-27: Before Complex root-wrapper implementation, decide the exact principal-root policy for user-entered `sqrt(F)=R` and `root(F,n)=R`, including symbolic RHS branch readback, `complexExactForm` behavior, branch-local facts, and whether principal-image conditions can be expressed without visible `RootOf`.
