@@ -147,6 +147,49 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([1, 2, 3]);
   });
 
+  it('resizes Matrix and Vector named inputs while preserving existing values', () => {
+    const { hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.resizeMatrix('A', 3, 4);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixA).toEqual([
+      [1, 2, 0, 0],
+      [3, 4, 0, 0],
+      [0, 0, 0, 0],
+    ]);
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setMatrixCell('A', 2, 3, 9);
+      hook.result.current.linearAlgebraRuntime.resizeMatrix('A', 2, 2);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixA).toEqual([
+      [1, 2],
+      [3, 4],
+    ]);
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.resizeMatrix('B', 0, 20);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixB).toEqual([[5, 6, 0, 0, 0, 0, 0, 0]]);
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.resizeVector('A', 5);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([1, 2, 3, 0, 0]);
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setVectorCell('A', 4, 9);
+      hook.result.current.linearAlgebraRuntime.resizeVector('A', 2);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([1, 2]);
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.resizeVector('B', 20);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.vectorB).toEqual([4, 5, 6, 0, 0, 0, 0, 0]);
+  });
+
   it('captures and restores Matrix and Vector surface snapshots independently', () => {
     const { hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 

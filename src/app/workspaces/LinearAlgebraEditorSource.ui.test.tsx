@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import {
   openLauncherApp,
@@ -23,6 +23,15 @@ describe('Linear algebra editor source', () => {
     expect(screen.queryByTestId('keypad-sqrt')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.queryByText('Matrix Notation Pad')).not.toBeInTheDocument();
+    const matrixACard = screen.getByText('Matrix A').closest('.editor-card') as HTMLElement;
+    expect(screen.getByLabelText('Matrix A rows')).toHaveValue(2);
+    expect(screen.getByLabelText('Matrix A columns')).toHaveValue(2);
+    expect(within(matrixACard).getAllByRole('textbox')).toHaveLength(4);
+    fireEvent.change(screen.getByLabelText('Matrix A columns'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('Matrix A rows'), { target: { value: '3' } });
+    await waitFor(() => expect(screen.getByLabelText('Matrix A columns')).toHaveValue(3));
+    expect(screen.getByLabelText('Matrix A rows')).toHaveValue(3);
+    expect(within(matrixACard).getAllByRole('textbox')).toHaveLength(9);
     setMathFieldLatex('main-editor', 'A+B');
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'A+B'));
 
@@ -42,6 +51,12 @@ describe('Linear algebra editor source', () => {
     expect(screen.queryByTestId('keypad-linear-rank')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.queryByText('Vector Notation Pad')).not.toBeInTheDocument();
+    const vectorUCard = screen.getByText('Vector u').closest('.editor-card') as HTMLElement;
+    expect(screen.getByLabelText('Vector u length')).toHaveValue(3);
+    expect(within(vectorUCard).getAllByRole('textbox')).toHaveLength(3);
+    fireEvent.change(screen.getByLabelText('Vector u length'), { target: { value: '5' } });
+    await waitFor(() => expect(screen.getByLabelText('Vector u length')).toHaveValue(5));
+    expect(within(vectorUCard).getAllByRole('textbox')).toHaveLength(5);
     setMathFieldLatex('main-editor', 'u\\cdot v');
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'u\\cdot v'));
   });

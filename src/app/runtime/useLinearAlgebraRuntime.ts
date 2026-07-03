@@ -81,6 +81,36 @@ const DEFAULT_MATRIX_B = [
 
 const DEFAULT_VECTOR_A = [1, 2, 3];
 const DEFAULT_VECTOR_B = [4, 5, 6];
+const MIN_LINEAR_ALGEBRA_DIMENSION = 1;
+const MAX_LINEAR_ALGEBRA_DIMENSION = 8;
+
+function clampLinearAlgebraDimension(value: number) {
+  if (!Number.isFinite(value)) {
+    return MIN_LINEAR_ALGEBRA_DIMENSION;
+  }
+  return Math.min(
+    MAX_LINEAR_ALGEBRA_DIMENSION,
+    Math.max(MIN_LINEAR_ALGEBRA_DIMENSION, Math.trunc(value)),
+  );
+}
+
+function resizeMatrixValue(matrix: number[][], rowCount: number, columnCount: number) {
+  const rows = clampLinearAlgebraDimension(rowCount);
+  const columns = clampLinearAlgebraDimension(columnCount);
+  return Array.from({ length: rows }, (_, rowIndex) =>
+    Array.from({ length: columns }, (_, columnIndex) => {
+      const currentValue = matrix[rowIndex]?.[columnIndex];
+      return Number.isFinite(currentValue) ? currentValue : 0;
+    }),
+  );
+}
+
+function resizeVectorValue(vector: number[], length: number) {
+  const nextLength = clampLinearAlgebraDimension(length);
+  return Array.from({ length: nextLength }, (_, index) =>
+    Number.isFinite(vector[index]) ? vector[index] : 0,
+  );
+}
 
 export function useLinearAlgebraRuntime({
   angleUnit,
@@ -360,6 +390,16 @@ export function useLinearAlgebraRuntime({
     );
   }
 
+  function resizeMatrix(which: 'A' | 'B', rows: number, columns: number) {
+    const setter = which === 'A' ? setMatrixA : setMatrixB;
+    setter((currentMatrix) => resizeMatrixValue(currentMatrix, rows, columns));
+  }
+
+  function resizeVector(which: 'A' | 'B', length: number) {
+    const setter = which === 'A' ? setVectorA : setVectorB;
+    setter((currentVector) => resizeVectorValue(currentVector, length));
+  }
+
   function captureMatrixSurfaceState(): MatrixSurfaceState {
     return {
       matrixA: cloneMatrix(matrixA),
@@ -400,6 +440,8 @@ export function useLinearAlgebraRuntime({
     runVectorAction,
     restoreMatrixSurfaceState,
     restoreVectorSurfaceState,
+    resizeMatrix,
+    resizeVector,
     setMatrixA,
     setMatrixB,
     setMatrixCell,

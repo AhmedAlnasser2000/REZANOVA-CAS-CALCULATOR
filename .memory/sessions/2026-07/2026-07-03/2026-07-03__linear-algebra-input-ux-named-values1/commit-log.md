@@ -22,5 +22,11 @@
 ### LINEAR-ALGEBRA-FRIENDLY-LIST-SYNTAX1
 
 - subject: `LINEAR-ALGEBRA-FRIENDLY-LIST-SYNTAX1: parse pasted matrix lists`
+- status: recorded in git history by subject
+- staged memory: session verification, completion report, commit log.
+
+### LINEAR-ALGEBRA-DYNAMIC-DIMENSIONS1
+
+- subject: `LINEAR-ALGEBRA-DYNAMIC-DIMENSIONS1: add matrix vector sizing controls`
 - status: ready to record in git history by subject
 - staged memory: session verification, completion report, commit log.

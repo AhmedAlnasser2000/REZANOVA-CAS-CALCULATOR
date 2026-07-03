@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
 
 type VectorWorkspaceProps = {
@@ -5,14 +6,75 @@ type VectorWorkspaceProps = {
   vectorB: number[];
   onOpenGuideMode: (mode: 'vector') => void;
   onOpenGuideArticle: (articleId: string) => void;
+  onResizeVector: (vectorId: 'A' | 'B', length: number) => void;
   onSetVectorCell: (vectorId: 'A' | 'B', index: number, value: number) => void;
 };
+
+function gridColumnStyle(columns: number): CSSProperties {
+  return {
+    '--linear-algebra-columns': String(columns),
+  } as CSSProperties;
+}
+
+type VectorValueCardProps = {
+  id: 'A' | 'B';
+  label: 'u' | 'v';
+  vector: number[];
+  onResizeVector: VectorWorkspaceProps['onResizeVector'];
+  onSetVectorCell: VectorWorkspaceProps['onSetVectorCell'];
+};
+
+function VectorValueCard({
+  id,
+  label,
+  vector,
+  onResizeVector,
+  onSetVectorCell,
+}: VectorValueCardProps) {
+  const length = vector.length || 1;
+
+  return (
+    <div className="editor-card linear-algebra-value-card">
+      <div className="linear-algebra-value-card-header">
+        <strong>Vector {label}</strong>
+        <div className="linear-algebra-size-controls">
+          <label>
+            <span>Length</span>
+            <input
+              aria-label={`Vector ${label} length`}
+              type="number"
+              min={1}
+              max={8}
+              step={1}
+              value={length}
+              onChange={(event) => onResizeVector(id, Number(event.currentTarget.value))}
+            />
+          </label>
+        </div>
+      </div>
+      <div
+        className="vector-grid linear-algebra-vector-grid"
+        data-columns={length}
+        style={gridColumnStyle(length)}
+      >
+        {vector.map((value, index) => (
+          <SignedNumberInput
+            key={`v${id.toLowerCase()}-${index}`}
+            value={value}
+            onValueChange={(nextValue) => onSetVectorCell(id, index, nextValue)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function VectorWorkspace({
   vectorA,
   vectorB,
   onOpenGuideMode,
   onOpenGuideArticle,
+  onResizeVector,
   onSetVectorCell,
 }: VectorWorkspaceProps) {
   return (
@@ -35,22 +97,20 @@ function VectorWorkspace({
         <button className="guide-chip" onClick={() => onOpenGuideArticle('linear-algebra-matrix-vector')}>Guide: Linear Algebra</button>
       </div>
       <div className="grid-two">
-        <div className="editor-card">
-          <strong>Vector u</strong>
-          <div className="vector-grid">
-            {vectorA.map((value, index) => (
-              <SignedNumberInput key={`va-${index}`} value={value} onValueChange={(nextValue) => onSetVectorCell('A', index, nextValue)} />
-            ))}
-          </div>
-        </div>
-        <div className="editor-card">
-          <strong>Vector v</strong>
-          <div className="vector-grid">
-            {vectorB.map((value, index) => (
-              <SignedNumberInput key={`vb-${index}`} value={value} onValueChange={(nextValue) => onSetVectorCell('B', index, nextValue)} />
-            ))}
-          </div>
-        </div>
+        <VectorValueCard
+          id="A"
+          label="u"
+          vector={vectorA}
+          onResizeVector={onResizeVector}
+          onSetVectorCell={onSetVectorCell}
+        />
+        <VectorValueCard
+          id="B"
+          label="v"
+          vector={vectorB}
+          onResizeVector={onResizeVector}
+          onSetVectorCell={onSetVectorCell}
+        />
       </div>
     </section>
   );

@@ -44,6 +44,7 @@ export function LinearAlgebraTableWorkspaceHost({
         matrixB={linearAlgebraRuntime.matrixB}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
+        onResizeMatrix={linearAlgebraRuntime.resizeMatrix}
         onSetMatrixCell={linearAlgebraRuntime.setMatrixCell}
       />
     );
@@ -56,6 +57,7 @@ export function LinearAlgebraTableWorkspaceHost({
         vectorB={linearAlgebraRuntime.vectorB}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
+        onResizeVector={linearAlgebraRuntime.resizeVector}
         onSetVectorCell={linearAlgebraRuntime.setVectorCell}
       />
     );

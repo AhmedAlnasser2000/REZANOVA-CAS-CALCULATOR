@@ -42,3 +42,19 @@
   - `git diff --check` passed.
 - global gate notes:
   - `npm run test:file-sizes` remains blocked by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; changed Linear Algebra files remain under cap.
+
+### LINEAR-ALGEBRA-DYNAMIC-DIMENSIONS1
+
+- gate: ui
+- status: pass
+- changed: Matrix A/B editors now expose row and column controls from 1x1 through 8x8; Vector u/v editors now expose length controls from 1 through 8.
+- behavior: resizing preserves existing top-left matrix values or vector prefix values, fills newly created cells with `0`, clamps out-of-range dimensions, and keeps old default/replay seed shapes compatible.
+- visual readback: Matrix `A+B` after resizing A/B to 3x3 showed the 3x3 sum with zero-filled new cells; Vector `u+v` after resizing u/v to length 5 showed the 5-entry sum with zero-filled new entries.
+- evidence:
+  - `npm run test:ui -- src/app/runtime/useLinearAlgebraTableShellRuntime.ui.test.tsx src/app/workspaces/LinearAlgebraEditorSource.ui.test.tsx` passed: 15 tests.
+  - `npx vitest run src/lib/linear-algebra/editor-parser.test.ts src/lib/linear-algebra/editor-dispatch.test.ts` passed: 16 tests.
+  - Playwright visual check against Vite dev server at `http://127.0.0.1:4173/` passed for Matrix 3x3 A/B controls plus result and Vector length-5 u/v controls plus result.
+  - screenshots: `.task_tmp/linear-algebra-dynamic-dimensions1/matrix-3x3-controls-and-result.png`, `.task_tmp/linear-algebra-dynamic-dimensions1/vector-length-5-controls-and-result.png`.
+  - scoped `git diff --check` passed for the M3 source and test files.
+- global gate notes:
+  - `npm run test:file-sizes` remains blocked by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; changed Linear Algebra files remain under cap.
