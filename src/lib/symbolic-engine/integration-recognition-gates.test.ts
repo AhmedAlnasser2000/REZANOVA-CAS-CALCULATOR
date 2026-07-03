@@ -48,4 +48,21 @@ describe('symbolic-engine integration recognition gates', () => {
     expect(result.detailSections?.flatMap((section) => section.lines).join(' '))
       .toContain('does not present a partial antiderivative');
   });
+
+  it('recognizes symbolic-affine trig derivative products', () => {
+    const cases = [
+      { latex: String.raw`\sec\left(\frac{\pi x}{2}\right)\tan\left(\frac{\pi x}{2}\right)`, answer: '\\sec' },
+      { latex: String.raw`-\pi\csc\left(\frac{\pi x}{2}\right)\cot\left(\frac{\pi x}{2}\right)`, answer: '\\csc' },
+      { latex: String.raw`\sin\left(\frac{\pi x}{2}\right)\cos\left(\frac{\pi x}{2}\right)`, answer: '\\sin' },
+    ];
+
+    for (const { latex, answer } of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
+      expect(result.strategy, latex).toBe('u-substitution');
+      expect(result.verification.status, latex).toBe('verified-exact');
+      expect(result.exactLatex, latex).toContain(answer);
+      expect(result.exactSupplementLatex?.join(' '), latex).toContain('\\ne0');
+      expect(result.exactSupplementLatex?.join(' '), latex).toContain('\\pi');
+    }
+  });
 });

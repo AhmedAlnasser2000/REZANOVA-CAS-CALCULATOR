@@ -36,7 +36,6 @@ import {
   normalizeIntegralLatexInput,
   tryPartsRule,
   trySubstitutionRule,
-  tryTrigDerivativeProductRule,
 } from './rules';
 import {
   trySymbolicBinomialSubstitutionRule,
@@ -51,6 +50,7 @@ import {
   trySymbolicTwoLinearPartialFractionRule,
 } from './symbolic-rational';
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
+import { tryTrigDerivativeProductRule } from './trig-derivative-products';
 import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
 import type { IntegralResolution, IntegralStrategy } from './types';
 import type { DisplayDetailSection } from '../../../types/calculator';
@@ -217,7 +217,14 @@ function tryRoute(
   if (route === 'u-substitution') {
     const trigDerivativeProduct = tryTrigDerivativeProductRule(node, variable);
     if (trigDerivativeProduct) {
-      return symbolicSuccess(node, variable, trigDerivativeProduct, 'u-substitution');
+      return symbolicSuccess(
+        node,
+        variable,
+        trigDerivativeProduct.exactLatex,
+        'u-substitution',
+        trigDerivativeProduct.verification,
+        trigDerivativeProduct.exactSupplementLatex,
+      );
     }
 
     const depth2Substitution = tryRischNormanDepth2DerivativeSubstitutionRule(node, variable);
