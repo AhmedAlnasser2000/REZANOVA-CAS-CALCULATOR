@@ -1823,3 +1823,7 @@
 ## 2026-07-03 - ALGEBRAIC-GENUS1-SECOND-KIND-BOUNDED-SOLVE-ATTEMPT1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Second-kind bounded solve attempts may stop under explicit coefficient-growth, operation, or pivot-boundary caps. These controlled stops are proof evidence only; live EllipticE/Pi adoption still requires a solved coefficient vector, accepted pivot facts, node-first antiderivative substitution, and exact derivative backcheck.
+
+## 2026-07-03 - ALGEBRAIC-FUNCTION-FIELD-ORCHESTRATOR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The algebraic function-field orchestrator is an internal coordinator over existing genus-0, genus-1, and boundary routes. It may preserve current public `u-substitution`/`unsupported` labels and result schemas, but it must not claim new second-kind, third-kind, symbolic, or degeneration live coverage without the required solve/backcheck prerequisites.
