@@ -55,6 +55,8 @@ Inserted prerequisite note: `ALGEBRAIC-GENUS1-ROOT-PULLBACK-NODE-FORM1` adds nod
 
 Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-MATRIX-NODE-SURFACE1` adds the node-level coefficient-comparison surface that bounded second-kind matrix population will consume. It records the chart-substituted radicand, raw pullback, first-kind-normalized RHS, row-power nodes, correction-polynomial nodes, and proof obligations while keeping live `EllipticE/Pi` adoption blocked.
 
+Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-CORRECTION-DERIVATIVE-NODE1` replaces the matrix-surface correction derivative placeholder with the normalized node formula `S'(z)(1-mz) - (m/2)S(z)`. Matrix entry population remains deferred until this node surface is expanded into row coefficients and solved over the named-root field.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.

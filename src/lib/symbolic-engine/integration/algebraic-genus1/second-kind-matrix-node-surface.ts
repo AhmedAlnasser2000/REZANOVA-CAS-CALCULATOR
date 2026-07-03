@@ -43,6 +43,7 @@ export type AlgebraicGenus1SecondKindMatrixNodeSurface = {
   pullbackOverFirstKindKernelNode: unknown;
   correctionPolynomialNode: unknown;
   correctionDerivativeNode: unknown;
+  correctionDerivativeFormula: 'expanded-normalized-second-kind-kernel';
   coefficientComparisonNode: unknown;
   rowBasisNodes: unknown[];
   unknownSymbols: string[];
@@ -77,14 +78,38 @@ function power(node: unknown, exponent: number) {
   return exponent === 0 ? 1 : exponent === 1 ? node : ['Power', node, exponent];
 }
 
-function derivativePlaceholder(node: unknown) {
-  void node;
-  return 'D_S_z';
-}
-
 function correctionPolynomial(symbols: readonly string[]) {
   return addMathJsonNodes(
     ...symbols.map((symbol, index) => multiplyMathJsonNodes(symbol, power(Z, index))),
+  );
+}
+
+function correctionPolynomialDerivative(symbols: readonly string[]) {
+  const derivativeTerms = symbols.flatMap((symbol, index) => (
+    index === 0 ? [] : [multiplyMathJsonNodes(index, symbol, power(Z, index - 1))]
+  ));
+  return addMathJsonNodes(...derivativeTerms);
+}
+
+function normalizedCorrectionDerivative(input: {
+  correctionSymbols: readonly string[];
+  correctionPolynomialNode: unknown;
+  parameterNode: unknown;
+}) {
+  const polynomialDerivative = correctionPolynomialDerivative(input.correctionSymbols);
+  const secondKindKernelSquared = subtractMathJsonNodes(
+    1,
+    multiplyMathJsonNodes(input.parameterNode, Z),
+  );
+  return simplifyMathJsonNodeOrOriginal(
+    subtractMathJsonNodes(
+      multiplyMathJsonNodes(polynomialDerivative, secondKindKernelSquared),
+      multiplyMathJsonNodes(
+        divideMathJsonNodes(input.parameterNode, 2),
+        input.correctionPolynomialNode,
+      ),
+    ),
+    { maxNodeCount: 5000 },
   );
 }
 
@@ -137,6 +162,7 @@ function detailSection(input: AlgebraicGenus1SecondKindMatrixNodeSurface) {
       [textPart('raw pullback: '), mathPart(boxLatex(input.rawPullbackNode))],
       [textPart('rhs node: '), mathPart(boxLatex(input.pullbackOverFirstKindKernelNode))],
       [textPart('correction polynomial: '), mathPart(boxLatex(input.correctionPolynomialNode))],
+      [textPart('correction derivative: '), mathPart(boxLatex(input.correctionDerivativeNode))],
       [textPart('coefficient comparison: '), mathPart(boxLatex(input.coefficientComparisonNode))],
     ],
   );
@@ -214,9 +240,11 @@ export function buildAlgebraicGenus1SecondKindMatrixNodeSurface(
     .filter((unknown) => unknown.block === 'rational-correction')
     .map((unknown) => unknown.symbolLatex);
   const correctionPolynomialNode = correctionPolynomial(correctionSymbols);
-  const correctionDerivativeNode = derivativePlaceholder(
-    multiplyMathJsonNodes(correctionPolynomialNode, nodeForm.secondKindKernelNode),
-  );
+  const correctionDerivativeNode = normalizedCorrectionDerivative({
+    correctionSymbols,
+    correctionPolynomialNode,
+    parameterNode: nodeForm.parameterNode,
+  });
   const comparisonNode = coefficientComparison({
     pullbackOverFirstKindKernelNode,
     parameterNode: nodeForm.parameterNode,
@@ -238,6 +266,7 @@ export function buildAlgebraicGenus1SecondKindMatrixNodeSurface(
     pullbackOverFirstKindKernelNode,
     correctionPolynomialNode,
     correctionDerivativeNode,
+    correctionDerivativeFormula: 'expanded-normalized-second-kind-kernel',
     coefficientComparisonNode: comparisonNode,
     rowBasisNodes: rowBasisNodes(matrix.matrixShape.rows),
     unknownSymbols: matrix.unknowns.map((unknown) => unknown.symbolLatex),
@@ -250,7 +279,7 @@ export function buildAlgebraicGenus1SecondKindMatrixNodeSurface(
       ...nodeForm.readinessNotes,
       ...matrix.readinessNotes,
       'The coefficient matrix now has a MathJSON node surface for the pullback RHS, basis kernels, correction polynomial, and row powers.',
-      'The rational-correction derivative is represented by a node-safe placeholder until matrix-entry population expands it.',
+      'The rational-correction derivative is expanded as S\\prime(z)(1-mz) - (m/2)S(z) over the first-kind kernel.',
       'Expansion into actual matrix entries and root-field solving remain separate prerequisites before live EllipticE/Pi adoption.',
     ],
     proofObligations: [

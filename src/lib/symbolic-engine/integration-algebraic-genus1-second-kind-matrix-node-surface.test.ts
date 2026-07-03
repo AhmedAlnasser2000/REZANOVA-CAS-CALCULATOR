@@ -48,6 +48,7 @@ describe('algebraic genus-1 second-kind matrix node surface', () => {
     expect(result.canPopulateEntries).toBe(true);
     expect(result.canSolveDirectly).toBe(false);
     expect(result.canAdoptLive).toBe(false);
+    expect(result.correctionDerivativeFormula).toBe('expanded-normalized-second-kind-kernel');
     expect(result.matrixShape).toEqual({ rows: 6, columns: 6 });
     expect(result.rowBasisNodes).toEqual([
       1,
@@ -61,8 +62,11 @@ describe('algebraic genus-1 second-kind matrix node surface', () => {
     expect(result.unknownSymbols).toContain('s_2');
     expect(JSON.stringify(result.radicandInChartNode)).toContain('alpha_3');
     expect(JSON.stringify(result.rawPullbackNode)).toContain('Sqrt');
-    expect(JSON.stringify(result.coefficientComparisonNode)).toContain('D_S_z');
+    expect(JSON.stringify(result.correctionDerivativeNode)).toContain('s_1');
+    expect(JSON.stringify(result.correctionDerivativeNode)).not.toContain('D_S_z');
+    expect(JSON.stringify(result.coefficientComparisonNode)).not.toContain('D_S_z');
     expect(text(result)).toContain('MathJSON node surface');
+    expect(text(result)).toContain('S\\prime(z)(1-mz) - (m/2)S(z)');
     expect(text(result)).not.toMatch(/RootOf|rootof/i);
   });
 
