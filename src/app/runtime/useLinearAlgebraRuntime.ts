@@ -550,6 +550,60 @@ export function useLinearAlgebraRuntime({
     );
   }
 
+  function setMatrixValueCell(id: string, row: number, column: number, value: number) {
+    setMatrixValues((currentValues) =>
+      currentValues.map((currentValue) =>
+        currentValue.id === id
+          ? {
+              ...currentValue,
+              value: currentValue.value.map((currentRow, rowIndex) =>
+                currentRow.map((cell, columnIndex) =>
+                  rowIndex === row && columnIndex === column
+                    ? (Number.isFinite(value) ? value : 0)
+                    : cell,
+                ),
+              ),
+            }
+          : currentValue,
+      ),
+    );
+  }
+
+  function setVectorValueCell(id: string, index: number, value: number) {
+    setVectorValues((currentValues) =>
+      currentValues.map((currentValue) =>
+        currentValue.id === id
+          ? {
+              ...currentValue,
+              value: currentValue.value.map((cell, cellIndex) =>
+                cellIndex === index ? (Number.isFinite(value) ? value : 0) : cell,
+              ),
+            }
+          : currentValue,
+      ),
+    );
+  }
+
+  function resizeMatrixValueById(id: string, rows: number, columns: number) {
+    setMatrixValues((currentValues) =>
+      currentValues.map((currentValue) =>
+        currentValue.id === id
+          ? { ...currentValue, value: resizeMatrixValue(currentValue.value, rows, columns) }
+          : currentValue,
+      ),
+    );
+  }
+
+  function resizeVectorValueById(id: string, length: number) {
+    setVectorValues((currentValues) =>
+      currentValues.map((currentValue) =>
+        currentValue.id === id
+          ? { ...currentValue, value: resizeVectorValue(currentValue.value, length) }
+          : currentValue,
+      ),
+    );
+  }
+
   function addMatrixValue(preferredName?: string, value: number[][] = DEFAULT_MATRIX_A) {
     const id = `matrix-${nextMatrixValueIdRef.current}`;
     nextMatrixValueIdRef.current += 1;
@@ -760,7 +814,9 @@ export function useLinearAlgebraRuntime({
     restoreMatrixSurfaceState,
     restoreVectorSurfaceState,
     resizeMatrix,
+    resizeMatrixValueById,
     resizeVector,
+    resizeVectorValueById,
     resetMatrixValues,
     resetVectorValues,
     setActiveMatrixValueIds,
@@ -769,10 +825,12 @@ export function useLinearAlgebraRuntime({
     setMatrixB,
     setMatrixCell,
     setMatrixEditorLatex,
+    setMatrixValueCell,
     setVectorA,
     setVectorB,
     setVectorCell,
     setVectorEditorLatex,
+    setVectorValueCell,
     vectorA,
     vectorB,
     vectorEditorLatex,

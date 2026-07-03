@@ -1,13 +1,20 @@
 import type { CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
+import type { LinearAlgebraVectorNamedValue } from '../../lib/linear-algebra/named-values';
 
 type VectorWorkspaceProps = {
-  vectorA: number[];
-  vectorB: number[];
+  activeVectorLeftId: string;
+  activeVectorRightId: string;
+  vectorValues: readonly LinearAlgebraVectorNamedValue[];
   onOpenGuideMode: (mode: 'vector') => void;
   onOpenGuideArticle: (articleId: string) => void;
-  onResizeVector: (vectorId: 'A' | 'B', length: number) => void;
-  onSetVectorCell: (vectorId: 'A' | 'B', index: number, value: number) => void;
+  onAddVectorValue: () => void;
+  onDeleteVectorValue: (id: string) => void;
+  onDuplicateVectorValue: (id: string) => void;
+  onRenameVectorValue: (id: string, name: string) => void;
+  onResizeVectorValue: (id: string, length: number) => void;
+  onSetActiveVectorValueIds: (leftId: string, rightId: string) => void;
+  onSetVectorCell: (id: string, index: number, value: number) => void;
 };
 
 function gridColumnStyle(columns: number): CSSProperties {
@@ -17,39 +24,78 @@ function gridColumnStyle(columns: number): CSSProperties {
 }
 
 type VectorValueCardProps = {
-  id: 'A' | 'B';
-  label: 'u' | 'v';
-  vector: number[];
-  onResizeVector: VectorWorkspaceProps['onResizeVector'];
+  activeRoles: string[];
+  canDelete: boolean;
+  value: LinearAlgebraVectorNamedValue;
+  onDeleteVectorValue: VectorWorkspaceProps['onDeleteVectorValue'];
+  onDuplicateVectorValue: VectorWorkspaceProps['onDuplicateVectorValue'];
+  onRenameVectorValue: VectorWorkspaceProps['onRenameVectorValue'];
+  onResizeVectorValue: VectorWorkspaceProps['onResizeVectorValue'];
   onSetVectorCell: VectorWorkspaceProps['onSetVectorCell'];
 };
 
 function VectorValueCard({
-  id,
-  label,
-  vector,
-  onResizeVector,
+  activeRoles,
+  canDelete,
+  value,
+  onDeleteVectorValue,
+  onDuplicateVectorValue,
+  onRenameVectorValue,
+  onResizeVectorValue,
   onSetVectorCell,
 }: VectorValueCardProps) {
+  const { id, name, value: vector } = value;
   const length = vector.length || 1;
 
   return (
     <div className="editor-card linear-algebra-value-card">
       <div className="linear-algebra-value-card-header">
-        <strong>Vector {label}</strong>
+        <div className="linear-algebra-value-title">
+          <strong>Vector</strong>
+          <input
+            aria-label={`Vector ${name} name`}
+            className="linear-algebra-name-input"
+            maxLength={1}
+            value={name}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => onRenameVectorValue(id, event.currentTarget.value)}
+          />
+          {activeRoles.map((role) => (
+            <span className="equation-badge" key={role}>{role}</span>
+          ))}
+        </div>
         <div className="linear-algebra-size-controls">
           <label>
             <span>Length</span>
             <input
-              aria-label={`Vector ${label} length`}
+              aria-label={`Vector ${name} length`}
               type="number"
               min={1}
               max={8}
               step={1}
               value={length}
-              onChange={(event) => onResizeVector(id, Number(event.currentTarget.value))}
+              onChange={(event) => onResizeVectorValue(id, Number(event.currentTarget.value))}
             />
           </label>
+        </div>
+        <div className="linear-algebra-card-actions">
+          <button
+            type="button"
+            className="linear-algebra-tool-button"
+            aria-label={`Duplicate Vector ${name}`}
+            onClick={() => onDuplicateVectorValue(id)}
+          >
+            Duplicate
+          </button>
+          <button
+            type="button"
+            className="linear-algebra-tool-button"
+            aria-label={`Delete Vector ${name}`}
+            disabled={!canDelete}
+            onClick={() => onDeleteVectorValue(id)}
+          >
+            Delete
+          </button>
         </div>
       </div>
       <div
@@ -59,7 +105,7 @@ function VectorValueCard({
       >
         {vector.map((value, index) => (
           <SignedNumberInput
-            key={`v${id.toLowerCase()}-${index}`}
+            key={`v${id}-${index}`}
             value={value}
             onValueChange={(nextValue) => onSetVectorCell(id, index, nextValue)}
           />
@@ -70,13 +116,37 @@ function VectorValueCard({
 }
 
 function VectorWorkspace({
-  vectorA,
-  vectorB,
+  activeVectorLeftId,
+  activeVectorRightId,
+  vectorValues,
   onOpenGuideMode,
   onOpenGuideArticle,
-  onResizeVector,
+  onAddVectorValue,
+  onDeleteVectorValue,
+  onDuplicateVectorValue,
+  onRenameVectorValue,
+  onResizeVectorValue,
+  onSetActiveVectorValueIds,
   onSetVectorCell,
 }: VectorWorkspaceProps) {
+  const fallbackLeftId = vectorValues[0]?.id ?? '';
+  const fallbackRightId = vectorValues[1]?.id ?? fallbackLeftId;
+  const vectorIds = new Set(vectorValues.map((value) => value.id));
+  const activeLeftId = vectorIds.has(activeVectorLeftId) ? activeVectorLeftId : fallbackLeftId;
+  const activeRightId = vectorIds.has(activeVectorRightId) ? activeVectorRightId : fallbackRightId;
+  const canAddVector = vectorValues.length < 26;
+
+  function activeRolesFor(id: string) {
+    const roles: string[] = [];
+    if (id === activeLeftId) {
+      roles.push('First');
+    }
+    if (id === activeRightId) {
+      roles.push('Second');
+    }
+    return roles;
+  }
+
   return (
     <section className="mode-panel">
       <div className="linear-algebra-panel-header">
@@ -89,28 +159,63 @@ function VectorWorkspace({
         </div>
         <div className="linear-algebra-badge-row">
           <span className="equation-badge">Editor source</span>
-          <span className="equation-origin-badge">u/v vectors</span>
+          <span className="equation-origin-badge">Named vectors</span>
         </div>
       </div>
       <div className="guide-related-links">
         <button className="guide-chip" onClick={() => onOpenGuideMode('vector')}>Guide: Vector mode</button>
         <button className="guide-chip" onClick={() => onOpenGuideArticle('linear-algebra-matrix-vector')}>Guide: Linear Algebra</button>
       </div>
-      <div className="grid-two">
-        <VectorValueCard
-          id="A"
-          label="u"
-          vector={vectorA}
-          onResizeVector={onResizeVector}
-          onSetVectorCell={onSetVectorCell}
-        />
-        <VectorValueCard
-          id="B"
-          label="v"
-          vector={vectorB}
-          onResizeVector={onResizeVector}
-          onSetVectorCell={onSetVectorCell}
-        />
+      <div className="linear-algebra-library-toolbar">
+        <div className="linear-algebra-active-operands">
+          <label>
+            <span>First</span>
+            <select
+              aria-label="Active Vector first operand"
+              value={activeLeftId}
+              onChange={(event) => onSetActiveVectorValueIds(event.currentTarget.value, activeRightId)}
+            >
+              {vectorValues.map((value) => (
+                <option key={value.id} value={value.id}>{value.name}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Second</span>
+            <select
+              aria-label="Active Vector second operand"
+              value={activeRightId}
+              onChange={(event) => onSetActiveVectorValueIds(activeLeftId, event.currentTarget.value)}
+            >
+              {vectorValues.map((value) => (
+                <option key={value.id} value={value.id}>{value.name}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <button
+          type="button"
+          className="linear-algebra-tool-button linear-algebra-add-button"
+          disabled={!canAddVector}
+          onClick={() => onAddVectorValue()}
+        >
+          Add Vector
+        </button>
+      </div>
+      <div className="linear-algebra-library-grid">
+        {vectorValues.map((value) => (
+          <VectorValueCard
+            key={value.id}
+            activeRoles={activeRolesFor(value.id)}
+            canDelete={vectorValues.length > 1}
+            value={value}
+            onDeleteVectorValue={onDeleteVectorValue}
+            onDuplicateVectorValue={onDuplicateVectorValue}
+            onRenameVectorValue={onRenameVectorValue}
+            onResizeVectorValue={onResizeVectorValue}
+            onSetVectorCell={onSetVectorCell}
+          />
+        ))}
       </div>
     </section>
   );

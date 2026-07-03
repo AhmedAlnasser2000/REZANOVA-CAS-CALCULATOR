@@ -75,3 +75,21 @@
 - global gate notes:
   - `npx tsc -b --pretty false` remains blocked by unrelated dirty `src/app/runtime/historyDisplayEntry.test.ts` readonly `lineKinds` typing.
   - `npm run test:file-sizes` remains blocked by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; changed Linear Algebra files are under their caps.
+
+### LINEAR-ALGEBRA-NAMED-LIBRARY-UI1
+
+- gate: ui
+- status: pass
+- changed: Matrix and Vector workspace panels now render compact editable named-value libraries instead of fixed A/B-only or u/v-only card pairs.
+- behavior: users can add, rename, duplicate, resize, and delete named matrices/vectors; single-letter names stay separate by workspace; active Matrix left/right and Vector first/second selectors are visible for the next active-operand F-key milestone.
+- visual readback: Matrix library screenshot showed A/B plus added renamed D and duplicated C cards with 3x3 sizing, active Left/Right badges, and no duplicated expression headers; Vector library screenshot showed u/v plus added renamed q and duplicated p cards with length controls and active First/Second badges.
+- evidence:
+  - `npm run test:ui -- src/app/runtime/useLinearAlgebraTableShellRuntime.ui.test.tsx src/app/workspaces/LinearAlgebraEditorSource.ui.test.tsx` passed: 19 tests.
+  - `npx vitest run src/lib/linear-algebra/editor-parser.test.ts src/lib/linear-algebra/editor-dispatch.test.ts src/lib/linear-algebra/editor-dispatch-named-values.test.ts` passed: 18 tests.
+  - Playwright visual check against Vite dev server at `http://127.0.0.1:4173/` passed for Matrix and Vector add/rename/duplicate/resize library surfaces.
+  - screenshots: `.task_tmp/linear-algebra-named-library-ui1/matrix-library-add-rename-duplicate.png`, `.task_tmp/linear-algebra-named-library-ui1/vector-library-add-rename-duplicate.png`.
+  - `git diff --check` passed.
+  - `npm run test:memory-protocol` passed.
+- global gate notes:
+  - `npm run test:file-sizes` remains blocked by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; changed Linear Algebra runtime/workspace/style/test files are under their caps.
+  - `npx tsc -b --pretty false` remains blocked by unrelated dirty `src/app/runtime/historyDisplayEntry.test.ts` readonly `lineKinds` typing.

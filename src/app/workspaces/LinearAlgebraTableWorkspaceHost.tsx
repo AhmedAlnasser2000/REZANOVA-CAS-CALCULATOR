@@ -40,12 +40,18 @@ export function LinearAlgebraTableWorkspaceHost({
   if (currentMode === 'matrix') {
     return (
       <MatrixWorkspace
-        matrixA={linearAlgebraRuntime.matrixA}
-        matrixB={linearAlgebraRuntime.matrixB}
+        activeMatrixLeftId={linearAlgebraRuntime.activeMatrixLeftId}
+        activeMatrixRightId={linearAlgebraRuntime.activeMatrixRightId}
+        matrixValues={linearAlgebraRuntime.matrixValues}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
-        onResizeMatrix={linearAlgebraRuntime.resizeMatrix}
-        onSetMatrixCell={linearAlgebraRuntime.setMatrixCell}
+        onAddMatrixValue={linearAlgebraRuntime.addMatrixValue}
+        onDeleteMatrixValue={linearAlgebraRuntime.deleteMatrixValue}
+        onDuplicateMatrixValue={linearAlgebraRuntime.duplicateMatrixValue}
+        onRenameMatrixValue={linearAlgebraRuntime.renameMatrixValue}
+        onResizeMatrixValue={linearAlgebraRuntime.resizeMatrixValueById}
+        onSetActiveMatrixValueIds={linearAlgebraRuntime.setActiveMatrixValueIds}
+        onSetMatrixCell={linearAlgebraRuntime.setMatrixValueCell}
       />
     );
   }
@@ -53,12 +59,18 @@ export function LinearAlgebraTableWorkspaceHost({
   if (currentMode === 'vector') {
     return (
       <VectorWorkspace
-        vectorA={linearAlgebraRuntime.vectorA}
-        vectorB={linearAlgebraRuntime.vectorB}
+        activeVectorLeftId={linearAlgebraRuntime.activeVectorLeftId}
+        activeVectorRightId={linearAlgebraRuntime.activeVectorRightId}
+        vectorValues={linearAlgebraRuntime.vectorValues}
         onOpenGuideMode={onOpenGuideMode}
         onOpenGuideArticle={onOpenGuideArticle}
-        onResizeVector={linearAlgebraRuntime.resizeVector}
-        onSetVectorCell={linearAlgebraRuntime.setVectorCell}
+        onAddVectorValue={linearAlgebraRuntime.addVectorValue}
+        onDeleteVectorValue={linearAlgebraRuntime.deleteVectorValue}
+        onDuplicateVectorValue={linearAlgebraRuntime.duplicateVectorValue}
+        onRenameVectorValue={linearAlgebraRuntime.renameVectorValue}
+        onResizeVectorValue={linearAlgebraRuntime.resizeVectorValueById}
+        onSetActiveVectorValueIds={linearAlgebraRuntime.setActiveVectorValueIds}
+        onSetVectorCell={linearAlgebraRuntime.setVectorValueCell}
       />
     );
   }
