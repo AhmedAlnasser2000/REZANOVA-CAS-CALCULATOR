@@ -1,7 +1,16 @@
 import type { DisplayDetailSection } from '../../../types/calculator';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
-import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
-import { nodeHasSymbol as sharedNodeHasSymbol } from './facts';
+import {
+  createComplexLogExpFamily,
+  createRealLogExpFamily,
+  renderLogExpFamily,
+} from '../solution/log-exp-family';
+import {
+  cleanExpLogLatex,
+  logCarrierLatex,
+  powerCarrierLatex,
+} from './exp-log-latex';
+import { dedupe, nodeHasSymbol as sharedNodeHasSymbol } from './facts';
 import { solveParameterizedComplexPreimageCarrierEquation } from './complex-preimage-handoff';
 import { solveGeneratedExpLogEquation } from './exp-log-generated-handoff';
 import {
@@ -561,38 +570,8 @@ export function stop(
   };
 }
 
-function dedupe(entries: string[]) {
-  return [...new Set(entries.filter(Boolean))];
-}
-
 export function cleanLatex(latex: string) {
-  return latex.replace(/\\exponentialE/g, 'e');
-}
-
-export function wrapLatexForPowerBase(node: MathJson) {
-  const latex = latexForNode(node);
-  return isArrayNode(node) && (node[0] === 'Add' || node[0] === 'Subtract' || node[0] === 'Power')
-    ? `\\left(${latex}\\right)`
-    : latex;
-}
-
-export function powerCarrierLatex(base: MathJson, exponent: MathJson) {
-  return `${wrapLatexForPowerBase(base)}^{${latexForNode(exponent)}}`;
-}
-
-function isBaseProfile(input: BaseProfile | MathJson): input is BaseProfile {
-  return Boolean(
-    input
-    && typeof input === 'object'
-    && !Array.isArray(input)
-    && 'kind' in input
-    && 'latex' in input,
-  );
-}
-
-export function logCarrierLatex(argument: MathJson, base: BaseProfile | MathJson) {
-  const baseLatex = isBaseProfile(base) ? base.latex : latexForNode(base as MathJson);
-  return `\\log_{${baseLatex}}\\left(${latexForNode(argument)}\\right)`;
+  return cleanExpLogLatex(latex);
 }
 
 function greatestCommonDivisor(left: number, right: number): number {
@@ -725,14 +704,6 @@ function solutionExpressionsFromExactLatex(exactLatex: string, target: string) {
   return [exactLatex];
 }
 
-function exactLatexForSolutions(target: string, solutionExpressions: string[]) {
-  const unique = dedupe(solutionExpressions.map(cleanLatex));
-  if (unique.length === 1) {
-    return `${target}=${unique[0]}`;
-  }
-  return `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
-}
-
 export function finalizeGeneratedExpLogSolve({
   target,
   parameterNames,
@@ -791,6 +762,10 @@ export function finalizeGeneratedExpLogSolve({
   }
 
   const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
+  const renderedFamily = renderLogExpFamily(createRealLogExpFamily({
+    targetLatex: target,
+    branches: dedupe(solutionExpressions.map(cleanLatex)),
+  }));
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
     parameterNames,
@@ -802,13 +777,8 @@ export function finalizeGeneratedExpLogSolve({
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: exactLatexForSolutions(target, solutionExpressions),
-    branchReadback: finiteBranchReadbackForNormalizedBranches({
-      targetLatex: target,
-      branchesLatex: dedupe(solutionExpressions.map(cleanLatex)),
-      preserveOrder: true,
-      source: 'equation-parameterized-exp-log',
-    }),
+    exactLatex: renderedFamily.exactLatex,
+    branchReadback: renderedFamily.branchReadback,
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex,
@@ -859,13 +829,18 @@ export function finalizeComplexPreimageExpLogSolve({
     extraSections: (solved.detailSections ?? [])
       .filter((section) => section.title !== 'Solve Target'),
   });
+  const renderedFamily = renderLogExpFamily(createComplexLogExpFamily({
+    targetLatex: target,
+    exactLatex: cleanLatex(solved.exactLatex),
+    branchReadback: solved.branchReadback,
+  }));
 
   return {
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: cleanLatex(solved.exactLatex),
-    branchReadback: solved.branchReadback,
+    exactLatex: renderedFamily.exactLatex,
+    branchReadback: renderedFamily.branchReadback,
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex: carrierEquationLatex,

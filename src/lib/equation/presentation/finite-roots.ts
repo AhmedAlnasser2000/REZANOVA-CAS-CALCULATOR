@@ -76,6 +76,31 @@ function hasSymbol(node: unknown): boolean {
   return false;
 }
 
+function isArithmeticScalarNode(node: unknown): boolean {
+  if (typeof node === 'number') {
+    return true;
+  }
+  if (!Array.isArray(node)) {
+    return false;
+  }
+
+  const [operator, ...operands] = node;
+  if (
+    operator !== 'Add'
+    && operator !== 'Subtract'
+    && operator !== 'Negate'
+    && operator !== 'Multiply'
+    && operator !== 'Divide'
+    && operator !== 'Rational'
+    && operator !== 'Complex'
+    && operator !== 'Power'
+  ) {
+    return false;
+  }
+
+  return operands.every(isArithmeticScalarNode);
+}
+
 function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
   const ferrariLatex = renderQuarticFerrariBranchNode(node);
   if (ferrariLatex) {
@@ -98,7 +123,7 @@ function renderNodeLatex(node: unknown, context: EquationPresentationContext) {
 
   try {
     const simplified = simplifyMathJsonNodeOrOriginal(node) as MathJson;
-    const renderNode = hasSymbol(simplified)
+    const renderNode = hasSymbol(simplified) || !isArithmeticScalarNode(simplified)
       ? simplified
       : ce.box(simplified as Parameters<typeof ce.box>[0]).evaluate().json;
     return ce.box(renderNode as Parameters<typeof ce.box>[0]).latex;

@@ -8,15 +8,17 @@ import {
   isNegativeOneNode,
   isOneNode,
   latexForNode,
-  logCarrierLatex,
   nonzeroFactForNode,
   notOneFactForNode,
   numericValueOfNode,
   positiveFactForNode,
-  powerCarrierLatex,
   stop,
-  wrapLatexForPowerBase,
 } from './exp-log-core';
+import {
+  logCarrierLatex,
+  powerCarrierLatex,
+  wrapLatexForPowerBase,
+} from './exp-log-latex';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import type { MathJson } from './math-json';
 import type {
