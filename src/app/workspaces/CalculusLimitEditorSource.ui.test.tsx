@@ -59,7 +59,9 @@ describe('Calculus limit editor source', () => {
     expect(screen.queryByText(/limit request/iu)).not.toBeInTheDocument();
     expect(screen.queryByText(/lim x->0/u)).not.toBeInTheDocument();
     expect(screen.getByTestId('keypad-limit-piecewise-template')).toHaveTextContent('Piecewise');
-    expect(screen.getByTestId('keypad-limit-piecewise-branch')).toHaveTextContent('+ Branch');
+    expect(screen.queryByTestId('keypad-limit-piecewise-branch')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('keypad-limit-if-text')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('keypad-limit-otherwise-text')).not.toBeInTheDocument();
     expect(screen.queryByTestId('keypad-00')).not.toBeInTheDocument();
 
     setMathFieldLatex('main-editor', '\\lim_{t\\to \\infty}\\frac{3t^2+1}{2t^2-5}');
@@ -138,11 +140,20 @@ describe('Calculus limit editor source', () => {
     expect(detail).toHaveTextContent('two-sided limit does not exist');
   });
 
-  it('renders friendly piecewise input as cases in the readback body', async () => {
+  it('renders friendly piecewise input as editable rows and cases readback', async () => {
     const { user } = await renderAppMain();
+    const writeTextSpy = vi.spyOn(navigator.clipboard, 'writeText');
 
     await openCalculusTool(user, 'Limits', 'Limit');
     setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; x^2 otherwise)');
+
+    const rowEditor = await screen.findByTestId('limit-piecewise-row-editor');
+    expect(rowEditor).toBeInTheDocument();
+    expect(screen.getByTestId('limit-piecewise-row-1')).toHaveTextContent('1');
+    expect(screen.getByTestId('limit-piecewise-row-2')).toHaveTextContent('2');
+    expect(within(screen.getByTestId('limit-piecewise-row-2')).getByDisplayValue('Otherwise'))
+      .toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Add Row/i })).toBeInTheDocument();
 
     await waitFor(() => {
       const readback = screen.getByTestId('calculus-limit-readback');
@@ -150,6 +161,42 @@ describe('Calculus limit editor source', () => {
         .map((element) => element.getAttribute('data-raw-latex') ?? '');
       expect(rawLatexValues).toContain('\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}');
       expect(readback).not.toHaveTextContent('piecewise(x if');
+    });
+
+    const generatedPreview = document.querySelector('.generated-preview-card') as HTMLElement;
+    await user.click(within(generatedPreview).getByRole('button', { name: 'Copy Expr' }));
+    expect(writeTextSpy).toHaveBeenLastCalledWith(
+      '\\lim_{x\\to 0}\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}',
+    );
+  });
+
+  it('adds and deletes piecewise rows without exposing loose branch keypad keys', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; x^2 otherwise)');
+
+    await user.click(await screen.findByRole('button', { name: /Add Row/i }));
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(3));
+    expect(within(screen.getByTestId('limit-piecewise-row-3')).getByDisplayValue('Otherwise'))
+      .toBeInTheDocument();
+
+    await user.click(within(screen.getByTestId('limit-piecewise-row-2')).getByRole('button', { name: /Delete row/i }));
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    expect(within(screen.getByTestId('limit-piecewise-row-2')).getByDisplayValue('Otherwise'))
+      .toBeInTheDocument();
+  });
+
+  it('highlights malformed piecewise rows instead of hiding the problem', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if ; x^2 otherwise)');
+
+    await waitFor(() => {
+      expect(screen.getByTestId('limit-piecewise-row-1')).toHaveTextContent(
+        'Enter a simple condition for this row.',
+      );
     });
   });
 });

@@ -17,6 +17,7 @@ import {
   parseNaturalLimitRequest,
   type NaturalLimitRequest,
 } from '../limit-request';
+import { parseLimitPiecewiseDraft } from '../limit-piecewise-row-editor';
 import {
   analyzeNaturalLimitVariables,
   limitVariableMismatchDetails,
@@ -157,6 +158,34 @@ function evaluatePiecewiseLimitRequest(
   };
 }
 
+function piecewiseDraftValidationStop(
+  requestLatex: string,
+): AdvancedLimitEvaluation | undefined {
+  const draft = parseLimitPiecewiseDraft(requestLatex);
+  if (!draft || draft.issues.length === 0) {
+    return undefined;
+  }
+
+  const firstIssue = draft.issues[0];
+  const rowIndex = draft.rows.findIndex((row) => row.id === firstIssue.rowId);
+  const rowNumber = rowIndex >= 0 ? rowIndex + 1 : 1;
+
+  return {
+    warnings: [],
+    error: `Fix row ${rowNumber}: ${firstIssue.message}`,
+    detailSections: [
+      {
+        title: 'Piecewise Input',
+        lines: draft.issues.map((issue) => {
+          const issueIndex = draft.rows.findIndex((row) => row.id === issue.rowId);
+          const issueRowNumber = issueIndex >= 0 ? issueIndex + 1 : 1;
+          return `Row ${issueRowNumber}: ${issue.message}`;
+        }),
+      },
+    ],
+  };
+}
+
 export function evaluateCalculusFiniteLimit(
   state: CalculusFiniteLimitState & LimitRouteOptions,
 ): AdvancedLimitEvaluation {
@@ -252,6 +281,11 @@ export function evaluateCalculusLimit(
   }
 
   const { request } = parsed;
+  const piecewiseValidation = piecewiseDraftValidationStop(state.requestLatex);
+  if (piecewiseValidation) {
+    return piecewiseValidation;
+  }
+
   const variableAnalysis = analyzeNaturalLimitVariables(request);
   if (variableAnalysis.mismatch) {
     return {

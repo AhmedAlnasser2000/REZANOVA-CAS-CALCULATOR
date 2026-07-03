@@ -258,6 +258,135 @@
   align-self: center;
 }
 
+.limit-piecewise-editor {
+  width: 100%;
+  min-height: 124px;
+  color: var(--editor-ink);
+}
+
+.limit-piecewise-editor__limit {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.limit-piecewise-editor__limit-math {
+  color: inherit;
+  font-size: calc(1.24rem * var(--math-scale));
+}
+
+.limit-piecewise-editor__cases {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 780px);
+  max-width: 920px;
+  padding: 10px;
+  border: 1px solid rgba(237, 241, 229, 0.16);
+  border-radius: 12px;
+  background: rgba(237, 241, 229, 0.045);
+}
+
+.limit-piecewise-editor__header,
+.limit-piecewise-row {
+  display: grid;
+  grid-template-columns: 22px 38px minmax(120px, 1fr) minmax(120px, 1fr) 34px;
+  align-items: start;
+  gap: 8px;
+}
+
+.limit-piecewise-editor__header {
+  color: rgba(237, 241, 229, 0.58);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.limit-piecewise-row__drag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  color: rgba(237, 241, 229, 0.45);
+  cursor: grab;
+  font-family: 'IBM Plex Mono', monospace;
+  line-height: 0.72;
+  writing-mode: vertical-rl;
+}
+
+.limit-piecewise-row__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(237, 241, 229, 0.16);
+  border-radius: 10px;
+  background: rgba(237, 241, 229, 0.08);
+  color: var(--surface-ink);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.limit-piecewise-row__field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.limit-piecewise-row__field input {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(237, 241, 229, 0.16);
+  border-radius: 10px;
+  background: rgba(3, 17, 15, 0.44);
+  color: var(--surface-ink);
+  font: 0.95rem 'IBM Plex Mono', monospace;
+  letter-spacing: 0;
+  padding: 8px 10px;
+}
+
+.limit-piecewise-row__field input::placeholder {
+  color: rgba(237, 241, 229, 0.42);
+}
+
+.limit-piecewise-row__field input:focus {
+  border-color: rgba(125, 207, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.14);
+  outline: none;
+}
+
+.limit-piecewise-row__field.has-error input {
+  border-color: rgba(176, 68, 48, 0.66);
+}
+
+.limit-piecewise-row__field small {
+  color: #ffb19c;
+  font-size: 0.72rem;
+}
+
+.limit-piecewise-row__delete,
+.limit-piecewise-editor__add {
+  border: 1px solid rgba(237, 241, 229, 0.18);
+  border-radius: 10px;
+  background: rgba(237, 241, 229, 0.08);
+  color: var(--surface-ink);
+  font-family: 'IBM Plex Mono', monospace;
+  cursor: pointer;
+}
+
+.limit-piecewise-row__delete {
+  width: 34px;
+  height: 34px;
+}
+
+.limit-piecewise-editor__add {
+  justify-self: start;
+  min-height: 34px;
+  padding: 0 12px;
+}
+
 .calculus-operator-rail {
   display: flex;
   flex-wrap: wrap;

@@ -480,25 +480,7 @@ const LIMIT_TEMPLATE_ROW: KeypadButton[] = [
     id: 'limit-piecewise-template',
     label: 'Piecewise',
     variant: 'function',
-    latex: '\\begin{cases}#0&x<0\\\\#?&\\text{otherwise}\\end{cases}',
-  },
-  {
-    id: 'limit-piecewise-branch',
-    label: '+ Branch',
-    variant: 'function',
-    latex: '\\\\#0&#?',
-  },
-  {
-    id: 'limit-if-text',
-    label: 'if',
-    variant: 'function',
-    latex: '\\text{ if }',
-  },
-  {
-    id: 'limit-otherwise-text',
-    label: 'otherwise',
-    variant: 'function',
-    latex: '\\text{otherwise}',
+    latex: '\\lim_{x\\to 0}\\begin{cases}#0&x<0\\\\#?&\\text{otherwise}\\end{cases}',
   },
 ];
 

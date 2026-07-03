@@ -66,6 +66,10 @@ function wrapBody(latex: string) {
     return trimmed;
   }
 
+  if (/^\\begin\{cases\}[\s\S]+\\end\{cases\}$/u.test(trimmed)) {
+    return trimmed;
+  }
+
   return /^[-+]?[\w\\]+$/u.test(trimmed) ? trimmed : `\\left(${trimmed}\\right)`;
 }
 

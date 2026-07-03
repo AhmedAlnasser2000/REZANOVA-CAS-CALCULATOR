@@ -3,6 +3,7 @@ import { MathEditor } from '../../../components/MathEditor';
 import { MathStatic } from '../../../components/MathStatic';
 import { SignedNumberDraftInput } from '../../../components/SignedNumberDraftInput';
 import { VariableHintStrip } from '../../../components/VariableHintStrip';
+import { LimitPiecewiseRowEditor } from './LimitPiecewiseRowEditor';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import {
   derivativeVariableLatex,
@@ -20,7 +21,10 @@ import {
   parseNaturalLimitRequest,
   type NaturalLimitTarget,
 } from '../../../lib/calculus/limit-request';
-import { parsePiecewiseLimitExpression } from '../../../lib/symbolic-engine/limits';
+import {
+  limitPiecewiseReadbackBodyLatex,
+  parseLimitPiecewiseDraft,
+} from '../../../lib/calculus/limit-piecewise-row-editor';
 import type { LabRunnerInputKind } from '../../../lib/labs/runner-types';
 import { LAB_INPUT_KIND_LABELS } from '../../runtime/useLabsRuntime';
 
@@ -40,20 +44,7 @@ function limitTargetReadbackLatex(target: NaturalLimitTarget) {
 }
 
 function limitReadbackBodyLatex(bodyLatex: string) {
-  const parsedPiecewise = parsePiecewiseLimitExpression(bodyLatex);
-  if (parsedPiecewise.kind !== 'piecewise') {
-    return bodyLatex;
-  }
-
-  const rows = parsedPiecewise.branches
-    .map((branch) => {
-      const conditionLatex = branch.otherwise
-        ? '\\text{otherwise}'
-        : branch.condition?.latex ?? '\\text{selected}';
-      return `${branch.expressionLatex}&${conditionLatex}`;
-    })
-    .join('\\\\');
-  return `\\begin{cases}${rows}\\end{cases}`;
+  return limitPiecewiseReadbackBodyLatex(bodyLatex);
 }
 
 export function DisplayEditorSurface({
@@ -232,6 +223,9 @@ export function DisplayEditorSurface({
       : 'calculus-derivative-readback';
   const calculusLimitRailRequest = calculusLimitRailActive
     ? parseNaturalLimitRequest(calculusMainEditorLatex)
+    : null;
+  const calculusLimitPiecewiseDraft = calculusLimitRailActive
+    ? parseLimitPiecewiseDraft(calculusMainEditorLatex)
     : null;
   const calculusLimitRailParsed = calculusLimitRailRequest?.ok ? calculusLimitRailRequest.request : null;
   const calculusLimitRailTarget = calculusLimitRailParsed
@@ -551,21 +545,30 @@ export function DisplayEditorSurface({
       ) : null}
       {!isLauncherOpen && calculusMainEditorActive ? (
         <div className="main-editor-stack">
-          <MathEditor
-            ref={mainFieldRef}
-            dataTestId="main-editor"
-            className="main-mathfield"
-            value={calculusMainEditorLatex}
-            modeId="calculus"
-            screenHint={calculusScreen}
-            onSubmit={onRunEditor}
-            onChange={setCalculusMainEditorLatex}
-            keyboardLayouts={calculusKeyboardLayouts}
-            onFocus={(field) => {
-              activeFieldRef.current = field;
-            }}
-            placeholder={calculusMainEditorPlaceholder}
-          />
+          {calculusLimitPiecewiseDraft ? (
+            <LimitPiecewiseRowEditor
+              ref={mainFieldRef}
+              requestLatex={calculusMainEditorLatex}
+              onChange={setCalculusMainEditorLatex}
+              onSubmit={onRunEditor}
+            />
+          ) : (
+            <MathEditor
+              ref={mainFieldRef}
+              dataTestId="main-editor"
+              className="main-mathfield"
+              value={calculusMainEditorLatex}
+              modeId="calculus"
+              screenHint={calculusScreen}
+              onSubmit={onRunEditor}
+              onChange={setCalculusMainEditorLatex}
+              keyboardLayouts={calculusKeyboardLayouts}
+              onFocus={(field) => {
+                activeFieldRef.current = field;
+              }}
+              placeholder={calculusMainEditorPlaceholder}
+            />
+          )}
           {calculusDerivativeRailActive ? (
             <div className="calculus-operator-rail" data-testid="calculus-operator-rail">
               <span

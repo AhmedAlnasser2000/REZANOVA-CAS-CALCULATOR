@@ -256,6 +256,13 @@ describe('calculus limits', () => {
     });
     expect(infinity.error).toBeUndefined();
     expect(infinity.exactLatex).toBe('2');
+
+    const malformedRow = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 piecewise(x if ; x^2 otherwise)',
+    });
+    expect(malformedRow.error).toBe('Fix row 1: Enter a simple condition for this row.');
+    expect(malformedRow.detailSections?.[0]?.title).toBe('Piecewise Input');
+    expect(malformedRow.detailSections?.[0]?.lines.join(' ')).toContain('Row 1');
   });
 
   it('stops variable mismatches with a correction suggestion', () => {

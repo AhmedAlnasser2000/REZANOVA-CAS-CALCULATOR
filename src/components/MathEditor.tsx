@@ -96,24 +96,6 @@ function configureVirtualKeyboard(layouts: readonly VirtualKeyboardLayout[] | un
   window.mathVirtualKeyboard.editToolbar = 'default';
 }
 
-function shouldInsertLimitPiecewiseRow(
-  event: KeyboardEvent,
-  field: MathfieldElement,
-  modeId: ModeId | undefined,
-  screenHint: string | undefined,
-) {
-  if (modeId !== 'calculus' || screenHint !== 'limit') {
-    return false;
-  }
-  if (event.ctrlKey || event.altKey || event.metaKey) {
-    return false;
-  }
-  if (event.key !== 'Tab' && event.key !== 'Enter') {
-    return false;
-  }
-  return field.getValue('latex').includes('\\begin{cases}');
-}
-
 const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
   function MathEditorInner(
     {
@@ -167,12 +149,6 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       };
 
       const handleKeydown = (event: KeyboardEvent) => {
-        if (shouldInsertLimitPiecewiseRow(event, field, modeId, screenHint)) {
-          event.preventDefault();
-          field.insert('\\\\#0&#?');
-          return;
-        }
-
         if (shouldHandlePlainEnter(event)) {
           event.preventDefault();
           onSubmit?.();

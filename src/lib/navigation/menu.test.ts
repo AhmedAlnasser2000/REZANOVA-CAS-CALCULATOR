@@ -74,9 +74,13 @@ describe('workspace keypad overlays', () => {
     expect(limitRows.flat().find((button) => button.id === 'limit-piecewise-template')?.label)
       .toBe('Piecewise');
     expect(limitRows.flat().find((button) => button.id === 'limit-piecewise-template')?.latex)
-      .toBe('\\begin{cases}#0&x<0\\\\#?&\\text{otherwise}\\end{cases}');
-    expect(limitRows.flat().find((button) => button.id === 'limit-piecewise-branch')?.latex)
-      .toBe('\\\\#0&#?');
+      .toBe('\\lim_{x\\to 0}\\begin{cases}#0&x<0\\\\#?&\\text{otherwise}\\end{cases}');
+    expect(limitRows.flat().find((button) => button.id === 'limit-piecewise-branch'))
+      .toBeUndefined();
+    expect(limitRows.flat().find((button) => button.id === 'limit-if-text'))
+      .toBeUndefined();
+    expect(limitRows.flat().find((button) => button.id === 'limit-otherwise-text'))
+      .toBeUndefined();
     expect(finiteLimitRows.flat().find((button) => button.id === 'limit-piecewise-template'))
       .toBeUndefined();
     expect(calculateRows.flat().find((button) => button.id === 'limit-piecewise-template'))
