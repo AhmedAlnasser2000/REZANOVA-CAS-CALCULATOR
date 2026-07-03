@@ -26,6 +26,22 @@ describe('piecewise limits', () => {
     }
   });
 
+  it('parses semicolon and line-break friendly piecewise branch syntax', () => {
+    const semicolon = parsePiecewiseLimitExpression('piecewise(x if x<0; x^2 otherwise)');
+    const lineBreak = parsePiecewiseLimitExpression('piecewise(x if x<0\nx^2 otherwise)');
+
+    for (const parsed of [semicolon, lineBreak]) {
+      expect(parsed.kind).toBe('piecewise');
+      if (parsed.kind === 'piecewise') {
+        expect(parsed.branches).toHaveLength(2);
+        expect(parsed.branches[0]?.expressionLatex).toBe('x');
+        expect(parsed.branches[0]?.condition?.operator).toBe('<');
+        expect(parsed.branches[1]?.expressionLatex).toBe('x^2');
+        expect(parsed.branches[1]?.otherwise).toBe(true);
+      }
+    }
+  });
+
   it('resolves agreeing one-sided finite Piecewise branch limits', () => {
     const result = resolvePiecewiseLimit({
       bodyLatex: 'piecewise(x if x<0, x^2 otherwise)',

@@ -58,6 +58,9 @@ describe('Calculus limit editor source', () => {
     expect(screen.getByText('Enter a full limit expression such as lim x -> 0 sin(x)/x.')).toBeInTheDocument();
     expect(screen.queryByText(/limit request/iu)).not.toBeInTheDocument();
     expect(screen.queryByText(/lim x->0/u)).not.toBeInTheDocument();
+    expect(screen.getByTestId('keypad-limit-piecewise-template')).toHaveTextContent('Piecewise');
+    expect(screen.getByTestId('keypad-limit-piecewise-branch')).toHaveTextContent('+ Branch');
+    expect(screen.queryByTestId('keypad-00')).not.toBeInTheDocument();
 
     setMathFieldLatex('main-editor', '\\lim_{t\\to \\infty}\\frac{3t^2+1}{2t^2-5}');
     await waitFor(() => {
@@ -133,5 +136,20 @@ describe('Calculus limit editor source', () => {
     expect(detail).toHaveTextContent('Left side tends to');
     expect(detail).toHaveTextContent('Right side tends to');
     expect(detail).toHaveTextContent('two-sided limit does not exist');
+  });
+
+  it('renders friendly piecewise input as cases in the readback body', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; x^2 otherwise)');
+
+    await waitFor(() => {
+      const readback = screen.getByTestId('calculus-limit-readback');
+      const rawLatexValues = Array.from(readback.querySelectorAll('[data-raw-latex]'))
+        .map((element) => element.getAttribute('data-raw-latex') ?? '');
+      expect(rawLatexValues).toContain('\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}');
+      expect(readback).not.toHaveTextContent('piecewise(x if');
+    });
   });
 });

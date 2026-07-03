@@ -459,6 +459,49 @@ const DERIVATIVE_OPERATOR_TEMPLATE_ROW: KeypadButton[] = [
   },
 ];
 
+const LIMIT_KEYPAD_SCREENS = new Set<CalculusScreen>([
+  'limit',
+]);
+
+const LIMIT_TEMPLATE_ROW: KeypadButton[] = [
+  {
+    id: 'limit-template',
+    label: 'lim',
+    variant: 'function',
+    latex: '\\lim_{x\\to #0}\\left(#?\\right)',
+  },
+  {
+    id: 'limit-infinity-symbol',
+    label: '∞',
+    variant: 'function',
+    latex: '\\infty',
+  },
+  {
+    id: 'limit-piecewise-template',
+    label: 'Piecewise',
+    variant: 'function',
+    latex: '\\begin{cases}#0&x<0\\\\#?&\\text{otherwise}\\end{cases}',
+  },
+  {
+    id: 'limit-piecewise-branch',
+    label: '+ Branch',
+    variant: 'function',
+    latex: '\\\\#0&#?',
+  },
+  {
+    id: 'limit-if-text',
+    label: 'if',
+    variant: 'function',
+    latex: '\\text{ if }',
+  },
+  {
+    id: 'limit-otherwise-text',
+    label: 'otherwise',
+    variant: 'function',
+    latex: '\\text{otherwise}',
+  },
+];
+
 const LINEAR_ALGEBRA_TEMPLATE_ROW: KeypadButton[] = [
   { id: 'menu', label: 'Menu', alpha: '@', ctrl: 'Open', variant: 'utility', command: 'open-menu', layers: { alpha: { label: '@', latex: '@' }, ctrl: { label: 'Open', command: 'open-menu' } } },
   { id: 'history', label: 'Hist', secondary: 'Ans', variant: 'utility', command: 'history', layers: { shift: { label: 'Ans', latex: 'Ans' } } },
@@ -593,10 +636,19 @@ export function getWorkspaceKeypadRows(
     return buildLinearAlgebraKeypadRows(rows, VECTOR_OPERATOR_ROW, VECTOR_MODIFIER_ROW);
   }
 
-  if (context.mode !== 'calculus' || !DERIVATIVE_KEYPAD_SCREENS.has(context.calculusScreen ?? 'home')) {
+  if (context.mode !== 'calculus') {
     return rows;
   }
 
-  return rows.map((row, index) =>
-    index === rows.length - 1 ? DERIVATIVE_OPERATOR_TEMPLATE_ROW : row);
+  if (LIMIT_KEYPAD_SCREENS.has(context.calculusScreen ?? 'home')) {
+    return rows.map((row, index) =>
+      index === rows.length - 1 ? LIMIT_TEMPLATE_ROW : row);
+  }
+
+  if (DERIVATIVE_KEYPAD_SCREENS.has(context.calculusScreen ?? 'home')) {
+    return rows.map((row, index) =>
+      index === rows.length - 1 ? DERIVATIVE_OPERATOR_TEMPLATE_ROW : row);
+  }
+
+  return rows;
 }

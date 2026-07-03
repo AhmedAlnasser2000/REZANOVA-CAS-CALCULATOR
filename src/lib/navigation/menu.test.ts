@@ -57,6 +57,32 @@ describe('workspace keypad overlays', () => {
     expect(calculateRows.flat().find((button) => button.id === '00')).toBeDefined();
   });
 
+  it('uses Limit templates only on the canonical Limit screen', () => {
+    const limitRows = getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: 'calculus',
+      calculusScreen: 'limit',
+    });
+    const finiteLimitRows = getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: 'calculus',
+      calculusScreen: 'finiteLimit',
+    });
+    const calculateRows = getWorkspaceKeypadRows(KEYPAD_ROWS, {
+      mode: 'calculate',
+    });
+
+    expect(limitRows.flat().find((button) => button.id === '00')).toBeUndefined();
+    expect(limitRows.flat().find((button) => button.id === 'limit-piecewise-template')?.label)
+      .toBe('Piecewise');
+    expect(limitRows.flat().find((button) => button.id === 'limit-piecewise-template')?.latex)
+      .toBe('\\begin{cases}#0&x<0\\\\#?&\\text{otherwise}\\end{cases}');
+    expect(limitRows.flat().find((button) => button.id === 'limit-piecewise-branch')?.latex)
+      .toBe('\\\\#0&#?');
+    expect(finiteLimitRows.flat().find((button) => button.id === 'limit-piecewise-template'))
+      .toBeUndefined();
+    expect(calculateRows.flat().find((button) => button.id === 'limit-piecewise-template'))
+      .toBeUndefined();
+  });
+
   it('uses Matrix and Vector operator rows only in linear algebra modes', () => {
     const matrixRows = getWorkspaceKeypadRows(KEYPAD_ROWS, { mode: 'matrix' });
     const vectorRows = getWorkspaceKeypadRows(KEYPAD_ROWS, { mode: 'vector' });

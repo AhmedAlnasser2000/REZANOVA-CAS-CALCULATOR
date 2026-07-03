@@ -112,6 +112,27 @@ function splitTopLevel(input: string, delimiter: string): string[] {
   return parts.filter(Boolean);
 }
 
+function splitFriendlyPiecewiseEntries(input: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    if (char === '(' || char === '[' || char === '{') {
+      depth += 1;
+    } else if (char === ')' || char === ']' || char === '}') {
+      depth = Math.max(0, depth - 1);
+    } else if ((char === ',' || char === ';' || char === '\n') && depth === 0) {
+      parts.push(input.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+
+  parts.push(input.slice(start).trim());
+  return parts.filter(Boolean);
+}
+
 function stripOuterParens(input: string) {
   const trimmed = input.trim();
   if (!trimmed.startsWith('(') || !trimmed.endsWith(')')) {
@@ -222,7 +243,7 @@ function parseFriendlyPiecewise(source: string): PiecewiseLimitParseResult {
     return { kind: 'not-piecewise' };
   }
 
-  const entries = splitTopLevel(match[1], ',');
+  const entries = splitFriendlyPiecewiseEntries(match[1]);
   if (entries.length < 2) {
     return {
       kind: 'malformed',

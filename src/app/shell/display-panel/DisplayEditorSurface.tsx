@@ -20,6 +20,7 @@ import {
   parseNaturalLimitRequest,
   type NaturalLimitTarget,
 } from '../../../lib/calculus/limit-request';
+import { parsePiecewiseLimitExpression } from '../../../lib/symbolic-engine/limits';
 import type { LabRunnerInputKind } from '../../../lib/labs/runner-types';
 import { LAB_INPUT_KIND_LABELS } from '../../runtime/useLabsRuntime';
 
@@ -36,6 +37,23 @@ function limitTargetReadbackLatex(target: NaturalLimitTarget) {
     return `${target.normalizedTargetLatex}^{+}`;
   }
   return target.normalizedTargetLatex;
+}
+
+function limitReadbackBodyLatex(bodyLatex: string) {
+  const parsedPiecewise = parsePiecewiseLimitExpression(bodyLatex);
+  if (parsedPiecewise.kind !== 'piecewise') {
+    return bodyLatex;
+  }
+
+  const rows = parsedPiecewise.branches
+    .map((branch) => {
+      const conditionLatex = branch.otherwise
+        ? '\\text{otherwise}'
+        : branch.condition?.latex ?? '\\text{selected}';
+      return `${branch.expressionLatex}&${conditionLatex}`;
+    })
+    .join('\\\\');
+  return `\\begin{cases}${rows}\\end{cases}`;
 }
 
 export function DisplayEditorSurface({
@@ -224,6 +242,9 @@ export function DisplayEditorSurface({
     : '';
   const calculusLimitRailApproaches = calculusLimitRailParsed
     ? `${calculusLimitRailParsed.variableLatex}\\to ${calculusLimitRailTarget}`
+    : '';
+  const calculusLimitRailBody = calculusLimitRailParsed
+    ? limitReadbackBodyLatex(calculusLimitRailParsed.bodyLatex)
     : '';
   const setImplicitVariable = (
     field: 'independentVariable' | 'dependentVariable',
@@ -619,7 +640,7 @@ export function DisplayEditorSurface({
                       <span className="calculus-limit-readback__label">Body</span>
                       <MathStatic
                         className="calculus-readback-math calculus-limit-readback__math"
-                        latex={calculusLimitRailParsed.bodyLatex}
+                        latex={calculusLimitRailBody}
                         deferRender
                       />
                     </span>
