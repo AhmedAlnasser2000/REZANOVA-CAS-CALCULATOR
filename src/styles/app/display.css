@@ -570,7 +570,7 @@
 .result-validity-block {
   background: rgba(244, 226, 149, 0.08);
   border-color: rgba(107, 93, 41, 0.24);
-  max-height: min(300px, 34vh);
+  max-height: min(420px, 48vh);
   overflow: auto;
 }
 

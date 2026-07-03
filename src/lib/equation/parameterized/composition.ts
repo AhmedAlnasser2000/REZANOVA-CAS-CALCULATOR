@@ -32,7 +32,11 @@ import {
 } from '../composition/core';
 import { isNestedAlgebraicFormulaWrapperKind } from '../composition/nested-formula-substrate';
 import { solveEquationAlgebraicIsolation } from '../equation-algebraic-isolation';
-import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
+import type { CasewiseSolution } from '../solution/casewise-solution';
+import {
+  createCasewiseSolution,
+  renderCasewiseSolution,
+} from '../solution/casewise-solution';
 import { solveParameterizedCarrierEquation } from './carrier';
 import { solveParameterizedExpLogEquation } from './exp-log';
 import { solveParameterizedFactorablePolynomialEquation } from './factorable-polynomial';
@@ -45,7 +49,6 @@ import {
   solveGeneratedRealCubicCardanoFormulaEquation,
   solveGeneratedRealQuarticFerrariFormulaEquation,
 } from './generated-formula-routes';
-import { exactLatexForSolutions } from './generated-handoff';
 import {
   exactLatexForGroupedFormulaCases,
   groupedFormulaDetailSections,
@@ -141,6 +144,7 @@ export type ParameterizedCompositionSolveSuccess = {
   parameterNames: string[];
   exactLatex: string;
   branchReadback?: DisplayBranchReadback;
+  solution?: CasewiseSolution;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   generatedEquationLatex: string[];
@@ -213,6 +217,19 @@ function stop(
 
 function dedupe(entries: string[]) {
   return [...new Set(entries.filter(Boolean))];
+}
+
+function integerParametersFromLatex(entries: readonly string[]) {
+  const parameters = new Set<string>();
+  const pattern = /(?<![A-Za-z])([kmnpq])(?!(?:[A-Za-z]|\\))/gu;
+
+  for (const entry of entries) {
+    for (const match of entry.matchAll(pattern)) {
+      parameters.add(match[1]);
+    }
+  }
+
+  return [...parameters];
 }
 
 function compositionBranchFailureMessage(
@@ -470,18 +487,31 @@ function solveGeneratedCompositionBranches({
     familyLineParts,
     extraSections: [mathDetailSection('Composition Branches', layerEquationLatex ?? generatedEquations)],
   });
+  const casewiseSolution = createCasewiseSolution({
+    targetLatex: target,
+    source: 'equation-parameterized-composition',
+    cases: solvedBranches.branches.map((branch, index) => ({
+      id: `branch-${index + 1}`,
+      source: `equation-parameterized-composition:${branch.family}`,
+      branchEquationLatex: branch.branchLatex,
+      conditionsLatex: branch.exactSupplementLatex ?? [],
+      integerParameters: integerParametersFromLatex([
+        branch.branchLatex,
+        ...branch.solutionExpressions,
+        ...(branch.exactSupplementLatex ?? []),
+      ]),
+      solutionBranches: branch.solutionExpressions,
+    })),
+  });
+  const renderedCasewise = renderCasewiseSolution(casewiseSolution);
 
   return {
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: exactLatexForSolutions(target, solvedBranches.solutionExpressions),
-    branchReadback: finiteBranchReadbackForNormalizedBranches({
-      targetLatex: target,
-      branchesLatex: dedupe(solvedBranches.solutionExpressions),
-      preserveOrder: true,
-      source: 'equation-parameterized-composition',
-    }),
+    exactLatex: renderedCasewise.exactLatex ?? '',
+    branchReadback: renderedCasewise.branchReadback,
+    solution: casewiseSolution,
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex: generatedEquations,
