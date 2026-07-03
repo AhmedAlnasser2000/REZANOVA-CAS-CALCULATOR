@@ -66,9 +66,9 @@ describe('calculus integration corpus ledger validation', () => {
   it('accepts the committed ledger scaffold', () => {
     assert.deepEqual(validateCalculusIntegrationCorpusLedger(), {
       sourceCount: 8,
-      uniqueCaseCount: 0,
+      uniqueCaseCount: 200,
       duplicateCaseCount: 0,
-      runResultCount: 0,
+      runResultCount: 200,
       scanFindingCount: 0,
     });
   });

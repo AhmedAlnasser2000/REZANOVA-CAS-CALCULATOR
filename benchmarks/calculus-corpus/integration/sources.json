@@ -72,7 +72,7 @@
     },
     {
       "source_id": "calculus-analytic-geometry-9e-local",
-      "title": "Calculus and Analytic Geometry, Ninth Edition",
+      "title": "Thomas/Finney Calculus and Analytic Geometry, Ninth Edition",
       "source_type": "local-pdf",
       "access": "local",
       "calculus_lane": "integration",
@@ -81,6 +81,7 @@
       "local_path_hint": "~/Documents/benchmarks and textbooks/dokumen.pub_calculus-and-analytic-geometry-ninth-edition-0201400154-9780201400151.pdf",
       "locator_policy": "Use source locators and compact integrand metadata only; do not copy full problem statements.",
       "integration_scope_notes": [
+        "Primary source for the first 200-case undergraduate integration seed",
         "Thomas-style classical calculus integration cases",
         "Useful for cross-textbook duplicate and method coverage checks",
         "Do not scan definite-only, application-only, or multivariable cases in this lane"
