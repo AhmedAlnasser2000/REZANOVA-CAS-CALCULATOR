@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "source_id": "openstax-algebra-trig-2e",
+      "title": "Algebra and Trigonometry 2e",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "primary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/algebra-and-trigonometry-2e_-_WEB.pdf",
+      "locator_policy": "Use section and page locators; do not copy full problem statements.",
+      "equation_scope_notes": [
+        "Equations and inequalities",
+        "Polynomial and rational functions",
+        "Exponential and logarithmic equations",
+        "Trigonometric equations",
+        "Systems of equations"
+      ]
+    },
+    {
+      "source_id": "openstax-college-algebra-2e",
+      "title": "College Algebra 2e",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "primary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/college-algebra-2e_-_WEB.pdf",
+      "locator_policy": "Use section and page locators; do not copy full problem statements.",
+      "equation_scope_notes": [
+        "Equations and inequalities",
+        "Complex numbers",
+        "Quadratic equations",
+        "Polynomial and rational zeros",
+        "Exponential and logarithmic equations",
+        "Systems of equations"
+      ]
+    },
+    {
+      "source_id": "openstax-calculus-v1-local",
+      "title": "Calculus Volume 1",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "secondary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus-volume-1_-_WEB.pdf",
+      "locator_policy": "Use only Equation-relevant root-finding or equation-solving cases.",
+      "equation_scope_notes": [
+        "Function zeros",
+        "Inverse/log/exponential/trig equations",
+        "Newton's method",
+        "Applied root-finding equations"
+      ]
+    },
+    {
+      "source_id": "openstax-calculus-v2-local",
+      "title": "Calculus Volume 2",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "secondary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus-volume-2_-_WEB.pdf",
+      "locator_policy": "Use only Equation-relevant root-finding or equation-solving cases.",
+      "equation_scope_notes": [
+        "Equation forms arising from integration, differential equations, series, or polar contexts"
+      ]
+    },
+    {
+      "source_id": "openstax-calculus-v3-local",
+      "title": "Calculus Volume 3",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "secondary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus-volume-3_-_WEB.pdf",
+      "locator_policy": "Use only Equation-relevant scalar equation-solving cases; keep vector and multivariable work out of this corpus.",
+      "equation_scope_notes": [
+        "Scalar equation cases only"
+      ]
+    },
+    {
+      "source_id": "techniques-of-integration-local",
+      "title": "calculus_08_Techniques_of_Integration",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "secondary",
+      "license": "unknown",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus_08_Techniques_of_Integration.pdf",
+      "locator_policy": "Use only if a case is directly an equation-solving benchmark.",
+      "equation_scope_notes": [
+        "Mostly out of scope for Equation; likely belongs to Calculus integration."
+      ]
+    },
+    {
+      "source_id": "larson-calculus-9e-local",
+      "title": "Calculus, 9th Edition",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "secondary",
+      "license": "unknown",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/dokumen.pub_calculus-9th-ed-9780547167022-0547167024-9780538498647-0538498641-9781439030332-1439030332.pdf",
+      "locator_policy": "Use source locators only; do not copy problem statements.",
+      "equation_scope_notes": [
+        "Newton's method",
+        "Applied root-finding",
+        "Implicit or optimization-derived equations when final task is solve-equation"
+      ]
+    },
+    {
+      "source_id": "calculus-analytic-geometry-9e-local",
+      "title": "Calculus and Analytic Geometry, Ninth Edition",
+      "source_type": "local-pdf",
+      "access": "local",
+      "equation_relevance": "secondary",
+      "license": "unknown",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/dokumen.pub_calculus-and-analytic-geometry-ninth-edition-0201400154-9780201400151.pdf",
+      "locator_policy": "Use source locators only; do not copy problem statements.",
+      "equation_scope_notes": [
+        "Classical calculus root-finding cases only"
+      ]
+    },
+    {
+      "source_id": "dlmf",
+      "title": "NIST Digital Library of Mathematical Functions",
+      "source_type": "website",
+      "access": "web",
+      "equation_relevance": "reference",
+      "license": "public-domain-or-government-reference-with-site-terms",
+      "url": "https://dlmf.nist.gov/",
+      "locator_policy": "Use stable section/equation locators such as DLMF 3.8 or 1.11; do not copy extended text.",
+      "equation_scope_notes": [
+        "Zeros of polynomials",
+        "Nonlinear equation methods",
+        "Elementary function branch behavior",
+        "Cubic and quartic reference cases"
+      ]
+    },
+    {
+      "source_id": "libretexts-openstax-calculus",
+      "title": "Calculus (OpenStax) - Mathematics LibreTexts",
+      "source_type": "website",
+      "access": "web",
+      "equation_relevance": "secondary",
+      "license": "CC BY-NC-SA 4.0",
+      "url": "https://math.libretexts.org/Bookshelves/Calculus/Calculus_(OpenStax)",
+      "locator_policy": "Use page/section locators and compact equation metadata only.",
+      "equation_scope_notes": [
+        "Newton's method",
+        "Function zeros",
+        "Inverse/log/exponential/trig equation cases"
+      ]
+    }
+  ]
+}
