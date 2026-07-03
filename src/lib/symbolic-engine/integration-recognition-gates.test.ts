@@ -65,4 +65,46 @@ describe('symbolic-engine integration recognition gates', () => {
       expect(result.exactSupplementLatex?.join(' '), latex).toContain('\\pi');
     }
   });
+
+  it('applies bounded textbook trig rewrites before routing', () => {
+    const cases = [
+      String.raw`(\sin(x)-\cos(x))^2`,
+      String.raw`(1+2\cos(x))^2`,
+      String.raw`\cos(x)(\tan(x)+\sec(x))`,
+    ];
+
+    for (const latex of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
+      expect(result.verification.status, latex).toBe('verified-exact');
+      expect(result.detailSections?.map((section) => section.title), latex)
+        .toContain('Integration Trig Rewrite');
+    }
+  });
+
+  it('combines normal form, affine trig products, and bounded trig rewrites in mixed sums', () => {
+    const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(
+      String.raw`\frac{3}{2}\sqrt{x}+\sec\left(\frac{\pi x}{2}\right)\tan\left(\frac{\pi x}{2}\right)+(\sin(x)-\cos(x))^2`,
+    ));
+
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.detailSections?.map((section) => section.title))
+      .toEqual(expect.arrayContaining(['Integration Normal Form', 'Integration Trig Rewrite']));
+    expect(result.exactSupplementLatex?.join(' ')).toContain('\\pi');
+  });
+
+  it('does not rewrite over-bound or branch-sensitive trig forms', () => {
+    const highPower = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(String.raw`\sin(x)^8`));
+    expect(highPower.detailSections?.map((section) => section.title) ?? [])
+      .not.toContain('Integration Trig Rewrite');
+
+    const branchSensitive = expectIntegrationError(resolveSymbolicIntegralFromLatex(String.raw`|\cos(x)|\sec(x)`));
+    expect(branchSensitive.detailSections?.map((section) => section.title) ?? [])
+      .not.toContain('Integration Trig Rewrite');
+
+    const overBoundSquare = expectIntegrationError(resolveSymbolicIntegralFromLatex(
+      String.raw`(\sin(x)+\cos(x)+\tan(x)+\sec(x))^2`,
+    ));
+    expect(overBoundSquare.detailSections?.map((section) => section.title) ?? [])
+      .not.toContain('Integration Trig Rewrite');
+  });
 });

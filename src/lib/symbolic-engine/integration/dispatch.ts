@@ -51,6 +51,7 @@ import {
 } from './symbolic-rational';
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
 import { tryTrigDerivativeProductRule } from './trig-derivative-products';
+import { normalizeIntegrationTrigRewrite } from './trig-rewrite';
 import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
 import type { IntegralResolution, IntegralStrategy } from './types';
 import type { DisplayDetailSection } from '../../../types/calculator';
@@ -58,6 +59,10 @@ import type { DisplayDetailSection } from '../../../types/calculator';
 const ce = new ComputeEngine();
 const RELATION_HEADS = new Set(['Equal', 'NotEqual', 'Less', 'LessEqual', 'Greater', 'GreaterEqual']);
 const LINEAR_COMBINATION_TERM_CAP = 6;
+
+type SymbolicIntegralOptions = {
+  recognitionGates?: boolean;
+};
 
 export const INTEGRATION_RELATION_INTEGRAND_ERROR =
   'Calculus integrals expect an expression f(x), not an equation or relation.';
@@ -70,6 +75,7 @@ function tryRoute(
   node: unknown,
   variable: string,
   route: IntegrationRouteFamily,
+  recognitionGates: boolean,
 ): IntegralResolution | undefined {
   if (route === 'inverse-trig') {
     const inverseTrig = inverseTrigIntegral(node, variable);
@@ -215,7 +221,9 @@ function tryRoute(
   }
 
   if (route === 'u-substitution') {
-    const trigDerivativeProduct = tryTrigDerivativeProductRule(node, variable);
+    const trigDerivativeProduct = tryTrigDerivativeProductRule(node, variable, {
+      symbolicAffine: recognitionGates,
+    });
     if (trigDerivativeProduct) {
       return symbolicSuccess(
         node,
@@ -439,9 +447,10 @@ function tryRoutes(
   node: unknown,
   variable: string,
   routes: IntegrationRouteFamily[],
+  recognitionGates: boolean,
 ): IntegralResolution | undefined {
   for (const route of routes) {
-    const result = tryRoute(node, variable, route);
+    const result = tryRoute(node, variable, route, recognitionGates);
     if (result) {
       return result;
     }
@@ -485,6 +494,8 @@ function normalFormDetail(lines: string[]): DisplayDetailSection {
 function tryNormalFormRetry(
   node: unknown,
   variable: string,
+  recognitionGates: boolean,
+  allowTrigRewrite: boolean,
 ): IntegralResolution | undefined {
   const normalized = normalizeIntegrationNormalForm(node);
   if (!normalized.changed) {
@@ -494,7 +505,9 @@ function tryNormalFormRetry(
   const retried = resolveSymbolicIntegralFromAstInternal(
     normalized.node,
     variable,
+    recognitionGates,
     false,
+    allowTrigRewrite,
   );
   if (retried.kind !== 'success') {
     return undefined;
@@ -514,25 +527,93 @@ function tryNormalFormRetry(
   );
 }
 
+function trigRewriteDetail(lines: string[]): DisplayDetailSection {
+  return {
+    title: 'Integration Trig Rewrite',
+    lines,
+  };
+}
+
+function tryTrigRewriteRetry(
+  node: unknown,
+  variable: string,
+  recognitionGates: boolean,
+): IntegralResolution | undefined {
+  const rewritten = normalizeIntegrationTrigRewrite(node, variable);
+  if (!rewritten.changed) {
+    return undefined;
+  }
+
+  const retried = resolveSymbolicIntegralFromAstInternal(
+    rewritten.node,
+    variable,
+    recognitionGates,
+    false,
+    false,
+  );
+  if (retried.kind !== 'success') {
+    return undefined;
+  }
+
+  const detailSections = [
+    trigRewriteDetail(rewritten.lines),
+    ...(retried.detailSections ?? []),
+  ];
+  const checked = symbolicSuccess(
+    node,
+    variable,
+    retried.exactLatex,
+    retried.strategy,
+    undefined,
+    retried.exactSupplementLatex,
+    detailSections,
+  );
+  if (checked.kind !== 'success' || checked.verification.status === 'not-verified') {
+    return undefined;
+  }
+
+  return symbolicSuccess(
+    node,
+    variable,
+    retried.exactLatex,
+    retried.strategy,
+    {
+      status: 'verified-exact',
+      reason: 'verified by bounded textbook trig identity rewrite plus derivative backcheck against the original integrand',
+    },
+    retried.exactSupplementLatex,
+    detailSections,
+  );
+}
+
 function routeTermWithoutLinearCombination(
   node: unknown,
   variable: string,
+  recognitionGates: boolean,
   allowNormalForm = true,
+  allowTrigRewrite = true,
 ): IntegralResolution | undefined {
   const classification = classifyIntegrandForm(node, variable);
-  const planned = tryRoutes(node, variable, classification.routes);
+  const planned = tryRoutes(node, variable, classification.routes, recognitionGates);
   if (planned) {
     return planned;
   }
 
   const fallback = classification.allowCompatibilityFallback
-    ? tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE)
+    ? tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE, recognitionGates)
     : undefined;
   if (fallback) {
     return fallback;
   }
 
-  return allowNormalForm ? tryNormalFormRetry(node, variable) : undefined;
+  if (allowNormalForm) {
+    const normalForm = tryNormalFormRetry(node, variable, recognitionGates, allowTrigRewrite);
+    if (normalForm) {
+      return normalForm;
+    }
+  }
+
+  return allowTrigRewrite ? tryTrigRewriteRetry(node, variable, recognitionGates) : undefined;
 }
 
 function combineSignedLatex(parts: Array<{ latex: string; sign: 1 | -1 }>) {
@@ -546,7 +627,11 @@ function dominantStrategy(strategies: IntegralStrategy[]): IntegralStrategy {
   const [first] = strategies;
   return strategies.every((strategy) => strategy === first)
     ? first
-    : 'integration-by-parts';
+    : strategies.every((strategy) => strategy === 'direct-rule' || strategy === 'affine-linear')
+      ? 'direct-rule'
+      : strategies.includes('u-substitution')
+        ? 'u-substitution'
+        : 'integration-by-parts';
 }
 
 function mergeSupplementLatex(results: IntegralResolution[]) {
@@ -567,7 +652,17 @@ function mergeSupplementLatex(results: IntegralResolution[]) {
   return merged.length > 0 ? merged : undefined;
 }
 
-function tryLinearCombinationFallback(node: unknown, variable: string): IntegralResolution | undefined {
+function mergeDetailSections(results: IntegralResolution[]) {
+  const merged = results
+    .flatMap((result) => result.kind === 'success' ? (result.detailSections ?? []) : []);
+  return merged.length > 0 ? merged : undefined;
+}
+
+function tryLinearCombinationFallback(
+  node: unknown,
+  variable: string,
+  recognitionGates: boolean,
+): IntegralResolution | undefined {
   if (!isNodeArray(node) || (node[0] !== 'Add' && node[0] !== 'Subtract')) {
     return undefined;
   }
@@ -580,7 +675,7 @@ function tryLinearCombinationFallback(node: unknown, variable: string): Integral
   const results: Array<Extract<IntegralResolution, { kind: 'success' }>> = [];
   const blockedTerms: string[] = [];
   for (const term of terms) {
-    const result = routeTermWithoutLinearCombination(term.node, variable);
+    const result = routeTermWithoutLinearCombination(term.node, variable, recognitionGates);
     if (!result || result.kind !== 'success') {
       blockedTerms.push(`${term.sign === -1 ? '-' : ''}${ce.box(term.node as Parameters<typeof ce.box>[0]).latex}`);
       continue;
@@ -620,13 +715,16 @@ function tryLinearCombinationFallback(node: unknown, variable: string): Integral
       reason: 'verified by internal Risch-Norman linear-combination rule proof',
     },
     mergeSupplementLatex(results),
+    mergeDetailSections(results),
   );
 }
 
 function resolveSymbolicIntegralFromAstInternal(
   node: unknown,
   variable: string,
+  recognitionGates: boolean,
   allowNormalForm: boolean,
+  allowTrigRewrite: boolean,
 ): IntegralResolution {
   if (isRelationRoot(node)) {
     return {
@@ -636,27 +734,45 @@ function resolveSymbolicIntegralFromAstInternal(
     };
   }
 
+  const additiveTrigRewriteCandidate = allowTrigRewrite
+    && isNodeArray(node)
+    && (node[0] === 'Add' || node[0] === 'Subtract')
+    && normalizeIntegrationTrigRewrite(node, variable).changed;
+  if (additiveTrigRewriteCandidate) {
+    const linearCombination = tryLinearCombinationFallback(node, variable, recognitionGates);
+    if (linearCombination) {
+      return linearCombination;
+    }
+  }
+
   const classification = classifyIntegrandForm(node, variable);
-  const planned = tryRoutes(node, variable, classification.routes);
+  const planned = tryRoutes(node, variable, classification.routes, recognitionGates);
   if (planned) {
     return planned;
   }
 
   if (classification.allowCompatibilityFallback) {
-    const fallback = tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE);
+    const fallback = tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE, recognitionGates);
     if (fallback) {
       return fallback;
     }
   }
 
   if (allowNormalForm) {
-    const normalForm = tryNormalFormRetry(node, variable);
+    const normalForm = tryNormalFormRetry(node, variable, recognitionGates, allowTrigRewrite);
     if (normalForm) {
       return normalForm;
     }
   }
 
-  const linearCombination = tryLinearCombinationFallback(node, variable);
+  if (allowTrigRewrite) {
+    const trigRewrite = tryTrigRewriteRetry(node, variable, recognitionGates);
+    if (trigRewrite) {
+      return trigRewrite;
+    }
+  }
+
+  const linearCombination = tryLinearCombinationFallback(node, variable, recognitionGates);
   if (linearCombination) {
     return linearCombination;
   }
@@ -686,8 +802,19 @@ function resolveSymbolicIntegralFromAstInternal(
   };
 }
 
-export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): IntegralResolution {
-  return resolveSymbolicIntegralFromAstInternal(node, variable, true);
+export function resolveSymbolicIntegralFromAst(
+  node: unknown,
+  variable = 'x',
+  options: SymbolicIntegralOptions = {},
+): IntegralResolution {
+  const recognitionGates = options.recognitionGates !== false;
+  return resolveSymbolicIntegralFromAstInternal(
+    node,
+    variable,
+    recognitionGates,
+    recognitionGates,
+    recognitionGates,
+  );
 }
 
 export function resolveSymbolicIntegralFromLatex(latex: string, variable = 'x'): IntegralResolution {

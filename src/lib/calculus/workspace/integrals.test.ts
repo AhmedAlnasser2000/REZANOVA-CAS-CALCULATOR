@@ -380,6 +380,16 @@ describe('calculus integrals', () => {
     });
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('numeric-fallback');
+
+    const rewriteOnly = evaluateCalculusDefiniteIntegral({
+      bodyLatex: '(\\sin(x)-\\cos(x))^2',
+      lower: '0',
+      upper: '1',
+    });
+    expect(rewriteOnly.error).toBeUndefined();
+    expect(rewriteOnly.resultOrigin).toBe('numeric-fallback');
+    expect(rewriteOnly.detailSections?.map((section) => section.title))
+      .not.toContain('Integration Trig Rewrite');
   });
 
   it('uses the shared exact definite-integral trust path when interval-safe', () => {

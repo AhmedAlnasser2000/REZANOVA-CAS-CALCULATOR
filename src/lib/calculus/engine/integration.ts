@@ -188,8 +188,11 @@ export function resolveIndefiniteIntegralFromAst(input: {
   computeEngineOrigin: ResultOrigin;
   unsupportedError: string;
   normalizeRuleLatex?: boolean;
+  recognitionGates?: boolean;
 }): CalculusCoreEvaluation {
-  const symbolicEngine = resolveSymbolicIntegralFromAst(input.body, input.variable);
+  const symbolicEngine = resolveSymbolicIntegralFromAst(input.body, input.variable, {
+    recognitionGates: input.recognitionGates,
+  });
   if (symbolicEngine.kind === 'success') {
     const partialFractionDetail = partialFractionReadbackDetail(symbolicEngine.candidate);
     const integrationDetails = [
@@ -290,6 +293,7 @@ export function evaluateDefiniteIntegralFromAst(input: {
     computeEngineFallback: () => computeEngineIndefiniteIntegral(input.body, input.variable),
     computeEngineOrigin: 'symbolic',
     unsupportedError: 'A verified antiderivative was not available for exact definite integration.',
+    recognitionGates: false,
   });
 
   if (
