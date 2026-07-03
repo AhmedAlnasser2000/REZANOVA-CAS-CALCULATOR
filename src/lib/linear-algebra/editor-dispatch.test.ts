@@ -475,6 +475,79 @@ describe('linear algebra editor dispatch', () => {
     });
   });
 
+  it('maps friendly plain list Matrix syntax into existing Matrix requests', () => {
+    expect(dispatchMatrixEditorLatex({
+      latex: 'eigen([[2,1],[1,2]])',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'eigenA',
+        matrixA: [[2, 1], [1, 2]],
+        matrixB,
+        exactMatrixA: [
+          [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 1 }],
+          [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+        ],
+        editorExpressionLatex: 'eigen([[2,1],[1,2]])',
+        matrixOperandLatexA: '\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'lu([[2,1],[4,3]])',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'luA',
+        matrixA: [[2, 1], [4, 3]],
+        matrixOperandLatexA: '\\begin{bmatrix}2&1\\\\4&3\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'plu([[0,1],[2,3]])',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'pluA',
+        matrixA: [[0, 1], [2, 3]],
+        matrixOperandLatexA: '\\begin{bmatrix}0&1\\\\2&3\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'coords([[1,2],[3,4]],[5,11])',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'coordinatesA',
+        matrixA: [[1, 2], [3, 4]],
+        coordinateVector: [5, 11],
+        matrixOperandLatexA: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
+        coordinateVectorLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'ls([[1,0],[0,1],[0,0]],[2,3,4])',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'leastSquaresA',
+        matrixA: [[1, 0], [0, 1], [0, 0]],
+        systemRhs: [2, 3, 4],
+        matrixOperandLatexA: '\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix}',
+        systemRhsLatex: '\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}',
+      },
+    });
+  });
+
   it('maps structured Matrix systems to Matrix system requests', () => {
     expect(dispatchMatrixEditorLatex({
       latex: 'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
@@ -738,6 +811,48 @@ describe('linear algebra editor dispatch', () => {
           { numerator: 0, denominator: 1 },
         ],
         angleUnit: 'deg',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: 'gram([1,1],[1,0])',
+      vectorA,
+      vectorB,
+      angleUnit: 'deg',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'gramSchmidtUV',
+        vectorA: [1, 1],
+        vectorB: [1, 0],
+        exactVectorA: [
+          { numerator: 1, denominator: 1 },
+          { numerator: 1, denominator: 1 },
+        ],
+        exactVectorB: [
+          { numerator: 1, denominator: 1 },
+          { numerator: 0, denominator: 1 },
+        ],
+        vectorOperandLatexA: '\\begin{bmatrix}1\\\\1\\end{bmatrix}',
+        vectorOperandLatexB: '\\begin{bmatrix}1\\\\0\\end{bmatrix}',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: 'proj_u([1/2,3])',
+      vectorA: [1, 0],
+      vectorB,
+      angleUnit: 'deg',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'projectionUofV',
+        vectorA: [1, 0],
+        vectorB: [0.5, 3],
+        exactVectorB: [
+          { numerator: 1, denominator: 2 },
+          { numerator: 3, denominator: 1 },
+        ],
+        vectorOperandLatexA: 'u',
+        vectorOperandLatexB: '\\begin{bmatrix}1/2\\\\3\\end{bmatrix}',
       },
     });
   });

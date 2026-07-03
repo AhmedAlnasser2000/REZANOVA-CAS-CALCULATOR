@@ -142,7 +142,35 @@ function parseFiniteDecimalExact(input: string): ExactScalarWire | null {
   return normalizeExactWire({ numerator, denominator });
 }
 
+function parseAsciiFractionExact(input: string): ExactScalarWire | null {
+  const fraction = input.match(/^(-?(?:\d+\.?\d*|\.\d+))\/(-?(?:\d+\.?\d*|\.\d+))$/);
+  if (!fraction) {
+    return null;
+  }
+
+  const numerator = parseFiniteDecimalExact(fraction[1]);
+  const denominator = parseFiniteDecimalExact(fraction[2]);
+  if (!numerator || !denominator) {
+    return null;
+  }
+  if (denominator.numerator === 0) {
+    fail('invalid-number', 'Matrix and vector entries cannot divide by zero.');
+  }
+
+  const exactNumerator = numerator.numerator * denominator.denominator;
+  const exactDenominator = numerator.denominator * denominator.numerator;
+  if (!Number.isSafeInteger(exactNumerator) || !Number.isSafeInteger(exactDenominator)) {
+    fail('invalid-number', `Unsupported numeric entry "${input}".`);
+  }
+  return normalizeExactWire({ numerator: exactNumerator, denominator: exactDenominator });
+}
+
 function parseScalarAtom(input: string): ExactScalarWire {
+  const asciiFraction = parseAsciiFractionExact(input);
+  if (asciiFraction) {
+    return asciiFraction;
+  }
+
   const decimal = parseFiniteDecimalExact(input);
   if (decimal) {
     return decimal;
@@ -175,6 +203,107 @@ function parseLatexNumber(input: string): { value: number; exactValue: ExactScal
   };
 }
 
+function splitPlainListItems(input: string): string[] {
+  const items: string[] = [];
+  let braceDepth = 0;
+  let parenDepth = 0;
+  let bracketDepth = 0;
+  let itemStart = 0;
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    if (char === '{') {
+      braceDepth += 1;
+    } else if (char === '}') {
+      braceDepth = Math.max(0, braceDepth - 1);
+    } else if (char === '(') {
+      parenDepth += 1;
+    } else if (char === ')') {
+      parenDepth = Math.max(0, parenDepth - 1);
+    } else if (char === '[') {
+      bracketDepth += 1;
+    } else if (char === ']') {
+      bracketDepth = Math.max(0, bracketDepth - 1);
+    } else if (char === ',' && braceDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
+      items.push(input.slice(itemStart, index));
+      itemStart = index + 1;
+    }
+  }
+
+  items.push(input.slice(itemStart));
+  return items;
+}
+
+function parsePlainVectorCells(input: string): string[] {
+  if (!input.startsWith('[') || !input.endsWith(']')) {
+    fail('invalid-matrix-literal', 'Plain vector literals use brackets, for example [5,11].');
+  }
+
+  const body = input.slice(1, -1);
+  if (!body) {
+    fail('invalid-matrix-literal', 'Matrix/vector literals must contain at least one entry.');
+  }
+
+  const cells = splitPlainListItems(body);
+  if (cells.some((cell) => !cell)) {
+    fail('placeholder', 'Fill every Matrix/Vector cell before running it.');
+  }
+  return cells;
+}
+
+function matrixOrVectorFromCells(rowCells: string[][]): LinearAlgebraValueExpression {
+  const parsedRows = rowCells.map((row) => row.map((cell) => {
+    return parseLatexNumber(cell);
+  }));
+  const matrix = parsedRows.map((row) => row.map((cell) => cell.value));
+  const exactMatrix = parsedRows.map((row) => row.map((cell) => cell.exactValue));
+  const columns = matrix[0]?.length ?? 0;
+  if (columns === 0 || matrix.some((row) => row.length !== columns)) {
+    fail('invalid-matrix-literal', 'Matrix rows must have a consistent number of columns.');
+  }
+
+  return columns === 1
+    ? {
+        kind: 'vectorLiteral',
+        value: matrix.map((row) => row[0]),
+        exactValue: exactMatrix.map((row) => row[0]),
+        displayLatex: vectorCellsToLatex(rowCells),
+      }
+    : {
+        kind: 'matrixLiteral',
+        value: matrix,
+        exactValue: exactMatrix,
+        displayLatex: matrixCellsToLatex(rowCells),
+      };
+}
+
+export function parsePlainListLiteral(input: string): LinearAlgebraValueExpression | null {
+  if (!input.startsWith('[')) {
+    return null;
+  }
+  if (!input.endsWith(']')) {
+    fail('invalid-matrix-literal', 'Plain Matrix/Vector lists need a closing ].');
+  }
+
+  const outer = input.slice(1, -1);
+  if (!outer) {
+    fail('invalid-matrix-literal', 'Matrix/vector literals must contain at least one entry.');
+  }
+
+  const items = splitPlainListItems(outer);
+  const isMatrix = items.every((item) => item.startsWith('[') && item.endsWith(']'));
+  if (isMatrix) {
+    return matrixOrVectorFromCells(items.map(parsePlainVectorCells));
+  }
+
+  if (items.some((item) => item.startsWith('[') || item.endsWith(']'))) {
+    fail('invalid-matrix-literal', 'Plain matrix rows must be bracketed consistently.');
+  }
+
+  const rowCells = parsePlainVectorCells(input).map((cell) => [cell]);
+  return matrixOrVectorFromCells(rowCells);
+}
+
 export function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null {
   const environment = parseWholeMatrixEnvironment(input);
   if (!environment) {
@@ -198,27 +327,5 @@ export function parseMatrixLiteral(input: string): LinearAlgebraValueExpression 
       return cell;
     });
   });
-  const parsedRows = rowCells.map((row) => row.map((cell) => {
-      return parseLatexNumber(cell);
-    }));
-  const matrix = parsedRows.map((row) => row.map((cell) => cell.value));
-  const exactMatrix = parsedRows.map((row) => row.map((cell) => cell.exactValue));
-  const columns = matrix[0]?.length ?? 0;
-  if (columns === 0 || matrix.some((row) => row.length !== columns)) {
-    fail('invalid-matrix-literal', 'Matrix rows must have a consistent number of columns.');
-  }
-
-  return columns === 1
-    ? {
-        kind: 'vectorLiteral',
-        value: matrix.map((row) => row[0]),
-        exactValue: exactMatrix.map((row) => row[0]),
-        displayLatex: vectorCellsToLatex(rowCells),
-      }
-    : {
-        kind: 'matrixLiteral',
-        value: matrix,
-        exactValue: exactMatrix,
-        displayLatex: matrixCellsToLatex(rowCells),
-      };
+  return matrixOrVectorFromCells(rowCells);
 }

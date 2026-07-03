@@ -232,6 +232,89 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
   });
 
+  it('parses friendly plain list matrix and vector literals', () => {
+    expect(parsed('[[1,2],[3,4]]', 'matrix')).toEqual({
+      kind: 'matrixLiteral',
+      value: [[1, 2], [3, 4]],
+      exactValue: [
+        [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+        [{ numerator: 3, denominator: 1 }, { numerator: 4, denominator: 1 }],
+      ],
+      displayLatex: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
+    });
+    expect(parsed('[5,11]', 'vector')).toEqual({
+      kind: 'vectorLiteral',
+      value: [5, 11],
+      exactValue: [
+        { numerator: 5, denominator: 1 },
+        { numerator: 11, denominator: 1 },
+      ],
+      displayLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+    });
+    expect(parsed('[1/2,0.125]', 'vector')).toEqual({
+      kind: 'vectorLiteral',
+      value: [0.5, 0.125],
+      exactValue: [
+        { numerator: 1, denominator: 2 },
+        { numerator: 1, denominator: 8 },
+      ],
+      displayLatex: '\\begin{bmatrix}1/2\\\\0.125\\end{bmatrix}',
+    });
+  });
+
+  it('parses friendly plain list syntax inside Matrix operations', () => {
+    expect(parsed('eigen([[2,1],[1,2]])', 'matrix')).toMatchObject({
+      kind: 'unary',
+      operator: 'eigen',
+      value: {
+        kind: 'matrixLiteral',
+        value: [[2, 1], [1, 2]],
+        displayLatex: '\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}',
+      },
+    });
+    expect(parsed('lu([[2,1],[4,3]])', 'matrix')).toMatchObject({
+      kind: 'unary',
+      operator: 'lu',
+      value: { kind: 'matrixLiteral', value: [[2, 1], [4, 3]] },
+    });
+    expect(parsed('plu([[0,1],[2,3]])', 'matrix')).toMatchObject({
+      kind: 'unary',
+      operator: 'plu',
+      value: { kind: 'matrixLiteral', value: [[0, 1], [2, 3]] },
+    });
+    expect(parsed('coords([[1,2],[3,4]],[5,11])', 'matrix')).toMatchObject({
+      kind: 'coordinates',
+      basis: { kind: 'matrixLiteral', value: [[1, 2], [3, 4]] },
+      vector: { kind: 'vectorLiteral', value: [5, 11] },
+    });
+    expect(parsed('ls([[1,0],[0,1],[0,0]],[2,3,4])', 'matrix')).toMatchObject({
+      kind: 'leastSquares',
+      matrix: { kind: 'matrixLiteral', value: [[1, 0], [0, 1], [0, 0]] },
+      vector: { kind: 'vectorLiteral', value: [2, 3, 4] },
+    });
+  });
+
+  it('parses friendly plain list syntax inside Vector operations', () => {
+    expect(parsed('proj_u([1/2,3])', 'vector')).toMatchObject({
+      kind: 'unary',
+      operator: 'projectionOntoU',
+      value: {
+        kind: 'vectorLiteral',
+        value: [0.5, 3],
+        exactValue: [
+          { numerator: 1, denominator: 2 },
+          { numerator: 3, denominator: 1 },
+        ],
+        displayLatex: '\\begin{bmatrix}1/2\\\\3\\end{bmatrix}',
+      },
+    });
+    expect(parsed('gram([1,1],[1,0])', 'vector')).toMatchObject({
+      kind: 'gramSchmidt',
+      left: { kind: 'vectorLiteral', value: [1, 1] },
+      right: { kind: 'vectorLiteral', value: [1, 0] },
+    });
+  });
+
   it('parses structured Matrix systems', () => {
     expect(parsed('Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}', 'matrix')).toEqual({
       kind: 'linearSystem',
@@ -304,6 +387,14 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parseLinearAlgebraEditorLatex('\\begin{bmatrix}1&2\\\\3\\end{bmatrix}', { mode: 'matrix' })).toMatchObject({
       ok: false,
       reason: 'invalid-matrix-literal',
+    });
+    expect(parseLinearAlgebraEditorLatex('[[1,2],[3]]', { mode: 'matrix' })).toMatchObject({
+      ok: false,
+      reason: 'invalid-matrix-literal',
+    });
+    expect(parseLinearAlgebraEditorLatex('[[1,],[3,4]]', { mode: 'matrix' })).toMatchObject({
+      ok: false,
+      reason: 'placeholder',
     });
     expect(parseLinearAlgebraEditorLatex('A=b', { mode: 'matrix' })).toMatchObject({
       ok: false,

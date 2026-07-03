@@ -3,6 +3,7 @@ import {
   exactVectorWireToLatex,
   matrixEnvironmentEndAt,
   parseMatrixLiteral,
+  parsePlainListLiteral,
 } from './editor-matrix-literals';
 import {
   fail,
@@ -155,12 +156,15 @@ function normalizeLatex(latex: string): string {
     .replace(/\\det/g, 'det')
     .replace(/\\angle/g, 'angle')
     .replace(/\\dfrac/g, '\\frac')
-    .replace(/\\tfrac/g, '\\frac');
+    .replace(/\\tfrac/g, '\\frac')
+    .replace(/\\lbrack/g, '[')
+    .replace(/\\rbrack/g, ']');
 }
 
 function splitTopLevel(input: string, tokens: readonly string[]): { token: string; left: string; right: string } | null {
   let braceDepth = 0;
   let parenDepth = 0;
+  let bracketDepth = 0;
 
   for (let index = 0; index < input.length; index += 1) {
     if (input.startsWith('\\begin{', index)) {
@@ -189,7 +193,15 @@ function splitTopLevel(input: string, tokens: readonly string[]): { token: strin
       parenDepth = Math.max(0, parenDepth - 1);
       continue;
     }
-    if (braceDepth > 0 || parenDepth > 0) {
+    if (char === '[') {
+      bracketDepth += 1;
+      continue;
+    }
+    if (char === ']') {
+      bracketDepth = Math.max(0, bracketDepth - 1);
+      continue;
+    }
+    if (braceDepth > 0 || parenDepth > 0 || bracketDepth > 0) {
       continue;
     }
 
@@ -631,6 +643,11 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
   const literal = parseMatrixLiteral(input);
   if (literal) {
     return literal;
+  }
+
+  const plainListLiteral = parsePlainListLiteral(input);
+  if (plainListLiteral) {
+    return plainListLiteral;
   }
 
   if (input === 'A' || input === 'B' || input === 'u' || input === 'v') {

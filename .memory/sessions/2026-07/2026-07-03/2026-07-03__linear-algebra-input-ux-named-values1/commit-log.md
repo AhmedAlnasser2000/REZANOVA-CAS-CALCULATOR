@@ -18,3 +18,9 @@
 - subject: `LINEAR-ALGEBRA-MATHLIVE-MATRIX-INPUT1: parse MathLive matrix inputs`
 - status: recorded in git history by subject
 - staged memory: session verification, completion report, commit log.
+
+### LINEAR-ALGEBRA-FRIENDLY-LIST-SYNTAX1
+
+- subject: `LINEAR-ALGEBRA-FRIENDLY-LIST-SYNTAX1: parse pasted matrix lists`
+- status: ready to record in git history by subject
+- staged memory: session verification, completion report, commit log.
