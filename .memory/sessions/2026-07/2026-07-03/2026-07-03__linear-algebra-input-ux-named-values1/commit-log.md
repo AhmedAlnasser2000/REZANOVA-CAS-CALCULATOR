@@ -46,5 +46,11 @@
 ### LINEAR-ALGEBRA-ACTIVE-OPERAND-FKEYS1
 
 - subject: `LINEAR-ALGEBRA-ACTIVE-OPERAND-FKEYS1: route soft keys through active operands`
-- status: ready to record in git history by subject
+- status: recorded in git history by subject
+- staged memory: session verification, completion report, commit log.
+
+### LINEAR-ALGEBRA-NAMED-REPLAY-HISTORY1
+
+- subject: `LINEAR-ALGEBRA-NAMED-REPLAY-HISTORY1: preserve named replay snapshots`
+- status: recorded in git history by subject
 - staged memory: session verification, completion report, commit log.

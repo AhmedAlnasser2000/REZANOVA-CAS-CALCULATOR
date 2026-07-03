@@ -364,6 +364,16 @@ const vectorOperationSchema = z.enum([
 ]);
 const numericMatrixSchema = z.array(z.array(z.number().finite()));
 const numericVectorSchema = z.array(z.number().finite());
+const matrixNamedValueSnapshotSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  value: numericMatrixSchema,
+});
+const vectorNamedValueSnapshotSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  value: numericVectorSchema,
+});
 const exactScalarWireSchema = z.object({
   numerator: z.number().int().safe(),
   denominator: z.number().int().safe().positive(),
@@ -388,6 +398,9 @@ const matrixReplaySeedSchema = z.object({
   systemRhsLatex: z.string().optional(),
   coordinateVectorLatex: z.string().optional(),
   matrixPowerExponentLatex: z.string().optional(),
+  matrixValues: z.array(matrixNamedValueSnapshotSchema).optional(),
+  activeMatrixLeftId: z.string().optional(),
+  activeMatrixRightId: z.string().optional(),
 });
 const vectorReplaySeedSchema = z.object({
   operation: vectorOperationSchema,
@@ -399,6 +412,9 @@ const vectorReplaySeedSchema = z.object({
   editorExpressionLatex: z.string().optional(),
   vectorOperandLatexA: z.string().optional(),
   vectorOperandLatexB: z.string().optional(),
+  vectorValues: z.array(vectorNamedValueSnapshotSchema).optional(),
+  activeVectorLeftId: z.string().optional(),
+  activeVectorRightId: z.string().optional(),
 });
 const geometryScreenSchema = z.enum([
   'home',

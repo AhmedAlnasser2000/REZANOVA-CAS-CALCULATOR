@@ -8,11 +8,13 @@ import type {
   LinearAlgebraWorkerRunPayload,
 } from './worker-entrypoints/linear-algebra.worker';
 import {
+  buildMatrixOoeSnapshot,
   runMatrixMode,
   runMatrixModeWithOoePilot,
   type RunMatrixModeRequest,
 } from './matrix';
 import {
+  buildVectorOoeSnapshot,
   runVectorMode,
   runVectorModeWithOoePilot,
   type RunVectorModeRequest,
@@ -95,6 +97,12 @@ const matrixRequest: RunMatrixModeRequest = {
   operation: 'multiply',
   matrixA: [[1, 2], [3, 4]],
   matrixB: [[5, 6], [7, 8]],
+  matrixValues: [
+    { id: 'matrix-a', name: 'A', value: [[1, 2], [3, 4]] },
+    { id: 'matrix-b', name: 'B', value: [[5, 6], [7, 8]] },
+  ],
+  activeMatrixLeftId: 'matrix-a',
+  activeMatrixRightId: 'matrix-b',
 };
 
 const vectorRequest: RunVectorModeRequest = {
@@ -102,6 +110,12 @@ const vectorRequest: RunVectorModeRequest = {
   vectorA: [1, 0],
   vectorB: [0, 1],
   angleUnit: 'deg',
+  vectorValues: [
+    { id: 'vector-u', name: 'u', value: [1, 0] },
+    { id: 'vector-v', name: 'v', value: [0, 1] },
+  ],
+  activeVectorLeftId: 'vector-u',
+  activeVectorRightId: 'vector-v',
 };
 
 beforeEach(() => {
@@ -110,6 +124,19 @@ beforeEach(() => {
 });
 
 describe('linear algebra worker runtime shell', () => {
+  it('includes named value snapshots in Matrix and Vector OOE snapshots', () => {
+    expect(buildMatrixOoeSnapshot(matrixRequest).request).toMatchObject({
+      matrixValues: matrixRequest.matrixValues,
+      activeMatrixLeftId: 'matrix-a',
+      activeMatrixRightId: 'matrix-b',
+    });
+    expect(buildVectorOoeSnapshot(vectorRequest).request).toMatchObject({
+      vectorValues: vectorRequest.vectorValues,
+      activeVectorLeftId: 'vector-u',
+      activeVectorRightId: 'vector-v',
+    });
+  });
+
   it('returns Matrix and Vector worker payloads matching the main-thread adapters', async () => {
     const matrix = await runMatrixModeWithOoePilot(matrixRequest, {
       commitPolicy: 'alwaysCommit',

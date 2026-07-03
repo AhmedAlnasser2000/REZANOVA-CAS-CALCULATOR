@@ -253,6 +253,30 @@ export function useLinearAlgebraRuntime({
       : undefined;
   }
 
+  function withMatrixValueSnapshot(
+    request: RunMatrixModeRequest,
+    state = matrixStateRef.current,
+  ): RunMatrixModeRequest {
+    return {
+      ...request,
+      matrixValues: cloneMatrixNamedValues(state.matrixValues),
+      activeMatrixLeftId: state.activeMatrixLeftId,
+      activeMatrixRightId: state.activeMatrixRightId,
+    };
+  }
+
+  function withVectorValueSnapshot(
+    request: RunVectorModeRequest,
+    state = vectorStateRef.current,
+  ): RunVectorModeRequest {
+    return {
+      ...request,
+      vectorValues: cloneVectorNamedValues(state.vectorValues),
+      activeVectorLeftId: state.activeVectorLeftId,
+      activeVectorRightId: state.activeVectorRightId,
+    };
+  }
+
   function commitMatrixEditorError(
     inputLatex: string,
     message: string,
@@ -286,7 +310,8 @@ export function useLinearAlgebraRuntime({
     inputLatex: string,
     visibleRequestForCommit: () => RunMatrixModeRequest,
   ) {
-    const inputRevisionId = buildMatrixOoeInputRevisionId(launchedRequest);
+    const launchedSnapshot = withMatrixValueSnapshot(launchedRequest);
+    const inputRevisionId = buildMatrixOoeInputRevisionId(launchedSnapshot);
     const launchToken = `${inputRevisionId}:${inputLatex}`;
     latestMatrixRunRevisionRef.current = launchToken;
     const historyTicket = reserveHistoryTicket?.({
@@ -296,7 +321,7 @@ export function useLinearAlgebraRuntime({
       inputRevisionId,
     });
 
-    void runMatrixModeWithOoePilot(launchedRequest, {
+    void runMatrixModeWithOoePilot(launchedSnapshot, {
       commitPolicy: 'alwaysCommit',
       ...ooeJobContextFromHistoryTicket(historyTicket),
     }).then((result) => {
@@ -311,14 +336,14 @@ export function useLinearAlgebraRuntime({
         return;
       }
 
-      const activeRevision = buildMatrixOoeInputRevisionId(visibleRequestForCommit());
+      const activeRevision = buildMatrixOoeInputRevisionId(withMatrixValueSnapshot(visibleRequestForCommit()));
       const visibleStillMatrix =
         (getCurrentMode?.() ?? 'matrix') === 'matrix'
         && activeRevision === inputRevisionId
         && latestMatrixRunRevisionRef.current === launchToken;
 
       commitOutcome(result.payload, inputLatex, 'matrix', {
-        matrixSeed: launchedRequest,
+        matrixSeed: launchedSnapshot,
         historyTicketId: historyTicket?.id,
         historyLaunchOrder: historyTicket?.historyLaunchOrder,
         suppressDisplayCommit: !visibleStillMatrix,
@@ -381,7 +406,8 @@ export function useLinearAlgebraRuntime({
     inputLatex: string,
     visibleRequestForCommit: () => RunVectorModeRequest,
   ) {
-    const inputRevisionId = buildVectorOoeInputRevisionId(launchedRequest);
+    const launchedSnapshot = withVectorValueSnapshot(launchedRequest);
+    const inputRevisionId = buildVectorOoeInputRevisionId(launchedSnapshot);
     const launchToken = `${inputRevisionId}:${inputLatex}`;
     latestVectorRunRevisionRef.current = launchToken;
     const historyTicket = reserveHistoryTicket?.({
@@ -391,7 +417,7 @@ export function useLinearAlgebraRuntime({
       inputRevisionId,
     });
 
-    void runVectorModeWithOoePilot(launchedRequest, {
+    void runVectorModeWithOoePilot(launchedSnapshot, {
       commitPolicy: 'alwaysCommit',
       ...ooeJobContextFromHistoryTicket(historyTicket),
     }).then((result) => {
@@ -406,14 +432,14 @@ export function useLinearAlgebraRuntime({
         return;
       }
 
-      const activeRevision = buildVectorOoeInputRevisionId(visibleRequestForCommit());
+      const activeRevision = buildVectorOoeInputRevisionId(withVectorValueSnapshot(visibleRequestForCommit()));
       const visibleStillVector =
         (getCurrentMode?.() ?? 'vector') === 'vector'
         && activeRevision === inputRevisionId
         && latestVectorRunRevisionRef.current === launchToken;
 
       commitOutcome(result.payload, inputLatex, 'vector', {
-        vectorSeed: launchedRequest,
+        vectorSeed: launchedSnapshot,
         historyTicketId: historyTicket?.id,
         historyLaunchOrder: historyTicket?.historyLaunchOrder,
         suppressDisplayCommit: !visibleStillVector,

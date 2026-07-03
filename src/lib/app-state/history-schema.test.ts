@@ -297,6 +297,12 @@ describe('history entry schema', () => {
         editorExpressionLatex: 'A\\times B',
         matrixOperandLatexA: 'A',
         matrixOperandLatexB: 'B',
+        matrixValues: [
+          { id: 'matrix-a', name: 'A', value: [[1, 2], [3, 4]] },
+          { id: 'matrix-b', name: 'B', value: [[5, 6], [7, 8]] },
+        ],
+        activeMatrixLeftId: 'matrix-a',
+        activeMatrixRightId: 'matrix-b',
       },
       timestamp: '2026-06-08T00:00:00.000Z',
     });
@@ -308,6 +314,12 @@ describe('history entry schema', () => {
       editorExpressionLatex: 'A\\times B',
       matrixOperandLatexA: 'A',
       matrixOperandLatexB: 'B',
+      matrixValues: [
+        { id: 'matrix-a', name: 'A', value: [[1, 2], [3, 4]] },
+        { id: 'matrix-b', name: 'B', value: [[5, 6], [7, 8]] },
+      ],
+      activeMatrixLeftId: 'matrix-a',
+      activeMatrixRightId: 'matrix-b',
     });
 
     expect(historyEntrySchema.parse({
@@ -568,6 +580,12 @@ describe('history entry schema', () => {
         editorExpressionLatex: '\\angle(u,v)',
         vectorOperandLatexA: 'u',
         vectorOperandLatexB: 'v',
+        vectorValues: [
+          { id: 'vector-u', name: 'u', value: [1, 0, 0] },
+          { id: 'vector-v', name: 'v', value: [0, 1, 0] },
+        ],
+        activeVectorLeftId: 'vector-u',
+        activeVectorRightId: 'vector-v',
       },
       timestamp: '2026-06-08T00:00:00.000Z',
     });
@@ -580,6 +598,12 @@ describe('history entry schema', () => {
       editorExpressionLatex: '\\angle(u,v)',
       vectorOperandLatexA: 'u',
       vectorOperandLatexB: 'v',
+      vectorValues: [
+        { id: 'vector-u', name: 'u', value: [1, 0, 0] },
+        { id: 'vector-v', name: 'v', value: [0, 1, 0] },
+      ],
+      activeVectorLeftId: 'vector-u',
+      activeVectorRightId: 'vector-v',
     });
 
     expect(historyEntrySchema.parse({

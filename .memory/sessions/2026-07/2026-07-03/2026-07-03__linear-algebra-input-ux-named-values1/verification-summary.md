@@ -111,3 +111,18 @@
 - global gate notes:
   - `npm run test:file-sizes` remains blocked only by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; M6-owned `src/AppMain.tsx` is 3356 lines under its 3357 cap and `src/app/runtime/useLinearAlgebraRuntime.ts` is 869 lines under its 900 cap.
   - `npx tsc -b --pretty false` remains blocked by unrelated dirty `src/app/runtime/historyDisplayEntry.test.ts` readonly `lineKinds` typing.
+
+### LINEAR-ALGEBRA-NAMED-REPLAY-HISTORY1
+
+- gate: backend
+- status: pass
+- changed: Matrix and Vector replay seeds now carry launch-time named-value snapshots plus active operand IDs through history, replay, OOE route snapshots, and persisted app-state schema.
+- behavior: replay restores the saved Matrix/Vector named library and active operands when present, so old results remain stable after users rename, resize, add, or delete live named values; old fixed A/B and u/v replay seeds still use the legacy restore path.
+- visual/readback coverage: active Matrix and Vector soft-key runs now commit `matrixValues`/`vectorValues` snapshots in their history seeds, and a focused replay test verifies restored labels such as `C+B` and `q·v` after live library names were changed.
+- evidence:
+  - `npm run test:ui -- src/app/runtime/useLinearAlgebraTableShellRuntime.ui.test.tsx src/app/runtime/useLinearAlgebraNamedReplay.ui.test.tsx src/app/workspaces/LinearAlgebraEditorSource.ui.test.tsx src/app/shell/DisplayOutcomeShell.ui.test.tsx` passed: 24 tests.
+  - `npx vitest run src/lib/app-state/history-schema.test.ts src/lib/modes/linear-algebra-worker-runtime.test.ts src/lib/linear-algebra/editor-parser.test.ts src/lib/linear-algebra/editor-dispatch.test.ts src/lib/linear-algebra/editor-dispatch-named-values.test.ts` passed: 58 tests.
+  - `git diff --check` passed.
+- global gate notes:
+  - `npm run test:file-sizes` remains blocked only by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; M7-owned files are under their caps after splitting the named replay UI test.
+  - `npx tsc -b --pretty false` remains blocked by unrelated `src/app/runtime/historyDisplayEntry.test.ts` readonly `lineKinds` typing.

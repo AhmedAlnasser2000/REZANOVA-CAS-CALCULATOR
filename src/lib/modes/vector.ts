@@ -28,6 +28,9 @@ export type RunVectorModeRequest = {
   editorExpressionLatex?: string;
   vectorOperandLatexA?: string;
   vectorOperandLatexB?: string;
+  vectorValues?: { id: string; name: string; value: number[] }[];
+  activeVectorLeftId?: string;
+  activeVectorRightId?: string;
 };
 
 export function vectorOperationLabel(operation: VectorOperation) {
@@ -137,6 +140,9 @@ export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
       editorExpressionLatex: request.editorExpressionLatex,
       vectorOperandLatexA: request.vectorOperandLatexA,
       vectorOperandLatexB: request.vectorOperandLatexB,
+      vectorValues: request.vectorValues,
+      activeVectorLeftId: request.activeVectorLeftId,
+      activeVectorRightId: request.activeVectorRightId,
     },
   };
 }

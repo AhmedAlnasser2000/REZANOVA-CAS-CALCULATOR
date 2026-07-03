@@ -37,6 +37,9 @@ export type RunMatrixModeRequest = {
   systemRhsLatex?: string;
   coordinateVectorLatex?: string;
   matrixPowerExponentLatex?: string;
+  matrixValues?: { id: string; name: string; value: number[][] }[];
+  activeMatrixLeftId?: string;
+  activeMatrixRightId?: string;
 };
 
 export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSystemForm) {
@@ -253,6 +256,9 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       systemRhsLatex: request.systemRhsLatex,
       coordinateVectorLatex: request.coordinateVectorLatex,
       matrixPowerExponentLatex: request.matrixPowerExponentLatex,
+      matrixValues: request.matrixValues,
+      activeMatrixLeftId: request.activeMatrixLeftId,
+      activeMatrixRightId: request.activeMatrixRightId,
     },
   };
 }

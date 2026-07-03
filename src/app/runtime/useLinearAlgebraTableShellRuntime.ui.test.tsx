@@ -487,6 +487,12 @@ describe('useLinearAlgebraTableShellRuntime', () => {
           editorExpressionLatex: 'C+B',
           matrixOperandLatexA: 'C',
           matrixOperandLatexB: 'B',
+          matrixValues: expect.arrayContaining([
+            { id: matrixId, name: 'C', value: [[9, 0], [0, 9]] },
+            { id: 'matrix-b', name: 'B', value: [[5, 6], [7, 8]] },
+          ]),
+          activeMatrixLeftId: matrixId,
+          activeMatrixRightId: 'matrix-b',
         }),
       }),
     ));
@@ -520,6 +526,12 @@ describe('useLinearAlgebraTableShellRuntime', () => {
           editorExpressionLatex: 'p·v',
           vectorOperandLatexA: 'p',
           vectorOperandLatexB: 'v',
+          vectorValues: expect.arrayContaining([
+            { id: vectorId, name: 'p', value: [10, 0, 0] },
+            { id: 'vector-v', name: 'v', value: [4, 5, 6] },
+          ]),
+          activeVectorLeftId: vectorId,
+          activeVectorRightId: 'vector-v',
         }),
       }),
     ));

@@ -1008,7 +1008,6 @@ export type MatrixOperation =
   | 'add' | 'subtract' | 'multiply' | 'transposeA' | 'transposeB' | 'detA' | 'detB' | 'inverseA' | 'inverseB' | 'rankA' | 'rankB' | 'rrefA' | 'rrefB' | 'nullSpaceA' | 'nullSpaceB' | 'columnSpaceA' | 'columnSpaceB' | 'basisA' | 'basisB' | 'coordinatesA' | 'coordinatesB' | 'changeBasis' | 'luA' | 'luB' | 'pluA' | 'pluB' | 'luSolveA' | 'luSolveB' | 'pluSolveA' | 'pluSolveB' | 'multiRhsSolve' | 'qrA' | 'qrB' | 'columnProjectionA' | 'columnProjectionB' | 'leastSquaresA' | 'leastSquaresB' | 'invertibilityA' | 'invertibilityB' | 'eigenA' | 'eigenB' | 'diagonalizeA' | 'diagonalizeB' | 'spectralPowerA' | 'spectralPowerB' | 'linearSystem';
 
 export type MatrixSystemForm = 'Ax=b' | 'Ax+b=0';
-
 export type MatrixRequest = {
   operation: MatrixOperation;
   matrixA: number[][];
@@ -1018,6 +1017,7 @@ export type MatrixRequest = {
   systemForm?: MatrixSystemForm;
   exactMatrixA?: ExactScalarWire[][]; exactMatrixB?: ExactScalarWire[][]; exactSystemRhs?: ExactScalarWire[]; exactCoordinateVector?: ExactScalarWire[];
   editorExpressionLatex?: string; matrixOperandLatexA?: string; matrixOperandLatexB?: string; systemRhsLatex?: string; coordinateVectorLatex?: string; matrixPowerExponentLatex?: string;
+  matrixValues?: { id: string; name: string; value: number[][] }[]; activeMatrixLeftId?: string; activeMatrixRightId?: string;
 };
 
 export type MatrixReplaySeed = MatrixRequest;
@@ -1041,6 +1041,7 @@ export type VectorRequest = {
   vectorB?: number[];
   angleUnit: AngleUnit;
   exactVectorA?: ExactScalarWire[]; exactVectorB?: ExactScalarWire[]; editorExpressionLatex?: string; vectorOperandLatexA?: string; vectorOperandLatexB?: string;
+  vectorValues?: { id: string; name: string; value: number[] }[]; activeVectorLeftId?: string; activeVectorRightId?: string;
 };
 
 export type VectorReplaySeed = VectorRequest;

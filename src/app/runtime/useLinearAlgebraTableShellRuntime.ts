@@ -78,6 +78,22 @@ function cloneVector(vector: readonly number[]) {
   return [...vector];
 }
 
+function cloneMatrixValues(values: NonNullable<HistoryEntry['matrixSeed']>['matrixValues']) {
+  return values?.map((value) => ({
+    id: value.id,
+    name: value.name,
+    value: cloneMatrix(value.value),
+  }));
+}
+
+function cloneVectorValues(values: NonNullable<HistoryEntry['vectorSeed']>['vectorValues']) {
+  return values?.map((value) => ({
+    id: value.id,
+    name: value.name,
+    value: cloneVector(value.value),
+  }));
+}
+
 export function useLinearAlgebraTableShellRuntime({
   activeFieldRef,
   angleUnit,
@@ -213,6 +229,22 @@ export function useLinearAlgebraTableShellRuntime({
     }
 
     if (entry.mode === 'matrix' && entry.matrixSeed) {
+      if (entry.matrixSeed.matrixValues?.length) {
+        const matrixB =
+          entry.matrixSeed.matrixB
+          ?? entry.matrixSeed.matrixValues.find((value) => value.id === entry.matrixSeed?.activeMatrixRightId)?.value
+          ?? entry.matrixSeed.matrixValues[1]?.value
+          ?? entry.matrixSeed.matrixA;
+        linearAlgebraRuntime.restoreMatrixSurfaceState({
+          matrixA: cloneMatrix(entry.matrixSeed.matrixA),
+          matrixB: cloneMatrix(matrixB),
+          matrixValues: cloneMatrixValues(entry.matrixSeed.matrixValues),
+          activeMatrixLeftId: entry.matrixSeed.activeMatrixLeftId,
+          activeMatrixRightId: entry.matrixSeed.activeMatrixRightId,
+          matrixEditorLatex: entry.matrixSeed.editorExpressionLatex ?? entry.inputLatex,
+        });
+        return true;
+      }
       linearAlgebraRuntime.resetMatrixValues();
       linearAlgebraRuntime.setMatrixA(cloneMatrix(entry.matrixSeed.matrixA));
       if (entry.matrixSeed.matrixB) {
@@ -223,6 +255,25 @@ export function useLinearAlgebraTableShellRuntime({
     }
 
     if (entry.mode === 'vector' && entry.vectorSeed) {
+      if (entry.vectorSeed.vectorValues?.length) {
+        const vectorB =
+          entry.vectorSeed.vectorB
+          ?? entry.vectorSeed.vectorValues.find((value) => value.id === entry.vectorSeed?.activeVectorRightId)?.value
+          ?? entry.vectorSeed.vectorValues[1]?.value
+          ?? entry.vectorSeed.vectorA;
+        linearAlgebraRuntime.restoreVectorSurfaceState({
+          vectorA: cloneVector(entry.vectorSeed.vectorA),
+          vectorB: cloneVector(vectorB),
+          vectorValues: cloneVectorValues(entry.vectorSeed.vectorValues),
+          activeVectorLeftId: entry.vectorSeed.activeVectorLeftId,
+          activeVectorRightId: entry.vectorSeed.activeVectorRightId,
+          vectorEditorLatex: entry.vectorSeed.editorExpressionLatex ?? entry.inputLatex,
+        });
+        if (entry.vectorSeed.angleUnit !== angleUnit) {
+          patchSettings({ angleUnit: entry.vectorSeed.angleUnit });
+        }
+        return true;
+      }
       linearAlgebraRuntime.resetVectorValues();
       linearAlgebraRuntime.setVectorA(cloneVector(entry.vectorSeed.vectorA));
       if (entry.vectorSeed.vectorB) {
