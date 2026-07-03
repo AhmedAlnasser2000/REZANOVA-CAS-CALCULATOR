@@ -1835,3 +1835,7 @@
 ## 2026-07-03 - ALGEBRAIC-GENUS1-ELEMENTARITY-CERTIFICATE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 elementarity certificates are proof context for already accepted elliptic answers, not a new solve route. They may state non-elementarity only for the displayed non-degenerate genus-1 elementary field and must keep degeneration, branch-heavy cases, and coefficient-cancellation specializations on separate fallback or controlled-stop paths.
+
+## 2026-07-03 - ALGEBRAIC-GENUS1-DEGENERATION-FALLBACK-LIVE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Live genus-1 degeneration fallback is limited to perfect-square quartic radicals with a provably nonnegative square factor. It may collapse those to existing genus-0 polynomial or rational integration routes; branch-changing square factors, symbolic repeated roots, and non-square repeated-root cubics/quartics must remain on controlled boundary paths until casewise branch splitting is available.

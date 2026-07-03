@@ -2,6 +2,7 @@ import { tryAlgebraicGenus0Genus1BoundaryStop } from './algebraic-genus0/genus1-
 import { tryAlgebraicGenus0RationalInRadicalRule } from './algebraic-genus0/rational-in-radical';
 import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standard-radicals';
 import { tryAlgebraicGenus0SymbolicStandardRadicalRule } from './algebraic-genus0/symbolic-standard-radicals';
+import { tryAlgebraicGenus1DegenerationFallbackRule } from './algebraic-genus1/degeneration-fallback-live';
 import { tryAlgebraicGenus1EllipticKindsRule } from './algebraic-genus1/elliptic-kinds-live';
 import { tryAlgebraicHyperellipticBoundaryStop } from './algebraic-genus1/hyperelliptic-boundary';
 import { tryAlgebraicGenus1RationalInRadicalHermiteRule } from './algebraic-genus1/rational-in-radical-hermite';
@@ -12,6 +13,7 @@ export type AlgebraicFunctionFieldFamily =
   | 'genus0-rational-in-radical'
   | 'genus0-standard-radical'
   | 'genus0-symbolic-standard-radical'
+  | 'genus1-degeneration-fallback'
   | 'genus1-elliptic-kinds'
   | 'genus1-rational-in-radical-hermite'
   | 'genus1-boundary'
@@ -67,6 +69,22 @@ export function tryAlgebraicFunctionFieldOrchestrator(
         'u-substitution',
         genus0SymbolicStandard.verification,
         genus0SymbolicStandard.exactSupplementLatex,
+      ),
+    };
+  }
+
+  const genus1DegenerationFallback = tryAlgebraicGenus1DegenerationFallbackRule(node, variable);
+  if (genus1DegenerationFallback) {
+    return {
+      family: 'genus1-degeneration-fallback',
+      resolution: symbolicSuccess(
+        node,
+        variable,
+        genus1DegenerationFallback.exactLatex,
+        genus1DegenerationFallback.strategy,
+        genus1DegenerationFallback.verification,
+        genus1DegenerationFallback.exactSupplementLatex,
+        genus1DegenerationFallback.detailSections,
       ),
     };
   }

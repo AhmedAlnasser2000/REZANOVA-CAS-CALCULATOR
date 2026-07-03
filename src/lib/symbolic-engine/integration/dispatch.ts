@@ -9,6 +9,7 @@ import {
 } from '../patterns';
 import { tryAffinePowerRule } from './affine-power';
 import { tryAlgebraicFunctionFieldOrchestrator } from './algebraic-function-field-orchestrator';
+import { tryAlgebraicGenus1DegenerationFallbackRule } from './algebraic-genus1/degeneration-fallback-live';
 import { tryAlgebraicGenus0RationalInRadicalRule } from './algebraic-genus0/rational-in-radical';
 import { tryAlgebraicGenus0StandardRadicalRule } from './algebraic-genus0/standard-radicals';
 import { tryAlgebraicGenus0SymbolicStandardRadicalRule } from './algebraic-genus0/symbolic-standard-radicals';
@@ -580,6 +581,19 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
   const algebraicFunctionField = tryAlgebraicFunctionFieldOrchestrator(node, variable);
   if (algebraicFunctionField) {
     return algebraicFunctionField.resolution;
+  }
+
+  const degenerationFallback = tryAlgebraicGenus1DegenerationFallbackRule(node, variable);
+  if (degenerationFallback) {
+    return symbolicSuccess(
+      node,
+      variable,
+      degenerationFallback.exactLatex,
+      degenerationFallback.strategy,
+      degenerationFallback.verification,
+      degenerationFallback.exactSupplementLatex,
+      degenerationFallback.detailSections,
+    );
   }
 
   return {
