@@ -245,6 +245,12 @@ describe('calculus limits', () => {
     expect(cases.error).toBeUndefined();
     expect(cases.exactLatex).toBe('0');
 
+    const semicolon = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 2 piecewise(x^2 if x<2; 4 otherwise)',
+    });
+    expect(semicolon.error).toBeUndefined();
+    expect(semicolon.exactLatex).toBe('4');
+
     const infinity = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity piecewise(1 if x<0, 2 otherwise)',
     });

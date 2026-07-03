@@ -96,6 +96,101 @@ describe('piecewise limits', () => {
     }
   });
 
+  it('resolves one-sided and boundary Piecewise branch limits', () => {
+    const right = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(-1 if x<0; 1 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 0,
+        direction: 'right',
+      },
+    });
+    const left = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(-1 if x<0; 1 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 0,
+        direction: 'left',
+      },
+    });
+    const boundary = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(x^2 if x<2; 4 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 2,
+        direction: 'two-sided',
+      },
+    });
+
+    expect(right.kind).toBe('success');
+    if (right.kind === 'success') {
+      expect(right.exactLatex).toBe('1');
+      expect(right.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+        kind: 'math',
+        latex: '1',
+      });
+    }
+    expect(left.kind).toBe('success');
+    if (left.kind === 'success') {
+      expect(left.exactLatex).toBe('-1');
+    }
+    expect(boundary.kind).toBe('success');
+    if (boundary.kind === 'success') {
+      expect(boundary.exactLatex).toBe('4');
+    }
+  });
+
+  it('keeps selected branch evidence when a Piecewise branch is unsupported', () => {
+    const result = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(floor(1/x) if x<0; 0 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 0,
+        direction: 'two-sided',
+      },
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind === 'failure') {
+      expect(result.error).toContain('outside the supported Calculus rules');
+      expect(result.detailSections?.[0]?.title).toBe('Limit Diagnostic');
+      expect(result.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+        kind: 'math',
+        latex: 'floor(1/x)',
+      });
+      expect(result.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+        kind: 'math',
+        latex: '0',
+      });
+    }
+  });
+
+  it('stops Piecewise branch analysis over the solver cap', () => {
+    const branches = Array.from({ length: 13 }, (_, index) =>
+      `${index} if x<${index - 6}`,
+    );
+    branches.push('99 otherwise');
+    const result = resolvePiecewiseLimit({
+      bodyLatex: `piecewise(${branches.join('; ')})`,
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 0,
+        direction: 'two-sided',
+      },
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind === 'failure') {
+      expect(result.error).toContain('supports up to 12 branches');
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('solver cap is 12');
+    }
+  });
+
   it('selects Piecewise branches at infinity', () => {
     const positive = resolvePiecewiseLimit({
       bodyLatex: 'piecewise(1 if x<0, 2 otherwise)',
