@@ -1839,3 +1839,7 @@
 ## 2026-07-03 - ALGEBRAIC-GENUS1-DEGENERATION-FALLBACK-LIVE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Live genus-1 degeneration fallback is limited to perfect-square quartic radicals with a provably nonnegative square factor. It may collapse those to existing genus-0 polynomial or rational integration routes; branch-changing square factors, symbolic repeated roots, and non-square repeated-root cubics/quartics must remain on controlled boundary paths until casewise branch splitting is available.
+
+## 2026-07-03 - ALGEBRAIC-RISCH-PRACTICAL-CLOSEOUT0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The algebraic frontier push is closed as practical but incomplete. Future widening should be benchmark-driven or start with a generic genus-1 coefficient-vector/backcheck milestone; do not claim full algebraic-function-field Risch, broad symbolic named-root formulas, or generic second/third-kind live adoption until those prerequisites are solved and branch-capped.
