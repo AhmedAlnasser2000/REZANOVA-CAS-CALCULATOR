@@ -585,6 +585,18 @@ export const variableSubstitutionSnapshotSchema = z.object({
   valueLatex: z.string(),
   numericValue: z.number().finite(),
 });
+const displayDetailLineKindSchema = z.enum(['text', 'math']);
+const displayDetailLinePartSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('text'), text: z.string() }),
+  z.object({ kind: z.literal('math'), latex: z.string() }),
+]);
+const displayDetailSectionSchema = z.object({
+  title: z.string(),
+  lines: z.array(z.string()),
+  lineKind: displayDetailLineKindSchema.optional(),
+  lineKinds: z.array(displayDetailLineKindSchema).optional(),
+  lineParts: z.array(z.array(displayDetailLinePartSchema)).optional(),
+});
 const calculateSeedSchema = z.object({
   bodyLatex: z.string().optional(),
   point: z.string().optional(),
@@ -682,6 +694,7 @@ export const historyEntrySchema = z.object({
   resultLatex: z.string().optional(),
   exactSupplementLatex: z.array(z.string()).optional(),
   approxText: z.string().optional(),
+  detailSections: z.array(displayDetailSectionSchema).optional(),
   calculateScreen: calculateScreenSchema.optional(),
   calculateSeed: calculateSeedSchema.optional(),
   calculusScreen: calculusScreenSchema.optional(),

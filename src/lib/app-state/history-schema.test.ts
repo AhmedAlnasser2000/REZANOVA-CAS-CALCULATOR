@@ -59,6 +59,36 @@ describe('history entry schema', () => {
     ]);
   });
 
+  it('accepts persisted display detail sections for history replay cards', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'matrix-history-cards-1',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{coords}(A,b)',
+      resultLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+      detailSections: [
+        {
+          title: 'Coordinate Proof',
+          lines: ['A c=b', 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}'],
+          lineKinds: ['math', 'math'],
+          lineParts: [
+            [{ kind: 'math', latex: 'A c=b' }],
+            [
+              { kind: 'text', text: 'Therefore ' },
+              { kind: 'math', latex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}' },
+            ],
+          ],
+        },
+      ],
+      timestamp: '2026-07-03T00:00:00.000Z',
+    });
+
+    expect(parsed.detailSections?.[0]).toMatchObject({
+      title: 'Coordinate Proof',
+      lines: ['A c=b', 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}'],
+      lineKinds: ['math', 'math'],
+    });
+  });
+
   it('accepts typed Basic Calculus replay context', () => {
     const parsed = historyEntrySchema.parse({
       id: 'calc-limit-1',

@@ -116,9 +116,20 @@ export function DisplayOutcomeShell({
       ? calculateRouteMeta.label
     : currentMode === 'equation' && equationResultTitle
       ? equationResultTitle
-      : displayOutcome?.title ?? 'Result';
+    : displayOutcome?.title ?? 'Result';
   const titleText = typeof resultTitle === 'string' ? resultTitle : String(resultTitle);
   const renderTitleAsMath = shouldRenderTitleAsMath(titleText);
+  const activeExpressionLatexText =
+    typeof activeExpressionLatex === 'function' ? activeExpressionLatex() : '';
+  const isLinearAlgebraMode = currentMode === 'matrix' || currentMode === 'vector';
+  const suppressDuplicateEditorExpressionTitle =
+    !isLauncherOpen
+    && isLinearAlgebraMode
+    && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
+    && titleText.trim().length > 0
+    && titleText.trim() === activeExpressionLatexText.trim();
+  const showResultTitle = !suppressDuplicateEditorExpressionTitle;
+  const showResultTitleRow = showResultTitle || displayResultBadges.length > 0;
   const openFormulaViewerFromBlock = useCallback((block: DisplayBlock) => {
     if (typeof onOpenFormulaViewer !== 'function') {
       return;
@@ -128,7 +139,7 @@ export function DisplayOutcomeShell({
       copyLatex: activeResultCopyText(),
       resolvedInputLatex: displayOutcome?.resolvedInputLatex ?? '',
       resultTitle: displayOutcome?.title ?? equationResultTitle ?? 'Result',
-      sourceExpressionLatex: activeExpressionLatex(),
+      sourceExpressionLatex: activeExpressionLatexText,
     };
     const artifact: FormulaViewerArtifact = buildFormulaViewerArtifact({
       block,
@@ -137,7 +148,7 @@ export function DisplayOutcomeShell({
     });
     onOpenFormulaViewer(artifact);
   }, [
-    activeExpressionLatex,
+    activeExpressionLatexText,
     activeResultCopyText,
     displayOutcome?.resolvedInputLatex,
     displayOutcome?.title,
@@ -149,30 +160,34 @@ export function DisplayOutcomeShell({
 
   return (
     <div className="display-result" data-testid="display-outcome-root">
-      <div className="result-title-row">
-        <div
-          className={`result-title${renderTitleAsMath ? ' result-title--math' : ''}`}
-          data-testid="display-outcome-title"
-        >
-          {renderTitleAsMath ? (
-            <MathStatic
-              block={false}
-              className="result-title-math"
-              latex={titleText}
-              normalizeDisplay={false}
-            />
-          ) : titleText}
+      {showResultTitleRow ? (
+        <div className="result-title-row">
+          {showResultTitle ? (
+            <div
+              className={`result-title${renderTitleAsMath ? ' result-title--math' : ''}`}
+              data-testid="display-outcome-title"
+            >
+              {renderTitleAsMath ? (
+                <MathStatic
+                  block={false}
+                  className="result-title-math"
+                  latex={titleText}
+                  normalizeDisplay={false}
+                />
+              ) : titleText}
+            </div>
+          ) : null}
+          {displayResultBadges.length > 0 ? (
+            <div className="result-badges">
+              {displayResultBadges.map((badge: any) => (
+                <span key={badge.label} className={badge.className}>
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-        {displayResultBadges.length > 0 ? (
-          <div className="result-badges">
-            {displayResultBadges.map((badge: any) => (
-              <span key={badge.label} className={badge.className}>
-                {badge.label}
-              </span>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
       {isLauncherOpen ? (
         <div className="result-approx">
           {launcherState.level === 'root'
@@ -281,7 +296,7 @@ export function DisplayOutcomeShell({
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && !suppressResolvedInputReadback
       && displayOutcome.resolvedInputLatex
-      && displayOutcome.resolvedInputLatex.trim() !== activeExpressionLatex().trim() ? (
+      && displayOutcome.resolvedInputLatex.trim() !== activeExpressionLatexText.trim() ? (
         <>
           <div className="result-approx">Resolved form</div>
           <MathStatic

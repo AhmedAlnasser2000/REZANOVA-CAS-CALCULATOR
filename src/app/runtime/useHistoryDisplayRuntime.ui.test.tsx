@@ -403,7 +403,11 @@ describe('useHistoryDisplayRuntime', () => {
       ],
     });
     expect(appendHistoryEntry).toHaveBeenCalledWith(
-      expect.objectContaining({ inputLatex: '2+2', resultLatex: '4', runtimeElapsedMs: 42 }),
+      expect.objectContaining({
+        inputLatex: '2+2',
+        resultLatex: '4',
+        runtimeElapsedMs: 42,
+      }),
     );
     expect(delegates.setRuntimeElapsedMs).toHaveBeenLastCalledWith(42);
   });
@@ -744,6 +748,13 @@ describe('useHistoryDisplayRuntime', () => {
         mode: 'equation',
         inputLatex: 'x+a=4',
         resultLatex: 'x=2',
+        detailSections: [
+          {
+            title: 'Replay Proof',
+            lines: ['x+a=4'],
+            lineKind: 'math',
+          },
+        ],
         variableSubstitutions: substitutions,
         timestamp: '2026-06-14T00:00:00Z',
       });
@@ -767,6 +778,13 @@ describe('useHistoryDisplayRuntime', () => {
       kind: 'success',
       title: 'History',
       exactLatex: 'x=2',
+      detailSections: [
+        {
+          title: 'Replay Proof',
+          lines: ['x+a=4'],
+          lineKind: 'math',
+        },
+      ],
     });
     expect(delegates.closeHistoryPanel).toHaveBeenCalledTimes(1);
 

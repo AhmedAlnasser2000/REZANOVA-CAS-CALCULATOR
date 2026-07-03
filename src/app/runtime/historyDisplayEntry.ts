@@ -74,6 +74,9 @@ export function buildHistoryDisplayEntry({
     resultLatex: outcome.exactLatex,
     exactSupplementLatex: outcome.exactSupplementLatex,
     approxText: outcome.approxText,
+    ...(outcome.detailSections && outcome.detailSections.length > 0
+      ? { detailSections: outcome.detailSections }
+      : {}),
     ...(mode === 'calculate'
       ? { ...currentCalculateHistoryContext(), ...context }
       : {}),

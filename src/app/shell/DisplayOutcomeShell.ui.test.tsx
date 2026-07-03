@@ -5,17 +5,53 @@ import { expectMathStaticLatex } from '../../test/renderAppMain';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
 
 describe('DisplayOutcomeShell result title', () => {
-  it('renders LaTeX result titles as math instead of uppercase raw text', () => {
+  it('hides Matrix expression titles when the editor preview already shows the same expression', () => {
     const titleLatex = String.raw`\operatorname{ls}\left(\begin{bmatrix}1&0\\0&1\\0&0\end{bmatrix},\begin{bmatrix}2\\3\\4\end{bmatrix}\right)`;
 
     render(
       <DisplayPanel
+        activeExpressionLatex={() => titleLatex}
         activeResultCopyText={() => String.raw`x_{\mathrm{LS}}=\begin{bmatrix}2\\3\end{bmatrix}`}
         activeResultEditorLatex={() => ''}
         calculateLatex=""
         copyText={() => undefined}
         currentMode="matrix"
         displayHeaderLabel="Matrix"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: titleLatex,
+          warnings: [],
+          exactLatex: String.raw`x_{\mathrm{LS}}=\begin{bmatrix}2\\3\end{bmatrix}`,
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        matrixEditorLatex=""
+        setMatrixEditorLatex={() => undefined}
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+      />,
+    );
+
+    expect(screen.queryByTestId('display-outcome-title')).toBeNull();
+    expect(screen.getByTestId('display-outcome-exact')).toBeInTheDocument();
+  });
+
+  it('renders non-duplicate LaTeX result titles as math instead of uppercase raw text', () => {
+    const titleLatex = String.raw`\operatorname{ls}\left(\begin{bmatrix}1&0\\0&1\\0&0\end{bmatrix},\begin{bmatrix}2\\3\\4\end{bmatrix}\right)`;
+
+    render(
+      <DisplayPanel
+        activeExpressionLatex={() => ''}
+        activeResultCopyText={() => String.raw`x_{\mathrm{LS}}=\begin{bmatrix}2\\3\end{bmatrix}`}
+        activeResultEditorLatex={() => ''}
+        calculateLatex=""
+        copyText={() => undefined}
+        currentMode="calculate"
+        displayHeaderLabel="Calculate"
         displayResultBadges={[]}
         displayOutcome={{
           kind: 'success',

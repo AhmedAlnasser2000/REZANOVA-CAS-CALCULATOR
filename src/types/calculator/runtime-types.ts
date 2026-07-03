@@ -35,10 +35,7 @@ import type {
 import type {
   NumericSolveInterval,
 } from './solver-types';
-import type {
-  DisplayDetailSection,
-  VariableSubstitutionSnapshot,
-} from './display-types';
+import type { DisplayDetailSection, VariableSubstitutionSnapshot } from './display-types';
 import {
   DEFAULT_LANGUAGE_CODE,
   type LanguageCode,
@@ -889,6 +886,7 @@ export type HistoryEntry = {
   resultLatex?: string;
   exactSupplementLatex?: string[];
   approxText?: string;
+  detailSections?: DisplayDetailSection[];
   calculateScreen?: CalculateScreen;
   calculateSeed?: Partial<
     DerivativeWorkbenchState
