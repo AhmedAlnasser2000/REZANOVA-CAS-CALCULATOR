@@ -1831,3 +1831,7 @@
 ## 2026-07-03 - ALGEBRAIC-GENUS1-BRANCH-CASEWISE-COVERAGE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 branch casewise coverage is evidence, not live adoption. Exact-rational branch rows may classify radicand signs, real-valued intervals, endpoint policies, and reciprocal endpoint exclusions under the fixed cap, but symbolic branch formulas and branch-sensitive live widening remain blocked until their row counts and assumptions are capped.
+
+## 2026-07-03 - ALGEBRAIC-GENUS1-ELEMENTARITY-CERTIFICATE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 elementarity certificates are proof context for already accepted elliptic answers, not a new solve route. They may state non-elementarity only for the displayed non-degenerate genus-1 elementary field and must keep degeneration, branch-heavy cases, and coefficient-cancellation specializations on separate fallback or controlled-stop paths.

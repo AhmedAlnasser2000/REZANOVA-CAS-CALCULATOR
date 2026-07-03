@@ -20,6 +20,7 @@ import {
   isNodeArray,
 } from '../../patterns';
 import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
+import { buildAlgebraicGenus1ElementarityCertificate } from './elementarity-certificate';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
 
 export type AlgebraicGenus1RationalInRadicalHermiteRule = {
@@ -469,13 +470,21 @@ function buildRule(input: {
       entries: input.facts,
       source: 'candidate-validation',
     }),
-    detailSections: [{
-      title: 'Genus-1 Hermite Reduction',
-      lines: [
-        `Reduced the rational-in-radical input to ${input.basisKinds.join(' and ')} Legendre elliptic obligations plus target-free coefficient facts.`,
-        'The generated antiderivative is accepted only through bounded genus-1 Hermite reduction with exact proof evidence.',
-      ],
-    }],
+    detailSections: [
+      {
+        title: 'Genus-1 Hermite Reduction',
+        lines: [
+          `Reduced the rational-in-radical input to ${input.basisKinds.join(' and ')} Legendre elliptic obligations plus target-free coefficient facts.`,
+          'The generated antiderivative is accepted only through bounded genus-1 Hermite reduction with exact proof evidence.',
+        ],
+      },
+      buildAlgebraicGenus1ElementarityCertificate({
+        variable: input.variable,
+        basisKinds: input.basisKinds,
+        answerLatex: exactLatex,
+        source: 'hermite-reduction',
+      }),
+    ],
     basisKinds: input.basisKinds,
   };
 }

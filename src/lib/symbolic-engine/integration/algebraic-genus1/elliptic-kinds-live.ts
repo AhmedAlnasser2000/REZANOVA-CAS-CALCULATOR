@@ -8,6 +8,7 @@ import {
 } from '../../../display/result-detail-lines';
 import { buildAlgebraicGenus1ComplexPairLegendreData } from './complex-pair-legendre-data';
 import { profileAlgebraicGenus1CurveCandidate } from './curve-profile';
+import { buildAlgebraicGenus1ElementarityCertificate } from './elementarity-certificate';
 import { buildAlgebraicGenus1NormalForm } from './normal-form';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
 
@@ -69,6 +70,12 @@ function tryGenericRootFirstKindRule(
           [textPart('The named-root Legendre substitution is accepted only on the displayed real branch.')],
         ],
       ),
+      buildAlgebraicGenus1ElementarityCertificate({
+        variable,
+        basisKinds: ['first-kind'],
+        answerLatex: rootData.firstKindPrototypeLatex,
+        source: 'named-root-chart',
+      }),
     ],
     kind: 'first-kind',
   };
@@ -108,6 +115,12 @@ function tryComplexPairRootFirstKindRule(
           [textPart('The complex-pair tan-half-angle substitution is accepted only on the displayed real branch.')],
         ],
       ),
+      buildAlgebraicGenus1ElementarityCertificate({
+        variable,
+        basisKinds: ['first-kind'],
+        answerLatex: rootData.firstKindPrototypeLatex,
+        source: 'complex-pair-chart',
+      }),
     ],
     kind: 'first-kind',
   };
@@ -151,7 +164,15 @@ export function tryAlgebraicGenus1EllipticKindsRule(
       entries: proof.exactSupplementEntries,
       source: 'candidate-validation',
     }),
-    detailSections: proof.detailSections,
+    detailSections: [
+      ...proof.detailSections,
+      buildAlgebraicGenus1ElementarityCertificate({
+        variable,
+        basisKinds: [obligation.basisKind],
+        answerLatex: obligation.prototypeAntiderivativeLatex,
+        source: 'legendre-template',
+      }),
+    ],
     kind: obligation.basisKind,
   };
 }
