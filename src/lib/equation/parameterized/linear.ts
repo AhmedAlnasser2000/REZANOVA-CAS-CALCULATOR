@@ -5,6 +5,10 @@ import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
 } from './readback';
+import {
+  createFiniteRootSet,
+  renderFiniteRootSet,
+} from '../solution/finite-root-set';
 
 const ce = new ComputeEngine();
 
@@ -477,7 +481,15 @@ export function solveParameterizedLinearEquation(
   }
 
   const solution = divideNodes(negateNode(normalized.constant), normalized.coefficient);
-  const exactLatex = `${target}=${latexForNode(solution)}`;
+  const renderedRoots = renderFiniteRootSet(
+    createFiniteRootSet({
+      targetLatex: target,
+      branches: [{ latex: latexForNode(solution), node: solution, source: 'equation-parameterized-linear' }],
+      source: 'equation-parameterized-linear',
+    }),
+    { preserveOrder: true },
+  );
+  const exactLatex = renderedRoots.exactLatex ?? `${target}=${latexForNode(solution)}`;
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(coefficientNeedsNonzeroFact(normalized.coefficient)
     ? [nonzeroFactLatexForCoefficient(normalized.coefficient)]
     : undefined);

@@ -38,6 +38,10 @@ import {
 } from '../facts/branch-domain-facts';
 import { exactRootsFromLatex } from '../roots/representation';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
+import {
+  createFiniteRootSet,
+  renderFiniteRootSet,
+} from '../solution/finite-root-set';
 
 const ce = new ComputeEngine();
 
@@ -343,10 +347,15 @@ function dedupeLatex(entries: string[]) {
 }
 
 function exactLatexForRoots(target: string, roots: string[]) {
-  const unique = dedupeLatex(roots);
-  return unique.length === 1
-    ? `${target}=${unique[0]}`
-    : `${target}\\in\\left\\{${unique.join(',\\ ')}\\right\\}`;
+  const renderedRoots = renderFiniteRootSet(
+    createFiniteRootSet({
+      targetLatex: target,
+      branches: roots,
+      source: 'equation-parameterized-rational',
+    }),
+    { preserveOrder: true },
+  );
+  return renderedRoots.exactLatex ?? `${target}\\in\\left\\{\\right\\}`;
 }
 
 function numericValueOfLatex(latex: string, target: string, rootLatex: string) {

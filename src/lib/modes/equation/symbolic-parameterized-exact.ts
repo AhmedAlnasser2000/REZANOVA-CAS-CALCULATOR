@@ -2,6 +2,7 @@ import { expandImplicitCharacterProductsInLatex } from '../../algebra/variable-c
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import { solveParameterizedExpLogEquation } from '../../equation/parameterized/exp-log';
 import { solveParameterizedFactorablePolynomialEquation } from '../../equation/parameterized/factorable-polynomial';
+import { solveParameterizedPolynomialEquation } from '../../equation/parameterized/polynomial';
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { solveParameterizedTrigEquation } from '../../equation/parameterized/trig';
 import { resolveEquationSolveTarget } from '../../equation/equation-target';
@@ -84,6 +85,26 @@ function isPureHighDegreePolynomialEquation(equationLatex: string, target: strin
     .map((match) => Number(match[1]))
     .filter((degree) => Number.isInteger(degree));
   return Math.max(1, ...exponents) >= 5;
+}
+
+function isPureQuadraticPolynomialEquation(equationLatex: string, target: string) {
+  const compact = equationLatex.replace(/\s+/g, '');
+  if (/\\(?!cdot\b)|\/|\|/.test(compact)) {
+    return false;
+  }
+
+  const escapedTarget = escapeRegExp(target);
+  const nonTargetLetters = compact
+    .replace(new RegExp(escapedTarget, 'g'), '')
+    .replace(/cdot/g, '');
+  if (/[A-Za-z]/.test(nonTargetLetters)) {
+    return false;
+  }
+
+  const exponents = [...compact.matchAll(new RegExp(`${escapedTarget}\\^(?:\\{)?(\\d+)`, 'g'))]
+    .map((match) => Number(match[1]))
+    .filter((degree) => Number.isInteger(degree));
+  return Math.max(1, ...exponents) === 2;
 }
 
 function tryParameterizedTrigRewriteSolve(
@@ -195,6 +216,23 @@ export function trySelectedTargetParameterizedExactSolve(input: {
       plannerResolvedLatex: input.plannerResolvedLatex,
       plannerBadges: input.plannerBadges,
     });
+  }
+
+  if (isPureQuadraticPolynomialEquation(parameterizedEquationLatex, selectedTarget)) {
+    const polynomial = solveParameterizedPolynomialEquation(
+      parameterizedEquationLatex,
+      selectedTarget,
+      parameterizedOptions,
+    );
+    if (polynomial.kind === 'success') {
+      return attachParameterizedSelectedTargetOutcome({
+        result: polynomial,
+        selectedTarget,
+        equationLatex: input.equationLatex,
+        plannerResolvedLatex: input.plannerResolvedLatex,
+        plannerBadges: input.plannerBadges,
+      });
+    }
   }
 
   if (isPureHighDegreePolynomialEquation(parameterizedEquationLatex, selectedTarget)) {

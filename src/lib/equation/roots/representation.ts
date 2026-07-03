@@ -13,12 +13,16 @@ import {
   normalizeFiniteRootExactLatexOverride,
 } from '../readback/exact-overrides';
 import {
-  exactLatexForFiniteBranchExpressions,
-  finiteBranchReadbackForFiniteBranchExpressions,
-  uniqueFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
   type EquationPresentationContext,
 } from '../presentation/finite-roots';
+import {
+  createFiniteRootBranch,
+  createFiniteRootSet,
+  renderFiniteRootSet,
+  type FiniteRootSetRenderOptions,
+  uniqueFiniteRootSetBranchLatex,
+} from '../solution/finite-root-set';
 
 export type EquationExactFiniteRoot = {
   kind: 'exact-finite';
@@ -211,16 +215,23 @@ export function adaptBoundedPolynomialSolveResultToRootSet(
       strategy: result.factorization.strategy,
       factorizedLatex: result.factorization.factorizedLatex,
       factors: result.factorization.factors,
-      roots: normalizeExactRoots(result.exactSolutions, options.source),
+      roots: normalizeExactRoots(
+        result.exactSolutionBranches.length > 0
+          ? result.exactSolutionBranches.map((root) =>
+            createExactFiniteRoot(root.latex, {
+              source: options.source,
+              ...(root.node !== undefined ? { node: root.node } : {}),
+            }))
+          : result.exactSolutions,
+        options.source,
+      ),
       approxRoots: result.approxSolutions,
     }],
   });
 }
 
 export function rootSetExactRootLatex(rootSet: EquationRootSet) {
-  return uniqueFiniteBranchExpressions({
-    targetLatex: rootSet.target,
-    branches: exactRootsFromRootSet(rootSet),
+  return uniqueFiniteRootSetBranchLatex(finiteRootSetFromRootSet(rootSet), {
     preserveOrder: true,
   });
 }
@@ -229,11 +240,11 @@ export function rootSetToExactLatex(
   rootSet: EquationRootSet,
   options: {
     setSeparator?: string;
-    context?: Parameters<typeof exactLatexForFiniteBranchExpressions>[0]['context'];
+    context?: FiniteRootSetRenderOptions['context'];
     presentationContext?: Pick<EquationPresentationContext, 'complexExactForm'>;
   } = {},
 ) {
-  const roots = exactRootsFromRootSet(rootSet);
+  const finiteRootSet = finiteRootSetFromRootSet(rootSet);
 
   if (rootSet.exactLatexOverride) {
     const normalizedOverride = normalizeFiniteRootExactLatexOverride({
@@ -242,15 +253,13 @@ export function rootSetToExactLatex(
       setSeparator: options.setSeparator,
     });
     if (normalizedOverride) {
-      if (roots.some((root) => root.node !== undefined)) {
-        return exactLatexForFiniteBranchExpressions({
-          targetLatex: rootSet.target,
-          branches: roots,
+      if (finiteRootSet.branches.some((root) => root.node !== undefined)) {
+        return renderFiniteRootSet(finiteRootSet, {
           preserveOrder: true,
-          setSeparator: options.setSeparator,
+          ...(options.setSeparator ? { setSeparator: options.setSeparator } : {}),
           ...(options.context ? { context: options.context } : {}),
           ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-        });
+        }).exactLatex;
       }
 
       return normalizedOverride.exactLatex;
@@ -259,18 +268,12 @@ export function rootSetToExactLatex(
     return rootSet.exactLatexOverride;
   }
 
-  if (roots.length === 0) {
-    return undefined;
-  }
-
-  return exactLatexForFiniteBranchExpressions({
-    targetLatex: rootSet.target,
-    branches: roots,
+  return renderFiniteRootSet(finiteRootSet, {
     preserveOrder: true,
-    setSeparator: options.setSeparator,
+    ...(options.setSeparator ? { setSeparator: options.setSeparator } : {}),
     ...(options.context ? { context: options.context } : {}),
     ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-  });
+  }).exactLatex;
 }
 
 export function rootSetToBranchReadback(
@@ -279,25 +282,28 @@ export function rootSetToBranchReadback(
     source?: string;
     relationLatex?: DisplayBranchReadback['relationLatex'];
     label?: string;
-    context?: Parameters<typeof finiteBranchReadbackForFiniteBranchExpressions>[0]['context'];
+    context?: FiniteRootSetRenderOptions['context'];
     presentationContext?: Pick<EquationPresentationContext, 'complexExactForm'>;
   } = {},
 ) {
-  const branches = exactRootsFromRootSet(rootSet);
-  if (branches.length === 0) {
-    return undefined;
-  }
-
-  return finiteBranchReadbackForFiniteBranchExpressions({
-    targetLatex: rootSet.target,
-    branches,
-    source: options.source ?? rootSet.source,
-    preserveOrder: true,
-    ...(options.context ? { context: options.context } : {}),
-    ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-    ...(options.relationLatex ? { relationLatex: options.relationLatex } : {}),
-    ...(options.label ? { label: options.label } : {}),
-  });
+  return renderFiniteRootSet(
+    createFiniteRootSet({
+      targetLatex: rootSet.target,
+      source: options.source ?? rootSet.source,
+      branches: exactRootsFromRootSet(rootSet).map((branch) =>
+        createFiniteRootBranch(branch.latex, {
+          ...(branch.node !== undefined ? { node: branch.node } : {}),
+          source: options.source ?? rootSet.source,
+        })),
+    }),
+    {
+      preserveOrder: true,
+      ...(options.context ? { context: options.context } : {}),
+      ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
+      ...(options.relationLatex ? { relationLatex: options.relationLatex } : {}),
+      ...(options.label ? { label: options.label } : {}),
+    },
+  ).branchReadback;
 }
 
 export function rootSetExactSupplementLatex(rootSet: EquationRootSet) {
@@ -342,6 +348,18 @@ function exactRootsFromEntry(entry: EquationRootRepresentation): EquationFiniteB
     return entry.roots;
   }
   return [];
+}
+
+function finiteRootSetFromRootSet(rootSet: EquationRootSet) {
+  return createFiniteRootSet({
+    targetLatex: rootSet.target,
+    source: rootSet.source,
+    branches: exactRootsFromRootSet(rootSet).map((branch) =>
+      createFiniteRootBranch(branch.latex, {
+        ...(branch.node !== undefined ? { node: branch.node } : {}),
+        source: rootSet.source,
+      })),
+  });
 }
 
 function dedupe(entries: string[]) {

@@ -29,6 +29,7 @@ export type BoundedPolynomialSolveResult = {
   exactLatex: string;
   approxText: string;
   exactSolutions: string[];
+  exactSolutionBranches: Array<{ latex: string; numeric: number; node?: unknown }>;
   approxSolutions: number[];
   factorization: BoundedPolynomialFactorization;
 };

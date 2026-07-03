@@ -2,9 +2,9 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import {
-  exactLatexForFiniteBranchExpressions,
-  finiteBranchReadbackForFiniteBranchExpressions,
-} from '../presentation/finite-roots';
+  createFiniteRootSet,
+  renderFiniteRootSet,
+} from '../solution/finite-root-set';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -296,19 +296,19 @@ function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: M
     latex: latexForNode(node),
   }));
 
-  return {
-    discriminant,
-    exactLatex: exactLatexForFiniteBranchExpressions({
+  const renderedRoots = renderFiniteRootSet(
+    createFiniteRootSet({
       targetLatex: target,
       branches: roots,
-      preserveOrder: true,
-    }),
-    branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
-      targetLatex: target,
-      branches: roots,
-      preserveOrder: true,
       source: 'equation-parameterized-polynomial',
     }),
+    { preserveOrder: true },
+  );
+
+  return {
+    discriminant,
+    exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{\\right\\}`,
+    branchReadback: renderedRoots.branchReadback,
   };
 }
 

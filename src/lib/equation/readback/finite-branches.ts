@@ -1,8 +1,10 @@
 import type { DisplayBranchReadback } from '../../../types/calculator';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
-import { sortEquationBranchLatex } from '../equation-branch-readback';
 import {
-  normalizeExactReadbackExpression,
+  createFiniteRootSet,
+  renderFiniteRootSet,
+  uniqueFiniteRootSetBranchLatex,
+} from '../solution/finite-root-set';
+import {
   type ExactReadbackNormalizationContext,
 } from './normalization';
 
@@ -35,10 +37,17 @@ export function normalizeFiniteBranchLatex(
   target: string,
   context?: ExactReadbackNormalizationContext,
 ) {
-  const resolvedContext = branchContext(target, context);
-  return branchesLatex
-    .map((branch) => normalizeExactReadbackExpression(branch, resolvedContext).latex)
-    .filter((branch) => branch.length > 0);
+  return uniqueFiniteRootSetBranchLatex(
+    createFiniteRootSet({
+      targetLatex: target,
+      branches: branchesLatex,
+      source: 'equation-finite-branch-normalization',
+    }),
+    {
+      preserveOrder: true,
+      context: branchContext(target, context),
+    },
+  );
 }
 
 export function uniqueFiniteBranchLatex({
@@ -47,30 +56,57 @@ export function uniqueFiniteBranchLatex({
   preserveOrder,
   context,
 }: Pick<FiniteBranchReadbackOptions, 'targetLatex' | 'branchesLatex' | 'preserveOrder' | 'context'>) {
-  const normalized = normalizeFiniteBranchLatex(branchesLatex, targetLatex, context);
-  return preserveOrder
-    ? [...new Set(normalized)]
-    : sortEquationBranchLatex([...new Set(normalized)]);
+  return uniqueFiniteRootSetBranchLatex(
+    createFiniteRootSet({
+      targetLatex,
+      branches: branchesLatex,
+      source: 'equation-finite-branches',
+    }),
+    {
+      preserveOrder,
+      context: branchContext(targetLatex, context),
+    },
+  );
 }
 
 export function exactLatexForFiniteBranches(options: Pick<
   FiniteBranchReadbackOptions,
   'targetLatex' | 'branchesLatex' | 'preserveOrder' | 'context' | 'setSeparator'
 >) {
-  const branches = uniqueFiniteBranchLatex(options);
-  return branches.length === 1
-    ? `${options.targetLatex}=${branches[0]}`
-    : `${options.targetLatex}\\in\\left\\{${branches.join(options.setSeparator ?? ',\\ ')}\\right\\}`;
+  const rendered = renderFiniteRootSet(
+    createFiniteRootSet({
+      targetLatex: options.targetLatex,
+      branches: options.branchesLatex,
+      source: 'equation-finite-branches',
+    }),
+    {
+      preserveOrder: options.preserveOrder,
+      context: branchContext(options.targetLatex, options.context),
+      ...(options.setSeparator ? { setSeparator: options.setSeparator } : {}),
+    },
+  );
+  return rendered.exactLatex ?? `${options.targetLatex}\\in\\left\\{\\right\\}`;
 }
 
 export function finiteBranchReadbackForNormalizedBranches(options: FiniteBranchReadbackOptions) {
-  const branchesLatex = uniqueFiniteBranchLatex(options);
-  return finiteBranchReadbackMetadata({
-    targetLatex: options.targetLatex,
-    relationLatex: options.relationLatex,
-    branchesLatex,
-    source: options.source,
+  const rendered = renderFiniteRootSet(
+    createFiniteRootSet({
+      targetLatex: options.targetLatex,
+      branches: options.branchesLatex,
+      source: options.source,
+    }),
+    {
+      preserveOrder: options.preserveOrder,
+      context: branchContext(options.targetLatex, options.context),
+      ...(options.relationLatex ? { relationLatex: options.relationLatex } : {}),
+      ...(options.label ? { label: options.label } : {}),
+    },
+  );
+  if (!rendered.branchReadback) {
+    return undefined;
+  }
+  return {
+    ...rendered.branchReadback,
     ...(options.countLabel ? { countLabel: options.countLabel } : {}),
-    ...(options.label ? { label: options.label } : {}),
-  });
+  };
 }

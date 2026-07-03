@@ -13,6 +13,11 @@ import {
   appendExtraneousSolutionsDetailSection,
   extraneousEvidenceFromRejectedCandidates,
 } from '../candidate/extraneous';
+import {
+  adaptBoundedPolynomialSolveResultToRootSet,
+  rootSetToBranchReadback,
+  rootSetToExactLatex,
+} from '../roots/representation';
 import { solutionsToLatex } from '../../display/format';
 import type {
   DisplayOutcome,
@@ -163,10 +168,16 @@ function runBoundedPolynomialSolve(
       recognizedDirectPolynomial = true;
       const solved = solveBoundedPolynomialEquationAst(parsed, 'x');
       if (solved) {
+        const rootSet = adaptBoundedPolynomialSolveResultToRootSet(solved, {
+          source: 'equation-guarded-bounded-polynomial',
+        });
         return {
           kind: 'success',
           title: 'Solve',
-          exactLatex: solved.exactLatex,
+          exactLatex: rootSetToExactLatex(rootSet),
+          branchReadback: rootSetToBranchReadback(rootSet, {
+            source: 'equation-guarded-bounded-polynomial',
+          }),
           approxText: solved.approxText,
           warnings: [],
           resultOrigin: 'symbolic',

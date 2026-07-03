@@ -141,7 +141,7 @@ export function solveBoundedPolynomialEquationAst(
     return null;
   }
 
-  const roots: Array<{ latex: string; numeric: number }> = [];
+  const roots: Array<{ latex: string; numeric: number; node?: unknown }> = [];
 
   for (const factor of factorization.factors) {
     if (factor.degree === 1) {
@@ -162,7 +162,7 @@ export function solveBoundedPolynomialEquationAst(
       if (numeric === null) {
         return null;
       }
-      roots.push({ latex: nodeLatex(rootNode), numeric });
+      roots.push({ latex: nodeLatex(rootNode), numeric, node: rootNode });
       continue;
     }
 
@@ -171,7 +171,11 @@ export function solveBoundedPolynomialEquationAst(
       if (quadraticRoots.kind !== 'real') {
         continue;
       }
-      roots.push(...quadraticRoots.roots.map((root) => ({ latex: root.latex, numeric: root.numeric })));
+      roots.push(...quadraticRoots.roots.map((root) => ({
+        latex: root.latex,
+        numeric: root.numeric,
+        node: root.node,
+      })));
       continue;
     }
 
@@ -188,15 +192,21 @@ export function solveBoundedPolynomialEquationAst(
     .sort((left, right) => left.numeric - right.numeric)
     .filter((root, index, list) =>
       index === 0 || Math.abs(root.numeric - list[index - 1].numeric) > ROOT_TOLERANCE)
-    .map((root) => root.latex);
+    .map((root) => ({
+      latex: root.latex,
+      numeric: root.numeric,
+      ...(root.node !== undefined ? { node: root.node } : {}),
+    }));
+  const exactSolutions = uniqueRoots.map((root) => root.latex);
 
   return {
     variable,
-    exactLatex: solutionsToLatex(variable, uniqueRoots),
+    exactLatex: solutionsToLatex(variable, exactSolutions),
     approxText: uniqueApproximations.length === 1
       ? `${variable} ~= ${formatApproxNumber(uniqueApproximations[0])}`
       : `${variable} ~= ${uniqueApproximations.map((value) => formatApproxNumber(value)).join(', ')}`,
-    exactSolutions: uniqueRoots,
+    exactSolutions,
+    exactSolutionBranches: uniqueRoots,
     approxSolutions: uniqueApproximations,
     factorization,
   };

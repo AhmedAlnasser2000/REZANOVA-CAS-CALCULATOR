@@ -1,12 +1,13 @@
 import type { ComplexExactForm, OutputStyle } from '../../../types/calculator';
 import { exactScalarToNumber, normalizeExactScalar, type ExactScalar } from '../../algebra/polynomial-core';
-import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
 import { complex, complexToApproxText, complexToLatex, type ComplexValue } from '../../numeric/complex';
 import {
-  finiteBranchReadbackForFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
-  uniqueFiniteBranchExpressions,
 } from '../presentation/finite-roots';
+import {
+  createFiniteRootSet,
+  renderFiniteRootSet,
+} from '../solution/finite-root-set';
 import { sortEquationBranchLatex } from '../equation-branch-readback';
 import {
   exactComplexApproxValue,
@@ -104,14 +105,17 @@ export function buildBranchReadback(
     : undefined;
 
   if (outputStyle === 'decimal' && canApproximate) {
-    return {
-      exactLatex: `${target}\\in\\left\\{${approximateBranches.join(',\\ ')}\\right\\}`,
-      branchReadback: finiteBranchReadbackMetadata({
+    const decimalRendered = renderFiniteRootSet(
+      createFiniteRootSet({
         targetLatex: target,
-        relationLatex: '\\in',
-        branchesLatex: approximateBranches,
+        branches: approximateBranches,
         source: 'equation-complex-decimal',
       }),
+      { preserveOrder: true, relationLatex: '\\in' },
+    );
+    return {
+      exactLatex: decimalRendered.exactLatex ?? `${target}\\in\\left\\{${approximateBranches.join(',\\ ')}\\right\\}`,
+      branchReadback: decimalRendered.branchReadback,
       approxText: undefined,
     };
   }
@@ -128,24 +132,22 @@ export function buildBranchReadback(
       latex: exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex,
     };
   });
-  const exactBranches = uniqueFiniteBranchExpressions({
-    targetLatex: target,
-    branches: exactBranchExpressions,
-    preserveOrder: true,
-    context: { domainIntent: 'complex' },
-    presentationContext: { complexExactForm },
-  });
-  return {
-    exactLatex: `${target}\\in\\left\\{${exactBranches.join(',\\ ')}\\right\\}`,
-    branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
+  const renderedRoots = renderFiniteRootSet(
+    createFiniteRootSet({
       targetLatex: target,
-      relationLatex: '\\in',
       branches: exactBranchExpressions,
-      preserveOrder: true,
-      context: { domainIntent: 'complex' },
-      presentationContext: { complexExactForm },
       source: 'equation-complex',
     }),
+    {
+      preserveOrder: true,
+      relationLatex: '\\in',
+      context: { domainIntent: 'complex' },
+      presentationContext: { complexExactForm },
+    },
+  );
+  return {
+    exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{${renderedRoots.branchesLatex.join(',\\ ')}\\right\\}`,
+    branchReadback: renderedRoots.branchReadback,
     approxText: outputStyle === 'both' ? approximateText : undefined,
   };
 }
