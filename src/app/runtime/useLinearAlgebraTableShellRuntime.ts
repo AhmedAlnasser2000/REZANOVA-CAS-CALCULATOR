@@ -126,18 +126,30 @@ export function useLinearAlgebraTableShellRuntime({
       tableStep: tableRuntime.tableStep,
       matrixA: linearAlgebraRuntime.matrixA,
       matrixB: linearAlgebraRuntime.matrixB,
+      matrixValues: linearAlgebraRuntime.matrixValues,
+      activeMatrixLeftId: linearAlgebraRuntime.activeMatrixLeftId,
+      activeMatrixRightId: linearAlgebraRuntime.activeMatrixRightId,
       matrixEditorLatex: linearAlgebraRuntime.matrixEditorLatex,
       vectorA: linearAlgebraRuntime.vectorA,
       vectorB: linearAlgebraRuntime.vectorB,
+      vectorValues: linearAlgebraRuntime.vectorValues,
+      activeVectorLeftId: linearAlgebraRuntime.activeVectorLeftId,
+      activeVectorRightId: linearAlgebraRuntime.activeVectorRightId,
       vectorEditorLatex: linearAlgebraRuntime.vectorEditorLatex,
     }),
     [
+      linearAlgebraRuntime.activeMatrixLeftId,
+      linearAlgebraRuntime.activeMatrixRightId,
+      linearAlgebraRuntime.activeVectorLeftId,
+      linearAlgebraRuntime.activeVectorRightId,
       linearAlgebraRuntime.matrixA,
       linearAlgebraRuntime.matrixB,
       linearAlgebraRuntime.matrixEditorLatex,
+      linearAlgebraRuntime.matrixValues,
       linearAlgebraRuntime.vectorA,
       linearAlgebraRuntime.vectorB,
       linearAlgebraRuntime.vectorEditorLatex,
+      linearAlgebraRuntime.vectorValues,
       tableRuntime.tableEnd,
       tableRuntime.tablePrimaryLatex,
       tableRuntime.tableSecondaryEnabled,
@@ -159,17 +171,9 @@ export function useLinearAlgebraTableShellRuntime({
     currentMode === 'matrix' || currentMode === 'vector' || currentMode === 'table';
 
   function resetLinearAlgebraRuntime() {
-    linearAlgebraRuntime.setMatrixA([
-      [1, 2],
-      [3, 4],
-    ]);
-    linearAlgebraRuntime.setMatrixB([
-      [5, 6],
-      [7, 8],
-    ]);
+    linearAlgebraRuntime.resetMatrixValues();
     linearAlgebraRuntime.setMatrixEditorLatex('');
-    linearAlgebraRuntime.setVectorA([1, 2, 3]);
-    linearAlgebraRuntime.setVectorB([4, 5, 6]);
+    linearAlgebraRuntime.resetVectorValues();
     linearAlgebraRuntime.setVectorEditorLatex('');
   }
 
@@ -209,6 +213,7 @@ export function useLinearAlgebraTableShellRuntime({
     }
 
     if (entry.mode === 'matrix' && entry.matrixSeed) {
+      linearAlgebraRuntime.resetMatrixValues();
       linearAlgebraRuntime.setMatrixA(cloneMatrix(entry.matrixSeed.matrixA));
       if (entry.matrixSeed.matrixB) {
         linearAlgebraRuntime.setMatrixB(cloneMatrix(entry.matrixSeed.matrixB));
@@ -218,6 +223,7 @@ export function useLinearAlgebraTableShellRuntime({
     }
 
     if (entry.mode === 'vector' && entry.vectorSeed) {
+      linearAlgebraRuntime.resetVectorValues();
       linearAlgebraRuntime.setVectorA(cloneVector(entry.vectorSeed.vectorA));
       if (entry.vectorSeed.vectorB) {
         linearAlgebraRuntime.setVectorB(cloneVector(entry.vectorSeed.vectorB));

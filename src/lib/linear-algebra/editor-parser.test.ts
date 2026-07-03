@@ -1,8 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { parseLinearAlgebraEditorLatex } from './editor-parser';
+import {
+  parseLinearAlgebraEditorLatex,
+  type LinearAlgebraEditorParseOptions,
+} from './editor-parser';
 
 function parsed(latex: string, mode?: 'matrix' | 'vector') {
   const result = parseLinearAlgebraEditorLatex(latex, { mode });
+  if (!result.ok) {
+    throw new Error(result.message);
+  }
+  return result.expression;
+}
+
+function parsedWithOptions(latex: string, options: LinearAlgebraEditorParseOptions) {
+  const result = parseLinearAlgebraEditorLatex(latex, options);
   if (!result.ok) {
     throw new Error(result.message);
   }
@@ -103,6 +114,48 @@ describe('parseLinearAlgebraEditorLatex', () => {
       matrix: { kind: 'named', name: 'A' },
       exponent: 3,
       exponentLatex: '3',
+    });
+  });
+
+  it('parses configured single-letter Matrix and Vector names', () => {
+    expect(parsedWithOptions('C+D', {
+      mode: 'matrix',
+      matrixNamedValues: ['A', 'B', 'C', 'D'],
+    })).toEqual({
+      kind: 'binary',
+      operator: 'add',
+      left: { kind: 'named', name: 'C', displayLatex: 'C' },
+      right: { kind: 'named', name: 'D', displayLatex: 'D' },
+    });
+    expect(parsedWithOptions('CD', {
+      mode: 'matrix',
+      matrixNamedValues: ['A', 'B', 'C', 'D'],
+    })).toMatchObject({
+      kind: 'binary',
+      operator: 'multiply',
+      left: { kind: 'named', name: 'C' },
+      right: { kind: 'named', name: 'D' },
+    });
+    expect(parsedWithOptions('Cx=\\begin{bmatrix}5\\\\11\\end{bmatrix}', {
+      mode: 'matrix',
+      matrixNamedValues: ['A', 'B', 'C'],
+    })).toMatchObject({
+      kind: 'linearSystem',
+      coefficients: { kind: 'named', name: 'C' },
+      constants: { kind: 'vectorLiteral', value: [5, 11] },
+    });
+    expect(parsedWithOptions('p\\cdot q', {
+      mode: 'vector',
+      vectorNamedValues: ['u', 'v', 'p', 'q'],
+    })).toEqual({
+      kind: 'binary',
+      operator: 'dot',
+      left: { kind: 'named', name: 'p', displayLatex: 'p' },
+      right: { kind: 'named', name: 'q', displayLatex: 'q' },
+    });
+    expect(parseLinearAlgebraEditorLatex('C+D', { mode: 'matrix' })).toMatchObject({
+      ok: false,
+      reason: 'unsupported-expression',
     });
   });
 

@@ -454,6 +454,7 @@ describe('linear algebra editor dispatch', () => {
     });
   });
 
+
   it('preserves inline Matrix fractions and finite decimals as exact sidecars', () => {
     expect(dispatchMatrixEditorLatex({
       latex: '\\det\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&0.125\\end{bmatrix}\\right)',

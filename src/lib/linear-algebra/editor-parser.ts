@@ -10,12 +10,16 @@ import {
   ParseFailure,
   type LinearAlgebraEditorParseErrorReason,
 } from './editor-parser-errors';
+import {
+  isMatrixNamedValueName,
+  isVectorNamedValueName,
+} from './named-values';
 
 export type { LinearAlgebraEditorParseErrorReason } from './editor-parser-errors';
 
 export type LinearAlgebraEditorMode = 'matrix' | 'vector';
 
-export type LinearAlgebraNamedValue = 'A' | 'B' | 'u' | 'v';
+export type LinearAlgebraNamedValue = string;
 
 export type LinearAlgebraValueExpression =
   | { kind: 'named'; name: LinearAlgebraNamedValue; displayLatex: string }
@@ -84,6 +88,8 @@ export type LinearAlgebraEditorParseResult =
 
 export type LinearAlgebraEditorParseOptions = {
   mode?: LinearAlgebraEditorMode;
+  matrixNamedValues?: readonly string[];
+  vectorNamedValues?: readonly string[];
 };
 
 function normalizeLatex(latex: string): string {
@@ -239,6 +245,14 @@ function namedValueExpression(name: LinearAlgebraNamedValue): LinearAlgebraValue
   };
 }
 
+function isMatrixName(name: string, options: LinearAlgebraEditorParseOptions) {
+  return isMatrixNamedValueName(name, options.matrixNamedValues);
+}
+
+function isVectorName(name: string, options: LinearAlgebraEditorParseOptions) {
+  return isVectorNamedValueName(name, options.vectorNamedValues);
+}
+
 function parseMatrixPowerExponent(input: string): { exponent: number; exponentLatex: string } {
   if (!/^-?\d+$/.test(input)) {
     fail('invalid-number', 'Matrix powers need an integer exponent.');
@@ -252,10 +266,11 @@ function parseMatrixPowerExponent(input: string): { exponent: number; exponentLa
 
 function isMatrixCoefficientExpression(
   expression: LinearAlgebraEditorExpression | null,
+  options: LinearAlgebraEditorParseOptions,
 ): expression is LinearAlgebraValueExpression {
   return expression !== null && (
     expression.kind === 'matrixLiteral'
-    || (expression.kind === 'named' && (expression.name === 'A' || expression.name === 'B'))
+    || (expression.kind === 'named' && isMatrixName(expression.name, options))
   );
 }
 
@@ -267,10 +282,11 @@ function isInlineVectorExpression(
 
 function isMatrixRhsExpression(
   expression: LinearAlgebraEditorExpression | null,
+  options: LinearAlgebraEditorParseOptions,
 ): expression is LinearAlgebraValueExpression {
   return expression !== null && (
     expression.kind === 'matrixLiteral'
-    || (expression.kind === 'named' && (expression.name === 'A' || expression.name === 'B'))
+    || (expression.kind === 'named' && isMatrixName(expression.name, options))
   );
 }
 
@@ -326,7 +342,7 @@ function parseCoefficientTimesX(
   }
 
   const coefficient = tryParseExpression(coefficientLatex, options);
-  return isMatrixCoefficientExpression(coefficient) ? coefficient : null;
+  return isMatrixCoefficientExpression(coefficient, options) ? coefficient : null;
 }
 
 function parseCoefficientTimesUnknownMatrix(
@@ -346,7 +362,7 @@ function parseCoefficientTimesUnknownMatrix(
   }
 
   const coefficient = tryParseExpression(coefficientLatex, options);
-  return isMatrixCoefficientExpression(coefficient) ? coefficient : null;
+  return isMatrixCoefficientExpression(coefficient, options) ? coefficient : null;
 }
 
 function parseLinearSystemExpression(
@@ -374,7 +390,7 @@ function parseLinearSystemExpression(
   const multiRhsCoefficients = parseCoefficientTimesUnknownMatrix(equation.left, options);
   if (multiRhsCoefficients) {
     const constants = tryParseExpression(equation.right, options);
-    return isMatrixRhsExpression(constants)
+    return isMatrixRhsExpression(constants, options)
       ? {
           kind: 'multiRhsSystem',
           coefficients: multiRhsCoefficients,
@@ -467,12 +483,17 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     };
   }
 
-  if (options.mode !== 'vector' && input === 'AB') {
+  if (
+    options.mode !== 'vector'
+    && input.length === 2
+    && isMatrixName(input[0], options)
+    && isMatrixName(input[1], options)
+  ) {
     return {
       kind: 'binary',
       operator: 'multiply',
-      left: namedValueExpression('A'),
-      right: namedValueExpression('B'),
+      left: namedValueExpression(input[0]),
+      right: namedValueExpression(input[1]),
     };
   }
 
@@ -650,7 +671,11 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return plainListLiteral;
   }
 
-  if (input === 'A' || input === 'B' || input === 'u' || input === 'v') {
+  if (isMatrixName(input, options)) {
+    return namedValueExpression(input);
+  }
+
+  if (isVectorName(input, options)) {
     return namedValueExpression(input);
   }
 

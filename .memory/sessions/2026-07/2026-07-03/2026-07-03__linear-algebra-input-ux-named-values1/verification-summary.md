@@ -58,3 +58,20 @@
   - scoped `git diff --check` passed for the M3 source and test files.
 - global gate notes:
   - `npm run test:file-sizes` remains blocked by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; changed Linear Algebra files remain under cap.
+
+### LINEAR-ALGEBRA-NAMED-VALUE-REGISTRY1
+
+- gate: backend
+- status: pass
+- changed: Matrix and Vector now carry separate named-value registries with stable IDs, default Matrix `A/B`, default Vector `u/v`, compatibility `matrixA/matrixB/vectorA/vectorB` accessors, active left/right IDs, and add/rename/duplicate/delete/reset helpers.
+- behavior: names are single-letter and unique within their workspace; Matrix reserves `X` for structured multi-RHS unknowns; old fixed A/B and u/v snapshots migrate into the new registry shape; editor parsing/dispatch can resolve configured names such as Matrix `C/D` and Vector `p/q` while still sending existing A/B and u/v worker request slots.
+- visual readback: visible default Matrix `A+B`, Vector `u\cdot v`, and Vector rejection of Matrix-only `invertible(A)` remained stable and learner-readable.
+- evidence:
+  - `npx vitest run src/lib/linear-algebra/editor-parser.test.ts src/lib/linear-algebra/editor-dispatch.test.ts src/lib/linear-algebra/editor-dispatch-named-values.test.ts` passed: 18 tests.
+  - `npm run test:ui -- src/app/runtime/useLinearAlgebraTableShellRuntime.ui.test.tsx src/app/workspaces/LinearAlgebraEditorSource.ui.test.tsx` passed: 18 tests.
+  - Playwright visual check against Vite dev server at `http://127.0.0.1:4173/` passed for Matrix default registry result, Vector default registry result, and settled Vector Matrix-only controlled error.
+  - screenshots: `.task_tmp/linear-algebra-named-value-registry1/matrix-default-registry-result.png`, `.task_tmp/linear-algebra-named-value-registry1/vector-default-registry-result.png`, `.task_tmp/linear-algebra-named-value-registry1/vector-matrix-only-controlled-error-settled.png`.
+  - `git diff --check` passed.
+- global gate notes:
+  - `npx tsc -b --pretty false` remains blocked by unrelated dirty `src/app/runtime/historyDisplayEntry.test.ts` readonly `lineKinds` typing.
+  - `npm run test:file-sizes` remains blocked by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; changed Linear Algebra files are under their caps.

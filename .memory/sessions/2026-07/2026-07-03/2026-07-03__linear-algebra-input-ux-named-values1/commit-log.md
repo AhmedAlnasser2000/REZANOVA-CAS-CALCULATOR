@@ -28,5 +28,11 @@
 ### LINEAR-ALGEBRA-DYNAMIC-DIMENSIONS1
 
 - subject: `LINEAR-ALGEBRA-DYNAMIC-DIMENSIONS1: add matrix vector sizing controls`
+- status: recorded in git history by subject
+- staged memory: session verification, completion report, commit log.
+
+### LINEAR-ALGEBRA-NAMED-VALUE-REGISTRY1
+
+- subject: `LINEAR-ALGEBRA-NAMED-VALUE-REGISTRY1: add named value registries`
 - status: ready to record in git history by subject
 - staged memory: session verification, completion report, commit log.

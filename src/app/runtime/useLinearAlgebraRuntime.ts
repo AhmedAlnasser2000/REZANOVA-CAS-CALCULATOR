@@ -21,6 +21,24 @@ import {
   dispatchVectorEditorLatex,
 } from '../../lib/linear-algebra/editor-dispatch';
 import type { LinearAlgebraEquationHandoff } from '../../lib/linear-algebra/equation-handoff';
+import {
+  DEFAULT_MATRIX_LEFT_ID,
+  DEFAULT_MATRIX_RIGHT_ID,
+  DEFAULT_VECTOR_LEFT_ID,
+  DEFAULT_VECTOR_RIGHT_ID,
+  cloneMatrixNamedValues,
+  cloneVectorNamedValues,
+  isValidMatrixValueName,
+  isValidVectorValueName,
+  matrixValueById,
+  nextMatrixValueName,
+  nextVectorValueName,
+  normalizeMatrixValueName,
+  normalizeVectorValueName,
+  vectorValueById,
+  type LinearAlgebraMatrixNamedValue,
+  type LinearAlgebraVectorNamedValue,
+} from '../../lib/linear-algebra/named-values';
 import type {
   MatrixSurfaceState,
   VectorSurfaceState,
@@ -84,6 +102,56 @@ const DEFAULT_VECTOR_B = [4, 5, 6];
 const MIN_LINEAR_ALGEBRA_DIMENSION = 1;
 const MAX_LINEAR_ALGEBRA_DIMENSION = 8;
 
+function defaultMatrixValues(): LinearAlgebraMatrixNamedValue[] {
+  return [
+    { id: DEFAULT_MATRIX_LEFT_ID, name: 'A', value: cloneMatrix(DEFAULT_MATRIX_A) },
+    { id: DEFAULT_MATRIX_RIGHT_ID, name: 'B', value: cloneMatrix(DEFAULT_MATRIX_B) },
+  ];
+}
+
+function defaultVectorValues(): LinearAlgebraVectorNamedValue[] {
+  return [
+    { id: DEFAULT_VECTOR_LEFT_ID, name: 'u', value: cloneVector(DEFAULT_VECTOR_A) },
+    { id: DEFAULT_VECTOR_RIGHT_ID, name: 'v', value: cloneVector(DEFAULT_VECTOR_B) },
+  ];
+}
+
+function matrixValuesFromCompatibility(
+  matrixA: number[][],
+  matrixB: number[][],
+): LinearAlgebraMatrixNamedValue[] {
+  return [
+    { id: DEFAULT_MATRIX_LEFT_ID, name: 'A', value: cloneMatrix(matrixA) },
+    { id: DEFAULT_MATRIX_RIGHT_ID, name: 'B', value: cloneMatrix(matrixB) },
+  ];
+}
+
+function vectorValuesFromCompatibility(
+  vectorA: number[],
+  vectorB: number[],
+): LinearAlgebraVectorNamedValue[] {
+  return [
+    { id: DEFAULT_VECTOR_LEFT_ID, name: 'u', value: cloneVector(vectorA) },
+    { id: DEFAULT_VECTOR_RIGHT_ID, name: 'v', value: cloneVector(vectorB) },
+  ];
+}
+
+function matrixValueForCompatibility(
+  values: readonly LinearAlgebraMatrixNamedValue[],
+  id: string,
+  fallback: number[][],
+) {
+  return cloneMatrix(matrixValueById(values, id)?.value ?? fallback);
+}
+
+function vectorValueForCompatibility(
+  values: readonly LinearAlgebraVectorNamedValue[],
+  id: string,
+  fallback: number[],
+) {
+  return cloneVector(vectorValueById(values, id)?.value ?? fallback);
+}
+
 function clampLinearAlgebraDimension(value: number) {
   if (!Number.isFinite(value)) {
     return MIN_LINEAR_ALGEBRA_DIMENSION;
@@ -120,12 +188,20 @@ export function useLinearAlgebraRuntime({
   reserveHistoryTicket,
   setRuntimeStatusOverride,
 }: UseLinearAlgebraRuntimeOptions) {
-  const [matrixA, setMatrixA] = useState(() => cloneMatrix(DEFAULT_MATRIX_A));
-  const [matrixB, setMatrixB] = useState(() => cloneMatrix(DEFAULT_MATRIX_B));
+  const [matrixValues, setMatrixValues] = useState(defaultMatrixValues);
+  const [activeMatrixLeftId, setActiveMatrixLeftId] = useState(DEFAULT_MATRIX_LEFT_ID);
+  const [activeMatrixRightId, setActiveMatrixRightId] = useState(DEFAULT_MATRIX_RIGHT_ID);
   const [matrixEditorLatex, setMatrixEditorLatex] = useState('');
-  const [vectorA, setVectorA] = useState(() => cloneVector(DEFAULT_VECTOR_A));
-  const [vectorB, setVectorB] = useState(() => cloneVector(DEFAULT_VECTOR_B));
+  const [vectorValues, setVectorValues] = useState(defaultVectorValues);
+  const [activeVectorLeftId, setActiveVectorLeftId] = useState(DEFAULT_VECTOR_LEFT_ID);
+  const [activeVectorRightId, setActiveVectorRightId] = useState(DEFAULT_VECTOR_RIGHT_ID);
   const [vectorEditorLatex, setVectorEditorLatex] = useState('');
+  const nextMatrixValueIdRef = useRef(1);
+  const nextVectorValueIdRef = useRef(1);
+  const matrixA = matrixValueForCompatibility(matrixValues, DEFAULT_MATRIX_LEFT_ID, DEFAULT_MATRIX_A);
+  const matrixB = matrixValueForCompatibility(matrixValues, DEFAULT_MATRIX_RIGHT_ID, DEFAULT_MATRIX_B);
+  const vectorA = vectorValueForCompatibility(vectorValues, DEFAULT_VECTOR_LEFT_ID, DEFAULT_VECTOR_A);
+  const vectorB = vectorValueForCompatibility(vectorValues, DEFAULT_VECTOR_RIGHT_ID, DEFAULT_VECTOR_B);
   const matrixStateRef = useRef({ matrixA, matrixB });
   const vectorStateRef = useRef({ vectorA, vectorB, angleUnit });
   const latestMatrixRunRevisionRef = useRef<string | null>(null);
@@ -261,6 +337,7 @@ export function useLinearAlgebraRuntime({
       latex: inputLatex,
       matrixA,
       matrixB,
+      matrixValues,
     });
     if (!dispatched.ok) {
       commitMatrixEditorError(inputLatex, dispatched.message, dispatched.handoff);
@@ -360,6 +437,7 @@ export function useLinearAlgebraRuntime({
       latex: inputLatex,
       vectorA,
       vectorB,
+      vectorValues,
       angleUnit,
     });
     if (!dispatched.ok) {
@@ -370,9 +448,71 @@ export function useLinearAlgebraRuntime({
     runVectorRequest(dispatched.request, inputLatex, () => dispatched.request);
   }
 
+  function updateMatrixValue(
+    id: string,
+    fallbackName: string,
+    fallbackValue: number[][],
+    updater: (matrix: number[][]) => number[][],
+  ) {
+    setMatrixValues((currentValues) => {
+      const existing = matrixValueById(currentValues, id);
+      if (!existing) {
+        return [
+          ...currentValues,
+          { id, name: fallbackName, value: updater(cloneMatrix(fallbackValue)) },
+        ];
+      }
+      return currentValues.map((currentValue) =>
+        currentValue.id === id
+          ? { ...currentValue, value: updater(cloneMatrix(currentValue.value)) }
+          : currentValue,
+      );
+    });
+  }
+
+  function updateVectorValue(
+    id: string,
+    fallbackName: string,
+    fallbackValue: number[],
+    updater: (vector: number[]) => number[],
+  ) {
+    setVectorValues((currentValues) => {
+      const existing = vectorValueById(currentValues, id);
+      if (!existing) {
+        return [
+          ...currentValues,
+          { id, name: fallbackName, value: updater(cloneVector(fallbackValue)) },
+        ];
+      }
+      return currentValues.map((currentValue) =>
+        currentValue.id === id
+          ? { ...currentValue, value: updater(cloneVector(currentValue.value)) }
+          : currentValue,
+      );
+    });
+  }
+
+  function setMatrixA(nextMatrix: number[][]) {
+    updateMatrixValue(DEFAULT_MATRIX_LEFT_ID, 'A', DEFAULT_MATRIX_A, () => cloneMatrix(nextMatrix));
+  }
+
+  function setMatrixB(nextMatrix: number[][]) {
+    updateMatrixValue(DEFAULT_MATRIX_RIGHT_ID, 'B', DEFAULT_MATRIX_B, () => cloneMatrix(nextMatrix));
+  }
+
+  function setVectorA(nextVector: number[]) {
+    updateVectorValue(DEFAULT_VECTOR_LEFT_ID, 'u', DEFAULT_VECTOR_A, () => cloneVector(nextVector));
+  }
+
+  function setVectorB(nextVector: number[]) {
+    updateVectorValue(DEFAULT_VECTOR_RIGHT_ID, 'v', DEFAULT_VECTOR_B, () => cloneVector(nextVector));
+  }
+
   function setMatrixCell(which: 'A' | 'B', row: number, column: number, value: number) {
-    const setter = which === 'A' ? setMatrixA : setMatrixB;
-    setter((currentMatrix) =>
+    const id = which === 'A' ? DEFAULT_MATRIX_LEFT_ID : DEFAULT_MATRIX_RIGHT_ID;
+    const fallbackName = which === 'A' ? 'A' : 'B';
+    const fallbackValue = which === 'A' ? DEFAULT_MATRIX_A : DEFAULT_MATRIX_B;
+    updateMatrixValue(id, fallbackName, fallbackValue, (currentMatrix) =>
       currentMatrix.map((currentRow, rowIndex) =>
         currentRow.map((cell, columnIndex) =>
           rowIndex === row && columnIndex === column ? (Number.isFinite(value) ? value : 0) : cell,
@@ -382,8 +522,10 @@ export function useLinearAlgebraRuntime({
   }
 
   function setVectorCell(which: 'A' | 'B', index: number, value: number) {
-    const setter = which === 'A' ? setVectorA : setVectorB;
-    setter((currentVector) =>
+    const id = which === 'A' ? DEFAULT_VECTOR_LEFT_ID : DEFAULT_VECTOR_RIGHT_ID;
+    const fallbackName = which === 'A' ? 'u' : 'v';
+    const fallbackValue = which === 'A' ? DEFAULT_VECTOR_A : DEFAULT_VECTOR_B;
+    updateVectorValue(id, fallbackName, fallbackValue, (currentVector) =>
       currentVector.map((cell, cellIndex) =>
         cellIndex === index ? (Number.isFinite(value) ? value : 0) : cell,
       ),
@@ -391,26 +533,180 @@ export function useLinearAlgebraRuntime({
   }
 
   function resizeMatrix(which: 'A' | 'B', rows: number, columns: number) {
-    const setter = which === 'A' ? setMatrixA : setMatrixB;
-    setter((currentMatrix) => resizeMatrixValue(currentMatrix, rows, columns));
+    const id = which === 'A' ? DEFAULT_MATRIX_LEFT_ID : DEFAULT_MATRIX_RIGHT_ID;
+    const fallbackName = which === 'A' ? 'A' : 'B';
+    const fallbackValue = which === 'A' ? DEFAULT_MATRIX_A : DEFAULT_MATRIX_B;
+    updateMatrixValue(id, fallbackName, fallbackValue, (currentMatrix) =>
+      resizeMatrixValue(currentMatrix, rows, columns),
+    );
   }
 
   function resizeVector(which: 'A' | 'B', length: number) {
-    const setter = which === 'A' ? setVectorA : setVectorB;
-    setter((currentVector) => resizeVectorValue(currentVector, length));
+    const id = which === 'A' ? DEFAULT_VECTOR_LEFT_ID : DEFAULT_VECTOR_RIGHT_ID;
+    const fallbackName = which === 'A' ? 'u' : 'v';
+    const fallbackValue = which === 'A' ? DEFAULT_VECTOR_A : DEFAULT_VECTOR_B;
+    updateVectorValue(id, fallbackName, fallbackValue, (currentVector) =>
+      resizeVectorValue(currentVector, length),
+    );
+  }
+
+  function addMatrixValue(preferredName?: string, value: number[][] = DEFAULT_MATRIX_A) {
+    const id = `matrix-${nextMatrixValueIdRef.current}`;
+    nextMatrixValueIdRef.current += 1;
+    setMatrixValues((currentValues) => {
+      const name = nextMatrixValueName(currentValues, preferredName);
+      return name
+        ? [...currentValues, { id, name, value: cloneMatrix(value) }]
+        : currentValues;
+    });
+    return id;
+  }
+
+  function addVectorValue(preferredName?: string, value: number[] = DEFAULT_VECTOR_A) {
+    const id = `vector-${nextVectorValueIdRef.current}`;
+    nextVectorValueIdRef.current += 1;
+    setVectorValues((currentValues) => {
+      const name = nextVectorValueName(currentValues, preferredName);
+      return name
+        ? [...currentValues, { id, name, value: cloneVector(value) }]
+        : currentValues;
+    });
+    return id;
+  }
+
+  function renameMatrixValue(id: string, nextName: string) {
+    const normalizedName = normalizeMatrixValueName(nextName);
+    setMatrixValues((currentValues) => {
+      if (!isValidMatrixValueName(normalizedName)) {
+        return currentValues;
+      }
+      const duplicate = currentValues.some((value) => value.id !== id && value.name === normalizedName);
+      if (duplicate) {
+        return currentValues;
+      }
+      return currentValues.map((value) =>
+        value.id === id ? { ...value, name: normalizedName } : value,
+      );
+    });
+  }
+
+  function renameVectorValue(id: string, nextName: string) {
+    const normalizedName = normalizeVectorValueName(nextName);
+    setVectorValues((currentValues) => {
+      if (!isValidVectorValueName(normalizedName)) {
+        return currentValues;
+      }
+      const duplicate = currentValues.some((value) => value.id !== id && value.name === normalizedName);
+      if (duplicate) {
+        return currentValues;
+      }
+      return currentValues.map((value) =>
+        value.id === id ? { ...value, name: normalizedName } : value,
+      );
+    });
+  }
+
+  function duplicateMatrixValue(id: string) {
+    const newId = `matrix-${nextMatrixValueIdRef.current}`;
+    nextMatrixValueIdRef.current += 1;
+    setMatrixValues((currentValues) => {
+      const source = matrixValueById(currentValues, id);
+      const name = source ? nextMatrixValueName(currentValues, source.name) : null;
+      return source && name
+        ? [...currentValues, { id: newId, name, value: cloneMatrix(source.value) }]
+        : currentValues;
+    });
+    return newId;
+  }
+
+  function duplicateVectorValue(id: string) {
+    const newId = `vector-${nextVectorValueIdRef.current}`;
+    nextVectorValueIdRef.current += 1;
+    setVectorValues((currentValues) => {
+      const source = vectorValueById(currentValues, id);
+      const name = source ? nextVectorValueName(currentValues, source.name) : null;
+      return source && name
+        ? [...currentValues, { id: newId, name, value: cloneVector(source.value) }]
+        : currentValues;
+    });
+    return newId;
+  }
+
+  function deleteMatrixValue(id: string) {
+    const canDelete = matrixValues.length > 1 && matrixValueById(matrixValues, id);
+    const fallbackId = matrixValues.find((value) => value.id !== id)?.id ?? DEFAULT_MATRIX_LEFT_ID;
+    if (!canDelete) {
+      return;
+    }
+    setMatrixValues((currentValues) => {
+      if (currentValues.length <= 1 || !matrixValueById(currentValues, id)) {
+        return currentValues;
+      }
+      return currentValues.filter((value) => value.id !== id);
+    });
+    setActiveMatrixLeftId((currentId) => (currentId === id ? fallbackId : currentId));
+    setActiveMatrixRightId((currentId) => (currentId === id ? fallbackId : currentId));
+  }
+
+  function deleteVectorValue(id: string) {
+    const canDelete = vectorValues.length > 1 && vectorValueById(vectorValues, id);
+    const fallbackId = vectorValues.find((value) => value.id !== id)?.id ?? DEFAULT_VECTOR_LEFT_ID;
+    if (!canDelete) {
+      return;
+    }
+    setVectorValues((currentValues) => {
+      if (currentValues.length <= 1 || !vectorValueById(currentValues, id)) {
+        return currentValues;
+      }
+      return currentValues.filter((value) => value.id !== id);
+    });
+    setActiveVectorLeftId((currentId) => (currentId === id ? fallbackId : currentId));
+    setActiveVectorRightId((currentId) => (currentId === id ? fallbackId : currentId));
+  }
+
+  function setActiveMatrixValueIds(leftId: string, rightId: string) {
+    setActiveMatrixLeftId(leftId);
+    setActiveMatrixRightId(rightId);
+  }
+
+  function setActiveVectorValueIds(leftId: string, rightId: string) {
+    setActiveVectorLeftId(leftId);
+    setActiveVectorRightId(rightId);
+  }
+
+  function resetMatrixValues() {
+    setMatrixValues(defaultMatrixValues());
+    setActiveMatrixLeftId(DEFAULT_MATRIX_LEFT_ID);
+    setActiveMatrixRightId(DEFAULT_MATRIX_RIGHT_ID);
+  }
+
+  function resetVectorValues() {
+    setVectorValues(defaultVectorValues());
+    setActiveVectorLeftId(DEFAULT_VECTOR_LEFT_ID);
+    setActiveVectorRightId(DEFAULT_VECTOR_RIGHT_ID);
   }
 
   function captureMatrixSurfaceState(): MatrixSurfaceState {
     return {
       matrixA: cloneMatrix(matrixA),
       matrixB: cloneMatrix(matrixB),
+      matrixValues: cloneMatrixNamedValues(matrixValues),
+      activeMatrixLeftId,
+      activeMatrixRightId,
       matrixEditorLatex,
     };
   }
 
   function restoreMatrixSurfaceState(state: MatrixSurfaceState | null) {
-    setMatrixA(cloneMatrix(state?.matrixA ?? DEFAULT_MATRIX_A));
-    setMatrixB(cloneMatrix(state?.matrixB ?? DEFAULT_MATRIX_B));
+    const restoredValues = state?.matrixValues
+      ? cloneMatrixNamedValues(state.matrixValues)
+      : matrixValuesFromCompatibility(
+          state?.matrixA ?? DEFAULT_MATRIX_A,
+          state?.matrixB ?? DEFAULT_MATRIX_B,
+        );
+    setMatrixValues(restoredValues);
+    setActiveMatrixLeftId(state?.activeMatrixLeftId ?? DEFAULT_MATRIX_LEFT_ID);
+    setActiveMatrixRightId(state?.activeMatrixRightId ?? DEFAULT_MATRIX_RIGHT_ID);
     setMatrixEditorLatex(state?.matrixEditorLatex ?? '');
   }
 
@@ -418,22 +714,45 @@ export function useLinearAlgebraRuntime({
     return {
       vectorA: cloneVector(vectorA),
       vectorB: cloneVector(vectorB),
+      vectorValues: cloneVectorNamedValues(vectorValues),
+      activeVectorLeftId,
+      activeVectorRightId,
       vectorEditorLatex,
     };
   }
 
   function restoreVectorSurfaceState(state: VectorSurfaceState | null) {
-    setVectorA(cloneVector(state?.vectorA ?? DEFAULT_VECTOR_A));
-    setVectorB(cloneVector(state?.vectorB ?? DEFAULT_VECTOR_B));
+    const restoredValues = state?.vectorValues
+      ? cloneVectorNamedValues(state.vectorValues)
+      : vectorValuesFromCompatibility(
+          state?.vectorA ?? DEFAULT_VECTOR_A,
+          state?.vectorB ?? DEFAULT_VECTOR_B,
+        );
+    setVectorValues(restoredValues);
+    setActiveVectorLeftId(state?.activeVectorLeftId ?? DEFAULT_VECTOR_LEFT_ID);
+    setActiveVectorRightId(state?.activeVectorRightId ?? DEFAULT_VECTOR_RIGHT_ID);
     setVectorEditorLatex(state?.vectorEditorLatex ?? '');
   }
 
   return {
+    activeMatrixLeftId,
+    activeMatrixRightId,
+    activeVectorLeftId,
+    activeVectorRightId,
+    addMatrixValue,
+    addVectorValue,
     captureMatrixSurfaceState,
     captureVectorSurfaceState,
+    deleteMatrixValue,
+    deleteVectorValue,
+    duplicateMatrixValue,
+    duplicateVectorValue,
     matrixA,
     matrixB,
     matrixEditorLatex,
+    matrixValues: cloneMatrixNamedValues(matrixValues),
+    renameMatrixValue,
+    renameVectorValue,
     runMatrixEditorAction,
     runMatrixAction,
     runVectorEditorAction,
@@ -442,6 +761,10 @@ export function useLinearAlgebraRuntime({
     restoreVectorSurfaceState,
     resizeMatrix,
     resizeVector,
+    resetMatrixValues,
+    resetVectorValues,
+    setActiveMatrixValueIds,
+    setActiveVectorValueIds,
     setMatrixA,
     setMatrixB,
     setMatrixCell,
@@ -453,5 +776,6 @@ export function useLinearAlgebraRuntime({
     vectorA,
     vectorB,
     vectorEditorLatex,
+    vectorValues: cloneVectorNamedValues(vectorValues),
   };
 }

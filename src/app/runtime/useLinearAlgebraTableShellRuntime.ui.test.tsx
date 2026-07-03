@@ -190,6 +190,72 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(hook.result.current.linearAlgebraRuntime.vectorB).toEqual([4, 5, 6, 0, 0, 0, 0, 0]);
   });
 
+  it('manages Matrix and Vector named-value registries with stable ids', () => {
+    const { hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues.map((value) => value.name)).toEqual(['A', 'B']);
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues.map((value) => value.name)).toEqual(['u', 'v']);
+
+    let matrixId = '';
+    act(() => {
+      matrixId = hook.result.current.linearAlgebraRuntime.addMatrixValue('C', [[9, 0], [0, 9]]);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues).toContainEqual({
+      id: matrixId,
+      name: 'C',
+      value: [[9, 0], [0, 9]],
+    });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.renameMatrixValue(matrixId, 'D');
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues).toContainEqual({
+      id: matrixId,
+      name: 'D',
+      value: [[9, 0], [0, 9]],
+    });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.renameMatrixValue(matrixId, 'A');
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues.find((value) => value.id === matrixId)?.name).toBe('D');
+
+    let duplicateMatrixId = '';
+    act(() => {
+      duplicateMatrixId = hook.result.current.linearAlgebraRuntime.duplicateMatrixValue(matrixId);
+    });
+    expect(duplicateMatrixId).not.toBe(matrixId);
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues.find((value) => value.id === duplicateMatrixId)).toMatchObject({
+      name: 'C',
+      value: [[9, 0], [0, 9]],
+    });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.setActiveMatrixValueIds(matrixId, duplicateMatrixId);
+      hook.result.current.linearAlgebraRuntime.deleteMatrixValue(matrixId);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues.some((value) => value.id === matrixId)).toBe(false);
+    expect(hook.result.current.linearAlgebraRuntime.activeMatrixLeftId).toBe('matrix-a');
+    expect(hook.result.current.linearAlgebraRuntime.activeMatrixRightId).toBe(duplicateMatrixId);
+
+    let vectorId = '';
+    act(() => {
+      vectorId = hook.result.current.linearAlgebraRuntime.addVectorValue('p', [7, 8, 9]);
+    });
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.renameVectorValue(vectorId, 'q');
+    });
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues).toContainEqual({
+      id: vectorId,
+      name: 'q',
+      value: [7, 8, 9],
+    });
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.renameVectorValue(vectorId, 'u');
+    });
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues.find((value) => value.id === vectorId)?.name).toBe('q');
+  });
+
   it('captures and restores Matrix and Vector surface snapshots independently', () => {
     const { hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 
@@ -231,6 +297,55 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(hook.result.current.linearAlgebraRuntime.vectorA).toEqual([4, 5, 6]);
     expect(hook.result.current.linearAlgebraRuntime.vectorB).toEqual([7, 8, 9]);
     expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe('u\\cdot v');
+  });
+
+  it('captures registry surface state and restores old fixed A/B u/v snapshots', () => {
+    const { hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    let matrixId = '';
+    let vectorId = '';
+    act(() => {
+      matrixId = hook.result.current.linearAlgebraRuntime.addMatrixValue('C', [[3, 0], [0, 3]]);
+      vectorId = hook.result.current.linearAlgebraRuntime.addVectorValue('p', [3, 4]);
+      hook.result.current.linearAlgebraRuntime.setActiveMatrixValueIds(matrixId, 'matrix-b');
+      hook.result.current.linearAlgebraRuntime.setActiveVectorValueIds(vectorId, 'vector-v');
+    });
+
+    const matrixSnapshot = hook.result.current.captureMatrixSurfaceState();
+    const vectorSnapshot = hook.result.current.captureVectorSurfaceState();
+    expect(matrixSnapshot.matrixValues?.map((value) => value.name)).toEqual(['A', 'B', 'C']);
+    expect(vectorSnapshot.vectorValues?.map((value) => value.name)).toEqual(['u', 'v', 'p']);
+    expect(matrixSnapshot.activeMatrixLeftId).toBe(matrixId);
+    expect(vectorSnapshot.activeVectorLeftId).toBe(vectorId);
+
+    act(() => {
+      hook.result.current.restoreMatrixSurfaceState({
+        matrixA: [[9]],
+        matrixB: [[8]],
+        matrixEditorLatex: 'A+B',
+      });
+      hook.result.current.restoreVectorSurfaceState({
+        vectorA: [9],
+        vectorB: [8],
+        vectorEditorLatex: 'u+v',
+      });
+    });
+
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues).toEqual([
+      { id: 'matrix-a', name: 'A', value: [[9]] },
+      { id: 'matrix-b', name: 'B', value: [[8]] },
+    ]);
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues).toEqual([
+      { id: 'vector-u', name: 'u', value: [9] },
+      { id: 'vector-v', name: 'v', value: [8] },
+    ]);
+
+    act(() => {
+      hook.result.current.restoreMatrixSurfaceState(matrixSnapshot);
+      hook.result.current.restoreVectorSurfaceState(vectorSnapshot);
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixValues.map((value) => value.name)).toEqual(['A', 'B', 'C']);
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues.map((value) => value.name)).toEqual(['u', 'v', 'p']);
   });
 
   it('runs Matrix and Vector editor expressions through existing operations', async () => {
@@ -282,6 +397,62 @@ describe('useLinearAlgebraTableShellRuntime', () => {
           editorExpressionLatex: 'u\\cdot v',
           vectorOperandLatexA: 'u',
           vectorOperandLatexB: 'v',
+        }),
+      }),
+    ));
+  });
+
+  it('runs editor expressions against registry names beyond the defaults', async () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.addMatrixValue('C', [[1, 0], [0, 1]]);
+      hook.result.current.linearAlgebraRuntime.addMatrixValue('D', [[2, 2], [3, 3]]);
+      hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('C+D');
+    });
+    act(() => {
+      hook.result.current.runMatrixEditorAction();
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        exactLatex: '\\begin{bmatrix}3 & 2\\\\3 & 4\\end{bmatrix}',
+      }),
+      'C+D',
+      'matrix',
+      expect.objectContaining({
+        matrixSeed: expect.objectContaining({
+          operation: 'add',
+          matrixOperandLatexA: 'C',
+          matrixOperandLatexB: 'D',
+        }),
+      }),
+    ));
+
+    commitOutcome.mockClear();
+    hook.rerender({ currentMode: 'vector' });
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.addVectorValue('p', [1, 0, 0]);
+      hook.result.current.linearAlgebraRuntime.addVectorValue('q', [2, 3, 4]);
+      hook.result.current.linearAlgebraRuntime.setVectorEditorLatex('p\\cdot q');
+    });
+    act(() => {
+      hook.result.current.runVectorEditorAction();
+    });
+
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        exactLatex: '2',
+      }),
+      'p\\cdot q',
+      'vector',
+      expect.objectContaining({
+        vectorSeed: expect.objectContaining({
+          operation: 'dot',
+          vectorOperandLatexA: 'p',
+          vectorOperandLatexB: 'q',
         }),
       }),
     ));

@@ -60,6 +60,10 @@ import type {
   EquationScreen,
 } from '../../types/calculator';
 import type {
+  LinearAlgebraMatrixNamedValue,
+  LinearAlgebraVectorNamedValue,
+} from '../../lib/linear-algebra/named-values';
+import type {
   defaultEquationComplexRegionPanelState,
   defaultEquationNumericSolvePanelState,
 } from '../logic/appUtils';
@@ -213,11 +217,17 @@ export type TableSurfaceState = {
 export type MatrixSurfaceState = {
   matrixA: number[][];
   matrixB: number[][];
+  matrixValues?: LinearAlgebraMatrixNamedValue[];
+  activeMatrixLeftId?: string;
+  activeMatrixRightId?: string;
   matrixEditorLatex: string;
 };
 
 export type VectorSurfaceState = {
   vectorA: number[];
   vectorB: number[];
+  vectorValues?: LinearAlgebraVectorNamedValue[];
+  activeVectorLeftId?: string;
+  activeVectorRightId?: string;
   vectorEditorLatex: string;
 };

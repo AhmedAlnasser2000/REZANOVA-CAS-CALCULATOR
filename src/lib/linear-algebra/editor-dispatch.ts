@@ -14,18 +14,26 @@ import {
   buildLinearAlgebraEquationHandoff,
   type LinearAlgebraEquationHandoff,
 } from './equation-handoff';
+import {
+  matrixNamedValueNames,
+  matrixValueByName,
+  vectorNamedValueNames,
+  vectorValueByName,
+  type LinearAlgebraMatrixNamedValue,
+  type LinearAlgebraVectorNamedValue,
+} from './named-values';
 
 type MatrixOperand = {
   matrix: number[][];
   exactMatrix?: ExactScalarWire[][];
-  named?: 'A' | 'B';
+  named?: string;
   displayLatex: string;
 };
 
 type VectorOperand = {
   vector: number[];
   exactVector?: ExactScalarWire[];
-  named?: 'u' | 'v';
+  named?: string;
   displayLatex: string;
 };
 
@@ -33,12 +41,14 @@ export type MatrixEditorDispatchInput = {
   latex: string;
   matrixA: number[][];
   matrixB: number[][];
+  matrixValues?: readonly LinearAlgebraMatrixNamedValue[];
 };
 
 export type VectorEditorDispatchInput = {
   latex: string;
   vectorA: number[];
   vectorB: number[];
+  vectorValues?: readonly LinearAlgebraVectorNamedValue[];
   angleUnit: AngleUnit;
 };
 
@@ -121,6 +131,14 @@ function matrixOperand(
   }
 
   if (expression.kind === 'named') {
+    const namedValue = matrixValueByName(input.matrixValues, expression.name);
+    if (namedValue) {
+      return {
+        matrix: cloneMatrix(namedValue.value),
+        named: expression.name,
+        displayLatex: expression.displayLatex,
+      };
+    }
     if (expression.name === 'A') {
       return { matrix: cloneMatrix(input.matrixA), named: 'A', displayLatex: expression.displayLatex };
     }
@@ -145,6 +163,14 @@ function vectorOperand(
   }
 
   if (expression.kind === 'named') {
+    const namedValue = vectorValueByName(input.vectorValues, expression.name);
+    if (namedValue) {
+      return {
+        vector: cloneVector(namedValue.value),
+        named: expression.name,
+        displayLatex: expression.displayLatex,
+      };
+    }
     if (expression.name === 'u') {
       return { vector: cloneVector(input.vectorA), named: 'u', displayLatex: expression.displayLatex };
     }
@@ -660,7 +686,10 @@ function vectorUnaryRequest(
 }
 
 export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): MatrixEditorDispatchResult {
-  const parsed = parseLinearAlgebraEditorLatex(input.latex, { mode: 'matrix' });
+  const parsed = parseLinearAlgebraEditorLatex(input.latex, {
+    mode: 'matrix',
+    matrixNamedValues: matrixNamedValueNames(input.matrixValues),
+  });
   if (!parsed.ok) {
     return {
       ok: false,
@@ -715,7 +744,10 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
 }
 
 export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): VectorEditorDispatchResult {
-  const parsed = parseLinearAlgebraEditorLatex(input.latex, { mode: 'vector' });
+  const parsed = parseLinearAlgebraEditorLatex(input.latex, {
+    mode: 'vector',
+    vectorNamedValues: vectorNamedValueNames(input.vectorValues),
+  });
   if (!parsed.ok) {
     return {
       ok: false,
