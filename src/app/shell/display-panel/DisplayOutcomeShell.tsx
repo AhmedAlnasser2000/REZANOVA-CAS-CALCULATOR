@@ -29,7 +29,7 @@ const MATH_TITLE_OPERATION_PATTERN =
 function shouldRenderTitleAsMath(title: string) {
   return /\\[A-Za-z]+|[{}^_]/u.test(title)
     || MATH_TITLE_OPERATION_PATTERN.test(title)
-    || /^[A-Za-z]\s*[-+*/=]/u.test(title);
+    || /^[A-Za-z]\s*[-+*/=×·]/u.test(title);
 }
 
 export function DisplayOutcomeShell({

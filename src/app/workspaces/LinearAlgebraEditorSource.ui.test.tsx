@@ -81,6 +81,8 @@ describe('Linear algebra editor source', () => {
     await waitFor(() => expect(screen.getByLabelText('Matrix D rows')).toHaveValue(2));
     await user.selectOptions(screen.getByLabelText('Active Matrix left operand'), 'matrix-1');
     expect(screen.getByLabelText('Active Matrix left operand')).toHaveValue('matrix-1');
+    expect(screen.getByTestId('soft-action-add')).toHaveTextContent('D+B');
+    expect(screen.getByTestId('soft-action-detA')).toHaveTextContent('det(D)');
     fireEvent.change(screen.getByLabelText('Matrix D rows'), { target: { value: '3' } });
     await waitFor(() => expect(screen.getByLabelText('Matrix D rows')).toHaveValue(3));
     await user.click(screen.getByRole('button', { name: 'Duplicate Matrix D' }));
@@ -97,6 +99,8 @@ describe('Linear algebra editor source', () => {
     await waitFor(() => expect(screen.getByLabelText('Vector q length')).toHaveValue(3));
     await user.selectOptions(screen.getByLabelText('Active Vector first operand'), 'vector-1');
     expect(screen.getByLabelText('Active Vector first operand')).toHaveValue('vector-1');
+    expect(screen.getByTestId('soft-action-dot')).toHaveTextContent('q·v');
+    expect(screen.getByTestId('soft-action-normA')).toHaveTextContent('‖q‖');
     fireEvent.change(screen.getByLabelText('Vector q length'), { target: { value: '4' } });
     await waitFor(() => expect(screen.getByLabelText('Vector q length')).toHaveValue(4));
     await user.click(screen.getByRole('button', { name: 'Duplicate Vector q' }));

@@ -1,16 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   buildMatrixOoeInputRevisionId,
-  matrixOperationLabel,
   runMatrixModeWithOoePilot,
   type RunMatrixModeRequest,
 } from '../../lib/modes/matrix';
 import {
   buildVectorOoeInputRevisionId,
   runVectorModeWithOoePilot,
-  vectorOperationLabel,
   type RunVectorModeRequest,
 } from '../../lib/modes/vector';
+import {
+  activeMatrixValuePair,
+  activeVectorValuePair,
+  buildActiveMatrixRequest,
+  buildActiveVectorRequest,
+  buildMatrixSoftActions,
+  buildVectorSoftActions,
+} from './linearAlgebraActiveOperands';
 import { isOoeCommitAllowed } from '../../lib/ooe/job-launch/job-contract';
 import {
   ooeJobContextFromHistoryTicket,
@@ -202,18 +208,44 @@ export function useLinearAlgebraRuntime({
   const matrixB = matrixValueForCompatibility(matrixValues, DEFAULT_MATRIX_RIGHT_ID, DEFAULT_MATRIX_B);
   const vectorA = vectorValueForCompatibility(vectorValues, DEFAULT_VECTOR_LEFT_ID, DEFAULT_VECTOR_A);
   const vectorB = vectorValueForCompatibility(vectorValues, DEFAULT_VECTOR_RIGHT_ID, DEFAULT_VECTOR_B);
-  const matrixStateRef = useRef({ matrixA, matrixB });
-  const vectorStateRef = useRef({ vectorA, vectorB, angleUnit });
+  const matrixStateRef = useRef({
+    matrixA,
+    matrixB,
+    matrixValues,
+    activeMatrixLeftId,
+    activeMatrixRightId,
+  });
+  const vectorStateRef = useRef({
+    vectorA,
+    vectorB,
+    vectorValues,
+    activeVectorLeftId,
+    activeVectorRightId,
+    angleUnit,
+  });
   const latestMatrixRunRevisionRef = useRef<string | null>(null);
   const latestVectorRunRevisionRef = useRef<string | null>(null);
 
   useEffect(() => {
-    matrixStateRef.current = { matrixA, matrixB };
-  }, [matrixA, matrixB]);
+    matrixStateRef.current = {
+      matrixA,
+      matrixB,
+      matrixValues,
+      activeMatrixLeftId,
+      activeMatrixRightId,
+    };
+  }, [activeMatrixLeftId, activeMatrixRightId, matrixA, matrixB, matrixValues]);
 
   useEffect(() => {
-    vectorStateRef.current = { vectorA, vectorB, angleUnit };
-  }, [angleUnit, vectorA, vectorB]);
+    vectorStateRef.current = {
+      vectorA,
+      vectorB,
+      vectorValues,
+      activeVectorLeftId,
+      activeVectorRightId,
+      angleUnit,
+    };
+  }, [activeVectorLeftId, activeVectorRightId, angleUnit, vectorA, vectorB, vectorValues]);
 
   function handoffActions(handoff?: LinearAlgebraEquationHandoff): DisplayOutcomeAction[] | undefined {
     return handoff
@@ -312,21 +344,18 @@ export function useLinearAlgebraRuntime({
   }
 
   function runMatrixAction(operation: MatrixOperation) {
-    const launchedRequest: RunMatrixModeRequest = {
-      operation,
-      matrixA: cloneMatrix(matrixA),
-      matrixB: cloneMatrix(matrixB),
-    };
+    const launched = buildActiveMatrixRequest(operation, matrixValues, activeMatrixLeftId, activeMatrixRightId);
     runMatrixRequest(
-      launchedRequest,
-      matrixOperationLabel(operation),
+      launched.request,
+      launched.inputLatex,
       () => {
         const active = matrixStateRef.current;
-        return {
+        return buildActiveMatrixRequest(
           operation,
-          matrixA: active.matrixA,
-          matrixB: active.matrixB,
-        };
+          active.matrixValues,
+          active.activeMatrixLeftId,
+          active.activeMatrixRightId,
+        ).request;
       },
     );
   }
@@ -410,23 +439,19 @@ export function useLinearAlgebraRuntime({
   }
 
   function runVectorAction(operation: VectorOperation) {
-    const launchedRequest: RunVectorModeRequest = {
-      operation,
-      vectorA: cloneVector(vectorA),
-      vectorB: cloneVector(vectorB),
-      angleUnit,
-    };
+    const launched = buildActiveVectorRequest(operation, vectorValues, activeVectorLeftId, activeVectorRightId, angleUnit);
     runVectorRequest(
-      launchedRequest,
-      vectorOperationLabel(operation),
+      launched.request,
+      launched.inputLatex,
       () => {
         const active = vectorStateRef.current;
-        return {
+        return buildActiveVectorRequest(
           operation,
-          vectorA: active.vectorA,
-          vectorB: active.vectorB,
-          angleUnit: active.angleUnit,
-        };
+          active.vectorValues,
+          active.activeVectorLeftId,
+          active.activeVectorRightId,
+          active.angleUnit,
+        ).request;
       },
     );
   }
@@ -788,6 +813,9 @@ export function useLinearAlgebraRuntime({
     setVectorEditorLatex(state?.vectorEditorLatex ?? '');
   }
 
+  const activeMatrixValues = activeMatrixValuePair(matrixValues, activeMatrixLeftId, activeMatrixRightId);
+  const activeVectorValues = activeVectorValuePair(vectorValues, activeVectorLeftId, activeVectorRightId);
+
   return {
     activeMatrixLeftId,
     activeMatrixRightId,
@@ -804,6 +832,7 @@ export function useLinearAlgebraRuntime({
     matrixA,
     matrixB,
     matrixEditorLatex,
+    matrixSoftActions: buildMatrixSoftActions(activeMatrixValues.left.name, activeMatrixValues.right.name),
     matrixValues: cloneMatrixNamedValues(matrixValues),
     renameMatrixValue,
     renameVectorValue,
@@ -834,6 +863,7 @@ export function useLinearAlgebraRuntime({
     vectorA,
     vectorB,
     vectorEditorLatex,
+    vectorSoftActions: buildVectorSoftActions(activeVectorValues.left.name, activeVectorValues.right.name),
     vectorValues: cloneVectorNamedValues(vectorValues),
   };
 }

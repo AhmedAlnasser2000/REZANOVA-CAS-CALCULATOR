@@ -1225,12 +1225,11 @@ export default function App() {
       ? getStatisticsSoftActions(statisticsScreen)
     : currentMode === 'trigonometry'
       ? getTrigSoftActions(trigScreen)
-    : isCalculusMode(currentMode)
-      ? getCalculusSoftActions(calculusScreen)
-    : currentMode === 'calculate'
-      ? getCalculateSoftActions(calculateScreen)
-    : currentMode === 'equation'
-      ? equationSoftActions
+    : isCalculusMode(currentMode) ? getCalculusSoftActions(calculusScreen)
+    : currentMode === 'calculate' ? getCalculateSoftActions(calculateScreen)
+    : currentMode === 'equation' ? equationSoftActions
+    : currentMode === 'matrix' ? linearAlgebraRuntime.matrixSoftActions
+    : currentMode === 'vector' ? linearAlgebraRuntime.vectorSoftActions
       : SOFT_MENU_BY_MODE[currentMode];
   const keypadRows = useMemo(
     () => getWorkspaceKeypadRows(KEYPAD_ROWS, {

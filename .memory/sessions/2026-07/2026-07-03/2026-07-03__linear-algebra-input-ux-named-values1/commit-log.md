@@ -40,5 +40,11 @@
 ### LINEAR-ALGEBRA-NAMED-LIBRARY-UI1
 
 - subject: `LINEAR-ALGEBRA-NAMED-LIBRARY-UI1: add named value library UI`
+- status: recorded in git history by subject
+- staged memory: session verification, completion report, commit log.
+
+### LINEAR-ALGEBRA-ACTIVE-OPERAND-FKEYS1
+
+- subject: `LINEAR-ALGEBRA-ACTIVE-OPERAND-FKEYS1: route soft keys through active operands`
 - status: ready to record in git history by subject
 - staged memory: session verification, completion report, commit log.

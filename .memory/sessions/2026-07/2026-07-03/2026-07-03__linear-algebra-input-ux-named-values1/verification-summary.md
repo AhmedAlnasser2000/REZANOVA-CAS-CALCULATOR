@@ -93,3 +93,21 @@
 - global gate notes:
   - `npm run test:file-sizes` remains blocked by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; changed Linear Algebra runtime/workspace/style/test files are under their caps.
   - `npx tsc -b --pretty false` remains blocked by unrelated dirty `src/app/runtime/historyDisplayEntry.test.ts` readonly `lineKinds` typing.
+
+### LINEAR-ALGEBRA-ACTIVE-OPERAND-FKEYS1
+
+- gate: ui
+- status: pass
+- changed: Matrix and Vector soft-key labels now follow the selected active named operands, while the runtime still maps those operands through the existing Matrix A/B and Vector u/v worker request slots.
+- behavior: Matrix active operands can show labels such as `D+B` and `det(D)` and commit the selected values into the worker request; Vector active operands can show labels such as `q·v` and `||q||` while preserving lowercase readback in result titles.
+- visual readback: Matrix active F-key result showed `D+B` in the result title with the expected matrix sum; Vector active F-key result showed lowercase math title `q·v`, answer `32`, and active soft-key labels tied to `q/v`.
+- evidence:
+  - `npm run test:ui -- src/app/runtime/useLinearAlgebraTableShellRuntime.ui.test.tsx src/app/workspaces/LinearAlgebraEditorSource.ui.test.tsx src/app/shell/DisplayOutcomeShell.ui.test.tsx` passed: 23 tests.
+  - `npx vitest run src/lib/linear-algebra/editor-parser.test.ts src/lib/linear-algebra/editor-dispatch.test.ts src/lib/linear-algebra/editor-dispatch-named-values.test.ts` passed: 18 tests.
+  - Playwright visual check against Vite dev server at `http://127.0.0.1:4173/` passed for Matrix active F-key labels/result and Vector lowercase title/result.
+  - screenshots: `.task_tmp/linear-algebra-named-library-ui1/matrix-active-fkey-result.png`, `.task_tmp/linear-algebra-named-library-ui1/vector-active-fkey-result-lowercase.png`.
+  - `git diff --check` passed.
+  - `npm run test:memory-protocol` passed.
+- global gate notes:
+  - `npm run test:file-sizes` remains blocked only by unrelated dirty `src/lib/equation/parameterized/exp-log-core.ts` at 918 lines over its 900-line cap; M6-owned `src/AppMain.tsx` is 3356 lines under its 3357 cap and `src/app/runtime/useLinearAlgebraRuntime.ts` is 869 lines under its 900 cap.
+  - `npx tsc -b --pretty false` remains blocked by unrelated dirty `src/app/runtime/historyDisplayEntry.test.ts` readonly `lineKinds` typing.

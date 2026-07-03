@@ -28,11 +28,13 @@ describe('DisplayOutcomeShell result title', () => {
         hydrated
         matrixEditorLatex=""
         setMatrixEditorLatex={() => undefined}
+        setVectorEditorLatex={() => undefined}
         settings={{
           ...DEFAULT_SETTINGS,
           outputStyle: 'exact',
         }}
         symbolicDisplayPrefs={DEFAULT_SETTINGS}
+        vectorEditorLatex=""
       />,
     );
 
@@ -63,11 +65,13 @@ describe('DisplayOutcomeShell result title', () => {
         hydrated
         matrixEditorLatex=""
         setMatrixEditorLatex={() => undefined}
+        setVectorEditorLatex={() => undefined}
         settings={{
           ...DEFAULT_SETTINGS,
           outputStyle: 'exact',
         }}
         symbolicDisplayPrefs={DEFAULT_SETTINGS}
+        vectorEditorLatex=""
       />,
     );
 
@@ -75,5 +79,42 @@ describe('DisplayOutcomeShell result title', () => {
     expect(title).toHaveClass('result-title--math');
     expectMathStaticLatex(title, titleLatex);
     expect(title).not.toHaveTextContent(String.raw`\OPERATORNAME`);
+  });
+
+  it('renders vector dot/cross titles as math so lowercase names stay lowercase', () => {
+    render(
+      <DisplayPanel
+        activeExpressionLatex={() => ''}
+        activeResultCopyText={() => '32'}
+        activeResultEditorLatex={() => ''}
+        calculateLatex=""
+        copyText={() => undefined}
+        currentMode="vector"
+        displayHeaderLabel="Vector"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'q·v',
+          warnings: [],
+          exactLatex: '32',
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        matrixEditorLatex=""
+        setMatrixEditorLatex={() => undefined}
+        setVectorEditorLatex={() => undefined}
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+        vectorEditorLatex=""
+      />,
+    );
+
+    const title = screen.getByTestId('display-outcome-title');
+    expect(title).toHaveClass('result-title--math');
+    expectMathStaticLatex(title, 'q·v');
+    expect(title).not.toHaveTextContent('Q·V');
   });
 });

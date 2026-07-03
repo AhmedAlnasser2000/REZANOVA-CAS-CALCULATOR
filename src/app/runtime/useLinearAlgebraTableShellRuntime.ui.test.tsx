@@ -458,6 +458,73 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     ));
   });
 
+  it('runs soft-key actions against the selected active Matrix and Vector operands', async () => {
+    const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
+
+    let matrixId = '';
+    act(() => {
+      matrixId = hook.result.current.linearAlgebraRuntime.addMatrixValue('C', [[9, 0], [0, 9]]);
+      hook.result.current.linearAlgebraRuntime.setActiveMatrixValueIds(matrixId, 'matrix-b');
+    });
+    expect(hook.result.current.linearAlgebraRuntime.matrixSoftActions[0].label).toBe('C+B');
+    expect(hook.result.current.linearAlgebraRuntime.matrixSoftActions[3].label).toBe('det(C)');
+
+    act(() => {
+      hook.result.current.runMatrixAction('add');
+    });
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        exactLatex: '\\begin{bmatrix}14 & 6\\\\7 & 17\\end{bmatrix}',
+      }),
+      'C+B',
+      'matrix',
+      expect.objectContaining({
+        matrixSeed: expect.objectContaining({
+          operation: 'add',
+          matrixA: [[9, 0], [0, 9]],
+          matrixB: [[5, 6], [7, 8]],
+          editorExpressionLatex: 'C+B',
+          matrixOperandLatexA: 'C',
+          matrixOperandLatexB: 'B',
+        }),
+      }),
+    ));
+
+    commitOutcome.mockClear();
+    hook.rerender({ currentMode: 'vector' });
+
+    let vectorId = '';
+    act(() => {
+      vectorId = hook.result.current.linearAlgebraRuntime.addVectorValue('p', [10, 0, 0]);
+      hook.result.current.linearAlgebraRuntime.setActiveVectorValueIds(vectorId, 'vector-v');
+    });
+    expect(hook.result.current.linearAlgebraRuntime.vectorSoftActions[0].label).toBe('p·v');
+    expect(hook.result.current.linearAlgebraRuntime.vectorSoftActions[2].label).toBe('‖p‖');
+
+    act(() => {
+      hook.result.current.runVectorAction('dot');
+    });
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'success',
+        exactLatex: '40',
+      }),
+      'p·v',
+      'vector',
+      expect.objectContaining({
+        vectorSeed: expect.objectContaining({
+          operation: 'dot',
+          vectorA: [10, 0, 0],
+          vectorB: [4, 5, 6],
+          editorExpressionLatex: 'p·v',
+          vectorOperandLatexA: 'p',
+          vectorOperandLatexB: 'v',
+        }),
+      }),
+    ));
+  });
+
   it('runs structured Matrix systems from the main editor', async () => {
     const { commitOutcome, hook } = renderLinearAlgebraTableShell({ currentMode: 'matrix' });
 
