@@ -53,6 +53,8 @@ Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-COEFFICIENT-MATRIX1` l
 
 Inserted prerequisite note: `ALGEBRAIC-GENUS1-ROOT-PULLBACK-NODE-FORM1` adds node-first Legendre chart evidence before matrix entry population. It records MathJSON nodes for `x(z)`, `dx/dz`, the Legendre parameter, and first/second/third-kind kernels for three-real-root, four-real-root, and one-real-root-complex-pair charts, while keeping all new evidence behavior-invisible and non-live.
 
+Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-MATRIX-NODE-SURFACE1` adds the node-level coefficient-comparison surface that bounded second-kind matrix population will consume. It records the chart-substituted radicand, raw pullback, first-kind-normalized RHS, row-power nodes, correction-polynomial nodes, and proof obligations while keeping live `EllipticE/Pi` adoption blocked.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
