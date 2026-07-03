@@ -1827,3 +1827,7 @@
 ## 2026-07-03 - ALGEBRAIC-FUNCTION-FIELD-ORCHESTRATOR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The algebraic function-field orchestrator is an internal coordinator over existing genus-0, genus-1, and boundary routes. It may preserve current public `u-substitution`/`unsupported` labels and result schemas, but it must not claim new second-kind, third-kind, symbolic, or degeneration live coverage without the required solve/backcheck prerequisites.
+
+## 2026-07-03 - ALGEBRAIC-GENUS1-BRANCH-CASEWISE-COVERAGE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 branch casewise coverage is evidence, not live adoption. Exact-rational branch rows may classify radicand signs, real-valued intervals, endpoint policies, and reciprocal endpoint exclusions under the fixed cap, but symbolic branch formulas and branch-sensitive live widening remain blocked until their row counts and assumptions are capped.
