@@ -1,5 +1,9 @@
 import type { DisplayDetailLinePart, DisplayDetailSection } from '../../../types/calculator';
 import { inferDetailLinePartsFromText } from '../../display/result-detail-lines';
+import {
+  normalizeConstraintLatex,
+  normalizeEquationConstraintLatex,
+} from '../solution/constraints';
 
 type BuildParameterizedBoundaryReadbackOptions = {
   reason: string;
@@ -25,35 +29,14 @@ type BuildParameterizedDetailSectionsOptions = {
 };
 
 export function normalizeParameterizedSupplementLatex(entries?: string[]) {
-  if (!entries || entries.length === 0) {
-    return undefined;
-  }
-
-  const normalized = entries
-    .map(normalizeRestrictionLatex)
-    .filter((entry) => entry.trim().length > 0);
-
-  return dedupe(normalized);
+  return normalizeEquationConstraintLatex(entries, {
+    style: 'raw',
+    preserveOrder: true,
+  });
 }
 
 export function normalizeRestrictionLatex(latex: string) {
-  const trimmed = latex.trim();
-  const reciprocalNonzero = trimmed.match(/^\\frac\{1\}\{(.+)\}\\ne0$/);
-  if (reciprocalNonzero) {
-    return `${reciprocalNonzero[1]}\\ne0`;
-  }
-
-  const outerLeftRightInverse = trimmed.match(/^\\left\((.+)\\right\)\^\{-1\}(.+)$/);
-  if (outerLeftRightInverse) {
-    return `\\frac{1}{${outerLeftRightInverse[1]}}${outerLeftRightInverse[2]}`;
-  }
-
-  const outerPlainInverse = trimmed.match(/^\((.+)\)\^\{-1\}(.+)$/);
-  if (outerPlainInverse) {
-    return `\\frac{1}{${outerPlainInverse[1]}}${outerPlainInverse[2]}`;
-  }
-
-  return trimmed;
+  return normalizeConstraintLatex(latex);
 }
 
 export function buildParameterizedSolveTargetSection(
@@ -388,20 +371,4 @@ function sanitizeMilestoneWording(text: string) {
     .replace(/outside the current exact selected-target solver ([^.]+)/gi, 'outside the supported exact family')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function dedupe(entries: string[]) {
-  const seen = new Set<string>();
-  const result: string[] = [];
-
-  for (const entry of entries) {
-    if (seen.has(entry)) {
-      continue;
-    }
-
-    seen.add(entry);
-    result.push(entry);
-  }
-
-  return result;
 }
