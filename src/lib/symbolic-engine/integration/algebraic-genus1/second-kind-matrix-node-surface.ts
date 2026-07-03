@@ -70,6 +70,10 @@ export type AlgebraicGenus1SecondKindMatrixNodeSurfaceResult =
       detail: string;
     };
 
+export type AlgebraicGenus1SecondKindMatrixNodeSurfaceOptions = {
+  includeDetailSections?: boolean;
+};
+
 const Z = 'z';
 const THIRD_KIND_CHARACTERISTIC = 'n_p';
 const THIRD_KIND_COEFFICIENT = 'C_Pi_p';
@@ -171,6 +175,7 @@ function detailSection(input: AlgebraicGenus1SecondKindMatrixNodeSurface) {
 export function buildAlgebraicGenus1SecondKindMatrixNodeSurface(
   node: unknown,
   variable = 'x',
+  options: AlgebraicGenus1SecondKindMatrixNodeSurfaceOptions = {},
 ): AlgebraicGenus1SecondKindMatrixNodeSurfaceResult {
   const curve = profileAlgebraicGenus1CurveCandidate(node, variable);
   if (curve.kind === 'stop') {
@@ -288,6 +293,10 @@ export function buildAlgebraicGenus1SecondKindMatrixNodeSurface(
       'Build a node-first F/E/Pi antiderivative and proof-check it before changing live dispatch.',
     ],
   };
+
+  if (options.includeDetailSections === false) {
+    return result;
+  }
 
   return {
     ...result,

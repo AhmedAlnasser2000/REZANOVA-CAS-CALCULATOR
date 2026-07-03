@@ -57,6 +57,8 @@ Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-MATRIX-NODE-SURFACE1` 
 
 Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-CORRECTION-DERIVATIVE-NODE1` replaces the matrix-surface correction derivative placeholder with the normalized node formula `S'(z)(1-mz) - (m/2)S(z)`. Matrix entry population remains deferred until this node surface is expanded into row coefficients and solved over the named-root field.
 
+Inserted prerequisite note: `ALGEBRAIC-GENUS1-SECOND-KIND-DENOMINATOR-CLEARING-SURFACE1` records the bounded denominator factors and clearing multiplier for the raw-radical second-kind coefficient comparison. The cleared zero form is intentionally stored as an unevaluated product so the next prerequisite can expand and extract row coefficients under strict caps.
+
 ## Guardrails
 
 - Keep genus/Risch orchestration Integration-owned.
