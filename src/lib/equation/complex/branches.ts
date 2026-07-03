@@ -152,7 +152,7 @@ export function buildBranchReadback(
 
 export function branchFromLatex(
   latex: string,
-  options: Partial<Pick<ComplexPreimageBranch, 'approxValue' | 'exactComplex' | 'parameterLatex'>> = {},
+  options: Partial<Pick<ComplexPreimageBranch, 'approxValue' | 'exactComplex' | 'parameterLatex' | 'periodicFamily'>> = {},
 ): ComplexPreimageBranch {
   return { latex, ...options };
 }

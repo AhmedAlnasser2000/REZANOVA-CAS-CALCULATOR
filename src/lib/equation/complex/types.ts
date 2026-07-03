@@ -7,6 +7,7 @@ import type {
 import type { ExactScalar } from '../../algebra/polynomial-core';
 import type { ComplexValue } from '../../numeric/complex';
 import type { EquationAlgebraicIsolationOptions } from '../equation-algebraic-isolation';
+import type { PeriodicFamily } from '../solution/periodic-family';
 
 export type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -39,6 +40,7 @@ export type ComplexPreimageBranch = {
   approxValue?: ComplexValue;
   exactComplex?: ExactComplexScalar;
   parameterLatex?: string;
+  periodicFamily?: PeriodicFamily;
 };
 
 export type ComplexPreimageSolveResult = {

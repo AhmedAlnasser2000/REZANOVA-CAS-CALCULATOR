@@ -1,4 +1,13 @@
 import type { AngleUnit, DisplayDetailSection } from '../../../types/calculator';
+import { readExactScalarNode } from '../../algebra/polynomial-core';
+import {
+  createPeriodicFamily,
+  piRationalFromDegrees,
+  renderPeriodicFamilies,
+  renderPeriodicFamilyExpression,
+  transformPeriodicFamilyForAffineTarget,
+  type PeriodicFamily,
+} from '../solution/periodic-family';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import { dedupe, nonzeroFactForNode as sharedNonzeroFactForNode } from './facts';
 import { formatDegreesAsUnitLatex } from '../../trigonometry/angles';
@@ -24,6 +33,7 @@ import type {
   TargetAffine,
   TrigCarrierKind,
 } from './trig-types';
+import { simplifyNode } from './math-json';
 
 function stop(
   reason: ParameterizedTrigStopReason,
@@ -69,15 +79,6 @@ function divideLatex(numerator: string, denominator: string) {
   }
   if (denominator === '-1') {
     return `-${paren(numerator)}`;
-  }
-  if (denominator === '2' && numerator === '\\frac{\\pi}{2}+2\\pi n') {
-    return '\\frac{\\pi}{4}+\\pi n';
-  }
-  if (denominator === '2' && numerator === '\\frac{\\pi}{2}+\\pi n') {
-    return '\\frac{\\pi}{4}+\\frac{\\pi n}{2}';
-  }
-  if (denominator === '\\frac{1}{2}' && numerator === '\\frac{\\pi}{2}+\\pi n') {
-    return '\\pi+2\\pi n';
   }
   return `\\frac{${numerator}}{${denominator}}`;
 }
@@ -127,6 +128,33 @@ function zeroBranchValues(kind: TrigCarrierKind, angleUnit: AngleUnit) {
   ];
 }
 
+function exactScalarForNode(node: MathJson) {
+  return readExactScalarNode(simplifyNode(node));
+}
+
+function periodicFamily(
+  targetLatex: string,
+  offsetDegrees: number,
+  periodDegrees: number,
+  parameter: string,
+) {
+  return createPeriodicFamily({
+    targetLatex,
+    offset: piRationalFromDegrees(offsetDegrees),
+    period: piRationalFromDegrees(periodDegrees),
+    parameter,
+    domain: 'real',
+  });
+}
+
+function zeroBranchFamilies(kind: TrigCarrierKind, targetLatex: string) {
+  return [
+    kind === 'cos'
+      ? periodicFamily(targetLatex, 90, 180, 'n')
+      : periodicFamily(targetLatex, 0, 180, 'n'),
+  ];
+}
+
 function periodicBranchValues(
   kind: TrigCarrierKind,
   value: MathJson,
@@ -162,6 +190,35 @@ function periodicBranchValues(
     `${inverse}+${fullPeriod}`,
     `-${inverse}+${fullPeriod}`,
   ];
+}
+
+function periodicBranchFamilies(
+  kind: TrigCarrierKind,
+  value: MathJson,
+  angleUnit: AngleUnit,
+  targetLatex: string,
+): PeriodicFamily[] | null {
+  if (angleUnit !== 'rad') {
+    return null;
+  }
+
+  if (isZeroNode(value)) {
+    return zeroBranchFamilies(kind, targetLatex);
+  }
+
+  const numericValue = numericValueOfNode(value);
+  if (numericValue === null) {
+    return null;
+  }
+
+  const cycleDegrees = exactCycleDegrees(kind, numericValue);
+  if (!cycleDegrees) {
+    return null;
+  }
+
+  const periodDegrees = kind === 'tan' ? 180 : 360;
+  return cycleDegrees.map((degrees) =>
+    periodicFamily(targetLatex, degrees, periodDegrees, 'n'));
 }
 
 function closeTo(left: number, right: number) {
@@ -354,7 +411,11 @@ export function solveDirectParameterizedTrigFromJson(
     );
   }
 
-  const branchValues = periodicBranchValues(carrier.kind, carrierValue, carrierValueLatex, angleUnit);
+  const argumentLatex = latexForNode(carrier.argument);
+  const branchFamilies = periodicBranchFamilies(carrier.kind, carrierValue, angleUnit, argumentLatex);
+  const branchValues = branchFamilies
+    ? branchFamilies.map(renderPeriodicFamilyExpression)
+    : periodicBranchValues(carrier.kind, carrierValue, carrierValueLatex, angleUnit);
   const formulaFacts = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForNode(normalized.affine.coefficient),
     rangeFact?.kind === 'fact' ? rangeFact.latex : null,
@@ -366,7 +427,6 @@ export function solveDirectParameterizedTrigFromJson(
       argument.reason === 'non-affine-argument'
       && options.formulaHandoff?.domain === 'real'
     ) {
-      const argumentLatex = latexForNode(carrier.argument);
       const generatedEquations = branchValues.map((branchValue) => `${argumentLatex}=${branchValue}`);
       return solveTrigFormulaBranches({
         generatedEquations,
@@ -395,14 +455,32 @@ export function solveDirectParameterizedTrigFromJson(
     );
   }
 
-  const solutionExpressions = branchValues.map((branchValue) =>
-    solveArgumentForTarget(argument.affine, branchValue),
-  );
+  const coefficientScalar = exactScalarForNode(argument.affine.coefficient);
+  const constantScalar = exactScalarForNode(argument.affine.constant);
+  const solutionFamilies = coefficientScalar && constantScalar && branchFamilies
+    ? branchFamilies
+      .map((family) =>
+        transformPeriodicFamilyForAffineTarget(family, {
+          targetLatex: target,
+          coefficient: coefficientScalar,
+          constant: constantScalar,
+        }))
+      .filter((family): family is PeriodicFamily => Boolean(family))
+    : null;
+  const renderedFamilies = solutionFamilies && solutionFamilies.length === branchFamilies?.length
+    ? renderPeriodicFamilies(solutionFamilies, {
+      source: 'equation-parameterized-trig',
+    })
+    : null;
+  const solutionExpressions = renderedFamilies
+    ? renderedFamilies.branchesLatex
+    : branchValues.map((branchValue) =>
+      solveArgumentForTarget(argument.affine, branchValue));
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForNode(normalized.affine.coefficient),
     nonzeroFactForNode(argument.affine.coefficient),
     rangeFact?.kind === 'fact' ? rangeFact.latex : null,
-    'n\\in\\mathbb{Z}',
+    renderedFamilies?.parameterLatex ?? 'n\\in\\mathbb{Z}',
   ].filter((entry): entry is string => Boolean(entry))));
 
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
@@ -419,8 +497,8 @@ export function solveDirectParameterizedTrigFromJson(
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: exactLatexForSolutions(target, solutionExpressions),
-    branchReadback: branchReadbackForSolutions(target, solutionExpressions),
+    exactLatex: renderedFamilies?.exactLatex ?? exactLatexForSolutions(target, solutionExpressions),
+    branchReadback: renderedFamilies?.branchReadback ?? branchReadbackForSolutions(target, solutionExpressions),
     exactSupplementLatex,
     detailSections,
     carrierValueLatex,

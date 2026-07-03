@@ -34,6 +34,10 @@ import { addLatex, divideLatex, multiplyLatex, negateLatex, subtractLatex } from
 import { containsTarget, isArrayNode, latexForNode } from './math-json';
 import { parameterNamesFromLatex, parseEquationZeroForm, solvePolynomialComplexBranchesFromNode } from './polynomial';
 import { ONE_SCALAR, ZERO_SCALAR, type ComplexEquationBranch, type ComplexPreimageBranch, type ComplexPreimageSolveResult, type ExactComplexScalar } from './types';
+import {
+  renderPeriodicFamilies,
+  transformPeriodicFamilyForAffineTarget,
+} from '../solution/periodic-family';
 
 export type LinearComplexExpression = {
   coefficient: ExactScalar;
@@ -176,6 +180,26 @@ export function solveAffineInnerAgainstBranch(
   const linear = collectLinearComplex(node, target);
   if (!linear || exactScalarIsZero(linear.coefficient)) {
     return null;
+  }
+
+  if (branch.periodicFamily && exactScalarIsZero(linear.constant.im)) {
+    const family = transformPeriodicFamilyForAffineTarget(branch.periodicFamily, {
+      targetLatex: target,
+      coefficient: linear.coefficient,
+      constant: linear.constant.re,
+    });
+    if (family) {
+      const rendered = renderPeriodicFamilies([family], {
+        source: 'equation-complex-preimage',
+        parameterPlacement: 'inline',
+      });
+      return {
+        answerLatex: rendered.exactLatex,
+        branchReadback: rendered.branchReadback,
+        exactSupplementLatex: [],
+        proofLines: [`Reduced ${latexForNode(node)} to a structured periodic affine preimage.`],
+      };
+    }
   }
 
   const solutionLatex = affineSolutionLatex(linear, branch, complexExactForm);

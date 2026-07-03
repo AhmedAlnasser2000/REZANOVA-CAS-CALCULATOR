@@ -180,6 +180,10 @@ describe('equation complex route', () => {
     const sin = solveComplex(String.raw`\sin(x)=i`, { angleUnit: 'rad' });
     const tan = solveComplex(String.raw`\tan(x)=1+i`, { angleUnit: 'rad' });
     const cosDeg = solveComplex(String.raw`\cos(2x+1)=i`, { angleUnit: 'deg' });
+    const cosZero = solveComplex(String.raw`\cos(2x)=0`, { angleUnit: 'rad' });
+    const sinZero = solveComplex(String.raw`\sin(2x)=0`, { angleUnit: 'rad' });
+    const tanUnit = solveComplex(String.raw`\tan(2x)=1`, { angleUnit: 'rad' });
+    const cosHalf = solveComplex(String.raw`\cos\left(\frac{x}{2}\right)=0`, { angleUnit: 'rad' });
 
     expect(sin.exactLatex).toContain('\\arcsin\\left(i\\right)+2\\pi k');
     expect(sin.exactLatex).toContain('\\pi-\\arcsin\\left(i\\right)+2\\pi k');
@@ -187,6 +191,13 @@ describe('equation complex route', () => {
     expect(tan.exactLatex).toContain('\\arctan\\left(1+i\\right)+\\pi k');
     expect(cosDeg.exactLatex).toContain('\\frac{180}{\\pi}\\arccos\\left(i\\right)');
     expect(cosDeg.exactLatex).toContain('360k');
+    expect(cosZero.exactLatex).toBe(String.raw`x\in\left\{\frac{\pi}{4}+\frac{\pi k}{2}\right\},\ k\in\mathbb{Z}`);
+    expect(sinZero.exactLatex).toBe(String.raw`x\in\left\{\frac{\pi k}{2}\right\},\ k\in\mathbb{Z}`);
+    expect(tanUnit.exactLatex).toBe(String.raw`x\in\left\{\frac{\pi}{8}+\frac{\pi k}{2}\right\},\ k\in\mathbb{Z}`);
+    expect(cosHalf.exactLatex).toBe(String.raw`x\in\left\{\pi+2\pi k\right\},\ k\in\mathbb{Z}`);
+    for (const result of [cosZero, sinZero, tanUnit, cosHalf]) {
+      expect(result.exactLatex).not.toContain(String.raw`\frac{\frac`);
+    }
   });
 
   it('solves true two-trig-layer complex preimages with independent integer families', () => {

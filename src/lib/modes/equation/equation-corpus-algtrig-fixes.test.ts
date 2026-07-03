@@ -96,14 +96,19 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
     const productZero = expectSuccess(String.raw`\sin(x)\cos(x)=0`);
     const squareDifference = expectSuccess(String.raw`\sin(x)^2-\cos(x)^2=0`);
     const affineAngle = expectSuccess(String.raw`\cos\left(\frac{x}{2}\right)=0`);
+    const doubledCosZero = expectSuccess(String.raw`\cos(2x)=0`);
+    const doubledTanUnit = expectSuccess(String.raw`\tan(2x)=1`);
 
-    for (const result of [square, identity, productUnit, productZero, squareDifference, affineAngle]) {
+    for (const result of [square, identity, productUnit, productZero, squareDifference, affineAngle, doubledCosZero, doubledTanUnit]) {
       expect(collectOutcomeText(result)).toContain('n\\in\\mathbb{Z}');
+      expect(result.exactLatex).not.toContain('\\frac{\\frac');
     }
     expect(identity.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\pi n\\right\\}');
     expect(productUnit.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\pi n\\right\\}');
     expect(productZero.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi n}{2}\\right\\}');
     expect(squareDifference.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\frac{\\pi n}{2}\\right\\}');
     expect(affineAngle.exactLatex).toBe('x\\in\\left\\{\\pi+2\\pi n\\right\\}');
+    expect(doubledCosZero.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\frac{\\pi n}{2}\\right\\}');
+    expect(doubledTanUnit.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{8}+\\frac{\\pi n}{2}\\right\\}');
   });
 });

@@ -24,6 +24,11 @@ import { addLatex, groupedLatex, negateLatex, subtractLatex } from './latex';
 import { containsTarget, isArrayNode, latexForNode, parseTopLevelEquationSides } from './math-json';
 import { parameterNamesFromLatex } from './polynomial';
 import { type ComplexEquationOptions, type ComplexPreimageBranch, type ComplexPreimageSolveResult } from './types';
+import {
+  createPeriodicFamily,
+  piRationalFromDegrees,
+  renderPeriodicFamilyExpression,
+} from '../solution/periodic-family';
 
 type ComplexPreimageRuntimeOptions = Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>
   & Pick<ComplexEquationOptions, 'maxPowerDegree'>;
@@ -270,6 +275,17 @@ export function trigPreimageBranchesFromLatex(
   parameterName = 'k',
   carriedParameterLatex?: string,
 ): ComplexPreimageBranch[] {
+  const periodicBranches = exactPeriodicTrigPreimageBranches(
+    functionName,
+    rhsLatex,
+    angleUnit,
+    parameterName,
+    carriedParameterLatex,
+  );
+  if (periodicBranches) {
+    return periodicBranches;
+  }
+
   const inverse = scaledInverseTrigLatex(functionName, rhsLatex, angleUnit);
   const period = anglePeriodLatex(functionName, angleUnit);
   const parameterLatex = mergeIntegerParameterLatex(carriedParameterLatex, integerParameterLatex(parameterName));
@@ -290,6 +306,58 @@ export function trigPreimageBranchesFromLatex(
     branchFromLatex(addLatex(inverse, integerPeriodTerm(period, parameterName)), { parameterLatex }),
     branchFromLatex(addLatex(subtractLatex(halfTurn, inverse), integerPeriodTerm(period, parameterName)), { parameterLatex }),
   ];
+}
+
+function exactPeriodicTrigPreimageBranches(
+  functionName: 'Sin' | 'Cos' | 'Tan',
+  rhsLatex: string,
+  angleUnit: AngleUnit,
+  parameterName: string,
+  carriedParameterLatex?: string,
+) {
+  if (angleUnit !== 'rad' || carriedParameterLatex) {
+    return null;
+  }
+
+  const branches = exactPeriodicDegrees(functionName, rhsLatex);
+  if (!branches) {
+    return null;
+  }
+
+  return branches.map(({ offsetDegrees, periodDegrees }) => {
+    const family = createPeriodicFamily({
+      targetLatex: '',
+      offset: piRationalFromDegrees(offsetDegrees),
+      period: piRationalFromDegrees(periodDegrees),
+      parameter: parameterName,
+      domain: 'complex',
+    });
+    return branchFromLatex(renderPeriodicFamilyExpression(family), {
+      parameterLatex: integerParameterLatex(parameterName),
+      periodicFamily: family,
+    });
+  });
+}
+
+function exactPeriodicDegrees(functionName: 'Sin' | 'Cos' | 'Tan', rhsLatex: string) {
+  if (functionName === 'Sin') {
+    if (rhsLatex === '0') return [{ offsetDegrees: 0, periodDegrees: 180 }];
+    if (rhsLatex === '1') return [{ offsetDegrees: 90, periodDegrees: 360 }];
+    if (rhsLatex === '-1') return [{ offsetDegrees: -90, periodDegrees: 360 }];
+    return null;
+  }
+
+  if (functionName === 'Cos') {
+    if (rhsLatex === '0') return [{ offsetDegrees: 90, periodDegrees: 180 }];
+    if (rhsLatex === '1') return [{ offsetDegrees: 0, periodDegrees: 360 }];
+    if (rhsLatex === '-1') return [{ offsetDegrees: 180, periodDegrees: 360 }];
+    return null;
+  }
+
+  if (rhsLatex === '0') return [{ offsetDegrees: 0, periodDegrees: 180 }];
+  if (rhsLatex === '1') return [{ offsetDegrees: 45, periodDegrees: 180 }];
+  if (rhsLatex === '-1') return [{ offsetDegrees: -45, periodDegrees: 180 }];
+  return null;
 }
 
 export function splitParameterSuffix(answerLatex: string) {
@@ -624,6 +692,7 @@ export function solveComplexPreimageEquation(
     parameterNames,
     generatedEquationLatex: equationLatex,
     exactLatex: solved.answerLatex,
+    branchReadback: solved.branchReadback,
     approxText: solved.approxText,
     exactSupplementLatex: [...new Set(solved.exactSupplementLatex)],
     detailSections,
