@@ -57,8 +57,8 @@ describe('algebraic genus-1 second-kind coefficient matrix readiness', () => {
     expect(result.canSolveDirectly).toBe(false);
     expect(result.rootChartKind).toBe('cubic-three-real-roots');
     expect(result.rowLabelsLatex).toContain('z^{0}');
-    expect(result.rowLabelsLatex).toContain('z^{5}');
-    expect(result.matrixShape).toEqual({ rows: 6, columns: 6 });
+    expect(result.rowLabelsLatex).toContain('z^{7}');
+    expect(result.matrixShape).toEqual({ rows: 8, columns: 6 });
     expect(result.unknowns.some((unknown) => unknown.symbolLatex === 'C_E')).toBe(true);
     expect(result.unknowns.some((unknown) => unknown.symbolLatex === 's_2')).toBe(true);
     expect(text(result)).toContain('linear-system shape');

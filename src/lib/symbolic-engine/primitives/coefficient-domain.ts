@@ -46,6 +46,10 @@ export type SymbolicCoefficientParseResult =
   | { kind: 'success'; coefficient: SymbolicCoefficient }
   | { kind: 'stop'; reason: SymbolicCoefficientStopReason; detail?: string };
 
+export type SymbolicCoefficientParseOptions = {
+  maxSimplifyNodeCount?: number;
+};
+
 const UNSUPPORTED_TRANSCENDENTAL_HEADS = new Set([
   'Sin',
   'Cos',
@@ -374,13 +378,16 @@ export function parseSymbolicCoefficient(
   node: unknown,
   variable: string,
   facts: SymbolicCoefficientFact[] = [],
+  options: SymbolicCoefficientParseOptions = {},
 ): SymbolicCoefficientParseResult {
   const validation = validateCoefficientNode(node, variable);
   if (validation) {
     return validation;
   }
 
-  const simplified = simplifyMathJsonNode(node, { maxNodeCount: COEFFICIENT_SIMPLIFY_LIMIT });
+  const simplified = simplifyMathJsonNode(node, {
+    maxNodeCount: options.maxSimplifyNodeCount ?? COEFFICIENT_SIMPLIFY_LIMIT,
+  });
   if (simplified.kind === 'unsupported') {
     return { kind: 'stop', reason: 'node-limit', detail: simplified.message };
   }

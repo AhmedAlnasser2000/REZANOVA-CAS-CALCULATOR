@@ -66,7 +66,7 @@ describe('algebraic genus-1 second-kind denominator clearing surface', () => {
     const result = success('\\sqrt{t^3-t}', 't');
 
     expect(result.variable).toBe('t');
-    expect(result.rowBasisNodes.length).toBe(6);
+    expect(result.rowBasisNodes.length).toBe(8);
     expect(result.rootChartKind).toBe('cubic-three-real-roots');
     expect(text(result)).toContain('row basis count: ');
   });

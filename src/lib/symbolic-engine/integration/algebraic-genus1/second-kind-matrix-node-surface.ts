@@ -77,9 +77,26 @@ export type AlgebraicGenus1SecondKindMatrixNodeSurfaceOptions = {
 const Z = 'z';
 const THIRD_KIND_CHARACTERISTIC = 'n_p';
 const THIRD_KIND_COEFFICIENT = 'C_Pi_p';
+const THREE_REAL_FIRST_KIND_MULTIPLIER = 'M_F_three_real';
+const QUARTIC_FIRST_KIND_MULTIPLIER = 'M_F_quartic';
+const COMPLEX_PAIR_FIRST_KIND_MULTIPLIER = 'M_F_complex_pair';
 
 function power(node: unknown, exponent: number) {
   return exponent === 0 ? 1 : exponent === 1 ? node : ['Power', node, exponent];
+}
+
+function firstKindMultiplierNode(
+  rootChartKind: AlgebraicGenus1RootPullbackNodeForm['rootChartKind'],
+) {
+  if (rootChartKind === 'cubic-one-real-root-complex-pair') {
+    return COMPLEX_PAIR_FIRST_KIND_MULTIPLIER;
+  }
+
+  if (rootChartKind === 'quartic-four-real-roots') {
+    return QUARTIC_FIRST_KIND_MULTIPLIER;
+  }
+
+  return THREE_REAL_FIRST_KIND_MULTIPLIER;
 }
 
 function correctionPolynomial(symbols: readonly string[]) {
@@ -237,8 +254,9 @@ export function buildAlgebraicGenus1SecondKindMatrixNodeSurface(
     nodeForm.dxDzNode,
   );
   const rawPullbackNode = simplifyMathJsonNodeOrOriginal(rawIntegrandPullback, { maxNodeCount: 5000 });
+  const firstKindMultiplier = firstKindMultiplierNode(nodeForm.rootChartKind);
   const pullbackOverFirstKindKernelNode = simplifyMathJsonNodeOrOriginal(
-    divideMathJsonNodes(rawPullbackNode, nodeForm.firstKindKernelNode),
+    multiplyMathJsonNodes(firstKindMultiplier, radicandInChartNode),
     { maxNodeCount: 5000 },
   );
   const correctionSymbols = matrix.unknowns
@@ -284,6 +302,7 @@ export function buildAlgebraicGenus1SecondKindMatrixNodeSurface(
       ...nodeForm.readinessNotes,
       ...matrix.readinessNotes,
       'The coefficient matrix now has a MathJSON node surface for the pullback RHS, basis kernels, correction polynomial, and row powers.',
+      'The raw radical RHS uses a named first-kind multiplier atom so row-coefficient parsing stays inside the bounded named-root coefficient field.',
       'The rational-correction derivative is expanded as S\\prime(z)(1-mz) - (m/2)S(z) over the first-kind kernel.',
       'Expansion into actual matrix entries and root-field solving remain separate prerequisites before live EllipticE/Pi adoption.',
     ],

@@ -47,8 +47,13 @@ export type AlgebraicGenus1SecondKindCoefficientMatrixResult =
       detail: string;
     };
 
-function coefficientRows(cap: number) {
-  const rowCount = cap + 4;
+function coefficientRows(
+  rootChartKind: AlgebraicGenus1SecondKindCoefficientIdentitySystem['rootChartKind'],
+  cap: number,
+) {
+  const rowCount = rootChartKind === 'cubic-three-real-roots'
+    ? cap + 6
+    : cap + 4;
   return Array.from({ length: rowCount }, (_, index) => `z^{${index}}`);
 }
 
@@ -125,7 +130,7 @@ export function buildAlgebraicGenus1SecondKindCoefficientMatrix(
     };
   }
 
-  const rowLabelsLatex = coefficientRows(identity.correctionDegreeCap);
+  const rowLabelsLatex = coefficientRows(identity.rootChartKind, identity.correctionDegreeCap);
   const unknowns = unknownsFromIdentity(identity);
   const unknownVectorLatex = vectorLatex(unknowns.map((unknown) => unknown.symbolLatex));
   const rightHandSideLatex = `\\vec b\\left(${identity.rationalCoefficientLatex}\\right)`;

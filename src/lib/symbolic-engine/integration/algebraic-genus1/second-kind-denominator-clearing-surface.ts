@@ -1,4 +1,5 @@
 import type { DisplayDetailSection } from '../../../../types/calculator';
+import { readExactScalarNode } from '../../../algebra/polynomial-core';
 import { mixedDetailSection, textPart } from '../../../display/result-detail-lines';
 import {
   multiplyMathJsonNodes,
@@ -38,24 +39,13 @@ export type AlgebraicGenus1SecondKindDenominatorClearingSurfaceResult =
       detail: string;
     };
 
-const MAX_DENOMINATOR_FACTORS = 12;
+const MAX_DENOMINATOR_FACTORS = 24;
 
-function structuralKey(node: unknown) {
-  return JSON.stringify(node);
-}
-
-function uniqueNodes(nodes: unknown[]) {
-  const seen = new Set<string>();
-  const unique: unknown[] = [];
-  for (const node of nodes) {
-    const key = structuralKey(node);
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    unique.push(node);
-  }
-  return unique;
+function exactPositiveInteger(node: unknown) {
+  const scalar = readExactScalarNode(node);
+  return scalar && scalar.denominator === 1 && scalar.numerator > 0
+    ? scalar.numerator
+    : undefined;
 }
 
 function collectDenominators(node: unknown, factors: unknown[]) {
@@ -63,8 +53,21 @@ function collectDenominators(node: unknown, factors: unknown[]) {
     return;
   }
 
+  if (node[0] === 'Power' && node.length === 3) {
+    const exponent = exactPositiveInteger(node[2]);
+    if (exponent !== undefined) {
+      for (let index = 0; index < exponent; index += 1) {
+        collectDenominators(node[1], factors);
+      }
+      return;
+    }
+  }
+
   if (node[0] === 'Divide' && node.length === 3) {
     factors.push(node[2]);
+    collectDenominators(node[1], factors);
+    collectDenominators(node[2], factors);
+    return;
   }
 
   for (const child of node.slice(1)) {
@@ -120,11 +123,11 @@ export function buildAlgebraicGenus1SecondKindDenominatorClearingSurface(
     };
   }
 
-  const denominatorFactorNodes = uniqueNodes((() => {
+  const denominatorFactorNodes = (() => {
     const factors: unknown[] = [];
     collectDenominators(zeroFormNode, factors);
     return factors;
-  })());
+  })();
 
   if (denominatorFactorNodes.length > MAX_DENOMINATOR_FACTORS) {
     return {

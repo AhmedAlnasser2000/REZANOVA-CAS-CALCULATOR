@@ -49,7 +49,7 @@ describe('algebraic genus-1 second-kind matrix node surface', () => {
     expect(result.canSolveDirectly).toBe(false);
     expect(result.canAdoptLive).toBe(false);
     expect(result.correctionDerivativeFormula).toBe('expanded-normalized-second-kind-kernel');
-    expect(result.matrixShape).toEqual({ rows: 6, columns: 6 });
+    expect(result.matrixShape).toEqual({ rows: 8, columns: 6 });
     expect(result.rowBasisNodes).toEqual([
       1,
       'z',
@@ -57,6 +57,8 @@ describe('algebraic genus-1 second-kind matrix node surface', () => {
       ['Power', 'z', 3],
       ['Power', 'z', 4],
       ['Power', 'z', 5],
+      ['Power', 'z', 6],
+      ['Power', 'z', 7],
     ]);
     expect(result.unknownSymbols).toContain('C_E');
     expect(result.unknownSymbols).toContain('s_2');

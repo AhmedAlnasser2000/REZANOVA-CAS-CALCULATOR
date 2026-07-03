@@ -1807,3 +1807,7 @@
 ## 2026-07-03 - EQUATION-CORPUS-LEDGER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation benchmarks use one canonical unique case as the runnable source of truth per mathematical case. Duplicate textbook or reference sightings are recorded as duplicate ledger rows attached to that canonical `case_id` and must not become separate run targets in the same sweep.
+
+## 2026-07-03 - ALGEBRAIC-GENUS1-SECOND-KIND-ROW-COEFFICIENT-EXTRACTION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 second-kind row extraction keeps first-kind Legendre multipliers as named target-free coefficient atoms while row equations are populated. This keeps bounded coefficient parsing inside the named-root field and defers concrete multiplier substitution to the later solved antiderivative/proof-backcheck gate.
