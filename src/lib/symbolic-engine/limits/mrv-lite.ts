@@ -26,6 +26,12 @@ type MrvFactorModel = {
   denominatorFactors: unknown[];
 };
 
+type MrvDominantTerm = {
+  exponent?: InfinityScaleTerm;
+  residual: InfinityScaleTerm;
+  reason: string;
+};
+
 function isCloseToZero(value: number) {
   return Math.abs(value) < EPSILON;
 }
@@ -130,6 +136,233 @@ function scaleWithPower(power: number): InfinityScale {
   };
 }
 
+function isPositiveUnboundedExponent(term: InfinityScaleTerm | undefined) {
+  return Boolean(
+    term
+    && compareInfinityScale(term.scale, zeroInfinityScale()) > 0
+    && term.coefficient > 0,
+  );
+}
+
+function normalizedMrvTermForSum(term: MrvDominantTerm): MrvDominantTerm | undefined {
+  if (!term.exponent) {
+    return term;
+  }
+
+  const tendency = exponentTendency(term.exponent);
+  if (tendency === 'positive-infinity') {
+    return term;
+  }
+  if (tendency === 'negative-infinity') {
+    return undefined;
+  }
+  if (tendency === 'zero') {
+    return {
+      ...term,
+      exponent: undefined,
+      reason: `${term.reason}; the exponential factor tends to 1`,
+    };
+  }
+
+  return {
+    ...term,
+    exponent: undefined,
+    residual: {
+      ...term.residual,
+      coefficient: term.residual.coefficient * Math.exp(term.exponent.coefficient),
+    },
+    reason: `${term.reason}; the exponential factor tends to a finite constant`,
+  };
+}
+
+function dominantTermLatex(term: MrvDominantTerm) {
+  const coefficientLatex = formatLimitNumberLatex(term.residual.coefficient);
+  const residualScale = infinityScaleLabel(term.residual.scale);
+  const residual =
+    residualScale === '1'
+      ? coefficientLatex
+      : coefficientLatex === '1'
+        ? residualScale
+        : coefficientLatex === '-1'
+          ? `-${residualScale}`
+          : `${coefficientLatex}${residualScale}`;
+
+  const exponentTerm = term.exponent;
+  if (!exponentTerm || !isPositiveUnboundedExponent(exponentTerm)) {
+    return residual;
+  }
+
+  const exponentScale = infinityScaleLabel(exponentTerm.scale);
+  const exponent =
+    Math.abs(exponentTerm.coefficient - 1) < EPSILON
+      ? exponentScale
+      : `${formatLimitNumberLatex(exponentTerm.coefficient)}${exponentScale}`;
+  const exponential = `e^{${exponent}}`;
+  if (residualScale === '1' && Math.abs(term.residual.coefficient - 1) < EPSILON) {
+    return exponential;
+  }
+  if (residualScale === '1' && Math.abs(term.residual.coefficient + 1) < EPSILON) {
+    return `-${exponential}`;
+  }
+  return `${residual}\\,${exponential}`;
+}
+
+function compareDominantTerms(left: MrvDominantTerm, right: MrvDominantTerm) {
+  const leftExponential = isPositiveUnboundedExponent(left.exponent);
+  const rightExponential = isPositiveUnboundedExponent(right.exponent);
+  if (leftExponential && rightExponential && left.exponent && right.exponent) {
+    const exponentScale = compareInfinityScale(left.exponent.scale, right.exponent.scale);
+    if (exponentScale !== 0) {
+      return exponentScale;
+    }
+
+    const exponentCoefficient = left.exponent.coefficient - right.exponent.coefficient;
+    if (Math.abs(exponentCoefficient) >= EPSILON) {
+      return exponentCoefficient > 0 ? 1 : -1;
+    }
+
+    return compareInfinityScale(left.residual.scale, right.residual.scale);
+  }
+
+  if (leftExponential !== rightExponential) {
+    return leftExponential ? 1 : -1;
+  }
+
+  return compareInfinityScale(left.residual.scale, right.residual.scale);
+}
+
+function sameDominanceClass(left: MrvDominantTerm, right: MrvDominantTerm) {
+  const leftExponential = isPositiveUnboundedExponent(left.exponent);
+  const rightExponential = isPositiveUnboundedExponent(right.exponent);
+  if (leftExponential !== rightExponential) {
+    return false;
+  }
+
+  if (leftExponential && left.exponent && right.exponent) {
+    return compareInfinityScale(left.exponent.scale, right.exponent.scale) === 0
+      && Math.abs(left.exponent.coefficient - right.exponent.coefficient) < EPSILON
+      && compareInfinityScale(left.residual.scale, right.residual.scale) === 0;
+  }
+
+  return compareInfinityScale(left.residual.scale, right.residual.scale) === 0;
+}
+
+function multiplyResidualCoefficient(term: MrvDominantTerm, factor: number): MrvDominantTerm {
+  return {
+    ...term,
+    residual: {
+      ...term.residual,
+      coefficient: term.residual.coefficient * factor,
+    },
+  };
+}
+
+function mrvTermFromNode(
+  node: unknown,
+  variable: string,
+  targetKind: Exclude<LimitTargetKind, 'finite'>,
+): MrvDominantTerm | undefined {
+  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
+    const child = mrvTermFromNode(node[1], variable, targetKind);
+    return child ? multiplyResidualCoefficient(child, -1) : undefined;
+  }
+
+  const model: MrvFactorModel = {
+    exponentTerms: [],
+    numeratorFactors: [],
+    denominatorFactors: [],
+  };
+  collectFactors(node, model);
+
+  if (model.exponentTerms.length === 0) {
+    const residual = leadingInfinityScaleTerm(node, variable, targetKind);
+    return residual
+      ? normalizedMrvTermForSum({
+          residual,
+          reason: residual.reason,
+        })
+      : undefined;
+  }
+
+  const exponentDifference = exponentDifferenceNode(model.exponentTerms);
+  if (!exponentDifference) {
+    return undefined;
+  }
+
+  const exponent = leadingInfinityScaleTerm(exponentDifference, variable, targetKind);
+  const residual = leadingInfinityScaleTerm(
+    quotientNode(model.numeratorFactors, model.denominatorFactors),
+    variable,
+    targetKind,
+  );
+  if (!exponent || !residual) {
+    return undefined;
+  }
+
+  return normalizedMrvTermForSum({
+    exponent,
+    residual,
+    reason: 'identified the dominant exponential scale inside a term',
+  });
+}
+
+function sumChildren(node: unknown) {
+  return isNodeArray(node) && node[0] === 'Add' ? node.slice(1) : [node];
+}
+
+function leadingMrvSumTerm(
+  node: unknown,
+  variable: string,
+  targetKind: Exclude<LimitTargetKind, 'finite'>,
+): MrvDominantTerm | undefined {
+  const terms = sumChildren(node)
+    .map((child) => mrvTermFromNode(child, variable, targetKind))
+    .filter(Boolean) as MrvDominantTerm[];
+  if (terms.length === 0) {
+    return undefined;
+  }
+
+  const ordered = [...terms].sort((left, right) => -compareDominantTerms(left, right));
+  while (ordered.length > 0) {
+    const dominant = ordered[0];
+    const sameClass = ordered.filter((term) => sameDominanceClass(term, dominant));
+    const coefficient = sameClass.reduce((sum, term) => sum + term.residual.coefficient, 0);
+    if (!isCloseToZero(coefficient)) {
+      return {
+        exponent: dominant.exponent,
+        residual: {
+          ...dominant.residual,
+          coefficient,
+        },
+        reason: sameClass.length > 1
+          ? 'combined matching MRV-lite dominant terms in a sum'
+          : 'selected the MRV-lite dominant term in a sum',
+      };
+    }
+    ordered.splice(0, sameClass.length);
+  }
+
+  return {
+    residual: {
+      coefficient: 0,
+      scale: zeroInfinityScale(),
+      reason: 'all MRV-lite dominant terms canceled',
+    },
+    reason: 'all MRV-lite dominant terms canceled',
+  };
+}
+
+function residualQuotient(numerator: InfinityScaleTerm, denominator: InfinityScaleTerm): InfinityScaleTerm | undefined {
+  if (isCloseToZero(denominator.coefficient)) {
+    return undefined;
+  }
+  return {
+    coefficient: numerator.coefficient / denominator.coefficient,
+    scale: combineInfinityScale(numerator.scale, denominator.scale, -1),
+    reason: 'compared residual MRV-lite scales in a quotient',
+  };
+}
+
 function withCombinedScale(term: InfinityScaleTerm, scale: InfinityScale, reason: string): InfinityScaleTerm {
   return {
     coefficient: term.coefficient,
@@ -137,6 +370,193 @@ function withCombinedScale(term: InfinityScaleTerm, scale: InfinityScale, reason
     reason,
     notes: term.notes,
   };
+}
+
+function quotientRows(input: {
+  numerator: MrvDominantTerm;
+  denominator: MrvDominantTerm;
+  conclusion: DisplayDetailLinePart[];
+  extraRows?: DisplayDetailLinePart[][];
+}) {
+  return limitMethodRowsSection([
+    [limitTextPart('Form detected: MRV-lite dominant-sum comparison.')],
+    [
+      limitTextPart('Numerator dominant term: '),
+      limitMathPart(dominantTermLatex(input.numerator)),
+      limitTextPart('.'),
+    ],
+    [
+      limitTextPart('Denominator dominant term: '),
+      limitMathPart(dominantTermLatex(input.denominator)),
+      limitTextPart('.'),
+    ],
+    ...(input.extraRows ?? []),
+    input.conclusion,
+  ]);
+}
+
+function successFromDominantSumComparison(input: {
+  numerator: MrvDominantTerm;
+  denominator: MrvDominantTerm;
+}): FiniteLimitRuleSuccess | undefined {
+  const numeratorExp = isPositiveUnboundedExponent(input.numerator.exponent);
+  const denominatorExp = isPositiveUnboundedExponent(input.denominator.exponent);
+
+  if (numeratorExp && denominatorExp && input.numerator.exponent && input.denominator.exponent) {
+    const exponentScaleComparison = compareInfinityScale(input.numerator.exponent.scale, input.denominator.exponent.scale);
+    const exponentCoefficientDelta = input.numerator.exponent.coefficient - input.denominator.exponent.coefficient;
+    if (exponentScaleComparison > 0 || (exponentScaleComparison === 0 && exponentCoefficientDelta > EPSILON)) {
+      const infinity: FiniteLimitRuleValue = input.numerator.residual.coefficient * input.denominator.residual.coefficient >= 0
+        ? 'posInfinity'
+        : 'negInfinity';
+      return {
+        kind: 'success',
+        value: infinity,
+        exactLatex: formatLimitValueLatex(infinity),
+        approxText: infinity === 'posInfinity' ? 'Infinity' : '-Infinity',
+        origin: 'rule-based-symbolic',
+        detailSections: quotientRows({
+          numerator: input.numerator,
+          denominator: input.denominator,
+          conclusion: [
+            limitTextPart('Conclusion: the numerator exponential scale dominates, so the limit is '),
+            limitMathPart(formatLimitValueLatex(infinity) ?? '\\infty'),
+            limitTextPart('.'),
+          ],
+        }),
+      };
+    }
+
+    if (exponentScaleComparison < 0 || (exponentScaleComparison === 0 && exponentCoefficientDelta < -EPSILON)) {
+      return {
+        kind: 'success',
+        value: 0,
+        exactLatex: '0',
+        approxText: '0',
+        origin: 'rule-based-symbolic',
+        detailSections: quotientRows({
+          numerator: input.numerator,
+          denominator: input.denominator,
+          conclusion: [
+            limitTextPart('Conclusion: the denominator exponential scale dominates, so the limit is '),
+            limitMathPart('0'),
+            limitTextPart('.'),
+          ],
+        }),
+      };
+    }
+  } else if (numeratorExp !== denominatorExp) {
+    if (numeratorExp) {
+      const infinity: FiniteLimitRuleValue = input.numerator.residual.coefficient * input.denominator.residual.coefficient >= 0
+        ? 'posInfinity'
+        : 'negInfinity';
+      return {
+        kind: 'success',
+        value: infinity,
+        exactLatex: formatLimitValueLatex(infinity),
+        approxText: infinity === 'posInfinity' ? 'Infinity' : '-Infinity',
+        origin: 'rule-based-symbolic',
+        detailSections: quotientRows({
+          numerator: input.numerator,
+          denominator: input.denominator,
+          conclusion: [
+            limitTextPart('Conclusion: the numerator exponential scale dominates, so the limit is '),
+            limitMathPart(formatLimitValueLatex(infinity) ?? '\\infty'),
+            limitTextPart('.'),
+          ],
+        }),
+      };
+    }
+
+    return {
+      kind: 'success',
+      value: 0,
+      exactLatex: '0',
+      approxText: '0',
+      origin: 'rule-based-symbolic',
+      detailSections: quotientRows({
+        numerator: input.numerator,
+        denominator: input.denominator,
+        conclusion: [
+          limitTextPart('Conclusion: the denominator exponential scale dominates, so the limit is '),
+          limitMathPart('0'),
+          limitTextPart('.'),
+        ],
+      }),
+    };
+  }
+
+  const residual = residualQuotient(input.numerator.residual, input.denominator.residual);
+  if (!residual) {
+    return undefined;
+  }
+  return successFromScale({
+    term: residual,
+    rows: [
+      [
+        limitTextPart('Numerator dominant term: '),
+        limitMathPart(dominantTermLatex(input.numerator)),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Denominator dominant term: '),
+        limitMathPart(dominantTermLatex(input.denominator)),
+        limitTextPart('.'),
+      ],
+      [
+        limitTextPart('Key calculation: matching exponential scales cancel, leaving the residual quotient.'),
+      ],
+    ],
+  });
+}
+
+function resolveMrvLiteDominantSumLimit(
+  node: unknown,
+  targetKind: Exclude<LimitTargetKind, 'finite'>,
+  variable: string,
+): FiniteLimitRuleSuccess | undefined {
+  if (targetKind !== 'posInfinity') {
+    return undefined;
+  }
+
+  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3) {
+    const numerator = leadingMrvSumTerm(node[1], variable, targetKind);
+    const denominator = leadingMrvSumTerm(node[2], variable, targetKind);
+    if (!numerator || !denominator || (!isPositiveUnboundedExponent(numerator.exponent) && !isPositiveUnboundedExponent(denominator.exponent))) {
+      return undefined;
+    }
+    return successFromDominantSumComparison({ numerator, denominator });
+  }
+
+  if (isNodeArray(node) && node[0] === 'Add') {
+    const term = leadingMrvSumTerm(node, variable, targetKind);
+    if (!term || !isPositiveUnboundedExponent(term.exponent)) {
+      return undefined;
+    }
+    const infinity: FiniteLimitRuleValue = term.residual.coefficient >= 0 ? 'posInfinity' : 'negInfinity';
+    return {
+      kind: 'success',
+      value: infinity,
+      exactLatex: formatLimitValueLatex(infinity),
+      approxText: infinity === 'posInfinity' ? 'Infinity' : '-Infinity',
+      origin: 'rule-based-symbolic',
+      detailSections: limitMethodRowsSection([
+        [limitTextPart('Form detected: MRV-lite dominant-sum comparison.')],
+        [
+          limitTextPart('Dominant term: '),
+          limitMathPart(dominantTermLatex(term)),
+          limitTextPart('.'),
+        ],
+        [
+          limitTextPart('Conclusion: the dominant exponential scale grows without bound, so the limit is '),
+          limitMathPart(formatLimitValueLatex(infinity) ?? '\\infty'),
+          limitTextPart('.'),
+        ],
+      ]),
+    };
+  }
+
+  return undefined;
 }
 
 function numericApproxText(value: number) {
@@ -268,7 +688,7 @@ export function resolveMrvLiteLimit(
   };
   collectFactors(node, model);
   if (model.exponentTerms.length === 0) {
-    return undefined;
+    return resolveMrvLiteDominantSumLimit(node, targetKind, variable);
   }
 
   const exponentDifference = exponentDifferenceNode(model.exponentTerms);

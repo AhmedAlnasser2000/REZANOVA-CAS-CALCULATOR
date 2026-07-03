@@ -56,4 +56,30 @@ describe('MRV-lite limit comparison', () => {
     expect(result?.kind).toBe('success');
     expect(result?.exactLatex).toBe('\\infty');
   });
+
+  it('selects dominant MRV terms inside sums before quotient comparison', () => {
+    const matchingDominantSums = resolveMrvLiteLimit(
+      parse(String.raw`(e^{\sqrt{x}}+x^5)/(e^{\sqrt{x}}-\log(x))`),
+      'posInfinity',
+      'x',
+    );
+    const polynomialTail = resolveMrvLiteLimit(
+      parse(String.raw`(e^{\sqrt{x}}+\log(x))/(e^{\sqrt{x}}+x^5)`),
+      'posInfinity',
+      'x',
+    );
+    const dominantSum = resolveMrvLiteLimit(parse(String.raw`e^{\sqrt{x}}+x^5`), 'posInfinity', 'x');
+
+    expect(matchingDominantSums?.kind).toBe('success');
+    expect(matchingDominantSums?.exactLatex).toBe('1');
+    expect(methodText(matchingDominantSums)).toContain('Numerator dominant term');
+    expect(methodText(matchingDominantSums)).toContain('e^{x^{\\frac{1}{2}}}');
+    expect(methodText(matchingDominantSums)).not.toContain("(i)^");
+
+    expect(polynomialTail?.kind).toBe('success');
+    expect(polynomialTail?.exactLatex).toBe('1');
+
+    expect(dominantSum?.kind).toBe('success');
+    expect(dominantSum?.exactLatex).toBe('\\infty');
+  });
 });

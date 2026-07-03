@@ -551,6 +551,18 @@ describe('calculus limits', () => {
     const iteratedLog = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity log(log(x))/log(x)',
     });
+    const sublinearExponential = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity e^{sqrt(x)}/x^5',
+    });
+    const exponentialLogDifference = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity e^x/e^{x+log(x)}',
+    });
+    const mrvDominantSums = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (e^{sqrt(x)}+x^5)/(e^{sqrt(x)}-log(x))',
+    });
+    const mrvDominantSumWithTail = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (e^{sqrt(x)}+log(x))/(e^{sqrt(x)}+x^5)',
+    });
 
     expect(logOverPower.error).toBeUndefined();
     expect(logOverPower.exactLatex).toBe('0');
@@ -560,6 +572,19 @@ describe('calculus limits', () => {
     expect(expRatio.exactLatex).toBe('1');
     expect(iteratedLog.error).toBeUndefined();
     expect(iteratedLog.exactLatex).toBe('0');
+    expect(sublinearExponential.error).toBeUndefined();
+    expect(sublinearExponential.exactLatex).toBe('\\infty');
+    expect(sublinearExponential.detailSections?.[0]?.lines.join(' ')).toContain('MRV-lite');
+    expect(exponentialLogDifference.error).toBeUndefined();
+    expect(exponentialLogDifference.exactLatex).toBe('0');
+    expect(exponentialLogDifference.detailSections?.[0]?.lines.join(' ')).toContain('contributes');
+    expect(mrvDominantSums.error).toBeUndefined();
+    expect(mrvDominantSums.exactLatex).toBe('1');
+    expect(mrvDominantSums.detailSections?.[0]?.lines.join(' ')).toContain('Numerator dominant term');
+    expect(mrvDominantSums.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('MRV-lite asymptotic comparison');
+    expect(mrvDominantSumWithTail.error).toBeUndefined();
+    expect(mrvDominantSumWithTail.exactLatex).toBe('1');
   });
 
   it('resolves symbolic infinity cases for target-free leading coefficients', () => {

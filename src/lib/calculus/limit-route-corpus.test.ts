@@ -74,6 +74,9 @@ describe('frontier limit route corpus', () => {
     const mrvQuotient = evaluateCalculusLimit({
       requestLatex: '\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{e^x}',
     });
+    const mrvDominantSums = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (e^{sqrt(x)}+x^5)/(e^{sqrt(x)}-log(x))',
+    });
 
     expectRoute('lim x -> infinity log(x)/x', 'infinity-asymptotic');
     expect(logOverPower.error).toBeUndefined();
@@ -96,6 +99,11 @@ describe('frontier limit route corpus', () => {
     expect(mrvQuotient.error).toBeUndefined();
     expect(mrvQuotient.exactLatex).toBe('0');
     expect(routeLines(mrvQuotient)).toContain('MRV-lite asymptotic comparison');
+
+    expectRoute('lim x -> infinity (e^{sqrt(x)}+x^5)/(e^{sqrt(x)}-log(x))', 'mrv-lite');
+    expect(mrvDominantSums.error).toBeUndefined();
+    expect(mrvDominantSums.exactLatex).toBe('1');
+    expect(routeLines(mrvDominantSums)).toContain('MRV-lite asymptotic comparison');
   });
 
   it('keeps proof routes controlled when the two-sided limit fails', () => {

@@ -97,6 +97,11 @@ describe('natural limit route classifier', () => {
     expect(classifyNaturalLimitRoute('\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{x^5}')).toMatchObject({
       kind: 'mrv-lite',
     });
+    expect(classifyNaturalLimitRoute(
+      'lim x -> infinity (e^{sqrt(x)}+x^5)/(e^{sqrt(x)}-log(x))',
+    )).toMatchObject({
+      kind: 'mrv-lite',
+    });
   });
 
   it('returns controlled unsupported and malformed routes', () => {
