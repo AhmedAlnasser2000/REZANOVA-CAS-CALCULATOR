@@ -254,6 +254,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
       ? symbolicEngine.error
       : input.unsupportedError,
     integrationCandidate: symbolicEngine.candidate,
+    detailSections: symbolicEngine.detailSections,
   };
 }
 

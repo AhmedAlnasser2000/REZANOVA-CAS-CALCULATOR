@@ -53,4 +53,5 @@ export type IntegralResolution =
       kind: 'error';
       error: string;
       candidate: IntegrationCandidateMetadata;
+      detailSections?: DisplayDetailSection[];
     };

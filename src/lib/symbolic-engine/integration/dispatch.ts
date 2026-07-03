@@ -26,6 +26,7 @@ import { tryExpandedDirectRule } from './expanded-direct';
 import { tryExpandedPartsRule } from './expanded-parts';
 import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
+import { normalizeIntegrationNormalForm } from './normal-form';
 import { tryRationalPartialFractionRule } from './rational';
 import { tryRischNormanOrchestrator } from './risch-norman/orchestrator';
 import { tryRischNormanDepth2DerivativeSubstitutionRule } from './risch-norman/depth2-substitution';
@@ -52,6 +53,7 @@ import {
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
 import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
 import type { IntegralResolution, IntegralStrategy } from './types';
+import type { DisplayDetailSection } from '../../../types/calculator';
 
 const ce = new ComputeEngine();
 const RELATION_HEADS = new Set(['Equal', 'NotEqual', 'Less', 'LessEqual', 'Greater', 'GreaterEqual']);
@@ -466,9 +468,49 @@ function signedAddTerms(node: unknown, sign: 1 | -1 = 1): SignedTerm[] {
   return [{ node, sign }];
 }
 
+function normalFormDetail(lines: string[]): DisplayDetailSection {
+  return {
+    title: 'Integration Normal Form',
+    lines,
+  };
+}
+
+function tryNormalFormRetry(
+  node: unknown,
+  variable: string,
+): IntegralResolution | undefined {
+  const normalized = normalizeIntegrationNormalForm(node);
+  if (!normalized.changed) {
+    return undefined;
+  }
+
+  const retried = resolveSymbolicIntegralFromAstInternal(
+    normalized.node,
+    variable,
+    false,
+  );
+  if (retried.kind !== 'success') {
+    return undefined;
+  }
+
+  return symbolicSuccess(
+    node,
+    variable,
+    retried.exactLatex,
+    retried.strategy,
+    undefined,
+    retried.exactSupplementLatex,
+    [
+      normalFormDetail(normalized.lines),
+      ...(retried.detailSections ?? []),
+    ],
+  );
+}
+
 function routeTermWithoutLinearCombination(
   node: unknown,
   variable: string,
+  allowNormalForm = true,
 ): IntegralResolution | undefined {
   const classification = classifyIntegrandForm(node, variable);
   const planned = tryRoutes(node, variable, classification.routes);
@@ -476,9 +518,14 @@ function routeTermWithoutLinearCombination(
     return planned;
   }
 
-  return classification.allowCompatibilityFallback
+  const fallback = classification.allowCompatibilityFallback
     ? tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE)
     : undefined;
+  if (fallback) {
+    return fallback;
+  }
+
+  return allowNormalForm ? tryNormalFormRetry(node, variable) : undefined;
 }
 
 function combineSignedLatex(parts: Array<{ latex: string; sign: 1 | -1 }>) {
@@ -524,12 +571,30 @@ function tryLinearCombinationFallback(node: unknown, variable: string): Integral
   }
 
   const results: Array<Extract<IntegralResolution, { kind: 'success' }>> = [];
+  const blockedTerms: string[] = [];
   for (const term of terms) {
     const result = routeTermWithoutLinearCombination(term.node, variable);
     if (!result || result.kind !== 'success') {
-      return undefined;
+      blockedTerms.push(`${term.sign === -1 ? '-' : ''}${ce.box(term.node as Parameters<typeof ce.box>[0]).latex}`);
+      continue;
     }
     results.push(result);
+  }
+
+  if (blockedTerms.length > 0) {
+    return {
+      kind: 'error',
+      error: 'This antiderivative could not be determined symbolically in this milestone.',
+      candidate: unsupportedCandidateMetadata(node, variable),
+      detailSections: [{
+        title: 'Integration Term Plan',
+        lines: [
+          `Resolved terms: ${results.length}`,
+          `Blocked terms: ${blockedTerms.join(', ')}`,
+          'Calcwiz does not present a partial antiderivative as a complete answer.',
+        ],
+      }],
+    };
   }
 
   const exactLatex = combineSignedLatex(
@@ -551,7 +616,11 @@ function tryLinearCombinationFallback(node: unknown, variable: string): Integral
   );
 }
 
-export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): IntegralResolution {
+function resolveSymbolicIntegralFromAstInternal(
+  node: unknown,
+  variable: string,
+  allowNormalForm: boolean,
+): IntegralResolution {
   if (isRelationRoot(node)) {
     return {
       kind: 'error',
@@ -570,6 +639,13 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
     const fallback = tryRoutes(node, variable, INTEGRATION_ROUTE_PRECEDENCE);
     if (fallback) {
       return fallback;
+    }
+  }
+
+  if (allowNormalForm) {
+    const normalForm = tryNormalFormRetry(node, variable);
+    if (normalForm) {
+      return normalForm;
     }
   }
 
@@ -601,6 +677,10 @@ export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): I
     error: 'This antiderivative could not be determined symbolically in this milestone.',
     candidate: unsupportedCandidateMetadata(node, variable),
   };
+}
+
+export function resolveSymbolicIntegralFromAst(node: unknown, variable = 'x'): IntegralResolution {
+  return resolveSymbolicIntegralFromAstInternal(node, variable, true);
 }
 
 export function resolveSymbolicIntegralFromLatex(latex: string, variable = 'x'): IntegralResolution {
