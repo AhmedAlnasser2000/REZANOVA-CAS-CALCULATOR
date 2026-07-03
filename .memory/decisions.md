@@ -1815,3 +1815,7 @@
 ## 2026-07-03 - ALGEBRAIC-GENUS1-SECOND-KIND-POPULATED-MATRIX-SURFACE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Genus-1 second-kind matrix population is a proof surface before it is a solver. Populated entries, RHS nodes, and row residual backchecks may be recorded behavior-invisibly, but live EllipticE/Pi adoption still requires a later bounded symbolic solve with pivot facts and an antiderivative backcheck.
+
+## 2026-07-03 - ALGEBRAIC-GENUS1-SECOND-KIND-SOLVE-BACKCHECK-SURFACE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Second-kind solve readiness may record pivot candidates and row residual backcheck payloads without producing a solved coefficient vector. Live adoption remains blocked until a later bounded symbolic elimination accepts pivot facts and differentiates the resulting antiderivative.
