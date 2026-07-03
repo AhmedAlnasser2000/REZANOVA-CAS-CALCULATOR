@@ -2,10 +2,9 @@ import type { LimitDirection, DisplayDetailSection } from '../../../types/calcul
 import {
   limitDetailSection,
   limitMathPart,
-  limitMethodSection,
   limitTextPart,
 } from './detail-readback';
-import { box, success } from './evaluation';
+import { box } from './evaluation';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import type { FiniteLimitRuleSuccess } from './types';
 
@@ -125,20 +124,25 @@ function sidePhrase(direction: LimitDirection) {
 }
 
 function oscillationFailure(label: string, variable: string, direction: LimitDirection): SqueezeOscillationFailure {
+  const functionName = label.startsWith('\\cos') ? '\\cos' : '\\sin';
   const sequenceRows = label.startsWith('\\cos')
     ? [
         [
           limitTextPart('Choose '),
           limitMathPart(`${variable}_n=1/(2\\pi n)`),
           limitTextPart('; then '),
-          limitMathPart(`${label.replace(`1/${variable}`, `1/${variable}_n`)}=1`),
+          limitMathPart(`${variable}_n\\to 0`),
+          limitTextPart(' and '),
+          limitMathPart(`${functionName}\\left(1/${variable}_n\\right)=1`),
           limitTextPart('.'),
         ],
         [
           limitTextPart('Choose '),
           limitMathPart(`y_n=1/(\\pi+2\\pi n)`),
           limitTextPart('; then '),
-          limitMathPart(`${label.replace(`1/${variable}`, '1/y_n')}=-1`),
+          limitMathPart('y_n\\to 0'),
+          limitTextPart(' and '),
+          limitMathPart(`${functionName}\\left(1/y_n\\right)=-1`),
           limitTextPart('.'),
         ],
       ]
@@ -147,14 +151,18 @@ function oscillationFailure(label: string, variable: string, direction: LimitDir
           limitTextPart('Choose '),
           limitMathPart(`${variable}_n=1/(\\pi/2+2\\pi n)`),
           limitTextPart('; then '),
-          limitMathPart(`${label.replace(`1/${variable}`, `1/${variable}_n`)}=1`),
+          limitMathPart(`${variable}_n\\to 0`),
+          limitTextPart(' and '),
+          limitMathPart(`${functionName}\\left(1/${variable}_n\\right)=1`),
           limitTextPart('.'),
         ],
         [
           limitTextPart('Choose '),
           limitMathPart(`y_n=1/(3\\pi/2+2\\pi n)`),
           limitTextPart('; then '),
-          limitMathPart(`${label.replace(`1/${variable}`, '1/y_n')}=-1`),
+          limitMathPart('y_n\\to 0'),
+          limitTextPart(' and '),
+          limitMathPart(`${functionName}\\left(1/y_n\\right)=-1`),
           limitTextPart('.'),
         ],
       ];
@@ -200,23 +208,43 @@ export function resolveFiniteSqueezeOscillationLimit(
     return undefined;
   }
 
+  const boundedOscillatorParts = product.oscillatorLabels.flatMap((label, index) => [
+    ...(index === 0 ? [] : [limitTextPart(index === product.oscillatorLabels.length - 1 ? ' and ' : ', ')]),
+    limitMathPart(label),
+  ]);
+
   return {
-    ...success(0, 'rule-based-symbolic', [
-      'Form detected: vanishing factor times bounded oscillator.',
-      `Squeeze bound: -\\left|${product.vanishingLatex}\\right|\\le ${product.productLatex}\\le \\left|${product.vanishingLatex}\\right|.`,
-      `Bounded oscillation: ${product.oscillatorLabels.join(' and ')} stays between -1 and 1.`,
-      `Key calculation: the remaining factor tends to 0 by ${product.vanishingProof}.`,
-      'Conclusion: by the squeeze theorem, the product tends to 0.',
-      'Conclusion: final limit is 0.',
-    ]),
-    detailSections: limitMethodSection(
-      'Form detected: vanishing factor times bounded oscillator.',
-      `Squeeze bound: -\\left|${product.vanishingLatex}\\right|\\le ${product.productLatex}\\le \\left|${product.vanishingLatex}\\right|.`,
-      `Bounded oscillation: ${product.oscillatorLabels.join(' and ')} stays between -1 and 1.`,
-      `Key calculation: the remaining factor tends to 0 by ${product.vanishingProof}.`,
-      'Conclusion: by the squeeze theorem, the product tends to 0.',
-      'Conclusion: final limit is 0.',
-    ),
+    kind: 'success' as const,
+    value: 0,
+    exactLatex: '0',
+    approxText: '0',
+    origin: 'rule-based-symbolic' as const,
+    detailSections: [
+      limitDetailSection('Limit Method', [
+        [limitTextPart('Form detected: vanishing factor times bounded oscillator.')],
+        [
+          limitTextPart('Squeeze bound: '),
+          limitMathPart(`-\\left|${product.vanishingLatex}\\right|\\le ${product.productLatex}\\le \\left|${product.vanishingLatex}\\right|`),
+          limitTextPart('.'),
+        ],
+        [
+          limitTextPart('Bounded oscillation: '),
+          ...boundedOscillatorParts,
+          limitTextPart(' stays between -1 and 1.'),
+        ],
+        [
+          limitTextPart('Key calculation: '),
+          limitMathPart(`\\lim_{${variable}\\to 0}${product.vanishingLatex}=0`),
+          limitTextPart(` by ${product.vanishingProof}.`),
+        ],
+        [limitTextPart('Conclusion: by the squeeze theorem, the product tends to 0.')],
+        [
+          limitTextPart('Conclusion: final limit is '),
+          limitMathPart('0'),
+          limitTextPart('.'),
+        ],
+      ]),
+    ],
   };
 }
 

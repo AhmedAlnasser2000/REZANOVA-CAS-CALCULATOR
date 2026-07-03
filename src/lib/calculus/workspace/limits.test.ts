@@ -289,7 +289,7 @@ describe('calculus limits', () => {
       requestLatex: 'lim x -> 0 x sin(1/x)',
     });
     const secondOrder = evaluateCalculusLimit({
-      requestLatex: 'lim x -> 0 x^2 cos(1/x)',
+      requestLatex: 'lim x -> 0 x^2 cos(1/x^2)',
     });
     const widened = evaluateCalculusLimit({
       requestLatex: 'lim x -> 0 ((1-cos(x))/x) cos(1/x^2)',
@@ -306,6 +306,10 @@ describe('calculus limits', () => {
 
     expect(secondOrder.error).toBeUndefined();
     expect(secondOrder.exactLatex).toBe('0');
+    expect(secondOrder.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\cos(\\frac{1}{x^2})',
+    });
 
     expect(widened.error).toBeUndefined();
     expect(widened.exactLatex).toBe('0');
@@ -324,6 +328,14 @@ describe('calculus limits', () => {
     expect(oscillation.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
       kind: 'math',
       latex: 'y_n=1/(3\\pi/2+2\\pi n)',
+    });
+    expect(oscillation.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\sin\\left(1/x_n\\right)=1',
+    });
+    expect(oscillation.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
+      kind: 'math',
+      latex: '\\sin\\left(1/y_n\\right)=-1',
     });
   });
 
