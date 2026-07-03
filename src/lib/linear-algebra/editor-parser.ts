@@ -1,4 +1,16 @@
 import type { ExactScalarWire } from '../../types/calculator';
+import {
+  exactVectorWireToLatex,
+  matrixEnvironmentEndAt,
+  parseMatrixLiteral,
+} from './editor-matrix-literals';
+import {
+  fail,
+  ParseFailure,
+  type LinearAlgebraEditorParseErrorReason,
+} from './editor-parser-errors';
+
+export type { LinearAlgebraEditorParseErrorReason } from './editor-parser-errors';
 
 export type LinearAlgebraEditorMode = 'matrix' | 'vector';
 
@@ -65,14 +77,6 @@ export type LinearAlgebraEditorExpression =
       constants: LinearAlgebraValueExpression;
     };
 
-export type LinearAlgebraEditorParseErrorReason =
-  | 'empty-expression'
-  | 'placeholder'
-  | 'invalid-matrix-literal'
-  | 'invalid-number'
-  | 'unsupported-equation-shape'
-  | 'unsupported-expression';
-
 export type LinearAlgebraEditorParseResult =
   | { ok: true; expression: LinearAlgebraEditorExpression }
   | { ok: false; reason: LinearAlgebraEditorParseErrorReason; message: string };
@@ -80,25 +84,6 @@ export type LinearAlgebraEditorParseResult =
 export type LinearAlgebraEditorParseOptions = {
   mode?: LinearAlgebraEditorMode;
 };
-
-class ParseFailure extends Error {
-  readonly reason: LinearAlgebraEditorParseErrorReason;
-
-  constructor(
-    reason: LinearAlgebraEditorParseErrorReason,
-    message: string,
-  ) {
-    super(message);
-    this.reason = reason;
-  }
-}
-
-const BMATRIX_START = '\\begin{bmatrix}';
-const BMATRIX_END = '\\end{bmatrix}';
-
-function fail(reason: LinearAlgebraEditorParseErrorReason, message: string): never {
-  throw new ParseFailure(reason, message);
-}
 
 function normalizeLatex(latex: string): string {
   return latex
@@ -178,12 +163,12 @@ function splitTopLevel(input: string, tokens: readonly string[]): { token: strin
   let parenDepth = 0;
 
   for (let index = 0; index < input.length; index += 1) {
-    if (input.startsWith(BMATRIX_START, index)) {
-      const endIndex = input.indexOf(BMATRIX_END, index + BMATRIX_START.length);
-      if (endIndex < 0) {
+    if (input.startsWith('\\begin{', index)) {
+      const environmentEnd = matrixEnvironmentEndAt(input, index);
+      if (environmentEnd === null) {
         return null;
       }
-      index = endIndex + BMATRIX_END.length - 1;
+      index = environmentEnd - 1;
       continue;
     }
 
@@ -234,105 +219,11 @@ function functionArgument(input: string, name: string): string | null {
     : null;
 }
 
-function gcd(left: number, right: number): number {
-  let a = Math.abs(left);
-  let b = Math.abs(right);
-  while (b !== 0) {
-    const next = a % b;
-    a = b;
-    b = next;
-  }
-  return a || 1;
-}
-
-function normalizeExactWire(value: ExactScalarWire): ExactScalarWire {
-  if (value.numerator === 0) {
-    return { numerator: 0, denominator: 1 };
-  }
-
-  const sign = value.denominator < 0 ? -1 : 1;
-  const numerator = value.numerator * sign;
-  const denominator = Math.abs(value.denominator);
-  const divisor = gcd(numerator, denominator);
-  return {
-    numerator: numerator / divisor,
-    denominator: denominator / divisor,
-  };
-}
-
-function exactWireToNumber(value: ExactScalarWire): number {
-  return value.numerator / value.denominator;
-}
-
-function exactWireToLatex(value: ExactScalarWire): string {
-  if (value.denominator === 1) {
-    return `${value.numerator}`;
-  }
-  if (value.numerator < 0) {
-    return `-\\frac{${Math.abs(value.numerator)}}{${value.denominator}}`;
-  }
-  return `\\frac{${value.numerator}}{${value.denominator}}`;
-}
-
-function exactVectorWireToLatex(vector: ExactScalarWire[]): string {
-  return `\\begin{bmatrix}${vector.map(exactWireToLatex).join('\\\\')}\\end{bmatrix}`;
-}
-
 function namedValueExpression(name: LinearAlgebraNamedValue): LinearAlgebraValueExpression {
   return {
     kind: 'named',
     name,
     displayLatex: name,
-  };
-}
-
-function parseFiniteDecimalExact(input: string): ExactScalarWire | null {
-  const match = input.match(/^(-)?(?:(\d+)(?:\.(\d*))?|\.(\d+))$/);
-  if (!match) {
-    return null;
-  }
-
-  const sign = match[1] ? -1 : 1;
-  const whole = match[2] ?? '0';
-  const fractional = match[3] ?? match[4] ?? '';
-  const denominator = 10 ** fractional.length;
-  const numerator = sign * Number(`${whole}${fractional || ''}`);
-  if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) {
-    fail('invalid-number', `Unsupported numeric entry "${input}".`);
-  }
-  return normalizeExactWire({ numerator, denominator });
-}
-
-function parseScalarAtom(input: string): ExactScalarWire {
-  const decimal = parseFiniteDecimalExact(input);
-  if (decimal) {
-    return decimal;
-  }
-
-  const fraction = input.match(/^(-)?\\frac\{(-?(?:\d+\.?\d*|\.\d+))\}\{(-?(?:\d+\.?\d*|\.\d+))\}$/);
-  if (fraction) {
-    const numerator = parseScalarAtom(fraction[2]);
-    const denominator = parseScalarAtom(fraction[3]);
-    if (denominator.numerator === 0) {
-      fail('invalid-number', 'Matrix and vector entries cannot divide by zero.');
-    }
-    const signedNumerator = fraction[1] ? -numerator.numerator : numerator.numerator;
-    const exactNumerator = signedNumerator * denominator.denominator;
-    const exactDenominator = numerator.denominator * denominator.numerator;
-    if (!Number.isSafeInteger(exactNumerator) || !Number.isSafeInteger(exactDenominator)) {
-      fail('invalid-number', `Unsupported numeric entry "${input}".`);
-    }
-    return normalizeExactWire({ numerator: exactNumerator, denominator: exactDenominator });
-  }
-
-  fail('invalid-number', `Unsupported numeric entry "${input}".`);
-}
-
-function parseLatexNumber(input: string): { value: number; exactValue: ExactScalarWire } {
-  const exactValue = parseScalarAtom(input);
-  return {
-    value: exactWireToNumber(exactValue),
-    exactValue,
   };
 }
 
@@ -345,45 +236,6 @@ function parseMatrixPowerExponent(input: string): { exponent: number; exponentLa
     fail('invalid-number', 'Matrix power exponent is outside the safe integer range.');
   }
   return { exponent, exponentLatex: input };
-}
-
-function parseMatrixLiteral(input: string): LinearAlgebraValueExpression | null {
-  if (!input.startsWith(BMATRIX_START) || !input.endsWith(BMATRIX_END)) {
-    return null;
-  }
-
-  const body = input.slice(BMATRIX_START.length, -BMATRIX_END.length);
-  if (!body) {
-    fail('invalid-matrix-literal', 'Matrix/vector literals must contain at least one entry.');
-  }
-
-  const rows = body.split('\\\\').map((row) => row.trim());
-  const parsedRows = rows.map((row) => {
-    if (!row) {
-      fail('invalid-matrix-literal', 'Matrix/vector literals cannot contain empty rows.');
-    }
-    return row.split('&').map((cell) => parseLatexNumber(cell));
-  });
-  const matrix = parsedRows.map((row) => row.map((cell) => cell.value));
-  const exactMatrix = parsedRows.map((row) => row.map((cell) => cell.exactValue));
-  const columns = matrix[0]?.length ?? 0;
-  if (columns === 0 || matrix.some((row) => row.length !== columns)) {
-    fail('invalid-matrix-literal', 'Matrix rows must have a consistent number of columns.');
-  }
-
-  return columns === 1
-    ? {
-        kind: 'vectorLiteral',
-        value: matrix.map((row) => row[0]),
-        exactValue: exactMatrix.map((row) => row[0]),
-        displayLatex: input,
-      }
-    : {
-        kind: 'matrixLiteral',
-        value: matrix,
-        exactValue: exactMatrix,
-        displayLatex: input,
-      };
 }
 
 function isMatrixCoefficientExpression(
@@ -797,7 +649,7 @@ export function parseLinearAlgebraEditorLatex(
     if (!normalized) {
       fail('empty-expression', 'Enter a Matrix or Vector expression.');
     }
-    if (normalized.includes('#')) {
+    if (normalized.includes('#') || normalized.includes('\\placeholder')) {
       fail('placeholder', 'Fill every Matrix/Vector template slot before running it.');
     }
 

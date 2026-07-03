@@ -194,6 +194,44 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
   });
 
+  it('parses MathLive matrix environment variants as matrix/vector literals', () => {
+    expect(parsed('\\begin{matrix}1&2\\\\3&4\\end{matrix}', 'matrix')).toEqual({
+      kind: 'matrixLiteral',
+      value: [[1, 2], [3, 4]],
+      exactValue: [
+        [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
+        [{ numerator: 3, denominator: 1 }, { numerator: 4, denominator: 1 }],
+      ],
+      displayLatex: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
+    });
+    expect(parsed('\\det\\left(\\begin{pmatrix}1&0\\\\0&3\\end{pmatrix}\\right)', 'matrix')).toMatchObject({
+      kind: 'unary',
+      operator: 'determinant',
+      value: {
+        kind: 'matrixLiteral',
+        value: [[1, 0], [0, 3]],
+        displayLatex: '\\begin{bmatrix}1&0\\\\0&3\\end{bmatrix}',
+      },
+    });
+    expect(parsed('\\operatorname{rank}\\left(\\begin{array}{cc}1&2\\\\3&4\\end{array}\\right)', 'matrix')).toMatchObject({
+      kind: 'unary',
+      operator: 'rank',
+      value: {
+        kind: 'matrixLiteral',
+        value: [[1, 2], [3, 4]],
+      },
+    });
+    expect(parsed('\\begin{array}{c}5\\\\11\\end{array}', 'vector')).toEqual({
+      kind: 'vectorLiteral',
+      value: [5, 11],
+      exactValue: [
+        { numerator: 5, denominator: 1 },
+        { numerator: 11, denominator: 1 },
+      ],
+      displayLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+    });
+  });
+
   it('parses structured Matrix systems', () => {
     expect(parsed('Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}', 'matrix')).toEqual({
       kind: 'linearSystem',
@@ -252,6 +290,14 @@ describe('parseLinearAlgebraEditorLatex', () => {
       reason: 'empty-expression',
     });
     expect(parseLinearAlgebraEditorLatex('\\begin{bmatrix}#0 & #?\\\\#? & #?\\end{bmatrix}', { mode: 'matrix' })).toMatchObject({
+      ok: false,
+      reason: 'placeholder',
+    });
+    expect(parseLinearAlgebraEditorLatex('\\begin{pmatrix}1&\\\\3&4\\end{pmatrix}', { mode: 'matrix' })).toMatchObject({
+      ok: false,
+      reason: 'placeholder',
+    });
+    expect(parseLinearAlgebraEditorLatex('\\begin{matrix}\\placeholder{}&2\\\\3&4\\end{matrix}', { mode: 'matrix' })).toMatchObject({
       ok: false,
       reason: 'placeholder',
     });
