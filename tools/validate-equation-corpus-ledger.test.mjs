@@ -22,10 +22,10 @@ describe('equation corpus ledger validation', () => {
   it('accepts the committed ledger scaffold', () => {
     assert.deepEqual(validateEquationCorpusLedger(), {
       sourceCount: 10,
-      uniqueCaseCount: 200,
-      duplicateCaseCount: 40,
-      runResultCount: 224,
-      scanFindingCount: 24,
+      uniqueCaseCount: 450,
+      duplicateCaseCount: 100,
+      runResultCount: 474,
+      scanFindingCount: 76,
     });
   });
 
