@@ -22,10 +22,10 @@ describe('equation corpus ledger validation', () => {
   it('accepts the committed ledger scaffold', () => {
     assert.deepEqual(validateEquationCorpusLedger(), {
       sourceCount: 10,
-      uniqueCaseCount: 50,
-      duplicateCaseCount: 0,
-      runResultCount: 56,
-      scanFindingCount: 6,
+      uniqueCaseCount: 200,
+      duplicateCaseCount: 40,
+      runResultCount: 206,
+      scanFindingCount: 24,
     });
   });
 
@@ -131,6 +131,8 @@ describe('equation corpus ledger validation', () => {
         failure_kind: 'none',
       })}\n`,
     );
+    writeFileSync(ledgerPath(rootDir, 'duplicate-cases.jsonl'), '');
+    writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
 
     assert.throws(
       () => validateEquationCorpusLedger({ rootDir }),
@@ -161,10 +163,12 @@ describe('equation corpus ledger validation', () => {
     };
 
     writeFileSync(ledgerPath(rootDir, 'unique-cases.jsonl'), `${JSON.stringify(uniqueCase)}\n`);
+    writeFileSync(ledgerPath(rootDir, 'duplicate-cases.jsonl'), '');
     writeFileSync(
       ledgerPath(rootDir, 'run-results.jsonl'),
       `${JSON.stringify(result)}\n${JSON.stringify(result)}\n`,
     );
+    writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
 
     assert.throws(
       () => validateEquationCorpusLedger({ rootDir }),
