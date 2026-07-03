@@ -595,7 +595,60 @@ export function logCarrierLatex(argument: MathJson, base: BaseProfile | MathJson
   return `\\log_{${baseLatex}}\\left(${latexForNode(argument)}\\right)`;
 }
 
+function greatestCommonDivisor(left: number, right: number): number {
+  let a = Math.abs(left);
+  let b = Math.abs(right);
+  while (b !== 0) {
+    const next = a % b;
+    a = b;
+    b = next;
+  }
+  return a || 1;
+}
+
+function rationalLatex(numerator: number, denominator: number) {
+  if (numerator === 0) {
+    return '0';
+  }
+  const sign = numerator < 0 ? '-' : '';
+  const divisor = greatestCommonDivisor(numerator, denominator);
+  const absNumerator = Math.abs(numerator) / divisor;
+  const normalizedDenominator = denominator / divisor;
+  if (normalizedDenominator === 1) {
+    return `${sign}${absNumerator}`;
+  }
+  return `${sign}\\frac{${absNumerator}}{${normalizedDenominator}}`;
+}
+
+function exactRationalLogLatex(base: BaseProfile, value: MathJson) {
+  if (base.kind === 'symbolic') {
+    return null;
+  }
+
+  const valueNumeric = numericValueOfNode(value);
+  if (valueNumeric === null || valueNumeric <= 0) {
+    return null;
+  }
+
+  for (let denominator = 1; denominator <= 12; denominator += 1) {
+    for (let numerator = -48; numerator <= 48; numerator += 1) {
+      const candidate = Math.pow(base.value, numerator / denominator);
+      const tolerance = EPSILON * Math.max(1, Math.abs(valueNumeric));
+      if (Math.abs(candidate - valueNumeric) <= tolerance) {
+        return rationalLatex(numerator, denominator);
+      }
+    }
+  }
+
+  return null;
+}
+
 function logLatexForBase(base: BaseProfile, value: MathJson) {
+  const rationalLog = exactRationalLogLatex(base, value);
+  if (rationalLog) {
+    return rationalLog;
+  }
+
   const valueLatex = latexForNode(value);
   if (base.kind === 'natural') {
     return `\\ln\\left(${valueLatex}\\right)`;

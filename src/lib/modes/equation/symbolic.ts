@@ -248,7 +248,11 @@ export function solveSymbolicEquation(
 
   let targetResolution = resolveEquationSolveTarget(equationLatex, equationSolveTarget);
   if (
-    (targetResolution.status === 'no-target' || targetResolution.status === 'unsupported')
+    (
+      targetResolution.status === 'no-target'
+      || targetResolution.status === 'unsupported'
+      || targetResolution.status === 'parameterized-unsupported'
+    )
     && equationLatex.replace(/\s+/g, '') !== planner.resolvedLatex.replace(/\s+/g, '')
   ) {
     const resolvedTarget = resolveEquationSolveTarget(planner.resolvedLatex, equationSolveTarget);

@@ -17,7 +17,8 @@ function solve(equationLatex: string) {
 function expectSuccess(equationLatex: string) {
   const result = solve(equationLatex);
   if (result.kind !== 'success') {
-    throw new Error(`Expected success for ${equationLatex}, received ${result.error}`);
+    const received = 'error' in result ? result.error : result.kind;
+    throw new Error(`Expected success for ${equationLatex}, received ${received}`);
   }
   return result;
 }
@@ -50,6 +51,19 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
     expect(canonical.exactLatex).toContain('\\ln(5)');
   });
 
+  it('solves scan2 pasted absolute-value and exp-log equations exactly', () => {
+    const pastedAbs = expectSuccess(String.raw`2abs(x-1)+3=11`);
+    const fractionalBase = expectSuccess(String.raw`9^x=27`);
+    const affineNaturalExp = expectSuccess(String.raw`e^{x-2}=5`);
+    const scaledNaturalExp = expectSuccess(String.raw`4e^{-x}=9`);
+
+    expect(pastedAbs.exactLatex).toContain('5');
+    expect(pastedAbs.exactLatex).toContain('-3');
+    expect(fractionalBase.exactLatex).toBe('x=\\frac{3}{2}');
+    expect(affineNaturalExp.exactLatex).toBe('x=2+\\ln(5)');
+    expect(scaledNaturalExp.exactLatex).toBe('x=-\\ln(\\frac{9}{4})');
+  });
+
   it('returns periodic families for quadratic trig carriers', () => {
     const result = expectSuccess(String.raw`2\cos^2(x)-1=0`);
     const text = collectOutcomeText(result);
@@ -73,5 +87,23 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
 
     expect(collectOutcomeText(tangent)).toContain('\\frac{\\pi}{4}');
     expect(collectOutcomeText(tangent)).not.toContain('\\arctan(1)');
+  });
+
+  it('keeps scan2 trig rewrites periodic in exact mode', () => {
+    const square = expectSuccess(String.raw`\sin(x)^2=\frac{1}{4}`);
+    const identity = expectSuccess(String.raw`\sin(x)=\cos(x)`);
+    const productUnit = expectSuccess(String.raw`2\sin(x)\cos(x)=1`);
+    const productZero = expectSuccess(String.raw`\sin(x)\cos(x)=0`);
+    const squareDifference = expectSuccess(String.raw`\sin(x)^2-\cos(x)^2=0`);
+    const affineAngle = expectSuccess(String.raw`\cos\left(\frac{x}{2}\right)=0`);
+
+    for (const result of [square, identity, productUnit, productZero, squareDifference, affineAngle]) {
+      expect(collectOutcomeText(result)).toContain('n\\in\\mathbb{Z}');
+    }
+    expect(identity.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\pi n\\right\\}');
+    expect(productUnit.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\pi n\\right\\}');
+    expect(productZero.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi n}{2}\\right\\}');
+    expect(squareDifference.exactLatex).toBe('x\\in\\left\\{\\frac{\\pi}{4}+\\frac{\\pi n}{2}\\right\\}');
+    expect(affineAngle.exactLatex).toBe('x\\in\\left\\{\\pi+2\\pi n\\right\\}');
   });
 });

@@ -716,6 +716,7 @@ export type TrigReplaySeed = {
 export type TrigRewriteSolveKind =
   | 'product-double-angle'
   | 'cos-double-angle'
+  | 'same-argument-quotient'
   | 'sin-square-split'
   | 'cos-square-split'
   | 'sum-product-single'
@@ -723,7 +724,7 @@ export type TrigRewriteSolveKind =
 export type TrigRewriteSolveCandidate =
   | {
       kind: 'single-call';
-      rewriteKind: 'product-double-angle' | 'cos-double-angle' | 'sum-product-single';
+      rewriteKind: 'product-double-angle' | 'cos-double-angle' | 'same-argument-quotient' | 'sum-product-single';
       solvedLatex: string;
       summaryText: string;
     }

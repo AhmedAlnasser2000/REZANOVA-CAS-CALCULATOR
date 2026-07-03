@@ -14,6 +14,7 @@ import {
   EPSILON,
   isFiniteNumber,
   isNodeArray,
+  scaledConstantLatex,
 } from './shared';
 import type { ScaledSquareMatch } from './types';
 import { parseSupportedRatio } from '../angles';
@@ -79,6 +80,7 @@ function matchDirectCosDoubleAngleRewrite(expressionNode: unknown, rhsNode: unkn
   const secondConstant = parseSupportedRatio(boxLatex(terms[1]));
 
   let argumentLatex: string | null = null;
+  let rhsScale = 1;
 
   if (
     firstSquare
@@ -99,6 +101,26 @@ function matchDirectCosDoubleAngleRewrite(expressionNode: unknown, rhsNode: unkn
     && firstSquare.argumentLatex === secondSquare.argumentLatex
   ) {
     argumentLatex = firstSquare.argumentLatex;
+  } else if (
+    firstSquare
+    && secondSquare
+    && (
+      (
+        firstSquare.kind === 'sin'
+        && firstSquare.coefficient === 1
+        && secondSquare.kind === 'cos'
+        && secondSquare.coefficient === -1
+      ) || (
+        firstSquare.kind === 'cos'
+        && firstSquare.coefficient === -1
+        && secondSquare.kind === 'sin'
+        && secondSquare.coefficient === 1
+      )
+    )
+    && firstSquare.argumentLatex === secondSquare.argumentLatex
+  ) {
+    argumentLatex = firstSquare.argumentLatex;
+    rhsScale = -1;
   } else if (
     (
       firstConstant !== null
@@ -145,7 +167,7 @@ function matchDirectCosDoubleAngleRewrite(expressionNode: unknown, rhsNode: unkn
   return {
     kind: 'single-call',
     rewriteKind: 'cos-double-angle',
-    solvedLatex: `\\cos\\left(${doubled}\\right)=${boxLatex(rhsNode)}`,
+    solvedLatex: `\\cos\\left(${doubled}\\right)=${rhsScale === 1 ? boxLatex(rhsNode) : scaledConstantLatex(rhsNode, -1)}`,
     summaryText: 'Rewritten to a bounded double-angle form before solving.',
   };
 }

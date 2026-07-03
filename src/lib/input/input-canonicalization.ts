@@ -61,6 +61,10 @@ function isBoundaryChar(char: string | undefined) {
   return char === undefined || /[\s,+\-*/^=()[\]{}]/.test(char);
 }
 
+function isFunctionPrefixBoundaryChar(char: string | undefined) {
+  return isBoundaryChar(char) || (char !== undefined && /\d/.test(char));
+}
+
 function collectCommand(source: string, start: number) {
   let index = start + 1;
   while (index < source.length && /[A-Za-z]/.test(source[index])) {
@@ -753,7 +757,7 @@ function canonicalizeSegment(
       continue;
     }
 
-    if (!isReservedCanonicalFunction(tokenLower, options) || !isBoundaryChar(previous)) {
+    if (!isReservedCanonicalFunction(tokenLower, options) || !isFunctionPrefixBoundaryChar(previous)) {
       result += token;
       index = nextIndex;
       continue;

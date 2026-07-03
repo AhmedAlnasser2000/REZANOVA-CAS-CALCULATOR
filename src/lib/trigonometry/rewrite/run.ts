@@ -3,7 +3,11 @@ import {
   flattenAdd,
 } from '../../symbolic-engine/patterns';
 import { normalizeAst } from '../../symbolic-engine/normalize';
-import { normalizeTrigAst } from '../normalize';
+import {
+  matchTrigCall,
+  normalizeTrigAst,
+  sameTrigArgument,
+} from '../normalize';
 import {
   ce,
   isNodeArray,
@@ -15,6 +19,31 @@ import { matchDirectProductRewrite } from './product-double-angle';
 import { matchDirectSquareSplit } from './square-split';
 import { matchTrigSumProductRewrite } from './sum-product';
 import type { TrigRewriteMatchResult } from './types';
+import type { TrigRewriteSolveCandidate } from '../../../types/calculator';
+
+function matchSameArgumentQuotientRewrite(
+  expressionNode: unknown,
+  rhsNode: unknown,
+): TrigRewriteSolveCandidate | null {
+  const expression = matchTrigCall(normalizeAst(expressionNode));
+  const rhs = matchTrigCall(normalizeAst(rhsNode));
+  if (
+    !expression
+    || !rhs
+    || expression.kind !== 'sin'
+    || rhs.kind !== 'cos'
+    || !sameTrigArgument(expression, rhs)
+  ) {
+    return null;
+  }
+
+  return {
+    kind: 'single-call',
+    rewriteKind: 'same-argument-quotient',
+    solvedLatex: `\\tan\\left(${expression.argumentLatex}\\right)=1`,
+    summaryText: 'Normalized same-argument sine/cosine equality to a tangent equation before solving.',
+  };
+}
 
 function matchZeroFormCandidate(nonZeroSide: unknown): TrigRewriteMatchResult {
   const terms = flattenAdd(normalizeAst(nonZeroSide));
@@ -46,6 +75,11 @@ function matchZeroFormCandidate(nonZeroSide: unknown): TrigRewriteMatchResult {
 }
 
 function matchDirectCandidate(expressionNode: unknown, rhsNode: unknown): TrigRewriteMatchResult {
+  const quotient = matchSameArgumentQuotientRewrite(expressionNode, rhsNode);
+  if (quotient) {
+    return { kind: 'candidate', candidate: quotient };
+  }
+
   const product = matchDirectProductRewrite(expressionNode, rhsNode);
   if (product) {
     return { kind: 'candidate', candidate: product };

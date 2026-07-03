@@ -73,14 +73,6 @@ function escapeRegExp(input: string) {
   return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function isDirectNaturalExponentialEquation(equationLatex: string, target: string) {
-  const compact = equationLatex.replace(/\s+/g, '');
-  const escapedTarget = escapeRegExp(target);
-  const directNaturalExp = `(?:e|\\\\exponentialE)\\^(?:${escapedTarget}|\\{${escapedTarget}\\})`;
-  return new RegExp(`^${directNaturalExp}=`).test(compact)
-    || new RegExp(`=${directNaturalExp}$`).test(compact);
-}
-
 function isPureHighDegreePolynomialEquation(equationLatex: string, target: string) {
   const compact = equationLatex.replace(/\s+/g, '');
   if (/\\(?!cdot\b)|\/|\|/.test(compact)) {
@@ -101,7 +93,7 @@ function tryParameterizedTrigRewriteSolve(
   options: ReturnType<typeof parameterizedOptionsFromTargetResolution>,
 ): SelectedTargetParameterizedSuccess | undefined {
   const rewrite = matchTrigEquationRewriteForSolve(equationLatex, angleUnit);
-  if (rewrite.kind !== 'candidate' || rewrite.candidate.rewriteKind !== 'cos-double-angle') {
+  if (rewrite.kind !== 'candidate') {
     return undefined;
   }
 
@@ -222,21 +214,22 @@ export function trySelectedTargetParameterizedExactSolve(input: {
     }
   }
 
-  if (isDirectNaturalExponentialEquation(parameterizedEquationLatex, selectedTarget)) {
-    const expLog = solveParameterizedExpLogEquation(
-      parameterizedEquationLatex,
+  const expLog = solveParameterizedExpLogEquation(
+    parameterizedEquationLatex,
+    selectedTarget,
+    {
+      ...parameterizedOptions,
+      formulaHandoff: { domain: 'real' },
+    },
+  );
+  if (expLog.kind === 'success') {
+    return attachParameterizedSelectedTargetOutcome({
+      result: expLog,
       selectedTarget,
-      parameterizedOptions,
-    );
-    if (expLog.kind === 'success') {
-      return attachParameterizedSelectedTargetOutcome({
-        result: expLog,
-        selectedTarget,
-        equationLatex: input.equationLatex,
-        plannerResolvedLatex: input.plannerResolvedLatex,
-        plannerBadges: input.plannerBadges,
-      });
-    }
+      equationLatex: input.equationLatex,
+      plannerResolvedLatex: input.plannerResolvedLatex,
+      plannerBadges: input.plannerBadges,
+    });
   }
 
   const trigRewrite = tryParameterizedTrigRewriteSolve(
@@ -245,13 +238,29 @@ export function trySelectedTargetParameterizedExactSolve(input: {
     input.angleUnit,
     parameterizedOptions,
   );
-  return trigRewrite
+  if (trigRewrite) {
+    return attachParameterizedSelectedTargetOutcome({
+      result: trigRewrite,
+      selectedTarget,
+      equationLatex: input.equationLatex,
+      plannerResolvedLatex: input.plannerResolvedLatex,
+      plannerBadges: input.plannerBadges,
+    });
+  }
+
+  const trigDirect = solveParameterizedTrigEquation(
+    parameterizedEquationLatex,
+    selectedTarget,
+    input.angleUnit,
+    parameterizedOptions,
+  );
+  return trigDirect.kind === 'success'
     ? attachParameterizedSelectedTargetOutcome({
-        result: trigRewrite,
-        selectedTarget,
-        equationLatex: input.equationLatex,
-        plannerResolvedLatex: input.plannerResolvedLatex,
-        plannerBadges: input.plannerBadges,
-      })
+      result: trigDirect,
+      selectedTarget,
+      equationLatex: input.equationLatex,
+      plannerResolvedLatex: input.plannerResolvedLatex,
+      plannerBadges: input.plannerBadges,
+    })
     : undefined;
 }

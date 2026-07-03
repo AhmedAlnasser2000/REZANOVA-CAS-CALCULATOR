@@ -36,6 +36,19 @@ describe('canonicalizeMathInput', () => {
     expect(result.canonicalLatex).toContain('(x)');
   });
 
+  it('canonicalizes pasted reserved functions after numeric coefficients', () => {
+    const result = canonicalizeMathInput('2abs(x-1)+3=11', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error('Expected a canonicalization result');
+    }
+    expect(result.canonicalLatex).toBe('2\\operatorname{abs}(x-1)+3=11');
+  });
+
   it('canonicalizes derivative shortcuts only in guided derivative contexts', () => {
     const ordinary = canonicalizeMathInput('ddt(sin(t))', {
       mode: 'calculus',

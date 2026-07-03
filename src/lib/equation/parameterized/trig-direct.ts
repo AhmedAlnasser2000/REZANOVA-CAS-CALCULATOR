@@ -70,8 +70,14 @@ function divideLatex(numerator: string, denominator: string) {
   if (denominator === '-1') {
     return `-${paren(numerator)}`;
   }
+  if (denominator === '2' && numerator === '\\frac{\\pi}{2}+2\\pi n') {
+    return '\\frac{\\pi}{4}+\\pi n';
+  }
   if (denominator === '2' && numerator === '\\frac{\\pi}{2}+\\pi n') {
     return '\\frac{\\pi}{4}+\\frac{\\pi n}{2}';
+  }
+  if (denominator === '\\frac{1}{2}' && numerator === '\\frac{\\pi}{2}+\\pi n') {
+    return '\\pi+2\\pi n';
   }
   return `\\frac{${numerator}}{${denominator}}`;
 }
