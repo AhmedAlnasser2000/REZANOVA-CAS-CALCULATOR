@@ -1863,3 +1863,7 @@
 ## 2026-07-04 - GUIDE-PAGE-SURFACE1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guide is a protected singleton app-level page surface, not a calculator-shell mode surface. Opening Guide focuses or creates `guide-page`, preserves the active calculator workspace/mode, uses null Order of Execution runtime context, suppresses quick inspectors, and keeps Notebook/import/export/persistence work deferred to later milestones.
+
+## 2026-07-04 - INPUT-PASTE-CANONICALIZATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Plain-text math paste normalization belongs in the input/editor canonicalization layer. Safe top-level ASCII `/` and `*` plus textbook function powers may be converted before insertion, while solver lanes still own mathematical adoption, route facts, and backchecks.

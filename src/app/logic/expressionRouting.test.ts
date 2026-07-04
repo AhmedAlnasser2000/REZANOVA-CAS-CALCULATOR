@@ -158,4 +158,41 @@ describe('expressionRouting', () => {
     expect(insert).toHaveBeenCalledWith('\\ln(\\frac{z^4+z+1}{z-m})+c=b');
     expect(setClipboardNotice).toHaveBeenCalledWith('Pasted into editor');
   });
+
+  it('canonicalizes pasted slash, star, and function powers before app paste insertion', async () => {
+    const insert = vi.fn();
+    const focus = vi.fn();
+    const setClipboardNotice = vi.fn();
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        clipboard: {
+          readText: vi.fn().mockResolvedValue('1/2*(csc^2(x)-csc(x)cot(x))'),
+        },
+      },
+      configurable: true,
+    });
+
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen: false,
+      currentMode: 'calculus',
+      geometryEditorIsEditable: false,
+      statisticsEditorIsEditable: false,
+      trigEditorIsEditable: false,
+      equationScreen: 'symbolic',
+      activeFieldRef: { current: { focus, insert } },
+      geometryDraftFieldRef: { current: null },
+      statisticsDraftFieldRef: { current: null },
+      trigDraftFieldRef: { current: null },
+      focusGeometryEditor: vi.fn(),
+      focusStatisticsEditor: vi.fn(),
+      focusTrigEditor: vi.fn(),
+      setClipboardNotice,
+      loadLatexIntoEditor: vi.fn(),
+    });
+
+    expect(insert).toHaveBeenCalledWith(
+      '\\frac{1}{2}\\cdot (\\csc^{2}(x)-\\csc(x)\\cot(x))',
+    );
+  });
 });

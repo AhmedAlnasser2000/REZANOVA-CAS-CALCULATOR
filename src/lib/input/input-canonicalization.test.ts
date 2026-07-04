@@ -108,6 +108,42 @@ describe('canonicalizeMathInput', () => {
     expect(result.canonicalLatex).toBe('\\csc(2x+3)^2+\\sec(x)\\tan(x)+\\cot(x)');
   });
 
+  it('canonicalizes pasted textbook slash and star operators structurally', () => {
+    const simple = canonicalizeMathInput('1/2*x', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+      liveAssist: true,
+    });
+    const grouped = canonicalizeMathInput('(x+1)/(x-1)', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+      liveAssist: true,
+    });
+    const radical = canonicalizeMathInput('sqrt(x)/2+2/sqrt(x)', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+      liveAssist: true,
+    });
+
+    expect(simple.ok && simple.canonicalLatex).toBe('\\frac{1}{2}\\cdot x');
+    expect(grouped.ok && grouped.canonicalLatex).toBe('\\frac{x+1}{x-1}');
+    expect(radical.ok && radical.canonicalLatex).toBe(
+      '\\frac{\\sqrt{x}}{2}+\\frac{2}{\\sqrt{x}}',
+    );
+  });
+
+  it('canonicalizes textbook function powers before grouped arguments', () => {
+    const result = canonicalizeMathInput('1/2*(csc^2(x)-csc(x)cot(x))', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+      liveAssist: true,
+    });
+
+    expect(result.ok && result.canonicalLatex).toBe(
+      '\\frac{1}{2}\\cdot (\\csc^{2}(x)-\\csc(x)\\cot(x))',
+    );
+  });
+
   it('canonicalizes Calculus special-function names without changing Equation shorthand', () => {
     const calculus = canonicalizeMathInput(
       'erf(x)+erfi(x)+Si(2x+1)+Ci(x)+Ei(x)+li(x)+FresnelS(x)+FresnelC(x)+EllipticF(x,m)+EllipticE(x,m)+EllipticPi(n,x,m)',
@@ -265,7 +301,7 @@ describe('canonicalizeMathInput', () => {
     expect(plain.ok && plain.canonicalLatex).toBe(expected);
     expect(command.ok && command.canonicalLatex).toBe(expected);
     expect(fenced.ok && fenced.canonicalLatex).toBe(expected);
-    expect(ungrouped.ok && ungrouped.canonicalLatex).toBe('\\ln(z^4+z+1/z-m)+c=b');
+    expect(ungrouped.ok && ungrouped.canonicalLatex).toBe('\\ln(z^4+z+\\frac{1}{z}-m)+c=b');
   });
 
   it('canonicalizes split natural-log letters produced by plain-text paste', () => {

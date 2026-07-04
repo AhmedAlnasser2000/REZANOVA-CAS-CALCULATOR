@@ -171,6 +171,32 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe('\\ln(\\frac{z^4+z+1}{z-m})+c=b');
   });
 
+  it('canonicalizes pasted slash, star, and function-power text before insertion', () => {
+    render(
+      <MathEditor
+        value=""
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="calculus"
+        screenHint="indefiniteIntegral"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+    };
+
+    fireEvent.paste(field, {
+      clipboardData: {
+        getData: () => '1/2*(csc^2(x)-csc(x)cot(x))+sqrt(x)/2',
+      },
+    });
+
+    expect(field.getValue()).toBe(
+      '\\frac{1}{2}\\cdot (\\csc^{2}(x)-\\csc(x)\\cot(x))+\\frac{\\sqrt{x}}{2}',
+    );
+  });
+
   it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor

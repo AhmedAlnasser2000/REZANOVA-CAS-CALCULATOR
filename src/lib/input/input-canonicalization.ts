@@ -15,19 +15,13 @@ import {
   isSpecialFunctionContext,
   normalizeSplitFunctionTokens,
 } from './function-canonicalization';
+import { canonicalizeAsciiOperatorExpression } from './ascii-operator-canonicalization';
+import {
+  normalizeDerivativeDisplay,
+  normalizeDerivativeShortcuts,
+  normalizeDerivativeTokens,
+} from './derivative-token-canonicalization';
 
-const DERIVATIVE_PATTERN = /(^|[^\\A-Za-z])d\s*\/\s*d([xyz])\b/g;
-const DISPLAY_DERIVATIVE_PATTERN = /\\frac\{\\mathrm\{d\}\}\{\\mathrm\{d\}([xyz])\}/g;
-const DERIVATIVE_SHORTCUT_VARIABLE_SOURCE = '(?:theta|alpha|beta|gamma|delta|lambda|mu|[A-Za-z])';
-const ORDINARY_DERIVATIVE_SHORTCUT_PATTERN = new RegExp(
-  `(^|[^\\\\A-Za-z])dd(${DERIVATIVE_SHORTCUT_VARIABLE_SOURCE})\\b`,
-  'g',
-);
-const PARTIAL_DERIVATIVE_SHORTCUT_PATTERN = new RegExp(
-  `(^|[^\\\\A-Za-z])pd(${DERIVATIVE_SHORTCUT_VARIABLE_SOURCE})\\b`,
-  'g',
-);
-const PARTIAL_SYMBOL_SHORTCUT_PATTERN = /(^|[^\\A-Za-z])pd\b/g;
 const MATH_SPACING_PATTERN_SOURCE = '(?:\\\\[,;:! ]|\\\\thinspace|\\\\medspace|\\\\quad|\\\\qquad|~|\\s)+';
 const TRAILING_MATH_SPACING_PATTERN = new RegExp(`${MATH_SPACING_PATTERN_SOURCE}$`);
 const INFIX_OPERATOR_PATTERN_SOURCE = '([+\\-*/=,;:<>^_])';
@@ -201,6 +195,47 @@ function collectExplicitGroupedQuotient(source: string) {
   };
 }
 
+function collectPowerArgument(source: string, start: number) {
+  if (source[start] !== '^') {
+    return null;
+  }
+
+  let index = start + 1;
+  while (index < source.length && /\s/.test(source[index])) {
+    index += 1;
+  }
+
+  const grouped = collectGroupedArgument(source, index);
+  if (grouped) {
+    return {
+      before: source.slice(start, grouped.nextIndex),
+      body: grouped.body,
+      nextIndex: grouped.nextIndex,
+    };
+  }
+
+  const bodyStart = index;
+  while (index < source.length && !isBoundaryChar(source[index])) {
+    index += 1;
+  }
+
+  if (index === bodyStart) {
+    return null;
+  }
+
+  return {
+    before: source.slice(start, index),
+    body: source.slice(bodyStart, index),
+    nextIndex: index,
+  };
+}
+
+type CanonicalizeSegmentOptions = {
+  normalizeImaginaryUnit?: boolean;
+  enableSpecialFunctions?: boolean;
+  canonicalizationScope?: 'all' | 'special-functions';
+};
+
 function collectSimpleArgument(source: string, start: number) {
   let index = start;
   while (index < source.length && /\s/.test(source[index])) {
@@ -269,66 +304,6 @@ function collectSimpleArgument(source: string, start: number) {
     body: source.slice(start, index).trim(),
     nextIndex: index,
   };
-}
-
-function normalizeDerivativeDisplay(source: string) {
-  return source.replace(DISPLAY_DERIVATIVE_PATTERN, (_match, variable: string) => `\\frac{d}{d${variable}}`);
-}
-
-function normalizeDerivativeTokens(source: string, changes: CanonicalizationChange[]) {
-  return source.replace(DERIVATIVE_PATTERN, (match, prefix: string, variable: string) => {
-    const after = `${prefix}\\frac{d}{d${variable}}`;
-    changes.push({
-      kind: 'derivative-token',
-      before: match,
-      after,
-    });
-    return after;
-  });
-}
-
-function derivativeShortcutVariableLatex(variable: string) {
-  return variable.length === 1 ? variable : `\\${variable}`;
-}
-
-function normalizeDerivativeShortcuts(source: string, changes: CanonicalizationChange[]) {
-  let next = source.replace(
-    ORDINARY_DERIVATIVE_SHORTCUT_PATTERN,
-    (match, prefix: string, variable: string) => {
-      const variableLatex = derivativeShortcutVariableLatex(variable);
-      const after = `${prefix}\\frac{d}{d${variableLatex}}`;
-      changes.push({
-        kind: 'derivative-token',
-        before: match,
-        after,
-      });
-      return after;
-    },
-  );
-
-  next = next.replace(
-    PARTIAL_DERIVATIVE_SHORTCUT_PATTERN,
-    (match, prefix: string, variable: string) => {
-      const variableLatex = derivativeShortcutVariableLatex(variable);
-      const after = `${prefix}\\frac{\\partial}{\\partial ${variableLatex}}`;
-      changes.push({
-        kind: 'derivative-token',
-        before: match,
-        after,
-      });
-      return after;
-    },
-  );
-
-  return next.replace(PARTIAL_SYMBOL_SHORTCUT_PATTERN, (match, prefix: string) => {
-    const after = `${prefix}\\partial`;
-    changes.push({
-      kind: 'derivative-token',
-      before: match,
-      after,
-    });
-    return after;
-  });
 }
 
 function normalizeUngroupedNumericPowers(source: string, changes: CanonicalizationChange[]) {
@@ -620,11 +595,7 @@ export function normalizeHarmlessMathSpacing(latex: string) {
 function canonicalizeFunctionArgumentBody(
   body: string,
   changes: CanonicalizationChange[],
-  options: {
-    normalizeImaginaryUnit?: boolean;
-    enableSpecialFunctions?: boolean;
-    canonicalizationScope?: 'all' | 'special-functions';
-  },
+  options: CanonicalizeSegmentOptions,
 ) {
   const quotient = collectExplicitGroupedQuotient(body);
   const explicitQuotient = canonicalizeExplicitGroupedQuotient(quotient, changes, options);
@@ -634,11 +605,7 @@ function canonicalizeFunctionArgumentBody(
 function canonicalizeExplicitGroupedQuotient(
   quotient: ReturnType<typeof collectExplicitGroupedQuotient>,
   changes: CanonicalizationChange[],
-  options: {
-    normalizeImaginaryUnit?: boolean;
-    enableSpecialFunctions?: boolean;
-    canonicalizationScope?: 'all' | 'special-functions';
-  },
+  options: CanonicalizeSegmentOptions,
 ) {
   if (!quotient) {
     return null;
@@ -665,11 +632,27 @@ function canonicalFunctionLatex(tokenLower: string, canonicalBody: string) {
 function canonicalizeSegment(
   source: string,
   changes: CanonicalizationChange[],
-  options: {
-    normalizeImaginaryUnit?: boolean;
-    enableSpecialFunctions?: boolean;
-    canonicalizationScope?: 'all' | 'special-functions';
-  } = {},
+  options: CanonicalizeSegmentOptions = {},
+): string {
+  const operatorCanonical = canonicalizeAsciiOperatorExpression(
+    source,
+    (part) => canonicalizeSegment(part, changes, options),
+    (before, after) => {
+      changes.push({
+        kind: 'operator-token',
+        before,
+        after,
+      });
+    },
+  );
+
+  return operatorCanonical ?? canonicalizeAtomicSegment(source, changes, options);
+}
+
+function canonicalizeAtomicSegment(
+  source: string,
+  changes: CanonicalizationChange[],
+  options: CanonicalizeSegmentOptions = {},
 ): string {
   let result = '';
   let index = 0;
@@ -766,6 +749,29 @@ function canonicalizeSegment(
     let scanIndex = nextIndex;
     while (scanIndex < source.length && /\s/.test(source[scanIndex])) {
       scanIndex += 1;
+    }
+
+    const powerArgument = collectPowerArgument(source, scanIndex);
+    if (powerArgument && tokenLower !== 'sqrt' && tokenLower !== 'abs') {
+      const argumentStart = skipWhitespace(source, powerArgument.nextIndex);
+      if (source[argumentStart] === '(' || source.startsWith('\\left', argumentStart)) {
+        const balanced = collectGroupedArgument(source, argumentStart);
+        if (balanced) {
+          const canonicalExponent = canonicalizeSegment(powerArgument.body, changes, options);
+          const canonicalBody = canonicalizeFunctionArgumentBody(balanced.body, changes, options);
+          const canonical = `${canonicalCommandFor(tokenLower)}^{${canonicalExponent}}(${canonicalBody})`;
+
+          changes.push({
+            kind: 'function-token',
+            before: source.slice(index, balanced.nextIndex),
+            after: canonical,
+          });
+
+          result += canonical;
+          index = balanced.nextIndex;
+          continue;
+        }
+      }
     }
 
     const nextChar = source[scanIndex];
