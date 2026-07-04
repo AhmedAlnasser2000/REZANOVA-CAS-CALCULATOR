@@ -14,6 +14,18 @@ function solve(equationLatex: string) {
   });
 }
 
+function solveComplex(equationLatex: string) {
+  return runEquationMode({
+    ...makeRequest(),
+    equationScreen: 'symbolic',
+    equationLatex,
+    equationSolveTarget: 'x',
+    equationAnswerMode: 'exact',
+    equationDomainIntent: 'complex',
+    angleUnit: 'rad',
+  });
+}
+
 function expectSuccess(equationLatex: string) {
   const result = solve(equationLatex);
   if (result.kind !== 'success') {
@@ -151,13 +163,37 @@ describe('Equation OpenStax Algebra/Trig corpus fixes', () => {
     const nestedLog = expectSuccess(String.raw`\ln(e^x+1)=2`);
 
     expect(numericBase.exactLatex).toBe('x=\\frac{\\ln(7)}{\\ln(2)}');
+    expect(numericBase.approxText).toContain('x ~= 2.807355');
     expect(affineNumericBase.exactLatex).toBe('x=\\frac{\\ln(11)}{2\\ln(3)}');
+    expect(affineNumericBase.approxText).toContain('x ~= 1.091329');
     expect(fractionalBase.exactLatex).toBe('x=\\frac{3}{2}');
+    expect(fractionalBase.approxText).toContain('x ~= 1.5');
     expect(quadraticExponent.exactLatex).toContain('-\\sqrt{\\ln(5)}');
     expect(quadraticExponent.exactLatex).toContain('\\sqrt{\\ln(5)}');
+    expect(quadraticExponent.approxText).toContain('-1.268636');
+    expect(quadraticExponent.approxText).toContain('1.268636');
     expect(collectOutcomeText(quadraticExponent)).not.toMatch(/\d+\.\d/u);
     expect(nestedLog.exactLatex).toBe('x=\\ln(e^{2}-1)');
+    expect(nestedLog.approxText).toContain('x ~= 1.854587');
     expect(collectOutcomeText(nestedLog)).toContain('e^{x}+1>0');
+  });
+
+  it('does not let Complex On wrapper boundaries mask real periodic textbook answers', () => {
+    const sineSquare = solveComplex(String.raw`2\sin^2(x)-1=0`);
+    const tangentSquare = solveComplex(String.raw`\tan^2(x)-3=0`);
+
+    for (const result of [sineSquare, tangentSquare]) {
+      expect(result.kind).toBe('success');
+      if (result.kind !== 'success') {
+        throw new Error(`Expected Complex On fallback success, received ${'error' in result ? result.error : result.kind}`);
+      }
+      const text = collectOutcomeText(result);
+      expect(text).toContain('n\\in\\mathbb{Z}');
+      expect(result.detailSections?.map((section) => section.title)).toContain('Complex Extension Boundary');
+      expect(text).toContain('validated real solution family');
+    }
+    expect(sineSquare.kind === 'success' ? sineSquare.exactLatex : '').toContain('\\frac{\\pi}{4}');
+    expect(tangentSquare.kind === 'success' ? tangentSquare.exactLatex : '').toContain('\\frac{\\pi}{3}');
   });
 
   it('preserves scan3 formula constraints and radical candidate evidence', () => {

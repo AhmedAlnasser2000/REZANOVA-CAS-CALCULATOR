@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import type { DisplayDetailSection } from '../../types/calculator';
 import { buildHistoryDisplayEntry } from './historyDisplayEntry';
 
 describe('buildHistoryDisplayEntry', () => {
   it('persists display detail sections so History replay can restore result cards', () => {
-    const detailSections = [
+    const detailSections: DisplayDetailSection[] = [
       {
         title: 'Coordinate Proof',
         lines: ['A c=b', 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}'],
-        lineKinds: ['math', 'math'] as const,
+        lineKinds: ['math', 'math'],
       },
     ];
 

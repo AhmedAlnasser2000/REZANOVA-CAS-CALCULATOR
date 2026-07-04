@@ -12,12 +12,13 @@ import {
   orderDisplayBlocksForReveal,
 } from '../../../lib/display/scheduling/display-render-scheduler';
 import type { DisplayOutcome } from '../../../types/calculator';
-import type { ModeId } from '../../../types/calculator/mode-types';
+import type { ModeId, OutputStyle } from '../../../types/calculator/mode-types';
 
 type UseDisplayRenderQueueOptions = {
   displayOutcome: DisplayOutcome | null | undefined;
   detailedFactsEnabled: boolean;
   getPeriodicStopReasonText: (reason: string) => string;
+  answerReadbackStyle: OutputStyle;
   showApproxReadback: boolean;
   sourceMode?: ModeId;
 };
@@ -49,6 +50,7 @@ export function useDisplayRenderQueue({
   displayOutcome,
   detailedFactsEnabled,
   getPeriodicStopReasonText,
+  answerReadbackStyle,
   showApproxReadback,
   sourceMode,
 }: UseDisplayRenderQueueOptions) {
@@ -57,6 +59,7 @@ export function useDisplayRenderQueue({
       detailedFactsEnabled,
     },
     getPeriodicStopReasonText,
+    answerReadbackStyle,
     showApproxReadback,
     sourceMode,
   });

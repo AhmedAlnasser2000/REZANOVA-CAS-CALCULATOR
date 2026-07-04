@@ -81,6 +81,16 @@ export type DisplayBranchReadback = {
   source?: string;
 };
 
+export type DisplaySystemSolutionReadback = {
+  variablesLatex: string[];
+  rows: Array<{
+    valuesLatex: string[];
+    approxText?: string;
+  }>;
+  label?: string;
+  source?: string;
+};
+
 export type DisplayOutcomeAction =
   | { kind: 'send'; target: TransferTarget; latex: string }
   | { kind: 'load-core-draft'; mode: 'geometry' | 'trigonometry' | 'statistics'; latex: string };
@@ -91,6 +101,7 @@ export type DisplayOutcome =
       title: string;
       exactLatex?: string;
       branchReadback?: DisplayBranchReadback;
+      systemReadback?: DisplaySystemSolutionReadback;
       periodicFamily?: PeriodicFamilyInfo;
       exactSupplementLatex?: string[];
       approxText?: string;

@@ -722,6 +722,28 @@
   margin-top: 2px;
 }
 
+.result-system-list {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  width: 100%;
+}
+
+.result-system-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 42px;
+  min-width: 0;
+  width: 100%;
+  padding: 2px 0 8px;
+}
+
+.result-system-cell {
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .result-case-math {
   display: grid;
   grid-template-columns: max-content max-content max-content;

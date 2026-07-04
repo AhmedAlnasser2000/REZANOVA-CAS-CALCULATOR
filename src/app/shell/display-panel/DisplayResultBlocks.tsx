@@ -222,6 +222,40 @@ function ResultBranchListBlock({
   );
 }
 
+function ResultSystemRowsBlock({
+  displayPrefs,
+  lines,
+  testIdPrefix,
+}: {
+  displayPrefs?: SymbolicDisplayPrefs;
+  lines: readonly DisplayBlockLine[];
+  testIdPrefix: string;
+}) {
+  return (
+    <div className="result-system-list" data-testid={`${testIdPrefix}-system-list`}>
+      {lines.map((line, rowIndex) => (
+        <div
+          key={`${line.id}-${rowIndex}`}
+          className="result-system-row"
+          data-testid={line.testId ?? `${testIdPrefix}-system-row-${rowIndex}`}
+          role="group"
+        >
+          {(line.systemCells ?? []).map((cell, cellIndex) => (
+            <MathStatic
+              key={`${cell.variableLatex}-${cell.valueLatex}-${cellIndex}`}
+              className="result-math result-system-cell"
+              latex={`${cell.variableLatex}=${cell.valueLatex}`}
+              block={false}
+              displayPrefs={displayPrefs}
+              normalizeDisplay={false}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ResultCaseMathBlock({
   displayPrefs,
   lines,
@@ -531,6 +565,16 @@ function renderDisplayBlockContent(
         onOpenFormulaViewer={onOpenFormulaViewer}
         originalBlock={block}
         prefixLatex={block.text ?? ''}
+        testIdPrefix={block.testId ?? block.id}
+      />
+    );
+  }
+
+  if (block.renderKind === 'systemRows') {
+    return (
+      <ResultSystemRowsBlock
+        displayPrefs={symbolicDisplayPrefs}
+        lines={block.lines ?? []}
         testIdPrefix={block.testId ?? block.id}
       />
     );

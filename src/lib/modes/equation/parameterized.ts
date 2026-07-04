@@ -47,6 +47,10 @@ import {
   unsupportedComplexPreimageOutcome,
 } from './outcomes';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
+import {
+  isDeferredComplexWrapperBoundary,
+  withDeferredComplexWrapperBoundary,
+} from './complex-wrapper-fallback';
 
 type ParameterizedRouteInput = {
   equationLatex: string;
@@ -107,6 +111,22 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         ),
       );
       recordSelectedTargetRoutePlan(searchTrace, routePlan);
+      let deferredComplexWrapperOutcome: DisplayOutcome | undefined;
+      const finalizeTopLevelOutcome = (outcome: DisplayOutcome) =>
+        withDeferredComplexWrapperBoundary(
+          finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget),
+          deferredComplexWrapperOutcome,
+        );
+      const attachTopLevelOutcome = (outcome: DisplayOutcome) => {
+        const finalOutcome = finalizeTopLevelOutcome(outcome);
+        return attachEquationRuntimeEnvelope(
+          finalOutcome,
+          equationLatex,
+          planner.resolvedLatex,
+          planner.badges,
+          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+        );
+      };
 
       if (answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval) {
         const complexSpecialForm = solveComplexSpecialFormRootsEquation(
@@ -132,15 +152,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             answerDomain: 'complex',
           };
 
-          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
-
-          return attachEquationRuntimeEnvelope(
-            finalOutcome,
-            equationLatex,
-            planner.resolvedLatex,
-            planner.badges,
-            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-          );
+          return attachTopLevelOutcome(outcome);
         }
 
         const symbolicCoefficientCardanoReady = complexSpecialForm.reason === 'symbolic-coefficients'
@@ -201,15 +213,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             answerDomain: 'complex',
           };
 
-          const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
-
-          return attachEquationRuntimeEnvelope(
-            finalOutcome,
-            equationLatex,
-            planner.resolvedLatex,
-            planner.badges,
-            classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-          );
+          return attachTopLevelOutcome(outcome);
         }
 
         const complexWrapperOutcome = tryComplexWrapperRoutes({
@@ -224,7 +228,11 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           stopOnRecognizedPreimageUnsupported: true,
         });
         if (complexWrapperOutcome) {
-          return complexWrapperOutcome;
+          if (isDeferredComplexWrapperBoundary(complexWrapperOutcome)) {
+            deferredComplexWrapperOutcome = complexWrapperOutcome;
+          } else {
+            return complexWrapperOutcome;
+          }
         }
 
         if (
@@ -263,15 +271,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedPolynomial = shouldAttemptSelectedTargetRoute(routePlan, 'polynomial')
@@ -296,15 +297,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedRational = shouldAttemptSelectedTargetRoute(routePlan, 'rational')
@@ -329,15 +323,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedFactorablePolynomial = shouldAttemptSelectedTargetRoute(routePlan, 'factorable-polynomial')
@@ -362,15 +349,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const complexExactRoute = answerMode === 'exact' && equationDomainIntent === 'complex' && !numericInterval;
@@ -398,15 +378,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedCarrierElimination = shouldAttemptSelectedTargetRoute(routePlan, 'carrier-elimination')
@@ -435,15 +408,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedCarrier = shouldAttemptSelectedTargetRoute(routePlan, 'carrier')
@@ -472,15 +438,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedAlgebraicIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')
@@ -513,15 +472,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             : {}),
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const formulaRoutes = runParameterizedFormulaRoutes({
@@ -537,7 +489,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         plannerBadges: planner.badges,
       });
       if (formulaRoutes.outcome) {
-        return formulaRoutes.outcome;
+        return withDeferredComplexWrapperBoundary(
+          formulaRoutes.outcome,
+          deferredComplexWrapperOutcome,
+        );
       }
       const parameterizedCubicCardano = formulaRoutes.cubicCardano;
       const parameterizedQuarticFerrari = formulaRoutes.quarticFerrari;
@@ -562,6 +517,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           title: 'Solve',
           exactLatex: parameterizedExpLog.exactLatex,
           branchReadback: parameterizedExpLog.branchReadback,
+          approxText: parameterizedExpLog.approxText,
           exactSupplementLatex: parameterizedExpLog.exactSupplementLatex,
           detailSections: parameterizedExpLog.detailSections,
           warnings: [],
@@ -571,15 +527,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             : {}),
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedTrig = shouldAttemptSelectedTargetRoute(routePlan, 'trig')
@@ -612,15 +561,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             : {}),
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedComposition = shouldAttemptSelectedTargetRoute(routePlan, 'composition')
@@ -653,15 +595,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             : {}),
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const parameterizedMixedAlgebraic = shouldAttemptSelectedTargetRoute(routePlan, 'mixed-algebraic')
@@ -693,15 +628,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
             : {}),
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       const selectedTargetIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'selected-target-isolation')
@@ -729,15 +657,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           resultOrigin: 'symbolic',
         };
 
-        const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
-        return attachEquationRuntimeEnvelope(
-          finalOutcome,
-          equationLatex,
-          planner.resolvedLatex,
-          planner.badges,
-          classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
-        );
+        return attachTopLevelOutcome(outcome);
       }
 
       let boundaryStop: { reason: string; message: string } =

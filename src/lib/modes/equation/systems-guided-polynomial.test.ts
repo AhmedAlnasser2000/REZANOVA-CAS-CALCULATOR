@@ -74,6 +74,14 @@ describe('Equation mode systems and guided polynomial', () => {
     }
     expect(result.exactLatex).toContain('\\left(-1,1\\right)');
     expect(result.exactLatex).toContain('\\left(1,1\\right)');
+    expect(result.systemReadback).toMatchObject({
+      label: 'Solution pairs',
+      variablesLatex: ['x', 'y'],
+      rows: [
+        { valuesLatex: ['-1', '1'] },
+        { valuesLatex: ['1', '1'] },
+      ],
+    });
     expect(result.detailSections?.map((section) => section.title)).toContain('Resultant Projection');
   });
 
@@ -91,6 +99,10 @@ describe('Equation mode systems and guided polynomial', () => {
     }
     expect(result.exactLatex).toContain('\\left(-4,-6\\right)');
     expect(result.exactLatex).toContain('\\left(3,1\\right)');
+    expect(result.systemReadback?.rows.map((row) => row.valuesLatex)).toEqual([
+      ['-4', '-6'],
+      ['3', '1'],
+    ]);
   });
 
   it('solves frontier polynomial 2x2 retained projections through the product route', () => {

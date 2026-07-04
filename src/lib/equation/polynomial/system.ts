@@ -537,6 +537,15 @@ export function solvePolynomialSystem2x2(
     kind: 'success',
     title: 'Polynomial 2x2',
     exactLatex: `\\left(x,y\\right)\\in\\left\\{${validated.map(pairExactLatex).join(',\\ ')}\\right\\}`,
+    systemReadback: {
+      label: 'Solution pairs',
+      variablesLatex: ['x', 'y'],
+      rows: validated.map((pair) => ({
+        valuesLatex: [pair.x.latex, pair.y.latex],
+        approxText: pairApproxText(pair),
+      })),
+      source: 'equation-polynomial-2x2',
+    },
     approxText: validated.map(pairApproxText).join('; '),
     warnings: [],
     resultOrigin: 'rule-based-symbolic',

@@ -150,6 +150,7 @@ function DisplayPanel({
     displayOutcome,
     detailedFactsEnabled: Boolean(settings?.detailedFactsEnabled),
     getPeriodicStopReasonText,
+    answerReadbackStyle: settings.outputStyle,
     showApproxReadback,
     sourceMode: currentMode,
   });

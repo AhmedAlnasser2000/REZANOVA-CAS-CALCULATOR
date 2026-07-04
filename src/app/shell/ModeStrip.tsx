@@ -33,6 +33,7 @@ function ModeStrip({
 }: ModeStripProps) {
   const { strings } = useLanguage();
   const modeText = strings.shell.modeStrip;
+  const outputStyleLabel = `Display ${String(settings.outputStyle).charAt(0).toUpperCase()}${String(settings.outputStyle).slice(1)}`;
 
   return (
   <header className="mode-strip">
@@ -129,7 +130,9 @@ function ModeStrip({
         {settings.angleUnit.toUpperCase()}
       </button>
       <button
+        aria-label={`Output style: ${outputStyleLabel}`}
         data-testid="quick-setting-output-style"
+        title={`Output style: ${outputStyleLabel}`}
         onClick={() =>
           patchSettings({
             outputStyle:
@@ -141,7 +144,7 @@ function ModeStrip({
           })
         }
       >
-        {settings.outputStyle.toUpperCase()}
+        {outputStyleLabel}
       </button>
       <button
         className={settings.autoSwitchToEquation ? 'is-active' : ''}

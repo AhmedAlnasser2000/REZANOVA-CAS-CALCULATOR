@@ -758,7 +758,7 @@ describe('AppMain UI automation flows', () => {
     expect(shell.style.getPropertyValue('--result-scale')).toBe('1.45');
     expect(shell.className).toContain('is-high-contrast');
     expect(screen.getByTestId('quick-setting-angle-unit')).toHaveTextContent('RAD');
-    expect(screen.getByTestId('quick-setting-output-style')).toHaveTextContent('EXACT');
+    expect(screen.getByTestId('quick-setting-output-style')).toHaveTextContent('Display Exact');
     expect(screen.getByTestId('quick-setting-auto-equation')).toHaveTextContent('Auto Eq On');
     expect(screen.getByTestId('quick-setting-equation-domain-intent')).toHaveTextContent('Complex Off');
   });
@@ -1442,13 +1442,19 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(within(screen.getByTestId('display-outcome-answer-block')).getByText('Answer'))
+    const answerBlock = screen.getByTestId('display-outcome-answer-block');
+    expect(within(answerBlock).getByText('Solution pairs'))
       .toBeInTheDocument();
-    const exactLatex = screen.getByTestId('display-outcome-exact')
-      .querySelector('[data-raw-latex]')
-      ?.getAttribute('data-raw-latex') ?? '';
-    expect(exactLatex).toContain('\\left(-1,1\\right)');
-    expect(exactLatex).toContain('\\left(1,1\\right)');
+    expect(answerBlock).toHaveTextContent('2 pairs');
+    const solutionRows = Array.from(
+      screen.getByTestId('display-outcome-exact')
+        .querySelectorAll('[data-testid^="display-outcome-answer-system-row-"]'),
+    ).map((row) => Array.from(row.querySelectorAll('[data-raw-latex]'))
+      .map((node) => node.getAttribute('data-raw-latex')));
+    expect(solutionRows).toEqual([
+      ['x=-1', 'y=1'],
+      ['x=1', 'y=1'],
+    ]);
 
     const details = screen.getByTestId('display-outcome-detail-sections');
     expect(details).toHaveTextContent('Polynomial System');

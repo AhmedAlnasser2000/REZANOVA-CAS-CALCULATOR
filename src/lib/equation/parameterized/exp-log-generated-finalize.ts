@@ -1,4 +1,6 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../../types/calculator';
+import { formatApproxNumber } from '../../display/format';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import {
@@ -20,6 +22,8 @@ import { dedupe } from './facts';
 import { latexForNode, type MathJson } from './math-json';
 import { buildParameterizedDetailSections, normalizeParameterizedSupplementLatex } from './readback';
 
+const ce = new ComputeEngine();
+
 function positiveBaseFacts(base: BaseProfile): string[] {
   if (base.kind !== 'symbolic') {
     return [];
@@ -36,6 +40,26 @@ function greatestCommonDivisor(left: number, right: number): number {
     b = next;
   }
   return a || 1;
+}
+
+function approximateLatexExpression(latex: string): number | null {
+  try {
+    const value = ce.parse(latex).N().valueOf();
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function approxTextForBranches(target: string, branches: readonly string[]) {
+  const values = branches.map(approximateLatexExpression);
+  if (values.some((value) => value === null)) {
+    return undefined;
+  }
+  const formatted = values.map((value) => formatApproxNumber(value ?? 0));
+  return formatted.length === 1
+    ? `${target} ~= ${formatted[0]}`
+    : `${target} ~= ${formatted.join(', ')}`;
 }
 
 function rationalLatex(numerator: number, denominator: number) {
@@ -265,6 +289,7 @@ export function finalizeGeneratedExpLogSolve({
         branchesLatex: [directAssignment],
         source: 'equation-parameterized-exp-log',
       }),
+      approxText: approxTextForBranches(target, [directAssignment]),
       exactSupplementLatex,
       detailSections: buildParameterizedDetailSections({
         target,
@@ -294,6 +319,7 @@ export function finalizeGeneratedExpLogSolve({
         branchesLatex: [affineAssignment],
         source: 'equation-parameterized-exp-log',
       }),
+      approxText: approxTextForBranches(target, [affineAssignment]),
       exactSupplementLatex,
       detailSections: buildParameterizedDetailSections({
         target,
@@ -326,6 +352,7 @@ export function finalizeGeneratedExpLogSolve({
         preserveOrder: true,
         source: 'equation-parameterized-exp-log',
       }),
+      approxText: approxTextForBranches(target, branches),
       exactSupplementLatex,
       detailSections: buildParameterizedDetailSections({
         target,
@@ -392,6 +419,7 @@ export function finalizeGeneratedExpLogSolve({
     parameterNames,
     exactLatex: renderedFamily.exactLatex,
     branchReadback: renderedFamily.branchReadback,
+    approxText: approxTextForBranches(target, renderedFamily.branchesLatex),
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex,

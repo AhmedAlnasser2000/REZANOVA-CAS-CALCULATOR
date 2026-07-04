@@ -28,6 +28,10 @@ import type { AngleUnit, ComplexExactForm, ComplexSolveRegion, DisplayOutcome, E
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
+import {
+  isDeferredComplexWrapperBoundary,
+  withDeferredComplexWrapperBoundary,
+} from './complex-wrapper-fallback';
 import { tryRealNumericFallbackOutcome } from './real-numeric-fallbacks';
 import { trySelectedTargetParameterizedExactSolve } from './symbolic-parameterized-exact';
 import {
@@ -49,6 +53,7 @@ const ce = new ComputeEngine();
 class AsyncSharedSolveCapture extends Error {
   request: SharedSolveRequest;
   sharedResolvedLatex?: string;
+  deferredComplexWrapperOutcome?: DisplayOutcome;
 
   constructor(request: SharedSolveRequest) {
     super('Async shared Equation solve requested.');
@@ -393,6 +398,7 @@ export function solveSymbolicEquation(
   }
 
   const solveTarget = targetResolution.selectedTarget ?? 'x';
+  let deferredComplexWrapperOutcome: DisplayOutcome | undefined;
 
   if (activeAnswerMode === 'exact' && equationDomainIntent === 'real' && !numericInterval && targetResolution.selectedTarget) {
     const selectedTargetParameterized = trySelectedTargetParameterizedExactSolve({
@@ -523,7 +529,11 @@ export function solveSymbolicEquation(
       stopOnRecognizedPreimageUnsupported: !complexRegion,
     });
     if (complexWrapperOutcome) {
-      return complexWrapperOutcome;
+      if (isDeferredComplexWrapperBoundary(complexWrapperOutcome)) {
+        deferredComplexWrapperOutcome = complexWrapperOutcome;
+      } else {
+        return complexWrapperOutcome;
+      }
     }
 
     if (solveTarget === 'x') {
@@ -701,6 +711,7 @@ export function solveSymbolicEquation(
   } catch (error) {
     if (error instanceof AsyncSharedSolveCapture) {
       error.sharedResolvedLatex = sharedResolvedLatex;
+      error.deferredComplexWrapperOutcome = deferredComplexWrapperOutcome;
     }
     throw error;
   }
@@ -744,10 +755,10 @@ export function solveSymbolicEquation(
     plannerBadges: planner.badges,
   });
   if (realNumericFallback) {
-    return realNumericFallback;
+    return withDeferredComplexWrapperBoundary(realNumericFallback, deferredComplexWrapperOutcome);
   }
 
-  return finalizeSharedSymbolicOutcome({
+  return withDeferredComplexWrapperBoundary(finalizeSharedSymbolicOutcome({
     sharedOutcome,
     solveTarget,
     answerMode: activeAnswerMode,
@@ -756,7 +767,7 @@ export function solveSymbolicEquation(
     plannerBadges: planner.badges,
     allowNumericOnly: Boolean(numericInterval),
     realDomainOnly: equationDomainIntent === 'real',
-  });
+  }), deferredComplexWrapperOutcome);
 }
 
 export async function solveSymbolicEquationAsync(
@@ -844,10 +855,10 @@ export async function solveSymbolicEquationAsync(
       plannerBadges,
     });
     if (realNumericFallback) {
-      return realNumericFallback;
+      return withDeferredComplexWrapperBoundary(realNumericFallback, error.deferredComplexWrapperOutcome);
     }
 
-    return finalizeSharedSymbolicOutcome({
+    return withDeferredComplexWrapperBoundary(finalizeSharedSymbolicOutcome({
       sharedOutcome,
       solveTarget,
       answerMode: activeAnswerMode,
@@ -856,6 +867,6 @@ export async function solveSymbolicEquationAsync(
       plannerBadges,
       allowNumericOnly: Boolean(numericInterval),
       realDomainOnly: equationDomainIntent === 'real',
-    });
+    }), error.deferredComplexWrapperOutcome);
   }
 }

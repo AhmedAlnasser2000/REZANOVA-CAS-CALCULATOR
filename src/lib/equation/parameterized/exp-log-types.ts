@@ -24,6 +24,7 @@ export type ParameterizedExpLogSolveSuccess = {
   parameterNames: string[];
   exactLatex: string;
   branchReadback?: DisplayBranchReadback;
+  approxText?: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
   generatedEquationLatex: string;
