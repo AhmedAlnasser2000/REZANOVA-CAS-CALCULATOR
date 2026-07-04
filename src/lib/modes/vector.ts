@@ -79,6 +79,14 @@ function vectorResultTitle(request: RunVectorModeRequest) {
     : vectorOperationLabel(request.operation);
 }
 
+function isNumericApproxText(text: string) {
+  return /^[-+]?(?:(?:\d+(?:\.\d+)?)|(?:\.\d+))(?:\s*(?:e|E|×\s*10\^)[-+]?\d+)?$/.test(text.trim());
+}
+
+function vectorUserFacingApproxText(approxText?: string) {
+  return approxText && isNumericApproxText(approxText) ? approxText : undefined;
+}
+
 export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
   const {
     operation,
@@ -109,7 +117,7 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
       error: response.error,
       warnings: response.warnings,
       exactLatex: response.resultLatex,
-      approxText: response.approxText,
+      approxText: vectorUserFacingApproxText(response.approxText),
       sourceMode: 'vector',
     };
   }
@@ -118,7 +126,7 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     kind: 'success',
     title: vectorResultTitle(request),
     exactLatex: response.resultLatex,
-    approxText: response.approxText,
+    approxText: vectorUserFacingApproxText(response.approxText),
     detailSections: response.detailSections,
     warnings: response.warnings,
     sourceMode: 'vector',

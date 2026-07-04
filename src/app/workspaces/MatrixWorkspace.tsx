@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
 import type { LinearAlgebraMatrixNamedValue } from '../../lib/linear-algebra/named-values';
+import { LinearAlgebraOperandPicker } from './LinearAlgebraOperandPicker';
 
 type MatrixWorkspaceProps = {
   activeMatrixLeftId: string;
@@ -187,30 +188,20 @@ function MatrixWorkspace({
       </div>
       <div className="linear-algebra-library-toolbar">
         <div className="linear-algebra-active-operands">
-          <label>
-            <span>Left</span>
-            <select
-              aria-label="Active Matrix left operand"
-              value={activeLeftId}
-              onChange={(event) => onSetActiveMatrixValueIds(event.currentTarget.value, activeRightId)}
-            >
-              {matrixValues.map((value) => (
-                <option key={value.id} value={value.id}>{value.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>Right</span>
-            <select
-              aria-label="Active Matrix right operand"
-              value={activeRightId}
-              onChange={(event) => onSetActiveMatrixValueIds(activeLeftId, event.currentTarget.value)}
-            >
-              {matrixValues.map((value) => (
-                <option key={value.id} value={value.id}>{value.name}</option>
-              ))}
-            </select>
-          </label>
+          <LinearAlgebraOperandPicker
+            activeId={activeLeftId}
+            ariaLabel="Active Matrix left operand"
+            label="Left"
+            options={matrixValues}
+            onChange={(id) => onSetActiveMatrixValueIds(id, activeRightId)}
+          />
+          <LinearAlgebraOperandPicker
+            activeId={activeRightId}
+            ariaLabel="Active Matrix right operand"
+            label="Right"
+            options={matrixValues}
+            onChange={(id) => onSetActiveMatrixValueIds(activeLeftId, id)}
+          />
         </div>
         <button
           type="button"

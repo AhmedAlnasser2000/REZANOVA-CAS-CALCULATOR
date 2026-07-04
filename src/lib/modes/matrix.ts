@@ -153,6 +153,10 @@ function matrixResultTitle(request: RunMatrixModeRequest) {
     : matrixOperationLabel(request.operation, request.systemForm);
 }
 
+function matrixUserFacingApproxText() {
+  return undefined;
+}
+
 export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
   const {
     operation,
@@ -214,7 +218,7 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
       error: response.error,
       warnings: response.warnings,
       exactLatex: response.resultLatex,
-      approxText: response.approxText,
+      approxText: matrixUserFacingApproxText(),
       detailSections: response.detailSections,
       actions,
       sourceMode: 'matrix',
@@ -225,7 +229,7 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
     kind: 'success',
     title: matrixResultTitle(request),
     exactLatex: response.resultLatex,
-    approxText: response.approxText,
+    approxText: matrixUserFacingApproxText(),
     detailSections: response.detailSections,
     warnings: response.warnings,
     actions,

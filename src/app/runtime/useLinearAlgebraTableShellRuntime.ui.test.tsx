@@ -662,9 +662,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(qr).toMatchObject({
       kind: 'success',
       title: qrLatex,
-      approxText: '2 QR columns',
       sourceMode: 'matrix',
     });
+    expect(qr.kind === 'success' ? qr.approxText : undefined).toBeUndefined();
     expect(qr.kind === 'success' ? qr.detailSections?.map((section) => section.title) : [])
       .toEqual(['QR Factors', 'QR Proof', 'QR Column Steps']);
 
@@ -673,9 +673,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(projection).toMatchObject({
       kind: 'success',
       title: projectionLatex,
-      approxText: 'projection in \\mathbb{R}^{3}',
       sourceMode: 'matrix',
     });
+    expect(projection.kind === 'success' ? projection.approxText : undefined).toBeUndefined();
     expect(projection.kind === 'success' ? projection.detailSections?.map((section) => section.title) : [])
       .toEqual(['Column Projection Facts', 'Column Projection Proof']);
 
@@ -684,9 +684,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(leastSquares).toMatchObject({
       kind: 'success',
       title: leastSquaresLatex,
-      approxText: 'least-squares solution',
       sourceMode: 'matrix',
     });
+    expect(leastSquares.kind === 'success' ? leastSquares.approxText : undefined).toBeUndefined();
     expect(leastSquares.kind === 'success' ? leastSquares.detailSections?.map((section) => section.title) : [])
       .toEqual(['Least-Squares Solution', 'Residual Vector', 'Least-Squares Proof']);
 
@@ -695,9 +695,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(eigen).toMatchObject({
       kind: 'success',
       title: eigenLatex,
-      approxText: 'eigenvalues 3, 1',
       sourceMode: 'matrix',
     });
+    expect(eigen.kind === 'success' ? eigen.approxText : undefined).toBeUndefined();
     expect(eigen.kind === 'success' ? eigen.detailSections?.map((section) => section.title) : [])
       .toContain('How Eigenvalues Were Found');
     expect(eigen.kind === 'success' ? eigen.detailSections?.map((section) => section.title) : [])
@@ -711,9 +711,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(diagonalized).toMatchObject({
       kind: 'success',
       title: diagonalizeLatex,
-      approxText: 'diagonalizable; eigenvalues 3, 1',
       sourceMode: 'matrix',
     });
+    expect(diagonalized.kind === 'success' ? diagonalized.approxText : undefined).toBeUndefined();
     expect(diagonalized.kind === 'success' ? diagonalized.detailSections?.map((section) => section.title) : [])
       .toEqual(['Characteristic Polynomial', 'Diagonalization Factors', 'Diagonalization Proof', 'Eigenvector Columns', 'Eigenspaces']);
 
@@ -722,9 +722,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(power).toMatchObject({
       kind: 'success',
       title: powerLatex,
-      approxText: 'power via diagonalization; eigenvalues 3, 1',
       sourceMode: 'matrix',
     });
+    expect(power.kind === 'success' ? power.approxText : undefined).toBeUndefined();
     expect(power.kind === 'success' ? power.detailSections?.map((section) => section.title) : [])
       .toEqual(['Characteristic Polynomial', 'Power Factors', 'Power via Diagonalization', 'Diagonalization Proof']);
   });
@@ -756,9 +756,9 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(gram).toMatchObject({
       kind: 'success',
       title: 'gram(u,v)',
-      approxText: '2 basis directions',
       sourceMode: 'vector',
     });
+    expect(gram.kind === 'success' ? gram.approxText : undefined).toBeUndefined();
     expect(gram.kind === 'success' ? gram.detailSections?.map((section) => section.title) : [])
       .toEqual(['Orthonormal Basis', 'Gram-Schmidt Proof']);
 

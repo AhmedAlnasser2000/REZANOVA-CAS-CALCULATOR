@@ -56,6 +56,7 @@ describe('runVectorMode', () => {
     expect(orthogonality.kind).toBe('success');
     if (orthogonality.kind === 'success') {
       expect(orthogonality.exactLatex).toBe('\\text{Orthogonal}');
+      expect(orthogonality.approxText).toBeUndefined();
     }
     const gram = runVectorMode({
       operation: 'gramSchmidtUV',
@@ -66,7 +67,32 @@ describe('runVectorMode', () => {
     expect(gram.title).toBe('gram(u,v)');
     expect(gram.kind).toBe('success');
     if (gram.kind === 'success') {
+      expect(gram.approxText).toBeUndefined();
       expect(gram.detailSections?.map((section) => section.title)).toContain('Gram-Schmidt Proof');
+    }
+  });
+
+  it('keeps numeric Vector approximations but hides nonnumeric summaries', () => {
+    const dot = runVectorMode({
+      operation: 'dot',
+      vectorA: [1, 2, 3],
+      vectorB: [4, 5, 6],
+      angleUnit: 'deg',
+    });
+    expect(dot.kind).toBe('success');
+    if (dot.kind === 'success') {
+      expect(dot.approxText).toBe('32');
+    }
+
+    const gram = runVectorMode({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 1],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    });
+    expect(gram.kind).toBe('success');
+    if (gram.kind === 'success') {
+      expect(gram.approxText).toBeUndefined();
     }
   });
 

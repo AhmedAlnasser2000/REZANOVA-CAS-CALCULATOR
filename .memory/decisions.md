@@ -1867,3 +1867,7 @@
 ## 2026-07-04 - INPUT-PASTE-CANONICALIZATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Plain-text math paste normalization belongs in the input/editor canonicalization layer. Safe top-level ASCII `/` and `*` plus textbook function powers may be converted before insertion, while solver lanes still own mathematical adoption, route facts, and backchecks.
+
+## 2026-07-04 - LINEAR-ALGEBRA-READBACK-TRUST-REPAIR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector DisplayOutcome readback reserves global `APPROX` cards for actual numeric approximations. Matrix app-mode suppresses worker summary `approxText`; Vector app-mode keeps numeric scalar approximation text but filters nonnumeric summaries. Active operand selection should use readable custom workspace controls instead of native light selects.

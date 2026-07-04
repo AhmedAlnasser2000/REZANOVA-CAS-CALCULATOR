@@ -58,13 +58,13 @@
   justify-content: space-between;
 }
 
-.linear-algebra-active-operands label {
+.linear-algebra-operand-picker {
   display: grid;
   gap: 4px;
   min-width: 104px;
 }
 
-.linear-algebra-active-operands span {
+.linear-algebra-operand-picker > span {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.72rem;
   letter-spacing: 0;
@@ -72,7 +72,6 @@
   color: rgba(219, 230, 221, 0.82);
 }
 
-.linear-algebra-active-operands select,
 .linear-algebra-name-input {
   border-radius: 12px;
   border: 1px solid var(--editor-border);
@@ -80,9 +79,73 @@
   color: var(--editor-ink);
 }
 
-.linear-algebra-active-operands select {
+.linear-algebra-operand-menu {
+  position: relative;
   min-width: 104px;
-  padding: 9px 30px 9px 10px;
+}
+
+.linear-algebra-operand-menu-button {
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--editor-border);
+  background: var(--editor-surface);
+  color: var(--editor-ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  list-style: none;
+  padding: 9px 10px;
+}
+
+.linear-algebra-operand-menu-button::-webkit-details-marker {
+  display: none;
+}
+
+.linear-algebra-operand-menu[open] .linear-algebra-operand-menu-button,
+.linear-algebra-operand-menu-button:hover {
+  background: var(--editor-surface-hover);
+  border-color: var(--editor-border-hover);
+}
+
+.linear-algebra-operand-menu-button:focus-visible {
+  outline: none;
+  background: var(--editor-surface-focus);
+  border-color: var(--editor-border-focus);
+  box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.16);
+}
+
+.linear-algebra-operand-menu-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  display: grid;
+  min-width: 100%;
+  gap: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--editor-border);
+  background: rgba(16, 29, 27, 0.98);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  padding: 6px;
+}
+
+.linear-algebra-operand-option {
+  min-height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--editor-ink);
+  cursor: pointer;
+  font: inherit;
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.linear-algebra-operand-option:hover,
+.linear-algebra-operand-option[aria-selected='true'] {
+  background: rgba(167, 184, 137, 0.18);
 }
 
 .linear-algebra-name-input {
@@ -92,14 +155,12 @@
   text-transform: none;
 }
 
-.linear-algebra-active-operands select:hover,
 .linear-algebra-name-input:hover,
 .linear-algebra-tool-button:hover:not(:disabled) {
   background: var(--editor-surface-hover);
   border-color: var(--editor-border-hover);
 }
 
-.linear-algebra-active-operands select:focus-visible,
 .linear-algebra-name-input:focus-visible,
 .linear-algebra-tool-button:focus-visible {
   outline: none;

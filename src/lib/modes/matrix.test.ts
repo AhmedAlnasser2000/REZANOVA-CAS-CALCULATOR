@@ -17,6 +17,7 @@ describe('runMatrixMode', () => {
     if (result.kind !== 'success') {
       return;
     }
+    expect(result.approxText).toBeUndefined();
     expect(result.sourceMode).toBe('matrix');
   });
 
@@ -85,6 +86,7 @@ describe('runMatrixMode', () => {
       return;
     }
     expect(result.exactLatex).toBe('A=LU');
+    expect(result.approxText).toBeUndefined();
     expect(result.detailSections?.map((section) => section.title)).toEqual([
       'LU Factors',
       'Factorization Row Steps',
@@ -105,6 +107,7 @@ describe('runMatrixMode', () => {
       return;
     }
     expect(result.exactLatex).toBe('PA=LU');
+    expect(result.approxText).toBeUndefined();
     expect(result.detailSections?.map((section) => section.title)).toEqual([
       'PLU Factors',
       'PLU Row Swaps',
