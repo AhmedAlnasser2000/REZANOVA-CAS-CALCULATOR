@@ -82,7 +82,7 @@ describe('WorkspaceTabs', () => {
     expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
   });
 
-  it('opens Settings and History singleton pages from the adjacent plus menu', () => {
+  it('opens Guide, Settings, and History singleton pages from the adjacent plus menu', () => {
     const handlers = renderTabs([
       tab({ id: 'workspace.calculate.1', isActive: true }),
     ]);
@@ -90,6 +90,10 @@ describe('WorkspaceTabs', () => {
     fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
     expect(screen.getByTestId('workspace-tab-create-menu')).toHaveTextContent('New workspace');
 
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Open Guide Page' }));
+    expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('guide-page');
+
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Open Settings Page' }));
     expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('settings');
 

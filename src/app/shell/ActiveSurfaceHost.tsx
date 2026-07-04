@@ -11,15 +11,19 @@ import type {
   SettingsPatch,
 } from '../../types/calculator';
 import {
+  GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
 } from '../runtime/app-page-workspaces';
 import { FormulaViewerPage } from './FormulaViewerPage';
+import { GuidePage } from './GuidePage';
 import { HistoryPage } from './HistoryPage';
 import { SettingsPage } from './SettingsPage';
+import type { GuideWorkspaceProps } from '../workspaces/GuideWorkspace';
 
 type ActiveSurfaceHostProps = {
   activeInstance: WorkspaceInstance | null | undefined;
+  guide: GuideWorkspaceProps;
   history: HistoryEntry[];
   modeLabels: Record<ModeId, string>;
   onCopyResult: (latex: string) => void;
@@ -41,6 +45,7 @@ type ActiveSurfaceHostProps = {
 
 export function ActiveSurfaceHost({
   activeInstance,
+  guide,
   history,
   modeLabels,
   onCopyResult,
@@ -123,6 +128,19 @@ export function ActiveSurfaceHost({
           onStopPending={onStopPendingHistoryTicket}
           symbolicDisplayPrefs={symbolicDisplayPrefs}
         />
+      </section>
+    );
+  }
+
+  if (surfaceDescriptor.pageKind === GUIDE_PAGE_WORKSPACE_KIND) {
+    return (
+      <section
+        className={`${pageSurfaceClassName} active-surface--guide`}
+        data-surface-kind="guide"
+        data-testid="active-surface-page"
+        style={pageSurfaceStyle}
+      >
+        <GuidePage guide={guide} />
       </section>
     );
   }

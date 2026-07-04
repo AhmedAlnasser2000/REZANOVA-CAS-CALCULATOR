@@ -43,6 +43,7 @@ type UseGuideRuntimeOptions = {
   closeLauncher: () => void;
   currentMode: ModeId;
   enabledCapabilities: readonly CapabilityId[];
+  openGuidePage?: () => void;
   openLauncher: () => void;
   setMode: (mode: ModeId) => void;
 };
@@ -70,8 +71,9 @@ function defaultGuideSelection(): GuideSelectionState {
 export function useGuideRuntime({
   closeHistoryPanel,
   closeLauncher,
-  currentMode,
+  currentMode: _currentMode,
   enabledCapabilities,
+  openGuidePage,
   openLauncher,
   setMode,
 }: UseGuideRuntimeOptions) {
@@ -79,48 +81,40 @@ export function useGuideRuntime({
   const [guideSelection, setGuideSelection] =
     useState<GuideSelectionState>(() => defaultGuideSelection());
 
-  const guideRouteMeta = currentMode === 'guide'
-    ? getGuideRouteMeta(guideRoute, enabledCapabilities)
-    : null;
-  const guideListEntries = currentMode === 'guide'
-    ? getGuideListEntries(guideRoute, enabledCapabilities)
-    : [];
+  const guideRouteMeta = getGuideRouteMeta(guideRoute, enabledCapabilities);
+  const guideListEntries = getGuideListEntries(guideRoute, enabledCapabilities);
   const currentGuideSelectionIndex =
-    currentMode !== 'guide'
-      ? 0
-      : guideRoute.screen === 'home'
-        ? guideSelection.home
-        : guideRoute.screen === 'domain'
-          ? guideSelection.domain[guideRoute.domainId]
-          : guideRoute.screen === 'symbolLookup'
-            ? guideSelection.symbolLookup
-            : guideRoute.screen === 'modeGuide' && !guideRoute.modeId
-              ? guideSelection.modeGuide
-              : guideRoute.screen === 'search'
-                ? guideSelection.search
-                : guideRoute.screen === 'article'
-                  ? (guideSelection.article[guideRoute.articleId] ?? 0)
-                  : 0;
-  const selectedGuideListEntry =
-    currentMode === 'guide' && guideListEntries.length > 0
-      ? guideListEntries[clampGuideIndex(currentGuideSelectionIndex, guideListEntries.length)]
-      : undefined;
+    guideRoute.screen === 'home'
+      ? guideSelection.home
+      : guideRoute.screen === 'domain'
+        ? guideSelection.domain[guideRoute.domainId]
+        : guideRoute.screen === 'symbolLookup'
+          ? guideSelection.symbolLookup
+          : guideRoute.screen === 'modeGuide' && !guideRoute.modeId
+            ? guideSelection.modeGuide
+            : guideRoute.screen === 'search'
+              ? guideSelection.search
+              : guideRoute.screen === 'article'
+                ? (guideSelection.article[guideRoute.articleId] ?? 0)
+                : 0;
+  const selectedGuideListEntry = guideListEntries.length > 0
+    ? guideListEntries[clampGuideIndex(currentGuideSelectionIndex, guideListEntries.length)]
+    : undefined;
   const guideArticle =
-    currentMode === 'guide' && guideRoute.screen === 'article'
+    guideRoute.screen === 'article'
       ? getGuideArticle(guideRoute.articleId)
       : null;
   const selectedGuideExample =
-    currentMode === 'guide' && guideRoute.screen === 'article'
+    guideRoute.screen === 'article'
       ? getSelectedGuideExample(guideArticle ?? undefined, currentGuideSelectionIndex)
       : undefined;
   const guideModeRef =
-    currentMode === 'guide' && guideRoute.screen === 'modeGuide' && guideRoute.modeId
+    guideRoute.screen === 'modeGuide' && guideRoute.modeId
       ? getGuideModeRef(guideRoute.modeId)
       : undefined;
   const activeGuideHomeEntries = getActiveGuideHomeEntries(enabledCapabilities);
   const guideSearchQuery =
-    currentMode === 'guide'
-    && (guideRoute.screen === 'search' || guideRoute.screen === 'symbolLookup')
+    guideRoute.screen === 'search' || guideRoute.screen === 'symbolLookup'
       ? guideRoute.query
       : '';
   const guideSoftMenu = guideRouteMeta?.softActions.map((action) => {
@@ -134,6 +128,14 @@ export function useGuideRuntime({
 
   function openGuideRoute(route: GuideRoute) {
     setGuideRoute(route);
+  }
+
+  function openGuideSurface() {
+    if (openGuidePage) {
+      openGuidePage();
+      return;
+    }
+    setMode('guide');
   }
 
   function setCurrentGuideSelectionIndex(index: number) {
@@ -216,21 +218,21 @@ export function useGuideRuntime({
     closeLauncher();
     closeHistoryPanel();
     setGuideRoute({ screen: 'article', articleId });
-    setMode('guide');
+    openGuideSurface();
   }
 
   function openGuideHome() {
     closeLauncher();
     closeHistoryPanel();
     setGuideRoute({ screen: 'home' });
-    setMode('guide');
+    openGuideSurface();
   }
 
   function openGuideMode(modeId: GuideModeId) {
     closeLauncher();
     closeHistoryPanel();
     setGuideRoute({ screen: 'modeGuide', modeId });
-    setMode('guide');
+    openGuideSurface();
   }
 
   function resetGuideRuntime() {

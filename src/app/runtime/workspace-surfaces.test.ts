@@ -37,7 +37,7 @@ describe('workspace surface descriptors', () => {
     });
   });
 
-  it('classifies Settings and History as live protected singleton page surfaces', () => {
+  it('classifies Settings, History, and Guide as live protected singleton page surfaces', () => {
     expect(SINGLETON_PAGE_SURFACE_POLICIES).toEqual([
       {
         pageKind: 'settings',
@@ -47,11 +47,16 @@ describe('workspace surface descriptors', () => {
         pageKind: 'history',
         singleton: true,
       },
+      {
+        pageKind: 'guide-page',
+        singleton: true,
+      },
     ]);
 
-    expect(resolveWorkspaceSurfaceDescriptor('settings')).toEqual({
+    for (const pageKind of ['settings', 'history', 'guide-page'] as const) {
+      expect(resolveWorkspaceSurfaceDescriptor(pageKind)).toEqual({
       allowsQuickInspectors: false,
-      pageKind: 'settings',
+      pageKind,
       surfaceKind: 'page',
       tabActionPolicy: {
         canClearState: false,
@@ -62,5 +67,6 @@ describe('workspace surface descriptors', () => {
         canStopJobs: false,
       },
     });
+    }
   });
 });

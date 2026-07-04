@@ -24,7 +24,11 @@ import { ModeStrip } from './app/shell/ModeStrip';
 import { SideSurfaceHost } from './app/shell/SideSurfaceHost';
 import { SoftMenu } from './app/shell/SoftMenu';
 import { WorkspaceTabs } from './app/shell/WorkspaceTabs';
-import { HISTORY_PAGE_WORKSPACE_KIND, SETTINGS_PAGE_WORKSPACE_KIND } from './app/runtime/app-page-workspaces';
+import {
+  GUIDE_PAGE_WORKSPACE_KIND,
+  HISTORY_PAGE_WORKSPACE_KIND,
+  SETTINGS_PAGE_WORKSPACE_KIND,
+} from './app/runtime/app-page-workspaces';
 import { useQuickInspectorPolicy } from './app/runtime/useQuickInspectorPolicy';
 import { resolveWorkspaceCompartment } from './app/shell/workspaceCompartment';
 import {
@@ -67,7 +71,10 @@ import {
   getCalculusMenuEntryByHotkey,
   getCalculusSoftActions,
 } from './lib/calculus/workspace/navigation';
-import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
+import {
+  canonicalizeMathInput,
+  trimHarmlessTrailingMathSpacing,
+} from './lib/input/input-canonicalization';
 import {
   getGeometryMenuEntryByHotkey,
   getGeometryParentScreen,
@@ -128,6 +135,7 @@ import { handleKeypadWithDeps } from './app/logic/keypadRouter';
 import { handleWindowKeydownWithDeps } from './app/logic/windowKeyRouter';
 import { launchWorkspaceEntryFromLauncher } from './app/logic/launcherWorkspaceActions';
 import { launchGuideExampleDestination } from './app/logic/guideExampleLaunchActions';
+import { createModeGuideOpeners } from './app/logic/modeGuideRouting';
 import {
   DEFAULT_SETTINGS,
   type CalculusResultOrigin,
@@ -334,6 +342,10 @@ export default function App() {
   const openGeometryScreenRef = useRef<(screen: GeometryScreen) => void>(() => {});
   const openCalculusScreenRef = useRef<(screen: CalculusScreen) => void>(() => {});
   const createWorkspaceKindTabRef = useRef<((mode: ModeId) => void) | null>(null);
+  const openGuidePageTabRef = useRef<(() => void) | null>(null);
+  const openGuidePageTab = useCallback(() => {
+    openGuidePageTabRef.current?.();
+  }, []);
   const resetCalculateRuntimeRef = useRef<() => void>(() => {});
   const resetCalculusRuntimeRef = useRef<() => void>(() => {});
   const resetEquationRuntimeRef = useRef<() => void>(() => {});
@@ -1032,6 +1044,7 @@ export default function App() {
     closeLauncher,
     currentMode,
     enabledCapabilities: guideEnabledCapabilities,
+    openGuidePage: openGuidePageTab,
     openLauncher,
     setMode,
   });
@@ -1160,6 +1173,8 @@ export default function App() {
     table: { captureSurfaceState: linearAlgebraTableShellRuntime.captureTableSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreTableSurfaceState }, matrix: { captureSurfaceState: linearAlgebraTableShellRuntime.captureMatrixSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreMatrixSurfaceState }, vector: { captureSurfaceState: linearAlgebraTableShellRuntime.captureVectorSurfaceState, restoreSurfaceState: linearAlgebraTableShellRuntime.restoreVectorSurfaceState },
   });
   createWorkspaceKindTabRef.current = createWorkspaceKindTab;
+  openGuidePageTabRef.current = () =>
+    workspaceTabsRuntime.onOpenAppPageTab(GUIDE_PAGE_WORKSPACE_KIND);
   useEffect(() => {
     if (isLauncherOpen || currentMode !== 'equation') {
       return;
@@ -1605,125 +1620,21 @@ export default function App() {
     });
   }
 
-  function openCalculusGuideForScreen(screen: CalculusScreen = calculusScreen) {
-    if (screen === 'home') {
-      openGuideRoute({ screen: 'domain', domainId: 'calculus' });
-      setMode('guide');
-      return;
-    }
-
-    if (screen === 'derivativesHome' || screen === 'derivative' || screen === 'derivativePoint') {
-      openGuideArticle('calculus-derivatives');
-      return;
-    }
-
-    if (screen === 'integralsHome' || screen === 'indefiniteIntegral' || screen === 'definiteIntegral' || screen === 'improperIntegral') {
-      openGuideArticle('calculus-integrals');
-      return;
-    }
-
-    if (screen === 'limitsHome' || screen === 'finiteLimit' || screen === 'infiniteLimit') {
-      openGuideArticle('calculus-limits');
-      return;
-    }
-
-    if (screen === 'seriesHome' || screen === 'maclaurin' || screen === 'taylor') {
-      openGuideArticle('calculus-series');
-      return;
-    }
-
-    if (screen === 'partialsHome' || screen === 'partialDerivative') {
-      openGuideArticle('calculus-partials');
-      return;
-    }
-
-    openGuideArticle('calculus-odes');
-  }
-
-  function openTrigGuideForScreen(screen: TrigScreen = trigScreen) {
-    if (screen === 'home') {
-      openGuideRoute({ screen: 'domain', domainId: 'trigonometry' });
-      setMode('guide');
-      return;
-    }
-
-    if (screen === 'functions') {
-      openGuideArticle('trig-functions');
-      return;
-    }
-
-    if (screen === 'identitiesHome' || screen === 'identitySimplify' || screen === 'identityConvert') {
-      openGuideArticle('trig-identities');
-      return;
-    }
-
-    if (screen === 'equationsHome' || screen === 'equationSolve') {
-      openGuideArticle('trig-equations');
-      return;
-    }
-
-    if (screen === 'trianglesHome' || screen === 'rightTriangle' || screen === 'sineRule' || screen === 'cosineRule') {
-      openGuideArticle('trig-triangles');
-      return;
-    }
-
-    openGuideArticle('trig-special-angles');
-  }
-
-  function openGeometryGuideForScreen(screen: GeometryScreen = geometryScreen) {
-    if (screen === 'home') {
-      openGuideRoute({ screen: 'domain', domainId: 'geometry' });
-      setMode('guide');
-      return;
-    }
-
-    if (screen === 'shapes2dHome' || screen === 'square' || screen === 'rectangle') {
-      openGuideArticle('geometry-shapes-2d');
-      return;
-    }
-
-    if (screen === 'shapes3dHome' || screen === 'cube' || screen === 'cuboid' || screen === 'cylinder' || screen === 'cone' || screen === 'sphere') {
-      openGuideArticle('geometry-solids-3d');
-      return;
-    }
-
-    if (screen === 'triangleHome' || screen === 'triangleArea' || screen === 'triangleHeron') {
-      openGuideArticle('geometry-triangles');
-      return;
-    }
-
-    if (screen === 'circleHome' || screen === 'circle' || screen === 'arcSector') {
-      openGuideArticle('geometry-circles');
-      return;
-    }
-
-    openGuideArticle('geometry-coordinate');
-  }
-
-  function openStatisticsGuideForScreen(screen: StatisticsScreen = statisticsScreen) {
-    if (screen === 'home') {
-      openGuideRoute({ screen: 'modeGuide', modeId: 'statistics' });
-      setMode('guide');
-      return;
-    }
-
-    if (screen === 'dataEntry' || screen === 'descriptive' || screen === 'frequency') {
-      openGuideArticle('statistics-descriptive');
-      return;
-    }
-
-    if (screen === 'probabilityHome' || screen === 'binomial' || screen === 'normal' || screen === 'poisson') {
-      openGuideArticle('statistics-probability');
-      return;
-    }
-
-    if (screen === 'inferenceHome' || screen === 'meanInference') {
-      openGuideArticle('statistics-inference');
-      return;
-    }
-
-    openGuideArticle('statistics-regression');
-  }
+  const {
+    openCalculusGuideForScreen,
+    openGeometryGuideForScreen,
+    openStatisticsGuideForScreen,
+    openTrigGuideForScreen,
+  } = createModeGuideOpeners({
+    calculusScreen,
+    geometryScreen,
+    openGuideArticle,
+    openGuidePage: openGuidePageTab,
+    openGuideRoute,
+    setMode: (mode) => setMode(mode),
+    statisticsScreen,
+    trigScreen,
+  });
 
   function activeExpressionLatex() {
     if (isLauncherOpen || isEquationMenuOpen || isTrigMenuOpen || isStatisticsMenuOpen) {
@@ -1927,6 +1838,18 @@ export default function App() {
       }
 
       const text = await navigator.clipboard.readText();
+      const canonicalized = canonicalizeMathInput(text, {
+        mode: currentMode,
+        screenHint: currentMode === 'equation'
+          ? 'symbolic'
+          : isCalculusMode(currentMode)
+            ? calculusScreen
+            : currentMode === 'calculate'
+              ? calculateScreen
+              : 'standard',
+        liveAssist: true,
+      });
+      const mathText = canonicalized.ok ? canonicalized.canonicalLatex : text;
       if (
         !isLauncherOpen &&
         (currentMode === 'calculate' ||
@@ -1938,33 +1861,33 @@ export default function App() {
         activeFieldRef.current
       ) {
         activeFieldRef.current.focus?.();
-        activeFieldRef.current.insert(text);
+        activeFieldRef.current.insert(mathText);
         setClipboardNotice('Pasted into editor');
         return;
       }
 
       if (currentMode === 'geometry' && geometryEditorIsEditable) {
         focusGeometryEditor();
-        geometryDraftFieldRef.current?.insert(text);
+        geometryDraftFieldRef.current?.insert(mathText);
         setClipboardNotice('Pasted into Geometry editor');
         return;
       }
 
       if (currentMode === 'statistics' && statisticsEditorIsEditable) {
         focusStatisticsEditor();
-        statisticsDraftFieldRef.current?.insert(text);
+        statisticsDraftFieldRef.current?.insert(mathText);
         setClipboardNotice('Pasted into Statistics editor');
         return;
       }
 
       if (currentMode === 'trigonometry' && trigEditorIsEditable) {
         focusTrigEditor();
-        trigDraftFieldRef.current?.insert(text);
+        trigDraftFieldRef.current?.insert(mathText);
         setClipboardNotice('Pasted into Trigonometry editor');
         return;
       }
 
-      loadLatexIntoEditor(text);
+      loadLatexIntoEditor(mathText);
     } catch {
       setClipboardNotice('Clipboard blocked');
     }
@@ -2820,6 +2743,25 @@ export default function App() {
         <WorkspaceTabs {...workspaceTabsRuntime} />
         <ActiveSurfaceHost
           activeInstance={workspaceInstancesRuntime.activeInstance}
+          guide={{
+            article: guideArticle ?? null,
+            currentSelectionIndex: currentGuideSelectionIndex,
+            homeEntryCount: activeGuideHomeEntries.length,
+            listEntries: guideListEntries,
+            menuPanelRef: guideMenuPanelRef,
+            modeRef: guideModeRef ?? null,
+            onCopyGuideExample: (example) =>
+              void copyText(copyableGuideExampleLatex(example), 'Example copied'),
+            onLaunchGuideExample: launchGuideExample,
+            onOpenGuideRoute: openGuideRoute,
+            onSetCurrentSelectionIndex: setCurrentGuideSelectionIndex,
+            onSetGuideQuery: setGuideQuery,
+            route: guideRoute,
+            routeMeta: guideRouteMeta,
+            searchInputRef: guideSearchInputRef,
+            searchQuery: guideSearchQuery,
+            selectedGuideListEntry,
+          }}
           history={history} modeLabels={MODE_LABELS}
           onCopyResult={(latex) => void copyText(latex, 'Result copied')}
           onDeleteHistoryEntry={deleteHistoryEntryById} onDeleteSelectedHistoryEntries={(ids) => ids.forEach(deleteHistoryEntryById)}
@@ -2851,7 +2793,6 @@ export default function App() {
           openTrigScreen={openTrigScreen}
           patchSettings={patchSettings}
           runtimeLabel={runtimeLabel}
-          setGuideRoute={openGuideRoute}
           setMode={setMode}
           settings={settings}
           settingsOpen={quickInspectorPolicy.effectiveSettingsOpen}

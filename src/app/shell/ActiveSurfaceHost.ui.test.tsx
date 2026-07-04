@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -13,6 +14,13 @@ import {
 } from '../runtime/workspace-instances';
 import { ActiveSurfaceHost } from './ActiveSurfaceHost';
 import type { ModeId } from '../../types/calculator';
+import { createKeyboardContext } from '../../lib/virtual-keyboard/capabilities';
+import { getActiveGuideHomeEntries } from '../../lib/guide/content';
+import {
+  getGuideListEntries,
+  getGuideRouteMeta,
+} from '../../lib/guide/navigation';
+import type { GuideWorkspaceProps } from '../workspaces/GuideWorkspace';
 
 const modeLabels: Record<ModeId, string> = {
   calculate: 'Calculate',
@@ -63,8 +71,31 @@ function formulaViewerInstance(): WorkspaceInstance {
   };
 }
 
+function guidePageProps(): GuideWorkspaceProps {
+  const route = { screen: 'home' } as const;
+  const enabledCapabilities = createKeyboardContext('calculate').enabledCapabilities;
+  return {
+    article: null,
+    currentSelectionIndex: 0,
+    homeEntryCount: getActiveGuideHomeEntries(enabledCapabilities).length,
+    listEntries: getGuideListEntries(route, enabledCapabilities),
+    menuPanelRef: createRef<HTMLDivElement>(),
+    modeRef: null,
+    onCopyGuideExample: vi.fn(),
+    onLaunchGuideExample: vi.fn(),
+    onOpenGuideRoute: vi.fn(),
+    onSetCurrentSelectionIndex: vi.fn(),
+    onSetGuideQuery: vi.fn(),
+    route,
+    routeMeta: getGuideRouteMeta(route, enabledCapabilities),
+    searchInputRef: createRef<HTMLInputElement>(),
+    searchQuery: '',
+  };
+}
+
 function activeSurfaceHostProps() {
   return {
+    guide: guidePageProps(),
     history: [],
     modeLabels,
     onCopyResult: vi.fn(),
@@ -189,6 +220,21 @@ describe('ActiveSurfaceHost', () => {
     const pageSurface = screen.getByTestId('active-surface-page');
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'history');
     expect(pageSurface).toContainElement(screen.getByTestId('history-page'));
+    expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
+  });
+
+  it('renders Guide as a page surface outside the calculator shell', () => {
+    render(
+      <ActiveSurfaceHost
+        {...activeSurfaceHostProps()}
+        activeInstance={createWorkspaceInstance('guide-page', 4)}
+      />,
+    );
+
+    const pageSurface = screen.getByTestId('active-surface-page');
+    expect(pageSurface).toHaveAttribute('data-surface-kind', 'guide');
+    expect(pageSurface).toContainElement(screen.getByTestId('guide-page'));
+    expect(screen.getByTestId('guide-page-main')).toBeInTheDocument();
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 });

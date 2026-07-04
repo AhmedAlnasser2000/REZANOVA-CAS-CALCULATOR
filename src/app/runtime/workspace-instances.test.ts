@@ -177,7 +177,7 @@ describe('workspace instance model', () => {
     expect(state.activeInstanceId).toBe('formula-viewer.3');
   });
 
-  it('opens Settings and History as singleton app pages without OOE runtime context', () => {
+  it('opens Settings, History, and Guide as singleton app pages without OOE runtime context', () => {
     const options = createDeterministicOptions();
     let state = createInitialWorkspaceInstancesState(options);
 
@@ -210,6 +210,25 @@ describe('workspace instance model', () => {
       compartmentId: 'app-shell',
     });
     expect(workspaceInstanceRuntimeContext(getActiveWorkspaceInstance(state)!)).toBeNull();
+
+    state = openAppPageWorkspaceInstance(state, 'guide-page', options);
+
+    expect(getActiveWorkspaceInstance(state)).toMatchObject({
+      id: 'guide-page.4',
+      workspaceKind: 'guide-page',
+      title: 'Guide',
+      compartmentId: 'app-shell',
+      compartmentLabel: 'App Page',
+      surfaceLabel: 'Guide page',
+    });
+    expect(workspaceInstanceRuntimeContext(getActiveWorkspaceInstance(state)!)).toBeNull();
+
+    state = focusWorkspaceInstance(state, 'calculate.1', options);
+    state = openAppPageWorkspaceInstance(state, 'guide-page', options);
+
+    expect(state.instances.filter((instance) => instance.workspaceKind === 'guide-page'))
+      .toHaveLength(1);
+    expect(state.activeInstanceId).toBe('guide-page.4');
   });
 
   it('renames with trimmed titles and falls back to the default label', () => {

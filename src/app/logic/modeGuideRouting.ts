@@ -13,12 +13,21 @@ export function createModeGuideOpeners(deps: {
   statisticsScreen: StatisticsScreen;
   openGuideRoute: (route: GuideRoute) => void;
   openGuideArticle: (articleId: string) => void;
+  openGuidePage?: () => void;
   setMode: (mode: 'guide') => void;
 }) {
+  function openGuideSurface() {
+    if (deps.openGuidePage) {
+      deps.openGuidePage();
+      return;
+    }
+    deps.setMode('guide');
+  }
+
   function openCalculusGuideForScreen(screen: CalculusScreen = deps.calculusScreen) {
     if (screen === 'home') {
       deps.openGuideRoute({ screen: 'domain', domainId: 'calculus' });
-      deps.setMode('guide');
+      openGuideSurface();
       return;
     }
 
@@ -63,7 +72,7 @@ export function createModeGuideOpeners(deps: {
   function openTrigGuideForScreen(screen: TrigScreen = deps.trigScreen) {
     if (screen === 'home') {
       deps.openGuideRoute({ screen: 'domain', domainId: 'trigonometry' });
-      deps.setMode('guide');
+      openGuideSurface();
       return;
     }
 
@@ -93,7 +102,7 @@ export function createModeGuideOpeners(deps: {
   function openGeometryGuideForScreen(screen: GeometryScreen = deps.geometryScreen) {
     if (screen === 'home') {
       deps.openGuideRoute({ screen: 'domain', domainId: 'geometry' });
-      deps.setMode('guide');
+      openGuideSurface();
       return;
     }
 
@@ -121,9 +130,9 @@ export function createModeGuideOpeners(deps: {
   }
 
   function openStatisticsGuideForScreen(screen: StatisticsScreen = deps.statisticsScreen) {
-    if (screen === 'home' || screen === 'probabilityHome') {
+    if (screen === 'home') {
       deps.openGuideRoute({ screen: 'modeGuide', modeId: 'statistics' });
-      deps.setMode('guide');
+      openGuideSurface();
       return;
     }
 
@@ -132,8 +141,13 @@ export function createModeGuideOpeners(deps: {
       return;
     }
 
-    if (screen === 'binomial' || screen === 'normal' || screen === 'poisson') {
+    if (screen === 'probabilityHome' || screen === 'binomial' || screen === 'normal' || screen === 'poisson') {
       deps.openGuideArticle('statistics-probability');
+      return;
+    }
+
+    if (screen === 'inferenceHome' || screen === 'meanInference') {
+      deps.openGuideArticle('statistics-inference');
       return;
     }
 

@@ -1859,3 +1859,7 @@
 ## 2026-07-03 - GUIDE-EDUCATION-PLATFORM-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | contributors: claude, user | attribution_basis: mixed] Future Guide platform work should reject a universal generated step-by-step engine and instead center on authorable notebooks/guidance packs, teacher/community export, learner import, and compact computation/evidence snapshots produced by real solver routes. External content embedding is not a dependency; import/export is the platform boundary, and History remains a personal computation ledger rather than the notebook schema.
+
+## 2026-07-04 - GUIDE-PAGE-SURFACE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guide is a protected singleton app-level page surface, not a calculator-shell mode surface. Opening Guide focuses or creates `guide-page`, preserves the active calculator workspace/mode, uses null Order of Execution runtime context, suppresses quick inspectors, and keeps Notebook/import/export/persistence work deferred to later milestones.

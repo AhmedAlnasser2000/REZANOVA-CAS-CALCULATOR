@@ -6,6 +6,7 @@ import {
 } from 'react';
 import {
   BarChart3,
+  BookOpen,
   Calculator,
   FileText,
   FlaskConical,
@@ -34,6 +35,7 @@ import type {
   WorkspaceTabActionPolicy,
 } from '../runtime/workspace-surfaces';
 import {
+  GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
   type AppPageWorkspaceKind,
@@ -90,6 +92,9 @@ function workspaceTabIcon(tab: WorkspaceTabItem): LucideIcon {
   }
   if (tab.workspaceKind === HISTORY_PAGE_WORKSPACE_KIND) {
     return History;
+  }
+  if (tab.workspaceKind === GUIDE_PAGE_WORKSPACE_KIND) {
+    return BookOpen;
   }
 
   switch (tab.workspaceKind) {
@@ -339,6 +344,13 @@ export function WorkspaceTabs({
           <strong>{tabText.createMenuTitle}</strong>
           <button type="button" role="menuitem" onClick={createBlankTabFromMenu}>
             {tabText.newCalculateTab}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => openAppPageFromMenu(GUIDE_PAGE_WORKSPACE_KIND)}
+          >
+            {tabText.openGuidePage}
           </button>
           <button
             type="button"

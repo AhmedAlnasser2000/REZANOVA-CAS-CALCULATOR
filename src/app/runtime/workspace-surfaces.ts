@@ -74,6 +74,10 @@ export const SINGLETON_PAGE_SURFACE_POLICIES: readonly SingletonPageSurfacePolic
     pageKind: 'history',
     singleton: true,
   },
+  {
+    pageKind: 'guide-page',
+    singleton: true,
+  },
 ];
 
 export function resolveWorkspaceSurfaceDescriptor(

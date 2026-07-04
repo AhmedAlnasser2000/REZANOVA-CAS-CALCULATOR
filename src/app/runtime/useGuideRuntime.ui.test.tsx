@@ -7,6 +7,7 @@ import { useGuideRuntime } from './useGuideRuntime';
 function renderGuideRuntime(initialProps: { currentMode?: ModeId } = {}) {
   const closeHistoryPanel = vi.fn();
   const closeLauncher = vi.fn();
+  const openGuidePage = vi.fn();
   const openLauncher = vi.fn();
   const setMode = vi.fn();
   const enabledCapabilities = createKeyboardContext('calculate').enabledCapabilities;
@@ -18,6 +19,7 @@ function renderGuideRuntime(initialProps: { currentMode?: ModeId } = {}) {
         closeLauncher,
         currentMode: props.currentMode,
         enabledCapabilities,
+        openGuidePage,
         openLauncher,
         setMode,
       }),
@@ -32,6 +34,7 @@ function renderGuideRuntime(initialProps: { currentMode?: ModeId } = {}) {
     closeHistoryPanel,
     closeLauncher,
     hook,
+    openGuidePage,
     openLauncher,
     setMode,
   };
@@ -144,8 +147,8 @@ describe('useGuideRuntime', () => {
     expect(openLauncher).toHaveBeenCalledTimes(1);
   });
 
-  it('opens Guide surfaces through shell helpers and resets Guide runtime state', () => {
-    const { closeHistoryPanel, closeLauncher, hook, setMode } = renderGuideRuntime();
+  it('opens Guide page surfaces through shell helpers and resets Guide runtime state', () => {
+    const { closeHistoryPanel, closeLauncher, hook, openGuidePage, setMode } = renderGuideRuntime();
 
     act(() => {
       hook.result.current.openGuideArticle('calculus-integrals');
@@ -157,7 +160,8 @@ describe('useGuideRuntime', () => {
     });
     expect(closeLauncher).toHaveBeenCalled();
     expect(closeHistoryPanel).toHaveBeenCalled();
-    expect(setMode).toHaveBeenCalledWith('guide');
+    expect(openGuidePage).toHaveBeenCalledTimes(1);
+    expect(setMode).not.toHaveBeenCalled();
 
     act(() => {
       hook.result.current.openGuideMode('calculus');
@@ -167,6 +171,7 @@ describe('useGuideRuntime', () => {
       screen: 'modeGuide',
       modeId: 'calculus',
     });
+    expect(openGuidePage).toHaveBeenCalledTimes(2);
 
     act(() => {
       hook.result.current.setCurrentGuideSelectionIndex(3);

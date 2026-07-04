@@ -105,6 +105,45 @@ describe('AppMain workspace tabs', () => {
     });
   });
 
+  it('opens Guide as a singleton page tab without replacing the calculator workspace', async () => {
+    const { user } = await renderAppMain();
+
+    await user.click(screen.getByTestId('keypad-menu'));
+    expect(await screen.findByTestId('left-menu-inspector')).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('guide-toggle'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('active-surface-page')).toHaveAttribute(
+        'data-surface-kind',
+        'guide',
+      );
+      expect(screen.getByTestId('guide-page')).toBeInTheDocument();
+      expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('side-surface-host')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('left-menu-inspector')).not.toBeInTheDocument();
+    });
+
+    let tabs = screen.getAllByTestId('workspace-tab');
+    expect(tabs).toHaveLength(2);
+    expect(tabs[0]).toHaveAttribute('data-workspace-kind', 'calculate');
+    expect(tabs[1]).toHaveAttribute('data-workspace-kind', 'guide-page');
+
+    await user.click(within(tabs[0]).getByRole('tab', { name: /Calculate/ }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('calculator-shell')).toBeInTheDocument();
+      expect(screen.queryByTestId('guide-page')).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('guide-toggle'));
+    await waitFor(() => {
+      tabs = screen.getAllByTestId('workspace-tab');
+      expect(tabs.filter((tab) => tab.getAttribute('data-workspace-kind') === 'guide-page'))
+        .toHaveLength(1);
+    });
+  });
+
   it('retargets the active workspace tab for normal mode selection', async () => {
     const { user } = await renderAppMain();
 

@@ -4,7 +4,7 @@ import { getGuideArticle } from '../../lib/guide/content';
 import type { GuideListEntry } from '../../lib/guide/navigation';
 import type { GuideArticle, GuideModeRef, GuideRoute, GuideRouteMeta } from '../../types/calculator';
 
-type GuideWorkspaceProps = {
+export type GuideWorkspaceProps = {
   route: GuideRoute;
   routeMeta: GuideRouteMeta | null;
   listEntries: GuideListEntry[];
@@ -15,11 +15,13 @@ type GuideWorkspaceProps = {
   searchQuery: string;
   article: GuideArticle | null;
   modeRef: GuideModeRef | null;
+  selectedGuideListEntry?: GuideListEntry;
   onOpenGuideRoute: (route: GuideRoute) => void;
   onSetCurrentSelectionIndex: (index: number) => void;
   onSetGuideQuery: (query: string) => void;
   onLaunchGuideExample: (example: GuideArticle['examples'][number]) => void;
   onCopyGuideExample: (example: GuideArticle['examples'][number]) => void;
+  surface?: 'calculator' | 'page';
 };
 
 const UNIT_CIRCLE_POINTS = [
@@ -139,9 +141,15 @@ export function GuideWorkspace({
   onSetGuideQuery,
   onLaunchGuideExample,
   onCopyGuideExample,
+  surface = 'calculator',
 }: GuideWorkspaceProps) {
+  const articleLike = route.screen === 'article' || (route.screen === 'modeGuide' && route.modeId);
+  const panelClassName = surface === 'page'
+    ? `guide-page-content ${articleLike ? 'guide-page-content--article' : 'guide-page-content--menu'}`
+    : `mode-panel ${articleLike ? 'guide-article-panel' : 'guide-menu-panel'}`;
+
   return (
-    <section className={`mode-panel ${route.screen === 'article' || (route.screen === 'modeGuide' && route.modeId) ? 'guide-article-panel' : 'guide-menu-panel'}`}>
+    <section className={panelClassName}>
       {routeMeta ? (
         <div className="equation-panel-header guide-panel-header">
           <div className="equation-panel-copy">

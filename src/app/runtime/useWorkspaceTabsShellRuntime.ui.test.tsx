@@ -48,7 +48,10 @@ import {
   formulaViewerArtifactFromSurfaceState,
   type FormulaViewerArtifact,
 } from './formula-viewer-artifacts';
-import { SETTINGS_PAGE_WORKSPACE_KIND } from './app-page-workspaces';
+import {
+  GUIDE_PAGE_WORKSPACE_KIND,
+  SETTINGS_PAGE_WORKSPACE_KIND,
+} from './app-page-workspaces';
 import type { DisplayBlock } from '../../lib/display/result/display-blocks';
 
 const definition: OoeJobIdentityDefinition = {
@@ -348,6 +351,47 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
       id: settingsId,
       title: 'Settings',
       workspaceKind: SETTINGS_PAGE_WORKSPACE_KIND,
+    });
+    expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
+  });
+
+  it('opens protected Guide page tabs as singleton app pages', () => {
+    const { hook, setEditorRuntimeStatusOverride } = renderWorkspaceTabsShell();
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenAppPageTab(GUIDE_PAGE_WORKSPACE_KIND);
+    });
+
+    const guideId = hook.result.current.workspaceInstances.activeInstance?.id;
+    expect(guideId).toBe('guide-page.2');
+    expect(hook.result.current.currentMode).toBe('calculate');
+    expect(hook.result.current.workspaceInstances.activeRuntimeContext).toBeNull();
+    expect(hook.result.current.shell.workspaceTabsRuntime.tabs[1]).toMatchObject({
+      actionPolicy: {
+        canClearState: false,
+        canDuplicate: false,
+        canRename: false,
+        canStopJobs: false,
+      },
+      surfaceKind: 'page',
+      workspaceKind: GUIDE_PAGE_WORKSPACE_KIND,
+    });
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onOpenAppPageTab(GUIDE_PAGE_WORKSPACE_KIND);
+      hook.result.current.shell.workspaceTabsRuntime.onDuplicateTab(guideId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onClearTabState(guideId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onStopJobsInTab(guideId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onRenameTab(guideId ?? '', 'Custom Guide');
+    });
+
+    expect(hook.result.current.workspaceInstances.workspaceInstances
+      .filter((instance) => instance.workspaceKind === GUIDE_PAGE_WORKSPACE_KIND))
+      .toHaveLength(1);
+    expect(hook.result.current.workspaceInstances.activeInstance).toMatchObject({
+      id: guideId,
+      title: 'Guide',
+      workspaceKind: GUIDE_PAGE_WORKSPACE_KIND,
     });
     expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
   });

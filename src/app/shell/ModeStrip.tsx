@@ -20,7 +20,6 @@ function ModeStrip({
   openTrigScreen,
   patchSettings,
   runtimeLabel,
-  setGuideRoute,
   setMode,
   settings,
   settingsOpen,
@@ -57,7 +56,8 @@ function ModeStrip({
             className={mode === currentMode || (mode === 'calculus' && isCalculusMode(currentMode)) ? 'is-active' : ''}
             onClick={() => {
               if (mode === 'guide') {
-                setGuideRoute({ screen: 'home' });
+                openGuideHome();
+                return;
               }
               if (mode === 'calculus') {
                 openCalculusScreen('home');
