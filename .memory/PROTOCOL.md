@@ -12,9 +12,10 @@
 5. `.memory/world-canon.md`
 6. `.memory/decisions.md`
 7. `.memory/open-questions.md`
-8. The most recent relevant folder in `.memory/sessions/YYYY-MM/YYYY-MM-DD/`
-9. The most recent relevant journal entry in `.memory/journal/YYYY-MM/`
-10. `docs/app_summary_latest.md`
+8. `.memory/closed-questions.md`
+9. The most recent relevant folder in `.memory/sessions/YYYY-MM/YYYY-MM-DD/`
+10. The most recent relevant journal entry in `.memory/journal/YYYY-MM/`
+11. `docs/app_summary_latest.md`
 
 ## Agent Attribution Schema
 - Use simple lowercase agent slugs for agent fields:
@@ -84,6 +85,8 @@
   - dated decision log
 - `open-questions.md`
   - dated unresolved items
+- `closed-questions.md`
+  - dated resolved or superseded items moved out of open questions
 - `journal/`
   - chronological short notes grouped by month as `journal/YYYY-MM/YYYY-MM-DD.md`
 - `sessions/`
@@ -96,6 +99,7 @@
   - `.memory/journal/YYYY-MM/YYYY-MM-DD.md`
   - `.memory/decisions.md` when a durable decision is locked in
   - `.memory/open-questions.md` when a meaningful unresolved choice remains
+  - `.memory/closed-questions.md` when a stale open question is resolved or superseded
 - `current-state.md` should be updated when the project operating context materially changes.
 - Daily catch-up is mandatory: `.memory/current-state.md` must have a `Last updated` date at least as new as the newest durable journal/session day. The memory-protocol validator fails when a newer journal or session exists, so agents must refresh current-state before committing the first meaningful work of a new day.
 - `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/` should be updated at meaningful task or gate completion points.

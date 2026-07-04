@@ -13,15 +13,17 @@
 5. `.memory/world-canon.md`
 6. `.memory/decisions.md`
 7. `.memory/open-questions.md`
-8. Most recent relevant folder under `.memory/sessions/YYYY-MM/YYYY-MM-DD/`
-9. Most recent relevant daily journal under `.memory/journal/YYYY-MM/`
-10. `docs/app_summary_latest.md`
+8. `.memory/closed-questions.md`
+9. Most recent relevant folder under `.memory/sessions/YYYY-MM/YYYY-MM-DD/`
+10. Most recent relevant daily journal under `.memory/journal/YYYY-MM/`
+11. `docs/app_summary_latest.md`
 
 ## Canonical Durable Files
 - `.memory/current-state.md`: short operational snapshot of where the project stands now.
 - `.memory/world-canon.md`: stable product and workflow invariants.
 - `.memory/decisions.md`: dated decisions already locked in.
 - `.memory/open-questions.md`: unresolved design and roadmap items.
+- `.memory/closed-questions.md`: resolved or superseded questions moved out of open questions.
 
 ## History And Task Recall
 - `.memory/journal/`: chronological stream of short dated notes grouped by month.
@@ -53,6 +55,7 @@
 - [Decisions](decisions.md)
 - [Approvals](approvals.md)
 - [Open Questions](open-questions.md)
+- [Closed Questions](closed-questions.md)
 - [Journal README](journal/README.md)
 - [Sessions README](sessions/README.md)
 - [Latest App Summary](../docs/app_summary_latest.md)

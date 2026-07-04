@@ -1804,6 +1804,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Algebraic/genus proof details that contain math must use structured `lineKind`/`lineParts` metadata and preserve it through detail-section merging. Display should render that structured metadata according to the active math notation mode rather than receiving plain prose-like LaTeX fragments.
 
+## 2026-07-03 - MEMORY-HISTORY-HYGIENE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] `.memory/current-state.md` is a short operating snapshot, not a milestone ledger. Stale or superseded current-state records should be moved to the monthly current-state milestone archive instead of accumulating in the live snapshot. Resolved or superseded questions should move from `.memory/open-questions.md` into `.memory/closed-questions.md`, with a narrower replacement open question only when future work remains genuinely unresolved.
+
 ## 2026-07-03 - EQUATION-CORPUS-LEDGER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation benchmarks use one canonical unique case as the runnable source of truth per mathematical case. Duplicate textbook or reference sightings are recorded as duplicate ledger rows attached to that canonical `case_id` and must not become separate run targets in the same sweep.
