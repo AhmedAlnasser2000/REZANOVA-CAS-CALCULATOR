@@ -3,8 +3,10 @@ import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import {
   addExactScalars,
   buildExactScalarNode,
+  divideExactScalars,
   exactScalarIsZero as exactScalarValueIsZero,
   exactScalarToNumber,
+  multiplyExactScalars,
   normalizeExactScalar,
   readExactScalarNode,
   type ExactScalar,
@@ -17,6 +19,7 @@ import {
   flattenMultiply,
   isNodeArray,
 } from '../patterns';
+import { scaleByExactScalar } from './rational';
 
 const TARGET_FREE_POLYNOMIAL_DEGREE_CAP = 6;
 const TARGET_FREE_MONOMIAL_POWER_ABS_CAP = 12;
@@ -191,6 +194,20 @@ function integrateMonomialNode(
   if (exactScalarValueIsZero(nextDegree)) {
     return undefined;
   }
+
+  const exactCoefficient = readExactScalarNode(monomial.coefficient);
+  const exactDenominator = denominator ? readExactScalarNode(denominator) : ONE;
+  if (exactCoefficient && exactDenominator) {
+    const coefficient = divideExactScalars(exactCoefficient, multiplyExactScalars(nextDegree, exactDenominator));
+    if (!coefficient) {
+      return undefined;
+    }
+    return multiplyNodes([
+      buildExactScalarNode(coefficient),
+      powerNode(variable, nextDegree),
+    ]);
+  }
+
   const numerator = multiplyNodes([
     monomial.coefficient,
     powerNode(variable, nextDegree),
@@ -201,11 +218,39 @@ function integrateMonomialNode(
   return divisor === 1 ? numerator : ['Divide', numerator, divisor];
 }
 
-function addNodes(nodes: unknown[]) {
-  if (nodes.length === 0) {
-    return 0;
+function joinAdditiveLatex(parts: string[]) {
+  return parts
+    .filter((part) => part !== '0')
+    .reduce((joined, part, index) => {
+      if (index === 0) {
+        return part;
+      }
+      return part.startsWith('-') ? `${joined}${part}` : `${joined}+${part}`;
+    }, '') || undefined;
+}
+
+function integrateMonomialLatex(
+  monomial: Monomial,
+  variable: string,
+  denominator: unknown | undefined,
+): string | undefined {
+  const nextDegree = addExactScalars(monomial.degree, ONE);
+  if (exactScalarValueIsZero(nextDegree)) {
+    return undefined;
   }
-  return nodes.length === 1 ? nodes[0] : ['Add', ...nodes];
+
+  const exactCoefficient = readExactScalarNode(monomial.coefficient);
+  const exactDenominator = denominator ? readExactScalarNode(denominator) : ONE;
+  if (exactCoefficient && exactDenominator) {
+    const coefficient = divideExactScalars(exactCoefficient, multiplyExactScalars(nextDegree, exactDenominator));
+    if (!coefficient) {
+      return undefined;
+    }
+    return scaleByExactScalar(boxLatex(powerNode(variable, nextDegree)), coefficient);
+  }
+
+  const antiderivative = integrateMonomialNode(monomial, variable, denominator);
+  return antiderivative === undefined ? undefined : boxLatex(antiderivative);
 }
 
 function exactScalarIsZero(node: unknown) {
@@ -239,15 +284,19 @@ export function tryTargetFreePolynomialDirectRule(
   }
 
   const antiderivativeTerms = polynomial.map((monomial) =>
-    integrateMonomialNode(monomial, variable, denominator));
+    integrateMonomialLatex(monomial, variable, denominator));
   if (antiderivativeTerms.some((term) => term === undefined)) {
     return undefined;
   }
 
-  const antiderivative = addNodes(antiderivativeTerms as unknown[]);
+  const exactLatex = joinAdditiveLatex(antiderivativeTerms as string[]);
+  if (!exactLatex) {
+    return undefined;
+  }
+
   const denominatorLatex = denominator ? boxLatex(denominator) : undefined;
   return {
-    exactLatex: boxLatex(antiderivative),
+    exactLatex,
     verification: proof(),
     exactSupplementLatex: denominatorLatex
       ? mergeExactSupplementLatex({ entries: [nonzero(denominatorLatex)], source: 'candidate-validation' })

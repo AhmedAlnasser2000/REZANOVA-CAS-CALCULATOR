@@ -68,7 +68,7 @@ describe('calculus integration corpus ledger validation', () => {
       sourceCount: 8,
       uniqueCaseCount: 200,
       duplicateCaseCount: 0,
-      runResultCount: 200,
+      runResultCount: 211,
       scanFindingCount: 0,
     });
   });

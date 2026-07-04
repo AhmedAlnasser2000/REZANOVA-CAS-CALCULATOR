@@ -24,6 +24,7 @@ import {
 } from './classifier';
 import { tryExpandedDirectRule } from './expanded-direct';
 import { tryExpandedPartsRule } from './expanded-parts';
+import { negateGeneratedLatex } from './generated-latex';
 import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { normalizeIntegrationNormalForm } from './normal-form';
@@ -49,6 +50,7 @@ import {
   trySymbolicQuadraticRepeatedPowerRule,
   trySymbolicTwoLinearPartialFractionRule,
 } from './symbolic-rational';
+import { finishScalarMultipleRetry, splitScalarMultiple } from './scalar-multiple';
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
 import { tryTrigDerivativeProductRule } from './trig-derivative-products';
 import { normalizeIntegrationTrigRewrite } from './trig-rewrite';
@@ -534,6 +536,33 @@ function trigRewriteDetail(lines: string[]): DisplayDetailSection {
   };
 }
 
+function tryScalarMultipleRetry(
+  node: unknown,
+  variable: string,
+  recognitionGates: boolean,
+  allowNormalForm: boolean,
+  allowTrigRewrite: boolean,
+): IntegralResolution | undefined {
+  const split = splitScalarMultiple(node, variable);
+  if (!split) {
+    return undefined;
+  }
+
+  const retried = resolveSymbolicIntegralFromAstInternal(
+    split.body,
+    variable,
+    recognitionGates,
+    allowNormalForm,
+    allowTrigRewrite,
+    false,
+  );
+  if (retried.kind !== 'success') {
+    return undefined;
+  }
+
+  return finishScalarMultipleRetry(node, variable, split, retried);
+}
+
 function tryTrigRewriteRetry(
   node: unknown,
   variable: string,
@@ -618,7 +647,7 @@ function routeTermWithoutLinearCombination(
 
 function combineSignedLatex(parts: Array<{ latex: string; sign: 1 | -1 }>) {
   return parts.map((part, index) => {
-    const latex = part.sign === 1 ? part.latex : `-${wrapGroupedLatex(part.latex)}`;
+    const latex = part.sign === 1 ? part.latex : negateGeneratedLatex(part.latex);
     return index === 0 || latex.startsWith('-') ? latex : `+${latex}`;
   }).join('');
 }
@@ -725,6 +754,7 @@ function resolveSymbolicIntegralFromAstInternal(
   recognitionGates: boolean,
   allowNormalForm: boolean,
   allowTrigRewrite: boolean,
+  allowScalarMultiple = true,
 ): IntegralResolution {
   if (isRelationRoot(node)) {
     return {
@@ -769,6 +799,19 @@ function resolveSymbolicIntegralFromAstInternal(
     const trigRewrite = tryTrigRewriteRetry(node, variable, recognitionGates);
     if (trigRewrite) {
       return trigRewrite;
+    }
+  }
+
+  if (allowScalarMultiple) {
+    const scalarMultiple = tryScalarMultipleRetry(
+      node,
+      variable,
+      recognitionGates,
+      allowNormalForm,
+      allowTrigRewrite,
+    );
+    if (scalarMultiple) {
+      return scalarMultiple;
     }
   }
 

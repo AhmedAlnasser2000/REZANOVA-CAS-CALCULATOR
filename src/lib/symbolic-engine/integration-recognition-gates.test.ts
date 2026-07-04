@@ -21,6 +21,9 @@ function expectIntegrationError(result: IntegrationResult): IntegrationError {
   return result;
 }
 
+const ambiguousCoefficientFactor = /\\frac\{1\}\{\d+\}\s*(?:\\left)?\(?\s*\d/u;
+const doubleNegativeFractionGroup = /-\\(?:left\()?\\frac\{-/u;
+
 describe('symbolic-engine integration recognition gates', () => {
   it('normalizes early textbook root and quotient power forms before routing', () => {
     const cases = [
@@ -38,6 +41,50 @@ describe('symbolic-engine integration recognition gates', () => {
       expect(result.verification.status, latex).toBe('verified-exact');
       expect(result.detailSections?.map((section) => section.title), latex)
         .toContain('Integration Normal Form');
+    }
+  });
+
+  it('keeps root-power normal-form readback coefficients visually grouped', () => {
+    const cases = [
+      String.raw`\sqrt{x}+x^{1/3}`,
+      String.raw`\frac{\sqrt{x}}{2}+\frac{2}{\sqrt{x}}`,
+      String.raw`8x-\frac{2}{x^{1/4}}`,
+    ];
+
+    for (const latex of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
+      expect(result.exactLatex, latex).not.toMatch(ambiguousCoefficientFactor);
+    }
+
+    const rootSum = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(String.raw`\sqrt{x}+x^{1/3}`));
+    expect(rootSum.exactLatex).toContain(String.raw`\frac{2}{3}`);
+    expect(rootSum.exactLatex).toContain(String.raw`\frac{3}{4}`);
+  });
+
+  it('recognizes scalar multiples of supported primitive atoms and sums', () => {
+    const cases = [
+      {
+        latex: String.raw`-\pi\sin(\pi x)`,
+        snippets: [String.raw`\cos(\pi x)`],
+      },
+      {
+        latex: String.raw`-\sec^2\left(\frac{3x}{2}\right)`,
+        snippets: [String.raw`-\frac{2`, String.raw`\tan\left(\frac{3x}{2}\right)`],
+      },
+      {
+        latex: String.raw`\frac{1}{2}\left(\csc^2(x)-\csc(x)\cot(x)\right)`,
+        snippets: [String.raw`\frac{\csc(x)}{2}`, String.raw`-\frac{\cot(x)}{2}`],
+      },
+    ];
+
+    for (const { latex, snippets } of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
+      expect(result.verification.status, latex).toBe('verified-exact');
+      expect(result.detailSections?.map((section) => section.title), latex)
+        .toContain('Integration Scalar Multiple');
+      for (const snippet of snippets) {
+        expect(result.exactLatex, latex).toContain(snippet);
+      }
     }
   });
 
@@ -106,5 +153,17 @@ describe('symbolic-engine integration recognition gates', () => {
     ));
     expect(overBoundSquare.detailSections?.map((section) => section.title) ?? [])
       .not.toContain('Integration Trig Rewrite');
+  });
+
+  it('keeps first-200 style negative primitive readback free of double-negative groups', () => {
+    const cases = [
+      String.raw`(\sin(x)-\cos(x))^2`,
+      String.raw`\sin(7-3x)`,
+    ];
+
+    for (const latex of cases) {
+      const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
+      expect(result.exactLatex, latex).not.toMatch(doubleNegativeFractionGroup);
+    }
   });
 });

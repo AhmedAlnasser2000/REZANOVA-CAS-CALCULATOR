@@ -36,6 +36,7 @@ import {
   preservedFactsFromDomainHazards,
 } from '../../algebra/simplify-policy';
 import { boxLatex, divideByNumericCoefficient, isNodeArray, multiplyLatex, wrapGroupedLatex } from '../patterns';
+import { negateGeneratedLatex } from './generated-latex';
 import { collectIntegrationDomainHazards, containsRationalOperator } from './metadata';
 import { rationalApproximation } from './node-helpers';
 import { completedSquareQuadraticDenominatorForm } from './quadratic-completion';
@@ -46,7 +47,7 @@ export function scaleLatex(latex: string, scale: number) {
   }
 
   if (Math.abs(scale + 1) < 1e-10) {
-    return `-${wrapGroupedLatex(latex)}`;
+    return negateGeneratedLatex(latex);
   }
 
   const rational = rationalApproximation(scale);
@@ -59,7 +60,7 @@ export function scaleLatex(latex: string, scale: number) {
 
     if (numerator === 1) {
       const divided = divideByNumericCoefficient(latex, rational.denominator);
-      return sign ? `-${wrapGroupedLatex(divided)}` : divided;
+      return sign ? negateGeneratedLatex(divided) : divided;
     }
 
     return `${sign}\\frac{${numerator}${wrapGroupedLatex(latex)}}{${rational.denominator}}`;
