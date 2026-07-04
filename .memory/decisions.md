@@ -1871,3 +1871,7 @@
 ## 2026-07-04 - LINEAR-ALGEBRA-READBACK-TRUST-REPAIR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector DisplayOutcome readback reserves global `APPROX` cards for actual numeric approximations. Matrix app-mode suppresses worker summary `approxText`; Vector app-mode keeps numeric scalar approximation text but filters nonnumeric summaries. Active operand selection should use readable custom workspace controls instead of native light selects.
+
+## 2026-07-04 - LINEAR-ALGEBRA-TEMPLATE-NATURAL-INPUT1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Plain list syntax in Matrix/Vector is an import convenience only. Successful editor parses canonicalize editor/request/preview/history/readback to natural LaTeX, while MathLive matrix/template parsing stays local to Linear Algebra with no Equation import or automatic Equation routing.

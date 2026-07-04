@@ -133,4 +133,38 @@ describe('Linear algebra editor source', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(document.querySelector('.launcher-panel')).toBeInTheDocument());
   });
+
+  it('inserts editable Matrix and Vector templates with controlled blank-slot errors', async () => {
+    const { user } = await renderAppMain();
+
+    await openLauncherApp(user, 'Linear', 'Matrix');
+    await screen.findByText('Matrix Workspace');
+
+    const matrixEditor = screen.getByTestId('main-editor');
+    matrixEditor.blur();
+    await user.click(screen.getByTestId('keypad-linear-matrix-template'));
+    await waitFor(() => expect(matrixEditor).toHaveAttribute(
+      'data-value',
+      '\\begin{bmatrix}#0 & #?\\\\#? & #?\\end{bmatrix}',
+    ));
+    await user.click(screen.getByTestId('editor-runtime-run'));
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
+      'Fill every Matrix/Vector template slot before running it.',
+    ));
+
+    await openLauncherApp(user, 'Linear', 'Vector');
+    await screen.findByText('Vector Workspace');
+
+    const vectorEditor = screen.getByTestId('main-editor');
+    vectorEditor.blur();
+    await user.click(screen.getByTestId('keypad-linear-vector-template'));
+    await waitFor(() => expect(vectorEditor).toHaveAttribute(
+      'data-value',
+      '\\begin{bmatrix}#0\\\\#?\\\\#?\\end{bmatrix}',
+    ));
+    await user.click(screen.getByTestId('editor-runtime-run'));
+    await waitFor(() => expect(screen.getByTestId('display-outcome-error')).toHaveTextContent(
+      'Fill every Matrix/Vector template slot before running it.',
+    ));
+  });
 });

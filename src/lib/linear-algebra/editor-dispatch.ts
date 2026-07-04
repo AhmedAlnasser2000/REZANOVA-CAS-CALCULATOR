@@ -14,6 +14,7 @@ import {
   buildLinearAlgebraEquationHandoff,
   type LinearAlgebraEquationHandoff,
 } from './equation-handoff';
+import { formatLinearAlgebraEditorExpression } from './editor-expression-format';
 import {
   matrixNamedValueNames,
   matrixValueByName,
@@ -708,33 +709,37 @@ export function dispatchMatrixEditorLatex(input: MatrixEditorDispatchInput): Mat
   }
 
   const expression = parsed.expression;
+  const canonicalInput = {
+    ...input,
+    latex: formatLinearAlgebraEditorExpression(expression),
+  };
   if (expression.kind === 'linearSystem') {
-    return matrixSystemRequest(input, expression);
+    return matrixSystemRequest(canonicalInput, expression);
   }
-  if (expression.kind === 'multiRhsSystem') return matrixMultiRhsSystemRequest(input, expression);
+  if (expression.kind === 'multiRhsSystem') return matrixMultiRhsSystemRequest(canonicalInput, expression);
   if (expression.kind === 'coordinates') {
-    return matrixCoordinatesRequest(input, expression);
+    return matrixCoordinatesRequest(canonicalInput, expression);
   }
   if (expression.kind === 'columnProjection') {
-    return matrixColumnProjectionRequest(input, expression);
+    return matrixColumnProjectionRequest(canonicalInput, expression);
   }
   if (expression.kind === 'leastSquares') {
-    return matrixLeastSquaresRequest(input, expression);
+    return matrixLeastSquaresRequest(canonicalInput, expression);
   }
   if (expression.kind === 'matrixPower') {
-    return matrixPowerRequest(input, expression);
+    return matrixPowerRequest(canonicalInput, expression);
   }
   if (expression.kind === 'factorSolve') {
-    return matrixFactorSolveRequest(input, expression);
+    return matrixFactorSolveRequest(canonicalInput, expression);
   }
   if (expression.kind === 'changeOfBasis') {
-    return matrixChangeOfBasisRequest(input, expression);
+    return matrixChangeOfBasisRequest(canonicalInput, expression);
   }
   if (expression.kind === 'binary') {
-    return matrixPairRequest(input, expression);
+    return matrixPairRequest(canonicalInput, expression);
   }
   if (expression.kind === 'unary') {
-    return matrixUnaryRequest(input, expression);
+    return matrixUnaryRequest(canonicalInput, expression);
   }
 
   return {
@@ -765,15 +770,19 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
   }
 
   const expression = parsed.expression;
+  const canonicalInput = {
+    ...input,
+    latex: formatLinearAlgebraEditorExpression(expression),
+  };
   if (expression.kind === 'binary') {
-    return vectorPairRequest(input, expression);
+    return vectorPairRequest(canonicalInput, expression);
   }
   if (expression.kind === 'unary') {
-    return vectorUnaryRequest(input, expression);
+    return vectorUnaryRequest(canonicalInput, expression);
   }
   if (expression.kind === 'angle') {
-    const left = vectorOperand(expression.left, input);
-    const right = vectorOperand(expression.right, input);
+    const left = vectorOperand(expression.left, canonicalInput);
+    const right = vectorOperand(expression.right, canonicalInput);
     if (!left || !right) {
       return {
         ok: false,
@@ -786,14 +795,14 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
         operation: 'angle',
         vectorA: left.vector,
         vectorB: right.vector,
-        angleUnit: input.angleUnit,
-        ...vectorMetadata(input, { operandA: left, operandB: right }),
+        angleUnit: canonicalInput.angleUnit,
+        ...vectorMetadata(canonicalInput, { operandA: left, operandB: right }),
       },
     };
   }
   if (expression.kind === 'orthogonality') {
-    const left = vectorOperand(expression.left, input);
-    const right = vectorOperand(expression.right, input);
+    const left = vectorOperand(expression.left, canonicalInput);
+    const right = vectorOperand(expression.right, canonicalInput);
     if (!left || !right) {
       return {
         ok: false,
@@ -806,14 +815,14 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
         operation: 'orthogonalCheck',
         vectorA: left.vector,
         vectorB: right.vector,
-        angleUnit: input.angleUnit,
-        ...vectorMetadata(input, { operandA: left, operandB: right }),
+        angleUnit: canonicalInput.angleUnit,
+        ...vectorMetadata(canonicalInput, { operandA: left, operandB: right }),
       },
     };
   }
   if (expression.kind === 'gramSchmidt') {
-    const left = vectorOperand(expression.left, input);
-    const right = vectorOperand(expression.right, input);
+    const left = vectorOperand(expression.left, canonicalInput);
+    const right = vectorOperand(expression.right, canonicalInput);
     if (!left || !right) {
       return {
         ok: false,
@@ -826,8 +835,8 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
         operation: 'gramSchmidtUV',
         vectorA: left.vector,
         vectorB: right.vector,
-        angleUnit: input.angleUnit,
-        ...vectorMetadata(input, { operandA: left, operandB: right }),
+        angleUnit: canonicalInput.angleUnit,
+        ...vectorMetadata(canonicalInput, { operandA: left, operandB: right }),
       },
     };
   }

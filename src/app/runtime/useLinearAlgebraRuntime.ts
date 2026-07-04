@@ -32,8 +32,6 @@ import {
   DEFAULT_MATRIX_RIGHT_ID,
   DEFAULT_VECTOR_LEFT_ID,
   DEFAULT_VECTOR_RIGHT_ID,
-  cloneMatrixNamedValues,
-  cloneVectorNamedValues,
   isValidMatrixValueName,
   isValidVectorValueName,
   matrixValueById,
@@ -42,9 +40,23 @@ import {
   normalizeMatrixValueName,
   normalizeVectorValueName,
   vectorValueById,
+  cloneMatrixNamedValues,
+  cloneVectorNamedValues,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
 } from '../../lib/linear-algebra/named-values';
+import {
+  DEFAULT_MATRIX_A,
+  DEFAULT_MATRIX_B,
+  DEFAULT_VECTOR_A,
+  DEFAULT_VECTOR_B,
+  cloneMatrix,
+  cloneVector,
+  defaultMatrixValues,
+  defaultVectorValues,
+  matrixValuesFromCompatibility,
+  vectorValuesFromCompatibility,
+} from './linearAlgebraRuntimeDefaults';
 import type {
   MatrixSurfaceState,
   VectorSurfaceState,
@@ -83,64 +95,11 @@ type UseLinearAlgebraRuntimeOptions = {
     inputRevisionId?: string;
   }) => PendingHistoryTicketReservation | null;
   setRuntimeStatusOverride?: (status: string | null) => void;
+  syncEditorLatex?: (mode: 'matrix' | 'vector', latex: string) => void;
 };
 
-function cloneMatrix(matrix: number[][]) {
-  return matrix.map((row) => [...row]);
-}
-
-function cloneVector(vector: number[]) {
-  return [...vector];
-}
-
-const DEFAULT_MATRIX_A = [
-  [1, 2],
-  [3, 4],
-];
-
-const DEFAULT_MATRIX_B = [
-  [5, 6],
-  [7, 8],
-];
-
-const DEFAULT_VECTOR_A = [1, 2, 3];
-const DEFAULT_VECTOR_B = [4, 5, 6];
 const MIN_LINEAR_ALGEBRA_DIMENSION = 1;
 const MAX_LINEAR_ALGEBRA_DIMENSION = 8;
-
-function defaultMatrixValues(): LinearAlgebraMatrixNamedValue[] {
-  return [
-    { id: DEFAULT_MATRIX_LEFT_ID, name: 'A', value: cloneMatrix(DEFAULT_MATRIX_A) },
-    { id: DEFAULT_MATRIX_RIGHT_ID, name: 'B', value: cloneMatrix(DEFAULT_MATRIX_B) },
-  ];
-}
-
-function defaultVectorValues(): LinearAlgebraVectorNamedValue[] {
-  return [
-    { id: DEFAULT_VECTOR_LEFT_ID, name: 'u', value: cloneVector(DEFAULT_VECTOR_A) },
-    { id: DEFAULT_VECTOR_RIGHT_ID, name: 'v', value: cloneVector(DEFAULT_VECTOR_B) },
-  ];
-}
-
-function matrixValuesFromCompatibility(
-  matrixA: number[][],
-  matrixB: number[][],
-): LinearAlgebraMatrixNamedValue[] {
-  return [
-    { id: DEFAULT_MATRIX_LEFT_ID, name: 'A', value: cloneMatrix(matrixA) },
-    { id: DEFAULT_MATRIX_RIGHT_ID, name: 'B', value: cloneMatrix(matrixB) },
-  ];
-}
-
-function vectorValuesFromCompatibility(
-  vectorA: number[],
-  vectorB: number[],
-): LinearAlgebraVectorNamedValue[] {
-  return [
-    { id: DEFAULT_VECTOR_LEFT_ID, name: 'u', value: cloneVector(vectorA) },
-    { id: DEFAULT_VECTOR_RIGHT_ID, name: 'v', value: cloneVector(vectorB) },
-  ];
-}
 
 function matrixValueForCompatibility(
   values: readonly LinearAlgebraMatrixNamedValue[],
@@ -193,6 +152,7 @@ export function useLinearAlgebraRuntime({
   getCurrentMode,
   reserveHistoryTicket,
   setRuntimeStatusOverride,
+  syncEditorLatex,
 }: UseLinearAlgebraRuntimeOptions) {
   const [matrixValues, setMatrixValues] = useState(defaultMatrixValues);
   const [activeMatrixLeftId, setActiveMatrixLeftId] = useState(DEFAULT_MATRIX_LEFT_ID);
@@ -398,7 +358,12 @@ export function useLinearAlgebraRuntime({
       return;
     }
 
-    runMatrixRequest(dispatched.request, inputLatex, () => dispatched.request);
+    const canonicalInputLatex = dispatched.request.editorExpressionLatex ?? inputLatex;
+    if (canonicalInputLatex !== inputLatex) {
+      setMatrixEditorLatex(canonicalInputLatex);
+      syncEditorLatex?.('matrix', canonicalInputLatex);
+    }
+    runMatrixRequest(dispatched.request, canonicalInputLatex, () => dispatched.request);
   }
 
   function runVectorRequest(
@@ -496,7 +461,12 @@ export function useLinearAlgebraRuntime({
       return;
     }
 
-    runVectorRequest(dispatched.request, inputLatex, () => dispatched.request);
+    const canonicalInputLatex = dispatched.request.editorExpressionLatex ?? inputLatex;
+    if (canonicalInputLatex !== inputLatex) {
+      setVectorEditorLatex(canonicalInputLatex);
+      syncEditorLatex?.('vector', canonicalInputLatex);
+    }
+    runVectorRequest(dispatched.request, canonicalInputLatex, () => dispatched.request);
   }
 
   function updateMatrixValue(

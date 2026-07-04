@@ -6,6 +6,7 @@ type MathfieldRef = {
 
 export function isLatexInsertTarget(field: unknown): field is {
   focus?: () => void;
+  dispatchEvent?: (event: Event) => boolean;
   insert: (latex: string) => void;
 } {
   return Boolean(field && typeof (field as { insert?: unknown }).insert === 'function');
@@ -82,6 +83,7 @@ export function insertLatexIntoEditor(
   const insertTarget = isLatexInsertTarget(field) ? field : null;
   if (insertTarget) {
     insertTarget.insert(latex);
+    insertTarget.dispatchEvent?.(new Event('input', { bubbles: true }));
     return;
   }
 

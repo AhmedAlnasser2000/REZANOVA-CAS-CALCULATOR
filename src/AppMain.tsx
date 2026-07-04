@@ -1013,6 +1013,7 @@ export default function App() {
     getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
     getWorkspaceInstances: getWorkspaceInstancesForRuntime,
     isLauncherOpen,
+    mainFieldRef,
     patchSettings,
     replayVariableSubstitutions,
     reserveHistoryTicket: reservePendingHistoryTicket,
@@ -1225,7 +1226,10 @@ export default function App() {
       contextKey: `${currentMode}:${displayHeaderLabel}`,
     },
   });
-  const deferredDisplayLatex = previewAnalysis.value;
+  const deferredDisplayLatex =
+    currentMode === 'matrix' || currentMode === 'vector'
+      ? displayInputLatex
+      : previewAnalysis.value;
   const displayMathLatex =
     displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
       ? displayOutcome.exactLatex

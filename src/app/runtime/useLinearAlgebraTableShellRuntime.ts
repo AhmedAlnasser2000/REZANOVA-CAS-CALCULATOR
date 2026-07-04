@@ -47,6 +47,7 @@ type UseLinearAlgebraTableShellRuntimeOptions = {
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
+  mainFieldRef?: MutableRefObject<MathfieldElement | null>;
   patchSettings: (patch: SettingsPatch) => void;
   replayVariableSubstitutions: ReplayVariableSubstitutions;
   reserveHistoryTicket: (input: {
@@ -104,6 +105,7 @@ export function useLinearAlgebraTableShellRuntime({
   getActiveWorkspaceInstanceRuntimeContext,
   getWorkspaceInstances,
   isLauncherOpen,
+  mainFieldRef,
   patchSettings,
   replayVariableSubstitutions,
   reserveHistoryTicket,
@@ -118,6 +120,18 @@ export function useLinearAlgebraTableShellRuntime({
     getCurrentMode: () => currentModeRef.current,
     reserveHistoryTicket,
     setRuntimeStatusOverride,
+    syncEditorLatex: (mode, latex) => {
+      if (currentModeRef.current !== mode) {
+        return;
+      }
+      const field = activeFieldRef.current?.isConnected
+        ? activeFieldRef.current
+        : mainFieldRef?.current;
+      if (!field?.isConnected || field.getValue?.('latex') === latex) {
+        return;
+      }
+      field.setValue(latex);
+    },
   });
 
   const tableRuntime = useTableRuntime({

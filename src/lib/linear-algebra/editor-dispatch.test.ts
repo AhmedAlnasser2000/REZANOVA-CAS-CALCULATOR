@@ -491,7 +491,7 @@ describe('linear algebra editor dispatch', () => {
           [{ numerator: 2, denominator: 1 }, { numerator: 1, denominator: 1 }],
           [{ numerator: 1, denominator: 1 }, { numerator: 2, denominator: 1 }],
         ],
-        editorExpressionLatex: 'eigen([[2,1],[1,2]])',
+        editorExpressionLatex: '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)',
         matrixOperandLatexA: '\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}',
       },
     });
@@ -504,6 +504,7 @@ describe('linear algebra editor dispatch', () => {
       request: {
         operation: 'luA',
         matrixA: [[2, 1], [4, 3]],
+        editorExpressionLatex: '\\operatorname{lu}\\left(\\begin{bmatrix}2&1\\\\4&3\\end{bmatrix}\\right)',
         matrixOperandLatexA: '\\begin{bmatrix}2&1\\\\4&3\\end{bmatrix}',
       },
     });
@@ -516,6 +517,7 @@ describe('linear algebra editor dispatch', () => {
       request: {
         operation: 'pluA',
         matrixA: [[0, 1], [2, 3]],
+        editorExpressionLatex: '\\operatorname{plu}\\left(\\begin{bmatrix}0&1\\\\2&3\\end{bmatrix}\\right)',
         matrixOperandLatexA: '\\begin{bmatrix}0&1\\\\2&3\\end{bmatrix}',
       },
     });
@@ -529,8 +531,22 @@ describe('linear algebra editor dispatch', () => {
         operation: 'coordinatesA',
         matrixA: [[1, 2], [3, 4]],
         coordinateVector: [5, 11],
+        editorExpressionLatex: '\\operatorname{coords}\\left(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix},\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
         matrixOperandLatexA: '\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}',
         coordinateVectorLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
+      },
+    });
+    expect(dispatchMatrixEditorLatex({
+      latex: 'qr([[3,0],[4,5]])',
+      matrixA,
+      matrixB,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'qrA',
+        matrixA: [[3, 0], [4, 5]],
+        editorExpressionLatex: '\\operatorname{qr}\\left(\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}\\right)',
+        matrixOperandLatexA: '\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}',
       },
     });
     expect(dispatchMatrixEditorLatex({
@@ -543,6 +559,7 @@ describe('linear algebra editor dispatch', () => {
         operation: 'leastSquaresA',
         matrixA: [[1, 0], [0, 1], [0, 0]],
         systemRhs: [2, 3, 4],
+        editorExpressionLatex: '\\operatorname{ls}\\left(\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix},\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)',
         matrixOperandLatexA: '\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix}',
         systemRhsLatex: '\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}',
       },
@@ -585,7 +602,7 @@ describe('linear algebra editor dispatch', () => {
           { numerator: 5, denominator: 1 },
           { numerator: 11, denominator: 1 },
         ],
-        editorExpressionLatex: 'A x + \\begin{bmatrix}-5\\\\-11\\end{bmatrix}=0',
+        editorExpressionLatex: 'A x + \\begin{bmatrix}-5\\\\-11\\end{bmatrix} = 0',
         matrixOperandLatexA: 'A',
         systemRhsLatex: '\\begin{bmatrix}5\\\\11\\end{bmatrix}',
       },
@@ -835,6 +852,7 @@ describe('linear algebra editor dispatch', () => {
         ],
         vectorOperandLatexA: '\\begin{bmatrix}1\\\\1\\end{bmatrix}',
         vectorOperandLatexB: '\\begin{bmatrix}1\\\\0\\end{bmatrix}',
+        editorExpressionLatex: '\\operatorname{gram}\\left(\\begin{bmatrix}1\\\\1\\end{bmatrix},\\begin{bmatrix}1\\\\0\\end{bmatrix}\\right)',
       },
     });
     expect(dispatchVectorEditorLatex({
@@ -854,6 +872,7 @@ describe('linear algebra editor dispatch', () => {
         ],
         vectorOperandLatexA: 'u',
         vectorOperandLatexB: '\\begin{bmatrix}1/2\\\\3\\end{bmatrix}',
+        editorExpressionLatex: '\\operatorname{proj}_{u}\\left(\\begin{bmatrix}1/2\\\\3\\end{bmatrix}\\right)',
       },
     });
   });

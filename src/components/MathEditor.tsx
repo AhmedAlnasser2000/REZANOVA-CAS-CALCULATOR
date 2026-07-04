@@ -3,6 +3,7 @@ import {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   type ReactNode,
 } from 'react';
@@ -118,7 +119,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
 
     useImperativeHandle(forwardedRef, () => elementRef.current as MathfieldElement, []);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
       const field = elementRef.current;
       if (!field) {
         return;

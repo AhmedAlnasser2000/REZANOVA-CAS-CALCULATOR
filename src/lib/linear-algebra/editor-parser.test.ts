@@ -335,6 +335,11 @@ describe('parseLinearAlgebraEditorLatex', () => {
       operator: 'plu',
       value: { kind: 'matrixLiteral', value: [[0, 1], [2, 3]] },
     });
+    expect(parsed('qr([[3,0],[4,5]])', 'matrix')).toMatchObject({
+      kind: 'unary',
+      operator: 'qr',
+      value: { kind: 'matrixLiteral', value: [[3, 0], [4, 5]] },
+    });
     expect(parsed('coords([[1,2],[3,4]],[5,11])', 'matrix')).toMatchObject({
       kind: 'coordinates',
       basis: { kind: 'matrixLiteral', value: [[1, 2], [3, 4]] },
