@@ -39,6 +39,10 @@ function stripLimitBodyWrapper(bodyLatex: string) {
 }
 
 function splitTopLevel(input: string, delimiters: Set<string>) {
+  return splitTopLevelPreservingEmpty(input, delimiters).filter(Boolean);
+}
+
+function splitTopLevelPreservingEmpty(input: string, delimiters: Set<string>) {
   const parts: string[] = [];
   let depth = 0;
   let start = 0;
@@ -56,17 +60,22 @@ function splitTopLevel(input: string, delimiters: Set<string>) {
   }
 
   parts.push(input.slice(start).trim());
-  return parts.filter(Boolean);
+  return parts;
 }
 
 function cleanExpressionLatex(input: string) {
-  return input.trim().replace(/,+$/u, '').trim();
+  return input
+    .trim()
+    .replace(/\\placeholder(?:\[[^\]]*\])?\{[^{}]*\}/gu, '')
+    .replace(/,+$/u, '')
+    .trim();
 }
 
 function cleanConditionLatex(input: string) {
   return input
     .trim()
     .replace(/^if\b\s*/iu, '')
+    .replace(/\s*(<=|>=|<|>|=)\s*/gu, '$1')
     .trim();
 }
 
@@ -100,7 +109,7 @@ function splitFriendlyBranchEntry(entry: string) {
 function branchToRow(branch: PiecewiseLimitBranch, index: number): LimitPiecewiseRow {
   return {
     id: `piecewise-row-${index + 1}`,
-    expressionLatex: branch.expressionLatex,
+    expressionLatex: cleanExpressionLatex(branch.expressionLatex),
     conditionLatex: branch.otherwise ? OTHERWISE_LATEX : branch.condition?.latex ?? '',
     otherwise: Boolean(branch.otherwise),
   };
@@ -114,8 +123,8 @@ function normalizeRows(rows: readonly LimitPiecewiseRow[]) {
     const nextRow = {
       ...row,
       id: row.id || `piecewise-row-${index + 1}`,
-      expressionLatex: row.expressionLatex.trim(),
-      conditionLatex: row.otherwise ? OTHERWISE_LATEX : row.conditionLatex.trim(),
+      expressionLatex: cleanExpressionLatex(row.expressionLatex),
+      conditionLatex: row.otherwise ? OTHERWISE_LATEX : cleanConditionLatex(row.conditionLatex),
     };
     if (nextRow.otherwise) {
       otherwise ??= nextRow;
@@ -164,7 +173,7 @@ function recoverCasesRows(bodyLatex: string) {
   const rows = match[1]
     .split(/\\\\/u)
     .map((source, index) => {
-      const [expressionLatex = '', conditionLatex = ''] = splitTopLevel(source, new Set(['&']));
+      const [expressionLatex = '', conditionLatex = ''] = splitTopLevelPreservingEmpty(source, new Set(['&']));
       const otherwise = /otherwise|\\top|true/iu.test(conditionLatex);
       return {
         id: `piecewise-row-${index + 1}`,
@@ -261,9 +270,11 @@ export function parseLimitPiecewiseDraft(requestLatex: string | null | undefined
 
   const bodyLatex = stripLimitBodyWrapper(parsedRequest.request.bodyLatex);
   const parsedPiecewise = parsePiecewiseLimitExpression(bodyLatex);
-  let rows: LimitPiecewiseRow[] | null = null;
+  let rows: LimitPiecewiseRow[] | null = recoverCasesRows(bodyLatex) ?? recoverFriendlyRows(bodyLatex);
 
-  if (parsedPiecewise.kind === 'piecewise') {
+  if (rows) {
+    rows = normalizeRows(rows);
+  } else if (parsedPiecewise.kind === 'piecewise') {
     rows = normalizeRows(parsedPiecewise.branches.map(branchToRow));
   } else if (parsedPiecewise.kind === 'malformed') {
     rows = recoverCasesRows(bodyLatex) ?? recoverFriendlyRows(bodyLatex);

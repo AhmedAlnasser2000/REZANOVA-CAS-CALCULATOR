@@ -54,6 +54,7 @@ function createDeps(): Parameters<typeof handleKeypadWithDeps>[0] {
     moveToNextChar: vi.fn(),
     cycleAngleUnit: vi.fn(),
     openLauncher: vi.fn(),
+    insertLimitPiecewiseTemplate: vi.fn(),
   };
 }
 
@@ -75,5 +76,20 @@ describe('keypadRouter', () => {
 
     handleKeypadWithDeps(deps);
     expect(deps.openSelectedEquationMenuEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes the Limit piecewise key through the structured row editor action', () => {
+    const deps = createDeps();
+    deps.button = {
+      id: 'limit-piecewise-template',
+      label: 'Piecewise',
+      variant: 'function',
+      latex: '\\lim_{x\\to 0}\\begin{cases}&x<0\\\\&\\text{otherwise}\\end{cases}',
+    };
+
+    handleKeypadWithDeps(deps);
+
+    expect(deps.insertLimitPiecewiseTemplate).toHaveBeenCalledTimes(1);
+    expect(deps.insertLatex).not.toHaveBeenCalled();
   });
 });

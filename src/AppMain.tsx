@@ -81,6 +81,7 @@ import {
   getGeometrySoftActions,
 } from './lib/geometry/navigation';
 import { getCalculusProvenanceBadge } from './lib/calculus/workspace/ui';
+import { buildStarterLimitPiecewiseRequest } from './lib/calculus/limit-piecewise-row-editor';
 import {
   getCalculusDerivativeStrategyBadges,
   getCalculusStrategyBadge,
@@ -2309,6 +2310,7 @@ export default function App() {
       moveCurrentEquationMenuSelection,
       openSelectedEquationMenuEntry,
       insertLatex,
+      insertLimitPiecewiseTemplate: () => setCalculusMainEditorLatex(buildStarterLimitPiecewiseRequest()),
       deleteBackward: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'deleteBackward'),
       moveToPreviousChar: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'moveToPreviousChar'),
       moveToNextChar: () => executeLatexEditorCommand(activeFieldRef, mainFieldRef, 'moveToNextChar'),

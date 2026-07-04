@@ -340,18 +340,26 @@
   color: rgba(21, 37, 27, 0.62);
 }
 
+.display-panel .limit-piecewise-editor__limit-field span,
+.display-panel .limit-piecewise-editor__toolbar,
+.display-panel .limit-piecewise-editor__arrow {
+  color: rgba(21, 37, 27, 0.64);
+}
+
 .display-panel .limit-piecewise-row__drag {
   color: rgba(21, 37, 27, 0.48);
 }
 
 .display-panel .limit-piecewise-row__number,
 .display-panel .limit-piecewise-row__delete,
-.display-panel .limit-piecewise-editor__add {
+.display-panel .limit-piecewise-editor__add,
+.display-panel .limit-piecewise-editor__remove {
   border-color: rgba(21, 37, 27, 0.18);
   background: rgba(21, 37, 27, 0.07);
   color: var(--lcd-ink);
 }
 
+.display-panel .limit-piecewise-editor__limit-field input,
 .display-panel .limit-piecewise-row__field input {
   border-color: rgba(21, 37, 27, 0.22);
   background: rgba(21, 37, 27, 0.14);

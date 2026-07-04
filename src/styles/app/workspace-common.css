@@ -272,9 +272,57 @@
   min-width: 0;
 }
 
-.limit-piecewise-editor__limit-math {
+.limit-piecewise-editor__limit-controls {
+  display: grid;
+  grid-template-columns: auto minmax(42px, 64px) auto minmax(64px, 92px);
+  align-items: end;
+  gap: 7px;
+}
+
+.limit-piecewise-editor__limit-word {
   color: inherit;
-  font-size: calc(1.24rem * var(--math-scale));
+  font-family: KaTeX_Main, 'Times New Roman', serif;
+  font-size: calc(1.2rem * var(--math-scale));
+  font-style: normal;
+  line-height: 1;
+}
+
+.limit-piecewise-editor__limit-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.limit-piecewise-editor__limit-field span {
+  color: rgba(237, 241, 229, 0.58);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.limit-piecewise-editor__limit-field input {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid rgba(237, 241, 229, 0.16);
+  border-radius: 10px;
+  background: rgba(3, 17, 15, 0.44);
+  color: var(--surface-ink);
+  font: 0.9rem 'IBM Plex Mono', monospace;
+  letter-spacing: 0;
+  padding: 7px 9px;
+}
+
+.limit-piecewise-editor__limit-field input:focus {
+  border-color: rgba(125, 207, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.14);
+  outline: none;
+}
+
+.limit-piecewise-editor__arrow {
+  align-self: center;
+  color: rgba(237, 241, 229, 0.66);
+  font-family: 'IBM Plex Mono', monospace;
 }
 
 .limit-piecewise-editor__cases {
@@ -286,6 +334,18 @@
   border: 1px solid rgba(237, 241, 229, 0.16);
   border-radius: 12px;
   background: rgba(237, 241, 229, 0.045);
+}
+
+.limit-piecewise-editor__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: rgba(237, 241, 229, 0.62);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .limit-piecewise-editor__header,
@@ -367,7 +427,8 @@
 }
 
 .limit-piecewise-row__delete,
-.limit-piecewise-editor__add {
+.limit-piecewise-editor__add,
+.limit-piecewise-editor__remove {
   border: 1px solid rgba(237, 241, 229, 0.18);
   border-radius: 10px;
   background: rgba(237, 241, 229, 0.08);
@@ -385,6 +446,11 @@
   justify-self: start;
   min-height: 34px;
   padding: 0 12px;
+}
+
+.limit-piecewise-editor__remove {
+  min-height: 30px;
+  padding: 0 10px;
 }
 
 .calculus-operator-rail {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildStarterLimitPiecewiseRequest,
   limitPiecewiseReadbackBodyLatex,
   parseLimitPiecewiseDraft,
   serializeLimitPiecewiseRequest,
@@ -57,6 +58,42 @@ describe('limit piecewise row editor helpers', () => {
       expressionLatex: 'x^2',
       otherwise: true,
     });
+  });
+
+  it('strips MathLive placeholder tokens from cases templates', () => {
+    const draft = parseLimitPiecewiseDraft(
+      '\\lim_{x\\to 0}\\begin{cases}\\placeholder{}&x<0\\\\\\placeholder{}&\\text{otherwise}\\end{cases}',
+    );
+
+    expect(draft?.rows).toMatchObject([
+      {
+        expressionLatex: '',
+        conditionLatex: 'x<0',
+        otherwise: false,
+      },
+      {
+        expressionLatex: '',
+        conditionLatex: '\\text{otherwise}',
+        otherwise: true,
+      },
+    ]);
+  });
+
+  it('preserves empty expression cells in the starter cases template', () => {
+    const draft = parseLimitPiecewiseDraft(buildStarterLimitPiecewiseRequest());
+
+    expect(draft?.rows).toMatchObject([
+      {
+        expressionLatex: '',
+        conditionLatex: 'x<0',
+        otherwise: false,
+      },
+      {
+        expressionLatex: '',
+        conditionLatex: '\\text{otherwise}',
+        otherwise: true,
+      },
+    ]);
   });
 
   it('serializes rows back to canonical cases without wrapping the body', () => {

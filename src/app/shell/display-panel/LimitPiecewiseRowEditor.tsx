@@ -4,17 +4,18 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  useState,
 } from 'react';
-import type { KeyboardEvent } from 'react';
-import { MathStatic } from '../../../components/MathStatic';
+import type { FocusEvent, KeyboardEvent } from 'react';
 import {
   defaultLimitPiecewiseRows,
   parseLimitPiecewiseDraft,
   serializeLimitPiecewiseRequest,
+  serializeLimitPiecewiseRows,
   type LimitPiecewiseRow,
   type LimitPiecewiseRowIssue,
 } from '../../../lib/calculus/limit-piecewise-row-editor';
-import { parseNaturalLimitRequest } from '../../../lib/calculus/limit-request';
+import { parseNaturalLimitRequest, type NaturalLimitRequest } from '../../../lib/calculus/limit-request';
 
 type LimitPiecewiseRowEditorProps = {
   requestLatex: string;
@@ -78,6 +79,22 @@ function rowsWithReorder(rows: readonly LimitPiecewiseRow[], fromIndex: number, 
   if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) {
     return normalizeRows(rows);
   }
+  const fromRow = rows[fromIndex];
+  const toRow = rows[toIndex];
+  if (!fromRow || !toRow) {
+    return normalizeRows(rows);
+  }
+  if (fromRow.otherwise !== toRow.otherwise) {
+    return normalizeRows(rows.map((row, index) => {
+      if (index === fromIndex) {
+        return { ...row, expressionLatex: toRow.expressionLatex };
+      }
+      if (index === toIndex) {
+        return { ...row, expressionLatex: fromRow.expressionLatex };
+      }
+      return row;
+    }));
+  }
   const nextRows = [...rows];
   const [moved] = nextRows.splice(fromIndex, 1);
   if (!moved) {
@@ -85,6 +102,35 @@ function rowsWithReorder(rows: readonly LimitPiecewiseRow[], fromIndex: number, 
   }
   nextRows.splice(toIndex, 0, moved);
   return normalizeRows(nextRows);
+}
+
+function clearActiveRowInputSelection(container: HTMLElement | null) {
+  const active = document.activeElement;
+  if (active instanceof HTMLInputElement && container?.contains(active)) {
+    active.blur();
+  }
+  window.getSelection?.()?.removeAllRanges();
+}
+
+function scheduleClearActiveRowInputSelection(container: HTMLElement | null) {
+  window.setTimeout(() => clearActiveRowInputSelection(container), 0);
+}
+
+function targetInputValue(request: NaturalLimitRequest | null) {
+  if (!request) {
+    return '0';
+  }
+  const target = request.target;
+  if (target.kind === 'infinite') {
+    return target.normalizedTargetLatex;
+  }
+  if (target.direction === 'left') {
+    return `${target.normalizedTargetLatex}^-`;
+  }
+  if (target.direction === 'right') {
+    return `${target.normalizedTargetLatex}^+`;
+  }
+  return target.normalizedTargetLatex;
 }
 
 export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRowEditorProps>(
@@ -96,19 +142,35 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
     },
     forwardedRef,
   ) {
+    const editorRef = useRef<HTMLDivElement | null>(null);
     const firstExpressionRef = useRef<HTMLInputElement | null>(null);
+    const focusedInputRef = useRef<HTMLInputElement | null>(null);
     const dragIndexRef = useRef<number | null>(null);
+    const [variableDraft, setVariableDraft] = useState('x');
+    const [targetDraft, setTargetDraft] = useState('0');
     const parsedDraft = useMemo(() => parseLimitPiecewiseDraft(requestLatex), [requestLatex]);
     const parsedRequest = useMemo(() => parseNaturalLimitRequest(requestLatex), [requestLatex]);
     const request = parsedDraft?.request ?? (parsedRequest.ok ? parsedRequest.request : null);
     const rows = parsedDraft?.rows ?? defaultLimitPiecewiseRows();
     const issues = parsedDraft?.issues ?? [];
+    const hasStartedRows = rows.some((row) => row.expressionLatex.trim());
     const canonicalRequestLatex = parsedDraft
       ? serializeLimitPiecewiseRequest(parsedDraft.request, parsedDraft.rows)
       : '';
 
     useImperativeHandle(forwardedRef, () => ({
-      focus: () => firstExpressionRef.current?.focus(),
+      focus: () => {
+        const active = document.activeElement;
+        if (active instanceof HTMLInputElement && editorRef.current?.contains(active)) {
+          focusedInputRef.current = active;
+          return;
+        }
+        (focusedInputRef.current ?? firstExpressionRef.current)?.focus();
+      },
+      blur: () => focusedInputRef.current?.blur(),
+      get isConnected() {
+        return editorRef.current?.isConnected ?? false;
+      },
     }) as HTMLElement, []);
 
     useEffect(() => {
@@ -117,11 +179,41 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
       }
     }, [canonicalRequestLatex, onChange, requestLatex]);
 
+    useEffect(() => {
+      if (!request) {
+        return;
+      }
+      setVariableDraft(request.variableLatex);
+      setTargetDraft(targetInputValue(request));
+    }, [request]);
+
     const commitRows = (nextRows: LimitPiecewiseRow[]) => {
       if (!request) {
         return;
       }
       onChange(serializeLimitPiecewiseRequest(request, nextRows));
+    };
+
+    const commitLimitControls = (nextVariableDraft = variableDraft, nextTargetDraft = targetDraft) => {
+      if (!request) {
+        return;
+      }
+      const nextVariable = nextVariableDraft.trim();
+      const nextTarget = nextTargetDraft.trim();
+      if (!nextVariable || !nextTarget) {
+        setVariableDraft(request.variableLatex);
+        setTargetDraft(targetInputValue(request));
+        return;
+      }
+
+      const candidate = `\\lim_{${nextVariable}\\to ${nextTarget}}${serializeLimitPiecewiseRows(rows)}`;
+      const parsedCandidate = parseLimitPiecewiseDraft(candidate);
+      if (!parsedCandidate) {
+        setVariableDraft(request.variableLatex);
+        setTargetDraft(targetInputValue(request));
+        return;
+      }
+      onChange(serializeLimitPiecewiseRequest(parsedCandidate.request, parsedCandidate.rows));
     };
 
     const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -131,20 +223,68 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
       }
     };
 
+    const handleInputFocus = (event: FocusEvent<HTMLInputElement>) => {
+      focusedInputRef.current = event.currentTarget;
+    };
+
+    const handleLimitControlKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        event.preventDefault();
+        commitLimitControls();
+        event.currentTarget.blur();
+      }
+    };
+
     return (
       <div
+        ref={editorRef}
         className="limit-piecewise-editor"
         data-testid="main-editor"
         data-value={requestLatex}
         data-placeholder="Piecewise limit expression"
       >
         <div className="limit-piecewise-editor__limit">
-          <MathStatic
-            className="limit-piecewise-editor__limit-math"
-            latex={request ? `\\lim_{${request.variableLatex}\\to ${request.target.normalizedTargetLatex}}` : '\\lim'}
-            deferRender
-          />
+          <div className="limit-piecewise-editor__limit-controls">
+            <span className="limit-piecewise-editor__limit-word">lim</span>
+            <label className="limit-piecewise-editor__limit-field">
+              <span>variable</span>
+              <input
+                value={variableDraft}
+                aria-label="Limit variable"
+                spellCheck={false}
+                onFocus={handleInputFocus}
+                onKeyDown={handleLimitControlKeyDown}
+                onBlur={() => commitLimitControls()}
+                onChange={(event) => setVariableDraft(event.target.value)}
+              />
+            </label>
+            <span className="limit-piecewise-editor__arrow" aria-hidden="true">-&gt;</span>
+            <label className="limit-piecewise-editor__limit-field">
+              <span>approaches</span>
+              <input
+                value={targetDraft}
+                aria-label="Limit approaches"
+                spellCheck={false}
+                onFocus={handleInputFocus}
+                onKeyDown={handleLimitControlKeyDown}
+                onBlur={() => commitLimitControls()}
+                onChange={(event) => setTargetDraft(event.target.value)}
+              />
+            </label>
+          </div>
           <div className="limit-piecewise-editor__cases" data-testid="limit-piecewise-row-editor">
+            <div className="limit-piecewise-editor__toolbar">
+              <span>Piecewise rows</span>
+              <button
+                type="button"
+                className="limit-piecewise-editor__remove"
+                aria-label="Remove piecewise"
+                title="Remove piecewise"
+                onClick={() => onChange('')}
+              >
+                Remove Piecewise
+              </button>
+            </div>
             <div className="limit-piecewise-editor__header" aria-hidden="true">
               <span />
               <span />
@@ -154,7 +294,9 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
             </div>
             {rows.map((row, index) => {
               const expressionIssue = issueFor(issues, row.id, 'expression');
+              const visibleExpressionIssue = hasStartedRows ? expressionIssue : undefined;
               const conditionIssue = issueFor(issues, row.id, 'condition');
+              const visibleConditionIssue = hasStartedRows ? conditionIssue : undefined;
               return (
                 <div
                   key={row.id}
@@ -168,7 +310,9 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                     if (fromIndex === null) {
                       return;
                     }
+                    clearActiveRowInputSelection(editorRef.current);
                     commitRows(rowsWithReorder(rows, fromIndex, index));
+                    scheduleClearActiveRowInputSelection(editorRef.current);
                   }}
                 >
                   <span
@@ -179,17 +323,19 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                     title="Drag row"
                     onDragStart={(event) => {
                       dragIndexRef.current = index;
+                      clearActiveRowInputSelection(editorRef.current);
                       event.dataTransfer.effectAllowed = 'move';
                       event.dataTransfer.setData('text/plain', row.id);
                     }}
                     onDragEnd={() => {
                       dragIndexRef.current = null;
+                      scheduleClearActiveRowInputSelection(editorRef.current);
                     }}
                   >
                     ⋮⋮
                   </span>
                   <span className="limit-piecewise-row__number">{index + 1}</span>
-                  <label className={`limit-piecewise-row__field ${expressionIssue ? 'has-error' : ''}`}>
+                  <label className={`limit-piecewise-row__field ${visibleExpressionIssue ? 'has-error' : ''}`}>
                     <input
                       ref={index === 0 ? firstExpressionRef : undefined}
                       value={row.expressionLatex}
@@ -197,23 +343,24 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                       aria-label={`Expression row ${index + 1}`}
                       spellCheck={false}
                       onKeyDown={handleKeyDown}
+                      onFocus={handleInputFocus}
                       onChange={(event) => commitRows(rowsWithUpdate(rows, row.id, {
                         expressionLatex: event.target.value,
                       }))}
-                      aria-invalid={Boolean(expressionIssue)}
+                      aria-invalid={Boolean(visibleExpressionIssue)}
                     />
-                    {expressionIssue ? (
-                      <small>{expressionIssue.message}</small>
+                    {visibleExpressionIssue ? (
+                      <small>{visibleExpressionIssue.message}</small>
                     ) : null}
                   </label>
-                  <label className={`limit-piecewise-row__field ${conditionIssue ? 'has-error' : ''}`}>
+                  <label className={`limit-piecewise-row__field ${visibleConditionIssue ? 'has-error' : ''}`}>
                     <input
                       value={row.otherwise ? 'Otherwise' : row.conditionLatex}
                       placeholder="condition"
                       aria-label={`Condition row ${index + 1}`}
                       spellCheck={false}
-                      readOnly={row.otherwise}
                       onKeyDown={handleKeyDown}
+                      onFocus={handleInputFocus}
                       onChange={(event) => {
                         const value = cleanConditionInput(event.target.value);
                         const otherwise = /^otherwise$/iu.test(value.trim());
@@ -222,10 +369,10 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                           otherwise,
                         }));
                       }}
-                      aria-invalid={Boolean(conditionIssue)}
+                      aria-invalid={Boolean(visibleConditionIssue)}
                     />
-                    {conditionIssue ? (
-                      <small>{conditionIssue.message}</small>
+                    {visibleConditionIssue ? (
+                      <small>{visibleConditionIssue.message}</small>
                     ) : null}
                   </label>
                   <button

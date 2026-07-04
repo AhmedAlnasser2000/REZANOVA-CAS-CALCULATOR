@@ -49,6 +49,7 @@ type KeypadRouterDeps = {
   moveCurrentEquationMenuSelection: (delta: number) => void;
   openSelectedEquationMenuEntry: () => void;
   insertLatex: (latex: string) => void;
+  insertLimitPiecewiseTemplate?: () => void;
   deleteBackward: () => void;
   moveToPreviousChar: () => void;
   moveToNextChar: () => void;
@@ -303,6 +304,11 @@ export function handleKeypadWithDeps(deps: KeypadRouterDeps) {
       deps.openSelectedEquationMenuEntry();
       return;
     }
+  }
+
+  if (deps.button.id === 'limit-piecewise-template' && deps.insertLimitPiecewiseTemplate) {
+    deps.insertLimitPiecewiseTemplate();
+    return;
   }
 
   if (deps.button.latex) {

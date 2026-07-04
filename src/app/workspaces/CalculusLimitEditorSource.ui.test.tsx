@@ -170,6 +170,25 @@ describe('Calculus limit editor source', () => {
     );
   });
 
+  it('opens the Piecewise template with empty editable rows, not raw placeholder tokens', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    await user.click(screen.getByTestId('keypad-limit-piecewise-template'));
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    expect(screen.getByTestId('limit-piecewise-row-editor')).not.toHaveTextContent('placeholder');
+    expect(within(screen.getByTestId('limit-piecewise-row-1')).getByLabelText('Expression row 1'))
+      .toHaveValue('');
+    expect(within(screen.getByTestId('limit-piecewise-row-1')).getByLabelText('Condition row 1'))
+      .toHaveValue('x<0');
+    expect(within(screen.getByTestId('limit-piecewise-row-2')).getByLabelText('Expression row 2'))
+      .toHaveValue('');
+    expect(within(screen.getByTestId('limit-piecewise-row-2')).getByLabelText('Condition row 2'))
+      .toHaveValue('Otherwise');
+    expect(screen.getByTestId('limit-piecewise-row-editor')).not.toHaveTextContent('Enter an expression for this row.');
+  });
+
   it('recovers pasted piecewise text when MathLive strips branch spacing', async () => {
     const { user } = await renderAppMain();
 
@@ -216,6 +235,119 @@ describe('Calculus limit editor source', () => {
     await user.click(screen.getByTestId('soft-action-evaluate'));
     await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+  });
+
+  it('swaps a regular row with the Otherwise row while preserving the fallback position', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; -x otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+
+    const dataTransfer = {
+      effectAllowed: 'move',
+      setData: vi.fn(),
+    };
+    fireEvent.dragStart(screen.getByTestId('limit-piecewise-drag-1'), { dataTransfer });
+    fireEvent.dragOver(screen.getByTestId('limit-piecewise-row-2'));
+    fireEvent.drop(screen.getByTestId('limit-piecewise-row-2'), { dataTransfer });
+
+    await waitFor(() => {
+      expect(within(screen.getByTestId('limit-piecewise-row-1')).getByDisplayValue('-x'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-1')).getByDisplayValue('x<0'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-2')).getByDisplayValue('x'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-2')).getByDisplayValue('Otherwise'))
+        .toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('0');
+  });
+
+  it('keeps focus on the active piecewise row input instead of jumping back to row one', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; -x otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    const rowTwoExpression = within(screen.getByTestId('limit-piecewise-row-2'))
+      .getByLabelText('Expression row 2');
+
+    await user.click(rowTwoExpression);
+    await user.type(rowTwoExpression, '+1');
+    expect(rowTwoExpression).toHaveFocus();
+
+    await user.click(screen.getByTestId('soft-action-toEditor'));
+    expect(rowTwoExpression).toHaveFocus();
+    expect(rowTwoExpression).toHaveValue('-x+1');
+  });
+
+  it('allows the Otherwise row to be edited into an explicit condition row', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; -x otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    const otherwiseInput = within(screen.getByTestId('limit-piecewise-row-2'))
+      .getByLabelText('Condition row 2');
+
+    await user.clear(otherwiseInput);
+    await user.type(otherwiseInput, 'x>=0');
+
+    expect(otherwiseInput).toHaveValue('x>=0');
+    expect(within(screen.getByTestId('limit-piecewise-row-2')).queryByDisplayValue('Otherwise'))
+      .not.toBeInTheDocument();
+  });
+
+  it('edits the piecewise limit approach controls without leaving the row editor', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; -x otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    const variableInput = screen.getByLabelText('Limit variable');
+
+    await user.clear(variableInput);
+    await user.type(variableInput, 't');
+    fireEvent.blur(variableInput);
+
+    await waitFor(() => expect(screen.getByLabelText('Limit variable')).toHaveValue('t'));
+    await user.clear(screen.getByLabelText('Limit approaches'));
+    await user.type(screen.getByLabelText('Limit approaches'), '2');
+    fireEvent.blur(screen.getByLabelText('Limit approaches'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('limit-piecewise-row-editor')).toBeInTheDocument();
+      expect(screen.getByTestId('main-editor')).toHaveAttribute(
+        'data-value',
+        '\\lim_{t\\to 2}\\begin{cases}x&x<0\\\\-x&\\text{otherwise}\\end{cases}',
+      );
+    });
+    expect(screen.getByTestId('main-editor').getAttribute('data-value')).toContain('\\lim_{t\\to 2}');
+  });
+
+  it('removes the whole piecewise block from the structured editor', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; -x otherwise)');
+
+    await waitFor(() => expect(screen.getByTestId('limit-piecewise-row-editor')).toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /Remove Piecewise/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('limit-piecewise-row-editor')).not.toBeInTheDocument();
+      expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '');
+    });
   });
 
   it('adds and deletes piecewise rows without exposing loose branch keypad keys', async () => {
