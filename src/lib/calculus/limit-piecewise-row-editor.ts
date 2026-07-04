@@ -63,6 +63,40 @@ function cleanExpressionLatex(input: string) {
   return input.trim().replace(/,+$/u, '').trim();
 }
 
+function cleanConditionLatex(input: string) {
+  return input
+    .trim()
+    .replace(/^if\b\s*/iu, '')
+    .trim();
+}
+
+function splitFriendlyBranchEntry(entry: string) {
+  const source = entry.trim();
+  const otherwise = source.match(/^([\s\S]+?)\s*(?:\\text\{\s*)?otherwise\s*\}?$/iu);
+  if (otherwise) {
+    return {
+      expressionLatex: cleanExpressionLatex(otherwise[1]),
+      conditionLatex: OTHERWISE_LATEX,
+      otherwise: true,
+    };
+  }
+
+  const conditional = source.match(/^([\s\S]+?)\s*if\s*([\s\S]+)$/iu);
+  if (conditional) {
+    return {
+      expressionLatex: cleanExpressionLatex(conditional[1]),
+      conditionLatex: cleanConditionLatex(conditional[2]),
+      otherwise: false,
+    };
+  }
+
+  return {
+    expressionLatex: cleanExpressionLatex(source),
+    conditionLatex: '',
+    otherwise: false,
+  };
+}
+
 function branchToRow(branch: PiecewiseLimitBranch, index: number): LimitPiecewiseRow {
   return {
     id: `piecewise-row-${index + 1}`,
@@ -111,31 +145,10 @@ function recoverFriendlyRows(bodyLatex: string) {
   }
 
   const rows = splitTopLevel(match[1], new Set([',', ';', '\n'])).map((entry, index) => {
-    const otherwise = entry.match(/^([\s\S]*?)\s+otherwise$/iu);
-    if (otherwise) {
-      return {
-        id: `piecewise-row-${index + 1}`,
-        expressionLatex: cleanExpressionLatex(otherwise[1]),
-        conditionLatex: OTHERWISE_LATEX,
-        otherwise: true,
-      };
-    }
-
-    const conditional = entry.match(/^([\s\S]*?)\s+if\s+([\s\S]*)$/iu);
-    if (conditional) {
-      return {
-        id: `piecewise-row-${index + 1}`,
-        expressionLatex: cleanExpressionLatex(conditional[1]),
-        conditionLatex: conditional[2].trim(),
-        otherwise: false,
-      };
-    }
-
+    const branch = splitFriendlyBranchEntry(entry);
     return {
       id: `piecewise-row-${index + 1}`,
-      expressionLatex: cleanExpressionLatex(entry),
-      conditionLatex: '',
-      otherwise: false,
+      ...branch,
     };
   });
 

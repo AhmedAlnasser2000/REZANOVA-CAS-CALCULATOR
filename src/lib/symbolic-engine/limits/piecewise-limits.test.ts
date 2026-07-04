@@ -42,6 +42,26 @@ describe('piecewise limits', () => {
     }
   });
 
+  it('parses pasted friendly piecewise syntax after spaces are stripped', () => {
+    const parsed = parsePiecewiseLimitExpression('piecewise(-1ifx<0;1otherwise)');
+
+    expect(parsed.kind).toBe('piecewise');
+    if (parsed.kind === 'piecewise') {
+      expect(parsed.branches[0]).toMatchObject({
+        expressionLatex: '-1',
+        condition: {
+          variable: 'x',
+          operator: '<',
+          value: 0,
+        },
+      });
+      expect(parsed.branches[1]).toMatchObject({
+        expressionLatex: '1',
+        otherwise: true,
+      });
+    }
+  });
+
   it('resolves agreeing one-sided finite Piecewise branch limits', () => {
     const result = resolvePiecewiseLimit({
       bodyLatex: 'piecewise(x if x<0, x^2 otherwise)',

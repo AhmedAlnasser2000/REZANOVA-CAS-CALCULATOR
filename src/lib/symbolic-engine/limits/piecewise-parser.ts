@@ -196,6 +196,32 @@ function cleanBranchExpression(input: string) {
     .trim();
 }
 
+function parseFriendlyBranchEntry(entry: string) {
+  const source = entry.trim();
+  const otherwise = source.match(/^([\s\S]+?)\s*(?:\\text\{\s*)?otherwise\s*\}?$/iu);
+  if (otherwise) {
+    return {
+      expressionLatex: cleanBranchExpression(otherwise[1]),
+      otherwise: true,
+    } satisfies PiecewiseLimitBranch;
+  }
+
+  const conditional = source.match(/^([\s\S]+?)\s*if\s*([\s\S]+)$/iu);
+  if (!conditional) {
+    return undefined;
+  }
+
+  const condition = parseCondition(conditional[2]);
+  if (!condition) {
+    return undefined;
+  }
+
+  return {
+    expressionLatex: cleanBranchExpression(conditional[1]),
+    condition,
+  } satisfies PiecewiseLimitBranch;
+}
+
 function parseFriendlyPiecewise(source: string): PiecewiseLimitParseResult {
   const match = source.trim().match(/^piecewise\s*\(([\s\S]*)\)$/iu);
   if (!match) {
@@ -212,35 +238,19 @@ function parseFriendlyPiecewise(source: string): PiecewiseLimitParseResult {
 
   const branches: PiecewiseLimitBranch[] = [];
   for (const entry of entries) {
-    const otherwise = entry.match(/^([\s\S]+?)\s+otherwise$/iu);
-    if (otherwise) {
-      branches.push({
-        expressionLatex: cleanBranchExpression(otherwise[1]),
-        otherwise: true,
-      });
+    const branch = parseFriendlyBranchEntry(entry);
+    if (!branch) {
+      return {
+        kind: 'malformed',
+        error: 'Piecewise branches need an expression and a simple comparison condition.',
+      };
+    }
+    if (branch.otherwise) {
+      branches.push(branch);
       continue;
     }
 
-    const conditional = entry.match(/^([\s\S]+?)\s+if\s+([\s\S]+)$/iu);
-    if (!conditional) {
-      return {
-        kind: 'malformed',
-        error: 'Piecewise branches must use "expr if condition" or "expr otherwise".',
-      };
-    }
-
-    const condition = parseCondition(conditional[2]);
-    if (!condition) {
-      return {
-        kind: 'malformed',
-        error: 'Piecewise limits only support simple comparison conditions in this milestone.',
-      };
-    }
-
-    branches.push({
-      expressionLatex: cleanBranchExpression(conditional[1]),
-      condition,
-    });
+    branches.push(branch);
   }
 
   return { kind: 'piecewise', branches };

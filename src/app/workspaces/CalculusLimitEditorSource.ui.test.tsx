@@ -170,6 +170,54 @@ describe('Calculus limit editor source', () => {
     );
   });
 
+  it('recovers pasted piecewise text when MathLive strips branch spacing', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(-1ifx<0;1otherwise)');
+
+    await waitFor(() => {
+      expect(within(screen.getByTestId('limit-piecewise-row-1')).getByDisplayValue('-1'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-1')).getByDisplayValue('x<0'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-2')).getByDisplayValue('1'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-2')).getByDisplayValue('Otherwise'))
+        .toBeInTheDocument();
+    });
+  });
+
+  it('reorders piecewise rows from the drag handle while keeping Otherwise last', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; x^2 if x<1; 3 otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(3));
+
+    const dataTransfer = {
+      effectAllowed: 'move',
+      setData: vi.fn(),
+    };
+    fireEvent.dragStart(screen.getByTestId('limit-piecewise-drag-2'), { dataTransfer });
+    fireEvent.dragOver(screen.getByTestId('limit-piecewise-row-1'));
+    fireEvent.drop(screen.getByTestId('limit-piecewise-row-1'), { dataTransfer });
+
+    await waitFor(() => {
+      expect(within(screen.getByTestId('limit-piecewise-row-1')).getByDisplayValue('x^2'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-2')).getByDisplayValue('x'))
+        .toBeInTheDocument();
+      expect(within(screen.getByTestId('limit-piecewise-row-3')).getByDisplayValue('Otherwise'))
+        .toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+  });
+
   it('adds and deletes piecewise rows without exposing loose branch keypad keys', async () => {
     const { user } = await renderAppMain();
 

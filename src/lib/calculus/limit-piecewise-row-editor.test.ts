@@ -24,6 +24,24 @@ describe('limit piecewise row editor helpers', () => {
     expect(draft?.issues).toEqual([]);
   });
 
+  it('recovers MathLive-glued friendly piecewise rows after paste', () => {
+    const draft = parseLimitPiecewiseDraft('lim x -> 0 piecewise(-1ifx<0;1otherwise)');
+
+    expect(draft?.rows).toMatchObject([
+      {
+        expressionLatex: '-1',
+        conditionLatex: 'x<0',
+        otherwise: false,
+      },
+      {
+        expressionLatex: '1',
+        conditionLatex: '\\text{otherwise}',
+        otherwise: true,
+      },
+    ]);
+    expect(draft?.issues).toEqual([]);
+  });
+
   it('normalizes LaTeX cases into editable rows', () => {
     const draft = parseLimitPiecewiseDraft(
       '\\lim_{x\\to 0}\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}',

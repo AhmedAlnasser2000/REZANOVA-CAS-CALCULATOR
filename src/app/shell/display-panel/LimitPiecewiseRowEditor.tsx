@@ -30,6 +30,10 @@ function issueFor(
   return issues.find((issue) => issue.rowId === rowId && issue.field === field);
 }
 
+function cleanConditionInput(value: string) {
+  return value.trim().replace(/^if\b\s*/iu, '');
+}
+
 function normalizeRows(rows: readonly LimitPiecewiseRow[]) {
   const otherwise = rows.find((row) => row.otherwise);
   const regularRows = rows.filter((row) => !row.otherwise);
@@ -156,10 +160,6 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                   key={row.id}
                   className="limit-piecewise-row"
                   data-testid={`limit-piecewise-row-${index + 1}`}
-                  draggable
-                  onDragStart={() => {
-                    dragIndexRef.current = index;
-                  }}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={(event) => {
                     event.preventDefault();
@@ -174,7 +174,17 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                   <span
                     className="limit-piecewise-row__drag"
                     aria-label="Drag row"
+                    data-testid={`limit-piecewise-drag-${index + 1}`}
+                    draggable
                     title="Drag row"
+                    onDragStart={(event) => {
+                      dragIndexRef.current = index;
+                      event.dataTransfer.effectAllowed = 'move';
+                      event.dataTransfer.setData('text/plain', row.id);
+                    }}
+                    onDragEnd={() => {
+                      dragIndexRef.current = null;
+                    }}
                   >
                     ⋮⋮
                   </span>
@@ -205,7 +215,7 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                       readOnly={row.otherwise}
                       onKeyDown={handleKeyDown}
                       onChange={(event) => {
-                        const value = event.target.value;
+                        const value = cleanConditionInput(event.target.value);
                         const otherwise = /^otherwise$/iu.test(value.trim());
                         commitRows(rowsWithUpdate(rows, row.id, {
                           conditionLatex: otherwise ? '\\text{otherwise}' : value,
