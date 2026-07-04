@@ -22,6 +22,7 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
+import { equationReplaySeedFromRequest } from './equationHistorySeed';
 
 type TransitionFn = (callback: () => void) => void;
 type CommitOutcomeFn = (
@@ -215,6 +216,8 @@ export function runEquationNumericIntervalRuntimeAction({
           committedInput,
           'equation',
           {
+            equationScreen: request.equationScreen,
+            equationSeed: equationReplaySeedFromRequest(request, committedInput),
             ...(envelope.payload.kind === 'success'
               && envelope.payload.solveBadges?.includes('Numeric Interval')
               ? { numericInterval: interval }
@@ -242,4 +245,3 @@ export function runEquationNumericIntervalRuntimeAction({
     })();
   });
 }
-

@@ -6,6 +6,56 @@ import {
 } from './equation-history';
 
 describe('equation history replay inference', () => {
+  it('prefers saved Equation replay seeds over result inference', () => {
+    expect(
+      inferEquationReplayTarget({
+        id: 'seed-poly-system',
+        mode: 'equation',
+        inputLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
+        resultLatex: '\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\left(3,1\\right)\\right\\}',
+        equationScreen: 'polynomialSystem2',
+        equationSeed: {
+          screen: 'polynomialSystem2',
+          equationLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
+          polynomialSystem2Latex: ['x^{2}+y=10', 'x-y=2'],
+        },
+        timestamp: '2026-07-04T00:00:00.000Z',
+      }),
+    ).toEqual({
+      screen: 'polynomialSystem2',
+      equationLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
+      polynomialSystem2Latex: ['x^{2}+y=10', 'x-y=2'],
+    });
+
+    expect(
+      inferEquationReplayTarget({
+        id: 'seed-linear3',
+        mode: 'equation',
+        inputLatex: 'linear-system',
+        resultLatex: 'x=1,\\;y=2,\\;z=3',
+        equationScreen: 'linear3',
+        equationSeed: {
+          screen: 'linear3',
+          equationLatex: 'linear-system',
+          system: [
+            [1, 1, 1, 6],
+            [2, -1, 1, 3],
+            [1, 2, -1, 3],
+          ],
+        },
+        timestamp: '2026-07-04T00:00:00.000Z',
+      }),
+    ).toEqual({
+      screen: 'linear3',
+      equationLatex: 'linear-system',
+      system: [
+        [1, 1, 1, 6],
+        [2, -1, 1, 3],
+        [1, 2, -1, 3],
+      ],
+    });
+  });
+
   it('infers quadratic and quartic polynomial branches from generated equations', () => {
     expect(parseGeneratedPolynomialEquationLatex('x^{2}-5x+6=0')).toEqual({
       screen: 'quadratic',

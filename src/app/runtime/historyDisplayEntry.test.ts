@@ -45,4 +45,55 @@ describe('buildHistoryDisplayEntry', () => {
       detailSections,
     });
   });
+
+  it('persists Equation route seeds for guided screen history replay', () => {
+    const entry = buildHistoryDisplayEntry({
+      outcome: {
+        kind: 'success',
+        title: 'Polynomial 2x2',
+        exactLatex: '\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\left(3,1\\right)\\right\\}',
+        systemReadback: {
+          label: 'Solution pairs',
+          variablesLatex: ['x', 'y'],
+          rows: [
+            { valuesLatex: ['-4', '-6'] },
+            { valuesLatex: ['3', '1'] },
+          ],
+        },
+        warnings: [],
+      },
+      inputLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
+      mode: 'equation',
+      context: {
+        equationScreen: 'polynomialSystem2',
+        equationSeed: {
+          screen: 'polynomialSystem2',
+          equationLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
+          polynomialSystem2Latex: ['x^{2}+y=10', 'x-y=2'],
+        },
+      },
+      currentCalculateHistoryContext: () => ({}),
+      currentCalculusHistoryContext: () => ({}),
+      geometryScreen: 'triangleArea',
+      trigScreen: 'functions',
+      statisticsScreen: 'descriptive',
+    });
+
+    expect(entry).toMatchObject({
+      mode: 'equation',
+      equationScreen: 'polynomialSystem2',
+      equationSeed: {
+        screen: 'polynomialSystem2',
+        polynomialSystem2Latex: ['x^{2}+y=10', 'x-y=2'],
+      },
+      systemReadback: {
+        label: 'Solution pairs',
+        variablesLatex: ['x', 'y'],
+        rows: [
+          { valuesLatex: ['-4', '-6'] },
+          { valuesLatex: ['3', '1'] },
+        ],
+      },
+    });
+  });
 });

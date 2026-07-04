@@ -207,6 +207,19 @@ describe('useEquationRuntime', () => {
     });
     expect(hook.result.current.polynomialSystem2Latex).toEqual(['x^2+y=1', 'x-y=0']);
     expect(hook.result.current.equationInputLatex).toBe('x^2+y=1\\quad;\\quadx-y=0');
+
+    const firstField = { focus: vi.fn() } as never;
+    const secondField = { focus: vi.fn() } as never;
+
+    act(() => {
+      hook.result.current.equationWorkspaceProps.onFocusPolynomialSystemField(secondField);
+    });
+    expect(hook.result.current.systemInputRefs.current.polynomialSystem2).toBe(secondField);
+
+    act(() => {
+      hook.result.current.equationWorkspaceProps.onFocusPolynomialSystemField(firstField);
+    });
+    expect(hook.result.current.systemInputRefs.current.polynomialSystem2).toBe(firstField);
   });
 
   it('captures and restores Equation surface state for workspace instances', () => {
@@ -405,6 +418,89 @@ describe('useEquationRuntime', () => {
     });
     expect(hook.result.current.equationScreen).toBe('quadratic');
     expect(hook.result.current.activePolynomialCoefficients).toEqual([1, -5, 6]);
+  });
+
+  it('restores seeded Equation history into guided system screens', () => {
+    const { hook } = renderEquationRuntime();
+
+    act(() => {
+      hook.result.current.restoreEquationHistoryEntry(historyEntry({
+        inputLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
+        resultLatex: '\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\left(3,1\\right)\\right\\}',
+        equationScreen: 'polynomialSystem2',
+        equationSeed: {
+          screen: 'polynomialSystem2',
+          equationLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
+          polynomialSystem2Latex: ['x^{2}+y=10', 'x-y=2'],
+        },
+      }));
+    });
+
+    expect(hook.result.current.equationScreen).toBe('polynomialSystem2');
+    expect(hook.result.current.polynomialSystem2Latex).toEqual(['x^{2}+y=10', 'x-y=2']);
+    expect(hook.result.current.equationLatex).toBe('x^{2}+y=10\\quad;\\quadx-y=2');
+    expect(hook.result.current.equationSolveTarget).toBeNull();
+
+    act(() => {
+      hook.result.current.restoreEquationHistoryEntry(historyEntry({
+        inputLatex: 'linear-system',
+        resultLatex: 'x=1,\\;y=2,\\;z=3',
+        equationScreen: 'linear3',
+        equationSeed: {
+          screen: 'linear3',
+          equationLatex: 'linear-system',
+          system: [
+            [1, 1, 1, 6],
+            [2, -1, 1, 3],
+            [1, 2, -1, 3],
+          ],
+        },
+      }));
+    });
+
+    expect(hook.result.current.equationScreen).toBe('linear3');
+    expect(hook.result.current.system3).toEqual([
+      [1, 1, 1, 6],
+      [2, -1, 1, 3],
+      [1, 2, -1, 3],
+    ]);
+  });
+
+  it('restores symbolic complex-region history from replay seeds', () => {
+    const { hook } = renderEquationRuntime({ equationDomainIntent: 'complex' });
+
+    act(() => {
+      hook.result.current.restoreEquationHistoryEntry(historyEntry({
+        inputLatex: 'e^z+z=0',
+        resultLatex: 'z\\approx -0.567143',
+        equationScreen: 'symbolic',
+        equationSeed: {
+          screen: 'symbolic',
+          equationLatex: 'e^z+z=0',
+          equationSolveTarget: 'z',
+          complexRegion: {
+            reMin: '-2',
+            reMax: '2',
+            imMin: '-3',
+            imMax: '3',
+            gridSize: 13,
+          },
+        },
+      }));
+    });
+
+    expect(hook.result.current.equationScreen).toBe('symbolic');
+    expect(hook.result.current.equationLatex).toBe('e^z+z=0');
+    expect(hook.result.current.equationSolveTarget).toBe('z');
+    expect(hook.result.current.equationWorkspaceProps.shouldShowComplexRegionPanel).toBe(true);
+    expect(hook.result.current.equationWorkspaceProps.equationComplexRegionPanel).toMatchObject({
+      enabled: true,
+      reMin: '-2',
+      reMax: '2',
+      imMin: '-3',
+      imMax: '3',
+      gridSize: 13,
+    });
   });
 
   it('clears active drafts, resets current screens, and resets the full Equation runtime', () => {

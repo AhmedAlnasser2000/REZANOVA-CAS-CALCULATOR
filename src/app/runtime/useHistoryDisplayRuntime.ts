@@ -610,6 +610,7 @@ export function useHistoryDisplayRuntime({
         exactSupplementLatex: entry.exactSupplementLatex,
         approxText: entry.approxText,
         detailSections: entry.detailSections,
+        systemReadback: entry.systemReadback,
         answerDomain: entry.answerDomain,
         solutionKind: entry.solutionKind,
         warnings: [],

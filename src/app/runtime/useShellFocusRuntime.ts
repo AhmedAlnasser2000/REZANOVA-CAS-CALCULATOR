@@ -30,6 +30,19 @@ type MathfieldRef = RefObject<MathfieldElement | null>;
 type PanelRef = RefObject<HTMLDivElement | null>;
 type TextAreaRef = RefObject<HTMLTextAreaElement | null>;
 
+function isActiveEquationWorkEditor() {
+  const activeElement = document.activeElement;
+  if (!(activeElement instanceof HTMLElement)) {
+    return false;
+  }
+
+  if (!activeElement.closest('.equation-work-panel')) {
+    return false;
+  }
+
+  return activeElement.matches('input, textarea, select, math-field') || activeElement.isContentEditable;
+}
+
 type UseShellFocusRuntimeOptions = {
   activeFieldRef: MathfieldRef;
   calculusRouteMeta: CalculusRouteMeta | null;
@@ -524,6 +537,10 @@ export function useShellFocusRuntime({
       }
 
       if (currentMode !== 'equation' || !equationRouteMeta) {
+        return;
+      }
+
+      if (isActiveEquationWorkEditor()) {
         return;
       }
 

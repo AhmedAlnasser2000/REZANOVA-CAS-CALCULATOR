@@ -1,4 +1,4 @@
-import type { MutableRefObject, RefObject } from 'react';
+import { useRef, type MutableRefObject, type RefObject } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
@@ -152,6 +152,8 @@ export function EquationWorkspace({
   onOpenGuideMode,
   storedVariables,
 }: EquationWorkspaceProps) {
+  const polynomialSystemFieldRefs = useRef<Array<MathfieldElement | null>>([null, null]);
+
   return (
     <section className={`mode-panel ${isMenuOpen ? 'equation-menu-panel' : 'equation-work-panel'}`}>
       {routeMeta ? (
@@ -228,15 +230,32 @@ export function EquationWorkspace({
                 </div>
                 <MathEditor
                   ref={(node: MathfieldElement | null) => {
-                    if (index === 0) {
+                    polynomialSystemFieldRefs.current[index] = node;
+                    if (
+                      index === 0
+                      && node
+                      && (
+                        !systemInputRefs.current.polynomialSystem2
+                        || !document.contains(systemInputRefs.current.polynomialSystem2)
+                      )
+                    ) {
                       systemInputRefs.current.polynomialSystem2 = node;
                     }
                   }}
                   className="secondary-mathfield"
                   dataTestId={index === 0 ? 'polynomial-system-equation-1' : 'polynomial-system-equation-2'}
                   value={latex}
-                  onChange={(nextLatex) => onSetPolynomialSystemEquation(index as 0 | 1, nextLatex)}
-                  onFocus={onFocusPolynomialSystemField}
+                  onChange={(nextLatex) => {
+                    const activeField = polynomialSystemFieldRefs.current[index];
+                    if (activeField) {
+                      onFocusPolynomialSystemField(activeField);
+                    }
+                    onSetPolynomialSystemEquation(index as 0 | 1, nextLatex);
+                  }}
+                  onFocus={(field) => {
+                    polynomialSystemFieldRefs.current[index] = field;
+                    onFocusPolynomialSystemField(field);
+                  }}
                   modeId="equation"
                   screenHint="polynomialSystem2"
                   placeholder={index === 0 ? 'First equation' : 'Second equation'}

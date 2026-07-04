@@ -22,6 +22,7 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
+import { equationReplaySeedFromRequest } from './equationHistorySeed';
 
 type TransitionFn = (callback: () => void) => void;
 type CommitOutcomeFn = (
@@ -219,6 +220,8 @@ export function runEquationComplexRegionRuntimeAction({
           committedInput,
           'equation',
           {
+            equationScreen: request.equationScreen,
+            equationSeed: equationReplaySeedFromRequest(request, committedInput),
             ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),
             equationAnswerMode: 'exact',
             equationDomainIntent: 'complex',
@@ -242,4 +245,3 @@ export function runEquationComplexRegionRuntimeAction({
     })();
   });
 }
-

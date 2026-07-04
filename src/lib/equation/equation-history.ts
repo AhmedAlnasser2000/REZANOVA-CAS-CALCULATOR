@@ -1,4 +1,5 @@
 import type {
+  EquationReplaySeed,
   EquationReplayTarget,
   HistoryEntry,
   PolynomialEquationView,
@@ -118,7 +119,53 @@ export function inferSimultaneousReplayScreen(resultLatex?: string) {
   return hasZ ? 'linear3' : 'linear2';
 }
 
+function copySystem(system: readonly (readonly number[])[]) {
+  return system.map((row) => [...row]);
+}
+
+function replayTargetFromSeed(seed: EquationReplaySeed): EquationReplayTarget {
+  if (seed.screen === 'symbolic') {
+    return {
+      screen: 'symbolic',
+      equationLatex: seed.equationLatex,
+      equationSolveTarget: seed.equationSolveTarget ?? null,
+      ...(seed.numericInterval ? { numericInterval: seed.numericInterval } : {}),
+      ...(seed.complexRegion ? { complexRegion: seed.complexRegion } : {}),
+    };
+  }
+
+  if (seed.screen === 'quadratic' || seed.screen === 'cubic' || seed.screen === 'quartic') {
+    return {
+      screen: seed.screen,
+      coefficients: [...seed.coefficients],
+      equationLatex: seed.equationLatex,
+    };
+  }
+
+  if (seed.screen === 'polynomialSystem2') {
+    return {
+      screen: 'polynomialSystem2',
+      equationLatex: seed.equationLatex,
+      polynomialSystem2Latex: [...seed.polynomialSystem2Latex] as [string, string],
+    };
+  }
+
+  if (seed.screen === 'linear2' || seed.screen === 'linear3') {
+    return {
+      screen: seed.screen,
+      equationLatex: seed.equationLatex,
+      system: copySystem(seed.system),
+    };
+  }
+
+  return seed;
+}
+
 export function inferEquationReplayTarget(entry: HistoryEntry): EquationReplayTarget {
+  if (entry.equationSeed) {
+    return replayTargetFromSeed(entry.equationSeed);
+  }
+
   const polynomialTarget = parseGeneratedPolynomialEquationLatex(entry.inputLatex);
   if (polynomialTarget) {
     return polynomialTarget;

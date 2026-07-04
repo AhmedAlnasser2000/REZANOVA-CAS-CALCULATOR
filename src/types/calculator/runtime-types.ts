@@ -18,9 +18,7 @@ import type {
   LegacyEquationAnswerMode,
   NumericNotationMode,
   OutputStyle,
-  PolynomialEquationView,
   ScientificNotationStyle,
-  SimultaneousEquationView,
   SolutionKind,
   StatisticsScreen,
   TrigScreen,
@@ -32,10 +30,13 @@ import type {
   DerivativeVariable,
   MathDocument,
 } from './execution-types';
+import type { NumericSolveInterval } from './solver-types';
+import type { EquationReplaySeed } from './equation-replay-types';
 import type {
-  NumericSolveInterval,
-} from './solver-types';
-import type { DisplayDetailSection, VariableSubstitutionSnapshot } from './display-types';
+  DisplayDetailSection,
+  DisplaySystemSolutionReadback,
+  VariableSubstitutionSnapshot,
+} from './display-types';
 import {
   DEFAULT_LANGUAGE_CODE,
   type LanguageCode,
@@ -49,6 +50,10 @@ export * from './exact-supplement-types';
 export * from './abs-types';
 export * from './display-types';
 export * from './solver-types';
+export type {
+  EquationReplaySeed,
+  EquationReplayTarget,
+} from './equation-replay-types';
 export type EquationMenuEntryId =
   | 'symbolic'
   | 'polynomial'
@@ -846,22 +851,6 @@ export type NumericOdeResponse = {
   error?: string;
 };
 
-export type EquationReplayTarget =
-  | {
-      screen: 'symbolic';
-      equationLatex: string;
-      equationSolveTarget?: string | null;
-    }
-  | {
-      screen: PolynomialEquationView;
-      coefficients: number[];
-      equationLatex: string;
-    }
-  | {
-      screen: SimultaneousEquationView;
-      equationLatex: string;
-    };
-
 export type AppSurface = 'app' | 'launcher';
 
 export type LauncherState = {
@@ -888,6 +877,7 @@ export type HistoryEntry = {
   exactSupplementLatex?: string[];
   approxText?: string;
   detailSections?: DisplayDetailSection[];
+  systemReadback?: DisplaySystemSolutionReadback;
   calculateScreen?: CalculateScreen;
   calculateSeed?: Partial<
     DerivativeWorkbenchState
@@ -920,6 +910,8 @@ export type HistoryEntry = {
   statisticsSeed?: StatisticsReplaySeed;
   matrixSeed?: MatrixReplaySeed;
   vectorSeed?: VectorReplaySeed;
+  equationScreen?: EquationScreen;
+  equationSeed?: EquationReplaySeed;
   equationSolveTarget?: string;
   equationAnswerMode?: LegacyEquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;

@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/refs */
 import {
   useCallback,
+  useMemo,
   useRef,
   useState,
-  type MutableRefObject,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import {
@@ -41,10 +41,7 @@ import {
 } from '../../lib/modes/equation-ui-model';
 import type { RunEquationModeRequest } from '../../lib/modes/equation';
 import { useEditorAnalysis } from '../../lib/editor/use-editor-analysis';
-import type { EditorAnalysisControlState } from '../../lib/editor/editor-analysis-control';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
-import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import {
   createEquationRuntimeController,
 } from '../logic/runtimeControllers';
@@ -56,15 +53,15 @@ import {
   polynomialTemplateLatex,
 } from '../logic/appUtils';
 import type { EquationSurfaceState } from './workspace-surface-state';
-import type { WorkspaceInstance } from './workspace-instances';
 import {
   buildEquationRequestFromState,
   equationRequestFromSurfaceState,
 } from './equation-origin-request';
 import type {
   ActiveEquationRuntimeState,
+  EquationMenuScreen,
   EquationRequestKind,
-  ReplayVariableSubstitutions,
+  UseEquationRuntimeOptions,
 } from './equation-runtime-types';
 import { useEquationAlgebraActions } from './equation-algebra-actions';
 import {
@@ -78,74 +75,9 @@ import type {
   EquationAnswerMode,
   EquationScreen,
   HistoryEntry,
-  ModeId,
   PolynomialEquationView,
-  Settings,
-  SettingsPatch,
   SimultaneousEquationView,
-  StoredVariableValue,
 } from '../../types/calculator';
-type TransitionFn = (callback: () => void) => void;
-type EquationMenuScreen = 'home' | 'polynomialMenu' | 'simultaneousMenu';
-type CommitEquationOutcome = (
-  outcome: DisplayOutcome,
-  inputLatex: string,
-  mode: ModeId,
-  context?: Partial<Pick<
-    HistoryEntry,
-    | 'equationSolveTarget'
-    | 'equationAnswerMode'
-    | 'equationDomainIntent'
-    | 'complexExactForm'
-    | 'numericInterval'
-    | 'variableSubstitutions'
-  >> & {
-    historyTicketId?: string | null;
-    historyLaunchOrder?: number;
-    suppressDisplayCommit?: boolean;
-  },
-) => void;
-type UseEquationRuntimeOptions = {
-  activeFieldRef: MutableRefObject<MathfieldElement | null>;
-  ansLatex: string;
-  commitOutcome: CommitEquationOutcome;
-  currentMode: ModeId;
-  currentModeRef: MutableRefObject<ModeId>;
-  discardHistoryTicket: (ticketId?: string | null) => void;
-  displayOutcome: DisplayOutcome | null;
-  editorAnalysisControl: EditorAnalysisControlState;
-  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
-  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
-  isLauncherOpen: boolean;
-  mainFieldRef: MutableRefObject<MathfieldElement | null>;
-  openGuideArticle: (articleId: string) => void;
-  openGuideMode: (modeId: 'equation') => void;
-  openLauncher: () => void;
-  patchSettings: (patch: SettingsPatch) => void;
-  replayVariableSubstitutions: ReplayVariableSubstitutions;
-  reserveHistoryTicket: (input: {
-    mode: ModeId;
-    inputLatex: string;
-    capabilityId?: string;
-    inputRevisionId?: string;
-    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
-  }) => PendingHistoryTicketReservation | null;
-  routeToModeDestination?: (mode: ModeId, applyDestination: () => void) => boolean;
-  settings: Pick<
-    Settings,
-    | 'angleUnit'
-    | 'outputStyle'
-    | 'equationAnswerMode'
-    | 'equationDomainIntent'
-    | 'complexExactForm'
-  >;
-  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
-  setMode: (mode: ModeId) => void;
-  setRuntimeStatusOverride: (status: string | null) => void;
-  startTransition: TransitionFn;
-  storedVariables: StoredVariableValue[];
-  clearReplayVariableSubstitutions: () => void;
-};
 function copySystem(system: number[][]) {
   return system.map((row) => [...row]);
 }
@@ -241,7 +173,10 @@ export function useEquationRuntime({
     !isLauncherOpen && currentMode === 'equation' && currentEquationMenuScreen !== null;
   const isEquationWorkScreen =
     !isLauncherOpen && currentMode === 'equation' && currentEquationMenuScreen === null;
-  const equationRouteMeta = currentMode === 'equation' ? getEquationRouteMeta(equationScreen) : null;
+  const equationRouteMeta = useMemo(
+    () => (currentMode === 'equation' ? getEquationRouteMeta(equationScreen) : null),
+    [currentMode, equationScreen],
+  );
   const equationInputLatex = equationInputLatexForScreen(
     equationScreen,
     equationLatex,
@@ -600,12 +535,29 @@ export function useEquationRuntime({
     setEquationLatex(replayTarget.equationLatex);
     setEquationSolveTarget(replayTarget.screen === 'symbolic' ? replayTarget.equationSolveTarget ?? null : null);
     openEquationScreen(replayTarget.screen);
-    if (entry.numericInterval && replayTarget.screen === 'symbolic') {
+    const numericInterval = replayTarget.screen === 'symbolic'
+      ? replayTarget.numericInterval ?? entry.numericInterval
+      : undefined;
+    if (numericInterval) {
       setEquationNumericSolvePanel({
         enabled: true,
-        start: entry.numericInterval.start,
-        end: entry.numericInterval.end,
-        subdivisions: entry.numericInterval.subdivisions,
+        start: numericInterval.start,
+        end: numericInterval.end,
+        subdivisions: numericInterval.subdivisions,
+      });
+    }
+    const complexRegion = replayTarget.screen === 'symbolic'
+      ? replayTarget.complexRegion
+      : undefined;
+    if (complexRegion) {
+      setEquationComplexRegionPanel({
+        ...defaultEquationComplexRegionPanelState(),
+        enabled: true,
+        reMin: complexRegion.reMin,
+        reMax: complexRegion.reMax,
+        imMin: complexRegion.imMin,
+        imMax: complexRegion.imMax,
+        gridSize: complexRegion.gridSize ?? defaultEquationComplexRegionPanelState().gridSize,
       });
     }
 
@@ -621,6 +573,12 @@ export function useEquationRuntime({
       } else {
         setQuarticCoefficients([...replayTarget.coefficients]);
       }
+    } else if (replayTarget.screen === 'linear2' && replayTarget.system) {
+      setSystem2(copySystem(replayTarget.system));
+    } else if (replayTarget.screen === 'linear3' && replayTarget.system) {
+      setSystem3(copySystem(replayTarget.system));
+    } else if (replayTarget.screen === 'polynomialSystem2') {
+      setPolynomialSystem2Latex([...replayTarget.polynomialSystem2Latex] as [string, string]);
     }
   }
 
@@ -796,6 +754,7 @@ export function useEquationRuntime({
     polynomialSystem2Latex,
     onSetPolynomialSystemEquation: setPolynomialSystemEquation,
     onFocusPolynomialSystemField: (field: MathfieldElement) => {
+      systemInputRefs.current.polynomialSystem2 = field;
       activeFieldRef.current = field;
     },
     activePolynomialView,

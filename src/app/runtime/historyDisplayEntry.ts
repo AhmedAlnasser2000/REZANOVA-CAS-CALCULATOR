@@ -24,6 +24,8 @@ export type CommitHistoryDisplayContext = Partial<Pick<
   | 'statisticsSeed'
   | 'matrixSeed'
   | 'vectorSeed'
+  | 'equationScreen'
+  | 'equationSeed'
   | 'equationSolveTarget'
   | 'equationAnswerMode'
   | 'equationDomainIntent'
@@ -77,6 +79,9 @@ export function buildHistoryDisplayEntry({
     ...(outcome.detailSections && outcome.detailSections.length > 0
       ? { detailSections: outcome.detailSections }
       : {}),
+    ...(outcome.systemReadback
+      ? { systemReadback: outcome.systemReadback }
+      : {}),
     ...(mode === 'calculate'
       ? { ...currentCalculateHistoryContext(), ...context }
       : {}),
@@ -106,6 +111,12 @@ export function buildHistoryDisplayEntry({
       : {}),
     ...(mode === 'vector' && context.vectorSeed
       ? { vectorSeed: context.vectorSeed }
+      : {}),
+    ...(mode === 'equation' && (context.equationScreen ?? context.equationSeed?.screen)
+      ? { equationScreen: context.equationScreen ?? context.equationSeed?.screen }
+      : {}),
+    ...(mode === 'equation' && context.equationSeed
+      ? { equationSeed: context.equationSeed }
       : {}),
     ...(mode === 'equation' && context.equationSolveTarget
       ? { equationSolveTarget: context.equationSolveTarget }

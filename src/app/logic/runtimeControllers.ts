@@ -46,6 +46,7 @@ import {
   runEquationNumericIntervalRuntimeAction,
   type EquationNumericSolvePanelState,
 } from './equationNumericIntervalRuntime';
+import { equationReplaySeedFromRequest } from './equationHistorySeed';
 
 type TransitionFn = (callback: () => void) => void;
 
@@ -235,6 +236,8 @@ function shouldSuppressEquationVisibleCommit(
 function buildEquationHistoryContext(
   deps: EquationRuntimeDeps,
   input: {
+    request: RunEquationModeRequest;
+    committedInput: string;
     historyTicket: PendingHistoryTicketReservation | null;
     suppressDisplayCommit: boolean;
     equationAnswerMode: EquationAnswerMode;
@@ -242,7 +245,11 @@ function buildEquationHistoryContext(
     numericInterval?: NumericSolveInterval;
   },
 ) {
+  const equationSeed = equationReplaySeedFromRequest(input.request, input.committedInput);
   return {
+    ...(equationSeed
+      ? { equationScreen: equationSeed.screen, equationSeed }
+      : { equationScreen: deps.equationScreen }),
     equationAnswerMode: input.equationAnswerMode,
     equationDomainIntent: input.equationDomainIntent,
     complexExactForm: deps.settings.complexExactForm ?? 'rectangular',
@@ -647,6 +654,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
               committedInput,
               'equation',
               buildEquationHistoryContext(deps, {
+                request,
+                committedInput,
                 historyTicket,
                 suppressDisplayCommit,
                 equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
@@ -683,6 +692,8 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             committedInput,
             'equation',
             buildEquationHistoryContext(deps, {
+              request,
+              committedInput,
               historyTicket,
               suppressDisplayCommit,
               equationAnswerMode: deps.settings.equationAnswerMode ?? 'exact',
