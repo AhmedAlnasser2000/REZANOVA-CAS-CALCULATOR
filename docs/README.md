@@ -26,6 +26,7 @@ This folder holds verified app-state summaries, milestone guides, validation not
 - `docs/architecture/equation/`: Equation root, guarded, inequality, complex, numeric, polynomial, and worker notes
 - `docs/architecture/modes/`: Modes root, Calculate foundation, Equation mode, and worker-client notes
 - `docs/architecture/ooe/`: Order of Execution root, pilots, job launch, runtime-control, diagnostics, and bridge-schema notes
+- `docs/architecture/surface-protocol/`: hostless Surface Protocol contract, boundary audit, and deferred mounting notes
 - `docs/architecture/supercarrier/`: Supercarrier compartment contract specs and future validator boundaries
 - `docs/architecture/symbolic-engine/`: Symbolic Engine root and district notes
 

@@ -5,7 +5,7 @@
 - `Calculate` is the general expression surface. It simplifies and evaluates expressions but does not own equation-solving workflows.
 - `Equation` owns solve workflows and equation-specific editing.
 - English is the safe default/fallback for any future Language compartment. Language should own prose and labels; Display/notation should own math rendering. RTL UI metadata must not automatically change math semantics.
-- Current Guide is a persistent top-panel utility and global help surface, not a launcher app. Future Guide notebook/platform work must remain a full-surface authoring/import-export lane, not a universal generated step-by-step engine.
+- Current Guide is a singleton app-level page surface and global help surface, not a calculator-shell panel. Future Guide notebook/platform work must remain a full-surface authoring/import-export lane, not a universal generated step-by-step engine.
 - Launcher navigation is category-based and digit-driven.
 - Geometry, Trigonometry, and Statistics follow the shared core-mode contract:
   - one top executable draft/editor

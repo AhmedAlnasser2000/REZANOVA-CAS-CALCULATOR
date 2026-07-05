@@ -43,9 +43,11 @@ Highlights in the current repo:
 
 - guarded symbolic equation solving with explicit numeric fallback
 - live Order of Execution runtime traffic control and Workspace Tabs
-- Formula Viewer support for very large structured formula output
+- Formula Viewer support for dense current-result formula output
+- full Settings and History app pages, plus the singleton Guide page
 - guided geometry, trigonometry, and statistics workflows
 - Calculus workbench with derivatives, integrals, bounded Risch-Norman progress, bounded Rothstein-Lazard-Rioboo-Trager rational integration, and the first non-elementary certificate family
+- hostless Surface Protocol infrastructure for future integrations, with mounting and adapters still deferred
 - exact + approximate result handling with warnings and condition lines
 - browser-first automation, UI tests, and repo-level validation gates
 

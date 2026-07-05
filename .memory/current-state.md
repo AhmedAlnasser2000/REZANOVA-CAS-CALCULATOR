@@ -95,7 +95,7 @@ Standing model:
 - OOE Event Outbox reports OOE lifecycle facts.
 - Supercarrier compartments define ownership, import boundaries, damage containment, diagnostics labels, and extension discipline.
 - Diagnostics and compartment projections observe existing facts; they do not decide, route, cancel, retry, or commit.
-- Surface Protocol remains a future external integration contract, not a current implementation.
+- Surface Protocol now has a hostless internal spine for future external integration contracts, while host mounting, adapters, commands, plugins, and external software development kit work remain future.
 
 Current foundation state:
 

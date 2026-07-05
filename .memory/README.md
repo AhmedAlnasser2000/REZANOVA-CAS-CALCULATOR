@@ -1,6 +1,6 @@
 # Memory
 
-`\.memory/` is the durable recall bundle for Calcwiz Desktop.
+`\.memory/` is the durable recall bundle for REZANOVA CLASSWIZ CALCULATOR.
 
 Purpose:
 - preserve product and engineering context across sessions

@@ -13,11 +13,13 @@ Version 1 is now Linux-first for development and release sequencing. The project
 - Desktop-first workflow with dedicated math workspaces instead of one overloaded input box
 - Session-scoped Workspace Tabs for keeping multiple workspaces open without turning the app into a document system
 - Live Order of Execution runtime traffic control for launches, cancellation, stale-result gates, diagnostics, and history tickets
-- Formula Viewer support for very large structured formula output
+- Formula Viewer support for dense current-result formula output that is too large for ordinary cards
+- Singleton app-level Guide, Settings, and History page surfaces, with quick inspectors preserved for fast calculator-side access
 - Textbook-style math entry and rendering via MathLive
 - Exact-first result handling, with clear approximate output, warnings, and condition/exclusion lines when needed
 - Direct entry and guided builders living side by side
 - Stored numeric variables with visible substitution policy and reproducible history snapshots
+- Hostless Surface Protocol spine for future integration contracts, with mounting/adapters still deferred
 - A responsive editor analysis boundary with Run, Stop, and Restart Editor controls for heavy drafts
 - Active, repo-owned validation with unit, UI, browser-smoke, lint, and Rust checks
 
@@ -49,7 +51,7 @@ These are grounded in the repository today.
   - Editable derivative operator rail for written/applied readback, preview, copy, and replay
   - Bounded app-owned integration progress through direct/rule-based routes, Risch-Norman, Rothstein-Lazard-Rioboo-Trager rational integration, and first non-elementary certificates
   - First proof-backed non-elementary certificate family for pure `e^(quadratic)` indefinite integrals after existing antiderivative routes miss
-  - Higher-order derivative evaluation, mixed partial derivative evaluation, broad Risch certificates, and named special-function readback remain future work
+  - Broad vector calculus, Jacobian/Hessian workflows, full Risch certificates, and broad named special-function readback remain future work
 - **Trigonometry**
   - Trig function evaluation
   - Bounded identity simplify/convert tools
@@ -75,7 +77,12 @@ These are grounded in the repository today.
   - Finite real stored numeric values only
   - Insert, edit, clear, and clear-all controls
 - **Guide**
-  - In-app help, examples, and mode-specific guidance
+  - Singleton app-level page with in-app help, examples, symbol lookup, and mode-specific guidance
+  - Statistics is intentionally Guide-visible alongside Calculate, Equation, Calculus, Trigonometry, Geometry, Matrix, and Vector examples
+- **Settings / History**
+  - Singleton app-level Settings and History pages outside the calculator shell
+  - Existing quick Settings and History inspectors remain available from calculator workspaces
+  - History uses a virtualized ledger, timeline groups, filters, selected-result details, and bounded row rendering
 
 ## What already feels strong
 
@@ -135,6 +142,7 @@ Architecture at a glance:
 - `src/lib/kernel/*` -> capability, runtime-host, profile, policy, and envelope metadata
 - `src/lib/symbolic-engine/*` -> app-owned symbolic normalization and rule layers
 - `src/lib/{trigonometry,geometry,statistics,calculus}/*` -> domain cores
+- `src/lib/surface-protocol/*` -> hostless DTO/query/event contract spine for future hosts and adapters
 - `src-tauri/*` -> desktop shell and Rust-side integration
 - `e2e/*` -> browser smoke coverage
 - `docs/*` -> milestone guides, validation notes, and project summaries
@@ -257,7 +265,7 @@ Current boundaries worth stating clearly:
 - Raw multi-letter input is interpreted as adjacent-letter multiplication where parseable; one named variable requires explicit `@name` or `var(name)`.
 - Matrix and Vector modes are numeric workspaces with notation pads, not full free-form symbolic matrix CAS.
 - Browser-first automation is in place; desktop-shell-specific automation is still lighter than browser coverage.
-- Some advanced algebra substrates are present internally, but product-facing polynomial systems, Grobner bases, broad inequality solving, Complex numeric roots, Complex absolute-value locus/set output, graphing, spreadsheet work, named special-function readback, broad Risch certificates, and full computer algebra system behavior are still future work.
+- Some advanced algebra substrates are present internally, but product-facing polynomial systems, Grobner bases, broad inequality solving, Complex numeric roots, Complex absolute-value locus/set output, Graphing, Spreadsheet, Notebook, import/export packages, website mounting, plugins, external software development kit work, Surface Protocol mounting/adapters, full Variables page work, broad named special-function readback, broad Risch certificates, and full computer algebra system behavior are still future work.
 
 ## Contributing
 
