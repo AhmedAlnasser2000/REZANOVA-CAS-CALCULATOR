@@ -1,10 +1,16 @@
 import type { AngleUnit, ComplexExactForm, DisplayDetailSection, OutputStyle } from '../../../types/calculator';
+import {
+  exactScalarToNumber,
+  normalizeExactScalar,
+  readExactScalarNode,
+} from '../../algebra/polynomial-core';
 import { mathDetailSection } from '../../display/result-detail-lines';
 import type { EquationAlgebraicIsolationSuccess } from '../equation-algebraic-isolation';
 import { branchFromLatex, branchLatexForNode } from './branches';
 import {
   exactComplexToFormLatex,
   exactComplexToLatex,
+  exactScalarToLatex,
   exactScalarIsNegativeOne,
   exactScalarIsOne,
   exactScalarIsZero,
@@ -88,6 +94,88 @@ export function expEquationBranch(rhs: unknown, complexExactForm: ComplexExactFo
   return branchFromLatex(`\\operatorname{Log}\\left(${rhsLatex}\\right)+2\\pi i k`, {
     parameterLatex: 'k\\in\\mathbb{Z}',
   });
+}
+
+function positiveNumericBaseProfile(node: unknown) {
+  const scalar = readExactScalarNode(node);
+  if (!scalar) {
+    return null;
+  }
+  const normalized = normalizeExactScalar(scalar);
+  const value = exactScalarToNumber(normalized);
+  return Number.isFinite(value) && value > 0 && Math.abs(value - 1) > 1e-12
+    ? {
+      value,
+      latex: exactScalarToLatex(normalized),
+    }
+    : null;
+}
+
+function rationalLogLatexForNumericBase(baseValue: number, rhsValue: number) {
+  if (!Number.isFinite(baseValue) || !Number.isFinite(rhsValue) || rhsValue <= 0) {
+    return null;
+  }
+
+  for (let denominator = 1; denominator <= 12; denominator += 1) {
+    for (let numerator = -48; numerator <= 48; numerator += 1) {
+      const candidate = Math.pow(baseValue, numerator / denominator);
+      const tolerance = 1e-10 * Math.max(1, Math.abs(rhsValue));
+      if (Math.abs(candidate - rhsValue) <= tolerance) {
+        return exactScalarToLatex(normalizeExactScalar({ numerator, denominator }));
+      }
+    }
+  }
+
+  return null;
+}
+
+function numericBaseExpEquationBranch(
+  baseNode: unknown,
+  rhs: unknown,
+  complexExactForm: ComplexExactForm,
+): ComplexPreimageBranch | null {
+  const base = positiveNumericBaseProfile(baseNode);
+  if (!base) {
+    return null;
+  }
+
+  const rhsExact = parseExactComplexConstantNode(rhs);
+  const baseLogLatex = `\\ln(${base.latex})`;
+  const parameterLatex = integerParameterLatex('k');
+  if (rhsExact) {
+    const normalized = normalizeExactComplexScalar(rhsExact);
+    if (isExactComplexZero(normalized)) {
+      return null;
+    }
+
+    if (exactScalarIsZero(normalized.im)) {
+      const rhsValue = exactScalarToNumber(normalized.re);
+      if (rhsValue > 0) {
+        const rational = rationalLogLatexForNumericBase(base.value, rhsValue);
+        const periodLatex = `\\frac{2\\pi i k}{${baseLogLatex}}`;
+        if (rational) {
+          return branchFromLatex(rational === '0' ? periodLatex : addLatex(rational, periodLatex), {
+            parameterLatex,
+          });
+        }
+        return branchFromLatex(
+          `\\frac{\\ln(${exactScalarToLatex(normalized.re)})+2\\pi i k}{${baseLogLatex}}`,
+          { parameterLatex },
+        );
+      }
+    }
+
+    const rhsLatex = exactComplexToFormLatex(normalized, complexExactForm) ?? exactComplexToLatex(normalized);
+    return branchFromLatex(
+      `\\frac{\\operatorname{Log}\\left(${rhsLatex}\\right)+2\\pi i k}{${baseLogLatex}}`,
+      { parameterLatex },
+    );
+  }
+
+  return branchFromLatex(
+    `\\frac{\\operatorname{Log}\\left(${latexForNode(rhs)}\\right)+2\\pi i k}{${baseLogLatex}}`,
+    { parameterLatex },
+  );
 }
 
 export function rootFamilyLatex(target: string, degree: number, branch: ComplexPreimageBranch) {
@@ -640,6 +728,15 @@ export function solveComplexPreimageEquation(
       solved = {
         ...solved,
         proofLines: ['Inverted a complex exponential equation and kept the integer branch family explicit.', ...solved.proofLines],
+      };
+    }
+  } else if (head === 'Power' && sides.expression.length === 3) {
+    const branch = numericBaseExpEquationBranch(sides.expression[1], sides.otherSide, complexExactForm);
+    solved = branch ? solveInnerAgainstBranch(sides.expression[2], target, branch, options, 1) : null;
+    if (solved) {
+      solved = {
+        ...solved,
+        proofLines: ['Inverted a positive numeric-base complex exponential equation and kept the integer branch family explicit.', ...solved.proofLines],
       };
     }
   } else if ((head === 'Sin' || head === 'Cos' || head === 'Tan') && sides.expression.length === 2) {

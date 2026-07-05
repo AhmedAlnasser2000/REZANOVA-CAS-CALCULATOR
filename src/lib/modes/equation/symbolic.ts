@@ -32,6 +32,8 @@ import {
   isDeferredComplexWrapperBoundary,
   withDeferredComplexWrapperBoundary,
 } from './complex-wrapper-fallback';
+import { tryComplexAbsBoundaryNoSolution } from './complex-abs-boundary';
+import { tryDeferredComplexPeriodicFallback } from './complex-periodic-fallback';
 import { tryRealNumericFallbackOutcome } from './real-numeric-fallbacks';
 import { trySelectedTargetParameterizedExactSolve } from './symbolic-parameterized-exact';
 import {
@@ -536,6 +538,18 @@ export function solveSymbolicEquation(
       }
     }
 
+    const deferredPeriodicFallback = tryDeferredComplexPeriodicFallback({
+      deferredComplexWrapperOutcome,
+      equationLatex,
+      angleUnit,
+      plannerResolvedLatex: planner.resolvedLatex,
+      plannerBadges: planner.badges,
+      targetResolution,
+    });
+    if (deferredPeriodicFallback) {
+      return deferredPeriodicFallback;
+    }
+
     if (solveTarget === 'x') {
       try {
         const complexCarrier = solveBoundedComplexPolynomialCarrierEquationAst(ce.parse(planner.resolvedLatex).json);
@@ -578,6 +592,20 @@ export function solveSymbolicEquation(
       } catch {
         // Keep the generic complex fallback when the bounded carrier bridge cannot parse.
       }
+    }
+
+    const complexAbsBoundary = tryComplexAbsBoundaryNoSolution({
+      equationLatex: parameterizedEquationLatex,
+      target: solveTarget,
+    });
+    if (complexAbsBoundary) {
+      return attachEquationRuntimeEnvelope(
+        complexAbsBoundary,
+        equationLatex,
+        planner.resolvedLatex,
+        planner.badges,
+        classifyEquationRuntimeAdvisories({ outcome: complexAbsBoundary }),
+      );
     }
 
     if (

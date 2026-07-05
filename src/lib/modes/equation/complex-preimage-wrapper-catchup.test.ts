@@ -68,9 +68,13 @@ describe('Equation Complex preimage wrapper catchup', () => {
     const baseTwo = expectComplexSuccess(String.raw`2\log_{2}\left(z-1\right)+1=5`);
 
     expect(affine.exactLatex).toContain(String.raw`e^{2}+1`);
-    expect(affine.exactSupplementLatex).toContain(String.raw`z-1\ne0`);
+    expect(affine.exactSupplementLatex).toEqual(expect.arrayContaining([
+      expect.stringMatching(/z-1\\ne0|z\\ne1/u),
+    ]));
     expect(rational.exactLatex).toContain(String.raw`e^{4}`);
-    expect(rational.exactSupplementLatex).toContain(String.raw`z+2\ne0`);
+    expect(rational.exactSupplementLatex).toEqual(expect.arrayContaining([
+      expect.stringMatching(/z\+2\\ne0|z\\ne-2/u),
+    ]));
     expect(rational.exactSupplementLatex).toContain(String.raw`\frac{z-1}{z+2}\ne0`);
     expect(baseTwo.exactLatex).toContain(String.raw`2^{2}+1`);
 

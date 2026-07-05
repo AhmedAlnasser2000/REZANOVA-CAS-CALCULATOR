@@ -24,7 +24,7 @@ describe('equation corpus ledger validation', () => {
       sourceCount: 10,
       uniqueCaseCount: 450,
       duplicateCaseCount: 100,
-      runResultCount: 1175,
+      runResultCount: 1609,
       scanFindingCount: 102,
     });
   });

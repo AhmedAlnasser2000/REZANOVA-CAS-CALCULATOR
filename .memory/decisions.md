@@ -1891,3 +1891,9 @@
 ## 2026-07-04 - CALCULUS-INTEGRATION-NEXT350-STUDY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus integration benchmark sweeps for app-visible output use the Calculus workspace evaluator as the backend source of truth, not only the lower-level symbolic dispatcher. The dispatcher-only result can be stricter than the app because the workspace evaluator includes guarded Compute Engine fallback plus backcheck; run ledgers should reflect the app path when paired with Playwright visual evidence.
+
+## 2026-07-05 - EQUATION-COMPLEX-COMPANION-FIX1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation Complex-On may preserve validated Real periodic trig families only when integer-parameter evidence is present; broad non-periodic real fallback must remain a controlled Complex boundary instead of hiding missing Complex support.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Positive numeric-base complex exponential equations use the existing log/exp family surface: `a^u=b` with positive numeric `a != 1` and affine `u` renders the structural branch `u=(Log(b)+2πik)/ln(a)`, while Real mode keeps its prior exact behavior.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The scoped benchmark case `abs(2x+1)=x-5` is a Complex magnitude boundary with controlled empty-set evidence, not a general locus/set-valued Complex solver. General locus output remains deferred.

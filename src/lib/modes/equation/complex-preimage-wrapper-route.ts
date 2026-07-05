@@ -105,6 +105,13 @@ function attachBoundary(input: ComplexPreimageWrapperRouteInput) {
   );
 }
 
+function hasIntegerPeriodicEvidence(result: { exactLatex: string; exactSupplementLatex?: string[] }) {
+  return /\\mathbb\{Z\}|\\pi\s*n|\\pi n|\\frac\{\\pi n\}/u.test([
+    result.exactLatex,
+    ...(result.exactSupplementLatex ?? []),
+  ].join(' '));
+}
+
 export function tryComplexPreimageWrapperRoute(
   input: ComplexPreimageWrapperRouteInput,
 ): DisplayOutcome | undefined {
@@ -151,8 +158,14 @@ export function tryComplexPreimageWrapperRoute(
           complexPreimageHandoff,
         },
       ));
-    if (trig.kind === 'success' && trig.answerDomain === 'complex') {
+    if (
+      trig.kind === 'success'
+      && trig.answerDomain === 'complex'
+    ) {
       return attachSuccess(input, 'trig', trig);
+    }
+    if (trig.kind === 'success' && trig.parameterNames.length === 0 && hasIntegerPeriodicEvidence(trig)) {
+      return attachBoundary(input);
     }
     if (
       input.stopOnRecognizedUnsupported

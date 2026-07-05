@@ -636,7 +636,10 @@ export function tryComplexPowerWrapperRoute(
     }
     const collected = collectPowerAffine(candidate.carrierSide, input.selectedTarget);
     if (collected.kind === 'blocked') {
-      return attachBoundary(input, [collected.message]);
+      if (hasDeferredOuterPowerWrapper(candidate.carrierSide, input.selectedTarget)) {
+        return attachBoundary(input, [collected.message]);
+      }
+      continue;
     }
     if (collected.kind !== 'ok' || !collected.affine.carrier) {
       continue;

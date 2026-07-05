@@ -84,13 +84,14 @@ export function solveParameterizedTrigEquation(
   if (direct.kind === 'success') {
     return direct;
   }
-  if (options.complexPreimageHandoff?.domain === 'complex') {
-    return direct;
-  }
 
   const mixed = solveMixedParameterizedTrigFromJson(equationJson, target, angleUnit, parameterNames, options);
   if (mixed.kind === 'success') {
     return mixed;
+  }
+
+  if (options.complexPreimageHandoff?.domain === 'complex') {
+    return direct;
   }
 
   return mixed.reason !== 'no-trig' ? mixed : direct;

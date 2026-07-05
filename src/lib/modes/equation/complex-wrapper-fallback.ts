@@ -24,6 +24,17 @@ function complexWrapperFallbackSections(
   ];
 }
 
+function hasIntegerPeriodicEvidence(outcome: DisplayOutcome) {
+  if (outcome.kind !== 'success') {
+    return false;
+  }
+  return /\\mathbb\{Z\}|\\pi\s*n|\\pi n|\\frac\{\\pi n\}/u.test([
+    outcome.exactLatex,
+    ...(outcome.exactSupplementLatex ?? []),
+    ...(outcome.branchReadback?.branchesLatex ?? []),
+  ].filter(Boolean).join(' '));
+}
+
 export function withDeferredComplexWrapperBoundary(
   outcome: DisplayOutcome,
   deferredOutcome: DisplayOutcome | undefined,
@@ -31,6 +42,9 @@ export function withDeferredComplexWrapperBoundary(
   const fallbackSections = complexWrapperFallbackSections(deferredOutcome);
   if (outcome.kind !== 'success' || fallbackSections.length === 0) {
     return outcome;
+  }
+  if (!hasIntegerPeriodicEvidence(outcome)) {
+    return deferredOutcome ?? outcome;
   }
 
   return {
