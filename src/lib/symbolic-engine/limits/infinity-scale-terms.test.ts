@@ -57,4 +57,53 @@ describe('infinity scale terms', () => {
     expect(result?.kind).toBe('success');
     expect(result?.exactLatex).toBe('0');
   });
+
+  it('extracts coefficients from logarithms of power and root scales', () => {
+    const squaredLog = resolveInfiniteScaleLimit(
+      parse(String.raw`\log(x^2)/\log(x)`),
+      'posInfinity',
+      'x',
+    );
+    const rootLog = resolveInfiniteScaleLimit(
+      parse(String.raw`\log(\sqrt{x})/\log(x)`),
+      'posInfinity',
+      'x',
+    );
+    const scaledLog = resolveInfiniteScaleLimit(
+      parse(String.raw`\log(2x)/\log(x)`),
+      'posInfinity',
+      'x',
+    );
+
+    expect(squaredLog?.exactLatex).toBe('2');
+    expect(rootLog?.exactLatex).toBe('\\frac{1}{2}');
+    expect(scaledLog?.exactLatex).toBe('1');
+  });
+
+  it('compares logarithms of exponential scales against powers', () => {
+    const result = resolveInfiniteScaleLimit(
+      parse(String.raw`\log(e^x)/x`),
+      'posInfinity',
+      'x',
+    );
+
+    expect(result?.kind).toBe('success');
+    expect(result?.exactLatex).toBe('1');
+  });
+
+  it('handles real square-root scales at negative infinity when the radicand is eventually positive', () => {
+    const ratio = resolveInfiniteScaleLimit(
+      parse(String.raw`\sqrt{x^2+x}/x`),
+      'negInfinity',
+      'x',
+    );
+    const evenPower = resolveInfiniteScaleLimit(
+      parse(String.raw`\sqrt{x^4+x^2}/x^2`),
+      'negInfinity',
+      'x',
+    );
+
+    expect(ratio?.exactLatex).toBe('-1');
+    expect(evenPower?.exactLatex).toBe('1');
+  });
 });

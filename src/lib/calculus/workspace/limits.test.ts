@@ -590,6 +590,18 @@ describe('calculus limits', () => {
     const iteratedLog = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity log(log(x))/log(x)',
     });
+    const scaledLog = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity log(2x)/log(x)',
+    });
+    const rootLog = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity log(sqrt(x))/log(x)',
+    });
+    const logOfExponential = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity log(e^x)/x',
+    });
+    const negativeInfinityRoot = evaluateCalculusLimit({
+      requestLatex: 'lim x -> -infinity sqrt(x^2+x)/x',
+    });
     const sublinearExponential = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity e^{sqrt(x)}/x^5',
     });
@@ -611,6 +623,14 @@ describe('calculus limits', () => {
     expect(expRatio.exactLatex).toBe('1');
     expect(iteratedLog.error).toBeUndefined();
     expect(iteratedLog.exactLatex).toBe('0');
+    expect(scaledLog.error).toBeUndefined();
+    expect(scaledLog.exactLatex).toBe('1');
+    expect(rootLog.error).toBeUndefined();
+    expect(rootLog.exactLatex).toBe('\\frac{1}{2}');
+    expect(logOfExponential.error).toBeUndefined();
+    expect(logOfExponential.exactLatex).toBe('1');
+    expect(negativeInfinityRoot.error).toBeUndefined();
+    expect(negativeInfinityRoot.exactLatex).toBe('-1');
     expect(sublinearExponential.error).toBeUndefined();
     expect(sublinearExponential.exactLatex).toBe('\\infty');
     expect(sublinearExponential.detailSections?.[0]?.lines.join(' ')).toContain('MRV-lite');

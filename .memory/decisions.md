@@ -1929,3 +1929,8 @@
 ## 2026-07-05 - CALCULUS-LIMITS-RECURSIVE-LEADING-TERMS2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Finite symbolic cancellation limits use a Limits-owned capped local-series fallback through Taylor order 10 after existing recursive leading-term routes fail. This is not a broad Taylor/Gruntz solver; workspace real-domain guards still block symbolic-log forms when assumptions are insufficient.
+
+## 2026-07-05 - CALCULUS-LIMITS-ASYMPTOTIC-SCALE-ENGINE2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits infinity-scale comparison may derive logarithmic scales from eventually positive unbounded inner scales, including `log(x^p)`, `log(sqrt(x))`, `log(c*x)`, and `log(e^x)`, before L'Hospital or numeric fallback. This remains a scale route, not full Gruntz.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Real square-root infinity comparisons may proceed at negative infinity when the leading radicand scale is eventually positive; invalid real-domain radicals still stop through domain/proof routes.

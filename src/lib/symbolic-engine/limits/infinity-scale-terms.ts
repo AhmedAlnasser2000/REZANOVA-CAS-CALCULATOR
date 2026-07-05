@@ -199,6 +199,58 @@ function logDepth(node: unknown, variable: string): number | undefined {
   return inner + 1;
 }
 
+function firstNonZeroLogScale(scale: InfinityScale) {
+  for (let index = 0; index < LOG_DEPTH_CAP; index += 1) {
+    const power = scale.logs[index] ?? 0;
+    if (Math.abs(power) >= EPSILON) {
+      return { index, power };
+    }
+  }
+  return undefined;
+}
+
+function logScaleFromUnboundedInner(
+  inner: InfinityScaleTerm,
+): InfinityScaleTerm | undefined {
+  if (inner.coefficient <= 0) {
+    return undefined;
+  }
+
+  if (Math.abs(inner.scale.expRate) >= EPSILON) {
+    return {
+      coefficient: inner.scale.expRate,
+      scale: { ...zeroInfinityScale(), power: 1 },
+      reason: 'converted a logarithm of an exponential scale to its exponent scale',
+      notes: combineNotes(inner),
+    };
+  }
+
+  if (Math.abs(inner.scale.power) >= EPSILON) {
+    const scale = zeroInfinityScale();
+    scale.logs[0] = 1;
+    return {
+      coefficient: inner.scale.power,
+      scale,
+      reason: 'converted a logarithm of a power scale to a logarithmic scale',
+      notes: combineNotes(inner),
+    };
+  }
+
+  const logScale = firstNonZeroLogScale(inner.scale);
+  if (logScale && logScale.index + 1 < LOG_DEPTH_CAP) {
+    const scale = zeroInfinityScale();
+    scale.logs[logScale.index + 1] = 1;
+    return {
+      coefficient: logScale.power,
+      scale,
+      reason: 'converted a logarithm of an iterated-log scale to the next log scale',
+      notes: combineNotes(inner),
+    };
+  }
+
+  return undefined;
+}
+
 export function infinityScaleLabel(scale: InfinityScale) {
   const factors: string[] = [];
   if (Math.abs(scale.expRate) >= EPSILON) {
@@ -291,9 +343,6 @@ export function leadingInfinityScaleTerm(
   }
 
   if (node[0] === 'Sqrt' && node.length === 2) {
-    if (targetKind === 'negInfinity') {
-      return undefined;
-    }
     const child = leadingInfinityScaleTerm(node[1], variable, targetKind);
     if (!child || child.coefficient < 0) {
       return undefined;
@@ -318,6 +367,14 @@ export function leadingInfinityScaleTerm(
       scale,
       reason: depth === 0 ? 'recognized log(x) growth' : 'recognized iterated logarithm growth',
     };
+  }
+
+  if (isNodeArray(node) && node[0] === 'Log' && node.length === 2 && targetKind === 'posInfinity') {
+    const inner = leadingInfinityScaleTerm(node[1], variable, targetKind);
+    const logScale = inner ? logScaleFromUnboundedInner(inner) : undefined;
+    if (logScale) {
+      return logScale;
+    }
   }
 
   if (node[0] === 'Power' && node.length === 3) {
