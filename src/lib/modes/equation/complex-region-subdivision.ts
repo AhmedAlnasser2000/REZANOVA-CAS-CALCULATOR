@@ -35,6 +35,14 @@ export type ComplexRegionVerifiedSearchResult = {
   subdivision: ComplexRegionSubdivisionDiagnostics;
 };
 
+export type ComplexRegionCellPolicy = {
+  shouldStop: boolean;
+  reason: string;
+  knownPoleCount?: number;
+  branchDiagnosticCount?: number;
+  poleDiagnosticCount?: number;
+};
+
 type CellWork = {
   region: ComplexRectangularRegion;
   depth: number;
@@ -127,6 +135,14 @@ function contourBranchDiagnostics(contour: ComplexContourWindingResult) {
   return contour.branchDiagnosticCount;
 }
 
+function contourPoleDiagnostics(contour: ComplexContourWindingResult) {
+  return contour.poleDiagnosticCount;
+}
+
+function contourKnownPoles(contour: ComplexContourWindingResult) {
+  return contour.knownPoleCount;
+}
+
 function contourMinimumResidual(contour: ComplexContourWindingResult) {
   return contour.minimumBoundaryResidual;
 }
@@ -138,7 +154,23 @@ function runCell(input: {
   randomSeedCount: number;
   samplesPerEdge: number;
   residualTolerance: number;
+  cellPolicy?: ComplexRegionCellPolicy;
 }) {
+  if (input.cellPolicy?.shouldStop) {
+    return {
+      newton: emptyNewton(),
+      accepted: [],
+      contour: {
+        kind: 'unsafe' as const,
+        reason: input.cellPolicy.reason,
+        boundarySampleCount: 0,
+        minimumBoundaryResidual: null,
+        branchDiagnosticCount: input.cellPolicy.branchDiagnosticCount ?? 0,
+        poleDiagnosticCount: input.cellPolicy.poleDiagnosticCount ?? 0,
+        knownPoleCount: input.cellPolicy.knownPoleCount ?? 0,
+      },
+    };
+  }
   const newton = findComplexNewtonCandidates({
     evaluator: input.evaluator,
     region: input.region,
@@ -152,6 +184,8 @@ function runCell(input: {
     region: input.region,
     candidates: accepted,
     samplesPerEdge: input.samplesPerEdge,
+    knownPoleCount: input.cellPolicy?.knownPoleCount,
+    poleDiagnosticCount: input.cellPolicy?.poleDiagnosticCount,
   });
   return { newton, accepted, contour };
 }
@@ -165,6 +199,7 @@ export function searchComplexRegionWithSubdivision(input: {
   residualTolerance: number;
   subdivisionDepth: number;
   cellBudget: number;
+  cellPolicyForRegion?: (region: ComplexRectangularRegion) => ComplexRegionCellPolicy;
 }): ComplexRegionVerifiedSearchResult {
   const aggregateNewton = emptyNewton();
   const accepted: ComplexNewtonCandidate[] = [];
@@ -187,8 +222,11 @@ export function searchComplexRegionWithSubdivision(input: {
   };
   let verifiedRootCount = 0;
   let windingNumber = 0;
+  let zerosMinusPoles = 0;
+  let knownPoleCount = 0;
   let boundarySampleCount = 0;
   let branchDiagnosticCount = 0;
+  let poleDiagnosticCount = 0;
   let minimumBoundaryResidual = Number.POSITIVE_INFINITY;
   let terminalUnsafeReason: string | null = null;
   let terminalInconclusiveReason: string | null = null;
@@ -205,10 +243,13 @@ export function searchComplexRegionWithSubdivision(input: {
       randomSeedCount: input.randomSeedCount,
       samplesPerEdge: input.samplesPerEdge,
       residualTolerance: input.residualTolerance,
+      cellPolicy: input.cellPolicyForRegion?.(cell.region),
     });
     mergeNewtonDiagnostics(aggregateNewton, result.newton);
     boundarySampleCount += contourBoundarySamples(result.contour);
     branchDiagnosticCount += contourBranchDiagnostics(result.contour);
+    poleDiagnosticCount += contourPoleDiagnostics(result.contour);
+    knownPoleCount += contourKnownPoles(result.contour);
     const cellMinimumResidual = contourMinimumResidual(result.contour);
     if (cellMinimumResidual !== null) {
       minimumBoundaryResidual = Math.min(minimumBoundaryResidual, cellMinimumResidual);
@@ -218,6 +259,7 @@ export function searchComplexRegionWithSubdivision(input: {
       subdivision.verifiedCellCount += 1;
       verifiedRootCount += result.contour.rootCount;
       windingNumber += result.contour.windingNumber;
+      zerosMinusPoles += result.contour.zerosMinusPoles;
       result.accepted.forEach((candidate) => addAcceptedRoot(accepted, candidate));
       continue;
     }
@@ -262,9 +304,12 @@ export function searchComplexRegionWithSubdivision(input: {
         rootCount: verifiedRootCount,
         candidateCount: accepted.length,
         windingNumber,
+        zerosMinusPoles,
+        knownPoleCount,
         boundarySampleCount,
         minimumBoundaryResidual: Number.isFinite(minimumBoundaryResidual) ? minimumBoundaryResidual : 0,
         branchDiagnosticCount,
+        poleDiagnosticCount,
       },
       subdivision,
     };
@@ -280,6 +325,8 @@ export function searchComplexRegionWithSubdivision(input: {
           boundarySampleCount,
           minimumBoundaryResidual: Number.isFinite(minimumBoundaryResidual) ? minimumBoundaryResidual : null,
           branchDiagnosticCount,
+          poleDiagnosticCount,
+          knownPoleCount,
         }
       : {
           kind: 'inconclusive',
@@ -287,9 +334,12 @@ export function searchComplexRegionWithSubdivision(input: {
           rootCount: verifiedRootCount,
           candidateCount: accepted.length,
           windingNumber,
+          zerosMinusPoles,
+          knownPoleCount,
           boundarySampleCount,
           minimumBoundaryResidual: Number.isFinite(minimumBoundaryResidual) ? minimumBoundaryResidual : null,
           branchDiagnosticCount,
+          poleDiagnosticCount,
         },
     subdivision,
   };

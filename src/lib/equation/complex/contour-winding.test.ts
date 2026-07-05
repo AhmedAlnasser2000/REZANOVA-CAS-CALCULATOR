@@ -85,4 +85,48 @@ describe('Complex contour winding verification', () => {
     expect(result.reason).toContain('principal branch');
     expect(result.branchDiagnosticCount).toBeGreaterThan(0);
   });
+
+  it('verifies meromorphic contours using known pole counts', () => {
+    const region = { reMin: -0.5, reMax: 1.5, imMin: -0.5, imMax: 0.5 };
+    const { evaluator, candidates } = candidatesFor('(z-1)/z=0', region);
+
+    const result = verifyComplexContourWinding({
+      evaluator,
+      region,
+      candidates,
+      knownPoleCount: 1,
+      poleDiagnosticCount: 1,
+    });
+
+    expect(result.kind).toBe('verified');
+    if (result.kind !== 'verified') {
+      throw new Error('Expected pole-aware contour verification');
+    }
+    expect(result.zerosMinusPoles).toBe(0);
+    expect(result.knownPoleCount).toBe(1);
+    expect(result.rootCount).toBe(1);
+    expect(result.candidateCount).toBe(1);
+    expect(result.poleDiagnosticCount).toBe(1);
+  });
+
+  it('can verify a bounded no-root meromorphic region when only poles are inside', () => {
+    const region = { reMin: -1, reMax: 1, imMin: -1, imMax: 1 };
+    const evaluator = createComplexNumericEvaluator({ expressionLatex: '1/z=0', target: 'z' });
+
+    const result = verifyComplexContourWinding({
+      evaluator,
+      region,
+      candidates: [],
+      knownPoleCount: 1,
+      poleDiagnosticCount: 1,
+    });
+
+    expect(result.kind).toBe('verified');
+    if (result.kind !== 'verified') {
+      throw new Error('Expected pole-aware zero-root verification');
+    }
+    expect(result.rootCount).toBe(0);
+    expect(result.zerosMinusPoles).toBe(-1);
+    expect(result.knownPoleCount).toBe(1);
+  });
 });

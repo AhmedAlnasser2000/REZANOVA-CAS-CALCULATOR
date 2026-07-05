@@ -8,9 +8,12 @@ export type ComplexContourWindingResult =
       rootCount: number;
       candidateCount: number;
       windingNumber: number;
+      zerosMinusPoles: number;
+      knownPoleCount: number;
       boundarySampleCount: number;
       minimumBoundaryResidual: number;
       branchDiagnosticCount: number;
+      poleDiagnosticCount: number;
     }
   | {
       kind: 'inconclusive';
@@ -18,9 +21,12 @@ export type ComplexContourWindingResult =
       rootCount: number | null;
       candidateCount: number;
       windingNumber: number | null;
+      zerosMinusPoles: number | null;
+      knownPoleCount: number;
       boundarySampleCount: number;
       minimumBoundaryResidual: number | null;
       branchDiagnosticCount: number;
+      poleDiagnosticCount: number;
     }
   | {
       kind: 'unsafe';
@@ -28,6 +34,8 @@ export type ComplexContourWindingResult =
       boundarySampleCount: number;
       minimumBoundaryResidual: number | null;
       branchDiagnosticCount: number;
+      poleDiagnosticCount: number;
+      knownPoleCount: number;
     };
 
 const DEFAULT_SAMPLES_PER_EDGE = 96;
@@ -95,7 +103,11 @@ export function verifyComplexContourWinding(input: {
   samplesPerEdge?: number;
   boundaryTolerance?: number;
   candidateTolerance?: number;
+  knownPoleCount?: number;
+  poleDiagnosticCount?: number;
 }): ComplexContourWindingResult {
+  const knownPoleCount = Math.max(0, Math.floor(input.knownPoleCount ?? 0));
+  const poleDiagnosticCount = Math.max(0, Math.floor(input.poleDiagnosticCount ?? 0));
   if (!isFiniteRegion(input.region)) {
     return {
       kind: 'unsafe',
@@ -103,6 +115,8 @@ export function verifyComplexContourWinding(input: {
       boundarySampleCount: 0,
       minimumBoundaryResidual: null,
       branchDiagnosticCount: 0,
+      poleDiagnosticCount,
+      knownPoleCount,
     };
   }
 
@@ -123,6 +137,8 @@ export function verifyComplexContourWinding(input: {
         boundarySampleCount: points.length,
         minimumBoundaryResidual: Number.isFinite(minimumBoundaryResidual) ? minimumBoundaryResidual : null,
         branchDiagnosticCount,
+        poleDiagnosticCount,
+        knownPoleCount,
       };
     }
     if (branchDiagnosticCount > 0) {
@@ -132,6 +148,8 @@ export function verifyComplexContourWinding(input: {
         boundarySampleCount: points.length,
         minimumBoundaryResidual: Number.isFinite(minimumBoundaryResidual) ? minimumBoundaryResidual : null,
         branchDiagnosticCount,
+        poleDiagnosticCount,
+        knownPoleCount,
       };
     }
     const residual = complexAbs(evaluated.value);
@@ -143,6 +161,8 @@ export function verifyComplexContourWinding(input: {
         boundarySampleCount: points.length,
         minimumBoundaryResidual,
         branchDiagnosticCount,
+        poleDiagnosticCount,
+        knownPoleCount,
       };
     }
     values.push(evaluated.value);
@@ -156,21 +176,40 @@ export function verifyComplexContourWinding(input: {
   }
 
   const windingNumber = Math.round(angleSum / (Math.PI * 2));
-  const rootCount = Math.abs(windingNumber);
+  const zerosMinusPoles = windingNumber;
+  const rootCount = zerosMinusPoles + knownPoleCount;
   const candidateCount = candidateCountInside(
     input.candidates,
     input.region,
     input.candidateTolerance ?? DEFAULT_CANDIDATE_TOLERANCE,
   );
+  if (rootCount < 0) {
+    return {
+      kind: 'inconclusive',
+      reason: 'Complex contour winding is negative after known-pole accounting.',
+      rootCount,
+      candidateCount,
+      windingNumber,
+      zerosMinusPoles,
+      knownPoleCount,
+      boundarySampleCount: points.length,
+      minimumBoundaryResidual,
+      branchDiagnosticCount,
+      poleDiagnosticCount,
+    };
+  }
   if (rootCount === candidateCount) {
     return {
       kind: 'verified',
       rootCount,
       candidateCount,
       windingNumber,
+      zerosMinusPoles,
+      knownPoleCount,
       boundarySampleCount: points.length,
       minimumBoundaryResidual,
       branchDiagnosticCount,
+      poleDiagnosticCount,
     };
   }
 
@@ -180,8 +219,11 @@ export function verifyComplexContourWinding(input: {
     rootCount,
     candidateCount,
     windingNumber,
+    zerosMinusPoles,
+    knownPoleCount,
     boundarySampleCount: points.length,
     minimumBoundaryResidual,
     branchDiagnosticCount,
+    poleDiagnosticCount,
   };
 }

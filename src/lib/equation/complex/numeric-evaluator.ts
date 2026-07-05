@@ -327,6 +327,7 @@ export function createComplexNumericEvaluator(input: {
       } else if (operator === 'Divide' && args.length === 2) {
         if (complexAbs(args[1]) < EPSILON) {
           diagnostics.push(diagnostic('error', 'complex-division-by-zero', 'Complex division by zero.'));
+          diagnostics.push(diagnostic('error', 'complex-pole', 'Complex evaluation reached a denominator pole.'));
         } else {
           result = complexDiv(args[0], args[1]);
         }
@@ -357,6 +358,9 @@ export function createComplexNumericEvaluator(input: {
         result = complexCos(args[0]);
       } else if (operator === 'Tan' && args.length === 1) {
         result = complexTan(args[0]);
+        if (!result) {
+          diagnostics.push(diagnostic('error', 'complex-pole', 'Principal tangent reached a pole.'));
+        }
       } else if ((operator === 'Arcsin' || operator === 'asin') && args.length === 1) {
         result = complexAsin(args[0], diagnostics);
       } else if ((operator === 'Arccos' || operator === 'acos') && args.length === 1) {
@@ -411,7 +415,12 @@ function evaluatePower(
 ) {
   const exponent = node[2];
   if (typeof exponent === 'number' && Number.isInteger(exponent)) {
-    return complexPowInteger(args[0], exponent);
+    try {
+      return complexPowInteger(args[0], exponent);
+    } catch {
+      diagnostics.push(diagnostic('error', 'complex-pole', 'Complex integer power reached a pole.'));
+      return null;
+    }
   }
   if (args[1].im !== 0) {
     diagnostics.push(diagnostic('warning', 'complex-principal-power', 'Complex powers use principal log semantics.'));

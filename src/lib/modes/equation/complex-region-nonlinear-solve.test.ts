@@ -124,6 +124,60 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(text).toContain('Contour count verified: 2 roots in this region.');
   });
 
+  it('uses pole-aware contour accounting for rational meromorphic region solves', () => {
+    const result = tryComplexRegionNonlinearSolveFallback({
+      equationLatex: '(z-1)/z=0',
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+      complexExactForm: 'rectangular',
+      complexRegion: {
+        reMin: '-0.5',
+        reMax: '1.5',
+        imMin: '-0.5',
+        imMax: '0.5',
+        gridSize: 9,
+      },
+      sharedOutcome: unsupportedExactOutcome,
+    });
+
+    expect(result?.kind).toBe('success');
+    if (!result || result.kind !== 'success') {
+      throw new Error('Expected pole-aware rational region success');
+    }
+    const text = collectOutcomeText(result);
+    expect(result.exactLatex).toContain('z\\approx 1');
+    expect(text).toContain('Known interior pole count: 1.');
+    expect(text).toContain('Zeros minus known poles: 0.');
+    expect(text).toContain('Known pole count: 1.');
+  });
+
+  it('can subdivide branch-cut regions before returning controlled unsafe evidence', () => {
+    const result = tryComplexRegionNonlinearSolveFallback({
+      equationLatex: '\\ln(z)=0',
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+      complexExactForm: 'rectangular',
+      complexRegion: {
+        reMin: '-2',
+        reMax: '2',
+        imMin: '-1',
+        imMax: '1',
+        subdivisionDepth: 1,
+        cellBudget: 8,
+      },
+      sharedOutcome: unsupportedExactOutcome,
+    });
+
+    expect(result?.kind).toBe('error');
+    if (!result || result.kind !== 'error') {
+      throw new Error('Expected subdivided branch-cut stop');
+    }
+    const text = collectOutcomeText(result);
+    expect(result.error).toContain('unsafe');
+    expect(text).toContain('Adaptive subdivision: enabled.');
+    expect(text).toContain('Terminal reason: Complex region cell crosses an unsupported principal branch cut.');
+  });
+
   it('honors Complex approximate output forms for region roots', () => {
     const complexRegion = {
       reMin: '-1',

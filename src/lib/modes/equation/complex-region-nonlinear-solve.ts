@@ -5,6 +5,9 @@ import { equationTargetLatex } from '../../equation/equation-target';
 import {
   diagnosePrincipalBranchPolicyForLatex,
 } from '../../equation/complex/branch-cut-policy';
+import {
+  diagnoseMeromorphicPolicyForLatex,
+} from '../../equation/complex/meromorphic-policy';
 import type { ComplexContourWindingResult } from '../../equation/complex/contour-winding';
 import {
   createComplexNumericEvaluator,
@@ -129,6 +132,8 @@ function contourLines(contour: ComplexContourWindingResult) {
   if (contour.kind === 'verified') {
     return [
       `Contour count verified: ${contour.rootCount} root${contour.rootCount === 1 ? '' : 's'} in this region.`,
+      `Zeros minus known poles: ${contour.zerosMinusPoles}.`,
+      `Known pole count: ${contour.knownPoleCount}.`,
       `Candidate count: ${contour.candidateCount}.`,
       `Winding number: ${contour.windingNumber}.`,
       `Boundary samples: ${contour.boundarySampleCount}.`,
@@ -141,6 +146,10 @@ function contourLines(contour: ComplexContourWindingResult) {
       contour.rootCount === null
         ? 'Contour root count: unavailable.'
         : `Contour root count estimate: ${contour.rootCount}.`,
+      contour.zerosMinusPoles === null
+        ? 'Zeros minus known poles: unavailable.'
+        : `Zeros minus known poles: ${contour.zerosMinusPoles}.`,
+      `Known pole count: ${contour.knownPoleCount}.`,
       `Candidate count: ${contour.candidateCount}.`,
       contour.windingNumber === null
         ? 'Winding number: unavailable.'
@@ -153,6 +162,7 @@ function contourLines(contour: ComplexContourWindingResult) {
   }
   return [
     `Region evidence incomplete: ${contour.reason}`,
+    `Known pole count: ${contour.knownPoleCount}.`,
     `Boundary samples: ${contour.boundarySampleCount}.`,
     contour.minimumBoundaryResidual === null
       ? 'Minimum boundary residual: unavailable.'
@@ -184,6 +194,7 @@ function diagnosticsSections(input: {
   contour: ComplexContourWindingResult;
   accepted: readonly ComplexNewtonCandidate[];
   branchPolicyLines: readonly string[];
+  meromorphicPolicyLines: readonly string[];
   target: string;
   complexExactForm: ComplexExactForm;
   subdivision: ComplexRegionSubdivisionDiagnostics;
@@ -242,6 +253,10 @@ function diagnosticsSections(input: {
     {
       title: 'Complex Branch-Cut Policy',
       lines: [...input.branchPolicyLines],
+    },
+    {
+      title: 'Complex Pole Policy',
+      lines: [...input.meromorphicPolicyLines],
     },
     {
       title: 'Complex Search Diagnostics',
@@ -333,12 +348,23 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   ) {
     return undefined;
   }
+  const selectedTarget = classification.selectedTarget;
 
   const branchPolicy = diagnosePrincipalBranchPolicyForLatex(input.equationLatex, {
-    target: classification.selectedTarget,
+    target: selectedTarget,
     region,
   });
-  if (branchPolicy.shouldStop) {
+  const gridSize = input.complexRegion.gridSize ?? DEFAULT_GRID_SIZE;
+  const randomSeedCount = input.complexRegion.randomSeedCount ?? DEFAULT_RANDOM_SEED_COUNT;
+  const samplesPerEdge = input.complexRegion.samplesPerEdge ?? DEFAULT_SAMPLES_PER_EDGE;
+  const subdivisionDepth = input.complexRegion.subdivisionDepth ?? DEFAULT_SUBDIVISION_DEPTH;
+  const cellBudget = input.complexRegion.cellBudget ?? DEFAULT_CELL_BUDGET;
+  const subdivisionEnabled = subdivisionDepth > 0 && cellBudget > 1;
+  const meromorphicPolicy = diagnoseMeromorphicPolicyForLatex(input.equationLatex, {
+    target: selectedTarget,
+    region,
+  });
+  if (branchPolicy.shouldStop && !subdivisionEnabled) {
     return unsupportedRegionOutcome({
       error: 'Complex region crosses an unsupported principal branch cut.',
       detailSections: [{
@@ -347,16 +373,20 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       }],
     });
   }
+  if (meromorphicPolicy.shouldStop && !subdivisionEnabled) {
+    return unsupportedRegionOutcome({
+      error: 'Complex region has unresolved or boundary pole evidence.',
+      detailSections: [{
+        title: 'Complex Pole Policy',
+        lines: meromorphicPolicy.detailLines,
+      }],
+    });
+  }
 
   const evaluator = createComplexNumericEvaluator({
     expressionLatex: input.equationLatex,
-    target: classification.selectedTarget,
+    target: selectedTarget,
   });
-  const gridSize = input.complexRegion.gridSize ?? DEFAULT_GRID_SIZE;
-  const randomSeedCount = input.complexRegion.randomSeedCount ?? DEFAULT_RANDOM_SEED_COUNT;
-  const samplesPerEdge = input.complexRegion.samplesPerEdge ?? DEFAULT_SAMPLES_PER_EDGE;
-  const subdivisionDepth = input.complexRegion.subdivisionDepth ?? DEFAULT_SUBDIVISION_DEPTH;
-  const cellBudget = input.complexRegion.cellBudget ?? DEFAULT_CELL_BUDGET;
   const search = searchComplexRegionWithSubdivision({
     evaluator,
     region,
@@ -366,6 +396,26 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
     residualTolerance: COMPLEX_REGION_RESIDUAL_TOLERANCE,
     subdivisionDepth,
     cellBudget,
+    cellPolicyForRegion: (cellRegion) => {
+      const cellBranchPolicy = diagnosePrincipalBranchPolicyForLatex(input.equationLatex, {
+        target: selectedTarget,
+        region: cellRegion,
+      });
+      const cellPolePolicy = diagnoseMeromorphicPolicyForLatex(input.equationLatex, {
+        target: selectedTarget,
+        region: cellRegion,
+      });
+      return {
+        shouldStop: cellBranchPolicy.shouldStop || cellPolePolicy.shouldStop,
+        reason: [
+          ...(cellBranchPolicy.shouldStop ? ['Complex region cell crosses an unsupported principal branch cut.'] : []),
+          ...(cellPolePolicy.shouldStop ? ['Complex region cell has unresolved or boundary pole evidence.'] : []),
+        ].join(' '),
+        knownPoleCount: cellPolePolicy.knownPoleCount,
+        branchDiagnosticCount: cellBranchPolicy.diagnostics.length,
+        poleDiagnosticCount: cellPolePolicy.diagnostics.length,
+      };
+    },
   });
   const { accepted, contour, newton, subdivision } = search;
   if (contour.kind === 'unsafe') {
@@ -382,7 +432,8 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
-        target: classification.selectedTarget,
+        meromorphicPolicyLines: meromorphicPolicy.detailLines,
+        target: selectedTarget,
         complexExactForm: input.complexExactForm,
         subdivision,
       }),
@@ -403,7 +454,8 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
-        target: classification.selectedTarget,
+        meromorphicPolicyLines: meromorphicPolicy.detailLines,
+        target: selectedTarget,
         complexExactForm: input.complexExactForm,
         subdivision,
       }),
@@ -426,7 +478,8 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
-        target: classification.selectedTarget,
+        meromorphicPolicyLines: meromorphicPolicy.detailLines,
+        target: selectedTarget,
         complexExactForm: input.complexExactForm,
         subdivision,
       }),
@@ -434,13 +487,13 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   }
 
   const roots = accepted.map((candidate) => candidate.value);
-  const targetLatex = equationTargetLatex(classification.selectedTarget);
+  const targetLatex = equationTargetLatex(selectedTarget);
   const branchesLatex = roots.map((root) => formatComplexRootLatex(root, input.complexExactForm));
   return {
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, roots, input.complexExactForm),
-    approxText: approximateText(classification.selectedTarget, roots, input.complexExactForm),
+    approxText: approximateText(selectedTarget, roots, input.complexExactForm),
     branchReadback: finiteBranchReadbackMetadata({
       targetLatex,
       relationLatex: '\\approx',
@@ -466,7 +519,8 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       contour,
       accepted,
       branchPolicyLines: branchPolicy.detailLines,
-      target: classification.selectedTarget,
+      meromorphicPolicyLines: meromorphicPolicy.detailLines,
+      target: selectedTarget,
       complexExactForm: input.complexExactForm,
       subdivision,
     }),

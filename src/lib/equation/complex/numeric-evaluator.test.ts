@@ -132,4 +132,20 @@ describe('Complex numeric evaluator', () => {
     expect(exponentialDerivative?.value?.re).toBeCloseTo(0);
     expect(exponentialDerivative?.value?.im).toBeCloseTo(0);
   });
+
+  it('returns controlled pole diagnostics for negative powers and tangent poles', () => {
+    const reciprocal = createComplexNumericEvaluator({
+      expressionLatex: 'z^{-1}=0',
+      target: 'z',
+    }).evaluateAt(complex(0, 0));
+    const tangent = createComplexNumericEvaluator({
+      expressionLatex: String.raw`\tan(z)=0`,
+      target: 'z',
+    }).evaluateAt(complex(Math.PI / 2, 0));
+
+    expect(reciprocal.status).toBe('undefined');
+    expect(reciprocal.diagnostics.map((entry) => entry.code)).toContain('complex-pole');
+    expect(tangent.status).toBe('undefined');
+    expect(tangent.diagnostics.map((entry) => entry.code)).toContain('complex-pole');
+  });
 });
