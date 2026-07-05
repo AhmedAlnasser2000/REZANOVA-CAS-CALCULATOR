@@ -412,4 +412,26 @@ describe('Calculus limit editor source', () => {
       );
     });
   });
+
+  it('shows guarded parameter cases when symbolic infinity coefficients vanish', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> infinity (b*x^2+a*x+c)');
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    const answer = screen.getByTestId('display-outcome-answer-block');
+    expect(answer).toHaveTextContent('guarded rows');
+    expect(answer).toHaveTextContent('Formula cases paused for responsiveness');
+    const details = await screen.findByTestId('display-outcome-detail-sections');
+    expect(details).toHaveTextContent('Limit Cases');
+    expect(details).toHaveTextContent('Limit Case Proof');
+    const proof = screen.getByTestId('display-outcome-detail-section-2');
+    fireEvent.click(proof.querySelector('summary') as HTMLElement);
+    await waitFor(() => expect(proof).toHaveTextContent('After higher-degree symbolic coefficients vanish'));
+    expect(proof).toHaveTextContent('constant term');
+    expect(proof).toHaveTextContent('c');
+  });
 });

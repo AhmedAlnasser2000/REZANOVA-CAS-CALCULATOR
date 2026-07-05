@@ -29,6 +29,30 @@ describe('symbolic infinity case limits', () => {
     expect(result?.exactLatex).toContain('0,&\\substack{b=0,\\ a=0}');
   });
 
+  it('falls through to target-free constant terms when symbolic growth vanishes', () => {
+    const result = resolveSymbolicInfinityCaseLimit(parse('b*x^2+a*x+c'), 'posInfinity', 'x');
+
+    expect(result?.kind).toBe('success');
+    expect(result?.exactLatex).toContain('\\infty,&\\substack{b>0}');
+    expect(result?.exactLatex).toContain('-\\infty,&\\substack{b<0}');
+    expect(result?.exactLatex).toContain('\\infty,&\\substack{b=0,\\ a>0}');
+    expect(result?.exactLatex).toContain('-\\infty,&\\substack{b=0,\\ a<0}');
+    expect(result?.exactLatex).toContain('c,&\\substack{b=0,\\ a=0}');
+    expect(result?.detailSections?.find((section) => section.title === 'Limit Case Proof')?.lineParts?.flat())
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ kind: 'math', latex: 'c' }),
+      ]));
+  });
+
+  it('uses lower numeric growth when a symbolic leading term vanishes', () => {
+    const result = resolveSymbolicInfinityCaseLimit(parse('a*x^2+3*x'), 'posInfinity', 'x');
+
+    expect(result?.kind).toBe('success');
+    expect(result?.exactLatex).toContain('\\infty,&\\substack{a>0}');
+    expect(result?.exactLatex).toContain('-\\infty,&\\substack{a<0}');
+    expect(result?.exactLatex).toContain('\\infty,&\\substack{a=0}');
+  });
+
   it('honors negative-infinity parity for odd powers', () => {
     const result = resolveSymbolicInfinityCaseLimit(parse('a*x'), 'negInfinity', 'x');
 

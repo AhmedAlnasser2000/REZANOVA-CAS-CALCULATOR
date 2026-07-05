@@ -621,5 +621,15 @@ describe('calculus limits', () => {
     expect(quadraticThenLinear.exactLatex).toContain('-\\infty,&\\substack{b<0}');
     expect(quadraticThenLinear.exactLatex).toContain('\\infty,&\\substack{b=0,\\ a>0}');
     expect(quadraticThenLinear.exactLatex).toContain('0,&\\substack{b=0,\\ a=0}');
+
+    const quadraticThenLinearThenConstant = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity (b*x^2+a*x+c)',
+    });
+    expect(quadraticThenLinearThenConstant.error).toBeUndefined();
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('\\infty,&\\substack{b>0}');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('-\\infty,&\\substack{b<0}');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('\\infty,&\\substack{b=0,\\ a>0}');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('-\\infty,&\\substack{b=0,\\ a<0}');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('c,&\\substack{b=0,\\ a=0}');
   });
 });

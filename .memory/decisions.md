@@ -1913,3 +1913,7 @@
 ## 2026-07-05 - CALCULUS-LIMITS-PIECEWISE-CONDITION-ENGINE2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Piecewise limit branch conditions remain Limits-owned linear interval logic in this arc. Numeric simple comparisons and chained intervals such as `0 <= x < 5` are parsed into internal comparison lists for branch selection; Calculus must not import Equation inequality solving for this milestone family.
+
+## 2026-07-05 - CALCULUS-LIMITS-PARAMETER-ASSUMPTIONS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits parameter assumptions remain generated guarded cases, not a new assumptions UI. Symbolic infinity polynomial-scale cases may branch on target-free symbolic leading coefficients and, when those coefficients vanish, fall through to lower numeric-growth terms or target-free constants under the accumulated guard conditions.

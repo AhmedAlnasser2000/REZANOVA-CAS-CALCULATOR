@@ -17,8 +17,9 @@ const MAX_SYMBOLIC_INFINITY_TERMS = 4;
 
 type SymbolicInfinityTerm = {
   degree: number;
-  driver: LimitAsymptoticBranchDriver;
+  driver?: LimitAsymptoticBranchDriver;
   branchSign: 1 | -1;
+  coefficientLatex: string;
   termLatex: string;
 };
 
@@ -129,7 +130,7 @@ function variablePowerDegree(node: unknown, variable: string): number | undefine
 function coefficientDriver(input: {
   factors: readonly unknown[];
   numericSign: 1 | -1;
-}): { driver: LimitAsymptoticBranchDriver; sign: 1 | -1; coefficientLatex: string } | undefined {
+}): { driver?: LimitAsymptoticBranchDriver; sign: 1 | -1; coefficientLatex: string } | undefined {
   let numeric = input.numericSign;
   const symbolicFactors: string[] = [];
 
@@ -146,23 +147,49 @@ function coefficientDriver(input: {
     symbolicFactors.push(latex);
   }
 
-  if (symbolicFactors.length === 0) {
-    return undefined;
-  }
-
   const sign = numeric < 0 ? -1 : 1;
   const magnitude = Math.abs(numeric);
-  const coefficientLatex = magnitude === 1
-    ? symbolicFactors.join('')
-    : `${formatLimitNumberLatex(magnitude)}${symbolicFactors.join('')}`;
+  const symbolicLatex = symbolicFactors.join('');
+  const coefficientLatex = symbolicFactors.length === 0
+    ? formatLimitNumberLatex(magnitude)
+    : magnitude === 1
+      ? symbolicLatex
+      : `${formatLimitNumberLatex(magnitude)}${symbolicLatex}`;
 
   return {
     sign,
     coefficientLatex,
-    driver: {
-      latex: coefficientLatex,
-      source: 'leading-coefficient',
-    },
+    driver: symbolicFactors.length === 0
+      ? undefined
+      : {
+          latex: coefficientLatex,
+          source: 'leading-coefficient',
+        },
+  };
+}
+
+function constantTerm(node: unknown, numericSign: 1 | -1): SymbolicInfinityTerm | undefined {
+  const numeric = numericConstant(node);
+  if (numeric !== undefined) {
+    const signed = numericSign * numeric;
+    return {
+      degree: 0,
+      branchSign: signed < 0 ? -1 : 1,
+      coefficientLatex: formatLimitNumberLatex(signed),
+      termLatex: formatLimitNumberLatex(signed),
+    };
+  }
+
+  const latex = nodeLatex(node);
+  if (!latex) {
+    return undefined;
+  }
+  const coefficientLatex = numericSign < 0 ? `-${latex}` : latex;
+  return {
+    degree: 0,
+    branchSign: 1,
+    coefficientLatex,
+    termLatex: coefficientLatex,
   };
 }
 
@@ -175,6 +202,10 @@ function parseSymbolicInfinityTerm(
   const degree = variablePowerDegree(node, variable);
   if (degree !== undefined) {
     return undefined;
+  }
+
+  if (!dependsOnVariable(node, variable)) {
+    return constantTerm(node, numericSign);
   }
 
   if (!isNodeArray(node) || node.length === 0) {
@@ -222,6 +253,7 @@ function parseSymbolicInfinityTerm(
     degree: variableDegree,
     driver: coefficient.driver,
     branchSign,
+    coefficientLatex: `${coefficient.sign < 0 ? '-' : ''}${coefficient.coefficientLatex}`,
     termLatex: `${coefficient.sign < 0 ? '-' : ''}${coefficient.coefficientLatex}${powerLatex}`,
   };
 }
@@ -241,8 +273,12 @@ function parseSymbolicInfinityTerms(
     return undefined;
   }
 
-  return (terms as SymbolicInfinityTerm[])
+  const parsedTerms = (terms as SymbolicInfinityTerm[])
     .sort((left, right) => right.degree - left.degree);
+  if (!parsedTerms.some((term) => term.driver)) {
+    return undefined;
+  }
+  return parsedTerms;
 }
 
 function valueForSign(term: SymbolicInfinityTerm, coefficientSign: 'positive' | 'negative') {
@@ -259,6 +295,30 @@ function rowsFromTerms(
     return [{
       valueLatex: '0',
       conditions: prefix,
+    }];
+  }
+
+  if (term.degree === 0) {
+    return [{
+      valueLatex: term.coefficientLatex,
+      conditions: prefix,
+      proofRows: [[
+        limitTextPart('After higher-degree symbolic coefficients vanish, the constant term '),
+        limitMathPart(term.termLatex),
+        limitTextPart(' remains.'),
+      ]],
+    }];
+  }
+
+  if (!term.driver) {
+    return [{
+      valueLatex: term.branchSign > 0 ? '\\infty' : '-\\infty',
+      conditions: prefix,
+      proofRows: [[
+        limitTextPart('After higher-degree symbolic coefficients vanish, leading term '),
+        limitMathPart(term.termLatex),
+        limitTextPart(' controls this branch.'),
+      ]],
     }];
   }
 
