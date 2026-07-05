@@ -26,6 +26,7 @@ import { tryExpandedDirectRule } from './expanded-direct';
 import { tryExpandedPartsRule } from './expanded-parts';
 import { negateGeneratedLatex } from './generated-latex';
 import { tryHyperbolicSquareTableRule } from './hyperbolic-table';
+import { tryTextbookIbpGapRule } from './ibp-gaps';
 import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { normalizeIntegrationNormalForm } from './normal-form';
@@ -410,6 +411,12 @@ function tryRoute(
   }
 
   if (route === 'integration-by-parts') {
+    const textbookIbpGap = tryTextbookIbpGapRule(node, variable);
+    if (textbookIbpGap) {
+      return symbolicSuccess(node, variable, textbookIbpGap.exactLatex, 'integration-by-parts',
+        textbookIbpGap.verification, textbookIbpGap.exactSupplementLatex, textbookIbpGap.detailSections);
+    }
+
     const byParts = tryPartsRule(node, variable);
     if (byParts) {
       return symbolicSuccess(node, variable, byParts, 'integration-by-parts');

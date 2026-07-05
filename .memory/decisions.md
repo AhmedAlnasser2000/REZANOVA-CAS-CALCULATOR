@@ -1906,6 +1906,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Low-risk textbook integration widening is bounded to exact positive-discriminant improper rational division, reciprocal `1/(a^2-u^2)^(3/2)` and `1/(u^2+a^2)^(3/2)` affine radical templates, and affine `sinh^2(u)`/`cosh^2(u)` table forms. These routes must remain indefinite-only, Calculus-owned, and accepted only through route proof plus derivative backcheck evidence; difference-root and IBP families remain separate gates.
 
+## 2026-07-05 - CALCULUS-INTEGRATION-IBP-GAPS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Textbook IBP widening is bounded to indefinite Calculus integration for exact polynomial degree up to 4 times `arctan(x)`/`arcsin(x)`, and affine polynomial factors times `sec^2(ax+b)` or `csc^2(ax+b)`. Arctan residuals reuse the rational integration route, arcsin residuals use a capped `A*arcsin(x)+B(x)*sqrt(1-x^2)` recurrence, and affine trig-derivative rows must expose branch/fact evidence and pass derivative backcheck before adoption. Broader inverse-trig composition, higher-degree trig-derivative IBP, and definite-integral widening remain out of scope.
+
 ## 2026-07-05 - CALCULUS-LIMITS-PIECEWISE-CONDITION-ENGINE2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Piecewise limit branch conditions remain Limits-owned linear interval logic in this arc. Numeric simple comparisons and chained intervals such as `0 <= x < 5` are parsed into internal comparison lists for branch selection; Calculus must not import Equation inequality solving for this milestone family.
