@@ -1,5 +1,8 @@
 import { resolveAntiderivativeRule } from '../../calculus/engine/antiderivative-rules';
-import { backcheckAntiderivative } from '../../calculus/engine/verification';
+import {
+  backcheckAntiderivative,
+  type AntiderivativeBackcheck,
+} from '../../calculus/engine/verification';
 import {
   decomposeDistinctLinearPartialFractions,
   decomposeRationalPartialFractionReadiness,
@@ -35,44 +38,27 @@ import {
   equivalenceTrustFromAntiderivativeBackcheck,
   preservedFactsFromDomainHazards,
 } from '../../algebra/simplify-policy';
-import { boxLatex, divideByNumericCoefficient, isNodeArray, multiplyLatex, wrapGroupedLatex } from '../patterns';
-import { negateGeneratedLatex } from './generated-latex';
+import {
+  boxLatex,
+  flattenMultiply,
+  isNodeArray,
+  wrapGroupedLatex,
+} from '../patterns';
 import { collectIntegrationDomainHazards, containsRationalOperator } from './metadata';
-import { rationalApproximation } from './node-helpers';
 import { completedSquareQuadraticDenominatorForm } from './quadratic-completion';
+import type { DisplayDetailSection } from '../../../types/calculator';
+import {
+  coefficientTimesLatex,
+  scaleByExactScalar,
+} from './rational-latex';
+import {
+  buildPositiveDiscriminantQuadraticRemainder,
+  exactTemplateProofAfterBackcheck,
+  polynomialDivisionDetail,
+} from './rational-positive-discriminant';
+import { affineQuadraticArgumentLatex } from './rational-quadratic-latex';
 
-export function scaleLatex(latex: string, scale: number) {
-  if (Math.abs(scale - 1) < 1e-10) {
-    return latex;
-  }
-
-  if (Math.abs(scale + 1) < 1e-10) {
-    return negateGeneratedLatex(latex);
-  }
-
-  const rational = rationalApproximation(scale);
-  if (rational) {
-    const sign = rational.numerator < 0 ? '-' : '';
-    const numerator = Math.abs(rational.numerator);
-    if (rational.denominator === 1) {
-      return `${sign}${multiplyLatex(String(numerator), latex)}`;
-    }
-
-    if (numerator === 1) {
-      const divided = divideByNumericCoefficient(latex, rational.denominator);
-      return sign ? negateGeneratedLatex(divided) : divided;
-    }
-
-    return `${sign}\\frac{${numerator}${wrapGroupedLatex(latex)}}{${rational.denominator}}`;
-  }
-
-  const reciprocal = 1 / scale;
-  if (Math.abs(reciprocal - Math.round(reciprocal)) < 1e-10) {
-    return divideByNumericCoefficient(latex, Math.round(reciprocal));
-  }
-
-  return multiplyLatex(boxLatex(scale), latex);
-}
+export { scaleLatex, scaleByExactScalar } from './rational-latex';
 
 function joinAdditiveLatex(parts: string[]) {
   return parts
@@ -83,46 +69,6 @@ function joinAdditiveLatex(parts: string[]) {
       }
       return part.startsWith('-') ? `${joined}${part}` : `${joined}+${part}`;
     }, '') || undefined;
-}
-
-function canAttachCoefficientDirectly(latex: string) {
-  return latex.startsWith('\\ln')
-    || latex.startsWith('\\arctan')
-    || latex.startsWith('\\frac')
-    || /^[a-zA-Z](?:\^\{?[-+]?\d+\}?)?$/.test(latex);
-}
-
-function coefficientTimesLatex(coefficientLatex: string, latex: string) {
-  return canAttachCoefficientDirectly(latex)
-    ? `${coefficientLatex}${latex}`
-    : `${coefficientLatex}${wrapGroupedLatex(latex)}`;
-}
-
-export function scaleByExactScalar(latex: string, coefficient: ExactScalar) {
-  const normalized = normalizeExactScalar(coefficient);
-  if (normalized.numerator === 0) {
-    return '0';
-  }
-
-  if (normalized.numerator === 1 && normalized.denominator === 1) {
-    return latex;
-  }
-
-  if (normalized.numerator === -1 && normalized.denominator === 1) {
-    return canAttachCoefficientDirectly(latex) ? `-${latex}` : `-${wrapGroupedLatex(latex)}`;
-  }
-
-  if (normalized.denominator === 1) {
-    return coefficientTimesLatex(boxLatex(buildExactScalarNode(normalized)), latex);
-  }
-
-  const sign = normalized.numerator < 0 ? '-' : '';
-  const numerator = Math.abs(normalized.numerator);
-  const coefficientLatex = numerator === 1
-    ? `\\frac{1}{${normalized.denominator}}`
-    : `\\frac{${numerator}}{${normalized.denominator}}`;
-
-  return `${sign}${coefficientTimesLatex(coefficientLatex, latex)}`;
 }
 
 function integratePolynomial(polynomial: ExactPolynomial, variable: string) {
@@ -174,19 +120,6 @@ function positiveScalarSqrtLatex(value: ExactScalar) {
   }
 
   return `\\sqrt{${exactScalarLatex(value)}}`;
-}
-
-function exactScalarSignLatex(value: ExactScalar) {
-  const normalized = normalizeExactScalar(value);
-  if (normalized.numerator === 0) {
-    return '';
-  }
-
-  const absoluteLatex = exactScalarLatex({
-    numerator: Math.abs(normalized.numerator),
-    denominator: normalized.denominator,
-  });
-  return normalized.numerator > 0 ? `+${absoluteLatex}` : `-${absoluteLatex}`;
 }
 
 type ExactAffineForm = {
@@ -300,7 +233,47 @@ function repeatedQuadraticReciprocalForm(node: unknown, variable: string) {
     : undefined;
 }
 
+function multiplyNodeFactors(factors: unknown[]) {
+  if (factors.length === 0) {
+    return 1;
+  }
+
+  return factors.length === 1 ? factors[0] : ['Multiply', ...factors];
+}
+
 function repeatedQuadraticDivideForm(node: unknown, variable: string) {
+  if (isNodeArray(node) && node[0] === 'Multiply') {
+    let denominator: ReturnType<typeof repeatedQuadraticDenominatorForm> | undefined;
+    let power: number | undefined;
+    const numeratorFactors: unknown[] = [];
+
+    for (const factor of flattenMultiply(node)) {
+      if (isNodeArray(factor) && factor[0] === 'Power' && factor.length === 3) {
+        const exponent = exactInteger(factor[2]);
+        const parsedPower = exponent === undefined || exponent > -2 || exponent < -4
+          ? undefined
+          : -exponent;
+        const candidateDenominator = parsedPower === undefined
+          ? undefined
+          : repeatedQuadraticDenominatorForm(factor[1], variable);
+        if (candidateDenominator) {
+          if (denominator) {
+            return undefined;
+          }
+          denominator = candidateDenominator;
+          power = parsedPower;
+          continue;
+        }
+      }
+
+      numeratorFactors.push(factor);
+    }
+
+    return denominator && power
+      ? { numerator: multiplyNodeFactors(numeratorFactors), denominator, power }
+      : undefined;
+  }
+
   if (
     !isNodeArray(node)
     || node[0] !== 'Divide'
@@ -563,7 +536,7 @@ function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
   return { exactLatex: candidate, verification };
 }
 
-function isPureQuadraticDerivativeOverlap(node: unknown, variable: string) {
+export function isPureQuadraticDerivativeOverlap(node: unknown, variable: string) {
   const form = repeatedQuadraticDivideForm(node, variable);
   const numerator = form
     ? numeratorRelativeToAffine(form.numerator, form.denominator.affine, variable)
@@ -680,26 +653,6 @@ function integrateLinearPowerTerm(
   );
 }
 
-function affineQuadraticArgumentLatex(
-  variable: string,
-  linearCoefficient: ExactScalar,
-  denominatorRoot: ExactScalar | undefined,
-  denominatorLatex: string,
-) {
-  if (denominatorRoot && Math.abs(exactScalarToNumber(denominatorRoot) - 2) < 1e-12) {
-    const halfB = divideExactScalars(linearCoefficient, { numerator: 2, denominator: 1 });
-    const offset = halfB ? exactScalarSignLatex(halfB) : '';
-    return `${variable}${offset}`;
-  }
-
-  const numerator = `2${variable}${exactScalarSignLatex(linearCoefficient)}`;
-  if (denominatorRoot && Math.abs(exactScalarToNumber(denominatorRoot) - 1) < 1e-12) {
-    return numerator;
-  }
-
-  return `\\frac{${numerator}}{${denominatorLatex}}`;
-}
-
 export function scaleByIrrationalDenominator(
   latex: string,
   numerator: ExactScalar,
@@ -808,8 +761,22 @@ function acceptedAntiderivativeVerification(
   return canAdoptPolicyResult(policy) ? verification : undefined;
 }
 
-export function tryRationalPartialFractionRule(node: unknown, variable: string) {
+type RationalPartialFractionRuleResult = {
+  exactLatex: string;
+  verification: AntiderivativeBackcheck;
+  exactSupplementLatex?: string[];
+  detailSections?: DisplayDetailSection[];
+};
+
+export function tryRationalPartialFractionRule(
+  node: unknown,
+  variable: string,
+): RationalPartialFractionRuleResult | undefined {
   if (!containsRationalOperator(node)) {
+    return undefined;
+  }
+
+  if (isPureQuadraticDerivativeOverlap(node, variable)) {
     return undefined;
   }
 
@@ -821,10 +788,6 @@ export function tryRationalPartialFractionRule(node: unknown, variable: string) 
   const quadraticNumerator = tryQuadraticReciprocalNumeratorRule(node, variable);
   if (quadraticNumerator) {
       return quadraticNumerator;
-  }
-
-  if (isPureQuadraticDerivativeOverlap(node, variable)) {
-      return undefined;
   }
 
   const repeatedLinear = tryRepeatedLinearReciprocalPowerRule(node, variable);
@@ -846,12 +809,20 @@ export function tryRationalPartialFractionRule(node: unknown, variable: string) 
   }
 
   const parts: string[] = [];
+  const detailSections: DisplayDetailSection[] = [];
+  let usedPositiveDiscriminantRemainder = false;
   if (!exactPolynomialIsZero(division.quotient)) {
     const quotientIntegral = integratePolynomial(division.quotient, normalized.rational.variable);
     if (!quotientIntegral) {
       return undefined;
     }
     parts.push(quotientIntegral);
+    detailSections.push(polynomialDivisionDetail({
+      originalNode: node,
+      quotient: division.quotient,
+      remainder: division.remainder,
+      denominator: normalized.rational.denominator,
+    }));
   }
 
   if (!exactPolynomialIsZero(division.remainder)) {
@@ -873,16 +844,25 @@ export function tryRationalPartialFractionRule(node: unknown, variable: string) 
         denominator: normalized.rational.denominator,
       });
       if (decomposed.kind === 'stop') {
-        return undefined;
-      }
+        const quadraticRemainder = buildPositiveDiscriminantQuadraticRemainder({
+          numerator: division.remainder,
+          denominator: normalized.rational.denominator,
+          variable: normalized.rational.variable,
+        });
+        if (!quadraticRemainder) {
+          return undefined;
+        }
+        usedPositiveDiscriminantRemainder = true;
+        parts.push(quadraticRemainder);
+      } else {
+        const widenedParts = decomposed.terms.map((term) =>
+          integrateReadinessTerm(term, normalized.rational.variable));
+        if (widenedParts.some((part) => part === undefined)) {
+          return undefined;
+        }
 
-      const widenedParts = decomposed.terms.map((term) =>
-        integrateReadinessTerm(term, normalized.rational.variable));
-      if (widenedParts.some((part) => part === undefined)) {
-        return undefined;
+        parts.push(...widenedParts as string[]);
       }
-
-      parts.push(...widenedParts as string[]);
     }
   }
 
@@ -894,5 +874,19 @@ export function tryRationalPartialFractionRule(node: unknown, variable: string) 
     return undefined;
   }
 
-  return { exactLatex: candidate, verification };
+  const finalVerification = usedPositiveDiscriminantRemainder
+    ? exactTemplateProofAfterBackcheck(
+      verification,
+      'verified by polynomial division plus positive-discriminant quadratic log-split proof after derivative backcheck',
+    )
+    : verification;
+  if (!finalVerification) {
+    return undefined;
+  }
+
+  return {
+    exactLatex: candidate,
+    verification: finalVerification,
+    detailSections: detailSections.length > 0 ? detailSections : undefined,
+  };
 }

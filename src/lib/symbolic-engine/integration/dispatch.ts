@@ -25,10 +25,14 @@ import {
 import { tryExpandedDirectRule } from './expanded-direct';
 import { tryExpandedPartsRule } from './expanded-parts';
 import { negateGeneratedLatex } from './generated-latex';
+import { tryHyperbolicSquareTableRule } from './hyperbolic-table';
 import { inverseTrigIntegral } from './inverse-trig';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { normalizeIntegrationNormalForm } from './normal-form';
-import { tryRationalPartialFractionRule } from './rational';
+import {
+  isPureQuadraticDerivativeOverlap,
+  tryRationalPartialFractionRule,
+} from './rational';
 import { tryRischNormanOrchestrator } from './risch-norman/orchestrator';
 import { tryRischNormanDepth2DerivativeSubstitutionRule } from './risch-norman/depth2-substitution';
 import { tryRischNormanSymbolicTrigProductToSumRule } from './risch-norman/symbolic-trig-products';
@@ -146,6 +150,10 @@ function tryRoute(
       return symbolicSuccess(node, variable, reciprocalBinomial, 'u-substitution');
     }
 
+    if (isPureQuadraticDerivativeOverlap(node, variable)) {
+      return undefined;
+    }
+
     const partialFractions = tryRationalPartialFractionRule(node, variable);
     if (partialFractions) {
       return symbolicSuccess(
@@ -154,6 +162,8 @@ function tryRoute(
         partialFractions.exactLatex,
         'partial-fractions',
         partialFractions.verification,
+        partialFractions.exactSupplementLatex,
+        partialFractions.detailSections,
       );
     }
 
@@ -316,11 +326,25 @@ function tryRoute(
         'u-substitution',
         trigSubstitutionRadical.verification,
         trigSubstitutionRadical.exactSupplementLatex,
+        trigSubstitutionRadical.detailSections,
       )
       : undefined;
   }
 
   if (route === 'direct-rule') {
+    const hyperbolicSquare = tryHyperbolicSquareTableRule(node, variable);
+    if (hyperbolicSquare) {
+      return symbolicSuccess(
+        node,
+        variable,
+        hyperbolicSquare.exactLatex,
+        'direct-rule',
+        hyperbolicSquare.verification,
+        hyperbolicSquare.exactSupplementLatex,
+        hyperbolicSquare.detailSections,
+      );
+    }
+
     const basic = resolveAntiderivativeRule(node, variable);
     if (basic) {
       return symbolicSuccess(node, variable, basic, 'direct-rule');

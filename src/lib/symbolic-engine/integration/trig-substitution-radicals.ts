@@ -11,6 +11,7 @@ import {
   normalizeExactScalar,
   parseExactPolynomial,
   readExactScalarNode,
+  divideExactScalars,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
 import type { AntiderivativeBackcheck } from '../../calculus/engine/verification';
@@ -20,11 +21,14 @@ import {
   isNodeArray,
   wrapGroupedLatex,
 } from '../patterns';
+import { scaleByExactScalar } from './rational';
+import type { DisplayDetailSection } from '../../../types/calculator';
 
 type TrigSubstitutionRadicalResult = {
   exactLatex: string;
   verification: AntiderivativeBackcheck;
   exactSupplementLatex: string[];
+  detailSections?: DisplayDetailSection[];
 };
 
 type SignedNode = {
@@ -219,6 +223,47 @@ function buildExactLatex(family: RadicalFamily, r: ExactScalar, affine: ExactAff
     : `${firstTerm}-${logTerm}`;
 }
 
+function buildReciprocalThreeHalvesLatex(
+  family: RadicalFamily,
+  r: ExactScalar,
+  affine: ExactAffine,
+) {
+  if (family === 'outside') {
+    return undefined;
+  }
+
+  const coefficient = divideExactScalars({ numerator: 1, denominator: 1 }, multiplyExactScalars(r, affine.slope));
+  if (!coefficient) {
+    return undefined;
+  }
+
+  const rLatex = exactScalarLatex(r);
+  const uGrouped = wrapGroupedLatex(affine.latex);
+  const radicandLatex = buildRadicandLatex(family, rLatex, uGrouped);
+  return scaleByExactScalar(
+    `\\frac{${uGrouped}}{\\sqrt{${radicandLatex}}}`,
+    coefficient,
+  );
+}
+
+function radicalTemplateDetail(lines: string[]): DisplayDetailSection {
+  return {
+    title: 'Integration Radical Template',
+    lines,
+  };
+}
+
+function isReciprocalThreeHalvesPower(node: unknown) {
+  if (!isNodeArray(node) || node[0] !== 'Power' || node.length !== 3) {
+    return undefined;
+  }
+
+  const exponent = readExactScalarNode(node[2]);
+  return exponent?.numerator === -3 && exponent.denominator === 2
+    ? node[1]
+    : undefined;
+}
+
 function supplementsFor(family: RadicalFamily, r: ExactScalar, affine: ExactAffine) {
   if (family === 'plus') {
     return [];
@@ -237,18 +282,43 @@ export function tryTrigSubstitutionRadicalRule(
   node: unknown,
   variable: string,
 ): TrigSubstitutionRadicalResult | undefined {
-  if (!isNodeArray(node) || node[0] !== 'Sqrt' || node.length !== 2) {
+  const reciprocalThreeHalves = isReciprocalThreeHalvesPower(node);
+  const radicand = reciprocalThreeHalves
+    ?? (isNodeArray(node) && node[0] === 'Sqrt' && node.length === 2 ? node[1] : undefined);
+  if (!radicand) {
     return undefined;
   }
 
-  const parsed = familyFromTerms(node[1], variable);
+  const parsed = familyFromTerms(radicand, variable);
   if (!parsed || exactScalarToNumber(parsed.r) <= 0) {
     return undefined;
+  }
+
+  if (reciprocalThreeHalves) {
+    const exactLatex = buildReciprocalThreeHalvesLatex(parsed.family, parsed.r, parsed.affine);
+    return exactLatex
+      ? {
+        exactLatex,
+        verification: proof(parsed.family),
+        exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
+        detailSections: [radicalTemplateDetail([
+          `Recognized reciprocal radical: ${boxLatex(node)}`,
+          `Template family: ${parsed.family === 'minus' ? 'a^2-u^2' : 'u^2+a^2'}`,
+          `Substitution carrier: ${parsed.affine.latex}`,
+          'Adopted only after derivative backcheck against the original integrand.',
+        ])],
+      }
+      : undefined;
   }
 
   return {
     exactLatex: buildExactLatex(parsed.family, parsed.r, parsed.affine),
     verification: proof(parsed.family),
     exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
+    detailSections: [radicalTemplateDetail([
+      `Recognized radical: ${boxLatex(node)}`,
+      `Template family: ${parsed.family}`,
+      `Substitution carrier: ${parsed.affine.latex}`,
+    ])],
   };
 }
