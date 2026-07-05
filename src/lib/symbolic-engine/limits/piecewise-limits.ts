@@ -299,7 +299,7 @@ function piecewiseSuccessDetails(input: {
     rows.push(
       selectedBranchRow('Selected', input.selectedBranch),
       [
-        limitTextPart('Calculation: '),
+        limitTextPart('Key calculation: '),
         limitMathPart(`\\lim_{${input.variable}\\to ${targetLabel}}${input.selectedBranch.expressionLatex}=${valueLatex(input.result) ?? '?'}`),
         limitTextPart('.'),
       ],
@@ -325,6 +325,7 @@ function piecewiseMismatchDetails(input: {
   const leftLatex = valueLatex(input.leftResult) ?? '?';
   const rightLatex = valueLatex(input.rightResult) ?? '?';
   return [limitDetailSection('Why This Limit Fails', [
+    [limitTextPart('Form detected: two-sided Piecewise branch disagreement.')],
     selectedBranchRow('Left', input.leftBranch),
     selectedBranchRow('Right', input.rightBranch),
     branchCalculationRow({
@@ -342,7 +343,7 @@ function piecewiseMismatchDetails(input: {
       valueLatex: rightLatex,
     }),
     [
-      limitTextPart('The one-sided branch limits are different, so the two-sided Piecewise limit does not exist.'),
+      limitTextPart('Conclusion: the one-sided branch limits are different, so the two-sided Piecewise limit does not exist.'),
     ],
   ])];
 }
@@ -354,7 +355,8 @@ function piecewiseDiagnosticRows(input: {
   selectedBranch?: PiecewiseLimitBranch;
 }) {
   const rows = [
-    [limitTextPart(input.reason)],
+    [limitTextPart('Form detected: Piecewise branch route.')],
+    [limitTextPart(`Key calculation: ${input.reason}`)],
   ];
   if (input.leftBranch) {
     rows.push(selectedBranchRow('Left', input.leftBranch));
@@ -366,7 +368,7 @@ function piecewiseDiagnosticRows(input: {
     rows.push(selectedBranchRow('Selected', input.selectedBranch));
   }
   rows.push([
-    limitTextPart('This milestone only supports simple branch selection plus existing finite and infinity limit routes.'),
+    limitTextPart('Conclusion: this milestone only supports simple branch selection plus existing finite and infinity limit routes.'),
   ]);
   return rows;
 }

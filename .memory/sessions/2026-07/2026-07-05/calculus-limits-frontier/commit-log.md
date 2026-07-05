@@ -11,4 +11,5 @@
 ## 2026-07-05
 
 - `CALCULUS-LIMITS-ASYMPTOTIC-SCALE-ENGINE2`: committed as `783156d2`.
-- `CALCULUS-LIMITS-MRV-PREGRUNTZ3`: ready to commit after broad gates pass.
+- `CALCULUS-LIMITS-MRV-PREGRUNTZ3`: committed as `016c467f`.
+- `CALCULUS-LIMITS-BRANCH-DOMAIN-PROOFS2`: committed in this checkpoint after focused backend/UI, Playwright visual, TypeScript, file-size, memory, and diff gates.

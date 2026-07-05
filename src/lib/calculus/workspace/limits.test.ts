@@ -160,6 +160,9 @@ describe('calculus limits', () => {
       direction: 'two-sided',
     });
     expect(domainGap.error).toContain('outside the real domain');
+    expect(domainGap.detailSections?.map((section) => section.title)).toContain('Domain Proof');
+    expect(domainGap.detailSections?.find((section) => section.title === 'Domain Proof')?.lines.join(' '))
+      .toContain('Conclusion');
   });
 
   it('handles infinite target limits', () => {

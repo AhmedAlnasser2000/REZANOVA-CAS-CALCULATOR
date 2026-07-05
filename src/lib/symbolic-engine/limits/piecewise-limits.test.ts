@@ -123,6 +123,8 @@ describe('piecewise limits', () => {
     if (result.kind === 'failure') {
       expect(result.error).toContain('do not agree');
       expect(result.detailSections?.[0]?.title).toBe('Why This Limit Fails');
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Form detected');
+      expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
       expect(result.detailSections?.[0]?.lineParts?.flat()).toContainEqual({
         kind: 'math',
         latex: '\\lim_{x\\to 0^{-}}-1=-1',

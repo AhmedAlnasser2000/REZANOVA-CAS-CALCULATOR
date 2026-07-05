@@ -73,6 +73,9 @@ describe('complex-domain finite limit proofs', () => {
     );
 
     expect(result.kind).toBe('unsupported');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Form detected');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Key calculation');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('Conclusion');
     expect(result.detailSections?.[0]?.lines.join(' ')).toContain('proof-first');
   });
 });

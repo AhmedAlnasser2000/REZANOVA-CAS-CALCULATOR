@@ -156,7 +156,7 @@ function absQuotientSuccessDetails(input: {
       limitTextPart(input.value > 0 ? ' is positive on this side.' : ' is negative on this side.'),
     ],
     [
-      limitTextPart('Calculation: '),
+      limitTextPart('Key calculation: '),
       limitMathPart(calculationLatex({
         expressionLatex: input.quotient.expressionLatex,
         variable: input.variable,
@@ -210,7 +210,7 @@ function absQuotientFailureDetails(input: {
       })),
       limitTextPart('.'),
     ],
-    [limitTextPart('The one-sided limits are different, so the two-sided limit does not exist.')],
+    [limitTextPart('Conclusion: the one-sided limits are different, so the two-sided limit does not exist.')],
   ])];
 }
 
@@ -291,4 +291,3 @@ export function resolveFiniteAbsSideBehaviorLimit(
     target,
   }));
 }
-

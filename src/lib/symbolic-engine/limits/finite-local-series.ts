@@ -334,6 +334,10 @@ function subtractOneFromSeries(series: CoefficientSeries, variable: string) {
   return setSeriesCoefficient(result, 0, negatedOne, variable) ? result : undefined;
 }
 
+function hasZeroConstantTerm(series: CoefficientSeries) {
+  return !series.has(0);
+}
+
 function localSeries(
   node: unknown,
   target: number,
@@ -460,7 +464,7 @@ function localSeries(
   if ((node[0] === 'Ln' || node[0] === 'Log') && node.length === 2) {
     const argument = localSeries(node[1], target, variable, depth + 1);
     const small = argument ? subtractOneFromSeries(argument, variable) : undefined;
-    if (!small) {
+    if (!small || !hasZeroConstantTerm(small)) {
       return undefined;
     }
     const result: CoefficientSeries = new Map();

@@ -22,7 +22,6 @@ import type {
   LimitTargetKind,
 } from '../../../types/calculator';
 import {
-  domainCheckDetails,
   evaluateBodyAt,
   limitValueToApproxText,
   limitValueToLatex,
@@ -34,13 +33,13 @@ import {
   numericLimitAtInfinity,
   resolveInfiniteLimitHeuristic,
 } from './limit-heuristics';
+import { limitDomainCheckDetails } from './limit-domain-proofs';
 import { derivativeVariableLatex } from '../derivative-target';
 import {
   limitDetailSection,
   limitDetailSectionFromLines,
   limitMathPart,
   limitTextPart,
-  withLimitDetailLineParts,
 } from '../../symbolic-engine/limits/detail-readback';
 
 const LIMIT_TOLERANCE = 1e-4;
@@ -461,7 +460,12 @@ export function evaluateFiniteLimitFromAst(input: {
       return {
         warnings: [],
         error: input.messages.oneSidedDomainError?.(domainProbe.side) ?? input.messages.unstableError,
-        detailSections: withLimitDetailLineParts(domainCheckDetails(undefined, domainProbe.result)),
+        detailSections: limitDomainCheckDetails({
+          check: domainProbe.result,
+          variable: input.variable,
+          target: input.target,
+          side: domainProbe.side,
+        }),
       };
     }
 
@@ -471,7 +475,12 @@ export function evaluateFiniteLimitFromAst(input: {
         return {
           warnings: [],
           error: input.messages.oneSidedDomainError?.('left') ?? input.messages.unstableError,
-          detailSections: withLimitDetailLineParts(domainCheckDetails(undefined, left)),
+          detailSections: limitDomainCheckDetails({
+            check: left,
+            variable: input.variable,
+            target: input.target,
+            side: 'left',
+          }),
         };
       }
       const right = checkOneSidedRealDomain({ node: input.body, variable: input.variable, target: input.target, direction: 'right' });
@@ -479,7 +488,12 @@ export function evaluateFiniteLimitFromAst(input: {
         return {
           warnings: [],
           error: input.messages.oneSidedDomainError?.('right') ?? input.messages.unstableError,
-          detailSections: withLimitDetailLineParts(domainCheckDetails(undefined, right)),
+          detailSections: limitDomainCheckDetails({
+            check: right,
+            variable: input.variable,
+            target: input.target,
+            side: 'right',
+          }),
         };
       }
     }

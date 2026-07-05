@@ -25,10 +25,13 @@ function complexUnsupportedDetail(reason: string): DisplayDetailSection[] {
   return [
     limitDetailSection('Complex Domain', [
       [
-        limitTextPart(reason),
+        limitTextPart('Form detected: finite complex-domain boundary.'),
       ],
       [
-        limitTextPart('Complex mode is proof-first for limits, so this route stops instead of guessing from numeric samples.'),
+        limitTextPart(`Key calculation: ${reason}`),
+      ],
+      [
+        limitTextPart('Conclusion: Complex mode is proof-first for limits, so this route stops instead of guessing from numeric samples.'),
       ],
     ]),
   ];
@@ -162,10 +165,13 @@ function principalSqrtDetails(input: {
   return [
     limitDetailSection('Complex Domain', [
       [
-        limitTextPart('Complex mode uses the principal square-root branch for this recognized boundary form.'),
+        limitTextPart('Form detected: recognized principal square-root boundary.'),
+      ],
+      [
+        limitTextPart('Branch: Complex mode uses the principal square-root branch for this form.'),
       ],
       ...input.result.radicands.map((radicand, index) => [
-        limitTextPart('Radicand check: '),
+        limitTextPart('Key calculation: '),
         limitMathPart(`\\lim_{${input.variable}\\to ${targetLatex}}${radicand}=0`),
         limitTextPart(', so '),
         limitMathPart(input.result.radicals[index] ?? `\\sqrt{${radicand}}`),
