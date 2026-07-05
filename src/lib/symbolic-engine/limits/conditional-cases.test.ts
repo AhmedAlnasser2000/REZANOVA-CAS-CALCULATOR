@@ -52,7 +52,7 @@ describe('limits conditional case surface', () => {
     }
 
     expect(result.exactLatex).toBe(
-      'L\\in\\begin{cases}\\infty,&\\substack{a>0}\\\\0,&\\substack{a=0}\\\\-\\infty,&\\substack{a<0}\\end{cases}',
+      'L=\\begin{cases}\\infty,&a>0\\\\0,&a=0\\\\-\\infty,&a<0\\end{cases}',
     );
     expect(result.branchDrivers.map((entry) => entry.latex)).toEqual(['a']);
     expect(result.rowCount).toBe(3);
@@ -66,7 +66,7 @@ describe('limits conditional case surface', () => {
     });
   });
 
-  it('stays compatible with existing case-math answer rendering', () => {
+  it('renders small limit cases directly instead of as guarded formula cases', () => {
     const result = buildLimitConditionalCases({ rows: signRows('a') });
     if (!result.ok) {
       throw new Error(result.error);
@@ -81,9 +81,69 @@ describe('limits conditional case surface', () => {
     };
     const answer = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
 
+    expect(answer?.renderKind).toBe('math');
+    expect(answer?.latex).toBe(
+      'L=\\begin{cases}\\infty,&a>0\\\\0,&a=0\\\\-\\infty,&a<0\\end{cases}',
+    );
+    expect(answer?.countSummary).toBeUndefined();
+  });
+
+  it('hands larger limit case answers to the compact case viewer from equality latex', () => {
+    const coefficient = driver('a');
+    const rows = Array.from({ length: 7 }, (_, index) => ({
+      valueLatex: `${index}`,
+      conditions: [{ kind: 'positive' as const, driver: coefficient }],
+    }));
+    const result = buildLimitConditionalCases({ rows });
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+
+    const outcome = {
+      kind: 'success' as const,
+      title: 'Limit',
+      value: 0,
+      exactLatex: result.exactLatex,
+      detailSections: result.detailSections,
+      solutionKind: 'exact-symbolic' as const,
+      tags: [],
+      warnings: [],
+    };
+    const answer = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+
     expect(answer?.renderKind).toBe('caseMath');
-    expect(answer?.text).toBe('L\\in');
-    expect(answer?.lines?.map((line) => line.conditionLatex)).toEqual(['a>0', 'a=0', 'a<0']);
+    expect(answer?.text).toBe('L=');
+    expect(answer?.countSummary?.guardedRowCount).toBe(7);
+  });
+
+  it('deduplicates compact proof rows', () => {
+    const coefficient = driver('a');
+    const repeatedProof = [
+      { kind: 'text' as const, text: 'Leading term ' },
+      { kind: 'math' as const, latex: 'ax' },
+      { kind: 'text' as const, text: ' controls this branch.' },
+    ];
+    const result = buildLimitConditionalCases({
+      rows: [
+        {
+          valueLatex: '\\infty',
+          conditions: [{ kind: 'positive', driver: coefficient }],
+          proofRows: [repeatedProof],
+        },
+        {
+          valueLatex: '-\\infty',
+          conditions: [{ kind: 'negative', driver: coefficient }],
+          proofRows: [repeatedProof],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+    const proofSection = result.detailSections.find((section) => section.title === 'Limit Case Proof');
+    expect(proofSection?.lineParts).toHaveLength(1);
   });
 
   it('allows at most two symbolic branch drivers', () => {

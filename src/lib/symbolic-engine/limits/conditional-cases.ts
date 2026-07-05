@@ -71,7 +71,7 @@ function caseConditionLatex(conditions: readonly LimitAsymptoticCondition[]) {
 
 function caseRowsLatex(rows: readonly LimitConditionalCaseRow[]) {
   return rows
-    .map((row) => `${row.valueLatex},&\\substack{${caseConditionLatex(row.conditions)}}`)
+    .map((row) => `${row.valueLatex},&${caseConditionLatex(row.conditions)}`)
     .join('\\\\');
 }
 
@@ -88,7 +88,17 @@ function caseDetailSection(rows: readonly LimitConditionalCaseRow[]) {
 }
 
 function caseProofSection(rows: readonly LimitConditionalCaseRow[]) {
-  const rowsWithProof = rows.flatMap((row) => row.proofRows ?? []);
+  const seen = new Set<string>();
+  const rowsWithProof = rows
+    .flatMap((row) => row.proofRows ?? [])
+    .filter((row) => {
+      const key = JSON.stringify(row);
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
   if (rowsWithProof.length > 0) {
     return limitDetailSection('Limit Case Proof', rowsWithProof);
   }
@@ -143,7 +153,7 @@ export function buildLimitConditionalCases(input: {
   }
 
   const answerTargetLatex = input.answerTargetLatex ?? 'L';
-  const exactLatex = `${answerTargetLatex}\\in\\begin{cases}${caseRowsLatex(input.rows)}\\end{cases}`;
+  const exactLatex = `${answerTargetLatex}=\\begin{cases}${caseRowsLatex(input.rows)}\\end{cases}`;
   return {
     ok: true,
     exactLatex,

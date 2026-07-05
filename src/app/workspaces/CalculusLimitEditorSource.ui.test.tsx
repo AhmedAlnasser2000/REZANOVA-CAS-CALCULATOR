@@ -368,6 +368,27 @@ describe('Calculus limit editor source', () => {
     expect(screen.getByTestId('main-editor').getAttribute('data-value')).toContain('\\lim_{t\\to 2}');
   });
 
+  it('canonicalizes friendly infinity spellings in piecewise limit controls', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; -x otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    const approachesInput = screen.getByLabelText('Limit approaches');
+    await user.clear(approachesInput);
+    await user.type(approachesInput, 'infinty');
+    fireEvent.blur(approachesInput);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Limit approaches')).toHaveValue('\\infty');
+      expect(screen.getByTestId('main-editor')).toHaveAttribute(
+        'data-value',
+        '\\lim_{x\\to \\infty}\\begin{cases}x&x<0\\\\-x&\\text{otherwise}\\end{cases}',
+      );
+    });
+  });
+
   it('removes the whole piecewise block from the structured editor', async () => {
     const { user } = await renderAppMain();
 
@@ -413,7 +434,7 @@ describe('Calculus limit editor source', () => {
     });
   });
 
-  it('shows guarded parameter cases when symbolic infinity coefficients vanish', async () => {
+  it('renders small parameter case answers directly without guarded-row wording', async () => {
     const { user } = await renderAppMain();
 
     await openCalculusTool(user, 'Limits', 'Limit');
@@ -423,8 +444,9 @@ describe('Calculus limit editor source', () => {
     await waitForDisplayOutcomeSuccess();
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
     const answer = screen.getByTestId('display-outcome-answer-block');
-    expect(answer).toHaveTextContent('guarded rows');
-    expect(answer).toHaveTextContent('Formula cases paused for responsiveness');
+    expect(answer).not.toHaveTextContent('guarded rows');
+    expect(answer).not.toHaveTextContent('Formula cases paused for responsiveness');
+    expect(answer.querySelector('[data-raw-latex]')?.getAttribute('data-raw-latex')).toContain('L=\\begin{cases}');
     const details = await screen.findByTestId('display-outcome-detail-sections');
     expect(details).toHaveTextContent('Limit Cases');
     expect(details).toHaveTextContent('Limit Case Proof');

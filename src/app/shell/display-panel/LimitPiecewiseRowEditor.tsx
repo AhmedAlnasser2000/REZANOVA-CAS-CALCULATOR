@@ -35,6 +35,20 @@ function cleanConditionInput(value: string) {
   return value.replace(/^(\s*)if\b\s*/iu, '$1');
 }
 
+function normalizeLimitTargetDraft(value: string) {
+  const trimmed = value.trim();
+  const compact = trimmed.replace(/\s+/gu, '').replaceAll('∞', '\\infty').toLowerCase();
+  const withoutPlus = compact.startsWith('+') ? compact.slice(1) : compact;
+  if (['\\infty', 'infty', 'infinity', 'infinty'].includes(withoutPlus)) {
+    return '\\infty';
+  }
+  const withoutMinus = compact.startsWith('-') ? compact.slice(1) : '';
+  if (['\\infty', 'infty', 'infinity', 'infinty'].includes(withoutMinus)) {
+    return '-\\infty';
+  }
+  return trimmed;
+}
+
 function normalizeRows(rows: readonly LimitPiecewiseRow[]) {
   const otherwise = rows.find((row) => row.otherwise);
   const regularRows = rows.filter((row) => !row.otherwise);
@@ -187,7 +201,7 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
         return;
       }
       const nextVariable = nextVariableDraft.trim();
-      const nextTarget = nextTargetDraft.trim();
+      const nextTarget = normalizeLimitTargetDraft(nextTargetDraft);
       if (!nextVariable || !nextTarget) {
         setVariableDraft(request.variableLatex);
         setTargetDraft(targetInputValue(request));

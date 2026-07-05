@@ -71,7 +71,11 @@ function stripFinalPeriod(text: string) {
 }
 
 function looksLikeMathValue(text: string) {
-  return /[\\=^/]/u.test(text);
+  const cleaned = text.trim();
+  if (/[\\=^()[\]{}0-9]/u.test(cleaned)) {
+    return true;
+  }
+  return /^[A-Za-z]\s*\/\s*[A-Za-z]$/u.test(cleaned);
 }
 
 function mathValueLineParts(
@@ -83,6 +87,20 @@ function mathValueLineParts(
     limitTextPart(prefix),
     limitMathPart(normalizeSmallNumericLatex(stripFinalPeriod(value.trim()))),
     limitTextPart(suffix),
+  ];
+}
+
+function proseOrMathValueLineParts(
+  prefix: string,
+  value: string,
+): DisplayDetailLinePart[] {
+  const cleaned = stripFinalPeriod(value.trim());
+  if (looksLikeMathValue(cleaned)) {
+    return mathValueLineParts(prefix, cleaned);
+  }
+  return [
+    limitTextPart(prefix),
+    limitTextPart(`${cleaned}.`),
   ];
 }
 
@@ -99,12 +117,30 @@ function inferLimitDetailLineParts(line: string): DisplayDetailLinePart[] | unde
 
   const rewrite = line.match(/^Rewrite:\s*(.+)\.$/u);
   if (rewrite) {
-    return mathValueLineParts('Rewrite: ', rewrite[1]);
+    return proseOrMathValueLineParts('Rewrite: ', rewrite[1]);
   }
 
   const rewriteEquivalent = line.match(/^Rewrite\/equivalent:\s*(.+)\.$/u);
   if (rewriteEquivalent) {
     const value = rewriteEquivalent[1];
+    const dominantScaleWithScale = value.match(/^dominant scale\s+(.+)\s+with coefficient\s+(.+)$/u);
+    if (dominantScaleWithScale) {
+      return [
+        limitTextPart('Rewrite/equivalent: dominant scale '),
+        limitMathPart(normalizeSmallNumericLatex(dominantScaleWithScale[1])),
+        limitTextPart(' with coefficient '),
+        limitMathPart(normalizeSmallNumericLatex(dominantScaleWithScale[2])),
+        limitTextPart('.'),
+      ];
+    }
+    const dominantScale = value.match(/^dominant scale with coefficient\s+(.+)$/u);
+    if (dominantScale) {
+      return [
+        limitTextPart('Rewrite/equivalent: dominant scale with coefficient '),
+        limitMathPart(normalizeSmallNumericLatex(dominantScale[1])),
+        limitTextPart('.'),
+      ];
+    }
     return looksLikeMathValue(value)
       ? mathValueLineParts('Rewrite/equivalent: ', value)
       : undefined;

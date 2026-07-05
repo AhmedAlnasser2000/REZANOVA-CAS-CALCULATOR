@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-06 - CALCULUS-LIMITS-READBACK-SANITY2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limit conditional case answers render as direct `L = cases` math for up to six rows; larger case answers keep the compact Formula Viewer handoff. Limit-owned method cards should use structured text/math parts for rewrite evidence so prose such as common-denominator or conjugate rewrites does not appear as glued math text.
+
 ## 2026-07-06 - COMPLEX-EQUATION-POLYNOMIAL-HARDENING1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The five-move Complex Equation hardening track stays TypeScript-only: no MPSolve, WASM, or GPL solver dependency is bundled or required. The Complex numeric polynomial path may describe `global-polynomial` scope with hardened residual, backward-error, root-slot, cluster, and pole evidence, but must not call those approximate results formal certificates.
