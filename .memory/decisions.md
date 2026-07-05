@@ -20,30 +20,6 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits cancellation rewrites now route through a single Limits-owned retry spine before algorithm-specific leading-term or scale comparison. V1 centralizes finite common-denominator rewrites, positive-infinity radical conjugates, and safe log/power transforms; it does not import Equation solving logic or become a broad algebra engine.
 
-## 2026-07-03 - CALCULUS-LIMITS-PIECEWISE-LIMITS1
-
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a narrow Piecewise branch-selection layer for simple comparison conditions in friendly `piecewise(...)` and LaTeX `cases` input. Branches feed existing finite/infinity limit engines; Equation inequality solving, broad Boolean condition proving, and Piecewise theorem proving remain out of scope.
-
-## 2026-07-03 - CALCULUS-LIMITS-ABS-SIDE-BEHAVIOR1
-
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a narrow absolute-value side-behavior route for affine absolute-value carriers at their zero. It may prove one-sided signs and two-sided disagreement through detail cards; broad Piecewise/inequality solving and non-affine absolute-value theorem proving remain out of scope.
-
-## 2026-07-03 - CALCULUS-LIMITS-MRV-LITE-ENGINE1
-
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a capped MRV-lite route for positive-infinity exponential/logarithmic scale comparisons. V1 compares collected exponential factors by flattened exponent differences, converts plain logarithmic exponent differences into ordinary powers, and stops short of full MRV-set construction, symbolic targets, or Gruntz.
-
-## 2026-07-03 - CALCULUS-LIMITS-COMPLEX-PRINCIPAL-PROOFS2
-
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Limit mode remains proof-first and narrow. It may prove recognized principal square-root boundary carriers whose radicand tends to zero, plus finite companion terms; unsupported branch, quotient, and non-radical complex boundary forms must stop with controlled guidance rather than numeric guessing.
-
-## 2026-07-03 - CALCULUS-LIMITS-ASYMPTOTIC-ORCHESTRATION-HARDENING1
-
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Natural Limit numeric fallback is explicitly route-owned and narrow: direct substitution and finite-pole side-evidence routes may use controlled numeric fallback, while exact symbolic/proof routes such as local-equivalent, exact-local-algebra, infinity-asymptotic, Piecewise, absolute-value side behavior, squeeze/oscillation, and MRV-lite must resolve symbolically or stop with controlled proof/diagnostic details.
-
-## 2026-07-03 - CALCULUS-LIMITS-CONDITIONAL-INFINITY-CASES1
-
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may branch on target-free symbolic leading coefficients for narrow infinity polynomial-scale cases, using the existing conditional case surface. This is limited to coefficient signs/zero fallthrough for powers of the limit variable and must not import Equation inequality solving or claim broad symbolic target/Gruntz behavior.
-
 ## 2026-07-02 - EQUATION-SOLVER-CARD-CREDIBILITY-CONSISTENCY1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation Real mode must not display complex-only roots; it should stop with no-real-root guidance and point to Complex On. Numeric/detail card taxonomy must keep hard domain facts, periodic structure, probe evidence, search diagnostics, breakpoints, extraneous candidates, and confidence wording in their own categories, with target-dependent branch guards scoped to branch/candidate details when safe.
@@ -1780,6 +1756,30 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may use a pattern-based `squeeze-oscillation` route for classic finite-target bounded-oscillation forms. Successful products expose squeeze-theorem method details, and unsupported pure oscillation examples expose proof cards; this remains educational pattern handling, not a broad theorem prover.
 
+## 2026-07-03 - CALCULUS-LIMITS-PIECEWISE-LIMITS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a narrow Piecewise branch-selection layer for simple comparison conditions in friendly `piecewise(...)` and LaTeX `cases` input. Branches feed existing finite/infinity limit engines; Equation inequality solving, broad Boolean condition proving, and Piecewise theorem proving remain out of scope.
+
+## 2026-07-03 - CALCULUS-LIMITS-ABS-SIDE-BEHAVIOR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a narrow absolute-value side-behavior route for affine absolute-value carriers at their zero. It may prove one-sided signs and two-sided disagreement through detail cards; broad Piecewise/inequality solving and non-affine absolute-value theorem proving remain out of scope.
+
+## 2026-07-03 - CALCULUS-LIMITS-MRV-LITE-ENGINE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits owns a capped MRV-lite route for positive-infinity exponential/logarithmic scale comparisons. V1 compares collected exponential factors by flattened exponent differences, converts plain logarithmic exponent differences into ordinary powers, and stops short of full MRV-set construction, symbolic targets, or Gruntz.
+
+## 2026-07-03 - CALCULUS-LIMITS-COMPLEX-PRINCIPAL-PROOFS2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Limit mode remains proof-first and narrow. It may prove recognized principal square-root boundary carriers whose radicand tends to zero, plus finite companion terms; unsupported branch, quotient, and non-radical complex boundary forms must stop with controlled guidance rather than numeric guessing.
+
+## 2026-07-03 - CALCULUS-LIMITS-ASYMPTOTIC-ORCHESTRATION-HARDENING1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Natural Limit numeric fallback is explicitly route-owned and narrow: direct substitution and finite-pole side-evidence routes may use controlled numeric fallback, while exact symbolic/proof routes such as local-equivalent, exact-local-algebra, infinity-asymptotic, Piecewise, absolute-value side behavior, squeeze/oscillation, and MRV-lite must resolve symbolically or stop with controlled proof/diagnostic details.
+
+## 2026-07-03 - CALCULUS-LIMITS-CONDITIONAL-INFINITY-CASES1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits may branch on target-free symbolic leading coefficients for narrow infinity polynomial-scale cases, using the existing conditional case surface. This is limited to coefficient signs/zero fallthrough for powers of the limit variable and must not import Equation inequality solving or claim broad symbolic target/Gruntz behavior.
+
 ## 2026-07-02 - LINEAR-ALGEBRA-EDITOR-TRUST-MILESTONE1 gate A
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector variable hints are mode-aware UI analysis: supported linear-algebra functions, LaTeX matrix environments, and structural operands (`A/B/x`, `u/v`) are editor syntax, not generic variables. Equation and Calculate keep their existing raw adjacent-letter ambiguity warnings.
@@ -1811,6 +1811,10 @@
 ## 2026-07-03 - EQUATION-CORPUS-LEDGER1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation benchmarks use one canonical unique case as the runnable source of truth per mathematical case. Duplicate textbook or reference sightings are recorded as duplicate ledger rows attached to that canonical `case_id` and must not become separate run targets in the same sweep.
+
+## 2026-07-03 - EQUATION-CORPUS-ALGTRIG-FIX1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Fixed corpus findings stay as historical scan evidence. A later fix must append a new `run_id` result and mark the finding with `resolution_status`, `resolution_run_id`, and `resolution_notes` instead of deleting or rewriting the original failed run.
 
 ## 2026-07-03 - ALGEBRAIC-GENUS1-SECOND-KIND-ROW-COEFFICIENT-EXTRACTION1
 
@@ -1864,6 +1868,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guide is a protected singleton app-level page surface, not a calculator-shell mode surface. Opening Guide focuses or creates `guide-page`, preserves the active calculator workspace/mode, uses null Order of Execution runtime context, suppresses quick inspectors, and keeps Notebook/import/export/persistence work deferred to later milestones.
 
+## 2026-07-04 - EQUATION-HISTORY-ROUTING1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation guided-route history replay should persist typed `equationSeed` payloads and trust them before result-text inference. Structured display metadata such as `systemReadback` should be persisted with the history entry when it is required to replay the same answer-card presentation, rather than reconstructing clean rows from flattened result LaTeX.
+
 ## 2026-07-04 - INPUT-PASTE-CANONICALIZATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Plain-text math paste normalization belongs in the input/editor canonicalization layer. Safe top-level ASCII `/` and `*` plus textbook function powers may be converted before insertion, while solver lanes still own mathematical adoption, route facts, and backchecks.
@@ -1875,6 +1883,10 @@
 ## 2026-07-04 - LINEAR-ALGEBRA-TEMPLATE-NATURAL-INPUT1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Plain list syntax in Matrix/Vector is an import convenience only. Successful editor parses canonicalize editor/request/preview/history/readback to natural LaTeX, while MathLive matrix/template parsing stays local to Linear Algebra with no Equation import or automatic Equation routing.
+
+## 2026-07-04 - EQUATION-COMPLEX-COMPANION-BENCHMARK1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Equation corpus Complex-On coverage is companion run evidence on the same canonical `case_id`, not a duplicate unique case. Applicable benchmark rows may carry `complex_companion_policy`, and Complex companion run results must record `domain_intent:"complex"`, `companion_run_kind:"complex-companion"`, and the real-domain run that triggered the check.
 
 ## 2026-07-04 - CALCULUS-INTEGRATION-NEXT350-STUDY1
 
