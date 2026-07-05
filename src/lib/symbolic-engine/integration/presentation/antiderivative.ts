@@ -94,12 +94,28 @@ function normalizeFunctionWrapperGroups(latex: string) {
   return next;
 }
 
+function normalizeSimpleFractionalPowerGroups(latex: string) {
+  return latex
+    .replace(
+      /\\left\(\\sqrt\{([A-Za-z])\}\^\{(-?\d+)\}\\right\)/g,
+      (_match, baseLatex: string, numeratorText: string) =>
+        `${baseLatex}^{\\frac{${numeratorText}}{2}}`,
+    )
+    .replace(
+      /\\left\(([A-Za-z])\^\{\\frac\{(-?\d+)\}\{(-?\d+)\}\}\\right\)/g,
+      (_match, baseLatex: string, numeratorText: string, denominatorText: string) =>
+        `${baseLatex}^{\\frac{${numeratorText}}{${denominatorText}}}`,
+    );
+}
+
 function normalizePresentationLatex(latex: string) {
-  return normalizeFunctionWrapperGroups(
-    normalizeReciprocalFractionProducts(
-      normalizeNestedCoefficientFractions(
-        normalizeScalarTimesMatchingFraction(
-          normalizeCoefficientAdjacency(latex),
+  return normalizeSimpleFractionalPowerGroups(
+    normalizeFunctionWrapperGroups(
+      normalizeReciprocalFractionProducts(
+        normalizeNestedCoefficientFractions(
+          normalizeScalarTimesMatchingFraction(
+            normalizeCoefficientAdjacency(latex),
+          ),
         ),
       ),
     ),

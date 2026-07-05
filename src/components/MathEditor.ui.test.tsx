@@ -143,7 +143,7 @@ describe('MathEditor typing behavior', () => {
     });
 
     expect(field.getValue()).toBe(
-      '\\csc(2x+3)^2+\\exponentialE^{x/2+1}+(1/2)^{3x-1}+\\operatorname{Si}(2x+1)+\\operatorname{FresnelC}(x)+\\operatorname{EllipticPi}(n,x,m)',
+      '\\csc(2x+3)^2+\\exponentialE^{\\frac{x}{2}+1}+(1/2)^{3x-1}+\\operatorname{Si}(2x+1)+\\operatorname{FresnelC}(x)+\\operatorname{EllipticPi}(n,x,m)',
     );
   });
 
@@ -224,6 +224,30 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe(
       '\\frac{1}{2}\\cdot (\\csc^{2}(x)-\\csc(x)\\cot(x))+\\frac{\\sqrt{x}}{2}',
     );
+  });
+
+  it('canonicalizes pasted slash fractions inside grouped exponents before insertion', () => {
+    render(
+      <MathEditor
+        value=""
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="calculus"
+        screenHint="indefiniteIntegral"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+    };
+
+    fireEvent.paste(field, {
+      clipboardData: {
+        getData: () => 'sqrt(x)+x^(1/3)',
+      },
+    });
+
+    expect(field.getValue()).toBe('\\sqrt{x}+x^{\\frac{1}{3}}');
   });
 
   it('canonicalizes pasted Calculus integration function names before insertion', () => {

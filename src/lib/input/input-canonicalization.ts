@@ -320,7 +320,7 @@ function normalizeUngroupedNumericPowers(source: string, changes: Canonicalizati
   });
 }
 
-function normalizeGroupedPowers(source: string, changes: CanonicalizationChange[]) {
+function normalizeGroupedPowers(source: string, changes: CanonicalizationChange[], options: CanonicalizeSegmentOptions = {}) {
   let result = '';
   let index = 0;
 
@@ -344,7 +344,7 @@ function normalizeGroupedPowers(source: string, changes: CanonicalizationChange[
     }
 
     const before = source.slice(index, grouped.nextIndex);
-    const after = `^{${grouped.body}}`;
+    const after = `^{${canonicalizeSegment(grouped.body, changes, options)}}`;
     changes.push({
       kind: 'operator-token',
       before,
@@ -879,7 +879,7 @@ export function canonicalizeMathInput(
   const relationNormalized = normalizeRelationOperatorTokens(derivativeNormalized, changes);
   const exponentialNormalized = normalizeExponentialEBase(relationNormalized, changes);
   const numericPowerNormalized = normalizeUngroupedNumericPowers(exponentialNormalized, changes);
-  const groupedPowerNormalized = normalizeGroupedPowers(numericPowerNormalized, changes);
+  const groupedPowerNormalized = normalizeGroupedPowers(numericPowerNormalized, changes, { normalizeImaginaryUnit: context.mode === 'equation', enableSpecialFunctions: specialFunctionContext });
   const spacingNormalized = normalizeHarmlessMathSpacing(groupedPowerNormalized);
   const canonicalLatex = canonicalizeSegment(spacingNormalized, changes, {
     normalizeImaginaryUnit: context.mode === 'equation',

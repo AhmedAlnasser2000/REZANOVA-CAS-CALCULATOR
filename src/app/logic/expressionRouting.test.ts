@@ -273,6 +273,40 @@ describe('expressionRouting', () => {
     );
   });
 
+  it('canonicalizes pasted slash fractions inside grouped exponents before app paste insertion', async () => {
+    const insert = vi.fn();
+    const focus = vi.fn();
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        clipboard: {
+          readText: vi.fn().mockResolvedValue('sqrt(x)+x^(1/3)'),
+        },
+      },
+      configurable: true,
+    });
+
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen: false,
+      currentMode: 'calculus',
+      geometryEditorIsEditable: false,
+      statisticsEditorIsEditable: false,
+      trigEditorIsEditable: false,
+      equationScreen: 'symbolic',
+      activeFieldRef: { current: { focus, insert } },
+      geometryDraftFieldRef: { current: null },
+      statisticsDraftFieldRef: { current: null },
+      trigDraftFieldRef: { current: null },
+      focusGeometryEditor: vi.fn(),
+      focusStatisticsEditor: vi.fn(),
+      focusTrigEditor: vi.fn(),
+      setClipboardNotice: vi.fn(),
+      loadLatexIntoEditor: vi.fn(),
+    });
+
+    expect(insert).toHaveBeenCalledWith('\\sqrt{x}+x^{\\frac{1}{3}}');
+  });
+
   it('canonicalizes pasted Calculus integration function names before app paste insertion', async () => {
     const insert = vi.fn();
     const focus = vi.fn();

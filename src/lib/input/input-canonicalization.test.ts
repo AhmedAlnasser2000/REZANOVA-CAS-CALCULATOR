@@ -453,9 +453,17 @@ describe('canonicalizeMathInput', () => {
       screenHint: 'indefinite-integral',
       liveAssist: true,
     });
+    const fractionalPower = canonicalizeMathInput('sqrt(x)+x^(1/3)', {
+      mode: 'calculus',
+      screenHint: 'indefinite-integral',
+      liveAssist: true,
+    });
 
-    expect(exponential.ok && exponential.canonicalLatex).toBe('\\exponentialE^{x/2+1}');
+    expect(exponential.ok && exponential.canonicalLatex).toBe('\\exponentialE^{\\frac{x}{2}+1}');
     expect(rationalBase.ok && rationalBase.canonicalLatex).toBe('(1/2)^{3x-1}');
+    expect(fractionalPower.ok && fractionalPower.canonicalLatex).toBe(
+      '\\sqrt{x}+x^{\\frac{1}{3}}',
+    );
   });
 
   it('normalizes copied and unicode relation variants before routing', () => {

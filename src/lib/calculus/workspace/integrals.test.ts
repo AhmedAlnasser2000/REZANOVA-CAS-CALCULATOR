@@ -359,8 +359,10 @@ describe('calculus integrals', () => {
       bodyLatex: String.raw`\sqrt{x}+x^{1/3}`,
     });
     expect(rootSum.error).toBeUndefined();
-    expect(rootSum.exactLatex).toContain(String.raw`\frac{2}{3}`);
-    expect(rootSum.exactLatex).toContain(String.raw`\frac{3}{4}`);
+    expect(rootSum.exactLatex).toBe(
+      String.raw`\frac{2}{3}x^{\frac{3}{2}}+\frac{3}{4}x^{\frac{4}{3}}+C`,
+    );
+    expect(rootSum.exactLatex).not.toContain(String.raw`\sqrt{x}^{3}`);
     expect(rootSum.exactLatex).not.toMatch(/\d+\\frac/u);
     expect(rootSum.exactLatex?.endsWith('+C')).toBe(true);
     expect(rootSum.answerRows?.rows).toEqual([
