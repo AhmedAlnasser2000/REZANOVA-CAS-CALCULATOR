@@ -25,6 +25,7 @@ export type IntegrationCandidateFailureClass =
   | 'unsupported-family'
   | 'missing-derivative-factor'
   | 'blocked-polynomial-prerequisite'
+  | 'performance-boundary'
   | 'not-verified'
   | 'not-symbolic';
 

@@ -4,10 +4,12 @@ import { checkRealIntervalSafety, type IntervalDomainCheck } from '../../algebra
 import { assumptionFactsFromDomainCheck } from '../../algebra/assumption-adapters';
 import {
   buildComputeEngineIntegrationCandidate,
+  collectIntegrationDomainHazards,
   INTEGRATION_RELATION_INTEGRAND_ERROR,
   resolveSymbolicIntegralFromAst,
   type IntegrationCandidateMetadata,
 } from '../../symbolic-engine/integration';
+import { parseAffine } from '../../symbolic-engine/patterns';
 import type { DisplayDetailSection, ResultOrigin } from '../../../types/calculator';
 import { integrateAdaptiveSimpson } from './adaptive-simpson';
 import { backcheckAntiderivative } from './verification';
@@ -189,7 +191,9 @@ export function resolveIndefiniteIntegralFromAst(input: {
   unsupportedError: string;
   normalizeRuleLatex?: boolean;
   recognitionGates?: boolean;
+  performanceBudgetMs?: number;
 }): CalculusCoreEvaluation {
+  const startedAt = Date.now();
   const symbolicEngine = resolveSymbolicIntegralFromAst(input.body, input.variable, {
     recognitionGates: input.recognitionGates,
   });
@@ -234,6 +238,14 @@ export function resolveIndefiniteIntegralFromAst(input: {
     return computed;
   }
 
+  const performanceBoundary = integrationPerformanceBoundary(input.body, input.variable, {
+    elapsedMs: Date.now() - startedAt,
+    budgetMs: input.performanceBudgetMs,
+  });
+  if (performanceBoundary) {
+    return performanceBoundary;
+  }
+
   if (
     input.computeEngineFallback
     && shouldAttemptComputeEngineIndefiniteFallback(input.body, input.variable)
@@ -258,6 +270,114 @@ export function resolveIndefiniteIntegralFromAst(input: {
       : input.unsupportedError,
     integrationCandidate: symbolicEngine.candidate,
     detailSections: symbolicEngine.detailSections,
+  };
+}
+
+function scalarNumber(node: unknown): number | undefined {
+  if (typeof node === 'number' && Number.isFinite(node)) {
+    return node;
+  }
+  return undefined;
+}
+
+function isSquareOfAffine(node: unknown, variable: string) {
+  return Array.isArray(node)
+    && node[0] === 'Power'
+    && scalarNumber(node[2]) === 2
+    && parseAffine(node[1], variable);
+}
+
+function signedRadicandTerms(node: unknown, sign: 1 | -1 = 1): Array<{ node: unknown; sign: 1 | -1 }> {
+  if (Array.isArray(node) && node[0] === 'Add') {
+    return node.slice(1).flatMap((term) => signedRadicandTerms(term, sign));
+  }
+
+  if (Array.isArray(node) && node[0] === 'Subtract') {
+    const [first, ...rest] = node.slice(1);
+    return [
+      ...(first === undefined ? [] : signedRadicandTerms(first, sign)),
+      ...rest.flatMap((term) => signedRadicandTerms(term, sign === 1 ? -1 : 1)),
+    ];
+  }
+
+  if (Array.isArray(node) && node[0] === 'Negate' && node.length === 2) {
+    return signedRadicandTerms(node[1], sign === 1 ? -1 : 1);
+  }
+
+  return [{ node, sign }];
+}
+
+function isAffineTrigSubstitutionRadicand(node: unknown, variable: string) {
+  let constantCount = 0;
+  let squareCount = 0;
+
+  for (const term of signedRadicandTerms(node)) {
+    if (scalarNumber(term.node) !== undefined) {
+      constantCount += 1;
+      continue;
+    }
+    if (isSquareOfAffine(term.node, variable)) {
+      squareCount += 1;
+      continue;
+    }
+    return false;
+  }
+
+  return constantCount === 1 && squareCount === 1;
+}
+
+function containsAffineTrigSubstitutionRadical(node: unknown, variable: string): boolean {
+  if (!Array.isArray(node) || node.length === 0) {
+    return false;
+  }
+
+  if (node[0] === 'Sqrt' && node.length === 2 && isAffineTrigSubstitutionRadicand(node[1], variable)) {
+    return true;
+  }
+
+  return node.slice(1).some((child) => containsAffineTrigSubstitutionRadical(child, variable));
+}
+
+function performanceBoundaryCandidate(body: unknown): IntegrationCandidateMetadata {
+  return {
+    method: 'unsupported',
+    requiredPrerequisites: ['compute-engine'],
+    blockedPrerequisites: ['compute-engine'],
+    verificationStatus: 'not-attempted',
+    controlledFailureClass: 'performance-boundary',
+    readinessNotes: [
+      'Calculus stopped before invoking a heavy symbolic fallback for this indefinite integral.',
+      'A future local exact route may replace this performance boundary after derivative backcheck.',
+    ],
+    domainHazards: collectIntegrationDomainHazards(body),
+  };
+}
+
+function integrationPerformanceBoundary(
+  body: unknown,
+  variable: string,
+  timing: { elapsedMs: number; budgetMs?: number },
+): CalculusCoreEvaluation | undefined {
+  const exhaustedBudget = timing.budgetMs !== undefined && timing.elapsedMs >= timing.budgetMs;
+  const knownHeavyFamily = containsAffineTrigSubstitutionRadical(body, variable);
+  if (!exhaustedBudget && !knownHeavyFamily) {
+    return undefined;
+  }
+
+  return {
+    warnings: [],
+    error: 'This antiderivative was stopped before a heavy symbolic fallback in Calculus.',
+    integrationCandidate: performanceBoundaryCandidate(body),
+    detailSections: [{
+      title: 'Integration Performance Boundary',
+      lines: [
+        exhaustedBudget
+          ? `Stopped before Compute Engine fallback after using the ${timing.budgetMs} ms integration budget.`
+          : 'Stopped before Compute Engine fallback because this affine trig-substitution radical family is known to be slow without a local route.',
+        'No partial antiderivative was adopted.',
+        'The case remains eligible for a future bounded exact route with derivative backcheck.',
+      ],
+    }],
   };
 }
 

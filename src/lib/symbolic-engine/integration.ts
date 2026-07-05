@@ -6,7 +6,10 @@ export type {
   IntegrationCandidateMethod,
   IntegrationCandidatePrerequisite,
 } from './integration/types';
-export { buildComputeEngineIntegrationCandidate } from './integration/metadata';
+export {
+  buildComputeEngineIntegrationCandidate,
+  collectIntegrationDomainHazards,
+} from './integration/metadata';
 export {
   INTEGRATION_RELATION_INTEGRAND_ERROR,
   resolveSymbolicIntegralFromAst,

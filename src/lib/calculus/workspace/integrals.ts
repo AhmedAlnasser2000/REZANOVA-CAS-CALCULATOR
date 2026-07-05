@@ -26,6 +26,7 @@ import type {
 } from '../../../types/calculator';
 
 const ce = new ComputeEngine();
+const INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS = 10_000;
 type BoxedLike = {
   latex: string;
   json: unknown;
@@ -257,6 +258,7 @@ export function evaluateCalculusIndefiniteIntegral(
       },
       computeEngineOrigin: 'symbolic',
       unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+      performanceBudgetMs: INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS,
     });
     return presentCalculusIndefiniteEvaluation(resolved, integrand.body, variable.id);
   } catch {

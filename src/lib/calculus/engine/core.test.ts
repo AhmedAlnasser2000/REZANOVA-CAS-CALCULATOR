@@ -297,6 +297,28 @@ describe('calculus core', () => {
     expect(fallbackCalled).toBe(false);
   });
 
+  it('stops before heavy fallback when the indefinite integration budget is exhausted', () => {
+    const body = parse('\\sin(x^3)');
+    let fallbackCalled = false;
+
+    const result = resolveIndefiniteIntegralFromAst({
+      body: body.json,
+      variable: 'x',
+      computeEngineFallback: () => {
+        fallbackCalled = true;
+        return { computed: parse('\\int \\sin(x^3)\\,dx'), unresolved: true };
+      },
+      computeEngineOrigin: 'symbolic',
+      unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
+      performanceBudgetMs: 0,
+    });
+
+    expect(result.error).toBe('This antiderivative was stopped before a heavy symbolic fallback in Calculus.');
+    expect(result.integrationCandidate?.controlledFailureClass).toBe('performance-boundary');
+    expect(result.detailSections?.map((section) => section.title)).toContain('Integration Performance Boundary');
+    expect(fallbackCalled).toBe(false);
+  });
+
   it('uses verified antiderivatives for safe finite definite integrals', () => {
     const polynomial = evaluateDefiniteIntegralFromAst({
       body: parse('2x').json,

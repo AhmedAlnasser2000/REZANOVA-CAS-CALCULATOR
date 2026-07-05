@@ -19,6 +19,7 @@
     "test:source-mirrors": "node --test tools/validate-source-mirrors.test.mjs && node tools/validate-source-mirrors.mjs",
     "test:area-studies": "node --test tools/validate-area-studies.test.mjs && node tools/validate-area-studies.mjs",
     "test:calculus-limits-corpus": "node --test tools/validate-calculus-limits-corpus-ledger.test.mjs && node tools/validate-calculus-limits-corpus-ledger.mjs && vitest run src/lib/calculus/limit-ledger-corpus.test.ts",
+    "test:calculus-integration-corpus": "node --test tools/validate-calculus-integration-corpus-ledger.test.mjs && node tools/validate-calculus-integration-corpus-ledger.mjs",
     "test:surface-protocol": "node --test tools/validate-surface-protocol-boundaries.test.mjs && node tools/validate-surface-protocol-boundaries.mjs && vitest run src/lib/surface-protocol/*.test.ts",
     "test:ooe-boundaries": "node --test tools/validate-ooe-boundaries.test.mjs && node tools/validate-ooe-boundaries.mjs",
     "test:compartments-boundaries": "node --test tools/validate-compartment-boundaries.test.mjs && node tools/validate-compartment-boundaries.mjs",
