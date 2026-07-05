@@ -27,6 +27,15 @@ export {
   runEquationModeForIsolatedWorker,
   runEquationModeWithOoePilot,
 } from './equation/run';
+export {
+  DEFAULT_COMPLEX_BENCHMARK_REGION_BOXES,
+  runEquationComplexBenchmarkRegionFallback,
+  type EquationComplexBenchmarkAttempt,
+  type EquationComplexBenchmarkEvidence,
+  type EquationComplexBenchmarkRegionEvidence,
+  type EquationComplexBenchmarkRunResult,
+  type EquationComplexBenchmarkRunStatus,
+} from './equation/complex-benchmark-region-runner';
 export type {
   EquationModeIsolatedWorkerRunResult,
   EquationModeOoePilotRunResult,
