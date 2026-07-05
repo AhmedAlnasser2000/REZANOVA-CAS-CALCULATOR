@@ -55,15 +55,40 @@ describe('Complex principal branch-cut policy', () => {
     expect(rightHalfPlane.detailLines.join(' ')).toContain('does not cross the principal negative-real-axis branch cut');
   });
 
-  it('does not certify branch-cut avoidance for mapped target-dependent arguments', () => {
+  it('certifies real-affine branch pullbacks when the mapped region is safe', () => {
     const report = diagnosePrincipalBranchPolicyForLatex(String.raw`\ln(z+1)`, {
       target: 'z',
       region: { reMin: 1, reMax: 2, imMin: 1, imMax: 2 },
     });
 
-    expect(report.status).toBe('unknown');
+    expect(report.status).toBe('safe');
     expect(report.shouldStop).toBe(false);
-    expect(report.detailLines.join(' ')).toContain('is not a direct target coordinate');
+    expect(report.detailLines.join(' ')).toContain('recognized as a real-affine target map');
+    expect(report.detailLines.join(' ')).toContain('does not cross the principal negative-real-axis branch cut');
+  });
+
+  it('marks unsafe real-affine branch pullbacks that cross the cut', () => {
+    const report = diagnosePrincipalBranchPolicyForLatex(String.raw`\ln(z-1)`, {
+      target: 'z',
+      region: { reMin: -1, reMax: 1, imMin: -0.5, imMax: 0.5 },
+    });
+
+    expect(report.status).toBe('unsafe');
+    expect(report.shouldStop).toBe(true);
+    expect(report.detailLines.join(' ')).toContain('recognized as a real-affine target map');
+    expect(report.detailLines.join(' ')).toContain('principal branch point at 0 after branch pullback');
+  });
+
+  it('fails closed for unsupported broad composed branch pullbacks', () => {
+    const report = diagnosePrincipalBranchPolicyForLatex(String.raw`\ln(z^2+1)`, {
+      target: 'z',
+      region: { reMin: 2, reMax: 3, imMin: 1, imMax: 2 },
+    });
+
+    expect(report.status).toBe('unsafe');
+    expect(report.shouldStop).toBe(true);
+    expect(report.detailLines.join(' ')).toContain('non-affine or unsupported map');
+    expect(report.detailLines.join(' ')).toContain('fails closed');
   });
 
   it('marks direct target regions crossing inverse-trig cuts as unsafe', () => {

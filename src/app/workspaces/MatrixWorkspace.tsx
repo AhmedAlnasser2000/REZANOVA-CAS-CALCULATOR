@@ -16,6 +16,7 @@ type MatrixWorkspaceProps = {
   onAddMatrixValue: () => void;
   onDeleteMatrixValue: (id: string) => void;
   onDuplicateMatrixValue: (id: string) => void;
+  onInsertMatrixName: (name: string) => void;
   onRenameMatrixValue: (id: string, name: string) => void;
   onResizeMatrixValue: (id: string, rows: number, columns: number) => void;
   onSetActiveMatrixValueIds: (leftId: string, rightId: string) => void;
@@ -42,6 +43,7 @@ type MatrixValueCardProps = {
   value: LinearAlgebraMatrixNamedValue;
   onDeleteMatrixValue: MatrixWorkspaceProps['onDeleteMatrixValue'];
   onDuplicateMatrixValue: MatrixWorkspaceProps['onDuplicateMatrixValue'];
+  onInsertMatrixName: MatrixWorkspaceProps['onInsertMatrixName'];
   onRenameMatrixValue: MatrixWorkspaceProps['onRenameMatrixValue'];
   onResizeMatrixValue: MatrixWorkspaceProps['onResizeMatrixValue'];
   onSetActiveMatrixValueIds: MatrixWorkspaceProps['onSetActiveMatrixValueIds'];
@@ -58,6 +60,7 @@ function MatrixValueCard({
   value,
   onDeleteMatrixValue,
   onDuplicateMatrixValue,
+  onInsertMatrixName,
   onRenameMatrixValue,
   onResizeMatrixValue,
   onSetActiveMatrixValueIds,
@@ -127,7 +130,7 @@ function MatrixValueCard({
             ) : null}
           </span>
           {activeRoles.map((role) => (
-            <span className="equation-badge" key={role}>{role}</span>
+            <span className="linear-algebra-active-badge" key={role}>{role}</span>
           ))}
         </div>
         <div className="linear-algebra-size-controls">
@@ -180,6 +183,14 @@ function MatrixValueCard({
           <button
             type="button"
             className="linear-algebra-tool-button"
+            aria-label={`Insert Matrix ${name} in editor`}
+            onClick={() => onInsertMatrixName(name)}
+          >
+            Insert {name}
+          </button>
+          <button
+            type="button"
+            className="linear-algebra-tool-button"
             aria-label={`Duplicate Matrix ${name}`}
             disabled={!canDuplicate}
             onClick={() => onDuplicateMatrixValue(id)}
@@ -225,6 +236,7 @@ function MatrixWorkspace({
   onAddMatrixValue,
   onDeleteMatrixValue,
   onDuplicateMatrixValue,
+  onInsertMatrixName,
   onRenameMatrixValue,
   onResizeMatrixValue,
   onSetActiveMatrixValueIds,
@@ -240,10 +252,10 @@ function MatrixWorkspace({
   function activeRolesFor(id: string) {
     const roles: string[] = [];
     if (id === activeLeftId) {
-      roles.push('Left');
+      roles.push('Active Left');
     }
     if (id === activeRightId) {
-      roles.push('Right');
+      roles.push('Active Right');
     }
     return roles;
   }
@@ -306,6 +318,7 @@ function MatrixWorkspace({
             value={value}
             onDeleteMatrixValue={onDeleteMatrixValue}
             onDuplicateMatrixValue={onDuplicateMatrixValue}
+            onInsertMatrixName={onInsertMatrixName}
             onRenameMatrixValue={onRenameMatrixValue}
             onResizeMatrixValue={onResizeMatrixValue}
             onSetActiveMatrixValueIds={onSetActiveMatrixValueIds}

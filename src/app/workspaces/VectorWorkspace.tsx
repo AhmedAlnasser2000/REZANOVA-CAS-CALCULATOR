@@ -16,6 +16,7 @@ type VectorWorkspaceProps = {
   onAddVectorValue: () => void;
   onDeleteVectorValue: (id: string) => void;
   onDuplicateVectorValue: (id: string) => void;
+  onInsertVectorName: (name: string) => void;
   onRenameVectorValue: (id: string, name: string) => void;
   onResizeVectorValue: (id: string, length: number) => void;
   onSetActiveVectorValueIds: (leftId: string, rightId: string) => void;
@@ -38,6 +39,7 @@ type VectorValueCardProps = {
   value: LinearAlgebraVectorNamedValue;
   onDeleteVectorValue: VectorWorkspaceProps['onDeleteVectorValue'];
   onDuplicateVectorValue: VectorWorkspaceProps['onDuplicateVectorValue'];
+  onInsertVectorName: VectorWorkspaceProps['onInsertVectorName'];
   onRenameVectorValue: VectorWorkspaceProps['onRenameVectorValue'];
   onResizeVectorValue: VectorWorkspaceProps['onResizeVectorValue'];
   onSetActiveVectorValueIds: VectorWorkspaceProps['onSetActiveVectorValueIds'];
@@ -54,6 +56,7 @@ function VectorValueCard({
   value,
   onDeleteVectorValue,
   onDuplicateVectorValue,
+  onInsertVectorName,
   onRenameVectorValue,
   onResizeVectorValue,
   onSetActiveVectorValueIds,
@@ -122,7 +125,7 @@ function VectorValueCard({
             ) : null}
           </span>
           {activeRoles.map((role) => (
-            <span className="equation-badge" key={role}>{role}</span>
+            <span className="linear-algebra-active-badge" key={role}>{role}</span>
           ))}
         </div>
         <div className="linear-algebra-size-controls">
@@ -160,6 +163,14 @@ function VectorValueCard({
               Set Second
             </button>
           </div>
+          <button
+            type="button"
+            className="linear-algebra-tool-button"
+            aria-label={`Insert Vector ${name} in editor`}
+            onClick={() => onInsertVectorName(name)}
+          >
+            Insert {name}
+          </button>
           <button
             type="button"
             className="linear-algebra-tool-button"
@@ -206,6 +217,7 @@ function VectorWorkspace({
   onAddVectorValue,
   onDeleteVectorValue,
   onDuplicateVectorValue,
+  onInsertVectorName,
   onRenameVectorValue,
   onResizeVectorValue,
   onSetActiveVectorValueIds,
@@ -221,10 +233,10 @@ function VectorWorkspace({
   function activeRolesFor(id: string) {
     const roles: string[] = [];
     if (id === activeLeftId) {
-      roles.push('First');
+      roles.push('Active First');
     }
     if (id === activeRightId) {
-      roles.push('Second');
+      roles.push('Active Second');
     }
     return roles;
   }
@@ -287,6 +299,7 @@ function VectorWorkspace({
             value={value}
             onDeleteVectorValue={onDeleteVectorValue}
             onDuplicateVectorValue={onDuplicateVectorValue}
+            onInsertVectorName={onInsertVectorName}
             onRenameVectorValue={onRenameVectorValue}
             onResizeVectorValue={onResizeVectorValue}
             onSetActiveVectorValueIds={onSetActiveVectorValueIds}

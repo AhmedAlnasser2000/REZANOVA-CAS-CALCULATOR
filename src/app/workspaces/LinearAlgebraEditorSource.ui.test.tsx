@@ -89,6 +89,8 @@ describe('Linear algebra editor source', () => {
     expect(screen.getByLabelText('Active Matrix left operand')).toHaveTextContent('D');
     expect(screen.getByTestId('soft-action-add')).toHaveTextContent('D+B');
     expect(screen.getByTestId('soft-action-detA')).toHaveTextContent('det(D)');
+    await user.click(screen.getByRole('button', { name: 'Insert Matrix D in editor' }));
+    await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'D'));
     await user.click(screen.getByRole('button', { name: 'Set Matrix B as Left' }));
     expect(screen.getByLabelText('Active Matrix left operand')).toHaveAttribute('data-value', 'matrix-b');
     await user.click(screen.getByRole('button', { name: 'Set Matrix D as Right' }));
@@ -117,6 +119,8 @@ describe('Linear algebra editor source', () => {
     expect(screen.getByLabelText('Active Vector first operand')).toHaveAttribute('data-value', 'vector-1');
     expect(screen.getByTestId('soft-action-dot')).toHaveTextContent('q·v');
     expect(screen.getByTestId('soft-action-normA')).toHaveTextContent('‖q‖');
+    await user.click(screen.getByRole('button', { name: 'Insert Vector q in editor' }));
+    await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'q'));
     await user.click(screen.getByRole('button', { name: 'Set Vector v as First' }));
     expect(screen.getByLabelText('Active Vector first operand')).toHaveAttribute('data-value', 'vector-v');
     await user.click(screen.getByRole('button', { name: 'Set Vector q as Second' }));

@@ -153,6 +153,57 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(text).toContain('Known pole count: 1.');
   });
 
+  it('allows branch-safe real-affine pullback regions to solve', () => {
+    const result = tryComplexRegionNonlinearSolveFallback({
+      equationLatex: String.raw`\ln(z-1)=0`,
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+      complexExactForm: 'rectangular',
+      complexRegion: {
+        reMin: '1.5',
+        reMax: '2.5',
+        imMin: '-0.5',
+        imMax: '0.5',
+        gridSize: 7,
+      },
+      sharedOutcome: unsupportedExactOutcome,
+    });
+
+    expect(result?.kind).toBe('success');
+    if (!result || result.kind !== 'success') {
+      throw new Error('Expected safe affine branch pullback success');
+    }
+    const text = collectOutcomeText(result);
+    expect(result.exactLatex).toContain('z\\approx 2');
+    expect(text).toContain('Branch pullback: z-1 was recognized as a real-affine target map.');
+    expect(text).toContain('does not cross the principal negative-real-axis branch cut');
+  });
+
+  it('fails closed for broad composed branch pullbacks that are not certified safe', () => {
+    const result = tryComplexRegionNonlinearSolveFallback({
+      equationLatex: String.raw`\ln(z^2+1)=0`,
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+      complexExactForm: 'rectangular',
+      complexRegion: {
+        reMin: '2',
+        reMax: '3',
+        imMin: '1',
+        imMax: '2',
+      },
+      sharedOutcome: unsupportedExactOutcome,
+    });
+
+    expect(result?.kind).toBe('error');
+    if (!result || result.kind !== 'error') {
+      throw new Error('Expected broad branch pullback controlled stop');
+    }
+    const text = collectOutcomeText(result);
+    expect(result.error).toContain('principal branch cut');
+    expect(text).toContain('non-affine or unsupported map');
+    expect(text).toContain('fails closed');
+  });
+
   it('can subdivide branch-cut regions before returning controlled unsafe evidence', () => {
     const result = tryComplexRegionNonlinearSolveFallback({
       equationLatex: '\\ln(z)=0',

@@ -1988,3 +1988,11 @@
 ## 2026-07-06 - LINEAR-ALGEBRA-MULTI-MATRIX-EDITOR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix typed editor expressions may use any named or inline matrix values and compose them locally before routing to existing Matrix operations. Soft F-keys stay intentionally two-operand and reflect the active Left/Right selections only.
+
+## 2026-07-06 - LINEAR-ALGEBRA-NAMED-LIBRARY-POLISH2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Named Matrix/Vector library cards may insert their single-letter names into the main editor, while active badges and F-key labels remain driven by the selected Left/Right or First/Second operands.
+
+## 2026-07-06 - COMPLEX-EQUATION-BRANCH-PULLBACK2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Region branch-sensitive solving may proceed through direct or real-affine principal-branch pullbacks only when the mapped bounded region avoids the branch point and cut. Broader composed pullbacks that cannot be certified safely must fail closed with branch-unsafe evidence instead of returning numeric roots.

@@ -48,6 +48,9 @@ export function LinearAlgebraTableWorkspaceHost({
         onAddMatrixValue={linearAlgebraRuntime.addMatrixValue}
         onDeleteMatrixValue={linearAlgebraRuntime.deleteMatrixValue}
         onDuplicateMatrixValue={linearAlgebraRuntime.duplicateMatrixValue}
+        onInsertMatrixName={(name) => {
+          linearAlgebraRuntime.setMatrixEditorLatex(`${linearAlgebraRuntime.matrixEditorLatex}${name}`);
+        }}
         onRenameMatrixValue={linearAlgebraRuntime.renameMatrixValue}
         onResizeMatrixValue={linearAlgebraRuntime.resizeMatrixValueById}
         onSetActiveMatrixValueIds={linearAlgebraRuntime.setActiveMatrixValueIds}
@@ -67,6 +70,9 @@ export function LinearAlgebraTableWorkspaceHost({
         onAddVectorValue={linearAlgebraRuntime.addVectorValue}
         onDeleteVectorValue={linearAlgebraRuntime.deleteVectorValue}
         onDuplicateVectorValue={linearAlgebraRuntime.duplicateVectorValue}
+        onInsertVectorName={(name) => {
+          linearAlgebraRuntime.setVectorEditorLatex(`${linearAlgebraRuntime.vectorEditorLatex}${name}`);
+        }}
         onRenameVectorValue={linearAlgebraRuntime.renameVectorValue}
         onResizeVectorValue={linearAlgebraRuntime.resizeVectorValueById}
         onSetActiveVectorValueIds={linearAlgebraRuntime.setActiveVectorValueIds}

@@ -1,6 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
-import { openLauncherApp } from './helpers';
+import { getMathFieldLatex, openLauncherApp } from './helpers';
 
 const screenshotDir = '.task_tmp/linear-algebra-named-library-ergonomics1';
 
@@ -24,6 +24,10 @@ test('Matrix named library card actions stay readable and drive active soft keys
   await expect(page.getByLabel('Matrix D name')).toBeVisible();
   await expect(page.getByLabel('Active Matrix left operand', { exact: true })).toHaveText('D');
   await expect(page.getByTestId('soft-action-add')).toHaveText(/D\+B/u);
+  await expect(page.getByText('Active Left', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Insert Matrix D in editor' }).click();
+  await expect.poll(() => getMathFieldLatex(page)).toBe('D');
 
   await page.getByRole('button', { name: 'Set Matrix B as Left' }).click();
   await page.getByRole('button', { name: 'Set Matrix D as Right' }).click();
@@ -66,6 +70,10 @@ test('Vector named library card actions stay readable and drive active soft keys
   await expect(page.getByLabel('Vector q name')).toBeVisible();
   await expect(page.getByLabel('Active Vector first operand', { exact: true })).toHaveText('q');
   await expect(page.getByTestId('soft-action-dot')).toHaveText(/q·v/u);
+  await expect(page.getByText('Active First', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Insert Vector q in editor' }).click();
+  await expect.poll(() => getMathFieldLatex(page)).toBe('q');
 
   await page.getByRole('button', { name: 'Set Vector v as First' }).click();
   await page.getByRole('button', { name: 'Set Vector q as Second' }).click();

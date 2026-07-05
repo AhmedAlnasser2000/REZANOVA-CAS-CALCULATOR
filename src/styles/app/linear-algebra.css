@@ -76,8 +76,9 @@
 .linear-algebra-name-input {
   border-radius: 12px;
   border: 1px solid var(--editor-border);
-  background: var(--editor-surface);
-  color: var(--editor-ink);
+  background: rgba(7, 18, 17, 0.96);
+  color: #f4f9ea;
+  font-weight: 700;
 }
 
 .linear-algebra-name-field {
@@ -155,10 +156,24 @@
 }
 
 .linear-algebra-name-input {
-  width: 48px;
+  width: 52px;
   padding: 8px 10px;
   text-align: center;
   text-transform: none;
+}
+
+.linear-algebra-active-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 221, 150, 0.38);
+  background: rgba(214, 205, 115, 0.18);
+  color: #f2f7dc;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0;
+  padding: 5px 10px;
 }
 
 .linear-algebra-name-input[aria-invalid='true'] {
@@ -218,8 +233,9 @@
 
 .linear-algebra-library-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr));
+  gap: 16px;
+  align-items: start;
 }
 
 .linear-algebra-size-controls {
@@ -265,15 +281,27 @@
   box-shadow: 0 0 0 3px rgba(125, 207, 255, 0.16);
 }
 
-.linear-algebra-matrix-grid,
+.linear-algebra-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--linear-algebra-columns), minmax(64px, 118px));
+  gap: 10px;
+  min-width: 100%;
+  width: max-content;
+}
+
 .linear-algebra-vector-grid {
   display: grid;
   grid-template-columns: repeat(var(--linear-algebra-columns), minmax(54px, 1fr));
   gap: 10px;
+  min-width: 0;
+  width: 100%;
 }
 
 .linear-algebra-value-card {
   overflow-x: auto;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
 }
 
 @media (max-width: 840px) {

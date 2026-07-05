@@ -10,6 +10,11 @@ export type ComplexRectangularRegion = {
   imMax: number;
 };
 
+type RealAffinePullback = {
+  scale: number;
+  offset: number;
+};
+
 export type ComplexPrincipalBranchFamily =
   | 'principal-log'
   | 'principal-root'
@@ -133,6 +138,137 @@ function inverseTrigCutCrossing(region: ComplexRectangularRegion, operator: stri
   return ordered.imMin <= 0 && ordered.imMax >= 0 && (ordered.reMin <= -1 || ordered.reMax >= 1);
 }
 
+function numericConstant(node: MathJson, target: string): number | null {
+  if (containsTarget(node, target)) {
+    return null;
+  }
+  if (typeof node === 'number') {
+    return Number.isFinite(node) ? node : null;
+  }
+  if (
+    isArrayNode(node)
+    && node[0] === 'Rational'
+    && typeof node[1] === 'number'
+    && typeof node[2] === 'number'
+    && node[2] !== 0
+  ) {
+    return node[1] / node[2];
+  }
+  const exact = parseExactComplexConstantNode(simplifyNode(node));
+  if (!exact) {
+    return null;
+  }
+  const normalized = normalizeExactComplexScalar(exact);
+  if (!exactScalarIsZero(normalized.im)) {
+    return null;
+  }
+  const denominator = normalized.re.denominator;
+  return denominator === 0 ? null : normalized.re.numerator / denominator;
+}
+
+function addAffine(left: RealAffinePullback, right: RealAffinePullback): RealAffinePullback {
+  return {
+    scale: left.scale + right.scale,
+    offset: left.offset + right.offset,
+  };
+}
+
+function scaleAffine(affine: RealAffinePullback, factor: number): RealAffinePullback {
+  return {
+    scale: affine.scale * factor,
+    offset: affine.offset * factor,
+  };
+}
+
+function realAffinePullback(node: MathJson, target: string): RealAffinePullback | null {
+  if (node === target) {
+    return { scale: 1, offset: 0 };
+  }
+  const constant = numericConstant(node, target);
+  if (constant !== null) {
+    return { scale: 0, offset: constant };
+  }
+  if (!isArrayNode(node) || typeof node[0] !== 'string') {
+    return null;
+  }
+  const operator = node[0];
+  const args = node.slice(1) as MathJson[];
+  if (operator === 'Add') {
+    return args.reduce<RealAffinePullback | null>((current, arg) => {
+      const next = realAffinePullback(arg, target);
+      return current && next ? addAffine(current, next) : null;
+    }, { scale: 0, offset: 0 });
+  }
+  if (operator === 'Subtract' && args.length === 2) {
+    const left = realAffinePullback(args[0], target);
+    const right = realAffinePullback(args[1], target);
+    return left && right ? addAffine(left, scaleAffine(right, -1)) : null;
+  }
+  if (operator === 'Negate' && args.length === 1) {
+    const value = realAffinePullback(args[0], target);
+    return value ? scaleAffine(value, -1) : null;
+  }
+  if (operator === 'Multiply') {
+    let scalar = 1;
+    let affine: RealAffinePullback | null = null;
+    for (const arg of args) {
+      const constantArg = numericConstant(arg, target);
+      if (constantArg !== null) {
+        scalar *= constantArg;
+        continue;
+      }
+      const affineArg = realAffinePullback(arg, target);
+      if (!affineArg || affine) {
+        return null;
+      }
+      affine = affineArg;
+    }
+    return affine ? scaleAffine(affine, scalar) : { scale: 0, offset: scalar };
+  }
+  if (operator === 'Divide' && args.length === 2) {
+    const numerator = realAffinePullback(args[0], target);
+    const denominator = numericConstant(args[1], target);
+    return numerator && denominator !== null && denominator !== 0
+      ? scaleAffine(numerator, 1 / denominator)
+      : null;
+  }
+  return null;
+}
+
+function imageRegionForRealAffine(
+  region: ComplexRectangularRegion,
+  affine: RealAffinePullback,
+): ComplexRectangularRegion {
+  const corners = [
+    { re: region.reMin, im: region.imMin },
+    { re: region.reMin, im: region.imMax },
+    { re: region.reMax, im: region.imMin },
+    { re: region.reMax, im: region.imMax },
+  ].map((point) => ({
+    re: affine.scale * point.re + affine.offset,
+    im: affine.scale * point.im,
+  }));
+  return {
+    reMin: Math.min(...corners.map((point) => point.re)),
+    reMax: Math.max(...corners.map((point) => point.re)),
+    imMin: Math.min(...corners.map((point) => point.im)),
+    imMax: Math.max(...corners.map((point) => point.im)),
+  };
+}
+
+function affinePullbackDetails(input: {
+  argumentLatex: string;
+  affine: RealAffinePullback;
+  imageRegion: ComplexRectangularRegion;
+}) {
+  return [
+    `Branch pullback: ${input.argumentLatex} was recognized as a real-affine target map.`,
+    `Affine image scale: ${input.affine.scale}; offset: ${input.affine.offset}.`,
+    `Mapped real bounds: [${input.imageRegion.reMin}, ${input.imageRegion.reMax}].`,
+    `Mapped imaginary bounds: [${input.imageRegion.imMin}, ${input.imageRegion.imMax}].`,
+  ];
+}
+
 function regionSeverity(input: {
   family: ComplexPrincipalBranchFamily;
   operator: string;
@@ -143,43 +279,53 @@ function regionSeverity(input: {
   if (!input.region) {
     return null;
   }
+  const argumentLatex = latexForNode(input.argument);
+  let testedRegion = input.region;
+  let pullbackDetails: string[] = [];
   if (input.argument !== input.target) {
-    return containsTarget(input.argument, input.target)
-      ? {
-        severity: 'warning',
+    if (!containsTarget(input.argument, input.target)) {
+      return null;
+    }
+    const affine = realAffinePullback(input.argument, input.target);
+    if (!affine) {
+      return {
+        severity: 'unsafe',
         details: [
-          'The branch-sensitive argument depends on the target but is not a direct target coordinate.',
-          'A future complex region solver must map this argument before certifying branch-cut avoidance.',
+          `Branch pullback: ${argumentLatex} depends on the target through a non-affine or unsupported map.`,
+          'Broad branch-cut pullback could not certify this composed argument safely.',
+          'Complex region solving fails closed instead of crossing an uncertain principal branch cut.',
         ],
-      }
-      : null;
+      };
+    }
+    testedRegion = imageRegionForRealAffine(input.region, affine);
+    pullbackDetails = affinePullbackDetails({ argumentLatex, affine, imageRegion: testedRegion });
   }
   if (input.family === 'principal-inverse-trig') {
-    return inverseTrigCutCrossing(input.region, input.operator)
+    return inverseTrigCutCrossing(testedRegion, input.operator)
       ? {
         severity: 'unsafe',
-        details: ['The requested region crosses a principal inverse-trig branch cut.'],
+        details: [...pullbackDetails, 'The requested region crosses a principal inverse-trig branch cut after branch pullback.'],
       }
       : {
         severity: 'info',
-        details: ['The direct target region does not cross the detected principal inverse-trig branch cut.'],
+        details: [...pullbackDetails, 'The pulled-back target region does not cross the detected principal inverse-trig branch cut.'],
       };
   }
-  if (containsBranchPointZero(input.region)) {
+  if (containsBranchPointZero(testedRegion)) {
     return {
       severity: 'unsafe',
-      details: ['The requested region contains the principal branch point at 0.'],
+      details: [...pullbackDetails, 'The requested region contains the principal branch point at 0 after branch pullback.'],
     };
   }
-  if (negativeRealAxisCrossed(input.region)) {
+  if (negativeRealAxisCrossed(testedRegion)) {
     return {
       severity: 'unsafe',
-      details: ['The requested region crosses the principal negative-real-axis branch cut.'],
+      details: [...pullbackDetails, 'The requested region crosses the principal negative-real-axis branch cut after branch pullback.'],
     };
   }
   return {
     severity: 'info',
-    details: ['The direct target region does not cross the principal negative-real-axis branch cut.'],
+    details: [...pullbackDetails, 'The pulled-back target region does not cross the principal negative-real-axis branch cut.'],
   };
 }
 
