@@ -24,3 +24,18 @@
   - `npm run test:file-sizes`
   - `git diff --check`
 
+## 2026-07-05 - CALCULUS-LIMITS-MRV-PREGRUNTZ3
+
+- Gate type: backend plus app-visible output.
+- Scope: extended MRV-lite residual quotient cleanup for exact-cancelled logarithmic exponent differences, including nested log residuals in exponential products and quotients.
+- Focused tests:
+  - `npm run test:unit -- src/lib/symbolic-engine/limits/mrv-lite.test.ts src/lib/calculus/workspace/limits.test.ts`
+- Visual verification:
+  - `node .task_tmp/limits-mrv-pregruntz3/visual-check.mjs`
+  - Screenshot: `.task_tmp/limits-mrv-pregruntz3/nested-log-residual-visual.png`
+  - Evidence: rendered Answer `1` for `lim x -> infinity e^{log(log(x))}/log(x)` and expanded Limit Method text containing MRV-lite residual-scale evidence.
+- Broad gates:
+  - `npx tsc -b --pretty false`
+  - `npm run test:file-sizes`
+  - `npm run test:memory-protocol`
+  - `git diff --check`

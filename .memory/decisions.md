@@ -1934,3 +1934,7 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits infinity-scale comparison may derive logarithmic scales from eventually positive unbounded inner scales, including `log(x^p)`, `log(sqrt(x))`, `log(c*x)`, and `log(e^x)`, before L'Hospital or numeric fallback. This remains a scale route, not full Gruntz.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Real square-root infinity comparisons may proceed at negative infinity when the leading radicand scale is eventually positive; invalid real-domain radicals still stop through domain/proof routes.
+
+## 2026-07-05 - CALCULUS-LIMITS-MRV-PREGRUNTZ3
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] MRV-lite may convert exact-cancelled logarithmic exponent differences into residual scale facts, including nested logarithmic factors. This is a pre-Gruntz residual-cleanup route, not a full MRV-set or rewrite-to-w solver.

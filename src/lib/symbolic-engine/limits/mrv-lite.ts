@@ -13,9 +13,9 @@ import {
   infinityScaleLabel,
   leadingInfinityScaleTerm,
   zeroInfinityScale,
-  type InfinityScale,
   type InfinityScaleTerm,
 } from './infinity-scale-terms';
+import { appendSignedExpression, logarithmicExponentDifferenceScale } from './mrv-log-residual';
 import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
 
 const EPSILON = 1e-10;
@@ -41,30 +41,6 @@ function isExponentialFactor(node: unknown): node is ['Power', 'ExponentialE', u
     && node.length === 3
     && node[0] === 'Power'
     && node[1] === 'ExponentialE';
-}
-
-function signedNode(node: unknown, sign: 1 | -1): unknown {
-  return sign === 1 ? node : ['Negate', node];
-}
-
-function appendSignedExpression(node: unknown, sign: 1 | -1, output: unknown[]) {
-  if (isNodeArray(node) && node[0] === 'Add') {
-    node.slice(1).forEach((child) => appendSignedExpression(child, sign, output));
-    return;
-  }
-
-  if (isNodeArray(node) && node[0] === 'Subtract' && node.length === 3) {
-    appendSignedExpression(node[1], sign, output);
-    appendSignedExpression(node[2], sign === 1 ? -1 : 1, output);
-    return;
-  }
-
-  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
-    appendSignedExpression(node[1], sign === 1 ? -1 : 1, output);
-    return;
-  }
-
-  output.push(signedNode(node, sign));
 }
 
 function collectFactors(node: unknown, model: MrvFactorModel, sign: 1 | -1 = 1) {
@@ -119,21 +95,6 @@ function exponentDifferenceNode(exponentTerms: MrvFactorModel['exponentTerms']) 
     return terms[0];
   }
   return ['Add', ...terms];
-}
-
-function isPlainLogScale(term: InfinityScaleTerm) {
-  const [firstLog = 0, ...restLogs] = term.scale.logs;
-  return isCloseToZero(term.scale.expRate)
-    && isCloseToZero(term.scale.power)
-    && Math.abs(firstLog - 1) < EPSILON
-    && restLogs.every(isCloseToZero);
-}
-
-function scaleWithPower(power: number): InfinityScale {
-  return {
-    ...zeroInfinityScale(),
-    power,
-  };
 }
 
 function isPositiveUnboundedExponent(term: InfinityScaleTerm | undefined) {
@@ -363,11 +324,11 @@ function residualQuotient(numerator: InfinityScaleTerm, denominator: InfinitySca
   };
 }
 
-function withCombinedScale(term: InfinityScaleTerm, scale: InfinityScale, reason: string): InfinityScaleTerm {
+function withMultipliedResidual(term: InfinityScaleTerm, residual: InfinityScaleTerm): InfinityScaleTerm {
   return {
-    coefficient: term.coefficient,
-    scale: combineInfinityScale(term.scale, scale),
-    reason,
+    coefficient: term.coefficient * residual.coefficient,
+    scale: combineInfinityScale(term.scale, residual.scale),
+    reason: residual.reason,
     notes: term.notes,
   };
 }
@@ -723,21 +684,17 @@ export function resolveMrvLiteLimit(
     ],
   ];
 
-  if (isPlainLogScale(exponentTerm)) {
-    const converted = withCombinedScale(
-      ordinaryTerm,
-      scaleWithPower(exponentTerm.coefficient),
-      'converted an exponential log-difference into an ordinary power scale',
-    );
+  const logarithmicResidual = logarithmicExponentDifferenceScale(exponentDifference, variable, targetKind);
+  if (logarithmicResidual) {
+    const converted = withMultipliedResidual(ordinaryTerm, logarithmicResidual);
     return successFromScale({
       term: converted,
       rows: [
         ...baseRows,
         [
           limitTextPart('Rewrite/equivalent: '),
-          limitMathPart(`e^{${formatLimitNumberLatex(exponentTerm.coefficient)}\\log(x)}`),
-          limitTextPart(' contributes '),
-          limitMathPart(`x^{${formatLimitNumberLatex(exponentTerm.coefficient)}}`),
+          limitTextPart('the logarithmic exponent difference contributes the residual scale '),
+          limitMathPart(infinityScaleLabel(logarithmicResidual.scale)),
           limitTextPart('.'),
         ],
       ],

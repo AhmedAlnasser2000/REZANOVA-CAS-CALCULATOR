@@ -44,10 +44,44 @@ describe('MRV-lite limit comparison', () => {
 
     expect(result?.kind).toBe('success');
     expect(result?.exactLatex).toBe('1');
-    expect(result?.detailSections?.[0]?.lines.join(' ')).toContain('contributes x');
-    expect(methodText(result)).toContain('e^{1\\log(x)}');
-    expect(methodText(result)).toContain('x^{1}');
+    expect(methodText(result)).toContain('logarithmic exponent difference');
+    expect(methodText(result)).toContain('residual scale');
+    expect(methodText(result)).toContain('x');
     expect(methodText(result)).not.toContain('(i)^');
+  });
+
+  it('cleans up nested logarithmic residuals inside exponential quotients', () => {
+    const logLog = resolveMrvLiteLimit(
+      parse(String.raw`e^{\log(\log(x))}/\log(x)`),
+      'posInfinity',
+      'x',
+    );
+    const productResidual = resolveMrvLiteLimit(
+      parse(String.raw`e^{\log(x)+\log(\log(x))}/(x\log(x))`),
+      'posInfinity',
+      'x',
+    );
+    const decayingResidual = resolveMrvLiteLimit(
+      parse(String.raw`e^{\log(x)-\log(\log(x))}/x`),
+      'posInfinity',
+      'x',
+    );
+    const growingResidual = resolveMrvLiteLimit(
+      parse(String.raw`e^{2\log(\log(x))}/\log(x)`),
+      'posInfinity',
+      'x',
+    );
+
+    expect(logLog?.kind).toBe('success');
+    expect(logLog?.exactLatex).toBe('1');
+    expect(productResidual?.kind).toBe('success');
+    expect(productResidual?.exactLatex).toBe('1');
+    expect(decayingResidual?.kind).toBe('success');
+    expect(decayingResidual?.exactLatex).toBe('0');
+    expect(growingResidual?.kind).toBe('success');
+    expect(growingResidual?.exactLatex).toBe('\\infty');
+    expect(methodText(productResidual)).toContain('residual MRV-lite scales');
+    expect(methodText(productResidual)).not.toContain('(i)^');
   });
 
   it('compares super-polynomial log-square exponentials', () => {

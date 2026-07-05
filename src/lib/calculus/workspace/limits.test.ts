@@ -608,6 +608,15 @@ describe('calculus limits', () => {
     const exponentialLogDifference = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity e^x/e^{x+log(x)}',
     });
+    const nestedLogResidual = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity e^{log(log(x))}/log(x)',
+    });
+    const productLogResidual = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity e^{log(x)+log(log(x))}/(x*log(x))',
+    });
+    const decayingLogResidual = evaluateCalculusLimit({
+      requestLatex: 'lim x -> infinity e^{log(x)-log(log(x))}/x',
+    });
     const mrvDominantSums = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity (e^{sqrt(x)}+x^5)/(e^{sqrt(x)}-log(x))',
     });
@@ -637,6 +646,12 @@ describe('calculus limits', () => {
     expect(exponentialLogDifference.error).toBeUndefined();
     expect(exponentialLogDifference.exactLatex).toBe('0');
     expect(exponentialLogDifference.detailSections?.[0]?.lines.join(' ')).toContain('contributes');
+    expect(nestedLogResidual.error).toBeUndefined();
+    expect(nestedLogResidual.exactLatex).toBe('1');
+    expect(productLogResidual.error).toBeUndefined();
+    expect(productLogResidual.exactLatex).toBe('1');
+    expect(decayingLogResidual.error).toBeUndefined();
+    expect(decayingLogResidual.exactLatex).toBe('0');
     expect(mrvDominantSums.error).toBeUndefined();
     expect(mrvDominantSums.exactLatex).toBe('1');
     expect(mrvDominantSums.detailSections?.[0]?.lines.join(' ')).toContain('Numerator dominant term');

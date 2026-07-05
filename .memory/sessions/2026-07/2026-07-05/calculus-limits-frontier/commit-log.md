@@ -8,6 +8,7 @@
 - verified_by_agent_model: gpt-5-codex
 - attribution_basis: live
 
-## Pending
+## 2026-07-05
 
-- `CALCULUS-LIMITS-ASYMPTOTIC-SCALE-ENGINE2`: ready to commit after memory protocol passes.
+- `CALCULUS-LIMITS-ASYMPTOTIC-SCALE-ENGINE2`: committed as `783156d2`.
+- `CALCULUS-LIMITS-MRV-PREGRUNTZ3`: ready to commit after broad gates pass.
