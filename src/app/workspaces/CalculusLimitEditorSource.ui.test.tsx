@@ -434,4 +434,25 @@ describe('Calculus limit editor source', () => {
     expect(proof).toHaveTextContent('constant term');
     expect(proof).toHaveTextContent('c');
   });
+
+  it('renders symbolic finite cancellation limits through the natural editor', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 (sin(a*x)-a*x)/x^3');
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    const answerLatex = screen
+      .getByTestId('display-outcome-answer-block')
+      .querySelector('[data-raw-latex]')
+      ?.getAttribute('data-raw-latex') ?? '';
+    expect(answerLatex).toBe('\\frac{-a^3}{6}');
+    const details = await screen.findByTestId('display-outcome-detail-sections');
+    expect(details).toHaveTextContent('Limit Method');
+    const method = screen.getByTestId('display-outcome-detail-section-0');
+    fireEvent.click(method.querySelector('summary') as HTMLElement);
+    await waitFor(() => expect(method).toHaveTextContent('capped symbolic local series'));
+  });
 });

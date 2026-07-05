@@ -31,6 +31,11 @@ import {
 } from './known-rules';
 import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
 import type { LimitDirection } from '../../../types/calculator';
+import {
+  leadingTermFromLocalSeries,
+  matchExpMinusOneMinusInner,
+  matchLogOnePlusMinusInner,
+} from './finite-local-series';
 
 type RecursiveLeadingTerm = {
   coefficient: SymbolicCoefficient;
@@ -274,6 +279,43 @@ function leadingTerm(
     }
   }
 
+  const expMinusLinearInner = matchExpMinusOneMinusInner(node);
+  if (expMinusLinearInner) {
+    const inner = leadingTerm(expMinusLinearInner, target, variable);
+    const squared = inner ? squareCoefficient(inner.coefficient, variable) : undefined;
+    const coefficient = squared ? scaleByHalf(squared, variable) : undefined;
+    if (inner && coefficient && inner.order > 0) {
+      return {
+        coefficient,
+        order: inner.order * 2,
+        reason: 'used local cancellation e^u - 1 - u ~ u^2/2',
+        notes: [
+          ...combineNotes(inner),
+          'Recursive leading term: used symbolic cancellation e^u - 1 - u ~ u^2/2.',
+        ],
+      };
+    }
+  }
+
+  const logMinusLinearInner = matchLogOnePlusMinusInner(node);
+  if (logMinusLinearInner) {
+    const inner = leadingTerm(logMinusLinearInner, target, variable);
+    const squared = inner ? squareCoefficient(inner.coefficient, variable) : undefined;
+    const half = squared ? scaleByHalf(squared, variable) : undefined;
+    const coefficient = half ? negateTermCoefficient(half, variable) : undefined;
+    if (inner && coefficient && inner.order > 0) {
+      return {
+        coefficient,
+        order: inner.order * 2,
+        reason: 'used local cancellation ln(1 + u) - u ~ -u^2/2',
+        notes: [
+          ...combineNotes(inner),
+          'Recursive leading term: used symbolic cancellation ln(1 + u) - u ~ -u^2/2.',
+        ],
+      };
+    }
+  }
+
   if ((node[0] === 'Sin' || node[0] === 'Tan' || node[0] === 'Arcsin' || node[0] === 'Arctan') && node.length === 2) {
     const inner = leadingTerm(node[1], target, variable);
     if (inner && inner.order > 0) {
@@ -490,7 +532,13 @@ export function resolveFiniteRecursiveLeadingTermLimit(
   direction: LimitDirection,
 ): FiniteLimitRuleSuccess | undefined {
   const term = leadingTerm(node, target, variable);
-  return term ? limitSuccessFromTerm(term, direction) : undefined;
+  const resolved = term ? limitSuccessFromTerm(term, direction) : undefined;
+  if (resolved) {
+    return resolved;
+  }
+
+  const seriesTerm = leadingTermFromLocalSeries(node, target, variable);
+  return seriesTerm ? limitSuccessFromTerm(seriesTerm, direction) : undefined;
 }
 
 export function hasFiniteRecursiveLeadingTermCandidate(

@@ -551,6 +551,32 @@ describe('calculus limits', () => {
     });
   });
 
+  it('resolves symbolic finite local cancellations in natural limit expressions', () => {
+    const sineCancellation = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 (sin(a*x)-a*x)/x^3',
+    });
+    const tangentCancellation = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 (tan(a*x)-a*x)/x^3',
+    });
+    const exponentialCancellation = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 (e^{a*x}-1-a*x)/x^2',
+    });
+
+    expect(sineCancellation.error).toBeUndefined();
+    expect(sineCancellation.exactLatex).toBe('\\frac{-a^3}{6}');
+    expect(sineCancellation.resultOrigin).toBe('rule-based-symbolic');
+    expect(sineCancellation.detailSections?.[0]?.lines.join(' ')).toContain('capped symbolic local series');
+
+    expect(tangentCancellation.error).toBeUndefined();
+    expect(tangentCancellation.exactLatex).toBe('\\frac{a^3}{3}');
+    expect(tangentCancellation.resultOrigin).toBe('rule-based-symbolic');
+
+    expect(exponentialCancellation.error).toBeUndefined();
+    expect(exponentialCancellation.exactLatex).toBe('\\frac{a^2}{2}');
+    expect(exponentialCancellation.resultOrigin).toBe('rule-based-symbolic');
+    expect(exponentialCancellation.detailSections?.[0]?.lines.join(' ')).toContain('symbolic cancellation e^u - 1 - u');
+  });
+
   it('resolves infinity scale comparisons for logs powers and exponentials', () => {
     const logOverPower = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity log(x)/x',

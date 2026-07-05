@@ -38,4 +38,47 @@ describe('finite recursive leading terms', () => {
     expect(result?.value).toBeCloseTo(-0.5, 10);
     expect(result?.detailSections?.[0]?.lines.join(' ')).toContain('ln(cos(u))');
   });
+
+  it('continues through symbolic local cancellations', () => {
+    const sine = resolveFiniteRecursiveLeadingTermLimit(
+      parse(String.raw`(\sin(a*x)-a*x)/x^3`),
+      0,
+      'x',
+      'two-sided',
+    );
+    const tangent = resolveFiniteRecursiveLeadingTermLimit(
+      parse(String.raw`(\tan(a*x)-a*x)/x^3`),
+      0,
+      'x',
+      'two-sided',
+    );
+    const exponential = resolveFiniteRecursiveLeadingTermLimit(
+      parse(String.raw`(e^{a*x}-1-a*x)/x^2`),
+      0,
+      'x',
+      'two-sided',
+    );
+    const logarithm = resolveFiniteRecursiveLeadingTermLimit(
+      parse(String.raw`(\ln(1+a*x)-a*x)/x^2`),
+      0,
+      'x',
+      'two-sided',
+    );
+
+    expect(sine?.kind).toBe('success');
+    expect(sine?.exactLatex).toContain('-');
+    expect(sine?.exactLatex).toMatch(/a(?:\^3|\^\{3\})/u);
+    expect(sine?.exactLatex).toContain('6');
+    expect(tangent?.kind).toBe('success');
+    expect(tangent?.exactLatex).toMatch(/a(?:\^3|\^\{3\})/u);
+    expect(tangent?.exactLatex).toContain('3');
+    expect(exponential?.kind).toBe('success');
+    expect(exponential?.exactLatex).toMatch(/a(?:\^2|\^\{2\})/u);
+    expect(exponential?.exactLatex).toContain('2');
+    expect(logarithm?.kind).toBe('success');
+    expect(logarithm?.exactLatex).toContain('-');
+    expect(logarithm?.exactLatex).toMatch(/a(?:\^2|\^\{2\})/u);
+    expect(logarithm?.exactLatex).toContain('2');
+    expect(sine?.detailSections?.[0]?.lines.join(' ')).toContain('capped symbolic local series');
+  });
 });

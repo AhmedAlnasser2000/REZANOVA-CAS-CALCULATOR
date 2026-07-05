@@ -1925,3 +1925,7 @@
 ## 2026-07-05 - LINEAR-ALGEBRA-PASTE-NATURALIZATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector friendly list syntax is paste/import UX only: supported pasted text naturalizes immediately through Linear Algebra-owned canonicalizers, malformed text stays editable until Run, and `answerRows` may improve visible row layout while `exactLatex` remains the Copy Result/export source.
+
+## 2026-07-05 - CALCULUS-LIMITS-RECURSIVE-LEADING-TERMS2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Finite symbolic cancellation limits use a Limits-owned capped local-series fallback through Taylor order 10 after existing recursive leading-term routes fail. This is not a broad Taylor/Gruntz solver; workspace real-domain guards still block symbolic-log forms when assumptions are insufficient.
