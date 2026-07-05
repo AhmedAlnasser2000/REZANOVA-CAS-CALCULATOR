@@ -31,6 +31,20 @@ describe('Equation Complex benchmark region runner', () => {
     });
   });
 
+  it('keeps exact symbolic infinite families ahead of benchmark region runs', () => {
+    const result = runEquationComplexBenchmarkRegionFallback(request('\\sin(x)=0', 'x'));
+
+    expect(result.status).toBe('primary-supported');
+    expect(result.attemptedRegions).toHaveLength(0);
+    expect(result.outcome.kind).toBe('success');
+    expect(result.evidence).toMatchObject({
+      complex_numeric_scope: 'symbolic-family',
+      complex_engine: 'exact-symbolic',
+      complex_verification_status: 'not-applicable',
+      complex_branch_policy: 'branch-family',
+    });
+  });
+
   it('tries the first staged benchmark box after exact and polynomial routes miss', () => {
     const result = runEquationComplexBenchmarkRegionFallback(request('e^z+z=0'));
 
@@ -52,7 +66,9 @@ describe('Equation Complex benchmark region runner', () => {
       },
     });
     expect(result.evidence?.complex_searched_region_notes).toContain('Benchmark staged region 1/2');
+    expect(result.evidence?.complex_searched_region_notes).toContain('bounded-region evidence enumerates only roots inside');
     expect(collectOutcomeText(result.outcome)).toContain('This is local to the supplied rectangular region');
+    expect(collectOutcomeText(result.outcome)).toContain('Exact Complex branch-family routes are tried before bounded Complex Region solving.');
   });
 
   it('continues to the larger staged box after a verified zero-root first box', () => {

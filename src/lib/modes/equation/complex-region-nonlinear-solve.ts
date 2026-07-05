@@ -8,6 +8,9 @@ import {
 import {
   diagnoseMeromorphicPolicyForLatex,
 } from '../../equation/complex/meromorphic-policy';
+import {
+  diagnoseComplexInfiniteFamilyPolicyForLatex,
+} from '../../equation/complex/infinite-family-policy';
 import type { ComplexContourWindingResult } from '../../equation/complex/contour-winding';
 import {
   createComplexNumericEvaluator,
@@ -195,6 +198,7 @@ function diagnosticsSections(input: {
   accepted: readonly ComplexNewtonCandidate[];
   branchPolicyLines: readonly string[];
   meromorphicPolicyLines: readonly string[];
+  infiniteFamilyPolicyLines: readonly string[];
   target: string;
   complexExactForm: ComplexExactForm;
   subdivision: ComplexRegionSubdivisionDiagnostics;
@@ -257,6 +261,10 @@ function diagnosticsSections(input: {
     {
       title: 'Complex Pole Policy',
       lines: [...input.meromorphicPolicyLines],
+    },
+    {
+      title: 'Complex Infinite-Family Policy',
+      lines: [...input.infiniteFamilyPolicyLines],
     },
     {
       title: 'Complex Search Diagnostics',
@@ -364,6 +372,9 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
     target: selectedTarget,
     region,
   });
+  const infiniteFamilyPolicy = diagnoseComplexInfiniteFamilyPolicyForLatex(input.equationLatex, {
+    target: selectedTarget,
+  });
   if (branchPolicy.shouldStop && !subdivisionEnabled) {
     return unsupportedRegionOutcome({
       error: 'Complex region crosses an unsupported principal branch cut.',
@@ -433,6 +444,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
         meromorphicPolicyLines: meromorphicPolicy.detailLines,
+        infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,
         target: selectedTarget,
         complexExactForm: input.complexExactForm,
         subdivision,
@@ -455,6 +467,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
         meromorphicPolicyLines: meromorphicPolicy.detailLines,
+        infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,
         target: selectedTarget,
         complexExactForm: input.complexExactForm,
         subdivision,
@@ -479,6 +492,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
         meromorphicPolicyLines: meromorphicPolicy.detailLines,
+        infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,
         target: selectedTarget,
         complexExactForm: input.complexExactForm,
         subdivision,
@@ -520,6 +534,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       accepted,
       branchPolicyLines: branchPolicy.detailLines,
       meromorphicPolicyLines: meromorphicPolicy.detailLines,
+      infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,
       target: selectedTarget,
       complexExactForm: input.complexExactForm,
       subdivision,

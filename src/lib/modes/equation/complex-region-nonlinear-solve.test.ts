@@ -93,6 +93,8 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(expResult.exactLatex).toContain('z\\approx 0');
     expect(sineResult.branchReadback?.branchesLatex).toHaveLength(3);
     expect(collectOutcomeText(sineResult)).toContain('Contour count verified: 3 roots in this region.');
+    expect(collectOutcomeText(sineResult)).toContain('Exact Complex branch-family routes are tried before bounded Complex Region solving.');
+    expect(collectOutcomeText(sineResult)).toContain('not a global solution set');
   });
 
   it('uses adaptive subdivision when a coarse region pass needs more cell evidence', () => {

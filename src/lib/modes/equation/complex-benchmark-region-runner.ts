@@ -120,6 +120,22 @@ function searchedRegionNote(region: ComplexSolveRegion, index: number, total: nu
   return `Benchmark staged region ${index + 1}/${total}: [${region.reMin}, ${region.reMax}] x [${region.imMin}, ${region.imMax}].`;
 }
 
+function boundedRegionNotes(input: {
+  outcome: DisplayOutcome;
+  region: ComplexSolveRegion;
+  index: number;
+  total: number;
+}) {
+  const familyLines = sectionLines(input.outcome, 'Complex Infinite-Family Policy');
+  const hasInfiniteFamily = familyLines.some((line) => /not a global solution set|infinite-family carrier/i.test(line));
+  return [
+    searchedRegionNote(input.region, input.index, input.total),
+    ...(hasInfiniteFamily
+      ? ['Infinite-family policy: bounded-region evidence enumerates only roots inside the selected rectangle.']
+      : []),
+  ].join(' ');
+}
+
 function globalPolynomialEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
   if (
     outcome.kind !== 'success'
@@ -147,12 +163,15 @@ function globalPolynomialEvidence(outcome: DisplayOutcome): EquationComplexBench
 function symbolicFamilyEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
   if (
     outcome.kind !== 'success'
-    || outcome.answerDomain !== 'complex'
     || outcome.solutionKind === 'approximate-numeric'
   ) {
     return undefined;
   }
-  if (!outcome.periodicFamily && outcome.branchReadback?.label !== 'Complex Branch Family') {
+  const exactFamilyLatex = [
+    outcome.exactLatex,
+    ...(outcome.exactSupplementLatex ?? []),
+  ].some((entry) => /[a-zA-Z]\\in\\mathbb\{Z\}/u.test(entry ?? ''));
+  if (!outcome.periodicFamily && outcome.branchReadback?.label !== 'Complex Branch Family' && !exactFamilyLatex) {
     return undefined;
   }
   return {
@@ -200,7 +219,7 @@ function boundedRegionEvidence(
     complex_region: regionEvidence(region),
     ...(contourRootCount === undefined ? {} : { complex_contour_root_count: contourRootCount }),
     ...(candidateCount === undefined ? {} : { complex_candidate_count: candidateCount }),
-    complex_searched_region_notes: searchedRegionNote(region, index, total),
+    complex_searched_region_notes: boundedRegionNotes({ outcome, region, index, total }),
   };
 }
 
