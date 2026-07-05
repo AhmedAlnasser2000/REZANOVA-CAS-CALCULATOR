@@ -73,6 +73,10 @@ describe('equationReplaySeedFromRequest', () => {
             imMin: '-2',
             imMax: '2',
             gridSize: 9,
+            randomSeedCount: 4,
+            samplesPerEdge: 128,
+            subdivisionDepth: 3,
+            cellBudget: 48,
           },
         }),
         'e^z+z=0',
@@ -88,6 +92,10 @@ describe('equationReplaySeedFromRequest', () => {
         imMin: '-2',
         imMax: '2',
         gridSize: 9,
+        randomSeedCount: 4,
+        samplesPerEdge: 128,
+        subdivisionDepth: 3,
+        cellBudget: 48,
       },
     });
   });

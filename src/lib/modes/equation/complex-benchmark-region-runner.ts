@@ -111,6 +111,8 @@ function regionEvidence(region: ComplexSolveRegion): EquationComplexBenchmarkReg
     ...(region.gridSize === undefined ? {} : { grid_size: region.gridSize }),
     ...(region.randomSeedCount === undefined ? {} : { random_seed_count: region.randomSeedCount }),
     ...(region.samplesPerEdge === undefined ? {} : { contour_samples: region.samplesPerEdge }),
+    ...(region.subdivisionDepth === undefined ? {} : { subdivision_depth: region.subdivisionDepth }),
+    ...(region.cellBudget === undefined ? {} : { cell_budget: region.cellBudget }),
   };
 }
 

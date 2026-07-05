@@ -391,10 +391,15 @@ describe('runtimeControllers', () => {
     );
     expect(inputLatex).toBe('x^2-5x+6=0');
     expect(mode).toBe('equation');
-    expect(replayContext).toEqual({
+    expect(replayContext).toMatchObject({
+      equationScreen: 'symbolic',
       equationAnswerMode: 'exact',
       equationDomainIntent: 'complex',
       complexExactForm: 'cis',
+      equationSeed: {
+        screen: 'symbolic',
+        equationLatex: 'x^2-5x+6=0',
+      },
     });
     expect(outcome.kind).toBe('success');
   });
@@ -707,6 +712,10 @@ describe('runtimeControllers', () => {
         imMin: '-1',
         imMax: '1',
         gridSize: 9,
+        randomSeedCount: 0,
+        samplesPerEdge: 96,
+        subdivisionDepth: 2,
+        cellBudget: 32,
       },
       currentMode: 'equation',
       displayOutcome: null,

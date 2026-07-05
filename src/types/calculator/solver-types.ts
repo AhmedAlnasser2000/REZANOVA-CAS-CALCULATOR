@@ -131,6 +131,8 @@ export type ComplexSolveRegion = {
   gridSize?: number;
   randomSeedCount?: number;
   samplesPerEdge?: number;
+  subdivisionDepth?: number;
+  cellBudget?: number;
 };
 
 export type SolveDomainConstraint =

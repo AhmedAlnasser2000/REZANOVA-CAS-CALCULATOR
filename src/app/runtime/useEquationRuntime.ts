@@ -558,6 +558,10 @@ export function useEquationRuntime({
         imMin: complexRegion.imMin,
         imMax: complexRegion.imMax,
         gridSize: complexRegion.gridSize ?? defaultEquationComplexRegionPanelState().gridSize,
+        randomSeedCount: complexRegion.randomSeedCount ?? defaultEquationComplexRegionPanelState().randomSeedCount,
+        samplesPerEdge: complexRegion.samplesPerEdge ?? defaultEquationComplexRegionPanelState().samplesPerEdge,
+        subdivisionDepth: complexRegion.subdivisionDepth ?? defaultEquationComplexRegionPanelState().subdivisionDepth,
+        cellBudget: complexRegion.cellBudget ?? defaultEquationComplexRegionPanelState().cellBudget,
       });
     }
 

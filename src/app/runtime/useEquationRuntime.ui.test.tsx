@@ -306,6 +306,10 @@ describe('useEquationRuntime', () => {
       hook.result.current.equationWorkspaceProps.onUpdateComplexRegionImMin(-2);
       hook.result.current.equationWorkspaceProps.onUpdateComplexRegionImMax(2);
       hook.result.current.equationWorkspaceProps.onUpdateComplexRegionGridSize(9);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionRandomSeedCount(5);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionSamplesPerEdge(128);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionSubdivisionDepth(3);
+      hook.result.current.equationWorkspaceProps.onUpdateComplexRegionCellBudget(64);
     });
 
     expect(hook.result.current.equationWorkspaceProps.shouldShowNumericSolvePanel).toBe(false);
@@ -326,6 +330,10 @@ describe('useEquationRuntime', () => {
         imMin: '-2',
         imMax: '2',
         gridSize: 9,
+        randomSeedCount: 5,
+        samplesPerEdge: 128,
+        subdivisionDepth: 3,
+        cellBudget: 64,
       },
       variableSubstitutionSnapshot: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
     });
@@ -484,6 +492,10 @@ describe('useEquationRuntime', () => {
             imMin: '-3',
             imMax: '3',
             gridSize: 13,
+            randomSeedCount: 6,
+            samplesPerEdge: 160,
+            subdivisionDepth: 4,
+            cellBudget: 80,
           },
         },
       }));
@@ -500,6 +512,10 @@ describe('useEquationRuntime', () => {
       imMin: '-3',
       imMax: '3',
       gridSize: 13,
+      randomSeedCount: 6,
+      samplesPerEdge: 160,
+      subdivisionDepth: 4,
+      cellBudget: 80,
     });
   });
 

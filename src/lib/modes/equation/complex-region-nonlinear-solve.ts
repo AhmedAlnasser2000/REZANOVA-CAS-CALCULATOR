@@ -5,19 +5,11 @@ import { equationTargetLatex } from '../../equation/equation-target';
 import {
   diagnosePrincipalBranchPolicyForLatex,
 } from '../../equation/complex/branch-cut-policy';
-import {
-  verifyComplexContourWinding,
-  type ComplexContourWindingResult,
-} from '../../equation/complex/contour-winding';
+import type { ComplexContourWindingResult } from '../../equation/complex/contour-winding';
 import {
   createComplexNumericEvaluator,
-  type ComplexNumericEvaluator,
 } from '../../equation/complex/numeric-evaluator';
-import {
-  findComplexNewtonCandidates,
-  type ComplexNewtonCandidate,
-  type ComplexRectangularRegion,
-} from '../../equation/complex/seed-grid-newton';
+import type { ComplexNewtonCandidate, ComplexRectangularRegion } from '../../equation/complex/seed-grid-newton';
 import {
   complexAbs,
   complexToApproxText,
@@ -33,11 +25,17 @@ import type {
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import { NUMERIC_FALLBACK_ELIGIBLE_ERRORS } from './numeric-polynomial-extraction';
+import {
+  searchComplexRegionWithSubdivision,
+  type ComplexRegionSubdivisionDiagnostics,
+} from './complex-region-subdivision';
 
 const COMPLEX_REGION_RESIDUAL_TOLERANCE = 1e-8;
 const DEFAULT_GRID_SIZE = 7;
 const DEFAULT_RANDOM_SEED_COUNT = 0;
 const DEFAULT_SAMPLES_PER_EDGE = 96;
+const DEFAULT_SUBDIVISION_DEPTH = 0;
+const DEFAULT_CELL_BUDGET = 1;
 const METHOD_LABEL = 'Complex region nonlinear solve';
 
 function numericRegionFromRequest(region: ComplexSolveRegion): ComplexRectangularRegion | null {
@@ -180,12 +178,15 @@ function diagnosticsSections(input: {
   gridSize: number;
   randomSeedCount: number;
   samplesPerEdge: number;
-  newton: ReturnType<typeof findComplexNewtonCandidates>;
+  subdivisionDepth: number;
+  cellBudget: number;
+  newton: ReturnType<typeof searchComplexRegionWithSubdivision>['newton'];
   contour: ComplexContourWindingResult;
   accepted: readonly ComplexNewtonCandidate[];
   branchPolicyLines: readonly string[];
   target: string;
   complexExactForm: ComplexExactForm;
+  subdivision: ComplexRegionSubdivisionDiagnostics;
 }) {
   const confidence = buildNumericConfidenceSection([
     'roots found in this complex region.',
@@ -216,6 +217,26 @@ function diagnosticsSections(input: {
         `Deterministic grid size: ${input.gridSize} by ${input.gridSize}.`,
         `Supplemental random seeds: ${input.randomSeedCount}.`,
         `Contour samples per edge: ${input.samplesPerEdge}.`,
+        `Subdivision depth limit: ${input.subdivisionDepth}.`,
+        `Cell budget: ${input.cellBudget}.`,
+      ],
+    },
+    {
+      title: 'Complex Subdivision',
+      lines: [
+        input.subdivision.enabled
+          ? 'Adaptive subdivision: enabled.'
+          : 'Adaptive subdivision: not enabled for this run.',
+        `Processed cells: ${input.subdivision.processedCellCount}.`,
+        `Split cells: ${input.subdivision.splitCellCount}.`,
+        `Verified cells: ${input.subdivision.verifiedCellCount}.`,
+        `Inconclusive terminal cells: ${input.subdivision.inconclusiveCellCount}.`,
+        `Unsafe terminal cells: ${input.subdivision.unsafeCellCount}.`,
+        `Maximum depth reached: ${input.subdivision.maxDepthReached}.`,
+        input.subdivision.exhaustedCellBudget
+          ? 'Cell budget exhausted before all cells were verified.'
+          : 'Cell budget was sufficient for the processed cells.',
+        ...input.subdivision.terminalReasons.slice(0, 3).map((reason) => `Terminal reason: ${reason}`),
       ],
     },
     {
@@ -249,18 +270,6 @@ function diagnosticsSections(input: {
     },
   );
   return sections;
-}
-
-function validateCandidates(
-  evaluator: ComplexNumericEvaluator,
-  candidates: readonly ComplexNewtonCandidate[],
-) {
-  return candidates.filter((candidate) => {
-    const evaluated = evaluator.evaluateAt(candidate.value);
-    return evaluated.status === 'finite'
-      && evaluated.residualNorm !== null
-      && evaluated.residualNorm <= COMPLEX_REGION_RESIDUAL_TOLERANCE;
-  });
 }
 
 function unsupportedRegionOutcome(input: {
@@ -340,20 +349,19 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   const gridSize = input.complexRegion.gridSize ?? DEFAULT_GRID_SIZE;
   const randomSeedCount = input.complexRegion.randomSeedCount ?? DEFAULT_RANDOM_SEED_COUNT;
   const samplesPerEdge = input.complexRegion.samplesPerEdge ?? DEFAULT_SAMPLES_PER_EDGE;
-  const newton = findComplexNewtonCandidates({
+  const subdivisionDepth = input.complexRegion.subdivisionDepth ?? DEFAULT_SUBDIVISION_DEPTH;
+  const cellBudget = input.complexRegion.cellBudget ?? DEFAULT_CELL_BUDGET;
+  const search = searchComplexRegionWithSubdivision({
     evaluator,
     region,
     gridSize,
     randomSeedCount,
-    tolerance: COMPLEX_REGION_RESIDUAL_TOLERANCE,
-  });
-  const accepted = validateCandidates(evaluator, newton.candidates);
-  const contour = verifyComplexContourWinding({
-    evaluator,
-    region,
-    candidates: accepted,
     samplesPerEdge,
+    residualTolerance: COMPLEX_REGION_RESIDUAL_TOLERANCE,
+    subdivisionDepth,
+    cellBudget,
   });
+  const { accepted, contour, newton, subdivision } = search;
   if (contour.kind === 'unsafe') {
     return unsupportedRegionOutcome({
       error: 'Complex region contour is unsafe for verified nonlinear solving.',
@@ -362,12 +370,36 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         gridSize,
         randomSeedCount,
         samplesPerEdge,
+        subdivisionDepth,
+        cellBudget,
         newton,
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
         target: classification.selectedTarget,
         complexExactForm: input.complexExactForm,
+        subdivision,
+      }),
+    });
+  }
+
+  if (contour.kind === 'inconclusive') {
+    return unsupportedRegionOutcome({
+      error: 'Complex region subdivision did not verify root-count agreement.',
+      detailSections: diagnosticsSections({
+        region,
+        gridSize,
+        randomSeedCount,
+        samplesPerEdge,
+        subdivisionDepth,
+        cellBudget,
+        newton,
+        contour,
+        accepted,
+        branchPolicyLines: branchPolicy.detailLines,
+        target: classification.selectedTarget,
+        complexExactForm: input.complexExactForm,
+        subdivision,
       }),
     });
   }
@@ -382,12 +414,15 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         gridSize,
         randomSeedCount,
         samplesPerEdge,
+        subdivisionDepth,
+        cellBudget,
         newton,
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
         target: classification.selectedTarget,
         complexExactForm: input.complexExactForm,
+        subdivision,
       }),
     });
   }
@@ -419,12 +454,15 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       gridSize,
       randomSeedCount,
       samplesPerEdge,
+      subdivisionDepth,
+      cellBudget,
       newton,
       contour,
       accepted,
       branchPolicyLines: branchPolicy.detailLines,
       target: classification.selectedTarget,
       complexExactForm: input.complexExactForm,
+      subdivision,
     }),
   };
 }

@@ -72,6 +72,10 @@ export function buildEquationExplicitNumericPanelWorkspaceProps(input: {
     imMin: string;
     imMax: string;
     gridSize: number;
+    randomSeedCount: number;
+    samplesPerEdge: number;
+    subdivisionDepth: number;
+    cellBudget: number;
   };
   complexRegionControls: {
     setPanelEnabled: (enabled: boolean) => void;
@@ -107,5 +111,13 @@ export function buildEquationExplicitNumericPanelWorkspaceProps(input: {
       input.complexRegionControls.updatePanel({ imMax: String(nextValue) }),
     onUpdateComplexRegionGridSize: (nextValue: number) =>
       input.complexRegionControls.updatePanel({ gridSize: nextValue || 0 }),
+    onUpdateComplexRegionRandomSeedCount: (nextValue: number) =>
+      input.complexRegionControls.updatePanel({ randomSeedCount: nextValue || 0 }),
+    onUpdateComplexRegionSamplesPerEdge: (nextValue: number) =>
+      input.complexRegionControls.updatePanel({ samplesPerEdge: nextValue || 0 }),
+    onUpdateComplexRegionSubdivisionDepth: (nextValue: number) =>
+      input.complexRegionControls.updatePanel({ subdivisionDepth: nextValue || 0 }),
+    onUpdateComplexRegionCellBudget: (nextValue: number) =>
+      input.complexRegionControls.updatePanel({ cellBudget: nextValue || 0 }),
   };
 }

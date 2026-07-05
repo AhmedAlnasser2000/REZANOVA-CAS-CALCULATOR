@@ -505,6 +505,10 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
       imMin: '-2',
       imMax: '2',
       gridSize: 7,
+      randomSeedCount: 0,
+      samplesPerEdge: 96,
+      subdivisionDepth: 2,
+      cellBudget: 32,
     };
   }
 

@@ -76,6 +76,10 @@ export function buildEquationRequestFromState(
         imMin: active.equationComplexRegionPanel.imMin,
         imMax: active.equationComplexRegionPanel.imMax,
         gridSize: active.equationComplexRegionPanel.gridSize,
+        randomSeedCount: active.equationComplexRegionPanel.randomSeedCount,
+        samplesPerEdge: active.equationComplexRegionPanel.samplesPerEdge,
+        subdivisionDepth: active.equationComplexRegionPanel.subdivisionDepth,
+        cellBudget: active.equationComplexRegionPanel.cellBudget,
       }
     : undefined;
 

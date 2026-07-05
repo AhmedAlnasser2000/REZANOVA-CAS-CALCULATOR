@@ -86,6 +86,10 @@ type EquationWorkspaceProps = {
     imMin: string;
     imMax: string;
     gridSize: number;
+    randomSeedCount: number;
+    samplesPerEdge: number;
+    subdivisionDepth: number;
+    cellBudget: number;
   };
   onSetComplexRegionPanelEnabled: (enabled: boolean) => void;
   onUpdateComplexRegionReMin: (value: number) => void;
@@ -93,6 +97,10 @@ type EquationWorkspaceProps = {
   onUpdateComplexRegionImMin: (value: number) => void;
   onUpdateComplexRegionImMax: (value: number) => void;
   onUpdateComplexRegionGridSize: (value: number) => void;
+  onUpdateComplexRegionRandomSeedCount: (value: number) => void;
+  onUpdateComplexRegionSamplesPerEdge: (value: number) => void;
+  onUpdateComplexRegionSubdivisionDepth: (value: number) => void;
+  onUpdateComplexRegionCellBudget: (value: number) => void;
   onOpenGuideArticle: (articleId: string) => void;
   onOpenGuideMode: () => void;
   storedVariables: readonly StoredVariableValue[];
@@ -148,6 +156,10 @@ export function EquationWorkspace({
   onUpdateComplexRegionImMin,
   onUpdateComplexRegionImMax,
   onUpdateComplexRegionGridSize,
+  onUpdateComplexRegionRandomSeedCount,
+  onUpdateComplexRegionSamplesPerEdge,
+  onUpdateComplexRegionSubdivisionDepth,
+  onUpdateComplexRegionCellBudget,
   onOpenGuideArticle,
   onOpenGuideMode,
   storedVariables,
@@ -558,6 +570,52 @@ export function EquationWorkspace({
                   />
                 </label>
               </div>
+              <details className="equation-numeric-suggestions">
+                <summary className="equation-subtitle">Advanced</summary>
+                <div className="grid-three">
+                  <label className="field-group">
+                    <span>Random seeds</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={equationComplexRegionPanel.randomSeedCount}
+                      onChange={(event) => onUpdateComplexRegionRandomSeedCount(Number(event.target.value) || 0)}
+                    />
+                  </label>
+                  <label className="field-group">
+                    <span>Contour samples</span>
+                    <input
+                      type="number"
+                      min={16}
+                      step={8}
+                      value={equationComplexRegionPanel.samplesPerEdge}
+                      onChange={(event) => onUpdateComplexRegionSamplesPerEdge(Number(event.target.value) || 0)}
+                    />
+                  </label>
+                  <label className="field-group">
+                    <span>Subdivision depth</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={4}
+                      step={1}
+                      value={equationComplexRegionPanel.subdivisionDepth}
+                      onChange={(event) => onUpdateComplexRegionSubdivisionDepth(Number(event.target.value) || 0)}
+                    />
+                  </label>
+                  <label className="field-group">
+                    <span>Cell budget</span>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={equationComplexRegionPanel.cellBudget}
+                      onChange={(event) => onUpdateComplexRegionCellBudget(Number(event.target.value) || 0)}
+                    />
+                  </label>
+                </div>
+              </details>
             </div>
           ) : null}
         </div>

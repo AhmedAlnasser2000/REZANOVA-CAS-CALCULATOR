@@ -39,6 +39,10 @@ export type EquationComplexRegionPanelState = {
   imMin: string;
   imMax: string;
   gridSize: number;
+  randomSeedCount: number;
+  samplesPerEdge: number;
+  subdivisionDepth: number;
+  cellBudget: number;
 };
 
 type EquationStoredValueSolveOptions = {
@@ -117,6 +121,10 @@ function regionFromPanel(panel: EquationComplexRegionPanelState): ComplexSolveRe
     imMin: panel.imMin,
     imMax: panel.imMax,
     gridSize: panel.gridSize,
+    randomSeedCount: panel.randomSeedCount,
+    samplesPerEdge: panel.samplesPerEdge,
+    subdivisionDepth: panel.subdivisionDepth,
+    cellBudget: panel.cellBudget,
   };
 }
 

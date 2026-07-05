@@ -95,6 +95,35 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(collectOutcomeText(sineResult)).toContain('Contour count verified: 3 roots in this region.');
   });
 
+  it('uses adaptive subdivision when a coarse region pass needs more cell evidence', () => {
+    const result = tryComplexRegionNonlinearSolveFallback({
+      equationLatex: 'z^2+1+e^z/10=0',
+      equationSolveTarget: 'z',
+      angleUnit: 'rad',
+      complexExactForm: 'rectangular',
+      complexRegion: {
+        reMin: '-2',
+        reMax: '2',
+        imMin: '-2',
+        imMax: '2',
+        gridSize: 1,
+        subdivisionDepth: 2,
+        cellBudget: 32,
+      },
+      sharedOutcome: unsupportedExactOutcome,
+    });
+
+    expect(result?.kind).toBe('success');
+    if (!result || result.kind !== 'success') {
+      throw new Error('Expected adaptive Complex subdivision success');
+    }
+    const text = collectOutcomeText(result);
+    expect(result.branchReadback?.branchesLatex).toHaveLength(2);
+    expect(text).toContain('Adaptive subdivision: enabled.');
+    expect(text).toContain('Split cells: 1.');
+    expect(text).toContain('Contour count verified: 2 roots in this region.');
+  });
+
   it('honors Complex approximate output forms for region roots', () => {
     const complexRegion = {
       reMin: '-1',
