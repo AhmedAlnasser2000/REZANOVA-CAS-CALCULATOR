@@ -49,6 +49,13 @@ describe('useLinearAlgebraTableShellRuntime editor canonicalization', () => {
     const { commitOutcome, hook } = renderLinearAlgebraTableShell('matrix');
     const canonicalEigen = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
 
+    expect(hook.result.current.linearAlgebraRuntime.canonicalizeMatrixEditorPaste(
+      'eigen([[2,1],[1,2]])',
+    )).toBe(canonicalEigen);
+    expect(hook.result.current.linearAlgebraRuntime.canonicalizeMatrixEditorPaste(
+      'eigen([[2,1],[bad]])',
+    )).toBeNull();
+
     act(() => {
       hook.result.current.linearAlgebraRuntime.setMatrixEditorLatex('eigen([[2,1],[1,2]])');
     });
@@ -76,6 +83,13 @@ describe('useLinearAlgebraTableShellRuntime editor canonicalization', () => {
     commitOutcome.mockClear();
     hook.rerender({ currentMode: 'vector' });
     const canonicalGram = '\\operatorname{gram}\\left(\\begin{bmatrix}1\\\\1\\end{bmatrix},\\begin{bmatrix}1\\\\0\\end{bmatrix}\\right)';
+    expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
+      'gram([1,1],[1,0])',
+    )).toBe(canonicalGram);
+    expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
+      'gram([1,bad],[1,0])',
+    )).toBeNull();
+
     act(() => {
       hook.result.current.linearAlgebraRuntime.setVectorEditorLatex('gram([1,1],[1,0])');
     });

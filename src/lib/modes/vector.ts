@@ -126,6 +126,7 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     kind: 'success',
     title: vectorResultTitle(request),
     exactLatex: response.resultLatex,
+    answerRows: response.answerRows,
     approxText: vectorUserFacingApproxText(response.approxText),
     detailSections: response.detailSections,
     warnings: response.warnings,

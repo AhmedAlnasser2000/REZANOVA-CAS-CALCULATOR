@@ -147,6 +147,35 @@ describe('MathEditor typing behavior', () => {
     );
   });
 
+  it('uses a mode paste canonicalizer before the generic paste canonicalizer', () => {
+    const canonicalizePaste = vi.fn(() => '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)');
+    render(
+      <MathEditor
+        value=""
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="matrix"
+        screenHint="matrix"
+        onPasteCanonicalize={canonicalizePaste}
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+    };
+
+    fireEvent.paste(field, {
+      clipboardData: {
+        getData: () => 'eigen([[2,1],[1,2]])',
+      },
+    });
+
+    expect(canonicalizePaste).toHaveBeenCalledWith('eigen([[2,1],[1,2]])');
+    expect(field.getValue()).toBe(
+      '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)',
+    );
+  });
+
   it('canonicalizes pasted grouped function quotients before insertion', () => {
     render(
       <MathEditor

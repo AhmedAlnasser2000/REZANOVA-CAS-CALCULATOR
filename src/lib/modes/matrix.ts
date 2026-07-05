@@ -229,6 +229,7 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
     kind: 'success',
     title: matrixResultTitle(request),
     exactLatex: response.resultLatex,
+    answerRows: response.answerRows,
     approxText: matrixUserFacingApproxText(),
     detailSections: response.detailSections,
     warnings: response.warnings,

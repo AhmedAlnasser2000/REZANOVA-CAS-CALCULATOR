@@ -91,6 +91,14 @@ export type DisplaySystemSolutionReadback = {
   source?: string;
 };
 
+export type DisplayAnswerRowsReadback = {
+  label?: string;
+  rows: Array<{
+    latex: string;
+    label?: string;
+  }>;
+};
+
 export type DisplayOutcomeAction =
   | { kind: 'send'; target: TransferTarget; latex: string }
   | { kind: 'load-core-draft'; mode: 'geometry' | 'trigonometry' | 'statistics'; latex: string };
@@ -100,6 +108,7 @@ export type DisplayOutcome =
       kind: 'success';
       title: string;
       exactLatex?: string;
+      answerRows?: DisplayAnswerRowsReadback;
       branchReadback?: DisplayBranchReadback;
       systemReadback?: DisplaySystemSolutionReadback;
       periodicFamily?: PeriodicFamilyInfo;

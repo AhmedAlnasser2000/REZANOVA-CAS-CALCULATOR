@@ -33,6 +33,7 @@ import type {
 import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
 import type {
+  DisplayAnswerRowsReadback,
   DisplayDetailSection,
   DisplaySystemSolutionReadback,
   VariableSubstitutionSnapshot,
@@ -1016,6 +1017,7 @@ export type MatrixReplaySeed = MatrixRequest;
 
 export type MatrixResponse = {
   resultLatex?: string;
+  answerRows?: DisplayAnswerRowsReadback;
   approxText?: string;
   detailSections?: DisplayDetailSection[];
   handoffEquationLatex?: string;
@@ -1040,6 +1042,7 @@ export type VectorReplaySeed = VectorRequest;
 
 export type VectorResponse = {
   resultLatex?: string;
+  answerRows?: DisplayAnswerRowsReadback;
   approxText?: string;
   detailSections?: DisplayDetailSection[];
   warnings: string[];

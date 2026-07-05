@@ -63,6 +63,22 @@ function exactVectorSetLatex(label: string, vectors: readonly ExactVector[]) {
   return `${label}=\\left\\{${vectors.map(exactVectorToColumnLatex).join(',')}\\right\\}`;
 }
 
+function vectorBasisAnswerRows(vectors: readonly number[][]) {
+  return {
+    rows: vectors.map((vector, index) => ({
+      latex: `w_{${index + 1}}=${vectorToLatex(vector)}`,
+    })),
+  };
+}
+
+function exactVectorBasisAnswerRows(vectors: readonly ExactVector[]) {
+  return {
+    rows: vectors.map((vector, index) => ({
+      latex: `w_{${index + 1}}=${exactVectorToColumnLatex(vector)}`,
+    })),
+  };
+}
+
 function gramSchmidtDetailSections(
   req: VectorRequest,
   result: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>,
@@ -253,6 +269,7 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
       const exactResult = exactGramSchmidtTwoVectors(vectorA, vectorB);
       return exactResult ? {
         resultLatex: exactVectorSetLatex('\\operatorname{orthogonal\\ basis}', exactResult.orthogonalBasis),
+        answerRows: exactVectorBasisAnswerRows(exactResult.orthogonalBasis),
         approxText: result.notes.length > 0
           ? `${exactResult.orthogonalBasis.length} basis direction${exactResult.orthogonalBasis.length === 1 ? '' : 's'}; dependent input skipped`
           : `${exactResult.orthogonalBasis.length} basis directions`,
@@ -293,6 +310,7 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
   if (result.kind === 'gramSchmidt') {
     return {
       resultLatex: vectorSetLatex('\\operatorname{orthogonal\\ basis}', result.orthogonalBasis),
+      answerRows: vectorBasisAnswerRows(result.orthogonalBasis),
       approxText: result.notes.length > 0
         ? `${result.orthogonalBasis.length} basis direction${result.orthogonalBasis.length === 1 ? '' : 's'}; dependent input skipped`
         : `${result.orthogonalBasis.length} basis directions`,

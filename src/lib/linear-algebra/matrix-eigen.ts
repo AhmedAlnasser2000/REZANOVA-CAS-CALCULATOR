@@ -270,6 +270,9 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
 
   return {
     resultLatex: `\\operatorname{eigen}(${analysis.label})=\\left\\{${resultEntries.join(',')}\\right\\}`,
+    answerRows: {
+      rows: resultEntries.map((entry) => ({ latex: entry })),
+    },
     approxText: `eigenvalues ${analysis.roots.map((root) => root.rootLatex).join(', ')}`,
     detailSections: [
       ...characteristicDetails({

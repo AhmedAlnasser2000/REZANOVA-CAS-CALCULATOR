@@ -79,6 +79,8 @@ function DisplayPanel({
   mainFieldRef,
   matrixEditorLatex,
   matrixKeyboardLayouts,
+  canonicalizeMatrixEditorPaste,
+  canonicalizeVectorEditorPaste,
   onRestartEditorAnalysis,
   onRunEditor,
   onOpenFormulaViewer,
@@ -243,6 +245,8 @@ function DisplayPanel({
       mainFieldRef={mainFieldRef}
       matrixEditorLatex={matrixEditorLatex}
       matrixKeyboardLayouts={matrixKeyboardLayouts}
+      canonicalizeMatrixEditorPaste={canonicalizeMatrixEditorPaste}
+      canonicalizeVectorEditorPaste={canonicalizeVectorEditorPaste}
       onRunEditor={onRunEditor}
       selectedCalculusMenuEntry={selectedCalculusMenuEntry}
       selectedEquationMenuEntry={selectedEquationMenuEntry}

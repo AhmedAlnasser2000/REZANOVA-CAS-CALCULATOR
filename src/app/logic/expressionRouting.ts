@@ -46,9 +46,18 @@ type PasteIntoEditorDeps = {
   focusTrigEditor: () => void;
   setClipboardNotice: (notice: string) => void;
   loadLatexIntoEditor: (latex: string) => void;
+  canonicalizePastedText?: (text: string, mode: ModeId) => string | null | undefined;
 };
 
-function canonicalizePastedMathText(text: string, mode: ModeId) {
+function canonicalizePastedMathText(
+  text: string,
+  mode: ModeId,
+  customCanonicalize?: (text: string, mode: ModeId) => string | null | undefined,
+) {
+  if (customCanonicalize) {
+    return customCanonicalize(text, mode) ?? text;
+  }
+
   const canonicalized = canonicalizeMathInput(text, {
     mode,
     screenHint: mode === 'equation' ? 'symbolic' : 'standard',
@@ -131,11 +140,13 @@ export async function pasteIntoEditorWithDeps(deps: PasteIntoEditorDeps) {
     }
 
     const text = await navigator.clipboard.readText();
-    const mathText = canonicalizePastedMathText(text, deps.currentMode);
+    const mathText = canonicalizePastedMathText(text, deps.currentMode, deps.canonicalizePastedText);
     if (
       !deps.isLauncherOpen
       && (deps.currentMode === 'calculate'
         || isCalculusMode(deps.currentMode)
+        || deps.currentMode === 'matrix'
+        || deps.currentMode === 'vector'
         || deps.currentMode === 'trigonometry'
         || (deps.currentMode === 'geometry' && deps.geometryEditorIsEditable)
         || deps.currentMode === 'statistics'

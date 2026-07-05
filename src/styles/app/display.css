@@ -869,6 +869,24 @@
   scrollbar-width: thin;
 }
 
+.result-answer-rows {
+  gap: 12px;
+}
+
+.result-math-list-row {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  scrollbar-width: thin;
+}
+
+.result-answer-row-math {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+}
+
 .algebra-transform-tray {
   background: linear-gradient(135deg, rgba(215, 223, 171, 0.1), rgba(255, 255, 255, 0.025));
   border-color: rgba(215, 223, 171, 0.2);

@@ -91,6 +91,8 @@ export function DisplayEditorSurface({
   mainFieldRef,
   matrixEditorLatex,
   matrixKeyboardLayouts,
+  canonicalizeMatrixEditorPaste,
+  canonicalizeVectorEditorPaste,
   onRunEditor,
   selectedCalculusMenuEntry,
   selectedEquationMenuEntry,
@@ -504,6 +506,7 @@ export function DisplayEditorSurface({
             screenHint="matrix"
             onSubmit={onRunEditor}
             onChange={setMatrixEditorLatex}
+            onPasteCanonicalize={canonicalizeMatrixEditorPaste}
             keyboardLayouts={matrixKeyboardLayouts}
             onFocus={(field) => {
               activeFieldRef.current = field;
@@ -529,6 +532,7 @@ export function DisplayEditorSurface({
             screenHint="vector"
             onSubmit={onRunEditor}
             onChange={setVectorEditorLatex}
+            onPasteCanonicalize={canonicalizeVectorEditorPaste}
             keyboardLayouts={vectorKeyboardLayouts}
             onFocus={(field) => {
               activeFieldRef.current = field;

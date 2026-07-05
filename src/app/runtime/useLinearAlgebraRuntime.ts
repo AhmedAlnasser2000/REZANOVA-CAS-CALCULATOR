@@ -469,6 +469,33 @@ export function useLinearAlgebraRuntime({
     runVectorRequest(dispatched.request, canonicalInputLatex, () => dispatched.request);
   }
 
+  function canonicalizeMatrixEditorPaste(text: string) {
+    const active = matrixStateRef.current;
+    const dispatched = dispatchMatrixEditorLatex({
+      latex: text,
+      matrixA: active.matrixA,
+      matrixB: active.matrixB,
+      matrixValues: active.matrixValues,
+    });
+    return dispatched.ok
+      ? dispatched.request.editorExpressionLatex ?? null
+      : null;
+  }
+
+  function canonicalizeVectorEditorPaste(text: string) {
+    const active = vectorStateRef.current;
+    const dispatched = dispatchVectorEditorLatex({
+      latex: text,
+      vectorA: active.vectorA,
+      vectorB: active.vectorB,
+      vectorValues: active.vectorValues,
+      angleUnit: active.angleUnit,
+    });
+    return dispatched.ok
+      ? dispatched.request.editorExpressionLatex ?? null
+      : null;
+  }
+
   function updateMatrixValue(
     id: string,
     fallbackName: string,
@@ -819,6 +846,8 @@ export function useLinearAlgebraRuntime({
     activeVectorRightId,
     addMatrixValue,
     addVectorValue,
+    canonicalizeMatrixEditorPaste,
+    canonicalizeVectorEditorPaste,
     captureMatrixSurfaceState,
     captureVectorSurfaceState,
     deleteMatrixValue,

@@ -132,7 +132,7 @@ function ResultLatexListBlock({
   return (
     <>
       {lines.map((line: string, index: number) => (
-        <div key={`${line}-${index}`} data-testid={`${testIdPrefix}-${index}`}>
+        <div key={`${line}-${index}`} className="result-math-list-row" data-testid={`${testIdPrefix}-${index}`}>
           <ResultLatexBlock
             className={className}
             displayPrefs={displayPrefs}
@@ -594,9 +594,9 @@ function renderDisplayBlockContent(
 
   if (block.renderKind === 'mathList') {
     return (
-      <div className="result-detail-lines">
+      <div className={block.kind === 'answer' ? 'result-detail-lines result-answer-rows' : 'result-detail-lines'}>
         <ResultLatexListBlock
-          className="result-math result-math-supplement"
+          className={block.kind === 'answer' ? 'result-math result-answer-row-math' : 'result-math result-math-supplement'}
           displayPrefs={symbolicDisplayPrefs}
           lines={latexLinesFromBlock(block)}
           normalizeDisplay={false}

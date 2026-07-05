@@ -36,6 +36,7 @@ type MathEditorProps = {
   keyboardLayouts?: readonly VirtualKeyboardLayout[];
   modeId?: ModeId;
   screenHint?: string;
+  onPasteCanonicalize?: (text: string) => string | null | undefined;
 };
 
 type MathEditorContainmentProps = {
@@ -111,6 +112,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       keyboardLayouts,
       modeId,
       screenHint,
+      onPasteCanonicalize,
     },
     forwardedRef,
   ) {
@@ -170,16 +172,19 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
 
       const handlePaste = (event: ClipboardEvent) => {
         const text = event.clipboardData?.getData('text/plain');
-        if (!text || !modeId) {
+        if (!text) {
           return;
         }
 
-        const canonicalized = canonicalizeMathInput(text, {
-          mode: modeId,
-          screenHint,
-          liveAssist: true,
-        });
-        const nextLatex = canonicalized.ok ? canonicalized.canonicalLatex : text;
+        let nextLatex = onPasteCanonicalize ? onPasteCanonicalize(text) ?? text : text;
+        if (!onPasteCanonicalize && modeId) {
+          const canonicalized = canonicalizeMathInput(text, {
+            mode: modeId,
+            screenHint,
+            liveAssist: true,
+          });
+          nextLatex = canonicalized.ok ? canonicalized.canonicalLatex : text;
+        }
         if (nextLatex === text) {
           return;
         }
@@ -199,7 +204,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
         field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('paste', handlePaste);
       };
-    }, [keyboardLayouts, modeId, onChange, onFocus, onSubmit, placeholder, readOnly, screenHint]);
+    }, [keyboardLayouts, modeId, onChange, onFocus, onPasteCanonicalize, onSubmit, placeholder, readOnly, screenHint]);
 
     useEffect(() => {
       const field = elementRef.current;

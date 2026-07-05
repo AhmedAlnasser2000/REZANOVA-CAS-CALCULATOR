@@ -417,6 +417,35 @@ function caseMathAnswerBlockFromLatex(
   };
 }
 
+function answerRowsBlockFromOutcome(
+  outcome: DisplayOutcome,
+  answerLatex: string,
+  label: string,
+  trustSummary?: string,
+): DisplayBlock | null {
+  if (outcome.kind !== 'success' || !outcome.answerRows?.rows.length) {
+    return null;
+  }
+
+  return {
+    id: 'answer',
+    kind: 'answer',
+    label: outcome.answerRows.label ?? label,
+    renderKind: 'mathList',
+    collapsible: true,
+    defaultCollapsed: false,
+    lines: outcome.answerRows.rows.map((row, index) => ({
+      id: `answer-row-${index}`,
+      label: row.label,
+      latex: row.latex,
+      testId: `display-outcome-answer-row-${index}`,
+    })),
+    rawContent: [answerLatex],
+    testId: 'display-outcome-answer-block',
+    trustSummary,
+  };
+}
+
 function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: number): DisplayBlock {
   const caseMathLines = CASE_MATH_DETAIL_TITLES.has(section.title)
     ? caseMathLinesFromSection(
@@ -740,6 +769,17 @@ export function buildDisplayBlocks(
           ...replayedCaseMathBlock,
           trustSummary,
         });
+        continue;
+      }
+
+      const answerRowsBlock = answerRowsBlockFromOutcome(
+        outcome,
+        section.latex,
+        section.label,
+        trustSummary,
+      );
+      if (answerRowsBlock) {
+        blocks.push(answerRowsBlock);
         continue;
       }
 

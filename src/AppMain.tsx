@@ -153,7 +153,6 @@ import {
   type ResultOrigin,
   type Settings,
   type SettingsPatch,
-  type StatisticsScreen,
   type StoredVariableValue,
   type TrigScreen,
   type VariableSubstitutionSnapshot,
@@ -1843,22 +1842,34 @@ export default function App() {
       }
 
       const text = await navigator.clipboard.readText();
-      const canonicalized = canonicalizeMathInput(text, {
-        mode: currentMode,
-        screenHint: currentMode === 'equation'
-          ? 'symbolic'
-          : isCalculusMode(currentMode)
-            ? calculusScreen
-            : currentMode === 'calculate'
-              ? calculateScreen
-              : 'standard',
-        liveAssist: true,
-      });
-      const mathText = canonicalized.ok ? canonicalized.canonicalLatex : text;
+      const isLinearAlgebraPaste = currentMode === 'matrix' || currentMode === 'vector';
+      const linearAlgebraPasteLatex = currentMode === 'matrix'
+        ? linearAlgebraRuntime.canonicalizeMatrixEditorPaste(text)
+        : currentMode === 'vector'
+          ? linearAlgebraRuntime.canonicalizeVectorEditorPaste(text)
+          : null;
+      const canonicalized = isLinearAlgebraPaste
+        ? null
+        : canonicalizeMathInput(text, {
+            mode: currentMode,
+            screenHint: currentMode === 'equation'
+              ? 'symbolic'
+              : isCalculusMode(currentMode)
+                ? calculusScreen
+                : currentMode === 'calculate'
+                  ? calculateScreen
+                  : 'standard',
+            liveAssist: true,
+          });
+      const mathText = isLinearAlgebraPaste
+        ? linearAlgebraPasteLatex ?? text
+        : canonicalized?.ok ? canonicalized.canonicalLatex : text;
       if (
         !isLauncherOpen &&
         (currentMode === 'calculate' ||
           isCalculusMode(currentMode) ||
+          currentMode === 'matrix' ||
+          currentMode === 'vector' ||
           currentMode === 'trigonometry' ||
           (currentMode === 'geometry' && geometryEditorIsEditable) ||
           currentMode === 'statistics' ||
@@ -2876,6 +2887,8 @@ export default function App() {
           launcherState={launcherState}
           loadLatexIntoEditor={loadLatexIntoEditor}
           mainFieldRef={mainFieldRef} matrixEditorLatex={linearAlgebraRuntime.matrixEditorLatex} matrixKeyboardLayouts={matrixKeyboardLayouts} onOpenFormulaViewer={workspaceTabsRuntime.onOpenFormulaViewerTab}
+          canonicalizeMatrixEditorPaste={linearAlgebraRuntime.canonicalizeMatrixEditorPaste}
+          canonicalizeVectorEditorPaste={linearAlgebraRuntime.canonicalizeVectorEditorPaste}
           onRestartEditorAnalysis={restartEditorAnalysis}
           onRunEditor={runEditorPrimaryAction}
           onStopEditorAnalysis={stopEditorAnalysis}
