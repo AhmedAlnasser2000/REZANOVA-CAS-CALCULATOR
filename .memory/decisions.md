@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-05 - COMPLEX-EQUATION-NUMERIC-CONTRACT1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Equation benchmark support must now state its evidence scope in the corpus ledger. `global-polynomial` may claim all complex roots only through the polynomial evidence path; `bounded-region` may be marked `supported` only with contour-verified evidence and matching contour/candidate counts; `locus-deferred` records cannot be marked supported. These evidence fields are optional ledger metadata and do not expand public `DisplayOutcome`.
+
 ## 2026-07-05 - LINEAR-ALGEBRA-RUNTIME-SEAM-AUDIT0
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Linear Algebra must eventually expose a public runtime seam for Matrix/Vector paste naturalization, editor canonicalization, request construction, named-value snapshots, replay helpers, and typed Equation handoff. Validator hardening for `workspace-runtime-request-boundary` is deferred because app runtime currently imports private Linear Algebra internals and the public seam does not yet exist. This `0` milestone intentionally changes no runtime code, request schemas, capability ids, workers, or validators.

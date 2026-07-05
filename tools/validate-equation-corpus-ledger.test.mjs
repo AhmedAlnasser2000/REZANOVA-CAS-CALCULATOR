@@ -18,6 +18,29 @@ function ledgerPath(rootDir, fileName) {
   return path.join(rootDir, 'benchmarks/equation-corpus/ledger', fileName);
 }
 
+function makeUniqueCase(overrides = {}) {
+  return {
+    case_id: 'eq.poly.quadratic.real.0001',
+    canonical_latex: 'x^2-5x+6=0',
+    target: 'x',
+    domain: 'real',
+    family: 'quadratic',
+    expected_result_kind: 'exact-roots',
+    run_policy: 'run-once-per-case-per-sweep',
+    status: 'pending',
+    source_id: 'openstax-algebra-trig-2e',
+    source_locator: '2.5 Quadratic Equations',
+    ...overrides,
+  };
+}
+
+function writeSingleCaseLedger(rootDir, result, caseOverrides = {}) {
+  writeFileSync(ledgerPath(rootDir, 'unique-cases.jsonl'), `${JSON.stringify(makeUniqueCase(caseOverrides))}\n`);
+  writeFileSync(ledgerPath(rootDir, 'duplicate-cases.jsonl'), '');
+  writeFileSync(ledgerPath(rootDir, 'run-results.jsonl'), `${JSON.stringify(result)}\n`);
+  writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
+}
+
 describe('equation corpus ledger validation', () => {
   it('accepts the committed ledger scaffold', () => {
     assert.deepEqual(validateEquationCorpusLedger(), {
@@ -182,6 +205,189 @@ describe('equation corpus ledger validation', () => {
     assert.throws(
       () => validateEquationCorpusLedger({ rootDir }),
       /run-results\.jsonl:1\.companion_of_run_id must not reference its own run_id/,
+    );
+  });
+
+  it('accepts global polynomial complex numeric evidence', () => {
+    const rootDir = makeRootFromRepo();
+    const result = {
+      run_id: '2026-07-05-complex-polynomial-contract',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-contract',
+      run_status: 'supported',
+      failure_kind: 'none',
+      domain_intent: 'complex',
+      route_observed: 'Complex numeric polynomial roots',
+      root_count: 2,
+      complex_numeric_scope: 'global-polynomial',
+      complex_engine: 'complex-polynomial-aberth',
+      complex_verification_status: 'global-polynomial',
+      complex_branch_policy: 'pole-aware',
+      complex_candidate_count: 2,
+    };
+
+    writeSingleCaseLedger(rootDir, result);
+
+    assert.deepEqual(validateEquationCorpusLedger({ rootDir }), {
+      sourceCount: 10,
+      uniqueCaseCount: 1,
+      duplicateCaseCount: 0,
+      runResultCount: 1,
+      scanFindingCount: 0,
+    });
+
+    rmSync(rootDir, { recursive: true, force: true });
+  });
+
+  it('accepts contour-verified bounded-region complex evidence', () => {
+    const rootDir = makeRootFromRepo();
+    const result = {
+      run_id: '2026-07-05-complex-region-contract',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-contract',
+      run_status: 'supported',
+      failure_kind: 'none',
+      domain_intent: 'complex',
+      route_observed: 'Complex region nonlinear roots',
+      root_count: 2,
+      complex_numeric_scope: 'bounded-region',
+      complex_engine: 'complex-region-argument-principle',
+      complex_verification_status: 'contour-verified',
+      complex_contour_root_count: 2,
+      complex_candidate_count: 2,
+      complex_branch_policy: 'principal',
+      complex_region: {
+        re_min: '-2',
+        re_max: '2',
+        im_min: '-2',
+        im_max: '2',
+        grid_size: 8,
+        random_seed_count: 12,
+        contour_samples: 64,
+        subdivision_depth: 0,
+        cell_budget: 1,
+      },
+      complex_searched_region_notes: 'Verified inside [-2,2] x [-2,2] only.',
+    };
+
+    writeSingleCaseLedger(rootDir, result);
+
+    assert.deepEqual(validateEquationCorpusLedger({ rootDir }), {
+      sourceCount: 10,
+      uniqueCaseCount: 1,
+      duplicateCaseCount: 0,
+      runResultCount: 1,
+      scanFindingCount: 0,
+    });
+
+    rmSync(rootDir, { recursive: true, force: true });
+  });
+
+  it('rejects supported bounded-region complex evidence without contour verification', () => {
+    const rootDir = makeRootFromRepo();
+    const result = {
+      run_id: '2026-07-05-complex-region-contract',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-contract',
+      run_status: 'supported',
+      failure_kind: 'none',
+      domain_intent: 'complex',
+      complex_numeric_scope: 'bounded-region',
+      complex_engine: 'complex-region-argument-principle',
+      complex_verification_status: 'inconclusive',
+      complex_candidate_count: 1,
+      complex_branch_policy: 'principal',
+      complex_region: {
+        re_min: -2,
+        re_max: 2,
+        im_min: -2,
+        im_max: 2,
+      },
+    };
+
+    writeSingleCaseLedger(rootDir, result);
+
+    assert.throws(
+      () => validateEquationCorpusLedger({ rootDir }),
+      /supported bounded-region complex results require contour-verified evidence/,
+    );
+  });
+
+  it('rejects bounded-region complex evidence without region bounds', () => {
+    const rootDir = makeRootFromRepo();
+    const result = {
+      run_id: '2026-07-05-complex-region-contract',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-contract',
+      run_status: 'unsupported',
+      failure_kind: 'needs-upgrade',
+      domain_intent: 'complex',
+      complex_numeric_scope: 'bounded-region',
+      complex_engine: 'complex-region-argument-principle',
+      complex_verification_status: 'inconclusive',
+      complex_candidate_count: 1,
+      complex_branch_policy: 'principal',
+    };
+
+    writeSingleCaseLedger(rootDir, result);
+
+    assert.throws(
+      () => validateEquationCorpusLedger({ rootDir }),
+      /complex_numeric_scope "bounded-region" requires complex_region/,
+    );
+  });
+
+  it('rejects contour-verified complex evidence with mismatched counts', () => {
+    const rootDir = makeRootFromRepo();
+    const result = {
+      run_id: '2026-07-05-complex-region-contract',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-contract',
+      run_status: 'supported',
+      failure_kind: 'none',
+      domain_intent: 'complex',
+      complex_numeric_scope: 'bounded-region',
+      complex_engine: 'complex-region-argument-principle',
+      complex_verification_status: 'contour-verified',
+      complex_contour_root_count: 2,
+      complex_candidate_count: 1,
+      complex_branch_policy: 'principal',
+      complex_region: {
+        re_min: -2,
+        re_max: 2,
+        im_min: -2,
+        im_max: 2,
+      },
+    };
+
+    writeSingleCaseLedger(rootDir, result);
+
+    assert.throws(
+      () => validateEquationCorpusLedger({ rootDir }),
+      /contour-verified complex evidence requires matching contour and candidate counts/,
+    );
+  });
+
+  it('rejects locus-deferred complex evidence marked supported', () => {
+    const rootDir = makeRootFromRepo();
+    const result = {
+      run_id: '2026-07-05-complex-locus-contract',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-contract',
+      run_status: 'supported',
+      failure_kind: 'none',
+      domain_intent: 'complex',
+      complex_numeric_scope: 'locus-deferred',
+      complex_engine: 'locus-deferred',
+      complex_verification_status: 'not-applicable',
+      complex_branch_policy: 'locus-deferred',
+    };
+
+    writeSingleCaseLedger(rootDir, result);
+
+    assert.throws(
+      () => validateEquationCorpusLedger({ rootDir }),
+      /complex_numeric_scope "locus-deferred" cannot be marked supported/,
     );
   });
 

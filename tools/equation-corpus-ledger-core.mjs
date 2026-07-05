@@ -63,6 +63,46 @@ const ALLOWED_RUN_POLICIES = ['run-once-per-case-per-sweep'];
 const ALLOWED_CASE_STATUSES = ['pending', 'supported', 'unsupported', 'wrong-result', 'needs-upgrade', 'not-run'];
 const ALLOWED_ROUTE_HINTS = ['symbolic', 'linear2', 'linear3', 'polynomialSystem2', 'quadratic', 'cubic', 'quartic'];
 const ALLOWED_COMPANION_RUN_KINDS = ['complex-companion'];
+const ALLOWED_COMPLEX_NUMERIC_SCOPES = [
+  'global-polynomial',
+  'bounded-region',
+  'symbolic-family',
+  'controlled-boundary',
+  'locus-deferred',
+];
+const ALLOWED_COMPLEX_ENGINES = [
+  'exact-symbolic',
+  'complex-polynomial-aberth',
+  'complex-region-argument-principle',
+  'complex-boundary-policy',
+  'locus-deferred',
+];
+const ALLOWED_COMPLEX_VERIFICATION_STATUSES = [
+  'global-polynomial',
+  'contour-verified',
+  'inconclusive',
+  'unsafe',
+  'not-applicable',
+];
+const ALLOWED_COMPLEX_BRANCH_POLICIES = [
+  'not-applicable',
+  'principal',
+  'branch-family',
+  'branch-safe',
+  'branch-unsafe',
+  'pole-aware',
+  'locus-deferred',
+];
+const COMPLEX_EVIDENCE_FIELDS = [
+  'complex_numeric_scope',
+  'complex_region',
+  'complex_engine',
+  'complex_verification_status',
+  'complex_contour_root_count',
+  'complex_candidate_count',
+  'complex_branch_policy',
+  'complex_searched_region_notes',
+];
 const ALLOWED_RUN_STATUSES = ['supported', 'unsupported', 'wrong-result', 'timeout-or-too-slow', 'not-run'];
 const ALLOWED_FAILURE_KINDS = [
   'none',
@@ -119,6 +159,158 @@ function assertRequiredFields(record, requiredFields, context) {
 function assertEnum(value, allowedValues, context) {
   if (!allowedValues.includes(value)) {
     throw new Error(`${context} has invalid value "${value}"`);
+  }
+}
+
+function assertNonnegativeInteger(value, context) {
+  if (!Number.isInteger(value) || value < 0) {
+    throw new Error(`${context} must be a nonnegative integer`);
+  }
+}
+
+function assertFiniteBound(value, context) {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    throw new Error(`${context} must be a finite numeric bound`);
+  }
+
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    throw new Error(`${context} must be a finite numeric bound`);
+  }
+
+  return numericValue;
+}
+
+function validateComplexRegion(region, context) {
+  assertPlainObject(region, context);
+
+  const reMin = assertFiniteBound(region.re_min, `${context}.re_min`);
+  const reMax = assertFiniteBound(region.re_max, `${context}.re_max`);
+  const imMin = assertFiniteBound(region.im_min, `${context}.im_min`);
+  const imMax = assertFiniteBound(region.im_max, `${context}.im_max`);
+
+  if (reMin >= reMax) {
+    throw new Error(`${context}.re_min must be less than re_max`);
+  }
+
+  if (imMin >= imMax) {
+    throw new Error(`${context}.im_min must be less than im_max`);
+  }
+
+  for (const field of ['grid_size', 'random_seed_count', 'contour_samples', 'subdivision_depth', 'cell_budget']) {
+    if (region[field] !== undefined) {
+      assertNonnegativeInteger(region[field], `${context}.${field}`);
+    }
+  }
+}
+
+function validateComplexNumericEvidence(record, context) {
+  const hasComplexEvidence = COMPLEX_EVIDENCE_FIELDS.some((field) => record[field] !== undefined);
+  if (!hasComplexEvidence) {
+    return;
+  }
+
+  if (record.domain_intent !== 'complex') {
+    throw new Error(`${context} complex numeric evidence requires domain_intent "complex"`);
+  }
+
+  for (const field of ['complex_numeric_scope', 'complex_engine', 'complex_verification_status', 'complex_branch_policy']) {
+    if (!record[field]) {
+      throw new Error(`${context} complex numeric evidence is missing required field "${field}"`);
+    }
+  }
+
+  assertEnum(
+    record.complex_numeric_scope,
+    ALLOWED_COMPLEX_NUMERIC_SCOPES,
+    `${context}.complex_numeric_scope`,
+  );
+  assertEnum(record.complex_engine, ALLOWED_COMPLEX_ENGINES, `${context}.complex_engine`);
+  assertEnum(
+    record.complex_verification_status,
+    ALLOWED_COMPLEX_VERIFICATION_STATUSES,
+    `${context}.complex_verification_status`,
+  );
+  assertEnum(record.complex_branch_policy, ALLOWED_COMPLEX_BRANCH_POLICIES, `${context}.complex_branch_policy`);
+
+  if (record.complex_region !== undefined) {
+    validateComplexRegion(record.complex_region, `${context}.complex_region`);
+  }
+
+  for (const field of ['complex_contour_root_count', 'complex_candidate_count']) {
+    if (record[field] !== undefined) {
+      assertNonnegativeInteger(record[field], `${context}.${field}`);
+    }
+  }
+
+  if (
+    record.complex_verification_status === 'contour-verified' &&
+    (record.complex_contour_root_count === undefined || record.complex_candidate_count === undefined)
+  ) {
+    throw new Error(`${context}.complex_verification_status "contour-verified" requires contour and candidate counts`);
+  }
+
+  if (
+    record.complex_verification_status === 'contour-verified' &&
+    record.complex_contour_root_count !== record.complex_candidate_count
+  ) {
+    throw new Error(`${context} contour-verified complex evidence requires matching contour and candidate counts`);
+  }
+
+  if (record.complex_searched_region_notes !== undefined && typeof record.complex_searched_region_notes !== 'string') {
+    throw new Error(`${context}.complex_searched_region_notes must be a string`);
+  }
+
+  switch (record.complex_numeric_scope) {
+    case 'global-polynomial':
+      if (record.complex_engine !== 'complex-polynomial-aberth') {
+        throw new Error(`${context}.complex_numeric_scope "global-polynomial" requires complex-polynomial-aberth`);
+      }
+      if (record.complex_verification_status !== 'global-polynomial') {
+        throw new Error(`${context}.complex_numeric_scope "global-polynomial" requires global-polynomial verification`);
+      }
+      if (record.complex_region !== undefined) {
+        throw new Error(`${context}.complex_numeric_scope "global-polynomial" must not include complex_region`);
+      }
+      break;
+    case 'bounded-region':
+      if (record.complex_engine !== 'complex-region-argument-principle') {
+        throw new Error(`${context}.complex_numeric_scope "bounded-region" requires complex-region-argument-principle`);
+      }
+      if (record.complex_region === undefined) {
+        throw new Error(`${context}.complex_numeric_scope "bounded-region" requires complex_region`);
+      }
+      if (record.run_status === 'supported' && record.complex_verification_status !== 'contour-verified') {
+        throw new Error(`${context} supported bounded-region complex results require contour-verified evidence`);
+      }
+      break;
+    case 'symbolic-family':
+      if (record.complex_engine !== 'exact-symbolic') {
+        throw new Error(`${context}.complex_numeric_scope "symbolic-family" requires exact-symbolic`);
+      }
+      if (record.complex_verification_status !== 'not-applicable') {
+        throw new Error(`${context}.complex_numeric_scope "symbolic-family" requires not-applicable verification`);
+      }
+      break;
+    case 'controlled-boundary':
+      if (record.complex_engine !== 'complex-boundary-policy') {
+        throw new Error(`${context}.complex_numeric_scope "controlled-boundary" requires complex-boundary-policy`);
+      }
+      if (!['not-applicable', 'unsafe'].includes(record.complex_verification_status)) {
+        throw new Error(`${context}.complex_numeric_scope "controlled-boundary" requires not-applicable or unsafe verification`);
+      }
+      break;
+    case 'locus-deferred':
+      if (record.complex_engine !== 'locus-deferred') {
+        throw new Error(`${context}.complex_numeric_scope "locus-deferred" requires locus-deferred engine`);
+      }
+      if (record.complex_branch_policy !== 'locus-deferred') {
+        throw new Error(`${context}.complex_numeric_scope "locus-deferred" requires locus-deferred branch policy`);
+      }
+      if (record.run_status === 'supported') {
+        throw new Error(`${context}.complex_numeric_scope "locus-deferred" cannot be marked supported`);
+      }
+      break;
   }
 }
 
@@ -282,6 +474,7 @@ function validateRunResults(filePath, caseIds) {
         throw new Error(`${context}.companion_of_run_id must not reference its own run_id`);
       }
     }
+    validateComplexNumericEvidence(record, context);
     addUnique(runCaseKeys, `${record.run_id}:${record.case_id}`, context);
   }
 
