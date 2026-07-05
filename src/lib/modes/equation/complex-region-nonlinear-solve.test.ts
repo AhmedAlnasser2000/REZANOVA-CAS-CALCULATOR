@@ -124,6 +124,8 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(text).toContain('Adaptive subdivision: enabled.');
     expect(text).toContain('Split cells: 0.');
     expect(text).toContain('Contour-moment fallback: attempted.');
+    expect(text).toContain('Validated local boxes: 2.');
+    expect(text).toContain('Krawczyk contraction stayed inside the local box');
     expect(text).toContain('Contour count verified: 2 roots in this region.');
   });
 

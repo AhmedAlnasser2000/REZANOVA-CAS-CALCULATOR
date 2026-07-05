@@ -15,6 +15,10 @@ import type { ComplexContourWindingResult } from '../../equation/complex/contour
 import {
   createComplexNumericEvaluator,
 } from '../../equation/complex/numeric-evaluator';
+import {
+  validateComplexRootBoxes,
+  type ComplexLocalBoxValidation,
+} from '../../equation/complex/local-box-validation';
 import type { ComplexNewtonCandidate, ComplexRectangularRegion } from '../../equation/complex/seed-grid-newton';
 import {
   complexAbs,
@@ -186,6 +190,32 @@ function validationLines(input: {
   ];
 }
 
+function localBoxValidationLines(input: {
+  target: string;
+  complexExactForm: ComplexExactForm;
+  boxes: readonly ComplexLocalBoxValidation[];
+}) {
+  const validated = input.boxes.filter((box) => box.status === 'validated');
+  const inconclusive = input.boxes.filter((box) => box.status !== 'validated');
+  return [
+    `Validated local boxes: ${validated.length}.`,
+    `Inconclusive local boxes: ${inconclusive.length}.`,
+    ...input.boxes.map((box) => {
+      const rootText = `${input.target}≈${formatComplexRootText(box.center, input.complexExactForm)}`;
+      const radiusText = `box radius ${formatDiagnosticNumber(box.boxRadius)}`;
+      const derivativeText = box.derivativeMagnitude === null
+        ? 'derivative unavailable'
+        : `derivative |f'| ${formatDiagnosticNumber(box.derivativeMagnitude)}`;
+      const contractionText = box.contractionRadius === null
+        ? 'contraction unavailable'
+        : `contraction ${formatDiagnosticNumber(box.contractionRadius)}`;
+      return box.status === 'validated'
+        ? `${rootText}: Krawczyk contraction stayed inside the local box (${radiusText}, ${contractionText}, ${derivativeText}).`
+        : `${rootText}: local box inconclusive (${radiusText}, ${contractionText}, ${derivativeText}); ${box.reason}.`;
+    }),
+  ];
+}
+
 function diagnosticsSections(input: {
   region: ComplexRectangularRegion;
   gridSize: number;
@@ -197,6 +227,7 @@ function diagnosticsSections(input: {
   moments: ReturnType<typeof searchComplexRegionWithSubdivision>['moments'];
   contour: ComplexContourWindingResult;
   accepted: readonly ComplexNewtonCandidate[];
+  localBoxes: readonly ComplexLocalBoxValidation[];
   branchPolicyLines: readonly string[];
   meromorphicPolicyLines: readonly string[];
   infiniteFamilyPolicyLines: readonly string[];
@@ -307,6 +338,14 @@ function diagnosticsSections(input: {
         target: input.target,
         accepted: input.accepted,
         complexExactForm: input.complexExactForm,
+      }),
+    },
+    {
+      title: 'Complex Local Box Validation',
+      lines: localBoxValidationLines({
+        target: input.target,
+        complexExactForm: input.complexExactForm,
+        boxes: input.localBoxes,
       }),
     },
     {
@@ -446,6 +485,11 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   });
   const { accepted, contour, newton, subdivision } = search;
   const { moments } = search;
+  const localBoxes = validateComplexRootBoxes({
+    evaluator,
+    roots: accepted.map((candidate) => candidate.value),
+    region,
+  });
   if (contour.kind === 'unsafe') {
     return unsupportedRegionOutcome({
       error: 'Complex region contour is unsafe for verified nonlinear solving.',
@@ -460,6 +504,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         moments,
         contour,
         accepted,
+        localBoxes,
         branchPolicyLines: branchPolicy.detailLines,
         meromorphicPolicyLines: meromorphicPolicy.detailLines,
         infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,
@@ -484,6 +529,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         moments,
         contour,
         accepted,
+        localBoxes,
         branchPolicyLines: branchPolicy.detailLines,
         meromorphicPolicyLines: meromorphicPolicy.detailLines,
         infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,
@@ -510,6 +556,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         moments,
         contour,
         accepted,
+        localBoxes,
         branchPolicyLines: branchPolicy.detailLines,
         meromorphicPolicyLines: meromorphicPolicy.detailLines,
         infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,
@@ -553,6 +600,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       moments,
       contour,
       accepted,
+      localBoxes,
       branchPolicyLines: branchPolicy.detailLines,
       meromorphicPolicyLines: meromorphicPolicy.detailLines,
       infiniteFamilyPolicyLines: infiniteFamilyPolicy.detailLines,

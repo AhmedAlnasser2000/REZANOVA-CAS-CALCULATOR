@@ -2000,3 +2000,7 @@
 ## 2026-07-06 - COMPLEX-EQUATION-CONTOUR-MOMENTS3
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Delves-Lyness contour moments are Equation-local candidate-seed machinery, not a proof surface by themselves. They may generate extra seeds only for safe one- or two-root holomorphic cells after contour count under-finds candidates; accepted roots still require residual validation and contour agreement, while higher-count, pole-aware, branch-unsafe, or derivative-missing cells remain controlled/inconclusive.
+
+## 2026-07-06 - COMPLEX-EQUATION-LOCAL-BOX-VALIDATION4
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Region local box validation is evidence for already accepted bounded roots, not a replacement solver. A Krawczyk-style contraction may mark simple local boxes as validated when derivative variation stays inside the box; derivative-missing, branch-unsafe, pole-aware, clustered, or multiple-root boxes must remain unsupported or inconclusive rather than claiming unique-root validation.
