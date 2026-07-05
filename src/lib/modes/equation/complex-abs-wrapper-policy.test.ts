@@ -42,7 +42,9 @@ describe('Equation Complex absolute-value wrapper policy', () => {
       }
       const text = JSON.stringify(result);
       expect(result.error).toContain('outside the supported guarded complex preimage families');
-      expect(text).toContain('loci or condition sets rather than finite branches');
+      expect(text).toContain('Complex Locus Policy');
+      expect(text).toContain('locus-deferred');
+      expect(text).toContain('two-real-variable');
       expect(text).toContain('real-domain equation');
       expect(text).not.toContain('Real Abs');
       expect(text).not.toContain('sign split');
@@ -57,8 +59,30 @@ describe('Equation Complex absolute-value wrapper policy', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected Complex affine circle policy stop');
     }
+    expect(result.detailSections?.some((section) => section.title === 'Complex Locus Policy')).toBe(true);
     expect(result).not.toHaveProperty('exactLatex');
     expect(result).not.toHaveProperty('branchReadback');
+  });
+
+  it('keeps Re, Im, and conjugate carriers on the deferred locus route', () => {
+    const cases = [
+      String.raw`\operatorname{Re}(z)=1`,
+      String.raw`\operatorname{Im}(z)=1`,
+      String.raw`\operatorname{conj}(z)=1`,
+      'conj(z)=1',
+    ];
+
+    for (const equationLatex of cases) {
+      const result = solve(equationLatex);
+      expect(result.kind, equationLatex).toBe('error');
+      if (result.kind !== 'error') {
+        throw new Error(`Expected Complex locus policy stop for ${equationLatex}`);
+      }
+      const text = JSON.stringify(result);
+      expect(text).toContain('Complex Locus Policy');
+      expect(text).toContain('locus-deferred');
+      expect(text).not.toContain('Complex region nonlinear solve');
+    }
   });
 
   it('leaves Complex Off on the existing real-domain absolute-value path', () => {

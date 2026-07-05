@@ -185,8 +185,42 @@ function symbolicFamilyEvidence(outcome: DisplayOutcome): EquationComplexBenchma
   };
 }
 
+function controlledBoundaryEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
+  if (
+    outcome.kind !== 'success'
+    || sectionLines(outcome, 'Complex Abs Boundary').length === 0
+  ) {
+    return undefined;
+  }
+  return {
+    complex_numeric_scope: 'controlled-boundary',
+    complex_engine: 'complex-boundary-policy',
+    complex_verification_status: 'not-applicable',
+    complex_branch_policy: 'locus-deferred',
+    complex_candidate_count: 0,
+    complex_searched_region_notes: 'Controlled Complex boundary evidence; no bounded-region numeric search was run.',
+  };
+}
+
+function locusDeferredEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
+  const locusLines = sectionLines(outcome, 'Complex Locus Policy');
+  if (outcome.kind !== 'error' || locusLines.length === 0) {
+    return undefined;
+  }
+  return {
+    complex_numeric_scope: 'locus-deferred',
+    complex_engine: 'locus-deferred',
+    complex_verification_status: 'not-applicable',
+    complex_branch_policy: 'locus-deferred',
+    complex_searched_region_notes: 'Non-holomorphic Complex locus case; analytic bounded-region numeric solving was not run.',
+  };
+}
+
 function primaryEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
-  return globalPolynomialEvidence(outcome) ?? symbolicFamilyEvidence(outcome);
+  return globalPolynomialEvidence(outcome)
+    ?? symbolicFamilyEvidence(outcome)
+    ?? controlledBoundaryEvidence(outcome)
+    ?? locusDeferredEvidence(outcome);
 }
 
 function boundedRegionEvidence(
@@ -251,6 +285,14 @@ export function runEquationComplexBenchmarkRegionFallback(
     return {
       outcome: primaryOutcome,
       status: 'primary-supported',
+      evidence,
+      attemptedRegions: [],
+    };
+  }
+  if (evidence?.complex_numeric_scope === 'locus-deferred') {
+    return {
+      outcome: primaryOutcome,
+      status: 'primary-controlled-stop',
       evidence,
       attemptedRegions: [],
     };

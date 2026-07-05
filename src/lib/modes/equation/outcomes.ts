@@ -4,6 +4,7 @@ import { attachRuntimeEnvelope } from '../../kernel/runtime-envelope';
 import { hasUnsafeSymbolicOutput } from '../../display/symbolic-output-hygiene';
 import { normalizeRelationOperatorLatex } from '../../input/input-canonicalization';
 import { formatNamedEquationOutcomeTarget, rewriteEquationOutcomeTarget } from '../../equation/equation-target';
+import type { ComplexLocusPolicyReport } from '../../equation/complex/locus-policy';
 import type { DisplayOutcome, EquationAnswerMode, PlannerBadge, SolutionKind } from '../../../types/calculator';
 
 const ce = new ComputeEngine();
@@ -282,6 +283,31 @@ export function unsupportedComplexPreimageOutcome(): DisplayOutcome {
       },
     ],
     answerMode: 'exact',
+  };
+}
+
+export function unsupportedComplexLocusOutcome(report: ComplexLocusPolicyReport): DisplayOutcome {
+  return {
+    kind: 'error',
+    title: 'Solve',
+    error: 'This complex equation is outside the supported guarded complex preimage families.',
+    warnings: [],
+    detailSections: [
+      {
+        title: 'Complex Locus Policy',
+        lines: report.detailLines,
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          'Use a real-domain equation or turn Complex Off when you want the older real absolute-value route.',
+          'Use holomorphic equations for bounded Complex Region solving.',
+          'Wait for the future two-real-variable/locus engine for full complex magnitude, conjugate, real-part, or imaginary-part conditions.',
+        ],
+      },
+    ],
+    answerMode: 'exact',
+    answerDomain: 'complex',
   };
 }
 

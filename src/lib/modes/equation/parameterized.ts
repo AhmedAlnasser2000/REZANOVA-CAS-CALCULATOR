@@ -15,6 +15,7 @@ import { solveParameterizedTrigEquation } from '../../equation/parameterized/tri
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
 import { runParameterizedFormulaRoutes } from './parameterized-formula-routes';
 import { containsEquationImaginaryUnitLatex } from '../../equation/complex-input-policy';
+import { diagnoseComplexLocusPolicyForLatex } from '../../equation/complex/locus-policy';
 import { solveEquationAlgebraicIsolation } from '../../equation/equation-algebraic-isolation';
 import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } from '../../equation/equation-complex';
 import { solveSelectedTargetIsolationEquation } from '../../equation/equation-selected-target-isolation';
@@ -42,8 +43,8 @@ import type {
 } from '../../../types/calculator';
 import {
   attachEquationRuntimeEnvelope,
-  containsTargetedAbsLatex,
   finalizeSelectedTargetSymbolicOutcome,
+  unsupportedComplexLocusOutcome,
   unsupportedComplexPreimageOutcome,
 } from './outcomes';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
@@ -235,10 +236,21 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           }
         }
 
-        if (
-          containsEquationImaginaryUnitLatex(parameterizedEquationLatex)
-          || containsTargetedAbsLatex(parameterizedEquationLatex, selectedTarget)
-        ) {
+        const locusPolicy = diagnoseComplexLocusPolicyForLatex(parameterizedEquationLatex, {
+          target: selectedTarget,
+        });
+        if (locusPolicy.hasLocusDeferredCarrier) {
+          const boundaryOutcome = unsupportedComplexLocusOutcome(locusPolicy);
+          return attachEquationRuntimeEnvelope(
+            boundaryOutcome,
+            equationLatex,
+            planner.resolvedLatex,
+            planner.badges,
+            classifyEquationRuntimeAdvisories({ invalidRequest: true }),
+          );
+        }
+
+        if (containsEquationImaginaryUnitLatex(parameterizedEquationLatex)) {
           const boundaryOutcome = unsupportedComplexPreimageOutcome();
           return attachEquationRuntimeEnvelope(
             boundaryOutcome,

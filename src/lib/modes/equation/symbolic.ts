@@ -32,7 +32,7 @@ import {
   isDeferredComplexWrapperBoundary,
   withDeferredComplexWrapperBoundary,
 } from './complex-wrapper-fallback';
-import { tryComplexAbsBoundaryNoSolution } from './complex-abs-boundary';
+import { tryComplexSymbolicBoundaryOutcome } from './complex-symbolic-boundary';
 import { tryDeferredComplexPeriodicFallback } from './complex-periodic-fallback';
 import { tryRealNumericFallbackOutcome } from './real-numeric-fallbacks';
 import { trySelectedTargetParameterizedExactSolve } from './symbolic-parameterized-exact';
@@ -47,7 +47,6 @@ import {
   containsTargetedAbsLatex,
   finalizeSelectedTargetSymbolicOutcome,
   finalizeSharedSymbolicOutcome,
-  unsupportedComplexPreimageOutcome,
 } from './outcomes';
 
 const ce = new ComputeEngine();
@@ -594,33 +593,15 @@ export function solveSymbolicEquation(
       }
     }
 
-    const complexAbsBoundary = tryComplexAbsBoundaryNoSolution({
-      equationLatex: parameterizedEquationLatex,
-      target: solveTarget,
+    const complexBoundaryOutcome = tryComplexSymbolicBoundaryOutcome({
+      equationLatex,
+      parameterizedEquationLatex,
+      solveTarget,
+      complexRegion,
+      plannerResolvedLatex: planner.resolvedLatex,
+      plannerBadges: planner.badges,
     });
-    if (complexAbsBoundary) {
-      return attachEquationRuntimeEnvelope(
-        complexAbsBoundary,
-        equationLatex,
-        planner.resolvedLatex,
-        planner.badges,
-        classifyEquationRuntimeAdvisories({ outcome: complexAbsBoundary }),
-      );
-    }
-
-    if (
-      (!complexRegion && containsEquationImaginaryUnitLatex(parameterizedEquationLatex))
-      || containsTargetedAbsLatex(parameterizedEquationLatex, solveTarget)
-    ) {
-      const boundaryOutcome = unsupportedComplexPreimageOutcome();
-      return attachEquationRuntimeEnvelope(
-        boundaryOutcome,
-        equationLatex,
-        planner.resolvedLatex,
-        planner.badges,
-        classifyEquationRuntimeAdvisories({ invalidRequest: true }),
-      );
-    }
+    if (complexBoundaryOutcome) return complexBoundaryOutcome;
   }
 
   if (

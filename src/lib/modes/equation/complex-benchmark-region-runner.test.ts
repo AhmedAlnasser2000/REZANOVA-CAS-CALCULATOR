@@ -45,6 +45,38 @@ describe('Equation Complex benchmark region runner', () => {
     });
   });
 
+  it('records Complex locus cases as deferred without staged region runs', () => {
+    const result = runEquationComplexBenchmarkRegionFallback(request(String.raw`\left|z-1\right|=2`));
+
+    expect(result.status).toBe('primary-controlled-stop');
+    expect(result.attemptedRegions).toHaveLength(0);
+    expect(result.outcome.kind).toBe('error');
+    expect(result.evidence).toMatchObject({
+      complex_numeric_scope: 'locus-deferred',
+      complex_engine: 'locus-deferred',
+      complex_verification_status: 'not-applicable',
+      complex_branch_policy: 'locus-deferred',
+    });
+    expect(collectOutcomeText(result.outcome)).toContain('locus-deferred');
+    expect(collectOutcomeText(result.outcome)).toContain('two-real-variable');
+  });
+
+  it('records controlled Complex abs boundaries without staged region runs', () => {
+    const result = runEquationComplexBenchmarkRegionFallback(request('abs(2x+1)=x-5', 'x'));
+
+    expect(result.status).toBe('primary-supported');
+    expect(result.attemptedRegions).toHaveLength(0);
+    expect(result.outcome.kind).toBe('success');
+    expect(result.evidence).toMatchObject({
+      complex_numeric_scope: 'controlled-boundary',
+      complex_engine: 'complex-boundary-policy',
+      complex_verification_status: 'not-applicable',
+      complex_branch_policy: 'locus-deferred',
+      complex_candidate_count: 0,
+    });
+    expect(collectOutcomeText(result.outcome)).toContain('Absolute-value equations use magnitude semantics');
+  });
+
   it('tries the first staged benchmark box after exact and polynomial routes miss', () => {
     const result = runEquationComplexBenchmarkRegionFallback(request('e^z+z=0'));
 
