@@ -3,10 +3,15 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { createKeyboardContext } from '../../lib/virtual-keyboard/capabilities';
-import { getActiveGuideHomeEntries } from '../../lib/guide/content';
+import {
+  getActiveGuideHomeEntries,
+  getGuideArticle,
+  getGuideModeRef,
+} from '../../lib/guide/content';
 import {
   getGuideListEntries,
   getGuideRouteMeta,
@@ -21,12 +26,12 @@ const enabledCapabilities = createKeyboardContext('calculate').enabledCapabiliti
 
 function guideProps(route: GuideRoute = { screen: 'home' }): GuideWorkspaceProps {
   return {
-    article: null,
+    article: route.screen === 'article' ? getGuideArticle(route.articleId) ?? null : null,
     currentSelectionIndex: 0,
     homeEntryCount: getActiveGuideHomeEntries(enabledCapabilities).length,
     listEntries: getGuideListEntries(route, enabledCapabilities),
     menuPanelRef: createRef<HTMLDivElement>(),
-    modeRef: null,
+    modeRef: route.screen === 'modeGuide' && route.modeId ? getGuideModeRef(route.modeId) ?? null : null,
     onCopyGuideExample: vi.fn(),
     onLaunchGuideExample: vi.fn(),
     onOpenGuideRoute: vi.fn(),
@@ -82,5 +87,26 @@ describe('GuidePage', () => {
 
     fireEvent.focus(firstEntry);
     expect(homeGuide.onSetCurrentSelectionIndex).toHaveBeenCalledWith(0);
+  });
+
+  it('dispatches article example Open in Tool and Copy Expr actions with real Guide examples', () => {
+    const route = { screen: 'article', articleId: 'trig-period-phase' } as const;
+    const articleGuide = guideProps(route);
+    const example = getGuideArticle('trig-period-phase')?.examples.find(
+      (candidate) => candidate.id === 'trig-period-phase-sine',
+    );
+
+    render(<GuidePage guide={articleGuide} />);
+
+    const cardTitle = screen.getByText('Analyze 2sin(3x-pi)+1');
+    const card = cardTitle.closest('.guide-example');
+    expect(card).toBeTruthy();
+    expect(example).toBeDefined();
+
+    fireEvent.click(within(card as HTMLElement).getByRole('button', { name: 'Open in Tool' }));
+    expect(articleGuide.onLaunchGuideExample).toHaveBeenCalledWith(example);
+
+    fireEvent.click(within(card as HTMLElement).getByRole('button', { name: 'Copy Expr' }));
+    expect(articleGuide.onCopyGuideExample).toHaveBeenCalledWith(example);
   });
 });

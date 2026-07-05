@@ -1954,3 +1954,7 @@
 ## 2026-07-05 - PUBLIC-OVERVIEW-CATCHUP1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Current public overview prose should treat full Settings and History pages, the singleton Guide page, Statistics Guide visibility, Formula Viewer for dense current-result formulas, and the hostless Surface Protocol spine as current. Graphing, Spreadsheet, Notebook, import/export packages, website mounting, plugins, external software development kit work, Surface Protocol mounting/adapters, full Variables page work, broad Complex numeric/locus output, and full Risch-style certificates remain future.
+
+## 2026-07-05 - GUIDE-CONTENT-CAPABILITY-EVIDENCE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Guide examples are contract-bearing launch payloads. Every current example must pass static launch-shape validation, Matrix/Vector Guide entries remain open-tool only, and app-visible Guide example claims should be proven with representative Guide-page Playwright evidence or corrected in Guide content rather than widened through solver/runtime expansion.

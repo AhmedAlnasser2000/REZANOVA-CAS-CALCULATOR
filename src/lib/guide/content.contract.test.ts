@@ -68,7 +68,7 @@ describe('guide content parity contract', () => {
     }
 
     for (const article of getActiveGuideArticles(ACTIVE_CAPABILITIES)) {
-      for (const articleId of article.relatedArticleIds) {
+      for (const articleId of article.relatedArticleIds ?? []) {
         expect(activeIds.has(articleId), `${article.id} links to inactive ${articleId}`).toBe(true);
       }
     }
