@@ -18,7 +18,13 @@ export type ComplexRectangularRegion = {
 export type ComplexNewtonCandidate = {
   value: ComplexValue;
   residualNorm: number;
-  source: 'deterministic-grid' | 'adaptive-midpoint' | 'supplemental-random' | 'low-discrepancy' | 'cluster-polish';
+  source:
+    | 'deterministic-grid'
+    | 'adaptive-midpoint'
+    | 'contour-moment'
+    | 'supplemental-random'
+    | 'low-discrepancy'
+    | 'cluster-polish';
   iterations: number;
 };
 
@@ -37,6 +43,7 @@ export type ComplexSeedGridNewtonResult = {
     dampingRetryCount: number;
     lowDiscrepancySeedCount: number;
     adaptiveSeedCount: number;
+    contourMomentSeedCount: number;
     clusterPolishSeedCount: number;
     maxIterationsReached: number;
     totalEvaluations: number;
@@ -318,6 +325,8 @@ export function findComplexNewtonCandidates(input: {
   randomSeedCount?: number;
   randomSeed?: number;
   lowDiscrepancySeedCount?: number;
+  contourMomentSeeds?: readonly ComplexValue[];
+  includeDefaultSeeds?: boolean;
   maxIterations?: number;
   tolerance?: number;
   dedupeTolerance?: number;
@@ -335,6 +344,7 @@ export function findComplexNewtonCandidates(input: {
     dampingRetryCount: 0,
     lowDiscrepancySeedCount: 0,
     adaptiveSeedCount: 0,
+    contourMomentSeedCount: 0,
     clusterPolishSeedCount: 0,
     maxIterationsReached: 0,
     totalEvaluations: 0,
@@ -344,17 +354,23 @@ export function findComplexNewtonCandidates(input: {
     return { candidates: [], diagnostics };
   }
 
-  const gridSeeds = deterministicGridSeeds(input.region, input.gridSize ?? DEFAULT_GRID_SIZE);
-  const adaptiveSeeds = adaptiveMidpointSeeds(input.region, input.gridSize ?? DEFAULT_GRID_SIZE);
+  const includeDefaultSeeds = input.includeDefaultSeeds ?? true;
+  const gridSeeds = includeDefaultSeeds
+    ? deterministicGridSeeds(input.region, input.gridSize ?? DEFAULT_GRID_SIZE)
+    : [];
+  const adaptiveSeeds = includeDefaultSeeds
+    ? adaptiveMidpointSeeds(input.region, input.gridSize ?? DEFAULT_GRID_SIZE)
+    : [];
   const lowDiscrepancy = lowDiscrepancySeeds(
     input.region,
-    input.lowDiscrepancySeedCount ?? DEFAULT_LOW_DISCREPANCY_SEED_COUNT,
+    includeDefaultSeeds ? input.lowDiscrepancySeedCount ?? DEFAULT_LOW_DISCREPANCY_SEED_COUNT : 0,
   );
   const supplemental = randomSeeds(
     input.region,
-    input.randomSeedCount ?? DEFAULT_RANDOM_SEED_COUNT,
+    includeDefaultSeeds ? input.randomSeedCount ?? DEFAULT_RANDOM_SEED_COUNT : 0,
     input.randomSeed ?? 0xdecafbad,
   );
+  const contourMomentSeeds = [...(input.contourMomentSeeds ?? [])];
   const candidates: ComplexNewtonCandidate[] = [];
   const maxIterations = input.maxIterations ?? DEFAULT_MAX_ITERATIONS;
   const tolerance = input.tolerance ?? DEFAULT_RESIDUAL_TOLERANCE;
@@ -364,6 +380,7 @@ export function findComplexNewtonCandidates(input: {
   diagnostics.adaptiveSeedCount = adaptiveSeeds.length;
   diagnostics.randomSeedCount = supplemental.length;
   diagnostics.lowDiscrepancySeedCount = lowDiscrepancy.length;
+  diagnostics.contourMomentSeedCount = contourMomentSeeds.length;
   diagnostics.supplementalRandomUsed = supplemental.length > 0 || lowDiscrepancy.length > 0;
 
   const runSeeds = (seeds: readonly ComplexValue[], source: ComplexNewtonCandidate['source']) => {
@@ -398,6 +415,7 @@ export function findComplexNewtonCandidates(input: {
   for (const [seeds, source] of [
     [gridSeeds, 'deterministic-grid'],
     [adaptiveSeeds, 'adaptive-midpoint'],
+    [contourMomentSeeds, 'contour-moment'],
     [lowDiscrepancy, 'low-discrepancy'],
     [supplemental, 'supplemental-random'],
   ] as const) {

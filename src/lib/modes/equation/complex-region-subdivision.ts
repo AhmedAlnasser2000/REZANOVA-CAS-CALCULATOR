@@ -3,6 +3,9 @@ import {
   verifyComplexContourWinding,
   type ComplexContourWindingResult,
 } from '../../equation/complex/contour-winding';
+import {
+  computeComplexContourMomentSeeds,
+} from '../../equation/complex/contour-moments';
 import type { ComplexNumericEvaluator } from '../../equation/complex/numeric-evaluator';
 import {
   findComplexNewtonCandidates,
@@ -28,11 +31,21 @@ export type ComplexRegionSubdivisionDiagnostics = {
   terminalReasons: string[];
 };
 
+export type ComplexRegionMomentDiagnostics = {
+  attemptedCellCount: number;
+  generatedSeedCount: number;
+  acceptedSeedCount: number;
+  inconclusiveCount: number;
+  sampleCount: number;
+  fallbackReasons: string[];
+};
+
 export type ComplexRegionVerifiedSearchResult = {
   accepted: ComplexNewtonCandidate[];
   newton: ComplexSeedGridNewtonResult;
   contour: ComplexContourWindingResult;
   subdivision: ComplexRegionSubdivisionDiagnostics;
+  moments: ComplexRegionMomentDiagnostics;
 };
 
 export type ComplexRegionCellPolicy = {
@@ -64,6 +77,7 @@ function emptyNewton(): ComplexSeedGridNewtonResult {
       dampingRetryCount: 0,
       lowDiscrepancySeedCount: 0,
       adaptiveSeedCount: 0,
+      contourMomentSeedCount: 0,
       clusterPolishSeedCount: 0,
       maxIterationsReached: 0,
       totalEvaluations: 0,
@@ -85,6 +99,7 @@ function mergeNewtonDiagnostics(target: ComplexSeedGridNewtonResult, source: Com
   target.diagnostics.dampingRetryCount += source.diagnostics.dampingRetryCount;
   target.diagnostics.lowDiscrepancySeedCount += source.diagnostics.lowDiscrepancySeedCount;
   target.diagnostics.adaptiveSeedCount += source.diagnostics.adaptiveSeedCount;
+  target.diagnostics.contourMomentSeedCount += source.diagnostics.contourMomentSeedCount;
   target.diagnostics.clusterPolishSeedCount += source.diagnostics.clusterPolishSeedCount;
   target.diagnostics.maxIterationsReached += source.diagnostics.maxIterationsReached;
   target.diagnostics.totalEvaluations += source.diagnostics.totalEvaluations;
@@ -169,6 +184,14 @@ function runCell(input: {
         poleDiagnosticCount: input.cellPolicy.poleDiagnosticCount ?? 0,
         knownPoleCount: input.cellPolicy.knownPoleCount ?? 0,
       },
+      moments: {
+        attemptedCellCount: 0,
+        generatedSeedCount: 0,
+        acceptedSeedCount: 0,
+        inconclusiveCount: 0,
+        sampleCount: 0,
+        fallbackReasons: [],
+      },
     };
   }
   const newton = findComplexNewtonCandidates({
@@ -187,7 +210,69 @@ function runCell(input: {
     knownPoleCount: input.cellPolicy?.knownPoleCount,
     poleDiagnosticCount: input.cellPolicy?.poleDiagnosticCount,
   });
-  return { newton, accepted, contour };
+  const moments: ComplexRegionMomentDiagnostics = {
+    attemptedCellCount: 0,
+    generatedSeedCount: 0,
+    acceptedSeedCount: 0,
+    inconclusiveCount: 0,
+    sampleCount: 0,
+    fallbackReasons: [],
+  };
+  if (
+    contour.kind === 'inconclusive'
+    && contour.rootCount !== null
+    && contour.rootCount > accepted.length
+    && contour.rootCount <= 2
+    && contour.knownPoleCount === 0
+  ) {
+    moments.attemptedCellCount += 1;
+    const momentSeeds = computeComplexContourMomentSeeds({
+      evaluator: input.evaluator,
+      region: input.region,
+      rootCount: contour.rootCount,
+      samplesPerEdge: input.samplesPerEdge,
+    });
+    moments.sampleCount += momentSeeds.sampleCount;
+    if (momentSeeds.kind === 'seeds') {
+      moments.generatedSeedCount += momentSeeds.seeds.length;
+      const momentNewton = findComplexNewtonCandidates({
+        evaluator: input.evaluator,
+        region: input.region,
+        contourMomentSeeds: momentSeeds.seeds,
+        includeDefaultSeeds: false,
+        tolerance: input.residualTolerance,
+      });
+      mergeNewtonDiagnostics(newton, momentNewton);
+      const momentAccepted = validateCandidates(input.evaluator, momentNewton.candidates, input.residualTolerance);
+      moments.acceptedSeedCount += momentAccepted.length;
+      for (const candidate of momentAccepted) {
+        addAcceptedRoot(accepted, candidate);
+      }
+      const momentContour = verifyComplexContourWinding({
+        evaluator: input.evaluator,
+        region: input.region,
+        candidates: accepted,
+        samplesPerEdge: input.samplesPerEdge,
+        knownPoleCount: input.cellPolicy?.knownPoleCount,
+        poleDiagnosticCount: input.cellPolicy?.poleDiagnosticCount,
+      });
+      return { newton, accepted, contour: momentContour, moments };
+    }
+    moments.inconclusiveCount += 1;
+    moments.fallbackReasons.push(momentSeeds.reason);
+  } else if (
+    contour.kind === 'inconclusive'
+    && contour.rootCount !== null
+    && contour.rootCount > 2
+  ) {
+    moments.fallbackReasons.push('moment seed generation currently supports one or two roots per cell');
+  } else if (
+    contour.kind === 'inconclusive'
+    && contour.knownPoleCount > 0
+  ) {
+    moments.fallbackReasons.push('moment fallback skipped for pole-aware meromorphic cells');
+  }
+  return { newton, accepted, contour, moments };
 }
 
 export function searchComplexRegionWithSubdivision(input: {
@@ -220,6 +305,14 @@ export function searchComplexRegionWithSubdivision(input: {
     exhaustedCellBudget: false,
     terminalReasons: [],
   };
+  const moments: ComplexRegionMomentDiagnostics = {
+    attemptedCellCount: 0,
+    generatedSeedCount: 0,
+    acceptedSeedCount: 0,
+    inconclusiveCount: 0,
+    sampleCount: 0,
+    fallbackReasons: [],
+  };
   let verifiedRootCount = 0;
   let windingNumber = 0;
   let zerosMinusPoles = 0;
@@ -246,6 +339,12 @@ export function searchComplexRegionWithSubdivision(input: {
       cellPolicy: input.cellPolicyForRegion?.(cell.region),
     });
     mergeNewtonDiagnostics(aggregateNewton, result.newton);
+    moments.attemptedCellCount += result.moments.attemptedCellCount;
+    moments.generatedSeedCount += result.moments.generatedSeedCount;
+    moments.acceptedSeedCount += result.moments.acceptedSeedCount;
+    moments.inconclusiveCount += result.moments.inconclusiveCount;
+    moments.sampleCount += result.moments.sampleCount;
+    moments.fallbackReasons.push(...result.moments.fallbackReasons);
     boundarySampleCount += contourBoundarySamples(result.contour);
     branchDiagnosticCount += contourBranchDiagnostics(result.contour);
     poleDiagnosticCount += contourPoleDiagnostics(result.contour);
@@ -312,6 +411,7 @@ export function searchComplexRegionWithSubdivision(input: {
         poleDiagnosticCount,
       },
       subdivision,
+      moments,
     };
   }
 
@@ -340,7 +440,8 @@ export function searchComplexRegionWithSubdivision(input: {
           minimumBoundaryResidual: Number.isFinite(minimumBoundaryResidual) ? minimumBoundaryResidual : null,
           branchDiagnosticCount,
           poleDiagnosticCount,
-        },
+    },
     subdivision,
+    moments,
   };
 }

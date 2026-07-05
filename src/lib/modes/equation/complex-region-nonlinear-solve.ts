@@ -194,6 +194,7 @@ function diagnosticsSections(input: {
   subdivisionDepth: number;
   cellBudget: number;
   newton: ReturnType<typeof searchComplexRegionWithSubdivision>['newton'];
+  moments: ReturnType<typeof searchComplexRegionWithSubdivision>['moments'];
   contour: ComplexContourWindingResult;
   accepted: readonly ComplexNewtonCandidate[];
   branchPolicyLines: readonly string[];
@@ -271,6 +272,7 @@ function diagnosticsSections(input: {
       lines: [
         `Deterministic seeds: ${input.newton.diagnostics.deterministicSeedCount}.`,
         `Adaptive midpoint seeds: ${input.newton.diagnostics.adaptiveSeedCount}.`,
+        `Contour moment seeds: ${input.newton.diagnostics.contourMomentSeedCount}.`,
         `Low-discrepancy seeds: ${input.newton.diagnostics.lowDiscrepancySeedCount}.`,
         `Supplemental random seeds: ${input.newton.diagnostics.randomSeedCount}.`,
         `Attempted seeds: ${input.newton.diagnostics.attemptedSeedCount}.`,
@@ -283,6 +285,20 @@ function diagnosticsSections(input: {
         `Damping retries: ${input.newton.diagnostics.dampingRetryCount}.`,
         `Max-iteration exits: ${input.newton.diagnostics.maxIterationsReached}.`,
         `Total evaluator calls: ${input.newton.diagnostics.totalEvaluations}.`,
+      ],
+    },
+    {
+      title: 'Complex Contour Moments',
+      lines: [
+        input.moments.attemptedCellCount > 0
+          ? 'Contour-moment fallback: attempted.'
+          : 'Contour-moment fallback: not needed for this run.',
+        `Moment cells attempted: ${input.moments.attemptedCellCount}.`,
+        `Moment boundary samples: ${input.moments.sampleCount}.`,
+        `Moment seeds generated: ${input.moments.generatedSeedCount}.`,
+        `Moment seeds accepted: ${input.moments.acceptedSeedCount}.`,
+        `Moment inconclusive attempts: ${input.moments.inconclusiveCount}.`,
+        ...input.moments.fallbackReasons.slice(0, 3).map((reason) => `Moment fallback reason: ${reason}.`),
       ],
     },
     {
@@ -429,6 +445,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
     },
   });
   const { accepted, contour, newton, subdivision } = search;
+  const { moments } = search;
   if (contour.kind === 'unsafe') {
     return unsupportedRegionOutcome({
       error: 'Complex region contour is unsafe for verified nonlinear solving.',
@@ -440,6 +457,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         subdivisionDepth,
         cellBudget,
         newton,
+        moments,
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
@@ -463,6 +481,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         subdivisionDepth,
         cellBudget,
         newton,
+        moments,
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
@@ -488,6 +507,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
         subdivisionDepth,
         cellBudget,
         newton,
+        moments,
         contour,
         accepted,
         branchPolicyLines: branchPolicy.detailLines,
@@ -530,6 +550,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       subdivisionDepth,
       cellBudget,
       newton,
+      moments,
       contour,
       accepted,
       branchPolicyLines: branchPolicy.detailLines,

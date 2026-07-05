@@ -97,7 +97,7 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(collectOutcomeText(sineResult)).toContain('not a global solution set');
   });
 
-  it('uses adaptive subdivision when a coarse region pass needs more cell evidence', () => {
+  it('uses contour moments before adaptive subdivision when a coarse cell has two roots', () => {
     const result = tryComplexRegionNonlinearSolveFallback({
       equationLatex: 'z^2+1+e^z/10=0',
       equationSolveTarget: 'z',
@@ -122,7 +122,8 @@ describe('Equation Complex region nonlinear solve', () => {
     const text = collectOutcomeText(result);
     expect(result.branchReadback?.branchesLatex).toHaveLength(2);
     expect(text).toContain('Adaptive subdivision: enabled.');
-    expect(text).toContain('Split cells: 1.');
+    expect(text).toContain('Split cells: 0.');
+    expect(text).toContain('Contour-moment fallback: attempted.');
     expect(text).toContain('Contour count verified: 2 roots in this region.');
   });
 

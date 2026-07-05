@@ -1996,3 +1996,7 @@
 ## 2026-07-06 - COMPLEX-EQUATION-BRANCH-PULLBACK2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Region branch-sensitive solving may proceed through direct or real-affine principal-branch pullbacks only when the mapped bounded region avoids the branch point and cut. Broader composed pullbacks that cannot be certified safely must fail closed with branch-unsafe evidence instead of returning numeric roots.
+
+## 2026-07-06 - COMPLEX-EQUATION-CONTOUR-MOMENTS3
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Delves-Lyness contour moments are Equation-local candidate-seed machinery, not a proof surface by themselves. They may generate extra seeds only for safe one- or two-root holomorphic cells after contour count under-finds candidates; accepted roots still require residual validation and contour agreement, while higher-count, pole-aware, branch-unsafe, or derivative-missing cells remain controlled/inconclusive.
