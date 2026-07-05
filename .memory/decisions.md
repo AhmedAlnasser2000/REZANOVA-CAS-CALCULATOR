@@ -1875,3 +1875,7 @@
 ## 2026-07-04 - LINEAR-ALGEBRA-TEMPLATE-NATURAL-INPUT1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Plain list syntax in Matrix/Vector is an import convenience only. Successful editor parses canonicalize editor/request/preview/history/readback to natural LaTeX, while MathLive matrix/template parsing stays local to Linear Algebra with no Equation import or automatic Equation routing.
+
+## 2026-07-04 - CALCULUS-INTEGRATION-NEXT350-STUDY1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus integration benchmark sweeps for app-visible output use the Calculus workspace evaluator as the backend source of truth, not only the lower-level symbolic dispatcher. The dispatcher-only result can be stricter than the app because the workspace evaluator includes guarded Compute Engine fallback plus backcheck; run ledgers should reflect the app path when paired with Playwright visual evidence.
