@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-05 - LINEAR-ALGEBRA-RUNTIME-SEAM-AUDIT0
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Linear Algebra must eventually expose a public runtime seam for Matrix/Vector paste naturalization, editor canonicalization, request construction, named-value snapshots, replay helpers, and typed Equation handoff. Validator hardening for `workspace-runtime-request-boundary` is deferred because app runtime currently imports private Linear Algebra internals and the public seam does not yet exist. This `0` milestone intentionally changes no runtime code, request schemas, capability ids, workers, or validators.
+
 ## 2026-07-03 - CALCULUS-LIMITS-ASYMPTOTIC-TERM-IR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits frontier symbolic work starts with an internal asymptotic term/series IR instead of route-local mini-algorithms. V1 caps are Taylor order `10`, branch drivers `2`, and displayed conditional rows `12`; live evaluation remains unchanged until later orchestration gates adopt the IR.
