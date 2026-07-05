@@ -23,7 +23,7 @@ const CLUSTER_WARNING_EPSILON = 1e-3;
 const CLOSE_SEPARATION_WARNING_EPSILON = 1e-3;
 const MAX_ITERATIONS = 500;
 const SEED_ANGLE_OFFSETS = [0.25, 0.43, 0.67, 0.91] as const;
-const MAX_DEGREE = 64;
+export const MAX_POLYNOMIAL_ROOT_DEGREE = 64;
 
 export type PolynomialRootsRequest = {
   coefficients: number[];
@@ -456,10 +456,10 @@ export function solvePolynomialRoots({
     Number.isFinite(coefficient) ? coefficient : 0,
   );
 
-  if (normalized.length < 2 || normalized.length > MAX_DEGREE + 1) {
+  if (normalized.length < 2 || normalized.length > MAX_POLYNOMIAL_ROOT_DEGREE + 1) {
     return {
       kind: 'error',
-      error: `Numeric polynomial fallback supports degrees 1 through ${MAX_DEGREE} only.`,
+      error: `Numeric polynomial fallback supports degrees 1 through ${MAX_POLYNOMIAL_ROOT_DEGREE} only.`,
     };
   }
 

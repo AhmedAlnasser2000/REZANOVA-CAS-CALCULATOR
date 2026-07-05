@@ -1,5 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import { solvePolynomialRoots, type PolynomialRootDiagnostics } from '../../algebra/polynomial-roots';
+import {
+  MAX_POLYNOMIAL_ROOT_DEGREE,
+  solvePolynomialRoots,
+  type PolynomialRootDiagnostics,
+} from '../../algebra/polynomial-roots';
 import {
   exactPolynomialCoefficientArray,
   exactScalarToNumber,
@@ -261,6 +265,7 @@ function detailSectionsFor(input: {
 }): DisplayDetailSection[] {
   const method = input.polynomial.kind === 'rational' ? NUMERIC_METHOD_RATIONAL : NUMERIC_METHOD_POLYNOMIAL;
   const factLines = uniqueLines(hardDomainFactLines(input.classification.domainFacts));
+  const branchPolicy = input.polynomial.kind === 'rational' ? 'pole-aware' : 'not-applicable';
   const confidenceSection = buildNumericConfidenceSection([
     'Candidate roots validated against original equation.',
     ...(factLines.length > 0 ? ['Domain segmented around exclusions.'] : []),
@@ -282,6 +287,23 @@ function detailSectionsFor(input: {
         ...(input.polynomial.degree > 16
           ? ['Large-degree root lists use progressive/capped branch rendering; narrow or factor the equation when individual roots need inspection.']
           : []),
+      ],
+    },
+    {
+      title: 'Global Complex Polynomial Evidence',
+      lines: [
+        'Numeric scope: global-polynomial.',
+        'Route engine label: complex-polynomial-aberth.',
+        'Verification status: global-polynomial.',
+        `Branch policy: ${branchPolicy}.`,
+        `Degree cap: ${input.polynomial.degree} of ${MAX_POLYNOMIAL_ROOT_DEGREE}.`,
+        `Accepted distinct roots: ${input.accepted.length}; rejected candidates: ${input.rejected.length}.`,
+        input.polynomial.kind === 'rational'
+          ? 'Completeness: all distinct roots of the cleared numerator are considered, then denominator/pole candidates are rejected.'
+          : 'Completeness: all distinct roots of the degree-capped polynomial are considered.',
+        input.diagnostics?.decimalRevalidation.performed
+          ? 'Decimal.js revalidation: performed.'
+          : 'Decimal.js revalidation: not triggered by current conditioning diagnostics.',
       ],
     },
   ];

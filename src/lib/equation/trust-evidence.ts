@@ -12,6 +12,31 @@ function evidenceHasClassification(
   return evidence.some((entry) => entry.classification === classification);
 }
 
+function complexNumericPolynomialTrust(input: {
+  outcome: DisplayOutcome;
+  evidence: readonly EquationAnalysisEvidence[];
+}) {
+  if (!evidenceHasClassification(input.evidence, 'complex-polynomial-root')) {
+    return null;
+  }
+  const method = input.outcome.kind === 'success'
+    ? input.outcome.numericMethod?.toLowerCase() ?? ''
+    : '';
+  if (method.includes('complex numeric rational')) {
+    return {
+      classification: 'global-complex-rational-roots',
+      text: 'Global complex rational roots',
+    };
+  }
+  if (method.includes('complex numeric polynomial')) {
+    return {
+      classification: 'global-complex-polynomial-roots',
+      text: 'Global complex polynomial roots',
+    };
+  }
+  return null;
+}
+
 function intervalTrustLabel(interval?: NumericSolveInterval) {
   return interval ? `Local numeric roots in [${interval.start}, ${interval.end}]` : 'Local numeric roots';
 }
@@ -75,6 +100,15 @@ export function buildEquationTrustEvidence(input: {
       text: 'Validated approximate roots from bounded search',
     })];
   }
+  const complexPolynomialTrust = complexNumericPolynomialTrust(input);
+  if (complexPolynomialTrust) {
+    return [trustEvidenceEntry({
+      target: input.target,
+      sourceRoute: input.sourceRoute,
+      classification: complexPolynomialTrust.classification,
+      text: complexPolynomialTrust.text,
+    })];
+  }
   if (evidenceHasClassification(input.evidence, 'region-local-complex-root')) {
     return [trustEvidenceEntry({
       target: input.target,
@@ -85,7 +119,7 @@ export function buildEquationTrustEvidence(input: {
   }
   if (
     input.outcome.resultOrigin === 'symbolic'
-    || input.outcome.branchReadback
+    || (input.outcome.solutionKind !== 'approximate-numeric' && input.outcome.branchReadback)
     || (input.outcome.exactLatex && !input.outcome.solutionKind && input.outcome.title === 'Symbolic')
   ) {
     return [trustEvidenceEntry({

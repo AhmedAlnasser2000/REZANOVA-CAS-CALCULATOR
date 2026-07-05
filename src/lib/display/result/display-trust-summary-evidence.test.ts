@@ -65,6 +65,24 @@ describe('Equation consumer trust readback', () => {
     expect(displayBlockSummaryText(answer!)).toBe('Certified polynomial roots');
   });
 
+  it('does not summarize approximate Complex polynomial branches as exact roots', () => {
+    const result = solve({
+      equationLatex: 'x^6+x+1=0',
+      equationDomainIntent: 'complex',
+      complexExactForm: 'rectangular',
+    });
+    const evidence = getEquationAnalysisEvidence(result);
+
+    expect(evidence).toContainEqual(expect.objectContaining({
+      category: 'trust',
+      classification: 'global-complex-polynomial-roots',
+      text: 'Global complex polynomial roots',
+    }));
+
+    const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    expect(displayBlockSummaryText(answer!)).toBe('Global complex polynomial roots · 6 roots');
+  });
+
   it('carries evidence-derived trust wording into Formula Viewer artifacts', () => {
     const result = solve({
       equationLatex: String.raw`x^2+\sin(x)=2`,

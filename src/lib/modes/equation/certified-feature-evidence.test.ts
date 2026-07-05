@@ -87,6 +87,11 @@ describe('Equation certified feature evidence', () => {
     expect(evidence).toHaveLength(6);
     expect(evidence.every((entry) => entry.confidence === 'validated')).toBe(true);
     expect(evidence.some((entry) => entry.latex?.includes('i'))).toBe(true);
+    expect(getEquationAnalysisEvidence(result)).toContainEqual(expect.objectContaining({
+      category: 'trust',
+      classification: 'global-complex-polynomial-roots',
+      text: 'Global complex polynomial roots',
+    }));
     expect(JSON.stringify(result)).not.toContain('complex-polynomial-root');
   });
 });

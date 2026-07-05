@@ -43,6 +43,10 @@ describe('Equation Complex numeric polynomial roots', () => {
     expect(result.branchReadback?.branchesLatex).toHaveLength(6);
     const text = collectOutcomeText(result);
     expect(text).toContain('No supported exact form was found; showing validated approximate complex roots.');
+    expect(text).toContain('Numeric scope: global-polynomial.');
+    expect(text).toContain('Verification status: global-polynomial.');
+    expect(text).toContain('Branch policy: not-applicable.');
+    expect(text).toContain('Completeness: all distinct roots of the degree-capped polynomial are considered.');
     expect(text).toContain('Root engine: aberth-ehrlich');
     expect(text).not.toContain('Real Cardano Cases');
     expect(text).not.toContain('Real Ferrari Cases');
@@ -94,6 +98,8 @@ describe('Equation Complex numeric polynomial roots', () => {
     expect(result.branchReadback?.branchesLatex).not.toContain('0');
     expect(result.detailSections?.map((section) => section.title)).toContain('Domain and Exclusions');
     const text = collectOutcomeText(result);
+    expect(text).toContain('Branch policy: pole-aware.');
+    expect(text).toContain('Completeness: all distinct roots of the cleared numerator are considered');
     expect(text).toContain('x\\ne 0');
   });
 

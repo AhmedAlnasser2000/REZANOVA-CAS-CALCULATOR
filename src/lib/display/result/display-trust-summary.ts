@@ -46,6 +46,10 @@ function trustSummaryFromEvidence(outcome: DisplayOutcome) {
       }
       case 'bounded-search-approximate-roots':
         return 'Validated approximate roots from bounded search';
+      case 'global-complex-polynomial-roots':
+        return 'Global complex polynomial roots';
+      case 'global-complex-rational-roots':
+        return 'Global complex rational roots';
       case 'region-local-complex-roots':
         return 'Region-local complex roots';
       default:
@@ -110,7 +114,7 @@ export function trustSummaryForDisplayOutcome(outcome: DisplayOutcome): string |
 
   if (
     outcome.resultOrigin === 'symbolic'
-    || outcome.branchReadback
+    || (outcome.solutionKind !== 'approximate-numeric' && outcome.branchReadback)
     || (outcome.exactLatex && !outcome.solutionKind && outcome.title === 'Symbolic')
   ) {
     return 'Exact roots';
