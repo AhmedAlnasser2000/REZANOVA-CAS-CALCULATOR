@@ -97,6 +97,9 @@ const APP_RUNTIME_ALLOWED_OOE_TARGETS = new Set([
 ]);
 
 const APP_RUNTIME_FORBIDDEN_WORKSPACE_REQUEST_TARGETS = [
+  'src/lib/linear-algebra/editor-dispatch',
+  'src/lib/linear-algebra/equation-handoff',
+  'src/lib/linear-algebra/named-values',
   'src/lib/trigonometry/parser',
   'src/lib/trigonometry/runtime-input',
   'src/lib/trigonometry/serializer',
@@ -109,6 +112,11 @@ const APP_RUNTIME_FORBIDDEN_WORKSPACE_REQUEST_TARGETS = [
 ];
 
 const APP_RUNTIME_FORBIDDEN_WORKSPACE_INTERNAL_TARGETS = [
+  'src/lib/linear-algebra/editor-expression-format',
+  'src/lib/linear-algebra/editor-parser',
+  'src/lib/linear-algebra/exact-scalar',
+  'src/lib/linear-algebra/matrix',
+  'src/lib/linear-algebra/vector',
   'src/lib/trigonometry/angles',
   'src/lib/trigonometry/core',
   'src/lib/trigonometry/equation-match',

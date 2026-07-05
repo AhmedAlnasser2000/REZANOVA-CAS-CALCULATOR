@@ -608,6 +608,7 @@ describe('compartment boundary validation', () => {
         "import { parseTrigDraft } from '../../lib/trigonometry/runtime-request';",
         "import { parseStatisticsDraft } from '../../lib/statistics/runtime-request';",
         "import { parseGeometryDraft } from '../../lib/geometry/runtime-request';",
+        "import { dispatchMatrixEditorLatex } from '../../lib/linear-algebra/runtime-request';",
         "import { getTrigRouteMeta } from '../../lib/trigonometry/navigation';",
         "import { defaultStatisticsDraftForScreen } from '../../lib/statistics/examples';",
         "import { runGeometryMode } from '../../lib/modes/geometry';",
@@ -626,6 +627,14 @@ describe('compartment boundary validation', () => {
 
   it('rejects app runtime imports from workspace request-building internals', () => {
     const cases = [
+      {
+        repoPath: 'src/app/runtime/badLinearAlgebraDispatch.ts',
+        text: "import { dispatchMatrixEditorLatex } from '../../lib/linear-algebra/editor-dispatch';\n",
+      },
+      {
+        repoPath: 'src/app/runtime/badLinearAlgebraNamedValues.ts',
+        text: "import { matrixValueById } from '../../lib/linear-algebra/named-values';\n",
+      },
       {
         repoPath: 'src/app/runtime/badTrigParser.ts',
         text: "import { parseTrigDraft } from '../../lib/trigonometry/parser';\n",
@@ -677,6 +686,10 @@ describe('compartment boundary validation', () => {
 
   it('rejects app runtime imports from workspace math-core internals', () => {
     const cases = [
+      {
+        repoPath: 'src/app/runtime/badLinearAlgebraMatrixCore.ts',
+        text: "import { addMatrices } from '../../lib/linear-algebra/matrix';\n",
+      },
       {
         repoPath: 'src/app/runtime/badTrigCore.ts',
         text: "import { runTrigCoreDraft } from '../../lib/trigonometry/core';\n",

@@ -62,7 +62,7 @@ import type {
 import type {
   LinearAlgebraMatrixNamedValue,
   LinearAlgebraVectorNamedValue,
-} from '../../lib/linear-algebra/named-values';
+} from '../../lib/linear-algebra/runtime-request';
 import type {
   defaultEquationComplexRegionPanelState,
   defaultEquationNumericSolvePanelState,

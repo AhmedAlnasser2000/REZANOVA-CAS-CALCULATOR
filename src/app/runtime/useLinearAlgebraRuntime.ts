@@ -10,8 +10,6 @@ import {
   type RunVectorModeRequest,
 } from '../../lib/modes/vector';
 import {
-  activeMatrixValuePair,
-  activeVectorValuePair,
   buildActiveMatrixRequest,
   buildActiveVectorRequest,
   buildMatrixSoftActions,
@@ -23,11 +21,11 @@ import {
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
 import {
+  activeMatrixValuePair,
+  activeVectorValuePair,
   dispatchMatrixEditorLatex,
   dispatchVectorEditorLatex,
-} from '../../lib/linear-algebra/editor-dispatch';
-import type { LinearAlgebraEquationHandoff } from '../../lib/linear-algebra/equation-handoff';
-import {
+  type LinearAlgebraEquationHandoff,
   DEFAULT_MATRIX_LEFT_ID,
   DEFAULT_MATRIX_RIGHT_ID,
   DEFAULT_VECTOR_LEFT_ID,
@@ -44,7 +42,7 @@ import {
   cloneVectorNamedValues,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
-} from '../../lib/linear-algebra/named-values';
+} from '../../lib/linear-algebra/runtime-request';
 import {
   DEFAULT_MATRIX_A,
   DEFAULT_MATRIX_B,

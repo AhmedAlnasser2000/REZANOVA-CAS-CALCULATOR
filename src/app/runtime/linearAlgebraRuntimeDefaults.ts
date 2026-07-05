@@ -5,7 +5,7 @@ import {
   DEFAULT_VECTOR_RIGHT_ID,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
-} from '../../lib/linear-algebra/named-values';
+} from '../../lib/linear-algebra/runtime-request';
 
 export function cloneMatrix(matrix: number[][]) {
   return matrix.map((row) => [...row]);

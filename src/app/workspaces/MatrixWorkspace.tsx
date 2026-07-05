@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
-import type { LinearAlgebraMatrixNamedValue } from '../../lib/linear-algebra/named-values';
+import type { LinearAlgebraMatrixNamedValue } from '../../lib/linear-algebra/runtime-request';
 import { LinearAlgebraOperandPicker } from './LinearAlgebraOperandPicker';
 
 type MatrixWorkspaceProps = {

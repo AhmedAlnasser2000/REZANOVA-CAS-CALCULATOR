@@ -398,6 +398,7 @@ export const COMPARTMENT_MANIFEST = [
       'src/lib/modes/vector.ts',
     ],
     publicSeams: [
+      'src/lib/linear-algebra/runtime-request.ts',
       'src/lib/modes/matrix.ts',
       'src/lib/modes/vector.ts',
     ],
@@ -407,6 +408,7 @@ export const COMPARTMENT_MANIFEST = [
     dependencyPolicies: [
       'library-no-app-ui',
       'no-source-mirrors',
+      'workspace-runtime-request-boundary',
     ],
     ooeFacts: {
       exact: ['linearAlgebra.matrix', 'linearAlgebra.vector'],
