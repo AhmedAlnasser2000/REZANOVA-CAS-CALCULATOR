@@ -1938,3 +1938,7 @@
 ## 2026-07-05 - CALCULUS-LIMITS-MRV-PREGRUNTZ3
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] MRV-lite may convert exact-cancelled logarithmic exponent differences into residual scale facts, including nested logarithmic factors. This is a pre-Gruntz residual-cleanup route, not a full MRV-set or rewrite-to-w solver.
+
+## 2026-07-05 - GUIDE-CONTENT-REALITY-FIX1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Statistics is now an active Guide-visible capability. Guide domain lists, mode references, related links, search targets, and home entries must stay mutually reachable for active capabilities; unsupported or future Guide claims should be corrected in content rather than hidden behind stale taxonomy.

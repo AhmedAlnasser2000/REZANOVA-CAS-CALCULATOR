@@ -26,6 +26,11 @@ describe('guide search', () => {
     expect(searchGuide('dot', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
   })
 
+  it('finds active Trigonometry and Statistics articles that were added after the initial Guide page', () => {
+    expect(searchGuide('phase shift', ACTIVE_CAPABILITIES).some((result) => result.id === 'trig-period-phase')).toBe(true)
+    expect(searchGuide('one-sample mean', ACTIVE_CAPABILITIES).some((result) => result.id === 'statistics-inference')).toBe(true)
+  })
+
   it('distinguishes sigma from the summation operator', () => {
     const results = searchGuide('sigma', ACTIVE_CAPABILITIES)
 

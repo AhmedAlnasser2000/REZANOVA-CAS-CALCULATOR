@@ -181,7 +181,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     ],
     whatItMeans: [
       'BIDMAS means grouping before powers, powers before unary signs, multiply or divide before add or subtract, and relations after arithmetic.',
-      'Factoring in Calcwiz now tries symbolic like-term grouping first, then symbolic common factors, then numeric factors.',
+      'Factoring in REZANOVA CLASSWIZ CALCULATOR now tries symbolic like-term grouping first, then symbolic common factors, then numeric factors.',
     ],
     howToUse: [
       'Open Calculate, enter a structured algebra expression, then use F1 Simplify, F2 Factor, F3 Expand, or F4 Numeric.',
@@ -507,7 +507,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     concepts: [
       'd/dx returns a derivative expression.',
       'd/dx| evaluates the derivative at one numeric point.',
-      'Calcwiz supports addition, subtraction, product, quotient, chain, log, ln, trig, function-power, general-power, and known inverse-trig derivative rules inside the symbolic engine.',
+      'REZANOVA CLASSWIZ CALCULATOR supports addition, subtraction, product, quotient, chain, log, ln, trig, function-power, general-power, and known inverse-trig derivative rules inside the symbolic engine.',
       'First-order partial derivatives in x, y, and z are supported for explicit multivariable expressions.',
       'Functions are inserted as structured notation, not plain text.',
     ],
@@ -1414,7 +1414,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'The same reusable trig core still supplies exact special-angle values and principal inverse-trig values, but Trigonometry no longer exposes a separate Functions screen.',
     ],
     whatItMeans: [
-      'Exact special-angle output means Calcwiz recognizes angles such as 30 degrees or pi/6 and returns a textbook value like 1/2.',
+      'Exact special-angle output means REZANOVA CLASSWIZ CALCULATOR recognizes angles such as 30 degrees or pi/6 and returns a textbook value like 1/2.',
       'Inverse trig returns principal values only, so asin, acos, and atan stay within their standard principal ranges.',
     ],
     howToUse: [

@@ -19,6 +19,7 @@ describe('guide content', () => {
       'Calculus',
       'Linear Algebra',
       'Trigonometry',
+      'Statistics',
       'Geometry',
       'Symbol Lookup',
       'Mode Guide',
@@ -34,6 +35,8 @@ describe('guide content', () => {
     expect(articleIds).toContain('linear-algebra-matrix-vector')
     expect(articleIds).toContain('calculus-integrals')
     expect(articleIds).toContain('trig-special-angles')
+    expect(articleIds).toContain('trig-period-phase')
+    expect(articleIds).toContain('statistics-inference')
     expect(articleIds).toContain('geometry-coordinate')
   })
 

@@ -28,10 +28,21 @@ describe('guide navigation', () => {
       { screen: 'domain', domainId: 'algebra' },
       ACTIVE_CAPABILITIES,
     )
+    const trigonometryEntries = getGuideListEntries(
+      { screen: 'domain', domainId: 'trigonometry' },
+      ACTIVE_CAPABILITIES,
+    )
+    const statisticsEntries = getGuideListEntries(
+      { screen: 'domain', domainId: 'statistics' },
+      ACTIVE_CAPABILITIES,
+    )
     const modeEntries = getGuideListEntries({ screen: 'modeGuide' }, ACTIVE_CAPABILITIES)
 
     expect(algebraEntries.map((entry) => entry.id)).toContain('algebra-manipulation')
+    expect(trigonometryEntries.map((entry) => entry.id)).toContain('trig-period-phase')
+    expect(statisticsEntries.map((entry) => entry.id)).toContain('statistics-inference')
     expect(modeEntries.map((entry) => entry.id)).toContain('equation')
+    expect(modeEntries.map((entry) => entry.id)).toContain('statistics')
   })
 
   it('supports one-level back behavior', () => {

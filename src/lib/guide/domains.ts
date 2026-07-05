@@ -54,13 +54,13 @@ export const GUIDE_DOMAINS: GuideDomain[] = [
     id: 'trigonometry',
     title: 'Trigonometry',
     summary: 'Identities, triangle solving, angle conversion, and unit-circle reference.',
-    articleIds: ['trig-special-angles', 'trig-identities', 'trig-triangles', 'trig-functions', 'trig-equations'],
+    articleIds: ['trig-special-angles', 'trig-identities', 'trig-triangles', 'trig-period-phase', 'trig-functions', 'trig-equations'],
   },
   {
     id: 'statistics',
     title: 'Statistics',
     summary: 'Dataset entry, descriptive statistics, probability distributions, and regression basics.',
-    articleIds: ['statistics-descriptive', 'statistics-probability', 'statistics-regression'],
+    articleIds: ['statistics-descriptive', 'statistics-probability', 'statistics-inference', 'statistics-regression'],
   },
   {
     id: 'geometry',
