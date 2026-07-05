@@ -149,7 +149,7 @@ export function GuideWorkspace({
     : `mode-panel ${articleLike ? 'guide-article-panel' : 'guide-menu-panel'}`;
 
   return (
-    <section className={panelClassName}>
+    <section className={panelClassName} data-guide-screen={route.screen}>
       {routeMeta ? (
         <div className="equation-panel-header guide-panel-header">
           <div className="equation-panel-copy">
@@ -162,6 +162,9 @@ export function GuideWorkspace({
             </div>
             <div className="card-title-row">
               <strong>{routeMeta.title}</strong>
+              {surface === 'page' ? (
+                <span className="guide-result-kind">{articleLike ? 'Article' : 'Reference'}</span>
+              ) : null}
             </div>
             <p className="equation-hint">{routeMeta.description}</p>
           </div>
@@ -192,12 +195,16 @@ export function GuideWorkspace({
               tabIndex={-1}
             >
               {listEntries.length === 0 ? (
-                <div className="guide-empty">No active guide entries match this view yet.</div>
+                <div className="guide-empty">
+                  <strong>No guide entries found</strong>
+                  <span>No active guide entries match this view yet.</span>
+                </div>
               ) : listEntries.map((entry, index) => (
                 <button
                   key={entry.id}
                   className={`guide-entry ${index === currentSelectionIndex ? 'is-selected' : ''}`}
                   onClick={() => onOpenGuideRoute(entry.route)}
+                  onFocus={() => onSetCurrentSelectionIndex(index)}
                   onMouseEnter={() => onSetCurrentSelectionIndex(index)}
                 >
                   <span className="launcher-entry-hotkey">{entry.hotkey ?? `${index + 1}`}</span>
@@ -303,8 +310,8 @@ export function GuideWorkspace({
                   </ol>
                   <p className="guide-expected">Expected: {example.expected}</p>
                   <div className="display-card-actions">
-                    <button onClick={() => onLaunchGuideExample(example)}>Open in Tool</button>
-                    <button onClick={() => onCopyGuideExample(example)}>Copy Expr</button>
+                    <button type="button" onClick={() => onLaunchGuideExample(example)}>Open in Tool</button>
+                    <button type="button" onClick={() => onCopyGuideExample(example)}>Copy Expr</button>
                   </div>
                 </article>
               ))}

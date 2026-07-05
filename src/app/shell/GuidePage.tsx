@@ -10,6 +10,58 @@ type GuidePageProps = {
   guide: GuideWorkspaceProps;
 };
 
+type GuideNavRoute = 'home' | 'search' | 'symbols' | 'modeGuide';
+
+type GuideNavItem = {
+  id: GuideNavRoute;
+  icon: typeof BookOpen;
+  label: string;
+  route: (guide: GuideWorkspaceProps) => Parameters<GuideWorkspaceProps['onOpenGuideRoute']>[0];
+};
+
+const GUIDE_NAV_ITEMS: GuideNavItem[] = [
+  {
+    id: 'home',
+    icon: BookOpen,
+    label: 'Home',
+    route: () => ({ screen: 'home' }),
+  },
+  {
+    id: 'search',
+    icon: Search,
+    label: 'Search',
+    route: (guide) => ({
+      screen: 'search',
+      query: guide.route.screen === 'search' ? guide.route.query : '',
+    }),
+  },
+  {
+    id: 'symbols',
+    icon: Keyboard,
+    label: 'Symbols',
+    route: () => ({ screen: 'symbolLookup', query: '' }),
+  },
+  {
+    id: 'modeGuide',
+    icon: Compass,
+    label: 'Mode Guide',
+    route: () => ({ screen: 'modeGuide' }),
+  },
+];
+
+function activeGuideNavRoute(route: GuideWorkspaceProps['route']): GuideNavRoute {
+  if (route.screen === 'search') {
+    return 'search';
+  }
+  if (route.screen === 'symbolLookup') {
+    return 'symbols';
+  }
+  if (route.screen === 'modeGuide') {
+    return 'modeGuide';
+  }
+  return 'home';
+}
+
 function routeLabel(guide: GuideWorkspaceProps) {
   const { article, modeRef, route, routeMeta, selectedGuideListEntry } = guide;
 
@@ -37,6 +89,7 @@ function routeDescription(guide: GuideWorkspaceProps) {
 export function GuidePage({ guide }: GuidePageProps) {
   const selectedRouteLabel = routeLabel(guide);
   const selectedRouteDescription = routeDescription(guide);
+  const activeRoute = activeGuideNavRoute(guide.route);
 
   return (
     <section className="app-page app-page--guide" data-testid="guide-page">
@@ -49,37 +102,33 @@ export function GuidePage({ guide }: GuidePageProps) {
             <p>Browse active topics, symbols, mode guidance, and worked examples.</p>
           </div>
           <div className="guide-page-route-actions">
-            <button type="button" onClick={() => guide.onOpenGuideRoute({ screen: 'home' })}>
-              <BookOpen aria-hidden="true" size={18} />
-              <span>Home</span>
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                guide.onOpenGuideRoute({
-                  screen: 'search',
-                  query: guide.route.screen === 'search' ? guide.route.query : '',
-                })}
-            >
-              <Search aria-hidden="true" size={18} />
-              <span>Search</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => guide.onOpenGuideRoute({ screen: 'symbolLookup', query: '' })}
-            >
-              <Keyboard aria-hidden="true" size={18} />
-              <span>Symbols</span>
-            </button>
-            <button type="button" onClick={() => guide.onOpenGuideRoute({ screen: 'modeGuide' })}>
-              <Compass aria-hidden="true" size={18} />
-              <span>Mode Guide</span>
-            </button>
+            {GUIDE_NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.id === activeRoute;
+
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={isActive ? 'is-active' : undefined}
+                  aria-current={isActive ? 'page' : undefined}
+                  data-testid={`guide-route-${item.id}`}
+                  onClick={() => guide.onOpenGuideRoute(item.route(guide))}
+                >
+                  <Icon aria-hidden="true" size={18} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
           <div className="guide-page-context-card">
             <span>Current route</span>
             <strong>{selectedRouteLabel}</strong>
             <p>{selectedRouteDescription}</p>
+            <div className="guide-page-route-metadata" aria-label="Guide route details">
+              <span>{guide.routeMeta?.breadcrumb.join(' / ') ?? 'Guide'}</span>
+              <span>{guide.listEntries.length} entries</span>
+            </div>
           </div>
           <div className="guide-page-brand">
             <BookOpen aria-hidden="true" size={18} />
