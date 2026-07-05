@@ -1,6 +1,10 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
-import type { LinearAlgebraMatrixNamedValue } from '../../lib/linear-algebra/runtime-request';
+import {
+  isValidMatrixValueName,
+  normalizeMatrixValueName,
+  type LinearAlgebraMatrixNamedValue,
+} from '../../lib/linear-algebra/runtime-request';
 import { LinearAlgebraOperandPicker } from './LinearAlgebraOperandPicker';
 
 type MatrixWorkspaceProps = {
@@ -29,43 +33,99 @@ function gridColumnStyle(columns: number): CSSProperties {
 }
 
 type MatrixValueCardProps = {
+  activeLeftId: string;
+  activeRightId: string;
   activeRoles: string[];
+  canDuplicate: boolean;
   canDelete: boolean;
+  matrixValues: readonly LinearAlgebraMatrixNamedValue[];
   value: LinearAlgebraMatrixNamedValue;
   onDeleteMatrixValue: MatrixWorkspaceProps['onDeleteMatrixValue'];
   onDuplicateMatrixValue: MatrixWorkspaceProps['onDuplicateMatrixValue'];
   onRenameMatrixValue: MatrixWorkspaceProps['onRenameMatrixValue'];
   onResizeMatrixValue: MatrixWorkspaceProps['onResizeMatrixValue'];
+  onSetActiveMatrixValueIds: MatrixWorkspaceProps['onSetActiveMatrixValueIds'];
   onSetMatrixCell: MatrixWorkspaceProps['onSetMatrixCell'];
 };
 
 function MatrixValueCard({
+  activeLeftId,
+  activeRightId,
   activeRoles,
+  canDuplicate,
   canDelete,
+  matrixValues,
   value,
   onDeleteMatrixValue,
   onDuplicateMatrixValue,
   onRenameMatrixValue,
   onResizeMatrixValue,
+  onSetActiveMatrixValueIds,
   onSetMatrixCell,
 }: MatrixValueCardProps) {
   const { id, name, value: matrix } = value;
   const rows = matrix.length || 1;
   const columns = matrixColumnCount(matrix);
+  const [draftName, setDraftName] = useState(name);
+  const [nameFeedback, setNameFeedback] = useState<string | null>(null);
+  const validationId = `matrix-name-feedback-${id}`;
+
+  useEffect(() => {
+    setDraftName(name);
+    setNameFeedback(null);
+  }, [name]);
+
+  function validateAndRename(rawName: string) {
+    const normalizedName = normalizeMatrixValueName(rawName);
+    setDraftName(normalizedName || rawName);
+    if (!normalizedName) {
+      setNameFeedback('Enter one Matrix letter.');
+      return;
+    }
+    if (!isValidMatrixValueName(normalizedName)) {
+      setNameFeedback('Use one Matrix letter A-W, Y, or Z.');
+      return;
+    }
+    const duplicate = matrixValues.some((matrixValue) =>
+      matrixValue.id !== id && matrixValue.name === normalizedName);
+    if (duplicate) {
+      setNameFeedback('Name already exists.');
+      return;
+    }
+    setNameFeedback(null);
+    onRenameMatrixValue(id, normalizedName);
+  }
+
+  function resetInvalidDraft() {
+    if (nameFeedback) {
+      setDraftName(name);
+      setNameFeedback(null);
+    }
+  }
 
   return (
     <div className="editor-card linear-algebra-value-card">
       <div className="linear-algebra-value-card-header">
         <div className="linear-algebra-value-title">
           <strong>Matrix</strong>
-          <input
-            aria-label={`Matrix ${name} name`}
-            className="linear-algebra-name-input"
-            maxLength={1}
-            value={name}
-            onFocus={(event) => event.currentTarget.select()}
-            onChange={(event) => onRenameMatrixValue(id, event.currentTarget.value)}
-          />
+          <span className="linear-algebra-name-field">
+            <input
+              aria-describedby={nameFeedback ? validationId : undefined}
+              aria-invalid={Boolean(nameFeedback)}
+              aria-label={`Matrix ${name} name`}
+              className="linear-algebra-name-input"
+              maxLength={1}
+              value={draftName}
+              onFocus={(event) => event.currentTarget.select()}
+              onBlur={resetInvalidDraft}
+              onChange={(event) => validateAndRename(event.currentTarget.value)}
+            />
+            {nameFeedback ? (
+              <span className="linear-algebra-validation-message" id={validationId} role="alert">
+                {nameFeedback}
+              </span>
+            ) : null}
+          </span>
           {activeRoles.map((role) => (
             <span className="equation-badge" key={role}>{role}</span>
           ))}
@@ -97,10 +157,31 @@ function MatrixValueCard({
           </label>
         </div>
         <div className="linear-algebra-card-actions">
+          <div className="linear-algebra-role-actions" aria-label={`Matrix ${name} operand actions`}>
+            <button
+              type="button"
+              className="linear-algebra-tool-button linear-algebra-role-button"
+              aria-label={`Set Matrix ${name} as Left`}
+              disabled={id === activeLeftId}
+              onClick={() => onSetActiveMatrixValueIds(id, activeRightId)}
+            >
+              Set Left
+            </button>
+            <button
+              type="button"
+              className="linear-algebra-tool-button linear-algebra-role-button"
+              aria-label={`Set Matrix ${name} as Right`}
+              disabled={id === activeRightId}
+              onClick={() => onSetActiveMatrixValueIds(activeLeftId, id)}
+            >
+              Set Right
+            </button>
+          </div>
           <button
             type="button"
             className="linear-algebra-tool-button"
             aria-label={`Duplicate Matrix ${name}`}
+            disabled={!canDuplicate}
             onClick={() => onDuplicateMatrixValue(id)}
           >
             Duplicate
@@ -173,8 +254,8 @@ function MatrixWorkspace({
         <div className="linear-algebra-panel-copy">
           <strong>Matrix Workspace</strong>
           <p>
-            Edit named matrices below, then use the main editor above or the soft keys to
-            build Matrix operations.
+            Create named matrices, choose active Left/Right operands, then use the editor
+            or soft keys to build Matrix operations.
           </p>
         </div>
         <div className="linear-algebra-badge-row">
@@ -216,13 +297,18 @@ function MatrixWorkspace({
         {matrixValues.map((value) => (
           <MatrixValueCard
             key={value.id}
+            activeLeftId={activeLeftId}
+            activeRightId={activeRightId}
             activeRoles={activeRolesFor(value.id)}
+            canDuplicate={canAddMatrix}
             canDelete={matrixValues.length > 1}
+            matrixValues={matrixValues}
             value={value}
             onDeleteMatrixValue={onDeleteMatrixValue}
             onDuplicateMatrixValue={onDuplicateMatrixValue}
             onRenameMatrixValue={onRenameMatrixValue}
             onResizeMatrixValue={onResizeMatrixValue}
+            onSetActiveMatrixValueIds={onSetActiveMatrixValueIds}
             onSetMatrixCell={onSetMatrixCell}
           />
         ))}

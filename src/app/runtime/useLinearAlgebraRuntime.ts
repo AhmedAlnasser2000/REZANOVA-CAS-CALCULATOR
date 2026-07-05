@@ -651,26 +651,26 @@ export function useLinearAlgebraRuntime({
   }
 
   function addMatrixValue(preferredName?: string, value: number[][] = DEFAULT_MATRIX_A) {
+    const name = nextMatrixValueName(matrixValues, preferredName);
+    if (!name) {
+      return '';
+    }
     const id = `matrix-${nextMatrixValueIdRef.current}`;
     nextMatrixValueIdRef.current += 1;
-    setMatrixValues((currentValues) => {
-      const name = nextMatrixValueName(currentValues, preferredName);
-      return name
-        ? [...currentValues, { id, name, value: cloneMatrix(value) }]
-        : currentValues;
-    });
+    setMatrixValues((currentValues) => [...currentValues, { id, name, value: cloneMatrix(value) }]);
+    setActiveMatrixLeftId(id);
     return id;
   }
 
   function addVectorValue(preferredName?: string, value: number[] = DEFAULT_VECTOR_A) {
+    const name = nextVectorValueName(vectorValues, preferredName);
+    if (!name) {
+      return '';
+    }
     const id = `vector-${nextVectorValueIdRef.current}`;
     nextVectorValueIdRef.current += 1;
-    setVectorValues((currentValues) => {
-      const name = nextVectorValueName(currentValues, preferredName);
-      return name
-        ? [...currentValues, { id, name, value: cloneVector(value) }]
-        : currentValues;
-    });
+    setVectorValues((currentValues) => [...currentValues, { id, name, value: cloneVector(value) }]);
+    setActiveVectorLeftId(id);
     return id;
   }
 
@@ -707,28 +707,34 @@ export function useLinearAlgebraRuntime({
   }
 
   function duplicateMatrixValue(id: string) {
+    const source = matrixValueById(matrixValues, id);
+    const name = source ? nextMatrixValueName(matrixValues, source.name) : null;
+    if (!source || !name) {
+      return '';
+    }
     const newId = `matrix-${nextMatrixValueIdRef.current}`;
     nextMatrixValueIdRef.current += 1;
-    setMatrixValues((currentValues) => {
-      const source = matrixValueById(currentValues, id);
-      const name = source ? nextMatrixValueName(currentValues, source.name) : null;
-      return source && name
-        ? [...currentValues, { id: newId, name, value: cloneMatrix(source.value) }]
-        : currentValues;
-    });
+    setMatrixValues((currentValues) => [
+      ...currentValues,
+      { id: newId, name, value: cloneMatrix(source.value) },
+    ]);
+    setActiveMatrixLeftId(newId);
     return newId;
   }
 
   function duplicateVectorValue(id: string) {
+    const source = vectorValueById(vectorValues, id);
+    const name = source ? nextVectorValueName(vectorValues, source.name) : null;
+    if (!source || !name) {
+      return '';
+    }
     const newId = `vector-${nextVectorValueIdRef.current}`;
     nextVectorValueIdRef.current += 1;
-    setVectorValues((currentValues) => {
-      const source = vectorValueById(currentValues, id);
-      const name = source ? nextVectorValueName(currentValues, source.name) : null;
-      return source && name
-        ? [...currentValues, { id: newId, name, value: cloneVector(source.value) }]
-        : currentValues;
-    });
+    setVectorValues((currentValues) => [
+      ...currentValues,
+      { id: newId, name, value: cloneVector(source.value) },
+    ]);
+    setActiveVectorLeftId(newId);
     return newId;
   }
 

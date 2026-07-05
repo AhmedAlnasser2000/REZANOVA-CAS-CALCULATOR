@@ -47,7 +47,8 @@
 .linear-algebra-library-toolbar,
 .linear-algebra-active-operands,
 .linear-algebra-value-title,
-.linear-algebra-card-actions {
+.linear-algebra-card-actions,
+.linear-algebra-role-actions {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -77,6 +78,11 @@
   border: 1px solid var(--editor-border);
   background: var(--editor-surface);
   color: var(--editor-ink);
+}
+
+.linear-algebra-name-field {
+  display: grid;
+  gap: 4px;
 }
 
 .linear-algebra-operand-menu {
@@ -155,6 +161,19 @@
   text-transform: none;
 }
 
+.linear-algebra-name-input[aria-invalid='true'] {
+  border-color: rgba(255, 172, 117, 0.72);
+  box-shadow: 0 0 0 3px rgba(255, 172, 117, 0.12);
+}
+
+.linear-algebra-validation-message {
+  max-width: 180px;
+  color: #ffd0b6;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
 .linear-algebra-name-input:hover,
 .linear-algebra-tool-button:hover:not(:disabled) {
   background: var(--editor-surface-hover);
@@ -186,6 +205,15 @@
 
 .linear-algebra-add-button {
   min-width: 112px;
+}
+
+.linear-algebra-role-actions {
+  gap: 6px;
+}
+
+.linear-algebra-role-button {
+  min-height: 34px;
+  padding: 7px 10px;
 }
 
 .linear-algebra-library-grid {

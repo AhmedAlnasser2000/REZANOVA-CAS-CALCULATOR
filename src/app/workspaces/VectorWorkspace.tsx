@@ -1,6 +1,10 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
-import type { LinearAlgebraVectorNamedValue } from '../../lib/linear-algebra/runtime-request';
+import {
+  isValidVectorValueName,
+  normalizeVectorValueName,
+  type LinearAlgebraVectorNamedValue,
+} from '../../lib/linear-algebra/runtime-request';
 import { LinearAlgebraOperandPicker } from './LinearAlgebraOperandPicker';
 
 type VectorWorkspaceProps = {
@@ -25,42 +29,98 @@ function gridColumnStyle(columns: number): CSSProperties {
 }
 
 type VectorValueCardProps = {
+  activeLeftId: string;
+  activeRightId: string;
   activeRoles: string[];
+  canDuplicate: boolean;
   canDelete: boolean;
+  vectorValues: readonly LinearAlgebraVectorNamedValue[];
   value: LinearAlgebraVectorNamedValue;
   onDeleteVectorValue: VectorWorkspaceProps['onDeleteVectorValue'];
   onDuplicateVectorValue: VectorWorkspaceProps['onDuplicateVectorValue'];
   onRenameVectorValue: VectorWorkspaceProps['onRenameVectorValue'];
   onResizeVectorValue: VectorWorkspaceProps['onResizeVectorValue'];
+  onSetActiveVectorValueIds: VectorWorkspaceProps['onSetActiveVectorValueIds'];
   onSetVectorCell: VectorWorkspaceProps['onSetVectorCell'];
 };
 
 function VectorValueCard({
+  activeLeftId,
+  activeRightId,
   activeRoles,
+  canDuplicate,
   canDelete,
+  vectorValues,
   value,
   onDeleteVectorValue,
   onDuplicateVectorValue,
   onRenameVectorValue,
   onResizeVectorValue,
+  onSetActiveVectorValueIds,
   onSetVectorCell,
 }: VectorValueCardProps) {
   const { id, name, value: vector } = value;
   const length = vector.length || 1;
+  const [draftName, setDraftName] = useState(name);
+  const [nameFeedback, setNameFeedback] = useState<string | null>(null);
+  const validationId = `vector-name-feedback-${id}`;
+
+  useEffect(() => {
+    setDraftName(name);
+    setNameFeedback(null);
+  }, [name]);
+
+  function validateAndRename(rawName: string) {
+    const normalizedName = normalizeVectorValueName(rawName);
+    setDraftName(normalizedName || rawName);
+    if (!normalizedName) {
+      setNameFeedback('Enter one Vector letter.');
+      return;
+    }
+    if (!isValidVectorValueName(normalizedName)) {
+      setNameFeedback('Use one lowercase Vector letter.');
+      return;
+    }
+    const duplicate = vectorValues.some((vectorValue) =>
+      vectorValue.id !== id && vectorValue.name === normalizedName);
+    if (duplicate) {
+      setNameFeedback('Name already exists.');
+      return;
+    }
+    setNameFeedback(null);
+    onRenameVectorValue(id, normalizedName);
+  }
+
+  function resetInvalidDraft() {
+    if (nameFeedback) {
+      setDraftName(name);
+      setNameFeedback(null);
+    }
+  }
 
   return (
     <div className="editor-card linear-algebra-value-card">
       <div className="linear-algebra-value-card-header">
         <div className="linear-algebra-value-title">
           <strong>Vector</strong>
-          <input
-            aria-label={`Vector ${name} name`}
-            className="linear-algebra-name-input"
-            maxLength={1}
-            value={name}
-            onFocus={(event) => event.currentTarget.select()}
-            onChange={(event) => onRenameVectorValue(id, event.currentTarget.value)}
-          />
+          <span className="linear-algebra-name-field">
+            <input
+              aria-describedby={nameFeedback ? validationId : undefined}
+              aria-invalid={Boolean(nameFeedback)}
+              aria-label={`Vector ${name} name`}
+              className="linear-algebra-name-input"
+              maxLength={1}
+              value={draftName}
+              onFocus={(event) => event.currentTarget.select()}
+              onBlur={resetInvalidDraft}
+              onChange={(event) => validateAndRename(event.currentTarget.value)}
+            />
+            {nameFeedback ? (
+              <span className="linear-algebra-validation-message" id={validationId} role="alert">
+                {nameFeedback}
+              </span>
+            ) : null}
+          </span>
           {activeRoles.map((role) => (
             <span className="equation-badge" key={role}>{role}</span>
           ))}
@@ -80,10 +140,31 @@ function VectorValueCard({
           </label>
         </div>
         <div className="linear-algebra-card-actions">
+          <div className="linear-algebra-role-actions" aria-label={`Vector ${name} operand actions`}>
+            <button
+              type="button"
+              className="linear-algebra-tool-button linear-algebra-role-button"
+              aria-label={`Set Vector ${name} as First`}
+              disabled={id === activeLeftId}
+              onClick={() => onSetActiveVectorValueIds(id, activeRightId)}
+            >
+              Set First
+            </button>
+            <button
+              type="button"
+              className="linear-algebra-tool-button linear-algebra-role-button"
+              aria-label={`Set Vector ${name} as Second`}
+              disabled={id === activeRightId}
+              onClick={() => onSetActiveVectorValueIds(activeLeftId, id)}
+            >
+              Set Second
+            </button>
+          </div>
           <button
             type="button"
             className="linear-algebra-tool-button"
             aria-label={`Duplicate Vector ${name}`}
+            disabled={!canDuplicate}
             onClick={() => onDuplicateVectorValue(id)}
           >
             Duplicate
@@ -154,8 +235,8 @@ function VectorWorkspace({
         <div className="linear-algebra-panel-copy">
           <strong>Vector Workspace</strong>
           <p>
-            Edit named vectors u and v below, then use the main editor above or the
-            soft keys to build Vector operations.
+            Create named vectors, choose active First/Second operands, then use the
+            editor or soft keys to build Vector operations.
           </p>
         </div>
         <div className="linear-algebra-badge-row">
@@ -197,13 +278,18 @@ function VectorWorkspace({
         {vectorValues.map((value) => (
           <VectorValueCard
             key={value.id}
+            activeLeftId={activeLeftId}
+            activeRightId={activeRightId}
             activeRoles={activeRolesFor(value.id)}
+            canDuplicate={canAddVector}
             canDelete={vectorValues.length > 1}
+            vectorValues={vectorValues}
             value={value}
             onDeleteVectorValue={onDeleteVectorValue}
             onDuplicateVectorValue={onDuplicateVectorValue}
             onRenameVectorValue={onRenameVectorValue}
             onResizeVectorValue={onResizeVectorValue}
+            onSetActiveVectorValueIds={onSetActiveVectorValueIds}
             onSetVectorCell={onSetVectorCell}
           />
         ))}

@@ -81,17 +81,27 @@ describe('Linear algebra editor source', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add Matrix' }));
     await screen.findByLabelText('Matrix C name');
+    expect(screen.getByLabelText('Active Matrix left operand')).toHaveAttribute('data-value', 'matrix-1');
+    expect(screen.getByLabelText('Active Matrix left operand')).toHaveTextContent('C');
     fireEvent.change(screen.getByLabelText('Matrix C name'), { target: { value: 'D' } });
     await waitFor(() => expect(screen.getByLabelText('Matrix D rows')).toHaveValue(2));
-    await user.click(screen.getByLabelText('Active Matrix left operand'));
-    await user.click(within(screen.getByRole('listbox', { name: 'Active Matrix left operand options' })).getByRole('option', { name: 'D' }));
     expect(screen.getByLabelText('Active Matrix left operand')).toHaveAttribute('data-value', 'matrix-1');
+    expect(screen.getByLabelText('Active Matrix left operand')).toHaveTextContent('D');
     expect(screen.getByTestId('soft-action-add')).toHaveTextContent('D+B');
     expect(screen.getByTestId('soft-action-detA')).toHaveTextContent('det(D)');
+    await user.click(screen.getByRole('button', { name: 'Set Matrix B as Left' }));
+    expect(screen.getByLabelText('Active Matrix left operand')).toHaveAttribute('data-value', 'matrix-b');
+    await user.click(screen.getByRole('button', { name: 'Set Matrix D as Right' }));
+    expect(screen.getByLabelText('Active Matrix right operand')).toHaveAttribute('data-value', 'matrix-1');
+    expect(screen.getByTestId('soft-action-add')).toHaveTextContent('B+D');
     fireEvent.change(screen.getByLabelText('Matrix D rows'), { target: { value: '3' } });
     await waitFor(() => expect(screen.getByLabelText('Matrix D rows')).toHaveValue(3));
     await user.click(screen.getByRole('button', { name: 'Duplicate Matrix D' }));
     await screen.findByLabelText('Matrix C name');
+    expect(screen.getByLabelText('Active Matrix left operand')).toHaveTextContent('C');
+    expect(screen.getByTestId('soft-action-add')).toHaveTextContent('C+D');
+    fireEvent.change(screen.getByLabelText('Matrix C name'), { target: { value: 'D' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('Name already exists.');
     await user.click(screen.getByRole('button', { name: 'Delete Matrix D' }));
     await waitFor(() => expect(screen.queryByLabelText('Matrix D name')).not.toBeInTheDocument());
 
@@ -100,17 +110,26 @@ describe('Linear algebra editor source', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add Vector' }));
     await screen.findByLabelText('Vector p name');
+    expect(screen.getByLabelText('Active Vector first operand')).toHaveAttribute('data-value', 'vector-1');
+    expect(screen.getByLabelText('Active Vector first operand')).toHaveTextContent('p');
     fireEvent.change(screen.getByLabelText('Vector p name'), { target: { value: 'q' } });
     await waitFor(() => expect(screen.getByLabelText('Vector q length')).toHaveValue(3));
-    await user.click(screen.getByLabelText('Active Vector first operand'));
-    await user.click(within(screen.getByRole('listbox', { name: 'Active Vector first operand options' })).getByRole('option', { name: 'q' }));
     expect(screen.getByLabelText('Active Vector first operand')).toHaveAttribute('data-value', 'vector-1');
     expect(screen.getByTestId('soft-action-dot')).toHaveTextContent('q·v');
     expect(screen.getByTestId('soft-action-normA')).toHaveTextContent('‖q‖');
+    await user.click(screen.getByRole('button', { name: 'Set Vector v as First' }));
+    expect(screen.getByLabelText('Active Vector first operand')).toHaveAttribute('data-value', 'vector-v');
+    await user.click(screen.getByRole('button', { name: 'Set Vector q as Second' }));
+    expect(screen.getByLabelText('Active Vector second operand')).toHaveAttribute('data-value', 'vector-1');
+    expect(screen.getByTestId('soft-action-dot')).toHaveTextContent('v·q');
     fireEvent.change(screen.getByLabelText('Vector q length'), { target: { value: '4' } });
     await waitFor(() => expect(screen.getByLabelText('Vector q length')).toHaveValue(4));
     await user.click(screen.getByRole('button', { name: 'Duplicate Vector q' }));
     await screen.findByLabelText('Vector p name');
+    expect(screen.getByLabelText('Active Vector first operand')).toHaveTextContent('p');
+    expect(screen.getByTestId('soft-action-dot')).toHaveTextContent('p·q');
+    fireEvent.change(screen.getByLabelText('Vector p name'), { target: { value: 'q' } });
+    expect(screen.getByRole('alert')).toHaveTextContent('Name already exists.');
     await user.click(screen.getByRole('button', { name: 'Delete Vector q' }));
     await waitFor(() => expect(screen.queryByLabelText('Vector q name')).not.toBeInTheDocument());
   });

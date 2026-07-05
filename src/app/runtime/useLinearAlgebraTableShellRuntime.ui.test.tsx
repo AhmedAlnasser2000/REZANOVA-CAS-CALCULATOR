@@ -205,6 +205,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       name: 'C',
       value: [[9, 0], [0, 9]],
     });
+    expect(hook.result.current.linearAlgebraRuntime.activeMatrixLeftId).toBe(matrixId);
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.renameMatrixValue(matrixId, 'D');
@@ -229,6 +230,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       name: 'C',
       value: [[9, 0], [0, 9]],
     });
+    expect(hook.result.current.linearAlgebraRuntime.activeMatrixLeftId).toBe(duplicateMatrixId);
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.setActiveMatrixValueIds(matrixId, duplicateMatrixId);
@@ -250,6 +252,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       name: 'q',
       value: [7, 8, 9],
     });
+    expect(hook.result.current.linearAlgebraRuntime.activeVectorLeftId).toBe(vectorId);
     act(() => {
       hook.result.current.linearAlgebraRuntime.renameVectorValue(vectorId, 'u');
     });
