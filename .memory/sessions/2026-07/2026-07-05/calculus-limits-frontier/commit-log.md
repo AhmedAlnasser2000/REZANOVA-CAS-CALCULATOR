@@ -13,3 +13,4 @@
 - `CALCULUS-LIMITS-ASYMPTOTIC-SCALE-ENGINE2`: committed as `783156d2`.
 - `CALCULUS-LIMITS-MRV-PREGRUNTZ3`: committed as `016c467f`.
 - `CALCULUS-LIMITS-BRANCH-DOMAIN-PROOFS2`: committed in this checkpoint after focused backend/UI, Playwright visual, TypeScript, file-size, memory, and diff gates.
+- `CALCULUS-LIMITS-CORPUS-HARNESS1`: committed in this checkpoint after corpus validator, seed execution, Playwright visual sample, TypeScript, file-size, memory, and diff gates.

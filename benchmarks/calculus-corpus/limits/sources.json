@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "calculus_lane": "limits",
+  "sources": [
+    {
+      "source_id": "openstax-calculus-v1-local",
+      "title": "Calculus Volume 1",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "limits",
+      "limits_relevance": "primary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus-volume-1_-_WEB.pdf",
+      "locator_policy": "Use section/page locators and compact limit metadata only; do not copy full problem statements.",
+      "limits_scope_notes": [
+        "Finite limits",
+        "One-sided limits and continuity",
+        "Infinite limits and asymptotes"
+      ]
+    },
+    {
+      "source_id": "openstax-calculus-v2-local",
+      "title": "Calculus Volume 2",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "limits",
+      "limits_relevance": "primary",
+      "license": "CC BY-NC-SA 4.0",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/calculus-volume-2_-_WEB.pdf",
+      "locator_policy": "Use section/page locators and compact limit metadata only; do not copy full problem statements.",
+      "limits_scope_notes": [
+        "Taylor expansions",
+        "Asymptotic comparison",
+        "Series-backed limit examples"
+      ]
+    },
+    {
+      "source_id": "calculus-analytic-geometry-9e-local",
+      "title": "Thomas/Finney Calculus and Analytic Geometry, Ninth Edition",
+      "source_type": "local-pdf",
+      "access": "local",
+      "calculus_lane": "limits",
+      "limits_relevance": "primary",
+      "license": "unknown",
+      "local_path_hint": "~/Documents/benchmarks and textbooks/dokumen.pub_calculus-and-analytic-geometry-ninth-edition-0201400154-9780201400151.pdf",
+      "locator_policy": "Use source locators and compact limit metadata only; do not copy full problem statements.",
+      "limits_scope_notes": [
+        "Classical undergraduate limit examples",
+        "Cross-textbook duplicate and difficulty calibration"
+      ]
+    },
+    {
+      "source_id": "paul-online-notes",
+      "title": "Paul's Online Math Notes",
+      "source_type": "website",
+      "access": "web",
+      "calculus_lane": "limits",
+      "limits_relevance": "secondary",
+      "license": "copyrighted; link/reference only",
+      "url": "https://tutorial.math.lamar.edu/classes/calci/limitsintro.aspx",
+      "locator_policy": "Use page/section locators and compact limit metadata only.",
+      "limits_scope_notes": [
+        "Student-facing finite, one-sided, and infinity examples",
+        "Use as a reference source, not embedded content"
+      ]
+    },
+    {
+      "source_id": "dlmf",
+      "title": "NIST Digital Library of Mathematical Functions",
+      "source_type": "website",
+      "access": "web",
+      "calculus_lane": "limits",
+      "limits_relevance": "reference",
+      "license": "public-domain-or-government-reference-with-site-terms",
+      "url": "https://dlmf.nist.gov/",
+      "locator_policy": "Use stable DLMF section/equation locators and compact reference metadata only.",
+      "limits_scope_notes": [
+        "Reference source for asymptotic scale and special-function context",
+        "Full Gruntz and advanced asymptotics remain deferred"
+      ]
+    }
+  ]
+}

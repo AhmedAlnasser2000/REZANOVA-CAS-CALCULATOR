@@ -1922,6 +1922,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits parameter assumptions remain generated guarded cases, not a new assumptions UI. Symbolic infinity polynomial-scale cases may branch on target-free symbolic leading coefficients and, when those coefficients vanish, fall through to lower numeric-growth terms or target-free constants under the accumulated guard conditions.
 
+## 2026-07-05 - CALCULUS-LIMITS-CORPUS-HARNESS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The Limits corpus seed is a runtime-free ledger under `benchmarks/calculus-corpus/limits/`: one canonical runnable row per unique case, duplicate source sightings in a separate ledger, one run result per case per sweep, route/proof-card expectations captured as benchmark assertions, and large PDF/site expansion deferred until after Gruntz foundations land.
+
 ## 2026-07-05 - LINEAR-ALGEBRA-PASTE-NATURALIZATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector friendly list syntax is paste/import UX only: supported pasted text naturalizes immediately through Linear Algebra-owned canonicalizers, malformed text stays editable until Run, and `answerRows` may improve visible row layout while `exactLatex` remains the Copy Result/export source.

@@ -56,3 +56,20 @@
   - `npm run test:file-sizes`
   - `npm run test:memory-protocol`
   - `git diff --check`
+
+## 2026-07-05 - CALCULUS-LIMITS-CORPUS-HARNESS1
+
+- Gate type: backend/tooling plus app-visible output sample.
+- Scope: added the source-controlled Limits seed corpus under `benchmarks/calculus-corpus/limits/`, including source registry, schema notes, unique/duplicate/run/finding ledgers, 27 canonical seed cases, a validator, `test:calculus-limits-corpus`, and a focused execution test that checks route expectations, answers, controlled errors, and proof-card text.
+- Focused tests:
+  - `npm run test:calculus-limits-corpus`
+  - `npm run test:unit -- src/lib/calculus/limit-route-corpus.test.ts src/lib/calculus/workspace/limits.test.ts`
+- Visual verification:
+  - `node .task_tmp/limits-corpus-harness1/visual-check.mjs`
+  - Screenshots: `.task_tmp/limits-corpus-harness1/infinity-log-over-x.png`, `.task_tmp/limits-corpus-harness1/oscillation-proof.png`, `.task_tmp/limits-corpus-harness1/symbolic-parameter-cases.png`
+  - Evidence: the app rendered the seed-harness sample answer for `lim x -> infinity log(x)/x`, the no-limit oscillation proof for `lim x -> 0 sin(1/x)`, and guarded parameter cases for `lim x -> infinity a*x`.
+- Broad gates:
+  - `npx tsc -b --pretty false`
+  - `npm run test:file-sizes`
+  - `npm run test:memory-protocol`
+  - `git diff --check`
