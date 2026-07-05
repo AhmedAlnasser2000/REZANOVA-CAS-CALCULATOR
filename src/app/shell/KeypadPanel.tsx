@@ -3,6 +3,7 @@ import {
   type KeypadButton,
   type KeypadLayer,
 } from '../../lib/navigation/menu';
+import type { MouseEvent } from 'react';
 
 type KeypadPanelProps = {
   rows: KeypadButton[][];
@@ -19,6 +20,10 @@ const KEYPAD_LAYERS: Array<{ id: KeypadLayer; label: string }> = [
   { id: 'alpha', label: 'Alt α' },
   { id: 'ctrl', label: 'Ctrl' },
 ];
+
+function preserveEditorFocusOnMouseDown(event: MouseEvent<HTMLButtonElement>) {
+  event.preventDefault();
+}
 
 function KeypadPanel({
   rows,
@@ -38,6 +43,7 @@ function KeypadPanel({
             className={`keypad-layer-button ${activeLayer === layer.id ? 'is-active' : ''}`}
             data-testid={`keypad-layer-${layer.id}`}
             aria-pressed={activeLayer === layer.id}
+            onMouseDown={preserveEditorFocusOnMouseDown}
             onClick={() => onSelectLayer?.(layer.id)}
           >
             {layer.label}
@@ -48,6 +54,7 @@ function KeypadPanel({
           className={`keypad-layer-button keypad-layer-lock ${layerLocked ? 'is-active' : ''}`}
           data-testid="keypad-layer-lock"
           aria-pressed={layerLocked}
+          onMouseDown={preserveEditorFocusOnMouseDown}
           onClick={onToggleLayerLock}
         >
           Lock
@@ -66,6 +73,7 @@ function KeypadPanel({
                 key={button.id}
                 data-testid={`keypad-${button.id}`}
                 className={`keypad-key ${button.variant} keypad-key--layer-${activeLayer}`}
+                onMouseDown={preserveEditorFocusOnMouseDown}
                 onClick={() => onKeypad(button)}
               >
                 {shiftLabel ? (

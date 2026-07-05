@@ -5,7 +5,7 @@ type MathfieldRef = {
 };
 
 export function isLatexInsertTarget(field: unknown): field is {
-  focus?: () => void;
+  focus?: (options?: FocusOptions) => void;
   dispatchEvent?: (event: Event) => boolean;
   insert: (latex: string) => void;
 } {
@@ -13,7 +13,7 @@ export function isLatexInsertTarget(field: unknown): field is {
 }
 
 export function isLatexValueTarget(field: unknown): field is {
-  focus?: () => void;
+  focus?: (options?: FocusOptions) => void;
   getValue?: (format?: string) => string;
   setValue: (latex: string) => void;
   dispatchEvent?: (event: Event) => boolean;
@@ -44,6 +44,7 @@ export function resolveLatexEditorTarget(
 export function focusLatexEditorTarget(
   activeFieldRef: MathfieldRef,
   mainFieldRef: MathfieldRef,
+  options?: FocusOptions,
 ) {
   const field = resolveLatexEditorTarget(activeFieldRef.current, mainFieldRef.current);
   if (!field) {
@@ -51,7 +52,7 @@ export function focusLatexEditorTarget(
   }
 
   activeFieldRef.current = field;
-  field.focus?.();
+  (field as { focus?: (options?: FocusOptions) => void }).focus?.(options);
   return field;
 }
 
@@ -64,7 +65,7 @@ export function executeLatexEditorCommand(
   mainFieldRef: MathfieldRef,
   command: string,
 ) {
-  const field = focusLatexEditorTarget(activeFieldRef, mainFieldRef) as
+  const field = focusLatexEditorTarget(activeFieldRef, mainFieldRef, { preventScroll: true }) as
     | ({ executeCommand?: (command: string) => unknown })
     | null;
   field?.executeCommand?.(command);
@@ -75,7 +76,7 @@ export function insertLatexIntoEditor(
   mainFieldRef: MathfieldRef,
   latex: string,
 ) {
-  const field = focusLatexEditorTarget(activeFieldRef, mainFieldRef);
+  const field = focusLatexEditorTarget(activeFieldRef, mainFieldRef, { preventScroll: true });
   if (!field) {
     return;
   }

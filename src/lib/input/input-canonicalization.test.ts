@@ -108,6 +108,50 @@ describe('canonicalizeMathInput', () => {
     expect(result.canonicalLatex).toBe('\\csc(2x+3)^2+\\sec(x)\\tan(x)+\\cot(x)');
   });
 
+  it('canonicalizes pasted inverse trig and hyperbolic function names', () => {
+    const result = canonicalizeMathInput(
+      'arctan(x)+arcsin(x)+sinh^2(x)+cosh^2(2x+1)+tanh(x)',
+      {
+        mode: 'calculus',
+        screenHint: 'indefiniteIntegral',
+        liveAssist: true,
+      },
+    );
+
+    expect(result.ok && result.canonicalLatex).toBe(
+      '\\arctan(x)+\\arcsin(x)+\\sinh^{2}(x)+\\cosh^{2}(2x+1)+\\tanh(x)',
+    );
+  });
+
+  it('keeps safe implicit products before pasted grouped function names', () => {
+    const result = canonicalizeMathInput('xarctan(x)+x^3arctan(x)+xsinh^2(x)+abcarctan(x)', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+      liveAssist: true,
+    });
+
+    expect(result.ok && result.canonicalLatex).toBe(
+      'x\\arctan(x)+x^3\\arctan(x)+x\\sinh^{2}(x)+abcarctan(x)',
+    );
+  });
+
+  it('canonicalizes split pasted function letters for textbook functions', () => {
+    const result = canonicalizeMathInput('a r c t a n(x)+s i n h^2(x)', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+      liveAssist: true,
+    });
+
+    expect(result.ok && result.canonicalLatex).toBe('\\arctan(x)+\\sinh^{2}(x)');
+  });
+
+  it('normalizes live Calculus integral function names before workspace state sees them', () => {
+    expect(normalizeLiveInputOperatorLatex('xarctan(x)+sinh^2(x)', {
+      mode: 'calculus',
+      screenHint: 'indefiniteIntegral',
+    })).toBe('x\\arctan(x)+\\sinh^{2}(x)');
+  });
+
   it('canonicalizes pasted textbook slash and star operators structurally', () => {
     const simple = canonicalizeMathInput('1/2*x', {
       mode: 'calculus',

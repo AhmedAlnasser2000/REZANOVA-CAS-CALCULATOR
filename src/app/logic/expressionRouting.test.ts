@@ -272,4 +272,41 @@ describe('expressionRouting', () => {
       '\\frac{1}{2}\\cdot (\\csc^{2}(x)-\\csc(x)\\cot(x))',
     );
   });
+
+  it('canonicalizes pasted Calculus integration function names before app paste insertion', async () => {
+    const insert = vi.fn();
+    const focus = vi.fn();
+
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        clipboard: {
+          readText: vi.fn().mockResolvedValue('xarctan(x)+x^3arctan(x)+sinh^2(x)'),
+        },
+      },
+      configurable: true,
+    });
+
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen: false,
+      currentMode: 'calculus',
+      geometryEditorIsEditable: false,
+      statisticsEditorIsEditable: false,
+      trigEditorIsEditable: false,
+      equationScreen: 'symbolic',
+      activeFieldRef: { current: { focus, insert } },
+      geometryDraftFieldRef: { current: null },
+      statisticsDraftFieldRef: { current: null },
+      trigDraftFieldRef: { current: null },
+      focusGeometryEditor: vi.fn(),
+      focusStatisticsEditor: vi.fn(),
+      focusTrigEditor: vi.fn(),
+      setClipboardNotice: vi.fn(),
+      loadLatexIntoEditor: vi.fn(),
+    });
+
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(insert).toHaveBeenCalledWith(
+      'x\\arctan(x)+x^3\\arctan(x)+\\sinh^{2}(x)',
+    );
+  });
 });

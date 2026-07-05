@@ -11,9 +11,11 @@ import { isDerivativeShortcutContext } from './derivative-shortcuts';
 import {
   COMMAND_FUNCTION_NAMES,
   canonicalCommandFor,
+  isIntegralFunctionContext,
   isReservedCanonicalFunction,
   isSpecialFunctionContext,
   normalizeSplitFunctionTokens,
+  splitImplicitFunctionSuffix,
 } from './function-canonicalization';
 import { canonicalizeAsciiOperatorExpression } from './ascii-operator-canonicalization';
 import {
@@ -558,7 +560,7 @@ export function normalizeLiveInputOperatorLatex(
   return specialFunctionContext
     ? canonicalizeSegment(operatorNormalized, changes, {
       enableSpecialFunctions: true,
-      canonicalizationScope: 'special-functions',
+      canonicalizationScope: isIntegralFunctionContext(context) ? 'all' : 'special-functions',
     })
     : operatorNormalized;
 }
@@ -706,6 +708,15 @@ function canonicalizeAtomicSegment(
     const tokenLower = token.toLowerCase();
     const previous = index > 0 ? source[index - 1] : undefined;
     const next = source[nextIndex];
+    const implicitFunction = splitImplicitFunctionSuffix(
+      token,
+      tokenLower,
+      source.slice(nextIndex),
+      previous,
+      options,
+    );
+    const functionPrefix = implicitFunction?.prefix ?? '';
+    const functionTokenLower = implicitFunction?.functionTokenLower ?? tokenLower;
 
     if (
       options.canonicalizationScope !== 'special-functions'
@@ -740,7 +751,10 @@ function canonicalizeAtomicSegment(
       continue;
     }
 
-    if (!isReservedCanonicalFunction(tokenLower, options) || !isFunctionPrefixBoundaryChar(previous)) {
+    if (
+      !isReservedCanonicalFunction(functionTokenLower, options)
+      || (!implicitFunction && !isFunctionPrefixBoundaryChar(previous))
+    ) {
       result += token;
       index = nextIndex;
       continue;
@@ -752,14 +766,14 @@ function canonicalizeAtomicSegment(
     }
 
     const powerArgument = collectPowerArgument(source, scanIndex);
-    if (powerArgument && tokenLower !== 'sqrt' && tokenLower !== 'abs') {
+    if (powerArgument && functionTokenLower !== 'sqrt' && functionTokenLower !== 'abs') {
       const argumentStart = skipWhitespace(source, powerArgument.nextIndex);
       if (source[argumentStart] === '(' || source.startsWith('\\left', argumentStart)) {
         const balanced = collectGroupedArgument(source, argumentStart);
         if (balanced) {
           const canonicalExponent = canonicalizeSegment(powerArgument.body, changes, options);
           const canonicalBody = canonicalizeFunctionArgumentBody(balanced.body, changes, options);
-          const canonical = `${canonicalCommandFor(tokenLower)}^{${canonicalExponent}}(${canonicalBody})`;
+          const canonical = `${functionPrefix}${canonicalCommandFor(functionTokenLower)}^{${canonicalExponent}}(${canonicalBody})`;
 
           changes.push({
             kind: 'function-token',
@@ -779,25 +793,25 @@ function canonicalizeAtomicSegment(
       const balanced = collectGroupedArgument(source, scanIndex);
       if (!balanced) {
         const canonical =
-          tokenLower === 'sqrt'
+          functionTokenLower === 'sqrt'
             ? '\\sqrt('
-            : tokenLower === 'abs'
-              ? `${canonicalCommandFor(tokenLower)}(`
-              : `${canonicalCommandFor(tokenLower)}(`;
+            : functionTokenLower === 'abs'
+              ? `${canonicalCommandFor(functionTokenLower)}(`
+              : `${canonicalCommandFor(functionTokenLower)}(`;
 
         changes.push({
           kind: 'function-token',
           before: source.slice(index, scanIndex + 1),
-          after: canonical,
+          after: `${functionPrefix}${canonical}`,
         });
 
-        result += canonical;
+        result += `${functionPrefix}${canonical}`;
         index = scanIndex + 1;
         continue;
       }
 
       const canonicalBody = canonicalizeFunctionArgumentBody(balanced.body, changes, options);
-      const canonical = canonicalFunctionLatex(tokenLower, canonicalBody);
+      const canonical = `${functionPrefix}${canonicalFunctionLatex(functionTokenLower, canonicalBody)}`;
 
       changes.push({
         kind: 'function-token',
@@ -814,7 +828,7 @@ function canonicalizeAtomicSegment(
       const simpleArgument = collectSimpleArgument(source, nextIndex);
       if (simpleArgument) {
         const canonicalArg = canonicalizeFunctionArgumentBody(simpleArgument.body, changes, options);
-        const canonical = canonicalFunctionLatex(tokenLower, canonicalArg);
+        const canonical = `${functionPrefix}${canonicalFunctionLatex(functionTokenLower, canonicalArg)}`;
 
         changes.push({
           kind: 'function-token',

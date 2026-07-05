@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { createEvent, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { KeypadPanel } from './KeypadPanel';
 import type { KeypadButton } from '../../lib/navigation/menu';
@@ -50,5 +50,25 @@ describe('KeypadPanel', () => {
 
     fireEvent.click(screen.getByTestId('keypad-sin'));
     expect(onKeypad).toHaveBeenCalledWith(rows[0][0]);
+  });
+
+  it('prevents keypad mouse down from stealing the active editor focus', () => {
+    render(
+      <KeypadPanel
+        rows={rows}
+        activeLayer="base"
+        onKeypad={() => {}}
+        onSelectLayer={() => {}}
+        onToggleLayerLock={() => {}}
+      />,
+    );
+
+    const layerMouseDown = createEvent.mouseDown(screen.getByTestId('keypad-layer-shift'));
+    fireEvent(screen.getByTestId('keypad-layer-shift'), layerMouseDown);
+    expect(layerMouseDown.defaultPrevented).toBe(true);
+
+    const keyMouseDown = createEvent.mouseDown(screen.getByTestId('keypad-sin'));
+    fireEvent(screen.getByTestId('keypad-sin'), keyMouseDown);
+    expect(keyMouseDown.defaultPrevented).toBe(true);
   });
 });

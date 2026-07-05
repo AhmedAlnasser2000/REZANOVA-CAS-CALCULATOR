@@ -226,6 +226,54 @@ describe('MathEditor typing behavior', () => {
     );
   });
 
+  it('canonicalizes pasted Calculus integration function names before insertion', () => {
+    render(
+      <MathEditor
+        value=""
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="calculus"
+        screenHint="indefiniteIntegral"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+    };
+
+    fireEvent.paste(field, {
+      clipboardData: {
+        getData: () => 'xarctan(x)+x^3arctan(x)+sinh^2(x)',
+      },
+    });
+
+    expect(field.getValue()).toBe('x\\arctan(x)+x^3\\arctan(x)+\\sinh^{2}(x)');
+  });
+
+  it('normalizes live Calculus integration function input before updating app state', () => {
+    const handleChange = vi.fn();
+    render(
+      <MathEditor
+        value=""
+        onChange={handleChange}
+        dataTestId="math-editor"
+        modeId="calculus"
+        screenHint="indefiniteIntegral"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+      setValue: (value: string) => void;
+    };
+
+    field.setValue('xarctan(x)+sinh^2(x)');
+    fireEvent.input(field);
+
+    expect(handleChange).toHaveBeenLastCalledWith('x\\arctan(x)+\\sinh^{2}(x)');
+    expect(field.getValue()).toBe('xarctan(x)+sinh^2(x)');
+  });
+
   it('leaves arrow keys to MathLive navigation', () => {
     render(
       <MathEditor

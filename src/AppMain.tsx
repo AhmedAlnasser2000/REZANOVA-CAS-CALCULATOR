@@ -1876,7 +1876,8 @@ export default function App() {
           (currentMode === 'equation' && equationScreen === 'symbolic')) &&
         activeFieldRef.current
       ) {
-        activeFieldRef.current.focus?.();
+        (activeFieldRef.current as { focus?: (options?: FocusOptions) => void })
+          .focus?.({ preventScroll: true });
         activeFieldRef.current.insert(mathText);
         setClipboardNotice('Pasted into editor');
         return;
@@ -2336,10 +2337,6 @@ export default function App() {
   const handleWindowKeydown = useEffectEvent((event: KeyboardEvent) => {
     const modifierLayer = physicalModifierLayer(event.key);
     if (modifierLayer) {
-      if (modifierLayer === 'alpha') {
-        event.preventDefault();
-      }
-      setKeypadMomentaryLayer(modifierLayer);
       return;
     }
 
@@ -2426,16 +2423,41 @@ export default function App() {
     });
   });
 
+  const handleWindowModifierKeydown = useEffectEvent((event: KeyboardEvent) => {
+    const modifierLayer = physicalModifierLayer(event.key);
+    if (!modifierLayer) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setKeypadMomentaryLayer(modifierLayer);
+  });
+
+  const handleWindowModifierKeyup = useEffectEvent((event: KeyboardEvent) => {
+    if (!physicalModifierLayer(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    setKeypadMomentaryLayer(null);
+  });
+
   const handleWindowKeyup = useEffectEvent((event: KeyboardEvent) => {
     if (physicalModifierLayer(event.key)) {
-      setKeypadMomentaryLayer(null);
+      return;
     }
   });
 
   useEffect(() => {
+    window.addEventListener('keydown', handleWindowModifierKeydown, true);
+    window.addEventListener('keyup', handleWindowModifierKeyup, true);
     window.addEventListener('keydown', handleWindowKeydown);
     window.addEventListener('keyup', handleWindowKeyup);
     return () => {
+      window.removeEventListener('keydown', handleWindowModifierKeydown, true);
+      window.removeEventListener('keyup', handleWindowModifierKeyup, true);
       window.removeEventListener('keydown', handleWindowKeydown);
       window.removeEventListener('keyup', handleWindowKeyup);
     };

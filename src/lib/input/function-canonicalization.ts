@@ -10,9 +10,18 @@ const FUNCTION_COMMANDS: Record<string, string> = {
   sec: '\\sec',
   csc: '\\csc',
   cot: '\\cot',
+  arcsin: '\\arcsin',
+  arccos: '\\arccos',
+  arctan: '\\arctan',
   asin: '\\arcsin',
   acos: '\\arccos',
   atan: '\\arctan',
+  sinh: '\\sinh',
+  cosh: '\\cosh',
+  tanh: '\\tanh',
+  sech: '\\operatorname{sech}',
+  csch: '\\operatorname{csch}',
+  coth: '\\operatorname{coth}',
   ln: '\\ln',
   log: '\\log',
   abs: '\\operatorname{abs}',
@@ -48,9 +57,18 @@ const RESERVED_FUNCTIONS = new Set([
   'sec',
   'csc',
   'cot',
+  'arcsin',
+  'arccos',
+  'arctan',
   'asin',
   'acos',
   'atan',
+  'sinh',
+  'cosh',
+  'tanh',
+  'sech',
+  'csch',
+  'coth',
   'ln',
   'log',
   'sqrt',
@@ -60,6 +78,72 @@ const RESERVED_SPECIAL_FUNCTIONS = new Set(Object.keys(SPECIAL_FUNCTION_COMMANDS
 
 export function canonicalCommandFor(name: string) {
   return ALL_FUNCTION_COMMANDS[name] ?? '';
+}
+
+export function canonicalFunctionTokenNames(options: {
+  enableSpecialFunctions?: boolean;
+  canonicalizationScope?: 'all' | 'special-functions';
+} = {}) {
+  const names = options.canonicalizationScope === 'special-functions'
+    ? []
+    : [...RESERVED_FUNCTIONS];
+
+  if (options.enableSpecialFunctions) {
+    names.push(...RESERVED_SPECIAL_FUNCTIONS);
+  }
+
+  return names;
+}
+
+function hasGroupedFunctionCallSuffix(followingText: string, tokenLower: string) {
+  if (/^\s*(?:\\left\s*)?\(/u.test(followingText)) {
+    return true;
+  }
+
+  if (tokenLower === 'sqrt' || tokenLower === 'abs') {
+    return false;
+  }
+
+  return /^\s*\^(?:\{[^{}]*\}|[^\s()[\]{}+\-*/=,;:<>^_]+)\s*(?:\\left\s*)?\(/u
+    .test(followingText);
+}
+
+export function splitImplicitFunctionSuffix(
+  token: string,
+  tokenLower: string,
+  followingText: string,
+  previous: string | undefined,
+  options: {
+    enableSpecialFunctions?: boolean;
+    canonicalizationScope?: 'all' | 'special-functions';
+  },
+) {
+  if (
+    previous !== undefined
+    && !/[\s,+\-*/^=()[\]{}0-9]/u.test(previous)
+  ) {
+    return null;
+  }
+
+  const functionNames = canonicalFunctionTokenNames(options).sort((a, b) => b.length - a.length);
+  for (const functionName of functionNames) {
+    if (!tokenLower.endsWith(functionName) || tokenLower === functionName) {
+      continue;
+    }
+
+    const prefixLength = tokenLower.length - functionName.length;
+    const prefix = token.slice(0, prefixLength);
+    if (!/^[A-Za-z]$/u.test(prefix) || !hasGroupedFunctionCallSuffix(followingText, functionName)) {
+      continue;
+    }
+
+    return {
+      prefix,
+      functionTokenLower: functionName,
+    };
+  }
+
+  return null;
 }
 
 export function isReservedCanonicalFunction(
@@ -101,6 +185,24 @@ export function isSpecialFunctionContext(
     || screenHint === 'integrals';
 }
 
+export function isIntegralFunctionContext(
+  context?: Pick<CanonicalizationContext, 'mode' | 'screenHint'> | null,
+) {
+  if (context?.mode !== 'calculus') {
+    return false;
+  }
+
+  const screenHint = context.screenHint ?? '';
+  return screenHint === 'indefinite-integral'
+    || screenHint === 'indefiniteIntegral'
+    || screenHint === 'definite-integral'
+    || screenHint === 'definiteIntegral'
+    || screenHint === 'improper-integral'
+    || screenHint === 'improperIntegral'
+    || screenHint === 'integral'
+    || screenHint === 'integrals';
+}
+
 export function normalizeSplitFunctionTokens(
   source: string,
   changes: CanonicalizationChange[],
@@ -117,11 +219,48 @@ export function normalizeSplitFunctionTokens(
     },
   );
 
+  const spacing = '(?:\\s|\\\\,|\\\\:|\\\\;|\\\\!|\\\\thinspace|\\\\medspace|\\\\quad|\\\\qquad)+';
+  const splitOrdinaryFunctions = [
+    'arcsin',
+    'arccos',
+    'arctan',
+    'sinh',
+    'cosh',
+    'tanh',
+    'sech',
+    'csch',
+    'coth',
+    'asin',
+    'acos',
+    'atan',
+    'sqrt',
+    'abs',
+    'log',
+    'sin',
+    'cos',
+    'tan',
+    'sec',
+    'csc',
+    'cot',
+  ];
+
+  for (const token of splitOrdinaryFunctions) {
+    const splitLetters = token.split('').join(spacing);
+    const pattern = new RegExp(
+      `(^|[^\\\\A-Za-z])${splitLetters}(?=\\s*(?:\\^|(?:\\\\left\\s*)?\\())`,
+      'gi',
+    );
+    next = next.replace(pattern, (match, prefix: string) => {
+      const after = `${prefix}${token}`;
+      changes.push({ kind: 'function-token', before: match, after });
+      return after;
+    });
+  }
+
   if (!options.enableSpecialFunctions) {
     return next;
   }
 
-  const spacing = '(?:\\s|\\\\,|\\\\:|\\\\;|\\\\!|\\\\thinspace|\\\\medspace|\\\\quad|\\\\qquad)+';
   const splitSpecials: Array<{ pattern: RegExp; joined: string }> = [
     { pattern: new RegExp(`(^|[^\\\\A-Za-z])S${spacing}i(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'Si' },
     { pattern: new RegExp(`(^|[^\\\\A-Za-z])C${spacing}i(?=\\s*(?:\\\\left\\s*)?\\()`, 'g'), joined: 'Ci' },

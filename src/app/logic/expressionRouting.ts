@@ -37,7 +37,7 @@ type PasteIntoEditorDeps = {
   statisticsEditorIsEditable: boolean;
   trigEditorIsEditable: boolean;
   equationScreen: EquationScreen;
-  activeFieldRef: { current: { focus?: () => void; insert: (text: string) => void } | null };
+  activeFieldRef: { current: { focus?: (options?: FocusOptions) => void; insert: (text: string) => void } | null };
   geometryDraftFieldRef: { current: { insert: (text: string) => void } | null };
   statisticsDraftFieldRef: { current: { insert: (text: string) => void } | null };
   trigDraftFieldRef: { current: { insert: (text: string) => void } | null };
@@ -60,7 +60,11 @@ function canonicalizePastedMathText(
 
   const canonicalized = canonicalizeMathInput(text, {
     mode,
-    screenHint: mode === 'equation' ? 'symbolic' : 'standard',
+    screenHint: mode === 'equation'
+      ? 'symbolic'
+      : isCalculusMode(mode)
+        ? 'integrals'
+        : 'standard',
     liveAssist: true,
   });
 
@@ -153,7 +157,7 @@ export async function pasteIntoEditorWithDeps(deps: PasteIntoEditorDeps) {
         || (deps.currentMode === 'equation' && deps.equationScreen === 'symbolic'))
       && deps.activeFieldRef.current
     ) {
-      deps.activeFieldRef.current.focus?.();
+      deps.activeFieldRef.current.focus?.({ preventScroll: true });
       deps.activeFieldRef.current.insert(mathText);
       deps.setClipboardNotice('Pasted into editor');
       return;
