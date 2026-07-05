@@ -65,16 +65,19 @@ function conditionHoldsAt(condition: PiecewiseLimitCondition, variable: string, 
     return false;
   }
 
-  if (condition.operator === '<') {
-    return point < condition.value;
-  }
-  if (condition.operator === '<=') {
-    return point <= condition.value;
-  }
-  if (condition.operator === '>') {
-    return point > condition.value;
-  }
-  return point >= condition.value;
+  return (condition.comparisons ?? [{ operator: condition.operator, value: condition.value }])
+    .every((comparison) => {
+      if (comparison.operator === '<') {
+        return point < comparison.value;
+      }
+      if (comparison.operator === '<=') {
+        return point <= comparison.value;
+      }
+      if (comparison.operator === '>') {
+        return point > comparison.value;
+      }
+      return point >= comparison.value;
+    });
 }
 
 function branchForPoint(

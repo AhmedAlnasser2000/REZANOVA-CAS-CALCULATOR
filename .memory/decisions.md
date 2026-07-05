@@ -1905,3 +1905,7 @@
 ## 2026-07-05 - CALCULUS-INTEGRATION-LOWRISK-UNLOCKS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Low-risk textbook integration widening is bounded to exact positive-discriminant improper rational division, reciprocal `1/(a^2-u^2)^(3/2)` and `1/(u^2+a^2)^(3/2)` affine radical templates, and affine `sinh^2(u)`/`cosh^2(u)` table forms. These routes must remain indefinite-only, Calculus-owned, and accepted only through route proof plus derivative backcheck evidence; difference-root and IBP families remain separate gates.
+
+## 2026-07-05 - CALCULUS-LIMITS-PIECEWISE-CONDITION-ENGINE2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Piecewise limit branch conditions remain Limits-owned linear interval logic in this arc. Numeric simple comparisons and chained intervals such as `0 <= x < 5` are parsed into internal comparison lists for branch selection; Calculus must not import Equation inequality solving for this milestone family.

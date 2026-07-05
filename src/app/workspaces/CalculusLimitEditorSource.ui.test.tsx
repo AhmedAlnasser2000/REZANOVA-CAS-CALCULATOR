@@ -308,6 +308,20 @@ describe('Calculus limit editor source', () => {
       .toContain('0 <= x < 5'));
   });
 
+  it('evaluates a piecewise interval condition from the row editor', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 3 piecewise(x if 0 <= x < 5; 0 otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('3');
+  });
+
   it('allows the Otherwise row to be edited into an explicit condition row', async () => {
     const { user } = await renderAppMain();
 

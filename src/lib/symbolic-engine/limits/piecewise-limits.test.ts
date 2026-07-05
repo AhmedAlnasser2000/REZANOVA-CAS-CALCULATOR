@@ -42,6 +42,24 @@ describe('piecewise limits', () => {
     }
   });
 
+  it('parses chained interval branch conditions', () => {
+    const parsed = parsePiecewiseLimitExpression('piecewise(x if 0 <= x < 5; 0 otherwise)');
+
+    expect(parsed.kind).toBe('piecewise');
+    if (parsed.kind === 'piecewise') {
+      expect(parsed.branches[0]?.condition).toMatchObject({
+        variable: 'x',
+        operator: '>=',
+        value: 0,
+        comparisons: [
+          { operator: '>=', value: 0 },
+          { operator: '<', value: 5 },
+        ],
+      });
+      expect(parsed.branches[0]?.condition?.latex).toBe('0<=x<5');
+    }
+  });
+
   it('parses pasted friendly piecewise syntax after spaces are stripped', () => {
     const parsed = parsePiecewiseLimitExpression('piecewise(-1ifx<0;1otherwise)');
 
@@ -163,6 +181,49 @@ describe('piecewise limits', () => {
     }
   });
 
+  it('resolves finite Piecewise interval branches with mixed endpoint inclusivity', () => {
+    const inside = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(x if 0 <= x < 5; 0 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 3,
+        direction: 'two-sided',
+      },
+    });
+    const lowerBoundary = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(x if 0 <= x < 5; 0 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 0,
+        direction: 'right',
+      },
+    });
+    const upperBoundary = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(x if 0 <= x < 5; 0 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'finite',
+        value: 5,
+        direction: 'left',
+      },
+    });
+
+    expect(inside.kind).toBe('success');
+    if (inside.kind === 'success') {
+      expect(inside.exactLatex).toBe('3');
+    }
+    expect(lowerBoundary.kind).toBe('success');
+    if (lowerBoundary.kind === 'success') {
+      expect(lowerBoundary.exactLatex).toBe('0');
+    }
+    expect(upperBoundary.kind).toBe('success');
+    if (upperBoundary.kind === 'success') {
+      expect(upperBoundary.exactLatex).toBe('5');
+    }
+  });
+
   it('keeps selected branch evidence when a Piecewise branch is unsupported', () => {
     const result = resolvePiecewiseLimit({
       bodyLatex: 'piecewise(floor(1/x) if x<0; 0 otherwise)',
@@ -236,6 +297,34 @@ describe('piecewise limits', () => {
     expect(negative.kind).toBe('success');
     if (negative.kind === 'success') {
       expect(negative.exactLatex).toBe('1');
+    }
+  });
+
+  it('uses interval conditions for infinity-side Piecewise branch selection', () => {
+    const positive = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(7 if 0 <= x < 5; 2 if x>=5; -3 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'infinite',
+        targetKind: 'posInfinity',
+      },
+    });
+    const negative = resolvePiecewiseLimit({
+      bodyLatex: 'piecewise(7 if 0 <= x < 5; 2 if x>=5; -3 otherwise)',
+      variable: 'x',
+      target: {
+        kind: 'infinite',
+        targetKind: 'negInfinity',
+      },
+    });
+
+    expect(positive.kind).toBe('success');
+    if (positive.kind === 'success') {
+      expect(positive.exactLatex).toBe('2');
+    }
+    expect(negative.kind).toBe('success');
+    if (negative.kind === 'success') {
+      expect(negative.exactLatex).toBe('-3');
     }
   });
 

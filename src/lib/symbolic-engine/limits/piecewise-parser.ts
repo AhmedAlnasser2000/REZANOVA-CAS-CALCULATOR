@@ -7,10 +7,16 @@ type ComputeEngineBoxInput = Parameters<ComputeEngine['box']>[0];
 
 type PiecewiseComparisonOperator = '<' | '<=' | '>' | '>=';
 
+export type PiecewiseLimitComparison = {
+  operator: PiecewiseComparisonOperator;
+  value: number;
+};
+
 export type PiecewiseLimitCondition = {
   variable: string;
   operator: PiecewiseComparisonOperator;
   value: number;
+  comparisons?: PiecewiseLimitComparison[];
   latex: string;
 };
 
@@ -154,6 +160,40 @@ function flipOperator(operator: PiecewiseComparisonOperator): PiecewiseCompariso
 
 function parseCondition(input: string): PiecewiseLimitCondition | undefined {
   const source = normalizeConditionSource(input);
+  const chainMatch = source.match(/^(.+?)(<=|>=|<|>)(.+?)(<=|>=|<|>)(.+)$/u);
+  if (chainMatch) {
+    const [, leftRaw, leftOperatorRaw, middleRaw, rightOperatorRaw, rightRaw] = chainMatch;
+    const variable = canonicalSymbol(middleRaw);
+    const leftValue = parseNumericConstant(leftRaw);
+    const rightValue = parseNumericConstant(rightRaw);
+    if (!variable || leftValue === undefined || rightValue === undefined) {
+      return undefined;
+    }
+
+    const leftOperator = leftOperatorRaw as PiecewiseComparisonOperator;
+    const rightOperator = rightOperatorRaw as PiecewiseComparisonOperator;
+    if (!['<', '<='].includes(leftOperator) || !['<', '<='].includes(rightOperator)) {
+      return undefined;
+    }
+
+    const leftComparison = {
+      operator: flipOperator(leftOperator),
+      value: leftValue,
+    } satisfies PiecewiseLimitComparison;
+    const rightComparison = {
+      operator: rightOperator,
+      value: rightValue,
+    } satisfies PiecewiseLimitComparison;
+
+    return {
+      variable,
+      operator: leftComparison.operator,
+      value: leftComparison.value,
+      comparisons: [leftComparison, rightComparison],
+      latex: `${leftRaw}${leftOperator}${middleRaw}${rightOperator}${rightRaw}`,
+    };
+  }
+
   const match = source.match(/^(.+?)(<=|>=|<|>)(.+)$/u);
   if (!match) {
     return undefined;
@@ -170,6 +210,7 @@ function parseCondition(input: string): PiecewiseLimitCondition | undefined {
           variable: leftSymbol,
           operator,
           value,
+          comparisons: [{ operator, value }],
           latex: `${leftRaw}${operator}${rightRaw}`,
         };
   }
@@ -183,6 +224,7 @@ function parseCondition(input: string): PiecewiseLimitCondition | undefined {
           variable: rightSymbol,
           operator: flipOperator(operator),
           value,
+          comparisons: [{ operator: flipOperator(operator), value }],
           latex: `${rightRaw}${flipOperator(operator)}${leftRaw}`,
         };
   }
