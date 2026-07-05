@@ -36,6 +36,7 @@ export type ComplexNumericEvaluationResult = {
 
 export type ComplexNumericEvaluator = {
   evaluateAt(value: ComplexValue): ComplexNumericEvaluationResult;
+  evaluateDerivativeAt?: (value: ComplexValue) => ComplexNumericEvaluationResult;
 };
 
 const ce = new ComputeEngine();
@@ -160,152 +161,246 @@ function zeroFormNode(node: MathJson): MathJson {
     : node;
 }
 
+function isTargetNode(node: MathJson, target: string) {
+  return node === target;
+}
+
+function isConstantNode(node: MathJson, target: string): boolean {
+  if (isTargetNode(node, target)) {
+    return false;
+  }
+  if (typeof node === 'number') {
+    return true;
+  }
+  if (typeof node === 'string') {
+    return true;
+  }
+  return isArrayNode(node) && node.slice(1).every((child) => isConstantNode(child as MathJson, target));
+}
+
+function derivativeNode(node: MathJson, target: string): MathJson | null {
+  if (isTargetNode(node, target)) return 1;
+  if (isConstantNode(node, target)) return 0;
+  if (!isArrayNode(node) || typeof node[0] !== 'string') return null;
+
+  const operator = node[0];
+  const args = node.slice(1) as MathJson[];
+  const derivativeArgs = args.map((arg) => derivativeNode(arg, target));
+  if (derivativeArgs.some((arg) => arg === null)) {
+    return null;
+  }
+  const d = derivativeArgs as MathJson[];
+  if (operator === 'Add') {
+    return ['Add', ...d];
+  }
+  if (operator === 'Subtract' && args.length === 2) {
+    return ['Subtract', d[0], d[1]];
+  }
+  if (operator === 'Negate' && args.length === 1) {
+    return ['Negate', d[0]];
+  }
+  if (operator === 'Multiply') {
+    const terms = args.map((_, index) => [
+      'Multiply',
+      d[index],
+      ...args.filter((__, factorIndex) => factorIndex !== index),
+    ] as MathJson);
+    return ['Add', ...terms];
+  }
+  if (operator === 'Divide' && args.length === 2) {
+    return [
+      'Divide',
+      ['Subtract', ['Multiply', d[0], args[1]], ['Multiply', args[0], d[1]]],
+      ['Power', args[1], 2],
+    ];
+  }
+  if (operator === 'Square' && args.length === 1) {
+    return ['Multiply', 2, args[0], d[0]];
+  }
+  if (operator === 'Power' && args.length === 2) {
+    const exponent = args[1];
+    if (typeof exponent === 'number' && Number.isInteger(exponent)) {
+      return ['Multiply', exponent, ['Power', args[0], exponent - 1], d[0]];
+    }
+    if (isConstantNode(args[0], target)) {
+      return ['Multiply', ['Power', args[0], args[1]], ['Ln', args[0]], d[1]];
+    }
+    if (isConstantNode(args[1], target)) {
+      return ['Multiply', args[1], ['Power', args[0], ['Subtract', args[1], 1]], d[0]];
+    }
+    return null;
+  }
+  if (operator === 'Sqrt' && args.length === 1) {
+    return ['Divide', d[0], ['Multiply', 2, ['Sqrt', args[0]]]];
+  }
+  if ((operator === 'Ln' || operator === 'Log') && args.length === 1) {
+    return ['Divide', d[0], args[0]];
+  }
+  if (operator === 'Sin' && args.length === 1) {
+    return ['Multiply', ['Cos', args[0]], d[0]];
+  }
+  if (operator === 'Cos' && args.length === 1) {
+    return ['Negate', ['Multiply', ['Sin', args[0]], d[0]]];
+  }
+  if (operator === 'Tan' && args.length === 1) {
+    return ['Divide', d[0], ['Power', ['Cos', args[0]], 2]];
+  }
+  return null;
+}
+
 export function createComplexNumericEvaluator(input: {
   expressionLatex: string;
   target: string;
   parameters?: Record<string, ComplexValue | number>;
 }): ComplexNumericEvaluator {
   const parsed = zeroFormNode(ce.parse(input.expressionLatex).json as MathJson);
-  return {
-    evaluateAt(value: ComplexValue) {
-      let evaluationCount = 0;
-      const diagnostics: ComplexNumericEvaluationDiagnostic[] = [];
+  const derivativeParsed = derivativeNode(parsed, input.target);
+  const evaluateParsedAt = (root: MathJson, value: ComplexValue): ComplexNumericEvaluationResult => {
+    let evaluationCount = 0;
+    const diagnostics: ComplexNumericEvaluationDiagnostic[] = [];
 
-      const evaluateNode = (node: MathJson): ComplexNumericEvaluationResult => {
-        evaluationCount += 1;
-        const exact = exactComplexToNumber(node);
-        if (exact) {
-          return { status: 'finite', value: exact, residualNorm: complexAbs(exact), diagnostics: [], evaluationCount };
+    const evaluateNode = (node: MathJson): ComplexNumericEvaluationResult => {
+      evaluationCount += 1;
+      const exact = exactComplexToNumber(node);
+      if (exact) {
+        return { status: 'finite', value: exact, residualNorm: complexAbs(exact), diagnostics: [], evaluationCount };
+      }
+      if (node === input.target) {
+        return { status: 'finite', value, residualNorm: complexAbs(value), diagnostics: [], evaluationCount };
+      }
+      if (typeof node === 'string') {
+        if (node === 'Pi') {
+          return { status: 'finite', value: complex(Math.PI, 0), residualNorm: Math.PI, diagnostics: [], evaluationCount };
         }
-        if (node === input.target) {
-          return { status: 'finite', value, residualNorm: complexAbs(value), diagnostics: [], evaluationCount };
+        if (node === 'ExponentialE') {
+          return { status: 'finite', value: complex(Math.E, 0), residualNorm: Math.E, diagnostics: [], evaluationCount };
         }
-        if (typeof node === 'string') {
-          if (node === 'Pi') {
-            return { status: 'finite', value: complex(Math.PI, 0), residualNorm: Math.PI, diagnostics: [], evaluationCount };
-          }
-          if (node === 'ExponentialE') {
-            return { status: 'finite', value: complex(Math.E, 0), residualNorm: Math.E, diagnostics: [], evaluationCount };
-          }
-          const parameter = input.parameters?.[node];
-          if (parameter !== undefined) {
-            const parameterValue = typeof parameter === 'number' ? complex(parameter, 0) : parameter;
-            return {
-              status: 'finite',
-              value: parameterValue,
-              residualNorm: complexAbs(parameterValue),
-              diagnostics: [],
-              evaluationCount,
-            };
-          }
-          diagnostics.push(diagnostic('error', 'complex-unresolved-symbol', `Unresolved complex numeric symbol: ${node}.`));
+        const parameter = input.parameters?.[node];
+        if (parameter !== undefined) {
+          const parameterValue = typeof parameter === 'number' ? complex(parameter, 0) : parameter;
           return {
-            status: 'unsupported',
-            value: null,
-            residualNorm: null,
-            diagnostics,
+            status: 'finite',
+            value: parameterValue,
+            residualNorm: complexAbs(parameterValue),
+            diagnostics: [],
             evaluationCount,
           };
         }
-        if (!isArrayNode(node) || typeof node[0] !== 'string') {
-          diagnostics.push(diagnostic('error', 'complex-unsupported-node', 'Unsupported complex numeric expression node.'));
-          return {
-            status: 'unsupported',
-            value: null,
-            residualNorm: null,
-            diagnostics,
-            evaluationCount,
-          };
-        }
-
-        const operator = node[0];
-        const children = node.slice(1).map((child) => evaluateNode(child as MathJson));
-        const values = children.map((child) => statusForChild(child));
-        if (values.some((entry) => entry === null)) {
-          const status = children.find((child) => child.status !== 'finite')?.status ?? 'unsupported';
-          return { status, value: null, residualNorm: null, diagnostics, evaluationCount };
-        }
-
-        const args = values as ComplexValue[];
-        let result: ComplexValue | null = null;
-        if (operator === 'Add') {
-          result = args.reduce((sum, part) => complexAdd(sum, part), complex(0, 0));
-        } else if (operator === 'Subtract' && args.length === 2) {
-          result = complexSub(args[0], args[1]);
-        } else if (operator === 'Negate' && args.length === 1) {
-          result = complexNeg(args[0]);
-        } else if (operator === 'Multiply') {
-          result = args.reduce((product, part) => complexMul(product, part), complex(1, 0));
-        } else if (operator === 'Divide' && args.length === 2) {
-          if (complexAbs(args[1]) < EPSILON) {
-            diagnostics.push(diagnostic('error', 'complex-division-by-zero', 'Complex division by zero.'));
-          } else {
-            result = complexDiv(args[0], args[1]);
-          }
-        } else if (operator === 'Power' && args.length === 2) {
-          result = evaluatePower(node, args, diagnostics);
-        } else if (operator === 'Square' && args.length === 1) {
-          result = complexMul(args[0], args[0]);
-        } else if (operator === 'Sqrt' && args.length === 1) {
-          const cut = branchContact(args[0], 'principal-root');
-          if (cut) diagnostics.push(cut);
-          result = complexSqrt(args[0]);
-        } else if (operator === 'Root' && args.length >= 2) {
-          const degree = Math.round(args[1].re);
-          const cut = branchContact(args[0], 'principal-root');
-          if (cut) diagnostics.push(cut);
-          result = Number.isInteger(degree) && degree >= 2 ? complexPrincipalNthRoot(args[0], degree) : null;
-        } else if ((operator === 'Ln' || operator === 'Log') && args.length >= 1) {
-          const cut = branchContact(args[0], 'principal-log');
-          if (cut) diagnostics.push(cut);
-          const numerator = complexLog(args[0]);
-          const denominator = operator === 'Log' && args.length >= 2 ? complexLog(args[1]) : complex(1, 0);
-          result = numerator && denominator && complexAbs(denominator) >= EPSILON
-            ? complexDiv(numerator, denominator)
-            : null;
-        } else if (operator === 'Sin' && args.length === 1) {
-          result = complexSin(args[0]);
-        } else if (operator === 'Cos' && args.length === 1) {
-          result = complexCos(args[0]);
-        } else if (operator === 'Tan' && args.length === 1) {
-          result = complexTan(args[0]);
-        } else if ((operator === 'Arcsin' || operator === 'asin') && args.length === 1) {
-          result = complexAsin(args[0], diagnostics);
-        } else if ((operator === 'Arccos' || operator === 'acos') && args.length === 1) {
-          result = complexAcos(args[0], diagnostics);
-        } else if ((operator === 'Arctan' || operator === 'atan') && args.length === 1) {
-          result = complexAtan(args[0], diagnostics);
-        } else {
-          diagnostics.push(diagnostic('error', 'complex-unsupported-operator', `Unsupported complex numeric operator: ${operator}.`));
-          return {
-            status: 'unsupported',
-            value: null,
-            residualNorm: null,
-            diagnostics,
-            evaluationCount,
-          };
-        }
-
-        if (!result) {
-          return { status: 'undefined', value: null, residualNorm: null, diagnostics, evaluationCount };
-        }
-        if (!finite(result)) {
-          diagnostics.push(diagnostic('error', 'complex-overflow', 'Complex numeric evaluation overflowed.'));
-          return { status: 'overflow', value: null, residualNorm: null, diagnostics, evaluationCount };
-        }
-        const normalized = normalizeComplex(result);
+        diagnostics.push(diagnostic('error', 'complex-unresolved-symbol', `Unresolved complex numeric symbol: ${node}.`));
         return {
-          status: 'finite',
-          value: normalized,
-          residualNorm: complexAbs(normalized),
+          status: 'unsupported',
+          value: null,
+          residualNorm: null,
           diagnostics,
           evaluationCount,
         };
-      };
+      }
+      if (!isArrayNode(node) || typeof node[0] !== 'string') {
+        diagnostics.push(diagnostic('error', 'complex-unsupported-node', 'Unsupported complex numeric expression node.'));
+        return {
+          status: 'unsupported',
+          value: null,
+          residualNorm: null,
+          diagnostics,
+          evaluationCount,
+        };
+      }
 
-      const evaluated = evaluateNode(parsed);
-      return { ...evaluated, diagnostics };
+      const operator = node[0];
+      const children = node.slice(1).map((child) => evaluateNode(child as MathJson));
+      const values = children.map((child) => statusForChild(child));
+      if (values.some((entry) => entry === null)) {
+        const status = children.find((child) => child.status !== 'finite')?.status ?? 'unsupported';
+        return { status, value: null, residualNorm: null, diagnostics, evaluationCount };
+      }
+
+      const args = values as ComplexValue[];
+      let result: ComplexValue | null = null;
+      if (operator === 'Add') {
+        result = args.reduce((sum, part) => complexAdd(sum, part), complex(0, 0));
+      } else if (operator === 'Subtract' && args.length === 2) {
+        result = complexSub(args[0], args[1]);
+      } else if (operator === 'Negate' && args.length === 1) {
+        result = complexNeg(args[0]);
+      } else if (operator === 'Multiply') {
+        result = args.reduce((product, part) => complexMul(product, part), complex(1, 0));
+      } else if (operator === 'Divide' && args.length === 2) {
+        if (complexAbs(args[1]) < EPSILON) {
+          diagnostics.push(diagnostic('error', 'complex-division-by-zero', 'Complex division by zero.'));
+        } else {
+          result = complexDiv(args[0], args[1]);
+        }
+      } else if (operator === 'Power' && args.length === 2) {
+        result = evaluatePower(node, args, diagnostics);
+      } else if (operator === 'Square' && args.length === 1) {
+        result = complexMul(args[0], args[0]);
+      } else if (operator === 'Sqrt' && args.length === 1) {
+        const cut = branchContact(args[0], 'principal-root');
+        if (cut) diagnostics.push(cut);
+        result = complexSqrt(args[0]);
+      } else if (operator === 'Root' && args.length >= 2) {
+        const degree = Math.round(args[1].re);
+        const cut = branchContact(args[0], 'principal-root');
+        if (cut) diagnostics.push(cut);
+        result = Number.isInteger(degree) && degree >= 2 ? complexPrincipalNthRoot(args[0], degree) : null;
+      } else if ((operator === 'Ln' || operator === 'Log') && args.length >= 1) {
+        const cut = branchContact(args[0], 'principal-log');
+        if (cut) diagnostics.push(cut);
+        const numerator = complexLog(args[0]);
+        const denominator = operator === 'Log' && args.length >= 2 ? complexLog(args[1]) : complex(1, 0);
+        result = numerator && denominator && complexAbs(denominator) >= EPSILON
+          ? complexDiv(numerator, denominator)
+          : null;
+      } else if (operator === 'Sin' && args.length === 1) {
+        result = complexSin(args[0]);
+      } else if (operator === 'Cos' && args.length === 1) {
+        result = complexCos(args[0]);
+      } else if (operator === 'Tan' && args.length === 1) {
+        result = complexTan(args[0]);
+      } else if ((operator === 'Arcsin' || operator === 'asin') && args.length === 1) {
+        result = complexAsin(args[0], diagnostics);
+      } else if ((operator === 'Arccos' || operator === 'acos') && args.length === 1) {
+        result = complexAcos(args[0], diagnostics);
+      } else if ((operator === 'Arctan' || operator === 'atan') && args.length === 1) {
+        result = complexAtan(args[0], diagnostics);
+      } else {
+        diagnostics.push(diagnostic('error', 'complex-unsupported-operator', `Unsupported complex numeric operator: ${operator}.`));
+        return {
+          status: 'unsupported',
+          value: null,
+          residualNorm: null,
+          diagnostics,
+          evaluationCount,
+        };
+      }
+
+      if (!result) {
+        return { status: 'undefined', value: null, residualNorm: null, diagnostics, evaluationCount };
+      }
+      if (!finite(result)) {
+        diagnostics.push(diagnostic('error', 'complex-overflow', 'Complex numeric evaluation overflowed.'));
+        return { status: 'overflow', value: null, residualNorm: null, diagnostics, evaluationCount };
+      }
+      const normalized = normalizeComplex(result);
+      return {
+        status: 'finite',
+        value: normalized,
+        residualNorm: complexAbs(normalized),
+        diagnostics,
+        evaluationCount,
+      };
+    };
+
+    const evaluated = evaluateNode(root);
+    return { ...evaluated, diagnostics };
+  };
+  return {
+    evaluateAt(value: ComplexValue) {
+      return evaluateParsedAt(parsed, value);
     },
+    ...(derivativeParsed
+      ? { evaluateDerivativeAt: (value: ComplexValue) => evaluateParsedAt(derivativeParsed, value) }
+      : {}),
   };
 }
 

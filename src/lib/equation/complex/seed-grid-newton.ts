@@ -18,7 +18,7 @@ export type ComplexRectangularRegion = {
 export type ComplexNewtonCandidate = {
   value: ComplexValue;
   residualNorm: number;
-  source: 'deterministic-grid' | 'supplemental-random';
+  source: 'deterministic-grid' | 'adaptive-midpoint' | 'supplemental-random' | 'low-discrepancy' | 'cluster-polish';
   iterations: number;
 };
 
@@ -32,6 +32,12 @@ export type ComplexSeedGridNewtonResult = {
     rejectedSeedCount: number;
     duplicateCount: number;
     branchDiagnosticCount: number;
+    analyticDerivativeCount: number;
+    finiteDifferenceDerivativeCount: number;
+    dampingRetryCount: number;
+    lowDiscrepancySeedCount: number;
+    adaptiveSeedCount: number;
+    clusterPolishSeedCount: number;
     maxIterationsReached: number;
     totalEvaluations: number;
     supplementalRandomUsed: boolean;
@@ -40,6 +46,7 @@ export type ComplexSeedGridNewtonResult = {
 
 const DEFAULT_GRID_SIZE = 7;
 const DEFAULT_RANDOM_SEED_COUNT = 0;
+const DEFAULT_LOW_DISCREPANCY_SEED_COUNT = 0;
 const DEFAULT_MAX_ITERATIONS = 40;
 const DEFAULT_RESIDUAL_TOLERANCE = 1e-8;
 const DEFAULT_DEDUPE_TOLERANCE = 1e-6;
@@ -87,12 +94,40 @@ function deterministicGridSeeds(region: ComplexRectangularRegion, gridSize: numb
   return seeds;
 }
 
+function adaptiveMidpointSeeds(region: ComplexRectangularRegion, gridSize: number) {
+  return Math.floor(gridSize) > 1 && Math.floor(gridSize) % 2 === 0
+    ? [complex((region.reMin + region.reMax) / 2, (region.imMin + region.imMax) / 2)]
+    : [];
+}
+
 function createRandom(seed: number) {
   let state = seed >>> 0;
   return () => {
     state = (1664525 * state + 1013904223) >>> 0;
     return state / 0x100000000;
   };
+}
+
+function radicalInverse(index: number, base: number) {
+  let value = 0;
+  let fraction = 1 / base;
+  let remaining = index;
+  while (remaining > 0) {
+    value += fraction * (remaining % base);
+    remaining = Math.floor(remaining / base);
+    fraction /= base;
+  }
+  return value;
+}
+
+function lowDiscrepancySeeds(region: ComplexRectangularRegion, count: number) {
+  return Array.from({ length: Math.max(0, Math.floor(count)) }, (_, index) => {
+    const sample = index + 1;
+    return complex(
+      region.reMin + regionWidth(region) * radicalInverse(sample, 2),
+      region.imMin + regionHeight(region) * radicalInverse(sample, 3),
+    );
+  });
 }
 
 function randomSeeds(region: ComplexRectangularRegion, count: number, seed: number) {
@@ -111,7 +146,21 @@ function finiteValue(evaluator: ComplexNumericEvaluator, value: ComplexValue) {
     : null;
 }
 
-function numericDerivative(evaluator: ComplexNumericEvaluator, value: ComplexValue) {
+function countBranchDiagnostics(diagnostics: readonly { code: string }[]) {
+  return diagnostics.filter((entry) => /branch/i.test(entry.code)).length;
+}
+
+function derivativeProbe(evaluator: ComplexNumericEvaluator, value: ComplexValue) {
+  const analytic = evaluator.evaluateDerivativeAt?.(value);
+  if (analytic?.status === 'finite' && analytic.value) {
+    return {
+      kind: 'analytic' as const,
+      value: analytic.value,
+      evaluationCount: analytic.evaluationCount,
+      branchDiagnosticCount: countBranchDiagnostics(analytic.diagnostics),
+    };
+  }
+
   const step = DERIVATIVE_STEP_SCALE * Math.max(1, complexAbs(value));
   const left = finiteValue(evaluator, complex(value.re - step, value.im));
   const right = finiteValue(evaluator, complex(value.re + step, value.im));
@@ -119,7 +168,12 @@ function numericDerivative(evaluator: ComplexNumericEvaluator, value: ComplexVal
     return null;
   }
   const difference = complexSub(right.value, left.value);
-  return complex(difference.re / (2 * step), difference.im / (2 * step));
+  return {
+    kind: 'finite-difference' as const,
+    value: complex(difference.re / (2 * step), difference.im / (2 * step)),
+    evaluationCount: left.evaluationCount + right.evaluationCount,
+    branchDiagnosticCount: countBranchDiagnostics([...left.diagnostics, ...right.diagnostics]),
+  };
 }
 
 function bestDampedStep(input: {
@@ -131,6 +185,7 @@ function bestDampedStep(input: {
 }) {
   let damping = 1;
   let best: { value: ComplexValue; residual: number } | null = null;
+  let retryCount = 0;
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const candidate = complexSub(input.current, complex(input.step.re * damping, input.step.im * damping));
     if (isInsideRegion(candidate, input.region)) {
@@ -141,8 +196,9 @@ function bestDampedStep(input: {
       }
     }
     damping /= 2;
+    retryCount += 1;
   }
-  return best;
+  return { best, retryCount };
 }
 
 function refineSeed(input: {
@@ -156,15 +212,26 @@ function refineSeed(input: {
   let current = input.seed;
   let totalEvaluations = 0;
   let branchDiagnosticCount = 0;
+  let analyticDerivativeCount = 0;
+  let finiteDifferenceDerivativeCount = 0;
+  let dampingRetryCount = 0;
+
+  const stopped = (kind: 'rejected' | 'max-iterations') => ({
+    kind,
+    totalEvaluations,
+    branchDiagnosticCount,
+    analyticDerivativeCount,
+    finiteDifferenceDerivativeCount,
+    dampingRetryCount,
+  });
 
   for (let iteration = 0; iteration < input.maxIterations; iteration += 1) {
     const evaluated = input.evaluator.evaluateAt(current);
     totalEvaluations += evaluated.evaluationCount;
-    branchDiagnosticCount += evaluated.diagnostics
-      .filter((entry) => /branch/i.test(entry.code)).length;
+    branchDiagnosticCount += countBranchDiagnostics(evaluated.diagnostics);
 
     if (evaluated.status !== 'finite' || !evaluated.value || evaluated.residualNorm === null) {
-      return { kind: 'rejected' as const, totalEvaluations, branchDiagnosticCount };
+      return stopped('rejected');
     }
     if (evaluated.residualNorm <= input.tolerance) {
       return {
@@ -177,20 +244,31 @@ function refineSeed(input: {
         },
         totalEvaluations,
         branchDiagnosticCount,
+        analyticDerivativeCount,
+        finiteDifferenceDerivativeCount,
+        dampingRetryCount,
       };
     }
 
-    const derivative = numericDerivative(input.evaluator, current);
-    totalEvaluations += 2;
-    if (!derivative || complexAbs(derivative) < 1e-12) {
-      return { kind: 'rejected' as const, totalEvaluations, branchDiagnosticCount };
+    const derivative = derivativeProbe(input.evaluator, current);
+    if (derivative) {
+      totalEvaluations += derivative.evaluationCount;
+      branchDiagnosticCount += derivative.branchDiagnosticCount;
+      if (derivative.kind === 'analytic') {
+        analyticDerivativeCount += 1;
+      } else {
+        finiteDifferenceDerivativeCount += 1;
+      }
+    }
+    if (!derivative || complexAbs(derivative.value) < 1e-12) {
+      return stopped('rejected');
     }
 
     let step: ComplexValue;
     try {
-      step = complexDiv(evaluated.value, derivative);
+      step = complexDiv(evaluated.value, derivative.value);
     } catch {
-      return { kind: 'rejected' as const, totalEvaluations, branchDiagnosticCount };
+      return stopped('rejected');
     }
     const maxStep = Math.max(regionWidth(input.region), regionHeight(input.region)) / 2;
     const stepSize = complexAbs(step);
@@ -205,13 +283,14 @@ function refineSeed(input: {
       region: input.region,
     });
     totalEvaluations += 8;
-    if (!next) {
-      return { kind: 'rejected' as const, totalEvaluations, branchDiagnosticCount };
+    dampingRetryCount += next.retryCount;
+    if (!next.best) {
+      return stopped('rejected');
     }
-    current = next.value;
+    current = next.best.value;
   }
 
-  return { kind: 'max-iterations' as const, totalEvaluations, branchDiagnosticCount };
+  return stopped('max-iterations');
 }
 
 function addCandidate(
@@ -238,6 +317,7 @@ export function findComplexNewtonCandidates(input: {
   gridSize?: number;
   randomSeedCount?: number;
   randomSeed?: number;
+  lowDiscrepancySeedCount?: number;
   maxIterations?: number;
   tolerance?: number;
   dedupeTolerance?: number;
@@ -250,6 +330,12 @@ export function findComplexNewtonCandidates(input: {
     rejectedSeedCount: 0,
     duplicateCount: 0,
     branchDiagnosticCount: 0,
+    analyticDerivativeCount: 0,
+    finiteDifferenceDerivativeCount: 0,
+    dampingRetryCount: 0,
+    lowDiscrepancySeedCount: 0,
+    adaptiveSeedCount: 0,
+    clusterPolishSeedCount: 0,
     maxIterationsReached: 0,
     totalEvaluations: 0,
     supplementalRandomUsed: false,
@@ -259,6 +345,11 @@ export function findComplexNewtonCandidates(input: {
   }
 
   const gridSeeds = deterministicGridSeeds(input.region, input.gridSize ?? DEFAULT_GRID_SIZE);
+  const adaptiveSeeds = adaptiveMidpointSeeds(input.region, input.gridSize ?? DEFAULT_GRID_SIZE);
+  const lowDiscrepancy = lowDiscrepancySeeds(
+    input.region,
+    input.lowDiscrepancySeedCount ?? DEFAULT_LOW_DISCREPANCY_SEED_COUNT,
+  );
   const supplemental = randomSeeds(
     input.region,
     input.randomSeedCount ?? DEFAULT_RANDOM_SEED_COUNT,
@@ -270,13 +361,12 @@ export function findComplexNewtonCandidates(input: {
   const dedupeTolerance = input.dedupeTolerance ?? DEFAULT_DEDUPE_TOLERANCE;
 
   diagnostics.deterministicSeedCount = gridSeeds.length;
+  diagnostics.adaptiveSeedCount = adaptiveSeeds.length;
   diagnostics.randomSeedCount = supplemental.length;
-  diagnostics.supplementalRandomUsed = supplemental.length > 0;
+  diagnostics.lowDiscrepancySeedCount = lowDiscrepancy.length;
+  diagnostics.supplementalRandomUsed = supplemental.length > 0 || lowDiscrepancy.length > 0;
 
-  for (const [seeds, source] of [
-    [gridSeeds, 'deterministic-grid'],
-    [supplemental, 'supplemental-random'],
-  ] as const) {
+  const runSeeds = (seeds: readonly ComplexValue[], source: ComplexNewtonCandidate['source']) => {
     for (const seed of seeds) {
       diagnostics.attemptedSeedCount += 1;
       const refined = refineSeed({
@@ -289,6 +379,9 @@ export function findComplexNewtonCandidates(input: {
       });
       diagnostics.totalEvaluations += refined.totalEvaluations;
       diagnostics.branchDiagnosticCount += refined.branchDiagnosticCount;
+      diagnostics.analyticDerivativeCount += refined.analyticDerivativeCount;
+      diagnostics.finiteDifferenceDerivativeCount += refined.finiteDifferenceDerivativeCount;
+      diagnostics.dampingRetryCount += refined.dampingRetryCount;
       if (refined.kind === 'converged') {
         diagnostics.convergedSeedCount += 1;
         if (addCandidate(candidates, refined.candidate, dedupeTolerance)) {
@@ -300,7 +393,26 @@ export function findComplexNewtonCandidates(input: {
         diagnostics.rejectedSeedCount += 1;
       }
     }
+  };
+
+  for (const [seeds, source] of [
+    [gridSeeds, 'deterministic-grid'],
+    [adaptiveSeeds, 'adaptive-midpoint'],
+    [lowDiscrepancy, 'low-discrepancy'],
+    [supplemental, 'supplemental-random'],
+  ] as const) {
+    runSeeds(seeds, source);
   }
+
+  const clusterRadius = Math.max(regionWidth(input.region), regionHeight(input.region)) * 1e-3;
+  const clusterSeeds = candidates.flatMap((candidate) => [
+    complex(candidate.value.re + clusterRadius, candidate.value.im),
+    complex(candidate.value.re - clusterRadius, candidate.value.im),
+    complex(candidate.value.re, candidate.value.im + clusterRadius),
+    complex(candidate.value.re, candidate.value.im - clusterRadius),
+  ].filter((seed) => isInsideRegion(seed, input.region)));
+  diagnostics.clusterPolishSeedCount = clusterSeeds.length;
+  runSeeds(clusterSeeds, 'cluster-polish');
 
   return {
     candidates: candidates.sort((left, right) => left.value.re - right.value.re || left.value.im - right.value.im),

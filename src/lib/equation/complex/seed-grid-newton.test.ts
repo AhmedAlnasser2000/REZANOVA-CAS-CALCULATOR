@@ -27,6 +27,8 @@ describe('Complex seed-grid Newton candidates', () => {
       Math.abs(candidate.value.re) < 1e-7 && Math.abs(candidate.value.im) < 1e-7)).toBe(true);
     expect(result.diagnostics.deterministicSeedCount).toBe(25);
     expect(result.diagnostics.convergedSeedCount).toBeGreaterThan(0);
+    expect(result.diagnostics.analyticDerivativeCount).toBeGreaterThan(0);
+    expect(result.diagnostics.finiteDifferenceDerivativeCount).toBe(0);
     expect(result.diagnostics.totalEvaluations).toBeGreaterThan(0);
   });
 
@@ -77,6 +79,19 @@ describe('Complex seed-grid Newton candidates', () => {
     expect(first.diagnostics.supplementalRandomUsed).toBe(true);
     expect(first.diagnostics.randomSeedCount).toBe(12);
     expect(first.candidates.map((candidate) => candidate.value)).toEqual(second.candidates.map((candidate) => candidate.value));
+  });
+
+  it('uses low-discrepancy supplemental seeds and cluster polish diagnostics', () => {
+    const result = rootsFor('z^2+1=0', {
+      region: { reMin: -1, reMax: 1, imMin: -2, imMax: 2 },
+      gridSize: 1,
+      lowDiscrepancySeedCount: 8,
+    });
+
+    expect(result.diagnostics.supplementalRandomUsed).toBe(true);
+    expect(result.diagnostics.lowDiscrepancySeedCount).toBe(8);
+    expect(result.diagnostics.clusterPolishSeedCount).toBeGreaterThan(0);
+    expect(result.candidates.some((candidate) => candidate.source === 'low-discrepancy' || candidate.source === 'cluster-polish')).toBe(true);
   });
 
   it('rejects invalid regions without probing', () => {

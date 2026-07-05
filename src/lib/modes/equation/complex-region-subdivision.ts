@@ -51,6 +51,12 @@ function emptyNewton(): ComplexSeedGridNewtonResult {
       rejectedSeedCount: 0,
       duplicateCount: 0,
       branchDiagnosticCount: 0,
+      analyticDerivativeCount: 0,
+      finiteDifferenceDerivativeCount: 0,
+      dampingRetryCount: 0,
+      lowDiscrepancySeedCount: 0,
+      adaptiveSeedCount: 0,
+      clusterPolishSeedCount: 0,
       maxIterationsReached: 0,
       totalEvaluations: 0,
       supplementalRandomUsed: false,
@@ -66,6 +72,12 @@ function mergeNewtonDiagnostics(target: ComplexSeedGridNewtonResult, source: Com
   target.diagnostics.rejectedSeedCount += source.diagnostics.rejectedSeedCount;
   target.diagnostics.duplicateCount += source.diagnostics.duplicateCount;
   target.diagnostics.branchDiagnosticCount += source.diagnostics.branchDiagnosticCount;
+  target.diagnostics.analyticDerivativeCount += source.diagnostics.analyticDerivativeCount;
+  target.diagnostics.finiteDifferenceDerivativeCount += source.diagnostics.finiteDifferenceDerivativeCount;
+  target.diagnostics.dampingRetryCount += source.diagnostics.dampingRetryCount;
+  target.diagnostics.lowDiscrepancySeedCount += source.diagnostics.lowDiscrepancySeedCount;
+  target.diagnostics.adaptiveSeedCount += source.diagnostics.adaptiveSeedCount;
+  target.diagnostics.clusterPolishSeedCount += source.diagnostics.clusterPolishSeedCount;
   target.diagnostics.maxIterationsReached += source.diagnostics.maxIterationsReached;
   target.diagnostics.totalEvaluations += source.diagnostics.totalEvaluations;
   target.diagnostics.supplementalRandomUsed ||= source.diagnostics.supplementalRandomUsed;

@@ -111,4 +111,25 @@ describe('Complex numeric evaluator', () => {
     expect(result.value).toBeNull();
     expect(result.diagnostics.map((entry) => entry.code)).toContain('complex-overflow');
   });
+
+  it('exposes bounded analytic derivatives for supported numeric families', () => {
+    const polynomial = createComplexNumericEvaluator({
+      expressionLatex: 'z^2+1=0',
+      target: 'z',
+    });
+    const exponential = createComplexNumericEvaluator({
+      expressionLatex: 'e^z+z=0',
+      target: 'z',
+    });
+
+    const polynomialDerivative = polynomial.evaluateDerivativeAt?.(complex(2, 0));
+    const exponentialDerivative = exponential.evaluateDerivativeAt?.(complex(0, Math.PI));
+
+    expect(polynomialDerivative?.status).toBe('finite');
+    expect(polynomialDerivative?.value?.re).toBeCloseTo(4);
+    expect(polynomialDerivative?.value?.im).toBeCloseTo(0);
+    expect(exponentialDerivative?.status).toBe('finite');
+    expect(exponentialDerivative?.value?.re).toBeCloseTo(0);
+    expect(exponentialDerivative?.value?.im).toBeCloseTo(0);
+  });
 });
