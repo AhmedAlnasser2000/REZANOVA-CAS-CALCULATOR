@@ -48,6 +48,9 @@ export function scaleLatex(latex: string, scale: number) {
 function canAttachCoefficientDirectly(latex: string) {
   return latex.startsWith('\\ln')
     || latex.startsWith('\\arctan')
+    || latex.startsWith('\\sinh')
+    || latex.startsWith('\\cosh')
+    || latex.startsWith('\\tanh')
     || latex.startsWith('\\frac')
     || /^[a-zA-Z](?:\^\{?[-+]?\d+\}?)?$/.test(latex);
 }

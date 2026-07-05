@@ -2,6 +2,7 @@ import type {
   DisplayOutcome,
   CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
+  DisplayAnswerRowsReadback,
   DisplayDetailSection,
   PlannerBadge,
   ResultOrigin,
@@ -13,6 +14,7 @@ type PlannerBadgeMode = 'merge' | 'replace';
 type BuildRuntimeOutcomeOptions = {
   title: string;
   exactLatex?: string;
+  answerRows?: DisplayAnswerRowsReadback;
   exactSupplementLatex?: string[];
   approxText?: string;
   warnings?: string[];
@@ -56,6 +58,7 @@ function attachPlannerBadges(
 export function buildRuntimeOutcome({
   title,
   exactLatex,
+  answerRows,
   exactSupplementLatex,
   approxText,
   warnings = [],
@@ -84,6 +87,7 @@ export function buildRuntimeOutcome({
     kind: 'success',
     title,
     exactLatex,
+    answerRows,
     exactSupplementLatex,
     approxText,
     warnings,

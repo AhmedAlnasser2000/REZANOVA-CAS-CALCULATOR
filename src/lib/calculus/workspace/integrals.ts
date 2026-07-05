@@ -13,6 +13,7 @@ import {
   evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
 } from '../engine/integration';
+import { presentCalculusIndefiniteEvaluation } from '../engine/indefinite-presentation';
 import {
   integralVariableErrorMessage,
   normalizeIntegralVariableDraft,
@@ -243,7 +244,7 @@ export function evaluateCalculusIndefiniteIntegral(
 
   try {
     const integrand = parseIntegralBody(bodyLatex);
-    return resolveIndefiniteIntegralFromAst({
+    const resolved = resolveIndefiniteIntegralFromAst({
       body: integrand.body,
       variable: variable.id,
       computeEngineFallback: () => {
@@ -257,6 +258,7 @@ export function evaluateCalculusIndefiniteIntegral(
       computeEngineOrigin: 'symbolic',
       unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
     });
+    return presentCalculusIndefiniteEvaluation(resolved, integrand.body, variable.id);
   } catch {
     return {
       warnings: [],

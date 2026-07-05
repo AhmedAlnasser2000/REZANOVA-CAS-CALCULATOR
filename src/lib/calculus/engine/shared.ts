@@ -14,6 +14,7 @@ import type {
 import { limitMethodSection } from '../../symbolic-engine/limits/detail-readback';
 import type {
   CalculusDerivativeStrategy,
+  DisplayAnswerRowsReadback,
   DisplayDetailSection,
   ResultOrigin,
 } from '../../../types/calculator';
@@ -23,6 +24,7 @@ export const ce = new ComputeEngine();
 
 export type CalculusCoreEvaluation = {
   exactLatex?: string;
+  answerRows?: DisplayAnswerRowsReadback;
   approxText?: string;
   warnings: string[];
   error?: string;

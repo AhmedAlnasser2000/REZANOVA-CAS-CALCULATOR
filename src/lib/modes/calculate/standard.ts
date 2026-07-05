@@ -202,6 +202,7 @@ export function runCalculateMode({
     buildRuntimeOutcome({
       title: responseTitleText,
       exactLatex: response.exactLatex,
+      answerRows: response.answerRows,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,
       warnings: response.warnings,

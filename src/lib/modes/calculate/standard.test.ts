@@ -255,6 +255,7 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('x-1');
     expect(result.exactLatex).toContain('x+1');
+    expect(result.answerRows?.rows.at(-1)?.latex).toBe('+C');
     expect(result.detailSections?.[0]?.title).toBe('Partial Fractions');
     expect(result.detailSections?.[0]?.lines.join(' ')).toContain('shared polynomial/rational core');
 
@@ -273,7 +274,7 @@ describe('runCalculateMode', () => {
     expect(repeated.title).toBe('Integral');
     expect(repeated.resultOrigin).toBe('rule-based-symbolic');
     expect(repeated.calculusStrategy).toBe('partial-fractions');
-    expect(repeated.exactLatex).toBe('-\\frac{1}{x-1}');
+    expect(repeated.exactLatex).toBe('-\\frac{1}{x-1}+C');
     expect(repeated.detailSections?.[0]?.title).toBe('Partial Fractions');
 
     const quadratic = runCalculateMode({
@@ -291,7 +292,7 @@ describe('runCalculateMode', () => {
     expect(quadratic.title).toBe('Integral');
     expect(quadratic.resultOrigin).toBe('rule-based-symbolic');
     expect(quadratic.calculusStrategy).toBe('partial-fractions');
-    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)');
+    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C');
     expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
   });
 

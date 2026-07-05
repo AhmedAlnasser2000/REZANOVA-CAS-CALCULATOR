@@ -35,6 +35,14 @@ export type EvaluateDetailSection = {
   lines: string[];
 };
 
+export type EvaluateAnswerRowsReadback = {
+  label?: string;
+  rows: Array<{
+    latex: string;
+    label?: string;
+  }>;
+};
+
 export type TrigResultOrigin =
   | 'symbolic'
   | 'exact-special-angle'
@@ -173,6 +181,7 @@ export type EvaluateRequest = {
 
 export type EvaluateResponse = {
   exactLatex?: string;
+  answerRows?: EvaluateAnswerRowsReadback;
   exactSupplementLatex?: string[];
   approxText?: string;
   normalizedMathJson?: unknown;

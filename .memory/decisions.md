@@ -1930,6 +1930,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Finite symbolic cancellation limits use a Limits-owned capped local-series fallback through Taylor order 10 after existing recursive leading-term routes fail. This is not a broad Taylor/Gruntz solver; workspace real-domain guards still block symbolic-log forms when assumptions are insufficient.
 
+## 2026-07-05 - CALCULUS-INTEGRATION-PRINTING-LAYER1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus indefinite integration presentation is Calculus-owned and runs only after verified antiderivative backcheck. `+C` is added as a verified presentation suffix for indefinite results, Copy Result and To Editor keep canonical parseable LaTeX, and visible answer rows may preserve order/readability without changing solver adoption.
+
 ## 2026-07-05 - CALCULUS-LIMITS-ASYMPTOTIC-SCALE-ENGINE2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits infinity-scale comparison may derive logarithmic scales from eventually positive unbounded inner scales, including `log(x^p)`, `log(sqrt(x))`, `log(c*x)`, and `log(e^x)`, before L'Hospital or numeric fallback. This remains a scale route, not full Gruntz.

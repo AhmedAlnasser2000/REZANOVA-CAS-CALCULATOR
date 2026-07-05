@@ -437,6 +437,7 @@ export function executePreparedExpressionAction(
 
         return {
             exactLatex: calculus.exactLatex,
+            answerRows: calculus.answerRows,
             approxText: calculus.approxText,
             normalizedMathJson: expr.json,
             warnings: [...warnings, ...calculus.warnings],

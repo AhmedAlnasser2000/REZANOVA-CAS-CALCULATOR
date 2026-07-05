@@ -127,6 +127,7 @@ function toOutcome(title: string, evaluation: CalculusWorkspaceEvaluation): Disp
     kind: 'success',
     title,
     exactLatex: evaluation.exactLatex,
+    answerRows: evaluation.answerRows,
     exactSupplementLatex: evaluation.exactSupplementLatex,
     approxText: evaluation.approxText,
     warnings: evaluation.warnings,

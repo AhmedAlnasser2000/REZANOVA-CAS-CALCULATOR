@@ -10,6 +10,7 @@ import {
   evaluateDefiniteIntegralFromAst,
   resolveIndefiniteIntegralFromAst,
 } from './integration';
+import { presentCalculusIndefiniteEvaluation } from './indefinite-presentation';
 import {
   basicFiniteLimitWarning,
   evaluateFiniteLimitFromAst,
@@ -22,6 +23,7 @@ import {
 } from '../../symbolic-engine/differentiation-preflight';
 import type {
   CalculusDerivativeStrategy,
+  DisplayAnswerRowsReadback,
   LimitDirection,
   LimitTargetKind,
   ResultOrigin,
@@ -31,7 +33,8 @@ import type {
 type CalculusEvaluation =
   | {
       kind: 'handled';
-    exactLatex: string;
+      exactLatex: string;
+      answerRows?: DisplayAnswerRowsReadback;
       approxText?: string;
       warnings: string[];
       resultOrigin?: ResultOrigin;
@@ -349,24 +352,30 @@ export function resolveCalculusEvaluation(
         unsupportedError: 'This antiderivative could not be determined symbolically in this milestone.',
         normalizeRuleLatex: true,
       });
+      const presented = presentCalculusIndefiniteEvaluation(
+        resolved,
+        integral.body,
+        integral.variable,
+      );
 
-      if (resolved.error) {
+      if (presented.error) {
         return {
           kind: 'error',
-          error: resolved.error,
-          warnings: resolved.warnings,
-          detailSections: resolved.detailSections,
+          error: presented.error,
+          warnings: presented.warnings,
+          detailSections: presented.detailSections,
         };
       }
 
       return {
         kind: 'handled',
-        exactLatex: resolved.exactLatex ?? '',
-        approxText: resolved.approxText,
-        warnings: resolved.warnings,
-        resultOrigin: resolved.resultOrigin,
-        integrationStrategy: resolved.integrationStrategy,
-        detailSections: resolved.detailSections,
+        exactLatex: presented.exactLatex ?? '',
+        answerRows: presented.answerRows,
+        approxText: presented.approxText,
+        warnings: presented.warnings,
+        resultOrigin: presented.resultOrigin,
+        integrationStrategy: presented.integrationStrategy,
+        detailSections: presented.detailSections,
       };
     }
 

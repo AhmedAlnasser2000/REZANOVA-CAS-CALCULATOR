@@ -1,3 +1,4 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import { describe, expect, it } from 'vitest';
 import {
   evaluateCalculusDefiniteIntegral,
@@ -5,6 +6,13 @@ import {
   evaluateCalculusIndefiniteIntegral,
 } from './integrals';
 import { resolveSymbolicIntegralFromLatex } from '../../symbolic-engine/integration';
+
+const ce = new ComputeEngine();
+
+function expectParseableLatex(latex: string | undefined) {
+  expect(latex).toBeDefined();
+  expect(() => ce.parse(latex ?? '')).not.toThrow();
+}
 
 describe('calculus integrals', () => {
   it('handles inverse trig primitives', () => {
@@ -124,7 +132,8 @@ describe('calculus integrals', () => {
       expect(shared.kind).toBe('success');
       expect(calculus.error).toBeUndefined();
       if (shared.kind === 'success') {
-        expect(calculus.exactLatex).toBe(shared.exactLatex);
+        expect(calculus.exactLatex?.endsWith('+C')).toBe(true);
+        expect(calculus.exactLatex?.slice(0, -2)).toBe(shared.exactLatex);
         expect(calculus.integrationStrategy).toBe(shared.strategy);
         expect(calculus.resultOrigin).toBe(shared.origin);
       }
@@ -163,6 +172,7 @@ describe('calculus integrals', () => {
       expect(result.integrationStrategy).toBeUndefined();
       expect(result.antiderivativeBackcheck).toBeUndefined();
       expect(result.exactLatex).toContain(`\\operatorname{${specialFunction}}`);
+      expect(result.exactLatex).not.toContain('+C');
       expect(result.detailSections?.map((section) => section.title)).toContain('Proof Scope');
       expect(result.detailSections?.map((section) => section.title)).toContain('Non-Elementary Certificate');
     }
@@ -331,7 +341,7 @@ describe('calculus integrals', () => {
     expect(repeated.error).toBeUndefined();
     expect(repeated.resultOrigin).toBe('rule-based-symbolic');
     expect(repeated.integrationStrategy).toBe('partial-fractions');
-    expect(repeated.exactLatex).toBe('-\\frac{1}{x-1}');
+    expect(repeated.exactLatex).toBe('-\\frac{1}{x-1}+C');
     expect(repeated.detailSections?.[0]?.title).toBe('Partial Fractions');
 
     const quadratic = evaluateCalculusIndefiniteIntegral({
@@ -340,8 +350,68 @@ describe('calculus integrals', () => {
     expect(quadratic.error).toBeUndefined();
     expect(quadratic.resultOrigin).toBe('rule-based-symbolic');
     expect(quadratic.integrationStrategy).toBe('partial-fractions');
-    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)');
+    expect(quadratic.exactLatex).toBe('\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C');
     expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
+  });
+
+  it('presents verified indefinite integral answers with parseable +C and readable rows', () => {
+    const rootSum = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\sqrt{x}+x^{1/3}`,
+    });
+    expect(rootSum.error).toBeUndefined();
+    expect(rootSum.exactLatex).toContain(String.raw`\frac{2}{3}`);
+    expect(rootSum.exactLatex).toContain(String.raw`\frac{3}{4}`);
+    expect(rootSum.exactLatex).not.toMatch(/\d+\\frac/u);
+    expect(rootSum.exactLatex?.endsWith('+C')).toBe(true);
+    expect(rootSum.answerRows?.rows.at(-1)?.latex).toBe('+C');
+    expectParseableLatex(rootSum.exactLatex);
+
+    const rational = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\frac{2x^3-3x^2+1}{x^2-3x+1}`,
+    });
+    expect(rational.error).toBeUndefined();
+    expect(rational.exactLatex).toContain('x^{2}+3x');
+    expect(rational.exactLatex).not.toContain(String.raw`2\left(\frac{x^{2}}{2}\right)`);
+    expect(rational.exactLatex).toContain(String.raw`\frac{17}{2\sqrt{5}}\ln`);
+    expect(rational.answerRows?.rows.at(-1)?.latex).toBe('+C');
+    expect(rational.detailSections?.map((section) => section.title))
+      .toContain('Integration Presentation');
+    expectParseableLatex(rational.exactLatex);
+  });
+
+  it('keeps textbook radical and hyperbolic presentation parseable without redundant wrappers', () => {
+    const differenceRadical = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\frac{1}{(4-x^2)^{3/2}}`,
+    });
+    expect(differenceRadical.error).toBeUndefined();
+    expect(differenceRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{4-x^{2}}}+C`);
+    expect(differenceRadical.answerRows?.rows).toEqual([
+      { latex: String.raw`\frac{x}{4\sqrt{4-x^{2}}}+C` },
+    ]);
+    expectParseableLatex(differenceRadical.exactLatex);
+
+    const sumRadical = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\frac{1}{(x^2+4)^{3/2}}`,
+    });
+    expect(sumRadical.error).toBeUndefined();
+    expect(sumRadical.exactLatex).toBe(String.raw`\frac{x}{4\sqrt{4+x^{2}}}+C`);
+    expectParseableLatex(sumRadical.exactLatex);
+
+    const sinh = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\sinh^2(x)`,
+    });
+    expect(sinh.error).toBeUndefined();
+    expect(sinh.exactLatex).toBe(String.raw`\frac{1}{4}\sinh\left(2x\right)-\frac{1}{2}x+C`);
+    expectParseableLatex(sinh.exactLatex);
+
+    const cosh = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\cosh^2(2x+1)`,
+    });
+    expect(cosh.error).toBeUndefined();
+    expect(cosh.exactLatex).not.toContain(String.raw`2\left(\left(2x+1\right)\right)`);
+    expect(cosh.exactLatex).toContain(String.raw`\sinh\left(2\left(2x+1\right)\right)`);
+    expect(cosh.exactLatex?.endsWith('+C')).toBe(true);
+    expectParseableLatex(cosh.exactLatex);
   });
 
   it('fails cleanly for unsupported antiderivatives', () => {
