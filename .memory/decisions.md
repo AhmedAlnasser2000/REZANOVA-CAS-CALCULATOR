@@ -1922,6 +1922,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits parameter assumptions remain generated guarded cases, not a new assumptions UI. Symbolic infinity polynomial-scale cases may branch on target-free symbolic leading coefficients and, when those coefficients vanish, fall through to lower numeric-growth terms or target-free constants under the accumulated guard conditions.
 
+## 2026-07-05 - CALCULUS-LIMITS-RECURSIVE-LEADING-TERMS2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Finite symbolic cancellation limits use a Limits-owned capped local-series fallback through Taylor order 10 after existing recursive leading-term routes fail. This is not a broad Taylor/Gruntz solver; workspace real-domain guards still block symbolic-log forms when assumptions are insufficient.
+
 ## 2026-07-05 - CALCULUS-LIMITS-CORPUS-HARNESS1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The Limits corpus seed is a runtime-free ledger under `benchmarks/calculus-corpus/limits/`: one canonical runnable row per unique case, duplicate source sightings in a separate ledger, one run result per case per sweep, route/proof-card expectations captured as benchmark assertions, and large PDF/site expansion deferred until after Gruntz foundations land.
@@ -1934,9 +1938,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector friendly list syntax is paste/import UX only: supported pasted text naturalizes immediately through Linear Algebra-owned canonicalizers, malformed text stays editable until Run, and `answerRows` may improve visible row layout while `exactLatex` remains the Copy Result/export source.
 
-## 2026-07-05 - CALCULUS-LIMITS-RECURSIVE-LEADING-TERMS2
+## 2026-07-05 - CALCULUS-INTEGRATION-PASTE-KEYPAD-FIX1
 
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Finite symbolic cancellation limits use a Limits-owned capped local-series fallback through Taylor order 10 after existing recursive leading-term routes fail. This is not a broad Taylor/Gruntz solver; workspace real-domain guards still block symbolic-log forms when assumptions are insufficient.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus integration input canonicalization must treat supported textbook function words as function heads before solver dispatch, including full inverse-trig names and hyperbolic names. Safe implicit product splitting is limited to a one-letter prefix before a known grouped function call, so arbitrary glued identifiers remain editable text.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] On-screen keypad layer/key interactions should preserve the active editor without stealing focus or scrolling back to the editor; editor focus calls made for keypad insertions should use no-scroll focus where the browser supports it.
 
 ## 2026-07-05 - CALCULUS-INTEGRATION-PRINTING-LAYER1
 
