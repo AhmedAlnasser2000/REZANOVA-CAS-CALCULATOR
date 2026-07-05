@@ -34,6 +34,7 @@ import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type {
   AngleUnit,
   ComplexExactForm,
+  ComplexSolveRegion,
   DisplayOutcome,
   EquationDomainIntent,
   LegacyEquationAnswerMode,
@@ -58,6 +59,7 @@ type ParameterizedRouteInput = {
   answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
+  complexRegion?: ComplexSolveRegion;
   angleUnit: AngleUnit;
   outputStyle: OutputStyle;
   complexExactForm: ComplexExactForm;
@@ -240,7 +242,11 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           target: selectedTarget,
         });
         if (locusPolicy.hasLocusDeferredCarrier) {
-          const boundaryOutcome = unsupportedComplexLocusOutcome(locusPolicy);
+          const boundaryOutcome = unsupportedComplexLocusOutcome(locusPolicy, {
+            equationLatex,
+            target: selectedTarget,
+            complexRegion: input.complexRegion,
+          });
           return attachEquationRuntimeEnvelope(
             boundaryOutcome,
             equationLatex,

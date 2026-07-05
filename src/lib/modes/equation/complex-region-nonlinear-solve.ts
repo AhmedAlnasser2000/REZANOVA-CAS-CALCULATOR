@@ -11,6 +11,9 @@ import {
 import {
   diagnoseComplexInfiniteFamilyPolicyForLatex,
 } from '../../equation/complex/infinite-family-policy';
+import {
+  diagnoseComplexLocusPolicyForLatex,
+} from '../../equation/complex/locus-policy';
 import type { ComplexContourWindingResult } from '../../equation/complex/contour-winding';
 import {
   createComplexNumericEvaluator,
@@ -39,6 +42,7 @@ import {
   searchComplexRegionWithSubdivision,
   type ComplexRegionSubdivisionDiagnostics,
 } from './complex-region-subdivision';
+import { unsupportedComplexLocusOutcome } from './outcomes';
 
 const COMPLEX_REGION_RESIDUAL_TOLERANCE = 1e-8;
 const DEFAULT_GRID_SIZE = 7;
@@ -412,6 +416,17 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
     return undefined;
   }
   const selectedTarget = classification.selectedTarget;
+
+  const locusPolicy = diagnoseComplexLocusPolicyForLatex(input.equationLatex, {
+    target: selectedTarget,
+  });
+  if (locusPolicy.hasLocusDeferredCarrier) {
+    return unsupportedComplexLocusOutcome(locusPolicy, {
+      equationLatex: input.equationLatex,
+      target: selectedTarget,
+      complexRegion: input.complexRegion,
+    });
+  }
 
   const branchPolicy = diagnosePrincipalBranchPolicyForLatex(input.equationLatex, {
     target: selectedTarget,

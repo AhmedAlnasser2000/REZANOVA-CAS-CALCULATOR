@@ -5,7 +5,8 @@ import { hasUnsafeSymbolicOutput } from '../../display/symbolic-output-hygiene';
 import { normalizeRelationOperatorLatex } from '../../input/input-canonicalization';
 import { formatNamedEquationOutcomeTarget, rewriteEquationOutcomeTarget } from '../../equation/equation-target';
 import type { ComplexLocusPolicyReport } from '../../equation/complex/locus-policy';
-import type { DisplayOutcome, EquationAnswerMode, PlannerBadge, SolutionKind } from '../../../types/calculator';
+import { buildComplexLocusEvidenceSections } from '../../equation/complex/locus-evidence';
+import type { ComplexSolveRegion, DisplayOutcome, EquationAnswerMode, PlannerBadge, SolutionKind } from '../../../types/calculator';
 
 const ce = new ComputeEngine();
 
@@ -286,7 +287,14 @@ export function unsupportedComplexPreimageOutcome(): DisplayOutcome {
   };
 }
 
-export function unsupportedComplexLocusOutcome(report: ComplexLocusPolicyReport): DisplayOutcome {
+export function unsupportedComplexLocusOutcome(
+  report: ComplexLocusPolicyReport,
+  options: {
+    equationLatex?: string;
+    target?: string;
+    complexRegion?: ComplexSolveRegion;
+  } = {},
+): DisplayOutcome {
   return {
     kind: 'error',
     title: 'Solve',
@@ -297,6 +305,12 @@ export function unsupportedComplexLocusOutcome(report: ComplexLocusPolicyReport)
         title: 'Complex Locus Policy',
         lines: report.detailLines,
       },
+      ...buildComplexLocusEvidenceSections({
+        report,
+        equationLatex: options.equationLatex,
+        target: options.target,
+        complexRegion: options.complexRegion,
+      }),
       {
         title: 'What To Try',
         lines: [

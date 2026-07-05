@@ -33,6 +33,15 @@ const LOCUS_OPERATORS = new Map<string, { kind: ComplexLocusCarrierKind; label: 
   ['conj', { kind: 'conjugate', label: 'complex conjugate' }],
 ]);
 
+export function normalizeComplexLocusFunctionSyntax(latex: string) {
+  return latex
+    .replace(/\bconj\s*\(/giu, '\\operatorname{conj}(')
+    .replace(/\bconjugate\s*\(/giu, '\\operatorname{conj}(')
+    .replace(/\bRe\s*\(/gu, '\\operatorname{Re}(')
+    .replace(/\bIm\s*\(/gu, '\\operatorname{Im}(')
+    .replace(/\babs\s*\(/giu, '\\operatorname{abs}(');
+}
+
 function zeroFormNode(node: MathJson): MathJson {
   return isArrayNode(node) && node[0] === 'Equal' && node.length === 3
     ? ['Subtract', node[1] as MathJson, node[2] as MathJson]
@@ -127,7 +136,7 @@ export function diagnoseComplexLocusPolicyForLatex(
 ): ComplexLocusPolicyReport {
   const carriers: ComplexLocusCarrier[] = [];
   try {
-    collectCarriers(zeroFormNode(ce.parse(expressionLatex).json as MathJson), options.target, carriers);
+    collectCarriers(zeroFormNode(ce.parse(normalizeComplexLocusFunctionSyntax(expressionLatex)).json as MathJson), options.target, carriers);
   } catch {
     // Lexical fallback below covers the user-facing typed forms that matter here.
   }

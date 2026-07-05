@@ -387,6 +387,7 @@ export function solveSymbolicEquation(
     answerMode: activeAnswerMode,
     equationDomainIntent,
     numericInterval,
+    complexRegion,
     angleUnit,
     outputStyle,
     complexExactForm,

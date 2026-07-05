@@ -36,7 +36,11 @@ export function tryComplexSymbolicBoundaryOutcome(input: {
   });
   if (locusPolicy.hasLocusDeferredCarrier) {
     return attachEquationRuntimeEnvelope(
-      unsupportedComplexLocusOutcome(locusPolicy),
+      unsupportedComplexLocusOutcome(locusPolicy, {
+        equationLatex: input.parameterizedEquationLatex,
+        target: input.solveTarget,
+        complexRegion: input.complexRegion,
+      }),
       input.equationLatex,
       input.plannerResolvedLatex,
       input.plannerBadges,

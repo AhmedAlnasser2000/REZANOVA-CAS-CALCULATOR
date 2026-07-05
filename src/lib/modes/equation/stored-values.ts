@@ -7,6 +7,7 @@ import {
   type StoredVariableSubstitutionResult,
 } from '../../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
+import { normalizeComplexLocusFunctionSyntax } from '../../equation/complex/locus-policy';
 import { resolveEquationSolveTarget } from '../../equation/equation-target';
 import type {
   DisplayOutcome,
@@ -72,7 +73,9 @@ export function withStoredValueDetails(
 }
 
 export function remainingApproximateModeParameters(latex: string, target?: string) {
-  const analysis = analyzeVariablesFromLatex(latex, { allowSymbolicParameters: true });
+  const analysis = analyzeVariablesFromLatex(normalizeComplexLocusFunctionSyntax(latex), {
+    allowSymbolicParameters: true,
+  });
   return analysis.symbols
     .filter((symbol) => symbol.name !== target)
     .filter((symbol) =>
