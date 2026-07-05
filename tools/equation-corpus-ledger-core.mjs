@@ -54,9 +54,15 @@ const ALLOWED_SOURCE_TYPES = ['local-pdf', 'website'];
 const ALLOWED_SOURCE_ACCESS = ['local', 'web'];
 const ALLOWED_SOURCE_RELEVANCE = ['primary', 'secondary', 'reference'];
 const ALLOWED_DOMAINS = ['real', 'complex', 'interval-real', 'mixed-or-unspecified'];
+const ALLOWED_COMPLEX_COMPANION_POLICIES = [
+  'required-when-applicable',
+  'native-complex-case',
+  'not-applicable',
+];
 const ALLOWED_RUN_POLICIES = ['run-once-per-case-per-sweep'];
 const ALLOWED_CASE_STATUSES = ['pending', 'supported', 'unsupported', 'wrong-result', 'needs-upgrade', 'not-run'];
 const ALLOWED_ROUTE_HINTS = ['symbolic', 'linear2', 'linear3', 'polynomialSystem2', 'quadratic', 'cubic', 'quartic'];
+const ALLOWED_COMPANION_RUN_KINDS = ['complex-companion'];
 const ALLOWED_RUN_STATUSES = ['supported', 'unsupported', 'wrong-result', 'timeout-or-too-slow', 'not-run'];
 const ALLOWED_FAILURE_KINDS = [
   'none',
@@ -206,6 +212,13 @@ function validateUniqueCases(filePath, sourceIds) {
     if (record.route_hint) {
       assertEnum(record.route_hint, ALLOWED_ROUTE_HINTS, `${context}.route_hint`);
     }
+    if (record.complex_companion_policy) {
+      assertEnum(
+        record.complex_companion_policy,
+        ALLOWED_COMPLEX_COMPANION_POLICIES,
+        `${context}.complex_companion_policy`,
+      );
+    }
 
     if (!sourceIds.has(record.source_id)) {
       throw new Error(`${context} references unknown source_id "${record.source_id}"`);
@@ -254,6 +267,21 @@ function validateRunResults(filePath, caseIds) {
 
     assertEnum(record.run_status, ALLOWED_RUN_STATUSES, `${context}.run_status`);
     assertEnum(record.failure_kind, ALLOWED_FAILURE_KINDS, `${context}.failure_kind`);
+    if (record.domain_intent) {
+      assertEnum(record.domain_intent, ALLOWED_DOMAINS, `${context}.domain_intent`);
+    }
+    if (record.companion_run_kind) {
+      assertEnum(record.companion_run_kind, ALLOWED_COMPANION_RUN_KINDS, `${context}.companion_run_kind`);
+      if (record.domain_intent !== 'complex') {
+        throw new Error(`${context}.companion_run_kind requires domain_intent "complex"`);
+      }
+      if (!record.companion_of_run_id) {
+        throw new Error(`${context}.companion_run_kind requires companion_of_run_id`);
+      }
+      if (record.companion_of_run_id === record.run_id) {
+        throw new Error(`${context}.companion_of_run_id must not reference its own run_id`);
+      }
+    }
     addUnique(runCaseKeys, `${record.run_id}:${record.case_id}`, context);
   }
 

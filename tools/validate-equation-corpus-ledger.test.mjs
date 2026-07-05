@@ -24,8 +24,8 @@ describe('equation corpus ledger validation', () => {
       sourceCount: 10,
       uniqueCaseCount: 450,
       duplicateCaseCount: 100,
-      runResultCount: 724,
-      scanFindingCount: 76,
+      runResultCount: 1175,
+      scanFindingCount: 102,
     });
   });
 
@@ -44,6 +44,7 @@ describe('equation corpus ledger validation', () => {
         run_policy: 'run-once-per-case-per-sweep',
         status: 'pending',
         route_hint: 'symbolic',
+        complex_companion_policy: 'required-when-applicable',
         source_id: 'openstax-algebra-trig-2e',
         source_locator: '2.5 Quadratic Equations',
       })}\n`,
@@ -69,6 +70,9 @@ describe('equation corpus ledger validation', () => {
         runner: 'manual-ledger-bootstrap',
         run_status: 'supported',
         failure_kind: 'none',
+        domain_intent: 'complex',
+        companion_run_kind: 'complex-companion',
+        companion_of_run_id: '2026-07-03-bootstrap-real',
       })}\n`,
     );
     writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
@@ -80,6 +84,105 @@ describe('equation corpus ledger validation', () => {
       runResultCount: 1,
       scanFindingCount: 0,
     });
+  });
+
+  it('rejects invalid complex companion metadata', () => {
+    const rootDir = makeRootFromRepo();
+    const uniqueCase = {
+      case_id: 'eq.poly.quadratic.real.0001',
+      canonical_latex: 'x^2-5x+6=0',
+      target: 'x',
+      domain: 'real',
+      family: 'quadratic',
+      expected_result_kind: 'exact-roots',
+      run_policy: 'run-once-per-case-per-sweep',
+      status: 'pending',
+      complex_companion_policy: 'always',
+      source_id: 'openstax-algebra-trig-2e',
+      source_locator: '2.5 Quadratic Equations',
+    };
+
+    writeFileSync(ledgerPath(rootDir, 'unique-cases.jsonl'), `${JSON.stringify(uniqueCase)}\n`);
+    writeFileSync(ledgerPath(rootDir, 'duplicate-cases.jsonl'), '');
+    writeFileSync(ledgerPath(rootDir, 'run-results.jsonl'), '');
+    writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
+
+    assert.throws(
+      () => validateEquationCorpusLedger({ rootDir }),
+      /unique-cases\.jsonl:1\.complex_companion_policy has invalid value "always"/,
+    );
+  });
+
+  it('rejects complex companion run results without complex domain intent', () => {
+    const rootDir = makeRootFromRepo();
+    const uniqueCase = {
+      case_id: 'eq.poly.quadratic.real.0001',
+      canonical_latex: 'x^2-5x+6=0',
+      target: 'x',
+      domain: 'real',
+      family: 'quadratic',
+      expected_result_kind: 'exact-roots',
+      run_policy: 'run-once-per-case-per-sweep',
+      status: 'pending',
+      source_id: 'openstax-algebra-trig-2e',
+      source_locator: '2.5 Quadratic Equations',
+    };
+    const result = {
+      run_id: '2026-07-04-complex-companion',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-bootstrap',
+      run_status: 'supported',
+      failure_kind: 'none',
+      domain_intent: 'real',
+      companion_run_kind: 'complex-companion',
+      companion_of_run_id: '2026-07-03-bootstrap',
+    };
+
+    writeFileSync(ledgerPath(rootDir, 'unique-cases.jsonl'), `${JSON.stringify(uniqueCase)}\n`);
+    writeFileSync(ledgerPath(rootDir, 'duplicate-cases.jsonl'), '');
+    writeFileSync(ledgerPath(rootDir, 'run-results.jsonl'), `${JSON.stringify(result)}\n`);
+    writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
+
+    assert.throws(
+      () => validateEquationCorpusLedger({ rootDir }),
+      /run-results\.jsonl:1\.companion_run_kind requires domain_intent "complex"/,
+    );
+  });
+
+  it('rejects complex companion run results that self-reference their companion run', () => {
+    const rootDir = makeRootFromRepo();
+    const uniqueCase = {
+      case_id: 'eq.poly.quadratic.real.0001',
+      canonical_latex: 'x^2-5x+6=0',
+      target: 'x',
+      domain: 'real',
+      family: 'quadratic',
+      expected_result_kind: 'exact-roots',
+      run_policy: 'run-once-per-case-per-sweep',
+      status: 'pending',
+      source_id: 'openstax-algebra-trig-2e',
+      source_locator: '2.5 Quadratic Equations',
+    };
+    const result = {
+      run_id: '2026-07-04-complex-companion',
+      case_id: 'eq.poly.quadratic.real.0001',
+      runner: 'manual-ledger-bootstrap',
+      run_status: 'supported',
+      failure_kind: 'none',
+      domain_intent: 'complex',
+      companion_run_kind: 'complex-companion',
+      companion_of_run_id: '2026-07-04-complex-companion',
+    };
+
+    writeFileSync(ledgerPath(rootDir, 'unique-cases.jsonl'), `${JSON.stringify(uniqueCase)}\n`);
+    writeFileSync(ledgerPath(rootDir, 'duplicate-cases.jsonl'), '');
+    writeFileSync(ledgerPath(rootDir, 'run-results.jsonl'), `${JSON.stringify(result)}\n`);
+    writeFileSync(ledgerPath(rootDir, 'scan-findings.jsonl'), '');
+
+    assert.throws(
+      () => validateEquationCorpusLedger({ rootDir }),
+      /run-results\.jsonl:1\.companion_of_run_id must not reference its own run_id/,
+    );
   });
 
   it('rejects duplicate records that point to unknown unique cases', () => {

@@ -16,9 +16,10 @@ The workflow is sweep-first:
 4. If the case is new, add one runnable row to `ledger/unique-cases.jsonl`.
 5. If the case already exists, move the sighting to `ledger/duplicate-cases.jsonl` and link it to the canonical `case_id`.
 6. Run only the unique canonical case once for the sweep. Duplicate rows preserve source coverage and must not create extra runs.
-7. Record the solver result in `ledger/run-results.jsonl`.
-8. If a case fails, classify the reason in `ledger/run-results.jsonl` and add details to `ledger/scan-findings.jsonl` when useful.
-9. Continue scanning. Do not stop a corpus pass because a case fails.
+7. For every case where Complex On is meaningful, record a complex companion run against the same canonical `case_id`; do not create a second unique case or run duplicate sightings independently.
+8. Record the solver result in `ledger/run-results.jsonl`.
+9. If a case fails, classify the reason in `ledger/run-results.jsonl` and add details to `ledger/scan-findings.jsonl` when useful.
+10. Continue scanning. Do not stop a corpus pass because a case fails.
 
 ## Ledger Files
 
@@ -50,6 +51,8 @@ x^2 - 5x + 6 = 0
 ```
 
 The second needs extraneous-root/domain validation. The third needs denominator exclusions.
+
+Complex companion runs do not change this rule. They are run-result evidence for the same canonical case, usually with `domain_intent:"complex"` and `companion_run_kind:"complex-companion"`. If a duplicate source sighting maps to a canonical case that already has complex companion evidence, reuse that canonical evidence instead of rerunning the duplicate.
 
 ## Failure Discipline
 

@@ -82,10 +82,18 @@ Optional fields:
 - `expected_roots_latex`
 - `expected_constraints_latex`
 - `canonicalization_notes`
+- `complex_companion_policy`
+- `complex_companion_notes`
 - `duplicate_notes`
 - `route_hint`
 - `tags`
 - `notes`
+
+Allowed `complex_companion_policy` values:
+
+- `required-when-applicable`
+- `native-complex-case`
+- `not-applicable`
 
 Allowed `route_hint` values:
 
@@ -153,6 +161,9 @@ Allowed `failure_kind` values:
 
 Optional fields:
 
+- `domain_intent`
+- `companion_run_kind`
+- `companion_of_run_id`
 - `route_observed`
 - `elapsed_ms`
 - `root_count`
@@ -160,6 +171,19 @@ Optional fields:
 - `failure_class`
 - `result_summary`
 - `notes`
+
+Allowed `domain_intent` values:
+
+- `real`
+- `complex`
+- `interval-real`
+- `mixed-or-unspecified`
+
+Allowed `companion_run_kind` values:
+
+- `complex-companion`
+
+When `companion_run_kind` is `complex-companion`, `domain_intent` must be `complex` and `companion_of_run_id` must point to the real-domain run that triggered the companion check.
 
 ## `ledger/scan-findings.jsonl`
 
