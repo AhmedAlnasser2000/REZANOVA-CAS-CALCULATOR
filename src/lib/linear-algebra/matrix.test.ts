@@ -93,6 +93,38 @@ describe('runMatrixOperation', () => {
     expect(rref.resultLatex).toBe('\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}');
   });
 
+  it('uses exact sidecars for Matrix arithmetic readback', () => {
+    const add = runMatrixOperation({
+      operation: 'add',
+      matrixA: [[0.5, 0], [0, 1 / 3]],
+      matrixB: [[1 / 3, 0], [0, 0.125]],
+      exactMatrixA: [
+        [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 3 }],
+      ],
+      exactMatrixB: [
+        [{ numerator: 1, denominator: 3 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 8 }],
+      ],
+    });
+    const multiply = runMatrixOperation({
+      operation: 'multiply',
+      matrixA: [[0.5, 0], [0, 1 / 3]],
+      matrixB: [[2, 0], [0, 3]],
+      exactMatrixA: [
+        [{ numerator: 1, denominator: 2 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 3 }],
+      ],
+      exactMatrixB: [
+        [{ numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 3, denominator: 1 }],
+      ],
+    });
+
+    expect(add.resultLatex).toBe('\\begin{bmatrix}\\frac{5}{6} & 0\\\\0 & \\frac{11}{24}\\end{bmatrix}');
+    expect(multiply.resultLatex).toBe('\\begin{bmatrix}1 & 0\\\\0 & 1\\end{bmatrix}');
+  });
+
   it('computes Matrix null space and column space bases from RREF pivots', () => {
     const nullSpace = runMatrixOperation({
       operation: 'nullSpaceA',

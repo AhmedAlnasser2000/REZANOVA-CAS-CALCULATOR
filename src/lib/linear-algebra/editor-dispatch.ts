@@ -17,19 +17,22 @@ import {
 import { formatLinearAlgebraEditorExpression } from './editor-expression-format';
 import {
   matrixNamedValueNames,
-  matrixValueByName,
   vectorNamedValueNames,
   vectorValueByName,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
 } from './named-values';
+import {
+  evaluateMatrixExpression,
+  type EvaluatedMatrixOperand,
+  type MatrixExpressionEvaluation,
+} from './matrix-expression-evaluator';
+import {
+  canMultiplyMatrices,
+  haveSameMatrixShape,
+} from './matrix-core';
 
-type MatrixOperand = {
-  matrix: number[][];
-  exactMatrix?: ExactScalarWire[][];
-  named?: string;
-  displayLatex: string;
-};
+type MatrixOperand = EvaluatedMatrixOperand;
 
 type VectorOperand = {
   vector: number[];
@@ -122,33 +125,8 @@ function vectorMetadata(
 function matrixOperand(
   expression: LinearAlgebraEditorExpression,
   input: MatrixEditorDispatchInput,
-): MatrixOperand | null {
-  if (expression.kind === 'matrixLiteral') {
-    return {
-      matrix: cloneMatrix(expression.value),
-      exactMatrix: cloneMatrix(expression.exactValue),
-      displayLatex: expression.displayLatex,
-    };
-  }
-
-  if (expression.kind === 'named') {
-    const namedValue = matrixValueByName(input.matrixValues, expression.name);
-    if (namedValue) {
-      return {
-        matrix: cloneMatrix(namedValue.value),
-        named: expression.name,
-        displayLatex: expression.displayLatex,
-      };
-    }
-    if (expression.name === 'A') {
-      return { matrix: cloneMatrix(input.matrixA), named: 'A', displayLatex: expression.displayLatex };
-    }
-    if (expression.name === 'B') {
-      return { matrix: cloneMatrix(input.matrixB), named: 'B', displayLatex: expression.displayLatex };
-    }
-  }
-
-  return null;
+): MatrixExpressionEvaluation {
+  return evaluateMatrixExpression(expression, input);
 }
 
 function vectorOperand(
@@ -204,15 +182,6 @@ function matrixPairRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'binary' }>,
 ): MatrixEditorDispatchResult {
-  const left = matrixOperand(expression.left, input);
-  const right = matrixOperand(expression.right, input);
-  if (!left || !right) {
-    return {
-      ok: false,
-      message: 'Matrix editor operations need Matrix A/B values or inline matrix literals.',
-    };
-  }
-
   if (
     expression.operator !== 'add'
     && expression.operator !== 'subtract'
@@ -222,6 +191,22 @@ function matrixPairRequest(
       ok: false,
       message: 'This Matrix editor operator is not executable in Matrix mode.',
     };
+  }
+
+  const leftResult = matrixOperand(expression.left, input);
+  if (!leftResult.ok) return leftResult;
+  const rightResult = matrixOperand(expression.right, input);
+  if (!rightResult.ok) return rightResult;
+  const left = leftResult.operand;
+  const right = rightResult.operand;
+  if (
+    (expression.operator === 'add' || expression.operator === 'subtract')
+    && !haveSameMatrixShape(left.matrix, right.matrix)
+  ) {
+    return { ok: false, message: 'Addition and subtraction require matching matrix dimensions.' };
+  }
+  if (expression.operator === 'multiply' && !canMultiplyMatrices(left.matrix, right.matrix)) {
+    return { ok: false, message: 'Matrix multiplication requires left columns to match right rows.' };
   }
 
   return {
@@ -241,8 +226,10 @@ function matrixSystemRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'linearSystem' }>,
 ): MatrixEditorDispatchResult {
-  const coefficients = matrixOperand(expression.coefficients, input);
-  if (!coefficients || expression.constants.kind !== 'vectorLiteral') {
+  const coefficientsResult = matrixOperand(expression.coefficients, input);
+  if (!coefficientsResult.ok) return coefficientsResult;
+  const coefficients = coefficientsResult.operand;
+  if (expression.constants.kind !== 'vectorLiteral') {
     return {
       ok: false,
       message: 'Matrix systems need Matrix A/B or an inline matrix, plus an inline RHS vector.',
@@ -265,10 +252,12 @@ function matrixSystemRequest(
 }
 
 function matrixMultiRhsSystemRequest(input: MatrixEditorDispatchInput, expression: Extract<LinearAlgebraEditorExpression, { kind: 'multiRhsSystem' }>): MatrixEditorDispatchResult {
-  const coefficients = matrixOperand(expression.coefficients, input), constants = matrixOperand(expression.constants, input);
-  if (!coefficients || !constants) {
-    return { ok: false, message: 'Multi-RHS Matrix systems need Matrix A/B or inline matrices on both sides of AX=B.' };
-  }
+  const coefficientsResult = matrixOperand(expression.coefficients, input);
+  if (!coefficientsResult.ok) return coefficientsResult;
+  const constantsResult = matrixOperand(expression.constants, input);
+  if (!constantsResult.ok) return constantsResult;
+  const coefficients = coefficientsResult.operand;
+  const constants = constantsResult.operand;
 
   return {
     ok: true,
@@ -285,8 +274,10 @@ function matrixCoordinatesRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'coordinates' }>,
 ): MatrixEditorDispatchResult {
-  const basis = matrixOperand(expression.basis, input);
-  if (!basis || expression.vector.kind !== 'vectorLiteral') {
+  const basisResult = matrixOperand(expression.basis, input);
+  if (!basisResult.ok) return basisResult;
+  const basis = basisResult.operand;
+  if (expression.vector.kind !== 'vectorLiteral') {
     return {
       ok: false,
       message: 'Coordinates need Matrix A/B or an inline basis matrix, plus an inline vector.',
@@ -321,8 +312,10 @@ function matrixColumnProjectionRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'columnProjection' }>,
 ): MatrixEditorDispatchResult {
-  const matrix = matrixOperand(expression.matrix, input);
-  if (!matrix || expression.vector.kind !== 'vectorLiteral') {
+  const matrixResult = matrixOperand(expression.matrix, input);
+  if (!matrixResult.ok) return matrixResult;
+  const matrix = matrixResult.operand;
+  if (expression.vector.kind !== 'vectorLiteral') {
     return {
       ok: false,
       message: 'Column projection needs Matrix A/B or an inline matrix, plus an inline vector.',
@@ -357,8 +350,10 @@ function matrixLeastSquaresRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'leastSquares' }>,
 ): MatrixEditorDispatchResult {
-  const matrix = matrixOperand(expression.matrix, input);
-  if (!matrix || expression.vector.kind !== 'vectorLiteral') {
+  const matrixResult = matrixOperand(expression.matrix, input);
+  if (!matrixResult.ok) return matrixResult;
+  const matrix = matrixResult.operand;
+  if (expression.vector.kind !== 'vectorLiteral') {
     return {
       ok: false,
       message: 'Least squares needs Matrix A/B or an inline matrix, plus an inline vector.',
@@ -393,8 +388,10 @@ function matrixFactorSolveRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'factorSolve' }>,
 ): MatrixEditorDispatchResult {
-  const matrix = matrixOperand(expression.matrix, input);
-  if (!matrix || expression.vector.kind !== 'vectorLiteral') {
+  const matrixResult = matrixOperand(expression.matrix, input);
+  if (!matrixResult.ok) return matrixResult;
+  const matrix = matrixResult.operand;
+  if (expression.vector.kind !== 'vectorLiteral') {
     return {
       ok: false,
       message: 'Factor solve needs Matrix A/B or an inline matrix, plus an inline RHS vector.',
@@ -433,14 +430,12 @@ function matrixChangeOfBasisRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'changeOfBasis' }>,
 ): MatrixEditorDispatchResult {
-  const source = matrixOperand(expression.source, input);
-  const target = matrixOperand(expression.target, input);
-  if (!source || !target) {
-    return {
-      ok: false,
-      message: 'Change of basis needs Matrix A/B values or inline matrix literals for both bases.',
-    };
-  }
+  const sourceResult = matrixOperand(expression.source, input);
+  if (!sourceResult.ok) return sourceResult;
+  const targetResult = matrixOperand(expression.target, input);
+  if (!targetResult.ok) return targetResult;
+  const source = sourceResult.operand;
+  const target = targetResult.operand;
 
   return {
     ok: true,
@@ -459,13 +454,9 @@ function matrixPowerRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'matrixPower' }>,
 ): MatrixEditorDispatchResult {
-  const matrix = matrixOperand(expression.matrix, input);
-  if (!matrix) {
-    return {
-      ok: false,
-      message: 'Matrix powers need Matrix A/B or an inline matrix literal, plus an integer exponent.',
-    };
-  }
+  const matrixResult = matrixOperand(expression.matrix, input);
+  if (!matrixResult.ok) return matrixResult;
+  const matrix = matrixResult.operand;
 
   return {
     ok: true,
@@ -493,13 +484,9 @@ function matrixUnaryRequest(
   input: MatrixEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
 ): MatrixEditorDispatchResult {
-  const value = matrixOperand(expression.value, input);
-  if (!value) {
-    return {
-      ok: false,
-      message: 'Matrix editor unary operations need Matrix A/B values or an inline matrix literal.',
-    };
-  }
+  const valueResult = matrixOperand(expression.value, input);
+  if (!valueResult.ok) return valueResult;
+  const value = valueResult.operand;
 
   const operations = MATRIX_UNARY_OPERATIONS[expression.operator];
   if (operations) {

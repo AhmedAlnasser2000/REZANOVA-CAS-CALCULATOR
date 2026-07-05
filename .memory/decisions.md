@@ -1980,3 +1980,7 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Grouped exponent bodies pasted into math editors should reuse the same safe canonicalization as base expressions, so forms such as `x^(1/3)` become parseable fractional exponents instead of leaving inline slash text inside the exponent.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Verified Calculus indefinite-integration presentation should prefer explicit fractional powers for simple power/root antiderivative terms, such as `x^{3/2}`, when that avoids root-versus-power ambiguity; Copy Result and To Editor remain parseable and derivative-backchecked.
+
+## 2026-07-06 - LINEAR-ALGEBRA-MULTI-MATRIX-EDITOR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix typed editor expressions may use any named or inline matrix values and compose them locally before routing to existing Matrix operations. Soft F-keys stay intentionally two-operand and reflect the active Left/Right selections only.

@@ -307,8 +307,28 @@ function negateVectorExpression(expression: LinearAlgebraValueExpression): Linea
   };
 }
 
+function isSingleWrappedParenGroup(input: string): boolean {
+  if (!input.startsWith('(') || !input.endsWith(')')) {
+    return false;
+  }
+
+  let depth = 0;
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index];
+    if (char === '(') {
+      depth += 1;
+    } else if (char === ')') {
+      depth -= 1;
+      if (depth === 0 && index < input.length - 1) {
+        return false;
+      }
+    }
+  }
+  return depth === 0;
+}
+
 function stripWrappedParens(input: string): string {
-  return input.startsWith('(') && input.endsWith(')') ? input.slice(1, -1) : input;
+  return isSingleWrappedParenGroup(input) ? input.slice(1, -1) : input;
 }
 
 function tryParseExpression(
@@ -450,6 +470,11 @@ function parseSuffixUnary(input: string, options: LinearAlgebraEditorParseOption
 }
 
 function parseExpression(input: string, options: LinearAlgebraEditorParseOptions): LinearAlgebraEditorExpression {
+  const unwrapped = stripWrappedParens(input);
+  if (unwrapped !== input) {
+    return parseExpression(unwrapped, options);
+  }
+
   const addSubtract = splitTopLevel(input, ['+', '-']);
   if (addSubtract) {
     if (!addSubtract.left || !addSubtract.right) {
@@ -485,16 +510,18 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
 
   if (
     options.mode !== 'vector'
-    && input.length === 2
-    && isMatrixName(input[0], options)
-    && isMatrixName(input[1], options)
+    && input.length > 1
+    && [...input].every((name) => isMatrixName(name, options))
   ) {
-    return {
-      kind: 'binary',
-      operator: 'multiply',
-      left: namedValueExpression(input[0]),
-      right: namedValueExpression(input[1]),
-    };
+    return [...input].slice(1).reduce<LinearAlgebraEditorExpression>(
+      (left, name) => ({
+        kind: 'binary',
+        operator: 'multiply',
+        left,
+        right: namedValueExpression(name),
+      }),
+      namedValueExpression(input[0]),
+    );
   }
 
   const suffix = parseSuffixUnary(input, options);

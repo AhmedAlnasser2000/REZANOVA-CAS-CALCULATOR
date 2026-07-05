@@ -9,6 +9,12 @@ import {
   rrefExactMatrix,
 } from './exact-matrix-core';
 import {
+  exactAddMatrices,
+  exactMultiplyMatrices,
+  exactSubtractMatrices,
+  exactTransposeMatrix,
+} from './matrix-exact-ops';
+import {
   exactMatrixFromNumeric,
   exactMatrixFromWire,
   exactMatrixToLatex,
@@ -57,26 +63,39 @@ function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
 }
 
 function exactMatrixReadback(req: MatrixRequest): string | null {
-  const targetMatrix =
-    req.operation === 'detA' || req.operation === 'inverseA'
-      ? req.matrixA
-      : req.operation === 'detB' || req.operation === 'inverseB'
-        ? req.matrixB
-        : undefined;
-  const targetExactMatrix =
-    req.operation === 'detA' || req.operation === 'inverseA'
-      ? req.exactMatrixA
-      : req.operation === 'detB' || req.operation === 'inverseB'
-        ? req.exactMatrixB
-        : undefined;
-  if (!targetMatrix) {
-    return null;
+  const exactA = exactMatrixFromWire(req.exactMatrixA) ?? exactMatrixFromNumeric(req.matrixA);
+  const exactB = req.matrixB
+    ? exactMatrixFromWire(req.exactMatrixB) ?? exactMatrixFromNumeric(req.matrixB)
+    : null;
+
+  if (req.operation === 'add' || req.operation === 'subtract' || req.operation === 'multiply') {
+    if (!exactA || !exactB) {
+      return null;
+    }
+    const result = req.operation === 'add'
+      ? exactAddMatrices(exactA, exactB)
+      : req.operation === 'subtract'
+        ? exactSubtractMatrices(exactA, exactB)
+        : exactMultiplyMatrices(exactA, exactB);
+    return result ? exactMatrixToLatex(result) : null;
   }
 
-  const exactMatrix = exactMatrixFromWire(targetExactMatrix) ?? exactMatrixFromNumeric(targetMatrix);
-  if (!exactMatrix) {
-    return null;
+  if (req.operation === 'transposeA' || req.operation === 'transposeB') {
+    const exactMatrix = req.operation === 'transposeA' ? exactA : exactB;
+    if (!exactMatrix) {
+      return null;
+    }
+    const result = exactTransposeMatrix(exactMatrix);
+    return result ? exactMatrixToLatex(result) : null;
   }
+
+  const exactMatrix =
+    req.operation === 'detA' || req.operation === 'inverseA'
+      ? exactA
+      : req.operation === 'detB' || req.operation === 'inverseB'
+        ? exactB
+        : null;
+  if (!exactMatrix) return null;
 
   if (req.operation === 'detA' || req.operation === 'detB') {
     const determinant = determinantExactMatrix(exactMatrix);
