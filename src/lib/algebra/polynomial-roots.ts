@@ -34,10 +34,18 @@ export type PolynomialRootDiagnostics = {
   method: 'linear' | 'quadratic' | 'aberth-ehrlich';
   iterations: number;
   maxResidual: number;
+  maxBackwardErrorEstimate: number;
+  minimumDerivativeMagnitude: number | null;
   coefficientScaleRatio: number;
   minimumRootSeparation: number | null;
   rootCountBeforeDedupe: number;
   rootCountAfterDedupe: number;
+  rootAccounting: {
+    expectedRootSlots: number;
+    estimatedRootSlots: number;
+    distinctRootCount: number;
+    status: 'all-slots-accounted' | 'slot-gap';
+  };
   clusteredRootCount: number;
   closeRootSeparationCount: number;
   conditioningPasses: number;
@@ -83,6 +91,34 @@ function coefficientScaleRatio(coefficients: number[]) {
 function maxPolynomialResidual(coefficients: number[], roots: readonly ComplexValue[]) {
   return roots.reduce((maxResidual, root) =>
     Math.max(maxResidual, complexAbs(evaluatePolynomial(coefficients, root))), 0);
+}
+
+function polynomialScaleAt(coefficients: readonly number[], root: ComplexValue) {
+  const magnitude = complexAbs(root);
+  const degree = coefficients.length - 1;
+  return coefficients.reduce((scale, coefficient, index) =>
+    scale + Math.abs(coefficient) * Math.pow(magnitude, degree - index), 0);
+}
+
+function maxBackwardErrorEstimate(coefficients: readonly number[], roots: readonly ComplexValue[]) {
+  return roots.reduce((maximum, root) => {
+    const scale = polynomialScaleAt(coefficients, root);
+    if (scale <= LEADING_EPSILON) {
+      return maximum;
+    }
+    const residual = complexAbs(evaluatePolynomial([...coefficients], root));
+    return Math.max(maximum, residual / scale);
+  }, 0);
+}
+
+function minimumDerivativeMagnitude(coefficients: readonly number[], roots: readonly ComplexValue[]) {
+  if (roots.length === 0) {
+    return null;
+  }
+  const derivative = derivativeCoefficients([...coefficients]);
+  const minimum = roots.reduce((current, root) =>
+    Math.min(current, complexAbs(evaluatePolynomial(derivative, root))), Number.POSITIVE_INFINITY);
+  return Number.isFinite(minimum) ? minimum : null;
 }
 
 function polishRoot(coefficients: number[], root: ComplexValue) {
@@ -234,10 +270,25 @@ function diagnosticsFor(input: {
 }) {
   const degree = input.coefficients.length - 1;
   const maxResidual = maxPolynomialResidual(input.coefficients, input.roots);
+  const maxBackwardError = maxBackwardErrorEstimate(input.coefficients, input.roots);
+  const derivativeMinimum = minimumDerivativeMagnitude(input.coefficients, input.roots);
   const scaleRatio = coefficientScaleRatio(input.coefficients);
   const separationStats = rootSeparationStats(input.roots, CLUSTER_WARNING_EPSILON);
   const closeSeparationStats = rootSeparationStats(input.roots, CLOSE_SEPARATION_WARNING_EPSILON);
   const clusteredRootCount = separationStats.closePairCount;
+  const multiplicityEstimates = input.multiplicityEstimates
+    ?? input.roots.map((root) => ({
+      root,
+      estimatedMultiplicity: degree === 2 && input.roots.length === 1 ? 2 : 1,
+    }));
+  const estimatedRootSlots = multiplicityEstimates.reduce((sum, entry) =>
+    sum + Math.max(1, Math.round(entry.estimatedMultiplicity)), 0);
+  const rootAccounting: PolynomialRootDiagnostics['rootAccounting'] = {
+    expectedRootSlots: degree,
+    estimatedRootSlots,
+    distinctRootCount: input.roots.length,
+    status: estimatedRootSlots === degree ? 'all-slots-accounted' : 'slot-gap',
+  };
   const warningLines: string[] = [];
   if (clusteredRootCount > 0 || input.rootsBeforeDedupe > input.roots.length) {
     warningLines.push(
@@ -254,6 +305,11 @@ function diagnosticsFor(input: {
       `Largest polynomial residual after polishing is ${maxResidual.toExponential(2)}.`,
     );
   }
+  if (rootAccounting.status === 'slot-gap') {
+    warningLines.push(
+      `Numeric root-slot accounting estimated ${estimatedRootSlots} of ${degree} polynomial root slots.`,
+    );
+  }
   if (warningLines.length > 0) {
     warningLines.push(
       'Higher precision is recommended if these roots are used in a sensitive downstream calculation.',
@@ -265,15 +321,17 @@ function diagnosticsFor(input: {
     method: input.method,
     iterations: input.iterations,
     maxResidual,
+    maxBackwardErrorEstimate: maxBackwardError,
+    minimumDerivativeMagnitude: derivativeMinimum,
     coefficientScaleRatio: scaleRatio,
     minimumRootSeparation: separationStats.minimum,
     rootCountBeforeDedupe: input.rootsBeforeDedupe,
     rootCountAfterDedupe: input.roots.length,
+    rootAccounting,
     clusteredRootCount,
     closeRootSeparationCount: closeSeparationStats.closePairCount,
     conditioningPasses: input.conditioningPasses,
-    multiplicityEstimates: input.multiplicityEstimates
-      ?? input.roots.map((root) => ({ root, estimatedMultiplicity: 1 })),
+    multiplicityEstimates,
     warningLines,
   };
 

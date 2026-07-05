@@ -204,6 +204,18 @@ function multiplicityEstimateLines(
   ];
 }
 
+function rootAccountingLines(diagnostics: PolynomialRootDiagnostics) {
+  const accounting = diagnostics.rootAccounting;
+  return [
+    `Expected polynomial root slots: ${accounting.expectedRootSlots}.`,
+    `Estimated root slots accounted: ${accounting.estimatedRootSlots}.`,
+    `Distinct roots after dedupe: ${accounting.distinctRootCount}.`,
+    accounting.status === 'all-slots-accounted'
+      ? 'Root-slot accounting: all polynomial root slots are represented after multiplicity estimates.'
+      : 'Root-slot accounting: numeric evidence has a root-slot gap; treat this result as lower confidence.',
+  ];
+}
+
 function validateComplexRoots(
   polynomial: SolvableNumericPolynomial,
   roots: readonly ComplexValue[],
@@ -284,6 +296,7 @@ function detailSectionsFor(input: {
         input.polynomial.kind === 'rational'
           ? 'Cleared numeric polynomial denominators, then rejected pole candidates and validated residuals.'
           : 'Solved the numeric polynomial globally, preserving real and non-real roots for Complex On.',
+        'Evidence posture: hardened numeric evidence, not a formal proof certificate.',
         ...(input.polynomial.degree > 16
           ? ['Large-degree root lists use progressive/capped branch rendering; narrow or factor the equation when individual roots need inspection.']
           : []),
@@ -298,6 +311,7 @@ function detailSectionsFor(input: {
         `Branch policy: ${branchPolicy}.`,
         `Degree cap: ${input.polynomial.degree} of ${MAX_POLYNOMIAL_ROOT_DEGREE}.`,
         `Accepted distinct roots: ${input.accepted.length}; rejected candidates: ${input.rejected.length}.`,
+        ...(input.diagnostics ? rootAccountingLines(input.diagnostics) : []),
         input.polynomial.kind === 'rational'
           ? 'Completeness: all distinct roots of the cleared numerator are considered, then denominator/pole candidates are rejected.'
           : 'Completeness: all distinct roots of the degree-capped polynomial are considered.',
@@ -327,6 +341,10 @@ function detailSectionsFor(input: {
         `Iterations: ${diagnostics.iterations}.`,
         `Conditioning passes: ${diagnostics.conditioningPasses}.`,
         `Largest polynomial residual after polishing: ${formatApproxNumber(diagnostics.maxResidual)}.`,
+        `Maximum backward-error estimate: ${formatDiagnosticNumber(diagnostics.maxBackwardErrorEstimate)}.`,
+        diagnostics.minimumDerivativeMagnitude === null
+          ? 'Smallest derivative magnitude at displayed roots: not applicable.'
+          : `Smallest derivative magnitude at displayed roots: ${formatDiagnosticNumber(diagnostics.minimumDerivativeMagnitude)}.`,
         `Coefficient scale ratio: ${diagnostics.coefficientScaleRatio.toExponential(2)}.`,
         diagnostics.minimumRootSeparation === null
           ? 'Nearest root separation: not applicable.'

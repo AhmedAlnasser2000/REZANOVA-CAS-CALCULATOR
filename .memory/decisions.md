@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-06 - COMPLEX-EQUATION-POLYNOMIAL-HARDENING1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The five-move Complex Equation hardening track stays TypeScript-only: no MPSolve, WASM, or GPL solver dependency is bundled or required. The Complex numeric polynomial path may describe `global-polynomial` scope with hardened residual, backward-error, root-slot, cluster, and pole evidence, but must not call those approximate results formal certificates.
+
 ## 2026-07-05 - COMPLEX-EQUATION-NUMERIC-CONTRACT1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Equation benchmark support must now state its evidence scope in the corpus ledger. `global-polynomial` may claim all complex roots only through the polynomial evidence path; `bounded-region` may be marked `supported` only with contour-verified evidence and matching contour/candidate counts; `locus-deferred` records cannot be marked supported. These evidence fields are optional ledger metadata and do not expand public `DisplayOutcome`.
