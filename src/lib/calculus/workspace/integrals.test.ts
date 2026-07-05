@@ -354,7 +354,7 @@ describe('calculus integrals', () => {
     expect(quadratic.detailSections?.[0]?.lines.join(' ')).toContain('irreducible quadratic');
   });
 
-  it('presents verified indefinite integral answers with parseable +C and readable rows', () => {
+  it('presents verified indefinite integral answers as one parseable antiderivative expression', () => {
     const rootSum = evaluateCalculusIndefiniteIntegral({
       bodyLatex: String.raw`\sqrt{x}+x^{1/3}`,
     });
@@ -363,7 +363,9 @@ describe('calculus integrals', () => {
     expect(rootSum.exactLatex).toContain(String.raw`\frac{3}{4}`);
     expect(rootSum.exactLatex).not.toMatch(/\d+\\frac/u);
     expect(rootSum.exactLatex?.endsWith('+C')).toBe(true);
-    expect(rootSum.answerRows?.rows.at(-1)?.latex).toBe('+C');
+    expect(rootSum.answerRows?.rows).toEqual([
+      { latex: rootSum.exactLatex },
+    ]);
     expectParseableLatex(rootSum.exactLatex);
 
     const rational = evaluateCalculusIndefiniteIntegral({
@@ -373,7 +375,9 @@ describe('calculus integrals', () => {
     expect(rational.exactLatex).toContain('x^{2}+3x');
     expect(rational.exactLatex).not.toContain(String.raw`2\left(\frac{x^{2}}{2}\right)`);
     expect(rational.exactLatex).toContain(String.raw`\frac{17}{2\sqrt{5}}\ln`);
-    expect(rational.answerRows?.rows.at(-1)?.latex).toBe('+C');
+    expect(rational.answerRows?.rows).toEqual([
+      { latex: rational.exactLatex },
+    ]);
     expect(rational.detailSections?.map((section) => section.title))
       .toContain('Integration Presentation');
     expectParseableLatex(rational.exactLatex);

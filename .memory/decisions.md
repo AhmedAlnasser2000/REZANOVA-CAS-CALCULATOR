@@ -1934,6 +1934,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus indefinite integration presentation is Calculus-owned and runs only after verified antiderivative backcheck. `+C` is added as a verified presentation suffix for indefinite results, Copy Result and To Editor keep canonical parseable LaTeX, and visible answer rows may preserve order/readability without changing solver adoption.
 
+## 2026-07-05 - CALCULUS-INTEGRATION-ONE-ANSWER-PRESENTATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Ordinary indefinite integration output must render as one antiderivative expression, not additive answer rows. `answerRows` may be used as a single-row display-order guard for the canonical expression, while multi-row structures are reserved for true casewise or branch-family integration results.
+
 ## 2026-07-05 - CALCULUS-LIMITS-ASYMPTOTIC-SCALE-ENGINE2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits infinity-scale comparison may derive logarithmic scales from eventually positive unbounded inner scales, including `log(x^p)`, `log(sqrt(x))`, `log(c*x)`, and `log(e^x)`, before L'Hospital or numeric fallback. This remains a scale route, not full Gruntz.

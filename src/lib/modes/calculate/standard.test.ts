@@ -255,7 +255,9 @@ describe('runCalculateMode', () => {
     expect(result.exactLatex).toContain('\\ln');
     expect(result.exactLatex).toContain('x-1');
     expect(result.exactLatex).toContain('x+1');
-    expect(result.answerRows?.rows.at(-1)?.latex).toBe('+C');
+    expect(result.answerRows?.rows).toEqual([
+      { latex: result.exactLatex },
+    ]);
     expect(result.detailSections?.[0]?.title).toBe('Partial Fractions');
     expect(result.detailSections?.[0]?.lines.join(' ')).toContain('shared polynomial/rational core');
 

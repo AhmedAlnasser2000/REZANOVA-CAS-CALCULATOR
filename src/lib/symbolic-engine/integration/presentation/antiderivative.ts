@@ -111,78 +111,16 @@ function isVerified(backcheck: AntiderivativeBackcheck | undefined) {
     || backcheck?.status === 'verified-numeric-confidence';
 }
 
-function additiveTerms(latex: string): string[] {
-  const terms: string[] = [];
-  let start = 0;
-  let braceDepth = 0;
-  let fenceDepth = 0;
-  for (let index = 0; index < latex.length; index += 1) {
-    if (latex.startsWith('\\left', index)) {
-      fenceDepth += 1;
-      index += '\\left'.length - 1;
-      continue;
-    }
-    if (latex.startsWith('\\right', index)) {
-      fenceDepth = Math.max(0, fenceDepth - 1);
-      index += '\\right'.length - 1;
-      continue;
-    }
-
-    const char = latex[index];
-    if (char === '{') {
-      braceDepth += 1;
-      continue;
-    }
-    if (char === '}') {
-      braceDepth = Math.max(0, braceDepth - 1);
-      continue;
-    }
-
-    if (braceDepth === 0 && fenceDepth === 0 && index > start && (char === '+' || char === '-')) {
-      const term = latex.slice(start, index).trim();
-      if (term) {
-        terms.push(term);
-      }
-      start = index;
-    }
-  }
-
-  const finalTerm = latex.slice(start).trim();
-  if (finalTerm) {
-    terms.push(finalTerm);
-  }
-  return terms;
-}
-
-function hasNestedDisplayRisk(latex: string) {
-  return latex.includes('\\ln\\left|')
-    || latex.includes('\\frac{\\frac')
-    || /\\frac\{[^{}]*\\sqrt/u.test(latex)
-    || (latex.match(/\\frac/g)?.length ?? 0) >= 3;
-}
-
-function answerRowsFor(baseLatex: string, constantLatex: string): DisplayAnswerRowsReadback {
-  const terms = additiveTerms(baseLatex);
-  const shouldSplit = terms.length >= 3 || baseLatex.length > 96 || hasNestedDisplayRisk(baseLatex);
-  if (!shouldSplit) {
-    return {
-      rows: [
-        { latex: `${baseLatex}+${constantLatex}` },
-      ],
-    };
-  }
-
+function answerRowsFor(exactLatex: string): DisplayAnswerRowsReadback {
   return {
     rows: [
-      ...terms.map((term) => ({ latex: term })),
-      { latex: `+${constantLatex}` },
+      { latex: exactLatex },
     ],
   };
 }
 
 function presentationDetail(input: {
   changedLatex: boolean;
-  answerRowCount: number;
   constantLatex: string;
 }): DisplayDetailSection {
   const lines = [
@@ -191,11 +129,7 @@ function presentationDetail(input: {
   if (input.changedLatex) {
     lines.push('Canonical output was normalized for coefficient, fraction, and grouping readability.');
   }
-  if (input.answerRowCount > 1) {
-    lines.push('Long visible output is split into answer rows; Copy Result keeps one parseable canonical expression.');
-  } else if (input.answerRowCount === 1) {
-    lines.push('Short visible output uses one canonical answer row so display order matches Copy Result.');
-  }
+  lines.push('Visible output is kept as one antiderivative expression; Copy Result uses the same parseable LaTeX.');
   return {
     title: 'Integration Presentation',
     lines,
@@ -221,14 +155,13 @@ export function presentVerifiedIndefiniteAntiderivative(
     return undefined;
   }
 
-  const answerRows = answerRowsFor(baseLatex, constantLatex);
+  const answerRows = answerRowsFor(exactLatex);
   return {
     exactLatex,
     answerRows,
     verification,
     detailSections: [presentationDetail({
       changedLatex: baseLatex !== input.exactLatex,
-      answerRowCount: answerRows.rows.length,
       constantLatex,
     })],
   };
