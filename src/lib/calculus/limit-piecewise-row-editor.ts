@@ -38,11 +38,30 @@ function stripLimitBodyWrapper(bodyLatex: string) {
   return trimmed;
 }
 
+function extractRawLimitBody(requestLatex: string | null | undefined) {
+  const source = requestLatex?.trim() ?? '';
+  if (!source) {
+    return null;
+  }
+
+  const latexLimit = source.match(/^\\lim_\{[^{}]*\\to[^{}]*\}([\s\S]+)$/u);
+  if (latexLimit) {
+    return latexLimit[1].trim();
+  }
+
+  const friendlyLimit = source.match(/^lim\s+[a-zA-Z\\]+(?:\s*->|\s+to\s+)[^\s]+\s+([\s\S]+)$/iu);
+  return friendlyLimit ? friendlyLimit[1].trim() : null;
+}
+
 function splitTopLevel(input: string, delimiters: Set<string>) {
   return splitTopLevelPreservingEmpty(input, delimiters).filter(Boolean);
 }
 
-function splitTopLevelPreservingEmpty(input: string, delimiters: Set<string>) {
+function splitTopLevelPreservingEmpty(
+  input: string,
+  delimiters: Set<string>,
+  options: { preserveWhitespace?: boolean } = {},
+) {
   const parts: string[] = [];
   let depth = 0;
   let start = 0;
@@ -54,12 +73,14 @@ function splitTopLevelPreservingEmpty(input: string, delimiters: Set<string>) {
     } else if (char === ')' || char === ']' || char === '}') {
       depth = Math.max(0, depth - 1);
     } else if (depth === 0 && delimiters.has(char)) {
-      parts.push(input.slice(start, index).trim());
+      const part = input.slice(start, index);
+      parts.push(options.preserveWhitespace ? part : part.trim());
       start = index + 1;
     }
   }
 
-  parts.push(input.slice(start).trim());
+  const part = input.slice(start);
+  parts.push(options.preserveWhitespace ? part : part.trim());
   return parts;
 }
 
@@ -73,10 +94,8 @@ function cleanExpressionLatex(input: string) {
 
 function cleanConditionLatex(input: string) {
   return input
-    .trim()
     .replace(/^if\b\s*/iu, '')
-    .replace(/\s*(<=|>=|<|>|=)\s*/gu, '$1')
-    .trim();
+    .replace(/[ \t]+/gu, ' ')
 }
 
 function splitFriendlyBranchEntry(entry: string) {
@@ -173,12 +192,16 @@ function recoverCasesRows(bodyLatex: string) {
   const rows = match[1]
     .split(/\\\\/u)
     .map((source, index) => {
-      const [expressionLatex = '', conditionLatex = ''] = splitTopLevelPreservingEmpty(source, new Set(['&']));
+      const [expressionLatex = '', conditionLatex = ''] = splitTopLevelPreservingEmpty(
+        source,
+        new Set(['&']),
+        { preserveWhitespace: true },
+      );
       const otherwise = /otherwise|\\top|true/iu.test(conditionLatex);
       return {
         id: `piecewise-row-${index + 1}`,
         expressionLatex: cleanExpressionLatex(expressionLatex),
-        conditionLatex: otherwise ? OTHERWISE_LATEX : conditionLatex.trim(),
+        conditionLatex: otherwise ? OTHERWISE_LATEX : conditionLatex,
         otherwise,
       };
     });
@@ -246,7 +269,7 @@ export function serializeLimitPiecewiseRows(rows: readonly LimitPiecewiseRow[]) 
   const normalizedRows = normalizeRows(rows);
   return `\\begin{cases}${normalizedRows
     .map((row) => {
-      const conditionLatex = row.otherwise ? OTHERWISE_LATEX : row.conditionLatex.trim();
+      const conditionLatex = row.otherwise ? OTHERWISE_LATEX : row.conditionLatex;
       return `${row.expressionLatex.trim()}&${conditionLatex}`;
     })
     .join('\\\\')}\\end{cases}`;
@@ -269,8 +292,12 @@ export function parseLimitPiecewiseDraft(requestLatex: string | null | undefined
   }
 
   const bodyLatex = stripLimitBodyWrapper(parsedRequest.request.bodyLatex);
+  const rawBodyLatex = stripLimitBodyWrapper(extractRawLimitBody(requestLatex) ?? bodyLatex);
   const parsedPiecewise = parsePiecewiseLimitExpression(bodyLatex);
-  let rows: LimitPiecewiseRow[] | null = recoverCasesRows(bodyLatex) ?? recoverFriendlyRows(bodyLatex);
+  let rows: LimitPiecewiseRow[] | null = recoverCasesRows(rawBodyLatex)
+    ?? recoverFriendlyRows(rawBodyLatex)
+    ?? recoverCasesRows(bodyLatex)
+    ?? recoverFriendlyRows(bodyLatex);
 
   if (rows) {
     rows = normalizeRows(rows);

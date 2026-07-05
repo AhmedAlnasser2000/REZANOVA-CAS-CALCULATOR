@@ -13,7 +13,7 @@ describe('limit piecewise row editor helpers', () => {
     expect(draft?.rows).toMatchObject([
       {
         expressionLatex: 'x',
-        conditionLatex: 'x<0',
+        conditionLatex: 'x < 0',
         otherwise: false,
       },
       {
@@ -103,8 +103,20 @@ describe('limit piecewise row editor helpers', () => {
     const serialized = serializeLimitPiecewiseRequest(draft!.request, draft!.rows);
 
     expect(serialized).toBe(
-      '\\lim_{x\\to 0}\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}',
+      '\\lim_{x\\to 0}\\begin{cases}x&x < 0\\\\x^2&\\text{otherwise}\\end{cases}',
     );
+  });
+
+  it('preserves authored spaces in cases conditions for the row editor', () => {
+    const draft = parseLimitPiecewiseDraft(
+      '\\lim_{x\\to 0}\\begin{cases}x&0 <= x < 5\\\\x^2&\\text{otherwise}\\end{cases}',
+    );
+
+    expect(draft?.rows[0]).toMatchObject({
+      expressionLatex: 'x',
+      conditionLatex: '0 <= x < 5',
+      otherwise: false,
+    });
   });
 
   it('keeps malformed rows recoverable with row-specific issues', () => {

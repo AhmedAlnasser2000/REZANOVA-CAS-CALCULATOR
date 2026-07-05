@@ -32,7 +32,7 @@ function issueFor(
 }
 
 function cleanConditionInput(value: string) {
-  return value.trim().replace(/^if\b\s*/iu, '');
+  return value.replace(/^(\s*)if\b\s*/iu, '$1');
 }
 
 function normalizeRows(rows: readonly LimitPiecewiseRow[]) {
@@ -102,18 +102,6 @@ function rowsWithReorder(rows: readonly LimitPiecewiseRow[], fromIndex: number, 
   }
   nextRows.splice(toIndex, 0, moved);
   return normalizeRows(nextRows);
-}
-
-function clearActiveRowInputSelection(container: HTMLElement | null) {
-  const active = document.activeElement;
-  if (active instanceof HTMLInputElement && container?.contains(active)) {
-    active.blur();
-  }
-  window.getSelection?.()?.removeAllRanges();
-}
-
-function scheduleClearActiveRowInputSelection(container: HTMLElement | null) {
-  window.setTimeout(() => clearActiveRowInputSelection(container), 0);
 }
 
 function targetInputValue(request: NaturalLimitRequest | null) {
@@ -216,7 +204,8 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
       onChange(serializeLimitPiecewiseRequest(parsedCandidate.request, parsedCandidate.rows));
     };
 
-    const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    const handleTextInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+      event.stopPropagation();
       if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
         event.preventDefault();
         onSubmit?.();
@@ -228,6 +217,7 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
     };
 
     const handleLimitControlKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+      event.stopPropagation();
       if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
         event.preventDefault();
         commitLimitControls();
@@ -310,9 +300,7 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                     if (fromIndex === null) {
                       return;
                     }
-                    clearActiveRowInputSelection(editorRef.current);
                     commitRows(rowsWithReorder(rows, fromIndex, index));
-                    scheduleClearActiveRowInputSelection(editorRef.current);
                   }}
                 >
                   <span
@@ -323,13 +311,12 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                     title="Drag row"
                     onDragStart={(event) => {
                       dragIndexRef.current = index;
-                      clearActiveRowInputSelection(editorRef.current);
                       event.dataTransfer.effectAllowed = 'move';
                       event.dataTransfer.setData('text/plain', row.id);
                     }}
                     onDragEnd={() => {
                       dragIndexRef.current = null;
-                      scheduleClearActiveRowInputSelection(editorRef.current);
+                      window.getSelection?.()?.removeAllRanges();
                     }}
                   >
                     ⋮⋮
@@ -342,7 +329,7 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                       placeholder="expression"
                       aria-label={`Expression row ${index + 1}`}
                       spellCheck={false}
-                      onKeyDown={handleKeyDown}
+                      onKeyDown={handleTextInputKeyDown}
                       onFocus={handleInputFocus}
                       onChange={(event) => commitRows(rowsWithUpdate(rows, row.id, {
                         expressionLatex: event.target.value,
@@ -359,7 +346,7 @@ export const LimitPiecewiseRowEditor = forwardRef<HTMLElement, LimitPiecewiseRow
                       placeholder="condition"
                       aria-label={`Condition row ${index + 1}`}
                       spellCheck={false}
-                      onKeyDown={handleKeyDown}
+                      onKeyDown={handleTextInputKeyDown}
                       onFocus={handleInputFocus}
                       onChange={(event) => {
                         const value = cleanConditionInput(event.target.value);

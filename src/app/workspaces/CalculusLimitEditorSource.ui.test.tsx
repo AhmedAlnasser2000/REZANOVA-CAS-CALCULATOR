@@ -289,6 +289,25 @@ describe('Calculus limit editor source', () => {
     expect(rowTwoExpression).toHaveValue('-x+1');
   });
 
+  it('lets condition inputs keep spaces around inequalities without leaking focus', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0 piecewise(x if x<0; -x otherwise)');
+
+    await waitFor(() => expect(screen.getAllByTestId(/^limit-piecewise-row-\d+$/u)).toHaveLength(2));
+    const rowOneCondition = within(screen.getByTestId('limit-piecewise-row-1'))
+      .getByLabelText('Condition row 1');
+
+    await user.clear(rowOneCondition);
+    await user.type(rowOneCondition, '0 <= x < 5');
+
+    expect(rowOneCondition).toHaveFocus();
+    expect(rowOneCondition).toHaveValue('0 <= x < 5');
+    await waitFor(() => expect(screen.getByTestId('main-editor').getAttribute('data-value'))
+      .toContain('0 <= x < 5'));
+  });
+
   it('allows the Otherwise row to be edited into an explicit condition row', async () => {
     const { user } = await renderAppMain();
 
