@@ -73,3 +73,17 @@
   - `npm run test:file-sizes`
   - `npm run test:memory-protocol`
   - `git diff --check`
+
+## 2026-07-05 - CALCULUS-LIMITS-GRUNTZ-FOUNDATION1
+
+- Gate type: backend foundation.
+- Scope: added Limits-owned Gruntz foundation contracts for MRV-set extraction, comparability classes, rewrite-to-`w`, and quotient sign/limit extraction fixtures. No app-visible Limit route or public solver behavior changed in this gate.
+- Focused tests:
+  - `npm run test:unit -- src/lib/symbolic-engine/limits/gruntz-foundation.test.ts src/lib/symbolic-engine/limits/mrv-lite.test.ts`
+- Visual verification:
+  - Not run for this gate because no app-visible output route, screen, or Display behavior changed. The contract is dormant foundation code covered by unit fixtures.
+- Broad gates:
+  - `npx tsc -b --pretty false`
+  - `npm run test:file-sizes`
+  - `npm run test:memory-protocol`
+  - `git diff --check`

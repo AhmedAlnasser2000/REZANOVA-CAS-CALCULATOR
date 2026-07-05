@@ -1926,6 +1926,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The Limits corpus seed is a runtime-free ledger under `benchmarks/calculus-corpus/limits/`: one canonical runnable row per unique case, duplicate source sightings in a separate ledger, one run result per case per sweep, route/proof-card expectations captured as benchmark assertions, and large PDF/site expansion deferred until after Gruntz foundations land.
 
+## 2026-07-05 - CALCULUS-LIMITS-GRUNTZ-FOUNDATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz work is now represented by Limits-owned foundation contracts first: MRV-set extraction, comparability classes, rewrite-to-`w`, and sign/limit extraction fixtures. This milestone deliberately does not expose a broad Gruntz solver route or alter app-visible Limit evaluation.
+
 ## 2026-07-05 - LINEAR-ALGEBRA-PASTE-NATURALIZATION1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix/Vector friendly list syntax is paste/import UX only: supported pasted text naturalizes immediately through Linear Algebra-owned canonicalizers, malformed text stays editable until Run, and `answerRows` may improve visible row layout while `exactLatex` remains the Copy Result/export source.
