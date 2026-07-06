@@ -122,9 +122,12 @@ describe('equation complex route', () => {
 
   it('solves guarded principal log and rational-log complex preimages', () => {
     const affineLog = solveComplex(String.raw`\ln(x-1)=4`);
+    const zeroLog = solveComplex(String.raw`\ln(x-1)=0`);
     const rationalLog = solveComplex(String.raw`\ln((x-1)/(x+2))=4`);
 
     expect(affineLog.exactLatex).toBe('x\\in\\left\\{e^{4}+1\\right\\}');
+    expect(zeroLog.exactLatex).toBe('x\\in\\left\\{2\\right\\}');
+    expect(zeroLog.exactLatex).not.toContain('e^{0}');
     expect(affineLog.exactSupplementLatex).toContain('x-1\\ne0');
     expect(rationalLog.exactLatex).toContain('\\frac{2e^{4}+1}{1-e^{4}}');
     expect(rationalLog.exactSupplementLatex).toContain('x+2\\ne0');

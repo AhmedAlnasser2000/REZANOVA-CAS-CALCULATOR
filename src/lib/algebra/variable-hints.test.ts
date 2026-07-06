@@ -51,6 +51,38 @@ describe('variable hints', () => {
     ]);
   });
 
+  it('marks plain complex locus calls as functions instead of adjacent-letter products', () => {
+    expect(hintKinds('Re(z)=1', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      solveTarget: 'z',
+      storedVariables: stored,
+    })).toEqual([
+      'Re:reserved-function',
+      'z:solve-target',
+    ]);
+
+    expect(hintKinds('Im(z)=0', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      solveTarget: 'z',
+      storedVariables: stored,
+    })).toEqual([
+      'Im:reserved-function',
+      'z:solve-target',
+    ]);
+
+    expect(hintKinds('conj(z)=z', {
+      mode: 'equation',
+      screenHint: 'symbolic',
+      solveTarget: 'z',
+      storedVariables: stored,
+    })).toEqual([
+      'conj:reserved-function',
+      'z:solve-target',
+    ]);
+  });
+
   it('does not turn Matrix editor functions and bmatrix syntax into variable hints', () => {
     expect(hintKinds('\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)', {
       mode: 'matrix',

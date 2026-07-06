@@ -43,6 +43,12 @@ const ce = new ComputeEngine();
 const DEFAULT_GRID_SIZE = 7;
 const RESIDUAL_TOLERANCE = 1e-6;
 const MAX_CANDIDATE_LINES = 6;
+const SHAPE_PREVIEW_REGION: NumericRegion = {
+  reMin: -1,
+  reMax: 1,
+  imMin: -1,
+  imMax: 1,
+};
 
 function numericRegionFromRequest(region?: ComplexSolveRegion): NumericRegion | null {
   if (!region) {
@@ -391,6 +397,14 @@ function analyzeDirectLocus(input: {
   return { lines, probes };
 }
 
+function directLocusMeaningLines(equationNode: MathJson | null, target: string) {
+  return analyzeDirectLocus({
+    equationNode,
+    target,
+    region: SHAPE_PREVIEW_REGION,
+  }).lines;
+}
+
 function sampleLocus(input: {
   equationNode: MathJson;
   target: string;
@@ -483,15 +497,24 @@ export function buildComplexLocusEvidenceSections(input: {
   complexRegion?: ComplexSolveRegion;
 }): DisplayDetailSection[] {
   const target = input.target ?? 'z';
+  const equationNode = input.equationLatex ? parseEquationNode(input.equationLatex) : null;
+  const meaningLines = directLocusMeaningLines(equationNode, target);
   const sections: DisplayDetailSection[] = [{
     title: 'Complex Locus Evidence',
     lines: [
       `Realified target: ${target}=x+iy.`,
       'Evidence scope: locus-deferred.',
       'Analytic contour/root-count solving is skipped for absolute-value, conjugate, real-part, and imaginary-part carriers.',
+      'These cases usually describe curves or point sets, not a finite root list.',
       'This route records bounded evidence only; it does not emit a curve, region, or solution-set readback yet.',
     ],
   }];
+  if (meaningLines.length > 0) {
+    sections.push({
+      title: 'Complex Locus Meaning',
+      lines: meaningLines,
+    });
+  }
 
   if (!input.complexRegion) {
     sections.push({
@@ -510,7 +533,6 @@ export function buildComplexLocusEvidenceSections(input: {
     return sections;
   }
 
-  const equationNode = input.equationLatex ? parseEquationNode(input.equationLatex) : null;
   const gridSize = input.complexRegion.gridSize ?? DEFAULT_GRID_SIZE;
   const direct = analyzeDirectLocus({ equationNode, target, region });
   if (!equationNode) {

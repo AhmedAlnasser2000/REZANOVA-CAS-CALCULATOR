@@ -42,6 +42,20 @@ function expectNoRealFormulaLeak(result: unknown) {
 }
 
 describe('Equation Complex power wrapper catchup', () => {
+  it('renders exact positive real square wrappers without internal branch symbols', () => {
+    const result = expectComplexSuccess('(x-3)^2=16', {
+      equationSolveTarget: 'x',
+    });
+    const text = JSON.stringify(result);
+
+    expect(result.exactLatex).toContain('7');
+    expect(result.exactLatex).toContain('-1');
+    expect(text).not.toContain('u_0');
+    expect(text).not.toContain('u_{0}');
+    expect(text).not.toContain('PrincipalRoot');
+    expect(result.detailSections?.some((section) => section.title === 'Complex Power Definitions')).toBe(false);
+  });
+
   it('solves symbolic nonlinear power wrappers through compact Complex branch definitions', () => {
     const result = expectComplexSuccess('(z^2+1)^5=a');
     const definitions = expectDefinitions(result);

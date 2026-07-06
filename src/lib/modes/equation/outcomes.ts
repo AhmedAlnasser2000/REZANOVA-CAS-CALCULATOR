@@ -314,6 +314,7 @@ export function unsupportedComplexLocusOutcome(
       {
         title: 'What To Try',
         lines: [
+          'Read these as locus/set conditions: for example Re(z)=1 is a vertical line, and |z-a|=r is a circle when r>0.',
           'Use a real-domain equation or turn Complex Off when you want the older real absolute-value route.',
           'Use holomorphic equations for bounded Complex Region solving.',
           'Wait for the future two-real-variable/locus engine for full complex magnitude, conjugate, real-part, or imaginary-part conditions.',

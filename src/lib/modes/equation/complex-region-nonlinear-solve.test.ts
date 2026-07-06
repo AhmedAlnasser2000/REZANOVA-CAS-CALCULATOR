@@ -330,7 +330,7 @@ describe('Equation Complex region nonlinear solve', () => {
     expect(collectOutcomeText(result)).toContain('requested region contains the principal branch point at 0');
   });
 
-  it('does not run without an explicit bounded Complex region', () => {
+  it('guides unsupported holomorphic equations to an explicit bounded Complex region', () => {
     const result = tryComplexRegionNonlinearSolveFallback({
       equationLatex: 'e^z+z=0',
       equationSolveTarget: 'z',
@@ -339,7 +339,16 @@ describe('Equation Complex region nonlinear solve', () => {
       sharedOutcome: unsupportedExactOutcome,
     });
 
-    expect(result).toBeUndefined();
+    expect(result?.kind).toBe('error');
+    if (!result || result.kind !== 'error') {
+      throw new Error('Expected Complex Region guidance without explicit bounds');
+    }
+    const text = collectOutcomeText(result);
+    const serialized = JSON.stringify(result);
+    expect(result.error).toContain('needs Complex Region bounds');
+    expect(serialized).toContain('Complex Region Needed');
+    expect(text).toContain('Enable Complex Region');
+    expect(text).toContain('[-2, 2]');
   });
 
   it('protects the target and reports missing non-target stored values before region solving', () => {

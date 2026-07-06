@@ -40,15 +40,19 @@ const RESERVED_DISPLAY_NAMES: Record<string, string> = {
   Arctan: 'arctan',
   Cos: 'cos',
   Cosh: 'cosh',
+  Conj: 'conj',
+  Conjugate: 'conj',
   Cot: 'cot',
   Csc: 'csc',
   ExponentialE: 'e',
   ImaginaryUnit: 'i',
+  Im: 'Im',
   imaginaryI: 'i',
   i: 'i',
   Ln: 'ln',
   Log: 'log',
   Pi: 'pi',
+  Re: 'Re',
   Root: 'root',
   Sec: 'sec',
   Sin: 'sin',
@@ -80,6 +84,15 @@ const RESERVED_FUNCTIONS = new Set([
   'sqrt',
   'tan',
   'tanh',
+]);
+
+const PLAIN_COMPLEX_FUNCTION_CALLS = new Set([
+  'Conj',
+  'Conjugate',
+  'Im',
+  'Re',
+  'conj',
+  'conjugate',
 ]);
 
 const RESERVED_CONSTANTS = new Set(['e', 'pi', 'infinity', 'nan']);
@@ -327,6 +340,14 @@ function isLinearAlgebraStructuralSymbol(raw: string, context: VariableHintConte
   return false;
 }
 
+function isPlainReservedFunctionCall(raw: string, searchable: string, index: number) {
+  if (!RESERVED_FUNCTIONS.has(raw.toLowerCase()) && !PLAIN_COMPLEX_FUNCTION_CALLS.has(raw)) {
+    return false;
+  }
+  const afterRaw = searchable.slice(index + raw.length).trimStart();
+  return afterRaw.startsWith('(') || afterRaw.startsWith('[') || afterRaw.startsWith('{');
+}
+
 function collectLightVariableAnalysis(latex: string, context: VariableHintContext) {
   const normalized = normalizeExplicitNamedVariablesInLatex(latex);
   const reservedIdentifiers: Array<{
@@ -355,7 +376,16 @@ function collectLightVariableAnalysis(latex: string, context: VariableHintContex
   const searchable = stripKnownLatexCommands(normalized.latex);
   for (const match of searchable.matchAll(/[A-Za-z][A-Za-z0-9_]*/g)) {
     const raw = match[0];
+    const index = match.index ?? 0;
     if (normalized.explicitNames.has(raw)) {
+      continue;
+    }
+
+    if (isPlainReservedFunctionCall(raw, searchable, index)) {
+      reservedIdentifiers.push({
+        name: raw,
+        identifierKind: 'reserved-function',
+      });
       continue;
     }
 

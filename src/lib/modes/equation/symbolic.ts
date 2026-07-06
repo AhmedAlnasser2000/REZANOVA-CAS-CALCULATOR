@@ -22,6 +22,7 @@ import {
   retargetDomainConstraintsToX,
   retargetEquationLatexToX,
 } from '../../equation/equation-target';
+import { normalizeComplexLocusFunctionSyntax } from '../../equation/complex/locus-policy';
 import { normalizeExactPowerLogNode } from '../../symbolic-engine/power-log';
 import { classifyEquationRuntimeAdvisories, classifyPlannerBlockedRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type { AngleUnit, ComplexExactForm, ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, PlannerBadge, SolveDomainConstraint } from '../../../types/calculator';
@@ -64,6 +65,15 @@ class AsyncSharedSolveCapture extends Error {
 
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
+
+function normalizeComplexEquationInputLatex(
+  equationLatex: string,
+  equationDomainIntent: EquationDomainIntent,
+) {
+  return equationDomainIntent === 'complex'
+    ? normalizeComplexLocusFunctionSyntax(equationLatex)
+    : equationLatex;
+}
 
 function parameterizedOptionsFromTargetResolution(targetResolution: ReturnType<typeof resolveEquationSolveTarget>) {
   return {
@@ -142,6 +152,7 @@ export function solveSymbolicEquation(
   complexRegion: ComplexSolveRegion | undefined = undefined,
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
 ): DisplayOutcome {
+  equationLatex = normalizeComplexEquationInputLatex(equationLatex, equationDomainIntent);
   const activeAnswerMode = answerMode === 'isolate' ? 'isolate' : 'exact';
   if (isTopLevelInequalityLatex(equationLatex)) {
     const inequalityOutcome = solveBoundedLinearInequality({
@@ -815,13 +826,14 @@ export async function solveSymbolicEquationAsync(
       throw error;
     }
 
-    const planner = planMathExecution(equationLatex, {
+    const normalizedEquationLatex = normalizeComplexEquationInputLatex(equationLatex, equationDomainIntent);
+    const planner = planMathExecution(normalizedEquationLatex, {
       mode: 'equation',
       intent: 'equation-solve',
       angleUnit,
       screenHint: 'symbolic',
     });
-    const targetResolution = resolveEquationSolveTarget(equationLatex, equationSolveTarget);
+    const targetResolution = resolveEquationSolveTarget(normalizedEquationLatex, equationSolveTarget);
     const solveTarget = targetResolution.selectedTarget ?? equationSolveTarget ?? 'x';
     const sharedOutcome = await sharedSolveRunner(error.request);
     const plannerBadges = planner.kind === 'blocked' ? undefined : planner.badges;
@@ -830,7 +842,7 @@ export async function solveSymbolicEquationAsync(
       answerMode: activeAnswerMode,
       equationDomainIntent,
       numericInterval,
-      equationLatex,
+      equationLatex: normalizedEquationLatex,
       sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
       plannerBadges,
       targetResolution,
@@ -843,7 +855,7 @@ export async function solveSymbolicEquationAsync(
       answerMode: activeAnswerMode,
       equationDomainIntent,
       numericInterval,
-      equationLatex,
+      equationLatex: normalizedEquationLatex,
       sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
       plannerBadges,
       targetResolution,
@@ -853,7 +865,7 @@ export async function solveSymbolicEquationAsync(
       return realAlgebraicFormulaFallback;
     }
     const realNumericFallback = tryRealNumericFallbackOutcome({
-      equationLatex,
+      equationLatex: normalizedEquationLatex,
       equationSolveTarget: solveTarget,
       angleUnit,
       equationDomainIntent,
@@ -872,7 +884,7 @@ export async function solveSymbolicEquationAsync(
       sharedOutcome,
       solveTarget,
       answerMode: activeAnswerMode,
-      equationLatex,
+      equationLatex: normalizedEquationLatex,
       sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
       plannerBadges,
       allowNumericOnly: Boolean(numericInterval),

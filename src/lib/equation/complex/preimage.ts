@@ -6,7 +6,7 @@ import {
 } from '../../algebra/polynomial-core';
 import { mathDetailSection } from '../../display/result-detail-lines';
 import type { EquationAlgebraicIsolationSuccess } from '../equation-algebraic-isolation';
-import { branchFromLatex, branchLatexForNode } from './branches';
+import { branchFromComplexConstant, branchFromLatex, branchLatexForNode } from './branches';
 import {
   exactComplexToFormLatex,
   exactComplexToLatex,
@@ -51,6 +51,10 @@ export function exponentialBranchForLog(
   if (base !== undefined) {
     const baseLatex = latexForNode(base);
     return branchFromLatex(`${groupedLatex(baseLatex)}^{${rhsLatex.latex}}`);
+  }
+
+  if (rhsLatex.exactComplex && isExactComplexZero(rhsLatex.exactComplex)) {
+    return branchFromComplexConstant({ re: { numerator: 1, denominator: 1 }, im: { numerator: 0, denominator: 1 } }, complexExactForm);
   }
 
   return branchFromLatex(`e^{${rhsLatex.latex}}`, {

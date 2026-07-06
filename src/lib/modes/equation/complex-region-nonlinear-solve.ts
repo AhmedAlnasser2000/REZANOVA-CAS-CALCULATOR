@@ -376,6 +376,29 @@ function unsupportedRegionOutcome(input: {
   };
 }
 
+function needsComplexRegionOutcome(input: { target: string }): DisplayOutcome {
+  return unsupportedRegionOutcome({
+    error: 'This complex equation needs Complex Region bounds before a bounded numeric search can run.',
+    detailSections: [
+      {
+        title: 'Complex Region Needed',
+        lines: [
+          `Selected target: ${input.target}.`,
+          'Exact Complex routes did not close this holomorphic nonlinear equation.',
+          'Complex Region solving searches a finite rectangle and reports roots verified inside that chosen region.',
+        ],
+      },
+      {
+        title: 'What To Try',
+        lines: [
+          'Enable Complex Region, keep Complex On, choose finite real and imaginary bounds, then run again.',
+          'Start with [-2, 2] for real and imaginary bounds; widen only when the bounded evidence says the region is incomplete.',
+        ],
+      },
+    ],
+  });
+}
+
 export function tryComplexRegionNonlinearSolveFallback(input: {
   equationLatex: string;
   equationSolveTarget: string;
@@ -385,11 +408,23 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   sharedOutcome: DisplayOutcome;
 }): DisplayOutcome | undefined {
   if (
-    !input.complexRegion
-    || input.sharedOutcome.kind !== 'error'
+    input.sharedOutcome.kind !== 'error'
     || !NUMERIC_FALLBACK_ELIGIBLE_ERRORS.has(input.sharedOutcome.error)
   ) {
     return undefined;
+  }
+
+  if (!input.complexRegion) {
+    const classification = classifyEquationNumericShape({
+      equationLatex: input.equationLatex,
+      equationSolveTarget: input.equationSolveTarget,
+      angleUnit: input.angleUnit,
+    });
+    return classification.numericReady && classification.selectedTarget
+      ? needsComplexRegionOutcome({
+          target: classification.selectedTarget,
+        })
+      : undefined;
   }
 
   const region = numericRegionFromRequest(input.complexRegion);

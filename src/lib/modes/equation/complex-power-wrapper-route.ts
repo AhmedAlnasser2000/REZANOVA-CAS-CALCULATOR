@@ -7,7 +7,7 @@ import type {
   PlannerBadge,
 } from '../../../types/calculator';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
-import { exactScalarIsZero, readExactScalarNode } from '../../algebra/polynomial-core';
+import { exactScalarIsZero, normalizeExactScalar, readExactScalarNode } from '../../algebra/polynomial-core';
 import {
   type EquationSelectedTargetRoutePlan,
   type EquationSelectedTargetSearchTraceRecorder,
@@ -24,6 +24,10 @@ import {
   principalRootBaseLatex,
   principalRootMultiplierLatex,
 } from '../../equation/roots/complex-principal-roots';
+import {
+  exactScalarToLatex,
+  sqrtExactScalar,
+} from '../../equation/complex/exact';
 import {
   createArithmeticHelpers,
   hasTarget,
@@ -419,6 +423,51 @@ function branchValueLatex(value: MathJson, exponent: ComplexPrincipalRootDegree,
   return branchIndex === 0 ? root : `${root}${omegaLatex(branchIndex)}`;
 }
 
+function exactVisiblePowerBranchLatex(
+  value: MathJson,
+  exponent: ComplexPrincipalRootDegree,
+  branchIndex: number,
+) {
+  if (exponent !== 2 || branchIndex > 1) {
+    return null;
+  }
+  const exact = readExactScalarNode(simplifyNode(value));
+  if (!exact) {
+    return null;
+  }
+  const normalized = normalizeExactScalar(exact);
+  if (normalized.numerator < 0) {
+    return null;
+  }
+  const root = sqrtExactScalar(normalized);
+  if (!root) {
+    return null;
+  }
+  const rootLatex = exactScalarToLatex(root);
+  return branchIndex === 0 || rootLatex === '0' ? rootLatex : `-${rootLatex}`;
+}
+
+function compactPowerBranchDescriptors(
+  value: MathJson,
+  exponent: ComplexPrincipalRootDegree,
+) {
+  const descriptors: Array<{ branchLatex: string; usesSymbol: boolean }> = [];
+  const seen = new Set<string>();
+  for (let branchIndex = 0; branchIndex < exponent; branchIndex += 1) {
+    const visibleBranch = exactVisiblePowerBranchLatex(value, exponent, branchIndex);
+    const branchLatex = visibleBranch ?? branchSymbol(branchIndex);
+    if (seen.has(branchLatex)) {
+      continue;
+    }
+    seen.add(branchLatex);
+    descriptors.push({
+      branchLatex,
+      usesSymbol: visibleBranch === null,
+    });
+  }
+  return descriptors;
+}
+
 function complexPowerDefinitionSection(options: {
   value: MathJson;
   exponent: ComplexPrincipalRootDegree;
@@ -491,8 +540,8 @@ function solveComplexPowerWrapper(
       );
   const coefficientFact = nonzeroFactForNode(affine.coefficient);
   const innerLatex = latexForNode(affine.carrier.inner);
-  const branchEquations = Array.from({ length: affine.carrier.exponent }, (_, branchIndex) =>
-    `${innerLatex}=${branchSymbol(branchIndex)}`);
+  const branchDescriptors = compactPowerBranchDescriptors(value, affine.carrier.exponent);
+  const branchEquations = branchDescriptors.map(({ branchLatex }) => `${innerLatex}=${branchLatex}`);
 
   const branchFamilies: GeneratedBranchHandoffFamily[] = [
     {
@@ -562,11 +611,13 @@ function solveComplexPowerWrapper(
       `Generated ${branchEquations.length} carrier branch equation${branchEquations.length === 1 ? '' : 's'} and delegated them to compact Complex selected-target routes.`,
     ],
     extraSections: [
-      complexPowerDefinitionSection({
-        value,
-        exponent: affine.carrier.exponent,
-        complexExactForm: input.complexExactForm,
-      }),
+      ...(branchDescriptors.some((branch) => branch.usesSymbol)
+        ? [complexPowerDefinitionSection({
+            value,
+            exponent: affine.carrier.exponent,
+            complexExactForm: input.complexExactForm,
+          })]
+        : []),
       {
         title: 'Complex Power Wrapper Branches',
         lines: [

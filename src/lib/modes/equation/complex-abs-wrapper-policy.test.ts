@@ -66,6 +66,8 @@ describe('Equation Complex absolute-value wrapper policy', () => {
 
   it('keeps Re, Im, and conjugate carriers on the deferred locus route', () => {
     const cases = [
+      'Re(z)=1',
+      'Im(z)=1',
       String.raw`\operatorname{Re}(z)=1`,
       String.raw`\operatorname{Im}(z)=1`,
       String.raw`\operatorname{conj}(z)=1`,
@@ -80,7 +82,10 @@ describe('Equation Complex absolute-value wrapper policy', () => {
       }
       const text = JSON.stringify(result);
       expect(text).toContain('Complex Locus Policy');
+      expect(text).toContain('Complex Locus Meaning');
       expect(text).toContain('locus-deferred');
+      expect(text).not.toContain('eRz');
+      expect(text).not.toContain('mIz');
       expect(text).not.toContain('Complex region nonlinear solve');
     }
   });
