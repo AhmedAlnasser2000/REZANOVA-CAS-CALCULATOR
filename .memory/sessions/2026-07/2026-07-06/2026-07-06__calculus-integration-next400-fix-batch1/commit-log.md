@@ -34,5 +34,11 @@
 ## Planned Commit
 
 - subject: `CALCULUS-INTEGRATION-TRIG-POWER-REDUCTION1`
-- commit_hash: pending at write time
+- commit_hash: `eb1d9031`
 - scope: bounded textbook trig-power reductions, over-cap trig-power boundary cards, focused tests, Playwright evidence, and durable session evidence.
+
+## Planned Commit
+
+- subject: `CALCULUS-INTEGRATION-NEXT400-PROMOTION1`
+- commit_hash: pending at write time
+- scope: regenerated next400 candidate/backend/visual survey, promoted integration corpus ledger rows, validator count update, and durable session evidence.
