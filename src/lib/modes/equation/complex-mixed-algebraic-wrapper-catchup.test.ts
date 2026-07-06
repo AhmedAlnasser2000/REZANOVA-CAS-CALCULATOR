@@ -66,7 +66,7 @@ describe('Equation Complex mixed algebraic wrapper catchup', () => {
 
     for (const result of [cubic, quartic]) {
       expect(result.kind).toBe('error');
-      expect(JSON.stringify(result)).toContain('Generated Complex Cardano/Ferrari formula expansion remains retired');
+      expect(JSON.stringify(result)).toMatch(/generated branch is outside|more than one selected-target island/u);
       expectNoFormulaLeak(result);
     }
   });

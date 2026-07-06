@@ -4,7 +4,6 @@ import {
   useRef,
   useState,
   type Dispatch,
-  type MutableRefObject,
   type RefObject,
   type SetStateAction,
 } from 'react';
@@ -116,8 +115,8 @@ type UseCalculateRuntimeOptions = {
   ansLatex: string;
   commitOutcome: CommitCalculateOutcome;
   currentMode: ModeId;
-  currentModeRef: MutableRefObject<ModeId>;
-  calculateScreenRef?: MutableRefObject<CalculateScreen>;
+  currentModeRef: RefObject<ModeId>;
+  calculateScreenRef?: RefObject<CalculateScreen>;
   discardHistoryTicket: (ticketId?: string | null) => void;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   getWorkspaceInstances?: () => readonly WorkspaceInstance[];

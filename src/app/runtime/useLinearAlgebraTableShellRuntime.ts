@@ -1,6 +1,6 @@
 import {
   useMemo,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import { createKeyboardContext } from '../../lib/virtual-keyboard/capabilities';
@@ -38,16 +38,16 @@ type ReplayVariableSubstitutions = {
 } | null;
 
 type UseLinearAlgebraTableShellRuntimeOptions = {
-  activeFieldRef: MutableRefObject<MathfieldElement | null>;
+  activeFieldRef: RefObject<MathfieldElement | null>;
   angleUnit: AngleUnit;
   commitOutcome: CommitLinearTableOutcome;
   currentMode: ModeId;
-  currentModeRef: MutableRefObject<ModeId>;
+  currentModeRef: RefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
-  mainFieldRef?: MutableRefObject<MathfieldElement | null>;
+  mainFieldRef?: RefObject<MathfieldElement | null>;
   patchSettings: (patch: SettingsPatch) => void;
   replayVariableSubstitutions: ReplayVariableSubstitutions;
   reserveHistoryTicket: (input: {

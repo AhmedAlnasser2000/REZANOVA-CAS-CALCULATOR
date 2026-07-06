@@ -28,7 +28,9 @@ describe('AppMain numeric interval guidance', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
     await waitForDisplayOutcomeSuccess();
 
-    await user.click(await screen.findByRole('button', { name: 'Numeric Solve' }));
+    if (!screen.queryByText('Numeric Interval Solve')) {
+      await user.click(await screen.findByRole('button', { name: 'Enable Numeric Interval' }));
+    }
     await screen.findByText('Numeric Interval Solve');
     expect(screen.getByText(/it does not prove every root was found/i)).toBeInTheDocument();
 

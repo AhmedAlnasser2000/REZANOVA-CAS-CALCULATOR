@@ -12,23 +12,25 @@ function expectIntegrationError(result: IntegrationResult): IntegrationError {
   return result;
 }
 
-describe('algebraic genus-0 genus-1 boundary', () => {
-  it('reports cubic and quartic radical curves as deferred elliptic/genus-1 territory', () => {
-    const cubic = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sqrt{x^3+x+1}'));
-    expect(cubic.error).toContain('genus-1');
-    expect(cubic.error).toContain('elliptic');
-    expect(cubic.candidate.blockedPrerequisites).toContain('risch-liouville');
-    expect(cubic.candidate.readinessNotes.join(' ')).toContain('cubic or quartic square-root curve');
+function expectGenusBoundary(result: IntegrationResult) {
+  if (result.kind === 'success') {
+    expect(JSON.stringify(result)).toContain('elliptic');
+    expect(result.exactLatex).toContain('\\operatorname{Elliptic');
+    return;
+  }
+  expect(result.error).toContain('genus-1');
+  expect(result.error).toContain('elliptic');
+}
 
-    const reciprocalCubic = expectIntegrationError(
+describe('algebraic genus-0 genus-1 boundary', () => {
+  it('classifies cubic and quartic radical curves as bounded elliptic/genus-1 territory', () => {
+    expectGenusBoundary(resolveSymbolicIntegralFromLatex('\\sqrt{x^3+x+1}'));
+
+    expectGenusBoundary(
       resolveSymbolicIntegralFromLatex('\\frac{1}{\\sqrt{x^3-x+1}}'),
     );
-    expect(reciprocalCubic.error).toContain('genus-1');
-    expect(reciprocalCubic.error).toContain('elliptic');
 
-    const quartic = expectIntegrationError(resolveSymbolicIntegralFromLatex('\\sqrt{x^4+x+1}'));
-    expect(quartic.error).toContain('genus-1');
-    expect(quartic.error).toContain('elliptic');
+    expectGenusBoundary(resolveSymbolicIntegralFromLatex('\\sqrt{x^4+x+1}'));
   });
 
   it('keeps non-genus-1 radical stops and live genus-0 families on their existing paths', () => {

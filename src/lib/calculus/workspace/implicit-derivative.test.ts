@@ -10,7 +10,7 @@ describe('evaluateCalculusImplicitDerivative', () => {
     });
 
     expect(result.error).toBeUndefined();
-    expect(result.exactLatex).toBe('\\frac{dy}{dx}=\\frac{-x}{y}');
+    expect(result.exactLatex).toBe('\\frac{dy}{dx}=-\\frac{x}{y}');
     expect(result.exactSupplementLatex).toContain('2y\\ne0');
     expect(result.detailSections?.[0]?.title).toBe('Implicit Differentiation');
     expect(result.detailSections?.[0]?.lines).toContain(

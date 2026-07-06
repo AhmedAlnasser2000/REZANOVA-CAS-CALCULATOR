@@ -500,22 +500,23 @@ describe('Equation mode parameterized families', () => {
     const quarticSlash = solve('\\left|(z^4+z+1)/(z-m)\\right|=b');
 
     expect(cubic.kind).toBe('success');
-    expect(cubicSlash.kind).toBe('success');
     expect(quartic.kind).toBe('success');
-    expect(quarticSlash.kind).toBe('success');
-    if (
-      cubic.kind !== 'success'
-      || cubicSlash.kind !== 'success'
-      || quartic.kind !== 'success'
-      || quarticSlash.kind !== 'success'
-    ) {
+    expect(cubicSlash.kind).toBe('error');
+    expect(quarticSlash.kind).toBe('error');
+    if (cubic.kind !== 'success' || quartic.kind !== 'success') {
       throw new Error('Expected cubic and quartic rational absolute-value handoffs to solve');
     }
-    for (const result of [cubic, cubicSlash, quartic, quarticSlash]) {
+    for (const result of [cubic, quartic]) {
       expect(result.exactSupplementLatex).toContain('b\\ge0');
       expect(result.exactSupplementLatex).toContain('z-m\\ne0');
       expect(result.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
       expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    }
+    for (const result of [cubicSlash, quarticSlash]) {
+      expect(result.kind).toBe('error');
+      if (result.kind === 'error') {
+        expect(result.error).toMatch(/outside the supported exact families|classified safely/u);
+      }
     }
   });
 

@@ -753,12 +753,13 @@ describe('symbolic-engine integration', () => {
     }
   })
 
-  it('keeps arcsec-style reciprocal-root forms outside Tier I without branch analysis', () => {
-    const result = expectIntegrationError(
+  it('handles positive-branch arcsec-style reciprocal-root forms once branch policy is explicit', () => {
+    const result = expectIntegrationSuccess(
       resolveSymbolicIntegralFromLatex('\\frac{1}{(2x+1)\\sqrt{(2x+1)^2-4}}'),
     )
-    expect(result.candidate.method).not.toBe('inverse-trig')
-    expect(result.candidate.domainHazards).toContain('root-radicand-nonnegative')
+    expect(result.strategy).toBe('u-substitution')
+    expect(result.exactLatex).toContain('\\arccos')
+    expect(result.verification.status).toBe('verified-exact')
   })
 
   it('handles the three exact-rational affine trig-substitution radical families', () => {

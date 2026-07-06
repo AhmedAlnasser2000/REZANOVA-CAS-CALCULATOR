@@ -60,10 +60,12 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.queryByTestId('calculus-partial-derivative-target')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
 
-    setMathFieldLatex('main-editor', '∂/∂y(x^2y+y^3)');
-    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('∂/∂y');
-    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(y, ...)');
-    expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Written ∂/∂y');
+    setMathFieldLatex(
+      'main-editor',
+      '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Written ∂/∂y'));
     expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Applied y');
     expect(screen.getByTestId('calculus-partial-derivative-readback')).toHaveTextContent('Body x^2y+y^3');
 
@@ -80,7 +82,10 @@ describe('Calculus partial derivative editor source', () => {
       '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
     );
 
-    expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', '∂/∂y(x^2y+y^3)');
+    expect(screen.getByTestId('main-editor')).toHaveAttribute(
+      'data-value',
+      '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
+    );
     expect(fireEvent.keyDown(screen.getByTestId('main-editor'), { key: 'Enter' })).toBe(false);
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-success')).toBeInTheDocument());

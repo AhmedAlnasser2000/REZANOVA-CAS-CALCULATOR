@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import type {
   DisplayOutcome,
@@ -98,10 +98,10 @@ function renderGeometryRuntime(
     isLauncherOpen?: boolean;
   } = {},
 ) {
-  const activeFieldRef = { current: null } as MutableRefObject<MathfieldElement | null>;
+  const activeFieldRef = { current: null } as RefObject<MathfieldElement | null>;
   const currentModeRef = {
     current: initialProps.currentMode ?? 'geometry',
-  } as MutableRefObject<ModeId>;
+  } as RefObject<ModeId>;
   const commitOutcome = vi.fn();
   const discardHistoryTicket = vi.fn();
   const openLauncher = vi.fn();

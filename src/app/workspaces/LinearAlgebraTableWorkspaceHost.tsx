@@ -1,4 +1,4 @@
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import { MatrixWorkspace } from './MatrixWorkspace';
 import { TableWorkspace } from './TableWorkspace';
 import { VectorWorkspace } from './VectorWorkspace';
@@ -11,7 +11,7 @@ type LinearAlgebraRuntime = ReturnType<typeof useLinearAlgebraRuntime>;
 type TableRuntime = ReturnType<typeof useTableRuntime>;
 
 type LinearAlgebraTableWorkspaceHostProps = {
-  activeFieldRef: MutableRefObject<MathfieldElement | null>;
+  activeFieldRef: RefObject<MathfieldElement | null>;
   currentMode: ModeId;
   isLauncherOpen: boolean;
   linearAlgebraRuntime: LinearAlgebraRuntime;

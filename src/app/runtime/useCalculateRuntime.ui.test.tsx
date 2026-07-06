@@ -13,7 +13,7 @@ import {
 import {
   useRef,
   useState,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 import type {
   CalculateScreen,
@@ -97,10 +97,10 @@ function renderCalculateRuntime(
 ) {
   const calculateScreenRef = {
     current: 'standard',
-  } as MutableRefObject<CalculateScreen>;
+  } as RefObject<CalculateScreen>;
   const currentModeRef = {
     current: initialProps.currentMode ?? 'calculate',
-  } as MutableRefObject<ModeId>;
+  } as RefObject<ModeId>;
   const commitOutcome = vi.fn();
   const discardHistoryTicket = vi.fn();
   const openCalculusScreen = vi.fn();

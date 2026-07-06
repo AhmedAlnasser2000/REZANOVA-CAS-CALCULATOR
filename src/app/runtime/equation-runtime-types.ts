@@ -1,5 +1,5 @@
 import type { MathfieldElement } from 'mathlive';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import type {
   defaultEquationComplexRegionPanelState,
   defaultEquationNumericSolvePanelState,
@@ -53,18 +53,18 @@ export type CommitEquationOutcome = (
 ) => void;
 
 export type UseEquationRuntimeOptions = {
-  activeFieldRef: MutableRefObject<MathfieldElement | null>;
+  activeFieldRef: RefObject<MathfieldElement | null>;
   ansLatex: string;
   commitOutcome: CommitEquationOutcome;
   currentMode: ModeId;
-  currentModeRef: MutableRefObject<ModeId>;
+  currentModeRef: RefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
   displayOutcome: DisplayOutcome | null;
   editorAnalysisControl: EditorAnalysisControlState;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   getWorkspaceInstances?: () => readonly WorkspaceInstance[];
   isLauncherOpen: boolean;
-  mainFieldRef: MutableRefObject<MathfieldElement | null>;
+  mainFieldRef: RefObject<MathfieldElement | null>;
   openGuideArticle: (articleId: string) => void;
   openGuideMode: (modeId: 'equation') => void;
   openLauncher: () => void;

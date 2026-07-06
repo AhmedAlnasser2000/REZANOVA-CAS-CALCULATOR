@@ -104,7 +104,7 @@ describe('solveParameterizedTrigEquation', () => {
 
     expect(result.exactLatex).toContain('z\\in');
     expect(result.exactLatex).toContain('\\arcsin');
-    expect(result.exactLatex).toContain('\\operatorname{atan2}\\left(1,1\\right)');
+    expect(result.exactLatex).toContain('\\frac{a\\sqrt{2}}{2}');
     expect(result.exactLatex).toContain('2\\pi n');
     expect(result.branchReadback).toMatchObject({
       targetLatex: 'z',
@@ -112,7 +112,7 @@ describe('solveParameterizedTrigEquation', () => {
       source: 'equation-parameterized-trig',
     });
     expect(result.branchReadback?.branchesLatex).toHaveLength(2);
-    expect(result.branchReadback?.branchesLatex.join(' ')).toContain('\\operatorname{atan2}\\left(1,1\\right)');
+    expect(result.branchReadback?.branchesLatex.join(' ')).toContain('\\frac{a\\sqrt{2}}{2}');
     expect(result.exactSupplementLatex).toContain('-\\sqrt{2}\\le a\\le \\sqrt{2}');
     expect(result.exactSupplementLatex).toContain('n\\in\\mathbb{Z}');
   });

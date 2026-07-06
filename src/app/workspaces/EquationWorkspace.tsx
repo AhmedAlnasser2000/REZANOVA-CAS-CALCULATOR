@@ -1,4 +1,4 @@
-import { useRef, type MutableRefObject, type RefObject } from 'react';
+import { useRef, type RefObject } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
@@ -44,7 +44,7 @@ type EquationWorkspaceProps = {
   onHoverMenuIndex: (screen: 'home' | 'polynomialMenu' | 'simultaneousMenu', index: number) => void;
   system2: number[][];
   system3: number[][];
-  systemInputRefs: MutableRefObject<Record<string, HTMLElement | null>>;
+  systemInputRefs: RefObject<Record<string, HTMLElement | null>>;
   onSetSystemCell: (size: 2 | 3, row: number, column: number, value: number) => void;
   polynomialSystem2Latex: readonly [string, string];
   onSetPolynomialSystemEquation: (index: 0 | 1, latex: string) => void;
@@ -52,7 +52,7 @@ type EquationWorkspaceProps = {
   activePolynomialView: PolynomialEquationView | null;
   activePolynomialMeta: PolynomialMetaLike | null;
   activePolynomialCoefficients: number[] | null;
-  polynomialInputRefs: MutableRefObject<Record<string, HTMLInputElement | null>>;
+  polynomialInputRefs: RefObject<Record<string, HTMLInputElement | null>>;
   onSetPolynomialCoefficient: (view: PolynomialEquationView, index: number, value: number) => void;
   polynomialTemplateLatex: (view: PolynomialEquationView) => string;
   buildPolynomialEquationLatex: (view: PolynomialEquationView, coefficients: number[]) => string;

@@ -11,7 +11,7 @@ import {
 } from 'vitest';
 import {
   useRef,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 import type {
   DisplayOutcome,
@@ -27,7 +27,7 @@ function renderLinearAlgebraTableShell(
 ) {
   const currentModeRef = {
     current: initialProps.currentMode ?? 'matrix',
-  } as MutableRefObject<ModeId>;
+  } as RefObject<ModeId>;
   const clearReplayVariableSubstitutions = vi.fn();
   const commitOutcome = vi.fn();
   const discardHistoryTicket = vi.fn();

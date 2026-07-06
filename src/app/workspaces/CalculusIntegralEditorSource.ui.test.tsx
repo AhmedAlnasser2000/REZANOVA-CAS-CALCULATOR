@@ -73,7 +73,7 @@ describe('Calculus integral editor source', () => {
     expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 't^2');
 
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));
-    expect(writeTextSpy).toHaveBeenLastCalledWith('\\frac{t^{3}}{3}');
+    expect(writeTextSpy).toHaveBeenLastCalledWith('\\frac{t^{3}}{3}+C');
   });
 
   it('runs typed symbolic quotient products from the main integral editor', async () => {

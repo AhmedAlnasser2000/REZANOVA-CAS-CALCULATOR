@@ -437,13 +437,14 @@ describe('calculus integrals', () => {
     expect(result.error).toBe('This antiderivative could not be determined symbolically in Calculus.');
   });
 
-  it('keeps guarded Compute Engine fallback for simple single-variable indefinite integrals', () => {
+  it('keeps adopted simple single-variable indefinite integrals on app-owned symbolic rules', () => {
     const result = evaluateCalculusIndefiniteIntegral({
       bodyLatex: '\\sec(x)',
     });
     expect(result.error).toBeUndefined();
-    expect(result.resultOrigin).toBe('symbolic');
-    expect(result.integrationStrategy).toBe('compute-engine');
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.integrationStrategy).not.toBe('compute-engine');
+    expect(result.antiderivativeBackcheck?.status).toMatch(/verified-/);
   });
 
   it('supports improper convergent integrals', () => {

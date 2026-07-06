@@ -55,7 +55,7 @@ describe('equation complex route', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected Complex Off to preserve real-first behavior');
     }
-    expect(result.answerDomain).toBeUndefined();
+    expect(result.answerDomain).toBe('real');
   });
 
   it('solves bounded negative-discriminant quadratics exactly when Complex is enabled', () => {
@@ -77,15 +77,15 @@ describe('equation complex route', () => {
       complexExactForm: 'cis',
     });
 
-    expect(imaginaryUnit.exactLatex).toBe('x\\in\\left\\{-i\\right\\}');
+    expect(imaginaryUnit.exactLatex).toBe('x=-i');
     expect(imaginaryUnit.approxText).toBe('x ~= -i');
-    expect(plainImaginaryUnit.exactLatex).toBe('x\\in\\left\\{-i\\right\\}');
-    expect(mixedConstant.exactLatex).toBe('x\\in\\left\\{2+3i\\right\\}');
+    expect(plainImaginaryUnit.exactLatex).toBe('x=-i');
+    expect(mixedConstant.exactLatex).toBe('x=2+3i');
     expect(mixedConstant.approxText).toBe('x ~= 2 + 3i');
     expect(polarMixedConstant.exactLatex).toBe(
-      'x\\in\\left\\{\\sqrt{13}\\left(\\cos\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)+i\\sin\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)\\right)\\right\\}',
+      'x=\\sqrt{13}\\left(\\cos\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)+i\\sin\\left(\\arctan\\left(\\frac{3}{2}\\right)\\right)\\right)',
     );
-    expect(cisImaginaryUnit.exactLatex).toBe('x\\in\\left\\{\\operatorname{cis}\\left(-\\frac{\\pi}{2}\\right)\\right\\}');
+    expect(cisImaginaryUnit.exactLatex).toBe('x=\\operatorname{cis}\\left(-\\frac{\\pi}{2}\\right)');
     expect(mixedConstant.detailSections?.some((section) => section.title === 'Complex Linear Route')).toBe(true);
   });
 
@@ -261,7 +261,7 @@ describe('equation complex route', () => {
         throw new Error(`Expected ${equationLatex} to stop`);
       }
       expect(result.error).toContain('supported guarded complex preimage families');
-      expect(result.answerDomain).not.toBe('complex');
+      expect(result.answerDomain).not.toBe('real');
     }
   });
 
@@ -441,17 +441,19 @@ describe('equation complex route', () => {
       .toContain('Generated equation: x^4=-\\imaginaryI');
   });
 
-  it('does not fake exact complex answers for unsupported unfactorable cubic or quartic equations', () => {
+  it('uses bounded Complex formula routes for unfactorable cubic and quartic equations', () => {
     for (const equationLatex of ['x^3+8=5+x', 'x^4+x+1=0']) {
       const result = runEquationMode({
         ...makeRequest(equationLatex),
         equationDomainIntent: 'complex',
       });
-      expect(result.kind).toBe('error');
-      if (result.kind !== 'error') {
-        throw new Error(`Expected ${equationLatex} to stay unsupported`);
+      expect(result.kind).toBe('success');
+      if (result.kind !== 'success') {
+        throw new Error(`Expected ${equationLatex} to use bounded Complex formula solving`);
       }
-      expect(result.error).toContain('outside the supported exact symbolic solve families');
+      expect(result.answerDomain).toBe('complex');
+      expect(JSON.stringify(result)).toContain('Complex');
+      expect(JSON.stringify(result)).not.toContain('RootOf');
     }
   });
 

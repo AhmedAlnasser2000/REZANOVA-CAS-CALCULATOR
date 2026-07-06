@@ -254,7 +254,7 @@ describe('calculus core', () => {
     expect(result.integrationCandidate?.method).toBe('unsupported');
   });
 
-  it('keeps Compute Engine-only integral candidates separate from app-owned rules', () => {
+  it('keeps formerly Compute Engine-only integral candidates on app-owned rules once adopted', () => {
     const body = parse('\\sec(x)');
     const computed = parse('\\int \\sec(x)\\,dx').evaluate();
 
@@ -268,11 +268,10 @@ describe('calculus core', () => {
     });
 
     expect(result.error).toBeUndefined();
-    expect(result.resultOrigin).toBe('symbolic');
-    expect(result.integrationStrategy).toBe('compute-engine');
-    expect(result.integrationCandidate?.method).toBe('compute-engine');
-    expect(result.integrationCandidate?.requiredPrerequisites).toContain('compute-engine');
-    expect(result.integrationCandidate?.readinessNotes.join(' ')).toContain('separate from app-owned symbolic rules');
+    expect(result.resultOrigin).toBe('rule-based-symbolic');
+    expect(result.integrationStrategy).not.toBe('compute-engine');
+    expect(result.integrationCandidate?.method).not.toBe('compute-engine');
+    expect(result.antiderivativeBackcheck?.status).toMatch(/verified-/);
   });
 
   it('guards lazy Compute Engine fallback for parameter-heavy symbolic-variable integrals', () => {

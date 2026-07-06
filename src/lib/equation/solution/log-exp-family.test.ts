@@ -19,7 +19,7 @@ describe('Equation log/exp structured families', () => {
       }],
     }));
 
-    expect(rendered.exactLatex).toMatch(/\\ln|\\log_\{\\exponentialE\}/u);
+    expect(rendered.exactLatex).toMatch(/\\ln|\\log_\{(?:\\exponentialE|e)\}/u);
     expect(rendered.exactLatex).not.toContain('3.609');
   });
 

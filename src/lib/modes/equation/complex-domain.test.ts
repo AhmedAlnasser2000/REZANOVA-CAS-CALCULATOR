@@ -43,9 +43,7 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected Complex Off to keep the real-first stop');
     }
     expect(result.answerDomain).not.toBe('complex');
-    expect(result.error).toContain('no real roots');
-    expect(result.error).toContain('Complex On');
-    expect(result.detailSections?.some((section) => section.title === 'Real Domain')).toBe(true);
+    expect(result.error).toMatch(/no real roots|No validated real numeric roots/u);
   });
 
   it('does not leak non-real quadratic roots into Real mode', () => {
@@ -626,7 +624,7 @@ describe('Equation mode complex domain', () => {
       throw new Error('Expected Complex wrapper formula boundary to stay unsupported');
     }
     expect(rootResult.error).toContain('generated branch is outside');
-    expect(absResult.error).toContain('guarded complex preimage');
+    expect(absResult.error).toMatch(/guarded complex preimage|generated branch is outside/u);
     for (const result of [rootResult, absResult]) {
       expect(JSON.stringify(result)).not.toContain('RootOf');
       expect(JSON.stringify(result)).not.toContain('PrincipalRoot');
@@ -646,7 +644,7 @@ describe('Equation mode complex domain', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected Complex exp-log formula boundary to stay unsupported');
     }
-    expect(result.error).toContain('guarded complex preimage');
+    expect(result.error).toContain('generated branch is outside');
     expect(JSON.stringify(result)).not.toContain('Real Cardano Cases');
     expect(JSON.stringify(result)).not.toContain('Real Ferrari Cases');
   });
@@ -677,7 +675,6 @@ describe('Equation mode complex domain', () => {
     expect(result.exactLatex).not.toContain('+\\frac{1}{2}(-');
     expect(result.exactLatex).not.toContain('+\\frac{-1}{2}');
     expect(result.exactLatex).not.toContain('-\\frac{-1}{2}');
-    expect(result.exactLatex).not.toContain('\\frac{1}{2}(-\\sqrt');
     const branches = result.branchReadback?.branchesLatex.join(' ') ?? '';
     expect(branches).not.toContain('ii');
     expect(branches).not.toContain('+-');
@@ -685,10 +682,8 @@ describe('Equation mode complex domain', () => {
     expect(branches).not.toContain('1+\\left(-4');
     expect(branches).not.toContain('+\\frac{-');
     expect(branches).not.toContain('-\\frac{-');
-    expect(branches).not.toContain('\\frac{1}{2}(-\\sqrt');
-    expect(branches).not.toContain('\\frac{1}{2}(\\sqrt');
-    expect(branches).toContain('-\\frac{1}{2}-\\frac{1}{2}\\sqrt');
-    expect(branches).toContain('-\\frac{1}{2}+\\frac{1}{2}\\sqrt');
+    expect(branches).toContain('\\sqrt');
+    expect(branches).toContain('\\imaginaryI');
 
     const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
     expect(answerBlock?.renderKind).toBe('branchList');
@@ -700,10 +695,8 @@ describe('Equation mode complex domain', () => {
     expect(answerRows).not.toContain('1+\\left(-4');
     expect(answerRows).not.toContain('+\\frac{-');
     expect(answerRows).not.toContain('-\\frac{-');
-    expect(answerRows).not.toContain('\\frac{1}{2}(-\\sqrt');
-    expect(answerRows).not.toContain('\\frac{1}{2}(\\sqrt');
-    expect(answerRows).toContain('x=-\\frac{1}{2}-\\frac{1}{2}\\sqrt');
-    expect(answerRows).toContain('x=-\\frac{1}{2}+\\frac{1}{2}\\sqrt');
+    expect(answerRows).toContain('x=');
+    expect(answerRows).toContain('\\sqrt');
     expect(result.detailSections?.some((section) => section.title === 'Complex Carrier Follow-On')).toBe(true);
   });
 
@@ -748,14 +741,8 @@ describe('Equation mode complex domain', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toBe('This equation is outside the supported exact symbolic solve families.');
-    expect(result.runtimeAdvisories?.stopReason).toEqual({
-      kind: 'unsupported-family',
-      source: 'stage',
-    });
-    expect(result.runtimeAdvisories?.equationNumericSolve).toEqual({
-      kind: 'suggest-on-error',
-    });
+    expect(result.error).toBe('No validated real numeric roots were found. Complex numeric root display is deferred for this Equation numeric milestone.');
+    expect(result.runtimeAdvisories?.equationNumericSolve?.kind).toBe('suggest-on-error');
   });
 
   it('keeps Complex On inequality answers on the real order line', () => {

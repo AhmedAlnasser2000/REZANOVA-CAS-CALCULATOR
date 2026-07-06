@@ -71,7 +71,6 @@ function defaultGuideSelection(): GuideSelectionState {
 export function useGuideRuntime({
   closeHistoryPanel,
   closeLauncher,
-  currentMode: _currentMode,
   enabledCapabilities,
   openGuidePage,
   openLauncher,

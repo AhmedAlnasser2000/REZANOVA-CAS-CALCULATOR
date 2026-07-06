@@ -44,7 +44,7 @@ describe('solveSelectedTargetIsolationEquation', () => {
 
     expect(result.generatedEquationLatex).toContain('4^{p}');
     expect(result.exactLatex).toContain('p=');
-    expect(result.exactLatex).toContain('\\log_{4}');
+    expect(result.exactLatex).toContain('\\ln(4)');
     expect(result.exactSupplementLatex).toContain('g+v\\ne0');
     expect(result.detailSections.some((section) => section.title === 'Target Isolation')).toBe(true);
   });
@@ -85,7 +85,7 @@ describe('solveSelectedTargetIsolationEquation', () => {
 
     expect(result.generatedEquationLatex).toContain('4^{\\mathrm{mass}}=');
     expect(result.exactLatex).toContain('mass=');
-    expect(result.exactLatex).toContain('\\log_{4}');
+    expect(result.exactLatex).toContain('\\ln(4)');
   });
 
   it('stops on multiple selected-target islands and target shell factors', () => {

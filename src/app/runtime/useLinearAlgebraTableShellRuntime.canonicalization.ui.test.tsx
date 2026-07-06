@@ -11,13 +11,13 @@ import {
 } from 'vitest';
 import {
   useRef,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 import type { ModeId } from '../../types/calculator';
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
 
 function renderLinearAlgebraTableShell(initialMode: ModeId) {
-  const currentModeRef = { current: initialMode } as MutableRefObject<ModeId>;
+  const currentModeRef = { current: initialMode } as RefObject<ModeId>;
   const commitOutcome = vi.fn();
   const hook = renderHook(
     (props: { currentMode: ModeId }) => {

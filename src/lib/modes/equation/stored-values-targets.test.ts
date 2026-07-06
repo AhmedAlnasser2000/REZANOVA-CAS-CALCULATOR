@@ -287,7 +287,7 @@ describe('Equation mode stored values and targets', () => {
       throw new Error('Expected a success outcome');
     }
     expect(exponential.exactLatex).toContain('p=');
-    expect(exponential.exactLatex).toContain('\\log_{4}');
+    expect(exponential.exactLatex).toContain('\\ln(4)');
     expect(exponential.exactSupplementLatex).toContain('g+v\\ne0');
     expect(exponential.detailSections?.some((section) => section.title === 'Target Isolation')).toBe(true);
 
@@ -318,7 +318,7 @@ describe('Equation mode stored values and targets', () => {
       throw new Error('Expected a success outcome');
     }
     expect(result.exactLatex).toContain('\\mathrm{mass}=');
-    expect(result.exactLatex).toContain('\\log_{4}');
+    expect(result.exactLatex).toContain('\\ln(4)');
   });
 
   it('reports isolation boundaries for multiple target islands and target shell factors', () => {

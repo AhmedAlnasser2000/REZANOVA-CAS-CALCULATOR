@@ -5,7 +5,7 @@ import {
 } from '@testing-library/react';
 import {
   useRef,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 import {
   describe,
@@ -20,7 +20,7 @@ import type {
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
 
 function renderVectorRuntime() {
-  const currentModeRef = { current: 'vector' } as MutableRefObject<ModeId>;
+  const currentModeRef = { current: 'vector' } as RefObject<ModeId>;
   const commitOutcome = vi.fn();
   const hook = renderHook(() => useLinearAlgebraTableShellRuntime({
     activeFieldRef: useRef(null),

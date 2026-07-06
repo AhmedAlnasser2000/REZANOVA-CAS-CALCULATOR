@@ -8,12 +8,17 @@ export function usePendingElapsedNow(active: boolean) {
       return undefined;
     }
 
-    setElapsedNowMs(Date.now());
+    const refreshTimeoutId = window.setTimeout(() => {
+      setElapsedNowMs(Date.now());
+    }, 0);
     const intervalId = window.setInterval(() => {
       setElapsedNowMs(Date.now());
     }, 250);
 
-    return () => window.clearInterval(intervalId);
+    return () => {
+      window.clearTimeout(refreshTimeoutId);
+      window.clearInterval(intervalId);
+    };
   }, [active]);
 
   return elapsedNowMs;

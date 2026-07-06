@@ -166,17 +166,14 @@ export function HistoryPanel({
   const { strings } = useLanguage();
   const historyText = strings.history;
   const rows = useMemo(() => {
-    let committedRows = 0;
-    return buildHistoryLaunchRows(history, pendingHistory).filter((row) => {
-      if (row.kind === 'pending') {
-        return true;
-      }
-      if (committedRows >= QUICK_HISTORY_COMMITTED_ROW_LIMIT) {
-        return false;
-      }
-      committedRows += 1;
-      return true;
-    });
+    const launchRows = buildHistoryLaunchRows(history, pendingHistory);
+    const committedRowIds = new Set(
+      launchRows
+        .filter((row) => row.kind === 'entry')
+        .slice(0, QUICK_HISTORY_COMMITTED_ROW_LIMIT)
+        .map((row) => row.entry.id),
+    );
+    return launchRows.filter((row) => row.kind === 'pending' || committedRowIds.has(row.entry.id));
   }, [history, pendingHistory]);
   return (
     <aside

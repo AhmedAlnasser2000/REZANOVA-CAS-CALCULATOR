@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import type {
   DisplayOutcome,
   HistoryEntry,
@@ -80,7 +80,7 @@ function renderCalculusRuntime(
 ) {
   const currentModeRef = {
     current: initialProps.currentMode ?? 'calculus',
-  } as MutableRefObject<ModeId>;
+  } as RefObject<ModeId>;
   const clearReplayVariableSubstitutions = vi.fn();
   const commitOutcome = vi.fn();
   const discardHistoryTicket = vi.fn();
@@ -616,7 +616,7 @@ describe('useCalculusRuntime', () => {
       id: 'history.calculus.implicit',
       mode: 'calculus',
       inputLatex: '\\operatorname{implicitD}_{y,x}\\left(x^2+y^2=25\\right)',
-      resultLatex: '\\frac{dy}{dx}=\\frac{-x}{y}',
+      resultLatex: '\\frac{dy}{dx}=-\\frac{x}{y}',
       calculusScreen: 'implicitDerivative',
       calculusSeed: {
         relationLatex: 'x^2+y^2=25',

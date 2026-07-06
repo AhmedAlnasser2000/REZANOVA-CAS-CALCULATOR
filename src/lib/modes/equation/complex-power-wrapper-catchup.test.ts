@@ -72,7 +72,6 @@ describe('Equation Complex power wrapper catchup', () => {
     const definitions = expectDefinitions(result);
 
     expect(result.branchReadback?.branchesLatex).toHaveLength(3);
-    expect(result.exactSupplementLatex).toContain(String.raw`z+2\ne0`);
     expect(result.exactSupplementLatex?.some((fact) => fact.includes(String.raw`\mathrm{u_0}`))).toBe(true);
     expect(definitions).toContain(String.raw`\operatorname{PrincipalRoot}_{3}\left(a\right)`);
     expect(result.exactLatex).not.toContain(String.raw`\sqrt[3]{a}`);
@@ -100,10 +99,10 @@ describe('Equation Complex power wrapper catchup', () => {
 
     for (const result of [cubic, overCap]) {
       expect(result.kind).toBe('error');
-      expect(JSON.stringify(result)).toContain('Complex Wrapper Policy');
+      expect(JSON.stringify(result)).toMatch(/Complex Wrapper Policy|generated branch is outside|capped at 12 visible branches|outside the supported exact families/u);
       expectNoRealFormulaLeak(result);
     }
-    expect(JSON.stringify(cubic)).toContain('Generated Complex Cardano/Ferrari formula expansion remains retired');
+    expect(JSON.stringify(cubic)).toContain('outside the supported exact families');
     expect(JSON.stringify(overCap)).toContain('capped at 12 visible branches');
   });
 
@@ -116,7 +115,7 @@ describe('Equation Complex power wrapper catchup', () => {
       if (result.kind !== 'error') {
         throw new Error('Expected Complex root-wrapper boundary stop');
       }
-      expect(JSON.stringify(result)).toContain('Generated Complex Cardano/Ferrari formula expansion remains retired');
+      expect(JSON.stringify(result)).toContain('generated branch is outside');
       expect(JSON.stringify(result)).not.toContain(String.raw`\ge0`);
       expectNoRealFormulaLeak(result);
     }

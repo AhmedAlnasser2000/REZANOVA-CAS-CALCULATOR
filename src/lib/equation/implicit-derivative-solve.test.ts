@@ -18,12 +18,12 @@ describe('solveImplicitDerivativePlaceholder', () => {
       throw new Error(result.message);
     }
 
-    expect(result.placeholderExactLatex).toBe('u=\\frac{-x}{y}');
-    expect(result.exactLatex).toBe('\\frac{dy}{dx}=\\frac{-x}{y}');
-    expect(result.rhsLatex).toBe('\\frac{-x}{y}');
+    expect(result.placeholderExactLatex).toBe('u=-\\frac{x}{y}');
+    expect(result.exactLatex).toBe('\\frac{dy}{dx}=-\\frac{x}{y}');
+    expect(result.rhsLatex).toBe('-\\frac{x}{y}');
     expect(result.exactSupplementLatex).toEqual(['2y\\ne0']);
     expect(result.detailSections[0]?.title).toBe('Implicit Derivative Solve');
-    expect(result.detailSections[0]?.lines.join(' ')).toContain('Mapped result: \\frac{dy}{dx}=\\frac{-x}{y}');
+    expect(result.detailSections[0]?.lines.join(' ')).toContain('Mapped result: \\frac{dy}{dx}=-\\frac{x}{y}');
   });
 
   it('solves the xy plus sin y textbook implicit derivative relation', () => {

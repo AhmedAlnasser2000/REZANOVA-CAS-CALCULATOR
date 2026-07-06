@@ -256,10 +256,9 @@ describe('Calculus derivative editor source', () => {
 
     await openCalculusTool(user, 'Derivatives', 'Derivative');
 
-    setMathFieldLatex('main-editor', 'd^3/dt^3(t^5)');
-    expect(screen.getByTestId('calculus-main-editor-context')).toHaveTextContent('d³/dt³');
-    expect(screen.getByTestId('calculus-operator-rail')).toHaveTextContent('f(t)');
-    expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Applied t → t → t');
+    setMathFieldLatex('main-editor', '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)');
+    await waitFor(() =>
+      expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Applied t → t → t'));
     expect(screen.getByTestId('calculus-derivative-readback')).toHaveTextContent('Body t^5');
 
     const generatedPreview = document.querySelector('.generated-preview-card');

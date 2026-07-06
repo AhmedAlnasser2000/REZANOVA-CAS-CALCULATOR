@@ -25,7 +25,10 @@ export function isConnectedLatexEditorTarget(field: unknown): field is Mathfield
   if (!(isLatexInsertTarget(field) || isLatexValueTarget(field))) {
     return false;
   }
-  return !(field instanceof HTMLElement) || field.isConnected;
+  if (typeof HTMLElement === 'undefined' || !(field instanceof HTMLElement)) {
+    return true;
+  }
+  return field.isConnected;
 }
 
 export function resolveLatexEditorTarget(

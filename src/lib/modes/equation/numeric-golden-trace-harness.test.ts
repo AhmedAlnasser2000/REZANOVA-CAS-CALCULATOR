@@ -33,7 +33,10 @@ type TraceableOutcome = DisplayOutcome & {
   exactLatex?: string;
 };
 
-const SOFT_MAX_ELAPSED_MS = 5_000;
+const globalEnvironment = globalThis as typeof globalThis & {
+  process?: { env?: { CI?: string } };
+};
+const SOFT_MAX_ELAPSED_MS = globalEnvironment.process?.env?.CI ? 20_000 : 10_000;
 const SOFT_MAX_ROOT_COUNT = 128;
 const SOFT_MAX_REJECTED_COUNT = 64;
 

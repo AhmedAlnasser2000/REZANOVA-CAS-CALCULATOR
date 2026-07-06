@@ -1,7 +1,7 @@
 import {
   useRef,
   useState,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import {
@@ -97,7 +97,7 @@ type UseCalculusRuntimeOptions = {
   ansLatex: string;
   commitOutcome: CommitCalculusOutcome;
   currentMode: ModeId;
-  currentModeRef: MutableRefObject<ModeId>;
+  currentModeRef: RefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   getWorkspaceInstances?: () => readonly WorkspaceInstance[];

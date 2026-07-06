@@ -1,6 +1,6 @@
 import type { MathfieldElement } from 'mathlive';
 import type { VirtualKeyboardLayout } from 'mathlive';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
@@ -16,7 +16,7 @@ type TableWorkspaceProps = {
   tableStep: number;
   tableResponse: TableResponse | null;
   tableKeyboardLayouts: readonly VirtualKeyboardLayout[];
-  activeFieldRef: MutableRefObject<MathfieldElement | null>;
+  activeFieldRef: RefObject<MathfieldElement | null>;
   onOpenGuideMode: (mode: 'table') => void;
   onOpenGuideArticle: (articleId: string) => void;
   onSetTablePrimaryLatex: (latex: string) => void;

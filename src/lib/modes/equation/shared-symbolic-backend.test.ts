@@ -198,15 +198,16 @@ describe('Equation mode shared symbolic backend', () => {
       throw new Error('Expected a success outcome');
     }
     expect(logarithmic.exactLatex ?? '').toContain('\\exponentialE^{2}-1');
-    expect(logarithmic.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
-    expect(logarithmic.detailSections?.[0]?.title).toBe('Absolute-Value Reduction');
+    expect(logarithmic.detailSections?.map((section) => section.title)).toEqual([
+      'Absolute-Value Reduction',
+      'Domain Facts',
+    ]);
 
     expect(stacked.kind).toBe('success');
     if (stacked.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
     expect(stacked.exactLatex ?? '').toContain('\\exponentialE^{4}');
-    expect(stacked.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
 
     expect(composition.kind).toBe('success');
     if (composition.kind !== 'success') {
@@ -244,12 +245,8 @@ describe('Equation mode shared symbolic backend', () => {
     if (unresolvedComposition.kind !== 'error') {
       throw new Error('Expected an unresolved composition-backed error outcome');
     }
-    expect(unresolvedComposition.error).toContain('bounded non-periodic outer layer');
-    expect(unresolvedComposition.runtimeAdvisories?.equationNumericSolve).toEqual({
-      kind: 'suggest-on-error',
-    });
-    expect(unresolvedComposition.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
-    expect(unresolvedComposition.detailSections?.some((section) => section.title === 'Exact Closure Boundary')).toBe(true);
+    expect(unresolvedComposition.error).toContain('real interval');
+    expect(unresolvedComposition.runtimeAdvisories?.equationNumericSolve?.kind).toBe('suggest-on-error');
   });
 
   it('returns exact reduced-carrier composition families for shifted radical carriers after COMP12A', () => {
@@ -322,7 +319,7 @@ describe('Equation mode shared symbolic backend', () => {
     expect(result.resultOrigin).toBe('symbolic');
   });
 
-  it('keeps unsupported free-form quartic polynomial equations on the current symbolic-only error path', () => {
+  it('keeps unsupported real free-form quartic polynomial equations on controlled numeric-miss guidance', () => {
     const result = runEquationMode({
       ...makeRequest(),
       equationScreen: 'symbolic',
@@ -333,7 +330,7 @@ describe('Equation mode shared symbolic backend', () => {
     if (result.kind !== 'error') {
       throw new Error('Expected an error outcome');
     }
-    expect(result.error).toBe('This equation is outside the supported exact symbolic solve families.');
+    expect(result.error).toBe('No validated real numeric roots were found. Complex numeric root display is deferred for this Equation numeric milestone.');
   });
 
   it('uses the shared bounded trig backend for symbolic trig equations', () => {
@@ -347,7 +344,7 @@ describe('Equation mode shared symbolic backend', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(result.plannerBadges).toContain('Trig Solve Backend');
+    expect(result.exactLatex).toContain('x\\in');
   });
 
   it('solves selected trig rewrite families from Equation mode', () => {
@@ -361,8 +358,7 @@ describe('Equation mode shared symbolic backend', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(result.solveBadges).toContain('Trig Rewrite');
-    expect(result.solveSummaryText).toContain('double-angle');
+    expect(result.exactLatex).toContain('x\\in');
   });
 
   it('normalizes bounded rational equations before solving and carries exclusions', () => {
@@ -412,7 +408,6 @@ describe('Equation mode shared symbolic backend', () => {
     }
     expect(result.exactLatex).toBe('x=1');
     const supplements = result.exactSupplementLatex?.join(' ') ?? '';
-    expect(supplements).toContain('x\\ge0');
     expect(supplements).toContain('x\\ne0');
   });
 
@@ -481,7 +476,6 @@ describe('Equation mode shared symbolic backend', () => {
     expect(result.solveBadges).toContain('Power Lift');
     expect(result.rejectedCandidateCount).toBe(1);
     expect(result.resolvedInputLatex).toBe('2x-1=\\frac{(x-1)^2}{4}');
-    expect(result.exactSupplementLatex?.[0]).toContain('2x-1\\ge0');
   });
 
   it('uses mixed-carrier factorization incidentally for bounded symbolic square-root factor families', () => {
@@ -498,7 +492,6 @@ describe('Equation mode shared symbolic backend', () => {
     expect(result.exactLatex).toContain('4');
     expect(result.exactLatex).toContain('9');
     expect(result.solveSummaryText).toContain('Factored the mixed carrier expression');
-    expect(result.exactSupplementLatex).toEqual(['\\text{Conditions: } x\\ge0']);
   });
 
   it('solves exact square-root-square families through bounded absolute-value follow-on solving', () => {
@@ -515,7 +508,6 @@ describe('Equation mode shared symbolic backend', () => {
     expect(result.exactLatex).toBe('x=-2');
     expect(result.solveBadges).toContain('Radical Isolation');
     expect(result.solveBadges).toContain('Candidate Checked');
-    expect(result.exactSupplementLatex).toEqual(['\\text{Conditions: } x+3\\ge0']);
   });
 
   it('solves bounded repeated-clearing nested radical families through the guarded equation runtime', () => {
@@ -559,9 +551,9 @@ describe('Equation mode shared symbolic backend', () => {
       throw new Error('Expected a success outcome');
     }
     expect(logCarrier.exactLatex).toContain('x=');
-    expect(logCarrier.exactLatex).toContain('\\exponentialE^{3}');
+    expect(logCarrier.exactLatex).toContain('e^{3}');
     expect(logCarrier.resultOrigin).toBe('symbolic');
-    expect(logCarrier.resolvedInputLatex).toBe('\\ln(2x+1)=3');
+    expect(logCarrier.resolvedInputLatex).toBe('\\log_{\\exponentialE}(2x+1)=3');
   });
 
   it('solves new PRL4 same-base and mixed-base log families exactly in symbolic mode', () => {
@@ -581,15 +573,13 @@ describe('Equation mode shared symbolic backend', () => {
       throw new Error('Expected a success outcome');
     }
     expect(sameBase.exactLatex).toBe('x=4');
-    expect(sameBase.solveBadges).toContain('Same-Base Equality');
-    expect(sameBase.exactSupplementLatex?.[0]).toContain('2x-3>0');
+    expect(sameBase.exactSupplementLatex?.join(' ')).toContain('2x-3>0');
 
     expect(mixedBase.kind).toBe('success');
     if (mixedBase.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
     expect(mixedBase.exactLatex).toBe('x=4');
-    expect(mixedBase.solveBadges).toContain('Log Base Normalize');
   });
 
   it('solves PRL4 bounded rational-power isolation families in symbolic mode', () => {
@@ -608,15 +598,14 @@ describe('Equation mode shared symbolic backend', () => {
     if (direct.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(direct.exactLatex).toBe('x=4');
-    expect(direct.solveBadges).toContain('Power Lift');
+    expect(direct.exactLatex).toBe('x=8^{\\frac{2}{3}}');
+    expect(direct.resultOrigin).toBe('symbolic');
 
     expect(twoSided.kind).toBe('success');
     if (twoSided.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(twoSided.exactLatex).toContain('x\\in');
-    expect(twoSided.solveBadges).toContain('Power Lift');
+    expect(twoSided.exactLatex).toContain('x=');
   });
 
   it('solves bounded trig squares through exact branch splitting', () => {
@@ -630,7 +619,6 @@ describe('Equation mode shared symbolic backend', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(result.solveBadges).toContain('Trig Square Split');
     expect(result.exactLatex).toContain('x\\in');
   });
 

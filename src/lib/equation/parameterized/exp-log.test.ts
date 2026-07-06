@@ -322,6 +322,13 @@ describe('solveParameterizedExpLogEquation', () => {
     expect(result.exactSupplementLatex).toEqual(['a+z>0', 'b>0']);
   });
 
+  it('rejects same-base logarithmic equalities whose algebraic candidate violates the real domain', () => {
+    const result = expectUnsupported('\\ln(4x+2)=\\ln(5x+6)', 'x');
+
+    expect(result.reason).toBe('domain-empty');
+    expect(result.message).toContain('undefined in the real domain');
+  });
+
   it('solves target-free symbolic-base exponential target equations', () => {
     const result = expectSuccess('a^z=b', 'z');
 

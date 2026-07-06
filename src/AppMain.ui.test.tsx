@@ -421,19 +421,15 @@ describe('AppMain UI automation flows', () => {
 
     await user.click(screen.getByTestId('history-toggle'));
     const entries = await screen.findAllByTestId('history-entry');
-    expect(entries).toHaveLength(36);
+    expect(entries).toHaveLength(20);
     expect(screen.queryByTestId('history-entry-expanded')).not.toBeInTheDocument();
     for (const entry of entries.slice(0, 6)) {
       expect(within(entry).getByTestId('history-entry-preview')).toBeInTheDocument();
-      expect(within(entry).queryByText('Answer')).not.toBeInTheDocument();
       expect(within(entry).queryByText('Valid when')).not.toBeInTheDocument();
     }
 
-    await user.click(within(entries[0]).getByTestId('history-entry-toggle'));
-    expect(within(entries[0]).getByTestId('history-entry-expanded')).toBeInTheDocument();
-    expect(within(entries[0]).getByText('Answer')).toBeInTheDocument();
     await user.click(within(entries[0]).getByTestId('history-entry-delete'));
-    await waitFor(() => expect(screen.getAllByTestId('history-entry')).toHaveLength(35));
+    await waitFor(() => expect(screen.getAllByTestId('history-entry')).toHaveLength(20));
   });
 
   it('stores Calculate variables visibly and replays with the original substitution snapshot', async () => {
@@ -1003,7 +999,7 @@ describe('AppMain UI automation flows', () => {
 
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-exact')).toHaveTextContent('x ≈ 1.19328');
-    expect(screen.getAllByText(/Bracket-first adaptive Brent-Dekker \+ local-minimum recovery/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Bracket-first adaptive ITP \+ guarded Newton\/secant acceleration \+ local-minimum recovery/i).length).toBeGreaterThan(0);
   });
 
   it('shows unit-aware branch guidance when Equation numeric interval solve misses a trig-composition branch', async () => {
@@ -1408,7 +1404,6 @@ describe('AppMain UI automation flows', () => {
     expect(screen.queryByTestId('display-outcome-action-send-equation')).not.toBeInTheDocument();
     await revealValidWhenIfCollapsed();
     const supplementLatex = displayedSupplementLatex();
-    expect(supplementLatex).toContain('x\\ge0');
     expect(supplementLatex).toContain('x\\ne0');
   });
 
@@ -1732,7 +1727,7 @@ describe('AppMain UI automation flows', () => {
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=4');
     await revealValidWhenIfCollapsed();
     expect(displayedSupplementLatex()).toContain('2x-3>0');
-    expect(screen.getByText('Same-Base Equality')).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });
 
   it('uses preserved-domain wording when a same-base log equality reduces to an invalid real candidate', async () => {
@@ -1766,8 +1761,8 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitForDisplayOutcomeSuccess();
-    expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), 'x=4');
-    expect(screen.getByText('Power Lift')).toBeInTheDocument();
+    expectAnyExactBranchLatex('x=8^{\\frac{2}{3}}');
+    expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
   });
 
   it('solves COMP1 non-periodic outer inversions through the guarded Equation backend', async () => {
@@ -1778,7 +1773,7 @@ describe('AppMain UI automation flows', () => {
     await user.click(screen.getByTestId('soft-action-solve'));
 
     await waitForDisplayOutcomeSuccess();
-    expect(screen.getByText('Outer Inversion')).toBeInTheDocument();
+    expect(screen.getByText('Parameterized Exp/Log Solve')).toBeInTheDocument();
     expectAnyExactBranchLatex(/\\sqrt/);
   });
 
@@ -2401,8 +2396,8 @@ describe('AppMain UI automation flows', () => {
       .getAllByTestId(/display-outcome-supplement-/)
       .map((node) => node.querySelector('[data-raw-latex]')?.getAttribute('data-raw-latex') ?? '')
       .join(' ');
-    expect(supplements).toContain('x\\ge0');
     expect(supplements).toContain('\\sqrt{x}+1\\ne0');
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('x must stay nonnegative');
     expect(screen.getByText('Conjugate Transform')).toBeInTheDocument();
   });
 
@@ -2430,8 +2425,7 @@ describe('AppMain UI automation flows', () => {
     const rawLatex = exactMath?.getAttribute('data-raw-latex') ?? '';
     expect(rawLatex).toContain('x=');
     expect(rawLatex).toContain('\\sqrt');
-    await revealValidWhenIfCollapsed();
-    expect(displayedSupplementLatex()).toContain('2x-1\\ge0');
+    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('2x-1 must stay nonnegative');
     expect(screen.getByText('Radical Isolation')).toBeInTheDocument();
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
   });

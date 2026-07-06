@@ -1,7 +1,7 @@
 import {
   useRef,
   useState,
-  type MutableRefObject,
+  type RefObject,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import {
@@ -72,11 +72,11 @@ type CommitTrigonometryOutcome = (
 ) => void;
 
 type UseTrigonometryRuntimeOptions = {
-  activeFieldRef: MutableRefObject<MathfieldElement | null>;
+  activeFieldRef: RefObject<MathfieldElement | null>;
   angleUnit: AngleUnit;
   commitOutcome: CommitTrigonometryOutcome;
   currentMode: ModeId;
-  currentModeRef: MutableRefObject<ModeId>;
+  currentModeRef: RefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   getWorkspaceInstances?: () => readonly WorkspaceInstance[];

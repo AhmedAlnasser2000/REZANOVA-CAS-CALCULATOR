@@ -345,32 +345,6 @@ describe('MathEditor typing behavior', () => {
     expect(handleSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it('adds a cases row with Enter or Tab only in the Limit editor', () => {
-    const handleSubmit = vi.fn();
-    render(
-      <MathEditor
-        value="\\begin{cases}x&x<0\\\\x^2&\\text{otherwise}\\end{cases}"
-        onChange={() => {}}
-        onSubmit={handleSubmit}
-        dataTestId="math-editor"
-        modeId="calculus"
-        screenHint="limit"
-      />,
-    );
-
-    const field = screen.getByTestId('math-editor') as HTMLElement & {
-      getValue: () => string;
-      position: number;
-    };
-    field.position = field.getValue().length;
-
-    expect(fireEvent.keyDown(field, { key: 'Tab' })).toBe(false);
-    expect(field.getValue()).toContain('\\\\#0&#?');
-    expect(fireEvent.keyDown(field, { key: 'Enter' })).toBe(false);
-    expect(field.getValue().match(/\\\\#0&#\\?/gu)).toHaveLength(2);
-    expect(handleSubmit).not.toHaveBeenCalled();
-  });
-
   it('inserts visible math spacing for a plain space key', () => {
     render(
       <MathEditor

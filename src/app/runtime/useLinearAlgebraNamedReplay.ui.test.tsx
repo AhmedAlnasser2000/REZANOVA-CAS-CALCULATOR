@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
-import { useRef, type MutableRefObject } from 'react';
+import { useRef, type RefObject } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { HistoryEntry, ModeId } from '../../types/calculator';
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
 
 function renderLinearAlgebraTableShell(currentMode: ModeId = 'matrix') {
-  const currentModeRef = { current: currentMode } as MutableRefObject<ModeId>;
+  const currentModeRef = { current: currentMode } as RefObject<ModeId>;
   const hook = renderHook(
     (props: { currentMode: ModeId }) => {
       currentModeRef.current = props.currentMode;

@@ -60,7 +60,7 @@ describe('Risch-Norman symbolic trig product-to-sum', () => {
     expect(supplements(reordered)).toContain('a-c\\ne0');
 
     const same = success('\\sin(a x+b)\\cos(a x+b)');
-    expect(same.strategy).toBe('direct-rule');
+    expect(same.strategy).toBe('u-substitution');
     expect(same.exactLatex).toContain('\\sin');
     expect(supplements(same)).toContain('a\\ne0');
   });

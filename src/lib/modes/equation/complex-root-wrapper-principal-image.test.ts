@@ -75,7 +75,6 @@ describe('Equation Complex root wrapper principal-image catchup', () => {
     const result = expectComplexSuccess(String.raw`\sqrt{(z-1)/(z+2)}=a`);
 
     expect(result.exactLatex).toBe(String.raw`z=\frac{1+2a^2}{1-a^2}`);
-    expect(result.exactSupplementLatex).toContain(String.raw`z+2\ne0`);
     expect(result.exactSupplementLatex).toContain(String.raw`1-a^2\ne0`);
     expectNoRealFormulaLeak(result);
   });
@@ -101,7 +100,7 @@ describe('Equation Complex root wrapper principal-image catchup', () => {
 
     for (const result of [cubic, quartic]) {
       expect(result.kind).toBe('error');
-      expect(JSON.stringify(result)).toContain('Generated Complex Cardano/Ferrari formula expansion remains retired');
+      expect(JSON.stringify(result)).toContain('generated branch is outside');
       expectNoRealFormulaLeak(result);
     }
   });

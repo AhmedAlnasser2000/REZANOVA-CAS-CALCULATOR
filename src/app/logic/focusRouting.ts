@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { MutableRefObject, RefObject } from 'react';
+import type { RefObject } from 'react';
 import type { EquationScreen, ModeId } from '../../types/calculator';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
 
@@ -23,7 +23,7 @@ type FocusCurrentSurfaceDeps = {
   statisticsRouteMeta: RouteMetaLike | null;
   guideRouteMeta: RouteMetaLike | null;
   equationRouteMeta: RouteMetaLike | null;
-  activeFieldRef: MutableRefObject<any>;
+  activeFieldRef: RefObject<any>;
   mainFieldRef: RefObject<any>;
   calculateMenuPanelRef: RefObject<HTMLDivElement | null>;
   derivativeFieldRef: RefObject<any>;
@@ -77,8 +77,8 @@ type FocusCurrentSurfaceDeps = {
   guideMenuPanelRef: RefObject<HTMLDivElement | null>;
   guideSearchInputRef: RefObject<HTMLInputElement | null>;
   equationMenuPanelRef: RefObject<HTMLDivElement | null>;
-  polynomialInputRefs: MutableRefObject<Record<string, HTMLInputElement | null>>;
-  systemInputRefs: MutableRefObject<Record<string, HTMLElement | null>>;
+  polynomialInputRefs: RefObject<Record<string, HTMLInputElement | null>>;
+  systemInputRefs: RefObject<Record<string, HTMLElement | null>>;
   focusTrigEditor: () => void;
   focusGeometryEditor: () => void;
   focusStatisticsEditor: () => void;

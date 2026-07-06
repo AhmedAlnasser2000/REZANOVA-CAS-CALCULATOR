@@ -17,7 +17,6 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import {
-  useEffect,
   useCallback,
   memo,
   useMemo,
@@ -514,12 +513,6 @@ export function HistoryPage({
     rows.slice(visibleRange.startIndex, visibleRange.endIndex),
   [rows, visibleRange.endIndex, visibleRange.startIndex]);
   const shownStart = rows.length === 0 ? 0 : visibleRange.startIndex + 1;
-
-  useEffect(() => {
-    if (!selectedRowId && rows[0]) {
-      setSelectedRowId(rows[0].id);
-    }
-  }, [rows, selectedRowId]);
 
   const entryIdsInRange = useCallback((fromRowId: string, toRowId: string) => {
     const fromIndex = rows.findIndex((row) => row.id === fromRowId);

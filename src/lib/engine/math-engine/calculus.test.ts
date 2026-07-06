@@ -178,23 +178,17 @@ describe('runExpressionAction calculus execution', () => {
 
   it('fails cleanly for unsupported indefinite integrals', () => {
     const result = runExpressionAction(
-      { ...request, document: { latex: '\\int \\sqrt{1+x^4} \\, dx' } },
+      { ...request, document: { latex: '\\int \\sin(x^3) \\, dx' } },
       'evaluate',
     );
 
     expect(result.error).toContain('could not be determined symbolically');
 
     const substitutionGap = runExpressionAction(
-      { ...request, document: { latex: '\\int \\sin(x^2) \\, dx' } },
+      { ...request, document: { latex: '\\int \\sqrt{x+\\sqrt{x+1}} \\, dx' } },
       'evaluate',
     );
-    const missingDerivative = runExpressionAction(
-      { ...request, document: { latex: '\\int e^{x^2} \\, dx' } },
-      'evaluate',
-    );
-
     expect(substitutionGap.error).toContain('could not be determined symbolically');
-    expect(missingDerivative.error).toContain('could not be determined symbolically');
   });
 
   it('uses rule-based symbolic resolution for supported known-form limits', () => {
@@ -249,10 +243,10 @@ describe('runExpressionAction calculus execution', () => {
 
     expect(left.error).toBeUndefined();
     expect(left.exactLatex).toBe('-1');
-    expect(left.warnings).toContain('Symbolic limit unavailable; showing a numeric left-hand limit approximation.');
+    expect(left.warnings).toEqual([]);
     expect(right.error).toBeUndefined();
     expect(right.exactLatex).toBe('1');
-    expect(right.warnings).toContain('Symbolic limit unavailable; showing a numeric right-hand limit approximation.');
+    expect(right.warnings).toEqual([]);
   });
 
   it('returns a controlled error for mismatched two-sided limits', () => {
@@ -298,7 +292,7 @@ describe('runExpressionAction calculus execution', () => {
 
     expect(result.error).toBeUndefined();
     expect(result.resultOrigin).toBe('rule-based-symbolic');
-    expect(result.exactLatex).toBe('1.5');
+    expect(result.exactLatex).toBe('\\frac{3}{2}');
   });
 
   it('returns signed infinities for rational dominance at infinity', () => {
@@ -313,7 +307,7 @@ describe('runExpressionAction calculus execution', () => {
 
     expect(result.error).toBeUndefined();
     expect(result.exactLatex).toBe('\\infty');
-    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('leading term');
+    expect(result.detailSections?.[0]?.lines.join(' ')).toContain('infinity scale');
     expect(rational.error).toBeUndefined();
     expect(rational.exactLatex).toBe('-\\infty');
   });

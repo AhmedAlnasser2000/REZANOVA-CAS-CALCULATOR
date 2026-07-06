@@ -74,8 +74,11 @@ function MatrixValueCard({
   const validationId = `matrix-name-feedback-${id}`;
 
   useEffect(() => {
-    setDraftName(name);
-    setNameFeedback(null);
+    const resetTimeoutId = window.setTimeout(() => {
+      setDraftName(name);
+      setNameFeedback(null);
+    }, 0);
+    return () => window.clearTimeout(resetTimeoutId);
   }, [name]);
 
   function validateAndRename(rawName: string) {

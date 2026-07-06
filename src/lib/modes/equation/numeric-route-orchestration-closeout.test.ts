@@ -104,7 +104,7 @@ describe('Equation numeric route orchestration closeout', () => {
     expect(result.numericMethod).toBe('Bracket-first adaptive ITP + guarded Newton/secant acceleration + local-minimum recovery');
     const text = collectOutcomeText(result);
     expect(text).toContain('Roots are local to this chosen interval');
-    expect(text).toContain('\\cos\\left(x\\right) \\ne0');
+    expect(text).toContain('\\cos\\left(x\\right)\\ne 0');
     expect(text).toContain('Tan(x) carrier repeats every about 3.141593');
     expect(text).not.toContain('No default interval was searched.');
   });

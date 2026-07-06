@@ -28,6 +28,7 @@ type NumericRegion = {
 type LocusEvaluationResult =
   | { status: 'finite'; value: ComplexValue; residualNorm: number }
   | { status: 'undefined' | 'unsupported' };
+type FiniteLocusEvaluationResult = Extract<LocusEvaluationResult, { status: 'finite' }>;
 
 type ProbePoint = {
   value: ComplexValue;
@@ -105,6 +106,10 @@ function unsupported(): LocusEvaluationResult {
   return { status: 'unsupported' };
 }
 
+function isFiniteEvaluation(result: LocusEvaluationResult): result is FiniteLocusEvaluationResult {
+  return result.status === 'finite';
+}
+
 function undefinedValue(): LocusEvaluationResult {
   return { status: 'undefined' };
 }
@@ -146,10 +151,11 @@ function evaluateLocusNode(node: MathJson, target: string, value: ComplexValue):
 
   const operator = node[0];
   const children = node.slice(1).map((child) => evaluateLocusNode(child as MathJson, target, value));
-  if (children.some((child) => child.status !== 'finite')) {
-    return children.find((child) => child.status !== 'finite') ?? unsupported();
+  const nonFiniteChild = children.find((child) => !isFiniteEvaluation(child));
+  if (nonFiniteChild) {
+    return nonFiniteChild;
   }
-  const args = children.map((child) => child.value) as ComplexValue[];
+  const args = (children as FiniteLocusEvaluationResult[]).map((child) => child.value);
 
   try {
     if (operator === 'Add') {

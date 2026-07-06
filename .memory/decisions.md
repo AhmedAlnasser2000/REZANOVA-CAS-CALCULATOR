@@ -2057,3 +2057,8 @@
 ## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-CORPUS-HARDENING1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The seeded Limits corpus may now use `gruntz` as an expected route label and should assert compact detail-card evidence for Gruntz seed cases. Large PDF/site ingestion remains deferred until after the public Gruntz route is broader.
+
+## 2026-07-06 - CI-UNIT-REFOBJECT-CLEANUP1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Current React code should use `RefObject` for mutable refs under the installed React typings; deprecated `MutableRefObject` usage should not be reintroduced for app/runtime/test code.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Generated exp/log symbolic candidates must validate inherited real-domain facts before display. Same-base logarithmic reductions whose algebraic candidate violates the original log domain should fail closed with a domain-empty result instead of surfacing an impossible exact answer.

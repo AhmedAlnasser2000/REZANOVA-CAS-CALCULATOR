@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DisplayDetailSection } from '../../../types/calculator';
 import { formatApproxNumber } from '../../display/format';
+import { evaluateLatexAtTarget } from '../domain-guards';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import { finiteBranchReadbackForNormalizedBranches } from '../readback/finite-branches';
 import {
@@ -60,6 +61,82 @@ function approxTextForBranches(target: string, branches: readonly string[]) {
   return formatted.length === 1
     ? `${target} ~= ${formatted[0]}`
     : `${target} ~= ${formatted.join(', ')}`;
+}
+
+function legacyFactExpression(factLatex: string): { expressionLatex: string; operator: '>' | '\\ge' | '\\ne' } | null {
+  const fact = cleanLatex(factLatex).replace(/\s+/gu, '');
+  const comparison = fact.match(/^(.*?)(\\ge|\\ne|>)0$/u);
+  if (!comparison) {
+    return null;
+  }
+
+  return {
+    expressionLatex: comparison[1],
+    operator: comparison[2] as '>' | '\\ge' | '\\ne',
+  };
+}
+
+function legacyFactHoldsAtCandidate(factLatex: string, target: string, candidate: number) {
+  const comparison = legacyFactExpression(factLatex);
+  if (!comparison) {
+    return true;
+  }
+
+  const evaluated = evaluateLatexAtTarget(comparison.expressionLatex, target, candidate);
+  if (evaluated.value === null) {
+    return false;
+  }
+
+  if (comparison.operator === '>') {
+    return evaluated.value > EPSILON;
+  }
+  if (comparison.operator === '\\ge') {
+    return evaluated.value >= -EPSILON;
+  }
+  return Math.abs(evaluated.value) > EPSILON;
+}
+
+function generatedCandidateDomainStop(
+  candidateLatex: string,
+  target: string,
+  parameterNames: string[],
+  domainFacts: string[],
+): ParameterizedExpLogSolveResult | null {
+  const candidate = approximateLatexExpression(candidateLatex);
+  if (candidate === null) {
+    return null;
+  }
+
+  const invalidFacts = domainFacts.filter((fact) => !legacyFactHoldsAtCandidate(fact, target, candidate));
+  if (invalidFacts.length === 0) {
+    return null;
+  }
+
+  return stop(
+    'domain-empty',
+    'No real selected-target solution remains because the algebraic candidate is undefined in the real domain.',
+    target,
+    parameterNames,
+  );
+}
+
+function filterBranchesByLegacyFacts(
+  branches: readonly string[],
+  target: string,
+  domainFacts: string[],
+) {
+  return branches.filter((branch) => {
+    const candidate = approximateLatexExpression(branch);
+    if (candidate === null) {
+      return true;
+    }
+
+    return domainFacts.every((fact) => legacyFactHoldsAtCandidate(fact, target, candidate));
+  });
+}
+
+function normalizeGeneratedDomainFacts(entries: string[]) {
+  return normalizeParameterizedSupplementLatex(dedupe(entries.map(cleanLatex))) ?? [];
 }
 
 function rationalLatex(numerator: number, denominator: number) {
@@ -253,7 +330,7 @@ export function finalizeGeneratedExpLogSolve({
   target,
   parameterNames,
   generatedEquationLatex,
-  domainFacts,
+  domainFacts = [],
   carrierLabel,
   searchTrace,
   formulaHandoff,
@@ -261,7 +338,7 @@ export function finalizeGeneratedExpLogSolve({
   target: string;
   parameterNames: string[];
   generatedEquationLatex: string;
-  domainFacts: string[];
+  domainFacts?: string[];
   carrierLabel: string;
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
   formulaHandoff?: ParameterizedExpLogSolveOptions['formulaHandoff'];
@@ -276,9 +353,16 @@ export function finalizeGeneratedExpLogSolve({
     ? generatedDirectTargetAssignment(generatedEquationLatex, target)
     : null;
   if (directAssignment) {
-    const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe(
-      domainFacts.map(cleanLatex),
-    ));
+    const exactSupplementLatex = normalizeGeneratedDomainFacts(domainFacts);
+    const domainStop = generatedCandidateDomainStop(
+      directAssignment,
+      target,
+      parameterNames,
+      exactSupplementLatex,
+    );
+    if (domainStop) {
+      return domainStop;
+    }
     return {
       kind: 'success',
       target,
@@ -306,9 +390,16 @@ export function finalizeGeneratedExpLogSolve({
     ? generatedAffineTargetAssignment(generatedEquationLatex, target)
     : null;
   if (affineAssignment) {
-    const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe(
-      domainFacts.map(cleanLatex),
-    ));
+    const exactSupplementLatex = normalizeGeneratedDomainFacts(domainFacts);
+    const domainStop = generatedCandidateDomainStop(
+      affineAssignment,
+      target,
+      parameterNames,
+      exactSupplementLatex,
+    );
+    if (domainStop) {
+      return domainStop;
+    }
     return {
       kind: 'success',
       target,
@@ -337,10 +428,10 @@ export function finalizeGeneratedExpLogSolve({
     : null;
   if (pureSquareAssignment) {
     const branches = [`-\\sqrt{${pureSquareAssignment}}`, `\\sqrt{${pureSquareAssignment}}`];
-    const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+    const exactSupplementLatex = normalizeGeneratedDomainFacts([
       ...domainFacts,
       `${pureSquareAssignment}\\ge0`,
-    ].map(cleanLatex)));
+    ]);
     return {
       kind: 'success',
       target,
@@ -375,10 +466,10 @@ export function finalizeGeneratedExpLogSolve({
     );
   }
 
-  const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
+  const exactSupplementLatex = normalizeGeneratedDomainFacts([
     ...domainFacts,
     ...(solved.exactSupplementLatex ?? []),
-  ].map(cleanLatex)));
+  ]);
   if (solved.formulaPayload?.answerDomain === 'real' && solved.formulaPayload.output.kind === 'case-math') {
     const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
       target,
@@ -402,9 +493,20 @@ export function finalizeGeneratedExpLogSolve({
   }
 
   const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
+  const normalizedBranches = dedupe(solutionExpressions.map(cleanLatex));
+  const validBranches = filterBranchesByLegacyFacts(normalizedBranches, target, exactSupplementLatex);
+  if (normalizedBranches.length > 0 && validBranches.length === 0) {
+    return stop(
+      'domain-empty',
+      'No real selected-target solution remains because the algebraic candidate is undefined in the real domain.',
+      target,
+      parameterNames,
+    );
+  }
+
   const renderedFamily = renderLogExpFamily(createRealLogExpFamily({
     targetLatex: target,
-    branches: dedupe(solutionExpressions.map(cleanLatex)),
+    branches: validBranches,
   }));
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
     target,
