@@ -2037,6 +2037,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Recursive Gruntz evaluation remains an internal contract until route orchestration: direct sign extraction is tried first, then bounded exponential exponent and quotient cleanup may recursively reduce residual scales while preserving parameter and principal-branch proof evidence.
 
+## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-FINITE-TARGET-BRIDGE1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Finite Gruntz bridging remains an internal contract until public orchestration: finite targets are converted to one-sided positive-infinity recursive contracts through `x=a+1/t` and `x=a-1/t`, and two-sided finite results require bridge-side agreement before exposure.
+
 ## 2026-07-06 - LINEAR-ALGEBRA-MULTI-VECTOR-EDITOR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector typed editor expressions may use arbitrary named or inline vectors beyond the active First/Second operands. `proj(base,target)` means "project target onto base"; `proj_u(v)` and `proj_v(u)` remain aliases. Exact 3D cross product and scalar triple product are Vector-owned operations, while F-keys remain active-operand shortcuts only.
