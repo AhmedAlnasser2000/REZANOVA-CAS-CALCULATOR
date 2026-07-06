@@ -1,5 +1,16 @@
-import type { LimitTargetKind } from '../../../types/calculator';
-import { dependsOnVariable, isNodeArray } from '../patterns';
+import type { DisplayDetailLinePart, LimitTargetKind } from '../../../types/calculator';
+import { readExactScalarNode } from '../../algebra/polynomial-core';
+import {
+  dependsOnVariable,
+  isNodeArray,
+} from '../patterns';
+import {
+  isSymbolicCoefficientOne,
+  parseSymbolicCoefficient,
+  type SymbolicCoefficient,
+  type SymbolicCoefficientFact,
+} from '../primitives/coefficient-domain';
+import { limitMathPart, limitTextPart } from './detail-readback';
 import {
   compareInfinityScale,
   infinityScaleLabel,
@@ -23,6 +34,20 @@ export type GruntzScaleSignature = {
   residual: InfinityScaleTerm;
 };
 
+export type GruntzDomainIntent = 'real' | 'complex-principal';
+
+export type GruntzBranchAssumption = {
+  latex: string;
+  reason: string;
+  source: 'coefficient-driver' | 'principal-branch' | 'real-domain';
+};
+
+export type GruntzAtomCoefficient = {
+  coefficient: SymbolicCoefficient;
+  latex: string;
+  facts: SymbolicCoefficientFact[];
+};
+
 export type GruntzMrvAtom = {
   id: string;
   kind: GruntzMrvAtomKind;
@@ -30,6 +55,18 @@ export type GruntzMrvAtom = {
   sourceLatex: string;
   variable: string;
   signature: GruntzScaleSignature;
+  coefficient?: GruntzAtomCoefficient;
+  branchAssumptions: GruntzBranchAssumption[];
+  evidenceRows: DisplayDetailLinePart[][];
+};
+
+type GruntzMrvAtomDraft = Omit<GruntzMrvAtom, 'id' | 'evidenceRows'>;
+
+export type GruntzCoefficientDriver = {
+  latex: string;
+  facts: SymbolicCoefficientFact[];
+  atomIds: string[];
+  branchConditions: string[];
 };
 
 export type GruntzComparability =
@@ -48,9 +85,13 @@ export type GruntzComparabilityClass = {
 export type GruntzMrvSet = {
   variable: string;
   targetKind: Exclude<LimitTargetKind, 'finite'>;
+  domain: GruntzDomainIntent;
   atoms: GruntzMrvAtom[];
   dominantAtomId?: string;
   comparabilityClasses: GruntzComparabilityClass[];
+  coefficientDrivers: GruntzCoefficientDriver[];
+  branchAssumptions: GruntzBranchAssumption[];
+  evidenceRows: DisplayDetailLinePart[][];
   unsupportedReason?: string;
 };
 
@@ -84,6 +125,10 @@ export type GruntzLimitExtractionContract = {
   stopReason?: string;
 };
 
+export type GruntzMrvSetOptions = {
+  domain?: GruntzDomainIntent;
+};
+
 function constantScaleTerm(coefficient = 1): InfinityScaleTerm {
   return {
     coefficient,
@@ -111,6 +156,18 @@ function numericConstant(node: unknown): number | undefined {
     return value === undefined ? undefined : -value;
   }
   return undefined;
+}
+
+function productNode(factors: unknown[]) {
+  if (factors.length === 0) {
+    return 1;
+  }
+  return factors.length === 1 ? factors[0] : ['Multiply', ...factors];
+}
+
+function quotientNode(numerators: unknown[], denominators: unknown[]) {
+  const numerator = productNode(numerators);
+  return denominators.length === 0 ? numerator : ['Divide', numerator, productNode(denominators)];
 }
 
 function rationalLatex(numerator: number, denominator: number) {
@@ -216,11 +273,140 @@ function atomKindFromNode(node: unknown, term: InfinityScaleTerm): GruntzMrvAtom
   return 'power';
 }
 
+function principalBranchAssumptions(input: {
+  kind: GruntzMrvAtomKind;
+  sourceLatex: string;
+  domain: GruntzDomainIntent;
+}): GruntzBranchAssumption[] {
+  if (input.domain === 'complex-principal') {
+    if (input.kind === 'root') {
+      return [{
+        latex: input.sourceLatex,
+        reason: 'principal square-root branch',
+        source: 'principal-branch',
+      }];
+    }
+    if (input.kind === 'log' || input.kind === 'iterated-log') {
+      return [{
+        latex: input.sourceLatex,
+        reason: 'principal logarithm branch',
+        source: 'principal-branch',
+      }];
+    }
+  }
+
+  if (input.domain === 'real' && input.kind === 'root') {
+    return [{
+      latex: input.sourceLatex,
+      reason: 'eventual real square-root domain',
+      source: 'real-domain',
+    }];
+  }
+
+  return [];
+}
+
+type FactorSplit = {
+  coefficientNumerators: unknown[];
+  coefficientDenominators: unknown[];
+  scaleNumerators: unknown[];
+  scaleDenominators: unknown[];
+};
+
+function splitCoefficientAndScaleFactors(
+  node: unknown,
+  variable: string,
+  split: FactorSplit,
+  denominator = false,
+) {
+  if (isNodeArray(node) && node[0] === 'Negate' && node.length === 2) {
+    split.coefficientNumerators.push(-1);
+    splitCoefficientAndScaleFactors(node[1], variable, split, denominator);
+    return;
+  }
+
+  if (isNodeArray(node) && node[0] === 'Multiply') {
+    node.slice(1).forEach((factor) =>
+      splitCoefficientAndScaleFactors(factor, variable, split, denominator));
+    return;
+  }
+
+  if (isNodeArray(node) && node[0] === 'Divide' && node.length === 3) {
+    splitCoefficientAndScaleFactors(node[1], variable, split, denominator);
+    splitCoefficientAndScaleFactors(node[2], variable, split, !denominator);
+    return;
+  }
+
+  const bucket = dependsOnVariable(node, variable)
+    ? denominator ? split.scaleDenominators : split.scaleNumerators
+    : denominator ? split.coefficientDenominators : split.coefficientNumerators;
+  bucket.push(node);
+}
+
+function coefficientAndScaleDraft(
+  node: unknown,
+  variable: string,
+): { coefficientNode: unknown; scaleNode: unknown } | undefined {
+  const split: FactorSplit = {
+    coefficientNumerators: [],
+    coefficientDenominators: [],
+    scaleNumerators: [],
+    scaleDenominators: [],
+  };
+  splitCoefficientAndScaleFactors(node, variable, split);
+  if (split.scaleNumerators.length === 0 && split.scaleDenominators.length === 0) {
+    return undefined;
+  }
+  return {
+    coefficientNode: quotientNode(split.coefficientNumerators, split.coefficientDenominators),
+    scaleNode: quotientNode(split.scaleNumerators, split.scaleDenominators),
+  };
+}
+
+function coefficientMetadata(
+  node: unknown,
+  variable: string,
+): GruntzAtomCoefficient | undefined {
+  const parsed = parseSymbolicCoefficient(node, variable);
+  if (parsed.kind !== 'success' || isSymbolicCoefficientOne(parsed.coefficient)) {
+    return undefined;
+  }
+  return {
+    coefficient: parsed.coefficient,
+    latex: parsed.coefficient.latex,
+    facts: parsed.coefficient.facts,
+  };
+}
+
+function atomEvidenceRows(atom: GruntzMrvAtom): DisplayDetailLinePart[][] {
+  const rows: DisplayDetailLinePart[][] = [[
+    limitTextPart('MRV atom: '),
+    limitMathPart(atom.latex),
+    limitTextPart(' with scale '),
+    limitMathPart(atomScaleLatex(atom)),
+    limitTextPart('.'),
+  ]];
+  if (atom.coefficient) {
+    rows.push([
+      limitTextPart('Target-free coefficient driver: '),
+      limitMathPart(atom.coefficient.latex),
+      limitTextPart('.'),
+    ]);
+  }
+  atom.branchAssumptions.forEach((assumption) => rows.push([
+    limitTextPart('Branch assumption: '),
+    limitMathPart(assumption.latex),
+    limitTextPart(` uses ${assumption.reason}.`),
+  ]));
+  return rows;
+}
+
 function atomFromNode(
   node: unknown,
   variable: string,
   targetKind: Exclude<LimitTargetKind, 'finite'>,
-): Omit<GruntzMrvAtom, 'id'> | undefined {
+  options: Required<GruntzMrvSetOptions>,
+): GruntzMrvAtomDraft | undefined {
   if (!dependsOnVariable(node, variable)) {
     const constant = numericConstant(node);
     if (constant === undefined) {
@@ -232,7 +418,32 @@ function atomFromNode(
       sourceLatex: gruntzNodeToLatex(node),
       variable,
       signature: { residual: constantScaleTerm(constant) },
+      branchAssumptions: [],
     };
+  }
+
+  const split = coefficientAndScaleDraft(node, variable);
+  if (split) {
+    const coefficient = coefficientMetadata(split.coefficientNode, variable);
+    if (coefficient) {
+      const scaleTerm = atomFromNode(split.scaleNode, variable, targetKind, options);
+      if (!scaleTerm) {
+        return undefined;
+      }
+      return {
+        ...scaleTerm,
+        sourceLatex: gruntzNodeToLatex(node),
+        coefficient,
+        branchAssumptions: [
+          ...scaleTerm.branchAssumptions,
+          ...coefficient.facts.map((fact) => ({
+            latex: `${fact.expressionLatex}${fact.relation}`,
+            reason: 'nonzero coefficient denominator',
+            source: 'coefficient-driver' as const,
+          })),
+        ],
+      };
+    }
   }
 
   if (isNodeArray(node) && node[0] === 'Power' && node.length === 3 && node[1] === 'ExponentialE') {
@@ -250,6 +461,11 @@ function atomFromNode(
         exponential: exponent,
         residual: constantScaleTerm(1),
       },
+      branchAssumptions: principalBranchAssumptions({
+        kind: 'exponential',
+        sourceLatex: latex,
+        domain: options.domain,
+      }),
     };
   }
 
@@ -258,12 +474,18 @@ function atomFromNode(
     return undefined;
   }
   const latex = gruntzNodeToLatex(node);
+  const kind = atomKindFromNode(node, residual);
   return {
-    kind: atomKindFromNode(node, residual),
+    kind,
     latex,
     sourceLatex: latex,
     variable,
     signature: { residual },
+    branchAssumptions: principalBranchAssumptions({
+      kind,
+      sourceLatex: latex,
+      domain: options.domain,
+    }),
   };
 }
 
@@ -283,17 +505,21 @@ function atomScaleLatex(atom: GruntzMrvAtom) {
   return infinityScaleLabel(atom.signature.residual.scale);
 }
 
-function withIds(atoms: Omit<GruntzMrvAtom, 'id'>[]): GruntzMrvAtom[] {
+function withIds(atoms: GruntzMrvAtomDraft[]): GruntzMrvAtom[] {
   return atoms.map((atom, index) => ({
     ...atom,
     id: `mrv_${index + 1}`,
+    evidenceRows: [],
+  })).map((atom) => ({
+    ...atom,
+    evidenceRows: atomEvidenceRows(atom),
   }));
 }
 
-function uniqueAtoms(atoms: Omit<GruntzMrvAtom, 'id'>[]) {
+function uniqueAtoms(atoms: GruntzMrvAtomDraft[]) {
   const seen = new Set<string>();
   return atoms.filter((atom) => {
-    const key = `${atom.kind}:${atom.latex}:${atomScaleLatex({ ...atom, id: 'tmp' })}`;
+    const key = `${atom.kind}:${atom.latex}:${atomScaleLatex({ ...atom, id: 'tmp', evidenceRows: [] })}`;
     if (seen.has(key)) {
       return false;
     }
@@ -320,23 +546,69 @@ function comparabilityClasses(atoms: GruntzMrvAtom[]): GruntzComparabilityClass[
   return classes;
 }
 
+function coefficientDrivers(atoms: GruntzMrvAtom[]): GruntzCoefficientDriver[] {
+  const drivers = new Map<string, GruntzCoefficientDriver>();
+  atoms.forEach((atom) => {
+    if (!atom.coefficient) {
+      return;
+    }
+    if (readExactScalarNode(atom.coefficient.coefficient.node)) {
+      return;
+    }
+    const existing = drivers.get(atom.coefficient.latex) ?? {
+      latex: atom.coefficient.latex,
+      facts: atom.coefficient.facts,
+      atomIds: [],
+      branchConditions: [
+        `${atom.coefficient.latex}>0`,
+        `${atom.coefficient.latex}=0`,
+        `${atom.coefficient.latex}<0`,
+      ],
+    };
+    existing.atomIds.push(atom.id);
+    drivers.set(atom.coefficient.latex, existing);
+  });
+  return [...drivers.values()];
+}
+
+function uniqueBranchAssumptions(atoms: GruntzMrvAtom[]): GruntzBranchAssumption[] {
+  const seen = new Set<string>();
+  return atoms.flatMap((atom) => atom.branchAssumptions).filter((assumption) => {
+    const key = `${assumption.source}:${assumption.latex}:${assumption.reason}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
 export function buildGruntzMrvSet(
   node: unknown,
   variable = 'x',
   targetKind: Exclude<LimitTargetKind, 'finite'> = 'posInfinity',
+  options: GruntzMrvSetOptions = {},
 ): GruntzMrvSet {
+  const resolvedOptions: Required<GruntzMrvSetOptions> = {
+    domain: options.domain ?? 'real',
+  };
   const candidates = collectCandidateNodes(node)
-    .map((candidate) => atomFromNode(candidate, variable, targetKind))
-    .filter(Boolean) as Omit<GruntzMrvAtom, 'id'>[];
+    .map((candidate) => atomFromNode(candidate, variable, targetKind, resolvedOptions))
+    .filter(Boolean) as GruntzMrvAtomDraft[];
   const atoms = withIds(uniqueAtoms(candidates))
     .sort((left, right) => -compareGruntzScaleSignatures(left.signature, right.signature));
   const classes = comparabilityClasses(atoms);
+  const branchAssumptions = uniqueBranchAssumptions(atoms);
   return {
     variable,
     targetKind,
+    domain: resolvedOptions.domain,
     atoms,
     dominantAtomId: atoms[0]?.id,
     comparabilityClasses: classes,
+    coefficientDrivers: coefficientDrivers(atoms),
+    branchAssumptions,
+    evidenceRows: atoms.flatMap((atom) => atom.evidenceRows),
     unsupportedReason: atoms.length === 0 && dependsOnVariable(node, variable)
       ? 'No supported MRV atom could be extracted for the current Gruntz foundation contract.'
       : undefined,
@@ -349,8 +621,9 @@ export function compareGruntzScales(
   variable = 'x',
   targetKind: Exclude<LimitTargetKind, 'finite'> = 'posInfinity',
 ): GruntzScaleComparison {
-  const left = atomFromNode(leftNode, variable, targetKind);
-  const right = atomFromNode(rightNode, variable, targetKind);
+  const options: Required<GruntzMrvSetOptions> = { domain: 'real' };
+  const left = atomFromNode(leftNode, variable, targetKind, options);
+  const right = atomFromNode(rightNode, variable, targetKind, options);
   if (!left || !right) {
     return {
       comparability: 'unsupported',
@@ -489,7 +762,11 @@ export function buildGruntzLimitExtractionContract(
     };
   }
 
-  const quotientAtoms = [atomFromNode(node[1], variable, targetKind), atomFromNode(node[2], variable, targetKind)];
+  const options: Required<GruntzMrvSetOptions> = { domain: 'real' };
+  const quotientAtoms = [
+    atomFromNode(node[1], variable, targetKind, options),
+    atomFromNode(node[2], variable, targetKind, options),
+  ];
   const [numerator, denominator] = quotientAtoms.every(Boolean)
     ? withIds(quotientAtoms as Omit<GruntzMrvAtom, 'id'>[])
     : [];

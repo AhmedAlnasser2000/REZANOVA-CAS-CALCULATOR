@@ -22,6 +22,54 @@ describe('Gruntz foundation contracts', () => {
     expect(dominant?.kind).toBe('exponential');
     expect(set.atoms.map((atom) => atom.latex)).toContain(String.raw`x^{5}`);
     expect(set.comparabilityClasses[0]?.representativeLatex).toBe(String.raw`e^{\sqrt{x}}`);
+    expect(set.evidenceRows.flat().map((part) => part.kind === 'math' ? part.latex : part.text).join(' '))
+      .toContain('MRV atom');
+  });
+
+  it('tracks target-free symbolic coefficient drivers on MRV atoms', () => {
+    const set = buildGruntzMrvSet(parse(String.raw`a e^x+b x^2`));
+
+    expect(set.coefficientDrivers.map((driver) => driver.latex).sort()).toEqual(['a', 'b']);
+    expect(set.coefficientDrivers.find((driver) => driver.latex === 'a')?.branchConditions)
+      .toEqual(['a>0', 'a=0', 'a<0']);
+    expect(set.atoms.find((atom) => atom.latex === String.raw`e^{x}`)?.coefficient?.latex)
+      .toBe('a');
+    expect(set.atoms.find((atom) => atom.latex === String.raw`x^{2}`)?.coefficient?.latex)
+      .toBe('b');
+    expect(set.comparabilityClasses[0]?.representativeLatex).toBe(String.raw`e^{x}`);
+  });
+
+  it('records principal-branch assumptions for complex MRV inspection', () => {
+    const set = buildGruntzMrvSet(
+      parse(String.raw`\sqrt{x^2+x}+\log(x)`),
+      'x',
+      'posInfinity',
+      { domain: 'complex-principal' },
+    );
+
+    expect(set.domain).toBe('complex-principal');
+    expect(set.branchAssumptions.map((assumption) => assumption.reason))
+      .toEqual(expect.arrayContaining([
+        'principal square-root branch',
+        'principal logarithm branch',
+      ]));
+    expect(set.evidenceRows.flat().map((part) => part.kind === 'math' ? part.latex : part.text).join(' '))
+      .toContain('principal square-root branch');
+  });
+
+  it('keeps parameter metadata when comparing Gruntz scales', () => {
+    const comparison = compareGruntzScales(parse(String.raw`a e^x`), parse(String.raw`x^2`));
+
+    expect(comparison.comparability).toBe('dominates');
+    expect(comparison.left?.coefficient?.latex).toBe('a');
+  });
+
+  it('does not treat exact numeric scale factors as symbolic branch drivers', () => {
+    const set = buildGruntzMrvSet(parse(String.raw`-2 e^x+x`));
+
+    expect(set.atoms.find((atom) => atom.latex === String.raw`e^{x}`)?.coefficient?.latex)
+      .toBe('-2');
+    expect(set.coefficientDrivers).toEqual([]);
   });
 
   it('orders the pre-Gruntz comparability chain', () => {

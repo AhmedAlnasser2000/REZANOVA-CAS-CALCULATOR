@@ -2008,3 +2008,7 @@
 ## 2026-07-06 - COMPLEX-EQUATION-LOCAL-BOX-VALIDATION4
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Complex Region local box validation is evidence for already accepted bounded roots, not a replacement solver. A Krawczyk-style contraction may mark simple local boxes as validated when derivative variation stays inside the box; derivative-missing, branch-unsafe, pole-aware, clustered, or multiple-root boxes must remain unsupported or inconclusive rather than claiming unique-root validation.
+
+## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-MRV-SET2
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz exposure remains contract-first: MRV-set extraction now owns symbolic coefficient drivers, numeric-coefficient filtering, principal-complex branch assumptions, and internal evidence rows before rewrite-to-`w`, sign extraction, or public route orchestration consume them.
