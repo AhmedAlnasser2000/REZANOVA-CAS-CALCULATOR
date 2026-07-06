@@ -69,7 +69,7 @@ describe('calculus limits corpus ledger validation', () => {
   it('accepts the committed ledger scaffold', () => {
     assert.deepEqual(validateCalculusLimitsCorpusLedger(), {
       sourceCount: 5,
-      uniqueCaseCount: 27,
+      uniqueCaseCount: 30,
       duplicateCaseCount: 0,
       runResultCount: 0,
       scanFindingCount: 0,

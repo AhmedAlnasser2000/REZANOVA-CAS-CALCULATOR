@@ -2053,3 +2053,7 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz is now a controlled public Limit route, not the first route: exact/domain/piecewise/abs/specialized symbolic routes keep precedence, Gruntz runs before numeric fallback for supported scale/indeterminate cases, and visible output stays compact through method/route evidence cards.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits plain-text natural input may canonicalize `exp(...)` to exponential notation for Limit parsing and history/copy stability, while unsupported full Gruntz cases must still stop cleanly instead of guessing numerically.
+
+## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-CORPUS-HARDENING1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] The seeded Limits corpus may now use `gruntz` as an expected route label and should assert compact detail-card evidence for Gruntz seed cases. Large PDF/site ingestion remains deferred until after the public Gruntz route is broader.

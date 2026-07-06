@@ -89,6 +89,7 @@ const ALLOWED_ROUTE_KINDS = [
   'piecewise',
   'abs-side-behavior',
   'mrv-lite',
+  'gruntz',
   'unsupported',
   'malformed',
   'too-complex',
