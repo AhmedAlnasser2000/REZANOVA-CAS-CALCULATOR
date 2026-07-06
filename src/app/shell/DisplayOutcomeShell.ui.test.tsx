@@ -117,4 +117,40 @@ describe('DisplayOutcomeShell result title', () => {
     expectMathStaticLatex(title, 'q·v');
     expect(title).not.toHaveTextContent('Q·V');
   });
+
+  it('renders vector operation titles with function notation as math', () => {
+    render(
+      <DisplayPanel
+        activeExpressionLatex={() => ''}
+        activeResultCopyText={() => '2'}
+        activeResultEditorLatex={() => ''}
+        calculateLatex=""
+        copyText={() => undefined}
+        currentMode="vector"
+        displayHeaderLabel="Vector"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'triple(p,q,r)',
+          warnings: [],
+          exactLatex: '2',
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        matrixEditorLatex=""
+        setMatrixEditorLatex={() => undefined}
+        setVectorEditorLatex={() => undefined}
+        settings={{
+          ...DEFAULT_SETTINGS,
+          outputStyle: 'exact',
+        }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+        vectorEditorLatex=""
+      />,
+    );
+
+    const title = screen.getByTestId('display-outcome-title');
+    expect(title).toHaveClass('result-title--math');
+    expectMathStaticLatex(title, 'triple(p,q,r)');
+  });
 });

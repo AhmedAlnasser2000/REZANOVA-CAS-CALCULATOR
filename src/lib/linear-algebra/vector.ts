@@ -16,11 +16,14 @@ import {
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
 import {
+  exactAddVectors,
+  exactCrossVectors,
   exactDotVectors,
   exactGramSchmidtTwoVectors,
   exactOrthogonalComponentToVector,
   exactProjectionOntoVector,
   exactScalarSquareRoot,
+  exactSubtractVectors,
   exactUnitVector,
 } from './exact-vector-core';
 import {
@@ -217,6 +220,14 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
   const { vectorA, vectorB } = exactVectorInputs(req);
 
   switch (req.operation) {
+    case 'add':
+      return vectorA && vectorB ? { resultLatex: exactVectorToColumnLatex(exactAddVectors(vectorA, vectorB)), warnings: [] } : null;
+    case 'subtract':
+      return vectorA && vectorB ? { resultLatex: exactVectorToColumnLatex(exactSubtractVectors(vectorA, vectorB)), warnings: [] } : null;
+    case 'cross': {
+      const vector = vectorA && vectorB ? exactCrossVectors(vectorA, vectorB) : null;
+      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+    }
     case 'dot':
       return vectorA && vectorB ? exactScalarResponse(exactDotVectors(vectorA, vectorB)) : null;
     case 'normA':

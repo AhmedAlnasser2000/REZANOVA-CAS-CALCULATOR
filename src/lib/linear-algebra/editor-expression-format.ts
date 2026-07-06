@@ -120,6 +120,19 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
         formatLinearAlgebraEditorExpression(expression.left),
         formatLinearAlgebraEditorExpression(expression.right),
       );
+    case 'projection':
+      return callLatex(
+        'proj',
+        formatLinearAlgebraEditorExpression(expression.base),
+        formatLinearAlgebraEditorExpression(expression.target),
+      );
+    case 'scalarTripleProduct':
+      return callLatex(
+        'triple',
+        formatLinearAlgebraEditorExpression(expression.first),
+        formatLinearAlgebraEditorExpression(expression.second),
+        formatLinearAlgebraEditorExpression(expression.third),
+      );
     case 'coordinates':
       return callLatex(
         'coords',

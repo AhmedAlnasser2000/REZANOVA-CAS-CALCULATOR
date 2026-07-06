@@ -24,7 +24,7 @@ function solveSummaryLines(summary: string): string[] {
 }
 
 const MATH_TITLE_OPERATION_PATTERN =
-  /(?:^|[\s([{,])(?:basis|change|col|coords|det|diag|eigen|gram|invertible|ls|lu|mpow|null|orthogonal|plu|proj|qr|rank|rref|unit)\s*(?:_[A-Za-z])?\s*\(/iu;
+  /(?:^|[\s([{,])(?:basis|change|col|coords|cross|det|diag|eigen|gram|invertible|ls|lu|mpow|null|orthogonal|plu|proj|qr|rank|rref|triple|unit)\s*(?:_[A-Za-z])?\s*\(/iu;
 
 function shouldRenderTitleAsMath(title: string) {
   return /\\[A-Za-z]+|[{}^_]/u.test(title)

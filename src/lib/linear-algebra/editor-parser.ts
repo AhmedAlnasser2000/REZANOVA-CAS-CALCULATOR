@@ -64,6 +64,8 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
+  | { kind: 'projection'; base: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
+  | { kind: 'scalarTripleProduct'; first: LinearAlgebraEditorExpression; second: LinearAlgebraEditorExpression; third: LinearAlgebraEditorExpression }
   | { kind: 'coordinates'; basis: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'columnProjection'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
   | { kind: 'leastSquares'; matrix: LinearAlgebraEditorExpression; vector: LinearAlgebraEditorExpression }
@@ -151,6 +153,15 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{proj\}_u/g, 'proj_u')
     .replace(/\\operatorname\{proj\}_\{v\}/g, 'proj_v')
     .replace(/\\operatorname\{proj\}_v/g, 'proj_v')
+    .replace(/\\operatorname\{proj\}/g, 'proj')
+    .replace(/\\operatorname\{cross\}/g, 'cross')
+    .replace(/\\operatorname\{Cross\}/g, 'cross')
+    .replace(/\\operatorname\{triple\}/g, 'triple')
+    .replace(/\\operatorname\{Triple\}/g, 'triple')
+    .replace(/\\operatorname\{scalartriple\}/g, 'triple')
+    .replace(/\\operatorname\{ScalarTriple\}/g, 'triple')
+    .replace(/\\operatorname\{stp\}/g, 'triple')
+    .replace(/\\operatorname\{STP\}/g, 'triple')
     .replace(/\\operatorname\{orth\}_\{u\}/g, 'orth_u')
     .replace(/\\operatorname\{orth\}_u/g, 'orth_u')
     .replace(/\\operatorname\{orth\}_\{v\}/g, 'orth_v')
@@ -234,6 +245,12 @@ function functionArgument(input: string, name: string): string | null {
   const prefix = `${name}(`;
   return input.startsWith(prefix) && input.endsWith(')')
     ? input.slice(prefix.length, -1)
+    : null;
+}
+
+function normWrapperArgument(input: string): string | null {
+  return input.startsWith('\\lVert') && input.endsWith('\\rVert')
+    ? input.slice('\\lVert'.length, -'\\rVert'.length)
     : null;
 }
 
@@ -475,6 +492,15 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return parseExpression(unwrapped, options);
   }
 
+  const normArgument = normWrapperArgument(input);
+  if (normArgument !== null) {
+    return {
+      kind: 'unary',
+      operator: 'norm',
+      value: parseExpression(normArgument, options),
+    };
+  }
+
   const addSubtract = splitTopLevel(input, ['+', '-']);
   if (addSubtract) {
     if (!addSubtract.left || !addSubtract.right) {
@@ -565,6 +591,48 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       kind: 'angle',
       left: parseExpression(parts[0], options),
       right: parseExpression(parts[1], options),
+    };
+  }
+
+  const crossArgument = functionArgument(input, 'cross');
+  if (crossArgument !== null) {
+    const parts = splitTopLevelComma(crossArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Cross product requires two vector operands.');
+    }
+    return {
+      kind: 'binary',
+      operator: 'cross',
+      left: parseExpression(parts[0], options),
+      right: parseExpression(parts[1], options),
+    };
+  }
+
+  const projectionArgument = functionArgument(input, 'proj');
+  if (projectionArgument !== null) {
+    const parts = splitTopLevelComma(projectionArgument);
+    if (!parts) {
+      fail('unsupported-expression', 'Projection requires a base vector and a target vector.');
+    }
+    return {
+      kind: 'projection',
+      base: parseExpression(parts[0], options),
+      target: parseExpression(parts[1], options),
+    };
+  }
+
+  const tripleArgument = functionArgument(input, 'triple');
+  if (tripleArgument !== null) {
+    const firstSplit = splitTopLevelComma(tripleArgument);
+    const secondSplit = firstSplit ? splitTopLevelComma(firstSplit[1]) : null;
+    if (!firstSplit || !secondSplit) {
+      fail('unsupported-expression', 'Scalar triple product requires three vector operands.');
+    }
+    return {
+      kind: 'scalarTripleProduct',
+      first: parseExpression(firstSplit[0], options),
+      second: parseExpression(secondSplit[0], options),
+      third: parseExpression(secondSplit[1], options),
     };
   }
 
@@ -677,14 +745,6 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       kind: 'changeOfBasis',
       source: parseExpression(parts[0], options),
       target: parseExpression(parts[1], options),
-    };
-  }
-
-  if (input.startsWith('\\lVert') && input.endsWith('\\rVert')) {
-    return {
-      kind: 'unary',
-      operator: 'norm',
-      value: parseExpression(input.slice('\\lVert'.length, -'\\rVert'.length), options),
     };
   }
 

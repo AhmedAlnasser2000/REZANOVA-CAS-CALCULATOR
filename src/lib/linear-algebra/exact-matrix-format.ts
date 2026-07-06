@@ -24,6 +24,13 @@ export function exactVectorToColumnLatex(vector: ExactVector): string {
   return exactMatrixToLatex(vector.map((value) => [value]));
 }
 
+export function exactVectorToWire(vector: ExactVector): ExactScalarWire[] {
+  return vector.map((value) => ({
+    numerator: value.numerator,
+    denominator: value.denominator,
+  }));
+}
+
 function exactScalarFromNumber(value: number): ExactScalar | null {
   return Number.isSafeInteger(value) ? scalar(value) : null;
 }

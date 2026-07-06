@@ -3,6 +3,7 @@ import {
   dispatchMatrixEditorLatex,
   dispatchVectorEditorLatex,
 } from './editor-dispatch';
+import { runVectorOperation } from './vector';
 
 const matrixA = [[1, 2], [3, 4]];
 const matrixB = [[5, 6], [7, 8]];
@@ -19,6 +20,16 @@ const vectorValues = [
   { id: 'vector-v', name: 'v', value: vectorB },
   { id: 'vector-p', name: 'p', value: [1, 0, 0] },
   { id: 'vector-q', name: 'q', value: [2, 3, 4] },
+];
+const twoDimensionalVectorValues = [
+  { id: 'vector-p', name: 'p', value: [1, 1] },
+  { id: 'vector-q', name: 'q', value: [1, 0] },
+  { id: 'vector-r', name: 'r', value: [0, 1] },
+];
+const threeDimensionalVectorValues = [
+  { id: 'vector-p', name: 'p', value: [1, 0, 0] },
+  { id: 'vector-q', name: 'q', value: [0, 1, 0] },
+  { id: 'vector-r', name: 'r', value: [0, 0, 2] },
 ];
 
 describe('linear algebra editor dispatch named values', () => {
@@ -68,5 +79,129 @@ describe('linear algebra editor dispatch named values', () => {
         vectorOperandLatexB: 'q',
       },
     });
+  });
+
+  it('evaluates arbitrary named Vector expressions through existing request slots', () => {
+    expect(dispatchVectorEditorLatex({
+      latex: 'p+q-r',
+      vectorA,
+      vectorB,
+      vectorValues: twoDimensionalVectorValues,
+      angleUnit: 'rad',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'add',
+        vectorA: [1, 1],
+        vectorB: [1, -1],
+        vectorOperandLatexA: 'p',
+        vectorOperandLatexB: 'q-r',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: 'norm(p-q)',
+      vectorA,
+      vectorB,
+      vectorValues: twoDimensionalVectorValues,
+      angleUnit: 'rad',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'normA',
+        vectorA: [0, 1],
+        vectorOperandLatexA: 'p-q',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: 'unit(p+q)',
+      vectorA,
+      vectorB,
+      vectorValues: twoDimensionalVectorValues,
+      angleUnit: 'rad',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'unitA',
+        vectorA: [2, 1],
+        vectorOperandLatexA: 'p+q',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
+      latex: 'gram(p,q)',
+      vectorA,
+      vectorB,
+      vectorValues: twoDimensionalVectorValues,
+      angleUnit: 'rad',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'gramSchmidtUV',
+        vectorA: [1, 1],
+        vectorB: [1, 0],
+        vectorOperandLatexA: 'p',
+        vectorOperandLatexB: 'q',
+      },
+    });
+  });
+
+  it('supports general projection, cross product, and scalar triple product notation', () => {
+    const projection = dispatchVectorEditorLatex({
+      latex: 'proj(p,q)',
+      vectorA,
+      vectorB,
+      vectorValues: twoDimensionalVectorValues,
+      angleUnit: 'rad',
+    });
+    expect(projection).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'projectionUofV',
+        vectorA: [1, 1],
+        vectorB: [1, 0],
+        vectorOperandLatexA: 'p',
+        vectorOperandLatexB: 'q',
+      },
+    });
+    expect(projection.ok ? runVectorOperation(projection.request).resultLatex : '').toBe(
+      '\\begin{bmatrix}\\frac{1}{2}\\\\\\frac{1}{2}\\end{bmatrix}',
+    );
+
+    const cross = dispatchVectorEditorLatex({
+      latex: 'cross(p,q)',
+      vectorA,
+      vectorB,
+      vectorValues: threeDimensionalVectorValues,
+      angleUnit: 'rad',
+    });
+    expect(cross).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'cross',
+        vectorA: [1, 0, 0],
+        vectorB: [0, 1, 0],
+      },
+    });
+    expect(cross.ok ? runVectorOperation(cross.request).resultLatex : '').toBe(
+      '\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}',
+    );
+
+    const triple = dispatchVectorEditorLatex({
+      latex: 'triple(p,q,r)',
+      vectorA,
+      vectorB,
+      vectorValues: threeDimensionalVectorValues,
+      angleUnit: 'rad',
+    });
+    expect(triple).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'dot',
+        vectorA: [1, 0, 0],
+        vectorB: [2, 0, 0],
+        vectorOperandLatexA: 'p',
+        vectorOperandLatexB: 'q\\times r',
+      },
+    });
+    expect(triple.ok ? runVectorOperation(triple.request).resultLatex : '').toBe('2');
   });
 });

@@ -155,6 +155,29 @@ describe('variable hints', () => {
       screenHint: 'vector',
       storedVariables: stored,
     })).toEqual([]);
+
+    expect(hintKinds('\\operatorname{proj}\\left(p,q\\right)', {
+      mode: 'vector',
+      screenHint: 'vector',
+      linearAlgebraNamedValues: ['u', 'v', 'p', 'q'],
+      storedVariables: stored,
+    })).toEqual([]);
+  });
+
+  it('does not turn Matrix named values or adjacent named products into variable hints', () => {
+    expect(hintKinds('\\det\\left(C\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      linearAlgebraNamedValues: ['A', 'B', 'C', 'D', 'E'],
+      storedVariables: stored,
+    })).toEqual([]);
+
+    expect(hintKinds('\\det\\left(CDE\\right)', {
+      mode: 'matrix',
+      screenHint: 'matrix',
+      linearAlgebraNamedValues: ['A', 'B', 'C', 'D', 'E'],
+      storedVariables: stored,
+    })).toEqual([]);
   });
 
   it('marks the imaginary unit as a reserved unit in Equation analysis', () => {

@@ -2908,7 +2908,7 @@ export default function App() {
           launchGuideExample={launchGuideExample}
           launcherState={launcherState}
           loadLatexIntoEditor={loadLatexIntoEditor}
-          mainFieldRef={mainFieldRef} matrixEditorLatex={linearAlgebraRuntime.matrixEditorLatex} matrixKeyboardLayouts={matrixKeyboardLayouts} onOpenFormulaViewer={workspaceTabsRuntime.onOpenFormulaViewerTab}
+          mainFieldRef={mainFieldRef} matrixEditorLatex={linearAlgebraRuntime.matrixEditorLatex} matrixKeyboardLayouts={matrixKeyboardLayouts} matrixNamedValueNames={linearAlgebraRuntime.matrixValues.map((value) => value.name)} onOpenFormulaViewer={workspaceTabsRuntime.onOpenFormulaViewerTab}
           canonicalizeMatrixEditorPaste={linearAlgebraRuntime.canonicalizeMatrixEditorPaste}
           canonicalizeVectorEditorPaste={linearAlgebraRuntime.canonicalizeVectorEditorPaste}
           onRestartEditorAnalysis={restartEditorAnalysis}
@@ -2954,7 +2954,7 @@ export default function App() {
           updateGeometryDraft={updateGeometryDraft}
           updateStatisticsDraft={updateStatisticsDraft}
           updateTrigDraft={updateTrigDraft}
-          variableMemory={variableMemory} vectorEditorLatex={linearAlgebraRuntime.vectorEditorLatex} vectorKeyboardLayouts={vectorKeyboardLayouts} setVectorEditorLatex={linearAlgebraRuntime.setVectorEditorLatex}
+          variableMemory={variableMemory} vectorEditorLatex={linearAlgebraRuntime.vectorEditorLatex} vectorKeyboardLayouts={vectorKeyboardLayouts} vectorNamedValueNames={linearAlgebraRuntime.vectorValues.map((value) => value.name)} setVectorEditorLatex={linearAlgebraRuntime.setVectorEditorLatex}
         />
         <SoftMenu actions={activeSoftMenu} onAction={handleSoftAction} />
         <main className="workspace">

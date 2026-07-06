@@ -79,6 +79,7 @@ function DisplayPanel({
   mainFieldRef,
   matrixEditorLatex,
   matrixKeyboardLayouts,
+  matrixNamedValueNames,
   canonicalizeMatrixEditorPaste,
   canonicalizeVectorEditorPaste,
   onRestartEditorAnalysis,
@@ -133,6 +134,7 @@ function DisplayPanel({
   variableMemory,
   vectorEditorLatex,
   vectorKeyboardLayouts,
+  vectorNamedValueNames,
   setVectorEditorLatex,
 }: DisplayPanelProps) {
   const { strings } = useLanguage();
@@ -245,6 +247,7 @@ function DisplayPanel({
       mainFieldRef={mainFieldRef}
       matrixEditorLatex={matrixEditorLatex}
       matrixKeyboardLayouts={matrixKeyboardLayouts}
+      matrixNamedValueNames={matrixNamedValueNames}
       canonicalizeMatrixEditorPaste={canonicalizeMatrixEditorPaste}
       canonicalizeVectorEditorPaste={canonicalizeVectorEditorPaste}
       onRunEditor={onRunEditor}
@@ -280,6 +283,7 @@ function DisplayPanel({
       variableMemory={variableMemory}
       vectorEditorLatex={vectorEditorLatex}
       vectorKeyboardLayouts={vectorKeyboardLayouts}
+      vectorNamedValueNames={vectorNamedValueNames}
       setVectorEditorLatex={setVectorEditorLatex}
     />
     <DisplayPreviewSurface

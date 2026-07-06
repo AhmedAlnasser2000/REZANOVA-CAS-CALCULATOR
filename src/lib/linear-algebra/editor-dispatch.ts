@@ -1,5 +1,4 @@
 import type {
-  ExactScalarWire,
   AngleUnit,
   MatrixOperation,
   MatrixRequest,
@@ -18,7 +17,6 @@ import { formatLinearAlgebraEditorExpression } from './editor-expression-format'
 import {
   matrixNamedValueNames,
   vectorNamedValueNames,
-  vectorValueByName,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
 } from './named-values';
@@ -31,15 +29,14 @@ import {
   canMultiplyMatrices,
   haveSameMatrixShape,
 } from './matrix-core';
+import {
+  evaluateVectorExpression,
+  type EvaluatedVectorOperand,
+  type VectorExpressionEvaluation,
+} from './vector-expression-evaluator';
 
 type MatrixOperand = EvaluatedMatrixOperand;
-
-type VectorOperand = {
-  vector: number[];
-  exactVector?: ExactScalarWire[];
-  named?: string;
-  displayLatex: string;
-};
+type VectorOperand = EvaluatedVectorOperand;
 
 export type MatrixEditorDispatchInput = {
   latex: string;
@@ -66,6 +63,18 @@ export type MatrixEditorDispatchResult =
 export type VectorEditorDispatchResult =
   | { ok: true; request: ExecutableVectorRequest }
   | { ok: false; message: string; handoff?: LinearAlgebraEquationHandoff };
+
+function matrixEvaluationError(
+  result: Extract<MatrixExpressionEvaluation, { ok: false }>,
+): MatrixEditorDispatchResult {
+  return { ok: false, message: result.message };
+}
+
+function vectorEvaluationError(
+  result: Extract<VectorExpressionEvaluation, { ok: false }>,
+): VectorEditorDispatchResult {
+  return { ok: false, message: result.message };
+}
 
 function cloneMatrix<T>(matrix: T[][]): T[][] {
   return matrix.map((row) => [...row]);
@@ -132,33 +141,12 @@ function matrixOperand(
 function vectorOperand(
   expression: LinearAlgebraEditorExpression,
   input: VectorEditorDispatchInput,
-): VectorOperand | null {
-  if (expression.kind === 'vectorLiteral') {
-    return {
-      vector: cloneVector(expression.value),
-      exactVector: cloneVector(expression.exactValue),
-      displayLatex: expression.displayLatex,
-    };
-  }
+): VectorExpressionEvaluation {
+  return evaluateVectorExpression(expression, input);
+}
 
-  if (expression.kind === 'named') {
-    const namedValue = vectorValueByName(input.vectorValues, expression.name);
-    if (namedValue) {
-      return {
-        vector: cloneVector(namedValue.value),
-        named: expression.name,
-        displayLatex: expression.displayLatex,
-      };
-    }
-    if (expression.name === 'u') {
-      return { vector: cloneVector(input.vectorA), named: 'u', displayLatex: expression.displayLatex };
-    }
-    if (expression.name === 'v') {
-      return { vector: cloneVector(input.vectorB), named: 'v', displayLatex: expression.displayLatex };
-    }
-  }
-
-  return null;
+function namedVectorOperand(name: string, input: VectorEditorDispatchInput): VectorExpressionEvaluation {
+  return vectorOperand({ kind: 'named', name, displayLatex: name }, input);
 }
 
 const MATRIX_UNARY_OPERATIONS: Partial<Record<LinearAlgebraUnaryOperator, readonly [MatrixOperation, MatrixOperation]>> = {
@@ -194,9 +182,9 @@ function matrixPairRequest(
   }
 
   const leftResult = matrixOperand(expression.left, input);
-  if (!leftResult.ok) return leftResult;
+  if (!leftResult.ok) return matrixEvaluationError(leftResult);
   const rightResult = matrixOperand(expression.right, input);
-  if (!rightResult.ok) return rightResult;
+  if (!rightResult.ok) return matrixEvaluationError(rightResult);
   const left = leftResult.operand;
   const right = rightResult.operand;
   if (
@@ -227,7 +215,7 @@ function matrixSystemRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'linearSystem' }>,
 ): MatrixEditorDispatchResult {
   const coefficientsResult = matrixOperand(expression.coefficients, input);
-  if (!coefficientsResult.ok) return coefficientsResult;
+  if (!coefficientsResult.ok) return matrixEvaluationError(coefficientsResult);
   const coefficients = coefficientsResult.operand;
   if (expression.constants.kind !== 'vectorLiteral') {
     return {
@@ -253,9 +241,9 @@ function matrixSystemRequest(
 
 function matrixMultiRhsSystemRequest(input: MatrixEditorDispatchInput, expression: Extract<LinearAlgebraEditorExpression, { kind: 'multiRhsSystem' }>): MatrixEditorDispatchResult {
   const coefficientsResult = matrixOperand(expression.coefficients, input);
-  if (!coefficientsResult.ok) return coefficientsResult;
+  if (!coefficientsResult.ok) return matrixEvaluationError(coefficientsResult);
   const constantsResult = matrixOperand(expression.constants, input);
-  if (!constantsResult.ok) return constantsResult;
+  if (!constantsResult.ok) return matrixEvaluationError(constantsResult);
   const coefficients = coefficientsResult.operand;
   const constants = constantsResult.operand;
 
@@ -275,7 +263,7 @@ function matrixCoordinatesRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'coordinates' }>,
 ): MatrixEditorDispatchResult {
   const basisResult = matrixOperand(expression.basis, input);
-  if (!basisResult.ok) return basisResult;
+  if (!basisResult.ok) return matrixEvaluationError(basisResult);
   const basis = basisResult.operand;
   if (expression.vector.kind !== 'vectorLiteral') {
     return {
@@ -313,7 +301,7 @@ function matrixColumnProjectionRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'columnProjection' }>,
 ): MatrixEditorDispatchResult {
   const matrixResult = matrixOperand(expression.matrix, input);
-  if (!matrixResult.ok) return matrixResult;
+  if (!matrixResult.ok) return matrixEvaluationError(matrixResult);
   const matrix = matrixResult.operand;
   if (expression.vector.kind !== 'vectorLiteral') {
     return {
@@ -351,7 +339,7 @@ function matrixLeastSquaresRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'leastSquares' }>,
 ): MatrixEditorDispatchResult {
   const matrixResult = matrixOperand(expression.matrix, input);
-  if (!matrixResult.ok) return matrixResult;
+  if (!matrixResult.ok) return matrixEvaluationError(matrixResult);
   const matrix = matrixResult.operand;
   if (expression.vector.kind !== 'vectorLiteral') {
     return {
@@ -389,7 +377,7 @@ function matrixFactorSolveRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'factorSolve' }>,
 ): MatrixEditorDispatchResult {
   const matrixResult = matrixOperand(expression.matrix, input);
-  if (!matrixResult.ok) return matrixResult;
+  if (!matrixResult.ok) return matrixEvaluationError(matrixResult);
   const matrix = matrixResult.operand;
   if (expression.vector.kind !== 'vectorLiteral') {
     return {
@@ -431,9 +419,9 @@ function matrixChangeOfBasisRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'changeOfBasis' }>,
 ): MatrixEditorDispatchResult {
   const sourceResult = matrixOperand(expression.source, input);
-  if (!sourceResult.ok) return sourceResult;
+  if (!sourceResult.ok) return matrixEvaluationError(sourceResult);
   const targetResult = matrixOperand(expression.target, input);
-  if (!targetResult.ok) return targetResult;
+  if (!targetResult.ok) return matrixEvaluationError(targetResult);
   const source = sourceResult.operand;
   const target = targetResult.operand;
 
@@ -455,7 +443,7 @@ function matrixPowerRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'matrixPower' }>,
 ): MatrixEditorDispatchResult {
   const matrixResult = matrixOperand(expression.matrix, input);
-  if (!matrixResult.ok) return matrixResult;
+  if (!matrixResult.ok) return matrixEvaluationError(matrixResult);
   const matrix = matrixResult.operand;
 
   return {
@@ -485,7 +473,7 @@ function matrixUnaryRequest(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'unary' }>,
 ): MatrixEditorDispatchResult {
   const valueResult = matrixOperand(expression.value, input);
-  if (!valueResult.ok) return valueResult;
+  if (!valueResult.ok) return matrixEvaluationError(valueResult);
   const value = valueResult.operand;
 
   const operations = MATRIX_UNARY_OPERATIONS[expression.operator];
@@ -521,15 +509,6 @@ function vectorPairRequest(
   input: VectorEditorDispatchInput,
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'binary' }>,
 ): VectorEditorDispatchResult {
-  const left = vectorOperand(expression.left, input);
-  const right = vectorOperand(expression.right, input);
-  if (!left || !right) {
-    return {
-      ok: false,
-      message: 'Vector editor operations need Vector u/v values or inline vector literals.',
-    };
-  }
-
   if (
     expression.operator !== 'add'
     && expression.operator !== 'subtract'
@@ -541,6 +520,13 @@ function vectorPairRequest(
       message: 'This Vector editor operator is not executable in Vector mode.',
     };
   }
+
+  const leftResult = vectorOperand(expression.left, input);
+  if (!leftResult.ok) return vectorEvaluationError(leftResult);
+  const rightResult = vectorOperand(expression.right, input);
+  if (!rightResult.ok) return vectorEvaluationError(rightResult);
+  const left = leftResult.operand;
+  const right = rightResult.operand;
 
   return {
     ok: true,
@@ -572,62 +558,70 @@ function vectorUnaryRequest(
     };
   }
 
-  const value = vectorOperand(expression.value, input);
-  if (!value) {
-    return {
-      ok: false,
-      message: 'Vector unary operations need Vector u/v values or inline vector literals.',
-    };
-  }
+  const valueResult = vectorOperand(expression.value, input);
+  if (!valueResult.ok) return vectorEvaluationError(valueResult);
+  const value = valueResult.operand;
 
   if (expression.operator === 'projectionOntoU') {
+    const baseResult = namedVectorOperand('u', input);
+    if (!baseResult.ok) return vectorEvaluationError(baseResult);
+    const base = baseResult.operand;
     return {
       ok: true,
       request: {
         operation: 'projectionUofV',
-        vectorA: cloneVector(input.vectorA),
+        vectorA: base.vector,
         vectorB: value.vector,
         angleUnit: input.angleUnit,
-        ...vectorMetadata(input, { operandA: 'u', operandB: value }),
+        ...vectorMetadata(input, { operandA: base, operandB: value }),
       },
     };
   }
 
   if (expression.operator === 'projectionOntoV') {
+    const baseResult = namedVectorOperand('v', input);
+    if (!baseResult.ok) return vectorEvaluationError(baseResult);
+    const base = baseResult.operand;
     return {
       ok: true,
       request: {
-        operation: 'projectionVofU',
-        vectorA: value.vector,
-        vectorB: cloneVector(input.vectorB),
+        operation: 'projectionUofV',
+        vectorA: base.vector,
+        vectorB: value.vector,
         angleUnit: input.angleUnit,
-        ...vectorMetadata(input, { operandA: value, operandB: 'v' }),
+        ...vectorMetadata(input, { operandA: base, operandB: value }),
       },
     };
   }
 
   if (expression.operator === 'orthogonalComponentToU') {
+    const baseResult = namedVectorOperand('u', input);
+    if (!baseResult.ok) return vectorEvaluationError(baseResult);
+    const base = baseResult.operand;
     return {
       ok: true,
       request: {
         operation: 'orthogonalToU',
-        vectorA: cloneVector(input.vectorA),
+        vectorA: base.vector,
         vectorB: value.vector,
         angleUnit: input.angleUnit,
-        ...vectorMetadata(input, { operandA: 'u', operandB: value }),
+        ...vectorMetadata(input, { operandA: base, operandB: value }),
       },
     };
   }
 
   if (expression.operator === 'orthogonalComponentToV') {
+    const baseResult = namedVectorOperand('v', input);
+    if (!baseResult.ok) return vectorEvaluationError(baseResult);
+    const base = baseResult.operand;
     return {
       ok: true,
       request: {
-        operation: 'orthogonalToV',
-        vectorA: value.vector,
-        vectorB: cloneVector(input.vectorB),
+        operation: 'orthogonalToU',
+        vectorA: base.vector,
+        vectorB: value.vector,
         angleUnit: input.angleUnit,
-        ...vectorMetadata(input, { operandA: value, operandB: 'v' }),
+        ...vectorMetadata(input, { operandA: base, operandB: value }),
       },
     };
   }
@@ -768,14 +762,12 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
     return vectorUnaryRequest(canonicalInput, expression);
   }
   if (expression.kind === 'angle') {
-    const left = vectorOperand(expression.left, canonicalInput);
-    const right = vectorOperand(expression.right, canonicalInput);
-    if (!left || !right) {
-      return {
-        ok: false,
-        message: 'Vector angle needs Vector u/v values or inline vector literals.',
-      };
-    }
+    const leftResult = vectorOperand(expression.left, canonicalInput);
+    if (!leftResult.ok) return vectorEvaluationError(leftResult);
+    const rightResult = vectorOperand(expression.right, canonicalInput);
+    if (!rightResult.ok) return vectorEvaluationError(rightResult);
+    const left = leftResult.operand;
+    const right = rightResult.operand;
     return {
       ok: true,
       request: {
@@ -787,15 +779,31 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
       },
     };
   }
+  if (expression.kind === 'projection') {
+    const baseResult = vectorOperand(expression.base, canonicalInput);
+    if (!baseResult.ok) return vectorEvaluationError(baseResult);
+    const targetResult = vectorOperand(expression.target, canonicalInput);
+    if (!targetResult.ok) return vectorEvaluationError(targetResult);
+    const base = baseResult.operand;
+    const target = targetResult.operand;
+    return {
+      ok: true,
+      request: {
+        operation: 'projectionUofV',
+        vectorA: base.vector,
+        vectorB: target.vector,
+        angleUnit: canonicalInput.angleUnit,
+        ...vectorMetadata(canonicalInput, { operandA: base, operandB: target }),
+      },
+    };
+  }
   if (expression.kind === 'orthogonality') {
-    const left = vectorOperand(expression.left, canonicalInput);
-    const right = vectorOperand(expression.right, canonicalInput);
-    if (!left || !right) {
-      return {
-        ok: false,
-        message: 'Vector orthogonality checks need Vector u/v values or inline vector literals.',
-      };
-    }
+    const leftResult = vectorOperand(expression.left, canonicalInput);
+    if (!leftResult.ok) return vectorEvaluationError(leftResult);
+    const rightResult = vectorOperand(expression.right, canonicalInput);
+    if (!rightResult.ok) return vectorEvaluationError(rightResult);
+    const left = leftResult.operand;
+    const right = rightResult.operand;
     return {
       ok: true,
       request: {
@@ -808,14 +816,12 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
     };
   }
   if (expression.kind === 'gramSchmidt') {
-    const left = vectorOperand(expression.left, canonicalInput);
-    const right = vectorOperand(expression.right, canonicalInput);
-    if (!left || !right) {
-      return {
-        ok: false,
-        message: 'Vector Gram-Schmidt needs Vector u/v values or inline vector literals.',
-      };
-    }
+    const leftResult = vectorOperand(expression.left, canonicalInput);
+    if (!leftResult.ok) return vectorEvaluationError(leftResult);
+    const rightResult = vectorOperand(expression.right, canonicalInput);
+    if (!rightResult.ok) return vectorEvaluationError(rightResult);
+    const left = leftResult.operand;
+    const right = rightResult.operand;
     return {
       ok: true,
       request: {
@@ -827,9 +833,32 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
       },
     };
   }
+  if (expression.kind === 'scalarTripleProduct') {
+    const firstResult = vectorOperand(expression.first, canonicalInput);
+    if (!firstResult.ok) return vectorEvaluationError(firstResult);
+    const crossResult = vectorOperand({
+      kind: 'binary',
+      operator: 'cross',
+      left: expression.second,
+      right: expression.third,
+    }, canonicalInput);
+    if (!crossResult.ok) return vectorEvaluationError(crossResult);
+    const first = firstResult.operand;
+    const cross = crossResult.operand;
+    return {
+      ok: true,
+      request: {
+        operation: 'dot',
+        vectorA: first.vector,
+        vectorB: cross.vector,
+        angleUnit: canonicalInput.angleUnit,
+        ...vectorMetadata(canonicalInput, { operandA: first, operandB: cross }),
+      },
+    };
+  }
 
   return {
     ok: false,
-    message: 'Enter a Vector operation such as u+v, u·v, proj_u(v), gram(u,v), or angle(u,v).',
+    message: 'Enter a Vector operation such as u+v, u·v, proj(u,v), cross(u,v), gram(u,v), or angle(u,v).',
   };
 }

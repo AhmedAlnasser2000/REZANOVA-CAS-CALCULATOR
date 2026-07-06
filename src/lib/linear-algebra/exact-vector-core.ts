@@ -28,6 +28,27 @@ export function exactSubtractVectors(left: ExactVector, right: ExactVector): Exa
   return left.map((value, index) => subtractExactScalars(value, right[index]));
 }
 
+export function exactCrossVectors(left: ExactVector, right: ExactVector): ExactVector | null {
+  if (left.length !== 3 || right.length !== 3) {
+    return null;
+  }
+
+  return [
+    subtractExactScalars(
+      multiplyExactScalars(left[1], right[2]),
+      multiplyExactScalars(left[2], right[1]),
+    ),
+    subtractExactScalars(
+      multiplyExactScalars(left[2], right[0]),
+      multiplyExactScalars(left[0], right[2]),
+    ),
+    subtractExactScalars(
+      multiplyExactScalars(left[0], right[1]),
+      multiplyExactScalars(left[1], right[0]),
+    ),
+  ];
+}
+
 export function exactScaleVector(vector: ExactVector, factor: ExactScalar): ExactVector {
   return vector.map((value) => multiplyExactScalars(value, factor));
 }

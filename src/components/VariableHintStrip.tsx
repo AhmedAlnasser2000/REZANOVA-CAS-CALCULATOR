@@ -11,12 +11,14 @@ function variableHintAnalysisKey(context: VariableHintContext) {
   const storedKey = context.storedVariables
     ?.map((entry) => `${entry.name}=${entry.valueLatex}`)
     .join('|') ?? '';
+  const linearAlgebraKey = context.linearAlgebraNamedValues?.join(',') ?? '';
   return [
     context.mode,
     context.screenHint ?? '',
     context.solveTarget ?? '',
     context.activeVariable ?? '',
     context.boundVariables?.join(',') ?? '',
+    linearAlgebraKey,
     storedKey,
   ].join('::');
 }
@@ -32,9 +34,11 @@ export function VariableHintStrip({
     solveTarget,
     activeVariable,
     boundVariables,
+    linearAlgebraNamedValues,
     storedVariables,
   } = context;
   const boundVariablesKey = boundVariables?.join(',') ?? '';
+  const linearAlgebraNamesKey = linearAlgebraNamedValues?.join(',') ?? '';
   const analysisKey = variableHintAnalysisKey(context);
   const analyzeHints = useCallback(
     (currentLatex: string) =>
@@ -44,6 +48,7 @@ export function VariableHintStrip({
         solveTarget,
         activeVariable,
         boundVariables: boundVariablesKey ? boundVariablesKey.split(',') : undefined,
+        linearAlgebraNamedValues: linearAlgebraNamesKey ? linearAlgebraNamesKey.split(',') : undefined,
         storedVariables,
       }),
     [
@@ -52,6 +57,7 @@ export function VariableHintStrip({
       mode,
       screenHint,
       solveTarget,
+      linearAlgebraNamesKey,
       storedVariables,
     ],
   );

@@ -345,11 +345,12 @@ export function useLinearAlgebraRuntime({
 
   function runMatrixEditorAction() {
     const inputLatex = matrixEditorLatex;
+    const active = matrixStateRef.current;
     const dispatched = dispatchMatrixEditorLatex({
       latex: inputLatex,
-      matrixA,
-      matrixB,
-      matrixValues,
+      matrixA: active.matrixA,
+      matrixB: active.matrixB,
+      matrixValues: active.matrixValues,
     });
     if (!dispatched.ok) {
       commitMatrixEditorError(inputLatex, dispatched.message, dispatched.handoff);
@@ -447,12 +448,13 @@ export function useLinearAlgebraRuntime({
 
   function runVectorEditorAction() {
     const inputLatex = vectorEditorLatex;
+    const active = vectorStateRef.current;
     const dispatched = dispatchVectorEditorLatex({
       latex: inputLatex,
-      vectorA,
-      vectorB,
-      vectorValues,
-      angleUnit,
+      vectorA: active.vectorA,
+      vectorB: active.vectorB,
+      vectorValues: active.vectorValues,
+      angleUnit: active.angleUnit,
     });
     if (!dispatched.ok) {
       commitVectorEditorError(inputLatex, dispatched.message, dispatched.handoff);

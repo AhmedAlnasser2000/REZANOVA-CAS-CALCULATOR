@@ -29,6 +29,7 @@ export type VariableHintContext = {
   solveTarget?: string | null;
   activeVariable?: string;
   boundVariables?: readonly string[];
+  linearAlgebraNamedValues?: readonly string[];
   storedVariables?: readonly StoredVariableValue[];
 };
 
@@ -305,6 +306,18 @@ function isLinearAlgebraEditorFunction(raw: string, context: VariableHintContext
 }
 
 function isLinearAlgebraStructuralSymbol(raw: string, context: VariableHintContext) {
+  const namedValues = context.linearAlgebraNamedValues;
+  if (
+    namedValues?.includes(raw)
+    || (
+      namedValues
+      && raw.length > 1
+      && /^[A-Za-z]+$/.test(raw)
+      && [...raw].every((character) => namedValues.includes(character))
+    )
+  ) {
+    return true;
+  }
   if (context.mode === 'matrix') {
     return raw === 'A' || raw === 'B' || raw === 'x' || raw === 'X';
   }

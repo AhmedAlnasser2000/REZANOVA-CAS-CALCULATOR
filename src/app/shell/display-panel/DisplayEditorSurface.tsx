@@ -91,6 +91,7 @@ export function DisplayEditorSurface({
   mainFieldRef,
   matrixEditorLatex,
   matrixKeyboardLayouts,
+  matrixNamedValueNames,
   canonicalizeMatrixEditorPaste,
   canonicalizeVectorEditorPaste,
   onRunEditor,
@@ -124,6 +125,7 @@ export function DisplayEditorSurface({
   variableMemory,
   vectorEditorLatex,
   vectorKeyboardLayouts,
+  vectorNamedValueNames,
   setVectorEditorLatex,
 }: DisplayEditorSurfaceProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
@@ -517,6 +519,7 @@ export function DisplayEditorSurface({
             latex={matrixEditorLatex}
             mode="matrix"
             screenHint="matrix"
+            linearAlgebraNamedValues={matrixNamedValueNames}
             storedVariables={variableMemory}
           />
         </div>
@@ -543,6 +546,7 @@ export function DisplayEditorSurface({
             latex={vectorEditorLatex}
             mode="vector"
             screenHint="vector"
+            linearAlgebraNamedValues={vectorNamedValueNames}
             storedVariables={variableMemory}
           />
         </div>

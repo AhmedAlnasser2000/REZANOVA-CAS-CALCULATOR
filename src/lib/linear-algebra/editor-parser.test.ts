@@ -169,6 +169,14 @@ describe('parseLinearAlgebraEditorLatex', () => {
       operator: 'norm',
       value: { kind: 'named', name: 'u', displayLatex: 'u' },
     });
+    expect(parsedWithOptions('\\left\\lVert p-q\\right\\rVert', {
+      mode: 'vector',
+      vectorNamedValues: ['u', 'v', 'p', 'q'],
+    })).toMatchObject({
+      kind: 'unary',
+      operator: 'norm',
+      value: { kind: 'binary', operator: 'subtract' },
+    });
     expect(parsed('\\angle\\left(u,v\\right)', 'vector')).toEqual({
       kind: 'angle',
       left: { kind: 'named', name: 'u', displayLatex: 'u' },
@@ -201,6 +209,26 @@ describe('parseLinearAlgebraEditorLatex', () => {
       kind: 'gramSchmidt',
       left: { kind: 'named', name: 'u', displayLatex: 'u' },
       right: { kind: 'named', name: 'v', displayLatex: 'v' },
+    });
+    expect(parsed('\\operatorname{proj}\\left(u,v\\right)', 'vector')).toEqual({
+      kind: 'projection',
+      base: { kind: 'named', name: 'u', displayLatex: 'u' },
+      target: { kind: 'named', name: 'v', displayLatex: 'v' },
+    });
+    expect(parsed('\\operatorname{cross}\\left(u,v\\right)', 'vector')).toEqual({
+      kind: 'binary',
+      operator: 'cross',
+      left: { kind: 'named', name: 'u', displayLatex: 'u' },
+      right: { kind: 'named', name: 'v', displayLatex: 'v' },
+    });
+    expect(parsedWithOptions('\\operatorname{triple}\\left(u,v,w\\right)', {
+      mode: 'vector',
+      vectorNamedValues: ['u', 'v', 'w'],
+    })).toEqual({
+      kind: 'scalarTripleProduct',
+      first: { kind: 'named', name: 'u', displayLatex: 'u' },
+      second: { kind: 'named', name: 'v', displayLatex: 'v' },
+      third: { kind: 'named', name: 'w', displayLatex: 'w' },
     });
   });
 
