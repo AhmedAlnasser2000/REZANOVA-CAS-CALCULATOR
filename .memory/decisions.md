@@ -1989,6 +1989,10 @@
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Grouped exponent bodies pasted into math editors should reuse the same safe canonicalization as base expressions, so forms such as `x^(1/3)` become parseable fractional exponents instead of leaving inline slash text inside the exponent.
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Verified Calculus indefinite-integration presentation should prefer explicit fractional powers for simple power/root antiderivative terms, such as `x^{3/2}`, when that avoids root-versus-power ambiguity; Copy Result and To Editor remain parseable and derivative-backchecked.
 
+## 2026-07-06 - CALCULUS-INTEGRATION-TRIG-SUB-ROOTS1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus indefinite presentation may reuse an existing exact antiderivative verification when the visible/copy base expression is unchanged and only the structured integration constant is appended; if presentation normalizes the base expression, it must still run the derivative backcheck before replacing the route output.
+
 ## 2026-07-06 - LINEAR-ALGEBRA-MULTI-MATRIX-EDITOR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Matrix typed editor expressions may use any named or inline matrix values and compose them locally before routing to existing Matrix operations. Soft F-keys stay intentionally two-operand and reflect the active Left/Right selections only.
@@ -2020,3 +2024,7 @@
 ## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-SERIES-IN-W1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz series-in-`w` extraction remains an internal contract: it computes the leading `w` order and coefficient from supported transformed scale expressions and passes parameter/branch evidence forward, but public Limit routing waits for sign extraction and recursive orchestration.
+
+## 2026-07-06 - LINEAR-ALGEBRA-MULTI-VECTOR-EDITOR1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector typed editor expressions may use arbitrary named or inline vectors beyond the active First/Second operands. `proj(base,target)` means "project target onto base"; `proj_u(v)` and `proj_v(u)` remain aliases. Exact 3D cross product and scalar triple product are Vector-owned operations, while F-keys remain active-operand shortcuts only.

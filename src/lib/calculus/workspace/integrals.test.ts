@@ -418,6 +418,16 @@ describe('calculus integrals', () => {
     expect(cosh.exactLatex).toContain(String.raw`\sinh\left(2\left(2x+1\right)\right)`);
     expect(cosh.exactLatex?.endsWith('+C')).toBe(true);
     expectParseableLatex(cosh.exactLatex);
+
+    const affineCarrierRadical = evaluateCalculusIndefiniteIntegral({
+      bodyLatex: String.raw`\frac{(2x+1)^2}{\sqrt{(2x+1)^2+9}}`,
+    });
+    expect(affineCarrierRadical.error).toBeUndefined();
+    expect(affineCarrierRadical.exactLatex).toContain(String.raw`\ln`);
+    expect(affineCarrierRadical.exactLatex?.endsWith('+C')).toBe(true);
+    expect(affineCarrierRadical.detailSections?.map((section) => section.title))
+      .toContain('Integration Presentation');
+    expectParseableLatex(affineCarrierRadical.exactLatex);
   });
 
   it('fails cleanly for unsupported antiderivatives', () => {

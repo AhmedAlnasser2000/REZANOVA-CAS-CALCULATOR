@@ -279,6 +279,79 @@ function buildReciprocalThreeHalvesLatex(
   );
 }
 
+function joinAdditiveLatex(parts: Array<string | undefined>) {
+  return parts
+    .filter((part): part is string => Boolean(part) && part !== '0')
+    .reduce((joined, part, index) => {
+      if (index === 0) {
+        return part;
+      }
+      return part.startsWith('-') ? `${joined}${part}` : `${joined}+${part}`;
+    }, '') || undefined;
+}
+
+function sqrtRadicandFromDenominator(node: unknown) {
+  if (isNodeArray(node) && node[0] === 'Sqrt' && node.length === 2) {
+    return node[1];
+  }
+
+  if (!isNodeArray(node) || node[0] !== 'Power' || node.length !== 3) {
+    return undefined;
+  }
+
+  const exponent = readExactScalarNode(node[2]);
+  return exponent?.numerator === 1 && exponent.denominator === 2
+    ? node[1]
+    : undefined;
+}
+
+function squaredAffineOverRadicalForm(node: unknown, variable: string) {
+  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return undefined;
+  }
+
+  const numeratorAffine = parseSquaredAffineTerm(node[1], variable);
+  const radicand = sqrtRadicandFromDenominator(node[2]);
+  const parsed = radicand ? familyFromTerms(radicand, variable) : undefined;
+  if (!numeratorAffine || !parsed || parsed.affine.latex !== numeratorAffine.latex) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+function buildSquaredAffineOverRadicalLatex(
+  family: RadicalFamily,
+  r: ExactScalar,
+  affine: ExactAffine,
+) {
+  const denominator = multiplyExactScalars({ numerator: 2, denominator: 1 }, affine.slope);
+  const rootCoefficient = divideExactScalars({ numerator: 1, denominator: 1 }, denominator);
+  const inverseCoefficient = divideExactScalars(r, denominator);
+  if (!rootCoefficient || !inverseCoefficient) {
+    return undefined;
+  }
+
+  const rLatex = exactScalarLatex(r);
+  const rootLatex = exactScalarSqrtLatex(r);
+  const uGrouped = wrapGroupedLatex(affine.latex);
+  const radicandLatex = buildRadicandLatex(family, rLatex, uGrouped);
+  const rootTerm = `${uGrouped}\\sqrt{${radicandLatex}}`;
+
+  if (family === 'minus') {
+    return joinAdditiveLatex([
+      scaleByExactScalar(`\\arcsin\\left(\\frac{${uGrouped}}{${rootLatex}}\\right)`, inverseCoefficient),
+      scaleByExactScalar(rootTerm, negateExactScalar(rootCoefficient)),
+    ]);
+  }
+
+  const logTerm = `\\ln\\left|${uGrouped}+\\sqrt{${radicandLatex}}\\right|`;
+  return joinAdditiveLatex([
+    scaleByExactScalar(rootTerm, rootCoefficient),
+    scaleByExactScalar(logTerm, family === 'plus' ? negateExactScalar(inverseCoefficient) : inverseCoefficient),
+  ]);
+}
+
 function affineTimesOutsideSqrtReciprocalForm(node: unknown, variable: string) {
   if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
     return undefined;
@@ -367,6 +440,32 @@ export function tryTrigSubstitutionRadicalRule(
   node: unknown,
   variable: string,
 ): TrigSubstitutionRadicalResult | undefined {
+  const squaredAffineOverRadical = squaredAffineOverRadicalForm(node, variable);
+  if (squaredAffineOverRadical) {
+    const exactLatex = buildSquaredAffineOverRadicalLatex(
+      squaredAffineOverRadical.family,
+      squaredAffineOverRadical.r,
+      squaredAffineOverRadical.affine,
+    );
+    return exactLatex
+      ? {
+        exactLatex,
+        verification: proof(squaredAffineOverRadical.family),
+        exactSupplementLatex: supplementsFor(
+          squaredAffineOverRadical.family,
+          squaredAffineOverRadical.r,
+          squaredAffineOverRadical.affine,
+        ),
+        detailSections: [radicalTemplateDetail([
+          `Recognized squared-carrier over radical: ${boxLatex(node)}`,
+          `Template family: ${squaredAffineOverRadical.family}`,
+          `Substitution carrier: ${squaredAffineOverRadical.affine.latex}`,
+          'Adopted only for an exact affine carrier squared over the matching radical.',
+        ])],
+      }
+      : undefined;
+  }
+
   const reciprocalAffineOutsideSqrt = affineTimesOutsideSqrtReciprocalForm(node, variable);
   if (reciprocalAffineOutsideSqrt) {
     const coefficient = divideExactScalars(

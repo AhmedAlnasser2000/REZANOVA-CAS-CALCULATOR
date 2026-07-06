@@ -122,7 +122,9 @@ function normalizePresentationLatex(latex: string) {
   );
 }
 
-function isVerified(backcheck: AntiderivativeBackcheck | undefined) {
+function isVerified(
+  backcheck: AntiderivativeBackcheck | undefined,
+): backcheck is AntiderivativeBackcheck {
   return backcheck?.status === 'verified-exact'
     || backcheck?.status === 'verified-numeric-confidence';
 }
@@ -138,9 +140,12 @@ function answerRowsFor(exactLatex: string): DisplayAnswerRowsReadback {
 function presentationDetail(input: {
   changedLatex: boolean;
   constantLatex: string;
+  reusedExistingVerification: boolean;
 }): DisplayDetailSection {
   const lines = [
-    `Added integration constant ${input.constantLatex} after derivative backcheck.`,
+    input.reusedExistingVerification
+      ? `Added integration constant ${input.constantLatex} after the existing exact antiderivative verification.`
+      : `Added integration constant ${input.constantLatex} after derivative backcheck.`,
   ];
   if (input.changedLatex) {
     lines.push('Canonical output was normalized for coefficient, fraction, and grouping readability.');
@@ -162,11 +167,14 @@ export function presentVerifiedIndefiniteAntiderivative(
   const constantLatex = input.variable === 'C' ? 'K' : 'C';
   const baseLatex = normalizePresentationLatex(input.exactLatex);
   const exactLatex = `${baseLatex}+${constantLatex}`;
-  const verification = backcheckAntiderivative({
-    antiderivativeLatex: exactLatex,
-    integrand: input.integrand,
-    variable: input.variable,
-  });
+  const changedLatex = baseLatex !== input.exactLatex;
+  const verification = changedLatex
+    ? backcheckAntiderivative({
+      antiderivativeLatex: exactLatex,
+      integrand: input.integrand,
+      variable: input.variable,
+    })
+    : input.verification;
   if (!isVerified(verification)) {
     return undefined;
   }
@@ -177,8 +185,9 @@ export function presentVerifiedIndefiniteAntiderivative(
     answerRows,
     verification,
     detailSections: [presentationDetail({
-      changedLatex: baseLatex !== input.exactLatex,
+      changedLatex,
       constantLatex,
+      reusedExistingVerification: !changedLatex,
     })],
   };
 }
