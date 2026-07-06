@@ -18,6 +18,7 @@ import type { AntiderivativeBackcheck } from '../../calculus/engine/verification
 import {
   boxLatex,
   flattenAdd,
+  flattenMultiply,
   isNodeArray,
   wrapGroupedLatex,
 } from '../patterns';
@@ -55,6 +56,24 @@ function nonnegative(expressionLatex: string): ExactSupplementEntry {
     kind: 'condition',
     expressionLatex,
     relation: '\\ge0',
+    source: 'candidate-validation',
+  };
+}
+
+function positive(expressionLatex: string): ExactSupplementEntry {
+  return {
+    kind: 'condition',
+    expressionLatex,
+    relation: '>0',
+    source: 'candidate-validation',
+  };
+}
+
+function nonzero(expressionLatex: string): ExactSupplementEntry {
+  return {
+    kind: 'exclusion',
+    expressionLatex,
+    relation: '\\ne0',
     source: 'candidate-validation',
   };
 }
@@ -103,6 +122,20 @@ function exactScalarSqrtLatex(value: ExactScalar) {
   }
 
   return `\\sqrt{${exactScalarLatex(normalized)}}`;
+}
+
+function exactScalarSqrt(value: ExactScalar): ExactScalar | undefined {
+  const normalized = normalizeExactScalar(value);
+  const numeratorRoot = Math.sqrt(normalized.numerator);
+  const denominatorRoot = Math.sqrt(normalized.denominator);
+  if (Number.isInteger(numeratorRoot) && Number.isInteger(denominatorRoot)) {
+    return normalizeExactScalar({
+      numerator: numeratorRoot,
+      denominator: denominatorRoot,
+    });
+  }
+
+  return undefined;
 }
 
 function parseExactAffine(node: unknown, variable: string): ExactAffine | undefined {
@@ -246,6 +279,58 @@ function buildReciprocalThreeHalvesLatex(
   );
 }
 
+function affineTimesOutsideSqrtReciprocalForm(node: unknown, variable: string) {
+  if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
+    return undefined;
+  }
+
+  const numerator = readExactScalarNode(node[1]);
+  if (!numerator) {
+    return undefined;
+  }
+
+  const denominatorFactors = flattenMultiply(node[2]);
+  if (denominatorFactors.length !== 2) {
+    return undefined;
+  }
+
+  const firstAffine = parseExactAffine(denominatorFactors[0], variable);
+  const firstSqrt = isNodeArray(denominatorFactors[1])
+    && denominatorFactors[1][0] === 'Sqrt'
+    && denominatorFactors[1].length === 2
+    ? denominatorFactors[1][1]
+    : undefined;
+  const secondAffine = parseExactAffine(denominatorFactors[1], variable);
+  const secondSqrt = isNodeArray(denominatorFactors[0])
+    && denominatorFactors[0][0] === 'Sqrt'
+    && denominatorFactors[0].length === 2
+    ? denominatorFactors[0][1]
+    : undefined;
+
+  const affine = firstAffine ?? secondAffine;
+  const sqrtBody = firstSqrt ?? secondSqrt;
+  if (!affine || !sqrtBody) {
+    return undefined;
+  }
+
+  const parsed = familyFromTerms(sqrtBody, variable);
+  if (!parsed || parsed.family !== 'outside' || parsed.affine.latex !== affine.latex) {
+    return undefined;
+  }
+
+  const root = exactScalarSqrt(parsed.r);
+  if (!root) {
+    return undefined;
+  }
+
+  return {
+    coefficient: numerator,
+    r: parsed.r,
+    root,
+    affine,
+  };
+}
+
 function radicalTemplateDetail(lines: string[]): DisplayDetailSection {
   return {
     title: 'Integration Radical Template',
@@ -282,6 +367,45 @@ export function tryTrigSubstitutionRadicalRule(
   node: unknown,
   variable: string,
 ): TrigSubstitutionRadicalResult | undefined {
+  const reciprocalAffineOutsideSqrt = affineTimesOutsideSqrtReciprocalForm(node, variable);
+  if (reciprocalAffineOutsideSqrt) {
+    const coefficient = divideExactScalars(
+      reciprocalAffineOutsideSqrt.coefficient,
+      multiplyExactScalars(reciprocalAffineOutsideSqrt.affine.slope, reciprocalAffineOutsideSqrt.root),
+    );
+    if (!coefficient) {
+      return undefined;
+    }
+
+    const rootLatex = exactScalarLatex(reciprocalAffineOutsideSqrt.root);
+    const uGrouped = wrapGroupedLatex(reciprocalAffineOutsideSqrt.affine.latex);
+    const branchCondition = `${uGrouped}-${rootLatex}`;
+    return {
+      exactLatex: scaleByExactScalar(
+        `\\arccos\\left(\\frac{${rootLatex}}{${uGrouped}}\\right)`,
+        coefficient,
+      ),
+      verification: {
+        status: 'verified-exact',
+        reason: 'verified by positive-branch affine inverse-secant radical template proof',
+      },
+      exactSupplementLatex: mergeExactSupplementLatex({
+        entries: [
+          positive(branchCondition),
+          nonzero(uGrouped),
+          nonnegative(`${uGrouped}^{2}-${exactScalarLatex(reciprocalAffineOutsideSqrt.r)}`),
+        ],
+        source: 'candidate-validation',
+      }),
+      detailSections: [radicalTemplateDetail([
+        `Recognized inverse-secant radical: ${boxLatex(node)}`,
+        `Positive branch carrier: ${reciprocalAffineOutsideSqrt.affine.latex}`,
+        `Branch condition: ${branchCondition}>0`,
+        'No partial antiderivative was adopted outside the stated branch.',
+      ])],
+    };
+  }
+
   const reciprocalThreeHalves = isReciprocalThreeHalvesPower(node);
   const radicand = reciprocalThreeHalves
     ?? (isNodeArray(node) && node[0] === 'Sqrt' && node.length === 2 ? node[1] : undefined);

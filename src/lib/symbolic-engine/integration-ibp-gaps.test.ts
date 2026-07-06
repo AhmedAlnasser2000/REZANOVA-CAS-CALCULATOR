@@ -29,6 +29,7 @@ describe('symbolic-engine integration by-parts textbook gap unlocks', () => {
     String.raw`x^3\arctan(x)`,
     String.raw`x^3\arcsin(x)`,
     String.raw`x^4\arcsin(x)`,
+    String.raw`x\arctan(2x)`,
   ])('handles bounded polynomial-times-inverse-trig IBP %s', (latex) => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
     expect(result.strategy).toBe('integration-by-parts');
@@ -60,5 +61,15 @@ describe('symbolic-engine integration by-parts textbook gap unlocks', () => {
   it('keeps affine trig derivative IBP bounded to affine polynomial factors', () => {
     const result = expectIntegrationError(resolveSymbolicIntegralFromLatex(String.raw`x^2\sec^2(2x)`));
     expect(result.candidate.controlledFailureClass).toBeDefined();
+  });
+
+  it('keeps high-degree affine arcsin IBP capped until the recurrence builder is optimized', () => {
+    for (const latex of [
+      String.raw`x\arcsin(x/2)`,
+      String.raw`x^6\arcsin(x/2)`,
+    ]) {
+      const result = expectIntegrationError(resolveSymbolicIntegralFromLatex(latex));
+      expect(result.candidate.controlledFailureClass).toBeDefined();
+    }
   });
 });

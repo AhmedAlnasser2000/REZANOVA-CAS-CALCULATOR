@@ -28,6 +28,7 @@ import { negateGeneratedLatex } from './generated-latex';
 import { tryHyperbolicSquareTableRule } from './hyperbolic-table';
 import { tryTextbookIbpGapRule } from './ibp-gaps';
 import { inverseTrigIntegral } from './inverse-trig';
+import { tryLogPowerSubstitutionRule } from './log-power-substitution';
 import { symbolicSuccess, unsupportedCandidateMetadata } from './metadata';
 import { normalizeIntegrationNormalForm } from './normal-form';
 import {
@@ -220,14 +221,9 @@ function tryRoute(
 
     const symbolicQuadraticRepeatedPower = trySymbolicQuadraticRepeatedPowerRule(node, variable);
     if (symbolicQuadraticRepeatedPower) {
-      return symbolicSuccess(
-        node,
-        variable,
-        symbolicQuadraticRepeatedPower.exactLatex,
-        'partial-fractions',
-        symbolicQuadraticRepeatedPower.verification,
-        symbolicQuadraticRepeatedPower.exactSupplementLatex,
-      )
+      return symbolicSuccess(node, variable, symbolicQuadraticRepeatedPower.exactLatex,
+        'partial-fractions', symbolicQuadraticRepeatedPower.verification,
+        symbolicQuadraticRepeatedPower.exactSupplementLatex);
     }
 
     return undefined;
@@ -258,6 +254,13 @@ function tryRoute(
         depth2Substitution.verification,
         depth2Substitution.exactSupplementLatex,
       );
+    }
+
+    const logPowerSubstitution = tryLogPowerSubstitutionRule(node, variable);
+    if (logPowerSubstitution) {
+      return symbolicSuccess(node, variable, logPowerSubstitution.exactLatex, 'u-substitution',
+        logPowerSubstitution.verification, logPowerSubstitution.exactSupplementLatex,
+        logPowerSubstitution.detailSections);
     }
 
     const substitution = trySubstitutionRule(node, variable);

@@ -18,3 +18,9 @@
 - subject: `CALCULUS-INTEGRATION-NEXT400-HYGIENE-PERF1`
 - commit_hash: pending at write time
 - scope: next400 generator hygiene evidence, integration corpus npm script, performance-boundary route behavior, focused tests, and durable session evidence.
+
+## Planned Commit
+
+- subject: `CALCULUS-INTEGRATION-SMALL-TEMPLATE-UNLOCKS2`
+- commit_hash: pending at write time
+- scope: log-power substitution, positive-branch inverse-secant radical template, hyperbolic-square parser-shape repair, affine arctan IBP widening, capped affine arcsin/sec2/csc2 findings, focused tests, Playwright evidence, and durable session evidence.

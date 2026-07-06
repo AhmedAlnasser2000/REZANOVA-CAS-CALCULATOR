@@ -6,13 +6,14 @@ import {
   divideExactScalars,
   multiplyExactScalars,
   negateExactScalar,
+  readExactScalarNode,
   type ExactScalar,
 } from '../../algebra/polynomial-core';
 import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
 } from '../../calculus/engine/verification';
-import { boxLatex, isNodeArray, multiplyLatex, wrapGroupedLatex } from '../patterns';
+import { boxLatex, isNodeArray } from '../patterns';
 import { parseExactAffineArgument } from './exact-parts';
 import { scaleByExactScalar } from './rational';
 
@@ -55,6 +56,23 @@ function exactScalarLatex(value: ExactScalar) {
   return boxLatex(buildExactScalarNode(value));
 }
 
+function exactScalarIsTwo(node: unknown) {
+  const scalar = readExactScalarNode(node);
+  return scalar?.numerator === 2 && scalar.denominator === 1;
+}
+
+function groupedAffineLatex(latex: string) {
+  return /^[A-Za-z](?:\^\{?[-+]?\d+\}?)?$/.test(latex)
+    ? latex
+    : `\\left(${latex}\\right)`;
+}
+
+function doubledAffineLatex(latex: string) {
+  return /^[A-Za-z]$/.test(latex)
+    ? `2${latex}`
+    : `2\\left(${latex}\\right)`;
+}
+
 function hyperbolicDetail(lines: string[]): DisplayDetailSection {
   return {
     title: 'Integration Hyperbolic Table',
@@ -83,7 +101,7 @@ export function tryHyperbolicSquareTableRule(
   }
 
   const exponent = node[2];
-  if (!isNodeArray(node[1]) || node[1].length !== 2 || boxLatex(exponent) !== '2') {
+  if (!isNodeArray(node[1]) || node[1].length !== 2 || !exactScalarIsTwo(exponent)) {
     return undefined;
   }
 
@@ -103,15 +121,14 @@ export function tryHyperbolicSquareTableRule(
     return undefined;
   }
 
-  const doubledArgument = multiplyLatex('2', wrapGroupedLatex(affine.latex));
   const sinhTerm = scaleByExactScalar(
-    `\\sinh\\left(${doubledArgument}\\right)`,
+    `\\sinh\\left(${doubledAffineLatex(affine.latex)}\\right)`,
     sinhCoefficient,
   );
   const signedLinearCoefficient = head === 'Sinh'
     ? negateExactScalar(linearCoefficient)
     : linearCoefficient;
-  const linearTerm = scaleByExactScalar(affine.latex, signedLinearCoefficient);
+  const linearTerm = scaleByExactScalar(groupedAffineLatex(affine.latex), signedLinearCoefficient);
   const exactLatex = joinAdditiveLatex([sinhTerm, linearTerm]);
   if (!exactLatex) {
     return undefined;

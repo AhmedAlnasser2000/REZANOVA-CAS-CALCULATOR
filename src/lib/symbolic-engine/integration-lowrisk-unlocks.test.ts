@@ -23,6 +23,19 @@ function expectIntegrationError(result: IntegrationResult): IntegrationError {
 
 describe('symbolic-engine low-risk textbook integration unlocks', () => {
   it.each([
+    [String.raw`\frac{\ln(x)^2}{x}`, String.raw`\ln`],
+    [String.raw`\frac{1}{x\ln(x)^2}`, String.raw`\frac{1}{\ln`],
+  ])('handles bounded log-power substitution %s', (latex, marker) => {
+    const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.exactLatex).toContain(marker);
+    expect(result.detailSections?.map((section) => section.title))
+      .toContain('Integration Log-Power Substitution');
+    expect(result.exactSupplementLatex?.join(' ')).toContain('x>0');
+  });
+
+  it.each([
     String.raw`\frac{2x^3-3x^2+1}{x^2-3x+1}`,
     String.raw`\frac{2x^3-4x^2+1}{x^2-4x+1}`,
     String.raw`\frac{2x^3-5x^2+1}{x^2-5x+1}`,
@@ -62,6 +75,8 @@ describe('symbolic-engine low-risk textbook integration unlocks', () => {
 
   it.each([
     [String.raw`\sinh^2(x)`, String.raw`-\frac{1}{2}x`],
+    [String.raw`\sinh^2(2x)`, String.raw`\sinh\left(2\left(2x\right)\right)`],
+    [String.raw`\cosh^2(2x)`, String.raw`\sinh\left(2\left(2x\right)\right)`],
     [String.raw`\cosh^2(2x+1)`, '+'],
   ])('handles tiny hyperbolic table form %s', (latex, marker) => {
     const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
@@ -75,10 +90,21 @@ describe('symbolic-engine low-risk textbook integration unlocks', () => {
 
   it.each([
     String.raw`\frac{1}{x\sqrt{x^2-4}}`,
-    String.raw`\frac{\sqrt{x^2-4}}{x}`,
     String.raw`\frac{1}{x\sqrt{x^2-9}}`,
+  ])('handles positive-branch inverse-secant radical form %s', (latex) => {
+    const result = expectIntegrationSuccess(resolveSymbolicIntegralFromLatex(latex));
+    expect(result.strategy).toBe('u-substitution');
+    expect(result.verification.status).toBe('verified-exact');
+    expect(result.exactLatex).toContain('\\arccos');
+    expect(result.exactSupplementLatex?.join(' ')).toContain('>0');
+    expect(result.detailSections?.map((section) => section.title))
+      .toContain('Integration Radical Template');
+  });
+
+  it.each([
+    String.raw`\frac{\sqrt{x^2-4}}{x}`,
     String.raw`\frac{\sqrt{x^2-9}}{x}`,
-  ])('keeps branch-heavy difference-root forms controlled unsupported %s', (latex) => {
+  ])('keeps unresolved branch-heavy quotient-root forms controlled unsupported %s', (latex) => {
     const result = expectIntegrationError(resolveSymbolicIntegralFromLatex(latex));
     expect(result.candidate.controlledFailureClass).toMatch(/unsupported-family|missing-derivative-factor/);
   });

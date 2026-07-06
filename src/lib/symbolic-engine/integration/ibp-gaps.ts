@@ -14,6 +14,8 @@ import {
   exactScalarIsZero,
   getExactPolynomialCoefficient,
   multiplyExactScalars,
+  multiplyExactPolynomials,
+  negateExactScalar,
   parseExactPolynomial,
   scaleExactPolynomial,
   type ExactPolynomial,
@@ -46,6 +48,7 @@ type IbpGapResult = {
 
 type InverseTrigHead = 'Arctan' | 'Arcsin';
 type TrigDerivativeHead = 'Sec' | 'Csc';
+type ExactAffineArgument = NonNullable<ReturnType<typeof parseExactAffineArgument>>;
 type ArcsinKernel = {
   arcsinCoefficient: ExactScalar;
   radicalPolynomial: ExactPolynomial;
@@ -53,7 +56,7 @@ type ArcsinKernel = {
 
 const EXACT_ZERO: ExactScalar = { numerator: 0, denominator: 1 };
 const EXACT_ONE: ExactScalar = { numerator: 1, denominator: 1 };
-const INVERSE_TRIG_POLYNOMIAL_DEGREE_CAP = 4;
+const INVERSE_TRIG_POLYNOMIAL_DEGREE_CAP = 6;
 const AFFINE_TRIG_DERIVATIVE_POLYNOMIAL_DEGREE_CAP = 1;
 
 function joinAdditiveLatex(parts: Array<string | undefined>) {
@@ -92,6 +95,12 @@ function productWithoutSelectedFactor(factors: unknown[], selectedIndex: number)
 
 function exactScalarLatex(value: ExactScalar) {
   return boxLatex(buildExactScalarNode(value));
+}
+
+function groupedLatex(latex: string) {
+  return /^[A-Za-z](?:\^\{?[-+]?\d+\}?)?$/.test(latex)
+    ? latex
+    : `\\left(${latex}\\right)`;
 }
 
 function nonzeroFact(expressionLatex: string): ExactSupplementEntry {
@@ -186,16 +195,37 @@ function productWithFunctionLatex(coefficientLatex: string, functionLatex: strin
 }
 
 function inverseTrigFactor(factor: unknown, head: InverseTrigHead, variable: string) {
-  return isNodeArray(factor)
-    && factor[0] === head
-    && factor.length === 2
-    && sameNode(factor[1], variable);
+  if (!isNodeArray(factor) || factor[0] !== head || factor.length !== 2) {
+    return undefined;
+  }
+
+  const affine = parseExactAffineArgument(factor[1], variable);
+  const argumentPolynomial = parseExactPolynomial(factor[1], variable, 1);
+  if (!affine || !argumentPolynomial) {
+    return undefined;
+  }
+
+  return {
+    affine,
+    argumentNode: factor[1],
+    argumentPolynomial,
+    factorLatex: head === 'Arctan'
+      ? `\\arctan\\left(${affine.latex}\\right)`
+      : `\\arcsin\\left(${affine.latex}\\right)`,
+  };
 }
 
 function findInverseTrigProduct(
   node: unknown,
   variable: string,
-): { head: InverseTrigHead; polynomial: ExactPolynomial; factorLatex: string } | undefined {
+): {
+  head: InverseTrigHead;
+  polynomial: ExactPolynomial;
+  factorLatex: string;
+  argumentNode: unknown;
+  argumentPolynomial: ExactPolynomial;
+  affine: ExactAffineArgument;
+} | undefined {
   if (!isNodeArray(node) || node[0] !== 'Multiply') {
     return undefined;
   }
@@ -203,10 +233,11 @@ function findInverseTrigProduct(
   const factors = flattenMultiply(node);
   for (let index = 0; index < factors.length; index += 1) {
     const factor = factors[index];
-    const head: InverseTrigHead | undefined = inverseTrigFactor(factor, 'Arctan', variable)
-      ? 'Arctan'
-      : inverseTrigFactor(factor, 'Arcsin', variable) ? 'Arcsin' : undefined;
-    if (!head) {
+    const arctan = inverseTrigFactor(factor, 'Arctan', variable);
+    const arcsin = arctan ? undefined : inverseTrigFactor(factor, 'Arcsin', variable);
+    const inverseTrig = arctan ?? arcsin;
+    const head: InverseTrigHead | undefined = arctan ? 'Arctan' : arcsin ? 'Arcsin' : undefined;
+    if (!head || !inverseTrig || !inverseTrig.affine) {
       continue;
     }
 
@@ -222,23 +253,29 @@ function findInverseTrigProduct(
     return {
       head,
       polynomial,
-      factorLatex: head === 'Arctan' ? '\\arctan\\left(x\\right)' : '\\arcsin\\left(x\\right)',
+      factorLatex: inverseTrig.factorLatex,
+      argumentNode: inverseTrig.argumentNode,
+      argumentPolynomial: inverseTrig.argumentPolynomial,
+      affine: inverseTrig.affine,
     };
   }
 
   return undefined;
 }
 
-function residualRationalNode(primitivePolynomial: ExactPolynomial, variable: string) {
+function residualRationalNode(
+  primitivePolynomial: ExactPolynomial,
+  product: NonNullable<ReturnType<typeof findInverseTrigProduct>>,
+) {
   return [
     'Divide',
-    exactPolynomialToNode(primitivePolynomial),
-    ['Add', ['Power', variable, 2], 1],
+    exactPolynomialToNode(scaleExactPolynomial(primitivePolynomial, product.affine.slope)),
+    ['Add', ['Power', product.argumentNode, 2], 1],
   ];
 }
 
-function radicalLatex() {
-  return '\\sqrt{1-x^2}';
+function radicalLatex(carrierLatex: string) {
+  return `\\sqrt{1-${groupedLatex(carrierLatex)}^2}`;
 }
 
 function zeroPolynomial(variable: string) {
@@ -289,7 +326,89 @@ function buildArcsinKernelTable(variable: string, maxDegree: number) {
   return table;
 }
 
-function integrateArcsinResidual(primitivePolynomial: ExactPolynomial) {
+function exactPolynomialPower(
+  polynomial: ExactPolynomial,
+  exponent: number,
+  maxDegree: number,
+): ExactPolynomial | undefined {
+  let current = buildExactPolynomialFromCoefficients(polynomial.variable, [EXACT_ONE]);
+  for (let index = 0; index < exponent; index += 1) {
+    const next = multiplyExactPolynomials(current, polynomial, maxDegree);
+    if (!next) {
+      return undefined;
+    }
+    current = next;
+  }
+  return current;
+}
+
+function composePolynomialWithAffineCarrier(
+  polynomial: ExactPolynomial,
+  affinePolynomial: ExactPolynomial,
+  carrierVariable: string,
+): ExactPolynomial | undefined {
+  const slope = getExactPolynomialCoefficient(affinePolynomial, 1);
+  const intercept = getExactPolynomialCoefficient(affinePolynomial, 0);
+  const inverseSlope = divideExactScalars(EXACT_ONE, slope);
+  const inverseIntercept = divideExactScalars(negateExactScalar(intercept), slope);
+  if (!inverseSlope || !inverseIntercept) {
+    return undefined;
+  }
+
+  const carrierAsOriginalVariable = buildExactPolynomialFromCoefficients(carrierVariable, [
+    inverseSlope,
+    inverseIntercept,
+  ]);
+  let composed = zeroPolynomial(carrierVariable);
+  const degree = exactPolynomialDegree(polynomial);
+  for (let power = 0; power <= degree; power += 1) {
+    const coefficient = getExactPolynomialCoefficient(polynomial, power);
+    if (exactScalarIsZero(coefficient)) {
+      continue;
+    }
+
+    const powered = exactPolynomialPower(carrierAsOriginalVariable, power, degree);
+    if (!powered) {
+      return undefined;
+    }
+    composed = addExactPolynomials(composed, scaleExactPolynomial(powered, coefficient));
+  }
+
+  return composed;
+}
+
+function substituteCarrierLatex(latex: string, carrierVariable: string, carrierLatex: string) {
+  const carrier = groupedLatex(carrierLatex);
+  return latex.replace(new RegExp(`\\b${carrierVariable}\\b`, 'g'), carrier);
+}
+
+function integrateArcsinResidual(
+  primitivePolynomial: ExactPolynomial,
+  product: NonNullable<ReturnType<typeof findInverseTrigProduct>>,
+  variable: string,
+) {
+  if (sameNode(product.argumentNode, variable)) {
+    return integrateArcsinKernelPolynomial(primitivePolynomial, variable, variable);
+  }
+
+  const carrierVariable = 'z';
+  const carrierPolynomial = composePolynomialWithAffineCarrier(
+    primitivePolynomial,
+    product.argumentPolynomial,
+    carrierVariable,
+  );
+  if (!carrierPolynomial) {
+    return undefined;
+  }
+
+  return integrateArcsinKernelPolynomial(carrierPolynomial, product.affine.latex, carrierVariable);
+}
+
+function integrateArcsinKernelPolynomial(
+  primitivePolynomial: ExactPolynomial,
+  carrierLatex: string,
+  carrierVariable: string,
+) {
   const degree = exactPolynomialDegree(primitivePolynomial);
   const kernels = buildArcsinKernelTable(primitivePolynomial.variable, degree);
 
@@ -312,10 +431,13 @@ function integrateArcsinResidual(primitivePolynomial: ExactPolynomial) {
 
   const arcsinLatex = exactScalarIsZero(arcsinCoefficient)
     ? undefined
-    : scaleExpressionByExactScalar('\\arcsin\\left(x\\right)', arcsinCoefficient);
+    : scaleExpressionByExactScalar(`\\arcsin\\left(${carrierLatex}\\right)`, arcsinCoefficient);
   const radicalTermLatex = exactPolynomialIsZero(radicalPolynomial)
     ? undefined
-    : productWithFunctionLatex(exactPolynomialToLatex(radicalPolynomial), radicalLatex());
+    : productWithFunctionLatex(
+      substituteCarrierLatex(exactPolynomialToLatex(radicalPolynomial), carrierVariable, carrierLatex),
+      radicalLatex(carrierLatex),
+    );
 
   return joinAdditiveLatex([arcsinLatex, radicalTermLatex]);
 }
@@ -330,6 +452,14 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResul
     return undefined;
   }
 
+  const polynomialDegree = exactPolynomialDegree(product.polynomial);
+  if (
+    product.head === 'Arcsin'
+    && (!sameNode(product.argumentNode, variable) || polynomialDegree > 4)
+  ) {
+    return undefined;
+  }
+
   const primitivePolynomial = integrateExactPolynomial(product.polynomial);
   if (!primitivePolynomial) {
     return undefined;
@@ -338,8 +468,8 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResul
   const primitiveLatex = exactPolynomialToLatex(primitivePolynomial);
   const boundaryLatex = productWithFunctionLatex(primitiveLatex, product.factorLatex);
   const residualLatex = product.head === 'Arctan'
-    ? tryRationalPartialFractionRule(residualRationalNode(primitivePolynomial, variable), variable)?.exactLatex
-    : integrateArcsinResidual(primitivePolynomial);
+    ? tryRationalPartialFractionRule(residualRationalNode(primitivePolynomial, product), variable)?.exactLatex
+    : integrateArcsinResidual(primitivePolynomial, product, variable);
   if (!residualLatex) {
     return undefined;
   }
@@ -365,15 +495,19 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResul
   return {
     exactLatex,
     verification,
-    exactSupplementLatex: product.head === 'Arcsin'
-      ? exactSupplementLatex([conditionFact('1-x^2', '\\ge0')])
-      : undefined,
+    exactSupplementLatex: exactSupplementLatex([
+      nonzeroFact(exactScalarLatex(product.affine.slope)),
+      ...(product.head === 'Arcsin'
+        ? [conditionFact(`1-${groupedLatex(product.affine.latex)}^2`, '\\ge0')]
+        : []),
+    ]),
     detailSections: [byPartsDetail('Integration By Parts', [
       `Polynomial factor: ${exactPolynomialToLatex(product.polynomial)}`,
       `Primitive polynomial: ${primitiveLatex}`,
+      `Affine inverse-trig argument: ${product.affine.latex}`,
       product.head === 'Arctan'
         ? 'Residual route: rational integration over 1+x^2.'
-        : 'Residual route: capped recurrence for powers over sqrt(1-x^2).',
+        : 'Residual route: affine change of variable, then capped recurrence for powers over sqrt(1-z^2).',
       'Accepted only after derivative backcheck against the original integrand.',
     ])],
   };
