@@ -49,7 +49,7 @@ describe('resolveAntiderivativeRule', () => {
   it('returns undefined for unsupported forms', () => {
     expect(resolveAntiderivativeRule(parseBody('\\sin(x^2)'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('\\sin^{13}(x)'))).toBeUndefined();
-    expect(resolveAntiderivativeRule(parseBody('\\tan^{7}(x)'))).toBeUndefined();
+    expect(resolveAntiderivativeRule(parseBody('\\tan^{9}(x)'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('\\sin(x)\\cos(x)\\tan(x)'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('a\\sin(x)\\cos(2x)'))).toBeUndefined();
     expect(resolveAntiderivativeRule(parseBody('a^{2x+1}'))).toBeUndefined();

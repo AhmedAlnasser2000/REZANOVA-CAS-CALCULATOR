@@ -1991,7 +1991,11 @@
 
 ## 2026-07-06 - CALCULUS-INTEGRATION-TRIG-SUB-ROOTS1
 
-- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus indefinite presentation may reuse an existing exact antiderivative verification when the visible/copy base expression is unchanged and only the structured integration constant is appended; if presentation normalizes the base expression, it must still run the derivative backcheck before replacing the route output.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus indefinite presentation may reuse an existing verified antiderivative result when the visible/copy base expression is unchanged and only the structured integration constant is appended; if presentation normalizes the base expression, it must still run the derivative backcheck before replacing the route output.
+
+## 2026-07-06 - CALCULUS-INTEGRATION-TRIG-POWER-REDUCTION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Calculus trig-power reduction remains bounded to textbook rows: mixed `sin^m cos^n`, `tan^m sec^n`, and `cot^m csc^n` are capped at individual exponent 8 and total degree 12, while over-cap rows must return a controlled boundary card with no partial antiderivative.
 
 ## 2026-07-06 - LINEAR-ALGEBRA-MULTI-MATRIX-EDITOR1
 

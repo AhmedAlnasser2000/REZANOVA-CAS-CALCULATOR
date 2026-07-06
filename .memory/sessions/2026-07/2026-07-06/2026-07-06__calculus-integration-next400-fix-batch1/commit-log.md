@@ -28,5 +28,11 @@
 ## Planned Commit
 
 - subject: `CALCULUS-INTEGRATION-TRIG-SUB-ROOTS1`
+- commit_hash: `088dcf80`
+- scope: affine squared-carrier trig-substitution radical templates, fractional-power denominator coverage, presentation slow-path fix for already verified antiderivatives, focused tests, Playwright evidence, and durable session evidence.
+
+## Planned Commit
+
+- subject: `CALCULUS-INTEGRATION-TRIG-POWER-REDUCTION1`
 - commit_hash: pending at write time
-- scope: affine squared-carrier trig-substitution radical templates, fractional-power denominator coverage, presentation slow-path fix for already verified exact antiderivatives, focused tests, Playwright evidence, and durable session evidence.
+- scope: bounded textbook trig-power reductions, over-cap trig-power boundary cards, focused tests, Playwright evidence, and durable session evidence.

@@ -1,4 +1,5 @@
 import {
+  addExactScalars,
   buildExactScalarNode,
   divideExactScalars,
   exactPolynomialDegree,
@@ -17,6 +18,8 @@ import { normalizeAst } from '../../symbolic-engine/normalize';
 import { isNodeArray } from '../../symbolic-engine/patterns';
 
 const MAX_SIN_COS_POWER = 12;
+const MAX_PRODUCT_INDIVIDUAL_POWER = 8;
+const MAX_PRODUCT_TOTAL_DEGREE = 12;
 const EXACT_ONE: ExactScalar = { numerator: 1, denominator: 1 };
 const EXACT_MINUS_ONE: ExactScalar = { numerator: -1, denominator: 1 };
 
@@ -37,6 +40,8 @@ type PoweredTrigFactor = {
   exponent: number;
   affine: AffineArgument;
 };
+
+type LatexTerm = { coefficient: ExactScalar; latex: string };
 
 function exact(numerator: number, denominator = 1): ExactScalar {
   return normalizeExactScalar({ numerator, denominator });
@@ -121,6 +126,125 @@ function sinCosPowerExpansion(head: 'Sin' | 'Cos', exponent: number): TrigExpans
       harmonic,
     };
   });
+}
+
+function sinCosPowerExpansionAny(head: 'Sin' | 'Cos', exponent: number): TrigExpansionTerm[] | undefined {
+  if (exponent === 0) {
+    return [{ coefficient: EXACT_ONE, head: 'Constant' }];
+  }
+
+  if (exponent === 1) {
+    return [{ coefficient: EXACT_ONE, head, harmonic: 1 }];
+  }
+
+  if (exponent === 2) {
+    return [
+      { coefficient: exact(1, 2), head: 'Constant' },
+      { coefficient: exact(head === 'Sin' ? -1 : 1, 2), head: 'Cos', harmonic: 2 },
+    ];
+  }
+
+  return sinCosPowerExpansion(head, exponent);
+}
+
+function signedHarmonicTerm(
+  head: 'Sin' | 'Cos',
+  harmonic: number,
+  coefficient: ExactScalar,
+): TrigExpansionTerm | undefined {
+  if (harmonic === 0) {
+    return head === 'Cos' ? { coefficient, head: 'Constant' } : undefined;
+  }
+
+  if (harmonic < 0) {
+    return {
+      coefficient: head === 'Sin' ? negateExactScalar(coefficient) : coefficient,
+      head,
+      harmonic: Math.abs(harmonic),
+    };
+  }
+
+  return { coefficient, head, harmonic };
+}
+
+function scaleExpansionTerm(term: TrigExpansionTerm, coefficient: ExactScalar): TrigExpansionTerm {
+  return {
+    ...term,
+    coefficient: multiplyExactScalars(term.coefficient, coefficient),
+  };
+}
+
+function productToSumTerms(left: TrigExpansionTerm, right: TrigExpansionTerm): TrigExpansionTerm[] {
+  if (left.head === 'Constant') {
+    return [scaleExpansionTerm(right, left.coefficient)];
+  }
+  if (right.head === 'Constant') {
+    return [scaleExpansionTerm(left, right.coefficient)];
+  }
+
+  const coefficient = multiplyExactScalars(left.coefficient, right.coefficient);
+  const half = multiplyExactScalars(coefficient, exact(1, 2));
+  const leftHarmonic = left.harmonic ?? 0;
+  const rightHarmonic = right.harmonic ?? 0;
+  const terms: Array<TrigExpansionTerm | undefined> =
+    left.head === 'Cos' && right.head === 'Cos'
+      ? [
+        signedHarmonicTerm('Cos', leftHarmonic - rightHarmonic, half),
+        signedHarmonicTerm('Cos', leftHarmonic + rightHarmonic, half),
+      ]
+      : left.head === 'Sin' && right.head === 'Sin'
+        ? [
+          signedHarmonicTerm('Cos', leftHarmonic - rightHarmonic, half),
+          signedHarmonicTerm('Cos', leftHarmonic + rightHarmonic, negateExactScalar(half)),
+        ]
+        : [
+          signedHarmonicTerm('Sin', left.head === 'Sin'
+            ? leftHarmonic + rightHarmonic
+            : rightHarmonic + leftHarmonic, half),
+          signedHarmonicTerm('Sin', left.head === 'Sin'
+            ? leftHarmonic - rightHarmonic
+            : rightHarmonic - leftHarmonic, half),
+        ];
+
+  return terms.filter((term): term is TrigExpansionTerm => term !== undefined);
+}
+
+function combineExpansionTerms(terms: TrigExpansionTerm[]) {
+  const combined = new Map<string, TrigExpansionTerm>();
+  for (const term of terms) {
+    const key = term.head === 'Constant' ? 'Constant:0' : `${term.head}:${term.harmonic ?? 0}`;
+    const existing = combined.get(key);
+    const coefficient = existing
+      ? addExactScalars(existing.coefficient, term.coefficient)
+      : term.coefficient;
+    combined.set(key, { ...term, coefficient: normalizeExactScalar(coefficient) });
+  }
+
+  return [...combined.values()].filter((term) => term.coefficient.numerator !== 0);
+}
+
+function sinCosProductExpansion(
+  sinExponent: number,
+  cosExponent: number,
+): TrigExpansionTerm[] | undefined {
+  if (
+    sinExponent < 1
+    || cosExponent < 1
+    || sinExponent > MAX_PRODUCT_INDIVIDUAL_POWER
+    || cosExponent > MAX_PRODUCT_INDIVIDUAL_POWER
+    || sinExponent + cosExponent > MAX_PRODUCT_TOTAL_DEGREE
+  ) {
+    return undefined;
+  }
+
+  const sinExpansion = sinCosPowerExpansionAny('Sin', sinExponent);
+  const cosExpansion = sinCosPowerExpansionAny('Cos', cosExponent);
+  if (!sinExpansion || !cosExpansion) {
+    return undefined;
+  }
+
+  return combineExpansionTerms(sinExpansion.flatMap((left) =>
+    cosExpansion.flatMap((right) => productToSumTerms(left, right))));
 }
 
 function harmonicArgument(argument: unknown, harmonic: number, variable: string) {
@@ -238,6 +362,35 @@ function joinAdditiveLatex(parts: string[]) {
 
     return part.startsWith('-') ? `${joined}${part}` : `${joined}+${part}`;
   }, '');
+}
+
+function combineLatexTerms(terms: LatexTerm[]) {
+  const combined = new Map<string, ExactScalar>();
+  for (const term of terms) {
+    const existing = combined.get(term.latex);
+    combined.set(
+      term.latex,
+      normalizeExactScalar(existing ? addExactScalars(existing, term.coefficient) : term.coefficient),
+    );
+  }
+
+  return [...combined.entries()]
+    .map(([latex, coefficient]) => ({ coefficient, latex }))
+    .filter((term) => term.coefficient.numerator !== 0);
+}
+
+function scaleLatexTerm(term: LatexTerm, coefficient: ExactScalar): LatexTerm {
+  return {
+    ...term,
+    coefficient: multiplyExactScalars(term.coefficient, coefficient),
+  };
+}
+
+function latexTermsToSum(terms: LatexTerm[]) {
+  const pieces = combineLatexTerms(terms)
+    .map((term) => scaleLatexByExact(term.coefficient, term.latex))
+    .filter((term): term is string => Boolean(term));
+  return pieces.length > 0 ? joinAdditiveLatex(pieces) : undefined;
 }
 
 function trigPowerLatex(head: PoweredTrigFactor['head'], affineLatex: string, exponent: number) {
@@ -377,6 +530,90 @@ function oddCotMixedIntegral(cotExponent: number, cscExponent: number, affine: A
   return pieces;
 }
 
+function oddSecPowerTerms(exponent: number, affine: AffineArgument): LatexTerm[] | undefined {
+  if (exponent === 1) {
+    const coefficient = divideByExact(EXACT_ONE, affine.slope);
+    return coefficient
+      ? [{
+        coefficient,
+        latex: `\\ln\\left|\\sec\\left(${affine.latex}\\right)+\\tan\\left(${affine.latex}\\right)\\right|`,
+      }]
+      : undefined;
+  }
+
+  const denominator = multiplyExactScalars(affine.slope, exact(exponent - 1));
+  const coefficient = divideByExact(EXACT_ONE, denominator);
+  const restScale = exact(exponent - 2, exponent - 1);
+  const rest = oddSecPowerTerms(exponent - 2, affine)?.map((term) => scaleLatexTerm(term, restScale));
+  return coefficient && rest
+    ? [
+      {
+        coefficient,
+        latex: `${trigPowerLatex('Sec', affine.latex, exponent - 2)}\\tan\\left(${affine.latex}\\right)`,
+      },
+      ...rest,
+    ]
+    : undefined;
+}
+
+function oddCscPowerTerms(exponent: number, affine: AffineArgument): LatexTerm[] | undefined {
+  if (exponent === 1) {
+    const coefficient = divideByExact(EXACT_ONE, affine.slope);
+    return coefficient
+      ? [{
+        coefficient,
+        latex: `\\ln\\left|\\csc\\left(${affine.latex}\\right)-\\cot\\left(${affine.latex}\\right)\\right|`,
+      }]
+      : undefined;
+  }
+
+  const denominator = multiplyExactScalars(affine.slope, exact(exponent - 1));
+  const coefficient = divideByExact(EXACT_MINUS_ONE, denominator);
+  const restScale = exact(exponent - 2, exponent - 1);
+  const rest = oddCscPowerTerms(exponent - 2, affine)?.map((term) => scaleLatexTerm(term, restScale));
+  return coefficient && rest
+    ? [
+      {
+        coefficient,
+        latex: `${trigPowerLatex('Csc', affine.latex, exponent - 2)}\\cot\\left(${affine.latex}\\right)`,
+      },
+      ...rest,
+    ]
+    : undefined;
+}
+
+function evenTanOddSecIntegral(tanExponent: number, secExponent: number, affine: AffineArgument) {
+  const halfTan = tanExponent / 2;
+  const pieces: LatexTerm[] = [];
+  for (let index = 0; index <= halfTan; index += 1) {
+    const coefficient = exact((halfTan - index) % 2 === 0 ? binomial(halfTan, index) : -binomial(halfTan, index));
+    const secPower = secExponent + 2 * index;
+    const terms = oddSecPowerTerms(secPower, affine);
+    if (!terms) {
+      return undefined;
+    }
+    pieces.push(...terms.map((term) => scaleLatexTerm(term, coefficient)));
+  }
+  const latex = latexTermsToSum(pieces);
+  return latex ? [latex] : undefined;
+}
+
+function evenCotOddCscIntegral(cotExponent: number, cscExponent: number, affine: AffineArgument) {
+  const halfCot = cotExponent / 2;
+  const pieces: LatexTerm[] = [];
+  for (let index = 0; index <= halfCot; index += 1) {
+    const coefficient = exact((halfCot - index) % 2 === 0 ? binomial(halfCot, index) : -binomial(halfCot, index));
+    const cscPower = cscExponent + 2 * index;
+    const terms = oddCscPowerTerms(cscPower, affine);
+    if (!terms) {
+      return undefined;
+    }
+    pieces.push(...terms.map((term) => scaleLatexTerm(term, coefficient)));
+  }
+  const latex = latexTermsToSum(pieces);
+  return latex ? [latex] : undefined;
+}
+
 function parsePoweredTrigFactor(node: unknown, variable: string): PoweredTrigFactor | undefined {
   const base = isNodeArray(node) && node[0] === 'Power' && node.length === 3 ? node[1] : node;
   const exponentNode = isNodeArray(node) && node[0] === 'Power' && node.length === 3 ? node[2] : 1;
@@ -384,7 +621,7 @@ function parsePoweredTrigFactor(node: unknown, variable: string): PoweredTrigFac
   if (
     exponent === undefined
     || exponent < 1
-    || exponent > 6
+    || exponent > MAX_PRODUCT_INDIVIDUAL_POWER
     || !isNodeArray(base)
     || base.length !== 2
     || !['Tan', 'Sec', 'Cot', 'Csc'].includes(String(base[0]))
@@ -428,7 +665,10 @@ function parseTanSecCotCscPowers(node: unknown, variable: string) {
     }
   }
 
-  if ([powers.tan, powers.sec, powers.cot, powers.csc].some((power) => power > 6)) {
+  if (
+    [powers.tan, powers.sec, powers.cot, powers.csc].some((power) => power > MAX_PRODUCT_INDIVIDUAL_POWER)
+    || powers.tan + powers.sec + powers.cot + powers.csc > MAX_PRODUCT_TOTAL_DEGREE
+  ) {
     return undefined;
   }
 
@@ -467,6 +707,59 @@ export function tryAffineSinCosPowerAntiderivative(node: unknown, variable: stri
   return pieces.length === terms.length ? joinAdditiveLatex(pieces) : undefined;
 }
 
+function parseSinCosPowerFactor(node: unknown, variable: string) {
+  const base = isNodeArray(node) && node[0] === 'Power' && node.length === 3 ? node[1] : node;
+  const exponentNode = isNodeArray(node) && node[0] === 'Power' && node.length === 3 ? node[2] : 1;
+  const exponent = parsePositiveIntegerExponent(exponentNode);
+  if (
+    exponent === undefined
+    || exponent < 1
+    || exponent > MAX_PRODUCT_INDIVIDUAL_POWER
+    || !isNodeArray(base)
+    || base.length !== 2
+    || (base[0] !== 'Sin' && base[0] !== 'Cos')
+  ) {
+    return undefined;
+  }
+
+  const affine = parseAffineArgument(base[1], variable);
+  return affine
+    ? { head: base[0] as 'Sin' | 'Cos', exponent, affine }
+    : undefined;
+}
+
+export function tryAffineSinCosProductPowerAntiderivative(node: unknown, variable: string) {
+  const factors = isNodeArray(node) && node[0] === 'Multiply' ? node.slice(1) : [node];
+  const parsed = factors.map((factor) => parseSinCosPowerFactor(factor, variable));
+  if (parsed.some((factor) => !factor)) {
+    return undefined;
+  }
+
+  const trigFactors = parsed as Array<{
+    head: 'Sin' | 'Cos';
+    exponent: number;
+    affine: AffineArgument;
+  }>;
+  const first = trigFactors[0];
+  if (!first || trigFactors.some((factor) => !sameAffineArgument(first.affine, factor.affine))) {
+    return undefined;
+  }
+
+  const powers = trigFactors.reduce((sum, factor) => ({
+    sin: sum.sin + (factor.head === 'Sin' ? factor.exponent : 0),
+    cos: sum.cos + (factor.head === 'Cos' ? factor.exponent : 0),
+  }), { sin: 0, cos: 0 });
+  const terms = sinCosProductExpansion(powers.sin, powers.cos);
+  if (!terms) {
+    return undefined;
+  }
+
+  const pieces = terms
+    .map((term) => integrateExpansionTerm(term, first.affine))
+    .filter((term): term is string => Boolean(term));
+  return pieces.length === terms.length ? joinAdditiveLatex(pieces) : undefined;
+}
+
 export function tryAffineTanSecCotCscPowerAntiderivative(node: unknown, variable: string) {
   const parsed = parseTanSecCotCscPowers(node, variable);
   if (!parsed) {
@@ -480,6 +773,8 @@ export function tryAffineTanSecCotCscPowerAntiderivative(node: unknown, variable
       pieces = evenSecPowerIntegral(powers.tan, powers.sec, affine);
     } else if (powers.tan > 0 && powers.tan % 2 === 1 && powers.sec > 0) {
       pieces = oddTanMixedIntegral(powers.tan, powers.sec, affine);
+    } else if (powers.sec > 0 && powers.sec % 2 === 1 && powers.tan % 2 === 0) {
+      pieces = evenTanOddSecIntegral(powers.tan, powers.sec, affine);
     } else if (powers.sec === 0) {
       pieces = tanPowerIntegral(powers.tan, affine);
     }
@@ -488,6 +783,8 @@ export function tryAffineTanSecCotCscPowerAntiderivative(node: unknown, variable
       pieces = evenCscPowerIntegral(powers.cot, powers.csc, affine);
     } else if (powers.cot > 0 && powers.cot % 2 === 1 && powers.csc > 0) {
       pieces = oddCotMixedIntegral(powers.cot, powers.csc, affine);
+    } else if (powers.csc > 0 && powers.csc % 2 === 1 && powers.cot % 2 === 0) {
+      pieces = evenCotOddCscIntegral(powers.cot, powers.csc, affine);
     } else if (powers.csc === 0) {
       pieces = cotPowerIntegral(powers.cot, affine);
     }

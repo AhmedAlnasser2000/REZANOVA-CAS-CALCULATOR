@@ -144,7 +144,7 @@ function presentationDetail(input: {
 }): DisplayDetailSection {
   const lines = [
     input.reusedExistingVerification
-      ? `Added integration constant ${input.constantLatex} after the existing exact antiderivative verification.`
+      ? `Added integration constant ${input.constantLatex} after the existing antiderivative verification.`
       : `Added integration constant ${input.constantLatex} after derivative backcheck.`,
   ];
   if (input.changedLatex) {

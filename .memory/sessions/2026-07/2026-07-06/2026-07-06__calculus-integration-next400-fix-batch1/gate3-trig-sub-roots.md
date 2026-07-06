@@ -23,7 +23,7 @@
 - Extended Calculus-owned trig-substitution radical templates to accept squared affine carriers over matching radicals, including `u^2/sqrt(a^2-u^2)`, `u^2/sqrt(u^2+a^2)`, and `u^2/sqrt(u^2-a^2)`.
 - Accepted both `Sqrt` and fractional-power denominator forms for the new squared-carrier route.
 - Preserved real-domain facts and radical-template detail cards for newly routed affine rows before adoption.
-- Fixed a presentation slow path discovered during Playwright: when the verified antiderivative is not normalized into a different base expression, the indefinite presentation layer now reuses the existing exact antiderivative verification for `+C` instead of rerunning a heavy global derivative equivalence check.
+- Fixed a presentation slow path discovered during Playwright: when the verified antiderivative is not normalized into a different base expression, the indefinite presentation layer now reuses the existing antiderivative verification for `+C` instead of rerunning a heavy global derivative equivalence check.
 
 ## Findings
 

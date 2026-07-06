@@ -59,6 +59,7 @@ import {
 import { finishScalarMultipleRetry, splitScalarMultiple } from './scalar-multiple';
 import { tryTargetFreePolynomialDirectRule } from './target-free-polynomial-direct';
 import { tryTrigDerivativeProductRule } from './trig-derivative-products';
+import { unsupportedTrigPowerBoundary } from './trig-power-boundary';
 import { normalizeIntegrationTrigRewrite } from './trig-rewrite';
 import { tryTrigSubstitutionRadicalRule } from './trig-substitution-radicals';
 import type { IntegralResolution, IntegralStrategy } from './types';
@@ -872,11 +873,8 @@ function resolveSymbolicIntegralFromAstInternal(
     );
   }
 
-  return {
-    kind: 'error',
-    error: 'This antiderivative could not be determined symbolically in this milestone.',
-    candidate: unsupportedCandidateMetadata(node, variable),
-  };
+  return unsupportedTrigPowerBoundary(node, variable)
+    ?? { kind: 'error', error: 'This antiderivative could not be determined symbolically in this milestone.', candidate: unsupportedCandidateMetadata(node, variable) };
 }
 
 export function resolveSymbolicIntegralFromAst(
