@@ -2012,3 +2012,7 @@
 ## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-MRV-SET2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz exposure remains contract-first: MRV-set extraction now owns symbolic coefficient drivers, numeric-coefficient filtering, principal-complex branch assumptions, and internal evidence rows before rewrite-to-`w`, sign extraction, or public route orchestration consume them.
+
+## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-REWRITE-W1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz rewrite-to-`w` remains internal and evidence-first: it records the chosen MRV atom, `w` substitution, basic residual-variable substitution, transformed expression, parameter conditions, and branch assumptions without exposing a public Gruntz Limit route.

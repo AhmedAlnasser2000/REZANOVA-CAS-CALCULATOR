@@ -18,6 +18,7 @@ import {
   zeroInfinityScale,
   type InfinityScaleTerm,
 } from './infinity-scale-terms';
+import { buildGruntzRewriteEvidenceRows } from './gruntz-rewrite-evidence';
 
 const EPSILON = 1e-10;
 
@@ -102,15 +103,27 @@ export type GruntzScaleComparison = {
   evidence: string[];
 };
 
+export type GruntzWSubstitution = {
+  fromLatex: string;
+  toLatex: string;
+  reason: string;
+  role: 'dominant-atom' | 'residual-variable';
+};
+
 export type GruntzRewriteToWContract = {
   supported: boolean;
   variable: string;
   wLatex?: string;
   wLimitLatex?: string;
   dominantAtom?: GruntzMrvAtom;
+  originalLatex?: string;
   rewrittenLatex?: string;
-  substitutions: { fromLatex: string; toLatex: string; reason: string }[];
+  substitutions: GruntzWSubstitution[];
   assumptions: string[];
+  branchAssumptions?: GruntzBranchAssumption[];
+  coefficientDrivers?: GruntzCoefficientDriver[];
+  parameterConditions?: string[];
+  evidenceRows?: DisplayDetailLinePart[][];
   stopReason?: string;
 };
 
@@ -663,6 +676,7 @@ function wSubstitutionForAtom(atom: GruntzMrvAtom, variable: string) {
       fromLatex: atom.latex,
       toLatex: '\\frac{1}{w}',
       reason: 'dominant exponential MRV atom is rewritten as 1/w',
+      role: 'dominant-atom' as const,
     };
   }
 
@@ -672,26 +686,58 @@ function wSubstitutionForAtom(atom: GruntzMrvAtom, variable: string) {
       fromLatex: atom.latex,
       toLatex: '\\frac{1}{w}',
       reason: 'dominant unbounded scale is rewritten as 1/w',
+      role: 'dominant-atom' as const,
     };
   }
 
   return undefined;
 }
 
-function replaceFirst(source: string, fromLatex: string, toLatex: string) {
-  const index = source.indexOf(fromLatex);
-  if (index < 0) {
-    return source;
+function residualVariableSubstitution(
+  atom: GruntzMrvAtom,
+  variable: string,
+): GruntzWSubstitution | undefined {
+  if (atom.latex === String.raw`e^{${variable}}`) {
+    return {
+      fromLatex: variable,
+      toLatex: String.raw`\left(-\log(w)\right)`,
+      reason: 'residual variable is rewritten from w=e^{-x}',
+      role: 'residual-variable',
+    };
   }
-  return `${source.slice(0, index)}${toLatex}${source.slice(index + fromLatex.length)}`;
+  if (atom.latex === variable) {
+    return {
+      fromLatex: variable,
+      toLatex: String.raw`\frac{1}{w}`,
+      reason: 'residual variable is rewritten from w=1/x',
+      role: 'residual-variable',
+    };
+  }
+  return undefined;
+}
+
+function replaceAllLiteral(source: string, fromLatex: string, toLatex: string) {
+  return fromLatex.length === 0 ? source : source.split(fromLatex).join(toLatex);
+}
+
+function applyWSubstitutions(sourceLatex: string, substitutions: GruntzWSubstitution[]) {
+  return substitutions.reduce(
+    (current, substitution) => replaceAllLiteral(current, substitution.fromLatex, substitution.toLatex),
+    sourceLatex,
+  );
+}
+
+function targetApproachLatex(targetKind: Exclude<LimitTargetKind, 'finite'>) {
+  return targetKind === 'negInfinity' ? '-\\infty' : '\\infty';
 }
 
 export function buildGruntzRewriteToWContract(
   node: unknown,
   variable = 'x',
   targetKind: Exclude<LimitTargetKind, 'finite'> = 'posInfinity',
+  options: GruntzMrvSetOptions = {},
 ): GruntzRewriteToWContract {
-  const set = buildGruntzMrvSet(node, variable, targetKind);
+  const set = buildGruntzMrvSet(node, variable, targetKind, options);
   const atom = dominantAtom(set);
   if (!atom) {
     return {
@@ -714,6 +760,13 @@ export function buildGruntzRewriteToWContract(
       stopReason: 'The dominant atom has no supported rewrite-to-w contract yet.',
     };
   }
+  const substitutions = [
+    substitution,
+    residualVariableSubstitution(atom, variable),
+  ].filter(Boolean) as GruntzWSubstitution[];
+  const originalLatex = gruntzNodeToLatex(node);
+  const rewrittenLatex = applyWSubstitutions(originalLatex, substitutions);
+  const parameterConditions = set.coefficientDrivers.flatMap((driver) => driver.branchConditions);
 
   return {
     supported: true,
@@ -721,9 +774,17 @@ export function buildGruntzRewriteToWContract(
     wLatex: substitution.wLatex,
     wLimitLatex: '0^+',
     dominantAtom: atom,
-    rewrittenLatex: replaceFirst(gruntzNodeToLatex(node), substitution.fromLatex, substitution.toLatex),
-    substitutions: [substitution],
-    assumptions: ['w > 0', `${variable}\\to\\infty`],
+    originalLatex,
+    rewrittenLatex,
+    substitutions,
+    assumptions: ['w > 0', `${variable}\\to${targetApproachLatex(targetKind)}`],
+    branchAssumptions: set.branchAssumptions,
+    coefficientDrivers: set.coefficientDrivers,
+    parameterConditions,
+    evidenceRows: [
+      ...set.evidenceRows,
+      ...buildGruntzRewriteEvidenceRows({ atom, originalLatex, rewrittenLatex, substitutions, set }),
+    ],
   };
 }
 

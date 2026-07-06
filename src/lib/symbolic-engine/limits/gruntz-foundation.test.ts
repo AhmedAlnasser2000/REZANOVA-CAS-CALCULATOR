@@ -92,8 +92,37 @@ describe('Gruntz foundation contracts', () => {
     expect(contract.substitutions[0]).toMatchObject({
       fromLatex: String.raw`e^{x}`,
       toLatex: String.raw`\frac{1}{w}`,
+      role: 'dominant-atom',
     });
     expect(contract.rewrittenLatex).toContain(String.raw`\frac{1}{w}`);
+    expect(contract.rewrittenLatex).toContain(String.raw`\left(-\log(w)\right)^{3}`);
+    expect(contract.evidenceRows?.flat().map((part) => part.kind === 'math' ? part.latex : part.text).join(' '))
+      .toContain('Transformed expression');
+  });
+
+  it('rewrites every occurrence of the chosen MRV atom and preserves parameter conditions', () => {
+    const contract = buildGruntzRewriteToWContract(parse(String.raw`(a e^x+x^3)/(e^x-1)`));
+
+    expect(contract.supported).toBe(true);
+    expect(contract.coefficientDrivers?.map((driver) => driver.latex)).toEqual(['a']);
+    expect(contract.parameterConditions).toEqual(['a>0', 'a=0', 'a<0']);
+    expect(contract.rewrittenLatex?.match(/\\frac\{1\}\{w\}/gu)?.length).toBe(2);
+  });
+
+  it('threads principal branch evidence through rewrite-to-w contracts', () => {
+    const contract = buildGruntzRewriteToWContract(
+      parse(String.raw`\sqrt{x^2+x}+\log(x)`),
+      'x',
+      'posInfinity',
+      { domain: 'complex-principal' },
+    );
+
+    expect(contract.supported).toBe(true);
+    expect(contract.branchAssumptions?.map((assumption) => assumption.reason))
+      .toEqual(expect.arrayContaining([
+        'principal square-root branch',
+        'principal logarithm branch',
+      ]));
   });
 
   it('extracts quotient limit contracts without enabling a public solver route', () => {
