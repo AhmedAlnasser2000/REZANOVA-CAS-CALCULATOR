@@ -93,7 +93,7 @@ export type LimitAsymptoticCondition =
   | { kind: 'nonzero'; driver: LimitAsymptoticBranchDriver };
 
 export const LIMIT_ASYMPTOTIC_CASE_ROW_CAP = 12;
-export const LIMIT_ASYMPTOTIC_BRANCH_DRIVER_CAP = 2;
+export const LIMIT_ASYMPTOTIC_BRANCH_DRIVER_CAP = 3;
 export const LIMIT_ASYMPTOTIC_TAYLOR_ORDER_CAP = 10;
 
 function numericSign(value: number): LimitAsymptoticCoefficientSign {

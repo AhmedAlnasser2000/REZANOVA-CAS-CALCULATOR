@@ -146,20 +146,25 @@ describe('limits conditional case surface', () => {
     expect(proofSection?.lineParts).toHaveLength(1);
   });
 
-  it('allows at most two symbolic branch drivers', () => {
+  it('allows up to three symbolic branch drivers', () => {
     const b = driver('b');
     const a = driver('a');
+    const c = driver('c');
     const result = buildLimitConditionalCases({
       rows: [
-        { valueLatex: '\\infty', conditions: [{ kind: 'positive', driver: b }] },
-        { valueLatex: '\\infty', conditions: [{ kind: 'zero', driver: b }, { kind: 'positive', driver: a }] },
-        { valueLatex: '0', conditions: [{ kind: 'zero', driver: b }, { kind: 'zero', driver: a }] },
-        { valueLatex: '-\\infty', conditions: [{ kind: 'zero', driver: b }, { kind: 'negative', driver: a }] },
+        {
+          valueLatex: '\\infty',
+          conditions: [
+            { kind: 'positive', driver: b },
+            { kind: 'positive', driver: a },
+            { kind: 'positive', driver: c },
+          ],
+        },
       ],
     });
 
     expect(result.ok).toBe(true);
-    expect(result.branchDrivers.map((entry) => entry.latex)).toEqual(['b', 'a']);
+    expect(result.branchDrivers.map((entry) => entry.latex)).toEqual(['b', 'a', 'c']);
   });
 
   it('stops case explosion above the row or branch-driver caps', () => {
@@ -174,6 +179,7 @@ describe('limits conditional case surface', () => {
         { valueLatex: '1', conditions: [{ kind: 'positive', driver: driver('a') }] },
         { valueLatex: '2', conditions: [{ kind: 'positive', driver: driver('b') }] },
         { valueLatex: '3', conditions: [{ kind: 'positive', driver: driver('c') }] },
+        { valueLatex: '4', conditions: [{ kind: 'positive', driver: driver('d') }] },
       ],
     });
 
@@ -181,6 +187,6 @@ describe('limits conditional case surface', () => {
     expect(tooManyRows.rowCount).toBe(13);
     expect(tooManyRows.detailSections[0]?.title).toBe('Limit Case Explosion');
     expect(tooManyDrivers.ok).toBe(false);
-    expect(tooManyDrivers.branchDrivers.map((entry) => entry.latex)).toEqual(['a', 'b', 'c']);
+    expect(tooManyDrivers.branchDrivers.map((entry) => entry.latex)).toEqual(['a', 'b', 'c', 'd']);
   });
 });

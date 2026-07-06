@@ -113,7 +113,7 @@ describe('limits asymptotic term IR', () => {
 
     expect([second, first].sort(compareAsymptoticTermOrder)).toEqual([first, second]);
     expect(LIMIT_ASYMPTOTIC_TAYLOR_ORDER_CAP).toBe(10);
-    expect(LIMIT_ASYMPTOTIC_BRANCH_DRIVER_CAP).toBe(2);
+    expect(LIMIT_ASYMPTOTIC_BRANCH_DRIVER_CAP).toBe(3);
     expect(LIMIT_ASYMPTOTIC_CASE_ROW_CAP).toBe(12);
   });
 });

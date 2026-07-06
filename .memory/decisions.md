@@ -2025,6 +2025,10 @@
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz series-in-`w` extraction remains an internal contract: it computes the leading `w` order and coefficient from supported transformed scale expressions and passes parameter/branch evidence forward, but public Limit routing waits for sign extraction and recursive orchestration.
 
+## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-SIGN-LIMIT-EXTRACTION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz sign extraction remains internal and proof-first: leading `w` order determines zero/finite/divergent shape, known coefficient signs determine signed infinity, symbolic leading coefficients produce guarded cases only within the three-driver and 12-row caps, and complex-valued outcomes still require principal-branch evidence before future public exposure.
+
 ## 2026-07-06 - LINEAR-ALGEBRA-MULTI-VECTOR-EDITOR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector typed editor expressions may use arbitrary named or inline vectors beyond the active First/Second operands. `proj(base,target)` means "project target onto base"; `proj_u(v)` and `proj_v(u)` remain aliases. Exact 3D cross product and scalar triple product are Vector-owned operations, while F-keys remain active-operand shortcuts only.
