@@ -6,6 +6,7 @@ import {
   buildGruntzRewriteToWContract,
   compareGruntzScales,
 } from './gruntz-foundation';
+import { buildGruntzSeriesInWContract } from './gruntz-series-w';
 
 const ce = new ComputeEngine();
 
@@ -153,5 +154,32 @@ describe('Gruntz foundation contracts', () => {
       resultKind: 'finite-residual',
       signKnowledge: 'positive',
     });
+  });
+
+  it('extracts a leading term in w from a dominant exponential sum', () => {
+    const contract = buildGruntzSeriesInWContract(parse(String.raw`e^x+x^3`));
+
+    expect(contract.supported).toBe(true);
+    expect(contract.leadingOrder).toBe(-1);
+    expect(contract.leadingCoefficientLatex).toBe('1');
+    expect(contract.evidenceRows?.flat().map((part) => part.kind === 'math' ? part.latex : part.text).join(' '))
+      .toContain('Leading term in w');
+  });
+
+  it('preserves parameter conditions through leading term extraction in w', () => {
+    const contract = buildGruntzSeriesInWContract(parse(String.raw`(a e^x+x^3)/(e^x-1)`));
+
+    expect(contract.supported).toBe(true);
+    expect(contract.leadingOrder).toBe(0);
+    expect(contract.leadingCoefficientLatex).toBe('a');
+    expect(contract.parameterConditions).toEqual(['a>0', 'a=0', 'a<0']);
+  });
+
+  it('extracts the residual leading coefficient for matching exponential quotients', () => {
+    const contract = buildGruntzSeriesInWContract(parse(String.raw`(e^x+x^5)/(e^x-\log(x))`));
+
+    expect(contract.supported).toBe(true);
+    expect(contract.leadingOrder).toBe(0);
+    expect(contract.leadingCoefficientLatex).toBe('1');
   });
 });

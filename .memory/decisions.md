@@ -2016,3 +2016,7 @@
 ## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-REWRITE-W1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz rewrite-to-`w` remains internal and evidence-first: it records the chosen MRV atom, `w` substitution, basic residual-variable substitution, transformed expression, parameter conditions, and branch assumptions without exposing a public Gruntz Limit route.
+
+## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-SERIES-IN-W1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz series-in-`w` extraction remains an internal contract: it computes the leading `w` order and coefficient from supported transformed scale expressions and passes parameter/branch evidence forward, but public Limit routing waits for sign extraction and recursive orchestration.
