@@ -2048,3 +2048,8 @@
 ## 2026-07-06 - LINEAR-ALGEBRA-MULTI-VECTOR-EDITOR1
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Vector typed editor expressions may use arbitrary named or inline vectors beyond the active First/Second operands. `proj(base,target)` means "project target onto base"; `proj_u(v)` and `proj_v(u)` remain aliases. Exact 3D cross product and scalar triple product are Vector-owned operations, while F-keys remain active-operand shortcuts only.
+
+## 2026-07-06 - CALCULUS-LIMITS-GRUNTZ-ORCHESTRATION1
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Gruntz is now a controlled public Limit route, not the first route: exact/domain/piecewise/abs/specialized symbolic routes keep precedence, Gruntz runs before numeric fallback for supported scale/indeterminate cases, and visible output stays compact through method/route evidence cards.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limits plain-text natural input may canonicalize `exp(...)` to exponential notation for Limit parsing and history/copy stability, while unsupported full Gruntz cases must still stop cleanly instead of guessing numerically.

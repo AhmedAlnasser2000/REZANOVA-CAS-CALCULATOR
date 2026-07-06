@@ -83,12 +83,17 @@ function compactTarget(input: string) {
     .replace(/\s+/g, '');
 }
 
-function normalizePlainSqrtGroups(input: string) {
+function normalizePlainFunctionGroups(
+  input: string,
+  functionName: string,
+  render: (content: string) => string,
+) {
   let output = '';
   let index = 0;
+  const matcher = new RegExp(`^${functionName}\\s*\\(`, 'iu');
 
   while (index < input.length) {
-    const match = input.slice(index).match(/^sqrt\s*\(/iu);
+    const match = input.slice(index).match(matcher);
     if (!match) {
       output += input[index];
       index += 1;
@@ -116,7 +121,7 @@ function normalizePlainSqrtGroups(input: string) {
       continue;
     }
 
-    output += `\\sqrt{${input.slice(groupStart + 1, groupEnd)}}`;
+    output += render(input.slice(groupStart + 1, groupEnd));
     index = groupEnd + 1;
   }
 
@@ -124,7 +129,18 @@ function normalizePlainSqrtGroups(input: string) {
 }
 
 function normalizePlainBody(input: string) {
-  return normalizePlainSqrtGroups(input.trim())
+  const groupedSqrt = normalizePlainFunctionGroups(
+    input.trim(),
+    'sqrt',
+    (content) => `\\sqrt{${content}}`,
+  );
+  const groupedExp = normalizePlainFunctionGroups(
+    groupedSqrt,
+    'exp',
+    (content) => `e^{${content}}`,
+  );
+
+  return groupedExp
     .replace(/\b(sin|cos|tan|ln|log|sqrt)(?=\s*\()/gu, '\\$1')
     .replace(/\bpi\b/gu, '\\pi');
 }

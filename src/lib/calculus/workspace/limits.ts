@@ -261,6 +261,7 @@ export function evaluateCalculusInfiniteLimit(
     targetKind: state.targetKind,
     routeKind: state.routeKind,
     allowNumericFallback: state.allowNumericFallback,
+    equationDomainIntent: state.equationDomainIntent,
     messages: {
       targetLabel: (kind) => (kind === 'posInfinity' ? '+infinity' : '-infinity'),
       unstableError: 'This limit could not be stabilized numerically in Calculus.',
@@ -329,6 +330,7 @@ export function evaluateCalculusLimit(
       variable: request.variable,
       routeKind: routePlan.routeKind,
       allowNumericFallback: routePlan.allowNumericFallback,
+      equationDomainIntent: state.equationDomainIntent,
     });
   };
 

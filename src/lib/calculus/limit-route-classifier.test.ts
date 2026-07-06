@@ -104,6 +104,16 @@ describe('natural limit route classifier', () => {
     });
   });
 
+  it('classifies finite-target Gruntz bridge routes after exact finite routes', () => {
+    expect(classifyNaturalLimitRoute('lim x -> 0+ e^{1/x}')).toMatchObject({
+      kind: 'gruntz',
+      reason: expect.stringContaining('Gruntz bridge'),
+    });
+    expect(classifyNaturalLimitRoute('lim x -> 0 exp(1/x)')).toMatchObject({
+      kind: 'gruntz',
+    });
+  });
+
   it('returns controlled unsupported and malformed routes', () => {
     expect(classifyNaturalLimitRoute('lim x -> 0 floor(1/x)')).toMatchObject({
       kind: 'unsupported',

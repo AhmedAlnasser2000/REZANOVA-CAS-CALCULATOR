@@ -16,6 +16,8 @@ import {
   hasInfiniteScaleCandidate,
   hasMrvLiteCandidate,
   hasSymbolicInfinityCaseCandidate,
+  buildGruntzFiniteTargetBridgeContract,
+  buildGruntzRecursiveEvaluatorContract,
   parsePiecewiseLimitExpression,
 } from '../symbolic-engine/limits';
 
@@ -37,6 +39,7 @@ export type LimitRouteKind =
   | 'piecewise'
   | 'abs-side-behavior'
   | 'mrv-lite'
+  | 'gruntz'
   | 'unsupported'
   | 'malformed'
   | 'too-complex';
@@ -253,6 +256,20 @@ function classifyFiniteNode(node: unknown, request: NaturalLimitRequest): LimitR
     };
   }
 
+  const finiteGruntz = buildGruntzFiniteTargetBridgeContract(
+    node,
+    request.variable,
+    request.target.value,
+    request.target.direction,
+  );
+  if (finiteGruntz.supported || finiteGruntz.route === 'two-sided-disagreement') {
+    return {
+      kind: 'gruntz',
+      reason: 'A finite-target Gruntz bridge can turn the local approach into an infinity-scale comparison.',
+      request,
+    };
+  }
+
   if (hasFiniteRecursiveLeadingTermCandidate(node, request.target.value, request.variable, request.target.direction)) {
     return {
       kind: 'local-equivalent',
@@ -338,6 +355,19 @@ function classifyInfiniteNode(node: unknown, request: NaturalLimitRequest): Limi
     return {
       kind: 'lhospital-candidate',
       reason: 'A quotient at infinity has competing variable-dependent growth.',
+      request,
+    };
+  }
+
+  const recursiveGruntz = buildGruntzRecursiveEvaluatorContract(
+    node,
+    request.variable,
+    request.target.targetKind,
+  );
+  if (recursiveGruntz.supported) {
+    return {
+      kind: 'gruntz',
+      reason: 'A recursive Gruntz route can compare the remaining asymptotic scale.',
       request,
     };
   }

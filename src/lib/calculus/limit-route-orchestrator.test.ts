@@ -51,6 +51,7 @@ describe('natural limit route orchestrator', () => {
       'piecewise',
       'abs-side-behavior',
       'mrv-lite',
+      'gruntz',
     ];
 
     expect(isLimitRouteNumericFallbackAllowed('direct-substitution')).toBe(true);

@@ -673,27 +673,52 @@ describe('calculus limits', () => {
     });
 
     expect(linear.error).toBeUndefined();
-    expect(linear.exactLatex).toContain('\\infty,&\\substack{a>0}');
-    expect(linear.exactLatex).toContain('0,&\\substack{a=0}');
-    expect(linear.exactLatex).toContain('-\\infty,&\\substack{a<0}');
+    expect(linear.exactLatex).toContain('\\infty,&a>0');
+    expect(linear.exactLatex).toContain('0,&a=0');
+    expect(linear.exactLatex).toContain('-\\infty,&a<0');
     expect(linear.detailSections?.map((section) => section.title)).toContain('Limit Cases');
     expect(linear.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
       .toContain('infinity asymptotic comparison');
 
     expect(quadraticThenLinear.error).toBeUndefined();
-    expect(quadraticThenLinear.exactLatex).toContain('\\infty,&\\substack{b>0}');
-    expect(quadraticThenLinear.exactLatex).toContain('-\\infty,&\\substack{b<0}');
-    expect(quadraticThenLinear.exactLatex).toContain('\\infty,&\\substack{b=0,\\ a>0}');
-    expect(quadraticThenLinear.exactLatex).toContain('0,&\\substack{b=0,\\ a=0}');
+    expect(quadraticThenLinear.exactLatex).toContain('\\infty,&b>0');
+    expect(quadraticThenLinear.exactLatex).toContain('-\\infty,&b<0');
+    expect(quadraticThenLinear.exactLatex).toContain('\\infty,&b=0,\\ a>0');
+    expect(quadraticThenLinear.exactLatex).toContain('0,&b=0,\\ a=0');
 
     const quadraticThenLinearThenConstant = evaluateCalculusLimit({
       requestLatex: 'lim x -> infinity (b*x^2+a*x+c)',
     });
     expect(quadraticThenLinearThenConstant.error).toBeUndefined();
-    expect(quadraticThenLinearThenConstant.exactLatex).toContain('\\infty,&\\substack{b>0}');
-    expect(quadraticThenLinearThenConstant.exactLatex).toContain('-\\infty,&\\substack{b<0}');
-    expect(quadraticThenLinearThenConstant.exactLatex).toContain('\\infty,&\\substack{b=0,\\ a>0}');
-    expect(quadraticThenLinearThenConstant.exactLatex).toContain('-\\infty,&\\substack{b=0,\\ a<0}');
-    expect(quadraticThenLinearThenConstant.exactLatex).toContain('c,&\\substack{b=0,\\ a=0}');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('\\infty,&b>0');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('-\\infty,&b<0');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('\\infty,&b=0,\\ a>0');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('-\\infty,&b=0,\\ a<0');
+    expect(quadraticThenLinearThenConstant.exactLatex).toContain('c,&b=0,\\ a=0');
+  });
+
+  it('exposes Gruntz as a controlled route before numeric fallback', () => {
+    const right = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0+ exp(1/x)',
+    });
+    const left = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0- exp(1/x)',
+    });
+    const twoSided = evaluateCalculusLimit({
+      requestLatex: 'lim x -> 0 exp(1/x)',
+    });
+
+    expect(right.error).toBeUndefined();
+    expect(right.exactLatex).toBe('\\infty');
+    expect(right.detailSections?.[0]?.title).toBe('Limit Method');
+    expect(right.detailSections?.[0]?.lines.join(' ')).toContain('Gruntz');
+    expect(right.detailSections?.find((section) => section.title === 'Limit Route')?.lines.join(' '))
+      .toContain('Gruntz asymptotic route');
+
+    expect(left.error).toBeUndefined();
+    expect(left.exactLatex).toBe('0');
+
+    expect(twoSided.error).toContain('do not agree');
+    expect(twoSided.detailSections?.map((section) => section.title)).toContain('Gruntz Finite Bridge');
   });
 });

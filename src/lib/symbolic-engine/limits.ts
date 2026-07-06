@@ -47,6 +47,14 @@ export {
   resolveMrvLiteLimit,
 } from './limits/mrv-lite';
 export {
+  buildGruntzRecursiveEvaluatorContract,
+  type GruntzRecursiveEvaluatorContract,
+} from './limits/gruntz-recursive-evaluator';
+export {
+  buildGruntzFiniteTargetBridgeContract,
+  type GruntzFiniteTargetBridgeContract,
+} from './limits/gruntz-finite-bridge';
+export {
   hasFiniteRecursiveLeadingTermCandidate,
   resolveFiniteRecursiveLeadingTermLimit,
 } from './limits/finite-leading-terms';

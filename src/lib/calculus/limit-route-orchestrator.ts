@@ -37,6 +37,7 @@ const routeLabels: Record<LimitRouteKind, string> = {
   piecewise: 'piecewise branch analysis',
   'abs-side-behavior': 'absolute-value side behavior',
   'mrv-lite': 'MRV-lite asymptotic comparison',
+  gruntz: 'Gruntz asymptotic route',
   unsupported: 'unsupported route',
   malformed: 'malformed expression',
   'too-complex': 'over-budget expression',

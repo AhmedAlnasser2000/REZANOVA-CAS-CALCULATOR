@@ -92,7 +92,7 @@ describe('frontier limit route corpus', () => {
 
     expectRoute('lim x -> infinity a*x', 'infinity-asymptotic');
     expect(symbolicCases.error).toBeUndefined();
-    expect(symbolicCases.exactLatex).toContain('\\substack{a>0}');
+    expect(symbolicCases.exactLatex).toContain('\\infty,&a>0');
     expect(routeLines(symbolicCases)).toContain('infinity asymptotic comparison');
 
     expectRoute('\\lim_{x\\to\\infty}\\frac{e^{\\sqrt{x}}}{e^x}', 'mrv-lite');

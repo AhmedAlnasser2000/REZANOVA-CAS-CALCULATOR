@@ -13,6 +13,8 @@ import {
   resolveInfiniteScaleLimit,
   resolveMrvLiteLimit,
   resolveSymbolicInfinityCaseLimit,
+  buildGruntzFiniteTargetBridgeContract,
+  buildGruntzRecursiveEvaluatorContract,
   unsupportedComplexDomainLimit,
 } from '../../symbolic-engine/limits';
 import type {
@@ -34,12 +36,16 @@ import {
   resolveInfiniteLimitHeuristic,
 } from './limit-heuristics';
 import { limitDomainCheckDetails } from './limit-domain-proofs';
-import { derivativeVariableLatex } from '../derivative-target';
 import {
-  limitDetailSection,
+  gruntzFiniteBridgeEvaluation,
+  gruntzRecursiveEvaluation,
+} from './limits-gruntz-evaluation';
+import {
+  signedFiniteLimitBehaviorDetails,
+  twoSidedMismatchDetails,
+} from './limit-side-details';
+import {
   limitDetailSectionFromLines,
-  limitMathPart,
-  limitTextPart,
 } from '../../symbolic-engine/limits/detail-readback';
 
 const LIMIT_TOLERANCE = 1e-4;
@@ -64,11 +70,6 @@ type InfiniteLimitMessages = {
   targetLabel: (targetKind: Exclude<LimitTargetKind, 'finite'>) => string;
   unstableError: string;
   numericFallbackWarning: string;
-};
-
-type TwoSidedMismatchEvidence = {
-  left: Exclude<OneSidedLimitResult, { kind: 'domain-error' | 'unstable' }>;
-  right: Exclude<OneSidedLimitResult, { kind: 'domain-error' | 'unstable' }>;
 };
 
 function signToInfiniteLimit(sign: 1 | -1): LimitValue {
@@ -227,81 +228,6 @@ function numericFiniteLimit(
   };
 }
 
-function oneSidedEvidenceLatex(result: TwoSidedMismatchEvidence['left']) {
-  if (result.kind === 'unbounded') {
-    return limitValueToLatex(signToInfiniteLimit(result.sign));
-  }
-  return limitValueToLatex(result.value);
-}
-
-function finiteTargetSideLatex(target: number, direction: Exclude<LimitDirection, 'two-sided'>) {
-  const targetLatex = limitValueToLatex(target);
-  return `${targetLatex}^{${direction === 'right' ? '+' : '-'}}`;
-}
-
-function oneSidedApproachLatex(input: {
-  variable: string;
-  target: number;
-  direction: Exclude<LimitDirection, 'two-sided'>;
-}) {
-  return `${derivativeVariableLatex(input.variable)}\\to ${finiteTargetSideLatex(input.target, input.direction)}`;
-}
-
-function oneSidedLimitCalculationLatex(input: {
-  variable: string;
-  target: number;
-  direction: Exclude<LimitDirection, 'two-sided'>;
-  valueLatex: string;
-}) {
-  const variableLatex = derivativeVariableLatex(input.variable);
-  return `\\lim_{${oneSidedApproachLatex(input)}} f(${variableLatex})=${input.valueLatex}`;
-}
-
-function twoSidedMismatchDetails(input: {
-  evidence: TwoSidedMismatchEvidence;
-  target: number;
-  variable: string;
-}): DisplayDetailSection[] {
-  const leftLatex = oneSidedEvidenceLatex(input.evidence.left);
-  const rightLatex = oneSidedEvidenceLatex(input.evidence.right);
-
-  return [
-    limitDetailSection('Why This Limit Fails', [
-      [
-        limitTextPart('Left calculation: '),
-        limitMathPart(oneSidedLimitCalculationLatex({
-          variable: input.variable,
-          target: input.target,
-          direction: 'left',
-          valueLatex: leftLatex,
-        })),
-        limitTextPart('.'),
-      ],
-      [
-        limitTextPart('Right calculation: '),
-        limitMathPart(oneSidedLimitCalculationLatex({
-          variable: input.variable,
-          target: input.target,
-          direction: 'right',
-          valueLatex: rightLatex,
-        })),
-        limitTextPart('.'),
-      ],
-      [
-        limitTextPart('Left side tends to '),
-        limitMathPart(leftLatex),
-        limitTextPart(', while '),
-        limitTextPart('Right side tends to '),
-        limitMathPart(rightLatex),
-        limitTextPart('.'),
-      ],
-      [
-        limitTextPart('The two one-sided limits are different, so the two-sided limit does not exist.'),
-      ],
-    ]),
-  ];
-}
-
 function appendLimitDetails(
   existing: readonly DisplayDetailSection[] | undefined,
   ...sections: DisplayDetailSection[]
@@ -311,90 +237,6 @@ function appendLimitDetails(
     : existing
       ? [...existing]
       : undefined;
-}
-
-function signedFiniteLimitBehaviorDetails(input: {
-  direction: LimitDirection;
-  target: number;
-  variable: string;
-  value: LimitValue;
-}): DisplayDetailSection[] {
-  if (input.value !== 'posInfinity' && input.value !== 'negInfinity') {
-    return [];
-  }
-
-  const valueLatex = limitValueToLatex(input.value);
-  if (input.direction === 'left' || input.direction === 'right') {
-    const side = input.direction === 'right' ? 'right-hand' : 'left-hand';
-    const comparison = input.direction === 'right' ? 'greater than' : 'less than';
-    const sign = input.value === 'posInfinity' ? 'positive' : 'negative';
-    return [{
-      ...limitDetailSection('Side Behavior', [
-        [
-          limitTextPart(`This is a ${side} limit: `),
-          limitMathPart(oneSidedApproachLatex({
-            variable: input.variable,
-            target: input.target,
-            direction: input.direction,
-          })),
-          limitTextPart(` using values ${comparison} the target.`),
-        ],
-        [
-          limitTextPart(`On that side, sample values stay ${sign} and grow without bound.`),
-        ],
-        [
-          limitTextPart('Calculation: '),
-          limitMathPart(oneSidedLimitCalculationLatex({
-            variable: input.variable,
-            target: input.target,
-            direction: input.direction,
-            valueLatex,
-          })),
-          limitTextPart('.'),
-        ],
-        [
-          limitTextPart(`Conclusion: the ${side} limit is `),
-          limitMathPart(valueLatex),
-          limitTextPart('.'),
-        ],
-      ]),
-    }];
-  }
-
-  return [{
-    ...limitDetailSection('Side Behavior', [
-      [
-        limitTextPart('Left calculation: '),
-        limitMathPart(oneSidedLimitCalculationLatex({
-          variable: input.variable,
-          target: input.target,
-          direction: 'left',
-          valueLatex,
-        })),
-        limitTextPart('.'),
-      ],
-      [
-        limitTextPart('Right calculation: '),
-        limitMathPart(oneSidedLimitCalculationLatex({
-          variable: input.variable,
-          target: input.target,
-          direction: 'right',
-          valueLatex,
-        })),
-        limitTextPart('.'),
-      ],
-      [
-        limitTextPart('Left-hand and right-hand behavior share the same signed divergence '),
-        limitMathPart(valueLatex),
-        limitTextPart('.'),
-      ],
-      [
-        limitTextPart('Because the two sides agree, the two-sided limit is '),
-        limitMathPart(valueLatex),
-        limitTextPart('.'),
-      ],
-    ]),
-  }];
 }
 
 export function basicFiniteLimitWarning(direction: LimitDirection) {
@@ -548,6 +390,31 @@ export function evaluateFiniteLimitFromAst(input: {
       warnings: [],
       error: squeezeOscillation.error,
       detailSections: squeezeOscillation.detailSections,
+    };
+  }
+
+  if (input.routeKind === 'gruntz') {
+    const finiteGruntz = buildGruntzFiniteTargetBridgeContract(
+      input.body,
+      input.variable,
+      input.target,
+      input.direction,
+      { domain: input.equationDomainIntent === 'complex' ? 'complex-principal' : 'real' },
+    );
+    const finiteGruntzEvaluation = gruntzFiniteBridgeEvaluation(finiteGruntz);
+    if (finiteGruntzEvaluation) {
+      return finiteGruntzEvaluation;
+    }
+    return {
+      warnings: [],
+      error: finiteGruntz.stopReason ?? 'The Gruntz bridge did not resolve this finite-target limit.',
+      detailSections: finiteGruntz.detailSections ?? [limitDetailSectionFromLines(
+        'Limit Diagnostic',
+        [
+          'Route classification: gruntz.',
+          finiteGruntz.stopReason ?? 'The finite-target Gruntz bridge stopped before a supported comparison.',
+        ],
+      )],
     };
   }
 
@@ -706,6 +573,7 @@ export function evaluateInfiniteLimitFromAst(input: {
   targetKind: Exclude<LimitTargetKind, 'finite'>;
   routeKind?: string;
   allowNumericFallback?: boolean;
+  equationDomainIntent?: EquationDomainIntent;
   messages: InfiniteLimitMessages;
 }): CalculusCoreEvaluation {
   const rewriteCancellation = resolveInfiniteRewriteCancellationLimit(
@@ -805,6 +673,30 @@ export function evaluateInfiniteLimitFromAst(input: {
       warnings: [],
       error: lHospital.reason,
       detailSections: lHospital.detailSections,
+    };
+  }
+
+  const recursiveGruntz = buildGruntzRecursiveEvaluatorContract(
+    input.body,
+    input.variable,
+    input.targetKind,
+    { domain: input.equationDomainIntent === 'complex' ? 'complex-principal' : 'real' },
+  );
+  const recursiveGruntzEvaluation = gruntzRecursiveEvaluation(recursiveGruntz);
+  if (recursiveGruntzEvaluation) {
+    return recursiveGruntzEvaluation;
+  }
+  if (input.routeKind === 'gruntz') {
+    return {
+      warnings: [],
+      error: recursiveGruntz.stopReason ?? 'The Gruntz route did not resolve this infinite-target limit.',
+      detailSections: recursiveGruntz.detailSections ?? [limitDetailSectionFromLines(
+        'Limit Diagnostic',
+        [
+          'Route classification: gruntz.',
+          recursiveGruntz.stopReason ?? 'The recursive Gruntz route stopped before a supported comparison.',
+        ],
+      )],
     };
   }
 

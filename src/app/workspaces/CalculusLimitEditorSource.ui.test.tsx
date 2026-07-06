@@ -477,4 +477,39 @@ describe('Calculus limit editor source', () => {
     fireEvent.click(method.querySelector('summary') as HTMLElement);
     await waitFor(() => expect(method).toHaveTextContent('capped symbolic local series'));
   });
+
+  it('renders finite Gruntz bridge limits through the natural editor', async () => {
+    const { user } = await renderAppMain();
+
+    await openCalculusTool(user, 'Limits', 'Limit');
+    setMathFieldLatex('main-editor', 'lim x -> 0+ exp(1/x)');
+    await user.click(screen.getByTestId('soft-action-evaluate'));
+
+    await waitForDisplayOutcomeSuccess();
+    expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
+    const answerLatex = screen
+      .getByTestId('display-outcome-answer-block')
+      .querySelector('[data-raw-latex]')
+      ?.getAttribute('data-raw-latex') ?? '';
+    expect(answerLatex).toBe('\\infty');
+
+    const method = screen.getByTestId('display-outcome-detail-section-0');
+    expect(method).toHaveTextContent('Limit Method');
+    fireEvent.click(method.querySelector('summary') as HTMLElement);
+    await waitFor(() => expect(method).toHaveTextContent('Gruntz'));
+
+    const bridge = screen.getByTestId('display-outcome-detail-section-1');
+    expect(bridge).toHaveTextContent('Gruntz Finite Bridge');
+
+    const route = screen
+      .getAllByTestId(/display-outcome-detail-section-\d+/u)
+      .find((section) => section.textContent?.includes('Limit Route'));
+    expect(route).toBeDefined();
+    if (!route) {
+      throw new Error('Limit Route detail section not found');
+    }
+    expect(route).toHaveTextContent('Limit Route');
+    fireEvent.click(route.querySelector('summary') as HTMLElement);
+    await waitFor(() => expect(route).toHaveTextContent('Gruntz asymptotic route'));
+  });
 });
