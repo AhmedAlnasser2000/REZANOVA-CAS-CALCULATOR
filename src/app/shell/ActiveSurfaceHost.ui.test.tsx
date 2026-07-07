@@ -102,12 +102,14 @@ function activeSurfaceHostProps() {
     onDeleteHistoryEntry: vi.fn(),
     onDeleteSelectedHistoryEntries: vi.fn(),
     onFocusTab: vi.fn(),
+    onOpenNotebookMathInTool: vi.fn(),
     onPatchSettings: vi.fn(),
     onReplayHistoryEntry: vi.fn(),
     onReplayHistoryEntryInNewTab: vi.fn(),
     onResetCalculatorMemory: vi.fn(),
     onResetHistory: vi.fn(),
     onStopPendingHistoryTicket: vi.fn(),
+    onUpdateNotebookSurfaceState: vi.fn(),
     pendingHistory: [],
     renderCalculatorSurface: () => (
       <div data-testid="calculator-shell">Calculator body</div>
@@ -235,6 +237,24 @@ describe('ActiveSurfaceHost', () => {
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'guide');
     expect(pageSurface).toContainElement(screen.getByTestId('guide-page'));
     expect(screen.getByTestId('guide-page-main')).toBeInTheDocument();
+    expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
+  });
+
+  it('renders Notebook document tabs as page surfaces outside the calculator shell', () => {
+    const notebookInstance = createWorkspaceInstance('notebook', 5, {
+      idFactory: (kind, order) => `${kind}.${order}`,
+    });
+
+    render(
+      <ActiveSurfaceHost
+        {...activeSurfaceHostProps()}
+        activeInstance={notebookInstance}
+      />,
+    );
+
+    const pageSurface = screen.getByTestId('active-surface-page');
+    expect(pageSurface).toHaveAttribute('data-surface-kind', 'notebook');
+    expect(pageSurface).toContainElement(screen.getByTestId('notebook-page'));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
   });
 });

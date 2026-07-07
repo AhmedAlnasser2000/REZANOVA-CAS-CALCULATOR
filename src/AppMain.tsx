@@ -158,6 +158,7 @@ import {
   type VariableSubstitutionSnapshot,
 } from './types/calculator';
 import { formatMathTextForDisplay, getDisplayLatex, latexToVisibleText } from './lib/display/math-notation';
+import type { NotebookWorkspaceTarget } from './lib/notebook';
 
 const CalculusWorkspace = lazy(() =>
   import('./app/workspaces/CalculusWorkspace').then((module) => ({
@@ -1771,6 +1772,20 @@ export default function App() {
     setClipboardNotice('Loaded into Equation');
   }
 
+  function openNotebookMathInTool(target: NotebookWorkspaceTarget, latex: string) {
+    if (target === 'equation') {
+      sendLatexToEquation(latex);
+      return;
+    }
+
+    if (target === 'calculate') {
+      sendLatexToCalculate(latex);
+      return;
+    }
+
+    setClipboardNotice(`${MODE_LABELS[target]} notebook launch is deferred`);
+  }
+
   function loadLatexIntoEditor(latex: string) {
     if (currentMode === 'equation') {
       sendLatexToEquation(latex);
@@ -2805,8 +2820,10 @@ export default function App() {
           onCopyResult={(latex) => void copyText(latex, 'Result copied')}
           onDeleteHistoryEntry={deleteHistoryEntryById} onDeleteSelectedHistoryEntries={(ids) => ids.forEach(deleteHistoryEntryById)}
           onFocusTab={workspaceTabsRuntime.onFocusTab}
+          onOpenNotebookMathInTool={openNotebookMathInTool}
           onPatchSettings={patchSettings} onReplayHistoryEntry={replayHistoryEntry}
           onReplayHistoryEntryInNewTab={replayHistoryEntryInNewTab} onResetCalculatorMemory={resetCalculatorMemory}
+          onUpdateNotebookSurfaceState={workspaceInstancesRuntime.updateInstanceSurfaceState}
           onResetHistory={resetHistory} onStopPendingHistoryTicket={stopPendingHistoryTicket}
           pendingHistory={pendingHistoryTickets} settings={settings}
           renderCalculatorSurface={() => (

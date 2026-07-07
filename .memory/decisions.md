@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-07-06 - NOTEBOOK V1 Math-Aware Authoring
+
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Notebook V1 is a protected app-level page workspace with document tabs, not a singleton and not a calculator-shell mode. Each Notebook tab owns a session-only draft, has null Order of Execution runtime context, suppresses quick inspectors, and uses protected page tab actions.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Notebook math-aware prose is the flagship V1 behavior. Text blocks preserve original prose, store rich text marks separately, detect likely math spans for review, and accept inline MathLive-capable spans with normalized LaTeX without destructive rewriting.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Notebook math editor blocks are authoring/launch surfaces only. V1 may send supported math to Calculate or Equation, but Notebook does not run jobs, own solver authority, attach raw History, persist across restart, or implement import/export packages.
+- [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Future Notebook/import-export packages must use compact evidence snapshot contracts and must not serialize raw History, Variables, Display block trees, MathJSON trees, solver objects, Order of Execution envelopes, diagnostics, host commands, local paths, app-state schemas, or executable code.
+
 ## 2026-07-06 - CALCULUS-LIMITS-READBACK-SANITY2
 
 - [agent: codex | model: gpt-5-codex | primary_agent: codex | primary_agent_model: gpt-5-codex | attribution_basis: live] Limit conditional case answers render as direct `L = cases` math for up to six rows; larger case answers keep the compact Formula Viewer handoff. Limit-owned method cards should use structured text/math parts for rewrite evidence so prose such as common-denominator or conjugate rewrites does not appear as glued math text.

@@ -8,6 +8,7 @@ import {
   BarChart3,
   BookOpen,
   Calculator,
+  NotebookTabs,
   FileText,
   FlaskConical,
   FunctionSquare,
@@ -37,8 +38,9 @@ import type {
 import {
   GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
+  NOTEBOOK_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
-  type AppPageWorkspaceKind,
+  type SingletonAppPageWorkspaceKind,
 } from '../runtime/app-page-workspaces';
 
 export type WorkspaceTabItem = {
@@ -60,9 +62,10 @@ type WorkspaceTabsProps = {
   onCloseOtherTabs: (tabId: WorkspaceInstanceId) => void;
   onCloseTab: (tabId: WorkspaceInstanceId) => void;
   onCreateBlankTab: () => void;
+  onCreateNotebookPageTab: () => void;
   onDuplicateTab: (tabId: WorkspaceInstanceId) => void;
   onFocusTab: (tabId: WorkspaceInstanceId) => void;
-  onOpenAppPageTab: (workspaceKind: AppPageWorkspaceKind) => void;
+  onOpenAppPageTab: (workspaceKind: SingletonAppPageWorkspaceKind) => void;
   onRenameTab: (tabId: WorkspaceInstanceId, title: string) => void;
   onStopJobsInTab: (tabId: WorkspaceInstanceId) => void;
 };
@@ -95,6 +98,9 @@ function workspaceTabIcon(tab: WorkspaceTabItem): LucideIcon {
   }
   if (tab.workspaceKind === GUIDE_PAGE_WORKSPACE_KIND) {
     return BookOpen;
+  }
+  if (tab.workspaceKind === NOTEBOOK_PAGE_WORKSPACE_KIND) {
+    return NotebookTabs;
   }
 
   switch (tab.workspaceKind) {
@@ -131,6 +137,7 @@ export function WorkspaceTabs({
   onCloseOtherTabs,
   onCloseTab,
   onCreateBlankTab,
+  onCreateNotebookPageTab,
   onDuplicateTab,
   onFocusTab,
   onOpenAppPageTab,
@@ -170,9 +177,14 @@ export function WorkspaceTabs({
     onCreateBlankTab();
   }
 
-  function openAppPageFromMenu(workspaceKind: AppPageWorkspaceKind) {
+  function openAppPageFromMenu(workspaceKind: SingletonAppPageWorkspaceKind) {
     setCreateMenuOpen(false);
     onOpenAppPageTab(workspaceKind);
+  }
+
+  function createNotebookFromMenu() {
+    setCreateMenuOpen(false);
+    onCreateNotebookPageTab();
   }
 
   function submitRename(event: FormEvent<HTMLFormElement>) {
@@ -351,6 +363,9 @@ export function WorkspaceTabs({
             onClick={() => openAppPageFromMenu(GUIDE_PAGE_WORKSPACE_KIND)}
           >
             {tabText.openGuidePage}
+          </button>
+          <button type="button" role="menuitem" onClick={createNotebookFromMenu}>
+            {tabText.newNotebookPage}
           </button>
           <button
             type="button"

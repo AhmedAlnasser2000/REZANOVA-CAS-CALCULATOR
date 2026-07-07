@@ -50,6 +50,7 @@ import {
 } from './formula-viewer-artifacts';
 import {
   GUIDE_PAGE_WORKSPACE_KIND,
+  NOTEBOOK_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
 } from './app-page-workspaces';
 import type { DisplayBlock } from '../../lib/display/result/display-blocks';
@@ -393,6 +394,47 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
       title: 'Guide',
       workspaceKind: GUIDE_PAGE_WORKSPACE_KIND,
     });
+    expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
+  });
+
+  it('creates protected Notebook document page tabs without singleton reuse', () => {
+    const { hook, setEditorRuntimeStatusOverride } = renderWorkspaceTabsShell();
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onCreateNotebookPageTab();
+    });
+
+    const firstNotebookId = hook.result.current.workspaceInstances.activeInstance?.id;
+    expect(firstNotebookId).toBe('notebook.2');
+    expect(hook.result.current.currentMode).toBe('calculate');
+    expect(hook.result.current.workspaceInstances.activeRuntimeContext).toBeNull();
+    expect(hook.result.current.shell.workspaceTabsRuntime.tabs[1]).toMatchObject({
+      actionPolicy: {
+        canClearState: false,
+        canDuplicate: false,
+        canRename: false,
+        canStopJobs: false,
+      },
+      surfaceKind: 'page',
+      workspaceKind: NOTEBOOK_PAGE_WORKSPACE_KIND,
+    });
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onCreateNotebookPageTab();
+      hook.result.current.shell.workspaceTabsRuntime.onDuplicateTab(firstNotebookId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onClearTabState(firstNotebookId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onStopJobsInTab(firstNotebookId ?? '');
+      hook.result.current.shell.workspaceTabsRuntime.onRenameTab(firstNotebookId ?? '', 'Custom Notebook');
+    });
+
+    expect(hook.result.current.workspaceInstances.workspaceInstances
+      .filter((instance) => instance.workspaceKind === NOTEBOOK_PAGE_WORKSPACE_KIND))
+      .toHaveLength(2);
+    expect(hook.result.current.workspaceInstances.workspaceInstances
+      .find((instance) => instance.id === firstNotebookId)).toMatchObject({
+        title: 'Notebook',
+        workspaceKind: NOTEBOOK_PAGE_WORKSPACE_KIND,
+      });
     expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
   });
 

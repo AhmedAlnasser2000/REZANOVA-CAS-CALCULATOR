@@ -19,6 +19,7 @@ import {
   appPageWorkspaceTitle,
   isAppPageWorkspaceKind,
   type AppPageWorkspaceKind,
+  type SingletonAppPageWorkspaceKind,
 } from './app-page-workspaces';
 
 export type { WorkspaceInstanceId, WorkspaceInstanceRuntimeContext };
@@ -316,7 +317,7 @@ export function openFormulaViewerWorkspaceInstance(
 
 export function openAppPageWorkspaceInstance(
   state: WorkspaceInstancesState,
-  workspaceKind: AppPageWorkspaceKind,
+  workspaceKind: SingletonAppPageWorkspaceKind,
   options: WorkspaceInstanceFactoryOptions = {},
 ): WorkspaceInstancesState {
   return focusLatestWorkspaceKindOrCreate(state, workspaceKind, options);

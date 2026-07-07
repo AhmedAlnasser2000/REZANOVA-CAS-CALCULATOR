@@ -69,4 +69,22 @@ describe('workspace surface descriptors', () => {
     });
     }
   });
+
+  it('classifies Notebook as a protected document page surface, not a singleton', () => {
+    expect(SINGLETON_PAGE_SURFACE_POLICIES.map((policy) => policy.pageKind))
+      .not.toContain('notebook');
+    expect(resolveWorkspaceSurfaceDescriptor('notebook')).toEqual({
+      allowsQuickInspectors: false,
+      pageKind: 'notebook',
+      surfaceKind: 'page',
+      tabActionPolicy: {
+        canClearState: false,
+        canClose: true,
+        canCloseOthers: true,
+        canDuplicate: false,
+        canRename: false,
+        canStopJobs: false,
+      },
+    });
+  });
 });

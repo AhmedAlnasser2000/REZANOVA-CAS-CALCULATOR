@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
 import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
-import type { AppPageWorkspaceKind } from './app-page-workspaces';
+import {
+  NOTEBOOK_PAGE_WORKSPACE_KIND,
+  type SingletonAppPageWorkspaceKind,
+} from './app-page-workspaces';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
 import type { useWorkspaceDisplayStateHostRuntime } from './useWorkspaceDisplayStateHostRuntime';
 import type { useWorkspaceRuntimeStateHostRuntime } from './useWorkspaceRuntimeStateHostRuntime';
@@ -296,7 +299,7 @@ export function useWorkspaceTabsRuntime({
     workspaceStateHost,
   ]);
 
-  const openAppPageTab = useCallback((workspaceKind: AppPageWorkspaceKind) => {
+  const openAppPageTab = useCallback((workspaceKind: SingletonAppPageWorkspaceKind) => {
     workspaceDisplayHost.captureActiveDisplayState();
     workspaceRuntimeHost.captureActiveRuntimeState();
     workspaceStateHost.captureActiveSurfaceState();
@@ -304,6 +307,17 @@ export function useWorkspaceTabsRuntime({
   }, [
     workspaceDisplayHost,
     workspaceInstances,
+    workspaceRuntimeHost,
+    workspaceStateHost,
+  ]);
+
+  const createNotebookPageTab = useCallback(() => {
+    workspaceDisplayHost.captureActiveDisplayState();
+    workspaceRuntimeHost.captureActiveRuntimeState();
+    workspaceStateHost.captureActiveSurfaceState();
+    workspaceStateHost.createBlankInstance(NOTEBOOK_PAGE_WORKSPACE_KIND);
+  }, [
+    workspaceDisplayHost,
     workspaceRuntimeHost,
     workspaceStateHost,
   ]);
@@ -323,6 +337,7 @@ export function useWorkspaceTabsRuntime({
     onCreateBlankTab: createTab,
     onDuplicateTab: duplicateTab,
     onFocusTab: focusTab,
+    onCreateNotebookPageTab: createNotebookPageTab,
     onOpenAppPageTab: openAppPageTab,
     onOpenFormulaViewerTab: openFormulaViewerTab,
     onRenameTab: renameTab,
@@ -335,6 +350,7 @@ export function useWorkspaceTabsRuntime({
     createTab,
     duplicateTab,
     focusTab,
+    createNotebookPageTab,
     openAppPageTab,
     openFormulaViewerTab,
     renameTab,

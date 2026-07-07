@@ -4,6 +4,7 @@ import {
 } from './formula-viewer-artifacts';
 import {
   isAppPageWorkspaceKind,
+  type SingletonAppPageWorkspaceKind,
   type AppPageWorkspaceKind,
 } from './app-page-workspaces';
 import type { WorkspaceKind } from './workspace-instances';
@@ -34,7 +35,7 @@ export type WorkspaceSurfaceDescriptor =
     };
 
 export type SingletonPageSurfacePolicy = {
-  pageKind: AppPageWorkspaceKind;
+  pageKind: SingletonAppPageWorkspaceKind;
   singleton: true;
 };
 

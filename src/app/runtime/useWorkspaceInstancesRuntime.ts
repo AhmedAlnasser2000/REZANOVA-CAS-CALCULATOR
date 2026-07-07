@@ -7,7 +7,7 @@ import {
 } from 'react';
 import type { ModeId } from '../../types/calculator';
 import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
-import type { AppPageWorkspaceKind } from './app-page-workspaces';
+import type { SingletonAppPageWorkspaceKind } from './app-page-workspaces';
 import {
   clearWorkspaceInstanceState,
   closeOtherWorkspaceInstances,
@@ -146,7 +146,7 @@ export function useWorkspaceInstancesRuntime(
       openFormulaViewerWorkspaceInstance(currentState, artifact, factoryOptions()));
   }, [factoryOptions]);
 
-  const openAppPageInstance = useCallback((workspaceKind: AppPageWorkspaceKind) => {
+  const openAppPageInstance = useCallback((workspaceKind: SingletonAppPageWorkspaceKind) => {
     setState((currentState) =>
       openAppPageWorkspaceInstance(currentState, workspaceKind, factoryOptions()));
   }, [factoryOptions]);

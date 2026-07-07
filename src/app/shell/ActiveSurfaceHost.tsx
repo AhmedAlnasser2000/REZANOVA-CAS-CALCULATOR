@@ -13,13 +13,19 @@ import type {
 import {
   GUIDE_PAGE_WORKSPACE_KIND,
   HISTORY_PAGE_WORKSPACE_KIND,
+  NOTEBOOK_PAGE_WORKSPACE_KIND,
   SETTINGS_PAGE_WORKSPACE_KIND,
 } from '../runtime/app-page-workspaces';
 import { FormulaViewerPage } from './FormulaViewerPage';
 import { GuidePage } from './GuidePage';
 import { HistoryPage } from './HistoryPage';
+import { NotebookPage } from './NotebookPage';
 import { SettingsPage } from './SettingsPage';
 import type { GuideWorkspaceProps } from '../workspaces/GuideWorkspace';
+import type {
+  NotebookSurfaceState,
+  NotebookWorkspaceTarget,
+} from '../../lib/notebook';
 
 type ActiveSurfaceHostProps = {
   activeInstance: WorkspaceInstance | null | undefined;
@@ -30,12 +36,14 @@ type ActiveSurfaceHostProps = {
   onDeleteHistoryEntry: (id: string) => void;
   onDeleteSelectedHistoryEntries: (ids: string[]) => void;
   onFocusTab: (instanceId: string) => void;
+  onOpenNotebookMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
   onPatchSettings: (patch: SettingsPatch) => void;
   onReplayHistoryEntry: (entry: HistoryEntry) => void;
   onReplayHistoryEntryInNewTab: (entry: HistoryEntry) => void;
   onResetCalculatorMemory: () => void;
   onResetHistory: () => void;
   onStopPendingHistoryTicket?: (ticket: PendingHistoryTicket) => void;
+  onUpdateNotebookSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
   pendingHistory: PendingHistoryTicket[];
   renderCalculatorSurface: () => ReactNode;
   settings: Settings;
@@ -52,12 +60,14 @@ export function ActiveSurfaceHost({
   onDeleteHistoryEntry,
   onDeleteSelectedHistoryEntries,
   onFocusTab,
+  onOpenNotebookMathInTool,
   onPatchSettings,
   onReplayHistoryEntry,
   onReplayHistoryEntryInNewTab,
   onResetCalculatorMemory,
   onResetHistory,
   onStopPendingHistoryTicket,
+  onUpdateNotebookSurfaceState,
   pendingHistory,
   renderCalculatorSurface,
   settings,
@@ -141,6 +151,24 @@ export function ActiveSurfaceHost({
         style={pageSurfaceStyle}
       >
         <GuidePage guide={guide} />
+      </section>
+    );
+  }
+
+  if (surfaceDescriptor.pageKind === NOTEBOOK_PAGE_WORKSPACE_KIND && activeInstance) {
+    return (
+      <section
+        className={`${pageSurfaceClassName} active-surface--notebook`}
+        data-surface-kind="notebook"
+        data-testid="active-surface-page"
+        style={pageSurfaceStyle}
+      >
+        <NotebookPage
+          instanceId={activeInstance.id}
+          onOpenMathInTool={onOpenNotebookMathInTool}
+          onUpdateSurfaceState={onUpdateNotebookSurfaceState}
+          surfaceState={activeInstance.surfaceState}
+        />
       </section>
     );
   }

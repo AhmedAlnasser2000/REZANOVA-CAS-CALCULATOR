@@ -41,6 +41,7 @@ function renderTabs(tabs: WorkspaceTabItem[]) {
     onCloseOtherTabs: vi.fn(),
     onCloseTab: vi.fn(),
     onCreateBlankTab: vi.fn(),
+    onCreateNotebookPageTab: vi.fn(),
     onDuplicateTab: vi.fn(),
     onFocusTab: vi.fn(),
     onOpenAppPageTab: vi.fn(),
@@ -82,7 +83,7 @@ describe('WorkspaceTabs', () => {
     expect(handlers.onCreateBlankTab).toHaveBeenCalledTimes(1);
   });
 
-  it('opens Guide, Settings, and History singleton pages from the adjacent plus menu', () => {
+  it('opens Guide, Notebook, Settings, and History pages from the adjacent plus menu', () => {
     const handlers = renderTabs([
       tab({ id: 'workspace.calculate.1', isActive: true }),
     ]);
@@ -92,6 +93,10 @@ describe('WorkspaceTabs', () => {
 
     fireEvent.click(screen.getByRole('menuitem', { name: 'Open Guide Page' }));
     expect(handlers.onOpenAppPageTab).toHaveBeenCalledWith('guide-page');
+
+    fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'New Notebook' }));
+    expect(handlers.onCreateNotebookPageTab).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByTestId('workspace-tab-add-menu'));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Open Settings Page' }));
