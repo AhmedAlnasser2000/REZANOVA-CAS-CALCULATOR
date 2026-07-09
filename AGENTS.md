@@ -34,12 +34,18 @@
 - Required durable-memory fields are defined in `.memory/PROTOCOL.md`, including:
   - `primary_agent`
   - `primary_agent_model`
+  - `primary_agent_family`
   - `recorded_by_agent`
   - `recorded_by_agent_model`
+  - `recorded_by_agent_family`
   - `verified_by_agent`
   - `verified_by_agent_model`
+  - `verified_by_agent_family`
   - `attribution_basis`
-- Add `contributors`, `committed_by_agent`, and `committed_by_agent_model` when they materially apply.
+- Add `contributors`, `committed_by_agent`, `committed_by_agent_model`, and `committed_by_agent_family` when they materially apply.
+- Allowed agent-family values are lowercase `sol`, `terra`, and `luna`.
+- Family fields are prospective from `2026-07-09`. Do not infer or backfill a family for older artifacts.
+- The user-confirmed attribution correction maps exact model-field values `gpt-5` and `gpt-5-codex` to `gpt-5.5`. Explicit `gpt-5.4`, `gpt-5.3-codex`, and lower/versioned historical values are protected and must not be rewritten by that correction.
 - `primary_agent` means milestone owner, not merely the last editor.
 - If an agent only updates memory, verification, or commit metadata, do not overwrite `primary_agent`.
 - Every cross-agent handoff must be recorded in durable memory with a short dated note in the active session dossier.

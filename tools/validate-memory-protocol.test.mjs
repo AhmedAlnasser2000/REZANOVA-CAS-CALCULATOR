@@ -12,14 +12,18 @@ async function seedRepo(root, options = {}) {
     omitJournalField,
     badStub = false,
   } = options;
+  const artifactDate = options.artifactDate ?? '2026-04-09';
+  const artifactMonth = artifactDate.slice(0, 7);
+  const agentFamily = options.agentFamily ?? 'sol';
+  const familyLine = (field) => options.includeFamilies ? [`- ${field}: ${agentFamily}`] : [];
 
   const sessionDir = options.flatSession
-    ? path.join(root, '.memory', 'sessions', '2026-04-09__sample')
-    : path.join(root, '.memory', 'sessions', '2026-04', '2026-04-09', '2026-04-09__sample');
+    ? path.join(root, '.memory', 'sessions', `${artifactDate}__sample`)
+    : path.join(root, '.memory', 'sessions', artifactMonth, artifactDate, `${artifactDate}__sample`);
   const journalDir = path.join(root, '.memory', 'journal');
   const journalPath = options.flatJournal
-    ? path.join(journalDir, '2026-04-09.md')
-    : path.join(journalDir, '2026-04', '2026-04-09.md');
+    ? path.join(journalDir, `${artifactDate}.md`)
+    : path.join(journalDir, artifactMonth, `${artifactDate}.md`);
 
   if (!options.skipSession) {
     await fs.mkdir(sessionDir, { recursive: true });
@@ -32,11 +36,14 @@ async function seedRepo(root, options = {}) {
     '## Attribution',
     '- primary_agent: codex',
     '- primary_agent_model: gpt-5.4',
+    ...familyLine('primary_agent_family'),
     '- contributors:',
     '- recorded_by_agent: codex',
     '- recorded_by_agent_model: gpt-5.4',
+    ...familyLine('recorded_by_agent_family'),
     '- verified_by_agent: codex',
     '- verified_by_agent_model: gpt-5.4',
+    ...familyLine('verified_by_agent_family'),
     '- attribution_basis: live',
     '',
     '## Task Goal',
@@ -50,11 +57,14 @@ async function seedRepo(root, options = {}) {
     '## Attribution',
     '- primary_agent: codex',
     '- primary_agent_model: gpt-5.4',
+    ...familyLine('primary_agent_family'),
     '- contributors:',
     '- recorded_by_agent: codex',
     '- recorded_by_agent_model: gpt-5.4',
+    ...familyLine('recorded_by_agent_family'),
     '- verified_by_agent: codex',
     '- verified_by_agent_model: gpt-5.4',
+    ...familyLine('verified_by_agent_family'),
     '- attribution_basis: live',
     '- commit_hash:',
     '',
@@ -83,8 +93,10 @@ async function seedRepo(root, options = {}) {
         '## Attribution',
         '- primary_agent: codex',
         '- primary_agent_model: gpt-5.4',
+        ...familyLine('primary_agent_family'),
         '- recorded_by_agent: codex',
         '- recorded_by_agent_model: gpt-5.4',
+        ...familyLine('recorded_by_agent_family'),
         '- attribution_basis: live',
         '',
         '- No commit recorded yet.',
@@ -95,18 +107,23 @@ async function seedRepo(root, options = {}) {
     await fs.mkdir(path.join(root, '.memory', 'sessions'), { recursive: true });
   }
 
-  const journalLines = [
-    '# Journal',
-    '',
-    '## Historical Attribution',
-    '- primary_agent: codex',
-    '- primary_agent_model: gpt-5.4',
-    '- attribution_basis: historical-user-confirmed',
-    '- scope: all entries in this file',
-    '',
-    '- note',
-    '',
-  ];
+  const prospectivePrefix = options.omitJournalFamily
+    ? '- [agent: codex | model: gpt-5.6 | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] note'
+    : `- [agent: codex | model: gpt-5.6 | agent_family: ${agentFamily} | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: ${agentFamily} | attribution_basis: live] note`;
+  const journalLines = options.useJournalPrefix
+    ? [`# ${artifactDate}`, '', prospectivePrefix, '']
+    : [
+        '# Journal',
+        '',
+        '## Historical Attribution',
+        '- primary_agent: codex',
+        '- primary_agent_model: gpt-5.4',
+        '- attribution_basis: historical-user-confirmed',
+        '- scope: all entries in this file',
+        '',
+        '- note',
+        '',
+      ];
 
   if (omitJournalField) {
     const index = journalLines.findIndex((line) => line.startsWith(`- ${omitJournalField}:`));
@@ -116,7 +133,7 @@ async function seedRepo(root, options = {}) {
   }
 
   await fs.writeFile(journalPath, journalLines.join('\n'));
-  const currentStateDate = options.currentStateDate ?? '2026-04-09';
+  const currentStateDate = options.currentStateDate ?? artifactDate;
   const lastUpdatedLine = options.omitCurrentStateLastUpdated ? '' : `Last updated: ${currentStateDate}\n\n`;
   const effectiveLastUpdatedLine = options.invalidCurrentStateLastUpdated
     ? 'Last updated: 2026-02-31\n\n'
@@ -124,9 +141,16 @@ async function seedRepo(root, options = {}) {
   const currentStateExtra = options.milestoneHeadingCurrentState
     ? '\n## OOE-RS12\n- finished milestone note\n'
     : '';
+  const currentStateFamilyLines = options.includeFamilies
+    ? [
+        `- primary_agent_family: ${agentFamily}`,
+        `- recorded_by_agent_family: ${agentFamily}`,
+        `- verified_by_agent_family: ${agentFamily}`,
+      ].filter((line) => !line.startsWith(`- ${options.omitCurrentStateFamily}:`)).join('\n') + '\n'
+    : '';
   const currentStateText = options.oversizedCurrentState
-    ? `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${'- filler posture line\n'.repeat(520)}`
-    : `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${currentStateExtra}`;
+    ? `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${currentStateFamilyLines}${'- filler posture line\n'.repeat(520)}`
+    : `# Current State\n\n${effectiveLastUpdatedLine}## Agent Ownership\n- owner: codex\n${currentStateFamilyLines}${currentStateExtra}`;
   await fs.writeFile(path.join(root, '.memory', 'current-state.md'), currentStateText);
 
   if (options.newerDurableMemoryDate) {
@@ -235,6 +259,60 @@ test('validator passes on a minimal compliant repo', async () => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-pass-'));
   await seedRepo(root);
   await assert.doesNotReject(() => validateRepo(root));
+});
+
+test('validator passes when prospective artifacts include valid agent families', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-pass-'));
+  await seedRepo(root, {
+    artifactDate: '2026-07-09',
+    includeFamilies: true,
+    useJournalPrefix: true,
+  });
+  await assert.doesNotReject(() => validateRepo(root));
+});
+
+test('validator fails when a prospective session omits a required family field', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-session-'));
+  await seedRepo(root, {
+    artifactDate: '2026-07-09',
+    includeFamilies: true,
+    useJournalPrefix: true,
+    omitSessionField: 'verified_by_agent_family',
+  });
+  await assert.rejects(() => validateRepo(root), /verified_by_agent_family/);
+});
+
+test('validator fails when a prospective current state omits a required family field', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-state-'));
+  await seedRepo(root, {
+    artifactDate: '2026-07-09',
+    includeFamilies: true,
+    useJournalPrefix: true,
+    omitCurrentStateFamily: 'recorded_by_agent_family',
+  });
+  await assert.rejects(() => validateRepo(root), /recorded_by_agent_family/);
+});
+
+test('validator fails when a prospective journal prefix omits agent family', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-journal-'));
+  await seedRepo(root, {
+    artifactDate: '2026-07-09',
+    includeFamilies: true,
+    useJournalPrefix: true,
+    omitJournalFamily: true,
+  });
+  await assert.rejects(() => validateRepo(root), /agent_family/);
+});
+
+test('validator rejects unknown prospective family values', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'calcwiz-memory-protocol-family-value-'));
+  await seedRepo(root, {
+    artifactDate: '2026-07-09',
+    includeFamilies: true,
+    useJournalPrefix: true,
+    agentFamily: 'orbit',
+  });
+  await assert.rejects(() => validateRepo(root), /expected one of sol, terra, luna/);
 });
 
 test('validator fails when current-state.md exceeds the snapshot line cap', async () => {

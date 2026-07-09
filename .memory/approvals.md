@@ -10,6 +10,7 @@
 - decision
 - recorded_by_agent
 - recorded_by_agent_model
+- recorded_by_agent_family (required for entries dated `2026-07-09` or later)
 - source
 - canonical_targets
 - notes
@@ -23,3 +24,12 @@
   source: chat-2026-04-09-agent-governance-plan
   canonical_targets: AGENTS.md; docs/workflow/commit-first-gates.md; .memory/PROTOCOL.md; .memory/current-state.md; .memory/decisions.md
   notes: Historical ownership is user-confirmed as Codex-only, with the primary-agent model split at 2026-03-12.
+- approved_at_local: 2026-07-09 +03:00
+  approver: user
+  decision: Execute the Calcwiz anti-regression program as one attribution-governance prerequisite, four Incident Closure milestones, a mandatory review checkpoint, and five Behavioral Ratchets, with one verified commit per named milestone.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-07-09-anti-regression-program-approval
+  canonical_targets: .memory/research/roadmaps/anti-regression-nine-move-roadmap.md; .memory/sessions/2026-07/2026-07-09/2026-07-09__anti-regression-nine-move-program/
+  notes: Explicit user approval remains required before every commit and push; Behavioral Ratchets cannot start before the Incident Closure review is accepted.

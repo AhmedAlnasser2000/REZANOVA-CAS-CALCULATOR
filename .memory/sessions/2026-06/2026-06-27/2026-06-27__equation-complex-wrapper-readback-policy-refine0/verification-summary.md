@@ -3,12 +3,12 @@
 ## Attribution
 
 - primary_agent: codex
-- primary_agent_model: gpt-5-codex
+- primary_agent_model: gpt-5.5
 - contributors: []
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5-codex
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5-codex
+- verified_by_agent_model: gpt-5.5
 - attribution_basis: live
 
 Status: preflight verification passed; no source code or runtime behavior changed in this refinement; commit requested as the checkpoint before `EQUATION-COMPLEX-WRAPPER-ROLE-POWER-POLICY-LOCK1`.

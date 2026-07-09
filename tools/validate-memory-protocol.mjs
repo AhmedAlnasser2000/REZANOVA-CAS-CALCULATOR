@@ -13,6 +13,23 @@ const SESSION_REQUIRED_FIELDS = [
   'attribution_basis',
 ];
 
+const SESSION_REQUIRED_FAMILY_FIELDS = [
+  'primary_agent_family',
+  'recorded_by_agent_family',
+  'verified_by_agent_family',
+];
+
+const COMMIT_REQUIRED_FAMILY_FIELDS = [
+  'primary_agent_family',
+  'recorded_by_agent_family',
+];
+
+const CURRENT_STATE_REQUIRED_FAMILY_FIELDS = [
+  'primary_agent_family',
+  'recorded_by_agent_family',
+  'verified_by_agent_family',
+];
+
 const JOURNAL_REQUIRED_FIELDS = [
   'primary_agent',
   'primary_agent_model',
@@ -40,6 +57,8 @@ const CURRENT_STATE_MILESTONE_HEADING_PATTERN =
   /^##\s+([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)*[0-9][A-Z0-9-]*)\b.*$/gmu;
 const CURRENT_STATE_LAST_UPDATED_PATTERN = /^Last updated:\s*(\d{4}-\d{2}-\d{2})\s*$/mu;
 const RESEARCH_ALLOWED_SOURCE_CONTEXT_DIRS = new Set(['fricas']);
+const AGENT_FAMILY_CUTOFF = '2026-07-09';
+const ALLOWED_AGENT_FAMILIES = new Set(['sol', 'terra', 'luna']);
 
 function normalizeNewlines(text) {
   return text.replace(/\r\n/g, '\n');
@@ -93,6 +112,50 @@ function assertFieldsPresent(data, fields, label) {
   }
 }
 
+function assertFamilyFields(data, fields, label) {
+  assertFieldsPresent(data, fields, label);
+  for (const field of fields) {
+    if (!ALLOWED_AGENT_FAMILIES.has(data[field])) {
+      throw new Error(
+        `${label} has invalid ${field}: ${data[field]}; expected one of ${[...ALLOWED_AGENT_FAMILIES].join(', ')}`,
+      );
+    }
+  }
+}
+
+function parseAgentPrefix(line) {
+  const match = line.match(/^\s*-\s*\[([^\]]+)\]/u);
+  if (!match) {
+    return null;
+  }
+
+  const data = {};
+  for (const segment of match[1].split('|')) {
+    const separator = segment.indexOf(':');
+    if (separator === -1) {
+      continue;
+    }
+    const key = segment.slice(0, separator).trim();
+    const value = segment.slice(separator + 1).trim();
+    data[key] = value;
+  }
+  return data;
+}
+
+function validateProspectiveAgentPrefixes(text, label) {
+  const prefixes = normalizeNewlines(text)
+    .split('\n')
+    .map(parseAgentPrefix)
+    .filter(Boolean);
+  if (prefixes.length === 0) {
+    throw new Error(`${label} must contain prefixed agent entries`);
+  }
+
+  for (const [index, prefix] of prefixes.entries()) {
+    assertFamilyFields(prefix, ['agent_family', 'primary_agent_family'], `${label} entry ${index + 1}`);
+  }
+}
+
 function hasAgentPrefixEntry(text) {
   return /^\s*-\s*\[agent:\s*[a-z0-9-]+\s*\|\s*model:\s*.+?\]/m.test(normalizeNewlines(text));
 }
@@ -142,7 +205,7 @@ function validateCompatibilityStub(text, label) {
   }
 }
 
-function validateCommitLogMetadata(text, label) {
+function validateCommitLogMetadata(text, label, requireFamilies = false) {
   const attribution = parseMetadataSection(text, 'Attribution');
   assertFieldsPresent(attribution, [
     'primary_agent',
@@ -151,6 +214,9 @@ function validateCommitLogMetadata(text, label) {
     'recorded_by_agent_model',
     'attribution_basis',
   ], label);
+  if (requireFamilies) {
+    assertFamilyFields(attribution, COMMIT_REQUIRED_FAMILY_FIELDS, label);
+  }
 
   const hasCommitHashInBody = /`[0-9a-f]{7,40}`/i.test(text);
   if (hasCommitHashInBody) {
@@ -158,6 +224,9 @@ function validateCommitLogMetadata(text, label) {
       if (!(field in attribution) || attribution[field] === '') {
         throw new Error(`${label} recorded a commit but is missing ${field}`);
       }
+    }
+    if (requireFamilies) {
+      assertFamilyFields(attribution, ['committed_by_agent_family'], label);
     }
   }
 }
@@ -387,6 +456,19 @@ export async function validateRepo(root = process.cwd()) {
     }
   }
 
+  if (currentStateLastUpdated && currentStateLastUpdated >= AGENT_FAMILY_CUTOFF) {
+    try {
+      const ownership = parseMetadataSection(currentStateText, 'Agent Ownership');
+      assertFamilyFields(
+        ownership,
+        CURRENT_STATE_REQUIRED_FAMILY_FIELDS,
+        '.memory/current-state.md Agent Ownership',
+      );
+    } catch (error) {
+      errors.push(error.message);
+    }
+  }
+
   const h2Headings = normalizedCurrentState
     .split('\n')
     .filter((line) => /^##\s+/u.test(line));
@@ -420,6 +502,8 @@ export async function validateRepo(root = process.cwd()) {
   errors.push(...sessionLayoutErrors);
   for (const dir of sessionDirs) {
     const labelBase = path.relative(root, dir);
+    const sessionDate = dateFromSessionDir(root, dir);
+    const requireFamilies = sessionDate && sessionDate >= AGENT_FAMILY_CUTOFF;
     const requiredPath = path.join(dir, 'completion-report.md');
     try {
       await fs.access(requiredPath);
@@ -439,10 +523,13 @@ export async function validateRepo(root = process.cwd()) {
       const label = `${labelBase}/${fileName}`;
       try {
         if (fileName === 'commit-log.md') {
-          validateCommitLogMetadata(text, label);
+          validateCommitLogMetadata(text, label, requireFamilies);
         } else {
           const attribution = parseMetadataSection(text, 'Attribution');
           assertFieldsPresent(attribution, SESSION_REQUIRED_FIELDS, label);
+          if (requireFamilies) {
+            assertFamilyFields(attribution, SESSION_REQUIRED_FAMILY_FIELDS, label);
+          }
         }
       } catch (error) {
         errors.push(error.message);
@@ -486,6 +573,16 @@ export async function validateRepo(root = process.cwd()) {
 
     if (!hasAgentPrefixEntry(text)) {
       errors.push(`${label} must contain either a Historical Attribution block or prefixed agent entries`);
+      continue;
+    }
+
+    const journalDate = dateFromJournalPath(root, filePath);
+    if (journalDate && journalDate >= AGENT_FAMILY_CUTOFF) {
+      try {
+        validateProspectiveAgentPrefixes(text, label);
+      } catch (error) {
+        errors.push(error.message);
+      }
     }
   }
 

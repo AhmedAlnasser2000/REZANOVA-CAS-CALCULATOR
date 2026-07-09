@@ -7,9 +7,9 @@
 - contributors:
   - codex
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5-codex
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5-codex
+- verified_by_agent_model: gpt-5.5
 - attribution_basis: handoff
 
 ## Summary

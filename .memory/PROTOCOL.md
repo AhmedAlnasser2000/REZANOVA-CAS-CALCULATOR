@@ -23,7 +23,11 @@
   - `claude`
   - `gemini`
 - Use fuller runtime identifiers for model fields when known:
-  - examples: `gpt-5.3-codex`, `gpt-5.4`, `claude-sonnet-4`, `gemini-2.5-pro`
+  - examples: `gpt-5.3-codex`, `gpt-5.4`, `gpt-5.5`, `gpt-5.6`, `claude-sonnet-4`, `gemini-2.5-pro`
+- Use lowercase family identifiers for Codex family fields:
+  - `sol`
+  - `terra`
+  - `luna`
 - Allowed `attribution_basis` values:
   - `live`
   - `historical-user-confirmed`
@@ -32,14 +36,20 @@
 - Core attribution fields:
   - `primary_agent`
   - `primary_agent_model`
+  - `primary_agent_family`
   - `contributors`
   - `recorded_by_agent`
   - `recorded_by_agent_model`
+  - `recorded_by_agent_family`
   - `verified_by_agent`
   - `verified_by_agent_model`
+  - `verified_by_agent_family`
   - `committed_by_agent`
   - `committed_by_agent_model`
+  - `committed_by_agent_family`
   - `attribution_basis`
+- Family fields are required prospectively for artifacts dated `2026-07-09` or later. Historical artifacts before that date keep their recorded shape; do not invent family values for them.
+- Compact journal and decision prefixes use `agent_family` beside `agent`/`model`, plus `primary_agent_family` beside the primary-owner fields.
 
 ## Artifact Requirements
 - `.memory/current-state.md`
@@ -49,6 +59,7 @@
 - `.memory/journal/YYYY-MM/YYYY-MM-DD.md`
   - historical files may use a file-level `## Historical Attribution` block
   - new entries should start with a compact prefix such as `[agent: codex | model: gpt-5.4]`
+  - for entries dated `2026-07-09` or later, the family-bearing prefix `[agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live]` supersedes the short pre-family example
 - `.memory/sessions/YYYY-MM/YYYY-MM-DD/<task-id>/completion-report.md`
   - include an `## Attribution` block at the top
   - require all non-commit attribution fields
@@ -71,6 +82,12 @@
 - Model split:
   - before `2026-03-12`: `primary_agent_model: gpt-5.3-codex`
   - on or after `2026-03-12`: `primary_agent_model: gpt-5.4`
+- This model split preserves explicit historical values; it is not an instruction to reinterpret the generic placeholders covered by the separate correction below.
+- User-confirmed correction:
+  - exact attribution model value `gpt-5` means `gpt-5.5`
+  - exact attribution model value `gpt-5-codex` means `gpt-5.5`
+  - the correction must not rewrite `gpt-5.4`, `gpt-5.3-codex`, or any lower/versioned historical value
+- Historical family values are not backfilled. Family recording begins prospectively on `2026-07-09`.
 - Historical backfill must use:
   - `attribution_basis: historical-user-confirmed`
 

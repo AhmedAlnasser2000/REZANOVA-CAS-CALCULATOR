@@ -5,11 +5,11 @@ Resolved or superseded questions moved out of `.memory/open-questions.md` so the
 ## 2026-07-03 - Memory Hygiene Pass
 
 - primary_agent: codex
-- primary_agent_model: gpt-5-codex
+- primary_agent_model: gpt-5.5
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5-codex
+- recorded_by_agent_model: gpt-5.5
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5-codex
+- verified_by_agent_model: gpt-5.5
 - attribution_basis: live
 
 Closed during the July 3 memory cleanup:

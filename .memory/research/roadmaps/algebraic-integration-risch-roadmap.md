@@ -3,7 +3,7 @@
 status: tracked planning artifact; checkpointed after the genus-0 push
 created: 2026-07-02
 primary_agent: codex
-primary_agent_model: gpt-5-codex
+primary_agent_model: gpt-5.5
 
 ## Purpose
 

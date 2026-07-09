@@ -3,7 +3,7 @@
 status: active roadmap draft
 created: 2026-07-01
 primary_agent: codex
-primary_agent_model: gpt-5-codex
+primary_agent_model: gpt-5.5
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-07-06
+Last updated: 2026-07-09
 
 ## Purpose
 
@@ -11,13 +11,16 @@ Historical milestone detail belongs in the dated journals, session folders, and 
 ## Agent Ownership
 
 - primary_agent: codex
-- primary_agent_model: gpt-5-codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
 - recorded_by_agent: codex
-- recorded_by_agent_model: gpt-5-codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
 - verified_by_agent: codex
-- verified_by_agent_model: gpt-5-codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
 - attribution_basis: live
-- Current maintenance note: the July 3 memory cleanup keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail was moved to `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
+- Current maintenance note: the July 9 anti-regression program keeps this file as a current operating snapshot; stale July 1-or-earlier milestone detail remains in `.memory/research/milestones/current-state-milestone-archive-2026-07.md`.
 
 ## Active Context
 
@@ -216,7 +219,11 @@ The recurring Node warning about `NO_COLOR` being ignored when `FORCE_COLOR` is 
 
 ## Near-Term Guidance
 
-Prefer product-facing or correctness work over more infrastructure. Good next lanes should come from real pressure:
+The user-approved anti-regression program is the active exception to the normal preference for product-facing work. Its governance prerequisite precedes four Incident Closure moves, a mandatory user review, and five Behavioral Ratchets; Statistics guided-control defects and the later printer/detail/clipboard arcs stay outside this nine-move program.
+
+Program sequence and acceptance details live in `.memory/research/roadmaps/anti-regression-nine-move-roadmap.md`. The first executable product gate after governance is the nine-workspace canary suite.
+
+Outside that approved program, prefer product-facing or correctness work over more infrastructure. Good next lanes should come from real pressure:
 
 - App shell component pressure.
 - Navigation/Input/keypad/editor breadth.

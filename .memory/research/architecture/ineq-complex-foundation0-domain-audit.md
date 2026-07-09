@@ -4,7 +4,7 @@ status: readiness audit
 created: 2026-06-02
 milestone: INEQ-COMPLEX-FOUNDATION0
 primary_agent: codex
-primary_agent_model: gpt-5
+primary_agent_model: gpt-5.5
 attribution_basis: live
 
 ## Purpose

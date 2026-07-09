@@ -2,7 +2,7 @@
 
 date: 2026-06-19
 primary_agent: codex
-primary_agent_model: gpt-5
+primary_agent_model: gpt-5.5
 status: paused after `LANGUAGE-ROADMAP-CLOSEOUT0`
 
 ## Purpose
