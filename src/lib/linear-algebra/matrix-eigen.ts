@@ -17,6 +17,7 @@ import {
   exactScalarToLatex,
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
+import { LINEAR_ALGEBRA_SPECTRAL_V1_MATRIX_SIZE } from './dimension-contract';
 
 export type MatrixEigenInput = {
   label: string;
@@ -169,8 +170,8 @@ export function analyzeMatrixEigen2x2(input: MatrixEigenInput): MatrixEigenAnaly
   }
 
   if (
-    exactMatrix.length !== 2
-    || exactMatrix.some((row) => row.length !== 2)
+    exactMatrix.length !== LINEAR_ALGEBRA_SPECTRAL_V1_MATRIX_SIZE
+    || exactMatrix.some((row) => row.length !== LINEAR_ALGEBRA_SPECTRAL_V1_MATRIX_SIZE)
   ) {
     return {
       kind: 'stop',

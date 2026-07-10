@@ -16,6 +16,10 @@ import {
   exactVectorFromWire,
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
+import {
+  exactMatrixDimensionLimitMessage,
+  LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
+} from './dimension-contract';
 
 export type MatrixCoordinatesInput = {
   basisLabel: string;
@@ -37,7 +41,7 @@ function matrixStop(message: string, detailSections?: DisplayDetailSection[]): M
 function exactStopReasonToMessage(reason: ExactMatrixStopReason): string {
   switch (reason) {
     case 'dimension-limit':
-      return 'Coordinate readback currently supports basis matrices up to 6 by 6.';
+      return exactMatrixDimensionLimitMessage('coordinate readback');
     case 'rhs-dimension-mismatch':
       return 'The vector length must match the basis row count.';
     case 'scalar-growth-limit':
@@ -176,7 +180,9 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
     return matrixStop(exactStopReasonToMessage(solved.reason));
   }
 
-  const augmented = rrefExactMatrix(augmentedMatrix(basis, vector), { maxDimension: 7 });
+  const augmented = rrefExactMatrix(augmentedMatrix(basis, vector), {
+    maxDimension: LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
+  });
   if (augmented.kind === 'stop') {
     return matrixStop(exactStopReasonToMessage(augmented.reason));
   }

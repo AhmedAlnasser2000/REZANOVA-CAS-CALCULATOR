@@ -13,6 +13,7 @@ import {
   exactMatrixToLatex,
   exactScalarToLatex,
 } from './exact-matrix-format';
+import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 
 export type MatrixChangeOfBasisInput = {
   sourceLabel: string;
@@ -34,7 +35,7 @@ function matrixStop(message: string, detailSections?: DisplayDetailSection[]): M
 function exactStopReasonToMessage(reason: ExactMatrixStopReason): string {
   switch (reason) {
     case 'dimension-limit':
-      return 'Change-of-basis readback currently supports basis matrices up to 6 by 6.';
+      return exactMatrixDimensionLimitMessage('change-of-basis readback');
     case 'scalar-growth-limit':
       return 'This change-of-basis request exceeded the exact Matrix arithmetic limit.';
     case 'empty-matrix':

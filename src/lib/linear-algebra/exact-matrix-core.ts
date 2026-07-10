@@ -4,9 +4,13 @@ import {
   normalizeExactScalar,
   type ExactScalar,
 } from '../algebra/polynomial-core';
+import {
+  LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION,
+  LINEAR_ALGEBRA_EXACT_SCALAR_ABS_LIMIT,
+} from './dimension-contract';
 
-export const DEFAULT_EXACT_MATRIX_MAX_DIMENSION = 6;
-export const DEFAULT_EXACT_MATRIX_SCALAR_ABS_LIMIT = 1_000_000_000;
+export const DEFAULT_EXACT_MATRIX_MAX_DIMENSION = LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION;
+export const DEFAULT_EXACT_MATRIX_SCALAR_ABS_LIMIT = LINEAR_ALGEBRA_EXACT_SCALAR_ABS_LIMIT;
 
 const ZERO: ExactScalar = { numerator: 0, denominator: 1 };
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };

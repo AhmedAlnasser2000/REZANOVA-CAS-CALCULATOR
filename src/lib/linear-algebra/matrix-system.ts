@@ -18,6 +18,10 @@ import {
 } from './exact-matrix-format';
 import type { ExactScalarWire } from '../../types/calculator';
 import { rowOperationDetailSection } from './row-operation-readback';
+import {
+  exactMatrixDimensionLimitMessage,
+  LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
+} from './dimension-contract';
 
 export type MatrixSystemRunInput = {
   coefficients: number[][];
@@ -46,7 +50,7 @@ function exactStopReasonToMessage(reason: ExactMatrixStopReason): string {
     case 'ragged-matrix':
       return 'The coefficient matrix rows must have a consistent length.';
     case 'dimension-limit':
-      return 'Structured Matrix systems currently support matrices up to 6 by 6.';
+      return exactMatrixDimensionLimitMessage('structured Matrix systems');
     case 'rhs-dimension-mismatch':
       return 'The RHS vector length must match the coefficient matrix row count.';
     case 'invalid-scalar':
@@ -294,7 +298,9 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
     return matrixSystemStop(exactStopReasonToMessage(coefficientRref.reason));
   }
 
-  const augmentedRref = rrefExactMatrix(augmentedMatrix(coefficients, constants), { maxDimension: 7 });
+  const augmentedRref = rrefExactMatrix(augmentedMatrix(coefficients, constants), {
+    maxDimension: LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
+  });
   if (augmentedRref.kind === 'stop') {
     return matrixSystemStop(exactStopReasonToMessage(augmentedRref.reason));
   }

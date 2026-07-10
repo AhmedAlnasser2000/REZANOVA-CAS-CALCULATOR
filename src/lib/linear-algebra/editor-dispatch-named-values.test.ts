@@ -20,6 +20,7 @@ const vectorValues = [
   { id: 'vector-v', name: 'v', value: vectorB },
   { id: 'vector-p', name: 'p', value: [1, 0, 0] },
   { id: 'vector-q', name: 'q', value: [2, 3, 4] },
+  { id: 'vector-z', name: 'z', value: Array(9).fill(1) },
 ];
 const twoDimensionalVectorValues = [
   { id: 'vector-p', name: 'p', value: [1, 1] },
@@ -203,5 +204,29 @@ describe('linear algebra editor dispatch named values', () => {
       },
     });
     expect(triple.ok ? runVectorOperation(triple.request).resultLatex : '').toBe('2');
+  });
+
+  it('stops named and inline vectors above the length-8 editor contract', () => {
+    expect(dispatchVectorEditorLatex({
+      latex: 'norm(z)',
+      vectorA,
+      vectorB,
+      vectorValues,
+      angleUnit: 'rad',
+    })).toEqual({
+      ok: false,
+      message: 'Vector inputs support up to 8 entries; received 9. Resize the vector before running.',
+    });
+
+    expect(dispatchVectorEditorLatex({
+      latex: 'norm([1,2,3,4,5,6,7,8,9])',
+      vectorA,
+      vectorB,
+      vectorValues,
+      angleUnit: 'rad',
+    })).toEqual({
+      ok: false,
+      message: 'Vector inputs support up to 8 entries; received 9. Resize the vector before running.',
+    });
   });
 });

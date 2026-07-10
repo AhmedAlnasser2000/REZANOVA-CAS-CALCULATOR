@@ -7,6 +7,7 @@ import {
   exactMatrixToLatex,
   exactScalarToLatex,
 } from './exact-matrix-format';
+import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 
 export type MatrixBasisInput = {
   label: string;
@@ -78,7 +79,7 @@ export function runMatrixBasis(input: MatrixBasisInput): MatrixResponse {
   const reduced = rrefExactMatrix(exactMatrix);
   if (reduced.kind === 'stop') {
     return matrixStop(reduced.reason === 'dimension-limit'
-      ? 'Basis checks currently support matrices up to 6 by 6.'
+      ? exactMatrixDimensionLimitMessage('basis checks')
       : 'Basis checks need a complete rectangular Matrix.');
   }
 

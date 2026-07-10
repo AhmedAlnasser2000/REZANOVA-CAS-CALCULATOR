@@ -2,6 +2,9 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
 import {
   isValidMatrixValueName,
+  LINEAR_ALGEBRA_MATRIX_MAX_COLUMNS,
+  LINEAR_ALGEBRA_MATRIX_MAX_ROWS,
+  LINEAR_ALGEBRA_MIN_EDITING_DIMENSION,
   normalizeMatrixValueName,
   type LinearAlgebraMatrixNamedValue,
 } from '../../lib/linear-algebra/runtime-request';
@@ -142,8 +145,8 @@ function MatrixValueCard({
             <input
               aria-label={`Matrix ${name} rows`}
               type="number"
-              min={1}
-              max={8}
+              min={LINEAR_ALGEBRA_MIN_EDITING_DIMENSION}
+              max={LINEAR_ALGEBRA_MATRIX_MAX_ROWS}
               step={1}
               value={rows}
               onChange={(event) => onResizeMatrixValue(id, Number(event.currentTarget.value), columns)}
@@ -154,8 +157,8 @@ function MatrixValueCard({
             <input
               aria-label={`Matrix ${name} columns`}
               type="number"
-              min={1}
-              max={8}
+              min={LINEAR_ALGEBRA_MIN_EDITING_DIMENSION}
+              max={LINEAR_ALGEBRA_MATRIX_MAX_COLUMNS}
               step={1}
               value={columns}
               onChange={(event) => onResizeMatrixValue(id, rows, Number(event.currentTarget.value))}

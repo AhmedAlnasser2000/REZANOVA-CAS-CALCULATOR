@@ -26,6 +26,7 @@ import {
   exactMatrixFromWire,
 } from './exact-matrix-format';
 import type { ExactMatrix } from './exact-matrix-core';
+import { matrixEditingDimensionError } from './dimension-contract';
 import {
   formatLinearAlgebraEditorExpression,
 } from './editor-expression-format';
@@ -94,12 +95,19 @@ function operandFromNamedNumeric(
   };
 }
 
+function matrixDimensionStop(matrix: NumericMatrix): MatrixExpressionEvaluation | null {
+  const message = matrixEditingDimensionError(matrix);
+  return message ? { ok: false, message } : null;
+}
+
 function evaluateNamedMatrix(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'named' }>,
   input: MatrixExpressionEvaluationInput,
 ): MatrixExpressionEvaluation {
   const namedValue = matrixValueByName(input.matrixValues, expression.name);
   if (namedValue) {
+    const dimensionStop = matrixDimensionStop(namedValue.value);
+    if (dimensionStop) return dimensionStop;
     return {
       ok: true,
       operand: operandFromNamedNumeric(namedValue.value, expression.name, expression.displayLatex),
@@ -107,6 +115,8 @@ function evaluateNamedMatrix(
   }
 
   if (expression.name === 'A') {
+    const dimensionStop = matrixDimensionStop(input.matrixA);
+    if (dimensionStop) return dimensionStop;
     return {
       ok: true,
       operand: operandFromNamedNumeric(input.matrixA, 'A', expression.displayLatex),
@@ -114,6 +124,8 @@ function evaluateNamedMatrix(
   }
 
   if (expression.name === 'B') {
+    const dimensionStop = matrixDimensionStop(input.matrixB);
+    if (dimensionStop) return dimensionStop;
     return {
       ok: true,
       operand: operandFromNamedNumeric(input.matrixB, 'B', expression.displayLatex),
@@ -261,6 +273,10 @@ export function evaluateMatrixExpression(
 ): MatrixExpressionEvaluation {
   switch (expression.kind) {
     case 'matrixLiteral':
+      {
+        const dimensionStop = matrixDimensionStop(expression.value);
+        if (dimensionStop) return dimensionStop;
+      }
       return {
         ok: true,
         operand: {

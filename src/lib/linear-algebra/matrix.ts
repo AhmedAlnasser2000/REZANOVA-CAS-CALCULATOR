@@ -38,6 +38,10 @@ import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
 import { runMatrixColumnProjection, runMatrixLeastSquares, runMatrixQr } from './matrix-qr';
 import { runMatrixSpaceOperation } from './matrix-spaces';
 import { rowOperationDetailSection } from './row-operation-readback';
+import {
+  exactMatrixDimensionLimitMessage,
+  matrixEditingDimensionError,
+} from './dimension-contract';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {
@@ -152,7 +156,7 @@ function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
     return {
       warnings: [],
       error: reduced.reason === 'dimension-limit'
-        ? 'Rank and RREF currently support matrices up to 6 by 6.'
+        ? exactMatrixDimensionLimitMessage('rank and RREF')
         : 'Rank and RREF need a complete rectangular Matrix.',
     };
   }
@@ -619,6 +623,12 @@ export function solveLinearSystem(coefficients: number[][], constants: number[])
 }
 
 export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
+  const matrixDimensionError = matrixEditingDimensionError(req.matrixA)
+    ?? (req.matrixB ? matrixEditingDimensionError(req.matrixB) : null);
+  if (matrixDimensionError) {
+    return { warnings: [], error: matrixDimensionError };
+  }
+
   if (req.operation === 'linearSystem') {
     return {
       warnings: [],

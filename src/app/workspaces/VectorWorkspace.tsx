@@ -2,6 +2,8 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import { SignedNumberInput } from '../../components/SignedNumberInput';
 import {
   isValidVectorValueName,
+  LINEAR_ALGEBRA_MIN_EDITING_DIMENSION,
+  LINEAR_ALGEBRA_VECTOR_MAX_LENGTH,
   normalizeVectorValueName,
   type LinearAlgebraVectorNamedValue,
 } from '../../lib/linear-algebra/runtime-request';
@@ -137,8 +139,8 @@ function VectorValueCard({
             <input
               aria-label={`Vector ${name} length`}
               type="number"
-              min={1}
-              max={8}
+              min={LINEAR_ALGEBRA_MIN_EDITING_DIMENSION}
+              max={LINEAR_ALGEBRA_VECTOR_MAX_LENGTH}
               step={1}
               value={length}
               onChange={(event) => onResizeVectorValue(id, Number(event.currentTarget.value))}

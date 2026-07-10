@@ -47,6 +47,13 @@ export type {
 } from './named-values';
 export type { RunMatrixModeRequest } from '../modes/matrix';
 export type { RunVectorModeRequest } from '../modes/vector';
+export {
+  clampLinearAlgebraEditingDimension,
+  LINEAR_ALGEBRA_MATRIX_MAX_COLUMNS,
+  LINEAR_ALGEBRA_MATRIX_MAX_ROWS,
+  LINEAR_ALGEBRA_MIN_EDITING_DIMENSION,
+  LINEAR_ALGEBRA_VECTOR_MAX_LENGTH,
+} from './dimension-contract';
 
 const FALLBACK_MATRIX_VALUE: LinearAlgebraMatrixNamedValue = {
   id: DEFAULT_MATRIX_LEFT_ID,

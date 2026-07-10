@@ -13,6 +13,10 @@ import {
   exactMatrixToLatex,
 } from './exact-matrix-format';
 import { rowOperationDetailSection } from './row-operation-readback';
+import {
+  exactMatrixDimensionLimitMessage,
+  LINEAR_ALGEBRA_MULTI_RHS_AUGMENTED_MAX_DIMENSION,
+} from './dimension-contract';
 
 export type MatrixMultiRhsInput = {
   coefficientLabel: string;
@@ -48,7 +52,7 @@ function exactStopReasonToMessage(reason: ExactMatrixStopReason): string {
     case 'ragged-matrix':
       return 'Multi-RHS solve needs rectangular Matrix entries.';
     case 'dimension-limit':
-      return 'Multi-RHS solve currently supports coefficient and RHS matrices up to 6 by 6.';
+      return exactMatrixDimensionLimitMessage('multi-RHS solve inputs');
     case 'invalid-scalar':
       return 'Multi-RHS solve needs exact Matrix entries in this move.';
     case 'scalar-growth-limit':
@@ -208,7 +212,9 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
     };
   }
 
-  const augmentedRref = rrefExactMatrix(augmentedMatrix(coefficients, rhs), { maxDimension: 12 });
+  const augmentedRref = rrefExactMatrix(augmentedMatrix(coefficients, rhs), {
+    maxDimension: LINEAR_ALGEBRA_MULTI_RHS_AUGMENTED_MAX_DIMENSION,
+  });
   if (augmentedRref.kind === 'stop') {
     return {
       warnings: [],

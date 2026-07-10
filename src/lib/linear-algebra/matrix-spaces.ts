@@ -8,6 +8,7 @@ import {
   exactMatrixToLatex,
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
+import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 
 type MatrixSpaceKind = 'nullSpace' | 'columnSpace';
 
@@ -134,7 +135,7 @@ export function runMatrixSpaceOperation(input: MatrixSpaceInput): MatrixResponse
   const reduced = rrefExactMatrix(exactMatrix);
   if (reduced.kind === 'stop') {
     return matrixSpaceStop(reduced.reason === 'dimension-limit'
-      ? 'Matrix spaces currently support matrices up to 6 by 6.'
+      ? exactMatrixDimensionLimitMessage('null and column spaces')
       : 'Matrix spaces need a complete rectangular Matrix.');
   }
 

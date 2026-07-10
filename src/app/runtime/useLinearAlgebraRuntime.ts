@@ -40,6 +40,7 @@ import {
   vectorValueById,
   cloneMatrixNamedValues,
   cloneVectorNamedValues,
+  clampLinearAlgebraEditingDimension,
   type LinearAlgebraMatrixNamedValue,
   type LinearAlgebraVectorNamedValue,
 } from '../../lib/linear-algebra/runtime-request';
@@ -96,9 +97,6 @@ type UseLinearAlgebraRuntimeOptions = {
   syncEditorLatex?: (mode: 'matrix' | 'vector', latex: string) => void;
 };
 
-const MIN_LINEAR_ALGEBRA_DIMENSION = 1;
-const MAX_LINEAR_ALGEBRA_DIMENSION = 8;
-
 function matrixValueForCompatibility(
   values: readonly LinearAlgebraMatrixNamedValue[],
   id: string,
@@ -115,19 +113,9 @@ function vectorValueForCompatibility(
   return cloneVector(vectorValueById(values, id)?.value ?? fallback);
 }
 
-function clampLinearAlgebraDimension(value: number) {
-  if (!Number.isFinite(value)) {
-    return MIN_LINEAR_ALGEBRA_DIMENSION;
-  }
-  return Math.min(
-    MAX_LINEAR_ALGEBRA_DIMENSION,
-    Math.max(MIN_LINEAR_ALGEBRA_DIMENSION, Math.trunc(value)),
-  );
-}
-
 function resizeMatrixValue(matrix: number[][], rowCount: number, columnCount: number) {
-  const rows = clampLinearAlgebraDimension(rowCount);
-  const columns = clampLinearAlgebraDimension(columnCount);
+  const rows = clampLinearAlgebraEditingDimension(rowCount);
+  const columns = clampLinearAlgebraEditingDimension(columnCount);
   return Array.from({ length: rows }, (_, rowIndex) =>
     Array.from({ length: columns }, (_, columnIndex) => {
       const currentValue = matrix[rowIndex]?.[columnIndex];
@@ -137,7 +125,7 @@ function resizeMatrixValue(matrix: number[][], rowCount: number, columnCount: nu
 }
 
 function resizeVectorValue(vector: number[], length: number) {
-  const nextLength = clampLinearAlgebraDimension(length);
+  const nextLength = clampLinearAlgebraEditingDimension(length);
   return Array.from({ length: nextLength }, (_, index) =>
     Number.isFinite(vector[index]) ? vector[index] : 0,
   );

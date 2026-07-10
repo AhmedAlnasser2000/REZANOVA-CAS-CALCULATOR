@@ -5,6 +5,7 @@ import {
   exactMatrixFromWire,
   exactScalarToLatex,
 } from './exact-matrix-format';
+import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 
 export type MatrixInvertibilityInput = {
   label: string;
@@ -105,7 +106,7 @@ export function runMatrixInvertibility(input: MatrixInvertibilityInput): MatrixR
   const reduced = rrefExactMatrix(exactMatrix);
   if (reduced.kind === 'stop') {
     return matrixStop(reduced.reason === 'dimension-limit'
-      ? 'Invertibility facts currently support matrices up to 6 by 6.'
+      ? exactMatrixDimensionLimitMessage('invertibility facts')
       : 'Invertibility needs a complete rectangular Matrix.');
   }
 

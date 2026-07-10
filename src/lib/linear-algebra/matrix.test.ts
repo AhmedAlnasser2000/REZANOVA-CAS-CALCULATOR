@@ -791,6 +791,13 @@ describe('runMatrixOperation', () => {
       matrixA: [[1, 2], [2, 4]],
       matrixB,
     }).error).toBe('Matrix A is singular or not square.');
+    expect(runMatrixOperation({
+      operation: 'transposeA',
+      matrixA: Array.from({ length: 9 }, () => [1]),
+      matrixB,
+    }).error).toBe(
+      'Matrix inputs support up to 8 by 8; received 9 by 1. Resize the matrix before running.',
+    );
   });
 });
 

@@ -1,6 +1,6 @@
 # Linear Algebra Vector And Matrix Roadmap
 
-Status: approved foundation roadmap; implementation begins with the dimension contract and pauses for user review afterward.
+Status: approved foundation roadmap; dimension contract verified, with capability selection paused for user review.
 
 Date: 2026-07-10
 
@@ -42,9 +42,13 @@ Date: 2026-07-10
 
 ### `LINEAR-ALGEBRA-DIMENSION-CONTRACT1`
 
+Status: implemented and verified on 2026-07-10.
+
 Centralize what editing supports, what each operation executes exactly, when scalar growth or algorithmic cost requires a smaller cap, and how unsupported dimensions stop. Preserve the 8 by 8 matrix and length-8 vector editing caps, old replay seeds, and current request shapes. Do not silently fall back from proof-grade exact algebra to approximate computation.
 
 This milestone must audit every exact Matrix caller before changing a cap. Its first responsibility is a truthful, reusable contract and consistent controlled errors, not an indiscriminate cap raise.
+
+Verified contract: editor Matrix 1 by 1 through 8 by 8; editor Vector length 1 through 8; exact expression profile through 8; exact elimination/rank/RREF through 6; single-RHS and multi-RHS augmented profiles retain 7 and 12; current spectral V1 remains 2 by 2; exact Matrix powers retain absolute exponent 12; exact scalar growth retains the existing absolute guard of 1,000,000,000. Every profile stops explicitly when exceeded.
 
 After this milestone is verified and committed, pause for user review before selecting the next capability milestone.
 

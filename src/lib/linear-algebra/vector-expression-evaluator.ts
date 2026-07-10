@@ -6,6 +6,7 @@ import {
   exactVectorToWire,
 } from './exact-matrix-format';
 import type { ExactVector } from './exact-matrix-core';
+import { vectorEditingDimensionError } from './dimension-contract';
 import {
   exactAddVectors,
   exactCrossVectors,
@@ -86,12 +87,19 @@ function operandFromNamedNumeric(
   };
 }
 
+function vectorDimensionStop(vector: NumericVector): VectorExpressionEvaluation | null {
+  const message = vectorEditingDimensionError(vector);
+  return message ? { ok: false, message } : null;
+}
+
 function evaluateNamedVector(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'named' }>,
   input: VectorExpressionEvaluationInput,
 ): VectorExpressionEvaluation {
   const namedValue = vectorValueByName(input.vectorValues, expression.name);
   if (namedValue) {
+    const dimensionStop = vectorDimensionStop(namedValue.value);
+    if (dimensionStop) return dimensionStop;
     return {
       ok: true,
       operand: operandFromNamedNumeric(namedValue.value, expression.name, expression.displayLatex),
@@ -99,6 +107,8 @@ function evaluateNamedVector(
   }
 
   if (expression.name === 'u') {
+    const dimensionStop = vectorDimensionStop(input.vectorA);
+    if (dimensionStop) return dimensionStop;
     return {
       ok: true,
       operand: operandFromNamedNumeric(input.vectorA, 'u', expression.displayLatex),
@@ -106,6 +116,8 @@ function evaluateNamedVector(
   }
 
   if (expression.name === 'v') {
+    const dimensionStop = vectorDimensionStop(input.vectorB);
+    if (dimensionStop) return dimensionStop;
     return {
       ok: true,
       operand: operandFromNamedNumeric(input.vectorB, 'v', expression.displayLatex),
@@ -190,6 +202,10 @@ export function evaluateVectorExpression(
 ): VectorExpressionEvaluation {
   switch (expression.kind) {
     case 'vectorLiteral':
+      {
+        const dimensionStop = vectorDimensionStop(expression.value);
+        if (dimensionStop) return dimensionStop;
+      }
       return {
         ok: true,
         operand: {

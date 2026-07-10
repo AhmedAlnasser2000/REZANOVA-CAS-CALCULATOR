@@ -205,5 +205,12 @@ describe('runVectorOperation', () => {
       vectorB: [0, 0],
       angleUnit: 'deg',
     }).error).toBe('Gram-Schmidt needs at least one nonzero vector.');
+    expect(runVectorOperation({
+      operation: 'normA',
+      vectorA: Array(9).fill(1),
+      angleUnit: 'deg',
+    }).error).toBe(
+      'Vector inputs support up to 8 entries; received 9. Resize the vector before running.',
+    );
   });
 });

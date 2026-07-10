@@ -26,6 +26,7 @@ import {
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
 import { formatRowOperation } from './row-operation-readback';
+import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 
 export type MatrixLuInput = {
   label: string;
@@ -91,7 +92,7 @@ function exactInputVector(input: MatrixFactorSolveInput): ExactVector | null {
 function exactStopReasonToMessage(reason: LuStopReason): string {
   switch (reason) {
     case 'dimension-limit':
-      return 'LU factorization currently supports matrices up to 6 by 6.';
+      return exactMatrixDimensionLimitMessage('LU/PLU factorization');
     case 'non-square-matrix':
       return 'LU factorization needs a square matrix.';
     case 'scalar-growth-limit':

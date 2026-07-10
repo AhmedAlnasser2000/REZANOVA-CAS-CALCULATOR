@@ -18,6 +18,7 @@ import {
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
 import { exactDotVectors, exactScalarSquareRoot, exactScaleVector, exactSubtractVectors } from './exact-vector-core';
+import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 
 export type MatrixQrInput = {
   label: string;
@@ -148,7 +149,7 @@ function exactQr(matrix: ExactMatrix): QrResult {
 function qrStopMessage(result: Extract<QrResult, { kind: 'stop' }>): string {
   switch (result.reason) {
     case 'dimension-limit':
-      return 'QR factorization currently supports matrices up to 6 by 6.';
+      return exactMatrixDimensionLimitMessage('QR factorization');
     case 'wide-matrix':
       return 'QR factorization in this move expects at least as many rows as columns.';
     case 'dependent-columns':

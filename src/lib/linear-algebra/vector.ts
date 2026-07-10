@@ -3,6 +3,7 @@ import type {
   VectorRequest,
   VectorResponse,
 } from '../../types/calculator';
+import { vectorEditingDimensionError } from './dimension-contract';
 import {
   exactScalarIsZero,
   exactScalarToNumber,
@@ -337,6 +338,12 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
 }
 
 export function runVectorOperation(req: VectorRequest): VectorResponse {
+  const dimensionError = vectorEditingDimensionError(req.vectorA)
+    ?? (req.vectorB ? vectorEditingDimensionError(req.vectorB) : null);
+  if (dimensionError) {
+    return { warnings: [], error: dimensionError };
+  }
+
   const result = runNumericVectorOperation(req);
   return exactVectorResponse(req, result) ?? vectorCoreResultToResponse(req, result);
 }

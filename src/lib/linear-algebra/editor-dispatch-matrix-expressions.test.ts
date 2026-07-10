@@ -10,6 +10,7 @@ const matrixValues = [
   { id: 'matrix-d', name: 'D', value: [[2, 1], [4, 3]] },
   { id: 'matrix-e', name: 'E', value: [[1, 2], [0, 1]] },
   { id: 'matrix-f', name: 'F', value: [[1, 2, 3], [4, 5, 6], [7, 8, 9]] },
+  { id: 'matrix-g', name: 'G', value: Array.from({ length: 9 }, () => [1]) },
 ];
 
 describe('multi-matrix editor expressions', () => {
@@ -85,6 +86,28 @@ describe('multi-matrix editor expressions', () => {
     })).toEqual({
       ok: false,
       message: 'Addition and subtraction require matching matrix dimensions.',
+    });
+  });
+
+  it('stops named and inline matrices above the 8 by 8 editor contract', () => {
+    expect(dispatchMatrixEditorLatex({
+      latex: 'G^T',
+      matrixA,
+      matrixB,
+      matrixValues,
+    })).toEqual({
+      ok: false,
+      message: 'Matrix inputs support up to 8 by 8; received 9 by 1. Resize the matrix before running.',
+    });
+
+    expect(dispatchMatrixEditorLatex({
+      latex: String.raw`\operatorname{rank}\left(\begin{bmatrix}1&0\\2&0\\3&0\\4&0\\5&0\\6&0\\7&0\\8&0\\9&0\end{bmatrix}\right)`,
+      matrixA,
+      matrixB,
+      matrixValues,
+    })).toEqual({
+      ok: false,
+      message: 'Matrix inputs support up to 8 by 8; received 9 by 2. Resize the matrix before running.',
     });
   });
 });
