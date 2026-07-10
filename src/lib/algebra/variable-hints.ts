@@ -130,6 +130,8 @@ const VECTOR_EDITOR_FUNCTIONS = new Set([
   'cross',
   'dot',
   'gram',
+  'span',
+  'independent',
   'norm',
   'orth',
   'orth_u',

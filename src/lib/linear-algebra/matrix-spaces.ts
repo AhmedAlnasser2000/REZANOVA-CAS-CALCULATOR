@@ -1,7 +1,5 @@
 import type { DisplayDetailSection, ExactScalarWire, MatrixResponse } from '../../types/calculator';
-import type { ExactScalar } from '../algebra/polynomial-core';
 import type { ExactMatrix, ExactVector } from './exact-matrix-core';
-import { rrefExactMatrix } from './exact-matrix-core';
 import {
   exactMatrixFromNumeric,
   exactMatrixFromWire,
@@ -9,6 +7,7 @@ import {
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
+import { analyzeExactColumnFamily } from './matrix-column-family';
 
 type MatrixSpaceKind = 'nullSpace' | 'columnSpace';
 
@@ -18,13 +17,6 @@ export type MatrixSpaceInput = {
   matrix: number[][];
   exactMatrix?: ExactScalarWire[][];
 };
-
-const ZERO: ExactScalar = { numerator: 0, denominator: 1 };
-const ONE: ExactScalar = { numerator: 1, denominator: 1 };
-
-function negateScalar(value: ExactScalar): ExactScalar {
-  return { numerator: -value.numerator, denominator: value.denominator };
-}
 
 function basisLatex(basis: ExactVector[]) {
   if (basis.length === 0) {
@@ -38,25 +30,6 @@ function pivotColumnsLatex(pivotColumns: readonly number[]) {
   return pivotColumns.length > 0
     ? pivotColumns.map((column) => `${column + 1}`).join(', ')
     : '\\text{none}';
-}
-
-function nullSpaceBasis(rref: ExactMatrix, pivotColumns: number[], unknowns: number) {
-  const pivotSet = new Set(pivotColumns);
-  const freeColumns = Array.from({ length: unknowns }, (_, index) => index)
-    .filter((column) => !pivotSet.has(column));
-
-  return freeColumns.map((freeColumn) => {
-    const vector = Array.from({ length: unknowns }, () => ZERO);
-    vector[freeColumn] = ONE;
-    pivotColumns.forEach((pivotColumn, pivotRow) => {
-      vector[pivotColumn] = negateScalar(rref[pivotRow][freeColumn]);
-    });
-    return vector;
-  });
-}
-
-function columnSpaceBasis(matrix: ExactMatrix, pivotColumns: number[]) {
-  return pivotColumns.map((column) => matrix.map((row) => row[column]));
 }
 
 function nullSpaceDetails(
@@ -132,33 +105,32 @@ export function runMatrixSpaceOperation(input: MatrixSpaceInput): MatrixResponse
     return matrixSpaceStop('Matrix spaces need exact Matrix entries in this move.');
   }
 
-  const reduced = rrefExactMatrix(exactMatrix);
-  if (reduced.kind === 'stop') {
-    return matrixSpaceStop(reduced.reason === 'dimension-limit'
+  const analysis = analyzeExactColumnFamily(exactMatrix);
+  if (analysis.kind === 'stop') {
+    return matrixSpaceStop(analysis.reason === 'dimension-limit'
       ? exactMatrixDimensionLimitMessage('null and column spaces')
       : 'Matrix spaces need a complete rectangular Matrix.');
   }
 
   const columns = exactMatrix[0]?.length ?? 0;
-  const pivotColumns = reduced.pivotColumns.filter((column) => column < columns);
-  const rank = pivotColumns.length;
+  const { pivotColumns, rank } = analysis;
 
   if (input.kind === 'nullSpace') {
-    const basis = nullSpaceBasis(reduced.matrix, pivotColumns, columns);
-    const nullity = columns - rank;
+    const basis = analysis.kernelBasis;
+    const nullity = analysis.nullity;
     return {
       resultLatex: `\\operatorname{Null}(${input.label})=${basisLatex(basis)}`,
       approxText: `dimension ${nullity}`,
-      detailSections: nullSpaceDetails(input.label, reduced.matrix, rank, pivotColumns, nullity, columns),
+      detailSections: nullSpaceDetails(input.label, analysis.rref, rank, pivotColumns, nullity, columns),
       warnings: [],
     };
   }
 
-  const basis = columnSpaceBasis(exactMatrix, pivotColumns);
+  const basis = analysis.imageBasis;
   return {
     resultLatex: `\\operatorname{Col}(${input.label})=${basisLatex(basis)}`,
     approxText: `dimension ${rank}`,
-    detailSections: columnSpaceDetails(input.label, reduced.matrix, rank, pivotColumns),
+    detailSections: columnSpaceDetails(input.label, analysis.rref, rank, pivotColumns),
     warnings: [],
   };
 }

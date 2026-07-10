@@ -34,6 +34,7 @@ import {
   type VectorCoreResult,
   type VectorCoreStopReason,
 } from './vector-core';
+import { runVectorFamilyOperation } from './vector-family';
 
 function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
   switch (reason) {
@@ -357,6 +358,9 @@ export function runVectorOperation(req: VectorRequest): VectorResponse {
       answerRows: { rows: [{ latex: answerLatex }] },
       warnings: [],
     };
+  }
+  if (operation === 'span' || operation === 'independent') {
+    return runVectorFamilyOperation(req);
   }
 
   const numericRequest: NumericVectorRequest = { ...req, operation };

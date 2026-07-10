@@ -101,4 +101,46 @@ describe('linear algebra named replay snapshots', () => {
     expect(hook.result.current.linearAlgebraRuntime.vectorSoftActions[0].label).toBe('q·v');
     expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe('q·v');
   });
+
+  it('restores a variadic Vector family snapshot after live values are replaced', () => {
+    const { hook } = renderLinearAlgebraTableShell('vector');
+    const familyEntry = {
+      id: 'history.vector.family',
+      mode: 'vector',
+      inputLatex: '\\operatorname{span}\\left(p,q,r\\right)',
+      resultLatex: '\\operatorname{span}\\left(p,q,r\\right)=\\operatorname{span}\\left\\{p,q\\right\\}',
+      vectorSeed: {
+        operation: 'span',
+        vectorA: [1, 0],
+        vectorB: [0, 1],
+        vectorOperands: [[1, 0], [0, 1], [1, 1]],
+        exactVectorOperands: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }],
+          [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
+        ],
+        vectorOperandLatexList: ['p', 'q', 'r'],
+        editorExpressionLatex: '\\operatorname{span}\\left(p,q,r\\right)',
+        vectorValues: [
+          { id: 'vector-p', name: 'p', value: [1, 0] },
+          { id: 'vector-q', name: 'q', value: [0, 1] },
+          { id: 'vector-r', name: 'r', value: [1, 1] },
+        ],
+        activeVectorLeftId: 'vector-p',
+        activeVectorRightId: 'vector-q',
+        angleUnit: 'rad',
+      },
+      timestamp: '2026-07-10T00:00:00.000Z',
+    } satisfies HistoryEntry;
+
+    act(() => {
+      hook.result.current.linearAlgebraRuntime.addVectorValue('p', [9, 9]);
+      hook.result.current.restoreLinearAlgebraTableHistoryEntry(familyEntry);
+    });
+
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues).toEqual(familyEntry.vectorSeed.vectorValues);
+    expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe(familyEntry.inputLatex);
+    expect(hook.result.current.linearAlgebraRuntime.activeVectorLeftId).toBe('vector-p');
+    expect(hook.result.current.linearAlgebraRuntime.activeVectorRightId).toBe('vector-q');
+  });
 });

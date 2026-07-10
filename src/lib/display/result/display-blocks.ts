@@ -142,6 +142,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'Null Space Proof',
   'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof', 'QR Factors', 'QR Proof', 'Column Projection Facts', 'Column Projection Proof', 'Least-Squares Solution', 'Residual Vector', 'Least-Squares Proof',
   'Orthonormal Basis',
+  'Span Facts', 'Dependence Relation',
   'Rank/Nullity Guidance',
   'System Proof', 'Multi-RHS Proof', 'Inverse Comparison', 'Why It Cannot Diagonalize',
   'Power Factors', 'Power via Diagonalization',
@@ -149,7 +150,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
 
 const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([
   'Solve Note',
-  'Row Reduction Steps', 'Factorization Row Steps', 'QR Column Steps',
+  'Row Reduction Steps', 'Factorization Row Steps', 'QR Column Steps', 'RREF Evidence',
 ]);
 
 function answerRowsBlockFromOutcome(

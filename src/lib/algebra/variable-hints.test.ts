@@ -194,6 +194,20 @@ describe('variable hints', () => {
       linearAlgebraNamedValues: ['u', 'v', 'p', 'q'],
       storedVariables: stored,
     })).toEqual([]);
+
+    expect(hintKinds('\\operatorname{span}\\left(p,q,r\\right)', {
+      mode: 'vector',
+      screenHint: 'vector',
+      linearAlgebraNamedValues: ['u', 'v', 'p', 'q', 'r'],
+      storedVariables: stored,
+    })).toEqual([]);
+
+    expect(hintKinds('\\operatorname{independent}\\left(p,q\\right)', {
+      mode: 'vector',
+      screenHint: 'vector',
+      linearAlgebraNamedValues: ['u', 'v', 'p', 'q'],
+      storedVariables: stored,
+    })).toEqual([]);
   });
 
   it('does not turn Matrix named values or adjacent named products into variable hints', () => {

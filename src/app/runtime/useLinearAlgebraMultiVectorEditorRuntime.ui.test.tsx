@@ -101,6 +101,15 @@ describe('useLinearAlgebraTableShellRuntime multi-vector editor expressions', ()
     expect(composedGram.kind === 'success' ? composedGram.detailSections?.map((section) => section.title) : [])
       .toEqual(['Orthonormal Basis', 'Gram-Schmidt Proof']);
 
+    const span = await runVectorExpression('span(p,q,r)');
+    expect(span).toMatchObject({
+      kind: 'success',
+      title: '\\operatorname{span}\\left(p,q,r\\right)',
+      exactLatex: '\\operatorname{span}\\left(p,q,r\\right)=\\operatorname{span}\\left\\{p,q\\right\\}',
+      approxText: undefined,
+    });
+    expect(span.kind === 'success' ? span.detailSections?.[1]?.lines : []).toContain('p-q-r=0');
+
     act(() => {
       hook.result.current.linearAlgebraRuntime.resizeVectorValueById(pId, 3);
       hook.result.current.linearAlgebraRuntime.resizeVectorValueById(qId, 3);

@@ -64,6 +64,8 @@ Prerequisites: vector expression AST precedence, exact scalar sidecars, dimensio
 
 ### `VECTOR-SPAN-INDEPENDENCE1`
 
+Status: implemented and verified on 2026-07-10.
+
 Add `span(p,q,r)` and `independent(p,q,r)` with span dimension, a basis selected from the input vectors, pivot facts, and a dependence relation when one exists. Reuse Matrix-owned exact elimination/RREF through a public core seam; do not add a Vector-local elimination engine.
 
 Prerequisites: variadic vector operand parsing, matrix-from-columns representation, exact RREF evidence, stable basis-vector row readback, and controlled dimension/cap errors.

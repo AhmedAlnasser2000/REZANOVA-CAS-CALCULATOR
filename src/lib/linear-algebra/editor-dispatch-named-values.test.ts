@@ -265,6 +265,65 @@ describe('linear algebra editor dispatch named values', () => {
     expect(triple.ok ? runVectorOperation(triple.request).resultLatex : '').toBe('2');
   });
 
+  it('dispatches variadic span and independence with exact operand snapshots', () => {
+    const values = [
+      { id: 'vector-p', name: 'p', value: [1, 0] },
+      { id: 'vector-q', name: 'q', value: [0, 1] },
+      { id: 'vector-r', name: 'r', value: [1, 1] },
+    ];
+    const input = {
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorValues: values,
+      angleUnit: 'rad' as const,
+    };
+    const span = dispatchVectorEditorLatex({ ...input, latex: 'span(p,q,r)' });
+    expect(span).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'span',
+        vectorA: [1, 0],
+        vectorB: [0, 1],
+        vectorOperands: [[1, 0], [0, 1], [1, 1]],
+        vectorOperandLatexList: ['p', 'q', 'r'],
+        editorExpressionLatex: '\\operatorname{span}\\left(p,q,r\\right)',
+      },
+    });
+    expect(span.ok ? runVectorOperation(span.request).resultLatex : '').toBe(
+      '\\operatorname{span}\\left(p,q,r\\right)=\\operatorname{span}\\left\\{p,q\\right\\}',
+    );
+
+    const computed = dispatchVectorEditorLatex({ ...input, latex: 'independent(p,q+r)' });
+    expect(computed).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'independent',
+        vectorOperands: [[1, 0], [1, 2]],
+        vectorOperandLatexList: ['p', 'q+r'],
+      },
+    });
+
+    expect(dispatchVectorEditorLatex({
+      ...input,
+      latex: 'span([1,0],[0,1])',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'span',
+        vectorOperands: [[1, 0], [0, 1]],
+      },
+    });
+
+    expect(dispatchVectorEditorLatex({
+      ...input,
+      latex: 'span(s)',
+      vectorValues: [...values, { id: 'vector-s', name: 's', value: Array(7).fill(1) }],
+    })).toEqual({
+      ok: false,
+      message: 'Exact span and independence support one through 6 vectors with length up to 6.',
+    });
+  });
+
   it('stops named and inline vectors above the length-8 editor contract', () => {
     expect(dispatchVectorEditorLatex({
       latex: 'norm(z)',

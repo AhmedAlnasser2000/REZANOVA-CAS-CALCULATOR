@@ -117,6 +117,32 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
   });
 
+  it('parses variadic span and independence vector families', () => {
+    expect(parsedWithOptions('span(p,q,r)', {
+      mode: 'vector',
+      vectorNamedValues: ['p', 'q', 'r'],
+    })).toMatchObject({
+      kind: 'vectorFamily',
+      operator: 'span',
+      operands: [
+        { kind: 'named', name: 'p' },
+        { kind: 'named', name: 'q' },
+        { kind: 'named', name: 'r' },
+      ],
+    });
+    expect(parsedWithOptions('\\operatorname{independent}\\left(p+q,[1,0]\\right)', {
+      mode: 'vector',
+      vectorNamedValues: ['p', 'q'],
+    })).toMatchObject({
+      kind: 'vectorFamily',
+      operator: 'independent',
+      operands: [
+        { kind: 'binary', operator: 'add' },
+        { kind: 'vectorLiteral', value: [1, 0] },
+      ],
+    });
+  });
+
   it('parses configured single-letter Matrix and Vector names', () => {
     expect(parsedWithOptions('C+D', {
       mode: 'matrix',

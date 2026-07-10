@@ -35,6 +35,7 @@ import {
   type VectorExpressionEvaluation,
 } from './vector-expression-evaluator';
 import { containsVectorScalarArithmetic } from './editor-vector-scalars';
+import { dispatchVectorFamilyExpression } from './vector-family-dispatch';
 
 type MatrixOperand = EvaluatedMatrixOperand;
 type VectorOperand = EvaluatedVectorOperand;
@@ -774,6 +775,9 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
     ...input,
     latex: formatLinearAlgebraEditorExpression(expression),
   };
+  if (expression.kind === 'vectorFamily') {
+    return dispatchVectorFamilyExpression(expression, canonicalInput);
+  }
   if (containsVectorScalarArithmetic(expression)) {
     return vectorLinearCombinationRequest(canonicalInput, expression);
   }

@@ -62,3 +62,40 @@ test('exact scalar/vector combinations render naturally without approximation le
     path: `${screenshotDir}/vector-exact-linear-combination.png`,
   });
 });
+
+test('span and independence show an input-selected basis and exact dependence proof', async ({ page }) => {
+  await openLauncherApp(page, 'Linear', 'Vector');
+  await addVector(page, 'p', [1, 0]);
+  await addVector(page, 'q', [0, 1]);
+  await addVector(page, 'r', [1, 1]);
+
+  await setMathFieldLatex(page, 'span(p,q,r)');
+  await page.getByTestId('editor-runtime-run').click();
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect.poll(() => rawAnswerLatex(page)).toContain(
+    String.raw`\dim\operatorname{span}\left(p,q,r\right)=2`,
+  );
+  await expect.poll(() => rawAnswerLatex(page)).toContain(
+    String.raw`\operatorname{basis}=\left\{p,q\right\}`,
+  );
+  await expect(page.getByText('Span Facts', { exact: true })).toBeVisible();
+  await expect(page.getByText('Dependence Relation', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-root')).not.toContainText(/APPROX|Unsupported/u);
+
+  await setMathFieldLatex(page, 'independent(p,q,r)');
+  await page.getByTestId('editor-runtime-run').click();
+  await expect.poll(() => rawAnswerLatex(page)).toContain(String.raw`\text{No}`);
+  await expect(page.getByTestId('display-outcome-detail-line-1-0')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-detail-line-1-1')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-detail-section-2')).not.toHaveAttribute('open');
+
+  await page.getByRole('button', { name: 'Shift', exact: true }).click();
+  await expect(page.getByRole('button', { name: /independent/u })).toBeVisible();
+  await expect(page.getByRole('button', { name: /span/u })).toBeVisible();
+  await page.getByRole('button', { name: 'Base', exact: true }).click();
+
+  await page.screenshot({
+    fullPage: true,
+    path: `${screenshotDir}/vector-span-independence.png`,
+  });
+});

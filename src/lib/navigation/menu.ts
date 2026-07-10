@@ -515,8 +515,8 @@ const VECTOR_OPERATOR_ROW: KeypadButton[] = [
   { id: 'linear-vector-v', label: 'v', variant: 'function', latex: 'v' },
   { id: 'linear-proj-u', label: 'proj_u', variant: 'function', latex: '\\operatorname{proj}_{u}\\left(#0\\right)' },
   { id: 'linear-proj-v', label: 'proj_v', variant: 'function', latex: '\\operatorname{proj}_{v}\\left(#0\\right)' },
-  { id: 'linear-unit', label: 'unit', variant: 'function', latex: '\\operatorname{unit}\\left(#0\\right)' },
-  { id: 'linear-gram', label: 'gram', variant: 'function', latex: '\\operatorname{gram}\\left(#0,#?\\right)' },
+  { id: 'linear-unit', label: 'unit', secondary: 'independent', variant: 'function', latex: '\\operatorname{unit}\\left(#0\\right)', layers: { shift: { label: 'independent', latex: '\\operatorname{independent}\\left(#0,#?\\right)' } } },
+  { id: 'linear-gram', label: 'gram', secondary: 'span', variant: 'function', latex: '\\operatorname{gram}\\left(#0,#?\\right)', layers: { shift: { label: 'span', latex: '\\operatorname{span}\\left(#0,#?\\right)' } } },
 ];
 
 const VECTOR_MODIFIER_ROW: KeypadButton[] = [

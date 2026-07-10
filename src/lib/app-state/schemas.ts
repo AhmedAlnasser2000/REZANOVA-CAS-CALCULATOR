@@ -361,6 +361,9 @@ const vectorOperationSchema = z.enum([
   'unitB',
   'orthogonalCheck',
   'gramSchmidtUV',
+  'linearCombination',
+  'span',
+  'independent',
 ]);
 const numericMatrixSchema = z.array(z.array(z.number().finite()));
 const numericVectorSchema = z.array(z.number().finite());
@@ -412,6 +415,9 @@ const vectorReplaySeedSchema = z.object({
   editorExpressionLatex: z.string().optional(),
   vectorOperandLatexA: z.string().optional(),
   vectorOperandLatexB: z.string().optional(),
+  vectorOperands: z.array(numericVectorSchema).optional(),
+  exactVectorOperands: z.array(exactVectorWireSchema).optional(),
+  vectorOperandLatexList: z.array(z.string()).optional(),
   vectorValues: z.array(vectorNamedValueSnapshotSchema).optional(),
   activeVectorLeftId: z.string().optional(),
   activeVectorRightId: z.string().optional(),

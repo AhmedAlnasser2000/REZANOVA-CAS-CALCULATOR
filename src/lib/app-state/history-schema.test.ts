@@ -643,6 +643,46 @@ describe('history entry schema', () => {
       },
       timestamp: '2026-06-08T00:00:00.000Z',
     }).vectorSeed?.operation).toBe('gramSchmidtUV');
+
+    expect(historyEntrySchema.parse({
+      id: 'vector-seed-combination',
+      mode: 'vector',
+      inputLatex: '2p-\\frac{q}{3}',
+      resultLatex: '\\begin{bmatrix}4\\\\11\\end{bmatrix}',
+      vectorSeed: {
+        operation: 'linearCombination',
+        vectorA: [4, 11],
+        vectorB: [6, 3],
+        angleUnit: 'rad',
+      },
+      timestamp: '2026-07-10T00:00:00.000Z',
+    }).vectorSeed?.operation).toBe('linearCombination');
+
+    const familySeed = historyEntrySchema.parse({
+      id: 'vector-seed-span',
+      mode: 'vector',
+      inputLatex: '\\operatorname{span}\\left(p,q,r\\right)',
+      resultLatex: '\\operatorname{span}\\left(p,q,r\\right)=\\operatorname{span}\\left\\{p,q\\right\\}',
+      vectorSeed: {
+        operation: 'span',
+        vectorA: [1, 0],
+        vectorB: [0, 1],
+        vectorOperands: [[1, 0], [0, 1], [1, 1]],
+        exactVectorOperands: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }],
+          [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
+        ],
+        vectorOperandLatexList: ['p', 'q', 'r'],
+        angleUnit: 'rad',
+      },
+      timestamp: '2026-07-10T00:00:00.000Z',
+    }).vectorSeed;
+    expect(familySeed).toMatchObject({
+      operation: 'span',
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+    });
   });
 
   it('accepts typed Trigonometry Period & Phase replay seeds', () => {

@@ -107,3 +107,7 @@ export function vectorEditingDimensionError(vector: readonly unknown[]): string 
 export function exactMatrixDimensionLimitMessage(subject: string) {
   return `The exact matrix limit for ${subject} is ${LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION} by ${LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION}.`;
 }
+
+export function exactVectorFamilyDimensionLimitMessage() {
+  return `Exact span and independence support one through ${LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION} vectors with length up to ${LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION}.`;
+}

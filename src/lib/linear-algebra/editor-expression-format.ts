@@ -127,6 +127,11 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
         formatLinearAlgebraEditorExpression(expression.left),
         formatLinearAlgebraEditorExpression(expression.right),
       );
+    case 'vectorFamily':
+      return callLatex(
+        expression.operator,
+        ...expression.operands.map(formatLinearAlgebraEditorExpression),
+      );
     case 'projection':
       return callLatex(
         'proj',

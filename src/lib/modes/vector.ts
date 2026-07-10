@@ -28,6 +28,9 @@ export type RunVectorModeRequest = {
   editorExpressionLatex?: string;
   vectorOperandLatexA?: string;
   vectorOperandLatexB?: string;
+  vectorOperands?: number[][];
+  exactVectorOperands?: ExactScalarWire[][];
+  vectorOperandLatexList?: string[];
   vectorValues?: { id: string; name: string; value: number[] }[];
   activeVectorLeftId?: string;
   activeVectorRightId?: string;
@@ -67,12 +70,19 @@ export function vectorOperationLabel(operation: VectorOperation) {
       return 'gram(u,v)';
     case 'linearCombination':
       return 'Vector combination';
+    case 'span':
+      return 'span(...)';
+    case 'independent':
+      return 'independent(...)';
     default:
       return 'Vector';
   }
 }
 
 function vectorResultTitle(request: RunVectorModeRequest) {
+  if ((request.operation === 'span' || request.operation === 'independent') && request.editorExpressionLatex) {
+    return request.editorExpressionLatex;
+  }
   const usesInlineOperand =
     (request.vectorOperandLatexA !== undefined && request.vectorOperandLatexA !== 'u')
     || (request.vectorOperandLatexB !== undefined && request.vectorOperandLatexB !== 'v');
@@ -100,6 +110,9 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     editorExpressionLatex,
     vectorOperandLatexA,
     vectorOperandLatexB,
+    vectorOperands,
+    exactVectorOperands,
+    vectorOperandLatexList,
   } = request;
   const response = runVectorOperation({
     operation,
@@ -111,6 +124,9 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     editorExpressionLatex,
     vectorOperandLatexA,
     vectorOperandLatexB,
+    vectorOperands,
+    exactVectorOperands,
+    vectorOperandLatexList,
   });
   if (response.error) {
     return {
@@ -151,6 +167,9 @@ export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
       editorExpressionLatex: request.editorExpressionLatex,
       vectorOperandLatexA: request.vectorOperandLatexA,
       vectorOperandLatexB: request.vectorOperandLatexB,
+      vectorOperands: request.vectorOperands,
+      exactVectorOperands: request.exactVectorOperands,
+      vectorOperandLatexList: request.vectorOperandLatexList,
       vectorValues: request.vectorValues,
       activeVectorLeftId: request.activeVectorLeftId,
       activeVectorRightId: request.activeVectorRightId,

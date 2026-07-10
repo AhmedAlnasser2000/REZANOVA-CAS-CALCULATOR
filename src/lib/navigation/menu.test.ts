@@ -138,6 +138,10 @@ describe('workspace keypad overlays', () => {
       .toBe('\\operatorname{unit}\\left(#0\\right)');
     expect(vectorRows.flat().find((button) => button.id === 'linear-gram')?.latex)
       .toBe('\\operatorname{gram}\\left(#0,#?\\right)');
+    expect(vectorRows.flat().find((button) => button.id === 'linear-gram')?.layers?.shift)
+      .toMatchObject({ label: 'span', latex: '\\operatorname{span}\\left(#0,#?\\right)' });
+    expect(vectorRows.flat().find((button) => button.id === 'linear-unit')?.layers?.shift)
+      .toMatchObject({ label: 'independent', latex: '\\operatorname{independent}\\left(#0,#?\\right)' });
     expect(vectorRows.flat().find((button) => button.id === 'linear-orth-u')?.latex)
       .toBe('\\operatorname{orth}_{u}\\left(#0\\right)');
     expect(vectorRows.flat().find((button) => button.id === 'linear-orth-v')?.latex)

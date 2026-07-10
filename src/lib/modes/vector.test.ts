@@ -27,6 +27,34 @@ describe('runVectorMode', () => {
     });
   });
 
+  it('presents variadic independence without nonnumeric approximation leakage', () => {
+    const outcome = runVectorMode({
+      operation: 'independent',
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      exactVectorOperands: [
+        [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }],
+        [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
+      ],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      vectorOperandLatexA: 'p',
+      vectorOperandLatexB: 'q',
+      editorExpressionLatex: '\\operatorname{independent}\\left(p,q,r\\right)',
+      angleUnit: 'rad',
+    });
+
+    expect(outcome).toMatchObject({
+      kind: 'success',
+      title: '\\operatorname{independent}\\left(p,q,r\\right)',
+      exactLatex: '\\operatorname{independent}\\left(p,q,r\\right)=\\text{No}',
+      approxText: undefined,
+    });
+    expect(outcome.kind === 'success' ? outcome.detailSections?.map((section) => section.title) : [])
+      .toEqual(['Span Facts', 'Dependence Relation', 'RREF Evidence']);
+  });
+
   it('uses editor expressions as Vector result titles when present', () => {
     const expressionLatex = '\\operatorname{proj}_{u}\\left(\\begin{bmatrix}2\\\\3\\end{bmatrix}\\right)';
     const result = runVectorMode({
@@ -165,6 +193,25 @@ describe('runVectorMode', () => {
         { numerator: 11, denominator: 1 },
       ],
       editorExpressionLatex: '2p-\\frac{q}{3}',
+    });
+
+    const familySnapshot = buildVectorOoeSnapshot({
+      operation: 'span',
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      exactVectorOperands: [
+        [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }],
+        [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
+      ],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      angleUnit: 'rad',
+    });
+    expect(familySnapshot.request).toMatchObject({
+      operation: 'span',
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
     });
   });
 });

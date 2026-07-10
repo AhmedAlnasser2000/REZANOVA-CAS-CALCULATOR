@@ -1028,7 +1028,7 @@ export type MatrixResponse = {
 export type VectorOperation =
   | 'dot' | 'cross' | 'normA' | 'normB' | 'angle' | 'add' | 'subtract'
   | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck' | 'gramSchmidtUV'
-  | 'linearCombination';
+  | 'linearCombination' | 'span' | 'independent';
 
 export type VectorRequest = {
   operation: VectorOperation;
@@ -1036,6 +1036,7 @@ export type VectorRequest = {
   vectorB?: number[];
   angleUnit: AngleUnit;
   exactVectorA?: ExactScalarWire[]; exactVectorB?: ExactScalarWire[]; editorExpressionLatex?: string; vectorOperandLatexA?: string; vectorOperandLatexB?: string;
+  vectorOperands?: number[][]; exactVectorOperands?: ExactScalarWire[][]; vectorOperandLatexList?: string[];
   vectorValues?: { id: string; name: string; value: number[] }[]; activeVectorLeftId?: string; activeVectorRightId?: string;
 };
 
