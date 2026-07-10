@@ -42,3 +42,12 @@
   source: chat-2026-07-10-linear-algebra-topology-lock
   canonical_targets: .memory/research/readiness/linear-algebra-topology-lock-recap.md; .memory/research/audits/linear-algebra-shell-split0.md; .memory/research/roadmaps/anti-regression-nine-move-roadmap.md; .memory/research/roadmaps/linear-algebra-vector-matrix-roadmap.md
   notes: Anti-Regression Moves 5-9 remain unimplemented repository work, not completed Git history. Explicit approval is still required before each commit or push.
+- approved_at_local: 2026-07-11 +03:00
+  approver: user
+  decision: Grant standing commit approval for all remaining anti-regression milestones, Behavioral Ratchets 6-9, while preserving one separately verified commit per named move.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-07-11-anti-regression-remaining-commit-approval
+  canonical_targets: .memory/research/roadmaps/anti-regression-nine-move-roadmap.md; .memory/sessions/2026-07/2026-07-09/2026-07-09__anti-regression-nine-move-program/
+  notes: This approval covers commits only. No push is authorized; `test-results/` remains excluded from staging.

@@ -147,3 +147,11 @@
 - Required evidence pins DEG/RAD/GRAD inverse trig special values and domain stops, exact/decimal/both Equation output, Equation answer/domain/complex form, notation/precision/scientific interactions, UI/math/result scale and high contrast, language, History-disabled privacy, and calculator-memory restore/autosave policy.
 - The first focused run correctly failed one inaccurate registered test label; the catalog was corrected to the exact live case name and the full gate then passed.
 - Focused ModeStrip UI rerun passed 1/1 after adding quick-setting patch assertions. `npx tsc -b --pretty false`, `npm run test:file-sizes`, and `git diff --check` passed before durable closeout.
+
+## GOLDEN-CORPUS-REGISTRY1
+- Kind: `backend` native golden registry with required `ui` Playwright inspection; no production runtime behavior changed.
+- `npm run test:golden`: passed 44/44, comprising one registry ratchet and 43 golden executions. The ratchet enforces unique IDs, exact initial total 43, and at least two cases for every launcher-derived computational workspace excluding Labs.
+- Direct adapters cover Calculate, Equation, async Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and Table. Table retains row-level response evidence alongside the common `DisplayOutcome`.
+- The temporary Chromium audit under ignored `.task_tmp/golden-corpus-registry1/` passed all 16 additions in 55.7 seconds after correcting audit-only route/action selectors and removing a redundant Lower-field fill. All 16 screenshots were inspected for answer/error cards, facts/details, warnings/actions, clipping, overlap, and readability; no production defect remained.
+- The Trigonometry periodic equation is native-core evidence in the corpus and was visually inspected through the current Equation-owned browser surface because Trigonometry no longer exposes an equation launcher leaf.
+- The unchanged workspace canaries passed 19/19 in 1.2 minutes. `npx tsc -b --pretty false`, `npm run build`, `npm run lint`, `npm run test:ooe-boundaries`, `npm run test:compartments-boundaries`, `npm run test:file-sizes`, `npm run test:canary-registry`, and `git diff --check` passed before durable closeout.

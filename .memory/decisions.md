@@ -2148,3 +2148,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Every live `Settings` key must be classified in the exhaustive feature-probe registry and name at least one executable native, component, or persistence test. Adding, removing, or renaming a setting or its evidence must fail the dedicated gate until the registry is updated intentionally.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Feature probes are evidence routing, not a second settings runtime. Existing native and UI tests remain behavior owners; the registry records their policy class and executable location without making application code depend on anti-regression metadata.
+
+## 2026-07-10 - GOLDEN-CORPUS-REGISTRY1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The fast golden corpus uses direct native workspace adapters over the existing `src/lib/__golden__` union. It is not an OOE, worker, or browser execution layer; those remain independent evidence gates.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The initial ratchet is exactly 43 unique cases with at least two per launcher-derived computational workspace. Table keeps structured row evidence beside its `DisplayOutcome`, while large Equation and Calculus benchmark ledgers stay outside this fast curated corpus.

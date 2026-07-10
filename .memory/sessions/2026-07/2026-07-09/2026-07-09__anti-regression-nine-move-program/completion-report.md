@@ -85,3 +85,10 @@
 - Added an 18-entry executable catalog spanning native, component, and persistence tests; registry tests fail on Settings-key drift, missing policy classes, missing or orphaned probes, missing files, or renamed evidence cases.
 - Added `npm run test:feature-probes` to execute the catalog's native and UI/persistence suites and included it in the aggregate local gate.
 - Tightened ModeStrip coverage to assert angle, exact-to-decimal, auto-equation, and real/complex quick-setting patches. No application behavior changed.
+
+## GOLDEN-CORPUS-REGISTRY1
+- Extended the existing Calculate/Equation golden union to all nine launcher-derived computational workspaces through direct native adapters.
+- Added reusable `GoldenExecution` evidence carrying `DisplayOutcome` plus optional structured Table response rows.
+- Preserved all 27 existing cases and added exactly 16 approved rich-success cases for an exact initial total of 43, with unique-ID and per-workspace coverage ratchets.
+- Added structured assertions for branches, periodic branches, actions, warnings, detail content, answer rows, and Table rows without absorbing Equation or Calculus benchmark ledgers.
+- Passed focused, static, build, boundary, canary, file-size, visual, and diff-hygiene gates. Commit approval remains pending.

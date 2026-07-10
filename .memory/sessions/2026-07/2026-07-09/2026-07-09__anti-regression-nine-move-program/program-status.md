@@ -21,13 +21,15 @@
 - Mandatory Incident Review: verification complete; accepted by the user on `2026-07-10`.
 - `LINEAR-ALGEBRA-SHELL-SPLIT0`: verified; split-eligibility threshold not met.
 - `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`: committed as `59bc68f0`.
-- `FEATURE-PROBE-REGISTRY1`: implemented and verified; commit approval pending.
-- Behavioral Ratchets 6-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
+- `FEATURE-PROBE-REGISTRY1`: committed as `4e5bfbd6`.
+- `GOLDEN-CORPUS-REGISTRY1`: implemented and verified; standing commit approval granted on `2026-07-11`.
+- Behavioral Ratchets 7-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
 - Printer/detail/clipboard arcs: deferred until nine-move closeout.
 
 ## Standing Constraints
 - One verified commit per named milestone.
 - Explicit approval before every commit or push.
+- Standing commit approval covers Moves 6-9 as of `2026-07-11`; no push is authorized.
 - Statistics guided-control defects remain out of scope.
 - Preserve independent runtime hosts, capability identities, existing ahead-one history, and unrelated `test-results/`.
 
@@ -54,3 +56,6 @@
 - Matrix now selects `matrix-worker-runtime` with `matrix-runtime` fallback and `matrix-worker-shell`; Vector selects `vector-worker-runtime` with `vector-runtime` fallback and `vector-worker-shell`. Vite emits separate `matrix.worker` and `vector.worker` assets and no shared Linear Algebra worker asset.
 - All 19 workspace canaries passed in 1.2 minutes. Structured Matrix profile and Vector independence cards were inspected at final `Ready` state without clipping, overlap, or unreadable evidence.
 - The feature-probe registry matches all 24 live Settings keys exactly and resolves each policy to an executable test. Its focused gate passed 124 native tests and 37 UI/persistence tests; TypeScript and file-size validation also pass.
+- The fast golden corpus preserves 27 existing cases and adds exactly 16 for an exact 43-case initial registry across all nine launcher-derived computational workspaces. The dedicated gate passed 44/44.
+- All 16 additions passed a temporary real-Chromium audit with screenshots and overflow checks. The redundant improper-integral Lower-field fill was identified as an audit-driver error; the corrected run asserted and visibly rendered `1.570796`. The Trigonometry equation case was inspected through its current Equation-owned browser surface while its native golden adapter remains Trigonometry-owned.
+- The unchanged 19-case Chromium canary suite passed in 1.2 minutes; TypeScript, build, lint, OOE/compartment boundaries, canary registry, file-size, and diff hygiene also pass for Move 6.

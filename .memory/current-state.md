@@ -1,6 +1,6 @@
 # Current State
 
-Last updated: 2026-07-10
+Last updated: 2026-07-11
 
 ## Purpose
 
@@ -227,7 +227,7 @@ The recurring Node warning about `NO_COLOR` being ignored when `FORCE_COLOR` is 
 
 The user-approved anti-regression program is the active exception to the normal preference for product-facing work. Its governance prerequisite precedes four Incident Closure moves, a mandatory user review, and five Behavioral Ratchets; Statistics guided-control defects and the later printer/detail/clipboard arcs stay outside this nine-move program.
 
-Program sequence and acceptance details live in `.memory/research/roadmaps/anti-regression-nine-move-roadmap.md`. All four Incident Closure moves, the mandatory review, the truthful Linear Algebra shell audit, the independently approved Matrix/Vector host split, and Behavioral Ratchet 5 are complete. `GOLDEN-CORPUS-REGISTRY1` is next; Matrix/Vector feature expansion remains frozen through the Move 9 closeout.
+Program sequence and acceptance details live in `.memory/research/roadmaps/anti-regression-nine-move-roadmap.md`. All four Incident Closure moves, the mandatory review, the truthful Linear Algebra shell audit, the independently approved Matrix/Vector host split, and Behavioral Ratchet 5 are committed. Behavioral Ratchet 6 is implemented and verified with a 43-case, nine-workspace native golden corpus. On `2026-07-11`, the user granted standing commit approval for Moves 6-9; this does not authorize a push. `PRINT-HYGIENE-BASELINE1` follows the Move 6 commit, and Matrix/Vector feature expansion remains frozen through the Move 9 closeout.
 
 Outside that approved program, prefer product-facing or correctness work over more infrastructure. Good next lanes should come from real pressure:
 

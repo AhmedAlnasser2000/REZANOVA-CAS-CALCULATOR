@@ -17,6 +17,7 @@
 - `ATTRIBUTION-FAMILY-GOVERNANCE1` is a prerequisite and is not counted among the nine moves.
 - Each named milestone is one verified commit. Internal gates are not automatic commit boundaries.
 - Explicit user approval is required before every commit and push.
+- The user granted standing commit approval for remaining Moves 6-9 on `2026-07-11`; pushes remain separately unapproved.
 - The four Incident Closure moves must pass a mandatory user review before any Behavioral Ratchet starts.
 - The user accepted the mandatory Incident Review on `2026-07-10`.
 - Statistics guided-control defects are out of scope. Stable direct structured Statistics requests are used for program evidence.
@@ -98,6 +99,8 @@ Status: implemented and verified on `2026-07-10`. The exhaustive 24-key registry
 - Add two inverse-trig Calculate cases and raise the initial total floor from 27 to at least 43.
 - Keep large Equation and Calculus benchmark ledgers separate from the fast curated corpus.
 - Fail when a launcher computational workspace lacks golden coverage.
+
+Status: implemented and verified on `2026-07-10`; commit approval pending. The existing 27 cases remain intact and exactly 16 rich-success cases extend the fast corpus to 43 across all nine launcher-derived computational workspaces. Direct native adapters return a shared `GoldenExecution`, with Table retaining structured response evidence. The focused gate passed 44/44, all 16 additions passed real Chromium inspection, and the unchanged 19-case canary suite passed. `PRINT-HYGIENE-BASELINE1` is next after the approval-gated commit.
 
 ### 7. PRINT-HYGIENE-BASELINE1
 - Add a pure shared collector for mathematical `DisplayOutcome` fragments, including exact answers, rows, branches, systems, periodic output, supplements, transforms, and typed detail math.

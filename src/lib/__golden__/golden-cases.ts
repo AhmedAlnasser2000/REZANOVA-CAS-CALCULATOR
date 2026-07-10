@@ -1,10 +1,19 @@
 import type {
+  AngleUnit,
   CalculateAction,
   CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
   EquationScreen,
+  OutputStyle,
   ResultOrigin,
 } from '../../types/calculator';
+import type { RunCalculusModeRequest } from '../modes/calculus';
+import type { RunGeometryRuntimeRequest } from '../geometry/runtime-input';
+import type { RunMatrixModeRequest } from '../modes/matrix';
+import type { RunStatisticsRuntimeRequest } from '../statistics/runtime-input';
+import type { RunTableModeRequest } from '../modes/table';
+import type { RunTrigonometryRuntimeRequest } from '../trigonometry/runtime-input';
+import type { RunVectorModeRequest } from '../modes/vector';
 
 type GoldenBase = {
   id: string;
@@ -17,6 +26,8 @@ export type GoldenCalculateCase = GoldenBase & {
   mode: 'calculate';
   action: CalculateAction;
   latex: string;
+  angleUnit?: AngleUnit;
+  outputStyle?: OutputStyle;
 };
 
 export type GoldenEquationCase = GoldenBase & {
@@ -25,13 +36,60 @@ export type GoldenEquationCase = GoldenBase & {
   equationLatex: string;
 };
 
-export type GoldenCase = GoldenCalculateCase | GoldenEquationCase;
+export type GoldenCalculusCase = GoldenBase & {
+  mode: 'calculus';
+  request: RunCalculusModeRequest;
+};
+
+export type GoldenTrigonometryCase = GoldenBase & {
+  mode: 'trigonometry';
+  request: RunTrigonometryRuntimeRequest;
+};
+
+export type GoldenGeometryCase = GoldenBase & {
+  mode: 'geometry';
+  request: RunGeometryRuntimeRequest;
+};
+
+export type GoldenStatisticsCase = GoldenBase & {
+  mode: 'statistics';
+  request: RunStatisticsRuntimeRequest;
+};
+
+export type GoldenMatrixCase = GoldenBase & {
+  mode: 'matrix';
+  request: RunMatrixModeRequest;
+};
+
+export type GoldenVectorCase = GoldenBase & {
+  mode: 'vector';
+  request: RunVectorModeRequest;
+};
+
+export type GoldenTableCase = GoldenBase & {
+  mode: 'table';
+  request: RunTableModeRequest;
+};
+
+export type GoldenCase =
+  | GoldenCalculateCase
+  | GoldenEquationCase
+  | GoldenCalculusCase
+  | GoldenTrigonometryCase
+  | GoldenGeometryCase
+  | GoldenStatisticsCase
+  | GoldenMatrixCase
+  | GoldenVectorCase
+  | GoldenTableCase;
 
 export type GoldenExpectation = {
   kind: 'success' | 'error' | 'prompt';
   title?: string;
   exactEquals?: string;
   exactIncludes?: string[];
+  answerRowsInclude?: string[];
+  branchIncludes?: string[];
+  periodicBranchesInclude?: string[];
   approxIncludes?: string[];
   resultOrigin?: ResultOrigin;
   calculusStrategy?: CalculusIntegrationStrategy;
@@ -42,8 +100,42 @@ export type GoldenExpectation = {
   supplementIncludes?: string[];
   solveBadgesInclude?: string[];
   plannerBadgesInclude?: string[];
+  actionLatexIncludes?: string[];
+  detailLinesInclude?: string[];
+  tableRows?: Array<{
+    index: number;
+    x: string;
+    primary: string;
+    secondary?: string;
+  }>;
   rejectedCandidateCount?: number;
   runtimeStopReasonKind?: string;
+};
+
+const CALCULUS_REQUEST: RunCalculusModeRequest = {
+  screen: 'finiteLimit',
+  indefiniteIntegral: { bodyLatex: '' },
+  definiteIntegral: { bodyLatex: '', lower: '0', upper: '1' },
+  improperIntegral: {
+    bodyLatex: '',
+    lowerKind: 'finite',
+    lower: '0',
+    upperKind: 'posInfinity',
+    upper: '',
+  },
+  finiteLimit: { bodyLatex: '', target: '0', direction: 'two-sided' },
+  infiniteLimit: { bodyLatex: '', targetKind: 'posInfinity' },
+  limit: { requestLatex: '' },
+  maclaurin: { bodyLatex: '', kind: 'maclaurin', center: '0', order: 3 },
+  taylor: { bodyLatex: '', kind: 'taylor', center: '0', order: 3 },
+  laplace: { bodyLatex: '' },
+  partialDerivative: { bodyLatex: '', variable: 'x' },
+  firstOrderOde: { lhsLatex: '', rhsLatex: '', classification: 'separable' },
+  secondOrderOde: { a2: '1', a1: '0', a0: '1', forcingLatex: '0' },
+  numericIvp: { bodyLatex: '', x0: '0', y0: '1', xEnd: '1', step: '0.1', method: 'rk4' },
+  angleUnit: 'rad',
+  outputStyle: 'both',
+  ansLatex: '0',
 };
 
 export const goldenCases: GoldenCase[] = [
@@ -395,6 +487,280 @@ export const goldenCases: GoldenCase[] = [
       kind: 'error',
       title: 'Solve',
       runtimeStopReasonKind: 'range-guard',
+    },
+  },
+  {
+    id: 'calculate-arcsin-one-deg',
+    lane: 'calculate-inverse-trig',
+    mode: 'calculate',
+    action: 'evaluate',
+    latex: '\\arcsin\\left(1\\right)',
+    angleUnit: 'deg',
+    outputStyle: 'exact',
+    expected: {
+      kind: 'success',
+      exactEquals: '90',
+      resultOrigin: 'exact-special-angle',
+    },
+  },
+  {
+    id: 'calculate-arcsin-one-rad',
+    lane: 'calculate-inverse-trig',
+    mode: 'calculate',
+    action: 'evaluate',
+    latex: '\\arcsin\\left(1\\right)',
+    angleUnit: 'rad',
+    outputStyle: 'exact',
+    expected: {
+      kind: 'success',
+      exactEquals: '\\frac{\\pi}{2}',
+      resultOrigin: 'exact-special-angle',
+    },
+  },
+  {
+    id: 'calculus-left-pole-limit',
+    lane: 'calculus-limits',
+    mode: 'calculus',
+    request: {
+      ...CALCULUS_REQUEST,
+      screen: 'finiteLimit',
+      finiteLimit: { bodyLatex: '\\frac{1}{x}', target: '0', direction: 'left' },
+    },
+    expected: {
+      kind: 'success',
+      title: 'Finite Limit',
+      exactEquals: '-\\infty',
+      resultOrigin: 'rule-based-symbolic',
+    },
+  },
+  {
+    id: 'calculus-improper-arctan-integral',
+    lane: 'calculus-integrals',
+    mode: 'calculus',
+    request: {
+      ...CALCULUS_REQUEST,
+      screen: 'improperIntegral',
+      improperIntegral: {
+        bodyLatex: '\\frac{1}{1+x^2}',
+        lowerKind: 'finite',
+        lower: '0',
+        upperKind: 'posInfinity',
+        upper: '',
+      },
+    },
+    expected: {
+      kind: 'success',
+      title: 'Improper Integral',
+      exactEquals: '1.570796',
+      approxIncludes: ['1.570'],
+      resultOrigin: 'numeric-fallback',
+    },
+  },
+  {
+    id: 'trigonometry-period-phase-rad',
+    lane: 'trigonometry-period-phase',
+    mode: 'trigonometry',
+    request: {
+      inputLatex: '2\\sin\\left(3x-\\pi\\right)+1',
+      screenHint: 'periodPhase',
+      angleUnit: 'rad',
+    },
+    expected: {
+      kind: 'success',
+      exactIncludes: ['P=\\frac{2\\pi}{3}', 'h=\\frac{\\pi}{3}'],
+      detailTitlesInclude: ['Wave Facts', 'First Cycle Landmarks'],
+    },
+  },
+  {
+    id: 'trigonometry-periodic-sine-equation',
+    lane: 'trigonometry-equations',
+    mode: 'trigonometry',
+    request: {
+      inputLatex: '\\sin\\left(x\\right)=\\frac{1}{2}',
+      screenHint: 'equationSolve',
+      angleUnit: 'deg',
+    },
+    expected: {
+      kind: 'success',
+      exactIncludes: ['\\arcsin(\\frac{1}{2})', '360n'],
+    },
+  },
+  {
+    id: 'geometry-distance-solve-missing-branches',
+    lane: 'geometry-coordinate',
+    mode: 'geometry',
+    request: {
+      inputLatex: 'distance(p1=(0,0), p2=(3,?), distance=5)',
+      screenHint: 'distance',
+    },
+    expected: {
+      kind: 'success',
+      branchIncludes: ['4', '-4'],
+      warningIncludes: ['Two real coordinate branches'],
+    },
+  },
+  {
+    id: 'geometry-line-equation-transfer',
+    lane: 'geometry-coordinate',
+    mode: 'geometry',
+    request: {
+      inputLatex: 'lineEquation(p1=(1,2), p2=(3,6), form=standard)',
+      screenHint: 'lineEquation',
+    },
+    expected: {
+      kind: 'success',
+      actionLatexIncludes: ['x', 'y'],
+    },
+  },
+  {
+    id: 'statistics-two-point-regression-warning',
+    lane: 'statistics-relationships',
+    mode: 'statistics',
+    request: {
+      inputLatex: 'regression(points={(1,2),(2,5)})',
+      screenHint: 'regression',
+      workingSourceHint: 'dataset',
+    },
+    expected: {
+      kind: 'success',
+      exactIncludes: ['\\hat{y}'],
+      warningIncludes: ['small sample', 'at least 3 points'],
+      detailTitlesInclude: ['Quality Summary'],
+    },
+  },
+  {
+    id: 'statistics-mean-confidence-interval',
+    lane: 'statistics-inference',
+    mode: 'statistics',
+    request: {
+      inputLatex: 'meanInference(values={12,15,15,18,20}, mode=ci, level=0.95)',
+      screenHint: 'meanInference',
+      workingSourceHint: 'dataset',
+    },
+    expected: {
+      kind: 'success',
+      approxIncludes: ['CI'],
+    },
+  },
+  {
+    id: 'matrix-profile-singular-square',
+    lane: 'matrix-profile',
+    mode: 'matrix',
+    request: {
+      operation: 'profileA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[1, 0], [0, 1]],
+    },
+    expected: {
+      kind: 'success',
+      answerRowsInclude: ['\\operatorname{rank}(A)=1', '\\operatorname{nullity}(A)=1'],
+      detailTitlesInclude: ['Kernel', 'Image', 'Invertibility', 'RREF Evidence'],
+      detailLinesInclude: ['\\det(A)=0', '\\operatorname{invertible}(A)=\\text{No}'],
+    },
+  },
+  {
+    id: 'matrix-profile-tall-rectangular',
+    lane: 'matrix-profile',
+    mode: 'matrix',
+    request: {
+      operation: 'profileA',
+      matrixA: [[1, 0], [0, 1], [0, 0]],
+      matrixB: [[1, 0], [0, 1]],
+      matrixOperandLatexA: 'T',
+    },
+    expected: {
+      kind: 'success',
+      answerRowsInclude: ['T:\\mathbb{R}^{2}\\to\\mathbb{R}^{3}', '\\operatorname{rank}(T)=2'],
+      detailLinesInclude: [
+        '\\operatorname{one\\text{-}to\\text{-}one}(T)=\\text{Yes}',
+        '\\operatorname{onto}(T)=\\text{No}',
+        'Invertibility is not applicable to rectangular matrices.',
+      ],
+    },
+  },
+  {
+    id: 'vector-dependent-independence-relation',
+    lane: 'vector-foundations',
+    mode: 'vector',
+    request: {
+      operation: 'independent',
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      exactVectorOperands: [
+        [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }],
+        [{ numerator: 1, denominator: 1 }, { numerator: 1, denominator: 1 }],
+      ],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      angleUnit: 'rad',
+    },
+    expected: {
+      kind: 'success',
+      exactIncludes: ['\\text{No}'],
+      detailTitlesInclude: ['Span Facts', 'Dependence Relation', 'RREF Evidence'],
+      detailLinesInclude: ['p+q-r=0', 'r=p+q'],
+    },
+  },
+  {
+    id: 'vector-exact-gram-schmidt',
+    lane: 'vector-orthogonalization',
+    mode: 'vector',
+    request: {
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 0],
+      vectorB: [1, 1],
+      angleUnit: 'rad',
+    },
+    expected: {
+      kind: 'success',
+      exactIncludes: ['\\operatorname{orthogonal\\ basis}'],
+      detailTitlesInclude: ['Orthonormal Basis', 'Gram-Schmidt Proof'],
+    },
+  },
+  {
+    id: 'table-partial-real-domain',
+    lane: 'table-domain',
+    mode: 'table',
+    request: {
+      primaryLatex: '\\sqrt{x}',
+      secondaryLatex: '',
+      secondaryEnabled: false,
+      start: -1,
+      end: 1,
+      step: 1,
+    },
+    expected: {
+      kind: 'success',
+      warningIncludes: ['outside the real domain'],
+      detailTitlesInclude: ['Domain Facts', 'Interval Safety'],
+      tableRows: [
+        { index: 0, x: '-1', primary: 'undefined' },
+        { index: 1, x: '0', primary: '0' },
+        { index: 2, x: '1', primary: '1' },
+      ],
+    },
+  },
+  {
+    id: 'table-two-function-grid',
+    lane: 'table-functions',
+    mode: 'table',
+    request: {
+      primaryLatex: 'x^2',
+      secondaryLatex: 'x+1',
+      secondaryEnabled: true,
+      start: 0,
+      end: 2,
+      step: 1,
+    },
+    expected: {
+      kind: 'success',
+      exactIncludes: ['f(x)=x^2', 'g(x)=x+1'],
+      tableRows: [
+        { index: 0, x: '0', primary: '0', secondary: '1' },
+        { index: 1, x: '1', primary: '1', secondary: '2' },
+        { index: 2, x: '2', primary: '4', secondary: '3' },
+      ],
     },
   },
 ];

@@ -1,45 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { runCalculateMode } from '../modes/calculate';
-import { runEquationMode } from '../modes/equation';
-import type { DisplayOutcome } from '../../types/calculator';
-import { goldenCases, type GoldenCase, type GoldenExpectation } from './golden-cases';
-
-const system2 = [
-  [1, 1, 3],
-  [2, -1, 0],
-];
-
-const system3 = [
-  [1, 1, 1, 6],
-  [2, -1, 1, 3],
-  [1, 2, -1, 3],
-];
-
-function runGoldenCase(goldenCase: GoldenCase): DisplayOutcome {
-  if (goldenCase.mode === 'calculate') {
-    return runCalculateMode({
-      action: goldenCase.action,
-      latex: goldenCase.latex,
-      angleUnit: 'deg',
-      outputStyle: 'both',
-      ansLatex: '0',
-    });
-  }
-
-  return runEquationMode({
-    equationScreen: goldenCase.equationScreen ?? 'symbolic',
-    equationLatex: goldenCase.equationLatex,
-    quadraticCoefficients: [1, -5, 6],
-    cubicCoefficients: [1, -6, 11, -6],
-    quarticCoefficients: [1, 0, -5, 0, 4],
-    polynomialSystem2Latex: ['x+y=3', 'x-y=1'],
-    system2,
-    system3,
-    angleUnit: 'deg',
-    outputStyle: 'both',
-    ansLatex: '0',
-  });
-}
+import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
+import { goldenCases, type GoldenExpectation } from './golden-cases';
+import { runGoldenCase, type GoldenExecution } from './golden-execution';
 
 function assertIncludesAll(label: string, actual: string | undefined, expected: readonly string[] | undefined) {
   for (const expectedSubstring of expected ?? []) {
@@ -47,7 +9,8 @@ function assertIncludesAll(label: string, actual: string | undefined, expected: 
   }
 }
 
-function assertExpectation(outcome: DisplayOutcome, expected: GoldenExpectation) {
+function assertExpectation(execution: GoldenExecution, expected: GoldenExpectation) {
+  const { outcome, tableResponse } = execution;
   const richOutcome = outcome.kind === 'prompt' ? undefined : outcome;
   expect(outcome.kind).toBe(expected.kind);
   expect(outcome.title).toBe(expected.title ?? outcome.title);
@@ -57,6 +20,23 @@ function assertExpectation(outcome: DisplayOutcome, expected: GoldenExpectation)
   }
 
   assertIncludesAll('exactLatex', richOutcome?.exactLatex, expected.exactIncludes);
+  assertIncludesAll(
+    'answerRows',
+    outcome.kind === 'success'
+      ? outcome.answerRows?.rows.map((row) => row.latex).join(' ')
+      : undefined,
+    expected.answerRowsInclude,
+  );
+  assertIncludesAll(
+    'branchReadback',
+    richOutcome?.branchReadback?.branchesLatex.join(' '),
+    expected.branchIncludes,
+  );
+  assertIncludesAll(
+    'periodicFamily',
+    richOutcome?.periodicFamily?.branchesLatex.join(' '),
+    expected.periodicBranchesInclude,
+  );
   assertIncludesAll('approxText', richOutcome?.approxText, expected.approxIncludes);
   assertIncludesAll('warnings', outcome.warnings.join(' '), expected.warningIncludes);
   assertIncludesAll(
@@ -70,6 +50,11 @@ function assertExpectation(outcome: DisplayOutcome, expected: GoldenExpectation)
     for (const expectedTitle of expected.detailTitlesInclude) {
       expect(titles).toContain(expectedTitle);
     }
+  }
+
+  if (expected.detailLinesInclude) {
+    const lines = richOutcome?.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    assertIncludesAll('detail lines', lines, expected.detailLinesInclude);
   }
 
   if (expected.resultOrigin !== undefined) {
@@ -105,6 +90,19 @@ function assertExpectation(outcome: DisplayOutcome, expected: GoldenExpectation)
     }
   }
 
+  if (expected.actionLatexIncludes) {
+    const actionLatex = richOutcome?.actions?.map((action) => action.latex).join(' ') ?? '';
+    assertIncludesAll('actions', actionLatex, expected.actionLatexIncludes);
+  }
+
+  for (const expectedRow of expected.tableRows ?? []) {
+    expect(tableResponse?.rows[expectedRow.index]).toEqual({
+      x: expectedRow.x,
+      primary: expectedRow.primary,
+      secondary: expectedRow.secondary,
+    });
+  }
+
   if (expected.rejectedCandidateCount !== undefined) {
     expect(richOutcome?.rejectedCandidateCount).toBe(expected.rejectedCandidateCount);
   }
@@ -115,10 +113,29 @@ function assertExpectation(outcome: DisplayOutcome, expected: GoldenExpectation)
 }
 
 describe('MATH-GOLDEN0 shipped behavior corpus', () => {
+  it('ratchets unique ids, the 43-case floor, and launcher workspace coverage', () => {
+    const ids = goldenCases.map((goldenCase) => goldenCase.id);
+    const launcherWorkspaces = DEFAULT_LAUNCHER_CATEGORIES
+      .flatMap((category) => category.entries)
+      .map((entry) => entry.id)
+      .filter((workspace) => workspace !== 'labs');
+
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(goldenCases.length).toBeGreaterThanOrEqual(43);
+    expect(goldenCases).toHaveLength(43);
+
+    for (const workspace of launcherWorkspaces) {
+      expect(
+        goldenCases.filter((goldenCase) => goldenCase.mode === workspace).length,
+        `${workspace} golden coverage`,
+      ).toBeGreaterThanOrEqual(2);
+    }
+  });
+
   for (const goldenCase of goldenCases) {
-    it(`${goldenCase.lane}: ${goldenCase.id}`, () => {
-      const outcome = runGoldenCase(goldenCase);
-      assertExpectation(outcome, goldenCase.expected);
+    it(`${goldenCase.lane}: ${goldenCase.id}`, async () => {
+      const execution = await runGoldenCase(goldenCase);
+      assertExpectation(execution, goldenCase.expected);
     });
   }
 });

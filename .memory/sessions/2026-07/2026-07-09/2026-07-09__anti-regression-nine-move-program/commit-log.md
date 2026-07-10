@@ -55,4 +55,9 @@
 ## Behavioral Ratchet 5
 - Subject: `FEATURE-PROBE-REGISTRY1`.
 - User approval: explicitly granted after verified gate review on `2026-07-10`.
-- Hash: this milestone commit after approval.
+- Hash: `4e5bfbd64739985619167c50778ef6bc7dccc23b`.
+
+## Behavioral Ratchet 6
+- Subject: `GOLDEN-CORPUS-REGISTRY1`.
+- User approval: standing approval explicitly granted for all remaining Moves 6-9 on `2026-07-11`.
+- Hash: this milestone commit; exact hash reported by post-commit readback and carried into the next checkpoint.
