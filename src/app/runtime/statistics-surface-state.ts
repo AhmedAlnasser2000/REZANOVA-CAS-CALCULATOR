@@ -1,4 +1,5 @@
 import type { CoreDraftState } from '../../types/calculator';
+import { datasetTextFromValues } from '../../lib/statistics/runtime-request';
 import type { StatisticsSurfaceState } from './workspace-surface-state';
 
 type StatisticsMenuScreen = 'home' | 'probabilityHome' | 'inferenceHome';
@@ -17,6 +18,8 @@ export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): Stati
     statisticsMenuSelection: copyStatisticsMenuSelection(state.statisticsMenuSelection),
     statisticsSourceSyncState: { ...state.statisticsSourceSyncState },
     statsDataset: { values: [...state.statsDataset.values] },
+    statisticsDatasetDraftText:
+      state.statisticsDatasetDraftText ?? datasetTextFromValues(state.statsDataset.values),
     frequencyTable: { rows: state.frequencyTable.rows.map((row) => ({ ...row })) },
     binomialState: { ...state.binomialState },
     normalState: { ...state.normalState },

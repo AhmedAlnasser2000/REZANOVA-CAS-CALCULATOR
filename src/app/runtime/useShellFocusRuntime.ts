@@ -198,6 +198,11 @@ export function useShellFocusRuntime({
   trigRouteMeta,
   trigScreen,
 }: UseShellFocusRuntimeOptions) {
+  const guideFocusTarget = guideRouteMeta?.focusTarget ?? null;
+  const guideFocusRouteKey = guideRouteMeta
+    ? `${guideRouteMeta.focusTarget}:${guideRouteMeta.breadcrumb.join('/')}`
+    : null;
+
   useEffect(() => {
     if (isLauncherOpen || historyOpen || sideSurfaceOverlayOpen) {
       return;
@@ -522,13 +527,13 @@ export function useShellFocusRuntime({
         return;
       }
 
-      if (currentMode === 'guide' && guideRouteMeta) {
-        if (guideRouteMeta.focusTarget === 'menu') {
+      if (currentMode === 'guide' && guideFocusTarget) {
+        if (guideFocusTarget === 'menu') {
           guideMenuPanelRef.current?.focus();
           return;
         }
 
-        if (guideRouteMeta.focusTarget === 'search') {
+        if (guideFocusTarget === 'search') {
           guideSearchInputRef.current?.focus();
           return;
         }
@@ -603,7 +608,8 @@ export function useShellFocusRuntime({
     geometryRouteMeta,
     geometryScreen,
     guideMenuPanelRef,
-    guideRouteMeta,
+    guideFocusRouteKey,
+    guideFocusTarget,
     guideSearchInputRef,
     historyOpen,
     integralFieldRef,

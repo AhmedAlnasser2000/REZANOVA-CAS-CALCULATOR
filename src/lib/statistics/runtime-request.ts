@@ -12,6 +12,7 @@ export {
   collapseDatasetToFrequencyTable,
   DEFAULT_STATISTICS_SOURCE_SYNC_STATE,
   datasetTextFromValues,
+  datasetValuesFromText,
   expandFrequencyTableToDataset,
   pointsTextFromState,
   statisticsRequestToWorkingSource,

@@ -194,6 +194,26 @@ describe('useStatisticsRuntime', () => {
     expect(setClipboardNotice).toHaveBeenCalledWith('Frequency table built from dataset');
   });
 
+  it('preserves in-progress dataset delimiters while deriving parsed values', () => {
+    const { hook } = renderStatisticsRuntime();
+
+    act(() => {
+      hook.result.current.updateStatisticsDataset('12,');
+    });
+
+    expect(hook.result.current.statisticsDatasetText).toBe('12,');
+    expect(hook.result.current.statsDataset.values).toEqual(['12']);
+
+    const snapshot = hook.result.current.captureStatisticsSurfaceState();
+    act(() => {
+      hook.result.current.updateStatisticsDataset('99');
+      hook.result.current.restoreStatisticsSurfaceState(snapshot);
+    });
+
+    expect(hook.result.current.statisticsDatasetText).toBe('12,');
+    expect(hook.result.current.statsDataset.values).toEqual(['12']);
+  });
+
   it('applies requests and guide examples through the hook boundary', () => {
     const { hook } = renderStatisticsRuntime();
 

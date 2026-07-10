@@ -166,6 +166,7 @@ export type StatisticsSurfaceState = {
   statisticsWorkingSource: StatisticsWorkingSource;
   statisticsSourceSyncState: StatisticsSourceSyncState;
   statsDataset: StatsDataset;
+  statisticsDatasetDraftText: string;
   frequencyTable: FrequencyTable;
   binomialState: BinomialState;
   normalState: NormalState;

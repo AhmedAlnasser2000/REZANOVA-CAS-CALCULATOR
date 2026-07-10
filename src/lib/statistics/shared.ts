@@ -309,6 +309,10 @@ export function datasetTextFromValues(values: string[]) {
   return values.join(', ');
 }
 
+export function datasetValuesFromText(text: string) {
+  return text.split(/[\s,]+/).map((value) => value.trim()).filter(Boolean);
+}
+
 export function frequencyTextFromRows(rows: FrequencyRow[]) {
   return rows
     .map((row) => `${row.value.trim()}:${row.frequency.trim()}`)
