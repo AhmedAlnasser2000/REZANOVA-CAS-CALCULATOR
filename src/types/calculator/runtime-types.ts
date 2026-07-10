@@ -1027,7 +1027,8 @@ export type MatrixResponse = {
 
 export type VectorOperation =
   | 'dot' | 'cross' | 'normA' | 'normB' | 'angle' | 'add' | 'subtract'
-  | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck' | 'gramSchmidtUV';
+  | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck' | 'gramSchmidtUV'
+  | 'linearCombination';
 
 export type VectorRequest = {
   operation: VectorOperation;

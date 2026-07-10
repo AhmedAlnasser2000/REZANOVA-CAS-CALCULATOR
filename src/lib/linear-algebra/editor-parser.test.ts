@@ -232,6 +232,54 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
   });
 
+  it('parses exact scalar/vector combinations with natural precedence', () => {
+    const options = {
+      mode: 'vector' as const,
+      vectorNamedValues: ['u', 'v', 'p', 'q'],
+    };
+    expect(parsedWithOptions('2p-q/3', options)).toMatchObject({
+      kind: 'binary',
+      operator: 'subtract',
+      left: {
+        kind: 'scale',
+        scalar: { exactValue: { numerator: 2, denominator: 1 } },
+        vector: { kind: 'named', name: 'p' },
+      },
+      right: {
+        kind: 'vectorDivide',
+        vector: { kind: 'named', name: 'q' },
+        scalar: { exactValue: { numerator: 3, denominator: 1 } },
+      },
+    });
+    expect(parsedWithOptions('-p', options)).toMatchObject({
+      kind: 'negate',
+      value: { kind: 'named', name: 'p' },
+    });
+    expect(parsedWithOptions('\\frac{1}{2}(p+q)', options)).toMatchObject({
+      kind: 'scale',
+      scalar: { exactValue: { numerator: 1, denominator: 2 } },
+      vector: { kind: 'binary', operator: 'add' },
+    });
+    expect(parsedWithOptions('0.125p', options)).toMatchObject({
+      kind: 'scale',
+      scalar: { exactValue: { numerator: 1, denominator: 8 } },
+    });
+    expect(parsedWithOptions('2\\cdot p', options)).toMatchObject({
+      kind: 'binary',
+      operator: 'dot',
+      left: { kind: 'scalar' },
+      right: { kind: 'named', name: 'p' },
+    });
+    expect(parsedWithOptions('p\\times q', options)).toMatchObject({
+      kind: 'binary',
+      operator: 'cross',
+    });
+    expect(parseLinearAlgebraEditorLatex('ap', options)).toMatchObject({
+      ok: false,
+      message: expect.stringContaining('Symbolic vector coefficients'),
+    });
+  });
+
   it('parses inline bmatrix matrices and column vectors', () => {
     expect(parsed('\\begin{bmatrix}1 & 2\\\\3 & 4\\end{bmatrix}', 'matrix')).toEqual({
       kind: 'matrixLiteral',

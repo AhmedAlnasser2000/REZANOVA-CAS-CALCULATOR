@@ -1,15 +1,29 @@
 import type { ExactScalarWire } from '../../types/calculator';
-import { exactScalarToNumber } from '../algebra/polynomial-core';
+import {
+  divideExactScalars,
+  exactScalarIsZero,
+  exactScalarToNumber,
+  type ExactScalar,
+} from '../algebra/polynomial-core';
 import {
   exactVectorFromNumeric,
   exactVectorFromWire,
   exactVectorToWire,
 } from './exact-matrix-format';
-import type { ExactVector } from './exact-matrix-core';
-import { vectorEditingDimensionError } from './dimension-contract';
+import {
+  scalar,
+  validateExactMatrix,
+  type ExactVector,
+} from './exact-matrix-core';
+import {
+  LINEAR_ALGEBRA_EXACT_EXPRESSION_MAX_DIMENSION,
+  LINEAR_ALGEBRA_EXACT_SCALAR_ABS_LIMIT,
+  vectorEditingDimensionError,
+} from './dimension-contract';
 import {
   exactAddVectors,
   exactCrossVectors,
+  exactScaleVector,
   exactSubtractVectors,
   exactUnitVector,
 } from './exact-vector-core';
@@ -92,6 +106,78 @@ function vectorDimensionStop(vector: NumericVector): VectorExpressionEvaluation 
   return message ? { ok: false, message } : null;
 }
 
+function exactScalarForExpression(
+  expression: Extract<LinearAlgebraEditorExpression, { kind: 'scalar' }>,
+): ExactScalar | null {
+  return exactVectorFromWire([expression.exactValue])?.[0] ?? null;
+}
+
+function validatedExactVector(vector: ExactVector): VectorExpressionEvaluation {
+  const validated = validateExactMatrix([vector], {
+    maxDimension: LINEAR_ALGEBRA_EXACT_EXPRESSION_MAX_DIMENSION,
+    maxScalarAbs: LINEAR_ALGEBRA_EXACT_SCALAR_ABS_LIMIT,
+  });
+  if (validated.kind === 'stop') {
+    return {
+      ok: false,
+      message: validated.reason === 'scalar-growth-limit'
+        ? 'This exact vector combination exceeds the scalar-growth limit.'
+        : 'This exact vector combination could not be validated.',
+    };
+  }
+  return {
+    ok: true,
+    operand: operandFromExact(validated.matrix[0], ''),
+  };
+}
+
+function scaleEvaluatedVector(
+  vector: EvaluatedVectorOperand,
+  factor: ExactScalar,
+  displayLatex: string,
+): VectorExpressionEvaluation {
+  const exactVector = exactForOperand(vector);
+  if (exactVector) {
+    const validated = validatedExactVector(exactScaleVector(exactVector, factor));
+    if (!validated.ok) return validated;
+    return {
+      ok: true,
+      operand: {
+        ...validated.operand,
+        displayLatex,
+      },
+    };
+  }
+
+  const numericFactor = exactScalarToNumber(factor);
+  return {
+    ok: true,
+    operand: operandFromNumeric(
+      vector.vector.map((value) => value * numericFactor),
+      displayLatex,
+    ),
+  };
+}
+
+function evaluateScaledVector(
+  vectorExpression: LinearAlgebraEditorExpression,
+  scalarExpression: Extract<LinearAlgebraEditorExpression, { kind: 'scalar' }>,
+  input: VectorExpressionEvaluationInput,
+  reciprocal: boolean,
+  displayLatex: string,
+): VectorExpressionEvaluation {
+  const factor = exactScalarForExpression(scalarExpression);
+  if (!factor) {
+    return { ok: false, message: 'Vector scaling needs an exact numeric scalar.' };
+  }
+  const resolvedFactor = reciprocal ? divideExactScalars(scalar(1), factor) : factor;
+  if (!resolvedFactor || (reciprocal && exactScalarIsZero(factor))) {
+    return { ok: false, message: 'A vector cannot be divided by zero.' };
+  }
+  const vector = evaluateVectorExpression(vectorExpression, input);
+  return vector.ok ? scaleEvaluatedVector(vector.operand, resolvedFactor, displayLatex) : vector;
+}
+
 function evaluateNamedVector(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'named' }>,
   input: VectorExpressionEvaluationInput,
@@ -131,6 +217,23 @@ function evaluateBinaryVector(
   expression: Extract<LinearAlgebraEditorExpression, { kind: 'binary' }>,
   input: VectorExpressionEvaluationInput,
 ): VectorExpressionEvaluation {
+  if (expression.operator === 'dot' || expression.operator === 'cross') {
+    const leftScalar = expression.left.kind === 'scalar' ? expression.left : null;
+    const rightScalar = expression.right.kind === 'scalar' ? expression.right : null;
+    if (leftScalar && rightScalar) {
+      return { ok: false, message: 'Scalar-only expressions are not Vector results.' };
+    }
+    if (leftScalar || rightScalar) {
+      return evaluateScaledVector(
+        leftScalar ? expression.right : expression.left,
+        leftScalar ?? rightScalar!,
+        input,
+        false,
+        formatLinearAlgebraEditorExpression(expression),
+      );
+    }
+  }
+
   if (expression.operator !== 'add' && expression.operator !== 'subtract' && expression.operator !== 'cross') {
     return { ok: false, message: 'This Vector editor expression does not produce a vector.' };
   }
@@ -158,7 +261,15 @@ function evaluateBinaryVector(
         : exactCrossVectors(leftExact, rightExact)
     : null;
   if (exactResult) {
-    return { ok: true, operand: operandFromExact(exactResult, displayLatex) };
+    const validated = validatedExactVector(exactResult);
+    if (!validated.ok) return validated;
+    return {
+      ok: true,
+      operand: {
+        ...validated.operand,
+        displayLatex,
+      },
+    };
   }
 
   const vector = expression.operator === 'add'
@@ -216,6 +327,30 @@ export function evaluateVectorExpression(
       };
     case 'named':
       return evaluateNamedVector(expression, input);
+    case 'negate':
+      return evaluateScaledVector(
+        expression.value,
+        { kind: 'scalar', exactValue: { numerator: -1, denominator: 1 }, displayLatex: '-1' },
+        input,
+        false,
+        formatLinearAlgebraEditorExpression(expression),
+      );
+    case 'scale':
+      return evaluateScaledVector(
+        expression.vector,
+        expression.scalar,
+        input,
+        false,
+        formatLinearAlgebraEditorExpression(expression),
+      );
+    case 'vectorDivide':
+      return evaluateScaledVector(
+        expression.vector,
+        expression.scalar,
+        input,
+        true,
+        formatLinearAlgebraEditorExpression(expression),
+      );
     case 'binary':
       return evaluateBinaryVector(expression, input);
     case 'unary':

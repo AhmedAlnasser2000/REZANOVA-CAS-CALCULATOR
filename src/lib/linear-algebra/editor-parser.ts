@@ -14,6 +14,12 @@ import {
   isMatrixNamedValueName,
   isVectorNamedValueName,
 } from './named-values';
+import {
+  parseScalarExpression,
+  splitLatexFraction,
+  splitLeadingScalarProduct,
+  type LinearAlgebraScalarExpression,
+} from './editor-vector-scalars';
 
 export type { LinearAlgebraEditorParseErrorReason } from './editor-parser-errors';
 
@@ -25,6 +31,8 @@ export type LinearAlgebraValueExpression =
   | { kind: 'named'; name: LinearAlgebraNamedValue; displayLatex: string }
   | { kind: 'matrixLiteral'; value: number[][]; exactValue: ExactScalarWire[][]; displayLatex: string }
   | { kind: 'vectorLiteral'; value: number[]; exactValue: ExactScalarWire[]; displayLatex: string };
+
+export type { LinearAlgebraScalarExpression } from './editor-vector-scalars';
 
 export type LinearAlgebraSystemForm = 'Ax=b' | 'Ax+b=0';
 
@@ -59,8 +67,12 @@ export type LinearAlgebraBinaryOperator =
 
 export type LinearAlgebraEditorExpression =
   | LinearAlgebraValueExpression
+  | LinearAlgebraScalarExpression
   | { kind: 'unary'; operator: LinearAlgebraUnaryOperator; value: LinearAlgebraEditorExpression }
   | { kind: 'binary'; operator: LinearAlgebraBinaryOperator; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
+  | { kind: 'negate'; value: LinearAlgebraEditorExpression }
+  | { kind: 'scale'; scalar: LinearAlgebraScalarExpression; vector: LinearAlgebraEditorExpression }
+  | { kind: 'vectorDivide'; vector: LinearAlgebraEditorExpression; scalar: LinearAlgebraScalarExpression }
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
@@ -514,6 +526,50 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     };
   }
 
+  if (input.startsWith('-')) {
+    if (input.length === 1) {
+      fail('unsupported-expression', 'Vector negation needs an operand.');
+    }
+    return { kind: 'negate', value: parseExpression(input.slice(1), options) };
+  }
+
+  if (options.mode === 'vector') {
+    const implicitScale = splitLeadingScalarProduct(input);
+    if (implicitScale) {
+      return {
+        kind: 'scale',
+        scalar: implicitScale.scalar,
+        vector: parseExpression(implicitScale.rest, options),
+      };
+    }
+
+    const latexFraction = splitLatexFraction(input);
+    if (latexFraction) {
+      const denominator = parseScalarExpression(latexFraction[1]);
+      if (!denominator) {
+        fail('unsupported-expression', 'Vector division needs an exact numeric scalar denominator.');
+      }
+      const numerator = parseExpression(latexFraction[0], options);
+      if (numerator.kind === 'scalar') {
+        fail('unsupported-expression', 'Scalar-only expressions are not Vector results.');
+      }
+      return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
+    }
+
+    const divide = splitTopLevel(input, ['/']);
+    if (divide) {
+      const denominator = parseScalarExpression(divide.right);
+      const numerator = tryParseExpression(divide.left, options);
+      if (!denominator) {
+        fail('unsupported-expression', 'Vector division needs an exact numeric scalar denominator.');
+      }
+      if (!numerator || numerator.kind === 'scalar') {
+        fail('unsupported-expression', 'A scalar cannot be divided by a vector.');
+      }
+      return { kind: 'vectorDivide', vector: numerator, scalar: denominator };
+    }
+  }
+
   const dot = splitTopLevel(input, ['\\cdot']);
   if (dot) {
     return {
@@ -758,12 +814,25 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     return plainListLiteral;
   }
 
+  const scalar = parseScalarExpression(input);
+  if (scalar) {
+    return scalar;
+  }
+
   if (isMatrixName(input, options)) {
     return namedValueExpression(input);
   }
 
   if (isVectorName(input, options)) {
     return namedValueExpression(input);
+  }
+
+  if (
+    options.mode === 'vector'
+    && /^[A-Za-z][A-Za-z]$/.test(input)
+    && isVectorName(input.slice(1), options)
+  ) {
+    fail('unsupported-expression', 'Symbolic vector coefficients are not supported yet. Use an exact number.');
   }
 
   fail('unsupported-expression', 'Unsupported Matrix/Vector editor expression.');

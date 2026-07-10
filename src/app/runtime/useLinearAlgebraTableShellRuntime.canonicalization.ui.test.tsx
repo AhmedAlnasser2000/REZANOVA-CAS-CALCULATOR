@@ -89,6 +89,9 @@ describe('useLinearAlgebraTableShellRuntime editor canonicalization', () => {
     expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
       'gram([1,bad],[1,0])',
     )).toBeNull();
+    expect(hook.result.current.linearAlgebraRuntime.canonicalizeVectorEditorPaste(
+      '2u-v/3',
+    )).toBe('2u-\\frac{v}{3}');
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.setVectorEditorLatex('gram([1,1],[1,0])');

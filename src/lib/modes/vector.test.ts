@@ -2,6 +2,31 @@ import { describe, expect, it } from 'vitest';
 import { buildVectorOoeSnapshot, runVectorMode } from './vector';
 
 describe('runVectorMode', () => {
+  it('reads exact linear combinations without nonnumeric approximation text', () => {
+    expect(runVectorMode({
+      operation: 'linearCombination',
+      vectorA: [4.5, 4.5],
+      vectorB: [0, 0],
+      exactVectorA: [
+        { numerator: 9, denominator: 2 },
+        { numerator: 9, denominator: 2 },
+      ],
+      editorExpressionLatex: '\\frac{1}{2}\\left(p+q\\right)',
+      vectorOperandLatexA: '\\frac{1}{2}\\left(p+q\\right)',
+      angleUnit: 'rad',
+    })).toMatchObject({
+      kind: 'success',
+      title: '\\frac{1}{2}\\left(p+q\\right)',
+      exactLatex: '\\begin{bmatrix}\\frac{9}{2}\\\\\\frac{9}{2}\\end{bmatrix}',
+      answerRows: {
+        rows: [{
+          latex: '\\frac{1}{2}\\left(p+q\\right)=\\begin{bmatrix}\\frac{9}{2}\\\\\\frac{9}{2}\\end{bmatrix}',
+        }],
+      },
+      approxText: undefined,
+    });
+  });
+
   it('uses editor expressions as Vector result titles when present', () => {
     const expressionLatex = '\\operatorname{proj}_{u}\\left(\\begin{bmatrix}2\\\\3\\end{bmatrix}\\right)';
     const result = runVectorMode({
@@ -119,6 +144,27 @@ describe('runVectorMode', () => {
         { numerator: 1, denominator: 2 },
         { numerator: 3, denominator: 1 },
       ],
+    });
+
+    const combinationSnapshot = buildVectorOoeSnapshot({
+      operation: 'linearCombination',
+      vectorA: [4, 11],
+      vectorB: [6, 3],
+      exactVectorA: [
+        { numerator: 4, denominator: 1 },
+        { numerator: 11, denominator: 1 },
+      ],
+      angleUnit: 'rad',
+      editorExpressionLatex: '2p-\\frac{q}{3}',
+      vectorOperandLatexA: '2p-\\frac{q}{3}',
+    });
+    expect(combinationSnapshot.request).toMatchObject({
+      operation: 'linearCombination',
+      exactVectorA: [
+        { numerator: 4, denominator: 1 },
+        { numerator: 11, denominator: 1 },
+      ],
+      editorExpressionLatex: '2p-\\frac{q}{3}',
     });
   });
 });

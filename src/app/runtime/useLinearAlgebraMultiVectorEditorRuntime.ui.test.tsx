@@ -83,6 +83,15 @@ describe('useLinearAlgebraTableShellRuntime multi-vector editor expressions', ()
       exactLatex: '1',
     });
 
+    const exactCombination = await runVectorExpression('2p-q/3');
+    expect(exactCombination).toMatchObject({
+      kind: 'success',
+      title: '2p-\\frac{q}{3}',
+      sourceMode: 'vector',
+      exactLatex: '\\begin{bmatrix}\\frac{5}{3}\\\\2\\end{bmatrix}',
+      approxText: undefined,
+    });
+
     const composedGram = await runVectorExpression('\\operatorname{gram}\\left(p,q\\right)');
     expect(composedGram).toMatchObject({
       kind: 'success',

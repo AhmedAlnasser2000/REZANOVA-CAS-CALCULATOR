@@ -145,6 +145,65 @@ describe('linear algebra editor dispatch named values', () => {
     });
   });
 
+  it('evaluates exact scalar/vector combinations through a dedicated request', () => {
+    const values = [
+      { id: 'vector-p', name: 'p', value: [3, 6] },
+      { id: 'vector-q', name: 'q', value: [6, 3] },
+    ];
+    const input = {
+      vectorA: [3, 6],
+      vectorB: [6, 3],
+      vectorValues: values,
+      angleUnit: 'rad' as const,
+    };
+
+    const combination = dispatchVectorEditorLatex({ ...input, latex: '2p-q/3' });
+    expect(combination).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'linearCombination',
+        vectorA: [4, 11],
+        exactVectorA: [
+          { numerator: 4, denominator: 1 },
+          { numerator: 11, denominator: 1 },
+        ],
+        editorExpressionLatex: '2p-\\frac{q}{3}',
+      },
+    });
+    expect(combination.ok ? runVectorOperation(combination.request).resultLatex : '').toBe(
+      '\\begin{bmatrix}4\\\\11\\end{bmatrix}',
+    );
+
+    const half = dispatchVectorEditorLatex({ ...input, latex: '\\frac{1}{2}(p+q)' });
+    expect(half).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'linearCombination',
+        vectorA: [4.5, 4.5],
+        exactVectorA: [
+          { numerator: 9, denominator: 2 },
+          { numerator: 9, denominator: 2 },
+        ],
+      },
+    });
+    expect(half.ok ? runVectorOperation(half.request).resultLatex : '').toBe(
+      '\\begin{bmatrix}\\frac{9}{2}\\\\\\frac{9}{2}\\end{bmatrix}',
+    );
+
+    const decimal = dispatchVectorEditorLatex({ ...input, latex: '0.125p' });
+    expect(decimal.ok ? runVectorOperation(decimal.request).resultLatex : '').toBe(
+      '\\begin{bmatrix}\\frac{3}{8}\\\\\\frac{3}{4}\\end{bmatrix}',
+    );
+    expect(dispatchVectorEditorLatex({ ...input, latex: 'p/0' })).toMatchObject({
+      ok: false,
+      message: 'A vector cannot be divided by zero.',
+    });
+    expect(dispatchVectorEditorLatex({ ...input, latex: 'ap' })).toMatchObject({
+      ok: false,
+      message: expect.stringContaining('Symbolic vector coefficients'),
+    });
+  });
+
   it('supports general projection, cross product, and scalar triple product notation', () => {
     const projection = dispatchVectorEditorLatex({
       latex: 'proj(p,q)',

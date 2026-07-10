@@ -15,7 +15,7 @@ function detLatex(value: string) {
 
 function suffixOperand(expression: LinearAlgebraEditorExpression) {
   const formatted = formatLinearAlgebraEditorExpression(expression);
-  return expression.kind === 'named' || expression.kind === 'matrixLiteral' || expression.kind === 'vectorLiteral'
+  return expression.kind === 'named' || expression.kind === 'matrixLiteral' || expression.kind === 'vectorLiteral' || expression.kind === 'scalar'
     ? formatted
     : `\\left(${formatted}\\right)`;
 }
@@ -97,7 +97,14 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
       return expression.displayLatex;
     case 'matrixLiteral':
     case 'vectorLiteral':
+    case 'scalar':
       return expression.displayLatex;
+    case 'negate':
+      return `-${suffixOperand(expression.value)}`;
+    case 'scale':
+      return `${expression.scalar.displayLatex}${suffixOperand(expression.vector)}`;
+    case 'vectorDivide':
+      return `\\frac{${formatLinearAlgebraEditorExpression(expression.vector)}}{${expression.scalar.displayLatex}}`;
     case 'unary':
       return formatUnary(expression.operator, expression.value);
     case 'binary':

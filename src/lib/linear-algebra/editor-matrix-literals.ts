@@ -99,11 +99,11 @@ function normalizeExactWire(value: ExactScalarWire): ExactScalarWire {
   };
 }
 
-function exactWireToNumber(value: ExactScalarWire): number {
+export function exactWireToNumber(value: ExactScalarWire): number {
   return value.numerator / value.denominator;
 }
 
-function exactWireToLatex(value: ExactScalarWire): string {
+export function exactWireToLatex(value: ExactScalarWire): string {
   if (value.denominator === 1) {
     return `${value.numerator}`;
   }
@@ -193,6 +193,15 @@ function parseScalarAtom(input: string): ExactScalarWire {
   }
 
   fail('invalid-number', `Unsupported numeric entry "${input}".`);
+}
+
+export function tryParseExactScalarLiteral(input: string): ExactScalarWire | null {
+  const finiteDecimal = /^-?(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))$/;
+  const asciiFraction = /^-?(?:\d+\.?\d*|\.\d+)\/-?(?:\d+\.?\d*|\.\d+)$/;
+  const latexFraction = /^-?\\frac\{-?(?:\d+\.?\d*|\.\d+)\}\{-?(?:\d+\.?\d*|\.\d+)\}$/;
+  return finiteDecimal.test(input) || asciiFraction.test(input) || latexFraction.test(input)
+    ? parseScalarAtom(input)
+    : null;
 }
 
 function parseLatexNumber(input: string): { value: number; exactValue: ExactScalarWire } {

@@ -56,6 +56,8 @@ After this milestone is verified and committed, pause for user review before sel
 
 ### `VECTOR-SCALAR-LINEAR-COMBINATION1`
 
+Status: implemented and verified on 2026-07-10.
+
 Add exact numeric scalar/vector expressions such as `2p-q/3`, `-p`, and `1/2(p+q)`. Preserve rational sidecars through vector addition, subtraction, and scalar multiplication. Symbolic coefficient parameters are deferred until the symbolic substrate exists.
 
 Prerequisites: vector expression AST precedence, exact scalar sidecars, dimension-contract validation, natural readback, and focused parser/runtime/UI tests.

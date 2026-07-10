@@ -34,6 +34,7 @@ import {
   type EvaluatedVectorOperand,
   type VectorExpressionEvaluation,
 } from './vector-expression-evaluator';
+import { containsVectorScalarArithmetic } from './editor-vector-scalars';
 
 type MatrixOperand = EvaluatedMatrixOperand;
 type VectorOperand = EvaluatedVectorOperand;
@@ -147,6 +148,24 @@ function vectorOperand(
 
 function namedVectorOperand(name: string, input: VectorEditorDispatchInput): VectorExpressionEvaluation {
   return vectorOperand({ kind: 'named', name, displayLatex: name }, input);
+}
+
+function vectorLinearCombinationRequest(
+  input: VectorEditorDispatchInput,
+  expression: LinearAlgebraEditorExpression,
+): VectorEditorDispatchResult {
+  const result = vectorOperand(expression, input);
+  if (!result.ok) return vectorEvaluationError(result);
+  return {
+    ok: true,
+    request: {
+      operation: 'linearCombination',
+      vectorA: result.operand.vector,
+      vectorB: cloneVector(input.vectorB),
+      angleUnit: input.angleUnit,
+      ...vectorMetadata(input, { operandA: result.operand }),
+    },
+  };
 }
 
 const MATRIX_UNARY_OPERATIONS: Partial<Record<LinearAlgebraUnaryOperator, readonly [MatrixOperation, MatrixOperation]>> = {
@@ -755,6 +774,9 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
     ...input,
     latex: formatLinearAlgebraEditorExpression(expression),
   };
+  if (containsVectorScalarArithmetic(expression)) {
+    return vectorLinearCombinationRequest(canonicalInput, expression);
+  }
   if (expression.kind === 'binary') {
     return vectorPairRequest(canonicalInput, expression);
   }

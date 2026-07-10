@@ -30,6 +30,7 @@ import {
 import {
   dotVectors,
   runNumericVectorOperation,
+  type NumericVectorRequest,
   type VectorCoreResult,
   type VectorCoreStopReason,
 } from './vector-core';
@@ -344,6 +345,21 @@ export function runVectorOperation(req: VectorRequest): VectorResponse {
     return { warnings: [], error: dimensionError };
   }
 
-  const result = runNumericVectorOperation(req);
+  const operation = req.operation;
+  if (operation === 'linearCombination') {
+    const exact = exactVectorFromWire(req.exactVectorA) ?? exactVectorFromNumeric(req.vectorA);
+    const resultLatex = exact ? exactVectorToColumnLatex(exact) : vectorToLatex(req.vectorA);
+    const answerLatex = req.editorExpressionLatex
+      ? `${req.editorExpressionLatex}=${resultLatex}`
+      : resultLatex;
+    return {
+      resultLatex,
+      answerRows: { rows: [{ latex: answerLatex }] },
+      warnings: [],
+    };
+  }
+
+  const numericRequest: NumericVectorRequest = { ...req, operation };
+  const result = runNumericVectorOperation(numericRequest);
   return exactVectorResponse(req, result) ?? vectorCoreResultToResponse(req, result);
 }

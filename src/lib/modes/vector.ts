@@ -65,6 +65,8 @@ export function vectorOperationLabel(operation: VectorOperation) {
       return 'orthogonal(u,v)';
     case 'gramSchmidtUV':
       return 'gram(u,v)';
+    case 'linearCombination':
+      return 'Vector combination';
     default:
       return 'Vector';
   }
