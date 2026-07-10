@@ -32,6 +32,27 @@ describe('runMatrixMode', () => {
     expect(result.kind).toBe('success');
   });
 
+  it('labels and presents Matrix linear-map profiles directly', () => {
+    const result = runMatrixMode({
+      operation: 'profileA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('profile(A)');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.approxText).toBeUndefined();
+      expect(result.detailSections?.map((section) => section.title)).toEqual([
+        'Rank-Nullity Facts',
+        'Kernel',
+        'Image',
+        'Invertibility',
+        'RREF Evidence',
+      ]);
+    }
+  });
+
   it('uses editor expressions as Matrix coordinate titles', () => {
     const expressionLatex = '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)';
     const result = runMatrixMode({

@@ -18,6 +18,12 @@ function vectorCard(page: Page, name: string): Locator {
     .first();
 }
 
+function matrixCard(page: Page, name: string): Locator {
+  return page.locator('.linear-algebra-value-card')
+    .filter({ has: page.getByLabel(`Matrix ${name} name`) })
+    .first();
+}
+
 async function setVector(page: Page, name: string, values: readonly number[]) {
   await page.getByLabel(`Vector ${name} length`).fill(String(values.length));
   const inputs = vectorCard(page, name).locator('.linear-algebra-vector-grid input');
@@ -32,6 +38,23 @@ async function addVector(page: Page, name: string, values: readonly number[]) {
   await page.getByRole('button', { name: 'Add Vector' }).click();
   await expect(page.getByLabel(`Vector ${name} name`)).toBeVisible();
   await setVector(page, name, values);
+}
+
+async function setMatrix(
+  page: Page,
+  name: string,
+  rows: number,
+  columns: number,
+  values: readonly number[],
+) {
+  await page.getByLabel(`Matrix ${name} rows`).fill(String(rows));
+  await page.getByLabel(`Matrix ${name} columns`).fill(String(columns));
+  const inputs = matrixCard(page, name).locator('.linear-algebra-matrix-grid input');
+  await expect(inputs).toHaveCount(rows * columns);
+  for (let index = 0; index < values.length; index += 1) {
+    await inputs.nth(index).fill(String(values[index]));
+    await inputs.nth(index).blur();
+  }
 }
 
 async function rawAnswerLatex(page: Page) {
@@ -97,5 +120,58 @@ test('span and independence show an input-selected basis and exact dependence pr
   await page.screenshot({
     fullPage: true,
     path: `${screenshotDir}/vector-span-independence.png`,
+  });
+});
+
+test('linear-map profile explains square and rectangular maps without misleading claims', async ({ page }) => {
+  await openLauncherApp(page, 'Linear', 'Matrix');
+  await setMatrix(page, 'A', 2, 2, [1, 1, 2, 2]);
+
+  await setMathFieldLatex(page, 'profile(A)');
+  await page.getByTestId('editor-runtime-run').click();
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect.poll(() => rawAnswerLatex(page)).toContain(
+    String.raw`A:\mathbb{R}^{2}\to\mathbb{R}^{2}`,
+  );
+  await expect.poll(() => rawAnswerLatex(page)).toContain(String.raw`\operatorname{rank}(A)=1`);
+  await expect.poll(() => rawAnswerLatex(page)).toContain(String.raw`\operatorname{nullity}(A)=1`);
+  for (const title of ['Rank-Nullity Facts', 'Kernel', 'Image', 'Invertibility', 'RREF Evidence']) {
+    await expect(page.getByText(title, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByTestId('display-outcome-detail-section-0')).toHaveAttribute('open');
+  await expect(page.getByTestId('display-outcome-detail-section-1')).toHaveAttribute('open');
+  await expect(page.getByTestId('display-outcome-detail-section-2')).toHaveAttribute('open');
+  await expect(page.getByTestId('display-outcome-detail-section-3')).toHaveAttribute('open');
+  await expect(page.getByTestId('display-outcome-detail-section-4')).not.toHaveAttribute('open');
+  await expect(page.getByTestId('display-outcome-root')).toContainText(
+    'Nullity is 1, so nonzero vectors in the kernel map to zero.',
+  );
+  await expect(page.getByTestId('display-outcome-root')).toContainText(
+    'The rank is 1, smaller than the codomain dimension 2',
+  );
+  await expect(page.getByTestId('display-outcome-root')).not.toContainText(/APPROX|Unsupported/u);
+
+  await page.screenshot({
+    fullPage: true,
+    path: `${screenshotDir}/matrix-linear-map-profile-singular.png`,
+  });
+
+  await setMatrix(page, 'A', 3, 2, [1, 0, 0, 1, 0, 0]);
+  await page.getByTestId('editor-runtime-run').click();
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-root')).toContainText(
+    'Invertibility is not applicable to rectangular matrices.',
+  );
+  await expect(page.getByTestId('display-outcome-root')).not.toContainText(
+    'The square matrix is not invertible.',
+  );
+
+  await page.getByRole('button', { name: 'Shift', exact: true }).click();
+  await expect(page.getByRole('button', { name: /profile/u })).toBeVisible();
+  await page.getByRole('button', { name: 'Base', exact: true }).click();
+
+  await page.screenshot({
+    fullPage: true,
+    path: `${screenshotDir}/matrix-linear-map-profile-rectangular.png`,
   });
 });

@@ -118,6 +118,7 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{gram\}/g, 'gram')
     .replace(/\\operatorname\{span\}/g, 'span')
     .replace(/\\operatorname\{independent\}/g, 'independent')
+    .replace(/\\operatorname\{profile\}/g, 'profile')
     .replace(/\\operatorname\{angle\}/g, 'angle')
     .replace(/\\det/g, 'det')
     .replace(/\\angle/g, 'angle')
@@ -559,6 +560,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['plu', 'plu'],
     ['qr', 'qr'],
     ['invertible', 'invertibility'],
+    ['profile', 'profile'],
     ['eigen', 'eigen'],
     ['diag', 'diagonalization'],
     ['norm', 'norm'],

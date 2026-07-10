@@ -21,4 +21,26 @@ describe('Linear Algebra display block defaults', () => {
     expect(blocks.find((block) => block.label === 'Dependence Relation')).toMatchObject({ defaultCollapsed: false });
     expect(blocks.find((block) => block.label === 'RREF Evidence')).toMatchObject({ defaultCollapsed: true });
   });
+
+  it('opens linear-map facts while keeping RREF evidence collapsed', () => {
+    const outcome: DisplayOutcome = {
+      kind: 'success',
+      title: 'profile(A)',
+      exactLatex: 'A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2}',
+      detailSections: [
+        { title: 'Rank-Nullity Facts', lines: ['\\operatorname{rank}(A)=1'], lineKind: 'math' },
+        { title: 'Kernel', lines: ['\\operatorname{nullity}(A)=1'], lineKind: 'math' },
+        { title: 'Image', lines: ['\\dim\\operatorname{Im}(A)=1'], lineKind: 'math' },
+        { title: 'Invertibility', lines: ['\\det(A)=0'], lineKind: 'math' },
+        { title: 'RREF Evidence', lines: ['\\operatorname{rref}(A)=R'], lineKind: 'math' },
+      ],
+      warnings: [],
+    };
+    const blocks = buildDisplayBlocks(outcome);
+
+    for (const title of ['Rank-Nullity Facts', 'Kernel', 'Image', 'Invertibility']) {
+      expect(blocks.find((block) => block.label === title)).toMatchObject({ defaultCollapsed: false });
+    }
+    expect(blocks.find((block) => block.label === 'RREF Evidence')).toMatchObject({ defaultCollapsed: true });
+  });
 });

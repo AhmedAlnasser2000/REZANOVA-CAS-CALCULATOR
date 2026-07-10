@@ -685,6 +685,23 @@ describe('history entry schema', () => {
     });
   });
 
+  it('accepts Matrix linear-map profile replay seeds', () => {
+    expect(historyEntrySchema.parse({
+      id: 'matrix-profile-seed',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{profile}\\left(A\\right)',
+      resultLatex: 'A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2}',
+      matrixSeed: {
+        operation: 'profileA',
+        matrixA: [[1, 1], [2, 2]],
+        matrixB: [[1, 0], [0, 1]],
+        editorExpressionLatex: '\\operatorname{profile}\\left(A\\right)',
+        matrixOperandLatexA: 'A',
+      },
+      timestamp: '2026-07-10T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('profileA');
+  });
+
   it('accepts typed Trigonometry Period & Phase replay seeds', () => {
     const parsed = historyEntrySchema.parse({
       id: 'trig-period-phase-seed-1',

@@ -119,6 +119,7 @@ const MATRIX_EDITOR_FUNCTIONS = new Set([
   'null',
   'plu',
   'plusolve',
+  'profile',
   'projcol',
   'qr',
   'rank',

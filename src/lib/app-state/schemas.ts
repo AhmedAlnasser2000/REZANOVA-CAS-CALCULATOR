@@ -336,6 +336,8 @@ const matrixOperationSchema = z.enum([
   'leastSquaresB',
   'invertibilityA',
   'invertibilityB',
+  'profileA',
+  'profileB',
   'eigenA',
   'eigenB',
   'diagonalizeA',

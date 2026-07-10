@@ -98,6 +98,8 @@ Audit the representation needed for symbolic vector components, assumptions, sym
 
 ### `MATRIX-LINEAR-MAP-PROFILE1`
 
+Status: implemented and verified on 2026-07-10.
+
 Add `profile(A)` with domain/codomain dimensions, rank, nullity, kernel, image, pivot columns, one-to-one/onto facts, and invertibility when square. Reuse existing exact space/rank infrastructure and present the rank-nullity theorem as one coherent profile.
 
 ### `LINEAR-ALGEBRA-SHELL-SPLIT0`

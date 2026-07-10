@@ -33,6 +33,7 @@ import { runMatrixCoordinates } from './matrix-coordinates';
 import { runMatrixDiagonalization, runMatrixSpectralPower } from './matrix-diagonalization';
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
+import { runMatrixLinearMapProfile } from './matrix-linear-map-profile';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
 import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
 import { runMatrixColumnProjection, runMatrixLeastSquares, runMatrixQr } from './matrix-qr';
@@ -225,6 +226,26 @@ function exactInvertibilityResponse(req: MatrixRequest): MatrixResponse | null {
         };
   }
 
+  return null;
+}
+
+function exactProfileResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'profileA') {
+    return runMatrixLinearMapProfile({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+  if (req.operation === 'profileB') {
+    return req.matrixB
+      ? runMatrixLinearMapProfile({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : { warnings: [], error: 'Matrix B is incomplete.' };
+  }
   return null;
 }
 
@@ -649,6 +670,11 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
   const invertibilityResponse = exactInvertibilityResponse(req);
   if (invertibilityResponse) {
     return invertibilityResponse;
+  }
+
+  const profileResponse = exactProfileResponse(req);
+  if (profileResponse) {
+    return profileResponse;
   }
 
   const basisResponse = exactBasisResponse(req);

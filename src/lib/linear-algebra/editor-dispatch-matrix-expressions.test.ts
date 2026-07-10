@@ -60,6 +60,21 @@ describe('multi-matrix editor expressions', () => {
     });
 
     expect(dispatchMatrixEditorLatex({
+      latex: 'profile(CD)',
+      matrixA,
+      matrixB,
+      matrixValues,
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'profileA',
+        matrixA: [[2, 1], [4, 3]],
+        editorExpressionLatex: '\\operatorname{profile}\\left(C\\times D\\right)',
+        matrixOperandLatexA: 'C\\times D',
+      },
+    });
+
+    expect(dispatchMatrixEditorLatex({
       latex: '(C+D)^T',
       matrixA,
       matrixB,

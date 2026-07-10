@@ -122,6 +122,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'invertible(A)';
     case 'invertibilityB':
       return 'invertible(B)';
+    case 'profileA':
+      return 'profile(A)';
+    case 'profileB':
+      return 'profile(B)';
     case 'eigenA':
       return 'eigen(A)';
     case 'eigenB':

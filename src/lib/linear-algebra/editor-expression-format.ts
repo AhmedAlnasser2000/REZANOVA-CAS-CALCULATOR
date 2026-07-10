@@ -43,6 +43,8 @@ function formatUnary(operator: LinearAlgebraUnaryOperator, value: LinearAlgebraE
       return callLatex('qr', formattedValue);
     case 'invertibility':
       return callLatex('invertible', formattedValue);
+    case 'profile':
+      return callLatex('profile', formattedValue);
     case 'eigen':
       return callLatex('eigen', formattedValue);
     case 'diagonalization':

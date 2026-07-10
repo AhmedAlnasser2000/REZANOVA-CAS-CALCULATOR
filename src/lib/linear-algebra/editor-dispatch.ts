@@ -180,6 +180,7 @@ const MATRIX_UNARY_OPERATIONS: Partial<Record<LinearAlgebraUnaryOperator, readon
   plu: ['pluA', 'pluB'],
   qr: ['qrA', 'qrB'],
   invertibility: ['invertibilityA', 'invertibilityB'],
+  profile: ['profileA', 'profileB'],
   eigen: ['eigenA', 'eigenB'],
   diagonalization: ['diagonalizeA', 'diagonalizeB'],
   transpose: ['transposeA', 'transposeB'],

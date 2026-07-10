@@ -143,6 +143,7 @@ const DETAIL_TITLES_VISIBLE_BY_DEFAULT = new Set([
   'LU Factors', 'LU Proof', 'PLU Factors', 'PLU Proof', 'PLU Row Swaps', 'Factor Solve Proof', 'QR Factors', 'QR Proof', 'Column Projection Facts', 'Column Projection Proof', 'Least-Squares Solution', 'Residual Vector', 'Least-Squares Proof',
   'Orthonormal Basis',
   'Span Facts', 'Dependence Relation',
+  'Rank-Nullity Facts', 'Kernel', 'Image', 'Invertibility',
   'Rank/Nullity Guidance',
   'System Proof', 'Multi-RHS Proof', 'Inverse Comparison', 'Why It Cannot Diagonalize',
   'Power Factors', 'Power via Diagonalization',
