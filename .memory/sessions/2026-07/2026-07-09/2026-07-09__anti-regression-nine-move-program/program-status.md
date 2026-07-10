@@ -23,8 +23,9 @@
 - `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`: committed as `59bc68f0`.
 - `FEATURE-PROBE-REGISTRY1`: committed as `4e5bfbd6`.
 - `GOLDEN-CORPUS-REGISTRY1`: committed as `ccb9e642`.
-- `PRINT-HYGIENE-BASELINE1`: implemented and verified; standing commit approval applies.
-- Behavioral Ratchets 8-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
+- `PRINT-HYGIENE-BASELINE1`: committed as `e7dbb0e5`.
+- `WORKSPACE-FRESHNESS-REPORT1`: implemented and verified; standing commit approval applies.
+- Behavioral Ratchet 9: not started; Matrix/Vector feature expansion is frozen through Move 9.
 - Printer/detail/clipboard arcs: deferred until nine-move closeout.
 
 ## Standing Constraints
@@ -62,3 +63,5 @@
 - The unchanged 19-case Chromium canary suite passed in 1.2 minutes; TypeScript, build, lint, OOE/compartment boundaries, canary registry, file-size, and diff hygiene also pass for Move 6.
 - Print hygiene collects 23 typed mathematical fragment kinds from `DisplayOutcome` plus three Table cell kinds, with prose excluded and complete Table `undefined` cells allowed. All 43 normalized golden executions match the accepted manifest with at least two successes per workspace.
 - The print-hygiene and full Display/UI suites passed 7 and 142 tests respectively. The 19 browser canaries and nine refreshed workspace print surfaces passed visual review without clipping, overlap, unreadable math, or malformed markers.
+- Workspace freshness passed five focused tests covering aliases, exact 14-day status, future evidence exclusion, stable formatting, warning-only missing/stale data, invalid input, unreadable state, and workflow structure. Live `2026-07-11` reports show all nine workspaces fresh.
+- The Monday `03:17 UTC` workflow parsed successfully, builds before all 19 canaries, writes human/JSON artifacts and the job summary, and contains no commit or push operation.

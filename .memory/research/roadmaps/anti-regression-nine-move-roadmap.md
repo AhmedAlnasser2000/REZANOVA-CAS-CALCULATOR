@@ -116,6 +116,8 @@ Status: implemented and verified on `2026-07-11`. A pure typed collector covers 
 - Report domains older than 14 days as operational warnings only, never correctness or release blockers.
 - Add synthetic tests and a weekly workflow that runs real canaries, publishes a summary/artifact, and does not commit timestamp churn.
 
+Status: implemented and verified on `2026-07-11`. The deterministic CLI requires `--as-of`, emits stable human or JSON output, and uses one alias registry over dated session slugs. Exactly 14 full days remains fresh; stale and missing are warnings with exit zero. Monday `03:17 UTC` automation builds, runs all 19 Chromium canaries, publishes both reports and the human job summary, and never commits generated output. `HISTORY-REPLAY-RATCHET1` is next.
+
 ### 9. HISTORY-REPLAY-RATCHET1
 - Gate A adds optional versioned `HistoryReplaySnapshotV1` data to new entries.
 - Snapshot angle/output/equation/complex/notation/symbolic/root/digit/scientific/detail settings plus launch-time `Ans`; existing route seeds and variable snapshots remain authoritative owners.

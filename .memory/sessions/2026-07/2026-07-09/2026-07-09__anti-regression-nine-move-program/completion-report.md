@@ -99,3 +99,10 @@
 - Committed the normalized structure of all 43 golden executions with at least two successful entries for every workspace and preserved parentheses.
 - Added an explicit baseline updater requiring `--accept` and a durable non-empty `--reason`; snapshot `-u` updates are rejected.
 - Added the print-hygiene gate to the aggregate local gate without changing rendering, printer, or clipboard behavior.
+
+## WORKSPACE-FRESHNESS-REPORT1
+- Added a deterministic explicit-date CLI with stable human and JSON reports over one central session-slug alias registry.
+- Added fresh, stale, and missing status with an exact 14-full-day boundary; stale and missing remain successful warning outcomes.
+- Added focused coverage for shared aliases, future evidence, missing data, invalid inputs, unreadable repositories, stable output, and workflow structure.
+- Added Monday `03:17 UTC` and manual automation that installs Chromium, builds, runs all 19 canaries, publishes both reports and the human job summary, and never commits generated files.
+- Added freshness validation to the aggregate local gate without making session age a release criterion.

@@ -1,0 +1,52 @@
+name: Weekly Anti-Regression
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  workspace-freshness:
+    name: workspace-freshness
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build frontend for preview server
+        run: npm run build
+
+      - name: Run all workspace canaries
+        run: npm run test:canaries:browser
+
+      - name: Generate workspace freshness reports
+        run: |
+          AS_OF="$(date -u +%F)"
+          node tools/workspace-freshness.mjs --as-of "$AS_OF" > workspace-freshness.txt
+          node tools/workspace-freshness.mjs --as-of "$AS_OF" --json > workspace-freshness.json
+          cat workspace-freshness.txt >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload workspace freshness reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-freshness-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            workspace-freshness.txt
+            workspace-freshness.json

@@ -163,3 +163,11 @@
 - `npm run update:print-hygiene -- --accept --reason "Initial curated 43-case anti-regression print baseline"` generated the committed manifest, and the immediate focused rerun matched it exactly.
 - Full Chromium canaries passed 19/19 in 1.2 minutes. Nine refreshed curated cases passed in 32.3 seconds and were inspected across Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and Table with no clipping, overlap, unreadable math, or unresolved errors.
 - `npm run build`, `npm run lint`, OOE/compartment boundaries, file sizes, canary registry, golden 44/44, and diff hygiene passed before durable closeout.
+
+## WORKSPACE-FRESHNESS-REPORT1
+- Kind: `backend` deterministic operational report and workflow gate with `ui` weekly canary execution; no application behavior changed.
+- `npm run test:workspace-freshness`: 5/5 passed. Synthetic evidence covers shared/all-workspace and Linear Algebra aliases, exact 14-day freshness, 15-day staleness, future evidence exclusion, missing warning data, stable ordering, invalid dates/flags, unreadable repository state, and workflow requirements.
+- Live human and JSON reports for `--as-of 2026-07-11` were stable and showed all nine workspaces fresh. Stale/missing report states remain exit zero by construction and tests.
+- `npm run test:ci-gate-alignment`: 8/8 passed. The weekly workflow parsed through installed `js-yaml`, schedules Monday at `03:17 UTC`, supports manual dispatch, builds, runs all 19 canaries, publishes human/JSON artifacts and the job summary, and contains no Git write command.
+- Local workflow-equivalent Chromium canaries passed 19/19 in 1.2 minutes.
+- `npm run build`, `npm run lint`, file sizes, OOE/compartment boundaries, canary registry, and diff hygiene passed before durable closeout.

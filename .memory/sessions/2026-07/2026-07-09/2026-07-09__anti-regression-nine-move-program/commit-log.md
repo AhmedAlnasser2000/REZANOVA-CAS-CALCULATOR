@@ -65,4 +65,9 @@
 ## Behavioral Ratchet 7
 - Subject: `PRINT-HYGIENE-BASELINE1`.
 - User approval: covered by standing approval for remaining Moves 6-9 on `2026-07-11`.
+- Hash: `e7dbb0e5`.
+
+## Behavioral Ratchet 8
+- Subject: `WORKSPACE-FRESHNESS-REPORT1`.
+- User approval: covered by standing approval for remaining Moves 6-9 on `2026-07-11`.
 - Hash: this milestone commit; exact hash reported by post-commit readback and carried into the next checkpoint.
