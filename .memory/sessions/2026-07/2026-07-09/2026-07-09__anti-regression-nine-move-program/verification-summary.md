@@ -92,3 +92,22 @@
 ## Outstanding Gaps After Move 4
 - Mandatory Incident Review remains required before any Behavioral Ratchet begins.
 - The two inherited Complex-abs failures and nested-radical positive-root classification gap remain separately recorded for the review; Move 4 does not alter mathematical output.
+
+## Mandatory Incident Review
+- Kind: `ui` review with supporting `backend` gates.
+- Current shared `main` Chrome canaries: 19/19 passed in 1.3 minutes with retries zero. Full-page screenshots from all nine workspaces were inspected for answer/error state, facts/details, clipping, overlap, and readability.
+- Inverse trig: `arcsin(1)` visibly rendered `90` under DEG and `\pi/2` under RAD.
+- Current canary registry 3/3, runtime probes 19/19, app identity 2/2, Surface Protocol boundaries 5/5, and Surface Protocol runtime tests 39/39 passed.
+- Seam review: app-runtime impact required workspace canaries, runtime probes, OOE, compartments, and UI evidence plus only the allowlisted workspace/app runtime contract commands. The shared Linear Algebra runtime selected both Matrix and Vector lanes.
+- Full UI, build/TypeScript, and the broad unit readback completed on the shared checkout. Before the supplemental fix, the broad suite had only the two inherited Complex-abs failures; after repair it passed 476/476 files and 3,450/3,450 tests.
+
+## INCIDENT-CLOSURE-REVIEW-CI-FIX1
+- The four user-reported CI files pass 71/71. Current `main` had already closed the radical-carrier and embedded-derivative failures.
+- Root cause for the remaining pair: the Complex boundary matcher recognized raw `abs(...)` and bar notation, while the routed parameterized input was canonical `\operatorname{abs}(...)`.
+- The fix adds only plain and `\left` canonical operator forms to the existing affine no-solution matcher. General Complex absolute-value/locus policy remains deferred.
+- Focused real-app Chromium passed and the rendered `x\in\varnothing` answer, `x-5\ge0` and `x\in\mathbb{R}` facts, Complex boundary detail, and candidate-check text were inspected without layout defects.
+- The final shared-checkout file-size rerun was blocked only by a concurrent uncommitted Linear Algebra lane (`editor-dispatch.ts` at 901 lines and `editor-parser.ts` at 937). This commit does not stage those files; its only production source is the 68-line Complex boundary module, below the default cap.
+
+## Review Checkpoint
+- Verification is complete. Explicit user acceptance is still required before `FEATURE-PROBE-REGISTRY1` begins.
+- The older nested-radical candidate-validation gap remains separate: two valid positive roots may still be classified as extraneous in that deep Equation case.

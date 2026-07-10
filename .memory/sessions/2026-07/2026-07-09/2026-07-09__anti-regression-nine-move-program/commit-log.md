@@ -35,4 +35,9 @@
 ## Incident Closure Commit 4
 - Subject: `SEAM-IMPACT-SELECTOR1`.
 - User approval: standing approval granted for all four Incident Closure commits before implementation.
+- Hash: `8fd8e78827822610c047b59c3f983e8eb7447417`.
+
+## Incident Review Supplemental Commit
+- Subject: `INCIDENT-CLOSURE-REVIEW-CI-FIX1`.
+- User approval: explicitly requested with the CI repair and memory record on `2026-07-10`.
 - Hash: this milestone commit; exact hash is reported by post-commit readback.

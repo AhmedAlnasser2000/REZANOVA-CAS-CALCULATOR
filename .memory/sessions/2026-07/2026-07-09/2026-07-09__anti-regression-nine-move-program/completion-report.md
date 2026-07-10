@@ -28,7 +28,7 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- Run the mandatory Incident Review after the verified `SEAM-IMPACT-SELECTOR1` milestone commit; do not begin Behavioral Ratchets before user acceptance.
+- Obtain explicit user acceptance of the completed mandatory Incident Review; do not begin Behavioral Ratchets before that acceptance.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -57,3 +57,11 @@
 - Integrated selector validation and additive evidence execution into CI before broad unit tests while preserving every baseline gate; Linux release validates the selector before packaging.
 - Kept Matrix and Vector as distinct lanes while shared Linear Algebra core and current host paths correctly select both, ready for the separately owned shell/worker split.
 - Passed the focused selector and workflow validators, all four allowlisted contract groups, TypeScript/build/lint, file-size, OOE/compartment, YAML, memory, and diff-hygiene gates.
+
+## Mandatory Incident Review And Supplemental CI Repair
+- Rebuilt and reviewed current shared `main` after the separately committed Linear Algebra dimension contract and Statistics guided-control stabilization.
+- Passed all 19 Chromium workspace canaries in 1.3 minutes with zero retries and inspected full-page evidence for Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and Table.
+- Confirmed visible `arcsin(1)` output is `90` in DEG and `\pi/2` in RAD; no reviewed answer/error surface showed clipping, overlap, or unreadable math.
+- Confirmed the seam plan names app-runtime impact, Matrix and Vector separately, both for their shared Linear Algebra runtime path, required baseline evidence, and only allowlisted additive commands.
+- Reproduced the four user-reported CI files. Radical-carrier and embedded-derivative cases were already fixed on current `main`; repaired the two remaining tests by recognizing the planner's canonical `\operatorname{abs}` form in the existing scoped Complex boundary matcher.
+- Passed the four-file CI set 71/71, the focused real-app Complex empty-set Playwright check, and the broad unit suite 3,450/3,450.

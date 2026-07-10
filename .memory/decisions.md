@@ -2102,6 +2102,11 @@
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Seam impact evidence is additive: the selector may require allowlisted focused contract suites, but it must never skip, replace, or claim completion of baseline CI gates. Executable commands are resolved from the committed registry and run without shell interpolation.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Matrix and Vector are separate seam-selector lanes. A Matrix-only path trips Matrix, a Vector-only path trips Vector, and shared Linear Algebra core, host, shell, and pilot paths trip both lanes while the current shared runtime remains in place.
 
+## 2026-07-10 - INCIDENT-CLOSURE-REVIEW-CI-FIX1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Canonical planner normalization to `\operatorname{abs}` must not bypass an already approved bounded Complex boundary route. The compatibility matcher is widened only for the existing affine benchmark `|2x+1|=x-5` and its reversed equality; this does not claim general Complex absolute-value or locus solving.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Mandatory Incident Review evidence is taken from the current shared `main`: all nine workspace canaries must pass with full-page visual inspection, seam evidence remains additive, and Behavioral Ratchets stay blocked until the user accepts the review checkpoint.
+
 ## 2026-07-10 - STATISTICS-WORKSPACE-CONSOLIDATION-ROADMAP0
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The approved guided Statistics information architecture has four visible sections: `Data & Summary`, `Probability`, `Inference`, and `Relationships`. Existing request kinds and `StatisticsScreen` values remain compatibility vocabulary for parser, Guide, History, and replay while the visible section model is introduced separately.

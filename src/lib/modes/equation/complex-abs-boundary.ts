@@ -15,6 +15,8 @@ function matchesAbsAffineNoSolutionBenchmark(equationLatex: string, target: stri
   const compact = compactLatex(equationLatex);
   const absoluteForms = [
     String.raw`abs\(2${variable}\+1\)`,
+    String.raw`\\operatorname\{abs\}\(2${variable}\+1\)`,
+    String.raw`\\operatorname\{abs\}\\left\(2${variable}\+1\\right\)`,
     String.raw`\\left\|2${variable}\+1\\right\|`,
     String.raw`\\vert2${variable}\+1\\vert`,
     String.raw`\|2${variable}\+1\|`,

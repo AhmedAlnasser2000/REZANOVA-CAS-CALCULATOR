@@ -17,8 +17,8 @@
 - `WORKSPACE-CANARY-SUITE1`: committed as `6f8bf93b`.
 - `WORKSPACE-RUNTIME-PROBE-REGISTRY1`: committed as `503eadb0`.
 - `CI-GATE-ALIGNMENT1`: committed as `948f2df3`.
-- `SEAM-IMPACT-SELECTOR1`: implemented, verified, and approved for its milestone commit.
-- Mandatory Incident Review: pending.
+- `SEAM-IMPACT-SELECTOR1`: committed as `8fd8e788`.
+- Mandatory Incident Review: verification complete; user acceptance pending.
 - Behavioral Ratchets 5-9: blocked by the review checkpoint.
 - Printer/detail/clipboard arcs: deferred until nine-move closeout.
 
@@ -37,8 +37,10 @@
 - CI alignment validator passes 7/7 and ratchets pull-request/`main` triggers, required commands, independent canary execution, pre-package release ordering, and zero retries.
 - Chrome passes all 19 workspace canaries in 1.2 minutes and the preserved 11-case focused smoke in 52.8 seconds.
 - The focused Equation carrier visual check passes with clean readable output and no double-minus serialization. It also exposes a pre-existing residual: two mathematically valid positive roots are still classified as extraneous in that deep nested case.
-- Broad unit baseline after the carrier repair: 3,442 passed and the same two pre-existing Complex-abs tests failed.
+- Broad unit baseline after the supplemental canonical-abs repair: 3,450/3,450 passed.
 - The seam selector passes 8/8 focused tests and emits stable plans for explicit paths, Git ranges, and GitHub events, including rename/copy/delete handling and empty or invalid input boundaries.
 - The CI-alignment ratchet now passes 8/8 tests, requires full checkout history, and requires additive seam evidence before the broad unit suite without weakening any baseline gate.
 - The real allowlisted wrapper passed 74/74 workspace runtime-contract tests; all four allowlisted contract groups passed 445 tests. Matrix and Vector classify independently, while shared Linear Algebra paths select both lanes.
+- The current-main mandatory sweep passed 19/19 Chromium canaries in 1.3 minutes with full-page visual inspection across all nine workspaces. DEG/RAD inverse-trig output remained visibly `90` and `\pi/2`.
+- The user-reported four-file CI set passes 71/71. The scoped Complex absolute-value result now survives canonical `\operatorname{abs}` planner normalization, and its real-app empty-set card, facts, and candidate evidence were inspected.
 - `test-results/` remains untracked and excluded from staging. A restricted-environment retry regenerated its transient Playwright contents before later runs were redirected to `.task_tmp/`.
