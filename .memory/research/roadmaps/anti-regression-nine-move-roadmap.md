@@ -100,7 +100,7 @@ Status: implemented and verified on `2026-07-10`. The exhaustive 24-key registry
 - Keep large Equation and Calculus benchmark ledgers separate from the fast curated corpus.
 - Fail when a launcher computational workspace lacks golden coverage.
 
-Status: implemented and verified on `2026-07-10`; commit approval pending. The existing 27 cases remain intact and exactly 16 rich-success cases extend the fast corpus to 43 across all nine launcher-derived computational workspaces. Direct native adapters return a shared `GoldenExecution`, with Table retaining structured response evidence. The focused gate passed 44/44, all 16 additions passed real Chromium inspection, and the unchanged 19-case canary suite passed. `PRINT-HYGIENE-BASELINE1` is next after the approval-gated commit.
+Status: committed as `ccb9e642` on `2026-07-11`. The existing 27 cases remain intact and exactly 16 rich-success cases extend the fast corpus to 43 across all nine launcher-derived computational workspaces. Direct native adapters return a shared `GoldenExecution`, with Table retaining structured response evidence. The focused gate passed 44/44, all 16 additions passed real Chromium inspection, and the unchanged 19-case canary suite passed.
 
 ### 7. PRINT-HYGIENE-BASELINE1
 - Add a pure shared collector for mathematical `DisplayOutcome` fragments, including exact answers, rows, branches, systems, periodic output, supplements, transforms, and typed detail math.
@@ -116,7 +116,7 @@ Status: implemented and verified on `2026-07-11`. A pure typed collector covers 
 - Report domains older than 14 days as operational warnings only, never correctness or release blockers.
 - Add synthetic tests and a weekly workflow that runs real canaries, publishes a summary/artifact, and does not commit timestamp churn.
 
-Status: implemented and verified on `2026-07-11`. The deterministic CLI requires `--as-of`, emits stable human or JSON output, and uses one alias registry over dated session slugs. Exactly 14 full days remains fresh; stale and missing are warnings with exit zero. Monday `03:17 UTC` automation builds, runs all 19 Chromium canaries, publishes both reports and the human job summary, and never commits generated output. `HISTORY-REPLAY-RATCHET1` is next.
+Status: committed as `85583ed2` on `2026-07-11`. The deterministic CLI requires `--as-of`, emits stable human or JSON output, and uses one alias registry over dated session slugs. Exactly 14 full days remains fresh; stale and missing are warnings with exit zero. Monday `03:17 UTC` automation builds, runs all 19 Chromium canaries, publishes both reports and the human job summary, and never commits generated output.
 
 ### 9. HISTORY-REPLAY-RATCHET1
 - Gate A adds optional versioned `HistoryReplaySnapshotV1` data to new entries.
@@ -127,9 +127,13 @@ Status: implemented and verified on `2026-07-11`. The deterministic CLI requires
 - Hard-compare stable outcome identity and report normalized LaTeX differences without failing initially.
 - Run replay weekly and on seam changes, not on every ordinary commit.
 
+Status: implemented, verified, and included in the completed manual closeout on `2026-07-11`; standing commit approval applies. New entries freeze `HistoryReplaySnapshotV1` at ticket reservation and consume it at finalization, while snapshot-less entries remain loadable and classify internally as `legacy-nondeterministic`. Nine versioned JSON files contain exactly 100 sanitized fixtures at the approved distribution. Stable identity and cardinality comparisons hard-pass; normalized LaTeX is report-only. Human/JSON reports show 100 fixtures, zero hard failures, and zero current LaTeX differences. The opt-in importer writes only beneath ignored `.task_tmp/history-replay-import/`. Weekly automation and the additive seam selector run the ratchet, and nine real Chromium create/replay flows passed with inspected screenshots.
+
 ## Verification And Delivery
 - Every milestone runs focused tests, TypeScript where applicable, file-size validation, memory validation, and `git diff --check`.
 - App-visible mathematical behavior requires real Playwright inspection and recorded evidence.
 - Preserve independent runtime hosts and capability identities throughout.
 - Preserve the existing ahead-one commit and unrelated untracked `test-results/`.
 - After Move 9, run a manual closeout before opening the Printer Core, detail-segment, and canonical clipboard roadmap.
+
+Closeout status: complete on `2026-07-11`, pending user acceptance. Full unit passed 3,500 tests, full UI passed 441, all named anti-regression gates and runtime/boundary/file-size checks passed, build/lint/TypeScript passed, 19 rebuilt canaries passed in 1.2 minutes, and all nine History replay surfaces passed visual review. Printer/detail/clipboard planning remains paused until the user accepts the closeout.

@@ -71,6 +71,10 @@ test('weekly workflow runs real canaries and publishes both reports without comm
   assert.match(workflow, /playwright install --with-deps chromium/u);
   assert.match(workflow, /npm run build/u);
   assert.match(workflow, /npm run test:canaries:browser/u);
+  assert.match(workflow, /npm run test:history-replay/u);
+  assert.match(workflow, /npm run test:history-replay:browser/u);
+  assert.match(workflow, /history-replay\.txt/u);
+  assert.match(workflow, /history-replay\.json/u);
   assert.match(workflow, /workspace-freshness\.txt/u);
   assert.match(workflow, /workspace-freshness\.json/u);
   assert.match(workflow, /GITHUB_STEP_SUMMARY/u);

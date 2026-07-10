@@ -1,0 +1,241 @@
+{
+  "version": 1,
+  "workspace": "trigonometry",
+  "fixtures": [
+    {
+      "id": "trigonometry-function",
+      "workspace": "trigonometry",
+      "family": "function",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "\\sin(30)",
+        "screenHint": "functions",
+        "angleUnit": "deg"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Trig Functions",
+          "resultOrigin": "exact-special-angle"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{1}{2}"
+      }
+    },
+    {
+      "id": "trigonometry-identity",
+      "workspace": "trigonometry",
+      "family": "identity",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "\\sin^2(x)+\\cos^2(x)",
+        "screenHint": "identitySimplify",
+        "angleUnit": "deg"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Identity Simplify",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1"
+      }
+    },
+    {
+      "id": "trigonometry-equation",
+      "workspace": "trigonometry",
+      "family": "equation",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "\\sin(x)=\\frac{1}{2}",
+        "screenHint": "equationSolve",
+        "angleUnit": "deg"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Trig Equation",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 2,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nbranchReadback.branchesLatex[1]=180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+      }
+    },
+    {
+      "id": "trigonometry-triangle",
+      "workspace": "trigonometry",
+      "family": "right-triangle",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "rightTriangle(a=3, b=4)",
+        "screenHint": "rightTriangle",
+        "angleUnit": "deg"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Right Triangle",
+          "resultOrigin": "triangle-solver"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=a=3,\\ b=4,\\ c=5,\\ A=36.869898^{\\circ},\\ B=53.130102^{\\circ},\\ C=90^{\\circ}\nresolvedInputLatex=rightTriangle(a=3,b=4)"
+      }
+    },
+    {
+      "id": "trigonometry-convert",
+      "workspace": "trigonometry",
+      "family": "angle-conversion",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "angleConvert(value=30, from=deg, to=rad)",
+        "screenHint": "angleConvert",
+        "angleUnit": "deg"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Angle Convert",
+          "resultOrigin": "exact-special-angle"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{\\pi}{6}\nresolvedInputLatex=angleConvert(value=30,from=deg,to=rad)"
+      }
+    }
+  ]
+}

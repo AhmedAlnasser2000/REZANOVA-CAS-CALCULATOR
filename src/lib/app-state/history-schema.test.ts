@@ -13,6 +13,38 @@ describe('history entry schema', () => {
 
     expect(parsed.calculateScreen).toBeUndefined();
     expect(parsed.calculusScreen).toBeUndefined();
+    expect(parsed.replaySnapshot).toBeUndefined();
+  });
+
+  it('accepts a complete versioned deterministic replay snapshot', () => {
+    const parsed = historyEntrySchema.parse({
+      id: 'versioned-replay-1',
+      mode: 'calculate',
+      inputLatex: 'arcsin(1)',
+      resultLatex: '\\frac{\\pi}{2}',
+      replaySnapshot: {
+        version: 1,
+        ansLatex: '0',
+        angleUnit: 'rad',
+        outputStyle: 'exact',
+        equationAnswerMode: 'exact',
+        equationDomainIntent: 'real',
+        complexExactForm: 'rectangular',
+        mathNotationDisplay: 'rendered',
+        historyInspectorNotationMode: 'rendered',
+        historyPageNotationMode: 'latex',
+        symbolicDisplayMode: 'auto',
+        flattenNestedRootsWhenSafe: true,
+        approxDigits: 10,
+        numericNotationMode: 'decimal',
+        scientificNotationStyle: 'times10',
+        detailedFactsEnabled: true,
+      },
+      timestamp: '2026-07-11T00:00:00.000Z',
+    });
+
+    expect(parsed.replaySnapshot?.version).toBe(1);
+    expect(parsed.replaySnapshot?.angleUnit).toBe('rad');
   });
 
   it('accepts optional Equation selected-target replay context', () => {

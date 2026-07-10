@@ -32,6 +32,7 @@ import type {
 } from './execution-types';
 import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
+import type { HistoryReplaySnapshotV1 } from './history-replay-types';
 import type {
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
@@ -923,6 +924,7 @@ export type HistoryEntry = {
   variableSubstitutions?: VariableSubstitutionSnapshot[];
   historyLaunchOrder?: number;
   runtimeElapsedMs?: number;
+  replaySnapshot?: HistoryReplaySnapshotV1;
   timestamp: string;
 };
 

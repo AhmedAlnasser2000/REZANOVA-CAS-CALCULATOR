@@ -1,0 +1,3204 @@
+{
+  "version": 1,
+  "workspace": "calculus",
+  "fixtures": [
+    {
+      "id": "calculus-derivative-polynomial",
+      "workspace": "calculus",
+      "family": "derivatives",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "derivative",
+        "derivative": {
+          "bodyLatex": "x^3+2x",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Derivative"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=3x^2+2\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=3x^2+2\nresolvedInputLatex=3x^2+2"
+      }
+    },
+    {
+      "id": "calculus-derivative-trig",
+      "workspace": "calculus",
+      "family": "derivatives",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "derivative",
+        "derivative": {
+          "bodyLatex": "\\sin(x)",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Derivative"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\cos(x)\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=\\cos(x)\nresolvedInputLatex=\\cos(x)"
+      }
+    },
+    {
+      "id": "calculus-derivative-exp",
+      "workspace": "calculus",
+      "family": "derivatives",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "derivative",
+        "derivative": {
+          "bodyLatex": "e^x",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Derivative"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\exponentialE^{x}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=\\exponentialE^{x}\nresolvedInputLatex=\\exponentialE^{x}"
+      }
+    },
+    {
+      "id": "calculus-derivative-at-point",
+      "workspace": "calculus",
+      "family": "derivatives",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "derivativePoint",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "3",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Derivative"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\left.\\left((2x)\\right)\\right|_{}_{x=\\error{\\blacksquare}}_{x=3}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2x\ndetailSections[0].lines[3]=D_{1}\\big|_{x=3}=6\nresolvedInputLatex=\\left.\\left(2x\\right)\\right|_{x=}_{x=3}"
+      }
+    },
+    {
+      "id": "calculus-implicit-circle",
+      "workspace": "calculus",
+      "family": "derivatives",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "implicitDerivative",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Implicit Derivative",
+          "resultOrigin": "symbolic-engine"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 5,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{dy}{dx}=-\\frac{x}{y}\nexactSupplementLatex[0]=2y\\ne0\ndetailSections[0].lines[0]=\\operatorname{relation}\\quad x^2+y^2=1\ndetailSections[0].lines[1]=\\operatorname{differentiate}\\quad \\frac{dy}{dx}\ndetailSections[0].lines[2]=\\operatorname{differentiated}\\quad 2uy+2x=0\ndetailSections[3].lineParts[1][1].latex=2uy=-2x"
+      }
+    },
+    {
+      "id": "calculus-indefinite-power",
+      "workspace": "calculus",
+      "family": "integrals",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "indefiniteIntegral",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x^2"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Indefinite Integral",
+          "resultOrigin": "rule-based-symbolic",
+          "calculusStrategy": "direct-rule"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 1,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{x^{3}}{3}+C\nanswerRows.rows[0].latex=\\frac{x^{3}}{3}+C"
+      }
+    },
+    {
+      "id": "calculus-indefinite-trig",
+      "workspace": "calculus",
+      "family": "integrals",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "indefiniteIntegral",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "\\sin(x)"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Indefinite Integral",
+          "resultOrigin": "rule-based-symbolic",
+          "calculusStrategy": "direct-rule"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 1,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=-\\cos\\left(x\\right)+C\nanswerRows.rows[0].latex=-\\cos\\left(x\\right)+C"
+      }
+    },
+    {
+      "id": "calculus-indefinite-log",
+      "workspace": "calculus",
+      "family": "integrals",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "indefiniteIntegral",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "\\frac{1}{x}"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Indefinite Integral",
+          "resultOrigin": "rule-based-symbolic",
+          "calculusStrategy": "derivative-ratio"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 1,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\ln\\left|x\\right|+C\nanswerRows.rows[0].latex=\\ln\\left|x\\right|+C"
+      }
+    },
+    {
+      "id": "calculus-definite-polynomial",
+      "workspace": "calculus",
+      "family": "integrals",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "definiteIntegral",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x^2",
+          "lower": "0",
+          "upper": "2"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Definite Integral",
+          "resultOrigin": "rule-based-symbolic",
+          "calculusStrategy": "direct-rule"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 3,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{8}{3}"
+      }
+    },
+    {
+      "id": "calculus-definite-sine",
+      "workspace": "calculus",
+      "family": "integrals",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "definiteIntegral",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "\\sin(x)",
+          "lower": "0",
+          "upper": "\\pi"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Definite Integral"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": ""
+      }
+    },
+    {
+      "id": "calculus-improper-arctan",
+      "workspace": "calculus",
+      "family": "integrals",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "improperIntegral",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Improper Integral",
+          "resultOrigin": "numeric-fallback"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1.570796"
+      }
+    },
+    {
+      "id": "calculus-finite-sinc",
+      "workspace": "calculus",
+      "family": "limits",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "finiteLimit",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Finite Limit",
+          "resultOrigin": "rule-based-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1\ndetailSections[0].lineParts[1][1].latex=u=x\ndetailSections[0].lineParts[1][3].latex=\\lim_{x\\to 0}u=0\ndetailSections[0].lineParts[2][1].latex=\\frac{\\sin(u)}{u}\\to 1\ndetailSections[0].lineParts[3][1].latex=1"
+      }
+    },
+    {
+      "id": "calculus-finite-left-pole",
+      "workspace": "calculus",
+      "family": "limits",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "finiteLimit",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "target": "0",
+          "direction": "left"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Finite Limit",
+          "resultOrigin": "rule-based-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=-\\infty\ndetailSections[0].lineParts[2][1].latex=1\ndetailSections[0].lineParts[2][3].latex=-1\ndetailSections[0].lineParts[5][1].latex=-\\infty\ndetailSections[1].lineParts[0][1].latex=x\\to 0^{-}\ndetailSections[1].lineParts[2][1].latex=\\lim_{x\\to 0^{-}} f(x)=-\\infty\ndetailSections[1].lineParts[3][1].latex=-\\infty"
+      }
+    },
+    {
+      "id": "calculus-finite-right-pole",
+      "workspace": "calculus",
+      "family": "limits",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "finiteLimit",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "target": "0",
+          "direction": "right"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Finite Limit",
+          "resultOrigin": "rule-based-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\infty\ndetailSections[0].lineParts[2][1].latex=1\ndetailSections[0].lineParts[2][3].latex=-1\ndetailSections[0].lineParts[5][1].latex=\\infty\ndetailSections[1].lineParts[0][1].latex=x\\to 0^{+}\ndetailSections[1].lineParts[2][1].latex=\\lim_{x\\to 0^{+}} f(x)=\\infty\ndetailSections[1].lineParts[3][1].latex=\\infty"
+      }
+    },
+    {
+      "id": "calculus-infinite-reciprocal",
+      "workspace": "calculus",
+      "family": "limits",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "infiniteLimit",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Infinite Limit",
+          "resultOrigin": "rule-based-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=0\ndetailSections[0].lineParts[1][1].latex=x^{-1}\ndetailSections[0].lineParts[1][3].latex=1\ndetailSections[0].lineParts[2][1].latex=x^{-1}\ndetailSections[0].lineParts[2][3].latex=1\ndetailSections[0].lineParts[4][1].latex=0"
+      }
+    },
+    {
+      "id": "calculus-natural-limit",
+      "workspace": "calculus",
+      "family": "limits",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "limit",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Limit",
+          "resultOrigin": "rule-based-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1\ndetailSections[0].lineParts[1][1].latex=u=x\ndetailSections[0].lineParts[1][3].latex=\\lim_{x\\to 0}u=0\ndetailSections[0].lineParts[2][1].latex=\\frac{\\sin(u)}{u}\\to 1\ndetailSections[0].lineParts[3][1].latex=1"
+      }
+    },
+    {
+      "id": "calculus-maclaurin-exp",
+      "workspace": "calculus",
+      "family": "series-transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "maclaurin",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Maclaurin Series",
+          "resultOrigin": "heuristic-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1+x+\\frac{1}{2}x^{2}+\\frac{1}{6}x^{3}+\\frac{1}{24}x^{4}"
+      }
+    },
+    {
+      "id": "calculus-maclaurin-sine",
+      "workspace": "calculus",
+      "family": "series-transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "maclaurin",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "\\sin(x)",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 5
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Maclaurin Series",
+          "resultOrigin": "heuristic-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x+\\frac{-1}{6}x^{3}+\\frac{1}{120}x^{5}"
+      }
+    },
+    {
+      "id": "calculus-taylor-exp",
+      "workspace": "calculus",
+      "family": "series-transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "taylor",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Taylor Series"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": ""
+      }
+    },
+    {
+      "id": "calculus-laplace-one",
+      "workspace": "calculus",
+      "family": "series-transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "laplace",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Laplace Transform",
+          "resultOrigin": "rule-based-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{1}{s}"
+      }
+    },
+    {
+      "id": "calculus-laplace-exp",
+      "workspace": "calculus",
+      "family": "series-transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "laplace",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "e^{2t}"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Laplace Transform",
+          "resultOrigin": "rule-based-symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{1}{s-2}"
+      }
+    },
+    {
+      "id": "calculus-partial-polynomial",
+      "workspace": "calculus",
+      "family": "partials",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "partialDerivative",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Partial Derivative",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=2xy\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{\\partial}{\\partial x}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2xy"
+      }
+    },
+    {
+      "id": "calculus-ode-separable",
+      "workspace": "calculus",
+      "family": "ode-ivp",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "odeFirstOrder",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "First-Order ODE",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=y=C\\,e^{\\left(\\frac{x^{2}}{2}+C\\right)}"
+      }
+    },
+    {
+      "id": "calculus-ode-second-order",
+      "workspace": "calculus",
+      "family": "ode-ivp",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "odeSecondOrder",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Second-Order ODE",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=y=e^{0x}\\left(C_1\\cos\\left(1x\\right)+C_2\\sin\\left(1x\\right)\\right)"
+      }
+    },
+    {
+      "id": "calculus-ode-numeric-ivp",
+      "workspace": "calculus",
+      "family": "ode-ivp",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "screen": "odeNumericIvp",
+        "derivative": {
+          "bodyLatex": "x^2",
+          "variable": "x"
+        },
+        "derivativePoint": {
+          "bodyLatex": "x^2",
+          "point": "2",
+          "variable": "x"
+        },
+        "implicitDerivative": {
+          "relationLatex": "x^2+y^2=1",
+          "independentVariable": "x",
+          "dependentVariable": "y"
+        },
+        "indefiniteIntegral": {
+          "bodyLatex": "x"
+        },
+        "definiteIntegral": {
+          "bodyLatex": "x",
+          "lower": "0",
+          "upper": "1"
+        },
+        "improperIntegral": {
+          "bodyLatex": "\\frac{1}{1+x^2}",
+          "lowerKind": "finite",
+          "lower": "0",
+          "upperKind": "posInfinity",
+          "upper": ""
+        },
+        "finiteLimit": {
+          "bodyLatex": "\\frac{\\sin(x)}{x}",
+          "target": "0",
+          "direction": "two-sided"
+        },
+        "infiniteLimit": {
+          "bodyLatex": "\\frac{1}{x}",
+          "targetKind": "posInfinity"
+        },
+        "limit": {
+          "requestLatex": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        },
+        "maclaurin": {
+          "bodyLatex": "e^x",
+          "kind": "maclaurin",
+          "center": "0",
+          "order": 4
+        },
+        "taylor": {
+          "bodyLatex": "e^x",
+          "kind": "taylor",
+          "center": "1",
+          "order": 3
+        },
+        "laplace": {
+          "bodyLatex": "1"
+        },
+        "partialDerivative": {
+          "bodyLatex": "x^2y+y^2",
+          "variable": "x"
+        },
+        "firstOrderOde": {
+          "lhsLatex": "\\frac{dy}{dx}",
+          "rhsLatex": "xy",
+          "classification": "separable"
+        },
+        "secondOrderOde": {
+          "a2": "1",
+          "a1": "0",
+          "a0": "1",
+          "forcingLatex": "0"
+        },
+        "numericIvp": {
+          "bodyLatex": "y",
+          "x0": "0",
+          "y0": "1",
+          "xEnd": "1",
+          "step": "0.1",
+          "method": "rk4"
+        },
+        "angleUnit": "rad",
+        "outputStyle": "both",
+        "equationDomainIntent": "real",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric IVP",
+          "resultOrigin": "numeric-fallback"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=y\\left(1\\right)\\approx2.71828"
+      }
+    }
+  ]
+}

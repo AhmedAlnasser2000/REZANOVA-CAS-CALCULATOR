@@ -24,9 +24,10 @@
 - `FEATURE-PROBE-REGISTRY1`: committed as `4e5bfbd6`.
 - `GOLDEN-CORPUS-REGISTRY1`: committed as `ccb9e642`.
 - `PRINT-HYGIENE-BASELINE1`: committed as `e7dbb0e5`.
-- `WORKSPACE-FRESHNESS-REPORT1`: implemented and verified; standing commit approval applies.
-- Behavioral Ratchet 9: not started; Matrix/Vector feature expansion is frozen through Move 9.
-- Printer/detail/clipboard arcs: deferred until nine-move closeout.
+- `WORKSPACE-FRESHNESS-REPORT1`: committed as `85583ed2`.
+- `HISTORY-REPLAY-RATCHET1`: implemented and verified; standing commit approval applies.
+- Nine-move manual closeout: complete; user acceptance pending.
+- Printer/detail/clipboard arcs: deferred until the user accepts the nine-move closeout.
 
 ## Standing Constraints
 - One verified commit per named milestone.
@@ -65,3 +66,8 @@
 - The print-hygiene and full Display/UI suites passed 7 and 142 tests respectively. The 19 browser canaries and nine refreshed workspace print surfaces passed visual review without clipping, overlap, unreadable math, or malformed markers.
 - Workspace freshness passed five focused tests covering aliases, exact 14-day status, future evidence exclusion, stable formatting, warning-only missing/stale data, invalid input, unreadable state, and workflow structure. Live `2026-07-11` reports show all nine workspaces fresh.
 - The Monday `03:17 UTC` workflow parsed successfully, builds before all 19 canaries, writes human/JSON artifacts and the job summary, and contains no commit or push operation.
+- New History entries freeze version-1 computation/print settings and launch-time `Ans` at pending-ticket reservation. Snapshot-less entries remain valid and classify internally as `legacy-nondeterministic`.
+- The nine JSON fixture files contain exactly 100 sanitized cases at the approved 20/25/25/5/5/5/5/5/5 distribution. Human and JSON reports show zero hard failures and zero current normalized-LaTeX differences.
+- The replay importer requires an explicit export and writes only ignored `.task_tmp/history-replay-import/` candidates. Relevant replay seams add the allowlisted replay command without skipping baseline CI.
+- Nine Chromium create/replay flows passed in 41.6 seconds, and all full-page post-replay screenshots were inspected. Table intentionally restores its saved summary rather than regenerating rows.
+- Final closeout passed 3,500 unit tests, 441 UI tests, all named anti-regression gates, TypeScript/build/lint, runtime and static boundaries, file sizes, and 19 rebuilt canaries in 1.2 minutes.

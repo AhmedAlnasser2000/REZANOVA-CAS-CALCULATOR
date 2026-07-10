@@ -1,0 +1,331 @@
+{
+  "version": 1,
+  "workspace": "matrix",
+  "fixtures": [
+    {
+      "id": "matrix-add",
+      "workspace": "matrix",
+      "family": "matrix-arithmetic",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "add",
+        "matrixA": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "matrixB": [
+          [
+            4,
+            3
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "A+B"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\begin{bmatrix}5 & 5\\\\5 & 5\\end{bmatrix}"
+      }
+    },
+    {
+      "id": "matrix-determinant",
+      "workspace": "matrix",
+      "family": "determinant",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "detA",
+        "matrixA": [
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ]
+        ],
+        "matrixB": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "det(A)"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=-2"
+      }
+    },
+    {
+      "id": "matrix-inverse",
+      "workspace": "matrix",
+      "family": "inverse",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "inverseA",
+        "matrixA": [
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ],
+        "matrixB": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Inverse A"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\begin{bmatrix}1 & -1\\\\-1 & 2\\end{bmatrix}"
+      }
+    },
+    {
+      "id": "matrix-rank",
+      "workspace": "matrix",
+      "family": "rank",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "rankA",
+        "matrixA": [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            4
+          ]
+        ],
+        "matrixB": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "rank(A)"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1"
+      }
+    },
+    {
+      "id": "matrix-linear-system",
+      "workspace": "matrix",
+      "family": "linear-system",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "linearSystem",
+        "matrixA": [
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            -1
+          ]
+        ],
+        "matrixB": [
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "systemRhs": [
+          5,
+          1
+        ],
+        "systemForm": "Ax=b"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Ax=b"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 4,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=\\begin{bmatrix}2\\\\1\\end{bmatrix}\ndetailSections[0].lines[0]=\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=2\ndetailSections[0].lines[1]=\\operatorname{unknowns}=2\ndetailSections[2].lines[0]=\\operatorname{rref}\\left([A|b]\\right)=\\begin{bmatrix}1 & 0 & 2\\\\0 & 1 & 1\\end{bmatrix}\ndetailSections[3].lines[0]=R_{1}\\leftarrow \\frac{1}{2}R_{1}\ndetailSections[3].lines[1]=R_{2}\\leftarrow R_{2}-R_{1}\ndetailSections[3].lines[2]=R_{2}\\leftarrow -\\frac{2}{3}R_{2}\ndetailSections[3].lines[3]=R_{1}\\leftarrow R_{1}-\\frac{1}{2}R_{2}"
+      }
+    }
+  ]
+}

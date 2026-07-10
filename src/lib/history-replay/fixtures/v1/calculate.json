@@ -1,0 +1,975 @@
+{
+  "version": 1,
+  "workspace": "calculate",
+  "fixtures": [
+    {
+      "id": "calculate-arithmetic-add",
+      "workspace": "calculate",
+      "family": "arithmetic",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "2+2",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=4\nresolvedInputLatex=4"
+      }
+    },
+    {
+      "id": "calculate-arithmetic-fraction",
+      "workspace": "calculate",
+      "family": "arithmetic",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\frac{1}{3}+\\frac{1}{6}",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{1}{2}\nresolvedInputLatex=\\frac{1}{2}"
+      }
+    },
+    {
+      "id": "calculate-exact-radical",
+      "workspace": "calculate",
+      "family": "exact-forms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\sqrt{12}",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric",
+          "resultOrigin": "numeric-fallback"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=3.464\\,101\\,615\\,137\\,754\\,4\nresolvedInputLatex=2\\sqrt{3}"
+      }
+    },
+    {
+      "id": "calculate-exact-power",
+      "workspace": "calculate",
+      "family": "exact-forms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "2^10",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1\\,024\nresolvedInputLatex=1\\,024"
+      }
+    },
+    {
+      "id": "calculate-trig-sine-deg",
+      "workspace": "calculate",
+      "family": "trigonometry",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\sin(30)",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{1}{2}"
+      }
+    },
+    {
+      "id": "calculate-trig-cosine-deg",
+      "workspace": "calculate",
+      "family": "trigonometry",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\cos(60)",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{1}{2}"
+      }
+    },
+    {
+      "id": "calculate-trig-tangent-deg",
+      "workspace": "calculate",
+      "family": "trigonometry",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\tan(45)",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=1"
+      }
+    },
+    {
+      "id": "calculate-inverse-sine-deg",
+      "workspace": "calculate",
+      "family": "inverse-trigonometry",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\arcsin(1)",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric",
+          "resultOrigin": "exact-special-angle"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=90"
+      }
+    },
+    {
+      "id": "calculate-inverse-sine-rad",
+      "workspace": "calculate",
+      "family": "inverse-trigonometry",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "exact",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\arcsin(1)",
+        "angleUnit": "rad",
+        "outputStyle": "exact",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric",
+          "resultOrigin": "exact-special-angle"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{\\pi}{2}"
+      }
+    },
+    {
+      "id": "calculate-inverse-cosine-rad",
+      "workspace": "calculate",
+      "family": "inverse-trigonometry",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "rad",
+        "outputStyle": "exact",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\arccos(0)",
+        "angleUnit": "rad",
+        "outputStyle": "exact",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric",
+          "resultOrigin": "exact-special-angle"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{\\pi}{2}"
+      }
+    },
+    {
+      "id": "calculate-inverse-tangent-grad",
+      "workspace": "calculate",
+      "family": "inverse-trigonometry",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "grad",
+        "outputStyle": "exact",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\arctan(1)",
+        "angleUnit": "grad",
+        "outputStyle": "exact",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric",
+          "resultOrigin": "exact-special-angle"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=50"
+      }
+    },
+    {
+      "id": "calculate-simplify-like-terms",
+      "workspace": "calculate",
+      "family": "transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "simplify",
+        "latex": "x+x",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Simplify",
+          "resultOrigin": "symbolic-engine"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=2x"
+      }
+    },
+    {
+      "id": "calculate-simplify-identity",
+      "workspace": "calculate",
+      "family": "transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "simplify",
+        "latex": "(x+1)^2-(x^2+2x+1)",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Simplify",
+          "resultOrigin": "symbolic-engine"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=0\nresolvedInputLatex=-x^2+(x+1)^2-2x-1"
+      }
+    },
+    {
+      "id": "calculate-factor-difference-squares",
+      "workspace": "calculate",
+      "family": "transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "factor",
+        "latex": "x^2-1",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Factor",
+          "resultOrigin": "symbolic-engine"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=(x-1)(x+1)"
+      }
+    },
+    {
+      "id": "calculate-factor-perfect-square",
+      "workspace": "calculate",
+      "family": "transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "factor",
+        "latex": "x^2+2x+1",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Factor",
+          "resultOrigin": "symbolic-engine"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=(x+1)(x+1)"
+      }
+    },
+    {
+      "id": "calculate-expand-square",
+      "workspace": "calculate",
+      "family": "transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "expand",
+        "latex": "(x+1)^2",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Expand"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x^2+2x+1"
+      }
+    },
+    {
+      "id": "calculate-expand-product",
+      "workspace": "calculate",
+      "family": "transforms",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "expand",
+        "latex": "(x-2)(x+3)",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Expand"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x^2+x-6"
+      }
+    },
+    {
+      "id": "calculate-ans-addition",
+      "workspace": "calculate",
+      "family": "ans",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "4",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "Ans+3",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "4"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=7"
+      }
+    },
+    {
+      "id": "calculate-ans-product",
+      "workspace": "calculate",
+      "family": "ans",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "5",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "2Ans",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "5"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=2Ans"
+      }
+    },
+    {
+      "id": "calculate-decimal-output",
+      "workspace": "calculate",
+      "family": "numeric-format",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "decimal",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "action": "evaluate",
+        "latex": "\\frac{1}{7}",
+        "angleUnit": "deg",
+        "outputStyle": "decimal",
+        "ansLatex": "0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Numeric"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\frac{1}{7}"
+      }
+    }
+  ]
+}

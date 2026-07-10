@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   HistoryEntry,
   ModeId,
+  Settings,
   WorkspaceInstanceRuntimeContext,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
@@ -86,6 +87,7 @@ function renderHistoryDisplayRuntime(options: {
   autoSwitchToEquation?: boolean;
   delegates?: RuntimeDelegates;
   historyEnabled?: boolean;
+  settings?: Settings;
   updateWorkspaceInstanceDisplayState?: (
     workspaceInstanceId: string,
     displayState: WorkspaceInstanceStateSlot | WorkspaceInstanceStateSlotUpdater,
@@ -107,7 +109,7 @@ function renderHistoryDisplayRuntime(options: {
   const activeWorkspaceInstanceRef = options.activeWorkspaceInstanceRef
     ?? { current: activeWorkspaceInstance };
   const hook = renderHook(
-    (props: { autoSwitchToEquation: boolean; historyEnabled: boolean }) =>
+    (props: { autoSwitchToEquation: boolean; historyEnabled: boolean; settings: Settings }) =>
       useHistoryDisplayRuntime({
         autoSwitchToEquation: props.autoSwitchToEquation,
         closeHistoryPanel: delegates.closeHistoryPanel,
@@ -119,6 +121,7 @@ function renderHistoryDisplayRuntime(options: {
         getTrigScreen: delegates.getTrigScreen,
         getActiveWorkspaceInstanceRuntimeContext: () => activeWorkspaceInstanceRef.current,
         historyEnabled: props.historyEnabled,
+        settings: props.settings,
         isWorkspaceInstanceOpen: () => options.workspaceInstanceOpen ?? true,
         openCalculusScreen: delegates.openCalculusScreen,
         restoreCalculateHistoryEntry: delegates.restoreCalculateHistoryEntry,
@@ -145,6 +148,7 @@ function renderHistoryDisplayRuntime(options: {
       initialProps: {
         autoSwitchToEquation: options.autoSwitchToEquation ?? true,
         historyEnabled: options.historyEnabled ?? true,
+        settings: options.settings ?? DEFAULT_SETTINGS,
       },
     },
   );

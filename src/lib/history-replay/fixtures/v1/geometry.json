@@ -1,0 +1,236 @@
+{
+  "version": 1,
+  "workspace": "geometry",
+  "fixtures": [
+    {
+      "id": "geometry-square",
+      "workspace": "geometry",
+      "family": "shape-2d",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "square(side=5)",
+        "screenHint": "square"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Square",
+          "resultOrigin": "geometry-formula"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=s=5,\\ A=25,\\ P=20,\\ d=7.071068"
+      }
+    },
+    {
+      "id": "geometry-distance",
+      "workspace": "geometry",
+      "family": "coordinate-distance",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "distance(p1=(0,0), p2=(3,4))",
+        "screenHint": "distance"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Distance",
+          "resultOrigin": "geometry-coordinate"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=P_1=\\left(0,0\\right),\\ P_2=\\left(3,4\\right),\\ d=5"
+      }
+    },
+    {
+      "id": "geometry-circle",
+      "workspace": "geometry",
+      "family": "circle",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "circle(radius=3)",
+        "screenHint": "circle"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Circle",
+          "resultOrigin": "geometry-formula"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=r=3,\\ d=6,\\ C=6\\pi,\\ A=9\\pi"
+      }
+    },
+    {
+      "id": "geometry-triangle",
+      "workspace": "geometry",
+      "family": "triangle",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "triangleHeron(a=5, b=6, c=7)",
+        "screenHint": "triangleHeron"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Heron",
+          "resultOrigin": "geometry-formula"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=a=5,\\ b=6,\\ c=7,\\ s=9,\\ A=14.696938"
+      }
+    },
+    {
+      "id": "geometry-line",
+      "workspace": "geometry",
+      "family": "line-equation",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "lineEquation(p1=(1,2), p2=(3,6), form=standard)",
+        "screenHint": "lineEquation"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Line Equation",
+          "resultOrigin": "geometry-coordinate"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 1,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=2x-y=0\nactions[0].latex=2x-y=0"
+      }
+    }
+  ]
+}

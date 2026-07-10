@@ -171,3 +171,15 @@
 - `npm run test:ci-gate-alignment`: 8/8 passed. The weekly workflow parsed through installed `js-yaml`, schedules Monday at `03:17 UTC`, supports manual dispatch, builds, runs all 19 canaries, publishes human/JSON artifacts and the job summary, and contains no Git write command.
 - Local workflow-equivalent Chromium canaries passed 19/19 in 1.2 minutes.
 - `npm run build`, `npm run lint`, file sizes, OOE/compartment boundaries, canary registry, and diff hygiene passed before durable closeout.
+
+## HISTORY-REPLAY-RATCHET1 And Manual Closeout
+- Kind: `backend` deterministic replay ratchet with required `ui` History creation/replay evidence.
+- Gate A adds optional `HistoryReplaySnapshotV1` data captured at pending-ticket reservation and retained in a ticket-ID map until commit or discard. A focused UI test proves settings changed after launch do not alter the committed snapshot.
+- Legacy schema parsing remains valid and internal classification returns `legacy-nondeterministic` without inventing settings. Visible replay still uses existing route seeds and saved result data.
+- Gate B stores exactly 100 versioned fixtures across nine JSON files: Calculate 20, Equation 25, Calculus 25, and five each for Matrix, Vector, Table, Trigonometry, Statistics, and Geometry.
+- `npm run test:history-replay` passed four replay tests plus the importer test. Human and JSON reports both recorded 100 fixtures, zero hard failures, and zero normalized-LaTeX differences.
+- The importer requires `--input` and writes sanitized candidates only beneath ignored `.task_tmp/history-replay-import/`. The seam selector adds only the allowlisted replay command for relevant paths.
+- Nine Chromium History create/replay flows passed in 41.6 seconds. Full-page screenshots were inspected for all nine workspaces; Table replay correctly restored the saved function summary without pretending to rebuild rows.
+- Full closeout passed 484 unit files / 3,500 tests, 59 UI files / 441 tests, feature probes 124 native plus 37 UI/persistence tests, golden 44/44, print hygiene 7/7, runtime probes 19/19, and rebuilt canaries 19/19 in 1.2 minutes.
+- TypeScript, build, lint, CI alignment, freshness, app identity, Surface Protocol, pillars, OOE/compartment boundaries, file sizes, and diff hygiene passed. Existing non-fatal Vite chunk/dynamic-import warnings remain unchanged.
+- Outcome: all nine moves are technically closed; user acceptance is required before a separate Printer Core, detail-segment, and canonical clipboard roadmap begins.

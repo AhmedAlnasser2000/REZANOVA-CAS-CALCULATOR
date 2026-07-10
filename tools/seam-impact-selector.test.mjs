@@ -74,6 +74,26 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands, []);
   });
 
+  it('selects the History replay ratchet only for relevant replay seams', () => {
+    const plan = buildExplicitPathPlan([
+      'src/types/calculator/history-replay-types.ts',
+      'src/app/runtime/useHistoryDisplayRuntime.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'app-runtime',
+      'history-replay',
+      'shared-type-contract',
+    ]);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'workspace-runtime-contracts',
+      'app-runtime-contracts',
+      'display-contracts',
+      'app-state-contracts',
+      'history-replay',
+    ]);
+  });
+
   it('handles rename, copy, and delete records including both rename paths', () => {
     const changes = parseGitNameStatusZ(
       'R100\0src/lib/equation/old.ts\0src/lib/ooe/new.ts\0D\0src/AppMain.tsx\0C75\0docs/a.md\0docs/b.md\0',

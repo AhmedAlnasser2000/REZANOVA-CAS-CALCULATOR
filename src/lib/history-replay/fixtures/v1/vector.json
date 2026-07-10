@@ -1,0 +1,275 @@
+{
+  "version": 1,
+  "workspace": "vector",
+  "fixtures": [
+    {
+      "id": "vector-dot",
+      "workspace": "vector",
+      "family": "dot-product",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "dot",
+        "vectorA": [
+          1,
+          2,
+          3
+        ],
+        "vectorB": [
+          4,
+          5,
+          6
+        ],
+        "angleUnit": "rad"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "u·v"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=32"
+      }
+    },
+    {
+      "id": "vector-cross",
+      "workspace": "vector",
+      "family": "cross-product",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "cross",
+        "vectorA": [
+          1,
+          0,
+          0
+        ],
+        "vectorB": [
+          0,
+          1,
+          0
+        ],
+        "angleUnit": "rad"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "u×v"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}"
+      }
+    },
+    {
+      "id": "vector-norm",
+      "workspace": "vector",
+      "family": "norm",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "normA",
+        "vectorA": [
+          3,
+          4
+        ],
+        "vectorB": [
+          0,
+          1
+        ],
+        "angleUnit": "rad"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "‖u‖"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=5"
+      }
+    },
+    {
+      "id": "vector-angle",
+      "workspace": "vector",
+      "family": "angle",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "angle",
+        "vectorA": [
+          1,
+          0
+        ],
+        "vectorB": [
+          0,
+          1
+        ],
+        "angleUnit": "deg"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "∠(u,v)"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=90^{\\circ}"
+      }
+    },
+    {
+      "id": "vector-gram-schmidt",
+      "workspace": "vector",
+      "family": "orthogonalization",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "operation": "gramSchmidtUV",
+        "vectorA": [
+          1,
+          0
+        ],
+        "vectorB": [
+          1,
+          1
+        ],
+        "angleUnit": "rad"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "gram(u,v)"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 2,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}\nanswerRows.rows[0].latex=w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}\nanswerRows.rows[1].latex=w_{2}=\\begin{bmatrix}0\\\\1\\end{bmatrix}\ndetailSections[0].lines[0]=\\operatorname{orthonormal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}\ndetailSections[1].lines[0]=w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}\ndetailSections[1].lines[1]=w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=\\begin{bmatrix}0\\\\1\\end{bmatrix}\ndetailSections[1].lines[2]=w_{1}\\cdot w_{2}=0"
+      }
+    }
+  ]
+}

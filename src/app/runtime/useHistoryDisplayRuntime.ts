@@ -46,6 +46,7 @@ import {
   runtimeElapsedMs,
   type RuntimeElapsedPendingStatus,
 } from './runtimeElapsedTime';
+import { buildHistoryReplaySnapshot } from '../../lib/history-replay/replay-snapshot';
 import type {
   CalculusScreen,
   CalculatorMemorySnapshot,
@@ -53,6 +54,7 @@ import type {
   GeometryScreen,
   GuideExample,
   HistoryEntry,
+  HistoryReplaySnapshotV1,
   ModeId,
   PendingHistoryTicket,
   Settings,
@@ -88,6 +90,7 @@ type UseHistoryDisplayRuntimeOptions = {
   getStatisticsScreen: () => StatisticsScreen;
   getTrigScreen: () => TrigScreen;
   historyEnabled: boolean;
+  settings: Settings;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   isWorkspaceInstanceOpen?: (
     workspaceInstanceId: string,
@@ -136,6 +139,7 @@ export function useHistoryDisplayRuntime({
   getTrigScreen,
   getActiveWorkspaceInstanceRuntimeContext,
   historyEnabled,
+  settings,
   isWorkspaceInstanceOpen,
   openCalculusScreen,
   restoreCalculateHistoryEntry,
@@ -166,6 +170,9 @@ export function useHistoryDisplayRuntime({
   const historyLaunchOrderRef = useRef(0);
   const workspaceInstanceByTicketIdRef = useRef(new Map<string, WorkspaceInstanceRuntimeContext>());
   const runtimeStartedAtByTicketIdRef = useRef(new Map<string, number>());
+  const historyReplaySnapshotByTicketIdRef = useRef(
+    new Map<string, HistoryReplaySnapshotV1>(),
+  );
 
   const syncHistoryLaunchOrder = useCallback((entries: readonly HistoryEntry[]) => {
     const maxOrder = entries.reduce(
@@ -185,6 +192,7 @@ export function useHistoryDisplayRuntime({
     setPendingHistoryTickets([]);
     workspaceInstanceByTicketIdRef.current.clear();
     runtimeStartedAtByTicketIdRef.current.clear();
+    historyReplaySnapshotByTicketIdRef.current.clear();
     historyLaunchOrderRef.current = Date.now();
     void clearHistoryEntries();
     setClipboardNotice('History reset');
@@ -249,6 +257,10 @@ export function useHistoryDisplayRuntime({
       isWorkspaceInstanceOpen,
     };
     runtimeStartedAtByTicketIdRef.current.set(reservation.id, startedAtMs);
+    historyReplaySnapshotByTicketIdRef.current.set(
+      reservation.id,
+      buildHistoryReplaySnapshot(settings, ansLatex),
+    );
     if (workspaceInstance) {
       workspaceInstanceByTicketIdRef.current.set(reservation.id, workspaceInstance);
     }
@@ -290,6 +302,7 @@ export function useHistoryDisplayRuntime({
 
     workspaceInstanceByTicketIdRef.current.delete(ticketId);
     runtimeStartedAtByTicketIdRef.current.delete(ticketId);
+    historyReplaySnapshotByTicketIdRef.current.delete(ticketId);
     setPendingHistoryTickets((currentTickets) =>
       discardPendingHistoryTicketById(currentTickets, ticketId));
   }
@@ -308,6 +321,7 @@ export function useHistoryDisplayRuntime({
       if (workspaceInstance.workspaceInstanceId === workspaceInstanceId) {
         workspaceInstanceByTicketIdRef.current.delete(ticketId);
         runtimeStartedAtByTicketIdRef.current.delete(ticketId);
+        historyReplaySnapshotByTicketIdRef.current.delete(ticketId);
       }
     }
     setPendingHistoryTickets((currentTickets) =>
@@ -323,12 +337,16 @@ export function useHistoryDisplayRuntime({
   }
 
   function appendFinalizedHistoryEntry(entry: HistoryEntry, ticketId?: string | null) {
+    const replaySnapshot = ticketId
+      ? historyReplaySnapshotByTicketIdRef.current.get(ticketId)
+      : undefined;
+    const finalizedEntry = replaySnapshot ? { ...entry, replaySnapshot } : entry;
     discardPendingHistoryTicket(ticketId);
     setHistory((currentHistory) => {
-      const ordered = sortHistoryEntriesByLaunchOrder([...currentHistory, entry]);
+      const ordered = sortHistoryEntriesByLaunchOrder([...currentHistory, finalizedEntry]);
       return ordered.slice(-80);
     });
-    void appendHistoryEntry(entry);
+    void appendHistoryEntry(finalizedEntry);
   }
 
   function stopPendingHistoryTicket(ticket: PendingHistoryTicket) {
@@ -632,6 +650,8 @@ export function useHistoryDisplayRuntime({
     setHistory(snapshot.history);
     setPendingHistoryTickets([]);
     workspaceInstanceByTicketIdRef.current.clear();
+    runtimeStartedAtByTicketIdRef.current.clear();
+    historyReplaySnapshotByTicketIdRef.current.clear();
     setAnsLatex(snapshot.ansLatex);
     setDisplayOutcome(null);
   }
@@ -657,6 +677,7 @@ export function useHistoryDisplayRuntime({
     setPendingHistoryTickets([]);
     workspaceInstanceByTicketIdRef.current.clear();
     runtimeStartedAtByTicketIdRef.current.clear();
+    historyReplaySnapshotByTicketIdRef.current.clear();
   }
 
   function scopedPendingRuntimeTickets(

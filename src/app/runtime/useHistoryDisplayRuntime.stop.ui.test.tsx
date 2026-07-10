@@ -6,7 +6,7 @@ import {
 } from '../../lib/ooe/job-launch/active-job-registry';
 import type { HistoryDisplayReplayVariableSubstitutions } from './useHistoryDisplayRuntime';
 import { useHistoryDisplayRuntime } from './useHistoryDisplayRuntime';
-import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator';
+import { DEFAULT_SETTINGS, type WorkspaceInstanceRuntimeContext } from '../../types/calculator';
 
 vi.mock('../../lib/app-state/persistence', () => ({
   appendHistoryEntry: vi.fn(),
@@ -35,6 +35,7 @@ function renderRuntimeStopHook(activeWorkspaceInstance: WorkspaceInstanceRuntime
       getTrigScreen: vi.fn(() => 'equationSolve' as const),
       getActiveWorkspaceInstanceRuntimeContext: () => activeWorkspaceInstance,
       historyEnabled: true,
+      settings: DEFAULT_SETTINGS,
       isWorkspaceInstanceOpen: () => true,
       openCalculusScreen: vi.fn(),
       restoreCalculateHistoryEntry: vi.fn(),

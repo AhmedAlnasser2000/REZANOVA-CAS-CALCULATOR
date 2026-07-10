@@ -35,6 +35,18 @@ jobs:
       - name: Run all workspace canaries
         run: npm run test:canaries:browser
 
+      - name: Run deterministic History replay ratchet
+        run: npm run test:history-replay
+
+      - name: Verify History create and replay flows
+        run: npm run test:history-replay:browser
+
+      - name: Generate History replay reports
+        run: |
+          npm run report:history-replay -- --output history-replay.txt
+          npm run report:history-replay -- --json --output history-replay.json
+          cat history-replay.txt >> "$GITHUB_STEP_SUMMARY"
+
       - name: Generate workspace freshness reports
         run: |
           AS_OF="$(date -u +%F)"
@@ -50,3 +62,5 @@ jobs:
           path: |
             workspace-freshness.txt
             workspace-freshness.json
+            history-replay.txt
+            history-replay.json

@@ -19,6 +19,11 @@ export const SEAM_COMMANDS = [
     label: 'App-state and shared schema contracts',
     argv: ['npm', 'run', 'test:app-state-contracts'],
   },
+  {
+    id: 'history-replay',
+    label: 'Versioned History replay ratchet',
+    argv: ['npm', 'run', 'test:history-replay'],
+  },
 ];
 
 export const BASELINE_EVIDENCE = [
@@ -155,6 +160,27 @@ export const SEAM_REGISTRY = [
     ),
     additionalCommandIds: ['app-state-contracts', 'app-runtime-contracts'],
     baselineEvidenceIds: ['workspace-canaries', 'surface-protocol', 'ui-tests'],
+  },
+  {
+    id: 'history-replay',
+    label: 'History replay snapshots and deterministic fixtures',
+    matchers: [
+      ...prefix('src/lib/history-replay/'),
+      ...exact(
+        'src/app/runtime/useHistoryDisplayRuntime.ts',
+        'src/lib/app-state/schemas.ts',
+        'src/types/calculator/history-replay-types.ts',
+        'src/types/calculator/runtime-types.ts',
+        'e2e/history-replay-ratchet.spec.ts',
+        'tools/import-history-replay.mjs',
+        'tools/import-history-replay.test.mjs',
+        'tools/report-history-replay.ts',
+        'tools/update-history-replay-fixtures.ts',
+        '.github/workflows/weekly-anti-regression.yml',
+      ),
+    ],
+    additionalCommandIds: ['history-replay'],
+    baselineEvidenceIds: ['workspace-canaries', 'ui-tests', 'app-identity'],
   },
   {
     id: 'shared-type-contract',

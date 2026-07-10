@@ -1,0 +1,251 @@
+{
+  "version": 1,
+  "workspace": "table",
+  "fixtures": [
+    {
+      "id": "table-polynomial",
+      "workspace": "table",
+      "family": "single-function",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "primaryLatex": "x^2",
+        "secondaryLatex": "",
+        "secondaryEnabled": false,
+        "start": -2,
+        "end": 2,
+        "step": 1
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Table"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 5
+        },
+        "normalizedLatex": "exactLatex=f(x)=x^2\ntableResponse.rows[0].x=-2\ntableResponse.rows[0].primary=4\ntableResponse.rows[1].x=-1\ntableResponse.rows[1].primary=1\ntableResponse.rows[2].x=0\ntableResponse.rows[2].primary=0\ntableResponse.rows[3].x=1\ntableResponse.rows[3].primary=1\ntableResponse.rows[4].x=2\ntableResponse.rows[4].primary=4"
+      }
+    },
+    {
+      "id": "table-two-functions",
+      "workspace": "table",
+      "family": "two-functions",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "primaryLatex": "x^2",
+        "secondaryLatex": "x+1",
+        "secondaryEnabled": true,
+        "start": 0,
+        "end": 2,
+        "step": 1
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Table"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 3
+        },
+        "normalizedLatex": "exactLatex=f(x)=x^2,\\;g(x)=x+1\ntableResponse.rows[0].x=0\ntableResponse.rows[0].primary=0\ntableResponse.rows[0].secondary=1\ntableResponse.rows[1].x=1\ntableResponse.rows[1].primary=1\ntableResponse.rows[1].secondary=2\ntableResponse.rows[2].x=2\ntableResponse.rows[2].primary=4\ntableResponse.rows[2].secondary=3"
+      }
+    },
+    {
+      "id": "table-partial-domain",
+      "workspace": "table",
+      "family": "domain-boundary",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "primaryLatex": "\\sqrt{x}",
+        "secondaryLatex": "",
+        "secondaryEnabled": false,
+        "start": -1,
+        "end": 1,
+        "step": 1
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Table"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 3
+        },
+        "normalizedLatex": "exactLatex=f(x)=\\sqrt{x}\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=undefined\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=0\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
+      }
+    },
+    {
+      "id": "table-reciprocal",
+      "workspace": "table",
+      "family": "rational-function",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "primaryLatex": "\\frac{1}{x}",
+        "secondaryLatex": "",
+        "secondaryEnabled": false,
+        "start": -1,
+        "end": 1,
+        "step": 1
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Table"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 3
+        },
+        "normalizedLatex": "exactLatex=f(x)=\\frac{1}{x}\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=-1\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=undefined\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
+      }
+    },
+    {
+      "id": "table-trigonometric",
+      "workspace": "table",
+      "family": "trigonometric-function",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "primaryLatex": "\\sin(x)",
+        "secondaryLatex": "",
+        "secondaryEnabled": false,
+        "start": 0,
+        "end": 2,
+        "step": 1
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Table"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 3
+        },
+        "normalizedLatex": "exactLatex=f(x)=\\sin(x)\ntableResponse.rows[0].x=0\ntableResponse.rows[0].primary=0\ntableResponse.rows[1].x=1\ntableResponse.rows[1].primary=0.841471\ntableResponse.rows[2].x=2\ntableResponse.rows[2].primary=0.909297"
+      }
+    }
+  ]
+}

@@ -482,6 +482,7 @@ export default function App() {
     getTrigScreen: () => trigScreen,
     getActiveWorkspaceInstanceRuntimeContext: getActiveWorkspaceInstanceRuntimeContextForRuntime,
     historyEnabled: settings.historyEnabled,
+    settings,
     isWorkspaceInstanceOpen: isWorkspaceInstanceOpenForRuntime,
     openCalculusScreen: (screen) => openCalculusScreen(screen),
     restoreCalculateHistoryEntry: (entry) => restoreCalculateHistoryEntry(entry),

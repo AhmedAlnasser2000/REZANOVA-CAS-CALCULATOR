@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "workspace": "statistics",
+  "fixtures": [
+    {
+      "id": "statistics-descriptive",
+      "workspace": "statistics",
+      "family": "descriptive",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "descriptive(values={12,15,15,18,20})",
+        "screenHint": "descriptive",
+        "workingSourceHint": "dataset"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Descriptive"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=n=5,\\ \\sum x=80,\\ \\bar{x}=16,\\ \\operatorname{median}=15,\\ \\min=12,\\ \\max=20,\\ \\operatorname{range}=8,\\ \\sigma^2=7.6,\\ \\sigma=2.75681,\\ s^2=9.5,\\ s=3.082207"
+      }
+    },
+    {
+      "id": "statistics-frequency",
+      "workspace": "statistics",
+      "family": "frequency",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "frequency(freq={1:2,2:3,4:1})",
+        "screenHint": "frequency",
+        "workingSourceHint": "frequencyTable"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Frequency"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=n=6,\\ \\left\\{1:2,\\ 2:3,\\ 4:1\\right\\},\\ \\operatorname{mode}=2"
+      }
+    },
+    {
+      "id": "statistics-binomial",
+      "workspace": "statistics",
+      "family": "probability",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "binomial(n=10,p=0.5,x=3,mode=pmf)",
+        "screenHint": "binomial"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Binomial"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=P(X=3)=0.117188"
+      }
+    },
+    {
+      "id": "statistics-regression",
+      "workspace": "statistics",
+      "family": "relationship",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "regression(points={(1,2),(2,4),(3,6)})",
+        "screenHint": "regression",
+        "workingSourceHint": "dataset"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Regression"
+        },
+        "cardinalities": {
+          "warnings": 1,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\hat{y}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3"
+      }
+    },
+    {
+      "id": "statistics-mean-inference",
+      "workspace": "statistics",
+      "family": "inference",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "inputLatex": "meanInference(values={12,15,15,18,20}, mode=ci, level=0.95)",
+        "screenHint": "meanInference",
+        "workingSourceHint": "dataset"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Mean Inference"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+      }
+    }
+  ]
+}

@@ -1,0 +1,2680 @@
+{
+  "version": 1,
+  "workspace": "equation",
+  "fixtures": [
+    {
+      "id": "equation-linear-basic",
+      "workspace": "equation",
+      "family": "linear",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "2x+3=7"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=2"
+      }
+    },
+    {
+      "id": "equation-linear-fraction",
+      "workspace": "equation",
+      "family": "linear",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\frac{x}{3}+2=5"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=9"
+      }
+    },
+    {
+      "id": "equation-linear-parentheses",
+      "workspace": "equation",
+      "family": "linear",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "3(x-2)=9"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=5"
+      }
+    },
+    {
+      "id": "equation-quadratic-factor",
+      "workspace": "equation",
+      "family": "polynomial",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "x^2-5x+6=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 2,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{2,\\ 3\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=2\nbranchReadback.branchesLatex[1]=3"
+      }
+    },
+    {
+      "id": "equation-quadratic-double-root",
+      "workspace": "equation",
+      "family": "polynomial",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "x^2-2x+1=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=1"
+      }
+    },
+    {
+      "id": "equation-quadratic-irrational",
+      "workspace": "equation",
+      "family": "polynomial",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "x^2-2=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 2,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{-(\\frac{\\sqrt{8}}{2}),\\ \\frac{\\sqrt{8}}{2}\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-(\\frac{\\sqrt{8}}{2})\nbranchReadback.branchesLatex[1]=\\frac{\\sqrt{8}}{2}"
+      }
+    },
+    {
+      "id": "equation-cubic-factor",
+      "workspace": "equation",
+      "family": "polynomial",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "x^3-6x^2+11x-6=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{1, 2, 3\\right\\}"
+      }
+    },
+    {
+      "id": "equation-quartic-biquadratic",
+      "workspace": "equation",
+      "family": "polynomial",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "x^4-5x^2+4=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{20}{-10}, \\frac{10}{-10}, 1, \\frac{-20}{-10}\\right\\}"
+      }
+    },
+    {
+      "id": "equation-rational-simple",
+      "workspace": "equation",
+      "family": "rational-radical",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\frac{x+1}{x-1}=2"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=3\nexactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0"
+      }
+    },
+    {
+      "id": "equation-rational-hole",
+      "workspace": "equation",
+      "family": "rational-radical",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\frac{x^2-1}{x-1}=2"
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Solve"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 3,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][1].latex=1\nresolvedInputLatex=x+1=2"
+      }
+    },
+    {
+      "id": "equation-radical-square",
+      "workspace": "equation",
+      "family": "rational-radical",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\sqrt{x+1}=3"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=8"
+      }
+    },
+    {
+      "id": "equation-radical-affine",
+      "workspace": "equation",
+      "family": "rational-radical",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\sqrt{2x+1}=5"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=12"
+      }
+    },
+    {
+      "id": "equation-absolute-basic",
+      "workspace": "equation",
+      "family": "absolute-value",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\left|x-2\\right|=3"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 0,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{5, -1\\right\\}\nresolvedInputLatex=\\vert x-2\\vert=3"
+      }
+    },
+    {
+      "id": "equation-trig-sine",
+      "workspace": "equation",
+      "family": "trig-exp-log",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\sin(x)=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{180n\\right\\}\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+      }
+    },
+    {
+      "id": "equation-trig-cosine",
+      "workspace": "equation",
+      "family": "trig-exp-log",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\cos(x)=1"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 2,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arccos(1)+360n,\\ -\\frac{180}{\\pi}\\arccos(1)+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arccos(1)+360n\nbranchReadback.branchesLatex[1]=-\\frac{180}{\\pi}\\arccos(1)+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+      }
+    },
+    {
+      "id": "equation-exponential-basic",
+      "workspace": "equation",
+      "family": "trig-exp-log",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "2^x=8"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=3\nresolvedInputLatex=2^{x}=8"
+      }
+    },
+    {
+      "id": "equation-exponential-substitution",
+      "workspace": "equation",
+      "family": "trig-exp-log",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "e^{2x}-5e^x+6=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Solve"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 3,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "resolvedInputLatex=6+-5e^{x}+e^{2x}=0"
+      }
+    },
+    {
+      "id": "equation-log-natural",
+      "workspace": "equation",
+      "family": "trig-exp-log",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\ln(x)=2"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=e^{2}\nexactSupplementLatex[0]=x>0"
+      }
+    },
+    {
+      "id": "equation-log-combine",
+      "workspace": "equation",
+      "family": "trig-exp-log",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\ln(x)+\\ln(x+1)=2"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 3,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ndetailSections[0].lineParts[0][1].latex=\\frac{1}{2}(-\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\nresolvedInputLatex=\\ln(x)+\\ln(x+1)=2"
+      }
+    },
+    {
+      "id": "equation-real-no-solution",
+      "workspace": "equation",
+      "family": "domain-boundary",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "x^2+1=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Solve"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": ""
+      }
+    },
+    {
+      "id": "equation-complex-quadratic",
+      "workspace": "equation",
+      "family": "domain-boundary",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "complex",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "complex",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "x^2+1=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic",
+          "answerDomain": "complex"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 2,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x\\in\\left\\{-i,\\ i\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-i\nbranchReadback.branchesLatex[1]=i"
+      }
+    },
+    {
+      "id": "equation-denominator-exclusion",
+      "workspace": "equation",
+      "family": "domain-boundary",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\frac{1}{x}=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Solve"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x\\ne0\nresolvedInputLatex=1=0"
+      }
+    },
+    {
+      "id": "equation-even-root-domain",
+      "workspace": "equation",
+      "family": "domain-boundary",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\sqrt{x}=-1"
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Solve"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactSupplementLatex[0]=\\text{Conditions: } x\\ge0"
+      }
+    },
+    {
+      "id": "equation-isolate-mode",
+      "workspace": "equation",
+      "family": "answer-mode",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "isolate",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": "x",
+        "equationAnswerMode": "isolate",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "ax+b=0"
+      },
+      "expected": {
+        "identity": {
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "symbolic"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 1,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 2,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": "exactLatex=x=\\frac{-b}{a}\nexactSupplementLatex[0]=a\\ne0\ndetailSections[1].lineParts[2][1].latex=x=\\frac{-b}{a}"
+      }
+    },
+    {
+      "id": "equation-numeric-interval",
+      "workspace": "equation",
+      "family": "numeric-boundary",
+      "snapshot": {
+        "version": 1,
+        "ansLatex": "0",
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "mathNotationDisplay": "rendered",
+        "historyInspectorNotationMode": "rendered",
+        "historyPageNotationMode": "latex",
+        "symbolicDisplayMode": "auto",
+        "flattenNestedRootsWhenSafe": true,
+        "approxDigits": 6,
+        "numericNotationMode": "decimal",
+        "scientificNotationStyle": "times10",
+        "detailedFactsEnabled": false
+      },
+      "request": {
+        "equationScreen": "symbolic",
+        "equationSolveTarget": null,
+        "equationAnswerMode": "exact",
+        "equationDomainIntent": "real",
+        "complexExactForm": "rectangular",
+        "quadraticCoefficients": [
+          1,
+          -5,
+          6
+        ],
+        "cubicCoefficients": [
+          1,
+          -6,
+          11,
+          -6
+        ],
+        "quarticCoefficients": [
+          1,
+          0,
+          -5,
+          0,
+          4
+        ],
+        "polynomialSystem2Latex": [
+          "x+y=3",
+          "x-y=1"
+        ],
+        "system2": [
+          [
+            1,
+            1,
+            3
+          ],
+          [
+            2,
+            -1,
+            0
+          ]
+        ],
+        "system3": [
+          [
+            1,
+            1,
+            1,
+            6
+          ],
+          [
+            2,
+            -1,
+            1,
+            3
+          ],
+          [
+            1,
+            2,
+            -1,
+            3
+          ]
+        ],
+        "angleUnit": "deg",
+        "outputStyle": "both",
+        "ansLatex": "0",
+        "equationLatex": "\\cos(x)=x",
+        "numericInterval": {
+          "min": 0,
+          "max": 1
+        }
+      },
+      "expected": {
+        "identity": {
+          "kind": "error",
+          "title": "Solve"
+        },
+        "cardinalities": {
+          "warnings": 0,
+          "supplements": 0,
+          "answerRows": 0,
+          "branchRows": 0,
+          "systemRows": 0,
+          "periodicBranches": 0,
+          "detailSections": 1,
+          "actions": 0,
+          "tableRows": 0
+        },
+        "normalizedLatex": ""
+      }
+    }
+  ]
+}

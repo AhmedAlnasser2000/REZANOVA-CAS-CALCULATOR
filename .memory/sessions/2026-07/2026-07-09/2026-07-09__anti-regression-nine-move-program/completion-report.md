@@ -28,8 +28,8 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- The user accepted the completed mandatory Incident Review on `2026-07-10`.
-- Approve and commit `FEATURE-PROBE-REGISTRY1`, then begin `GOLDEN-CORPUS-REGISTRY1`.
+- Commit `HISTORY-REPLAY-RATCHET1` under the standing approval for Moves 6-9.
+- Pause for user acceptance of the nine-move manual checklist before planning Printer Core, detail-segment, or canonical clipboard work.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -106,3 +106,11 @@
 - Added focused coverage for shared aliases, future evidence, missing data, invalid inputs, unreadable repositories, stable output, and workflow structure.
 - Added Monday `03:17 UTC` and manual automation that installs Chromium, builds, runs all 19 canaries, publishes both reports and the human job summary, and never commits generated files.
 - Added freshness validation to the aggregate local gate without making session age a release criterion.
+
+## HISTORY-REPLAY-RATCHET1 And Nine-Move Closeout
+- Added optional version-1 replay snapshots containing launch-time `Ans` and the approved computation/print settings. Snapshots follow pending History ticket reserve, commit, discard, reset, and workspace-close lifecycle.
+- Kept legacy records loadable and visible replay unchanged; the snapshot is consumed only by deterministic automation.
+- Added nine sanitized JSON fixture files containing exactly 100 native requests at the approved distribution, hard identity/cardinality comparisons, and report-only normalized-LaTeX evidence.
+- Added stable human/JSON reporting, an explicit-export importer confined to ignored task storage, a relevant seam command, and weekly native plus browser replay execution.
+- Passed nine real create/replay flows with inspected full-page evidence, 19 rebuilt canaries, 3,500 unit tests, 441 UI tests, all named anti-regression gates, and static/runtime/build/lint/file-size closeout checks.
+- Recorded the user-facing manual acceptance checklist. Printer/detail/clipboard work remains paused pending acceptance.
