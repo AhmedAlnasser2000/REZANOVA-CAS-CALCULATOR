@@ -90,6 +90,8 @@ Status: implemented and verified on `2026-07-10` under the explicit user product
 - Use native runtime/formatter probes and reserve Playwright for component-level wiring.
 - Pin DEG/RAD/GRAD inverse trig and exact/decimal interactions.
 
+Status: implemented and verified on `2026-07-10`. The exhaustive 24-key registry references 18 executable native, component, and persistence probes; the focused gate passed 124 native tests and 37 UI/persistence tests. `GOLDEN-CORPUS-REGISTRY1` is next.
+
 ### 6. GOLDEN-CORPUS-REGISTRY1
 - Extend `src/lib/__golden__`; do not create a parallel corpus system.
 - Add adapters and at least two cases for every computational workspace.

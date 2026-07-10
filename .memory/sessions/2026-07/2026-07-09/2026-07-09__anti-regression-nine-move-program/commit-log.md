@@ -50,4 +50,9 @@
 ## Matrix/Vector Runtime Shell Split
 - Subject: `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`.
 - User approval: explicitly granted during implementation on `2026-07-10`.
+- Hash: `59bc68f0168baa672cb2306fa426ab076596411c`.
+
+## Behavioral Ratchet 5
+- Subject: `FEATURE-PROBE-REGISTRY1`.
+- User approval: explicitly granted after verified gate review on `2026-07-10`.
 - Hash: this milestone commit after approval.

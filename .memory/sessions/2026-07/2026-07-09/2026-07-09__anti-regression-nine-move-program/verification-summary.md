@@ -139,3 +139,11 @@
 - Focused Matrix/Vector Chromium canaries passed 4/4; the full workspace suite passed 19/19 in 1.2 minutes.
 - Full-page Matrix `profile(...)` and Vector `independent(...)` evidence was inspected after final `Ready` status. Answers, rank-nullity/span facts, kernel/image/basis evidence, collapsed RREF sections, editor surfaces, and controls were readable without clipping or overlap.
 - Outcome: independent Matrix/Vector topology is complete with unchanged visible mathematical behavior.
+
+## FEATURE-PROBE-REGISTRY1
+- Kind: `backend` anti-regression registry with supporting component and persistence tests; no app-visible behavior changed.
+- `npm run test:feature-probes`: passed 124 native tests across 9 files and 37 UI/persistence tests across 6 files.
+- Registry parity is exactly 24/24 live `Settings` keys and all four policy classes are represented. Every policy resolves to at least one named test in the committed source catalog.
+- Required evidence pins DEG/RAD/GRAD inverse trig special values and domain stops, exact/decimal/both Equation output, Equation answer/domain/complex form, notation/precision/scientific interactions, UI/math/result scale and high contrast, language, History-disabled privacy, and calculator-memory restore/autosave policy.
+- The first focused run correctly failed one inaccurate registered test label; the catalog was corrected to the exact live case name and the full gate then passed.
+- Focused ModeStrip UI rerun passed 1/1 after adding quick-setting patch assertions. `npx tsc -b --pretty false`, `npm run test:file-sizes`, and `git diff --check` passed before durable closeout.

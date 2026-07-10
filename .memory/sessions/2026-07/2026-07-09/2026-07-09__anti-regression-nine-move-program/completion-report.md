@@ -29,7 +29,7 @@
 
 ## Follow-Ups
 - The user accepted the completed mandatory Incident Review on `2026-07-10`.
-- Commit the verified audit/topology decision, then implement the separately approved Matrix/Vector host split before Move 5.
+- Approve and commit `FEATURE-PROBE-REGISTRY1`, then begin `GOLDEN-CORPUS-REGISTRY1`.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -79,3 +79,9 @@
 - Preserved `linearAlgebra.matrix`, `linearAlgebra.vector`, public requests, `matrixSeed`, `vectorSeed`, History, stale/cancel semantics, commit legality, diagnostics meaning, and shared exact math cores.
 - Updated TypeScript and Rust OOE plans/hosts, workspace pilots, runtime probes, selector lanes, and focused parity/fallback/failure/cancellation tests.
 - Production build emits separate Matrix and Vector worker assets. Runtime, boundary, build/lint, full canary, and final visual gates passed.
+
+## FEATURE-PROBE-REGISTRY1
+- Added an exhaustive `Record<keyof Settings, ProbePolicy>` over all 24 live settings with semantic-runtime, formatting, shell-accessibility, and persistence-privacy classifications.
+- Added an 18-entry executable catalog spanning native, component, and persistence tests; registry tests fail on Settings-key drift, missing policy classes, missing or orphaned probes, missing files, or renamed evidence cases.
+- Added `npm run test:feature-probes` to execute the catalog's native and UI/persistence suites and included it in the aggregate local gate.
+- Tightened ModeStrip coverage to assert angle, exact-to-decimal, auto-equation, and real/complex quick-setting patches. No application behavior changed.

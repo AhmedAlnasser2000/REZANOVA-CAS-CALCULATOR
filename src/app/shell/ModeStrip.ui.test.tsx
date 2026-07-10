@@ -70,11 +70,19 @@ describe('ModeStrip', () => {
     fireEvent.click(screen.getByTestId('variables-toggle'));
     fireEvent.click(screen.getByTestId('ooe-diagnostics-toggle'));
     fireEvent.click(screen.getByTestId('history-toggle'));
+    fireEvent.click(screen.getByTestId('quick-setting-angle-unit'));
+    fireEvent.click(screen.getByTestId('quick-setting-output-style'));
+    fireEvent.click(screen.getByTestId('quick-setting-auto-equation'));
+    fireEvent.click(screen.getByTestId('quick-setting-equation-domain-intent'));
 
     expect(handlers.openGuideHome).toHaveBeenCalledTimes(1);
     expect(handlers.toggleSettingsPanel).toHaveBeenCalledTimes(1);
     expect(handlers.toggleVariablesPanel).toHaveBeenCalledTimes(1);
     expect(handlers.toggleOoeDiagnosticsPanel).toHaveBeenCalledTimes(1);
     expect(handlers.toggleHistoryPanel).toHaveBeenCalledTimes(1);
+    expect(handlers.patchSettings).toHaveBeenCalledWith({ angleUnit: 'deg' });
+    expect(handlers.patchSettings).toHaveBeenCalledWith({ outputStyle: 'decimal' });
+    expect(handlers.patchSettings).toHaveBeenCalledWith({ autoSwitchToEquation: false });
+    expect(handlers.patchSettings).toHaveBeenCalledWith({ equationDomainIntent: 'real' });
   });
 });

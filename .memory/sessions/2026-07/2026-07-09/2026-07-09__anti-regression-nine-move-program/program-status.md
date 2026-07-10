@@ -20,8 +20,9 @@
 - `SEAM-IMPACT-SELECTOR1`: committed as `8fd8e788`.
 - Mandatory Incident Review: verification complete; accepted by the user on `2026-07-10`.
 - `LINEAR-ALGEBRA-SHELL-SPLIT0`: verified; split-eligibility threshold not met.
-- `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`: implemented and verified; approved commit checkpoint pending completion in this milestone.
-- Behavioral Ratchets 5-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
+- `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`: committed as `59bc68f0`.
+- `FEATURE-PROBE-REGISTRY1`: implemented and verified; commit approval pending.
+- Behavioral Ratchets 6-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
 - Printer/detail/clipboard arcs: deferred until nine-move closeout.
 
 ## Standing Constraints
@@ -52,3 +53,4 @@
 - After reviewing that result, the user locked separate Matrix and Vector hosts prospectively for the approved Matrix numerical-decomposition/conditioning and Vector exact/geometric arcs. This does not convert the audit into a pass; it is a separate topology policy decision.
 - Matrix now selects `matrix-worker-runtime` with `matrix-runtime` fallback and `matrix-worker-shell`; Vector selects `vector-worker-runtime` with `vector-runtime` fallback and `vector-worker-shell`. Vite emits separate `matrix.worker` and `vector.worker` assets and no shared Linear Algebra worker asset.
 - All 19 workspace canaries passed in 1.2 minutes. Structured Matrix profile and Vector independence cards were inspected at final `Ready` state without clipping, overlap, or unreadable evidence.
+- The feature-probe registry matches all 24 live Settings keys exactly and resolves each policy to an executable test. Its focused gate passed 124 native tests and 37 UI/persistence tests; TypeScript and file-size validation also pass.
