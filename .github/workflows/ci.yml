@@ -47,6 +47,15 @@ jobs:
       - name: Validate memory protocol
         run: npm run test:memory-protocol
 
+      - name: Validate CI gate alignment
+        run: npm run test:ci-gate-alignment
+
+      - name: Validate app identity
+        run: npm run test:app-identity
+
+      - name: Validate Surface Protocol
+        run: npm run test:surface-protocol
+
       - name: Validate public pillars
         run: npm run test:pillars
 
@@ -61,6 +70,21 @@ jobs:
 
       - name: Validate area study templates
         run: npm run test:area-studies
+
+      - name: Validate OOE boundaries
+        run: npm run test:ooe-boundaries
+
+      - name: Validate compartment boundaries
+        run: npm run test:compartments-boundaries
+
+      - name: Validate source file sizes
+        run: npm run test:file-sizes
+
+      - name: Validate workspace canary registry
+        run: npm run test:canary-registry
+
+      - name: Run workspace runtime probes
+        run: npm run test:runtime-probes
 
       - name: Run unit tests
         run: npm run test:unit
@@ -80,7 +104,6 @@ jobs:
   e2e-linux:
     name: e2e-linux
     runs-on: ubuntu-24.04
-    needs: ci-linux
 
     steps:
       - name: Checkout
@@ -100,6 +123,9 @@ jobs:
 
       - name: Build frontend for preview server
         run: npm run build
+
+      - name: Run workspace canaries
+        run: npm run test:canaries:browser
 
       - name: Run focused browser smoke
         run: npx playwright test e2e/calc-audit0-smoke.spec.ts --project=chromium

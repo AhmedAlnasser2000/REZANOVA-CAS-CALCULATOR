@@ -104,6 +104,7 @@ describe('runSharedEquationSolve radicals and carriers', () => {
       throw new Error('Expected a success outcome');
     }
     expect(result.exactLatex).toMatch(/(\\sqrt\{13\}|13\^\{1\/2\})/);
+    expect(result.exactLatex).not.toContain('--');
     expect(result.solveBadges).toContain('Outer Inversion');
     expect(result.solveBadges).toContain('Nested Recursion');
   });

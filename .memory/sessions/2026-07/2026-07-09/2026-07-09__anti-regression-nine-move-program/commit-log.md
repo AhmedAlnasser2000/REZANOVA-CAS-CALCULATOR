@@ -25,4 +25,9 @@
 ## Incident Closure Commit 2
 - Subject: `WORKSPACE-RUNTIME-PROBE-REGISTRY1`.
 - User approval: standing approval granted for all four Incident Closure commits before implementation.
+- Hash: `503eadb07ece3c1c199e88b208256b3b1c25757a`.
+
+## Incident Closure Commit 3
+- Subject: `CI-GATE-ALIGNMENT1`.
+- User approval: standing approval granted for all four Incident Closure commits before implementation.
 - Hash: this milestone commit; exact hash is reported by post-commit readback.

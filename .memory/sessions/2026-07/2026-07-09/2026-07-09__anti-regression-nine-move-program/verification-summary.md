@@ -65,3 +65,17 @@
 ## Outstanding Gaps After Move 2
 - CI still does not run the new canary and runtime-probe lanes at the required pull-request, `main`, and Linux-release boundaries; this belongs to `CI-GATE-ALIGNMENT1`.
 - Browser registry probes exercise the public OOE facades in Node fallback mode; direct worker lifecycle coverage exists for every host family, including the newly explicit Statistics and Table cases.
+
+## CI-GATE-ALIGNMENT1
+- Kind: `backend` workflow gate with `ui` browser evidence.
+- `npm run test:ci-gate-alignment`: 7 passed; both workflows also parsed successfully through the installed YAML parser.
+- Named static gates: app identity 2 passed; Surface Protocol 5 boundary and 39 runtime tests passed; OOE 7 passed; compartments 36 passed; file sizes 8 passed; canary registry 3 passed; runtime probes 19 passed.
+- Chrome workspace canaries: 19/19 passed in 1.2 minutes under the exact workflow command.
+- Preserved focused browser smoke: 11/11 passed in 52.8 seconds after currentizing Calculus routes and editor ownership.
+- Carrier regression coverage: 61/61 focused Equation tests passed; the one-case real-app Chrome check passed and its full-page screenshot was inspected for answer/error state, badges, facts/details, readability, overflow, and double-minus serialization.
+- `npx tsc -b --pretty false`, `npm run build`, `npm run lint`, and Cargo check passed; build completed 2,804 modules with existing non-fatal warnings.
+- Broad `npm run test:unit`: 3,442 passed and two pre-existing Complex-abs tests failed exactly as isolated before this milestone.
+
+## Outstanding Gaps After Move 3
+- The static CI job remains red until the separately existing Complex-abs empty-set regression is fixed; independent browser canaries still run on every pull request and `main` push.
+- The nested radical visual check restored success and clean serialization but exposed an older candidate-validation gap: two valid positive roots remain misclassified as extraneous. This is deferred to focused Equation correctness work, not widened inside CI alignment.

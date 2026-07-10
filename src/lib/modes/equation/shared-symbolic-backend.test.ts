@@ -294,7 +294,7 @@ describe('Equation mode shared symbolic backend', () => {
       throw new Error('Expected a success outcome');
     }
     expect(result.exactLatex).toContain('x=');
-    expect(result.exactLatex).toContain('\\frac{-12}{6}');
+    expect(result.exactLatex).toContain('x=-2');
     const normalized = result.resolvedInputLatex?.replaceAll(' ', '') ?? '';
     expect(normalized).toContain('6x');
     expect(normalized).toContain('17');

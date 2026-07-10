@@ -28,7 +28,7 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- Begin `CI-GATE-ALIGNMENT1` after the verified runtime-probe milestone commit.
+- Begin `SEAM-IMPACT-SELECTOR1` after the verified CI-alignment milestone commit.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -42,3 +42,10 @@
 - Pinned capability, primary/fallback host, shell, request/snapshot, outcome, commit/stale, diagnostics, active-job, and History-ticket evidence without merging runtime ownership.
 - Added direct Statistics and Table worker coverage for completion, pre-start fallback, post-start failure policy, and hard-stop cancellation.
 - Passed 19 focused probe/worker tests, 74 surrounding runtime/OOE tests, TypeScript, build, lint, file-size, OOE/compartment boundaries, and diff hygiene.
+
+## CI-GATE-ALIGNMENT1
+- Added every required named anti-regression gate to pull-request, `main`, and Linux-release workflows, with an independent browser job for every-commit canaries and pre-package release ordering.
+- Added a tested workflow validator and local `test:gate` alignment; pinned Playwright retries to zero and separated build from the reusable browser-canary command.
+- Preserved and currentized the existing 11-case browser smoke rather than dropping its Calculus, Limits, History, Series, Partials, and ODE coverage.
+- Repaired the Move 1 carrier-readback regression by simplifying exact scalar display roots only while retaining original branch nodes for validation.
+- Passed 19 workspace canaries, 11 focused smoke cases, 61 focused Equation tests, the real-app carrier visual check, all named static gates, TypeScript/build/lint, and Cargo check.

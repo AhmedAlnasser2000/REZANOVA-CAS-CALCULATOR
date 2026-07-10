@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
 
 test('CALC-AUDIT0 basic Calculus smoke covers derivative, integral, and limit', async ({ page }) => {
   await openCalculusTool(page, 'Derivative');
-  await setVisibleSecondaryMathFieldLatex(page, 'x^3+2x');
+  await setMathFieldLatex(page, 'x^3+2x');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
@@ -23,14 +23,14 @@ test('CALC-AUDIT0 basic Calculus smoke covers derivative, integral, and limit', 
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="x"]')).toBeVisible();
 
   await openCalculusTool(page, 'Integral');
-  await setVisibleSecondaryMathFieldLatex(page, '\\frac{1}{1+x^2}');
+  await setMathFieldLatex(page, '\\frac{1}{1+x^2}');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="arctan"]')).toBeVisible();
 
   await openCalculusTool(page, 'Limit');
-  await setVisibleSecondaryMathFieldLatex(page, '\\frac{\\sin(x)}{x}');
+  await setMathFieldLatex(page, '\\lim_{x\\to 0}\\frac{\\sin(x)}{x}');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
@@ -84,7 +84,7 @@ test('CALC-DIFF1 Calculate editor smoke covers powered chain derivatives', async
 
 test('CALC-DIFF1 guided Calculus derivative smoke covers general powers', async ({ page }) => {
   await openCalculusTool(page, 'Derivative');
-  await setVisibleSecondaryMathFieldLatex(page, '\\cos^{2x}\\left(x\\right)');
+  await setMathFieldLatex(page, '\\cos^{2x}\\left(x\\right)');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
@@ -102,9 +102,8 @@ test('CALC-LIM2 directional finite-limit smoke covers typed one-sided targets', 
   await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="infty"]')).toBeVisible();
 
-  await openAdvancedCalcTool(page, 'Limits', 'Finite Target');
-  await setVisibleSecondaryMathFieldLatex(page, '\\frac{1}{x}');
-  await page.locator('.range-field input:visible').fill('0^-');
+  await openCalculusTool(page, 'Limit');
+  await setMathFieldLatex(page, '\\lim_{x\\to 0^-}\\frac{1}{x}');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
@@ -121,20 +120,19 @@ test('CALC-LIM3 local limit behavior smoke covers details', async ({ page }) => 
   await expect(page.getByTestId('display-outcome-root')).toContainText(/3(?:\.0+)?/);
   await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('rational normalizer');
 
-  await openAdvancedCalcTool(page, 'Limits', 'Finite Target');
-  await setVisibleSecondaryMathFieldLatex(page, '\\frac{\\ln(1+x)\\sin(x)}{x^2}');
-  await page.locator('.range-field input:visible').fill('0');
+  await openCalculusTool(page, 'Limit');
+  await setMathFieldLatex(page, '\\lim_{x\\to 0}\\frac{\\ln(1+x)\\sin(x)}{x^2}');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
   await expect(page.getByTestId('display-outcome-root')).toContainText(/1(?:\.0+)?/);
-  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('local orders');
+  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('Taylor leading terms');
 });
 
 test('CALC-POLISH1 history replay preserves guided calculus context', async ({ page }) => {
   await openCalculusTool(page, 'Integral');
-  await setVisibleSecondaryMathFieldLatex(page, '2x');
+  await setMathFieldLatex(page, '2x');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
@@ -145,7 +143,7 @@ test('CALC-POLISH1 history replay preserves guided calculus context', async ({ p
   await page.getByTestId('history-entry').first().click();
 
   await expect(page.getByText('Integral').first()).toBeVisible();
-  await expect.poll(() => getVisibleSecondaryMathFieldLatex(page)).toBe('2x');
+  await expect.poll(() => getMathFieldLatex(page)).toBe('2x');
   await page.getByTestId('history-toggle').click();
 
   await openAdvancedCalcTool(page, 'Series', 'Maclaurin');
@@ -164,28 +162,28 @@ test('CALC-POLISH1 history replay preserves guided calculus context', async ({ p
 
 test('CALC-AUDIT0 Advanced Calc smoke covers integrals and limits', async ({ page }) => {
   await openAdvancedCalcTool(page, 'Integrals', 'Indefinite');
-  await setVisibleSecondaryMathFieldLatex(page, '\\frac{1}{1+x^2}');
+  await setMathFieldLatex(page, '\\frac{1}{1+x^2}');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="arctan"]')).toBeVisible();
 
-  await setVisibleSecondaryMathFieldLatex(page, '\\cos(3x+2)');
+  await setMathFieldLatex(page, '\\cos(3x+2)');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-root')).toContainText('Rule-based symbolic');
   await expect(page.getByTestId('display-outcome-root')).toContainText('U-substitution');
 
-  await openAdvancedCalcTool(page, 'Limits', 'Finite Target');
-  await setVisibleSecondaryMathFieldLatex(page, '\\frac{1-\\cos(x)}{x^2}');
+  await openCalculusTool(page, 'Limit');
+  await setMathFieldLatex(page, '\\lim_{x\\to 0}\\frac{1-\\cos(x)}{x^2}');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-root')).toContainText(/0\.5|\\frac\{1\}\{2\}/);
 
-  await setVisibleSecondaryMathFieldLatex(page, '\\frac{\\ln(1+x)}{x}');
+  await setMathFieldLatex(page, '\\lim_{x\\to 0}\\frac{\\ln(1+x)}{x}');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
@@ -202,8 +200,8 @@ test('CALC-AUDIT0 Advanced Calc smoke covers series and partials', async ({ page
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label*="x"]')).toBeVisible();
 
-  await openAdvancedCalcTool(page, 'Partials', 'First Order');
-  await setVisibleSecondaryMathFieldLatex(page, 'x^2y+y^3');
+  await openAdvancedCalcTool(page, 'Derivatives', 'Partial Derivative');
+  await setMathFieldLatex(page, '\\frac{\\partial}{\\partial x}\\left(x^2y+y^3\\right)');
   await page.getByTestId('keypad-execute').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();

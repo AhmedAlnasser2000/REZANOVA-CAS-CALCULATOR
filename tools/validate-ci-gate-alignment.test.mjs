@@ -1,0 +1,116 @@
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import {
+  CANARY_COMMAND,
+  PACKAGE_COMMAND,
+  STATIC_GATE_COMMANDS,
+  validateCiGateAlignment,
+  validateRepoCiGateAlignment,
+} from './ci-gate-alignment-core.mjs';
+
+function fixture(overrides = {}) {
+  const staticSteps = STATIC_GATE_COMMANDS.map((command) => `      - run: ${command}`).join('\n');
+  return {
+    ciWorkflow: [
+      'on:',
+      '  pull_request:',
+      '  push:',
+      '    branches:',
+      '      - main',
+      'jobs:',
+      '  ci-linux:',
+      staticSteps,
+      '  e2e-linux:',
+      `      - run: ${CANARY_COMMAND}`,
+    ].join('\n'),
+    releaseWorkflow: [
+      'jobs:',
+      '  linux-preview:',
+      staticSteps,
+      `      - run: ${CANARY_COMMAND}`,
+      `      - run: ${PACKAGE_COMMAND}`,
+    ].join('\n'),
+    playwrightConfig: 'export default { retries: 0, workers: 1 };\n',
+    ...overrides,
+  };
+}
+
+describe('CI gate alignment validation', () => {
+  it('accepts the committed workflows', () => {
+    assert.doesNotThrow(() => validateRepoCiGateAlignment());
+  });
+
+  it('rejects a missing required static gate', () => {
+    const input = fixture();
+    input.ciWorkflow = input.ciWorkflow.replace(
+      `      - run: ${STATIC_GATE_COMMANDS[2]}\n`,
+      '',
+    );
+
+    assert.throws(
+      () => validateCiGateAlignment(input),
+      new RegExp(`CI workflow must include run: ${STATIC_GATE_COMMANDS[2]}`),
+    );
+  });
+
+  it('rejects CI without pull-request and main triggers', () => {
+    const input = fixture({ ciWorkflow: fixture().ciWorkflow.replace('  pull_request:\n', '') });
+
+    assert.throws(
+      () => validateCiGateAlignment(input),
+      /CI workflow must include\s+pull_request:/u,
+    );
+  });
+
+  it('rejects a canary job blocked behind the static CI job', () => {
+    const input = fixture();
+    input.ciWorkflow = input.ciWorkflow.replace(
+      '  e2e-linux:\n',
+      '  e2e-linux:\n    needs: ci-linux\n',
+    );
+
+    assert.throws(
+      () => validateCiGateAlignment(input),
+      /CI e2e-linux job must run independently from ci-linux/u,
+    );
+  });
+
+  it('rejects Linux packaging before the workspace canaries', () => {
+    const input = fixture();
+    input.releaseWorkflow = input.releaseWorkflow.replace(
+      `      - run: ${CANARY_COMMAND}\n      - run: ${PACKAGE_COMMAND}`,
+      `      - run: ${PACKAGE_COMMAND}\n      - run: ${CANARY_COMMAND}`,
+    );
+
+    assert.throws(
+      () => validateCiGateAlignment(input),
+      /Linux release workflow must run .* before npm run tauri:build/u,
+    );
+  });
+
+  it('rejects Linux packaging before any required static gate', () => {
+    const input = fixture();
+    const command = STATIC_GATE_COMMANDS[0];
+    input.releaseWorkflow = input.releaseWorkflow
+      .replace(`      - run: ${command}\n`, '')
+      .concat(`\n      - run: ${command}`);
+
+    assert.throws(
+      () => validateCiGateAlignment(input),
+      new RegExp(`Linux release workflow must run ${command} before npm run tauri:build`),
+    );
+  });
+
+  it('rejects Playwright retry overrides and nonzero defaults', () => {
+    assert.throws(
+      () => validateCiGateAlignment(fixture({ playwrightConfig: 'retries: 1,\n' })),
+      /Playwright configuration must pin retries to 0/u,
+    );
+    assert.throws(
+      () => validateCiGateAlignment(fixture({
+        ciWorkflow: `${fixture().ciWorkflow}\n      - run: playwright test --retries=2`,
+      })),
+      /CI workflow must not override Playwright retries/u,
+    );
+  });
+});

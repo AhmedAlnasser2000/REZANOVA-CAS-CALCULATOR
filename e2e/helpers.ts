@@ -71,8 +71,20 @@ async function clickVisibleLauncherEntryByTitle(page: Page, label: string) {
 const calculusToolPaths: Record<string, string[]> = {
   Derivative: ['Derivatives', 'Derivative'],
   Integral: ['Integrals', 'Indefinite'],
-  Limit: ['Limits', 'Finite Target'],
+  Limit: ['Limits', 'Limit'],
 };
+
+const calculusMainEditorTools = new Set([
+  'Derivative',
+  'Derivative at Point',
+  'Implicit Derivative',
+  'Partial Derivative',
+  'Indefinite',
+  'Definite',
+  'Improper',
+  'Limit',
+  'Laplace Transform',
+]);
 
 function expandCalculusToolPath(labels: readonly string[]) {
   return labels.flatMap((label) => calculusToolPaths[label] ?? [label]);
@@ -80,22 +92,30 @@ function expandCalculusToolPath(labels: readonly string[]) {
 
 export async function openCalculusTool(page: Page, toolLabel: string) {
   await openLauncherApp(page, 'Calculus', 'Calculus');
-  for (const label of expandCalculusToolPath([toolLabel])) {
+  const path = expandCalculusToolPath([toolLabel]);
+  for (const label of path) {
     await clickVisibleLauncherEntryByTitle(page, label);
   }
-  await expect(page.locator('math-field.secondary-mathfield:visible').first()).toBeVisible();
+  const finalTool = path.at(-1) ?? '';
+  await expect(calculusMainEditorTools.has(finalTool)
+    ? page.getByTestId('main-editor')
+    : page.locator('math-field.secondary-mathfield:visible').first()).toBeVisible();
 }
 
 export async function openAdvancedCalcTool(page: Page, ...toolLabels: string[]) {
   await openLauncherApp(page, 'Calculus', 'Calculus');
-  for (const toolLabel of expandCalculusToolPath(toolLabels)) {
+  const path = expandCalculusToolPath(toolLabels);
+  for (const toolLabel of path) {
     if (toolLabel === 'ODE') {
       await clickVisibleLauncherEntryByTitle(page, 'Differential Equations');
       continue;
     }
     await clickVisibleLauncherEntryByTitle(page, toolLabel);
   }
-  await expect(page.locator('math-field.secondary-mathfield:visible').first()).toBeVisible();
+  const finalTool = path.at(-1) ?? '';
+  await expect(calculusMainEditorTools.has(finalTool)
+    ? page.getByTestId('main-editor')
+    : page.locator('math-field.secondary-mathfield:visible').first()).toBeVisible();
 }
 
 export async function openEquationSymbolic(page: Page) {

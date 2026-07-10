@@ -14,6 +14,7 @@ import {
   normalizeExactScalar,
   parseExactPolynomial,
   quadraticDiscriminant,
+  readExactScalarNode,
   scaleExactPolynomial,
   type ExactPolynomial,
   type ExactScalar,
@@ -587,10 +588,13 @@ function buildRootsFromBranches(branches: SymbolicFamilyBranch[], zeroFormNode: 
     dedupeSymbolicFamilyBranches(branches)
       .filter((branch) => Number.isFinite(branch.representativeValue))
       .map((branch) => {
-        const node = simplifyMathJsonNodeOrOriginal(branch.node);
+        const simplifiedNode = simplifyMathJsonNodeOrOriginal(branch.node);
+        const latex = readExactScalarNode(simplifiedNode)
+          ? boxLatex(simplifiedNode)
+          : branch.latex;
         return {
-          latex: boxLatex(node),
-          node,
+          latex,
+          node: branch.node,
           numeric: refineRootAgainstZeroForm(zeroFormNode, branch.representativeValue),
         };
       }),
