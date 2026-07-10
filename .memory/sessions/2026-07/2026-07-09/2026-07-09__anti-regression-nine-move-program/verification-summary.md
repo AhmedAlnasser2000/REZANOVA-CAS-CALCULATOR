@@ -155,3 +155,11 @@
 - The temporary Chromium audit under ignored `.task_tmp/golden-corpus-registry1/` passed all 16 additions in 55.7 seconds after correcting audit-only route/action selectors and removing a redundant Lower-field fill. All 16 screenshots were inspected for answer/error cards, facts/details, warnings/actions, clipping, overlap, and readability; no production defect remained.
 - The Trigonometry periodic equation is native-core evidence in the corpus and was visually inspected through the current Equation-owned browser surface because Trigonometry no longer exposes an equation launcher leaf.
 - The unchanged workspace canaries passed 19/19 in 1.2 minutes. `npx tsc -b --pretty false`, `npm run build`, `npm run lint`, `npm run test:ooe-boundaries`, `npm run test:compartments-boundaries`, `npm run test:file-sizes`, `npm run test:canary-registry`, and `git diff --check` passed before durable closeout.
+
+## PRINT-HYGIENE-BASELINE1
+- Kind: `backend` pure collector/baseline gate with required `ui` Playwright inspection; no runtime rendering or clipboard behavior changed.
+- `npm run test:print-hygiene`: 7/7 passed, including complete field coverage, prose exclusion, bounded marker checks, legitimate Table `undefined`, parenthesis preservation, 43-case manifest equality, two-success-per-workspace floors, and updater policy.
+- `npm run test:display-contracts`: 121/121 library and 21/21 UI tests passed.
+- `npm run update:print-hygiene -- --accept --reason "Initial curated 43-case anti-regression print baseline"` generated the committed manifest, and the immediate focused rerun matched it exactly.
+- Full Chromium canaries passed 19/19 in 1.2 minutes. Nine refreshed curated cases passed in 32.3 seconds and were inspected across Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and Table with no clipping, overlap, unreadable math, or unresolved errors.
+- `npm run build`, `npm run lint`, OOE/compartment boundaries, file sizes, canary registry, golden 44/44, and diff hygiene passed before durable closeout.

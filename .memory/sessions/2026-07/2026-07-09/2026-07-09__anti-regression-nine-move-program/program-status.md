@@ -22,8 +22,9 @@
 - `LINEAR-ALGEBRA-SHELL-SPLIT0`: verified; split-eligibility threshold not met.
 - `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`: committed as `59bc68f0`.
 - `FEATURE-PROBE-REGISTRY1`: committed as `4e5bfbd6`.
-- `GOLDEN-CORPUS-REGISTRY1`: implemented and verified; standing commit approval granted on `2026-07-11`.
-- Behavioral Ratchets 7-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
+- `GOLDEN-CORPUS-REGISTRY1`: committed as `ccb9e642`.
+- `PRINT-HYGIENE-BASELINE1`: implemented and verified; standing commit approval applies.
+- Behavioral Ratchets 8-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
 - Printer/detail/clipboard arcs: deferred until nine-move closeout.
 
 ## Standing Constraints
@@ -59,3 +60,5 @@
 - The fast golden corpus preserves 27 existing cases and adds exactly 16 for an exact 43-case initial registry across all nine launcher-derived computational workspaces. The dedicated gate passed 44/44.
 - All 16 additions passed a temporary real-Chromium audit with screenshots and overflow checks. The redundant improper-integral Lower-field fill was identified as an audit-driver error; the corrected run asserted and visibly rendered `1.570796`. The Trigonometry equation case was inspected through its current Equation-owned browser surface while its native golden adapter remains Trigonometry-owned.
 - The unchanged 19-case Chromium canary suite passed in 1.2 minutes; TypeScript, build, lint, OOE/compartment boundaries, canary registry, file-size, and diff hygiene also pass for Move 6.
+- Print hygiene collects 23 typed mathematical fragment kinds from `DisplayOutcome` plus three Table cell kinds, with prose excluded and complete Table `undefined` cells allowed. All 43 normalized golden executions match the accepted manifest with at least two successes per workspace.
+- The print-hygiene and full Display/UI suites passed 7 and 142 tests respectively. The 19 browser canaries and nine refreshed workspace print surfaces passed visual review without clipping, overlap, unreadable math, or malformed markers.

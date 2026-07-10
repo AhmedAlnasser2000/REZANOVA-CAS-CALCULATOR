@@ -92,3 +92,10 @@
 - Preserved all 27 existing cases and added exactly 16 approved rich-success cases for an exact initial total of 43, with unique-ID and per-workspace coverage ratchets.
 - Added structured assertions for branches, periodic branches, actions, warnings, detail content, answer rows, and Table rows without absorbing Equation or Calculus benchmark ledgers.
 - Passed focused, static, build, boundary, canary, file-size, visual, and diff-hygiene gates. Commit approval remains pending.
+
+## PRINT-HYGIENE-BASELINE1
+- Added a pure collector returning stable typed path, kind, and value records for all explicit mathematical `DisplayOutcome` structures and separate Table cells.
+- Added bounded malformed-token detection for standalone `NaN`, standalone `undefined`, internal-error markers, and `[object Object]`, while allowing complete Table `undefined` cells.
+- Committed the normalized structure of all 43 golden executions with at least two successful entries for every workspace and preserved parentheses.
+- Added an explicit baseline updater requiring `--accept` and a durable non-empty `--reason`; snapshot `-u` updates are rejected.
+- Added the print-hygiene gate to the aggregate local gate without changing rendering, printer, or clipboard behavior.

@@ -1,0 +1,1253 @@
+{
+  "schemaVersion": 1,
+  "acceptedReason": "Initial curated 43-case anti-regression print baseline",
+  "caseCount": 43,
+  "workspaceCounts": {
+    "calculate": 23,
+    "equation": 6,
+    "calculus": 2,
+    "trigonometry": 2,
+    "geometry": 2,
+    "statistics": 2,
+    "matrix": 2,
+    "vector": 2,
+    "table": 2
+  },
+  "successfulWorkspaceCounts": {
+    "calculate": 21,
+    "equation": 5,
+    "calculus": 2,
+    "trigonometry": 2,
+    "geometry": 2,
+    "statistics": 2,
+    "matrix": 2,
+    "vector": 2,
+    "table": 2
+  },
+  "entries": [
+    {
+      "id": "calculate-arithmetic-basic",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Numeric",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "4"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "4"
+        }
+      ]
+    },
+    {
+      "id": "calculate-simplify-zero-polynomial-difference",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Simplify",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "0"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "-x^2+(x+1)^2-2x-1"
+        }
+      ]
+    },
+    {
+      "id": "calculate-factor-perfect-square",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Factor",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "(x+1)(x+1)"
+        }
+      ]
+    },
+    {
+      "id": "calculate-expand-affine-square",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Expand",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "x^2+2x+1"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "(x+1)^2"
+        }
+      ]
+    },
+    {
+      "id": "calculus-derivative-function-power",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Derivative",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
+        }
+      ]
+    },
+    {
+      "id": "calculus-derivative-general-power",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Derivative",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "2\\ln(\\cos(x))\\cos(x)^{2x}-\\frac{1}{\\cos(x)}(2x\\sin(x)\\cos(x)^{2x})"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "(2\\ln(\\cos(x))-\\frac{2x\\sin(x)}{\\cos(x)})\\cos(x)^{2x}"
+        }
+      ]
+    },
+    {
+      "id": "calculus-derivative-known-inverse-trig",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Derivative",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\sqrt{\\frac{1}{1-x^2}}"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\sqrt{\\frac{1}{1-x^2}}"
+        }
+      ]
+    },
+    {
+      "id": "calculus-integral-inverse-trig",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\arctan(x)+C"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "\\arctan(x)+C"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int\\!\\frac{1}{x^2+1}\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "calculus-integral-partial-fractions",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int\\!\\frac{1}{x^2-1}\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "calculus-integral-repeated-linear-partial-fractions",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "-\\frac{1}{x-1}+C"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "-\\frac{1}{x-1}+C"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int\\!\\frac{1}{(x-1)^2}\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "calculus-integral-quadratic-partial-fractions",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int\\!\\frac{x+1}{x^2+1}\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "calculus-integral-u-substitution-log",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int\\!2x\\ln(x^2+1)\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "calculus-definite-integral-exact",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "1"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int_{0}^{1}\\!2x\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "calculus-definite-integral-numeric-fallback",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "0.310268"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int_{0}^{1}\\!\\sin(x^2)\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "calculus-definite-integral-unsafe-stop",
+      "workspace": "calculate",
+      "outcomeKind": "error",
+      "title": "Integral",
+      "fragments": [
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\int_{-1}^{1}\\!\\frac{1}{x}\\, \\mathrm{d}x"
+        }
+      ]
+    },
+    {
+      "id": "limit-known-form-sin-over-x",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Limit",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "1"
+        },
+        {
+          "path": "detailSections[0].lineParts[1][1].latex",
+          "kind": "detail-math-part",
+          "value": "u=x"
+        },
+        {
+          "path": "detailSections[0].lineParts[1][3].latex",
+          "kind": "detail-math-part",
+          "value": "\\lim_{x\\to 0}u=0"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "\\frac{\\sin(u)}{u}\\to 1"
+        },
+        {
+          "path": "detailSections[0].lineParts[3][1].latex",
+          "kind": "detail-math-part",
+          "value": "1"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
+        }
+      ]
+    },
+    {
+      "id": "limit-directional-positive-pole",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Limit",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\infty"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "1"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][3].latex",
+          "kind": "detail-math-part",
+          "value": "-1"
+        },
+        {
+          "path": "detailSections[0].lineParts[5][1].latex",
+          "kind": "detail-math-part",
+          "value": "\\infty"
+        },
+        {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "x\\to 0^{+}"
+        },
+        {
+          "path": "detailSections[1].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "\\lim_{x\\to 0^{+}} f(x)=\\infty"
+        },
+        {
+          "path": "detailSections[1].lineParts[3][1].latex",
+          "kind": "detail-math-part",
+          "value": "\\infty"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\lim_{x\\to0}\\frac{1}{x}"
+        }
+      ]
+    },
+    {
+      "id": "limit-directional-negative-pole",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Limit",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "-\\infty"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "1"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][3].latex",
+          "kind": "detail-math-part",
+          "value": "-1"
+        },
+        {
+          "path": "detailSections[0].lineParts[5][1].latex",
+          "kind": "detail-math-part",
+          "value": "-\\infty"
+        },
+        {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "x\\to 0^{-}"
+        },
+        {
+          "path": "detailSections[1].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "\\lim_{x\\to 0^{-}} f(x)=-\\infty"
+        },
+        {
+          "path": "detailSections[1].lineParts[3][1].latex",
+          "kind": "detail-math-part",
+          "value": "-\\infty"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\lim_{x\\to0}\\frac{1}{x}"
+        }
+      ]
+    },
+    {
+      "id": "limit-removable-rational-hole",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Limit",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "2"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\lim_{x\\to1}\\frac{x^2-1}{x-1}"
+        }
+      ]
+    },
+    {
+      "id": "limit-local-equivalent-product",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Limit",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "1"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "1"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][3].latex",
+          "kind": "detail-math-part",
+          "value": "0"
+        },
+        {
+          "path": "detailSections[0].lineParts[4][1].latex",
+          "kind": "detail-math-part",
+          "value": "1"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\lim_{x\\to0}\\frac{\\sin(x)\\ln(x+1)}{x^2}"
+        }
+      ]
+    },
+    {
+      "id": "limit-one-sided-real-domain-stop",
+      "workspace": "calculate",
+      "outcomeKind": "error",
+      "title": "Limit",
+      "fragments": [
+        {
+          "path": "detailSections[0].lineParts[0][0].latex",
+          "kind": "detail-math-part",
+          "value": "x"
+        },
+        {
+          "path": "detailSections[2].lineParts[1][1].latex",
+          "kind": "detail-math-part",
+          "value": "x\\to 0^{-}"
+        },
+        {
+          "path": "detailSections[2].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "x\\ge 0"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\lim_{x\\to0}\\sqrt{x}"
+        }
+      ]
+    },
+    {
+      "id": "equation-linear-symbolic",
+      "workspace": "equation",
+      "outcomeKind": "success",
+      "title": "Solve",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "x=\\frac{-3}{5}"
+        }
+      ]
+    },
+    {
+      "id": "equation-guided-quadratic-symbolic",
+      "workspace": "equation",
+      "outcomeKind": "success",
+      "title": "Quadratic",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "x\\in\\left\\{3, 2\\right\\}"
+        }
+      ]
+    },
+    {
+      "id": "equation-rational-exclusion",
+      "workspace": "equation",
+      "outcomeKind": "success",
+      "title": "Solve",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "x=\\frac{1}{4}"
+        },
+        {
+          "path": "exactSupplementLatex[0]",
+          "kind": "supplement",
+          "value": "\\text{Exclusions: } x\\ne0"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\frac{2x+1}{6x}=1"
+        }
+      ]
+    },
+    {
+      "id": "equation-radical-candidate-rejection",
+      "workspace": "equation",
+      "outcomeKind": "success",
+      "title": "Solve",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "x=3"
+        },
+        {
+          "path": "detailSections[0].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "0"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\sqrt{x+1}=x-1"
+        }
+      ]
+    },
+    {
+      "id": "equation-absolute-value-bounded",
+      "workspace": "equation",
+      "outcomeKind": "success",
+      "title": "Solve",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "x\\in\\left\\{-(\\frac{\\sqrt{21}}{2})-\\frac{1}{2}, \\frac{\\sqrt{21}}{2}-\\frac{1}{2}\\right\\}"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\vert x^2+x-2\\vert=3"
+        }
+      ]
+    },
+    {
+      "id": "equation-range-impossibility-stop",
+      "workspace": "equation",
+      "outcomeKind": "error",
+      "title": "Solve",
+      "fragments": [
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\sin(x)=2"
+        }
+      ]
+    },
+    {
+      "id": "calculate-arcsin-one-deg",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Numeric",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "90"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\arcsin(1)"
+        }
+      ]
+    },
+    {
+      "id": "calculate-arcsin-one-rad",
+      "workspace": "calculate",
+      "outcomeKind": "success",
+      "title": "Numeric",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\frac{\\pi}{2}"
+        },
+        {
+          "path": "resolvedInputLatex",
+          "kind": "resolved-input",
+          "value": "\\arcsin(1)"
+        }
+      ]
+    },
+    {
+      "id": "calculus-left-pole-limit",
+      "workspace": "calculus",
+      "outcomeKind": "success",
+      "title": "Finite Limit",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "-\\infty"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "1"
+        },
+        {
+          "path": "detailSections[0].lineParts[2][3].latex",
+          "kind": "detail-math-part",
+          "value": "-1"
+        },
+        {
+          "path": "detailSections[0].lineParts[5][1].latex",
+          "kind": "detail-math-part",
+          "value": "-\\infty"
+        },
+        {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "x\\to 0^{-}"
+        },
+        {
+          "path": "detailSections[1].lineParts[2][1].latex",
+          "kind": "detail-math-part",
+          "value": "\\lim_{x\\to 0^{-}} f(x)=-\\infty"
+        },
+        {
+          "path": "detailSections[1].lineParts[3][1].latex",
+          "kind": "detail-math-part",
+          "value": "-\\infty"
+        }
+      ]
+    },
+    {
+      "id": "calculus-improper-arctan-integral",
+      "workspace": "calculus",
+      "outcomeKind": "success",
+      "title": "Improper Integral",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "1.570796"
+        }
+      ]
+    },
+    {
+      "id": "trigonometry-period-phase-rad",
+      "workspace": "trigonometry",
+      "outcomeKind": "success",
+      "title": "Period & Phase",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "y=2\\sin\\left(3\\left(x-\\frac{\\pi}{3}\\right)\\right)+1,\\quad P=\\frac{2\\pi}{3},\\quad h=\\frac{\\pi}{3}"
+        },
+        {
+          "path": "detailSections[0].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\text{carrier}=\\sin"
+        },
+        {
+          "path": "detailSections[0].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\text{amplitude}=2"
+        },
+        {
+          "path": "detailSections[0].lines[2]",
+          "kind": "detail-math-line",
+          "value": "B=3"
+        },
+        {
+          "path": "detailSections[0].lines[3]",
+          "kind": "detail-math-line",
+          "value": "\\text{period}=\\frac{2\\pi}{3}"
+        },
+        {
+          "path": "detailSections[0].lines[4]",
+          "kind": "detail-math-line",
+          "value": "\\text{phase shift}=\\frac{\\pi}{3}"
+        },
+        {
+          "path": "detailSections[0].lines[5]",
+          "kind": "detail-math-line",
+          "value": "\\text{vertical shift}=1"
+        },
+        {
+          "path": "detailSections[0].lines[6]",
+          "kind": "detail-math-line",
+          "value": "\\text{midline}: y=1"
+        },
+        {
+          "path": "detailSections[0].lines[7]",
+          "kind": "detail-math-line",
+          "value": "\\text{range}=\\left[-1,3\\right]"
+        },
+        {
+          "path": "detailSections[1].lines[0]",
+          "kind": "detail-math-line",
+          "value": "x_0=\\frac{\\pi}{3}"
+        },
+        {
+          "path": "detailSections[1].lines[1]",
+          "kind": "detail-math-line",
+          "value": "x_1=\\frac{\\pi}{2}"
+        },
+        {
+          "path": "detailSections[1].lines[2]",
+          "kind": "detail-math-line",
+          "value": "x_2=\\frac{2\\pi}{3}"
+        },
+        {
+          "path": "detailSections[1].lines[3]",
+          "kind": "detail-math-line",
+          "value": "x_3=\\frac{5\\pi}{6}"
+        },
+        {
+          "path": "detailSections[1].lines[4]",
+          "kind": "detail-math-line",
+          "value": "x_4=\\pi"
+        }
+      ]
+    },
+    {
+      "id": "trigonometry-periodic-sine-equation",
+      "workspace": "trigonometry",
+      "outcomeKind": "success",
+      "title": "Trig Equation",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}"
+        },
+        {
+          "path": "branchReadback.targetLatex",
+          "kind": "branch-target",
+          "value": "x"
+        },
+        {
+          "path": "branchReadback.branchesLatex[0]",
+          "kind": "branch",
+          "value": "\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n"
+        },
+        {
+          "path": "branchReadback.branchesLatex[1]",
+          "kind": "branch",
+          "value": "180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n"
+        },
+        {
+          "path": "exactSupplementLatex[0]",
+          "kind": "supplement",
+          "value": "n\\in\\mathbb{Z}"
+        }
+      ]
+    },
+    {
+      "id": "geometry-distance-solve-missing-branches",
+      "workspace": "geometry",
+      "outcomeKind": "success",
+      "title": "Distance",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "y_2^{(1)}=4,\\ y_2^{(2)}=-4,\\ d=5"
+        },
+        {
+          "path": "branchReadback.targetLatex",
+          "kind": "branch-target",
+          "value": "y_2"
+        },
+        {
+          "path": "branchReadback.branchesLatex[0]",
+          "kind": "branch",
+          "value": "4"
+        },
+        {
+          "path": "branchReadback.branchesLatex[1]",
+          "kind": "branch",
+          "value": "-4"
+        }
+      ]
+    },
+    {
+      "id": "geometry-line-equation-transfer",
+      "workspace": "geometry",
+      "outcomeKind": "success",
+      "title": "Line Equation",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "2x-y=0"
+        },
+        {
+          "path": "actions[0].latex",
+          "kind": "action",
+          "value": "2x-y=0"
+        }
+      ]
+    },
+    {
+      "id": "statistics-two-point-regression-warning",
+      "workspace": "statistics",
+      "outcomeKind": "success",
+      "title": "Regression",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\hat{y}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
+        }
+      ]
+    },
+    {
+      "id": "statistics-mean-confidence-interval",
+      "workspace": "statistics",
+      "outcomeKind": "success",
+      "title": "Mean Inference",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+        }
+      ]
+    },
+    {
+      "id": "matrix-profile-singular-square",
+      "workspace": "matrix",
+      "outcomeKind": "success",
+      "title": "profile(A)",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2},\\quad\\operatorname{rank}(A)=1,\\quad\\operatorname{nullity}(A)=1"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2}"
+        },
+        {
+          "path": "answerRows.rows[1].latex",
+          "kind": "answer-row",
+          "value": "\\operatorname{rank}(A)=1"
+        },
+        {
+          "path": "answerRows.rows[2].latex",
+          "kind": "answer-row",
+          "value": "\\operatorname{nullity}(A)=1"
+        },
+        {
+          "path": "detailSections[0].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{rank}(A)+\\operatorname{nullity}(A)=2"
+        },
+        {
+          "path": "detailSections[0].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{pivot\\ columns}=\\{1\\}"
+        },
+        {
+          "path": "detailSections[1].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\ker(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}"
+        },
+        {
+          "path": "detailSections[1].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{one\\text{-}to\\text{-}one}(A)=\\text{No}"
+        },
+        {
+          "path": "detailSections[2].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{Im}(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\2\\end{bmatrix}\\right\\}"
+        },
+        {
+          "path": "detailSections[2].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{onto}(A)=\\text{No}"
+        },
+        {
+          "path": "detailSections[3].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\det(A)=0"
+        },
+        {
+          "path": "detailSections[3].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{invertible}(A)=\\text{No}"
+        },
+        {
+          "path": "detailSections[4].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{rref}(A)=\\begin{bmatrix}1 & 1\\\\0 & 0\\end{bmatrix}"
+        },
+        {
+          "path": "detailSections[4].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{pivot\\ columns}=\\{1\\}"
+        }
+      ]
+    },
+    {
+      "id": "matrix-profile-tall-rectangular",
+      "workspace": "matrix",
+      "outcomeKind": "success",
+      "title": "profile(A)",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "T:\\mathbb{R}^{2}\\to\\mathbb{R}^{3},\\quad\\operatorname{rank}(T)=2,\\quad\\operatorname{nullity}(T)=0"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "T:\\mathbb{R}^{2}\\to\\mathbb{R}^{3}"
+        },
+        {
+          "path": "answerRows.rows[1].latex",
+          "kind": "answer-row",
+          "value": "\\operatorname{rank}(T)=2"
+        },
+        {
+          "path": "answerRows.rows[2].latex",
+          "kind": "answer-row",
+          "value": "\\operatorname{nullity}(T)=0"
+        },
+        {
+          "path": "detailSections[0].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{rank}(T)+\\operatorname{nullity}(T)=2"
+        },
+        {
+          "path": "detailSections[0].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
+        },
+        {
+          "path": "detailSections[1].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\ker(T)=\\{0\\}"
+        },
+        {
+          "path": "detailSections[1].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{one\\text{-}to\\text{-}one}(T)=\\text{Yes}"
+        },
+        {
+          "path": "detailSections[2].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{Im}(T)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\\\0\\end{bmatrix}\\right\\}"
+        },
+        {
+          "path": "detailSections[2].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{onto}(T)=\\text{No}"
+        },
+        {
+          "path": "detailSections[4].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{rref}(T)=\\begin{bmatrix}1 & 0\\\\0 & 1\\\\0 & 0\\end{bmatrix}"
+        },
+        {
+          "path": "detailSections[4].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
+        }
+      ]
+    },
+    {
+      "id": "vector-dependent-independence-relation",
+      "workspace": "vector",
+      "outcomeKind": "success",
+      "title": "independent(...)",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\operatorname{independent}\\left(p,q,r\\right)=\\text{No}"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "\\operatorname{independent}\\left(p,q,r\\right)=\\text{No}"
+        },
+        {
+          "path": "detailSections[0].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\dim\\operatorname{span}\\left(p,q,r\\right)=2"
+        },
+        {
+          "path": "detailSections[0].lines[1]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
+        },
+        {
+          "path": "detailSections[0].lines[2]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{basis\\ selected}=\\left\\{p,q\\right\\}"
+        },
+        {
+          "path": "detailSections[0].lines[3]",
+          "kind": "detail-math-line",
+          "value": "b_{1}=p=\\begin{bmatrix}1\\\\0\\end{bmatrix}"
+        },
+        {
+          "path": "detailSections[0].lines[4]",
+          "kind": "detail-math-line",
+          "value": "b_{2}=q=\\begin{bmatrix}0\\\\1\\end{bmatrix}"
+        },
+        {
+          "path": "detailSections[1].lines[0]",
+          "kind": "detail-math-line",
+          "value": "p+q-r=0"
+        },
+        {
+          "path": "detailSections[1].lines[1]",
+          "kind": "detail-math-line",
+          "value": "r=p+q"
+        },
+        {
+          "path": "detailSections[2].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{rref}\\left(\\left[p\\;q\\;r\\right]\\right)=\\begin{bmatrix}1 & 0 & 1\\\\0 & 1 & 1\\end{bmatrix}"
+        }
+      ]
+    },
+    {
+      "id": "vector-exact-gram-schmidt",
+      "workspace": "vector",
+      "outcomeKind": "success",
+      "title": "gram(u,v)",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}"
+        },
+        {
+          "path": "answerRows.rows[0].latex",
+          "kind": "answer-row",
+          "value": "w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}"
+        },
+        {
+          "path": "answerRows.rows[1].latex",
+          "kind": "answer-row",
+          "value": "w_{2}=\\begin{bmatrix}0\\\\1\\end{bmatrix}"
+        },
+        {
+          "path": "detailSections[0].lines[0]",
+          "kind": "detail-math-line",
+          "value": "\\operatorname{orthonormal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}"
+        },
+        {
+          "path": "detailSections[1].lines[0]",
+          "kind": "detail-math-line",
+          "value": "w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}"
+        },
+        {
+          "path": "detailSections[1].lines[1]",
+          "kind": "detail-math-line",
+          "value": "w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=\\begin{bmatrix}0\\\\1\\end{bmatrix}"
+        },
+        {
+          "path": "detailSections[1].lines[2]",
+          "kind": "detail-math-line",
+          "value": "w_{1}\\cdot w_{2}=0"
+        }
+      ]
+    },
+    {
+      "id": "table-partial-real-domain",
+      "workspace": "table",
+      "outcomeKind": "success",
+      "title": "Table",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "f(x)=\\sqrt{x}"
+        },
+        {
+          "path": "tableResponse.rows[0].x",
+          "kind": "table-x",
+          "value": "-1"
+        },
+        {
+          "path": "tableResponse.rows[0].primary",
+          "kind": "table-primary",
+          "value": "undefined"
+        },
+        {
+          "path": "tableResponse.rows[1].x",
+          "kind": "table-x",
+          "value": "0"
+        },
+        {
+          "path": "tableResponse.rows[1].primary",
+          "kind": "table-primary",
+          "value": "0"
+        },
+        {
+          "path": "tableResponse.rows[2].x",
+          "kind": "table-x",
+          "value": "1"
+        },
+        {
+          "path": "tableResponse.rows[2].primary",
+          "kind": "table-primary",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "id": "table-two-function-grid",
+      "workspace": "table",
+      "outcomeKind": "success",
+      "title": "Table",
+      "fragments": [
+        {
+          "path": "exactLatex",
+          "kind": "primary-answer",
+          "value": "f(x)=x^2,\\;g(x)=x+1"
+        },
+        {
+          "path": "tableResponse.rows[0].x",
+          "kind": "table-x",
+          "value": "0"
+        },
+        {
+          "path": "tableResponse.rows[0].primary",
+          "kind": "table-primary",
+          "value": "0"
+        },
+        {
+          "path": "tableResponse.rows[0].secondary",
+          "kind": "table-secondary",
+          "value": "1"
+        },
+        {
+          "path": "tableResponse.rows[1].x",
+          "kind": "table-x",
+          "value": "1"
+        },
+        {
+          "path": "tableResponse.rows[1].primary",
+          "kind": "table-primary",
+          "value": "1"
+        },
+        {
+          "path": "tableResponse.rows[1].secondary",
+          "kind": "table-secondary",
+          "value": "2"
+        },
+        {
+          "path": "tableResponse.rows[2].x",
+          "kind": "table-x",
+          "value": "2"
+        },
+        {
+          "path": "tableResponse.rows[2].primary",
+          "kind": "table-primary",
+          "value": "4"
+        },
+        {
+          "path": "tableResponse.rows[2].secondary",
+          "kind": "table-secondary",
+          "value": "3"
+        }
+      ]
+    }
+  ]
+}

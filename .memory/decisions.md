@@ -2153,3 +2153,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The fast golden corpus uses direct native workspace adapters over the existing `src/lib/__golden__` union. It is not an OOE, worker, or browser execution layer; those remain independent evidence gates.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The initial ratchet is exactly 43 unique cases with at least two per launcher-derived computational workspace. Table keeps structured row evidence beside its `DisplayOutcome`, while large Equation and Calculus benchmark ledgers stay outside this fast curated corpus.
+
+## 2026-07-11 - PRINT-HYGIENE-BASELINE1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Print hygiene is a pure evidence collector over typed mathematical fields, not a printer, serializer, renderer, or clipboard policy. Prose remains outside token checks, and Table row values remain separately typed so a complete `undefined` cell is legitimate domain evidence.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The initial print baseline is the normalized structure of all 43 golden executions. Updates require explicit `--accept` plus a committed non-empty reason; broad snapshot-update flags are forbidden, and normalization may collapse whitespace but must not remove pedagogical parentheses.

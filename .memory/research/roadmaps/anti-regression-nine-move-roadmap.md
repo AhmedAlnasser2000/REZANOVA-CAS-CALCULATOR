@@ -109,6 +109,8 @@ Status: implemented and verified on `2026-07-10`; commit approval pending. The e
 - Establish per-workspace style floors without treating pedagogical parentheses as automatic failures.
 - Commit curated whitespace-normalized printouts before later printer architecture work; accepts require durable rationale.
 
+Status: implemented and verified on `2026-07-11`. A pure typed collector covers every explicit mathematical `DisplayOutcome` surface plus narrow Table row cells, while legitimate Table `undefined` remains allowed. All 43 golden executions are committed as a whitespace-normalized structured manifest with at least two successful cases per workspace. Baseline updates require `--accept` and a non-empty durable `--reason`; snapshot `-u` paths are rejected. `WORKSPACE-FRESHNESS-REPORT1` is next.
+
 ### 8. WORKSPACE-FRESHNESS-REPORT1
 - Add `tools/workspace-freshness.mjs` with one central session-to-domain alias table.
 - Report domains older than 14 days as operational warnings only, never correctness or release blockers.

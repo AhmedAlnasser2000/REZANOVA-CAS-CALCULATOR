@@ -60,4 +60,9 @@
 ## Behavioral Ratchet 6
 - Subject: `GOLDEN-CORPUS-REGISTRY1`.
 - User approval: standing approval explicitly granted for all remaining Moves 6-9 on `2026-07-11`.
+- Hash: `ccb9e642`.
+
+## Behavioral Ratchet 7
+- Subject: `PRINT-HYGIENE-BASELINE1`.
+- User approval: covered by standing approval for remaining Moves 6-9 on `2026-07-11`.
 - Hash: this milestone commit; exact hash reported by post-commit readback and carried into the next checkpoint.
