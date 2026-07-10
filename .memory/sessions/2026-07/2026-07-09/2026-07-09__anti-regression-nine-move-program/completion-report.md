@@ -28,7 +28,7 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- Begin `SEAM-IMPACT-SELECTOR1` after the verified CI-alignment milestone commit.
+- Run the mandatory Incident Review after the verified `SEAM-IMPACT-SELECTOR1` milestone commit; do not begin Behavioral Ratchets before user acceptance.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -49,3 +49,11 @@
 - Preserved and currentized the existing 11-case browser smoke rather than dropping its Calculus, Limits, History, Series, Partials, and ODE coverage.
 - Repaired the Move 1 carrier-readback regression by simplifying exact scalar display roots only while retaining original branch nodes for validation.
 - Passed 19 workspace canaries, 11 focused smoke cases, 61 focused Equation tests, the real-app carrier visual check, all named static gates, TypeScript/build/lint, and Cargo check.
+
+## SEAM-IMPACT-SELECTOR1
+- Added a declarative seam, lane, baseline-evidence, and executable-command registry under `tools/`.
+- Added stable human and JSON plans for explicit paths, Git base/head ranges, and GitHub pull-request or push events, including new-branch empty-tree handling.
+- Added tested rename, copy, delete, empty-diff, invalid-input, and command-allowlist behavior without shell interpolation.
+- Integrated selector validation and additive evidence execution into CI before broad unit tests while preserving every baseline gate; Linux release validates the selector before packaging.
+- Kept Matrix and Vector as distinct lanes while shared Linear Algebra core and current host paths correctly select both, ready for the separately owned shell/worker split.
+- Passed the focused selector and workflow validators, all four allowlisted contract groups, TypeScript/build/lint, file-size, OOE/compartment, YAML, memory, and diff-hygiene gates.

@@ -79,3 +79,16 @@
 ## Outstanding Gaps After Move 3
 - The static CI job remains red until the separately existing Complex-abs empty-set regression is fixed; independent browser canaries still run on every pull request and `main` push.
 - The nested radical visual check restored success and clean serialization but exposed an older candidate-validation gap: two valid positive roots remain misclassified as extraneous. This is deferred to focused Equation correctness work, not widened inside CI alignment.
+
+## SEAM-IMPACT-SELECTOR1
+- Kind: `backend` tooling and workflow gate; no app-visible output changed.
+- `npm run test:seam-impact-selector`: 8/8 passed, covering seam/lane classification, rename/copy/delete records, empty diffs, invalid input, GitHub event ranges, safe Git invocation, and allowlisted execution.
+- `npm run test:ci-gate-alignment`: 8/8 passed; the validator reports 10 static gates plus workspace canaries and requires full history plus seam execution before broad units.
+- All four allowlisted contract groups passed 445 tests: workspace runtime 74, app runtime/logic 188, Display 133, and app-state/schema 50. A real `--run` OOE selection also passed the 74-test workspace runtime group.
+- Both edited workflows parsed through the installed YAML parser.
+- `npx tsc -b --pretty false`, `npm run build`, `npm run lint`, `npm run test:file-sizes`, `npm run test:ooe-boundaries`, and `npm run test:compartments-boundaries` passed.
+- Matrix-only and Vector-only paths select their own lanes; current shared Linear Algebra core/runtime paths select both.
+
+## Outstanding Gaps After Move 4
+- Mandatory Incident Review remains required before any Behavioral Ratchet begins.
+- The two inherited Complex-abs failures and nested-radical positive-root classification gap remain separately recorded for the review; Move 4 does not alter mathematical output.

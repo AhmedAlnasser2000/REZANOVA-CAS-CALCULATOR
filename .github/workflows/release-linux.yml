@@ -72,6 +72,9 @@ jobs:
       - name: Validate CI gate alignment
         run: npm run test:ci-gate-alignment
 
+      - name: Validate seam impact selector
+        run: npm run test:seam-impact-selector
+
       - name: Validate app identity
         run: npm run test:app-identity
 

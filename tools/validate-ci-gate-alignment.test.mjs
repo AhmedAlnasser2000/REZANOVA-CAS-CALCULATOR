@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   CANARY_COMMAND,
   PACKAGE_COMMAND,
+  SEAM_IMPACT_COMMAND,
   STATIC_GATE_COMMANDS,
   validateCiGateAlignment,
   validateRepoCiGateAlignment,
@@ -20,6 +21,11 @@ function fixture(overrides = {}) {
       'jobs:',
       '  ci-linux:',
       staticSteps,
+      '      - uses: actions/checkout@v4',
+      '        with:',
+      '          fetch-depth: 0',
+      `      - run: ${SEAM_IMPACT_COMMAND}`,
+      '      - run: npm run test:unit',
       '  e2e-linux:',
       `      - run: ${CANARY_COMMAND}`,
     ].join('\n'),
@@ -72,6 +78,37 @@ describe('CI gate alignment validation', () => {
     assert.throws(
       () => validateCiGateAlignment(input),
       /CI e2e-linux job must run independently from ci-linux/u,
+    );
+  });
+
+  it('rejects CI without the executable seam-impact runner and full history', () => {
+    const missingRunner = fixture();
+    missingRunner.ciWorkflow = missingRunner.ciWorkflow.replace(
+      `      - run: ${SEAM_IMPACT_COMMAND}\n`,
+      '',
+    );
+    assert.throws(
+      () => validateCiGateAlignment(missingRunner),
+      /CI workflow must include run: npm run seam:impact/u,
+    );
+
+    const shallow = fixture();
+    shallow.ciWorkflow = shallow.ciWorkflow.replace('          fetch-depth: 0\n', '');
+    assert.throws(
+      () => validateCiGateAlignment(shallow),
+      /CI workflow checkout must include fetch-depth: 0/u,
+    );
+
+    const lateRunner = fixture();
+    lateRunner.ciWorkflow = lateRunner.ciWorkflow
+      .replace(`      - run: ${SEAM_IMPACT_COMMAND}\n`, '')
+      .replace(
+        '      - run: npm run test:unit\n',
+        `      - run: npm run test:unit\n      - run: ${SEAM_IMPACT_COMMAND}\n`,
+      );
+    assert.throws(
+      () => validateCiGateAlignment(lateRunner),
+      /CI workflow must run seam impact evidence before broad unit tests/u,
     );
   });
 

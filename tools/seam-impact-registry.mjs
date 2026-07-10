@@ -1,0 +1,247 @@
+export const SEAM_COMMANDS = [
+  {
+    id: 'workspace-runtime-contracts',
+    label: 'Workspace runtime contract matrix',
+    argv: ['npm', 'run', 'test:workspace-runtime-contracts'],
+  },
+  {
+    id: 'app-runtime-contracts',
+    label: 'App runtime and logic contracts',
+    argv: ['npm', 'run', 'test:app-runtime-contracts'],
+  },
+  {
+    id: 'display-contracts',
+    label: 'Display library and shell contracts',
+    argv: ['npm', 'run', 'test:display-contracts'],
+  },
+  {
+    id: 'app-state-contracts',
+    label: 'App-state and shared schema contracts',
+    argv: ['npm', 'run', 'test:app-state-contracts'],
+  },
+];
+
+export const BASELINE_EVIDENCE = [
+  { id: 'workspace-canaries', command: 'npm run test:canaries:browser' },
+  { id: 'runtime-probes', command: 'npm run test:runtime-probes' },
+  { id: 'ooe-boundaries', command: 'npm run test:ooe-boundaries' },
+  { id: 'compartment-boundaries', command: 'npm run test:compartments-boundaries' },
+  { id: 'surface-protocol', command: 'npm run test:surface-protocol' },
+  { id: 'ui-tests', command: 'npm run test:ui' },
+  { id: 'app-identity', command: 'npm run test:app-identity' },
+  { id: 'file-sizes', command: 'npm run test:file-sizes' },
+];
+
+const exact = (...paths) => paths.map((path) => ({ kind: 'exact', value: path }));
+const prefix = (...paths) => paths.map((path) => ({ kind: 'prefix', value: path }));
+const sharedLinearAlgebraLaneMatchers = [
+  ...prefix(
+    'src/lib/linear-algebra/',
+    'src/lib/modes/linear-algebra',
+    'src/lib/modes/worker-clients/linear-algebra',
+    'src/lib/modes/worker-entrypoints/linear-algebra',
+    'src/lib/ooe/pilots/linear-algebra',
+    'src/app/runtime/linearAlgebra',
+    'src/app/runtime/useLinearAlgebra',
+  ),
+  ...exact(
+    'src/app/workspaces/LinearAlgebraOperandPicker.tsx',
+    'src/app/workspaces/LinearAlgebraTableWorkspaceHost.tsx',
+  ),
+];
+
+export const SEAM_REGISTRY = [
+  {
+    id: 'app-shell-root',
+    label: 'App shell composition root',
+    matchers: exact('src/AppMain.tsx'),
+    additionalCommandIds: ['app-runtime-contracts', 'display-contracts'],
+    baselineEvidenceIds: ['workspace-canaries', 'compartment-boundaries', 'ui-tests'],
+  },
+  {
+    id: 'app-runtime',
+    label: 'App runtime and routing',
+    matchers: prefix('src/app/runtime/', 'src/app/logic/'),
+    additionalCommandIds: ['workspace-runtime-contracts', 'app-runtime-contracts'],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'runtime-probes',
+      'ooe-boundaries',
+      'compartment-boundaries',
+      'ui-tests',
+    ],
+  },
+  {
+    id: 'workspace-instances',
+    label: 'Workspace instance and tab contracts',
+    matchers: exact(
+      'src/types/calculator/workspace-instance-types.ts',
+      'src/app/runtime/workspace-instances.ts',
+      'src/app/runtime/workspace-runtime-state.ts',
+      'src/app/runtime/workspace-surface-state.ts',
+      'src/app/runtime/workspace-display-state.ts',
+      'src/app/runtime/workspace-surfaces.ts',
+      'src/app/runtime/workspaceTabJobs.ts',
+      'src/app/runtime/useWorkspaceInstancesRuntime.ts',
+      'src/app/runtime/useWorkspaceTabsRuntime.ts',
+      'src/app/runtime/useWorkspaceTabsShellRuntime.ts',
+    ),
+    additionalCommandIds: [
+      'workspace-runtime-contracts',
+      'app-runtime-contracts',
+      'app-state-contracts',
+    ],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'runtime-probes',
+      'ooe-boundaries',
+      'compartment-boundaries',
+      'ui-tests',
+    ],
+  },
+  {
+    id: 'ooe-control',
+    label: 'Order of Execution control',
+    matchers: prefix('src/lib/ooe/'),
+    additionalCommandIds: ['workspace-runtime-contracts'],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'runtime-probes',
+      'ooe-boundaries',
+      'compartment-boundaries',
+    ],
+  },
+  {
+    id: 'kernel-runtime',
+    label: 'Kernel runtime contracts',
+    matchers: prefix('src/lib/kernel/'),
+    additionalCommandIds: ['workspace-runtime-contracts'],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'runtime-probes',
+      'compartment-boundaries',
+    ],
+  },
+  {
+    id: 'engine-core',
+    label: 'Shared engine core',
+    matchers: prefix('src/lib/engine/'),
+    additionalCommandIds: ['workspace-runtime-contracts'],
+    baselineEvidenceIds: ['workspace-canaries', 'runtime-probes', 'compartment-boundaries'],
+  },
+  {
+    id: 'display-contract',
+    label: 'Display outcome and rendering contracts',
+    matchers: [
+      ...prefix('src/lib/display/', 'src/app/shell/display-panel/'),
+      ...exact('src/app/shell/DisplayPanel.tsx', 'src/types/calculator/display-types.ts'),
+    ],
+    additionalCommandIds: ['display-contracts'],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'surface-protocol',
+      'compartment-boundaries',
+      'ui-tests',
+    ],
+  },
+  {
+    id: 'app-state-schema',
+    label: 'App-state and replay schemas',
+    matchers: exact(
+      'src/lib/app-state/schemas.ts',
+      'src/lib/app-state/history-schema.ts',
+      'src/types/calculator/defaults.ts',
+      'src/types/calculator/equation-replay-types.ts',
+    ),
+    additionalCommandIds: ['app-state-contracts', 'app-runtime-contracts'],
+    baselineEvidenceIds: ['workspace-canaries', 'surface-protocol', 'ui-tests'],
+  },
+  {
+    id: 'shared-type-contract',
+    label: 'Shared calculator type contracts',
+    matchers: [
+      ...exact('src/types/calculator.ts'),
+      ...prefix('src/types/calculator/'),
+    ],
+    additionalCommandIds: [
+      'workspace-runtime-contracts',
+      'display-contracts',
+      'app-state-contracts',
+    ],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'runtime-probes',
+      'surface-protocol',
+      'compartment-boundaries',
+      'ui-tests',
+    ],
+  },
+  {
+    id: 'shared-configuration',
+    label: 'Shared repository configuration',
+    matchers: [
+      ...exact(
+        'package.json',
+        'package-lock.json',
+        'eslint.config.js',
+        'playwright.config.ts',
+        'tsconfig.json',
+        'tsconfig.app.json',
+        'tsconfig.node.json',
+        'vite.config.ts',
+        'vitest.config.ts',
+        'vitest.canary.config.ts',
+        'vitest.playground.config.ts',
+        'vitest.ui.config.ts',
+        'src/lib/compartments/manifest.ts',
+      ),
+      ...prefix('.github/workflows/'),
+    ],
+    additionalCommandIds: [
+      'workspace-runtime-contracts',
+      'app-runtime-contracts',
+      'display-contracts',
+      'app-state-contracts',
+    ],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'runtime-probes',
+      'ooe-boundaries',
+      'compartment-boundaries',
+      'surface-protocol',
+      'ui-tests',
+      'app-identity',
+      'file-sizes',
+    ],
+  },
+];
+
+export const LANE_REGISTRY = [
+  { id: 'calculate', matchers: prefix('src/lib/modes/calculate') },
+  { id: 'equation', matchers: prefix('src/lib/equation/', 'src/lib/modes/equation') },
+  { id: 'calculus', matchers: prefix('src/lib/calculus/', 'src/lib/symbolic-engine/', 'src/lib/modes/calculus') },
+  { id: 'trigonometry', matchers: prefix('src/lib/trigonometry/', 'src/lib/modes/trigonometry') },
+  { id: 'geometry', matchers: prefix('src/lib/geometry/', 'src/lib/modes/geometry') },
+  { id: 'statistics', matchers: prefix('src/lib/statistics/', 'src/lib/modes/statistics') },
+  {
+    id: 'matrix',
+    matchers: [
+      ...sharedLinearAlgebraLaneMatchers,
+      ...prefix('src/lib/modes/matrix'),
+      ...exact('src/app/workspaces/MatrixWorkspace.tsx'),
+    ],
+  },
+  {
+    id: 'vector',
+    matchers: [
+      ...sharedLinearAlgebraLaneMatchers,
+      ...prefix('src/lib/modes/vector'),
+      ...exact('src/app/workspaces/VectorWorkspace.tsx'),
+    ],
+  },
+  { id: 'table', matchers: prefix('src/lib/modes/table') },
+  { id: 'guide-notebook', matchers: prefix('src/lib/guide/', 'src/lib/notebook/') },
+  { id: 'tooling', matchers: prefix('tools/', 'e2e/') },
+  { id: 'docs-memory', matchers: prefix('docs/', '.memory/') },
+  { id: 'configuration', matchers: prefix('.github/', 'package', 'tsconfig', 'vite', 'vitest', 'playwright', 'eslint') },
+];

@@ -4,6 +4,7 @@ import path from 'node:path';
 export const STATIC_GATE_COMMANDS = [
   'npm run test:memory-protocol',
   'npm run test:ci-gate-alignment',
+  'npm run test:seam-impact-selector',
   'npm run test:app-identity',
   'npm run test:surface-protocol',
   'npm run test:ooe-boundaries',
@@ -15,6 +16,7 @@ export const STATIC_GATE_COMMANDS = [
 
 export const CANARY_COMMAND = 'npm run test:canaries:browser';
 export const PACKAGE_COMMAND = 'npm run tauri:build';
+export const SEAM_IMPACT_COMMAND = 'npm run seam:impact -- --github-event --run';
 
 function assertIncludes(text, value, label) {
   if (!text.includes(value)) {
@@ -41,6 +43,16 @@ function assertCiCanaryJob(ciWorkflow) {
   }
   if (/\be2e-linux:\s*[\s\S]*?\bneeds:\s*ci-linux\b/u.test(ciWorkflow)) {
     throw new Error('CI e2e-linux job must run independently from ci-linux');
+  }
+}
+
+function assertCiSeamImpactRunner(ciWorkflow) {
+  assertIncludes(ciWorkflow, `run: ${SEAM_IMPACT_COMMAND}`, 'CI workflow');
+  assertIncludes(ciWorkflow, 'fetch-depth: 0', 'CI workflow checkout');
+  const seamIndex = ciWorkflow.indexOf(`run: ${SEAM_IMPACT_COMMAND}`);
+  const unitIndex = ciWorkflow.indexOf('run: npm run test:unit');
+  if (seamIndex < 0 || unitIndex < 0 || seamIndex >= unitIndex) {
+    throw new Error('CI workflow must run seam impact evidence before broad unit tests');
   }
 }
 
@@ -81,6 +93,7 @@ export function validateCiGateAlignment({
   assertCiTriggers(ciWorkflow);
   assertCommands(ciWorkflow, STATIC_GATE_COMMANDS, 'CI workflow');
   assertCiCanaryJob(ciWorkflow);
+  assertCiSeamImpactRunner(ciWorkflow);
 
   assertCommands(releaseWorkflow, STATIC_GATE_COMMANDS, 'Linux release workflow');
   assertCommandsBefore(

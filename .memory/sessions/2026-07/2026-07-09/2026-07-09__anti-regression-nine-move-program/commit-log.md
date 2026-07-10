@@ -30,4 +30,9 @@
 ## Incident Closure Commit 3
 - Subject: `CI-GATE-ALIGNMENT1`.
 - User approval: standing approval granted for all four Incident Closure commits before implementation.
+- Hash: `948f2df3858cbffdadf277634d938a96bcd8309d`.
+
+## Incident Closure Commit 4
+- Subject: `SEAM-IMPACT-SELECTOR1`.
+- User approval: standing approval granted for all four Incident Closure commits before implementation.
 - Hash: this milestone commit; exact hash is reported by post-commit readback.
