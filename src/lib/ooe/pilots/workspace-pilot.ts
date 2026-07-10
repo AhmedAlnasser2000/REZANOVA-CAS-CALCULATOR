@@ -83,10 +83,10 @@ const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefini
     hostId: 'geometry-worker-runtime',
   },
   'linearAlgebra.matrix': {
-    hostId: 'linear-algebra-worker-runtime',
+    hostId: 'matrix-worker-runtime',
   },
   'linearAlgebra.vector': {
-    hostId: 'linear-algebra-worker-runtime',
+    hostId: 'vector-worker-runtime',
   },
 };
 

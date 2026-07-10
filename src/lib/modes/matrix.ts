@@ -9,9 +9,9 @@ import {
   type LinearAlgebraHostExecution,
 } from '../ooe/pilots/linear-algebra-pilot';
 import {
-  runLinearAlgebraModeViaIsolatedWorker,
-  type CreateLinearAlgebraWorker,
-} from './worker-clients/linear-algebra-worker-client';
+  runMatrixModeViaIsolatedWorker,
+  type CreateMatrixWorker,
+} from './worker-clients/matrix-worker-client';
 import type {
   DisplayOutcome,
   ExactScalarWire,
@@ -279,7 +279,7 @@ export function buildMatrixOoeInputRevisionId(request: RunMatrixModeRequest) {
 export async function runMatrixModeWithOoePilot(
   request: RunMatrixModeRequest,
   options?: OoeJobContextOptions & {
-    createWorker?: CreateLinearAlgebraWorker;
+    createWorker?: CreateMatrixWorker;
   },
 ) {
   let hostExecution: LinearAlgebraHostExecution | undefined;
@@ -287,11 +287,8 @@ export async function runMatrixModeWithOoePilot(
   return runLinearAlgebraWithOoePilot(
     'matrix',
     async (control) => {
-      const result = await runLinearAlgebraModeViaIsolatedWorker(
-        {
-          kind: 'matrix',
-          request,
-        },
+      const result = await runMatrixModeViaIsolatedWorker(
+        request,
         control,
         {
           createWorker: options?.createWorker,

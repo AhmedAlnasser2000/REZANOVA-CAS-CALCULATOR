@@ -1,7 +1,7 @@
 # Linear Algebra Topology Lock Recap
 
 Date: 2026-07-10
-Status: topology decision locked; implementation pending
+Status: topology implemented and verified; Behavioral Ratchets pending
 
 ## Attribution
 
@@ -24,8 +24,8 @@ Status: topology decision locked; implementation pending
 - The mandatory Incident Review is complete and user-accepted.
 - Behavioral Ratchets 5-9 are reserved and approved, but they are not implemented or committed.
 - `LINEAR-ALGEBRA-SHELL-SPLIT0` is complete and is committed with this topology-decision recap.
-- `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` has not changed production code yet.
-- Current production topology still uses one `linear-algebra-worker-runtime` / `linear-algebra-runtime` host pair with separate `linearAlgebra.matrix` and `linearAlgebra.vector` capabilities.
+- `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` is implemented and verified in its approved commit checkpoint.
+- Production now uses independent `matrix-worker-runtime` / `matrix-runtime` and `vector-worker-runtime` / `vector-runtime` host pairs while preserving separate `linearAlgebra.matrix` and `linearAlgebra.vector` capabilities.
 
 The earlier instruction to the Matrix/Vector thread to assume the nine moves were finished was a scheduling reservation intended to prevent concurrent interference. It must not be restated as Git history, completed verification, or shipped behavior.
 
@@ -54,9 +54,9 @@ Locked topology:
 
 ## Safe Sequence
 
-1. Commit the verified `LINEAR-ALGEBRA-SHELL-SPLIT0` audit and this topology-decision recap as the user-approved audit checkpoint.
-2. Implement and verify only `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`; do not bundle new Matrix/Vector math.
-3. Complete and commit Behavioral Ratchets 5-9 in their approved order.
+1. Completed: commit the verified `LINEAR-ALGEBRA-SHELL-SPLIT0` audit and topology decision as `bc752a25`.
+2. Completed in the current approved checkpoint: implement and verify only `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` without new Matrix/Vector math.
+3. Next: complete and commit Behavioral Ratchets 5-9 in their approved order.
 4. Run the anti-regression manual closeout and obtain user acceptance.
 5. Resume Linear Algebra capability work with `LINEAR-ALGEBRA-EXACT-DECIMAL-CONTROLS1`, then Gram-Schmidt, geometric measures, positive-definite classification, and SVD/pseudoinverse/conditioning.
 
@@ -64,4 +64,4 @@ Until step 4 is accepted, Matrix/Vector feature work remains frozen. The other a
 
 ## Message For The Matrix/Vector Thread
 
-Do not treat Anti-Regression Moves 5-9 as completed Git history. They are reserved blockers and are being executed by the Anti-Regression thread. The Linear Algebra shell audit is complete; its current-cost thresholds did not pass, but the user has now made a separate prospective product-containment decision locking independent Matrix and Vector hosts before future numerical and geometric expansion. Pause capability implementation until the split and all five Behavioral Ratchets are actually committed and the closeout is accepted. Remove `LINEAR-ALGEBRA-SHELL-SPLIT0` and `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` from the end of the numeric feature sequence: the audit belongs before the split, and both topology milestones precede all remaining capability work.
+Do not treat Anti-Regression Moves 5-9 as completed Git history. They are reserved blockers and are being executed by the Anti-Regression thread. The Linear Algebra shell audit and independent Matrix/Vector host split are complete; the truthful audit thresholds did not pass, and the split proceeded under the user's separate prospective product-containment decision. Pause capability implementation until all five Behavioral Ratchets are actually committed and the closeout is accepted. Remove `LINEAR-ALGEBRA-SHELL-SPLIT0` and `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` from the remaining numeric feature sequence because both topology milestones now precede that work.

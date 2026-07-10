@@ -8,9 +8,9 @@ import {
   type LinearAlgebraHostExecution,
 } from '../ooe/pilots/linear-algebra-pilot';
 import {
-  runLinearAlgebraModeViaIsolatedWorker,
-  type CreateLinearAlgebraWorker,
-} from './worker-clients/linear-algebra-worker-client';
+  runVectorModeViaIsolatedWorker,
+  type CreateVectorWorker,
+} from './worker-clients/vector-worker-client';
 import type {
   AngleUnit,
   DisplayOutcome,
@@ -184,7 +184,7 @@ export function buildVectorOoeInputRevisionId(request: RunVectorModeRequest) {
 export async function runVectorModeWithOoePilot(
   request: RunVectorModeRequest,
   options?: OoeJobContextOptions & {
-    createWorker?: CreateLinearAlgebraWorker;
+    createWorker?: CreateVectorWorker;
   },
 ) {
   let hostExecution: LinearAlgebraHostExecution | undefined;
@@ -192,11 +192,8 @@ export async function runVectorModeWithOoePilot(
   return runLinearAlgebraWithOoePilot(
     'vector',
     async (control) => {
-      const result = await runLinearAlgebraModeViaIsolatedWorker(
-        {
-          kind: 'vector',
-          request,
-        },
+      const result = await runVectorModeViaIsolatedWorker(
+        request,
         control,
         {
           createWorker: options?.createWorker,

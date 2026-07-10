@@ -126,3 +126,16 @@
 - `npm run test:ooe-boundaries` passed 7 tests; `npm run test:compartments-boundaries` passed 36 tests.
 - `git diff --check` passed.
 - Outcome: the approved 10% asset, 2x runtime/serialization, and concrete current-policy-divergence criteria all failed. The user subsequently authorized the split through a separate prospective product-containment decision; the audit is not reclassified as passed.
+
+## MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1
+- Kind: `backend` topology change with `ui` behavior-parity evidence.
+- `npx tsc -b --pretty false`: passed.
+- Focused runtime set: 21/21 passed; complete workspace runtime contracts: 74/74 passed; runtime probes: 19/19 passed.
+- `cargo test --manifest-path src-tauri/Cargo.toml ooe`: 43/43 passed.
+- `npm run test:seam-impact-selector`: 8/8 passed after using the shared lifecycle helper, rather than the correctly seam-triggering OOE pilot, as the shared lane-only fixture.
+- `npm run test:ooe-boundaries`: 7/7 passed; `npm run test:compartments-boundaries`: 36/36 passed.
+- `npm run test:file-sizes`: 8/8 passed; 1,604 files remained within caps.
+- `npm run build` and `npm run lint`: passed. Build emitted `matrix.worker` at 1,224.31 kB and `vector.worker` at 1,169.44 kB; no `linear-algebra.worker` asset remained.
+- Focused Matrix/Vector Chromium canaries passed 4/4; the full workspace suite passed 19/19 in 1.2 minutes.
+- Full-page Matrix `profile(...)` and Vector `independent(...)` evidence was inspected after final `Ready` status. Answers, rank-nullity/span facts, kernel/image/basis evidence, collapsed RREF sections, editor surfaces, and controls were readable without clipping or overlap.
+- Outcome: independent Matrix/Vector topology is complete with unchanged visible mathematical behavior.

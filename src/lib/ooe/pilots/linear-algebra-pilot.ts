@@ -25,23 +25,40 @@ import {
 
 export type LinearAlgebraRuntimeKind = 'matrix' | 'vector';
 
-export const OOE_LINEAR_ALGEBRA_WORKER_HOST_ID = 'linear-algebra-worker-runtime' as const;
-export const OOE_LINEAR_ALGEBRA_FALLBACK_HOST_ID = 'linear-algebra-runtime' as const;
+export const OOE_MATRIX_WORKER_HOST_ID = 'matrix-worker-runtime' as const;
+export const OOE_MATRIX_FALLBACK_HOST_ID = 'matrix-runtime' as const;
+export const OOE_MATRIX_WORKER_SHELL_ID = 'matrix-worker-shell' as const;
+export const OOE_VECTOR_WORKER_HOST_ID = 'vector-worker-runtime' as const;
+export const OOE_VECTOR_FALLBACK_HOST_ID = 'vector-runtime' as const;
+export const OOE_VECTOR_WORKER_SHELL_ID = 'vector-worker-shell' as const;
 
 const LINEAR_ALGEBRA_DEFINITIONS = {
   matrix: {
     planId: 'plan.linearAlgebra.matrix',
     capabilityId: 'linearAlgebra.matrix',
-    hostId: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
+    hostId: OOE_MATRIX_WORKER_HOST_ID,
     nodeId: 'node.linearAlgebra.matrix',
     phaseId: 'linearAlgebra.matrix',
   },
   vector: {
     planId: 'plan.linearAlgebra.vector',
     capabilityId: 'linearAlgebra.vector',
-    hostId: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
+    hostId: OOE_VECTOR_WORKER_HOST_ID,
     nodeId: 'node.linearAlgebra.vector',
     phaseId: 'linearAlgebra.vector',
+  },
+} as const;
+
+const LINEAR_ALGEBRA_RUNTIME_SHELLS = {
+  matrix: {
+    primaryHostId: OOE_MATRIX_WORKER_HOST_ID,
+    fallbackHostId: OOE_MATRIX_FALLBACK_HOST_ID,
+    shellId: OOE_MATRIX_WORKER_SHELL_ID,
+  },
+  vector: {
+    primaryHostId: OOE_VECTOR_WORKER_HOST_ID,
+    fallbackHostId: OOE_VECTOR_FALLBACK_HOST_ID,
+    shellId: OOE_VECTOR_WORKER_SHELL_ID,
   },
 } as const;
 
@@ -66,13 +83,13 @@ export type LinearAlgebraOoePilotStatus = OoePilotStatus<LinearAlgebraPilotDefin
 export type LinearAlgebraHostExecution =
   | {
       kind: 'worker';
-      hostId: typeof OOE_LINEAR_ALGEBRA_WORKER_HOST_ID;
+      hostId: typeof OOE_MATRIX_WORKER_HOST_ID | typeof OOE_VECTOR_WORKER_HOST_ID;
       isolated: true;
       terminalStatus: 'completed';
     }
   | {
       kind: 'worker-cancelled';
-      hostId: typeof OOE_LINEAR_ALGEBRA_WORKER_HOST_ID;
+      hostId: typeof OOE_MATRIX_WORKER_HOST_ID | typeof OOE_VECTOR_WORKER_HOST_ID;
       isolated: true;
       terminalStatus: 'cancelled';
       termination: 'hardStop';
@@ -80,10 +97,10 @@ export type LinearAlgebraHostExecution =
     }
   | {
       kind: 'fallback';
-      hostId: typeof OOE_LINEAR_ALGEBRA_FALLBACK_HOST_ID;
+      hostId: typeof OOE_MATRIX_FALLBACK_HOST_ID | typeof OOE_VECTOR_FALLBACK_HOST_ID;
       isolated: false;
       terminalStatus: 'fallback';
-      fallbackFromHostId: typeof OOE_LINEAR_ALGEBRA_WORKER_HOST_ID;
+      fallbackFromHostId: typeof OOE_MATRIX_WORKER_HOST_ID | typeof OOE_VECTOR_WORKER_HOST_ID;
       reason: string;
     };
 
@@ -102,6 +119,10 @@ export type LinearAlgebraOoePilotRunResult<TPayload> = OoeRuntimeEnvelope<
 
 export function linearAlgebraPilotDefinition(kind: LinearAlgebraRuntimeKind): LinearAlgebraPilotDefinition {
   return LINEAR_ALGEBRA_DEFINITIONS[kind];
+}
+
+export function linearAlgebraRuntimeShellDefinition(kind: LinearAlgebraRuntimeKind) {
+  return LINEAR_ALGEBRA_RUNTIME_SHELLS[kind];
 }
 
 export async function prepareLinearAlgebraOoePilot(
@@ -201,6 +222,7 @@ export function buildLinearAlgebraOoePilotMetadata(
   hostExecution?: LinearAlgebraHostExecution,
 ): LinearAlgebraOoePilotMetadata {
   const definition = linearAlgebraPilotDefinition(kind);
+  const shellDefinition = linearAlgebraRuntimeShellDefinition(kind);
   const cancelled = hostExecution?.terminalStatus === 'cancelled';
   const commitAssessment = cancelled
     ? {
@@ -211,10 +233,10 @@ export function buildLinearAlgebraOoePilotMetadata(
       }
     : jobContext.commitAssessment;
   const runtimeShell = buildOoeRuntimeShellEvidence({
-    shellId: 'linear-algebra-worker-shell',
+    shellId: shellDefinition.shellId,
     capabilityId: definition.capabilityId,
-    primaryHostId: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
-    fallbackHostId: OOE_LINEAR_ALGEBRA_FALLBACK_HOST_ID,
+    primaryHostId: shellDefinition.primaryHostId,
+    fallbackHostId: shellDefinition.fallbackHostId,
     lifecycle: cancelled ? 'cancelled' : 'completed',
     hostExecution,
     launchTicket: options?.launchTicket,
@@ -296,6 +318,7 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
     },
     buildFailureProvenance: ({ error, routeSnapshot }) => {
       const snapshot = routeSnapshot as LinearAlgebraRouteSnapshot;
+      const shellDefinition = linearAlgebraRuntimeShellDefinition(kind);
       return {
         depth: 'coarse',
         mode: snapshot.kind,
@@ -303,7 +326,7 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
         screen: snapshot.kind,
         action: snapshot.request?.operation,
         inputSummary: snapshot.request,
-        runtimeHost: OOE_LINEAR_ALGEBRA_WORKER_HOST_ID,
+        runtimeHost: shellDefinition.primaryHostId,
         commitDecision: 'notApplicable',
         notes: [`Linear Algebra runtime failed: ${errorMessage(error)}`],
       };

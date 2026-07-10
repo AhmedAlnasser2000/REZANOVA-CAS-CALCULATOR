@@ -41,7 +41,9 @@ describe('seam impact selector', () => {
       'src/lib/equation/roots/readback.ts',
       'src/lib/modes/equation-worker-runtime.ts',
       'src/lib/modes/calculus-worker-client.ts',
-      'src/lib/modes/linear-algebra-worker-runtime.ts',
+      'src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts',
+      'src/lib/modes/worker-clients/matrix-worker-client.ts',
+      'src/lib/modes/worker-clients/vector-worker-client.ts',
       'src/app/workspaces/MatrixWorkspace.tsx',
       'src/app/workspaces/VectorWorkspace.tsx',
     ]);
@@ -50,8 +52,16 @@ describe('seam impact selector', () => {
     assert.equal(plan.summary.laneOnly, true);
     assert.deepEqual(plan.laneIds, ['calculus', 'equation', 'matrix', 'vector']);
     assert.deepEqual(
-      plan.paths.find((entry) => entry.path.endsWith('linear-algebra-worker-runtime.ts'))?.laneIds,
+      plan.paths.find((entry) => entry.path.endsWith('linear-algebra-worker-client-core.ts'))?.laneIds,
       ['matrix', 'vector'],
+    );
+    assert.deepEqual(
+      plan.paths.find((entry) => entry.path.endsWith('matrix-worker-client.ts'))?.laneIds,
+      ['matrix'],
+    );
+    assert.deepEqual(
+      plan.paths.find((entry) => entry.path.endsWith('vector-worker-client.ts'))?.laneIds,
+      ['vector'],
     );
     assert.deepEqual(
       plan.paths.find((entry) => entry.path.endsWith('MatrixWorkspace.tsx'))?.laneIds,

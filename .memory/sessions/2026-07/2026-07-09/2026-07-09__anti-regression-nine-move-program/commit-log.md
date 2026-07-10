@@ -45,4 +45,9 @@
 ## Linear Algebra Transition Audit
 - Subject: `LINEAR-ALGEBRA-SHELL-SPLIT0`.
 - User approval: explicitly granted after the verified audit and topology-lock recap on `2026-07-10`.
+- Hash: `bc752a25`.
+
+## Matrix/Vector Runtime Shell Split
+- Subject: `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`.
+- User approval: explicitly granted during implementation on `2026-07-10`.
 - Hash: this milestone commit after approval.

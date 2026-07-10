@@ -73,4 +73,4 @@ No approved current-risk split criterion is met. The audit therefore does not in
 
 After reviewing the failed gate, the user explicitly locked separate Matrix and Vector runtime topology prospectively. The reason is the approved near-term divergence between Matrix numerical decomposition/conditioning work and Vector exact Gram-Schmidt/geometric work, not the current benchmark numbers.
 
-This product-containment decision supersedes the audit's implementation blocker without rewriting the audit outcome. `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` is authorized as the next implementation milestone and must precede Behavioral Ratchets 5-9 and all remaining Matrix/Vector capability expansion. The Matrix/Vector feature freeze remains active through the Anti-Regression closeout.
+This product-containment decision supersedes the audit's implementation blocker without rewriting the audit outcome. `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` was implemented and verified immediately after the audit, before Behavioral Ratchets 5-9 or further Matrix/Vector capability expansion. The Matrix/Vector feature freeze remains active through the Anti-Regression closeout.

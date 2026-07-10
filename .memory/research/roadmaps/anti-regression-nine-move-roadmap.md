@@ -79,7 +79,7 @@ Status: verified on `2026-07-10`; no split criterion was met. Matrix-only reduce
 ### `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`
 - Conditionally split into independent Matrix and Vector workers only when the audit gate passes.
 
-Status: authorized by explicit user product-containment decision after the current-risk audit failed. The audit remains truthful; the split is justified prospectively by the approved Matrix numerical-decomposition/conditioning arc versus Vector exact orthogonalization/geometric arc. This milestone must complete before Move 5.
+Status: implemented and verified on `2026-07-10` under the explicit user product-containment decision. Matrix and Vector now have independent primary/fallback hosts, worker entrypoints, clients, runtime-shell evidence, probes, and seam lanes while preserving capabilities, requests, replay seeds, History, stale/cancel rules, commit legality, and shared math cores. Move 5 is next.
 
 ## Behavioral Ratchets
 

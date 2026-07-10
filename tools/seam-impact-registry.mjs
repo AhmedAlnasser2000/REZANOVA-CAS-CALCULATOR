@@ -38,8 +38,8 @@ const sharedLinearAlgebraLaneMatchers = [
   ...prefix(
     'src/lib/linear-algebra/',
     'src/lib/modes/linear-algebra',
-    'src/lib/modes/worker-clients/linear-algebra',
-    'src/lib/modes/worker-entrypoints/linear-algebra',
+    'src/lib/modes/worker-clients/linear-algebra-worker-client-core',
+    'src/lib/modes/worker-entrypoints/linear-algebra-worker-contract',
     'src/lib/ooe/pilots/linear-algebra',
     'src/app/runtime/linearAlgebra',
     'src/app/runtime/useLinearAlgebra',
@@ -227,7 +227,11 @@ export const LANE_REGISTRY = [
     id: 'matrix',
     matchers: [
       ...sharedLinearAlgebraLaneMatchers,
-      ...prefix('src/lib/modes/matrix'),
+      ...prefix(
+        'src/lib/modes/matrix',
+        'src/lib/modes/worker-clients/matrix-worker-client',
+        'src/lib/modes/worker-entrypoints/matrix.worker',
+      ),
       ...exact('src/app/workspaces/MatrixWorkspace.tsx'),
     ],
   },
@@ -235,7 +239,11 @@ export const LANE_REGISTRY = [
     id: 'vector',
     matchers: [
       ...sharedLinearAlgebraLaneMatchers,
-      ...prefix('src/lib/modes/vector'),
+      ...prefix(
+        'src/lib/modes/vector',
+        'src/lib/modes/worker-clients/vector-worker-client',
+        'src/lib/modes/worker-entrypoints/vector.worker',
+      ),
       ...exact('src/app/workspaces/VectorWorkspace.tsx'),
     ],
   },

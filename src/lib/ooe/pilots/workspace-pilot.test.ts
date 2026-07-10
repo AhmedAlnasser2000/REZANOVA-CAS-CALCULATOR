@@ -43,8 +43,8 @@ const cases: Array<{
   },
   { capabilityId: 'statistics.evaluate', mode: 'statistics', hostId: 'statistics-worker-runtime' },
   { capabilityId: 'geometry.evaluate', mode: 'geometry', hostId: 'geometry-worker-runtime' },
-  { capabilityId: 'linearAlgebra.matrix', mode: 'matrix', hostId: 'linear-algebra-worker-runtime' },
-  { capabilityId: 'linearAlgebra.vector', mode: 'vector', hostId: 'linear-algebra-worker-runtime' },
+  { capabilityId: 'linearAlgebra.matrix', mode: 'matrix', hostId: 'matrix-worker-runtime' },
+  { capabilityId: 'linearAlgebra.vector', mode: 'vector', hostId: 'vector-worker-runtime' },
 ];
 
 function planFor(capabilityId: WorkspaceOoeCapabilityId, hostId: string): OoePlan {

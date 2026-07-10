@@ -73,3 +73,9 @@
 - Matrix-only reduced loaded gzip bytes by 1.34%; Vector-only reduced them by 5.00%. Browser P95s were effectively equal, while maximum request/result sizes differed by 1.14x/1.31x.
 - No approved split criterion was met. No production source changed, and `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` is blocked pending user review.
 - User review then locked separate hosts prospectively because the approved Matrix numerical and Vector exact/geometric roadmaps intentionally create different execution classes. The audit result remains unchanged; the split is now separately authorized.
+
+## MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1
+- Replaced the shared Linear Algebra worker entrypoint/client and primary/fallback host pair with independent Matrix and Vector workers, thin clients, host descriptors, runtime-shell identities, and request counters over one unchanged shared lifecycle ritual.
+- Preserved `linearAlgebra.matrix`, `linearAlgebra.vector`, public requests, `matrixSeed`, `vectorSeed`, History, stale/cancel semantics, commit legality, diagnostics meaning, and shared exact math cores.
+- Updated TypeScript and Rust OOE plans/hosts, workspace pilots, runtime probes, selector lanes, and focused parity/fallback/failure/cancellation tests.
+- Production build emits separate Matrix and Vector worker assets. Runtime, boundary, build/lint, full canary, and final visual gates passed.

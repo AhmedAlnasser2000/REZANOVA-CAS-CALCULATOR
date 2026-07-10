@@ -125,14 +125,16 @@ mod tests {
             "expression-runtime",
             "geometry-runtime",
             "geometry-worker-runtime",
-            "linear-algebra-runtime",
-            "linear-algebra-worker-runtime",
+            "matrix-runtime",
+            "matrix-worker-runtime",
             "statistics-runtime",
             "statistics-worker-runtime",
             "table-runtime",
             "table-worker-runtime",
             "trigonometry-runtime",
             "trigonometry-worker-runtime",
+            "vector-runtime",
+            "vector-worker-runtime",
         ].into_iter().map(String::from).collect::<BTreeSet<_>>();
 
         assert_eq!(host_ids, expected_host_ids);
