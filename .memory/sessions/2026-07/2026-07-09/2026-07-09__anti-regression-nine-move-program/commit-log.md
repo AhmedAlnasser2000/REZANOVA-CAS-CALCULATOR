@@ -20,4 +20,9 @@
 ## Incident Closure Commit 1
 - Subject: `WORKSPACE-CANARY-SUITE1`.
 - User approval: standing approval granted for all four Incident Closure commits before implementation.
+- Hash: `6f8bf93b6bc9d9d2a01124e574ed92574bab71eb`.
+
+## Incident Closure Commit 2
+- Subject: `WORKSPACE-RUNTIME-PROBE-REGISTRY1`.
+- User approval: standing approval granted for all four Incident Closure commits before implementation.
 - Hash: this milestone commit; exact hash is reported by post-commit readback.

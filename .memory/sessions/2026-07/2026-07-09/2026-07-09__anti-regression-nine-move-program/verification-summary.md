@@ -50,3 +50,18 @@
 ## Outstanding Gaps After Move 1
 - CI integration belongs to `CI-GATE-ALIGNMENT1`; this milestone adds scripts but does not yet replace workflow lanes.
 - Statistics guided-control defects remain out of scope; direct structured requests are the stable canary path.
+
+## WORKSPACE-RUNTIME-PROBE-REGISTRY1
+- Kind: `backend`.
+- `npm run test:runtime-probes`: 19 passed across the exhaustive registry and direct Statistics/Table workers.
+- Surrounding runtime/OOE suite: 74 passed across 12 files.
+- `npm run test:ooe-boundaries`: 7 passed; 26 TypeScript and 6 Rust OOE files validated.
+- `npm run test:compartments-boundaries`: 36 passed; 1,058 source files validated.
+- `npx tsc -b --pretty false`, `npm run build`, and `npm run lint`: passed; build completed 2,804 modules with existing non-fatal chunk/dynamic-import warnings.
+- `npm run test:file-sizes`: 8 passed; 1,586 files validated within caps.
+- Restored Chrome path: the three Calculate canaries passed in 11.5 seconds with output redirected under `.task_tmp/`.
+- `git diff --check`: passed before durable closeout.
+
+## Outstanding Gaps After Move 2
+- CI still does not run the new canary and runtime-probe lanes at the required pull-request, `main`, and Linux-release boundaries; this belongs to `CI-GATE-ALIGNMENT1`.
+- Browser registry probes exercise the public OOE facades in Node fallback mode; direct worker lifecycle coverage exists for every host family, including the newly explicit Statistics and Table cases.

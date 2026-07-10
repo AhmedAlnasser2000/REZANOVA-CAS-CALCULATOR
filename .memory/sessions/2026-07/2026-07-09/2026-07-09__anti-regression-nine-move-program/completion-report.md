@@ -28,7 +28,7 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- Begin `WORKSPACE-RUNTIME-PROBE-REGISTRY1` after the verified canary milestone commit.
+- Begin `CI-GATE-ALIGNMENT1` after the verified runtime-probe milestone commit.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -36,3 +36,9 @@
 - Repaired public Equation affine-root simplification at the carrier-root boundary and exact Geometry circle pi output while preserving numeric approximation text.
 - Updated canary drivers to the current Calculus main editor and Table text controls.
 - Passed the 19-case Chromium suite in 74.90 seconds and inspected full-page evidence for every workspace.
+
+## WORKSPACE-RUNTIME-PROBE-REGISTRY1
+- Added an exhaustive nine-workspace registry derived against launcher leaves, with a committed count floor and one executable native public OOE-facade probe per workspace.
+- Pinned capability, primary/fallback host, shell, request/snapshot, outcome, commit/stale, diagnostics, active-job, and History-ticket evidence without merging runtime ownership.
+- Added direct Statistics and Table worker coverage for completion, pre-start fallback, post-start failure policy, and hard-stop cancellation.
+- Passed 19 focused probe/worker tests, 74 surrounding runtime/OOE tests, TypeScript, build, lint, file-size, OOE/compartment boundaries, and diff hygiene.

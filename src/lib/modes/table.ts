@@ -8,7 +8,10 @@ import {
   runTableModeCooperatively,
   type RunTableModeRequest,
 } from './table-core';
-import { runTableModeViaIsolatedWorker } from './worker-clients/table-worker-client';
+import {
+  runTableModeViaIsolatedWorker,
+  type CreateTableWorker,
+} from './worker-clients/table-worker-client';
 
 export {
   buildTableOoeSnapshot,
@@ -26,11 +29,14 @@ export function buildTableOoeInputRevisionId(request: RunTableModeRequest) {
 
 export async function runTableModeWithOoePilot(
   request: RunTableModeRequest,
-  options?: OoeJobContextOptions,
+  options?: OoeJobContextOptions & {
+    createWorker?: CreateTableWorker;
+  },
 ) {
   let hostExecution: TableHostExecution | undefined;
   return runTableWithOoePilot(async (context) => {
     const isolatedResult = await runTableModeViaIsolatedWorker(request, context, {
+      createWorker: options?.createWorker,
       fallback: () => runTableModeCooperatively(request, {
         rowsPerBatch: 5,
         shouldCancel: context.shouldCancel,

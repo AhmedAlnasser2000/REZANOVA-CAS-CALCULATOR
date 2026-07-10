@@ -27,6 +27,7 @@
     "test:file-sizes": "node --test tools/validate-file-sizes.test.mjs && node tools/validate-file-sizes.mjs",
     "test:canary-registry": "vitest run --config vitest.canary.config.ts",
     "test:canaries": "npm run build && playwright test e2e/canaries/workspace-canaries.spec.ts",
+    "test:runtime-probes": "vitest run src/lib/modes/runtime-probes/*.test.ts src/lib/modes/statistics-worker-runtime.test.ts src/lib/modes/table-worker-runtime.test.ts",
     "test:launch-preflight": "node --test tools/check-tauri-linux-deps.test.mjs tools/fix-linux-watch-limits.test.mjs",
     "test:app-identity": "node --test tools/check-app-identity.test.mjs",
     "test:bundle-size": "node tools/report-bundle-size.mjs --check",

@@ -40,7 +40,7 @@ type TableWorkerLike = Pick<
   'addEventListener' | 'removeEventListener' | 'postMessage' | 'terminate'
 >;
 
-type CreateTableWorker = () => TableWorkerLike;
+export type CreateTableWorker = () => TableWorkerLike;
 
 type RunTableModeViaIsolatedWorkerOptions = {
   createWorker?: CreateTableWorker;
