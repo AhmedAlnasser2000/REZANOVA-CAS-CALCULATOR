@@ -1,5 +1,6 @@
 import type { AngleUnit } from '../../types/calculator';
 import { formatApproxNumber, formatNumber } from '../display/format';
+import { exactInverseTrigDegrees } from '../numeric/inverse-trig-special-values';
 import {
   type TrigEvaluation,
   convertAngle,
@@ -41,43 +42,6 @@ function parseFunctionExpression(latex: string) {
             : 'atan';
 
   return { kind: name as TrigFunctionKind, argumentLatex: match[2] };
-}
-
-function exactInverseDegrees(kind: 'asin' | 'acos' | 'atan', value: number) {
-  if (kind === 'asin') {
-    if (Math.abs(value + 1) < EPSILON) return -90;
-    if (Math.abs(value + Math.sqrt(3) / 2) < EPSILON) return -60;
-    if (Math.abs(value + Math.SQRT1_2) < EPSILON) return -45;
-    if (Math.abs(value + 0.5) < EPSILON) return -30;
-    if (Math.abs(value) < EPSILON) return 0;
-    if (Math.abs(value - 0.5) < EPSILON) return 30;
-    if (Math.abs(value - Math.SQRT1_2) < EPSILON) return 45;
-    if (Math.abs(value - Math.sqrt(3) / 2) < EPSILON) return 60;
-    if (Math.abs(value - 1) < EPSILON) return 90;
-    return undefined;
-  }
-
-  if (kind === 'acos') {
-    if (Math.abs(value + 1) < EPSILON) return 180;
-    if (Math.abs(value + Math.sqrt(3) / 2) < EPSILON) return 150;
-    if (Math.abs(value + Math.SQRT1_2) < EPSILON) return 135;
-    if (Math.abs(value + 0.5) < EPSILON) return 120;
-    if (Math.abs(value) < EPSILON) return 90;
-    if (Math.abs(value - 0.5) < EPSILON) return 60;
-    if (Math.abs(value - Math.SQRT1_2) < EPSILON) return 45;
-    if (Math.abs(value - Math.sqrt(3) / 2) < EPSILON) return 30;
-    if (Math.abs(value - 1) < EPSILON) return 0;
-    return undefined;
-  }
-
-  if (Math.abs(value + Math.sqrt(3)) < EPSILON) return -60;
-  if (Math.abs(value + 1) < EPSILON) return -45;
-  if (Math.abs(value + Math.sqrt(3) / 3) < EPSILON) return -30;
-  if (Math.abs(value) < EPSILON) return 0;
-  if (Math.abs(value - Math.sqrt(3) / 3) < EPSILON) return 30;
-  if (Math.abs(value - 1) < EPSILON) return 45;
-  if (Math.abs(value - Math.sqrt(3)) < EPSILON) return 60;
-  return undefined;
 }
 
 function toNumericTrigResult(kind: 'sin' | 'cos' | 'tan', degrees: number): TrigEvaluation {
@@ -147,7 +111,7 @@ function evaluateInverseTrig(kind: 'asin' | 'acos' | 'atan', argumentLatex: stri
     };
   }
 
-  const exactDegrees = exactInverseDegrees(kind, value);
+  const exactDegrees = exactInverseTrigDegrees(kind, value);
   if (exactDegrees !== undefined) {
     return {
       exactLatex: formatDegreesAsUnitLatex(exactDegrees, angleUnit),

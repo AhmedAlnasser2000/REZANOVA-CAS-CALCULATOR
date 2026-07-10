@@ -156,6 +156,37 @@ describe('runExpressionAction numeric evaluation', () => {
     expect(Number(gradianResult.approxText)).toBeCloseTo(50, 6);
   });
 
+  it.each([
+    ['\\arcsin\\left(1\\right)', 'deg', '90'],
+    ['\\arcsin\\left(1\\right)', 'rad', '\\frac{\\pi}{2}'],
+    ['\\arcsin\\left(1\\right)', 'grad', '100'],
+    ['\\arccos\\left(-1\\right)', 'deg', '180'],
+    ['\\arccos\\left(-1\\right)', 'rad', '\\pi'],
+    ['\\arccos\\left(-1\\right)', 'grad', '200'],
+    ['\\arctan\\left(1\\right)', 'deg', '45'],
+    ['\\arctan\\left(1\\right)', 'rad', '\\frac{\\pi}{4}'],
+    ['\\arctan\\left(1\\right)', 'grad', '50'],
+  ] as const)('keeps exact inverse-trig special values in %s mode for %s', (latex, angleUnit, exactLatex) => {
+    const result = runExpressionAction(
+      { ...request, mode: 'calculate', angleUnit, document: { latex } },
+      'evaluate',
+    );
+
+    expect(result.error).toBeUndefined();
+    expect(result.exactLatex).toBe(exactLatex);
+    expect(result.resultOrigin).toBe('exact-special-angle');
+  });
+
+  it.each(['deg', 'rad', 'grad'] as const)('stops inverse-trig real-domain violations in %s mode', (angleUnit) => {
+    const result = runExpressionAction(
+      { ...request, mode: 'calculate', angleUnit, document: { latex: '\\arcsin\\left(2\\right)' } },
+      'evaluate',
+    );
+
+    expect(result.exactLatex).toBeUndefined();
+    expect(result.error).toContain('between -1 and 1');
+  });
+
   it('respects gradian mode for direct numeric trig in Calculate', () => {
     const result = runExpressionAction(
       { ...request, mode: 'calculate', angleUnit: 'grad', document: { latex: '\\sin\\left(100\\right)' } },

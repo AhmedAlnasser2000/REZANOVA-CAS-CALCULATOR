@@ -22,6 +22,7 @@ import { solveBoundedPolynomialEquationAst } from '../../algebra/polynomial-fact
 import { complex } from '../../numeric/complex';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { expandMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/expansion/expansion';
+import { simplifyMathJsonNodeOrOriginal } from '../../symbolic-engine/primitives/simplification/simplification';
 import { substituteMathJsonSubtree } from '../../symbolic-engine/primitives/substitution/substitution';
 import { dependsOnVariable, isNodeArray, termKey } from '../../symbolic-engine/patterns';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
@@ -585,11 +586,14 @@ function buildRootsFromBranches(branches: SymbolicFamilyBranch[], zeroFormNode: 
   return sortAndDedupeRoots(
     dedupeSymbolicFamilyBranches(branches)
       .filter((branch) => Number.isFinite(branch.representativeValue))
-      .map((branch) => ({
-        latex: branch.latex,
-        node: branch.node,
-        numeric: refineRootAgainstZeroForm(zeroFormNode, branch.representativeValue),
-      })),
+      .map((branch) => {
+        const node = simplifyMathJsonNodeOrOriginal(branch.node);
+        return {
+          latex: boxLatex(node),
+          node,
+          numeric: refineRootAgainstZeroForm(zeroFormNode, branch.representativeValue),
+        };
+      }),
   );
 }
 

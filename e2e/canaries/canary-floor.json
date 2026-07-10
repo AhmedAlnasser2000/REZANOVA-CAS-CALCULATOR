@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "total": 19,
+  "perWorkspace": {
+    "calculate": 3,
+    "equation": 2,
+    "calculus": 2,
+    "trigonometry": 2,
+    "geometry": 2,
+    "statistics": 2,
+    "matrix": 2,
+    "vector": 2,
+    "table": 2
+  }
+}

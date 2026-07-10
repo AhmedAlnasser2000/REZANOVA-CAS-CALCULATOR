@@ -13,6 +13,10 @@ import {
 
 const PI = Math.PI;
 
+function piMultipleLatex(multiplier: number) {
+  return multiplier === 1 ? '\\pi' : `${numericLatex(multiplier)}\\pi`;
+}
+
 export function solveCircle(state: CircleState): GeometryEvaluation {
   const radius = parsePositiveDraft(state.radius);
   if (radius === null) {
@@ -22,8 +26,16 @@ export function solveCircle(state: CircleState): GeometryEvaluation {
   return geometryResult([
     { label: 'r', latex: numericLatex(radius) },
     { label: 'd', latex: numericLatex(2 * radius) },
-    { label: 'C', latex: numericLatex(2 * PI * radius) },
-    { label: 'A', latex: numericLatex(PI * radius ** 2) },
+    {
+      label: 'C',
+      latex: piMultipleLatex(2 * radius),
+      text: numericLatex(2 * PI * radius),
+    },
+    {
+      label: 'A',
+      latex: piMultipleLatex(radius ** 2),
+      text: numericLatex(PI * radius ** 2),
+    },
   ], [], 'geometry-formula');
 }
 
@@ -42,4 +54,3 @@ export function solveArcSector(state: ArcSectorState): GeometryEvaluation {
     { label: 'sector', latex: numericLatex(0.5 * radius ** 2 * radians) },
   ], [], 'geometry-formula');
 }
-

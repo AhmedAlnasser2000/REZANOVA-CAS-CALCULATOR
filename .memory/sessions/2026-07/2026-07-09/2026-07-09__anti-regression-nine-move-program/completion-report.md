@@ -28,4 +28,11 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- After the verified Move 0 commit, begin `WORKSPACE-CANARY-SUITE1`.
+- Begin `WORKSPACE-RUNTIME-PROBE-REGISTRY1` after the verified canary milestone commit.
+
+## WORKSPACE-CANARY-SUITE1
+- Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
+- Added shared exact inverse-trig special values and bounded Calculate exact/domain handling across DEG/RAD/GRAD.
+- Repaired public Equation affine-root simplification at the carrier-root boundary and exact Geometry circle pi output while preserving numeric approximation text.
+- Updated canary drivers to the current Calculus main editor and Table text controls.
+- Passed the 19-case Chromium suite in 74.90 seconds and inspected full-page evidence for every workspace.

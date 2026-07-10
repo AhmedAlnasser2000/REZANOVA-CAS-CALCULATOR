@@ -15,4 +15,9 @@
 ## Commit
 - Subject: `ATTRIBUTION-FAMILY-GOVERNANCE1`.
 - User approval: granted on `2026-07-09` before commit.
+- Hash: `98c2641f1f34c5a4ee16814bc76963269cba46ff`.
+
+## Incident Closure Commit 1
+- Subject: `WORKSPACE-CANARY-SUITE1`.
+- User approval: standing approval granted for all four Incident Closure commits before implementation.
 - Hash: this milestone commit; exact hash is reported by post-commit readback.

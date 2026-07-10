@@ -34,4 +34,19 @@
 - Passed as a `backend` governance gate.
 
 ## Outstanding Gaps
-- No product runtime or UI changed; the canary milestone has not started.
+- The governance gate did not change product runtime or UI.
+
+## WORKSPACE-CANARY-SUITE1
+- Kind: `ui` with supporting `backend` gates.
+- Focused tests: 77 passed across carrier follow-on, public Equation routes, inverse trig, Trigonometry, and Geometry; the dedicated linear readback test also passed after extraction for file-size compliance.
+- `npm run test:canary-registry`: 3 passed.
+- Full Chromium canaries: 19/19 passed in 74.90 seconds.
+- Visual inspection: full-page evidence covered all nine workspaces with readable answer surfaces, no error cards, and no observed overlap or clipping.
+- `npx tsc -b --pretty false`, `npm run build`, and `npm run lint`: passed.
+- `npm run test:file-sizes`: 8 passed; 1,582 files validated within caps.
+- Broad `npm run test:unit`: 3,423 passed and 2 Complex-abs tests failed. Both failures reproduced unchanged in a detached clean-`98c2641f` worktree, so they are pre-existing and outside this milestone.
+- `git diff --check`: passed before durable closeout.
+
+## Outstanding Gaps After Move 1
+- CI integration belongs to `CI-GATE-ALIGNMENT1`; this milestone adds scripts but does not yet replace workflow lanes.
+- Statistics guided-control defects remain out of scope; direct structured requests are the stable canary path.

@@ -8,7 +8,10 @@ import { latexToApproxText } from '../../display/format';
 import { canonicalizeMathInput } from '../../input/input-canonicalization';
 import { rewriteDiscreteOperators } from '../../numeric/discrete-eval';
 import { parsePartialDerivativeLatex, resolvePartialDerivative } from '../../symbolic-engine/partials';
-import { rewriteDirectTrigAngles } from './angle-units';
+import {
+  evaluateExactInverseTrigSpecial,
+  rewriteDirectTrigAngles,
+} from './angle-units';
 import { ce } from './math-json';
 import type {
   BoxedLike,
@@ -156,6 +159,21 @@ export function prepareExpressionRuntime(
 ): PreparedExpressionRuntime {
   const sourceLatex = injectAns(rawLatex, request.variables);
   const parsedExpr = ce.parse(sourceLatex) as BoxedLike;
+  const exactInverseTrig =
+    request.mode === 'calculate' && action === 'evaluate'
+      ? evaluateExactInverseTrigSpecial(parsedExpr.json, request.angleUnit)
+      : undefined;
+  if (exactInverseTrig) {
+    return {
+      kind: 'done',
+      response: {
+        ...exactInverseTrig,
+        normalizedMathJson: parsedExpr.json,
+        warnings: [],
+        resultOrigin: 'exact-special-angle',
+      },
+    };
+  }
   const angleAwareExpr =
     request.mode === 'calculate' && action === 'evaluate'
       ? (() => {
