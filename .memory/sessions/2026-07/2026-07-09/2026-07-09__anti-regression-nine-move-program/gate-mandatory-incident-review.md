@@ -24,7 +24,7 @@
 - 2026-07-10
 
 ## Closed At
-- pending user acceptance
+- 2026-07-10; accepted by the user
 
 ## Scope
 - Review all four Incident Closure moves on current shared `main`, inspect all nine computational workspaces in Chromium, review seam/CI behavior and inverse trig, and close user-reported CI regressions before requesting acceptance.
@@ -38,7 +38,7 @@
 - A focused real-app Equation run visibly rendered the Complex empty set, both validity facts, boundary detail, and candidate-check evidence without clipping or overlap.
 
 ## Result
-- `verification-pass`; explicit user acceptance pending
+- `verification-pass`; explicitly accepted by the user
 
 ## Durable Memory Updated
 - `.memory/current-state.md`
@@ -47,6 +47,6 @@
 - This master dossier's status, completion, verification, commit log, and review gate record.
 
 ## Follow-Up Notes
-- Do not start Behavioral Ratchets until the user explicitly accepts this review.
+- The review checkpoint is closed. Behavioral Ratchets remain sequenced behind the separately approved Linear Algebra shell-transition review.
 - Keep the deep nested-radical positive-root classification residual in its separate focused Equation lane.
 - Keep Statistics consolidation and the Matrix/Vector shell split in their separately approved programs.

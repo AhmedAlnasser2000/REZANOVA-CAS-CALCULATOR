@@ -28,7 +28,8 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- Obtain explicit user acceptance of the completed mandatory Incident Review; do not begin Behavioral Ratchets before that acceptance.
+- The user accepted the completed mandatory Incident Review on `2026-07-10`.
+- Commit the verified audit/topology decision, then implement the separately approved Matrix/Vector host split before Move 5.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -65,3 +66,10 @@
 - Confirmed the seam plan names app-runtime impact, Matrix and Vector separately, both for their shared Linear Algebra runtime path, required baseline evidence, and only allowlisted additive commands.
 - Reproduced the four user-reported CI files. Radical-carrier and embedded-derivative cases were already fixed on current `main`; repaired the two remaining tests by recognizing the planner's canonical `\operatorname{abs}` form in the existing scoped Complex boundary matcher.
 - Passed the four-file CI set 71/71, the focused real-app Complex empty-set Playwright check, and the broad unit suite 3,450/3,450.
+
+## LINEAR-ALGEBRA-SHELL-SPLIT0
+- Measured light and maximum-cap Matrix/Vector profiles with five browser cold runs, twenty browser warm runs, twenty direct compute samples, serialized requests/results, and production worker assets.
+- Verified both capabilities preserve distinct identities and tickets but share the same fallback, cancellation, failure, stale/commit, and diagnostics policy.
+- Matrix-only reduced loaded gzip bytes by 1.34%; Vector-only reduced them by 5.00%. Browser P95s were effectively equal, while maximum request/result sizes differed by 1.14x/1.31x.
+- No approved split criterion was met. No production source changed, and `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1` is blocked pending user review.
+- User review then locked separate hosts prospectively because the approved Matrix numerical and Vector exact/geometric roadmaps intentionally create different execution classes. The audit result remains unchanged; the split is now separately authorized.

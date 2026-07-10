@@ -104,11 +104,19 @@ Add `profile(A)` with domain/codomain dimensions, rank, nullity, kernel, image, 
 
 ### `LINEAR-ALGEBRA-SHELL-SPLIT0`
 
+Status: implemented and verified on 2026-07-10; split gate not met.
+
 Measure Matrix/Vector runtime behavior before changing host topology: dependency weight, cancellation latency, memory pressure, result size, duration distribution, and failure/fallback differences. A feature-count argument is insufficient.
+
+The measured production asset reductions were 1.34% gzip for Matrix-only and 5.00% for Vector-only. Browser P95 lifecycle timing was effectively equal, maximum request/result sizes differed by 1.14x/1.31x, and both capabilities retain the same fallback, cancellation, stale/commit, diagnostics, and History-ticket policies. The audit therefore blocks a topology change under the approved risk-based rule.
 
 ### `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`
 
+Status: approved next milestone by explicit user topology lock. `LINEAR-ALGEBRA-SHELL-SPLIT0` did not prove current divergence, so the split is a prospective product-containment decision for the approved Matrix numerical and Vector exact/geometric arcs, not a retroactive audit pass.
+
 Proceed only if the audit proves meaningful execution-risk divergence. Preserve `linearAlgebra.matrix` and `linearAlgebra.vector`, request/replay schemas, History behavior, fallback semantics, diagnostics, and shared math cores while giving each workspace its own runtime shell/host lifecycle.
+
+The user explicitly revised the proceed rule after reviewing the audit: future approved runtime-risk divergence is sufficient to lock topology before those features land. Implement this split before any remaining Vector or Matrix expansion; do not leave the audit and split at the end of the numerical feature sequence.
 
 ### `MATRIX-CHARPOLY-EQUATION-BOUNDARY1`
 

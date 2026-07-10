@@ -41,3 +41,8 @@
 - Subject: `INCIDENT-CLOSURE-REVIEW-CI-FIX1`.
 - User approval: explicitly requested with the CI repair and memory record on `2026-07-10`.
 - Hash: this milestone commit; exact hash is reported by post-commit readback.
+
+## Linear Algebra Transition Audit
+- Subject: `LINEAR-ALGEBRA-SHELL-SPLIT0`.
+- User approval: explicitly granted after the verified audit and topology-lock recap on `2026-07-10`.
+- Hash: this milestone commit after approval.

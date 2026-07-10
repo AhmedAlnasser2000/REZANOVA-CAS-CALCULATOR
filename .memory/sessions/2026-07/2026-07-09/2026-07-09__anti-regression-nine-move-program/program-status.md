@@ -18,8 +18,10 @@
 - `WORKSPACE-RUNTIME-PROBE-REGISTRY1`: committed as `503eadb0`.
 - `CI-GATE-ALIGNMENT1`: committed as `948f2df3`.
 - `SEAM-IMPACT-SELECTOR1`: committed as `8fd8e788`.
-- Mandatory Incident Review: verification complete; user acceptance pending.
-- Behavioral Ratchets 5-9: blocked by the review checkpoint.
+- Mandatory Incident Review: verification complete; accepted by the user on `2026-07-10`.
+- `LINEAR-ALGEBRA-SHELL-SPLIT0`: verified; split-eligibility threshold not met.
+- `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`: explicitly authorized by the user's prospective product-containment topology lock; implementation pending.
+- Behavioral Ratchets 5-9: not started; Matrix/Vector feature expansion is frozen through Move 9.
 - Printer/detail/clipboard arcs: deferred until nine-move closeout.
 
 ## Standing Constraints
@@ -44,3 +46,7 @@
 - The current-main mandatory sweep passed 19/19 Chromium canaries in 1.3 minutes with full-page visual inspection across all nine workspaces. DEG/RAD inverse-trig output remained visibly `90` and `\pi/2`.
 - The user-reported four-file CI set passes 71/71. The scoped Complex absolute-value result now survives canonical `\operatorname{abs}` planner normalization, and its real-app empty-set card, facts, and candidate evidence were inspected.
 - `test-results/` remains untracked and excluded from staging. A restricted-environment retry regenerated its transient Playwright contents before later runs were redirected to `.task_tmp/`.
+- The user accepted the completed Incident Review before planning the continuation.
+- The Linear Algebra shell audit ran five cold and twenty warm browser worker samples for each light and maximum-cap Matrix/Vector fixture. Browser P95s were effectively equal; maximum serialized request/result sizes differed by 1.14x/1.31x.
+- Production loaded-worker reductions were 1.34% gzip for Matrix-only and 5.00% for Vector-only. Shared fallback, hard-stop, diagnostics, stale/commit, and History-ticket behavior passed 21 focused tests. No approved split criterion was met.
+- After reviewing that result, the user locked separate Matrix and Vector hosts prospectively for the approved Matrix numerical-decomposition/conditioning and Vector exact/geometric arcs. This does not convert the audit into a pass; it is a separate topology policy decision.

@@ -18,8 +18,10 @@
 - Each named milestone is one verified commit. Internal gates are not automatic commit boundaries.
 - Explicit user approval is required before every commit and push.
 - The four Incident Closure moves must pass a mandatory user review before any Behavioral Ratchet starts.
+- The user accepted the mandatory Incident Review on `2026-07-10`.
 - Statistics guided-control defects are out of scope. Stable direct structured Statistics requests are used for program evidence.
 - The later Printer Core, detail-segment, and canonical clipboard arcs begin only after the nine-move closeout.
+- Matrix/Vector capability expansion is frozen through Move 9.
 
 ## Prerequisite - ATTRIBUTION-FAMILY-GOVERNANCE1
 - Correct exact attribution-field values `gpt-5` and `gpt-5-codex` to `gpt-5.5`.
@@ -63,6 +65,21 @@
 - Review CI behavior, selector classification, inverse-trig readback, answer/error cards, facts, assumptions, details, overflow, and readability.
 - Update the manual checklist, current state, journal, decisions, and dossier.
 - Pause for explicit user acceptance before Behavioral Ratchets.
+
+Status: accepted by the user on `2026-07-10`.
+
+## Pre-Move-5 Linear Algebra Transition
+
+### `LINEAR-ALGEBRA-SHELL-SPLIT0`
+- Measure the shared worker with deterministic cold/warm browser runs, direct compute profiles, serialized request/result sizes, production assets, fallback, cancellation, diagnostics, stale/commit legality, and History tickets.
+- Require a 10% asset reduction, 2x runtime/serialization divergence, or a concrete current runtime-policy difference before changing host topology.
+
+Status: verified on `2026-07-10`; no split criterion was met. Matrix-only reduced loaded gzip bytes by 1.34%, Vector-only by 5.00%, and browser/runtime/serialization profiles remained below the 2x threshold.
+
+### `MATRIX-VECTOR-RUNTIME-SHELL-SPLIT1`
+- Conditionally split into independent Matrix and Vector workers only when the audit gate passes.
+
+Status: authorized by explicit user product-containment decision after the current-risk audit failed. The audit remains truthful; the split is justified prospectively by the approved Matrix numerical-decomposition/conditioning arc versus Vector exact orthogonalization/geometric arc. This milestone must complete before Move 5.
 
 ## Behavioral Ratchets
 

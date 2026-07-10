@@ -109,5 +109,20 @@
 - The final shared-checkout file-size rerun was blocked only by a concurrent uncommitted Linear Algebra lane (`editor-dispatch.ts` at 901 lines and `editor-parser.ts` at 937). This commit does not stage those files; its only production source is the 68-line Complex boundary module, below the default cap.
 
 ## Review Checkpoint
-- Verification is complete. Explicit user acceptance is still required before `FEATURE-PROBE-REGISTRY1` begins.
+- Verification is complete and the user accepted the checkpoint on `2026-07-10`.
 - The older nested-radical candidate-validation gap remains separate: two valid positive roots may still be classified as extraneous in that deep Equation case.
+
+## LINEAR-ALGEBRA-SHELL-SPLIT0
+- Kind: `backend` audit; no product runtime or UI changed.
+- Direct profile: five warmups plus twenty measured runs for each Matrix determinant, Matrix 6 by 6 profile, Vector unit, and Vector six-vector span fixture.
+- Chromium lifecycle profile: five fresh-context cold and twenty same-context warm real worker runs per fixture. All 100 runs returned successful isolated worker evidence and stable commit legality.
+- Browser P95 range was 88.0-92.0 ms cold and 89.4-90.3 ms warm; no Matrix/Vector timing divergence approached 2x.
+- Maximum request bytes were 216 Matrix versus 189 Vector; maximum result bytes were 2,064 versus 1,581.
+- Production shared worker was 1,240,488 raw / 334,342 gzip bytes. Matrix-only was 1,223,981 / 329,865; Vector-only was 1,169,115 / 317,628.
+- Focused worker, pilot, runtime-shell, and registry tests passed 21/21, covering parity, pre-start fallback, post-start failure, hard-stop cancellation, diagnostics, launch tickets, commit legality, and stale drops.
+- `npm run build` passed with the existing non-fatal chunk/dynamic-import warnings.
+- `npm run test:memory-protocol` passed 21 validator tests and repository validation.
+- `npm run test:file-sizes` passed 8 tests and validated 1,600 files within caps.
+- `npm run test:ooe-boundaries` passed 7 tests; `npm run test:compartments-boundaries` passed 36 tests.
+- `git diff --check` passed.
+- Outcome: the approved 10% asset, 2x runtime/serialization, and concrete current-policy-divergence criteria all failed. The user subsequently authorized the split through a separate prospective product-containment decision; the audit is not reclassified as passed.

@@ -25,3 +25,19 @@ Closed during the July 3 memory cleanup:
 - Closed 2026-06-24 large Cardano/Ferrari answer-layout question. Dense formula output now uses compact-first Display rendering, row budgets, Formula Viewer, virtualization, and viewer-local math sizing rather than unrestricted answer-card expansion.
 - Closed 2026-06-27 Formula Viewer readability follow-up. Formula Viewer added local math sizing and kept row inspection inside the virtualized list with per-row reveal instead of a separate focused row inspector.
 - Closed 2026-06-29 `CALCULUS-DERIVATIVE-SINGLE-RESULT1` presentation question. Guided derivative results are answer-card owned; derivative main-editor screens suppress the extra expression preview and no longer repeat the resolved input above the structured Answer block.
+
+## 2026-07-10 - Linear Algebra Continuation
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+- Closed the post-dimension-contract capability choice. `VECTOR-SCALAR-LINEAR-COMBINATION1`, `VECTOR-SPAN-INDEPENDENCE1`, and `MATRIX-LINEAR-MAP-PROFILE1` were implemented and verified before the anti-regression continuation froze further Matrix/Vector expansion through Move 9.
+- Closed the failed-audit next-step question. The user kept the current-risk audit truthful and explicitly replaced its blocker with a prospective product-containment topology lock; independent Matrix and Vector hosts now precede Move 5 and all remaining capability work.
