@@ -9,7 +9,7 @@ import { executeHistoryReplayRequest } from './native-execution';
 
 export type HistoryReplayHardFailure = {
   fixtureId: string;
-  field: 'identity' | 'cardinalities' | 'execution';
+  field: 'identity' | 'cardinalities' | 'normalized-latex' | 'execution';
   expected?: unknown;
   actual?: unknown;
   message?: string;
@@ -24,6 +24,8 @@ export type HistoryReplayLatexDifference = {
 export type HistoryReplayReport = {
   version: 1;
   fixtureCount: number;
+  hardLatexFixtureCount: number;
+  reportOnlyLatexFixtureCount: number;
   hardFailures: HistoryReplayHardFailure[];
   latexDifferences: HistoryReplayLatexDifference[];
 };
@@ -59,11 +61,20 @@ async function runFixture(
       });
     }
     if (normalizedLatex !== fixture.expected.normalizedLatex) {
-      report.latexDifferences.push({
-        fixtureId: fixture.id,
-        expected: fixture.expected.normalizedLatex,
-        actual: normalizedLatex,
-      });
+      if (fixture.latexComparison === 'hard') {
+        report.hardFailures.push({
+          fixtureId: fixture.id,
+          field: 'normalized-latex',
+          expected: fixture.expected.normalizedLatex,
+          actual: normalizedLatex,
+        });
+      } else {
+        report.latexDifferences.push({
+          fixtureId: fixture.id,
+          expected: fixture.expected.normalizedLatex,
+          actual: normalizedLatex,
+        });
+      }
     }
   } catch (error) {
     report.hardFailures.push({
@@ -78,6 +89,12 @@ export async function runHistoryReplayHarness(): Promise<HistoryReplayReport> {
   const report: HistoryReplayReport = {
     version: 1,
     fixtureCount: HISTORY_REPLAY_FIXTURES.length,
+    hardLatexFixtureCount: HISTORY_REPLAY_FIXTURES.filter(
+      (fixture) => fixture.latexComparison === 'hard',
+    ).length,
+    reportOnlyLatexFixtureCount: HISTORY_REPLAY_FIXTURES.filter(
+      (fixture) => fixture.latexComparison !== 'hard',
+    ).length,
     hardFailures: [],
     latexDifferences: [],
   };
@@ -91,6 +108,8 @@ export function formatHistoryReplayReport(report: HistoryReplayReport) {
   const lines = [
     'History Replay Ratchet',
     `Fixtures: ${report.fixtureCount}`,
+    `Hard LaTeX fixtures: ${report.hardLatexFixtureCount}`,
+    `Report-only LaTeX fixtures: ${report.reportOnlyLatexFixtureCount}`,
     `Hard failures: ${report.hardFailures.length}`,
     `Normalized LaTeX differences (report-only): ${report.latexDifferences.length}`,
   ];

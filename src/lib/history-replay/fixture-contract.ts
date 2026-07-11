@@ -49,6 +49,7 @@ export type HistoryReplayFixture = {
   id: string;
   workspace: HistoryReplayWorkspace;
   family: string;
+  latexComparison?: 'hard' | 'report-only';
   snapshot: HistoryReplaySnapshotV1;
   request: Record<string, unknown>;
   expected: {
@@ -61,6 +62,7 @@ export type HistoryReplayFixture = {
 export type HistoryReplayFixtureFile = {
   version: 1;
   workspace: HistoryReplayWorkspace;
+  latexComparison?: 'hard' | 'report-only';
   fixtures: HistoryReplayFixture[];
 };
 

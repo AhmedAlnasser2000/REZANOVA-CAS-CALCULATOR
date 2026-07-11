@@ -4,7 +4,9 @@ import type {
   DisplayMathPayloadV1,
   SerializableMathJson,
 } from '../../../types/calculator';
-import { createDisplayMathPayload } from '../../display/printer';
+import {
+  profileDomainDisplayMathPayload,
+} from '../../display/printer';
 import {
   exactLatexForFiniteBranchExpressions,
   finiteBranchReadbackForFiniteBranchExpressions,
@@ -51,14 +53,14 @@ export type FiniteRootSetRender = {
   rejectedBranches: FiniteRootBranch[];
 };
 
-function canonicalFiniteRootMath(
+function profiledFiniteRootMath(
   rootSet: FiniteRootSet,
   branchesLatex: readonly string[],
   exactLatex: string,
   options: FiniteRootSetRenderOptions,
 ) {
   if (!/^[A-Za-z]$/.test(rootSet.targetLatex)) {
-    return undefined;
+    return { exactLatex };
   }
 
   const nodeByLatex = new Map<string, SerializableMathJson>();
@@ -77,14 +79,17 @@ function canonicalFiniteRootMath(
   }
 
   if (branchesLatex.some((branchLatex) => !nodeByLatex.has(branchLatex))) {
-    return undefined;
+    return { exactLatex };
   }
 
   const nodes = branchesLatex.map((branchLatex) => nodeByLatex.get(branchLatex)!);
   const answerNode: SerializableMathJson = nodes.length === 1
     ? ['Equal', rootSet.targetLatex, nodes[0]]
     : ['Element', rootSet.targetLatex, ['Set', ...nodes]];
-  return createDisplayMathPayload(exactLatex, answerNode);
+  const profiled = profileDomainDisplayMathPayload(exactLatex, answerNode);
+  return profiled
+    ? { exactLatex: profiled.canonicalLatex, canonicalMath: profiled.canonicalMath }
+    : { exactLatex };
 }
 
 export function createFiniteRootBranch(
@@ -162,12 +167,13 @@ export function renderFiniteRootSet(
       preserveOrder: options.preserveOrder,
       ...(options.setSeparator ? { setSeparator: options.setSeparator } : {}),
       ...(options.context ? { context: options.context } : {}),
-      ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-    });
+    ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
+  });
+  const profiledMath = profiledFiniteRootMath(rootSet, branchesLatex, exactLatex, options);
 
   return {
-    exactLatex,
-    canonicalMath: canonicalFiniteRootMath(rootSet, branchesLatex, exactLatex, options),
+    exactLatex: profiledMath.exactLatex,
+    ...(profiledMath.canonicalMath ? { canonicalMath: profiledMath.canonicalMath } : {}),
     branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
       targetLatex: rootSet.targetLatex,
       branches,

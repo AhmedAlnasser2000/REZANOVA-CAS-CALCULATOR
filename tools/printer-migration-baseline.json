@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "PRINTER-MIGRATION-RATCHET1 initial TypeScript AST inventory of production result serialization.",
+  "acceptedReason": "PRINT-PROFILE-CALCULATE-EQUATION1 moves both remaining Calculate numeric result paths to validated answer-node dual writes while preserving the established Calculate and Equation domain serializers.",
   "registryDigest": "68cc00c8655c6cda8285",
   "resultProperties": [
     "answerLatex",
@@ -9,7 +9,7 @@
     "solutionLatex"
   ],
   "laneFloors": {
-    "calculate": 2,
+    "calculate": 0,
     "calculus": 43,
     "equation": 76,
     "geometry": 2,
@@ -24,7 +24,6 @@
     "trigonometry": 8
   },
   "registrationFloors": {
-    "calculate-result-v1": 2,
     "calculus-result-v1": 43,
     "equation-result-v1": 76,
     "geometry-result-v1": 2,
@@ -36,13 +35,13 @@
     "trigonometry-result-v1": 8
   },
   "categoryCounts": {
-    "canonical-printer": 3,
+    "canonical-printer": 5,
     "downstream-presentation": 11,
     "input-syntax": 855,
-    "presentation-math": 2787,
-    "prose-only": 3973,
+    "presentation-math": 2801,
+    "prose-only": 3892,
     "reference-content": 2565,
-    "result-path": 515
+    "result-path": 519
   },
   "compatibilityAssignments": [
     {
@@ -1388,22 +1387,6 @@
       "sourceKind": "property",
       "lane": "equation",
       "fallbackId": "equation-result-v1"
-    },
-    {
-      "id": "40a02b85da1a7a130869:1",
-      "file": "src/lib/numeric/real-numeric-eval.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "calculate",
-      "fallbackId": "calculate-result-v1"
-    },
-    {
-      "id": "6f540182e4bb33d54939:1",
-      "file": "src/lib/numeric/real-numeric-eval.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "calculate",
-      "fallbackId": "calculate-result-v1"
     },
     {
       "id": "b20eb1d871fbcb04b27d:1",

@@ -427,7 +427,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{2,\\ 3\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=2\nbranchReadback.branchesLatex[1]=3"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{2,\\ 3\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{2,\\ 3\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=2\nbranchReadback.branchesLatex[1]=3"
       }
     },
     {
@@ -534,7 +534,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=1"
+        "normalizedLatex": "exactLatex=x=1\ncanonicalMath.canonicalLatex=x=1"
       }
     },
     {
@@ -641,7 +641,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{-(\\frac{\\sqrt{8}}{2}),\\ \\frac{\\sqrt{8}}{2}\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-(\\frac{\\sqrt{8}}{2})\nbranchReadback.branchesLatex[1]=\\frac{\\sqrt{8}}{2}"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{-(\\frac{\\sqrt{8}}{2}),\\ \\frac{\\sqrt{8}}{2}\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{-(\\frac{\\sqrt{8}}{2}),\\ \\frac{\\sqrt{8}}{2}\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-(\\frac{\\sqrt{8}}{2})\nbranchReadback.branchesLatex[1]=\\frac{\\sqrt{8}}{2}"
       }
     },
     {
@@ -962,7 +962,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=3\nexactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0"
+        "normalizedLatex": "exactLatex=x=3\nexactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][0].latex=x-1"
       }
     },
     {
@@ -1068,7 +1068,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][1].latex=1\nresolvedInputLatex=x+1=2"
+        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][1].latex=1\ndetailSections[1].lineParts[0][0].latex=x-1\ndetailSections[1].lineParts[1][0].latex=x-1\nresolvedInputLatex=x+1=2"
       }
     },
     {
@@ -1175,7 +1175,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=8"
+        "normalizedLatex": "exactLatex=x=8\ndetailSections[0].lineParts[0][0].latex=x+1\ndetailSections[0].lineParts[1][0].latex=3"
       }
     },
     {
@@ -1282,7 +1282,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=12"
+        "normalizedLatex": "exactLatex=x=12\ndetailSections[0].lineParts[0][0].latex=2x+1\ndetailSections[0].lineParts[1][0].latex=5"
       }
     },
     {

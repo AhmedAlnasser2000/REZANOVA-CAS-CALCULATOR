@@ -23,6 +23,7 @@ export type RealNumericEvaluation =
       kind: 'success';
       value: number;
       exactLatex: string;
+      answerMathJson: number;
       approxText: string;
     }
   | {
@@ -470,7 +471,8 @@ function fallbackToComputeEngine(node: unknown): RealNumericEvaluation {
       kind: 'success',
       value,
       exactLatex: ce.number(value).latex,
-        approxText: formatApproxNumber(value),
+      answerMathJson: value,
+      approxText: formatApproxNumber(value),
     };
   } catch {
     return {
@@ -515,7 +517,8 @@ export function evaluateRealNumericExpression(
       kind: 'success',
       value: result.value,
       exactLatex: ce.number(result.value).latex,
-        approxText: formatApproxNumber(result.value),
+      answerMathJson: result.value,
+      approxText: formatApproxNumber(result.value),
     };
   }
 

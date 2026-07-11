@@ -22,5 +22,8 @@ export const HISTORY_REPLAY_FIXTURE_FILES = [
 ] as unknown as readonly HistoryReplayFixtureFile[];
 
 export const HISTORY_REPLAY_FIXTURES = HISTORY_REPLAY_FIXTURE_FILES.flatMap(
-  (file) => file.fixtures,
+  (file) => file.fixtures.map((fixture) => ({
+    ...fixture,
+    latexComparison: fixture.latexComparison ?? file.latexComparison ?? 'report-only',
+  })),
 );

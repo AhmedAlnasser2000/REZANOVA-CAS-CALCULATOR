@@ -126,7 +126,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=3x^2+2\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=3x^2+2\nresolvedInputLatex=3x^2+2"
+        "normalizedLatex": "exactLatex=3x^2+2\ncanonicalMath.canonicalLatex=3x^2+2\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=3x^2+2\nresolvedInputLatex=3x^2+2"
       }
     },
     {
@@ -253,7 +253,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\cos(x)\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=\\cos(x)\nresolvedInputLatex=\\cos(x)"
+        "normalizedLatex": "exactLatex=\\cos(x)\ncanonicalMath.canonicalLatex=\\cos(x)\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=\\cos(x)\nresolvedInputLatex=\\cos(x)"
       }
     },
     {
@@ -380,7 +380,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\exponentialE^{x}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=\\exponentialE^{x}\nresolvedInputLatex=\\exponentialE^{x}"
+        "normalizedLatex": "exactLatex=\\exponentialE^{x}\ncanonicalMath.canonicalLatex=\\exponentialE^{x}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=\\exponentialE^{x}\nresolvedInputLatex=\\exponentialE^{x}"
       }
     },
     {
@@ -507,7 +507,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\left.\\left((2x)\\right)\\right|_{}_{x=\\error{\\blacksquare}}_{x=3}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2x\ndetailSections[0].lines[3]=D_{1}\\big|_{x=3}=6\nresolvedInputLatex=\\left.\\left(2x\\right)\\right|_{x=}_{x=3}"
+        "normalizedLatex": "exactLatex=\\left.\\left((2x)\\right)\\right|_{}_{x=\\error{\\blacksquare}}_{x=3}\ncanonicalMath.canonicalLatex=\\left.\\left((2x)\\right)\\right|_{}_{x=\\error{\\blacksquare}}_{x=3}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2x\ndetailSections[0].lines[3]=D_{1}\\big|_{x=3}=6\nresolvedInputLatex=\\left.\\left(2x\\right)\\right|_{x=}_{x=3}"
       }
     },
     {
@@ -764,7 +764,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{x^{3}}{3}+C\nanswerRows.rows[0].latex=\\frac{x^{3}}{3}+C"
+        "normalizedLatex": "exactLatex=\\frac{x^{3}}{3}+C\nanswerRows.rows[0].latex=\\frac{x^{3}}{3}+C\ndetailSections[0].lineParts[0][1].latex=C"
       }
     },
     {
@@ -893,7 +893,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=-\\cos\\left(x\\right)+C\nanswerRows.rows[0].latex=-\\cos\\left(x\\right)+C"
+        "normalizedLatex": "exactLatex=-\\cos\\left(x\\right)+C\nanswerRows.rows[0].latex=-\\cos\\left(x\\right)+C\ndetailSections[0].lineParts[0][1].latex=C"
       }
     },
     {
@@ -1022,7 +1022,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\ln\\left|x\\right|+C\nanswerRows.rows[0].latex=\\ln\\left|x\\right|+C"
+        "normalizedLatex": "exactLatex=\\ln\\left|x\\right|+C\nanswerRows.rows[0].latex=\\ln\\left|x\\right|+C\ndetailSections[0].lineParts[0][1].latex=C"
       }
     },
     {
@@ -1151,7 +1151,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{8}{3}"
+        "normalizedLatex": "exactLatex=\\frac{8}{3}\ndetailSections[1].lineParts[0][1].latex=[0, 2]"
       }
     },
     {

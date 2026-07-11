@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "calculate",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "calculate-arithmetic-add",
@@ -47,7 +48,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=4\nresolvedInputLatex=4"
+        "normalizedLatex": "exactLatex=4\ncanonicalMath.canonicalLatex=4\nresolvedInputLatex=4"
       }
     },
     {
@@ -95,7 +96,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{2}\nresolvedInputLatex=\\frac{1}{2}"
+        "normalizedLatex": "exactLatex=\\frac{1}{2}\ncanonicalMath.canonicalLatex=\\frac{1}{2}\nresolvedInputLatex=\\frac{1}{2}"
       }
     },
     {
@@ -192,7 +193,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1\\,024\nresolvedInputLatex=1\\,024"
+        "normalizedLatex": "exactLatex=1\\,024\ncanonicalMath.canonicalLatex=1\\,024\nresolvedInputLatex=1\\,024"
       }
     },
     {
@@ -240,7 +241,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{2}"
+        "normalizedLatex": "exactLatex=\\frac{1}{2}\ncanonicalMath.canonicalLatex=\\frac{1}{2}"
       }
     },
     {
@@ -288,7 +289,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{2}"
+        "normalizedLatex": "exactLatex=\\frac{1}{2}\ncanonicalMath.canonicalLatex=\\frac{1}{2}"
       }
     },
     {
@@ -336,7 +337,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1"
+        "normalizedLatex": "exactLatex=1\ncanonicalMath.canonicalLatex=1"
       }
     },
     {
@@ -385,7 +386,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=90"
+        "normalizedLatex": "exactLatex=90\ncanonicalMath.canonicalLatex=90"
       }
     },
     {
@@ -434,7 +435,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{\\pi}{2}"
+        "normalizedLatex": "exactLatex=\\frac{\\pi}{2}\ncanonicalMath.canonicalLatex=\\frac{\\pi}{2}"
       }
     },
     {
@@ -483,7 +484,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{\\pi}{2}"
+        "normalizedLatex": "exactLatex=\\frac{\\pi}{2}\ncanonicalMath.canonicalLatex=\\frac{\\pi}{2}"
       }
     },
     {
@@ -532,7 +533,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=50"
+        "normalizedLatex": "exactLatex=50\ncanonicalMath.canonicalLatex=50"
       }
     },
     {
@@ -581,7 +582,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=2x"
+        "normalizedLatex": "exactLatex=2x\ncanonicalMath.canonicalLatex=2x"
       }
     },
     {
@@ -630,7 +631,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=0\nresolvedInputLatex=-x^2+(x+1)^2-2x-1"
+        "normalizedLatex": "exactLatex=0\ncanonicalMath.canonicalLatex=0\nresolvedInputLatex=-x^2+(x+1)^2-2x-1"
       }
     },
     {
@@ -679,7 +680,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=(x-1)(x+1)"
+        "normalizedLatex": "exactLatex=(x-1)(x+1)\ncanonicalMath.canonicalLatex=(x-1)(x+1)"
       }
     },
     {
@@ -728,7 +729,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=(x+1)(x+1)"
+        "normalizedLatex": "exactLatex=(x+1)(x+1)\ncanonicalMath.canonicalLatex=(x+1)(x+1)"
       }
     },
     {
@@ -776,7 +777,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x^2+2x+1"
+        "normalizedLatex": "exactLatex=x^2+2x+1\ncanonicalMath.canonicalLatex=x^2+2x+1"
       }
     },
     {
@@ -824,7 +825,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x^2+x-6"
+        "normalizedLatex": "exactLatex=x^2+x-6\ncanonicalMath.canonicalLatex=x^2+x-6"
       }
     },
     {
@@ -872,7 +873,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=7"
+        "normalizedLatex": "exactLatex=7\ncanonicalMath.canonicalLatex=7"
       }
     },
     {
@@ -920,7 +921,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=2Ans"
+        "normalizedLatex": "exactLatex=2Ans\ncanonicalMath.canonicalLatex=2Ans"
       }
     },
     {
@@ -968,7 +969,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{7}"
+        "normalizedLatex": "exactLatex=\\frac{1}{7}\ncanonicalMath.canonicalLatex=\\frac{1}{7}"
       }
     }
   ]

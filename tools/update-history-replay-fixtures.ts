@@ -263,11 +263,13 @@ async function main() {
   }
 
   const outputDir = resolve('src/lib/history-replay/fixtures/v1');
+  const hardLatexWorkspaces = new Set<HistoryReplayWorkspace>(['calculate']);
   await mkdir(outputDir, { recursive: true });
   for (const workspace of new Set(fixtures.map((fixture) => fixture.workspace))) {
     const file: HistoryReplayFixtureFile = {
       version: 1,
       workspace,
+      ...(hardLatexWorkspaces.has(workspace) ? { latexComparison: 'hard' as const } : {}),
       fixtures: fixtures.filter((fixture) => fixture.workspace === workspace),
     };
     await writeFile(

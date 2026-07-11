@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { runCalculateMode } from '../calculate';
 
 describe('runCalculateMode', () => {
-  it('dual-writes proven Calculate answer nodes without changing exact output', () => {
+  it('profiles proven Calculate answer nodes with canonical payload parity', () => {
     const requests = [
       { action: 'evaluate' as const, latex: '2+3' },
       { action: 'simplify' as const, latex: '(x^2-1)/(x-1)' },

@@ -37,11 +37,14 @@
 - `DETAIL-SEGMENT-CALCULUS1`: committed as `27305475`.
 - `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`: committed as `2bb2f91b`.
 - `DETAIL-SEGMENT-LINEAR-ALGEBRA1`: committed as `ca7d8179`.
-- `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`: implemented and verified; entering its approved commit checkpoint.
+- `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`: committed as `536d1f07`.
 - The widened AST ratchet inventories 445 live producers: all 445 are declared and no undeclared fingerprint remains in any lane.
 - Parameterized normalization no longer calls legacy text inference. Selected-target generated equations and formula branches are producer-owned typed parts, while compatibility lines, wording, and mathematics remain unchanged.
 - Symbolic Limits finite rules, local equivalents, recursive leading terms, indeterminate transforms, L'Hospital, and rewrite/cancellation derive compatibility lines from explicit typed rows. A source audit forbids legacy string helper calls in this lane.
 - Live absolute-value, domain/range, assumption, variable-memory, solve-note, trust, and partial-fraction details now own typed math or explicit prose while deriving unchanged compatibility lines. Legacy or snapshot-less History retains renderer inference.
-- The mandatory contract-evidence sweep is next, followed directly by eight printer-profile slices and one accumulated final review.
+- The mandatory contract-evidence sweep passed: Clipboard custom MIME/HTML/text passed in Chromium, all nine versioned History replay flows passed, all 19 canaries passed, and dense Formula Viewer virtualization was expanded and inspected without overlap or overflow.
+- `PRINT-PROFILE-CALCULATE-EQUATION1`: implemented and verified; entering its approved commit checkpoint.
+- Calculate compatibility debt is zero, 20 Calculate replay fixtures hard-compare normalized LaTeX, and Equation finite roots enter the profile through the existing presentation-IR adapter. Three less-readable generic serializer candidates were rejected, so accepted visible output remains unchanged.
+- `PRINT-PROFILE-EQUATION-ADVANCED1` is next, followed by six later printer-profile slices and one accumulated final review.
 - The contract-review evidence checkpoint remains required, but the user removed its intermediate acceptance pause and directed the program to continue through printer profiles before one accumulated final review.
 - No push is authorized, and untracked `test-results/` stays excluded.

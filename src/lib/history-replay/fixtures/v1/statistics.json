@@ -182,7 +182,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\hat{y}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3"
+        "normalizedLatex": "exactLatex=\\hat{y}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3\ndetailSections[0].lineParts[1][1].latex=0\ndetailSections[0].lineParts[2][1].latex=0\ndetailSections[0].lineParts[3][1].latex=0"
       }
     },
     {

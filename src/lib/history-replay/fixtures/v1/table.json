@@ -146,7 +146,7 @@
           "actions": 0,
           "tableRows": 3
         },
-        "normalizedLatex": "exactLatex=f(x)=\\sqrt{x}\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=undefined\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=0\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
+        "normalizedLatex": "exactLatex=f(x)=\\sqrt{x}\ndetailSections[0].lineParts[0][0].latex=x\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=undefined\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=0\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
       }
     },
     {
@@ -195,7 +195,7 @@
           "actions": 0,
           "tableRows": 3
         },
-        "normalizedLatex": "exactLatex=f(x)=\\frac{1}{x}\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=-1\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=undefined\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
+        "normalizedLatex": "exactLatex=f(x)=\\frac{1}{x}\ndetailSections[0].lineParts[0][0].latex=x\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=-1\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=undefined\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
       }
     },
     {

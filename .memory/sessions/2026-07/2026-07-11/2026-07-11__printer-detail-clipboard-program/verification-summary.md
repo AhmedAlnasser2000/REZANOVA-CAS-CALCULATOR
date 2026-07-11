@@ -16,12 +16,10 @@
 
 ## Current Verified Gate
 
-- `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`: the final 10 accepted live debts moved to producer-owned typed math or explicit prose. Compatibility lines, wording, mathematics, card order, collapse behavior, workers, fallbacks, Clipboard, Surface Protocol, and OOE behavior are unchanged.
-- Static inventory: 445 live detail producers, all 445 declared, and zero undeclared fingerprints across every lane. Renderer inference remains available only for legacy or snapshot-less stored History data.
-- Absolute-value reduction, domain/range constraints, assumptions, variable-memory substitutions, solve notes, trust details, and concise partial-fraction rows now declare intent. Seven existing typed domain and variable symbols raise print-hygiene evidence from 196 to 203 fragments.
-- Focused coverage passed 13 files and 164 tests. The detail migration ratchet passed seven tests against the accepted 445/445/zero inventory.
-- Full unit passed 3,567 across 502 files; full UI passed 452 across 62 files.
-- Cross-program evidence passed: 44 golden tests, seven print-hygiene tests over 43 executions and 203 fragments, feature probes, all 100 replay fixtures, the 515-path printer migration ratchet, and Clipboard contracts.
-- Runtime probes passed 19 and workspace runtime contracts passed 74. All 19 Chromium canaries passed in 1.2 minutes.
-- Chromium inspected stored-value History replay, absolute-value reduction, and radical-domain facts. Typed math, preserved prose, replay collapse/lazy mounting, and card readability showed no overlap, clipping, stale content, or unreadable overflow.
-- TypeScript, production build, lint, file-size, CI alignment, seam selection, Surface Protocol, OOE, compartments, Cargo check, and diff hygiene passed.
+- `PRINT-PROFILE-CALCULATE-EQUATION1`: proven Calculate answer trees and Equation finite-root IR enter the internal pedagogical profile through explicit domain adapters. Existing canonical output remains unchanged.
+- The printer ratchet inventories 519 result paths: 255 compatibility fallbacks, 21 migrated dual writes, and 240 forwarders. Calculate is zero compatibility, 10 migrated, and nine forwarded; Equation advanced retains 76 owned compatibility producers.
+- The final two Calculate numeric paths now carry validated numeric answer nodes. Calculate's 20 replay fixtures hard-compare normalized LaTeX; 80 fixtures remain report-only until their workspace slices.
+- Three generic MathJSON candidates were rejected because they changed `x+1` to `1+x`, reordered a general-power derivative, or changed `1-x^2` to `-x^2+1`. The accepted output-change ledger remains empty.
+- Focused printer, Calculate, Equation finite-root, numeric, golden, print-hygiene, and replay coverage passed nine files and 95 tests. Feature probes passed 124 unit and 37 UI tests.
+- Five focused Calculate/Equation Chromium canaries passed from a fresh production build. The preceding contract sweep also passed two Clipboard capability checks, nine History replay flows, all 19 canaries, and inspected dense Formula Viewer row virtualization without overlap or unreadable overflow.
+- TypeScript, production build, lint, file size, printer migration, seam selection, Surface Protocol, OOE, compartments, and diff hygiene passed.

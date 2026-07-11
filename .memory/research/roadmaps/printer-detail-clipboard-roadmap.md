@@ -131,11 +131,15 @@ Implemented contract: the TypeScript-compiler-API inventory currently classifies
 
 ### A4. `PRINT-PROFILES1` And Domain Migration
 
+Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; `PRINT-PROFILE-CALCULATE-EQUATION1` is implemented and verified and is entering its approved commit checkpoint.
+
 - Introduce profiles only where migrations prove a real policy difference; avoid speculative per-domain switches.
 - Cover all nine workspaces, including Geometry and Table, rather than the older six-profile sketch.
 - Migrate one producer family per verified milestone. Start with existing Equation presentation-IR consumers and Calculate exact answers, then prioritize high-density Symbolic Engine, Calculus, Trigonometry, and Linear Algebra result builders.
 - Use accepted snapshot diffs, real Playwright output, parse-back where applicable, and per-domain replay fixtures.
 - Keep large Equation and Calculus benchmark ledgers separate from the fast migration corpus while sampling them for printer evidence.
+
+`PRINT-PROFILE-CALCULATE-EQUATION1` moves the final two Calculate numeric result paths from compatibility debt to validated answer-node dual writes, reducing the Calculate fallback floor to zero. Proven Calculate trees and Equation finite-root IR now enter `pedagogical-v1` through explicit domain adapters, preserving canonical/exact parity and structured-clone safety. Calculate's 20 replay fixtures hard-compare normalized LaTeX; the other 80 remain report-only until their workspace slices. Structural candidates `(1+x)(1+x)`, a reordered general-power derivative, and `\sqrt{1/(-x^2+1)}` were rejected because they were less readable than the established producer output. The accepted visible-output ledger therefore remains empty for this slice.
 
 ### A5. `DISPLAY-CONTRACT-INVERSION1` Later Gate
 
@@ -201,7 +205,7 @@ Implemented contract: `DetailLineContent` is a focused shared renderer used by t
 
 ### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
 
-Status: active. Equation core is committed as `6e2182bf`, Equation parameterized as `97ec9ca2`, Symbolic Limits as `1325782c`, Symbolic Integration as `19ea2ad5`, Calculus as `27305475`, Workspace Domains as `2bb2f91b`, and Linear Algebra as `ca7d8179`. `DETAIL-SEGMENT-COMPAT-CLOSEOUT1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
+Status: complete. Equation core is committed as `6e2182bf`, Equation parameterized as `97ec9ca2`, Symbolic Limits as `1325782c`, Symbolic Integration as `19ea2ad5`, Calculus as `27305475`, Workspace Domains as `2bb2f91b`, Linear Algebra as `ca7d8179`, and compatibility closeout as `536d1f07`.
 
 1. `DETAIL-SEGMENT-EQUATION-CORE1`.
 2. `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`.
@@ -236,7 +240,7 @@ Status: active. Equation core is committed as `6e2182bf`, Equation parameterized
 
 ### C3. `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`
 
-Status: implemented and verified on `2026-07-11`; entering its approved commit checkpoint.
+Status: committed as `536d1f07` on `2026-07-11`.
 
 - Audit live producers, stored-History compatibility, Formula Viewer, and solve summaries.
 - Stop new legacy detail production once the floor reaches zero.

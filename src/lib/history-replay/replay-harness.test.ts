@@ -31,9 +31,11 @@ describe('History replay ratchet', () => {
     }
   });
 
-  it('hard-compares identity and cardinality while keeping LaTeX drift report-only', async () => {
+  it('hard-compares migrated workspace LaTeX while retaining report-only families', async () => {
     const report = await runHistoryReplayHarness();
     expect(report.fixtureCount).toBe(100);
+    expect(report.hardLatexFixtureCount).toBe(20);
+    expect(report.reportOnlyLatexFixtureCount).toBe(80);
     expect(report.hardFailures).toEqual([]);
     expect(Array.isArray(report.latexDifferences)).toBe(true);
   }, 60_000);
