@@ -6,7 +6,11 @@ import {
   simplifyMathJsonNodeOrOriginal,
 } from '../primitives/simplification/simplification';
 import { isNodeArray } from '../patterns';
-import { limitMethodSection, withLimitDetailLineParts } from './detail-readback';
+import {
+  limitDetailSection,
+  limitTextRow,
+  type LimitDetailRow,
+} from './detail-readback';
 import { resolveFiniteIndeterminateTransformLimit, resolveInfiniteIndeterminateTransformLimit } from './indeterminate-transforms';
 import { resolveInfiniteScaleLimit } from './infinity-scale-terms';
 import { resolveFiniteRecursiveLeadingTermLimit } from './finite-leading-terms';
@@ -229,34 +233,35 @@ function radicalConjugateRewrite(
   return simplifyMathJsonNodeOrOriginal(['Divide', numerator, denominator], { maxNodeCount: 340 });
 }
 
-function prependMethodLines(
+function prependMethodRows(
   result: FiniteLimitRuleSuccess,
-  lines: readonly string[],
+  rows: readonly LimitDetailRow[],
 ): FiniteLimitRuleSuccess {
   const [first, ...rest] = result.detailSections ?? [];
+  const prefix = limitDetailSection('Limit Method', rows);
   if (!first) {
     return {
       ...result,
-      detailSections: limitMethodSection(...lines),
+      detailSections: [prefix],
     };
   }
 
   const merged: DisplayDetailSection = first.title === 'Limit Method'
-    ? {
-        ...first,
-        lines: [...lines, ...first.lines],
-        lineParts: undefined,
-      }
-    : {
-        ...limitMethodSection(...lines)[0],
-      };
+    ? (() => {
+        const section = limitDetailSection('Limit Method', [
+          ...rows,
+          ...(first.lineParts ?? first.lines.map(limitTextRow)),
+        ]);
+        return { ...first, lines: section.lines, lineParts: section.lineParts };
+      })()
+    : prefix;
 
   const sections = first.title === 'Limit Method'
     ? [merged, ...rest]
     : [merged, first, ...rest];
   return {
     ...result,
-    detailSections: withLimitDetailLineParts(sections),
+    detailSections: sections,
   };
 }
 
@@ -323,18 +328,18 @@ export function resolveFiniteRewriteCancellationLimit(
         'Retried the common-denominator rewrite through finite leading-term comparison.',
       );
     return resolved
-      ? prependMethodLines(resolved, [
-          'Form detected: rewrite/cancellation spine.',
-          'Rewrite: combined local algebra over a common denominator before retrying the limit.',
+      ? prependMethodRows(resolved, [
+          limitTextRow('Form detected: rewrite/cancellation spine.'),
+          limitTextRow('Rewrite: combined local algebra over a common denominator before retrying the limit.'),
         ])
       : undefined;
   }
 
   const transformed = resolveFiniteIndeterminateTransformLimit(node, target, variable, direction);
   return transformed
-    ? prependMethodLines(transformed, [
-        'Form detected: rewrite/cancellation spine.',
-        'Rewrite: selected a safe log/power transform before retrying the sub-limit.',
+    ? prependMethodRows(transformed, [
+        limitTextRow('Form detected: rewrite/cancellation spine.'),
+        limitTextRow('Rewrite: selected a safe log/power transform before retrying the sub-limit.'),
       ])
     : undefined;
 }
@@ -348,18 +353,18 @@ export function resolveInfiniteRewriteCancellationLimit(
   if (conjugate) {
     const resolved = resolveInfiniteScaleLimit(conjugate, targetKind, variable);
     return resolved
-      ? prependMethodLines(resolved, [
-          'Form detected: rewrite/cancellation spine.',
-          'Rewrite: rationalized the radical difference with its conjugate before comparing infinity scales.',
+      ? prependMethodRows(resolved, [
+          limitTextRow('Form detected: rewrite/cancellation spine.'),
+          limitTextRow('Rewrite: rationalized the radical difference with its conjugate before comparing infinity scales.'),
         ])
       : undefined;
   }
 
   const transformed = resolveInfiniteIndeterminateTransformLimit(node, targetKind, variable);
   return transformed
-    ? prependMethodLines(transformed, [
-        'Form detected: rewrite/cancellation spine.',
-        'Rewrite: selected a safe log/power transform before retrying the sub-limit.',
+    ? prependMethodRows(transformed, [
+        limitTextRow('Form detected: rewrite/cancellation spine.'),
+        limitTextRow('Rewrite: selected a safe log/power transform before retrying the sub-limit.'),
       ])
     : undefined;
 }

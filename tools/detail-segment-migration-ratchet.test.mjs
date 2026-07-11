@@ -27,6 +27,14 @@ function rewrite(rootDir, repoPath, source) {
   fs.writeFileSync(path.join(rootDir, repoPath), source);
 }
 
+function collectTypeScriptFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const absolute = path.join(directory, entry.name);
+    if (entry.isDirectory()) return collectTypeScriptFiles(absolute);
+    return entry.isFile() && entry.name.endsWith('.ts') ? [absolute] : [];
+  });
+}
+
 afterEach(() => {
   while (temporaryRoots.length > 0) {
     fs.rmSync(temporaryRoots.pop(), { recursive: true, force: true });
@@ -66,18 +74,34 @@ describe('detail-segment migration ratchet', () => {
         };
         declare function mathDetailSection(title: string, lines: string[]): DisplayDetailSection;
         declare function buildParameterizedDetailSections(options: unknown): DisplayDetailSection[];
+        declare function limitDetailSection(title: string, rows: unknown[][]): DisplayDetailSection;
+        declare function limitMethodRowsSection(rows: unknown[][]): DisplayDetailSection[];
         export const a: DisplayDetailSection = { title: 'A', lines: ['x'], lineKind: 'math' };
         export const b: DisplayDetailSection = { title: 'B', lines: ['x'], lineKinds: ['math'] };
         export const c: DisplayDetailSection = { title: 'C', lines: ['x'], lineParts: [[{}]] };
         export const d = mathDetailSection('D', ['x']);
         export const e = buildParameterizedDetailSections({});
+        export const f = limitDetailSection('F', [[{}]]);
+        export const g = limitMethodRowsSection([[{}]]);
       `,
     });
     const report = scanDetailSegmentRepository({ rootDir });
 
-    assert.equal(report.summary.producerCount, 5);
-    assert.equal(report.summary.declaredCount, 5);
+    assert.equal(report.summary.producerCount, 7);
+    assert.equal(report.summary.declaredCount, 7);
     assert.equal(report.summary.undeclaredCount, 0);
+  });
+
+  it('keeps Symbolic Limits routes off legacy string inference helpers', () => {
+    const limitsRoot = path.join(process.cwd(), 'src/lib/symbolic-engine/limits');
+    const legacyCall = /\b(?:limitDetailSectionFromLines|limitMethodSection|withLimitDetailLineParts)\s*\(/u;
+    const offenders = collectTypeScriptFiles(limitsRoot)
+      .filter((file) => !file.endsWith('.test.ts'))
+      .filter((file) => path.basename(file) !== 'detail-readback.ts')
+      .filter((file) => legacyCall.test(fs.readFileSync(file, 'utf8')))
+      .map((file) => path.relative(process.cwd(), file));
+
+    assert.deepEqual(offenders, []);
   });
 
   it('pins undeclared fingerprints while ignoring line-only movement', () => {

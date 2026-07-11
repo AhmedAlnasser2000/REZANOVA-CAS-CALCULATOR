@@ -16,12 +16,12 @@
 
 ## Current Verified Gate
 
-- `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`: the widened AST/runtime ratchet and parameterized Equation migration passed without changing mathematical output, wording, card order, History, worker, fallback, Clipboard, Surface Protocol, or OOE behavior.
-- Static inventory: 383 live detail producers, 329 declared, and 54 accepted undeclared fingerprints. Equation parameterized is 73 declared and zero undeclared after migrating 21 objects and inventorying 34 established builder calls. Equation core is 123 declared and zero undeclared; later floors are Symbolic Integration 25, Calculus 15, workspace domains 3, Linear Algebra 1, compatibility closeout 10, and Symbolic Limits 0.
-- Parameterized normalization preserves explicit parts and no longer invokes `inferDetailLinePartsFromText()`. Explicit prose stays prose; selected-target generated equations and formula branches now use producer-owned typed parts while deriving unchanged compatibility lines.
-- Focused parameterized coverage passed 24 files and 320 tests. The post-full-suite shape assertion repair passed 33 focused tests: absent typed parts are omitted rather than retained as an own `undefined` field, while live prose requires explicit `lineKind: 'text'`.
-- Full unit passed 3,545 across 497 files; full UI passed 452 across 62 files.
-- Cross-program evidence passed: 44 golden tests, seven print-hygiene tests over the unchanged 43-case/185-fragment manifest, 124 native plus 37 UI feature probes, all 100 replay fixtures, the printer migration ratchet, and Clipboard contracts/audit.
+- `DETAIL-SEGMENT-SYMBOLIC-LIMITS1`: typed-row migration and the widened AST/runtime ratchet passed without changing mathematical results, compatibility wording, card order, History, workers, fallbacks, Clipboard, Surface Protocol, or OOE behavior.
+- Static inventory: 433 live detail producers, 379 declared, and 54 accepted undeclared fingerprints. Symbolic Limits is 46 declared and zero undeclared after inventorying 45 additional typed builder calls; five existing typed Calculus consumers are also now visible. Later floors remain Symbolic Integration 25, Calculus 15, workspace domains 3, Linear Algebra 1, and compatibility closeout 10.
+- Symbolic Limits routes no longer call `limitMethodSection()`, `limitDetailSectionFromLines()`, or `withLimitDetailLineParts()`. Finite rules, local equivalents, recursive leading terms, indeterminate transforms, L'Hospital, and rewrite/cancellation construct explicit parts and derive exact compatibility lines.
+- Focused Limits coverage passed 17 files and 109 tests. Runtime intent tests require nonempty typed parts for every row and pin exact L'Hospital compatibility lines.
+- Full unit passed 3,547 across 498 files; full UI passed 452 across 62 files. One earlier full-unit run exceeded an unrelated Equation numeric soft timing cap by 91.8 ms; its isolated rerun passed in 5.17 seconds and the authoritative full rerun passed.
+- Cross-program evidence passed: 44 golden tests, seven print-hygiene tests over the unchanged 43-case/185-fragment manifest, feature probes, all 100 replay fixtures, and the printer migration ratchet.
 - Runtime probes passed 19 and workspace runtime contracts passed 74. All 19 Chromium canaries passed in 1.2 minutes.
-- Chromium inspected the selected-target generated-equation and isolate-formula branch cards. Both retained their existing wording and layout without overlap, clipping, or unreadable overflow.
+- Chromium inspected finite local-equivalent and rewrite/cancellation detail cards. Prose remained readable, exact coefficients/fractions rendered inline, and no overlap, clipping, stale content, or unreadable overflow appeared.
 - TypeScript, production build, lint, file-size, CI alignment, seam selection, Surface Protocol, OOE, compartments, Cargo check, and diff hygiene passed.

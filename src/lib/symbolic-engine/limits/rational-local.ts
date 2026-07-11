@@ -1,5 +1,6 @@
 import type { LimitDirection } from '../../../types/calculator';
 import { normalizeExactRationalNode } from '../rational';
+import { limitTextRow } from './detail-readback';
 import { evaluateNodeAt, success } from './evaluation';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import { isNodeArray } from '../patterns';
@@ -19,8 +20,8 @@ export function resolveRationalLocalLimit(
     const value = evaluateNodeAt(simplified.normalizedNode, target, variable);
     if (value !== undefined) {
       return success(value, 'rule-based-symbolic', [
-        'Used the existing exact rational normalizer to cancel common factors before evaluating the local form.',
-        'The simplified local form is finite at the target.',
+        limitTextRow('Used the existing exact rational normalizer to cancel common factors before evaluating the local form.'),
+        limitTextRow('The simplified local form is finite at the target.'),
       ]);
     }
 

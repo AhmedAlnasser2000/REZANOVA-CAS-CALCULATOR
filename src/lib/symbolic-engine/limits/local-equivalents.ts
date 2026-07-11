@@ -9,7 +9,14 @@ import {
   isZeroish,
   success,
 } from './evaluation';
-import { formatLimitNumberLatex, formatLimitValueLatex } from './detail-readback';
+import {
+  formatLimitNumberLatex,
+  formatLimitValueLatex,
+  limitMathPart,
+  limitMathValueRow,
+  limitTextPart,
+  limitTextRow,
+} from './detail-readback';
 import {
   matchExpMinusOne,
   matchFunctionMinusOne,
@@ -120,9 +127,13 @@ function boundedDerivativeEquivalent(
         coefficient,
         order,
         reason: `Taylor leading-term check found first nonzero derivative of order ${order}`,
-        notes: [
-          `Taylor leading term: first nonzero derivative order ${order}, coefficient ${formatLimitNumberLatex(coefficient)}.`,
-        ],
+        notes: [[
+          limitTextPart('Taylor leading term: first nonzero derivative order '),
+          limitMathPart(`${order}`),
+          limitTextPart(', coefficient '),
+          limitMathPart(formatLimitNumberLatex(coefficient)),
+          limitTextPart('.'),
+        ]],
       };
     }
   }
@@ -361,35 +372,42 @@ export function resolveLocalEquivalentLimit(
     return undefined;
   }
 
-  const baseLines = [
-    'Form detected: finite local equivalent comparison of local orders.',
-    `Rewrite/equivalent: ${intro}`,
+  const coefficientLatex = formatLimitNumberLatex(equivalent.coefficient);
+  const baseRows = [
+    limitTextRow('Form detected: finite local equivalent comparison of local orders.'),
+    [limitTextPart('Rewrite/equivalent: '), limitTextPart(intro)],
     ...(equivalent.notes ?? []),
-    `Key calculation: coefficient ${formatLimitNumberLatex(equivalent.coefficient)} with net order ${equivalent.order}.`,
-    `Reason: ${equivalent.reason}.`,
+    [
+      limitTextPart('Key calculation: coefficient '),
+      limitMathPart(coefficientLatex),
+      limitTextPart(' with net order '),
+      limitMathPart(`${equivalent.order}`),
+      limitTextPart('.'),
+    ],
+    limitTextRow(`Reason: ${equivalent.reason}.`),
   ];
 
   if (equivalent.order === 0) {
     return success(equivalent.coefficient, 'rule-based-symbolic', [
-      ...baseLines,
-      `Conclusion: final limit is ${formatLimitNumberLatex(equivalent.coefficient)}.`,
+      ...baseRows,
+      limitMathValueRow('Conclusion: final limit is ', coefficientLatex),
     ]);
   }
 
   if (equivalent.order > 0) {
     return success(0, 'rule-based-symbolic', [
-      ...baseLines,
-      'Conclusion: positive net order means the expression tends to 0 at the target.',
-      'Conclusion: final limit is 0.',
+      ...baseRows,
+      limitTextRow('Conclusion: positive net order means the expression tends to 0 at the target.'),
+      limitMathValueRow('Conclusion: final limit is ', '0'),
     ]);
   }
 
   const infinity = signedInfinityFromLocalEquivalent(equivalent, direction);
   return infinity
     ? success(infinity, 'rule-based-symbolic', [
-        ...baseLines,
-        'Conclusion: negative net order creates a pole; the requested direction determines the signed infinity when signs agree.',
-        `Conclusion: final limit is ${formatLimitValueLatex(infinity) ?? 'undefined'}.`,
+        ...baseRows,
+        limitTextRow('Conclusion: negative net order creates a pole; the requested direction determines the signed infinity when signs agree.'),
+        limitMathValueRow('Conclusion: final limit is ', formatLimitValueLatex(infinity) ?? 'undefined'),
       ])
     : undefined;
 }

@@ -1,4 +1,5 @@
 import type { LimitDirection } from '../../../types/calculator';
+import { limitTextRow } from './detail-readback';
 import { box, latexToNumber, success } from './evaluation';
 import { resolveKnownFiniteLimitRule } from './known-rules';
 import { resolveFiniteRecursiveLeadingTermLimit } from './finite-leading-terms';
@@ -21,7 +22,7 @@ export function resolveFiniteLimitRule(
       const numeric = typeof evaluated.json === 'number' ? evaluated.json : latexToNumber((evaluated.N?.() ?? evaluated).latex);
       if (numeric !== undefined) {
         return success(numeric, 'symbolic', [
-          'Direct substitution evaluated to a finite value.',
+          limitTextRow('Direct substitution evaluated to a finite value.'),
         ]);
       }
     }

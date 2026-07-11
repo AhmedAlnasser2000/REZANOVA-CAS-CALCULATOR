@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "acceptedReason": "DETAIL-SEGMENT-EQUATION-PARAMETERIZED1 removes 21 undeclared parameterized producers, inventories 34 existing parameterized detail-builder calls, and eliminates production legacy inference while preserving typed mixed rows.",
-  "registryDigest": "c109a0afcf037381b44a",
+  "acceptedReason": "DETAIL-SEGMENT-SYMBOLIC-LIMITS1 inventories 45 additional typed Symbolic Limits builder calls and five existing typed Calculus consumers while removing all legacy string-inference calls from Symbolic Limits routes without increasing undeclared debt.",
+  "registryDigest": "454beba0a93fd0f748f5",
   "laneFloors": {
     "equation-parameterized": 0,
     "equation-core": 0,

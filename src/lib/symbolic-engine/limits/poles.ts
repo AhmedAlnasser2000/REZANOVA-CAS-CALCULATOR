@@ -1,5 +1,6 @@
 import type { LimitDirection } from '../../../types/calculator';
 import { isNodeArray } from '../patterns';
+import { limitTextRow } from './detail-readback';
 import {
   evaluateNodeAt,
   isNegativeInteger,
@@ -74,22 +75,22 @@ export function resolveSignedPoleLimit(
 
   if (direction === 'left' && leftSign) {
     return success(leftSign > 0 ? 'posInfinity' : 'negInfinity', 'rule-based-symbolic', [
-      'Detected a finite pole with a stable left-hand sign pattern.',
-      'The sign of the one-sided samples determines the signed infinity.',
+      limitTextRow('Detected a finite pole with a stable left-hand sign pattern.'),
+      limitTextRow('The sign of the one-sided samples determines the signed infinity.'),
     ]);
   }
 
   if (direction === 'right' && rightSign) {
     return success(rightSign > 0 ? 'posInfinity' : 'negInfinity', 'rule-based-symbolic', [
-      'Detected a finite pole with a stable right-hand sign pattern.',
-      'The sign of the one-sided samples determines the signed infinity.',
+      limitTextRow('Detected a finite pole with a stable right-hand sign pattern.'),
+      limitTextRow('The sign of the one-sided samples determines the signed infinity.'),
     ]);
   }
 
   if (direction === 'two-sided' && leftSign && rightSign && leftSign === rightSign) {
     return success(leftSign > 0 ? 'posInfinity' : 'negInfinity', 'rule-based-symbolic', [
-      'Detected a finite pole where left-hand and right-hand signs agree.',
-      'The shared sign determines the two-sided signed infinity.',
+      limitTextRow('Detected a finite pole where left-hand and right-hand signs agree.'),
+      limitTextRow('The shared sign determines the two-sided signed infinity.'),
     ]);
   }
 
@@ -128,7 +129,7 @@ export function resolveLogBoundaryLimit(
   }
 
   return success('negInfinity', 'rule-based-symbolic', [
-    'Recognized a one-sided logarithm boundary with the argument approaching 0 through positive real values.',
-    'The real logarithm tends to negative infinity on that side.',
+    limitTextRow('Recognized a one-sided logarithm boundary with the argument approaching 0 through positive real values.'),
+    limitTextRow('The real logarithm tends to negative infinity on that side.'),
   ]);
 }

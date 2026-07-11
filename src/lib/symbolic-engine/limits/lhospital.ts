@@ -2,7 +2,12 @@ import { differentiateAst } from '../differentiation';
 import { simplifyNode } from '../differentiation';
 import { isNodeArray } from '../patterns';
 import type { DisplayDetailSection } from '../../../types/calculator';
-import { limitMethodSection } from './detail-readback';
+import {
+  limitMathValueRow,
+  limitMethodRowsSection,
+  limitTextRow,
+  type LimitDetailRow,
+} from './detail-readback';
 import {
   box,
   evaluateNodeAt,
@@ -67,20 +72,20 @@ function optionsWithDefaults(options: LHospitalAttemptOptions | undefined) {
   };
 }
 
-function unsupported(reason: string, lines: string[], iterations: number): LHospitalAttempt {
+function unsupported(reason: string, rows: LimitDetailRow[], iterations: number): LHospitalAttempt {
   return {
     kind: 'unsupported',
     reason,
-    detailSections: limitMethodSection(...lines, reason),
+    detailSections: limitMethodRowsSection([...rows, limitTextRow(reason)]),
     iterations,
   };
 }
 
-function tooComplex(reason: string, lines: string[], iterations: number): LHospitalAttempt {
+function tooComplex(reason: string, rows: LimitDetailRow[], iterations: number): LHospitalAttempt {
   return {
     kind: 'too-complex',
     reason,
-    detailSections: limitMethodSection(...lines, reason),
+    detailSections: limitMethodRowsSection([...rows, limitTextRow(reason)]),
     iterations,
   };
 }
@@ -189,14 +194,14 @@ function infinityEvaluation(
 function ensureBudget(
   node: unknown,
   options: ReturnType<typeof optionsWithDefaults>,
-  lines: string[],
+  rows: LimitDetailRow[],
   iterations: number,
 ): LHospitalAttempt | undefined {
   const profile = profileNode(node);
   if (profile.nodeCount > options.maxNodes || profile.maxDepth > options.maxDepth) {
     return tooComplex(
       `L'Hospital stopped because the derivative quotient exceeded the route budget (${profile.nodeCount} nodes, depth ${profile.maxDepth}).`,
-      lines,
+      rows,
       iterations,
     );
   }
@@ -237,26 +242,26 @@ export function attemptLHospital(
   options?: LHospitalAttemptOptions,
 ): LHospitalAttempt {
   const budget = optionsWithDefaults(options);
-  const lines = ["Form detected: L'Hospital route selected for an indeterminate quotient."];
+  const rows = [limitTextRow("Form detected: L'Hospital route selected for an indeterminate quotient.")];
 
   if (!isFiniteIndeterminateQuotient(node, target, variable)) {
-    return unsupported("L'Hospital needs a finite 0/0 or infinity/infinity quotient.", lines, 0);
+    return unsupported("L'Hospital needs a finite 0/0 or infinity/infinity quotient.", rows, 0);
   }
 
   let current = node;
   for (let iteration = 1; iteration <= budget.maxIterations; iteration += 1) {
-    const overBudget = ensureBudget(current, budget, lines, iteration - 1);
+    const overBudget = ensureBudget(current, budget, rows, iteration - 1);
     if (overBudget) {
       return overBudget;
     }
 
     const nextNode = differentiateQuotient(current, variable);
     if (!nextNode) {
-      return unsupported("L'Hospital stopped because the expression is no longer a quotient.", lines, iteration - 1);
+      return unsupported("L'Hospital stopped because the expression is no longer a quotient.", rows, iteration - 1);
     }
 
     current = nextNode;
-    lines.push(`Iteration ${iteration}: differentiated numerator and denominator.`);
+    rows.push(limitTextRow(`Iteration ${iteration}: differentiated numerator and denominator.`));
 
     const evaluated = finiteEvaluation(current, target, variable);
     if (evaluated) {
@@ -264,11 +269,11 @@ export function attemptLHospital(
         kind: 'success',
         value: evaluated.value,
         exactLatex: evaluated.exactLatex,
-        detailSections: limitMethodSection(
-          ...lines,
-          `Key calculation: the differentiated quotient evaluates to ${evaluated.exactLatex} at the target.`,
-          `Conclusion: final limit is ${evaluated.exactLatex}.`,
-        ),
+        detailSections: limitMethodRowsSection([
+          ...rows,
+          limitMathValueRow('Key calculation: the differentiated quotient evaluates to ', evaluated.exactLatex, ' at the target.'),
+          limitMathValueRow('Conclusion: final limit is ', evaluated.exactLatex),
+        ]),
         iterations: iteration,
       };
     }
@@ -276,7 +281,7 @@ export function attemptLHospital(
     if (!isFiniteIndeterminateQuotient(current, target, variable)) {
       return unsupported(
         "L'Hospital stopped because the differentiated quotient is not a supported indeterminate form.",
-        lines,
+        rows,
         iteration,
       );
     }
@@ -284,7 +289,7 @@ export function attemptLHospital(
 
   return tooComplex(
     `L'Hospital stopped after ${budget.maxIterations} iterations.`,
-    lines,
+    rows,
     budget.maxIterations,
   );
 }
@@ -296,26 +301,26 @@ export function attemptInfiniteLHospital(
   options?: LHospitalAttemptOptions,
 ): LHospitalAttempt {
   const budget = optionsWithDefaults(options);
-  const lines = ["Form detected: L'Hospital route selected for a quotient at infinity."];
+  const rows = [limitTextRow("Form detected: L'Hospital route selected for a quotient at infinity.")];
 
   if (!isNodeArray(node) || node[0] !== 'Divide' || node.length !== 3) {
-    return unsupported("L'Hospital at infinity needs a quotient.", lines, 0);
+    return unsupported("L'Hospital at infinity needs a quotient.", rows, 0);
   }
 
   let current = node;
   for (let iteration = 1; iteration <= budget.maxIterations; iteration += 1) {
-    const overBudget = ensureBudget(current, budget, lines, iteration - 1);
+    const overBudget = ensureBudget(current, budget, rows, iteration - 1);
     if (overBudget) {
       return overBudget;
     }
 
     const nextNode = differentiateQuotient(current, variable);
     if (!nextNode) {
-      return unsupported("L'Hospital stopped because the expression is no longer a quotient.", lines, iteration - 1);
+      return unsupported("L'Hospital stopped because the expression is no longer a quotient.", rows, iteration - 1);
     }
 
     current = nextNode;
-    lines.push(`Iteration ${iteration}: differentiated numerator and denominator.`);
+    rows.push(limitTextRow(`Iteration ${iteration}: differentiated numerator and denominator.`));
 
     const evaluated = infinityEvaluation(current, targetKind, variable);
     if (evaluated) {
@@ -323,11 +328,11 @@ export function attemptInfiniteLHospital(
         kind: 'success',
         value: evaluated.value,
         exactLatex: evaluated.exactLatex,
-        detailSections: limitMethodSection(
-          ...lines,
-          `Key calculation: the differentiated quotient stabilizes to ${evaluated.exactLatex ?? evaluated.value} at infinity.`,
-          `Conclusion: final limit is ${evaluated.exactLatex ?? evaluated.value}.`,
-        ),
+        detailSections: limitMethodRowsSection([
+          ...rows,
+          limitMathValueRow('Key calculation: the differentiated quotient stabilizes to ', `${evaluated.exactLatex ?? evaluated.value}`, ' at infinity.'),
+          limitMathValueRow('Conclusion: final limit is ', `${evaluated.exactLatex ?? evaluated.value}`),
+        ]),
         iterations: iteration,
       };
     }
@@ -335,7 +340,7 @@ export function attemptInfiniteLHospital(
 
   return tooComplex(
     `L'Hospital stopped after ${budget.maxIterations} iterations.`,
-    lines,
+    rows,
     budget.maxIterations,
   );
 }

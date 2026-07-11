@@ -9,6 +9,7 @@ import {
 } from '../../display/result/result-detail-lines';
 
 type LimitValueLike = number | 'posInfinity' | 'negInfinity';
+export type LimitDetailRow = DisplayDetailLinePart[];
 
 export function formatLimitNumberLatex(value: number): string {
   const rounded = Math.round(value);
@@ -52,6 +53,10 @@ export function limitTextRow(text: string): DisplayDetailLinePart[] {
   return [limitTextPart(text)];
 }
 
+export function limitTextRows(lines: readonly string[]): DisplayDetailLinePart[][] {
+  return lines.map(limitTextRow);
+}
+
 export function limitDetailSection(
   title: string,
   rows: readonly (readonly DisplayDetailLinePart[])[],
@@ -78,7 +83,7 @@ function looksLikeMathValue(text: string) {
   return /^[A-Za-z]\s*\/\s*[A-Za-z]$/u.test(cleaned);
 }
 
-function mathValueLineParts(
+export function limitMathValueRow(
   prefix: string,
   value: string,
   suffix = '.',
@@ -96,7 +101,7 @@ function proseOrMathValueLineParts(
 ): DisplayDetailLinePart[] {
   const cleaned = stripFinalPeriod(value.trim());
   if (looksLikeMathValue(cleaned)) {
-    return mathValueLineParts(prefix, cleaned);
+    return limitMathValueRow(prefix, cleaned);
   }
   return [
     limitTextPart(prefix),
@@ -107,12 +112,12 @@ function proseOrMathValueLineParts(
 function inferLimitDetailLineParts(line: string): DisplayDetailLinePart[] | undefined {
   const finalLimit = line.match(/^Final limit:\s*(.+)\.$/u);
   if (finalLimit) {
-    return mathValueLineParts('Final limit: ', finalLimit[1]);
+    return limitMathValueRow('Final limit: ', finalLimit[1]);
   }
 
   const originalForm = line.match(/^Original form:\s*(.+)\.$/u);
   if (originalForm) {
-    return mathValueLineParts('Original form: ', originalForm[1]);
+    return limitMathValueRow('Original form: ', originalForm[1]);
   }
 
   const rewrite = line.match(/^Rewrite:\s*(.+)\.$/u);
@@ -142,18 +147,18 @@ function inferLimitDetailLineParts(line: string): DisplayDetailLinePart[] | unde
       ];
     }
     return looksLikeMathValue(value)
-      ? mathValueLineParts('Rewrite/equivalent: ', value)
+      ? limitMathValueRow('Rewrite/equivalent: ', value)
       : undefined;
   }
 
   const logTransform = line.match(/^Log transform:\s*(.+)\.$/u);
   if (logTransform) {
-    return mathValueLineParts('Log transform: ', logTransform[1]);
+    return limitMathValueRow('Log transform: ', logTransform[1]);
   }
 
   const squeezeBound = line.match(/^Squeeze bound:\s*(.+)\.$/u);
   if (squeezeBound) {
-    return mathValueLineParts('Squeeze bound: ', squeezeBound[1]);
+    return limitMathValueRow('Squeeze bound: ', squeezeBound[1]);
   }
 
   const equivalent = line.match(/^Equivalent used: coefficient\s+(.+)\s+with net order\s+(-?\d+)\.$/u);
@@ -200,7 +205,7 @@ function inferLimitDetailLineParts(line: string): DisplayDetailLinePart[] | unde
 
   const conclusionLimit = line.match(/^Conclusion: final limit is\s+(.+)\.$/u);
   if (conclusionLimit) {
-    return mathValueLineParts('Conclusion: final limit is ', conclusionLimit[1]);
+    return limitMathValueRow('Conclusion: final limit is ', conclusionLimit[1]);
   }
 
   const sideLimit = line.match(/^(Left side|Right side) tends to\s+(.+)\.$/u);
@@ -214,12 +219,12 @@ function inferLimitDetailLineParts(line: string): DisplayDetailLinePart[] | unde
 
   const evaluated = line.match(/^The differentiated quotient evaluates to\s+(.+)\s+at the target\.$/u);
   if (evaluated) {
-    return mathValueLineParts('The differentiated quotient evaluates to ', evaluated[1], ' at the target.');
+    return limitMathValueRow('The differentiated quotient evaluates to ', evaluated[1], ' at the target.');
   }
 
   const stabilizes = line.match(/^The differentiated quotient stabilizes to\s+(.+)\s+at infinity\.$/u);
   if (stabilizes) {
-    return mathValueLineParts('The differentiated quotient stabilizes to ', stabilizes[1], ' at infinity.');
+    return limitMathValueRow('The differentiated quotient stabilizes to ', stabilizes[1], ' at infinity.');
   }
 
   const domainConstraint = line.match(/^(.+?) must stay (nonnegative|positive|nonzero)\. (Trust: .+)$/u);

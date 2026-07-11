@@ -16,7 +16,16 @@ import {
   dependsOnVariable,
   isNodeArray,
 } from '../patterns';
-import { formatLimitNumberLatex, formatLimitValueLatex, limitMethodSection } from './detail-readback';
+import {
+  formatLimitNumberLatex,
+  formatLimitValueLatex,
+  limitMathPart,
+  limitMathValueRow,
+  limitMethodRowsSection,
+  limitTextPart,
+  limitTextRow,
+  limitTextRows,
+} from './detail-readback';
 import {
   evaluateNodeAt,
   isInteger,
@@ -463,12 +472,18 @@ function limitSuccessFromTerm(
   const coefficientLatex = numericCoefficient === undefined
     ? term.coefficient.latex
     : formatLimitNumberLatex(numericCoefficient);
-  const baseLines = [
-    'Form detected: recursive finite leading-term comparison.',
-    'Rewrite/equivalent: built the first nonzero local term from constants, products, quotients, powers, sums, and standard compositions.',
-    ...(term.notes ?? []),
-    `Key calculation: coefficient ${coefficientLatex} with net order ${term.order}.`,
-    `Reason: ${term.reason}.`,
+  const baseRows = [
+    limitTextRow('Form detected: recursive finite leading-term comparison.'),
+    limitTextRow('Rewrite/equivalent: built the first nonzero local term from constants, products, quotients, powers, sums, and standard compositions.'),
+    ...limitTextRows(term.notes ?? []),
+    [
+      limitTextPart('Key calculation: coefficient '),
+      limitMathPart(coefficientLatex),
+      limitTextPart(' with net order '),
+      limitMathPart(`${term.order}`),
+      limitTextPart('.'),
+    ],
+    limitTextRow(`Reason: ${term.reason}.`),
   ];
 
   if (term.order === 0) {
@@ -476,20 +491,20 @@ function limitSuccessFromTerm(
       kind: 'success',
       exactLatex: coefficientLatex,
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        ...baseLines,
-        `Conclusion: final limit is ${coefficientLatex}.`,
-      ),
+      detailSections: limitMethodRowsSection([
+        ...baseRows,
+        limitMathValueRow('Conclusion: final limit is ', coefficientLatex),
+      ]),
     } : {
       kind: 'success',
       value: numericCoefficient,
       exactLatex: coefficientLatex,
       approxText: formatLimitNumberLatex(numericCoefficient),
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        ...baseLines,
-        `Conclusion: final limit is ${coefficientLatex}.`,
-      ),
+      detailSections: limitMethodRowsSection([
+        ...baseRows,
+        limitMathValueRow('Conclusion: final limit is ', coefficientLatex),
+      ]),
     };
   }
 
@@ -500,11 +515,11 @@ function limitSuccessFromTerm(
       exactLatex: '0',
       approxText: '0',
       origin: 'rule-based-symbolic',
-      detailSections: limitMethodSection(
-        ...baseLines,
-        'Conclusion: positive net order means the expression tends to 0 at the target.',
-        'Conclusion: final limit is 0.',
-      ),
+      detailSections: limitMethodRowsSection([
+        ...baseRows,
+        limitTextRow('Conclusion: positive net order means the expression tends to 0 at the target.'),
+        limitMathValueRow('Conclusion: final limit is ', '0'),
+      ]),
     };
   }
 
@@ -516,11 +531,11 @@ function limitSuccessFromTerm(
         exactLatex: formatLimitValueLatex(infinity),
         approxText: infinity === 'posInfinity' ? 'Infinity' : '-Infinity',
         origin: 'rule-based-symbolic',
-        detailSections: limitMethodSection(
-          ...baseLines,
-          'Conclusion: negative net order creates a pole; the requested direction determines the signed infinity when signs agree.',
-          `Conclusion: final limit is ${formatLimitValueLatex(infinity) ?? 'undefined'}.`,
-        ),
+        detailSections: limitMethodRowsSection([
+          ...baseRows,
+          limitTextRow('Conclusion: negative net order creates a pole; the requested direction determines the signed infinity when signs agree.'),
+          limitMathValueRow('Conclusion: final limit is ', formatLimitValueLatex(infinity) ?? 'undefined'),
+        ]),
       }
     : undefined;
 }

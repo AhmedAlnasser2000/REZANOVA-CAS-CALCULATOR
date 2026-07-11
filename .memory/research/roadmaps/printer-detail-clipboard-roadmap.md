@@ -201,7 +201,7 @@ Implemented contract: `DetailLineContent` is a focused shared renderer used by t
 
 ### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
 
-Status: active. `DETAIL-SEGMENT-EQUATION-CORE1` is committed as `6e2182bf`; `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
+Status: active. Equation core is committed as `6e2182bf`; Equation parameterized is committed as `97ec9ca2`; `DETAIL-SEGMENT-SYMBOLIC-LIMITS1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
 
 1. `DETAIL-SEGMENT-EQUATION-CORE1`.
 2. `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`.
@@ -215,6 +215,8 @@ Status: active. `DETAIL-SEGMENT-EQUATION-CORE1` is committed as `6e2182bf`; `DET
 `DETAIL-SEGMENT-EQUATION-CORE1` establishes the TypeScript-compiler-API migration ratchet over contextual live `DisplayDetailSection` producers. The accepted baseline inventories 349 producers: 274 declared and 75 fingerprinted undeclared producers reserved for later named slices. Equation core moved from 119 undeclared object producers to zero, with all 121 registered core producers declared. Plain rows now state `lineKind: 'text'`; the existing mixed `Factorization` and `Relation tested` rows use typed parts so their current mixed rendering remains unchanged. Stable fingerprints reject replacement debt, lane floors may not increase, and baseline updates require explicit acceptance plus a durable reason. CI, Linux release, aggregate gates, and relevant seam plans execute the ratchet.
 
 `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1` widens the AST inventory to established `buildParameterizedDetailSections()` calls instead of treating the builder as invisible. The accepted baseline now inventories 383 producers: 329 declared and 54 fingerprinted undeclared producers. Equation parameterized has 73 declared and zero undeclared producers after 21 object migrations plus 34 inventoried builder calls; Equation core now has 123 declared and zero undeclared producers. Parameterized normalization no longer invokes legacy text inference, explicit prose remains prose, and selected-target generated equations and formula branches are producer-owned typed parts. Compatibility `lines`, wording, mathematics, workers, fallbacks, History, and OOE behavior remain unchanged.
+
+`DETAIL-SEGMENT-SYMBOLIC-LIMITS1` replaces the misleading one-producer Limits count with 46 governed typed producers. The accepted inventory is now 433 producers: 379 declared and 54 fingerprinted undeclared producers. Finite rules, local equivalents, recursive leading terms, indeterminate transforms, L'Hospital, and rewrite/cancellation now construct explicit typed rows; compatibility lines are derived from those rows. A source audit forbids legacy string inference helpers in Symbolic Limits routes. The legacy string classifier remains only for Calculus-owned callers until `DETAIL-SEGMENT-CALCULUS1`.
 
 - Establish an AST-aware source floor plus runtime corpus evidence for plain detail lines containing math-looking content.
 - Migrate the known dense Equation inequality/complex/numeric paths, Calculus shared/integral details, then at least two representative detail surfaces per workspace.

@@ -1,4 +1,4 @@
-import type { DisplayDetailSection, ResultOrigin } from '../../../types/calculator';
+import type { DisplayDetailLinePart, DisplayDetailSection, ResultOrigin } from '../../../types/calculator';
 
 export type FiniteLimitRuleValue = number | 'posInfinity' | 'negInfinity';
 export type FiniteLimitRuleOrigin = Extract<ResultOrigin, 'symbolic' | 'rule-based-symbolic' | 'heuristic-symbolic'>;
@@ -16,7 +16,7 @@ export type LocalEquivalent = {
   coefficient: number;
   order: number;
   reason: string;
-  notes?: string[];
+  notes?: DisplayDetailLinePart[][];
 };
 
 export type BoxedLike = {

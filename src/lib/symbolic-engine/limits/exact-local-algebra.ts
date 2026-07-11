@@ -6,7 +6,12 @@ import {
   simplifyMathJsonNodeOrOriginal,
 } from '../primitives/simplification/simplification';
 import { isNodeArray } from '../patterns';
-import { formatLimitNumberLatex, limitMethodSection } from './detail-readback';
+import {
+  formatLimitNumberLatex,
+  limitMathValueRow,
+  limitMethodRowsSection,
+  limitTextRow,
+} from './detail-readback';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import type { FiniteLimitRuleSuccess } from './types';
 
@@ -210,11 +215,11 @@ export function resolveInfiniteExactLocalAlgebraLimit(
     kind: 'success' as const,
     value,
     exactLatex: formatLimitNumberLatex(value),
-    detailSections: limitMethodSection(
-      'Form detected: radical difference at positive infinity.',
-      'Rewrite/equivalent: rationalized the radical difference by multiplying by the conjugate.',
-      'Key calculation: at positive infinity, the leading denominator behaves like 2x.',
-      `Conclusion: final limit is ${formatLimitNumberLatex(value)}.`,
-    ),
+    detailSections: limitMethodRowsSection([
+      limitTextRow('Form detected: radical difference at positive infinity.'),
+      limitTextRow('Rewrite/equivalent: rationalized the radical difference by multiplying by the conjugate.'),
+      limitTextRow('Key calculation: at positive infinity, the leading denominator behaves like 2x.'),
+      limitMathValueRow('Conclusion: final limit is ', formatLimitNumberLatex(value)),
+    ]),
   };
 }

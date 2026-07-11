@@ -1,6 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { normalizeAst } from '../normalize';
-import { formatLimitValueLatex, limitMethodSection } from './detail-readback';
+import {
+  formatLimitValueLatex,
+  limitMethodRowsSection,
+  type LimitDetailRow,
+} from './detail-readback';
 import type { BoxedLike, FiniteLimitRuleOrigin, FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
 
 const ce = new ComputeEngine();
@@ -70,14 +74,14 @@ export function factorial(value: number) {
 export function success(
   value: FiniteLimitRuleValue,
   origin: FiniteLimitRuleOrigin,
-  lines: string[],
+  rows: readonly LimitDetailRow[],
 ): FiniteLimitRuleSuccess {
   return {
     kind: 'success',
     value,
     exactLatex: formatLimitValueLatex(value),
     origin,
-    detailSections: limitMethodSection(...lines),
+    detailSections: limitMethodRowsSection(rows),
   };
 }
 
