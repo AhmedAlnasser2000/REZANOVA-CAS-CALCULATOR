@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "PRINT-PROFILE-CALCULUS1 routes all 43 Calculus engine and workspace result producers through the explicit Calculus domain profile while preserving derivative, integral, limit, Laplace, ODE, and series output.",
+  "acceptedReason": "PRINT-PROFILE-GUIDED-DOMAINS1 routes all 20 Trigonometry, Geometry, and Statistics result producers plus the Table success outcome through explicit native-domain profiles while preserving exact workspace readback and structured Table rows.",
   "registryDigest": "11229e8e725fa539737c",
   "resultProperties": [
     "answerLatex",
@@ -12,24 +12,21 @@
     "calculate": 0,
     "calculus": 0,
     "equation": 0,
-    "geometry": 2,
+    "geometry": 0,
     "history-compatibility": 0,
     "linear-algebra": 44,
     "shared-algebra": 3,
     "shared-runtime": 0,
-    "statistics": 10,
+    "statistics": 0,
     "symbolic-core": 0,
     "symbolic-integration": 0,
     "symbolic-limits": 0,
     "table": 0,
-    "trigonometry": 8
+    "trigonometry": 0
   },
   "registrationFloors": {
-    "geometry-result-v1": 2,
     "linear-algebra-result-v1": 44,
-    "shared-algebra-result-v1": 3,
-    "statistics-result-v1": 10,
-    "trigonometry-result-v1": 8
+    "shared-algebra-result-v1": 3
   },
   "categoryCounts": {
     "canonical-printer": 5,
@@ -64,22 +61,6 @@
       "sourceKind": "property",
       "lane": "shared-algebra",
       "fallbackId": "shared-algebra-result-v1"
-    },
-    {
-      "id": "2493deeee31f6520a1e7:1",
-      "file": "src/lib/geometry/coordinate.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "geometry",
-      "fallbackId": "geometry-result-v1"
-    },
-    {
-      "id": "9103f1f6bc5f8c07c4e1:1",
-      "file": "src/lib/geometry/shared.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "geometry",
-      "fallbackId": "geometry-result-v1"
     },
     {
       "id": "7be88f98d2164ccfb6f9:1",
@@ -432,150 +413,6 @@
       "sourceKind": "property",
       "lane": "linear-algebra",
       "fallbackId": "linear-algebra-result-v1"
-    },
-    {
-      "id": "b20eb1d871fbcb04b27d:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "dcfe029fca82319b21b5:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "eb855398ec150acdbb8e:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "04b5e4eeb4328156f17d:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "0da6f8654fb48ed9be8b:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "d185efcc9c5045b25f45:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "e6605b01610552a823c6:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "e9829980ce61de5c7caa:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "7382d9c9d3fefdf22207:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "542505d2c66ab0924e52:1",
-      "file": "src/lib/statistics/core.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "statistics",
-      "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "a23ba8ab3953ec905da3:1",
-      "file": "src/lib/trigonometry/equations.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
-    },
-    {
-      "id": "a1eb7b8901b313091045:1",
-      "file": "src/lib/trigonometry/equations.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
-    },
-    {
-      "id": "0ceeb8b1e1f8c7aa9065:1",
-      "file": "src/lib/trigonometry/functions.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
-    },
-    {
-      "id": "68d4f572dbfcc2c59af3:1",
-      "file": "src/lib/trigonometry/functions.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
-    },
-    {
-      "id": "55db9df8723b8a22e7a0:1",
-      "file": "src/lib/trigonometry/functions.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
-    },
-    {
-      "id": "ce8291187510b55752b1:1",
-      "file": "src/lib/trigonometry/functions.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
-    },
-    {
-      "id": "385c1349b090f8c1a946:1",
-      "file": "src/lib/trigonometry/period-phase.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
-    },
-    {
-      "id": "ab81ea5510f2d9da528e:1",
-      "file": "src/lib/trigonometry/triangles.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "trigonometry",
-      "fallbackId": "trigonometry-result-v1"
     }
   ]
 }

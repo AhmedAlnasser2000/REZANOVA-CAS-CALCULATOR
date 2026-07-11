@@ -131,7 +131,7 @@ Implemented contract: the TypeScript-compiler-API inventory currently classifies
 
 ### A4. `PRINT-PROFILES1` And Domain Migration
 
-Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; profiles are committed through Symbolic Integration at `81015366`, and `PRINT-PROFILE-CALCULUS1` is implemented and verified and is entering its approved commit checkpoint.
+Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; profiles are committed through Calculus at `1ffc9900`, and `PRINT-PROFILE-GUIDED-DOMAINS1` is implemented and verified and is entering its approved commit checkpoint.
 
 - Introduce profiles only where migrations prove a real policy difference; avoid speculative per-domain switches.
 - Cover all nine workspaces, including Geometry and Table, rather than the older six-profile sketch.
@@ -148,6 +148,8 @@ Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; pr
 `PRINT-PROFILE-SYMBOLIC-INTEGRATION1` routes 31 genuinely Integration-owned result producers through `profileSymbolicIntegrationResult()` while preserving exact antiderivatives, constants, certificates, method evidence, and controlled stops. A live diff audit found that the old exact-file registration had incorrectly counted two generic factor/derivative outcomes and one partial-derivative resolution as Integration; those three now use a separate zero-debt `profileSymbolicCoreResult()` lane. The global floor is 110 compatibility, 166 migrated, and 240 forwarded. Six Calculus integral fixtures become hard, bringing hard coverage to 56/100. Integration-focused coverage passed 104 files and 714 tests, and fresh Chromium screenshots show readable `arctan(x)+C` and `2xy` cards without accepted visible drift.
 
 `PRINT-PROFILE-CALCULUS1` routes all 43 Calculus engine and workspace result producers through `profileCalculusResult()`, covering derivatives, integrals, limits, Laplace transforms, ODEs, and series without changing their native serializers. Explicit existing result annotations preserve TypeScript union narrowing at wrapped integral helpers. Calculus reaches zero compatibility; the global floor is 67 compatibility, 209 migrated, and 240 forwarded. All 25 Calculus fixtures are hard, bringing total hard replay coverage to 70/100. Focused coverage passed 31 files and 244 tests, all 11 Calculus Chromium smokes passed, and fresh Laplace plus ODE cards were inspected without accepted visible drift.
+
+`PRINT-PROFILE-GUIDED-DOMAINS1` routes eight Trigonometry, two Geometry, and ten Statistics result producers through explicit native-domain profiles. Table had zero compatibility debt but one unprofiled forwarded result seam, so its success `DisplayOutcome` now explicitly uses `profileTableResult()` while structured rows remain unchanged. The global floor is 47 compatibility, 230 migrated, and 239 forwarded. All four five-fixture workspace files become hard, bringing hard replay coverage to 90/100. Native coverage passed 35 files and 231 tests, eight Chromium canaries passed, and representative Trigonometry, Geometry, Statistics, and Table surfaces were inspected without accepted visible drift.
 
 ### A5. `DISPLAY-CONTRACT-INVERSION1` Later Gate
 

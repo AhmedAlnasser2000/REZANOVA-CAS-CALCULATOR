@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "table",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "table-polynomial",

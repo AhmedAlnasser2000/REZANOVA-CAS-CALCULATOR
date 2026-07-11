@@ -13,6 +13,7 @@ import {
   pointLatex,
   type GeometryEvaluation,
 } from './shared';
+import { profileGeometryResult } from '../display/printer';
 
 const EPSILON = 1e-9;
 
@@ -148,12 +149,12 @@ export function solveLineEquation(state: LineEquationState): GeometryEvaluation 
 
   if (Math.abs(parsed.dx) < EPSILON) {
     const xLine = `x=${numericLatex(parsed.p1.x)}`;
-    return {
+    return profileGeometryResult({
       exactLatex: xLine,
       approxText: xLine,
       warnings: ['Vertical lines are reported in x = constant form.'],
       resultOrigin: 'geometry-coordinate',
-    };
+    });
   }
 
   const slope = parsed.dy / parsed.dx;

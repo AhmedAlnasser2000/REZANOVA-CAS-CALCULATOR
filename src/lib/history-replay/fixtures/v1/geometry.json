@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "geometry",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "geometry-square",

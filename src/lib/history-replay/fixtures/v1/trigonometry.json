@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "trigonometry",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "trigonometry-function",

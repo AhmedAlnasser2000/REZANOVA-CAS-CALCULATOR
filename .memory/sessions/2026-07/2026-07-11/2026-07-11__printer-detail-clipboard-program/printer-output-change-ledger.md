@@ -16,7 +16,7 @@
 
 ## Accepted Changes
 
-None through `PRINT-PROFILE-CALCULUS1`.
+None through `PRINT-PROFILE-GUIDED-DOMAINS1`.
 
 ## Rejected Candidates
 

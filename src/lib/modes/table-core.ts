@@ -16,6 +16,7 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import { textDetailSection } from '../display/result/result-detail-lines';
+import { profileTableResult } from '../display/printer';
 
 export type RunTableModeRequest = {
   primaryLatex: string;
@@ -163,7 +164,7 @@ function buildTableModeResult(
 
   return {
     response,
-    outcome: {
+    outcome: profileTableResult<DisplayOutcome>({
       kind: 'success',
       title: 'Table',
       exactLatex: prepared.functions,
@@ -179,7 +180,7 @@ function buildTableModeResult(
         }) ?? []),
       ],
       variableSubstitutions: prepared.substitutions.length > 0 ? prepared.substitutions : undefined,
-    },
+    }),
   };
 }
 

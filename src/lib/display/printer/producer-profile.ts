@@ -45,3 +45,19 @@ export function profileSymbolicCoreResult<T>(result: T): T {
 export function profileCalculusResult<T>(result: T): T {
   return profileDomainResult(result);
 }
+
+export function profileTrigonometryResult<T>(result: T): T {
+  return profileDomainResult(result);
+}
+
+export function profileGeometryResult<T>(result: T): T {
+  return profileDomainResult(result);
+}
+
+export function profileStatisticsResult<T>(result: T): T {
+  return profileDomainResult(result);
+}
+
+export function profileTableResult<T>(result: T): T {
+  return profileDomainResult(result);
+}

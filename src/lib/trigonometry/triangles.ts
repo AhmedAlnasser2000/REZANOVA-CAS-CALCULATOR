@@ -2,6 +2,7 @@ import type { CosineRuleState, RightTriangleState, SineRuleState } from '../../t
 import { formatApproxNumber, formatNumber } from '../display/format';
 import { parseSignedNumberInput } from '../numeric/signed-number';
 import type { TrigEvaluation } from './angles';
+import { profileTrigonometryResult } from '../display/printer';
 
 const DEGREE = Math.PI / 180;
 const EPSILON = 1e-9;
@@ -43,7 +44,7 @@ function asLatex(solution: TriangleSolution) {
 }
 
 function triangleResult(solution: TriangleSolution, warnings: string[] = []): TrigEvaluation {
-  return {
+  return profileTrigonometryResult({
     exactLatex: asLatex(solution),
     approxText: [
       `a=${formatApproxNumber(solution.sideA)}`,
@@ -55,7 +56,7 @@ function triangleResult(solution: TriangleSolution, warnings: string[] = []): Tr
     ].join(', '),
     warnings,
     resultOrigin: 'triangle-solver',
-  };
+  });
 }
 
 function solveFromThreeSides(sideA: number, sideB: number, sideC: number) {

@@ -5,6 +5,7 @@ import type {
 } from '../../types/calculator';
 import { formatNumber, latexToApproxText } from '../display/format';
 import { parseSignedNumberInput } from '../numeric/signed-number';
+import { profileGeometryResult } from '../display/printer';
 
 export type GeometryEvaluation = {
   exactLatex?: string;
@@ -51,14 +52,14 @@ export function geometryResult(
   warnings: string[],
   resultOrigin: GeometryResultOrigin,
 ): GeometryEvaluation {
-  return {
+  return profileGeometryResult({
     exactLatex: rows.map((row) => `${row.label}=${row.latex}`).join(',\\ '),
     approxText: rows
       .map((row) => `${row.label}=${row.text ?? latexToApproxText(row.latex) ?? row.latex}`)
       .join(', '),
     warnings,
     resultOrigin,
-  };
+  });
 }
 
 export function geometryError(error: string): GeometryEvaluation {

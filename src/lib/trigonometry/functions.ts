@@ -9,6 +9,7 @@ import {
   parseAngleInput,
   parseSupportedRatio,
 } from './angles';
+import { profileTrigonometryResult } from '../display/printer';
 
 const EPSILON = 1e-9;
 
@@ -54,12 +55,12 @@ function toNumericTrigResult(kind: 'sin' | 'cos' | 'tan', degrees: number): Trig
     };
   }
 
-  return {
+  return profileTrigonometryResult({
     exactLatex: formatNumber(value),
     approxText: formatApproxNumber(value),
     warnings: [],
     resultOrigin: 'numeric',
-  };
+  });
 }
 
 function evaluateDirectTrig(kind: 'sin' | 'cos' | 'tan', argumentLatex: string, angleUnit: AngleUnit): TrigEvaluation {
@@ -81,12 +82,12 @@ function evaluateDirectTrig(kind: 'sin' | 'cos' | 'tan', argumentLatex: string, 
 
   const numeric = toNumericTrigResult(kind, degrees);
   if (exact) {
-    return {
+    return profileTrigonometryResult({
       exactLatex: exact,
       approxText: numeric.approxText,
       warnings: [`Angle unit: ${angleUnit.toUpperCase()}.`],
       resultOrigin: 'exact-special-angle',
-    };
+    });
   }
 
   return {
@@ -113,12 +114,12 @@ function evaluateInverseTrig(kind: 'asin' | 'acos' | 'atan', argumentLatex: stri
 
   const exactDegrees = exactInverseTrigDegrees(kind, value);
   if (exactDegrees !== undefined) {
-    return {
+    return profileTrigonometryResult({
       exactLatex: formatDegreesAsUnitLatex(exactDegrees, angleUnit),
       approxText: formatApproxNumber(convertAngle(exactDegrees, 'deg', angleUnit)),
       warnings: ['Principal value returned.'],
       resultOrigin: 'exact-special-angle',
-    };
+    });
   }
 
   const radians = kind === 'asin'
@@ -128,12 +129,12 @@ function evaluateInverseTrig(kind: 'asin' | 'acos' | 'atan', argumentLatex: stri
       : Math.atan(value);
   const numeric = convertAngle(radians, 'rad', angleUnit);
 
-  return {
+  return profileTrigonometryResult({
     exactLatex: formatNumber(numeric),
     approxText: formatApproxNumber(numeric),
     warnings: ['Principal value returned.'],
     resultOrigin: 'numeric',
-  };
+  });
 }
 
 export function evaluateTrigFunction(expressionLatex: string, angleUnit: AngleUnit): TrigEvaluation {

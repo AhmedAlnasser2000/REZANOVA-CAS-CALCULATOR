@@ -2,6 +2,7 @@ import type { AngleUnit } from '../../types/calculator';
 import { formatNumber } from '../display/format';
 import { mathDetailSection } from '../display/result-detail-lines';
 import { formatDegreesAsUnitLatex, type TrigEvaluation } from './angles';
+import { profileTrigonometryResult } from '../display/printer';
 
 type TrigCarrier = 'sin' | 'cos' | 'tan';
 
@@ -384,7 +385,7 @@ export function analyzePeriodPhase(
   const phase = phaseShiftLatex(parsed, angleUnit);
   const period = periodLatex(parsed, angleUnit);
   const normalized = normalizedWaveLatex(parsed, phase);
-  return {
+  return profileTrigonometryResult({
     exactLatex: `y=${normalized},\\quad P=${period},\\quad h=${phase}`,
     approxText: `Carrier ${parsed.carrier}; period ${period}; phase shift ${phase}.`,
     warnings: [],
@@ -392,5 +393,5 @@ export function analyzePeriodPhase(
       mathDetailSection('Wave Facts', waveFacts(parsed, phase, period, angleUnit)),
       mathDetailSection('First Cycle Landmarks', landmarkFacts(parsed, phase, period, angleUnit)),
     ],
-  };
+  });
 }

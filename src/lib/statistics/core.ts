@@ -24,6 +24,7 @@ import {
   type RegressionFitSummary,
 } from './quality-readback';
 import { formatStatisticsNumber, parseIntegerDraft, parseNumericDraft } from './shared';
+import { profileStatisticsResult } from '../display/printer';
 
 type NumericFrequencyRow = {
   value: number;
@@ -332,7 +333,7 @@ function descriptiveOutcomeFromSummary(summary: MeanInferenceSummary & ReturnTyp
   const warnings = summary.count < 2
     ? ['Sample variance and sample standard deviation need at least two values.']
     : [];
-  return {
+  return profileStatisticsResult({
     exactLatex: [
       `n=${summary.count}`,
       `\\sum x=${numberToLatex(summary.sum)}`,
@@ -348,15 +349,15 @@ function descriptiveOutcomeFromSummary(summary: MeanInferenceSummary & ReturnTyp
     ].filter(Boolean).join(',\\ '),
     approxText: `n=${summary.count}, mean=${formatStatisticsNumber(summary.mean)}, median=${formatStatisticsNumber(summary.median)}, population sd=${formatStatisticsNumber(summary.standardDeviation)}${summary.sampleStandardDeviation === null ? '' : `, sample sd=${formatStatisticsNumber(summary.sampleStandardDeviation)}`}`,
     warnings,
-  };
+  });
 }
 
 function datasetOutcome(values: number[]): StatisticsEvaluation {
-  return {
+  return profileStatisticsResult({
     exactLatex: `n=${values.length},\\ \\left\\{${values.map(numberToLatex).join(',\\ ')}\\right\\}`,
     approxText: `${values.length} values loaded`,
     warnings: [],
-  };
+  });
 }
 
 function frequencyOutcomeFromRows(rows: NumericFrequencyRow[]): StatisticsEvaluation {
@@ -372,11 +373,11 @@ function frequencyOutcomeFromRows(rows: NumericFrequencyRow[]): StatisticsEvalua
       ? `,\\ \\operatorname{mode}=${numberToLatex(modeRows[0].value)}`
       : '';
 
-  return {
+  return profileStatisticsResult({
     exactLatex: `n=${totalCount},\\ \\left\\{${rows.map((row) => `${numberToLatex(row.value)}:${row.frequency}`).join(',\\ ')}\\right\\}${modeLatex}`,
     approxText: `n=${totalCount}, ${rows.map((row) => `${formatStatisticsNumber(row.value)}:${row.frequency}`).join(', ')}`,
     warnings,
-  };
+  });
 }
 
 function meanInferenceSummaryFromValues(values: number[]): MeanInferenceSummary {
@@ -435,7 +436,7 @@ function meanInferenceOutcome(
       return statisticsError('Mean confidence intervals need at least two numeric observations.');
     }
 
-    return {
+    return profileStatisticsResult({
       exactLatex: [
         `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
         `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
@@ -446,7 +447,7 @@ function meanInferenceOutcome(
       ].join(',\\ '),
       approxText: `${formatStatisticsNumber(level * 100)}% CI: (${formatStatisticsNumber(result.lowerBound)}, ${formatStatisticsNumber(result.upperBound)})`,
       warnings: [],
-    };
+    });
   }
 
   const mu0 = parseNumericDraft(request.mu0 ?? '');
@@ -462,7 +463,7 @@ function meanInferenceOutcome(
   const tStatisticLatex = Number.isFinite(result.tStatistic) ? numberToLatex(result.tStatistic) : '\\infty';
   const tStatisticApprox = Number.isFinite(result.tStatistic) ? formatStatisticsNumber(result.tStatistic) : 'infinity';
 
-  return {
+  return profileStatisticsResult({
     exactLatex: [
       `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
       `\\mu_0=${numberToLatex(mu0)}`,
@@ -474,7 +475,7 @@ function meanInferenceOutcome(
     ].join(',\\ '),
     approxText: `two-sided t-test: t=${tStatisticApprox}, p=${formatStatisticsNumber(result.pValue)}, ${result.rejectNull ? 'reject H0' : 'fail to reject H0'}`,
     warnings: [],
-  };
+  });
 }
 
 function factorial(value: number) {
@@ -548,11 +549,11 @@ function binomialOutcome(request: Extract<StatisticsRequest, { kind: 'binomial' 
       : Array.from({ length: x + 1 }, (_, index) => binomialPmf(n, p, index))
         .reduce((total, probability) => total + probability, 0);
 
-  return {
+  return profileStatisticsResult({
     exactLatex: `P(X${request.mode === 'pmf' ? '=' : '\\le'}${x})=${numberToLatex(value)}`,
     approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
     warnings: [],
-  };
+  });
 }
 
 function normalOutcome(request: Extract<StatisticsRequest, { kind: 'normal' }>): StatisticsEvaluation {
@@ -575,13 +576,13 @@ function normalOutcome(request: Extract<StatisticsRequest, { kind: 'normal' }>):
       ? normalPdf(mean, standardDeviation, x)
       : normalCdf(mean, standardDeviation, x);
 
-  return {
+  return profileStatisticsResult({
     exactLatex: request.mode === 'pdf'
       ? `f(${numberToLatex(x)})=${numberToLatex(value)}`
       : `P(X\\le${numberToLatex(x)})=${numberToLatex(value)}`,
     approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
     warnings: [],
-  };
+  });
 }
 
 function poissonOutcome(request: Extract<StatisticsRequest, { kind: 'poisson' }>): StatisticsEvaluation {
@@ -601,11 +602,11 @@ function poissonOutcome(request: Extract<StatisticsRequest, { kind: 'poisson' }>
       : Array.from({ length: x + 1 }, (_, index) => poissonPmf(lambda, index))
         .reduce((total, probability) => total + probability, 0);
 
-  return {
+  return profileStatisticsResult({
     exactLatex: `P(X${request.mode === 'pmf' ? '=' : '\\le'}${x})=${numberToLatex(value)}`,
     approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
     warnings: [],
-  };
+  });
 }
 
 function regressionSummary(points: NumericPoint[]) {
@@ -703,7 +704,7 @@ function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regressi
     warnings.push('Residual variance and residual standard error need at least 3 points.');
   }
 
-  return {
+  return profileStatisticsResult({
     exactLatex: [
       `\\hat{y}=${numberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${numberToLatex(summary.intercept)}`,
       `m=${numberToLatex(summary.slope)}`,
@@ -715,7 +716,7 @@ function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regressi
     approxText: `ŷ=${formatStatisticsNumber(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${formatStatisticsNumber(summary.intercept)}, r=${formatStatisticsNumber(summary.r)}, r²=${formatStatisticsNumber(summary.rSquared)}, n=${summary.count}`,
     detailSections: [regressionQualitySection(summary, diagnostics)],
     warnings,
-  };
+  });
 }
 
 function correlationOutcome(request: Extract<StatisticsRequest, { kind: 'correlation' }>): StatisticsEvaluation {
@@ -732,7 +733,7 @@ function correlationOutcome(request: Extract<StatisticsRequest, { kind: 'correla
   }
 
   const strength = correlationStrength(summary.r);
-  return {
+  return profileStatisticsResult({
     exactLatex: [
       `r=${numberToLatex(summary.r)}`,
       `r^2=${numberToLatex(summary.rSquared)}`,
@@ -742,7 +743,7 @@ function correlationOutcome(request: Extract<StatisticsRequest, { kind: 'correla
     approxText: `r=${formatStatisticsNumber(summary.r)}, r²=${formatStatisticsNumber(summary.rSquared)}, ${strength}, n=${summary.count}`,
     detailSections: [correlationQualitySection(summary)],
     warnings: fitQualityWarnings(summary.r, summary.count),
-  };
+  });
 }
 
 export function runStatisticsRequest(request: StatisticsRequest): DisplayOutcome {

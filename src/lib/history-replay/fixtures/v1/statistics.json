@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "statistics",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "statistics-descriptive",

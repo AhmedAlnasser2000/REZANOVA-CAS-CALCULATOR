@@ -12,6 +12,7 @@ import {
   formatDegreesAsUnitText,
   parseAngleInput,
 } from './angles';
+import { profileTrigonometryResult } from '../display/printer';
 
 const EPSILON = 1e-9;
 
@@ -339,7 +340,7 @@ function solveMixedLinearTrigEquation(state: TrigEquationState): TrigEvaluation 
     };
   }
 
-  return {
+  return profileTrigonometryResult({
     exactLatex: buildExactLatex(xSolutions, state.angleUnit),
     branchReadback: buildTrigEquationBranchReadback(
       xSolutions,
@@ -353,7 +354,7 @@ function solveMixedLinearTrigEquation(state: TrigEquationState): TrigEvaluation 
       `Reference normalized equation: ${syntheticEquationText}.`,
     ],
     resultOrigin: exactCycleSolutions('sin', normalizedRhs) ? 'exact-special-angle' : 'numeric',
-  };
+  });
 }
 
 export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
@@ -405,7 +406,7 @@ export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
     };
   }
 
-  return {
+  return profileTrigonometryResult({
     exactLatex: buildExactLatex(filteredSolutions, state.angleUnit),
     branchReadback: buildTrigEquationBranchReadback(
       filteredSolutions,
@@ -418,5 +419,5 @@ export function solveTrigEquation(state: TrigEquationState): TrigEvaluation {
       buildPeriodicFamily(parsed.kind, filteredSolutions, parsed.argument.coefficient, state.angleUnit),
     ],
     resultOrigin: exactSolutions ? 'exact-special-angle' : 'numeric',
-  };
+  });
 }

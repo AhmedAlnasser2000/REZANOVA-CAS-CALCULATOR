@@ -198,7 +198,11 @@ export const MIGRATION_WRAPPER_NAMES = new Set([
   'canonicalDirectSymbolicOutcome',
   'profileCalculusResult',
   'profileEquationResult',
+  'profileGeometryResult',
+  'profileStatisticsResult',
   'profileSymbolicCoreResult',
   'profileSymbolicIntegrationResult',
   'profileSymbolicLimitsResult',
+  'profileTableResult',
+  'profileTrigonometryResult',
 ]);

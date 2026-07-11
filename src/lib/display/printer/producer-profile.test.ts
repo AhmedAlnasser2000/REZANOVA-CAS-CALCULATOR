@@ -2,9 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   profileCalculusResult,
   profileEquationResult,
+  profileGeometryResult,
+  profileStatisticsResult,
   profileSymbolicCoreResult,
   profileSymbolicIntegrationResult,
   profileSymbolicLimitsResult,
+  profileTableResult,
+  profileTrigonometryResult,
 } from './producer-profile';
 
 describe('producer printer profiles', () => {
@@ -37,5 +41,15 @@ describe('producer printer profiles', () => {
   it('keeps Calculus workspace serialization stable under pedagogical-v1', () => {
     const result = { kind: 'success', exactLatex: String.raw`y=Ce^{2x}` };
     expect(profileCalculusResult(result)).toBe(result);
+  });
+
+  it.each([
+    ['Trigonometry', profileTrigonometryResult, String.raw`x=30^\circ+360^\circ k`],
+    ['Geometry', profileGeometryResult, String.raw`d=\sqrt{5}`],
+    ['Statistics', profileStatisticsResult, String.raw`\bar{x}=2`],
+    ['Table', profileTableResult, String.raw`f(x)=x^2`],
+  ])('keeps %s serialization stable under pedagogical-v1', (_name, profile, exactLatex) => {
+    const result = { kind: 'success', exactLatex };
+    expect(profile(result)).toBe(result);
   });
 });
