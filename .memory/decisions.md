@@ -1,5 +1,12 @@
 # Decisions
 
+## 2026-07-11 - NOTEBOOK-RICH-DOCUMENT-MODEL1
+
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook rich authoring uses a versioned app-owned JSON document tree. Tiptap and ProseMirror remain replaceable editor implementation details; their runtime objects and package-native JSON types do not become Notebook package, persistence, Surface Protocol, or external contracts.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Version-1 Notebook drafts migrate one way into version 2. Valid accepted inline spans become structured inline math, while stale or misaligned spans fall back to the unchanged original prose rather than losing or rewriting author text.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Durable Notebook storage is a required later product capability, but the current program adds only an asynchronous persistence port and in-memory contract adapter. Production remains on workspace surface state until History persistence parity is committed and a separate Notebook local-persistence milestone owns its namespace and lifecycle.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook editor dependencies must be official open-source packages with MIT, ISC, BSD-2-Clause, BSD-3-Clause, or Apache-2.0 licensing. Tiptap Pro, Cloud, paid, source-available, copyleft, unidentified, collaboration, and unofficial extensions are excluded.
+
 ## 2026-07-06 - NOTEBOOK V1 Math-Aware Authoring
 
 - [agent: codex | model: gpt-5.5 | primary_agent: codex | primary_agent_model: gpt-5.5 | attribution_basis: live] Notebook V1 is a protected app-level page workspace with document tabs, not a singleton and not a calculator-shell mode. Each Notebook tab owns a session-only draft, has null Order of Execution runtime context, suppresses quick inspectors, and uses protected page tab actions.
