@@ -13,6 +13,7 @@ import {
 import { numericNodeValue, sameNode } from './node-helpers';
 import { scaleLatex } from './rational';
 import { parseSymbolicAffine } from './symbolic-coefficients';
+import { profileSymbolicIntegrationResult } from '../../display/printer';
 
 type TrigHead = 'Sin' | 'Cos' | 'Tan' | 'Cot' | 'Sec' | 'Csc';
 
@@ -155,11 +156,11 @@ function symbolicTrigDerivativeProductResult(
   const denominator = denominatorMultiplier === undefined
     ? affineSlope
     : multiplyNodeFactors([denominatorMultiplier, affineSlope]);
-  return {
+  return profileSymbolicIntegrationResult({
     exactLatex: multiplyLatex(ratioLatex(numerator, denominator), primitiveLatex),
     verification: proof(reason),
     exactSupplementLatex: exactSupplementLatex([nonzeroFact(affineSlopeLatex)]),
-  };
+  });
 }
 
 function trigArgument(factor: unknown, head: TrigHead) {
@@ -205,7 +206,7 @@ function tryNumericTrigDerivativeProductRule(
   if (secTan !== undefined) {
     const affine = parseAffine(secTan, variable);
     return affine && affine.a !== 0
-      ? { exactLatex: scaleLatex(`\\sec\\left(${affine.latex}\\right)`, coefficient / affine.a) }
+      ? profileSymbolicIntegrationResult({ exactLatex: scaleLatex(`\\sec\\left(${affine.latex}\\right)`, coefficient / affine.a) })
       : undefined;
   }
 
@@ -213,7 +214,7 @@ function tryNumericTrigDerivativeProductRule(
   if (cscCot !== undefined) {
     const affine = parseAffine(cscCot, variable);
     return affine && affine.a !== 0
-      ? { exactLatex: scaleLatex(`\\csc\\left(${affine.latex}\\right)`, -coefficient / affine.a) }
+      ? profileSymbolicIntegrationResult({ exactLatex: scaleLatex(`\\csc\\left(${affine.latex}\\right)`, -coefficient / affine.a) })
       : undefined;
   }
 
@@ -221,7 +222,7 @@ function tryNumericTrigDerivativeProductRule(
   if (sinCos !== undefined) {
     const affine = parseAffine(sinCos, variable);
     return affine && affine.a !== 0
-      ? { exactLatex: scaleLatex(`\\sin\\left(${affine.latex}\\right)^2`, coefficient / (2 * affine.a)) }
+      ? profileSymbolicIntegrationResult({ exactLatex: scaleLatex(`\\sin\\left(${affine.latex}\\right)^2`, coefficient / (2 * affine.a)) })
       : undefined;
   }
 

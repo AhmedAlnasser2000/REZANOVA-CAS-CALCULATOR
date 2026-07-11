@@ -36,6 +36,7 @@
 - `536d1f07` - `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`
 - `3d22c6dd` - `PRINT-PROFILE-CALCULATE-EQUATION1`
 - `5eb2f9c6` - `PRINT-PROFILE-EQUATION-ADVANCED1`
-- pending at write time - `PRINT-PROFILE-SYMBOLIC-LIMITS1`
+- `1c67132f` - `PRINT-PROFILE-SYMBOLIC-LIMITS1`
+- pending at write time - `PRINT-PROFILE-SYMBOLIC-INTEGRATION1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

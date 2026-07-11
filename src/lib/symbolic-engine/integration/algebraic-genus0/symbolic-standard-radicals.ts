@@ -26,6 +26,7 @@ import {
   algebraicGenus0SlopeNonzeroFact,
   type AlgebraicGenus0Fact,
 } from './facts';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type AlgebraicGenus0SymbolicStandardRadicalRule = {
   exactLatex: string;
@@ -111,14 +112,14 @@ function finish(input: {
   variable: string;
 }): AlgebraicGenus0SymbolicStandardRadicalRule {
   const antiderivativeNode = simplifyMathJsonNodeOrOriginal(input.node);
-  return {
+  return profileSymbolicIntegrationResult({
     exactLatex: normalizeGeneratedIntegrationLatex(
       input.exactLatex ?? boxLatex(antiderivativeNode),
       input.variable,
     ),
     verification: proof(),
     exactSupplementLatex: algebraicGenus0FactsToExactSupplementLatex(input.exactSupplementFacts),
-  };
+  });
 }
 
 function tryAffineRadical(
@@ -143,7 +144,7 @@ function tryAffineRadical(
   if (shape.kind === 'radical') {
     const slopeLatex = boxLatex(simplifyMathJsonNodeOrOriginal(slope.node));
     const groupedRadicandLatex = wrapGroupedLatex(radicandLatex(shape.radicand));
-    return finish({
+    return finish(profileSymbolicIntegrationResult({
       node: divideMathJsonNodes(
         multiplyMathJsonNodes(2, power(shape.radicand, THREE_HALVES)),
         multiplyMathJsonNodes(3, slope.node),
@@ -153,12 +154,12 @@ function tryAffineRadical(
         : `\\frac{2${groupedRadicandLatex}^{\\frac{3}{2}}}{3${wrapGroupedLatex(slopeLatex)}}`,
       exactSupplementFacts: facts,
       variable,
-    });
+    }));
   }
 
   const slopeLatex = boxLatex(simplifyMathJsonNodeOrOriginal(slope.node));
   const radicandRootLatex = `\\sqrt{${radicandLatex(shape.radicand)}}`;
-  return finish({
+  return finish(profileSymbolicIntegrationResult({
     node: divideMathJsonNodes(
       multiplyMathJsonNodes(2, sqrt(shape.radicand)),
       slope.node,
@@ -168,7 +169,7 @@ function tryAffineRadical(
       : `\\frac{2}{${wrapGroupedLatex(slopeLatex)}}${radicandRootLatex}`,
     exactSupplementFacts: facts,
     variable,
-  });
+  }));
 }
 
 function stripLeadingNegative(node: unknown): unknown | undefined {

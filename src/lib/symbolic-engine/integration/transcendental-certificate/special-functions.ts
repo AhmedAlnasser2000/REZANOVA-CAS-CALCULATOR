@@ -30,6 +30,7 @@ import {
   type TranscendentalNonElementaryCertificate,
 } from './result-shape';
 import { certificateUxDetailSections } from './certificate-ux';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export { buildFresnelQuadraticSpecialFunctionCertificate } from './fresnel';
 
@@ -749,7 +750,7 @@ export function buildExpQuadraticSpecialFunctionCertificateFromProof(
     return undefined;
   }
 
-  return {
+  return profileSymbolicIntegrationResult({
     ...certificate,
     exactLatex: functionLatex,
     antiderivativeKind: 'special-function',
@@ -757,5 +758,5 @@ export function buildExpQuadraticSpecialFunctionCertificateFromProof(
       ...updateProofScopeForSpecialFunction(certificate.detailSections),
       specialFunctionDetail(functionLatex),
     ],
-  };
+  });
 }

@@ -32,6 +32,7 @@ import {
   buildPolynomialNodeFromCoefficients,
 } from './polynomial';
 import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type RischNormanHermiteReductionStopReason =
   | 'coefficient-stop'
@@ -723,7 +724,7 @@ function buildResult(input: {
     : correctionLatexPart;
 
   const facts = mergeRischNormanCoefficientFacts(input.facts);
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'success' as const,
     antiderivativeNode,
     exactLatex: normalizeGeneratedRischNormanLatex(exactLatex, input.variable),
@@ -732,7 +733,7 @@ function buildResult(input: {
       entries: facts.map(factEntry),
       source: 'candidate-validation',
     }),
-  };
+  });
 }
 
 export function tryRischNormanHermiteReductionRule(

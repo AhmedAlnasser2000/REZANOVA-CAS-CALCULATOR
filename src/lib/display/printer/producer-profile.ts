@@ -33,3 +33,11 @@ export function profileEquationResult<T>(result: T): T {
 export function profileSymbolicLimitsResult<T>(result: T): T {
   return profileDomainResult(result);
 }
+
+export function profileSymbolicIntegrationResult<T>(result: T): T {
+  return profileDomainResult(result);
+}
+
+export function profileSymbolicCoreResult<T>(result: T): T {
+  return profileDomainResult(result);
+}

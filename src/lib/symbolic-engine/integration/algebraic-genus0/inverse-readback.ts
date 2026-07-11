@@ -36,6 +36,7 @@ import {
   type AlgebraicGenus0PullbackSuccess,
   type AlgebraicGenus0PullbackStopReason,
 } from './pullback';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type AlgebraicGenus0InverseReadbackSource =
   | 'affine-radical'
@@ -123,7 +124,7 @@ function finish(input: {
   pullback: AlgebraicGenus0PullbackSuccess;
 }): AlgebraicGenus0InverseReadbackSuccess {
   const antiderivativeNode = simplifyMathJsonNodeOrOriginal(input.node);
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'success',
     variable: input.variable,
     parameter: input.pullback.parameter,
@@ -136,7 +137,7 @@ function finish(input: {
     verification: proof(input.source),
     exactSupplementLatex: input.pullback.exactSupplementLatex,
     pullback: input.pullback,
-  };
+  });
 }
 
 function isExactOne(node: unknown) {
@@ -219,16 +220,16 @@ function affineReadback(
       power(shape.radicand, { numerator: 3, denominator: 2 }),
     );
     const denominator = multiplyMathJsonNodes(THREE.numerator, slope);
-    return {
+    return profileSymbolicIntegrationResult({
       node: divideMathJsonNodes(numerator, denominator),
       source: 'affine-radical',
       exactLatex: slopeLatex === '1'
         ? `\\frac{2}{3}${radicandLatex}^{\\frac{3}{2}}`
         : `\\frac{2${radicandLatex}^{\\frac{3}{2}}}{3${wrapGroupedLatex(slopeLatex)}}`,
-    };
+    });
   }
 
-  return {
+  return profileSymbolicIntegrationResult({
     node: divideMathJsonNodes(
       multiplyMathJsonNodes(TWO.numerator, sqrt(shape.radicand)),
       slope,
@@ -237,7 +238,7 @@ function affineReadback(
     exactLatex: slopeLatex === '1'
       ? `2\\sqrt{${boxLatex(simplifyMathJsonNodeOrOriginal(shape.radicand))}}`
       : `\\frac{2\\sqrt{${boxLatex(simplifyMathJsonNodeOrOriginal(shape.radicand))}}}{${wrapGroupedLatex(slopeLatex)}}`,
-  };
+  });
 }
 
 export function parseAlgebraicGenus0StandardQuadratic(

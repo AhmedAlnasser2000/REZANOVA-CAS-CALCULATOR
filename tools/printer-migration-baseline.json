@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "PRINT-PROFILE-SYMBOLIC-LIMITS1 routes all 35 proof-aware Limits result producers through the explicit Symbolic Limits domain profile while preserving exact conclusions and method readback.",
-  "registryDigest": "68cc00c8655c6cda8285",
+  "acceptedReason": "PRINT-PROFILE-SYMBOLIC-INTEGRATION1 migrates 31 Integration-owned producers and corrects three generic factor or derivative producers into an explicit zero-debt symbolic-core profile; exact antiderivatives, constants, method evidence, and controlled stops remain unchanged.",
+  "registryDigest": "11229e8e725fa539737c",
   "resultProperties": [
     "answerLatex",
     "exactLatex",
@@ -18,7 +18,8 @@
     "shared-algebra": 3,
     "shared-runtime": 0,
     "statistics": 10,
-    "symbolic-integration": 34,
+    "symbolic-core": 0,
+    "symbolic-integration": 0,
     "symbolic-limits": 0,
     "table": 0,
     "trigonometry": 8
@@ -29,7 +30,6 @@
     "linear-algebra-result-v1": 44,
     "shared-algebra-result-v1": 3,
     "statistics-result-v1": 10,
-    "symbolic-integration-result-v1": 34,
     "trigonometry-result-v1": 8
   },
   "categoryCounts": {
@@ -857,278 +857,6 @@
       "sourceKind": "property",
       "lane": "statistics",
       "fallbackId": "statistics-result-v1"
-    },
-    {
-      "id": "e73aeaa07081c747bae5:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/inverse-readback.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "3dc5f12e1ae822621a12:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/inverse-readback.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "1ea7c47f71fb60bac4f3:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/inverse-readback.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "7220332115bad85475bc:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/rational-in-radical.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "5a91ff6ddda1ebb829f7:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/symbolic-standard-radicals.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "e9d6ba6a58b97641f6af:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/symbolic-standard-radicals.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "32e8379d495e7374ed7a:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/symbolic-standard-radicals.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "7654152ca81385abc36e:1",
-      "file": "src/lib/symbolic-engine/integration/algebraic-genus1/rational-in-radical-hermite.ts",
-      "property": "answerLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "fb5f95c160b184913896:1",
-      "file": "src/lib/symbolic-engine/integration/numeric-base-exponential-parts.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "6baa5408c71375482814:1",
-      "file": "src/lib/symbolic-engine/integration/rational.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "c9ebb7bfa8b243c224bd:1",
-      "file": "src/lib/symbolic-engine/integration/rational.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "576c57cff20af0b70f0d:1",
-      "file": "src/lib/symbolic-engine/integration/rational.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "3bb80a0d0e3f9ac0cbe7:1",
-      "file": "src/lib/symbolic-engine/integration/rational.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "8876fe5ea51d8c665ed7:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/affine-rational-correction.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "947121d7ac66cd2d5d50:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/depth2-substitution.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "efc73b62a7d827506d91:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/exp-sincos-ansatz.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "f5d5c335f64eef9135ba:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/exponential-ansatz.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "c06b902899fae553238e:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/hermite-reduction.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "29029da45bde8c9a875d:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/log-correction.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "09d6f825f87187baa890:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/log-rational-correction.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "2df4342550a0e889b787:1",
-      "file": "src/lib/symbolic-engine/integration/risch-norman/sincos-ansatz.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "e602e26a4555d1e4aff5:1",
-      "file": "src/lib/symbolic-engine/integration/transcendental-certificate/quotient-powers.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "4aa07e262dd02b3df414:1",
-      "file": "src/lib/symbolic-engine/integration/transcendental-certificate/result-shape.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "469a9a71b060e74b7d78:1",
-      "file": "src/lib/symbolic-engine/integration/transcendental-certificate/special-functions.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "098d88a122d0e437ecd4:1",
-      "file": "src/lib/symbolic-engine/integration/transcendental-rde.ts",
-      "property": "solutionLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "d7a7e4d282d60f616eec:1",
-      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "5fcd531844f5f69823bf:1",
-      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "a34f8c97f743b2f20cb8:1",
-      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "0391edadaddaf1377355:1",
-      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "4a261e9ac3305e4080a9:1",
-      "file": "src/lib/symbolic-engine/integration/trig-substitution-radicals.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "1f002770c8e562af59df:1",
-      "file": "src/lib/symbolic-engine/integration/trig-substitution-radicals.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "1de87a2ead99ddbb1411:1",
-      "file": "src/lib/symbolic-engine/orchestrator.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "829302ea35a3f396b02d:1",
-      "file": "src/lib/symbolic-engine/orchestrator.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
-    },
-    {
-      "id": "a3ba2af4637be6544cff:1",
-      "file": "src/lib/symbolic-engine/partials.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "symbolic-integration",
-      "fallbackId": "symbolic-integration-result-v1"
     },
     {
       "id": "a23ba8ab3953ec905da3:1",

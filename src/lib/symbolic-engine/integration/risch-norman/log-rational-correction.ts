@@ -26,6 +26,7 @@ import {
   parseRischNormanPolynomial,
   type RischNormanPolynomialStopReason,
 } from './polynomial';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type RischNormanLogRationalCorrectionStopReason =
   | 'coefficient-stop'
@@ -448,7 +449,7 @@ export function solveRischNormanLogRationalCorrection(
     positiveFact(affine.latex),
   ]);
 
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'success',
     family: 'affine-log-rational-correction',
     variable,
@@ -459,5 +460,5 @@ export function solveRischNormanLogRationalCorrection(
     exactLatex: normalizeGeneratedRischNormanLatex(boxLatex(antiderivativeNode), variable),
     facts,
     proof: 'risch-norman-log-rational-correction-rule-proof',
-  };
+  });
 }

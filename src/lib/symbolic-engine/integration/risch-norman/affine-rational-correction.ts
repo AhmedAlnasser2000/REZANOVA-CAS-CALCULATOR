@@ -24,6 +24,7 @@ import {
 } from './coefficient-field';
 import { parseRischNormanPolynomial } from './polynomial';
 import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type RischNormanAffineRationalCorrectionStopReason =
   | 'coefficient-stop'
@@ -439,7 +440,7 @@ export function tryRischNormanAffineRationalCorrectionRule(
     slope: slope.coefficient,
   });
 
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'success',
     antiderivativeNode,
     exactLatex: normalizeGeneratedRischNormanLatex(buildCorrectionLatex({
@@ -451,5 +452,5 @@ export function tryRischNormanAffineRationalCorrectionRule(
     }), variable),
     verification: proof(),
     exactSupplementLatex: supplements(dedupeEntries(entries)),
-  };
+  });
 }

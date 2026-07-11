@@ -25,6 +25,7 @@ import {
   type RischNormanPolynomialStopReason,
 } from './polynomial';
 import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type RischNormanAnsatzFact = {
   kind: 'nonzero' | 'positive' | 'nonunit';
@@ -265,7 +266,7 @@ export function solveRischNormanExponentialAnsatz(
     ? `e^{${affine.latex}}`
     : `${wrapGroupedLatex(baseLatex)}^{${affine.latex}}`;
 
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'success',
     family,
     variable,
@@ -274,5 +275,5 @@ export function solveRischNormanExponentialAnsatz(
     exactLatex: normalizeGeneratedRischNormanLatex(`${carrierLatex}\\left(${boxLatex(polynomialNode)}\\right)`, variable),
     facts: dedupeFacts(facts),
     proof: 'risch-norman-exp-ansatz-rule-proof',
-  };
+  });
 }

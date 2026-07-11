@@ -84,13 +84,18 @@ export const FALLBACK_REGISTRATIONS = [
     lane: 'symbolic-integration',
     owner: 'symbolic-integration',
     rationale: 'Integration families keep compatibility serializers until the Symbolic Integration profile slice.',
-    matchers: [
-      ...prefix('src/lib/symbolic-engine/integration/'),
-      ...exact(
-        'src/lib/symbolic-engine/orchestrator.ts',
-        'src/lib/symbolic-engine/partials.ts',
-      ),
-    ],
+    matchers: prefix('src/lib/symbolic-engine/integration/'),
+    properties: RESULT_PROPERTY_NAMES,
+  },
+  {
+    id: 'symbolic-core-result-v1',
+    lane: 'symbolic-core',
+    owner: 'symbolic-orchestrator',
+    rationale: 'Generic factor and derivative producers stay outside Integration and migrate with producer closeout.',
+    matchers: exact(
+      'src/lib/symbolic-engine/orchestrator.ts',
+      'src/lib/symbolic-engine/partials.ts',
+    ),
     properties: RESULT_PROPERTY_NAMES,
   },
   {
@@ -192,5 +197,7 @@ export const MIGRATION_MARKER_NAMES = new Set([
 export const MIGRATION_WRAPPER_NAMES = new Set([
   'canonicalDirectSymbolicOutcome',
   'profileEquationResult',
+  'profileSymbolicCoreResult',
+  'profileSymbolicIntegrationResult',
   'profileSymbolicLimitsResult',
 ]);

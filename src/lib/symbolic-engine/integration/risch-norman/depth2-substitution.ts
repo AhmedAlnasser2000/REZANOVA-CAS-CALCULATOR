@@ -17,6 +17,7 @@ import {
   profileDepth2TranscendentalTower,
   type Depth2TowerProfileReady,
 } from '../transcendental-certificate/depth2-profile';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 type Depth2SubstitutionResult = {
   exactLatex: string;
@@ -147,11 +148,11 @@ function result(
   variable: string,
   exactSupplementLatex?: string[],
 ): Depth2SubstitutionResult {
-  return {
+  return profileSymbolicIntegrationResult({
     exactLatex: normalizeGeneratedIntegrationLatex(exactLatex, variable),
     verification: proof(),
     exactSupplementLatex,
-  };
+  });
 }
 
 function nestedExpProfileResult(

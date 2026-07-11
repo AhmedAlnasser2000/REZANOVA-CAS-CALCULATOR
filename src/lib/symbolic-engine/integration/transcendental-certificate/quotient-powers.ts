@@ -21,6 +21,7 @@ import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import { normalizeCertificateProofNode } from './proof-diff';
 import { certificateUxDetailSections } from './certificate-ux';
 import type { TranscendentalNonElementaryCertificate } from './result-shape';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 const MAX_QUOTIENT_POWER = 6;
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };
@@ -623,7 +624,7 @@ export function buildQuotientPowerSpecialFunctionCertificate(
   }
 
   const normalizedExactLatex = normalizeGeneratedIntegrationLatex(exactLatex, parsed.variable);
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'non-elementary-certificate',
     family: 'depth2-affine-quotient',
     variable: parsed.variable,
@@ -634,5 +635,5 @@ export function buildQuotientPowerSpecialFunctionCertificate(
     proofSummary: `${parsed.kind} affine quotient-power recurrence certificate with named special-function readback.`,
     exactSupplementLatex: supplementLatex(parsed),
     detailSections: detailSections(parsed, normalizedExactLatex),
-  };
+  });
 }

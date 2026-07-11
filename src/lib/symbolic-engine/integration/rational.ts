@@ -57,6 +57,7 @@ import {
   polynomialDivisionDetail,
 } from './rational-positive-discriminant';
 import { affineQuadraticArgumentLatex } from './rational-quadratic-latex';
+import { profileSymbolicIntegrationResult } from '../../display/printer';
 
 export { scaleLatex, scaleByExactScalar } from './rational-latex';
 
@@ -343,7 +344,7 @@ function tryRepeatedQuadraticReciprocalPowerRule(node: unknown, variable: string
     return undefined;
   }
 
-  return { exactLatex: candidate, verification };
+  return profileSymbolicIntegrationResult({ exactLatex: candidate, verification });
 }
 
 type RepeatedQuadraticReciprocalForm = NonNullable<ReturnType<typeof repeatedQuadraticReciprocalForm>>;
@@ -533,7 +534,7 @@ function tryQuadraticReciprocalNumeratorRule(node: unknown, variable: string) {
     return undefined;
   }
 
-  return { exactLatex: candidate, verification };
+  return profileSymbolicIntegrationResult({ exactLatex: candidate, verification });
 }
 
 export function isPureQuadraticDerivativeOverlap(node: unknown, variable: string) {
@@ -607,7 +608,7 @@ function tryRepeatedLinearReciprocalPowerRule(node: unknown, variable: string) {
     : `${wrapGroupedLatex(form.affine.latex)}^{${form.power - 1}}`;
   const candidate = scaleByExactScalar(`\\frac{1}{${denominatorLatex}}`, coefficient);
   const verification = acceptedAntiderivativeVerification(candidate, node, variable);
-  return verification ? { exactLatex: candidate, verification } : undefined;
+  return verification ? profileSymbolicIntegrationResult({ exactLatex: candidate, verification }) : undefined;
 }
 
 function linearFactorLatex(variable: string, root: ExactScalar) {
@@ -884,9 +885,9 @@ export function tryRationalPartialFractionRule(
     return undefined;
   }
 
-  return {
+  return profileSymbolicIntegrationResult({
     exactLatex: candidate,
     verification: finalVerification,
     detailSections: detailSections.length > 0 ? detailSections : undefined,
-  };
+  });
 }

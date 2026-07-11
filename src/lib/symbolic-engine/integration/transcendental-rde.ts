@@ -29,6 +29,7 @@ import {
   type TranscendentalConstantFieldFact,
 } from './transcendental-constant-field';
 import { solveRischNormanLinearSystem } from './risch-norman/linear-solver';
+import { profileSymbolicIntegrationResult } from '../../display/printer';
 
 export type TranscendentalRdeStopReason =
   | 'branch-sensitive-carrier'
@@ -278,7 +279,7 @@ function buildSolution(
     ...polynomialFactsToConstantFacts(solutionPolynomial),
   ]);
 
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'solution',
     solutionKind: 'polynomial',
     variable: equation.variable,
@@ -291,7 +292,7 @@ function buildSolution(
     proofSummary,
     proofSteps,
     proofMode: 'exact-symbolic-no-compute-engine',
-  };
+  });
 }
 
 function solveZeroCoefficientRde(equation: TranscendentalRdeEquation): TranscendentalRdeSolveResult {

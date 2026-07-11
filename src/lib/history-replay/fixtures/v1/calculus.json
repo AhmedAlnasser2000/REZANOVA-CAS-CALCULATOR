@@ -642,6 +642,7 @@
       "id": "calculus-indefinite-power",
       "workspace": "calculus",
       "family": "integrals",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -771,6 +772,7 @@
       "id": "calculus-indefinite-trig",
       "workspace": "calculus",
       "family": "integrals",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -900,6 +902,7 @@
       "id": "calculus-indefinite-log",
       "workspace": "calculus",
       "family": "integrals",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -1029,6 +1032,7 @@
       "id": "calculus-definite-polynomial",
       "workspace": "calculus",
       "family": "integrals",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -1158,6 +1162,7 @@
       "id": "calculus-definite-sine",
       "workspace": "calculus",
       "family": "integrals",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -1285,6 +1290,7 @@
       "id": "calculus-improper-arctan",
       "workspace": "calculus",
       "family": "integrals",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",

@@ -16,7 +16,7 @@
 
 ## Accepted Changes
 
-None through `PRINT-PROFILE-SYMBOLIC-LIMITS1`.
+None through `PRINT-PROFILE-SYMBOLIC-INTEGRATION1`.
 
 ## Rejected Candidates
 

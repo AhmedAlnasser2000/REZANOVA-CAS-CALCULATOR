@@ -26,6 +26,7 @@ import {
 } from './polynomial';
 import type { RischNormanAnsatzFact } from './exponential-ansatz';
 import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type RischNormanExpSinCosAnsatzStopReason =
   | 'coefficient-stop'
@@ -466,7 +467,7 @@ export function solveRischNormanExpSinCosAnsatz(
     nonzeroFact(denominatorLatex),
   ]);
 
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'success',
     family: 'affine-exp-sin-cos',
     variable,
@@ -481,5 +482,5 @@ export function solveRischNormanExpSinCosAnsatz(
     }), variable),
     facts,
     proof: 'risch-norman-exp-sincos-ansatz-rule-proof',
-  };
+  });
 }

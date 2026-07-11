@@ -30,6 +30,7 @@ import {
 } from './detail-readback';
 import { scaleByExactScalar } from './rational';
 import type { DisplayDetailSection } from '../../../types/calculator';
+import { profileSymbolicIntegrationResult } from '../../display/printer';
 
 type TrigSubstitutionRadicalResult = {
   exactLatex: string;
@@ -482,7 +483,7 @@ export function tryTrigSubstitutionRadicalRule(
     const rootLatex = exactScalarLatex(reciprocalAffineOutsideSqrt.root);
     const uGrouped = wrapGroupedLatex(reciprocalAffineOutsideSqrt.affine.latex);
     const branchCondition = `${uGrouped}-${rootLatex}`;
-    return {
+    return profileSymbolicIntegrationResult({
       exactLatex: scaleByExactScalar(
         `\\arccos\\left(\\frac{${rootLatex}}{${uGrouped}}\\right)`,
         coefficient,
@@ -505,7 +506,7 @@ export function tryTrigSubstitutionRadicalRule(
         integrationMathRow('Branch condition: ', `${branchCondition}>0`),
         integrationTextRow('No partial antiderivative was adopted outside the stated branch.'),
       ])],
-    };
+    });
   }
 
   const reciprocalThreeHalves = isReciprocalThreeHalvesPower(node);
@@ -537,7 +538,7 @@ export function tryTrigSubstitutionRadicalRule(
       : undefined;
   }
 
-  return {
+  return profileSymbolicIntegrationResult({
     exactLatex: buildExactLatex(parsed.family, parsed.r, parsed.affine),
     verification: proof(parsed.family),
     exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
@@ -546,5 +547,5 @@ export function tryTrigSubstitutionRadicalRule(
       integrationTextRow(`Template family: ${parsed.family}`),
       integrationMathRow('Substitution carrier: ', parsed.affine.latex),
     ])],
-  };
+  });
 }

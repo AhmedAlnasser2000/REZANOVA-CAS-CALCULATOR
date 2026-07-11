@@ -26,6 +26,7 @@ import {
   algebraicGenus0FactsToExactSupplementLatex,
 } from './facts';
 import { parseAlgebraicGenus0StandardQuadratic } from './inverse-readback';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type AlgebraicGenus0RationalInRadicalRule = {
   exactLatex: string;
@@ -226,11 +227,11 @@ function tryQuadraticNumeratorOverStandardRadical(
     return undefined;
   }
 
-  return {
+  return profileSymbolicIntegrationResult({
     exactLatex: normalizeGeneratedIntegrationLatex(boxLatex(antiderivativeNode), variable),
     verification: proof(),
     exactSupplementLatex: radicandSupplements(shape.radicand),
-  };
+  });
 }
 
 export function tryAlgebraicGenus0RationalInRadicalRule(

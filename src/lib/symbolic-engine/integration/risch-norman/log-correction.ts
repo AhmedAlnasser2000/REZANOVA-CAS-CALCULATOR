@@ -26,6 +26,7 @@ import {
 } from './polynomial';
 import type { RischNormanAnsatzFact } from './exponential-ansatz';
 import { normalizeGeneratedRischNormanLatex } from './output-hygiene';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type RischNormanLogCorrectionStopReason =
   | 'coefficient-stop'
@@ -397,7 +398,7 @@ export function solveRischNormanLogCorrection(
     positiveFact(affine.latex),
   ]);
 
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'success',
     family: 'affine-log-correction',
     variable,
@@ -407,5 +408,5 @@ export function solveRischNormanLogCorrection(
     exactLatex: normalizeGeneratedRischNormanLatex(exactLatex, variable),
     facts,
     proof: 'risch-norman-log-correction-rule-proof',
-  };
+  });
 }

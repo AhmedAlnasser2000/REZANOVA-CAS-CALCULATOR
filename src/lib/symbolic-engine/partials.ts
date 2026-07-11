@@ -2,6 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type { DerivativeVariable, PartialDerivativeRequest } from '../../types/calculator';
 import { parseDerivativeVariable } from '../calculus/derivative-target';
 import { differentiateAst } from './differentiation';
+import { profileSymbolicCoreResult } from '../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -52,11 +53,11 @@ export function resolvePartialDerivative(
   try {
     const parsed = ce.parse(bodyLatex);
     const differentiated = differentiateAst(parsed.json, request.variable);
-    return {
+    return profileSymbolicCoreResult({
       kind: 'success',
       variable: request.variable,
       exactLatex: ce.box(differentiated as Parameters<typeof ce.box>[0]).latex,
-    };
+    });
   } catch {
     return {
       kind: 'error',

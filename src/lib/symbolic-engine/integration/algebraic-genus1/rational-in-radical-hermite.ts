@@ -22,6 +22,7 @@ import {
 import { normalizeGeneratedIntegrationLatex } from '../readback-hygiene';
 import { buildAlgebraicGenus1ElementarityCertificate } from './elementarity-certificate';
 import { buildAlgebraicGenus1EllipticProofBackcheck } from './proof-backcheck';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type AlgebraicGenus1RationalInRadicalHermiteRule = {
   exactLatex: string;
@@ -479,12 +480,12 @@ function buildRule(input: {
           'The generated antiderivative is accepted only through bounded genus-1 Hermite reduction with exact proof evidence.',
         ],
       },
-      buildAlgebraicGenus1ElementarityCertificate({
+      buildAlgebraicGenus1ElementarityCertificate(profileSymbolicIntegrationResult({
         variable: input.variable,
         basisKinds: input.basisKinds,
         answerLatex: exactLatex,
         source: 'hermite-reduction',
-      }),
+      })),
     ],
     basisKinds: input.basisKinds,
   };

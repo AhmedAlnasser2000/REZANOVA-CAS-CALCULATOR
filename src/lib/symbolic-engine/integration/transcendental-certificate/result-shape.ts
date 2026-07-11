@@ -9,6 +9,7 @@ import type {
   TranscendentalCertificateTowerReady,
 } from './profile';
 import { certificateUxDetailSections } from './certificate-ux';
+import { profileSymbolicIntegrationResult } from '../../../display/printer';
 
 export type TranscendentalNonElementaryCertificate = {
   kind: 'non-elementary-certificate';
@@ -88,7 +89,7 @@ export function buildTranscendentalNonElementaryCertificate(
     return undefined;
   }
 
-  return {
+  return profileSymbolicIntegrationResult({
     kind: 'non-elementary-certificate',
     family: 'exp-quadratic',
     variable: profile.variable,
@@ -98,7 +99,7 @@ export function buildTranscendentalNonElementaryCertificate(
     proofSummary: 'Quadratic exponential non-elementarity certificate prepared for the stated coefficient field.',
     exactSupplementLatex: certificateFacts(profile),
     detailSections: detailSectionsFor(profile),
-  };
+  });
 }
 
 export function buildTranscendentalNonElementaryCertificateFromProof(

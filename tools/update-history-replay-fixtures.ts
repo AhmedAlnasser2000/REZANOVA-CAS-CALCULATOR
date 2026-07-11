@@ -244,7 +244,7 @@ async function main() {
     throw new Error(`Expected 100 History replay seeds, received ${seeds.length}.`);
   }
 
-  const hardLatexFamilies = new Set(['calculus:limits']);
+  const hardLatexFamilies = new Set(['calculus:integrals', 'calculus:limits']);
   const fixtures: HistoryReplayFixture[] = [];
   for (const seed of seeds) {
     const settings = { ...DEFAULT_SETTINGS, ...seed.settings };

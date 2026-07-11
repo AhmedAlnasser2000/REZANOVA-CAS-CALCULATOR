@@ -47,8 +47,10 @@
 - Calculate compatibility debt is zero, 20 Calculate replay fixtures hard-compare normalized LaTeX, and Equation finite roots enter the profile through the existing presentation-IR adapter. Three less-readable generic serializer candidates were rejected, so accepted visible output remains unchanged.
 - `PRINT-PROFILE-EQUATION-ADVANCED1`: committed as `5eb2f9c6`.
 - Equation's 76 remaining exact, numeric, parameterized, composition, target, and Complex producers now use the explicit Equation domain-profile adapter. Equation compatibility debt is zero and all 25 Equation replay fixtures are hard, bringing hard coverage to 45/100.
-- `PRINT-PROFILE-SYMBOLIC-LIMITS1`: implemented and verified; entering its approved commit checkpoint.
+- `PRINT-PROFILE-SYMBOLIC-LIMITS1`: committed as `1c67132f`.
 - All 35 proof-aware Limits producers now use the Symbolic Limits domain-profile adapter. Symbolic Limits compatibility debt is zero and five Calculus limit fixtures are hard, bringing hard replay coverage to 50/100.
-- `PRINT-PROFILE-SYMBOLIC-INTEGRATION1` is next, followed by four later printer-profile slices and one accumulated final review.
+- `PRINT-PROFILE-SYMBOLIC-INTEGRATION1`: implemented and verified; entering its approved commit checkpoint.
+- The ownership-corrected inventory has 31 Integration profile paths and three separate generic symbolic-core paths, all at zero compatibility debt. Six integral fixtures are newly hard, bringing replay coverage to 56/100 and the global printer floor to 110.
+- `PRINT-PROFILE-CALCULUS1` is next, followed by three later printer-profile slices and one accumulated final review.
 - The contract-review evidence checkpoint remains required, but the user removed its intermediate acceptance pause and directed the program to continue through printer profiles before one accumulated final review.
 - No push is authorized, and untracked `test-results/` stays excluded.

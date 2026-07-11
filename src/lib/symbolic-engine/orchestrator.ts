@@ -11,6 +11,7 @@ import { differentiateAst } from './differentiation';
 import { resolveSymbolicIntegralFromAst } from './integration';
 import { normalizeLatex, normalizeNode } from './normalize';
 import { resolvePartialDerivative } from './partials';
+import { profileSymbolicCoreResult } from '../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -37,26 +38,26 @@ export function normalizeExpression(latex: string) {
 export function runFactoringEngine(latex: string): SymbolicEngineOutcome {
   const normalized = normalizeLatex(latex);
   const result = factorAst(normalized.ast);
-  return {
+  return profileSymbolicCoreResult({
     kind: 'success',
     operation: 'factor',
     normalized,
     exactLatex: ce.box(result.node as Parameters<typeof ce.box>[0]).latex,
     origin: result.strategy === 'none' ? 'compute-engine' : 'symbolic-engine',
     strategy: result.strategy,
-  };
+  });
 }
 
 export function runDerivativeEngine(latex: string, variable: DerivativeVariable = 'x'): SymbolicEngineOutcome {
   const normalized = normalizeLatex(latex);
   const exactAst = differentiateAst(normalized.ast, variable);
-  return {
+  return profileSymbolicCoreResult({
     kind: 'success',
     operation: 'differentiate',
     normalized,
     exactLatex: ce.box(exactAst as Parameters<typeof ce.box>[0]).latex,
     origin: 'symbolic-engine',
-  };
+  });
 }
 
 export function runIntegralEngine(latex: string, variable: DerivativeVariable = 'x'): SymbolicEngineOutcome {

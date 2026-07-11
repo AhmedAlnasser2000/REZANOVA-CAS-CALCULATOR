@@ -13,6 +13,7 @@ import type { AntiderivativeBackcheck } from '../../calculus/engine/verification
 import { boxLatex, isNodeArray, type PolynomialTerm, wrapGroupedLatex } from '../patterns';
 import { numberLatex } from './node-helpers';
 import { BY_PARTS_POLYNOMIAL_DEGREE_CAP } from './types';
+import { profileSymbolicIntegrationResult } from '../../display/printer';
 
 function polynomialDegree(terms: PolynomialTerm[]) {
   return terms.length === 0 ? 0 : terms[0].degree;
@@ -167,13 +168,13 @@ function solvePolynomialTimesNumericBaseExponential(
 
   const polynomialPart = joinAdditiveParts(pieces);
   return polynomialPart
-    ? {
+    ? profileSymbolicIntegrationResult({
       exactLatex: `${wrapGroupedLatex(baseLatex)}^{${wrapGroupedLatex(exponentLatex)}}\\left(${polynomialPart}\\right)`,
       verification: {
         status: 'verified-exact',
         reason: 'verified by finite numeric-base exponential integration-by-parts recurrence',
       },
-    }
+    })
     : undefined;
 }
 
