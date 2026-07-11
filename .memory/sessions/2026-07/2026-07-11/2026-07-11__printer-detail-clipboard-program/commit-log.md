@@ -22,6 +22,7 @@
 - `db674b13` - `PRINTER-DETAIL-CLIPBOARD-ROADMAP0`
 - `f4cb2de2` - `PRINTER-SERIALIZATION-CONTRACT1`
 - `93e9b40e` - `DISPLAY-MATH-PAYLOAD1`
-- pending at write time - `PRINTER-MIGRATION-RATCHET1`
+- `1b83f897` - `PRINTER-MIGRATION-RATCHET1`
+- pending at write time - `CLIPBOARD-CANONICAL1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

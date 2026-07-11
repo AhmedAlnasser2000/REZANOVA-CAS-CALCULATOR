@@ -21,8 +21,11 @@
 - `DISPLAY-MATH-PAYLOAD1`: committed as `93e9b40e`.
 - Nine of the 43 golden executions now carry additive canonical payloads from proven answer nodes; app-visible output remains unchanged.
 - History persistence and Surface Protocol do not receive the payload.
-- `PRINTER-MIGRATION-RATCHET1`: implemented, verified, and entering its approved commit checkpoint.
+- `PRINTER-MIGRATION-RATCHET1`: committed as `1b83f897`.
 - The accepted AST baseline contains 515 result paths with zero unclassified violations and nonincreasing lane/registration floors.
-- `CLIPBOARD-CANONICAL1`, beginning with `CLIPBOARD-CAPABILITY-AUDIT0`, is next.
+- `CLIPBOARD-CAPABILITY-AUDIT0`: passed in real Chromium and through the live Tauri Linux WebView/X11 path.
+- `CLIPBOARD-CANONICAL1`: implemented, verified, and entering its approved commit checkpoint.
+- Display copy is canonical and lossless where the host permits it; Tauri retains exact canonical text fallback.
+- `CLIPBOARD-PIPELINE-RATCHET1`: next, covering every remaining copy/paste surface and the direct-API floor.
 - The mandatory contract review blocks all pedagogical-profile migration.
 - No push is authorized, and untracked `test-results/` stays excluded.

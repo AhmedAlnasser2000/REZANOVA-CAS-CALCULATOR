@@ -24,3 +24,7 @@ log = "0.4"
 tauri = { version = "2.10.0", features = [] }
 tauri-plugin-log = "2"
 mathexpr = "0.1.1"
+tauri-plugin-clipboard-manager = "2.3.2"
+
+[dev-dependencies]
+tauri = { version = "2.10.0", features = ["test"] }

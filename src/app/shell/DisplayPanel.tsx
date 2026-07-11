@@ -26,6 +26,7 @@ function DisplayPanel({
   calculateRouteMeta,
   calculateScreen,
   clipboardNotice,
+  copyActiveResult,
   copyText,
   copyableGuideExampleLatex,
   currentMode,
@@ -334,6 +335,7 @@ function DisplayPanel({
       calculusScreen={calculusScreen}
       calculateRouteMeta={calculateRouteMeta}
       calculateScreen={calculateScreen}
+      copyActiveResult={copyActiveResult}
       copyText={copyText}
       copyableGuideExampleLatex={copyableGuideExampleLatex}
       currentMode={currentMode}

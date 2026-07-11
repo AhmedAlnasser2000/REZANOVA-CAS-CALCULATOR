@@ -91,6 +91,8 @@ import {
   mapLegacyCalculateScreenToCalculusScreen,
 } from './lib/calculus/calculus-identity';
 import { setNumericOutputSettings } from './lib/display/numeric-output';
+import { writeTextClipboard } from './lib/clipboard';
+import { copyDisplayResultWithDeps } from './app/logic/displayClipboard';
 import {
   getCalculateSoftActions,
 } from './lib/modes/calculate-navigation';
@@ -1713,18 +1715,6 @@ export default function App() {
     return '';
   }
 
-  function fallbackCopyText(text: string) {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.setAttribute('readonly', 'true');
-    textarea.style.position = 'absolute';
-    textarea.style.left = '-9999px';
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-  }
-
   async function copyText(text: string, successNotice: string) {
     const trimmed = text.trim();
     if (!trimmed) {
@@ -1732,16 +1722,17 @@ export default function App() {
       return;
     }
 
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(trimmed);
-      } else {
-        fallbackCopyText(trimmed);
-      }
-      setClipboardNotice(successNotice);
-    } catch {
-      setClipboardNotice('Clipboard blocked');
-    }
+    const copied = await writeTextClipboard(trimmed);
+    setClipboardNotice(copied ? successNotice : 'Clipboard blocked');
+  }
+
+  async function copyActiveResult() {
+    await copyDisplayResultWithDeps({
+      displayOutcome,
+      visibleText: activeResultCopyText(),
+      currentMode,
+      setClipboardNotice,
+    });
   }
 
   function sendLatexToCalculate(latex: string) {
@@ -2879,6 +2870,7 @@ export default function App() {
           calculateRouteMeta={calculateRouteMeta}
           calculateScreen={calculateScreen}
           clipboardNotice={clipboardNotice}
+          copyActiveResult={copyActiveResult}
           copyText={copyText}
           copyableGuideExampleLatex={copyableGuideExampleLatex}
           currentMode={currentMode}

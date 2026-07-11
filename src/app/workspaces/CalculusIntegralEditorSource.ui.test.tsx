@@ -143,11 +143,11 @@ describe('Calculus integral editor source', () => {
     await user.click(screen.getByTestId('settings-toggle'));
     await screen.findByTestId('settings-panel');
     await user.click(screen.getByTestId('settings-math-notation-plainText'));
+    expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('√(π)');
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));
     const plainCopy = writeTextSpy.mock.calls[writeTextSpy.mock.calls.length - 1]?.[0] ?? '';
-    expect(plainCopy).toContain('erf');
-    expect(plainCopy).toContain('√(π)');
-    expect(plainCopy).not.toContain('\\operatorname');
+    expect(plainCopy).toContain('\\operatorname{erf}');
+    expect(plainCopy).toContain('\\sqrt{\\pi}');
 
     await user.click(screen.getByTestId('settings-math-notation-latex'));
     setMathFieldLatex('main-editor', 'e^{a*x^2+b*x+c}');

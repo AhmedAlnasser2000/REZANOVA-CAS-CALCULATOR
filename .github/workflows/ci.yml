@@ -61,6 +61,9 @@ jobs:
       - name: Validate printer migration ratchet
         run: npm run test:printer-migration
 
+      - name: Validate clipboard contract
+        run: npm run test:clipboard-contract
+
       - name: Validate app identity
         run: npm run test:app-identity
 

@@ -32,6 +32,7 @@ describe('seam impact selector', () => {
       'display-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
+      'clipboard-contracts',
     ]);
     assert.match(formatHumanPlan(plan), /Baseline CI gates remain required and unchanged\./u);
     assert.doesNotThrow(() => JSON.parse(JSON.stringify(plan)));
@@ -92,6 +93,7 @@ describe('seam impact selector', () => {
       'display-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
+      'clipboard-contracts',
       'history-replay',
     ]);
   });
@@ -118,6 +120,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
       'app-shell-root',
       'ooe-control',
+      'clipboard-contract',
     ]);
   });
 

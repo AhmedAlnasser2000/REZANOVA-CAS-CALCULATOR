@@ -25,7 +25,7 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ## Current Baseline
 
-- `main` is three approved local commits ahead of `origin/main`: `db674b13` (`PRINTER-DETAIL-CLIPBOARD-ROADMAP0`), `f4cb2de2` (`PRINTER-SERIALIZATION-CONTRACT1`), and `93e9b40e` (`DISPLAY-MATH-PAYLOAD1`). No push is authorized.
+- `main` is four approved local commits ahead of `origin/main`: `db674b13` (`PRINTER-DETAIL-CLIPBOARD-ROADMAP0`), `f4cb2de2` (`PRINTER-SERIALIZATION-CONTRACT1`), `93e9b40e` (`DISPLAY-MATH-PAYLOAD1`), and `1b83f897` (`PRINTER-MIGRATION-RATCHET1`). No push is authorized.
 - `HISTORY-REPLAY-RATCHET1` is committed as `63d21229`.
 - Untracked `test-results/` is unrelated and must remain untouched.
 - Production has at least 478 explicit `exactLatex:` assignments across 173 files and 61 explicit `resultLatex:` assignments. These are lower bounds because shorthand and indirect builders are not counted.
@@ -119,7 +119,7 @@ Implemented contract: `DisplayMathPayloadV1` carries versioned canonical LaTeX p
 
 ### A3. `PRINTER-MIGRATION-RATCHET1`
 
-Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+Status: committed as `1b83f897` on `2026-07-11`.
 
 - Build the ratchet with the TypeScript compiler API over known output properties/builders rather than a repository-wide raw-string grep.
 - Classify expression output, structured-domain output, presentation templates, plain prose, input syntax, and reference content separately.
@@ -149,11 +149,17 @@ This arc should begin after A1 and the first A2 payload, before broad detail mig
 
 ### B0. `CLIPBOARD-CAPABILITY-AUDIT0`
 
+Status: passed as the `CLIPBOARD-CANONICAL1` entry gate on `2026-07-11`.
+
 - Verify multi-format read/write in real Chromium and the packaged/dev Tauri Linux WebView.
 - Record support for custom web MIME, `text/html`, permissions, programmatic paste, native paste events, and writeText/readText fallback.
 - Decide the `text/plain` fallback policy before implementation.
 
+Verified matrix: real Chromium reads and writes the custom web MIME, HTML, and plain text in one item. The live Tauri Linux WebView writes HTML plus exact UTF-8 text through the official plugin; an external X11 readback returned the canonical text and advertised `text/html` plus UTF-8 text targets, with no arbitrary custom MIME. The capability file grants only read-text, write-text, and write-html.
+
 ### B1. `CLIPBOARD-CANONICAL1`
+
+Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
 
 - Add `src/lib/clipboard/` with pure envelope encode/decode plus environment adapters.
 - Use a versioned envelope such as `web application/x-calcwiz-math+json`, mirrored in inert `text/html` metadata where supported.
@@ -161,6 +167,8 @@ This arc should begin after A1 and the first A2 payload, before broad detail mig
 - Treat clipboard data as untrusted input: schema-validate, cap bytes/depth/nodes, reject boxed objects and malformed HTML metadata, and fall back to canonicalized text.
 - Always write `text/plain`. Multi-format-capable environments may let it follow visible notation only while the hidden envelope succeeds; fallback-only environments should preserve canonical LaTeX unless the user explicitly chooses lossy external text.
 - Keep current success/block notices and `execCommand` fallback behavior where still needed.
+
+Implemented contract: `MathClipboardEnvelopeV1` has exact schema/version validation, canonical LaTeX, optional bounded validated MathJSON, and coarse surface/mode metadata only. Canonical text is capped at 320,000 bytes and the whole envelope at 640,000 bytes. Browser Display copy writes custom MIME, escaped HTML with a base64url envelope attribute, and visible text together; rich-write failure falls back to canonical text. Tauri uses the official v2 plugin, writes the HTML envelope with canonical alternate text, and cannot claim HTML/custom reads. Malformed, mismatched, oversized, text-only, HTML-only, permission-blocked, native-event, and Linux fallback paths are pinned. AppMain shrank to 3,348 lines and its file-size cap lowered in the same change.
 
 ### B2. `CLIPBOARD-PIPELINE-RATCHET1`
 

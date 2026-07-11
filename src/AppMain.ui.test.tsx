@@ -1154,7 +1154,7 @@ describe('AppMain UI automation flows', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Copy Result' }));
-    expect(writeTextSpy).toHaveBeenLastCalledWith('x^(1/6)');
+    expect(writeTextSpy).toHaveBeenLastCalledWith('x^{\\frac{1}{6}}');
 
     await user.click(screen.getByTestId('settings-math-notation-latex'));
 

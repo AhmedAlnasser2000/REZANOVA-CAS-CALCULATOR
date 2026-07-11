@@ -25,6 +25,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:printer-migration'],
   },
   {
+    id: 'clipboard-contracts',
+    label: 'Canonical Clipboard envelope and host contracts',
+    argv: ['npm', 'run', 'test:clipboard-contract'],
+  },
+  {
     id: 'history-replay',
     label: 'Versioned History replay ratchet',
     argv: ['npm', 'run', 'test:history-replay'],
@@ -140,6 +145,33 @@ export const SEAM_REGISTRY = [
     baselineEvidenceIds: ['workspace-canaries', 'runtime-probes', 'compartment-boundaries'],
   },
   {
+    id: 'clipboard-contract',
+    label: 'Canonical Clipboard contracts and integration surfaces',
+    matchers: [
+      ...prefix('src/lib/clipboard/'),
+      ...exact(
+        'src/AppMain.tsx',
+        'src/components/MathEditor.tsx',
+        'src/components/OoeDiagnosticsPanel.tsx',
+        'src/app/logic/expressionRouting.ts',
+        'src/app/shell/ActiveSurfaceHost.tsx',
+        'src/app/shell/DisplayPanel.tsx',
+        'src/app/shell/FormulaViewerPage.tsx',
+        'src/app/shell/HistoryPage.tsx',
+        'src/app/shell/display-panel/DisplayOutcomeShell.tsx',
+        'src-tauri/Cargo.toml',
+        'src-tauri/src/lib.rs',
+        'src-tauri/capabilities/default.json',
+        'e2e/clipboard-capability-audit.spec.ts',
+        'tools/clipboard-capability-audit-core.mjs',
+        'tools/clipboard-capability-audit.mjs',
+        'tools/clipboard-capability-audit.test.mjs',
+      ),
+    ],
+    additionalCommandIds: ['clipboard-contracts', 'app-runtime-contracts', 'display-contracts'],
+    baselineEvidenceIds: ['workspace-canaries', 'compartment-boundaries', 'ui-tests', 'file-sizes'],
+  },
+  {
     id: 'display-contract',
     label: 'Display outcome and rendering contracts',
     matchers: [
@@ -199,6 +231,7 @@ export const SEAM_REGISTRY = [
       'display-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
+      'clipboard-contracts',
     ],
     baselineEvidenceIds: [
       'workspace-canaries',

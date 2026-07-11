@@ -43,6 +43,7 @@ export function DisplayOutcomeShell({
   calculusScreen,
   calculateRouteMeta,
   calculateScreen,
+  copyActiveResult,
   copyText,
   copyableGuideExampleLatex,
   currentMode,
@@ -412,7 +413,11 @@ export function DisplayOutcomeShell({
         <div className="display-card-actions" data-testid="display-outcome-actions">
           <button
             data-testid="display-outcome-action-copy-result"
-            onClick={() => void copyText(activeResultCopyText(), 'Result copied')}
+            onClick={() => void (
+              typeof copyActiveResult === 'function'
+                ? copyActiveResult()
+                : copyText(activeResultCopyText(), 'Result copied')
+            )}
           >
             Copy Result
           </button>
