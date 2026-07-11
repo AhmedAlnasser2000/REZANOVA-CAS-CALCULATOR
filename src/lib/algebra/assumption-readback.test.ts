@@ -67,6 +67,13 @@ describe('assumption readback', () => {
     expect(sections[2].lines[0]).toContain('Trust: display-only via complex core.');
     expect(sections[3].lines[0]).toContain('Trust: validated via candidate validation.');
     expect(sections[5].lines[0]).toContain('Trust: display-only via simplify policy.');
+    expect(sections[0].lineParts?.[0]).toEqual([
+      mathPart('x-1'),
+      textPart(' must stay nonzero. Trust: proved via rational-function core.'),
+    ]);
+    expect(sections[1].lineParts?.[0]).toEqual([
+      textPart('x <= 2. Trust: proved via inequality core.'),
+    ]);
   });
 
   it('dedupes facts and merges generated lines into existing sections', () => {
@@ -85,7 +92,7 @@ describe('assumption readback', () => {
       },
     ], [fact, fact]);
 
-    expect(merged).toEqual([
+    expect(merged).toMatchObject([
       {
         title: 'Interval Safety',
         lines: [

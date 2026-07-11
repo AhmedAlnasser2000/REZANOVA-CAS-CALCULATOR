@@ -2241,3 +2241,8 @@
 ## 2026-07-11 - DETAIL-SEGMENT-LINEAR-ALGEBRA1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The LU zero-pivot proof is an explicit prose stop, not a mathematical fragment. Closing detail metadata debt must preserve its existing error and proof wording and cannot be used to widen Matrix/Vector capabilities or alter their independent runtime topology.
+
+## 2026-07-11 - DETAIL-SEGMENT-COMPAT-CLOSEOUT1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Every live detail producer must own typed math or explicitly declared prose; the accepted live inference floor is zero. Compatibility inference remains a renderer-only path for legacy or snapshot-less stored History and may not be reused to classify new producer strings.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Structured domain, assumption, variable-memory, and absolute-value facts preserve their exact compatibility lines while exposing mathematical subfragments as typed evidence. Free-form policy, trust, and concise explanatory rows remain explicit prose rather than being promoted by punctuation heuristics.

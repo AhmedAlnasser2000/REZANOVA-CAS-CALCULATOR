@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DETAIL-SEGMENT-WORKSPACE-DOMAINS1 adds the existing two-point regression SSE value as one producer-owned mathematical fragment while preserving all prior evidence and output text.",
+  "acceptedReason": "DETAIL-SEGMENT-COMPAT-CLOSEOUT1 adds seven existing producer-owned domain and variable symbols as typed mathematical fragments while preserving all prior evidence and compatibility output.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -389,6 +389,11 @@
           "value": "[-1, 1]"
         },
         {
+          "path": "detailSections[1].lineParts[0][0].latex",
+          "kind": "detail-math-part",
+          "value": "x"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\int_{-1}^{1}\\!\\frac{1}{x}\\, \\mathrm{d}x"
@@ -651,6 +656,11 @@
           "value": "\\text{Exclusions: } x\\ne0"
         },
         {
+          "path": "detailSections[0].lineParts[0][0].latex",
+          "kind": "detail-math-part",
+          "value": "x"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\frac{2x+1}{6x}=1"
@@ -672,6 +682,26 @@
           "path": "detailSections[0].lineParts[0][1].latex",
           "kind": "detail-math-part",
           "value": "0"
+        },
+        {
+          "path": "detailSections[1].lineParts[0][0].latex",
+          "kind": "detail-math-part",
+          "value": "x+1"
+        },
+        {
+          "path": "detailSections[1].lineParts[1][0].latex",
+          "kind": "detail-math-part",
+          "value": "x-1"
+        },
+        {
+          "path": "detailSections[1].lineParts[2][0].latex",
+          "kind": "detail-math-part",
+          "value": "x+1"
+        },
+        {
+          "path": "detailSections[1].lineParts[3][0].latex",
+          "kind": "detail-math-part",
+          "value": "x-1"
         },
         {
           "path": "resolvedInputLatex",
@@ -1258,6 +1288,11 @@
           "path": "exactLatex",
           "kind": "primary-answer",
           "value": "f(x)=\\sqrt{x}"
+        },
+        {
+          "path": "detailSections[0].lineParts[0][0].latex",
+          "kind": "detail-math-part",
+          "value": "x"
         },
         {
           "path": "tableResponse.rows[0].x",

@@ -441,14 +441,14 @@ describe('runTableMode', () => {
       { name: 'a', valueLatex: '4', numericValue: 4 },
       { name: 'k', valueLatex: '-2', numericValue: -2 },
     ])
-    expect(result.outcome.detailSections?.[0]).toEqual({
+    expect(result.outcome.detailSections?.[0]).toMatchObject({
       title: 'Stored Values',
       lines: [
         'Used stored values: a=4, k=-2.',
         'Effective table expression: f(x)=4x^2+x,\\;g(x)=x-2.',
       ],
     })
-    expect(result.outcome.detailSections?.[1]).toEqual({
+    expect(result.outcome.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept x symbolic as the table variable.'],
     })

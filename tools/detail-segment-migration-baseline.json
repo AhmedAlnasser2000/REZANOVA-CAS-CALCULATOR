@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "acceptedReason": "DETAIL-SEGMENT-LINEAR-ALGEBRA1 declares the final accepted Linear Algebra debt, the LU zero-pivot stop, as prose without changing its compatibility lines or mathematical behavior.",
+  "acceptedReason": "DETAIL-SEGMENT-COMPAT-CLOSEOUT1 removes the final ten accepted debts by typing structured math and explicitly declaring remaining prose while preserving compatibility lines and legacy History inference.",
   "registryDigest": "a8019e1bc55ed5c4a143",
   "laneFloors": {
     "equation-parameterized": 0,
@@ -10,18 +10,7 @@
     "calculus": 0,
     "workspace-domains": 0,
     "linear-algebra": 0,
-    "compat-closeout": 10
+    "compat-closeout": 0
   },
-  "undeclaredFingerprints": [
-    "src/lib/algebra/absolute-value/families.ts::buildAbsoluteValueDetailSections::object::05e0d81c7ac726149e68",
-    "src/lib/algebra/absolute-value/families.ts::buildAbsoluteValueDetailSections::object::8c722036f05c5493dc96",
-    "src/lib/algebra/assumption-readback.ts::assumptionFactsToDetailSections::object::0ff0db784d0cd833fda1",
-    "src/lib/algebra/domain-range/readback.ts::domainFactsDetailSection::object::3721933425ad2bb7fbd4",
-    "src/lib/algebra/variable-memory/readback.ts::storedValueReadbackSections::object::04095ee8556e0c4ef703",
-    "src/lib/algebra/variable-memory/readback.ts::storedValueReadbackSections::object::3de669655fc83d509bb4",
-    "src/lib/algebra/variable-memory/readback.ts::storedValuesDetailSection::object::e298e189d32ed0ab9631",
-    "src/lib/display/result/result-detail-policy.ts::concisePartialFractions::object::d9eb65fc8dd0c20ff81c",
-    "src/lib/display/result/result-detail-policy.ts::conciseTrust::object::4c4277917eb033909054",
-    "src/lib/display/result/result-detail-policy.ts::readableSolveNoteSection::object::e0ddeccbc055c2c582e9"
-  ]
+  "undeclaredFingerprints": []
 }

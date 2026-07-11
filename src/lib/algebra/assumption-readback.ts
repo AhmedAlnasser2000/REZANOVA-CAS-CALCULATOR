@@ -3,6 +3,12 @@ import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
 } from '../../types/calculator';
+import {
+  detailLineFromParts,
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../display/result-detail-lines';
 import type {
   AssumptionFact,
   AssumptionFactKind,
@@ -87,9 +93,31 @@ function trustLabel(trust: AssumptionFactTrust) {
   }
 }
 
-function lineForFact(fact: AssumptionFact) {
+function linePartsForFact(fact: AssumptionFact): DisplayDetailLinePart[] {
   const suffix = `Trust: ${trustLabel(fact.trust)} via ${sourceLabel(fact.source)}.`;
-  return `${fact.message} ${suffix}`;
+  const expressionPrefix = fact.expressionLatex && fact.message.startsWith(fact.expressionLatex)
+    ? fact.expressionLatex
+    : fact.variable && fact.message.startsWith(fact.variable)
+      ? fact.variable
+      : undefined;
+
+  if (!expressionPrefix) {
+    return [textPart(`${fact.message} ${suffix}`)];
+  }
+
+  return [
+    mathPart(expressionPrefix),
+    textPart(`${fact.message.slice(expressionPrefix.length)} ${suffix}`),
+  ];
+}
+
+function uniqueFactRows(facts: readonly AssumptionFact[]) {
+  const rows = new Map<string, DisplayDetailLinePart[]>();
+  for (const fact of facts) {
+    const parts = linePartsForFact(fact);
+    rows.set(detailLineFromParts(parts).line, parts);
+  }
+  return [...rows.values()];
 }
 
 type MergedDetailLine = {
@@ -169,10 +197,7 @@ export function assumptionFactsToDetailSections(
       continue;
     }
 
-    sections.push({
-      title: group.title,
-      lines: [...new Set(groupFacts.map(lineForFact))],
-    });
+    sections.push(mixedDetailSection(group.title, uniqueFactRows(groupFacts)));
   }
 
   return sections;

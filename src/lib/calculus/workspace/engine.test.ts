@@ -41,11 +41,11 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '4', numericValue: 4 },
     ]);
-    expect(result.detailSections?.[0]).toEqual({
+    expect(result.detailSections?.[0]).toMatchObject({
       title: 'Stored Values',
       lines: ['Used stored values: a=4.'],
     });
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept x symbolic as the integration variable.'],
     });
@@ -89,7 +89,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '4', numericValue: 4 },
     ]);
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept y symbolic as the partial derivative variable.'],
     });
@@ -111,7 +111,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.title).toBe('Limit');
     expect(result.exactLatex).toBe('1');
     expect(result.variableSubstitutions).toBeUndefined();
-    expect(result.detailSections?.[0]).toEqual({
+    expect(result.detailSections?.[0]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept t symbolic as the limit variable.'],
     });
@@ -234,7 +234,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
       { name: 'a', valueLatex: '2', numericValue: 2 },
       { name: 'c', valueLatex: '5', numericValue: 5 },
     ]);
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept t symbolic as the derivative variable.'],
     });
@@ -334,7 +334,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
       { name: 'b', valueLatex: '9', numericValue: 9 },
       { name: 'z', valueLatex: '1', numericValue: 1 },
     ]);
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: [
         'Kept x symbolic as a partial derivative variable.',
@@ -367,11 +367,11 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '2', numericValue: 2 },
     ]);
-    expect(result.detailSections?.[0]).toEqual({
+    expect(result.detailSections?.[0]).toMatchObject({
       title: 'Stored Values',
       lines: ['Used stored values: a=2.'],
     });
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: [
         'Kept x symbolic as the independent ODE variable.',

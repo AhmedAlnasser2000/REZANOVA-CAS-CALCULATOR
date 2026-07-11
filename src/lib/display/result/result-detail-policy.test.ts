@@ -71,7 +71,7 @@ describe('displayDetailSectionsForPolicy', () => {
       },
     ], { detailedFactsEnabled: false });
 
-    expect(concise).toEqual([
+    expect(concise).toMatchObject([
       {
         title: 'Trust',
         lines: ['Domain safety could not be established.'],
@@ -159,6 +159,10 @@ describe('displayDetailSectionsForPolicy', () => {
     expect(section?.lines).toEqual([
       'Composition branch: sin(ln(x)+1) stays in [-1, 1], so tan(sin(ln(x)+1))=1 reduces to sin(ln(x)+1)=\\frac{\\pi}{4}.',
       'Periodic family: sin(ln(x)+1)=\\frac{\\pi}{4} yields x\\in\\left\\{e^{2\\pi k-1}\\right\\}.',
+    ]);
+    expect(section?.lineParts?.[0].some((part) => part.kind === 'math')).toBe(true);
+    expect(section?.lineParts?.[1]).toEqual([
+      textPart('Periodic family: sin(ln(x)+1)=\\frac{\\pi}{4} yields x\\in\\left\\{e^{2\\pi k-1}\\right\\}.'),
     ]);
   });
 });

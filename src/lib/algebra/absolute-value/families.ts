@@ -4,6 +4,7 @@ import type {
   AbsoluteValueEquationFamilyKind,
   AbsoluteValueExactScalar,
   AbsoluteValueTargetDescriptor,
+  DisplayDetailLinePart,
   DisplayDetailSection,
   SolveDomainConstraint,
 } from '../../../types/calculator';
@@ -21,7 +22,12 @@ import {
 } from '../polynomial-core';
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { boxLatex, isNodeArray, termKey } from '../../symbolic-engine/patterns';
-import { mathDetailSection } from '../../display/result-detail-lines';
+import {
+  mathDetailSection,
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../../display/result-detail-lines';
 import {
   ABS_NUMERIC_EPSILON,
   ABS_OUTER_NON_PERIODIC_MAX_TRANSFORMS,
@@ -177,21 +183,37 @@ function shouldIncludeGeneratedBranchSection(family: RecognizedAbsoluteValueEqua
   return family.branchEquations.some((equationLatex) => !/^x\s*=/.test(toInlineSummaryMath(equationLatex)));
 }
 
-function buildAbsoluteValueBoundaryText(
+function buildAbsoluteValueBoundaryParts(
   family: RecognizedAbsoluteValueEquationFamily,
   reason: AbsoluteValueBoundaryReason,
-) {
+): DisplayDetailLinePart[] {
   const placeholder = absoluteValuePlaceholderInline(family);
   switch (reason) {
     case 'outer-depth':
-      return `${placeholder} would need more than one extra bounded non-periodic outer layer before returning to exact abs branches.`;
+      return [
+        mathPart(placeholder),
+        textPart(' would need more than one extra bounded non-periodic outer layer before returning to exact abs branches.'),
+      ];
     case 'no-roots':
-      return `${placeholder} produced no admissible real values with t >= 0 after the outer non-periodic reduction.`;
+      return [
+        mathPart(placeholder),
+        textPart(' produced no admissible real values with '),
+        mathPart('t >= 0'),
+        textPart(' after the outer non-periodic reduction.'),
+      ];
     case 'guided-branch':
-      return `At least one generated branch from ${placeholder} reaches only guided periodic/composition output, so the full abs family stays unresolved.`;
+      return [
+        textPart('At least one generated branch from '),
+        mathPart(placeholder),
+        textPart(' reaches only guided periodic/composition output, so the full abs family stays unresolved.'),
+      ];
     case 'outer-sink':
     default:
-      return `The outer non-periodic reduction over ${placeholder} succeeded, but at least one resulting abs branch leaves the current exact sink set.`;
+      return [
+        textPart('The outer non-periodic reduction over '),
+        mathPart(placeholder),
+        textPart(' succeeded, but at least one resulting abs branch leaves the current exact sink set.'),
+      ];
   }
 }
 
@@ -216,12 +238,13 @@ export function buildAbsoluteValueDetailSections(
   const sections: DisplayDetailSection[] = [];
 
   if (family.normalizationKind === 'outer-nonperiodic') {
-    sections.push({
-      title: 'Absolute-Value Reduction',
-      lines: [
-        `Reduced the equation to ${absoluteValuePlaceholderInline(family)} with t >= 0 and solved the bounded outer non-periodic layer before returning to exact abs branches.`,
-      ],
-    });
+    sections.push(mixedDetailSection('Absolute-Value Reduction', [[
+      textPart('Reduced the equation to '),
+      mathPart(absoluteValuePlaceholderInline(family)),
+      textPart(' with '),
+      mathPart('t >= 0'),
+      textPart(' and solved the bounded outer non-periodic layer before returning to exact abs branches.'),
+    ]]));
 
     if (shouldIncludeGeneratedBranchSection(family)) {
       sections.push(mathDetailSection('Generated Branches', family.branchEquations));
@@ -229,10 +252,9 @@ export function buildAbsoluteValueDetailSections(
   }
 
   if (options.boundaryReason) {
-    sections.push({
-      title: 'Exact Closure Boundary',
-      lines: [buildAbsoluteValueBoundaryText(family, options.boundaryReason)],
-    });
+    sections.push(mixedDetailSection('Exact Closure Boundary', [
+      buildAbsoluteValueBoundaryParts(family, options.boundaryReason),
+    ]));
   }
 
   return sections;

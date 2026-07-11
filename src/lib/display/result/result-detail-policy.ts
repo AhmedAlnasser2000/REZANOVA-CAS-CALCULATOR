@@ -1,5 +1,12 @@
 import type { DisplayDetailSection } from '../../../types/calculator';
-import { cloneDisplayDetailSection } from './result-detail-lines';
+import {
+  cloneDisplayDetailSection,
+  detailLineFromParts,
+  inferDetailLinePartsFromText,
+  mathPart,
+  textDetailSection,
+  textPart,
+} from './result-detail-lines';
 
 export type ResultDetailPolicy = {
   detailedFactsEnabled: boolean;
@@ -38,13 +45,13 @@ function concisePartialFractions(section: DisplayDetailSection): DisplayDetailSe
     lines.push('The antiderivative passed the derivative backcheck.');
   }
 
-  return { title: section.title, lines };
+  return textDetailSection(section.title, lines);
 }
 
 function conciseTrust(section: DisplayDetailSection): DisplayDetailSection | null {
   const criticalLines = uniqueLines(section.lines.filter(isCriticalTrustLine));
   return criticalLines.length > 0
-    ? { title: section.title, lines: criticalLines }
+    ? textDetailSection(section.title, criticalLines)
     : null;
 }
 
@@ -116,15 +123,51 @@ function splitReadableSolveNoteLine(line: string) {
     .filter(Boolean);
 }
 
-function readableSolveNoteSection(section: DisplayDetailSection): DisplayDetailSection {
-  const lines = section.lines.flatMap(splitReadableSolveNoteLine);
-  if (lines.length === section.lines.length) {
-    return cloneDisplayDetailSection(section);
+function legacyDeclaredParts(line: string) {
+  const inferred = inferDetailLinePartsFromText(line);
+  if (!inferred?.length) {
+    return [textPart(line)];
   }
+
+  const inferredLine = detailLineFromParts(inferred).line;
+  if (inferredLine === line) {
+    return inferred;
+  }
+  if (line.startsWith(inferredLine)) {
+    return [...inferred, textPart(line.slice(inferredLine.length))];
+  }
+  return [textPart(line)];
+}
+
+function originalDeclaredParts(section: DisplayDetailSection, index: number, line: string) {
+  const parts = section.lineParts?.[index];
+  if (parts?.length) {
+    return parts.map((part) => ({ ...part }));
+  }
+  const lineKind = section.lineKinds?.[index] ?? section.lineKind;
+  if (lineKind === 'math') {
+    return [mathPart(line)];
+  }
+  if (lineKind === 'text') {
+    return [textPart(line)];
+  }
+  return legacyDeclaredParts(line);
+}
+
+function readableSolveNoteSection(section: DisplayDetailSection): DisplayDetailSection {
+  const rows = section.lines.flatMap((line, index) => {
+    const splitLines = splitReadableSolveNoteLine(line);
+    return splitLines.map((splitLine) => (
+      splitLines.length === 1
+        ? originalDeclaredParts(section, index, splitLine)
+        : legacyDeclaredParts(splitLine)
+    ));
+  });
 
   return {
     title: section.title,
-    lines,
+    lines: rows.map((parts) => detailLineFromParts(parts).line),
+    lineParts: rows,
   };
 }
 

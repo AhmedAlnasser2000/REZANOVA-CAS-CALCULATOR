@@ -32,6 +32,7 @@
 - `19ea2ad5` - `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`
 - `27305475` - `DETAIL-SEGMENT-CALCULUS1`
 - `2bb2f91b` - `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`
-- pending at write time - `DETAIL-SEGMENT-LINEAR-ALGEBRA1`
+- `ca7d8179` - `DETAIL-SEGMENT-LINEAR-ALGEBRA1`
+- pending at write time - `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

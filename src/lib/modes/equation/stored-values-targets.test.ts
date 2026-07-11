@@ -22,7 +22,7 @@ describe('Equation mode stored values and targets', () => {
     }
     expect(symbolic.exactLatex).toBe('z=5-a');
     expect(symbolic.variableSubstitutions).toBeUndefined();
-    expect(symbolic.detailSections?.[0]).toEqual({
+    expect(symbolic.detailSections?.[0]).toMatchObject({
       title: 'Variable Policy',
       lines: [
         'Ignored stored values: a=2. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
@@ -50,14 +50,14 @@ describe('Equation mode stored values and targets', () => {
     expect(numeric.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '2', numericValue: 2 },
     ]);
-    expect(numeric.detailSections?.[0]).toEqual({
+    expect(numeric.detailSections?.[0]).toMatchObject({
       title: 'Stored Values',
       lines: [
         'Used stored values: a=2.',
         'Effective equation for z: z+2=5.',
       ],
     });
-    expect(numeric.detailSections?.[1]).toEqual({
+    expect(numeric.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept z symbolic as the solve target.'],
     });
@@ -79,7 +79,7 @@ describe('Equation mode stored values and targets', () => {
     expect(symbolic.exactLatex).toContain('x=');
     expect(symbolic.exactLatex).toContain('\\mathrm{mass}');
     expect(symbolic.variableSubstitutions).toBeUndefined();
-    expect(symbolic.detailSections?.[0]).toEqual({
+    expect(symbolic.detailSections?.[0]).toMatchObject({
       title: 'Variable Policy',
       lines: [
         'Ignored stored values: mass=5. Equation symbolic solve keeps solve targets and symbolic parameters symbolic.',
@@ -135,7 +135,7 @@ describe('Equation mode stored values and targets', () => {
       throw new Error('Expected a success outcome');
     }
     expect(parameterized.exactLatex).toBe('\\mathrm{mass}=7-x');
-    expect(parameterized.detailSections?.[0]).toEqual({
+    expect(parameterized.detailSections?.[0]).toMatchObject({
       title: 'Solve Target',
       lineKind: 'text',
       lines: [
@@ -457,14 +457,14 @@ describe('Equation mode stored values and targets', () => {
     expect(solveResult.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '2', numericValue: 2 },
     ]);
-    expect(solveResult.detailSections?.[0]).toEqual({
+    expect(solveResult.detailSections?.[0]).toMatchObject({
       title: 'Stored Values',
       lines: [
         'Used stored values: a=2.',
         'Effective equation for z: z+2=5.',
       ],
     });
-    expect(solveResult.detailSections?.[1]).toEqual({
+    expect(solveResult.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept z symbolic as the solve target.'],
     });

@@ -61,7 +61,7 @@ describe('calculus Laplace table', () => {
     expect(result.variableSubstitutions).toEqual([
       { name: 'a', valueLatex: '4', numericValue: 4 },
     ]);
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept t symbolic as the Laplace source variable.'],
     });

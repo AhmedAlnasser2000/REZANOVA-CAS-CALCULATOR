@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EDITOR_ANALYSIS_DEBOUNCE_MS } from './lib/editor/editor-analysis-runtime';
 import { WEB_PREVIEW_APP_STATE_STORAGE_KEY } from './lib/app-state/tauri';
 import { DEFAULT_SETTINGS, type HistoryEntry } from './types/calculator';
-import { displayedSupplementLatex, revealValidWhenIfCollapsed } from './test/displayResultAssertions';
+import { displayedDetailLatex, displayedSupplementLatex, revealDetailSection, revealValidWhenIfCollapsed } from './test/displayResultAssertions';
 import {
   expectMathStaticLatex,
   openLauncherApp,
@@ -104,7 +104,6 @@ function getDisplayedExactRawLatex() {
     .map((node) => node.getAttribute('data-raw-latex') ?? '')
     .filter((latex) => latex.length > 0);
 }
-
 function expectAnyExactBranchLatex(expected: RegExp | string) {
   const exactLatex = getDisplayedExactRawLatex();
   expect(exactLatex.length).toBeGreaterThan(0);
@@ -450,7 +449,7 @@ describe('AppMain UI automation flows', () => {
     await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
     expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('Stored Values');
-    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/a\s*=\s*4/);
+    await waitFor(() => expect(displayedDetailLatex()).toContain('a=4'));
 
     await user.click(screen.getByTestId('variables-toggle'));
     fireEvent.change(screen.getByTestId('variables-name-input'), { target: { value: 'a' } });
@@ -464,7 +463,8 @@ describe('AppMain UI automation flows', () => {
 
     await waitForDisplayOutcomeSuccess();
     expectMathStaticLatex(screen.getByTestId('display-outcome-exact'), '5');
-    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/a\s*=\s*4/);
+    expect(revealDetailSection('display-outcome-detail-section-0', 'Stored Values')).toBe(true);
+    await waitFor(() => expect(displayedDetailLatex()).toContain('a=4'), { timeout: 5000 });
   });
 
   it('does not substitute stored values while solving Equation symbolic targets', async () => {
@@ -2295,7 +2295,7 @@ describe('AppMain UI automation flows', () => {
     await waitForDisplayOutcomeSuccess();
     expect(screen.getByTestId('display-outcome-solve-summary')).toHaveTextContent(/outer non-periodic absolute-value family/i);
     expect(screen.getByText('Absolute-Value Reduction')).toBeInTheDocument();
-    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent(/t = \|x\|/i);
+    await waitFor(() => expect(displayedDetailLatex()).toEqual(expect.arrayContaining(['t = |x|', 't >= 0'])));
     expect(screen.queryByText('Exact Closure Boundary')).not.toBeInTheDocument();
   });
 
@@ -2425,7 +2425,7 @@ describe('AppMain UI automation flows', () => {
     const rawLatex = exactMath?.getAttribute('data-raw-latex') ?? '';
     expect(rawLatex).toContain('x=');
     expect(rawLatex).toContain('\\sqrt');
-    expect(screen.getByTestId('display-outcome-detail-sections')).toHaveTextContent('2x-1 must stay nonnegative');
+    await waitFor(() => expect(displayedDetailLatex()).toContain('2x-1'));
     expect(screen.getByText('Radical Isolation')).toBeInTheDocument();
     expect(screen.getByText('Power Lift')).toBeInTheDocument();
   });

@@ -208,13 +208,13 @@ describe('variable-memory', () => {
       latex: 'a+\\sin(k)',
       entries,
       policy,
-    })).toEqual([
+    })).toMatchObject([
       'Ignored stored values: a=4, k=-2. Symbolic transforms keep variables symbolic.',
     ]);
   });
 
   it('builds concise stored-value readback and detailed variable policy', () => {
-    expect(storedValueReadbackSections({
+    const sections = storedValueReadbackSections({
       substitutions: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
       protectedSubstitutions: [{ name: 'x', valueLatex: '9', numericValue: 9 }],
       protectedNameDescriptions: { x: 'the table variable' },
@@ -222,7 +222,9 @@ describe('variable-memory', () => {
       effectiveLatex: '4x^2',
       effectiveLabel: 'Effective table expression',
       replayedSnapshot: true,
-    })).toEqual([
+    });
+
+    expect(sections).toMatchObject([
       {
         title: 'Stored Values',
         lines: [
@@ -236,16 +238,30 @@ describe('variable-memory', () => {
         lines: ['Kept x symbolic as the table variable.'],
       },
     ]);
+    expect(sections[0]?.lineParts?.flat().filter((part) => part.kind === 'math')).toEqual([
+      { kind: 'math', latex: 'a=4' },
+      { kind: 'math', latex: '4x^2' },
+    ]);
+    expect(sections[1]?.lineParts?.[0]).toEqual([
+      { kind: 'text', text: 'Kept ' },
+      { kind: 'math', latex: 'x' },
+      { kind: 'text', text: ' symbolic as the table variable.' },
+    ]);
   });
 
   it('builds a concise stored-values detail section', () => {
-    expect(storedValuesDetailSection([
+    const section = storedValuesDetailSection([
       { name: 'a', valueLatex: '4', numericValue: 4 },
       { name: 'k', valueLatex: '-2', numericValue: -2 },
-    ])).toEqual({
+    ]);
+    expect(section).toMatchObject({
       title: 'Stored Values',
       lines: ['Substituted a=4, k=-2 before evaluating this expression.'],
     });
+    expect(section?.lineParts?.[0].filter((part) => part.kind === 'math')).toEqual([
+      { kind: 'math', latex: 'a=4' },
+      { kind: 'math', latex: 'k=-2' },
+    ]);
   });
 
   it('can label stored-value details for adopted modes', () => {

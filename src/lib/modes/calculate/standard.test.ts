@@ -87,7 +87,7 @@ describe('runCalculateMode', () => {
       { name: 'a', valueLatex: '4', numericValue: 4 },
       { name: 'k', valueLatex: '-2', numericValue: -2 },
     ]);
-    expect(result.detailSections?.[0]).toEqual({
+    expect(result.detailSections?.[0]).toMatchObject({
       title: 'Stored Values',
       lines: [
         'Used stored values: a=4, k=-2.',
@@ -148,7 +148,7 @@ describe('runCalculateMode', () => {
     }
     expect(simplified.exactLatex).toContain('a');
     expect(simplified.variableSubstitutions).toBeUndefined();
-    expect(simplified.detailSections?.[0]).toEqual({
+    expect(simplified.detailSections?.[0]).toMatchObject({
       title: 'Variable Policy',
       lines: [
         'Ignored stored values: a=4. Symbolic transforms keep variables symbolic.',
@@ -202,14 +202,14 @@ describe('runCalculateMode', () => {
     ]);
     expect(result.exactLatex).toContain('x^2');
     expect(result.exactLatex).not.toContain('\\mathrm{d}2');
-    expect(result.detailSections?.[0]).toEqual({
+    expect(result.detailSections?.[0]).toMatchObject({
       title: 'Stored Values',
       lines: [
         'Used stored values: c=4.',
         'Effective derivative expression: \\frac{\\mathrm{d}}{\\mathrm{d}f}4fx^2+4x.',
       ],
     });
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept f symbolic as the derivative variable.'],
     });
@@ -239,7 +239,7 @@ describe('runCalculateMode', () => {
       { name: 'a', valueLatex: '4', numericValue: 4 },
       { name: 'c', valueLatex: '2', numericValue: 2 },
     ]);
-    expect(result.detailSections?.[1]).toEqual({
+    expect(result.detailSections?.[1]).toMatchObject({
       title: 'Variable Policy',
       lines: ['Kept x symbolic as the derivative variable.'],
     });

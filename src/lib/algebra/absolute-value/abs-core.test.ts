@@ -70,10 +70,21 @@ describe('abs-core', () => {
     const sections = buildAbsoluteValueDetailSections(family);
     expect(sections[0]?.title).toBe('Absolute-Value Reduction');
     expect(sections[0]?.lines.join(' ')).toContain('t = |sin(x^3+x)|');
+    expect(sections[0]?.lineParts?.[0].filter((part) => part.kind === 'math')).toEqual([
+      { kind: 'math', latex: 't = |sin(x^3+x)|' },
+      { kind: 'math', latex: 't >= 0' },
+    ]);
     expect(sections[1]?.title).toBe('Generated Branches');
     expect(sections[1]?.lineKind).toBe('math');
     expect(sections[1]?.lines.join(' ')).toContain('\\sin(x^3+x)=0.500');
     expect(sections[1]?.lines.join(' ')).not.toContain('Branch:');
+
+    const boundary = buildAbsoluteValueDetailSections(family, { boundaryReason: 'no-roots' })
+      .find((section) => section.title === 'Exact Closure Boundary');
+    expect(boundary?.lineParts?.[0].filter((part) => part.kind === 'math')).toEqual([
+      { kind: 'math', latex: 't = |sin(x^3+x)|' },
+      { kind: 'math', latex: 't >= 0' },
+    ]);
   });
 
   it('normalizes direct bounded abs identities for simplify-only reuse', () => {

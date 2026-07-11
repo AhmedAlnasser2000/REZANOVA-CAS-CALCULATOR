@@ -201,7 +201,7 @@ Implemented contract: `DetailLineContent` is a focused shared renderer used by t
 
 ### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
 
-Status: active. Equation core is committed as `6e2182bf`, Equation parameterized as `97ec9ca2`, Symbolic Limits as `1325782c`, Symbolic Integration as `19ea2ad5`, Calculus as `27305475`, and Workspace Domains as `2bb2f91b`. `DETAIL-SEGMENT-LINEAR-ALGEBRA1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
+Status: active. Equation core is committed as `6e2182bf`, Equation parameterized as `97ec9ca2`, Symbolic Limits as `1325782c`, Symbolic Integration as `19ea2ad5`, Calculus as `27305475`, Workspace Domains as `2bb2f91b`, and Linear Algebra as `ca7d8179`. `DETAIL-SEGMENT-COMPAT-CLOSEOUT1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
 
 1. `DETAIL-SEGMENT-EQUATION-CORE1`.
 2. `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`.
@@ -226,6 +226,8 @@ Status: active. Equation core is committed as `6e2182bf`, Equation parameterized
 
 `DETAIL-SEGMENT-LINEAR-ALGEBRA1` removes the final accepted Linear Algebra debt while keeping the inventory at 445 producers: 435 declared and 10 fingerprinted undeclared producers. All 74 Matrix/Vector detail producers are now declared. The LU zero-pivot stop explicitly remains prose; its exact error, proof wording, collapse behavior, mathematical result, runtime hosts, and independent Matrix/Vector topology are unchanged. Expanded Chromium evidence shows both proof lines without overlap or a math renderer.
 
+`DETAIL-SEGMENT-COMPAT-CLOSEOUT1` removes the final 10 accepted debts while keeping the inventory at 445 producers: all 445 are declared and no undeclared live fingerprint remains. Structured absolute-value, domain/range, assumptions, variable-memory, solve-note, trust, and partial-fraction details now own typed math or explicit prose while deriving unchanged compatibility lines. Seven existing domain and variable symbols raise print-hygiene evidence from 196 to 203 fragments. Live producers no longer need renderer inference; old or snapshot-less History retains compatibility inference without storage migration. Chromium inspected stored-value replay, absolute-value reduction, and radical-domain facts with preserved collapse behavior and no overlap or overflow.
+
 - Establish an AST-aware source floor plus runtime corpus evidence for plain detail lines containing math-looking content.
 - Migrate the known dense Equation inequality/complex/numeric paths, Calculus shared/integral details, then at least two representative detail surfaces per workspace.
 - Prefer producer-owned parts. `inferDetailLinePartsFromText()` remains compatibility-only and must trend toward zero live use.
@@ -233,6 +235,8 @@ Status: active. Equation core is committed as `6e2182bf`, Equation parameterized
 - Preserve prose wording, pedagogical parentheses, card order, collapse behavior, Formula Viewer behavior, and History serialization.
 
 ### C3. `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`
+
+Status: implemented and verified on `2026-07-11`; entering its approved commit checkpoint.
 
 - Audit live producers, stored-History compatibility, Formula Viewer, and solve summaries.
 - Stop new legacy detail production once the floor reaches zero.

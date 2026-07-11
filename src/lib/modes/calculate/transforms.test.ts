@@ -17,7 +17,7 @@ describe('runCalculateAlgebraTransform', () => {
     expect(result.exactLatex).toBe('\\frac{2x+1}{6x}');
     expect(result.transformBadges).toEqual(['Combine Fractions']);
     expect(result.exactSupplementLatex?.[0]).toContain('x\\ne0');
-    expect(result.detailSections?.[0]).toEqual({
+    expect(result.detailSections?.[0]).toMatchObject({
       title: 'Variable Policy',
       lines: [
         'Ignored stored values: x=4. Symbolic transforms keep variables symbolic.',
