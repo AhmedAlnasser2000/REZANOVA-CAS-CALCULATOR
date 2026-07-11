@@ -29,6 +29,7 @@ import type {
   ResultOrigin,
   CalculusIntegrationStrategy,
 } from '../../../types/calculator';
+import { profileCalculusResult } from '../../display/printer';
 
 type CalculusEvaluation =
   | {
@@ -267,13 +268,13 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
 
     const numeric = centralDifference(derivativeAtPoint.body, derivativeAtPoint.variable, point);
     if (numeric !== undefined) {
-      return {
+      return profileCalculusResult({
         kind: 'handled',
         exactLatex: numberToLatex(numeric),
         approxText: formatApproxNumber(numeric),
         warnings: [derivativeNumericFallbackWarning(preflight)],
         resultOrigin: 'numeric-fallback',
-      };
+      });
     }
 
     return {
@@ -293,14 +294,14 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
     const substituted = exactDerivative.subs({ [derivativeAtPoint.variable]: point }).evaluate();
     const numericDerivative = boxedToFiniteNumber(substituted);
     if (numericDerivative !== undefined) {
-      return {
+      return profileCalculusResult({
         kind: 'handled',
         exactLatex: substituted.latex,
         approxText: latexToApproxText((substituted.N?.() ?? substituted).latex),
         warnings: [],
         resultOrigin: 'symbolic-engine',
         derivativeStrategies: derivative.strategies,
-      };
+      });
     }
   } catch {
     // Fall through to the bounded numeric derivative below.
@@ -315,13 +316,13 @@ function evaluateDerivativeAtPoint(node: unknown): CalculusEvaluation {
     };
   }
 
-  return {
+  return profileCalculusResult({
     kind: 'handled',
     exactLatex: numberToLatex(numeric),
     approxText: formatApproxNumber(numeric),
     warnings: ['Symbolic derivative unavailable; showing a numeric derivative at the selected point.'],
     resultOrigin: 'numeric-fallback',
-  };
+  });
 }
 
 export function resolveCalculusEvaluation(
@@ -367,7 +368,7 @@ export function resolveCalculusEvaluation(
         };
       }
 
-      return {
+      return profileCalculusResult({
         kind: 'handled',
         exactLatex: presented.exactLatex ?? '',
         answerRows: presented.answerRows,
@@ -376,7 +377,7 @@ export function resolveCalculusEvaluation(
         resultOrigin: presented.resultOrigin,
         integrationStrategy: presented.integrationStrategy,
         detailSections: presented.detailSections,
-      };
+      });
     }
 
     const lower = nodeToFiniteNumber(integral.lower);
@@ -405,7 +406,7 @@ export function resolveCalculusEvaluation(
       };
     }
 
-    return {
+    return profileCalculusResult({
       kind: 'handled',
       exactLatex: definite.exactLatex ?? '',
       approxText: definite.approxText,
@@ -413,7 +414,7 @@ export function resolveCalculusEvaluation(
       resultOrigin: definite.resultOrigin,
       integrationStrategy: definite.integrationStrategy,
       detailSections: definite.detailSections,
-    };
+    });
   }
 
   const limit = extractLimit(originalExpr.json);
@@ -463,14 +464,14 @@ export function resolveCalculusEvaluation(
         };
       }
 
-      return {
+      return profileCalculusResult({
         kind: 'handled',
         exactLatex: resolved.exactLatex ?? '',
         approxText: resolved.approxText,
         warnings: resolved.warnings,
         resultOrigin: resolved.resultOrigin,
         detailSections: resolved.detailSections,
-      };
+      });
     }
 
     const resolved = evaluateInfiniteLimitFromAst({
@@ -492,14 +493,14 @@ export function resolveCalculusEvaluation(
       };
     }
 
-    return {
+    return profileCalculusResult({
       kind: 'handled',
       exactLatex: resolved.exactLatex ?? '',
       approxText: resolved.approxText,
       warnings: resolved.warnings,
       resultOrigin: resolved.resultOrigin,
       detailSections: resolved.detailSections,
-    };
+    });
   }
 
   const derivative = extractDerivative(originalExpr.json);
@@ -520,24 +521,24 @@ export function resolveCalculusEvaluation(
         { computeEngineFallback: derivativeFallbackMode(preflight) },
       );
       const exactDerivative = box(resolvedDerivative.ast);
-      return {
+      return profileCalculusResult({
         kind: 'handled',
         exactLatex: exactDerivative.latex,
         approxText: latexToApproxText((exactDerivative.N?.() ?? exactDerivative).latex),
         warnings: [],
         resultOrigin: 'symbolic-engine',
         derivativeStrategies: resolvedDerivative.strategies,
-      };
+      });
     } catch {
       if (preflight.kind === 'compute-engine-fallback' && evaluatedExpr.latex !== originalExpr.latex) {
-        return {
+        return profileCalculusResult({
           kind: 'handled',
           exactLatex: evaluatedExpr.latex,
           approxText: latexToApproxText((evaluatedExpr.N?.() ?? evaluatedExpr).latex),
           warnings: [],
           resultOrigin: 'compute-engine',
           derivativeStrategies: ['compute-engine'],
-        };
+        });
       }
 
       return {

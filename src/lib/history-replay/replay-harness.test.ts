@@ -34,8 +34,8 @@ describe('History replay ratchet', () => {
   it('hard-compares migrated workspace LaTeX while retaining report-only families', async () => {
     const report = await runHistoryReplayHarness();
     expect(report.fixtureCount).toBe(100);
-    expect(report.hardLatexFixtureCount).toBe(56);
-    expect(report.reportOnlyLatexFixtureCount).toBe(44);
+    expect(report.hardLatexFixtureCount).toBe(70);
+    expect(report.reportOnlyLatexFixtureCount).toBe(30);
     expect(report.hardFailures).toEqual([]);
     expect(Array.isArray(report.latexDifferences)).toBe(true);
   }, 60_000);

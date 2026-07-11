@@ -17,6 +17,7 @@ import {
   calculusDetailSection,
   calculusTextRows,
 } from '../detail-readback';
+import { profileCalculusResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -174,17 +175,17 @@ function splitExactScalarFactor(node: unknown): { coefficient: ExactScalar; core
 
 function matchPowerOfT(core: unknown): LaplaceMatch | undefined {
   if (core === 1) {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex('1', 's'),
       method: 'Applied the table entry L{1}=1/s.',
-    };
+    });
   }
 
   if (core === 't') {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex('1', 's^{2}'),
       method: 'Applied the table entry L{t}=1/s^2.',
-    };
+    });
   }
 
   if (!isNodeArray(core) || core[0] !== 'Power' || core.length !== 3 || core[1] !== 't') {
@@ -197,10 +198,10 @@ function matchPowerOfT(core: unknown): LaplaceMatch | undefined {
   }
 
   const coefficient = factorial(exponent.numerator);
-  return {
+  return profileCalculusResult({
     exactLatex: fractionLatex(`${coefficient}`, sPowerLatex(exponent.numerator + 1)),
     method: `Applied the table entry L{t^n}=n!/s^(n+1) with n=${exponent.numerator}.`,
-  };
+  });
 }
 
 function matchExponential(core: unknown): { shift: ExactScalar } | undefined {
@@ -228,31 +229,31 @@ function matchUnaryFunction(core: unknown, head: string): ExactScalar | undefine
 function transformTrigLike(head: string, parameter: ExactScalar): LaplaceMatch | undefined {
   const parameterSquared = scalarSquare(parameter);
   if (head === 'Sin') {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex(exactScalarLatex(parameter), plusScalarTerm('s^{2}', parameterSquared)),
       method: 'Applied the table entry L{sin(a t)}=a/(s^2+a^2).',
-    };
+    });
   }
 
   if (head === 'Cos') {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex('s', plusScalarTerm('s^{2}', parameterSquared)),
       method: 'Applied the table entry L{cos(a t)}=s/(s^2+a^2).',
-    };
+    });
   }
 
   if (head === 'Sinh') {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex(exactScalarLatex(parameter), minusScalarTerm('s^{2}', parameterSquared)),
       method: 'Applied the table entry L{sinh(a t)}=a/(s^2-a^2).',
-    };
+    });
   }
 
   if (head === 'Cosh') {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex('s', minusScalarTerm('s^{2}', parameterSquared)),
       method: 'Applied the table entry L{cosh(a t)}=s/(s^2-a^2).',
-    };
+    });
   }
 
   return undefined;
@@ -283,16 +284,16 @@ function matchExponentialTrigProduct(core: unknown): LaplaceMatch | undefined {
   const shifted = shiftedSLatex(expMatch.shift);
   const denominator = plusScalarTerm(squaredLatex(shifted), scalarSquare(parameter));
   if (trig[0] === 'Sin') {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex(exactScalarLatex(parameter), denominator),
       method: 'Applied the table entry L{e^(a t) sin(b t)}=b/((s-a)^2+b^2).',
-    };
+    });
   }
 
-  return {
+  return profileCalculusResult({
     exactLatex: fractionLatex(shifted, denominator),
     method: 'Applied the table entry L{e^(a t) cos(b t)}=(s-a)/((s-a)^2+b^2).',
-  };
+  });
 }
 
 function matchLaplaceTable(core: unknown): LaplaceMatch | undefined {
@@ -303,10 +304,10 @@ function matchLaplaceTable(core: unknown): LaplaceMatch | undefined {
 
   const exp = matchExponential(core);
   if (exp) {
-    return {
+    return profileCalculusResult({
       exactLatex: fractionLatex('1', shiftedSLatex(exp.shift)),
       method: 'Applied the table entry L{e^(a t)}=1/(s-a).',
-    };
+    });
   }
 
   for (const head of ['Sin', 'Cos', 'Sinh', 'Cosh']) {
@@ -330,10 +331,10 @@ export function resolveLaplaceTransformFromAst(node: unknown): LaplaceMatch | un
     return undefined;
   }
 
-  return {
+  return profileCalculusResult({
     ...matched,
     exactLatex: scaleLatex(matched.exactLatex, factored.coefficient),
-  };
+  });
 }
 
 export function evaluateCalculusLaplaceTransform(

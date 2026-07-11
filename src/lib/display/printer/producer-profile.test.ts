@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  profileCalculusResult,
   profileEquationResult,
   profileSymbolicCoreResult,
   profileSymbolicIntegrationResult,
@@ -31,5 +32,10 @@ describe('producer printer profiles', () => {
   it('keeps generic symbolic serialization stable under pedagogical-v1', () => {
     const result = { kind: 'success', exactLatex: String.raw`2x` };
     expect(profileSymbolicCoreResult(result)).toBe(result);
+  });
+
+  it('keeps Calculus workspace serialization stable under pedagogical-v1', () => {
+    const result = { kind: 'success', exactLatex: String.raw`y=Ce^{2x}` };
+    expect(profileCalculusResult(result)).toBe(result);
   });
 });

@@ -33,6 +33,7 @@ import {
   calculusDetailSection,
   calculusTextRows,
 } from '../detail-readback';
+import { profileCalculusResult } from '../../display/printer';
 
 function partialFractionReadbackDetail(
   candidate: IntegrationCandidateMetadata | undefined,
@@ -116,7 +117,7 @@ function evaluateAntiderivativeAtBounds(input: {
   variable: string;
   lower: number;
   upper: number;
-}) {
+}): Pick<CalculusCoreEvaluation, 'exactLatex' | 'approxText' | 'error'> {
   try {
     const antiderivative = ce.parse(input.antiderivativeLatex) as BoxedLike;
     const upper = antiderivative.subs({ [input.variable]: input.upper });
@@ -132,10 +133,10 @@ function evaluateAntiderivativeAtBounds(input: {
       return { error: guardError };
     }
 
-    return {
+    return profileCalculusResult({
       exactLatex: exact.latex,
       approxText,
-    };
+    });
   } catch {
     return {
       error: 'This definite integral could not be evaluated reliably in this milestone.',
@@ -164,7 +165,7 @@ function resolvedComputeEngineIntegral(
     variable,
   });
 
-  return {
+  return profileCalculusResult({
     exactLatex: computed.latex,
     approxText: latexToApproxText((computed.N?.() ?? computed).latex),
     warnings: [],
@@ -172,7 +173,7 @@ function resolvedComputeEngineIntegral(
     integrationStrategy: 'compute-engine',
     integrationCandidate: buildComputeEngineIntegrationCandidate(body, backcheck),
     antiderivativeBackcheck: backcheck,
-  };
+  });
 }
 
 function resolvedTranscendentalCertificate(
@@ -209,7 +210,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
     ];
     const shouldNormalizeRuleLatex =
       input.normalizeRuleLatex && symbolicEngine.candidate?.method !== 'partial-fractions';
-    return {
+    return profileCalculusResult({
       exactLatex: shouldNormalizeRuleLatex
         ? normalizeExactLatex(symbolicEngine.exactLatex)
         : symbolicEngine.exactLatex,
@@ -223,7 +224,7 @@ export function resolveIndefiniteIntegralFromAst(input: {
         integrationDetails.length > 0 ? integrationDetails : undefined,
         antiderivativeTrustFacts(symbolicEngine.verification),
       ),
-    };
+    });
   }
 
   const certificate = resolvedTranscendentalCertificate(input.body, input.variable);

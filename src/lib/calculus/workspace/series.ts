@@ -4,6 +4,7 @@ import type {
   CalculusResultOrigin,
   SeriesState,
 } from '../../../types/calculator';
+import { profileCalculusResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -131,11 +132,11 @@ function evaluateSeries(state: SeriesState, center: number) {
     }
   }
 
-  return {
+  return profileCalculusResult({
     exactLatex: joinTerms(terms) || '0',
     warnings: [],
     resultOrigin: 'heuristic-symbolic',
-  } satisfies AdvancedSeriesEvaluation;
+  }) satisfies AdvancedSeriesEvaluation;
 }
 
 export function evaluateMaclaurinSeries(state: SeriesState): AdvancedSeriesEvaluation {

@@ -7,6 +7,7 @@ import {
   limitTextRow,
   type LimitDetailRow,
 } from '../../symbolic-engine/limits/detail-readback';
+import { profileCalculusResult } from '../../display/printer';
 
 const LIMIT_TOLERANCE = 1e-4;
 const INFINITE_SAMPLES = [10, 20, 50, 100, 200, 500, 1000];
@@ -340,7 +341,7 @@ export function resolveInfiniteLimitHeuristic(
     }
 
     if (numerator.degree < denominator.degree) {
-      return {
+      return profileCalculusResult({
         kind: 'success',
         value: 0,
         exactLatex: '0',
@@ -348,7 +349,7 @@ export function resolveInfiniteLimitHeuristic(
           limitTextRow(`Key calculation: numerator degree ${numerator.degree} is lower than denominator degree ${denominator.degree}, so the ratio tends to 0.`),
           conclusionRow('0'),
         ),
-      };
+      });
     }
 
     if (numerator.degree === denominator.degree) {

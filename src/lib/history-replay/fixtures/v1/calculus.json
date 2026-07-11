@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "calculus",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "calculus-derivative-polynomial",

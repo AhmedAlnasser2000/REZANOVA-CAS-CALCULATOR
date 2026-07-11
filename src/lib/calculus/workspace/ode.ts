@@ -10,6 +10,7 @@ import type {
   NumericOdeResponse,
   SecondOrderOdeState,
 } from '../../../types/calculator';
+import { profileCalculusResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -277,11 +278,11 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
       };
     }
 
-    return {
+    return profileCalculusResult({
       exactLatex: `y=C\\,e^{${wrapExpExponent(integral.exactLatex)}}`,
       warnings: [],
       resultOrigin: 'symbolic',
-    };
+    });
   }
 
   if (state.classification === 'linear') {
@@ -294,30 +295,30 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
     }
 
     if (linear.a === 0) {
-      return {
+      return profileCalculusResult({
         exactLatex: `y=${numberToLatex(linear.b)}x+C`,
         warnings: [],
         resultOrigin: 'symbolic',
-      };
+      });
     }
 
     const offset = linear.b === 0 ? '' : `${numberToLatex(-linear.b / linear.a)}`;
     const homogeneous = `Ce^{${numberToLatex(linear.a)}x}`;
-    return {
+    return profileCalculusResult({
       exactLatex: offset ? `y=${homogeneous}+${offset}` : `y=${homogeneous}`,
       warnings: [],
       resultOrigin: 'symbolic',
-    };
+    });
   }
 
   if (!dependsOnVariable(rhs.json, 'y')) {
     const integral = evaluateCalculusIndefiniteIntegral({ bodyLatex: rhsLatex });
     if (!integral.error && integral.exactLatex) {
-      return {
+      return profileCalculusResult({
         exactLatex: `y=${integral.exactLatex}+C`,
         warnings: [],
         resultOrigin: 'symbolic',
-      };
+      });
     }
   }
 
@@ -399,20 +400,20 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
   const homogeneous = homogeneousSecondOrderLatex(a2, a1, a0);
   const forcingLatex = state.forcingLatex.trim();
   if (!forcingLatex || forcingLatex === '0') {
-    return {
+    return profileCalculusResult({
       exactLatex: `y=${homogeneous}`,
       warnings: [],
       resultOrigin: 'symbolic',
-    };
+    });
   }
 
   const constantForcing = Number(forcingLatex);
   if (Number.isFinite(constantForcing) && Math.abs(a0) > 1e-10) {
-    return {
+    return profileCalculusResult({
       exactLatex: `y=${homogeneous}+${numberToLatex(constantForcing / a0)}`,
       warnings: [],
       resultOrigin: 'symbolic',
-    };
+    });
   }
 
   const expForcing = parseExpForcing(forcingLatex);
@@ -426,11 +427,11 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
     }
 
     const coefficient = expForcing.amplitude / characteristic;
-    return {
+    return profileCalculusResult({
       exactLatex: `y=${homogeneous}+${numberToLatex(coefficient)}e^{${numberToLatex(expForcing.rate)}x}`,
       warnings: [],
       resultOrigin: 'symbolic',
-    };
+    });
   }
 
   const trigForcing = parseTrigForcing(forcingLatex);
@@ -452,11 +453,11 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
       ? (-trigForcing.amplitude * mu) / determinant
       : (trigForcing.amplitude * lambda) / determinant;
 
-    return {
+    return profileCalculusResult({
       exactLatex: `y=${homogeneous}+${numberToLatex(sinCoeff)}\\sin\\left(${numberToLatex(trigForcing.rate)}x\\right)+${numberToLatex(cosCoeff)}\\cos\\left(${numberToLatex(trigForcing.rate)}x\\right)`,
       warnings: [],
       resultOrigin: 'symbolic',
-    };
+    });
   }
 
   return {
@@ -482,10 +483,10 @@ export async function solveNumericIvp(state: NumericIvpState): Promise<AdvancedO
     };
   }
 
-  return {
+  return profileCalculusResult({
     exactLatex: `y\\left(${numberToLatex(response.finalX)}\\right)\\approx${numberToLatex(response.finalY)}`,
     approxText: `Final value ~= ${formatApproxNumber(response.finalY)}`,
     warnings: response.warnings,
     resultOrigin: 'numeric-fallback',
-  };
+  });
 }

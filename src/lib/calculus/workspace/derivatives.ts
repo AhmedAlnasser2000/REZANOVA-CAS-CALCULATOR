@@ -22,6 +22,7 @@ import type {
 import { derivativeVariableLatex } from '../derivative-target';
 import type { DerivativeOperatorSpec } from '../derivative-operator';
 import type { CalculusWorkspaceEvaluation } from './integrals';
+import { profileCalculusResult } from '../../display/printer';
 
 type HigherOrderDerivativeRequest = {
   bodyLatex: string;
@@ -224,11 +225,11 @@ export function buildCalculusDerivativeStepsDetail({
     return derivativeStepsDetailSection(operator, differentiated.steps);
   }
 
-  return derivativeStepsDetailSection(operator, differentiated.steps, {
+  return derivativeStepsDetailSection(operator, differentiated.steps, profileCalculusResult({
     variable,
     pointLatex: point,
     resultLatex: renderNodeLatex(replaceSymbol(differentiated.ast, variable, pointAst)),
-  });
+  }));
 }
 
 export function evaluateCalculusHigherOrderDerivative({
@@ -258,7 +259,7 @@ export function evaluateCalculusHigherOrderDerivative({
     };
   }
 
-  return {
+  return profileCalculusResult({
     exactLatex: renderNodeLatex(differentiated.ast),
     warnings: [],
     resultOrigin: 'symbolic-engine',
@@ -266,7 +267,7 @@ export function evaluateCalculusHigherOrderDerivative({
     detailSections: [
       derivativeStepsDetailSection(operator, differentiated.steps),
     ],
-  };
+  });
 }
 
 export function evaluateCalculusHigherOrderDerivativeAtPoint({
@@ -323,11 +324,11 @@ export function evaluateCalculusHigherOrderDerivativeAtPoint({
     resultOrigin: 'symbolic-engine',
     derivativeStrategies: differentiated.strategies,
     detailSections: [
-      derivativeStepsDetailSection(operator, differentiated.steps, {
+      derivativeStepsDetailSection(operator, differentiated.steps, profileCalculusResult({
         variable,
         pointLatex: point,
         resultLatex: exactLatex,
-      }),
+      })),
     ],
   };
 }
@@ -359,7 +360,7 @@ export function evaluateCalculusMixedPartialDerivative({
     };
   }
 
-  return {
+  return profileCalculusResult({
     exactLatex: renderNodeLatex(differentiated.ast),
     warnings: [],
     resultOrigin: 'symbolic-engine',
@@ -367,5 +368,5 @@ export function evaluateCalculusMixedPartialDerivative({
     detailSections: [
       derivativeStepsDetailSection(operator, differentiated.steps),
     ],
-  };
+  });
 }

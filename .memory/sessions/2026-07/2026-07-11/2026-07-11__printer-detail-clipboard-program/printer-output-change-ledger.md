@@ -16,7 +16,7 @@
 
 ## Accepted Changes
 
-None through `PRINT-PROFILE-SYMBOLIC-INTEGRATION1`.
+None through `PRINT-PROFILE-CALCULUS1`.
 
 ## Rejected Candidates
 

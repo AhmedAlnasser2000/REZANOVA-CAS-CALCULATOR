@@ -39,6 +39,7 @@ import {
   calculusTextRow,
   calculusTextRows,
 } from '../detail-readback';
+import { profileCalculusResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -222,12 +223,12 @@ export function evaluateCalculusFiniteLimit(
     const body = ce.parse(bodyLatex) as BoxedLike;
     const exact = parsed.evaluate();
     if (exact.latex !== parsed.latex && !exact.latex.includes('\\lim')) {
-      return {
+      return profileCalculusResult({
         exactLatex: exact.latex,
         approxText: latexToApproxText((exact.N?.() ?? exact).latex),
         warnings: [],
         resultOrigin: 'symbolic',
-      };
+      });
     }
 
     return evaluateFiniteLimitFromAst({

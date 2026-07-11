@@ -267,7 +267,11 @@ async function main() {
   }
 
   const outputDir = resolve('src/lib/history-replay/fixtures/v1');
-  const hardLatexWorkspaces = new Set<HistoryReplayWorkspace>(['calculate', 'equation']);
+  const hardLatexWorkspaces = new Set<HistoryReplayWorkspace>([
+    'calculate',
+    'calculus',
+    'equation',
+  ]);
   await mkdir(outputDir, { recursive: true });
   for (const workspace of new Set(fixtures.map((fixture) => fixture.workspace))) {
     const file: HistoryReplayFixtureFile = {

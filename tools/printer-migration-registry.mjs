@@ -196,6 +196,7 @@ export const MIGRATION_MARKER_NAMES = new Set([
 
 export const MIGRATION_WRAPPER_NAMES = new Set([
   'canonicalDirectSymbolicOutcome',
+  'profileCalculusResult',
   'profileEquationResult',
   'profileSymbolicCoreResult',
   'profileSymbolicIntegrationResult',

@@ -48,6 +48,7 @@ import {
   limitDetailSection,
   limitTextRows,
 } from '../../symbolic-engine/limits/detail-readback';
+import { profileCalculusResult } from '../../display/printer';
 
 const LIMIT_TOLERANCE = 1e-4;
 const LIMIT_STEPS = [1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4];
@@ -649,25 +650,25 @@ export function evaluateInfiniteLimitFromAst(input: {
 
   const heuristic = resolveInfiniteLimitHeuristic(input.body, input.variable, input.targetKind);
   if (heuristic.kind === 'success') {
-    return {
+    return profileCalculusResult({
       exactLatex: heuristic.exactLatex ?? limitValueToLatex(heuristic.value),
       approxText: limitValueToApproxText(heuristic.value),
       warnings: [],
       resultOrigin: 'rule-based-symbolic',
       detailSections: heuristic.detailSections,
-    };
+    });
   }
 
   if (input.routeKind === 'lhospital-candidate') {
     const lHospital = attemptInfiniteLHospital(input.body, input.targetKind, input.variable);
     if (lHospital.kind === 'success') {
-      return {
+      return profileCalculusResult({
         exactLatex: lHospital.exactLatex ?? limitValueToLatex(lHospital.value),
         approxText: limitValueToApproxText(lHospital.value),
         warnings: ["Rule-based limit resolution used capped L'Hopital on a supported quotient at infinity."],
         resultOrigin: 'heuristic-symbolic',
         detailSections: lHospital.detailSections,
-      };
+      });
     }
 
     return {

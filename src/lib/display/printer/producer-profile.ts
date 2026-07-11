@@ -41,3 +41,7 @@ export function profileSymbolicIntegrationResult<T>(result: T): T {
 export function profileSymbolicCoreResult<T>(result: T): T {
   return profileDomainResult(result);
 }
+
+export function profileCalculusResult<T>(result: T): T {
+  return profileDomainResult(result);
+}

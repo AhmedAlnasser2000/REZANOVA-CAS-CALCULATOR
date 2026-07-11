@@ -30,6 +30,7 @@ import {
   calculusTextPart,
   calculusTextRows,
 } from '../detail-readback';
+import { profileCalculusResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 const INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS = 10_000;
@@ -174,7 +175,7 @@ function integrateHalfInfinite(
   finiteBound: number,
   direction: 'pos' | 'neg',
   finiteEndpointLabel = direction === 'pos' ? 'lower endpoint' : 'upper endpoint',
-) {
+): CalculusWorkspaceEvaluation {
   const endpointStop = improperEndpointDomainStop(
     checkPointRealDomain({ node: body, variable, value: finiteBound }),
     finiteBound,
@@ -221,7 +222,7 @@ function integrateHalfInfinite(
     return { warnings: [], error: guardError } satisfies CalculusWorkspaceEvaluation;
   }
 
-  return {
+  return profileCalculusResult({
     exactLatex: numberToLatex(result.value),
     approxText: formatApproxNumber(result.value),
     warnings: ['Symbolic improper integral unavailable; showing a numeric improper integral.'],
@@ -233,7 +234,7 @@ function integrateHalfInfinite(
         'The result remains labeled as numeric fallback.',
       ]),
     )],
-  } satisfies CalculusWorkspaceEvaluation;
+  }) satisfies CalculusWorkspaceEvaluation;
 }
 
 export function evaluateCalculusIndefiniteIntegral(
@@ -406,7 +407,7 @@ export function evaluateCalculusImproperIntegral(
     return { warnings: [], error: guardError };
   }
 
-  return {
+  return profileCalculusResult({
     exactLatex: numberToLatex(total),
     approxText: formatApproxNumber(total),
     warnings: ['Symbolic improper integral unavailable; showing a numeric improper integral.'],
@@ -418,5 +419,5 @@ export function evaluateCalculusImproperIntegral(
         'The result remains labeled as numeric fallback.',
       ]),
     )],
-  };
+  });
 }
