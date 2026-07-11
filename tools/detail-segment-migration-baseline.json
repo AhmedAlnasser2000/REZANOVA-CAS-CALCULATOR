@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "acceptedReason": "DETAIL-SEGMENT-WORKSPACE-DOMAINS1 removes all three accepted workspace-domain debts, types Statistics regression metrics, and declares correlation quality plus Table cancellation as prose without changing compatibility lines.",
+  "acceptedReason": "DETAIL-SEGMENT-LINEAR-ALGEBRA1 declares the final accepted Linear Algebra debt, the LU zero-pivot stop, as prose without changing its compatibility lines or mathematical behavior.",
   "registryDigest": "a8019e1bc55ed5c4a143",
   "laneFloors": {
     "equation-parameterized": 0,
@@ -9,7 +9,7 @@
     "symbolic-integration": 0,
     "calculus": 0,
     "workspace-domains": 0,
-    "linear-algebra": 1,
+    "linear-algebra": 0,
     "compat-closeout": 10
   },
   "undeclaredFingerprints": [
@@ -22,7 +22,6 @@
     "src/lib/algebra/variable-memory/readback.ts::storedValuesDetailSection::object::e298e189d32ed0ab9631",
     "src/lib/display/result/result-detail-policy.ts::concisePartialFractions::object::d9eb65fc8dd0c20ff81c",
     "src/lib/display/result/result-detail-policy.ts::conciseTrust::object::4c4277917eb033909054",
-    "src/lib/display/result/result-detail-policy.ts::readableSolveNoteSection::object::e0ddeccbc055c2c582e9",
-    "src/lib/linear-algebra/matrix-lu.ts::runMatrixLu::object::377d9e2a7a3f00a7d633"
+    "src/lib/display/result/result-detail-policy.ts::readableSolveNoteSection::object::e0ddeccbc055c2c582e9"
   ]
 }

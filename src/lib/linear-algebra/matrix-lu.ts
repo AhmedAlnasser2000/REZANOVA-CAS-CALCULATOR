@@ -386,6 +386,7 @@ export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
           `pivot ${factored.pivotIndex + 1} is zero before elimination.`,
           'Plain LU does not swap rows. PLU is the row-swap-aware factorization.',
         ],
+        lineKind: 'text',
       }],
     };
   }

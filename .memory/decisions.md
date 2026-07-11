@@ -2237,3 +2237,7 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Statistics quality readback keeps metric labels as prose and owns SSE, MSE, and residual standard error as typed mathematical values. Correlation interpretation remains explicitly prose because it communicates a qualitative classification rather than a mathematical fragment.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Table cancellation remains an explicit OOE prose detail. Declaring detail intent must preserve existing collapsed state and card behavior; verification expands collapsed sections to inspect typed math rather than changing their default presentation.
+
+## 2026-07-11 - DETAIL-SEGMENT-LINEAR-ALGEBRA1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The LU zero-pivot proof is an explicit prose stop, not a mathematical fragment. Closing detail metadata debt must preserve its existing error and proof wording and cannot be used to widen Matrix/Vector capabilities or alter their independent runtime topology.
