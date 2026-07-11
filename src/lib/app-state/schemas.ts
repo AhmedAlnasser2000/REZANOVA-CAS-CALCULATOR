@@ -596,6 +596,41 @@ const numericSolveIntervalSchema = z.object({
   end: z.string(),
   subdivisions: z.number(),
 });
+const complexSolveRegionSchema = z.object({
+  reMin: z.string(),
+  reMax: z.string(),
+  imMin: z.string(),
+  imMax: z.string(),
+  gridSize: z.number().optional(),
+  randomSeedCount: z.number().optional(),
+  samplesPerEdge: z.number().optional(),
+  subdivisionDepth: z.number().optional(),
+  cellBudget: z.number().optional(),
+});
+const equationReplaySeedSchema = z.union([
+  z.object({
+    screen: z.literal('symbolic'),
+    equationLatex: z.string(),
+    equationSolveTarget: z.string().nullable().optional(),
+    complexRegion: complexSolveRegionSchema.optional(),
+    numericInterval: numericSolveIntervalSchema.optional(),
+  }),
+  z.object({
+    screen: z.enum(['quadratic', 'cubic', 'quartic']),
+    coefficients: z.array(z.number().finite()),
+    equationLatex: z.string(),
+  }),
+  z.object({
+    screen: z.enum(['linear2', 'linear3']),
+    equationLatex: z.string(),
+    system: z.array(z.array(z.number().finite())),
+  }),
+  z.object({
+    screen: z.literal('polynomialSystem2'),
+    equationLatex: z.string(),
+    polynomialSystem2Latex: z.tuple([z.string(), z.string()]),
+  }),
+]);
 
 export const storedVariableValueSchema = z.object({
   name: z.string(),
@@ -620,6 +655,15 @@ const displayDetailSectionSchema = z.object({
   lineKind: displayDetailLineKindSchema.optional(),
   lineKinds: z.array(displayDetailLineKindSchema).optional(),
   lineParts: z.array(z.array(displayDetailLinePartSchema)).optional(),
+});
+const displaySystemSolutionReadbackSchema = z.object({
+  variablesLatex: z.array(z.string()),
+  rows: z.array(z.object({
+    valuesLatex: z.array(z.string()),
+    approxText: z.string().optional(),
+  })),
+  label: z.string().optional(),
+  source: z.string().optional(),
 });
 const calculateSeedSchema = z.object({
   bodyLatex: z.string().optional(),
@@ -719,6 +763,7 @@ export const historyEntrySchema = z.object({
   exactSupplementLatex: z.array(z.string()).optional(),
   approxText: z.string().optional(),
   detailSections: z.array(displayDetailSectionSchema).optional(),
+  systemReadback: displaySystemSolutionReadbackSchema.optional(),
   calculateScreen: calculateScreenSchema.optional(),
   calculateSeed: calculateSeedSchema.optional(),
   calculusScreen: calculusScreenSchema.optional(),
@@ -731,6 +776,8 @@ export const historyEntrySchema = z.object({
   statisticsSeed: statisticsReplaySeedSchema.optional(),
   matrixSeed: matrixReplaySeedSchema.optional(),
   vectorSeed: vectorReplaySeedSchema.optional(),
+  equationScreen: equationScreenSchema.optional(),
+  equationSeed: equationReplaySeedSchema.optional(),
   equationSolveTarget: z.string().optional(),
   equationAnswerMode: legacyEquationAnswerModeSchema.optional(),
   equationDomainIntent: equationDomainIntentSchema.optional(),
@@ -760,7 +807,7 @@ export const historyEntrySchema = z.object({
     detailedFactsEnabled: z.boolean(),
   }).optional(),
   timestamp: z.string(),
-});
+}).passthrough();
 
 export const appBootstrapSchema = z.object({
   currentMode: modeIdSchema,

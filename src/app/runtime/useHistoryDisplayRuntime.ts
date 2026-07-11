@@ -11,7 +11,6 @@ import {
   mapLegacyCalculateScreenToCalculusScreen,
 } from '../../lib/calculus/calculus-identity';
 import {
-  appendHistoryEntry,
   clearHistoryEntries,
   deleteHistoryEntry,
 } from '../../lib/app-state/persistence';
@@ -47,6 +46,7 @@ import {
   type RuntimeElapsedPendingStatus,
 } from './runtimeElapsedTime';
 import { buildHistoryReplaySnapshot } from '../../lib/history-replay/replay-snapshot';
+import { persistHistoryEntryWithWarning } from './historyPersistence';
 import type {
   CalculusScreen,
   CalculatorMemorySnapshot,
@@ -346,7 +346,7 @@ export function useHistoryDisplayRuntime({
       const ordered = sortHistoryEntriesByLaunchOrder([...currentHistory, finalizedEntry]);
       return ordered.slice(-80);
     });
-    void appendHistoryEntry(finalizedEntry);
+    void persistHistoryEntryWithWarning(finalizedEntry, setClipboardNotice);
   }
 
   function stopPendingHistoryTicket(ticket: PendingHistoryTicket) {

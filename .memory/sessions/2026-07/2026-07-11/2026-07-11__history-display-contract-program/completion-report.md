@@ -46,3 +46,32 @@ Ground and record the accepted structured-History and Display-contract-inversion
 ## Next Step
 
 Commit this roadmap checkpoint, then implement `HISTORY-PERSISTENCE-PARITY-CLOSURE1` without touching Notebook files.
+
+## HISTORY-PERSISTENCE-PARITY-CLOSURE1
+
+### Completed
+
+- Added exact schema coverage for all 35 current `HistoryEntry` fields, including `systemReadback`, `equationScreen`, and `equationSeed`, with a compile-time/runtime key-parity ratchet.
+- Preserved original validated browser History objects and Calculator Memory History arrays so unknown versioned extensions survive reload.
+- Replaced the obsolete typed Rust History projection with a minimally validated raw JSON envelope, an 80-row retention policy, and a 2,000,000-byte new-append limit.
+- Added explicit append results and a session-only durability warning while retaining failed-save rows in memory.
+- Added extension-rich browser reload, Calculator Memory, Rust file restart, deletion, malformed/oversized, retention, and real Chromium failure-path coverage.
+- Launched the real Tauri desktop twice against isolated app data and confirmed native load plus frontend autosave preserved structured fields and unknown extensions.
+- Kept Notebook, mathematical output, OOE authority, Surface Protocol DTOs, and capability topology unchanged.
+
+### Durable Memory Updated
+
+- `.memory/current-state.md`
+- `.memory/decisions.md`
+- `.memory/journal/2026-07/2026-07-11.md`
+- `.memory/research/roadmaps/history-display-contract-roadmap.md`
+- `.memory/sessions/2026-07/2026-07-11/2026-07-11__history-display-contract-program/`
+
+### Next Step
+
+Commit `HISTORY-PERSISTENCE-PARITY-CLOSURE1`, then implement `CANONICAL-RESULT-DOCUMENT1`. Durable Notebook persistence is no longer blocked by this prerequisite after the parity commit lands, but Notebook files remain outside this program's lane.
+
+### Concurrent Work Boundary
+
+- During final staging, the Notebook agent added unstaged TipTap dependencies in `package.json` and `package-lock.json`.
+- Those files do not overlap app-state, History, Display, `AppMain`, or Tauri persistence; they were inspected, left unstaged, and excluded from this milestone.

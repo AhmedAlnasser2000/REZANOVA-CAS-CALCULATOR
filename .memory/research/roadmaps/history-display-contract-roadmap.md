@@ -73,6 +73,13 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 18. `DISPLAY-CONTRACT-INVERSION1`: make canonical documents authoritative while retaining derived legacy projections.
 19. `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0`: run the full gate, inspect restart behavior and all nine workspaces, and review accumulated evidence with the user.
 
+## Progress
+
+- `HISTORY-DISPLAY-CONTRACT-ROADMAP0`: committed as `6a4c0d0d`.
+- `HISTORY-PERSISTENCE-PARITY-CLOSURE1`: verified and entering its approved commit. Browser validation covers all 35 current fields and preserves unknown extensions; Rust now validates only the stable envelope and 2,000,000-byte append cap while retaining the original JSON value.
+- Restart evidence: an extension-rich row survives real Chromium reload, Calculator Memory, file-backed Rust restart, and two isolated real Tauri desktop launches. A forced browser storage failure leaves the row in session and renders the durability warning.
+- `CANONICAL-RESULT-DOCUMENT1` is next. No canonical result fields, structured History result, Display inversion, Notebook file, Surface DTO, or OOE behavior changed in the parity gate.
+
 ## Verification Contract
 
 - Every implementation gate runs focused tests, TypeScript, build, lint, file-size, memory, OOE/compartment/Surface boundaries, seam selection, and `git diff --check`.

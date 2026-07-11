@@ -30,6 +30,11 @@ import {
 
 export const WEB_PREVIEW_APP_STATE_STORAGE_KEY = 'rezanova-classwiz-calculator:app-state:v1';
 export const HISTORY_ENTRY_LIMIT = 80;
+export const HISTORY_ENTRY_MAX_SERIALIZED_BYTES = 2_000_000;
+
+export type HistoryPersistenceWriteResult =
+  | { ok: true }
+  | { ok: false; reason: 'invalid' | 'over-size' | 'unavailable' };
 
 type WebPreviewState = {
   currentMode: ModeId;
@@ -82,7 +87,7 @@ function parseHistoryEntries(payload: unknown): HistoryEntry[] {
   for (const entry of payload) {
     const parsed = historyEntrySchema.safeParse(entry);
     if (parsed.success) {
-      entries.push(parsed.data as HistoryEntry);
+      entries.push(entry as HistoryEntry);
     }
   }
 
@@ -106,11 +111,12 @@ function parseCalculatorMemory(payload: unknown): CalculatorMemorySnapshot | nul
   }
 
   const candidate = payload as Record<string, unknown>;
+  const history = parseHistoryEntries(candidate.history);
   const parsed = calculatorMemorySnapshotSchema.safeParse({
     ...candidate,
     currentMode: 'calculate',
     previousNonGuideMode: 'calculate',
-    history: parseHistoryEntries(candidate.history),
+    history,
     displayOutcome: null,
     session: {},
   });
@@ -120,8 +126,19 @@ function parseCalculatorMemory(payload: unknown): CalculatorMemorySnapshot | nul
 
   return {
     ...parsed.data,
-    history: parsed.data.history.slice(-HISTORY_ENTRY_LIMIT),
+    history: history.slice(-HISTORY_ENTRY_LIMIT),
   };
+}
+
+function serializedByteLength(value: unknown): number | null {
+  try {
+    const serialized = JSON.stringify(value);
+    return typeof serialized === 'string'
+      ? new TextEncoder().encode(serialized).byteLength
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function readWebPreviewState(): WebPreviewState {
@@ -236,20 +253,39 @@ export async function loadHistoryEntries(): Promise<HistoryEntry[]> {
   return payload ? parseHistoryEntries(payload) : readWebPreviewState().history;
 }
 
-export async function appendHistoryEntry(entry: HistoryEntry) {
+export async function appendHistoryEntry(
+  entry: HistoryEntry,
+): Promise<HistoryPersistenceWriteResult> {
   if (!historyEntrySchema.safeParse(entry).success) {
-    return;
+    return { ok: false, reason: 'invalid' };
   }
 
-  if (hasTauriRuntime()) {
-    await optionalInvoke('append_history', { entry });
-    return;
+  const entryBytes = serializedByteLength(entry);
+  if (entryBytes === null) {
+    return { ok: false, reason: 'invalid' };
+  }
+  if (entryBytes > HISTORY_ENTRY_MAX_SERIALIZED_BYTES) {
+    return { ok: false, reason: 'over-size' };
   }
 
-  writeWebPreviewState((state) => ({
-    ...state,
-    history: [...state.history, entry].slice(-HISTORY_ENTRY_LIMIT),
-  }));
+  try {
+    if (hasTauriRuntime()) {
+      await optionalInvoke('append_history', { entry });
+      return { ok: true };
+    }
+
+    if (!getWebPreviewStorage()) {
+      return { ok: false, reason: 'unavailable' };
+    }
+
+    writeWebPreviewState((state) => ({
+      ...state,
+      history: [...state.history, entry].slice(-HISTORY_ENTRY_LIMIT),
+    }));
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: 'unavailable' };
+  }
 }
 
 export async function clearHistoryEntries() {

@@ -101,7 +101,7 @@ describe('app-state persistence facade', () => {
     });
     vi.mocked(persistVariableMemory).mockResolvedValue([]);
     vi.mocked(persistCalculatorMemorySnapshot).mockResolvedValue(snapshot);
-    vi.mocked(appendHistoryEntry).mockResolvedValue(undefined);
+    vi.mocked(appendHistoryEntry).mockResolvedValue({ ok: true });
     vi.mocked(clearHistoryEntries).mockResolvedValue(undefined);
     vi.mocked(deleteHistoryEntry).mockResolvedValue(undefined);
     vi.mocked(clearCalculatorMemorySnapshot).mockResolvedValue(undefined);
@@ -126,7 +126,7 @@ describe('app-state persistence facade', () => {
       mode: 'calculate',
       resultLatex: '4',
       timestamp: '2026-06-15T00:00:00.000Z',
-    })).resolves.toBeUndefined();
+    })).resolves.toEqual({ ok: true });
     await expect(clearHistoryEntriesPersistence()).resolves.toBeUndefined();
     await expect(deleteHistoryEntryPersistence('history.1')).resolves.toBeUndefined();
     await expect(clearCalculatorMemorySnapshotPersistence()).resolves.toBeUndefined();

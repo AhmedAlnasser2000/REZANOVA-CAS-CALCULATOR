@@ -162,6 +162,7 @@ function renderHistoryDisplayRuntime(options: {
 describe('useHistoryDisplayRuntime', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(appendHistoryEntry).mockResolvedValue({ ok: true });
   });
 
   afterEach(() => {

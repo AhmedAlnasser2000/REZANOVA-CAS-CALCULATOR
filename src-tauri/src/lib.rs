@@ -222,58 +222,11 @@ struct LauncherCategory {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct HistoryEntry {
-    id: String,
-    mode: ModeId,
-    input_latex: String,
-    resolved_input_latex: Option<String>,
-    result_latex: Option<String>,
-    exact_supplement_latex: Option<Vec<String>>,
-    approx_text: Option<String>,
-    calculate_screen: Option<String>,
-    calculate_seed: Option<serde_json::Value>,
-    advanced_calc_screen: Option<String>,
-    advanced_calc_seed: Option<serde_json::Value>,
-    geometry_screen: Option<String>,
-    geometry_seed: Option<serde_json::Value>,
-    trig_screen: Option<String>,
-    statistics_screen: Option<String>,
-    statistics_seed: Option<serde_json::Value>,
-    equation_solve_target: Option<String>,
-    equation_answer_mode: Option<String>,
-    equation_domain_intent: Option<String>,
-    complex_exact_form: Option<String>,
-    answer_domain: Option<String>,
-    solution_kind: Option<String>,
-    numeric_interval: Option<NumericSolveInterval>,
-    variable_substitutions: Option<Vec<VariableSubstitutionSnapshot>>,
-    history_launch_order: Option<f64>,
-    timestamp: String,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct VariableSubstitutionSnapshot {
-    name: String,
-    value_latex: String,
-    numeric_value: f64,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 struct StoredVariableValue {
     name: String,
     value_latex: String,
     numeric_value: f64,
     updated_at: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct NumericSolveInterval {
-    start: String,
-    end: String,
-    subdivisions: i64,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -407,12 +360,67 @@ impl Default for PersistedState {
     }
 }
 
+const HISTORY_ENTRY_LIMIT: usize = 80;
+const HISTORY_ENTRY_MAX_SERIALIZED_BYTES: usize = 2_000_000;
+
+fn history_envelope_string<'a>(
+    entry: &'a serde_json::Value,
+    field: &str,
+) -> Result<&'a str, String> {
+    entry
+        .as_object()
+        .ok_or_else(|| "History entry must be a JSON object.".to_string())?
+        .get(field)
+        .and_then(serde_json::Value::as_str)
+        .filter(|value| !value.trim().is_empty())
+        .ok_or_else(|| format!("History entry requires a non-empty {field}."))
+}
+
+fn validate_history_envelope(
+    entry: &serde_json::Value,
+    enforce_append_size: bool,
+) -> Result<(), String> {
+    history_envelope_string(entry, "id")?;
+    let mode = history_envelope_string(entry, "mode")?;
+    if !matches!(
+        mode,
+        "calculate"
+            | "equation"
+            | "matrix"
+            | "vector"
+            | "table"
+            | "guide"
+            | "calculus"
+            | "trigonometry"
+            | "statistics"
+            | "geometry"
+            | "labs"
+    ) {
+        return Err("History entry mode is not supported.".into());
+    }
+    history_envelope_string(entry, "inputLatex")?;
+    history_envelope_string(entry, "timestamp")?;
+
+    if enforce_append_size {
+        let serialized_bytes = serde_json::to_vec(entry)
+            .map_err(|error| format!("History entry could not be serialized: {error}"))?
+            .len();
+        if serialized_bytes > HISTORY_ENTRY_MAX_SERIALIZED_BYTES {
+            return Err(format!(
+                "History entry exceeds the {HISTORY_ENTRY_MAX_SERIALIZED_BYTES}-byte append limit."
+            ));
+        }
+    }
+
+    Ok(())
+}
+
 fn sanitize_history_values(history: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
     history
         .into_iter()
-        .filter(|entry| serde_json::from_value::<HistoryEntry>(entry.clone()).is_ok())
+        .filter(|entry| validate_history_envelope(entry, false).is_ok())
         .rev()
-        .take(80)
+        .take(HISTORY_ENTRY_LIMIT)
         .collect::<Vec<_>>()
         .into_iter()
         .rev()
@@ -484,6 +492,81 @@ impl AppState {
         let contents = serde_json::to_string_pretty(snapshot).map_err(|error| error.to_string())?;
         fs::write(self.file_path(), contents).map_err(|error| error.to_string())
     }
+}
+
+fn append_history_value(entry: serde_json::Value, state: &AppState) -> Result<(), String> {
+    validate_history_envelope(&entry, true)?;
+    let mut snapshot = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    snapshot.history.push(entry);
+    if snapshot.history.len() > HISTORY_ENTRY_LIMIT {
+        let overflow = snapshot.history.len() - HISTORY_ENTRY_LIMIT;
+        snapshot.history.drain(0..overflow);
+    }
+    let clone = snapshot.clone();
+    drop(snapshot);
+    state.save_snapshot(&clone)
+}
+
+fn load_history_values(state: &AppState) -> Result<Vec<serde_json::Value>, String> {
+    let history = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?
+        .history
+        .clone();
+    Ok(sanitize_history_values(history))
+}
+
+fn clear_history_values(state: &AppState) -> Result<(), String> {
+    let mut snapshot = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    snapshot.history.clear();
+    let clone = snapshot.clone();
+    drop(snapshot);
+    state.save_snapshot(&clone)
+}
+
+fn delete_history_value(id: &str, state: &AppState) -> Result<(), String> {
+    let mut snapshot = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    snapshot
+        .history
+        .retain(|entry| entry.get("id").and_then(serde_json::Value::as_str) != Some(id));
+    let clone = snapshot.clone();
+    drop(snapshot);
+    state.save_snapshot(&clone)
+}
+
+fn save_calculator_memory_value(
+    calculator_memory: serde_json::Value,
+    state: &AppState,
+) -> Result<Option<serde_json::Value>, String> {
+    let mut persisted = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    persisted.calculator_memory = Some(calculator_memory);
+    let saved = persisted.calculator_memory.clone();
+    let clone = persisted.clone();
+    drop(persisted);
+    state.save_snapshot(&clone)?;
+    Ok(saved)
+}
+
+fn load_calculator_memory_value(state: &AppState) -> Result<Option<serde_json::Value>, String> {
+    Ok(state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?
+        .calculator_memory
+        .clone())
 }
 
 fn menu_children(items: &[(&str, &str, &str)]) -> Vec<MenuNode> {
@@ -959,6 +1042,14 @@ fn solve_numeric_ode(request: NumericOdeRequest) -> Result<NumericOdeResponse, S
 mod tests {
     use super::*;
 
+    fn unique_test_storage_dir(label: &str) -> PathBuf {
+        let nonce = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time should follow the Unix epoch")
+            .as_nanos();
+        std::env::temp_dir().join(format!("calcwiz-{label}-{}-{nonce}", std::process::id()))
+    }
+
     #[test]
     fn compiles_supported_numeric_ode_math_surface() {
         let expr = compile_ode_expression(
@@ -1036,6 +1127,117 @@ mod tests {
         assert_eq!(sanitize_language_code("en".into()), "en");
         assert_eq!(sanitize_language_code("fr".into()), "en");
     }
+
+    #[test]
+    fn preserves_history_extensions_across_native_and_calculator_memory_restart() {
+        let storage_dir = unique_test_storage_dir("history-parity");
+        let entry = serde_json::json!({
+            "id": "history.rich.1",
+            "mode": "equation",
+            "inputLatex": "x+y=3",
+            "resultLatex": "(x,y)=(1,2)",
+            "detailSections": [{
+                "title": "Verification",
+                "lines": ["x+y=3"],
+                "lineParts": [[{"kind": "math", "latex": "x+y=3"}]]
+            }],
+            "systemReadback": {
+                "variablesLatex": ["x", "y"],
+                "rows": [{"valuesLatex": ["1", "2"]}],
+                "source": "linear-system"
+            },
+            "calculusScreen": "finiteLimit",
+            "calculusSeed": {"bodyLatex": "1/x", "target": "0"},
+            "trigSeed": {
+                "screen": "periodPhase",
+                "request": {"kind": "periodPhase", "expressionLatex": "sin(x)", "variable": "x"}
+            },
+            "matrixSeed": {"operation": "rankA", "matrixA": [[1.0]]},
+            "vectorSeed": {"operation": "normA", "vectorA": [1.0], "angleUnit": "rad"},
+            "equationScreen": "symbolic",
+            "equationSeed": {"screen": "symbolic", "equationLatex": "x+y=3"},
+            "runtimeElapsedMs": 17,
+            "replaySnapshot": {"version": 1, "futureReplayField": {"kept": true}},
+            "futureHistoryExtension": {"version": 2, "payload": [1, 2, 3]},
+            "timestamp": "2026-07-11T00:00:00.000Z"
+        });
+        let calculator_memory = serde_json::json!({
+            "version": 1,
+            "history": [entry.clone()],
+            "futureMemoryExtension": {"version": 3}
+        });
+
+        {
+            let state = AppState::load(storage_dir.clone()).expect("state should initialize");
+            append_history_value(entry.clone(), &state).expect("history should append");
+            save_calculator_memory_value(calculator_memory.clone(), &state)
+                .expect("calculator memory should save");
+        }
+
+        {
+            let restarted = AppState::load(storage_dir.clone()).expect("state should restart");
+            assert_eq!(
+                load_history_values(&restarted).unwrap(),
+                vec![entry.clone()]
+            );
+            assert_eq!(
+                load_calculator_memory_value(&restarted).unwrap(),
+                Some(calculator_memory)
+            );
+            delete_history_value("history.rich.1", &restarted)
+                .expect("history deletion should persist");
+        }
+
+        let restarted = AppState::load(storage_dir.clone()).expect("state should restart again");
+        assert!(load_history_values(&restarted).unwrap().is_empty());
+        fs::remove_dir_all(storage_dir).expect("temporary state should be removed");
+    }
+
+    #[test]
+    fn rejects_invalid_or_oversized_history_appends() {
+        let storage_dir = unique_test_storage_dir("history-validation");
+        let state = AppState::load(storage_dir.clone()).expect("state should initialize");
+
+        let invalid = serde_json::json!({
+            "id": "history.invalid",
+            "mode": "retired-mode",
+            "inputLatex": "1+1",
+            "timestamp": "2026-07-11T00:00:00.000Z"
+        });
+        assert!(append_history_value(invalid, &state).is_err());
+
+        let oversized = serde_json::json!({
+            "id": "history.oversized",
+            "mode": "calculate",
+            "inputLatex": "1+1",
+            "futurePayload": "x".repeat(HISTORY_ENTRY_MAX_SERIALIZED_BYTES),
+            "timestamp": "2026-07-11T00:00:00.000Z"
+        });
+        let error =
+            append_history_value(oversized, &state).expect_err("oversized history should fail");
+        assert!(error.contains("append limit"));
+        assert!(load_history_values(&state).unwrap().is_empty());
+        fs::remove_dir_all(storage_dir).expect("temporary state should be removed");
+    }
+
+    #[test]
+    fn sanitizes_sparse_history_without_stripping_extensions_and_keeps_newest_eighty() {
+        let mut history = vec![serde_json::json!({"id": "invalid"})];
+        history.extend((0..85).map(|index| {
+            serde_json::json!({
+                "id": format!("history.{index}"),
+                "mode": "calculate",
+                "inputLatex": format!("{index}+1"),
+                "futureExtension": {"index": index},
+                "timestamp": "2026-07-11T00:00:00.000Z"
+            })
+        }));
+
+        let sanitized = sanitize_history_values(history);
+        assert_eq!(sanitized.len(), HISTORY_ENTRY_LIMIT);
+        assert_eq!(sanitized[0]["id"], "history.5");
+        assert_eq!(sanitized[79]["futureExtension"]["index"], 84);
+    }
 }
 
 #[tauri::command]
@@ -1053,7 +1255,7 @@ fn boot_app(state: State<'_, AppState>) -> Result<AppBootstrap, String> {
         history_count: snapshot
             .history
             .iter()
-            .filter(|entry| serde_json::from_value::<HistoryEntry>((*entry).clone()).is_ok())
+            .filter(|entry| validate_history_envelope(entry, false).is_ok())
             .count(),
         variable_memory: snapshot.variable_memory,
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -1253,64 +1455,23 @@ fn save_settings(patch: SettingsPatch, state: State<'_, AppState>) -> Result<Set
 }
 
 #[tauri::command]
-fn append_history(entry: HistoryEntry, state: State<'_, AppState>) -> Result<(), String> {
-    let mut snapshot = state
-        .state
-        .lock()
-        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
-    snapshot
-        .history
-        .push(serde_json::to_value(entry).map_err(|error| error.to_string())?);
-    if snapshot.history.len() > 80 {
-        let overflow = snapshot.history.len() - 80;
-        snapshot.history.drain(0..overflow);
-    }
-    let clone = snapshot.clone();
-    drop(snapshot);
-    state.save_snapshot(&clone)
+fn append_history(entry: serde_json::Value, state: State<'_, AppState>) -> Result<(), String> {
+    append_history_value(entry, &state)
 }
 
 #[tauri::command]
-fn load_history(state: State<'_, AppState>) -> Result<Vec<HistoryEntry>, String> {
-    let mut entries = state
-        .state
-        .lock()
-        .map_err(|_| "Calculator state is currently unavailable.".to_string())?
-        .history
-        .iter()
-        .filter_map(|entry| serde_json::from_value::<HistoryEntry>(entry.clone()).ok())
-        .collect::<Vec<_>>();
-    if entries.len() > 80 {
-        let overflow = entries.len() - 80;
-        entries.drain(0..overflow);
-    }
-    Ok(entries)
+fn load_history(state: State<'_, AppState>) -> Result<Vec<serde_json::Value>, String> {
+    load_history_values(&state)
 }
 
 #[tauri::command]
 fn clear_history(state: State<'_, AppState>) -> Result<(), String> {
-    let mut snapshot = state
-        .state
-        .lock()
-        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
-    snapshot.history.clear();
-    let clone = snapshot.clone();
-    drop(snapshot);
-    state.save_snapshot(&clone)
+    clear_history_values(&state)
 }
 
 #[tauri::command]
 fn delete_history_entry(id: String, state: State<'_, AppState>) -> Result<(), String> {
-    let mut snapshot = state
-        .state
-        .lock()
-        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
-    snapshot
-        .history
-        .retain(|entry| entry.get("id").and_then(serde_json::Value::as_str) != Some(id.as_str()));
-    let clone = snapshot.clone();
-    drop(snapshot);
-    state.save_snapshot(&clone)
+    delete_history_value(&id, &state)
 }
 
 #[tauri::command]
@@ -1331,12 +1492,7 @@ fn save_variable_memory(
 
 #[tauri::command]
 fn load_calculator_memory(state: State<'_, AppState>) -> Result<Option<serde_json::Value>, String> {
-    Ok(state
-        .state
-        .lock()
-        .map_err(|_| "Calculator state is currently unavailable.".to_string())?
-        .calculator_memory
-        .clone())
+    load_calculator_memory_value(&state)
 }
 
 #[tauri::command]
@@ -1344,16 +1500,7 @@ fn save_calculator_memory(
     snapshot: serde_json::Value,
     state: State<'_, AppState>,
 ) -> Result<Option<serde_json::Value>, String> {
-    let mut persisted = state
-        .state
-        .lock()
-        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
-    persisted.calculator_memory = Some(snapshot);
-    let saved = persisted.calculator_memory.clone();
-    let clone = persisted.clone();
-    drop(persisted);
-    state.save_snapshot(&clone)?;
-    Ok(saved)
+    save_calculator_memory_value(snapshot, &state)
 }
 
 #[tauri::command]
