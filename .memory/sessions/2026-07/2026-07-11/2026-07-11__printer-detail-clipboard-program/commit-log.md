@@ -40,6 +40,7 @@
 - `81015366` - `PRINT-PROFILE-SYMBOLIC-INTEGRATION1`
 - `1ffc9900` - `PRINT-PROFILE-CALCULUS1`
 - `f47437f3` - `PRINT-PROFILE-GUIDED-DOMAINS1`
-- pending at write time - `PRINT-PROFILE-LINEAR-ALGEBRA1`
+- `48a26150` - `PRINT-PROFILE-LINEAR-ALGEBRA1`
+- pending at write time - `PRINT-PROFILE-PRODUCER-CLOSEOUT1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

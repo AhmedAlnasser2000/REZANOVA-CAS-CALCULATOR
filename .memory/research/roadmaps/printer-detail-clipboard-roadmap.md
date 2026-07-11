@@ -1,7 +1,7 @@
 # PRINTER-DETAIL-CLIPBOARD-ROADMAP0
 
 Date: 2026-07-11
-Status: approved and active; standing commit approval applies to the named milestones in this session, but no push is authorized
+Status: implementation complete; accumulated final user review pending acceptance; no push is authorized
 
 ## Attribution
 
@@ -25,21 +25,19 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ## Current Baseline
 
-- `main` points to `2bb2f91b` (`DETAIL-SEGMENT-WORKSPACE-DOMAINS1`) and is two commits ahead of `origin/main` at `19ea2ad5` (`DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`); this session did not push. `DETAIL-SEGMENT-LINEAR-ALGEBRA1` is implemented and verified in the current approved checkpoint. No push is authorized.
+- `main` points to `48a26150` (`PRINT-PROFILE-LINEAR-ALGEBRA1`) and is two commits ahead of `origin/main` at `1ffc9900` (`PRINT-PROFILE-CALCULUS1`); this session did not push. `PRINT-PROFILE-PRODUCER-CLOSEOUT1` is implemented and verified in the current approved checkpoint. No push is authorized.
 - `HISTORY-REPLAY-RATCHET1` is committed as `63d21229`.
 - Untracked `test-results/` is unrelated and must remain untouched.
-- Production has at least 478 explicit `exactLatex:` assignments across 173 files and 61 explicit `resultLatex:` assignments. These are lower bounds because shorthand and indirect builders are not counted.
+- The current TypeScript-AST inventory governs 519 production result paths: zero compatibility fallbacks, 277 migrated producers, and 239 forwarders.
 - Raw LaTeX-command tokens are too broad for a trustworthy global grep floor: 6,687 production matches also include input parsing, Guide content, keyboard definitions, and other non-result strings.
 - `DisplayOutcome` remains LaTeX-first. `MathDocument.mathJson` is optional `unknown`, and `EvaluateResponse.normalizedMathJson` is not consistently the answer tree; some solve paths use it for the input equation while keeping answer roots separately.
 - `DisplayOutcome` crosses worker `postMessage` boundaries. Any structured math payload must be plain, bounded, structured-clone-safe data and must not carry boxed Compute Engine objects.
 - Equation already has a producer-side presentation IR in `src/lib/equation/presentation/finite-roots.ts`. A new printer must reuse that seam instead of creating a competing Equation renderer.
 - Display already has substantial printer-like behavior in `notation/symbolic-display.ts`, `notation/math-notation.ts`, `notation/numeric-output.ts`, and domain serializers such as Linear Algebra exact matrix formatting.
-- Detail rendering already prefers `lineParts` and has one shared `DetailLineContent` renderer. The remaining problem is producer adoption and render-time string inference, not the absence of a renderer.
-- Static production counts show 18 direct `lineParts:` assignments, 115 `lineKind`/`lineKinds` assignments, and 483 `detailSections:` assignments. Shared `mixedDetailSection()` adds more correct producers, but the legacy surface remains much larger.
-- Clipboard math writes are mostly centralized, not scattered across workspaces. Direct production Clipboard API use currently appears in `AppMain.tsx`, `OoeDiagnosticsPanel.tsx`, and the dormant/extracted `expressionRouting.ts`; `MathEditor` reads paste-event `DataTransfer` text.
-- A real Chromium check confirmed plain-text mode renders and copies `x^(1/6)` while the canonical result remains `x^{\frac{1}{6}}`. The current copy payload therefore follows visible notation and loses the hidden canonical form.
-- Local secure-context Chromium supports `ClipboardItem`, `navigator.clipboard.read/write`, and the custom format `web application/x-calcwiz-math+json` alongside `text/plain` and `text/html`. Tauri Linux WebView support remains unverified and needs a real app capability gate.
-- AppMain is at 3,356 lines against a 3,357-line ratchet, and `DisplayResultBlocks.tsx` is at 898 lines against the default 900-line cap. Clipboard and detail work must extract ownership rather than grow either file.
+- Detail rendering uses one shared `DetailLineContent` renderer. The AST ratchet governs 445 live producers, all 445 are declared, and legacy inference remains only for old or snapshot-less History.
+- Clipboard writes and reads are centralized under `src/lib/clipboard/`; direct production Clipboard API and raw paste-event access outside adapters have a zero floor.
+- Real Chromium preserves custom MIME, HTML, and text together. The live Tauri Linux WebView and X11 readback preserve exact canonical text beside HTML, with no unsupported custom-MIME claim.
+- `AppMain.tsx` is 3,306 lines and `DisplayResultBlocks.tsx` is 842 lines; both extraction gains remain protected by the file-size ratchet.
 
 ## What Behavioral Ratchets 5-9 Provide
 
@@ -131,7 +129,7 @@ Implemented contract: the TypeScript-compiler-API inventory currently classifies
 
 ### A4. `PRINT-PROFILES1` And Domain Migration
 
-Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; profiles are committed through Guided Domains at `f47437f3`, and `PRINT-PROFILE-LINEAR-ALGEBRA1` is implemented and verified and is entering its approved commit checkpoint.
+Status: implementation complete. The mandatory contract-evidence sweep passed on `2026-07-11`; all workspace profiles are committed through `PRINT-PROFILE-LINEAR-ALGEBRA1` at `48a26150`, and producer closeout is verified in the current approved checkpoint.
 
 - Introduce profiles only where migrations prove a real policy difference; avoid speculative per-domain switches.
 - Cover all nine workspaces, including Geometry and Table, rather than the older six-profile sketch.
@@ -152,6 +150,8 @@ Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; pr
 `PRINT-PROFILE-GUIDED-DOMAINS1` routes eight Trigonometry, two Geometry, and ten Statistics result producers through explicit native-domain profiles. Table had zero compatibility debt but one unprofiled forwarded result seam, so its success `DisplayOutcome` now explicitly uses `profileTableResult()` while structured rows remain unchanged. The global floor is 47 compatibility, 230 migrated, and 239 forwarded. All four five-fixture workspace files become hard, bringing hard replay coverage to 90/100. Native coverage passed 35 files and 231 tests, eight Chromium canaries passed, and representative Trigonometry, Geometry, Statistics, and Table surfaces were inspected without accepted visible drift.
 
 `PRINT-PROFILE-LINEAR-ALGEBRA1` routes all 44 Matrix and Vector result producers through `profileLinearAlgebraResult()` while preserving their native exact serializers and independent runtime topology. Linear Algebra reaches zero compatibility; the global floor is three compatibility, 274 migrated, and 239 forwarded. Matrix and Vector's ten fixtures make all 100 replay fixtures hard. Focused coverage passed 26 files and 220 tests, workspace runtime contracts passed 74, runtime probes passed 19, four Chromium canaries passed, and fresh Matrix determinant plus Vector cross-product cards were inspected without accepted visible drift.
+
+`PRINT-PROFILE-PRODUCER-CLOSEOUT1` routes the final three shared polynomial-factor and transform result helpers through `profileSharedAlgebraResult()`. The final inventory is 519 result paths with zero compatibility, 277 migrated, and 239 forwarded; every lane and fallback registration is at zero. The complete closeout passed 503 unit files with 3,581 tests, 62 UI files with 452 tests, and all 140 production Playwright tests in 21 spec files, including 19 canaries and nine History flows. The Playwright collector now excludes its Vitest-only canary registry, and legacy E2E assertions follow the current typed-detail, numeric-interval, and provenance contracts. Browser rich Clipboard, Linux/Tauri fallback, `cargo check`, lint, build, file size, golden, print hygiene, replay, seam, and migration ratchets passed. No visible output candidate was accepted.
 
 ### A5. `DISPLAY-CONTRACT-INVERSION1` Later Gate
 
@@ -278,8 +278,8 @@ Status: committed as `536d1f07` on `2026-07-11`.
 7. `DETAIL-SEGMENT-CONTRACT1`.
 8. Risk-sliced detail migration through the eight named `DETAIL-SEGMENT-*1` commits recorded under C2.
 9. Run the contract-review evidence checkpoint across Clipboard, details, Formula Viewer, legacy History, overflow, and fallbacks without pausing for intermediate user acceptance.
-10. Continue directly into the risk-sliced internal printer-profile migration across all nine workspaces, followed by one accumulated visible-output review with the user.
-11. Close this program, then create a separate structured-History and Display-inversion roadmap from measured migration floors.
+10. Complete the risk-sliced internal printer-profile migration across all nine workspaces and the zero-debt producer closeout. Done; accumulated evidence is ready for review.
+11. Accept the accumulated final review, close this program, then create a separate structured-History and Display-inversion roadmap from the measured zero-debt floor.
 
 ## Verification Contract
 

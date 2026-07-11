@@ -16,7 +16,7 @@
 
 ## Accepted Changes
 
-None through `PRINT-PROFILE-LINEAR-ALGEBRA1`.
+None through `PRINT-PROFILE-PRODUCER-CLOSEOUT1`.
 
 ## Rejected Candidates
 

@@ -4,6 +4,7 @@ import {
   profileEquationResult,
   profileGeometryResult,
   profileLinearAlgebraResult,
+  profileSharedAlgebraResult,
   profileStatisticsResult,
   profileSymbolicCoreResult,
   profileSymbolicIntegrationResult,
@@ -57,5 +58,10 @@ describe('producer printer profiles', () => {
   it('keeps Linear Algebra serialization stable under pedagogical-v1', () => {
     const result = { kind: 'success', resultLatex: String.raw`\begin{bmatrix}1&0\\0&1\end{bmatrix}` };
     expect(profileLinearAlgebraResult(result)).toBe(result);
+  });
+
+  it('keeps shared algebra serialization stable under pedagogical-v1', () => {
+    const result = { kind: 'success', exactLatex: String.raw`(x-1)(x+1)` };
+    expect(profileSharedAlgebraResult(result)).toBe(result);
   });
 });

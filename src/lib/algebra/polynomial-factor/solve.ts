@@ -27,6 +27,7 @@ import {
   type QuadraticExactRoots,
   type RecognizedPolynomialEquation,
 } from './types';
+import { profileSharedAlgebraResult } from '../../display/printer';
 
 export function recognizeBoundedPolynomialEquationAst(
   node: unknown,
@@ -199,7 +200,7 @@ export function solveBoundedPolynomialEquationAst(
     }));
   const exactSolutions = uniqueRoots.map((root) => root.latex);
 
-  return {
+  return profileSharedAlgebraResult({
     variable,
     exactLatex: solutionsToLatex(variable, exactSolutions),
     approxText: uniqueApproximations.length === 1
@@ -209,7 +210,7 @@ export function solveBoundedPolynomialEquationAst(
     exactSolutionBranches: uniqueRoots,
     approxSolutions: uniqueApproximations,
     factorization,
-  };
+  });
 }
 
 export function factorBoundedPolynomialAst(

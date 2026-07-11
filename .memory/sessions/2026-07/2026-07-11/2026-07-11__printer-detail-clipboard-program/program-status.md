@@ -55,8 +55,11 @@
 - All 43 Calculus result producers use the Calculus domain profile, Calculus compatibility debt is zero, and all 25 Calculus fixtures are hard. Global hard replay coverage is 70/100 and the printer fallback floor is 67.
 - `PRINT-PROFILE-GUIDED-DOMAINS1`: committed as `f47437f3`.
 - Trigonometry, Geometry, Statistics, and Table have zero compatibility debt. Table's single forwarded result seam is explicitly profiled, hard replay coverage is 90/100, and the global fallback floor is 47.
-- `PRINT-PROFILE-LINEAR-ALGEBRA1`: implemented and verified; entering its approved commit checkpoint.
-- All 44 Matrix/Vector result producers use the Linear Algebra presentation profile without changing independent runtime topology. All 100 replay fixtures are hard and the global fallback floor is three.
-- `PRINT-PROFILE-PRODUCER-CLOSEOUT1` is next, followed by the complete closeout gate and accumulated final review.
+- `PRINT-PROFILE-LINEAR-ALGEBRA1`: committed as `48a26150`.
+- All 44 Matrix/Vector result producers use the Linear Algebra presentation profile without changing independent runtime topology. All 100 replay fixtures are hard.
+- `PRINT-PROFILE-PRODUCER-CLOSEOUT1`: implemented and verified; entering its approved commit checkpoint.
+- The final three shared-algebra result helpers use the explicit shared profile. The global inventory is 519 result paths with zero compatibility, 277 migrated, and 239 forwarded; all 445 detail producers remain declared.
+- Complete verification passed 3,581 unit tests, 452 UI tests, and 140 Playwright tests, including all 19 canaries and nine History flows. Clipboard browser/native contracts, build, TypeScript, lint, Rust, file size, memory, seam, golden, print-hygiene, and replay gates passed.
+- No visible printer change was accepted. The accumulated final user review is the only remaining program checkpoint before the deferred structured-History and Display-inversion roadmap.
 - The contract-review evidence checkpoint remains required, but the user removed its intermediate acceptance pause and directed the program to continue through printer profiles before one accumulated final review.
 - No push is authorized, and untracked `test-results/` stays excluded.

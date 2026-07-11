@@ -131,7 +131,7 @@ export async function openEquationNumericIntervalPanel(page: Page, inputLatex: s
   await expect(page.getByTestId('display-outcome-error')).toContainText(
     'absolute-value family is outside the current exact bounded solve set',
   );
-  await page.getByRole('button', { name: 'Numeric Solve', exact: true }).click();
+  await page.getByRole('button', { name: 'Enable Numeric Interval', exact: true }).click();
   await expect(page.getByText('Numeric Interval Solve')).toBeVisible();
   await setMathFieldLatex(page, inputLatex);
   await page.getByTestId('main-editor').evaluate((element) => {

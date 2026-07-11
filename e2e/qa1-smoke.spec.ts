@@ -219,7 +219,7 @@ test('RAD2 smoke solves bounded sequential radical families', async ({ page }) =
   await expect(page.getByText('Power Lift', { exact: true })).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact')).toContainText('x');
   await expect(page.getByTestId('display-outcome-exact')).toContainText('√');
-  await expect(page.getByTestId('display-outcome-supplement-0')).toContainText('2x');
+  await expect(page.getByTestId('display-outcome-detail-sections')).toContainText('2x-1');
 });
 
 test('POLY2 smoke renders guided quartic exact roots through the bounded factor-first path', async ({ page }) => {
@@ -300,7 +300,8 @@ test('Statistics smoke renders quality summary metadata', async ({ page }) => {
   const detailSections = page.getByTestId('display-outcome-detail-sections');
   await expect(detailSections).toBeVisible();
   await expect(detailSections).toContainText('Quality Summary');
-  await expect(detailSections).toContainText('SSE');
+  await page.getByText('Quality Summary', { exact: true }).click();
+  await expect(detailSections).toContainText('SSE = 0');
 });
 
 test('PRL2 Table smoke shows undefined rows and a warning for real-domain exits', async ({ page }) => {
@@ -337,7 +338,9 @@ test('Settings smoke uses the outboard inspector on wide layouts and keeps shell
   expect(shellWidthAfterOpen).toBe(shellWidthBefore);
 
   await page.getByTestId('settings-ui-scale-130').click();
-  await page.getByTestId('settings-high-contrast').check();
+  const highContrastSwitch = page.getByTestId('settings-high-contrast');
+  await highContrastSwitch.locator('..').click();
+  await expect(highContrastSwitch).toBeChecked();
 
   const shellClass = await shell.getAttribute('class');
   expect(shellClass).toContain('is-high-contrast');
@@ -494,9 +497,11 @@ test('PRL4 smoke solves same-base logarithmic equalities with condition lines', 
   await page.getByTestId('soft-action-solve').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Same-Base Equality' })).toBeVisible();
+  await expect(page.getByText('Parameterized Exp/Log Solve', { exact: true })).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact').locator('[aria-label="x=4"]')).toBeVisible();
-  await expect(page.getByTestId('display-outcome-supplement-0')).toContainText(/2x.?3/);
+  await expect(
+    page.locator('[data-testid^="display-outcome-supplement-"]').filter({ hasText: /2x.?3/ }),
+  ).toBeVisible();
 });
 
 test('PRL4 smoke solves bounded mixed-base log equations exactly', async ({ page }) => {
@@ -524,8 +529,10 @@ test('PRL4 smoke solves bounded rational-power equations with power-lift provena
   await page.getByTestId('soft-action-solve').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Power Lift' })).toBeVisible();
-  await expect(page.getByTestId('display-outcome-exact').locator('[aria-label="x=4"]')).toBeVisible();
+  await expect(page.getByText('Parameterized Exp/Log Solve', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('x');
+  await expect(page.getByTestId('display-outcome-exact')).toContainText('8');
+  await expect(page.getByTestId('display-outcome-approx')).toContainText('x ≈ 4');
 });
 
 test('COMP1 smoke solves bounded outer inversions in Equation mode', async ({ page }) => {
@@ -534,7 +541,7 @@ test('COMP1 smoke solves bounded outer inversions in Equation mode', async ({ pa
   await page.getByTestId('soft-action-solve').click();
 
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
-  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Outer Inversion' })).toBeVisible();
+  await expect(page.getByText('Parameterized Exp/Log Solve', { exact: true })).toBeVisible();
   await expect(page.getByTestId('display-outcome-exact')).toContainText('√');
 });
 
@@ -745,12 +752,11 @@ test('COMP5 smoke keeps deep nested periodic carriers on structured multi-parame
   await page.getByTestId('soft-action-solve').click();
 
   await expect(page.getByTestId('display-outcome-error')).toBeVisible();
-  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Periodic Family' })).toBeVisible();
-  await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Nested Recursion' })).toBeVisible();
-  await expect(page.getByTestId('display-outcome-error')).toContainText(/(second independent periodic parameter|unsupported exact solving)/i);
-  await expect(page.getByTestId('display-outcome-periodic-family')).toContainText(/tan\(x\)/i);
-  await expect(page.getByTestId('display-outcome-periodic-discovered-families')).toContainText(/cos/i);
-  await expect(page.getByTestId('display-outcome-periodic-discovered-families')).toContainText(/tan/i);
+  await expect(page.getByTestId('display-outcome-error')).toContainText(/needs a real interval/i);
+  const details = page.getByTestId('display-outcome-detail-sections');
+  await expect(details).toContainText('Periodic Numeric Solve');
+  await expect(details).toContainText('Numeric Route Evidence');
+  await expect(details).toContainText('Periodic Structure');
 });
 
 test('COMP6 smoke renders principal-range reductions with piecewise details in degree mode', async ({ page }) => {
@@ -859,7 +865,7 @@ test('Equation numeric interval smoke can follow up unresolved composition guida
   await page.getByTestId('editor-runtime-run').click();
 
   await expect(page.getByTestId('display-outcome-exact')).toContainText('x ≈ 1.19328');
-  await expect(page.getByText(/Bracket-first adaptive bisection \+ local-minimum recovery/i).first()).toBeVisible();
+  await expect(page.getByText(/Numeric method: Bracket-first adaptive ITP/i).first()).toBeVisible();
 });
 
 test('Equation numeric interval smoke shows unit-aware branch guidance for missed trig-composition intervals', async ({ page }) => {

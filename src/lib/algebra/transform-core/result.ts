@@ -2,6 +2,7 @@ import { mergeExactSupplementLatex } from '../exact-supplements';
 import { boxLatex } from '../../symbolic-engine/patterns';
 import type { TransformBadge } from '../../../types/calculator';
 import type { AlgebraTransformResult, TransformSideResult } from './types';
+import { profileSharedAlgebraResult } from '../../display/printer';
 
 export function buildTwoSideEquationResult(
   left: unknown,
@@ -16,7 +17,7 @@ export function buildTwoSideEquationResult(
     return null;
   }
 
-  return {
+  return profileSharedAlgebraResult({
     exactLatex: `${leftResult?.latex ?? boxLatex(left)}=${rightResult?.latex ?? boxLatex(right)}`,
     exactSupplementLatex: mergeExactSupplementLatex(
       { latex: leftResult?.supplement, source: 'legacy' },
@@ -25,5 +26,5 @@ export function buildTwoSideEquationResult(
     transformBadges,
     transformSummaryText,
     transformSummaryLatex,
-  };
+  });
 }

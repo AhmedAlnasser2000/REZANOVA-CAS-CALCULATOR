@@ -9,6 +9,7 @@ import { applyConjugateTransformNode, normalizeExactRadicalNode } from '../../sy
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { hasAdditiveStructure } from './parsing';
 import type { AlgebraTransformResult } from './types';
+import { profileSharedAlgebraResult } from '../../display/printer';
 
 export function rewriteExpressionAsRoot(node: unknown): AlgebraTransformResult | null {
   const normalized = normalizeExactPowerLogNode(node, 'rewrite-root');
@@ -89,14 +90,14 @@ export function cancelFactorsExpression(node: unknown): AlgebraTransformResult |
     ? compactRepeatedProductFactors(factoredSimplified.normalizedNode)
     : null;
 
-  return {
+  return profileSharedAlgebraResult({
     exactLatex: compactedFactoredNode && factoredSimplified
       ? boxLatex(compactedFactoredNode)
       : simplified.normalizedLatex,
     exactSupplementLatex: simplified.exactSupplementLatex,
     transformBadges: ['Cancel Factors'],
     transformSummaryText: 'Canceled supported common factors while preserving original exclusions',
-  };
+  });
 }
 
 export function rewriteWithLcdExpression(node: unknown): AlgebraTransformResult | null {

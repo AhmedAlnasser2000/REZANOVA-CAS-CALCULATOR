@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "PRINT-PROFILE-LINEAR-ALGEBRA1 routes all 44 Matrix and Vector result producers through the explicit Linear Algebra presentation profile while preserving independent runtime shells, exact solver cores, and workspace identities.",
+  "acceptedReason": "PRINT-PROFILE-PRODUCER-CLOSEOUT1 routes the final three shared polynomial-factor and transform result helpers through the explicit shared-algebra profile, closing all production compatibility debt without changing canonical output.",
   "registryDigest": "11229e8e725fa539737c",
   "resultProperties": [
     "answerLatex",
@@ -15,7 +15,7 @@
     "geometry": 0,
     "history-compatibility": 0,
     "linear-algebra": 0,
-    "shared-algebra": 3,
+    "shared-algebra": 0,
     "shared-runtime": 0,
     "statistics": 0,
     "symbolic-core": 0,
@@ -24,9 +24,7 @@
     "table": 0,
     "trigonometry": 0
   },
-  "registrationFloors": {
-    "shared-algebra-result-v1": 3
-  },
+  "registrationFloors": {},
   "categoryCounts": {
     "canonical-printer": 5,
     "downstream-presentation": 11,
@@ -36,30 +34,5 @@
     "reference-content": 2565,
     "result-path": 519
   },
-  "compatibilityAssignments": [
-    {
-      "id": "368d25147cee9c6744a5:1",
-      "file": "src/lib/algebra/polynomial-factor/solve.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "shared-algebra",
-      "fallbackId": "shared-algebra-result-v1"
-    },
-    {
-      "id": "3681d1bace28a4ab4d0a:1",
-      "file": "src/lib/algebra/transform-core/expression-transforms.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "shared-algebra",
-      "fallbackId": "shared-algebra-result-v1"
-    },
-    {
-      "id": "de0d15e5b7791ec4fd48:1",
-      "file": "src/lib/algebra/transform-core/result.ts",
-      "property": "exactLatex",
-      "sourceKind": "property",
-      "lane": "shared-algebra",
-      "fallbackId": "shared-algebra-result-v1"
-    }
-  ]
+  "compatibilityAssignments": []
 }

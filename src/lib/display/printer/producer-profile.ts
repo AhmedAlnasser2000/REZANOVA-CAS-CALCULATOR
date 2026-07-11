@@ -65,3 +65,7 @@ export function profileTableResult<T>(result: T): T {
 export function profileLinearAlgebraResult<T>(result: T): T {
   return profileDomainResult(result);
 }
+
+export function profileSharedAlgebraResult<T>(result: T): T {
+  return profileDomainResult(result);
+}
