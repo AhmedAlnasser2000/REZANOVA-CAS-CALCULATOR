@@ -36,6 +36,7 @@ import {
 } from './algebraic-power';
 import { peelOnce, type PeelPolicy, type PeelStep } from './peeling';
 import { hasAmbiguousAdjacentProduct, parseIsolationEquation } from './target-context';
+import { profileEquationResult } from '../../display/printer';
 
 export type EquationAlgebraicIsolationStopReason =
   | 'parse-error'
@@ -580,12 +581,12 @@ function imaginaryUnitPowerBranchReadback(
     return null;
   }
 
-  return {
+  return profileEquationResult({
     exactLatex: exactLatex as string[],
     approxLatex: approxValues.map((value) => complexToLatex(value)),
     approxText: approxValues.map((value) => complexToApproxText(value)),
     preserveOrder: true,
-  };
+  });
 }
 
 function principalAngle(value: ReturnType<typeof complexFromPolar>) {
@@ -618,12 +619,12 @@ function realScalarPowerBranchReadback(
 ): ComplexPowerBranchReadback | null {
   const normalized = normalizeExactScalar(scalar);
   if (normalized.numerator === 0) {
-    return {
+    return profileEquationResult({
       exactLatex: ['0'],
       approxLatex: ['0'],
       approxText: ['0'],
       preserveOrder: true,
-    };
+    });
   }
 
   const absoluteScalar = normalizeExactScalar({
@@ -651,12 +652,12 @@ function realScalarPowerBranchReadback(
   }
 
   const ordered = orderPowerBranchEntries(entries as Array<{ exactLatex: string; approxValue: ReturnType<typeof complexFromPolar> }>);
-  return {
+  return profileEquationResult({
     exactLatex: ordered.map((entry) => entry.exactLatex),
     approxLatex: ordered.map((entry) => complexToLatex(entry.approxValue)),
     approxText: ordered.map((entry) => complexToApproxText(entry.approxValue)),
     preserveOrder: true,
-  };
+  });
 }
 
 function complexPowerBranchReadback(
@@ -674,9 +675,9 @@ function complexPowerBranchReadback(
     return realScalarPowerBranchReadback(realScalar, degree, complexExactForm);
   }
 
-  return {
+  return profileEquationResult({
     exactLatex: complexPowerBranchLatex(rootLatex, degree, otherSide),
-  };
+  });
 }
 
 function stop(

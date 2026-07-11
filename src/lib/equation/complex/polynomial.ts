@@ -25,6 +25,7 @@ import {
 } from './exact';
 import { ce, isArrayNode, simplifyNode } from './math-json';
 import { type ComplexEquationBranch, type ComplexEquationOptions, type ComplexPolynomialBranchResult, type MathJson } from './types';
+import { profileEquationResult } from '../../display/printer';
 
 export function realLinearEquationBranch(polynomial: NonNullable<ReturnType<typeof parseExactPolynomial>>) {
   const root = divideExactScalars(
@@ -64,14 +65,14 @@ export function realQuadraticBranches(polynomial: NonNullable<ReturnType<typeof 
   const negativeBNumber = exactScalarToNumber(negativeB);
   const denominatorNumber = exactScalarToNumber(denominator);
   return [
-    {
+    profileEquationResult({
       exactLatex: `\\frac{${exactScalarToLatex(negativeB)}-${discriminantLatex}}{${denominatorLatex}}`,
       approxValue: complex((negativeBNumber - Math.sqrt(discriminantNumber)) / denominatorNumber, 0),
-    },
-    {
+    }),
+    profileEquationResult({
       exactLatex: `\\frac{${exactScalarToLatex(negativeB)}+${discriminantLatex}}{${denominatorLatex}}`,
       approxValue: complex((negativeBNumber + Math.sqrt(discriminantNumber)) / denominatorNumber, 0),
-    },
+    }),
   ];
 }
 
@@ -109,20 +110,20 @@ export function complexQuadraticBranches(polynomial: NonNullable<ReturnType<type
   const imaginaryMagnitudeNumber = Math.abs(exactScalarToNumber(imaginaryCoefficient))
     * Math.sqrt(exactScalarToNumber(positiveDiscriminantMagnitude));
   return [
-    {
+    profileEquationResult({
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, -1),
       approxValue: complex(realNumber, -imaginaryMagnitudeNumber),
       exactComplex: exactImaginaryMagnitude
         ? { re: real, im: negateExactScalar(exactImaginaryMagnitude) }
         : undefined,
-    },
-    {
+    }),
+    profileEquationResult({
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, 1),
       approxValue: complex(realNumber, imaginaryMagnitudeNumber),
       exactComplex: exactImaginaryMagnitude
         ? { re: real, im: exactImaginaryMagnitude }
         : undefined,
-    },
+    }),
   ];
 }
 
@@ -376,7 +377,7 @@ export function solveNegativeDiscriminantQuadratic(
     })
     : null;
   const branches = [
-    {
+    profileEquationResult({
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, -1),
       approxValue: complex(
         exactScalarToNumber(real),
@@ -385,8 +386,8 @@ export function solveNegativeDiscriminantQuadratic(
       exactComplex: exactImaginaryMagnitude
         ? { re: real, im: negateExactScalar(exactImaginaryMagnitude) }
         : undefined,
-    },
-    {
+    }),
+    profileEquationResult({
       exactLatex: complexBranchLatex(real, imaginaryMagnitudeLatex, 1),
       approxValue: complex(
         exactScalarToNumber(real),
@@ -395,7 +396,7 @@ export function solveNegativeDiscriminantQuadratic(
       exactComplex: exactImaginaryMagnitude
         ? { re: real, im: exactImaginaryMagnitude }
         : undefined,
-    },
+    }),
   ];
   const readback = buildBranchReadback(target, branches, outputStyle, complexExactForm);
   const parameterNames = parameterNamesFromLatex(equationLatex, target);

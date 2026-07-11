@@ -19,6 +19,7 @@ import {
 } from './special-form-carrier';
 import { ce, containsTarget, isArrayNode, latexForNode, simplifyNode } from './math-json';
 import type { ComplexEquationBranch, ComplexEquationOptions, MathJson } from './types';
+import { profileEquationResult } from '../../display/printer';
 
 type ComplexSpecialFormStopReason =
   | 'parse-error'
@@ -134,7 +135,7 @@ function complexCarrierRootBranches(
 ): ComplexEquationBranch[] {
   const sign = scalarSign(value.numeric);
   if (sign === 0) {
-    return [{ exactLatex: '0', approxValue: complex(0, 0) }];
+    return [profileEquationResult({ exactLatex: '0', approxValue: complex(0, 0) })];
   }
 
   const absNode = sign < 0 ? simplifyNode(['Negate', value.node] as MathJson) : value.node;
@@ -145,10 +146,10 @@ function complexCarrierRootBranches(
     const phaseNumerator = phaseNumeratorBase + 2 * index;
     const angleLatex = piFractionLatex(phaseNumerator, degree);
     const angle = (phaseNumerator * Math.PI) / degree;
-    return {
+    return profileEquationResult({
       exactLatex: exactBranchLatex(magnitudeLatex, angleLatex, complexExactForm),
       approxValue: complex(radius * Math.cos(angle), radius * Math.sin(angle)),
-    };
+    });
   });
 }
 
@@ -158,10 +159,10 @@ function targetBranchesForCarrierRoot(
   degree: number,
   complexExactForm: ComplexExactForm,
 ) {
-  return complexCarrierRootBranches(carrierValue, degree, complexExactForm).map((branch) => ({
+  return complexCarrierRootBranches(carrierValue, degree, complexExactForm).map((branch) => (profileEquationResult({
     ...branch,
     exactLatex: solveAffineCarrierLatex(carrier, branch.exactLatex),
-  }));
+  })));
 }
 
 function omegaLatex(branchIndex: number) {
@@ -236,9 +237,9 @@ function targetBranchesForSymbolicCarrierRoot(
       node.branchIndex,
     );
     if (!rootLatex) {
-      return {
+      return profileEquationResult({
         exactLatex: 'unsupported-principal-root',
-      };
+      });
     }
     const exactLatex = solveAffineCarrierLatex(carrier, rootLatex);
     return {

@@ -9,6 +9,7 @@ import {
   type TrigFunctionKind,
 } from './type-imports';
 import { normalizePeriodicNumber } from './periodic-math';
+import { profileEquationResult } from '../../display/printer';
 
 function formatPeriodicBound(valueDegrees: number, affine: { a: number; b: number }, unit: AngleUnit) {
   const boundInUnit = convertAngle(valueDegrees, 'deg', unit);
@@ -376,13 +377,13 @@ function buildAbsAffinePeriodicReadback(input: {
     }));
   }
 
-  return {
+  return profileEquationResult({
     exactLatex: families.join('\\;\\cup\\;'),
     text: input.outputStyle === 'decimal'
       ? `${latexFragmentToReadableText(families.join(' or '))}; n is a nonnegative integer`
       : 'The x-family answer is shown above; n is a nonnegative integer',
     periodLatex,
-  };
+  });
 }
 
 

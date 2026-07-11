@@ -4,6 +4,7 @@ import {
   renderFiniteRootSet,
   type FiniteRootBranch,
 } from './finite-root-set';
+import { profileEquationResult } from '../../display/printer';
 
 export type LogExpFamilyKind =
   | 'real-inverse'
@@ -85,9 +86,9 @@ export function renderLogExpFamily(family: LogExpFamily): LogExpFamilyRender {
     { preserveOrder: true },
   );
 
-  return {
+  return profileEquationResult({
     exactLatex: rendered.exactLatex ?? `${family.targetLatex}\\in\\left\\{\\right\\}`,
     branchReadback: rendered.branchReadback,
     branchesLatex: rendered.branchesLatex,
-  };
+  });
 }

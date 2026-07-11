@@ -16,10 +16,10 @@
 
 ## Current Verified Gate
 
-- `PRINT-PROFILE-CALCULATE-EQUATION1`: proven Calculate answer trees and Equation finite-root IR enter the internal pedagogical profile through explicit domain adapters. Existing canonical output remains unchanged.
-- The printer ratchet inventories 519 result paths: 255 compatibility fallbacks, 21 migrated dual writes, and 240 forwarders. Calculate is zero compatibility, 10 migrated, and nine forwarded; Equation advanced retains 76 owned compatibility producers.
-- The final two Calculate numeric paths now carry validated numeric answer nodes. Calculate's 20 replay fixtures hard-compare normalized LaTeX; 80 fixtures remain report-only until their workspace slices.
-- Three generic MathJSON candidates were rejected because they changed `x+1` to `1+x`, reordered a general-power derivative, or changed `1-x^2` to `-x^2+1`. The accepted output-change ledger remains empty.
-- Focused printer, Calculate, Equation finite-root, numeric, golden, print-hygiene, and replay coverage passed nine files and 95 tests. Feature probes passed 124 unit and 37 UI tests.
-- Five focused Calculate/Equation Chromium canaries passed from a fresh production build. The preceding contract sweep also passed two Clipboard capability checks, nine History replay flows, all 19 canaries, and inspected dense Formula Viewer row virtualization without overlap or unreadable overflow.
+- `PRINT-PROFILE-EQUATION-ADVANCED1`: all 76 remaining Equation-owned result paths enter `pedagogical-v1` through the explicit Equation domain adapter. Canonical strings, mathematics, routing, workers, fallbacks, History persistence, OOE, and Surface Protocol are unchanged.
+- The printer ratchet inventories 519 result paths: 179 compatibility fallbacks, 97 migrated paths, and 240 forwarders. Equation is zero compatibility, 86 migrated, and 97 forwarded.
+- The ratchet now recognizes named producer-profile wrappers around authored result objects and tests that classification. Exact source fingerprints and nonincreasing floors remain enforced.
+- All 25 Equation replay fixtures now hard-compare normalized LaTeX, bringing hard coverage to 45/100. Golden, the 203-fragment print-hygiene baseline, and all 100 replay fixtures passed with zero drift.
+- The broad Equation and Equation-mode suite passed across exact, numeric, parameterized, composition, target, Complex, worker, and boundary families. Feature probes passed 124 unit and 37 UI tests.
+- Two Equation Chromium canaries passed from a fresh production build. Dense Formula Viewer evidence from the mandatory review remains unchanged.
 - TypeScript, production build, lint, file size, printer migration, seam selection, Surface Protocol, OOE, compartments, and diff hygiene passed.

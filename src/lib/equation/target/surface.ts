@@ -6,6 +6,7 @@ import {
   type VariableSymbolFact,
 } from '../../algebra/variable-core';
 import { namedVariableLatex } from '../../algebra/named-variable';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -175,20 +176,20 @@ function rewritePeriodicFamilyTarget(
     parameterConstraintLatex: family.parameterConstraintLatex?.map((entry) => replaceXToken(entry, target)),
     branchesLatex: family.branchesLatex.map((entry) => replaceXToken(entry, target)),
     discoveredFamilies: family.discoveredFamilies?.map((entry) => replaceXToken(entry, target)),
-    representatives: family.representatives?.map((entry) => ({
+    representatives: family.representatives?.map((entry) => (profileEquationResult({
       ...entry,
       exactLatex: entry.exactLatex ? replaceXToken(entry.exactLatex, target) : entry.exactLatex,
       approxText: entry.approxText ? replaceXToken(entry.approxText, target, false) : entry.approxText,
-    })),
+    }))),
     suggestedIntervals: family.suggestedIntervals?.map((entry) => ({
       ...entry,
       start: replaceXToken(entry.start, target),
       end: replaceXToken(entry.end, target),
     })),
-    piecewiseBranches: family.piecewiseBranches?.map((entry) => ({
+    piecewiseBranches: family.piecewiseBranches?.map((entry) => (profileEquationResult({
       conditionLatex: replaceXToken(entry.conditionLatex, target),
       resultLatex: replaceXToken(entry.resultLatex, target),
-    })),
+    }))),
     principalRangeLatex: family.principalRangeLatex ? replaceXToken(family.principalRangeLatex, target) : family.principalRangeLatex,
     reducedCarrierLatex: family.reducedCarrierLatex ? replaceXToken(family.reducedCarrierLatex, target) : family.reducedCarrierLatex,
   };
@@ -216,7 +217,7 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
     };
   }
 
-  const rewritten = {
+  const rewritten = profileEquationResult({
     ...withoutCanonicalMath(outcome),
     exactLatex: outcome.exactLatex ? replaceXToken(outcome.exactLatex, target) : outcome.exactLatex,
     periodicFamily: rewritePeriodicFamilyTarget(outcome.periodicFamily, target),
@@ -237,7 +238,7 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
     transformSummaryLatex: outcome.transformSummaryLatex
       ? replaceXToken(outcome.transformSummaryLatex, target)
       : outcome.transformSummaryLatex,
-  };
+  });
 
   return rewritten as DisplayOutcome;
 }
@@ -255,7 +256,7 @@ export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target
     };
   }
 
-  return {
+  return profileEquationResult({
     ...withoutCanonicalMath(outcome),
     exactLatex: outcome.exactLatex ? replaceLatexSymbolToken(outcome.exactLatex, target, targetLatex) : outcome.exactLatex,
     exactSupplementLatex: outcome.exactSupplementLatex?.map((entry) => replaceLatexSymbolToken(entry, target, targetLatex)),
@@ -270,7 +271,7 @@ export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target
     transformSummaryLatex: outcome.transformSummaryLatex
       ? replaceLatexSymbolToken(outcome.transformSummaryLatex, target, targetLatex)
       : outcome.transformSummaryLatex,
-  } as DisplayOutcome;
+  }) as DisplayOutcome;
 }
 
 export function retargetDomainConstraintsToX(

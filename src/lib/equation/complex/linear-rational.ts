@@ -38,6 +38,7 @@ import {
   renderPeriodicFamilies,
   transformPeriodicFamilyForAffineTarget,
 } from '../solution/periodic-family';
+import { profileEquationResult } from '../../display/printer';
 
 export type LinearComplexExpression = {
   coefficient: ExactScalar;
@@ -210,24 +211,24 @@ export function solveAffineInnerAgainstBranch(
   const approxText = branch.exactComplex && !branch.parameterLatex
     ? buildBranchReadback(
       target,
-      [{
+      [profileEquationResult({
         exactLatex: solutionLatex,
         exactComplex: divideExactComplexByScalar(
           addExactComplexScalars(branch.exactComplex, negateExactComplexScalar(linear.constant)),
           linear.coefficient,
         ) ?? undefined,
-      }],
+      })],
       'both',
       complexExactForm,
     ).approxText
     : undefined;
 
-  return {
+  return profileEquationResult({
     answerLatex: branch.parameterLatex ? `${target}=${solutionLatex},\\ ${branch.parameterLatex}` : exactLatex,
     approxText,
     exactSupplementLatex: [],
     proofLines: [`Reduced ${latexForNode(node)} to a one-variable affine preimage.`],
-  };
+  });
 }
 
 export function solveRationalLinearInnerAgainstBranch(
@@ -256,13 +257,13 @@ export function solveRationalLinearInnerAgainstBranch(
   const top = subtractLatex(multiplyLatex(branch.latex, d), b);
   const bottom = subtractLatex(a, multiplyLatex(branch.latex, c));
   const solutionLatex = divideLatex(top, bottom);
-  return {
+  return profileEquationResult({
     answerLatex: branch.parameterLatex
       ? `${target}=${solutionLatex},\\ ${branch.parameterLatex}`
       : `${target}\\in\\left\\{${solutionLatex}\\right\\}`,
     exactSupplementLatex: [`${latexForNode(node[2])}\\ne0`, `${bottom}\\ne0`],
     proofLines: ['Solved a supported rational-linear complex preimage and preserved denominator exclusions.'],
-  };
+  });
 }
 
 export function exactComplexDiscriminantLatex(
@@ -313,11 +314,11 @@ export function solveQuadraticOverLinearAgainstExactBranch(
   const denominatorLatex = scalarLatex(denominator);
   const left = `\\frac{${negativeBLatex}-\\sqrt{${discriminantLatex}}}{${denominatorLatex}}`;
   const right = `\\frac{${negativeBLatex}+\\sqrt{${discriminantLatex}}}{${denominatorLatex}}`;
-  return {
+  return profileEquationResult({
     answerLatex: `${target}\\in\\left\\{${left},\\ ${right}\\right\\}`,
     exactSupplementLatex: [`${latexForNode(node[2])}\\ne0`],
     proofLines: ['Solved a supported rational equation by clearing a linear denominator and applying the complex quadratic formula.'],
-  };
+  });
 }
 
 export function exactComplexCoefficientIsZero(value: ExactComplexScalar) {
@@ -396,8 +397,8 @@ export function complexQuadraticFormulaBranches(
   const negativeBLatex = exactComplexToFormLatex(negativeB, complexExactForm) ?? exactComplexToLatex(negativeB);
   const denominatorLatex = exactComplexToFormLatex(denominator, complexExactForm) ?? exactComplexToLatex(denominator);
   return [
-    { exactLatex: `\\frac{${negativeBLatex}-\\sqrt{${discriminantLatex}}}{${denominatorLatex}}` },
-    { exactLatex: `\\frac{${negativeBLatex}+\\sqrt{${discriminantLatex}}}{${denominatorLatex}}` },
+    profileEquationResult({ exactLatex: `\\frac{${negativeBLatex}-\\sqrt{${discriminantLatex}}}{${denominatorLatex}}` }),
+    profileEquationResult({ exactLatex: `\\frac{${negativeBLatex}+\\sqrt{${discriminantLatex}}}{${denominatorLatex}}` }),
   ];
 }
 
@@ -510,11 +511,11 @@ export function solveQuadraticOverLinearAgainstBranchLatex(
   const denominator = multiplyLatex('2', a);
   const left = divideLatex(subtractLatex(negativeB, `\\sqrt{${discriminant}}`), denominator);
   const right = divideLatex(addLatex(negativeB, `\\sqrt{${discriminant}}`), denominator);
-  return {
+  return profileEquationResult({
     answerLatex: `${target}\\in\\left\\{${left},\\ ${right}\\right\\}${branch.parameterLatex ? `,\\ ${branch.parameterLatex}` : ''}`,
     exactSupplementLatex: [`${latexForNode(node[2])}\\ne0`],
     proofLines: ['Cleared a supported quadratic-over-linear complex preimage and kept its branch family symbolic.'],
-  };
+  });
 }
 
 export function solveDirectComplexLinearEquation(

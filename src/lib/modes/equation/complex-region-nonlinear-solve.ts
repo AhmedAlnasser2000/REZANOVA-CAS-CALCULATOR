@@ -43,6 +43,7 @@ import {
   type ComplexRegionSubdivisionDiagnostics,
 } from './complex-region-subdivision';
 import { unsupportedComplexLocusOutcome } from './outcomes';
+import { profileEquationResult } from '../../display/printer';
 
 const COMPLEX_REGION_RESIDUAL_TOLERANCE = 1e-8;
 const DEFAULT_GRID_SIZE = 7;
@@ -636,7 +637,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   const roots = accepted.map((candidate) => candidate.value);
   const targetLatex = equationTargetLatex(selectedTarget);
   const branchesLatex = roots.map((root) => formatComplexRootLatex(root, input.complexExactForm));
-  return {
+  return profileEquationResult({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, roots, input.complexExactForm),
@@ -674,5 +675,5 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       complexExactForm: input.complexExactForm,
       subdivision,
     }),
-  };
+  });
 }

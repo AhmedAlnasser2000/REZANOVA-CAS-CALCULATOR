@@ -36,6 +36,7 @@ import type {
   ProjectionSolveResult,
   ZeroFormResult,
 } from './system-types';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -539,7 +540,7 @@ export function solvePolynomialSystem2x2(
     ...(extraneousSection ? [extraneousSection] : []),
   ];
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     title: 'Polynomial 2x2',
     exactLatex: `\\left(x,y\\right)\\in\\left\\{${validated.map(pairExactLatex).join(',\\ ')}\\right\\}`,
@@ -558,5 +559,5 @@ export function solvePolynomialSystem2x2(
     detailSections,
     variableSubstitutions: substitutions.length > 0 ? substitutions : undefined,
     rejectedCandidateCount,
-  };
+  });
 }

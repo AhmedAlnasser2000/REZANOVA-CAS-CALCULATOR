@@ -1,5 +1,6 @@
 import { exactLatexForFiniteBranches } from './finite-branches';
 import type { ExactReadbackNormalizationContext } from './normalization';
+import { profileEquationResult } from '../../display/printer';
 
 export type FiniteRootOverrideNormalization = {
   exactLatex: string;
@@ -57,10 +58,10 @@ export function normalizeFiniteRootExactLatexOverride({
       ...context,
     },
   });
-  return {
+  return profileEquationResult({
     exactLatex: normalizedExactLatex,
     branchesLatex: extractFiniteRootBranchesFromExactLatex(normalizedExactLatex, targetLatex) ?? [],
-  };
+  });
 }
 
 function extractRepeatedEqualityRows(exactLatex: string, targetLatex: string): string[] | null {

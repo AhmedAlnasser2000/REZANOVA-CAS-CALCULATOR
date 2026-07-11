@@ -21,6 +21,7 @@ import {
   containsTargetedAbsLatex,
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
+import { profileEquationResult } from '../../display/printer';
 
 type TargetResolution = ReturnType<typeof resolveEquationSolveTarget>;
 
@@ -138,7 +139,7 @@ function tryParameterizedTrigRewriteSolve(
     solutionExpressionsFromExactLatex(branch.exactLatex, target));
   const exactSupplementLatex = dedupeLatex(successes.flatMap((branch) => branch.exactSupplementLatex ?? []));
 
-  return {
+  return profileEquationResult({
     exactLatex: exactLatexFromSolutionExpressions(target, solutionExpressions),
     exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
     detailSections: [
@@ -153,7 +154,7 @@ function tryParameterizedTrigRewriteSolve(
       },
       ...successes.flatMap((branch) => branch.detailSections ?? []),
     ],
-  };
+  });
 }
 
 function attachParameterizedSelectedTargetOutcome(input: {

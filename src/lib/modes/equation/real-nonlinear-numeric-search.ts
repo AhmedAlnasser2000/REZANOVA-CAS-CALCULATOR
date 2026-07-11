@@ -24,6 +24,7 @@ import type {
   NumericSolveInterval,
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
+import { profileEquationResult } from '../../display/printer';
 
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
@@ -253,7 +254,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   const targetLatex = equationTargetLatex(classification.selectedTarget);
   const formattedRoots = accepted.map((value) => formatApproxNumber(value));
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, accepted),
@@ -274,5 +275,5 @@ export function tryRealNonlinearNumericSearchFallback(input: {
     rejectedCandidateCount: rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,
     numericMethod: NUMERIC_METHOD_NONLINEAR,
     detailSections,
-  };
+  });
 }

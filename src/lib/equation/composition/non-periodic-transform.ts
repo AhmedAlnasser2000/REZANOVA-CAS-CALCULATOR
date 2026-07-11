@@ -39,6 +39,7 @@ import {
   numericAffineCarrier,
   type SymbolicFamilyBranch,
 } from './carriers';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 const EPSILON = 1e-9;
@@ -485,10 +486,10 @@ function matchNonPeriodicTransform(
             principalRangeLatex,
             reducedCarrierLatex,
             piecewiseBranches: [
-              {
+              profileEquationResult({
                 conditionLatex: `${reducedCarrierLatex}\\in${principalRangeLatex}`,
                 resultLatex: `${outerLatex}=${reducedCarrierLatex}`,
-              },
+              }),
             ] as PeriodicPiecewiseBranch[],
           },
         };
@@ -530,10 +531,10 @@ function matchNonPeriodicTransform(
       }
       const template = buildTrigPeriodicTemplate(mappedKind, invertedTarget.value, invertedTarget.latex, angleUnit);
       const piecewiseBranches = template
-        ? template.branches.map((branch) => ({
+        ? template.branches.map((branch) => (profileEquationResult({
             conditionLatex: `${reducedCarrierLatex}=${branch.latex}`,
             resultLatex: `${outerLatex}=${target.latex}`,
-          }))
+          })))
         : [];
 
       return {

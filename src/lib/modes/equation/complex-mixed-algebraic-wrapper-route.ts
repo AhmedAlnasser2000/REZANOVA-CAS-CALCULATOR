@@ -56,6 +56,7 @@ import {
   attachEquationRuntimeEnvelope,
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
+import { profileEquationResult } from '../../display/printer';
 
 type ComplexMixedAlgebraicWrapperRouteInput = {
   equationLatex: string;
@@ -587,10 +588,10 @@ function solveMixedRootAffine(
       ...compactPolynomial.supplements,
     ]);
     const exactLatex = exactLatexForSolutions(input.selectedTarget, compactPolynomial.solutionExpressions);
-    const solvedBranches = compactPolynomial.solutionExpressions.map((solution) => ({
+    const solvedBranches = compactPolynomial.solutionExpressions.map((solution) => (profileEquationResult({
       branchLatex: branchEquation,
       exactLatex: `${input.selectedTarget}=${solution}`,
-    }));
+    })));
     const outcome: DisplayOutcome = {
       kind: 'success',
       title: 'Solve',

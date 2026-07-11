@@ -61,6 +61,7 @@ import { solveParameterizedLinearEquation } from './linear';
 import { solveParameterizedPolynomialEquation } from './polynomial';
 import { solveParameterizedRationalEquation } from './rational';
 import { solveParameterizedTrigEquation } from './trig';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 const ABS_FORMULA_CASES_SECTION_TITLE = 'Absolute-Value Formula Cases';
@@ -433,7 +434,7 @@ function solveGeneratedCompositionBranches({
       );
     }
     if (groupedFormula.kind === 'grouped') {
-      return {
+      return profileEquationResult({
         kind: 'success',
         target,
         parameterNames,
@@ -452,12 +453,12 @@ function solveGeneratedCompositionBranches({
         }),
         generatedEquationLatex: generatedEquations,
         answerDomain: 'real',
-      };
+      });
     }
   }
 
   if (formulaPayload) {
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -476,7 +477,7 @@ function solveGeneratedCompositionBranches({
       }),
       generatedEquationLatex: generatedEquations,
       answerDomain: 'real',
-    };
+    });
   }
 
   const detailSections: DisplayDetailSection[] = buildParameterizedDetailSections({
@@ -505,7 +506,7 @@ function solveGeneratedCompositionBranches({
   });
   const renderedCasewise = renderCasewiseSolution(casewiseSolution);
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
@@ -515,7 +516,7 @@ function solveGeneratedCompositionBranches({
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex: generatedEquations,
-  };
+  });
 }
 
 export function solveParameterizedCompositionEquation(

@@ -39,6 +39,7 @@ import {
 } from './math-json';
 import { peelOnce, type PeelPolicy, type PeelStep } from './peeling';
 import { hasAmbiguousAdjacentProduct, parseIsolationEquation } from './target-context';
+import { profileEquationResult } from '../../display/printer';
 
 export type SelectedTargetIsolationStopReason =
   | 'parse-error'
@@ -648,7 +649,7 @@ export function isolateSelectedTargetEquation(
         ...formula.facts,
       ]);
       const exactSupplementLatex = normalizeParameterizedSupplementLatex(allFacts);
-      return {
+      return profileEquationResult({
         kind: 'success',
         target,
         parameterNames,
@@ -664,14 +665,14 @@ export function isolateSelectedTargetEquation(
           allFacts,
           formula.branchRows,
         ),
-      };
+      });
     }
   }
 
   if (steps.length > 0) {
     const isolatedEquationLatex = equationLatexForAttempt(expression, otherSide);
     const exactSupplementLatex = normalizeParameterizedSupplementLatex(unique(facts));
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -686,7 +687,7 @@ export function isolateSelectedTargetEquation(
         isolatedEquationLatex,
         unique(facts),
       ),
-    };
+    });
   }
 
   return stop(

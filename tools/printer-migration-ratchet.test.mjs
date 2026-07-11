@@ -78,6 +78,19 @@ describe('printer migration ratchet', () => {
     assert.equal(report.summary.compatibilityFallbackCount, 0);
   });
 
+  it('recognizes an explicit producer-profile wrapper around authored result paths', () => {
+    const rootDir = fixture({
+      'src/lib/equation/sample.ts': `
+        const profileEquationResult = (value) => value;
+        export const result = profileEquationResult({ exactLatex: 'x=1' });
+      `,
+    });
+    const report = scanPrinterMigrationRepository({ rootDir });
+
+    assert.equal(report.summary.migratedDualWriteCount, 1);
+    assert.equal(report.summary.compatibilityFallbackCount, 0);
+  });
+
   it('rejects result serialization outside every narrow registration', () => {
     const rootDir = fixture({
       'src/lib/new-domain/result.ts': `export const result = { exactLatex: 'x=1' };`,

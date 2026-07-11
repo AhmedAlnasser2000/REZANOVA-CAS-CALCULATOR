@@ -34,6 +34,7 @@ import type {
   TrigCarrierKind,
 } from './trig-types';
 import { simplifyNode } from './math-json';
+import { profileEquationResult } from '../../display/printer';
 
 function stop(
   reason: ParameterizedTrigStopReason,
@@ -637,7 +638,7 @@ export function solveDirectParameterizedTrigFromJson(
     ],
   });
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
@@ -646,5 +647,5 @@ export function solveDirectParameterizedTrigFromJson(
     exactSupplementLatex,
     detailSections,
     carrierValueLatex,
-  };
+  });
 }

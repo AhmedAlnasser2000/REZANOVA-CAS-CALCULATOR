@@ -29,6 +29,7 @@ import {
   latexForNode,
   simplifyNode,
 } from './math-json';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -591,7 +592,7 @@ export function solveParameterizedCarrierEquation(
     extraSections: [mathDetailSection('Carrier Branches', branchEquations)],
   });
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
@@ -605,5 +606,5 @@ export function solveParameterizedCarrierEquation(
     exactSupplementLatex,
     detailSections,
     branchEquations,
-  };
+  });
 }

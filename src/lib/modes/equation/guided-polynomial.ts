@@ -16,6 +16,7 @@ import {
   POLYNOMIAL_VIEW_META,
 } from '../equation-ui-model';
 import type { AngleUnit, DisplayOutcome, EquationDomainIntent, OutputStyle, PolynomialEquationView } from '../../../types/calculator';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -124,7 +125,7 @@ export function solvePolynomial(
   }
 
   const hasComplexRoots = numericRoots.roots.some((root) => Math.abs(root.im) > 1e-10);
-  return {
+  return profileEquationResult({
     kind: 'success',
     title: meta.title,
     exactLatex: complexSolutionsToLatex('x', numericRoots.roots),
@@ -132,5 +133,5 @@ export function solvePolynomial(
     warnings: ['Symbolic solve unavailable; showing numeric roots.'],
     resultOrigin: 'numeric-fallback',
     ...(equationDomainIntent === 'complex' && hasComplexRoots ? { answerDomain: 'complex' as const } : {}),
-  };
+  });
 }

@@ -35,6 +35,7 @@ import type {
   ParameterizedTrigSolveStop,
   ParameterizedTrigStopReason,
 } from './trig-types';
+import { profileEquationResult } from '../../display/printer';
 
 function stop(
   reason: ParameterizedTrigStopReason,
@@ -297,7 +298,7 @@ export function solveMixedParameterizedTrigFromJson(
     ],
   });
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
@@ -306,5 +307,5 @@ export function solveMixedParameterizedTrigFromJson(
     exactSupplementLatex,
     detailSections,
     carrierValueLatex: normalizedValueLatex,
-  };
+  });
 }

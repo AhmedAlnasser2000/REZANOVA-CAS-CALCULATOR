@@ -65,6 +65,7 @@ import type {
   SolveBadge,
   SolveDomainConstraint,
 } from '../../../types/calculator';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 type GuardedSolveRunner = (
@@ -418,7 +419,7 @@ function compositionSolve(
       if (periodic?.kind === 'solved') {
         const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
         const supplements = buildPeriodicOutcomeSupplements(periodic);
-        return {
+        return profileEquationResult({
           kind: 'success',
           title: 'Solve',
           exactLatex: periodicFamilyToExactLatex(periodic.family),
@@ -434,12 +435,12 @@ function compositionSolve(
             periodic,
             'yields',
           ),
-        };
+        });
       }
       if (periodic?.kind === 'guided') {
         const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
         const supplements = buildPeriodicOutcomeSupplements(periodic);
-        return {
+        return profileEquationResult({
           kind: 'error',
           title: 'Solve',
           error: periodic.error,
@@ -455,7 +456,7 @@ function compositionSolve(
             periodic,
             'reduces to',
           ),
-        };
+        });
       }
 
       return errorOutcome(
@@ -494,7 +495,7 @@ function compositionSolve(
     if (periodic?.kind === 'solved') {
       const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
       const supplements = buildPeriodicOutcomeSupplements(periodic);
-      return {
+      return profileEquationResult({
         kind: 'success',
         title: 'Solve',
         exactLatex: periodicFamilyToExactLatex(periodic.family),
@@ -510,12 +511,12 @@ function compositionSolve(
           periodic,
           'yields',
         ),
-      };
+      });
     }
     if (periodic?.kind === 'guided') {
       const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
       const supplements = buildPeriodicOutcomeSupplements(periodic);
-      return {
+      return profileEquationResult({
         kind: 'error',
         title: 'Solve',
         error: periodic.error,
@@ -531,7 +532,7 @@ function compositionSolve(
           periodic,
           'reduces to',
         ),
-      };
+      });
     }
 
     const transform = matchNonPeriodicTransform(attempt.composite, target, request.angleUnit);

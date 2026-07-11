@@ -43,8 +43,10 @@
 - Symbolic Limits finite rules, local equivalents, recursive leading terms, indeterminate transforms, L'Hospital, and rewrite/cancellation derive compatibility lines from explicit typed rows. A source audit forbids legacy string helper calls in this lane.
 - Live absolute-value, domain/range, assumption, variable-memory, solve-note, trust, and partial-fraction details now own typed math or explicit prose while deriving unchanged compatibility lines. Legacy or snapshot-less History retains renderer inference.
 - The mandatory contract-evidence sweep passed: Clipboard custom MIME/HTML/text passed in Chromium, all nine versioned History replay flows passed, all 19 canaries passed, and dense Formula Viewer virtualization was expanded and inspected without overlap or overflow.
-- `PRINT-PROFILE-CALCULATE-EQUATION1`: implemented and verified; entering its approved commit checkpoint.
+- `PRINT-PROFILE-CALCULATE-EQUATION1`: committed as `3d22c6dd`.
 - Calculate compatibility debt is zero, 20 Calculate replay fixtures hard-compare normalized LaTeX, and Equation finite roots enter the profile through the existing presentation-IR adapter. Three less-readable generic serializer candidates were rejected, so accepted visible output remains unchanged.
-- `PRINT-PROFILE-EQUATION-ADVANCED1` is next, followed by six later printer-profile slices and one accumulated final review.
+- `PRINT-PROFILE-EQUATION-ADVANCED1`: implemented and verified; entering its approved commit checkpoint.
+- Equation's 76 remaining exact, numeric, parameterized, composition, target, and Complex producers now use the explicit Equation domain-profile adapter. Equation compatibility debt is zero and all 25 Equation replay fixtures are hard, bringing hard coverage to 45/100.
+- `PRINT-PROFILE-SYMBOLIC-LIMITS1` is next, followed by five later printer-profile slices and one accumulated final review.
 - The contract-review evidence checkpoint remains required, but the user removed its intermediate acceptance pause and directed the program to continue through printer profiles before one accumulated final review.
 - No push is authorized, and untracked `test-results/` stays excluded.

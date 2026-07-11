@@ -34,6 +34,7 @@
 - `2bb2f91b` - `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`
 - `ca7d8179` - `DETAIL-SEGMENT-LINEAR-ALGEBRA1`
 - `536d1f07` - `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`
-- pending at write time - `PRINT-PROFILE-CALCULATE-EQUATION1`
+- `3d22c6dd` - `PRINT-PROFILE-CALCULATE-EQUATION1`
+- pending at write time - `PRINT-PROFILE-EQUATION-ADVANCED1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

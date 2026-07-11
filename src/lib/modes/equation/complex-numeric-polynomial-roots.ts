@@ -39,6 +39,7 @@ import {
   polynomialFromZeroForm,
   type SolvableNumericPolynomial,
 } from './numeric-polynomial-extraction';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 const COMPLEX_RESIDUAL_TOLERANCE = 1e-8;
@@ -473,7 +474,7 @@ export function tryComplexNumericPolynomialFallback(input: {
 
   const targetLatex = equationTargetLatex(classification.selectedTarget);
   const branchesLatex = validation.accepted.map((root) => formatComplexRootLatex(root, input.complexExactForm));
-  return {
+  return profileEquationResult({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, validation.accepted, input.complexExactForm),
@@ -494,5 +495,5 @@ export function tryComplexNumericPolynomialFallback(input: {
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     numericMethod: method,
     detailSections,
-  };
+  });
 }

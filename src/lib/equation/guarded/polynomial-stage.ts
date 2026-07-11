@@ -36,6 +36,7 @@ import {
   isApproximateOnlySolutionLatex,
   isMathJsonArray,
 } from './request-prep';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -171,7 +172,7 @@ function runBoundedPolynomialSolve(
         const rootSet = adaptBoundedPolynomialSolveResultToRootSet(solved, {
           source: 'equation-guarded-bounded-polynomial',
         });
-        return {
+        return profileEquationResult({
           kind: 'success',
           title: 'Solve',
           exactLatex: rootSetToExactLatex(rootSet),
@@ -184,7 +185,7 @@ function runBoundedPolynomialSolve(
           plannerBadges: [],
           solveBadges: [],
           candidateValues: solved.approxSolutions,
-        };
+        });
       }
     }
 

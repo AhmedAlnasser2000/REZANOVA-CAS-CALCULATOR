@@ -42,6 +42,7 @@ import {
   createFiniteRootSet,
   renderFiniteRootSet,
 } from '../solution/finite-root-set';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -521,7 +522,7 @@ export function solveParameterizedRationalEquation(
       }],
     });
 
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -529,7 +530,7 @@ export function solveParameterizedRationalEquation(
       exactSupplementLatex,
       detailSections,
       clearedEquationLatex,
-    };
+    });
   }
 
   const delegateOptions = { allowGeneratedImplicitProducts: true };

@@ -20,6 +20,7 @@ import type {
   ParameterizedTrigSolveResult,
   ParameterizedTrigSolveStop,
 } from './trig-types';
+import { profileEquationResult } from '../../display/printer';
 
 const TRIG_FORMULA_CASES_SECTION_TITLE = 'Trig Formula Cases';
 const TRIG_GROUPED_FORMULA_CONFIG: GroupedFormulaCaseConfig = {
@@ -101,7 +102,7 @@ export function solveTrigFormulaBranches(options: {
     );
   }
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     target: options.target,
     parameterNames: options.parameterNames,
@@ -123,5 +124,5 @@ export function solveTrigFormulaBranches(options: {
     }),
     carrierValueLatex: options.carrierValueLatex,
     answerDomain: 'real',
-  };
+  });
 }

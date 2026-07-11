@@ -22,6 +22,7 @@ import {
 import { dedupe } from './facts';
 import { latexForNode, type MathJson } from './math-json';
 import { buildParameterizedDetailSections, normalizeParameterizedSupplementLatex } from './readback';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -363,7 +364,7 @@ export function finalizeGeneratedExpLogSolve({
     if (domainStop) {
       return domainStop;
     }
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -383,7 +384,7 @@ export function finalizeGeneratedExpLogSolve({
       }),
       generatedEquationLatex,
       answerDomain: 'real',
-    };
+    });
   }
 
   const affineAssignment = useExactLogShortcut
@@ -400,7 +401,7 @@ export function finalizeGeneratedExpLogSolve({
     if (domainStop) {
       return domainStop;
     }
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -420,7 +421,7 @@ export function finalizeGeneratedExpLogSolve({
       }),
       generatedEquationLatex,
       answerDomain: 'real',
-    };
+    });
   }
 
   const pureSquareAssignment = useExactLogShortcut
@@ -432,7 +433,7 @@ export function finalizeGeneratedExpLogSolve({
       ...domainFacts,
       `${pureSquareAssignment}\\ge0`,
     ]);
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -453,7 +454,7 @@ export function finalizeGeneratedExpLogSolve({
       }),
       generatedEquationLatex,
       answerDomain: 'real',
-    };
+    });
   }
 
   const solved = solveGeneratedExpLogEquation(generatedEquationLatex, target, searchTrace, formulaHandoff);
@@ -480,7 +481,7 @@ export function finalizeGeneratedExpLogSolve({
         .filter((section) => section.title !== 'Solve Target'),
     });
 
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -489,7 +490,7 @@ export function finalizeGeneratedExpLogSolve({
       detailSections,
       generatedEquationLatex,
       answerDomain: 'real',
-    };
+    });
   }
 
   const solutionExpressions = solutionExpressionsFromExactLatex(solved.exactLatex, target);
@@ -572,11 +573,11 @@ export function finalizeComplexPreimageExpLogSolve({
     extraSections: (solved.detailSections ?? [])
       .filter((section) => section.title !== 'Solve Target'),
   });
-  const renderedFamily = renderLogExpFamily(createComplexLogExpFamily({
+  const renderedFamily = renderLogExpFamily(createComplexLogExpFamily(profileEquationResult({
     targetLatex: target,
     exactLatex: cleanLatex(solved.exactLatex),
     branchReadback: solved.branchReadback,
-  }));
+  })));
 
   return {
     kind: 'success',

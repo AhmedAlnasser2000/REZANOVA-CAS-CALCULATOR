@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "equation",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "equation-linear-basic",

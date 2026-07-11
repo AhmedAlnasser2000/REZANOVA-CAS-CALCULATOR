@@ -10,6 +10,7 @@ import {
   solveParameterizedTopLevelCubicCardanoEquation,
   solveParameterizedTopLevelQuarticFerrariEquation,
 } from './formula-rational-normalization';
+import { profileEquationResult } from '../../display/printer';
 
 type GeneratedFormulaResult = GeneratedHandoffSuccess | GeneratedHandoffFailure;
 type RealFormulaAlgorithm = 'cardano' | 'ferrari';
@@ -32,7 +33,7 @@ function caseRowsFromSections(
     const parts = section.lineParts?.[index];
     const mathParts = parts?.filter((part): part is Extract<DisplayDetailLinePart, { kind: 'math' }> =>
       part.kind === 'math') ?? [];
-    return {
+    return profileEquationResult({
       id: `${algorithm}-case-${index}`,
       resultLatex: mathParts[0]?.latex ?? line,
       conditionLatex: mathParts[1]?.latex ?? '',
@@ -40,7 +41,7 @@ function caseRowsFromSections(
       text: line,
       ...(parts ? { parts: parts.map((part) => ({ ...part })) } : {}),
       ...(mathParts[1]?.latex ? { factsLatex: [mathParts[1].latex] } : {}),
-    };
+    });
   });
 }
 

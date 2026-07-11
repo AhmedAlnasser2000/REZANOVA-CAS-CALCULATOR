@@ -27,6 +27,7 @@ import {
   isZeroNode,
 } from './math-json';
 import { hasAmbiguousAdjacentProduct, parameterNamesFromLatex } from './target-context';
+import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 const MAX_MIXED_CARRIERS = 2;
@@ -656,7 +657,7 @@ export function solveParameterizedMixedAlgebraicEquation(
     }],
   });
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
@@ -670,5 +671,5 @@ export function solveParameterizedMixedAlgebraicEquation(
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex: solved.generatedEquations,
-  };
+  });
 }

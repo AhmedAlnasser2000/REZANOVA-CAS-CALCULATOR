@@ -155,15 +155,14 @@ function resolvedExpressionText(expression, checker, seen = new Set()) {
 function hasMigrationMarker(node) {
   if (ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) {
     const objectLiteral = ts.isObjectLiteralExpression(node.parent) ? node.parent : undefined;
-    if (!objectLiteral) return false;
-    return objectLiteral.properties.some((property) => {
+    if (objectLiteral?.properties.some((property) => {
       if (ts.isSpreadAssignment(property)) {
         return [...MIGRATION_MARKER_NAMES].some((marker) =>
           new RegExp(`\\b${marker}\\b`, 'u').test(property.getText(property.getSourceFile())));
       }
       const name = propertyName(property);
       return name ? MIGRATION_MARKER_NAMES.has(name) : false;
-    });
+    })) return true;
   }
 
   for (let current = node.parent, depth = 0; current && depth < 6; current = current.parent, depth += 1) {

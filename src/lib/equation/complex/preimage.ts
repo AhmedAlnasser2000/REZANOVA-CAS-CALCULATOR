@@ -35,6 +35,7 @@ import {
   piRationalFromDegrees,
   renderPeriodicFamilyExpression,
 } from '../solution/periodic-family';
+import { profileEquationResult } from '../../display/printer';
 
 type ComplexPreimageRuntimeOptions = Required<Pick<ComplexEquationOptions, 'outputStyle' | 'complexExactForm' | 'angleUnit'>>
   & Pick<ComplexEquationOptions, 'maxPowerDegree'>;
@@ -227,12 +228,12 @@ export function solvePowerInnerAgainstBranch(
     return null;
   }
   const expanded = degree === 2 ? undefined : expandedRootFamilyLatex(target, degree, branch);
-  return {
+  return profileEquationResult({
     answerLatex: rootFamilyLatex(target, degree, branch),
     exactSupplementLatex: [],
     proofLines: [`Returned a parameterized root family for ${target}^${degree}.`],
     expandedBranchLatex: expanded ? [expanded] : undefined,
-  };
+  });
 }
 
 export function anglePeriodLatex(functionName: 'Sin' | 'Cos' | 'Tan', angleUnit: AngleUnit = 'rad') {
@@ -490,12 +491,12 @@ export function mergePreimageResults(target: string, results: ComplexPreimageSol
   const extracted = results.map((result) => extractAnswerFamily(target, result.answerLatex));
   const families = extracted.map((result) => result.familyLatex);
   const parameterLatex = mergeIntegerParameterLatex(...extracted.map((result) => result.parameterLatex));
-  return {
+  return profileEquationResult({
     answerLatex: `${target}\\in\\left\\{${families.join(',\\ ')}\\right\\}${parameterLatex ? `,\\ ${parameterLatex}` : ''}`,
     exactSupplementLatex: [...new Set(results.flatMap((result) => result.exactSupplementLatex))],
     proofLines: results.flatMap((result) => result.proofLines),
     expandedBranchLatex: results.flatMap((result) => result.expandedBranchLatex ?? []),
-  };
+  });
 }
 
 export function solveTrigArgumentAgainstBranch(
@@ -555,13 +556,13 @@ export function solveInnerAgainstBranch(
     return null;
   }
   if (node === target) {
-    return {
+    return profileEquationResult({
       answerLatex: branch.parameterLatex
         ? `${target}=${branch.latex},\\ ${branch.parameterLatex}`
         : `${target}\\in\\left\\{${branch.latex}\\right\\}`,
       exactSupplementLatex: [],
       proofLines: ['Reduced the preimage to the selected target.'],
-    };
+    });
   }
 
   const affine = solveAffineInnerAgainstBranch(node, target, branch, options.complexExactForm);

@@ -25,6 +25,7 @@ import {
   NUMERIC_FALLBACK_ELIGIBLE_ERRORS,
   polynomialFromZeroForm,
 } from './numeric-polynomial-extraction';
+import { profileEquationResult } from '../../display/printer';
 
 const REAL_ROOT_IMAGINARY_TOLERANCE = 1e-7;
 const NUMERIC_RESIDUAL_TOLERANCE = 1e-8;
@@ -370,7 +371,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
     extraneousEvidenceFromRejectedCandidates(validation.rejected),
   );
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, accepted),
@@ -391,5 +392,5 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     numericMethod: method,
     detailSections,
-  };
+  });
 }

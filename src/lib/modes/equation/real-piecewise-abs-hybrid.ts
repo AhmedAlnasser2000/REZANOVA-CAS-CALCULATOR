@@ -31,6 +31,7 @@ import {
   NUMERIC_FALLBACK_ELIGIBLE_ERRORS,
   polynomialFromZeroForm,
 } from './numeric-polynomial-extraction';
+import { profileEquationResult } from '../../display/printer';
 
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -538,7 +539,7 @@ export function tryRealPiecewiseAbsHybridFallback(input: {
     };
   }
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, roots),
@@ -559,5 +560,5 @@ export function tryRealPiecewiseAbsHybridFallback(input: {
     rejectedCandidateCount: rejected.length > 0 ? rejected.length : undefined,
     numericMethod: NUMERIC_METHOD_PIECEWISE,
     detailSections,
-  };
+  });
 }

@@ -34,6 +34,7 @@ import type {
   EquationAlgebraicIsolationStopReason,
   EquationAlgebraicIsolationSuccess,
 } from './algebraic';
+import { profileEquationResult } from '../../display/printer';
 
 export const MAX_COMPLEX_ALGEBRAIC_POWER = 4;
 export const MAX_REAL_AFFINE_ALGEBRAIC_POWER = 12;
@@ -363,7 +364,7 @@ export function solvePowerExpression({
       ],
     });
 
-    return {
+    return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
@@ -379,7 +380,7 @@ export function solvePowerExpression({
       exactSupplementLatex: normalizeParameterizedSupplementLatex(facts),
       detailSections,
       answerDomain: 'complex',
-    };
+    });
   }
 
   const baseBranches = degree % 2 === 0 ? [negateNode(root), root] : [root];
@@ -412,7 +413,7 @@ export function solvePowerExpression({
     ],
   });
 
-  return {
+  return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
@@ -421,5 +422,5 @@ export function solvePowerExpression({
     branchReadback: callbacks.branchReadbackForSolutions(target, roots),
     exactSupplementLatex: normalizeParameterizedSupplementLatex(allFacts),
     detailSections,
-  };
+  });
 }

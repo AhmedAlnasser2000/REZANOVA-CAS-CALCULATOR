@@ -21,6 +21,7 @@ import {
 } from './exact';
 import { latexForNode } from './math-json';
 import { ZERO_SCALAR, type ComplexEquationBranch, type ComplexPreimageBranch, type ExactComplexScalar } from './types';
+import { profileEquationResult } from '../../display/printer';
 
 export function complexBranchLatex(real: ExactScalar, imaginaryMagnitudeLatex: string, sign: 1 | -1) {
   const realLatex = exactScalarToLatex(real);
@@ -69,20 +70,20 @@ export function exactLatexForBranches(target: string, branches: string[], option
 
 export function branchFromRealScalar(value: ExactScalar): ComplexEquationBranch {
   const normalized = normalizeExactScalar(value);
-  return {
+  return profileEquationResult({
     exactLatex: exactScalarToLatex(normalized),
     approxValue: complex(exactScalarToNumber(normalized), 0),
     exactComplex: { re: normalized, im: ZERO_SCALAR },
-  };
+  });
 }
 
 export function branchFromExactComplex(value: ExactComplexScalar): ComplexEquationBranch {
   const normalized = normalizeExactComplexScalar(value);
-  return {
+  return profileEquationResult({
     exactLatex: exactComplexToLatex(normalized),
     approxValue: complex(exactScalarToNumber(normalized.re), exactScalarToNumber(normalized.im)),
     exactComplex: normalized,
-  };
+  });
 }
 
 export function buildBranchReadback(
@@ -113,11 +114,11 @@ export function buildBranchReadback(
       }),
       { preserveOrder: true, relationLatex: '\\in' },
     );
-    return {
+    return profileEquationResult({
       exactLatex: decimalRendered.exactLatex ?? `${target}\\in\\left\\{${approximateBranches.join(',\\ ')}\\right\\}`,
       branchReadback: decimalRendered.branchReadback,
       approxText: undefined,
-    };
+    });
   }
 
   const exactBranchExpressions: EquationFiniteBranchExpression[] = unique.map((branch) => {
@@ -145,11 +146,11 @@ export function buildBranchReadback(
       presentationContext: { complexExactForm },
     },
   );
-  return {
+  return profileEquationResult({
     exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{${renderedRoots.branchesLatex.join(',\\ ')}\\right\\}`,
     branchReadback: renderedRoots.branchReadback,
     approxText: outputStyle === 'both' ? approximateText : undefined,
-  };
+  });
 }
 
 export function branchFromLatex(

@@ -49,7 +49,7 @@ import type {
   PolynomialCarrierSolveAttempt,
 } from './carrier-types';
 import { ROOT_TOLERANCE, sortAndDedupeRoots } from './carrier-utils';
-
+import { profileEquationResult } from '../../display/printer';
 const ce = new ComputeEngine();
 
 type SupportedCarrierDescriptor =
@@ -643,16 +643,16 @@ function buildComplexQuadraticBranches(
       const sqrtRepresentative = Math.sqrt(Math.max(0, discriminantValue));
       const positiveNode = normalizeAst(['Divide', ['Add', negativeBNode, ['Sqrt', discriminantNode]], twoANode]);
       const negativeNode = normalizeAst(['Divide', ['Subtract', negativeBNode, ['Sqrt', discriminantNode]], twoANode]);
-      branches.push({
+      branches.push(profileEquationResult({
         exactLatex: boxLatex(simplifyNode(positiveNode)),
         node: positiveNode,
         approxValue: complex((-carrier.bValue + sqrtRepresentative) / denominatorValue, 0),
-      });
-      branches.push({
+      }));
+      branches.push(profileEquationResult({
         exactLatex: boxLatex(simplifyNode(negativeNode)),
         node: negativeNode,
         approxValue: complex((-carrier.bValue - sqrtRepresentative) / denominatorValue, 0),
-      });
+      }));
       continue;
     }
 
@@ -672,16 +672,16 @@ function buildComplexQuadraticBranches(
     const imaginaryMagnitudeLatex = boxLatex(imaginaryNode);
     const realValue = -carrier.bValue / denominatorValue;
     const imaginaryValue = Math.sqrt(-discriminantValue) / Math.abs(denominatorValue);
-    branches.push({
+    branches.push(profileEquationResult({
       exactLatex: formatComplexRootLatex(realLatex, imaginaryMagnitudeLatex, -1),
       node: negativeComplexNode,
       approxValue: complex(realValue, -imaginaryValue),
-    });
-    branches.push({
+    }));
+    branches.push(profileEquationResult({
       exactLatex: formatComplexRootLatex(realLatex, imaginaryMagnitudeLatex, 1),
       node: positiveComplexNode,
       approxValue: complex(realValue, imaginaryValue),
-    });
+    }));
   }
 
   return [...new Map(branches.map((branch) => [branch.exactLatex, branch] as const)).values()];

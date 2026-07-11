@@ -16,7 +16,7 @@
 
 ## Accepted Changes
 
-None through `PRINT-PROFILE-CALCULATE-EQUATION1`.
+None through `PRINT-PROFILE-EQUATION-ADVANCED1`.
 
 ## Rejected Candidates
 
