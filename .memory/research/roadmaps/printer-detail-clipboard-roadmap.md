@@ -1,0 +1,239 @@
+# PRINTER-DETAIL-CLIPBOARD-ROADMAP0
+
+Date: 2026-07-11
+Status: approved and active; standing commit approval applies to the named milestones in this session, but no push is authorized
+
+## Attribution
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
+- contributors:
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+## Purpose
+
+Define the next presentation-safety program after the accepted nine-move anti-regression closeout. This roadmap reconciles the original handoff's Printer Core, canonical detail-segment, and canonical clipboard direction with the current repository rather than assuming the older inventory is still exact.
+
+The target is not a big-bang renderer rewrite. It is an additive path from structured solver results to deterministic canonical math, lossless internal copy/paste, and typed detail lines while preserving current workers, OOE authority, History compatibility, and visible output until each migration is accepted.
+
+## Current Baseline
+
+- `main` and `origin/main` currently align at `63d21229`. During this roadmap review, the remote-tracking ref advanced through an external `update by push` at `2026-07-11 02:40:20 +0300`; this session did not fetch or push.
+- `HISTORY-REPLAY-RATCHET1` is committed as `63d21229`.
+- Untracked `test-results/` is unrelated and must remain untouched.
+- Production has at least 478 explicit `exactLatex:` assignments across 173 files and 61 explicit `resultLatex:` assignments. These are lower bounds because shorthand and indirect builders are not counted.
+- Raw LaTeX-command tokens are too broad for a trustworthy global grep floor: 6,687 production matches also include input parsing, Guide content, keyboard definitions, and other non-result strings.
+- `DisplayOutcome` remains LaTeX-first. `MathDocument.mathJson` is optional `unknown`, and `EvaluateResponse.normalizedMathJson` is not consistently the answer tree; some solve paths use it for the input equation while keeping answer roots separately.
+- `DisplayOutcome` crosses worker `postMessage` boundaries. Any structured math payload must be plain, bounded, structured-clone-safe data and must not carry boxed Compute Engine objects.
+- Equation already has a producer-side presentation IR in `src/lib/equation/presentation/finite-roots.ts`. A new printer must reuse that seam instead of creating a competing Equation renderer.
+- Display already has substantial printer-like behavior in `notation/symbolic-display.ts`, `notation/math-notation.ts`, `notation/numeric-output.ts`, and domain serializers such as Linear Algebra exact matrix formatting.
+- Detail rendering already prefers `lineParts` and has one shared `DetailLineContent` renderer. The remaining problem is producer adoption and render-time string inference, not the absence of a renderer.
+- Static production counts show 18 direct `lineParts:` assignments, 115 `lineKind`/`lineKinds` assignments, and 483 `detailSections:` assignments. Shared `mixedDetailSection()` adds more correct producers, but the legacy surface remains much larger.
+- Clipboard math writes are mostly centralized, not scattered across workspaces. Direct production Clipboard API use currently appears in `AppMain.tsx`, `OoeDiagnosticsPanel.tsx`, and the dormant/extracted `expressionRouting.ts`; `MathEditor` reads paste-event `DataTransfer` text.
+- A real Chromium check confirmed plain-text mode renders and copies `x^(1/6)` while the canonical result remains `x^{\frac{1}{6}}`. The current copy payload therefore follows visible notation and loses the hidden canonical form.
+- Local secure-context Chromium supports `ClipboardItem`, `navigator.clipboard.read/write`, and the custom format `web application/x-calcwiz-math+json` alongside `text/plain` and `text/html`. Tauri Linux WebView support remains unverified and needs a real app capability gate.
+- AppMain is at 3,356 lines against a 3,357-line ratchet, and `DisplayResultBlocks.tsx` is at 898 lines against the default 900-line cap. Clipboard and detail work must extract ownership rather than grow either file.
+
+## What Behavioral Ratchets 5-9 Provide
+
+### Move 5: `FEATURE-PROBE-REGISTRY1`
+
+- Exhaustively classifies all 24 live `Settings` keys and ties each to executable native, UI, or persistence evidence.
+- Protects angle units, exact/decimal behavior, notation, precision, scaling, contrast, language, History privacy, and calculator-memory behavior while presentation code changes.
+- Limit: classification does not make every setting a printer setting. Angle, domain, Complex form, and `outputStyle` participate in computation or result selection and must not be reduced to render-time styling.
+
+### Move 6: `GOLDEN-CORPUS-REGISTRY1`
+
+- Supplies 43 deterministic direct-native executions across all nine computational workspaces.
+- Gives printer, detail, and clipboard changes one fast cross-workspace comparison surface.
+- Limit: coverage is intentionally shallow outside Calculate and Equation. It is a migration tripwire, not proof that a new serializer handles every domain family.
+
+### Move 7: `PRINT-HYGIENE-BASELINE1`
+
+- Collects 176 accepted mathematical fragments from the 43 golden executions and hard-fails bounded malformed markers.
+- The current manifest includes 43 whole-line math details and 29 typed math parts, preserving a before-printer snapshot.
+- Limit: it intentionally excludes prose and therefore does not detect math hidden inside plain detail strings. It is evidence and hygiene, not a printer or detail-segment ratchet.
+
+### Move 8: `WORKSPACE-FRESHNESS-REPORT1`
+
+- Keeps weekly real-browser evidence visible for all nine workspaces and publishes deterministic freshness artifacts.
+- Gives the new arcs an operational warning when a workspace has not been exercised recently.
+- Limit: freshness is warning-only and never proves correctness.
+
+### Move 9: `HISTORY-REPLAY-RATCHET1`
+
+- Freezes launch-time `Ans` plus computation and print settings for new History tickets and supplies 100 sanitized deterministic fixtures.
+- Hard-compares identity/cardinality and already records normalized LaTeX drift as report-only evidence. Printer migrations can promote only migrated fixture families to hard LaTeX expectations.
+- Limit: visible History replay still uses saved LaTeX/result data, and History does not yet store canonical result MathJSON. The V1 replay snapshot is a deterministic harness foundation, not the final structured-History contract.
+
+## Locked Boundaries
+
+- OOE remains launch, host, cancellation, stale, commit/drop, diagnostics, and History-ticket authority. Printer and Clipboard work must not become execution authorities.
+- Display remains a renderer and display-policy owner, not a CAS. Structured math should originate with producers; render-time guessing must fail closed. [ad-hoc note]
+- Preserve full canonical exact LaTeX for Copy Result, To Editor, History, replay, stored output, and exact semantics even when visible rendering is transformed or compacted. [ad-hoc note]
+- Printer-owned settings are presentation-only: parentheses, serializer style, roots-versus-powers display, plain-text export, and numeric text formatting.
+- Angle units, domain intent, Equation answer mode, Complex exact form where it changes branch construction, and exact/decimal result selection remain producer/runtime inputs.
+- Do not force Matrix, Vector, Table, Statistics, or Geometry through scalar MathJSON when their native structured values are the more truthful source.
+- Keep MathJSON internal and explicitly excluded from Surface Protocol DTOs.
+- No broad LaTeX-to-MathJSON reparsing migration. Existing LaTeX remains a compatibility fallback until its producer has a trustworthy structured source.
+- Do not remove legacy History parsing. Old `lines`, `lineKind`, `lineKinds`, and string-only results remain loadable.
+- No printer redesign may alter mathematical behavior, route selection, worker topology, capability IDs, History ticket behavior, or OOE legality.
+
+## Arc A: Presentation Printer
+
+### A1. `PRINTER-SERIALIZATION-CONTRACT1`
+
+- Add a pure internal printer district under `src/lib/display/printer/`.
+- Define a strict serializable MathJSON type or validated Compute Engine `MathJsonExpression` boundary; do not use `unknown` as the durable contract.
+- Wrap Compute Engine `toLatex()` with explicit serializer options and reuse the existing Symbolic Display and Equation finite-root presentation behavior.
+- Keep scalar-expression precedence, signs, grouping, roots/powers, fractions, functions, and plain-text conversion in one policy surface.
+- Treat domain serializers as adapters. Linear Algebra exact matrices/vectors and other structured domains keep their native value types.
+- Pass formatting context explicitly. Do not read the mutable global numeric-output setting inside the pure printer.
+- Support `canonical-latex`, `visible-latex`, and `plain-text` targets. Canonical output must be settings-independent except for producer-selected mathematical form.
+- Add bounded parse-back and idempotence properties for the supported scalar-expression subset. Unsupported or non-injective forms fail closed to tested compatibility LaTeX.
+- Require output parity against all 43 golden cases and relevant 100 replay fixtures before any visible difference is accepted.
+
+### A2. `DISPLAY-MATH-PAYLOAD1`
+
+- Add one optional internal canonical math payload carrying `canonicalLatex` plus validated optional MathJSON.
+- Keep every existing LaTeX field additive and authoritative as compatibility fallback during migration.
+- Do not forward `normalizedMathJson` blindly. Audit each route to prove the node represents the displayed answer rather than the input or an intermediate.
+- First dual-write candidates: Calculate simplify/evaluate paths that already retain the exact answer node, and Equation finite roots already using the presentation IR.
+- Bound node count, depth, and serialized bytes. Omit the node and retain canonical LaTeX when the limit is exceeded.
+- Verify structured clone through worker and fallback hosts, diagnostics meaning, result-size behavior, History commit parity, and Surface Protocol exclusion.
+
+### A3. `PRINTER-MIGRATION-RATCHET1`
+
+- Build the ratchet with the TypeScript compiler API over known output properties/builders rather than a repository-wide raw-string grep.
+- Classify expression output, structured-domain output, presentation templates, plain prose, input syntax, and reference content separately.
+- Ratchet result-path authored LaTeX per domain; floors may only decrease.
+- Permit narrow registered compatibility fallbacks with owner and rationale. Do not grant whole-file exemptions.
+- Add the gate to local aggregate CI and relevant seam lanes without weakening baseline tests.
+
+### A4. `PRINT-PROFILES1` And Domain Migration
+
+- Introduce profiles only where migrations prove a real policy difference; avoid speculative per-domain switches.
+- Cover all nine workspaces, including Geometry and Table, rather than the older six-profile sketch.
+- Migrate one producer family per verified milestone. Start with existing Equation presentation-IR consumers and Calculate exact answers, then prioritize high-density Symbolic Engine, Calculus, Trigonometry, and Linear Algebra result builders.
+- Use accepted snapshot diffs, real Playwright output, parse-back where applicable, and per-domain replay fixtures.
+- Keep large Equation and Calculus benchmark ledgers separate from the fast migration corpus while sampling them for printer evidence.
+
+### A5. `DISPLAY-CONTRACT-INVERSION1` Later Gate
+
+- Do not schedule inversion until the migrated result-path floor is near zero, all nine domains have structured adapters, Clipboard is canonical, detail math is typed, and History has a structured-result decision.
+- The likely end state is producer-side canonical printing plus optional display-time presentation variants, not Display-side algebra or arbitrary reparsing.
+- Removal of compatibility fields requires a separate audit and user approval.
+
+## Arc B: Canonical Clipboard
+
+This arc should begin after A1 and the first A2 payload, before broad detail migration. The app has no detail-line copy action today, so Clipboard does not depend on completion of Arc C.
+
+### B0. `CLIPBOARD-CAPABILITY-AUDIT0`
+
+- Verify multi-format read/write in real Chromium and the packaged/dev Tauri Linux WebView.
+- Record support for custom web MIME, `text/html`, permissions, programmatic paste, native paste events, and writeText/readText fallback.
+- Decide the `text/plain` fallback policy before implementation.
+
+### B1. `CLIPBOARD-CANONICAL1`
+
+- Add `src/lib/clipboard/` with pure envelope encode/decode plus environment adapters.
+- Use a versioned envelope such as `web application/x-calcwiz-math+json`, mirrored in inert `text/html` metadata where supported.
+- Carry canonical LaTeX, optional bounded validated MathJSON, source metadata, and optional approximate/plain presentation. Source metadata is descriptive, never trusted authority.
+- Treat clipboard data as untrusted input: schema-validate, cap bytes/depth/nodes, reject boxed objects and malformed HTML metadata, and fall back to canonicalized text.
+- Always write `text/plain`. Multi-format-capable environments may let it follow visible notation only while the hidden envelope succeeds; fallback-only environments should preserve canonical LaTeX unless the user explicitly chooses lossy external text.
+- Keep current success/block notices and `execCommand` fallback behavior where still needed.
+
+### B2. `CLIPBOARD-PIPELINE-RATCHET1`
+
+- Route Display, Formula Viewer, full History, Guide/workspace expression copy, diagnostics prose, app Paste, and `MathEditor` paste events through shared math/text APIs.
+- Keep existing prop callbacks initially; do not bundle a broad hook/prop-drilling refactor unless required by the AppMain file-size gate.
+- Resolve or remove the unused duplicate `expressionRouting.ts` paste implementation rather than maintaining two authorities.
+- Paste priority: validated envelope MathJSON -> envelope canonical LaTeX -> `text/plain` through existing canonicalization -> workspace-specific naturalization.
+- Preserve Matrix/Vector paste naturalization and every workspace's current editor routing.
+- Ratchet direct `navigator.clipboard` use outside the shared adapter to zero. Event `DataTransfer` access must delegate decoding to the shared module.
+- Pin plain-text notation Copy Result -> same-editor Paste for the current `x^{\frac{1}{6}}` loss case, cross-workspace History copy/paste, malformed/oversized envelope fallback, and all eligible golden/canary answers.
+
+## Arc C: Canonical Detail Segments
+
+### C1. `DETAIL-SEGMENT-CONTRACT1`
+
+- Keep `lineParts` as the canonical producer shape because the schema, persistence parser, Formula Viewer, and shared renderer already support it.
+- Extract `DetailLineContent` from the near-cap `DisplayResultBlocks.tsx` into a focused shared component; do not introduce a second renderer.
+- Add builders that dual-write legacy `lines` for compatibility while making typed parts the producer source.
+- Keep detail math parts canonical-LaTeX-only in this program. Structured detail MathJSON belongs with the later structured-History design.
+- Add a separate structured shape for `solveSummaryText` or stop classifying it through render-time string inference.
+- Mark `lines`, `lineKind`, and `lineKinds` as legacy producer inputs without breaking old History entries.
+
+### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
+
+- Establish an AST-aware source floor plus runtime corpus evidence for plain detail lines containing math-looking content.
+- Migrate the known dense Equation inequality/complex/numeric paths, Calculus shared/integral details, then at least two representative detail surfaces per workspace.
+- Prefer producer-owned parts. `inferDetailLinePartsFromText()` remains compatibility-only and must trend toward zero live use.
+- Add one real-browser typed-math detail assertion per workspace without necessarily enlarging the fixed 19-case canary count.
+- Preserve prose wording, pedagogical parentheses, card order, collapse behavior, Formula Viewer behavior, and History serialization.
+
+### C3. `DETAIL-SEGMENT-COMPAT-CLOSEOUT0`
+
+- Audit live producers, stored-History compatibility, Formula Viewer, and solve summaries.
+- Stop new legacy detail production once the floor reaches zero.
+- Retain load/render compatibility for historical entries unless a separately approved storage migration safely normalizes them.
+
+## Later Structured History Gate
+
+`HISTORY-STRUCTURED-RESULT2` is a later dependency of full Display inversion, not part of initial Printer Core.
+
+- Keep `HistoryReplaySnapshotV1` unchanged and visible replay behavior unchanged during A1-C2.
+- Later add optional canonical result math to new records while retaining stored LaTeX fallback.
+- Decide whether visible History defaults to frozen launch-time presentation or current presentation preferences. The automated harness can use V1 snapshots without silently changing the product.
+- Never invent structured results for legacy entries by reparsing arbitrary old strings.
+
+## Cross-Arc Sequence
+
+1. Commit this accepted roadmap and its existing memory/session slice as `PRINTER-DETAIL-CLIPBOARD-ROADMAP0`.
+2. `PRINTER-SERIALIZATION-CONTRACT1`.
+3. `DISPLAY-MATH-PAYLOAD1`.
+4. `PRINTER-MIGRATION-RATCHET1`.
+5. `CLIPBOARD-CAPABILITY-AUDIT0` as the entry gate for `CLIPBOARD-CANONICAL1`.
+6. `CLIPBOARD-PIPELINE-RATCHET1`.
+7. `DETAIL-SEGMENT-CONTRACT1`.
+8. Risk-sliced detail migration: Equation core, Equation parameterized, Symbolic Limits, Symbolic Integration, Calculus, remaining workspace domains, and Linear Algebra, followed by compatibility closeout.
+9. Mandatory contract review before any pedagogical-profile migration.
+10. Risk-sliced internal printer-profile migration across all nine workspaces, followed by one accumulated visible-output review.
+11. Close this program, then create a separate structured-History and Display-inversion roadmap from measured migration floors.
+
+## Verification Contract
+
+- Every implementation milestone runs focused tests, TypeScript, build, lint, file-size, memory protocol, relevant OOE/compartment/Surface boundaries, and `git diff --check`.
+- Printer changes run golden, print-hygiene, feature-probe, and relevant History replay gates. LaTeX drift becomes hard-fail only for explicitly migrated fixture families.
+- Clipboard changes run browser permission/capability evidence, native event paste, programmatic paste, malformed/oversized payload, fallback-only, and real Tauri Linux checks.
+- Detail changes visually inspect typed math, prose, collapse behavior, Formula Viewer, History replay, and overflow across all nine workspaces.
+- Preserve worker/fallback parity, capability identity, request shape, stale/cancel behavior, commit legality, diagnostics meaning, and History ticket behavior.
+- One verified commit per named implementation milestone. The user granted standing approval for these named commits during this session; scope-changing commits still require renewed approval. No push is implied or authorized.
+
+## Locked User Decisions
+
+1. `text/plain` uses the hybrid policy: visible notation only when a lossless envelope succeeds, canonical LaTeX on fallback-only hosts.
+2. Visible History behavior stays unchanged. Structured History and `DISPLAY-CONTRACT-INVERSION1` receive a separate later roadmap.
+3. Canonical Clipboard precedes broad detail migration after the printer substrate.
+4. Canonical truth is MathJSON or the native domain value, while the producer-owned printer derives canonical LaTeX and Display owns presentation-only variants.
+5. Printer profiles are internal `compatibility-v1` and `pedagogical-v1` contracts, not a new Settings control.
+6. The pedagogical profile may normalize presentation such as subtraction and precedence-driven parentheses, but may not simplify, reorder, combine, or change the producer tree.
+7. Every live detail line must be typed or explicitly declared prose-only. Detail parts remain canonical-LaTeX-only in this program.
+8. Equation and Symbolic migrations use verified risk slices. Visible printer changes accumulate for one final user review, while the earlier mandatory contract review remains a blocking checkpoint.
+
+## Explicit Non-Goals
+
+- No Statistics guided-control changes.
+- No Matrix/Vector capability expansion.
+- No Graphing, Surface host, plugin, remote compute, SDK, or broad event-bus work.
+- No Tauri/Rust MathJSON migration.
+- No all-at-once raw-LaTeX rewrite.
+- No new detail-line copy feature merely to satisfy a hypothetical round-trip test.
+- No visual redesign, printer-driven solver changes, or broad formatting cleanup.

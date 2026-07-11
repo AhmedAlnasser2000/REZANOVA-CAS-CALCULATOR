@@ -1,7 +1,7 @@
 # Research Index
 
 ## Categories
-- `roadmaps/` - 36 roadmap and sequencing documents.
+- `roadmaps/` - 37 roadmap and sequencing documents.
 - `checklists/2026-03/YYYY-MM-DD/` - 26 manual verification checklists across 5 day folders.
 - `checklists/2026-04/YYYY-MM-DD/` - 35 manual verification checklists across 11 day folders.
 - `checklists/2026-05/YYYY-MM-DD/` - 98 manual verification checklists across 10 day folders.
@@ -15,6 +15,7 @@
 
 ## Frequently Used Files
 - `.memory/research/roadmaps/anti-regression-nine-move-roadmap.md`
+- `.memory/research/roadmaps/printer-detail-clipboard-roadmap.md`
 - `.memory/research/roadmaps/linear-algebra-vector-matrix-roadmap.md`
 - `.memory/research/roadmaps/statistics-workspace-consolidation-roadmap.md`
 - `.memory/research/roadmaps/PLAN.md`

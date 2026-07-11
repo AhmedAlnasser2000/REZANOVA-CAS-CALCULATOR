@@ -25,9 +25,9 @@
 - `GOLDEN-CORPUS-REGISTRY1`: committed as `ccb9e642`.
 - `PRINT-HYGIENE-BASELINE1`: committed as `e7dbb0e5`.
 - `WORKSPACE-FRESHNESS-REPORT1`: committed as `85583ed2`.
-- `HISTORY-REPLAY-RATCHET1`: implemented and verified; standing commit approval applies.
-- Nine-move manual closeout: complete; user acceptance pending.
-- Printer/detail/clipboard arcs: deferred until the user accepts the nine-move closeout.
+- `HISTORY-REPLAY-RATCHET1`: committed as `63d21229`.
+- Nine-move manual closeout: complete and accepted when the user opened next-arc review on `2026-07-11`.
+- Printer/detail/clipboard arcs: proposed in `.memory/research/roadmaps/printer-detail-clipboard-roadmap.md`; implementation decisions remain pending.
 
 ## Standing Constraints
 - One verified commit per named milestone.

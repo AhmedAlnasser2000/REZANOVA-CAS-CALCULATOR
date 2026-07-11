@@ -41,3 +41,22 @@ Closed during the July 3 memory cleanup:
 
 - Closed the post-dimension-contract capability choice. `VECTOR-SCALAR-LINEAR-COMBINATION1`, `VECTOR-SPAN-INDEPENDENCE1`, and `MATRIX-LINEAR-MAP-PROFILE1` were implemented and verified before the anti-regression continuation froze further Matrix/Vector expansion through Move 9.
 - Closed the failed-audit next-step question. The user kept the current-risk audit truthful and explicitly replaced its blocker with a prospective product-containment topology lock; independent Matrix and Vector hosts now precede Move 5 and all remaining capability work.
+
+## 2026-07-11 - Printer, Clipboard, And Detail Roadmap
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+- Closed the Clipboard plain-text policy question. Visible notation is written only when a lossless multi-format envelope succeeds; fallback-only hosts receive canonical LaTeX.
+- Closed the initial History policy question. Visible History remains unchanged, and structured results plus Display inversion move to a separate later roadmap.
+- Closed the cross-arc ordering question. Canonical Clipboard follows the printer substrate and precedes broad detail migration.
+- Closed the printer-profile question. Profiles are internal compatibility and pedagogical contracts rather than a new Settings control.
+- Closed the detail-payload question. Every live line becomes explicit, while detail parts remain canonical-LaTeX-only until the later structured-History design.

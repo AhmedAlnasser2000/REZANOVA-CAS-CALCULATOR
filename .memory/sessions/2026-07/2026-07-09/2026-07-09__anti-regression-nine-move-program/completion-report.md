@@ -28,8 +28,8 @@
 - User approved the `ATTRIBUTION-FAMILY-GOVERNANCE1` milestone commit on `2026-07-09`; this dossier is included in that commit.
 
 ## Follow-Ups
-- Commit `HISTORY-REPLAY-RATCHET1` under the standing approval for Moves 6-9.
-- Pause for user acceptance of the nine-move manual checklist before planning Printer Core, detail-segment, or canonical clipboard work.
+- `HISTORY-REPLAY-RATCHET1` was committed as `63d21229` under the standing approval for Moves 6-9.
+- The user opened the Printer, detail-segment, and canonical Clipboard review on `2026-07-11`; the separate proposed roadmap records the current sequence and unresolved policy choices.
 
 ## WORKSPACE-CANARY-SUITE1
 - Added the launcher-derived nine-workspace registry, committed 19-case floor, registry ratchet, and Playwright runner.
@@ -113,4 +113,4 @@
 - Added nine sanitized JSON fixture files containing exactly 100 native requests at the approved distribution, hard identity/cardinality comparisons, and report-only normalized-LaTeX evidence.
 - Added stable human/JSON reporting, an explicit-export importer confined to ignored task storage, a relevant seam command, and weekly native plus browser replay execution.
 - Passed nine real create/replay flows with inspected full-page evidence, 19 rebuilt canaries, 3,500 unit tests, 441 UI tests, all named anti-regression gates, and static/runtime/build/lint/file-size closeout checks.
-- Recorded the user-facing manual acceptance checklist. Printer/detail/clipboard work remains paused pending acceptance.
+- Recorded the user-facing manual acceptance checklist. The closeout was accepted by the user's transition into next-arc review on `2026-07-11`; no next-arc implementation or push is authorized yet.

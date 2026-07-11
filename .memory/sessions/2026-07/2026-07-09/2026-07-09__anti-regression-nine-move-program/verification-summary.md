@@ -182,4 +182,4 @@
 - Nine Chromium History create/replay flows passed in 41.6 seconds. Full-page screenshots were inspected for all nine workspaces; Table replay correctly restored the saved function summary without pretending to rebuild rows.
 - Full closeout passed 484 unit files / 3,500 tests, 59 UI files / 441 tests, feature probes 124 native plus 37 UI/persistence tests, golden 44/44, print hygiene 7/7, runtime probes 19/19, and rebuilt canaries 19/19 in 1.2 minutes.
 - TypeScript, build, lint, CI alignment, freshness, app identity, Surface Protocol, pillars, OOE/compartment boundaries, file sizes, and diff hygiene passed. Existing non-fatal Vite chunk/dynamic-import warnings remain unchanged.
-- Outcome: all nine moves are technically closed; user acceptance is required before a separate Printer Core, detail-segment, and canonical clipboard roadmap begins.
+- Outcome: all nine moves are technically closed and accepted as of the user's `2026-07-11` transition into next-arc review. The separate Printer, detail-segment, and canonical Clipboard roadmap is now proposed; implementation remains unapproved.

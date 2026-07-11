@@ -51,3 +51,12 @@
   source: chat-2026-07-11-anti-regression-remaining-commit-approval
   canonical_targets: .memory/research/roadmaps/anti-regression-nine-move-roadmap.md; .memory/sessions/2026-07/2026-07-09/2026-07-09__anti-regression-nine-move-program/
   notes: This approval covers commits only. No push is authorized; `test-results/` remains excluded from staging.
+- approved_at_local: 2026-07-11 03:22:39 +03:00
+  approver: user
+  decision: Approve the Calcwiz Printer, canonical Clipboard, and typed detail-segment program, including its risk-sliced migrations and all named commits in this session.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-07-11-printer-clipboard-detail-program-approval
+  canonical_targets: .memory/research/roadmaps/printer-detail-clipboard-roadmap.md; .memory/sessions/2026-07/2026-07-11/2026-07-11__printer-detail-clipboard-roadmap0/
+  notes: Standing approval covers the named commits only. The mandatory contract review still blocks pedagogical profile migration, scope-changing commits require renewed approval, no push is authorized, and `test-results/` remains excluded.

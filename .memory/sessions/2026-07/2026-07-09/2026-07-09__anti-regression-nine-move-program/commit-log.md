@@ -75,4 +75,4 @@
 ## Behavioral Ratchet 9
 - Subject: `HISTORY-REPLAY-RATCHET1`.
 - User approval: covered by standing approval for remaining Moves 6-9 on `2026-07-11`.
-- Hash: this milestone commit; exact hash will be reported by post-commit readback.
+- Hash: `63d21229`.
