@@ -59,6 +59,7 @@ function detailSectionsFor(profile: TranscendentalCertificateTowerReady): Displa
   return [
     {
       title: 'Non-Elementary Certificate',
+      lineKind: 'text',
       lines: [
         'No elementary antiderivative exists for this integrand in the stated elementary differential field.',
         'This is certificate evidence, not a failed heuristic integration search.',

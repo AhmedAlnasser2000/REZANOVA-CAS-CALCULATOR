@@ -24,6 +24,12 @@ import {
 } from './classifier';
 import { tryExpandedDirectRule } from './expanded-direct';
 import { tryExpandedPartsRule } from './expanded-parts';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+  type IntegrationDetailRow,
+} from './detail-readback';
 import { negateGeneratedLatex } from './generated-latex';
 import { tryHyperbolicSquareTableRule } from './hyperbolic-table';
 import { tryTextbookIbpGapRule } from './ibp-gaps';
@@ -521,11 +527,8 @@ function signedAddTerms(node: unknown, sign: 1 | -1 = 1): SignedTerm[] {
   return [{ node, sign }];
 }
 
-function normalFormDetail(lines: string[]): DisplayDetailSection {
-  return {
-    title: 'Integration Normal Form',
-    lines,
-  };
+function normalFormDetail(rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
+  return integrationDetailSection('Integration Normal Form', rows);
 }
 
 function tryNormalFormRetry(
@@ -558,17 +561,14 @@ function tryNormalFormRetry(
     undefined,
     retried.exactSupplementLatex,
     [
-      normalFormDetail(normalized.lines),
+      normalFormDetail(normalized.detailRows),
       ...(retried.detailSections ?? []),
     ],
   );
 }
 
-function trigRewriteDetail(lines: string[]): DisplayDetailSection {
-  return {
-    title: 'Integration Trig Rewrite',
-    lines,
-  };
+function trigRewriteDetail(rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
+  return integrationDetailSection('Integration Trig Rewrite', rows);
 }
 
 function tryScalarMultipleRetry(
@@ -620,7 +620,7 @@ function tryTrigRewriteRetry(
   }
 
   const detailSections = [
-    trigRewriteDetail(rewritten.lines),
+    trigRewriteDetail(rewritten.detailRows),
     ...(retried.detailSections ?? []),
   ];
   const checked = symbolicSuccess(
@@ -752,14 +752,11 @@ function tryLinearCombinationFallback(
       kind: 'error',
       error: 'This antiderivative could not be determined symbolically in this milestone.',
       candidate: unsupportedCandidateMetadata(node, variable),
-      detailSections: [{
-        title: 'Integration Term Plan',
-        lines: [
-          `Resolved terms: ${results.length}`,
-          `Blocked terms: ${blockedTerms.join(', ')}`,
-          'Calcwiz does not present a partial antiderivative as a complete answer.',
-        ],
-      }],
+      detailSections: [integrationDetailSection('Integration Term Plan', [
+        integrationTextRow(`Resolved terms: ${results.length}`),
+        integrationMathRow('Blocked terms: ', blockedTerms.join(', ')),
+        integrationTextRow('Calcwiz does not present a partial antiderivative as a complete answer.'),
+      ])],
     };
   }
 

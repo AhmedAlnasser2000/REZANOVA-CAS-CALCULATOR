@@ -14,6 +14,12 @@ import {
   type AntiderivativeBackcheck,
 } from '../../calculus/engine/verification';
 import { boxLatex, isNodeArray } from '../patterns';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+  type IntegrationDetailRow,
+} from './detail-readback';
 import { parseExactAffineArgument } from './exact-parts';
 import { scaleByExactScalar } from './rational';
 
@@ -73,11 +79,8 @@ function doubledAffineLatex(latex: string) {
     : `2\\left(${latex}\\right)`;
 }
 
-function hyperbolicDetail(lines: string[]): DisplayDetailSection {
-  return {
-    title: 'Integration Hyperbolic Table',
-    lines,
-  };
+function hyperbolicDetail(rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
+  return integrationDetailSection('Integration Hyperbolic Table', rows);
 }
 
 function exactTemplateProofAfterBackcheck(
@@ -151,9 +154,9 @@ export function tryHyperbolicSquareTableRule(
       source: 'candidate-validation',
     }),
     detailSections: [hyperbolicDetail([
-      `Recognized table form: ${boxLatex(node)}`,
-      `Affine argument: ${affine.latex}`,
-      'Used sinh/cosh square identity and accepted only after derivative backcheck.',
+      integrationMathRow('Recognized table form: ', boxLatex(node)),
+      integrationMathRow('Affine argument: ', affine.latex),
+      integrationTextRow('Used sinh/cosh square identity and accepted only after derivative backcheck.'),
     ])],
   };
 }

@@ -6,11 +6,16 @@ import {
 } from '../../algebra/polynomial-core';
 import { normalizeAst } from '../normalize';
 import { boxLatex, flattenMultiply, isNodeArray } from '../patterns';
+import {
+  integrationMathRow,
+  integrationTextRow,
+  type IntegrationDetailRow,
+} from './detail-readback';
 
 export type IntegrationNormalForm = {
   node: unknown;
   changed: boolean;
-  lines: string[];
+  detailRows: IntegrationDetailRow[];
 };
 
 type NormalizedNode = {
@@ -128,17 +133,17 @@ function normalizeNode(node: unknown): NormalizedNode {
 export function normalizeIntegrationNormalForm(node: unknown): IntegrationNormalForm {
   const normalized = normalizeNode(node);
   if (!normalized.changed) {
-    return { node, changed: false, lines: [] };
+    return { node, changed: false, detailRows: [] };
   }
 
   return {
     node: normalizeAst(normalized.node),
     changed: true,
-    lines: [
-      `Original integrand: ${boxLatex(node)}`,
-      `Recognized rewrites: ${Array.from(new Set(normalized.steps)).join('; ')}`,
-      `Internal retry form: ${boxLatex(normalizeAst(normalized.node))}`,
-      'Existing integration routes must still accept and backcheck the retried form before adoption.',
+    detailRows: [
+      integrationMathRow('Original integrand: ', boxLatex(node)),
+      integrationTextRow(`Recognized rewrites: ${Array.from(new Set(normalized.steps)).join('; ')}`),
+      integrationMathRow('Internal retry form: ', boxLatex(normalizeAst(normalized.node))),
+      integrationTextRow('Existing integration routes must still accept and backcheck the retried form before adoption.'),
     ],
   };
 }

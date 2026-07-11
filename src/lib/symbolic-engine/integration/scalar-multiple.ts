@@ -1,6 +1,11 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { readExactScalarNode } from '../../algebra/polynomial-core';
 import { dependsOnVariable, flattenMultiply, isNodeArray } from '../patterns';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+} from './detail-readback';
 import { multiplyGeneratedLatexByNode, negateGeneratedLatex } from './generated-latex';
 import { symbolicSuccess } from './metadata';
 import type { IntegralResolution } from './types';
@@ -78,14 +83,11 @@ function scalarMultipleDetail(
   coefficient: unknown,
   body: unknown,
 ): DisplayDetailSection {
-  return {
-    title: 'Integration Scalar Multiple',
-    lines: [
-      `Factored coefficient: ${ce.box(coefficient as Parameters<typeof ce.box>[0]).latex}`,
-      `Integrated factor: ${ce.box(body as Parameters<typeof ce.box>[0]).latex}`,
-      'Scaled the factor primitive and backchecked the result against the original integrand.',
-    ],
-  };
+  return integrationDetailSection('Integration Scalar Multiple', [
+    integrationMathRow('Factored coefficient: ', ce.box(coefficient as Parameters<typeof ce.box>[0]).latex),
+    integrationMathRow('Integrated factor: ', ce.box(body as Parameters<typeof ce.box>[0]).latex),
+    integrationTextRow('Scaled the factor primitive and backchecked the result against the original integrand.'),
+  ]);
 }
 
 function scalePrimitiveLatex(coefficient: unknown, latex: string) {

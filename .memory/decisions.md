@@ -2222,3 +2222,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Symbolic Limits route producers must construct explicit typed rows. Regex classification of completed prose strings is compatibility debt and may not be called by finite rules, local equivalents, recursive leading terms, indeterminate transforms, L'Hospital, or rewrite/cancellation routes.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Limits-specific typed builders are governed AST producer seams. The ratchet inventories `limitDetailSection()` and `limitMethodRowsSection()` calls, while legacy string helpers remain temporarily available only to Calculus-owned callers until `DETAIL-SEGMENT-CALCULUS1`.
+
+## 2026-07-11 - DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Symbolic Integration details must be authored as typed math/text rows or explicitly declared prose. Normal-form, rewrite, substitution, integration-by-parts, polynomial-division, genus-1, and certificate routes may not rely on renderer inference for live intent.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The user removed the intermediate contract-review pause. Its verification evidence remains mandatory, but the program proceeds directly through printer profiles and presents one accumulated review at the end.

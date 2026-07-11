@@ -7,6 +7,12 @@ import {
   type AntiderivativeBackcheck,
 } from '../../calculus/engine/verification';
 import { flattenMultiply, isNodeArray } from '../patterns';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+  type IntegrationDetailRow,
+} from './detail-readback';
 import { sameNode } from './node-helpers';
 import { scaleByExactScalar } from './rational-latex';
 
@@ -113,11 +119,8 @@ function exactTemplateProofAfterBackcheck(
     : undefined;
 }
 
-function logPowerDetail(lines: string[]): DisplayDetailSection {
-  return {
-    title: 'Integration Log-Power Substitution',
-    lines,
-  };
+function logPowerDetail(rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
+  return integrationDetailSection('Integration Log-Power Substitution', rows);
 }
 
 function supplements(variable: string, needsLogExclusion: boolean) {
@@ -134,7 +137,7 @@ function verifiedLogPowerResult(
   node: unknown,
   variable: string,
   exactLatex: string,
-  detail: string[],
+  detail: readonly IntegrationDetailRow[],
   needsLogExclusion: boolean,
 ): LogPowerResult | undefined {
   const verification = exactTemplateProofAfterBackcheck(backcheckAntiderivative({
@@ -149,7 +152,7 @@ function verifiedLogPowerResult(
       exactSupplementLatex: supplements(variable, needsLogExclusion),
       detailSections: [logPowerDetail([
         ...detail,
-        'Accepted only after derivative backcheck against the original integrand.',
+        integrationTextRow('Accepted only after derivative backcheck against the original integrand.'),
       ])],
     }
     : undefined;
@@ -167,8 +170,8 @@ export function tryLogPowerSubstitutionRule(
       variable,
       scaleByExactScalar(positiveLogPowerLatex(variable, numeratorLogPower + 1), coefficient),
       [
-        `Recognized form: ln(${variable})^${numeratorLogPower}/${variable}.`,
-        `Substitution carrier: ${logLatex(variable)}.`,
+        integrationMathRow('Recognized form: ', `ln(${variable})^${numeratorLogPower}/${variable}`, '.'),
+        integrationMathRow('Substitution carrier: ', logLatex(variable), '.'),
       ],
       false,
     );
@@ -185,8 +188,8 @@ export function tryLogPowerSubstitutionRule(
       variable,
       `\\ln\\left|${logLatex(variable)}\\right|`,
       [
-        `Recognized form: 1/(${variable} ln(${variable})).`,
-        `Substitution carrier: ${logLatex(variable)}.`,
+        integrationMathRow('Recognized form: ', `1/(${variable} ln(${variable}))`, '.'),
+        integrationMathRow('Substitution carrier: ', logLatex(variable), '.'),
       ],
       true,
     );
@@ -200,8 +203,8 @@ export function tryLogPowerSubstitutionRule(
       denominator: denominatorLogPower - 1,
     }),
     [
-      `Recognized form: 1/(${variable} ln(${variable})^${denominatorLogPower}).`,
-      `Substitution carrier: ${logLatex(variable)}.`,
+      integrationMathRow('Recognized form: ', `1/(${variable} ln(${variable})^${denominatorLogPower})`, '.'),
+      integrationMathRow('Substitution carrier: ', logLatex(variable), '.'),
     ],
     true,
   );

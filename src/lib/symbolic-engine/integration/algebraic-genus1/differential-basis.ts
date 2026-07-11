@@ -164,10 +164,10 @@ function rootBasedReadiness(
     exactSupplementEntries: normalForm.exactSupplementEntries,
     detailSections: [
       ...normalForm.detailSections,
-      {
-        title: 'Genus-1 Differential Basis',
-        lines: basisObligations.map((obligation) => `${obligation.kind}: ${obligation.status}`),
-      },
+      mixedDetailSection(
+        'Genus-1 Differential Basis',
+        basisObligations.map(basisLineParts),
+      ),
     ],
     readinessNotes: [
       ...normalForm.readinessNotes,
@@ -208,10 +208,10 @@ function symbolicReadiness(
     exactSupplementEntries: normalForm.exactSupplementEntries,
     detailSections: [
       ...normalForm.detailSections,
-      {
-        title: 'Genus-1 Differential Basis',
-        lines: basisObligations.map((obligation) => `${obligation.kind}: ${obligation.status}`),
-      },
+      mixedDetailSection(
+        'Genus-1 Differential Basis',
+        basisObligations.map(basisLineParts),
+      ),
     ],
     readinessNotes: [
       ...normalForm.readinessNotes,

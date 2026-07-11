@@ -41,6 +41,7 @@ function factSection(
   if (lines.length === 0) {
     return {
       title,
+      lineKind: 'text',
       lines: [emptyText],
     };
   }
@@ -58,6 +59,7 @@ export function certificateProofObligationSection(
   if (obligations.length === 0) {
     return {
       title: 'Proof Obligations',
+      lineKind: 'text',
       lines: ['No separate proof obligation was required for this certificate slice.'],
     };
   }

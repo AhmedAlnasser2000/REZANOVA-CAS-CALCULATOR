@@ -28,6 +28,7 @@
 - `5c82758b` - `DETAIL-SEGMENT-CONTRACT1`
 - `6e2182bf` - `DETAIL-SEGMENT-EQUATION-CORE1`
 - `97ec9ca2` - `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`
-- pending at write time - `DETAIL-SEGMENT-SYMBOLIC-LIMITS1`
+- `1325782c` - `DETAIL-SEGMENT-SYMBOLIC-LIMITS1`
+- pending at write time - `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

@@ -409,6 +409,7 @@ function depth2SpecialFunctionDetail(input: {
   return [
     {
       title: 'Non-Elementary Certificate',
+      lineKind: 'text',
       lines: [
         'No elementary antiderivative exists for this affine quotient in the stated elementary differential field.',
         'The main answer uses a named special function rather than reporting a heuristic failure.',
@@ -516,6 +517,7 @@ function depth2EiLiSpecialFunctionDetail(input: {
   return [
     {
       title: 'Non-Elementary Certificate',
+      lineKind: 'text',
       lines: [
         'No elementary antiderivative exists for this affine quotient in the stated elementary differential field.',
         'The main answer uses a named special function rather than reporting a heuristic failure.',
@@ -591,6 +593,7 @@ function depth2CompositionSpecialFunctionDetail(input: {
   return [
     {
       title: 'Non-Elementary Certificate',
+      lineKind: 'text',
       lines: [
         'No elementary antiderivative exists for this depth-2 composition in the stated elementary differential field.',
         'The main answer uses a named special function rather than reporting a heuristic failure.',

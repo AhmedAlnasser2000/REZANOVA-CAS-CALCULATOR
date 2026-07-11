@@ -76,6 +76,7 @@ describe('detail-segment migration ratchet', () => {
         declare function buildParameterizedDetailSections(options: unknown): DisplayDetailSection[];
         declare function limitDetailSection(title: string, rows: unknown[][]): DisplayDetailSection;
         declare function limitMethodRowsSection(rows: unknown[][]): DisplayDetailSection[];
+        declare function integrationDetailSection(title: string, rows: unknown[][]): DisplayDetailSection;
         export const a: DisplayDetailSection = { title: 'A', lines: ['x'], lineKind: 'math' };
         export const b: DisplayDetailSection = { title: 'B', lines: ['x'], lineKinds: ['math'] };
         export const c: DisplayDetailSection = { title: 'C', lines: ['x'], lineParts: [[{}]] };
@@ -83,12 +84,13 @@ describe('detail-segment migration ratchet', () => {
         export const e = buildParameterizedDetailSections({});
         export const f = limitDetailSection('F', [[{}]]);
         export const g = limitMethodRowsSection([[{}]]);
+        export const h = integrationDetailSection('H', [[{}]]);
       `,
     });
     const report = scanDetailSegmentRepository({ rootDir });
 
-    assert.equal(report.summary.producerCount, 7);
-    assert.equal(report.summary.declaredCount, 7);
+    assert.equal(report.summary.producerCount, 8);
+    assert.equal(report.summary.declaredCount, 8);
     assert.equal(report.summary.undeclaredCount, 0);
   });
 

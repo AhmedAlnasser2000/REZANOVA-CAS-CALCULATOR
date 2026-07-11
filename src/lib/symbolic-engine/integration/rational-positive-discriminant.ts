@@ -17,6 +17,11 @@ import {
 import type { AntiderivativeBackcheck } from '../../calculus/engine/verification';
 import { boxLatex } from '../patterns';
 import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+} from './detail-readback';
+import {
   coefficientTimesLatex,
   scaleByExactScalar,
 } from './rational-latex';
@@ -158,16 +163,13 @@ export function polynomialDivisionDetail(input: {
   remainder: ExactPolynomial;
   denominator: ExactPolynomial;
 }): DisplayDetailSection {
-  return {
-    title: 'Integration Polynomial Division',
-    lines: [
-      `Original rational integrand: ${boxLatex(input.originalNode)}`,
-      `Polynomial quotient: ${exactPolynomialToLatex(input.quotient)}`,
-      `Remainder: ${exactPolynomialToLatex(input.remainder)}`,
-      `Denominator: ${exactPolynomialToLatex(input.denominator)}`,
-      'Remainder integrated through a bounded positive-discriminant quadratic log split before derivative backcheck.',
-    ],
-  };
+  return integrationDetailSection('Integration Polynomial Division', [
+    integrationMathRow('Original rational integrand: ', boxLatex(input.originalNode)),
+    integrationMathRow('Polynomial quotient: ', exactPolynomialToLatex(input.quotient)),
+    integrationMathRow('Remainder: ', exactPolynomialToLatex(input.remainder)),
+    integrationMathRow('Denominator: ', exactPolynomialToLatex(input.denominator)),
+    integrationTextRow('Remainder integrated through a bounded positive-discriminant quadratic log split before derivative backcheck.'),
+  ]);
 }
 
 export function exactTemplateProofAfterBackcheck(

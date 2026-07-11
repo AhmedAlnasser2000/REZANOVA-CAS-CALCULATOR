@@ -473,6 +473,7 @@ function buildRule(input: {
     detailSections: [
       {
         title: 'Genus-1 Hermite Reduction',
+        lineKind: 'text',
         lines: [
           `Reduced the rational-in-radical input to ${input.basisKinds.join(' and ')} Legendre elliptic obligations plus target-free coefficient facts.`,
           'The generated antiderivative is accepted only through bounded genus-1 Hermite reduction with exact proof evidence.',

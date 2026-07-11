@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DISPLAY-MATH-PAYLOAD1 adds bounded canonical payload parity evidence without changing visible output.",
+  "acceptedReason": "DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1 makes five existing integration constants explicit typed mathematical fragments while preserving every compatibility line and visible result.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -198,6 +198,11 @@
           "value": "\\arctan(x)+C"
         },
         {
+          "path": "detailSections[0].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "C"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{1}{x^2+1}\\, \\mathrm{d}x"
@@ -219,6 +224,11 @@
           "path": "answerRows.rows[0].latex",
           "kind": "answer-row",
           "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
+        },
+        {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "C"
         },
         {
           "path": "resolvedInputLatex",
@@ -244,6 +254,11 @@
           "value": "-\\frac{1}{x-1}+C"
         },
         {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "C"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{1}{(x-1)^2}\\, \\mathrm{d}x"
@@ -267,6 +282,11 @@
           "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
         },
         {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "C"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{x+1}{x^2+1}\\, \\mathrm{d}x"
@@ -288,6 +308,11 @@
           "path": "answerRows.rows[0].latex",
           "kind": "answer-row",
           "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
+        },
+        {
+          "path": "detailSections[0].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "C"
         },
         {
           "path": "resolvedInputLatex",

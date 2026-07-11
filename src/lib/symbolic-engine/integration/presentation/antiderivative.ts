@@ -6,6 +6,11 @@ import {
   backcheckAntiderivative,
   type AntiderivativeBackcheck,
 } from '../../../calculus/engine/verification';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+} from '../detail-readback';
 
 type PresentationInput = {
   exactLatex: string;
@@ -142,19 +147,20 @@ function presentationDetail(input: {
   constantLatex: string;
   reusedExistingVerification: boolean;
 }): DisplayDetailSection {
-  const lines = [
-    input.reusedExistingVerification
-      ? `Added integration constant ${input.constantLatex} after the existing antiderivative verification.`
-      : `Added integration constant ${input.constantLatex} after derivative backcheck.`,
+  const rows = [
+    integrationMathRow(
+      'Added integration constant ',
+      input.constantLatex,
+      input.reusedExistingVerification
+        ? ' after the existing antiderivative verification.'
+        : ' after derivative backcheck.',
+    ),
   ];
   if (input.changedLatex) {
-    lines.push('Canonical output was normalized for coefficient, fraction, and grouping readability.');
+    rows.push(integrationTextRow('Canonical output was normalized for coefficient, fraction, and grouping readability.'));
   }
-  lines.push('Visible output is kept as one antiderivative expression; Copy Result uses the same parseable LaTeX.');
-  return {
-    title: 'Integration Presentation',
-    lines,
-  };
+  rows.push(integrationTextRow('Visible output is kept as one antiderivative expression; Copy Result uses the same parseable LaTeX.'));
+  return integrationDetailSection('Integration Presentation', rows);
 }
 
 export function presentVerifiedIndefiniteAntiderivative(

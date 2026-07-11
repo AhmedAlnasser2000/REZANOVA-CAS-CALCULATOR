@@ -25,7 +25,7 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ## Current Baseline
 
-- `main` is four approved local commits ahead of `origin/main`: `db674b13` (`PRINTER-DETAIL-CLIPBOARD-ROADMAP0`), `f4cb2de2` (`PRINTER-SERIALIZATION-CONTRACT1`), `93e9b40e` (`DISPLAY-MATH-PAYLOAD1`), and `1b83f897` (`PRINTER-MIGRATION-RATCHET1`). No push is authorized.
+- `main` is three approved local commits ahead of `origin/main`: `6e2182bf` (`DETAIL-SEGMENT-EQUATION-CORE1`), `97ec9ca2` (`DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`), and `1325782c` (`DETAIL-SEGMENT-SYMBOLIC-LIMITS1`). `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1` is implemented and verified in the current approved checkpoint. No push is authorized.
 - `HISTORY-REPLAY-RATCHET1` is committed as `63d21229`.
 - Untracked `test-results/` is unrelated and must remain untouched.
 - Production has at least 478 explicit `exactLatex:` assignments across 173 files and 61 explicit `resultLatex:` assignments. These are lower bounds because shorthand and indirect builders are not counted.
@@ -201,7 +201,7 @@ Implemented contract: `DetailLineContent` is a focused shared renderer used by t
 
 ### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
 
-Status: active. Equation core is committed as `6e2182bf`; Equation parameterized is committed as `97ec9ca2`; `DETAIL-SEGMENT-SYMBOLIC-LIMITS1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
+Status: active. Equation core is committed as `6e2182bf`, Equation parameterized as `97ec9ca2`, and Symbolic Limits as `1325782c`. `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
 
 1. `DETAIL-SEGMENT-EQUATION-CORE1`.
 2. `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`.
@@ -217,6 +217,8 @@ Status: active. Equation core is committed as `6e2182bf`; Equation parameterized
 `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1` widens the AST inventory to established `buildParameterizedDetailSections()` calls instead of treating the builder as invisible. The accepted baseline now inventories 383 producers: 329 declared and 54 fingerprinted undeclared producers. Equation parameterized has 73 declared and zero undeclared producers after 21 object migrations plus 34 inventoried builder calls; Equation core now has 123 declared and zero undeclared producers. Parameterized normalization no longer invokes legacy text inference, explicit prose remains prose, and selected-target generated equations and formula branches are producer-owned typed parts. Compatibility `lines`, wording, mathematics, workers, fallbacks, History, and OOE behavior remain unchanged.
 
 `DETAIL-SEGMENT-SYMBOLIC-LIMITS1` replaces the misleading one-producer Limits count with 46 governed typed producers. The accepted inventory is now 433 producers: 379 declared and 54 fingerprinted undeclared producers. Finite rules, local equivalents, recursive leading terms, indeterminate transforms, L'Hospital, and rewrite/cancellation now construct explicit typed rows; compatibility lines are derived from those rows. A source audit forbids legacy string inference helpers in Symbolic Limits routes. The legacy string classifier remains only for Calculus-owned callers until `DETAIL-SEGMENT-CALCULUS1`.
+
+`DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1` adds one producer-owned Integration detail builder and removes all 25 undeclared Symbolic Integration producers. The accepted inventory is now 434 producers: 405 declared and 29 fingerprinted undeclared producers. Normal-form and trig rewrites, integration by parts, substitutions, polynomial division, genus-1 evidence, and non-elementary certificates now declare math or prose intent explicitly while deriving unchanged compatibility lines. The print-hygiene manifest intentionally grows from 185 to 190 fragments because five existing integration constants are now typed mathematical evidence; visible wording and mathematical results remain unchanged.
 
 - Establish an AST-aware source floor plus runtime corpus evidence for plain detail lines containing math-looking content.
 - Migrate the known dense Equation inequality/complex/numeric paths, Calculus shared/integral details, then at least two representative detail surfaces per workspace.
@@ -249,8 +251,8 @@ Status: active. Equation core is committed as `6e2182bf`; Equation parameterized
 6. `CLIPBOARD-PIPELINE-RATCHET1`.
 7. `DETAIL-SEGMENT-CONTRACT1`.
 8. Risk-sliced detail migration through the eight named `DETAIL-SEGMENT-*1` commits recorded under C2.
-9. Mandatory contract review before any pedagogical-profile migration.
-10. Risk-sliced internal printer-profile migration across all nine workspaces, followed by one accumulated visible-output review.
+9. Run the contract-review evidence checkpoint across Clipboard, details, Formula Viewer, legacy History, overflow, and fallbacks without pausing for intermediate user acceptance.
+10. Continue directly into the risk-sliced internal printer-profile migration across all nine workspaces, followed by one accumulated visible-output review with the user.
 11. Close this program, then create a separate structured-History and Display-inversion roadmap from measured migration floors.
 
 ## Verification Contract
@@ -271,7 +273,7 @@ Status: active. Equation core is committed as `6e2182bf`; Equation parameterized
 5. Printer profiles are internal `compatibility-v1` and `pedagogical-v1` contracts, not a new Settings control.
 6. The pedagogical profile may normalize presentation such as subtraction and precedence-driven parentheses, but may not simplify, reorder, combine, or change the producer tree.
 7. Every live detail line must be typed or explicitly declared prose-only. Detail parts remain canonical-LaTeX-only in this program.
-8. Equation and Symbolic migrations use verified risk slices. Visible printer changes accumulate for one final user review, while the earlier mandatory contract review remains a blocking checkpoint.
+8. Equation and Symbolic migrations use verified risk slices. At the user's `2026-07-11` direction, the contract-review evidence remains mandatory but its intermediate user pause is removed; visible printer changes accumulate for one final user review.
 
 ## Explicit Non-Goals
 

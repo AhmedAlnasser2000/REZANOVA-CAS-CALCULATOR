@@ -1,6 +1,11 @@
 import type { DisplayDetailSection } from '../../../types/calculator';
 import { readExactScalarNode } from '../../algebra/polynomial-core';
 import { boxLatex, flattenMultiply, isNodeArray } from '../patterns';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+} from './detail-readback';
 import { unsupportedCandidateMetadata } from './metadata';
 import type { IntegralResolution } from './types';
 
@@ -52,15 +57,12 @@ function trigPowerBoundaryDetail(node: unknown, factors: PoweredTrigFactor[]): D
     return undefined;
   }
 
-  return {
-    title: 'Integration Trig Power Boundary',
-    lines: [
-      `Recognized trig-power integrand: ${boxLatex(node)}`,
-      `Largest exponent: ${maxExponent}; total trig degree: ${totalDegree}`,
-      `Current cap: single sin/cos powers up to ${MAX_SINGLE_SIN_COS_POWER}, mixed trig products with individual exponent <= ${MAX_PRODUCT_INDIVIDUAL_POWER} and total degree <= ${MAX_PRODUCT_TOTAL_DEGREE}.`,
-      'No partial antiderivative was adopted outside the bounded textbook reduction slice.',
-    ],
-  };
+  return integrationDetailSection('Integration Trig Power Boundary', [
+    integrationMathRow('Recognized trig-power integrand: ', boxLatex(node)),
+    integrationTextRow(`Largest exponent: ${maxExponent}; total trig degree: ${totalDegree}`),
+    integrationTextRow(`Current cap: single sin/cos powers up to ${MAX_SINGLE_SIN_COS_POWER}, mixed trig products with individual exponent <= ${MAX_PRODUCT_INDIVIDUAL_POWER} and total degree <= ${MAX_PRODUCT_TOTAL_DEGREE}.`),
+    integrationTextRow('No partial antiderivative was adopted outside the bounded textbook reduction slice.'),
+  ]);
 }
 
 export function unsupportedTrigPowerBoundary(

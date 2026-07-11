@@ -573,6 +573,7 @@ function detailSections(
   return [
     {
       title: 'Non-Elementary Certificate',
+      lineKind: 'text',
       lines: [
         'No elementary antiderivative exists for this affine quotient-power family in the stated elementary differential field.',
         'The main answer uses a named special function and a bounded recurrence rather than reporting a heuristic failure.',

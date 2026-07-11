@@ -12,6 +12,11 @@ import {
   flattenMultiply,
   isNodeArray,
 } from '../patterns';
+import {
+  integrationMathRow,
+  integrationTextRow,
+  type IntegrationDetailRow,
+} from './detail-readback';
 import { sameNode } from './node-helpers';
 
 type SignedTerm = {
@@ -28,7 +33,7 @@ type RewriteResult = {
 export type IntegrationTrigRewrite = {
   node: unknown;
   changed: boolean;
-  lines: string[];
+  detailRows: IntegrationDetailRow[];
 };
 
 const ONE: ExactScalar = { numerator: 1, denominator: 1 };
@@ -369,17 +374,17 @@ export function normalizeIntegrationTrigRewrite(
 ): IntegrationTrigRewrite {
   const rewritten = rewriteNode(node, variable);
   if (!rewritten.changed) {
-    return { node, changed: false, lines: [] };
+    return { node, changed: false, detailRows: [] };
   }
 
   return {
     node: normalizeAst(rewritten.node),
     changed: true,
-    lines: [
-      `Original integrand: ${boxLatex(node)}`,
-      `Recognized rewrites: ${Array.from(new Set(rewritten.steps)).join('; ')}`,
-      `Internal retry form: ${boxLatex(normalizeAst(rewritten.node))}`,
-      'Existing integration routes must still accept and backcheck the rewritten form before adoption.',
+    detailRows: [
+      integrationMathRow('Original integrand: ', boxLatex(node)),
+      integrationTextRow(`Recognized rewrites: ${Array.from(new Set(rewritten.steps)).join('; ')}`),
+      integrationMathRow('Internal retry form: ', boxLatex(normalizeAst(rewritten.node))),
+      integrationTextRow('Existing integration routes must still accept and backcheck the rewritten form before adoption.'),
     ],
   };
 }

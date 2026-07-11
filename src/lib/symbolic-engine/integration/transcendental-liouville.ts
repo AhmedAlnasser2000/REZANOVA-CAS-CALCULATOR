@@ -131,6 +131,7 @@ function rdeObstructionDetails(input: {
     },
     {
       title: 'RDE Obstruction',
+      lineKind: 'text',
       lines: [
         input.obstruction.proofSummary,
         ...input.obstruction.proofSteps,

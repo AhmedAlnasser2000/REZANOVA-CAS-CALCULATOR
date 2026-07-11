@@ -141,6 +141,7 @@ function proofDetailsFor(
     },
     {
       title: 'Liouville Obstruction',
+      lineKind: 'text',
       lines: [
         'The displayed first-order equation is the proof obligation for that auxiliary rational certificate, not a condition on the original input.',
         'For a genuine quadratic exponent, finite-pole and polynomial-degree comparisons rule out such a rational r.',

@@ -32,6 +32,12 @@ import {
   multiplyLatex,
   wrapGroupedLatex,
 } from '../patterns';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+  type IntegrationDetailRow,
+} from './detail-readback';
 import { negateGeneratedLatex } from './generated-latex';
 import { sameNode } from './node-helpers';
 import { parseExactAffineArgument } from './exact-parts';
@@ -442,8 +448,8 @@ function integrateArcsinKernelPolynomial(
   return joinAdditiveLatex([arcsinLatex, radicalTermLatex]);
 }
 
-function byPartsDetail(title: string, lines: string[]): DisplayDetailSection {
-  return { title, lines };
+function byPartsDetail(title: string, rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
+  return integrationDetailSection(title, rows);
 }
 
 function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResult | undefined {
@@ -502,13 +508,13 @@ function tryInverseTrigByPartsRule(node: unknown, variable: string): IbpGapResul
         : []),
     ]),
     detailSections: [byPartsDetail('Integration By Parts', [
-      `Polynomial factor: ${exactPolynomialToLatex(product.polynomial)}`,
-      `Primitive polynomial: ${primitiveLatex}`,
-      `Affine inverse-trig argument: ${product.affine.latex}`,
-      product.head === 'Arctan'
+      integrationMathRow('Polynomial factor: ', exactPolynomialToLatex(product.polynomial)),
+      integrationMathRow('Primitive polynomial: ', primitiveLatex),
+      integrationMathRow('Affine inverse-trig argument: ', product.affine.latex),
+      integrationTextRow(product.head === 'Arctan'
         ? 'Residual route: rational integration over 1+x^2.'
-        : 'Residual route: affine change of variable, then capped recurrence for powers over sqrt(1-z^2).',
-      'Accepted only after derivative backcheck against the original integrand.',
+        : 'Residual route: affine change of variable, then capped recurrence for powers over sqrt(1-z^2).'),
+      integrationTextRow('Accepted only after derivative backcheck against the original integrand.'),
     ])],
   };
 }
@@ -618,11 +624,11 @@ function tryAffineTrigDerivativeByPartsRule(
       nonzeroFact(logCarrier),
     ]),
     detailSections: [byPartsDetail('Integration By Parts', [
-      `Polynomial factor: ${exactPolynomialToLatex(product.polynomial)}`,
-      `Affine argument: ${argumentLatex}`,
-      `Affine slope fact: ${exactScalarLatex(product.affine.slope)}\\ne0`,
-      `Primitive trig kernel: ${product.head === 'Sec' ? 'tan' : '-cot'}.`,
-      'Accepted only after derivative backcheck against the original integrand.',
+      integrationMathRow('Polynomial factor: ', exactPolynomialToLatex(product.polynomial)),
+      integrationMathRow('Affine argument: ', argumentLatex),
+      integrationMathRow('Affine slope fact: ', `${exactScalarLatex(product.affine.slope)}\\ne0`),
+      integrationMathRow('Primitive trig kernel: ', product.head === 'Sec' ? 'tan' : '-cot', '.'),
+      integrationTextRow('Accepted only after derivative backcheck against the original integrand.'),
     ])],
   };
 }

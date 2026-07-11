@@ -22,6 +22,12 @@ import {
   isNodeArray,
   wrapGroupedLatex,
 } from '../patterns';
+import {
+  integrationDetailSection,
+  integrationMathRow,
+  integrationTextRow,
+  type IntegrationDetailRow,
+} from './detail-readback';
 import { scaleByExactScalar } from './rational';
 import type { DisplayDetailSection } from '../../../types/calculator';
 
@@ -404,11 +410,8 @@ function affineTimesOutsideSqrtReciprocalForm(node: unknown, variable: string) {
   };
 }
 
-function radicalTemplateDetail(lines: string[]): DisplayDetailSection {
-  return {
-    title: 'Integration Radical Template',
-    lines,
-  };
+function radicalTemplateDetail(rows: readonly IntegrationDetailRow[]): DisplayDetailSection {
+  return integrationDetailSection('Integration Radical Template', rows);
 }
 
 function isReciprocalThreeHalvesPower(node: unknown) {
@@ -457,10 +460,10 @@ export function tryTrigSubstitutionRadicalRule(
           squaredAffineOverRadical.affine,
         ),
         detailSections: [radicalTemplateDetail([
-          `Recognized squared-carrier over radical: ${boxLatex(node)}`,
-          `Template family: ${squaredAffineOverRadical.family}`,
-          `Substitution carrier: ${squaredAffineOverRadical.affine.latex}`,
-          'Adopted only for an exact affine carrier squared over the matching radical.',
+          integrationMathRow('Recognized squared-carrier over radical: ', boxLatex(node)),
+          integrationTextRow(`Template family: ${squaredAffineOverRadical.family}`),
+          integrationMathRow('Substitution carrier: ', squaredAffineOverRadical.affine.latex),
+          integrationTextRow('Adopted only for an exact affine carrier squared over the matching radical.'),
         ])],
       }
       : undefined;
@@ -497,10 +500,10 @@ export function tryTrigSubstitutionRadicalRule(
         source: 'candidate-validation',
       }),
       detailSections: [radicalTemplateDetail([
-        `Recognized inverse-secant radical: ${boxLatex(node)}`,
-        `Positive branch carrier: ${reciprocalAffineOutsideSqrt.affine.latex}`,
-        `Branch condition: ${branchCondition}>0`,
-        'No partial antiderivative was adopted outside the stated branch.',
+        integrationMathRow('Recognized inverse-secant radical: ', boxLatex(node)),
+        integrationMathRow('Positive branch carrier: ', reciprocalAffineOutsideSqrt.affine.latex),
+        integrationMathRow('Branch condition: ', `${branchCondition}>0`),
+        integrationTextRow('No partial antiderivative was adopted outside the stated branch.'),
       ])],
     };
   }
@@ -525,10 +528,10 @@ export function tryTrigSubstitutionRadicalRule(
         verification: proof(parsed.family),
         exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
         detailSections: [radicalTemplateDetail([
-          `Recognized reciprocal radical: ${boxLatex(node)}`,
-          `Template family: ${parsed.family === 'minus' ? 'a^2-u^2' : 'u^2+a^2'}`,
-          `Substitution carrier: ${parsed.affine.latex}`,
-          'Adopted only after derivative backcheck against the original integrand.',
+          integrationMathRow('Recognized reciprocal radical: ', boxLatex(node)),
+          integrationMathRow('Template family: ', parsed.family === 'minus' ? 'a^2-u^2' : 'u^2+a^2'),
+          integrationMathRow('Substitution carrier: ', parsed.affine.latex),
+          integrationTextRow('Adopted only after derivative backcheck against the original integrand.'),
         ])],
       }
       : undefined;
@@ -539,9 +542,9 @@ export function tryTrigSubstitutionRadicalRule(
     verification: proof(parsed.family),
     exactSupplementLatex: supplementsFor(parsed.family, parsed.r, parsed.affine),
     detailSections: [radicalTemplateDetail([
-      `Recognized radical: ${boxLatex(node)}`,
-      `Template family: ${parsed.family}`,
-      `Substitution carrier: ${parsed.affine.latex}`,
+      integrationMathRow('Recognized radical: ', boxLatex(node)),
+      integrationTextRow(`Template family: ${parsed.family}`),
+      integrationMathRow('Substitution carrier: ', parsed.affine.latex),
     ])],
   };
 }

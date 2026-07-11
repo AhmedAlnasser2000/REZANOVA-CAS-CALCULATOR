@@ -303,6 +303,7 @@ function fresnelQuadraticDetail(input: {
   return [
     {
       title: 'Non-Elementary Certificate',
+      lineKind: 'text',
       lines: [
         'No elementary antiderivative exists for this quadratic trigonometric integrand in the stated elementary differential field.',
         'The main answer uses named Fresnel special functions rather than reporting a heuristic failure.',

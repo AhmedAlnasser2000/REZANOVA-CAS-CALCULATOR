@@ -127,6 +127,7 @@ export function buildAlgebraicGenus1EllipticProofBackcheck(
         ...basisReduction.detailSections,
         {
           title: 'Genus-1 Elliptic Proof Backcheck',
+          lineKind: 'text',
           lines: [
             'Generic exact/symbolic genus-1 curves remain proof-readiness only until root normalization and branch formulas are live.',
           ],
