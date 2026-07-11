@@ -1,4 +1,4 @@
-# PRINTER-DETAIL-CLIPBOARD-ROADMAP0 Commit Log
+# Printer, Clipboard, And Detail Program Commit Log
 
 ## Attribution
 
@@ -17,11 +17,9 @@
 - committed_by_agent_family: sol
 - attribution_basis: live
 
-## Commit
+## Commits
 
-- commit_message: `PRINTER-DETAIL-CLIPBOARD-ROADMAP0`
-- commit_hash: `db674b13`
-- scope: accepted roadmap, anti-regression closeout catch-up, durable decisions, approval, and session evidence only
-- approval: user granted standing approval for all named commits in this program during this session
-- push: not authorized
-- excluded: untracked `test-results/`
+- `db674b13` - `PRINTER-DETAIL-CLIPBOARD-ROADMAP0`
+- pending at write time - `PRINTER-SERIALIZATION-CONTRACT1`
+
+Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

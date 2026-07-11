@@ -90,6 +90,8 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ### A1. `PRINTER-SERIALIZATION-CONTRACT1`
 
+Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+
 - Add a pure internal printer district under `src/lib/display/printer/`.
 - Define a strict serializable MathJSON type or validated Compute Engine `MathJsonExpression` boundary; do not use `unknown` as the durable contract.
 - Wrap Compute Engine `toLatex()` with explicit serializer options and reuse the existing Symbolic Display and Equation finite-root presentation behavior.
@@ -99,6 +101,8 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 - Support `canonical-latex`, `visible-latex`, and `plain-text` targets. Canonical output must be settings-independent except for producer-selected mathematical form.
 - Add bounded parse-back and idempotence properties for the supported scalar-expression subset. Unsupported or non-injective forms fail closed to tested compatibility LaTeX.
 - Require output parity against all 43 golden cases and relevant 100 replay fixtures before any visible difference is accepted.
+
+Implemented contract: validated plain MathJSON is capped at 2,000 nodes, 64 levels, and 320,000 serialized bytes; structural Compute Engine serialization uses explicit options; compatibility output remains byte-stable until a producer opts into the pedagogical profile; and typed adapters do not create a runtime registry or merge domain ownership.
 
 ### A2. `DISPLAY-MATH-PAYLOAD1`
 

@@ -18,6 +18,7 @@
     "test:pillars": "node --test tools/validate-pillars.test.mjs && node tools/validate-pillars.mjs",
     "test:golden": "vitest run src/lib/__golden__/golden-runner.test.ts",
     "test:print-hygiene": "vitest run src/lib/display/print-hygiene.test.ts",
+    "test:printer-contract": "vitest run src/lib/display/printer/*.test.ts src/lib/equation/presentation/printer-adapter.test.ts",
     "update:print-hygiene": "vite-node tools/update-print-hygiene.ts",
     "test:workspace-freshness": "node --test tools/workspace-freshness.test.mjs",
     "report:workspace-freshness": "node tools/workspace-freshness.mjs",
