@@ -15,6 +15,7 @@ function complexWrapperFallbackSections(
   return [
     {
       title: 'Complex Extension Boundary',
+      lineKind: 'text',
       lines: [
         'Domain intent: Complex.',
         'The complex exact wrapper route could not close this family, so Equation is showing the validated real solution family instead of failing the answer card.',

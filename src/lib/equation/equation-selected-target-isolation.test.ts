@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import {
+  detailLineIntentAt,
+  resolveDetailLinePresentation,
+} from '../display/result-detail-lines';
 import { createEquationSelectedTargetSearchTrace } from './equation-target-shape';
 import {
   isolateSelectedTargetEquation,
@@ -36,6 +40,20 @@ function expectIsolateSuccess(latex: string, target: string) {
     throw new Error(`Expected isolate success, got ${result.reason}: ${result.message}`);
   }
   return result;
+}
+
+function expectDeclaredDetails(result: ReturnType<typeof expectSuccess>) {
+  for (const section of result.detailSections) {
+    section.lines.forEach((line, index) => {
+      expect(detailLineIntentAt(section, index), `${section.title}[${index}]`)
+        .not.toBe('undeclared');
+      expect(resolveDetailLinePresentation({
+        line,
+        lineKind: section.lineKinds?.[index] ?? section.lineKind,
+        parts: section.lineParts?.[index],
+      }).source).not.toBe('legacy-inference');
+    });
+  }
 }
 
 describe('solveSelectedTargetIsolationEquation', () => {
@@ -153,6 +171,30 @@ describe('isolateSelectedTargetEquation', () => {
     expect(cube.exactLatex).toBe('u=\\sqrt[3]{a}');
     expect(quartic.exactLatex).toBe('u=\\pm \\sqrt[4]{a}');
     expect(quartic.exactSupplementLatex).toContain('a\\ge0');
+  });
+
+  it('declares selected-target generated and formula detail rows without legacy inference', () => {
+    const generated = expectSuccess('\\frac{5f+4^p}{g+v}+cx=34', 'p');
+    const square = expectIsolateSuccess('u^2=a', 'u');
+
+    expectDeclaredDetails(generated);
+    expectDeclaredDetails(square);
+
+    const generatedSection = generated.detailSections.find((section) =>
+      section.title === 'Target Isolation');
+    const generatedIndex = generatedSection?.lines.findIndex((line) =>
+      line.startsWith('Generated equation:')) ?? -1;
+    expect(generatedIndex).toBeGreaterThanOrEqual(0);
+    expect(generatedSection && detailLineIntentAt(generatedSection, generatedIndex))
+      .toBe('typed-parts');
+
+    const isolatedSection = square.detailSections.find((section) =>
+      section.title === 'Target Isolation');
+    const formulaIndex = isolatedSection?.lines.findIndex((line) =>
+      line.startsWith('Formula branches:')) ?? -1;
+    expect(formulaIndex).toBeGreaterThanOrEqual(0);
+    expect(isolatedSection && detailLineIntentAt(isolatedSection, formulaIndex))
+      .toBe('typed-parts');
   });
 
   it('keeps isolate mode as formula rearrangement instead of broad solver delegation', () => {

@@ -121,10 +121,12 @@ function unsupportedComplexWrapperOutcome(
     detailSections: [
       {
         title: 'Complex Wrapper Policy',
+        lineKind: 'text',
         lines,
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: options.tryLines ?? [
           'Use a compact Complex power wrapper whose generated branches stay inside bounded linear, rational, factorable, or algebraic-isolation routes.',
           'Turn Complex Off when you want the real-domain wrapper formula route.',

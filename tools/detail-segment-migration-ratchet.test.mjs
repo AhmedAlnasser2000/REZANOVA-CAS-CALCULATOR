@@ -65,16 +65,18 @@ describe('detail-segment migration ratchet', () => {
           lineParts?: unknown[][];
         };
         declare function mathDetailSection(title: string, lines: string[]): DisplayDetailSection;
+        declare function buildParameterizedDetailSections(options: unknown): DisplayDetailSection[];
         export const a: DisplayDetailSection = { title: 'A', lines: ['x'], lineKind: 'math' };
         export const b: DisplayDetailSection = { title: 'B', lines: ['x'], lineKinds: ['math'] };
         export const c: DisplayDetailSection = { title: 'C', lines: ['x'], lineParts: [[{}]] };
         export const d = mathDetailSection('D', ['x']);
+        export const e = buildParameterizedDetailSections({});
       `,
     });
     const report = scanDetailSegmentRepository({ rootDir });
 
-    assert.equal(report.summary.producerCount, 4);
-    assert.equal(report.summary.declaredCount, 4);
+    assert.equal(report.summary.producerCount, 5);
+    assert.equal(report.summary.declaredCount, 5);
     assert.equal(report.summary.undeclaredCount, 0);
   });
 

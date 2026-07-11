@@ -118,10 +118,12 @@ function unsupportedComplexWrapperOutcome(
     detailSections: [
       {
         title: 'Complex Root Wrapper Policy',
+        lineKind: 'text',
         lines,
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: options.tryLines ?? [
           'Use a Complex principal root wrapper whose generated carrier equation stays inside bounded linear, rational, factorable, or algebraic-isolation routes.',
           'Use a Complex power relation such as F^n=R when you intend all branch roots instead of the principal root function.',

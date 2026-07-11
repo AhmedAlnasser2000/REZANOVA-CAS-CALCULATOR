@@ -137,6 +137,7 @@ describe('Equation mode stored values and targets', () => {
     expect(parameterized.exactLatex).toBe('\\mathrm{mass}=7-x');
     expect(parameterized.detailSections?.[0]).toEqual({
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         'Selected target: mass',
         'Symbolic parameters: x',

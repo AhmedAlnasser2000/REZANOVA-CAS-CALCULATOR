@@ -30,8 +30,10 @@
 - All production copy/paste surfaces use shared adapters, `expressionRouting.ts` owns app Paste, and the direct production Clipboard API floor is zero.
 - `DETAIL-SEGMENT-CONTRACT1`: committed as `5c82758b`.
 - The main Display and Formula Viewer share one extracted detail renderer with typed-parts, explicit-kind, then legacy-inference precedence. Typed solve summaries dual-write compatibility text, and old undeclared History data retains inference.
-- `DETAIL-SEGMENT-EQUATION-CORE1`: implemented and verified; entering its approved commit checkpoint.
-- The AST ratchet inventories 349 live producers. Equation core has 121 declared and zero undeclared producers after 119 object migrations; 75 exact undeclared fingerprints remain pinned across later approved lanes.
-- `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1` is next after this commit; seven approved migration slices remain before the mandatory review.
+- `DETAIL-SEGMENT-EQUATION-CORE1`: committed as `6e2182bf`.
+- `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`: implemented and verified; entering its approved commit checkpoint.
+- The widened AST ratchet inventories 383 live producers: 329 declared and 54 undeclared. Equation parameterized has 73 declared and zero undeclared producers after 21 object migrations plus 34 newly inventoried builder calls; Equation core has 123 declared and zero undeclared producers.
+- Parameterized normalization no longer calls legacy text inference. Selected-target generated equations and formula branches are producer-owned typed parts, while compatibility lines, wording, and mathematics remain unchanged.
+- `DETAIL-SEGMENT-SYMBOLIC-LIMITS1` is next; six approved detail slices remain before the mandatory review, followed by eight printer-profile slices.
 - The mandatory contract review blocks all pedagogical-profile migration.
 - No push is authorized, and untracked `test-results/` stays excluded.

@@ -4,6 +4,7 @@ import type {
   DisplayBranchReadback,
   OutputStyle,
 } from '../../../types/calculator';
+import { equationLabelLineParts } from '../../display/result-detail-lines';
 import {
   buildParameterizedDetailSections,
   normalizeParameterizedSupplementLatex,
@@ -354,6 +355,12 @@ export function solvePowerExpression({
         ...steps.map((step) => step.line),
         'Returned bounded complex formula branches because Complex intent is enabled.',
       ],
+      familyLineParts: [
+        [],
+        equationLabelLineParts('Generated equation', generatedEquationLatex),
+        ...steps.map(() => []),
+        [],
+      ],
     });
 
     return {
@@ -396,6 +403,12 @@ export function solvePowerExpression({
       degree % 2 === 0
         ? 'Returned both real even-root branches under the displayed validity condition.'
         : 'Returned the real odd-root branch.',
+    ],
+    familyLineParts: [
+      [],
+      equationLabelLineParts('Generated equation', generatedEquationLatex),
+      ...steps.map(() => []),
+      [],
     ],
   });
 

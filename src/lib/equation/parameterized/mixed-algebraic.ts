@@ -221,6 +221,7 @@ function formulaDetailSections(options: {
       ...(options.payload.detailSections ?? []).filter((section) => section.title !== 'Solve Target'),
       {
         title: 'Mixed Algebraic Branches',
+        lineKind: 'text',
         lines: options.generatedEquations.map((entry) => `Generated: ${entry}`),
       },
     ],
@@ -647,6 +648,7 @@ export function solveParameterizedMixedAlgebraicEquation(
     ],
     extraSections: [{
       title: 'Branch Conditions',
+      lineKind: 'text',
       lines: [
         ...(exactSupplementLatex ?? []),
         ...solved.generatedEquations.map((entry) => `Generated: ${entry}`),

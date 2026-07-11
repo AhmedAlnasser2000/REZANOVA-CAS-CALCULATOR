@@ -68,6 +68,17 @@ describe('parameterized equation readback helpers', () => {
     }]);
   });
 
+  it('preserves explicit prose intent without synthesizing inferred math parts', () => {
+    const sections = normalizeParameterizedDetailSections([{
+      title: 'Target Isolation',
+      lineKind: 'text',
+      lines: ['Generated equation: x=1'],
+    }]);
+
+    expect(sections[0].lineKind).toBe('text');
+    expect(sections[0].lineParts).toBeUndefined();
+  });
+
   it('maps selected-target boundary stops to user-facing text', () => {
     const domain = buildParameterizedBoundaryReadback({
       reason: 'domain-empty',

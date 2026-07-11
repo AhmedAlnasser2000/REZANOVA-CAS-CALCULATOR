@@ -1,5 +1,9 @@
 import type { DisplayDetailSection } from '../../../types/calculator';
 import type { AngleUnit } from '../../../types/calculator/mode-types';
+import {
+  detailLineFromParts,
+  equationLabelLineParts,
+} from '../../display/result-detail-lines';
 import { solveEquationAlgebraicIsolation } from './algebraic';
 import {
   type EquationSelectedTargetSearchTraceRecorder,
@@ -240,18 +244,27 @@ function detailSectionsForSuccess(
   delegatedSections: DisplayDetailSection[],
 ) {
   const delegatedWithoutTarget = delegatedSections.filter((section) => section.title !== 'Solve Target');
+  const generatedEquationRow = detailLineFromParts(
+    equationLabelLineParts('Generated equation', generatedEquationLatex),
+  );
   return normalizeParameterizedDetailSections([
     buildParameterizedSolveTargetSection(target, parameterNames),
     {
       title: 'Target Isolation',
+      lineKind: 'text',
       lines: [
         `Isolated one selected-target expression through ${steps.length} target-free algebra step${steps.length === 1 ? '' : 's'}.`,
-        `Generated equation: ${generatedEquationLatex}`,
+        generatedEquationRow.line,
         ...(
           facts.length > 0
             ? [`Isolation facts: ${unique(facts).join(', ')}`]
             : []
         ),
+      ],
+      lineParts: [
+        [],
+        generatedEquationRow.parts,
+        ...(facts.length > 0 ? [[]] : []),
       ],
     },
     ...delegatedWithoutTarget,
@@ -430,11 +443,15 @@ function formulaTargetLatex(
   otherSide: MathJson,
   target: string,
   maxLatexLength: number,
-): { latex: string; facts: string[]; branchLines: string[] } | null {
+): {
+  latex: string;
+  facts: string[];
+  branchRows: ReturnType<typeof detailLineFromParts>[];
+} | null {
   const rhsLatex = latexForNode(otherSide);
   let candidate: string | null = null;
   const facts: string[] = [];
-  const branchLines: string[] = [];
+  const branchRows: ReturnType<typeof detailLineFromParts>[] = [];
   const formattedTarget = formatTargetLatex(target);
 
   if (typeof expression === 'string' && expression === target) {
@@ -452,14 +469,19 @@ function formulaTargetLatex(
     } else if (exponent % 2 === 0) {
       const root = rootFormulaLatex(rhsLatex, exponent);
       candidate = `${formattedTarget}=\\pm ${root}`;
-      branchLines.push(`Formula branches: ${formattedTarget}=-${root}, ${formattedTarget}=${root}`);
+      branchRows.push(detailLineFromParts(equationLabelLineParts(
+        'Formula branches',
+        `${formattedTarget}=-${root}, ${formattedTarget}=${root}`,
+      )));
       facts.push(`${rhsLatex}\\ge0`);
     } else {
       candidate = `${formattedTarget}=${rootFormulaLatex(rhsLatex, exponent)}`;
     }
   }
 
-  return candidate && candidate.length <= maxLatexLength ? { latex: candidate, facts, branchLines } : null;
+  return candidate && candidate.length <= maxLatexLength
+    ? { latex: candidate, facts, branchRows }
+    : null;
 }
 
 function formatTargetLatex(target: string) {
@@ -473,22 +495,37 @@ function detailSectionsForIsolationOnlySuccess(
   isolatedEquationLatex: string,
   exactLatex: string,
   facts: string[],
-  branchLines: string[] = [],
+  branchRows: ReturnType<typeof detailLineFromParts>[] = [],
 ) {
   const stepLine = steps.length === 0
     ? 'Recognized the selected-target expression as already isolated.'
     : `Rearranged one selected-target expression through ${steps.length} target-free algebra step${steps.length === 1 ? '' : 's'}.`;
+  const isolatedRow = detailLineFromParts(
+    equationLabelLineParts('Isolated form', isolatedEquationLatex),
+  );
+  const formulaRow = exactLatex !== isolatedEquationLatex
+    ? detailLineFromParts(equationLabelLineParts('Formula form', exactLatex))
+    : undefined;
   return normalizeParameterizedDetailSections([
     buildParameterizedSolveTargetSection(target, parameterNames),
     {
       title: 'Target Isolation',
+      lineKind: 'text',
       lines: [
         `Answer mode: Isolate.`,
         stepLine,
-        `Isolated form: ${isolatedEquationLatex}`,
-        ...(exactLatex !== isolatedEquationLatex ? [`Formula form: ${exactLatex}`] : []),
-        ...branchLines,
+        isolatedRow.line,
+        ...(formulaRow ? [formulaRow.line] : []),
+        ...branchRows.map((row) => row.line),
         ...(facts.length > 0 ? [`Isolation facts: ${unique(facts).join(', ')}`] : []),
+      ],
+      lineParts: [
+        [],
+        [],
+        isolatedRow.parts,
+        ...(formulaRow ? [formulaRow.parts] : []),
+        ...branchRows.map((row) => row.parts),
+        ...(facts.length > 0 ? [[]] : []),
       ],
     },
   ]);
@@ -585,7 +622,7 @@ export function isolateSelectedTargetEquation(
             isolatedEquationLatex,
             exactLatex,
             allFacts,
-            formula?.branchLines,
+            formula?.branchRows,
           ),
         };
       }
@@ -625,7 +662,7 @@ export function isolateSelectedTargetEquation(
           isolatedEquationLatex,
           formula.latex,
           allFacts,
-          formula.branchLines,
+          formula.branchRows,
         ),
       };
     }

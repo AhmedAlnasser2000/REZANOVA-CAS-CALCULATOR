@@ -177,6 +177,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
               warnings: [],
               detailSections: [{
                 title: 'Complex Boundary',
+                lineKind: 'text',
                 lines: [
                   'Complex special-form solving is currently bounded to exact-rational direct and carrier-quadratic shapes through 12 visible branches.',
                   'Symbolic carrier coefficients or constants require a formal principal-branch root policy, so they stay deferred for now.',
@@ -827,6 +828,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         warnings: [],
         detailSections: [{
           title: 'Solve Target',
+          lineKind: 'text',
           lines: [
             `Detected variables: ${targetResolution.candidates.map((candidate) => candidate.name).join(', ')}`,
             targetResolution.selectedTarget

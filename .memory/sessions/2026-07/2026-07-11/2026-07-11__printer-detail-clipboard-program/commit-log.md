@@ -26,6 +26,7 @@
 - `586795b0` - `CLIPBOARD-CANONICAL1`
 - `f58cf1c0` - `CLIPBOARD-PIPELINE-RATCHET1`
 - `5c82758b` - `DETAIL-SEGMENT-CONTRACT1`
-- pending at write time - `DETAIL-SEGMENT-EQUATION-CORE1`
+- `6e2182bf` - `DETAIL-SEGMENT-EQUATION-CORE1`
+- pending at write time - `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

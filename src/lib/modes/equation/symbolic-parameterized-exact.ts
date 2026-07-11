@@ -144,6 +144,7 @@ function tryParameterizedTrigRewriteSolve(
     detailSections: [
       {
         title: 'Parameterized Trig Rewrite',
+        lineKind: 'text',
         lines: [
           rewrite.candidate.summaryText,
           `Generated ${generatedEquations.length} trigonometric branch equation${generatedEquations.length === 1 ? '' : 's'} and solved them as periodic selected-target families.`,

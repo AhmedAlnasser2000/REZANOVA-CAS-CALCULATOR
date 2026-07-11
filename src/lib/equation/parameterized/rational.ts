@@ -514,6 +514,7 @@ export function solveParameterizedRationalEquation(
       ],
       extraSections: [{
         title: 'Conditional Target Family',
+        lineKind: 'text',
         lines: [
           'Any selected-target value still has to satisfy the preserved denominator exclusions.',
         ],
@@ -569,6 +570,7 @@ export function solveParameterizedRationalEquation(
     ...solved.detailSections,
     {
       title: 'Parameterized Rational Solve',
+      lineKind: 'text',
       lines: [
         `Cleared denominator factors into ${clearedEquationLatex}.`,
         'Original denominator exclusions were preserved before solving the cleared equation.',

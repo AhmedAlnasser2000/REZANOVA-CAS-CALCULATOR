@@ -5,6 +5,7 @@ import type {
   DisplayDetailSection,
   OutputStyle,
 } from '../../../types/calculator';
+import { equationLabelLineParts } from '../../display/result-detail-lines';
 import {
   negateExactScalar,
   normalizeExactScalar,
@@ -745,6 +746,10 @@ export function solveEquationAlgebraicIsolation(
           familyLines: [
             'Delegated a bounded degree-3/4 factorable polynomial to the existing exact factor solver.',
             `Generated equation: ${sourceLatex}`,
+          ],
+          familyLineParts: [
+            [],
+            equationLabelLineParts('Generated equation', sourceLatex),
           ],
           extraSections: factorable.detailSections.filter((section) => section.title !== 'Solve Target'),
         }),

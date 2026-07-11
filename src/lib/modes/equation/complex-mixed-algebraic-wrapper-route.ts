@@ -386,10 +386,12 @@ function unsupportedOutcome(lines: string[], error = 'This complex mixed algebra
     detailSections: [
       {
         title: 'Complex Mixed Algebraic Wrapper Policy',
+        lineKind: 'text',
         lines,
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Use one principal Complex root carrier mixed with a compact algebraic selected-target companion.',
           'Keep generated powered equations inside bounded linear, rational, factorable, or algebraic-isolation routes.',

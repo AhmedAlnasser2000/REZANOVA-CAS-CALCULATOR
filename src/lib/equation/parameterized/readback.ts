@@ -1,5 +1,4 @@
 import type { DisplayDetailLinePart, DisplayDetailSection } from '../../../types/calculator';
-import { inferDetailLinePartsFromText } from '../../display/result-detail-lines';
 import {
   normalizeConstraintLatex,
   normalizeEquationConstraintLatex,
@@ -45,6 +44,7 @@ export function buildParameterizedSolveTargetSection(
 ): DisplayDetailSection {
   return {
     title: 'Solve Target',
+    lineKind: 'text',
     lines: [
       `Selected target: ${target}`,
       parameterNames.length > 0
@@ -66,6 +66,7 @@ export function buildParameterizedDetailSections({
     buildParameterizedSolveTargetSection(target, parameterNames),
     {
       title: familyTitle,
+      lineKind: 'text',
       lines: familyLines,
       lineParts: familyLineParts,
     },
@@ -90,6 +91,7 @@ export function buildParameterizedBoundaryReadback({
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         detectedVariables.length > 0
           ? `Detected variables: ${detectedVariables.join(', ')}`
@@ -102,6 +104,7 @@ export function buildParameterizedBoundaryReadback({
     },
     {
       title: 'Why It Stopped',
+      lineKind: 'text',
       lines: [boundary.why],
     },
   ];
@@ -109,6 +112,7 @@ export function buildParameterizedBoundaryReadback({
   if (boundary.suggestion) {
     detailSections.push({
       title: 'What To Try',
+      lineKind: 'text',
       lines: [boundary.suggestion],
     });
   }
@@ -124,16 +128,16 @@ export function normalizeParameterizedDetailSections(
 ): DisplayDetailSection[] {
   return sections.map((section) => {
     const lines = section.lines.map(normalizeRestrictionLine);
-    const lineParts = section.lineParts
-      ? section.lineParts
-      : lines.map((line) => inferDetailLinePartsFromText(line) ?? []);
-    const hasLineParts = lineParts.some((parts) => parts.length > 0);
+    const lineParts = section.lineParts;
+    const hasLineParts = lineParts?.some((parts) => parts.length > 0) ?? false;
 
-    return {
-      ...section,
-      lines,
-      lineParts: hasLineParts ? lineParts : undefined,
-    };
+    if (hasLineParts) {
+      return { ...section, lines, lineParts };
+    }
+
+    const normalizedSection: DisplayDetailSection = { ...section, lines };
+    delete normalizedSection.lineParts;
+    return normalizedSection;
   });
 }
 

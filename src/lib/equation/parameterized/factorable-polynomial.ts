@@ -367,6 +367,7 @@ function buildMergedFactorSolveResult(options: {
     familyLines: options.familyLines,
     extraSections: [{
       title: 'Factor Branches',
+      lineKind: 'text',
       lines: rootReadback.detailLines ?? [],
     }],
   });
