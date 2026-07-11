@@ -75,6 +75,9 @@ jobs:
       - name: Validate seam impact selector
         run: npm run test:seam-impact-selector
 
+      - name: Validate printer migration ratchet
+        run: npm run test:printer-migration
+
       - name: Validate app identity
         run: npm run test:app-identity
 

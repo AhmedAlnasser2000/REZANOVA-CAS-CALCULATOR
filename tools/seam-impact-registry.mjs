@@ -20,6 +20,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:app-state-contracts'],
   },
   {
+    id: 'printer-migration-ratchet',
+    label: 'Printer result-path migration ratchet',
+    argv: ['npm', 'run', 'test:printer-migration'],
+  },
+  {
     id: 'history-replay',
     label: 'Versioned History replay ratchet',
     argv: ['npm', 'run', 'test:history-replay'],
@@ -141,7 +146,7 @@ export const SEAM_REGISTRY = [
       ...prefix('src/lib/display/', 'src/app/shell/display-panel/'),
       ...exact('src/app/shell/DisplayPanel.tsx', 'src/types/calculator/display-types.ts'),
     ],
-    additionalCommandIds: ['display-contracts'],
+    additionalCommandIds: ['display-contracts', 'printer-migration-ratchet'],
     baselineEvidenceIds: [
       'workspace-canaries',
       'surface-protocol',
@@ -193,6 +198,7 @@ export const SEAM_REGISTRY = [
       'workspace-runtime-contracts',
       'display-contracts',
       'app-state-contracts',
+      'printer-migration-ratchet',
     ],
     baselineEvidenceIds: [
       'workspace-canaries',
@@ -228,6 +234,7 @@ export const SEAM_REGISTRY = [
       'app-runtime-contracts',
       'display-contracts',
       'app-state-contracts',
+      'printer-migration-ratchet',
     ],
     baselineEvidenceIds: [
       'workspace-canaries',

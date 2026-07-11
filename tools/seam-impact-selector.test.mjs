@@ -31,6 +31,7 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'display-contracts',
       'app-state-contracts',
+      'printer-migration-ratchet',
     ]);
     assert.match(formatHumanPlan(plan), /Baseline CI gates remain required and unchanged\./u);
     assert.doesNotThrow(() => JSON.parse(JSON.stringify(plan)));
@@ -90,6 +91,7 @@ describe('seam impact selector', () => {
       'app-runtime-contracts',
       'display-contracts',
       'app-state-contracts',
+      'printer-migration-ratchet',
       'history-replay',
     ]);
   });

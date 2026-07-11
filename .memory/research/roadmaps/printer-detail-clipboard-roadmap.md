@@ -25,7 +25,7 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ## Current Baseline
 
-- `main` is two approved local commits ahead of `origin/main`: `db674b13` (`PRINTER-DETAIL-CLIPBOARD-ROADMAP0`) and `f4cb2de2` (`PRINTER-SERIALIZATION-CONTRACT1`). No push is authorized.
+- `main` is three approved local commits ahead of `origin/main`: `db674b13` (`PRINTER-DETAIL-CLIPBOARD-ROADMAP0`), `f4cb2de2` (`PRINTER-SERIALIZATION-CONTRACT1`), and `93e9b40e` (`DISPLAY-MATH-PAYLOAD1`). No push is authorized.
 - `HISTORY-REPLAY-RATCHET1` is committed as `63d21229`.
 - Untracked `test-results/` is unrelated and must remain untouched.
 - Production has at least 478 explicit `exactLatex:` assignments across 173 files and 61 explicit `resultLatex:` assignments. These are lower bounds because shorthand and indirect builders are not counted.
@@ -106,7 +106,7 @@ Implemented contract: validated plain MathJSON is capped at 2,000 nodes, 64 leve
 
 ### A2. `DISPLAY-MATH-PAYLOAD1`
 
-Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+Status: committed as `93e9b40e` on `2026-07-11`.
 
 - Add one optional internal canonical math payload carrying `canonicalLatex` plus validated optional MathJSON.
 - Keep every existing LaTeX field additive and authoritative as compatibility fallback during migration.
@@ -119,11 +119,15 @@ Implemented contract: `DisplayMathPayloadV1` carries versioned canonical LaTeX p
 
 ### A3. `PRINTER-MIGRATION-RATCHET1`
 
+Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+
 - Build the ratchet with the TypeScript compiler API over known output properties/builders rather than a repository-wide raw-string grep.
 - Classify expression output, structured-domain output, presentation templates, plain prose, input syntax, and reference content separately.
 - Ratchet result-path authored LaTeX per domain; floors may only decrease.
 - Permit narrow registered compatibility fallbacks with owner and rationale. Do not grant whole-file exemptions.
 - Add the gate to local aggregate CI and relevant seam lanes without weakening baseline tests.
+
+Implemented contract: the TypeScript-compiler-API inventory currently classifies 515 production result paths as 257 owned compatibility fallbacks, 18 migrated dual writes, 237 forwarders, one nonproducer History schema slot, and two absent optional slots. The accepted baseline fingerprints source expressions, pins per-lane and per-registration floors, rejects stale or new unclassified paths, and keeps input syntax, presentation math, prose, reference content, and canonical-printer internals outside result debt. CI and shared-configuration seam plans now add this ratchet without removing any baseline gate.
 
 ### A4. `PRINT-PROFILES1` And Domain Migration
 

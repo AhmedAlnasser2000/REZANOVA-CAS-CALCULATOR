@@ -58,6 +58,9 @@ jobs:
       - name: Run additional seam impact evidence
         run: npm run seam:impact -- --github-event --run
 
+      - name: Validate printer migration ratchet
+        run: npm run test:printer-migration
+
       - name: Validate app identity
         run: npm run test:app-identity
 

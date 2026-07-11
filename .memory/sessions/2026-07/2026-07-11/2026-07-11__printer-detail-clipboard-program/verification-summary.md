@@ -16,9 +16,10 @@
 
 ## Current Verified Gate
 
-- `DISPLAY-MATH-PAYLOAD1`: backend contract and UI parity evidence passed.
-- Focused payload/producer/firewall suite: 83 tests; printer contract: 12 tests.
-- Cross-workspace evidence: 44 golden tests, 185-fragment print baseline, 100 replay fixtures, 3,514 full unit tests, 441 full UI tests, and 19 Chromium canaries passed.
-- Worker/fallback structured-clone parity passed for Calculate and Equation; runtime probes, workspace contracts, Display contracts, app-state contracts, Surface Protocol, OOE, and compartment boundaries passed.
-- Visual evidence: Calculate `arcsin(1)` and Equation `x^2-5x+6=0` answer/detail surfaces inspected at 1440 by 1000 with no visible regression or overflow.
-- Production integration: additive canonical payload only; no visible printer-profile migration.
+- `PRINTER-MIGRATION-RATCHET1`: backend tooling and CI contract passed with no production-visible behavior change.
+- Six focused tests cover category separation, known builders, migrated markers, unregistered producers, stable fingerprints, floor enforcement, deterministic repeated scans, and JSON round trips.
+- Live inventory: 1,087 source files; 515 result paths; 257 owned compatibility fallbacks; 18 migrated dual writes; 237 forwarders; zero violations.
+- Cross-workspace evidence: 12 printer tests, 44 golden tests, 185-fragment print hygiene, all 100 replay fixtures, 124 native plus 37 UI feature probes, and the full 441-test UI suite passed.
+- Runtime probes passed 19; workspace runtime contracts passed 74; app runtime passed 52 native plus 140 UI; Display passed 132 native plus 21 UI; app-state passed 52.
+- Surface Protocol, OOE, compartments, app identity, CI alignment, seam selection, file size, TypeScript, production build, lint, and diff hygiene passed.
+- `npm run test:canaries:browser`: all 19 Chromium canaries passed in 1.2 minutes.

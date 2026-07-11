@@ -5,6 +5,7 @@ export const STATIC_GATE_COMMANDS = [
   'npm run test:memory-protocol',
   'npm run test:ci-gate-alignment',
   'npm run test:seam-impact-selector',
+  'npm run test:printer-migration',
   'npm run test:app-identity',
   'npm run test:surface-protocol',
   'npm run test:ooe-boundaries',

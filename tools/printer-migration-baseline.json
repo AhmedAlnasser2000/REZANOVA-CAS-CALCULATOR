@@ -1,0 +1,2105 @@
+{
+  "schemaVersion": 1,
+  "acceptedReason": "PRINTER-MIGRATION-RATCHET1 initial TypeScript AST inventory of production result serialization.",
+  "registryDigest": "68cc00c8655c6cda8285",
+  "resultProperties": [
+    "answerLatex",
+    "exactLatex",
+    "resultLatex",
+    "solutionLatex"
+  ],
+  "laneFloors": {
+    "calculate": 2,
+    "calculus": 43,
+    "equation": 76,
+    "geometry": 2,
+    "history-compatibility": 0,
+    "linear-algebra": 44,
+    "shared-algebra": 3,
+    "shared-runtime": 0,
+    "statistics": 10,
+    "symbolic-integration": 34,
+    "symbolic-limits": 35,
+    "table": 0,
+    "trigonometry": 8
+  },
+  "registrationFloors": {
+    "calculate-result-v1": 2,
+    "calculus-result-v1": 43,
+    "equation-result-v1": 76,
+    "geometry-result-v1": 2,
+    "linear-algebra-result-v1": 44,
+    "shared-algebra-result-v1": 3,
+    "statistics-result-v1": 10,
+    "symbolic-integration-result-v1": 34,
+    "symbolic-limits-result-v1": 35,
+    "trigonometry-result-v1": 8
+  },
+  "categoryCounts": {
+    "canonical-printer": 3,
+    "downstream-presentation": 11,
+    "input-syntax": 855,
+    "presentation-math": 2787,
+    "prose-only": 3973,
+    "reference-content": 2565,
+    "result-path": 515
+  },
+  "compatibilityAssignments": [
+    {
+      "id": "368d25147cee9c6744a5:1",
+      "file": "src/lib/algebra/polynomial-factor/solve.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "shared-algebra",
+      "fallbackId": "shared-algebra-result-v1"
+    },
+    {
+      "id": "3681d1bace28a4ab4d0a:1",
+      "file": "src/lib/algebra/transform-core/expression-transforms.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "shared-algebra",
+      "fallbackId": "shared-algebra-result-v1"
+    },
+    {
+      "id": "de0d15e5b7791ec4fd48:1",
+      "file": "src/lib/algebra/transform-core/result.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "shared-algebra",
+      "fallbackId": "shared-algebra-result-v1"
+    },
+    {
+      "id": "9d87ffec4612554ee79a:1",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "80c5fe92085b18d36d88:1",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "9d87ffec4612554ee79a:2",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "2df88880e2fa672ee46d:1",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "1387c7bb8457277255cc:1",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "30fd0aa30f08af0796e5:1",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "30fd0aa30f08af0796e5:2",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "399c2c944e9deb7741d8:1",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "2748e5538d12266b42b3:1",
+      "file": "src/lib/calculus/engine/eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "bca220864f4cd2f04f01:1",
+      "file": "src/lib/calculus/engine/integration.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "a806487980a8545d6478:1",
+      "file": "src/lib/calculus/engine/integration.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "233f1e3aa4c4fefe4318:1",
+      "file": "src/lib/calculus/engine/integration.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "22c82640424e5c141823:1",
+      "file": "src/lib/calculus/engine/limit-heuristics.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "e1eda61c4575000a4554:1",
+      "file": "src/lib/calculus/engine/limits.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "20bc15468cc9d3811a72:1",
+      "file": "src/lib/calculus/engine/limits.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "5440bc8cc8463a4e4296:1",
+      "file": "src/lib/calculus/workspace/derivatives.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "53240eb31b86cc98320d:1",
+      "file": "src/lib/calculus/workspace/derivatives.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "1bedac3eec936328f450:1",
+      "file": "src/lib/calculus/workspace/derivatives.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "d3bab476bf5745634b98:1",
+      "file": "src/lib/calculus/workspace/derivatives.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "4077b59c1fa7eb97c71e:1",
+      "file": "src/lib/calculus/workspace/integrals.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "a563e7ba496bb6b4dd52:1",
+      "file": "src/lib/calculus/workspace/integrals.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "63eede24966c62f29281:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "99944f8a0f4350c197af:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "d66aeffbe9c79d66bcf7:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "546aafb3fafb81f5f8a3:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "6e2f8d9916a67eaef620:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "100b75fd9af8503b2830:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "dcb415fd7e5490b8575d:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "008064b6a8a87b0e5778:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "67dfb832de927c9d769b:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "fc8d426511727f8967e3:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "2ca17f8581ad956515c7:1",
+      "file": "src/lib/calculus/workspace/laplace.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "3b1631261e13832eb4e1:1",
+      "file": "src/lib/calculus/workspace/limits.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "d910157f97d2baf8ff11:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "322d3f50e812c31a9f72:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "33d0407ec60e496fd9e7:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "5a5867cd4b723168eef7:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "8b218316753b5c76eae8:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "0d02839b5ece123eb55d:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "887c1fa97e856e47081e:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "0c466b63aa8af7cbe123:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "28ee1700f24f5d1f9cf1:1",
+      "file": "src/lib/calculus/workspace/ode.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "c28f8f8c56e251c7b3b2:1",
+      "file": "src/lib/calculus/workspace/series.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculus",
+      "fallbackId": "calculus-result-v1"
+    },
+    {
+      "id": "7b5b6f2a169723dc4ea8:1",
+      "file": "src/lib/equation/complex/branches.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "f651008f15495b281f82:1",
+      "file": "src/lib/equation/complex/branches.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "36b24679591e93900ea0:1",
+      "file": "src/lib/equation/complex/branches.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "89a752e41bb4ed81c10f:1",
+      "file": "src/lib/equation/complex/branches.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "6377fe5bedde9dd6c018:1",
+      "file": "src/lib/equation/complex/linear-rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "b998536a3153907a8494:1",
+      "file": "src/lib/equation/complex/linear-rational.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "465f99fbb0d31dfbf533:1",
+      "file": "src/lib/equation/complex/linear-rational.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "541beaaf100348fc0eb2:1",
+      "file": "src/lib/equation/complex/linear-rational.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "2a1b6a79907764dc6ea9:1",
+      "file": "src/lib/equation/complex/linear-rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "2b57e39c98918ac9ee60:1",
+      "file": "src/lib/equation/complex/linear-rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "cfe3af4c8563ce3e2006:1",
+      "file": "src/lib/equation/complex/linear-rational.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "c561cd2c3af176b4900c:1",
+      "file": "src/lib/equation/complex/polynomial.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "faaf119adbc50c207e67:1",
+      "file": "src/lib/equation/complex/polynomial.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "3ed23a15ad7b1e4b5ec4:1",
+      "file": "src/lib/equation/complex/polynomial.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "21172ca24c39055f7b06:1",
+      "file": "src/lib/equation/complex/polynomial.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "ab2cebd48cfa977e48cf:1",
+      "file": "src/lib/equation/complex/polynomial.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "fb2f5127adaccbfd4ac2:1",
+      "file": "src/lib/equation/complex/polynomial.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "187f82e9e7c052faaa5d:1",
+      "file": "src/lib/equation/complex/preimage.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "16f5d55020b129282ff7:1",
+      "file": "src/lib/equation/complex/preimage.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "c36537707833c66a04fa:1",
+      "file": "src/lib/equation/complex/preimage.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "b27a2842cfb0c8d3ad67:1",
+      "file": "src/lib/equation/complex/special-form-roots.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "8cadbdc08d9f5febd57c:1",
+      "file": "src/lib/equation/complex/special-form-roots.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "e43ebb2c8d25814b45e9:1",
+      "file": "src/lib/equation/complex/special-form-roots.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "8ba9915c8e07f9b1cacf:1",
+      "file": "src/lib/equation/complex/special-form-roots.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "7392be125d0267d0bf42:1",
+      "file": "src/lib/equation/composition/non-periodic-transform.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "d5e8d5baf06174531d55:1",
+      "file": "src/lib/equation/composition/non-periodic-transform.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "ae74fa6feffc86a12241:1",
+      "file": "src/lib/equation/composition/stage.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "ae74fa6feffc86a12241:2",
+      "file": "src/lib/equation/composition/stage.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "ae74fa6feffc86a12241:3",
+      "file": "src/lib/equation/composition/stage.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "ae74fa6feffc86a12241:4",
+      "file": "src/lib/equation/composition/stage.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "f19f3ce2b2512aaae52b:1",
+      "file": "src/lib/equation/guarded/merge.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "717b09e9c028f25988c3:1",
+      "file": "src/lib/equation/guarded/polynomial-stage.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "f0d3428970117c2179cd:1",
+      "file": "src/lib/equation/inequality/periodic-format.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "1b24aa7da567dcb87392:1",
+      "file": "src/lib/equation/isolation/algebraic-power.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "6af5b9e48f090bdbc608:1",
+      "file": "src/lib/equation/isolation/algebraic-power.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "8eacd9b374f5600348ac:1",
+      "file": "src/lib/equation/isolation/algebraic.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "6a238dc4340fbc53b483:1",
+      "file": "src/lib/equation/isolation/algebraic.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "30cda663bacfdf2af4b4:1",
+      "file": "src/lib/equation/isolation/algebraic.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "92630b81b66ed261db03:1",
+      "file": "src/lib/equation/isolation/algebraic.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "62b3e2a2ce065396c9ca:1",
+      "file": "src/lib/equation/isolation/selected-target.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "41d8ebd395f538ae3180:1",
+      "file": "src/lib/equation/isolation/selected-target.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "93146590f16bd55a44e1:1",
+      "file": "src/lib/equation/parameterized/carrier.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "f65c335cb08445ab0e61:1",
+      "file": "src/lib/equation/parameterized/composition.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "d87eb94f85a85e360297:1",
+      "file": "src/lib/equation/parameterized/composition.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "b2db1aff9e554441633a:1",
+      "file": "src/lib/equation/parameterized/composition.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "7a10fad5bb7dea7797fb:1",
+      "file": "src/lib/equation/parameterized/exp-log-generated-finalize.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "afb7ad4504d0269c5e6c:1",
+      "file": "src/lib/equation/parameterized/exp-log-generated-finalize.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "6c8cb399b09f13610b4f:1",
+      "file": "src/lib/equation/parameterized/exp-log-generated-finalize.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "8c7bcca302dd7eb9e470:1",
+      "file": "src/lib/equation/parameterized/exp-log-generated-finalize.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "9acbf5f4c17132339325:1",
+      "file": "src/lib/equation/parameterized/exp-log-generated-finalize.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "5d28889a4576f2fb1148:1",
+      "file": "src/lib/equation/parameterized/generated-formula-routes.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "eb8f96c9334e96c83502:1",
+      "file": "src/lib/equation/parameterized/mixed-algebraic.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "b260255ffae51e49a38e:1",
+      "file": "src/lib/equation/parameterized/rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "0b3fc61b32fa7c7b02b8:1",
+      "file": "src/lib/equation/parameterized/trig-direct.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "d5420c9f4ef147fbc415:1",
+      "file": "src/lib/equation/parameterized/trig-formula-handoff.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "6e79dd62183c701c9008:1",
+      "file": "src/lib/equation/parameterized/trig-mixed.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "7f7a8229721083378c07:1",
+      "file": "src/lib/equation/polynomial/carrier-follow-on.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "06e4a3c326b22ca0603d:1",
+      "file": "src/lib/equation/polynomial/carrier-follow-on.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "d4d2a2b33fdca4bd78ee:1",
+      "file": "src/lib/equation/polynomial/carrier-follow-on.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "f1666f34325e01f8bb5d:1",
+      "file": "src/lib/equation/polynomial/carrier-follow-on.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "547c3243eb510ed68b16:1",
+      "file": "src/lib/equation/polynomial/system.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "8fe891c352057a1ab427:1",
+      "file": "src/lib/equation/readback/exact-overrides.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "9a7c6adafc1139fc18cf:1",
+      "file": "src/lib/equation/solution/log-exp-family.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "b8284ce896ccd6bb2239:1",
+      "file": "src/lib/equation/target/surface.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "b977f2f55dd3180412a7:1",
+      "file": "src/lib/equation/target/surface.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "8cdc6b266b3f3b52319a:1",
+      "file": "src/lib/equation/target/surface.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "3d5aa544185de9e1a2fc:1",
+      "file": "src/lib/equation/target/surface.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "2493deeee31f6520a1e7:1",
+      "file": "src/lib/geometry/coordinate.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "geometry",
+      "fallbackId": "geometry-result-v1"
+    },
+    {
+      "id": "9103f1f6bc5f8c07c4e1:1",
+      "file": "src/lib/geometry/shared.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "geometry",
+      "fallbackId": "geometry-result-v1"
+    },
+    {
+      "id": "7be88f98d2164ccfb6f9:1",
+      "file": "src/lib/linear-algebra/matrix-basis.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "60c3a77117671d0849da:1",
+      "file": "src/lib/linear-algebra/matrix-change-of-basis.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "b3bd4625ed6513aa9075:1",
+      "file": "src/lib/linear-algebra/matrix-coordinates.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "b44636bf8504587aae89:1",
+      "file": "src/lib/linear-algebra/matrix-diagonalization.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "8ff5450e5f1ddcfe6787:1",
+      "file": "src/lib/linear-algebra/matrix-diagonalization.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "48a8d42853b50946d9c4:1",
+      "file": "src/lib/linear-algebra/matrix-eigen.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "a176b26cf4fa826bff31:1",
+      "file": "src/lib/linear-algebra/matrix-invertibility.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "7a05934eb4de30f13224:1",
+      "file": "src/lib/linear-algebra/matrix-invertibility.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "83dcd2b31e920029469b:1",
+      "file": "src/lib/linear-algebra/matrix-linear-map-profile.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "ebede3921c241fc996dc:1",
+      "file": "src/lib/linear-algebra/matrix-lu.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "46f88219ae1f04d35636:1",
+      "file": "src/lib/linear-algebra/matrix-lu.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "9316300f11ea812a168a:1",
+      "file": "src/lib/linear-algebra/matrix-lu.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "266f6790b871b3ac7af4:1",
+      "file": "src/lib/linear-algebra/matrix-lu.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "4dc518620671bf45a324:1",
+      "file": "src/lib/linear-algebra/matrix-multi-rhs.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "b5e17567c375a2c99b7a:1",
+      "file": "src/lib/linear-algebra/matrix-multi-rhs.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "443a61e03d5aa2dd7511:1",
+      "file": "src/lib/linear-algebra/matrix-multi-rhs.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "65232b92a4e2d83a458b:1",
+      "file": "src/lib/linear-algebra/matrix-qr.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "aa08002aec5f335c48a3:1",
+      "file": "src/lib/linear-algebra/matrix-qr.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "7725648da9b59f2872e9:1",
+      "file": "src/lib/linear-algebra/matrix-qr.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "eee6e217820930d41404:1",
+      "file": "src/lib/linear-algebra/matrix-spaces.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "6380072e1acec6376de8:1",
+      "file": "src/lib/linear-algebra/matrix-spaces.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "aaf689f09399db59823e:1",
+      "file": "src/lib/linear-algebra/matrix-system.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "14df955bcf0e585aa7f5:1",
+      "file": "src/lib/linear-algebra/matrix-system.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "61f4da62fb73b14ac021:1",
+      "file": "src/lib/linear-algebra/matrix-system.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "8acdf21b2c27293b8cef:1",
+      "file": "src/lib/linear-algebra/matrix-system.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "332b63cf24a0a1214324:1",
+      "file": "src/lib/linear-algebra/matrix.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "aca145b4d0265f895f6c:1",
+      "file": "src/lib/linear-algebra/matrix.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "9896f4780a93affc5d2a:1",
+      "file": "src/lib/linear-algebra/matrix.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "d39c37d26e67296cd806:1",
+      "file": "src/lib/linear-algebra/matrix.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "0ce175ad3895f369280c:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "e037ff355505a0b99c66:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "22fa7bccf0cd1db2b7ee:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "5a1a8380034227eb0a57:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "5a1a8380034227eb0a57:2",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "5a1a8380034227eb0a57:3",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "5a1a8380034227eb0a57:4",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "5a1a8380034227eb0a57:5",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "bbb249e46d0d02c38dcd:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "a3e5b0e1de8d770b50c8:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "00c6341e8fe3e87e7967:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "8db05a980ee50e8d68de:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "43a3858fe910dc648456:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "6f78bcc817bf317c4448:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "98b58e7fab228e766bc9:1",
+      "file": "src/lib/linear-algebra/vector.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "linear-algebra",
+      "fallbackId": "linear-algebra-result-v1"
+    },
+    {
+      "id": "11ecf0b033c4620aa0bb:1",
+      "file": "src/lib/modes/equation/complex-abs-boundary.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "7d914fba29a285965eae:1",
+      "file": "src/lib/modes/equation/complex-mixed-algebraic-wrapper-route.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "a67f5773c0ed0918399c:1",
+      "file": "src/lib/modes/equation/complex-numeric-polynomial-roots.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "caec7ab5aa968891163a:1",
+      "file": "src/lib/modes/equation/complex-region-nonlinear-solve.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "70548fb92d45e452378c:1",
+      "file": "src/lib/modes/equation/deterministic-numeric-algebraic.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "6a2302bccdffb3c616d7:1",
+      "file": "src/lib/modes/equation/guided-polynomial.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "1a115997e28a4b082250:1",
+      "file": "src/lib/modes/equation/real-nonlinear-numeric-search.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "943696b66dfb50a4bb33:1",
+      "file": "src/lib/modes/equation/real-piecewise-abs-hybrid.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "dac2167b9f93419c0761:1",
+      "file": "src/lib/modes/equation/symbolic-parameterized-exact.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "equation",
+      "fallbackId": "equation-result-v1"
+    },
+    {
+      "id": "40a02b85da1a7a130869:1",
+      "file": "src/lib/numeric/real-numeric-eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculate",
+      "fallbackId": "calculate-result-v1"
+    },
+    {
+      "id": "6f540182e4bb33d54939:1",
+      "file": "src/lib/numeric/real-numeric-eval.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "calculate",
+      "fallbackId": "calculate-result-v1"
+    },
+    {
+      "id": "b20eb1d871fbcb04b27d:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "dcfe029fca82319b21b5:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "eb855398ec150acdbb8e:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "04b5e4eeb4328156f17d:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "0da6f8654fb48ed9be8b:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "d185efcc9c5045b25f45:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "e6605b01610552a823c6:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "e9829980ce61de5c7caa:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "7382d9c9d3fefdf22207:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "542505d2c66ab0924e52:1",
+      "file": "src/lib/statistics/core.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "statistics",
+      "fallbackId": "statistics-result-v1"
+    },
+    {
+      "id": "e73aeaa07081c747bae5:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/inverse-readback.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "3dc5f12e1ae822621a12:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/inverse-readback.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "1ea7c47f71fb60bac4f3:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/inverse-readback.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "7220332115bad85475bc:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/rational-in-radical.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "5a91ff6ddda1ebb829f7:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/symbolic-standard-radicals.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "e9d6ba6a58b97641f6af:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/symbolic-standard-radicals.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "32e8379d495e7374ed7a:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus0/symbolic-standard-radicals.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "7654152ca81385abc36e:1",
+      "file": "src/lib/symbolic-engine/integration/algebraic-genus1/rational-in-radical-hermite.ts",
+      "property": "answerLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "fb5f95c160b184913896:1",
+      "file": "src/lib/symbolic-engine/integration/numeric-base-exponential-parts.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "6baa5408c71375482814:1",
+      "file": "src/lib/symbolic-engine/integration/rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "c9ebb7bfa8b243c224bd:1",
+      "file": "src/lib/symbolic-engine/integration/rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "576c57cff20af0b70f0d:1",
+      "file": "src/lib/symbolic-engine/integration/rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "3bb80a0d0e3f9ac0cbe7:1",
+      "file": "src/lib/symbolic-engine/integration/rational.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "8876fe5ea51d8c665ed7:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/affine-rational-correction.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "947121d7ac66cd2d5d50:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/depth2-substitution.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "efc73b62a7d827506d91:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/exp-sincos-ansatz.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "f5d5c335f64eef9135ba:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/exponential-ansatz.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "c06b902899fae553238e:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/hermite-reduction.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "29029da45bde8c9a875d:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/log-correction.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "09d6f825f87187baa890:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/log-rational-correction.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "2df4342550a0e889b787:1",
+      "file": "src/lib/symbolic-engine/integration/risch-norman/sincos-ansatz.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "e602e26a4555d1e4aff5:1",
+      "file": "src/lib/symbolic-engine/integration/transcendental-certificate/quotient-powers.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "4aa07e262dd02b3df414:1",
+      "file": "src/lib/symbolic-engine/integration/transcendental-certificate/result-shape.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "469a9a71b060e74b7d78:1",
+      "file": "src/lib/symbolic-engine/integration/transcendental-certificate/special-functions.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "098d88a122d0e437ecd4:1",
+      "file": "src/lib/symbolic-engine/integration/transcendental-rde.ts",
+      "property": "solutionLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "d7a7e4d282d60f616eec:1",
+      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "5fcd531844f5f69823bf:1",
+      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "a34f8c97f743b2f20cb8:1",
+      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "0391edadaddaf1377355:1",
+      "file": "src/lib/symbolic-engine/integration/trig-derivative-products.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "4a261e9ac3305e4080a9:1",
+      "file": "src/lib/symbolic-engine/integration/trig-substitution-radicals.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "1f002770c8e562af59df:1",
+      "file": "src/lib/symbolic-engine/integration/trig-substitution-radicals.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "b78ecaf438dd7ccceac9:1",
+      "file": "src/lib/symbolic-engine/limits/abs-side-behavior.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "8e3bc9c6266723c780c3:1",
+      "file": "src/lib/symbolic-engine/limits/complex-domain.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "0c4004569699283cbba0:1",
+      "file": "src/lib/symbolic-engine/limits/evaluation.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "325659adf35ce4a28c77:1",
+      "file": "src/lib/symbolic-engine/limits/exact-local-algebra.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "b013e3bc63c152436e06:1",
+      "file": "src/lib/symbolic-engine/limits/finite-leading-terms.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "b013e3bc63c152436e06:2",
+      "file": "src/lib/symbolic-engine/limits/finite-leading-terms.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "b128a69d0ad54688b6d7:1",
+      "file": "src/lib/symbolic-engine/limits/finite-leading-terms.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "07a50f4682fdca1ff390:1",
+      "file": "src/lib/symbolic-engine/limits/finite-leading-terms.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "e9583f700ca272b2625e:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-foundation.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "f3e9b30556ff5b2a7ad3:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-foundation.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "ab609fc66d0eb85ff5bf:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-recursive-evaluator.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "c71bb6965d68a44e11a6:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-recursive-evaluator.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "92230e730dc4dc4db409:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-sign-extraction.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "e0eee59b3b1a687c2706:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-sign-extraction.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "cbe63adde0e9fb77c3ad:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-sign-extraction.ts",
+      "property": "resultLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "6996b4edb8825070c426:1",
+      "file": "src/lib/symbolic-engine/limits/gruntz-sign-extraction.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "bd8ecb60d0546256197e:1",
+      "file": "src/lib/symbolic-engine/limits/infinity-scale-terms.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "1d176fb727748735d55c:1",
+      "file": "src/lib/symbolic-engine/limits/infinity-scale-terms.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "059740d31aa6ff6f66e1:1",
+      "file": "src/lib/symbolic-engine/limits/known-rules.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "4fa2de07342f7dfa22fe:1",
+      "file": "src/lib/symbolic-engine/limits/lhospital.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "689f3cc31a4096f55cee:1",
+      "file": "src/lib/symbolic-engine/limits/lhospital.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "88316de233cdce1ff825:1",
+      "file": "src/lib/symbolic-engine/limits/lhospital.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "87f3ce5990eb34d5a9fd:1",
+      "file": "src/lib/symbolic-engine/limits/lhospital.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "f27fac4c696582fde06c:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "d83dd216ac291ac22a94:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "f27fac4c696582fde06c:2",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "d83dd216ac291ac22a94:2",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "06ad9079653f4fea045c:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "c822e383922d86e1b8ab:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "6d8ef309f519b86135a5:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "81401eab7952cf158bc6:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "d3651b24f597b86e1549:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "d196a4277bd00575cb61:1",
+      "file": "src/lib/symbolic-engine/limits/mrv-lite.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "951ea566b9bc1fba1305:1",
+      "file": "src/lib/symbolic-engine/limits/piecewise-limits.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "756be336ec3d65da7ea2:1",
+      "file": "src/lib/symbolic-engine/limits/squeeze-oscillation.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-limits",
+      "fallbackId": "symbolic-limits-result-v1"
+    },
+    {
+      "id": "1de87a2ead99ddbb1411:1",
+      "file": "src/lib/symbolic-engine/orchestrator.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "829302ea35a3f396b02d:1",
+      "file": "src/lib/symbolic-engine/orchestrator.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "a3ba2af4637be6544cff:1",
+      "file": "src/lib/symbolic-engine/partials.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "symbolic-integration",
+      "fallbackId": "symbolic-integration-result-v1"
+    },
+    {
+      "id": "a23ba8ab3953ec905da3:1",
+      "file": "src/lib/trigonometry/equations.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    },
+    {
+      "id": "a1eb7b8901b313091045:1",
+      "file": "src/lib/trigonometry/equations.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    },
+    {
+      "id": "0ceeb8b1e1f8c7aa9065:1",
+      "file": "src/lib/trigonometry/functions.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    },
+    {
+      "id": "68d4f572dbfcc2c59af3:1",
+      "file": "src/lib/trigonometry/functions.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    },
+    {
+      "id": "55db9df8723b8a22e7a0:1",
+      "file": "src/lib/trigonometry/functions.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    },
+    {
+      "id": "ce8291187510b55752b1:1",
+      "file": "src/lib/trigonometry/functions.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    },
+    {
+      "id": "385c1349b090f8c1a946:1",
+      "file": "src/lib/trigonometry/period-phase.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    },
+    {
+      "id": "ab81ea5510f2d9da528e:1",
+      "file": "src/lib/trigonometry/triangles.ts",
+      "property": "exactLatex",
+      "sourceKind": "property",
+      "lane": "trigonometry",
+      "fallbackId": "trigonometry-result-v1"
+    }
+  ]
+}
