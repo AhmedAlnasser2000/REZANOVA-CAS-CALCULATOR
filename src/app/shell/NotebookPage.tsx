@@ -19,7 +19,6 @@ import type {
   SyntheticEvent,
 } from 'react';
 import { useState } from 'react';
-import { MathEditor } from '../../components/MathEditor';
 import { MathStatic } from '../../components/MathStatic';
 import {
   NOTEBOOK_PACKAGE_BOUNDARY,
@@ -45,6 +44,10 @@ import {
   type NotebookWorkspaceTarget,
 } from '../../lib/notebook';
 import type { WorkspaceInstanceStateSlot } from '../runtime/workspace-instances';
+import {
+  NotebookMathField,
+  NotebookMathFieldProvider,
+} from './notebook/math-field';
 
 type NotebookPageProps = {
   instanceId: string;
@@ -182,11 +185,13 @@ function renderInlineMathPreview(
     }
     fragments.push(
       <span className="notebook-inline-math" key={span.id}>
-        <MathEditor
+        <NotebookMathField
           className="notebook-inline-math-editor"
           dataTestId={`notebook-inline-math-${index}`}
-          modeId={span.mode}
+          nodeId={span.id}
+          role="inline"
           value={span.normalizedLatex}
+          workspaceTarget={span.mode}
           onChange={(latex) => onUpdateSpan(span.id, latex)}
         />
       </span>,
@@ -324,12 +329,14 @@ function NotebookMathBlockView({
         <small>{targetLabel(block.workspaceTarget)}</small>
       </header>
       <div className="notebook-math-editor-row">
-        <MathEditor
+        <NotebookMathField
           className="notebook-math-editor"
           dataTestId="notebook-math-editor"
-          modeId={block.workspaceTarget}
+          nodeId={block.id}
           placeholder="Enter math"
+          role="display"
           value={block.latex}
+          workspaceTarget={block.workspaceTarget}
           onChange={(latex) => onChange({ ...block, latex })}
           onSubmit={() => {
             if (canOpen) {
@@ -562,6 +569,7 @@ export function NotebookPage({
   }
 
   return (
+    <NotebookMathFieldProvider>
     <section className="app-page app-page--notebook" data-testid="notebook-page">
       <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
       <div className="notebook-page-workbench">
@@ -636,5 +644,6 @@ export function NotebookPage({
         <span>Mode: N/A (Page Surface)</span>
       </footer>
     </section>
+    </NotebookMathFieldProvider>
   );
 }

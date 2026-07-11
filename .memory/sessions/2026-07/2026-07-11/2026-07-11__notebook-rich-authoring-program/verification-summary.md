@@ -17,10 +17,10 @@
 ## Verified Gates
 
 - `NOTEBOOK-RICH-DOCUMENT-MODEL1`: backend pass.
+- `NOTEBOOK-MATH-FIELD-ACTIVATION1`: ui pass; shared file-size gate externally blocked by the concurrent result-contract lane.
 
 ## Program Verification Still Required
 
-- Notebook-local math-field activation and focus ownership.
 - Custom adaptive authoring keyboard.
 - Continuous inline/display math canvas.
 - Academic containers, outline, reordering, drawers, scale/contrast, performance, and Chromium design QA.

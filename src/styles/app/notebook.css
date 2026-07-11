@@ -289,6 +289,15 @@
   background: transparent;
 }
 
+.app-page--notebook .notebook-math-field::part(virtual-keyboard-toggle) {
+  display: none;
+}
+
+.app-page--notebook .notebook-math-field {
+  --caret-color: #d7dfab;
+  --selection-background-color: rgba(184, 212, 156, 0.25);
+}
+
 .notebook-math-candidates,
 .notebook-accepted-spans {
   display: grid;

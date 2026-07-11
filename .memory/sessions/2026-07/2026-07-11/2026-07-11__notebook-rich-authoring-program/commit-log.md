@@ -19,8 +19,17 @@
 
 ## NOTEBOOK-RICH-DOCUMENT-MODEL1
 
+- commit_hash: `f16e149b`
 - commit_message: `NOTEBOOK-RICH-DOCUMENT-MODEL1`
 - scope: version-2 document contract, version-1 migration, starter templates, persistence port, exact Tiptap pins, license gate, focused tests, and durable memory
 - approval: explicitly approved as the first of five commits in the Notebook Rich Authoring Program
 - push: not authorized
 - excluded: active History persistence files and untracked `test-results/`
+
+## NOTEBOOK-MATH-FIELD-ACTIVATION1
+
+- commit_message: `NOTEBOOK-MATH-FIELD-ACTIVATION1`
+- scope: Notebook-owned MathLive field wrapper, active-field coordinator, scoped toggle suppression, focused UI tests, and durable memory
+- approval: explicitly approved as the second of five commits in the Notebook Rich Authoring Program
+- push: not authorized
+- excluded: concurrent result-contract files and untracked `test-results/`

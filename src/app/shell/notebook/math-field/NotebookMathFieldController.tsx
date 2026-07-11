@@ -1,0 +1,84 @@
+import type { MathfieldElement } from 'mathlive';
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import {
+  NotebookMathFieldContext,
+  type ActiveNotebookMathField,
+  type NotebookMathFieldController,
+  type NotebookMathFieldRole,
+} from './notebookMathFieldContext';
+
+function focusField(field: MathfieldElement) {
+  field.focus();
+}
+
+export function NotebookMathFieldProvider({ children }: { children: ReactNode }) {
+  const [active, setActive] = useState<ActiveNotebookMathField | null>(null);
+
+  const activate = useCallback((
+    field: MathfieldElement,
+    nodeId: string,
+    role: NotebookMathFieldRole,
+  ) => {
+    setActive((current) =>
+      current?.field === field && current.nodeId === nodeId && current.role === role
+        ? current
+        : { field, nodeId, role });
+  }, []);
+
+  const release = useCallback((field: MathfieldElement) => {
+    setActive((current) => current?.field === field ? null : current);
+  }, []);
+
+  const focusActive = useCallback(() => {
+    if (!active?.field.isConnected) {
+      return false;
+    }
+    focusField(active.field);
+    return true;
+  }, [active]);
+
+  const insert = useCallback((latex: string) => {
+    if (!active?.field.isConnected || !latex) {
+      return false;
+    }
+    const inserted = active.field.insert(latex, {
+      focus: true,
+      mode: 'math',
+      selectionMode: 'placeholder',
+    });
+    focusField(active.field);
+    return inserted;
+  }, [active]);
+
+  const execute = useCallback((command: string | [string, ...unknown[]]) => {
+    if (!active?.field.isConnected) {
+      return false;
+    }
+    const runCommand = active.field.executeCommand as (
+      nextCommand: string | [string, ...unknown[]],
+    ) => boolean;
+    const executed = runCommand.call(active.field, command);
+    focusField(active.field);
+    return executed;
+  }, [active]);
+
+  const value = useMemo<NotebookMathFieldController>(() => ({
+    active,
+    activate,
+    execute,
+    focusActive,
+    insert,
+    release,
+  }), [active, activate, execute, focusActive, insert, release]);
+
+  return (
+    <NotebookMathFieldContext.Provider value={value}>
+      {children}
+    </NotebookMathFieldContext.Provider>
+  );
+}

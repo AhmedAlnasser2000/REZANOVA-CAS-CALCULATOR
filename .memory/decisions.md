@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-11 - NOTEBOOK-MATH-FIELD-ACTIVATION1
+
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook owns its math-field activation and keyboard focus boundary. Notebook fields use MathLive with manual virtual-keyboard policy, hide the built-in keyboard toggle only under the Notebook page, and expose insertion/command operations through a local active-field coordinator without changing shared MathEditor or global MathLive layouts.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] The Notebook active field remains registered across ordinary focus transfer to custom authoring controls and is released only when its field unmounts or another Notebook math field activates. This supports focus-safe custom keyboard input without mounting a second execution authority.
+
 ## 2026-07-11 - NOTEBOOK-RICH-DOCUMENT-MODEL1
 
 - [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook rich authoring uses a versioned app-owned JSON document tree. Tiptap and ProseMirror remain replaceable editor implementation details; their runtime objects and package-native JSON types do not become Notebook package, persistence, Surface Protocol, or external contracts.
