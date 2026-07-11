@@ -132,7 +132,11 @@ export function DisplayPreviewSurface({
       ) : hasExpressionPreview ? (
         <div className="display-card-content" data-testid="display-expression-preview-card">
           <div className="display-card-actions">
-            <button onClick={() => void copyText(activeExpressionLatex(), 'Expression copied')}>
+            <button onClick={() => void copyText(
+              activeExpressionLatex(),
+              'Expression copied',
+              'workspace-expression',
+            )}>
               Copy Expr
             </button>
             {currentMode === 'geometry' || currentMode === 'trigonometry' ? (

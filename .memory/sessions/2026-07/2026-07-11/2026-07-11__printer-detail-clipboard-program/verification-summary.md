@@ -16,12 +16,11 @@
 
 ## Current Verified Gate
 
-- `CLIPBOARD-CANONICAL1`: backend/browser/Tauri contract plus visible Display integration passed.
-- Focused contract evidence: 13 native tests, six browser-adapter UI tests, and two setup-audit tests passed.
-- Real host evidence: two Chromium clipboard tests passed; one Tauri Linux plugin test passed; live desktop WebView copy exposed `text/html` and UTF-8 text targets and returned canonical text through external X11 readback.
-- Security/capability evidence: malformed, mismatched, oversized, unknown-field, invalid-MathJSON, browser-permission, custom-MIME, HTML-only, text-only, native-event, and Tauri fallback paths passed. Tauri grants exactly read-text, write-text, and write-html.
-- Cross-workspace evidence: 12 printer tests, 44 golden tests, 185-fragment print hygiene, all 100 replay fixtures, 124 native plus 37 UI feature probes, 3,531 full unit tests, and 447 full UI tests passed.
-- Runtime probes passed 19; workspace runtime contracts passed 74; app runtime passed 54 native plus 140 UI; Display passed 132 native plus 21 UI; app-state passed 52.
+- `CLIPBOARD-PIPELINE-RATCHET1`: backend routing, browser/Tauri adapters, app-level copy/paste integration, and direct-API ratchet passed.
+- Focused contract evidence: 27 native tests, 32 UI tests, and three source/capability audit tests passed; the production direct Clipboard API violation count is zero.
+- Real host evidence: two Chromium clipboard tests passed, including visible `x^(1/6)` copy followed by exact canonical `x^{\frac{1}{6}}` app Paste; four Matrix/Vector naturalization browser tests and one Tauri Linux fallback test passed.
+- Cross-workspace evidence: 12 printer tests, 44 golden tests, 185-fragment print hygiene, all 100 replay fixtures, 124 native plus 37 UI feature probes, 3,537 full unit tests, and 448 full UI tests passed.
+- Runtime probes passed 19; workspace runtime contracts passed 74; app runtime passed 59 native plus 140 UI; app-state passed 52. All nine History create/replay browser flows passed.
 - Surface Protocol, OOE, compartments, app identity, CI alignment, seam selection, printer migration, file size, TypeScript, production build, lint, Cargo check, and diff hygiene passed.
 - `npm run test:canaries:browser`: all 19 Chromium canaries passed in 1.2 minutes.
-- Visual evidence: the real Chromium plain-text result and live Tauri `2+2` result/copy status were inspected without overlap or overflow.
+- Visual evidence: canonical Calculate paste plus Matrix and Vector naturalized paste/result surfaces were inspected without overlap, stale preview, or overflow.

@@ -22,7 +22,7 @@
     "test:printer-migration": "node --test tools/printer-migration-ratchet.test.mjs && node tools/printer-migration-ratchet.mjs",
     "report:printer-migration": "node tools/printer-migration-ratchet.mjs",
     "update:printer-migration": "node tools/printer-migration-ratchet.mjs --write-baseline",
-    "test:clipboard-contract": "vitest run src/lib/clipboard/envelope.test.ts src/lib/clipboard/tauri-adapter.test.ts src/lib/clipboard/capabilities.test.ts src/app/logic/displayClipboard.test.ts && vitest run --config vitest.ui.config.ts src/lib/clipboard/browser-adapter.ui.test.ts && node --test tools/clipboard-capability-audit.test.mjs && node tools/clipboard-capability-audit.mjs",
+    "test:clipboard-contract": "vitest run src/lib/clipboard/envelope.test.ts src/lib/clipboard/tauri-adapter.test.ts src/lib/clipboard/capabilities.test.ts src/app/logic/displayClipboard.test.ts src/app/logic/clipboardPipeline.test.ts src/app/logic/expressionRouting.test.ts && vitest run --config vitest.ui.config.ts src/lib/clipboard/browser-adapter.ui.test.ts src/components/MathEditor.ui.test.tsx src/app/shell/ActiveSurfaceHost.ui.test.tsx && node --test tools/clipboard-capability-audit.test.mjs && node tools/clipboard-capability-audit.mjs",
     "test:clipboard-capability": "playwright test e2e/clipboard-capability-audit.spec.ts --project=chromium",
     "test:clipboard-tauri": "cargo test --manifest-path src-tauri/Cargo.toml --test clipboard_linux -- --nocapture",
     "update:print-hygiene": "vite-node tools/update-print-hygiene.ts",

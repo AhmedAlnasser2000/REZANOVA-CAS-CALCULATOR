@@ -159,7 +159,7 @@ Verified matrix: real Chromium reads and writes the custom web MIME, HTML, and p
 
 ### B1. `CLIPBOARD-CANONICAL1`
 
-Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+Status: committed as `586795b0` on `2026-07-11`.
 
 - Add `src/lib/clipboard/` with pure envelope encode/decode plus environment adapters.
 - Use a versioned envelope such as `web application/x-calcwiz-math+json`, mirrored in inert `text/html` metadata where supported.
@@ -172,6 +172,8 @@ Implemented contract: `MathClipboardEnvelopeV1` has exact schema/version validat
 
 ### B2. `CLIPBOARD-PIPELINE-RATCHET1`
 
+Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+
 - Route Display, Formula Viewer, full History, Guide/workspace expression copy, diagnostics prose, app Paste, and `MathEditor` paste events through shared math/text APIs.
 - Keep existing prop callbacks initially; do not bundle a broad hook/prop-drilling refactor unless required by the AppMain file-size gate.
 - Resolve or remove the unused duplicate `expressionRouting.ts` paste implementation rather than maintaining two authorities.
@@ -179,6 +181,8 @@ Implemented contract: `MathClipboardEnvelopeV1` has exact schema/version validat
 - Preserve Matrix/Vector paste naturalization and every workspace's current editor routing.
 - Ratchet direct `navigator.clipboard` use outside the shared adapter to zero. Event `DataTransfer` access must delegate decoding to the shared module.
 - Pin plain-text notation Copy Result -> same-editor Paste for the current `x^{\frac{1}{6}}` loss case, cross-workspace History copy/paste, malformed/oversized envelope fallback, and all eligible golden/canary answers.
+
+Implemented contract: Display, Formula Viewer, History, Guide/workspace expressions, diagnostics, programmatic Paste, and native `MathEditor` paste now route through the shared Clipboard district. `expressionRouting.ts` is the only app-level paste router; validated rich envelopes preserve canonical LaTeX without reparsing, while text-only inputs retain existing per-workspace canonicalization and Matrix/Vector naturalization. A source audit rejects direct production Clipboard API, Tauri-plugin, legacy copy-command, or raw paste-event access outside `src/lib/clipboard/`; its current floor is zero. AppMain shrank to 3,306 lines and its cap lowered to match.
 
 ## Arc C: Canonical Detail Segments
 

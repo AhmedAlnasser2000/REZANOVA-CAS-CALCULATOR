@@ -23,6 +23,7 @@ import {
 } from './math-editor-keyflow';
 import { buildInlineShortcutOverrides } from './math-editor-shortcuts';
 import { useEditorAnalysisControl } from '../lib/editor/editor-analysis-control';
+import { readMathClipboardEvent } from '../lib/clipboard';
 
 type MathEditorProps = {
   value: string;
@@ -171,13 +172,17 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
       };
 
       const handlePaste = (event: ClipboardEvent) => {
-        const text = event.clipboardData?.getData('text/plain');
-        if (!text) {
+        const readResult = readMathClipboardEvent(event);
+        const text = readResult.ok ? readResult.canonicalLatex : readResult.textFallback;
+        if (!text?.trim()) {
           return;
         }
 
-        let nextLatex = onPasteCanonicalize ? onPasteCanonicalize(text) ?? text : text;
-        if (!onPasteCanonicalize && modeId) {
+        const hasCanonicalEnvelope = readResult.ok && readResult.source !== 'text';
+        let nextLatex = text;
+        if (!hasCanonicalEnvelope && onPasteCanonicalize) {
+          nextLatex = onPasteCanonicalize(text) ?? text;
+        } else if (!hasCanonicalEnvelope && modeId) {
           const canonicalized = canonicalizeMathInput(text, {
             mode: modeId,
             screenHint,
@@ -185,7 +190,7 @@ const MathEditorInner = forwardRef<MathfieldElement, MathEditorProps>(
           });
           nextLatex = canonicalized.ok ? canonicalized.canonicalLatex : text;
         }
-        if (nextLatex === text) {
+        if (!hasCanonicalEnvelope && nextLatex === text) {
           return;
         }
 

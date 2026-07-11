@@ -71,10 +71,7 @@ import {
   getCalculusMenuEntryByHotkey,
   getCalculusSoftActions,
 } from './lib/calculus/workspace/navigation';
-import {
-  canonicalizeMathInput,
-  trimHarmlessTrailingMathSpacing,
-} from './lib/input/input-canonicalization';
+import { trimHarmlessTrailingMathSpacing } from './lib/input/input-canonicalization';
 import {
   getGeometryMenuEntryByHotkey,
   getGeometryParentScreen,
@@ -91,8 +88,10 @@ import {
   mapLegacyCalculateScreenToCalculusScreen,
 } from './lib/calculus/calculus-identity';
 import { setNumericOutputSettings } from './lib/display/numeric-output';
-import { writeTextClipboard } from './lib/clipboard';
+import type { MathClipboardSurface } from './lib/clipboard';
 import { copyDisplayResultWithDeps } from './app/logic/displayClipboard';
+import { copyCanonicalMathWithDeps } from './app/logic/clipboardPipeline';
+import { pasteIntoEditorWithDeps } from './app/logic/expressionRouting';
 import {
   getCalculateSoftActions,
 } from './lib/modes/calculate-navigation';
@@ -1715,15 +1714,18 @@ export default function App() {
     return '';
   }
 
-  async function copyText(text: string, successNotice: string) {
-    const trimmed = text.trim();
-    if (!trimmed) {
-      setClipboardNotice('Nothing to copy');
-      return;
-    }
-
-    const copied = await writeTextClipboard(trimmed);
-    setClipboardNotice(copied ? successNotice : 'Clipboard blocked');
+  async function copyText(
+    text: string,
+    successNotice: string,
+    surface: MathClipboardSurface = currentMode === 'guide' ? 'guide' : 'workspace-expression',
+  ) {
+    await copyCanonicalMathWithDeps({
+      canonicalLatex: text,
+      successNotice,
+      surface,
+      setClipboardNotice,
+      ...(surface === 'history' || surface === 'formula-viewer' ? {} : { mode: currentMode }),
+    });
   }
 
   async function copyActiveResult() {
@@ -1842,79 +1844,35 @@ export default function App() {
   }
 
   async function pasteIntoEditor() {
-    try {
-      if (!navigator.clipboard?.readText) {
-        setClipboardNotice('Paste unavailable');
-        return;
-      }
-
-      const text = await navigator.clipboard.readText();
-      const isLinearAlgebraPaste = currentMode === 'matrix' || currentMode === 'vector';
-      const linearAlgebraPasteLatex = currentMode === 'matrix'
-        ? linearAlgebraRuntime.canonicalizeMatrixEditorPaste(text)
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen,
+      currentMode,
+      geometryEditorIsEditable,
+      statisticsEditorIsEditable,
+      trigEditorIsEditable,
+      equationScreen,
+      activeFieldRef,
+      geometryDraftFieldRef,
+      statisticsDraftFieldRef,
+      trigDraftFieldRef,
+      focusGeometryEditor,
+      focusStatisticsEditor,
+      focusTrigEditor,
+      setClipboardNotice,
+      loadLatexIntoEditor,
+      screenHint: currentMode === 'equation'
+        ? 'symbolic'
+        : isCalculusMode(currentMode)
+          ? calculusScreen
+          : currentMode === 'calculate'
+            ? calculateScreen
+            : 'standard',
+      canonicalizePastedText: currentMode === 'matrix'
+        ? (text) => linearAlgebraRuntime.canonicalizeMatrixEditorPaste(text)
         : currentMode === 'vector'
-          ? linearAlgebraRuntime.canonicalizeVectorEditorPaste(text)
-          : null;
-      const canonicalized = isLinearAlgebraPaste
-        ? null
-        : canonicalizeMathInput(text, {
-            mode: currentMode,
-            screenHint: currentMode === 'equation'
-              ? 'symbolic'
-              : isCalculusMode(currentMode)
-                ? calculusScreen
-                : currentMode === 'calculate'
-                  ? calculateScreen
-                  : 'standard',
-            liveAssist: true,
-          });
-      const mathText = isLinearAlgebraPaste
-        ? linearAlgebraPasteLatex ?? text
-        : canonicalized?.ok ? canonicalized.canonicalLatex : text;
-      if (
-        !isLauncherOpen &&
-        (currentMode === 'calculate' ||
-          isCalculusMode(currentMode) ||
-          currentMode === 'matrix' ||
-          currentMode === 'vector' ||
-          currentMode === 'trigonometry' ||
-          (currentMode === 'geometry' && geometryEditorIsEditable) ||
-          currentMode === 'statistics' ||
-          (currentMode === 'equation' && equationScreen === 'symbolic')) &&
-        activeFieldRef.current
-      ) {
-        (activeFieldRef.current as { focus?: (options?: FocusOptions) => void })
-          .focus?.({ preventScroll: true });
-        activeFieldRef.current.insert(mathText);
-        setClipboardNotice('Pasted into editor');
-        return;
-      }
-
-      if (currentMode === 'geometry' && geometryEditorIsEditable) {
-        focusGeometryEditor();
-        geometryDraftFieldRef.current?.insert(mathText);
-        setClipboardNotice('Pasted into Geometry editor');
-        return;
-      }
-
-      if (currentMode === 'statistics' && statisticsEditorIsEditable) {
-        focusStatisticsEditor();
-        statisticsDraftFieldRef.current?.insert(mathText);
-        setClipboardNotice('Pasted into Statistics editor');
-        return;
-      }
-
-      if (currentMode === 'trigonometry' && trigEditorIsEditable) {
-        focusTrigEditor();
-        trigDraftFieldRef.current?.insert(mathText);
-        setClipboardNotice('Pasted into Trigonometry editor');
-        return;
-      }
-
-      loadLatexIntoEditor(mathText);
-    } catch {
-      setClipboardNotice('Clipboard blocked');
-    }
+          ? (text) => linearAlgebraRuntime.canonicalizeVectorEditorPaste(text)
+          : undefined,
+    });
   }
 
   function commitVisibleModeSelection(mode: ModeId) {
@@ -2187,7 +2145,7 @@ export default function App() {
       openGuideSymbols: () => openGuideRoute({ screen: 'symbolLookup', query: '' }),
       openGuideModes: () => openGuideRoute({ screen: 'modeGuide' }),
       copyGuideExample: () => {
-        void copyText(copyableGuideExampleLatex(selectedGuideExample), 'Example copied');
+        void copyText(copyableGuideExampleLatex(selectedGuideExample), 'Example copied', 'guide');
       },
       loadGuideExample: () => launchGuideExample(selectedGuideExample),
       goBackInGuide,
@@ -2797,7 +2755,7 @@ export default function App() {
             menuPanelRef: guideMenuPanelRef,
             modeRef: guideModeRef ?? null,
             onCopyGuideExample: (example) =>
-              void copyText(copyableGuideExampleLatex(example), 'Example copied'),
+              void copyText(copyableGuideExampleLatex(example), 'Example copied', 'guide'),
             onLaunchGuideExample: launchGuideExample,
             onOpenGuideRoute: openGuideRoute,
             onSetCurrentSelectionIndex: setCurrentGuideSelectionIndex,
@@ -2809,7 +2767,7 @@ export default function App() {
             selectedGuideListEntry,
           }}
           history={history} modeLabels={MODE_LABELS}
-          onCopyResult={(latex) => void copyText(latex, 'Result copied')}
+          onCopyResult={(latex, surface) => void copyText(latex, 'Result copied', surface)}
           onDeleteHistoryEntry={deleteHistoryEntryById} onDeleteSelectedHistoryEntries={(ids) => ids.forEach(deleteHistoryEntryById)}
           onFocusTab={workspaceTabsRuntime.onFocusTab}
           onOpenNotebookMathInTool={openNotebookMathInTool}
@@ -3282,7 +3240,7 @@ export default function App() {
                 onSetCurrentSelectionIndex={setCurrentGuideSelectionIndex}
                 onSetGuideQuery={setGuideQuery}
                 onLaunchGuideExample={launchGuideExample}
-                onCopyGuideExample={(example) => void copyText(copyableGuideExampleLatex(example), 'Example copied')}
+                onCopyGuideExample={(example) => void copyText(copyableGuideExampleLatex(example), 'Example copied', 'guide')}
               />
             ) : null}
 

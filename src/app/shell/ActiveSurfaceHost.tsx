@@ -32,7 +32,7 @@ type ActiveSurfaceHostProps = {
   guide: GuideWorkspaceProps;
   history: HistoryEntry[];
   modeLabels: Record<ModeId, string>;
-  onCopyResult: (latex: string) => void;
+  onCopyResult: (latex: string, surface: 'history' | 'formula-viewer') => void;
   onDeleteHistoryEntry: (id: string) => void;
   onDeleteSelectedHistoryEntries: (ids: string[]) => void;
   onFocusTab: (instanceId: string) => void;
@@ -130,7 +130,7 @@ export function ActiveSurfaceHost({
           historyNotationMode={settings.historyPageNotationMode}
           pendingHistory={pendingHistory}
           modeLabels={modeLabels}
-          onCopyResult={onCopyResult}
+          onCopyResult={(latex) => onCopyResult(latex, 'history')}
           onDelete={onDeleteHistoryEntry}
           onDeleteSelected={onDeleteSelectedHistoryEntries}
           onReplay={onReplayHistoryEntry}
@@ -192,7 +192,7 @@ export function ActiveSurfaceHost({
       <FormulaViewerPage
         artifact={formulaViewerArtifact}
         onBackToSource={sourceId ? () => onFocusTab(sourceId) : undefined}
-        onCopyResult={onCopyResult}
+        onCopyResult={(latex) => onCopyResult(latex, 'formula-viewer')}
         sourceAvailable={sourceAvailable}
         symbolicDisplayPrefs={symbolicDisplayPrefs}
       />

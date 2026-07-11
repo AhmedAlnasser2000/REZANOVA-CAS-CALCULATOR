@@ -343,4 +343,65 @@ describe('expressionRouting', () => {
       'x\\arctan(x)+x^3\\arctan(x)+\\sinh^{2}(x)',
     );
   });
+
+  it('uses canonical envelope LaTeX for programmatic Paste without reparsing visible notation', async () => {
+    const insert = vi.fn();
+    const canonicalLatex = String.raw`x^{\frac{1}{6}}`;
+
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen: false,
+      currentMode: 'calculate',
+      geometryEditorIsEditable: false,
+      statisticsEditorIsEditable: false,
+      trigEditorIsEditable: false,
+      equationScreen: 'symbolic',
+      activeFieldRef: { current: { insert } },
+      geometryDraftFieldRef: { current: null },
+      statisticsDraftFieldRef: { current: null },
+      trigDraftFieldRef: { current: null },
+      focusGeometryEditor: vi.fn(),
+      focusStatisticsEditor: vi.fn(),
+      focusTrigEditor: vi.fn(),
+      setClipboardNotice: vi.fn(),
+      loadLatexIntoEditor: vi.fn(),
+      readClipboard: vi.fn().mockResolvedValue({
+        ok: true,
+        canonicalLatex,
+        mathJson: ['Power', 'x', ['Divide', 1, 6]],
+        metadata: { surface: 'display', mode: 'calculate' },
+        source: 'custom-mime',
+      }),
+    });
+
+    expect(insert).toHaveBeenCalledWith(canonicalLatex);
+  });
+
+  it('canonicalizes the safe text fallback when rich clipboard formats disagree', async () => {
+    const insert = vi.fn();
+
+    await pasteIntoEditorWithDeps({
+      isLauncherOpen: false,
+      currentMode: 'calculate',
+      geometryEditorIsEditable: false,
+      statisticsEditorIsEditable: false,
+      trigEditorIsEditable: false,
+      equationScreen: 'symbolic',
+      activeFieldRef: { current: { insert } },
+      geometryDraftFieldRef: { current: null },
+      statisticsDraftFieldRef: { current: null },
+      trigDraftFieldRef: { current: null },
+      focusGeometryEditor: vi.fn(),
+      focusStatisticsEditor: vi.fn(),
+      focusTrigEditor: vi.fn(),
+      setClipboardNotice: vi.fn(),
+      loadLatexIntoEditor: vi.fn(),
+      readClipboard: vi.fn().mockResolvedValue({
+        ok: false,
+        reason: 'mismatched',
+        textFallback: 'sqrt(x)+x^(1/3)',
+      }),
+    });
+
+    expect(insert).toHaveBeenCalledWith('\\sqrt{x}+x^{\\frac{1}{3}}');
+  });
 });

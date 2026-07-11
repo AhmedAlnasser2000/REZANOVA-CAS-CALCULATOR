@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { writeTextClipboard } from '../lib/clipboard';
 import {
   buildOoeDiagnosticsPanelSnapshot,
   clearOoeDiagnosticsPanelData,
@@ -38,7 +39,7 @@ const PANEL_TABS: Array<{ id: OoeDiagnosticsPanelTab; label: string }> = [
 ];
 
 async function defaultCopyText(text: string) {
-  await navigator.clipboard?.writeText(text);
+  await writeTextClipboard(text);
 }
 
 function summarizeList(values: readonly string[], emptyLabel = 'none') {

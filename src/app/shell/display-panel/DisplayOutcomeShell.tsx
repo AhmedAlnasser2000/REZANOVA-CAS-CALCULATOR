@@ -204,7 +204,11 @@ export function DisplayOutcomeShell({
                 <button onClick={() => launchGuideExample(selectedGuideExample)}>
                   Open in Tool
                 </button>
-                <button onClick={() => void copyText(copyableGuideExampleLatex(selectedGuideExample), 'Example copied')}>
+                <button onClick={() => void copyText(
+                  copyableGuideExampleLatex(selectedGuideExample),
+                  'Example copied',
+                  'guide',
+                )}>
                   Copy Expr
                 </button>
               </div>
@@ -416,7 +420,7 @@ export function DisplayOutcomeShell({
             onClick={() => void (
               typeof copyActiveResult === 'function'
                 ? copyActiveResult()
-                : copyText(activeResultCopyText(), 'Result copied')
+                : copyText(activeResultCopyText(), 'Result copied', 'display')
             )}
           >
             Copy Result

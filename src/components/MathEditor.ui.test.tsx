@@ -1,6 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { EditorAnalysisControlProvider } from '../lib/editor/editor-analysis-control-provider';
+import {
+  MATH_CLIPBOARD_MIME,
+  createMathClipboardEnvelope,
+} from '../lib/clipboard';
 import { MathEditor, MathEditorContainment } from './MathEditor';
 
 describe('MathEditor typing behavior', () => {
@@ -174,6 +178,42 @@ describe('MathEditor typing behavior', () => {
     expect(field.getValue()).toBe(
       '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)',
     );
+  });
+
+  it('prefers canonical envelope math over lossy visible text on native paste', () => {
+    const canonicalLatex = String.raw`x^{\frac{1}{6}}`;
+    const created = createMathClipboardEnvelope({
+      canonicalLatex,
+      visibleText: 'x^(1/6)',
+      mathJson: ['Power', 'x', ['Divide', 1, 6]],
+      metadata: { surface: 'display', mode: 'calculate' },
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    render(
+      <MathEditor
+        value=""
+        onChange={() => {}}
+        dataTestId="math-editor"
+        modeId="calculate"
+        screenHint="standard"
+      />,
+    );
+
+    const field = screen.getByTestId('math-editor') as HTMLElement & {
+      getValue: () => string;
+    };
+    fireEvent.paste(field, {
+      clipboardData: {
+        getData: (type: string) => ({
+          [MATH_CLIPBOARD_MIME]: created.serialized,
+          'text/plain': 'x^(1/6)',
+        })[type] ?? '',
+      },
+    });
+
+    expect(field.getValue()).toBe(canonicalLatex);
   });
 
   it('canonicalizes pasted grouped function quotients before insertion', () => {

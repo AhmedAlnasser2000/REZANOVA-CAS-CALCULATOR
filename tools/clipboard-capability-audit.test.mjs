@@ -7,11 +7,18 @@ import { auditClipboardCapabilitySetup } from './clipboard-capability-audit-core
 
 const roots = [];
 
-function fixture({ permissions, rustEntry = '', cargoDependency = true, jsDependency = true }) {
+function fixture({
+  permissions,
+  rustEntry = '',
+  cargoDependency = true,
+  jsDependency = true,
+  productionSource = '',
+}) {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), 'calcwiz-clipboard-audit-'));
   roots.push(rootDir);
   fs.mkdirSync(path.join(rootDir, 'src-tauri/capabilities'), { recursive: true });
   fs.mkdirSync(path.join(rootDir, 'src-tauri/src'), { recursive: true });
+  fs.mkdirSync(path.join(rootDir, 'src/components'), { recursive: true });
   fs.writeFileSync(path.join(rootDir, 'package.json'), JSON.stringify({
     dependencies: jsDependency ? { '@tauri-apps/plugin-clipboard-manager': '^2.3.2' } : {},
   }));
@@ -23,6 +30,7 @@ function fixture({ permissions, rustEntry = '', cargoDependency = true, jsDepend
   fs.writeFileSync(path.join(rootDir, 'src-tauri/capabilities/default.json'), JSON.stringify({
     permissions,
   }));
+  fs.writeFileSync(path.join(rootDir, 'src/components/ClipboardConsumer.tsx'), productionSource);
   return rootDir;
 }
 
@@ -54,5 +62,26 @@ describe('clipboard capability audit', () => {
     const report = auditClipboardCapabilitySetup({ rootDir });
     assert.equal(report.ok, false);
     assert.equal(report.errors.length, 4);
+  });
+
+  it('rejects direct production Clipboard API and paste-event access outside adapters', () => {
+    const rootDir = fixture({
+      permissions: [
+        'clipboard-manager:allow-read-text',
+        'clipboard-manager:allow-write-text',
+        'clipboard-manager:allow-write-html',
+      ],
+      rustEntry: 'tauri::Builder::default().plugin(tauri_plugin_clipboard_manager::init());',
+      productionSource: [
+        'navigator.clipboard.writeText("x");',
+        'const text = event.clipboardData.getData("text/plain");',
+      ].join('\n'),
+    });
+    const report = auditClipboardCapabilitySetup({ rootDir });
+    assert.equal(report.ok, false);
+    assert.deepEqual(
+      report.directApiViolations.map(({ authority }) => authority),
+      ['navigator.clipboard', 'clipboard event data'],
+    );
   });
 });

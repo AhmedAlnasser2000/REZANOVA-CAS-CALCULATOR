@@ -162,3 +162,9 @@ export function readMathClipboardData(data: DataTransfer | null): MathClipboardR
     data.getData('text/plain') || undefined,
   );
 }
+
+export function readMathClipboardEvent(
+  event: Pick<ClipboardEvent, 'clipboardData'>,
+): MathClipboardReadResult {
+  return readMathClipboardData(event.clipboardData);
+}

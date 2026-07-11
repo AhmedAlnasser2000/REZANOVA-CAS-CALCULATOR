@@ -212,7 +212,7 @@ describe('DisplayPanel result shell', () => {
     expect(validWhen.querySelector('[data-raw-latex]')).toBeNull();
 
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-    expect(copyText).toHaveBeenCalledWith(copyLatex, 'Result copied');
+    expect(copyText).toHaveBeenCalledWith(copyLatex, 'Result copied', 'display');
 
     fireEvent.click(within(validWhen).getByRole('button', { name: /show full result/i }));
     await waitFor(() => expectMathStaticLatex(
@@ -306,7 +306,7 @@ describe('DisplayPanel result shell', () => {
     ));
 
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied', 'display');
   });
 
   it('renders Real Cardano case answers as structured rows while preserving copy latex', async () => {
@@ -383,7 +383,7 @@ describe('DisplayPanel result shell', () => {
     });
 
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied', 'display');
   });
 
   it('renders grouped wrapper formula cases with scoped labels while preserving copy latex', async () => {
@@ -469,7 +469,7 @@ describe('DisplayPanel result shell', () => {
       ]).toHaveLength(0);
 
       fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-      expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+      expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied', 'display');
 
       fireEvent.click(screen.getByRole('button', { name: 'Show full formula cases' }));
 
@@ -511,7 +511,7 @@ describe('DisplayPanel result shell', () => {
 
       fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
       expect(copyText).toHaveBeenCalledTimes(2);
-      expect(copyText).toHaveBeenLastCalledWith(exactLatex, 'Result copied');
+      expect(copyText).toHaveBeenLastCalledWith(exactLatex, 'Result copied', 'display');
     } finally {
       window.requestAnimationFrame = originalRequestAnimationFrame;
       window.cancelAnimationFrame = originalCancelAnimationFrame;
@@ -588,7 +588,7 @@ describe('DisplayPanel result shell', () => {
     expect(compactPreview.querySelector('[data-raw-latex]')).toBeNull();
 
     fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+    expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied', 'display');
 
     fireEvent.click(within(compactPreview).getByRole('button', { name: 'Open Formula Viewer' }));
 
@@ -724,7 +724,7 @@ describe('DisplayPanel result shell', () => {
       });
 
       fireEvent.click(screen.getByTestId('display-outcome-action-copy-result'));
-      expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied');
+      expect(copyText).toHaveBeenCalledWith(exactLatex, 'Result copied', 'display');
     } finally {
       window.requestAnimationFrame = originalRequestAnimationFrame;
       window.cancelAnimationFrame = originalCancelAnimationFrame;

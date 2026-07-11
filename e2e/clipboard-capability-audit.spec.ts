@@ -2,6 +2,7 @@ import { mkdir } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import {
   closeSidePanelIfOpen,
+  getMathFieldLatex,
   openSettingsPanel,
   setMathFieldLatex,
 } from './helpers';
@@ -85,8 +86,21 @@ test('Display copy keeps visible plain text beside the exact canonical envelope'
     metadata: { surface: 'display', mode: 'calculate' },
   });
   expect(copied.html).toContain('data-calcwiz-math-envelope');
+
+  await page.reload();
+  await setMathFieldLatex(page, 'y');
+  await page.getByTestId('main-editor').evaluate((element) => {
+    (element as HTMLElement & { executeCommand?: (command: string) => void })
+      .executeCommand?.('selectAll');
+  });
+  await expect(page.getByRole('button', { name: 'Paste' }).first()).toBeVisible();
+  await page.getByRole('button', { name: 'Paste' }).first().click();
+  await expect.poll(() => getMathFieldLatex(page)).toBe(String.raw`x^{\frac{1}{6}}`);
+  await expect(
+    page.getByTestId('display-expression-preview-card').locator('[data-raw-latex]'),
+  ).toHaveAttribute('data-raw-latex', String.raw`x^{\frac{1}{6}}`);
   await page.screenshot({
     fullPage: true,
-    path: `${SCREENSHOT_DIR}/b1-canonical-clipboard.png`,
+    path: `${SCREENSHOT_DIR}/b2-canonical-copy-paste.png`,
   });
 });

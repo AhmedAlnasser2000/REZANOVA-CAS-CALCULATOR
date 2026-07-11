@@ -159,7 +159,7 @@ describe('ActiveSurfaceHost', () => {
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Copy Result' }));
-    expect(onCopyResult).toHaveBeenCalledWith('x=1');
+    expect(onCopyResult).toHaveBeenCalledWith('x=1', 'formula-viewer');
 
     fireEvent.click(screen.getByRole('button', { name: 'Back to source' }));
     expect(onFocusTab).toHaveBeenCalledWith('equation.1');
@@ -203,10 +203,12 @@ describe('ActiveSurfaceHost', () => {
   });
 
   it('renders History as a page surface outside the calculator shell', () => {
+    const onCopyResult = vi.fn();
     render(
       <ActiveSurfaceHost
         {...activeSurfaceHostProps()}
         activeInstance={createWorkspaceInstance('history', 3)}
+        onCopyResult={onCopyResult}
         history={[
           {
             id: 'history.1',
@@ -223,6 +225,10 @@ describe('ActiveSurfaceHost', () => {
     expect(pageSurface).toHaveAttribute('data-surface-kind', 'history');
     expect(pageSurface).toContainElement(screen.getByTestId('history-page'));
     expect(screen.queryByTestId('calculator-shell')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('history-page-row'));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy Result' }));
+    expect(onCopyResult).toHaveBeenCalledWith('x=1', 'history');
   });
 
   it('renders Guide as a page surface outside the calculator shell', () => {

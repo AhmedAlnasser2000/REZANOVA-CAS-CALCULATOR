@@ -1,6 +1,7 @@
 import type { CalculateScreen, EquationScreen, ModeId } from '../../types/calculator';
 import { canonicalizeMathInput } from '../../lib/input/input-canonicalization';
 import { isCalculusMode } from '../../lib/calculus/calculus-identity';
+import { readMathClipboard } from '../../lib/clipboard';
 
 type ActiveExpressionContext = {
   isLauncherOpen: boolean;
@@ -47,11 +48,14 @@ type PasteIntoEditorDeps = {
   setClipboardNotice: (notice: string) => void;
   loadLatexIntoEditor: (latex: string) => void;
   canonicalizePastedText?: (text: string, mode: ModeId) => string | null | undefined;
+  screenHint?: string;
+  readClipboard?: typeof readMathClipboard;
 };
 
 function canonicalizePastedMathText(
   text: string,
   mode: ModeId,
+  screenHint?: string,
   customCanonicalize?: (text: string, mode: ModeId) => string | null | undefined,
 ) {
   if (customCanonicalize) {
@@ -60,11 +64,11 @@ function canonicalizePastedMathText(
 
   const canonicalized = canonicalizeMathInput(text, {
     mode,
-    screenHint: mode === 'equation'
+    screenHint: screenHint ?? (mode === 'equation'
       ? 'symbolic'
       : isCalculusMode(mode)
         ? 'integrals'
-        : 'standard',
+        : 'standard'),
     liveAssist: true,
   });
 
@@ -137,14 +141,30 @@ export function editActiveExpressionWithDeps(deps: EditExpressionDeps) {
 }
 
 export async function pasteIntoEditorWithDeps(deps: PasteIntoEditorDeps) {
+  let readResult;
   try {
-    if (!navigator.clipboard?.readText) {
-      deps.setClipboardNotice('Paste unavailable');
-      return;
-    }
+    readResult = await (deps.readClipboard ?? readMathClipboard)();
+  } catch {
+    deps.setClipboardNotice('Clipboard blocked');
+    return;
+  }
+  const text = readResult.ok ? readResult.canonicalLatex : readResult.textFallback;
+  if (!text?.trim()) {
+    deps.setClipboardNotice(
+      !readResult.ok && readResult.reason === 'blocked' ? 'Clipboard blocked' : 'Paste unavailable',
+    );
+    return;
+  }
 
-    const text = await navigator.clipboard.readText();
-    const mathText = canonicalizePastedMathText(text, deps.currentMode, deps.canonicalizePastedText);
+  try {
+    const mathText = readResult.ok && readResult.source !== 'text'
+      ? text
+      : canonicalizePastedMathText(
+          text,
+          deps.currentMode,
+          deps.screenHint,
+          deps.canonicalizePastedText,
+        );
     if (
       !deps.isLauncherOpen
       && (deps.currentMode === 'calculate'

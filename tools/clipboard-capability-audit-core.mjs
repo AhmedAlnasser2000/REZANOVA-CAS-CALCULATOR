@@ -7,8 +7,60 @@ const REQUIRED_PERMISSIONS = [
   'clipboard-manager:allow-write-text',
 ];
 
+const SOURCE_PATTERNS = [
+  ['navigator.clipboard', /\bnavigator\s*\.\s*clipboard\b/u],
+  ['clipboard event data', /\.\s*clipboardData\b/u],
+  ['ClipboardItem', /\b(?:new\s+)?ClipboardItem\b/u],
+  ['legacy copy command', /\bexecCommand\s*\(\s*['"]copy['"]/u],
+  ['Tauri clipboard plugin import', /@tauri-apps\/plugin-clipboard-manager/u],
+];
+
 function read(rootDir, repoPath) {
   return fs.readFileSync(path.join(rootDir, repoPath), 'utf8');
+}
+
+function productionSourceFiles(rootDir) {
+  const sourceRoot = path.join(rootDir, 'src');
+  if (!fs.existsSync(sourceRoot)) return [];
+  const files = [];
+  const visit = (directory) => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        visit(absolute);
+        continue;
+      }
+      if (!/\.(?:ts|tsx)$/u.test(entry.name)) continue;
+      const repoPath = path.relative(rootDir, absolute).split(path.sep).join('/');
+      if (
+        repoPath.startsWith('src/lib/clipboard/')
+        || repoPath.startsWith('src/test/')
+        || /(?:^|\/)__tests__\//u.test(repoPath)
+        || /\.(?:test|spec|stories)\.[^.]+$/u.test(repoPath)
+      ) {
+        continue;
+      }
+      files.push(repoPath);
+    }
+  };
+  visit(sourceRoot);
+  return files.sort();
+}
+
+export function auditClipboardSourceAuthority({ rootDir = process.cwd() } = {}) {
+  const violations = [];
+  for (const repoPath of productionSourceFiles(rootDir)) {
+    const source = read(rootDir, repoPath);
+    const lines = source.split(/\r?\n/u);
+    for (const [authority, pattern] of SOURCE_PATTERNS) {
+      lines.forEach((line, index) => {
+        if (pattern.test(line)) {
+          violations.push({ authority, path: repoPath, line: index + 1 });
+        }
+      });
+    }
+  }
+  return violations;
 }
 
 export function auditClipboardCapabilitySetup({ rootDir = process.cwd() } = {}) {
@@ -33,12 +85,20 @@ export function auditClipboardCapabilitySetup({ rootDir = process.cwd() } = {}) 
   if (JSON.stringify(clipboardPermissions) !== JSON.stringify(REQUIRED_PERMISSIONS)) {
     errors.push(`Clipboard permissions must be exactly: ${REQUIRED_PERMISSIONS.join(', ')}`);
   }
+  const directApiViolations = auditClipboardSourceAuthority({ rootDir });
+  for (const violation of directApiViolations) {
+    errors.push(
+      `Direct ${violation.authority} authority is forbidden outside src/lib/clipboard: `
+      + `${violation.path}:${violation.line}`,
+    );
+  }
 
   return {
-    version: 1,
+    version: 2,
     ok: errors.length === 0,
     errors,
     permissions: clipboardPermissions,
+    directApiViolations,
     matrix: {
       browser: {
         textRead: true,
@@ -66,6 +126,7 @@ export function formatClipboardCapabilityAudit(report) {
   const lines = [
     `Clipboard capability audit v${report.version}: ${report.ok ? 'pass' : 'fail'}`,
     `Tauri permissions: ${report.permissions.join(', ') || 'none'}`,
+    `Direct production Clipboard API violations: ${report.directApiViolations.length}`,
   ];
   for (const [host, capability] of Object.entries(report.matrix)) {
     lines.push(
