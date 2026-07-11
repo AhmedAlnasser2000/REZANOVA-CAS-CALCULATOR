@@ -194,6 +194,16 @@ function rewritePeriodicFamilyTarget(
   };
 }
 
+function withoutCanonicalMath(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
+  if (outcome.kind !== 'success' || !outcome.canonicalMath) {
+    return outcome;
+  }
+
+  const rest = { ...outcome };
+  delete rest.canonicalMath;
+  return rest;
+}
+
 export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: string): DisplayOutcome {
   if (target === 'x') {
     return outcome;
@@ -207,7 +217,7 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
   }
 
   const rewritten = {
-    ...outcome,
+    ...withoutCanonicalMath(outcome),
     exactLatex: outcome.exactLatex ? replaceXToken(outcome.exactLatex, target) : outcome.exactLatex,
     periodicFamily: rewritePeriodicFamilyTarget(outcome.periodicFamily, target),
     exactSupplementLatex: outcome.exactSupplementLatex?.map((entry) => replaceXToken(entry, target)),
@@ -246,7 +256,7 @@ export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target
   }
 
   return {
-    ...outcome,
+    ...withoutCanonicalMath(outcome),
     exactLatex: outcome.exactLatex ? replaceLatexSymbolToken(outcome.exactLatex, target, targetLatex) : outcome.exactLatex,
     exactSupplementLatex: outcome.exactSupplementLatex?.map((entry) => replaceLatexSymbolToken(entry, target, targetLatex)),
     actions: outcome.actions?.map((action) =>

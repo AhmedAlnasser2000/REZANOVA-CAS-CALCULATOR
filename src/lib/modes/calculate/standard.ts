@@ -14,6 +14,7 @@ import {
 } from '../../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import type { DisplayOutcome } from '../../../types/calculator';
+import { createDisplayMathPayload } from '../../display/printer';
 import {
   applyCalculateStoredVariableSubstitutions,
   calculateSubstitutionPolicy,
@@ -198,10 +199,14 @@ export function runCalculateMode({
     ...storedValueDetails,
     ...(response.detailSections ?? []),
   ];
+  const canonicalMath = response.answerMathJson === undefined
+    ? undefined
+    : createDisplayMathPayload(response.exactLatex, response.answerMathJson);
   const outcome = attachRuntimeEnvelope(
     buildRuntimeOutcome({
       title: responseTitleText,
       exactLatex: response.exactLatex,
+      canonicalMath,
       answerRows: response.answerRows,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,

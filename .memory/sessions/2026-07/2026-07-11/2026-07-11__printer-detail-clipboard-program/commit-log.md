@@ -20,6 +20,7 @@
 ## Commits
 
 - `db674b13` - `PRINTER-DETAIL-CLIPBOARD-ROADMAP0`
-- pending at write time - `PRINTER-SERIALIZATION-CONTRACT1`
+- `f4cb2de2` - `PRINTER-SERIALIZATION-CONTRACT1`
+- pending at write time - `DISPLAY-MATH-PAYLOAD1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

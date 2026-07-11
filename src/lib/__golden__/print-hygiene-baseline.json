@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Initial curated 43-case anti-regression print baseline",
+  "acceptedReason": "DISPLAY-MATH-PAYLOAD1 adds bounded canonical payload parity evidence without changing visible output.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -37,6 +37,11 @@
           "value": "4"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "4"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "4"
@@ -52,6 +57,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "0"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "0"
         },
         {
@@ -71,6 +81,11 @@
           "path": "exactLatex",
           "kind": "primary-answer",
           "value": "(x+1)(x+1)"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "(x+1)(x+1)"
         }
       ]
     },
@@ -83,6 +98,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "x^2+2x+1"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "x^2+2x+1"
         },
         {
@@ -104,6 +124,11 @@
           "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
@@ -122,6 +147,11 @@
           "value": "2\\ln(\\cos(x))\\cos(x)^{2x}-\\frac{1}{\\cos(x)}(2x\\sin(x)\\cos(x)^{2x})"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "2\\ln(\\cos(x))\\cos(x)^{2x}-\\frac{1}{\\cos(x)}(2x\\sin(x)\\cos(x)^{2x})"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "(2\\ln(\\cos(x))-\\frac{2x\\sin(x)}{\\cos(x)})\\cos(x)^{2x}"
@@ -137,6 +167,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "\\sqrt{\\frac{1}{1-x^2}}"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "\\sqrt{\\frac{1}{1-x^2}}"
         },
         {
@@ -638,6 +673,11 @@
           "value": "90"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "90"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\arcsin(1)"
@@ -653,6 +693,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "\\frac{\\pi}{2}"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "\\frac{\\pi}{2}"
         },
         {

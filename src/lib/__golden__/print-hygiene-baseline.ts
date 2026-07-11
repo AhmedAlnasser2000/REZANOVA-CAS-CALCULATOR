@@ -8,6 +8,7 @@ import {
 } from '../display/print-hygiene';
 import { goldenCases } from './golden-cases';
 import { runGoldenCase } from './golden-execution';
+import { hasDisplayMathPayloadParity } from '../display/printer';
 
 export type PrintHygieneBaselineEntry = {
   id: string;
@@ -42,6 +43,12 @@ export async function buildPrintHygieneBaseline(
 
   for (const goldenCase of goldenCases) {
     const execution = await runGoldenCase(goldenCase);
+    if (
+      execution.outcome.kind === 'success'
+      && !hasDisplayMathPayloadParity(execution.outcome)
+    ) {
+      throw new Error(`Canonical payload drift: ${goldenCase.id}`);
+    }
     const fragments = [
       ...collectDisplayOutcomeMathFragments(execution.outcome),
       ...collectTableResponseMathFragments(execution.tableResponse),

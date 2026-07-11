@@ -1,7 +1,14 @@
-import type { CandidateValidationResult, DisplayBranchReadback } from '../../../types/calculator';
+import type {
+  CandidateValidationResult,
+  DisplayBranchReadback,
+  DisplayMathPayloadV1,
+  SerializableMathJson,
+} from '../../../types/calculator';
+import { createDisplayMathPayload } from '../../display/printer';
 import {
   exactLatexForFiniteBranchExpressions,
   finiteBranchReadbackForFiniteBranchExpressions,
+  normalizeFiniteBranchExpression,
   uniqueFiniteBranchExpressions,
   type EquationFiniteBranchExpression,
   type EquationPresentationContext,
@@ -38,10 +45,47 @@ export type FiniteRootSetRenderOptions = {
 
 export type FiniteRootSetRender = {
   exactLatex?: string;
+  canonicalMath?: DisplayMathPayloadV1;
   branchReadback?: DisplayBranchReadback;
   branchesLatex: string[];
   rejectedBranches: FiniteRootBranch[];
 };
+
+function canonicalFiniteRootMath(
+  rootSet: FiniteRootSet,
+  branchesLatex: readonly string[],
+  exactLatex: string,
+  options: FiniteRootSetRenderOptions,
+) {
+  if (!/^[A-Za-z]$/.test(rootSet.targetLatex)) {
+    return undefined;
+  }
+
+  const nodeByLatex = new Map<string, SerializableMathJson>();
+  for (const branch of visibleFiniteRootBranches(rootSet)) {
+    if (branch.node === undefined) continue;
+    const normalizedLatex = normalizeFiniteBranchExpression({
+      latex: branch.latex,
+      node: branch.node,
+      target: rootSet.targetLatex,
+      ...(options.context ? { context: options.context } : {}),
+      ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
+    });
+    if (!nodeByLatex.has(normalizedLatex)) {
+      nodeByLatex.set(normalizedLatex, branch.node as SerializableMathJson);
+    }
+  }
+
+  if (branchesLatex.some((branchLatex) => !nodeByLatex.has(branchLatex))) {
+    return undefined;
+  }
+
+  const nodes = branchesLatex.map((branchLatex) => nodeByLatex.get(branchLatex)!);
+  const answerNode: SerializableMathJson = nodes.length === 1
+    ? ['Equal', rootSet.targetLatex, nodes[0]]
+    : ['Element', rootSet.targetLatex, ['Set', ...nodes]];
+  return createDisplayMathPayload(exactLatex, answerNode);
+}
 
 export function createFiniteRootBranch(
   latex: string,
@@ -112,15 +156,18 @@ export function renderFiniteRootSet(
     };
   }
 
-  return {
-    exactLatex: exactLatexForFiniteBranchExpressions({
+  const exactLatex = exactLatexForFiniteBranchExpressions({
       targetLatex: rootSet.targetLatex,
       branches,
       preserveOrder: options.preserveOrder,
       ...(options.setSeparator ? { setSeparator: options.setSeparator } : {}),
       ...(options.context ? { context: options.context } : {}),
       ...(options.presentationContext ? { presentationContext: options.presentationContext } : {}),
-    }),
+    });
+
+  return {
+    exactLatex,
+    canonicalMath: canonicalFiniteRootMath(rootSet, branchesLatex, exactLatex, options),
     branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
       targetLatex: rootSet.targetLatex,
       branches,

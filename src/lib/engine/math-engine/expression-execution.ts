@@ -1,4 +1,4 @@
-import type { EvaluateResponse } from '../../../types/calculator';
+import type { EvaluateResponse, SerializableMathJson } from '../../../types/calculator';
 import { resolveCalculusEvaluation } from '../../calculus/engine/eval';
 import { latexToApproxText, solutionsToLatex } from '../../display/format';
 import { canUseExpressionNumericFallback } from '../../kernel/runtime-profile';
@@ -37,6 +37,10 @@ function normalizedSupplementLatex(
     { latex: right, source: 'legacy' },
   );
   return merged.length > 0 ? merged : undefined;
+}
+
+function answerMathJson(node: unknown): SerializableMathJson {
+  return node as SerializableMathJson;
 }
 
 function solutionApproximationText(symbol: string, solutions: unknown[]) {
@@ -153,6 +157,7 @@ export function executePreparedExpressionAction(
       if (powerLog?.changed) {
         return {
           exactLatex: powerLog.normalizedLatex,
+          answerMathJson: answerMathJson(powerLog.normalizedNode),
           exactSupplementLatex: normalizedSupplementLatex(
               exactSupplementLatex,
               powerLog.exactSupplementLatex,
@@ -217,6 +222,7 @@ export function executePreparedExpressionAction(
 
       return {
         exactLatex: rational.normalizedLatex,
+        answerMathJson: answerMathJson(rational.normalizedNode),
         exactSupplementLatex,
         approxText: latexToApproxText(approx?.latex),
         normalizedMathJson: rational.normalizedNode,
@@ -234,6 +240,7 @@ export function executePreparedExpressionAction(
       if (powerLog?.changed) {
         return {
           exactLatex: powerLog.normalizedLatex,
+          answerMathJson: answerMathJson(powerLog.normalizedNode),
           exactSupplementLatex: normalizedSupplementLatex(
               simplifySupplementLatex,
               powerLog.exactSupplementLatex,
@@ -294,6 +301,7 @@ export function executePreparedExpressionAction(
 
       return {
         exactLatex: absoluteValue?.normalizedLatex ?? radical?.normalizedLatex,
+        answerMathJson: simplifyNormalizedExpr.json,
         exactSupplementLatex: simplifySupplementLatex.length > 0 ? simplifySupplementLatex : undefined,
         approxText: latexToApproxText(approx?.latex),
         normalizedMathJson: simplifyNormalizedExpr.json,
@@ -346,6 +354,7 @@ export function executePreparedExpressionAction(
           : undefined;
         return {
           exactLatex: powerLog.normalizedLatex,
+          answerMathJson: answerMathJson(powerLog.normalizedNode),
           exactSupplementLatex: normalizedSupplementLatex(
               simplifySupplementLatex,
               powerLog.exactSupplementLatex,
@@ -551,6 +560,7 @@ export function executePreparedExpressionAction(
 
     return {
       exactLatex: exactExpr?.latex ?? radicalExpr.latex,
+      answerMathJson: exactExpr?.json ?? radicalExpr.json,
       exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
       approxText: latexToApproxText(approx?.latex),
       normalizedMathJson: radical?.normalizedNode ?? expr.json,

@@ -11,9 +11,11 @@ export type SymbolicAction =
   | CalculateAction
   | EquationAction;
 
+import type { SerializableMathJson } from '../../../types/calculator';
+
 export type BoxedLike = {
   latex: string;
-  json: unknown;
+  json: SerializableMathJson;
   operator?: string;
   solve?: (symbol: string) => unknown;
   simplify: () => BoxedLike;

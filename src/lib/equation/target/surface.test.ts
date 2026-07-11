@@ -91,6 +91,11 @@ describe('equation-target', () => {
       kind: 'success',
       title: 'Solve',
       exactLatex: 'x=2',
+      canonicalMath: {
+        version: 1,
+        canonicalLatex: 'x=2',
+        mathJson: ['Equal', 'x', 2],
+      },
       approxText: 'x ~= 2',
       warnings: [],
     }, 'z');
@@ -101,5 +106,6 @@ describe('equation-target', () => {
     }
     expect(result.exactLatex).toBe('z=2');
     expect(result.approxText).toBe('z ~= 2');
+    expect(result.canonicalMath).toBeUndefined();
   });
 });

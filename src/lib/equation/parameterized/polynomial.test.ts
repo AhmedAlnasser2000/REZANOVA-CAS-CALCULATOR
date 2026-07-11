@@ -26,6 +26,8 @@ describe('solveParameterizedPolynomialEquation', () => {
     expect(result.exactLatex).toContain('z\\in');
     expect(result.exactLatex).toContain('-\\sqrt{a}');
     expect(result.exactLatex).toContain('\\sqrt{a}');
+    expect(result.canonicalMath?.canonicalLatex).toBe(result.exactLatex);
+    expect(result.canonicalMath?.mathJson).toBeDefined();
     expect(result.exactSupplementLatex).toEqual(['a\\ge0']);
   });
 

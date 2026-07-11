@@ -12,6 +12,7 @@ import type {
   AngleUnit,
   DisplayBranchReadback,
   DisplayDetailSection,
+  DisplayMathPayloadV1,
   DisplayOutcome,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -25,6 +26,7 @@ type TargetResolution = ReturnType<typeof resolveEquationSolveTarget>;
 
 type SelectedTargetParameterizedSuccess = {
   exactLatex: string;
+  canonicalMath?: DisplayMathPayloadV1;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections?: DisplayDetailSection[];
@@ -164,6 +166,7 @@ function attachParameterizedSelectedTargetOutcome(input: {
     kind: 'success',
     title: 'Solve',
     exactLatex: input.result.exactLatex,
+    ...(input.result.canonicalMath ? { canonicalMath: input.result.canonicalMath } : {}),
     branchReadback: input.result.branchReadback,
     approxText: input.result.approxText,
     exactSupplementLatex: input.result.exactSupplementLatex,

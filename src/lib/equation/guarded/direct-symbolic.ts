@@ -1,5 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../../engine/math-engine';
+import {
+  createFiniteRootSet,
+  renderFiniteRootSet,
+} from '../solution/finite-root-set';
 import type {
   DisplayOutcome,
   GuardedSolveRequest,
@@ -97,6 +101,38 @@ function hasNonFiniteRawSolutions(symbolic: ReturnType<typeof runExpressionActio
   }));
 }
 
+function canonicalDirectSymbolicOutcome(
+  symbolic: ReturnType<typeof runExpressionAction>,
+  outcome: DisplayOutcome,
+) {
+  if (
+    outcome.kind !== 'success'
+    || !symbolic.exactLatex
+    || !symbolic.rawSolutions
+    || !symbolic.rawSolutionLatex
+    || symbolic.rawSolutions.length !== symbolic.rawSolutionLatex.length
+  ) {
+    return outcome;
+  }
+
+  const rendered = renderFiniteRootSet(
+    createFiniteRootSet({
+      targetLatex: 'x',
+      branches: symbolic.rawSolutions.map((node, index) => ({
+        node,
+        latex: symbolic.rawSolutionLatex![index],
+        source: 'equation-direct-symbolic',
+      })),
+      source: 'equation-direct-symbolic',
+    }),
+    { preserveOrder: true },
+  );
+
+  return rendered.exactLatex === symbolic.exactLatex && rendered.canonicalMath
+    ? { ...outcome, canonicalMath: rendered.canonicalMath }
+    : outcome;
+}
+
 function runDirectSymbolicFallbackPrepared(
   preparedRequest: GuardedSolveRequest,
 ): DisplayOutcome {
@@ -113,12 +149,16 @@ function runDirectSymbolicFallbackPrepared(
 
   if (!symbolic.error && symbolic.exactLatex && !hasNonFiniteRawSolutions(symbolic)) {
     const validated = validateDirectSymbolicOutcome(preparedRequest, symbolic);
-    return validated ?? successOutcome(
+    if (validated) {
+      return validated;
+    }
+
+    return canonicalDirectSymbolicOutcome(symbolic, successOutcome(
       'Solve',
       symbolic.exactLatex,
       symbolic.approxText,
       symbolic.warnings,
-    );
+    ));
   }
 
   return errorOutcome(

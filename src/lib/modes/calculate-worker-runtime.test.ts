@@ -162,8 +162,19 @@ describe('calculate worker runtime shell', () => {
         commitPolicy: 'alwaysCommit',
         createWorker: createWorker('complete'),
       });
+      const mainThreadPayload = runCalculateRuntimeRequest(request);
 
-      expect(result.payload).toEqual(runCalculateRuntimeRequest(request));
+      expect(result.payload).toEqual(mainThreadPayload);
+      expect(structuredClone(result.payload)).toEqual(result.payload);
+      if (request.kind === 'standard') {
+        expect(result.payload.kind).toBe('success');
+        if (result.payload.kind === 'success') {
+          expect(result.payload.canonicalMath?.canonicalLatex).toBe(result.payload.exactLatex);
+          expect(result.payload.canonicalMath?.mathJson).toBeDefined();
+        }
+      } else {
+        expect(result.payload).not.toHaveProperty('canonicalMath');
+      }
       expect(result.ooe.calculateHostExecution).toMatchObject({
         kind: 'worker',
         hostId: 'calculate-worker-runtime',

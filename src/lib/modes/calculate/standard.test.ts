@@ -2,6 +2,69 @@ import { describe, expect, it } from 'vitest';
 import { runCalculateMode } from '../calculate';
 
 describe('runCalculateMode', () => {
+  it('dual-writes proven Calculate answer nodes without changing exact output', () => {
+    const requests = [
+      { action: 'evaluate' as const, latex: '2+3' },
+      { action: 'simplify' as const, latex: '(x^2-1)/(x-1)' },
+      { action: 'factor' as const, latex: 'x^2+2x+1' },
+      { action: 'expand' as const, latex: '(x+1)^2' },
+    ];
+
+    for (const request of requests) {
+      const result = runCalculateMode({
+        ...request,
+        angleUnit: 'deg',
+        outputStyle: 'both',
+        ansLatex: '0',
+      });
+      expect(result.kind).toBe('success');
+      if (result.kind !== 'success') throw new Error('Expected a success outcome');
+      expect(result.canonicalMath?.canonicalLatex).toBe(result.exactLatex);
+      expect(result.canonicalMath?.mathJson).toBeDefined();
+      expect(structuredClone(result.canonicalMath)).toEqual(result.canonicalMath);
+    }
+  });
+
+  it('pins inverse-trig canonical nodes by angle unit and omits unproven calculus nodes', () => {
+    const degrees = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\arcsin(1)',
+      angleUnit: 'deg',
+      outputStyle: 'both',
+      ansLatex: '0',
+    });
+    const radians = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\arcsin(1)',
+      angleUnit: 'rad',
+      outputStyle: 'both',
+      ansLatex: '0',
+    });
+    const integral = runCalculateMode({
+      action: 'evaluate',
+      latex: '\\int 2x \\ln\\left(x^2+1\\right)\\,dx',
+      angleUnit: 'rad',
+      outputStyle: 'both',
+      ansLatex: '0',
+    });
+
+    expect(degrees).toMatchObject({
+      kind: 'success',
+      exactLatex: '90',
+      canonicalMath: { version: 1, canonicalLatex: '90', mathJson: 90 },
+    });
+    expect(radians).toMatchObject({
+      kind: 'success',
+      exactLatex: '\\frac{\\pi}{2}',
+      canonicalMath: {
+        version: 1,
+        canonicalLatex: '\\frac{\\pi}{2}',
+        mathJson: ['Divide', 'Pi', 2],
+      },
+    });
+    expect(integral).not.toHaveProperty('canonicalMath');
+  });
+
   it('substitutes stored numeric values only in standard Evaluate', () => {
     const result = runCalculateMode({
       action: 'evaluate',

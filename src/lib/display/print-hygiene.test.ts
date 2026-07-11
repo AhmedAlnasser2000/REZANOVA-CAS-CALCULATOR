@@ -16,6 +16,11 @@ describe('print hygiene fragment collection', () => {
       kind: 'success',
       title: 'Coverage',
       exactLatex: '(x+1)',
+      canonicalMath: {
+        version: 1,
+        canonicalLatex: '(x+1)',
+        mathJson: ['Add', 'x', 1],
+      },
       answerRows: { rows: [{ latex: 'x=1' }] },
       branchReadback: { targetLatex: 'x', relationLatex: '=', branchesLatex: ['1', '-1'] },
       systemReadback: { variablesLatex: ['x', 'y'], rows: [{ valuesLatex: ['1', '2'] }] },
@@ -50,12 +55,17 @@ describe('print hygiene fragment collection', () => {
     const fragments = collectDisplayOutcomeMathFragments(outcome);
     expect(fragments).toContainEqual({ path: 'exactLatex', kind: 'primary-answer', value: '(x+1)' });
     expect(fragments).toContainEqual({
+      path: 'canonicalMath.canonicalLatex',
+      kind: 'canonical-payload',
+      value: '(x+1)',
+    });
+    expect(fragments).toContainEqual({
       path: 'detailSections[1].lineParts[0][1].latex',
       kind: 'detail-math-part',
       value: 'x=1',
     });
     expect(fragments.map((fragment) => fragment.value)).not.toContain('NaN is a token name in this explanation.');
-    expect(new Set(fragments.map((fragment) => fragment.kind)).size).toBe(23);
+    expect(new Set(fragments.map((fragment) => fragment.kind)).size).toBe(24);
   });
 
   it('collects prompt carry math without treating its prose as math', () => {

@@ -51,6 +51,7 @@ export * from './runtime-policy-types';
 export * from './exact-supplement-types';
 export * from './abs-types';
 export * from './display-types';
+export * from './math-payload-types';
 export * from './solver-types';
 export type {
   EquationReplaySeed,

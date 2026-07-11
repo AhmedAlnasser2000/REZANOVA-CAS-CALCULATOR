@@ -4,6 +4,7 @@ import type {
   CalculusIntegrationStrategy,
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
+  DisplayMathPayloadV1,
   PlannerBadge,
   ResultOrigin,
   RuntimeAdvisories,
@@ -14,6 +15,7 @@ type PlannerBadgeMode = 'merge' | 'replace';
 type BuildRuntimeOutcomeOptions = {
   title: string;
   exactLatex?: string;
+  canonicalMath?: DisplayMathPayloadV1;
   answerRows?: DisplayAnswerRowsReadback;
   exactSupplementLatex?: string[];
   approxText?: string;
@@ -58,6 +60,7 @@ function attachPlannerBadges(
 export function buildRuntimeOutcome({
   title,
   exactLatex,
+  canonicalMath,
   answerRows,
   exactSupplementLatex,
   approxText,
@@ -87,6 +90,7 @@ export function buildRuntimeOutcome({
     kind: 'success',
     title,
     exactLatex,
+    ...(canonicalMath ? { canonicalMath } : {}),
     answerRows,
     exactSupplementLatex,
     approxText,

@@ -17,6 +17,11 @@ describe('buildHistoryDisplayEntry', () => {
         kind: 'success',
         title: '\\operatorname{coords}(A,b)',
         exactLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+        canonicalMath: {
+          version: 1,
+          canonicalLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+          mathJson: ['Equal', 'c', ['List', 1, 2]],
+        },
         detailSections,
         warnings: [],
       },
@@ -44,6 +49,7 @@ describe('buildHistoryDisplayEntry', () => {
       resultLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
       detailSections,
     });
+    expect(entry).not.toHaveProperty('canonicalMath');
   });
 
   it('persists Equation route seeds for guided screen history replay', () => {

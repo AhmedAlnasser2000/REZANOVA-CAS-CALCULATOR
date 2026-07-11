@@ -16,8 +16,9 @@
 
 ## Current Verified Gate
 
-- `PRINTER-SERIALIZATION-CONTRACT1`: backend and UI parity evidence passed.
-- Focused contract: 9 tests.
-- Cross-workspace evidence: 44 golden tests, 176-fragment print baseline, 100 replay fixtures, and 19 Chromium canaries passed.
-- Visual evidence: Calculate and Equation answer/detail surfaces inspected at 1440 by 1000 with no visible regression.
-- Production integration: none yet.
+- `DISPLAY-MATH-PAYLOAD1`: backend contract and UI parity evidence passed.
+- Focused payload/producer/firewall suite: 83 tests; printer contract: 12 tests.
+- Cross-workspace evidence: 44 golden tests, 185-fragment print baseline, 100 replay fixtures, 3,514 full unit tests, 441 full UI tests, and 19 Chromium canaries passed.
+- Worker/fallback structured-clone parity passed for Calculate and Equation; runtime probes, workspace contracts, Display contracts, app-state contracts, Surface Protocol, OOE, and compartment boundaries passed.
+- Visual evidence: Calculate `arcsin(1)` and Equation `x^2-5x+6=0` answer/detail surfaces inspected at 1440 by 1000 with no visible regression or overflow.
+- Production integration: additive canonical payload only; no visible printer-profile migration.

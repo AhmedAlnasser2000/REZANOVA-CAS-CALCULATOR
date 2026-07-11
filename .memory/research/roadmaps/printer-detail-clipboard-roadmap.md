@@ -25,7 +25,7 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ## Current Baseline
 
-- `main` and `origin/main` currently align at `63d21229`. During this roadmap review, the remote-tracking ref advanced through an external `update by push` at `2026-07-11 02:40:20 +0300`; this session did not fetch or push.
+- `main` is two approved local commits ahead of `origin/main`: `db674b13` (`PRINTER-DETAIL-CLIPBOARD-ROADMAP0`) and `f4cb2de2` (`PRINTER-SERIALIZATION-CONTRACT1`). No push is authorized.
 - `HISTORY-REPLAY-RATCHET1` is committed as `63d21229`.
 - Untracked `test-results/` is unrelated and must remain untouched.
 - Production has at least 478 explicit `exactLatex:` assignments across 173 files and 61 explicit `resultLatex:` assignments. These are lower bounds because shorthand and indirect builders are not counted.
@@ -57,7 +57,7 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ### Move 7: `PRINT-HYGIENE-BASELINE1`
 
-- Collects 176 accepted mathematical fragments from the 43 golden executions and hard-fails bounded malformed markers.
+- Started with 176 accepted mathematical fragments from the 43 golden executions and hard-fails bounded malformed markers. `DISPLAY-MATH-PAYLOAD1` adds nine accepted canonical-payload fragments, bringing the current manifest to 185 without changing primary output.
 - The current manifest includes 43 whole-line math details and 29 typed math parts, preserving a before-printer snapshot.
 - Limit: it intentionally excludes prose and therefore does not detect math hidden inside plain detail strings. It is evidence and hygiene, not a printer or detail-segment ratchet.
 
@@ -90,7 +90,7 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ### A1. `PRINTER-SERIALIZATION-CONTRACT1`
 
-Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+Status: committed as `f4cb2de2` on `2026-07-11`.
 
 - Add a pure internal printer district under `src/lib/display/printer/`.
 - Define a strict serializable MathJSON type or validated Compute Engine `MathJsonExpression` boundary; do not use `unknown` as the durable contract.
@@ -106,12 +106,16 @@ Implemented contract: validated plain MathJSON is capped at 2,000 nodes, 64 leve
 
 ### A2. `DISPLAY-MATH-PAYLOAD1`
 
+Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+
 - Add one optional internal canonical math payload carrying `canonicalLatex` plus validated optional MathJSON.
 - Keep every existing LaTeX field additive and authoritative as compatibility fallback during migration.
 - Do not forward `normalizedMathJson` blindly. Audit each route to prove the node represents the displayed answer rather than the input or an intermediate.
 - First dual-write candidates: Calculate simplify/evaluate paths that already retain the exact answer node, and Equation finite roots already using the presentation IR.
 - Bound node count, depth, and serialized bytes. Omit the node and retain canonical LaTeX when the limit is exceeded.
 - Verify structured clone through worker and fallback hosts, diagnostics meaning, result-size behavior, History commit parity, and Surface Protocol exclusion.
+
+Implemented contract: `DisplayMathPayloadV1` carries versioned canonical LaTeX plus optional validated MathJSON. Calculate dual-writes only retained exact answer nodes, including pinned inverse-trig angle nodes; Equation dual-writes node-complete finite-root IR and invalidates the payload on target rewrites. The 43-case golden ratchet enforces canonical/exact parity. History persistence and Surface Protocol deliberately omit the payload, and no visible output changed.
 
 ### A3. `PRINTER-MIGRATION-RATCHET1`
 

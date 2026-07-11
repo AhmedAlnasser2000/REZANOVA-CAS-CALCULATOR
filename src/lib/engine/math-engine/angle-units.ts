@@ -1,4 +1,4 @@
-import type { EvaluateRequest } from '../../../types/calculator';
+import type { EvaluateRequest, SerializableMathJson } from '../../../types/calculator';
 import { formatApproxNumber } from '../../display/format';
 import {
   exactInverseTrigDegrees,
@@ -59,6 +59,46 @@ function exactAngleLatex(degrees: number, angleUnit: EvaluateRequest['angleUnit'
     return radianLatex(degrees);
   }
   return fractionLatex(degrees * 10, 9);
+}
+
+function rationalNode(numerator: number, denominator: number): SerializableMathJson {
+  const divisor = gcd(numerator, denominator);
+  const reducedNumerator = numerator / divisor;
+  const reducedDenominator = denominator / divisor;
+  return reducedDenominator === 1
+    ? reducedNumerator
+    : ['Rational', reducedNumerator, reducedDenominator];
+}
+
+function radianNode(degrees: number): SerializableMathJson {
+  if (degrees === 0) {
+    return 0;
+  }
+
+  const divisor = gcd(degrees, 180);
+  const numerator = degrees / divisor;
+  const denominator = 180 / divisor;
+  const absoluteNumerator = Math.abs(numerator);
+  const piTerm: SerializableMathJson = absoluteNumerator === 1
+    ? 'Pi'
+    : ['Multiply', absoluteNumerator, 'Pi'];
+  const magnitude: SerializableMathJson = denominator === 1
+    ? piTerm
+    : ['Divide', piTerm, denominator];
+  return numerator < 0 ? ['Negate', magnitude] : magnitude;
+}
+
+function exactAngleNode(
+  degrees: number,
+  angleUnit: EvaluateRequest['angleUnit'],
+): SerializableMathJson {
+  if (angleUnit === 'deg') {
+    return degrees;
+  }
+  if (angleUnit === 'rad') {
+    return radianNode(degrees);
+  }
+  return rationalNode(degrees * 10, 9);
 }
 
 function numericAngleValue(degrees: number, angleUnit: EvaluateRequest['angleUnit']) {
@@ -129,6 +169,7 @@ export function evaluateExactInverseTrigSpecial(
 
   return {
     exactLatex: exactAngleLatex(degrees, angleUnit),
+    answerMathJson: exactAngleNode(degrees, angleUnit),
     approxText: formatApproxNumber(numericAngleValue(degrees, angleUnit)),
   };
 }

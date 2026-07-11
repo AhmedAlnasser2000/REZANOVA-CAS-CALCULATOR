@@ -82,6 +82,12 @@ describe('Equation mode OOE runtime', () => {
     const direct = runEquationMode(request);
     const wrapped = await runEquationModeWithOoePilot(request);
 
+    expect(direct.kind).toBe('success');
+    if (direct.kind === 'success') {
+      expect(direct.canonicalMath?.canonicalLatex).toBe(direct.exactLatex);
+      expect(direct.canonicalMath?.mathJson).toBeDefined();
+      expect(structuredClone(direct.canonicalMath)).toEqual(direct.canonicalMath);
+    }
     expect(wrapped.payload).toEqual(direct);
     expect(wrapped.ooe.status.kind).toBe('unavailable');
     if (wrapped.ooe.guardedTrace) {

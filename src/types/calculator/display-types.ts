@@ -12,6 +12,9 @@ import type {
   SubstitutionSolveDiagnostics,
   TransformBadge,
 } from './solver-types';
+import type { DisplayMathPayloadV1 } from './math-payload-types';
+
+export type { DisplayMathPayloadV1, SerializableMathJson } from './math-payload-types';
 
 export type DisplayDetailLineKind = 'text' | 'math';
 
@@ -108,6 +111,7 @@ export type DisplayOutcome =
       kind: 'success';
       title: string;
       exactLatex?: string;
+      canonicalMath?: DisplayMathPayloadV1;
       answerRows?: DisplayAnswerRowsReadback;
       branchReadback?: DisplayBranchReadback;
       systemReadback?: DisplaySystemSolutionReadback;

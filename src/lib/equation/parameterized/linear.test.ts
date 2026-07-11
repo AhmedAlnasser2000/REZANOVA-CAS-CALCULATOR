@@ -21,7 +21,10 @@ function expectUnsupported(latex: string, target: string) {
 
 describe('solveParameterizedLinearEquation', () => {
   it('solves for either target in a two-symbol affine equation', () => {
-    expect(expectSuccess('x+z=5', 'z').exactLatex).toBe('z=5-x');
+    const zResult = expectSuccess('x+z=5', 'z');
+    expect(zResult.exactLatex).toBe('z=5-x');
+    expect(zResult.canonicalMath?.canonicalLatex).toBe(zResult.exactLatex);
+    expect(zResult.canonicalMath?.mathJson).toBeDefined();
     expect(expectSuccess('x+z=5', 'x').exactLatex).toBe('x=5-z');
   });
 

@@ -27,6 +27,7 @@ describe('Equation structured finite root sets', () => {
       branchesLatex: [String.raw`\sqrt{a}`, '-1'],
       source: 'test-finite-root-set',
     });
+    expect(rendered.canonicalMath).toBeUndefined();
   });
 
   it('renders node-backed finite branches before adapting to display fields', () => {
@@ -45,8 +46,14 @@ describe('Equation structured finite root sets', () => {
 
     expect(uniqueFiniteRootSetBranchLatex(rootSet, { preserveOrder: true }))
       .toEqual(['a', String.raw`\sqrt{b}`]);
-    expect(renderFiniteRootSet(rootSet, { preserveOrder: true }).exactLatex)
-      .toBe(String.raw`x\in\left\{a,\ \sqrt{b}\right\}`);
+    const rendered = renderFiniteRootSet(rootSet, { preserveOrder: true });
+    expect(rendered.exactLatex).toBe(String.raw`x\in\left\{a,\ \sqrt{b}\right\}`);
+    expect(rendered.canonicalMath).toEqual({
+      version: 1,
+      canonicalLatex: String.raw`x\in\left\{a,\ \sqrt{b}\right\}`,
+      mathJson: ['Element', 'x', ['Set', ['Add', 0, 'a'], ['Multiply', 1, ['Sqrt', 'b']]]],
+    });
+    expect(structuredClone(rendered.canonicalMath)).toEqual(rendered.canonicalMath);
   });
 
   it('records rejected candidates without rendering them as accepted finite roots', () => {

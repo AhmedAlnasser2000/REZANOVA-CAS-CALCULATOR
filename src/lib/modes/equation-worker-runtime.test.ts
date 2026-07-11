@@ -10,6 +10,11 @@ const successPayload: DisplayOutcome = {
   kind: 'success',
   title: 'Solve',
   exactLatex: 'x=1',
+  canonicalMath: {
+    version: 1,
+    canonicalLatex: 'x=1',
+    mathJson: ['Equal', 'x', 1],
+  },
   warnings: [],
 };
 
@@ -125,6 +130,7 @@ describe('Equation worker runtime client', () => {
         terminalStatus: 'completed',
       },
     });
+    expect(structuredClone(successPayload)).toEqual(successPayload);
   });
 
   it('falls back only when the worker is unavailable before start', async () => {

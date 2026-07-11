@@ -1,5 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import type {
+  DisplayBranchReadback,
+  DisplayDetailSection,
+  DisplayMathPayloadV1,
+} from '../../../types/calculator';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import {
   createFiniteRootSet,
@@ -50,6 +54,7 @@ export type ParameterizedPolynomialSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  canonicalMath?: DisplayMathPayloadV1;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
@@ -329,6 +334,7 @@ function buildPureSquareTranscendentalRoots(target: string, a: MathJson, b: Math
   );
   return {
     exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{\\right\\}`,
+    ...(renderedRoots.canonicalMath ? { canonicalMath: renderedRoots.canonicalMath } : {}),
     branchReadback: renderedRoots.branchReadback,
   };
 }
@@ -366,6 +372,7 @@ function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: M
   return {
     discriminant,
     exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{\\right\\}`,
+    ...(renderedRoots.canonicalMath ? { canonicalMath: renderedRoots.canonicalMath } : {}),
     branchReadback: renderedRoots.branchReadback,
   };
 }
@@ -442,7 +449,7 @@ export function solveParameterizedPolynomialEquation(
     );
   }
 
-  const { branchReadback, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
+  const { branchReadback, canonicalMath, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     nonzeroFactForLeadingCoefficient(a),
     realDiscriminantFact(discriminant),
@@ -462,6 +469,7 @@ export function solveParameterizedPolynomialEquation(
     target,
     parameterNames,
     exactLatex,
+    ...(canonicalMath ? { canonicalMath } : {}),
     branchReadback,
     exactSupplementLatex,
     detailSections,

@@ -181,6 +181,7 @@ export type EvaluateRequest = {
 
 export type EvaluateResponse = {
   exactLatex?: string;
+  answerMathJson?: import('./math-payload-types').SerializableMathJson;
   answerRows?: EvaluateAnswerRowsReadback;
   exactSupplementLatex?: string[];
   approxText?: string;

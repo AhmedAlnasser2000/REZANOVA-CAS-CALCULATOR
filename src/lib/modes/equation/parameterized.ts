@@ -283,6 +283,9 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedLinear.exactLatex,
+          ...(parameterizedLinear.canonicalMath
+            ? { canonicalMath: parameterizedLinear.canonicalMath }
+            : {}),
           exactSupplementLatex: parameterizedLinear.exactSupplementLatex,
           detailSections: parameterizedLinear.detailSections,
           warnings: [],
@@ -308,6 +311,9 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedPolynomial.exactLatex,
+          ...(parameterizedPolynomial.canonicalMath
+            ? { canonicalMath: parameterizedPolynomial.canonicalMath }
+            : {}),
           branchReadback: parameterizedPolynomial.branchReadback,
           exactSupplementLatex: parameterizedPolynomial.exactSupplementLatex,
           detailSections: parameterizedPolynomial.detailSections,

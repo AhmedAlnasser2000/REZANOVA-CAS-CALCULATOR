@@ -3,6 +3,7 @@ import { detailLineKindAt } from './result-detail-lines';
 
 export type MathematicalFragmentKind =
   | 'primary-answer'
+  | 'canonical-payload'
   | 'answer-row'
   | 'branch-target'
   | 'branch'
@@ -150,6 +151,12 @@ export function collectDisplayOutcomeMathFragments(outcome: DisplayOutcome): Mat
 
   appendFragment(fragments, 'exactLatex', 'primary-answer', outcome.exactLatex);
   if (outcome.kind === 'success') {
+    appendFragment(
+      fragments,
+      'canonicalMath.canonicalLatex',
+      'canonical-payload',
+      outcome.canonicalMath?.canonicalLatex,
+    );
     outcome.answerRows?.rows.forEach((row, index) =>
       appendFragment(fragments, `answerRows.rows[${index}].latex`, 'answer-row', row.latex));
     outcome.systemReadback?.variablesLatex.forEach((value, index) =>

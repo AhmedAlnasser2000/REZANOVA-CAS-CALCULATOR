@@ -1,10 +1,10 @@
-import type { MathJsonExpression } from '@cortex-js/compute-engine';
+import type { SerializableMathJson } from '../../../types/calculator/math-payload-types';
+
+export type { SerializableMathJson } from '../../../types/calculator/math-payload-types';
 
 export const MATH_JSON_MAX_NODES = 2_000;
 export const MATH_JSON_MAX_DEPTH = 64;
 export const MATH_JSON_MAX_BYTES = 320_000;
-
-export type SerializableMathJson = MathJsonExpression;
 
 export type MathJsonValidationLimits = {
   maxNodes?: number;
@@ -64,7 +64,7 @@ function expressionObjectKey(value: Record<string, unknown>) {
   return keys.length === 1 ? keys[0] : null;
 }
 
-function isExpressionRoot(value: unknown): value is MathJsonExpression {
+function isExpressionRoot(value: unknown): value is SerializableMathJson {
   if (typeof value === 'number') {
     return Number.isFinite(value);
   }

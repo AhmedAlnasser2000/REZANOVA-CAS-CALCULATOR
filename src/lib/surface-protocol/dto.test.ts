@@ -14,6 +14,11 @@ describe('Surface Protocol DTO firewall', () => {
       kind: 'success',
       title: 'Equation Result',
       exactLatex: 'x=2',
+      canonicalMath: {
+        version: 1,
+        canonicalLatex: 'x=2',
+        mathJson: ['Equal', 'x', 2],
+      },
       approxText: 'x ≈ 2',
       exactSupplementLatex: ['x\\ne0'],
       answerDomain: 'real',
@@ -52,6 +57,9 @@ describe('Surface Protocol DTO firewall', () => {
         { kind: 'facts', count: 3, label: 'Facts' },
       ],
     });
+    const serialized = JSON.stringify(displayOutcomeToSurfaceResultSummary('equation', outcome));
+    expect(serialized).not.toContain('canonicalMath');
+    expect(serialized).not.toContain('Equal');
   });
 
   it('does not expose Display block trees or runtime internals', () => {
