@@ -9,6 +9,7 @@ export const DETAIL_SEGMENT_HELPERS = new Map([
   ['limitDetailSection', 'typed-builder'],
   ['limitMethodRowsSection', 'typed-builder'],
   ['integrationDetailSection', 'typed-builder'],
+  ['calculusDetailSection', 'typed-builder'],
 ]);
 export const DETAIL_SEGMENT_LANES = [
   {

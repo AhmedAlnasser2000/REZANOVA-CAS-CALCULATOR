@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1 makes five existing integration constants explicit typed mathematical fragments while preserving every compatibility line and visible result.",
+  "acceptedReason": "DETAIL-SEGMENT-CALCULUS1 adds five producer-owned interval-safety math fragments while preserving all prior fragments, compatibility lines, and mathematical outcomes.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -333,6 +333,11 @@
           "value": "1"
         },
         {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "[0, 1]"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\int_{0}^{1}\\!2x\\, \\mathrm{d}x"
@@ -351,6 +356,11 @@
           "value": "0.310268"
         },
         {
+          "path": "detailSections[1].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "[0, 1]"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\int_{0}^{1}\\!\\sin(x^2)\\, \\mathrm{d}x"
@@ -363,6 +373,21 @@
       "outcomeKind": "error",
       "title": "Integral",
       "fragments": [
+        {
+          "path": "detailSections[0].lineParts[0][1].latex",
+          "kind": "detail-math-part",
+          "value": "x=0"
+        },
+        {
+          "path": "detailSections[0].lineParts[1][0].latex",
+          "kind": "detail-math-part",
+          "value": "x"
+        },
+        {
+          "path": "detailSections[0].lineParts[1][2].latex",
+          "kind": "detail-math-part",
+          "value": "[-1, 1]"
+        },
         {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",

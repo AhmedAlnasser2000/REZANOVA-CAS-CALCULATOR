@@ -9,6 +9,12 @@ import {
   buildNaturalLimitRequestLatex,
   type NaturalLimitRequest,
 } from './limit-request';
+import {
+  calculusDetailSection,
+  calculusMathPart,
+  calculusTextPart,
+  type CalculusDetailRow,
+} from './detail-readback';
 
 const ce = new ComputeEngine();
 
@@ -104,16 +110,26 @@ export function limitVariableMismatchError(mismatch: LimitVariableMismatch) {
 }
 
 export function limitVariableMismatchDetails(mismatch: LimitVariableMismatch): DisplayDetailSection[] {
-  const lines = [
-    `Limit variable: ${derivativeVariableLatex(mismatch.limitVariable)}`,
-    `Expression variables: ${formatVariableList(mismatch.bodyVariables)}`,
+  const expressionVariableParts = mismatch.bodyVariables.flatMap((variable, index) => [
+    ...(index > 0 ? [calculusTextPart(', ')] : []),
+    calculusMathPart(derivativeVariableLatex(variable)),
+  ]);
+  const rows: CalculusDetailRow[] = [
+    [
+      calculusTextPart('Limit variable: '),
+      calculusMathPart(derivativeVariableLatex(mismatch.limitVariable)),
+    ],
+    [
+      calculusTextPart('Expression variables: '),
+      ...expressionVariableParts,
+    ],
   ];
   if (mismatch.suggestedLatex) {
-    lines.push(`Suggested expression: ${mismatch.suggestedLatex}`);
+    rows.push([
+      calculusTextPart('Suggested expression: '),
+      calculusMathPart(mismatch.suggestedLatex),
+    ]);
   }
 
-  return [{
-    title: 'Limit Variable Check',
-    lines,
-  }];
+  return [calculusDetailSection('Limit Variable Check', rows)];
 }

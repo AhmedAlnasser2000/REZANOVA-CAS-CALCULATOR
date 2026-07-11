@@ -32,6 +32,13 @@ import type {
   EquationDomainIntent,
   LimitDirection,
 } from '../../../types/calculator';
+import {
+  calculusDetailSection,
+  calculusMathPart,
+  calculusTextPart,
+  calculusTextRow,
+  calculusTextRows,
+} from '../detail-readback';
 
 const ce = new ComputeEngine();
 
@@ -69,15 +76,25 @@ function appendUnstableLimitDiagnostic(input: {
     return input.evaluation;
   }
 
-  const diagnostic: DisplayDetailSection = {
-    title: 'Limit Diagnostic',
-    lines: [
-      `Parsed variable: ${input.request.variableLatex}.`,
-      `Expression variables: ${formatBodyVariables(input.bodyVariables)}.`,
+  const expressionVariables = formatBodyVariables(input.bodyVariables);
+  const diagnostic: DisplayDetailSection = calculusDetailSection('Limit Diagnostic', [
+    [
+      calculusTextPart('Parsed variable: '),
+      calculusMathPart(input.request.variableLatex),
+      calculusTextPart('.'),
+    ],
+    input.bodyVariables.length > 0
+      ? [
+          calculusTextPart('Expression variables: '),
+          calculusMathPart(expressionVariables),
+          calculusTextPart('.'),
+        ]
+      : calculusTextRow('Expression variables: none detected.'),
+    ...calculusTextRows([
       `Route classification: ${input.routeKind}.`,
       'No supported symbolic route or stable numeric sample sequence resolved this expression.',
-    ],
-  };
+    ]),
+  ]);
 
   return {
     ...input.evaluation,
@@ -173,16 +190,14 @@ function piecewiseDraftValidationStop(
   return {
     warnings: [],
     error: `Fix row ${rowNumber}: ${firstIssue.message}`,
-    detailSections: [
-      {
-        title: 'Piecewise Input',
-        lines: draft.issues.map((issue) => {
+    detailSections: [calculusDetailSection(
+      'Piecewise Input',
+      calculusTextRows(draft.issues.map((issue) => {
           const issueIndex = draft.rows.findIndex((row) => row.id === issue.rowId);
           const issueRowNumber = issueIndex >= 0 ? issueIndex + 1 : 1;
           return `Row ${issueRowNumber}: ${issue.message}`;
-        }),
-      },
-    ],
+      })),
+    )],
   };
 }
 

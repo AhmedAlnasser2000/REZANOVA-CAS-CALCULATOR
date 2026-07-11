@@ -4,7 +4,6 @@ import {
   limitDetailSection,
   limitMathPart,
   limitTextPart,
-  withLimitDetailLineParts,
 } from '../../symbolic-engine/limits/detail-readback';
 import { domainCheckDetails, limitValueToLatex } from './shared';
 
@@ -72,6 +71,49 @@ function violatedRequirementLatex(check: Extract<OneSidedDomainCheck, { kind: 'o
   return undefined;
 }
 
+function constraintSubjectLatex(
+  constraint: OneSidedDomainCheck['constraints'][number],
+) {
+  switch (constraint.kind) {
+    case 'nonzero':
+    case 'positive':
+    case 'nonnegative':
+    case 'expression-interval':
+      return constraint.expressionLatex;
+    case 'interval':
+      return constraint.variable;
+    case 'carrier-range':
+    case 'carrier-square-range':
+      return constraint.carrier;
+    case 'exp-positive':
+      return undefined;
+  }
+}
+
+function typedDomainCheckSections(
+  sections: readonly DisplayDetailSection[],
+  check: OneSidedDomainCheck,
+) {
+  const subjects = check.constraints
+    .map(constraintSubjectLatex)
+    .filter((subject): subject is string => Boolean(subject));
+
+  return sections.map((section) => limitDetailSection(
+    section.title,
+    section.lines.map((line, index) => {
+      const existing = section.lineParts?.[index];
+      if (existing?.length) {
+        return existing;
+      }
+
+      const subject = subjects.find((candidate) => line.startsWith(candidate));
+      return subject
+        ? [limitMathPart(subject), limitTextPart(line.slice(subject.length))]
+        : [limitTextPart(line)];
+    }),
+  ));
+}
+
 function domainProofSection(input: {
   check: Extract<OneSidedDomainCheck, { kind: 'outside-domain' }>;
   variable: string;
@@ -110,7 +152,10 @@ export function limitDomainCheckDetails(input: {
   target: number;
   side: Exclude<LimitDirection, 'two-sided'>;
 }): DisplayDetailSection[] {
-  const base = withLimitDetailLineParts(domainCheckDetails(undefined, input.check)) ?? [];
+  const base = typedDomainCheckSections(
+    domainCheckDetails(undefined, input.check) ?? [],
+    input.check,
+  );
   if (input.check.kind !== 'outside-domain') {
     return base;
   }

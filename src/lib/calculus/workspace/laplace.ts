@@ -13,6 +13,10 @@ import {
 import { isNodeArray } from '../../symbolic-engine/patterns';
 import type { CalculusCoreEvaluation } from '../engine/shared';
 import type { LaplaceTransformState } from '../../../types/calculator';
+import {
+  calculusDetailSection,
+  calculusTextRows,
+} from '../detail-readback';
 
 const ce = new ComputeEngine();
 
@@ -350,12 +354,12 @@ export function evaluateCalculusLaplaceTransform(
       return {
         warnings: [],
         error: 'This Laplace transform is outside the supported Calculus table.',
-        detailSections: [{
-          title: 'Laplace Table',
-          lines: [
+        detailSections: [calculusDetailSection(
+          'Laplace Table',
+          calculusTextRows([
             'CALCULUS-LAPLACE-TABLE1 covers constants, t^n, e^(a t), sin/cos/sinh/cosh, and e^(a t)sin/cos(b t) with exact-rational numeric parameters.',
-          ],
-        }],
+          ]),
+        )],
       };
     }
 
@@ -363,13 +367,13 @@ export function evaluateCalculusLaplaceTransform(
       exactLatex: matched.exactLatex,
       warnings: [],
       resultOrigin: 'rule-based-symbolic',
-      detailSections: [{
-        title: 'Laplace Table',
-        lines: [
+      detailSections: [calculusDetailSection(
+        'Laplace Table',
+        calculusTextRows([
           matched.method,
           'Source variable t and transform variable s are fixed in this table slice.',
-        ],
-      }],
+        ]),
+      )],
     };
   } catch {
     return {

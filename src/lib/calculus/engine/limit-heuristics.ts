@@ -1,6 +1,12 @@
 import { MAX_RESULT_MAGNITUDE } from '../../engine/result-guard';
 import type { DisplayDetailSection, LimitTargetKind } from '../../../types/calculator';
-import { limitMethodSection } from '../../symbolic-engine/limits/detail-readback';
+import {
+  limitDetailSection,
+  limitMathPart,
+  limitTextPart,
+  limitTextRow,
+  type LimitDetailRow,
+} from '../../symbolic-engine/limits/detail-readback';
 
 const LIMIT_TOLERANCE = 1e-4;
 const INFINITE_SAMPLES = [10, 20, 50, 100, 200, 500, 1000];
@@ -68,12 +74,20 @@ function rationalRatioLatex(numerator: number, denominator: number): string | un
   return `\\frac{${reducedNumerator}}{${reducedDenominator}}`;
 }
 
-function rationalDominanceDetail(...lines: string[]) {
-  return limitMethodSection(
-    'Form detected: asymptotic comparison at infinity.',
-    'Rewrite/equivalent: compare dominant polynomial terms and leading coefficients.',
-    ...lines,
-  );
+function conclusionRow(latex: string): LimitDetailRow {
+  return [
+    limitTextPart('Conclusion: final limit is '),
+    limitMathPart(latex),
+    limitTextPart('.'),
+  ];
+}
+
+function rationalDominanceDetail(...rows: LimitDetailRow[]) {
+  return [limitDetailSection('Limit Method', [
+    limitTextRow('Form detected: asymptotic comparison at infinity.'),
+    limitTextRow('Rewrite/equivalent: compare dominant polynomial terms and leading coefficients.'),
+    ...rows,
+  ])];
 }
 
 function stabilizeSamples(samples: number[]) {
@@ -288,11 +302,11 @@ export function resolveInfiniteLimitHeuristic(
     return {
       kind: 'success',
       value: constant,
-      detailSections: limitMethodSection(
-        'Form detected: constant expression at infinity.',
-        'Key calculation: the expression is constant with respect to the limit variable.',
-        `Conclusion: final limit is ${constant}.`,
-      ),
+      detailSections: [limitDetailSection('Limit Method', [
+        limitTextRow('Form detected: constant expression at infinity.'),
+        limitTextRow('Key calculation: the expression is constant with respect to the limit variable.'),
+        conclusionRow(`${constant}`),
+      ])],
     };
   }
 
@@ -303,8 +317,8 @@ export function resolveInfiniteLimitHeuristic(
         kind: 'success',
         value: polynomial.leadingCoefficient,
         detailSections: rationalDominanceDetail(
-          'Key calculation: the polynomial has degree 0, so the constant term is the limit.',
-          `Conclusion: final limit is ${polynomial.leadingCoefficient}.`,
+          limitTextRow('Key calculation: the polynomial has degree 0, so the constant term is the limit.'),
+          conclusionRow(`${polynomial.leadingCoefficient}`),
         ),
       };
     }
@@ -312,8 +326,8 @@ export function resolveInfiniteLimitHeuristic(
       kind: 'success',
       value: signedInfinity(signAtInfinity(polynomial.leadingCoefficient, polynomial.degree)),
       detailSections: rationalDominanceDetail(
-        `Key calculation: the polynomial degree is ${polynomial.degree}; its leading term determines signed divergence.`,
-        `Conclusion: final limit is ${signedInfinity(signAtInfinity(polynomial.leadingCoefficient, polynomial.degree)) === 'posInfinity' ? '\\infty' : '-\\infty'}.`,
+        limitTextRow(`Key calculation: the polynomial degree is ${polynomial.degree}; its leading term determines signed divergence.`),
+        conclusionRow(signedInfinity(signAtInfinity(polynomial.leadingCoefficient, polynomial.degree)) === 'posInfinity' ? '\\infty' : '-\\infty'),
       ),
     };
   }
@@ -331,8 +345,8 @@ export function resolveInfiniteLimitHeuristic(
         value: 0,
         exactLatex: '0',
         detailSections: rationalDominanceDetail(
-          `Key calculation: numerator degree ${numerator.degree} is lower than denominator degree ${denominator.degree}, so the ratio tends to 0.`,
-          'Conclusion: final limit is 0.',
+          limitTextRow(`Key calculation: numerator degree ${numerator.degree} is lower than denominator degree ${denominator.degree}, so the ratio tends to 0.`),
+          conclusionRow('0'),
         ),
       };
     }
@@ -345,8 +359,8 @@ export function resolveInfiniteLimitHeuristic(
         value,
         exactLatex,
         detailSections: rationalDominanceDetail(
-          `Key calculation: degrees match at ${numerator.degree}; the limit is the leading-coefficient ratio.`,
-          `Conclusion: final limit is ${exactLatex ?? value}.`,
+          limitTextRow(`Key calculation: degrees match at ${numerator.degree}; the limit is the leading-coefficient ratio.`),
+          conclusionRow(`${exactLatex ?? value}`),
         ),
       };
     }
@@ -358,8 +372,8 @@ export function resolveInfiniteLimitHeuristic(
       kind: 'success',
       value: infinity,
       detailSections: rationalDominanceDetail(
-        `Key calculation: numerator degree ${numerator.degree} exceeds denominator degree ${denominator.degree}; the leading ratio and target side determine signed infinity.`,
-        `Conclusion: final limit is ${infinity === 'posInfinity' ? '\\infty' : '-\\infty'}.`,
+        limitTextRow(`Key calculation: numerator degree ${numerator.degree} exceeds denominator degree ${denominator.degree}; the leading ratio and target side determine signed infinity.`),
+        conclusionRow(infinity === 'posInfinity' ? '\\infty' : '-\\infty'),
       ),
     };
   }

@@ -24,6 +24,12 @@ import type {
   CalculusImproperIntegralState,
   CalculusIndefiniteIntegralState,
 } from '../../../types/calculator';
+import {
+  calculusDetailSection,
+  calculusMathPart,
+  calculusTextPart,
+  calculusTextRows,
+} from '../detail-readback';
 
 const ce = new ComputeEngine();
 const INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS = 10_000;
@@ -137,13 +143,19 @@ function improperEndpointDomainStop(
   return {
     warnings: [],
     error: `This improper integral has a real-domain boundary at the ${label}; exact convergence classification is deferred in CALC-INT1.`,
-    detailSections: mergeAssumptionDetailSections([{
-      title: 'Interval Safety',
-      lines: [
-        `At x=${numberToLatex(value)}, ${violation.message}.`,
+    detailSections: mergeAssumptionDetailSections([calculusDetailSection(
+      'Interval Safety',
+      [
+        [
+          calculusTextPart('At '),
+          calculusMathPart(`x=${numberToLatex(value)}`),
+          calculusTextPart(`, ${violation.message}.`),
+        ],
+        ...calculusTextRows([
         'CALC-INT1 keeps broad improper convergence classification deferred instead of trusting a numeric endpoint singularity.',
+        ]),
       ],
-    }], [buildAssumptionFact({
+    )], [buildAssumptionFact({
       kind: 'interval-hazard',
       source: 'domain-range-core',
       trust: 'blocked',
@@ -214,13 +226,13 @@ function integrateHalfInfinite(
     approxText: formatApproxNumber(result.value),
     warnings: ['Symbolic improper integral unavailable; showing a numeric improper integral.'],
     resultOrigin: 'numeric-fallback',
-    detailSections: [{
-      title: 'Integral Method',
-      lines: [
+    detailSections: [calculusDetailSection(
+      'Integral Method',
+      calculusTextRows([
         'The improper integral was transformed to a finite numeric interval.',
         'The result remains labeled as numeric fallback.',
-      ],
-    }],
+      ]),
+    )],
   } satisfies CalculusWorkspaceEvaluation;
 }
 
@@ -399,12 +411,12 @@ export function evaluateCalculusImproperIntegral(
     approxText: formatApproxNumber(total),
     warnings: ['Symbolic improper integral unavailable; showing a numeric improper integral.'],
     resultOrigin: 'numeric-fallback',
-    detailSections: [{
-      title: 'Integral Method',
-      lines: [
+    detailSections: [calculusDetailSection(
+      'Integral Method',
+      calculusTextRows([
         'The two-sided improper integral was split at 0 and evaluated numerically on both tails.',
         'The result remains labeled as numeric fallback.',
-      ],
-    }],
+      ]),
+    )],
   };
 }

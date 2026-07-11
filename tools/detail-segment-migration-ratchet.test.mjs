@@ -77,6 +77,7 @@ describe('detail-segment migration ratchet', () => {
         declare function limitDetailSection(title: string, rows: unknown[][]): DisplayDetailSection;
         declare function limitMethodRowsSection(rows: unknown[][]): DisplayDetailSection[];
         declare function integrationDetailSection(title: string, rows: unknown[][]): DisplayDetailSection;
+        declare function calculusDetailSection(title: string, rows: unknown[][]): DisplayDetailSection;
         export const a: DisplayDetailSection = { title: 'A', lines: ['x'], lineKind: 'math' };
         export const b: DisplayDetailSection = { title: 'B', lines: ['x'], lineKinds: ['math'] };
         export const c: DisplayDetailSection = { title: 'C', lines: ['x'], lineParts: [[{}]] };
@@ -85,12 +86,13 @@ describe('detail-segment migration ratchet', () => {
         export const f = limitDetailSection('F', [[{}]]);
         export const g = limitMethodRowsSection([[{}]]);
         export const h = integrationDetailSection('H', [[{}]]);
+        export const i = calculusDetailSection('I', [[{}]]);
       `,
     });
     const report = scanDetailSegmentRepository({ rootDir });
 
-    assert.equal(report.summary.producerCount, 8);
-    assert.equal(report.summary.declaredCount, 8);
+    assert.equal(report.summary.producerCount, 9);
+    assert.equal(report.summary.declaredCount, 9);
     assert.equal(report.summary.undeclaredCount, 0);
   });
 
@@ -100,6 +102,17 @@ describe('detail-segment migration ratchet', () => {
     const offenders = collectTypeScriptFiles(limitsRoot)
       .filter((file) => !file.endsWith('.test.ts'))
       .filter((file) => path.basename(file) !== 'detail-readback.ts')
+      .filter((file) => legacyCall.test(fs.readFileSync(file, 'utf8')))
+      .map((file) => path.relative(process.cwd(), file));
+
+    assert.deepEqual(offenders, []);
+  });
+
+  it('keeps Calculus routes off legacy Limits string inference helpers', () => {
+    const calculusRoot = path.join(process.cwd(), 'src/lib/calculus');
+    const legacyCall = /\b(?:limitDetailSectionFromLines|limitMethodSection|withLimitDetailLineParts)\s*\(/u;
+    const offenders = collectTypeScriptFiles(calculusRoot)
+      .filter((file) => !file.endsWith('.test.ts'))
       .filter((file) => legacyCall.test(fs.readFileSync(file, 'utf8')))
       .map((file) => path.relative(process.cwd(), file));
 

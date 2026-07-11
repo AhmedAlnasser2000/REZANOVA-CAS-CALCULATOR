@@ -2227,3 +2227,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Symbolic Integration details must be authored as typed math/text rows or explicitly declared prose. Normal-form, rewrite, substitution, integration-by-parts, polynomial-division, genus-1, and certificate routes may not rely on renderer inference for live intent.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The user removed the intermediate contract-review pause. Its verification evidence remains mandatory, but the program proceeds directly through printer profiles and presents one accumulated review at the end.
+
+## 2026-07-11 - DETAIL-SEGMENT-CALCULUS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Calculus details use producer-owned typed rows for variable checks, route diagnostics, limit conclusions, integral methods and safety, improper-integral stops, and Laplace readback. Production Calculus may not call the legacy Limits completed-string inference helpers.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] One-sided domain detail subjects are derived from structured constraints at the Calculus boundary. Existing typed domain math must not be lost merely to remove a compatibility inference helper.

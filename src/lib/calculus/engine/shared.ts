@@ -11,7 +11,6 @@ import type {
   IntegrationCandidateMetadata,
   IntegralStrategy,
 } from '../../symbolic-engine/integration';
-import { limitMethodSection } from '../../symbolic-engine/limits/detail-readback';
 import type {
   CalculusDerivativeStrategy,
   DisplayAnswerRowsReadback,
@@ -19,6 +18,12 @@ import type {
   ResultOrigin,
 } from '../../../types/calculator';
 import type { AntiderivativeBackcheck } from './verification';
+import {
+  calculusDetailSection,
+  calculusMathPart,
+  calculusTextPart,
+  calculusTextRows,
+} from '../detail-readback';
 
 export const ce = new ComputeEngine();
 
@@ -118,14 +123,11 @@ export function limitValueToApproxText(value: LimitValue) {
 }
 
 export function numericFallbackDetail(...lines: string[]): DisplayDetailSection[] {
-  return limitMethodSection(...lines);
+  return [calculusDetailSection('Limit Method', calculusTextRows(lines))];
 }
 
 export function integralMethodDetail(...lines: string[]): DisplayDetailSection {
-  return {
-    title: 'Integral Method',
-    lines,
-  };
+  return calculusDetailSection('Integral Method', calculusTextRows(lines));
 }
 
 function formatIntervalBounds(lower: number, upper: number) {
@@ -155,40 +157,54 @@ export function integralSafetyDetail(
 ): DisplayDetailSection {
   const intervalLatex = formatIntervalBounds(lower, upper);
   if (check.kind === 'unsafe') {
-    return {
-      title: 'Interval Safety',
-      lines: [
-        `Stopped before integration because x=${numberToLatex(check.value)} ${check.violation.message}.`,
-        constraintLatex(check)
-          ? `${constraintLatex(check)} failed a real-domain constraint on ${intervalLatex}.`
-          : `A real-domain constraint failed on ${intervalLatex}.`,
+    const constraint = constraintLatex(check);
+    return calculusDetailSection('Interval Safety', [
+      [
+        calculusTextPart('Stopped before integration because '),
+        calculusMathPart(`x=${numberToLatex(check.value)}`),
+        calculusTextPart(` ${check.violation.message}.`),
       ],
-    };
+      constraint
+        ? [
+            calculusMathPart(constraint),
+            calculusTextPart(' failed a real-domain constraint on '),
+            calculusMathPart(intervalLatex),
+            calculusTextPart('.'),
+          ]
+        : [
+            calculusTextPart('A real-domain constraint failed on '),
+            calculusMathPart(intervalLatex),
+            calculusTextPart('.'),
+          ],
+    ]);
   }
 
   if (check.constraints.length === 0) {
-    return {
-      title: 'Interval Safety',
-      lines: [`No explicit real-domain constraints were detected on ${intervalLatex}.`],
-    };
+    return calculusDetailSection('Interval Safety', [[
+      calculusTextPart('No explicit real-domain constraints were detected on '),
+      calculusMathPart(intervalLatex),
+      calculusTextPart('.'),
+    ]]);
   }
 
   if (check.kind === 'unknown') {
-    return {
-      title: 'Interval Safety',
-      lines: [
-        `No concrete domain violation was detected on ${intervalLatex}.`,
-        'The interval proof is bounded, so the result keeps the existing fallback honesty policy.',
+    return calculusDetailSection('Interval Safety', [
+      [
+        calculusTextPart('No concrete domain violation was detected on '),
+        calculusMathPart(intervalLatex),
+        calculusTextPart('.'),
       ],
-    };
+      ...calculusTextRows([
+        'The interval proof is bounded, so the result keeps the existing fallback honesty policy.',
+      ]),
+    ]);
   }
 
-  return {
-    title: 'Interval Safety',
-    lines: [
-      `Real-domain constraints were checked at the finite endpoints and bounded sample points on ${intervalLatex}.`,
-    ],
-  };
+  return calculusDetailSection('Interval Safety', [[
+    calculusTextPart('Real-domain constraints were checked at the finite endpoints and bounded sample points on '),
+    calculusMathPart(intervalLatex),
+    calculusTextPart('.'),
+  ]]);
 }
 
 export function antiderivativeTrustFacts(backcheck: AntiderivativeBackcheck | undefined) {

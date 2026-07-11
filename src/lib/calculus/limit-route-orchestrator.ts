@@ -1,5 +1,8 @@
 import type { DisplayDetailSection } from '../../types/calculator';
-import { limitDetailSectionFromLines } from '../symbolic-engine/limits/detail-readback';
+import {
+  limitDetailSection,
+  limitTextRows,
+} from '../symbolic-engine/limits/detail-readback';
 import type { LimitRouteClassification, LimitRouteKind } from './limit-route-classifier';
 
 export type LimitRoutePlan =
@@ -110,7 +113,7 @@ export function limitRouteExplanationSection(input: {
     lines.push(`Route profile: ${input.classification.nodeCount} nodes, depth ${input.classification.maxDepth}.`);
   }
 
-  return limitDetailSectionFromLines('Limit Route', lines);
+  return limitDetailSection('Limit Route', limitTextRows(lines));
 }
 
 function routeDiagnostic(classification: LimitRouteClassification): DisplayDetailSection[] {
@@ -123,7 +126,7 @@ function routeDiagnostic(classification: LimitRouteClassification): DisplayDetai
     lines.push(`Route profile: ${classification.nodeCount} nodes, depth ${classification.maxDepth}.`);
   }
 
-  return [limitDetailSectionFromLines('Limit Diagnostic', lines)];
+  return [limitDetailSection('Limit Diagnostic', limitTextRows(lines))];
 }
 
 function blockedRoute(

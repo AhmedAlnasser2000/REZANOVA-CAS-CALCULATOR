@@ -16,12 +16,12 @@
 
 ## Current Verified Gate
 
-- `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`: all 25 accepted Integration debts moved to producer-owned typed math or explicit prose without changing mathematical results, compatibility wording, card order, History, workers, fallbacks, Clipboard, Surface Protocol, or OOE behavior.
-- Static inventory: 434 live detail producers, 405 declared, and 29 accepted undeclared fingerprints. Symbolic Integration is 75 declared and zero undeclared. Remaining floors are Calculus 15, workspace domains 3, Linear Algebra 1, and compatibility closeout 10.
-- One typed Integration builder now governs normal forms, trig rewrites, integration by parts, substitutions, polynomial division, genus-1 evidence, and non-elementary certificates. Compatibility strings are derived from typed parts; prose-only certificates remain explicit text.
-- Focused Integration coverage passed 89 files and 574 tests, including 11 intent contracts across formula-bearing and prose-only families. The detail migration ratchet passed six tests against the accepted 434-producer inventory.
-- Full unit passed 3,558 across 499 files; full UI passed 452 across 62 files.
-- Cross-program evidence passed: 44 golden tests, seven print-hygiene tests over 43 executions and 190 fragments, feature probes, all 100 replay fixtures, the 515-path printer migration ratchet, and Clipboard contracts. The five new print-hygiene fragments are existing integration constants now exposed as typed math.
+- `DETAIL-SEGMENT-CALCULUS1`: all 15 accepted Calculus debts moved to producer-owned typed rows, and production Calculus paths no longer call legacy Limits string-inference helpers. Mathematical results, compatibility wording, card order, History, workers, fallbacks, Clipboard, Surface Protocol, and OOE behavior are unchanged.
+- Static inventory: 445 live detail producers, 431 declared, and 14 accepted undeclared fingerprints. Calculus is 33 declared and zero undeclared. Remaining floors are workspace domains 3, Linear Algebra 1, and compatibility closeout 10.
+- Variable mismatch, route diagnostics, finite/infinite conclusions, integral methods and interval safety, improper-integral stops, and Laplace readback now declare intent directly. One-sided domain subjects are rebuilt from structured constraints rather than regex inference.
+- Focused Calculus coverage passed 27 files and 186 tests, including six runtime intent cases. The detail migration ratchet passed seven tests against the accepted 445-producer inventory and audits production Calculus for legacy helper calls.
+- Full unit passed 3,564 across 500 files; full UI passed 452 across 62 files.
+- Cross-program evidence passed: 44 golden tests, seven print-hygiene tests over 43 executions and 195 fragments, feature probes, all 100 replay fixtures, the 515-path printer migration ratchet, and Clipboard contracts. Five interval/domain fragments were added and no prior fragment was removed.
 - Runtime probes passed 19 and workspace runtime contracts passed 74. All 19 Chromium canaries passed in 1.2 minutes.
-- Chromium inspected integration-by-parts and non-elementary-certificate cards from a fresh production build. Inline formulas rendered as math, explanatory certificate rows remained prose, and no overlap, clipping, stale content, or unreadable overflow appeared.
+- Chromium inspected successful and unsafe definite-integral cards from a fresh production build. Interval, point, and constraint math rendered inline with no overlap, clipping, stale content, or unreadable overflow.
 - TypeScript, production build, lint, file-size, CI alignment, seam selection, Surface Protocol, OOE, compartments, Cargo check, and diff hygiene passed.

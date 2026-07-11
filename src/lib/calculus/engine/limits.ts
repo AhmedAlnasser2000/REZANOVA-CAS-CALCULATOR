@@ -45,7 +45,8 @@ import {
   twoSidedMismatchDetails,
 } from './limit-side-details';
 import {
-  limitDetailSectionFromLines,
+  limitDetailSection,
+  limitTextRows,
 } from '../../symbolic-engine/limits/detail-readback';
 
 const LIMIT_TOLERANCE = 1e-4;
@@ -408,12 +409,12 @@ export function evaluateFiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: finiteGruntz.stopReason ?? 'The Gruntz bridge did not resolve this finite-target limit.',
-      detailSections: finiteGruntz.detailSections ?? [limitDetailSectionFromLines(
+      detailSections: finiteGruntz.detailSections ?? [limitDetailSection(
         'Limit Diagnostic',
-        [
+        limitTextRows([
           'Route classification: gruntz.',
           finiteGruntz.stopReason ?? 'The finite-target Gruntz bridge stopped before a supported comparison.',
-        ],
+        ]),
       )],
     };
   }
@@ -452,12 +453,12 @@ export function evaluateFiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: `The ${input.routeKind ?? 'selected'} limit route did not resolve this expression within the current symbolic rules.`,
-      detailSections: [limitDetailSectionFromLines(
+      detailSections: [limitDetailSection(
         'Limit Diagnostic',
-        [
+        limitTextRows([
           `Route classification: ${input.routeKind ?? 'unknown'}.`,
           'Numeric fallback was skipped because this route needs an exact symbolic decision.',
-        ],
+        ]),
       )],
     };
   }
@@ -690,12 +691,12 @@ export function evaluateInfiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: recursiveGruntz.stopReason ?? 'The Gruntz route did not resolve this infinite-target limit.',
-      detailSections: recursiveGruntz.detailSections ?? [limitDetailSectionFromLines(
+      detailSections: recursiveGruntz.detailSections ?? [limitDetailSection(
         'Limit Diagnostic',
-        [
+        limitTextRows([
           'Route classification: gruntz.',
           recursiveGruntz.stopReason ?? 'The recursive Gruntz route stopped before a supported comparison.',
-        ],
+        ]),
       )],
     };
   }
@@ -712,12 +713,12 @@ export function evaluateInfiniteLimitFromAst(input: {
     return {
       warnings: [],
       error: `The ${input.routeKind ?? 'selected'} limit route did not resolve this expression within the current symbolic rules.`,
-      detailSections: [limitDetailSectionFromLines(
+      detailSections: [limitDetailSection(
         'Limit Diagnostic',
-        [
+        limitTextRows([
           `Route classification: ${input.routeKind ?? 'unknown'}.`,
           'Numeric fallback was skipped because this route needs an exact symbolic decision.',
-        ],
+        ]),
       )],
     };
   }

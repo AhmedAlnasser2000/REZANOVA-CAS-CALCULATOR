@@ -29,6 +29,10 @@ import {
   type BoxedLike,
   type CalculusCoreEvaluation,
 } from './shared';
+import {
+  calculusDetailSection,
+  calculusTextRows,
+} from '../detail-readback';
 
 function partialFractionReadbackDetail(
   candidate: IntegrationCandidateMetadata | undefined,
@@ -37,14 +41,14 @@ function partialFractionReadbackDetail(
     return undefined;
   }
 
-  return {
-    title: 'Partial Fractions',
-    lines: [
+  return calculusDetailSection(
+    'Partial Fractions',
+    calculusTextRows([
       'The shared polynomial/rational core decomposed this rational expression before integration.',
       'Bounded support covers distinct or repeated rational linear factors and irreducible quadratic factors.',
       'The resulting antiderivative still had to pass the derivative backcheck.',
-    ],
-  };
+    ]),
+  );
 }
 
 function trustedAntiderivative(backcheck: CalculusCoreEvaluation['antiderivativeBackcheck']) {
@@ -368,16 +372,16 @@ function integrationPerformanceBoundary(
     warnings: [],
     error: 'This antiderivative was stopped before a heavy symbolic fallback in Calculus.',
     integrationCandidate: performanceBoundaryCandidate(body),
-    detailSections: [{
-      title: 'Integration Performance Boundary',
-      lines: [
+    detailSections: [calculusDetailSection(
+      'Integration Performance Boundary',
+      calculusTextRows([
         exhaustedBudget
           ? `Stopped before Compute Engine fallback after using the ${timing.budgetMs} ms integration budget.`
           : 'Stopped before Compute Engine fallback because this affine trig-substitution radical family is known to be slow without a local route.',
         'No partial antiderivative was adopted.',
         'The case remains eligible for a future bounded exact route with derivative backcheck.',
-      ],
-    }],
+      ]),
+    )],
   };
 }
 
