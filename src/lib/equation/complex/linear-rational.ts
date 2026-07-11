@@ -542,6 +542,7 @@ export function solveDirectComplexLinearEquation(
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Complex Linear Route',
+      lineKind: 'text',
       lines: [
         'Domain intent: Complex.',
         'Solved a direct one-variable linear equation with an explicit imaginary constant.',
@@ -549,6 +550,7 @@ export function solveDirectComplexLinearEquation(
     },
     {
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         `Selected target: ${target}`,
         parameterNames.length > 0
@@ -612,6 +614,7 @@ export function solveRationalComplexEquation(
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Complex Rational Route',
+      lineKind: 'text',
       lines: [
         'Domain intent: Complex.',
         'Solved numerator roots for a supported rational equation over the complex domain.',
@@ -621,6 +624,7 @@ export function solveRationalComplexEquation(
     },
     {
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         `Selected target: ${target}`,
         parameterNames.length > 0

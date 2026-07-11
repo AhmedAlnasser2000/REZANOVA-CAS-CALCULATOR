@@ -501,6 +501,7 @@ export function buildComplexLocusEvidenceSections(input: {
   const meaningLines = directLocusMeaningLines(equationNode, target);
   const sections: DisplayDetailSection[] = [{
     title: 'Complex Locus Evidence',
+    lineKind: 'text',
     lines: [
       `Realified target: ${target}=x+iy.`,
       'Evidence scope: locus-deferred.',
@@ -512,6 +513,7 @@ export function buildComplexLocusEvidenceSections(input: {
   if (meaningLines.length > 0) {
     sections.push({
       title: 'Complex Locus Meaning',
+      lineKind: 'text',
       lines: meaningLines,
     });
   }
@@ -519,6 +521,7 @@ export function buildComplexLocusEvidenceSections(input: {
   if (!input.complexRegion) {
     sections.push({
       title: 'Complex Locus Region',
+      lineKind: 'text',
       lines: ['No Complex Region bounds were supplied, so bounded locus sampling was not run.'],
     });
     return sections;
@@ -528,6 +531,7 @@ export function buildComplexLocusEvidenceSections(input: {
   if (!region) {
     sections.push({
       title: 'Complex Locus Region',
+      lineKind: 'text',
       lines: ['Complex Region bounds were supplied but were not finite ordered bounds, so bounded locus sampling was skipped.'],
     });
     return sections;
@@ -538,6 +542,7 @@ export function buildComplexLocusEvidenceSections(input: {
   if (!equationNode) {
     sections.push({
       title: 'Complex Locus Region',
+      lineKind: 'text',
       lines: [
         ...regionLines(region, gridSize),
         'The equation could not be parsed into MathJSON for bounded locus sampling.',
@@ -545,6 +550,7 @@ export function buildComplexLocusEvidenceSections(input: {
     });
     sections.push({
       title: 'Complex Locus Diagnostics',
+      lineKind: 'text',
       lines: [
         ...input.report.detailLines,
         'Curve-like loci remain controlled evidence until a later curve/readback/graph contract exists.',
@@ -562,6 +568,7 @@ export function buildComplexLocusEvidenceSections(input: {
   });
   sections.push({
     title: 'Complex Locus Region',
+    lineKind: 'text',
     lines: [
       ...regionLines(region, sample.cellsPerAxis),
       `Sampled cells: ${sample.sampledCellCount}.`,
@@ -571,6 +578,7 @@ export function buildComplexLocusEvidenceSections(input: {
   });
   sections.push({
     title: 'Complex Locus Residual Band',
+    lineKind: 'text',
     lines: sample.residualMin === null || sample.residualMax === null
       ? ['Residual band across sampled cell centers/probes: unavailable because no finite evaluations completed.']
       : [
@@ -580,10 +588,12 @@ export function buildComplexLocusEvidenceSections(input: {
   });
   sections.push({
     title: 'Complex Locus Candidates',
+    lineKind: 'text',
     lines: candidateLines(sample.candidates),
   });
   sections.push({
     title: 'Complex Locus Diagnostics',
+    lineKind: 'text',
     lines: [
       ...(direct.lines.length > 0 ? direct.lines : input.report.detailLines),
       'Curve-like loci remain controlled evidence until a later curve/readback/graph contract exists.',

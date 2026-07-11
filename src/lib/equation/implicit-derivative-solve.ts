@@ -109,6 +109,7 @@ export function solveImplicitDerivativePlaceholder({
         equationReason: solved.reason,
         detailSections: [{
           title: 'Implicit Derivative Solve',
+          lineKind: 'text',
           lines: [
             `Internal derivative placeholder: ${placeholder}`,
             `Display derivative: ${displayDerivative}`,
@@ -129,6 +130,7 @@ export function solveImplicitDerivativePlaceholder({
         detailSections: [
           {
             title: 'Implicit Derivative Solve',
+            lineKind: 'text',
             lines: [
               `Internal derivative placeholder: ${placeholder}`,
               `Display derivative: ${displayDerivative}`,
@@ -154,6 +156,7 @@ export function solveImplicitDerivativePlaceholder({
     detailSections: [
       {
         title: 'Implicit Derivative Solve',
+        lineKind: 'text',
         lines: [
           `Internal derivative placeholder: ${placeholder}`,
           `Display derivative: ${displayDerivative}`,

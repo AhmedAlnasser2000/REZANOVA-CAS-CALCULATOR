@@ -28,8 +28,10 @@
 - Display copy is canonical and lossless where the host permits it; Tauri retains exact canonical text fallback.
 - `CLIPBOARD-PIPELINE-RATCHET1`: committed as `f58cf1c0`.
 - All production copy/paste surfaces use shared adapters, `expressionRouting.ts` owns app Paste, and the direct production Clipboard API floor is zero.
-- `DETAIL-SEGMENT-CONTRACT1`: implemented, verified, and entering its approved commit checkpoint.
+- `DETAIL-SEGMENT-CONTRACT1`: committed as `5c82758b`.
 - The main Display and Formula Viewer share one extracted detail renderer with typed-parts, explicit-kind, then legacy-inference precedence. Typed solve summaries dual-write compatibility text, and old undeclared History data retains inference.
-- `DETAIL-SEGMENT-EQUATION-CORE1` is next; the eight approved migration slices must eliminate undeclared live detail intent without removing historical compatibility.
+- `DETAIL-SEGMENT-EQUATION-CORE1`: implemented and verified; entering its approved commit checkpoint.
+- The AST ratchet inventories 349 live producers. Equation core has 121 declared and zero undeclared producers after 119 object migrations; 75 exact undeclared fingerprints remain pinned across later approved lanes.
+- `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1` is next after this commit; seven approved migration slices remain before the mandatory review.
 - The mandatory contract review blocks all pedagogical-profile migration.
 - No push is authorized, and untracked `test-results/` stays excluded.

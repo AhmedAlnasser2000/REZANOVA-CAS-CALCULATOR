@@ -249,6 +249,7 @@ function diagnosticsSections(input: {
   const sections: DisplayDetailSection[] = [
     {
       title: 'Complex Region Method',
+      lineKind: 'text',
       lines: [
         'No supported exact form was found; showing validated approximate complex roots in the selected region.',
         `Method: ${METHOD_LABEL}.`,
@@ -263,6 +264,7 @@ function diagnosticsSections(input: {
   sections.push(
     {
       title: 'Complex Region',
+      lineKind: 'text',
       lines: [
         ...regionLines(input.region),
         `Deterministic grid size: ${input.gridSize} by ${input.gridSize}.`,
@@ -274,6 +276,7 @@ function diagnosticsSections(input: {
     },
     {
       title: 'Complex Subdivision',
+      lineKind: 'text',
       lines: [
         input.subdivision.enabled
           ? 'Adaptive subdivision: enabled.'
@@ -292,18 +295,22 @@ function diagnosticsSections(input: {
     },
     {
       title: 'Complex Branch-Cut Policy',
+      lineKind: 'text',
       lines: [...input.branchPolicyLines],
     },
     {
       title: 'Complex Pole Policy',
+      lineKind: 'text',
       lines: [...input.meromorphicPolicyLines],
     },
     {
       title: 'Complex Infinite-Family Policy',
+      lineKind: 'text',
       lines: [...input.infiniteFamilyPolicyLines],
     },
     {
       title: 'Complex Search Diagnostics',
+      lineKind: 'text',
       lines: [
         `Deterministic seeds: ${input.newton.diagnostics.deterministicSeedCount}.`,
         `Adaptive midpoint seeds: ${input.newton.diagnostics.adaptiveSeedCount}.`,
@@ -324,6 +331,7 @@ function diagnosticsSections(input: {
     },
     {
       title: 'Complex Contour Moments',
+      lineKind: 'text',
       lines: [
         input.moments.attemptedCellCount > 0
           ? 'Contour-moment fallback: attempted.'
@@ -338,6 +346,7 @@ function diagnosticsSections(input: {
     },
     {
       title: 'Complex Region Validation',
+      lineKind: 'text',
       lines: validationLines({
         target: input.target,
         accepted: input.accepted,
@@ -346,6 +355,7 @@ function diagnosticsSections(input: {
     },
     {
       title: 'Complex Local Box Validation',
+      lineKind: 'text',
       lines: localBoxValidationLines({
         target: input.target,
         complexExactForm: input.complexExactForm,
@@ -354,6 +364,7 @@ function diagnosticsSections(input: {
     },
     {
       title: 'Complex Contour Verification',
+      lineKind: 'text',
       lines: contourLines(input.contour),
     },
   );
@@ -382,6 +393,7 @@ function needsComplexRegionOutcome(input: { target: string }): DisplayOutcome {
     detailSections: [
       {
         title: 'Complex Region Needed',
+        lineKind: 'text',
         lines: [
           `Selected target: ${input.target}.`,
           'Exact Complex routes did not close this holomorphic nonlinear equation.',
@@ -390,6 +402,7 @@ function needsComplexRegionOutcome(input: { target: string }): DisplayOutcome {
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Enable Complex Region, keep Complex On, choose finite real and imaginary bounds, then run again.',
           'Start with [-2, 2] for real and imaginary bounds; widen only when the bounded evidence says the region is incomplete.',
@@ -433,6 +446,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       error: 'Complex region solving needs finite rectangular bounds with reMin < reMax and imMin < imMax.',
       detailSections: [{
         title: 'Complex Region',
+        lineKind: 'text',
         lines: ['Provide finite real and imaginary bounds for the bounded Complex region solve.'],
       }],
     });
@@ -485,6 +499,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       error: 'Complex region crosses an unsupported principal branch cut.',
       detailSections: [{
         title: 'Complex Branch-Cut Policy',
+        lineKind: 'text',
         lines: branchPolicy.detailLines,
       }],
     });
@@ -494,6 +509,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       error: 'Complex region has unresolved or boundary pole evidence.',
       detailSections: [{
         title: 'Complex Pole Policy',
+        lineKind: 'text',
         lines: meromorphicPolicy.detailLines,
       }],
     });

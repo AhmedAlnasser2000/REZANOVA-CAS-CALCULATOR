@@ -344,7 +344,7 @@ function domainAndExclusionDetailSections(plan: EquationNumericSegmentationPlan)
       .map((fact) => normalizeFactLine(fact.message)),
   );
   return lines.length > 0
-    ? [{ title: 'Domain and Exclusions', lines }]
+    ? [{ title: 'Domain and Exclusions', lineKind: 'text', lines }]
     : [];
 }
 
@@ -357,7 +357,7 @@ function piecewiseBreakpointDetailSections(plan: EquationNumericSegmentationPlan
     .map((boundary) => `${plan.target}=${formatApproxNumber(boundary.value)}`);
   const lines = uniqueLines(boundaryLines.length > 0 ? boundaryLines : factLines);
   return lines.length > 0
-    ? [{ title: 'Piecewise Breakpoints', lines }]
+    ? [{ title: 'Piecewise Breakpoints', lineKind: 'text', lines }]
     : [];
 }
 
@@ -393,6 +393,7 @@ function domainProbeDetailSections(plan: EquationNumericSegmentationPlan): Displ
     `Finite sample: ${formatApproxNumber(point)}.`);
   return [{
     title: 'Domain Probe',
+    lineKind: 'text',
     lines: [
       `Probe set: ${probe.samplePoints.length} fixed numeric target sample${probe.samplePoints.length === 1 ? '' : 's'}.`,
       `Undefined or non-real samples: ${probe.undefinedSampleCount}; finite samples: ${probe.finiteSampleCount}.`,
@@ -419,6 +420,7 @@ function numericSegmentationDetailSections(plan: EquationNumericSegmentationPlan
 
   return [{
     title: 'Search Diagnostics',
+    lineKind: 'text',
     lines: [
       ...arithmeticLines,
       `Boundary probes inside the interval: ${formatBoundaryValues(plan.gridBreakpoints)}.`,
@@ -453,6 +455,7 @@ function numericPeriodicIntervalDetailSections(input: {
   const visible = summaries.slice(0, 4);
   return [{
     title: 'Periodic Structure',
+    lineKind: 'text',
     lines: [
       `Angle unit: ${angleUnitLabel(input.angleUnit)}.`,
       ...visible.map((summary) =>
@@ -510,6 +513,7 @@ function numericConditioningDetailSections(input: {
 
   return [{
     title: 'Numeric Conditioning',
+    lineKind: 'text',
     lines: [
       ...complexityLines,
       ...(needsGuidance && needsPrecisionGuidance

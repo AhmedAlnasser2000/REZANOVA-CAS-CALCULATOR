@@ -12,6 +12,7 @@ import {
   quadraticDiscriminant,
 } from '../../algebra/polynomial-core';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
+import { equationLabelLineParts } from '../../display/result-detail-lines';
 import { complex } from '../../numeric/complex';
 import { solveEquationAlgebraicIsolation, type EquationAlgebraicIsolationSuccess } from '../equation-algebraic-isolation';
 import { extractEquationPolynomialDomain } from '../equation-polynomial-domain';
@@ -255,15 +256,23 @@ export function solveFactorableComplexPolynomial(
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Complex Polynomial Route',
+      lineKind: 'text',
       lines: [
         'Domain intent: Complex.',
         'Factored the bounded polynomial and solved linear/quadratic factors over the complex domain.',
         `Polynomial degree: ${exactPolynomialDegree(extracted.metadata.polynomial)}.`,
         `Factorization: ${factorization.factorizedLatex}.`,
       ],
+      lineParts: [
+        [],
+        [],
+        [],
+        equationLabelLineParts('Factorization', `${factorization.factorizedLatex}.`),
+      ],
     },
     {
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         `Selected target: ${target}`,
         parameterNames.length > 0
@@ -393,6 +402,7 @@ export function solveNegativeDiscriminantQuadratic(
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Complex Domain',
+      lineKind: 'text',
       lines: [
         'Domain intent: Complex.',
         'Used the bounded complex quadratic formula because the discriminant is negative.',
@@ -401,6 +411,7 @@ export function solveNegativeDiscriminantQuadratic(
     },
     {
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         `Selected target: ${target}`,
         parameterNames.length > 0

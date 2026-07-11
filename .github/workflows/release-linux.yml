@@ -78,6 +78,9 @@ jobs:
       - name: Validate printer migration ratchet
         run: npm run test:printer-migration
 
+      - name: Validate detail segment migration ratchet
+        run: npm run test:detail-segment-migration
+
       - name: Validate clipboard contract
         run: npm run test:clipboard-contract
 

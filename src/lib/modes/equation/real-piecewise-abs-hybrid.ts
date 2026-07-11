@@ -373,6 +373,7 @@ function detailSectionsFor(input: {
   const sections: DisplayDetailSection[] = [
     {
       title: 'Numeric Method',
+      lineKind: 'text',
       lines: [
         'No supported exact form was found; showing validated approximate real roots.',
         `Method: ${NUMERIC_METHOD_PIECEWISE}.`,
@@ -382,6 +383,7 @@ function detailSectionsFor(input: {
     ...(confidenceSection ? [confidenceSection] : []),
     {
       title: 'Piecewise Branch Rewrite',
+      lineKind: 'text',
       lines: input.expansion.kind === 'cap-exceeded'
         ? [
             `Piecewise branch caps exceeded: ${input.expansion.stats.piecewiseCarrierCount} carrier(s), depth ${input.expansion.stats.maxDepth}, ${input.expansion.stats.generatedEquationCount} generated equation(s).`,
@@ -396,6 +398,7 @@ function detailSectionsFor(input: {
     },
     {
       title: 'Generated Branches',
+      lineKind: 'text',
       lines: input.expansion.branches.map((branch, index) =>
         `Branch ${index + 1}: ${branch.equationLatex}${branch.labels.length > 0 ? ` (${[...new Set(branch.labels)].join('; ')})` : ''}.`),
     },
@@ -417,12 +420,14 @@ function detailSectionsFor(input: {
   if (polynomialLines.length > 0) {
     sections.push({
       title: 'Polynomial Diagnostics',
+      lineKind: 'text',
       lines: polynomialLines,
     });
   }
 
   sections.push({
     title: 'Numeric Validation',
+    lineKind: 'text',
     lines: [
       `Accepted ${input.roots.length} validated real root${input.roots.length === 1 ? '' : 's'}.`,
       `Residual tolerance: ${NUMERIC_RESIDUAL_TOLERANCE}.`,

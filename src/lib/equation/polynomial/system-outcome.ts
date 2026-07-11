@@ -78,6 +78,7 @@ export function projectionStopOutcome(projection: SymbolicEliminationStop): Disp
     return errorOutcome('constant-resultant-no-solution', {
       detailSections: [{
         title: 'Resultant Projection',
+        lineKind: 'text',
         lines: [
           'Eliminating a system variable reduced the equations to a nonzero constant.',
           'That means the equations contradict each other, so no x/y pair can satisfy both.',

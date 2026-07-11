@@ -315,6 +315,7 @@ export function solveSymbolicEquation(
           targetResolution.analysis.reservedIdentifiers.length > 0
             ? [{
                 title: 'Variable Check',
+                lineKind: 'text',
                 lines: [
                   `Reserved identifiers: ${targetResolution.analysis.reservedIdentifiers.map((entry) => entry.name).join(', ')}`,
                 ],
@@ -381,6 +382,7 @@ export function solveSymbolicEquation(
         detailSections: [
           {
             title: 'Answer Mode',
+            lineKind: 'text',
             lines: ['Answer mode: Isolate.'],
           },
           ...readback.detailSections,
@@ -479,6 +481,7 @@ export function solveSymbolicEquation(
           warnings: [],
           detailSections: [{
             title: 'Complex Boundary',
+            lineKind: 'text',
             lines: [
               'Complex special-form solving is currently bounded to exact-rational direct and carrier-quadratic shapes through 12 visible branches.',
               'Symbolic carrier coefficients or constants require a formal principal-branch root policy, so they stay deferred for now.',
@@ -579,6 +582,7 @@ export function solveSymbolicEquation(
             detailSections: [
               {
                 title: 'Complex Carrier Follow-On',
+                lineKind: 'text',
                 lines: [
                   'Domain intent: Complex.',
                   'Expanded the equation into a bounded quadratic carrier and solved each carrier branch over the complex domain.',

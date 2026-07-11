@@ -89,7 +89,7 @@ export function buildFactSection(
 ): DisplayDetailSection | null {
   const deduped = uniqueLines(lines.map(normalizeFactLine));
   return deduped.length > 0
-    ? { title, lines: deduped }
+    ? { title, lineKind: 'text', lines: deduped }
     : null;
 }
 
@@ -177,6 +177,7 @@ export function buildDomainProbeSection(
 
   return {
     title: 'Domain Probe',
+    lineKind: 'text',
     lines,
   };
 }
@@ -214,6 +215,7 @@ export function buildSearchDiagnosticsSection(input: {
 
   return {
     title: 'Search Diagnostics',
+    lineKind: 'text',
     lines,
   };
 }

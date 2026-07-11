@@ -77,6 +77,7 @@ function matchTopLevelQuotientZeroTransform(request: GuardedSolveRequest): Algeb
       solveSummaryText: 'Reduced a quotient equal to zero to its numerator equation and preserved the denominator exclusion',
       detailSections: [{
         title: 'Quotient Zero Reduction',
+        lineKind: 'text',
         lines: [
           `Reduced ${boxLatex(quotient)}=0 to ${equationLatex}.`,
           `Preserved denominator exclusion: ${denominatorLatex}\\ne0.`,

@@ -210,6 +210,7 @@ function complexPowerDefinitionSection(options: {
 
   return {
     title: 'Complex Power Definitions',
+    lineKind: 'text',
     lines: [
       `r=${latexForNode(options.carrierValue)}`,
       ...omegaDefinitions,
@@ -268,6 +269,7 @@ function buildSuccess(options: {
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Complex Special-Form Route',
+      lineKind: 'text',
       lines: [
         'Domain intent: Complex.',
         ...options.routeLines,
@@ -277,6 +279,7 @@ function buildSuccess(options: {
     },
     {
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         `Selected target: ${options.target}`,
         options.parameterNames.length > 0

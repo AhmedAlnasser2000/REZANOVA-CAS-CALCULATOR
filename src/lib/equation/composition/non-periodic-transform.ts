@@ -475,6 +475,7 @@ function matchNonPeriodicTransform(
           detailSections: [
             {
               title: 'Piecewise Exact',
+              lineKind: 'text',
               lines: [
                 `${outerLatex} = ${reducedCarrierLatex} when ${reducedCarrierLatex} stays in ${buildInverseTrigPrincipalRangeMessage(inverseTrigKind, angleUnit)}.`,
               ],
@@ -544,6 +545,7 @@ function matchNonPeriodicTransform(
         detailSections: [
           {
             title: 'Piecewise Exact',
+            lineKind: 'text',
             lines: [
               `${outerLatex} matches ${target.latex} on the bounded sawtooth branches of ${reducedCarrierLatex}.`,
             ],

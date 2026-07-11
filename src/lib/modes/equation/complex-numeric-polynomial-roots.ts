@@ -289,6 +289,7 @@ function detailSectionsFor(input: {
   const sections: DisplayDetailSection[] = [
     {
       title: 'Complex Numeric Method',
+      lineKind: 'text',
       lines: [
         'No supported exact form was found; showing validated approximate complex roots.',
         `Method: ${method}.`,
@@ -304,6 +305,7 @@ function detailSectionsFor(input: {
     },
     {
       title: 'Global Complex Polynomial Evidence',
+      lineKind: 'text',
       lines: [
         'Numeric scope: global-polynomial.',
         'Route engine label: complex-polynomial-aberth.',
@@ -336,6 +338,7 @@ function detailSectionsFor(input: {
     const diagnostics = input.diagnostics;
     sections.push({
       title: 'Polynomial Diagnostics',
+      lineKind: 'text',
       lines: [
         `Root engine: ${diagnostics.method}.`,
         `Iterations: ${diagnostics.iterations}.`,
@@ -365,6 +368,7 @@ function detailSectionsFor(input: {
 
   sections.push({
     title: 'Complex Numeric Validation',
+    lineKind: 'text',
     lines: [
       `Accepted ${input.accepted.length} validated complex root${input.accepted.length === 1 ? '' : 's'}.`,
       `Residual tolerance: ${COMPLEX_RESIDUAL_TOLERANCE}.`,

@@ -195,6 +195,7 @@ function missingStoredValueOutcome(input: {
     detailSections: [
       {
         title: 'Variable Policy',
+        lineKind: 'text',
         lines: [
           `Protected solve target: ${input.protectedTarget ?? 'none'}.`,
           `Parameters needing stored values: ${nameListText(input.requiredNames)}.`,
@@ -202,6 +203,7 @@ function missingStoredValueOutcome(input: {
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           `Add stored values for ${missingText} in Vars, then choose Use Stored Values again.`,
         ],

@@ -32,6 +32,7 @@ describe('seam impact selector', () => {
       'display-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
+      'detail-segment-migration-ratchet',
       'clipboard-contracts',
     ]);
     assert.match(formatHumanPlan(plan), /Baseline CI gates remain required and unchanged\./u);
@@ -93,6 +94,7 @@ describe('seam impact selector', () => {
       'display-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
+      'detail-segment-migration-ratchet',
       'clipboard-contracts',
       'history-replay',
     ]);

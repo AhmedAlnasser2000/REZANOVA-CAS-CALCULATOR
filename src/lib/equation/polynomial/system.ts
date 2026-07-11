@@ -401,6 +401,7 @@ export function solvePolynomialSystem2x2(
       symbols: missingSystemVariables,
       detailSections: [{
         title: 'Polynomial System',
+        lineKind: 'text',
         lines: [
           'Use two equations in the fixed variables x and y.',
           'For curve intersections, write equations like y=x^2+4x and y=1+5x.',
@@ -447,6 +448,7 @@ export function solvePolynomialSystem2x2(
     return errorOutcome('candidate-limit', {
       detailSections: [{
         title: 'Candidate Check',
+        lineKind: 'text',
         lines: [`Projected roots produced ${pairs.length} candidate pairs; cap is ${maxCandidatePairs}.`],
       }],
     });
@@ -477,6 +479,7 @@ export function solvePolynomialSystem2x2(
         ...(extraneousSection ? [extraneousSection] : []),
         {
           title: 'Candidate Check',
+          lineKind: 'text',
           lines: [`Checked ${pairs.length} candidate pairs; none validated in both equations.`],
         },
       ],
@@ -506,6 +509,7 @@ export function solvePolynomialSystem2x2(
     }),
     {
       title: 'Polynomial System',
+      lineKind: 'text',
       lines: [
         'Variables: x, y.',
         `Equation 1 zero form: ${xProjection.substitutedLeftLatex}=0.`,
@@ -514,6 +518,7 @@ export function solvePolynomialSystem2x2(
     },
     {
       title: 'Resultant Projection',
+      lineKind: 'text',
       lines: [
         `Eliminated y to project onto x: ${xProjection.projectedLatex}=0.`,
         yProjection.kind === 'success'
@@ -526,6 +531,7 @@ export function solvePolynomialSystem2x2(
     },
     {
       title: 'Candidate Check',
+      lineKind: 'text',
       lines: [
         `Checked ${pairs.length} candidate pairs; accepted ${validated.length} and rejected ${rejectedCandidateCount}.`,
       ],

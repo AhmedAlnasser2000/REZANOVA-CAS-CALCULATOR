@@ -25,6 +25,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:printer-migration'],
   },
   {
+    id: 'detail-segment-migration-ratchet',
+    label: 'Typed detail-segment migration ratchet',
+    argv: ['npm', 'run', 'test:detail-segment-migration'],
+  },
+  {
     id: 'clipboard-contracts',
     label: 'Canonical Clipboard envelope and host contracts',
     argv: ['npm', 'run', 'test:clipboard-contract'],
@@ -180,7 +185,11 @@ export const SEAM_REGISTRY = [
       ...prefix('src/lib/display/', 'src/app/shell/display-panel/'),
       ...exact('src/app/shell/DisplayPanel.tsx', 'src/types/calculator/display-types.ts'),
     ],
-    additionalCommandIds: ['display-contracts', 'printer-migration-ratchet'],
+    additionalCommandIds: [
+      'display-contracts',
+      'printer-migration-ratchet',
+      'detail-segment-migration-ratchet',
+    ],
     baselineEvidenceIds: [
       'workspace-canaries',
       'surface-protocol',
@@ -233,6 +242,7 @@ export const SEAM_REGISTRY = [
       'display-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
+      'detail-segment-migration-ratchet',
       'clipboard-contracts',
     ],
     baselineEvidenceIds: [
@@ -270,6 +280,7 @@ export const SEAM_REGISTRY = [
       'display-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
+      'detail-segment-migration-ratchet',
     ],
     baselineEvidenceIds: [
       'workspace-canaries',

@@ -107,6 +107,7 @@ function detailSectionsFor(input: {
   const sections: DisplayDetailSection[] = [
     {
       title: 'Numeric Method',
+      lineKind: 'text',
       lines: [
         'No supported exact form was found; showing validated approximate real roots.',
         `Method: ${method}.`,
@@ -137,6 +138,7 @@ function detailSectionsFor(input: {
     const diagnostics = input.rootDiagnostics;
     sections.push({
       title: 'Polynomial Diagnostics',
+      lineKind: 'text',
       lines: [
         `Root engine: ${diagnostics.method}.`,
         `Iterations: ${diagnostics.iterations}.`,
@@ -163,6 +165,7 @@ function detailSectionsFor(input: {
     const certification = input.sturmCertification;
     sections.push({
       title: 'Real Root Certification',
+      lineKind: 'text',
       lines: certification.kind === 'certified'
         ? [
             `Sturm sequence certified ${certification.distinctRealRootCount} distinct real root${certification.distinctRealRootCount === 1 ? '' : 's'}.`,
@@ -180,6 +183,7 @@ function detailSectionsFor(input: {
 
   sections.push({
     title: 'Numeric Validation',
+    lineKind: 'text',
     lines: [
       `Accepted ${input.roots.length} validated real root${input.roots.length === 1 ? '' : 's'}.`,
       `Residual tolerance: ${NUMERIC_RESIDUAL_TOLERANCE}.`,

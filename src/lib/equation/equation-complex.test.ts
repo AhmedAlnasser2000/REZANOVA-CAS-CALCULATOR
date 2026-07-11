@@ -149,9 +149,11 @@ describe('equation complex route', () => {
     expect(square.exactLatex).toContain('\\sqrt{2\\pi i k}');
     expect(square.exactLatex).not.toContain('\\operatorname{Roots}_{2}');
     const expanded = square.detailSections?.find((section) => section.title === 'Expanded Branches');
+    const preimageRoute = square.detailSections?.find((section) =>
+      section.title === 'Complex Preimage Route');
     expect(expanded).toBeUndefined();
-    expect(square.detailSections?.find((section) => section.title === 'Complex Preimage Route')?.lineKind)
-      .toBeUndefined();
+    expect(preimageRoute?.lineKind).toBe('text');
+    expect(preimageRoute?.lineParts).toBeUndefined();
     expect(quartic.exactLatex).toContain('\\sqrt[4]{2\\pi i k}');
     expect(quartic.exactLatex).not.toContain('\\mathrm{all}');
   });

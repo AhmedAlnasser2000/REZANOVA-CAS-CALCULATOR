@@ -5,6 +5,7 @@ export function buildNumericConfidenceSection(lines: readonly string[]): Display
   return uniqueLines.length > 0
     ? {
         title: 'Numeric Confidence',
+        lineKind: 'text',
         lines: uniqueLines,
       }
     : null;

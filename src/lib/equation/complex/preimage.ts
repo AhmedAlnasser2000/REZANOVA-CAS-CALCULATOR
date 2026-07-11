@@ -769,6 +769,7 @@ export function solveComplexPreimageEquation(
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Complex Preimage Route',
+      lineKind: 'text',
       lines: [
         'Domain intent: Complex.',
         'Reduced supported outer complex functions to exact inner equations before algebraic solving.',
@@ -780,6 +781,7 @@ export function solveComplexPreimageEquation(
       : []),
     {
       title: 'Solve Target',
+      lineKind: 'text',
       lines: [
         `Selected target: ${target}`,
         'No symbolic parameters were preserved.',

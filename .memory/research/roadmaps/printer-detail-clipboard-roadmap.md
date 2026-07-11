@@ -188,7 +188,7 @@ Implemented contract: Display, Formula Viewer, History, Guide/workspace expressi
 
 ### C1. `DETAIL-SEGMENT-CONTRACT1`
 
-Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+Status: committed as `5c82758b` on `2026-07-11`.
 
 - Keep `lineParts` as the canonical producer shape because the schema, persistence parser, Formula Viewer, and shared renderer already support it.
 - Extract `DetailLineContent` from the near-cap `DisplayResultBlocks.tsx` into a focused shared component; do not introduce a second renderer.
@@ -201,7 +201,7 @@ Implemented contract: `DetailLineContent` is a focused shared renderer used by t
 
 ### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
 
-Status: next. Execute as the approved named risk slices:
+Status: active. `DETAIL-SEGMENT-EQUATION-CORE1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
 
 1. `DETAIL-SEGMENT-EQUATION-CORE1`.
 2. `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`.
@@ -211,6 +211,8 @@ Status: next. Execute as the approved named risk slices:
 6. `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`.
 7. `DETAIL-SEGMENT-LINEAR-ALGEBRA1`.
 8. `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`.
+
+`DETAIL-SEGMENT-EQUATION-CORE1` establishes the TypeScript-compiler-API migration ratchet over contextual live `DisplayDetailSection` producers. The accepted baseline inventories 349 producers: 274 declared and 75 fingerprinted undeclared producers reserved for later named slices. Equation core moved from 119 undeclared object producers to zero, with all 121 registered core producers declared. Plain rows now state `lineKind: 'text'`; the existing mixed `Factorization` and `Relation tested` rows use typed parts so their current mixed rendering remains unchanged. Stable fingerprints reject replacement debt, lane floors may not increase, and baseline updates require explicit acceptance plus a durable reason. CI, Linux release, aggregate gates, and relevant seam plans execute the ratchet.
 
 - Establish an AST-aware source floor plus runtime corpus evidence for plain detail lines containing math-looking content.
 - Migrate the known dense Equation inequality/complex/numeric paths, Calculus shared/integral details, then at least two representative detail surfaces per workspace.

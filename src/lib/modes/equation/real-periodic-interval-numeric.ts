@@ -73,6 +73,7 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
   const detailSections: DisplayDetailSection[] = [
     {
       title: 'Periodic Numeric Solve',
+      lineKind: 'text',
       lines: [
         'Periodic equations can have infinitely many roots, so numeric fallback needs a finite real interval.',
         'Exact symbolic periodic routes still run first when they can describe the branch family.',
@@ -94,6 +95,7 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
   if (reducedFamilyLatex) {
     detailSections.push({
       title: 'Reduced Periodic Family',
+      lineKind: 'text',
       lines: [
         reducedFamilyLatex,
         'This reduced family is route evidence only; it is not being presented as a complete solved answer.',
@@ -104,6 +106,7 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
   if (routeEvidence.length > 0) {
     detailSections.push({
       title: 'Numeric Route Evidence',
+      lineKind: 'text',
       lines: routeEvidence,
     });
   }
@@ -122,6 +125,7 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
 
   detailSections.push({
     title: 'What To Try',
+    lineKind: 'text',
     lines: [
       'Open Numeric Interval Solve, choose finite real bounds, then run again.',
       'The numeric roots returned from that route are local to the chosen interval only.',

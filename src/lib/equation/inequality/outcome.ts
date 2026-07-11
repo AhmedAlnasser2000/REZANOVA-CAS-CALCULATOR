@@ -1,12 +1,21 @@
 import { inequalitySetToLatex, inequalitySetToText, periodicInequalitySetToLatex, periodicInequalitySetToText } from '../../algebra/inequality-core';
 import type {
   DisplayDetailSection,
+  DisplayDetailLinePart,
   DisplayOutcome,
   EquationDomainIntent,
   LegacyEquationAnswerMode,
 } from '../../../types/calculator';
+import { equationLabelLineParts } from '../../display/result-detail-lines';
 import { dedupeStrings, latexText } from './relation';
 import type { FiniteInequalityResult, PeriodicInequalityResult } from './types';
+
+function inequalityRouteLineParts(lines: readonly string[]): DisplayDetailLinePart[][] {
+  return lines.map((line) => {
+    const match = line.match(/^Relation tested:\s*(.+)\.$/u);
+    return match ? equationLabelLineParts('Relation tested', match[1]) : [];
+  });
+}
 
 function unsupportedInequalityOutcome(input: {
   answerMode: LegacyEquationAnswerMode;
@@ -32,10 +41,12 @@ function unsupportedInequalityOutcome(input: {
     detailSections: [
       {
         title: 'Inequality Route',
+        lineKind: 'text',
         lines,
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Use Exact mode with one variable and exact numeric constants.',
           'Use an = equation when you need symbolic solving, Approximate, or Isolate.',
@@ -61,6 +72,7 @@ function inequalityAnswerModeGuidanceOutcome(input: {
     detailSections: [
       {
         title: 'Answer Mode',
+        lineKind: 'text',
         lines: [
           `Answer mode: ${modeLabel}.`,
           'Use Exact mode for guarded real interval inequality sets.',
@@ -68,6 +80,7 @@ function inequalityAnswerModeGuidanceOutcome(input: {
       },
       {
         title: 'Real Order',
+        lineKind: 'text',
         lines: [
           input.equationDomainIntent === 'complex'
             ? 'Complex intent is enabled, but ordered inequalities are solved over the real line.'
@@ -99,15 +112,21 @@ function buildSuccessOutcome(input: {
   const detailSections: DisplayDetailSection[] = [
     {
       title: input.result.kind === 'periodic' ? 'Periodic Inequality Route' : 'Inequality Route',
+      lineKind: 'text',
       lines: [
         'Answer mode: Exact.',
         ...input.result.lines,
+      ],
+      lineParts: [
+        [],
+        ...inequalityRouteLineParts(input.result.lines),
       ],
     },
   ];
   if (input.result.kind === 'periodic') {
     detailSections.push({
       title: 'Periodic Readback',
+      lineKind: 'text',
       lines: [
         `${resultText}.`,
       ],
@@ -116,6 +135,7 @@ function buildSuccessOutcome(input: {
   if (input.result.proofDetails.length > 0) {
     detailSections.push({
       title: 'Inequality Proof',
+      lineKind: 'text',
       lines: input.result.proofDetails,
     });
   }

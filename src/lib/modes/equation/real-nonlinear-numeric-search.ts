@@ -165,6 +165,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   const baseSections: DisplayDetailSection[] = [
     {
       title: 'Numeric Method',
+      lineKind: 'text',
       lines: [
         'No supported exact form was found; showing validated approximate real roots.',
         `Method: ${NUMERIC_METHOD_NONLINEAR}.`,
@@ -186,6 +187,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   if (classification.routeEvidence.length > 0) {
     baseSections.push({
       title: 'Numeric Route Evidence',
+      lineKind: 'text',
       lines: classification.routeEvidence,
     });
   }
@@ -219,6 +221,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
 
   baseSections.push({
     title: 'Numeric Validation',
+    lineKind: 'text',
     lines: [
       `Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}.`,
       `Residual tolerance: ${NUMERIC_RESIDUAL_TOLERANCE}.`,

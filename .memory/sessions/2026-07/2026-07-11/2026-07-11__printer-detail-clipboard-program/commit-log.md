@@ -25,6 +25,7 @@
 - `1b83f897` - `PRINTER-MIGRATION-RATCHET1`
 - `586795b0` - `CLIPBOARD-CANONICAL1`
 - `f58cf1c0` - `CLIPBOARD-PIPELINE-RATCHET1`
-- pending at write time - `DETAIL-SEGMENT-CONTRACT1`
+- `5c82758b` - `DETAIL-SEGMENT-CONTRACT1`
+- pending at write time - `DETAIL-SEGMENT-EQUATION-CORE1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

@@ -123,6 +123,7 @@ function withOriginalQuotientZeroExclusion(outcome: DisplayOutcome, equationLate
       ...(outcome.detailSections ?? []),
       {
         title: 'Domain Facts',
+        lineKind: 'text',
         lines: [`${denominatorLatex} must stay nonzero.`],
       },
     ],

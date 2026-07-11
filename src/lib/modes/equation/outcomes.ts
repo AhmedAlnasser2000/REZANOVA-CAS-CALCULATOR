@@ -35,6 +35,7 @@ export function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
     detailSections: [
       {
         title: 'Why It Stopped',
+        lineKind: 'text',
         lines: [
           target
             ? `The symbolic solver produced an internal fragment while formatting the exact result for ${target}.`
@@ -43,6 +44,7 @@ export function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Re-run after rewriting ambiguous products with explicit multiplication, choose a simpler target, or use numeric interval solve for a local answer.',
         ],
@@ -86,10 +88,12 @@ export function numericIntervalSolveNeedsIntervalOutcome(): DisplayOutcome {
     detailSections: [
       {
         title: 'Numeric Solve',
+        lineKind: 'text',
         lines: ['Numeric interval solving searches a chosen real interval and validates candidates against the original equation.'],
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Open Numeric Interval Solve, choose a valid start and end, then run again.',
           'Use Exact or Isolate when you want symbolic output instead.',
@@ -113,16 +117,19 @@ export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: st
     detailSections: [
       {
         title: 'Numeric Solve',
+        lineKind: 'text',
         lines: ['Numeric interval solving needs a one-variable real-valued equation after stored-value substitution.'],
       },
       {
         title: 'Why It Stopped',
+        lineKind: 'text',
         lines: [
           'At least one non-target symbol has no stored numeric value.',
         ],
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           ...storeLines,
           'Then run Numeric Interval Solve again with Run / F1 / EXE.',
@@ -147,6 +154,7 @@ export function complexRegionSolveNeedsNumericParametersOutcome(parameters: stri
     detailSections: [
       {
         title: 'Complex Region Solve',
+        lineKind: 'text',
         lines: [
           'Complex region solving needs a one-variable complex-valued equation after stored-value substitution.',
           `Protected solve target: ${protectedTarget ?? 'none'}.`,
@@ -154,12 +162,14 @@ export function complexRegionSolveNeedsNumericParametersOutcome(parameters: stri
       },
       {
         title: 'Why It Stopped',
+        lineKind: 'text',
         lines: [
           'At least one non-target symbol has no stored numeric value.',
         ],
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           ...storeLines,
           'Then run the bounded Complex region solve again.',
@@ -182,16 +192,19 @@ export function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
     detailSections: [
       {
         title: 'Answer Mode',
+        lineKind: 'text',
         lines: ['Answer mode: Exact.'],
       },
       {
         title: 'Why It Stopped',
+        lineKind: 'text',
         lines: [
           'The available solver path produced only a numeric or approximate result, so Exact mode leaves it out.',
         ],
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Use Numeric Interval Solve with finite real bounds when you want interval-local numeric roots.',
           target
@@ -244,6 +257,7 @@ export function complexIntentRequiredOutcome(): DisplayOutcome {
     detailSections: [
       {
         title: 'Complex Input',
+        lineKind: 'text',
         lines: [
           'The symbol i is reserved as the imaginary unit in Equation input.',
           'Complex Off keeps Equation solving real-first.',
@@ -251,6 +265,7 @@ export function complexIntentRequiredOutcome(): DisplayOutcome {
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Turn Complex On for bounded exact complex Equation answers.',
           'Use a different symbol if you intended i to be a real variable.',
@@ -270,6 +285,7 @@ export function unsupportedComplexPreimageOutcome(): DisplayOutcome {
     detailSections: [
       {
         title: 'Complex Preimage Route',
+        lineKind: 'text',
         lines: [
           'Complex Exact currently supports bounded algebraic, rational, log/exp, and two-trig-layer preimages.',
           'Absolute-value complex equations are deferred because they usually describe loci or condition sets rather than finite branches.',
@@ -277,6 +293,7 @@ export function unsupportedComplexPreimageOutcome(): DisplayOutcome {
       },
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Use Complex On with one selected target and exact numeric constants.',
           'Use a real-domain equation or turn Complex Off when you want the older real absolute-value route.',
@@ -303,6 +320,7 @@ export function unsupportedComplexLocusOutcome(
     detailSections: [
       {
         title: 'Complex Locus Policy',
+        lineKind: 'text',
         lines: report.detailLines,
       },
       ...buildComplexLocusEvidenceSections({
@@ -313,6 +331,7 @@ export function unsupportedComplexLocusOutcome(
       }),
       {
         title: 'What To Try',
+        lineKind: 'text',
         lines: [
           'Read these as locus/set conditions: for example Re(z)=1 is a vertical line, and |z-a|=r is a circle when r>0.',
           'Use a real-domain equation or turn Complex Off when you want the older real absolute-value route.',
@@ -355,6 +374,7 @@ function realDomainComplexRootsOutcome(target: string): DisplayOutcome {
     detailSections: [
       {
         title: 'Real Domain',
+        lineKind: 'text',
         lines: [
           `Selected target: ${target}.`,
           'Real mode reports real roots only.',
@@ -395,6 +415,7 @@ function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: st
       ...(outcome.detailSections ?? []),
       {
         title: 'Branch Guards',
+        lineKind: 'text',
         lines: scoped.map((fact) =>
           `${conditionTextFromLegacySupplement(fact)} was checked against the displayed candidate root(s).`),
       },

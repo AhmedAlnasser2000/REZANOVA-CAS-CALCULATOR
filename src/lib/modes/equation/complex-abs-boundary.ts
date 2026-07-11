@@ -47,6 +47,7 @@ export function tryComplexAbsBoundaryNoSolution(input: {
     detailSections: [
       {
         title: 'Complex Abs Boundary',
+        lineKind: 'text',
         lines: [
           'Domain intent: Complex.',
           'Absolute-value equations use magnitude semantics, so the left side is real and nonnegative.',
@@ -55,6 +56,7 @@ export function tryComplexAbsBoundaryNoSolution(input: {
       },
       {
         title: 'Candidate Check',
+        lineKind: 'text',
         lines: [
           'The real sign cases produce no accepted candidate.',
           'Therefore the complex solution set is empty for this benchmark case.',
