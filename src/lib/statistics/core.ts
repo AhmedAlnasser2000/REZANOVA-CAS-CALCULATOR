@@ -16,6 +16,13 @@ import {
   type MeanInferenceSummary,
 } from './inference';
 import { parseStatisticsDraft } from './parser';
+import {
+  correlationQualitySection,
+  correlationStrength,
+  regressionQualitySection,
+  type RegressionDiagnostics,
+  type RegressionFitSummary,
+} from './quality-readback';
 import { formatStatisticsNumber, parseIntegerDraft, parseNumericDraft } from './shared';
 
 type NumericFrequencyRow = {
@@ -26,20 +33,6 @@ type NumericFrequencyRow = {
 type NumericPoint = {
   x: number;
   y: number;
-};
-
-type RegressionFitSummary = {
-  count: number;
-  slope: number;
-  intercept: number;
-  r: number;
-  rSquared: number;
-};
-
-type RegressionDiagnostics = {
-  sse: number;
-  mse: number | null;
-  residualStandardError: number | null;
 };
 
 type StatisticsEvaluation = {
@@ -654,23 +647,6 @@ function regressionSummary(points: NumericPoint[]) {
   };
 }
 
-function correlationStrength(r: number) {
-  const magnitude = Math.abs(r);
-  const direction = r > 0 ? 'positive' : r < 0 ? 'negative' : 'none';
-  const strength =
-    magnitude < 0.2
-      ? 'negligible'
-      : magnitude < 0.4
-        ? 'weak'
-        : magnitude < 0.7
-          ? 'moderate'
-          : magnitude < 0.9
-            ? 'strong'
-            : 'very strong';
-
-  return direction === 'none' ? 'no linear direction' : `${strength} ${direction}`;
-}
-
 function regressionDiagnostics(points: NumericPoint[], summary: RegressionFitSummary): RegressionDiagnostics {
   const sse = points.reduce((total, point) => {
     const fitted = (summary.slope * point.x) + summary.intercept;
@@ -708,43 +684,6 @@ function fitQualityWarnings(r: number, count: number) {
   }
 
   return warnings;
-}
-
-function regressionQualitySection(summary: RegressionFitSummary, diagnostics: RegressionDiagnostics): DisplayDetailSection {
-  const lines = [
-    `Fit strength: ${correlationStrength(summary.r)} linear relationship.`,
-    `SSE = ${formatStatisticsNumber(diagnostics.sse)}`,
-  ];
-
-  if (diagnostics.mse === null || diagnostics.residualStandardError === null) {
-    lines.push('Residual variance and residual standard error need at least 3 points.');
-  } else {
-    lines.push(`Residual variance (MSE) = ${formatStatisticsNumber(diagnostics.mse)}`);
-    lines.push(`Residual standard error = ${formatStatisticsNumber(diagnostics.residualStandardError)}`);
-  }
-
-  return {
-    title: 'Quality Summary',
-    lines,
-  };
-}
-
-function correlationQualitySection(summary: RegressionFitSummary): DisplayDetailSection {
-  const magnitude = Math.abs(summary.r);
-  const qualityNote =
-    magnitude < 0.4
-      ? 'Quality note: weak linear relationship in this sample.'
-      : magnitude < 0.7
-        ? 'Quality note: moderate linear relationship in this sample.'
-        : 'Quality note: strong linear relationship in this sample.';
-
-  return {
-    title: 'Quality Summary',
-    lines: [
-      `Strength: ${correlationStrength(summary.r)} linear relationship.`,
-      qualityNote,
-    ],
-  };
 }
 
 function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regression' }>): StatisticsEvaluation {

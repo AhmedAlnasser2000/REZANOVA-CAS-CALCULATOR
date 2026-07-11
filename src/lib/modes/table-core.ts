@@ -15,6 +15,7 @@ import type {
   TableResponse,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import { textDetailSection } from '../display/result/result-detail-lines';
 
 export type RunTableModeRequest = {
   primaryLatex: string;
@@ -196,10 +197,9 @@ export function buildCancelledTableModeResult(): TableModeResult {
       error: 'Table build was stopped before it finished.',
       warnings: [],
       detailSections: [
-        {
-          title: 'OOE',
-          lines: ['The active Table job observed a Stop request and exited before committing rows.'],
-        },
+        textDetailSection('OOE', [
+          'The active Table job observed a Stop request and exited before committing rows.',
+        ]),
       ],
     },
   };

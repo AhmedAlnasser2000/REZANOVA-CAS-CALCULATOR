@@ -34,10 +34,11 @@
 - `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`: committed as `97ec9ca2`.
 - `DETAIL-SEGMENT-SYMBOLIC-LIMITS1`: committed as `1325782c`.
 - `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`: committed as `19ea2ad5`.
-- `DETAIL-SEGMENT-CALCULUS1`: implemented and verified; entering its approved commit checkpoint.
-- The widened AST ratchet inventories 445 live producers: 431 declared and 14 undeclared. Calculus has 33 declared and zero undeclared producers; Symbolic Integration remains 75/zero, Symbolic Limits 46/zero, Equation parameterized 73/zero, and Equation core 123/zero.
+- `DETAIL-SEGMENT-CALCULUS1`: committed as `27305475`.
+- `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`: implemented and verified; entering its approved commit checkpoint.
+- The widened AST ratchet inventories 445 live producers: 434 declared and 11 undeclared. Workspace Domains has five declared and zero undeclared producers; Calculus remains 33/zero, Symbolic Integration 75/zero, Symbolic Limits 46/zero, Equation parameterized 73/zero, and Equation core 123/zero.
 - Parameterized normalization no longer calls legacy text inference. Selected-target generated equations and formula branches are producer-owned typed parts, while compatibility lines, wording, and mathematics remain unchanged.
 - Symbolic Limits finite rules, local equivalents, recursive leading terms, indeterminate transforms, L'Hospital, and rewrite/cancellation derive compatibility lines from explicit typed rows. A source audit forbids legacy string helper calls in this lane.
-- `DETAIL-SEGMENT-WORKSPACE-DOMAINS1` is next; three approved detail slices remain, followed by eight printer-profile slices.
+- `DETAIL-SEGMENT-LINEAR-ALGEBRA1` is next; two approved detail slices remain, followed by eight printer-profile slices.
 - The contract-review evidence checkpoint remains required, but the user removed its intermediate acceptance pause and directed the program to continue through printer profiles before one accumulated final review.
 - No push is authorized, and untracked `test-results/` stays excluded.

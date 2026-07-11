@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "acceptedReason": "DETAIL-SEGMENT-CALCULUS1 removes all 15 accepted Calculus debts, governs 33 typed producers, preserves structured domain math, and forbids Calculus calls into legacy Limits string inference.",
+  "acceptedReason": "DETAIL-SEGMENT-WORKSPACE-DOMAINS1 removes all three accepted workspace-domain debts, types Statistics regression metrics, and declares correlation quality plus Table cancellation as prose without changing compatibility lines.",
   "registryDigest": "a8019e1bc55ed5c4a143",
   "laneFloors": {
     "equation-parameterized": 0,
@@ -8,7 +8,7 @@
     "symbolic-limits": 0,
     "symbolic-integration": 0,
     "calculus": 0,
-    "workspace-domains": 3,
+    "workspace-domains": 0,
     "linear-algebra": 1,
     "compat-closeout": 10
   },
@@ -23,9 +23,6 @@
     "src/lib/display/result/result-detail-policy.ts::concisePartialFractions::object::d9eb65fc8dd0c20ff81c",
     "src/lib/display/result/result-detail-policy.ts::conciseTrust::object::4c4277917eb033909054",
     "src/lib/display/result/result-detail-policy.ts::readableSolveNoteSection::object::e0ddeccbc055c2c582e9",
-    "src/lib/linear-algebra/matrix-lu.ts::runMatrixLu::object::377d9e2a7a3f00a7d633",
-    "src/lib/modes/table-core.ts::buildCancelledTableModeResult::object::4a4022a563575f312b0d",
-    "src/lib/statistics/core.ts::correlationQualitySection::object::67822aba4c942aa469d2",
-    "src/lib/statistics/core.ts::regressionQualitySection::object::9465c4287c60aa4c9135"
+    "src/lib/linear-algebra/matrix-lu.ts::runMatrixLu::object::377d9e2a7a3f00a7d633"
   ]
 }

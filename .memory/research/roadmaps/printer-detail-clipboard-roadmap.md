@@ -25,7 +25,7 @@ The target is not a big-bang renderer rewrite. It is an additive path from struc
 
 ## Current Baseline
 
-- `main` and `origin/main` both point to `19ea2ad5` (`DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`) after an external `update by push` at `2026-07-11 08:24:43 +0300`; this session did not push. `DETAIL-SEGMENT-CALCULUS1` is implemented and verified in the current approved checkpoint. No push is authorized.
+- `main` points to `27305475` (`DETAIL-SEGMENT-CALCULUS1`) and is one commit ahead of `origin/main` at `19ea2ad5` (`DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`); this session did not push. `DETAIL-SEGMENT-WORKSPACE-DOMAINS1` is implemented and verified in the current approved checkpoint. No push is authorized.
 - `HISTORY-REPLAY-RATCHET1` is committed as `63d21229`.
 - Untracked `test-results/` is unrelated and must remain untouched.
 - Production has at least 478 explicit `exactLatex:` assignments across 173 files and 61 explicit `resultLatex:` assignments. These are lower bounds because shorthand and indirect builders are not counted.
@@ -201,7 +201,7 @@ Implemented contract: `DetailLineContent` is a focused shared renderer used by t
 
 ### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
 
-Status: active. Equation core is committed as `6e2182bf`, Equation parameterized as `97ec9ca2`, Symbolic Limits as `1325782c`, and Symbolic Integration as `19ea2ad5`. `DETAIL-SEGMENT-CALCULUS1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
+Status: active. Equation core is committed as `6e2182bf`, Equation parameterized as `97ec9ca2`, Symbolic Limits as `1325782c`, Symbolic Integration as `19ea2ad5`, and Calculus as `27305475`. `DETAIL-SEGMENT-WORKSPACE-DOMAINS1` is implemented and verified on `2026-07-11` and is entering its approved commit checkpoint.
 
 1. `DETAIL-SEGMENT-EQUATION-CORE1`.
 2. `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`.
@@ -221,6 +221,8 @@ Status: active. Equation core is committed as `6e2182bf`, Equation parameterized
 `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1` adds one producer-owned Integration detail builder and removes all 25 undeclared Symbolic Integration producers. The accepted inventory is now 434 producers: 405 declared and 29 fingerprinted undeclared producers. Normal-form and trig rewrites, integration by parts, substitutions, polynomial division, genus-1 evidence, and non-elementary certificates now declare math or prose intent explicitly while deriving unchanged compatibility lines. The print-hygiene manifest intentionally grows from 185 to 190 fragments because five existing integration constants are now typed mathematical evidence; visible wording and mathematical results remain unchanged.
 
 `DETAIL-SEGMENT-CALCULUS1` removes all 15 accepted Calculus debts and governs 33 typed producers. The accepted inventory is now 445 producers: 431 declared and 14 fingerprinted undeclared producers. Calculus no longer calls the legacy Limits string-inference helpers; variable checks, route diagnostics, finite/infinite limit conclusions, integral methods and interval safety, improper-integral stops, and Laplace readback declare intent directly. Structured one-sided domain subjects preserve prior math evidence without regex inference. The print-hygiene manifest grows additively from 190 to 195 fragments, with compatibility lines and mathematical outcomes unchanged.
+
+`DETAIL-SEGMENT-WORKSPACE-DOMAINS1` removes all three accepted workspace-domain debts while keeping the inventory at 445 producers: 434 declared and 11 fingerprinted undeclared producers. Statistics regression quality derives unchanged compatibility lines from typed SSE, MSE, and residual-standard-error math parts; correlation quality and Table cancellation explicitly declare their existing prose intent. The print-hygiene manifest grows additively from 195 to 196 fragments because the golden regression case exposes the existing SSE value. Quality Summary remains collapsed by default, and expanded Chromium evidence is readable without overlap or overflow.
 
 - Establish an AST-aware source floor plus runtime corpus evidence for plain detail lines containing math-looking content.
 - Migrate the known dense Equation inequality/complex/numeric paths, Calculus shared/integral details, then at least two representative detail surfaces per workspace.

@@ -2487,8 +2487,10 @@ describe('AppMain UI automation flows', () => {
 
     await waitFor(() => expect(screen.getByTestId('display-outcome-detail-sections')).toBeInTheDocument());
     await waitForDisplayQueueToSettle();
-    expect(screen.getByText('Quality Summary')).toBeInTheDocument();
-    expect(screen.getByText(/SSE/i)).toBeInTheDocument();
+    await user.click(screen.getByText('Quality Summary'));
+    const details = screen.getByTestId('display-outcome-detail-sections');
+    expect(details).toHaveTextContent('SSE = 0');
+    expect(details.querySelectorAll('.result-math-inline')).toHaveLength(3);
   });
 
   it('shows undefined table rows plus a warning when sampled rows leave the real domain', async () => {

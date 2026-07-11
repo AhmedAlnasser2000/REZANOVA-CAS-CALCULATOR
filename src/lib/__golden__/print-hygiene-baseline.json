@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DETAIL-SEGMENT-CALCULUS1 adds five producer-owned interval-safety math fragments while preserving all prior fragments, compatibility lines, and mathematical outcomes.",
+  "acceptedReason": "DETAIL-SEGMENT-WORKSPACE-DOMAINS1 adds the existing two-point regression SSE value as one producer-owned mathematical fragment while preserving all prior evidence and output text.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -980,6 +980,11 @@
           "path": "exactLatex",
           "kind": "primary-answer",
           "value": "\\hat{y}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
+        },
+        {
+          "path": "detailSections[0].lineParts[1][1].latex",
+          "kind": "detail-math-part",
+          "value": "0"
         }
       ]
     },

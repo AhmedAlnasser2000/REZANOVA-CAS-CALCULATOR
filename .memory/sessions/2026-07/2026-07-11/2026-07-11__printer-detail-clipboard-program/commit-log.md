@@ -30,6 +30,7 @@
 - `97ec9ca2` - `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`
 - `1325782c` - `DETAIL-SEGMENT-SYMBOLIC-LIMITS1`
 - `19ea2ad5` - `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`
-- pending at write time - `DETAIL-SEGMENT-CALCULUS1`
+- `27305475` - `DETAIL-SEGMENT-CALCULUS1`
+- pending at write time - `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`
 
 Standing approval covers named commits in this session. No push is authorized; untracked `test-results/` is excluded.

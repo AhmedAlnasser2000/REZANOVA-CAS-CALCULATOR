@@ -2232,3 +2232,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Calculus details use producer-owned typed rows for variable checks, route diagnostics, limit conclusions, integral methods and safety, improper-integral stops, and Laplace readback. Production Calculus may not call the legacy Limits completed-string inference helpers.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] One-sided domain detail subjects are derived from structured constraints at the Calculus boundary. Existing typed domain math must not be lost merely to remove a compatibility inference helper.
+
+## 2026-07-11 - DETAIL-SEGMENT-WORKSPACE-DOMAINS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Statistics quality readback keeps metric labels as prose and owns SSE, MSE, and residual standard error as typed mathematical values. Correlation interpretation remains explicitly prose because it communicates a qualitative classification rather than a mathematical fragment.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Table cancellation remains an explicit OOE prose detail. Declaring detail intent must preserve existing collapsed state and card behavior; verification expands collapsed sections to inspect typed math rather than changing their default presentation.

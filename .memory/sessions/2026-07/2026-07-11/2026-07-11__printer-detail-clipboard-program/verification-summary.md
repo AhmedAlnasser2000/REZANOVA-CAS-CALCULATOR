@@ -16,12 +16,12 @@
 
 ## Current Verified Gate
 
-- `DETAIL-SEGMENT-CALCULUS1`: all 15 accepted Calculus debts moved to producer-owned typed rows, and production Calculus paths no longer call legacy Limits string-inference helpers. Mathematical results, compatibility wording, card order, History, workers, fallbacks, Clipboard, Surface Protocol, and OOE behavior are unchanged.
-- Static inventory: 445 live detail producers, 431 declared, and 14 accepted undeclared fingerprints. Calculus is 33 declared and zero undeclared. Remaining floors are workspace domains 3, Linear Algebra 1, and compatibility closeout 10.
-- Variable mismatch, route diagnostics, finite/infinite conclusions, integral methods and interval safety, improper-integral stops, and Laplace readback now declare intent directly. One-sided domain subjects are rebuilt from structured constraints rather than regex inference.
-- Focused Calculus coverage passed 27 files and 186 tests, including six runtime intent cases. The detail migration ratchet passed seven tests against the accepted 445-producer inventory and audits production Calculus for legacy helper calls.
-- Full unit passed 3,564 across 500 files; full UI passed 452 across 62 files.
-- Cross-program evidence passed: 44 golden tests, seven print-hygiene tests over 43 executions and 195 fragments, feature probes, all 100 replay fixtures, the 515-path printer migration ratchet, and Clipboard contracts. Five interval/domain fragments were added and no prior fragment was removed.
+- `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`: all three accepted Statistics/Table debts moved to producer-owned intent. Mathematical results, compatibility wording, collapse behavior, card order, History, workers, fallbacks, Clipboard, Surface Protocol, and OOE behavior are unchanged.
+- Static inventory: 445 live detail producers, 434 declared, and 11 accepted undeclared fingerprints. Workspace Domains is five declared and zero undeclared. Remaining floors are Linear Algebra 1 and compatibility closeout 10.
+- Statistics regression quality types SSE, MSE, and residual standard error as math parts; correlation quality and Table cancellation explicitly remain prose. Extracting the quality readback helper lowered the Statistics core below the default file-size cap.
+- Focused Statistics/Table coverage passed nine files and 45 tests. The detail migration ratchet passed seven tests against the accepted 445-producer inventory and audits all workspace-domain debts at zero.
+- Full unit passed 3,566 across 501 files; full UI passed 452 across 62 files.
+- Cross-program evidence passed: 44 golden tests, seven print-hygiene tests over 43 executions and 196 fragments, feature probes, all 100 replay fixtures, the 515-path printer migration ratchet, and Clipboard contracts. One existing SSE fragment was added and no prior fragment was removed.
 - Runtime probes passed 19 and workspace runtime contracts passed 74. All 19 Chromium canaries passed in 1.2 minutes.
-- Chromium inspected successful and unsafe definite-integral cards from a fresh production build. Interval, point, and constraint math rendered inline with no overlap, clipping, stale content, or unreadable overflow.
+- Chromium expanded and inspected Statistics Quality Summary from a fresh production build. Inline metrics remained readable with no overlap, clipping, stale content, or unreadable overflow; the section remains intentionally collapsed by default.
 - TypeScript, production build, lint, file-size, CI alignment, seam selection, Surface Protocol, OOE, compartments, Cargo check, and diff hygiene passed.
