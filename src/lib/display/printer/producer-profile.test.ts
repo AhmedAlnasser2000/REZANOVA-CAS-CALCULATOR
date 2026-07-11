@@ -3,6 +3,7 @@ import {
   profileCalculusResult,
   profileEquationResult,
   profileGeometryResult,
+  profileLinearAlgebraResult,
   profileStatisticsResult,
   profileSymbolicCoreResult,
   profileSymbolicIntegrationResult,
@@ -51,5 +52,10 @@ describe('producer printer profiles', () => {
   ])('keeps %s serialization stable under pedagogical-v1', (_name, profile, exactLatex) => {
     const result = { kind: 'success', exactLatex };
     expect(profile(result)).toBe(result);
+  });
+
+  it('keeps Linear Algebra serialization stable under pedagogical-v1', () => {
+    const result = { kind: 'success', resultLatex: String.raw`\begin{bmatrix}1&0\\0&1\end{bmatrix}` };
+    expect(profileLinearAlgebraResult(result)).toBe(result);
   });
 });

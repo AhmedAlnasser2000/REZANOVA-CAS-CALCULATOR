@@ -43,6 +43,7 @@ import {
   exactMatrixDimensionLimitMessage,
   matrixEditingDimensionError,
 } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {
@@ -163,18 +164,18 @@ function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
   }
 
   if (req.operation === 'rankA' || req.operation === 'rankB') {
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: `${reduced.rank}`,
       approxText: formatApproxNumber(reduced.rank),
       warnings: [],
-    };
+    });
   }
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: exactMatrixToLatex(reduced.matrix),
     detailSections: [rowOperationDetailSection(reduced.rowOperations)],
     warnings: [],
-  };
+  });
 }
 
 function exactSpaceResponse(req: MatrixRequest): MatrixResponse | null {
@@ -626,17 +627,17 @@ function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult
   }
 
   if (result.kind === 'scalar') {
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: exactMatrixReadback(req) ?? scalarToLatex(result.value),
       approxText: formatApproxNumber(result.value),
       warnings: [],
-    };
+    });
   }
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: exactMatrixReadback(req) ?? matrixToLatex(result.value),
     warnings: [],
-  };
+  });
 }
 
 export function solveLinearSystem(coefficients: number[][], constants: number[]) {

@@ -17,6 +17,7 @@ import {
   exactMatrixDimensionLimitMessage,
   LINEAR_ALGEBRA_MULTI_RHS_AUGMENTED_MAX_DIMENSION,
 } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixMultiRhsInput = {
   coefficientLabel: string;
@@ -237,7 +238,7 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
   });
 
   if (rankA < rankAugmented) {
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: '\\text{No solution matrix}',
       approxText: 'no solution matrix',
       detailSections: [
@@ -254,11 +255,11 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
-    };
+    });
   }
 
   if (rankA < unknowns) {
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: '\\text{Infinitely many solution matrices}',
       approxText: 'not unique',
       detailSections: [
@@ -275,7 +276,7 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
-    };
+    });
   }
 
   const solution = uniqueSolutionMatrix(augmentedRref.matrix, augmentedRref.pivotColumns, unknowns, rhsColumns);
@@ -293,7 +294,7 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
     solution,
   });
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `X=${exactMatrixToLatex(solution)}`,
     approxText: `unique ${rhsColumns}-column solution`,
     detailSections: [
@@ -311,5 +312,5 @@ export function runMatrixMultiRhsSolve(input: MatrixMultiRhsInput): MatrixRespon
       rowOperationDetailSection(augmentedRref.rowOperations),
     ],
     warnings: [],
-  };
+  });
 }

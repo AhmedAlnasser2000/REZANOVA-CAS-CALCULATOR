@@ -17,6 +17,7 @@ import {
   type MatrixEigenAnalysis,
   type MatrixEigenAnalysisRoot,
 } from './matrix-eigen';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixDiagonalizationInput = {
   label: string;
@@ -280,12 +281,12 @@ export function runMatrixDiagonalization(input: MatrixDiagonalizationInput): Mat
   }
   const { factors } = computed;
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `\\operatorname{diag}(${factors.analysis.label})=${factors.analysis.label}=PDP^{-1}`,
     approxText: `diagonalizable; eigenvalues ${rootsSummary(factors.analysis.roots)}`,
     detailSections: diagonalizationDetails(factors),
     warnings: [],
-  };
+  });
 }
 
 function spectralPowerDetails(input: {
@@ -344,7 +345,7 @@ export function runMatrixSpectralPower(input: MatrixSpectralPowerInput): MatrixR
     : diagonalMatrix(factors.d.map((row, index) => exactScalarPower(row[index], input.exponent)));
   const result = multiplyExactMatrices(multiplyExactMatrices(factors.p, dPower), factors.pInverse);
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `${factors.analysis.label}^{${input.exponent}}=${exactMatrixToLatex(result)}`,
     approxText: `power via diagonalization; eigenvalues ${rootsSummary(factors.analysis.roots)}`,
     detailSections: spectralPowerDetails({
@@ -354,5 +355,5 @@ export function runMatrixSpectralPower(input: MatrixSpectralPowerInput): MatrixR
       result,
     }),
     warnings: [],
-  };
+  });
 }

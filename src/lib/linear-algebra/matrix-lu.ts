@@ -27,6 +27,7 @@ import {
 } from './exact-matrix-format';
 import { formatRowOperation } from './row-operation-readback';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixLuInput = {
   label: string;
@@ -392,7 +393,7 @@ export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
   }
 
   const product = multiplyExactMatrices(factored.lower, factored.upper);
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `${input.label}=LU`,
     approxText: `det(${input.label}) = ${exactScalarToLatex(factored.determinant)}`,
     detailSections: luDetails({
@@ -404,7 +405,7 @@ export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
-  };
+  });
 }
 
 export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
@@ -430,7 +431,7 @@ export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
     };
   }
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `${prefixedMatrixLabel('P', input.label)}=LU`,
     approxText: `det(${input.label}) = ${exactScalarToLatex(factored.determinant)}`,
     detailSections: pluDetails({
@@ -444,7 +445,7 @@ export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
-  };
+  });
 }
 
 function forwardSubstitute(lower: ExactMatrix, rhs: ExactVector): ExactVector | null {
@@ -590,7 +591,7 @@ export function runMatrixLuSolve(input: MatrixFactorSolveInput): MatrixResponse 
     return factorSolveStop('LU solve stopped because the factorization has a zero pivot.');
   }
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `x=${exactVectorToColumnLatex(solution)}`,
     approxText: 'LU solve',
     detailSections: luSolveDetails({
@@ -603,7 +604,7 @@ export function runMatrixLuSolve(input: MatrixFactorSolveInput): MatrixResponse 
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
-  };
+  });
 }
 
 export function runMatrixPluSolve(input: MatrixFactorSolveInput): MatrixResponse {
@@ -631,7 +632,7 @@ export function runMatrixPluSolve(input: MatrixFactorSolveInput): MatrixResponse
     return factorSolveStop('PLU solve stopped because the factorization has a zero pivot.');
   }
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `x=${exactVectorToColumnLatex(solution)}`,
     approxText: 'PLU solve',
     detailSections: pluSolveDetails({
@@ -647,5 +648,5 @@ export function runMatrixPluSolve(input: MatrixFactorSolveInput): MatrixResponse
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
-  };
+  });
 }

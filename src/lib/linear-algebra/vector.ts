@@ -35,6 +35,7 @@ import {
   type VectorCoreStopReason,
 } from './vector-core';
 import { runVectorFamilyOperation } from './vector-family';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
   switch (reason) {
@@ -208,11 +209,11 @@ function exactVectorInputs(req: VectorRequest) {
 }
 
 function exactScalarResponse(value: ReturnType<typeof exactDotVectors>): VectorResponse {
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: exactScalarToLatex(value),
     approxText: formatApproxNumber(exactScalarToNumber(value)),
     warnings: [],
-  };
+  });
 }
 
 function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): VectorResponse | null {
@@ -224,12 +225,12 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
 
   switch (req.operation) {
     case 'add':
-      return vectorA && vectorB ? { resultLatex: exactVectorToColumnLatex(exactAddVectors(vectorA, vectorB)), warnings: [] } : null;
+      return vectorA && vectorB ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(exactAddVectors(vectorA, vectorB)), warnings: [] }) : null;
     case 'subtract':
-      return vectorA && vectorB ? { resultLatex: exactVectorToColumnLatex(exactSubtractVectors(vectorA, vectorB)), warnings: [] } : null;
+      return vectorA && vectorB ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(exactSubtractVectors(vectorA, vectorB)), warnings: [] }) : null;
     case 'cross': {
       const vector = vectorA && vectorB ? exactCrossVectors(vectorA, vectorB) : null;
-      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
     }
     case 'dot':
       return vectorA && vectorB ? exactScalarResponse(exactDotVectors(vectorA, vectorB)) : null;
@@ -245,43 +246,43 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
     }
     case 'projectionUofV': {
       const vector = vectorA && vectorB ? exactProjectionOntoVector(vectorA, vectorB) : null;
-      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
     }
     case 'projectionVofU': {
       const vector = vectorA && vectorB ? exactProjectionOntoVector(vectorB, vectorA) : null;
-      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
     }
     case 'orthogonalToU': {
       const vector = vectorA && vectorB ? exactOrthogonalComponentToVector(vectorA, vectorB) : null;
-      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
     }
     case 'orthogonalToV': {
       const vector = vectorA && vectorB ? exactOrthogonalComponentToVector(vectorB, vectorA) : null;
-      return vector ? { resultLatex: exactVectorToColumnLatex(vector), warnings: [] } : null;
+      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
     }
     case 'unitA':
     case 'unitB': {
       const vector = req.operation === 'unitA' ? vectorA : vectorB;
       const unit = vector ? exactUnitVector(vector) : null;
-      return unit ? { resultLatex: exactVectorToColumnLatex(unit), warnings: [] } : null;
+      return unit ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(unit), warnings: [] }) : null;
     }
     case 'orthogonalCheck': {
       if (!vectorA || !vectorB) {
         return null;
       }
       const dot = exactDotVectors(vectorA, vectorB);
-      return {
+      return profileLinearAlgebraResult({
         resultLatex: exactScalarIsZero(dot) ? '\\text{Orthogonal}' : '\\text{Not orthogonal}',
         approxText: `dot = ${exactScalarToLatex(dot)}`,
         warnings: [],
-      };
+      });
     }
     case 'gramSchmidtUV': {
       if (!vectorA || !vectorB || result.kind !== 'gramSchmidt') {
         return null;
       }
       const exactResult = exactGramSchmidtTwoVectors(vectorA, vectorB);
-      return exactResult ? {
+      return exactResult ? profileLinearAlgebraResult({
         resultLatex: exactVectorSetLatex('\\operatorname{orthogonal\\ basis}', exactResult.orthogonalBasis),
         answerRows: exactVectorBasisAnswerRows(exactResult.orthogonalBasis),
         approxText: result.notes.length > 0
@@ -289,7 +290,7 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
           : `${exactResult.orthogonalBasis.length} basis directions`,
         detailSections: exactGramSchmidtDetailSections(req, exactResult, result),
         warnings: [],
-      } : null;
+      }) : null;
     }
     default:
       return null;
@@ -306,23 +307,23 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
 
   if (result.kind === 'scalar') {
     const suffix = result.angleUnit === 'deg' ? '^{\\circ}' : result.angleUnit === 'grad' ? '^{g}' : '';
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: `${scalarToLatex(result.value)}${suffix}`,
       approxText: formatApproxNumber(result.value),
       warnings: [],
-    };
+    });
   }
 
   if (result.kind === 'orthogonality') {
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: result.orthogonal ? '\\text{Orthogonal}' : '\\text{Not orthogonal}',
       approxText: `dot = ${formatApproxNumber(result.dot)}`,
       warnings: [],
-    };
+    });
   }
 
   if (result.kind === 'gramSchmidt') {
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: vectorSetLatex('\\operatorname{orthogonal\\ basis}', result.orthogonalBasis),
       answerRows: vectorBasisAnswerRows(result.orthogonalBasis),
       approxText: result.notes.length > 0
@@ -330,13 +331,13 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
         : `${result.orthogonalBasis.length} basis directions`,
       detailSections: gramSchmidtDetailSections(req, result),
       warnings: [],
-    };
+    });
   }
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: vectorToLatex(result.value),
     warnings: [],
-  };
+  });
 }
 
 export function runVectorOperation(req: VectorRequest): VectorResponse {

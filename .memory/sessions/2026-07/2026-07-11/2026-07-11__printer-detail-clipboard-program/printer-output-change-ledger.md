@@ -16,7 +16,7 @@
 
 ## Accepted Changes
 
-None through `PRINT-PROFILE-GUIDED-DOMAINS1`.
+None through `PRINT-PROFILE-LINEAR-ALGEBRA1`.
 
 ## Rejected Candidates
 

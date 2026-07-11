@@ -19,6 +19,7 @@ import {
 } from './exact-matrix-format';
 import { exactDotVectors, exactScalarSquareRoot, exactScaleVector, exactSubtractVectors } from './exact-vector-core';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixQrInput = {
   label: string;
@@ -283,12 +284,12 @@ export function runMatrixQr(input: MatrixQrInput): MatrixResponse {
   }
 
   const columns = result.r.length;
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `${input.label}=QR`,
     approxText: `${columns} QR ${columns === 1 ? 'column' : 'columns'}`,
     detailSections: qrDetails(result),
     warnings: [],
-  };
+  });
 }
 
 export function runMatrixColumnProjection(input: MatrixColumnProjectionInput): MatrixResponse {
@@ -313,12 +314,12 @@ export function runMatrixColumnProjection(input: MatrixColumnProjectionInput): M
   const residual = exactSubtractVectors(vector, projected);
   const residualCheck = multiplyMatrixVector(qTranspose, residual);
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `${columnProjectionLabel(input)}=${exactVectorToColumnLatex(projected)}`,
     approxText: `projection in \\mathbb{R}^{${vector.length}}`,
     detailSections: columnProjectionDetails(input, qr, coordinates, projected, residual, residualCheck),
     warnings: [],
-  };
+  });
 }
 
 export function runMatrixLeastSquares(input: MatrixLeastSquaresInput): MatrixResponse {
@@ -346,10 +347,10 @@ export function runMatrixLeastSquares(input: MatrixLeastSquaresInput): MatrixRes
   const fitted = multiplyMatrixVector(exactMatrix, solved.solution);
   const residual = exactSubtractVectors(vector, fitted);
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `x_{\\mathrm{LS}}=${exactVectorToColumnLatex(solved.solution)}`,
     approxText: 'least-squares solution',
     detailSections: leastSquaresDetails(input, qr, coordinates, solved.solution, fitted, residual),
     warnings: [],
-  };
+  });
 }

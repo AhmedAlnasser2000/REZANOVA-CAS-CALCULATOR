@@ -18,6 +18,7 @@ import {
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
 import { LINEAR_ALGEBRA_SPECTRAL_V1_MATRIX_SIZE } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixEigenInput = {
   label: string;
@@ -269,7 +270,7 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
     );
   }
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `\\operatorname{eigen}(${analysis.label})=\\left\\{${resultEntries.join(',')}\\right\\}`,
     answerRows: {
       rows: resultEntries.map((entry) => ({ latex: entry })),
@@ -293,5 +294,5 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
       eigenspaceDetails(eigenspaceLines),
     ],
     warnings: [],
-  };
+  });
 }

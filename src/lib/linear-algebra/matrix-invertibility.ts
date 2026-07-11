@@ -6,6 +6,7 @@ import {
   exactScalarToLatex,
 } from './exact-matrix-format';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixInvertibilityInput = {
   label: string;
@@ -117,12 +118,12 @@ export function runMatrixInvertibility(input: MatrixInvertibilityInput): MatrixR
   const nullity = columns - rank;
 
   if (rows !== columns) {
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: `\\text{Invertibility applies only to square matrices}`,
       approxText: `rank ${rank}, nullity ${nullity}`,
       detailSections: rankNullityGuidance(input.label, rank, nullity, columns, pivotColumns),
       warnings: [],
-    };
+    });
   }
 
   const determinant = determinantExactMatrix(exactMatrix);
@@ -133,7 +134,7 @@ export function runMatrixInvertibility(input: MatrixInvertibilityInput): MatrixR
   const determinantLatex = exactScalarToLatex(determinant.determinant);
   const invertible = !scalarIsZero(determinant.determinant);
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `\\operatorname{invertible}(${input.label})=\\text{${invertible ? 'Yes' : 'No'}}`,
     approxText: `det(${input.label}) = ${determinantLatex}`,
     detailSections: theoremDetails({
@@ -145,5 +146,5 @@ export function runMatrixInvertibility(input: MatrixInvertibilityInput): MatrixR
       invertible,
     }),
     warnings: [],
-  };
+  });
 }

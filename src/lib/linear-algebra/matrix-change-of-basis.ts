@@ -14,6 +14,7 @@ import {
   exactScalarToLatex,
 } from './exact-matrix-format';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixChangeOfBasisInput = {
   sourceLabel: string;
@@ -214,7 +215,7 @@ export function runMatrixChangeOfBasis(input: MatrixChangeOfBasisInput): MatrixR
 
   const changeMatrix = matrixFromColumns(columns);
   const conversionLabel = `P_{${input.targetLabel}\\leftarrow ${input.sourceLabel}}`;
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `${conversionLabel}=${exactMatrixToLatex(changeMatrix)}`,
     approxText: `${sourceCheck.rows} by ${sourceCheck.columns} coordinate conversion`,
     detailSections: [
@@ -234,5 +235,5 @@ export function runMatrixChangeOfBasis(input: MatrixChangeOfBasisInput): MatrixR
       }),
     ],
     warnings: [],
-  };
+  });
 }

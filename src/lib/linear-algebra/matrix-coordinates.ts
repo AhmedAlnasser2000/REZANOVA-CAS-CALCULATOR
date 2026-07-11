@@ -20,6 +20,7 @@ import {
   exactMatrixDimensionLimitMessage,
   LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
 } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixCoordinatesInput = {
   basisLabel: string;
@@ -188,7 +189,7 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
   }
 
   const coordinateLatex = exactVectorToColumnLatex(solved.solution);
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `[${input.vectorLabel}]_{${input.basisLabel}}=${coordinateLatex}`,
     approxText: `${solved.solution.length} coordinates`,
     detailSections: coordinateDetails({
@@ -200,5 +201,5 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
       pivotColumns: solved.pivotColumns,
     }),
     warnings: [],
-  };
+  });
 }

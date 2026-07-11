@@ -53,8 +53,10 @@
 - The ownership-corrected inventory has 31 Integration profile paths and three separate generic symbolic-core paths, all at zero compatibility debt. Six integral fixtures are newly hard, bringing replay coverage to 56/100 and the global printer floor to 110.
 - `PRINT-PROFILE-CALCULUS1`: committed as `1ffc9900`.
 - All 43 Calculus result producers use the Calculus domain profile, Calculus compatibility debt is zero, and all 25 Calculus fixtures are hard. Global hard replay coverage is 70/100 and the printer fallback floor is 67.
-- `PRINT-PROFILE-GUIDED-DOMAINS1`: implemented and verified; entering its approved commit checkpoint.
+- `PRINT-PROFILE-GUIDED-DOMAINS1`: committed as `f47437f3`.
 - Trigonometry, Geometry, Statistics, and Table have zero compatibility debt. Table's single forwarded result seam is explicitly profiled, hard replay coverage is 90/100, and the global fallback floor is 47.
-- `PRINT-PROFILE-LINEAR-ALGEBRA1` is next, followed by producer closeout and one accumulated final review.
+- `PRINT-PROFILE-LINEAR-ALGEBRA1`: implemented and verified; entering its approved commit checkpoint.
+- All 44 Matrix/Vector result producers use the Linear Algebra presentation profile without changing independent runtime topology. All 100 replay fixtures are hard and the global fallback floor is three.
+- `PRINT-PROFILE-PRODUCER-CLOSEOUT1` is next, followed by the complete closeout gate and accumulated final review.
 - The contract-review evidence checkpoint remains required, but the user removed its intermediate acceptance pause and directed the program to continue through printer profiles before one accumulated final review.
 - No push is authorized, and untracked `test-results/` stays excluded.

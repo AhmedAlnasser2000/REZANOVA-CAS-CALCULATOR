@@ -272,9 +272,11 @@ async function main() {
     'calculus',
     'equation',
     'geometry',
+    'matrix',
     'statistics',
     'table',
     'trigonometry',
+    'vector',
   ]);
   await mkdir(outputDir, { recursive: true });
   for (const workspace of new Set(fixtures.map((fixture) => fixture.workspace))) {

@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "matrix",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "matrix-add",

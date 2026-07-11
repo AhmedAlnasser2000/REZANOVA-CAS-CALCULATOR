@@ -199,6 +199,7 @@ export const MIGRATION_WRAPPER_NAMES = new Set([
   'profileCalculusResult',
   'profileEquationResult',
   'profileGeometryResult',
+  'profileLinearAlgebraResult',
   'profileStatisticsResult',
   'profileSymbolicCoreResult',
   'profileSymbolicIntegrationResult',

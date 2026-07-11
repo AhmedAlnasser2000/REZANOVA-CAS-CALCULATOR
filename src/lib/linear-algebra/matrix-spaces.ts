@@ -8,6 +8,7 @@ import {
 } from './exact-matrix-format';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 import { analyzeExactColumnFamily } from './matrix-column-family';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 type MatrixSpaceKind = 'nullSpace' | 'columnSpace';
 
@@ -118,19 +119,19 @@ export function runMatrixSpaceOperation(input: MatrixSpaceInput): MatrixResponse
   if (input.kind === 'nullSpace') {
     const basis = analysis.kernelBasis;
     const nullity = analysis.nullity;
-    return {
+    return profileLinearAlgebraResult({
       resultLatex: `\\operatorname{Null}(${input.label})=${basisLatex(basis)}`,
       approxText: `dimension ${nullity}`,
       detailSections: nullSpaceDetails(input.label, analysis.rref, rank, pivotColumns, nullity, columns),
       warnings: [],
-    };
+    });
   }
 
   const basis = analysis.imageBasis;
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `\\operatorname{Col}(${input.label})=${basisLatex(basis)}`,
     approxText: `dimension ${rank}`,
     detailSections: columnSpaceDetails(input.label, analysis.rref, rank, pivotColumns),
     warnings: [],
-  };
+  });
 }

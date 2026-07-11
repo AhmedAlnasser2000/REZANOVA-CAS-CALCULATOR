@@ -22,6 +22,7 @@ import {
   exactMatrixDimensionLimitMessage,
   LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
 } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixSystemRunInput = {
   coefficients: number[][];
@@ -188,11 +189,11 @@ function solutionFamilyFromRref(
     ? `${parameters[0]}\\in\\mathbb{R}`
     : `${parameters.join(',')}\\in\\mathbb{R}`;
   const vectorLatex = expressionColumnLatex(entries);
-  return {
+  return profileLinearAlgebraResult({
     domain,
     exactLatex: `x=${vectorLatex}\\quad ${domain}`,
     vectorLatex,
-  };
+  });
 }
 
 function inconsistentRowLatex(rref: ExactMatrix, coefficientColumns: number) {
@@ -312,7 +313,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
   const labels = systemDisplayLabels(input);
 
   if (rankA < rankAugmented) {
-    return {
+    return profileLinearAlgebraResult({
       kind: 'success',
       title,
       exactLatex: '\\text{No solution}',
@@ -324,12 +325,12 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       ],
       warnings: [],
       sourceMode: 'matrix',
-    };
+    });
   }
 
   if (rankA < unknowns) {
     const family = solutionFamilyFromRref(augmentedRref.matrix, augmentedRref.pivotColumns, unknowns);
-    return {
+    return profileLinearAlgebraResult({
       kind: 'success',
       title,
       exactLatex: family?.exactLatex ?? '\\text{Infinitely many solutions}',
@@ -344,7 +345,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       ],
       warnings: [],
       sourceMode: 'matrix',
-    };
+    });
   }
 
   const solved = solveExactLinearSystem(coefficients, constants);
@@ -352,7 +353,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
     return matrixSystemStop(exactStopReasonToMessage(solved.reason));
   }
 
-  return {
+  return profileLinearAlgebraResult({
     kind: 'success',
     title,
     exactLatex: `x=${exactVectorToColumnLatex(solved.solution)}`,
@@ -364,5 +365,5 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
     ],
     warnings: [],
     sourceMode: 'matrix',
-  };
+  });
 }

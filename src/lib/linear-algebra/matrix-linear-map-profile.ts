@@ -17,6 +17,7 @@ import {
   analyzeExactColumnFamily,
   type ExactColumnFamilyAnalysis,
 } from './matrix-column-family';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixLinearMapProfileInput = {
   label: string;
@@ -134,7 +135,7 @@ export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): M
   if ('warnings' in invertibility) return invertibility;
 
   const mapLatex = `${input.label}:\\mathbb{R}^{${columns}}\\to\\mathbb{R}^{${rows}}`;
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `${mapLatex},\\quad\\operatorname{rank}(${input.label})=${analysis.rank},\\quad\\operatorname{nullity}(${input.label})=${analysis.nullity}`,
     answerRows: {
       rows: [
@@ -157,5 +158,5 @@ export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): M
       },
     ],
     warnings: [],
-  };
+  });
 }

@@ -1,6 +1,7 @@
 {
   "version": 1,
   "workspace": "vector",
+  "latexComparison": "hard",
   "fixtures": [
     {
       "id": "vector-dot",

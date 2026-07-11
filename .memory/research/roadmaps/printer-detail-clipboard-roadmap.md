@@ -131,7 +131,7 @@ Implemented contract: the TypeScript-compiler-API inventory currently classifies
 
 ### A4. `PRINT-PROFILES1` And Domain Migration
 
-Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; profiles are committed through Calculus at `1ffc9900`, and `PRINT-PROFILE-GUIDED-DOMAINS1` is implemented and verified and is entering its approved commit checkpoint.
+Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; profiles are committed through Guided Domains at `f47437f3`, and `PRINT-PROFILE-LINEAR-ALGEBRA1` is implemented and verified and is entering its approved commit checkpoint.
 
 - Introduce profiles only where migrations prove a real policy difference; avoid speculative per-domain switches.
 - Cover all nine workspaces, including Geometry and Table, rather than the older six-profile sketch.
@@ -150,6 +150,8 @@ Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; pr
 `PRINT-PROFILE-CALCULUS1` routes all 43 Calculus engine and workspace result producers through `profileCalculusResult()`, covering derivatives, integrals, limits, Laplace transforms, ODEs, and series without changing their native serializers. Explicit existing result annotations preserve TypeScript union narrowing at wrapped integral helpers. Calculus reaches zero compatibility; the global floor is 67 compatibility, 209 migrated, and 240 forwarded. All 25 Calculus fixtures are hard, bringing total hard replay coverage to 70/100. Focused coverage passed 31 files and 244 tests, all 11 Calculus Chromium smokes passed, and fresh Laplace plus ODE cards were inspected without accepted visible drift.
 
 `PRINT-PROFILE-GUIDED-DOMAINS1` routes eight Trigonometry, two Geometry, and ten Statistics result producers through explicit native-domain profiles. Table had zero compatibility debt but one unprofiled forwarded result seam, so its success `DisplayOutcome` now explicitly uses `profileTableResult()` while structured rows remain unchanged. The global floor is 47 compatibility, 230 migrated, and 239 forwarded. All four five-fixture workspace files become hard, bringing hard replay coverage to 90/100. Native coverage passed 35 files and 231 tests, eight Chromium canaries passed, and representative Trigonometry, Geometry, Statistics, and Table surfaces were inspected without accepted visible drift.
+
+`PRINT-PROFILE-LINEAR-ALGEBRA1` routes all 44 Matrix and Vector result producers through `profileLinearAlgebraResult()` while preserving their native exact serializers and independent runtime topology. Linear Algebra reaches zero compatibility; the global floor is three compatibility, 274 migrated, and 239 forwarded. Matrix and Vector's ten fixtures make all 100 replay fixtures hard. Focused coverage passed 26 files and 220 tests, workspace runtime contracts passed 74, runtime probes passed 19, four Chromium canaries passed, and fresh Matrix determinant plus Vector cross-product cards were inspected without accepted visible drift.
 
 ### A5. `DISPLAY-CONTRACT-INVERSION1` Later Gate
 

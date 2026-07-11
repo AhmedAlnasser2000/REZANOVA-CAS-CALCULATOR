@@ -8,6 +8,7 @@ import {
   exactScalarToLatex,
 } from './exact-matrix-format';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
+import { profileLinearAlgebraResult } from '../display/printer';
 
 export type MatrixBasisInput = {
   label: string;
@@ -97,7 +98,7 @@ export function runMatrixBasis(input: MatrixBasisInput): MatrixResponse {
     && determinant?.kind === 'success'
     && !exactScalarIsZero(determinant.determinant);
 
-  return {
+  return profileLinearAlgebraResult({
     resultLatex: `\\operatorname{basis}(${input.label})=\\text{${isBasis ? 'Yes' : 'No'}}`,
     approxText: determinantLatex ? `det(${input.label}) = ${determinantLatex}` : `rank ${rank}, ${columns} column vectors in R^${rows}`,
     detailSections: basisDetails({
@@ -111,5 +112,5 @@ export function runMatrixBasis(input: MatrixBasisInput): MatrixResponse {
       isBasis,
     }),
     warnings: [],
-  };
+  });
 }
