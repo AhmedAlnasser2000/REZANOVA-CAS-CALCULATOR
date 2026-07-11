@@ -26,8 +26,10 @@
 - `CLIPBOARD-CAPABILITY-AUDIT0`: passed in real Chromium and through the live Tauri Linux WebView/X11 path.
 - `CLIPBOARD-CANONICAL1`: committed as `586795b0`.
 - Display copy is canonical and lossless where the host permits it; Tauri retains exact canonical text fallback.
-- `CLIPBOARD-PIPELINE-RATCHET1`: implemented, verified, and entering its approved commit checkpoint.
+- `CLIPBOARD-PIPELINE-RATCHET1`: committed as `f58cf1c0`.
 - All production copy/paste surfaces use shared adapters, `expressionRouting.ts` owns app Paste, and the direct production Clipboard API floor is zero.
-- `DETAIL-SEGMENT-CONTRACT1`: next.
+- `DETAIL-SEGMENT-CONTRACT1`: implemented, verified, and entering its approved commit checkpoint.
+- The main Display and Formula Viewer share one extracted detail renderer with typed-parts, explicit-kind, then legacy-inference precedence. Typed solve summaries dual-write compatibility text, and old undeclared History data retains inference.
+- `DETAIL-SEGMENT-EQUATION-CORE1` is next; the eight approved migration slices must eliminate undeclared live detail intent without removing historical compatibility.
 - The mandatory contract review blocks all pedagogical-profile migration.
 - No push is authorized, and untracked `test-results/` stays excluded.

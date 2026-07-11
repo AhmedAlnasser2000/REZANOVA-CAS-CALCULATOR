@@ -45,6 +45,11 @@ describe('print hygiene fragment collection', () => {
         },
         { title: 'Prose', lines: ['NaN is a token name in this explanation.'] },
       ],
+      solveSummaryText: 'Reduced carrier: x^2=1',
+      solveSummaryParts: [[
+        { kind: 'text', text: 'Reduced carrier: ' },
+        { kind: 'math', latex: 'x^2=1' },
+      ]],
       actions: [{ kind: 'send', target: 'equation', latex: 'x=1' }],
       transformSummaryLatex: 'x\\mapsto x+1',
       resolvedInputLatex: 'x^2=1',
@@ -64,8 +69,13 @@ describe('print hygiene fragment collection', () => {
       kind: 'detail-math-part',
       value: 'x=1',
     });
+    expect(fragments).toContainEqual({
+      path: 'solveSummaryParts[0][1].latex',
+      kind: 'solve-summary-math-part',
+      value: 'x^2=1',
+    });
     expect(fragments.map((fragment) => fragment.value)).not.toContain('NaN is a token name in this explanation.');
-    expect(new Set(fragments.map((fragment) => fragment.kind)).size).toBe(24);
+    expect(new Set(fragments.map((fragment) => fragment.kind)).size).toBe(25);
   });
 
   it('collects prompt carry math without treating its prose as math', () => {

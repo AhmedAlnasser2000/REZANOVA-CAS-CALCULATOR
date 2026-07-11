@@ -9,19 +9,11 @@ import {
 } from '../../runtime/formula-viewer-artifacts';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import type { DisplayBlock } from '../../../lib/display/result/display-blocks';
-import { DetailLineContent, ResultSummaryBlock, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
+import { solveSummaryDetailLines } from '../../../lib/display/result-detail-lines';
+import { DetailLineContent } from './DetailLineContent';
+import { ResultSummaryBlock, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
 
 type DisplayOutcomeShellProps = Record<string, any>;
-
-const SOLVE_SUMMARY_SPLIT_PATTERN =
-  /;\s*(?=(?:Composition branch|Periodic family|Exact reduced-carrier|Sawtooth closure|Range guard|Reciprocal rewrite|Principal range|Inverted|Lifted|Substituted|Combined|Normalized|Reduced)\b)/gu;
-
-function solveSummaryLines(summary: string): string[] {
-  return summary
-    .split(SOLVE_SUMMARY_SPLIT_PATTERN)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-}
 
 const MATH_TITLE_OPERATION_PATTERN =
   /(?:^|[\s([{,])(?:basis|change|col|coords|cross|det|diag|eigen|gram|invertible|ls|lu|mpow|null|orthogonal|plu|proj|qr|rank|rref|triple|unit)\s*(?:_[A-Za-z])?\s*\(/iu;
@@ -379,20 +371,24 @@ export function DisplayOutcomeShell({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.solveSummaryText ? (
+      && (displayOutcome.solveSummaryText || displayOutcome.solveSummaryParts?.length) ? (
         <ResultSummaryBlock
           collapsible
           defaultCollapsed
           label="Solve Note"
           testId="display-outcome-solve-summary"
         >
-          {solveSummaryLines(displayOutcome.solveSummaryText).map((line: string, index: number) => (
+          {solveSummaryDetailLines(
+            displayOutcome.solveSummaryText ?? '',
+            displayOutcome.solveSummaryParts,
+          ).map(({ line, parts }, index: number) => (
             <div
               key={`${line}-${index}`}
               className="result-approx result-summary-text result-detail-line"
             >
               <DetailLineContent
                 line={line}
+                parts={parts}
                 symbolicDisplayPrefs={symbolicDisplayPrefs}
               />
             </div>

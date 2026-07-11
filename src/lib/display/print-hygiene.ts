@@ -25,6 +25,7 @@ export type MathematicalFragmentKind =
   | 'action'
   | 'detail-math-line'
   | 'detail-math-part'
+  | 'solve-summary-math-part'
   | 'resolved-input'
   | 'substitution-value'
   | 'table-x'
@@ -136,6 +137,18 @@ function collectDetailFragments(
           `detailSections[${sectionIndex}].lines[${lineIndex}]`,
           'detail-math-line',
           line,
+        );
+      }
+    });
+  });
+  outcome.solveSummaryParts?.forEach((parts, lineIndex) => {
+    parts.forEach((part, partIndex) => {
+      if (part.kind === 'math') {
+        appendFragment(
+          fragments,
+          `solveSummaryParts[${lineIndex}][${partIndex}].latex`,
+          'solve-summary-math-part',
+          part.latex,
         );
       }
     });

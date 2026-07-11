@@ -6,7 +6,6 @@ import {
   type DisplayBlock,
   type DisplayBlockLine,
 } from '../../../lib/display/result/display-blocks';
-import { inferDetailLinePartsFromText } from '../../../lib/display/result-detail-lines';
 import {
   classifyCaseMathResultSize,
   classifyLatexCollectionResultSize,
@@ -21,11 +20,11 @@ import {
   shouldProgressivelyRenderCaseMath,
 } from '../../../lib/display/scheduling/display-render-scheduler';
 import type { SymbolicDisplayPrefs } from '../../../lib/display/symbolic-display';
-import type { DisplayDetailLinePart } from '../../../types/calculator';
 import {
   CaseMathCompactPreview,
   CaseMathRowPlaceholder,
 } from './CaseMathRenderControls';
+import { DetailLineContent } from './DetailLineContent';
 import { useProgressiveCaseRowCount } from './useProgressiveCaseRowCount';
 
 function LargeResultPreview({
@@ -493,40 +492,10 @@ function renderMixedBlockLine(
     );
   }
 
-  if (line.parts?.length) {
-    return (
-      <div
-        key={`${line.id}-${index}`}
-        className="result-detail-line result-summary-text"
-        data-testid={line.testId}
-      >
-        <DetailLineContent
-          line={line.text ?? ''}
-          parts={line.parts}
-          symbolicDisplayPrefs={symbolicDisplayPrefs}
-        />
-      </div>
-    );
-  }
-
-  if (line.lineKind === 'math' || line.latex) {
-    return (
-      <div
-        key={`${line.id}-${index}`}
-        className="result-detail-line result-summary-text"
-        data-testid={line.testId}
-      >
-        <ResultLatexBlock
-          className="result-math result-math-supplement"
-          displayPrefs={symbolicDisplayPrefs}
-          latex={line.latex ?? line.text ?? ''}
-          label={line.testId ?? `${block.id}-${index}`}
-          normalizeDisplay={false}
-        />
-      </div>
-    );
-  }
-
+  const lineKind = line.lineKind ?? (line.latex ? 'math' : undefined);
+  const content = lineKind === 'text'
+    ? line.text ?? line.latex ?? ''
+    : line.latex ?? line.text ?? '';
   return (
     <div
       key={`${line.id}-${index}`}
@@ -534,8 +503,19 @@ function renderMixedBlockLine(
       data-testid={line.testId}
     >
       <DetailLineContent
-        line={line.text ?? ''}
+        line={content}
+        lineKind={lineKind}
+        parts={line.parts}
         symbolicDisplayPrefs={symbolicDisplayPrefs}
+        renderMath={(latex) => (
+          <ResultLatexBlock
+            className="result-math result-math-supplement"
+            displayPrefs={symbolicDisplayPrefs}
+            latex={latex}
+            label={line.testId ?? `${block.id}-${index}`}
+            normalizeDisplay={false}
+          />
+        )}
       />
     </div>
   );
@@ -805,42 +785,6 @@ function renderScheduledBlock(
       onOpenFormulaViewer={onOpenFormulaViewer}
       symbolicDisplayPrefs={symbolicDisplayPrefs}
     />
-  );
-}
-
-export function DetailLineContent({
-  line,
-  parts,
-  symbolicDisplayPrefs,
-}: {
-  line: string;
-  parts?: readonly DisplayDetailLinePart[];
-  symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined;
-}) {
-  const resolvedParts = parts ?? inferDetailLinePartsFromText(line);
-
-  if (!resolvedParts?.length) {
-    return <NotationText className="result-detail-line-content" text={line} />;
-  }
-
-  return (
-    <span className="result-detail-line-content result-detail-line-mixed">
-      {resolvedParts.map((part, partIndex) => (
-        part.kind === 'math'
-          ? (
-            <MathStatic
-              key={`${part.latex}-${partIndex}`}
-              className="result-math result-math-inline"
-              latex={part.latex}
-              block={false}
-              displayPrefs={symbolicDisplayPrefs}
-            />
-          )
-          : (
-            <span key={`${part.text}-${partIndex}`}>{part.text}</span>
-          )
-      ))}
-    </span>
   );
 }
 

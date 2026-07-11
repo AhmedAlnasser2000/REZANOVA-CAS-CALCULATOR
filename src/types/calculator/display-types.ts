@@ -24,9 +24,13 @@ export type DisplayDetailLinePart =
 
 export type DisplayDetailSection = {
   title: string;
+  /** Compatibility projection for storage and older consumers. */
   lines: string[];
+  /** Legacy uniform intent; new mixed producers should derive lines from lineParts. */
   lineKind?: DisplayDetailLineKind;
+  /** Legacy per-line intent retained for stored History compatibility. */
   lineKinds?: DisplayDetailLineKind[];
+  /** Canonical live-producer shape for mixed text and canonical LaTeX. */
   lineParts?: DisplayDetailLinePart[][];
 };
 
@@ -130,7 +134,10 @@ export type DisplayOutcome =
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];
+      /** Compatibility projection for older consumers and stored History. */
       solveSummaryText?: string;
+      /** Canonical live-producer shape for mixed summary text and canonical LaTeX. */
+      solveSummaryParts?: DisplayDetailLinePart[][];
       transformBadges?: TransformBadge[];
       transformSummaryText?: string;
       transformSummaryLatex?: string;
@@ -169,7 +176,10 @@ export type DisplayOutcome =
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];
+      /** Compatibility projection for older consumers and stored History. */
       solveSummaryText?: string;
+      /** Canonical live-producer shape for mixed summary text and canonical LaTeX. */
+      solveSummaryParts?: DisplayDetailLinePart[][];
       transformBadges?: TransformBadge[];
       transformSummaryText?: string;
       transformSummaryLatex?: string;

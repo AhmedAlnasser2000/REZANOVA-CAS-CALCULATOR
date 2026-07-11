@@ -11,6 +11,23 @@ export function detailLineKindAt(
   return section.lineKinds?.[index] ?? section.lineKind ?? 'text';
 }
 
+export type DisplayDetailLineIntent =
+  | 'typed-parts'
+  | 'explicit-math'
+  | 'explicit-text'
+  | 'undeclared';
+
+export function detailLineIntentAt(
+  section: Pick<DisplayDetailSection, 'lineKind' | 'lineKinds' | 'lineParts'>,
+  index: number,
+): DisplayDetailLineIntent {
+  if (section.lineParts?.[index]?.length) return 'typed-parts';
+  const lineKind = section.lineKinds?.[index] ?? section.lineKind;
+  if (lineKind === 'math') return 'explicit-math';
+  if (lineKind === 'text') return 'explicit-text';
+  return 'undeclared';
+}
+
 export function cloneDisplayDetailSection(section: DisplayDetailSection): DisplayDetailSection {
   return {
     ...section,
@@ -30,6 +47,14 @@ export function mathDetailSection(title: string, lines: readonly string[]): Disp
   };
 }
 
+export function textDetailSection(title: string, lines: readonly string[]): DisplayDetailSection {
+  return {
+    title,
+    lines: [...lines],
+    lineKind: 'text',
+  };
+}
+
 export function textPart(text: string): DisplayDetailLinePart {
   return { kind: 'text', text };
 }
@@ -46,6 +71,16 @@ export function detailLineFromParts(parts: readonly DisplayDetailLinePart[]) {
   return {
     line,
     parts: parts.map((part) => ({ ...part })),
+  };
+}
+
+export function solveSummaryFromParts(
+  rows: readonly (readonly DisplayDetailLinePart[])[],
+) {
+  const built = rows.map((parts) => detailLineFromParts(parts));
+  return {
+    solveSummaryText: built.map((entry) => entry.line).join('; '),
+    solveSummaryParts: built.map((entry) => entry.parts),
   };
 }
 
@@ -73,6 +108,54 @@ export function equationLabelLineParts(label: string, latex: string): DisplayDet
     textPart(`${label}: `),
     mathPart(latex),
   ];
+}
+
+const SOLVE_SUMMARY_SPLIT_PATTERN =
+  /;\s*(?=(?:Composition branch|Periodic family|Exact reduced-carrier|Sawtooth closure|Range guard|Reciprocal rewrite|Principal range|Inverted|Lifted|Substituted|Combined|Normalized|Reduced)\b)/gu;
+
+export function solveSummaryDetailLines(
+  summaryText: string,
+  summaryParts?: readonly (readonly DisplayDetailLinePart[])[],
+) {
+  if (summaryParts?.length) {
+    return summaryParts.map((parts) => detailLineFromParts(parts));
+  }
+  return summaryText
+    .split(SOLVE_SUMMARY_SPLIT_PATTERN)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => ({ line, parts: undefined }));
+}
+
+export type ResolvedDetailLinePresentation =
+  | { source: 'typed-parts'; kind: 'parts'; parts: DisplayDetailLinePart[] }
+  | { source: 'explicit-kind'; kind: DisplayDetailLineKind }
+  | { source: 'legacy-inference'; kind: 'parts'; parts: DisplayDetailLinePart[] }
+  | { source: 'undeclared'; kind: 'text' };
+
+export function resolveDetailLinePresentation({
+  line,
+  lineKind,
+  parts,
+  allowLegacyInference = true,
+}: {
+  line: string;
+  lineKind?: DisplayDetailLineKind;
+  parts?: readonly DisplayDetailLinePart[];
+  allowLegacyInference?: boolean;
+}): ResolvedDetailLinePresentation {
+  if (parts?.length) {
+    return {
+      source: 'typed-parts',
+      kind: 'parts',
+      parts: parts.map((part) => ({ ...part })),
+    };
+  }
+  if (lineKind) return { source: 'explicit-kind', kind: lineKind };
+  const inferred = allowLegacyInference ? inferDetailLinePartsFromText(line) : undefined;
+  return inferred?.length
+    ? { source: 'legacy-inference', kind: 'parts', parts: inferred }
+    : { source: 'undeclared', kind: 'text' };
 }
 
 export function inferDetailLinePartsFromText(line: string): DisplayDetailLinePart[] | undefined {

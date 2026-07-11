@@ -16,11 +16,11 @@
 
 ## Current Verified Gate
 
-- `CLIPBOARD-PIPELINE-RATCHET1`: backend routing, browser/Tauri adapters, app-level copy/paste integration, and direct-API ratchet passed.
-- Focused contract evidence: 27 native tests, 32 UI tests, and three source/capability audit tests passed; the production direct Clipboard API violation count is zero.
-- Real host evidence: two Chromium clipboard tests passed, including visible `x^(1/6)` copy followed by exact canonical `x^{\frac{1}{6}}` app Paste; four Matrix/Vector naturalization browser tests and one Tauri Linux fallback test passed.
-- Cross-workspace evidence: 12 printer tests, 44 golden tests, 185-fragment print hygiene, all 100 replay fixtures, 124 native plus 37 UI feature probes, 3,537 full unit tests, and 448 full UI tests passed.
-- Runtime probes passed 19; workspace runtime contracts passed 74; app runtime passed 59 native plus 140 UI; app-state passed 52. All nine History create/replay browser flows passed.
-- Surface Protocol, OOE, compartments, app identity, CI alignment, seam selection, printer migration, file size, TypeScript, production build, lint, Cargo check, and diff hygiene passed.
-- `npm run test:canaries:browser`: all 19 Chromium canaries passed in 1.2 minutes.
-- Visual evidence: canonical Calculate paste plus Matrix and Vector naturalized paste/result surfaces were inspected without overlap, stale preview, or overflow.
+- `DETAIL-SEGMENT-CONTRACT1`: shared detail rendering, typed solve-summary payload, compatibility precedence, and print-hygiene coverage passed.
+- Focused Display evidence: 136 native tests and 25 UI tests passed. Contract tests pin compatibility-line derivation, nonempty typed-part precedence, explicit prose/math declarations, undeclared legacy inference, empty placeholder handling, and typed solve-note rendering.
+- Cross-program evidence: 12 printer tests, 44 golden tests, seven print-hygiene tests across the unchanged 43-case/185-fragment manifest, all 100 replay fixtures, 124 native plus 37 UI feature probes, and 27 native plus 32 UI plus three audit Clipboard checks passed.
+- Full unit passed 3,541; full UI passed 452. Runtime probes passed 19; workspace runtime contracts passed 74; app runtime passed 59 native plus 140 UI; app-state passed 52.
+- All 19 Chromium canaries passed in 1.2 minutes. All nine History create/replay browser flows passed, and evidence screenshots were inspected for every workspace.
+- Focused Chromium evidence passed one heavy compact-result/Formula Viewer flow plus three Matrix/Vector detail flows. Typed math, prose, open/collapsed cards, virtualization, and overflow were visually inspected without overlap or truncation.
+- Seam selection required Display, Clipboard, shared-type, runtime, app-state, printer-migration, and baseline evidence; every selected suite passed.
+- Surface Protocol, OOE, compartments, app identity, CI alignment, file size, TypeScript, production build, lint, Cargo check, and diff hygiene passed.

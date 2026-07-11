@@ -8,7 +8,7 @@ import type {
   ModeId,
   PeriodicFamilyInfo,
 } from '../../../types/calculator';
-import { detailLineKindAt, detailLinePartsAt } from './result-detail-lines';
+import { detailLinePartsAt } from './result-detail-lines';
 import {
   displayDetailSectionsForPolicy,
   type ResultDetailPolicy,
@@ -210,7 +210,7 @@ function detailBlockFromSection(section: DisplayDetailSection, sectionIndex: num
     const parts = detailLinePartsAt(section, lineIndex);
     return {
       id: `detail-${sectionIndex}-line-${lineIndex}`,
-      lineKind: detailLineKindAt(section, lineIndex),
+      lineKind: section.lineKinds?.[lineIndex] ?? section.lineKind,
       parts: cloneParts(parts),
       testId: `display-outcome-detail-line-${sectionIndex}-${lineIndex}`,
       text: line,

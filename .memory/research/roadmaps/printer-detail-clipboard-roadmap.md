@@ -172,7 +172,7 @@ Implemented contract: `MathClipboardEnvelopeV1` has exact schema/version validat
 
 ### B2. `CLIPBOARD-PIPELINE-RATCHET1`
 
-Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+Status: committed as `f58cf1c0` on `2026-07-11`.
 
 - Route Display, Formula Viewer, full History, Guide/workspace expression copy, diagnostics prose, app Paste, and `MathEditor` paste events through shared math/text APIs.
 - Keep existing prop callbacks initially; do not bundle a broad hook/prop-drilling refactor unless required by the AppMain file-size gate.
@@ -188,6 +188,8 @@ Implemented contract: Display, Formula Viewer, History, Guide/workspace expressi
 
 ### C1. `DETAIL-SEGMENT-CONTRACT1`
 
+Status: implemented and verified on `2026-07-11`; entering the approved commit checkpoint.
+
 - Keep `lineParts` as the canonical producer shape because the schema, persistence parser, Formula Viewer, and shared renderer already support it.
 - Extract `DetailLineContent` from the near-cap `DisplayResultBlocks.tsx` into a focused shared component; do not introduce a second renderer.
 - Add builders that dual-write legacy `lines` for compatibility while making typed parts the producer source.
@@ -195,7 +197,20 @@ Implemented contract: Display, Formula Viewer, History, Guide/workspace expressi
 - Add a separate structured shape for `solveSummaryText` or stop classifying it through render-time string inference.
 - Mark `lines`, `lineKind`, and `lineKinds` as legacy producer inputs without breaking old History entries.
 
+Implemented contract: `DetailLineContent` is a focused shared renderer used by the main Display and Formula Viewer. Nonempty typed parts take precedence, then an explicit math/prose declaration, then legacy inference only for undeclared compatibility data. Mixed-detail and solve-summary builders derive legacy strings from typed parts; optional `solveSummaryParts` remains additive and is included in print hygiene without entering History or Surface Protocol. Empty policy placeholders do not masquerade as typed rows. `DisplayResultBlocks.tsx` shrank from 898 to 842 lines with no file-size cap increase.
+
 ### C2. `DETAIL-SEGMENT-MIGRATION-RATCHET1`
+
+Status: next. Execute as the approved named risk slices:
+
+1. `DETAIL-SEGMENT-EQUATION-CORE1`.
+2. `DETAIL-SEGMENT-EQUATION-PARAMETERIZED1`.
+3. `DETAIL-SEGMENT-SYMBOLIC-LIMITS1`.
+4. `DETAIL-SEGMENT-SYMBOLIC-INTEGRATION1`.
+5. `DETAIL-SEGMENT-CALCULUS1`.
+6. `DETAIL-SEGMENT-WORKSPACE-DOMAINS1`.
+7. `DETAIL-SEGMENT-LINEAR-ALGEBRA1`.
+8. `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`.
 
 - Establish an AST-aware source floor plus runtime corpus evidence for plain detail lines containing math-looking content.
 - Migrate the known dense Equation inequality/complex/numeric paths, Calculus shared/integral details, then at least two representative detail surfaces per workspace.
@@ -203,7 +218,7 @@ Implemented contract: Display, Formula Viewer, History, Guide/workspace expressi
 - Add one real-browser typed-math detail assertion per workspace without necessarily enlarging the fixed 19-case canary count.
 - Preserve prose wording, pedagogical parentheses, card order, collapse behavior, Formula Viewer behavior, and History serialization.
 
-### C3. `DETAIL-SEGMENT-COMPAT-CLOSEOUT0`
+### C3. `DETAIL-SEGMENT-COMPAT-CLOSEOUT1`
 
 - Audit live producers, stored-History compatibility, Formula Viewer, and solve summaries.
 - Stop new legacy detail production once the floor reaches zero.
@@ -227,7 +242,7 @@ Implemented contract: Display, Formula Viewer, History, Guide/workspace expressi
 5. `CLIPBOARD-CAPABILITY-AUDIT0` as the entry gate for `CLIPBOARD-CANONICAL1`.
 6. `CLIPBOARD-PIPELINE-RATCHET1`.
 7. `DETAIL-SEGMENT-CONTRACT1`.
-8. Risk-sliced detail migration: Equation core, Equation parameterized, Symbolic Limits, Symbolic Integration, Calculus, remaining workspace domains, and Linear Algebra, followed by compatibility closeout.
+8. Risk-sliced detail migration through the eight named `DETAIL-SEGMENT-*1` commits recorded under C2.
 9. Mandatory contract review before any pedagogical-profile migration.
 10. Risk-sliced internal printer-profile migration across all nine workspaces, followed by one accumulated visible-output review.
 11. Close this program, then create a separate structured-History and Display-inversion roadmap from measured migration floors.

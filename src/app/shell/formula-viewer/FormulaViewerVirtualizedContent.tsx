@@ -16,7 +16,7 @@ import {
   type FormulaViewerVirtualLayoutEntry,
 } from '../../../lib/display/scheduling/formula-viewer-virtualization';
 import { CaseMathRowPlaceholder } from '../display-panel/CaseMathRenderControls';
-import { DetailLineContent } from '../display-panel/DisplayResultBlocks';
+import { DetailLineContent } from '../display-panel/DetailLineContent';
 import { FormulaViewerCaseRow } from './FormulaViewerReadability';
 
 interface FormulaViewerVirtualizedContentProps {
@@ -385,19 +385,19 @@ function FormulaViewerMixedLine({
   line: DisplayBlockLine;
   symbolicDisplayPrefs: SymbolicDisplayPrefs;
 }): ReactElement {
-  if (line.parts?.length) {
-    return (
-      <DetailLineContent
-        line={line.text ?? ''}
-        parts={line.parts}
-        symbolicDisplayPrefs={symbolicDisplayPrefs}
-      />
-    );
-  }
-
-  if (line.latex) {
-    return <MathStatic latex={line.latex} displayPrefs={symbolicDisplayPrefs} deferRender />;
-  }
-
-  return <NotationText text={line.text ?? ''} />;
+  const lineKind = line.lineKind ?? (line.latex ? 'math' : undefined);
+  const content = lineKind === 'text'
+    ? line.text ?? line.latex ?? ''
+    : line.latex ?? line.text ?? '';
+  return (
+    <DetailLineContent
+      line={content}
+      lineKind={lineKind}
+      parts={line.parts}
+      symbolicDisplayPrefs={symbolicDisplayPrefs}
+      renderMath={(latex) => (
+        <MathStatic latex={latex} displayPrefs={symbolicDisplayPrefs} deferRender />
+      )}
+    />
+  );
 }
