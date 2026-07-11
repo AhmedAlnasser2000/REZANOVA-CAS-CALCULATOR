@@ -23,6 +23,7 @@ import {
   buildGruntzSignLimitExtractionContract,
   type GruntzSignLimitExtractionContract,
 } from './gruntz-sign-extraction';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 const GRUNTZ_RECURSIVE_DEPTH_CAP = 4;
 
@@ -307,12 +308,12 @@ function fromExponentialExponent(input: {
       depth: input.depth,
       sourceLatex: gruntzNodeToLatex(input.node),
       transformedLatex: gruntzNodeToLatex(input.exponent),
-      detailSections: [recursiveSection({
+      detailSections: [recursiveSection(profileSymbolicLimitsResult({
         route: 'exponential-exponent',
         sourceLatex: gruntzNodeToLatex(input.node),
         transformedLatex: gruntzNodeToLatex(input.exponent),
         resultLatex: exactLatex,
-      })],
+      }))],
     };
   }
 
@@ -383,12 +384,12 @@ function fromExponentialExponent(input: {
     sourceLatex: gruntzNodeToLatex(input.node),
     transformedLatex: gruntzNodeToLatex(input.exponent),
     children: [child],
-    detailSections: mergeDetails(recursiveSection({
+    detailSections: mergeDetails(recursiveSection(profileSymbolicLimitsResult({
       route: 'exponential-exponent',
       sourceLatex: gruntzNodeToLatex(input.node),
       transformedLatex: gruntzNodeToLatex(input.exponent),
       resultLatex: exactLatex,
-    }), child),
+    })), child),
     branchAssumptions: child.branchAssumptions,
     coefficientDrivers: child.coefficientDrivers,
   };

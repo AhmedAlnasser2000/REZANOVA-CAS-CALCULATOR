@@ -29,3 +29,7 @@ function profileDomainResult<T>(result: T): T {
 export function profileEquationResult<T>(result: T): T {
   return profileDomainResult(result);
 }
+
+export function profileSymbolicLimitsResult<T>(result: T): T {
+  return profileDomainResult(result);
+}

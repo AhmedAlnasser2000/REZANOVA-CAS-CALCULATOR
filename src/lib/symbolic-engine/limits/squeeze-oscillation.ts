@@ -7,6 +7,7 @@ import {
 import { box } from './evaluation';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import type { FiniteLimitRuleSuccess } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 type SqueezeOscillationFailure = {
   kind: 'failure';
@@ -213,7 +214,7 @@ export function resolveFiniteSqueezeOscillationLimit(
     limitMathPart(label),
   ]);
 
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success' as const,
     value: 0,
     exactLatex: '0',
@@ -245,7 +246,7 @@ export function resolveFiniteSqueezeOscillationLimit(
         ],
       ]),
     ],
-  };
+  });
 }
 
 export function hasFiniteSqueezeOscillationCandidate(

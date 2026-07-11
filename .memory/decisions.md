@@ -2257,3 +2257,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Advanced Equation producers keep their specialized exact, numeric, parameterized, composition, target, and Complex serializers as native domain adapters under `pedagogical-v1`; generic MathJSON reparsing or normalization is not introduced.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] A named profile wrapper counts as migrated only when it directly encloses the authored result object. The ratchet does not allow wrapper imports, file-level calls, or broad registrations to erase unwrapped producer debt.
+
+## 2026-07-11 - PRINT-PROFILE-SYMBOLIC-LIMITS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Proof-aware Limits producers retain their native exact and conditional serializers as the `pedagogical-v1` domain adapter. Profile migration must preserve signed infinity, sided conditions, method evidence, and route-local fallback behavior rather than reparsing conclusions through generic MathJSON.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Replay LaTeX becomes hard by migrated family, not by an unfinished parent workspace. The five Calculus limit fixtures are hard evidence; unrelated Calculus families remain report-only until their owning profile slices migrate.

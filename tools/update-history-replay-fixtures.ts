@@ -244,6 +244,7 @@ async function main() {
     throw new Error(`Expected 100 History replay seeds, received ${seeds.length}.`);
   }
 
+  const hardLatexFamilies = new Set(['calculus:limits']);
   const fixtures: HistoryReplayFixture[] = [];
   for (const seed of seeds) {
     const settings = { ...DEFAULT_SETTINGS, ...seed.settings };
@@ -252,6 +253,9 @@ async function main() {
       id: seed.id,
       workspace: seed.workspace,
       family: seed.family,
+      ...(hardLatexFamilies.has(`${seed.workspace}:${seed.family}`)
+        ? { latexComparison: 'hard' as const }
+        : {}),
       snapshot: buildHistoryReplaySnapshot(settings, seed.ansLatex ?? '0'),
       request: seed.request,
       expected: {

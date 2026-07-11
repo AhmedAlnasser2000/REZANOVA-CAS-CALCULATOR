@@ -6,6 +6,7 @@ import {
   type LimitDetailRow,
 } from './detail-readback';
 import type { BoxedLike, FiniteLimitRuleOrigin, FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
 
@@ -76,13 +77,13 @@ export function success(
   origin: FiniteLimitRuleOrigin,
   rows: readonly LimitDetailRow[],
 ): FiniteLimitRuleSuccess {
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success',
     value,
     exactLatex: formatLimitValueLatex(value),
     origin,
     detailSections: limitMethodRowsSection(rows),
-  };
+  });
 }
 
 export function isEquivalentNode(left: unknown, right: unknown) {

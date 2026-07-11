@@ -19,6 +19,7 @@ import {
   type InfinityScaleTerm,
 } from './infinity-scale-terms';
 import { buildGruntzRewriteEvidenceRows } from './gruntz-rewrite-evidence';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 const EPSILON = 1e-10;
 
@@ -846,7 +847,7 @@ export function buildGruntzLimitExtractionContract(
   ];
 
   if (comparison < 0) {
-    return {
+    return profileSymbolicLimitsResult({
       supported: true,
       resultKind: 'zero',
       exactLatex: '0',
@@ -854,12 +855,12 @@ export function buildGruntzLimitExtractionContract(
       numerator,
       denominator,
       evidence: [...evidence, 'denominator scale dominates'],
-    };
+    });
   }
 
   if (comparison > 0) {
     const sign = quotientSign(numerator, denominator);
-    return {
+    return profileSymbolicLimitsResult({
       supported: true,
       resultKind: 'infinity',
       exactLatex: sign === 'negative' ? '-\\infty' : sign === 'positive' ? '\\infty' : undefined,
@@ -867,7 +868,7 @@ export function buildGruntzLimitExtractionContract(
       numerator,
       denominator,
       evidence: [...evidence, 'numerator scale dominates'],
-    };
+    });
   }
 
   return {

@@ -16,6 +16,7 @@ import {
   latexToNumber,
 } from './evaluation';
 import type { FiniteLimitRuleValue } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 const DEFAULT_MAX_LHOSPITAL_ITERATIONS = 5;
 const DEFAULT_MAX_LHOSPITAL_NODES = 220;
@@ -122,10 +123,10 @@ function finiteEvaluation(node: unknown, target: number, variable: string) {
     if (value === undefined || !Number.isFinite(value)) {
       return undefined;
     }
-    return {
+    return profileSymbolicLimitsResult({
       value,
       exactLatex: normalizeExactLatex(evaluated.latex),
-    };
+    });
   } catch {
     return undefined;
   }
@@ -158,10 +159,10 @@ function infinityEvaluation(
   const scale = Math.max(1, Math.abs(last), Math.abs(previous));
   if (Math.abs(last - previous) <= 1e-6 * scale) {
     const value = Math.abs(last) < 1e-8 ? 0 : last;
-    return {
+    return profileSymbolicLimitsResult({
       value,
       exactLatex: value === 0 ? '0' : undefined,
-    };
+    });
   }
 
   const lastMagnitude = magnitudes.at(-1) ?? 0;
@@ -174,10 +175,10 @@ function infinityEvaluation(
     && lastMagnitude > previousMagnitude * 1.5
     && previousMagnitude > olderMagnitude * 1.5
   ) {
-    return {
+    return profileSymbolicLimitsResult({
       value: signToInfinity(last),
       exactLatex: last < 0 ? '-\\infty' : '\\infty',
-    };
+    });
   }
 
   if (
@@ -185,7 +186,7 @@ function infinityEvaluation(
     && lastMagnitude < Math.abs(previous)
     && Math.abs(previous) < Math.abs(older)
   ) {
-    return { value: 0, exactLatex: '0' };
+    return profileSymbolicLimitsResult({ value: 0, exactLatex: '0' });
   }
 
   return undefined;

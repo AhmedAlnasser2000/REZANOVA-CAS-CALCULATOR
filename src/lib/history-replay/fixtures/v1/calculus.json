@@ -1413,6 +1413,7 @@
       "id": "calculus-finite-sinc",
       "workspace": "calculus",
       "family": "limits",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -1541,6 +1542,7 @@
       "id": "calculus-finite-left-pole",
       "workspace": "calculus",
       "family": "limits",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -1669,6 +1671,7 @@
       "id": "calculus-finite-right-pole",
       "workspace": "calculus",
       "family": "limits",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -1797,6 +1800,7 @@
       "id": "calculus-infinite-reciprocal",
       "workspace": "calculus",
       "family": "limits",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",
@@ -1925,6 +1929,7 @@
       "id": "calculus-natural-limit",
       "workspace": "calculus",
       "family": "limits",
+      "latexComparison": "hard",
       "snapshot": {
         "version": 1,
         "ansLatex": "0",

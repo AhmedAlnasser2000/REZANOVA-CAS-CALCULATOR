@@ -17,6 +17,7 @@ import {
 } from './infinity-scale-terms';
 import { appendSignedExpression, logarithmicExponentDifferenceScale } from './mrv-log-residual';
 import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 const EPSILON = 1e-10;
 
@@ -370,7 +371,7 @@ function successFromDominantSumComparison(input: {
       const infinity: FiniteLimitRuleValue = input.numerator.residual.coefficient * input.denominator.residual.coefficient >= 0
         ? 'posInfinity'
         : 'negInfinity';
-      return {
+      return profileSymbolicLimitsResult({
         kind: 'success',
         value: infinity,
         exactLatex: formatLimitValueLatex(infinity),
@@ -385,11 +386,11 @@ function successFromDominantSumComparison(input: {
             limitTextPart('.'),
           ],
         }),
-      };
+      });
     }
 
     if (exponentScaleComparison < 0 || (exponentScaleComparison === 0 && exponentCoefficientDelta < -EPSILON)) {
-      return {
+      return profileSymbolicLimitsResult({
         kind: 'success',
         value: 0,
         exactLatex: '0',
@@ -404,14 +405,14 @@ function successFromDominantSumComparison(input: {
             limitTextPart('.'),
           ],
         }),
-      };
+      });
     }
   } else if (numeratorExp !== denominatorExp) {
     if (numeratorExp) {
       const infinity: FiniteLimitRuleValue = input.numerator.residual.coefficient * input.denominator.residual.coefficient >= 0
         ? 'posInfinity'
         : 'negInfinity';
-      return {
+      return profileSymbolicLimitsResult({
         kind: 'success',
         value: infinity,
         exactLatex: formatLimitValueLatex(infinity),
@@ -426,10 +427,10 @@ function successFromDominantSumComparison(input: {
             limitTextPart('.'),
           ],
         }),
-      };
+      });
     }
 
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: 0,
       exactLatex: '0',
@@ -444,7 +445,7 @@ function successFromDominantSumComparison(input: {
           limitTextPart('.'),
         ],
       }),
-    };
+    });
   }
 
   const residual = residualQuotient(input.numerator.residual, input.denominator.residual);
@@ -495,7 +496,7 @@ function resolveMrvLiteDominantSumLimit(
       return undefined;
     }
     const infinity: FiniteLimitRuleValue = term.residual.coefficient >= 0 ? 'posInfinity' : 'negInfinity';
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: infinity,
       exactLatex: formatLimitValueLatex(infinity),
@@ -514,7 +515,7 @@ function resolveMrvLiteDominantSumLimit(
           limitTextPart('.'),
         ],
       ]),
-    };
+    });
   }
 
   return undefined;
@@ -566,7 +567,7 @@ function successFromScale(input: {
   ];
 
   if (comparison < 0) {
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: 0,
       exactLatex: '0',
@@ -580,11 +581,11 @@ function successFromScale(input: {
           limitTextPart('.'),
         ],
       ]),
-    };
+    });
   }
 
   if (comparison === 0) {
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: coefficient,
       exactLatex: input.finiteMultiplierLatex ?? coefficientLatex,
@@ -598,11 +599,11 @@ function successFromScale(input: {
           limitTextPart('.'),
         ],
       ]),
-    };
+    });
   }
 
   const infinity: FiniteLimitRuleValue = coefficient >= 0 ? 'posInfinity' : 'negInfinity';
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success',
     value: infinity,
     exactLatex: formatLimitValueLatex(infinity),
@@ -616,7 +617,7 @@ function successFromScale(input: {
         limitTextPart('.'),
       ],
     ]),
-  };
+  });
 }
 
 function exponentTendency(term: InfinityScaleTerm) {
@@ -705,7 +706,7 @@ export function resolveMrvLiteLimit(
   if (tendency === 'positive-infinity') {
     const sign = ordinaryTerm.coefficient >= 0 ? 1 : -1;
     const infinity: FiniteLimitRuleValue = sign > 0 ? 'posInfinity' : 'negInfinity';
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: infinity,
       exactLatex: formatLimitValueLatex(infinity),
@@ -721,11 +722,11 @@ export function resolveMrvLiteLimit(
           limitTextPart('.'),
         ],
       ]),
-    };
+    });
   }
 
   if (tendency === 'negative-infinity') {
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: 0,
       exactLatex: '0',
@@ -741,7 +742,7 @@ export function resolveMrvLiteLimit(
           limitTextPart('.'),
         ],
       ]),
-    };
+    });
   }
 
   if (tendency === 'zero') {

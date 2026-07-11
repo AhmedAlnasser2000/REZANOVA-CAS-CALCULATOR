@@ -11,6 +11,7 @@ import {
   limitTextPart,
 } from './detail-readback';
 import type { FiniteLimitRuleSuccess } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 const EPSILON = 1e-10;
 
@@ -215,14 +216,14 @@ function absQuotientFailureDetails(input: {
 }
 
 function success(value: number, detailSections: DisplayDetailSection[]): FiniteLimitRuleSuccess {
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success',
     value,
     exactLatex: `${value}`,
     approxText: `${value}`,
     origin: 'rule-based-symbolic',
     detailSections,
-  };
+  });
 }
 
 export function hasFiniteAbsSideBehaviorCandidate(

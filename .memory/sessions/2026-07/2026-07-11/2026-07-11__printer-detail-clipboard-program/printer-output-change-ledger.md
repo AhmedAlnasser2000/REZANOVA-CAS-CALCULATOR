@@ -16,7 +16,7 @@
 
 ## Accepted Changes
 
-None through `PRINT-PROFILE-EQUATION-ADVANCED1`.
+None through `PRINT-PROFILE-SYMBOLIC-LIMITS1`.
 
 ## Rejected Candidates
 

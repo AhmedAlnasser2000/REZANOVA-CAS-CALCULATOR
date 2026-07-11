@@ -11,6 +11,7 @@ import {
   limitMethodRowsSection,
   limitTextPart,
 } from './detail-readback';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 type KnownLimitInner = {
   inner: unknown;
@@ -193,7 +194,7 @@ export function resolveKnownFiniteLimitRule(node: unknown, target: number, varia
   const valueLatex = formatLimitNumberLatex(match.value);
   const targetLatex = formatLimitNumberLatex(target);
   const innerLatex = latexOf(match.inner);
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success' as const,
     value: match.value,
     exactLatex: valueLatex,
@@ -219,5 +220,5 @@ export function resolveKnownFiniteLimitRule(node: unknown, target: number, varia
         limitTextPart('.'),
       ],
     ]),
-  };
+  });
 }

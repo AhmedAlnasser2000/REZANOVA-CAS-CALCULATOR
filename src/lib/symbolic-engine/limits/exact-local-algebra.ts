@@ -14,6 +14,7 @@ import {
 } from './detail-readback';
 import { resolveLocalEquivalentLimit } from './local-equivalents';
 import type { FiniteLimitRuleSuccess } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 type FractionParts = {
   numerator: unknown;
@@ -211,7 +212,7 @@ export function resolveInfiniteExactLocalAlgebraLimit(
   }
 
   const value = linear / 2;
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success' as const,
     value,
     exactLatex: formatLimitNumberLatex(value),
@@ -221,5 +222,5 @@ export function resolveInfiniteExactLocalAlgebraLimit(
       limitTextRow('Key calculation: at positive infinity, the leading denominator behaves like 2x.'),
       limitMathValueRow('Conclusion: final limit is ', formatLimitNumberLatex(value)),
     ]),
-  };
+  });
 }

@@ -45,6 +45,7 @@ import {
   matchExpMinusOneMinusInner,
   matchLogOnePlusMinusInner,
 } from './finite-local-series';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 type RecursiveLeadingTerm = {
   coefficient: SymbolicCoefficient;
@@ -487,7 +488,7 @@ function limitSuccessFromTerm(
   ];
 
   if (term.order === 0) {
-    return numericCoefficient === undefined ? {
+    return numericCoefficient === undefined ? profileSymbolicLimitsResult({
       kind: 'success',
       exactLatex: coefficientLatex,
       origin: 'rule-based-symbolic',
@@ -495,7 +496,7 @@ function limitSuccessFromTerm(
         ...baseRows,
         limitMathValueRow('Conclusion: final limit is ', coefficientLatex),
       ]),
-    } : {
+    }) : profileSymbolicLimitsResult({
       kind: 'success',
       value: numericCoefficient,
       exactLatex: coefficientLatex,
@@ -505,11 +506,11 @@ function limitSuccessFromTerm(
         ...baseRows,
         limitMathValueRow('Conclusion: final limit is ', coefficientLatex),
       ]),
-    };
+    });
   }
 
   if (term.order > 0) {
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: 0,
       exactLatex: '0',
@@ -520,12 +521,12 @@ function limitSuccessFromTerm(
         limitTextRow('Conclusion: positive net order means the expression tends to 0 at the target.'),
         limitMathValueRow('Conclusion: final limit is ', '0'),
       ]),
-    };
+    });
   }
 
   const infinity = signedInfinityFromTerm(term, direction);
   return infinity
-    ? {
+    ? profileSymbolicLimitsResult({
         kind: 'success',
         value: infinity,
         exactLatex: formatLimitValueLatex(infinity),
@@ -536,7 +537,7 @@ function limitSuccessFromTerm(
           limitTextRow('Conclusion: negative net order creates a pole; the requested direction determines the signed infinity when signs agree.'),
           limitMathValueRow('Conclusion: final limit is ', formatLimitValueLatex(infinity) ?? 'undefined'),
         ]),
-      }
+      })
     : undefined;
 }
 

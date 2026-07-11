@@ -20,6 +20,7 @@ import type {
   PiecewiseLimitCondition,
 } from './piecewise-parser';
 import type { FiniteLimitRuleSuccess } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 export {
   collectPiecewiseLimitVariables,
@@ -395,12 +396,12 @@ function successFromResult(
   result: FiniteLimitRuleSuccess,
   detailSections: DisplayDetailSection[],
 ): PiecewiseLimitResolution {
-  return {
+  return profileSymbolicLimitsResult({
     ...result,
     exactLatex: valueLatex(result),
     approxText: resultApproxText(result),
     detailSections,
-  };
+  });
 }
 
 function resolveFinitePiecewise(

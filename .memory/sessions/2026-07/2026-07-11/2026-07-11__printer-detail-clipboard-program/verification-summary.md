@@ -16,10 +16,9 @@
 
 ## Current Verified Gate
 
-- `PRINT-PROFILE-EQUATION-ADVANCED1`: all 76 remaining Equation-owned result paths enter `pedagogical-v1` through the explicit Equation domain adapter. Canonical strings, mathematics, routing, workers, fallbacks, History persistence, OOE, and Surface Protocol are unchanged.
-- The printer ratchet inventories 519 result paths: 179 compatibility fallbacks, 97 migrated paths, and 240 forwarders. Equation is zero compatibility, 86 migrated, and 97 forwarded.
-- The ratchet now recognizes named producer-profile wrappers around authored result objects and tests that classification. Exact source fingerprints and nonincreasing floors remain enforced.
-- All 25 Equation replay fixtures now hard-compare normalized LaTeX, bringing hard coverage to 45/100. Golden, the 203-fragment print-hygiene baseline, and all 100 replay fixtures passed with zero drift.
-- The broad Equation and Equation-mode suite passed across exact, numeric, parameterized, composition, target, Complex, worker, and boundary families. Feature probes passed 124 unit and 37 UI tests.
-- Two Equation Chromium canaries passed from a fresh production build. Dense Formula Viewer evidence from the mandatory review remains unchanged.
+- `PRINT-PROFILE-SYMBOLIC-LIMITS1`: all 35 proof-aware Limits result producers enter `pedagogical-v1` through the explicit Symbolic Limits domain adapter. Exact conclusions, infinity signs, conditional cases, detail wording, routing, and fallbacks are unchanged.
+- The printer ratchet inventories 519 result paths: 144 compatibility fallbacks, 132 migrated paths, and 240 forwarders. Symbolic Limits is zero compatibility, 35 migrated, and 22 forwarded.
+- Five Calculus limit fixtures now hard-compare normalized LaTeX, bringing hard coverage to 50/100 while unrelated Calculus families remain report-only.
+- Focused Limits, Calculus Limits, printer-profile, golden, print-hygiene, and replay coverage passed 22 files and 182 tests. Feature probes passed 124 unit and 37 UI tests.
+- The real Calculus advanced smoke exercised integrals and multiple Limits routes from a fresh production build and passed without visible drift.
 - TypeScript, production build, lint, file size, printer migration, seam selection, Surface Protocol, OOE, compartments, and diff hygiene passed.

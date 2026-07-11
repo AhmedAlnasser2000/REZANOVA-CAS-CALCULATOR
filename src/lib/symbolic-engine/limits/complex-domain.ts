@@ -8,6 +8,7 @@ import {
 } from './detail-readback';
 import { boxLatex } from '../patterns/latex';
 import type { FiniteLimitRuleSuccess } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 export type ComplexDomainLimitAttempt =
   | FiniteLimitRuleSuccess
@@ -208,7 +209,7 @@ export function resolveFiniteComplexDomainLimit(input: {
     return undefined;
   }
 
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success',
     value: principalSqrt.value,
     exactLatex: formatLimitNumberLatex(principalSqrt.value),
@@ -218,5 +219,5 @@ export function resolveFiniteComplexDomainLimit(input: {
       variable: input.variable,
       target: input.target,
     }),
-  };
+  });
 }

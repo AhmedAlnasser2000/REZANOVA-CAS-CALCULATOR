@@ -131,7 +131,7 @@ Implemented contract: the TypeScript-compiler-API inventory currently classifies
 
 ### A4. `PRINT-PROFILES1` And Domain Migration
 
-Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; `PRINT-PROFILE-CALCULATE-EQUATION1` is committed as `3d22c6dd`, and `PRINT-PROFILE-EQUATION-ADVANCED1` is implemented and verified and is entering its approved commit checkpoint.
+Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; Calculate/Equation is committed as `3d22c6dd`, Equation Advanced as `5eb2f9c6`, and `PRINT-PROFILE-SYMBOLIC-LIMITS1` is implemented and verified and is entering its approved commit checkpoint.
 
 - Introduce profiles only where migrations prove a real policy difference; avoid speculative per-domain switches.
 - Cover all nine workspaces, including Geometry and Table, rather than the older six-profile sketch.
@@ -142,6 +142,8 @@ Status: active. The mandatory contract-evidence sweep passed on `2026-07-11`; `P
 `PRINT-PROFILE-CALCULATE-EQUATION1` moves the final two Calculate numeric result paths from compatibility debt to validated answer-node dual writes, reducing the Calculate fallback floor to zero. Proven Calculate trees and Equation finite-root IR now enter `pedagogical-v1` through explicit domain adapters, preserving canonical/exact parity and structured-clone safety. Calculate's 20 replay fixtures hard-compare normalized LaTeX; the other 80 remain report-only until their workspace slices. Structural candidates `(1+x)(1+x)`, a reordered general-power derivative, and `\sqrt{1/(-x^2+1)}` were rejected because they were less readable than the established producer output. The accepted visible-output ledger therefore remains empty for this slice.
 
 `PRINT-PROFILE-EQUATION-ADVANCED1` routes all 76 remaining Equation-owned result producers through `profileEquationResult()`, an explicit `pedagogical-v1` domain adapter that preserves existing canonical serializers. The TypeScript-AST ratchet now recognizes wrappers around each authored object path, reducing Equation compatibility debt to zero and raising Equation migrated paths to 86. All 25 Equation replay fixtures hard-compare normalized LaTeX, bringing the hard total to 45. Broad exact, numeric, parameterized, composition, target, Complex, worker, golden, print-hygiene, and browser evidence passed with no accepted visible drift.
+
+`PRINT-PROFILE-SYMBOLIC-LIMITS1` routes all 35 proof-aware Limits result producers through `profileSymbolicLimitsResult()` without changing exact conclusions, infinity signs, conditional cases, or method readback. Symbolic Limits compatibility debt reaches zero; the global floor is 144 compatibility, 132 migrated, and 240 forwarded. Five Calculus limit replay fixtures become hard, bringing hard coverage to 50/100 while unrelated Calculus families remain report-only. Focused Limits, golden, print-hygiene, replay, and real Calculus browser evidence pass with no accepted visible drift.
 
 ### A5. `DISPLAY-CONTRACT-INVERSION1` Later Gate
 

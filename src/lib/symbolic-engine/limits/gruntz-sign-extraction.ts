@@ -26,6 +26,7 @@ import {
   buildGruntzSeriesInWContract,
   type GruntzSeriesInWContract,
 } from './gruntz-series-w';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 type CoefficientSign = 'positive' | 'negative' | 'zero' | 'unknown';
 
@@ -228,8 +229,8 @@ export function buildGruntzSignLimitExtractionContract(
   const coefficient = series.leadingCoefficientLatex;
   const coefficientSign = exactCoefficientSign(coefficient);
   if (series.leadingOrder > 0) {
-    const evidenceRows = extractionEvidenceRows({ coefficientLatex: coefficient, order: series.leadingOrder, resultLatex: '0' });
-    return {
+    const evidenceRows = extractionEvidenceRows(profileSymbolicLimitsResult({ coefficientLatex: coefficient, order: series.leadingOrder, resultLatex: '0' }));
+    return profileSymbolicLimitsResult({
       supported: true,
       variable,
       resultKind: 'zero',
@@ -240,7 +241,7 @@ export function buildGruntzSignLimitExtractionContract(
       coefficientDrivers: series.coefficientDrivers,
       evidenceRows,
       detailSections: [extractionDetailSection(evidenceRows)],
-    };
+    });
   }
 
   if (series.leadingOrder === 0) {
@@ -305,12 +306,12 @@ export function buildGruntzSignLimitExtractionContract(
     };
   }
 
-  const evidenceRows = extractionEvidenceRows({
+  const evidenceRows = extractionEvidenceRows(profileSymbolicLimitsResult({
     coefficientLatex: coefficient,
     order: series.leadingOrder,
     resultLatex: infinityLatex,
-  });
-  return {
+  }));
+  return profileSymbolicLimitsResult({
     supported: true,
     variable,
     resultKind: 'infinity',
@@ -321,5 +322,5 @@ export function buildGruntzSignLimitExtractionContract(
     coefficientDrivers: series.coefficientDrivers,
     evidenceRows,
     detailSections: [extractionDetailSection(evidenceRows)],
-  };
+  });
 }

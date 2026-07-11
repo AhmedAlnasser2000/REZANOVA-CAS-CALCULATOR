@@ -8,6 +8,7 @@ import {
   limitTextPart,
 } from './detail-readback';
 import type { FiniteLimitRuleSuccess, FiniteLimitRuleValue } from './types';
+import { profileSymbolicLimitsResult } from '../../display/printer';
 
 const LOG_DEPTH_CAP = 4;
 const EPSILON = 1e-10;
@@ -499,7 +500,7 @@ function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | unde
   ];
 
   if (comparison < 0) {
-    return {
+    return profileSymbolicLimitsResult({
       kind: 'success',
       value: 0,
       exactLatex: '0',
@@ -513,7 +514,7 @@ function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | unde
           limitTextPart('.'),
         ],
       ]),
-    };
+    });
   }
 
   if (comparison === 0) {
@@ -537,7 +538,7 @@ function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | unde
   }
 
   const infinity: FiniteLimitRuleValue = term.coefficient >= 0 ? 'posInfinity' : 'negInfinity';
-  return {
+  return profileSymbolicLimitsResult({
     kind: 'success',
     value: infinity,
     exactLatex: formatLimitValueLatex(infinity),
@@ -551,7 +552,7 @@ function successFromTerm(term: InfinityScaleTerm): FiniteLimitRuleSuccess | unde
         limitTextPart('.'),
       ],
     ]),
-  };
+  });
 }
 
 function infinityScaleNoteRows(notes: readonly string[] | undefined): DisplayDetailLinePart[][] {
