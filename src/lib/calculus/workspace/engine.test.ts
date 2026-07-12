@@ -178,6 +178,61 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(resolveCanonicalResultForStorage(infinite)).toMatchObject({ ok: true, source: 'native' });
   });
 
+  it('builds native documents for Symbolic Integration owner screens', async () => {
+    const cases: Array<{
+      screen: CalculusScreen;
+      overrides: Record<string, unknown>;
+      title: string;
+    }> = [
+      {
+        screen: 'indefiniteIntegral',
+        overrides: { indefiniteIntegral: { bodyLatex: 'x' } },
+        title: 'Indefinite Integral',
+      },
+      {
+        screen: 'definiteIntegral',
+        overrides: { definiteIntegral: { bodyLatex: '2x', lower: '0', upper: '1' } },
+        title: 'Definite Integral',
+      },
+      {
+        screen: 'improperIntegral',
+        overrides: {
+          improperIntegral: {
+            bodyLatex: '1/(1+x^2)',
+            lowerKind: 'finite',
+            lower: '0',
+            upperKind: 'posInfinity',
+            upper: '',
+          },
+        },
+        title: 'Improper Integral',
+      },
+      {
+        screen: 'laplace',
+        overrides: { laplace: { bodyLatex: '1' } },
+        title: 'Laplace Transform',
+      },
+      {
+        screen: 'partialDerivative',
+        overrides: { partialDerivative: { bodyLatex: 'x^2 y', variable: 'x' } },
+        title: 'Partial Derivative',
+      },
+    ];
+
+    for (const entry of cases) {
+      const result = await runCalculusWorkspaceMode(makeRequest(entry.screen, entry.overrides));
+      expect(result.title, entry.screen).toBe(entry.title);
+      expect(result.kind, entry.screen).not.toBe('prompt');
+      if (result.kind === 'prompt') {
+        throw new Error(`${entry.screen} must return a result, not a prompt.`);
+      }
+      expect(resolveCanonicalResultForStorage(result), entry.screen).toMatchObject({
+        ok: true,
+        source: 'native',
+      });
+    }
+  });
+
   it('runs unified derivative workflows through Calculus', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
       derivative: { bodyLatex: 't^2', variable: 't' },

@@ -94,10 +94,19 @@
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
 
-## Pending Commit
+## RESULT-DOCUMENT-SYMBOLIC-LIMITS1
 
+- commit_hash: `c9ea91ec`
 - commit_message: `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`
 - scope: final Calculus Limit-boundary native result adapter, three Limit screens, success and typed controlled-stop documents, accepted inversion/seam ratchets, full regression and Chromium evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
+
+## Pending Commit
+
+- commit_message: `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`
+- scope: explicit eight-screen Calculus native-document policy, Symbolic Integration owner exits for integrals/Laplace/partials, corpus ratchets, full regression and Chromium evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files

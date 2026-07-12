@@ -214,3 +214,22 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`, then migrate symbolic integration results in `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`.
+
+## RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1
+
+### Completed
+
+- Confirmed that Symbolic Integration internals produce typed mathematical evidence rather than `DisplayOutcome`; they remain independent of the result-document and Display districts.
+- Added an explicit Calculus native-screen policy and extended the final owner adapter to indefinite, definite, improper, Laplace-transform, and partial-derivative screens while retaining the three completed Limit screens.
+- Added focused owner-policy, workspace, golden, and replay assertions. The policy explicitly defers derivatives, implicit derivatives, series, ODEs, and IVP until the full Calculus milestone.
+- Kept static inversion floors unchanged because the same final adapter call sites now cover more runtime families; scope is ratcheted through exact screen membership and 14 native Calculus replay executions.
+
+### Runtime And UI
+
+- Focused Integration passes 94 files and 638 tests. Full unit and UI suites pass 3,668 and 469 tests; all 43 golden and 100 replay executions remain green.
+- Nineteen Chromium canaries and three focused headless tests pass. Five inspected screenshots preserve exact and numeric integral output, Laplace, partial derivative, domain-stop evidence, and overflow without accepted drift.
+- The existing Partial Derivative answer header reads `Exact roots`. It predates this migration, remains unchanged under the no-output-drift contract, and is recorded for separate approval.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`, then close the remaining workspace screens in `RESULT-DOCUMENT-CALCULUS1`.

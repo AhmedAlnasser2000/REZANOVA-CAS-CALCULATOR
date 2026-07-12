@@ -1,9 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CalculusScreen, DisplayOutcome } from '../../../types/calculator';
 import { projectDisplayOutcomeToCanonicalResult } from '../../result-contract';
-import { createCalculusResultOutcome } from './result-document';
+import {
+  createCalculusResultOutcome,
+  hasNativeCalculusResultDocument,
+} from './result-document';
 
 describe('Calculus result document producer', () => {
+  it('keeps native ownership limited to the completed Limits and Symbolic Integration slices', () => {
+    const nativeScreens = [
+      'limit',
+      'finiteLimit',
+      'infiniteLimit',
+      'indefiniteIntegral',
+      'definiteIntegral',
+      'improperIntegral',
+      'laplace',
+      'partialDerivative',
+    ] satisfies CalculusScreen[];
+    const deferredScreens = [
+      'derivative',
+      'derivativePoint',
+      'implicitDerivative',
+      'maclaurin',
+      'taylor',
+      'odeFirstOrder',
+      'odeSecondOrder',
+      'odeNumericIvp',
+    ] satisfies CalculusScreen[];
+
+    expect(nativeScreens.every(hasNativeCalculusResultDocument)).toBe(true);
+    expect(deferredScreens.some(hasNativeCalculusResultDocument)).toBe(false);
+  });
+
   it('builds native proof-aware Limit truth from typed fields', () => {
     const input: Extract<DisplayOutcome, { kind: 'success' }> = {
       kind: 'success',

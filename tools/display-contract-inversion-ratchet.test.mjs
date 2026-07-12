@@ -231,7 +231,7 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.equation['native-document'], 1);
   });
 
-  it('classifies the Calculus adapter and its direct Limit wrapper as native', () => {
+  it('classifies the Calculus adapter and its direct owner boundary as native', () => {
     const rootDir = fixture({
       'src/lib/calculus/workspace/result-document.ts': `
         import type { DisplayOutcome } from '../../../types/calculator/display-types';

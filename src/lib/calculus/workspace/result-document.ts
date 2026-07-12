@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CalculusScreen, DisplayOutcome } from '../../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
@@ -12,6 +12,21 @@ export type CalculusResultProducerInput =
   | Omit<CalculusErrorOutcome, 'canonicalResult'>;
 
 export type CalculusResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+
+const NATIVE_CALCULUS_RESULT_DOCUMENT_SCREENS = new Set<CalculusScreen>([
+  'limit',
+  'finiteLimit',
+  'infiniteLimit',
+  'indefiniteIntegral',
+  'definiteIntegral',
+  'improperIntegral',
+  'laplace',
+  'partialDerivative',
+]);
+
+export function hasNativeCalculusResultDocument(screen: CalculusScreen) {
+  return NATIVE_CALCULUS_RESULT_DOCUMENT_SCREENS.has(screen);
+}
 
 export function createCalculusResultOutcome(
   input: Omit<CalculusSuccessOutcome, 'canonicalResult'>,

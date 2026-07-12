@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; advanced Equation native result documents are committed as `594adc5e`; Symbolic Limits native result documents are verified through Gate 11 and entering their approved commit; `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1` is next; no push is authorized
+Status: active; Symbolic Limits native result documents are committed as `c9ea91ec`; Symbolic Integration owner exits are verified through Gate 12 and entering their approved commit; `RESULT-DOCUMENT-CALCULUS1` is next; no push is authorized
 
 ## Attribution
 
@@ -116,11 +116,16 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - All six Equation golden executions and all 25 Equation replay fixtures are native. Full Equation verification passes 145 files and 1,217 tests; result-contract, solve-result, intent, detail, printer, replay, runtime, UI, TypeScript, build, lint, file-size, CI, seam, Surface, OOE, and compartment gates pass.
 - Nineteen Chromium canaries pass in 1.2 minutes. Three focused headless tests and seven inspected screenshots cover parameterized success, the established exponential Exact-mode stop, interval numeric roots, Complex roots, guided quartic roots, range guards, and the live legacy Trigonometry equation handoff without clipping or output drift.
 - Cross-workspace ownership is explicit: Trigonometry removes Equation's canonical document after changing title/actions/planner presentation and remains compatibility-owned until `RESULT-DOCUMENT-GUIDED-DOMAINS1`; the unit and browser gates pin that handoff.
-- `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`: verified and entering its approved commit. A Calculus-owned adapter builds validated native documents at the final workspace boundary for `limit`, `finiteLimit`, and `infiniteLimit` after stored-value enrichment. The 35 proof-aware symbolic Limit leaf rules remain typed domain evidence without importing Display contracts.
+- `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`: committed as `c9ea91ec`. A Calculus-owned adapter builds validated native documents at the final workspace boundary for `limit`, `finiteLimit`, and `infiniteLimit` after stored-value enrichment. The 35 proof-aware symbolic Limit leaf rules remain typed domain evidence without importing Display contracts.
 - The accepted inventory now measures 589 producer boundaries, 769 consumer reads, 37 compatibility projections, 554 legacy reads, and 129 native calls. Calculus records two native boundaries, seven compatibility producers, nine forwarders, six controls, two legacy reads, and two canonical reads; unrelated Calculus families remain explicitly unmigrated.
 - The golden left-pole Limit and all five sanitized Calculus Limits replay fixtures carry native documents. Full verification passes 22 focused Limits files and 174 tests, all 43 golden and 100 replay executions, 3,666 unit tests, 469 UI tests, 19 Chromium canaries, runtime contracts/probes, and every canonical seam command.
 - Three focused headless Chromium cases and inspected screenshots preserve the one-sided signed-infinity answer, infinite-scale method evidence, two-sided mismatch wording, typed proof details, and overflow behavior. Successful results persist version-1 result documents; the controlled stop remains absent from History by the locked success-only contract.
 - Worker hosts, capability identity, request shape, OOE launch/cancel/stale/commit authority, fallback semantics, History tickets, Surface DTOs, and mathematical output remain unchanged. `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1` is next.
+- `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`: verified and entering its approved commit. Live inspection found no `DisplayOutcome` producer inside the Symbolic Integration leaf engine; it returns typed domain evidence. The migration therefore preserves that dependency direction and extends the existing Calculus owner boundary to indefinite, definite, improper, Laplace-transform, and partial-derivative screens.
+- The native screen policy now covers eight exact screens and explicitly leaves derivative, derivative-at-point, implicit derivative, series, ODE, and IVP screens for `RESULT-DOCUMENT-CALCULUS1`. The static inversion inventory remains 589 producers, 769 reads, 37 compatibility projections, 554 legacy reads, and 129 native calls because the same two owner call sites cover the expanded runtime scope.
+- The improper-integral golden execution and all six integral, two Laplace, and one partial-derivative replay fixtures join the five Limit fixtures as native Calculus evidence. Focused Integration passes 94 files and 638 tests; full verification passes 3,668 unit and 469 UI tests, all 43 golden and 100 replay executions, runtime contracts/probes, and every canonical seam command.
+- Nineteen Chromium canaries and three focused headless tests pass. Five inspected screenshots preserve exact `arctan(x)+C`, numeric improper integration, `1/s`, `2xy`, and the definite-integral domain stop without clipping or drift. The existing Partial Derivative `Exact roots` answer label remains unchanged and is tracked as a separate presentation question.
+- Successful outcomes persist version-1 result documents; the definite-integral controlled stop remains live-only under success-only History. Full Calculus producer completion is next.
 
 ## Verification Contract
 

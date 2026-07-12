@@ -11,7 +11,10 @@ import {
   evaluateCalculusLimit,
 } from './limits';
 import { evaluateCalculusImplicitDerivative } from './implicit-derivative';
-import { createCalculusResultOutcome } from './result-document';
+import {
+  createCalculusResultOutcome,
+  hasNativeCalculusResultDocument,
+} from './result-document';
 import {
   solveFirstOrderOde,
   solveNumericIvp,
@@ -627,11 +630,7 @@ export async function runCalculusWorkspaceMode(
     protectedNameDescriptions,
     Boolean(request.variableSubstitutionSnapshot),
   );
-  if (
-    request.screen === 'limit'
-    || request.screen === 'finiteLimit'
-    || request.screen === 'infiniteLimit'
-  ) {
+  if (hasNativeCalculusResultDocument(request.screen)) {
     return finalOutcome.kind === 'prompt'
       ? finalOutcome
       : createCalculusResultOutcome(finalOutcome);

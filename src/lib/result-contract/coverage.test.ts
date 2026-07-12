@@ -9,6 +9,8 @@ import {
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
 import { executeHistoryReplayRequest } from '../history-replay/native-execution';
 import type { HistoryReplayExecution } from '../history-replay/fixture-contract';
+import { hasNativeCalculusResultDocument } from '../calculus/workspace/result-document';
+import type { CalculusScreen } from '../../types/calculator';
 import {
   projectCanonicalResultToDisplayOutcome,
   projectCanonicalResultToTableResponse,
@@ -113,12 +115,15 @@ describe('canonical result corpus coverage', () => {
           `${goldenCase.id} native ${goldenCase.mode} document`,
         ).toBeDefined();
       }
-      if (goldenCase.id === 'calculus-left-pole-limit') {
+      if (
+        goldenCase.id === 'calculus-left-pole-limit'
+        || goldenCase.id === 'calculus-improper-arctan-integral'
+      ) {
         expect(
           execution.outcome.kind === 'prompt'
             ? undefined
             : execution.outcome.canonicalResult,
-          `${goldenCase.id} native Symbolic Limits document`,
+          `${goldenCase.id} native Calculus family document`,
         ).toBeDefined();
       }
     }
@@ -139,8 +144,12 @@ describe('canonical result corpus coverage', () => {
       if (fixture.workspace === 'equation' && nativeDocument) {
         nativeEquationFixtures.push(fixture.id);
       }
-      if (fixture.workspace === 'calculus' && fixture.family === 'limits') {
-        expect(nativeDocument, `${fixture.id} native Symbolic Limits document`).toBeDefined();
+      if (
+        fixture.workspace === 'calculus'
+        && typeof fixture.request.screen === 'string'
+        && hasNativeCalculusResultDocument(fixture.request.screen as CalculusScreen)
+      ) {
+        expect(nativeDocument, `${fixture.id} native Calculus family document`).toBeDefined();
       }
     }
     expect(nativeEquationFixtures).toEqual(
