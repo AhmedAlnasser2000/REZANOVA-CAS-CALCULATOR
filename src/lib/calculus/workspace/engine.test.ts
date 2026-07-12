@@ -233,6 +233,89 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
   });
 
+  it('builds native documents for every remaining Calculus result screen', async () => {
+    const cases: Array<{
+      screen: CalculusScreen;
+      overrides: Record<string, unknown>;
+      title: string;
+    }> = [
+      {
+        screen: 'derivative',
+        overrides: { derivative: { bodyLatex: 'x^2', variable: 'x' } },
+        title: 'Derivative',
+      },
+      {
+        screen: 'derivativePoint',
+        overrides: { derivativePoint: { bodyLatex: 'x^2', point: '2', variable: 'x' } },
+        title: 'Derivative',
+      },
+      {
+        screen: 'implicitDerivative',
+        overrides: {
+          implicitDerivative: {
+            relationLatex: 'x^2+y^2=1',
+            independentVariable: 'x',
+            dependentVariable: 'y',
+          },
+        },
+        title: 'Implicit Derivative',
+      },
+      {
+        screen: 'maclaurin',
+        overrides: { maclaurin: { bodyLatex: 'e^x', kind: 'maclaurin', center: '0', order: 4 } },
+        title: 'Maclaurin Series',
+      },
+      {
+        screen: 'taylor',
+        overrides: { taylor: { bodyLatex: 'e^x', kind: 'taylor', center: '1', order: 3 } },
+        title: 'Taylor Series',
+      },
+      {
+        screen: 'odeFirstOrder',
+        overrides: {
+          firstOrderOde: {
+            lhsLatex: '\\frac{dy}{dx}',
+            rhsLatex: 'xy',
+            classification: 'separable',
+          },
+        },
+        title: 'First-Order ODE',
+      },
+      {
+        screen: 'odeSecondOrder',
+        overrides: { secondOrderOde: { a2: '1', a1: '0', a0: '1', forcingLatex: '0' } },
+        title: 'Second-Order ODE',
+      },
+      {
+        screen: 'odeNumericIvp',
+        overrides: {
+          numericIvp: {
+            bodyLatex: 'y',
+            x0: '0',
+            y0: '1',
+            xEnd: '0.1',
+            step: '0.1',
+            method: 'rk4',
+          },
+        },
+        title: 'Numeric IVP',
+      },
+    ];
+
+    for (const entry of cases) {
+      const result = await runCalculusWorkspaceMode(makeRequest(entry.screen, entry.overrides));
+      expect(result.title, entry.screen).toBe(entry.title);
+      expect(result.kind, entry.screen).not.toBe('prompt');
+      if (result.kind === 'prompt') {
+        throw new Error(`${entry.screen} must return a result, not a prompt.`);
+      }
+      expect(resolveCanonicalResultForStorage(result), entry.screen).toMatchObject({
+        ok: true,
+        source: 'native',
+      });
+    }
+  });
+
   it('runs unified derivative workflows through Calculus', async () => {
     const result = await runCalculusWorkspaceMode(makeRequest('derivative', {
       derivative: { bodyLatex: 't^2', variable: 't' },
@@ -244,7 +327,10 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toContain('2');
     expect(result.exactLatex).toContain('t');
-    expect(result.canonicalResult).toBeUndefined();
+    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
+      ok: true,
+      source: 'native',
+    });
     const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
     expect(steps?.lineKind).toBe('math');
     expect(steps?.lines).toContain('\\operatorname{operator}\\quad \\frac{d}{dt}');

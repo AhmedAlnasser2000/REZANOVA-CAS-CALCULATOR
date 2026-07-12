@@ -7,7 +7,7 @@ import {
 } from './result-document';
 
 describe('Calculus result document producer', () => {
-  it('keeps native ownership limited to the completed Limits and Symbolic Integration slices', () => {
+  it('covers every result screen while keeping navigation screens control-only', () => {
     const nativeScreens = [
       'limit',
       'finiteLimit',
@@ -17,8 +17,6 @@ describe('Calculus result document producer', () => {
       'improperIntegral',
       'laplace',
       'partialDerivative',
-    ] satisfies CalculusScreen[];
-    const deferredScreens = [
       'derivative',
       'derivativePoint',
       'implicitDerivative',
@@ -28,9 +26,18 @@ describe('Calculus result document producer', () => {
       'odeSecondOrder',
       'odeNumericIvp',
     ] satisfies CalculusScreen[];
+    const navigationScreens = [
+      'home',
+      'derivativesHome',
+      'integralsHome',
+      'limitsHome',
+      'seriesHome',
+      'partialsHome',
+      'odeHome',
+    ] satisfies CalculusScreen[];
 
     expect(nativeScreens.every(hasNativeCalculusResultDocument)).toBe(true);
-    expect(deferredScreens.some(hasNativeCalculusResultDocument)).toBe(false);
+    expect(navigationScreens.some(hasNativeCalculusResultDocument)).toBe(false);
   });
 
   it('builds native proof-aware Limit truth from typed fields', () => {

@@ -272,3 +272,30 @@
 - Symbolic Integration internals remain Display-independent. Native documents are attached only at the final Calculus owner boundary after existing enrichment.
 - Worker topology, capability identity, request shape, OOE authority, fallback, stale/cancel/commit rules, diagnostics, History tickets, Surface DTOs, Notebook source, and mathematical output are unchanged.
 - Ignored `.task_tmp/` evidence and untracked `test-results/` are excluded. No push is authorized.
+
+## RESULT-DOCUMENT-CALCULUS1 Gate
+
+- Kind: `backend` complete Calculus native producer policy with mandatory `ui` mathematical-output parity evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass for all 16 Calculus result screens.
+
+### Contract Evidence
+
+- Focused result-document, workspace, and corpus coverage passes 3 files and 25 tests. Full Calculus passes 29 files and 196 tests.
+- Result contract passes 25 tests over all 43 golden and 100 replay executions. Both Calculus golden executions and all 25 Calculus replay fixtures resolve from native documents.
+- Static inversion remains 1,150 source files, 589 producer boundaries, 769 consumer reads, 37 compatibility projections, 554 legacy reads, and 129 native calls. The same two Calculus owner calls cover all result screens; exact screen and fixture ratchets prove runtime breadth.
+- Full unit passes 526 files and 3,669 tests; full UI passes 64 files and 469 tests. Display, intent, detail, printer, replay, golden, print hygiene, settings probes, runtime contracts/probes, Equation carrier, TypeScript, production build, lint, file size, CI, seam, identity, Surface, OOE, and compartment gates pass.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.2 minutes.
+- Focused Calculus evidence: 3/3 headless tests passed across eight newly native owner exits. Each successful outcome persisted a version-1 native History document.
+- Inspected `.task_tmp/history-display-contract/calculus-closeout-screenshots/` for derivative, derivative at point, implicit derivative, Maclaurin, Taylor, first-order ODE, second-order ODE, and Numeric IVP. Answer cards, typed details, exact/approx output, warnings, controls, and long-page layouts are readable without malformed fragments, clipping, overlap, or drift.
+- The first temporary run exposed two harness assumptions: the shell-visible derivative-at-point title differs from its shared engine title, and `e^x` is unsupported at Taylor center 1. The corrected harness preserves those established contracts and passes with the supported polynomial Taylor case.
+
+### Boundaries
+
+- Seven Calculus home/navigation screens remain explicit control-only routes. The result adapter runs once after existing computation and stored-value enrichment; domain engines remain independent of Display.
+- Worker topology, capability identity, request shape, OOE authority, fallback, stale/cancel/commit rules, diagnostics, History tickets, Surface DTOs, Notebook source, and mathematical output are unchanged.
+- Pre-existing derivative-at-point title and ODE presentation debt is recorded for resolution before read-model authority changes; it is not silently bundled into this no-drift milestone.
+- Ignored `.task_tmp/` evidence and untracked `test-results/` are excluded. No push is authorized.

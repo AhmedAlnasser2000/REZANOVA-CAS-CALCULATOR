@@ -233,3 +233,23 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`, then close the remaining workspace screens in `RESULT-DOCUMENT-CALCULUS1`.
+
+## RESULT-DOCUMENT-CALCULUS1
+
+### Completed
+
+- Expanded the existing Calculus owner policy from eight to all 16 result screens while leaving `home`, `derivativesHome`, `integralsHome`, `limitsHome`, `seriesHome`, `partialsHome`, and `odeHome` explicitly control-only.
+- Added native-document coverage for derivative, derivative at point, implicit derivative, Maclaurin, Taylor, first-order ODE, second-order ODE, and Numeric IVP after existing stored-value enrichment.
+- Ratcheted both Calculus golden executions and all 25 Calculus replay fixtures to require native storage resolution. Static native call counts remain unchanged because the same final owner adapter covers the larger runtime set.
+- Preserved current visible output and engine contracts, including the shared derivative-at-point engine title and current ODE presentation labels.
+
+### Runtime And UI
+
+- Focused owner/workspace/coverage tests pass 3 files and 25 tests; the complete Calculus district passes 29 files and 196 tests.
+- Full unit and UI suites pass 526 files/3,669 tests and 64 files/469 tests. All 43 golden executions, 100 replay fixtures, feature probes, Display/detail/printer contracts, runtime contracts/probes, static boundaries, TypeScript, build, lint, and file-size gates pass.
+- Nineteen Chromium canaries and three focused headless tests pass. Eight inspected screenshots cover every newly native result screen without malformed fragments, clipping, overlap, or accepted output drift.
+- The visual pass recorded pre-existing ODE `Exact roots` wording, literal second-order coefficient escapes, and the derivative-at-point engine/route title split for later presentation/read-model resolution.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-CALCULUS1`, then migrate Trigonometry, Geometry, Statistics, and Table through their own owner adapters in `RESULT-DOCUMENT-GUIDED-DOMAINS1`.

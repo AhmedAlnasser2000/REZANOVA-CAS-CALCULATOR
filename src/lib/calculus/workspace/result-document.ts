@@ -22,6 +22,14 @@ const NATIVE_CALCULUS_RESULT_DOCUMENT_SCREENS = new Set<CalculusScreen>([
   'improperIntegral',
   'laplace',
   'partialDerivative',
+  'derivative',
+  'derivativePoint',
+  'implicitDerivative',
+  'maclaurin',
+  'taylor',
+  'odeFirstOrder',
+  'odeSecondOrder',
+  'odeNumericIvp',
 ]);
 
 export function hasNativeCalculusResultDocument(screen: CalculusScreen) {

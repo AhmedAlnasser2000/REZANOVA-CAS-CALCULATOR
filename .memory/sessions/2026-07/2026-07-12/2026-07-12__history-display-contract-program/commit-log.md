@@ -103,10 +103,19 @@
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
 
-## Pending Commit
+## RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1
 
+- commit_hash: `392fb45b`
 - commit_message: `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`
 - scope: explicit eight-screen Calculus native-document policy, Symbolic Integration owner exits for integrals/Laplace/partials, corpus ratchets, full regression and Chromium evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
+
+## Pending Commit
+
+- commit_message: `RESULT-DOCUMENT-CALCULUS1`
+- scope: complete 16-screen Calculus native-document policy, seven-screen navigation exclusion, all 25 replay fixtures, full regression and eight-screen Chromium evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files

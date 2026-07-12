@@ -107,23 +107,16 @@ describe('canonical result corpus coverage', () => {
     for (const goldenCase of goldenCases) {
       const execution = await runGoldenCase(goldenCase);
       assertCanonicalRoundTrip(execution, goldenCase.id);
-      if (goldenCase.mode === 'calculate' || goldenCase.mode === 'equation') {
-        expect(
-          execution.outcome.kind === 'prompt'
-            ? undefined
-            : execution.outcome.canonicalResult,
-          `${goldenCase.id} native ${goldenCase.mode} document`,
-        ).toBeDefined();
-      }
       if (
-        goldenCase.id === 'calculus-left-pole-limit'
-        || goldenCase.id === 'calculus-improper-arctan-integral'
+        goldenCase.mode === 'calculate'
+        || goldenCase.mode === 'equation'
+        || goldenCase.mode === 'calculus'
       ) {
         expect(
           execution.outcome.kind === 'prompt'
             ? undefined
             : execution.outcome.canonicalResult,
-          `${goldenCase.id} native Calculus family document`,
+          `${goldenCase.id} native ${goldenCase.mode} document`,
         ).toBeDefined();
       }
     }
@@ -132,6 +125,7 @@ describe('canonical result corpus coverage', () => {
   it('projects all 100 deterministic History replay executions', async () => {
     expect(HISTORY_REPLAY_FIXTURES).toHaveLength(100);
     const nativeEquationFixtures: string[] = [];
+    const nativeCalculusFixtures: string[] = [];
     for (const fixture of HISTORY_REPLAY_FIXTURES) {
       const execution = await executeHistoryReplayRequest(fixture.workspace, fixture.request);
       assertCanonicalRoundTrip(execution, fixture.id);
@@ -150,11 +144,17 @@ describe('canonical result corpus coverage', () => {
         && hasNativeCalculusResultDocument(fixture.request.screen as CalculusScreen)
       ) {
         expect(nativeDocument, `${fixture.id} native Calculus family document`).toBeDefined();
+        if (nativeDocument) nativeCalculusFixtures.push(fixture.id);
       }
     }
     expect(nativeEquationFixtures).toEqual(
       HISTORY_REPLAY_FIXTURES
         .filter((fixture) => fixture.workspace === 'equation')
+        .map((fixture) => fixture.id),
+    );
+    expect(nativeCalculusFixtures).toEqual(
+      HISTORY_REPLAY_FIXTURES
+        .filter((fixture) => fixture.workspace === 'calculus')
         .map((fixture) => fixture.id),
     );
   }, 60_000);
