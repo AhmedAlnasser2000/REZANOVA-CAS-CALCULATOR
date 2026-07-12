@@ -222,10 +222,18 @@ export const NATIVE_DOCUMENT_CALL_NAMES = new Set([
 ]);
 
 export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
+  'createCalculusResultOutcome',
   'createEquationResultOutcome',
 ]);
 
 export const PRODUCER_INPUT_REGISTRATIONS = [
+  {
+    id: 'calculus-result-producer-input-v1',
+    owner: 'calculus-result-contract',
+    rationale: 'The Calculus producer adapter reads typed result evidence before emitting canonical and compatibility projections; these are producer assembly reads, not downstream Display consumers.',
+    matchers: exact('src/lib/calculus/workspace/result-document.ts'),
+    functions: ['createCalculusResultOutcome'],
+  },
   {
     id: 'equation-result-producer-input-v1',
     owner: 'equation-result-contract',

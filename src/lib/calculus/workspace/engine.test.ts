@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveCanonicalResultForStorage } from '../../result-contract';
 import { runCalculusWorkspaceMode } from './engine';
 import type { CalculusScreen } from '../../../types/calculator';
 
@@ -115,6 +116,10 @@ describe('runCalculusWorkspaceMode stored values', () => {
       title: 'Variable Policy',
       lines: ['Kept t symbolic as the limit variable.'],
     });
+    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
+      ok: true,
+      source: 'native',
+    });
   });
 
   it('stops natural limit variable mismatches before stored-value substitution', async () => {
@@ -133,6 +138,10 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.error).toContain('uses t');
     expect(result.error).toContain('\\lim_{t\\to \\infty}');
     expect(result.detailSections?.[0]?.title).toBe('Limit Variable Check');
+    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
+      ok: true,
+      source: 'native',
+    });
   });
 
   it('threads complex domain intent into natural limit evaluation', async () => {
@@ -147,6 +156,26 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toBe('0');
     expect(result.detailSections?.some((section) => section.title === 'Complex Domain')).toBe(true);
+    expect(result.canonicalResult?.title).toBe('Limit');
+  });
+
+  it('builds native documents for guided finite and infinite Limit screens', async () => {
+    const finite = await runCalculusWorkspaceMode(makeRequest('finiteLimit', {
+      finiteLimit: { bodyLatex: '1/x', target: '0', direction: 'left' },
+    }));
+    const infinite = await runCalculusWorkspaceMode(makeRequest('infiniteLimit', {
+      infiniteLimit: { bodyLatex: '1/x', targetKind: 'posInfinity' },
+    }));
+
+    expect(finite.kind === 'prompt' ? undefined : finite.canonicalResult?.title)
+      .toBe('Finite Limit');
+    expect(infinite.kind === 'prompt' ? undefined : infinite.canonicalResult?.title)
+      .toBe('Infinite Limit');
+    if (finite.kind === 'prompt' || infinite.kind === 'prompt') {
+      throw new Error('Limit workspace requests must return results, not prompts.');
+    }
+    expect(resolveCanonicalResultForStorage(finite)).toMatchObject({ ok: true, source: 'native' });
+    expect(resolveCanonicalResultForStorage(infinite)).toMatchObject({ ok: true, source: 'native' });
   });
 
   it('runs unified derivative workflows through Calculus', async () => {

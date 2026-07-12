@@ -231,6 +231,30 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.equation['native-document'], 1);
   });
 
+  it('classifies the Calculus adapter and its direct Limit wrapper as native', () => {
+    const rootDir = fixture({
+      'src/lib/calculus/workspace/result-document.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        export function createCalculusResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+      'src/lib/calculus/workspace/engine.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        declare function createCalculusResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function runLimit(outcome: DisplayOutcome): DisplayOutcome {
+          return createCalculusResultOutcome(outcome);
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.calculus['legacy-read'], 0);
+    assert.equal(report.lanes.calculus['native-document'], 2);
+    assert.equal(report.lanes.calculus['compatibility-projection'], 0);
+  });
+
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `

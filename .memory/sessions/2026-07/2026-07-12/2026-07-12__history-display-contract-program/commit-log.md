@@ -85,10 +85,19 @@
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
 
-## Pending Commit
+## RESULT-DOCUMENT-EQUATION-ADVANCED1
 
+- commit_hash: `594adc5e`
 - commit_message: `RESULT-DOCUMENT-EQUATION-ADVANCED1`
 - scope: typed advanced Equation producer adapter, zero Equation compatibility producers, native non-prompt boundary assertion, explicit cancellation control and Trigonometry owner handoff, accepted inversion baseline, full Equation/runtime/Chromium verification, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
+
+## Pending Commit
+
+- commit_message: `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`
+- scope: final Calculus Limit-boundary native result adapter, three Limit screens, success and typed controlled-stop documents, accepted inversion/seam ratchets, full regression and Chromium evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files

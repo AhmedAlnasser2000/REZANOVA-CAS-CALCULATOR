@@ -11,6 +11,7 @@ import {
   evaluateCalculusLimit,
 } from './limits';
 import { evaluateCalculusImplicitDerivative } from './implicit-derivative';
+import { createCalculusResultOutcome } from './result-document';
 import {
   solveFirstOrderOde,
   solveNumericIvp,
@@ -619,11 +620,21 @@ export async function runCalculusWorkspaceMode(
       };
   }
 
-  return withStoredValueDetails(
+  const finalOutcome = withStoredValueDetails(
     outcome,
     substitutions,
     protectedSubstitutions,
     protectedNameDescriptions,
     Boolean(request.variableSubstitutionSnapshot),
   );
+  if (
+    request.screen === 'limit'
+    || request.screen === 'finiteLimit'
+    || request.screen === 'infiniteLimit'
+  ) {
+    return finalOutcome.kind === 'prompt'
+      ? finalOutcome
+      : createCalculusResultOutcome(finalOutcome);
+  }
+  return finalOutcome;
 }

@@ -189,3 +189,28 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-EQUATION-ADVANCED1`, then migrate proof-aware Limits producers in `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`.
+
+## RESULT-DOCUMENT-SYMBOLIC-LIMITS1
+
+### Completed
+
+- Added a Calculus-owned native result adapter that builds the complete canonical document from existing typed success and controlled-stop fields without parsing LaTeX.
+- Applied it once at the final workspace boundary, after stored-value enrichment, for the merged natural Limit plus the guided finite and infinite Limit screens.
+- Kept all 35 proof-aware symbolic Limit leaf rules independent of Display and preserved their existing typed evidence, method details, side behavior, route diagnostics, and exact serializers.
+- Added native-document coverage for the left-pole golden case and all five Limits replay fixtures, plus inventory and seam ratchets for the new owner boundary.
+
+### Measured Posture
+
+- Accepted inventory: 589 producer boundaries, 769 consumer reads, 37 compatibility projections, 554 legacy reads, and 129 native calls.
+- Calculus: two native boundaries, seven compatibility producers, nine forwarders, six controls, two legacy reads, and two canonical reads. Other Calculus families remain compatibility-owned until their named gates.
+- Successful Limits persist version-1 canonical result documents alongside compatibility fields. Math-bearing controlled stops carry live canonical truth but do not enter success-only History.
+
+### Runtime And UI
+
+- Full unit and UI suites pass 3,666 and 469 tests. The focused Limits district passes 22 files and 174 tests; all 43 golden and 100 replay executions remain green.
+- Nineteen Chromium canaries and three focused headless Limit cases pass. Inspected screenshots preserve signed infinity, infinite-scale method evidence, two-sided mismatch wording, proof details, and readable overflow with no output drift.
+- Worker host, request, capability, OOE cancellation/stale/commit authority, fallback, diagnostics, History tickets, Surface DTOs, and mathematical behavior are unchanged.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`, then migrate symbolic integration results in `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`.

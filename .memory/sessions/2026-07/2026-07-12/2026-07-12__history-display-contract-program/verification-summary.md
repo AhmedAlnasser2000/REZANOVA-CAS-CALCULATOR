@@ -218,3 +218,31 @@
 - OOE cancellation remains control-only. Runtime advisories and executable actions remain transient. Equation's request, hosts, capability, worker/fallback policy, stale/cancel rules, commit legality, diagnostics, and History-ticket behavior are unchanged.
 - Trigonometry drops Equation-owned canonical truth after its owner-specific presentation changes and remains compatibility-owned until `RESULT-DOCUMENT-GUIDED-DOMAINS1`.
 - Notebook source, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
+
+## RESULT-DOCUMENT-SYMBOLIC-LIMITS1 Gate
+
+- Kind: `backend` native producer migration with mandatory `ui` mathematical-output parity evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass for the proof-aware Symbolic Limits slice.
+
+### Contract Evidence
+
+- Focused Limits: 22 files and 174 tests pass across symbolic Limit rules, finite/infinite bridges, workspace orchestration, heuristics, and the new producer adapter.
+- Result contract passes 25 tests over all 43 golden and 100 replay executions. The golden left-pole case and all five Limits replay fixtures are native. Result intent covers all 143 executions; detail migration remains 450/450 declared; printer inventory remains 533 paths with zero fallback debt.
+- Accepted inversion inventory: 1,150 source files, 589 producer boundaries, 769 consumer reads, 37 compatibility projections, 554 legacy reads, and 129 native calls. Calculus records two native boundaries without reducing or disguising the seven unrelated compatibility producers.
+- Full unit: 526 files and 3,666 tests pass. Full UI: 64 files and 469 tests pass. Display contracts pass 153 library and 25 UI tests; runtime contracts pass 76 tests and native probes pass 19 tests.
+- TypeScript, production build, global ESLint, golden, replay, solve-result, file-size, CI alignment, seam selection, app identity, Surface Protocol, OOE, compartments, and diff hygiene pass. Existing build chunk/dynamic-import notices remain non-fatal.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.2 minutes.
+- Focused Symbolic Limits evidence: 3/3 headless tests passed for a left-sided pole, an infinite-scale quotient, and a two-sided mismatch controlled stop.
+- Inspected `.task_tmp/history-display-contract/symbolic-limits-screenshots/one-sided-pole.png`, `infinite-asymptotic.png`, and `two-sided-controlled-stop.png`. Answers, approximation, method/proof details, side behavior, cards, and long-page layout are readable without clipping, overlap, malformed fragments, or drift.
+- The first temporary controlled-stop assertion expected a History row and correctly failed. The harness was corrected to enforce the locked success-only History rule; both successful cases persist native documents while the controlled error remains live-only.
+
+### Boundaries
+
+- Native truth is attached only after existing Limit computation and stored-value enrichment. The symbolic leaf engine remains Display-independent, and other Calculus families remain compatibility-owned.
+- OOE/runtime ownership, worker topology, capability IDs, request shape, cancellation, stale/commit legality, fallback policy, diagnostics, History tickets, Surface DTOs, and Notebook source are unchanged.
+- A final resync reviewed concurrent commit `62c56bf7` (`NOTEBOOK-OUTPUT-INVERSION-PAUSE0`): it adds only a separate Notebook session note and does not overlap this working slice or active dossier.
+- Ignored `.task_tmp/` evidence and untracked `test-results/` are excluded. No push is authorized.

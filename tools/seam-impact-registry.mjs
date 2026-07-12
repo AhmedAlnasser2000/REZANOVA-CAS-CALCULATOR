@@ -219,7 +219,10 @@ export const SEAM_REGISTRY = [
     label: 'Canonical result document and compatibility projections',
     matchers: [
       ...prefix('src/lib/result-contract/'),
-      ...exact('src/types/calculator/canonical-result-types.ts'),
+      ...exact(
+        'src/lib/calculus/workspace/result-document.ts',
+        'src/types/calculator/canonical-result-types.ts',
+      ),
     ],
     additionalCommandIds: [
       'result-contracts',

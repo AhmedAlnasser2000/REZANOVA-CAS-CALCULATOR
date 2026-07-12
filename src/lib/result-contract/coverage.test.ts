@@ -113,6 +113,14 @@ describe('canonical result corpus coverage', () => {
           `${goldenCase.id} native ${goldenCase.mode} document`,
         ).toBeDefined();
       }
+      if (goldenCase.id === 'calculus-left-pole-limit') {
+        expect(
+          execution.outcome.kind === 'prompt'
+            ? undefined
+            : execution.outcome.canonicalResult,
+          `${goldenCase.id} native Symbolic Limits document`,
+        ).toBeDefined();
+      }
     }
   }, 60_000);
 
@@ -130,6 +138,9 @@ describe('canonical result corpus coverage', () => {
       }
       if (fixture.workspace === 'equation' && nativeDocument) {
         nativeEquationFixtures.push(fixture.id);
+      }
+      if (fixture.workspace === 'calculus' && fixture.family === 'limits') {
+        expect(nativeDocument, `${fixture.id} native Symbolic Limits document`).toBeDefined();
       }
     }
     expect(nativeEquationFixtures).toEqual(
