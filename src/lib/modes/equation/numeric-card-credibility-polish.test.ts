@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayDetailSection, DisplayOutcome, NumericSolveInterval } from '../../../types/calculator';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
+import { createEquationResultOutcome } from '../../equation/solve-result/producer';
 import { runEquationMode } from '../equation';
 import { makeRequest } from './test-support';
 
@@ -252,12 +253,18 @@ describe('Equation numeric card credibility polish', () => {
     const result = expectSuccess(solve({
       equationLatex: String.raw`\tan(\sin(\ln(x)+1))=1`,
     }));
-    const syntheticSolveNote = buildDisplayBlocks({
-      ...result,
+    const resultInput = { ...result };
+    delete resultInput.canonicalResult;
+    const syntheticSolveNote = buildDisplayBlocks(createEquationResultOutcome({
+      ...resultInput,
       detailSections: [
-        { title: 'Solve Note', lines: ['Composition branch: reduced carrier.', 'Periodic family: generated branches.'] },
+        {
+          title: 'Solve Note',
+          lineKind: 'text',
+          lines: ['Composition branch: reduced carrier.', 'Periodic family: generated branches.'],
+        },
       ],
-    }).find((block) => block.label === 'Solve Note');
+    })).find((block) => block.label === 'Solve Note');
 
     expect(syntheticSolveNote).toMatchObject({
       kind: 'detail',

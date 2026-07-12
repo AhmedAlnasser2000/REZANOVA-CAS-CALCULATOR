@@ -2437,3 +2437,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] A final workspace success is legal only when its canonical document validates and exactly matches the typed compatibility projection. Prompts and OOE cancellation controls remain outside this success-only invariant; Equation keeps its stronger non-prompt invariant.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Pre-final `DisplayOutcome` assembly is measured as `owner-assembly`, not compatibility debt, only through exact owner/function registrations with durable rationale. Completed Table authority must be checked with its companion `TableResponse` because bounded row truth is intentionally not duplicated onto `DisplayOutcome`.
+
+## 2026-07-12 - DISPLAY-READ-MODEL-INVERSION1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Display presentation policy must resolve through one canonical-derived read model before building blocks, trust summaries, render schedules, or Formula Viewer artifacts. Native canonical truth wins over contradictory compatibility fields.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Typed legacy outcomes may project once without LaTeX reparsing. Only old History may preserve raw undeclared detail sections when that is the projection's sole validation failure; live producers remain forbidden from relying on inference.

@@ -201,6 +201,13 @@ export const CANONICAL_PROJECTION_REGISTRATIONS = [
     matchers: exact('src/lib/result-contract/projection.ts'),
     functions: ['projectCanonicalResultToDisplayOutcome'],
   },
+  {
+    id: 'display-canonical-read-model-projection-v1',
+    owner: 'display-result-read-model',
+    rationale: 'Display resolves native canonical truth first and projects typed compatibility outcomes once, preserving only the explicit undeclared-detail boundary required by legacy History.',
+    matchers: exact('src/lib/display/result/display-read-model.ts'),
+    functions: ['canonicalDocumentForDisplay'],
+  },
 ];
 
 export const CONTROL_OUTCOME_REGISTRATIONS = [

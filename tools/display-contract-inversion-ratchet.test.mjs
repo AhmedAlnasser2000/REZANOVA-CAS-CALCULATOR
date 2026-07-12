@@ -419,6 +419,33 @@ describe('display contract inversion ratchet', () => {
     );
   });
 
+  it('keeps Display blocks canonical-first with only deferred hygiene and legacy History reads', () => {
+    const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
+    const lane = report.lanes['display-read-model'];
+    const legacyReads = report.entries['legacy-read']
+      .filter((entry) => entry.lane === 'display-read-model');
+    const legacyReadsByFile = Object.fromEntries(
+      [...new Set(legacyReads.map((entry) => entry.file))]
+        .map((file) => [file, legacyReads.filter((entry) => entry.file === file).length]),
+    );
+
+    assert.equal(lane['canonical-projection'], 1);
+    assert.equal(lane['compatibility-projection'], 0);
+    assert.equal(lane['canonical-read'], 1);
+    assert.equal(lane['legacy-read'], 21);
+    assert.deepEqual(legacyReadsByFile, {
+      'src/lib/display/notation/symbolic-output-hygiene.ts': 5,
+      'src/lib/display/print-hygiene.ts': 15,
+      'src/lib/display/result/display-read-model.ts': 1,
+    });
+    assert.deepEqual(
+      legacyReads
+        .filter((entry) => entry.file === 'src/lib/display/result/display-read-model.ts')
+        .map((entry) => [entry.detail, entry.context]),
+      [['detailSections', 'canonicalDocumentForDisplay']],
+    );
+  });
+
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `

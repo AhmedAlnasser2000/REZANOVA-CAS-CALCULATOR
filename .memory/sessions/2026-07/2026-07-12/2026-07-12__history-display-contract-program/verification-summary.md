@@ -379,3 +379,28 @@
 - The assertion checks successful final results only. Prompts and OOE cancellation remain control outcomes; Equation retains its stronger non-prompt assertion.
 - Completed Table supplies its companion response because table rows are canonical truth outside `DisplayOutcome`.
 - Notebook source, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
+
+## DISPLAY-READ-MODEL-INVERSION1 Gate
+
+- Kind: `backend` canonical Display read authority with mandatory `ui` no-drift evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass.
+
+### Contract Evidence
+
+- Display blocks, trust summaries, case/system readback, scheduling, and Formula Viewer resolve through `DisplayResultReadModel`; native canonical documents override stale compatibility fields.
+- Typed legacy outcomes project once without reparsing LaTeX. The sole exception preserves raw undeclared detail sections for old History when no other projection failure exists.
+- Display inversion passes 19 tests. The accepted inventory retains one compatibility projection, 29 owner assemblies, and 150 native calls; Display has 21 legacy reads, one canonical read, zero compatibility producers, and one registered canonical projection.
+- Full unit passes 530 files/3,682 tests and full UI passes 67 files/481 tests. Result contracts, all 43 golden executions, all 100 replay fixtures, printer/detail/clipboard/feature probes, runtime contracts/probes, TypeScript, build, lint, Rust, file size, CI, seam, identity, Surface, OOE, and compartment gates pass.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed. Structured History create/replay: 9/9 workspaces passed.
+- Fresh screenshots for Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and Table were inspected; answers, branches, details, warnings, and exact Table rows remain readable without malformed fragments or result-card overflow.
+- A real Equation `ln(x^4+x+1)=b` route opened Formula Viewer for a 39,456-character result with five guarded rows. Source context, virtualized row policy, and local conditions remained readable without overlap.
+
+### Boundaries
+
+- Twenty Display legacy reads remain in downstream print-hygiene and symbolic consumer logic for Gate 18. One additional read is the explicit old-History detail exception.
+- Runtime hosts, capabilities, OOE authority, History tickets, Surface DTOs, mathematics, wording, and formatting are unchanged.
+- Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.

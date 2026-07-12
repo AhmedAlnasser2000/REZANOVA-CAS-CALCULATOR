@@ -329,3 +329,28 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`, then derive Display blocks, render scheduling, and Formula Viewer content from canonical documents in `DISPLAY-READ-MODEL-INVERSION1`.
+
+## DISPLAY-READ-MODEL-INVERSION1
+
+### Completed
+
+- Added one non-`DisplayOutcome` read model that resolves native canonical documents first and projects typed legacy outcomes once without LaTeX reparsing.
+- Moved Display blocks, trust summaries, branch/system/case readback, render scheduling inputs, and Formula Viewer artifacts onto canonical-derived values.
+- Preserved old History compatibility through a narrow undeclared-detail exception; live producers remain fully declared and canonical-authoritative.
+- Ratcheted the exact Display projection and downstream printer classification without increasing compatibility debt.
+
+### Measured Posture
+
+- The inventory retains one compatibility projection, 29 owner assemblies, and 150 native calls. Display has 21 legacy reads, one canonical read, zero compatibility producers, and one registered canonical projection.
+- Twenty reads are downstream print-hygiene/symbolic consumer work assigned to the next gate; one is the deliberate old-History inference exception.
+- Full unit/UI pass 530 files/3,682 tests and 67 files/481 tests. All golden/replay, runtime, printer/detail/clipboard, build/lint/Rust, and static gates pass.
+
+### Runtime And UI
+
+- Nineteen Chromium canaries and nine structured-History journeys pass.
+- Fresh all-nine screenshots preserve visible answers, facts, details, warnings, and Table rows. A live 39,456-character Formula Viewer case preserves source context and five guarded virtual rows without overlap or malformed math.
+- No output, request, runtime, OOE, History-ticket, capability, worker, fallback, or Surface behavior changed.
+
+### Next Step
+
+- Commit `DISPLAY-READ-MODEL-INVERSION1`, then migrate Clipboard, `Ans`, editor transfer, workspace display state, History, print hygiene, and Surface mapping in `CANONICAL-RESULT-CONSUMER-INVERSION1`.

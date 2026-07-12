@@ -18,15 +18,18 @@ import {
   extractFiniteBranchReadback,
   normalizeFiniteBranchReadback,
 } from './branch-readback';
-import { trustSummaryForDisplayOutcome } from './display-trust-summary';
 import { rootCountSummary } from './display-block-summary';
 import {
   caseMathAnswerBlockFromLatex,
-  caseMathAnswerBlockFromOutcome,
+  caseMathAnswerBlockFromSections,
   caseMathDetailLinesFromSection,
   isCaseMathDetailSection,
 } from './display-case-math-blocks';
-import { systemSolutionAnswerBlockFromOutcome } from './system-solution-block';
+import { systemSolutionAnswerBlockFromReadback } from './system-solution-block';
+import {
+  displayResultReadModelFromOutcome,
+  type DisplayResultReadModel,
+} from './display-read-model';
 export { displayBlockCountSummary, displayBlockSummaryText } from './display-block-summary';
 
 export type DisplayBlockKind =
@@ -103,22 +106,20 @@ export type BuildDisplayBlocksOptions = {
   sourceMode?: ModeId;
 };
 
-type SuccessDisplayOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-
 export function isVerboseDisplayBlockLines(lines: readonly string[]) {
   const joined = lines.join(' ');
   return lines.length > 2 || joined.length > 160;
 }
 
 function isPrimaryApproximateOutcome(
-  outcome: DisplayOutcome,
-): outcome is SuccessDisplayOutcome & { approxText: string } {
-  return outcome.kind === 'success'
-    && !outcome.exactLatex
-    && Boolean(outcome.approxText)
+  model: DisplayResultReadModel,
+) {
+  return model.outcomeKind === 'success'
+    && !model.primaryLatex
+    && Boolean(model.approximateText)
     && (
-      outcome.solutionKind === 'approximate-numeric'
-      || outcome.resultOrigin === 'numeric-fallback'
+      model.solutionKind === 'approximate-numeric'
+      || model.resultOrigin === 'numeric-fallback'
     );
 }
 
@@ -155,23 +156,23 @@ const DETAIL_TITLES_COLLAPSED_BY_DEFAULT = new Set([
 ]);
 
 function answerRowsBlockFromOutcome(
-  outcome: DisplayOutcome,
+  model: DisplayResultReadModel,
   answerLatex: string,
   label: string,
   trustSummary?: string,
 ): DisplayBlock | null {
-  if (outcome.kind !== 'success' || !outcome.answerRows?.rows.length) {
+  if (model.outcomeKind !== 'success' || !model.answerRows?.rows.length) {
     return null;
   }
 
   return {
     id: 'answer',
     kind: 'answer',
-    label: outcome.answerRows.label ?? label,
+    label: model.answerRows.label ?? label,
     renderKind: 'mathList',
     collapsible: true,
     defaultCollapsed: false,
-    lines: outcome.answerRows.rows.map((row, index) => ({
+    lines: model.answerRows.rows.map((row, index) => ({
       id: `answer-row-${index}`,
       label: row.label,
       latex: row.latex,
@@ -383,17 +384,17 @@ function periodicFamilyBlocks(
   return blocks;
 }
 
-function primaryApproximateAnswerBlock(outcome: DisplayOutcome): DisplayBlock | null {
-  if (!isPrimaryApproximateOutcome(outcome) || !outcome.approxText) {
+function primaryApproximateAnswerBlock(model: DisplayResultReadModel): DisplayBlock | null {
+  if (!isPrimaryApproximateOutcome(model) || !model.approximateText) {
     return null;
   }
 
-  const branchReadback = normalizeFiniteBranchReadback(outcome.branchReadback);
+  const branchReadback = normalizeFiniteBranchReadback(model.branchReadback);
   if (branchReadback) {
     return {
       id: 'answer',
       kind: 'answer',
-      label: outcome.branchReadback?.label ?? 'Numeric Roots',
+      label: model.branchReadback?.label ?? 'Numeric Roots',
       renderKind: 'branchList',
       branchCount: branchReadback.rows.length,
       collapsible: true,
@@ -410,7 +411,7 @@ function primaryApproximateAnswerBlock(outcome: DisplayOutcome): DisplayBlock | 
         latex: row.rowLatex,
         testId: `display-outcome-answer-branch-${index}`,
       })),
-      rawContent: [outcome.approxText],
+      rawContent: [model.approximateText],
       testId: 'display-outcome-answer-block',
     };
   }
@@ -422,8 +423,8 @@ function primaryApproximateAnswerBlock(outcome: DisplayOutcome): DisplayBlock | 
     renderKind: 'text',
     collapsible: true,
     defaultCollapsed: false,
-    text: outcome.approxText,
-    rawContent: [outcome.approxText],
+    text: model.approximateText,
+    rawContent: [model.approximateText],
     testId: 'display-outcome-answer-block',
   };
 }
@@ -432,36 +433,34 @@ function isLinearAlgebraSourceMode(mode: ModeId | undefined) {
   return mode === 'matrix' || mode === 'vector';
 }
 
-function displayOutcomeSourceMode(outcome: DisplayOutcome) {
-  return outcome.kind === 'success' || outcome.kind === 'error'
-    ? outcome.sourceMode
-    : undefined;
-}
-
-function allowsImplicitBranchReadback(outcome: DisplayOutcome, options: BuildDisplayBlocksOptions) {
-  return !isLinearAlgebraSourceMode(options.sourceMode ?? displayOutcomeSourceMode(outcome));
+function allowsImplicitBranchReadback(
+  model: DisplayResultReadModel,
+  options: BuildDisplayBlocksOptions,
+) {
+  return !isLinearAlgebraSourceMode(options.sourceMode ?? model.sourceMode);
 }
 
 export function buildDisplayBlocks(
   outcome: DisplayOutcome | null | undefined,
   options: BuildDisplayBlocksOptions = {},
 ): DisplayBlock[] {
-  if (!outcome || outcome.kind === 'prompt') {
+  const model = displayResultReadModelFromOutcome(outcome);
+  if (!model) {
     return [];
   }
 
   const blocks: DisplayBlock[] = [];
-  const primaryApproximateBlock = primaryApproximateAnswerBlock(outcome);
-  const trustSummary = trustSummaryForDisplayOutcome(outcome);
+  const primaryApproximateBlock = primaryApproximateAnswerBlock(model);
+  const trustSummary = model.trustSummary;
 
-  if (outcome.kind === 'error') {
+  if (model.outcomeKind === 'error') {
     blocks.push({
       id: 'error-text',
       kind: 'errorText',
       label: 'Error',
       renderKind: 'text',
-      text: outcome.error,
-      rawContent: [outcome.error],
+      text: model.errorText ?? '',
+      rawContent: [model.errorText ?? ''],
       testId: 'display-outcome-error-text',
     });
   }
@@ -473,16 +472,23 @@ export function buildDisplayBlocks(
     });
   }
 
-  for (const section of buildResultReadbackSections(outcome)) {
+  for (const section of buildResultReadbackSections({
+    exactLatex: model.primaryLatex,
+    exactSupplementLatex: model.supplementLatex,
+  })) {
     if (section.kind === 'answer') {
-      const hideExactAnswer = outcome.kind === 'success'
+      const hideExactAnswer = model.outcomeKind === 'success'
         && options.answerReadbackStyle === 'decimal'
-        && Boolean(outcome.approxText);
+        && Boolean(model.approximateText);
       if (hideExactAnswer) {
         continue;
       }
 
-      const systemBlock = systemSolutionAnswerBlockFromOutcome(outcome, section.latex, section.label);
+      const systemBlock = systemSolutionAnswerBlockFromReadback(
+        model.systemReadback,
+        section.latex,
+        section.label,
+      );
       if (systemBlock) {
         blocks.push({
           ...systemBlock,
@@ -491,7 +497,11 @@ export function buildDisplayBlocks(
         continue;
       }
 
-      const caseMathBlock = caseMathAnswerBlockFromOutcome(outcome, section.latex, section.label);
+      const caseMathBlock = caseMathAnswerBlockFromSections(
+        model.detailSections,
+        section.latex,
+        section.label,
+      );
       if (caseMathBlock) {
         blocks.push({
           ...caseMathBlock,
@@ -510,7 +520,7 @@ export function buildDisplayBlocks(
       }
 
       const answerRowsBlock = answerRowsBlockFromOutcome(
-        outcome,
+        model,
         section.latex,
         section.label,
         trustSummary,
@@ -521,19 +531,19 @@ export function buildDisplayBlocks(
       }
 
       const metadataBranchReadback = normalizeFiniteBranchReadback(
-        outcome.branchReadback,
+        model.branchReadback,
         section.latex,
       );
       const branchReadback = metadataBranchReadback
-        ?? (allowsImplicitBranchReadback(outcome, options)
+        ?? (allowsImplicitBranchReadback(model, options)
           ? extractFiniteBranchReadback(section.latex)
           : null);
       if (branchReadback) {
         blocks.push({
           id: 'answer',
           kind: 'answer',
-          label: metadataBranchReadback && outcome.branchReadback?.label
-            ? outcome.branchReadback.label
+          label: metadataBranchReadback && model.branchReadback?.label
+            ? model.branchReadback.label
             : section.label,
           renderKind: 'branchList',
           branchCount: branchReadback.rows.length,
@@ -590,39 +600,39 @@ export function buildDisplayBlocks(
     });
   }
 
-  if (options.showApproxReadback && outcome.approxText && !primaryApproximateBlock) {
+  if (options.showApproxReadback && model.approximateText && !primaryApproximateBlock) {
     blocks.push({
       id: 'approx',
       kind: 'approx',
       label: 'Approx',
       renderKind: 'text',
-      text: outcome.approxText,
-      rawContent: [outcome.approxText],
+      text: model.approximateText,
+      rawContent: [model.approximateText],
       testId: 'display-outcome-approx',
     });
   }
 
-  blocks.push(...periodicFamilyBlocks(outcome.periodicFamily, options.getPeriodicStopReasonText));
+  blocks.push(...periodicFamilyBlocks(model.periodicFamily, options.getPeriodicStopReasonText));
 
   const detailSections = displayDetailSectionsForPolicy(
-    outcome.detailSections,
+    model.detailSections,
     options.detailPolicy ?? { detailedFactsEnabled: false },
   );
   detailSections?.forEach((section, index) => {
     blocks.push(detailBlockFromSection(section, index));
   });
 
-  if (outcome.warnings.length > 0) {
+  if (model.warnings.length > 0) {
     blocks.push({
       id: 'warnings',
       kind: 'warning',
       label: 'Warnings',
       renderKind: 'text',
-      lines: outcome.warnings.map((warning, index) => ({
+      lines: model.warnings.map((warning, index) => ({
         id: `warning-${index}`,
         text: warning,
       })),
-      rawContent: [...outcome.warnings],
+      rawContent: [...model.warnings],
       testId: 'display-outcome-warnings',
     });
   }

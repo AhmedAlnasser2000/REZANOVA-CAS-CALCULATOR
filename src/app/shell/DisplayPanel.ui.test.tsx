@@ -98,6 +98,7 @@ describe('DisplayPanel result shell', () => {
           warnings: [],
           exactLatex: 'x=1',
           solveSummaryText: 'Composition branch: reduced carrier; Periodic family: generated branches.',
+          solveSummaryParts: [[{ kind: 'text', text: 'Composition branch: reduced carrier; Periodic family: generated branches.' }]],
         }}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated

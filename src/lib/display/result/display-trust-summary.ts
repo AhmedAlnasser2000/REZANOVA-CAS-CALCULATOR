@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalResultDocumentV1 } from '../../../types/calculator';
 
 type InternalEquationEvidence = {
   category?: string;
@@ -12,8 +12,9 @@ type InternalEquationEvidence = {
 
 const EQUATION_ANALYSIS_EVIDENCE = Symbol.for('calcwiz.equation.analysisEvidence');
 
-function equationTrustEvidence(outcome: DisplayOutcome): InternalEquationEvidence[] {
-  const evidence = (outcome as { [EQUATION_ANALYSIS_EVIDENCE]?: unknown })[EQUATION_ANALYSIS_EVIDENCE];
+function equationTrustEvidence(source: unknown): InternalEquationEvidence[] {
+  const evidence = (source as { [EQUATION_ANALYSIS_EVIDENCE]?: unknown } | null | undefined)
+    ?.[EQUATION_ANALYSIS_EVIDENCE];
   return Array.isArray(evidence)
     ? evidence.filter((entry): entry is InternalEquationEvidence =>
       Boolean(entry)
@@ -28,8 +29,8 @@ function intervalTextFromEvidence(entry: InternalEquationEvidence) {
     : null;
 }
 
-function trustSummaryFromEvidence(outcome: DisplayOutcome) {
-  const trustEvidence = equationTrustEvidence(outcome);
+function trustSummaryFromEvidence(source: unknown) {
+  const trustEvidence = equationTrustEvidence(source);
   for (const entry of trustEvidence) {
     switch (entry.classification) {
       case 'exact-roots':
@@ -59,18 +60,21 @@ function trustSummaryFromEvidence(outcome: DisplayOutcome) {
   return undefined;
 }
 
-function numericConfidenceLines(outcome: DisplayOutcome) {
-  return outcome.kind === 'success'
-    ? outcome.detailSections?.find((section) => section.title === 'Numeric Confidence')?.lines ?? []
+function detailLineText(line: NonNullable<CanonicalResultDocumentV1['details']>[number]['lines'][number]) {
+  return line.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.text).join('');
+}
+
+function numericConfidenceLines(document: CanonicalResultDocumentV1) {
+  return document.outcomeKind === 'success'
+    ? document.details?.find((section) => section.title === 'Numeric Confidence')
+      ?.lines.map(detailLineText) ?? []
     : [];
 }
 
-function searchedIntervalText(outcome: DisplayOutcome) {
-  if (outcome.kind !== 'success') {
-    return null;
-  }
-  for (const section of outcome.detailSections ?? []) {
-    for (const line of section.lines) {
+function searchedIntervalText(document: CanonicalResultDocumentV1) {
+  for (const section of document.details ?? []) {
+    for (const parts of section.lines) {
+      const line = detailLineText(parts);
       const match = line.match(/Searched real interval\s*(\[[^\]]+\])/u);
       if (match?.[1]) {
         return match[1];
@@ -80,27 +84,31 @@ function searchedIntervalText(outcome: DisplayOutcome) {
   return null;
 }
 
-export function trustSummaryForDisplayOutcome(outcome: DisplayOutcome): string | undefined {
-  if (outcome.kind !== 'success') {
+export function trustSummaryForCanonicalResult(
+  document: CanonicalResultDocumentV1,
+  equationEvidenceSource?: unknown,
+): string | undefined {
+  if (document.outcomeKind !== 'success') {
     return undefined;
   }
 
-  if (outcome.sourceMode === 'matrix' || outcome.sourceMode === 'vector') {
+  const metadata = document.metadata;
+  if (metadata?.sourceMode === 'matrix' || metadata?.sourceMode === 'vector') {
     return undefined;
   }
 
-  const evidenceSummary = trustSummaryFromEvidence(outcome);
+  const evidenceSummary = trustSummaryFromEvidence(equationEvidenceSource);
   if (evidenceSummary) {
     return evidenceSummary;
   }
 
-  const confidenceLines = numericConfidenceLines(outcome);
+  const confidenceLines = numericConfidenceLines(document);
   if (confidenceLines.some((line) => /All real polynomial roots certified/iu.test(line))) {
     return 'Certified polynomial roots';
   }
 
   if (confidenceLines.some((line) => /All roots in this interval/iu.test(line))) {
-    const interval = searchedIntervalText(outcome);
+    const interval = searchedIntervalText(document);
     return interval ? `Local numeric roots in ${interval}` : 'Local numeric roots';
   }
 
@@ -113,9 +121,9 @@ export function trustSummaryForDisplayOutcome(outcome: DisplayOutcome): string |
   }
 
   if (
-    outcome.resultOrigin === 'symbolic'
-    || (outcome.solutionKind !== 'approximate-numeric' && outcome.branchReadback)
-    || (outcome.exactLatex && !outcome.solutionKind && outcome.title === 'Symbolic')
+    metadata?.resultOrigin === 'symbolic'
+    || (metadata?.solutionKind !== 'approximate-numeric' && document.branchReadback)
+    || (document.primaryMath && !metadata?.solutionKind && document.title === 'Symbolic')
   ) {
     return 'Exact roots';
   }

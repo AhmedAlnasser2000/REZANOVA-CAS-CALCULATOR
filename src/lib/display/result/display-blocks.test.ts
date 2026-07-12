@@ -54,13 +54,11 @@ describe('display block adapter', () => {
       text: 'x ~= 2',
     });
     expect(blocks.find((block) => block.id === 'detail-0')?.lines?.[0]).toMatchObject({
-      lineKind: 'math',
       parts: [{ kind: 'math', latex: 'x+1=3' }],
       testId: 'display-outcome-detail-line-0-0',
       text: 'x+1=3',
     });
     expect(blocks.find((block) => block.id === 'detail-0')?.lines?.[1]).toMatchObject({
-      lineKind: 'text',
       parts: [{ kind: 'text', text: 'Selected target: ' }, { kind: 'math', latex: 'x' }],
       testId: 'display-outcome-detail-line-0-1',
       text: 'Selected target: x',
@@ -158,6 +156,7 @@ describe('display block adapter', () => {
       exactLatex: 'x=3',
       detailSections: [{
         title: 'Extraneous Solutions',
+        lineKind: 'text',
         lines: [
           'Candidate -1 rejected: does not satisfy the original equation after substitution.',
           'Candidate 2 rejected: does not satisfy the original equation after substitution.',
@@ -382,6 +381,7 @@ describe('display block adapter', () => {
       exactLatex: 'x=3',
       detailSections: [{
         title: 'Solve Note',
+        lineKind: 'text',
         lines: ['Composition branch reduced to a periodic carrier family.'],
       }],
       warnings: [],
@@ -601,6 +601,7 @@ describe('display block adapter', () => {
       },
       detailSections: [{
         title: 'Numeric Confidence',
+        lineKind: 'text',
         lines: [
           'All real polynomial roots certified.',
           'Candidate roots validated against original equation.',
@@ -623,11 +624,12 @@ describe('display block adapter', () => {
       },
       detailSections: [
         {
-          title: 'Numeric Confidence',
+          title: 'Numeric Confidence', lineKind: 'text',
           lines: ['All roots in this interval.'],
         },
         {
           title: 'Numeric Interval Scope',
+          lineKind: 'text',
           lines: ['Searched real interval [0, 10] with 256 subdivisions.'],
         },
       ],
@@ -648,6 +650,7 @@ describe('display block adapter', () => {
       },
       detailSections: [{
         title: 'Numeric Confidence',
+        lineKind: 'text',
         lines: ['Validated roots from bounded search.'],
       }],
       warnings: [],
@@ -668,6 +671,7 @@ describe('display block adapter', () => {
       },
       detailSections: [{
         title: 'Numeric Confidence',
+        lineKind: 'text',
         lines: ['roots found in this complex region.'],
       }],
       warnings: [],

@@ -1,7 +1,6 @@
 import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
 } from '../../../types/calculator';
 import { caseMathCountSummary } from './display-block-summary';
 import type { DisplayBlock, DisplayBlockLine } from './display-blocks';
@@ -32,10 +31,8 @@ export function isCaseMathDetailSection(section: DisplayDetailSection) {
   return CASE_MATH_DETAIL_TITLES.has(section.title);
 }
 
-function caseMathSectionFromOutcome(outcome: DisplayOutcome) {
-  return outcome.kind === 'success'
-    ? outcome.detailSections?.find((section) => CASE_MATH_DETAIL_TITLES.has(section.title))
-    : undefined;
+function caseMathSectionFromSections(sections: readonly DisplayDetailSection[] | undefined) {
+  return sections?.find((section) => CASE_MATH_DETAIL_TITLES.has(section.title));
 }
 
 function caseMathBranchFamilyCountFromSection(section: DisplayDetailSection) {
@@ -243,12 +240,12 @@ export function caseMathDetailLinesFromSection(
   return maybeLines.filter((line): line is DisplayBlockLine => line !== null);
 }
 
-export function caseMathAnswerBlockFromOutcome(
-  outcome: DisplayOutcome,
+export function caseMathAnswerBlockFromSections(
+  sections: readonly DisplayDetailSection[] | undefined,
   answerLatex: string,
   label: string,
 ): DisplayBlock | null {
-  const section = caseMathSectionFromOutcome(outcome);
+  const section = caseMathSectionFromSections(sections);
   const target = caseMathTarget(answerLatex);
   if (!section || !target) {
     return null;

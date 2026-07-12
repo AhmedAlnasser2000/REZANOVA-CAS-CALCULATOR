@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { DisplaySystemSolutionReadback } from '../../../types/calculator';
 import type { DisplayBlock, DisplayBlockCountSummary, DisplayBlockLine } from './display-blocks';
 
 function plural(count: number, singular: string, pluralLabel = `${singular}s`) {
@@ -13,19 +13,19 @@ function systemSolutionCountSummary(rowCount: number): DisplayBlockCountSummary 
   };
 }
 
-export function systemSolutionAnswerBlockFromOutcome(
-  outcome: DisplayOutcome,
+export function systemSolutionAnswerBlockFromReadback(
+  readback: DisplaySystemSolutionReadback | undefined,
   answerLatex: string,
   label: string,
 ): DisplayBlock | null {
-  if (outcome.kind !== 'success' || !outcome.systemReadback) {
+  if (!readback) {
     return null;
   }
 
-  const variables = outcome.systemReadback.variablesLatex
+  const variables = readback.variablesLatex
     .map((variable) => variable.trim())
     .filter(Boolean);
-  const rows = outcome.systemReadback.rows.map((row, rowIndex): DisplayBlockLine | null => {
+  const rows = readback.rows.map((row, rowIndex): DisplayBlockLine | null => {
     if (row.valuesLatex.length !== variables.length) {
       return null;
     }
@@ -49,7 +49,7 @@ export function systemSolutionAnswerBlockFromOutcome(
   return {
     id: 'answer',
     kind: 'answer',
-    label: outcome.systemReadback.label ?? label,
+    label: readback.label ?? label,
     renderKind: 'systemRows',
     branchCount: visibleRows.length,
     collapsible: true,

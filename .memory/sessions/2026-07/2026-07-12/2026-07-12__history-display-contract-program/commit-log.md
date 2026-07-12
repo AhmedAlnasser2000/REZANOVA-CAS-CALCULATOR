@@ -141,8 +141,17 @@
 
 ## RESULT-DOCUMENT-PRODUCER-CLOSEOUT1
 
+- commit_hash: `312d99b4`
 - commit_message: `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`
 - scope: explicit owner-assembly and cancellation-control classifications, final success native-authority assertion across all workspaces, Table companion-evidence handling, accepted inversion baseline, full regression/browser evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files
+
+## DISPLAY-READ-MODEL-INVERSION1
+
+- commit_message: `DISPLAY-READ-MODEL-INVERSION1`
+- scope: canonical-derived Display read model, blocks/trust/scheduling/Formula Viewer migration, bounded old-History detail compatibility, accepted inversion/printer baselines, full regression/browser evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files

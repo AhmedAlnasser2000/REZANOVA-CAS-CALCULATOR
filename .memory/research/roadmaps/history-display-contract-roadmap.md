@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; producer ownership is closed through Gate 16; `DISPLAY-READ-MODEL-INVERSION1` is next; no push is authorized
+Status: active; Display read-model authority is verified through Gate 17; `CANONICAL-RESULT-CONSUMER-INVERSION1` is next; no push is authorized
 
 ## Attribution
 
@@ -147,6 +147,11 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - Accepted inventory: 611 producer boundaries, 775 consumer reads, one compatibility projection, 29 owner assemblies, 554 legacy reads, and 150 native calls. All 43 golden executions and all 100 replay fixtures retain native authority and exact visible/structural parity.
 - Full verification passes 529 unit files and 3,680 tests, focused result/runtime/printer/detail gates, TypeScript, production build, lint, Rust check, file size, CI, seam, Surface, OOE, and compartment boundaries. Nineteen Chromium canaries and nine structured History browser journeys pass; prior all-nine screenshot evidence was re-inspected and remains readable because this gate changes enforcement only.
 - No mathematical output, visible wording, request shape, runtime host, capability identity, OOE authority, cancellation, fallback, History-ticket behavior, or Surface DTO changed. Display read-model inversion is next.
+- `DISPLAY-READ-MODEL-INVERSION1`: verified for its approved commit. Display blocks now resolve one canonical-derived read model before answer, branch, system, periodic, supplement, approximation, typed-detail, trust-summary, scheduling, or Formula Viewer presentation policy runs.
+- Native canonical documents are authoritative even when compatibility fields disagree. Typed legacy outcomes project once without parsing LaTeX; old History may retain raw undeclared detail sections only when that is the projection's sole validation failure, preserving established legacy inference without weakening live producer rules.
+- The accepted inventory remains one compatibility projection, 29 owner assemblies, and 150 native calls. Display records 21 legacy reads, one canonical read, zero compatibility producers, and one registered canonical projection; 20 reads belong to print-hygiene/symbolic downstream consumers scheduled for Gate 18, while one is the explicit old-History detail exception.
+- Full unit and UI verification passes 530 files/3,682 tests and 67 files/481 tests. All 43 golden executions, 100 replay fixtures, 19 Chromium canaries, nine structured-History journeys, runtime/static contracts, TypeScript, build, lint, Rust, and file-size gates pass.
+- Fresh screenshots across all nine workspaces and a live 39,456-character Formula Viewer result were inspected. Answers, facts, details, exact Table rows, guarded formula rows, and overflow policy remain readable with no intentional output drift. Consumer inversion is next.
 
 ## Verification Contract
 

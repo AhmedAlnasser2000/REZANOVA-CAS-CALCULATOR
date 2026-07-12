@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "RESULT-DOCUMENT-LINEAR-ALGEBRA1 classifies the independent Matrix and Vector canonical-result adapters with zero compatibility fallback growth.",
-  "registryDigest": "234fd39948cdb55d4a53",
+  "acceptedReason": "DISPLAY-READ-MODEL-INVERSION1 registers the exact Display block and canonical read-model files as downstream presentation consumers of producer-owned canonical values; no result serialization or visible output changes.",
+  "registryDigest": "7ae544f305202073a85c",
   "resultProperties": [
     "answerLatex",
     "exactLatex",
@@ -27,12 +27,12 @@
   "registrationFloors": {},
   "categoryCounts": {
     "canonical-printer": 5,
-    "downstream-presentation": 13,
+    "downstream-presentation": 14,
     "input-syntax": 869,
-    "presentation-math": 2910,
-    "prose-only": 4160,
+    "presentation-math": 2926,
+    "prose-only": 4187,
     "reference-content": 2565,
-    "result-path": 533
+    "result-path": 536
   },
   "compatibilityAssignments": []
 }

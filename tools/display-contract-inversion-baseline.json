@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "RESULT-DOCUMENT-PRODUCER-CLOSEOUT1 classifies pre-final owner assemblies and OOE cancellation controls explicitly, enforces native authority for every successful workspace boundary, and leaves only legacy History compatibility.",
-  "registryDigest": "400df82c3883fce89039",
+  "acceptedReason": "DISPLAY-READ-MODEL-INVERSION1 derives Display blocks, reveal scheduling, and Formula Viewer artifacts from canonical result documents while preserving one registered legacy History detail-inference boundary and deferring print and symbolic hygiene consumers.",
+  "registryDigest": "244a50a598fb40bfd3f8",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -35,7 +35,7 @@
     },
     "display-read-model": {
       "compatibilityProjection": 0,
-      "legacyRead": 63,
+      "legacyRead": 21,
       "nativeDocument": 0
     },
     "equation": {
@@ -386,6 +386,9 @@
       ]
     },
     "canonical-projection": {
+      "src/lib/display/result/display-read-model.ts": [
+        "1d96e790fc8b4998ae97:1"
+      ],
       "src/lib/result-contract/projection.ts": [
         "11c19875e55f29584268:1",
         "b81db50f2f3f5ab9190c:1"
@@ -1069,6 +1072,9 @@
         "d32346102b389fdb39fe:1",
         "6ab542ecc3b967ef52e2:1"
       ],
+      "src/lib/display/result/display-read-model.ts": [
+        "a14680aebb90ff48d5cc:1"
+      ],
       "src/lib/equation/target/surface.ts": [
         "d88da38fa175a9b5d055:1",
         "c4b6471fafa084efc4a6:1"
@@ -1212,56 +1218,8 @@
         "bd5aa1617183e10ae281:1",
         "b16f7d1f11278c344eee:1"
       ],
-      "src/lib/display/result/display-blocks.ts": [
-        "b23ae03ad26fa4d06d5a:1",
-        "59832e313973233b63ed:1",
-        "5cac91b215184a150a2d:1",
-        "cec97e287ddf80b499ad:1",
-        "7c57909d02b936b7b5ac:1",
-        "7c57909d02b936b7b5ac:2",
-        "7c57909d02b936b7b5ac:3",
-        "58c7cb19a8398e42916b:1",
-        "7ef129e7d9b984e8bef1:1",
-        "7ef129e7d9b984e8bef1:2",
-        "58c7cb19a8398e42916b:2",
-        "58c7cb19a8398e42916b:3",
-        "58c7cb19a8398e42916b:4",
-        "8a714a37db9c557f07a8:1",
-        "c64f03f27d3b90e83730:1",
-        "c64f03f27d3b90e83730:2",
-        "e79ae6c962d0cf790f4a:1",
-        "ca484cd790cd2ca2b761:1",
-        "ca484cd790cd2ca2b761:2",
-        "ca484cd790cd2ca2b761:3",
-        "e79ae6c962d0cf790f4a:2",
-        "e79ae6c962d0cf790f4a:3",
-        "e79ae6c962d0cf790f4a:4",
-        "5524d1c124ba6ffbb1c3:1",
-        "0884def2560f8904eb2b:1",
-        "762675a66495106b5ecc:1",
-        "762675a66495106b5ecc:2",
-        "762675a66495106b5ecc:3"
-      ],
-      "src/lib/display/result/display-case-math-blocks.ts": [
-        "da0d3d45d7e119ee2256:1"
-      ],
-      "src/lib/display/result/display-trust-summary.ts": [
-        "ea1fbd9bc135e8f89a18:1",
-        "5d85cbf90d99d2aca0db:1",
-        "3617bb26bd06030dc4eb:1",
-        "3617bb26bd06030dc4eb:2",
-        "c8450143075735a38aa7:1",
-        "1af8c68f691271149f89:1",
-        "3d226c96659b32b40b6e:1",
-        "e6e3be8474b2b5cdd953:1",
-        "3d226c96659b32b40b6e:2",
-        "91cabd20b327566317e8:1"
-      ],
-      "src/lib/display/result/system-solution-block.ts": [
-        "55322a3dee7e05f36738:1",
-        "55322a3dee7e05f36738:2",
-        "55322a3dee7e05f36738:3",
-        "55322a3dee7e05f36738:4"
+      "src/lib/display/result/display-read-model.ts": [
+        "914d369c46b42f64dbef:1"
       ],
       "src/lib/equation/analysis-evidence.ts": [
         "ac1f2da195976b6389e7:1",
@@ -1823,25 +1781,8 @@
         "29269ba4894a33fef42d:1",
         "d7a318824733828b4d93:2"
       ],
-      "src/lib/display/result/display-blocks.ts": [
-        "4a6416b982c9c8b2762e:1",
-        "d510cb578f30334b6b04:1",
-        "f41ee7980ef770ddd993:1",
-        "f41ee7980ef770ddd993:2",
-        "523f25d3776e64598bf3:1",
-        "523f25d3776e64598bf3:2",
-        "523f25d3776e64598bf3:3"
-      ],
-      "src/lib/display/result/display-case-math-blocks.ts": [
-        "59f0ff410c34387c58d4:1"
-      ],
-      "src/lib/display/result/display-trust-summary.ts": [
-        "ad4f4a4b36d01bf6cdd8:1",
-        "acaa517259c60f6d56f5:1",
-        "41e97dc66626002989a1:1"
-      ],
-      "src/lib/display/result/system-solution-block.ts": [
-        "eeacf3fb6a0015ddd0c3:1"
+      "src/lib/display/result/display-read-model.ts": [
+        "09d0df2e40da61afa8ce:1"
       ],
       "src/lib/equation/analysis-evidence.ts": [
         "2e1205bf77f57564d60b:1",

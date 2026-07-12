@@ -42,6 +42,17 @@ export const NON_PRODUCER_RESULT_REGISTRATIONS = [
     properties: ['exactLatex', 'resultLatex'],
   },
   {
+    id: 'display-canonical-read-model-v1',
+    category: 'downstream-presentation',
+    owner: 'display-result-read-model',
+    rationale: 'Display projects producer-owned canonical values into established render-only readback shapes without serializing or transforming mathematical truth.',
+    matchers: exact(
+      'src/lib/display/result/display-blocks.ts',
+      'src/lib/display/result/display-read-model.ts',
+    ),
+    properties: ['exactLatex', 'resultLatex'],
+  },
+  {
     id: 'notebook-evidence-document-v1',
     category: 'notebook-document-content',
     owner: 'notebook-authoring',
