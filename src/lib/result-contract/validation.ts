@@ -7,6 +7,7 @@ import {
   validateSerializableMathJson,
   type MathJsonValidationFailure,
 } from '../display/printer/math-json';
+import { inspectJsonCompatibleStructuredValue } from './structured-value';
 
 export const CANONICAL_RESULT_MAX_NODES = 10_000;
 export const CANONICAL_RESULT_MAX_DEPTH = 64;
@@ -304,118 +305,6 @@ function fail(
   return { ok: false, failure: { reason, message, ...(path ? { path } : {}) } };
 }
 
-function isPlainObject(value: object) {
-  const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
-}
-
-function inspectStructuredValue(
-  input: unknown,
-  limits: Required<CanonicalResultValidationLimits>,
-): CanonicalResultValidationResult | {
-  serialized: string;
-  nodeCount: number;
-  depth: number;
-} {
-  if (input === null || typeof input !== 'object' || Array.isArray(input)) {
-    return fail('invalid-root', 'Canonical result documents must be plain objects.');
-  }
-
-  const active = new WeakSet<object>();
-  let nodeCount = 0;
-  let deepest = 0;
-  let failure: CanonicalResultValidationResult | null = null;
-
-  const visit = (value: unknown, depth: number, path: string) => {
-    if (failure) return;
-    nodeCount += 1;
-    deepest = Math.max(deepest, depth);
-    if (nodeCount > limits.maxNodes) {
-      failure = fail('node-limit', `Canonical result exceeds the ${limits.maxNodes} node limit.`, path);
-      return;
-    }
-    if (depth > limits.maxDepth) {
-      failure = fail('depth-limit', `Canonical result exceeds the ${limits.maxDepth} level depth limit.`, path);
-      return;
-    }
-    if (typeof value === 'number') {
-      if (!Number.isFinite(value)) {
-        failure = fail('non-finite-number', 'Canonical result numbers must be finite.', path);
-      }
-      return;
-    }
-    if (value === null || typeof value === 'string' || typeof value === 'boolean') return;
-    if (typeof value !== 'object') {
-      failure = fail('unsupported-value', 'Canonical results contain only JSON-compatible values.', path);
-      return;
-    }
-    if (!Array.isArray(value) && !isPlainObject(value)) {
-      failure = fail('non-plain-object', 'Canonical results contain only arrays and plain objects.', path);
-      return;
-    }
-    if (active.has(value)) {
-      failure = fail('cyclic-value', 'Canonical results cannot contain cyclic references.', path);
-      return;
-    }
-    active.add(value);
-
-    if (Array.isArray(value)) {
-      const keys = Reflect.ownKeys(value);
-      if (keys.some((key) => typeof key !== 'string')) {
-        failure = fail('unsupported-value', 'Canonical result array keys must be strings.', path);
-      } else if ((keys as string[]).some(
-        (key) => key !== 'length' && !/^(0|[1-9]\d*)$/u.test(key),
-      )) {
-        failure = fail('unsupported-value', 'Canonical result arrays cannot carry custom properties.', path);
-      } else {
-        for (let index = 0; index < value.length; index += 1) {
-          const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
-          if (!descriptor?.enumerable || !('value' in descriptor)) {
-            failure = fail(
-              'unsupported-value',
-              'Canonical result arrays must contain enumerable data values without gaps.',
-              `${path}[${index}]`,
-            );
-            break;
-          }
-          visit(descriptor.value, depth + 1, `${path}[${index}]`);
-        }
-      }
-    } else {
-      const propertyNames = Object.getOwnPropertyNames(value);
-      if (Reflect.ownKeys(value).length !== propertyNames.length) {
-        failure = fail('unsupported-value', 'Canonical result object keys must be strings.', path);
-      } else {
-        for (const key of propertyNames) {
-          const descriptor = Object.getOwnPropertyDescriptor(value, key);
-          if (!descriptor?.enumerable || !('value' in descriptor)) {
-            failure = fail('unsupported-value', 'Canonical result properties must be enumerable data values.', `${path}.${key}`);
-            break;
-          }
-          visit(descriptor.value, depth + 1, `${path}.${key}`);
-        }
-      }
-    }
-    active.delete(value);
-  };
-
-  visit(input, 1, '$');
-  if (failure) return failure;
-
-  let serialized: string;
-  try {
-    serialized = JSON.stringify(input);
-  } catch {
-    return fail('unsupported-value', 'Canonical result could not be serialized.');
-  }
-  const byteLength = new TextEncoder().encode(serialized).byteLength;
-  if (byteLength > limits.maxBytes) {
-    return fail('byte-limit', `Canonical result exceeds the ${limits.maxBytes} byte limit.`);
-  }
-
-  return { serialized, nodeCount, depth: deepest };
-}
-
 export function collectCanonicalResultMathValues(
   document: CanonicalResultDocumentV1,
 ): CanonicalResultMathReference[] {
@@ -445,8 +334,11 @@ export function validateCanonicalResultDocument(
     maxDepth: limits.maxDepth ?? CANONICAL_RESULT_MAX_DEPTH,
     maxBytes: limits.maxBytes ?? CANONICAL_RESULT_MAX_BYTES,
   };
-  const inspection = inspectStructuredValue(input, resolvedLimits);
-  if ('ok' in inspection) return inspection;
+  const inspection = inspectJsonCompatibleStructuredValue(input, {
+    label: 'Canonical result',
+    ...resolvedLimits,
+  });
+  if (!inspection.ok) return { ok: false, failure: inspection.failure };
 
   const cloned = JSON.parse(inspection.serialized) as unknown;
   const parsed = canonicalResultDocumentSchema.safeParse(cloned);
@@ -483,7 +375,7 @@ export function validateCanonicalResultDocument(
       value: document,
       nodeCount: inspection.nodeCount,
       depth: inspection.depth,
-      byteLength: new TextEncoder().encode(inspection.serialized).byteLength,
+      byteLength: inspection.byteLength,
       mathValueCount: mathValues.length,
     },
   };

@@ -20,6 +20,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:result-contract'],
   },
   {
+    id: 'equation-solve-result-contracts',
+    label: 'Equation internal solve-result carrier contracts',
+    argv: ['npm', 'run', 'test:equation-solve-result'],
+  },
+  {
     id: 'display-contract-inversion-ratchet',
     label: 'Display producer and consumer inversion ratchet',
     argv: ['npm', 'run', 'test:display-contract-inversion'],
@@ -197,6 +202,7 @@ export const SEAM_REGISTRY = [
     ],
     additionalCommandIds: [
       'display-contracts',
+      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
@@ -218,12 +224,33 @@ export const SEAM_REGISTRY = [
     additionalCommandIds: [
       'result-contracts',
       'display-contracts',
+      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
     ],
     baselineEvidenceIds: [
       'workspace-canaries',
       'surface-protocol',
+      'compartment-boundaries',
+      'ui-tests',
+      'file-sizes',
+    ],
+  },
+  {
+    id: 'equation-solve-result-contract',
+    label: 'Equation internal solve-result carrier and compatibility boundary',
+    matchers: [
+      ...prefix('src/lib/equation/solve-result/'),
+      ...exact('src/lib/equation/equation-solve-result.ts'),
+    ],
+    additionalCommandIds: [
+      'result-contracts',
+      'equation-solve-result-contracts',
+      'display-contract-inversion-ratchet',
+    ],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'runtime-probes',
       'compartment-boundaries',
       'ui-tests',
       'file-sizes',
@@ -273,6 +300,7 @@ export const SEAM_REGISTRY = [
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'equation-solve-result-contracts',
       'app-state-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
@@ -313,6 +341,7 @@ export const SEAM_REGISTRY = [
       'app-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'equation-solve-result-contracts',
       'app-state-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',

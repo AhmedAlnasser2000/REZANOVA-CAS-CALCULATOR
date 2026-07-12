@@ -49,10 +49,19 @@
 - push: not authorized
 - excluded: `test-results/` and all concurrent Notebook files/registrations
 
-## Pending Commit
+## DISPLAY-CONTRACT-INVERSION-RATCHET1
 
+- commit_hash: `8d0af6fc`
 - commit_message: `DISPLAY-CONTRACT-INVERSION-RATCHET1`
 - scope: TypeScript producer/consumer authority inventory, per-lane debt and native floors, stable fingerprints, accepted baseline, package/CI/release/seam wiring, and durable verification evidence
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/` and all concurrent Notebook files/registrations
+
+## Pending Commit
+
+- commit_message: `EQUATION-SOLVE-RESULT-CONTRACT1`
+- scope: bounded Equation solve-result carrier, compatibility projection, shared structured-value inspection, corpus and full-Equation verification, package/CI/release/seam/compartment wiring, and durable evidence
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/` and the separately committed Notebook program

@@ -119,3 +119,25 @@
 
 - The live printer inventory remains red only on five concurrent Notebook-owned `resultLatex` paths. Its seven unit tests pass and this milestone adds no printer fallback or unclassified serializer.
 - Concurrent Notebook files and untracked `test-results/` remain excluded from staging and commit.
+
+## EQUATION-SOLVE-RESULT-CONTRACT1 Gate
+
+- Kind: `backend` internal solver-evidence contract.
+- Live app-visible behavior changed: no; no live producer or consumer uses the carrier in this milestone.
+- Result: pass for the intended Equation carrier slice.
+
+### Contract Evidence
+
+- Focused carrier suite: 2 files and 6 tests pass. Coverage includes solved evidence, compatibility controlled stops, prompt rejection, mirrored-evidence mismatch, malformed values, cycles, byte bounds, status parity, all six Equation golden executions, and all 25 Equation replay fixtures.
+- Canonical result contract: 4 files and 23 tests pass, including all 43 golden executions and all 100 replay fixtures after extracting the shared structured-value inspector.
+- Complete Equation verification: 142 files and 1,206 tests pass across private solvers, mode orchestration, worker/fallback runtime, exact and numeric routes, Complex boundaries, benchmarks, domains, branches, and readback.
+- TypeScript, production build, global ESLint, focused ESLint, Display inversion, result intent, History replay, file sizes, Surface Protocol, OOE, compartments, seam selector, CI alignment, and `git diff --check` pass. CI and Linux release now require 15 static gates.
+
+### UI Boundary
+
+- No Playwright run is required for this backend-only gate because the carrier has no live producer, renderer, History consumer, or output string. Exact canonical-document equality across 31 native Equation executions proves this milestone's behavior-invisible boundary; live boundary migration retains mandatory Playwright evidence.
+
+### External Limit
+
+- The printer ratchet's seven tests pass. Its live inventory fails only on five Notebook-owned `resultLatex` paths in the already committed parallel Notebook program; this carrier adds no printer result path and does not register or modify those files.
+- `test-results/` remains untracked and excluded. No push is authorized.

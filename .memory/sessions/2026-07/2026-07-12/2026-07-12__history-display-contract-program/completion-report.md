@@ -98,3 +98,25 @@
 ### Next Step
 
 - Commit this ratchet, then implement `EQUATION-SOLVE-RESULT-CONTRACT1` as the dedicated solver-evidence carrier before changing Equation worker/fallback boundaries.
+
+## EQUATION-SOLVE-RESULT-CONTRACT1
+
+### Completed
+
+- Added a private Equation solve-result district with a narrow public facade and no production consumer yet.
+- Defined a version-1 carrier over `CanonicalResultDocumentV1` for solved results and math-bearing controlled stops, including candidate values and validation, branch evidence, planner/solve badges, substitution and numeric diagnostics, and explicit Equation analysis evidence.
+- Added strict clone-safe validation at 20,000 nodes, depth 64, and 1,280,000 UTF-8 bytes, with count caps for candidates, candidate validations, and analysis evidence.
+- Required status/document parity, exact mirrored branch/badge/candidate/diagnostic evidence, unique analysis IDs, and stop-message parity with the canonical error.
+- Extracted the existing strict JSON-compatible structured-value inspection into the neutral result-contract district so the canonical document and Equation carrier share one traversal without weakening either bound.
+- Added one compatibility adapter from current Equation `DisplayOutcome` values. It does not parse LaTeX, rejects prompts, labels inherited errors as compatibility-boundary stops, and is the only carrier module that imports Display types.
+- Added focused package, CI, Linux-release, seam-impact, compartment, and CI-alignment gates. No reverse Display adapter or worker/fallback migration is included in this milestone.
+
+### Runtime And UI
+
+- All six Equation golden executions and all 25 Equation replay fixtures carry an identical canonical document and survive `structuredClone`.
+- The full Equation district passes 142 files and 1,206 tests, including worker/fallback, exact/numeric, benchmark, domain, branch, and readback coverage.
+- This backend-only carrier is not returned by a live producer and changes no rendered card, History row, worker request, OOE decision, Surface DTO, or mathematical output; Playwright begins again when `EQUATION-OUTCOME-BOUNDARY1` changes the live boundary.
+
+### Next Step
+
+- Commit `EQUATION-SOLVE-RESULT-CONTRACT1`, then migrate Equation orchestration and worker/fallback exits through one final canonical-result adapter in `EQUATION-OUTCOME-BOUNDARY1`.

@@ -31,6 +31,7 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
       'printer-migration-ratchet',
@@ -95,6 +96,7 @@ describe('seam impact selector', () => {
       'app-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
       'printer-migration-ratchet',
@@ -118,11 +120,29 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
       'clipboard-contracts',
+    ]);
+  });
+
+  it('selects the Equation carrier contract for its private district and public seam', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/equation/solve-result/contract.ts',
+      'src/lib/equation/equation-solve-result.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'equation-solve-result-contract',
+    ]);
+    assert.deepEqual(plan.laneIds, ['equation']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'result-contracts',
+      'equation-solve-result-contracts',
+      'display-contract-inversion-ratchet',
     ]);
   });
 

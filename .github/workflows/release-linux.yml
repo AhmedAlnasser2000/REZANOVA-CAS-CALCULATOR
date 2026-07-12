@@ -84,6 +84,9 @@ jobs:
       - name: Validate Display contract inversion ratchet
         run: npm run test:display-contract-inversion
 
+      - name: Validate Equation solve result contract
+        run: npm run test:equation-solve-result
+
       - name: Validate clipboard contract
         run: npm run test:clipboard-contract
 

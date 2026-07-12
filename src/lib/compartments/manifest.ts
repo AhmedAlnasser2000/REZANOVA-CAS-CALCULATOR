@@ -246,6 +246,7 @@ export const COMPARTMENT_MANIFEST = [
     publicSeams: [
       'src/lib/equation/guarded-solve.ts',
       'src/lib/equation/implicit-derivative-solve.ts',
+      'src/lib/equation/equation-solve-result.ts',
       'src/lib/equation/shared-solve.ts',
       'src/lib/modes/equation.ts',
     ],
@@ -260,6 +261,7 @@ export const COMPARTMENT_MANIFEST = [
       'src/lib/equation/numeric-interval/',
       'src/lib/equation/parameterized/',
       'src/lib/equation/polynomial/',
+      'src/lib/equation/solve-result/',
       'src/lib/equation/target/',
     ],
     dependencyPolicies: [

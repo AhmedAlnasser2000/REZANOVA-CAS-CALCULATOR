@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; the producer/consumer inversion inventory is verified through Gate 6 and entering its approved commit; no push is authorized
+Status: active; the dedicated Equation solve-result carrier is verified through Gate 7 and entering its approved commit; no push is authorized
 
 ## Attribution
 
@@ -89,11 +89,16 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - Exact Table headers/rows and warnings are stored and restored directly without running the Table engine. Transient commit context and executable actions are excluded. Invalid or oversized documents preserve the full legacy row and add `unavailable`, `invalid`, or `over-size`; malformed new structured appends are rejected while load remains extension-preserving.
 - Browser evidence passes all nine workspaces with versioned result/replay payloads, visible title parity, exact Table row parity, current root/power presentation, legacy replay, reload, Calculator Memory, and save-failure warning coverage. Rust preserves the document verbatim across file-backed restart.
 - At the History milestone checkpoint, the mixed tree reported five Notebook-owned unclassified printer paths and seven Notebook-only lint errors in `templates.ts`; the History milestone's exact lint slice, build, TypeScript, 469 UI tests, 19 canaries, 50 Rust tests, and all scoped contracts passed. Global lint is green at the later inversion-ratchet checkpoint; the five Notebook printer registrations remain separate.
-- `DISPLAY-CONTRACT-INVERSION-RATCHET1`: verified and entering its approved commit. A TypeScript compiler inventory records 575 producer boundaries and 753 direct consumer reads across declared ownership lanes with line-movement-stable source fingerprints.
+- `DISPLAY-CONTRACT-INVERSION-RATCHET1`: committed as `8d0af6fc`. A TypeScript compiler inventory records 575 producer boundaries and 753 direct consumer reads across declared ownership lanes with line-movement-stable source fingerprints.
 - The accepted pre-inversion producer surface is one native structured-History adapter call, two canonical-result-to-Display projection exits, 159 compatibility projections, 331 forwarders, and 82 control-only outcomes. All computational producer lanes remain at zero native documents, so later migrations cannot overclaim readiness.
 - The accepted consumer surface is 554 legacy reads, two canonical reads, 191 control reads, and six transient reads. Dynamic and rest reads fail closed; every `DisplayOutcome` field must remain explicitly classified. Curated golden expected outcomes are reference fixtures rather than live producers, while the golden execution adapter remains measured evidence.
 - Compatibility and legacy-read debt cannot rise by lane, native-document coverage cannot fall, and any fingerprint, registry, forwarder, or control-topology change requires an explicit `--accept --reason` baseline refresh. CI, Linux release, and relevant seam plans run the additive gate without skipping baseline evidence.
-- Focused inversion, seam, CI-alignment, result-contract, detail, result-intent, Display, golden, replay, TypeScript, build, lint, file-size, Surface, OOE, and compartment gates pass. The printer inventory remains red only on five concurrent Notebook-owned serializers outside this program's lane.
+- Focused inversion, seam, CI-alignment, result-contract, detail, result-intent, Display, golden, replay, TypeScript, build, lint, file-size, Surface, OOE, and compartment gates pass. The printer inventory remains red only on five Notebook-owned serializers outside this program's lane.
+- `EQUATION-SOLVE-RESULT-CONTRACT1`: verified and entering its approved commit. A private Equation district and narrow public facade define a version-1 solver carrier over a validated canonical document, accepted/rejected candidate evidence, optional candidate validation, branch evidence, planner/solve badges, substitution and numeric diagnostics, explicit analysis evidence, and solved versus controlled-stop state.
+- Carrier validation is strict JSON-compatible and structured-clone-safe at 20,000 nodes, depth 64, and 1,280,000 UTF-8 bytes. Candidate, validation, and analysis arrays have explicit count caps; document-mirrored evidence must agree exactly, controlled-stop text must match the canonical error, and duplicate analysis IDs fail.
+- The carrier core has no `DisplayOutcome` dependency. A single compatibility boundary projects current Equation outcomes without reparsing LaTeX, labels legacy errors as compatibility controlled stops, and rejects prompts; the reverse carrier-to-Display adapter is intentionally deferred to `EQUATION-OUTCOME-BOUNDARY1`.
+- All six Equation golden executions and all 25 sanitized Equation replay fixtures preserve canonical-document equality and clone parity. The complete Equation district passes 142 files and 1,206 tests, including workers, fallbacks, exact/numeric routes, benchmark coverage, domains, branches, and readback. Result-contract, TypeScript, build, lint, file-size, Surface, OOE, compartment, seam, CI-alignment, and diff gates also pass.
+- The printer ratchet's seven tests pass, but its live inventory remains red on five Notebook-owned `resultLatex` paths committed by the parallel Notebook lane. This carrier adds no result serializer or printer debt, so the unrelated paths remain outside this milestone rather than being silently registered here.
 
 ## Verification Contract
 
