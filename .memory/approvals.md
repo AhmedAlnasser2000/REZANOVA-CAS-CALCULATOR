@@ -78,3 +78,12 @@
   source: chat-2026-07-12-result-intent-prerequisite-approval
   canonical_targets: .memory/research/roadmaps/history-display-contract-roadmap.md; .memory/sessions/2026-07/2026-07-12/2026-07-12__history-display-contract-program/
   notes: Approval covers the inserted prerequisite commit only; it preserves visible wording and mathematics, excludes Notebook and test-results, and authorizes no push.
+- approved_at_local: 2026-07-12 +03:00
+  approver: user
+  decision: Execute the proven-MathJSON and physical legacy-result-removal program as an expandable sequence of named gates while preserving native solver representations and rejecting a universal solver AST.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-07-12-canonical-mathjson-legacy-program-approval
+  canonical_targets: .memory/research/roadmaps/canonical-mathjson-legacy-removal-roadmap.md; .memory/sessions/2026-07/2026-07-12/2026-07-12__canonical-mathjson-legacy-program/
+  notes: The user subsequently granted standing commit approval for all 19 numbered program moves, including paired named subgates inside the producer-lane moves. No push is authorized; concurrent Notebook files and test-results remain excluded.

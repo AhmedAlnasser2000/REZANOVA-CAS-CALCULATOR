@@ -17,6 +17,7 @@
 - `.memory/research/roadmaps/anti-regression-nine-move-roadmap.md`
 - `.memory/research/roadmaps/printer-detail-clipboard-roadmap.md`
 - `.memory/research/roadmaps/history-display-contract-roadmap.md`
+- `.memory/research/roadmaps/canonical-mathjson-legacy-removal-roadmap.md`
 - `.memory/research/roadmaps/linear-algebra-vector-matrix-roadmap.md`
 - `.memory/research/roadmaps/statistics-workspace-consolidation-roadmap.md`
 - `.memory/research/roadmaps/PLAN.md`
