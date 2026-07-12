@@ -64,6 +64,9 @@ jobs:
       - name: Validate detail segment migration ratchet
         run: npm run test:detail-segment-migration
 
+      - name: Validate Display contract inversion ratchet
+        run: npm run test:display-contract-inversion
+
       - name: Validate clipboard contract
         run: npm run test:clipboard-contract
 

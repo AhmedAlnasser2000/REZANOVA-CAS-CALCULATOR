@@ -78,3 +78,23 @@
 ### Next Step
 
 - Commit `HISTORY-STRUCTURED-RESULT2`, then implement `DISPLAY-CONTRACT-INVERSION-RATCHET1` before any producer inversion.
+
+## DISPLAY-CONTRACT-INVERSION-RATCHET1
+
+### Completed
+
+- Added a TypeScript-compiler inventory of every production `DisplayOutcome` object boundary, canonical adapter call, forwarding boundary, and direct consumer read.
+- Split producer evidence into native documents, the canonical-to-legacy projection, compatibility projections, forwarders, and control-only outcomes. Split consumers into canonical, legacy, control, and transient reads.
+- Added declared ownership lanes, stable source fingerprints, exhaustive `DisplayOutcome` field classification, dynamic/rest-read rejection, and an explicit reference-fixture exclusion for curated golden expectations.
+- Accepted a compact per-file baseline covering 575 producer boundaries and 753 consumer reads. Compatibility and legacy debt cannot rise by lane; native coverage cannot fall; any topology or fingerprint change requires an accepted reason.
+- Wired the gate into package scripts, the aggregate gate, CI, Linux release, CI-alignment validation, and relevant seam plans without changing production Display or History behavior.
+
+### Measured Posture
+
+- Producer inventory: one native structured-History adapter, two canonical projection exits, 159 compatibility projections, 331 forwarders, and 82 control-only outcomes.
+- Consumer inventory: 554 legacy reads, two canonical reads, 191 control reads, and six transient reads.
+- All computational producer lanes remain at zero native documents. Equation is the dominant migration surface with 120 compatibility projections and 265 legacy reads.
+
+### Next Step
+
+- Commit this ratchet, then implement `EQUATION-SOLVE-RESULT-CONTRACT1` as the dedicated solver-evidence carrier before changing Equation worker/fallback boundaries.

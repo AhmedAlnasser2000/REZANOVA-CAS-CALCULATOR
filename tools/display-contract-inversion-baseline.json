@@ -1,0 +1,1965 @@
+{
+  "schemaVersion": 1,
+  "acceptedReason": "DISPLAY-CONTRACT-INVERSION-RATCHET1 records the verified pre-inversion producer and consumer authority surface; structured History contributes the sole native canonical adapter call, golden expectations remain reference fixtures, control-only outcomes stay separate, and all migration debt may only decrease by declared lane.",
+  "registryDigest": "70a429b8b893441bc673",
+  "laneFloors": {
+    "anti-regression-evidence": {
+      "compatibilityProjection": 0,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    },
+    "app-display": {
+      "compatibilityProjection": 0,
+      "legacyRead": 27,
+      "nativeDocument": 0
+    },
+    "app-runtime": {
+      "compatibilityProjection": 2,
+      "legacyRead": 17,
+      "nativeDocument": 0
+    },
+    "app-shell": {
+      "compatibilityProjection": 0,
+      "legacyRead": 6,
+      "nativeDocument": 0
+    },
+    "calculate": {
+      "compatibilityProjection": 3,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    },
+    "calculus": {
+      "compatibilityProjection": 7,
+      "legacyRead": 2,
+      "nativeDocument": 0
+    },
+    "display-read-model": {
+      "compatibilityProjection": 0,
+      "legacyRead": 63,
+      "nativeDocument": 0
+    },
+    "equation": {
+      "compatibilityProjection": 120,
+      "legacyRead": 265,
+      "nativeDocument": 0
+    },
+    "geometry": {
+      "compatibilityProjection": 3,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    },
+    "golden-evidence": {
+      "compatibilityProjection": 0,
+      "legacyRead": 1,
+      "nativeDocument": 0
+    },
+    "history": {
+      "compatibilityProjection": 1,
+      "legacyRead": 24,
+      "nativeDocument": 1
+    },
+    "history-replay": {
+      "compatibilityProjection": 0,
+      "legacyRead": 16,
+      "nativeDocument": 0
+    },
+    "kernel-runtime": {
+      "compatibilityProjection": 3,
+      "legacyRead": 5,
+      "nativeDocument": 0
+    },
+    "linear-algebra-shared": {
+      "compatibilityProjection": 5,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    },
+    "matrix": {
+      "compatibilityProjection": 2,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    },
+    "ooe-observability": {
+      "compatibilityProjection": 0,
+      "legacyRead": 11,
+      "nativeDocument": 0
+    },
+    "result-contract": {
+      "compatibilityProjection": 0,
+      "legacyRead": 80,
+      "nativeDocument": 0
+    },
+    "statistics": {
+      "compatibilityProjection": 3,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    },
+    "surface-protocol": {
+      "compatibilityProjection": 0,
+      "legacyRead": 23,
+      "nativeDocument": 0
+    },
+    "table": {
+      "compatibilityProjection": 2,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    },
+    "trigonometry": {
+      "compatibilityProjection": 6,
+      "legacyRead": 14,
+      "nativeDocument": 0
+    },
+    "vector": {
+      "compatibilityProjection": 2,
+      "legacyRead": 0,
+      "nativeDocument": 0
+    }
+  },
+  "entries": {
+    "native-document": {
+      "src/app/runtime/historyDisplayEntry.ts": [
+        "9babe825561a6da699df:1"
+      ]
+    },
+    "canonical-projection": {
+      "src/lib/result-contract/projection.ts": [
+        "11c19875e55f29584268:1",
+        "b81db50f2f3f5ab9190c:1"
+      ]
+    },
+    "compatibility-projection": {
+      "src/app/runtime/historyDisplayEntry.ts": [
+        "2d14f3e22c6e65d27a5d:1"
+      ],
+      "src/app/runtime/useCalculateRuntime.ts": [
+        "ad1f8a20b4ae0ec5c6ef:1",
+        "725db18f5a44468cbc82:1"
+      ],
+      "src/lib/calculus/workspace/engine.ts": [
+        "064ef96e3e5df54fd6af:1",
+        "51e622f1b12a925aeed3:1",
+        "d1749fb688e6d0676145:1",
+        "564904924f8a838663e0:1",
+        "83ee6edf68ac2efdee74:1",
+        "b864a3a7691b244aeb9e:1"
+      ],
+      "src/lib/equation/composition/stage.ts": [
+        "e3da7a5ae8ec21848708:1",
+        "44407a91acdff756088e:1",
+        "7510e790d7563487c8ae:1",
+        "d050389ddd719a148f62:1",
+        "f694de4b07f29624f713:1",
+        "b063136c0b79730e4e9e:1",
+        "c6f6b516c70cb36a06b0:1",
+        "6ff0b5385dfcee669a0a:1",
+        "c6f6b516c70cb36a06b0:2",
+        "6ff0b5385dfcee669a0a:2",
+        "ddd61c1c756eb3aaf108:1"
+      ],
+      "src/lib/equation/direct-symbolic-worker/client.ts": [
+        "659bcb1117db77c6b645:1"
+      ],
+      "src/lib/equation/guarded/algebra-stage.ts": [
+        "24a17623bcc7dda37157:1",
+        "a8cdbcd4df1e43bfb6a4:1",
+        "174d83a84c6e08af2b73:1",
+        "1a83dfa4cbe85a64238f:1"
+      ],
+      "src/lib/equation/guarded/algebra/absolute-value.ts": [
+        "6342f6940a3b7de0d1ec:1"
+      ],
+      "src/lib/equation/guarded/direct-symbolic.ts": [
+        "b2c8ae7f4890ab0e9874:1"
+      ],
+      "src/lib/equation/guarded/direct-trig-stage.ts": [
+        "3e560c0f8d1499303975:1"
+      ],
+      "src/lib/equation/guarded/merge.ts": [
+        "1dc815e521fdbd72f7eb:1",
+        "4df68ec7175ad8a707b9:1"
+      ],
+      "src/lib/equation/guarded/numeric-stage.ts": [
+        "5aaf5b831ef34eeb7821:1",
+        "258d012eea66723b4937:1"
+      ],
+      "src/lib/equation/guarded/outcome.ts": [
+        "8f59f42414a7b2d25187:1",
+        "c6b6ea8b25a6c8b5f13d:1"
+      ],
+      "src/lib/equation/guarded/polynomial-stage.ts": [
+        "4a0a659c07e4420d11f0:1",
+        "7b81a6b38872412d071d:1",
+        "e9b3513a87e9e91afa8a:1",
+        "62a3100e9a132cf61f35:1"
+      ],
+      "src/lib/equation/guarded/request-prep.ts": [
+        "a5a87a49e90d9dfc1802:1",
+        "5fd1adf2b4da09acf9c0:1",
+        "91510907fcf02b52c559:1"
+      ],
+      "src/lib/equation/guarded/substitution-stage.ts": [
+        "40a4bef1c024b6097e8b:1",
+        "e368ac7123e893302f93:1",
+        "b825b6dd27226d782cfc:1",
+        "624e2956754236433559:1"
+      ],
+      "src/lib/equation/inequality/outcome.ts": [
+        "92407428917d93c990ad:1",
+        "49f6361c51d3d16e4f9d:1",
+        "341dfea4c008fffe3b75:1"
+      ],
+      "src/lib/equation/polynomial/system-outcome.ts": [
+        "2ead7ed8305fe0d82800:1"
+      ],
+      "src/lib/equation/polynomial/system.ts": [
+        "fb2c35323f5e68c73c4e:1"
+      ],
+      "src/lib/equation/target/surface.ts": [
+        "cacfd4ab9e2da58b1c44:1",
+        "fcf58d3a65aac991385a:1",
+        "969b174c9889eaff451f:1"
+      ],
+      "src/lib/geometry/core.ts": [
+        "73c8b3624b0f7b980d41:1",
+        "ad4d9ff45a4bdd7027d5:1"
+      ],
+      "src/lib/kernel/runtime-envelope.ts": [
+        "dbce9e0c8c676a0d629f:1",
+        "8538fc3f30eba96e21ee:1",
+        "c52442e9f5389087f062:1"
+      ],
+      "src/lib/linear-algebra/matrix-system.ts": [
+        "74bef1897411fa739a8c:1",
+        "2c6f078eff47ca5df8ac:1",
+        "0a4f585a1fb67dac68b3:1",
+        "b22cdbfed25030256634:1"
+      ],
+      "src/lib/modes/calculate/standard.ts": [
+        "bd84e3e3c78ace806e10:1"
+      ],
+      "src/lib/modes/calculate/transforms.ts": [
+        "5ef8558d86406e20b6b2:1"
+      ],
+      "src/lib/modes/equation/complex-abs-boundary.ts": [
+        "06063a4f95fb044f6501:1"
+      ],
+      "src/lib/modes/equation/complex-mixed-algebraic-wrapper-route.ts": [
+        "2043c7fd6bd48ca31f0c:1",
+        "dbaae7a18495a90a8e83:1",
+        "935d53068fbe509a044d:1"
+      ],
+      "src/lib/modes/equation/complex-numeric-polynomial-roots.ts": [
+        "83909c42eff31d62c48a:1",
+        "0fce1868bb005ac0a7e9:1",
+        "bafdcbe268908ff0d61f:1"
+      ],
+      "src/lib/modes/equation/complex-power-wrapper-route.ts": [
+        "5ca497a87652b3472cae:1",
+        "2c906b33443c3a19e1af:1"
+      ],
+      "src/lib/modes/equation/complex-preimage-wrapper-route.ts": [
+        "e18d1ead2f16de5401e9:1"
+      ],
+      "src/lib/modes/equation/complex-region-nonlinear-solve.ts": [
+        "826dfa6ca404540f9828:1",
+        "7b2f10e9fa624192d35d:1"
+      ],
+      "src/lib/modes/equation/complex-root-wrapper-route.ts": [
+        "3e672533887e44588a1b:1",
+        "60038f76fd0ea0f7062a:1"
+      ],
+      "src/lib/modes/equation/complex-wrapper-fallback.ts": [
+        "40ac94bfe082618f0463:1"
+      ],
+      "src/lib/modes/equation/deterministic-numeric-algebraic.ts": [
+        "a161e9f325fde813cd6e:1",
+        "c4d81a52b62a7f73d843:1",
+        "ba98e5a84bc3c26b219e:1",
+        "6020b78e235d728317ed:1",
+        "912c7394bc79ae45804f:1"
+      ],
+      "src/lib/modes/equation/guided-polynomial.ts": [
+        "9316a9b49060ff9447e2:1",
+        "b1f4c195e1bfaad8d96e:1"
+      ],
+      "src/lib/modes/equation/outcomes.ts": [
+        "9610b755dad941da2a6d:1",
+        "a4b49fba729b7c034389:1",
+        "747f5331b844b0347ddc:1",
+        "044caa44810f22f62f00:1",
+        "4e08ba9d4b741903ee20:1",
+        "dc801c21ee79a2b88ba6:1",
+        "421e8db4d57c8c218c6d:1",
+        "efbbd9a4489320b667d0:1",
+        "08a68ded442307b62d06:1",
+        "31714cecf0ee766da406:1",
+        "60037aa5d4dc0939d2aa:1",
+        "2df92b20ee9b42ef1fe3:1"
+      ],
+      "src/lib/modes/equation/parameterized-formula-routes.ts": [
+        "7befb9bab71d798236ac:1"
+      ],
+      "src/lib/modes/equation/parameterized.ts": [
+        "e1b58a66c168d11f70db:1",
+        "b295675252efc8fa69ae:1",
+        "f0c12eaf6ff4b0c72184:1",
+        "af1d5bd0482421503795:1",
+        "d925f77249d0ea40c767:1",
+        "02e75973d185c77ccf98:1",
+        "41d6726d342e09e56953:1",
+        "de8ce13cdfe1bef0460d:1",
+        "161cea2d0e0bd74c1146:1",
+        "1eaffba3d45ab93fad8d:1",
+        "cb441c3485777392102c:1",
+        "1c34418d30e259675653:1",
+        "823e5d11ea08b0655c59:1",
+        "d8470fdf5f81736e7eeb:1",
+        "c8d96b6956c0e8db7eda:1",
+        "e161bb99cfc63b7753a1:1",
+        "9bbea8dcff3f67a7cf3c:1",
+        "5ff570c7f204900003fe:1"
+      ],
+      "src/lib/modes/equation/real-nonlinear-numeric-search.ts": [
+        "be59c31886f3c2525cf9:1",
+        "ff756221dfe3ad0f0a77:1"
+      ],
+      "src/lib/modes/equation/real-periodic-interval-numeric.ts": [
+        "0da489cc3ed4409a10b2:1"
+      ],
+      "src/lib/modes/equation/real-piecewise-abs-hybrid.ts": [
+        "0986f9cc2b41e8b25a24:1",
+        "3c6e53422e0b50bd1dcd:1"
+      ],
+      "src/lib/modes/equation/run.ts": [
+        "1170c17c906676c32358:1"
+      ],
+      "src/lib/modes/equation/stored-values.ts": [
+        "67ecc8700707fae3250e:1",
+        "9caebc850e7820ee6b62:1",
+        "106dddb321bcee404473:1"
+      ],
+      "src/lib/modes/equation/symbolic-algebraic-formula-fallback.ts": [
+        "1537ee672d72d679e904:1"
+      ],
+      "src/lib/modes/equation/symbolic-parameterized-exact.ts": [
+        "5f7c408485c3450362bb:1"
+      ],
+      "src/lib/modes/equation/symbolic.ts": [
+        "0333ba46eb18ad6c8f6b:1",
+        "2ba1d87c4136ac9f3c0a:1",
+        "7fee7467994ebb9dc6ab:1",
+        "b4f3a5444fc0ca02f0e7:1",
+        "d76a88164043065e1d75:1",
+        "0d89d9f2dd3731dc97f8:1",
+        "504069e65ef36caa6a9b:1",
+        "bba44dd8e262b8706e3e:1",
+        "a7337cd02318d5ccc64c:1",
+        "1c32e6fd77c2c7bffaea:1"
+      ],
+      "src/lib/modes/equation/transforms.ts": [
+        "925f11d633aa67995154:1"
+      ],
+      "src/lib/modes/matrix.ts": [
+        "e8515d19c7e33f041953:1",
+        "10a2b6bce5e391698e60:1"
+      ],
+      "src/lib/modes/table-core.ts": [
+        "e79dc3225ea7c6f9366b:1",
+        "d9d55ffce475822e089d:1"
+      ],
+      "src/lib/modes/vector.ts": [
+        "d53b7e38f2b74dcf54e9:1",
+        "023bc9cacb6efc146e62:1"
+      ],
+      "src/lib/modes/worker-clients/calculate-worker-client.ts": [
+        "b2f8bce0dc5e5e5cdafb:1"
+      ],
+      "src/lib/modes/worker-clients/calculus-worker-client.ts": [
+        "359e885116635a6e9873:1"
+      ],
+      "src/lib/modes/worker-clients/equation-worker-client.ts": [
+        "597896e8a10c7b13909d:1"
+      ],
+      "src/lib/modes/worker-clients/geometry-worker-client.ts": [
+        "b37bdfc609b17c347ced:1"
+      ],
+      "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
+        "093c65d48150b297f51e:1"
+      ],
+      "src/lib/modes/worker-clients/statistics-worker-client.ts": [
+        "3ffb9f7d0b8ba2e02527:1"
+      ],
+      "src/lib/modes/worker-clients/trigonometry-worker-client.ts": [
+        "3cb837a4649bc6301a9a:1"
+      ],
+      "src/lib/statistics/core.ts": [
+        "9dd0443ee891bf3e3ef6:1",
+        "7ca89ef7ea89776bec9e:1"
+      ],
+      "src/lib/trigonometry/core.ts": [
+        "e3787ab7751bc691bf36:1",
+        "dd985c26d344800c6a41:1",
+        "292a62d6402dd734873c:1",
+        "527a3dce07712010fc4c:1",
+        "e681c9fbc3414b2f0208:1"
+      ]
+    },
+    "forwarder": {
+      "src/AppMain.tsx": [
+        "e4ee2a4f9c15d34d6011:1"
+      ],
+      "src/lib/__golden__/golden-execution.ts": [
+        "78491b6bd0fed22888a9:1",
+        "0f3c508f6fe38efd41b0:1",
+        "ade94c674688d50af58d:1",
+        "0f1d819b6588e9d56fad:1",
+        "94a7b92d14f72064a505:1",
+        "d84db08fd693f04c660c:1"
+      ],
+      "src/lib/calculus/workspace/engine.ts": [
+        "7e3028849fc3b0a8e60f:1",
+        "c7aa4a26355adbd0365e:1",
+        "8b26ea55ecea710df313:1"
+      ],
+      "src/lib/equation/analysis-evidence.ts": [
+        "db8c7fd8a8e856d011d3:1",
+        "db8c7fd8a8e856d011d3:2",
+        "9b4f328fc096af5e09f0:1",
+        "9b4f328fc096af5e09f0:2",
+        "9b4f328fc096af5e09f0:3",
+        "9b4f328fc096af5e09f0:4",
+        "9b4f328fc096af5e09f0:5"
+      ],
+      "src/lib/equation/composition/stage.ts": [
+        "4a71aaf611b29f0af36a:1",
+        "95756d8a353e92f4c66e:1",
+        "63a10765a97624e04c64:1",
+        "b35b88eef59609e660bc:1",
+        "7f0bcbedae6defab99ea:1",
+        "56a9ce66eaf5be2ac747:1",
+        "1052e18a9824a81d2973:1",
+        "45a678039f9e4675d77a:1",
+        "f37f10aee857f3cd2c99:1",
+        "719e071ea0ce0831abfa:1",
+        "f37f10aee857f3cd2c99:2"
+      ],
+      "src/lib/equation/direct-symbolic-worker/client.ts": [
+        "43ab67f7af46e28da966:1",
+        "05b475bf4407a9b4b0a5:1",
+        "210c0badc082ec42c35c:1",
+        "335dcec927a2c91f9d9a:1"
+      ],
+      "src/lib/equation/direct-symbolic-worker/worker-runtime.ts": [
+        "c6abbe07d8b67d78e609:1"
+      ],
+      "src/lib/equation/guarded/algebra-stage.ts": [
+        "8ed0d08ba8392812d56d:1",
+        "d5393596dcc6bb557455:1",
+        "12dff83a1880038ec45d:1",
+        "6f6cf8710c1c549e8b7f:1",
+        "3f780e23c56edadf5601:1",
+        "06cb0e548b9686c6d428:1",
+        "3f780e23c56edadf5601:2",
+        "6e2c99f57bbea780bde3:1",
+        "6e2c99f57bbea780bde3:2",
+        "09cad90b40201c687107:1",
+        "09cad90b40201c687107:2",
+        "09cad90b40201c687107:3",
+        "09cad90b40201c687107:4",
+        "09cad90b40201c687107:5",
+        "09cad90b40201c687107:6",
+        "09cad90b40201c687107:7"
+      ],
+      "src/lib/equation/guarded/cancellation.ts": [
+        "b9742a79db3d0025bc01:1",
+        "9d3a8640a452a421ae44:1",
+        "d10884df13510f2dceb3:1"
+      ],
+      "src/lib/equation/guarded/direct-symbolic.ts": [
+        "a30c7483853663e781c1:1",
+        "0c83835464a1b7f22ae1:1",
+        "249d73194d1eb114b41d:1",
+        "7801b4dc0bec53fc6c0f:1",
+        "085883eb7c5cb535b272:1",
+        "a7237334f9e87318718e:1",
+        "93c46eaaeb7c6263ef9d:1",
+        "8381b99cc54ea5857b11:1",
+        "ce95282987cd3d67141e:1",
+        "b06f319297926c1f9d8a:1",
+        "6c921f10436a9b2b458f:1",
+        "11e37f3ccb1ef322c2a6:1",
+        "8c1d749d0cb829fedd4e:1"
+      ],
+      "src/lib/equation/guarded/direct-trig-stage.ts": [
+        "11372653a3eb19f1fd2e:1",
+        "b5b391fe660fd20135a9:1"
+      ],
+      "src/lib/equation/guarded/merge.ts": [
+        "c601763d4fb9ce819a58:1"
+      ],
+      "src/lib/equation/guarded/orchestrator.ts": [
+        "f686cced2e3cee407f0c:1",
+        "7d913bb59f581c75e2ed:1",
+        "d17b86961f5a37be47b4:1",
+        "b5895fccfc1f4388dc86:1",
+        "fec82c3bfeaccbacc19a:1",
+        "93d99518c1ee1106157d:1",
+        "7d913bb59f581c75e2ed:2",
+        "d17b86961f5a37be47b4:2",
+        "b791d33d40c6d2fb436d:1",
+        "2e17c764454a26cdc529:1",
+        "19e3824a14333bb168f1:1",
+        "0ecff731d2e534ebdaf3:1",
+        "7dfebb1e144db3747cf4:1",
+        "c35d17504e5a07469343:1",
+        "24166f58b15ce6b50942:1",
+        "564bfee82e69dff8d6ef:1",
+        "c5d1fa81b969c6ddebd6:1",
+        "d0fd559e4fa4e8493d55:1",
+        "59eca442808fa2f0afd6:1"
+      ],
+      "src/lib/equation/guarded/polynomial-stage.ts": [
+        "cbfaf9695ffe8b40f1a1:1",
+        "34bb93eb8165e2a8aa95:1",
+        "eccf234c55906fb9a061:1",
+        "a5f8bf9725bd59a65eb4:1"
+      ],
+      "src/lib/equation/guarded/request-prep.ts": [
+        "e4a36e1dee94c73d1a41:1",
+        "db0fb674ebd0e8d64512:1"
+      ],
+      "src/lib/equation/guarded/rewrite-trig-stage.ts": [
+        "eef343acf4d4578b091d:1",
+        "b2ea8edfbd7a22cffdc9:1",
+        "0af19e3e48af9eee11f3:1",
+        "31668cdf622c1c814654:1",
+        "081608e91fa0a7312da1:1",
+        "dd3f40a186dfb69c2c05:1",
+        "f8b91f165077985bbf65:1",
+        "081608e91fa0a7312da1:2",
+        "dd3f40a186dfb69c2c05:2",
+        "aa7c743a44e25403c59f:1"
+      ],
+      "src/lib/equation/guarded/run.ts": [
+        "c6309dec5c7502ee57db:1",
+        "8bd7ab2c0951cd5f6a23:1",
+        "d77798fa8d505632f66c:1",
+        "8de408fbdf4ed0b9e3d8:1",
+        "90c3adf9d546bf063f7c:1",
+        "0b5cf600777947783d4d:1",
+        "b862b7cbc4f89432934b:1",
+        "cd3de826cad1c553c4bb:1"
+      ],
+      "src/lib/equation/guarded/substitution-stage.ts": [
+        "04b06c54a30c66c56cef:1",
+        "ce514842289f89935799:1",
+        "16c5d2d602780f19a316:1",
+        "3ef16aba538bb2eb85c7:1",
+        "8467c463282a0433a29f:1",
+        "8467c463282a0433a29f:2",
+        "7f45456714e465a68680:1",
+        "14a0a6919a5c9e14c05b:1",
+        "e54d7df5ff50918656fe:1",
+        "7b4b0c13092f1157b2a4:1",
+        "7d232bf7efc666c2bac7:1",
+        "54b92122d959f08e8c31:1",
+        "54b92122d959f08e8c31:2",
+        "e54d7df5ff50918656fe:2"
+      ],
+      "src/lib/equation/polynomial/system.ts": [
+        "8a60a7198bcbb55284b5:1",
+        "674d2df2e79fa5b608f6:1",
+        "f4f733cdcb72058c1561:1",
+        "98fbbd52492bb7d1034a:1",
+        "8edcb47ef386ef89f525:1",
+        "3a4226afe70bd4374f62:1",
+        "98fbbd52492bb7d1034a:2"
+      ],
+      "src/lib/equation/shared-solve.ts": [
+        "94e9717c8f4d8b5cbb4f:1"
+      ],
+      "src/lib/equation/target/surface.ts": [
+        "2723fbe0a4322980e75a:1",
+        "2f601a41c1945093f6f9:1",
+        "571e5be1ce1739e24c3d:1",
+        "d76a10852bbf98fd9ff8:1",
+        "b45836e08c747a442a09:1"
+      ],
+      "src/lib/geometry/core.ts": [
+        "9bef0bd4223ffdf7d22a:1",
+        "cdc8023f438f7ed59c8e:1",
+        "a247e00935cf63b6592f:1",
+        "f7fc461e0da3bfa96d80:1",
+        "d2e02f9f9b042e68078c:1",
+        "3f41bd405d85ad312fa7:1",
+        "826354ce9746aa73506f:1",
+        "e7f3feb4f0a2c279358e:1",
+        "b9158bde2deee794e324:1",
+        "7227b9657b0ee1e0c593:1",
+        "6d9ba257f9a703fae046:1",
+        "e6a16ba05cae02ea951a:1",
+        "df7dc90a8e19d5a14ec2:1",
+        "14df4ca9eddb771be31d:1",
+        "df8a9c887910dafd4b0b:1",
+        "4b5deef1721a534f5802:1",
+        "711fbcd0676b8d943a14:1"
+      ],
+      "src/lib/history-replay/native-execution.ts": [
+        "08a387ef4ccabd1b4b51:1",
+        "ce1046d097f653dc6c11:1",
+        "c804cc0ae4387c651bc1:1",
+        "a0a67101d9b140e5d65f:1",
+        "0c2d481d3aaf03a6f0d6:1",
+        "7076350c5ae5ad8402d8:1",
+        "d3d701b776d81cf6400c:1",
+        "50bf1dd15532dc248c63:1"
+      ],
+      "src/lib/linear-algebra/matrix-system.ts": [
+        "cca50e05eaea6b841cb5:1",
+        "3f4454f5cf846ff05d0a:1",
+        "334809d57957effad6e0:1",
+        "425683498a8af9c80774:1",
+        "0d44bc9ef45577cbd694:1",
+        "a5482cdfc9af2bf6486e:1"
+      ],
+      "src/lib/modes/calculate/runtime.ts": [
+        "da481474f733b0186b35:1",
+        "5cda8be2a241d8c03b7d:1",
+        "988177e8b710bf5b52d6:1",
+        "439462364eb26ed737ce:1"
+      ],
+      "src/lib/modes/calculus.ts": [
+        "84159a8f8fc647500cbd:1"
+      ],
+      "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
+        "e5c7b06408c4af6c2f23:1",
+        "e5c7b06408c4af6c2f23:2",
+        "95a241ce5b421ca0383d:1",
+        "436eb59b7cab8f3ad8fe:1"
+      ],
+      "src/lib/modes/equation/complex-mixed-algebraic-wrapper-route.ts": [
+        "f2afb84254f7e6f7dadb:1",
+        "3bdfbe16e633198a0d12:1",
+        "989be35df3e1ae201d58:1",
+        "9b3d82c1ad388f139737:1",
+        "211029bb6f6d116ff1cb:1",
+        "3f3fa1f6f1b858367bec:1",
+        "989be35df3e1ae201d58:2",
+        "ef89938fb1267b87f91f:1",
+        "a41b6b98dd6d6c2d9fab:1",
+        "14f5236daa02e8fb1990:1",
+        "c67440de5ae14058bb76:1"
+      ],
+      "src/lib/modes/equation/complex-periodic-fallback.ts": [
+        "de26e1ec1fa594165c01:1"
+      ],
+      "src/lib/modes/equation/complex-power-wrapper-route.ts": [
+        "2d78df9520604d8372e3:1",
+        "fd38aa87730a57f48216:1",
+        "6721fa1318cf86cdc5e7:1",
+        "d34757505c5bc8d796df:1",
+        "050d201e55ee73942ebd:1",
+        "f1814a0be573a6e90797:1",
+        "2436a6cdf5825c931f88:1"
+      ],
+      "src/lib/modes/equation/complex-preimage-wrapper-route.ts": [
+        "980e197a9689275db6de:1",
+        "6b2576ac1b8864b3f4a0:1",
+        "815b6a2a00372c5b8e3b:1",
+        "fd8e9242da8e13698963:1",
+        "815b6a2a00372c5b8e3b:2",
+        "815b6a2a00372c5b8e3b:3"
+      ],
+      "src/lib/modes/equation/complex-root-wrapper-route.ts": [
+        "081674948642135811da:1",
+        "61d53b687f78b39d840f:1",
+        "25912a1f01685ec70145:1",
+        "c1c1f0d0b61d661d5a20:1",
+        "369aece0f89ee6943e4a:1",
+        "b5bb3c5225fd6d8ee568:1",
+        "6981761d4fa0d30ad6af:1"
+      ],
+      "src/lib/modes/equation/complex-symbolic-boundary.ts": [
+        "86022942a6588132c254:1"
+      ],
+      "src/lib/modes/equation/complex-wrapper-fallback.ts": [
+        "a584cfe9a74f4342d4e5:1",
+        "1b93132998bd2649f447:1"
+      ],
+      "src/lib/modes/equation/complex-wrapper-routes.ts": [
+        "0f3f5fc5d6f6cb0d2054:1",
+        "8f2394b69d8969c0c9ff:1",
+        "881ca86048b29503655d:1"
+      ],
+      "src/lib/modes/equation/outcomes.ts": [
+        "ebb5a99c1063595ec212:1",
+        "ef2dc4248e9fb1329221:1",
+        "1450b64c638e2ccae22e:1",
+        "aa8a9260989d5d470b35:1",
+        "aa8a9260989d5d470b35:2",
+        "8d3c132476ee910ddcde:1"
+      ],
+      "src/lib/modes/equation/parameterized-formula-routes.ts": [
+        "043335eb601a6dc269cd:1"
+      ],
+      "src/lib/modes/equation/parameterized.ts": [
+        "eac7c5ceef060d74302d:1",
+        "81d4cc5433d6e6dc4b08:1",
+        "e746f2244890de6c0ae5:1",
+        "e746f2244890de6c0ae5:2",
+        "ac364f57ea74d5b2a1d7:1",
+        "e746f2244890de6c0ae5:3",
+        "e746f2244890de6c0ae5:4",
+        "e746f2244890de6c0ae5:5",
+        "e746f2244890de6c0ae5:6",
+        "e746f2244890de6c0ae5:7",
+        "e746f2244890de6c0ae5:8",
+        "e746f2244890de6c0ae5:9",
+        "e746f2244890de6c0ae5:10",
+        "a10ae75fd9bd19fb442c:1",
+        "e746f2244890de6c0ae5:11",
+        "e746f2244890de6c0ae5:12",
+        "e746f2244890de6c0ae5:13",
+        "e746f2244890de6c0ae5:14",
+        "e746f2244890de6c0ae5:15"
+      ],
+      "src/lib/modes/equation/real-numeric-fallbacks.ts": [
+        "dbf82a1208640fe79596:1"
+      ],
+      "src/lib/modes/equation/run.ts": [
+        "6b45e90490f84e02eb5c:1",
+        "6b45e90490f84e02eb5c:2",
+        "8bf9badc6983c806f9aa:1",
+        "8bf9badc6983c806f9aa:2",
+        "8bf9badc6983c806f9aa:3",
+        "5ffd8180c6fc3ca53c94:1",
+        "66751d3d352853d1bcf3:1",
+        "d9434d103773051dd76e:1",
+        "3ac7600d2df62eff1c71:1",
+        "43eb016b61af1e1cef65:1",
+        "595e0edcac441ba7b2b7:1",
+        "69e3dc1da1649943d10d:1",
+        "b0cfc1e5f2d641bb7fad:1",
+        "de549d8c4843ff8b7f9d:1",
+        "bbb30a8b667fd4c9767b:1",
+        "1d2794e5729f3fd54755:1",
+        "c2353dd4a4d52be43868:1",
+        "c93c71647e54b7deeaa1:1",
+        "3a14428deb05597e64d9:1",
+        "c93c71647e54b7deeaa1:2",
+        "50655bb03563569db016:1"
+      ],
+      "src/lib/modes/equation/stored-values.ts": [
+        "397f61f1ea5d479ec7f5:1"
+      ],
+      "src/lib/modes/equation/symbolic-algebraic-formula-fallback.ts": [
+        "6b6f4e0ae46ded6016e0:1",
+        "f688b666d7314128f1c5:1",
+        "6131aa50eb00f1e3c9b4:1"
+      ],
+      "src/lib/modes/equation/symbolic-parameterized-exact.ts": [
+        "3753a288bc7037bf2c5f:1"
+      ],
+      "src/lib/modes/equation/symbolic.ts": [
+        "c4d9b4a0bf834e451c7b:1",
+        "40756600c9a91d69c40f:1",
+        "1e9874822710bfc6f0d3:1",
+        "406aecb31fa94518131a:1",
+        "a8e5bf652618dbbf837f:1",
+        "1e9874822710bfc6f0d3:2",
+        "1e9874822710bfc6f0d3:3",
+        "30676b5484154a193e12:1",
+        "103b4149e9dd85f3b723:1",
+        "1e9874822710bfc6f0d3:4",
+        "aa50e1dd18f6064543d9:1",
+        "1e9874822710bfc6f0d3:5",
+        "0acff9092bd28b6013ad:1",
+        "42de41b44c398b2076f5:1",
+        "508f67bbc3805915712e:1",
+        "b5f25f5fe139895602ac:1",
+        "43d4a7612d927667d554:1",
+        "92b7b798992ebf3de827:1",
+        "747c98569f3869b7c44a:1",
+        "76f4f6a9485c37b0a467:1"
+      ],
+      "src/lib/modes/matrix.ts": [
+        "9deb4d41d5ce4c300ad1:1",
+        "44abfe464f008636033c:1"
+      ],
+      "src/lib/modes/runtime-probes/registry.ts": [
+        "0107a7063dbfbbbe6402:1"
+      ],
+      "src/lib/modes/vector.ts": [
+        "f09a01c6224260303184:1",
+        "531b0ad8cb10e2ea3234:1"
+      ],
+      "src/lib/modes/worker-clients/calculate-worker-client.ts": [
+        "76a8b0e344811804f160:1",
+        "371915f58588d47ea6c9:1",
+        "2884896bd335d627e80f:1"
+      ],
+      "src/lib/modes/worker-clients/calculus-worker-client.ts": [
+        "b9cc3eb6f1372fc8f001:1",
+        "7f86786fa151409ca039:1",
+        "5a50ca63e9532f6958af:1"
+      ],
+      "src/lib/modes/worker-clients/equation-worker-client.ts": [
+        "3af1dd333d2becc4cbfc:1",
+        "a1471ea4d856f1edf67e:1",
+        "50f2735be43360599530:1"
+      ],
+      "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
+        "8224da9626514cc4fbe6:1",
+        "83dfe0c713bed0a4d9b7:1",
+        "03204821746bef87222c:1"
+      ],
+      "src/lib/modes/worker-entrypoints/calculate.worker.ts": [
+        "0268bd07a3e847e42a22:1"
+      ],
+      "src/lib/modes/worker-entrypoints/equation.worker.ts": [
+        "bbc59e4a76f2c57bdaf6:1"
+      ],
+      "src/lib/modes/worker-entrypoints/matrix.worker.ts": [
+        "c1d844bb944bb5ad302a:1"
+      ],
+      "src/lib/modes/worker-entrypoints/vector.worker.ts": [
+        "a3a5dcc4339dac08c668:1"
+      ],
+      "src/lib/ooe/pilots/equation-pilot.ts": [
+        "0e84ef2380233134a87a:1",
+        "bb0a529baf1786afa5c3:1"
+      ],
+      "src/lib/statistics/core.ts": [
+        "56b38bafc5b300e35c2f:1",
+        "bff7a549d85254181ed0:1",
+        "a160d3d4fb8395cd5e37:1",
+        "7b39416da465e1dfce70:1",
+        "192018f9d1755654a67d:1",
+        "03a343c9a2bf325c5ad0:1",
+        "689299ee58bf99d930b2:1",
+        "59720f6aa3c8b9213c2f:1",
+        "518544bfcf68ac56ce7e:1",
+        "d263fd990ee8e29ed468:1",
+        "65262d7ef9fa07e8dc72:1",
+        "1ae33380a7063d0377fe:1",
+        "b52c670547b92f2a7e32:1"
+      ],
+      "src/lib/trigonometry/core.ts": [
+        "288f8b617a537fefbfcc:1",
+        "2d14a11de1170c8e603e:1",
+        "e606efa10998c121aa6d:1",
+        "519b0ad46ea11b72a784:1",
+        "2adb8ca51a8d71f1b16e:1",
+        "480651ecd9659ae1757d:1"
+      ]
+    },
+    "control-outcome": {
+      "src/app/logic/runtimeControllers.ts": [
+        "d316307e9f6002455aa8:1",
+        "dccf7b563eb982201961:1"
+      ],
+      "src/app/runtime/launchWorkspaceRuntimeJob.ts": [
+        "3e0b5e78aacb9b251ccd:1"
+      ],
+      "src/app/runtime/useCalculateRuntime.ts": [
+        "fafe7b15c7d47a711023:1"
+      ],
+      "src/app/runtime/useCalculusRuntime.ts": [
+        "6185dff9d0992094264c:1",
+        "82680d629e56d6b80683:1",
+        "4ecfc20dda87a5a88acc:1"
+      ],
+      "src/app/runtime/useGeometryRuntime.ts": [
+        "7f1e444f13ff81823e4b:1"
+      ],
+      "src/app/runtime/useLinearAlgebraRuntime.ts": [
+        "7ceeaafaabeff59dda3e:1",
+        "d59b84a1c557c3a75378:1",
+        "56597358b84f0e3cec1d:1",
+        "c575bac7e742a7609ba7:1"
+      ],
+      "src/app/runtime/useStatisticsRuntime.ts": [
+        "5af0f420f614a591abf6:1"
+      ],
+      "src/app/runtime/useTableRuntime.ts": [
+        "e1b9008efcb137ed6060:1"
+      ],
+      "src/app/runtime/useTrigonometryRuntime.ts": [
+        "87e6095362b3f9320089:1"
+      ],
+      "src/lib/calculus/workspace/engine.ts": [
+        "3e5529bce6ae15de0ac8:1",
+        "be231dbe88b6023fc674:1",
+        "4b45fb9d1d364728ac64:1",
+        "3f67d568910ea2a3b868:1",
+        "51280da5860588e65ba7:1",
+        "b6ee159147db636c16d0:1"
+      ],
+      "src/lib/equation/target/surface.ts": [
+        "9f63a1c93643cbe8498a:1",
+        "fc6feb56ba6de1c95663:1"
+      ],
+      "src/lib/geometry/core.ts": [
+        "6c34ac3af424b19b1fc9:1",
+        "f20bc528df5c0a831683:1",
+        "f6e128263d9a766cf354:1",
+        "35af92d6a24e58e703ef:1",
+        "882c72d6db6bdd5e0811:1",
+        "8256718102b5200b213a:1",
+        "8256718102b5200b213a:2",
+        "3c27731fd87b81099ed6:1",
+        "6aaf9890bdecf6f76842:1",
+        "17b600695a28aaf6df8c:1",
+        "6aaf9890bdecf6f76842:2",
+        "17b600695a28aaf6df8c:2",
+        "6aaf9890bdecf6f76842:3",
+        "17b600695a28aaf6df8c:3",
+        "f6e128263d9a766cf354:2",
+        "bb6109059bd744f6d68e:1",
+        "35af92d6a24e58e703ef:2",
+        "882c72d6db6bdd5e0811:2",
+        "8256718102b5200b213a:3",
+        "882c72d6db6bdd5e0811:3",
+        "8256718102b5200b213a:4",
+        "882c72d6db6bdd5e0811:4",
+        "2efcf6c9bb62fed8c7ca:1",
+        "8256718102b5200b213a:5",
+        "71b223cc95e718222937:1",
+        "882c72d6db6bdd5e0811:5",
+        "224346bf1cf73b125ff7:1",
+        "e9c3ab0e1e944527fb6c:1",
+        "2376514e9e2ed8d7dc38:1",
+        "6aaf9890bdecf6f76842:4",
+        "17b600695a28aaf6df8c:4"
+      ],
+      "src/lib/kernel/runtime-envelope.ts": [
+        "83041b56ab4ce7891e36:1"
+      ],
+      "src/lib/modes/calculate/standard.ts": [
+        "210ee0e19c667152705d:1",
+        "69d54ca8626acd1b17a5:1",
+        "60b718827f7809cbd077:1",
+        "3b4ee2036a30b5446ff9:1"
+      ],
+      "src/lib/modes/calculate/transforms.ts": [
+        "39df407fffb470e04bdb:1",
+        "57270dceb397d3e631d6:1",
+        "3e827ac0a8533c0027fe:1",
+        "02423b846f0fcb54465e:1",
+        "6d5c176f552eac3671d3:1"
+      ],
+      "src/lib/modes/equation/guided-polynomial.ts": [
+        "087e551e2543acaff893:1",
+        "dee4116c2a282a831270:1",
+        "d565979b17796e0f2dbf:1"
+      ],
+      "src/lib/modes/equation/run.ts": [
+        "39baef8ce3b5d64b0ed7:1"
+      ],
+      "src/lib/modes/equation/symbolic-algebraic-formula-fallback.ts": [
+        "ea7bee39536253b09c0f:1"
+      ],
+      "src/lib/modes/equation/symbolic.ts": [
+        "b71f83f68673842afbbc:1",
+        "ce7943d331f807c05d19:1",
+        "b71f83f68673842afbbc:2",
+        "2af0ba8274b131a55e96:1"
+      ],
+      "src/lib/modes/equation/transforms.ts": [
+        "d0735f641583292c6847:1",
+        "c437089da5a2fa64153c:1",
+        "a235b7310d5bc8276706:1",
+        "f16a26f325e74f03c48f:1",
+        "f16a26f325e74f03c48f:2"
+      ],
+      "src/lib/modes/table-core.ts": [
+        "fb436a86a0c823c0331c:1"
+      ],
+      "src/lib/statistics/core.ts": [
+        "2a276e36ec77c0c6f828:1"
+      ],
+      "src/lib/statistics/engine.ts": [
+        "6126e0507f624b72bb49:1"
+      ],
+      "src/lib/trigonometry/core.ts": [
+        "4210890dff87e45926dc:1"
+      ]
+    },
+    "canonical-read": {
+      "src/lib/result-contract/storage.ts": [
+        "ddd00484a1c1d06528b1:1",
+        "ddd00484a1c1d06528b1:2"
+      ]
+    },
+    "legacy-read": {
+      "src/app/logic/displayClipboard.ts": [
+        "4f97bc540752731982c1:1",
+        "54ac33c805a3bf53b6bf:1",
+        "4f97bc540752731982c1:2",
+        "54ac33c805a3bf53b6bf:2"
+      ],
+      "src/app/logic/equationNumericIntervalRuntime.ts": [
+        "ebb6b8e06080b97c3eea:1"
+      ],
+      "src/app/runtime/equation-explicit-numeric-panels.ts": [
+        "c6ec6bfb54855a401c75:1"
+      ],
+      "src/app/runtime/historyDisplayEntry.ts": [
+        "a1e30cac5337603fb06e:1",
+        "5e22f1883b6ac2853788:1",
+        "a1e30cac5337603fb06e:2",
+        "5e22f1883b6ac2853788:2",
+        "fcb1785f20698009a14c:1",
+        "75f411765b18883d7d9b:1",
+        "b92017e8a5d18440e4e8:1",
+        "d4f943976c8a0534ee0c:1",
+        "163680e72ab3ac5d9a3b:1",
+        "3d7ac6271d177d7d217c:1",
+        "3d7ac6271d177d7d217c:2",
+        "3d7ac6271d177d7d217c:3",
+        "a2a66bdaabc86da61b56:1",
+        "a2a66bdaabc86da61b56:2",
+        "f01cac0999c60c0155a6:1",
+        "f01cac0999c60c0155a6:2",
+        "359911f1d9c2133601b4:1",
+        "359911f1d9c2133601b4:2"
+      ],
+      "src/app/runtime/useEquationRuntime.ts": [
+        "aab49f74d199055a9fa2:1",
+        "aab49f74d199055a9fa2:2",
+        "86053cf4ac9b805ff494:1",
+        "c0e0c0b4cde89a232e42:1",
+        "c0e0c0b4cde89a232e42:2",
+        "652f464467f2d07e1b48:1",
+        "652f464467f2d07e1b48:2",
+        "86053cf4ac9b805ff494:2",
+        "3c002615b6df59fcc29b:1"
+      ],
+      "src/app/runtime/useHistoryDisplayRuntime.ts": [
+        "9a7d243020d99f048567:1",
+        "b726799eb75210bc0bbe:1",
+        "b726799eb75210bc0bbe:2",
+        "b726799eb75210bc0bbe:3"
+      ],
+      "src/app/runtime/workspace-display-state.ts": [
+        "fbc790da21ed93625519:1",
+        "fbc790da21ed93625519:2"
+      ],
+      "src/app/shell/history-page-model.ts": [
+        "e3f4276cff5f4703d2b7:1",
+        "48430cad7d00d8770956:1",
+        "34b17bd72b11911f440e:1",
+        "046e3acd10b02bf3f473:1",
+        "7f4e93d04db90a71afdd:1",
+        "d292cbed14c1b9d5fba4:1"
+      ],
+      "src/app/shell/HistoryPage.tsx": [
+        "3fd69d79da4d7c868034:1",
+        "3fd69d79da4d7c868034:2"
+      ],
+      "src/AppMain.tsx": [
+        "9ae3849827df688b7a6f:1",
+        "e42dc3d2d4210c5389a7:1",
+        "010ff8ed047b094169b8:1",
+        "a507387fbf89951f493e:1",
+        "a0dde79ddade9bfdd781:1",
+        "655e1000b5877a5b16fa:1",
+        "010ff8ed047b094169b8:2",
+        "010ff8ed047b094169b8:3",
+        "010ff8ed047b094169b8:4",
+        "a507387fbf89951f493e:2",
+        "a507387fbf89951f493e:3",
+        "4c58a637ee57e310952f:1",
+        "f3a1a84216a8a1ee6479:1",
+        "fd1f3ce12f787f92eb21:1",
+        "2d08844883a48d9e3ad9:1",
+        "f3a1a84216a8a1ee6479:2",
+        "fd1f3ce12f787f92eb21:2",
+        "4c58a637ee57e310952f:2",
+        "4c58a637ee57e310952f:3",
+        "4c58a637ee57e310952f:4",
+        "4c58a637ee57e310952f:5",
+        "4c58a637ee57e310952f:6",
+        "4c58a637ee57e310952f:7",
+        "4c58a637ee57e310952f:8",
+        "2cf372ac3c7462b5fd1b:1",
+        "f39515eeea4e830cb93d:1",
+        "d82b355f1a303e4d174a:1"
+      ],
+      "src/lib/__golden__/print-hygiene-baseline.ts": [
+        "b88e6e00522a612d6bc7:1"
+      ],
+      "src/lib/calculus/workspace/engine.ts": [
+        "d29ead8685ae1c208ef0:1",
+        "fcee6a1699c5aa8211b0:1"
+      ],
+      "src/lib/display/notation/symbolic-output-hygiene.ts": [
+        "a37d559892dfc23d3b65:1",
+        "a5011bab8015180279f7:1",
+        "620048aa03f01b5c8786:1",
+        "1830af6e1bfcd1031216:1",
+        "3750dcb475d3b531c491:1"
+      ],
+      "src/lib/display/print-hygiene.ts": [
+        "4e9e0689b070a34ad4b5:1",
+        "15dc140113aa875ae293:1",
+        "38af09014107fdf742f2:1",
+        "e9dcbe9ecf560b53ddd1:1",
+        "c3caf4374593f1b2357b:1",
+        "ed0b48e4944460a322b5:1",
+        "21778b5a11fe8655e162:1",
+        "21778b5a11fe8655e162:2",
+        "8dc8637cf8bfe8187070:1",
+        "49e6fbe10b2f205398da:1",
+        "49e6fbe10b2f205398da:2",
+        "49e6fbe10b2f205398da:3",
+        "34c6e4c8f611e51b5fd3:1",
+        "bd5aa1617183e10ae281:1",
+        "b16f7d1f11278c344eee:1"
+      ],
+      "src/lib/display/result/display-blocks.ts": [
+        "b23ae03ad26fa4d06d5a:1",
+        "59832e313973233b63ed:1",
+        "5cac91b215184a150a2d:1",
+        "cec97e287ddf80b499ad:1",
+        "7c57909d02b936b7b5ac:1",
+        "7c57909d02b936b7b5ac:2",
+        "7c57909d02b936b7b5ac:3",
+        "58c7cb19a8398e42916b:1",
+        "7ef129e7d9b984e8bef1:1",
+        "7ef129e7d9b984e8bef1:2",
+        "58c7cb19a8398e42916b:2",
+        "58c7cb19a8398e42916b:3",
+        "58c7cb19a8398e42916b:4",
+        "8a714a37db9c557f07a8:1",
+        "c64f03f27d3b90e83730:1",
+        "c64f03f27d3b90e83730:2",
+        "e79ae6c962d0cf790f4a:1",
+        "ca484cd790cd2ca2b761:1",
+        "ca484cd790cd2ca2b761:2",
+        "ca484cd790cd2ca2b761:3",
+        "e79ae6c962d0cf790f4a:2",
+        "e79ae6c962d0cf790f4a:3",
+        "e79ae6c962d0cf790f4a:4",
+        "5524d1c124ba6ffbb1c3:1",
+        "0884def2560f8904eb2b:1",
+        "762675a66495106b5ecc:1",
+        "762675a66495106b5ecc:2",
+        "762675a66495106b5ecc:3"
+      ],
+      "src/lib/display/result/display-case-math-blocks.ts": [
+        "da0d3d45d7e119ee2256:1"
+      ],
+      "src/lib/display/result/display-trust-summary.ts": [
+        "ea1fbd9bc135e8f89a18:1",
+        "5d85cbf90d99d2aca0db:1",
+        "3617bb26bd06030dc4eb:1",
+        "3617bb26bd06030dc4eb:2",
+        "c8450143075735a38aa7:1",
+        "1af8c68f691271149f89:1",
+        "3d226c96659b32b40b6e:1",
+        "e6e3be8474b2b5cdd953:1",
+        "3d226c96659b32b40b6e:2",
+        "91cabd20b327566317e8:1"
+      ],
+      "src/lib/display/result/system-solution-block.ts": [
+        "55322a3dee7e05f36738:1",
+        "55322a3dee7e05f36738:2",
+        "55322a3dee7e05f36738:3",
+        "55322a3dee7e05f36738:4"
+      ],
+      "src/lib/equation/analysis-evidence.ts": [
+        "ac1f2da195976b6389e7:1",
+        "b485f07593f1c0fd2f8e:1",
+        "b485f07593f1c0fd2f8e:2",
+        "a9c9a3f2c087e8ff2a55:1",
+        "46d28537a044aeecc9fc:1",
+        "346bd7e0ddab7dce4745:1",
+        "35623e4f5e135b84345c:1",
+        "7735df048e97236dbe31:1",
+        "7735df048e97236dbe31:2",
+        "ecdbba340edc23e7e405:1",
+        "ecdbba340edc23e7e405:2",
+        "ecdbba340edc23e7e405:3",
+        "ecdbba340edc23e7e405:4",
+        "cfaea83aeeae1cb4b3b2:1",
+        "126a95a3fd2febdf07ed:1",
+        "7d97069a8d78e725fa47:1",
+        "126a95a3fd2febdf07ed:2",
+        "126a95a3fd2febdf07ed:3",
+        "e00db3963509cd28c214:1"
+      ],
+      "src/lib/equation/composition/stage.ts": [
+        "eb16a7e8e37b0505e724:1",
+        "a43588f5f9298e4595ef:1",
+        "7390990df7cb3425beed:1",
+        "1d8af8108da626de78e0:1",
+        "0e584cdc642a3f0fd36a:1",
+        "1f0e6ea42c509bc3508a:1",
+        "a86eab862450d9dfb8dc:1",
+        "0d0ec9a5c1b699eda4ce:1",
+        "25abf30dacecaa01d2f6:1",
+        "7957c5848814f45babef:1",
+        "22518c3ef1b966a27fab:1",
+        "7957c5848814f45babef:2",
+        "22518c3ef1b966a27fab:2",
+        "8cec1a60aaab07dda5c7:1",
+        "1f0e6ea42c509bc3508a:2",
+        "7957c5848814f45babef:3",
+        "22518c3ef1b966a27fab:3",
+        "dfbe335b20a9c774c4be:1",
+        "dfbe335b20a9c774c4be:2",
+        "c239abbdd38cfd2bafce:1",
+        "1d8af8108da626de78e0:2",
+        "0e584cdc642a3f0fd36a:2",
+        "1f0e6ea42c509bc3508a:3",
+        "0d0ec9a5c1b699eda4ce:2",
+        "25abf30dacecaa01d2f6:2",
+        "dfbe335b20a9c774c4be:3",
+        "7957c5848814f45babef:4",
+        "22518c3ef1b966a27fab:4",
+        "dfbe335b20a9c774c4be:4",
+        "8cec1a60aaab07dda5c7:2",
+        "1d8af8108da626de78e0:3",
+        "0e584cdc642a3f0fd36a:3",
+        "1f0e6ea42c509bc3508a:4",
+        "a86eab862450d9dfb8dc:2",
+        "0d0ec9a5c1b699eda4ce:3",
+        "25abf30dacecaa01d2f6:3"
+      ],
+      "src/lib/equation/composition/validation.ts": [
+        "3463a036e4ae3e1eb394:1",
+        "f1e3a41ff75ce4f3e462:1",
+        "f1e3a41ff75ce4f3e462:2",
+        "f1e3a41ff75ce4f3e462:3",
+        "b97de9da201916340ec4:1"
+      ],
+      "src/lib/equation/guarded/algebra-stage.ts": [
+        "06fbd117fd07690ceb59:1",
+        "947bcd9242e72965f8bd:1",
+        "947bcd9242e72965f8bd:2",
+        "8284a8a4014c664677a5:1",
+        "ea7848bf2b718fe3970c:1",
+        "cf69d92934f59b8a6772:1",
+        "dd8d9190102e1431981c:1",
+        "67a752baaffd9f96bbcf:1",
+        "e3f62a4e63418ccaf201:1",
+        "23e36254b3a961c5f72b:1",
+        "73ec25f52616f7b0dfb6:1",
+        "7af07fe6abf9f0986c2c:1"
+      ],
+      "src/lib/equation/guarded/algebra/absolute-value.ts": [
+        "eb1285cbd03ef4fc7090:1",
+        "87bd10b81755f8f19969:1",
+        "4a3bf50539d23b655756:1",
+        "393d18e6c22252d5ca49:1",
+        "1b1ebfd7647a73d9fe1d:1",
+        "69b967f661d6933a6eec:1",
+        "69b967f661d6933a6eec:2",
+        "67493104976b400b0eb9:1",
+        "18e8a09cbb17f856c20e:1",
+        "629d3533ce80fc2125eb:1"
+      ],
+      "src/lib/equation/guarded/merge.ts": [
+        "e589f279206f7c73d131:1",
+        "18011aabba256ac8beaf:1",
+        "8c5247b25dfc06acac56:1",
+        "2b314d5ac36d3c016efb:1",
+        "29e5bda6e1dc649b0385:1",
+        "6c5915173784e8fdf218:1",
+        "7ab91cc1a6c0bd79ff04:1",
+        "17467f50b6cecb3fb85e:1",
+        "9fbb2c0ce1e40894517f:1",
+        "63f831c5a86f0a2dd1aa:1",
+        "efc4a37fc9f0b4cf2f60:1",
+        "720ec3e8f90ed23956af:1",
+        "89b8fead58f092e9dd15:1",
+        "2c54c05d1ffeb3144d70:1",
+        "24e7cc5478c09406fee4:1",
+        "8f636247aaecf0acf086:1",
+        "5ccd8fe21534ee8fc06a:1",
+        "8f225913182d843bada9:1",
+        "bfc9388ef74d712f4322:1",
+        "e1d18b5e88c9c1979f34:1",
+        "57b655bb30548485f4a6:1"
+      ],
+      "src/lib/equation/guarded/request-prep.ts": [
+        "c24e1b84ae554ca722d5:1",
+        "462abc255376ebe49470:1",
+        "462abc255376ebe49470:2",
+        "27a33da28b87d1cf9b54:1",
+        "a4618223fa74068a3992:1",
+        "a4618223fa74068a3992:2",
+        "a4618223fa74068a3992:3",
+        "142ac57ae5201aab9a93:1",
+        "142ac57ae5201aab9a93:2",
+        "57f94ea16730e115f162:1",
+        "2d8b10e411070e518978:1"
+      ],
+      "src/lib/equation/guarded/substitution-stage.ts": [
+        "fd7ee09fd8f098e43cfd:1",
+        "32877eec8f2e02280dbe:1",
+        "e2c207816ced4cb6c870:1",
+        "e4c3580312dd40f070b3:1",
+        "a07d017046218b6f7922:1",
+        "e276c0df2c08dfd00873:1",
+        "32877eec8f2e02280dbe:2",
+        "e2c207816ced4cb6c870:2",
+        "e4c3580312dd40f070b3:2",
+        "a07d017046218b6f7922:2",
+        "e276c0df2c08dfd00873:2",
+        "7dc72b3d9e7a7b507800:1",
+        "0b233704d3b49746ccd7:1",
+        "ead4d38effc79c903ff0:1",
+        "32877eec8f2e02280dbe:3",
+        "e2c207816ced4cb6c870:3",
+        "e4c3580312dd40f070b3:3",
+        "e276c0df2c08dfd00873:3",
+        "e75b6c5f7ea8250da392:1",
+        "7dc72b3d9e7a7b507800:2",
+        "7dc72b3d9e7a7b507800:3",
+        "424bdf7f344f23fbbcac:1",
+        "32877eec8f2e02280dbe:4",
+        "e2c207816ced4cb6c870:4",
+        "e4c3580312dd40f070b3:4",
+        "a07d017046218b6f7922:3",
+        "35495249bce55420552e:1",
+        "7dc72b3d9e7a7b507800:4",
+        "e276c0df2c08dfd00873:4",
+        "a622d832c54d37ce5f89:1",
+        "f0fd8465437fb1b90a6f:1",
+        "d9f1e0f24845a6838cab:1",
+        "c61f13aff36d00402e4b:1",
+        "d50dca11355ec95e4f32:1",
+        "07fcdfd50be01b93048e:1",
+        "f0fd8465437fb1b90a6f:2",
+        "d9f1e0f24845a6838cab:2",
+        "c61f13aff36d00402e4b:2",
+        "d50dca11355ec95e4f32:2",
+        "07fcdfd50be01b93048e:2",
+        "0d58927ccfc75c52530f:1",
+        "72f8f2bd97cdfbecbe74:1",
+        "13f7dec174c13f0964d3:1",
+        "f0fd8465437fb1b90a6f:3",
+        "d9f1e0f24845a6838cab:3",
+        "c61f13aff36d00402e4b:3",
+        "07fcdfd50be01b93048e:3",
+        "2c657f564ef93ee3d8f1:1",
+        "0d58927ccfc75c52530f:2",
+        "0d58927ccfc75c52530f:3",
+        "ae0a9cc0bec6a1be9122:1",
+        "f0fd8465437fb1b90a6f:4",
+        "d9f1e0f24845a6838cab:4",
+        "c61f13aff36d00402e4b:4",
+        "d50dca11355ec95e4f32:3",
+        "ac61271a748e55583aa7:1",
+        "0d58927ccfc75c52530f:4",
+        "07fcdfd50be01b93048e:4"
+      ],
+      "src/lib/equation/target/surface.ts": [
+        "9083f1ece03cb454dc37:1",
+        "6c92f37fc8efdf1fdf4f:1",
+        "09e7af3d0e0d7f3e7a39:1",
+        "09e7af3d0e0d7f3e7a39:2",
+        "09e7af3d0e0d7f3e7a39:3",
+        "75233373f19b61d402fe:1",
+        "009c3ffd3a9ddc65b983:1",
+        "7bc400acbbff05a39165:1",
+        "7bc400acbbff05a39165:2",
+        "7bc400acbbff05a39165:3",
+        "79e3662c16d56634e428:1",
+        "e32d9a840278b9f718e0:1",
+        "e32d9a840278b9f718e0:2",
+        "e32d9a840278b9f718e0:3",
+        "ceb249ce76b1caa46ceb:1",
+        "ceb249ce76b1caa46ceb:2",
+        "ceb249ce76b1caa46ceb:3",
+        "e6c3b06f5688841bef36:1",
+        "e6c3b06f5688841bef36:2",
+        "e6c3b06f5688841bef36:3",
+        "8142a4b9a11771d32ef1:1",
+        "8bbfebf3635baa0395c8:1",
+        "8bbfebf3635baa0395c8:2",
+        "8bbfebf3635baa0395c8:3",
+        "5dd062ca4f53592af28d:1",
+        "5dd062ca4f53592af28d:2",
+        "5dd062ca4f53592af28d:3"
+      ],
+      "src/lib/equation/trust-evidence.ts": [
+        "29c9450c66205339b50b:1",
+        "deea3c06cd93cec0c839:1",
+        "63a83515dae4eb0d1ed5:1",
+        "879e7a940e39ad6d0736:1",
+        "0f6f5febf7febf61e83e:1",
+        "879e7a940e39ad6d0736:2",
+        "4a6d776b8d81fa55eef8:1"
+      ],
+      "src/lib/history-replay/fixture-contract.ts": [
+        "8d1d997e9fccb6d937e4:1",
+        "74c84f94f11f5ad812c5:1",
+        "74c84f94f11f5ad812c5:2",
+        "d996be1c0908f99e8218:1",
+        "d996be1c0908f99e8218:2",
+        "f89c6e83473e156ec164:1",
+        "f89c6e83473e156ec164:2",
+        "23ba4543a7a57c786701:1",
+        "23ba4543a7a57c786701:2",
+        "20b6a1d5d70d4a4f82f1:1",
+        "ad003f0279e8c895c5a4:1",
+        "e8af175ec7a15761d463:1",
+        "6519ddab13ca998479ce:1",
+        "d3cae6df38228ac9a1eb:1",
+        "6fb19a80664f32536888:1",
+        "56161edd5a5727a4d400:1"
+      ],
+      "src/lib/kernel/runtime-envelope.ts": [
+        "5305128ed545135a9cec:1",
+        "8e53d5189ca89153b09c:1"
+      ],
+      "src/lib/kernel/runtime-policy.ts": [
+        "0134c1c06c483b911ebb:1",
+        "68f1ed7521eeac64094a:1",
+        "68f1ed7521eeac64094a:2"
+      ],
+      "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
+        "5da017db0fa01d9b2335:1",
+        "d55f2333c8eacefbefb8:1",
+        "3899803310a920240e8c:1",
+        "19161276256c6e1e67c5:1",
+        "19161276256c6e1e67c5:2",
+        "19161276256c6e1e67c5:3",
+        "cb5e4eb8ff3410a69791:1",
+        "d1aef5ba4f85c0cc05b6:1",
+        "6fbae08477cb849a7966:1",
+        "884427622d83b6f8dfe5:1",
+        "7c53bc86681c0739bd7a:1",
+        "884427622d83b6f8dfe5:2",
+        "884427622d83b6f8dfe5:3",
+        "f35e02964416966ccfdc:1",
+        "f35e02964416966ccfdc:2"
+      ],
+      "src/lib/modes/equation/complex-numeric-polynomial-roots.ts": [
+        "761b6cec94649603bfdf:1"
+      ],
+      "src/lib/modes/equation/complex-periodic-fallback.ts": [
+        "2545bd684c19ffadc330:1",
+        "b455f8df1f16e1a5ba60:1",
+        "e64d74de0ffad193862f:1"
+      ],
+      "src/lib/modes/equation/complex-region-nonlinear-solve.ts": [
+        "9dcdac017cd56bb38529:1"
+      ],
+      "src/lib/modes/equation/complex-wrapper-fallback.ts": [
+        "1b77dd430a99d844e538:1",
+        "42a105797151e3d7f59d:1",
+        "abdc85680c648b481bb0:1",
+        "89656f816a9c28054d53:1",
+        "def07d8cb6f24f50817a:1",
+        "26370a828416a56fe0a1:1",
+        "8693a7d78ea6e9ad425f:1"
+      ],
+      "src/lib/modes/equation/deterministic-numeric-algebraic.ts": [
+        "144862e88ddd07a65ff2:1"
+      ],
+      "src/lib/modes/equation/outcomes.ts": [
+        "256b786b2475e117f3b8:1",
+        "26782c2d9c7b45399951:1",
+        "5779f2f254f75c1d12a5:1",
+        "2c897e56b75fab52398b:1",
+        "f34e935921345b7081be:1",
+        "ee4e6d26c81a3a67efa6:1",
+        "3446b8ba1a4cca2624d7:1",
+        "3aad249ce58c8676242b:1",
+        "3c363070e2ca1f94ee69:1",
+        "3c363070e2ca1f94ee69:2",
+        "3c363070e2ca1f94ee69:3",
+        "8498b94f2741391406d6:1"
+      ],
+      "src/lib/modes/equation/real-nonlinear-numeric-search.ts": [
+        "2e0a7494eff5eaddaabe:1"
+      ],
+      "src/lib/modes/equation/real-periodic-interval-numeric.ts": [
+        "b82c69e64d5442351b0a:1",
+        "e9b2683fec9e8d8e1d9e:1",
+        "b82c69e64d5442351b0a:2",
+        "b82c69e64d5442351b0a:3",
+        "b82c69e64d5442351b0a:4",
+        "1656f65aa25202871b7f:1"
+      ],
+      "src/lib/modes/equation/real-piecewise-abs-hybrid.ts": [
+        "01c54d3fa5bef04ccf63:1",
+        "01c54d3fa5bef04ccf63:2"
+      ],
+      "src/lib/modes/equation/run.ts": [
+        "d48c7ee5fb2482521236:1",
+        "8a152c3117f17c9d1781:1"
+      ],
+      "src/lib/modes/equation/stored-values.ts": [
+        "449be06e47acb0056514:1",
+        "39dea218c6fa9acef7bd:1"
+      ],
+      "src/lib/modes/equation/symbolic-algebraic-formula-fallback.ts": [
+        "8fd16b0a19cbb85ab5b2:1",
+        "8fd16b0a19cbb85ab5b2:2",
+        "2b67af1fe5b44e9622c5:1",
+        "6ee6c0b6beab97dee650:1",
+        "7f4598a555bba3e1cc1e:1"
+      ],
+      "src/lib/modes/equation/symbolic.ts": [
+        "5de9ac11c1b0d93d3637:1"
+      ],
+      "src/lib/ooe/pilots/equation-pilot.ts": [
+        "1c01e4569398e465b310:1",
+        "1c01e4569398e465b310:2",
+        "e08aa7038eaf0fa156c6:1",
+        "e08aa7038eaf0fa156c6:2",
+        "6551d6a704613fe5bdff:1",
+        "af05dd441cc95fef9f9f:1",
+        "af05dd441cc95fef9f9f:2",
+        "1fd43db26454b5de9074:1",
+        "6551d6a704613fe5bdff:2",
+        "1fd43db26454b5de9074:2",
+        "e9d87547d1d7ef8bb6c3:1"
+      ],
+      "src/lib/result-contract/projection.ts": [
+        "e2505dd82a7b3fe6837f:1",
+        "e2505dd82a7b3fe6837f:2",
+        "9c725baf9d114b22b837:1",
+        "9c725baf9d114b22b837:2",
+        "8c957948ce45f7e1b7bc:1",
+        "8c957948ce45f7e1b7bc:2",
+        "1891b1f9514f0dc1bbdd:1",
+        "838fb1a81a2d9978ce4f:1",
+        "973f8ab58dc92ebc8796:1",
+        "236c362413ca6754ee3f:1",
+        "1c74bbb18bb6c4fc62f3:1",
+        "cae1d265307c9f4d1ed3:1",
+        "d499ff392bf2cbfe8f61:1",
+        "d499ff392bf2cbfe8f61:2",
+        "e5f7d9e8fea07ecf9442:1",
+        "e5f7d9e8fea07ecf9442:2",
+        "72d7e4a19c94e66aeb36:1",
+        "72d7e4a19c94e66aeb36:2",
+        "fe233d5183bf0355aa30:1",
+        "fe233d5183bf0355aa30:2",
+        "c5ad9ad403b34e004633:1",
+        "6f4fe5cf975afd707c5c:1",
+        "438d015ef072e779d3fd:1",
+        "438d015ef072e779d3fd:2",
+        "d9453acf86c39b5df412:1",
+        "d9453acf86c39b5df412:2",
+        "5ff08fa7ed52c2bebfa2:1",
+        "5ff08fa7ed52c2bebfa2:2",
+        "b78bac1879c9ef55bdba:1",
+        "b78bac1879c9ef55bdba:2",
+        "367e384ff2399516d1f5:1",
+        "b49d74616c3c79b81c9d:1",
+        "1ed48ba82c353a01a9c5:1",
+        "1ed48ba82c353a01a9c5:2",
+        "c47d4ca783d02ce55aac:1",
+        "31357ff4e0cd8bdfa7ad:1",
+        "31357ff4e0cd8bdfa7ad:2",
+        "119de97c42ab5908d326:1",
+        "162df20f31ac11e7e81d:1",
+        "a80febc135dc872e6577:1",
+        "c9f6a997f789d6ebc2d0:1",
+        "119de97c42ab5908d326:2",
+        "31357ff4e0cd8bdfa7ad:3",
+        "119de97c42ab5908d326:3",
+        "0df84c07a25295a5037c:1",
+        "8bb581d50bb0663f6b5a:1",
+        "8bb581d50bb0663f6b5a:2",
+        "8bb581d50bb0663f6b5a:3",
+        "17ef9849b46ceb053e82:1",
+        "17ef9849b46ceb053e82:2",
+        "17ef9849b46ceb053e82:3",
+        "17ef9849b46ceb053e82:4",
+        "17ef9849b46ceb053e82:5",
+        "17ef9849b46ceb053e82:6",
+        "17ef9849b46ceb053e82:7",
+        "17ef9849b46ceb053e82:8",
+        "17ef9849b46ceb053e82:9",
+        "17ef9849b46ceb053e82:10",
+        "ec49a5d666d5f646a810:1",
+        "8ecf1319c944417fc1ec:1",
+        "8ecf1319c944417fc1ec:2",
+        "8ecf1319c944417fc1ec:3",
+        "8ecf1319c944417fc1ec:4",
+        "8ecf1319c944417fc1ec:5",
+        "8ecf1319c944417fc1ec:6",
+        "1391a0301c89ba470bac:1",
+        "1391a0301c89ba470bac:2",
+        "fcd167b6ff9305f2d7f6:1",
+        "fcd167b6ff9305f2d7f6:2",
+        "dc118941279839f53c8e:1",
+        "dc118941279839f53c8e:2",
+        "19a3644d02984fefb3c6:1",
+        "054fa9129cdb47a70e92:1",
+        "19a3644d02984fefb3c6:2",
+        "054fa9129cdb47a70e92:2",
+        "054fa9129cdb47a70e92:3",
+        "054fa9129cdb47a70e92:4",
+        "19a3644d02984fefb3c6:3",
+        "19a3644d02984fefb3c6:4",
+        "c3cf9d97212fe3ddd88d:1"
+      ],
+      "src/lib/surface-protocol/dto.ts": [
+        "6fae0922de5560197a7d:1",
+        "a3fde41241eddadfc84f:1",
+        "261f590f7413a9b2d20c:1",
+        "261f590f7413a9b2d20c:2",
+        "d08d110acbd895ce3d31:1",
+        "d08d110acbd895ce3d31:2",
+        "d08d110acbd895ce3d31:3",
+        "b110db5196bff6b1d5a3:1",
+        "b110db5196bff6b1d5a3:2",
+        "b39f2322609e68385b80:1",
+        "7a896567c109855102f6:1",
+        "6dac41457ab3b8ea3fdf:1",
+        "ac1b616d5823e5d57a28:1",
+        "a204e425bfd8b469bae6:1",
+        "42a72d29a9fa902d1681:1",
+        "a6e00c498a5cab097577:1",
+        "a04aaab58960ebcaf935:1",
+        "3d9c61e34720bef93509:1",
+        "3d9c61e34720bef93509:2",
+        "a204e425bfd8b469bae6:2",
+        "a204e425bfd8b469bae6:3",
+        "a04aaab58960ebcaf935:2",
+        "a04aaab58960ebcaf935:3"
+      ],
+      "src/lib/trigonometry/core.ts": [
+        "6ecd093c2d8bfb4ec3e5:1",
+        "c0d27ce43b64de856b18:1",
+        "77000896d3a7f72aab59:1",
+        "da59d0f63bce0a195881:1",
+        "da59d0f63bce0a195881:2",
+        "da59d0f63bce0a195881:3",
+        "da59d0f63bce0a195881:4",
+        "da59d0f63bce0a195881:5",
+        "da59d0f63bce0a195881:6",
+        "da59d0f63bce0a195881:7",
+        "da59d0f63bce0a195881:8",
+        "da59d0f63bce0a195881:9",
+        "3e4ddd362192c28dda70:1",
+        "2170946d9cfe41f7a6cf:1"
+      ]
+    },
+    "control-read": {
+      "src/app/logic/displayClipboard.ts": [
+        "a5467185d80b4ccb33ba:1",
+        "a5467185d80b4ccb33ba:2",
+        "a5467185d80b4ccb33ba:3"
+      ],
+      "src/app/logic/equationNumericIntervalRuntime.ts": [
+        "5024288f9b2c289e0538:1"
+      ],
+      "src/app/logic/runtimeControllers.ts": [
+        "b8896099985ea1cd0381:1",
+        "2c2634d45c0f8eaa126b:1",
+        "27ca8fda219e0b57aa46:1"
+      ],
+      "src/app/runtime/historyDisplayEntry.ts": [
+        "bdb21178ef437cbb034f:1",
+        "baa46319d74bda594a8b:1"
+      ],
+      "src/app/runtime/useCalculateRuntime.ts": [
+        "15dfbd12ec92526b5433:1",
+        "15dfbd12ec92526b5433:2"
+      ],
+      "src/app/runtime/useEquationRuntime.ts": [
+        "0bf756a14c7562d5aefc:1",
+        "0bf756a14c7562d5aefc:2",
+        "0bf756a14c7562d5aefc:3",
+        "0bf756a14c7562d5aefc:4",
+        "0bf756a14c7562d5aefc:5",
+        "8e37d7762a95b7d1bdf3:1"
+      ],
+      "src/app/runtime/useHistoryDisplayRuntime.ts": [
+        "f5c306d2fb47f479b6ec:1",
+        "93294c4a7508ed2447ee:1",
+        "e3008f30996edaad183c:1",
+        "f5c306d2fb47f479b6ec:2"
+      ],
+      "src/app/runtime/workspace-display-state.ts": [
+        "3c012101c5883095b0c3:1"
+      ],
+      "src/AppMain.tsx": [
+        "cfede5e8fd563956bbfd:1",
+        "cfede5e8fd563956bbfd:2",
+        "06562d6b4ad7fdb5107d:1",
+        "06562d6b4ad7fdb5107d:2",
+        "e9669767dd098c8f1d12:1",
+        "e9669767dd098c8f1d12:2",
+        "093c1b9224747e532852:1",
+        "f33db0423cfae75923e2:1",
+        "cfede5e8fd563956bbfd:3",
+        "cfede5e8fd563956bbfd:4",
+        "cfede5e8fd563956bbfd:5",
+        "cfede5e8fd563956bbfd:6",
+        "cfede5e8fd563956bbfd:7",
+        "cfede5e8fd563956bbfd:8",
+        "cfede5e8fd563956bbfd:9",
+        "cfede5e8fd563956bbfd:10",
+        "cfede5e8fd563956bbfd:11",
+        "cfede5e8fd563956bbfd:12",
+        "cfede5e8fd563956bbfd:13",
+        "cfede5e8fd563956bbfd:14",
+        "cfede5e8fd563956bbfd:15",
+        "cfede5e8fd563956bbfd:16"
+      ],
+      "src/lib/__golden__/print-hygiene-baseline.ts": [
+        "c780508653befbcc149f:1",
+        "c780508653befbcc149f:2",
+        "c780508653befbcc149f:3"
+      ],
+      "src/lib/calculus/workspace/engine.ts": [
+        "893a6ce5a6b90f81f54a:1",
+        "0d138977d6b4155f7774:1",
+        "20f7b01bb3ff8f20e108:1"
+      ],
+      "src/lib/display/notation/symbolic-output-hygiene.ts": [
+        "315f0c0cf64f7178a90a:1"
+      ],
+      "src/lib/display/print-hygiene.ts": [
+        "d7a318824733828b4d93:1",
+        "29269ba4894a33fef42d:1",
+        "d7a318824733828b4d93:2"
+      ],
+      "src/lib/display/result/display-blocks.ts": [
+        "4a6416b982c9c8b2762e:1",
+        "d510cb578f30334b6b04:1",
+        "f41ee7980ef770ddd993:1",
+        "f41ee7980ef770ddd993:2",
+        "523f25d3776e64598bf3:1",
+        "523f25d3776e64598bf3:2",
+        "523f25d3776e64598bf3:3"
+      ],
+      "src/lib/display/result/display-case-math-blocks.ts": [
+        "59f0ff410c34387c58d4:1"
+      ],
+      "src/lib/display/result/display-trust-summary.ts": [
+        "ad4f4a4b36d01bf6cdd8:1",
+        "acaa517259c60f6d56f5:1",
+        "41e97dc66626002989a1:1"
+      ],
+      "src/lib/display/result/system-solution-block.ts": [
+        "eeacf3fb6a0015ddd0c3:1"
+      ],
+      "src/lib/equation/analysis-evidence.ts": [
+        "2e1205bf77f57564d60b:1",
+        "2e1205bf77f57564d60b:2",
+        "2e1205bf77f57564d60b:3",
+        "9eecdc6d941231e4f654:1",
+        "deb737902570e22225dd:1",
+        "93d0b527cadf076df734:1",
+        "82d0a06dd547cac3698e:1",
+        "f8e15de2e433ecb2870c:1",
+        "6b039aa9da1189ad617f:1",
+        "81b7934e4c06e6957597:1",
+        "81b7934e4c06e6957597:2"
+      ],
+      "src/lib/equation/composition/stage.ts": [
+        "58c2174c6686a258773e:1",
+        "13683e80a18a8f9a40b1:1",
+        "13683e80a18a8f9a40b1:2",
+        "0faba9e87acb6966442d:1",
+        "0faba9e87acb6966442d:2",
+        "0faba9e87acb6966442d:3",
+        "ad8e5eef5790e886f42a:1"
+      ],
+      "src/lib/equation/composition/validation.ts": [
+        "741758bf76d23df66195:1",
+        "741758bf76d23df66195:2"
+      ],
+      "src/lib/equation/equation-ux.ts": [
+        "27fd38f8ac42933ca891:1",
+        "27fd38f8ac42933ca891:2"
+      ],
+      "src/lib/equation/guarded/algebra-stage.ts": [
+        "4f5466e76bd6eb00410f:1",
+        "3ce6db2ee7db857283a4:1",
+        "5ae1a874d204f478f90b:1",
+        "5ae1a874d204f478f90b:2"
+      ],
+      "src/lib/equation/guarded/algebra/absolute-value.ts": [
+        "d108327251321da0e1f3:1",
+        "3ab819cca01ff09cefb2:1",
+        "3ab819cca01ff09cefb2:2",
+        "3ab819cca01ff09cefb2:3",
+        "3ab819cca01ff09cefb2:4",
+        "3ab819cca01ff09cefb2:5",
+        "3ab819cca01ff09cefb2:6",
+        "3ab819cca01ff09cefb2:7"
+      ],
+      "src/lib/equation/guarded/direct-symbolic.ts": [
+        "0218e271789deeaf5cb8:1"
+      ],
+      "src/lib/equation/guarded/merge.ts": [
+        "0eea67175b197f31ea1b:1",
+        "0eea67175b197f31ea1b:2",
+        "0eea67175b197f31ea1b:3",
+        "aec87770bdd637868243:1"
+      ],
+      "src/lib/equation/guarded/polynomial-stage.ts": [
+        "48e2c92073bc94585efb:1"
+      ],
+      "src/lib/equation/guarded/request-prep.ts": [
+        "f2f7af58cf29f62e9127:1",
+        "baf507384d87068a62f8:1"
+      ],
+      "src/lib/equation/guarded/substitution-stage.ts": [
+        "62df0c93899267eacfc8:1",
+        "62df0c93899267eacfc8:2",
+        "eff5fe34931ac950c8b3:1",
+        "eff5fe34931ac950c8b3:2"
+      ],
+      "src/lib/equation/target/surface.ts": [
+        "22a251632a30067b0fa4:1",
+        "9c2f29f1bba4eacb7ece:1",
+        "4d2628bf8a72caf3607e:1",
+        "e07df28e01a5015ef55b:1",
+        "f4c273695e88a980b56d:1"
+      ],
+      "src/lib/equation/trust-evidence.ts": [
+        "897c9046ba8e4419f9c4:1",
+        "e44ed9a022c06c70adfd:1"
+      ],
+      "src/lib/history-replay/fixture-contract.ts": [
+        "3e51ab15f027ba8403d4:1"
+      ],
+      "src/lib/kernel/runtime-envelope.ts": [
+        "7265ed8f495993655343:1",
+        "4cff12dc461222107c83:1"
+      ],
+      "src/lib/kernel/runtime-policy.ts": [
+        "9b6b64a3e94d0a41762b:1",
+        "221cd8b6eed3a565e8f4:1",
+        "080a5cab3fb14d945a20:1"
+      ],
+      "src/lib/modes/calculate/standard.ts": [
+        "c07cd7a7c5d9a9d22c8c:1"
+      ],
+      "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
+        "a28bddf414f72a60d2fc:1",
+        "9be980fc146a88da3021:1",
+        "b9cb03091c9d7f0eb35d:1",
+        "a69eee9d2a790c73590d:1",
+        "71577ef226ce1bbde5b0:1",
+        "9eab06a334a9497e52f2:1",
+        "9eab06a334a9497e52f2:2",
+        "5d4e058c6c3c6a89222f:1",
+        "13b8d7b4abb8dd60b2cf:1"
+      ],
+      "src/lib/modes/equation/complex-numeric-polynomial-roots.ts": [
+        "2d016087fe64c532980e:1"
+      ],
+      "src/lib/modes/equation/complex-periodic-fallback.ts": [
+        "3473b7cfba4b382d4723:1"
+      ],
+      "src/lib/modes/equation/complex-region-nonlinear-solve.ts": [
+        "bebccabd61340fcfe3cc:1"
+      ],
+      "src/lib/modes/equation/complex-wrapper-fallback.ts": [
+        "18fb37518b1a1e5e7f13:1",
+        "a8dad73d9e51a7dfa78f:1",
+        "b7662c07899dbffa88c7:1",
+        "6484fa3f79c992405140:1"
+      ],
+      "src/lib/modes/equation/deterministic-numeric-algebraic.ts": [
+        "34a98dc6aaae9306f37b:1"
+      ],
+      "src/lib/modes/equation/outcomes.ts": [
+        "b79457e1c3e88321a615:1",
+        "fd18bc1a02903d8ce41b:1",
+        "770340764fa9555bca86:1",
+        "9f92406fd177cdcd7edb:1",
+        "1ba7137a1b7cbeed9b61:1",
+        "e44a66320f18f79d159a:1"
+      ],
+      "src/lib/modes/equation/real-nonlinear-numeric-search.ts": [
+        "c6d58fffe8005cbaca41:1"
+      ],
+      "src/lib/modes/equation/real-numeric-fallbacks.ts": [
+        "31e3ad58942e5f59be99:1"
+      ],
+      "src/lib/modes/equation/real-periodic-interval-numeric.ts": [
+        "bb5667106f3e01487f40:1",
+        "b1cc164be81a85f9594e:1"
+      ],
+      "src/lib/modes/equation/real-piecewise-abs-hybrid.ts": [
+        "69d325b4f5ead5c4763a:1"
+      ],
+      "src/lib/modes/equation/run.ts": [
+        "1858df8af85fe7b00493:1"
+      ],
+      "src/lib/modes/equation/stored-values.ts": [
+        "7d9832d184df16490f7a:1",
+        "7d9832d184df16490f7a:2",
+        "2d2ce091aa4aa36f075d:1"
+      ],
+      "src/lib/modes/equation/symbolic-algebraic-formula-fallback.ts": [
+        "a0f992f0e56100fdcf06:1",
+        "15ed5575530f048ae212:1",
+        "44b8ff6508aa6774da3f:1",
+        "4ce6892c61d3ce8ec3b6:1",
+        "15d86ce76f4217700f35:1"
+      ],
+      "src/lib/modes/equation/symbolic.ts": [
+        "456647802672dd4e10cf:1",
+        "d7f4cd95eb1379d9f4fa:1"
+      ],
+      "src/lib/ooe/pilots/equation-pilot.ts": [
+        "fc2a2fcf7918907bd3f1:1",
+        "fc2a2fcf7918907bd3f1:2",
+        "fc2a2fcf7918907bd3f1:3",
+        "fc2a2fcf7918907bd3f1:4",
+        "fc2a2fcf7918907bd3f1:5"
+      ],
+      "src/lib/result-contract/projection.ts": [
+        "e25ca208b5c003f1b0a8:1",
+        "a0b84eb385db03660c82:1",
+        "a0b84eb385db03660c82:2",
+        "a0b84eb385db03660c82:3",
+        "a0b84eb385db03660c82:4"
+      ],
+      "src/lib/surface-protocol/dto.ts": [
+        "12fef343c5fd7d1ec965:1",
+        "552fa80bb142b0dc0736:1",
+        "89752744caab97d51183:1",
+        "5ea25a7d9fee34f3496f:1",
+        "5ea25a7d9fee34f3496f:2",
+        "5ea25a7d9fee34f3496f:3",
+        "5ea25a7d9fee34f3496f:4",
+        "5ea25a7d9fee34f3496f:5",
+        "5ea25a7d9fee34f3496f:6",
+        "5ea25a7d9fee34f3496f:7",
+        "5ea25a7d9fee34f3496f:8",
+        "5ea25a7d9fee34f3496f:9",
+        "5ea25a7d9fee34f3496f:10"
+      ],
+      "src/lib/trigonometry/core.ts": [
+        "b2ac6ecae600f3bc5f75:1",
+        "b47aa0604bbc038fa426:1",
+        "b47aa0604bbc038fa426:2"
+      ]
+    },
+    "transient-read": {
+      "src/lib/display/print-hygiene.ts": [
+        "2e1c6da332cab53cb884:1"
+      ],
+      "src/lib/equation/target/surface.ts": [
+        "412a0ba26fb39fc52085:1",
+        "6525059b9919b812863e:1"
+      ],
+      "src/lib/history-replay/fixture-contract.ts": [
+        "3e64b4977dbb46df2afe:1"
+      ],
+      "src/lib/kernel/runtime-envelope.ts": [
+        "9f50643a5a4aa74d3290:1"
+      ],
+      "src/lib/trigonometry/core.ts": [
+        "e6e63cf79e478e9698c5:1"
+      ]
+    }
+  }
+}

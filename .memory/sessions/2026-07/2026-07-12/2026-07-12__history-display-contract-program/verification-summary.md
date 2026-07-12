@@ -93,3 +93,29 @@
 - Repo-wide lint reports seven Notebook-owned `no-useless-escape` errors in `src/lib/notebook/document/templates.ts`; no History/Display file is implicated.
 - The live printer inventory reports five Notebook-owned unclassified `resultLatex` paths in `extensions.tsx`, `migrate-v1.ts`, `templates.ts`, and two `tiptap-adapter.ts` locations. This milestone's History paths remain classified with zero fallback debt.
 - Concurrent Notebook files and untracked `test-results/` are excluded from staging and commit.
+
+## DISPLAY-CONTRACT-INVERSION-RATCHET1 Gate
+
+- Kind: `backend` source-authority inventory and CI ratchet.
+- Live app-visible behavior changed: no.
+- Result: pass for the intended tooling and governance slice.
+
+### Inventory Evidence
+
+- Eight focused Node tests pass for deterministic classification, native adapter calls, canonical projection exits, forwarding, parameter destructuring, dynamic/rest rejection, unknown lanes, line-only movement, debt growth, native loss, and golden reference fixtures.
+- Live scan: 1,136 source files, 575 producer boundaries, 753 consumer reads, and zero unclassified paths.
+- Producer split: one native History adapter, two canonical projection exits, 159 compatibility projections, 331 forwarders, and 82 control-only outcomes.
+- Consumer split: 554 legacy reads, two canonical reads, 191 control reads, and six transient reads.
+- Seam selector and CI alignment pass; CI and Linux release now require 14 static gates including this ratchet.
+
+### Contract Evidence
+
+- Result contract: 23 tests pass, including exact projection coverage for all 43 golden executions and all 100 deterministic replay fixtures.
+- Display: 153 unit and 25 UI tests pass. Detail migration remains 447/447 declared; result intent remains 8/8 source assignments plus all golden/replay executions.
+- History replay, golden corpus, TypeScript, production build, global ESLint, file sizes, Surface Protocol, OOE, compartments, and diff hygiene pass.
+- No new Playwright run is required for this backend-only inventory: no producer, renderer, stored record, output string, or mathematical behavior changed.
+
+### Mixed-Tree Limits
+
+- The live printer inventory remains red only on five concurrent Notebook-owned `resultLatex` paths. Its seven unit tests pass and this milestone adds no printer fallback or unclassified serializer.
+- Concurrent Notebook files and untracked `test-results/` remain excluded from staging and commit.

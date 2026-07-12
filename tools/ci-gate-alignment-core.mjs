@@ -7,6 +7,7 @@ export const STATIC_GATE_COMMANDS = [
   'npm run test:seam-impact-selector',
   'npm run test:printer-migration',
   'npm run test:detail-segment-migration',
+  'npm run test:display-contract-inversion',
   'npm run test:clipboard-contract',
   'npm run test:app-identity',
   'npm run test:surface-protocol',

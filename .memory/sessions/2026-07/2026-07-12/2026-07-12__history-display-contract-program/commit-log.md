@@ -40,10 +40,19 @@
 - push: not authorized
 - excluded: `test-results/` and all concurrent Notebook files/registrations
 
-## Pending Commit
+## HISTORY-STRUCTURED-RESULT2
 
+- commit_hash: `25e7af6b`
 - commit_message: `HISTORY-STRUCTURED-RESULT2`
 - scope: success-only structured History dual-write/read, exact Table carriage and restore, omission fallback, schema/native restart parity, structured-first History consumers, and durable verification evidence
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/` and all concurrent Notebook files/registrations
+
+## Pending Commit
+
+- commit_message: `DISPLAY-CONTRACT-INVERSION-RATCHET1`
+- scope: TypeScript producer/consumer authority inventory, per-lane debt and native floors, stable fingerprints, accepted baseline, package/CI/release/seam wiring, and durable verification evidence
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/` and all concurrent Notebook files/registrations

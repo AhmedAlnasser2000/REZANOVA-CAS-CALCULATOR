@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; structured History is verified through Gate 5 and entering its approved commit; no push is authorized
+Status: active; the producer/consumer inversion inventory is verified through Gate 6 and entering its approved commit; no push is authorized
 
 ## Attribution
 
@@ -85,10 +85,15 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - `CANONICAL-RESULT-DOCUMENT1`: committed as `a5b63e39`. The neutral compartment defines the version-1 document, nested math values, strict clone-safe validation, 10,000-node/64-depth/640,000-byte document bounds, existing per-MathJSON bounds, no-reparse compatibility projections, and optional live `DisplayOutcome.canonicalResult` carriage.
 - Coverage round-trips every stable field in all 43 golden and 100 replay executions, rejects prompts and prohibited transient fields, drops actions/runtime advisories by contract, and preserves exact Table rows. No live producer writes the document yet, so this gate changes no visible output, History schema, Surface DTO, OOE authority, worker topology, or capability identity.
 - The intended commit snapshot passes the accepted printer inventory at 522 result paths, zero compatibility fallbacks, 277 migrated paths, and 239 forwarders. The live mixed tree separately reports four Notebook-owned `resultLatex` paths; they remain outside this program's staging and must be classified by the Notebook lane.
-- `HISTORY-STRUCTURED-RESULT2`: verified and entering its approved commit. New successful rows dual-write `resultDocument` and all legacy fields; stored documents are read first by replay, quick History, full History, copy, search, and Table restoration, while legacy-only or malformed/future extension rows fall back without reparsing LaTeX.
+- `HISTORY-STRUCTURED-RESULT2`: committed as `25e7af6b`. New successful rows dual-write `resultDocument` and all legacy fields; stored documents are read first by replay, quick History, full History, copy, search, and Table restoration, while legacy-only or malformed/future extension rows fall back without reparsing LaTeX.
 - Exact Table headers/rows and warnings are stored and restored directly without running the Table engine. Transient commit context and executable actions are excluded. Invalid or oversized documents preserve the full legacy row and add `unavailable`, `invalid`, or `over-size`; malformed new structured appends are rejected while load remains extension-preserving.
 - Browser evidence passes all nine workspaces with versioned result/replay payloads, visible title parity, exact Table row parity, current root/power presentation, legacy replay, reload, Calculator Memory, and save-failure warning coverage. Rust preserves the document verbatim across file-backed restart.
-- The live mixed tree now reports five Notebook-owned unclassified printer paths and seven Notebook-only lint errors in `templates.ts`; the History milestone's exact lint slice, build, TypeScript, 469 UI tests, 19 canaries, 50 Rust tests, and all scoped contracts pass.
+- At the History milestone checkpoint, the mixed tree reported five Notebook-owned unclassified printer paths and seven Notebook-only lint errors in `templates.ts`; the History milestone's exact lint slice, build, TypeScript, 469 UI tests, 19 canaries, 50 Rust tests, and all scoped contracts passed. Global lint is green at the later inversion-ratchet checkpoint; the five Notebook printer registrations remain separate.
+- `DISPLAY-CONTRACT-INVERSION-RATCHET1`: verified and entering its approved commit. A TypeScript compiler inventory records 575 producer boundaries and 753 direct consumer reads across declared ownership lanes with line-movement-stable source fingerprints.
+- The accepted pre-inversion producer surface is one native structured-History adapter call, two canonical-result-to-Display projection exits, 159 compatibility projections, 331 forwarders, and 82 control-only outcomes. All computational producer lanes remain at zero native documents, so later migrations cannot overclaim readiness.
+- The accepted consumer surface is 554 legacy reads, two canonical reads, 191 control reads, and six transient reads. Dynamic and rest reads fail closed; every `DisplayOutcome` field must remain explicitly classified. Curated golden expected outcomes are reference fixtures rather than live producers, while the golden execution adapter remains measured evidence.
+- Compatibility and legacy-read debt cannot rise by lane, native-document coverage cannot fall, and any fingerprint, registry, forwarder, or control-topology change requires an explicit `--accept --reason` baseline refresh. CI, Linux release, and relevant seam plans run the additive gate without skipping baseline evidence.
+- Focused inversion, seam, CI-alignment, result-contract, detail, result-intent, Display, golden, replay, TypeScript, build, lint, file-size, Surface, OOE, and compartment gates pass. The printer inventory remains red only on five concurrent Notebook-owned serializers outside this program's lane.
 
 ## Verification Contract
 

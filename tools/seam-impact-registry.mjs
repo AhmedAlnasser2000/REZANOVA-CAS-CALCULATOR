@@ -20,6 +20,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:result-contract'],
   },
   {
+    id: 'display-contract-inversion-ratchet',
+    label: 'Display producer and consumer inversion ratchet',
+    argv: ['npm', 'run', 'test:display-contract-inversion'],
+  },
+  {
     id: 'app-state-contracts',
     label: 'App-state and shared schema contracts',
     argv: ['npm', 'run', 'test:app-state-contracts'],
@@ -192,6 +197,7 @@ export const SEAM_REGISTRY = [
     ],
     additionalCommandIds: [
       'display-contracts',
+      'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
     ],
@@ -212,6 +218,7 @@ export const SEAM_REGISTRY = [
     additionalCommandIds: [
       'result-contracts',
       'display-contracts',
+      'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
     ],
     baselineEvidenceIds: [
@@ -267,6 +274,7 @@ export const SEAM_REGISTRY = [
       'display-contracts',
       'result-contracts',
       'app-state-contracts',
+      'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
       'clipboard-contracts',
@@ -306,6 +314,7 @@ export const SEAM_REGISTRY = [
       'display-contracts',
       'result-contracts',
       'app-state-contracts',
+      'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
     ],
