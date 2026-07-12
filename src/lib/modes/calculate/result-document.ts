@@ -4,6 +4,7 @@ import type {
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
   DisplayMathPayloadV1,
+  DisplayOutcome,
   PlannerBadge,
   ResultOrigin,
   TransformBadge,
@@ -12,6 +13,7 @@ import type {
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
+  deriveDisplayOutcomeFromCanonicalResult,
 } from '../../result-contract';
 
 export type CalculateResultDocumentInput = {
@@ -93,4 +95,27 @@ export function buildCalculateResultDocument(input: CalculateResultDocumentInput
         : {}),
     },
   });
+}
+
+type CalculateErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+
+export function createCalculateErrorResultOutcome(
+  input: Omit<CalculateErrorOutcome, 'canonicalResult'>,
+): CalculateErrorOutcome {
+  const canonicalResult = buildCalculateResultDocument({
+    outcomeKind: 'error',
+    title: input.title,
+    error: input.error,
+    exactLatex: input.exactLatex,
+    canonicalMath: input.canonicalMath,
+    supplements: input.exactSupplementLatex,
+    approxText: input.approxText,
+    detailSections: input.detailSections,
+    warnings: input.warnings,
+    plannerBadges: input.plannerBadges,
+    resolvedInputLatex: input.resolvedInputLatex,
+    transformSummaryText: input.transformSummaryText,
+    transformSummaryLatex: input.transformSummaryLatex,
+  });
+  return deriveDisplayOutcomeFromCanonicalResult(canonicalResult, input);
 }

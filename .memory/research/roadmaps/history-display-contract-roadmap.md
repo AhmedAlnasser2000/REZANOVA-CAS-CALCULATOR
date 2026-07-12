@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; canonical consumer authority is verified through Gate 18; `DISPLAY-CONTRACT-INVERSION1` is next; no push is authorized
+Status: active; canonical Display authority is verified through Gate 19; `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0` is next; no push is authorized
 
 ## Attribution
 
@@ -158,6 +158,12 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - Surface Protocol DTO shapes remain unchanged. Only the exact DTO mapper may cross the neutral result-consumer seam; host commands, mounting, History exposure, settings expansion, and OOE authority remain out of scope.
 - Full verification passes 532 unit files/3,687 tests and 67 UI files/482 tests. All 43 golden executions, all 100 replay fixtures, 24 setting probes, 19 runtime probes, 19 Chromium canaries, nine structured-History journeys, real Chromium clipboard capability, TypeScript, build, lint, Rust, file-size, CI, seam, Surface, OOE, and compartment gates pass.
 - Fresh all-nine structured-History screenshots were inspected. Restored titles, branches, details, exact Statistics/Linear Algebra math, and all three Table rows remain readable without malformed fragments, overlap, or clipping. Final contract inversion is next.
+- `DISPLAY-CONTRACT-INVERSION1`: verified for its approved commit. Every final workspace success and every math-bearing controlled error now passes one native-authority guard; prompts, worker cancellations, and stopped Table builds remain explicit control outcomes.
+- Producer adapters build validated canonical documents first and derive all compatibility values from those documents. Compatibility shape policy may retain an existing optional `undefined` property, route-proven `canonicalMath` presence, executable actions, and runtime advisories, but it cannot supply mathematical values.
+- Calculate now attaches a native document to controlled errors that reach its owner boundary. The inventory records 619 producer boundaries, 594 consumer reads, one legacy-History compatibility projection, 29 owner assemblies, 411 classified legacy reads, and 154 native-document paths. Every live computational producer lane remains at zero compatibility debt.
+- Inversion exposed one dormant Equation detail mismatch: typed parts rendered `Relation tested: p(x) > 0` while the unused legacy line carried a trailing period. The compatibility assertion now follows the already-visible typed rendering; no app-visible wording changed.
+- Full verification passes 532 unit files/3,688 tests and 67 UI files/481 tests. All 43 golden executions, all 100 replay fixtures, 76 workspace-runtime contracts, printer/detail/clipboard contracts, TypeScript, build, lint, file-size, CI, seam, Surface, OOE, compartments, and Rust pass.
+- Nineteen Chromium canaries, nine structured-History journeys, and two Linear Algebra dimension-contract journeys pass. Fresh all-nine success screenshots and three math-bearing Matrix/Vector error screenshots were inspected without malformed fragments, overlap, or clipping. Program closeout is next.
 
 ## Verification Contract
 

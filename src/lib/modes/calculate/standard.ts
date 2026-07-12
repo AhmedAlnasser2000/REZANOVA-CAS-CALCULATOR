@@ -15,6 +15,7 @@ import {
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import type { DisplayOutcome } from '../../../types/calculator';
 import { profileDomainDisplayMathPayload } from '../../display/printer';
+import { deriveDisplayOutcomeFromCanonicalResult } from '../../result-contract';
 import {
   applyCalculateStoredVariableSubstitutions,
   calculateSubstitutionPolicy,
@@ -254,9 +255,8 @@ export function runCalculateMode({
     },
   );
 
-  return {
-    ...outcome,
+  return deriveDisplayOutcomeFromCanonicalResult<Exclude<DisplayOutcome, { kind: 'prompt' }>>(
     canonicalResult,
-    ...(variableSubstitutions ? { variableSubstitutions } : {}),
-  };
+    outcome,
+  );
 }

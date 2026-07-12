@@ -18,7 +18,7 @@ import type {
 import { textDetailSection } from '../display/result/result-detail-lines';
 import { profileTableResult } from '../display/printer';
 import { createTableResultOutcome } from './table-result-document';
-import { requireNativeSuccessfulResult } from '../result-contract';
+import { requireCanonicalResultAuthority } from '../result-contract';
 
 export type RunTableModeRequest = {
   primaryLatex: string;
@@ -184,7 +184,7 @@ function buildTableModeResult(
   });
   return {
     response,
-    outcome: requireNativeSuccessfulResult(
+    outcome: requireCanonicalResultAuthority(
       createTableResultOutcome(outcome, response),
       'Table',
       { tableResponse: response },

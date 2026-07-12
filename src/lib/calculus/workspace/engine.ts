@@ -61,7 +61,7 @@ import {
 } from '../limit-variable-analysis';
 import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
-import { requireNativeSuccessfulResult } from '../../result-contract';
+import { requireCanonicalResultAuthority } from '../../result-contract';
 import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
@@ -636,5 +636,5 @@ export async function runCalculusWorkspaceMode(
       ? finalOutcome
       : createCalculusResultOutcome(finalOutcome)
     : finalOutcome;
-  return requireNativeSuccessfulResult(ownedOutcome, 'Calculus');
+  return requireCanonicalResultAuthority(ownedOutcome, 'Calculus');
 }

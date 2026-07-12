@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome, TableResponse } from '../../types/calculator';
 import {
+  deriveDisplayOutcomeFromCanonicalResult,
   projectCanonicalResultToDisplayOutcome,
   projectCanonicalResultToTableResponse,
   projectDisplayOutcomeToCanonicalResult,
@@ -204,6 +205,32 @@ describe('canonical result compatibility projections', () => {
       title: 'Domain',
       lines: ['x<0'],
       lineKind: 'math',
+    });
+  });
+
+  it('derives compatibility values from canonical truth while preserving transient and shape policy', () => {
+    const projected = projectDisplayOutcomeToCanonicalResult(richOutcome(), {
+      tableResponse: TABLE_RESPONSE,
+    });
+    expect(projected.ok).toBe(true);
+    if (!projected.ok) throw new Error(projected.failure.message);
+
+    const derived = deriveDisplayOutcomeFromCanonicalResult(projected.document, {
+      kind: 'success',
+      title: 'Stale title',
+      exactLatex: 'stale',
+      approxText: undefined,
+      actions: [{ kind: 'send', target: 'equation', latex: 'x=1' }],
+      runtimeAdvisories: { stopReason: { kind: 'range-guard', source: 'stage' } },
+    });
+
+    expect(derived.title).toBe(projected.document.title);
+    expect(derived.kind === 'success' ? derived.exactLatex : undefined)
+      .toBe(projected.document.primaryMath?.canonicalLatex);
+    expect(derived).toHaveProperty('approxText');
+    expect(derived.actions).toEqual([{ kind: 'send', target: 'equation', latex: 'x=1' }]);
+    expect(derived.runtimeAdvisories).toEqual({
+      stopReason: { kind: 'range-guard', source: 'stage' },
     });
   });
 

@@ -427,3 +427,33 @@
 
 - Surface DTO shape, OOE authority, capabilities, hosts, requests, cancellation/stale/commit policy, History tickets, mathematics, wording, and formatting remain unchanged.
 - Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
+
+## DISPLAY-CONTRACT-INVERSION1 Gate
+
+- Kind: `backend` final canonical authority inversion with mandatory `ui` no-drift evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass.
+
+### Contract Evidence
+
+- Every final success and math-bearing controlled error requires a validated native document with exact compatibility-projection parity. Plain prompts, worker cancellations, and stopped Table control outcomes remain outside result authority.
+- Producer adapters derive compatibility values from canonical truth. Existing optional `undefined` keys, route-proven `canonicalMath` presence, actions, and runtime advisories survive only as shape/transient policy.
+- Display inversion passes 20 tests with 619 producers, 594 reads, one legacy-History compatibility projection, 29 owner assemblies, 411 classified legacy reads, 154 native paths, and zero violations. Every live computational producer lane has zero compatibility debt.
+- Result contracts pass 38 tests across all 43 golden executions and 100 replay fixtures. Workspace runtime contracts pass 12 files/76 tests; printer inventory has 537 paths and zero fallbacks; all 453 detail producers remain declared; Clipboard contracts pass.
+- Full unit passes 532 files/3,688 tests. Full UI passes 67 files/481 tests. TypeScript, production build, global lint, file size, CI, seam, Surface, OOE, compartments, Rust check, and diff hygiene pass.
+
+### Discovery
+
+- Inversion exposed one dormant Equation detail mismatch: typed parts rendered `Relation tested: p(x) > 0`, while the unused compatibility line ended with a period. The assertion now follows the already-visible typed rendering, so compatibility is derived without changing the app.
+- Initial derivation omitted explicit `undefined` optional keys used by two Linear Algebra runtime tests. Shape preservation now restores those keys without accepting legacy values as mathematical authority.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.3 minutes. Structured History create/replay: 9/9 passed in 42.9 seconds.
+- Fresh all-nine History screenshots preserve workspace titles, answer cards, branches, details, exact Statistics/Linear Algebra math, and Table rows.
+- Linear Algebra dimension contracts pass 2/2. Three inspected math-bearing Matrix/Vector error screenshots preserve canonical input math, clear limit wording, and readable long-form layout without overlap or clipping.
+
+### Boundaries
+
+- Surface DTOs, OOE authority, capabilities, hosts, requests, cancellation/stale/commit rules, diagnostics, History tickets, mathematics, and visible wording remain unchanged.
+- Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.

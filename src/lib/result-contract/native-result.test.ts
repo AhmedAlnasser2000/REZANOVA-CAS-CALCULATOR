@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
 import { buildCanonicalResultDocumentFromProducer } from './producer';
-import { requireNativeSuccessfulResult } from './native-result';
+import {
+  isMathBearingControlledError,
+  requireCanonicalResultAuthority,
+} from './native-result';
 
-describe('successful result native authority', () => {
+describe('live result native authority', () => {
   it('retains a matching native success and rejects missing or stale authority', () => {
     const canonicalResult = buildCanonicalResultDocumentFromProducer({
       outcomeKind: 'success',
@@ -17,19 +20,19 @@ describe('successful result native authority', () => {
       canonicalResult,
     };
 
-    expect(requireNativeSuccessfulResult(native, 'Calculate')).toBe(native);
-    expect(() => requireNativeSuccessfulResult({
+    expect(requireCanonicalResultAuthority(native, 'Calculate')).toBe(native);
+    expect(() => requireCanonicalResultAuthority({
       kind: 'success',
       title: 'Calculate',
       warnings: [],
     }, 'Calculate')).toThrow('Calculate success is missing native canonical authority');
-    expect(() => requireNativeSuccessfulResult({
+    expect(() => requireCanonicalResultAuthority({
       ...native,
       exactSupplementLatex: ['x\\ne0'],
     }, 'Calculate')).toThrow('Calculate success is missing native canonical authority');
   });
 
-  it('leaves prompts and controlled errors outside the success requirement', () => {
+  it('requires native authority for math-bearing errors and leaves control outcomes separate', () => {
     const prompt: DisplayOutcome = {
       kind: 'prompt',
       title: 'Calculate',
@@ -38,14 +41,34 @@ describe('successful result native authority', () => {
       carryLatex: 'x=1',
       warnings: [],
     };
-    const error: DisplayOutcome = {
+    const controlError: DisplayOutcome = {
       kind: 'error',
       title: 'Table',
       error: 'Table build was stopped before it finished.',
       warnings: [],
     };
+    const mathError: DisplayOutcome = {
+      kind: 'error',
+      title: 'Boundary',
+      error: 'No real solution.',
+      exactLatex: 'x\\notin\\mathbb{R}',
+      warnings: [],
+    };
+    const canonicalResult = buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'error',
+      title: mathError.title,
+      error: mathError.error,
+      primaryMath: { canonicalLatex: mathError.exactLatex ?? '' },
+      warnings: [],
+    });
 
-    expect(requireNativeSuccessfulResult(prompt, 'Calculate')).toBe(prompt);
-    expect(requireNativeSuccessfulResult(error, 'Table')).toBe(error);
+    expect(isMathBearingControlledError(controlError)).toBe(false);
+    expect(isMathBearingControlledError(mathError)).toBe(true);
+    expect(requireCanonicalResultAuthority(prompt, 'Calculate')).toBe(prompt);
+    expect(requireCanonicalResultAuthority(controlError, 'Table')).toBe(controlError);
+    expect(() => requireCanonicalResultAuthority(mathError, 'Equation'))
+      .toThrow('Equation math-bearing error is missing native canonical authority');
+    expect(requireCanonicalResultAuthority({ ...mathError, canonicalResult }, 'Equation'))
+      .toMatchObject({ canonicalResult });
   });
 });

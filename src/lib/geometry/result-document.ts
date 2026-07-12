@@ -2,6 +2,7 @@ import type { DisplayOutcome } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
+  deriveDisplayOutcomeFromCanonicalResult,
 } from '../result-contract';
 
 type GeometrySuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -87,5 +88,8 @@ export function createGeometryResultOutcome(
     },
   });
 
-  return { ...input, canonicalResult };
+  return deriveDisplayOutcomeFromCanonicalResult<GeometryResultProducerOutcome>(
+    canonicalResult,
+    input,
+  );
 }

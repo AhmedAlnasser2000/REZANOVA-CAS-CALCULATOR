@@ -15,6 +15,7 @@ import {
   storedValueReadbackSections,
 } from '../../algebra/variable-memory';
 import type { DisplayOutcome } from '../../../types/calculator';
+import { deriveDisplayOutcomeFromCanonicalResult } from '../../result-contract';
 import { buildCalculateResultDocument } from './result-document';
 import type { RunCalculateAlgebraTransformRequest } from './types';
 
@@ -159,19 +160,21 @@ export function runCalculateAlgebraTransform({
   });
 
   return attachRuntimeEnvelope(
-    {
-      kind: 'success',
-      title,
-      exactLatex: result.exactLatex,
+    deriveDisplayOutcomeFromCanonicalResult<Extract<DisplayOutcome, { kind: 'success' }>>(
       canonicalResult,
-      exactSupplementLatex,
-      warnings: [],
-      detailSections,
-      resultOrigin: 'symbolic-engine',
-      transformBadges: result.transformBadges,
-      transformSummaryText: result.transformSummaryText,
-      transformSummaryLatex: result.transformSummaryLatex,
-    },
+      {
+        kind: 'success',
+        title,
+        exactLatex: result.exactLatex,
+        exactSupplementLatex,
+        warnings: [],
+        detailSections,
+        resultOrigin: 'symbolic-engine',
+        transformBadges: result.transformBadges,
+        transformSummaryText: result.transformSummaryText,
+        transformSummaryLatex: result.transformSummaryLatex,
+      },
+    ),
     {
       originalLatex: latex,
       resolvedLatex: planner.resolvedLatex,

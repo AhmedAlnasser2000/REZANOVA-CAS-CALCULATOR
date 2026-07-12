@@ -520,6 +520,34 @@ export function projectCanonicalResultToDisplayOutcome(
   };
 }
 
+export function deriveDisplayOutcomeFromCanonicalResult<
+  Outcome extends Exclude<DisplayOutcome, { kind: 'prompt' }>,
+>(
+  document: CanonicalResultDocumentV1,
+  compatibilityPolicy: Partial<Outcome>,
+): Outcome {
+  const projected = projectCanonicalResultToDisplayOutcome(document);
+  if (compatibilityPolicy.canonicalMath === undefined) {
+    delete projected.canonicalMath;
+  }
+  const derived = {
+    ...projected,
+    ...(compatibilityPolicy.actions !== undefined
+      ? { actions: compatibilityPolicy.actions }
+      : {}),
+    ...(compatibilityPolicy.runtimeAdvisories !== undefined
+      ? { runtimeAdvisories: compatibilityPolicy.runtimeAdvisories }
+      : {}),
+  } as Outcome;
+  const derivedRecord = derived as Record<string, unknown>;
+  for (const key of Object.keys(compatibilityPolicy)) {
+    if (compatibilityPolicy[key as keyof Outcome] === undefined && !(key in derivedRecord)) {
+      derivedRecord[key] = undefined;
+    }
+  }
+  return derived;
+}
+
 export function projectCanonicalResultToTableResponse(
   document: CanonicalResultDocumentV1,
 ): TableResponse | undefined {

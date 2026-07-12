@@ -377,3 +377,27 @@
 ### Next Step
 
 - Commit `CANONICAL-RESULT-CONSUMER-INVERSION1`, then make canonical documents authoritative for every live success and math-bearing controlled error in `DISPLAY-CONTRACT-INVERSION1`.
+
+## DISPLAY-CONTRACT-INVERSION1
+
+### Completed
+
+- Replaced success-only owner guards with native authority for every final success and math-bearing controlled error while retaining explicit prompt and OOE cancellation controls.
+- Made Equation, Calculus, Calculate, guided-domain, Table, Matrix, and Vector adapters derive compatibility values from validated canonical documents.
+- Added Calculate controlled-error documents and preserved route-proven payload presence, optional-field shape, actions, and runtime advisories without allowing them to supply mathematical values.
+- Ratcheted final producer/consumer inventories and corrected one stale compatibility-only Equation detail assertion to the already-visible typed rendering.
+
+### Measured Posture
+
+- Accepted inventory: 619 producers, 594 reads, one compatibility projection, 29 owner assemblies, 411 legacy reads, and 154 native paths. Live computational producer compatibility debt is zero.
+- Full unit/UI pass 532 files/3,688 tests and 67 files/481 tests. All golden/replay, runtime, printer/detail/clipboard, build/lint/Rust, and static gates pass.
+
+### Runtime And UI
+
+- Nineteen Chromium canaries and nine structured-History journeys pass.
+- Fresh all-nine success screenshots and three math-bearing Matrix/Vector controlled-error screenshots remain readable without malformed math, overlap, clipping, or visible drift.
+- Runtime hosts, capabilities, request shapes, OOE authority, History tickets, Surface DTOs, mathematics, and wording remain unchanged.
+
+### Next Step
+
+- Commit `DISPLAY-CONTRACT-INVERSION1`, then run the complete program closeout in `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0` without removing compatibility fields.

@@ -8,13 +8,14 @@ import {
   type CreateCalculateWorker,
 } from '../worker-clients/calculate-worker-client';
 import type { DisplayOutcome } from '../../../types/calculator';
-import { requireNativeSuccessfulResult } from '../../result-contract';
+import { requireCanonicalResultAuthority } from '../../result-contract';
 import {
   buildCalculateRuntimeOoeSnapshot,
   calculateCapabilityIdForRuntimeRequest,
 } from './ooe-snapshot';
 import { runCalculateMode } from './standard';
 import { runCalculateAlgebraTransform } from './transforms';
+import { createCalculateErrorResultOutcome } from './result-document';
 import type {
   RunCalculateAlgebraTransformRequest,
   RunCalculateModeRequest,
@@ -38,7 +39,10 @@ export function runCalculateRuntimeRequest(
       outcome = runCalculateAlgebraTransform(request.request);
       break;
   }
-  return requireNativeSuccessfulResult(outcome, 'Calculate');
+  const ownedOutcome = outcome.kind === 'error' && outcome.canonicalResult === undefined
+    ? createCalculateErrorResultOutcome(outcome)
+    : outcome;
+  return requireCanonicalResultAuthority(ownedOutcome, 'Calculate');
 }
 
 export async function runCalculateRuntimeWithOoePilot(

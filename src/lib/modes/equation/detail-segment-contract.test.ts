@@ -89,7 +89,7 @@ describe('Equation core detail-segment contract', () => {
       line.startsWith('Relation tested:')) ?? -1;
 
     expect(relationIndex).toBeGreaterThanOrEqual(0);
-    expect(inequalityRoute?.lines[relationIndex]).toBe('Relation tested: p(x) > 0.');
+    expect(inequalityRoute?.lines[relationIndex]).toBe('Relation tested: p(x) > 0');
     expect(inequalityRoute && detailLineIntentAt(inequalityRoute, relationIndex)).toBe('typed-parts');
 
     const complex = solveFactorableComplexPolynomial(

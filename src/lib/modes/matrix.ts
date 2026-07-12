@@ -13,7 +13,7 @@ import {
   type CreateMatrixWorker,
 } from './worker-clients/matrix-worker-client';
 import { createMatrixResultOutcome } from './matrix-result-document';
-import { requireNativeSuccessfulResult } from '../result-contract';
+import { requireCanonicalResultAuthority } from '../result-contract';
 import type {
   DisplayOutcome,
   ExactScalarWire,
@@ -246,7 +246,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): DisplayOutcome {
 
 export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
   const outcome = runMatrixModeOutcome(request);
-  return requireNativeSuccessfulResult(
+  return requireCanonicalResultAuthority(
     outcome.kind === 'prompt' ? outcome : createMatrixResultOutcome(outcome),
     'Matrix',
   );

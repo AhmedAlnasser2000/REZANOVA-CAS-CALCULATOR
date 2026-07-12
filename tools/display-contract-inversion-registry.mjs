@@ -199,7 +199,10 @@ export const CANONICAL_PROJECTION_REGISTRATIONS = [
     owner: 'canonical-result-contract',
     rationale: 'One validated adapter derives compatibility DisplayOutcome fields from a canonical result document.',
     matchers: exact('src/lib/result-contract/projection.ts'),
-    functions: ['projectCanonicalResultToDisplayOutcome'],
+    functions: [
+      'deriveDisplayOutcomeFromCanonicalResult',
+      'projectCanonicalResultToDisplayOutcome',
+    ],
   },
   {
     id: 'canonical-result-consumer-resolution-v1',
@@ -336,7 +339,9 @@ export const NATIVE_DOCUMENT_CALL_NAMES = new Set([
 ]);
 
 export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
+  'deriveDisplayOutcomeFromCanonicalResult',
   'createCalculusResultOutcome',
+  'createCalculateErrorResultOutcome',
   'createEquationResultOutcome',
   'createGeometryResultOutcome',
   'createMatrixResultOutcome',
@@ -344,10 +349,34 @@ export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
   'createTableResultOutcome',
   'createTrigonometryResultOutcome',
   'createVectorResultOutcome',
-  'requireNativeSuccessfulResult',
+  'requireCanonicalResultAuthority',
 ]);
 
 export const PRODUCER_INPUT_REGISTRATIONS = [
+  {
+    id: 'canonical-result-live-authority-input-v1',
+    owner: 'canonical-result-contract',
+    rationale: 'The final live-authority guard classifies math-bearing controlled errors and verifies native projection parity; these reads enforce authority rather than consume presentation fields.',
+    matchers: exact('src/lib/result-contract/native-result.ts'),
+    functions: [
+      'isMathBearingControlledError',
+      'requireCanonicalResultAuthority',
+    ],
+  },
+  {
+    id: 'canonical-result-display-derivation-input-v1',
+    owner: 'canonical-result-contract',
+    rationale: 'The canonical display derivation reads only compatibility presence policy and transient fields while deriving every mathematical value from the validated document.',
+    matchers: exact('src/lib/result-contract/projection.ts'),
+    functions: ['deriveDisplayOutcomeFromCanonicalResult'],
+  },
+  {
+    id: 'calculate-error-result-producer-input-v1',
+    owner: 'calculate-result-contract',
+    rationale: 'The Calculate error adapter reads typed controlled-stop evidence before deriving canonical truth and its compatibility projection.',
+    matchers: exact('src/lib/modes/calculate/result-document.ts'),
+    functions: ['createCalculateErrorResultOutcome'],
+  },
   {
     id: 'calculus-result-producer-input-v1',
     owner: 'calculus-result-contract',

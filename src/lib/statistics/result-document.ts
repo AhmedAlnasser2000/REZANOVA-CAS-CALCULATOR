@@ -2,6 +2,7 @@ import type { DisplayOutcome } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
+  deriveDisplayOutcomeFromCanonicalResult,
 } from '../result-contract';
 
 type StatisticsSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -87,5 +88,8 @@ export function createStatisticsResultOutcome(
     },
   });
 
-  return { ...input, canonicalResult };
+  return deriveDisplayOutcomeFromCanonicalResult<StatisticsResultProducerOutcome>(
+    canonicalResult,
+    input,
+  );
 }

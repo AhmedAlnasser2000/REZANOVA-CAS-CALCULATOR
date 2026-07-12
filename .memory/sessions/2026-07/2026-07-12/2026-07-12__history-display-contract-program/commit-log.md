@@ -159,8 +159,17 @@
 
 ## CANONICAL-RESULT-CONSUMER-INVERSION1
 
+- commit_hash: `93f56cbf`
 - commit_message: `CANONICAL-RESULT-CONSUMER-INVERSION1`
 - scope: neutral fail-closed result consumer, Clipboard/editor/Ans/workspace/History/print/replay/Surface migration, accepted inversion baseline, full regression/browser evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files
+
+## DISPLAY-CONTRACT-INVERSION1
+
+- commit_message: `DISPLAY-CONTRACT-INVERSION1`
+- scope: final success/math-bearing-error authority guard, canonical-derived compatibility output, Calculate controlled-error documents, accepted inversion baseline, full regression/browser evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files

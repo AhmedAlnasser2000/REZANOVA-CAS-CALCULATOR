@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "CANONICAL-RESULT-CONSUMER-INVERSION1 moves Display, Clipboard, Ans, editor transfer, workspace state, structured History, replay, print hygiene, and Surface DTO consumers to producer-owned canonical documents while preserving prompt controls and legacy History dual writes.",
-  "registryDigest": "f4154789429391a2e200",
+  "acceptedReason": "DISPLAY-CONTRACT-INVERSION1 makes validated canonical documents authoritative for every live success and math-bearing controlled error, derives compatibility values from canonical truth while preserving optional-field shape, and keeps prompts plus registered OOE cancellations as control outcomes.",
+  "registryDigest": "5698b6e6412b3ecbe7a2",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -21,7 +21,7 @@
     "calculate": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 3
+      "nativeDocument": 6
     },
     "calculus": {
       "compatibilityProjection": 0,
@@ -81,7 +81,7 @@
     "result-contract": {
       "compatibilityProjection": 0,
       "legacyRead": 80,
-      "nativeDocument": 0
+      "nativeDocument": 1
     },
     "statistics": {
       "compatibilityProjection": 0,
@@ -116,10 +116,10 @@
       ],
       "src/lib/calculus/workspace/engine.ts": [
         "d3423b3106cf5ac27634:1",
-        "9b1666039b57225c517f:1"
+        "65afd2d6e9a26cb45590:1"
       ],
       "src/lib/calculus/workspace/result-document.ts": [
-        "7deceff4c56c69341cbf:1"
+        "742e1e8fdf72d67c1daf:1"
       ],
       "src/lib/equation/composition/stage.ts": [
         "df332d2a9869a9eb8f0f:1",
@@ -199,27 +199,32 @@
         "e8544c155b347f77f9d2:1"
       ],
       "src/lib/equation/solve-result/producer.ts": [
-        "aa7c78712ea77fa1e39c:1"
+        "3f9e73631084dfd4dafb:1"
       ],
       "src/lib/equation/target/surface.ts": [
         "eecf7c3b9563761ba5dd:1",
         "9aab7846312e7cf6160c:1"
       ],
       "src/lib/geometry/result-document.ts": [
-        "f980cd0168646f72e051:1"
+        "2f25f9250244efd23832:1"
       ],
       "src/lib/geometry/runtime-run.ts": [
-        "55e6dfbd8f6cabcb805d:1",
+        "dab6958a2a206493a9ac:1",
         "cfef16f4ba56c3e35ec4:1"
       ],
+      "src/lib/modes/calculate/result-document.ts": [
+        "a37e23c446896b5ad16a:1"
+      ],
       "src/lib/modes/calculate/runtime.ts": [
-        "771f164721b2e5d24f16:1"
+        "552873394d37356bb012:1",
+        "c1abe668ab60e4b219cd:1"
       ],
       "src/lib/modes/calculate/standard.ts": [
-        "7e96ac33b94ae918912d:1"
+        "6eaf52646ca37decb2c1:1"
       ],
       "src/lib/modes/calculate/transforms.ts": [
-        "8aa01521b9ea6206b81a:1"
+        "84e120817f7a94ed7f82:1",
+        "a5935b6ce61d0bcad072:1"
       ],
       "src/lib/modes/equation/complex-abs-boundary.ts": [
         "77c670037f44cede1493:1"
@@ -344,39 +349,42 @@
         "48c5c356a08c2e788f35:1"
       ],
       "src/lib/modes/matrix-result-document.ts": [
-        "6e6008d1b6c3c57e7b95:1"
+        "5b85802fa5e4a06a4593:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "271bc24bb943e19a94db:1",
+        "9156e48df70ba77207e8:1",
         "df438a19396eda15a2e5:1"
       ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
-        "a0e9910d4c35d95fa8ce:1",
+        "35721bcaa7cb18ee70bd:1",
         "5596fa01d9903a06a317:2"
       ],
       "src/lib/modes/table-result-document.ts": [
-        "b2fd87e7d1c481b5f90d:1"
+        "e469ea41a47c83a31862:1"
       ],
       "src/lib/modes/vector-result-document.ts": [
-        "232d96a92419bf302444:1"
+        "39b7ad54b33d16bd6af6:1"
       ],
       "src/lib/modes/vector.ts": [
-        "36cd0397d65764699573:1",
+        "1781bedd66f05cb91171:1",
         "4a64247ba7f8be36af3f:1"
       ],
+      "src/lib/result-contract/projection.ts": [
+        "b845e5a0379f98960e45:1"
+      ],
       "src/lib/statistics/result-document.ts": [
-        "22161a254a67642b0931:1"
+        "438c5c3707f4f8780809:1"
       ],
       "src/lib/statistics/runtime-run.ts": [
-        "194d285648f9125af57a:1",
+        "ba495893a95fea5ab417:1",
         "3ed4bc9878d98105cb56:1"
       ],
       "src/lib/trigonometry/result-document.ts": [
-        "9144cfbff36e2fc364ab:1"
+        "63a95d91ed4002597d26:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
-        "8c6a7bc4dcd2bc5cd975:1",
+        "e0c4e9a7c6dddbdbfba9:1",
         "c5ea9b6510259df12ebf:1"
       ]
     },
@@ -386,7 +394,8 @@
       ],
       "src/lib/result-contract/projection.ts": [
         "11c19875e55f29584268:1",
-        "b81db50f2f3f5ab9190c:1"
+        "b81db50f2f3f5ab9190c:1",
+        "c1fa2a7926c2a4c2cb67:1"
       ]
     },
     "compatibility-projection": {
@@ -874,8 +883,11 @@
         "bb0a529baf1786afa5c3:1"
       ],
       "src/lib/result-contract/native-result.ts": [
-        "5f6bde993466d1c952a6:1",
-        "5f6bde993466d1c952a6:2"
+        "5a7a7d43d6a568b84bb7:1",
+        "5a7a7d43d6a568b84bb7:2"
+      ],
+      "src/lib/result-contract/projection.ts": [
+        "776ae81dba1d5b0b967b:1"
       ],
       "src/lib/statistics/core.ts": [
         "56b38bafc5b300e35c2f:1",
@@ -1073,6 +1085,9 @@
       "src/lib/equation/target/surface.ts": [
         "d88da38fa175a9b5d055:1",
         "c4b6471fafa084efc4a6:1"
+      ],
+      "src/lib/modes/calculate/runtime.ts": [
+        "5c03653cec698262502c:1"
       ],
       "src/lib/modes/equation/outcomes.ts": [
         "65f068ad14a024accd01:1",
@@ -1751,6 +1766,9 @@
         "221cd8b6eed3a565e8f4:1",
         "080a5cab3fb14d945a20:1"
       ],
+      "src/lib/modes/calculate/runtime.ts": [
+        "bf0fb2a101e4956a0eee:1"
+      ],
       "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
         "a28bddf414f72a60d2fc:1",
         "9be980fc146a88da3021:1",
@@ -1836,9 +1854,6 @@
       ],
       "src/lib/result-contract/consumer.ts": [
         "a8a5fbbcf92bd3e5fbef:1"
-      ],
-      "src/lib/result-contract/native-result.ts": [
-        "fccbce851ea2e7b82617:1"
       ],
       "src/lib/result-contract/projection.ts": [
         "e25ca208b5c003f1b0a8:1",

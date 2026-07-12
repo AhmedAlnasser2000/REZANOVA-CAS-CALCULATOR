@@ -4,7 +4,7 @@ import type {
   StatisticsScreen,
 } from '../../types/calculator';
 import { runStatisticsCoreDraft } from './core';
-import { requireNativeSuccessfulResult } from '../result-contract';
+import { requireCanonicalResultAuthority } from '../result-contract';
 import { statisticsRequestToScreen } from './parser';
 import { createStatisticsResultOutcome } from './result-document';
 import { statisticsRequestToWorkingSource } from './shared';
@@ -32,7 +32,7 @@ export function buildStatisticsModeRunPayload(
       ?? request.workingSourceHint
     : request.workingSourceHint;
 
-  const ownedOutcome = requireNativeSuccessfulResult(outcome.kind === 'prompt'
+  const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
     ? outcome
     : createStatisticsResultOutcome(outcome), 'Statistics');
 

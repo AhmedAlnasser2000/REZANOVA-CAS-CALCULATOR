@@ -12,7 +12,7 @@ import {
   type CreateVectorWorker,
 } from './worker-clients/vector-worker-client';
 import { createVectorResultOutcome } from './vector-result-document';
-import { requireNativeSuccessfulResult } from '../result-contract';
+import { requireCanonicalResultAuthority } from '../result-contract';
 import type {
   AngleUnit,
   DisplayOutcome,
@@ -156,7 +156,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest): DisplayOutcome {
 
 export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
   const outcome = runVectorModeOutcome(request);
-  return requireNativeSuccessfulResult(
+  return requireCanonicalResultAuthority(
     outcome.kind === 'prompt' ? outcome : createVectorResultOutcome(outcome),
     'Vector',
   );
