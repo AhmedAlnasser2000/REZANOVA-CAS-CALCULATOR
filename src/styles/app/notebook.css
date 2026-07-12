@@ -45,7 +45,7 @@
 .notebook-outline {
   grid-area: outline;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
 }
 
 .notebook-inspector {
@@ -121,6 +121,39 @@
   font-weight: 800;
 }
 
+.notebook-outline-heading > button {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  border: 1px solid var(--notebook-border);
+  border-radius: 6px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--page-muted);
+}
+
+.notebook-outline-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 6px;
+  padding: 0 9px;
+  background: rgba(2, 11, 12, 0.48);
+  color: var(--page-subtle);
+}
+
+.notebook-outline-search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  padding: 8px 0;
+  background: transparent;
+  color: var(--page-ink);
+}
+
 .notebook-outline-list {
   min-height: 0;
   display: grid;
@@ -130,6 +163,142 @@
   overflow: auto;
   scrollbar-gutter: stable;
 }
+
+.notebook-outline-entry {
+  --outline-offset: calc(min(var(--notebook-outline-depth), 4) * 16px);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  min-height: 46px;
+  margin-left: var(--outline-offset);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.notebook-outline-entry::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  bottom: -7px;
+  left: -9px;
+  width: 1px;
+  background: rgba(184, 212, 156, 0.18);
+}
+
+.notebook-outline-entry.is-section {
+  border-color: rgba(184, 212, 156, 0.19);
+  background: rgba(184, 212, 156, 0.055);
+}
+
+.notebook-outline-entry.is-active {
+  border-color: var(--notebook-border-strong);
+  background: rgba(184, 212, 156, 0.18);
+  box-shadow: inset 3px 0 0 var(--notebook-accent);
+}
+
+.notebook-outline-entry.is-drop-before::after,
+.notebook-outline-entry.is-drop-after::after {
+  content: '';
+  position: absolute;
+  right: 4px;
+  left: 4px;
+  height: 2px;
+  background: var(--notebook-accent);
+}
+
+.notebook-outline-entry.is-drop-before::after { top: -3px; }
+.notebook-outline-entry.is-drop-after::after { bottom: -3px; }
+
+.notebook-outline-entry.is-drop-inside {
+  outline: 2px solid var(--notebook-accent);
+  outline-offset: 1px;
+}
+
+.notebook-outline-collapse,
+.notebook-outline-entry-actions > button {
+  display: inline-grid !important;
+  place-items: center;
+  min-height: 28px !important;
+  width: 28px;
+  border: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--page-muted);
+}
+
+.notebook-outline-entry-main {
+  min-width: 0;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 6px !important;
+  min-height: 44px !important;
+  border: 0 !important;
+  padding: 6px 4px !important;
+  background: transparent !important;
+  text-align: left;
+}
+
+.notebook-outline-entry-copy input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 4px;
+  padding: 4px 6px;
+  background: rgba(2, 10, 11, 0.8);
+  color: var(--page-ink);
+}
+
+.notebook-outline-count {
+  color: var(--page-accent);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.notebook-outline-entry-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notebook-outline-entry-actions > button:first-child,
+.notebook-outline-entry-actions > button:nth-child(2) {
+  width: 24px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.notebook-outline-menu {
+  position: absolute;
+  z-index: 24;
+  top: 34px;
+  right: 0;
+  width: 240px;
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 7px;
+  padding: 6px;
+  background: #102021;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42);
+}
+
+.notebook-outline-menu button {
+  min-height: 34px !important;
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  gap: 8px !important;
+  border: 0 !important;
+  padding: 7px 8px !important;
+  background: transparent !important;
+}
+
+.notebook-outline-menu button:hover {
+  background: rgba(184, 212, 156, 0.12) !important;
+}
+
+.notebook-outline-menu button.is-danger { color: #f0aaa0; }
 
 .notebook-outline-list button,
 .notebook-add-actions button,

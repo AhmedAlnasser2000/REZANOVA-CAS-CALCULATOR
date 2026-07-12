@@ -153,6 +153,17 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
   if (node.type === 'horizontalRule') {
     return { type: 'horizontalRule', attrs: { id: node.id } };
   }
+  if (node.type === 'section') {
+    return {
+      type: 'notebookSection',
+      attrs: {
+        id: node.id,
+        title: node.title,
+        collapsed: node.collapsed ?? false,
+      },
+      content: node.content.map(blockToTiptap),
+    };
+  }
   if ('variant' in node) {
     return {
       type: 'semanticBlock',
@@ -278,6 +289,20 @@ function blockFromTiptap(
   }
   if (node.type === 'horizontalRule') {
     return { type: 'horizontalRule', id };
+  }
+  if (node.type === 'notebookSection') {
+    const content = node.content
+      ?.map((child) => blockFromTiptap(child, nextId))
+      .filter((child): child is NotebookRichBlockNode => Boolean(child));
+    return {
+      type: 'section',
+      id,
+      title: stringAttr(node, 'title', 'Untitled section'),
+      ...(booleanAttr(node, 'collapsed') ? { collapsed: true } : {}),
+      content: content?.length
+        ? content
+        : [{ type: 'paragraph', id: nextId('paragraph') }],
+    };
   }
   if (node.type === 'bulletList' || node.type === 'orderedList') {
     const items = node.content

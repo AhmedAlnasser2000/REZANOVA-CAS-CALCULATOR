@@ -156,6 +156,71 @@
   outline-offset: 2px;
 }
 
+.notebook-section {
+  overflow: hidden;
+  border: 1px solid rgba(184, 212, 156, 0.22);
+  border-radius: 8px;
+  background: rgba(184, 212, 156, 0.025);
+}
+
+.notebook-section > header {
+  display: grid;
+  grid-template-columns: auto auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--notebook-border);
+  padding: 7px 9px;
+  background: rgba(184, 212, 156, 0.09);
+}
+
+.notebook-section > header button,
+.notebook-section-drag {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 5px;
+  padding: 0;
+  background: transparent;
+  color: var(--page-muted);
+}
+
+.notebook-section-drag { cursor: grab; }
+
+.notebook-section > header input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  padding: 4px 6px;
+  background: transparent;
+  color: var(--page-ink);
+  font: 800 1rem 'Fira Sans Condensed', sans-serif;
+}
+
+.notebook-section > header input:focus {
+  outline: 1px solid var(--notebook-border-strong);
+  background: rgba(2, 10, 11, 0.5);
+}
+
+.notebook-section > header small {
+  color: var(--page-subtle);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+}
+
+.notebook-section-content {
+  min-height: 52px;
+  padding: 14px 16px 2px;
+}
+
+.notebook-section.is-collapsed > header { border-bottom: 0; }
+.notebook-section.is-collapsed .notebook-section-content { display: none; }
+
+.notebook-section .notebook-section {
+  margin-left: 10px;
+}
+
 .notebook-rich-inline-math {
   display: inline-flex;
   max-width: min(100%, 520px);

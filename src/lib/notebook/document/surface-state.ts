@@ -4,9 +4,11 @@ import {
   type NotebookRichSurfaceState,
 } from '../types';
 import { migrateNotebookDocumentV1 } from './migrate-v1';
+import { migrateNotebookDocumentV2 } from './migrate-v2';
 import {
   createNotebookRichDocument,
   isNotebookRichDocument,
+  isNotebookRichDocumentV2,
   type NotebookRichFactoryOptions,
 } from './model';
 
@@ -46,6 +48,12 @@ export function notebookRichSurfaceStateFromSlot(
       return {
         kind: NOTEBOOK_SURFACE_STATE_KIND,
         document: migrateNotebookDocumentV1(value.document),
+      };
+    }
+    if (isNotebookRichDocumentV2(value.document)) {
+      return {
+        kind: NOTEBOOK_SURFACE_STATE_KIND,
+        document: migrateNotebookDocumentV2(value.document),
       };
     }
   }

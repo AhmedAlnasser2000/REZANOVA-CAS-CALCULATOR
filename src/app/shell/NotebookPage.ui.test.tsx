@@ -279,4 +279,49 @@ describe('NotebookPage', () => {
       expect(getNotebookNodeViewRenderStats().totalRenders).toBeLessThanOrEqual(4);
     });
   });
+
+  it('creates, nests, renames, and collapses visible document sections', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+
+    await user.click(screen.getByRole('button', { name: 'Add top-level section' }));
+    let sectionEntries = screen.getAllByTestId('notebook-outline-entry')
+      .filter((entry) => entry.dataset.outlineKind === 'section');
+    expect(sectionEntries).toHaveLength(1);
+    expect(screen.getAllByTestId('notebook-section')).toHaveLength(1);
+
+    await user.click(within(sectionEntries[0]!).getByRole('button', { name: /actions/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Add subsection' }));
+    sectionEntries = screen.getAllByTestId('notebook-outline-entry')
+      .filter((entry) => entry.dataset.outlineKind === 'section');
+    expect(sectionEntries).toHaveLength(2);
+    expect(sectionEntries[1]).toHaveAttribute('data-outline-depth', '1');
+
+    const transfer = new Map<string, string>();
+    const dataTransfer = {
+      dropEffect: 'none',
+      effectAllowed: 'all',
+      getData: (type: string) => transfer.get(type) ?? '',
+      setData: (type: string, value: string) => transfer.set(type, value),
+    };
+    fireEvent.dragStart(sectionEntries[0]!, { dataTransfer });
+    fireEvent.dragOver(sectionEntries[1]!, { dataTransfer, clientX: 100 });
+    fireEvent.drop(sectionEntries[1]!, { dataTransfer, clientX: 100 });
+    sectionEntries = screen.getAllByTestId('notebook-outline-entry')
+      .filter((entry) => entry.dataset.outlineKind === 'section');
+    expect(sectionEntries[0]).toHaveAttribute('data-outline-depth', '0');
+    expect(sectionEntries[1]).toHaveAttribute('data-outline-depth', '1');
+
+    await user.click(within(sectionEntries[1]!).getByRole('button', { name: /actions/ }));
+    await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
+    const rename = screen.getByRole('textbox', { name: 'Rename section' });
+    await user.clear(rename);
+    await user.type(rename, 'Worked examples{Enter}');
+    expect(screen.getByText('Worked examples')).toBeInTheDocument();
+
+    const outline = screen.getByLabelText('Notebook outline');
+    await user.click(within(outline).getByRole('button', { name: 'Collapse Untitled section' }));
+    expect(screen.queryByText('Worked examples')).not.toBeInTheDocument();
+    expect(within(outline).getByRole('button', { name: 'Expand Untitled section' })).toBeInTheDocument();
+  });
 });

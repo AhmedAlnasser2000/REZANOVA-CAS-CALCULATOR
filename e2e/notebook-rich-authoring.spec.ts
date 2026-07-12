@@ -9,6 +9,13 @@ async function openWorkedExample(page: Page) {
   await expect(page.getByLabel('Notebook rich document')).toBeVisible();
 }
 
+async function openBlankNotebook(page: Page) {
+  await page.goto('/');
+  await page.getByTestId('workspace-tab-add-menu').click();
+  await page.getByRole('menuitem', { name: 'New Notebook' }).click();
+  await expect(page.getByLabel('Notebook rich document')).toBeVisible();
+}
+
 async function expectKeyboardClearance(page: Page) {
   const field = page.locator('.notebook-rich-display-field').first();
   await field.click();
@@ -74,6 +81,31 @@ test('Notebook preserves a dominant canvas and clear keyboard at drawer width', 
   await expectKeyboardClearance(page);
 
   await test.info().attach('notebook-drawer-keyboard', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+});
+
+test('Notebook renders recursive sections in the outline and document canvas', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openBlankNotebook(page);
+
+  await page.getByRole('button', { name: 'Add top-level section' }).click();
+  const outlineSections = page.locator('[data-outline-kind="section"]');
+  await expect(outlineSections).toHaveCount(1);
+  await outlineSections.first().getByRole('button', { name: /actions/ }).click();
+  await page.getByRole('menuitem', { name: 'Add subsection' }).click();
+
+  await expect(outlineSections).toHaveCount(2);
+  await expect(outlineSections.nth(1)).toHaveAttribute('data-outline-depth', '1');
+  await expect(page.getByTestId('notebook-section')).toHaveCount(2);
+
+  const outline = page.getByRole('complementary', { name: 'Notebook outline' });
+  await outlineSections.first().getByRole('button', { name: 'Collapse Untitled section' }).click();
+  await expect(outlineSections).toHaveCount(1);
+  await expect(page.getByTestId('notebook-section').first()).toHaveClass(/is-collapsed/);
+
+  await test.info().attach('notebook-nested-section-hierarchy', {
     body: await page.screenshot(),
     contentType: 'image/png',
   });

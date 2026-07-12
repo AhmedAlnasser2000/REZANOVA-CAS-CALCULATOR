@@ -46,8 +46,13 @@ export function notebookSemanticTitle(
 export type NotebookOutlineEntry = {
   id: string;
   label: string;
-  nodeType: 'heading' | 'semanticBlock';
+  nodeType: 'heading' | 'semanticBlock' | 'section';
   semanticKind?: NotebookSemanticKind;
+  parentId: string | null;
+  depth: number;
+  path: string[];
+  childCount: number;
+  collapsed: boolean;
   topLevelIndex: number;
 };
 
@@ -63,24 +68,73 @@ function inlineText(node: NotebookRichBlockNode) {
 export function buildNotebookOutline(
   nodes: readonly NotebookRichBlockNode[],
 ): NotebookOutlineEntry[] {
-  return nodes.flatMap((node, topLevelIndex): NotebookOutlineEntry[] => {
-    if (node.type === 'heading') {
-      return [{
-        id: node.id,
-        label: inlineText(node).trim() || 'Untitled section',
-        nodeType: 'heading',
-        topLevelIndex,
-      }];
-    }
-    if (node.type === 'semanticBlock') {
-      return [{
-        id: node.id,
-        label: notebookSemanticTitle(node.variant, node.number, node.label),
-        nodeType: 'semanticBlock',
-        semanticKind: node.variant,
-        topLevelIndex,
-      }];
-    }
-    return [];
-  });
+  const entries: NotebookOutlineEntry[] = [];
+
+  function visit(
+    children: readonly NotebookRichBlockNode[],
+    parentId: string | null,
+    depth: number,
+    path: string[],
+    topLevelIndex: number,
+  ) {
+    children.forEach((node, index) => {
+      const rootIndex = depth === 0 ? index : topLevelIndex;
+      if (node.type === 'section') {
+        const label = node.title.trim() || 'Untitled section';
+        const entry: NotebookOutlineEntry = {
+          id: node.id,
+          label,
+          nodeType: 'section',
+          parentId,
+          depth,
+          path: [...path, label],
+          childCount: node.content.length,
+          collapsed: node.collapsed === true,
+          topLevelIndex: rootIndex,
+        };
+        entries.push(entry);
+        visit(node.content, node.id, depth + 1, entry.path, rootIndex);
+        return;
+      }
+      if (node.type === 'heading') {
+        const label = inlineText(node).trim() || 'Untitled heading';
+        entries.push({
+          id: node.id,
+          label,
+          nodeType: 'heading',
+          parentId,
+          depth,
+          path: [...path, label],
+          childCount: 0,
+          collapsed: false,
+          topLevelIndex: rootIndex,
+        });
+        return;
+      }
+      if (node.type === 'semanticBlock') {
+        const label = notebookSemanticTitle(node.variant, node.number, node.label);
+        const entry: NotebookOutlineEntry = {
+          id: node.id,
+          label,
+          nodeType: 'semanticBlock',
+          semanticKind: node.variant,
+          parentId,
+          depth,
+          path: [...path, label],
+          childCount: node.content.length,
+          collapsed: node.collapsed === true,
+          topLevelIndex: rootIndex,
+        };
+        entries.push(entry);
+        visit(node.content, node.id, depth + 1, entry.path, rootIndex);
+        return;
+      }
+      if (node.type === 'bulletList' || node.type === 'orderedList') {
+        node.content.forEach((item) => visit(item.content, parentId, depth, path, rootIndex));
+      }
+    });
+  }
+
+  visit(nodes, null, 0, [], 0);
+  return entries;
 }

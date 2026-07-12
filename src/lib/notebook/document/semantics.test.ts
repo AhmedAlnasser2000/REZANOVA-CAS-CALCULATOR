@@ -28,7 +28,7 @@ describe('Notebook academic semantics', () => {
     expect(notebookSemanticDefinition('theorem').tone).toBe('concept');
   });
 
-  it('builds a stable top-level outline from headings and academic containers', () => {
+  it('builds a stable recursive outline from sections, headings, and academic containers', () => {
     expect(buildNotebookOutline([
       {
         type: 'heading',
@@ -38,25 +38,52 @@ describe('Notebook academic semantics', () => {
       },
       { type: 'paragraph', id: 'paragraph.1' },
       {
-        type: 'semanticBlock',
-        id: 'theorem.1',
-        variant: 'theorem',
-        number: '2.3.2',
-        label: 'Limit Laws',
-        content: [{ type: 'paragraph', id: 'paragraph.2' }],
+        type: 'section',
+        id: 'section.1',
+        title: 'Applications',
+        collapsed: true,
+        content: [{
+          type: 'semanticBlock',
+          id: 'theorem.1',
+          variant: 'theorem',
+          number: '2.3.2',
+          label: 'Limit Laws',
+          content: [{ type: 'paragraph', id: 'paragraph.2' }],
+        }],
       },
     ])).toEqual([
       {
         id: 'heading.1',
         label: 'Limit Laws',
         nodeType: 'heading',
+        parentId: null,
+        depth: 0,
+        path: ['Limit Laws'],
+        childCount: 0,
+        collapsed: false,
         topLevelIndex: 0,
+      },
+      {
+        id: 'section.1',
+        label: 'Applications',
+        nodeType: 'section',
+        parentId: null,
+        depth: 0,
+        path: ['Applications'],
+        childCount: 1,
+        collapsed: true,
+        topLevelIndex: 2,
       },
       {
         id: 'theorem.1',
         label: 'Theorem 2.3.2 Limit Laws',
         nodeType: 'semanticBlock',
         semanticKind: 'theorem',
+        parentId: 'section.1',
+        depth: 1,
+        path: ['Applications', 'Theorem 2.3.2 Limit Laws'],
+        childCount: 1,
+        collapsed: false,
         topLevelIndex: 2,
       },
     ]);

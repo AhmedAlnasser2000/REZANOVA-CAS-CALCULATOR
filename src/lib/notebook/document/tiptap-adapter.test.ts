@@ -10,7 +10,7 @@ import type { NotebookRichDocument } from './types';
 const NOW = () => new Date('2026-07-12T02:00:00.000Z');
 
 describe('Notebook Tiptap adapter', () => {
-  it('round-trips app-owned prose, marks, math, lists, and semantic nodes', () => {
+  it('round-trips app-owned prose, math, semantic nodes, and nested sections', () => {
     const base = createNotebookRichDocument({ idPrefix: 'roundtrip', now: NOW });
     const document: NotebookRichDocument = {
       ...base,
@@ -38,14 +38,20 @@ describe('Notebook Tiptap adapter', () => {
           workspaceTarget: 'calculus',
         },
         {
-          type: 'semanticBlock',
-          id: 'semantic.1',
-          variant: 'theorem',
-          label: 'Limit Laws',
+          type: 'section',
+          id: 'section.1',
+          title: 'Theorems',
+          collapsed: true,
           content: [{
-            type: 'paragraph',
-            id: 'paragraph.2',
-            content: [{ type: 'text', text: 'The sum law holds.' }],
+            type: 'semanticBlock',
+            id: 'semantic.1',
+            variant: 'theorem',
+            label: 'Limit Laws',
+            content: [{
+              type: 'paragraph',
+              id: 'paragraph.2',
+              content: [{ type: 'text', text: 'The sum law holds.' }],
+            }],
           }],
         },
       ],

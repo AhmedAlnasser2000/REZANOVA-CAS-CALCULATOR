@@ -1,6 +1,6 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 2 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 3 as const;
 
 export type NotebookRichDocumentVersion = typeof NOTEBOOK_RICH_DOCUMENT_VERSION;
 export type NotebookSemanticKind =
@@ -99,6 +99,14 @@ export type NotebookSemanticNode = {
   content: NotebookRichBlockNode[];
 };
 
+export type NotebookSectionNode = {
+  type: 'section';
+  id: string;
+  title: string;
+  collapsed?: boolean;
+  content: NotebookRichBlockNode[];
+};
+
 export type NotebookRichBlockNode =
   | NotebookParagraphNode
   | NotebookHeadingNode
@@ -106,7 +114,8 @@ export type NotebookRichBlockNode =
   | NotebookEvidenceNode
   | NotebookDividerNode
   | NotebookListNode
-  | NotebookSemanticNode;
+  | NotebookSemanticNode
+  | NotebookSectionNode;
 
 export type NotebookRichDocument = {
   version: NotebookRichDocumentVersion;
@@ -116,6 +125,10 @@ export type NotebookRichDocument = {
   updatedAt: string;
   selectedNodeId: string | null;
   content: NotebookRichBlockNode[];
+};
+
+export type NotebookRichDocumentV2 = Omit<NotebookRichDocument, 'version'> & {
+  version: 2;
 };
 
 export type NotebookDocumentSummary = {

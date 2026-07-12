@@ -11,7 +11,7 @@ import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 2 document with an empty starter paragraph', () => {
+  it('creates an app-owned version 3 document with an empty starter paragraph', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -26,13 +26,19 @@ describe('Notebook rich document model', () => {
     expect(isNotebookRichDocument(JSON.parse(JSON.stringify(document)))).toBe(true);
   });
 
-  it('counts nested semantic and list content for document summaries', () => {
+  it('counts nested sections, semantic blocks, and list content for summaries', () => {
     const document = createNotebookRichDocument({ now: fixedNow });
     document.content = [{
-      type: 'semanticBlock',
-      id: 'theorem.1',
-      variant: 'theorem',
-      content: [{ type: 'paragraph', id: 'paragraph.1' }],
+      type: 'section',
+      id: 'section.1',
+      title: 'Limit Laws',
+      collapsed: true,
+      content: [{
+        type: 'semanticBlock',
+        id: 'theorem.1',
+        variant: 'theorem',
+        content: [{ type: 'paragraph', id: 'paragraph.1' }],
+      }],
     }, {
       type: 'bulletList',
       id: 'list.1',
@@ -43,10 +49,10 @@ describe('Notebook rich document model', () => {
       }],
     }];
 
-    expect(countNotebookBlocks(document.content)).toBe(4);
+    expect(countNotebookBlocks(document.content)).toBe(5);
     expect(summarizeNotebookDocument(document)).toMatchObject({
       id: document.id,
-      blockCount: 4,
+      blockCount: 5,
       title: 'Untitled Notebook',
     });
   });

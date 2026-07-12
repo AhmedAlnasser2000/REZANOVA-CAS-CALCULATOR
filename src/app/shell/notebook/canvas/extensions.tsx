@@ -13,6 +13,7 @@ import {
   type NotebookOpenMathHandler,
 } from './NotebookMathNodeView';
 import { NotebookSemanticNodeView } from './NotebookSemanticNodeView';
+import { NotebookSectionNodeView } from './NotebookSectionNodeView';
 
 const ID_NODE_TYPES = new Set([
   'paragraph',
@@ -25,6 +26,7 @@ const ID_NODE_TYPES = new Set([
   'displayMath',
   'evidenceSnapshot',
   'semanticBlock',
+  'notebookSection',
 ]);
 
 function nodeIdFactory() {
@@ -208,6 +210,42 @@ const SemanticBlock = Node.create({
   },
 });
 
+const NotebookSection = Node.create({
+  name: 'notebookSection',
+  group: 'block',
+  content: 'block+',
+  defining: true,
+  isolating: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      title: { default: 'Untitled section' },
+      collapsed: { default: false },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'section[data-notebook-section]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'section',
+      mergeAttributes(HTMLAttributes, {
+        'data-notebook-section': '',
+        class: 'notebook-section',
+      }),
+      ['div', { class: 'notebook-section-content' }, 0],
+    ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(NotebookSectionNodeView);
+  },
+});
+
 export function createNotebookExtensions(
   onOpenMathInTool: NotebookOpenMathHandler,
 ) {
@@ -234,5 +272,6 @@ export function createNotebookExtensions(
     }),
     EvidenceSnapshot,
     SemanticBlock,
+    NotebookSection,
   ];
 }

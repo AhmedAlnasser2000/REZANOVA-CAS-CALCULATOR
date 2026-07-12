@@ -191,6 +191,36 @@ export function insertNotebookSemanticBlock(
   }).run();
 }
 
+export function insertNotebookSection(
+  editor: Editor,
+  options: { parentId?: string | null; title?: string } = {},
+) {
+  const sectionType = editor.schema.nodes.notebookSection;
+  const paragraphType = editor.schema.nodes.paragraph;
+  if (!sectionType || !paragraphType) {
+    return false;
+  }
+  const section = sectionType.create({
+    id: newNodeId('section'),
+    title: options.title ?? 'Untitled section',
+    collapsed: false,
+  }, paragraphType.create({ id: newNodeId('paragraph') }));
+  const parent = options.parentId ? locateNotebookNode(editor, options.parentId) : null;
+  const position = parent?.node.type.name === 'notebookSection'
+    ? parent.position + parent.node.nodeSize - 1
+    : editor.state.doc.content.size;
+  const transaction = editor.state.tr.insert(position, section);
+  if (parent?.node.type.name === 'notebookSection' && parent.node.attrs.collapsed === true) {
+    transaction.setNodeMarkup(parent.position, undefined, {
+      ...parent.node.attrs,
+      collapsed: false,
+    });
+  }
+  transaction.setSelection(NodeSelection.create(transaction.doc, position));
+  editor.view.dispatch(transaction.scrollIntoView());
+  return true;
+}
+
 export function updateSelectedNotebookSemantic(
   editor: Editor,
   attributes: Partial<{
@@ -217,21 +247,197 @@ export function updateSelectedNotebookSemantic(
   return true;
 }
 
-type TopLevelNode = {
+type LocatedNotebookNode = {
   id: string;
   index: number;
   node: ProseMirrorNode;
+  parent: ProseMirrorNode;
+  parentId: string | null;
   position: number;
+  depth: number;
 };
 
-function notebookTopLevelNodes(editor: Editor) {
-  const nodes: TopLevelNode[] = [];
-  editor.state.doc.forEach((node, position, index) => {
-    if (typeof node.attrs.id === 'string') {
-      nodes.push({ id: node.attrs.id, index, node, position });
+function notebookNodes(editor: Editor) {
+  const nodes: LocatedNotebookNode[] = [];
+  editor.state.doc.descendants((node, position, parent, index) => {
+    if (parent && typeof node.attrs.id === 'string') {
+      nodes.push({
+        id: node.attrs.id,
+        index,
+        node,
+        parent,
+        parentId: typeof parent.attrs.id === 'string' ? parent.attrs.id : null,
+        position,
+        depth: editor.state.doc.resolve(position).depth,
+      });
     }
   });
   return nodes;
+}
+
+function locateNotebookNode(editor: Editor, id: string) {
+  return notebookNodes(editor).find((node) => node.id === id) ?? null;
+}
+
+function siblingNotebookNodes(editor: Editor, source: LocatedNotebookNode) {
+  return notebookNodes(editor).filter((candidate) =>
+    candidate.parentId === source.parentId && candidate.depth === source.depth);
+}
+
+function notebookTopLevelNodes(editor: Editor) {
+  return notebookNodes(editor).filter((node) => node.parent.type.name === 'doc');
+}
+
+export type NotebookMovePlacement = 'before' | 'after' | 'inside';
+
+export function moveNotebookNode(
+  editor: Editor,
+  sourceId: string,
+  targetId: string,
+  placement: NotebookMovePlacement,
+) {
+  if (sourceId === targetId) {
+    return false;
+  }
+  const source = locateNotebookNode(editor, sourceId);
+  const target = locateNotebookNode(editor, targetId);
+  if (!source || !target || (placement === 'inside' && target.node.type.name !== 'notebookSection')) {
+    return false;
+  }
+  if (target.position > source.position
+    && target.position < source.position + source.node.nodeSize) {
+    return false;
+  }
+
+  const transaction = editor.state.tr;
+  if (source.parent.type.name !== 'doc' && source.parent.childCount === 1) {
+    transaction.replaceWith(
+      source.position,
+      source.position + source.node.nodeSize,
+      editor.schema.nodes.paragraph.create({ id: newNodeId('paragraph') }),
+    );
+  } else {
+    transaction.delete(source.position, source.position + source.node.nodeSize);
+  }
+
+  const mappedTargetPosition = transaction.mapping.map(target.position, 1);
+  const mappedTarget = transaction.doc.nodeAt(mappedTargetPosition);
+  if (!mappedTarget) {
+    return false;
+  }
+  const insertionPosition = placement === 'before'
+    ? mappedTargetPosition
+    : placement === 'after'
+      ? mappedTargetPosition + mappedTarget.nodeSize
+      : mappedTargetPosition + mappedTarget.nodeSize - 1;
+  const resolvedInsertion = transaction.doc.resolve(insertionPosition);
+  const insertionIndex = resolvedInsertion.index();
+  if (!resolvedInsertion.parent.canReplaceWith(
+    insertionIndex,
+    insertionIndex,
+    source.node.type,
+  )) {
+    return false;
+  }
+  transaction.insert(insertionPosition, source.node);
+  if (placement === 'inside' && mappedTarget.attrs.collapsed === true) {
+    transaction.setNodeMarkup(mappedTargetPosition, undefined, {
+      ...mappedTarget.attrs,
+      collapsed: false,
+    });
+  }
+  transaction.setSelection(NodeSelection.create(transaction.doc, insertionPosition));
+  editor.view.dispatch(transaction.scrollIntoView());
+  return true;
+}
+
+export function updateNotebookSection(
+  editor: Editor,
+  id: string,
+  attributes: Partial<{ title: string; collapsed: boolean }>,
+) {
+  const section = locateNotebookNode(editor, id);
+  if (!section || section.node.type.name !== 'notebookSection') {
+    return false;
+  }
+  editor.view.dispatch(editor.state.tr.setNodeMarkup(section.position, undefined, {
+    ...section.node.attrs,
+    ...attributes,
+  }));
+  return true;
+}
+
+export function removeNotebookSection(
+  editor: Editor,
+  id: string,
+  options: { keepContents: boolean },
+) {
+  const section = locateNotebookNode(editor, id);
+  if (!section || section.node.type.name !== 'notebookSection') {
+    return false;
+  }
+  const transaction = editor.state.tr;
+  if (options.keepContents) {
+    transaction.replaceWith(
+      section.position,
+      section.position + section.node.nodeSize,
+      section.node.content,
+    );
+  } else if (section.parent.type.name !== 'doc' && section.parent.childCount === 1) {
+    transaction.replaceWith(
+      section.position,
+      section.position + section.node.nodeSize,
+      editor.schema.nodes.paragraph.create({ id: newNodeId('paragraph') }),
+    );
+  } else {
+    transaction.delete(section.position, section.position + section.node.nodeSize);
+  }
+  if (transaction.doc.childCount === 0) {
+    transaction.insert(0, editor.schema.nodes.paragraph.create({ id: newNodeId('paragraph') }));
+  }
+  editor.view.dispatch(transaction.scrollIntoView());
+  return true;
+}
+
+export function indentNotebookNode(editor: Editor, id: string) {
+  const source = locateNotebookNode(editor, id);
+  if (!source) {
+    return false;
+  }
+  const siblings = siblingNotebookNodes(editor, source);
+  const sourceIndex = siblings.findIndex((node) => node.id === id);
+  const previous = siblings[sourceIndex - 1];
+  return previous?.node.type.name === 'notebookSection'
+    ? moveNotebookNode(editor, id, previous.id, 'inside')
+    : false;
+}
+
+export function outdentNotebookNode(editor: Editor, id: string) {
+  const source = locateNotebookNode(editor, id);
+  if (!source?.parentId) {
+    return false;
+  }
+  const parent = locateNotebookNode(editor, source.parentId);
+  return parent?.node.type.name === 'notebookSection'
+    ? moveNotebookNode(editor, id, parent.id, 'after')
+    : false;
+}
+
+export function moveNotebookNodeInParent(
+  editor: Editor,
+  id: string,
+  direction: 'up' | 'down',
+) {
+  const source = locateNotebookNode(editor, id);
+  if (!source) {
+    return false;
+  }
+  const siblings = siblingNotebookNodes(editor, source);
+  const sourceIndex = siblings.findIndex((node) => node.id === id);
+  const target = siblings[sourceIndex + (direction === 'up' ? -1 : 1)];
+  return target
+    ? moveNotebookNode(editor, id, target.id, direction === 'up' ? 'before' : 'after')
+    : false;
 }
 
 export function notebookTopLevelMoveState(editor: Editor, id: string) {
@@ -249,28 +455,7 @@ export function moveNotebookTopLevelNode(
   targetId: string,
   placement: 'before' | 'after',
 ) {
-  if (sourceId === targetId) {
-    return false;
-  }
-  const nodes = notebookTopLevelNodes(editor);
-  const source = nodes.find((node) => node.id === sourceId);
-  const target = nodes.find((node) => node.id === targetId);
-  if (!source || !target) {
-    return false;
-  }
-
-  const targetPosition = placement === 'before'
-    ? target.position
-    : target.position + target.node.nodeSize;
-  const transaction = editor.state.tr.delete(
-    source.position,
-    source.position + source.node.nodeSize,
-  );
-  const insertionPosition = transaction.mapping.map(targetPosition);
-  transaction.insert(insertionPosition, source.node);
-  transaction.setSelection(NodeSelection.create(transaction.doc, insertionPosition));
-  editor.view.dispatch(transaction.scrollIntoView());
-  return true;
+  return moveNotebookNode(editor, sourceId, targetId, placement);
 }
 
 export function moveSelectedNotebookTopLevelNode(
