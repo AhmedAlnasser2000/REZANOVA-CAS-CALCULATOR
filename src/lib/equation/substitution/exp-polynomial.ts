@@ -22,6 +22,7 @@ import {
   sameNode,
   solveLinearOrQuadratic,
 } from './shared';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 function matchSupportedExponentialCarrier(node: unknown): ExpCarrier | null {
   const normalized = normalizeAst(node);
@@ -245,7 +246,7 @@ function matchExponentialPolynomialSubstitution(nonZeroSide: unknown): Substitut
     kind: 'branches',
     equations: branchSet.equations,
     solveBadges: ['Symbolic Substitution', 'Candidate Checked'],
-    solveSummaryText: `Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`,
+    ...proseSolveSummary(`Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`),
     diagnostics: {
       family: 'exp-polynomial',
       carrierKind: carrier.kind,

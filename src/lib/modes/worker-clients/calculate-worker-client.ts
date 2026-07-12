@@ -7,6 +7,7 @@ import type {
   CalculateWorkerOutboundMessage,
 } from '../worker-entrypoints/calculate.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const CALCULATE_WORKER_RUNTIME_HOST_ID = 'calculate-worker-runtime' as const;
 export const CALCULATE_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculate-runtime' as const;
@@ -58,7 +59,7 @@ function buildCancelledPayload(): DisplayOutcome {
     title: 'Calculate',
     error: 'Calculate stopped before it finished.',
     warnings: [],
-    solveSummaryText: 'Calculate stopped after the worker runtime was hard-stopped.',
+    ...proseSolveSummary('Calculate stopped after the worker runtime was hard-stopped.'),
   };
 }
 

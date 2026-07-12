@@ -667,14 +667,14 @@ function solveTrigPeriodicFamily(
     return {
       kind: 'guided',
       family: {
-        carrierLatex: normalizedTrig.reducedCarrierLatex ?? normalizedTrig.summaryText,
+        carrierLatex: normalizedTrig.reducedCarrierLatex ?? normalizedTrig.solveSummaryText,
         parameterLatex: 'k\\in\\mathbb{Z}',
         branchesLatex: [],
         reducedCarrierLatex: normalizedTrig.reducedCarrierLatex,
         structuredStopReason: normalizedTrig.structuredStopReason,
       },
       error: normalizedTrig.error,
-      summaryText: normalizedTrig.summaryText,
+      summaryText: normalizedTrig.solveSummaryText,
       solveBadges: normalizedTrig.solveBadges,
     };
   }
@@ -696,7 +696,7 @@ function solveTrigPeriodicFamily(
         reducedCarrierLatex,
       },
       error: 'No real solutions because this trig target lies outside the real range of the carrier.',
-      summaryText: summaryPrefix ?? '',
+      summaryText: summaryPrefix?.solveSummaryText ?? '',
       solveBadges,
     };
   }
@@ -722,12 +722,12 @@ function solveTrigPeriodicFamily(
     },
     summaryText: summaryPrefix
       ? resolved.kind === 'solved'
-        && summaryPrefix.startsWith('Sawtooth closure:')
+        && summaryPrefix.solveSummaryText.startsWith('Sawtooth closure:')
         && isReducedCarrierExactFamily(resolved.family)
           ? `Exact reduced-carrier sawtooth family: ${boxLatex(normalizeAst(node))}=${target.latex} closes over ${resolved.family.carrierLatex}.`
           : resolved.summaryText
-            ? `${summaryPrefix} ${resolved.summaryText}`
-            : summaryPrefix
+            ? `${summaryPrefix.solveSummaryText} ${resolved.summaryText}`
+            : summaryPrefix.solveSummaryText
       : resolved.summaryText,
     solveBadges: dedupe([...(resolved.solveBadges ?? []), ...(solveBadges ?? [])]),
   };

@@ -7,6 +7,7 @@ import type {
   GeometryWorkerOutboundMessage,
 } from '../worker-entrypoints/geometry.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const GEOMETRY_WORKER_RUNTIME_HOST_ID = 'geometry-worker-runtime' as const;
 export const GEOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID = 'geometry-runtime' as const;
@@ -59,7 +60,7 @@ function buildCancelledPayload(request: RunGeometryRuntimeRequest): GeometryMode
       title: 'Geometry',
       error: 'Geometry evaluation stopped before it finished.',
       warnings: [],
-      solveSummaryText: 'Geometry evaluation stopped after the worker runtime was hard-stopped.',
+      ...proseSolveSummary('Geometry evaluation stopped after the worker runtime was hard-stopped.'),
     },
     parsed: {
       ok: false,

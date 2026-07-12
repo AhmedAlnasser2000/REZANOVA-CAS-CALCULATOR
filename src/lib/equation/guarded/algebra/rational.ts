@@ -26,6 +26,7 @@ import {
   isSupportedRightSideExpression,
 } from './radicals';
 import { countEquationRadicalTargets } from './repeated-clearing';
+import { proseSolveSummary } from '../../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 
@@ -74,7 +75,7 @@ function matchTopLevelQuotientZeroTransform(request: GuardedSolveRequest): Algeb
         expressionLatex: denominatorLatex,
       }],
       solveBadges: ['LCD Clear'],
-      solveSummaryText: 'Reduced a quotient equal to zero to its numerator equation and preserved the denominator exclusion',
+      ...proseSolveSummary('Reduced a quotient equal to zero to its numerator equation and preserved the denominator exclusion'),
       detailSections: [{
         title: 'Quotient Zero Reduction',
         lineKind: 'text',
@@ -116,7 +117,7 @@ function matchRationalTransform(request: GuardedSolveRequest): AlgebraTransform 
     equationLatex,
     domainConstraints: rational.exclusionConstraints,
     solveBadges: ['LCD Clear'],
-    solveSummaryText: 'Cleared the LCD and reduced the equation to an exact solve-ready form',
+    ...proseSolveSummary('Cleared the LCD and reduced the equation to an exact solve-ready form'),
     unresolvedError: 'This recognized rational family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
   };
 }
@@ -154,9 +155,9 @@ function tryRationalizeSquareRootDenominatorSide(node: unknown, variable: string
     equationLatex: boxLatex(rationalized.node),
     domainConstraints: mergeConstraints(constraints, rationalized.conditionConstraints),
     solveBadges: ['Conjugate Transform'],
-    solveSummaryText: rationalized.usedResidualCleanup
+    ...proseSolveSummary(rationalized.usedResidualCleanup
       ? 'Applied bounded conjugates to remove the supported square-root denominator'
-      : 'Applied a conjugate to remove a square-root denominator',
+      : 'Applied a conjugate to remove a square-root denominator'),
     unresolvedError: 'This recognized radical conjugate family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     radicalStepCost: 1,
   };
@@ -225,7 +226,7 @@ function matchThreeTermReciprocalEqualityTransform(request: GuardedSolveRequest)
         expressionLatex: boxLatex(reciprocalDenominator),
       }], profile.conditionConstraints),
       solveBadges: ['LCD Clear'],
-      solveSummaryText: 'Cleared a bounded reciprocal equality into a supported denominator equation',
+      ...proseSolveSummary('Cleared a bounded reciprocal equality into a supported denominator equation'),
       unresolvedError: 'This recognized radical conjugate family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -275,7 +276,7 @@ function tryCrossMultiplySingleFractionEquation(equationLatex: string, variable:
       equationLatex: `${boxLatex(clearedLeft)}=${boxLatex(clearedRight)}`,
       domainConstraints: [],
       solveBadges: ['Conjugate Transform', 'LCD Clear'] as SolveBadge[],
-      solveSummaryText: 'Applied a conjugate and cleared the remaining supported denominator',
+      ...proseSolveSummary('Applied a conjugate and cleared the remaining supported denominator'),
       unresolvedError: 'This recognized radical conjugate family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }

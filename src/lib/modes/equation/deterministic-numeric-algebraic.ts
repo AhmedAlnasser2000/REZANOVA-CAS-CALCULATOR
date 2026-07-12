@@ -26,6 +26,7 @@ import {
   polynomialFromZeroForm,
 } from './numeric-polynomial-extraction';
 import { profileEquationResult } from '../../display/printer';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 const REAL_ROOT_IMAGINARY_TOLERANCE = 1e-7;
 const NUMERIC_RESIDUAL_TOLERANCE = 1e-8;
@@ -387,7 +388,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
     resultOrigin: 'numeric-fallback',
     answerDomain: 'real',
     solveBadges: polynomial.kind === 'rational' ? ['LCD Clear', 'Candidate Checked'] : ['Candidate Checked'],
-    solveSummaryText: `${method}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${roots.sturmCertification.kind === 'certified' && accepted.every((root) => rootInSturmIntervals(root, roots.sturmCertification.intervals)) ? ' with Sturm certification' : ''}${validation.rejected.length > 0 ? `, rejected ${validation.rejected.length}.` : '.'}`,
+    ...proseSolveSummary(`${method}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${roots.sturmCertification.kind === 'certified' && accepted.every((root) => rootInSturmIntervals(root, roots.sturmCertification.intervals)) ? ' with Sturm certification' : ''}${validation.rejected.length > 0 ? `, rejected ${validation.rejected.length}.` : '.'}`),
     candidateValues: accepted,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     numericMethod: method,

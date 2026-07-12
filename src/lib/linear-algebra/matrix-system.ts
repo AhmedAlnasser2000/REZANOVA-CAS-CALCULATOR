@@ -23,6 +23,7 @@ import {
   LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
 } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
+import { proseSolveSummary } from '../display/result-detail-lines';
 
 export type MatrixSystemRunInput = {
   coefficients: number[][];
@@ -87,6 +88,7 @@ function rankFacts(
   return [
     {
       title: 'Rank Facts',
+      lineKind: 'math' as const,
       lines: [
         `\\operatorname{rank}(${labels.coefficient})=${rankA}`,
         `\\operatorname{rank}(${augmented})=${rankAugmented}`,
@@ -317,7 +319,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       kind: 'success',
       title,
       exactLatex: '\\text{No solution}',
-      solveSummaryText: 'No solution.',
+      ...proseSolveSummary('No solution.'),
       detailSections: [
         systemProofDetails('none', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
         ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
@@ -334,9 +336,9 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
       kind: 'success',
       title,
       exactLatex: family?.exactLatex ?? '\\text{Infinitely many solutions}',
-      solveSummaryText: family
+      ...proseSolveSummary(family
         ? 'Infinitely many solutions. The parameterized vector describes all solution vectors.'
-        : 'Infinitely many solutions.',
+        : 'Infinitely many solutions.'),
       detailSections: [
         ...(family ? [solutionFamilyDetails(family)] : []),
         systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
@@ -357,7 +359,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutco
     kind: 'success',
     title,
     exactLatex: `x=${exactVectorToColumnLatex(solved.solution)}`,
-    solveSummaryText: 'Exactly one solution. Only this vector x satisfies the system.',
+    ...proseSolveSummary('Exactly one solution. Only this vector x satisfies the system.'),
     detailSections: [
       systemProofDetails('unique', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
       ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),

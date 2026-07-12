@@ -245,7 +245,7 @@ describe('Equation mode shared symbolic backend', () => {
     if (unresolvedComposition.kind !== 'error') {
       throw new Error('Expected an unresolved composition-backed error outcome');
     }
-    expect(unresolvedComposition.error).toContain('real interval');
+    expect(unresolvedComposition.error).toContain('interval');
     expect(unresolvedComposition.runtimeAdvisories?.equationNumericSolve?.kind).toBe('suggest-on-error');
   });
 

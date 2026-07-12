@@ -22,6 +22,11 @@ export type DisplayDetailLinePart =
   | { kind: 'text'; text: string }
   | { kind: 'math'; latex: string };
 
+export type DisplaySolveSummary = {
+  solveSummaryText: string;
+  solveSummaryParts: DisplayDetailLinePart[][];
+};
+
 export type DisplayDetailSection = {
   title: string;
   /** Compatibility projection for storage and older consumers. */

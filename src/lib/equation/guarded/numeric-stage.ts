@@ -9,6 +9,7 @@ import {
   errorOutcome,
   successOutcome,
 } from './outcome';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 const MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS = 64;
 
@@ -17,6 +18,7 @@ function numericIntervalDetailSections(request: GuardedSolveRequest) {
   return [
     {
       title: 'Numeric Interval Scope',
+      lineKind: 'text' as const,
       lines: [
         interval
           ? `Searched real interval [${interval.start}, ${interval.end}] with ${interval.subdivisions} subdivisions.`
@@ -49,7 +51,7 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
       [],
       [],
       ['Numeric Interval', 'Candidate Checked'],
-      numeric.summaryText,
+      proseSolveSummary(numeric.summaryText),
       numeric.rejectedCandidateCount,
       undefined,
       numeric.method,
@@ -68,6 +70,7 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
   const cappedRootDetails = numeric.roots.length > MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS
     ? [{
         title: 'Search Diagnostics',
+        lineKind: 'text' as const,
         lines: [
           `Found ${numeric.roots.length} validated roots in the chosen interval; showing the first ${MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS}.`,
           'Narrow the interval to inspect a dense local root set.',
@@ -82,7 +85,7 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
     [],
     [],
     ['Numeric Interval', 'Candidate Checked'],
-    numeric.summaryText,
+    proseSolveSummary(numeric.summaryText),
     numeric.rejectedCandidateCount,
     undefined,
     numeric.method,

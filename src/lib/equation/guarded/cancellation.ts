@@ -6,6 +6,7 @@ import {
   type GuardedEquationStageId,
 } from './types';
 import { errorOutcome } from './outcome';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 function cancellationCheckpointMessage(input: {
   phase: GuardedEquationCancellationPhase;
@@ -33,7 +34,7 @@ function buildCancellationOutcome() {
     [],
     [],
     [],
-    'Equation solve stopped at an OOE cancellation checkpoint.',
+    proseSolveSummary('Equation solve stopped at an OOE cancellation checkpoint.'),
   );
 }
 

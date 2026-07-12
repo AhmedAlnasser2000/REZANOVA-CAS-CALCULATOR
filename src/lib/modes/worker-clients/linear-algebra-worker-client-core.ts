@@ -12,6 +12,7 @@ import type {
   LinearAlgebraWorkerOutboundMessage,
 } from '../worker-entrypoints/linear-algebra-worker-contract';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export type LinearAlgebraWorkerLike<TRequest> = {
   addEventListener(
@@ -75,7 +76,7 @@ function buildCancelledPayload(label: string): DisplayOutcome {
     title: label,
     error: stoppedMessage(label),
     warnings: [],
-    solveSummaryText: `${label} operation stopped after the worker runtime was hard-stopped.`,
+    ...proseSolveSummary(`${label} operation stopped after the worker runtime was hard-stopped.`),
   };
 }
 

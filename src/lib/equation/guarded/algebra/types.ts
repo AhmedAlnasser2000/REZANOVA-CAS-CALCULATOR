@@ -1,6 +1,7 @@
 import type {
   DisplayDetailSection,
   DisplayOutcome,
+  DisplaySolveSummary,
   GuardedSolveRequest,
   SolveBadge,
   SolveDomainConstraint,
@@ -43,7 +44,6 @@ export type AlgebraTransform = {
   branchEquations?: string[];
   domainConstraints?: SolveDomainConstraint[];
   solveBadges: SolveBadge[];
-  solveSummaryText: string;
   summaryMergeMode?: 'prepend' | 'replace';
   detailSections?: DisplayDetailSection[];
   unresolvedDetailSections?: DisplayDetailSection[];
@@ -55,7 +55,7 @@ export type AlgebraTransform = {
   radicalStepCost?: number;
   repeatedClearingStepCost?: number;
   polynomialCarrierHints?: unknown[];
-};
+} & DisplaySolveSummary;
 
 export type GuardedSolveRunner = (
   request: GuardedSolveRequest,

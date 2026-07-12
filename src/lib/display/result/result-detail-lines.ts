@@ -2,6 +2,7 @@ import type {
   DisplayDetailLineKind,
   DisplayDetailLinePart,
   DisplayDetailSection,
+  DisplaySolveSummary,
 } from '../../../types/calculator';
 
 export function detailLineKindAt(
@@ -76,12 +77,43 @@ export function detailLineFromParts(parts: readonly DisplayDetailLinePart[]) {
 
 export function solveSummaryFromParts(
   rows: readonly (readonly DisplayDetailLinePart[])[],
-) {
+): DisplaySolveSummary {
   const built = rows.map((parts) => detailLineFromParts(parts));
   return {
     solveSummaryText: built.map((entry) => entry.line).join('; '),
     solveSummaryParts: built.map((entry) => entry.parts),
   };
+}
+
+export function proseSolveSummary(text: string): DisplaySolveSummary {
+  return solveSummaryFromParts([[textPart(text)]]);
+}
+
+export function mergeSolveSummaries(
+  ...summaries: readonly (DisplaySolveSummary | undefined)[]
+): DisplaySolveSummary | undefined {
+  const parts = summaries.flatMap((summary) => summary?.solveSummaryParts ?? []);
+  return parts.length > 0 ? solveSummaryFromParts(parts) : undefined;
+}
+
+export function dedupeSolveSummaries(
+  ...summaries: readonly (DisplaySolveSummary | undefined)[]
+): DisplaySolveSummary | undefined {
+  const seen = new Set<string>();
+  return mergeSolveSummaries(...summaries.filter((summary) => {
+    if (!summary || seen.has(summary.solveSummaryText)) return false;
+    seen.add(summary.solveSummaryText);
+    return true;
+  }));
+}
+
+export function solveSummaryFromDisplayFields({
+  solveSummaryText,
+  solveSummaryParts,
+}: Partial<DisplaySolveSummary>): DisplaySolveSummary | undefined {
+  return solveSummaryText && solveSummaryParts?.length
+    ? { solveSummaryText, solveSummaryParts }
+    : undefined;
 }
 
 export function mixedDetailSection(

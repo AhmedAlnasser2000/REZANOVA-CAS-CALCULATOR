@@ -7,6 +7,7 @@ import type {
   CalculusWorkerOutboundMessage,
 } from '../worker-entrypoints/calculus.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const CALCULUS_WORKER_RUNTIME_HOST_ID = 'calculus-worker-runtime' as const;
 export const CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculus-runtime' as const;
@@ -58,7 +59,7 @@ function buildCancelledOutcome(): DisplayOutcome {
     title: 'Calculus',
     error: 'Calculus evaluation stopped before it finished.',
     warnings: [],
-    solveSummaryText: 'Calculus evaluation stopped after the worker runtime was hard-stopped.',
+    ...proseSolveSummary('Calculus evaluation stopped after the worker runtime was hard-stopped.'),
   };
 }
 

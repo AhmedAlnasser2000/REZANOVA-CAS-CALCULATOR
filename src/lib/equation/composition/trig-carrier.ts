@@ -9,6 +9,8 @@ import { normalizeAst } from '../../symbolic-engine/normalize';
 import { isDirectAffineInner } from './targets';
 import type {
   AngleUnit,
+  DisplayDetailLinePart,
+  DisplaySolveSummary,
   PeriodicFamilyInfo,
   SolveBadge,
 } from '../../../types/calculator';
@@ -17,26 +19,28 @@ import {
   type NumericTarget,
 } from './targets';
 import type { SymbolicFamilyBranch } from './carriers';
+import {
+  mathPart,
+  solveSummaryFromParts,
+  textPart,
+} from '../../display/result-detail-lines';
 
 type TrigBranchResult =
-  | {
+  | ({
       kind: 'impossible';
       error: string;
-      summaryText: string;
       solveBadges?: SolveBadge[];
-    }
-  | {
+    } & DisplaySolveSummary)
+  | ({
       kind: 'branches';
       equations: string[];
-      summaryText: string;
       solveBadges?: SolveBadge[];
-    }
-  | {
+    } & DisplaySolveSummary)
+  | ({
       kind: 'unresolved';
       error: string;
-      summaryText: string;
       solveBadges?: SolveBadge[];
-    };
+    } & DisplaySolveSummary);
 
 const ce = new ComputeEngine();
 const EPSILON = 1e-9;
@@ -50,6 +54,18 @@ function buildCompositionBranchSet(equations: string[]) {
   return buildSharedCompositionBranchSet(equations);
 }
 
+function summaryWithPrefix(
+  prefix: DisplaySolveSummary | undefined,
+  parts: readonly DisplayDetailLinePart[],
+) {
+  const prefixParts = prefix?.solveSummaryParts[0] ?? [];
+  return solveSummaryFromParts([[
+    ...prefixParts,
+    ...(prefixParts.length > 0 ? [textPart(' ')] : []),
+    ...parts,
+  ]]);
+}
+
 type NormalizedTrigComposite =
   | {
       kind: 'normalized';
@@ -60,16 +76,15 @@ type NormalizedTrigComposite =
       outerLatex: string;
       reducedCarrierLatex?: string;
       solveBadges?: SolveBadge[];
-      summaryPrefix?: string;
+      summaryPrefix?: DisplaySolveSummary;
     }
-  | {
+  | ({
       kind: 'impossible';
       error: string;
-      summaryText: string;
       solveBadges?: SolveBadge[];
       reducedCarrierLatex?: string;
       structuredStopReason?: PeriodicFamilyInfo['structuredStopReason'];
-    };
+    } & DisplaySolveSummary);
 
 function buildReciprocalTarget(target: NumericTarget): NumericTarget {
   const node = normalizeAst(['Divide', 1, target.node]);
@@ -114,7 +129,17 @@ function normalizeTrigComposite(
       return {
         kind: 'impossible',
         error: `No real solutions because ${operator === 'Sec' ? '\\sec' : '\\csc'} only takes values with |y|\\ge1 and never 0.`,
-        summaryText: `Reciprocal rewrite: ${outerLatex}=${target.latex} would require ${operator === 'Sec' ? '\\cos' : '\\sin'}\\left(${innerLatex}\\right)=${boxLatex(['Divide', 1, target.node])}, but reciprocal trig targets must satisfy |${target.latex}|\\ge1 and ${target.latex}\\ne0.`,
+        ...solveSummaryFromParts([[
+          textPart('Reciprocal rewrite: '),
+          mathPart(`${outerLatex}=${target.latex}`),
+          textPart(' would require '),
+          mathPart(`${operator === 'Sec' ? '\\cos' : '\\sin'}\\left(${innerLatex}\\right)=${boxLatex(['Divide', 1, target.node])}`),
+          textPart(', but reciprocal trig targets must satisfy '),
+          mathPart(`|${target.latex}|\\ge1`),
+          textPart(' and '),
+          mathPart(`${target.latex}\\ne0`),
+          textPart('.'),
+        ]]),
         solveBadges: ['Reciprocal Rewrite'],
         reducedCarrierLatex: `${operator === 'Sec' ? '\\cos' : '\\sin'}\\left(${innerLatex}\\right)`,
       };
@@ -131,7 +156,13 @@ function normalizeTrigComposite(
       outerLatex,
       reducedCarrierLatex,
       solveBadges: ['Reciprocal Rewrite'],
-      summaryPrefix: `Reciprocal rewrite: ${outerLatex}=${target.latex} reduces to ${reducedCarrierLatex}=${reciprocalTarget.latex}.`,
+      summaryPrefix: solveSummaryFromParts([[
+        textPart('Reciprocal rewrite: '),
+        mathPart(`${outerLatex}=${target.latex}`),
+        textPart(' reduces to '),
+        mathPart(`${reducedCarrierLatex}=${reciprocalTarget.latex}`),
+        textPart('.'),
+      ]]),
     };
   }
 
@@ -153,7 +184,13 @@ function normalizeTrigComposite(
       outerLatex,
       reducedCarrierLatex,
       solveBadges: ['Reciprocal Rewrite'],
-      summaryPrefix: `Reciprocal rewrite: ${outerLatex}=${target.latex} reduces to ${reducedCarrierLatex}=${cotTarget.latex}.`,
+      summaryPrefix: solveSummaryFromParts([[
+        textPart('Reciprocal rewrite: '),
+        mathPart(`${outerLatex}=${target.latex}`),
+        textPart(' reduces to '),
+        mathPart(`${reducedCarrierLatex}=${cotTarget.latex}`),
+        textPart('.'),
+      ]]),
     };
   }
 
@@ -288,9 +325,11 @@ function matchTrigBranches(node: unknown, target: NumericTarget, angleUnit: Angl
     return {
       kind: 'unresolved',
       error: 'This recognized composition family leaves infinitely many or currently unsupported inverse branches. Use Numeric Solve with a chosen interval.',
-      summaryText: summaryPrefix
-        ? `${summaryPrefix} Composition branch: ${innerLatex} does not yet have a finite proven image that supports bounded symbolic inversion.`
-        : `Composition branch: ${innerLatex} does not yet have a finite proven image that supports bounded symbolic inversion.`,
+      ...summaryWithPrefix(summaryPrefix, [
+        textPart('Composition branch: '),
+        mathPart(innerLatex),
+        textPart(' does not yet have a finite proven image that supports bounded symbolic inversion.'),
+      ]),
       solveBadges: normalizedTrig.solveBadges,
     };
   }
@@ -307,25 +346,42 @@ function matchTrigBranches(node: unknown, target: NumericTarget, angleUnit: Angl
     return {
       kind: 'unresolved',
       error: 'This recognized composition family leaves too many inverse branches for the current bounded symbolic solve set. Use Numeric Solve with a chosen interval.',
-      summaryText: summaryPrefix
-        ? `${summaryPrefix} Composition branch: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, but that interval still yields too many admissible ${kind} inverse branches.`
-        : `Composition branch: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, but that interval still yields too many admissible ${kind} inverse branches.`,
+      ...summaryWithPrefix(summaryPrefix, [
+        textPart('Composition branch: '),
+        mathPart(innerLatex),
+        textPart(' stays in '),
+        mathPart(formatRangeInterval(innerProof.interval)),
+        textPart(`, but that interval still yields too many admissible ${kind} inverse branches.`),
+      ]),
       solveBadges: normalizedTrig.solveBadges,
     };
   }
 
   if (branchValues.length === 0) {
     const outerImage = composeTrigImage(kind, innerProof.interval.min, innerProof.interval.max, angleUnit);
+    const carrierLatex = summaryPrefix
+      ? normalizedTrig.reducedCarrierLatex ?? outerLatex
+      : outerLatex;
     return {
       kind: 'impossible',
       error: 'No real solutions because the proven inner image makes the outer trig target unreachable.',
-      summaryText: outerImage
-        ? summaryPrefix
-          ? `${summaryPrefix} Range guard: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, so ${normalizedTrig.reducedCarrierLatex ?? outerLatex} stays in ${formatRangeInterval(outerImage)} and cannot equal ${effectiveTarget.latex}.`
-          : `Range guard: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, so ${outerLatex} stays in ${formatRangeInterval(outerImage)} and cannot equal ${effectiveTarget.latex}.`
-        : summaryPrefix
-          ? `${summaryPrefix} Range guard: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, so ${normalizedTrig.reducedCarrierLatex ?? outerLatex} cannot equal ${effectiveTarget.latex}.`
-          : `Range guard: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, so ${outerLatex} cannot equal ${effectiveTarget.latex}.`,
+      ...summaryWithPrefix(summaryPrefix, [
+        textPart('Range guard: '),
+        mathPart(innerLatex),
+        textPart(' stays in '),
+        mathPart(formatRangeInterval(innerProof.interval)),
+        textPart(', so '),
+        mathPart(carrierLatex),
+        ...(outerImage
+          ? [
+              textPart(' stays in '),
+              mathPart(formatRangeInterval(outerImage)),
+              textPart(' and cannot equal '),
+            ]
+          : [textPart(' cannot equal ')]),
+        mathPart(effectiveTarget.latex),
+        textPart('.'),
+      ]),
       solveBadges: normalizedTrig.solveBadges,
     };
   }
@@ -336,9 +392,17 @@ function matchTrigBranches(node: unknown, target: NumericTarget, angleUnit: Angl
   return {
     kind: 'branches',
     equations: branchSet.equations,
-    summaryText: summaryPrefix
-      ? `${summaryPrefix} Composition branch: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, so ${normalizedTrig.reducedCarrierLatex ?? outerLatex}=${effectiveTarget.latex} reduces to ${branchSet.equations.join(',\\;')}.`
-      : `Composition branch: ${innerLatex} stays in ${formatRangeInterval(innerProof.interval)}, so ${outerLatex}=${effectiveTarget.latex} reduces to ${branchSet.equations.join(',\\;')}.`,
+    ...summaryWithPrefix(summaryPrefix, [
+      textPart('Composition branch: '),
+      mathPart(innerLatex),
+      textPart(' stays in '),
+      mathPart(formatRangeInterval(innerProof.interval)),
+      textPart(', so '),
+      mathPart(`${summaryPrefix ? normalizedTrig.reducedCarrierLatex ?? outerLatex : outerLatex}=${effectiveTarget.latex}`),
+      textPart(' reduces to '),
+      mathPart(branchSet.equations.join(',\\;')),
+      textPart('.'),
+    ]),
     solveBadges: normalizedTrig.solveBadges,
   };
 }

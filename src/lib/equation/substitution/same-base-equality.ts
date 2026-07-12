@@ -11,6 +11,7 @@ import {
   numericFromNode,
   toInlineSummaryMath,
 } from './shared';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 function isValidLogBase(base: number) {
   return base > 0 && Math.abs(base - 1) > EPSILON;
@@ -167,7 +168,7 @@ function matchSameBaseEquality(equationAst: unknown): SubstitutionSolveResult {
     solveBadges: usesExplicitLogBase
       ? ['Symbolic Substitution', 'Same-Base Equality', 'Log Base Normalize', 'Candidate Checked']
       : ['Symbolic Substitution', 'Same-Base Equality', 'Candidate Checked'],
-    solveSummaryText: `Reduced same-base equality ${toInlineSummaryMath(left.carrierLatex)}=${toInlineSummaryMath(right.carrierLatex)} into ${toInlineSummaryMath(nextEquationLatex)}`,
+    ...proseSolveSummary(`Reduced same-base equality ${toInlineSummaryMath(left.carrierLatex)}=${toInlineSummaryMath(right.carrierLatex)} into ${toInlineSummaryMath(nextEquationLatex)}`),
     domainConstraints: branchSet.constraints,
     diagnostics: {
       family: 'same-base-equality',

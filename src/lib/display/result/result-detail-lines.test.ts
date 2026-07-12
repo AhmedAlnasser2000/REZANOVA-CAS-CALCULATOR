@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   detailLineIntentAt,
   mathPart,
+  mergeSolveSummaries,
   mixedDetailSection,
+  proseSolveSummary,
   resolveDetailLinePresentation,
   solveSummaryDetailLines,
   solveSummaryFromParts,
@@ -40,6 +42,25 @@ describe('detail segment contract', () => {
       { line: 'Reduced carrier: u=x^2', parts: [textPart('Reduced carrier: '), mathPart('u=x^2')] },
       { line: 'Generated equation: u=1', parts: [textPart('Generated equation: '), mathPart('u=1')] },
     ]);
+  });
+
+  it('declares prose summaries and merges typed rows without reparsing text', () => {
+    const prose = proseSolveSummary('Validated one exact branch.');
+    const mixed = solveSummaryFromParts([
+      [textPart('Generated equation: '), mathPart('x=1')],
+    ]);
+
+    expect(prose).toEqual({
+      solveSummaryText: 'Validated one exact branch.',
+      solveSummaryParts: [[textPart('Validated one exact branch.')]],
+    });
+    expect(mergeSolveSummaries(prose, undefined, mixed)).toEqual({
+      solveSummaryText: 'Validated one exact branch.; Generated equation: x=1',
+      solveSummaryParts: [
+        [textPart('Validated one exact branch.')],
+        [textPart('Generated equation: '), mathPart('x=1')],
+      ],
+    });
   });
 
   it('resolves typed parts, explicit kind, and legacy inference in that order', () => {

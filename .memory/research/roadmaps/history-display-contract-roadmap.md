@@ -1,7 +1,8 @@
 # HISTORY-DISPLAY-CONTRACT-ROADMAP0
 
 Date: 2026-07-11
-Status: accepted; implementation begins with History persistence parity; no push is authorized
+Last updated: 2026-07-12
+Status: active; History persistence parity and the approved result-intent prerequisite are complete; no push is authorized
 
 ## Attribution
 
@@ -55,30 +56,33 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 
 1. `HISTORY-DISPLAY-CONTRACT-ROADMAP0`: record this roadmap, baseline, protected paths, approval, session dossier, and prior-program checklist.
 2. `HISTORY-PERSISTENCE-PARITY-CLOSURE1`: align TypeScript, browser, Calculator Memory, and native History round trips through a minimally validated extension-preserving Rust envelope.
-3. `CANONICAL-RESULT-DOCUMENT1`: add neutral versioned types, validation, a no-reparse compatibility projection, and optional `DisplayOutcome.canonicalResult`.
-4. `HISTORY-STRUCTURED-RESULT2`: dual-write/read the full result document, preserve exact Table rows, and retain legacy fallback.
-5. `DISPLAY-CONTRACT-INVERSION-RATCHET1`: inventory native/projected/forwarded/control producers and legacy consumers with nonincreasing lane floors.
-6. `EQUATION-SOLVE-RESULT-CONTRACT1`: separate Equation solver evidence from the Display contract.
-7. `EQUATION-OUTCOME-BOUNDARY1`: migrate Equation orchestration and worker/fallback boundaries to one final canonical-result adapter.
-8. `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1`.
-9. `RESULT-DOCUMENT-EQUATION-ADVANCED1`.
-10. `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`.
-11. `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`.
-12. `RESULT-DOCUMENT-CALCULUS1`.
-13. `RESULT-DOCUMENT-GUIDED-DOMAINS1`.
-14. `RESULT-DOCUMENT-LINEAR-ALGEBRA1`.
-15. `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`: reduce live compatibility projection to zero for successful producer results.
-16. `DISPLAY-READ-MODEL-INVERSION1`: derive Display blocks, scheduling, and Formula Viewer content from canonical documents.
-17. `CANONICAL-RESULT-CONSUMER-INVERSION1`: migrate Clipboard, `Ans`, editor transfer, workspace display state, History, print hygiene, and Surface mapping.
-18. `DISPLAY-CONTRACT-INVERSION1`: make canonical documents authoritative while retaining derived legacy projections.
-19. `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0`: run the full gate, inspect restart behavior and all nine workspaces, and review accumulated evidence with the user.
+3. `RESULT-INTENT-DECLARATION-CLOSURE1`: approved inserted prerequisite. Require every live solve summary and detail line to declare math/text intent before a compatibility projection may create a canonical result document; correct the malformed numeric replay request discovered by the projection audit.
+4. `CANONICAL-RESULT-DOCUMENT1`: add neutral versioned types, validation, a no-reparse compatibility projection, and optional `DisplayOutcome.canonicalResult`.
+5. `HISTORY-STRUCTURED-RESULT2`: dual-write/read the full result document, preserve exact Table rows, and retain legacy fallback.
+6. `DISPLAY-CONTRACT-INVERSION-RATCHET1`: inventory native/projected/forwarded/control producers and legacy consumers with nonincreasing lane floors.
+7. `EQUATION-SOLVE-RESULT-CONTRACT1`: separate Equation solver evidence from the Display contract.
+8. `EQUATION-OUTCOME-BOUNDARY1`: migrate Equation orchestration and worker/fallback boundaries to one final canonical-result adapter.
+9. `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1`.
+10. `RESULT-DOCUMENT-EQUATION-ADVANCED1`.
+11. `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`.
+12. `RESULT-DOCUMENT-SYMBOLIC-INTEGRATION1`.
+13. `RESULT-DOCUMENT-CALCULUS1`.
+14. `RESULT-DOCUMENT-GUIDED-DOMAINS1`.
+15. `RESULT-DOCUMENT-LINEAR-ALGEBRA1`.
+16. `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`: reduce live compatibility projection to zero for successful producer results.
+17. `DISPLAY-READ-MODEL-INVERSION1`: derive Display blocks, scheduling, and Formula Viewer content from canonical documents.
+18. `CANONICAL-RESULT-CONSUMER-INVERSION1`: migrate Clipboard, `Ans`, editor transfer, workspace display state, History, print hygiene, and Surface mapping.
+19. `DISPLAY-CONTRACT-INVERSION1`: make canonical documents authoritative while retaining derived legacy projections.
+20. `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0`: run the full gate, inspect restart behavior and all nine workspaces, and review accumulated evidence with the user.
 
 ## Progress
 
 - `HISTORY-DISPLAY-CONTRACT-ROADMAP0`: committed as `6a4c0d0d`.
-- `HISTORY-PERSISTENCE-PARITY-CLOSURE1`: verified and entering its approved commit. Browser validation covers all 35 current fields and preserves unknown extensions; Rust now validates only the stable envelope and 2,000,000-byte append cap while retaining the original JSON value.
+- `HISTORY-PERSISTENCE-PARITY-CLOSURE1`: committed as `1e6e894f`. Browser validation covers all 35 current fields and preserves unknown extensions; Rust validates only the stable envelope and 2,000,000-byte append cap while retaining the original JSON value.
 - Restart evidence: an extension-rich row survives real Chromium reload, Calculator Memory, file-backed Rust restart, and two isolated real Tauri desktop launches. A forced browser storage failure leaves the row in session and renders the durability warning.
-- `CANONICAL-RESULT-DOCUMENT1` is next. No canonical result fields, structured History result, Display inversion, Notebook file, Surface DTO, or OOE behavior changed in the parity gate.
+- `RESULT-INTENT-DECLARATION-CLOSURE1`: approved on 2026-07-12 after the first compatibility-projection audit found 13 undeclared fragments across the 43 golden and 100 replay executions. All live solve-summary object literals now pair text with typed parts, all 447 live detail producers declare intent, and runtime coverage projects all 143 executions without guessing math from prose.
+- The prerequisite also corrects the obsolete `{min,max}` Equation replay interval to the current `{start,end,subdivisions}` request, adds source/runtime ratchets, and accepts three previously rendered range-guard fragments into the print-hygiene baseline without changing wording or mathematics.
+- `CANONICAL-RESULT-DOCUMENT1` follows this prerequisite. No structured History result, Display authority inversion, Notebook file, Surface DTO, OOE authority, worker topology, or capability identity changes in the prerequisite.
 
 ## Verification Contract
 

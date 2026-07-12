@@ -2,6 +2,7 @@ import { solutionsToLatex } from '../../display/format';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import type {
   DisplayOutcome,
+  DisplaySolveSummary,
   PeriodicFamilyInfo,
   SolveBadge,
   SubstitutionSolveDiagnostics,
@@ -63,7 +64,7 @@ function mergeDetailSections(outcomes: DisplayOutcome[]) {
 function mergeDisplayOutcomes(
   outcomes: DisplayOutcome[],
   solveBadges: SolveBadge[],
-  solveSummaryText: string,
+  solveSummary: DisplaySolveSummary,
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
 ): DisplayOutcome {
   const successes = outcomes.filter((outcome) => outcome.kind === 'success');
@@ -76,7 +77,7 @@ function mergeDisplayOutcomes(
         firstError.warnings,
         firstError.plannerBadges ?? [],
         dedupe([...(firstError.solveBadges ?? []), ...solveBadges]),
-        solveSummaryText,
+        solveSummary,
         firstError.rejectedCandidateCount,
         substitutionDiagnostics ?? firstError.substitutionDiagnostics,
         firstError.numericMethod,
@@ -93,7 +94,7 @@ function mergeDisplayOutcomes(
       [],
       [],
       solveBadges,
-      solveSummaryText,
+      solveSummary,
       undefined,
       substitutionDiagnostics,
     );
@@ -129,7 +130,8 @@ function mergeDisplayOutcomes(
     resultOrigin: approxValues.length > 0 && exactValues.length === 0 ? 'numeric-fallback' : 'symbolic',
     plannerBadges,
     solveBadges: badgeSet,
-    solveSummaryText,
+    solveSummaryText: solveSummary.solveSummaryText,
+    solveSummaryParts: solveSummary.solveSummaryParts,
     candidateValues: candidateValues.length > 0 ? candidateValues : undefined,
     rejectedCandidateCount: rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,
     substitutionDiagnostics: substitutionDiagnostics ?? successes.find((outcome) => outcome.substitutionDiagnostics)?.substitutionDiagnostics,

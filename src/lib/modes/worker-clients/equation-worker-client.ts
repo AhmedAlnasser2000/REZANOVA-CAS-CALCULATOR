@@ -11,6 +11,7 @@ import type {
 } from '../worker-entrypoints/equation.worker';
 import type { RunEquationModeRequest } from '../equation';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const EQUATION_WORKER_RUNTIME_HOST_ID = 'equation-worker-runtime' as const;
 export const EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID = 'equation-runtime' as const;
@@ -67,7 +68,7 @@ function buildCancelledOutcome(): DisplayOutcome {
     error: EQUATION_SOLVE_CANCELLED_MESSAGE,
     warnings: [],
     plannerBadges: [],
-    solveSummaryText: 'Equation solve stopped after the Equation worker runtime was hard-stopped.',
+    ...proseSolveSummary('Equation solve stopped after the Equation worker runtime was hard-stopped.'),
   };
 }
 

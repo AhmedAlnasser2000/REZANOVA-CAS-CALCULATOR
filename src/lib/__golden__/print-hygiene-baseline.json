@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DETAIL-SEGMENT-COMPAT-CLOSEOUT1 adds seven existing producer-owned domain and variable symbols as typed mathematical fragments while preserving all prior evidence and compatibility output.",
+  "acceptedReason": "RESULT-INTENT-DECLARATION-CLOSURE1 exposes existing range-guard math through explicit solve-summary parts without changing visible wording",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -734,6 +734,21 @@
       "outcomeKind": "error",
       "title": "Solve",
       "fragments": [
+        {
+          "path": "solveSummaryParts[0][1].latex",
+          "kind": "solve-summary-math-part",
+          "value": "\\sin(x)"
+        },
+        {
+          "path": "solveSummaryParts[0][3].latex",
+          "kind": "solve-summary-math-part",
+          "value": "[-1, 1]"
+        },
+        {
+          "path": "solveSummaryParts[0][5].latex",
+          "kind": "solve-summary-math-part",
+          "value": "2"
+        },
         {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",

@@ -1,6 +1,7 @@
 import type {
   DisplayOutcome,
   DisplayBranchReadback,
+  DisplaySolveSummary,
   PlannerBadge,
   SolveBadge,
   SubstitutionSolveDiagnostics,
@@ -18,7 +19,7 @@ function successOutcome(
   warnings: string[] = [],
   plannerBadges: PlannerBadge[] = [],
   solveBadges: SolveBadge[] = [],
-  solveSummaryText?: string,
+  solveSummary?: DisplaySolveSummary,
   rejectedCandidateCount?: number,
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
   numericMethod?: string,
@@ -34,7 +35,12 @@ function successOutcome(
     resultOrigin: approxText && !exactLatex ? 'numeric-fallback' : 'symbolic',
     plannerBadges,
     solveBadges,
-    solveSummaryText,
+    ...(solveSummary
+      ? {
+          solveSummaryText: solveSummary.solveSummaryText,
+          solveSummaryParts: solveSummary.solveSummaryParts,
+        }
+      : {}),
     rejectedCandidateCount,
     substitutionDiagnostics,
     numericMethod,
@@ -47,7 +53,7 @@ function errorOutcome(
   warnings: string[] = [],
   plannerBadges: PlannerBadge[] = [],
   solveBadges: SolveBadge[] = [],
-  solveSummaryText?: string,
+  solveSummary?: DisplaySolveSummary,
   rejectedCandidateCount?: number,
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
   numericMethod?: string,
@@ -59,7 +65,12 @@ function errorOutcome(
     warnings,
     plannerBadges,
     solveBadges,
-    solveSummaryText,
+    ...(solveSummary
+      ? {
+          solveSummaryText: solveSummary.solveSummaryText,
+          solveSummaryParts: solveSummary.solveSummaryParts,
+        }
+      : {}),
     rejectedCandidateCount,
     substitutionDiagnostics,
     numericMethod,

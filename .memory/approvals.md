@@ -69,3 +69,12 @@
   source: chat-2026-07-11-history-display-contract-program-approval
   canonical_targets: .memory/research/roadmaps/history-display-contract-roadmap.md; .memory/sessions/2026-07/2026-07-11/2026-07-11__history-display-contract-program/
   notes: Newly inserted prerequisites, combined milestones, scope changes, or intentional output changes require fresh approval. No push is authorized; `test-results/` and the parallel Notebook lane remain excluded.
+- approved_at_local: 2026-07-12 +03:00
+  approver: user
+  decision: Insert and implement `RESULT-INTENT-DECLARATION-CLOSURE1` before the canonical-result document, including correction of the malformed numeric Equation replay fixture.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-07-12-result-intent-prerequisite-approval
+  canonical_targets: .memory/research/roadmaps/history-display-contract-roadmap.md; .memory/sessions/2026-07/2026-07-12/2026-07-12__history-display-contract-program/
+  notes: Approval covers the inserted prerequisite commit only; it preserves visible wording and mathematics, excludes Notebook and test-results, and authorizes no push.

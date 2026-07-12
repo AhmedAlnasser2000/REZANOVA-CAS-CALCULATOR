@@ -28,6 +28,7 @@ import {
   errorOutcome,
 } from './outcome';
 import { mergeDisplayOutcomes } from './merge';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 import type { GuardedSolveRunner } from './types';
 import {
   NUMERIC_MATCH_TOLERANCE,
@@ -126,7 +127,7 @@ function runMixedFactorEquationSolve(
     return mergeDisplayOutcomes(
       outcomes,
       [],
-      'Factored the mixed carrier expression into bounded exact factors.',
+      proseSolveSummary('Factored the mixed carrier expression into bounded exact factors.'),
     );
   } catch {
     return null;

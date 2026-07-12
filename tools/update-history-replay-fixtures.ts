@@ -142,7 +142,9 @@ function equationSeeds(): FixtureSeed[] {
     ['denominator-exclusion', 'domain-boundary', '\\frac{1}{x}=0'],
     ['even-root-domain', 'domain-boundary', '\\sqrt{x}=-1'],
     ['isolate-mode', 'answer-mode', 'ax+b=0', { equationAnswerMode: 'isolate', equationSolveTarget: 'x' }],
-    ['numeric-interval', 'numeric-boundary', '\\cos(x)=x', { numericInterval: { min: 0, max: 1 } }],
+    ['numeric-interval', 'numeric-boundary', '\\cos(x)=x', {
+      numericInterval: { start: '0', end: '1', subdivisions: 64 },
+    }],
   ];
   return rows.map(([id, family, equationLatex, overrides = {}]) => ({
     id: `equation-${id}`,

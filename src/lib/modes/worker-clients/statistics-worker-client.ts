@@ -7,6 +7,7 @@ import type {
   StatisticsWorkerOutboundMessage,
 } from '../worker-entrypoints/statistics.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const STATISTICS_WORKER_RUNTIME_HOST_ID = 'statistics-worker-runtime' as const;
 export const STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'statistics-runtime' as const;
@@ -59,7 +60,7 @@ function buildCancelledPayload(request: RunStatisticsRuntimeRequest): Statistics
       title: 'Statistics',
       error: 'Statistics evaluation stopped before it finished.',
       warnings: [],
-      solveSummaryText: 'Statistics evaluation stopped after the worker runtime was hard-stopped.',
+      ...proseSolveSummary('Statistics evaluation stopped after the worker runtime was hard-stopped.'),
     },
     parsed: {
       ok: false,

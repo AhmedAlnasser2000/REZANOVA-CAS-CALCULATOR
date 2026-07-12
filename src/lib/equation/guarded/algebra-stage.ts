@@ -4,6 +4,7 @@ import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import type {
   DisplayDetailSection,
   DisplayOutcome,
+  DisplaySolveSummary,
   EquationExecutionBudget,
   GuardedSolveRequest,
   SolveBadge,
@@ -36,6 +37,11 @@ import {
   matchConjugateTransform,
   matchRationalTransform,
 } from './algebra/rational';
+import {
+  dedupeSolveSummaries,
+  mergeSolveSummaries,
+  solveSummaryFromDisplayFields,
+} from '../../display/result-detail-lines';
 
 const RADICAL_STEP_BUDGET_ERROR = 'This recognized radical family would require more than two bounded radical transform steps. Use Numeric Solve with an interval in Equation mode.';
 const REPEATED_CLEARING_BUDGET_ERROR = 'This recognized repeated-clearing radical family would require more than one extra bounded radical clear. Use Numeric Solve with an interval in Equation mode.';
@@ -43,7 +49,7 @@ const REPEATED_CLEARING_BUDGET_ERROR = 'This recognized repeated-clearing radica
 function appendSolveMetadata(
   outcome: DisplayOutcome,
   badges: SolveBadge[],
-  summary: string,
+  summary: DisplaySolveSummary,
   detailSections: DisplayDetailSection[] = [],
   summaryMergeMode: 'prepend' | 'replace' = 'prepend',
 ): DisplayOutcome {
@@ -52,11 +58,13 @@ function appendSolveMetadata(
   }
 
   const solveBadges = dedupe([...(outcome.solveBadges ?? []), ...badges]);
-  const solveSummaryText = summaryMergeMode === 'replace'
-    ? summary
-    : outcome.solveSummaryText
-      ? `${summary}; ${outcome.solveSummaryText}`
-      : summary;
+  const declaredSummary = solveSummaryFromDisplayFields(summary);
+  if (!declaredSummary) {
+    throw new Error('Algebra transform must declare solve-summary intent.');
+  }
+  const solveSummary = summaryMergeMode === 'replace'
+    ? declaredSummary
+    : mergeSolveSummaries(declaredSummary, solveSummaryFromDisplayFields(outcome));
   const mergedDetailSections = dedupe([
     ...detailSections.map((section) => JSON.stringify(section)),
     ...(outcome.detailSections ?? []).map((section) => JSON.stringify(section)),
@@ -65,7 +73,7 @@ function appendSolveMetadata(
   return {
     ...outcome,
     solveBadges,
-    solveSummaryText,
+    ...solveSummary,
     detailSections: mergedDetailSections.length > 0 ? mergedDetailSections : outcome.detailSections,
   };
 }
@@ -85,7 +93,7 @@ function recurseTransform(
       [],
       [],
       transform.solveBadges,
-      transform.solveSummaryText,
+      transform,
     );
   }
 
@@ -98,7 +106,7 @@ function recurseTransform(
       [],
       [],
       transform.solveBadges,
-      transform.solveSummaryText,
+      transform,
     );
   }
 
@@ -109,7 +117,7 @@ function recurseTransform(
       [],
       [],
       transform.solveBadges,
-      transform.solveSummaryText,
+      transform,
     );
   }
 
@@ -129,7 +137,7 @@ function recurseTransform(
         [],
         [],
         transform.solveBadges,
-        transform.solveSummaryText,
+        transform,
       ) as Extract<DisplayOutcome, { kind: 'error' }>;
       if (transform.emptyDetailSections?.length) {
         return {
@@ -168,12 +176,15 @@ function recurseTransform(
         recursiveOutcomes,
         transform.solveBadges,
         transform.summaryMergeMode === 'replace'
-          ? transform.solveSummaryText
-          : dedupe([
-            transform.solveSummaryText,
-            ...recursiveOutcomes
-              .flatMap((outcome) => (outcome.kind !== 'prompt' && outcome.solveSummaryText ? [outcome.solveSummaryText] : [])),
-          ]).join('; '),
+          ? transform
+          : dedupeSolveSummaries(
+            transform,
+            ...recursiveOutcomes.flatMap((outcome) => {
+              if (outcome.kind === 'prompt') return [];
+              const summary = solveSummaryFromDisplayFields(outcome);
+              return summary ? [summary] : [];
+            }),
+          ) ?? transform,
       );
 
   if (
@@ -198,7 +209,7 @@ function recurseTransform(
       recursiveOutcome.warnings,
       recursiveOutcome.plannerBadges ?? [],
       dedupe([...(recursiveOutcome.solveBadges ?? []), ...transform.solveBadges]),
-      transform.solveSummaryText,
+      transform,
       recursiveOutcome.rejectedCandidateCount,
       recursiveOutcome.substitutionDiagnostics,
       recursiveOutcome.numericMethod,
@@ -237,7 +248,7 @@ function recurseTransform(
     return appendSolveMetadata(
       supplementedOutcome,
       transform.solveBadges,
-      transform.solveSummaryText,
+      transform,
       transform.detailSections,
       transform.summaryMergeMode,
     );
@@ -246,7 +257,7 @@ function recurseTransform(
   return appendSolveMetadata(
     supplementedOutcome,
     transform.solveBadges,
-    transform.solveSummaryText,
+    transform,
     transform.detailSections,
     transform.summaryMergeMode,
   );

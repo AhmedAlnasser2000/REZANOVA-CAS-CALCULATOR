@@ -16,6 +16,7 @@ import {
   formatBranchValue,
 } from './shared';
 import { termKey } from '../../symbolic-engine/patterns';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 type SignedLogTerm = {
   coefficient: number;
@@ -425,7 +426,7 @@ function trySameBaseAggregateSolve(
       solveBadges: usesExplicitBase
         ? ['Symbolic Substitution', solveBadge, 'Same-Base Equality', 'Log Base Normalize', 'Candidate Checked']
         : ['Symbolic Substitution', solveBadge, 'Same-Base Equality', 'Candidate Checked'],
-      solveSummaryText: `Combined ${toInlineSummaryMath(aggregate.carrierLatex)} into ${toInlineSummaryMath(nextEquationLatex)}`,
+      ...proseSolveSummary(`Combined ${toInlineSummaryMath(aggregate.carrierLatex)} into ${toInlineSummaryMath(nextEquationLatex)}`),
       domainConstraints: branchSet.constraints,
       diagnostics: {
         family: aggregate.relation === 'product' ? 'log-same-base' : 'log-quotient',
@@ -450,7 +451,7 @@ function trySameBaseAggregateSolve(
       solveBadges: usesExplicitBase
         ? ['Symbolic Substitution', solveBadge, 'Log Base Normalize', 'Candidate Checked']
         : ['Symbolic Substitution', solveBadge, 'Candidate Checked'],
-      solveSummaryText: `Combined ${toInlineSummaryMath(aggregate.carrierLatex)} into ${toInlineSummaryMath(nextEquationLatex)}`,
+      ...proseSolveSummary(`Combined ${toInlineSummaryMath(aggregate.carrierLatex)} into ${toInlineSummaryMath(nextEquationLatex)}`),
       domainConstraints: branchSet.constraints,
       diagnostics: {
         family: aggregate.relation === 'product' ? 'log-same-base' : 'log-quotient',
@@ -522,7 +523,7 @@ function tryMixedBaseExactSolve(equationAst: unknown): SubstitutionSolveResult {
         kind: 'branches',
         equations: branchSet.equations,
         solveBadges: ['Symbolic Substitution', 'Log Base Normalize', 'Candidate Checked'],
-        solveSummaryText: `Normalized mixed-base logs via change-of-base: ${toInlineSummaryMath(normalizedEquationLatex)}`,
+        ...proseSolveSummary(`Normalized mixed-base logs via change-of-base: ${toInlineSummaryMath(normalizedEquationLatex)}`),
         domainConstraints: branchSet.constraints,
         diagnostics: {
           family: 'log-mixed-base',
@@ -552,7 +553,7 @@ function tryMixedBaseExactSolve(equationAst: unknown): SubstitutionSolveResult {
     kind: 'branches',
     equations: branchSet.equations,
     solveBadges: ['Symbolic Substitution', 'Log Base Normalize', 'Candidate Checked'],
-    solveSummaryText: `Normalized mixed-base logs into ${toInlineSummaryMath(nextEquationLatex)}`,
+    ...proseSolveSummary(`Normalized mixed-base logs into ${toInlineSummaryMath(nextEquationLatex)}`),
     domainConstraints: branchSet.constraints,
     diagnostics: {
       family: 'log-mixed-base-rational',
@@ -587,7 +588,7 @@ function tryRecognizedMixedBaseGuidance(
     kind: 'branches',
     equations: branchSet.equations,
     solveBadges: ['Symbolic Substitution', 'Log Base Normalize', 'Candidate Checked'],
-    solveSummaryText: `Normalized mixed-base logs via change-of-base: ${toInlineSummaryMath(normalizedEquationLatex)}`,
+    ...proseSolveSummary(`Normalized mixed-base logs via change-of-base: ${toInlineSummaryMath(normalizedEquationLatex)}`),
     domainConstraints: branchSet.constraints,
     diagnostics: {
       family: 'log-mixed-base',

@@ -232,7 +232,10 @@ function runGuardedEquationSolveInternal(
       [],
       [],
       ['Range Guard'],
-      rangeImpossibility.summaryText,
+      {
+        solveSummaryText: rangeImpossibility.summaryText,
+        solveSummaryParts: rangeImpossibility.summaryParts,
+      },
     ), request.resolvedLatex, preparedRequest);
   }
 
@@ -326,7 +329,10 @@ async function runGuardedEquationSolveInternalAsync(
       [],
       [],
       ['Range Guard'],
-      rangeImpossibility.summaryText,
+      {
+        solveSummaryText: rangeImpossibility.summaryText,
+        solveSummaryParts: rangeImpossibility.summaryParts,
+      },
     ), request.resolvedLatex, preparedRequest);
   }
 

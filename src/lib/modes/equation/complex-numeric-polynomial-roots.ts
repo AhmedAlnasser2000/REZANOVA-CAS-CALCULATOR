@@ -40,6 +40,7 @@ import {
   type SolvableNumericPolynomial,
 } from './numeric-polynomial-extraction';
 import { profileEquationResult } from '../../display/printer';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 const COMPLEX_RESIDUAL_TOLERANCE = 1e-8;
@@ -491,7 +492,7 @@ export function tryComplexNumericPolynomialFallback(input: {
     resultOrigin: 'numeric-fallback',
     answerDomain: 'complex',
     solveBadges: effectivePolynomial.kind === 'rational' ? ['LCD Clear', 'Candidate Checked'] : ['Candidate Checked'],
-    solveSummaryText: `${method}. Accepted ${validation.accepted.length} validated complex root${validation.accepted.length === 1 ? '' : 's'}${validation.rejected.length > 0 ? `, rejected ${validation.rejected.length}.` : '.'}`,
+    ...proseSolveSummary(`${method}. Accepted ${validation.accepted.length} validated complex root${validation.accepted.length === 1 ? '' : 's'}${validation.rejected.length > 0 ? `, rejected ${validation.rejected.length}.` : '.'}`),
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     numericMethod: method,
     detailSections,

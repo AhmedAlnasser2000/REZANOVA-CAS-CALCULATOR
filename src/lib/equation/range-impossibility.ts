@@ -8,6 +8,11 @@ import {
 import { normalizeAst } from '../symbolic-engine/normalize';
 import { isNodeArray } from '../symbolic-engine/patterns';
 import { parseSupportedRatio } from '../trigonometry/angles';
+import {
+  mathPart,
+  solveSummaryFromParts,
+  textPart,
+} from '../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 
@@ -64,10 +69,20 @@ function compareAgainstConstant(
     return null;
   }
 
+  const summary = solveSummaryFromParts([[
+    textPart('Range guard: '),
+    mathPart(expression.expressionLatex),
+    textPart(' stays in '),
+    mathPart(formatRangeInterval(expression.interval)),
+    textPart(', so it cannot equal '),
+    mathPart(constantLatex),
+    textPart('.'),
+  ]]);
   return {
     kind: 'impossible',
     error: rangeError(expression.reason),
-    summaryText: `Range guard: ${expression.expressionLatex} stays in ${formatRangeInterval(expression.interval)}, so it cannot equal ${constantLatex}.`,
+    summaryText: summary.solveSummaryText,
+    summaryParts: summary.solveSummaryParts,
     badge: 'Range Guard',
     reason: expression.reason,
     derivedRange: expression.interval,
@@ -110,10 +125,18 @@ export function detectRealRangeImpossibility(
   }
 
   if (leftProof.kind === 'exact' && rightProof.kind === 'exact' && intervalsDisjoint(leftProof.interval, rightProof.interval)) {
+    const summary = solveSummaryFromParts([[
+      textPart('Range guard: the left side stays in '),
+      mathPart(formatRangeInterval(leftProof.interval)),
+      textPart(' while the right side stays in '),
+      mathPart(formatRangeInterval(rightProof.interval)),
+      textPart('.'),
+    ]]);
     return {
       kind: 'impossible',
       error: 'No real solutions because the two sides have disjoint real ranges.',
-      summaryText: `Range guard: the left side stays in ${formatRangeInterval(leftProof.interval)} while the right side stays in ${formatRangeInterval(rightProof.interval)}.`,
+      summaryText: summary.solveSummaryText,
+      summaryParts: summary.solveSummaryParts,
       badge: 'Range Guard',
       reason: leftProof.reason === 'bounded-sum' || rightProof.reason === 'bounded-sum'
         ? 'bounded-sum'

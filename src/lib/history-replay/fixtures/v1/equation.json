@@ -2351,7 +2351,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x\\ne0\nresolvedInputLatex=1=0"
+        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x\\ne0\ndetailSections[0].lines[0]=x\\ne 0\nsolveSummaryParts[0][1].latex=1\nsolveSummaryParts[0][3].latex=[1, 1]\nsolveSummaryParts[0][5].latex=0\nresolvedInputLatex=1=0"
       }
     },
     {
@@ -2457,7 +2457,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactSupplementLatex[0]=\\text{Conditions: } x\\ge0"
+        "normalizedLatex": "exactSupplementLatex[0]=\\text{Conditions: } x\\ge0\ndetailSections[0].lines[0]=x\\ge 0\nsolveSummaryParts[0][1].latex=\\sqrt{x}\nsolveSummaryParts[0][3].latex=[0, \\infty]\nsolveSummaryParts[0][5].latex=-1"
       }
     },
     {
@@ -2654,14 +2654,17 @@
         "ansLatex": "0",
         "equationLatex": "\\cos(x)=x",
         "numericInterval": {
-          "min": 0,
-          "max": 1
+          "start": "0",
+          "end": "1",
+          "subdivisions": 64
         }
       },
       "expected": {
         "identity": {
-          "kind": "error",
-          "title": "Solve"
+          "kind": "success",
+          "title": "Solve",
+          "resultOrigin": "numeric-fallback",
+          "solutionKind": "approximate-numeric"
         },
         "cardinalities": {
           "warnings": 0,
@@ -2670,7 +2673,7 @@
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
-          "detailSections": 1,
+          "detailSections": 5,
           "actions": 0,
           "tableRows": 0
         },

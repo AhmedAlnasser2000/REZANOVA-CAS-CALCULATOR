@@ -18,6 +18,7 @@ import {
   unwrapNegate,
   formatBranchValue,
 } from './shared';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 function matchInverseCarrier(node: unknown): InverseCarrier | null {
   const normalized = normalizeAst(node);
@@ -220,7 +221,7 @@ function matchInverseIsolation(equationAst: unknown): SubstitutionSolveResult {
     kind: 'branches',
     equations: branchSet.equations,
     solveBadges: ['Inverse Isolation', 'Candidate Checked'],
-    solveSummaryText: `Inverted ${toInlineSummaryMath(linearCarrier.carrier.carrierLatex)} into ${toInlineSummaryMath(next.nextEquationLatex)}`,
+    ...proseSolveSummary(`Inverted ${toInlineSummaryMath(linearCarrier.carrier.carrierLatex)} into ${toInlineSummaryMath(next.nextEquationLatex)}`),
     domainConstraints: branchSet.constraints,
     diagnostics: {
       family: 'inverse-isolation',

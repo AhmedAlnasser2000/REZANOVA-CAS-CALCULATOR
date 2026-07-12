@@ -26,8 +26,9 @@
 - push: not authorized
 - excluded: untracked `test-results/`
 
-## Pending Commit
+## HISTORY-PERSISTENCE-PARITY-CLOSURE1
 
+- commit_hash: `1e6e894f`
 - commit_message: `HISTORY-PERSISTENCE-PARITY-CLOSURE1`
 - scope: exact TypeScript field parity, extension-preserving browser/Calculator Memory/native roundtrips, append bounds, session-only failure warning, restart tests, and durable gate evidence
 - approval: covered by the user's standing approval for named roadmap milestones

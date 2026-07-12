@@ -44,6 +44,7 @@ import {
 } from './complex-region-subdivision';
 import { unsupportedComplexLocusOutcome } from './outcomes';
 import { profileEquationResult } from '../../display/printer';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 const COMPLEX_REGION_RESIDUAL_TOLERANCE = 1e-8;
 const DEFAULT_GRID_SIZE = 7;
@@ -654,7 +655,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
     resultOrigin: 'numeric-fallback',
     answerDomain: 'complex',
     solveBadges: ['Candidate Checked'],
-    solveSummaryText: `${METHOD_LABEL}. Accepted ${accepted.length} validated complex root${accepted.length === 1 ? '' : 's'} in the selected region.`,
+    ...proseSolveSummary(`${METHOD_LABEL}. Accepted ${accepted.length} validated complex root${accepted.length === 1 ? '' : 's'} in the selected region.`),
     numericMethod: METHOD_LABEL,
     detailSections: diagnosticsSections({
       region,

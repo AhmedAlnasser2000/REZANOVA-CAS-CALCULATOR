@@ -32,6 +32,7 @@ import {
   polynomialFromZeroForm,
 } from './numeric-polynomial-extraction';
 import { profileEquationResult } from '../../display/printer';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -555,7 +556,7 @@ export function tryRealPiecewiseAbsHybridFallback(input: {
     resultOrigin: 'numeric-fallback',
     answerDomain: 'real',
     solveBadges: ['Candidate Checked'],
-    solveSummaryText: `${NUMERIC_METHOD_PIECEWISE}. Accepted ${roots.length} validated real root${roots.length === 1 ? '' : 's'}${rejected.length > 0 ? `, marked ${rejected.length} extraneous candidate attempt${rejected.length === 1 ? '' : 's'}.` : '.'}`,
+    ...proseSolveSummary(`${NUMERIC_METHOD_PIECEWISE}. Accepted ${roots.length} validated real root${roots.length === 1 ? '' : 's'}${rejected.length > 0 ? `, marked ${rejected.length} extraneous candidate attempt${rejected.length === 1 ? '' : 's'}.` : '.'}`),
     candidateValues: roots,
     rejectedCandidateCount: rejected.length > 0 ? rejected.length : undefined,
     numericMethod: NUMERIC_METHOD_PIECEWISE,

@@ -11,6 +11,7 @@ import {
 } from './outcome';
 import { mergeDisplayOutcomes } from './merge';
 import { isTrigSolveSuccess } from './direct-trig-stage';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
   const rewriteMatch = matchTrigEquationRewriteForSolve(request.resolvedLatex, request.angleUnit);
@@ -29,7 +30,7 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
       [],
       [],
       ['Trig Sum-Product'],
-      rewriteMatch.summaryText,
+      proseSolveSummary(rewriteMatch.summaryText),
     );
   }
 
@@ -48,7 +49,7 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
         trig.warnings,
         ['Trig Solve Backend'],
         ['Trig Rewrite'],
-        rewriteMatch.candidate.summaryText,
+        proseSolveSummary(rewriteMatch.candidate.summaryText),
       );
     }
 
@@ -58,7 +59,7 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
       trig.warnings,
       ['Trig Solve Backend'],
       ['Trig Rewrite'],
-      rewriteMatch.candidate.summaryText,
+      proseSolveSummary(rewriteMatch.candidate.summaryText),
     );
   }
 
@@ -96,7 +97,7 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
     return mergeDisplayOutcomes(
       outcomes,
       ['Trig Sum-Product'],
-      rewriteMatch.candidate.summaryText,
+      proseSolveSummary(rewriteMatch.candidate.summaryText),
     );
   }
 
@@ -133,7 +134,7 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
   return mergeDisplayOutcomes(
     outcomes,
     ['Trig Rewrite', 'Trig Square Split'],
-    rewriteMatch.candidate.summaryText,
+    proseSolveSummary(rewriteMatch.candidate.summaryText),
   );
 }
 

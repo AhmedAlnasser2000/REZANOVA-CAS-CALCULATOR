@@ -2,19 +2,19 @@ import type {
   SolveDomainConstraint,
   SolveBadge,
   SubstitutionSolveDiagnostics,
+  DisplaySolveSummary,
 } from '../../../types/calculator';
 
 export type SubstitutionSolveResult =
   | { kind: 'none' }
   | { kind: 'blocked'; error: string }
-  | {
+  | ({
       kind: 'branches';
       equations: string[];
       solveBadges: SolveBadge[];
-      solveSummaryText: string;
       domainConstraints?: SolveDomainConstraint[];
       diagnostics?: SubstitutionSolveDiagnostics;
-    };
+    } & DisplaySolveSummary);
 
 export type TrigCarrier = {
   kind: 'sin' | 'cos' | 'tan';

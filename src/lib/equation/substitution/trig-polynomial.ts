@@ -21,6 +21,7 @@ import {
   sameNode,
   solveLinearOrQuadratic,
 } from './shared';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 function matchSupportedTrigCarrier(node: unknown): TrigCarrier | null {
   const trig = matchTrigCall(normalizeAst(node));
@@ -191,7 +192,7 @@ function matchTrigPolynomialSubstitution(nonZeroSide: unknown): SubstitutionSolv
     kind: 'branches',
     equations: branchSet.equations,
     solveBadges: ['Symbolic Substitution', 'Candidate Checked'],
-    solveSummaryText: `Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`,
+    ...proseSolveSummary(`Substituted t = ${carrierLabel}, solved ${summaryPolynomial}`),
     diagnostics: {
       family: 'trig-polynomial',
       carrierKind: carrier.kind,

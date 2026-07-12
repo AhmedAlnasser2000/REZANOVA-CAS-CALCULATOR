@@ -7,6 +7,7 @@ import type {
   TrigonometryWorkerOutboundMessage,
 } from '../worker-entrypoints/trigonometry.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const TRIGONOMETRY_WORKER_RUNTIME_HOST_ID = 'trigonometry-worker-runtime' as const;
 export const TRIGONOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID = 'trigonometry-runtime' as const;
@@ -59,7 +60,7 @@ function buildCancelledPayload(request: RunTrigonometryRuntimeRequest): Trigonom
       title: 'Trigonometry',
       error: 'Trigonometry evaluation stopped before it finished.',
       warnings: [],
-      solveSummaryText: 'Trigonometry evaluation stopped after the worker runtime was hard-stopped.',
+      ...proseSolveSummary('Trigonometry evaluation stopped after the worker runtime was hard-stopped.'),
     },
     parsed: {
       ok: false,

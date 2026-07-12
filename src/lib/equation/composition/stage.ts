@@ -59,6 +59,7 @@ import { solveTrigPeriodicFamily } from './periodic-resolution';
 import type {
   DisplayDetailSection,
   DisplayOutcome,
+  DisplaySolveSummary,
   EquationExecutionBudget,
   GuardedSolveRequest,
   PeriodicFamilyInfo,
@@ -66,6 +67,11 @@ import type {
   SolveDomainConstraint,
 } from '../../../types/calculator';
 import { profileEquationResult } from '../../display/printer';
+import {
+  mergeSolveSummaries,
+  proseSolveSummary,
+  solveSummaryFromDisplayFields,
+} from '../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 type GuardedSolveRunner = (
@@ -95,18 +101,20 @@ function buildCompositionBranchSet(
 function appendSolveMetadata(
   outcome: DisplayOutcome,
   badges: SolveBadge[],
-  summary: string,
+  summary: DisplaySolveSummary,
 ): DisplayOutcome {
   if (outcome.kind === 'prompt') {
     return outcome;
   }
 
+  const solveSummary = mergeSolveSummaries(
+    summary,
+    solveSummaryFromDisplayFields(outcome),
+  ) ?? summary;
   return {
     ...outcome,
     solveBadges: dedupe([...(outcome.solveBadges ?? []), ...badges]),
-    solveSummaryText: outcome.solveSummaryText
-      ? `${summary}; ${outcome.solveSummaryText}`
-      : summary,
+    ...solveSummary,
   };
 }
 
@@ -116,7 +124,7 @@ function withNestedRecursionBadges(badges: SolveBadge[] = []) {
 
 function compositionDepthLimitError(
   badges: SolveBadge[],
-  summaryText: string,
+  solveSummary: DisplaySolveSummary,
 ) {
   return errorOutcome(
     'Solve',
@@ -124,7 +132,7 @@ function compositionDepthLimitError(
     [],
     [],
     withNestedRecursionBadges(badges),
-    summaryText,
+    solveSummary,
   );
 }
 
@@ -137,7 +145,7 @@ function recurseComposition(
   executionBudget: EquationExecutionBudget,
   runGuardedEquationSolve: GuardedSolveRunner,
   badges: SolveBadge[],
-  summaryText: string,
+  solveSummary: DisplaySolveSummary,
   domainConstraints: SolveDomainConstraint[] = [],
   unresolvedError?: string,
   extraSupplementLatex: string[] = [],
@@ -149,7 +157,7 @@ function recurseComposition(
     executionBudget,
   );
   if (depthPolicy.kind === 'blocked') {
-    return compositionDepthLimitError(badges, summaryText);
+    return compositionDepthLimitError(badges, solveSummary);
   }
   const nextCompositionDepth = depthPolicy.nextDepth;
 
@@ -161,7 +169,7 @@ function recurseComposition(
       [],
       [],
       effectiveBadges,
-      summaryText,
+      solveSummary,
     );
   }
 
@@ -190,7 +198,7 @@ function recurseComposition(
 
   const merged = recursiveOutcomes.length === 1
     ? recursiveOutcomes[0]
-    : mergeDisplayOutcomes(recursiveOutcomes, effectiveBadges, summaryText);
+    : mergeDisplayOutcomes(recursiveOutcomes, effectiveBadges, solveSummary);
 
   const mergedPeriodicFamilyWithStructuredStop = (() => {
     const mergedFamily = merged.kind === 'prompt'
@@ -217,7 +225,7 @@ function recurseComposition(
       merged.warnings,
       merged.plannerBadges ?? [],
       dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges]),
-      summaryText,
+      solveSummary,
       merged.rejectedCandidateCount,
       merged.substitutionDiagnostics,
       merged.numericMethod,
@@ -236,11 +244,11 @@ function recurseComposition(
       periodicFamily: mergedPeriodicFamilyWithStructuredStop,
       exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
       detailSections: detailSections.length > 0 ? detailSections : undefined,
-    }, effectiveBadges, summaryText);
+    }, effectiveBadges, solveSummary);
   }
 
   if (merged.kind === 'prompt') {
-    return appendSolveMetadata(merged, effectiveBadges, summaryText);
+    return appendSolveMetadata(merged, effectiveBadges, solveSummary);
   }
 
   const validationCandidates = collectOutcomeCandidates(merged);
@@ -264,7 +272,9 @@ function recurseComposition(
         exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
         detailSections: detailSections.length > 0 ? detailSections : undefined,
         solveBadges: dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges]),
-        solveSummaryText: buildReducedCarrierSawtoothSummary(request.resolvedLatex, mergedPeriodicFamily),
+        ...proseSolveSummary(
+          buildReducedCarrierSawtoothSummary(request.resolvedLatex, mergedPeriodicFamily),
+        ),
       };
     }
 
@@ -273,7 +283,7 @@ function recurseComposition(
       periodicFamily: mergedPeriodicFamily,
       exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
       detailSections: detailSections.length > 0 ? detailSections : undefined,
-    }, effectiveBadges, summaryText);
+    }, effectiveBadges, solveSummary);
   }
 
   const validation = validateCompositionCandidates(
@@ -308,7 +318,7 @@ function recurseComposition(
       warnings: merged.warnings,
       plannerBadges: merged.plannerBadges ?? [],
       solveBadges: dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges, 'Candidate Checked']),
-      solveSummaryText: summaryText,
+      ...solveSummary,
       rejectedCandidateCount: validation.rejected.length,
       substitutionDiagnostics: merged.substitutionDiagnostics,
       numericMethod: merged.numericMethod,
@@ -361,9 +371,7 @@ function recurseComposition(
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],
     solveBadges: dedupe<SolveBadge>([...(merged.solveBadges ?? []), ...effectiveBadges, 'Candidate Checked']),
-    solveSummaryText: merged.solveSummaryText
-      ? `${summaryText}; ${merged.solveSummaryText}`
-      : summaryText,
+    ...(mergeSolveSummaries(solveSummary, solveSummaryFromDisplayFields(merged)) ?? solveSummary),
     candidateValues: validation.accepted,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
     substitutionDiagnostics: merged.substitutionDiagnostics,
@@ -411,7 +419,7 @@ function compositionSolve(
         [],
         [],
         dedupe<SolveBadge>(['Range Guard', ...(trigBranches.solveBadges ?? []), ...nestedContextBadges]),
-        trigBranches.summaryText,
+        trigBranches,
       );
     }
     if (trigBranches?.kind === 'unresolved') {
@@ -429,12 +437,12 @@ function compositionSolve(
           resultOrigin: 'symbolic',
           plannerBadges: [],
           solveBadges: badges,
-          solveSummaryText: buildPeriodicSolveSummary(
+          ...proseSolveSummary(buildPeriodicSolveSummary(
             boxLatex(normalizeAst(attempt.composite)),
             target.latex,
             periodic,
             'yields',
-          ),
+          )),
         });
       }
       if (periodic?.kind === 'guided') {
@@ -450,12 +458,12 @@ function compositionSolve(
           warnings: [],
           plannerBadges: [],
           solveBadges: badges,
-          solveSummaryText: buildPeriodicSolveSummary(
+          ...proseSolveSummary(buildPeriodicSolveSummary(
             boxLatex(normalizeAst(attempt.composite)),
             target.latex,
             periodic,
             'reduces to',
-          ),
+          )),
         });
       }
 
@@ -465,7 +473,7 @@ function compositionSolve(
         [],
         [],
         dedupe<SolveBadge>(['Composition Branch', ...(trigBranches.solveBadges ?? []), ...nestedContextBadges]),
-        trigBranches.summaryText,
+        trigBranches,
       );
     }
     if (trigBranches?.kind === 'branches') {
@@ -479,7 +487,7 @@ function compositionSolve(
         executionBudget,
         runGuardedEquationSolve,
         dedupe<SolveBadge>(['Composition Branch', ...(trigBranches.solveBadges ?? [])]),
-        trigBranches.summaryText,
+        trigBranches,
         [],
         'This recognized composition family leaves infinitely many or currently unsupported inverse branches. Use Numeric Solve with a chosen interval.',
         [],
@@ -505,12 +513,12 @@ function compositionSolve(
         resultOrigin: 'symbolic',
         plannerBadges: [],
         solveBadges: badges,
-        solveSummaryText: buildPeriodicSolveSummary(
+        ...proseSolveSummary(buildPeriodicSolveSummary(
           boxLatex(normalizeAst(attempt.composite)),
           target.latex,
           periodic,
           'yields',
-        ),
+        )),
       });
     }
     if (periodic?.kind === 'guided') {
@@ -526,12 +534,12 @@ function compositionSolve(
         warnings: [],
         plannerBadges: [],
         solveBadges: badges,
-        solveSummaryText: buildPeriodicSolveSummary(
+        ...proseSolveSummary(buildPeriodicSolveSummary(
           boxLatex(normalizeAst(attempt.composite)),
           target.latex,
           periodic,
           'reduces to',
-        ),
+        )),
       });
     }
 
@@ -547,7 +555,7 @@ function compositionSolve(
         [],
         [],
         dedupe<SolveBadge>([...transform.solveBadges, ...nestedContextBadges]),
-        transform.solveSummaryText || undefined,
+        solveSummaryFromDisplayFields(transform),
       );
       if (blocked.kind !== 'error') {
         return blocked;
@@ -564,6 +572,11 @@ function compositionSolve(
       };
     }
 
+    const transformSummary = solveSummaryFromDisplayFields(transform);
+    if (!transformSummary) {
+      throw new Error('Non-periodic transform with branches must declare solve-summary intent.');
+    }
+
     const recursive = recurseComposition(
       request,
       transform.equations,
@@ -572,7 +585,7 @@ function compositionSolve(
       executionBudget,
       runGuardedEquationSolve,
       transform.solveBadges,
-      transform.solveSummaryText,
+      transformSummary,
       transform.domainConstraints,
       transform.unresolvedError,
       transform.exactSupplementLatex,

@@ -33,6 +33,11 @@ import {
   getSolveVariable,
   subtractConstraints,
 } from './math-json';
+import {
+  dedupeSolveSummaries,
+  proseSolveSummary,
+  solveSummaryFromDisplayFields,
+} from '../../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 
@@ -83,7 +88,7 @@ function buildAbsoluteValueRadicalTransform(
       branchEquations: family.branchEquations,
       domainConstraints: family.branchConstraints,
       solveBadges: ['Radical Isolation'],
-      solveSummaryText: 'Reduced an exact square-root square into a bounded absolute-value carrier',
+      ...proseSolveSummary('Reduced an exact square-root square into a bounded absolute-value carrier'),
       unresolvedError: buildAbsoluteValueUnresolvedError(family),
       radicalStepCost: 1,
     };
@@ -92,7 +97,7 @@ function buildAbsoluteValueRadicalTransform(
   return {
     equationLatex: `${boxLatex(absNode)}=${boxLatex(otherSide)}`,
     solveBadges: ['Radical Isolation'],
-    solveSummaryText: 'Reduced an exact square-root square into a bounded absolute-value carrier',
+    ...proseSolveSummary('Reduced an exact square-root square into a bounded absolute-value carrier'),
     unresolvedError: 'This recognized absolute-value family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     radicalStepCost: 1,
   };
@@ -122,7 +127,7 @@ function buildAbsoluteValueBranchTransform(family: RecognizedAbsoluteValueEquati
     branchEquations: family.branchEquations,
     domainConstraints: family.branchConstraints,
     solveBadges: [],
-    solveSummaryText: buildAbsoluteValueSolveSummary(family),
+    ...proseSolveSummary(buildAbsoluteValueSolveSummary(family)),
     summaryMergeMode: family.normalizationKind === 'outer-nonperiodic' ? 'replace' : 'prepend',
     detailSections,
     unresolvedDetailSections,
@@ -274,6 +279,20 @@ function buildBlockedAbsBranchOutcome(
       .flatMap((outcome) => outcome.kind === 'prompt' ? [] : outcome.detailSections ?? [])
       .map((section) => JSON.stringify(section)),
   ]).map((section) => JSON.parse(section) as DisplayDetailSection);
+  const transformSummary = solveSummaryFromDisplayFields(transform);
+  if (!transformSummary) {
+    throw new Error('Absolute-value transform must declare solve-summary intent.');
+  }
+  const solveSummary = transform.summaryMergeMode === 'replace'
+    ? transformSummary
+    : dedupeSolveSummaries(
+      transformSummary,
+      ...recursiveOutcomes.flatMap((outcome) => {
+        if (outcome.kind === 'prompt') return [];
+        const summary = solveSummaryFromDisplayFields(outcome);
+        return summary ? [summary] : [];
+      }),
+    );
 
   return {
     kind: 'error',
@@ -282,13 +301,7 @@ function buildBlockedAbsBranchOutcome(
     warnings,
     plannerBadges,
     solveBadges,
-    solveSummaryText: transform.summaryMergeMode === 'replace'
-      ? transform.solveSummaryText
-      : dedupe([
-        transform.solveSummaryText,
-        ...recursiveOutcomes
-          .flatMap((outcome) => (outcome.kind !== 'prompt' && outcome.solveSummaryText ? [outcome.solveSummaryText] : [])),
-      ]).join('; '),
+    ...solveSummary,
     periodicFamily,
     exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
     detailSections: detailSections.length > 0 ? detailSections : undefined,

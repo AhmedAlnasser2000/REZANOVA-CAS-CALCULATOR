@@ -25,6 +25,7 @@ import type {
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import { profileEquationResult } from '../../display/printer';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
@@ -270,7 +271,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
     resultOrigin: 'numeric-fallback',
     answerDomain: 'real',
     solveBadges: ['Candidate Checked'],
-    solveSummaryText: `${NUMERIC_METHOD_NONLINEAR}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${rejectedCandidateCount > 0 ? `, marked ${rejectedCandidateCount} extraneous candidate attempt${rejectedCandidateCount === 1 ? '' : 's'}.` : '.'}`,
+    ...proseSolveSummary(`${NUMERIC_METHOD_NONLINEAR}. Accepted ${accepted.length} validated real root${accepted.length === 1 ? '' : 's'}${rejectedCandidateCount > 0 ? `, marked ${rejectedCandidateCount} extraneous candidate attempt${rejectedCandidateCount === 1 ? '' : 's'}.` : '.'}`),
     candidateValues: accepted,
     rejectedCandidateCount: rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,
     numericMethod: NUMERIC_METHOD_NONLINEAR,

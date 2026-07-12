@@ -37,6 +37,7 @@ import {
   readExactScalar,
   replaceFirstMatch,
 } from './math-json';
+import { proseSolveSummary } from '../../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 
@@ -362,7 +363,7 @@ function buildRadicalPowerTransform(
     equationLatex,
     domainConstraints,
     solveBadges: ['Radical Isolation', 'Root Isolation', 'Power Lift'],
-    solveSummaryText: 'Isolated a root and applied an exact power lift',
+    ...proseSolveSummary('Isolated a root and applied an exact power lift'),
     unresolvedError: 'This recognized radical family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     radicalStepCost: 1,
   };
@@ -378,7 +379,7 @@ function buildLiftedPowerTransform(
     return {
       equationLatex: `${boxLatex(power.node)}=${boxLatex(isolated)}`,
       solveBadges: ['Power Lift'],
-      solveSummaryText: 'Isolated a rational power and applied an exact lift',
+      ...proseSolveSummary('Isolated a rational power and applied an exact lift'),
       unresolvedError: 'This recognized rational-power family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -409,7 +410,7 @@ function buildLiftedPowerTransform(
     branchEquations: branchEquations.equations,
     domainConstraints: branchEquations.constraints ?? domainConstraints,
     solveBadges: ['Power Lift'],
-    solveSummaryText: 'Isolated a rational power and applied an exact lift',
+    ...proseSolveSummary('Isolated a rational power and applied an exact lift'),
     unresolvedError: 'This recognized rational-power family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
   };
 }

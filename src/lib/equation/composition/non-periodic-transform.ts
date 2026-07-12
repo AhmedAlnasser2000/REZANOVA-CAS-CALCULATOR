@@ -12,6 +12,7 @@ import { parseExactPolynomial } from '../../algebra/polynomial-core';
 import type {
   AngleUnit,
   DisplayDetailSection,
+  DisplaySolveSummary,
   PeriodicFamilyInfo,
   PeriodicPiecewiseBranch,
   SolveBadge,
@@ -40,6 +41,11 @@ import {
   type SymbolicFamilyBranch,
 } from './carriers';
 import { profileEquationResult } from '../../display/printer';
+import {
+  mathPart,
+  solveSummaryFromParts,
+  textPart,
+} from '../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 const EPSILON = 1e-9;
@@ -55,15 +61,35 @@ type NonPeriodicTransform = {
   equations: string[];
   domainConstraints?: SolveDomainConstraint[];
   solveBadges: SolveBadge[];
-  solveSummaryText: string;
   unresolvedError: string;
   exactSupplementLatex?: string[];
   detailSections?: DisplayDetailSection[];
   periodicFamilyExtras?: Partial<PeriodicFamilyInfo>;
-};
+} & (DisplaySolveSummary | {
+  solveSummaryText?: undefined;
+  solveSummaryParts?: undefined;
+});
 
 function boxLatex(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]).latex;
+}
+
+function inversionSummary(source: string, result: string) {
+  return solveSummaryFromParts([[
+    textPart('Inverted '),
+    mathPart(source),
+    textPart(' into '),
+    mathPart(result),
+  ]]);
+}
+
+function liftedSummary(source: string, branches: string) {
+  return solveSummaryFromParts([[
+    textPart('Lifted '),
+    mathPart(source),
+    textPart(' into '),
+    mathPart(branches),
+  ]]);
 }
 
 function buildCompositionBranchSet(
@@ -416,7 +442,6 @@ function transformBlocked(error: string): NonPeriodicTransform {
   return {
     equations: buildCompositionBranchSet([]).equations,
     solveBadges: ['Outer Inversion'],
-    solveSummaryText: '',
     unresolvedError: error,
   };
 }
@@ -467,7 +492,17 @@ function matchNonPeriodicTransform(
         return {
           equations: buildCompositionBranchSet([buildEquationLatex(directInner[1], target.node)]).equations,
           solveBadges: ['Principal Range'],
-          solveSummaryText: `Principal range: ${reducedCarrierLatex} stays in ${formatRangeInterval(directInnerRange.interval)}, so ${outerLatex} reduces to ${reducedCarrierLatex}=${target.latex}.`,
+          ...solveSummaryFromParts([[
+            textPart('Principal range: '),
+            mathPart(reducedCarrierLatex),
+            textPart(' stays in '),
+            mathPart(formatRangeInterval(directInnerRange.interval)),
+            textPart(', so '),
+            mathPart(outerLatex),
+            textPart(' reduces to '),
+            mathPart(`${reducedCarrierLatex}=${target.latex}`),
+            textPart('.'),
+          ]]),
           unresolvedError: 'This recognized inverse/direct trig identity is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
           exactSupplementLatex: [
             `\\text{Principal range: } ${principalRangeLatex}`,
@@ -505,7 +540,15 @@ function matchNonPeriodicTransform(
         return {
           equations: buildCompositionBranchSet([]).equations,
           solveBadges: ['Principal Range'],
-          solveSummaryText: `Principal range: ${outerLatex} cannot equal ${target.latex} because ${label} only returns values on ${buildInverseTrigPrincipalRangeMessage(inverseTrigKind, angleUnit)}.`,
+          ...solveSummaryFromParts([[
+            textPart('Principal range: '),
+            mathPart(outerLatex),
+            textPart(' cannot equal '),
+            mathPart(target.latex),
+            textPart(` because ${label} only returns values on `),
+            mathPart(buildInverseTrigPrincipalRangeMessage(inverseTrigKind, angleUnit)),
+            textPart('.'),
+          ]]),
           unresolvedError: `No real solutions because ${label} returns principal values only on ${buildInverseTrigPrincipalRangeMessage(inverseTrigKind, angleUnit)}.`,
           exactSupplementLatex: [`\\text{Principal range: } ${principalRangeLatex}`],
           periodicFamilyExtras: {
@@ -540,7 +583,13 @@ function matchNonPeriodicTransform(
       return {
         equations: buildCompositionBranchSet([buildEquationLatex(directInner, invertedTarget.node)]).equations,
         solveBadges: ['Outer Inversion', 'Principal Range'],
-        solveSummaryText: `Sawtooth closure: ${outerLatex}=${target.latex} reduces to ${boxLatex(directInner)}=${invertedTarget.latex} on bounded principal-range branches.`,
+        ...solveSummaryFromParts([[
+          textPart('Sawtooth closure: '),
+          mathPart(`${outerLatex}=${target.latex}`),
+          textPart(' reduces to '),
+          mathPart(`${boxLatex(directInner)}=${invertedTarget.latex}`),
+          textPart(' on bounded principal-range branches.'),
+        ]]),
         unresolvedError: 'This recognized inverse/direct trig identity is outside the current exact bounded sawtooth-closure set. Use Numeric Solve with a chosen interval in Equation mode.',
         exactSupplementLatex: [`\\text{Principal range: } ${principalRangeLatex}`],
         detailSections: [
@@ -591,7 +640,10 @@ function matchNonPeriodicTransform(
     return {
       equations: buildCompositionBranchSet([buildEquationLatex(normalized[1], invertedTarget.node)]).equations,
       solveBadges: ['Outer Inversion'],
-      solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(normalized[1])}=${invertedTarget.latex}`,
+      ...inversionSummary(
+        boxLatex(normalized),
+        `${boxLatex(normalized[1])}=${invertedTarget.latex}`,
+      ),
       unresolvedError: 'This recognized inverse-trig composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -608,7 +660,10 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(normalized[1])}=e^{${target.latex}}`,
+      ...inversionSummary(
+        boxLatex(normalized),
+        `${boxLatex(normalized[1])}=e^{${target.latex}}`,
+      ),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -625,7 +680,10 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(normalized[1])}=10^{${target.latex}}`,
+      ...inversionSummary(
+        boxLatex(normalized),
+        `${boxLatex(normalized[1])}=10^{${target.latex}}`,
+      ),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -647,7 +705,10 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(normalized[1])}=${boxLatex(normalized[2])}^{${target.latex}}`,
+      ...inversionSummary(
+        boxLatex(normalized),
+        `${boxLatex(normalized[1])}=${boxLatex(normalized[2])}^{${target.latex}}`,
+      ),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -663,7 +724,10 @@ function matchNonPeriodicTransform(
     return {
       equations: buildCompositionBranchSet([buildEquationLatex(normalized[1], ['Ln', target.node])]).equations,
       solveBadges: ['Outer Inversion'],
-      solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(normalized[1])}=\\ln\\left(${target.latex}\\right)`,
+      ...inversionSummary(
+        boxLatex(normalized),
+        `${boxLatex(normalized[1])}=\\ln\\left(${target.latex}\\right)`,
+      ),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -684,7 +748,10 @@ function matchNonPeriodicTransform(
       return {
         equations: buildCompositionBranchSet([buildEquationLatex(exponent, ['Ln', target.node])]).equations,
         solveBadges: ['Outer Inversion'],
-        solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(exponent)}=\\ln\\left(${target.latex}\\right)`,
+        ...inversionSummary(
+          boxLatex(normalized),
+          `${boxLatex(exponent)}=\\ln\\left(${target.latex}\\right)`,
+        ),
         unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
       };
     }
@@ -700,7 +767,10 @@ function matchNonPeriodicTransform(
       return {
         equations: buildCompositionBranchSet([buildEquationLatex(exponent, ['Divide', ['Ln', target.node], ['Ln', base]])]).equations,
         solveBadges: ['Outer Inversion'],
-        solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(exponent)}=\\frac{\\ln\\left(${target.latex}\\right)}{\\ln\\left(${boxLatex(base)}\\right)}`,
+        ...inversionSummary(
+          boxLatex(normalized),
+          `${boxLatex(exponent)}=\\frac{\\ln\\left(${target.latex}\\right)}{\\ln\\left(${boxLatex(base)}\\right)}`,
+        ),
         unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
       };
     }
@@ -734,7 +804,7 @@ function matchNonPeriodicTransform(
         equations: branchSet.equations,
         domainConstraints: branchSet.constraints,
         solveBadges: ['Outer Inversion'],
-        solveSummaryText: `Lifted ${boxLatex(normalized)} into ${branchSet.equations.join(',\\;')}`,
+        ...liftedSummary(boxLatex(normalized), branchSet.equations.join(',\\;')),
         unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
       };
     }
@@ -756,7 +826,10 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, 2])}`,
+      ...inversionSummary(
+        boxLatex(normalized),
+        `${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, 2])}`,
+      ),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }
@@ -784,7 +857,10 @@ function matchNonPeriodicTransform(
       equations: branchSet.equations,
       domainConstraints: branchSet.constraints,
       solveBadges: ['Outer Inversion'],
-      solveSummaryText: `Inverted ${boxLatex(normalized)} into ${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, index.value])}`,
+      ...inversionSummary(
+        boxLatex(normalized),
+        `${boxLatex(normalized[1])}=${boxLatex(['Power', target.node, index.value])}`,
+      ),
       unresolvedError: 'This recognized composition family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     };
   }

@@ -29,6 +29,12 @@ import type {
   SolveDomainConstraint,
 } from '../../../types/calculator';
 import { errorOutcome } from './outcome';
+import {
+  mathDetailSection,
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 const NUMERIC_MATCH_TOLERANCE = 1e-6;
@@ -175,17 +181,24 @@ function mergeDomainConstraintDetailSection(
   if (existingIndex >= 0) {
     return sections.map((section, index) =>
       index === existingIndex
-        ? {
-            ...section,
-            lines: uniqueDisplayFactLines([...section.lines, ...incoming]),
-          }
+        ? mixedDetailSection(
+            section.title,
+            uniqueDisplayFactLines([...section.lines, ...incoming]).map((line) => {
+              const existingLineIndex = section.lines.indexOf(line);
+              if (existingLineIndex < 0) return [mathPart(line)];
+              const parts = section.lineParts?.[existingLineIndex];
+              if (parts?.length) return parts;
+              const kind = section.lineKinds?.[existingLineIndex] ?? section.lineKind;
+              return kind === 'text' ? [textPart(line)] : [mathPart(line)];
+            }),
+          )
         : section);
   }
 
   const insertionIndex = sections.findIndex((section) =>
     section.title === 'Numeric Confidence'
     || section.title === 'Numeric Interval Scope');
-  const domainSection = { title: 'Domain and Exclusions', lines: incoming };
+  const domainSection = mathDetailSection('Domain and Exclusions', incoming);
   if (insertionIndex < 0) {
     return [...sections, domainSection];
   }

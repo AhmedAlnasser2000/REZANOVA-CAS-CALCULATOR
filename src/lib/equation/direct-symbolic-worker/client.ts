@@ -11,6 +11,7 @@ import type {
   EquationDirectSymbolicWorkerInboundMessage,
   EquationDirectSymbolicWorkerOutboundMessage,
 } from './messages';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID =
   'equation-direct-symbolic-worker-runtime' as const;
@@ -54,7 +55,7 @@ function buildCancelledOutcome(): DisplayOutcome {
     error: EQUATION_SOLVE_CANCELLED_MESSAGE,
     warnings: [],
     plannerBadges: [],
-    solveSummaryText: 'Equation solve stopped at an OOE cancellation checkpoint.',
+    ...proseSolveSummary('Equation solve stopped at an OOE cancellation checkpoint.'),
   };
 }
 

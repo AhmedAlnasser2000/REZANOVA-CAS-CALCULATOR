@@ -32,6 +32,7 @@ import {
   mergeDisplayOutcomes,
 } from './merge';
 import { equationStateKey } from './state-key';
+import { solveSummaryFromDisplayFields } from '../../display/result-detail-lines';
 
 const ce = new ComputeEngine();
 const EXACT_MATCH_TOLERANCE = 1e-6;
@@ -150,7 +151,7 @@ function substitutionSolve(
       [],
       [],
       substitution.solveBadges,
-      substitution.solveSummaryText,
+      substitution,
       undefined,
       substitution.diagnostics,
     );
@@ -180,7 +181,7 @@ function substitutionSolve(
   const merged = mergeDisplayOutcomes(
     outcomes,
     substitution.solveBadges,
-    substitution.solveSummaryText,
+    substitution,
     substitution.diagnostics,
   );
   const substitutionSupplementLatex = buildConstraintSupplementLatex(
@@ -199,7 +200,7 @@ function substitutionSolve(
       merged.warnings,
       merged.plannerBadges ?? [],
       dedupe([...(merged.solveBadges ?? []), 'Log Base Normalize']),
-      substitution.solveSummaryText,
+      substitution,
       merged.rejectedCandidateCount,
       substitution.diagnostics,
       merged.numericMethod,
@@ -213,7 +214,7 @@ function substitutionSolve(
       merged.warnings,
       merged.plannerBadges ?? [],
       dedupe([...(merged.solveBadges ?? []), 'Trig Sum-Product']),
-      substitution.solveSummaryText,
+      substitution,
       merged.rejectedCandidateCount,
       substitution.diagnostics,
       merged.numericMethod,
@@ -263,7 +264,7 @@ function substitutionSolve(
       merged.warnings,
       merged.plannerBadges ?? [],
       dedupe([...(merged.solveBadges ?? []), 'Candidate Checked']),
-      merged.solveSummaryText,
+      solveSummaryFromDisplayFields(merged) ?? substitution,
       validation.rejected.length,
       substitution.diagnostics,
       merged.numericMethod,
@@ -307,7 +308,7 @@ function substitutionSolve(
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],
     solveBadges: dedupe([...(merged.solveBadges ?? []), 'Candidate Checked']),
-    solveSummaryText: merged.solveSummaryText,
+    ...(solveSummaryFromDisplayFields(merged) ?? substitution),
     candidateValues: validation.accepted,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
     detailSections: appendExtraneousSolutionsDetailSection(
@@ -345,7 +346,7 @@ async function substitutionSolveAsync(
       [],
       [],
       substitution.solveBadges,
-      substitution.solveSummaryText,
+      substitution,
       undefined,
       substitution.diagnostics,
     );
@@ -387,7 +388,7 @@ async function substitutionSolveAsync(
   const merged = mergeDisplayOutcomes(
     outcomes,
     substitution.solveBadges,
-    substitution.solveSummaryText,
+    substitution,
     substitution.diagnostics,
   );
   const substitutionSupplementLatex = buildConstraintSupplementLatex(
@@ -406,7 +407,7 @@ async function substitutionSolveAsync(
       merged.warnings,
       merged.plannerBadges ?? [],
       dedupe([...(merged.solveBadges ?? []), 'Log Base Normalize']),
-      substitution.solveSummaryText,
+      substitution,
       merged.rejectedCandidateCount,
       substitution.diagnostics,
       merged.numericMethod,
@@ -420,7 +421,7 @@ async function substitutionSolveAsync(
       merged.warnings,
       merged.plannerBadges ?? [],
       dedupe([...(merged.solveBadges ?? []), 'Trig Sum-Product']),
-      substitution.solveSummaryText,
+      substitution,
       merged.rejectedCandidateCount,
       substitution.diagnostics,
       merged.numericMethod,
@@ -482,7 +483,7 @@ async function substitutionSolveAsync(
       merged.warnings,
       merged.plannerBadges ?? [],
       dedupe([...(merged.solveBadges ?? []), 'Candidate Checked']),
-      merged.solveSummaryText,
+      solveSummaryFromDisplayFields(merged) ?? substitution,
       validation.rejected.length,
       substitution.diagnostics,
       merged.numericMethod,
@@ -526,7 +527,7 @@ async function substitutionSolveAsync(
     resultOrigin: 'symbolic',
     plannerBadges: merged.plannerBadges ?? [],
     solveBadges: dedupe([...(merged.solveBadges ?? []), 'Candidate Checked']),
-    solveSummaryText: merged.solveSummaryText,
+    ...(solveSummaryFromDisplayFields(merged) ?? substitution),
     candidateValues: validation.accepted,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
     detailSections: appendExtraneousSolutionsDetailSection(
