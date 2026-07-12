@@ -39,20 +39,23 @@ async function expectKeyboardClearance(page: Page) {
       };
     };
     return {
-      canvas: measure('[data-testid="notebook-canvas"]'),
       field: measure('.notebook-rich-display-field'),
       keyboard: measure('[data-testid="notebook-authoring-keyboard"]'),
       overflow: document.documentElement.scrollWidth - window.innerWidth,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
     };
   });
 
-  expect(bounds.canvas).not.toBeNull();
   expect(bounds.field).not.toBeNull();
   expect(bounds.keyboard).not.toBeNull();
-  expect(bounds.keyboard!.left).toBeGreaterThanOrEqual(bounds.canvas!.left);
-  expect(bounds.keyboard!.right).toBeLessThanOrEqual(bounds.canvas!.right);
-  expect(bounds.keyboard!.bottom).toBeLessThanOrEqual(bounds.canvas!.bottom);
-  expect(bounds.field!.bottom).toBeLessThanOrEqual(bounds.keyboard!.top - 12);
+  expect(bounds.keyboard!.left).toBeGreaterThanOrEqual(0);
+  expect(bounds.keyboard!.right).toBeLessThanOrEqual(bounds.viewport.width);
+  expect(bounds.keyboard!.bottom).toBeLessThanOrEqual(bounds.viewport.height);
+  const overlapsField = bounds.keyboard!.left < bounds.field!.right
+    && bounds.keyboard!.right > bounds.field!.left
+    && bounds.keyboard!.top < bounds.field!.bottom
+    && bounds.keyboard!.bottom > bounds.field!.top;
+  expect(overlapsField).toBe(false);
   expect(bounds.overflow).toBeLessThanOrEqual(0);
 }
 
@@ -61,10 +64,43 @@ test('Notebook keeps its math keyboard visible without covering the active field
   await openWorkedExample(page);
 
   await expect(page.getByRole('complementary', { name: 'Notebook outline' })).toBeVisible();
-  await expect(page.getByTestId('notebook-outline-entry').first()).toContainText('Section 1');
+  await expect(page.getByTestId('notebook-outline-entry').first()).toContainText('Quadratic Equations');
   await expectKeyboardClearance(page);
 
   await test.info().attach('notebook-desktop-keyboard', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+});
+
+test('Notebook unifies compact tools, symbols, and matrix dimensions in one floating surface', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openWorkedExample(page);
+
+  await page.locator('.notebook-rich-display-field').first().click();
+  const surface = page.getByTestId('notebook-authoring-keyboard');
+  await expect(surface).toBeVisible();
+  await expect(surface).toHaveClass(/is-compact/);
+  await expect(surface.getByRole('button', { name: 'Fraction' })).toContainText('a⁄b');
+  await surface.getByRole('button', { name: 'Open symbol keyboard' }).click();
+  await expect(surface).toHaveClass(/is-expanded/);
+  await surface.getByRole('tab', { name: 'Structures' }).click();
+  await surface.getByRole('button', { name: 'Matrix, document only' }).click();
+  const picker = page.getByLabel('Choose matrix dimensions');
+  await expect(picker.getByRole('gridcell')).toHaveCount(64);
+  await picker.getByRole('gridcell', { name: '4 by 5 matrix' }).hover();
+  await expect(picker).toContainText('4 × 5');
+  await page.keyboard.press('Escape');
+  await expect(picker).toBeHidden();
+  await expect(surface.getByRole('searchbox')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(surface.getByRole('searchbox')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(surface).toBeHidden();
+  await page.locator('.notebook-rich-display-field').first().click({ button: 'right' });
+  await expect(surface).toBeVisible();
+
+  await test.info().attach('notebook-unified-math-authoring-surface', {
     body: await page.screenshot(),
     contentType: 'image/png',
   });

@@ -123,7 +123,7 @@ function NotebookPageContent({
               onOpenMathInTool={onOpenMathInTool}
               onSelectionChange={setSelection}
             />
-            <NotebookAuthoringKeyboard />
+            <NotebookAuthoringKeyboard instanceId={instanceId} />
           </main>
           <NotebookInspector
             className={activeDrawer === 'inspector' ? 'is-drawer-open' : undefined}

@@ -1,47 +1,36 @@
-.notebook-template-toolbar {
+.notebook-authoring-keyboard {
   position: fixed;
   z-index: 72;
-  display: flex;
-  gap: 6px;
-  max-width: calc(100vw - 32px);
+  width: min(620px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 96px));
+  overflow: auto;
   border: 1px solid rgba(184, 212, 156, 0.34);
   border-radius: 8px;
-  padding: 6px;
-  background: rgba(10, 25, 25, 0.96);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
-  backdrop-filter: blur(14px);
-}
-
-.notebook-template-toolbar .notebook-authoring-key {
-  min-width: 84px;
-  min-height: 32px;
-  padding: 6px 9px;
-}
-
-.notebook-authoring-keyboard {
-  position: absolute;
-  z-index: 68;
-  left: 50%;
-  bottom: 12px;
-  width: min(960px, calc(100% - 24px));
-  margin: 0;
-  transform: translateX(-50%);
-  border: 1px solid rgba(184, 212, 156, 0.28);
-  border-radius: 9px;
-  background: rgba(13, 30, 30, 0.98);
-  box-shadow: 0 -18px 46px rgba(0, 0, 0, 0.42);
+  background: rgba(10, 25, 25, 0.98);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.5);
   color: var(--page-ink);
   backdrop-filter: blur(16px);
 }
 
-.notebook-authoring-keyboard.is-collapsed {
-  right: 12px;
-  left: auto;
-  width: min(460px, calc(100% - 32px));
-  transform: none;
+.notebook-authoring-keyboard.is-expanded {
+  width: min(800px, calc(100vw - 24px));
 }
 
-.notebook-authoring-keyboard-header,
+.notebook-authoring-keyboard.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.notebook-authoring-keyboard-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  border-bottom: 1px solid rgba(214, 225, 205, 0.1);
+  padding: 6px 8px;
+}
+
 .notebook-authoring-keyboard-header > div,
 .notebook-authoring-keyboard-commands,
 .notebook-authoring-keyboard-search {
@@ -49,55 +38,75 @@
   align-items: center;
 }
 
-.notebook-authoring-keyboard-header {
-  min-height: 44px;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid rgba(214, 225, 205, 0.1);
-  padding: 7px 10px;
-}
-
-.notebook-authoring-keyboard-header > div:first-child {
+.notebook-authoring-keyboard-header > div:nth-child(2) {
   min-width: 0;
-  gap: 8px;
+  gap: 7px;
 }
 
 .notebook-authoring-keyboard-header span {
+  overflow: hidden;
   color: var(--page-muted);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-authoring-drag-handle,
+.notebook-authoring-keyboard-commands button {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-color: transparent;
+  padding: 0;
+  background: transparent;
+  color: var(--page-muted);
+}
+
+.notebook-authoring-drag-handle {
+  cursor: grab;
 }
 
 .notebook-authoring-keyboard-commands {
-  gap: 4px;
+  gap: 2px;
 }
 
-.notebook-authoring-keyboard-commands button {
-  width: 32px;
-  height: 32px;
-  padding: 0;
+.notebook-authoring-keyboard-commands button:hover,
+.notebook-authoring-drag-handle:hover {
+  border-color: rgba(184, 212, 156, 0.36);
+  background: rgba(184, 212, 156, 0.11);
+  color: var(--page-ink);
 }
 
 .notebook-authoring-keyboard-commands .is-rotated {
   transform: rotate(180deg);
 }
 
+.notebook-authoring-quick-keys {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(56px, 1fr));
+  gap: 5px;
+  padding: 8px;
+}
+
 .notebook-authoring-keyboard-body {
   display: grid;
-  grid-template-columns: minmax(220px, 0.7fr) minmax(0, 2fr);
+  grid-template-columns: minmax(190px, 0.7fr) minmax(0, 2fr);
   grid-template-areas:
     'search tabs'
     'keys keys';
-  gap: 8px 12px;
-  padding: 10px;
+  gap: 8px 10px;
+  border-top: 1px solid rgba(214, 225, 205, 0.1);
+  padding: 9px;
 }
 
 .notebook-authoring-keyboard-search {
   grid-area: search;
   gap: 8px;
-  border: 1px solid rgba(214, 225, 205, 0.12);
-  border-radius: 7px;
-  padding: 0 9px;
-  background: rgba(2, 11, 12, 0.58);
+  border: 1px solid rgba(214, 225, 205, 0.14);
+  border-radius: 6px;
+  padding: 0 8px;
+  background: rgba(2, 11, 12, 0.62);
 }
 
 .notebook-authoring-keyboard-search input {
@@ -121,15 +130,15 @@
 .notebook-authoring-keyboard-tabs {
   grid-area: tabs;
   display: grid;
-  grid-template-columns: repeat(7, minmax(70px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(7, minmax(64px, 1fr));
+  gap: 3px;
 }
 
 .notebook-authoring-keyboard-tabs button {
-  min-height: 34px;
+  min-height: 33px;
   border: 1px solid rgba(214, 225, 205, 0.12);
-  border-radius: 6px;
-  padding: 5px 7px;
+  border-radius: 5px;
+  padding: 4px 6px;
   background: rgba(255, 255, 255, 0.035);
   color: var(--page-muted);
 }
@@ -143,38 +152,88 @@
 .notebook-authoring-keyboard-grid {
   grid-area: keys;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
-  gap: 6px;
-  max-height: 132px;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 5px;
+  max-height: 190px;
   overflow: auto;
 }
 
 .notebook-authoring-key {
+  position: relative;
   display: grid;
   place-items: center;
-  gap: 2px;
-  min-height: 42px;
-  border-color: rgba(214, 225, 205, 0.13);
-  padding: 7px 9px;
+  min-height: 45px;
+  border: 1px solid rgba(214, 225, 205, 0.14);
+  border-radius: 5px;
+  padding: 5px;
   background: rgba(255, 255, 255, 0.045);
   color: var(--page-ink);
 }
 
-.notebook-authoring-key:hover {
-  border-color: rgba(184, 212, 156, 0.46);
-  background: rgba(184, 212, 156, 0.12);
+.notebook-authoring-key:hover,
+.notebook-authoring-key:focus-visible {
+  border-color: rgba(184, 212, 156, 0.52);
+  background: rgba(184, 212, 156, 0.13);
 }
 
-.notebook-authoring-key small {
-  color: #e8c783;
-  font-size: 0.64rem;
+.notebook-authoring-key-symbol {
+  font-family: 'STIX Two Math', 'Fira Sans Condensed', serif;
+  font-size: 1.18rem;
+  line-height: 1;
+}
+
+.notebook-authoring-key i {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e8c783;
+}
+
+.notebook-matrix-picker {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgba(214, 225, 205, 0.12);
+  padding: 10px;
+  background: rgba(5, 16, 17, 0.72);
+}
+
+.notebook-matrix-picker > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notebook-matrix-picker > header span,
+.notebook-matrix-picker > small {
+  color: var(--page-muted);
+  font: 0.72rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-matrix-grid {
+  width: max-content;
+  display: grid;
+  grid-template-columns: repeat(8, 24px);
+  gap: 3px;
+}
+
+.notebook-matrix-grid button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(214, 225, 205, 0.2);
+  border-radius: 3px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.notebook-matrix-grid button.is-selected {
+  border-color: rgba(184, 212, 156, 0.68);
+  background: rgba(184, 212, 156, 0.28);
 }
 
 @media (max-width: 1120px) {
-  .notebook-template-toolbar {
-    display: none;
-  }
-
   .notebook-authoring-keyboard-body {
     grid-template-columns: 1fr;
     grid-template-areas: 'search' 'tabs' 'keys';
@@ -182,22 +241,23 @@
 
   .notebook-authoring-keyboard-tabs {
     overflow-x: auto;
-    grid-template-columns: repeat(7, minmax(92px, 1fr));
+    grid-template-columns: repeat(7, minmax(86px, 1fr));
   }
 }
 
 @media (max-width: 720px) {
-  .notebook-authoring-keyboard {
-    bottom: 8px;
-    width: calc(100% - 16px);
+  .notebook-authoring-keyboard,
+  .notebook-authoring-keyboard.is-expanded {
+    width: calc(100vw - 16px);
   }
 
-  .notebook-authoring-keyboard-header span {
+  .notebook-authoring-keyboard-header span,
+  .notebook-authoring-keyboard-commands button:nth-child(4),
+  .notebook-authoring-keyboard-commands button:nth-child(5) {
     display: none;
   }
 
-  .notebook-authoring-keyboard-commands button:nth-child(3),
-  .notebook-authoring-keyboard-commands button:nth-child(4) {
-    display: none;
+  .notebook-authoring-quick-keys {
+    grid-template-columns: repeat(6, minmax(42px, 1fr));
   }
 }

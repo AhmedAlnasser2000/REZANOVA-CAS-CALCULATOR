@@ -16,10 +16,13 @@ export type NotebookKeyboardEntry = {
   id: string;
   label: string;
   latex: string;
+  visualKeycap: string;
   tab: NotebookKeyboardTabId;
   support: NotebookKeyboardSupport;
   keywords: readonly string[];
 };
+
+type NotebookKeyboardRecipe = Omit<NotebookKeyboardEntry, 'visualKeycap'>;
 
 export const NOTEBOOK_KEYBOARD_TABS: readonly {
   id: NotebookKeyboardTabId;
@@ -38,7 +41,7 @@ const RUNNABLE = 'authoring-runnable' as const;
 const DOCUMENT_ONLY = 'document-only' as const;
 const HIDDEN = 'hidden' as const;
 
-export const NOTEBOOK_KEYBOARD_ENTRIES: readonly NotebookKeyboardEntry[] = [
+const NOTEBOOK_KEYBOARD_RECIPES: readonly NotebookKeyboardRecipe[] = [
   { id: 'fraction', label: 'Fraction', latex: '\\frac{#0}{#?}', tab: 'core', support: RUNNABLE, keywords: ['divide', 'ratio'] },
   { id: 'square-root', label: 'Square root', latex: '\\sqrt{#0}', tab: 'core', support: RUNNABLE, keywords: ['root', 'radical'] },
   { id: 'nth-root', label: 'nth root', latex: '\\sqrt[#0]{#?}', tab: 'core', support: RUNNABLE, keywords: ['root', 'radical'] },
@@ -90,7 +93,7 @@ export const NOTEBOOK_KEYBOARD_ENTRIES: readonly NotebookKeyboardEntry[] = [
   { id: 'ceiling', label: 'Ceiling', latex: '\\left\\lceil#0\\right\\rceil', tab: 'discrete', support: RUNNABLE, keywords: ['round'] },
 
   { id: 'equation-template', label: 'Equation', latex: '#0=#?', tab: 'structures', support: RUNNABLE, keywords: ['solve'] },
-  { id: 'matrix-2x2', label: '2 by 2 matrix', latex: '\\begin{bmatrix}#0&#?\\\\#?&#?\\end{bmatrix}', tab: 'structures', support: DOCUMENT_ONLY, keywords: ['matrix', 'grid'] },
+  { id: 'matrix', label: 'Matrix', latex: '', tab: 'structures', support: DOCUMENT_ONLY, keywords: ['matrix', 'grid', 'rows', 'columns'] },
   { id: 'column-vector', label: 'Column vector', latex: '\\begin{bmatrix}#0\\\\#?\\end{bmatrix}', tab: 'structures', support: DOCUMENT_ONLY, keywords: ['vector', 'matrix'] },
   { id: 'piecewise', label: 'Piecewise', latex: '\\begin{cases}#0&#?\\\\#?&#?\\end{cases}', tab: 'structures', support: DOCUMENT_ONLY, keywords: ['cases', 'conditional'] },
   { id: 'aligned-work', label: 'Aligned work', latex: '\\begin{aligned}#0&=#?\\\\&=#?\\end{aligned}', tab: 'structures', support: DOCUMENT_ONLY, keywords: ['steps', 'working'] },
@@ -98,6 +101,82 @@ export const NOTEBOOK_KEYBOARD_ENTRIES: readonly NotebookKeyboardEntry[] = [
   { id: 'unsafe-link', label: 'External link', latex: '\\href{#0}{#?}', tab: 'structures', support: HIDDEN, keywords: ['html', 'url'] },
   { id: 'unsafe-html', label: 'HTML data', latex: '\\htmlData{#0}{#?}', tab: 'structures', support: HIDDEN, keywords: ['html', 'attribute'] },
 ];
+
+const NOTEBOOK_KEYCAPS: Readonly<Record<string, string>> = {
+  fraction: 'a⁄b',
+  'square-root': '√',
+  'nth-root': 'ⁿ√',
+  power: 'xⁿ',
+  subscript: 'xᵢ',
+  parentheses: '( )',
+  absolute: '|x|',
+  'plus-minus': '±',
+  exponential: 'eˣ',
+  'natural-log': 'ln',
+  'log-base': 'logₐ',
+  function: 'f(x)',
+  factorial: 'n!',
+  binomial: 'C',
+  equals: '=',
+  'not-equals': '≠',
+  'less-equal': '≤',
+  'greater-equal': '≥',
+  approximately: '≈',
+  implies: '⇒',
+  equivalent: '⇔',
+  alpha: 'α',
+  beta: 'β',
+  theta: 'θ',
+  lambda: 'λ',
+  mu: 'μ',
+  pi: 'π',
+  sigma: 'σ',
+  delta: 'Δ',
+  limit: 'lim',
+  derivative: 'd⁄dx',
+  partial: '∂⁄∂x',
+  integral: '∫',
+  sum: '∑',
+  product: '∏',
+  infinity: '∞',
+  'set-membership': '∈',
+  'not-in-set': '∉',
+  union: '∪',
+  intersection: '∩',
+  'for-all': '∀',
+  exists: '∃',
+  floor: '⌊x⌋',
+  ceiling: '⌈x⌉',
+  'equation-template': 'x = y',
+  matrix: 'matrix-grid',
+  'column-vector': '⃗v',
+  piecewise: '{⋯',
+  'aligned-work': '= ⋯',
+  'unsafe-link': '↗',
+  'unsafe-html': '</>',
+};
+
+export const NOTEBOOK_KEYBOARD_ENTRIES: readonly NotebookKeyboardEntry[] =
+  NOTEBOOK_KEYBOARD_RECIPES.map((entry) => ({
+    ...entry,
+    visualKeycap: NOTEBOOK_KEYCAPS[entry.id] ?? entry.label,
+  }));
+
+export function notebookMatrixLatex(rows: number, columns: number) {
+  if (!Number.isInteger(rows) || !Number.isInteger(columns)
+    || rows < 1 || rows > 8 || columns < 1 || columns > 8) {
+    throw new Error('Notebook matrices support dimensions from 1 by 1 through 8 by 8');
+  }
+  let placeholder = 0;
+  const body = Array.from({ length: rows }, () => (
+    Array.from({ length: columns }, () => {
+      const value = placeholder === 0 ? '#0' : '#?';
+      placeholder += 1;
+      return value;
+    }).join('&')
+  )).join('\\\\');
+  return `\\begin{bmatrix}${body}\\end{bmatrix}`;
+}
 
 const DOCUMENT_ONLY_PATTERNS = [
   /\\begin\{(?:bmatrix|pmatrix|matrix|cases|aligned)\}/,

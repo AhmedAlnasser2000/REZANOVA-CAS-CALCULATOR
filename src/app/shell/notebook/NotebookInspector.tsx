@@ -36,8 +36,8 @@ function selectionLabel(selection: NotebookEditorSelection | null) {
   const labels: Record<string, string> = {
     paragraph: 'Text',
     heading: 'Heading',
-    inlineMath: 'Inline math',
-    displayMath: 'Display math',
+    inlineMath: 'Math in text',
+    displayMath: 'Separate equation',
     semanticBlock: 'Academic container',
     evidenceSnapshot: 'Evidence snapshot',
     bulletList: 'Bullet list',
@@ -172,12 +172,12 @@ export function NotebookInspector({
                 type="button"
                 className={selection?.type === 'inlineMath' ? 'is-active' : undefined}
                 onClick={() => convertSelectedNotebookMath(editor, 'inline')}
-              >Inline</button>
+              >In text</button>
               <button
                 type="button"
                 className={selection?.type === 'displayMath' ? 'is-active' : undefined}
                 onClick={() => convertSelectedNotebookMath(editor, 'display')}
-              >Display</button>
+              >Separate equation</button>
             </div>
           </div>
           <div className="notebook-inspector-section">

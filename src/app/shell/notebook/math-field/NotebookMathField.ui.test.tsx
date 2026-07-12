@@ -45,13 +45,24 @@ describe('NotebookMathField', () => {
     render(<FieldHarness />);
 
     const field = screen.getByTestId('notebook-field') as HTMLElement & {
+      menuItems: readonly unknown[];
       mathVirtualKeyboardPolicy: string;
     };
     fireEvent.focus(field);
 
     expect(field.mathVirtualKeyboardPolicy).toBe('manual');
+    expect(field.menuItems).toEqual([]);
     expect(window.mathVirtualKeyboard.layouts).toBe(layouts);
     expect(screen.getByTestId('active-field')).toHaveTextContent('math.1');
+  });
+
+  it('suppresses the native menu and routes context input through the Notebook field', () => {
+    render(<FieldHarness />);
+    const field = screen.getByTestId('notebook-field');
+
+    expect(fireEvent.contextMenu(field)).toBe(false);
+    expect(screen.getByTestId('active-field')).toHaveTextContent('math.1');
+    expect(document.activeElement).toBe(field);
   });
 
   it('inserts through the active field and restores focus after keyboard actions', () => {

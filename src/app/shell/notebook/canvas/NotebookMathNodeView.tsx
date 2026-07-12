@@ -83,7 +83,7 @@ export function createNotebookMathNodeView(
         onPointerDown={selectMathNode}
       >
         <header>
-          <span><Sigma aria-hidden="true" size={15} /> Display math</span>
+          <span><Sigma aria-hidden="true" size={15} /> Separate equation</span>
           <small>{notebookToolTargetLabel(workspaceTarget)}</small>
         </header>
         <div className="notebook-rich-display-math-row">

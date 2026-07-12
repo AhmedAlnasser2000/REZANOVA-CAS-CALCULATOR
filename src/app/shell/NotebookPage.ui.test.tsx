@@ -207,7 +207,7 @@ describe('NotebookPage', () => {
     const onOpenMathInTool = vi.fn();
     render(<NotebookHarness onOpenMathInTool={onOpenMathInTool} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Insert display math' }));
+    await user.click(await screen.findByRole('button', { name: 'Insert separate equation' }));
     const field = await screen.findByTestId('notebook-display-math-field') as HTMLElement & {
       setValue: (value: string) => void;
     };
@@ -230,21 +230,21 @@ describe('NotebookPage', () => {
   it('converts selected math explicitly between inline and display placement', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
-    await user.click(await screen.findByRole('button', { name: 'Insert inline math' }));
+    await user.click(await screen.findByRole('button', { name: 'Insert math in text' }));
     const inlineField = await screen.findByTestId('notebook-inline-math-field');
     await user.click(inlineField);
 
     const inspector = screen.getByTestId('notebook-inspector');
     await waitFor(() => {
-      expect(within(inspector).getByRole('button', { name: 'Inline' })).toHaveClass('is-active');
+      expect(within(inspector).getByRole('button', { name: 'In text' })).toHaveClass('is-active');
     });
-    await user.click(within(inspector).getByRole('button', { name: 'Display' }));
+    await user.click(within(inspector).getByRole('button', { name: 'Separate equation' }));
 
     expect(await screen.findByTestId('notebook-display-math-node')).toBeInTheDocument();
     expect(screen.queryByTestId('notebook-inline-math-node')).not.toBeInTheDocument();
 
     await user.click(screen.getByTestId('notebook-display-math-field'));
-    await user.click(within(inspector).getByRole('button', { name: 'Inline' }));
+    await user.click(within(inspector).getByRole('button', { name: 'In text' }));
     expect(await screen.findByTestId('notebook-inline-math-node')).toBeInTheDocument();
     expect(screen.queryByTestId('notebook-display-math-node')).not.toBeInTheDocument();
   });
@@ -252,7 +252,7 @@ describe('NotebookPage', () => {
   it('keeps document-only structures in Notebook instead of sending them to a tool', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
-    await user.click(await screen.findByRole('button', { name: 'Insert display math' }));
+    await user.click(await screen.findByRole('button', { name: 'Insert separate equation' }));
     const field = await screen.findByTestId('notebook-display-math-field') as HTMLElement & {
       setValue: (value: string) => void;
     };

@@ -636,10 +636,6 @@
   color: var(--page-ink);
 }
 
-.notebook-canvas:has(.notebook-authoring-keyboard.is-expanded) .notebook-rich-editor {
-  padding-bottom: 340px;
-}
-
 .notebook-math-candidates,
 .notebook-accepted-spans {
   display: grid;

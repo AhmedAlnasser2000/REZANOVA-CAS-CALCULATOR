@@ -37,8 +37,17 @@
 
 ## NOTEBOOK-SELECTION-FORMATTING-PALETTES1
 
+- commit_hash: `bbf1817b`
 - commit_message: `NOTEBOOK-SELECTION-FORMATTING-PALETTES1`
 - scope: bounded Notebook prose selection, exact-range Bold/Italic, separate Text Color and Highlight palettes, custom/recent/reset controls, low-contrast warning, transient dismissal, focused tests, Chromium evidence, and durable memory
 - approval: explicitly approved as the third of five commits in the Notebook Authoring Recovery And Enhancement Plan
 - push: not authorized
 - excluded: active output-inversion/result-document files and untracked `test-results/`
+
+## NOTEBOOK-MATH-AUTHORING-SURFACE1
+
+- commit_message: `NOTEBOOK-MATH-AUTHORING-SURFACE1`
+- scope: one draggable Notebook-owned Math Authoring surface, compact and expanded modes, symbol-first keys, Notebook-only MathLive menu suppression, 1 by 1 through 8 by 8 matrix picker, per-tab session position, focused tests, Chromium evidence, and durable memory
+- approval: explicitly approved as the fourth of five commits in the Notebook Authoring Recovery And Enhancement Plan
+- push: not authorized
+- excluded: active output-inversion/result-document/History files and untracked `test-results/`

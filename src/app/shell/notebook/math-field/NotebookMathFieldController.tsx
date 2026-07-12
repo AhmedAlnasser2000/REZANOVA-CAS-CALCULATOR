@@ -45,10 +45,7 @@ export function NotebookMathFieldProvider({ children }: { children: ReactNode })
     nodeId: string,
     role: NotebookMathFieldRole,
   ) => {
-    setActive((current) =>
-      current?.field === field && current.nodeId === nodeId && current.role === role
-        ? current
-        : { field, nodeId, role });
+    setActive({ field, nodeId, role });
   }, []);
 
   const release = useCallback((field: MathfieldElement) => {

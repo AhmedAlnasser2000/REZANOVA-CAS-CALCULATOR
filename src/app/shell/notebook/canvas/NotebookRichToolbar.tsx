@@ -111,10 +111,10 @@ export function NotebookRichToolbar({
         ><ListOrdered size={16} /></ToolButton>
       </div>
       <div className="notebook-rich-toolbar-group">
-        <ToolButton label="Insert inline math" onClick={() => insertNotebookInlineMath(editor)}>
+        <ToolButton label="Insert math in text" onClick={() => insertNotebookInlineMath(editor)}>
           <Braces size={16} />
         </ToolButton>
-        <ToolButton label="Insert display math" onClick={() => insertNotebookDisplayMath(editor)}>
+        <ToolButton label="Insert separate equation" onClick={() => insertNotebookDisplayMath(editor)}>
           <Sigma size={16} />
         </ToolButton>
         <div className="notebook-semantic-insert">

@@ -63,6 +63,13 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
       field.placeholder = placeholder ?? '';
       field.setAttribute('data-placeholder', placeholder ?? '');
       field.mathVirtualKeyboardPolicy = 'manual';
+      const suppressNativeMenu = () => {
+        try {
+          field.menuItems = [];
+        } catch {
+          // MathLive rejects menu configuration until its mount event fires.
+        }
+      };
 
       const handleInput = () => {
         onChangeRef.current(normalizeLiveInputOperatorLatex(field.getValue('latex'), {
@@ -73,6 +80,11 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
         activate(field, nodeId, role);
         onFocusRef.current?.();
       };
+      const handleContextMenu = (event: MouseEvent) => {
+        event.preventDefault();
+        activate(field, nodeId, role);
+        field.focus();
+      };
       const handleKeydown = (event: KeyboardEvent) => {
         if (event.key === 'Enter' && !event.shiftKey && onSubmitRef.current) {
           event.preventDefault();
@@ -82,11 +94,16 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
 
       field.addEventListener('input', handleInput);
       field.addEventListener('focus', handleFocus);
+      field.addEventListener('contextmenu', handleContextMenu);
       field.addEventListener('keydown', handleKeydown);
+      field.addEventListener('mount', suppressNativeMenu);
+      suppressNativeMenu();
       return () => {
         field.removeEventListener('input', handleInput);
         field.removeEventListener('focus', handleFocus);
+        field.removeEventListener('contextmenu', handleContextMenu);
         field.removeEventListener('keydown', handleKeydown);
+        field.removeEventListener('mount', suppressNativeMenu);
         release(field);
       };
     }, [activate, nodeId, placeholder, readOnly, release, role]);

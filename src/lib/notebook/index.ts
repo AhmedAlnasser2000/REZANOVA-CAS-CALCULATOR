@@ -11,3 +11,4 @@ export * from './document/types';
 export * from './document/surface-state';
 export * from './persistence/port';
 export * from './authoring-keyboard';
+export * from './ui-state';

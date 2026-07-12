@@ -3,6 +3,8 @@ import {
   ArrowRight,
   ChevronDown,
   Delete,
+  GripHorizontal,
+  Grid3X3,
   Keyboard,
   Redo2,
   Search,
@@ -15,106 +17,195 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
 } from 'react';
 
 import {
   NOTEBOOK_KEYBOARD_ENTRIES,
   NOTEBOOK_KEYBOARD_TABS,
   notebookKeyboardEntries,
+  notebookMatrixLatex,
   type NotebookKeyboardEntry,
   type NotebookKeyboardTabId,
 } from '../../../../lib/notebook';
 import { useNotebookMathFieldController } from '../math-field';
+import { useNotebookTransientLayer } from '../transient-ui';
+import { useNotebookUiState } from '../useNotebookUiState';
 
-const QUICK_ENTRY_IDS = ['fraction', 'square-root', 'power', 'limit', 'integral'];
+const QUICK_ENTRY_IDS = ['fraction', 'square-root', 'power', 'limit', 'integral', 'matrix'];
 
 function keyboardEntry(id: string) {
   return NOTEBOOK_KEYBOARD_ENTRIES.find((entry) => entry.id === id);
 }
 
+function MatrixGridIcon() {
+  return <Grid3X3 aria-hidden="true" size={21} />;
+}
+
 function NotebookTemplateButton({
   entry,
+  matrixTriggerId,
   onInsert,
+  onOpenMatrix,
 }: {
   entry: NotebookKeyboardEntry;
+  matrixTriggerId: string;
   onInsert: (entry: NotebookKeyboardEntry) => void;
+  onOpenMatrix: () => void;
 }) {
+  const documentOnly = entry.support === 'document-only';
   return (
     <button
+      data-notebook-transient-trigger={entry.id === 'matrix' ? matrixTriggerId : undefined}
       type="button"
       className={`notebook-authoring-key is-${entry.support}`}
-      title={entry.support === 'document-only'
+      aria-label={`${entry.label}${documentOnly ? ', document only' : ''}`}
+      title={documentOnly
         ? `${entry.label} is available for authored documents but is not sent to calculator tools.`
         : `Insert ${entry.label}`}
-      onClick={() => onInsert(entry)}
+      onClick={() => entry.id === 'matrix' ? onOpenMatrix() : onInsert(entry)}
     >
-      <span>{entry.label}</span>
-      {entry.support === 'document-only' ? <small>Document</small> : null}
+      <span className="notebook-authoring-key-symbol" aria-hidden="true">
+        {entry.visualKeycap === 'matrix-grid' ? <MatrixGridIcon /> : entry.visualKeycap}
+      </span>
+      {documentOnly ? <i aria-hidden="true" title="Document only" /> : null}
     </button>
   );
 }
 
-export function NotebookAuthoringKeyboard() {
+function clampPosition(x: number, y: number, width: number, height: number) {
+  const tablist = document.querySelector('[role="tablist"][aria-label="Open workspaces"]');
+  const tabBottom = tablist?.getBoundingClientRect().bottom ?? 0;
+  return {
+    x: Math.max(12, Math.min(x, window.innerWidth - width - 12)),
+    y: Math.max(tabBottom + 12, Math.min(y, window.innerHeight - height - 12)),
+  };
+}
+
+function NotebookMatrixPicker({
+  layerId,
+  onInsert,
+}: {
+  layerId: string;
+  onInsert: (rows: number, columns: number) => void;
+}) {
+  const [dimensions, setDimensions] = useState({ rows: 2, columns: 2 });
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  function focusCell(rows: number, columns: number) {
+    setDimensions({ rows, columns });
+    requestAnimationFrame(() => {
+      gridRef.current?.querySelector<HTMLElement>(
+        `[data-matrix-row="${rows}"][data-matrix-column="${columns}"]`,
+      )?.focus();
+    });
+  }
+
+  return (
+    <section
+      data-notebook-transient-layer={layerId}
+      className="notebook-matrix-picker"
+      aria-label="Choose matrix dimensions"
+    >
+      <header>
+        <strong>Matrix</strong>
+        <span aria-live="polite">{dimensions.rows} × {dimensions.columns}</span>
+      </header>
+      <div ref={gridRef} role="grid" aria-label="Matrix dimensions" className="notebook-matrix-grid">
+        {Array.from({ length: 8 }, (_, rowIndex) => (
+          Array.from({ length: 8 }, (_, columnIndex) => {
+            const rows = rowIndex + 1;
+            const columns = columnIndex + 1;
+            const selected = rows <= dimensions.rows && columns <= dimensions.columns;
+            return (
+              <button
+                key={`${rows}x${columns}`}
+                data-matrix-row={rows}
+                data-matrix-column={columns}
+                type="button"
+                role="gridcell"
+                tabIndex={rows === dimensions.rows && columns === dimensions.columns ? 0 : -1}
+                className={selected ? 'is-selected' : undefined}
+                aria-label={`${rows} by ${columns} matrix`}
+                onFocus={() => setDimensions({ rows, columns })}
+                onPointerEnter={() => setDimensions({ rows, columns })}
+                onClick={() => onInsert(rows, columns)}
+                onKeyDown={(event) => {
+                  const next = {
+                    rows: event.key === 'ArrowUp' ? Math.max(1, rows - 1)
+                      : event.key === 'ArrowDown' ? Math.min(8, rows + 1) : rows,
+                    columns: event.key === 'ArrowLeft' ? Math.max(1, columns - 1)
+                      : event.key === 'ArrowRight' ? Math.min(8, columns + 1) : columns,
+                  };
+                  if (next.rows !== rows || next.columns !== columns) {
+                    event.preventDefault();
+                    focusCell(next.rows, next.columns);
+                  }
+                }}
+              />
+            );
+          })
+        ))}
+      </div>
+      <small>Square brackets · 1 × 1 through 8 × 8</small>
+    </section>
+  );
+}
+
+export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }) {
   const controller = useNotebookMathFieldController();
   const { active } = controller;
-  const [expanded, setExpanded] = useState(true);
+  const { patchUiState, uiState } = useNotebookUiState(instanceId);
+  const toolsLayer = useNotebookTransientLayer({ id: 'notebook-math-authoring-tools' });
+  const symbolsLayer = useNotebookTransientLayer({
+    id: 'notebook-math-authoring-symbols',
+    parentId: toolsLayer.id,
+  });
+  const matrixLayer = useNotebookTransientLayer({
+    id: 'notebook-matrix-picker',
+    parentId: symbolsLayer.id,
+  });
+  const closeTools = toolsLayer.close;
+  const openTools = toolsLayer.open;
+  const toolsOpen = toolsLayer.isOpen;
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<NotebookKeyboardTabId>('core');
-  const [anchor, setAnchor] = useState<CSSProperties>({});
-  const keyboardRef = useRef<HTMLElement>(null);
+  const [anchor, setAnchor] = useState<CSSProperties>({ left: 24, top: 120 });
+  const [dragging, setDragging] = useState(false);
+  const surfaceRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!active?.field) {
-      return;
+    if (active?.field) {
+      openTools();
+    } else {
+      closeTools(false);
     }
-    const updateAnchor = () => {
-      const rect = active.field.getBoundingClientRect();
-      const viewportWidth = window.innerWidth || 1200;
-      const viewportHeight = window.innerHeight || 800;
-      const toolbarWidth = 540;
-      const left = Math.max(16, Math.min(rect.left, viewportWidth - toolbarWidth - 16));
-      const below = rect.bottom + 10;
-      const top = rect.top > 140
-        ? rect.top - 58
-        : Math.min(below, viewportHeight - 72);
-      setAnchor({ left, top });
-    };
-    updateAnchor();
-    window.addEventListener('resize', updateAnchor);
-    window.addEventListener('scroll', updateAnchor, true);
-    active.field.addEventListener('selection-change', updateAnchor);
-    return () => {
-      window.removeEventListener('resize', updateAnchor);
-      window.removeEventListener('scroll', updateAnchor, true);
-      active.field.removeEventListener('selection-change', updateAnchor);
-    };
-  }, [active]);
+  }, [active, closeTools, openTools]);
 
   useLayoutEffect(() => {
-    if (!active?.field || !expanded || !keyboardRef.current) {
+    if (!active?.field || !toolsOpen || !surfaceRef.current || dragging) {
       return;
     }
-    let layoutFrame = 0;
     const frame = requestAnimationFrame(() => {
-      layoutFrame = requestAnimationFrame(() => {
-        const keyboardBounds = keyboardRef.current?.getBoundingClientRect();
-        const fieldBounds = active.field.getBoundingClientRect();
-        if (!keyboardBounds || fieldBounds.bottom <= keyboardBounds.top - 16) {
-          return;
-        }
-        const scroller = active.field.closest<HTMLElement>('.notebook-rich-scroll-region');
-        if (scroller) {
-          scroller.scrollTop += fieldBounds.bottom - keyboardBounds.top + 28;
-        } else if (typeof active.field.scrollIntoView === 'function') {
-          active.field.scrollIntoView({ block: 'center', inline: 'nearest' });
-        }
-      });
+      const surface = surfaceRef.current;
+      if (!surface) {
+        return;
+      }
+      const surfaceBounds = surface.getBoundingClientRect();
+      const fieldBounds = active.field.getBoundingClientRect();
+      const saved = uiState.mathAuthoringPosition;
+      const initialX = saved?.x ?? fieldBounds.left;
+      const preferredBelow = fieldBounds.bottom + 12;
+      const initialY = saved?.y ?? (
+        preferredBelow + surfaceBounds.height <= window.innerHeight - 12
+          ? preferredBelow
+          : fieldBounds.top - surfaceBounds.height - 12
+      );
+      const next = clampPosition(initialX, initialY, surfaceBounds.width, surfaceBounds.height);
+      setAnchor({ left: next.x, top: next.y });
     });
-    return () => {
-      cancelAnimationFrame(frame);
-      cancelAnimationFrame(layoutFrame);
-    };
-  }, [active, expanded]);
+    return () => cancelAnimationFrame(frame);
+  }, [active, dragging, matrixLayer.isOpen, symbolsLayer.isOpen, toolsOpen, uiState.mathAuthoringPosition]);
 
   const entries = useMemo(
     () => notebookKeyboardEntries(query ? { query } : { tab }),
@@ -124,7 +215,7 @@ export function NotebookAuthoringKeyboard() {
     .map(keyboardEntry)
     .filter((entry): entry is NotebookKeyboardEntry => Boolean(entry));
 
-  if (!active) {
+  if (!active || !toolsOpen) {
     return null;
   }
 
@@ -132,88 +223,157 @@ export function NotebookAuthoringKeyboard() {
     controller.insert(entry.latex);
   }
 
+  function insertMatrix(rows: number, columns: number) {
+    controller.insert(notebookMatrixLatex(rows, columns));
+    matrixLayer.close(false);
+  }
+
+  function startDrag(event: ReactPointerEvent<HTMLElement>) {
+    if (!surfaceRef.current) {
+      return;
+    }
+    event.preventDefault();
+    const bounds = surfaceRef.current.getBoundingClientRect();
+    const offset = { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+    setDragging(true);
+    const move = (moveEvent: PointerEvent) => {
+      const surface = surfaceRef.current;
+      if (!surface) {
+        return;
+      }
+      const currentBounds = surface.getBoundingClientRect();
+      const next = clampPosition(
+        moveEvent.clientX - offset.x,
+        moveEvent.clientY - offset.y,
+        currentBounds.width,
+        currentBounds.height,
+      );
+      setAnchor({ left: next.x, top: next.y });
+    };
+    const finish = (upEvent: PointerEvent) => {
+      const surface = surfaceRef.current;
+      if (surface) {
+        const currentBounds = surface.getBoundingClientRect();
+        const next = clampPosition(
+          upEvent.clientX - offset.x,
+          upEvent.clientY - offset.y,
+          currentBounds.width,
+          currentBounds.height,
+        );
+        patchUiState({ mathAuthoringPosition: next });
+        setAnchor({ left: next.x, top: next.y });
+      }
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+      controller.focusActive();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish);
+  }
+
   return (
-    <>
-      {expanded ? (
-        <div
-          className="notebook-template-toolbar"
-          data-testid="notebook-template-toolbar"
-          style={anchor}
-          onPointerDown={(event) => event.preventDefault()}
-        >
+    <section
+      ref={surfaceRef}
+      data-notebook-transient-layer={toolsLayer.id}
+      aria-label="Notebook math authoring surface"
+      className={`notebook-authoring-keyboard${symbolsLayer.isOpen ? ' is-expanded' : ' is-compact'}${dragging ? ' is-dragging' : ''}`}
+      data-testid="notebook-authoring-keyboard"
+      style={anchor}
+    >
+      <header className="notebook-authoring-keyboard-header">
+        <button
+          type="button"
+          className="notebook-authoring-drag-handle"
+          aria-label="Move Math Authoring"
+          title="Drag Math Authoring"
+          onPointerDown={startDrag}
+        ><GripHorizontal aria-hidden="true" size={17} /></button>
+        <div>
+          <Keyboard aria-hidden="true" size={17} />
+          <strong>Math Field Tools</strong>
+          <span>{active.role === 'inline' ? 'In text' : 'Separate equation'}</span>
+        </div>
+        <div className="notebook-authoring-keyboard-commands">
+          <button type="button" aria-label="Undo math" title="Undo math" onClick={() => controller.execute('undo')}><Undo2 size={15} /></button>
+          <button type="button" aria-label="Redo math" title="Redo math" onClick={() => controller.execute('redo')}><Redo2 size={15} /></button>
+          <button type="button" aria-label="Move math cursor left" title="Move cursor left" onClick={() => controller.execute('moveToPreviousChar')}><ArrowLeft size={15} /></button>
+          <button type="button" aria-label="Move math cursor right" title="Move cursor right" onClick={() => controller.execute('moveToNextChar')}><ArrowRight size={15} /></button>
+          <button type="button" aria-label="Delete previous math character" title="Delete previous character" onClick={() => controller.execute('deleteBackward')}><Delete size={15} /></button>
+          <button
+            data-notebook-transient-trigger={symbolsLayer.id}
+            type="button"
+            aria-label={symbolsLayer.isOpen ? 'Close symbol keyboard' : 'Open symbol keyboard'}
+            aria-expanded={symbolsLayer.isOpen}
+            title={symbolsLayer.isOpen ? 'Close symbol keyboard' : 'Open symbol keyboard'}
+            onClick={() => symbolsLayer.isOpen ? symbolsLayer.close() : symbolsLayer.open()}
+          >
+            <ChevronDown className={symbolsLayer.isOpen ? undefined : 'is-rotated'} size={15} />
+          </button>
+        </div>
+      </header>
+      {!symbolsLayer.isOpen ? (
+        <div className="notebook-authoring-quick-keys" aria-label="Math structure shortcuts">
           {quickEntries.map((entry) => (
-            <NotebookTemplateButton key={entry.id} entry={entry} onInsert={insert} />
+            <NotebookTemplateButton
+              key={entry.id}
+              entry={entry}
+              matrixTriggerId={matrixLayer.id}
+              onInsert={insert}
+              onOpenMatrix={() => {
+                symbolsLayer.open();
+                requestAnimationFrame(() => matrixLayer.open());
+              }}
+            />
           ))}
         </div>
       ) : null}
-      <section
-        ref={keyboardRef}
-        aria-label="Notebook math authoring keyboard"
-        className={`notebook-authoring-keyboard${expanded ? ' is-expanded' : ' is-collapsed'}`}
-        data-testid="notebook-authoring-keyboard"
-        onPointerDown={(event) => event.preventDefault()}
-      >
-        <header className="notebook-authoring-keyboard-header">
-          <div>
-            <Keyboard aria-hidden="true" size={18} />
-            <strong>Math authoring</strong>
-            <span>{active.role === 'inline' ? 'Inline math' : 'Display math'}</span>
+      {symbolsLayer.isOpen ? (
+        <div data-notebook-transient-layer={symbolsLayer.id} className="notebook-authoring-keyboard-body">
+          <label className="notebook-authoring-keyboard-search">
+            <Search aria-hidden="true" size={15} />
+            <span className="sr-only">Search math templates</span>
+            <input
+              type="search"
+              placeholder="Find a symbol or structure"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
+          <div className="notebook-authoring-keyboard-tabs" role="tablist" aria-label="Math template categories">
+            {NOTEBOOK_KEYBOARD_TABS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={!query && tab === item.id}
+                className={!query && tab === item.id ? 'is-active' : undefined}
+                onClick={() => {
+                  setQuery('');
+                  setTab(item.id);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
-          <div className="notebook-authoring-keyboard-commands">
-            <button type="button" aria-label="Undo math" title="Undo math" onClick={() => controller.execute('undo')}><Undo2 size={16} /></button>
-            <button type="button" aria-label="Redo math" title="Redo math" onClick={() => controller.execute('redo')}><Redo2 size={16} /></button>
-            <button type="button" aria-label="Move math cursor left" title="Move cursor left" onClick={() => controller.execute('moveToPreviousChar')}><ArrowLeft size={16} /></button>
-            <button type="button" aria-label="Move math cursor right" title="Move cursor right" onClick={() => controller.execute('moveToNextChar')}><ArrowRight size={16} /></button>
-            <button type="button" aria-label="Delete previous math character" title="Delete previous character" onClick={() => controller.execute('deleteBackward')}><Delete size={16} /></button>
-            <button
-              type="button"
-              aria-label={expanded ? 'Collapse math keyboard' : 'Expand math keyboard'}
-              aria-expanded={expanded}
-              title={expanded ? 'Collapse math keyboard' : 'Expand math keyboard'}
-              onClick={() => setExpanded((current) => !current)}
-            >
-              <ChevronDown className={expanded ? undefined : 'is-rotated'} size={16} />
-            </button>
-          </div>
-        </header>
-        {expanded ? (
-          <div className="notebook-authoring-keyboard-body">
-            <label className="notebook-authoring-keyboard-search">
-              <Search aria-hidden="true" size={15} />
-              <span className="sr-only">Search math templates</span>
-              <input
-                type="search"
-                placeholder="Search templates and symbols"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+          <div className="notebook-authoring-keyboard-grid" data-testid="notebook-keyboard-entries">
+            {entries.map((entry) => (
+              <NotebookTemplateButton
+                key={entry.id}
+                entry={entry}
+                matrixTriggerId={matrixLayer.id}
+                onInsert={insert}
+                onOpenMatrix={matrixLayer.open}
               />
-            </label>
-            <div className="notebook-authoring-keyboard-tabs" role="tablist" aria-label="Math template categories">
-              {NOTEBOOK_KEYBOARD_TABS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={!query && tab === item.id}
-                  className={!query && tab === item.id ? 'is-active' : undefined}
-                  onClick={() => {
-                    setQuery('');
-                    setTab(item.id);
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <div className="notebook-authoring-keyboard-grid" data-testid="notebook-keyboard-entries">
-              {entries.map((entry) => (
-                <NotebookTemplateButton key={entry.id} entry={entry} onInsert={insert} />
-              ))}
-              {entries.length === 0 ? <p>No matching math templates.</p> : null}
-            </div>
+            ))}
+            {entries.length === 0 ? <p>No matching math templates.</p> : null}
           </div>
-        ) : null}
-      </section>
-    </>
+        </div>
+      ) : null}
+      {matrixLayer.isOpen ? (
+        <NotebookMatrixPicker layerId={matrixLayer.id} onInsert={insertMatrix} />
+      ) : null}
+    </section>
   );
 }
