@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; canonical Display authority is verified through Gate 19; `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0` is next; no push is authorized
+Status: complete; all 20 gates are verified and the structured-History/Display-inversion track is closed; no push is authorized
 
 ## Attribution
 
@@ -164,6 +164,10 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - Inversion exposed one dormant Equation detail mismatch: typed parts rendered `Relation tested: p(x) > 0` while the unused legacy line carried a trailing period. The compatibility assertion now follows the already-visible typed rendering; no app-visible wording changed.
 - Full verification passes 532 unit files/3,688 tests and 67 UI files/481 tests. All 43 golden executions, all 100 replay fixtures, 76 workspace-runtime contracts, printer/detail/clipboard contracts, TypeScript, build, lint, file-size, CI, seam, Surface, OOE, compartments, and Rust pass.
 - Nineteen Chromium canaries, nine structured-History journeys, and two Linear Algebra dimension-contract journeys pass. Fresh all-nine success screenshots and three math-bearing Matrix/Vector error screenshots were inspected without malformed fragments, overlap, or clipping. Program closeout is next.
+- `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0`: verified at the final commit edge. The aggregate gate passed every static, unit, and UI phase, including 532 unit files/3,688 tests and 67 UI files/481 tests. Its full Chromium phase passed 153/154 cases; the sole timeout is the concurrently edited Notebook authoring test waiting for a `Structures` tab outside this program and its staging boundary.
+- Program-owned closeout evidence is green: 19/19 workspace canaries, 9/9 dedicated History create/replay journeys, four browser persistence/reload cases, two browser clipboard capability cases, 12 runtime-contract files/76 tests, all 100 replay fixtures, 50 native Rust persistence tests, and the Linux Tauri clipboard fallback.
+- Fresh all-nine success screenshots plus three Matrix/Vector math-bearing controlled-error screenshots were inspected at Gate 19. Result cards, facts, details, branches, warnings, exact Table rows, and overflow behavior remain readable with no accepted mathematical or visible output drift.
+- The roadmap closes with compatibility fields intentionally retained as derived projections. Physical removal, Statistics guided-control work, capability expansion, Surface hosting, and durable Notebook persistence require separate approved work.
 
 ## Verification Contract
 

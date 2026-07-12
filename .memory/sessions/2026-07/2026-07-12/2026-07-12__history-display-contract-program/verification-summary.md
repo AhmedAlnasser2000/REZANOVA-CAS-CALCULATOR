@@ -457,3 +457,27 @@
 
 - Surface DTOs, OOE authority, capabilities, hosts, requests, cancellation/stale/commit rules, diagnostics, History tickets, mathematics, and visible wording remain unchanged.
 - Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
+
+## HISTORY-DISPLAY-CONTRACT-CLOSEOUT0 Gate
+
+- Kind: `backend` program closeout with accumulated `ui` and native restart evidence.
+- Intentional mathematical, visible formatting, Surface DTO, runtime, or compatibility-removal change: no.
+- Result: pass for the owned program; one external dirty-Notebook browser case remains separately owned.
+
+### Aggregate Evidence
+
+- `npm run test:gate` passed all static gates, 532 unit files/3,688 tests, and 67 UI files/481 tests. The final Playwright phase passed 153/154 tests; only `Notebook unifies compact tools, symbols, and matrix dimensions in one floating surface` timed out waiting for the concurrent Notebook lane's `Structures` tab.
+- All 19 workspace canaries, all nine History create/replay journeys, all four browser persistence/reload cases, and both Chromium clipboard capability cases passed within that run. The Notebook failure is excluded from this program's source, staging, and acceptance claims.
+- Focused replay passes two files/four tests plus the sanitized importer; runtime contracts pass 12 files/76 tests. Native Rust passes 50 library tests, including extension-rich file restart and Calculator Memory round trips, and the Linux Tauri clipboard fallback passes its integration test.
+- Dedicated reruns pass 9/9 History browser journeys and 2/2 Chromium clipboard capability cases.
+
+### Visual Evidence
+
+- Gate 19's fresh screenshots cover Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and Table successes plus three Matrix/Vector math-bearing controlled errors.
+- Answer/error cards, facts, branches, details, warnings, exact Table rows, copy surfaces, and long-layout behavior remain readable without malformed math, overlap, clipping, or accepted drift.
+
+### Boundaries
+
+- Compatibility fields remain present as derived projections; removal is deferred to a separate approved audit.
+- Closeout retains Gate 2's two isolated real Tauri desktop-launch inspections. The current executable rerun adds Rust file-backed `AppState::load` round trips, real Chromium reload tests, and the Linux Tauri clipboard integration test without opening another desktop window while the user is active.
+- Concurrent Notebook files and their one timeout, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.

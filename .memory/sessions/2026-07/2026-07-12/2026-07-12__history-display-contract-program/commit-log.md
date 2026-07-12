@@ -168,8 +168,17 @@
 
 ## DISPLAY-CONTRACT-INVERSION1
 
+- commit_hash: `e50ba5a2`
 - commit_message: `DISPLAY-CONTRACT-INVERSION1`
 - scope: final success/math-bearing-error authority guard, canonical-derived compatibility output, Calculate controlled-error documents, accepted inversion baseline, full regression/browser evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files
+
+## HISTORY-DISPLAY-CONTRACT-CLOSEOUT0
+
+- commit_message: `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0`
+- scope: final aggregate/static/browser/native verification, closeout roadmap and checklist, explicit external Notebook timeout classification, and durable completion evidence
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files

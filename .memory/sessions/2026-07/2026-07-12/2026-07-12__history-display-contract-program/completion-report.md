@@ -401,3 +401,23 @@
 ### Next Step
 
 - Commit `DISPLAY-CONTRACT-INVERSION1`, then run the complete program closeout in `HISTORY-DISPLAY-CONTRACT-CLOSEOUT0` without removing compatibility fields.
+
+## HISTORY-DISPLAY-CONTRACT-CLOSEOUT0
+
+### Completed
+
+- Closed the expandable 20-gate Structured History and Display Contract Inversion program after persistence parity, one shared canonical result document, structured History dual-write/read, producer and consumer migration, and final canonical authority.
+- Retained legacy compatibility fields as derived projections and published a manual verification checklist for future human review. No compatibility field was removed.
+- Preserved Surface DTOs, OOE authority, worker topology, capabilities, requests, History tickets, mathematics, wording, and visible formatting.
+
+### Final Evidence
+
+- Full static/unit/UI aggregate phases pass, including 3,688 unit and 481 UI tests. The repository-wide Chromium run passes 153/154 cases; its only failure is a timeout in concurrently edited Notebook source outside this program.
+- Program-owned browser evidence passes 19 workspace canaries, nine History journeys, four persistence/reload cases, and two clipboard capability cases. Replay, runtime, native persistence, and Tauri clipboard checks pass.
+- Fresh all-nine success evidence and Matrix/Vector controlled-error evidence remain visually readable with no accepted output drift.
+
+### Final Posture
+
+- Canonical documents are authoritative for every live success and math-bearing controlled error. Prompts and registered cancellation/stopped-job outcomes remain control flow.
+- Structured History stores canonical results success-only, reads structured-first, preserves exact Table data, and keeps legacy-only rows loadable without inventing structure.
+- The roadmap is closed. Statistics guided controls, capability expansion, Surface hosting, durable Notebook persistence, and compatibility-field removal remain separate future work.
