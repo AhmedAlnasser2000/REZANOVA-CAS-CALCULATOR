@@ -13,6 +13,7 @@ import {
 } from './outcome';
 import { mergeBranchFamilies } from '../../algebra/branch-core';
 import { profileEquationResult } from '../../display/printer';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 function extractExactSolutions(exactLatex?: string) {
   if (!exactLatex) {
@@ -82,10 +83,10 @@ function mergeDisplayOutcomes(
         substitutionDiagnostics ?? firstError.substitutionDiagnostics,
         firstError.numericMethod,
       );
-      return {
+      return createEquationResultOutcome({
         ...outcome,
         detailSections: firstError.detailSections,
-      };
+      });
     }
 
     return errorOutcome(
@@ -118,7 +119,7 @@ function mergeDisplayOutcomes(
       .filter((family): family is PeriodicFamilyInfo => Boolean(family)),
   );
 
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: exactValues.length > 0 ? solutionsToLatex('x', exactValues) : undefined,
@@ -136,7 +137,7 @@ function mergeDisplayOutcomes(
     rejectedCandidateCount: rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,
     substitutionDiagnostics: substitutionDiagnostics ?? successes.find((outcome) => outcome.substitutionDiagnostics)?.substitutionDiagnostics,
     numericMethod: numericMethod || undefined,
-  });
+  }));
 }
 
 export {

@@ -12,6 +12,7 @@ import {
   errorOutcome,
   successOutcome,
 } from './outcome';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 type SolveLike = ReturnType<typeof solveTrigEquation>;
 
@@ -32,7 +33,7 @@ function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
     request.angleUnit,
   );
   if (parameterized.kind === 'success') {
-    return {
+    return createEquationResultOutcome({
       kind: 'success',
       title: 'Solve',
       exactLatex: parameterized.exactLatex,
@@ -42,7 +43,7 @@ function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
       warnings: [],
       resultOrigin: 'symbolic',
       plannerBadges: ['Trig Solve Backend'],
-    };
+    });
   }
 
   const trig = solveTrigEquation({

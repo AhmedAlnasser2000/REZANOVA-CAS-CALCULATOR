@@ -26,6 +26,7 @@ import type {
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import { profileEquationResult } from '../../display/printer';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
@@ -238,7 +239,7 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   const detailSections = extraneousSection ? [...baseSections, extraneousSection] : baseSections;
 
   if (accepted.length === 0) {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: 'No validated real numeric roots were found in the bounded automatic search windows.',
@@ -249,13 +250,13 @@ export function tryRealNonlinearNumericSearchFallback(input: {
       solveBadges: ['Candidate Checked'],
       numericMethod: NUMERIC_METHOD_NONLINEAR,
       detailSections,
-    };
+    });
   }
 
   const targetLatex = equationTargetLatex(classification.selectedTarget);
   const formattedRoots = accepted.map((value) => formatApproxNumber(value));
 
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, accepted),
@@ -276,5 +277,5 @@ export function tryRealNonlinearNumericSearchFallback(input: {
     rejectedCandidateCount: rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,
     numericMethod: NUMERIC_METHOD_NONLINEAR,
     detailSections,
-  });
+  }));
 }

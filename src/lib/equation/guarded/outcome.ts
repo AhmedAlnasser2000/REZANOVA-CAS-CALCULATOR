@@ -6,6 +6,7 @@ import type {
   SolveBadge,
   SubstitutionSolveDiagnostics,
 } from '../../../types/calculator';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const UNSUPPORTED_FAMILY_ERROR = 'This equation is outside the supported exact symbolic solve families.';
 
@@ -25,7 +26,7 @@ function successOutcome(
   numericMethod?: string,
   branchReadback?: DisplayBranchReadback,
 ): GuardedSuccessOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'success',
     title,
     exactLatex,
@@ -44,7 +45,7 @@ function successOutcome(
     rejectedCandidateCount,
     substitutionDiagnostics,
     numericMethod,
-  };
+  });
 }
 
 function errorOutcome(
@@ -58,7 +59,7 @@ function errorOutcome(
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
   numericMethod?: string,
 ): GuardedErrorOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title,
     error,
@@ -74,7 +75,7 @@ function errorOutcome(
     rejectedCandidateCount,
     substitutionDiagnostics,
     numericMethod,
-  };
+  });
 }
 
 export {

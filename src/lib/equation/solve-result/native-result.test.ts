@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { resolveCanonicalResultForStorage } from '../../result-contract';
 import { createEquationFiniteRootSuccessOutcome } from './finite-root-producer';
-import { retainCompatibleNativeEquationResult } from './native-result';
+import { requireNativeEquationResult } from './native-result';
 
 describe('Equation native result parity', () => {
-  it('retains matching documents and drops them after legacy enrichment changes the result', () => {
+  it('retains matching documents and rejects stale legacy enrichment', () => {
     const native = createEquationFiniteRootSuccessOutcome({
       title: 'Solve',
       exactLatex: 'x=1',
@@ -16,20 +16,19 @@ describe('Equation native result parity', () => {
       warnings: [],
       resultOrigin: 'symbolic',
     });
-    expect(retainCompatibleNativeEquationResult(native)).toBe(native);
+    expect(requireNativeEquationResult(native)).toBe(native);
 
     const enriched = {
       ...native,
       exactSupplementLatex: ['x\\ne 0'],
     };
-    const retained = retainCompatibleNativeEquationResult(enriched);
-    if (retained.kind === 'prompt') {
-      throw new Error('Expected an Equation result outcome');
-    }
-    expect(retained.canonicalResult).toBeUndefined();
-    expect(resolveCanonicalResultForStorage(retained)).toMatchObject({
-      ok: true,
-      source: 'compatibility',
+    expect(resolveCanonicalResultForStorage(enriched)).toMatchObject({
+      ok: false,
+      omissionReason: 'invalid',
+      message: 'Native canonical result does not match the typed compatibility projection.',
     });
+    expect(() => requireNativeEquationResult(enriched)).toThrow(
+      'missing native canonical authority',
+    );
   });
 });

@@ -9,6 +9,7 @@ import type {
 import { equationLabelLineParts } from '../../display/result-detail-lines';
 import { dedupeStrings, latexText } from './relation';
 import type { FiniteInequalityResult, PeriodicInequalityResult } from './types';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 function inequalityRouteLineParts(lines: readonly string[]): DisplayDetailLinePart[][] {
   return lines.map((line) => {
@@ -30,7 +31,7 @@ function unsupportedInequalityOutcome(input: {
     lines.push('Complex intent is enabled, but ordered inequalities are solved over the real line.');
   }
 
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Inequality',
     error: 'This inequality is outside the supported guarded real inequality families.',
@@ -53,7 +54,7 @@ function unsupportedInequalityOutcome(input: {
         ],
       },
     ],
-  };
+  });
 }
 
 function inequalityAnswerModeGuidanceOutcome(input: {
@@ -61,7 +62,7 @@ function inequalityAnswerModeGuidanceOutcome(input: {
   equationDomainIntent: EquationDomainIntent;
 }): DisplayOutcome {
   const modeLabel = input.answerMode === 'approximate' ? 'Approximate' : 'Isolate';
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Inequality',
     error: `${modeLabel} answer mode does not solve inequalities.`,
@@ -88,7 +89,7 @@ function inequalityAnswerModeGuidanceOutcome(input: {
         ],
       },
     ],
-  };
+  });
 }
 
 function buildSuccessOutcome(input: {
@@ -140,7 +141,7 @@ function buildSuccessOutcome(input: {
     });
   }
 
-  return {
+  return createEquationResultOutcome({
     kind: 'success',
     title: 'Inequality',
     exactLatex,
@@ -151,7 +152,7 @@ function buildSuccessOutcome(input: {
     solutionKind: 'inequality-solution-set',
     exactSupplementLatex: validWhenLatex,
     detailSections,
-  };
+  });
 }
 
 

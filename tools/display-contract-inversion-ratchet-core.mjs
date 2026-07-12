@@ -4,6 +4,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import {
   CANONICAL_PROJECTION_REGISTRATIONS,
+  CONTROL_OUTCOME_REGISTRATIONS,
   CONTROL_ONLY_ERROR_PROPERTIES,
   DISPLAY_CONTRACT_LANES,
   DISPLAY_OUTCOME_CANONICAL_PROPERTIES,
@@ -11,6 +12,8 @@ import {
   DISPLAY_OUTCOME_LEGACY_PROPERTIES,
   DISPLAY_OUTCOME_TRANSIENT_PROPERTIES,
   NATIVE_DOCUMENT_CALL_NAMES,
+  NATIVE_DOCUMENT_WRAPPER_CALL_NAMES,
+  PRODUCER_INPUT_REGISTRATIONS,
   REFERENCE_OUTCOME_MATCHERS,
 } from './display-contract-inversion-registry.mjs';
 
@@ -274,6 +277,23 @@ function canonicalProjectionRegistration(file, context) {
     matchesAny(file, registration.matchers) && registration.functions.includes(context));
 }
 
+function controlOutcomeRegistration(file, context) {
+  return CONTROL_OUTCOME_REGISTRATIONS.find((registration) =>
+    matchesAny(file, registration.matchers) && registration.functions.includes(context));
+}
+
+function nativeDocumentWrapperName(node) {
+  const parent = node.parent;
+  if (!ts.isCallExpression(parent) || !parent.arguments.includes(node)) return undefined;
+  const name = calleeName(parent.expression);
+  return NATIVE_DOCUMENT_WRAPPER_CALL_NAMES.has(name) ? name : undefined;
+}
+
+function isProducerInputAssembly(file, context) {
+  return PRODUCER_INPUT_REGISTRATIONS.some((registration) =>
+    matchesAny(file, registration.matchers) && registration.functions.includes(context));
+}
+
 function laneFor(file) {
   return DISPLAY_CONTRACT_LANES.find((lane) => matchesAny(file, lane.matchers))?.id;
 }
@@ -285,8 +305,16 @@ function classifyProducer(node, file, checker) {
   if (projection) {
     return { category: 'canonical-projection', detail: projection.id, context };
   }
+  const controlRegistration = controlOutcomeRegistration(file, context);
+  if (controlRegistration) {
+    return { category: 'control-outcome', detail: controlRegistration.id, context };
+  }
   if (kind === 'prompt' || (kind === 'error' && isControlOnlyError(node))) {
     return { category: 'control-outcome', detail: kind ?? 'control', context };
+  }
+  const wrapperName = nativeDocumentWrapperName(node);
+  if (wrapperName) {
+    return { category: 'native-document', detail: `wrapper:${wrapperName}`, context };
   }
   if (objectCarriesCanonicalResult(node, checker)) {
     return { category: 'native-document', detail: kind ?? 'result', context };
@@ -346,6 +374,7 @@ function registryDigest() {
   return stableHash(JSON.stringify({
     lanes: DISPLAY_CONTRACT_LANES,
     canonicalProjections: CANONICAL_PROJECTION_REGISTRATIONS,
+    controlOutcomeRegistrations: CONTROL_OUTCOME_REGISTRATIONS,
     canonicalProperties: [...DISPLAY_OUTCOME_CANONICAL_PROPERTIES].sort(),
     controlProperties: [...DISPLAY_OUTCOME_CONTROL_PROPERTIES].sort(),
     legacyProperties: [...DISPLAY_OUTCOME_LEGACY_PROPERTIES].sort(),
@@ -353,6 +382,8 @@ function registryDigest() {
     controlOnlyErrorProperties: [...CONTROL_ONLY_ERROR_PROPERTIES].sort(),
     referenceOutcomeMatchers: REFERENCE_OUTCOME_MATCHERS,
     nativeDocumentCallNames: [...NATIVE_DOCUMENT_CALL_NAMES].sort(),
+    nativeDocumentWrapperCallNames: [...NATIVE_DOCUMENT_WRAPPER_CALL_NAMES].sort(),
+    producerInputRegistrations: PRODUCER_INPUT_REGISTRATIONS,
     trackedCategories: TRACKED_CATEGORIES,
   }));
 }
@@ -442,7 +473,16 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         }
       }
 
-      if (ts.isCallExpression(node) && NATIVE_DOCUMENT_CALL_NAMES.has(calleeName(node.expression))) {
+      if (
+        ts.isCallExpression(node)
+        && (
+          NATIVE_DOCUMENT_CALL_NAMES.has(calleeName(node.expression))
+          || (
+            NATIVE_DOCUMENT_WRAPPER_CALL_NAMES.has(calleeName(node.expression))
+            && !unwrapToObject(node.arguments[0])
+          )
+        )
+      ) {
         const type = checker.getTypeAtLocation(node);
         if (typeIncludesDisplayOutcome(type, displayType, checker)) {
           add({
@@ -459,7 +499,10 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
       if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
         const receiver = node.expression;
         const receiverType = checker.getTypeAtLocation(receiver);
-        if (typeIncludesDisplayOutcome(receiverType, displayType, checker)) {
+        if (
+          typeIncludesDisplayOutcome(receiverType, displayType, checker)
+          && !isProducerInputAssembly(file, functionContext(node))
+        ) {
           const property = ts.isPropertyAccessExpression(node)
             ? node.name.text
             : ts.isStringLiteral(node.argumentExpression)
@@ -497,7 +540,10 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
           : node.type
             ? checker.getTypeFromTypeNode(node.type)
             : checker.getTypeAtLocation(node);
-        if (typeIncludesDisplayOutcome(sourceType, displayType, checker)) {
+        if (
+          typeIncludesDisplayOutcome(sourceType, displayType, checker)
+          && !isProducerInputAssembly(file, functionContext(node))
+        ) {
           for (const element of node.name.elements) {
             if (element.dotDotDotToken) {
               violations.push({
@@ -548,7 +594,10 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         const expression = unwrapExpression(forwardExpression);
         const expressionType = checker.getTypeAtLocation(expression);
         const isNativeDocumentCall = ts.isCallExpression(expression)
-          && NATIVE_DOCUMENT_CALL_NAMES.has(calleeName(expression.expression));
+          && (
+            NATIVE_DOCUMENT_CALL_NAMES.has(calleeName(expression.expression))
+            || NATIVE_DOCUMENT_WRAPPER_CALL_NAMES.has(calleeName(expression.expression))
+          );
         if (
           typeIncludesDisplayOutcome(expressionType, displayType, checker)
           && !unwrapToObject(expression)

@@ -41,6 +41,7 @@ import {
 } from './numeric-polynomial-extraction';
 import { profileEquationResult } from '../../display/printer';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const ce = new ComputeEngine();
 const COMPLEX_RESIDUAL_TOLERANCE = 1e-8;
@@ -430,7 +431,7 @@ export function tryComplexNumericPolynomialFallback(input: {
   const method = effectivePolynomial.kind === 'rational' ? NUMERIC_METHOD_RATIONAL : NUMERIC_METHOD_POLYNOMIAL;
   const solveResult = solvePolynomialRoots({ coefficients: polynomial.coefficients });
   if (solveResult.kind === 'error') {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: solveResult.error,
@@ -446,7 +447,7 @@ export function tryComplexNumericPolynomialFallback(input: {
         rejected: [],
         complexExactForm: input.complexExactForm,
       }),
-    };
+    });
   }
 
   const validation = validateComplexRoots(effectivePolynomial, solveResult.roots, denominatorChecks);
@@ -459,7 +460,7 @@ export function tryComplexNumericPolynomialFallback(input: {
     complexExactForm: input.complexExactForm,
   });
   if (validation.accepted.length === 0) {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: 'Numeric complex candidates were found but rejected after denominator and residual validation.',
@@ -470,12 +471,12 @@ export function tryComplexNumericPolynomialFallback(input: {
       solveBadges: effectivePolynomial.kind === 'rational' ? ['LCD Clear', 'Candidate Checked'] : ['Candidate Checked'],
       numericMethod: method,
       detailSections,
-    };
+    });
   }
 
   const targetLatex = equationTargetLatex(classification.selectedTarget);
   const branchesLatex = validation.accepted.map((root) => formatComplexRootLatex(root, input.complexExactForm));
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, validation.accepted, input.complexExactForm),
@@ -496,5 +497,5 @@ export function tryComplexNumericPolynomialFallback(input: {
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     numericMethod: method,
     detailSections,
-  });
+  }));
 }

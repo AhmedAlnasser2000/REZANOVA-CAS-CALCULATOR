@@ -1,0 +1,99 @@
+import { describe, expect, it } from 'vitest';
+import { resolveCanonicalResultForStorage } from '../../result-contract';
+import { createEquationResultOutcome } from './producer';
+
+describe('Equation result producer', () => {
+  it('dual-writes complete typed success evidence without reparsing LaTeX', () => {
+    const outcome = createEquationResultOutcome({
+      kind: 'success',
+      title: 'Solve',
+      exactLatex: 'x=1',
+      canonicalMath: {
+        version: 1,
+        canonicalLatex: 'x=1',
+        mathJson: ['Equal', 'x', 1],
+      },
+      branchReadback: {
+        targetLatex: 'x',
+        relationLatex: '=',
+        branchesLatex: ['1'],
+      },
+      detailSections: [{
+        title: 'Proof',
+        lines: ['Substitute x=1.'],
+        lineParts: [[
+          { kind: 'text', text: 'Substitute ' },
+          { kind: 'math', latex: 'x=1' },
+          { kind: 'text', text: '.' },
+        ]],
+      }],
+      warnings: [],
+      answerMode: 'exact',
+      answerDomain: 'real',
+      solutionKind: 'exact-symbolic',
+      resultOrigin: 'symbolic',
+      candidateValues: [1],
+      rejectedCandidateCount: 0,
+      numericMethod: 'fixture',
+    });
+
+    expect(resolveCanonicalResultForStorage(outcome)).toMatchObject({
+      ok: true,
+      source: 'native',
+    });
+    if (!outcome.canonicalResult) {
+      throw new Error('Expected a native Equation result document');
+    }
+    expect(outcome.canonicalResult.metadata).toMatchObject({
+      answerMode: 'exact',
+      answerDomain: 'real',
+      solutionKind: 'exact-symbolic',
+      resultOrigin: 'symbolic',
+      candidateValues: [1],
+      rejectedCandidateCount: 0,
+      numericMethod: 'fixture',
+    });
+  });
+
+  it('keeps transient controls outside a typed controlled-error document', () => {
+    const outcome = createEquationResultOutcome({
+      kind: 'error',
+      title: 'Solve',
+      error: 'The requested branch is not supported.',
+      warnings: [],
+      detailSections: [{
+        title: 'Boundary',
+        lines: ['Use a bounded interval.'],
+        lineKind: 'text',
+      }],
+      runtimeAdvisories: { stopReason: { kind: 'invalid-request', source: 'planner' } },
+    });
+
+    expect(outcome.canonicalResult).not.toHaveProperty('runtimeAdvisories');
+    expect(resolveCanonicalResultForStorage(outcome)).toMatchObject({
+      ok: true,
+      source: 'native',
+    });
+  });
+
+  it('fails closed on mismatched MathJSON or undeclared summary intent', () => {
+    expect(() => createEquationResultOutcome({
+      kind: 'success',
+      title: 'Solve',
+      exactLatex: 'x=1',
+      canonicalMath: {
+        version: 1,
+        canonicalLatex: 'x=2',
+        mathJson: ['Equal', 'x', 2],
+      },
+      warnings: [],
+    })).toThrow('must match');
+    expect(() => createEquationResultOutcome({
+      kind: 'success',
+      title: 'Solve',
+      exactLatex: 'x=1',
+      solveSummaryText: 'x=1',
+      warnings: [],
+    })).toThrow('typed producer parts');
+  });
+});

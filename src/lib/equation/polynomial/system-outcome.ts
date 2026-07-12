@@ -2,6 +2,7 @@ import { formatApproxNumber } from '../../display/format';
 import type { SymbolicEliminationStop } from '../../symbolic-engine/primitives/elimination/elimination';
 import type { DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
 import type { CandidatePair, SolveStopReason } from './system-types';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 function stopMessage(reason: SolveStopReason, symbols?: readonly string[]) {
   switch (reason) {
@@ -63,14 +64,14 @@ export function errorOutcome(
     rejectedCandidateCount?: number;
   } = {},
 ): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Polynomial 2x2',
     error: stopMessage(reason, extra.symbols),
     warnings: [],
     detailSections: extra.detailSections,
     rejectedCandidateCount: extra.rejectedCandidateCount,
-  };
+  });
 }
 
 export function projectionStopOutcome(projection: SymbolicEliminationStop): DisplayOutcome {

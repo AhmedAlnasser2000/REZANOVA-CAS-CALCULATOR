@@ -23,6 +23,7 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
   unsupportedComplexPreimageOutcome,
 } from './outcomes';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 type ParameterizedOptions = {
   allowGeneratedImplicitProducts?: boolean;
@@ -71,7 +72,7 @@ function attachSuccess(
   if (input.routePlan) {
     recordSelectedTargetFamilySuccess(input.searchTrace, 'top-level', family);
   }
-  const outcome: DisplayOutcome = {
+  const outcome: DisplayOutcome = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: result.exactLatex,
@@ -81,7 +82,7 @@ function attachSuccess(
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: 'complex',
-  };
+  });
 
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, input.selectedTarget);
 

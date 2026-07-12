@@ -45,6 +45,7 @@ import {
 import { unsupportedComplexLocusOutcome } from './outcomes';
 import { profileEquationResult } from '../../display/printer';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const COMPLEX_REGION_RESIDUAL_TOLERANCE = 1e-8;
 const DEFAULT_GRID_SIZE = 7;
@@ -377,7 +378,7 @@ function unsupportedRegionOutcome(input: {
   error: string;
   detailSections: DisplayDetailSection[];
 }): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: input.error,
@@ -386,7 +387,7 @@ function unsupportedRegionOutcome(input: {
     answerDomain: 'complex',
     numericMethod: METHOD_LABEL,
     detailSections: input.detailSections,
-  };
+  });
 }
 
 function needsComplexRegionOutcome(input: { target: string }): DisplayOutcome {
@@ -638,7 +639,7 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   const roots = accepted.map((candidate) => candidate.value);
   const targetLatex = equationTargetLatex(selectedTarget);
   const branchesLatex = roots.map((root) => formatComplexRootLatex(root, input.complexExactForm));
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, roots, input.complexExactForm),
@@ -676,5 +677,5 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
       complexExactForm: input.complexExactForm,
       subdivision,
     }),
-  });
+  }));
 }

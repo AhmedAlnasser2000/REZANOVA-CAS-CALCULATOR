@@ -203,6 +203,16 @@ export const CANONICAL_PROJECTION_REGISTRATIONS = [
   },
 ];
 
+export const CONTROL_OUTCOME_REGISTRATIONS = [
+  {
+    id: 'equation-cancellation-display-control-v1',
+    owner: 'equation-runtime-control',
+    rationale: 'The Equation boundary projects an OOE hard-stop cancellation into the existing Display error card without treating runtime cancellation as mathematical result truth.',
+    matchers: exact('src/lib/equation/solve-result/boundary.ts'),
+    functions: ['projectEquationOutcomeBoundaryToDisplay'],
+  },
+];
+
 export const REFERENCE_OUTCOME_MATCHERS = exact(
   'src/lib/__golden__/golden-cases.ts',
 );
@@ -210,6 +220,20 @@ export const REFERENCE_OUTCOME_MATCHERS = exact(
 export const NATIVE_DOCUMENT_CALL_NAMES = new Set([
   'projectCanonicalResultToDisplayOutcome',
 ]);
+
+export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
+  'createEquationResultOutcome',
+]);
+
+export const PRODUCER_INPUT_REGISTRATIONS = [
+  {
+    id: 'equation-result-producer-input-v1',
+    owner: 'equation-result-contract',
+    rationale: 'The Equation producer adapter reads its authored dual-write input before emitting both canonical and compatibility projections; these are producer assembly reads, not downstream Display consumers.',
+    matchers: exact('src/lib/equation/solve-result/producer.ts'),
+    functions: ['createEquationResultOutcome'],
+  },
+];
 
 export const DISPLAY_OUTCOME_CONTROL_PROPERTIES = new Set([
   'carryLatex',

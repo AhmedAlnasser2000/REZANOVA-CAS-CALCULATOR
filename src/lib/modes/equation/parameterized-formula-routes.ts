@@ -22,6 +22,7 @@ import {
   attachEquationRuntimeEnvelope,
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 type FormulaRouteOptions = {
   allowGeneratedImplicitProducts: boolean;
@@ -56,7 +57,7 @@ function attachSymbolicFormulaOutcome(options: {
   exactSupplementLatex?: string[];
   detailSections?: DisplayDetailSection[];
 }) {
-  const outcome: DisplayOutcome = {
+  const outcome: DisplayOutcome = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: options.exactLatex,
@@ -66,7 +67,7 @@ function attachSymbolicFormulaOutcome(options: {
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: options.answerDomain,
-  };
+  });
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, options.selectedTarget);
 
   return attachEquationRuntimeEnvelope(

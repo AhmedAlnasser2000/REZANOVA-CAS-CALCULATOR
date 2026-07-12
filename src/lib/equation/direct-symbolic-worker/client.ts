@@ -12,6 +12,7 @@ import type {
   EquationDirectSymbolicWorkerOutboundMessage,
 } from './messages';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 export const EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID =
   'equation-direct-symbolic-worker-runtime' as const;
@@ -49,14 +50,14 @@ function nextRequestId() {
 }
 
 function buildCancelledOutcome(): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: EQUATION_SOLVE_CANCELLED_MESSAGE,
     warnings: [],
     plannerBadges: [],
     ...proseSolveSummary('Equation solve stopped at an OOE cancellation checkpoint.'),
-  };
+  });
 }
 
 function workerHostEvidence(

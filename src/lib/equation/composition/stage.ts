@@ -72,6 +72,7 @@ import {
   proseSolveSummary,
   solveSummaryFromDisplayFields,
 } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const ce = new ComputeEngine();
 type GuardedSolveRunner = (
@@ -111,11 +112,11 @@ function appendSolveMetadata(
     summary,
     solveSummaryFromDisplayFields(outcome),
   ) ?? summary;
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     solveBadges: dedupe([...(outcome.solveBadges ?? []), ...badges]),
     ...solveSummary,
-  };
+  });
 }
 
 function withNestedRecursionBadges(badges: SolveBadge[] = []) {
@@ -239,12 +240,12 @@ function recurseComposition(
       { constraints: domainConstraints, source: 'transform' },
     );
     const detailSections = mergeDetailSections(merged.detailSections, extraDetailSections);
-    return appendSolveMetadata({
+    return appendSolveMetadata(createEquationResultOutcome({
       ...merged,
       periodicFamily: mergedPeriodicFamilyWithStructuredStop,
       exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
       detailSections: detailSections.length > 0 ? detailSections : undefined,
-    }, effectiveBadges, solveSummary);
+    }), effectiveBadges, solveSummary);
   }
 
   if (merged.kind === 'prompt') {
@@ -266,7 +267,7 @@ function recurseComposition(
       && (mergedPeriodicFamily.piecewiseBranches?.length ?? 0) > 0
       && periodicFamilyExtras?.piecewiseBranches?.length
     ) {
-      return {
+      return createEquationResultOutcome({
         ...merged,
         periodicFamily: mergedPeriodicFamily,
         exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
@@ -275,15 +276,15 @@ function recurseComposition(
         ...proseSolveSummary(
           buildReducedCarrierSawtoothSummary(request.resolvedLatex, mergedPeriodicFamily),
         ),
-      };
+      });
     }
 
-    return appendSolveMetadata({
+    return appendSolveMetadata(createEquationResultOutcome({
       ...merged,
       periodicFamily: mergedPeriodicFamily,
       exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
       detailSections: detailSections.length > 0 ? detailSections : undefined,
-    }, effectiveBadges, solveSummary);
+    }), effectiveBadges, solveSummary);
   }
 
   const validation = validateCompositionCandidates(
@@ -303,7 +304,7 @@ function recurseComposition(
     const extraneousEvidence = extraneousEvidenceFromRejectedCandidates(validation.rejected, {
       exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
     });
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: compositionRejectionMessage(validation.rejected, domainConstraints),
@@ -322,7 +323,7 @@ function recurseComposition(
       rejectedCandidateCount: validation.rejected.length,
       substitutionDiagnostics: merged.substitutionDiagnostics,
       numericMethod: merged.numericMethod,
-    };
+    });
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -355,7 +356,7 @@ function recurseComposition(
     exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
   });
 
-  return {
+  return createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -376,7 +377,7 @@ function recurseComposition(
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
     substitutionDiagnostics: merged.substitutionDiagnostics,
     numericMethod: merged.numericMethod,
-  };
+  });
 }
 
 function compositionSolve(
@@ -427,7 +428,7 @@ function compositionSolve(
       if (periodic?.kind === 'solved') {
         const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
         const supplements = buildPeriodicOutcomeSupplements(periodic);
-        return profileEquationResult({
+        return profileEquationResult(createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: periodicFamilyToExactLatex(periodic.family),
@@ -443,12 +444,12 @@ function compositionSolve(
             periodic,
             'yields',
           )),
-        });
+        }));
       }
       if (periodic?.kind === 'guided') {
         const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
         const supplements = buildPeriodicOutcomeSupplements(periodic);
-        return profileEquationResult({
+        return profileEquationResult(createEquationResultOutcome({
           kind: 'error',
           title: 'Solve',
           error: periodic.error,
@@ -464,7 +465,7 @@ function compositionSolve(
             periodic,
             'reduces to',
           )),
-        });
+        }));
       }
 
       return errorOutcome(
@@ -503,7 +504,7 @@ function compositionSolve(
     if (periodic?.kind === 'solved') {
       const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
       const supplements = buildPeriodicOutcomeSupplements(periodic);
-      return profileEquationResult({
+      return profileEquationResult(createEquationResultOutcome({
         kind: 'success',
         title: 'Solve',
         exactLatex: periodicFamilyToExactLatex(periodic.family),
@@ -519,12 +520,12 @@ function compositionSolve(
           periodic,
           'yields',
         )),
-      });
+      }));
     }
     if (periodic?.kind === 'guided') {
       const badges = periodicFamilyBadges(attempt.composite, nestedContextBadges, periodic.solveBadges);
       const supplements = buildPeriodicOutcomeSupplements(periodic);
-      return profileEquationResult({
+      return profileEquationResult(createEquationResultOutcome({
         kind: 'error',
         title: 'Solve',
         error: periodic.error,
@@ -540,7 +541,7 @@ function compositionSolve(
           periodic,
           'reduces to',
         )),
-      });
+      }));
     }
 
     const transform = matchNonPeriodicTransform(attempt.composite, target, request.angleUnit);
@@ -564,12 +565,12 @@ function compositionSolve(
         { latex: transform.exactSupplementLatex, source: 'transform' },
         { constraints: transform.domainConstraints, source: 'transform' },
       );
-      return {
+      return createEquationResultOutcome({
         ...blocked,
         periodicFamily: mergePeriodicFamilyExtras(undefined, transform.periodicFamilyExtras),
         exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
         detailSections: transform.detailSections?.length ? transform.detailSections : undefined,
-      };
+      });
     }
 
     const transformSummary = solveSummaryFromDisplayFields(transform);

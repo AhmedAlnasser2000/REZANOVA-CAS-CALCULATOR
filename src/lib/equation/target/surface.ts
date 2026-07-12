@@ -7,6 +7,7 @@ import {
 } from '../../algebra/variable-core';
 import { namedVariableLatex } from '../../algebra/named-variable';
 import { profileEquationResult } from '../../display/printer';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const ce = new ComputeEngine();
 
@@ -203,7 +204,7 @@ function withoutCanonicalMath(outcome: Exclude<DisplayOutcome, { kind: 'prompt' 
     return outcome;
   }
 
-  const rest = { ...outcome };
+  const rest = Object.assign({}, outcome);
   delete rest.canonicalMath;
   delete rest.canonicalResult;
   return rest;
@@ -221,7 +222,7 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
     };
   }
 
-  const rewritten = profileEquationResult({
+  const rewritten = profileEquationResult(createEquationResultOutcome({
     ...withoutCanonicalMath(outcome),
     exactLatex: outcome.exactLatex ? replaceXToken(outcome.exactLatex, target) : outcome.exactLatex,
     periodicFamily: rewritePeriodicFamilyTarget(outcome.periodicFamily, target),
@@ -242,7 +243,7 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
     transformSummaryLatex: outcome.transformSummaryLatex
       ? replaceXToken(outcome.transformSummaryLatex, target)
       : outcome.transformSummaryLatex,
-  });
+  }));
 
   return rewritten as DisplayOutcome;
 }
@@ -260,7 +261,7 @@ export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target
     };
   }
 
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     ...withoutCanonicalMath(outcome),
     exactLatex: outcome.exactLatex ? replaceLatexSymbolToken(outcome.exactLatex, target, targetLatex) : outcome.exactLatex,
     exactSupplementLatex: outcome.exactSupplementLatex?.map((entry) => replaceLatexSymbolToken(entry, target, targetLatex)),
@@ -275,7 +276,7 @@ export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target
     transformSummaryLatex: outcome.transformSummaryLatex
       ? replaceLatexSymbolToken(outcome.transformSummaryLatex, target, targetLatex)
       : outcome.transformSummaryLatex,
-  }) as DisplayOutcome;
+  })) as DisplayOutcome;
 }
 
 export function retargetDomainConstraintsToX(

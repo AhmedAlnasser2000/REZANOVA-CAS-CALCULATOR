@@ -6,7 +6,10 @@ import { solveParameterizedPolynomialEquation } from '../../equation/parameteriz
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { solveParameterizedTrigEquation } from '../../equation/parameterized/trig';
 import { resolveEquationSolveTarget } from '../../equation/equation-target';
-import { createEquationFiniteRootSuccessOutcome } from '../../equation/equation-solve-result';
+import {
+  createEquationFiniteRootSuccessOutcome,
+  createEquationResultOutcome,
+} from '../../equation/equation-solve-result';
 import { matchTrigEquationRewriteForSolve } from '../../trigonometry/rewrite-solve';
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type {
@@ -178,7 +181,7 @@ function attachParameterizedSelectedTargetOutcome(input: {
         resultOrigin: 'symbolic',
         answerDomain: input.result.answerDomain,
       })
-    : {
+    : createEquationResultOutcome({
         kind: 'success',
         title: 'Solve',
         exactLatex: input.result.exactLatex,
@@ -189,7 +192,7 @@ function attachParameterizedSelectedTargetOutcome(input: {
         warnings: [],
         resultOrigin: 'symbolic',
         ...(input.result.answerDomain ? { answerDomain: input.result.answerDomain } : {}),
-      };
+      });
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, input.selectedTarget);
 
   return attachEquationRuntimeEnvelope(

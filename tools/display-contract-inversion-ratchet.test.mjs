@@ -128,6 +128,28 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.summary.nativeDocumentCount, 0);
   });
 
+  it('keeps the exact Equation cancellation projection in control authority', () => {
+    const rootDir = fixture({
+      'src/lib/equation/solve-result/boundary.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        export function projectEquationOutcomeBoundaryToDisplay(reason: string): DisplayOutcome {
+          return {
+            kind: 'error',
+            title: 'Solve',
+            error: reason,
+            warnings: [],
+            plannerBadges: [],
+            solveSummaryText: 'The worker was stopped.',
+          };
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.equation['control-outcome'], 1);
+    assert.equal(report.lanes.equation['compatibility-projection'], 0);
+  });
+
   it('recognizes canonical adapter calls as native producer coverage', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `
@@ -142,6 +164,71 @@ describe('display contract inversion ratchet', () => {
 
     assert.equal(report.summary.nativeDocumentCount, 1);
     assert.equal(report.categoryCounts.forwarder, 0);
+  });
+
+  it('counts only directly wrapped authored results as native documents', () => {
+    const rootDir = fixture({
+      'src/lib/modes/equation/wrapped.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        declare function createEquationResultOutcome(input: {
+          kind: 'success';
+          title: string;
+          exactLatex: string;
+          warnings: string[];
+        }): DisplayOutcome;
+        export function wrapped(): DisplayOutcome {
+          return createEquationResultOutcome({
+            kind: 'success',
+            title: 'Solve',
+            exactLatex: 'x=1',
+            warnings: [],
+          });
+        }
+        export function unwrapped(): DisplayOutcome {
+          return { kind: 'success', title: 'Solve', exactLatex: 'x=2', warnings: [] };
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.equation['native-document'], 1);
+    assert.equal(report.lanes.equation['compatibility-projection'], 1);
+    assert.equal(report.lanes.equation.forwarder, 0);
+  });
+
+  it('counts a producer wrapper around a typed builder result without double-counting literals', () => {
+    const rootDir = fixture({
+      'src/lib/modes/equation/builder.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        declare function createEquationResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        declare function buildRuntimeOutcome(): DisplayOutcome;
+        export function built(): DisplayOutcome {
+          return createEquationResultOutcome(buildRuntimeOutcome());
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.equation['native-document'], 1);
+    assert.equal(report.lanes.equation['compatibility-projection'], 0);
+    assert.equal(report.lanes.equation.forwarder, 0);
+  });
+
+  it('does not misclassify the exact producer adapter input as a downstream consumer', () => {
+    const rootDir = fixture({
+      'src/lib/equation/solve-result/producer.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        export function createEquationResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.equation['legacy-read'], 0);
+    assert.equal(report.lanes.equation['control-read'], 0);
+    assert.equal(report.lanes.equation['native-document'], 1);
   });
 
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {

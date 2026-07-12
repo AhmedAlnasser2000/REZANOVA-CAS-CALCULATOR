@@ -57,6 +57,7 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
 import { profileEquationResult } from '../../display/printer';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 type ComplexMixedAlgebraicWrapperRouteInput = {
   equationLatex: string;
@@ -379,7 +380,7 @@ function subtractAffine(left: MixedRootAffine, right: MixedRootAffine): CollectR
 }
 
 function unsupportedOutcome(lines: string[], error = 'This complex mixed algebraic wrapper equation is outside the supported guarded complex wrapper families.'): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error,
@@ -400,7 +401,7 @@ function unsupportedOutcome(lines: string[], error = 'This complex mixed algebra
       },
     ],
     answerMode: 'exact',
-  };
+  });
 }
 
 function attachBoundary(input: ComplexMixedAlgebraicWrapperRouteInput, lines: string[], error?: string) {
@@ -592,7 +593,7 @@ function solveMixedRootAffine(
       branchLatex: branchEquation,
       exactLatex: `${input.selectedTarget}=${solution}`,
     })));
-    const outcome: DisplayOutcome = {
+    const outcome: DisplayOutcome = createEquationResultOutcome({
       kind: 'success',
       title: 'Solve',
       exactLatex,
@@ -619,7 +620,7 @@ function solveMixedRootAffine(
       warnings: [],
       resultOrigin: 'symbolic',
       answerDomain: 'complex',
-    };
+    });
 
     const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, input.selectedTarget);
     return attachEquationRuntimeEnvelope(
@@ -692,7 +693,7 @@ function solveMixedRootAffine(
     ...solved.exactSupplementLatex,
   ]);
   const exactLatex = exactLatexForSolutions(input.selectedTarget, solved.solutionExpressions);
-  const outcome: DisplayOutcome = {
+  const outcome: DisplayOutcome = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -719,7 +720,7 @@ function solveMixedRootAffine(
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: 'complex',
-  };
+  });
 
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, input.selectedTarget);
   return attachEquationRuntimeEnvelope(

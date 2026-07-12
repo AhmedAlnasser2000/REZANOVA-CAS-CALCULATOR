@@ -27,6 +27,7 @@ import {
 } from './numeric-polynomial-extraction';
 import { profileEquationResult } from '../../display/printer';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const REAL_ROOT_IMAGINARY_TOLERANCE = 1e-7;
 const NUMERIC_RESIDUAL_TOLERANCE = 1e-8;
@@ -250,7 +251,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
 
   const method = polynomial.kind === 'rational' ? NUMERIC_METHOD_RATIONAL : NUMERIC_METHOD_POLYNOMIAL;
   if (polynomial.degree === 0) {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: 'No validated real numeric roots were found.',
@@ -269,12 +270,12 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
       }),
-    };
+    });
   }
 
   const roots = realRootsFromPolynomial(polynomial.coefficients);
   if (roots.kind === 'error') {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: roots.error,
@@ -293,11 +294,11 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
       }),
-    };
+    });
   }
 
   if (roots.roots.length === 0) {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: 'No validated real numeric roots were found. Complex numeric root display is deferred for this Equation numeric milestone.',
@@ -316,7 +317,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
         rejectedCount: 0,
         zeroFormLatex: classification.zeroFormLatex,
       }),
-    };
+    });
   }
 
   const validation = validateCandidateRoots(
@@ -341,7 +342,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
       }),
       extraneousEvidenceFromRejectedCandidates(validation.rejected),
     );
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: 'Numeric candidates were found but rejected after substitution back into the original equation.',
@@ -352,7 +353,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
       solveBadges: polynomial.kind === 'rational' ? ['LCD Clear', 'Candidate Checked'] : ['Candidate Checked'],
       numericMethod: method,
       detailSections,
-    };
+    });
   }
 
   const accepted = dedupeNumericRoots(validation.accepted);
@@ -372,7 +373,7 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
     extraneousEvidenceFromRejectedCandidates(validation.rejected),
   );
 
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, accepted),
@@ -393,5 +394,5 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     numericMethod: method,
     detailSections,
-  });
+  }));
 }

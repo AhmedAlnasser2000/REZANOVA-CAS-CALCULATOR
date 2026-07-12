@@ -163,3 +163,29 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1`, then migrate parameterized, numeric, complex, composition, system, and guarded Equation producers in `RESULT-DOCUMENT-EQUATION-ADVANCED1`.
+
+## RESULT-DOCUMENT-EQUATION-ADVANCED1
+
+### Completed
+
+- Added an Equation-owned typed producer adapter that validates native canonical documents for success and math-bearing controlled-stop outcomes without parsing LaTeX.
+- Migrated parameterized, numeric, Complex, composition, system, inequality, guarded, guided-polynomial, target, stored-value, direct-worker, and final orchestration producers.
+- Made native Equation truth a hard non-prompt boundary invariant; stale enrichment now fails instead of silently returning to compatibility projection.
+- Kept OOE cancellation control-only and excluded runtime advisories, actions, and cross-workspace presentation changes from canonical mathematical truth.
+- Preserved Trigonometry ownership by explicitly dropping Equation's canonical document after the legacy equation handoff changes title, actions, planner presentation, and route identity.
+
+### Measured Posture
+
+- Accepted inventory: 586 producer boundaries, 768 consumer reads, 37 compatibility projections, 554 legacy reads, and 127 native calls.
+- Equation: 124 native producers, zero compatibility producers, 251 forwarders, 17 controls, 265 legacy reads, and five canonical reads.
+- All six Equation golden executions and all 25 Equation replay fixtures are native. Consumer legacy debt is unchanged and remains in scope for later inversion gates.
+
+### Runtime And UI
+
+- Full Equation verification passes 145 files and 1,217 tests. Result-contract, solve-result, detail, intent, printer, replay, runtime, UI, TypeScript, build, lint, file-size, CI, seam, Surface, OOE, and compartment gates pass.
+- Nineteen Chromium canaries pass in 1.2 minutes. Three focused headless tests and seven inspected screenshots cover parameterized output, the established exponential Exact-mode controlled stop, interval numeric roots, Complex roots, guided quartic roots, range guards, and the completed legacy Trigonometry handoff without clipping or output drift.
+- The first temporary visual run exposed two evidence-harness assumptions, not product defects: the exponential fixture is intentionally a controlled stop, and the retired Trigonometry equation surface is reachable only through legacy History. The corrected harness then caught and fixed its own premature replay-card assertion before final evidence was accepted.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-EQUATION-ADVANCED1`, then migrate proof-aware Limits producers in `RESULT-DOCUMENT-SYMBOLIC-LIMITS1`.

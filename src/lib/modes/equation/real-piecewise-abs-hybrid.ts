@@ -33,6 +33,7 @@ import {
 } from './numeric-polynomial-extraction';
 import { profileEquationResult } from '../../display/printer';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 type MathJson = string | number | boolean | null | MathJson[] | { [key: string]: MathJson | undefined };
 
@@ -526,7 +527,7 @@ export function tryRealPiecewiseAbsHybridFallback(input: {
   const formattedRoots = roots.map((value) => formatApproxNumber(value));
 
   if (roots.length === 0) {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: 'Solve',
       error: 'No validated real numeric roots were found after guarded piecewise branch solving.',
@@ -537,10 +538,10 @@ export function tryRealPiecewiseAbsHybridFallback(input: {
       numericMethod: NUMERIC_METHOD_PIECEWISE,
       rejectedCandidateCount: rejected.length > 0 ? rejected.length : undefined,
       detailSections,
-    };
+    });
   }
 
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: approximateEquationLatex(targetLatex, roots),
@@ -561,5 +562,5 @@ export function tryRealPiecewiseAbsHybridFallback(input: {
     rejectedCandidateCount: rejected.length > 0 ? rejected.length : undefined,
     numericMethod: NUMERIC_METHOD_PIECEWISE,
     detailSections,
-  });
+  }));
 }

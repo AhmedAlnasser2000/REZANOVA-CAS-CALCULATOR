@@ -11,6 +11,7 @@ import {
 import type { ComplexLocusPolicyReport } from '../../equation/complex/locus-policy';
 import { buildComplexLocusEvidenceSections } from '../../equation/complex/locus-evidence';
 import type { ComplexSolveRegion, DisplayOutcome, EquationAnswerMode, PlannerBadge, SolutionKind } from '../../../types/calculator';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const ce = new ComputeEngine();
 
@@ -48,7 +49,7 @@ export function attachEquationRuntimeEnvelope(
 }
 
 export function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'The exact symbolic readback became unsafe to display.',
@@ -71,7 +72,7 @@ export function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
         ],
       },
     ],
-  };
+  });
 }
 
 export function ensureSafeEquationSuccessOutcome(outcome: DisplayOutcome, target?: string): DisplayOutcome {
@@ -84,36 +85,20 @@ export function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: Equa
   if (outcome.kind === 'prompt' || outcome.solutionKind === 'approximate-numeric') {
     return outcome;
   }
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     answerMode,
-    ...(outcome.canonicalResult
-      ? {
-          canonicalResult: updateCanonicalResultMetadata(
-            outcome.canonicalResult,
-            { answerMode },
-          ),
-        }
-      : {}),
-  };
+  });
 }
 
 export function withEquationSolutionKind(outcome: DisplayOutcome, solutionKind: SolutionKind): DisplayOutcome {
   if (outcome.kind !== 'success' || outcome.solutionKind) {
     return outcome;
   }
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     solutionKind,
-    ...(outcome.canonicalResult
-      ? {
-          canonicalResult: updateCanonicalResultMetadata(
-            outcome.canonicalResult,
-            { solutionKind },
-          ),
-        }
-      : {}),
-  };
+  });
 }
 
 export function withEquationNumericRouteKind(outcome: DisplayOutcome): DisplayOutcome {
@@ -125,7 +110,7 @@ export function finalizeSelectedTargetSymbolicOutcome(outcome: DisplayOutcome, t
 }
 
 export function numericIntervalSolveNeedsIntervalOutcome(): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'Numeric Interval Solve needs a numeric interval before it can search for real roots.',
@@ -145,7 +130,7 @@ export function numericIntervalSolveNeedsIntervalOutcome(): DisplayOutcome {
         ],
       },
     ],
-  };
+  });
 }
 
 export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: string[]): DisplayOutcome {
@@ -154,7 +139,7 @@ export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: st
   const missingValueLabel = missingParameters.length === 1 ? 'value' : 'values';
   const storeLines = missingParameters.map((parameter) =>
     `Store a numeric value for ${parameter} in Variables.`);
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: `Numeric Interval Solve needs numeric values for every non-target parameter before it can search for real roots. Missing numeric ${missingValueLabel}: ${parameterText}.`,
@@ -182,7 +167,7 @@ export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: st
         ],
       },
     ],
-  };
+  });
 }
 
 export function complexRegionSolveNeedsNumericParametersOutcome(parameters: string[], protectedTarget?: string): DisplayOutcome {
@@ -191,7 +176,7 @@ export function complexRegionSolveNeedsNumericParametersOutcome(parameters: stri
   const missingValueLabel = missingParameters.length === 1 ? 'value' : 'values';
   const storeLines = missingParameters.map((parameter) =>
     `Store a numeric value for ${parameter} in Variables.`);
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: `Complex Region Solve needs numeric values for every non-target parameter before it can search a bounded complex region. Missing numeric ${missingValueLabel}: ${parameterText}.`,
@@ -225,11 +210,11 @@ export function complexRegionSolveNeedsNumericParametersOutcome(parameters: stri
     solutionKind: 'approximate-numeric',
     answerDomain: 'complex',
     numericMethod: 'Complex region nonlinear solve',
-  };
+  });
 }
 
 export function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'Exact answer mode could not produce a trustworthy exact closed form.',
@@ -259,7 +244,7 @@ export function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
       },
     ],
     answerMode: 'exact',
-  };
+  });
 }
 
 function containsTargetNode(node: unknown, target: string): boolean {
@@ -294,7 +279,7 @@ export function containsTargetedAbsLatex(latex: string, target: string) {
 }
 
 export function complexIntentRequiredOutcome(): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'This Equation input uses the imaginary unit. Enable Complex before asking for a complex-domain exact answer.',
@@ -318,11 +303,11 @@ export function complexIntentRequiredOutcome(): DisplayOutcome {
       },
     ],
     answerMode: 'exact',
-  };
+  });
 }
 
 export function unsupportedComplexPreimageOutcome(): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'This complex equation is outside the supported guarded complex preimage families.',
@@ -346,7 +331,7 @@ export function unsupportedComplexPreimageOutcome(): DisplayOutcome {
       },
     ],
     answerMode: 'exact',
-  };
+  });
 }
 
 export function unsupportedComplexLocusOutcome(
@@ -357,7 +342,7 @@ export function unsupportedComplexLocusOutcome(
     complexRegion?: ComplexSolveRegion;
   } = {},
 ): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'This complex equation is outside the supported guarded complex preimage families.',
@@ -387,7 +372,7 @@ export function unsupportedComplexLocusOutcome(
     ],
     answerMode: 'exact',
     answerDomain: 'complex',
-  };
+  });
 }
 
 function exactModeShouldRejectNumericOnlyOutcome(outcome: DisplayOutcome) {
@@ -411,7 +396,7 @@ function answerPayloadContainsImaginaryUnit(outcome: DisplayOutcome) {
 }
 
 function realDomainComplexRootsOutcome(target: string): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'This real equation has no real roots. Turn Complex On to show the non-real roots.',
@@ -428,7 +413,7 @@ function realDomainComplexRootsOutcome(target: string): DisplayOutcome {
       },
     ],
     answerMode: 'exact',
-  };
+  });
 }
 
 function conditionTextFromLegacySupplement(fact: string) {
@@ -453,7 +438,7 @@ function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: st
 
   const remaining = outcome.exactSupplementLatex.filter((fact) =>
     !isTargetDependentConditionSupplement(fact, target));
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     exactSupplementLatex: remaining.length > 0 ? remaining : undefined,
     detailSections: [
@@ -465,7 +450,7 @@ function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: st
           `${conditionTextFromLegacySupplement(fact)} was checked against the displayed candidate root(s).`),
       },
     ],
-  };
+  });
 }
 
 export function finalizeSharedSymbolicOutcome(input: {

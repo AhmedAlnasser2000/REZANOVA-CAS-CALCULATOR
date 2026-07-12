@@ -2,7 +2,8 @@ import { runGuardedDirectSymbolicFallback } from '../../equation/guarded-solve';
 import {
   projectEquationDisplayOutcomeToBoundaryOrThrow,
   projectEquationOutcomeBoundaryToDisplay,
-  retainCompatibleNativeEquationResult,
+  createEquationResultOutcome,
+  requireNativeEquationResult,
   type EquationOutcomeBoundaryV1,
 } from '../../equation/equation-solve-result';
 import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
@@ -122,7 +123,7 @@ function withOriginalQuotientZeroExclusion(outcome: DisplayOutcome, equationLate
     return outcome;
   }
 
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     exactSupplementLatex: [`${denominatorLatex}\\ne0`],
     detailSections: [
@@ -133,7 +134,7 @@ function withOriginalQuotientZeroExclusion(outcome: DisplayOutcome, equationLate
         lines: [`${denominatorLatex} must stay nonzero.`],
       },
     ],
-  };
+  });
 }
 
 function buildEquationRunEvidence(input: {
@@ -235,29 +236,37 @@ export function runEquationMode({
   sharedSolveRunner,
 }: RunEquationModeRequest): DisplayOutcome {
   if (equationScreen === 'linear2') {
-    return solveSystem(system2, 2);
+    return requireNativeEquationResult(solveSystem(system2, 2));
   }
 
   if (equationScreen === 'linear3') {
-    return solveSystem(system3, 3);
+    return requireNativeEquationResult(solveSystem(system3, 3));
   }
 
   if (equationScreen === 'polynomialSystem2') {
-    return solvePolynomialSystem2x2(polynomialSystem2Latex, {
-      storedVariables,
-    });
+    return requireNativeEquationResult(
+      solvePolynomialSystem2x2(polynomialSystem2Latex, {
+        storedVariables,
+      }),
+    );
   }
 
   if (equationScreen === 'quadratic') {
-    return solvePolynomial('quadratic', quadraticCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent);
+    return requireNativeEquationResult(
+      solvePolynomial('quadratic', quadraticCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent),
+    );
   }
 
   if (equationScreen === 'cubic') {
-    return solvePolynomial('cubic', cubicCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent);
+    return requireNativeEquationResult(
+      solvePolynomial('cubic', cubicCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent),
+    );
   }
 
   if (equationScreen === 'quartic') {
-    return solvePolynomial('quartic', quarticCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent);
+    return requireNativeEquationResult(
+      solvePolynomial('quartic', quarticCoefficients, angleUnit, outputStyle, ansLatex, equationDomainIntent),
+    );
   }
 
   if (equationScreen === 'symbolic') {
@@ -341,7 +350,7 @@ export function runEquationMode({
     const finalOutcome = isNumericIntervalRoute
       ? withEquationNumericRouteKind(storedValueOutcome)
       : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
-    return retainCompatibleNativeEquationResult(
+    return requireNativeEquationResult(
       attachEquationAnalysisEvidence(
         finalOutcome,
         buildEquationRunEvidence({
@@ -470,7 +479,7 @@ export async function runEquationModeWithAsyncSharedSolve(
   const finalOutcome = isNumericIntervalRoute
     ? withEquationNumericRouteKind(storedValueOutcome)
     : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
-  return retainCompatibleNativeEquationResult(
+  return requireNativeEquationResult(
     attachEquationAnalysisEvidence(
       finalOutcome,
       buildEquationRunEvidence({

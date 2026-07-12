@@ -42,6 +42,7 @@ import {
   mergeSolveSummaries,
   solveSummaryFromDisplayFields,
 } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const RADICAL_STEP_BUDGET_ERROR = 'This recognized radical family would require more than two bounded radical transform steps. Use Numeric Solve with an interval in Equation mode.';
 const REPEATED_CLEARING_BUDGET_ERROR = 'This recognized repeated-clearing radical family would require more than one extra bounded radical clear. Use Numeric Solve with an interval in Equation mode.';
@@ -70,12 +71,12 @@ function appendSolveMetadata(
     ...(outcome.detailSections ?? []).map((section) => JSON.stringify(section)),
   ]).map((section) => JSON.parse(section) as DisplayDetailSection);
 
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     solveBadges,
     ...solveSummary,
     detailSections: mergedDetailSections.length > 0 ? mergedDetailSections : outcome.detailSections,
-  };
+  });
 }
 
 function recurseTransform(
@@ -140,10 +141,10 @@ function recurseTransform(
         transform,
       ) as Extract<DisplayOutcome, { kind: 'error' }>;
       if (transform.emptyDetailSections?.length) {
-        return {
+        return createEquationResultOutcome({
           ...outcome,
           detailSections: transform.emptyDetailSections,
-        };
+        });
       }
       return outcome;
     }
@@ -215,13 +216,13 @@ function recurseTransform(
       recursiveOutcome.numericMethod,
     ) as Extract<DisplayOutcome, { kind: 'error' }>;
     if (transform.unresolvedDetailSections?.length) {
-      return {
+      return createEquationResultOutcome({
         ...outcome,
         detailSections: dedupe([
           ...transform.unresolvedDetailSections.map((section) => JSON.stringify(section)),
           ...(recursiveOutcome.detailSections ?? []).map((section) => JSON.stringify(section)),
         ]).map((section) => JSON.parse(section) as DisplayDetailSection),
-      };
+      });
     }
     return outcome;
   }
@@ -237,10 +238,10 @@ function recurseTransform(
             { latex: recursiveOutcome.exactSupplementLatex, source: 'legacy' },
             { constraints: newTransformConstraints, source: 'transform' },
           );
-          return {
+          return createEquationResultOutcome({
             ...recursiveOutcome,
             exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
-          };
+          });
         })()
       : recursiveOutcome;
 

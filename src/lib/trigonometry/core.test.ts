@@ -33,6 +33,8 @@ describe('trigonometry core draft runner', () => {
       angleUnit: 'deg',
     });
     expect(equation.outcome.kind).toBe('success');
+    expect(equation.outcome.kind === 'prompt' ? undefined : equation.outcome.canonicalResult)
+      .toBeUndefined();
 
     const triangle = runTrigonometryCoreDraft('rightTriangle(a=3, b=4)', {
       screenHint: 'rightTriangle',

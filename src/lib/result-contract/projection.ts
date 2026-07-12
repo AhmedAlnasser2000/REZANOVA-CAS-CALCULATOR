@@ -329,13 +329,16 @@ function restoreDetailSections(
       line.map((part) => part.kind === 'math' ? part.latex : part.text).join(''));
     const simpleLineKinds = lineParts.map((line) =>
       line.length === 1 ? line[0]?.kind : undefined);
-    if (simpleLineKinds.every((kind): kind is 'math' | 'text' => kind !== undefined)) {
+    if (
+      simpleLineKinds.length > 0
+      && simpleLineKinds.every((kind): kind is 'math' | 'text' => kind !== undefined)
+    ) {
       const firstKind = simpleLineKinds[0];
       return simpleLineKinds.every((kind) => kind === firstKind)
         ? {
             title: section.title,
             lines,
-            ...(firstKind ? { lineKind: firstKind } : {}),
+            lineKind: firstKind,
           }
         : {
             title: section.title,

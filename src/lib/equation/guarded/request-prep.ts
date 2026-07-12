@@ -35,6 +35,7 @@ import {
   mixedDetailSection,
   textPart,
 } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const ce = new ComputeEngine();
 const NUMERIC_MATCH_TOLERANCE = 1e-6;
@@ -242,7 +243,7 @@ function attachAlgebraMetadata(
       : [],
   );
 
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
     detailSections: usesNumericTrustTaxonomy(outcome)
@@ -251,7 +252,7 @@ function attachAlgebraMetadata(
     resolvedInputLatex:
       outcome.resolvedInputLatex
       ?? (request.resolvedLatex !== originalResolvedLatex ? request.resolvedLatex : undefined),
-  };
+  });
 }
 
 function prepareAlgebraSolveRequest(request: GuardedSolveRequest): GuardedSolveRequest {
@@ -376,7 +377,7 @@ function validateDirectSymbolicOutcome(
       undefined,
       validation.rejected.length,
     );
-    return {
+    return createEquationResultOutcome({
       ...outcome,
       detailSections: appendExtraneousSolutionsDetailSection(
         outcome.detailSections,
@@ -384,7 +385,7 @@ function validateDirectSymbolicOutcome(
           exactCandidatesLatex: rawSolutionLatex,
         }),
       ),
-    };
+    });
   }
 
   const acceptedLatex: string[] = [];
@@ -408,7 +409,7 @@ function validateDirectSymbolicOutcome(
     exactCandidatesLatex: rawSolutionLatex,
   });
 
-  return {
+  return createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -426,7 +427,7 @@ function validateDirectSymbolicOutcome(
     candidateValues: acceptedValues,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     detailSections: appendExtraneousSolutionsDetailSection(undefined, extraneousEvidence),
-  };
+  });
 }
 
 export {

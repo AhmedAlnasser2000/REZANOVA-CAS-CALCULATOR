@@ -1,5 +1,6 @@
 import type { DisplayOutcome } from '../../../types/calculator';
 import { profileEquationResult } from '../../display/printer';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -37,7 +38,7 @@ export function tryComplexAbsBoundaryNoSolution(input: {
     return undefined;
   }
 
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: `${input.target}\\in\\varnothing`,
@@ -67,5 +68,5 @@ export function tryComplexAbsBoundaryNoSolution(input: {
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: 'complex',
-  });
+  }));
 }

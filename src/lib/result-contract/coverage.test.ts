@@ -105,12 +105,12 @@ describe('canonical result corpus coverage', () => {
     for (const goldenCase of goldenCases) {
       const execution = await runGoldenCase(goldenCase);
       assertCanonicalRoundTrip(execution, goldenCase.id);
-      if (goldenCase.mode === 'calculate') {
+      if (goldenCase.mode === 'calculate' || goldenCase.mode === 'equation') {
         expect(
           execution.outcome.kind === 'prompt'
             ? undefined
             : execution.outcome.canonicalResult,
-          `${goldenCase.id} native Calculate document`,
+          `${goldenCase.id} native ${goldenCase.mode} document`,
         ).toBeDefined();
       }
     }
@@ -132,10 +132,10 @@ describe('canonical result corpus coverage', () => {
         nativeEquationFixtures.push(fixture.id);
       }
     }
-    expect(nativeEquationFixtures).toEqual([
-      'equation-quadratic-factor',
-      'equation-quadratic-double-root',
-      'equation-quadratic-irrational',
-    ]);
+    expect(nativeEquationFixtures).toEqual(
+      HISTORY_REPLAY_FIXTURES
+        .filter((fixture) => fixture.workspace === 'equation')
+        .map((fixture) => fixture.id),
+    );
   }, 60_000);
 });

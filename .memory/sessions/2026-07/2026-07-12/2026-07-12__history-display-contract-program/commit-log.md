@@ -76,10 +76,19 @@
 - push: not authorized
 - excluded: `test-results/` and the separately committed Notebook program
 
-## Pending Commit
+## RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1
 
+- commit_hash: `9cde95f1`
 - commit_message: `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1`
 - scope: typed producer-owned result builder, Calculate and proven Equation finite-root native documents, parity retention guard, strict advisory transport repair, detail-intent projection repair, accepted inversion/printer baselines, full regression and Chromium evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
+
+## Pending Commit
+
+- commit_message: `RESULT-DOCUMENT-EQUATION-ADVANCED1`
+- scope: typed advanced Equation producer adapter, zero Equation compatibility producers, native non-prompt boundary assertion, explicit cancellation control and Trigonometry owner handoff, accepted inversion baseline, full Equation/runtime/Chromium verification, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files

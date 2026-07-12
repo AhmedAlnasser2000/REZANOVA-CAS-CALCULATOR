@@ -10,6 +10,7 @@ import {
   successOutcome,
 } from './outcome';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS = 64;
 
@@ -56,13 +57,13 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
       undefined,
       numeric.method,
     );
-    return {
+    return createEquationResultOutcome({
       ...outcome,
       detailSections: [
         ...numericDetails,
         ...(numeric.detailSections ?? []),
       ],
-    };
+    });
   }
 
   const visibleRoots = numeric.roots.slice(0, MAX_VISIBLE_NUMERIC_INTERVAL_ROOTS);
@@ -96,14 +97,14 @@ function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | nu
       source: 'equation-numeric-interval',
     }),
   );
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     detailSections: [
       ...numericDetails,
       ...cappedRootDetails,
       ...(numeric.detailSections ?? []),
     ],
-  };
+  });
 }
 
 export { numericIntervalSolve };

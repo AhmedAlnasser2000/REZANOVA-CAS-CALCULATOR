@@ -33,6 +33,7 @@ import {
 } from './merge';
 import { equationStateKey } from './state-key';
 import { solveSummaryFromDisplayFields } from '../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const ce = new ComputeEngine();
 const EXACT_MATCH_TOLERANCE = 1e-6;
@@ -269,7 +270,7 @@ function substitutionSolve(
       substitution.diagnostics,
       merged.numericMethod,
     );
-    return {
+    return createEquationResultOutcome({
       ...outcome,
       detailSections: appendExtraneousSolutionsDetailSection(
         outcome.detailSections,
@@ -277,7 +278,7 @@ function substitutionSolve(
           exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
         }),
       ),
-    };
+    });
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -289,7 +290,7 @@ function substitutionSolve(
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
 
-  return {
+  return createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -319,7 +320,7 @@ function substitutionSolve(
     ),
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
-  };
+  });
 }
 
 async function substitutionSolveAsync(
@@ -488,7 +489,7 @@ async function substitutionSolveAsync(
       substitution.diagnostics,
       merged.numericMethod,
     );
-    return {
+    return createEquationResultOutcome({
       ...outcome,
       detailSections: appendExtraneousSolutionsDetailSection(
         outcome.detailSections,
@@ -496,7 +497,7 @@ async function substitutionSolveAsync(
           exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
         }),
       ),
-    };
+    });
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -508,7 +509,7 @@ async function substitutionSolveAsync(
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
 
-  return {
+  return createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -538,7 +539,7 @@ async function substitutionSolveAsync(
     ),
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
-  };
+  });
 }
 
 export { substitutionSolve, substitutionSolveAsync };

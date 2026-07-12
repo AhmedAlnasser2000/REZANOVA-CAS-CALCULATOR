@@ -38,6 +38,7 @@ import {
   isMathJsonArray,
 } from './request-prep';
 import { profileEquationResult } from '../../display/printer';
+import { createEquationResultOutcome } from '../solve-result/producer';
 
 const ce = new ComputeEngine();
 
@@ -173,7 +174,7 @@ function runBoundedPolynomialSolve(
         const rootSet = adaptBoundedPolynomialSolveResultToRootSet(solved, {
           source: 'equation-guarded-bounded-polynomial',
         });
-        return profileEquationResult({
+        return profileEquationResult(createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: rootSetToExactLatex(rootSet),
@@ -186,7 +187,7 @@ function runBoundedPolynomialSolve(
           plannerBadges: [],
           solveBadges: [],
           candidateValues: solved.approxSolutions,
-        });
+        }));
       }
     }
 
@@ -205,7 +206,7 @@ function runBoundedPolynomialSolve(
         const exactLatex = exactSolutions.length > 0 && exactSolutions.every((value) => !isApproximateOnlySolutionLatex(value))
           ? solutionsToLatex('x', exactSolutions)
           : undefined;
-        return {
+        return createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex,
@@ -219,7 +220,7 @@ function runBoundedPolynomialSolve(
           plannerBadges: [],
           solveBadges: [],
           candidateValues,
-        };
+        });
       }
 
       const validation = validateCandidateRoots(
@@ -231,7 +232,7 @@ function runBoundedPolynomialSolve(
       );
 
       if (validation.accepted.length === 0) {
-        return {
+        return createEquationResultOutcome({
           kind: 'error',
           title: 'Solve',
           error: buildEquationCandidateRejectionMessage(
@@ -251,7 +252,7 @@ function runBoundedPolynomialSolve(
               exactCandidatesLatex: carrierAttempt.roots.map((root) => root.latex),
             }),
           ),
-        };
+        });
       }
 
       const acceptedLatex = matchAcceptedSolvedRoots(carrierAttempt.roots, validation.accepted);
@@ -259,7 +260,7 @@ function runBoundedPolynomialSolve(
         ? solutionsToLatex('x', acceptedLatex)
         : undefined;
 
-      return {
+      return createEquationResultOutcome({
         kind: 'success',
         title: 'Solve',
         exactLatex,
@@ -286,7 +287,7 @@ function runBoundedPolynomialSolve(
             exactCandidatesLatex: carrierAttempt.roots.map((root) => root.latex),
           }),
         ),
-      };
+      });
     }
 
     if (carrierAttempt.kind === 'empty') {

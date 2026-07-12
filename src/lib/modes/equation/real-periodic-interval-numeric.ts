@@ -12,6 +12,7 @@ import {
   hardDomainFactLines,
   periodicStructureLines,
 } from './numeric-search-diagnostics';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
@@ -132,7 +133,7 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
     ],
   });
 
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: 'Periodic numeric solving needs a real interval before it can enumerate local roots.',
@@ -142,5 +143,5 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
     solveBadges: ['Numeric Interval', 'Candidate Checked'],
     numericMethod: NUMERIC_METHOD_PERIODIC_INTERVAL,
     detailSections,
-  };
+  });
 }

@@ -57,6 +57,7 @@ import {
   attachEquationRuntimeEnvelope,
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 type ComplexPowerWrapperRouteInput = {
   equationLatex: string;
@@ -113,7 +114,7 @@ function unsupportedComplexWrapperOutcome(
   lines: string[],
   options: UnsupportedComplexWrapperOptions = {},
 ): DisplayOutcome {
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: options.error ?? 'This complex wrapper equation is outside the supported guarded complex wrapper families.',
@@ -134,7 +135,7 @@ function unsupportedComplexWrapperOutcome(
       },
     ],
     answerMode: 'exact',
-  };
+  });
 }
 
 function attachBoundary(
@@ -631,7 +632,7 @@ function solveComplexPowerWrapper(
     ],
   });
 
-  const outcome: DisplayOutcome = {
+  const outcome: DisplayOutcome = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -648,7 +649,7 @@ function solveComplexPowerWrapper(
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: 'complex',
-  };
+  });
 
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, input.selectedTarget);
   return attachEquationRuntimeEnvelope(

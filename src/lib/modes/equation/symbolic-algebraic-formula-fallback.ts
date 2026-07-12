@@ -27,6 +27,7 @@ import {
   attachEquationRuntimeEnvelope,
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const ce = new ComputeEngine();
 const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
@@ -204,7 +205,7 @@ function solveRealAlgebraicFormulaComposition(input: {
     return undefined;
   }
 
-  const outcome: DisplayOutcome = {
+  const outcome: DisplayOutcome = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: composition.exactLatex,
@@ -214,7 +215,7 @@ function solveRealAlgebraicFormulaComposition(input: {
     warnings: [],
     resultOrigin: 'symbolic',
     ...(composition.answerDomain ? { answerDomain: composition.answerDomain } : {}),
-  };
+  });
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
   return attachEquationRuntimeEnvelope(

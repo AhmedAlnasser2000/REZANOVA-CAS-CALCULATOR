@@ -38,6 +38,7 @@ import {
   proseSolveSummary,
   solveSummaryFromDisplayFields,
 } from '../../../display/result-detail-lines';
+import { createEquationResultOutcome } from '../../solve-result/producer';
 
 const ce = new ComputeEngine();
 
@@ -294,7 +295,7 @@ function buildBlockedAbsBranchOutcome(
       }),
     );
 
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: transform.unresolvedError,
@@ -309,7 +310,7 @@ function buildBlockedAbsBranchOutcome(
       (total, outcome) => total + (outcome.kind === 'prompt' ? 0 : outcome.rejectedCandidateCount ?? 0),
       0,
     ) || undefined,
-  };
+  });
 }
 
 export {

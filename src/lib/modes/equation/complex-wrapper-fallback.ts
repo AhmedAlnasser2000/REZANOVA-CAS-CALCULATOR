@@ -1,4 +1,5 @@
 import type { DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 export function isDeferredComplexWrapperBoundary(outcome: DisplayOutcome) {
   return outcome.kind === 'error'
@@ -48,12 +49,12 @@ export function withDeferredComplexWrapperBoundary(
     return deferredOutcome ?? outcome;
   }
 
-  return {
+  return createEquationResultOutcome({
     ...outcome,
     answerDomain: outcome.answerDomain ?? 'real',
     detailSections: [
       ...(outcome.detailSections ?? []),
       ...fallbackSections,
     ],
-  };
+  });
 }

@@ -49,6 +49,7 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
   finalizeSharedSymbolicOutcome,
 } from './outcomes';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const ce = new ComputeEngine();
 
@@ -118,7 +119,7 @@ function tryRealCubicCardanoSharedFallback(input: {
     return undefined;
   }
 
-  const outcome: DisplayOutcome = {
+  const outcome: DisplayOutcome = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: cardano.exactLatex,
@@ -127,7 +128,7 @@ function tryRealCubicCardanoSharedFallback(input: {
     warnings: [],
     resultOrigin: 'symbolic',
     answerDomain: 'real',
-  };
+  });
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget);
 
   return attachEquationRuntimeEnvelope(
@@ -291,13 +292,13 @@ export function solveSymbolicEquation(
       });
 
       return attachEquationRuntimeEnvelope(
-        {
+        createEquationResultOutcome({
           kind: 'error',
           title: 'Solve',
           error: readback.error,
           warnings: [],
           detailSections: readback.detailSections,
-        },
+        }),
         equationLatex,
         planner.resolvedLatex,
         planner.badges,
@@ -306,7 +307,7 @@ export function solveSymbolicEquation(
     }
 
     return attachEquationRuntimeEnvelope(
-      {
+      createEquationResultOutcome({
         kind: 'error',
         title: 'Solve',
         error: targetResolution.message ?? 'Enter an equation containing a supported solve target.',
@@ -321,7 +322,7 @@ export function solveSymbolicEquation(
                 ],
               }]
             : undefined,
-      },
+      }),
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
@@ -343,7 +344,7 @@ export function solveSymbolicEquation(
     );
 
     if (isolated.kind === 'success') {
-      const outcome: DisplayOutcome = {
+      const outcome: DisplayOutcome = createEquationResultOutcome({
         kind: 'success',
         title: 'Solve',
         exactLatex: isolated.exactLatex,
@@ -351,7 +352,7 @@ export function solveSymbolicEquation(
         detailSections: isolated.detailSections,
         warnings: [],
         resultOrigin: 'symbolic',
-      };
+      });
 
       const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
@@ -374,7 +375,7 @@ export function solveSymbolicEquation(
     });
 
     return attachEquationRuntimeEnvelope(
-      {
+      createEquationResultOutcome({
         kind: 'error',
         title: 'Solve',
         error: readback.error,
@@ -387,7 +388,7 @@ export function solveSymbolicEquation(
           },
           ...readback.detailSections,
         ],
-      },
+      }),
       equationLatex,
       planner.resolvedLatex,
       planner.badges,
@@ -445,7 +446,7 @@ export function solveSymbolicEquation(
       },
     );
     if (complexSpecialForm.kind === 'success') {
-      const outcome: DisplayOutcome = {
+      const outcome: DisplayOutcome = createEquationResultOutcome({
         kind: 'success',
         title: 'Solve',
         exactLatex: complexSpecialForm.exactLatex,
@@ -455,7 +456,7 @@ export function solveSymbolicEquation(
         warnings: [],
         resultOrigin: 'symbolic',
         answerDomain: 'complex',
-      };
+      });
 
       const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
 
@@ -474,7 +475,7 @@ export function solveSymbolicEquation(
       || complexSpecialForm.reason === 'complex-carrier-root'
     ) {
       return attachEquationRuntimeEnvelope(
-        {
+        createEquationResultOutcome({
           kind: 'error',
           title: 'Solve',
           error: complexSpecialForm.message,
@@ -488,7 +489,7 @@ export function solveSymbolicEquation(
               'Turn Complex Off for the widened real Exact route when appropriate, or use Numeric Interval Solve for local real numeric roots.',
             ],
           }],
-        },
+        }),
         equationLatex,
         planner.resolvedLatex,
         planner.badges,
@@ -508,7 +509,7 @@ export function solveSymbolicEquation(
     );
 
     if (boundedComplex) {
-      const outcome: DisplayOutcome = {
+      const outcome: DisplayOutcome = createEquationResultOutcome({
         kind: 'success',
         title: 'Solve',
         exactLatex: boundedComplex.exactLatex,
@@ -519,7 +520,7 @@ export function solveSymbolicEquation(
         warnings: [],
         resultOrigin: 'symbolic',
         answerDomain: 'complex',
-      };
+      });
 
       const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
 
@@ -569,7 +570,7 @@ export function solveSymbolicEquation(
         const complexCarrier = solveBoundedComplexPolynomialCarrierEquationAst(ce.parse(planner.resolvedLatex).json);
         if (complexCarrier.kind === 'solved') {
           const readback = buildBranchReadback(solveTarget, complexCarrier.branches, outputStyle, complexExactForm);
-          const outcome: DisplayOutcome = {
+          const outcome: DisplayOutcome = createEquationResultOutcome({
             kind: 'success',
             title: 'Solve',
             exactLatex: readback.exactLatex,
@@ -593,7 +594,7 @@ export function solveSymbolicEquation(
             warnings: [],
             resultOrigin: 'symbolic',
             answerDomain: 'complex',
-          };
+          });
           const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
 
           return attachEquationRuntimeEnvelope(
@@ -634,7 +635,7 @@ export function solveSymbolicEquation(
         const exactLatex = exactSolutions.length > 0
           ? solutionsToLatex('x', exactSolutions)
           : undefined;
-        const outcome: DisplayOutcome = {
+        const outcome: DisplayOutcome = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex,
@@ -647,7 +648,7 @@ export function solveSymbolicEquation(
             : undefined,
           warnings: [],
           resultOrigin: 'symbolic',
-        };
+        });
         const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
 
         return attachEquationRuntimeEnvelope(

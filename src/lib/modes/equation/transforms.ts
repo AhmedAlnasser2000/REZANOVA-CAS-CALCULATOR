@@ -12,6 +12,7 @@ import {
   containsNonEqualityRelation,
   ensureSafeEquationSuccessOutcome,
 } from './outcomes';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 type RunEquationAlgebraTransformRequest = {
   action: AlgebraTransformAction;
@@ -114,7 +115,7 @@ export function runEquationAlgebraTransform({
     );
   }
 
-  const outcome = ensureSafeEquationSuccessOutcome({
+  const outcome = ensureSafeEquationSuccessOutcome(createEquationResultOutcome({
     kind: 'success',
     title,
     exactLatex: result.exactLatex,
@@ -127,7 +128,7 @@ export function runEquationAlgebraTransform({
     transformBadges: result.transformBadges,
     transformSummaryText: result.transformSummaryText,
     transformSummaryLatex: result.transformSummaryLatex,
-  });
+  }));
 
   return attachEquationRuntimeEnvelope(
     outcome,

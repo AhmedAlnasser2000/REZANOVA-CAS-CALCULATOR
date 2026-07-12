@@ -17,6 +17,7 @@ import {
 } from '../equation-ui-model';
 import type { AngleUnit, DisplayOutcome, EquationDomainIntent, OutputStyle, PolynomialEquationView } from '../../../types/calculator';
 import { profileEquationResult } from '../../display/printer';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 const ce = new ComputeEngine();
 
@@ -26,12 +27,12 @@ export function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
   const solution = solveLinearSystem(coefficients, constants);
 
   if (!solution) {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: `${size}x${size}`,
       error: 'The linear system does not have a unique solution.',
       warnings: [],
-    };
+    });
   }
 
   const exactLatex = solution
@@ -41,13 +42,13 @@ export function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
     .map((value, index) => `${['x', 'y', 'z'][index]} ~= ${formatApproxNumber(value)}`)
     .join(', ');
 
-  return {
+  return createEquationResultOutcome({
     kind: 'success',
     title: `${size}x${size}`,
     exactLatex,
     approxText,
     warnings: [],
-  };
+  });
 }
 
 export function solvePolynomial(
@@ -62,25 +63,25 @@ export function solvePolynomial(
   const normalized = normalizedPolynomialCoefficients(coefficients, meta.degree + 1);
 
   if (Math.abs(normalized[0]) < 1e-10) {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: meta.title,
       error: `Set ${meta.coefficientLabels[0]} to a non-zero value for the ${meta.title.toLowerCase()} equation.`,
       warnings: [],
-    };
+    });
   }
 
   const polynomialLatex = buildPolynomialEquationLatex(screen, normalized);
   if (screen === 'cubic' || screen === 'quartic') {
     const bounded = solveBoundedPolynomialEquationAst(ce.parse(polynomialLatex).json, 'x');
     if (bounded) {
-      return buildRuntimeOutcome({
+      return createEquationResultOutcome(buildRuntimeOutcome({
         title: meta.title,
         exactLatex: bounded.exactLatex,
         approxText: bounded.approxText,
         warnings: [],
         resultOrigin: 'symbolic',
-      });
+      }));
     }
   }
 
@@ -104,28 +105,28 @@ export function solvePolynomial(
     };
 
   if (screen === 'quadratic' && !response.error && response.exactLatex) {
-    return buildRuntimeOutcome({
+    return createEquationResultOutcome(buildRuntimeOutcome({
       title: meta.title,
       exactLatex: response.exactLatex,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,
       warnings: response.warnings,
       resultOrigin: 'symbolic',
-    });
+    }));
   }
 
   const numericRoots = solvePolynomialRoots({ coefficients: normalized });
   if (numericRoots.kind === 'error') {
-    return {
+    return createEquationResultOutcome({
       kind: 'error',
       title: meta.title,
       error: response.error ?? numericRoots.error,
       warnings: response.warnings,
-    };
+    });
   }
 
   const hasComplexRoots = numericRoots.roots.some((root) => Math.abs(root.im) > 1e-10);
-  return profileEquationResult({
+  return profileEquationResult(createEquationResultOutcome({
     kind: 'success',
     title: meta.title,
     exactLatex: complexSolutionsToLatex('x', numericRoots.roots),
@@ -133,5 +134,5 @@ export function solvePolynomial(
     warnings: ['Symbolic solve unavailable; showing numeric roots.'],
     resultOrigin: 'numeric-fallback',
     ...(equationDomainIntent === 'complex' && hasComplexRoots ? { answerDomain: 'complex' as const } : {}),
-  });
+  }));
 }

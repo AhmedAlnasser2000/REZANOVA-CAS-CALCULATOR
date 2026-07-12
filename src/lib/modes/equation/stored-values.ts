@@ -15,6 +15,7 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../../types/calculator';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
 type StoredValueConsentErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
 
@@ -58,17 +59,17 @@ export function withStoredValueDetails(
       ? `No real root for ${input.target} was found inside ${intervalText} for the substituted equation ${input.substitution.latex}. Try widening the interval, shifting the interval center, or increasing subdivisions.`
       : undefined;
 
-  const nextOutcome = {
+  const nextOutcome = createEquationResultOutcome({
     ...outcome,
     ...(scopedNoRootError ? { error: scopedNoRootError } : {}),
     detailSections: [
       ...storedValueDetails,
       ...(outcome.detailSections ?? []),
     ],
-  };
+  });
 
   return nextOutcome.kind === 'success' && input.substitution.substitutions.length > 0
-    ? { ...nextOutcome, variableSubstitutions: [...input.substitution.substitutions] }
+    ? createEquationResultOutcome({ ...nextOutcome, variableSubstitutions: [...input.substitution.substitutions] })
     : nextOutcome;
 }
 
@@ -188,7 +189,7 @@ function missingStoredValueOutcome(input: {
   missingNames: readonly string[];
 }): StoredValueConsentErrorOutcome {
   const missingText = nameListText(input.missingNames);
-  return {
+  return createEquationResultOutcome({
     kind: 'error',
     title: 'Use Stored Values',
     error: `Missing stored values for: ${missingText}.`,
@@ -211,7 +212,7 @@ function missingStoredValueOutcome(input: {
     ],
     warnings: [],
     answerMode: 'exact',
-  };
+  });
 }
 
 export type EquationStoredValueConsentResult =

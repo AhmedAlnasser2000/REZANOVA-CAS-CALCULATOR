@@ -155,7 +155,7 @@ function runTrigRequest(
         ? [{ kind: 'send', target: 'equation', latex: request.equationLatex }]
         : outcome.actions;
 
-      return {
+      const trigonometryOutcome = {
         ...outcome,
         title,
         actions,
@@ -167,6 +167,8 @@ function runTrigRequest(
           ...((outcome.plannerBadges ?? []).filter((badge) => !(planner.badges ?? []).includes(badge))),
         ],
       };
+      delete trigonometryOutcome.canonicalResult;
+      return trigonometryOutcome;
     }
     case 'rightTriangle':
       return toOutcome(title, solveRightTriangle({

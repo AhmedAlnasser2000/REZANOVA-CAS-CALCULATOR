@@ -192,3 +192,29 @@
 
 - Worker hosts, capabilities, requests, cancellation, stale/commit legality, fallback semantics, History tickets, Surface DTOs, solver mathematics, and Notebook source remain unchanged.
 - `test-results/` remains untracked and excluded. No push is authorized.
+
+## RESULT-DOCUMENT-EQUATION-ADVANCED1 Gate
+
+- Kind: `backend` native producer migration with mandatory `ui` mathematical-output parity evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass for the intended advanced Equation producer slice.
+
+### Contract Evidence
+
+- Full Equation: 145 files and 1,217 tests pass. Focused guarded, composition/system, parameterized/symbolic, numeric/Complex, guided/Trig, and solve-result suites pass.
+- Result contract: 5 files and 25 tests pass; all 43 golden executions and all 100 replay fixtures retain canonical/compatibility parity. All six Equation golden and all 25 Equation replay executions are native.
+- Result intent passes all eight source assignments and all 143 runtime executions. Detail migration reports 450 declared live lines and zero undeclared lines. Printer inventory reports 533 paths and zero compatibility fallbacks.
+- Accepted inversion inventory: 1,149 source files, 586 producer boundaries, 768 consumer reads, 37 compatibility projections, 554 legacy reads, and 127 native calls. Equation records 124 native, zero compatibility, 251 forwarders, 17 controls, 265 legacy reads, and five canonical reads.
+- TypeScript, production build, global ESLint, full UI, History replay, golden corpus, runtime probes/contracts, file sizes, CI alignment, seam selector, app identity, Surface Protocol, OOE, compartments, and diff hygiene pass. Existing build chunk/dynamic-import notices remain non-fatal.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.2 minutes.
+- Focused Equation Advanced evidence: 3/3 headless tests passed after correcting temporary harness assumptions. Seven full-page screenshots were inspected for answer/error cards, facts, typed details, periodic branches, controlled boundaries, runtime completion, and overflow.
+- Covered routes: parameterized linear success, exponential Exact-mode controlled stop, bounded numeric interval, Complex quadratic, guided quartic, impossible trig range guard, and live legacy Trigonometry equation handoff. No clipping, overlap, malformed fragments, or output drift was found.
+
+### Boundaries
+
+- OOE cancellation remains control-only. Runtime advisories and executable actions remain transient. Equation's request, hosts, capability, worker/fallback policy, stale/cancel rules, commit legality, diagnostics, and History-ticket behavior are unchanged.
+- Trigonometry drops Equation-owned canonical truth after its owner-specific presentation changes and remains compatibility-owned until `RESULT-DOCUMENT-GUIDED-DOMAINS1`.
+- Notebook source, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
