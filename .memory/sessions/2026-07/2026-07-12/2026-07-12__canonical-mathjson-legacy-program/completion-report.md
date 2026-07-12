@@ -17,7 +17,8 @@
 ## Program Status
 
 - Status: active.
-- Current gate: `CANONICAL-MATHJSON-LEGACY-ROADMAP0` verified with standing commit approval recorded.
+- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`.
+- Next gate: `PROVEN-ANSWER-MATHJSON-CONTRACT1`.
 - Starting commit: `0a173b61`.
 - Push: not authorized.
 - Commit approval: standing approval covers all 19 numbered program moves, including their paired named subgates.
@@ -30,6 +31,13 @@
 - Final `CanonicalRuntimeOutcome` authority with no duplicate result strings outside the canonical document.
 - Canonical-only History fallback, old/malformed cleanup with notice, and opaque future-row preservation.
 - Physical deletion of deferred Display and History compatibility after producer and consumer migrations prove zero debt.
+
+## Current Coverage Baseline
+
+- 51 operation families and 100 native replay probes.
+- 262 canonical math leaves: 26 proven, 236 missing, zero exempt.
+- 51,813 total serialized bytes; 2,753-byte maximum sampled document.
+- Coverage tooling is audit-only and is not exported through production result-contract facades.
 
 ## Durable Files
 

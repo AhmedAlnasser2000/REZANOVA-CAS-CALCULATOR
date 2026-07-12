@@ -43,3 +43,11 @@
 
 - Notebook source, styles, and tests remain owned by the concurrent Notebook lane.
 - `.task_tmp/` benchmark details and untracked `test-results/` remain ignored and excluded.
+
+## MATHJSON-COVERAGE-REGISTRY1
+
+- result: pass; backend-only with no runtime output change.
+- `npm run test:mathjson-coverage`: 4 tests plus 100 native probes pass at 262 leaves, 26 proven, 236 missing, and zero exemptions.
+- `npm run test:workspace-runtime-contracts`: 12 files and 76 tests pass.
+- Result contract, History replay, CI alignment, seam selector, compartments, TypeScript, global lint, production build, file size, memory, and diff hygiene pass.
+- The first production build exposed an audit-module barrel export and exhausted the default heap. Removing the export restored the normal 2,965-module build without a heap override.

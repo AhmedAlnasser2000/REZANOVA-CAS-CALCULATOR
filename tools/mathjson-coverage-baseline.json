@@ -1,0 +1,528 @@
+{
+  "version": 1,
+  "reason": "Initial MATHJSON-COVERAGE-REGISTRY1 native replay baseline",
+  "routeIds": [
+    "calculate.ans",
+    "calculate.arithmetic",
+    "calculate.exact-forms",
+    "calculate.inverse-trigonometry",
+    "calculate.numeric-format",
+    "calculate.transforms",
+    "calculate.trigonometry",
+    "calculus.derivatives",
+    "calculus.integrals",
+    "calculus.limits",
+    "calculus.ode-ivp",
+    "calculus.partials",
+    "calculus.series-transforms",
+    "equation.absolute-value",
+    "equation.answer-mode",
+    "equation.domain-boundary",
+    "equation.linear",
+    "equation.numeric-boundary",
+    "equation.polynomial",
+    "equation.rational-radical",
+    "equation.trig-exp-log",
+    "geometry.circle",
+    "geometry.coordinate-distance",
+    "geometry.line-equation",
+    "geometry.shape-2d",
+    "geometry.triangle",
+    "matrix.determinant",
+    "matrix.inverse",
+    "matrix.linear-system",
+    "matrix.matrix-arithmetic",
+    "matrix.rank",
+    "statistics.descriptive",
+    "statistics.frequency",
+    "statistics.inference",
+    "statistics.probability",
+    "statistics.relationship",
+    "table.domain-boundary",
+    "table.rational-function",
+    "table.single-function",
+    "table.trigonometric-function",
+    "table.two-functions",
+    "trigonometry.angle-conversion",
+    "trigonometry.equation",
+    "trigonometry.function",
+    "trigonometry.identity",
+    "trigonometry.right-triangle",
+    "vector.angle",
+    "vector.cross-product",
+    "vector.dot-product",
+    "vector.norm",
+    "vector.orthogonalization"
+  ],
+  "exemptionIds": [],
+  "totals": {
+    "fixtures": 100,
+    "bytes": 51813,
+    "maxBytes": 2753,
+    "leaves": 262,
+    "proven": 26,
+    "exempt": 0,
+    "missing": 236
+  },
+  "routes": {
+    "calculate.ans": {
+      "fixtures": 2,
+      "bytes": 299,
+      "maxBytes": 152,
+      "leaves": 2,
+      "proven": 2,
+      "exempt": 0,
+      "missing": 0
+    },
+    "calculate.arithmetic": {
+      "fixtures": 2,
+      "bytes": 447,
+      "maxBytes": 243,
+      "leaves": 4,
+      "proven": 2,
+      "exempt": 0,
+      "missing": 2
+    },
+    "calculate.exact-forms": {
+      "fixtures": 2,
+      "bytes": 529,
+      "maxBytes": 273,
+      "leaves": 4,
+      "proven": 1,
+      "exempt": 0,
+      "missing": 3
+    },
+    "calculate.inverse-trigonometry": {
+      "fixtures": 4,
+      "bytes": 888,
+      "maxBytes": 239,
+      "leaves": 4,
+      "proven": 4,
+      "exempt": 0,
+      "missing": 0
+    },
+    "calculate.numeric-format": {
+      "fixtures": 1,
+      "bytes": 197,
+      "maxBytes": 197,
+      "leaves": 1,
+      "proven": 1,
+      "exempt": 0,
+      "missing": 0
+    },
+    "calculate.transforms": {
+      "fixtures": 6,
+      "bytes": 1184,
+      "maxBytes": 254,
+      "leaves": 7,
+      "proven": 6,
+      "exempt": 0,
+      "missing": 1
+    },
+    "calculate.trigonometry": {
+      "fixtures": 3,
+      "bytes": 512,
+      "maxBytes": 180,
+      "leaves": 3,
+      "proven": 3,
+      "exempt": 0,
+      "missing": 0
+    },
+    "calculus.derivatives": {
+      "fixtures": 5,
+      "bytes": 4176,
+      "maxBytes": 1564,
+      "leaves": 27,
+      "proven": 4,
+      "exempt": 0,
+      "missing": 23
+    },
+    "calculus.integrals": {
+      "fixtures": 6,
+      "bytes": 3858,
+      "maxBytes": 810,
+      "leaves": 12,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 12
+    },
+    "calculus.limits": {
+      "fixtures": 5,
+      "bytes": 6464,
+      "maxBytes": 1667,
+      "leaves": 30,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 30
+    },
+    "calculus.ode-ivp": {
+      "fixtures": 3,
+      "bytes": 735,
+      "maxBytes": 313,
+      "leaves": 3,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 3
+    },
+    "calculus.partials": {
+      "fixtures": 1,
+      "bytes": 451,
+      "maxBytes": 451,
+      "leaves": 4,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 4
+    },
+    "calculus.series-transforms": {
+      "fixtures": 5,
+      "bytes": 1356,
+      "maxBytes": 399,
+      "leaves": 4,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 4
+    },
+    "equation.absolute-value": {
+      "fixtures": 1,
+      "bytes": 565,
+      "maxBytes": 565,
+      "leaves": 2,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 2
+    },
+    "equation.answer-mode": {
+      "fixtures": 1,
+      "bytes": 718,
+      "maxBytes": 718,
+      "leaves": 3,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 3
+    },
+    "equation.domain-boundary": {
+      "fixtures": 4,
+      "bytes": 2729,
+      "maxBytes": 818,
+      "leaves": 15,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 15
+    },
+    "equation.linear": {
+      "fixtures": 3,
+      "bytes": 654,
+      "maxBytes": 218,
+      "leaves": 3,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 3
+    },
+    "equation.numeric-boundary": {
+      "fixtures": 1,
+      "bytes": 2753,
+      "maxBytes": 2753,
+      "leaves": 0,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 0
+    },
+    "equation.polynomial": {
+      "fixtures": 5,
+      "bytes": 3016,
+      "maxBytes": 969,
+      "leaves": 11,
+      "proven": 3,
+      "exempt": 0,
+      "missing": 8
+    },
+    "equation.rational-radical": {
+      "fixtures": 4,
+      "bytes": 3391,
+      "maxBytes": 1034,
+      "leaves": 14,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 14
+    },
+    "equation.trig-exp-log": {
+      "fixtures": 6,
+      "bytes": 4811,
+      "maxBytes": 1235,
+      "leaves": 15,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 15
+    },
+    "geometry.circle": {
+      "fixtures": 1,
+      "bytes": 249,
+      "maxBytes": 249,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "geometry.coordinate-distance": {
+      "fixtures": 1,
+      "bytes": 268,
+      "maxBytes": 268,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "geometry.line-equation": {
+      "fixtures": 1,
+      "bytes": 205,
+      "maxBytes": 205,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "geometry.shape-2d": {
+      "fixtures": 1,
+      "bytes": 243,
+      "maxBytes": 243,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "geometry.triangle": {
+      "fixtures": 1,
+      "bytes": 252,
+      "maxBytes": 252,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "matrix.determinant": {
+      "fixtures": 1,
+      "bytes": 141,
+      "maxBytes": 141,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "matrix.inverse": {
+      "fixtures": 1,
+      "bytes": 188,
+      "maxBytes": 188,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "matrix.linear-system": {
+      "fixtures": 1,
+      "bytes": 1497,
+      "maxBytes": 1497,
+      "leaves": 11,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 11
+    },
+    "matrix.matrix-arithmetic": {
+      "fixtures": 1,
+      "bytes": 180,
+      "maxBytes": 180,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "matrix.rank": {
+      "fixtures": 1,
+      "bytes": 141,
+      "maxBytes": 141,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "statistics.descriptive": {
+      "fixtures": 1,
+      "bytes": 380,
+      "maxBytes": 380,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "statistics.frequency": {
+      "fixtures": 1,
+      "bytes": 226,
+      "maxBytes": 226,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "statistics.inference": {
+      "fixtures": 1,
+      "bytes": 274,
+      "maxBytes": 274,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "statistics.probability": {
+      "fixtures": 1,
+      "bytes": 165,
+      "maxBytes": 165,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "statistics.relationship": {
+      "fixtures": 1,
+      "bytes": 681,
+      "maxBytes": 681,
+      "leaves": 4,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 4
+    },
+    "table.domain-boundary": {
+      "fixtures": 1,
+      "bytes": 830,
+      "maxBytes": 830,
+      "leaves": 8,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 8
+    },
+    "table.rational-function": {
+      "fixtures": 1,
+      "bytes": 833,
+      "maxBytes": 833,
+      "leaves": 8,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 8
+    },
+    "table.single-function": {
+      "fixtures": 1,
+      "bytes": 512,
+      "maxBytes": 512,
+      "leaves": 11,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 11
+    },
+    "table.trigonometric-function": {
+      "fixtures": 1,
+      "bytes": 410,
+      "maxBytes": 410,
+      "leaves": 7,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 7
+    },
+    "table.two-functions": {
+      "fixtures": 1,
+      "bytes": 509,
+      "maxBytes": 509,
+      "leaves": 10,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 10
+    },
+    "trigonometry.angle-conversion": {
+      "fixtures": 1,
+      "bytes": 354,
+      "maxBytes": 354,
+      "leaves": 2,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 2
+    },
+    "trigonometry.equation": {
+      "fixtures": 1,
+      "bytes": 1003,
+      "maxBytes": 1003,
+      "leaves": 5,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 5
+    },
+    "trigonometry.function": {
+      "fixtures": 1,
+      "bytes": 227,
+      "maxBytes": 227,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "trigonometry.identity": {
+      "fixtures": 1,
+      "bytes": 193,
+      "maxBytes": 193,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "trigonometry.right-triangle": {
+      "fixtures": 1,
+      "bytes": 423,
+      "maxBytes": 423,
+      "leaves": 2,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 2
+    },
+    "vector.angle": {
+      "fixtures": 1,
+      "bytes": 186,
+      "maxBytes": 186,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "vector.cross-product": {
+      "fixtures": 1,
+      "bytes": 178,
+      "maxBytes": 178,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "vector.dot-product": {
+      "fixtures": 1,
+      "bytes": 173,
+      "maxBytes": 173,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "vector.norm": {
+      "fixtures": 1,
+      "bytes": 174,
+      "maxBytes": 174,
+      "leaves": 1,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 1
+    },
+    "vector.orthogonalization": {
+      "fixtures": 1,
+      "bytes": 985,
+      "maxBytes": 985,
+      "leaves": 7,
+      "proven": 0,
+      "exempt": 0,
+      "missing": 7
+    }
+  }
+}

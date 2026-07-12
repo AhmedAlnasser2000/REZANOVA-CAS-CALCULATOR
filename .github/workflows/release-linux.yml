@@ -84,6 +84,9 @@ jobs:
       - name: Validate Display contract inversion ratchet
         run: npm run test:display-contract-inversion
 
+      - name: Validate MathJSON coverage ratchet
+        run: npm run test:mathjson-coverage
+
       - name: Validate Equation solve result contract
         run: npm run test:equation-solve-result
 

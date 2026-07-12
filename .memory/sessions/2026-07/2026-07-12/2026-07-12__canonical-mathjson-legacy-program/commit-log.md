@@ -22,3 +22,11 @@
 - scope: accepted roadmap, measured starting baseline, protected paths, durable decisions, approval, and active session dossier only
 - push: not authorized
 - excluded: concurrent Notebook files, ignored `.task_tmp/`, and untracked `test-results/`
+
+## MATHJSON-COVERAGE-REGISTRY1
+
+- commit_message: `MATHJSON-COVERAGE-REGISTRY1`
+- status: verified; covered by standing commit approval
+- scope: exhaustive route/leaf registry, 100 native probes, baseline ratchet, stable reports, CI/release alignment, seam selection, and durable evidence
+- push: not authorized
+- excluded: concurrent Notebook files, ignored `.task_tmp/`, and untracked `test-results/`

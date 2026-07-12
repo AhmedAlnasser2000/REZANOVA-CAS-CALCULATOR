@@ -20,6 +20,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:result-contract'],
   },
   {
+    id: 'mathjson-coverage-ratchet',
+    label: 'Producer-proven MathJSON coverage ratchet',
+    argv: ['npm', 'run', 'test:mathjson-coverage'],
+  },
+  {
     id: 'equation-solve-result-contracts',
     label: 'Equation internal solve-result carrier contracts',
     argv: ['npm', 'run', 'test:equation-solve-result'],
@@ -228,10 +233,13 @@ export const SEAM_REGISTRY = [
         'src/lib/statistics/result-document.ts',
         'src/lib/trigonometry/result-document.ts',
         'src/types/calculator/canonical-result-types.ts',
+        'tools/mathjson-coverage-ratchet.ts',
+        'tools/mathjson-coverage-baseline.json',
       ),
     ],
     additionalCommandIds: [
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'display-contracts',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
@@ -295,7 +303,7 @@ export const SEAM_REGISTRY = [
         '.github/workflows/weekly-anti-regression.yml',
       ),
     ],
-    additionalCommandIds: ['history-replay'],
+    additionalCommandIds: ['history-replay', 'mathjson-coverage-ratchet'],
     baselineEvidenceIds: ['workspace-canaries', 'ui-tests', 'app-identity'],
   },
   {
@@ -309,6 +317,7 @@ export const SEAM_REGISTRY = [
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'app-state-contracts',
       'display-contract-inversion-ratchet',

@@ -31,6 +31,7 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
@@ -96,6 +97,7 @@ describe('seam impact selector', () => {
       'app-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
@@ -120,6 +122,7 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'app-state-contracts',
@@ -158,6 +161,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'display-contracts',
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
@@ -184,6 +188,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'display-contracts',
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
@@ -203,6 +208,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'display-contracts',
       'result-contracts',
+      'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
       'printer-migration-ratchet',
