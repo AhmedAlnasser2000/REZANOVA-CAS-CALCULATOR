@@ -10,7 +10,9 @@ import {
 } from 'lucide-react';
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
 } from 'react';
@@ -59,6 +61,7 @@ export function NotebookAuthoringKeyboard() {
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<NotebookKeyboardTabId>('core');
   const [anchor, setAnchor] = useState<CSSProperties>({});
+  const keyboardRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!active?.field) {
@@ -71,7 +74,9 @@ export function NotebookAuthoringKeyboard() {
       const toolbarWidth = 540;
       const left = Math.max(16, Math.min(rect.left, viewportWidth - toolbarWidth - 16));
       const below = rect.bottom + 10;
-      const top = below < viewportHeight - 310 ? below : Math.max(72, rect.top - 58);
+      const top = rect.top > 140
+        ? rect.top - 58
+        : Math.min(below, viewportHeight - 72);
       setAnchor({ left, top });
     };
     updateAnchor();
@@ -84,6 +89,32 @@ export function NotebookAuthoringKeyboard() {
       active.field.removeEventListener('selection-change', updateAnchor);
     };
   }, [active]);
+
+  useLayoutEffect(() => {
+    if (!active?.field || !expanded || !keyboardRef.current) {
+      return;
+    }
+    let layoutFrame = 0;
+    const frame = requestAnimationFrame(() => {
+      layoutFrame = requestAnimationFrame(() => {
+        const keyboardBounds = keyboardRef.current?.getBoundingClientRect();
+        const fieldBounds = active.field.getBoundingClientRect();
+        if (!keyboardBounds || fieldBounds.bottom <= keyboardBounds.top - 16) {
+          return;
+        }
+        const scroller = active.field.closest<HTMLElement>('.notebook-rich-scroll-region');
+        if (scroller) {
+          scroller.scrollTop += fieldBounds.bottom - keyboardBounds.top + 28;
+        } else if (typeof active.field.scrollIntoView === 'function') {
+          active.field.scrollIntoView({ block: 'center', inline: 'nearest' });
+        }
+      });
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      cancelAnimationFrame(layoutFrame);
+    };
+  }, [active, expanded]);
 
   const entries = useMemo(
     () => notebookKeyboardEntries(query ? { query } : { tab }),
@@ -116,6 +147,7 @@ export function NotebookAuthoringKeyboard() {
         </div>
       ) : null}
       <section
+        ref={keyboardRef}
         aria-label="Notebook math authoring keyboard"
         className={`notebook-authoring-keyboard${expanded ? ' is-expanded' : ' is-collapsed'}`}
         data-testid="notebook-authoring-keyboard"

@@ -8,19 +8,16 @@ import {
   type NotebookWorkspaceTarget,
 } from '../../../../lib/notebook';
 import { NotebookMathField } from '../math-field';
+import {
+  canOpenNotebookToolTarget,
+  notebookToolTargetLabel,
+} from '../tool-targets';
+import { recordNotebookNodeViewRender } from './node-view-stats';
 
 export type NotebookOpenMathHandler = (
   target: NotebookWorkspaceTarget,
   latex: string,
 ) => void;
-
-function canOpenTarget(target: NotebookWorkspaceTarget) {
-  return target === 'calculate' || target === 'equation';
-}
-
-function targetLabel(target: NotebookWorkspaceTarget) {
-  return target.charAt(0).toUpperCase() + target.slice(1);
-}
 
 export function createNotebookMathNodeView(
   role: 'inline' | 'display',
@@ -34,13 +31,14 @@ export function createNotebookMathNodeView(
     updateAttributes,
   }: ReactNodeViewProps) {
     const id = String(node.attrs.id ?? 'notebook.math');
+    recordNotebookNodeViewRender(id);
     const latex = String(node.attrs.latex ?? '');
     const workspaceTarget = String(
       node.attrs.workspaceTarget ?? 'calculate',
     ) as NotebookWorkspaceTarget;
     const canOpen = role === 'display'
       && Boolean(latex.trim())
-      && canOpenTarget(workspaceTarget)
+      && canOpenNotebookToolTarget(workspaceTarget)
       && isNotebookLatexRunnable(latex);
     const selectMathNode = () => {
       const position = getPos();
@@ -86,7 +84,7 @@ export function createNotebookMathNodeView(
       >
         <header>
           <span><Sigma aria-hidden="true" size={15} /> Display math</span>
-          <small>{targetLabel(workspaceTarget)}</small>
+          <small>{notebookToolTargetLabel(workspaceTarget)}</small>
         </header>
         <div className="notebook-rich-display-math-row">
           <NotebookMathField

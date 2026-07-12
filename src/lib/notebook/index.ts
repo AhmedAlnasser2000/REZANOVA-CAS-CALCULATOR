@@ -3,6 +3,8 @@ export * from './model';
 export * from './types';
 export * from './document/migrate-v1';
 export * from './document/model';
+export * from './document/performance-fixture';
+export * from './document/semantics';
 export * from './document/templates';
 export * from './document/types';
 export * from './document/surface-state';

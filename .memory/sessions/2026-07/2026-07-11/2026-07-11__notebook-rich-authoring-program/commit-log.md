@@ -46,8 +46,17 @@
 
 ## NOTEBOOK-INLINE-MATH-CANVAS1
 
+- commit_hash: `983474b9`
 - commit_message: `NOTEBOOK-INLINE-MATH-CANVAS1`
 - scope: version-2 live surface adoption, internal Tiptap adapter, continuous rich prose canvas, explicit inline/display MathLive nodes, reviewed non-destructive conversion, starter templates, focused tests, Chromium comparison, and durable memory
 - approval: explicitly approved as the fourth of five commits in the Notebook Rich Authoring Program
 - push: not authorized
 - excluded: concurrent result-contract/Equation files and untracked `test-results/`
+
+## NOTEBOOK-AUTHORING-POLISH1
+
+- commit_message: `NOTEBOOK-AUTHORING-POLISH1`
+- scope: academic containers, hierarchical outline, reordering, responsive drawers, compact evidence, scale/contrast hardening, keyboard placement, stress fixture, Chromium conformance, and durable memory
+- approval: explicitly approved as the fifth of five commits in the Notebook Rich Authoring Program
+- push: not authorized
+- excluded: concurrent History/Display contract files, shared package/tooling changes, and untracked `test-results/`

@@ -180,7 +180,7 @@ export function NotebookRichCanvas({
           ) : null}
         </div>
       ) : null}
-      <EditorContent editor={editor} />
+      <EditorContent className="notebook-rich-scroll-region" editor={editor} />
       {suggestion ? (
         <div className="notebook-math-suggestion" data-testid="notebook-math-suggestion">
           <div>

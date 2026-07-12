@@ -1,6 +1,7 @@
 import type { Editor } from '@tiptap/core';
 import {
   Bold,
+  BookOpenCheck,
   Braces,
   Highlighter,
   Italic,
@@ -12,10 +13,14 @@ import {
   Type,
   Undo2,
 } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+
+import { NOTEBOOK_SEMANTIC_DEFINITIONS } from '../../../../lib/notebook';
 
 import {
   insertNotebookDisplayMath,
   insertNotebookInlineMath,
+  insertNotebookSemanticBlock,
 } from './selection';
 
 function ToolButton({
@@ -27,7 +32,7 @@ function ToolButton({
   active?: boolean;
   label: string;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -45,6 +50,8 @@ function ToolButton({
 }
 
 export function NotebookRichToolbar({ editor }: { editor: Editor }) {
+  const [showSemanticMenu, setShowSemanticMenu] = useState(false);
+
   return (
     <div className="notebook-rich-toolbar" aria-label="Notebook formatting toolbar">
       <div className="notebook-rich-toolbar-group">
@@ -92,6 +99,34 @@ export function NotebookRichToolbar({ editor }: { editor: Editor }) {
         <ToolButton label="Insert display math" onClick={() => insertNotebookDisplayMath(editor)}>
           <Sigma size={16} />
         </ToolButton>
+        <div className="notebook-semantic-insert">
+          <ToolButton
+            active={showSemanticMenu}
+            label="Insert academic container"
+            onClick={() => setShowSemanticMenu((current) => !current)}
+          >
+            <BookOpenCheck size={16} />
+          </ToolButton>
+          {showSemanticMenu ? (
+            <div className="notebook-semantic-menu" role="menu" aria-label="Academic containers">
+              {NOTEBOOK_SEMANTIC_DEFINITIONS.map((definition) => (
+                <button
+                  key={definition.kind}
+                  type="button"
+                  role="menuitem"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    insertNotebookSemanticBlock(editor, definition.kind);
+                    setShowSemanticMenu(false);
+                  }}
+                >
+                  <span>{definition.label}</span>
+                  <small>{definition.tone}</small>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="notebook-rich-toolbar-group is-history">
         <ToolButton label="Undo" onClick={() => editor.chain().focus().undo().run()}>

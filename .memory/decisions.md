@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-07-12 - NOTEBOOK-AUTHORING-POLISH1
+
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook academic structure uses the fixed container catalog Theorem, Definition, Lemma, Corollary, Proof, Example, Solution, Exercise, Hint, Answer, Note, and Warning. Labels and numbers are optional and author-owned; only Hint and Answer may collapse.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] The Notebook outline indexes headings and academic containers rather than every paragraph or math node. It supports drag/drop plus Move Up/Down, while app-level Workspace Tabs remain the only document-tab system and a saved Notebook library waits for local persistence.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] The REZANOVA math-authoring keyboard is hosted inside the active Notebook canvas, keeps the active field above its dock, and never changes calculator MathLive layouts. Notebook page content honors UI scale and high contrast while inverse frame sizing prevents 80%/130% scale from shrinking or overflowing the app frame.
+
 ## 2026-07-12 - NOTEBOOK-INLINE-MATH-CANVAS1
 
 - [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] The live Notebook page uses one continuous Tiptap-backed authoring canvas, but the app-owned version-2 Notebook tree remains the durable state and future package contract. Tiptap and ProseMirror runtime objects and native JSON are internal implementation details.

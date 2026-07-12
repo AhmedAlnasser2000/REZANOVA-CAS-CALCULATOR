@@ -12,6 +12,7 @@ import {
   createNotebookMathNodeView,
   type NotebookOpenMathHandler,
 } from './NotebookMathNodeView';
+import { NotebookSemanticNodeView } from './NotebookSemanticNodeView';
 
 const ID_NODE_TYPES = new Set([
   'paragraph',
@@ -169,6 +170,7 @@ const SemanticBlock = Node.create({
   defining: true,
   isolating: true,
   draggable: true,
+  selectable: true,
 
   addAttributes() {
     return {
@@ -199,6 +201,10 @@ const SemanticBlock = Node.create({
       ['header', { contenteditable: 'false' }, heading],
       ['div', { class: 'notebook-semantic-content' }, 0],
     ];
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(NotebookSemanticNodeView);
   },
 });
 

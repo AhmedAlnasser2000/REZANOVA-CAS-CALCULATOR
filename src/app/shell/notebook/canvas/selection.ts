@@ -1,8 +1,10 @@
 import type { Editor } from '@tiptap/core';
+import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { NodeSelection } from '@tiptap/pm/state';
 
 import {
   normalizeNotebookMathSource,
+  type NotebookSemanticKind,
   type NotebookWorkspaceTarget,
 } from '../../../../lib/notebook';
 
@@ -167,4 +169,131 @@ export function updateSelectedNotebookMathTarget(
     return false;
   }
   return editor.chain().focus().updateAttributes(selection.type, { workspaceTarget }).run();
+}
+
+export function insertNotebookSemanticBlock(
+  editor: Editor,
+  variant: NotebookSemanticKind,
+) {
+  return editor.chain().focus().insertContent({
+    type: 'semanticBlock',
+    attrs: {
+      id: null,
+      variant,
+      label: '',
+      number: '',
+      collapsed: false,
+    },
+    content: [{
+      type: 'paragraph',
+      attrs: { id: null },
+    }],
+  }).run();
+}
+
+export function updateSelectedNotebookSemantic(
+  editor: Editor,
+  attributes: Partial<{
+    variant: NotebookSemanticKind;
+    label: string;
+    number: string;
+    collapsed: boolean;
+  }>,
+) {
+  const selection = notebookEditorSelection(editor);
+  if (selection?.type !== 'semanticBlock') {
+    return false;
+  }
+  const node = editor.state.doc.nodeAt(selection.from);
+  if (!node || node.type.name !== 'semanticBlock') {
+    return false;
+  }
+  const transaction = editor.state.tr.setNodeMarkup(selection.from, undefined, {
+    ...node.attrs,
+    ...attributes,
+  });
+  transaction.setSelection(NodeSelection.create(transaction.doc, selection.from));
+  editor.view.dispatch(transaction);
+  return true;
+}
+
+type TopLevelNode = {
+  id: string;
+  index: number;
+  node: ProseMirrorNode;
+  position: number;
+};
+
+function notebookTopLevelNodes(editor: Editor) {
+  const nodes: TopLevelNode[] = [];
+  editor.state.doc.forEach((node, position, index) => {
+    if (typeof node.attrs.id === 'string') {
+      nodes.push({ id: node.attrs.id, index, node, position });
+    }
+  });
+  return nodes;
+}
+
+export function notebookTopLevelMoveState(editor: Editor, id: string) {
+  const nodes = notebookTopLevelNodes(editor);
+  const index = nodes.findIndex((node) => node.id === id);
+  return {
+    canMoveUp: index > 0,
+    canMoveDown: index >= 0 && index < nodes.length - 1,
+  };
+}
+
+export function moveNotebookTopLevelNode(
+  editor: Editor,
+  sourceId: string,
+  targetId: string,
+  placement: 'before' | 'after',
+) {
+  if (sourceId === targetId) {
+    return false;
+  }
+  const nodes = notebookTopLevelNodes(editor);
+  const source = nodes.find((node) => node.id === sourceId);
+  const target = nodes.find((node) => node.id === targetId);
+  if (!source || !target) {
+    return false;
+  }
+
+  const targetPosition = placement === 'before'
+    ? target.position
+    : target.position + target.node.nodeSize;
+  const transaction = editor.state.tr.delete(
+    source.position,
+    source.position + source.node.nodeSize,
+  );
+  const insertionPosition = transaction.mapping.map(targetPosition);
+  transaction.insert(insertionPosition, source.node);
+  transaction.setSelection(NodeSelection.create(transaction.doc, insertionPosition));
+  editor.view.dispatch(transaction.scrollIntoView());
+  return true;
+}
+
+export function moveSelectedNotebookTopLevelNode(
+  editor: Editor,
+  direction: 'up' | 'down',
+) {
+  const selection = notebookEditorSelection(editor);
+  if (!selection?.id) {
+    return false;
+  }
+  const nodes = notebookTopLevelNodes(editor);
+  const sourceIndex = nodes.findIndex((node) => node.id === selection.id);
+  if (sourceIndex < 0) {
+    return false;
+  }
+  const target = nodes[sourceIndex + (direction === 'up' ? -1 : 1)];
+  if (!target) {
+    return false;
+  }
+  return moveNotebookTopLevelNode(
+    editor,
+    selection.id,
+    target.id,
+    direction === 'up' ? 'before' : 'after',
+  );
 }

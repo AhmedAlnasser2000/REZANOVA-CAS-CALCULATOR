@@ -5,11 +5,16 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MathNotationProvider } from '../../components/MathNotationContext';
 import {
+  createNotebookPerformanceFixture,
   createNotebookRichSurfaceState,
   type NotebookSurfaceState,
   type NotebookWorkspaceTarget,
 } from '../../lib/notebook';
 import { NotebookPage } from './NotebookPage';
+import {
+  getNotebookNodeViewRenderStats,
+  resetNotebookNodeViewRenderStats,
+} from './notebook/canvas';
 
 beforeAll(() => {
   if (!Range.prototype.getClientRects) {
@@ -28,12 +33,14 @@ beforeAll(() => {
 });
 
 function NotebookHarness({
+  initialState,
   onOpenMathInTool = vi.fn(),
 }: {
+  initialState?: NotebookSurfaceState;
   onOpenMathInTool?: (target: NotebookWorkspaceTarget, latex: string) => void;
 }) {
   const [surfaceState, setSurfaceState] = useState<NotebookSurfaceState>(() =>
-    createNotebookRichSurfaceState({
+    initialState ?? createNotebookRichSurfaceState({
       idPrefix: 'test-notebook',
       now: () => new Date('2026-07-12T12:00:00.000Z'),
       title: 'Limits Notebook',
@@ -59,8 +66,9 @@ describe('NotebookPage', () => {
     expect(screen.getByLabelText('Notebook outline')).toBeInTheDocument();
     expect(screen.getByTestId('notebook-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('notebook-inspector')).toBeInTheDocument();
-    expect(screen.getByText('Session draft')).toBeInTheDocument();
+    expect(screen.getAllByText('Session draft')).not.toHaveLength(0);
     expect(await screen.findByLabelText('Notebook rich document')).toBeInTheDocument();
+    expect(document.querySelector('.notebook-rich-scroll-region')).not.toBeNull();
     expect(screen.queryByLabelText('Notebook text')).not.toBeInTheDocument();
   });
 
@@ -75,8 +83,87 @@ describe('NotebookPage', () => {
     expect(screen.getByRole('button', { name: /Exercise Set/ })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Theorem Sheet/ }));
-    expect(await screen.findByText('Theorem')).toBeInTheDocument();
+    expect(await screen.findByTestId('notebook-semantic-theorem')).toBeInTheDocument();
     expect(screen.queryByText('My notebooks')).not.toBeInTheDocument();
+  });
+
+  it('inserts and configures every academic container through one catalog', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+
+    await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
+    const menu = screen.getByRole('menu', { name: 'Academic containers' });
+    expect(within(menu).getAllByRole('menuitem')).toHaveLength(12);
+    await user.click(within(menu).getByRole('menuitem', { name: /Theorem/ }));
+
+    const theorem = await screen.findByTestId('notebook-semantic-theorem');
+    await user.click(within(theorem).getByText('Theorem'));
+    const inspector = screen.getByTestId('notebook-inspector');
+    const kindSelect = await within(inspector).findByLabelText('Academic container type');
+    fireEvent.change(kindSelect, {
+      target: { value: 'hint' },
+    });
+    fireEvent.change(within(inspector).getByLabelText('Container number'), {
+      target: { value: '2.3' },
+    });
+    fireEvent.change(within(inspector).getByLabelText('Container label'), {
+      target: { value: 'Try substitution' },
+    });
+    await user.click(within(inspector).getByRole('switch', { name: 'Start container collapsed' }));
+
+    const hint = await screen.findByTestId('notebook-semantic-hint');
+    expect(hint).toHaveTextContent('Hint 2.3 Try substitution');
+    expect(within(inspector).getByRole('switch')).toHaveAttribute('aria-checked', 'true');
+    expect(within(hint).getByRole('button', { name: /Expand Hint 2.3/ })).toBeInTheDocument();
+  });
+
+  it('synchronizes the outline and reorders top-level containers accessibly', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+    await user.click(await screen.findByRole('button', { name: 'Start from template' }));
+    await user.click(screen.getByRole('button', { name: /Worked Example/ }));
+
+    let entries = await screen.findAllByTestId('notebook-outline-entry');
+    expect(entries.map((entry) => entry.textContent)).toEqual([
+      expect.stringContaining('Quadratic Equations'),
+      expect.stringContaining('Example'),
+      expect.stringContaining('Solution'),
+      expect.stringContaining('Note'),
+    ]);
+    await user.click(entries[2]!);
+    await user.click(within(screen.getByTestId('notebook-inspector'))
+      .getByRole('button', { name: 'Move Up' }));
+
+    entries = screen.getAllByTestId('notebook-outline-entry');
+    expect(entries[0]).toHaveTextContent('Quadratic Equations');
+    expect(entries[1]).toHaveTextContent('Solution');
+    expect(entries[2]).toHaveTextContent('Example');
+
+    const transfer = new Map<string, string>();
+    const dataTransfer = {
+      dropEffect: 'none',
+      effectAllowed: 'all',
+      getData: (type: string) => transfer.get(type) ?? '',
+      setData: (type: string, value: string) => transfer.set(type, value),
+    };
+    fireEvent.dragStart(entries[3]!, { dataTransfer });
+    fireEvent.dragOver(entries[0]!, { dataTransfer, clientY: -1 });
+    fireEvent.drop(entries[0]!, { dataTransfer, clientY: -1 });
+    expect(screen.getAllByTestId('notebook-outline-entry')[0]).toHaveTextContent('Note');
+  });
+
+  it('exposes outline and inspector as mutually exclusive narrow drawers', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+
+    await user.click(screen.getByRole('button', { name: 'Toggle Notebook outline' }));
+    expect(screen.getByLabelText('Notebook outline')).toHaveClass('is-drawer-open');
+    await user.click(screen.getByRole('button', { name: 'Close Notebook drawer' }));
+    expect(screen.getByLabelText('Notebook outline')).not.toHaveClass('is-drawer-open');
+
+    await user.click(screen.getByRole('button', { name: 'Toggle block inspector' }));
+    expect(screen.getByTestId('notebook-inspector')).toHaveClass('is-drawer-open');
+    expect(screen.getByLabelText('Notebook outline')).not.toHaveClass('is-drawer-open');
   });
 
   it('suggests likely math but converts it only after explicit acceptance', async () => {
@@ -128,6 +215,10 @@ describe('NotebookPage', () => {
     field.setValue('x+1=2');
     fireEvent.input(field);
 
+    expect(screen.getByTestId('notebook-canvas')).toContainElement(
+      screen.getByTestId('notebook-authoring-keyboard'),
+    );
+
     const inspector = screen.getByTestId('notebook-inspector');
     fireEvent.change(within(inspector).getByLabelText('Workspace'), {
       target: { value: 'equation' },
@@ -171,5 +262,21 @@ describe('NotebookPage', () => {
 
     const display = screen.getByTestId('notebook-display-math-node');
     expect(within(display).getByRole('button', { name: 'Open in Tool' })).toBeDisabled();
+  });
+
+  it('keeps math node rerenders bounded for the 100-block stress document', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness initialState={{
+      kind: 'notebook-surface-state',
+      document: createNotebookPerformanceFixture(),
+    }} />);
+
+    const fields = await screen.findAllByTestId('notebook-inline-math-field');
+    expect(fields).toHaveLength(150);
+    resetNotebookNodeViewRenderStats();
+    await user.click(fields[0]!);
+    await waitFor(() => {
+      expect(getNotebookNodeViewRenderStats().totalRenders).toBeLessThanOrEqual(4);
+    });
   });
 });

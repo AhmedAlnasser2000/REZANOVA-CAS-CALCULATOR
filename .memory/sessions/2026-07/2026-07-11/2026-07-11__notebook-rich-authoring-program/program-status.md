@@ -23,8 +23,9 @@ Replace the separate Notebook textarea and preview with a continuous rich prose-
 - `NOTEBOOK-RICH-DOCUMENT-MODEL1`: passed, backend, committed as `f16e149b`.
 - `NOTEBOOK-MATH-FIELD-ACTIVATION1`: passed, ui, committed as `f35d4164`.
 - `NOTEBOOK-AUTHORING-KEYBOARD1`: passed, ui, committed as `91e4fa42`.
-- `NOTEBOOK-INLINE-MATH-CANVAS1`: passed, ui, entering its approved commit checkpoint.
-- Next: `NOTEBOOK-AUTHORING-POLISH1`.
+- `NOTEBOOK-INLINE-MATH-CANVAS1`: passed, ui, committed as `983474b9`.
+- `NOTEBOOK-AUTHORING-POLISH1`: passed, ui, entering its approved commit checkpoint.
+- Program status: implementation complete; local persistence, packages, and external protocol work remain separate future milestones.
 
 ## Shared-Tree Boundary
 

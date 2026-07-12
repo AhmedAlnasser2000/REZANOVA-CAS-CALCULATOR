@@ -8,12 +8,17 @@
   --notebook-border-strong: rgba(184, 212, 156, 0.42);
   --notebook-accent: #b8d49c;
   --notebook-accent-soft: rgba(184, 212, 156, 0.17);
+  width: calc(min(1668px, calc(100vw - 36px)) / var(--page-ui-scale, 1));
+  height: calc(min(900px, calc(100vh - 154px)) / var(--page-ui-scale, 1));
+  min-height: calc(min(900px, calc(100vh - 154px)) / var(--page-ui-scale, 1));
 }
 
 .notebook-page-workbench {
+  position: relative;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(230px, 0.72fr) minmax(420px, 2.1fr) minmax(250px, 0.86fr);
+  grid-template-areas: 'outline canvas inspector';
   gap: 16px;
   padding: 16px;
 }
@@ -33,15 +38,40 @@
 
 .notebook-outline,
 .notebook-inspector {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
   gap: 14px;
   padding: 16px;
+}
+
+.notebook-outline {
+  grid-area: outline;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+}
+
+.notebook-inspector {
+  grid-area: inspector;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.notebook-canvas {
+  grid-area: canvas;
+  position: relative;
 }
 
 .notebook-title {
   display: grid;
   gap: 7px;
+}
+
+.notebook-title-row,
+.notebook-canvas-heading-row,
+.notebook-inspector-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .notebook-title span,
@@ -61,7 +91,7 @@
 .notebook-canvas-header h2 {
   margin: 0;
   color: var(--page-ink);
-  font-size: clamp(1.35rem, 1.1rem + 0.7vw, 2rem);
+  font-size: 1.68rem;
   line-height: 1.05;
 }
 
@@ -95,8 +125,10 @@
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 8px;
+  gap: 5px;
+  padding-right: 4px;
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .notebook-outline-list button,
@@ -116,18 +148,76 @@
 
 .notebook-outline-list button {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 9px;
   align-items: center;
-  padding: 12px;
+  min-height: 44px;
+  padding: 8px 10px;
   text-align: left;
 }
 
-.notebook-outline-list button span {
+.notebook-outline-list button.is-heading {
+  margin-top: 5px;
+  border-color: rgba(184, 212, 156, 0.24);
+  background: rgba(184, 212, 156, 0.075);
+}
+
+.notebook-outline-list button.is-semantic {
+  position: relative;
+  margin-left: 13px;
+  border-color: transparent;
+  border-left-color: rgba(214, 225, 205, 0.15);
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.notebook-outline-list button.is-semantic::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  left: -9px;
+  width: 1px;
+  background: rgba(184, 212, 156, 0.2);
+}
+
+.notebook-outline-list button[draggable='true'] {
+  cursor: grab;
+}
+
+.notebook-outline-list button[draggable='true']:active {
+  cursor: grabbing;
+}
+
+.notebook-outline-empty {
+  border: 1px dashed var(--notebook-border);
+  border-radius: 7px;
+  padding: 14px;
+  color: var(--page-subtle);
+  line-height: 1.45;
+}
+
+.notebook-outline-entry-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.notebook-outline-entry-copy small {
+  color: var(--page-accent);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.63rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.notebook-outline-entry-copy strong {
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--page-ink);
+  line-height: 1.18;
 }
 
 .notebook-outline-list button:hover,
@@ -208,9 +298,48 @@
   background: transparent;
   color: var(--page-ink);
   font: inherit;
-  font-size: clamp(1.35rem, 1.1rem + 0.7vw, 2rem);
+  font-size: 1.72rem;
   font-weight: 900;
   line-height: 1.05;
+}
+
+.notebook-canvas-heading-row > span {
+  color: var(--page-accent);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.notebook-drawer-toggles {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.notebook-drawer-toggles button,
+.notebook-drawer-close {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 6px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--page-muted);
+}
+
+.notebook-drawer-toggles button[aria-pressed='true'],
+.notebook-drawer-toggles button:hover,
+.notebook-drawer-close:hover {
+  border-color: var(--notebook-border-strong);
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
+}
+
+.notebook-drawer-close {
+  display: none;
 }
 
 .notebook-canvas-header > input:focus-visible {
@@ -333,7 +462,13 @@
 
 .app-page--notebook .notebook-math-field {
   --caret-color: #d7dfab;
+  --selection-color: #f7ffed;
   --selection-background-color: rgba(184, 212, 156, 0.25);
+  color: var(--page-ink);
+}
+
+.notebook-canvas:has(.notebook-authoring-keyboard.is-expanded) .notebook-rich-editor {
+  padding-bottom: 340px;
 }
 
 .notebook-math-candidates,
@@ -407,14 +542,23 @@
   border-top: 1px solid var(--notebook-border);
 }
 
-.notebook-inspector {
-  grid-template-rows: auto auto auto minmax(0, 1fr);
-}
-
-.notebook-inspector-heading,
 .notebook-inspector-section {
   display: grid;
   gap: 10px;
+}
+
+.notebook-inspector-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.notebook-inspector-heading strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--page-ink);
+  font-size: 1rem;
 }
 
 .notebook-inspector-section p {
@@ -477,50 +621,188 @@
   gap: 8px;
 }
 
+.notebook-inspector-actions button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
 .notebook-inspector-section select {
   width: 100%;
   border: 1px solid var(--notebook-border);
   border-radius: 8px;
   padding: 10px;
-  background: #f3f6ef;
-  color: #10201f;
+  background: #0b1718;
+  color: #f2f6ec;
+  color-scheme: dark;
   font-weight: 800;
 }
 
 .notebook-inspector-section select option {
-  background: #f3f6ef;
-  color: #10201f;
+  background: #0b1718;
+  color: #f2f6ec;
 }
 
-.notebook-forbidden-fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+.notebook-semantic-controls {
+  gap: 12px;
 }
 
-.notebook-forbidden-fields code {
-  border: 1px solid rgba(255, 132, 132, 0.25);
-  border-radius: 999px;
-  padding: 5px 8px;
-  background: rgba(255, 132, 132, 0.07);
-  color: #f1c2bd;
-  font-family: 'IBM Plex Mono', monospace;
+.notebook-semantic-fields {
+  display: grid;
+  grid-template-columns: minmax(84px, 0.72fr) minmax(0, 1.28fr);
+  gap: 8px;
+}
+
+.notebook-semantic-fields label {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.notebook-semantic-fields label > span,
+.notebook-semantic-collapse-setting > span {
+  color: var(--page-subtle);
   font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.notebook-semantic-fields input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 9px;
+  background: #0b1718;
+  color: var(--page-ink);
+  font: inherit;
+}
+
+.notebook-semantic-fields input:focus,
+.notebook-inspector-section select:focus {
+  border-color: var(--notebook-border-strong);
+  outline: 2px solid rgba(184, 212, 156, 0.14);
+  outline-offset: 1px;
+}
+
+.notebook-semantic-collapse-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notebook-semantic-collapse-setting button[role='switch'] {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 1px solid rgba(214, 225, 205, 0.22);
+  border-radius: 999px;
+  padding: 2px;
+  background: #273334;
+}
+
+.notebook-semantic-collapse-setting button[role='switch'] span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #d5ddd1;
+  transition: transform 140ms ease;
+}
+
+.notebook-semantic-collapse-setting button[role='switch'].is-on {
+  border-color: #8fad72;
+  background: #527049;
+}
+
+.notebook-semantic-collapse-setting button[role='switch'].is-on span {
+  transform: translateX(18px);
+  background: #f5ffe9;
+}
+
+.notebook-session-status {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-top: 1px solid var(--notebook-border);
+  padding-top: 14px;
+  color: var(--page-accent);
+}
+
+.notebook-session-status > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.notebook-session-status strong {
+  color: var(--page-ink);
+}
+
+.notebook-session-status span {
+  color: var(--page-subtle);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.notebook-drawer-backdrop {
+  display: none;
 }
 
 @media (max-width: 1120px) {
   .notebook-page-workbench {
+    grid-template-areas: 'canvas';
     grid-template-columns: 1fr;
-    overflow: auto;
+    overflow: hidden;
   }
 
   .notebook-outline,
   .notebook-inspector {
-    min-height: 260px;
+    position: absolute;
+    z-index: 42;
+    top: 16px;
+    bottom: 16px;
+    width: min(330px, calc(100% - 48px));
+    min-height: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 170ms ease, opacity 170ms ease;
+  }
+
+  .notebook-outline {
+    left: 16px;
+    transform: translateX(calc(-100% - 24px));
+  }
+
+  .notebook-inspector {
+    right: 16px;
+    transform: translateX(calc(100% + 24px));
+  }
+
+  .notebook-outline.is-drawer-open,
+  .notebook-inspector.is-drawer-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0);
   }
 
   .notebook-canvas {
-    min-height: 620px;
+    min-height: 0;
+  }
+
+  .notebook-drawer-toggles,
+  .notebook-drawer-close {
+    display: flex;
+  }
+
+  .notebook-drawer-backdrop {
+    position: absolute;
+    z-index: 40;
+    inset: 0;
+    display: block;
+    border: 0;
+    padding: 0;
+    background: rgba(1, 7, 8, 0.64);
   }
 }
 
@@ -530,12 +812,31 @@
     gap: 10px;
   }
 
+  .notebook-outline,
+  .notebook-inspector {
+    top: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+  }
+
+  .notebook-outline {
+    left: 10px;
+  }
+
+  .notebook-inspector {
+    right: 10px;
+  }
+
   .notebook-math-candidate,
   .notebook-math-editor-row {
     grid-template-columns: 1fr;
   }
 
   .notebook-inspector-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .notebook-semantic-fields {
     grid-template-columns: 1fr;
   }
 }
