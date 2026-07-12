@@ -1158,6 +1158,21 @@ mod tests {
             "equationSeed": {"screen": "symbolic", "equationLatex": "x+y=3"},
             "runtimeElapsedMs": 17,
             "replaySnapshot": {"version": 1, "futureReplayField": {"kept": true}},
+            "resultDocument": {
+                "version": 1,
+                "outcomeKind": "success",
+                "title": "Solved system",
+                "primaryMath": {"canonicalLatex": "(x,y)=(1,2)"},
+                "systemReadback": {
+                    "variables": [{"canonicalLatex": "x"}, {"canonicalLatex": "y"}],
+                    "rows": [{"values": [
+                        {"canonicalLatex": "1"},
+                        {"canonicalLatex": "2"}
+                    ]}],
+                    "source": "linear-system"
+                },
+                "warnings": []
+            },
             "futureHistoryExtension": {"version": 2, "payload": [1, 2, 3]},
             "timestamp": "2026-07-11T00:00:00.000Z"
         });

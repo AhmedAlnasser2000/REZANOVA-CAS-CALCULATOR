@@ -160,6 +160,30 @@ describe('HistoryPage', () => {
     expect(handlers.onDeleteSelected).toHaveBeenCalledWith(['2']);
   });
 
+  it('reads structured results before intentionally stale legacy projections', () => {
+    const structuredEntry: HistoryEntry = {
+      ...entry('1'),
+      resultLatex: 'legacy-result-must-not-win',
+      resultDocument: {
+        version: 1,
+        outcomeKind: 'success',
+        title: 'Original Equation Card',
+        primaryMath: { canonicalLatex: 'x=4' },
+        supplements: [{ canonicalLatex: 'x\\in\\mathbb{R}' }],
+        warnings: [],
+      },
+    };
+    const handlers = renderHistoryPage({ history: [structuredEntry] });
+
+    expect(screen.getByTestId('history-page-row')).toHaveTextContent('x=4');
+    expect(screen.getByTestId('history-page-inspector')).toHaveTextContent('x=4');
+    expect(screen.getByTestId('history-page-inspector')).toHaveTextContent(/x\u2208R/);
+    expect(screen.queryByText('legacy-result-must-not-win')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: historyText.actions.copyResult }));
+    expect(handlers.onCopyResult).toHaveBeenCalledWith('x=4');
+  });
+
   it('supports Shift range selection and Ctrl toggled multi-selection', () => {
     const handlers = renderHistoryPage({
       history: [entry('1'), entry('2'), entry('3')],

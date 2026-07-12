@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayDetailSection } from '../../types/calculator';
-import { buildHistoryDisplayEntry } from './historyDisplayEntry';
+import type { DisplayDetailSection, HistoryEntry, TableResponse } from '../../types/calculator';
+import { buildHistoryDisplayEntry, readHistoryResult } from './historyDisplayEntry';
 
 describe('buildHistoryDisplayEntry', () => {
   it('persists display detail sections so History replay can restore result cards', () => {
@@ -23,6 +23,8 @@ describe('buildHistoryDisplayEntry', () => {
           mathJson: ['Equal', 'c', ['List', 1, 2]],
         },
         detailSections,
+        actions: [{ kind: 'send', target: 'equation', latex: 'c=1' }],
+        runtimeAdvisories: { stopReason: { kind: 'range-guard', source: 'stage' } },
         warnings: [],
       },
       inputLatex: '\\operatorname{coords}(A,b)',
@@ -48,8 +50,27 @@ describe('buildHistoryDisplayEntry', () => {
       inputLatex: '\\operatorname{coords}(A,b)',
       resultLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
       detailSections,
+      resultDocument: {
+        version: 1,
+        outcomeKind: 'success',
+        title: '\\operatorname{coords}(A,b)',
+        primaryMath: {
+          canonicalLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+          mathJson: ['Equal', 'c', ['List', 1, 2]],
+        },
+        warnings: [],
+      },
     });
     expect(entry).not.toHaveProperty('canonicalMath');
+    expect(JSON.stringify(entry.resultDocument)).not.toMatch(/actions|runtimeAdvisories/u);
+    expect(readHistoryResult(entry)).toMatchObject({
+      source: 'structured',
+      outcome: {
+        kind: 'success',
+        title: '\\operatorname{coords}(A,b)',
+        exactLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+      },
+    });
   });
 
   it('persists Equation route seeds for guided screen history replay', () => {
@@ -100,6 +121,89 @@ describe('buildHistoryDisplayEntry', () => {
           { valuesLatex: ['3', '1'] },
         ],
       },
+    });
+  });
+
+  it('stores exact Table rows and never leaks transient commit context', () => {
+    const tableResponse: TableResponse = {
+      headers: ['x', '\\sqrt{x}'],
+      rows: [
+        { x: '-1', primary: 'undefined' },
+        { x: '0', primary: '0' },
+      ],
+      warnings: ['Some sampled rows were outside the real domain.'],
+    };
+    const entry = buildHistoryDisplayEntry({
+      outcome: {
+        kind: 'success',
+        title: 'Table',
+        exactLatex: '\\operatorname{Table}(\\sqrt{x})',
+        warnings: [...tableResponse.warnings],
+      },
+      inputLatex: '\\sqrt{x}',
+      mode: 'table',
+      context: {
+        historyTicketId: 'ticket.private',
+        historyLaunchOrder: 7,
+        suppressDisplayCommit: true,
+        tableResponse,
+      },
+      currentCalculateHistoryContext: () => ({}),
+      currentCalculusHistoryContext: () => ({}),
+      geometryScreen: 'triangleArea',
+      trigScreen: 'functions',
+      statisticsScreen: 'descriptive',
+    });
+
+    expect(readHistoryResult(entry).tableResponse).toEqual(tableResponse);
+    expect(entry).not.toHaveProperty('historyTicketId');
+    expect(entry).not.toHaveProperty('suppressDisplayCommit');
+    expect(entry).not.toHaveProperty('tableResponse');
+  });
+
+  it('keeps legacy fields and records a durable reason when native structure is oversized', () => {
+    const entry = buildHistoryDisplayEntry({
+      outcome: {
+        kind: 'success',
+        title: 'Large result',
+        exactLatex: 'x=1',
+        canonicalResult: {
+          version: 1,
+          outcomeKind: 'success',
+          title: 'Large result',
+          primaryMath: { canonicalLatex: 'x=1' },
+          warnings: ['x'.repeat(641_000)],
+        },
+        warnings: [],
+      },
+      inputLatex: 'x=1',
+      mode: 'equation',
+      context: {},
+      currentCalculateHistoryContext: () => ({}),
+      currentCalculusHistoryContext: () => ({}),
+      geometryScreen: 'triangleArea',
+      trigScreen: 'functions',
+      statisticsScreen: 'descriptive',
+    });
+
+    expect(entry.resultLatex).toBe('x=1');
+    expect(entry.resultDocument).toBeUndefined();
+    expect(entry.resultDocumentOmissionReason).toBe('over-size');
+  });
+
+  it('loads malformed structured extensions through the legacy read path', () => {
+    const entry = {
+      id: 'legacy-with-bad-extension',
+      mode: 'calculate',
+      inputLatex: '2+2',
+      resultLatex: '4',
+      resultDocument: { version: 2, title: 'future' },
+      timestamp: '2026-07-12T00:00:00.000Z',
+    } as unknown as HistoryEntry;
+
+    expect(readHistoryResult(entry)).toMatchObject({
+      source: 'legacy',
+      outcome: { title: 'History', exactLatex: '4' },
     });
   });
 });

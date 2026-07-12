@@ -100,19 +100,19 @@ function rowResultKind(row: HistoryLedgerRow) {
     return row.ticket.status === 'stopping' ? 'Stopping' : 'Running';
   }
 
-  if (row.entry.resultLatex) {
+  if (row.result.primaryLatex) {
     return 'Exact';
   }
 
-  if (row.entry.approxText) {
+  if (row.result.approxText) {
     return 'Numeric';
   }
 
   return 'Stored';
 }
 
-function entryCopyText(entry: HistoryEntry) {
-  return entry.resultLatex || entry.approxText || entry.inputLatex;
+function entryCopyText(row: EntryHistoryLedgerRow) {
+  return row.result.primaryLatex || row.result.approxText || row.entry.inputLatex;
 }
 
 function modeTone(mode: ModeId) {
@@ -287,7 +287,7 @@ const HistoryEntryLedgerRow = memo(function HistoryEntryLedgerRow({
       <div className="history-page-row-result">
         <HistoryRowPreview
           displayPrefs={symbolicDisplayPrefs}
-          latex={row.entry.resultLatex}
+          latex={row.result.primaryLatex}
           notationMode={notationMode}
           text={row.resultPreviewText ?? staleAnswer}
         />
@@ -388,6 +388,8 @@ function HistoryDetailInspector({
   }
 
   const entry = row.entry;
+  const result = row.result;
+  const outcome = result.outcome;
   return (
     <aside className="history-page-inspector" data-testid="history-page-inspector">
       <header className="history-page-inspector-header">
@@ -406,25 +408,25 @@ function HistoryDetailInspector({
           <MathStatic latex={entry.inputLatex} />
         </div>
       </section>
-      {entry.resultLatex ? (
+      {result.primaryLatex ? (
         <section>
           <span>{historyText.labels.result}</span>
           <div className="history-page-inspector-math">
-            <MathStatic latex={entry.resultLatex} />
+            <MathStatic latex={result.primaryLatex} />
           </div>
         </section>
       ) : null}
-      {entry.approxText ? (
+      {result.approxText ? (
         <section>
           <span>{historyText.labels.approx}</span>
-          <p>{entry.approxText}</p>
+          <p>{result.approxText}</p>
         </section>
       ) : null}
-      {entry.exactSupplementLatex?.length ? (
+      {outcome.exactSupplementLatex?.length ? (
         <section>
           <span>Facts</span>
           <ul className="history-page-facts">
-            {entry.exactSupplementLatex.map((latex, index) => (
+            {outcome.exactSupplementLatex.map((latex, index) => (
               <li key={`${entry.id}.supplement.${index}`}>
                 <MathStatic latex={latex} />
               </li>
@@ -441,7 +443,7 @@ function HistoryDetailInspector({
           <InspectorButton icon={Plus} onClick={() => onReplayInNewTab(entry)}>
             {historyText.actions.openInNewTab}
           </InspectorButton>
-          <InspectorButton icon={Copy} onClick={() => onCopyResult(entryCopyText(entry))}>
+          <InspectorButton icon={Copy} onClick={() => onCopyResult(entryCopyText(row))}>
             {historyText.actions.copyResult}
           </InspectorButton>
           <InspectorButton icon={Trash2} tone="danger" onClick={() => onDelete(entry.id)}>

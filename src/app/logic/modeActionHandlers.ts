@@ -540,7 +540,9 @@ function runTableAction() {
   });
 
   setTableResponse(result.response);
-  commitOutcome(result.outcome, tablePrimaryLatex, 'table');
+  commitOutcome(result.outcome, tablePrimaryLatex, 'table', {
+    tableResponse: result.response,
+  });
   clearReplayVariableSubstitutions?.();
 }
 

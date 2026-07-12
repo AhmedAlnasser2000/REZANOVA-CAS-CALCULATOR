@@ -5,6 +5,7 @@ import {
   resolveLanguageCode,
 } from '../language';
 import { parseDerivativeVariable } from '../calculus/derivative-target';
+import { validateCanonicalResultDocument } from '../result-contract';
 
 export const modeIdSchema = z.enum([
   'calculate',
@@ -806,8 +807,18 @@ export const historyEntrySchema = z.object({
     scientificNotationStyle: scientificNotationStyleSchema,
     detailedFactsEnabled: z.boolean(),
   }).optional(),
+  resultDocument: z.unknown().optional(),
+  resultDocumentOmissionReason: z.enum(['unavailable', 'invalid', 'over-size']).optional(),
   timestamp: z.string(),
 }).passthrough();
+
+export function hasValidHistoryResultDocument(entry: unknown) {
+  if (entry === null || typeof entry !== 'object') return false;
+  const document = (entry as Record<string, unknown>).resultDocument;
+  if (document === undefined) return true;
+  const validation = validateCanonicalResultDocument(document);
+  return validation.ok && validation.validated.value.outcomeKind === 'success';
+}
 
 export const appBootstrapSchema = z.object({
   currentMode: modeIdSchema,

@@ -88,4 +88,47 @@ describe('useHistoryDisplayRuntime replay snapshot', () => {
       mathNotationDisplay: 'latex',
     });
   });
+
+  it('replays a structured result before its stale legacy projection', () => {
+    const hook = renderSnapshotRuntime(DEFAULT_SETTINGS);
+
+    act(() => {
+      hook.result.current.replayHistoryEntry({
+        id: 'history.structured-equation',
+        mode: 'equation',
+        inputLatex: 'x^2=4',
+        resultLatex: 'legacy-result-must-not-win',
+        resultDocument: {
+          version: 1,
+          outcomeKind: 'success',
+          title: 'Equation Solution',
+          primaryMath: { canonicalLatex: 'x=\\pm 2' },
+          details: [{
+            title: 'Verification',
+            lines: [[
+              { kind: 'text', text: 'Substitute ' },
+              { kind: 'math', math: { canonicalLatex: 'x=2' } },
+            ]],
+          }],
+          warnings: ['Both roots were verified.'],
+        },
+        timestamp: '2026-07-12T00:00:00Z',
+      });
+    });
+
+    expect(hook.result.current.displayOutcome).toMatchObject({
+      kind: 'success',
+      title: 'Equation Solution',
+      exactLatex: 'x=\\pm 2',
+      detailSections: [{
+        title: 'Verification',
+        lines: ['Substitute x=2'],
+        lineParts: [[
+          { kind: 'text', text: 'Substitute ' },
+          { kind: 'math', latex: 'x=2' },
+        ]],
+      }],
+      warnings: ['Both roots were verified.'],
+    });
+  });
 });

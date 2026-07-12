@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { DEFAULT_SETTINGS, type HistoryEntry } from '../src/types/calculator';
-import { setMathFieldLatex } from './helpers';
+import {
+  closeSidePanelIfOpen,
+  openSettingsPanel,
+  setMathFieldLatex,
+} from './helpers';
 
 const APP_STATE_KEY = 'rezanova-classwiz-calculator:app-state:v1';
 
@@ -81,6 +85,27 @@ const RICH_HISTORY_ENTRY: HistoryEntry & {
     numericNotationMode: 'scientific',
     scientificNotationStyle: 'e',
     detailedFactsEnabled: true,
+  },
+  resultDocument: {
+    version: 1,
+    outcomeKind: 'success',
+    title: 'Solved system',
+    primaryMath: { canonicalLatex: '(x,y)=(1,2)' },
+    systemReadback: {
+      variables: [{ canonicalLatex: 'x' }, { canonicalLatex: 'y' }],
+      rows: [{
+        values: [{ canonicalLatex: '1' }, { canonicalLatex: '2' }],
+        approxText: '(1.0, 2.0)',
+      }],
+      source: 'linear-system',
+    },
+    details: [{
+      title: 'Verification',
+      lines: [[{ kind: 'math', math: { canonicalLatex: 'x+y=3' } }]],
+    }],
+    supplements: [{ canonicalLatex: 'x=1' }, { canonicalLatex: 'y=2' }],
+    approximations: { primary: '(1.0, 2.0)' },
+    warnings: [],
   },
   timestamp: '2026-07-11T00:00:00.000Z',
   futureHistoryExtension: { version: 2, payload: ['kept', 'verbatim'] },
@@ -166,4 +191,87 @@ test('keeps a new row in session and warns when browser persistence fails', asyn
 
   await page.getByTestId('history-toggle').click();
   await expect(page.getByTestId('history-entry').first()).toContainText('2+2');
+});
+
+test('renders stored canonical History math with current root and power preferences', async ({ page }) => {
+  const entry: HistoryEntry = {
+    id: 'history.current-presentation.1',
+    mode: 'calculate',
+    inputLatex: String.raw`(\sqrt{x})^{1/3}`,
+    resultLatex: 'legacy-result-must-not-win',
+    resultDocument: {
+      version: 1,
+      outcomeKind: 'success',
+      title: 'Simplify',
+      primaryMath: { canonicalLatex: String.raw`(\sqrt{x})^{1/3}` },
+      warnings: [],
+    },
+    timestamp: '2026-07-12T00:00:00.000Z',
+  };
+  await page.addInitScript(({ key, historyEntry, settings }) => {
+    window.localStorage.setItem(key, JSON.stringify({
+      version: 1,
+      currentMode: 'calculate',
+      settings,
+      history: [historyEntry],
+      variableMemory: [],
+    }));
+  }, { key: APP_STATE_KEY, historyEntry: entry, settings: DEFAULT_SETTINGS });
+
+  await page.goto('/');
+  await expect(page.getByTestId('main-editor')).toBeVisible();
+  await openSettingsPanel(page);
+  const powersButton = page.getByTestId('settings-symbolic-mode-powers');
+  await powersButton.click();
+  await expect(powersButton).toHaveClass(/is-active/);
+  await expect.poll(async () => page.evaluate((key) => {
+    const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as {
+      settings?: { symbolicDisplayMode?: unknown };
+    };
+    return state.settings?.symbolicDisplayMode;
+  }, APP_STATE_KEY)).toBe('powers');
+  await closeSidePanelIfOpen(page);
+  await page.getByTestId('history-toggle').click();
+
+  const resultMath = page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]');
+  await expect(resultMath).toHaveAttribute('data-raw-latex', String.raw`(\sqrt{x})^{1/3}`);
+  await expect(resultMath).toHaveAttribute('aria-label', String.raw`x^{\frac{1}{6}}`);
+
+  await closeSidePanelIfOpen(page);
+  await openSettingsPanel(page);
+  const rootsButton = page.getByTestId('settings-symbolic-mode-roots');
+  await rootsButton.click();
+  await expect(rootsButton).toHaveClass(/is-active/);
+  await closeSidePanelIfOpen(page);
+  await page.getByTestId('history-toggle').click();
+  await expect(page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]'))
+    .toHaveAttribute('aria-label', String.raw`\sqrt[6]{x}`);
+});
+
+test('keeps legacy-only History rows replayable without inventing structured content', async ({ page }) => {
+  const legacyEntry: HistoryEntry = {
+    id: 'history.legacy-only.1',
+    mode: 'calculate',
+    inputLatex: '2+3',
+    resultLatex: '5',
+    timestamp: '2026-07-12T00:00:00.000Z',
+  };
+  await page.addInitScript(({ key, entry, settings }) => {
+    window.localStorage.setItem(key, JSON.stringify({
+      version: 1,
+      currentMode: 'calculate',
+      settings,
+      history: [entry],
+      variableMemory: [],
+    }));
+  }, { key: APP_STATE_KEY, entry: legacyEntry, settings: DEFAULT_SETTINGS });
+
+  await page.goto('/');
+  await expect(page.getByTestId('main-editor')).toBeVisible();
+  await page.getByTestId('history-toggle').click();
+  await page.getByTestId('history-entry').click();
+
+  await expect(page.getByTestId('display-outcome-title')).toHaveText('History');
+  await expect(page.getByTestId('display-outcome-exact').locator('[data-raw-latex]'))
+    .toHaveAttribute('data-raw-latex', '5');
 });

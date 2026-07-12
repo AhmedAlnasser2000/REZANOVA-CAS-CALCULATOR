@@ -66,3 +66,30 @@
 ### UI Boundary
 
 - No Playwright run is required for this backend-only carrier milestone because no live producer, renderer, History row, or visible string consumes the new document. The 143 native executions prove exact projection parity; app-visible slices later in the roadmap retain mandatory Playwright review.
+
+## HISTORY-STRUCTURED-RESULT2 Gate
+
+- Kind: `backend` persistence/read-model contract with mandatory `ui` History and mathematical-output evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass for the intended History commit slice.
+
+### Contract Evidence
+
+- Result-contract and app-state focused suites: 76 and 58 tests passed; all 43 golden executions and 100 replay fixtures project and validate.
+- Focused History/Table UI: 6 files and 55 tests passed. Full app runtime: 59 logic plus 141 runtime UI tests passed. Full UI: 64 files and 469 tests passed.
+- Display contracts: 153 unit plus 25 UI tests passed. Golden, print hygiene, History replay, clipboard, detail, Surface, OOE, compartment, app identity, runtime probes, and workspace runtime contracts passed.
+- TypeScript and production build passed. The assistant-owned ESLint slice passed. File-size ratchet passed with the large History runtime test held at 898 lines and `runtime-types.ts` lowered to 1,340 lines.
+- Native persistence: `cargo check` and all 50 Rust library tests passed, including extension-rich structured History and Calculator Memory restart.
+
+### Browser Evidence
+
+- `e2e/history-replay-ratchet.spec.ts`: 9/9 workspaces passed. Every persisted row has `resultDocument.version = 1`, a separate replay snapshot, no serialized actions, visible title parity, and exact Table rendered-text parity.
+- `e2e/history-persistence-parity.spec.ts`: 4/4 passed for extension-rich browser reload and Calculator Memory, non-blocking save failure, current roots/powers presentation, and legacy-only replay.
+- Workspace canaries: 19/19 passed in Chromium, including inverse trig, all nine workspaces, Matrix/Vector independent runtime hosts, and both Table profiles.
+- Verification used headless Chromium and did not open desktop windows while the user was using the computer.
+
+### Mixed-Tree Limits
+
+- Repo-wide lint reports seven Notebook-owned `no-useless-escape` errors in `src/lib/notebook/document/templates.ts`; no History/Display file is implicated.
+- The live printer inventory reports five Notebook-owned unclassified `resultLatex` paths in `extensions.tsx`, `migrate-v1.ts`, `templates.ts`, and two `tiptap-adapter.ts` locations. This milestone's History paths remain classified with zero fallback debt.
+- Concurrent Notebook files and untracked `test-results/` are excluded from staging and commit.

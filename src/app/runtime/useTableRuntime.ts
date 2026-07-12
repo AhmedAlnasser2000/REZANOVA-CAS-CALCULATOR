@@ -29,6 +29,7 @@ type CommitTableOutcome = (
   context?: {
     historyTicketId?: string | null;
     historyLaunchOrder?: number;
+    tableResponse?: TableResponse;
   },
 ) => void;
 
@@ -74,6 +75,15 @@ const DEFAULT_TABLE_SECONDARY_LATEX = 'x+1';
 const DEFAULT_TABLE_START = -2;
 const DEFAULT_TABLE_END = 2;
 const DEFAULT_TABLE_STEP = 1;
+
+function cloneTableResponse(response: TableResponse): TableResponse {
+  return {
+    headers: [...response.headers],
+    rows: response.rows.map((row) => ({ ...row })),
+    warnings: [...response.warnings],
+    ...(response.error ? { error: response.error } : {}),
+  };
+}
 
 function buildTableRequestFromState(state: ActiveTableRuntimeState): RunTableModeRequest {
   return {
@@ -219,10 +229,13 @@ export function useTableRuntime({
             {
               historyTicketId: historyTicket.id,
               historyLaunchOrder: historyTicket.historyLaunchOrder,
+              tableResponse: result.payload.response,
             },
           );
         } else {
-          commitOutcome(result.payload.outcome, request.primaryLatex, 'table');
+          commitOutcome(result.payload.outcome, request.primaryLatex, 'table', {
+            tableResponse: result.payload.response,
+          });
         }
         clearReplayVariableSubstitutions?.();
       })
@@ -256,11 +269,7 @@ export function useTableRuntime({
       tableEnd,
       tableStep,
       tableResponse: tableResponse
-        ? {
-          headers: [...tableResponse.headers],
-          rows: tableResponse.rows.map((row) => ({ ...row })),
-          warnings: [...tableResponse.warnings],
-        }
+        ? cloneTableResponse(tableResponse)
         : null,
     };
   }
@@ -272,18 +281,20 @@ export function useTableRuntime({
     setTableStart(state?.tableStart ?? DEFAULT_TABLE_START);
     setTableEnd(state?.tableEnd ?? DEFAULT_TABLE_END);
     setTableStep(state?.tableStep ?? DEFAULT_TABLE_STEP);
-    setTableResponse(state?.tableResponse
-      ? {
-        headers: [...state.tableResponse.headers],
-        rows: state.tableResponse.rows.map((row) => ({ ...row })),
-        warnings: [...state.tableResponse.warnings],
-      }
-      : null);
+    setTableResponse(state?.tableResponse ? cloneTableResponse(state.tableResponse) : null);
+  }
+
+  function restoreHistoryTableResult(inputLatex: string, response?: TableResponse) {
+    setTablePrimaryLatex(inputLatex);
+    setTableSecondaryEnabled(Boolean(response && response.headers.length > 2));
+    setTableSecondaryLatex(response?.headers[2] ?? '');
+    setTableResponse(response ? cloneTableResponse(response) : null);
   }
 
   return {
     captureTableSurfaceState,
     clearTable,
+    restoreHistoryTableResult,
     restoreTableSurfaceState,
     runTableAction,
     setTableEnd,

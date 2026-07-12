@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; History persistence parity and the approved result-intent prerequisite are complete; no push is authorized
+Status: active; structured History is verified through Gate 5 and entering its approved commit; no push is authorized
 
 ## Attribution
 
@@ -82,9 +82,13 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - Restart evidence: an extension-rich row survives real Chromium reload, Calculator Memory, file-backed Rust restart, and two isolated real Tauri desktop launches. A forced browser storage failure leaves the row in session and renders the durability warning.
 - `RESULT-INTENT-DECLARATION-CLOSURE1`: committed as `c2469318` after the first compatibility-projection audit found 13 undeclared fragments across the 43 golden and 100 replay executions. All live solve-summary object literals now pair text with typed parts, all 447 live detail producers declare intent, and runtime coverage projects all 143 executions without guessing math from prose.
 - The prerequisite also corrects the obsolete `{min,max}` Equation replay interval to the current `{start,end,subdivisions}` request, adds source/runtime ratchets, and accepts three previously rendered range-guard fragments into the print-hygiene baseline without changing wording or mathematics.
-- `CANONICAL-RESULT-DOCUMENT1`: verified and entering its approved commit. The neutral compartment defines the version-1 document, nested math values, strict clone-safe validation, 10,000-node/64-depth/640,000-byte document bounds, existing per-MathJSON bounds, no-reparse compatibility projections, and optional live `DisplayOutcome.canonicalResult` carriage.
+- `CANONICAL-RESULT-DOCUMENT1`: committed as `a5b63e39`. The neutral compartment defines the version-1 document, nested math values, strict clone-safe validation, 10,000-node/64-depth/640,000-byte document bounds, existing per-MathJSON bounds, no-reparse compatibility projections, and optional live `DisplayOutcome.canonicalResult` carriage.
 - Coverage round-trips every stable field in all 43 golden and 100 replay executions, rejects prompts and prohibited transient fields, drops actions/runtime advisories by contract, and preserves exact Table rows. No live producer writes the document yet, so this gate changes no visible output, History schema, Surface DTO, OOE authority, worker topology, or capability identity.
 - The intended commit snapshot passes the accepted printer inventory at 522 result paths, zero compatibility fallbacks, 277 migrated paths, and 239 forwarders. The live mixed tree separately reports four Notebook-owned `resultLatex` paths; they remain outside this program's staging and must be classified by the Notebook lane.
+- `HISTORY-STRUCTURED-RESULT2`: verified and entering its approved commit. New successful rows dual-write `resultDocument` and all legacy fields; stored documents are read first by replay, quick History, full History, copy, search, and Table restoration, while legacy-only or malformed/future extension rows fall back without reparsing LaTeX.
+- Exact Table headers/rows and warnings are stored and restored directly without running the Table engine. Transient commit context and executable actions are excluded. Invalid or oversized documents preserve the full legacy row and add `unavailable`, `invalid`, or `over-size`; malformed new structured appends are rejected while load remains extension-preserving.
+- Browser evidence passes all nine workspaces with versioned result/replay payloads, visible title parity, exact Table row parity, current root/power presentation, legacy replay, reload, Calculator Memory, and save-failure warning coverage. Rust preserves the document verbatim across file-backed restart.
+- The live mixed tree now reports five Notebook-owned unclassified printer paths and seven Notebook-only lint errors in `templates.ts`; the History milestone's exact lint slice, build, TypeScript, 469 UI tests, 19 canaries, 50 Rust tests, and all scoped contracts pass.
 
 ## Verification Contract
 

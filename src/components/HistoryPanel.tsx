@@ -17,6 +17,7 @@ import { usePendingElapsedNow } from '../app/runtime/usePendingElapsedNow';
 import { latexToVisibleText } from '../lib/display/math-notation';
 import type { SymbolicDisplayPrefs } from '../lib/display/symbolic-display';
 import { useLanguage } from '../lib/language/language-context';
+import { readHistoryResult } from '../app/runtime/historyDisplayEntry';
 
 const QUICK_HISTORY_COMMITTED_ROW_LIMIT = 20;
 
@@ -222,9 +223,10 @@ export function HistoryPanel({
               }
 
               const entry = row.entry;
-              const resultPreview = entry.resultLatex
-                ? quickHistoryPreviewText(entry.resultLatex, notationMode, symbolicDisplayPrefs)
-                : entry.approxText;
+              const result = readHistoryResult(entry);
+              const resultPreview = result.primaryLatex
+                ? quickHistoryPreviewText(result.primaryLatex, notationMode, symbolicDisplayPrefs)
+                : result.approxText;
               const inputPreview = quickHistoryPreviewText(
                 entry.inputLatex,
                 notationMode,
@@ -292,11 +294,11 @@ export function HistoryPanel({
                         data-testid="history-entry-result-preview"
                       >
                         <span className="history-entry-section-label">
-                          {entry.resultLatex ? historyText.labels.answer : historyText.labels.approx}
+                          {result.primaryLatex ? historyText.labels.answer : historyText.labels.approx}
                         </span>
                         <HistoryPanelPreview
                           displayPrefs={symbolicDisplayPrefs}
-                          latex={entry.resultLatex}
+                          latex={result.primaryLatex}
                           notationMode={notationMode}
                           text={resultPreview}
                         />

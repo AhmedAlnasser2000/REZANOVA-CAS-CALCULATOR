@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { HistoryEntry } from '../../types/calculator';
-import { historyEntrySchema } from './schemas';
+import { hasValidHistoryResultDocument, historyEntrySchema } from './schemas';
 
 const HISTORY_ENTRY_FIELDS = [
   'id',
@@ -37,6 +37,8 @@ const HISTORY_ENTRY_FIELDS = [
   'historyLaunchOrder',
   'runtimeElapsedMs',
   'replaySnapshot',
+  'resultDocument',
+  'resultDocumentOmissionReason',
   'timestamp',
 ] as const satisfies readonly (keyof HistoryEntry)[];
 
@@ -106,5 +108,34 @@ describe('HistoryEntry persistence parity', () => {
       version: 2,
       payload: ['kept', 'verbatim'],
     });
+  });
+
+  it('accepts valid success documents while leaving malformed extensions loadable for legacy fallback', () => {
+    const valid = historyEntrySchema.parse({
+      id: 'structured-result-1',
+      mode: 'calculate',
+      inputLatex: '2+2',
+      resultLatex: '4',
+      resultDocument: {
+        version: 1,
+        outcomeKind: 'success',
+        title: 'Calculate',
+        primaryMath: { canonicalLatex: '4', mathJson: 4 },
+        warnings: [],
+      },
+      timestamp: '2026-07-12T00:00:00.000Z',
+    });
+    expect(hasValidHistoryResultDocument(valid)).toBe(true);
+
+    const malformed = historyEntrySchema.parse({
+      id: 'structured-result-malformed',
+      mode: 'calculate',
+      inputLatex: '2+2',
+      resultLatex: '4',
+      resultDocument: { version: 2, title: 'Future shape' },
+      timestamp: '2026-07-12T00:00:00.000Z',
+    });
+    expect(malformed.resultDocument).toEqual({ version: 2, title: 'Future shape' });
+    expect(hasValidHistoryResultDocument(malformed)).toBe(false);
   });
 });

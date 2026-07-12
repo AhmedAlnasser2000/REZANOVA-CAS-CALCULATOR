@@ -19,6 +19,7 @@ import {
 import {
   appBootstrapSchema,
   calculatorMemorySnapshotSchema,
+  hasValidHistoryResultDocument,
   historyEntrySchema,
   launcherCategorySchema,
   menuNodeSchema,
@@ -256,7 +257,7 @@ export async function loadHistoryEntries(): Promise<HistoryEntry[]> {
 export async function appendHistoryEntry(
   entry: HistoryEntry,
 ): Promise<HistoryPersistenceWriteResult> {
-  if (!historyEntrySchema.safeParse(entry).success) {
+  if (!historyEntrySchema.safeParse(entry).success || !hasValidHistoryResultDocument(entry)) {
     return { ok: false, reason: 'invalid' };
   }
 

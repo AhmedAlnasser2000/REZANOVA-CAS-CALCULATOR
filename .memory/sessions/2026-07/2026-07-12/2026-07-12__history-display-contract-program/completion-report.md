@@ -55,3 +55,26 @@
 ### Next Step
 
 - Commit `CANONICAL-RESULT-DOCUMENT1`, then implement `HISTORY-STRUCTURED-RESULT2` as the first durable consumer and dual-write boundary.
+
+## HISTORY-STRUCTURED-RESULT2
+
+### Completed
+
+- Added optional `resultDocument` and durable omission reason fields to `HistoryEntry` while preserving every legacy compatibility field and unknown extension.
+- Added one storage resolver that accepts native documents only when they validate and exactly match the no-reparse compatibility projection; missing native documents use the compatibility projection.
+- Classified whole-document and nested-MathJSON node, depth, and byte failures as `over-size`; other invalid data fails whole without truncating legacy math.
+- Dual-wrote successful History rows, excluded transient ticket/suppression/Table context, executable actions, and runtime advisories, and retained launch-time replay snapshots in their separate ticket map.
+- Switched replay, quick History, full History preview/search/inspector/copy, and Table restoration to structured-first reads with legacy fallback.
+- Stored exact Table response headers, rows, optional secondary cells, and warnings, then restored them without launching a worker or recomputing values.
+- Kept malformed/future structured extensions loadable for legacy fallback, but rejected them on new append. Browser, Calculator Memory, and Rust continue preserving accepted extension-rich rows verbatim.
+
+### Runtime And UI
+
+- All nine computational workspaces create a versioned result document and replay with the same visible title behavior; Matrix/Vector duplicate expression titles remain intentionally hidden.
+- Table rendered text is identical before and after replay, including partial-domain cells, and no Table engine run is required for restore.
+- History renders stored canonical math through current symbolic presentation preferences. The known half-power preference asymmetry remains unchanged and is recorded separately.
+- Legacy-only records still replay with the `History` compatibility card, and a failed durable append keeps the new row visible for the session with the existing warning.
+
+### Next Step
+
+- Commit `HISTORY-STRUCTURED-RESULT2`, then implement `DISPLAY-CONTRACT-INVERSION-RATCHET1` before any producer inversion.

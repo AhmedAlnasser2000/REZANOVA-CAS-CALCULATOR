@@ -3,7 +3,10 @@ import type {
   CanonicalMathValueV1,
   CanonicalResultDocumentV1,
 } from '../../types/calculator';
-import { validateSerializableMathJson } from '../display/printer/math-json';
+import {
+  validateSerializableMathJson,
+  type MathJsonValidationFailure,
+} from '../display/printer/math-json';
 
 export const CANONICAL_RESULT_MAX_NODES = 10_000;
 export const CANONICAL_RESULT_MAX_DEPTH = 64;
@@ -31,6 +34,7 @@ export type CanonicalResultValidationFailure = {
     | 'invalid-math-json';
   message: string;
   path?: string;
+  mathJsonFailure?: MathJsonValidationFailure;
 };
 
 export type ValidatedCanonicalResultDocument = {
@@ -461,11 +465,15 @@ export function validateCanonicalResultDocument(
     if (reference.value.mathJson === undefined) continue;
     const mathValidation = validateSerializableMathJson(reference.value.mathJson);
     if (!mathValidation.ok) {
-      return fail(
-        'invalid-math-json',
-        mathValidation.failure.message,
-        `${reference.path}.mathJson`,
-      );
+      return {
+        ok: false,
+        failure: {
+          reason: 'invalid-math-json',
+          message: mathValidation.failure.message,
+          path: `${reference.path}.mathJson`,
+          mathJsonFailure: mathValidation.failure,
+        },
+      };
     }
   }
 

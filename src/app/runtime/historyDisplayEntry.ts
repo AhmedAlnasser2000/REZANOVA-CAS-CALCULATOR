@@ -5,8 +5,15 @@ import type {
   HistoryEntry,
   ModeId,
   StatisticsScreen,
+  TableResponse,
   TrigScreen,
 } from '../../types/calculator';
+import {
+  projectCanonicalResultToDisplayOutcome,
+  projectCanonicalResultToTableResponse,
+  resolveCanonicalResultForStorage,
+  validateCanonicalResultDocument,
+} from '../../lib/result-contract';
 
 type SuccessfulDisplayOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
 
@@ -39,6 +46,7 @@ export type CommitHistoryDisplayContext = Partial<Pick<
   historyTicketId?: string | null;
   historyLaunchOrder?: number;
   suppressDisplayCommit?: boolean;
+  tableResponse?: TableResponse;
 };
 
 export type BuildHistoryDisplayEntryOptions = {
@@ -52,6 +60,53 @@ export type BuildHistoryDisplayEntryOptions = {
   trigScreen: TrigScreen;
   statisticsScreen: StatisticsScreen;
 };
+
+export type HistoryResultReadModel = {
+  source: 'structured' | 'legacy';
+  outcome: SuccessfulDisplayOutcome;
+  primaryLatex?: string;
+  approxText?: string;
+  tableResponse?: TableResponse;
+};
+
+function legacyHistoryOutcome(entry: HistoryEntry): SuccessfulDisplayOutcome {
+  return {
+    kind: 'success',
+    title: 'History',
+    exactLatex: entry.resultLatex,
+    exactSupplementLatex: entry.exactSupplementLatex,
+    approxText: entry.approxText,
+    detailSections: entry.detailSections,
+    systemReadback: entry.systemReadback,
+    answerDomain: entry.answerDomain,
+    solutionKind: entry.solutionKind,
+    warnings: [],
+  };
+}
+
+export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
+  const validation = validateCanonicalResultDocument(entry.resultDocument);
+  if (validation.ok && validation.validated.value.outcomeKind === 'success') {
+    const outcome = projectCanonicalResultToDisplayOutcome(validation.validated.value);
+    if (outcome.kind === 'success') {
+      return {
+        source: 'structured',
+        outcome,
+        primaryLatex: outcome.exactLatex,
+        approxText: outcome.approxText,
+        tableResponse: projectCanonicalResultToTableResponse(validation.validated.value),
+      };
+    }
+  }
+
+  const outcome = legacyHistoryOutcome(entry);
+  return {
+    source: 'legacy',
+    outcome,
+    primaryLatex: outcome.exactLatex,
+    approxText: outcome.approxText,
+  };
+}
 
 export function buildHistoryDisplayEntry({
   outcome,
@@ -67,6 +122,9 @@ export function buildHistoryDisplayEntry({
   const variableSubstitutions =
     context.variableSubstitutions
     ?? (outcome.kind === 'success' ? outcome.variableSubstitutions : undefined);
+  const resultDocument = resolveCanonicalResultForStorage(outcome, {
+    tableResponse: context.tableResponse,
+  });
 
   return {
     id: createId(),
@@ -82,11 +140,22 @@ export function buildHistoryDisplayEntry({
     ...(outcome.systemReadback
       ? { systemReadback: outcome.systemReadback }
       : {}),
+    ...(resultDocument.ok
+      ? { resultDocument: resultDocument.document }
+      : { resultDocumentOmissionReason: resultDocument.omissionReason }),
     ...(mode === 'calculate'
-      ? { ...currentCalculateHistoryContext(), ...context }
+      ? {
+          ...currentCalculateHistoryContext(),
+          ...(context.calculateScreen ? { calculateScreen: context.calculateScreen } : {}),
+          ...(context.calculateSeed ? { calculateSeed: context.calculateSeed } : {}),
+        }
       : {}),
     ...(mode === 'calculus'
-      ? { ...currentCalculusHistoryContext(), ...context }
+      ? {
+          ...currentCalculusHistoryContext(),
+          ...(context.calculusScreen ? { calculusScreen: context.calculusScreen } : {}),
+          ...(context.calculusSeed ? { calculusSeed: context.calculusSeed } : {}),
+        }
       : {}),
     ...(mode === 'geometry'
       ? {

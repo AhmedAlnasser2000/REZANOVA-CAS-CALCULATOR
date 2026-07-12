@@ -7,6 +7,10 @@ import type {
   ModeId,
   PendingHistoryTicket,
 } from '../../types/calculator';
+import {
+  readHistoryResult,
+  type HistoryResultReadModel,
+} from '../runtime/historyDisplayEntry';
 
 export type HistoryLedgerRow =
   | {
@@ -17,6 +21,7 @@ export type HistoryLedgerRow =
       inputPreviewText: string;
       mode: ModeId;
       order: number;
+      result: HistoryResultReadModel;
       resultPreviewText?: string;
       searchText: string;
       timestamp: string;
@@ -66,16 +71,27 @@ export function historyDateLabel(timestamp: string) {
   });
 }
 
-function entrySearchText(entry: HistoryEntry, modeLabel: string) {
+function entrySearchText(
+  entry: HistoryEntry,
+  modeLabel: string,
+  result: HistoryResultReadModel,
+) {
+  const outcome = result.outcome;
   return [
     modeLabel,
     entry.inputLatex,
     entry.resolvedInputLatex,
-    entry.resultLatex,
-    entry.approxText,
-    entry.answerDomain,
-    entry.solutionKind,
-    ...(entry.exactSupplementLatex ?? []),
+    outcome.title,
+    result.primaryLatex,
+    result.approxText,
+    outcome.answerDomain,
+    outcome.solutionKind,
+    ...(outcome.exactSupplementLatex ?? []),
+    ...(outcome.detailSections?.flatMap((section) => [
+      section.title,
+      ...section.lines,
+    ]) ?? []),
+    ...outcome.warnings,
   ].filter(Boolean).join(' ').toLowerCase();
 }
 
@@ -128,6 +144,7 @@ export function buildHistoryLedgerRows({
     }
 
     const entry = row.entry;
+    const result = readHistoryResult(entry);
     return {
       dateKey: historyLocalDateKey(entry.timestamp),
       entry,
@@ -136,10 +153,11 @@ export function buildHistoryLedgerRows({
       kind: 'entry' as const,
       mode: entry.mode,
       order: row.order,
-      resultPreviewText: entry.resultLatex
-        ? historyPreviewText(entry.resultLatex, notationMode, displayPrefs)
-        : entry.approxText,
-      searchText: entrySearchText(entry, modeLabels[entry.mode]),
+      result,
+      resultPreviewText: result.primaryLatex
+        ? historyPreviewText(result.primaryLatex, notationMode, displayPrefs)
+        : result.approxText,
+      searchText: entrySearchText(entry, modeLabels[entry.mode], result),
       timestamp: entry.timestamp,
     };
   });

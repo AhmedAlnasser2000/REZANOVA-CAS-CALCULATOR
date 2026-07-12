@@ -801,7 +801,28 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       id: 'history.table',
       mode: 'table',
       inputLatex: 'x^3',
-      resultLatex: 'table',
+      resultLatex: 'legacy-table-summary',
+      resultDocument: {
+        version: 1,
+        outcomeKind: 'success',
+        title: 'Table',
+        primaryMath: { canonicalLatex: 'f(x)=x^3' },
+        warnings: ['One row is outside the real domain.'],
+        table: {
+          headers: ['x', 'x^3', '\\sqrt{x}'],
+          rows: [
+            {
+              x: { canonicalLatex: '-1' },
+              primary: { canonicalLatex: '-1' },
+            },
+            {
+              x: { canonicalLatex: '0' },
+              primary: { canonicalLatex: '0' },
+              secondary: { canonicalLatex: '0' },
+            },
+          ],
+        },
+      },
       timestamp: '2026-06-13T00:00:00.000Z',
     } satisfies HistoryEntry;
     const matrixEntry = {
@@ -822,6 +843,14 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       hook.result.current.restoreLinearAlgebraTableHistoryEntry(tableEntry);
     });
     expect(hook.result.current.tableRuntime.tablePrimaryLatex).toBe('x^3');
+    expect(hook.result.current.tableRuntime.tableResponse).toEqual({
+      headers: ['x', 'x^3', '\\sqrt{x}'],
+      rows: [
+        { x: '-1', primary: '-1' },
+        { x: '0', primary: '0', secondary: '0' },
+      ],
+      warnings: ['One row is outside the real domain.'],
+    });
 
     act(() => {
       hook.result.current.restoreLinearAlgebraTableHistoryEntry(matrixEntry);

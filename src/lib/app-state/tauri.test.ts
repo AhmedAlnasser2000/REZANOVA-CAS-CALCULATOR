@@ -156,6 +156,22 @@ function createRichHistoryEntry(): HistoryEntry & {
       scientificNotationStyle: 'e',
       detailedFactsEnabled: true,
     },
+    resultDocument: {
+      version: 1,
+      outcomeKind: 'success',
+      title: 'Solved system',
+      primaryMath: { canonicalLatex: '(x,y)=(1,2)' },
+      systemReadback: {
+        variables: [{ canonicalLatex: 'x' }, { canonicalLatex: 'y' }],
+        rows: [{
+          values: [{ canonicalLatex: '1' }, { canonicalLatex: '2' }],
+          approxText: '(1.0, 2.0)',
+        }],
+        label: 'Solution',
+        source: 'linear-system',
+      },
+      warnings: [],
+    },
     timestamp: '2026-07-11T00:00:00.000Z',
     futureHistoryExtension: {
       version: 2,
@@ -252,6 +268,11 @@ describe('web-preview app-state persistence', () => {
       mode: 'calculate',
       inputLatex: '1+1',
     } as HistoryEntry)).toEqual({ ok: false, reason: 'invalid' });
+
+    expect(await appendHistoryEntry({
+      ...createHistoryEntry('invalid-structured'),
+      resultDocument: { version: 2, title: 'Future shape' },
+    } as unknown as HistoryEntry)).toEqual({ ok: false, reason: 'invalid' });
 
     expect(await appendHistoryEntry({
       ...createHistoryEntry('oversized'),

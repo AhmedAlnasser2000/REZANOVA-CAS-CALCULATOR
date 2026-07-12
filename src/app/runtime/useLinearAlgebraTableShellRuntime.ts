@@ -12,6 +12,7 @@ import type {
   ModeId,
   SettingsPatch,
   StoredVariableValue,
+  TableResponse,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
@@ -19,6 +20,7 @@ import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/wor
 import type { WorkspaceInstance } from './workspace-instances';
 import { useLinearAlgebraRuntime } from './useLinearAlgebraRuntime';
 import { useTableRuntime } from './useTableRuntime';
+import { readHistoryResult } from './historyDisplayEntry';
 
 type CommitLinearTableOutcome = (
   outcome: DisplayOutcome,
@@ -28,6 +30,7 @@ type CommitLinearTableOutcome = (
     historyTicketId?: string | null;
     historyLaunchOrder?: number;
     suppressDisplayCommit?: boolean;
+    tableResponse?: TableResponse;
   },
 ) => void;
 
@@ -237,8 +240,10 @@ export function useLinearAlgebraTableShellRuntime({
 
   function restoreLinearAlgebraTableHistoryEntry(entry: HistoryEntry) {
     if (entry.mode === 'table') {
-      tableRuntime.clearTable();
-      tableRuntime.setTablePrimaryLatex(entry.inputLatex);
+      tableRuntime.restoreHistoryTableResult(
+        entry.inputLatex,
+        readHistoryResult(entry).tableResponse,
+      );
       return true;
     }
 

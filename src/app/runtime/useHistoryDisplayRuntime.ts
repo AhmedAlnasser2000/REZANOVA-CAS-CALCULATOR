@@ -39,6 +39,7 @@ import type {
 } from './workspace-instances';
 import {
   buildHistoryDisplayEntry,
+  readHistoryResult,
   type CommitHistoryDisplayContext,
 } from './historyDisplayEntry';
 import {
@@ -621,18 +622,7 @@ export function useHistoryDisplayRuntime({
         restoreGeometryHistoryEntry(entry);
       }
 
-      setDisplayOutcome({
-        kind: 'success',
-        title: 'History',
-        exactLatex: entry.resultLatex,
-        exactSupplementLatex: entry.exactSupplementLatex,
-        approxText: entry.approxText,
-        detailSections: entry.detailSections,
-        systemReadback: entry.systemReadback,
-        answerDomain: entry.answerDomain,
-        solutionKind: entry.solutionKind,
-        warnings: [],
-      });
+      setDisplayOutcome(readHistoryResult(entry).outcome);
       closeHistoryPanel();
     }, options);
   }

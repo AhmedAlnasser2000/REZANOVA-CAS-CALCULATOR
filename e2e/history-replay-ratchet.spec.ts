@@ -12,6 +12,8 @@ import {
   type CanaryCase,
 } from './canaries/canary-registry';
 
+const APP_STATE_KEY = 'rezanova-classwiz-calculator:app-state:v1';
+
 async function clickVisibleMenuEntry(page: Page, label: string) {
   await page.locator('button.launcher-entry:visible')
     .filter({ has: page.locator('strong', { hasText: new RegExp(`^${label}$`, 'i') }) })
@@ -95,6 +97,43 @@ for (const workspace of WORKSPACE_CANARIES) {
       await expect(page.getByTestId('display-outcome-success')).toBeVisible();
     }
 
+    const originalDisplayTitle = await page.getByTestId('display-outcome-title').count() > 0
+      ? await page.getByTestId('display-outcome-title').textContent()
+      : null;
+    const originalTableText = canary.expectation.surface === 'table'
+      ? await page.getByTestId('table-preview').innerText()
+      : null;
+    await expect.poll(async () => page.evaluate((storageKey) => {
+      const state = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}') as {
+        history?: Array<{
+          replaySnapshot?: { version?: unknown };
+          resultDocument?: { version?: unknown; title?: unknown };
+        }>;
+      };
+      return state.history?.at(-1)?.resultDocument?.version;
+    }, APP_STATE_KEY)).toBe(1);
+    const persistedResult = await page.evaluate((storageKey) => {
+      const state = JSON.parse(window.localStorage.getItem(storageKey) ?? '{}') as {
+        history?: Array<{
+          replaySnapshot?: { version?: unknown };
+          resultDocument?: { version?: unknown; title?: unknown };
+        }>;
+      };
+      const entry = state.history?.at(-1);
+      return {
+        replayVersion: entry?.replaySnapshot?.version,
+        resultDocument: entry?.resultDocument,
+      };
+    }, APP_STATE_KEY);
+    const resultDocument = persistedResult.resultDocument;
+    expect(resultDocument).toMatchObject({
+      version: 1,
+      title: expect.any(String),
+    });
+    expect(persistedResult.replayVersion).toBe(1);
+    expect(JSON.stringify(resultDocument)).not.toContain('"actions"');
+    expect(typeof resultDocument?.title).toBe('string');
+
     await page.getByTestId('history-toggle').click();
     await expect(page.getByTestId('history-panel')).toBeVisible();
     await expect(page.getByTestId('history-entry').first()).toBeVisible();
@@ -104,8 +143,14 @@ for (const workspace of WORKSPACE_CANARIES) {
     await expect(page.getByTestId('display-outcome-error')).toHaveCount(0);
     if (canary.expectation.surface === 'table') {
       await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+      expect(await page.getByTestId('table-preview').innerText()).toBe(originalTableText);
     } else {
       await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+    }
+    if (originalDisplayTitle === null) {
+      await expect(page.getByTestId('display-outcome-title')).toHaveCount(0);
+    } else {
+      await expect(page.getByTestId('display-outcome-title')).toHaveText(originalDisplayTitle);
     }
     if (process.env.HISTORY_REPLAY_EVIDENCE_DIR) {
       await page.screenshot({

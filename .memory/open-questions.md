@@ -1,5 +1,7 @@
 # Open Questions
 
+- 2026-07-12: `x^{\frac{1}{2}}` currently normalizes to `\sqrt{x}` under roots, powers, and auto because Compute Engine canonicalization loses the source half-power before the familiar-root preference branch. Decide in a dedicated printer-output milestone whether powers mode should retain the half-power; `HISTORY-STRUCTURED-RESULT2` preserves current formatting and does not change it.
+
 - 2026-07-03: Before implementing Guide notebook import/export, decide the first package shape, author/attribution metadata, tamper/provenance policy, answer/hint visibility model, and stable computation/evidence snapshot vocabulary.
 - 2026-07-03: Before making generic raw-radical genus-1 second-kind integration live, decide the bounded coefficient-field solve strategy that can finish without coefficient-growth blowups and still produce accepted pivot facts plus an exact antiderivative backcheck.
 - 2026-07-03: Before any Surface Protocol host/mount or read-only History/Variables exposure, decide the concrete website host, privacy/consent gates, and allowed query scope.

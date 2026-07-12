@@ -116,7 +116,9 @@ describe('useTableRuntime OOE stale gate', () => {
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(1));
 
     expect(result.current.tableResponse).toEqual(payload.response);
-    expect(commitOutcome).toHaveBeenCalledWith(payload.outcome, 'x^2', 'table');
+    expect(commitOutcome).toHaveBeenCalledWith(payload.outcome, 'x^2', 'table', {
+      tableResponse: payload.response,
+    });
     expect(clearReplayVariableSubstitutions).toHaveBeenCalledTimes(1);
   });
 
@@ -251,6 +253,7 @@ describe('useTableRuntime OOE stale gate', () => {
       {
         historyTicketId: 'ticket.table.success',
         historyLaunchOrder: 33,
+        tableResponse: payload.response,
       },
     );
   });

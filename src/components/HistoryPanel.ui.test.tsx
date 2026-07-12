@@ -96,6 +96,36 @@ describe('HistoryPanel', () => {
     expect(onDelete).toHaveBeenCalledWith('2');
   });
 
+  it('prefers the structured result preview over a stale legacy projection', () => {
+    const structuredEntry: HistoryEntry = {
+      ...historyEntry('1'),
+      resultLatex: 'legacy-result-must-not-win',
+      resultDocument: {
+        version: 1,
+        outcomeKind: 'success',
+        title: 'Original Equation Card',
+        primaryMath: { canonicalLatex: 'x=4' },
+        warnings: [],
+      },
+    };
+
+    render(
+      <HistoryPanel
+        presentation="overlay"
+        history={[structuredEntry]}
+        modeLabels={modeLabels}
+        notationMode="plainText"
+        onClear={vi.fn()}
+        onClose={vi.fn()}
+        onDelete={vi.fn()}
+        onReplay={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('history-entry-result-preview')).toHaveTextContent(/x\s*=\s*4/);
+    expect(screen.queryByText('legacy-result-must-not-win')).not.toBeInTheDocument();
+  });
+
   it('caps committed quick-panel rows while keeping summaries compact', () => {
     render(
       <HistoryPanel

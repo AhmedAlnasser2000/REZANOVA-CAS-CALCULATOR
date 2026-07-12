@@ -31,10 +31,19 @@
 - push: not authorized
 - excluded: `test-results/`, concurrent Notebook files, and isolated `CANONICAL-RESULT-DOCUMENT1` work
 
-## Pending Commit
+## CANONICAL-RESULT-DOCUMENT1
 
+- commit_hash: `a5b63e39`
 - commit_message: `CANONICAL-RESULT-DOCUMENT1`
 - scope: neutral version-1 result document, strict bounded validation, no-reparse Display/Table compatibility projections, focused corpus gate, compartment/seam wiring, and downstream-presentation printer classification
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/` and all concurrent Notebook files/registrations
+
+## Pending Commit
+
+- commit_message: `HISTORY-STRUCTURED-RESULT2`
+- scope: success-only structured History dual-write/read, exact Table carriage and restore, omission fallback, schema/native restart parity, structured-first History consumers, and durable verification evidence
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/` and all concurrent Notebook files/registrations

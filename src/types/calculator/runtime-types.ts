@@ -33,6 +33,7 @@ import type {
 import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
 import type { HistoryReplaySnapshotV1 } from './history-replay-types';
+import type { CanonicalResultDocumentV1, CanonicalResultOmissionReason } from './canonical-result-types';
 import type {
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
@@ -853,9 +854,7 @@ export type NumericOdeResponse = {
   warnings: string[];
   error?: string;
 };
-
 export type AppSurface = 'app' | 'launcher';
-
 export type LauncherState = {
   surface: AppSurface;
   level: 'root' | 'category';
@@ -863,14 +862,12 @@ export type LauncherState = {
   categoryId: LauncherCategoryId | null;
   categorySelectedIndex: number;
 };
-
 export type StoredVariableValue = {
   name: string;
   valueLatex: string;
   numericValue: number;
   updatedAt?: string;
 };
-
 export type HistoryEntry = {
   id: string;
   mode: ModeId;
@@ -926,6 +923,8 @@ export type HistoryEntry = {
   historyLaunchOrder?: number;
   runtimeElapsedMs?: number;
   replaySnapshot?: HistoryReplaySnapshotV1;
+  resultDocument?: CanonicalResultDocumentV1;
+  resultDocumentOmissionReason?: CanonicalResultOmissionReason;
   timestamp: string;
 };
 
