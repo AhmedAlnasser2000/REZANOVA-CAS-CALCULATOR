@@ -225,9 +225,11 @@ export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
   'createCalculusResultOutcome',
   'createEquationResultOutcome',
   'createGeometryResultOutcome',
+  'createMatrixResultOutcome',
   'createStatisticsResultOutcome',
   'createTableResultOutcome',
   'createTrigonometryResultOutcome',
+  'createVectorResultOutcome',
 ]);
 
 export const PRODUCER_INPUT_REGISTRATIONS = [
@@ -253,6 +255,13 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     functions: ['createGeometryResultOutcome'],
   },
   {
+    id: 'matrix-result-producer-input-v1',
+    owner: 'matrix-result-contract',
+    rationale: 'The Matrix owner adapter reads typed result evidence before attaching native canonical truth without changing its independent runtime shell.',
+    matchers: exact('src/lib/modes/matrix-result-document.ts'),
+    functions: ['createMatrixResultOutcome'],
+  },
+  {
     id: 'statistics-result-producer-input-v1',
     owner: 'statistics-result-contract',
     rationale: 'The Statistics owner adapter reads typed result evidence before attaching native canonical truth.',
@@ -272,6 +281,13 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     rationale: 'The Trigonometry owner adapter reads typed result evidence after cross-workspace presentation changes.',
     matchers: exact('src/lib/trigonometry/result-document.ts'),
     functions: ['createTrigonometryResultOutcome'],
+  },
+  {
+    id: 'vector-result-producer-input-v1',
+    owner: 'vector-result-contract',
+    rationale: 'The Vector owner adapter reads typed result evidence before attaching native canonical truth without changing its independent runtime shell.',
+    matchers: exact('src/lib/modes/vector-result-document.ts'),
+    functions: ['createVectorResultOutcome'],
   },
 ];
 

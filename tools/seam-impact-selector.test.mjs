@@ -190,6 +190,25 @@ describe('seam impact selector', () => {
     ]);
   });
 
+  it('selects canonical result contracts for independent Linear Algebra adapters', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/modes/matrix-result-document.ts',
+      'src/lib/modes/vector-result-document.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'canonical-result-contract',
+    ]);
+    assert.deepEqual([...plan.laneIds].sort(), ['matrix', 'vector']);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'display-contracts',
+      'result-contracts',
+      'equation-solve-result-contracts',
+      'display-contract-inversion-ratchet',
+      'printer-migration-ratchet',
+    ]);
+  });
+
   it('handles rename, copy, and delete records including both rename paths', () => {
     const changes = parseGitNameStatusZ(
       'R100\0src/lib/equation/old.ts\0src/lib/ooe/new.ts\0D\0src/AppMain.tsx\0C75\0docs/a.md\0docs/b.md\0',

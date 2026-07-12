@@ -150,7 +150,12 @@ export const FALLBACK_REGISTRATIONS = [
     rationale: 'Matrix and Vector retain native exact serializers until the shared Linear Algebra profile slice.',
     matchers: [
       ...prefix('src/lib/linear-algebra/'),
-      ...exact('src/lib/modes/matrix.ts', 'src/lib/modes/vector.ts'),
+      ...exact(
+        'src/lib/modes/matrix-result-document.ts',
+        'src/lib/modes/matrix.ts',
+        'src/lib/modes/vector-result-document.ts',
+        'src/lib/modes/vector.ts',
+      ),
     ],
     properties: RESULT_PROPERTY_NAMES,
   },

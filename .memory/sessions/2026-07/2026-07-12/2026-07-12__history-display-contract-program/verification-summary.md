@@ -326,3 +326,31 @@
 - Domain math cores remain Display-independent. Native documents are attached only at each workspace's final owner boundary.
 - Matrix/Vector workers and capabilities, Statistics guided controls, Table capabilities, Surface DTOs, OOE authority, History tickets, mathematical output, and visible wording remain unchanged.
 - Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
+
+## RESULT-DOCUMENT-LINEAR-ALGEBRA1 Gate
+
+- Kind: `backend` independent Matrix/Vector producer ownership with mandatory `ui` mathematical-output parity evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass for both independent Linear Algebra workspace lanes.
+
+### Contract Evidence
+
+- Focused Linear Algebra and result-contract coverage passes 28 files and 187 tests. All 43 golden executions and all 100 replay fixtures preserve visible and structural parity; the four Matrix/Vector golden and ten replay executions resolve from native documents.
+- Accepted inversion inventory is 1,158 source files, 607 producer boundaries, 774 consumer reads, 37 compatibility projections, 554 legacy reads, and 142 native calls. Native coverage rose by four with no compatibility or legacy growth.
+- Printer inventory records 533 result paths, zero compatibility fallbacks, 278 migrated dual writes, and 244 forwarders. Linear Algebra has 44 migrated paths and seven forwarders.
+- Display, result intent, detail, printer, clipboard, feature probes, app state, runtime contracts/probes, CI, seam, identity, Surface, OOE, compartments, file size, source mirrors, freshness, Labs, pillars, TypeScript, and Vite production build pass.
+- Full UI passes 65 files and 473 tests. The full unit run passes 527 of 528 files and 3,676 of 3,677 tests; only `numeric-golden-trace-harness.test.ts` exceeded its soft elapsed budget under full parallel load at 10,538 ms versus 10,000 ms. Its exact eight-test file passes in isolation, with that case at 2,918 ms.
+- Global lint is blocked by 15 errors and one warning confined to separately owned Notebook files and the untracked transient-layer district. The milestone-owned TypeScript/MJS lint slice passes.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.3 minutes. Structured History create/replay: 9/9 workspaces passed.
+- Focused Linear Algebra evidence: 2/2 headless journeys passed across four golden surfaces. Each run persisted a version-1 native document with Matrix or Vector ownership.
+- Inspected `.task_tmp/history-display-contract/linear-algebra-screenshots/` for singular and tall Matrix profiles, dependent Vector evidence, and exact Gram-Schmidt. Settled answer cards, typed details, controls, and long-page layouts are readable without malformed fragments, overlap, clipping, or result-card overflow.
+- The first temporary capture exposed a harness race on the second operation in each workspace; requiring a new persisted document and `Ready` render status removed the intermediate capture. Product output was unchanged.
+
+### Boundaries
+
+- Matrix keeps `linearAlgebra.matrix`, `matrix-worker-runtime`, `matrix-runtime`, and `matrix-worker-shell`; Vector keeps `linearAlgebra.vector`, `vector-worker-runtime`, `vector-runtime`, and `vector-worker-shell`.
+- Shared lifecycle ritual and exact math cores remain shared; requests, replay seeds, cancellation, stale/commit legality, diagnostics, History tickets, Surface DTOs, OOE authority, mathematics, and visible wording are unchanged.
+- The separately owned untracked Notebook transient-UI directory, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.

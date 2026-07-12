@@ -12,6 +12,7 @@ import {
   runMatrixModeViaIsolatedWorker,
   type CreateMatrixWorker,
 } from './worker-clients/matrix-worker-client';
+import { createMatrixResultOutcome } from './matrix-result-document';
 import type {
   DisplayOutcome,
   ExactScalarWire,
@@ -161,7 +162,7 @@ function matrixUserFacingApproxText() {
   return undefined;
 }
 
-export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
+function runMatrixModeOutcome(request: RunMatrixModeRequest): DisplayOutcome {
   const {
     operation,
     matrixA,
@@ -240,6 +241,11 @@ export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
     actions,
     sourceMode: 'matrix',
   };
+}
+
+export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
+  const outcome = runMatrixModeOutcome(request);
+  return outcome.kind === 'prompt' ? outcome : createMatrixResultOutcome(outcome);
 }
 
 export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "RESULT-DOCUMENT-GUIDED-DOMAINS1 adds owner-native canonical result adapters at the final Trigonometry, Geometry, Statistics, and Table boundaries, including exact bounded Table rows, without changing mathematical output or runtime ownership.",
-  "registryDigest": "3ec899873986f14b7295",
+  "acceptedReason": "RESULT-DOCUMENT-LINEAR-ALGEBRA1 adds independent Matrix and Vector native result adapters while compatibility projections and legacy reads remain flat.",
+  "registryDigest": "fc2b3aef3bfdcbc62a6a",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -76,7 +76,7 @@
     "matrix": {
       "compatibilityProjection": 2,
       "legacyRead": 0,
-      "nativeDocument": 0
+      "nativeDocument": 2
     },
     "ooe-observability": {
       "compatibilityProjection": 0,
@@ -111,7 +111,7 @@
     "vector": {
       "compatibilityProjection": 2,
       "legacyRead": 0,
-      "nativeDocument": 0
+      "nativeDocument": 2
     }
   },
   "entries": {
@@ -343,12 +343,24 @@
       "src/lib/modes/equation/transforms.ts": [
         "48c5c356a08c2e788f35:1"
       ],
+      "src/lib/modes/matrix-result-document.ts": [
+        "6e6008d1b6c3c57e7b95:1"
+      ],
+      "src/lib/modes/matrix.ts": [
+        "df438a19396eda15a2e5:1"
+      ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
         "5596fa01d9903a06a317:2"
       ],
       "src/lib/modes/table-result-document.ts": [
         "b2fd87e7d1c481b5f90d:1"
+      ],
+      "src/lib/modes/vector-result-document.ts": [
+        "232d96a92419bf302444:1"
+      ],
+      "src/lib/modes/vector.ts": [
+        "4a64247ba7f8be36af3f:1"
       ],
       "src/lib/statistics/result-document.ts": [
         "22161a254a67642b0931:1"
@@ -401,16 +413,16 @@
         "b22cdbfed25030256634:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "e8515d19c7e33f041953:1",
-        "10a2b6bce5e391698e60:1"
+        "e9a5d8e3e5bd51100a39:1",
+        "db55cf0d8c6aad7133e1:1"
       ],
       "src/lib/modes/table-core.ts": [
         "e79dc3225ea7c6f9366b:1",
         "d9d55ffce475822e089d:1"
       ],
       "src/lib/modes/vector.ts": [
-        "d53b7e38f2b74dcf54e9:1",
-        "023bc9cacb6efc146e62:1"
+        "b919c5a170ed0bea2722:1",
+        "06b523de2f2437dc8d45:1"
       ],
       "src/lib/modes/worker-clients/calculate-worker-client.ts": [
         "b2f8bce0dc5e5e5cdafb:1"
@@ -836,6 +848,7 @@
         "76f4f6a9485c37b0a467:1"
       ],
       "src/lib/modes/matrix.ts": [
+        "2c59efe713c78684a4a0:1",
         "9deb4d41d5ce4c300ad1:1",
         "44abfe464f008636033c:1"
       ],
@@ -843,6 +856,7 @@
         "0107a7063dbfbbbe6402:1"
       ],
       "src/lib/modes/vector.ts": [
+        "f83bb13d31bd0f11af36:1",
         "f09a01c6224260303184:1",
         "531b0ad8cb10e2ea3234:1"
       ],
@@ -1991,6 +2005,12 @@
       "src/lib/modes/equation/symbolic.ts": [
         "456647802672dd4e10cf:1",
         "d7f4cd95eb1379d9f4fa:1"
+      ],
+      "src/lib/modes/matrix.ts": [
+        "3f17a9e1d1033146349f:1"
+      ],
+      "src/lib/modes/vector.ts": [
+        "970b1193141c587e6f67:1"
       ],
       "src/lib/ooe/pilots/equation-pilot.ts": [
         "fc2a2fcf7918907bd3f1:1",

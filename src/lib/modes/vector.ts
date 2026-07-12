@@ -11,6 +11,7 @@ import {
   runVectorModeViaIsolatedWorker,
   type CreateVectorWorker,
 } from './worker-clients/vector-worker-client';
+import { createVectorResultOutcome } from './vector-result-document';
 import type {
   AngleUnit,
   DisplayOutcome,
@@ -99,7 +100,7 @@ function vectorUserFacingApproxText(approxText?: string) {
   return approxText && isNumericApproxText(approxText) ? approxText : undefined;
 }
 
-export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
+function runVectorModeOutcome(request: RunVectorModeRequest): DisplayOutcome {
   const {
     operation,
     vectorA,
@@ -150,6 +151,11 @@ export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
     warnings: response.warnings,
     sourceMode: 'vector',
   };
+}
+
+export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
+  const outcome = runVectorModeOutcome(request);
+  return outcome.kind === 'prompt' ? outcome : createVectorResultOutcome(outcome);
 }
 
 export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {

@@ -121,10 +121,19 @@
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
 
-## Pending Commit
+## RESULT-DOCUMENT-GUIDED-DOMAINS1
 
+- commit_hash: `1a2a4742`
 - commit_message: `RESULT-DOCUMENT-GUIDED-DOMAINS1`
 - scope: independent Trigonometry, Geometry, Statistics, and Table owner adapters, exact bounded Table documents, native golden/replay ratchets, accepted inversion baseline, focused/full regression and eight-screen Chromium evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
+
+## Pending Commit
+
+- commit_message: `RESULT-DOCUMENT-LINEAR-ALGEBRA1`
+- scope: separate Matrix and Vector owner adapters, native golden/replay ratchets, accepted inversion and printer baselines, split-runtime parity, focused/full regression, four-screen Chromium evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and the separately owned Notebook transient-UI directory

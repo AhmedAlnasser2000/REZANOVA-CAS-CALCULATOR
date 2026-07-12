@@ -279,3 +279,29 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-GUIDED-DOMAINS1`, then attach Matrix and Vector canonical truth at their independent final mode boundaries in `RESULT-DOCUMENT-LINEAR-ALGEBRA1`.
+
+## RESULT-DOCUMENT-LINEAR-ALGEBRA1
+
+### Completed
+
+- Added separate Matrix and Vector canonical-result adapters and invoked each once at its exported mode-owner boundary, covering both its isolated worker and fallback path.
+- Preserved Matrix Equation-transfer actions as transient live behavior and kept all compatibility Display fields unchanged.
+- Ratcheted all four Linear Algebra golden executions and all ten replay fixtures to native document resolution.
+
+### Measured Posture
+
+- Accepted inventory: 1,158 source files, 607 producer boundaries, 774 consumer reads, 37 compatibility projections, 554 legacy reads, and 142 native calls.
+- Native coverage increased by four calls while compatibility and legacy debt stayed flat. Printer compatibility fallback remains zero.
+- Focused Linear Algebra and canonical-result coverage passes 28 files and 187 tests; all 43 golden and 100 replay executions remain green.
+
+### Runtime And UI
+
+- Matrix and Vector retain separate capabilities, primary/fallback hosts, shells, clients, worker entrypoints, request shapes, seeds, diagnostics, cancellation, and History-ticket behavior.
+- Nineteen Chromium canaries and nine workspace History create/replay cases pass.
+- Two focused headless journeys cover four golden surfaces. The singular/tall Matrix profiles and dependent/Gram-Schmidt Vector results were visually inspected after settled-render waits; cards and typed details are readable without malformed fragments or overflow.
+- Full UI passes 65 files and 473 tests. The full unit run passes 527 of 528 files and 3,676 of 3,677 tests; an unrelated Equation numeric-trace soft elapsed budget exceeded only under the full parallel load and passed its exact file in isolation.
+- Global lint is blocked only by separately owned Notebook and untracked transient-layer files. The complete milestone-owned lint slice, Rust check, memory protocol, and diff hygiene pass.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-LINEAR-ALGEBRA1`, then audit and eliminate the remaining successful-producer compatibility projections in `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`.

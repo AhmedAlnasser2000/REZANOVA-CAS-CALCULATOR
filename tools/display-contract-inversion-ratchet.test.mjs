@@ -315,6 +315,42 @@ describe('display contract inversion ratchet', () => {
     }
   });
 
+  it('classifies independent Matrix and Vector adapters and owner boundaries as native', () => {
+    const rootDir = fixture({
+      'src/lib/modes/matrix-result-document.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        export function createMatrixResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+      'src/lib/modes/matrix.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        declare function createMatrixResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function run(outcome: DisplayOutcome) { return createMatrixResultOutcome(outcome); }
+      `,
+      'src/lib/modes/vector-result-document.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        export function createVectorResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+      'src/lib/modes/vector.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        declare function createVectorResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function run(outcome: DisplayOutcome) { return createVectorResultOutcome(outcome); }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    for (const lane of ['matrix', 'vector']) {
+      assert.equal(report.lanes[lane]['legacy-read'], 0, lane);
+      assert.equal(report.lanes[lane]['native-document'], 2, lane);
+      assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
+    }
+  });
+
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `
