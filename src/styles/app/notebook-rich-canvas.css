@@ -55,6 +55,11 @@
   color: var(--page-ink);
 }
 
+.notebook-rich-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
 .notebook-semantic-insert {
   position: relative;
 }
@@ -104,7 +109,129 @@
   min-height: 0;
   flex: 1;
   overflow: auto;
+  overscroll-behavior: contain;
   scroll-padding-bottom: 320px;
+}
+
+.notebook-selection-toolbar {
+  position: absolute;
+  z-index: 36;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transform: translate(-50%, -100%);
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 7px;
+  padding: 4px;
+  background: #102021;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.46);
+}
+
+.notebook-selection-toolbar > button,
+.notebook-selection-palette button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  min-height: 30px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 5px 8px;
+  background: transparent;
+  color: var(--page-muted);
+}
+
+.notebook-selection-toolbar > button:hover,
+.notebook-selection-toolbar > button[aria-pressed='true'],
+.notebook-selection-toolbar > button[aria-expanded='true'],
+.notebook-selection-palette button:hover,
+.notebook-selection-palette button.is-active {
+  border-color: var(--notebook-border-strong);
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
+}
+
+.notebook-selection-palette {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  width: 278px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 7px;
+  padding: 10px;
+  background: #102021;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.48);
+}
+
+.notebook-selection-palette > header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.notebook-selection-palette > header button {
+  width: 100%;
+  font-weight: 800;
+}
+
+.notebook-selection-swatches,
+.notebook-selection-recents {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.notebook-selection-swatches button,
+.notebook-selection-recents button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  border-color: rgba(255, 255, 255, 0.2);
+  padding: 0;
+  background: var(--notebook-swatch);
+}
+
+.notebook-selection-recents span {
+  margin-right: 2px;
+  color: var(--page-subtle);
+  font: 0.66rem 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+}
+
+.notebook-selection-custom-color {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--notebook-border);
+  padding-top: 9px;
+}
+
+.notebook-selection-custom-color label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--page-muted);
+  font-weight: 700;
+}
+
+.notebook-selection-custom-color input[type='color'] {
+  width: 34px;
+  height: 28px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 2px;
+  background: #071314;
+}
+
+.notebook-selection-palette p[role='status'] {
+  margin: 0;
+  color: #f0a49a;
+  font-size: 0.76rem;
 }
 
 .notebook-rich-editor {

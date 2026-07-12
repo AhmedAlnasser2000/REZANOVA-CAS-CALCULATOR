@@ -23,15 +23,18 @@ import {
   insertNotebookSemanticBlock,
 } from './selection';
 import { useNotebookTransientLayer } from '../transient-ui';
+import type { NotebookPaletteMode } from './NotebookSelectionToolbar';
 
 function ToolButton({
   active = false,
+  disabled = false,
   label,
   onClick,
   transientTriggerId,
   children,
 }: {
   active?: boolean;
+  disabled?: boolean;
   label: string;
   onClick: () => void;
   transientTriggerId?: string;
@@ -41,6 +44,7 @@ function ToolButton({
     <button
       data-notebook-transient-trigger={transientTriggerId}
       type="button"
+      disabled={disabled}
       aria-label={label}
       aria-pressed={active}
       className={active ? 'is-active' : undefined}
@@ -53,7 +57,15 @@ function ToolButton({
   );
 }
 
-export function NotebookRichToolbar({ editor }: { editor: Editor }) {
+export function NotebookRichToolbar({
+  editor,
+  hasProseSelection,
+  onRequestPalette,
+}: {
+  editor: Editor;
+  hasProseSelection: boolean;
+  onRequestPalette: (mode: NotebookPaletteMode) => void;
+}) {
   const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
 
   return (
@@ -70,13 +82,15 @@ export function NotebookRichToolbar({ editor }: { editor: Editor }) {
           onClick={() => editor.chain().focus().toggleItalic().run()}
         ><Italic size={16} /></ToolButton>
         <ToolButton
+          disabled={!hasProseSelection}
           active={editor.isActive('highlight')}
           label="Highlight"
-          onClick={() => editor.chain().focus().toggleHighlight({ color: '#48673f' }).run()}
+          onClick={() => onRequestPalette('highlight')}
         ><Highlighter size={16} /></ToolButton>
         <ToolButton
+          disabled={!hasProseSelection}
           label="Text color"
-          onClick={() => editor.chain().focus().setColor('#b8d49c').run()}
+          onClick={() => onRequestPalette('text-color')}
         ><Palette size={16} /></ToolButton>
       </div>
       <div className="notebook-rich-toolbar-group">

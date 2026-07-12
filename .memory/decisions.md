@@ -2421,3 +2421,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Transient-layer coordination is Notebook-local. Root menus are mutually exclusive, parent-child layers form a stack, and one non-repeated Escape closes exactly the topmost layer with trigger-focus restoration.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Holding Escape is suppressed until keyup so it cannot cascade through multiple Notebook layers or into app-tab behavior. Permanent desktop outline and inspector panes are not transient layers unless opened as narrow-layout drawers.
+
+## 2026-07-12 - NOTEBOOK-SELECTION-FORMATTING-PALETTES1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Notebook prose formatting is selection-scoped: Bold, Italic, Highlight, and Text Color restore the exact saved prose range, while embedded math nodes do not inherit prose marks unless separately selected through their own math controls.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Text Color and Highlight remain separate palette modes. Curated and custom colors are allowed, low contrast warns without blocking, and one Escape closes the palette before the contextual toolbar without clearing the document selection.

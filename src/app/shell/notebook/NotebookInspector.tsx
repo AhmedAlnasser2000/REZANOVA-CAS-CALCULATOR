@@ -3,9 +3,7 @@ import {
   ArrowDown,
   ArrowUp,
   FilePenLine,
-  Highlighter,
   Italic,
-  Palette,
   Send,
   Type,
   X,
@@ -103,8 +101,6 @@ export function NotebookInspector({
           <div className="notebook-inspector-actions">
             <button type="button" onClick={() => editor.chain().focus().toggleBold().run()}><Type size={15} /> Bold</button>
             <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()}><Italic size={15} /> Italic</button>
-            <button type="button" onClick={() => editor.chain().focus().toggleHighlight({ color: '#48673f' }).run()}><Highlighter size={15} /> Highlight</button>
-            <button type="button" onClick={() => editor.chain().focus().setColor('#b8d49c').run()}><Palette size={15} /> Color</button>
           </div>
         </div>
       ) : null}

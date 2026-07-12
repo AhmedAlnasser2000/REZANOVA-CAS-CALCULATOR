@@ -21,8 +21,8 @@ Recover Notebook authoring ergonomics through recursive hierarchy, local transie
 ## Current Gates
 
 - `NOTEBOOK-NESTED-SECTION-HIERARCHY1`: passed, ui, committed as `11ff1162`.
-- `NOTEBOOK-TRANSIENT-LAYER-DISMISSAL1`: passed, ui, entering its approved commit checkpoint.
-- `NOTEBOOK-SELECTION-FORMATTING-PALETTES1`: pending.
+- `NOTEBOOK-TRANSIENT-LAYER-DISMISSAL1`: passed, ui, committed as `d4180940`.
+- `NOTEBOOK-SELECTION-FORMATTING-PALETTES1`: passed, ui, entering its approved commit checkpoint.
 - `NOTEBOOK-MATH-AUTHORING-SURFACE1`: pending.
 - `NOTEBOOK-WORKBENCH-RESIZE-POLISH1`: pending.
 

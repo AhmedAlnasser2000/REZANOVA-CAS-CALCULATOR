@@ -28,8 +28,17 @@
 
 ## NOTEBOOK-TRANSIENT-LAYER-DISMISSAL1
 
+- commit_hash: `d4180940`
 - commit_message: `NOTEBOOK-TRANSIENT-LAYER-DISMISSAL1`
 - scope: Notebook-local layer stack, sibling exclusivity, nested Escape order, repeat suppression, outside dismissal, focus restoration, menu/drawer integration, focused tests, Chromium evidence, and durable memory
 - approval: explicitly approved as the second of five commits in the Notebook Authoring Recovery And Enhancement Plan
+- push: not authorized
+- excluded: active output-inversion/result-document files and untracked `test-results/`
+
+## NOTEBOOK-SELECTION-FORMATTING-PALETTES1
+
+- commit_message: `NOTEBOOK-SELECTION-FORMATTING-PALETTES1`
+- scope: bounded Notebook prose selection, exact-range Bold/Italic, separate Text Color and Highlight palettes, custom/recent/reset controls, low-contrast warning, transient dismissal, focused tests, Chromium evidence, and durable memory
+- approval: explicitly approved as the third of five commits in the Notebook Authoring Recovery And Enhancement Plan
 - push: not authorized
 - excluded: active output-inversion/result-document files and untracked `test-results/`

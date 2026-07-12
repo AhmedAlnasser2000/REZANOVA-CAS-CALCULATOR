@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/core';
+import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Check, Sparkles } from 'lucide-react';
 import {
@@ -28,6 +29,12 @@ import {
   type NotebookEditorSelection,
 } from './selection';
 import { useNotebookTransientLayer } from '../transient-ui';
+import {
+  NotebookSelectionToolbar,
+  type NotebookPaletteMode,
+  type NotebookPaletteRequest,
+  type NotebookProseSelection,
+} from './NotebookSelectionToolbar';
 
 type NotebookRichCanvasProps = {
   document: NotebookRichDocument;
@@ -61,6 +68,20 @@ function selectedParagraphSuggestion(editor: Editor | null) {
   return null;
 }
 
+function selectedProseRange(editor: Editor): NotebookProseSelection | null {
+  const { selection } = editor.state;
+  if (!(selection instanceof TextSelection) || selection.empty) {
+    return null;
+  }
+  let containsText = false;
+  editor.state.doc.nodesBetween(selection.from, selection.to, (node) => {
+    if (node.isText && node.textContent.trim()) {
+      containsText = true;
+    }
+  });
+  return containsText ? { from: selection.from, to: selection.to } : null;
+}
+
 export function NotebookRichCanvas({
   document,
   onChange,
@@ -72,7 +93,10 @@ export function NotebookRichCanvas({
   const loadedDocumentIdRef = useRef(document.id);
   const changeRef = useRef(onChange);
   const selectionRef = useRef(onSelectionChange);
+  const scrollRegionRef = useRef<HTMLDivElement | null>(null);
   const [revision, setRevision] = useState(0);
+  const [paletteRequest, setPaletteRequest] = useState<NotebookPaletteRequest | null>(null);
+  const [proseSelection, setProseSelection] = useState<NotebookProseSelection | null>(null);
   const templateMenu = useNotebookTransientLayer({ id: 'notebook-starter-templates' });
   const extensions = useMemo(
     () => createNotebookExtensions(onOpenMathInTool),
@@ -97,10 +121,12 @@ export function NotebookRichCanvas({
       documentRef.current = nextDocument;
       changeRef.current(nextDocument);
       selectionRef.current(selection);
+      setProseSelection(selectedProseRange(currentEditor));
       setRevision((current) => current + 1);
     },
     onSelectionUpdate: ({ editor: currentEditor }) => {
       selectionRef.current(notebookEditorSelection(currentEditor));
+      setProseSelection(selectedProseRange(currentEditor));
       setRevision((current) => current + 1);
     },
   });
@@ -130,6 +156,52 @@ export function NotebookRichCanvas({
     editor.commands.setContent(notebookDocumentToTiptap(document), { emitUpdate: false });
   }, [document, editor]);
 
+  useEffect(() => {
+    const scrollRegion = scrollRegionRef.current;
+    if (!editor || !scrollRegion) {
+      return;
+    }
+    let selecting = false;
+    let pageScrollY = 0;
+    const startSelection = (event: PointerEvent) => {
+      if (!(event.target instanceof Node) || !editor.view.dom.contains(event.target)) {
+        return;
+      }
+      selecting = true;
+      pageScrollY = window.scrollY;
+    };
+    const moveSelection = (event: PointerEvent) => {
+      if (!selecting || event.buttons !== 1) {
+        return;
+      }
+      const bounds = scrollRegion.getBoundingClientRect();
+      const edge = 42;
+      const upperDistance = Math.max(0, bounds.top + edge - event.clientY);
+      const lowerDistance = Math.max(0, event.clientY - (bounds.bottom - edge));
+      if (upperDistance || lowerDistance) {
+        const direction = lowerDistance ? 1 : -1;
+        const distance = Math.max(upperDistance, lowerDistance);
+        scrollRegion.scrollTop += direction * Math.min(24, Math.max(4, distance / 4));
+      }
+      if (window.scrollY !== pageScrollY) {
+        window.scrollTo(window.scrollX, pageScrollY);
+      }
+    };
+    const endSelection = () => {
+      selecting = false;
+    };
+    scrollRegion.addEventListener('pointerdown', startSelection);
+    window.addEventListener('pointermove', moveSelection, { passive: true });
+    window.addEventListener('pointerup', endSelection);
+    window.addEventListener('pointercancel', endSelection);
+    return () => {
+      scrollRegion.removeEventListener('pointerdown', startSelection);
+      window.removeEventListener('pointermove', moveSelection);
+      window.removeEventListener('pointerup', endSelection);
+      window.removeEventListener('pointercancel', endSelection);
+    };
+  }, [editor]);
+
   if (!editor) {
     return <div className="notebook-rich-canvas-loading">Preparing document…</div>;
   }
@@ -157,9 +229,17 @@ export function NotebookRichCanvas({
     });
   }
 
+  function requestPalette(mode: NotebookPaletteMode) {
+    setPaletteRequest((current) => ({ mode, nonce: (current?.nonce ?? 0) + 1 }));
+  }
+
   return (
     <div className="notebook-rich-canvas" data-revision={revision}>
-      <NotebookRichToolbar editor={editor} />
+      <NotebookRichToolbar
+        editor={editor}
+        hasProseSelection={Boolean(proseSelection)}
+        onRequestPalette={requestPalette}
+      />
       {isBlank ? (
         <div className="notebook-template-start" data-testid="notebook-template-start">
           <div>
@@ -181,7 +261,13 @@ export function NotebookRichCanvas({
           ) : null}
         </div>
       ) : null}
-      <EditorContent className="notebook-rich-scroll-region" editor={editor} />
+      <EditorContent ref={scrollRegionRef} className="notebook-rich-scroll-region" editor={editor} />
+      <NotebookSelectionToolbar
+        key={paletteRequest?.nonce ?? 0}
+        editor={editor}
+        paletteRequest={paletteRequest}
+        selection={proseSelection}
+      />
       {suggestion ? (
         <div className="notebook-math-suggestion" data-testid="notebook-math-suggestion">
           <div>

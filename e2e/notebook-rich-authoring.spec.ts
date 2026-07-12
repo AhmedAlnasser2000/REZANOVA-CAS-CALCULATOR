@@ -128,3 +128,54 @@ test('Notebook dismisses one transient layer per Escape without closing the docu
   await expect(page.getByTestId('notebook-page')).toBeVisible();
   await expect(page.getByLabel('Notebook rich document')).toBeVisible();
 });
+
+test('Notebook keeps prose formatting palettes close to the selected text', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openBlankNotebook(page);
+
+  const editor = page.getByLabel('Notebook rich document');
+  await editor.click();
+  await page.keyboard.type('A bounded selection should remain easy to format.');
+  const drag = await page.evaluate(() => {
+    const text = document.querySelector('.notebook-rich-editor p')?.firstChild;
+    if (!(text instanceof Text)) {
+      throw new Error('Notebook prose text was not available for pointer selection');
+    }
+    const point = (offset: number) => {
+      const range = document.createRange();
+      range.setStart(text, offset);
+      range.setEnd(text, offset + 1);
+      const bounds = range.getBoundingClientRect();
+      return { x: bounds.left + 2, y: bounds.top + bounds.height / 2 };
+    };
+    return { start: point(2), end: point(text.data.length - 2) };
+  });
+  await page.mouse.move(drag.start.x, drag.start.y);
+  await page.mouse.down();
+  await page.mouse.move(drag.end.x, drag.end.y, { steps: 8 });
+  await page.mouse.up();
+
+  const selectionToolbar = page.getByTestId('notebook-selection-toolbar');
+  await expect(selectionToolbar).toBeVisible();
+  await selectionToolbar.getByRole('button', { name: 'Highlight selection' }).click();
+  const palette = page.getByLabel('Notebook selection colors');
+  await expect(palette).toBeVisible();
+  await expect(palette.getByRole('button', { name: 'Text Color' })).toBeVisible();
+  await expect(palette.getByRole('button', { name: 'Highlight', exact: true })).toBeVisible();
+
+  const clearance = await page.evaluate(() => {
+    const canvas = document.querySelector('[data-testid="notebook-canvas"]')!.getBoundingClientRect();
+    const toolbar = document.querySelector('[data-testid="notebook-selection-toolbar"]')!.getBoundingClientRect();
+    return {
+      insideHorizontally: toolbar.left >= canvas.left && toolbar.right <= canvas.right,
+      belowChrome: toolbar.top >= canvas.top,
+    };
+  });
+  expect(clearance.insideHorizontally).toBe(true);
+  expect(clearance.belowChrome).toBe(true);
+
+  await test.info().attach('notebook-selection-formatting-palettes', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+});
