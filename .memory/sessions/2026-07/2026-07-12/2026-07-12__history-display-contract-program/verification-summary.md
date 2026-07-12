@@ -165,3 +165,30 @@
 
 - The printer ratchet's seven tests pass. Its live inventory remains red only on five Notebook-owned `resultLatex` paths in the separately committed Notebook program; this milestone adds no printer result path and does not register unrelated debt.
 - `test-results/` remains untracked and excluded. No push is authorized.
+
+## RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1 Gate
+
+- Kind: `backend` native producer migration with mandatory `ui` mathematical-output parity evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass for the intended Calculate and proven Equation finite-root slice.
+
+### Contract Evidence
+
+- Result contract: 5 files and 25 tests pass; all 43 golden executions and all 100 deterministic replay fixtures preserve canonical and compatibility projections.
+- Equation solve-result: 4 files and 12 tests pass; all six Equation golden executions and 25 replay fixtures keep carrier/document parity, including stale-native-document removal after enrichment.
+- Full unit suite: 523 files and 3,659 tests pass. The first run had one contention-only 10.542-second numeric golden timeout; the isolated file passed with its slow case at 2.894 seconds, and a clean complete rerun passed.
+- Full UI: 64 files and 469 tests pass. Display contracts, golden corpus, History replay, runtime probes/contracts, Equation, printer migration, inversion inventory, TypeScript, production build, global ESLint, file sizes, Surface Protocol, OOE, compartments, seam selection, CI alignment, and diff hygiene pass.
+- Accepted inversion inventory: 1,148 source files, 585 producer boundaries, 773 consumer reads, 157 compatibility projections, 554 legacy reads, and seven native-document calls.
+- Printer inventory: 533 result paths, zero compatibility fallbacks, 278 migrated dual writes, and 244 forwarders. Five Notebook document-content paths are narrowly classified without editing Notebook source.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.2 minutes. A focused six-case Calculate/Equation/Calculus subset also passed.
+- Three temporary headless Playwright inspections cover `arcsin(1)` as DEG `90` and RAD `pi/2`, factor output `(x-1)(x+1)`, Equation quadratic finite roots, and the Calculus COMP12B detail card.
+- Inspected screenshots under `.task_tmp/history-display-contract/result-document-core-screenshots/` show answer cards, typed details, provenance, and overflow with no clipping or accepted output drift.
+- Real Chromium caught an undefined `runtimeAdvisories.stopReason` own property at the strict Equation worker boundary and a canonical-roundtrip loss of uniform text intent. Both were repaired and covered before the final canary/UI runs.
+
+### Boundary
+
+- Worker hosts, capabilities, requests, cancellation, stale/commit legality, fallback semantics, History tickets, Surface DTOs, solver mathematics, and Notebook source remain unchanged.
+- `test-results/` remains untracked and excluded. No push is authorized.

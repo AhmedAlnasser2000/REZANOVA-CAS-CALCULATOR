@@ -41,6 +41,19 @@ export const NON_PRODUCER_RESULT_REGISTRATIONS = [
     matchers: exact('src/lib/result-contract/projection.ts'),
     properties: ['exactLatex', 'resultLatex'],
   },
+  {
+    id: 'notebook-evidence-document-v1',
+    category: 'notebook-document-content',
+    owner: 'notebook-authoring',
+    rationale: 'Notebook evidence snapshots preserve authored reference LaTeX through document schemas, templates, and Tiptap attributes without computing solver output.',
+    matchers: exact(
+      'src/app/shell/notebook/canvas/extensions.tsx',
+      'src/lib/notebook/document/migrate-v1.ts',
+      'src/lib/notebook/document/templates.ts',
+      'src/lib/notebook/document/tiptap-adapter.ts',
+    ),
+    properties: ['resultLatex'],
+  },
 ];
 
 export const FALLBACK_REGISTRATIONS = [

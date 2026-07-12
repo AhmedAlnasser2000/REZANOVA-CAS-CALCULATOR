@@ -196,12 +196,16 @@ function rewritePeriodicFamilyTarget(
 }
 
 function withoutCanonicalMath(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
-  if (outcome.kind !== 'success' || !outcome.canonicalMath) {
+  if (
+    outcome.kind !== 'success'
+    || (!outcome.canonicalMath && !outcome.canonicalResult)
+  ) {
     return outcome;
   }
 
   const rest = { ...outcome };
   delete rest.canonicalMath;
+  delete rest.canonicalResult;
   return rest;
 }
 

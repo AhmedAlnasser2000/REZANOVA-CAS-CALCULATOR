@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveCanonicalResultForStorage } from '../../result-contract';
 import { runCalculateMode } from '../calculate';
 
 describe('runCalculateMode', () => {
@@ -22,6 +23,14 @@ describe('runCalculateMode', () => {
       expect(result.canonicalMath?.canonicalLatex).toBe(result.exactLatex);
       expect(result.canonicalMath?.mathJson).toBeDefined();
       expect(structuredClone(result.canonicalMath)).toEqual(result.canonicalMath);
+      expect(result.canonicalResult?.primaryMath).toEqual({
+        canonicalLatex: result.exactLatex,
+        mathJson: result.canonicalMath?.mathJson,
+      });
+      expect(resolveCanonicalResultForStorage(result)).toMatchObject({
+        ok: true,
+        source: 'native',
+      });
     }
   });
 
@@ -63,6 +72,13 @@ describe('runCalculateMode', () => {
       },
     });
     expect(integral).not.toHaveProperty('canonicalMath');
+    expect(integral.kind === 'success' ? integral.canonicalResult?.primaryMath : undefined)
+      .toMatchObject({ canonicalLatex: expect.any(String) });
+    expect(
+      integral.kind === 'success'
+        ? integral.canonicalResult?.primaryMath
+        : undefined,
+    ).not.toHaveProperty('mathJson');
   });
 
   it('substitutes stored numeric values only in standard Evaluate', () => {

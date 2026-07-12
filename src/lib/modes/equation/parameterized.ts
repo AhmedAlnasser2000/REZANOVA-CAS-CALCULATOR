@@ -19,6 +19,7 @@ import { diagnoseComplexLocusPolicyForLatex } from '../../equation/complex/locus
 import { solveEquationAlgebraicIsolation } from '../../equation/equation-algebraic-isolation';
 import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } from '../../equation/equation-complex';
 import { solveSelectedTargetIsolationEquation } from '../../equation/equation-selected-target-isolation';
+import { createEquationFiniteRootSuccessOutcome } from '../../equation/equation-solve-result';
 import {
   type EquationSelectedTargetSearchTraceRecorder,
   planSelectedTargetRouteFamilies,
@@ -280,18 +281,25 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedLinear?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'linear');
-        const outcome: DisplayOutcome = {
-          kind: 'success',
-          title: 'Solve',
-          exactLatex: parameterizedLinear.exactLatex,
-          ...(parameterizedLinear.canonicalMath
-            ? { canonicalMath: parameterizedLinear.canonicalMath }
-            : {}),
-          exactSupplementLatex: parameterizedLinear.exactSupplementLatex,
-          detailSections: parameterizedLinear.detailSections,
-          warnings: [],
-          resultOrigin: 'symbolic',
-        };
+        const outcome: DisplayOutcome = parameterizedLinear.canonicalMath
+          ? createEquationFiniteRootSuccessOutcome({
+              title: 'Solve',
+              exactLatex: parameterizedLinear.exactLatex,
+              canonicalMath: parameterizedLinear.canonicalMath,
+              exactSupplementLatex: parameterizedLinear.exactSupplementLatex,
+              detailSections: parameterizedLinear.detailSections,
+              warnings: [],
+              resultOrigin: 'symbolic',
+            })
+          : {
+              kind: 'success',
+              title: 'Solve',
+              exactLatex: parameterizedLinear.exactLatex,
+              exactSupplementLatex: parameterizedLinear.exactSupplementLatex,
+              detailSections: parameterizedLinear.detailSections,
+              warnings: [],
+              resultOrigin: 'symbolic',
+            };
 
 
         return attachTopLevelOutcome(outcome);
@@ -308,19 +316,27 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedPolynomial?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'polynomial');
-        const outcome: DisplayOutcome = {
-          kind: 'success',
-          title: 'Solve',
-          exactLatex: parameterizedPolynomial.exactLatex,
-          ...(parameterizedPolynomial.canonicalMath
-            ? { canonicalMath: parameterizedPolynomial.canonicalMath }
-            : {}),
-          branchReadback: parameterizedPolynomial.branchReadback,
-          exactSupplementLatex: parameterizedPolynomial.exactSupplementLatex,
-          detailSections: parameterizedPolynomial.detailSections,
-          warnings: [],
-          resultOrigin: 'symbolic',
-        };
+        const outcome: DisplayOutcome = parameterizedPolynomial.canonicalMath
+          ? createEquationFiniteRootSuccessOutcome({
+              title: 'Solve',
+              exactLatex: parameterizedPolynomial.exactLatex,
+              canonicalMath: parameterizedPolynomial.canonicalMath,
+              branchReadback: parameterizedPolynomial.branchReadback,
+              exactSupplementLatex: parameterizedPolynomial.exactSupplementLatex,
+              detailSections: parameterizedPolynomial.detailSections,
+              warnings: [],
+              resultOrigin: 'symbolic',
+            })
+          : {
+              kind: 'success',
+              title: 'Solve',
+              exactLatex: parameterizedPolynomial.exactLatex,
+              branchReadback: parameterizedPolynomial.branchReadback,
+              exactSupplementLatex: parameterizedPolynomial.exactSupplementLatex,
+              detailSections: parameterizedPolynomial.detailSections,
+              warnings: [],
+              resultOrigin: 'symbolic',
+            };
 
 
         return attachTopLevelOutcome(outcome);

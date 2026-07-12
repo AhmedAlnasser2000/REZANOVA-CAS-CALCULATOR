@@ -71,7 +71,7 @@ export function buildRuntimeOutcome({
   calculusDerivativeStrategies,
   detailSections,
   runtimeAdvisories,
-}: BuildRuntimeOutcomeOptions): DisplayOutcome {
+}: BuildRuntimeOutcomeOptions): Exclude<DisplayOutcome, { kind: 'prompt' }> {
   if (error) {
     return {
       kind: 'error',
@@ -103,6 +103,14 @@ export function buildRuntimeOutcome({
   };
 }
 
+export function attachRuntimeEnvelope(
+  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>,
+  options: AttachRuntimeEnvelopeOptions,
+): Exclude<DisplayOutcome, { kind: 'prompt' }>;
+export function attachRuntimeEnvelope(
+  outcome: DisplayOutcome,
+  options: AttachRuntimeEnvelopeOptions,
+): DisplayOutcome;
 export function attachRuntimeEnvelope(
   outcome: DisplayOutcome,
   {

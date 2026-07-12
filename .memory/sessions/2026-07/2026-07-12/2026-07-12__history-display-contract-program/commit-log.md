@@ -67,10 +67,19 @@
 - push: not authorized
 - excluded: `test-results/` and the separately committed Notebook program
 
-## Pending Commit
+## EQUATION-OUTCOME-BOUNDARY1
 
+- commit_hash: `42a5efd6`
 - commit_message: `EQUATION-OUTCOME-BOUNDARY1`
 - scope: validated Equation worker/fallback result boundary, explicit cancellation and runtime-advisory policy, one final canonical-to-Display adapter, runtime parity tests, full Equation and Playwright verification, accepted inversion baseline, and durable evidence
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/` and the separately committed Notebook program
+
+## Pending Commit
+
+- commit_message: `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1`
+- scope: typed producer-owned result builder, Calculate and proven Equation finite-root native documents, parity retention guard, strict advisory transport repair, detail-intent projection repair, accepted inversion/printer baselines, full regression and Chromium evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files

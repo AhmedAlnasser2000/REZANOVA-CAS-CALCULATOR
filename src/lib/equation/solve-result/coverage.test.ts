@@ -21,6 +21,11 @@ function assertCarrier(outcome: Awaited<ReturnType<typeof runGoldenCase>>['outco
     throw new Error(`${label}: ${projected.failure.reason}`);
   }
   expect(projected.result.document, `${label} canonical document`).toEqual(direct.document);
+  if (outcome.kind !== 'prompt' && outcome.canonicalResult) {
+    expect(projected.result.document, `${label} native document authority`).toEqual(
+      outcome.canonicalResult,
+    );
+  }
   expect(validateEquationSolveResultContract(projected.result).ok, `${label} contract`).toBe(true);
   expect(structuredClone(projected.result), `${label} clone parity`).toEqual(projected.result);
 

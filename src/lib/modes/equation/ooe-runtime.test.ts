@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator';
 import { getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
-import { projectDisplayOutcomeToCanonicalResult } from '../../result-contract';
+import {
+  projectDisplayOutcomeToCanonicalResult,
+  resolveCanonicalResultForStorage,
+} from '../../result-contract';
 import {
   buildEquationOoeInputRevisionId,
   buildEquationOoeSnapshot,
@@ -104,6 +107,13 @@ describe('Equation mode OOE runtime', () => {
       expect(direct.canonicalMath?.canonicalLatex).toBe(direct.exactLatex);
       expect(direct.canonicalMath?.mathJson).toBeDefined();
       expect(structuredClone(direct.canonicalMath)).toEqual(direct.canonicalMath);
+      expect(direct.canonicalResult?.primaryMath?.mathJson).toEqual(
+        direct.canonicalMath?.mathJson,
+      );
+      expect(resolveCanonicalResultForStorage(direct)).toMatchObject({
+        ok: true,
+        source: 'native',
+      });
     }
     expectBoundaryParity(direct, wrapped.payload);
     expect(wrapped.ooe.status.kind).toBe('unavailable');

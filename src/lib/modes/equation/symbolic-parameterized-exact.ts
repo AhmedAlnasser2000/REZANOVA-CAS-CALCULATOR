@@ -6,6 +6,7 @@ import { solveParameterizedPolynomialEquation } from '../../equation/parameteriz
 import { solveParameterizedSpecialFormRootsEquation } from '../../equation/parameterized/special-form-roots';
 import { solveParameterizedTrigEquation } from '../../equation/parameterized/trig';
 import { resolveEquationSolveTarget } from '../../equation/equation-target';
+import { createEquationFiniteRootSuccessOutcome } from '../../equation/equation-solve-result';
 import { matchTrigEquationRewriteForSolve } from '../../trigonometry/rewrite-solve';
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type {
@@ -164,19 +165,31 @@ function attachParameterizedSelectedTargetOutcome(input: {
   plannerResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
 }) {
-  const outcome: DisplayOutcome = {
-    kind: 'success',
-    title: 'Solve',
-    exactLatex: input.result.exactLatex,
-    ...(input.result.canonicalMath ? { canonicalMath: input.result.canonicalMath } : {}),
-    branchReadback: input.result.branchReadback,
-    approxText: input.result.approxText,
-    exactSupplementLatex: input.result.exactSupplementLatex,
-    detailSections: input.result.detailSections,
-    warnings: [],
-    resultOrigin: 'symbolic',
-    ...(input.result.answerDomain ? { answerDomain: input.result.answerDomain } : {}),
-  };
+  const outcome: DisplayOutcome = input.result.canonicalMath
+    ? createEquationFiniteRootSuccessOutcome({
+        title: 'Solve',
+        exactLatex: input.result.exactLatex,
+        canonicalMath: input.result.canonicalMath,
+        branchReadback: input.result.branchReadback,
+        approxText: input.result.approxText,
+        exactSupplementLatex: input.result.exactSupplementLatex,
+        detailSections: input.result.detailSections,
+        warnings: [],
+        resultOrigin: 'symbolic',
+        answerDomain: input.result.answerDomain,
+      })
+    : {
+        kind: 'success',
+        title: 'Solve',
+        exactLatex: input.result.exactLatex,
+        branchReadback: input.result.branchReadback,
+        approxText: input.result.approxText,
+        exactSupplementLatex: input.result.exactSupplementLatex,
+        detailSections: input.result.detailSections,
+        warnings: [],
+        resultOrigin: 'symbolic',
+        ...(input.result.answerDomain ? { answerDomain: input.result.answerDomain } : {}),
+      };
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, input.selectedTarget);
 
   return attachEquationRuntimeEnvelope(

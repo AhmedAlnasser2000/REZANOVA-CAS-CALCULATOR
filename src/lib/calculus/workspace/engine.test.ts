@@ -160,6 +160,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toContain('2');
     expect(result.exactLatex).toContain('t');
+    expect(result.canonicalResult).toBeUndefined();
     const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
     expect(steps?.lineKind).toBe('math');
     expect(steps?.lines).toContain('\\operatorname{operator}\\quad \\frac{d}{dt}');

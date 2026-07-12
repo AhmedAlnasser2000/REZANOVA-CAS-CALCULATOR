@@ -14,6 +14,7 @@ import {
   projectCanonicalResultToTableResponse,
   projectDisplayOutcomeToCanonicalResult,
 } from './projection';
+import { resolveCanonicalResultForStorage } from './storage';
 
 function stableMathValues(execution: GoldenExecution | HistoryReplayExecution) {
   return [
@@ -75,6 +76,11 @@ function assertCanonicalRoundTrip(
     throw new Error(`${label}: ${projected.failure.reason}: ${projected.failure.message}`);
   }
   expect(projected.ok, label).toBe(true);
+  if (execution.outcome.kind !== 'prompt' && execution.outcome.canonicalResult) {
+    expect(resolveCanonicalResultForStorage(execution.outcome, {
+      tableResponse: execution.tableResponse,
+    }), `${label} native parity`).toMatchObject({ ok: true, source: 'native' });
+  }
 
   const restored: GoldenExecution = {
     outcome: projectCanonicalResultToDisplayOutcome(projected.document),
@@ -97,15 +103,39 @@ describe('canonical result corpus coverage', () => {
   it('projects all 43 golden executions without visible or mathematical drift', async () => {
     expect(goldenCases).toHaveLength(43);
     for (const goldenCase of goldenCases) {
-      assertCanonicalRoundTrip(await runGoldenCase(goldenCase), goldenCase.id);
+      const execution = await runGoldenCase(goldenCase);
+      assertCanonicalRoundTrip(execution, goldenCase.id);
+      if (goldenCase.mode === 'calculate') {
+        expect(
+          execution.outcome.kind === 'prompt'
+            ? undefined
+            : execution.outcome.canonicalResult,
+          `${goldenCase.id} native Calculate document`,
+        ).toBeDefined();
+      }
     }
   }, 60_000);
 
   it('projects all 100 deterministic History replay executions', async () => {
     expect(HISTORY_REPLAY_FIXTURES).toHaveLength(100);
+    const nativeEquationFixtures: string[] = [];
     for (const fixture of HISTORY_REPLAY_FIXTURES) {
       const execution = await executeHistoryReplayRequest(fixture.workspace, fixture.request);
       assertCanonicalRoundTrip(execution, fixture.id);
+      const nativeDocument = execution.outcome.kind === 'prompt'
+        ? undefined
+        : execution.outcome.canonicalResult;
+      if (fixture.workspace === 'calculate') {
+        expect(nativeDocument, `${fixture.id} native Calculate document`).toBeDefined();
+      }
+      if (fixture.workspace === 'equation' && nativeDocument) {
+        nativeEquationFixtures.push(fixture.id);
+      }
     }
+    expect(nativeEquationFixtures).toEqual([
+      'equation-quadratic-factor',
+      'equation-quadratic-double-root',
+      'equation-quadratic-irrational',
+    ]);
   }, 60_000);
 });

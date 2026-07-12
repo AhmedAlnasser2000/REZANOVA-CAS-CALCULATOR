@@ -2,6 +2,7 @@ import { runGuardedDirectSymbolicFallback } from '../../equation/guarded-solve';
 import {
   projectEquationDisplayOutcomeToBoundaryOrThrow,
   projectEquationOutcomeBoundaryToDisplay,
+  retainCompatibleNativeEquationResult,
   type EquationOutcomeBoundaryV1,
 } from '../../equation/equation-solve-result';
 import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
@@ -340,17 +341,19 @@ export function runEquationMode({
     const finalOutcome = isNumericIntervalRoute
       ? withEquationNumericRouteKind(storedValueOutcome)
       : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
-    return attachEquationAnalysisEvidence(
-      finalOutcome,
-      buildEquationRunEvidence({
-        outcome: finalOutcome,
-        equationLatex: substitution.latex,
-        target: protectedTarget ?? equationSolveTarget ?? undefined,
-        angleUnit,
-        numericInterval,
-        complexRegion,
-        equationDomainIntent,
-      }),
+    return retainCompatibleNativeEquationResult(
+      attachEquationAnalysisEvidence(
+        finalOutcome,
+        buildEquationRunEvidence({
+          outcome: finalOutcome,
+          equationLatex: substitution.latex,
+          target: protectedTarget ?? equationSolveTarget ?? undefined,
+          angleUnit,
+          numericInterval,
+          complexRegion,
+          equationDomainIntent,
+        }),
+      ),
     );
   }
 
@@ -467,17 +470,19 @@ export async function runEquationModeWithAsyncSharedSolve(
   const finalOutcome = isNumericIntervalRoute
     ? withEquationNumericRouteKind(storedValueOutcome)
     : withEquationAnswerMode(storedValueOutcome, equationAnswerMode === 'isolate' ? 'isolate' : 'exact');
-  return attachEquationAnalysisEvidence(
-    finalOutcome,
-    buildEquationRunEvidence({
-      outcome: finalOutcome,
-      equationLatex: substitution.latex,
-      target: protectedTarget ?? equationSolveTarget ?? undefined,
-      angleUnit,
-      numericInterval,
-      complexRegion,
-      equationDomainIntent,
-    }),
+  return retainCompatibleNativeEquationResult(
+    attachEquationAnalysisEvidence(
+      finalOutcome,
+      buildEquationRunEvidence({
+        outcome: finalOutcome,
+        equationLatex: substitution.latex,
+        target: protectedTarget ?? equationSolveTarget ?? undefined,
+        angleUnit,
+        numericInterval,
+        complexRegion,
+        equationDomainIntent,
+      }),
+    ),
   );
 }
 

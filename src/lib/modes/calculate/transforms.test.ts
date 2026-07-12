@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveCanonicalResultForStorage } from '../../result-contract';
 import { runCalculateAlgebraTransform } from '../calculate';
 
 describe('runCalculateAlgebraTransform', () => {
@@ -22,6 +23,10 @@ describe('runCalculateAlgebraTransform', () => {
       lines: [
         'Ignored stored values: x=4. Symbolic transforms keep variables symbolic.',
       ],
+    });
+    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
+      ok: true,
+      source: 'native',
     });
   });
 

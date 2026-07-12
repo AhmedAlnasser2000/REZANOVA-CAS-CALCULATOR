@@ -1,6 +1,10 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import { runExpressionAction } from '../../engine/math-engine';
 import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../../result-contract';
+import {
   createFiniteRootSet,
   renderFiniteRootSet,
 } from '../solution/finite-root-set';
@@ -128,9 +132,25 @@ function canonicalDirectSymbolicOutcome(
     { preserveOrder: true },
   );
 
-  return rendered.exactLatex === symbolic.exactLatex && rendered.canonicalMath
-    ? { ...outcome, canonicalMath: rendered.canonicalMath }
-    : outcome;
+  if (rendered.exactLatex !== symbolic.exactLatex || !rendered.canonicalMath) {
+    return outcome;
+  }
+  const canonicalResult = buildCanonicalResultDocumentFromProducer({
+    outcomeKind: 'success',
+    title: 'Solve',
+    primaryMath: canonicalMathValue(
+      rendered.canonicalMath.canonicalLatex,
+      rendered.canonicalMath.mathJson,
+    ),
+    approxText: symbolic.approxText,
+    warnings: symbolic.warnings,
+    metadata: { resultOrigin: 'symbolic' },
+  });
+  return {
+    ...outcome,
+    canonicalMath: rendered.canonicalMath,
+    canonicalResult,
+  };
 }
 
 function runDirectSymbolicFallbackPrepared(

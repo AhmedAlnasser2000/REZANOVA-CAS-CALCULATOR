@@ -4,6 +4,10 @@ import { attachRuntimeEnvelope } from '../../kernel/runtime-envelope';
 import { hasUnsafeSymbolicOutput } from '../../display/symbolic-output-hygiene';
 import { normalizeRelationOperatorLatex } from '../../input/input-canonicalization';
 import { formatNamedEquationOutcomeTarget, rewriteEquationOutcomeTarget } from '../../equation/equation-target';
+import {
+  canonicalMathValue,
+  updateCanonicalResultMetadata,
+} from '../../result-contract';
 import type { ComplexLocusPolicyReport } from '../../equation/complex/locus-policy';
 import { buildComplexLocusEvidenceSections } from '../../equation/complex/locus-evidence';
 import type { ComplexSolveRegion, DisplayOutcome, EquationAnswerMode, PlannerBadge, SolutionKind } from '../../../types/calculator';
@@ -17,13 +21,30 @@ export function attachEquationRuntimeEnvelope(
   plannerBadges: PlannerBadge[] | undefined,
   runtimeAdvisories?: DisplayOutcome['runtimeAdvisories'],
 ) {
-  return attachRuntimeEnvelope(outcome, {
+  const attached = attachRuntimeEnvelope(outcome, {
     originalLatex,
     resolvedLatex,
     plannerBadges,
     plannerBadgeMode: 'merge',
     runtimeAdvisories,
   });
+  if (outcome.kind === 'prompt' || !outcome.canonicalResult) {
+    return attached;
+  }
+  const existingMetadata = outcome.canonicalResult.metadata;
+  const effectivePlannerBadges = [...new Set([
+    ...(plannerBadges ?? []),
+    ...(existingMetadata?.plannerBadges ?? []),
+  ])];
+  const resolvedInput = existingMetadata?.resolvedInput
+    ?? (resolvedLatex !== originalLatex.trim() ? canonicalMathValue(resolvedLatex) : undefined);
+  return {
+    ...attached,
+    canonicalResult: updateCanonicalResultMetadata(outcome.canonicalResult, {
+      plannerBadges: effectivePlannerBadges.length > 0 ? effectivePlannerBadges : undefined,
+      resolvedInput,
+    }),
+  };
 }
 
 export function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
@@ -60,15 +81,39 @@ export function ensureSafeEquationSuccessOutcome(outcome: DisplayOutcome, target
 }
 
 export function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: EquationAnswerMode): DisplayOutcome {
-  return outcome.kind === 'prompt' || outcome.solutionKind === 'approximate-numeric'
-    ? outcome
-    : { ...outcome, answerMode };
+  if (outcome.kind === 'prompt' || outcome.solutionKind === 'approximate-numeric') {
+    return outcome;
+  }
+  return {
+    ...outcome,
+    answerMode,
+    ...(outcome.canonicalResult
+      ? {
+          canonicalResult: updateCanonicalResultMetadata(
+            outcome.canonicalResult,
+            { answerMode },
+          ),
+        }
+      : {}),
+  };
 }
 
 export function withEquationSolutionKind(outcome: DisplayOutcome, solutionKind: SolutionKind): DisplayOutcome {
-  return outcome.kind === 'success' && !outcome.solutionKind
-    ? { ...outcome, solutionKind }
-    : outcome;
+  if (outcome.kind !== 'success' || outcome.solutionKind) {
+    return outcome;
+  }
+  return {
+    ...outcome,
+    solutionKind,
+    ...(outcome.canonicalResult
+      ? {
+          canonicalResult: updateCanonicalResultMetadata(
+            outcome.canonicalResult,
+            { solutionKind },
+          ),
+        }
+      : {}),
+  };
 }
 
 export function withEquationNumericRouteKind(outcome: DisplayOutcome): DisplayOutcome {

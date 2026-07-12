@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; the Equation worker/fallback outcome boundary is verified through Gate 8 and entering its approved commit; no push is authorized
+Status: active; native Calculate and proven Equation finite-root documents are verified through Gate 9 and entering their approved commit; no push is authorized
 
 ## Attribution
 
@@ -98,12 +98,18 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - Carrier validation is strict JSON-compatible and structured-clone-safe at 20,000 nodes, depth 64, and 1,280,000 UTF-8 bytes. Candidate, validation, and analysis arrays have explicit count caps; document-mirrored evidence must agree exactly, controlled-stop text must match the canonical error, and duplicate analysis IDs fail.
 - The carrier core has no `DisplayOutcome` dependency. A single compatibility boundary projects current Equation outcomes without reparsing LaTeX, labels legacy errors as compatibility controlled stops, and rejects prompts.
 - All six Equation golden executions and all 25 sanitized Equation replay fixtures preserve canonical-document equality and clone parity. The complete Equation district passed 142 files and 1,206 tests at the carrier commit.
-- `EQUATION-OUTCOME-BOUNDARY1`: verified and entering its approved commit. The isolated worker and main-thread fallback now return `EquationResultOutcomeBoundaryV1`; the OOE job carries that boundary and invokes one memoized canonical-result-to-Display adapter only for final payload and provenance projection.
+- `EQUATION-OUTCOME-BOUNDARY1`: committed as `42a5efd6`. The isolated worker and main-thread fallback now return `EquationResultOutcomeBoundaryV1`; the OOE job carries that boundary and invokes one memoized canonical-result-to-Display adapter only for final payload and provenance projection.
 - The boundary is strict clone-safe data bounded by the carrier limit plus a small transient-policy allowance. The client revalidates worker completions, rejects malformed carriers and cancellation-shaped completed messages, and never falls back after a post-start invalid response. Cancellation remains a local hard-stop control boundary, while runtime advisories remain transient and outside the canonical document.
 - Host IDs, capability identity, request shape, guarded trace, stale/cancel rules, commit legality, diagnostics, fallback policy, and History-ticket behavior remain unchanged. Prompts and executable result actions fail closed rather than being silently embedded in result truth.
 - The accepted inversion inventory now measures 574 producer boundaries and 757 consumer reads. Equation records one native canonical-to-Display boundary adapter, 120 compatibility producers, 245 forwarders, 16 controls, 265 legacy reads, and zero canonical reads; this is boundary infrastructure, not a claim that Equation producers are already native.
 - Full verification passes 143 Equation files and 1,213 tests, focused boundary/worker suites, TypeScript, production build, global lint, file sizes, Display inversion, Surface, OOE, compartments, seam selection, and diff hygiene. Eight headless Chromium Equation cases and three inspected screenshots preserve answer, domain, branch, periodic, detail, and overflow behavior.
 - The printer ratchet's seven tests pass, but its live inventory remains red on five Notebook-owned `resultLatex` paths committed by the parallel Notebook lane. This carrier adds no result serializer or printer debt, so the unrelated paths remain outside this milestone rather than being silently registered here.
+- `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1`: verified and entering its approved commit. A neutral producer builder creates validated documents directly from typed producer fields; Calculate evaluate/simplify/factor/expand routes and proven Equation finite-root routes dual-write native documents without parsing LaTeX or changing presentation.
+- Native Equation documents survive orchestration only while they exactly match the current compatibility projection. Target rewrites, Calculus enrichment, or any other legacy-field mutation removes stale native truth and remains on the compatibility path until its owning producer slice migrates.
+- The accepted inventory now measures 585 producer boundaries, 773 consumer reads, 157 compatibility projections, 554 legacy reads, and seven native-document calls. Calculate records two native boundaries and one compatibility producer; Equation records four native boundaries, 120 compatibility producers, and 265 legacy reads.
+- Browser verification found and closed two migration defects before commit: undefined runtime-advisory properties could not cross the strict Equation JSON boundary, and canonical round-trip projection could lose uniform text/math row intent. Transport advisories are now compacted explicitly, and projection restores uniform `lineKind`/`lineKinds` before using mixed `lineParts`.
+- All 43 golden executions and 100 replay fixtures preserve canonical-document and visible-field parity. The full unit suite passes 523 files and 3,659 tests; 19 Chromium canaries and focused Calculate/Equation/Calculus visual evidence pass with zero accepted output drift.
+- The five separately committed Notebook result serializers are now classified narrowly as non-producer document content in the printer registry. Notebook source remains untouched, and the printer ratchet is green with zero compatibility fallbacks.
 
 ## Verification Contract
 

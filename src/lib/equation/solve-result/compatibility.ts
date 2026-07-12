@@ -1,6 +1,7 @@
 import type { CandidateValidationResult, DisplayOutcome } from '../../../types/calculator';
 import {
   projectDisplayOutcomeToCanonicalResult,
+  resolveCanonicalResultForStorage,
   type CanonicalResultProjectionFailure,
 } from '../../result-contract';
 import {
@@ -31,11 +32,24 @@ export function projectEquationDisplayOutcomeToSolveResult(
   outcome: DisplayOutcome,
   options: ProjectEquationDisplayOutcomeOptions = {},
 ): EquationSolveResultCompatibilityResult {
-  const projected = projectDisplayOutcomeToCanonicalResult(outcome);
-  if (!projected.ok) {
-    return { ok: false, failure: { reason: 'projection', projection: projected.failure } };
+  if (outcome.kind === 'prompt') {
+    const projected = projectDisplayOutcomeToCanonicalResult(outcome);
+    if (!projected.ok) {
+      return { ok: false, failure: { reason: 'projection', projection: projected.failure } };
+    }
+    return {
+      ok: false,
+      failure: { reason: 'contract', message: 'Equation prompts cannot carry solve results.' },
+    };
   }
-  const document = projected.document;
+  const resolution = resolveCanonicalResultForStorage(outcome);
+  if (!resolution.ok) {
+    return {
+      ok: false,
+      failure: { reason: 'contract', message: resolution.message },
+    };
+  }
+  const document = resolution.document;
   const controlledStop = document.outcomeKind === 'error'
     ? options.controlledStop ?? {
         code: 'compatibility-display-error',

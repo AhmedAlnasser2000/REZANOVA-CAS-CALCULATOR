@@ -141,3 +141,25 @@
 ### Next Step
 
 - Commit `EQUATION-OUTCOME-BOUNDARY1`, then begin `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1` with Calculate and proven Equation finite-root routes.
+
+## RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1
+
+### Completed
+
+- Added a reusable producer-owned document builder that validates typed primary math, rows, branches, systems, periodic structures, supplements, typed details, warnings, approximations, metadata, and optional Table evidence without parsing LaTeX.
+- Added a Calculate-owned adapter and dual-wrote native documents for evaluate, simplify, factor, and expand results from the proven answer node and existing exact MathJSON.
+- Added an Equation finite-root adapter for node-proven direct, linear, polynomial, and central selected-target routes. Native documents are retained through worker/fallback orchestration only when exact parity with the final compatibility projection still holds.
+- Removed stale native documents after target rewrites and Calculus-owned enrichment. These routes remain compatibility-owned until their named migration slices rather than carrying incomplete canonical truth.
+- Preserved explicit detail intent through canonical round trips by restoring uniform `lineKind`/`lineKinds` and using `lineParts` only for genuinely mixed rows.
+- Compacted optional Equation runtime advisories before strict worker-boundary validation so absent values do not become invalid own properties.
+- Narrowly classified the separately committed Notebook `resultLatex` schema/template/editor paths as non-producer document content without changing any protected Notebook source.
+
+### Runtime And UI
+
+- All 43 golden executions and all 100 replay fixtures preserve exact canonical and compatibility projections. Native replay evidence covers all Calculate fixtures and three proven Equation quadratic finite-root fixtures.
+- Browser evidence covers DEG/RAD inverse trig, Calculate factor output, Equation finite roots and cards, and Calculus compatibility enrichment. The real worker boundary and typed detail presentation both pass after the browser-found repairs.
+- The accepted inventory is 585 producer boundaries, 773 consumer reads, 157 compatibility projections, 554 legacy reads, and seven native calls. No intentional mathematical or visible formatting change is accepted.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1`, then migrate parameterized, numeric, complex, composition, system, and guarded Equation producers in `RESULT-DOCUMENT-EQUATION-ADVANCED1`.

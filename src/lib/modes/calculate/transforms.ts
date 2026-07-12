@@ -15,6 +15,7 @@ import {
   storedValueReadbackSections,
 } from '../../algebra/variable-memory';
 import type { DisplayOutcome } from '../../../types/calculator';
+import { buildCalculateResultDocument } from './result-document';
 import type { RunCalculateAlgebraTransformRequest } from './types';
 
 export function runCalculateAlgebraTransform({
@@ -134,17 +135,38 @@ export function runCalculateAlgebraTransform({
     );
   }
 
+  const exactSupplementLatex =
+    result.exactSupplementLatex && result.exactSupplementLatex.length > 0
+      ? result.exactSupplementLatex
+      : undefined;
+  const detailSections = storedValueDetails.length > 0 ? storedValueDetails : undefined;
+  const resolvedInputLatex = planner.resolvedLatex !== latex.trim()
+    ? planner.resolvedLatex
+    : undefined;
+  const canonicalResult = buildCalculateResultDocument({
+    outcomeKind: 'success',
+    title,
+    exactLatex: result.exactLatex,
+    supplements: exactSupplementLatex,
+    detailSections,
+    warnings: [],
+    resultOrigin: 'symbolic-engine',
+    plannerBadges: planner.badges,
+    resolvedInputLatex,
+    transformBadges: result.transformBadges,
+    transformSummaryText: result.transformSummaryText,
+    transformSummaryLatex: result.transformSummaryLatex,
+  });
+
   return attachRuntimeEnvelope(
     {
       kind: 'success',
       title,
       exactLatex: result.exactLatex,
-      exactSupplementLatex:
-        result.exactSupplementLatex && result.exactSupplementLatex.length > 0
-          ? result.exactSupplementLatex
-          : undefined,
+      canonicalResult,
+      exactSupplementLatex,
       warnings: [],
-      detailSections: storedValueDetails.length > 0 ? storedValueDetails : undefined,
+      detailSections,
       resultOrigin: 'symbolic-engine',
       transformBadges: result.transformBadges,
       transformSummaryText: result.transformSummaryText,

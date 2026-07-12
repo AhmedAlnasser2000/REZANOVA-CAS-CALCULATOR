@@ -325,9 +325,27 @@ function restoreDetailSections(
 ): DisplayDetailSection[] | undefined {
   return sections?.map((section) => {
     const lineParts = section.lines.map((line) => line.map(restoreDetailPart));
+    const lines = lineParts.map((line) =>
+      line.map((part) => part.kind === 'math' ? part.latex : part.text).join(''));
+    const simpleLineKinds = lineParts.map((line) =>
+      line.length === 1 ? line[0]?.kind : undefined);
+    if (simpleLineKinds.every((kind): kind is 'math' | 'text' => kind !== undefined)) {
+      const firstKind = simpleLineKinds[0];
+      return simpleLineKinds.every((kind) => kind === firstKind)
+        ? {
+            title: section.title,
+            lines,
+            ...(firstKind ? { lineKind: firstKind } : {}),
+          }
+        : {
+            title: section.title,
+            lines,
+            lineKinds: simpleLineKinds,
+          };
+    }
     return {
       title: section.title,
-      lines: lineParts.map((line) => line.map((part) => part.kind === 'math' ? part.latex : part.text).join('')),
+      lines,
       lineParts,
     };
   });

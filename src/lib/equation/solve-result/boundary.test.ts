@@ -17,6 +17,7 @@ describe('Equation outcome boundary', () => {
       exactLatex: 'x=1',
       warnings: [],
       runtimeAdvisories: {
+        stopReason: undefined,
         equationNumericSolve: { kind: 'manual-only' },
       },
     };
@@ -24,11 +25,17 @@ describe('Equation outcome boundary', () => {
     const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(outcome);
     expect(boundary.result.document.primaryMath?.canonicalLatex).toBe('x=1');
     expect(boundary.result.document).not.toHaveProperty('runtimeAdvisories');
-    expect(boundary.runtimeAdvisories).toEqual(outcome.runtimeAdvisories);
+    expect(boundary.runtimeAdvisories).toEqual({
+      equationNumericSolve: { kind: 'manual-only' },
+    });
     expect(structuredClone(boundary)).toEqual(boundary);
+    expect(validateEquationResultOutcomeBoundary(boundary)).toMatchObject({ ok: true });
 
     const restored = projectEquationOutcomeBoundaryToDisplay(boundary);
-    expect(restored).toMatchObject(outcome);
+    expect(restored).toMatchObject({
+      ...outcome,
+      runtimeAdvisories: { equationNumericSolve: { kind: 'manual-only' } },
+    });
     expect(restored.kind).toBe('success');
     expect(restored.kind === 'success' ? restored.canonicalResult : undefined).toEqual(
       boundary.result.document,

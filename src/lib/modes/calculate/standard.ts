@@ -27,6 +27,7 @@ import {
   mergeDerivativeStrategies,
   responseTitle,
 } from './titles';
+import { buildCalculateResultDocument } from './result-document';
 import type { RunCalculateModeRequest } from './types';
 
 export function runCalculateMode({
@@ -202,10 +203,37 @@ export function runCalculateMode({
   const profiledMath = response.answerMathJson === undefined
     ? undefined
     : profileDomainDisplayMathPayload(response.exactLatex, response.answerMathJson);
+  const exactLatex = profiledMath?.canonicalLatex ?? response.exactLatex;
+  const derivativeStrategies = mergeDerivativeStrategies(
+    planner.derivativeStrategies,
+    response.calculusDerivativeStrategies,
+  );
+  const resolvedInputLatex = executionLatex !== latex.trim() ? executionLatex : undefined;
+  const variableSubstitutions = !response.error && substitution.substitutions.length > 0
+    ? substitution.substitutions
+    : undefined;
+  const canonicalResult = buildCalculateResultDocument({
+    outcomeKind: response.error ? 'error' : 'success',
+    title: responseTitleText,
+    ...(response.error ? { error: response.error } : {}),
+    ...(exactLatex ? { exactLatex } : {}),
+    ...(profiledMath?.canonicalMath ? { canonicalMath: profiledMath.canonicalMath } : {}),
+    answerRows: response.answerRows,
+    supplements: response.exactSupplementLatex,
+    approxText: response.approxText,
+    detailSections: detailSections.length > 0 ? detailSections : undefined,
+    warnings: response.warnings,
+    resultOrigin: response.resultOrigin,
+    calculusStrategy: response.calculusStrategy,
+    calculusDerivativeStrategies: derivativeStrategies,
+    plannerBadges: planner.badges,
+    resolvedInputLatex,
+    variableSubstitutions,
+  });
   const outcome = attachRuntimeEnvelope(
     buildRuntimeOutcome({
       title: responseTitleText,
-      exactLatex: profiledMath?.canonicalLatex ?? response.exactLatex,
+      exactLatex,
       canonicalMath: profiledMath?.canonicalMath,
       answerRows: response.answerRows,
       exactSupplementLatex: response.exactSupplementLatex,
@@ -214,10 +242,7 @@ export function runCalculateMode({
       error: response.error,
       resultOrigin: response.resultOrigin,
       calculusStrategy: response.calculusStrategy,
-      calculusDerivativeStrategies: mergeDerivativeStrategies(
-        planner.derivativeStrategies,
-        response.calculusDerivativeStrategies,
-      ),
+      calculusDerivativeStrategies: derivativeStrategies,
       detailSections: detailSections.length > 0 ? detailSections : undefined,
       runtimeAdvisories: classifyCalculateRuntimeAdvisories({ error: response.error }),
     }),
@@ -229,7 +254,9 @@ export function runCalculateMode({
     },
   );
 
-  return outcome.kind === 'success' && substitution.substitutions.length > 0
-    ? { ...outcome, variableSubstitutions: substitution.substitutions }
-    : outcome;
+  return {
+    ...outcome,
+    canonicalResult,
+    ...(variableSubstitutions ? { variableSubstitutions } : {}),
+  };
 }

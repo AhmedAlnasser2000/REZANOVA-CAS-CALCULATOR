@@ -109,6 +109,32 @@ function isRuntimeAdvisories(value: unknown): value is NonNullable<DisplayOutcom
   return true;
 }
 
+function compactRuntimeAdvisories(
+  advisories: NonNullable<DisplayOutcome['runtimeAdvisories']>,
+): NonNullable<DisplayOutcome['runtimeAdvisories']> | undefined {
+  const compacted: NonNullable<DisplayOutcome['runtimeAdvisories']> = {
+    ...(advisories.stopReason
+      ? {
+          stopReason: {
+            kind: advisories.stopReason.kind,
+            source: advisories.stopReason.source,
+          },
+        }
+      : {}),
+    ...(advisories.equationNumericSolve
+      ? {
+          equationNumericSolve: advisories.equationNumericSolve.kind === 'blocked'
+            ? {
+                kind: advisories.equationNumericSolve.kind,
+                reason: advisories.equationNumericSolve.reason,
+              }
+            : { kind: advisories.equationNumericSolve.kind },
+        }
+      : {}),
+  };
+  return Object.keys(compacted).length > 0 ? compacted : undefined;
+}
+
 function invalidBoundary(message: string, path?: string): EquationOutcomeBoundaryValidation {
   return {
     ok: false,
@@ -236,6 +262,9 @@ export function projectEquationDisplayOutcomeToBoundary(
       },
     };
   }
+  const runtimeAdvisories = outcome.runtimeAdvisories
+    ? compactRuntimeAdvisories(outcome.runtimeAdvisories)
+    : undefined;
 
   return {
     ok: true,
@@ -243,8 +272,8 @@ export function projectEquationDisplayOutcomeToBoundary(
       version: EQUATION_OUTCOME_BOUNDARY_VERSION,
       kind: 'result',
       result: projected.result,
-      ...(outcome.runtimeAdvisories
-        ? { runtimeAdvisories: structuredClone(outcome.runtimeAdvisories) }
+      ...(runtimeAdvisories
+        ? { runtimeAdvisories }
         : {}),
     },
   };

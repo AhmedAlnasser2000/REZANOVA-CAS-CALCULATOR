@@ -196,6 +196,9 @@ function withStoredValueDetails(
       ...((outcome.kind === 'prompt' ? [] : outcome.detailSections) ?? []),
     ],
   };
+  if (nextOutcome.kind !== 'prompt') {
+    delete nextOutcome.canonicalResult;
+  }
 
   return nextOutcome.kind === 'success' && substitutions.length > 0
     ? { ...nextOutcome, variableSubstitutions: [...substitutions] }
@@ -273,13 +276,15 @@ function withDerivativeSteps(
     return outcome;
   }
 
-  return {
+  const nextOutcome = {
     ...outcome,
     detailSections: [
       ...(outcome.detailSections ?? []),
       detailSection,
     ],
   };
+  delete nextOutcome.canonicalResult;
+  return nextOutcome;
 }
 
 export async function runCalculusWorkspaceMode(

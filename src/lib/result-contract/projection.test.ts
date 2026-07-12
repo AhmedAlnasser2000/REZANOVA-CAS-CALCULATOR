@@ -150,6 +150,18 @@ describe('canonical result compatibility projections', () => {
       ['x>0'],
       ['Exact route'],
     ]);
+    expect(display.detailSections).toEqual([
+      {
+        title: 'Proof',
+        lines: ['Substitute x=1'],
+        lineParts: [[
+          { kind: 'text', text: 'Substitute ' },
+          { kind: 'math', latex: 'x=1' },
+        ]],
+      },
+      { title: 'Boundary', lines: ['x>0'], lineKind: 'math' },
+      { title: 'Method', lines: ['Exact route'], lineKind: 'text' },
+    ]);
     expect(table).toEqual(TABLE_RESPONSE);
 
     const second = projectDisplayOutcomeToCanonicalResult(display, { tableResponse: table });
@@ -191,7 +203,7 @@ describe('canonical result compatibility projections', () => {
     expect(restored.detailSections?.[0]).toMatchObject({
       title: 'Domain',
       lines: ['x<0'],
-      lineParts: [[{ kind: 'math', latex: 'x<0' }]],
+      lineKind: 'math',
     });
   });
 

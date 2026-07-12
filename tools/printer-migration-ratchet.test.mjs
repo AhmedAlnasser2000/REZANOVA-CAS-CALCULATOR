@@ -49,6 +49,9 @@ describe('printer migration ratchet', () => {
       'src/lib/guide/reference.ts': `
         export const example = { exactLatex: 'reference-only' };
       `,
+      'src/lib/notebook/document/tiptap-adapter.ts': `
+        export const evidence = { resultLatex: 'authored-reference' };
+      `,
     });
     const report = scanPrinterMigrationRepository({ rootDir });
 
@@ -57,6 +60,7 @@ describe('printer migration ratchet', () => {
     assert.equal(report.categoryCounts['input-syntax'], 1);
     assert.equal(report.categoryCounts['prose-only'], 1);
     assert.equal(report.categoryCounts['reference-content'], 1);
+    assert.equal(report.classificationCounts['notebook-document-content'], 1);
     assert.match(formatPrinterMigrationReport(report), /calculate-result-v1/u);
     assert.deepEqual(JSON.parse(JSON.stringify(report)), report);
     assert.deepEqual(scanPrinterMigrationRepository({ rootDir }), report);
