@@ -3,6 +3,7 @@ import {
   runEquationMode,
   runEquationModeForIsolatedWorker,
 } from '../equation';
+import { projectEquationOutcomeBoundaryToDisplay } from '../../equation/equation-solve-result';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { makeRequest } from './test-support';
 
@@ -681,7 +682,7 @@ describe('Equation mode parameterized families', () => {
         equationSolveTarget: 'z',
         equationDomainIntent: 'real',
       });
-      return result.payload;
+      return projectEquationOutcomeBoundaryToDisplay(result.boundary);
     };
     const direct = await solve('z^3+z+1=0');
     const absoluteZero = await solve('\\left|z^3+z+1\\right|=0');

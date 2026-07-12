@@ -4,6 +4,10 @@ import { runGoldenCase } from '../../__golden__/golden-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../../history-replay/fixtures';
 import { executeHistoryReplayRequest } from '../../history-replay/native-execution';
 import { projectDisplayOutcomeToCanonicalResult } from '../../result-contract';
+import {
+  projectEquationDisplayOutcomeToBoundaryOrThrow,
+  projectEquationOutcomeBoundaryToDisplay,
+} from './boundary';
 import { projectEquationDisplayOutcomeToSolveResult } from './compatibility';
 import { validateEquationSolveResultContract } from './validation';
 
@@ -19,6 +23,19 @@ function assertCarrier(outcome: Awaited<ReturnType<typeof runGoldenCase>>['outco
   expect(projected.result.document, `${label} canonical document`).toEqual(direct.document);
   expect(validateEquationSolveResultContract(projected.result).ok, `${label} contract`).toBe(true);
   expect(structuredClone(projected.result), `${label} clone parity`).toEqual(projected.result);
+
+  const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(outcome);
+  const restored = projectEquationOutcomeBoundaryToDisplay(boundary);
+  const restoredDocument = projectDisplayOutcomeToCanonicalResult(restored);
+  expect(restoredDocument.ok, `${label} restored canonical document`).toBe(true);
+  if (!restoredDocument.ok) return;
+  expect(restoredDocument.document, `${label} boundary canonical parity`).toEqual(direct.document);
+  expect(restored.runtimeAdvisories, `${label} runtime advisory parity`).toEqual(
+    outcome.runtimeAdvisories,
+  );
+  if (outcome.kind !== 'prompt') {
+    expect(outcome.actions, `${label} Equation actions require a boundary policy`).toBeUndefined();
+  }
 }
 
 describe('Equation solve result corpus coverage', () => {

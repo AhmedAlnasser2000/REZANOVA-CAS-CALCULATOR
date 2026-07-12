@@ -1,4 +1,5 @@
 import type { SharedSolveRequest } from '../../equation/shared-solve';
+import type { EquationResultOutcomeBoundaryV1 } from '../../equation/equation-solve-result';
 import type { EquationOoePilotMetadata } from '../../ooe/pilots/equation-pilot';
 import type {
   AngleUnit,
@@ -47,6 +48,6 @@ export type EquationModeOoePilotRunResult = {
 };
 
 export type EquationModeIsolatedWorkerRunResult = {
-  payload: DisplayOutcome;
+  boundary: EquationResultOutcomeBoundaryV1;
   guardedTrace?: EquationOoePilotMetadata['guardedTrace'];
 };

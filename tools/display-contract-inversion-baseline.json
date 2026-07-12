@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DISPLAY-CONTRACT-INVERSION-RATCHET1 records the verified pre-inversion producer and consumer authority surface; structured History contributes the sole native canonical adapter call, golden expectations remain reference fixtures, control-only outcomes stay separate, and all migration debt may only decrease by declared lane.",
+  "acceptedReason": "EQUATION-OUTCOME-BOUNDARY1 moves the Equation worker and fallback payload to a validated solve-result carrier, adds one canonical-to-Display boundary adapter, preserves compatibility debt at 120 and legacy reads at 265, and keeps cancellation plus runtime advisories as explicit transient control policy.",
   "registryDigest": "70a429b8b893441bc673",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -41,7 +41,7 @@
     "equation": {
       "compatibilityProjection": 120,
       "legacyRead": 265,
-      "nativeDocument": 0
+      "nativeDocument": 1
     },
     "geometry": {
       "compatibilityProjection": 3,
@@ -118,6 +118,9 @@
     "native-document": {
       "src/app/runtime/historyDisplayEntry.ts": [
         "9babe825561a6da699df:1"
+      ],
+      "src/lib/equation/solve-result/boundary.ts": [
+        "27102b7d857242007414:1"
       ]
     },
     "canonical-projection": {
@@ -212,6 +215,9 @@
       ],
       "src/lib/equation/polynomial/system.ts": [
         "fb2c35323f5e68c73c4e:1"
+      ],
+      "src/lib/equation/solve-result/boundary.ts": [
+        "7be0e145df425179b79e:1"
       ],
       "src/lib/equation/target/surface.ts": [
         "cacfd4ab9e2da58b1c44:1",
@@ -375,9 +381,6 @@
       ],
       "src/lib/modes/worker-clients/calculus-worker-client.ts": [
         "359e885116635a6e9873:1"
-      ],
-      "src/lib/modes/worker-clients/equation-worker-client.ts": [
-        "597896e8a10c7b13909d:1"
       ],
       "src/lib/modes/worker-clients/geometry-worker-client.ts": [
         "b37bdfc609b17c347ced:1"
@@ -744,9 +747,11 @@
         "1d2794e5729f3fd54755:1",
         "c2353dd4a4d52be43868:1",
         "c93c71647e54b7deeaa1:1",
+        "873900740cd797b0e608:1",
         "3a14428deb05597e64d9:1",
         "c93c71647e54b7deeaa1:2",
-        "50655bb03563569db016:1"
+        "052f1450c7bdde95295e:1",
+        "6c1a9de8b2b047762e8e:1"
       ],
       "src/lib/modes/equation/stored-values.ts": [
         "397f61f1ea5d479ec7f5:1"
@@ -802,11 +807,6 @@
         "7f86786fa151409ca039:1",
         "5a50ca63e9532f6958af:1"
       ],
-      "src/lib/modes/worker-clients/equation-worker-client.ts": [
-        "3af1dd333d2becc4cbfc:1",
-        "a1471ea4d856f1edf67e:1",
-        "50f2735be43360599530:1"
-      ],
       "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
         "8224da9626514cc4fbe6:1",
         "83dfe0c713bed0a4d9b7:1",
@@ -814,9 +814,6 @@
       ],
       "src/lib/modes/worker-entrypoints/calculate.worker.ts": [
         "0268bd07a3e847e42a22:1"
-      ],
-      "src/lib/modes/worker-entrypoints/equation.worker.ts": [
-        "bbc59e4a76f2c57bdaf6:1"
       ],
       "src/lib/modes/worker-entrypoints/matrix.worker.ts": [
         "c1d844bb944bb5ad302a:1"
@@ -1813,6 +1810,9 @@
         "eff5fe34931ac950c8b3:1",
         "eff5fe34931ac950c8b3:2"
       ],
+      "src/lib/equation/solve-result/boundary.ts": [
+        "44bd6b19461e676d6c91:1"
+      ],
       "src/lib/equation/target/surface.ts": [
         "22a251632a30067b0fa4:1",
         "9c2f29f1bba4eacb7ece:1",
@@ -1946,6 +1946,11 @@
     "transient-read": {
       "src/lib/display/print-hygiene.ts": [
         "2e1c6da332cab53cb884:1"
+      ],
+      "src/lib/equation/solve-result/boundary.ts": [
+        "632f8cd0112b89a45475:1",
+        "782761956b59b87d2ed7:1",
+        "782761956b59b87d2ed7:2"
       ],
       "src/lib/equation/target/surface.ts": [
         "412a0ba26fb39fc52085:1",

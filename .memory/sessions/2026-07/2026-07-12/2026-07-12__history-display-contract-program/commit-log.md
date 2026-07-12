@@ -58,10 +58,19 @@
 - push: not authorized
 - excluded: `test-results/` and all concurrent Notebook files/registrations
 
-## Pending Commit
+## EQUATION-SOLVE-RESULT-CONTRACT1
 
+- commit_hash: `1f488623`
 - commit_message: `EQUATION-SOLVE-RESULT-CONTRACT1`
 - scope: bounded Equation solve-result carrier, compatibility projection, shared structured-value inspection, corpus and full-Equation verification, package/CI/release/seam/compartment wiring, and durable evidence
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/` and the separately committed Notebook program
+
+## Pending Commit
+
+- commit_message: `EQUATION-OUTCOME-BOUNDARY1`
+- scope: validated Equation worker/fallback result boundary, explicit cancellation and runtime-advisory policy, one final canonical-to-Display adapter, runtime parity tests, full Equation and Playwright verification, accepted inversion baseline, and durable evidence
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/` and the separately committed Notebook program

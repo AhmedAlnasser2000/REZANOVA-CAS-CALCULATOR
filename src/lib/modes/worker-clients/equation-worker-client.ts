@@ -1,4 +1,9 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import {
+  buildEquationCancelledOutcomeBoundary,
+  type EquationOutcomeBoundaryV1,
+  type EquationResultOutcomeBoundaryV1,
+  validateEquationResultOutcomeBoundary,
+} from '../../equation/equation-solve-result';
 import {
   EQUATION_SOLVE_CANCELLED_MESSAGE,
   type GuardedEquationStageReplayTrace,
@@ -11,17 +16,18 @@ import type {
 } from '../worker-entrypoints/equation.worker';
 import type { RunEquationModeRequest } from '../equation';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
-import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const EQUATION_WORKER_RUNTIME_HOST_ID = 'equation-worker-runtime' as const;
 export const EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID = 'equation-runtime' as const;
 
 export type EquationWorkerRunPayload = {
-  payload: DisplayOutcome;
+  boundary: EquationResultOutcomeBoundaryV1;
   guardedTrace?: GuardedEquationStageReplayTrace;
 };
 
-export type EquationWorkerRunResult = EquationWorkerRunPayload & {
+export type EquationWorkerRunResult = {
+  boundary: EquationOutcomeBoundaryV1;
+  guardedTrace?: GuardedEquationStageReplayTrace;
   hostExecution: EquationRuntimeHostExecution;
 };
 
@@ -61,17 +67,6 @@ function nextRequestId() {
   return `equation-worker-${equationWorkerRequestCounter}`;
 }
 
-function buildCancelledOutcome(): DisplayOutcome {
-  return {
-    kind: 'error',
-    title: 'Solve',
-    error: EQUATION_SOLVE_CANCELLED_MESSAGE,
-    warnings: [],
-    plannerBadges: [],
-    ...proseSolveSummary('Equation solve stopped after the Equation worker runtime was hard-stopped.'),
-  };
-}
-
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
@@ -103,7 +98,7 @@ export async function runEquationModeViaIsolatedWorker(
 ): Promise<EquationWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledOutcome(),
+      boundary: buildEquationCancelledOutcomeBoundary(EQUATION_SOLVE_CANCELLED_MESSAGE),
       hostExecution: {
         kind: 'worker-cancelled',
         hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
@@ -194,7 +189,7 @@ export async function runEquationModeViaIsolatedWorker(
       worker.terminate();
       context.checkpoint('Equation worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledOutcome(),
+        boundary: buildEquationCancelledOutcomeBoundary(EQUATION_SOLVE_CANCELLED_MESSAGE),
         hostExecution: {
           kind: 'worker-cancelled',
           hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
@@ -224,8 +219,15 @@ export async function runEquationModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateEquationResultOutcomeBoundary(event.data.boundary);
+        if (!validation.ok) {
+          fail(workerRuntimeError(
+            `invalid completed boundary: ${validation.failure.reason}: ${validation.failure.message}`,
+          ));
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          boundary: validation.boundary,
           guardedTrace: event.data.guardedTrace,
           hostExecution: {
             kind: 'worker',

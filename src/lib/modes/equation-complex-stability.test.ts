@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { DisplayOutcome } from '../../types/calculator';
+import { getEquationAnalysisEvidence } from '../equation/analysis-evidence';
+import { projectDisplayOutcomeToCanonicalResult } from '../result-contract';
 import {
   buildEquationOoeInputRevisionId,
   runEquationMode,
@@ -31,6 +34,20 @@ function makeRequest() {
   };
 }
 
+function expectBoundaryParity(direct: DisplayOutcome, wrapped: DisplayOutcome) {
+  const directDocument = projectDisplayOutcomeToCanonicalResult(direct);
+  const wrappedDocument = projectDisplayOutcomeToCanonicalResult(wrapped);
+  expect(directDocument.ok).toBe(true);
+  expect(wrappedDocument.ok).toBe(true);
+  if (!directDocument.ok || !wrappedDocument.ok) return;
+  expect(wrappedDocument.document).toEqual(directDocument.document);
+  expect(wrapped.kind === 'prompt' ? undefined : wrapped.canonicalResult).toEqual(
+    directDocument.document,
+  );
+  expect(wrapped.runtimeAdvisories).toEqual(direct.runtimeAdvisories);
+  expect(getEquationAnalysisEvidence(wrapped)).toEqual(getEquationAnalysisEvidence(direct));
+}
+
 describe('Equation Complex exact stability', () => {
   it('keeps Complex Exact output stable through the OOE wrapper and exact-form revisions', async () => {
     const baseRequest = {
@@ -55,7 +72,7 @@ describe('Equation Complex exact stability', () => {
       const direct = runEquationMode(request);
       const wrapped = await runEquationModeWithOoePilot(request);
 
-      expect(wrapped.payload).toEqual(direct);
+      expectBoundaryParity(direct, wrapped.payload);
       expect(wrapped.payload.kind).toBe('success');
       if (wrapped.payload.kind !== 'success') {
         throw new Error(`Expected ${complexExactForm} complex exact output to solve`);

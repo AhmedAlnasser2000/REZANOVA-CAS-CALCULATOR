@@ -1,3 +1,4 @@
+export * from './boundary';
 export * from './compatibility';
 export * from './contract';
 export * from './factory';

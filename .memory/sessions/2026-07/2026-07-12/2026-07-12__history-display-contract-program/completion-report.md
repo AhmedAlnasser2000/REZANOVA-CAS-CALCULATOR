@@ -120,3 +120,24 @@
 ### Next Step
 
 - Commit `EQUATION-SOLVE-RESULT-CONTRACT1`, then migrate Equation orchestration and worker/fallback exits through one final canonical-result adapter in `EQUATION-OUTCOME-BOUNDARY1`.
+
+## EQUATION-OUTCOME-BOUNDARY1
+
+### Completed
+
+- Added a version-1 Equation outcome boundary that carries either one validated solve-result carrier or explicit hard-stop cancellation control.
+- Moved the isolated Equation worker entrypoint/client, main-thread fallback, and OOE runtime payload from `DisplayOutcome` to the result boundary without changing public requests, capability identity, host topology, guarded trace, or fallback policy.
+- Added one canonical-result-to-Display adapter at the outer OOE return/provenance seam. It restores existing Equation analysis evidence and transient runtime advisories without placing either in persisted canonical truth.
+- Narrowed worker `completed` messages to result boundaries. The client revalidates clone safety, wrapper shape, runtime-advisory shape, and the complete carrier, then rejects malformed or cancellation-shaped completions without invoking the pre-start fallback.
+- Kept prompt outcomes and executable result actions outside the mathematical boundary. They fail closed until a dedicated transient control contract exists.
+
+### Runtime And UI
+
+- Current visible Equation output is unchanged across exact, numeric, Complex, parameterized, worker/fallback, domain, branch, and periodic routes.
+- OOE cancellation still hard-stops the worker and produces the existing final Solve error card. Runtime advisories remain transient and are attached only after canonical projection.
+- Eight focused headless Chromium cases passed. Three inspected full-page screenshots cover quotient-domain periodic output, mixed-trig periodic structure, and collapsed exact-periodic solve notes without clipping or overlap.
+- The accepted inventory records one Equation native boundary adapter while retaining 120 compatibility producers and 265 legacy reads. Native producer migration has not been overclaimed.
+
+### Next Step
+
+- Commit `EQUATION-OUTCOME-BOUNDARY1`, then begin `RESULT-DOCUMENT-CALCULATE-EQUATION-CORE1` with Calculate and proven Equation finite-root routes.

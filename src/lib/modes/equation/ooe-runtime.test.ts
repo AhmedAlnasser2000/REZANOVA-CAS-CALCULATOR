@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { DisplayOutcome } from '../../../types/calculator';
+import { getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
+import { projectDisplayOutcomeToCanonicalResult } from '../../result-contract';
 import {
   buildEquationOoeInputRevisionId,
   buildEquationOoeSnapshot,
@@ -6,6 +9,20 @@ import {
   runEquationModeWithOoePilot,
 } from '../equation';
 import { makeRequest } from './test-support';
+
+function expectBoundaryParity(direct: DisplayOutcome, wrapped: DisplayOutcome) {
+  const directDocument = projectDisplayOutcomeToCanonicalResult(direct);
+  const wrappedDocument = projectDisplayOutcomeToCanonicalResult(wrapped);
+  expect(directDocument.ok).toBe(true);
+  expect(wrappedDocument.ok).toBe(true);
+  if (!directDocument.ok || !wrappedDocument.ok) return;
+  expect(wrappedDocument.document).toEqual(directDocument.document);
+  expect(wrapped.kind === 'prompt' ? undefined : wrapped.canonicalResult).toEqual(
+    directDocument.document,
+  );
+  expect(wrapped.runtimeAdvisories).toEqual(direct.runtimeAdvisories);
+  expect(getEquationAnalysisEvidence(wrapped)).toEqual(getEquationAnalysisEvidence(direct));
+}
 
 describe('Equation mode OOE runtime', () => {
   it('builds stable OOE revisions for equivalent Equation requests and changes on meaningful input', () => {
@@ -88,7 +105,7 @@ describe('Equation mode OOE runtime', () => {
       expect(direct.canonicalMath?.mathJson).toBeDefined();
       expect(structuredClone(direct.canonicalMath)).toEqual(direct.canonicalMath);
     }
-    expect(wrapped.payload).toEqual(direct);
+    expectBoundaryParity(direct, wrapped.payload);
     expect(wrapped.ooe.status.kind).toBe('unavailable');
     if (wrapped.ooe.guardedTrace) {
       expect(wrapped.ooe.guardedTrace.attempts.length).toBeGreaterThan(0);
@@ -106,7 +123,7 @@ describe('Equation mode OOE runtime', () => {
       activeInputRevisionId: 'input.equation.solve.stale',
     });
 
-    expect(wrapped.payload).toEqual(direct);
+    expectBoundaryParity(direct, wrapped.payload);
     expect(wrapped.ooe.commitAssessment).toMatchObject({
       activeInputRevisionId: 'input.equation.solve.stale',
       legality: 'staleDrop',

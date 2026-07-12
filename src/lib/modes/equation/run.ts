@@ -1,4 +1,9 @@
 import { runGuardedDirectSymbolicFallback } from '../../equation/guarded-solve';
+import {
+  projectEquationDisplayOutcomeToBoundaryOrThrow,
+  projectEquationOutcomeBoundaryToDisplay,
+  type EquationOutcomeBoundaryV1,
+} from '../../equation/equation-solve-result';
 import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
 import { solvePolynomialSystem2x2 } from '../../equation/equation-polynomial-system';
 import {
@@ -490,7 +495,7 @@ export async function runEquationModeForIsolatedWorker(
   );
 
   return {
-    payload,
+    boundary: projectEquationDisplayOutcomeToBoundaryOrThrow(payload),
     guardedTrace,
   };
 }
@@ -502,8 +507,17 @@ export async function runEquationModeWithOoePilot(
   let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
   let runtimeHostExecution: EquationRuntimeHostExecution | undefined;
   const routeSnapshot = buildEquationOoeRevisionSnapshot(request);
+  let projectedBoundary: EquationOutcomeBoundaryV1 | undefined;
+  let projectedOutcome: DisplayOutcome | undefined;
+  const displayOutcomeForBoundary = (boundary: EquationOutcomeBoundaryV1) => {
+    if (projectedBoundary !== boundary || !projectedOutcome) {
+      projectedBoundary = boundary;
+      projectedOutcome = projectEquationOutcomeBoundaryToDisplay(boundary);
+    }
+    return projectedOutcome;
+  };
 
-  return runOoeRuntimeJob({
+  const envelope = await runOoeRuntimeJob({
     definition: equationPilotDefinition(),
     routeLabel: 'equation.solve',
     routeSnapshot,
@@ -543,7 +557,7 @@ export async function runEquationModeWithOoePilot(
               },
             );
             return {
-              payload,
+              boundary: projectEquationDisplayOutcomeToBoundaryOrThrow(payload),
               guardedTrace,
             };
           },
@@ -551,7 +565,7 @@ export async function runEquationModeWithOoePilot(
       );
       guardedTrace = result.guardedTrace;
       runtimeHostExecution = result.hostExecution;
-      return result.payload;
+      return result.boundary;
     },
     buildMetadata: ({ status, jobContext, controlTraceEvents }) => buildEquationOoePilotMetadata(
       status,
@@ -563,9 +577,14 @@ export async function runEquationModeWithOoePilot(
       runtimeHostExecution,
     ),
     buildProvenance: ({ payload, metadata, routeSnapshot }) => buildEquationProvenance({
-      payload,
+      payload: displayOutcomeForBoundary(payload),
       metadata,
       routeSnapshot,
     }),
   });
+
+  return {
+    payload: displayOutcomeForBoundary(envelope.payload),
+    ooe: envelope.ooe,
+  };
 }

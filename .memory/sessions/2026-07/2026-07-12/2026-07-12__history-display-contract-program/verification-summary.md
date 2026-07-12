@@ -141,3 +141,27 @@
 
 - The printer ratchet's seven tests pass. Its live inventory fails only on five Notebook-owned `resultLatex` paths in the already committed parallel Notebook program; this carrier adds no printer result path and does not register or modify those files.
 - `test-results/` remains untracked and excluded. No push is authorized.
+
+## EQUATION-OUTCOME-BOUNDARY1 Gate
+
+- Kind: `backend` runtime-boundary migration with mandatory `ui` mathematical-output parity evidence.
+- Intentional mathematical or visible wording change: no.
+- Result: pass for the intended Equation worker/fallback boundary slice.
+
+### Contract Evidence
+
+- Focused carrier, boundary, worker, OOE, Complex, and parameterized suites: 7 files and 57 tests passed after receipt validation was added.
+- Boundary tests cover canonical/runtime-policy separation, prompt/action rejection, cancellation projection, clone-safe validation, malformed carriers, invalid advisory extensions, forged cancellation completions, and no post-start fallback.
+- Complete Equation verification: 143 files and 1,213 tests passed across private solvers, orchestration, worker/fallback, exact/numeric routes, Complex boundaries, benchmarks, domains, branches, and readback.
+- Display inversion passes at 1,144 source files, 574 producer boundaries, 757 consumer reads, 159 compatibility projections, 554 legacy reads, and two native-document calls. Equation records one native boundary adapter, 120 compatibility producers, 245 forwarders, 16 controls, 265 legacy reads, and zero canonical reads.
+- TypeScript, production build, global ESLint, file sizes, Surface Protocol, OOE, compartments, seam selector, and diff hygiene pass. Existing build chunk and dynamic-import notices remain non-fatal.
+
+### Browser Evidence
+
+- Headless Chromium: two Equation canaries, three equation-card credibility cases, and three QA cases passed, covering DEG/RAD/GRAD interval behavior, solved-condition supplements, and controlled same-base log domain errors.
+- Inspected `.task_tmp/equation-card-credibility-polish1/screenshots/sin-quotient-domain-periodic.png`, `mixed-trig-periodic-structure.png`, and `exact-periodic-solve-note-collapsed.png` for answer cards, facts, branch/periodic details, collapse policy, and long-layout overflow; no clipping, overlap, or visible drift was found.
+
+### External Limit
+
+- The printer ratchet's seven tests pass. Its live inventory remains red only on five Notebook-owned `resultLatex` paths in the separately committed Notebook program; this milestone adds no printer result path and does not register unrelated debt.
+- `test-results/` remains untracked and excluded. No push is authorized.
