@@ -1,4 +1,5 @@
 @import './notebook-keyboard.css';
+@import './notebook-rich-canvas.css';
 
 .app-page--notebook {
   --notebook-panel: rgba(18, 31, 32, 0.94);
@@ -70,6 +71,24 @@
   margin: 0;
   color: var(--page-muted);
   line-height: 1.42;
+}
+
+.notebook-outline-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-top: 1px solid var(--notebook-border);
+  padding-top: 12px;
+  color: var(--page-muted);
+}
+
+.notebook-outline-heading span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--page-ink);
+  font-weight: 800;
 }
 
 .notebook-outline-list {
@@ -180,6 +199,23 @@
   background:
     linear-gradient(180deg, rgba(184, 212, 156, 0.08), rgba(255, 255, 255, 0.015)),
     rgba(255, 255, 255, 0.02);
+}
+
+.notebook-canvas-header > input {
+  width: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--page-ink);
+  font: inherit;
+  font-size: clamp(1.35rem, 1.1rem + 0.7vw, 2rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.notebook-canvas-header > input:focus-visible {
+  outline: 1px solid var(--notebook-border-strong);
+  outline-offset: 5px;
 }
 
 .notebook-canvas-meta {
@@ -379,6 +415,55 @@
 .notebook-inspector-section {
   display: grid;
   gap: 10px;
+}
+
+.notebook-inspector-section p {
+  margin: 0;
+  color: var(--page-muted);
+  line-height: 1.45;
+}
+
+.notebook-inspector-segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+}
+
+.notebook-inspector-segmented button {
+  min-height: 36px;
+  border: 0;
+  border-right: 1px solid var(--notebook-border);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--page-muted);
+}
+
+.notebook-inspector-segmented button:last-child {
+  border-right: 0;
+}
+
+.notebook-inspector-segmented button.is-active {
+  background: rgba(184, 212, 156, 0.2);
+  color: var(--page-ink);
+}
+
+.notebook-inspector-math-source code {
+  overflow-wrap: anywhere;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 9px;
+  background: rgba(2, 11, 12, 0.5);
+  color: var(--page-ink);
+}
+
+.notebook-inspector-math-source button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
 }
 
 .notebook-inspector-section {

@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-12 - NOTEBOOK-INLINE-MATH-CANVAS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] The live Notebook page uses one continuous Tiptap-backed authoring canvas, but the app-owned version-2 Notebook tree remains the durable state and future package contract. Tiptap and ProseMirror runtime objects and native JSON are internal implementation details.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Prose-to-math conversion is explicit and non-destructive. Passive detection may suggest likely math, but only author acceptance creates an inline MathLive node with preserved source; display math is inserted explicitly, and placement conversion never gives Notebook solver or Order of Execution authority.
+
 ## 2026-07-12 - NOTEBOOK-AUTHORING-KEYBOARD1
 
 - [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook owns an adaptive authoring keyboard layered over its active MathLive field. The bottom dock and floating quick-template toolbar call only the Notebook coordinator's public insert/command surface; they do not alter shared MathEditor behavior, global MathLive layouts, calculator key support, or execution authority.

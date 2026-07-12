@@ -19,6 +19,7 @@ type NotebookMathFieldProps = {
   dataTestId?: string;
   nodeId: string;
   onChange: (latex: string) => void;
+  onFocus?: () => void;
   onSubmit?: () => void;
   placeholder?: string;
   readOnly?: boolean;
@@ -33,6 +34,7 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
     dataTestId,
     nodeId,
     onChange,
+    onFocus,
     onSubmit,
     placeholder,
     readOnly = false,
@@ -43,6 +45,7 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
     const fieldRef = useRef<MathfieldElement | null>(null);
     const hasSyncedValueRef = useRef(false);
     const onChangeRef = useRef(onChange);
+    const onFocusRef = useRef(onFocus);
     const onSubmitRef = useRef(onSubmit);
     const workspaceTargetRef = useRef(workspaceTarget);
     const { activate, release } = useNotebookMathFieldController();
@@ -66,7 +69,10 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
           mode: workspaceTargetRef.current,
         }));
       };
-      const handleFocus = () => activate(field, nodeId, role);
+      const handleFocus = () => {
+        activate(field, nodeId, role);
+        onFocusRef.current?.();
+      };
       const handleKeydown = (event: KeyboardEvent) => {
         if (event.key === 'Enter' && !event.shiftKey && onSubmitRef.current) {
           event.preventDefault();
@@ -87,9 +93,10 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
 
     useEffect(() => {
       onChangeRef.current = onChange;
+      onFocusRef.current = onFocus;
       onSubmitRef.current = onSubmit;
       workspaceTargetRef.current = workspaceTarget;
-    }, [onChange, onSubmit, workspaceTarget]);
+    }, [onChange, onFocus, onSubmit, workspaceTarget]);
 
     useEffect(() => {
       const field = fieldRef.current;

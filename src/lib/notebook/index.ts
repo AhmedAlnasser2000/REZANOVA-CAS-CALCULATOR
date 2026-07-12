@@ -5,5 +5,6 @@ export * from './document/migrate-v1';
 export * from './document/model';
 export * from './document/templates';
 export * from './document/types';
+export * from './document/surface-state';
 export * from './persistence/port';
 export * from './authoring-keyboard';

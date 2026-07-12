@@ -1,0 +1,354 @@
+.notebook-rich-canvas {
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(184, 212, 156, 0.035), transparent 180px),
+    rgba(3, 12, 13, 0.52);
+}
+
+.notebook-rich-toolbar {
+  position: relative;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--notebook-border);
+  padding: 7px 12px;
+  background: rgba(12, 26, 27, 0.96);
+}
+
+.notebook-rich-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+  border-right: 1px solid var(--notebook-border);
+}
+
+.notebook-rich-toolbar-group:last-child {
+  margin-left: auto;
+  padding-right: 0;
+  border-right: 0;
+}
+
+.notebook-rich-toolbar button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0;
+  background: transparent;
+  color: var(--page-muted);
+}
+
+.notebook-rich-toolbar button:hover,
+.notebook-rich-toolbar button.is-active {
+  border-color: var(--notebook-border-strong);
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
+}
+
+.notebook-rich-canvas > .tiptap {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+}
+
+.notebook-rich-editor {
+  min-height: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 34px clamp(26px, 5vw, 72px) 160px;
+  color: var(--page-ink);
+  font-family: 'Fira Sans Condensed', sans-serif;
+  font-size: 1rem;
+  line-height: 1.72;
+  outline: none;
+}
+
+.notebook-rich-editor > * {
+  margin-block: 0 1.1em;
+}
+
+.notebook-rich-editor p {
+  min-height: 1.72em;
+}
+
+.notebook-rich-editor h1,
+.notebook-rich-editor h2,
+.notebook-rich-editor h3 {
+  margin-top: 1.4em;
+  color: var(--page-ink);
+  line-height: 1.18;
+}
+
+.notebook-rich-editor h1 { font-size: 1.85rem; }
+.notebook-rich-editor h2 { font-size: 1.5rem; }
+.notebook-rich-editor h3 { font-size: 1.22rem; }
+
+.notebook-rich-editor ul,
+.notebook-rich-editor ol {
+  padding-left: 1.6rem;
+}
+
+.notebook-rich-editor li + li {
+  margin-top: 0.35rem;
+}
+
+.notebook-rich-editor .ProseMirror-selectednode,
+.notebook-rich-inline-math.is-selected,
+.notebook-rich-display-math.is-selected,
+.notebook-rich-evidence.is-selected {
+  outline: 2px solid var(--notebook-accent);
+  outline-offset: 2px;
+}
+
+.notebook-rich-inline-math {
+  display: inline-flex;
+  max-width: min(100%, 520px);
+  margin-inline: 0.18em;
+  vertical-align: -0.28em;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: rgba(184, 212, 156, 0.075);
+}
+
+.notebook-rich-inline-field {
+  min-width: 2.2em;
+  max-width: 100%;
+  min-height: 1.7em;
+  padding: 0 0.22em;
+  background: transparent;
+  color: var(--page-ink);
+}
+
+.notebook-rich-display-math,
+.notebook-rich-evidence {
+  display: grid;
+  gap: 11px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 8px;
+  padding: 13px 15px;
+  background: rgba(10, 22, 23, 0.74);
+  box-shadow: inset 3px 0 0 rgba(184, 212, 156, 0.26);
+}
+
+.notebook-rich-display-math > header,
+.notebook-rich-evidence > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notebook-rich-display-math > header span,
+.notebook-rich-evidence > header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 800;
+}
+
+.notebook-rich-display-math > header small,
+.notebook-rich-evidence > header small {
+  color: var(--page-accent);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.notebook-rich-display-math-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.notebook-rich-display-field {
+  min-width: 0;
+  min-height: 78px;
+  overflow-x: auto;
+  border: 1px solid rgba(214, 225, 205, 0.12);
+  border-radius: 7px;
+  padding: 10px 12px;
+  background: rgba(2, 11, 12, 0.68);
+}
+
+.notebook-rich-display-math-row button,
+.notebook-math-suggestion button,
+.notebook-template-start > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 8px 11px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--page-ink);
+  font-weight: 800;
+}
+
+.notebook-rich-display-math-row button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.notebook-rich-evidence > div {
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed rgba(184, 212, 156, 0.28);
+  border-radius: 7px;
+  color: var(--page-muted);
+}
+
+.notebook-semantic-block {
+  overflow: hidden;
+  border: 1px solid var(--notebook-border);
+  border-left: 4px solid var(--notebook-accent);
+  border-radius: 7px;
+  background: rgba(184, 212, 156, 0.045);
+}
+
+.notebook-semantic-block > header {
+  border-bottom: 1px solid var(--notebook-border);
+  padding: 8px 12px;
+  background: rgba(184, 212, 156, 0.12);
+  color: var(--page-ink);
+  font-weight: 900;
+}
+
+.notebook-semantic-content {
+  padding: 12px 14px;
+}
+
+.notebook-semantic-content > :last-child {
+  margin-bottom: 0;
+}
+
+.notebook-template-start {
+  position: absolute;
+  z-index: 7;
+  top: 70px;
+  left: 50%;
+  width: min(620px, calc(100% - 42px));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(12, 27, 27, 0.98);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.notebook-template-start > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--page-muted);
+}
+
+.notebook-template-menu {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.notebook-template-menu button {
+  display: grid;
+  gap: 4px;
+  min-height: 70px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--page-ink);
+  text-align: left;
+}
+
+.notebook-template-menu button:hover {
+  border-color: var(--notebook-border-strong);
+  background: var(--notebook-accent-soft);
+}
+
+.notebook-template-menu span {
+  color: var(--page-muted);
+  font-size: 0.82rem;
+}
+
+.notebook-math-suggestion {
+  position: absolute;
+  z-index: 6;
+  right: 18px;
+  bottom: 18px;
+  width: min(440px, calc(100% - 36px));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(184, 212, 156, 0.34);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(9, 23, 23, 0.97);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+}
+
+.notebook-math-suggestion > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.notebook-math-suggestion span {
+  color: var(--page-accent);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.notebook-math-suggestion strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-rich-canvas-loading {
+  display: grid;
+  place-items: center;
+  min-height: 300px;
+  color: var(--page-muted);
+}
+
+@media (max-width: 720px) {
+  .notebook-rich-toolbar {
+    overflow-x: auto;
+  }
+
+  .notebook-rich-toolbar-group.is-history {
+    margin-left: 0;
+  }
+
+  .notebook-rich-editor {
+    padding: 24px 18px 170px;
+  }
+
+  .notebook-rich-display-math-row,
+  .notebook-template-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .notebook-math-suggestion {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

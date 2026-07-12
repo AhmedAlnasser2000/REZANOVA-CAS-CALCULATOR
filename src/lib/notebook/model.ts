@@ -3,6 +3,7 @@ import type {
   NotebookDocument,
   NotebookEvidenceSnapshotBlock,
   NotebookMathEditorBlock,
+  NotebookLegacySurfaceState,
   NotebookSurfaceState,
   NotebookTextBlock,
   NotebookWorkspaceTarget,
@@ -140,14 +141,14 @@ export function createNotebookSurfaceState(
   options: NotebookFactoryOptions & {
     title?: string;
   } = {},
-): NotebookSurfaceState {
+): NotebookLegacySurfaceState {
   return {
     kind: NOTEBOOK_SURFACE_STATE_KIND,
     document: createNotebookDocument(options),
   };
 }
 
-export function isNotebookSurfaceState(value: unknown): value is NotebookSurfaceState {
+export function isNotebookSurfaceState(value: unknown): value is NotebookLegacySurfaceState {
   return Boolean(
     value
       && typeof value === 'object'

@@ -175,6 +175,25 @@ function normalizeMode(mode: NotebookWorkspaceTarget | undefined): NotebookWorks
   return mode ?? 'calculate';
 }
 
+export function normalizeNotebookMathSource(
+  sourceText: string,
+  options: NotebookMathDetectionOptions = {},
+) {
+  const mode = normalizeMode(options.mode);
+  const preservedSource = normalizeCandidateSource(sourceText);
+  const canonicalized = canonicalizeMathInput(preservedSource, {
+    mode: mode as ModeId,
+    screenHint: options.screenHint,
+    liveAssist: true,
+  });
+  return {
+    sourceText: preservedSource,
+    latex: canonicalized.ok ? canonicalized.canonicalLatex : preservedSource,
+    workspaceTarget: mode,
+    recognized: canonicalized.ok,
+  };
+}
+
 export function detectNotebookMathCandidates(
   text: string,
   options: NotebookMathDetectionOptions = {},
@@ -184,23 +203,18 @@ export function detectNotebookMathCandidates(
     ...collectDelimitedRanges(text),
     ...collectSentenceRanges(text),
   ]).map((range, index) => {
-    const sourceText = normalizeCandidateSource(range.sourceText);
-    const canonicalized = canonicalizeMathInput(sourceText, {
-      mode: mode as ModeId,
-      screenHint: options.screenHint,
-      liveAssist: true,
-    });
+    const normalized = normalizeNotebookMathSource(range.sourceText, options);
 
     return {
       id: `candidate.${range.start}.${range.end}.${index}`,
       status: 'pending' as const,
       start: range.start,
       end: range.end,
-      sourceText,
-      normalizedLatex: canonicalized.ok ? canonicalized.canonicalLatex : sourceText,
+      sourceText: normalized.sourceText,
+      normalizedLatex: normalized.latex,
       parser: 'canonicalizeMathInput',
       mode,
-      confidence: canonicalized.ok ? range.confidence : 'medium',
+      confidence: normalized.recognized ? range.confidence : 'medium',
     };
   });
 }

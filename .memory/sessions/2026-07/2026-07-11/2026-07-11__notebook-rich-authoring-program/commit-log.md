@@ -37,8 +37,17 @@
 
 ## NOTEBOOK-AUTHORING-KEYBOARD1
 
+- commit_hash: `91e4fa42`
 - commit_message: `NOTEBOOK-AUTHORING-KEYBOARD1`
 - scope: curated Notebook-only adaptive keyboard, floating quick-template toolbar, support classifier, focus-safe input fallback, launch-safety handling, focused tests, and durable memory
 - approval: explicitly approved as the third of five commits in the Notebook Rich Authoring Program
 - push: not authorized
 - excluded: concurrent result-contract/Equation files, shared package changes, and untracked `test-results/`
+
+## NOTEBOOK-INLINE-MATH-CANVAS1
+
+- commit_message: `NOTEBOOK-INLINE-MATH-CANVAS1`
+- scope: version-2 live surface adoption, internal Tiptap adapter, continuous rich prose canvas, explicit inline/display MathLive nodes, reviewed non-destructive conversion, starter templates, focused tests, Chromium comparison, and durable memory
+- approval: explicitly approved as the fourth of five commits in the Notebook Rich Authoring Program
+- push: not authorized
+- excluded: concurrent result-contract/Equation files and untracked `test-results/`

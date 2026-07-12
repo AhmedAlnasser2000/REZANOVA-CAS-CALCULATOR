@@ -1,4 +1,5 @@
 import type { ModeId } from '../../types/calculator';
+import type { NotebookRichDocument } from './document/types';
 
 export const NOTEBOOK_DTO_VERSION = 1 as const;
 export const NOTEBOOK_SURFACE_STATE_KIND = 'notebook-surface-state' as const;
@@ -97,10 +98,17 @@ export type NotebookDocument = {
   blocks: NotebookBlock[];
 };
 
-export type NotebookSurfaceState = {
+export type NotebookLegacySurfaceState = {
   kind: typeof NOTEBOOK_SURFACE_STATE_KIND;
   document: NotebookDocument;
 };
+
+export type NotebookRichSurfaceState = {
+  kind: typeof NOTEBOOK_SURFACE_STATE_KIND;
+  document: NotebookRichDocument;
+};
+
+export type NotebookSurfaceState = NotebookLegacySurfaceState | NotebookRichSurfaceState;
 
 export type NotebookPackageBoundary = {
   version: NotebookDtoVersion;
