@@ -93,4 +93,17 @@ describe('NotebookPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /Open in Tool/ }));
     expect(onOpenMathInTool).toHaveBeenCalledWith('equation', 'x+1=2');
   });
+
+  it('keeps document-only structures in Notebook instead of sending them to a tool', () => {
+    render(<NotebookHarness />);
+    const field = screen.getByTestId('notebook-math-editor') as HTMLElement & {
+      setValue: (value: string) => void;
+    };
+    field.setValue('\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}');
+    fireEvent.input(field);
+
+    expect(screen.getByRole('button', { name: /Open in Tool/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Open in Tool/ }))
+      .toHaveAttribute('title', expect.stringContaining('authored documents'));
+  });
 });

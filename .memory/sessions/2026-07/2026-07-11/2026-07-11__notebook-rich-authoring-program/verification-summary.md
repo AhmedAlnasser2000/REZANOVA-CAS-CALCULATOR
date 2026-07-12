@@ -18,9 +18,9 @@
 
 - `NOTEBOOK-RICH-DOCUMENT-MODEL1`: backend pass.
 - `NOTEBOOK-MATH-FIELD-ACTIVATION1`: ui pass; shared file-size gate externally blocked by the concurrent result-contract lane.
+- `NOTEBOOK-AUTHORING-KEYBOARD1`: ui pass; 15 focused registry/UI checks, targeted ESLint, TypeScript, and diff hygiene pass. The shared file-size gate remains externally blocked by `src/types/calculator/runtime-types.ts` at 1,342 lines against its concurrent 1,341-line cap.
 
 ## Program Verification Still Required
 
-- Custom adaptive authoring keyboard.
 - Continuous inline/display math canvas.
 - Academic containers, outline, reordering, drawers, scale/contrast, performance, and Chromium design QA.

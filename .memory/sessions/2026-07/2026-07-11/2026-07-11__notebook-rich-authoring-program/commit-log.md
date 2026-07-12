@@ -28,8 +28,17 @@
 
 ## NOTEBOOK-MATH-FIELD-ACTIVATION1
 
+- commit_hash: `f35d4164`
 - commit_message: `NOTEBOOK-MATH-FIELD-ACTIVATION1`
 - scope: Notebook-owned MathLive field wrapper, active-field coordinator, scoped toggle suppression, focused UI tests, and durable memory
 - approval: explicitly approved as the second of five commits in the Notebook Rich Authoring Program
 - push: not authorized
 - excluded: concurrent result-contract files and untracked `test-results/`
+
+## NOTEBOOK-AUTHORING-KEYBOARD1
+
+- commit_message: `NOTEBOOK-AUTHORING-KEYBOARD1`
+- scope: curated Notebook-only adaptive keyboard, floating quick-template toolbar, support classifier, focus-safe input fallback, launch-safety handling, focused tests, and durable memory
+- approval: explicitly approved as the third of five commits in the Notebook Rich Authoring Program
+- push: not authorized
+- excluded: concurrent result-contract/Equation files, shared package changes, and untracked `test-results/`

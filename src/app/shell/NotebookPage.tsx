@@ -34,6 +34,7 @@ import {
   selectNotebookBlock,
   updateNotebookBlock,
   updateNotebookMathSpanLatex,
+  isNotebookLatexRunnable,
   type NotebookBlock,
   type NotebookDocument,
   type NotebookInlineMathSpan,
@@ -48,6 +49,7 @@ import {
   NotebookMathField,
   NotebookMathFieldProvider,
 } from './notebook/math-field';
+import { NotebookAuthoringKeyboard } from './notebook/authoring-keyboard';
 
 type NotebookPageProps = {
   instanceId: string;
@@ -316,7 +318,9 @@ function NotebookMathBlockView({
   onOpenMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
   onSelect: () => void;
 }) {
-  const canOpen = block.latex.trim() && canOpenTarget(block.workspaceTarget);
+  const canOpen = block.latex.trim()
+    && canOpenTarget(block.workspaceTarget)
+    && isNotebookLatexRunnable(block.latex);
 
   return (
     <article
@@ -347,6 +351,9 @@ function NotebookMathBlockView({
         <button
           type="button"
           disabled={!canOpen}
+          title={!isNotebookLatexRunnable(block.latex)
+            ? 'This notation is available for authored documents but is not sent to calculator tools.'
+            : undefined}
           onClick={(event) => {
             event.stopPropagation();
             onOpenMathInTool(block.workspaceTarget, block.latex);
@@ -638,6 +645,7 @@ export function NotebookPage({
           onChangeMathTarget={changeMathTarget}
         />
       </div>
+      <NotebookAuthoringKeyboard />
       <footer className="app-page-shell-footer">
         <span>Ready</span>
         <span>Workspace: Notebook</span>

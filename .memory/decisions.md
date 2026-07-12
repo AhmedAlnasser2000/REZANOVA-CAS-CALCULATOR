@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-12 - NOTEBOOK-AUTHORING-KEYBOARD1
+
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook owns an adaptive authoring keyboard layered over its active MathLive field. The bottom dock and floating quick-template toolbar call only the Notebook coordinator's public insert/command surface; they do not alter shared MathEditor behavior, global MathLive layouts, calculator key support, or execution authority.
+- [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Curated Notebook symbols are classified as `authoring-runnable`, `document-only`, or hidden. Document-only notation remains available for mathematical writing but disables `Open in Tool`; unsafe raw HTML/link commands stay hidden. Support classification is a launch-safety policy, not a claim that Notebook solves or validates authored mathematics.
+
 ## 2026-07-11 - NOTEBOOK-MATH-FIELD-ACTIVATION1
 
 - [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook owns its math-field activation and keyboard focus boundary. Notebook fields use MathLive with manual virtual-keyboard policy, hide the built-in keyboard toggle only under the Notebook page, and expose insertion/command operations through a local active-field coordinator without changing shared MathEditor or global MathLive layouts.

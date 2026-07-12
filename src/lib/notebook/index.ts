@@ -6,3 +6,4 @@ export * from './document/model';
 export * from './document/templates';
 export * from './document/types';
 export * from './persistence/port';
+export * from './authoring-keyboard';

@@ -1,3 +1,5 @@
+@import './notebook-keyboard.css';
+
 .app-page--notebook {
   --notebook-panel: rgba(18, 31, 32, 0.94);
   --notebook-panel-strong: rgba(9, 18, 19, 0.96);

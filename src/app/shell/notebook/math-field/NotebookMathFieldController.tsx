@@ -16,6 +16,27 @@ function focusField(field: MathfieldElement) {
   field.focus();
 }
 
+function runWithInputFallback(
+  field: MathfieldElement,
+  operation: () => boolean,
+) {
+  const before = field.getValue('latex');
+  let emitted = false;
+  const markInput = () => {
+    emitted = true;
+  };
+  field.addEventListener('input', markInput);
+  const completed = operation();
+  field.removeEventListener('input', markInput);
+  if (!emitted && field.getValue('latex') !== before) {
+    field.dispatchEvent(new InputEvent('input', {
+      bubbles: true,
+      inputType: 'insertText',
+    }));
+  }
+  return completed;
+}
+
 export function NotebookMathFieldProvider({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<ActiveNotebookMathField | null>(null);
 
@@ -46,11 +67,11 @@ export function NotebookMathFieldProvider({ children }: { children: ReactNode })
     if (!active?.field.isConnected || !latex) {
       return false;
     }
-    const inserted = active.field.insert(latex, {
+    const inserted = runWithInputFallback(active.field, () => active.field.insert(latex, {
       focus: true,
       mode: 'math',
       selectionMode: 'placeholder',
-    });
+    }));
     focusField(active.field);
     return inserted;
   }, [active]);
@@ -62,7 +83,10 @@ export function NotebookMathFieldProvider({ children }: { children: ReactNode })
     const runCommand = active.field.executeCommand as (
       nextCommand: string | [string, ...unknown[]],
     ) => boolean;
-    const executed = runCommand.call(active.field, command);
+    const executed = runWithInputFallback(
+      active.field,
+      () => runCommand.call(active.field, command),
+    );
     focusField(active.field);
     return executed;
   }, [active]);

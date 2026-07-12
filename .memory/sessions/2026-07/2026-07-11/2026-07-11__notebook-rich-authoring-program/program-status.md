@@ -21,8 +21,9 @@ Replace the separate Notebook textarea and preview with a continuous rich prose-
 ## Current Gate
 
 - `NOTEBOOK-RICH-DOCUMENT-MODEL1`: passed, backend, committed as `f16e149b`.
-- `NOTEBOOK-MATH-FIELD-ACTIVATION1`: passed, ui.
-- Next: `NOTEBOOK-AUTHORING-KEYBOARD1`.
+- `NOTEBOOK-MATH-FIELD-ACTIVATION1`: passed, ui, committed as `f35d4164`.
+- `NOTEBOOK-AUTHORING-KEYBOARD1`: passed, ui, entering its approved commit checkpoint.
+- Next: `NOTEBOOK-INLINE-MATH-CANVAS1`.
 
 ## Shared-Tree Boundary
 
@@ -30,7 +31,7 @@ Replace the separate Notebook textarea and preview with a continuous rich prose-
 - Notebook work owns Notebook source, styles, tests, new Notebook subfolders, the six approved package pins, and its own memory hunks.
 - Shared MathEditor, Clipboard, expression routing, printer/display contracts, AppMain, and ActiveSurfaceHost remain excluded.
 - Cross-agent handoff basis: user-provided lane permission plus the live History program dossier; no Notebook file was dirty at entry.
-- Concurrent result-contract work now owns dirty calculator result types; its one-line `runtime-types.ts` cap overage is an external file-size blocker and is not part of Notebook staging.
+- Concurrent result-contract work owns dirty result/document contracts, calculator result types, Equation producers, worker clients, replay fixtures, and ratchet tooling. Its one-line `runtime-types.ts` cap overage is an external file-size blocker and is not part of Notebook staging.
 
 ## Product Decisions
 
