@@ -5,6 +5,7 @@ import type {
 } from '../../types/calculator';
 import { runGeometryCoreDraft } from './core';
 import { geometryRequestToScreen } from './parser';
+import { createGeometryResultOutcome } from './result-document';
 import type { RunGeometryRuntimeRequest } from './runtime-input';
 
 export type GeometryModeRunPayload = {
@@ -22,8 +23,12 @@ export function buildGeometryModeRunPayload(
     ? geometryRequestToScreen(parsed.request)
     : request.screenHint;
 
+  const ownedOutcome = outcome.kind === 'prompt'
+    ? outcome
+    : createGeometryResultOutcome(outcome);
+
   return {
-    outcome,
+    outcome: ownedOutcome,
     parsed,
     replayScreen,
     ...(parsed.ok

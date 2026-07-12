@@ -17,6 +17,7 @@ import type {
 } from '../../types/calculator';
 import { textDetailSection } from '../display/result/result-detail-lines';
 import { profileTableResult } from '../display/printer';
+import { createTableResultOutcome } from './table-result-document';
 
 export type RunTableModeRequest = {
   primaryLatex: string;
@@ -151,36 +152,38 @@ function buildTableModeResult(
   response: TableResponse,
 ): TableModeResult {
   if (response.error) {
+    const outcome: Extract<DisplayOutcome, { kind: 'error' }> = {
+      kind: 'error',
+      title: 'Table',
+      error: response.error,
+      warnings: response.warnings,
+    };
     return {
       response,
-      outcome: {
-        kind: 'error',
-        title: 'Table',
-        error: response.error,
-        warnings: response.warnings,
-      },
+      outcome: createTableResultOutcome(outcome, response),
     };
   }
 
+  const outcome = profileTableResult<Extract<DisplayOutcome, { kind: 'success' }>>({
+    kind: 'success',
+    title: 'Table',
+    exactLatex: prepared.functions,
+    approxText: `${response.rows.length} rows generated`,
+    warnings: response.warnings,
+    detailSections: [
+      ...prepared.storedValueDetails,
+      ...(tableAssumptionDetails({
+        primaryLatex: prepared.primaryLatex,
+        secondaryLatex: prepared.secondaryLatex,
+        secondaryEnabled: prepared.secondaryEnabled,
+        response,
+      }) ?? []),
+    ],
+    variableSubstitutions: prepared.substitutions.length > 0 ? prepared.substitutions : undefined,
+  });
   return {
     response,
-    outcome: profileTableResult<DisplayOutcome>({
-      kind: 'success',
-      title: 'Table',
-      exactLatex: prepared.functions,
-      approxText: `${response.rows.length} rows generated`,
-      warnings: response.warnings,
-      detailSections: [
-        ...prepared.storedValueDetails,
-        ...(tableAssumptionDetails({
-          primaryLatex: prepared.primaryLatex,
-          secondaryLatex: prepared.secondaryLatex,
-          secondaryEnabled: prepared.secondaryEnabled,
-          response,
-        }) ?? []),
-      ],
-      variableSubstitutions: prepared.substitutions.length > 0 ? prepared.substitutions : undefined,
-    }),
+    outcome: createTableResultOutcome(outcome, response),
   };
 }
 

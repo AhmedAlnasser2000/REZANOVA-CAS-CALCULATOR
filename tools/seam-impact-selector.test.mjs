@@ -164,6 +164,32 @@ describe('seam impact selector', () => {
     ]);
   });
 
+  it('selects canonical result contracts for guided-domain owner adapters', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/trigonometry/result-document.ts',
+      'src/lib/geometry/result-document.ts',
+      'src/lib/statistics/result-document.ts',
+      'src/lib/modes/table-result-document.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'canonical-result-contract',
+    ]);
+    assert.deepEqual([...plan.laneIds].sort(), [
+      'geometry',
+      'statistics',
+      'table',
+      'trigonometry',
+    ]);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'display-contracts',
+      'result-contracts',
+      'equation-solve-result-contracts',
+      'display-contract-inversion-ratchet',
+      'printer-migration-ratchet',
+    ]);
+  });
+
   it('handles rename, copy, and delete records including both rename paths', () => {
     const changes = parseGitNameStatusZ(
       'R100\0src/lib/equation/old.ts\0src/lib/ooe/new.ts\0D\0src/AppMain.tsx\0C75\0docs/a.md\0docs/b.md\0',

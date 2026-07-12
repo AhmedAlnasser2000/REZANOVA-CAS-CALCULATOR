@@ -224,6 +224,10 @@ export const NATIVE_DOCUMENT_CALL_NAMES = new Set([
 export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
   'createCalculusResultOutcome',
   'createEquationResultOutcome',
+  'createGeometryResultOutcome',
+  'createStatisticsResultOutcome',
+  'createTableResultOutcome',
+  'createTrigonometryResultOutcome',
 ]);
 
 export const PRODUCER_INPUT_REGISTRATIONS = [
@@ -240,6 +244,34 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     rationale: 'The Equation producer adapter reads its authored dual-write input before emitting both canonical and compatibility projections; these are producer assembly reads, not downstream Display consumers.',
     matchers: exact('src/lib/equation/solve-result/producer.ts'),
     functions: ['createEquationResultOutcome'],
+  },
+  {
+    id: 'geometry-result-producer-input-v1',
+    owner: 'geometry-result-contract',
+    rationale: 'The Geometry owner adapter reads typed result evidence before attaching native canonical truth.',
+    matchers: exact('src/lib/geometry/result-document.ts'),
+    functions: ['createGeometryResultOutcome'],
+  },
+  {
+    id: 'statistics-result-producer-input-v1',
+    owner: 'statistics-result-contract',
+    rationale: 'The Statistics owner adapter reads typed result evidence before attaching native canonical truth.',
+    matchers: exact('src/lib/statistics/result-document.ts'),
+    functions: ['createStatisticsResultOutcome'],
+  },
+  {
+    id: 'table-result-producer-input-v1',
+    owner: 'table-result-contract',
+    rationale: 'The Table owner adapter reads typed result evidence and the completed structured response before attaching native canonical truth.',
+    matchers: exact('src/lib/modes/table-result-document.ts'),
+    functions: ['createTableResultOutcome'],
+  },
+  {
+    id: 'trigonometry-result-producer-input-v1',
+    owner: 'trigonometry-result-contract',
+    rationale: 'The Trigonometry owner adapter reads typed result evidence after cross-workspace presentation changes.',
+    matchers: exact('src/lib/trigonometry/result-document.ts'),
+    functions: ['createTrigonometryResultOutcome'],
   },
 ];
 

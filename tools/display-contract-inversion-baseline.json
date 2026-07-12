@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "RESULT-DOCUMENT-SYMBOLIC-LIMITS1 adds a Calculus-owned native result-document adapter at the final proof-aware Limit boundary, covering all three Limit screens and their typed controlled stops without changing other Calculus producers or legacy consumers.",
-  "registryDigest": "5f950560ae12a69e13ac",
+  "acceptedReason": "RESULT-DOCUMENT-GUIDED-DOMAINS1 adds owner-native canonical result adapters at the final Trigonometry, Geometry, Statistics, and Table boundaries, including exact bounded Table rows, without changing mathematical output or runtime ownership.",
+  "registryDigest": "3ec899873986f14b7295",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -46,7 +46,7 @@
     "geometry": {
       "compatibilityProjection": 3,
       "legacyRead": 0,
-      "nativeDocument": 0
+      "nativeDocument": 2
     },
     "golden-evidence": {
       "compatibilityProjection": 0,
@@ -91,7 +91,7 @@
     "statistics": {
       "compatibilityProjection": 3,
       "legacyRead": 0,
-      "nativeDocument": 0
+      "nativeDocument": 2
     },
     "surface-protocol": {
       "compatibilityProjection": 0,
@@ -101,12 +101,12 @@
     "table": {
       "compatibilityProjection": 2,
       "legacyRead": 0,
-      "nativeDocument": 0
+      "nativeDocument": 3
     },
     "trigonometry": {
       "compatibilityProjection": 6,
       "legacyRead": 14,
-      "nativeDocument": 0
+      "nativeDocument": 2
     },
     "vector": {
       "compatibilityProjection": 2,
@@ -208,6 +208,12 @@
       "src/lib/equation/target/surface.ts": [
         "eecf7c3b9563761ba5dd:1",
         "9aab7846312e7cf6160c:1"
+      ],
+      "src/lib/geometry/result-document.ts": [
+        "f980cd0168646f72e051:1"
+      ],
+      "src/lib/geometry/runtime-run.ts": [
+        "cfef16f4ba56c3e35ec4:1"
       ],
       "src/lib/modes/calculate/standard.ts": [
         "7e96ac33b94ae918912d:1"
@@ -336,6 +342,25 @@
       ],
       "src/lib/modes/equation/transforms.ts": [
         "48c5c356a08c2e788f35:1"
+      ],
+      "src/lib/modes/table-core.ts": [
+        "5596fa01d9903a06a317:1",
+        "5596fa01d9903a06a317:2"
+      ],
+      "src/lib/modes/table-result-document.ts": [
+        "b2fd87e7d1c481b5f90d:1"
+      ],
+      "src/lib/statistics/result-document.ts": [
+        "22161a254a67642b0931:1"
+      ],
+      "src/lib/statistics/runtime-run.ts": [
+        "3ed4bc9878d98105cb56:1"
+      ],
+      "src/lib/trigonometry/result-document.ts": [
+        "9144cfbff36e2fc364ab:1"
+      ],
+      "src/lib/trigonometry/runtime-run.ts": [
+        "c5ea9b6510259df12ebf:1"
       ]
     },
     "canonical-projection": {
@@ -624,6 +649,9 @@
         "4b5deef1721a534f5802:1",
         "711fbcd0676b8d943a14:1"
       ],
+      "src/lib/geometry/runtime-run.ts": [
+        "bfbef6f54dafe32ea510:1"
+      ],
       "src/lib/history-replay/native-execution.ts": [
         "08a387ef4ccabd1b4b51:1",
         "ce1046d097f653dc6c11:1",
@@ -861,6 +889,9 @@
         "1ae33380a7063d0377fe:1",
         "b52c670547b92f2a7e32:1"
       ],
+      "src/lib/statistics/runtime-run.ts": [
+        "b57fa6106228daccb420:1"
+      ],
       "src/lib/trigonometry/core.ts": [
         "288f8b617a537fefbfcc:1",
         "2d14a11de1170c8e603e:1",
@@ -869,6 +900,9 @@
         "519b0ad46ea11b72a784:1",
         "2adb8ca51a8d71f1b16e:1",
         "480651ecd9659ae1757d:1"
+      ],
+      "src/lib/trigonometry/runtime-run.ts": [
+        "2e674a69a0ca35c35c19:1"
       ]
     },
     "control-outcome": {
@@ -1873,6 +1907,9 @@
         "897c9046ba8e4419f9c4:1",
         "e44ed9a022c06c70adfd:1"
       ],
+      "src/lib/geometry/runtime-run.ts": [
+        "e728459a83f30e39983f:1"
+      ],
       "src/lib/history-replay/fixture-contract.ts": [
         "3e51ab15f027ba8403d4:1"
       ],
@@ -1969,6 +2006,9 @@
         "a0b84eb385db03660c82:3",
         "a0b84eb385db03660c82:4"
       ],
+      "src/lib/statistics/runtime-run.ts": [
+        "3226a414e7478b46c356:1"
+      ],
       "src/lib/surface-protocol/dto.ts": [
         "12fef343c5fd7d1ec965:1",
         "552fa80bb142b0dc0736:1",
@@ -1988,6 +2028,9 @@
         "b2ac6ecae600f3bc5f75:1",
         "b47aa0604bbc038fa426:1",
         "b47aa0604bbc038fa426:2"
+      ],
+      "src/lib/trigonometry/runtime-run.ts": [
+        "f7656b67326871dc852c:1"
       ]
     },
     "transient-read": {

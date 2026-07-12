@@ -253,3 +253,29 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-CALCULUS1`, then migrate Trigonometry, Geometry, Statistics, and Table through their own owner adapters in `RESULT-DOCUMENT-GUIDED-DOMAINS1`.
+
+## RESULT-DOCUMENT-GUIDED-DOMAINS1
+
+### Completed
+
+- Added independent owner adapters for Trigonometry, Geometry, Statistics, and Table. Each adapter builds canonical truth from existing typed fields without parsing LaTeX or acquiring runtime authority.
+- Attached Trigonometry, Geometry, and Statistics documents at their final runtime owner boundaries after route/title ownership is settled. Table attaches documents only after its structured response is complete.
+- Preserved prompts and Table cancellation as control-only outcomes. Geometry transfer actions remain live and transient rather than entering stored result truth.
+- Stored exact bounded Table headers and rows, including legitimate `undefined` cells, and ratcheted all eight guided golden executions plus all 20 guided replay fixtures to native storage resolution.
+
+### Measured Posture
+
+- Accepted inventory: 1,155 source files, 601 producer boundaries, 772 consumer reads, 37 compatibility projections, 554 legacy reads, and 138 native calls.
+- Native coverage increased by nine calls while compatibility and legacy debt stayed flat. Trigonometry, Geometry, and Statistics each record two native calls; Table records three.
+- Focused guided-domain and worker suites pass 31 files and 169 tests. Result contracts pass 29 tests over all 43 golden and 100 replay executions.
+
+### Runtime And UI
+
+- Nineteen Chromium canaries and nine workspace History create/replay cases pass. Four focused headless journeys cover eight migrated golden surfaces and exact persisted Table documents.
+- Inspected screenshots preserve Period & Phase, legacy bounded Trigonometry equations, Geometry branches/actions, Statistics warnings/inference, and both Table grids without malformed math or result-card overflow.
+- Long request-preview formulas clip in existing narrow Trigonometry and Geometry workbench cards. The result cards are unaffected; this layout debt is recorded rather than changed during a zero-output-drift contract milestone.
+- Full non-Notebook unit and UI surfaces pass. Concurrent uncommitted Notebook section work is the only source of live full-suite and global-lint failures; it remains excluded from this milestone's staging and commit.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-GUIDED-DOMAINS1`, then attach Matrix and Vector canonical truth at their independent final mode boundaries in `RESULT-DOCUMENT-LINEAR-ALGEBRA1`.

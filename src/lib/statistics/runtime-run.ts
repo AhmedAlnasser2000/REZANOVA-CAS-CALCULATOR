@@ -5,6 +5,7 @@ import type {
 } from '../../types/calculator';
 import { runStatisticsCoreDraft } from './core';
 import { statisticsRequestToScreen } from './parser';
+import { createStatisticsResultOutcome } from './result-document';
 import { statisticsRequestToWorkingSource } from './shared';
 import type { RunStatisticsRuntimeRequest } from './runtime-input';
 
@@ -30,8 +31,12 @@ export function buildStatisticsModeRunPayload(
       ?? request.workingSourceHint
     : request.workingSourceHint;
 
+  const ownedOutcome = outcome.kind === 'prompt'
+    ? outcome
+    : createStatisticsResultOutcome(outcome);
+
   return {
-    outcome,
+    outcome: ownedOutcome,
     parsed,
     replayScreen,
     ...(parsed.ok

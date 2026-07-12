@@ -112,10 +112,19 @@
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
 
-## Pending Commit
+## RESULT-DOCUMENT-CALCULUS1
 
+- commit_hash: `ed29552a`
 - commit_message: `RESULT-DOCUMENT-CALCULUS1`
 - scope: complete 16-screen Calculus native-document policy, seven-screen navigation exclusion, all 25 replay fixtures, full regression and eight-screen Chromium evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
+
+## Pending Commit
+
+- commit_message: `RESULT-DOCUMENT-GUIDED-DOMAINS1`
+- scope: independent Trigonometry, Geometry, Statistics, and Table owner adapters, exact bounded Table documents, native golden/replay ratchets, accepted inversion baseline, focused/full regression and eight-screen Chromium evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files

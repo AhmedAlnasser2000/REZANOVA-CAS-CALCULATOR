@@ -18,6 +18,13 @@ import {
 } from './projection';
 import { resolveCanonicalResultForStorage } from './storage';
 
+const NATIVE_GUIDED_WORKSPACES = new Set([
+  'trigonometry',
+  'geometry',
+  'statistics',
+  'table',
+]);
+
 function stableMathValues(execution: GoldenExecution | HistoryReplayExecution) {
   return [
     ...collectDisplayOutcomeMathFragments(execution.outcome),
@@ -111,6 +118,7 @@ describe('canonical result corpus coverage', () => {
         goldenCase.mode === 'calculate'
         || goldenCase.mode === 'equation'
         || goldenCase.mode === 'calculus'
+        || NATIVE_GUIDED_WORKSPACES.has(goldenCase.mode)
       ) {
         expect(
           execution.outcome.kind === 'prompt'
@@ -126,6 +134,7 @@ describe('canonical result corpus coverage', () => {
     expect(HISTORY_REPLAY_FIXTURES).toHaveLength(100);
     const nativeEquationFixtures: string[] = [];
     const nativeCalculusFixtures: string[] = [];
+    const nativeGuidedFixtures: string[] = [];
     for (const fixture of HISTORY_REPLAY_FIXTURES) {
       const execution = await executeHistoryReplayRequest(fixture.workspace, fixture.request);
       assertCanonicalRoundTrip(execution, fixture.id);
@@ -146,6 +155,10 @@ describe('canonical result corpus coverage', () => {
         expect(nativeDocument, `${fixture.id} native Calculus family document`).toBeDefined();
         if (nativeDocument) nativeCalculusFixtures.push(fixture.id);
       }
+      if (NATIVE_GUIDED_WORKSPACES.has(fixture.workspace)) {
+        expect(nativeDocument, `${fixture.id} native ${fixture.workspace} document`).toBeDefined();
+        if (nativeDocument) nativeGuidedFixtures.push(fixture.id);
+      }
     }
     expect(nativeEquationFixtures).toEqual(
       HISTORY_REPLAY_FIXTURES
@@ -155,6 +168,11 @@ describe('canonical result corpus coverage', () => {
     expect(nativeCalculusFixtures).toEqual(
       HISTORY_REPLAY_FIXTURES
         .filter((fixture) => fixture.workspace === 'calculus')
+        .map((fixture) => fixture.id),
+    );
+    expect(nativeGuidedFixtures).toEqual(
+      HISTORY_REPLAY_FIXTURES
+        .filter((fixture) => NATIVE_GUIDED_WORKSPACES.has(fixture.workspace))
         .map((fixture) => fixture.id),
     );
   }, 60_000);

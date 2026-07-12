@@ -204,6 +204,7 @@ describe('runTableMode', () => {
       throw new Error('Expected a cancellation note')
     }
     expect(result.outcome.error).toBe('Table build was stopped before it finished.')
+    expect(result.outcome.canonicalResult).toBeUndefined()
   })
 
   it('isolated worker table completion matches the synchronous table result', async () => {

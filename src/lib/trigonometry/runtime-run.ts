@@ -5,6 +5,7 @@ import type {
 } from '../../types/calculator';
 import { runTrigonometryCoreDraft } from './core';
 import { trigRequestToScreen } from './parser';
+import { createTrigonometryResultOutcome } from './result-document';
 import type { RunTrigonometryRuntimeRequest } from './runtime-input';
 
 export type TrigonometryModeRunPayload = {
@@ -26,8 +27,12 @@ export function buildTrigonometryModeRunPayload(
     ? trigRequestToScreen(parsed.request, request.screenHint)
     : request.screenHint;
 
+  const ownedOutcome = outcome.kind === 'prompt'
+    ? outcome
+    : createTrigonometryResultOutcome(outcome);
+
   return {
-    outcome,
+    outcome: ownedOutcome,
     parsed,
     replayScreen,
     ...(parsed.ok

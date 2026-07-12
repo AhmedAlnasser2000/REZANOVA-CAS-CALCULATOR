@@ -221,6 +221,10 @@ export const SEAM_REGISTRY = [
       ...prefix('src/lib/result-contract/'),
       ...exact(
         'src/lib/calculus/workspace/result-document.ts',
+        'src/lib/geometry/result-document.ts',
+        'src/lib/modes/table-result-document.ts',
+        'src/lib/statistics/result-document.ts',
+        'src/lib/trigonometry/result-document.ts',
         'src/types/calculator/canonical-result-types.ts',
       ),
     ],

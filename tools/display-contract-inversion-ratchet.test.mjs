@@ -255,6 +255,66 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.calculus['compatibility-projection'], 0);
   });
 
+  it('classifies all guided-domain adapters and owner boundaries as native', () => {
+    const rootDir = fixture({
+      'src/lib/trigonometry/result-document.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        export function createTrigonometryResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+      'src/lib/trigonometry/runtime-run.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        declare function createTrigonometryResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function run(outcome: DisplayOutcome) { return createTrigonometryResultOutcome(outcome); }
+      `,
+      'src/lib/geometry/result-document.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        export function createGeometryResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+      'src/lib/geometry/runtime-run.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        declare function createGeometryResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function run(outcome: DisplayOutcome) { return createGeometryResultOutcome(outcome); }
+      `,
+      'src/lib/statistics/result-document.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        export function createStatisticsResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+      'src/lib/statistics/runtime-run.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        declare function createStatisticsResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function run(outcome: DisplayOutcome) { return createStatisticsResultOutcome(outcome); }
+      `,
+      'src/lib/modes/table-result-document.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        export function createTableResultOutcome(input: DisplayOutcome): DisplayOutcome {
+          if (input.kind === 'prompt') return input;
+          return { ...input, canonicalResult: { version: 1 } };
+        }
+      `,
+      'src/lib/modes/table-core.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        declare function createTableResultOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function run(outcome: DisplayOutcome) { return createTableResultOutcome(outcome); }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    for (const lane of ['trigonometry', 'geometry', 'statistics', 'table']) {
+      assert.equal(report.lanes[lane]['legacy-read'], 0, lane);
+      assert.equal(report.lanes[lane]['native-document'], 2, lane);
+      assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
+    }
+  });
+
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `

@@ -299,3 +299,30 @@
 - Worker topology, capability identity, request shape, OOE authority, fallback, stale/cancel/commit rules, diagnostics, History tickets, Surface DTOs, Notebook source, and mathematical output are unchanged.
 - Pre-existing derivative-at-point title and ODE presentation debt is recorded for resolution before read-model authority changes; it is not silently bundled into this no-drift milestone.
 - Ignored `.task_tmp/` evidence and untracked `test-results/` are excluded. No push is authorized.
+
+## RESULT-DOCUMENT-GUIDED-DOMAINS1 Gate
+
+- Kind: `backend` guided-domain native producer migration with mandatory `ui` mathematical-output parity evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass for the protected Guided Domains slice; concurrent Notebook work remains a separately owned mixed-tree blocker.
+
+### Contract Evidence
+
+- Focused Trigonometry, Geometry, Statistics, Table, and worker coverage passes 31 files and 169 tests. Canonical result coverage passes 6 files and 29 tests over all 43 golden and 100 replay executions.
+- All eight guided golden executions and 20 guided replay fixtures resolve from native documents. Table cancellation remains document-free, while completed Table success and error responses store bounded headers and rows.
+- Accepted inversion inventory: 1,155 source files, 601 producer boundaries, 772 consumer reads, 37 compatibility projections, 554 legacy reads, and 138 native calls. Native coverage rose from 129 without compatibility or legacy debt growth.
+- Golden, print hygiene, replay, feature probes, result intent, detail, printer, clipboard, Display, app-state, runtime contracts/probes, CI, seam, identity, Surface, OOE, compartments, file size, source mirrors, freshness, Labs, pillars, TypeScript, Vite production build, Rust check, owned lint, and diff hygiene pass.
+- The mixed-tree full unit run passed 524 files and 3,669 tests outside three concurrent Notebook files; the mixed-tree full UI run passed 63 files and 468 tests outside one concurrent Notebook file. Current global lint is blocked only by four lines in the uncommitted Notebook outline. Those files were neither edited nor staged by this program.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed. Structured History create/replay: 9/9 workspaces passed.
+- Focused Guided Domains evidence: 4/4 headless journeys passed across eight surfaces. Stored document titles and exact Table headers/rows were inspected through browser persistence.
+- Inspected `.task_tmp/history-display-contract/guided-domains-screenshots/` for Period & Phase, legacy bounded trig equation, distance branches, line transfer, regression, mean inference, partial-domain Table, and two-function Table. Answer cards, warnings, details, actions, and rows remain readable without malformed fragments or result-card overflow.
+- Existing request-preview formulas clip inside narrow Trigonometry and Geometry workbench cards. This does not affect result documents or answer cards and is recorded for separate layout work.
+
+### Boundaries
+
+- Domain math cores remain Display-independent. Native documents are attached only at each workspace's final owner boundary.
+- Matrix/Vector workers and capabilities, Statistics guided controls, Table capabilities, Surface DTOs, OOE authority, History tickets, mathematical output, and visible wording remain unchanged.
+- Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
