@@ -100,7 +100,6 @@ test('Notebook renders recursive sections in the outline and document canvas', a
   await expect(outlineSections.nth(1)).toHaveAttribute('data-outline-depth', '1');
   await expect(page.getByTestId('notebook-section')).toHaveCount(2);
 
-  const outline = page.getByRole('complementary', { name: 'Notebook outline' });
   await outlineSections.first().getByRole('button', { name: 'Collapse Untitled section' }).click();
   await expect(outlineSections).toHaveCount(1);
   await expect(page.getByTestId('notebook-section').first()).toHaveClass(/is-collapsed/);
@@ -109,4 +108,23 @@ test('Notebook renders recursive sections in the outline and document canvas', a
     body: await page.screenshot(),
     contentType: 'image/png',
   });
+});
+
+test('Notebook dismisses one transient layer per Escape without closing the document', async ({ page }) => {
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await openBlankNotebook(page);
+
+  const templateTrigger = page.getByRole('button', { name: 'Start from template' });
+  await templateTrigger.click();
+  await expect(page.getByRole('button', { name: /Lecture Notes/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: /Lecture Notes/ })).toBeHidden();
+  await expect(templateTrigger).toBeFocused();
+
+  await page.getByRole('button', { name: 'Toggle Notebook outline' }).click();
+  await expect(page.getByRole('complementary', { name: 'Notebook outline' })).toHaveClass(/is-drawer-open/);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('complementary', { name: 'Notebook outline' })).not.toHaveClass(/is-drawer-open/);
+  await expect(page.getByTestId('notebook-page')).toBeVisible();
+  await expect(page.getByLabel('Notebook rich document')).toBeVisible();
 });

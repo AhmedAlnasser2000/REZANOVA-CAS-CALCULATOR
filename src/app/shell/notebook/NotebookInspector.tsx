@@ -80,7 +80,7 @@ export function NotebookInspector({
   );
 
   return (
-    <aside className={`notebook-inspector${className ? ` ${className}` : ''}`} data-testid="notebook-inspector">
+    <aside data-notebook-transient-layer="notebook-inspector-drawer" className={`notebook-inspector${className ? ` ${className}` : ''}`} data-testid="notebook-inspector">
       <div className="notebook-inspector-heading">
         <div>
           <span>Block inspector</span>

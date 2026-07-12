@@ -40,6 +40,7 @@ import {
   updateNotebookSection,
   type NotebookMovePlacement,
 } from './canvas';
+import { useNotebookTransientLayer } from './transient-ui';
 
 type NotebookOutlineProps = {
   className?: string;
@@ -116,6 +117,10 @@ export function NotebookOutline({
   const [query, setQuery] = useState('');
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
   const [menuSectionId, setMenuSectionId] = useState<string | null>(null);
+  const sectionMenu = useNotebookTransientLayer({
+    id: 'notebook-section-actions',
+    parentId: 'notebook-outline-drawer',
+  });
   const outline = useMemo(() => buildNotebookOutline(document.content), [document.content]);
   const visibleEntries = useMemo(() => visibleOutlineEntries(outline, query), [outline, query]);
 
@@ -140,43 +145,49 @@ export function NotebookOutline({
   }
 
   function sectionActions(entry: NotebookOutlineEntry) {
-    if (entry.nodeType !== 'section' || menuSectionId !== entry.id) {
+    if (entry.nodeType !== 'section' || menuSectionId !== entry.id || !sectionMenu.isOpen) {
       return null;
     }
     return (
-      <div className="notebook-outline-menu" role="menu" aria-label={`${entry.label} actions`}>
+      <div data-notebook-transient-layer={sectionMenu.id} className="notebook-outline-menu" role="menu" aria-label={`${entry.label} actions`}>
         <button type="button" role="menuitem" onClick={() => {
           setEditingSectionId(entry.id);
           setMenuSectionId(null);
+          sectionMenu.close(false);
         }}><Pencil aria-hidden="true" size={14} /> Rename</button>
         <button type="button" role="menuitem" onClick={() => {
-          editor && insertNotebookSection(editor, { parentId: entry.id });
+          if (editor) insertNotebookSection(editor, { parentId: entry.id });
           setMenuSectionId(null);
+          sectionMenu.close(false);
         }}><FolderPlus aria-hidden="true" size={14} /> Add subsection</button>
         <button type="button" role="menuitem" onClick={() => {
-          editor && indentNotebookNode(editor, entry.id);
+          if (editor) indentNotebookNode(editor, entry.id);
           setMenuSectionId(null);
+          sectionMenu.close(false);
         }}><IndentIncrease aria-hidden="true" size={14} /> Indent</button>
         <button type="button" role="menuitem" onClick={() => {
-          editor && outdentNotebookNode(editor, entry.id);
+          if (editor) outdentNotebookNode(editor, entry.id);
           setMenuSectionId(null);
+          sectionMenu.close(false);
         }}><Outdent aria-hidden="true" size={14} /> Outdent</button>
         <button type="button" role="menuitem" onClick={() => {
-          editor && removeNotebookSection(editor, entry.id, { keepContents: true });
+          if (editor) removeNotebookSection(editor, entry.id, { keepContents: true });
           setMenuSectionId(null);
+          sectionMenu.close(false);
         }}><Folder aria-hidden="true" size={14} /> Remove section, keep contents</button>
         <button className="is-danger" type="button" role="menuitem" onClick={() => {
           if (editor && window.confirm(`Delete "${entry.label}" and everything inside it?`)) {
             removeNotebookSection(editor, entry.id, { keepContents: false });
           }
           setMenuSectionId(null);
+          sectionMenu.close(false);
         }}><Trash2 aria-hidden="true" size={14} /> Delete section and contents</button>
       </div>
     );
   }
 
   return (
-    <aside className={`notebook-outline${className ? ` ${className}` : ''}`} aria-label="Notebook outline">
+    <aside data-notebook-transient-layer="notebook-outline-drawer" className={`notebook-outline${className ? ` ${className}` : ''}`} aria-label="Notebook outline">
       <div className="notebook-title">
         <div className="notebook-title-row">
           <span>Notebook</span>
@@ -189,7 +200,9 @@ export function NotebookOutline({
       </div>
       <div className="notebook-outline-heading">
         <span><ListTree aria-hidden="true" size={15} /> Outline</span>
-        <button type="button" aria-label="Add top-level section" title="Add section" onClick={() => editor && insertNotebookSection(editor)}>
+        <button type="button" aria-label="Add top-level section" title="Add section" onClick={() => {
+          if (editor) insertNotebookSection(editor);
+        }}>
           <FolderPlus aria-hidden="true" size={15} />
         </button>
         <small title={`${countNotebookBlocks(document.content)} total blocks`}>{outline.length} anchors</small>
@@ -266,7 +279,9 @@ export function NotebookOutline({
                   className="notebook-outline-collapse"
                   aria-label={entry.collapsed ? `Expand ${entry.label}` : `Collapse ${entry.label}`}
                   aria-expanded={!entry.collapsed}
-                  onClick={() => editor && updateNotebookSection(editor, entry.id, { collapsed: !entry.collapsed })}
+                  onClick={() => {
+                    if (editor) updateNotebookSection(editor, entry.id, { collapsed: !entry.collapsed });
+                  }}
                 >
                   {entry.collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                 </button>
@@ -282,18 +297,22 @@ export function NotebookOutline({
                       autoFocus
                       defaultValue={entry.label}
                       onBlur={(event) => {
-                        editor && updateNotebookSection(editor, entry.id, {
-                          title: event.currentTarget.value.trim() || 'Untitled section',
-                        });
+                        if (editor) {
+                          updateNotebookSection(editor, entry.id, {
+                            title: event.currentTarget.value.trim() || 'Untitled section',
+                          });
+                        }
                         setEditingSectionId(null);
                       }}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter') {
                           event.preventDefault();
                           event.stopPropagation();
-                          editor && updateNotebookSection(editor, entry.id, {
-                            title: event.currentTarget.value.trim() || 'Untitled section',
-                          });
+                          if (editor) {
+                            updateNotebookSection(editor, entry.id, {
+                              title: event.currentTarget.value.trim() || 'Untitled section',
+                            });
+                          }
                           setEditingSectionId(null);
                         } else if (event.key === 'Escape') {
                           event.preventDefault();
@@ -303,7 +322,9 @@ export function NotebookOutline({
                       }}
                     />
                   ) : (
-                    <button type="button" onClick={() => editor && selectNotebookEditorNode(editor, entry.id)}>
+                    <button type="button" onClick={() => {
+                      if (editor) selectNotebookEditorNode(editor, entry.id);
+                    }}>
                       <strong>{detailLabel}</strong>
                     </button>
                   )}
@@ -312,9 +333,27 @@ export function NotebookOutline({
               </div>
               {entry.nodeType === 'section' ? (
                 <div className="notebook-outline-entry-actions">
-                  <button type="button" aria-label={`Move ${entry.label} up`} title="Move up" onClick={() => editor && moveNotebookNodeInParent(editor, entry.id, 'up')}>↑</button>
-                  <button type="button" aria-label={`Move ${entry.label} down`} title="Move down" onClick={() => editor && moveNotebookNodeInParent(editor, entry.id, 'down')}>↓</button>
-                  <button type="button" aria-label={`${entry.label} actions`} aria-expanded={menuSectionId === entry.id} onClick={() => setMenuSectionId((current) => current === entry.id ? null : entry.id)}>
+                  <button type="button" aria-label={`Move ${entry.label} up`} title="Move up" onClick={() => {
+                    if (editor) moveNotebookNodeInParent(editor, entry.id, 'up');
+                  }}>↑</button>
+                  <button type="button" aria-label={`Move ${entry.label} down`} title="Move down" onClick={() => {
+                    if (editor) moveNotebookNodeInParent(editor, entry.id, 'down');
+                  }}>↓</button>
+                  <button
+                    data-notebook-transient-trigger={sectionMenu.id}
+                    type="button"
+                    aria-label={`${entry.label} actions`}
+                    aria-expanded={menuSectionId === entry.id && sectionMenu.isOpen}
+                    onClick={() => {
+                      if (menuSectionId === entry.id && sectionMenu.isOpen) {
+                        sectionMenu.close();
+                        setMenuSectionId(null);
+                      } else {
+                        setMenuSectionId(entry.id);
+                        sectionMenu.open();
+                      }
+                    }}
+                  >
                     <MoreHorizontal aria-hidden="true" size={14} />
                   </button>
                   {sectionActions(entry)}
@@ -330,7 +369,9 @@ export function NotebookOutline({
       </div>
       <div className="notebook-add-actions" aria-label="Add Notebook block">
         <button type="button" title="Add text" onClick={addParagraph}><Type size={15} /> Text</button>
-        <button type="button" title="Add display math" onClick={() => editor && insertNotebookDisplayMath(editor)}><Sigma size={15} /> Math</button>
+        <button type="button" title="Add display math" onClick={() => {
+          if (editor) insertNotebookDisplayMath(editor);
+        }}><Sigma size={15} /> Math</button>
         <button type="button" title="Add evidence placeholder" onClick={addEvidence}><FileCheck2 size={15} /> Evidence</button>
       </div>
       <div className="notebook-brand">

@@ -13,7 +13,7 @@ import {
   Type,
   Undo2,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { NOTEBOOK_SEMANTIC_DEFINITIONS } from '../../../../lib/notebook';
 
@@ -22,20 +22,24 @@ import {
   insertNotebookInlineMath,
   insertNotebookSemanticBlock,
 } from './selection';
+import { useNotebookTransientLayer } from '../transient-ui';
 
 function ToolButton({
   active = false,
   label,
   onClick,
+  transientTriggerId,
   children,
 }: {
   active?: boolean;
   label: string;
   onClick: () => void;
+  transientTriggerId?: string;
   children: ReactNode;
 }) {
   return (
     <button
+      data-notebook-transient-trigger={transientTriggerId}
       type="button"
       aria-label={label}
       aria-pressed={active}
@@ -50,7 +54,7 @@ function ToolButton({
 }
 
 export function NotebookRichToolbar({ editor }: { editor: Editor }) {
-  const [showSemanticMenu, setShowSemanticMenu] = useState(false);
+  const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
 
   return (
     <div className="notebook-rich-toolbar" aria-label="Notebook formatting toolbar">
@@ -101,14 +105,15 @@ export function NotebookRichToolbar({ editor }: { editor: Editor }) {
         </ToolButton>
         <div className="notebook-semantic-insert">
           <ToolButton
-            active={showSemanticMenu}
+            active={semanticMenu.isOpen}
             label="Insert academic container"
-            onClick={() => setShowSemanticMenu((current) => !current)}
+            onClick={semanticMenu.toggle}
+            transientTriggerId={semanticMenu.id}
           >
             <BookOpenCheck size={16} />
           </ToolButton>
-          {showSemanticMenu ? (
-            <div className="notebook-semantic-menu" role="menu" aria-label="Academic containers">
+          {semanticMenu.isOpen ? (
+            <div data-notebook-transient-layer={semanticMenu.id} className="notebook-semantic-menu" role="menu" aria-label="Academic containers">
               {NOTEBOOK_SEMANTIC_DEFINITIONS.map((definition) => (
                 <button
                   key={definition.kind}
@@ -117,7 +122,7 @@ export function NotebookRichToolbar({ editor }: { editor: Editor }) {
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     insertNotebookSemanticBlock(editor, definition.kind);
-                    setShowSemanticMenu(false);
+                    semanticMenu.close(false);
                   }}
                 >
                   <span>{definition.label}</span>

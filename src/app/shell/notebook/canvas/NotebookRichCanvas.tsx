@@ -27,6 +27,7 @@ import {
   notebookEditorSelection,
   type NotebookEditorSelection,
 } from './selection';
+import { useNotebookTransientLayer } from '../transient-ui';
 
 type NotebookRichCanvasProps = {
   document: NotebookRichDocument;
@@ -72,7 +73,7 @@ export function NotebookRichCanvas({
   const changeRef = useRef(onChange);
   const selectionRef = useRef(onSelectionChange);
   const [revision, setRevision] = useState(0);
-  const [showTemplates, setShowTemplates] = useState(false);
+  const templateMenu = useNotebookTransientLayer({ id: 'notebook-starter-templates' });
   const extensions = useMemo(
     () => createNotebookExtensions(onOpenMathInTool),
     [onOpenMathInTool],
@@ -148,7 +149,7 @@ export function NotebookRichCanvas({
     documentRef.current = nextDocument;
     editor?.commands.setContent(notebookDocumentToTiptap(nextDocument), { emitUpdate: false });
     changeRef.current(nextDocument);
-    setShowTemplates(false);
+    templateMenu.close(false);
     requestAnimationFrame(() => {
       if (editor && !editor.isDestroyed) {
         editor.chain().focus('start').run();
@@ -165,11 +166,11 @@ export function NotebookRichCanvas({
             <Sparkles aria-hidden="true" size={18} />
             <span>Begin with an empty page or a structured starting point.</span>
           </div>
-          <button type="button" onClick={() => setShowTemplates((current) => !current)}>
+          <button data-notebook-transient-trigger={templateMenu.id} type="button" onClick={templateMenu.toggle}>
             Start from template
           </button>
-          {showTemplates ? (
-            <div className="notebook-template-menu">
+          {templateMenu.isOpen ? (
+            <div data-notebook-transient-layer={templateMenu.id} className="notebook-template-menu">
               {NOTEBOOK_STARTER_TEMPLATES.map((template) => (
                 <button key={template.id} type="button" onClick={() => applyTemplate(template.id)}>
                   <strong>{template.label}</strong>

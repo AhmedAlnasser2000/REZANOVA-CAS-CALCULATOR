@@ -21,6 +21,10 @@ import {
 import { NotebookMathFieldProvider } from './notebook/math-field';
 import { NotebookInspector } from './notebook/NotebookInspector';
 import { NotebookOutline } from './notebook/NotebookOutline';
+import {
+  NotebookTransientLayerProvider,
+  useNotebookTransientLayer,
+} from './notebook/transient-ui';
 
 type NotebookPageProps = {
   instanceId: string;
@@ -31,7 +35,7 @@ type NotebookPageProps = {
 
 type NotebookDrawer = 'outline' | 'inspector' | null;
 
-export function NotebookPage({
+function NotebookPageContent({
   instanceId,
   onOpenMathInTool,
   onUpdateSurfaceState,
@@ -39,7 +43,11 @@ export function NotebookPage({
 }: NotebookPageProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [selection, setSelection] = useState<NotebookEditorSelection | null>(null);
-  const [activeDrawer, setActiveDrawer] = useState<NotebookDrawer>(null);
+  const outlineDrawer = useNotebookTransientLayer({ id: 'notebook-outline-drawer' });
+  const inspectorDrawer = useNotebookTransientLayer({ id: 'notebook-inspector-drawer' });
+  const activeDrawer: NotebookDrawer = outlineDrawer.isOpen
+    ? 'outline'
+    : inspectorDrawer.isOpen ? 'inspector' : null;
   const notebookState = notebookRichSurfaceStateFromSlot(surfaceState, {
     idPrefix: instanceId,
   });
@@ -53,11 +61,14 @@ export function NotebookPage({
   }, [instanceId, onUpdateSurfaceState]);
 
   function toggleDrawer(drawer: Exclude<NotebookDrawer, null>) {
-    setActiveDrawer((current) => current === drawer ? null : drawer);
+    if (drawer === 'outline') {
+      outlineDrawer.toggle();
+    } else {
+      inspectorDrawer.toggle();
+    }
   }
 
   return (
-    <NotebookMathFieldProvider>
       <section className="app-page app-page--notebook" data-testid="notebook-page">
         <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
         <div className="notebook-page-workbench">
@@ -66,7 +77,7 @@ export function NotebookPage({
             document={document}
             editor={editor}
             selectedNodeId={selection?.id ?? document.selectedNodeId}
-            onClose={() => setActiveDrawer(null)}
+            onClose={() => outlineDrawer.close()}
           />
           <main className="notebook-canvas" data-testid="notebook-canvas">
             <div className="notebook-canvas-header">
@@ -74,6 +85,7 @@ export function NotebookPage({
                 <span>Math-aware document</span>
                 <div className="notebook-drawer-toggles">
                   <button
+                    data-notebook-transient-trigger={outlineDrawer.id}
                     type="button"
                     aria-label="Toggle Notebook outline"
                     aria-pressed={activeDrawer === 'outline'}
@@ -81,6 +93,7 @@ export function NotebookPage({
                     onClick={() => toggleDrawer('outline')}
                   ><PanelLeftOpen aria-hidden="true" size={17} /></button>
                   <button
+                    data-notebook-transient-trigger={inspectorDrawer.id}
                     type="button"
                     aria-label="Toggle block inspector"
                     aria-pressed={activeDrawer === 'inspector'}
@@ -116,7 +129,7 @@ export function NotebookPage({
             className={activeDrawer === 'inspector' ? 'is-drawer-open' : undefined}
             editor={editor}
             selection={selection}
-            onClose={() => setActiveDrawer(null)}
+            onClose={() => inspectorDrawer.close()}
             onOpenMathInTool={onOpenMathInTool}
           />
           {activeDrawer ? (
@@ -124,7 +137,9 @@ export function NotebookPage({
               type="button"
               className="notebook-drawer-backdrop"
               aria-label="Close Notebook drawer"
-              onClick={() => setActiveDrawer(null)}
+              onClick={() => activeDrawer === 'outline'
+                ? outlineDrawer.close(false)
+                : inspectorDrawer.close(false)}
             />
           ) : null}
         </div>
@@ -134,6 +149,15 @@ export function NotebookPage({
           <span>Session draft</span>
         </footer>
       </section>
-    </NotebookMathFieldProvider>
+  );
+}
+
+export function NotebookPage(props: NotebookPageProps) {
+  return (
+    <NotebookTransientLayerProvider>
+      <NotebookMathFieldProvider>
+        <NotebookPageContent {...props} />
+      </NotebookMathFieldProvider>
+    </NotebookTransientLayerProvider>
   );
 }
