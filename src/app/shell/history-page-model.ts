@@ -76,22 +76,18 @@ function entrySearchText(
   modeLabel: string,
   result: HistoryResultReadModel,
 ) {
-  const outcome = result.outcome;
   return [
     modeLabel,
     entry.inputLatex,
     entry.resolvedInputLatex,
-    outcome.title,
+    result.title,
     result.primaryLatex,
     result.approxText,
-    outcome.answerDomain,
-    outcome.solutionKind,
-    ...(outcome.exactSupplementLatex ?? []),
-    ...(outcome.detailSections?.flatMap((section) => [
-      section.title,
-      ...section.lines,
-    ]) ?? []),
-    ...outcome.warnings,
+    result.answerDomain,
+    result.solutionKind,
+    ...result.supplementLatex,
+    ...result.detailSearchText,
+    ...result.warnings,
   ].filter(Boolean).join(' ').toLowerCase();
 }
 

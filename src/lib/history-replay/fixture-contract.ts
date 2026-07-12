@@ -8,6 +8,7 @@ import {
   collectTableResponseMathFragments,
   normalizePrintHygieneValue,
 } from '../display/print-hygiene';
+import { resolveCanonicalResultForConsumer } from '../result-contract';
 
 export const HISTORY_REPLAY_WORKSPACES = [
   'calculate',
@@ -72,23 +73,30 @@ export type HistoryReplayExecution = {
 };
 
 export function historyReplayIdentity(outcome: DisplayOutcome): HistoryReplayIdentity {
-  const extended = outcome as DisplayOutcome & {
-    resultOrigin?: string;
-    answerDomain?: string;
-    solutionKind?: string;
-    calculusStrategy?: string;
-    runtimeStopReason?: { kind?: string };
-  };
+  const runtimeStopReasonKind = (
+    outcome as DisplayOutcome & { runtimeStopReason?: { kind?: string } }
+  ).runtimeStopReason?.kind;
+  if (outcome.kind === 'prompt') {
+    return {
+      kind: outcome.kind,
+      title: outcome.title,
+      ...(runtimeStopReasonKind ? { runtimeStopReasonKind } : {}),
+    };
+  }
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  if (!resolution.ok) {
+    throw new Error(`History replay canonical resolution failed: ${resolution.failure.message}`);
+  }
+  const document = resolution.document;
+  const metadata = document.metadata;
   return {
-    kind: outcome.kind,
-    title: outcome.title,
-    ...(extended.resultOrigin ? { resultOrigin: extended.resultOrigin } : {}),
-    ...(extended.answerDomain ? { answerDomain: extended.answerDomain } : {}),
-    ...(extended.solutionKind ? { solutionKind: extended.solutionKind } : {}),
-    ...(extended.calculusStrategy ? { calculusStrategy: extended.calculusStrategy } : {}),
-    ...(extended.runtimeStopReason?.kind
-      ? { runtimeStopReasonKind: extended.runtimeStopReason.kind }
-      : {}),
+    kind: document.outcomeKind,
+    title: document.title,
+    ...(metadata?.resultOrigin ? { resultOrigin: metadata.resultOrigin } : {}),
+    ...(metadata?.answerDomain ? { answerDomain: metadata.answerDomain } : {}),
+    ...(metadata?.solutionKind ? { solutionKind: metadata.solutionKind } : {}),
+    ...(metadata?.calculusStrategy ? { calculusStrategy: metadata.calculusStrategy } : {}),
+    ...(runtimeStopReasonKind ? { runtimeStopReasonKind } : {}),
   };
 }
 
@@ -96,25 +104,34 @@ export function historyReplayCardinalities(
   execution: HistoryReplayExecution,
 ): HistoryReplayCardinalities {
   const outcome = execution.outcome;
-  const extended = outcome as DisplayOutcome & {
-    answerRows?: { rows?: unknown[] };
-    branchReadback?: { branchesLatex?: unknown[] };
-    systemReadback?: { rows?: unknown[] };
-    periodicFamily?: { branchesLatex?: unknown[] };
-    exactSupplementLatex?: unknown[];
-    detailSections?: unknown[];
-    actions?: unknown[];
-  };
+  if (outcome.kind === 'prompt') {
+    return {
+      warnings: outcome.warnings.length,
+      supplements: 0,
+      answerRows: 0,
+      branchRows: 0,
+      systemRows: 0,
+      periodicBranches: 0,
+      detailSections: 0,
+      actions: 0,
+      tableRows: execution.tableResponse?.rows.length ?? 0,
+    };
+  }
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  if (!resolution.ok) {
+    throw new Error(`History replay canonical resolution failed: ${resolution.failure.message}`);
+  }
+  const document = resolution.document;
   return {
-    warnings: outcome.warnings.length,
-    supplements: extended.exactSupplementLatex?.length ?? 0,
-    answerRows: extended.answerRows?.rows?.length ?? 0,
-    branchRows: extended.branchReadback?.branchesLatex?.length ?? 0,
-    systemRows: extended.systemReadback?.rows?.length ?? 0,
-    periodicBranches: extended.periodicFamily?.branchesLatex?.length ?? 0,
-    detailSections: extended.detailSections?.length ?? 0,
-    actions: extended.actions?.length ?? 0,
-    tableRows: execution.tableResponse?.rows.length ?? 0,
+    warnings: document.warnings.length,
+    supplements: document.supplements?.length ?? 0,
+    answerRows: document.answerRows?.rows.length ?? 0,
+    branchRows: document.branchReadback?.branches.length ?? 0,
+    systemRows: document.systemReadback?.rows.length ?? 0,
+    periodicBranches: document.periodicFamily?.branches.length ?? 0,
+    detailSections: document.details?.length ?? 0,
+    actions: outcome.actions?.length ?? 0,
+    tableRows: document.table?.rows.length ?? execution.tableResponse?.rows.length ?? 0,
   };
 }
 

@@ -1,4 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
+import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../../lib/result-contract';
 import { copyDisplayResultWithDeps } from './displayClipboard';
 
 describe('Display canonical clipboard routing', () => {
@@ -99,5 +103,36 @@ describe('Display canonical clipboard routing', () => {
       mathJson: undefined,
       metadata: { surface: 'display', mode: 'equation' },
     });
+  });
+
+  it('copies native canonical truth when compatibility fields disagree', async () => {
+    const write = vi.fn().mockResolvedValue({
+      ok: true,
+      host: 'browser',
+      fidelity: 'custom-mime',
+    });
+    await copyDisplayResultWithDeps({
+      displayOutcome: {
+        kind: 'success',
+        title: 'Stale result',
+        exactLatex: 'x=999',
+        warnings: [],
+        canonicalResult: buildCanonicalResultDocumentFromProducer({
+          outcomeKind: 'success',
+          title: 'Canonical result',
+          primaryMath: canonicalMathValue('x=1', ['Equal', 'x', 1]),
+          warnings: [],
+        }),
+      },
+      visibleText: 'x = 1',
+      currentMode: 'equation',
+      setClipboardNotice: vi.fn(),
+      write,
+    });
+
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({
+      canonicalLatex: 'x=1',
+      mathJson: ['Equal', 'x', 1],
+    }));
   });
 });

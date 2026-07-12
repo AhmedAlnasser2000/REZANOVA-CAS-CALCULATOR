@@ -15,7 +15,11 @@ describe('Surface Protocol snapshot queries', () => {
       title: 'Equation Result',
       exactLatex: 'x=2',
       warnings: [],
-      detailSections: [{ title: 'Internal details', lines: ['solver object should stay hidden'] }],
+      detailSections: [{
+        title: 'Internal details',
+        lines: ['solver object should stay hidden'],
+        lineKind: 'text',
+      }],
       runtimeAdvisories: { advisories: [{ code: 'internal', message: 'hidden advisory' }] },
       history: { entries: ['hidden history'] },
       variables: { x: 2 },

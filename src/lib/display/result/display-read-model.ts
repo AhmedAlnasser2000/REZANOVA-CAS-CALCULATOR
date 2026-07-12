@@ -13,7 +13,7 @@ import type {
   ResultOrigin,
   SolutionKind,
 } from '../../../types/calculator';
-import { projectDisplayOutcomeToCanonicalResult } from '../../result-contract';
+import { resolveCanonicalResultForConsumer } from '../../result-contract';
 import { trustSummaryForCanonicalResult } from './display-trust-summary';
 
 export type DisplayResultReadModel = {
@@ -160,11 +160,7 @@ function displaySystemReadback(document: CanonicalResultDocumentV1) {
 }
 
 function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
-  const canonicalResult = outcome.canonicalResult;
-  if (canonicalResult) {
-    return { authority: 'native' as const, document: canonicalResult };
-  }
-  const projected = projectDisplayOutcomeToCanonicalResult(outcome);
+  const projected = resolveCanonicalResultForConsumer(outcome);
   const legacyDetailSections = outcome.detailSections;
   if (
     !projected.ok
@@ -173,12 +169,12 @@ function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'p
   ) {
     const outcomeWithoutLegacyDetails = { ...outcome };
     Reflect.deleteProperty(outcomeWithoutLegacyDetails, 'detailSections');
-    const projectedWithoutLegacyDetails = projectDisplayOutcomeToCanonicalResult(
+    const projectedWithoutLegacyDetails = resolveCanonicalResultForConsumer(
       outcomeWithoutLegacyDetails,
     );
     if (projectedWithoutLegacyDetails.ok) {
       return {
-        authority: 'compatibility' as const,
+        authority: projectedWithoutLegacyDetails.source,
         document: projectedWithoutLegacyDetails.document,
         legacyDetailSections,
       };
@@ -189,7 +185,7 @@ function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'p
       `Display read model projection failed: ${projected.failure.reason}: ${projected.failure.message}`,
     );
   }
-  return { authority: 'compatibility' as const, document: projected.document };
+  return { authority: projected.source, document: projected.document };
 }
 
 export function displayResultReadModelFromOutcome(

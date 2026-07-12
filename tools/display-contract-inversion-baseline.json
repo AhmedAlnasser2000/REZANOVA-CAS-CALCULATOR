@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DISPLAY-READ-MODEL-INVERSION1 derives Display blocks, reveal scheduling, and Formula Viewer artifacts from canonical result documents while preserving one registered legacy History detail-inference boundary and deferring print and symbolic hygiene consumers.",
-  "registryDigest": "244a50a598fb40bfd3f8",
+  "acceptedReason": "CANONICAL-RESULT-CONSUMER-INVERSION1 moves Display, Clipboard, Ans, editor transfer, workspace state, structured History, replay, print hygiene, and Surface DTO consumers to producer-owned canonical documents while preserving prompt controls and legacy History dual writes.",
+  "registryDigest": "f4154789429391a2e200",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -10,17 +10,12 @@
     },
     "app-display": {
       "compatibilityProjection": 0,
-      "legacyRead": 27,
+      "legacyRead": 0,
       "nativeDocument": 0
     },
     "app-runtime": {
       "compatibilityProjection": 0,
-      "legacyRead": 17,
-      "nativeDocument": 0
-    },
-    "app-shell": {
-      "compatibilityProjection": 0,
-      "legacyRead": 6,
+      "legacyRead": 12,
       "nativeDocument": 0
     },
     "calculate": {
@@ -35,7 +30,7 @@
     },
     "display-read-model": {
       "compatibilityProjection": 0,
-      "legacyRead": 21,
+      "legacyRead": 1,
       "nativeDocument": 0
     },
     "equation": {
@@ -55,12 +50,12 @@
     },
     "history": {
       "compatibilityProjection": 1,
-      "legacyRead": 24,
+      "legacyRead": 14,
       "nativeDocument": 1
     },
     "history-replay": {
       "compatibilityProjection": 0,
-      "legacyRead": 16,
+      "legacyRead": 2,
       "nativeDocument": 0
     },
     "kernel-runtime": {
@@ -95,7 +90,7 @@
     },
     "surface-protocol": {
       "compatibilityProjection": 0,
-      "legacyRead": 23,
+      "legacyRead": 4,
       "nativeDocument": 0
     },
     "table": {
@@ -387,7 +382,7 @@
     },
     "canonical-projection": {
       "src/lib/display/result/display-read-model.ts": [
-        "1d96e790fc8b4998ae97:1"
+        "3107f6a2829270b39a67:1"
       ],
       "src/lib/result-contract/projection.ts": [
         "11c19875e55f29584268:1",
@@ -995,6 +990,9 @@
         "6aaf9890bdecf6f76842:4",
         "17b600695a28aaf6df8c:4"
       ],
+      "src/lib/history-replay/fixture-contract.ts": [
+        "0af5027720add5602bb9:1"
+      ],
       "src/lib/kernel/runtime-envelope.ts": [
         "83041b56ab4ce7891e36:1"
       ],
@@ -1072,9 +1070,6 @@
         "d32346102b389fdb39fe:1",
         "6ab542ecc3b967ef52e2:1"
       ],
-      "src/lib/display/result/display-read-model.ts": [
-        "a14680aebb90ff48d5cc:1"
-      ],
       "src/lib/equation/target/surface.ts": [
         "d88da38fa175a9b5d055:1",
         "c4b6471fafa084efc4a6:1"
@@ -1083,6 +1078,10 @@
         "65f068ad14a024accd01:1",
         "65f068ad14a024accd01:2",
         "65f068ad14a024accd01:3"
+      ],
+      "src/lib/result-contract/consumer.ts": [
+        "bee03b3be25575ea25f8:1",
+        "bee03b3be25575ea25f8:2"
       ],
       "src/lib/result-contract/storage.ts": [
         "ddd00484a1c1d06528b1:1",
@@ -1094,10 +1093,7 @@
     },
     "legacy-read": {
       "src/app/logic/displayClipboard.ts": [
-        "4f97bc540752731982c1:1",
-        "54ac33c805a3bf53b6bf:1",
-        "4f97bc540752731982c1:2",
-        "54ac33c805a3bf53b6bf:2"
+        "54ac33c805a3bf53b6bf:1"
       ],
       "src/app/logic/equationNumericIntervalRuntime.ts": [
         "ebb6b8e06080b97c3eea:1"
@@ -1106,24 +1102,20 @@
         "c6ec6bfb54855a401c75:1"
       ],
       "src/app/runtime/historyDisplayEntry.ts": [
-        "a1e30cac5337603fb06e:1",
-        "5e22f1883b6ac2853788:1",
-        "a1e30cac5337603fb06e:2",
-        "5e22f1883b6ac2853788:2",
-        "fcb1785f20698009a14c:1",
-        "75f411765b18883d7d9b:1",
-        "b92017e8a5d18440e4e8:1",
-        "d4f943976c8a0534ee0c:1",
-        "163680e72ab3ac5d9a3b:1",
-        "3d7ac6271d177d7d217c:1",
-        "3d7ac6271d177d7d217c:2",
-        "3d7ac6271d177d7d217c:3",
-        "a2a66bdaabc86da61b56:1",
-        "a2a66bdaabc86da61b56:2",
-        "f01cac0999c60c0155a6:1",
-        "f01cac0999c60c0155a6:2",
-        "359911f1d9c2133601b4:1",
-        "359911f1d9c2133601b4:2"
+        "45a563ab9d97213793b9:1",
+        "ba1b43c62ca4172ee145:1",
+        "a6c8e000174a92c2f99c:1",
+        "08c2c7b52d0632695726:1",
+        "9c34c8623c55d29d84c2:1",
+        "f07bd99c428344c69f1a:1",
+        "f07bd99c428344c69f1a:2",
+        "f07bd99c428344c69f1a:3",
+        "826975e022e72d9c0cb7:1",
+        "826975e022e72d9c0cb7:2",
+        "3f5a757ffebd2214359b:1",
+        "3f5a757ffebd2214359b:2",
+        "80b97ded0770ffa35417:1",
+        "80b97ded0770ffa35417:2"
       ],
       "src/app/runtime/useEquationRuntime.ts": [
         "aab49f74d199055a9fa2:1",
@@ -1136,87 +1128,12 @@
         "86053cf4ac9b805ff494:2",
         "3c002615b6df59fcc29b:1"
       ],
-      "src/app/runtime/useHistoryDisplayRuntime.ts": [
-        "9a7d243020d99f048567:1",
-        "b726799eb75210bc0bbe:1",
-        "b726799eb75210bc0bbe:2",
-        "b726799eb75210bc0bbe:3"
-      ],
-      "src/app/runtime/workspace-display-state.ts": [
-        "fbc790da21ed93625519:1",
-        "fbc790da21ed93625519:2"
-      ],
-      "src/app/shell/history-page-model.ts": [
-        "e3f4276cff5f4703d2b7:1",
-        "48430cad7d00d8770956:1",
-        "34b17bd72b11911f440e:1",
-        "046e3acd10b02bf3f473:1",
-        "7f4e93d04db90a71afdd:1",
-        "d292cbed14c1b9d5fba4:1"
-      ],
-      "src/app/shell/HistoryPage.tsx": [
-        "3fd69d79da4d7c868034:1",
-        "3fd69d79da4d7c868034:2"
-      ],
-      "src/AppMain.tsx": [
-        "9ae3849827df688b7a6f:1",
-        "e42dc3d2d4210c5389a7:1",
-        "010ff8ed047b094169b8:1",
-        "a507387fbf89951f493e:1",
-        "a0dde79ddade9bfdd781:1",
-        "655e1000b5877a5b16fa:1",
-        "010ff8ed047b094169b8:2",
-        "010ff8ed047b094169b8:3",
-        "010ff8ed047b094169b8:4",
-        "a507387fbf89951f493e:2",
-        "a507387fbf89951f493e:3",
-        "4c58a637ee57e310952f:1",
-        "f3a1a84216a8a1ee6479:1",
-        "fd1f3ce12f787f92eb21:1",
-        "2d08844883a48d9e3ad9:1",
-        "f3a1a84216a8a1ee6479:2",
-        "fd1f3ce12f787f92eb21:2",
-        "4c58a637ee57e310952f:2",
-        "4c58a637ee57e310952f:3",
-        "4c58a637ee57e310952f:4",
-        "4c58a637ee57e310952f:5",
-        "4c58a637ee57e310952f:6",
-        "4c58a637ee57e310952f:7",
-        "4c58a637ee57e310952f:8",
-        "2cf372ac3c7462b5fd1b:1",
-        "f39515eeea4e830cb93d:1",
-        "d82b355f1a303e4d174a:1"
-      ],
       "src/lib/__golden__/print-hygiene-baseline.ts": [
         "b88e6e00522a612d6bc7:1"
       ],
       "src/lib/calculus/workspace/engine.ts": [
         "d29ead8685ae1c208ef0:1",
         "fcee6a1699c5aa8211b0:1"
-      ],
-      "src/lib/display/notation/symbolic-output-hygiene.ts": [
-        "a37d559892dfc23d3b65:1",
-        "a5011bab8015180279f7:1",
-        "620048aa03f01b5c8786:1",
-        "1830af6e1bfcd1031216:1",
-        "3750dcb475d3b531c491:1"
-      ],
-      "src/lib/display/print-hygiene.ts": [
-        "4e9e0689b070a34ad4b5:1",
-        "15dc140113aa875ae293:1",
-        "38af09014107fdf742f2:1",
-        "e9dcbe9ecf560b53ddd1:1",
-        "c3caf4374593f1b2357b:1",
-        "ed0b48e4944460a322b5:1",
-        "21778b5a11fe8655e162:1",
-        "21778b5a11fe8655e162:2",
-        "8dc8637cf8bfe8187070:1",
-        "49e6fbe10b2f205398da:1",
-        "49e6fbe10b2f205398da:2",
-        "49e6fbe10b2f205398da:3",
-        "34c6e4c8f611e51b5fd3:1",
-        "bd5aa1617183e10ae281:1",
-        "b16f7d1f11278c344eee:1"
       ],
       "src/lib/display/result/display-read-model.ts": [
         "914d369c46b42f64dbef:1"
@@ -1449,21 +1366,7 @@
       ],
       "src/lib/history-replay/fixture-contract.ts": [
         "8d1d997e9fccb6d937e4:1",
-        "74c84f94f11f5ad812c5:1",
-        "74c84f94f11f5ad812c5:2",
-        "d996be1c0908f99e8218:1",
-        "d996be1c0908f99e8218:2",
-        "f89c6e83473e156ec164:1",
-        "f89c6e83473e156ec164:2",
-        "23ba4543a7a57c786701:1",
-        "23ba4543a7a57c786701:2",
-        "20b6a1d5d70d4a4f82f1:1",
-        "ad003f0279e8c895c5a4:1",
-        "e8af175ec7a15761d463:1",
-        "6519ddab13ca998479ce:1",
-        "d3cae6df38228ac9a1eb:1",
-        "6fb19a80664f32536888:1",
-        "56161edd5a5727a4d400:1"
+        "20b6a1d5d70d4a4f82f1:1"
       ],
       "src/lib/kernel/runtime-envelope.ts": [
         "5305128ed545135a9cec:1",
@@ -1657,29 +1560,10 @@
         "c3cf9d97212fe3ddd88d:1"
       ],
       "src/lib/surface-protocol/dto.ts": [
-        "6fae0922de5560197a7d:1",
-        "a3fde41241eddadfc84f:1",
-        "261f590f7413a9b2d20c:1",
-        "261f590f7413a9b2d20c:2",
-        "d08d110acbd895ce3d31:1",
-        "d08d110acbd895ce3d31:2",
-        "d08d110acbd895ce3d31:3",
-        "b110db5196bff6b1d5a3:1",
-        "b110db5196bff6b1d5a3:2",
-        "b39f2322609e68385b80:1",
-        "7a896567c109855102f6:1",
-        "6dac41457ab3b8ea3fdf:1",
-        "ac1b616d5823e5d57a28:1",
-        "a204e425bfd8b469bae6:1",
-        "42a72d29a9fa902d1681:1",
         "a6e00c498a5cab097577:1",
-        "a04aaab58960ebcaf935:1",
-        "3d9c61e34720bef93509:1",
-        "3d9c61e34720bef93509:2",
-        "a204e425bfd8b469bae6:2",
-        "a204e425bfd8b469bae6:3",
-        "a04aaab58960ebcaf935:2",
-        "a04aaab58960ebcaf935:3"
+        "42a72d29a9fa902d1681:1",
+        "42a72d29a9fa902d1681:2",
+        "42a72d29a9fa902d1681:3"
       ],
       "src/lib/trigonometry/core.ts": [
         "6ecd093c2d8bfb4ec3e5:1",
@@ -1700,9 +1584,8 @@
     },
     "control-read": {
       "src/app/logic/displayClipboard.ts": [
-        "a5467185d80b4ccb33ba:1",
-        "a5467185d80b4ccb33ba:2",
-        "a5467185d80b4ccb33ba:3"
+        "e1c29c817e6a4d936f08:1",
+        "e1c29c817e6a4d936f08:2"
       ],
       "src/app/logic/equationNumericIntervalRuntime.ts": [
         "5024288f9b2c289e0538:1"
@@ -1713,8 +1596,7 @@
         "27ca8fda219e0b57aa46:1"
       ],
       "src/app/runtime/historyDisplayEntry.ts": [
-        "bdb21178ef437cbb034f:1",
-        "baa46319d74bda594a8b:1"
+        "bdb21178ef437cbb034f:1"
       ],
       "src/app/runtime/useCalculateRuntime.ts": [
         "15dfbd12ec92526b5433:1",
@@ -1735,31 +1617,12 @@
         "f5c306d2fb47f479b6ec:2"
       ],
       "src/app/runtime/workspace-display-state.ts": [
-        "3c012101c5883095b0c3:1"
+        "3c012101c5883095b0c3:1",
+        "3c012101c5883095b0c3:2"
       ],
       "src/AppMain.tsx": [
-        "cfede5e8fd563956bbfd:1",
-        "cfede5e8fd563956bbfd:2",
-        "06562d6b4ad7fdb5107d:1",
-        "06562d6b4ad7fdb5107d:2",
-        "e9669767dd098c8f1d12:1",
-        "e9669767dd098c8f1d12:2",
-        "093c1b9224747e532852:1",
-        "f33db0423cfae75923e2:1",
-        "cfede5e8fd563956bbfd:3",
-        "cfede5e8fd563956bbfd:4",
-        "cfede5e8fd563956bbfd:5",
-        "cfede5e8fd563956bbfd:6",
-        "cfede5e8fd563956bbfd:7",
-        "cfede5e8fd563956bbfd:8",
-        "cfede5e8fd563956bbfd:9",
-        "cfede5e8fd563956bbfd:10",
-        "cfede5e8fd563956bbfd:11",
-        "cfede5e8fd563956bbfd:12",
-        "cfede5e8fd563956bbfd:13",
-        "cfede5e8fd563956bbfd:14",
-        "cfede5e8fd563956bbfd:15",
-        "cfede5e8fd563956bbfd:16"
+        "79d62c15df9580385169:1",
+        "f33db0423cfae75923e2:1"
       ],
       "src/lib/__golden__/print-hygiene-baseline.ts": [
         "c780508653befbcc149f:1",
@@ -1778,8 +1641,7 @@
       ],
       "src/lib/display/print-hygiene.ts": [
         "d7a318824733828b4d93:1",
-        "29269ba4894a33fef42d:1",
-        "d7a318824733828b4d93:2"
+        "29269ba4894a33fef42d:1"
       ],
       "src/lib/display/result/display-read-model.ts": [
         "09d0df2e40da61afa8ce:1"
@@ -1876,7 +1738,9 @@
         "e728459a83f30e39983f:1"
       ],
       "src/lib/history-replay/fixture-contract.ts": [
-        "3e51ab15f027ba8403d4:1"
+        "3e51ab15f027ba8403d4:1",
+        "3e51ab15f027ba8403d4:2",
+        "3f195f575c219f2f5b2d:1"
       ],
       "src/lib/kernel/runtime-envelope.ts": [
         "7265ed8f495993655343:1",
@@ -1970,6 +1834,9 @@
         "fc2a2fcf7918907bd3f1:4",
         "fc2a2fcf7918907bd3f1:5"
       ],
+      "src/lib/result-contract/consumer.ts": [
+        "a8a5fbbcf92bd3e5fbef:1"
+      ],
       "src/lib/result-contract/native-result.ts": [
         "fccbce851ea2e7b82617:1"
       ],
@@ -1984,19 +1851,8 @@
         "3226a414e7478b46c356:1"
       ],
       "src/lib/surface-protocol/dto.ts": [
-        "12fef343c5fd7d1ec965:1",
-        "552fa80bb142b0dc0736:1",
-        "89752744caab97d51183:1",
         "5ea25a7d9fee34f3496f:1",
-        "5ea25a7d9fee34f3496f:2",
-        "5ea25a7d9fee34f3496f:3",
-        "5ea25a7d9fee34f3496f:4",
-        "5ea25a7d9fee34f3496f:5",
-        "5ea25a7d9fee34f3496f:6",
-        "5ea25a7d9fee34f3496f:7",
-        "5ea25a7d9fee34f3496f:8",
-        "5ea25a7d9fee34f3496f:9",
-        "5ea25a7d9fee34f3496f:10"
+        "60c87aab26bdf6e595a7:1"
       ],
       "src/lib/trigonometry/core.ts": [
         "b2ac6ecae600f3bc5f75:1",
@@ -2021,7 +1877,7 @@
         "6525059b9919b812863e:1"
       ],
       "src/lib/history-replay/fixture-contract.ts": [
-        "3e64b4977dbb46df2afe:1"
+        "5b7446d652e8e307d056:1"
       ],
       "src/lib/kernel/runtime-envelope.ts": [
         "9f50643a5a4aa74d3290:1"

@@ -26,6 +26,7 @@ const resultFixtureOutcome: DisplayOutcome = {
   answerDomain: 'real',
   solutionKind: 'exact-symbolic',
   solveSummaryText: 'Solved exactly.',
+  solveSummaryParts: [[{ kind: 'text', text: 'Solved exactly.' }]],
   branchReadback: {
     targetLatex: 'x',
     relationLatex: '=',

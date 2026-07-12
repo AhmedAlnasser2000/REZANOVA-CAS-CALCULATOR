@@ -1,4 +1,5 @@
 import { writeMathClipboard } from '../../lib/clipboard';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
 import type { DisplayOutcome, ModeId } from '../../types/calculator';
 
 type DisplayClipboardDeps = {
@@ -16,15 +17,16 @@ export async function copyDisplayResultWithDeps({
   setClipboardNotice,
   write = writeMathClipboard,
 }: DisplayClipboardDeps) {
-  const canonicalPayload = displayOutcome?.kind === 'success'
-    && displayOutcome.canonicalMath?.canonicalLatex === displayOutcome.exactLatex
-    ? displayOutcome.canonicalMath
+  const resolution = displayOutcome && displayOutcome.kind !== 'prompt'
+    ? resolveCanonicalResultForConsumer(displayOutcome)
     : undefined;
-  const canonicalLatex = canonicalPayload?.canonicalLatex
-    ?? (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
-      ? displayOutcome.exactLatex
-      : undefined)
-    ?? visibleText;
+  const primaryMath = resolution?.ok ? resolution.document.primaryMath : undefined;
+  const compatibilityLatex = !resolution?.ok
+    && displayOutcome
+    && displayOutcome.kind !== 'prompt'
+    ? displayOutcome.exactLatex
+    : undefined;
+  const canonicalLatex = primaryMath?.canonicalLatex ?? compatibilityLatex ?? visibleText;
   if (!canonicalLatex.trim()) {
     setClipboardNotice('Nothing to copy');
     return;
@@ -33,7 +35,7 @@ export async function copyDisplayResultWithDeps({
   const result = await write({
     canonicalLatex,
     visibleText: visibleText || canonicalLatex,
-    mathJson: canonicalPayload?.mathJson,
+    mathJson: primaryMath?.mathJson,
     metadata: { surface: 'display', mode: currentMode },
   });
   setClipboardNotice(result.ok ? 'Result copied' : 'Clipboard blocked');

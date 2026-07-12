@@ -39,6 +39,26 @@ describe('Surface Protocol boundary validation', () => {
     );
   });
 
+  it('allows only the DTO mapper to read the neutral canonical consumer seam', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/lib/surface-protocol/dto.ts',
+      "import { resolveCanonicalResultForConsumer } from '../result-contract/consumer';\n",
+    );
+    assert.deepEqual(validateSurfaceProtocolBoundaries({ rootDir }), { files: 1 });
+
+    writeFile(
+      rootDir,
+      'src/lib/surface-protocol/queries.ts',
+      "import { resolveCanonicalResultForConsumer } from '../result-contract/consumer';\n",
+    );
+    assert.throws(
+      () => validateSurfaceProtocolBoundaries({ rootDir }),
+      /queries\.ts imports forbidden Surface dependency/,
+    );
+  });
+
   it('allows the policy registry to name blocked internal concepts', () => {
     const rootDir = makeRoot();
     writeFile(

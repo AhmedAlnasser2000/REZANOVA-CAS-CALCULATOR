@@ -354,3 +354,26 @@
 ### Next Step
 
 - Commit `DISPLAY-READ-MODEL-INVERSION1`, then migrate Clipboard, `Ans`, editor transfer, workspace display state, History, print hygiene, and Surface mapping in `CANONICAL-RESULT-CONSUMER-INVERSION1`.
+
+## CANONICAL-RESULT-CONSUMER-INVERSION1
+
+### Completed
+
+- Added one fail-closed neutral canonical-result resolver and moved Clipboard, editor transfer, `Ans`, workspace display state, structured History, print hygiene, replay comparisons, and Surface mapping onto it.
+- Preserved prompt/control reads, transient actions, dual-written History compatibility fields, and the explicit old-History detail exception without allowing them to override native result truth.
+- Added an exact Surface boundary allowlist for the DTO mapper without changing the compact public DTO.
+
+### Measured Posture
+
+- Accepted inventory: 613 producer boundaries, 593 consumer reads, one compatibility projection, 29 owner assemblies, 411 legacy reads, and 150 native calls. Legacy reads fell from 554; App Display and app shell are at zero.
+- Full unit/UI pass 532 files/3,687 tests and 67 files/482 tests. All golden/replay, runtime, printer/detail/clipboard, Surface, build/lint/Rust, and static gates pass.
+
+### Runtime And UI
+
+- Nineteen Chromium canaries, nine structured-History journeys, and two real Chromium clipboard capability cases pass.
+- Fresh all-nine History screenshots preserve workspace identity, titles, answers, branches, details, exact Table rows, and overflow behavior without output drift.
+- No output, request, runtime, OOE, History-ticket, capability, worker, fallback, or Surface DTO behavior changed.
+
+### Next Step
+
+- Commit `CANONICAL-RESULT-CONSUMER-INVERSION1`, then make canonical documents authoritative for every live success and math-bearing controlled error in `DISPLAY-CONTRACT-INVERSION1`.

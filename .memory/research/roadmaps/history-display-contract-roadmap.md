@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; Display read-model authority is verified through Gate 17; `CANONICAL-RESULT-CONSUMER-INVERSION1` is next; no push is authorized
+Status: active; canonical consumer authority is verified through Gate 18; `DISPLAY-CONTRACT-INVERSION1` is next; no push is authorized
 
 ## Attribution
 
@@ -152,6 +152,12 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - The accepted inventory remains one compatibility projection, 29 owner assemblies, and 150 native calls. Display records 21 legacy reads, one canonical read, zero compatibility producers, and one registered canonical projection; 20 reads belong to print-hygiene/symbolic downstream consumers scheduled for Gate 18, while one is the explicit old-History detail exception.
 - Full unit and UI verification passes 530 files/3,682 tests and 67 files/481 tests. All 43 golden executions, 100 replay fixtures, 19 Chromium canaries, nine structured-History journeys, runtime/static contracts, TypeScript, build, lint, Rust, and file-size gates pass.
 - Fresh screenshots across all nine workspaces and a live 39,456-character Formula Viewer result were inspected. Answers, facts, details, exact Table rows, guarded formula rows, and overflow policy remain readable with no intentional output drift. Consumer inversion is next.
+- `CANONICAL-RESULT-CONSUMER-INVERSION1`: verified for its approved commit. A neutral resolver now supplies canonical truth to Clipboard, editor transfer, `Ans`, workspace display state, structured History, print hygiene, replay identity/cardinality, and Surface DTO mapping.
+- Native documents validate and win whenever present; an invalid native document fails closed instead of silently falling back. Typed compatibility projection is available only when native truth is absent. Prompt/control fields and transient actions remain outside the result document, while dual-written legacy History fields remain unchanged for compatibility.
+- The accepted inventory now measures 411 legacy reads, down from 554. App Display and app shell have zero legacy reads; Display retains only its explicit old-History undeclared-detail exception. Remaining reads are classified runtime decisions, prompt/control reads, and required History dual writes for final inversion rather than hidden consumer authority.
+- Surface Protocol DTO shapes remain unchanged. Only the exact DTO mapper may cross the neutral result-consumer seam; host commands, mounting, History exposure, settings expansion, and OOE authority remain out of scope.
+- Full verification passes 532 unit files/3,687 tests and 67 UI files/482 tests. All 43 golden executions, all 100 replay fixtures, 24 setting probes, 19 runtime probes, 19 Chromium canaries, nine structured-History journeys, real Chromium clipboard capability, TypeScript, build, lint, Rust, file-size, CI, seam, Surface, OOE, and compartment gates pass.
+- Fresh all-nine structured-History screenshots were inspected. Restored titles, branches, details, exact Statistics/Linear Algebra math, and all three Table rows remain readable without malformed fragments, overlap, or clipping. Final contract inversion is next.
 
 ## Verification Contract
 

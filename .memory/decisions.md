@@ -2442,3 +2442,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Display presentation policy must resolve through one canonical-derived read model before building blocks, trust summaries, render schedules, or Formula Viewer artifacts. Native canonical truth wins over contradictory compatibility fields.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Typed legacy outcomes may project once without LaTeX reparsing. Only old History may preserve raw undeclared detail sections when that is the projection's sole validation failure; live producers remain forbidden from relying on inference.
+
+## 2026-07-12 - CANONICAL-RESULT-CONSUMER-INVERSION1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Canonical result consumers use one neutral resolver: a present native document must validate and is authoritative; invalid native truth fails closed, and typed compatibility projection is permitted only when the native document is absent.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Prompt/control fields, transient actions, runtime commit policy, and required dual-written legacy History fields remain outside canonical consumer authority. Surface Protocol keeps its compact DTO unchanged and allows only its exact DTO mapper to cross the result-consumer seam.

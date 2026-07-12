@@ -1,5 +1,9 @@
-import type { DisplayOutcome, TableResponse } from '../../types/calculator';
-import { detailLineKindAt } from './result-detail-lines';
+import type {
+  CanonicalResultDocumentV1,
+  DisplayOutcome,
+  TableResponse,
+} from '../../types/calculator';
+import { resolveCanonicalResultForConsumer } from '../result-contract';
 
 export type MathematicalFragmentKind =
   | 'primary-answer'
@@ -60,95 +64,94 @@ function appendFragment(
 }
 
 function collectPeriodicFragments(
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>,
+  document: CanonicalResultDocumentV1,
   fragments: MathematicalFragment[],
 ) {
-  const periodic = outcome.periodicFamily;
+  const periodic = document.periodicFamily;
   if (!periodic) return;
 
-  appendFragment(fragments, 'periodicFamily.carrierLatex', 'periodic-carrier', periodic.carrierLatex);
-  appendFragment(fragments, 'periodicFamily.parameterLatex', 'periodic-parameter', periodic.parameterLatex);
-  periodic.parameterConstraintLatex?.forEach((value, index) =>
-    appendFragment(fragments, `periodicFamily.parameterConstraintLatex[${index}]`, 'periodic-constraint', value));
-  periodic.branchesLatex.forEach((value, index) =>
-    appendFragment(fragments, `periodicFamily.branchesLatex[${index}]`, 'periodic-branch', value));
+  appendFragment(fragments, 'periodicFamily.carrierLatex', 'periodic-carrier', periodic.carrier.canonicalLatex);
+  appendFragment(fragments, 'periodicFamily.parameterLatex', 'periodic-parameter', periodic.parameter.canonicalLatex);
+  periodic.parameterConstraints?.forEach((value, index) =>
+    appendFragment(fragments, `periodicFamily.parameterConstraintLatex[${index}]`, 'periodic-constraint', value.canonicalLatex));
+  periodic.branches.forEach((value, index) =>
+    appendFragment(fragments, `periodicFamily.branchesLatex[${index}]`, 'periodic-branch', value.canonicalLatex));
   periodic.representatives?.forEach((representative, index) =>
     appendFragment(
       fragments,
       `periodicFamily.representatives[${index}].exactLatex`,
       'periodic-representative',
-      representative.exactLatex,
+      representative.exact?.canonicalLatex,
     ));
   periodic.suggestedIntervals?.forEach((interval, index) => {
-    appendFragment(fragments, `periodicFamily.suggestedIntervals[${index}].start`, 'periodic-interval-bound', interval.start);
-    appendFragment(fragments, `periodicFamily.suggestedIntervals[${index}].end`, 'periodic-interval-bound', interval.end);
+    appendFragment(fragments, `periodicFamily.suggestedIntervals[${index}].start`, 'periodic-interval-bound', interval.start.canonicalLatex);
+    appendFragment(fragments, `periodicFamily.suggestedIntervals[${index}].end`, 'periodic-interval-bound', interval.end.canonicalLatex);
   });
   periodic.piecewiseBranches?.forEach((branch, index) => {
     appendFragment(
       fragments,
       `periodicFamily.piecewiseBranches[${index}].conditionLatex`,
       'periodic-piecewise-condition',
-      branch.conditionLatex,
+      branch.condition.canonicalLatex,
     );
     appendFragment(
       fragments,
       `periodicFamily.piecewiseBranches[${index}].resultLatex`,
       'periodic-piecewise-result',
-      branch.resultLatex,
+      branch.result.canonicalLatex,
     );
   });
   appendFragment(
     fragments,
     'periodicFamily.principalRangeLatex',
     'periodic-principal-range',
-    periodic.principalRangeLatex,
+    periodic.principalRange?.canonicalLatex,
   );
   appendFragment(
     fragments,
     'periodicFamily.reducedCarrierLatex',
     'periodic-reduced-carrier',
-    periodic.reducedCarrierLatex,
+    periodic.reducedCarrier?.canonicalLatex,
   );
 }
 
 function collectDetailFragments(
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>,
+  document: CanonicalResultDocumentV1,
   fragments: MathematicalFragment[],
 ) {
-  outcome.detailSections?.forEach((section, sectionIndex) => {
-    section.lines.forEach((line, lineIndex) => {
-      const parts = section.lineParts?.[lineIndex];
-      const mathParts = parts?.flatMap((part, partIndex) =>
+  document.details?.forEach((section, sectionIndex) => {
+    section.lines.forEach((parts, lineIndex) => {
+      const mathParts = parts.flatMap((part, partIndex) =>
         part.kind === 'math'
           ? [{ part, partIndex }]
           : []);
 
-      if (mathParts && mathParts.length > 0) {
+      if (parts.length === 1 && parts[0]?.kind === 'math') {
+        appendFragment(
+          fragments,
+          `detailSections[${sectionIndex}].lines[${lineIndex}]`,
+          'detail-math-line',
+          parts[0].math.canonicalLatex,
+        );
+      } else if (mathParts.length > 0) {
         mathParts.forEach(({ part, partIndex }) =>
           appendFragment(
             fragments,
             `detailSections[${sectionIndex}].lineParts[${lineIndex}][${partIndex}].latex`,
             'detail-math-part',
-            part.latex,
+            part.kind === 'math' ? part.math.canonicalLatex : undefined,
           ));
-      } else if (detailLineKindAt(section, lineIndex) === 'math') {
-        appendFragment(
-          fragments,
-          `detailSections[${sectionIndex}].lines[${lineIndex}]`,
-          'detail-math-line',
-          line,
-        );
       }
     });
   });
-  outcome.solveSummaryParts?.forEach((parts, lineIndex) => {
+  document.summaries?.solve?.forEach((parts, lineIndex) => {
     parts.forEach((part, partIndex) => {
       if (part.kind === 'math') {
         appendFragment(
           fragments,
           `solveSummaryParts[${lineIndex}][${partIndex}].latex`,
           'solve-summary-math-part',
-          part.latex,
+          part.math.canonicalLatex,
         );
       }
     });
@@ -162,48 +165,67 @@ export function collectDisplayOutcomeMathFragments(outcome: DisplayOutcome): Mat
     return fragments;
   }
 
-  appendFragment(fragments, 'exactLatex', 'primary-answer', outcome.exactLatex);
-  if (outcome.kind === 'success') {
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  if (!resolution.ok) {
+    throw new Error(
+      `Print hygiene canonical resolution failed: ${resolution.failure.reason}: ${resolution.failure.message}`,
+    );
+  }
+  const document = resolution.document;
+  appendFragment(fragments, 'exactLatex', 'primary-answer', document.primaryMath?.canonicalLatex);
+  if (document.primaryMath?.mathJson !== undefined) {
     appendFragment(
       fragments,
       'canonicalMath.canonicalLatex',
       'canonical-payload',
-      outcome.canonicalMath?.canonicalLatex,
+      document.primaryMath.canonicalLatex,
     );
-    outcome.answerRows?.rows.forEach((row, index) =>
-      appendFragment(fragments, `answerRows.rows[${index}].latex`, 'answer-row', row.latex));
-    outcome.systemReadback?.variablesLatex.forEach((value, index) =>
-      appendFragment(fragments, `systemReadback.variablesLatex[${index}]`, 'system-variable', value));
-    outcome.systemReadback?.rows.forEach((row, rowIndex) =>
-      row.valuesLatex.forEach((value, valueIndex) =>
+  }
+  if (document.outcomeKind === 'success') {
+    document.answerRows?.rows.forEach((row, index) =>
+      appendFragment(fragments, `answerRows.rows[${index}].latex`, 'answer-row', row.math.canonicalLatex));
+    document.systemReadback?.variables.forEach((value, index) =>
+      appendFragment(fragments, `systemReadback.variablesLatex[${index}]`, 'system-variable', value.canonicalLatex));
+    document.systemReadback?.rows.forEach((row, rowIndex) =>
+      row.values.forEach((value, valueIndex) =>
         appendFragment(
           fragments,
           `systemReadback.rows[${rowIndex}].valuesLatex[${valueIndex}]`,
           'system-value',
-          value,
+          value.canonicalLatex,
         )));
-    outcome.variableSubstitutions?.forEach((substitution, index) =>
+    document.metadata?.variableSubstitutions?.forEach((substitution, index) =>
       appendFragment(
         fragments,
         `variableSubstitutions[${index}].valueLatex`,
         'substitution-value',
-        substitution.valueLatex,
+        substitution.value.canonicalLatex,
       ));
   }
 
-  if (outcome.branchReadback) {
-    appendFragment(fragments, 'branchReadback.targetLatex', 'branch-target', outcome.branchReadback.targetLatex);
-    outcome.branchReadback.branchesLatex.forEach((value, index) =>
-      appendFragment(fragments, `branchReadback.branchesLatex[${index}]`, 'branch', value));
+  if (document.branchReadback) {
+    appendFragment(fragments, 'branchReadback.targetLatex', 'branch-target', document.branchReadback.target.canonicalLatex);
+    document.branchReadback.branches.forEach((value, index) =>
+      appendFragment(fragments, `branchReadback.branchesLatex[${index}]`, 'branch', value.canonicalLatex));
   }
-  collectPeriodicFragments(outcome, fragments);
-  outcome.exactSupplementLatex?.forEach((value, index) =>
-    appendFragment(fragments, `exactSupplementLatex[${index}]`, 'supplement', value));
-  appendFragment(fragments, 'transformSummaryLatex', 'transform-summary', outcome.transformSummaryLatex);
+  collectPeriodicFragments(document, fragments);
+  document.supplements?.forEach((value, index) =>
+    appendFragment(fragments, `exactSupplementLatex[${index}]`, 'supplement', value.canonicalLatex));
+  appendFragment(
+    fragments,
+    'transformSummaryLatex',
+    'transform-summary',
+    document.summaries?.transform?.math?.canonicalLatex,
+  );
   outcome.actions?.forEach((action, index) =>
     appendFragment(fragments, `actions[${index}].latex`, 'action', action.latex));
-  collectDetailFragments(outcome, fragments);
-  appendFragment(fragments, 'resolvedInputLatex', 'resolved-input', outcome.resolvedInputLatex);
+  collectDetailFragments(document, fragments);
+  appendFragment(
+    fragments,
+    'resolvedInputLatex',
+    'resolved-input',
+    document.metadata?.resolvedInput?.canonicalLatex,
+  );
   return fragments;
 }
 

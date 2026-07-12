@@ -404,3 +404,26 @@
 - Twenty Display legacy reads remain in downstream print-hygiene and symbolic consumer logic for Gate 18. One additional read is the explicit old-History detail exception.
 - Runtime hosts, capabilities, OOE authority, History tickets, Surface DTOs, mathematics, wording, and formatting are unchanged.
 - Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
+
+## CANONICAL-RESULT-CONSUMER-INVERSION1 Gate
+
+- Kind: `backend` canonical consumer-authority migration with mandatory `ui` no-drift evidence.
+- Intentional mathematical, visible formatting, Surface DTO, or runtime change: no.
+- Result: pass.
+
+### Contract Evidence
+
+- Clipboard, editor transfer, `Ans`, workspace display state, structured History, print hygiene, replay identity/cardinality, and Surface DTO mapping resolve through one neutral canonical consumer. Native truth wins when present; invalid native truth fails closed; compatibility projection occurs only when native truth is absent.
+- Display inversion passes 20 tests. Accepted inventory records 613 producer boundaries, 593 consumer reads, one compatibility projection, 29 owner assemblies, 411 legacy reads, and 150 native calls. App Display and app shell have zero legacy reads; remaining reads are explicit prompt/control policy, runtime decisions, History dual writes, and the old-History detail exception.
+- Result contracts pass 37 tests across all 43 golden executions and all 100 replay fixtures. Surface Protocol passes six boundary tests plus 39 contract tests; Clipboard passes 28 logic, 32 UI, three audit, and two real Chromium capability tests.
+- Full unit passes 532 files/3,687 tests and full UI passes 67 files/482 tests. Feature probes pass 24-setting policy coverage, runtime probes pass 19 tests, and TypeScript, production build, global lint, file size, CI, seam, identity, Surface, OOE, compartments, and Rust check pass.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.2 minutes. Structured History create/replay: 9/9 workspaces passed, with a focused Table rerun confirming its final screenshot and exact rows.
+- Fresh screenshots for Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and Table were inspected. Restored workspace titles, answer cards, Equation branches/details, exact Statistics and Linear Algebra math, and Table rows `-1/1`, `0/0`, and `1/1` remain readable without malformed fragments, overlap, or clipping.
+
+### Boundaries
+
+- Surface DTO shape, OOE authority, capabilities, hosts, requests, cancellation/stale/commit policy, History tickets, mathematics, wording, and formatting remain unchanged.
+- Concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.

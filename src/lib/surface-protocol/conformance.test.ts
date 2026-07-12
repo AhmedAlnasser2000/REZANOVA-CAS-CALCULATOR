@@ -93,10 +93,11 @@ describe('Surface Protocol conformance', () => {
       detailSections: [{
         title: 'DisplayBlock',
         lines: ['MathJSON tree', 'solver object', '/home/ahmed/local'],
+        lineKind: 'text',
       }],
       runtimeAdvisories: { advisories: [{ code: 'diagnostics', message: 'raw diagnostics' }] },
       appStateSchema: { HistoryEntry: 'hidden' },
-      variableSubstitutions: [{ name: 'x', valueLatex: '2' }],
+      variableSubstitutions: [{ name: 'x', valueLatex: '2', numericValue: 2 }],
       mathJsonTree: ['Add', 'x', 2],
       nonSerializable: () => 'hidden',
     } as unknown as DisplayOutcome;

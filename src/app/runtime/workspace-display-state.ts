@@ -3,6 +3,7 @@ import type {
   ModeId,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
 
 export type WorkspaceDisplayReplayVariableSubstitutions = {
   mode: ModeId;
@@ -47,11 +48,17 @@ export function applyWorkspaceDisplayOutcome(
   outcome: DisplayOutcome,
 ): WorkspaceDisplayState {
   const current = normalizeWorkspaceDisplayState(currentValue);
+  const resolution = outcome.kind === 'prompt'
+    ? undefined
+    : resolveCanonicalResultForConsumer(outcome);
+  const primaryLatex = resolution?.ok
+    ? resolution.document.primaryMath?.canonicalLatex
+    : undefined;
   return {
     ...current,
     displayOutcome: outcome,
-    ansLatex: outcome.kind === 'success' && outcome.exactLatex
-      ? outcome.exactLatex
+    ansLatex: outcome.kind === 'success' && primaryLatex
+      ? primaryLatex
       : current.ansLatex,
   };
 }

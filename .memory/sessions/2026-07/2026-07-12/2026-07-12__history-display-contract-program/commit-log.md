@@ -150,8 +150,17 @@
 
 ## DISPLAY-READ-MODEL-INVERSION1
 
+- commit_hash: `5ec4d5ab`
 - commit_message: `DISPLAY-READ-MODEL-INVERSION1`
 - scope: canonical-derived Display read model, blocks/trust/scheduling/Formula Viewer migration, bounded old-History detail compatibility, accepted inversion/printer baselines, full regression/browser evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files
+
+## CANONICAL-RESULT-CONSUMER-INVERSION1
+
+- commit_message: `CANONICAL-RESULT-CONSUMER-INVERSION1`
+- scope: neutral fail-closed result consumer, Clipboard/editor/Ans/workspace/History/print/replay/Surface migration, accepted inversion baseline, full regression/browser evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files

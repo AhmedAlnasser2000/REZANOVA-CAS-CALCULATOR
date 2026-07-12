@@ -64,6 +64,7 @@ import type {
   TrigScreen,
   WorkspaceInstanceRuntimeContext,
 } from '../../types/calculator';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
 
 export type HistoryDisplayReplayVariableSubstitutions = WorkspaceDisplayReplayVariableSubstitutions;
 
@@ -507,13 +508,25 @@ export function useHistoryDisplayRuntime({
       setWorkspaceRuntimeElapsed(workspaceInstance, committedRuntimeElapsedMs);
     }
 
-    if (outcome.kind !== 'success' || (!outcome.exactLatex && !outcome.approxText)) {
+    if (outcome.kind !== 'success') {
       discardPendingHistoryTicket(context.historyTicketId);
       return;
     }
+    const resultResolution = resolveCanonicalResultForConsumer(outcome);
+    if (
+      !resultResolution.ok
+      || (
+        !resultResolution.document.primaryMath
+        && !resultResolution.document.approximations?.primary
+      )
+    ) {
+      discardPendingHistoryTicket(context.historyTicketId);
+      return;
+    }
+    const primaryLatex = resultResolution.document.primaryMath?.canonicalLatex;
 
-    if (outcome.exactLatex && !context.suppressDisplayCommit && isActiveWorkspaceCommit) {
-      setAnsLatex(outcome.exactLatex);
+    if (primaryLatex && !context.suppressDisplayCommit && isActiveWorkspaceCommit) {
+      setAnsLatex(primaryLatex);
     }
     if (!historyEnabled) {
       discardPendingHistoryTicket(context.historyTicketId);

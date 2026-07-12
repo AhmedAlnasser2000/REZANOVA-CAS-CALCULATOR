@@ -1,5 +1,6 @@
 import { createId } from '../logic/appUtils';
 import type {
+  CanonicalResultDocumentV1,
   DisplayOutcome,
   GeometryScreen,
   HistoryEntry,
@@ -64,10 +65,25 @@ export type BuildHistoryDisplayEntryOptions = {
 export type HistoryResultReadModel = {
   source: 'structured' | 'legacy';
   outcome: SuccessfulDisplayOutcome;
+  document?: CanonicalResultDocumentV1;
+  title: string;
   primaryLatex?: string;
   approxText?: string;
+  answerDomain?: SuccessfulDisplayOutcome['answerDomain'];
+  solutionKind?: SuccessfulDisplayOutcome['solutionKind'];
+  supplementLatex: string[];
+  detailSearchText: string[];
+  warnings: string[];
   tableResponse?: TableResponse;
 };
+
+function canonicalDetailSearchText(document: CanonicalResultDocumentV1) {
+  return document.details?.flatMap((section) => [
+    section.title,
+    ...section.lines.map((line) => line.map((part) =>
+      part.kind === 'math' ? part.math.canonicalLatex : part.text).join('')),
+  ]) ?? [];
+}
 
 function legacyHistoryOutcome(entry: HistoryEntry): SuccessfulDisplayOutcome {
   return {
@@ -89,12 +105,20 @@ export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
   if (validation.ok && validation.validated.value.outcomeKind === 'success') {
     const outcome = projectCanonicalResultToDisplayOutcome(validation.validated.value);
     if (outcome.kind === 'success') {
+      const document = validation.validated.value;
       return {
         source: 'structured',
         outcome,
-        primaryLatex: outcome.exactLatex,
-        approxText: outcome.approxText,
-        tableResponse: projectCanonicalResultToTableResponse(validation.validated.value),
+        document,
+        title: document.title,
+        primaryLatex: document.primaryMath?.canonicalLatex,
+        approxText: document.approximations?.primary,
+        answerDomain: document.metadata?.answerDomain,
+        solutionKind: document.metadata?.solutionKind,
+        supplementLatex: document.supplements?.map((value) => value.canonicalLatex) ?? [],
+        detailSearchText: canonicalDetailSearchText(document),
+        warnings: [...document.warnings],
+        tableResponse: projectCanonicalResultToTableResponse(document),
       };
     }
   }
@@ -103,8 +127,17 @@ export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
   return {
     source: 'legacy',
     outcome,
-    primaryLatex: outcome.exactLatex,
-    approxText: outcome.approxText,
+    title: 'History',
+    primaryLatex: entry.resultLatex,
+    approxText: entry.approxText,
+    answerDomain: entry.answerDomain,
+    solutionKind: entry.solutionKind,
+    supplementLatex: entry.exactSupplementLatex ?? [],
+    detailSearchText: entry.detailSections?.flatMap((section) => [
+      section.title,
+      ...section.lines,
+    ]) ?? [],
+    warnings: [],
   };
 }
 
@@ -119,26 +152,27 @@ export function buildHistoryDisplayEntry({
   trigScreen,
   statisticsScreen,
 }: BuildHistoryDisplayEntryOptions): HistoryEntry {
-  const variableSubstitutions =
-    context.variableSubstitutions
-    ?? (outcome.kind === 'success' ? outcome.variableSubstitutions : undefined);
   const resultDocument = resolveCanonicalResultForStorage(outcome, {
     tableResponse: context.tableResponse,
   });
+  const compatibilityOutcome = outcome;
+  const variableSubstitutions =
+    context.variableSubstitutions
+    ?? compatibilityOutcome.variableSubstitutions;
 
   return {
     id: createId(),
     mode: mode,
     inputLatex,
-    resolvedInputLatex: outcome.resolvedInputLatex,
-    resultLatex: outcome.exactLatex,
-    exactSupplementLatex: outcome.exactSupplementLatex,
-    approxText: outcome.approxText,
-    ...(outcome.detailSections && outcome.detailSections.length > 0
-      ? { detailSections: outcome.detailSections }
+    resolvedInputLatex: compatibilityOutcome.resolvedInputLatex,
+    resultLatex: compatibilityOutcome.exactLatex,
+    exactSupplementLatex: compatibilityOutcome.exactSupplementLatex,
+    approxText: compatibilityOutcome.approxText,
+    ...(compatibilityOutcome.detailSections && compatibilityOutcome.detailSections.length > 0
+      ? { detailSections: compatibilityOutcome.detailSections }
       : {}),
-    ...(outcome.systemReadback
-      ? { systemReadback: outcome.systemReadback }
+    ...(compatibilityOutcome.systemReadback
+      ? { systemReadback: compatibilityOutcome.systemReadback }
       : {}),
     ...(resultDocument.ok
       ? { resultDocument: resultDocument.document }
@@ -199,11 +233,11 @@ export function buildHistoryDisplayEntry({
     ...(mode === 'equation' && context.complexExactForm
       ? { complexExactForm: context.complexExactForm }
       : {}),
-    ...(mode === 'equation' && (context.answerDomain ?? outcome.answerDomain)
-      ? { answerDomain: context.answerDomain ?? outcome.answerDomain }
+    ...(mode === 'equation' && (compatibilityOutcome.answerDomain ?? context.answerDomain)
+      ? { answerDomain: compatibilityOutcome.answerDomain ?? context.answerDomain }
       : {}),
-    ...(mode === 'equation' && (context.solutionKind ?? outcome.solutionKind)
-      ? { solutionKind: context.solutionKind ?? outcome.solutionKind }
+    ...(mode === 'equation' && (compatibilityOutcome.solutionKind ?? context.solutionKind)
+      ? { solutionKind: compatibilityOutcome.solutionKind ?? context.solutionKind }
       : {}),
     ...(context.numericInterval
       ? { numericInterval: context.numericInterval }

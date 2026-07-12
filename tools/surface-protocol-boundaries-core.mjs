@@ -61,6 +61,13 @@ function isAllowedRelativeImport(repoPath, specifier) {
     return true;
   }
 
+  if (
+    repoPath === `${SURFACE_PROTOCOL_DIR}/dto.ts`
+    && specifier === '../result-contract/consumer'
+  ) {
+    return true;
+  }
+
   return false;
 }
 

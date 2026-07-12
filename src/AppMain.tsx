@@ -92,6 +92,7 @@ import type { MathClipboardSurface } from './lib/clipboard';
 import { copyDisplayResultWithDeps } from './app/logic/displayClipboard';
 import { copyCanonicalMathWithDeps } from './app/logic/clipboardPipeline';
 import { pasteIntoEditorWithDeps } from './app/logic/expressionRouting';
+import { resolveCanonicalResultForConsumer } from './lib/result-contract';
 import {
   getCalculateSoftActions,
 } from './lib/modes/calculate-navigation';
@@ -1233,10 +1234,13 @@ export default function App() {
     currentMode === 'matrix' || currentMode === 'vector'
       ? displayInputLatex
       : previewAnalysis.value;
-  const displayMathLatex =
-    displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
-      ? displayOutcome.exactLatex
-      : undefined;
+  const displayResultDocument = useMemo(() => {
+    if (!displayOutcome || displayOutcome.kind === 'prompt') return undefined;
+    const resolution = resolveCanonicalResultForConsumer(displayOutcome);
+    return resolution.ok ? resolution.document : undefined;
+  }, [displayOutcome]);
+  const displayResultMetadata = displayResultDocument?.metadata;
+  const displayMathLatex = displayResultDocument?.primaryMath?.canonicalLatex;
   const activeSoftMenu = isLauncherOpen
     ? LAUNCHER_SOFT_ACTIONS
     : currentMode === 'guide'
@@ -1682,29 +1686,27 @@ export default function App() {
   }
 
   function activeResultEditorLatex() {
-    if (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') {
-      return displayOutcome.exactLatex ?? '';
-    }
-
-    return '';
+    return displayResultDocument?.primaryMath?.canonicalLatex ?? '';
   }
 
   function activeResultCopyText() {
-    if (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') {
+    if (displayResultDocument) {
       const visibleLines: string[] = [];
-      const hasPrimaryApproxResult = displayOutcome.kind === 'success' && !displayOutcome.exactLatex
-        && Boolean(displayOutcome.approxText) && (displayOutcome.solutionKind === 'approximate-numeric'
-          || displayOutcome.resultOrigin === 'numeric-fallback');
+      const exactLatex = displayResultDocument.primaryMath?.canonicalLatex;
+      const approxText = displayResultDocument.approximations?.primary;
+      const hasPrimaryApproxResult = displayResultDocument.outcomeKind === 'success' && !exactLatex
+        && Boolean(approxText) && (displayResultMetadata?.solutionKind === 'approximate-numeric'
+          || displayResultMetadata?.resultOrigin === 'numeric-fallback');
 
-      if (settings.outputStyle !== 'decimal' && displayOutcome.exactLatex) {
+      if (settings.outputStyle !== 'decimal' && exactLatex) {
         visibleLines.push(settings.mathNotationDisplay === 'plainText'
-          ? latexToVisibleText(displayOutcome.exactLatex, settings.mathNotationDisplay, symbolicDisplayPrefs)
-          : getDisplayLatex(displayOutcome.exactLatex, symbolicDisplayPrefs));
+          ? latexToVisibleText(exactLatex, settings.mathNotationDisplay, symbolicDisplayPrefs)
+          : getDisplayLatex(exactLatex, symbolicDisplayPrefs));
       }
 
-      if ((settings.outputStyle !== 'exact' || hasPrimaryApproxResult) && displayOutcome.approxText) {
+      if ((settings.outputStyle !== 'exact' || hasPrimaryApproxResult) && approxText) {
         visibleLines.push(
-          formatMathTextForDisplay(displayOutcome.approxText, settings.mathNotationDisplay),
+          formatMathTextForDisplay(approxText, settings.mathNotationDisplay),
         );
       }
 
@@ -2429,44 +2431,41 @@ export default function App() {
   }, []);
 
   const calculusProvenanceBadge =
-    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'
-      ? getCalculusProvenanceBadge(displayOutcome.resultOrigin as CalculusResultOrigin | undefined)
+    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayResultDocument?.outcomeKind === 'success'
+      ? getCalculusProvenanceBadge(displayResultMetadata?.resultOrigin as CalculusResultOrigin | undefined)
       : undefined;
   const calculusResultBadges =
-    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayOutcome?.kind === 'success'
+    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayResultDocument?.outcomeKind === 'success'
       ? ['Calculus']
       : [];
   const calculusStrategyBadge =
-    displayOutcome?.kind === 'success'
-      ? getCalculusStrategyBadge(displayOutcome.calculusStrategy)
+    displayResultDocument?.outcomeKind === 'success'
+      ? getCalculusStrategyBadge(displayResultMetadata?.calculusStrategy)
       : undefined;
   const calculusDerivativeStrategyBadges =
-    displayOutcome?.kind === 'success'
-      ? getCalculusDerivativeStrategyBadges(displayOutcome.calculusDerivativeStrategies)
+    displayResultDocument?.outcomeKind === 'success'
+      ? getCalculusDerivativeStrategyBadges(displayResultMetadata?.calculusDerivativeStrategies)
       : [];
-  const calculateResolvedInputLatex =
-    displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
-      ? displayOutcome.resolvedInputLatex
-      : undefined;
+  const calculateResolvedInputLatex = displayResultMetadata?.resolvedInput?.canonicalLatex;
   const calculateOutcomeLatex =
     currentMode === 'calculate'
       ? calculateResolvedInputLatex ?? activeExpressionLatex()
       : '';
   const isCalculateCalculusOutcome =
     currentMode === 'calculate'
-    && displayOutcome?.kind === 'success'
+    && displayResultDocument?.outcomeKind === 'success'
     && (
       calculateScreen !== 'standard'
-      || displayOutcome.calculusStrategy !== undefined
-      || displayOutcome.calculusDerivativeStrategies !== undefined
+      || displayResultMetadata?.calculusStrategy !== undefined
+      || displayResultMetadata?.calculusDerivativeStrategies !== undefined
       || calculateOutcomeLatex.includes('\\int')
       || calculateOutcomeLatex.includes('\\lim')
       || calculateOutcomeLatex.includes('\\frac{d}')
       || calculateOutcomeLatex.includes('\\frac{\\mathrm{d}}')
     );
   const calculateCalculusProvenanceBadge =
-    isCalculateCalculusOutcome && displayOutcome?.kind === 'success'
-      ? getCalculusProvenanceLabel(displayOutcome.resultOrigin)
+    isCalculateCalculusOutcome && displayResultDocument?.outcomeKind === 'success'
+      ? getCalculusProvenanceLabel(displayResultMetadata?.resultOrigin)
       : undefined;
   const calculateResultBadges =
     isCalculateCalculusOutcome
@@ -2480,13 +2479,13 @@ export default function App() {
       ? [
           'Trigonometry',
           ...(
-            displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'exact-special-angle'
+            displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'exact-special-angle'
               ? ['Exact special angle']
-              : displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'triangle-solver'
+              : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'triangle-solver'
                 ? ['Triangle solver']
-                : displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'numeric'
+                : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'numeric'
                   ? ['Numeric']
-                  : displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'symbolic'
+                  : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'symbolic'
                     ? ['Symbolic']
                     : []
           ),
@@ -2497,9 +2496,9 @@ export default function App() {
       ? [
           'Geometry',
           ...(
-            displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'geometry-coordinate'
+            displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'geometry-coordinate'
               ? ['Coordinate']
-              : displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'geometry-formula'
+              : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'geometry-formula'
                 ? ['Formula']
                 : []
           ),
@@ -2546,15 +2545,15 @@ export default function App() {
       label: badge.label,
       className: 'equation-badge',
     })),
-    ...(((displayOutcome && 'transformBadges' in displayOutcome ? displayOutcome.transformBadges : undefined) ?? []).map((badge) => ({
+    ...((displayResultMetadata?.transformBadges ?? []).map((badge) => ({
       label: badge,
       className: 'equation-badge',
     }))),
-    ...(((displayOutcome && 'solveBadges' in displayOutcome ? displayOutcome.solveBadges : undefined) ?? []).map((badge) => ({
+    ...((displayResultMetadata?.solveBadges ?? []).map((badge) => ({
       label: badge,
       className: 'equation-origin-badge',
     }))),
-    ...(((displayOutcome && 'plannerBadges' in displayOutcome ? displayOutcome.plannerBadges : undefined) ?? []).map((badge) => ({
+    ...((displayResultMetadata?.plannerBadges ?? []).map((badge) => ({
       label: badge,
       className: badge === 'Hard Stop' ? 'equation-origin-badge' : 'equation-badge',
     }))),

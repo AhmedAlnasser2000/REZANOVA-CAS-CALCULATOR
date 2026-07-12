@@ -389,7 +389,6 @@ function HistoryDetailInspector({
 
   const entry = row.entry;
   const result = row.result;
-  const outcome = result.outcome;
   return (
     <aside className="history-page-inspector" data-testid="history-page-inspector">
       <header className="history-page-inspector-header">
@@ -422,11 +421,11 @@ function HistoryDetailInspector({
           <p>{result.approxText}</p>
         </section>
       ) : null}
-      {outcome.exactSupplementLatex?.length ? (
+      {result.supplementLatex.length ? (
         <section>
           <span>Facts</span>
           <ul className="history-page-facts">
-            {outcome.exactSupplementLatex.map((latex, index) => (
+            {result.supplementLatex.map((latex, index) => (
               <li key={`${entry.id}.supplement.${index}`}>
                 <MathStatic latex={latex} />
               </li>

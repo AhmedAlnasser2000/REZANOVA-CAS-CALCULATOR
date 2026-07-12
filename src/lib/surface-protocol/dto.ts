@@ -1,8 +1,11 @@
 import type {
   AnswerDomain,
+  CanonicalResultDetailPartV1,
+  CanonicalResultDocumentV1,
   DisplayOutcome,
   SolutionKind,
 } from '../../types/calculator';
+import { resolveCanonicalResultForConsumer } from '../result-contract/consumer';
 
 export const SURFACE_PROTOCOL_VERSION = 1 as const;
 
@@ -157,37 +160,34 @@ function solutionKindToResultKind(
   }
 }
 
-function primaryLatexFor(outcome: DisplayOutcome): string | undefined {
-  if (outcome.kind === 'prompt') {
-    return outcome.carryLatex.trim() || undefined;
-  }
-  return outcome.exactLatex?.trim() || outcome.branchReadback?.branchesLatex.join(', ');
+function primaryLatexFor(document: CanonicalResultDocumentV1): string | undefined {
+  return document.primaryMath?.canonicalLatex.trim()
+    || document.branchReadback?.branches.map((branch) => branch.canonicalLatex).join(', ');
 }
 
-function countDtosFor(outcome: DisplayOutcome, facts: readonly SurfaceFactDto[]) {
+function countDtosFor(document: CanonicalResultDocumentV1, facts: readonly SurfaceFactDto[]) {
   const counts: SurfaceCountDto[] = [];
-  if (outcome.kind !== 'prompt') {
-    const branchCount = outcome.branchReadback?.branchesLatex.length ?? 0;
-    if (branchCount > 0) {
-      const kind = outcome.branchReadback?.countLabel ?? 'branches';
-      counts.push({
-        kind,
-        count: branchCount,
-        label: kind === 'candidateRoots' ? 'Candidate roots' : kind === 'roots' ? 'Roots' : 'Branches',
-      });
-    }
-    if (typeof outcome.rejectedCandidateCount === 'number' && outcome.rejectedCandidateCount > 0) {
-      counts.push({
-        kind: 'rejectedCandidates',
-        count: outcome.rejectedCandidateCount,
-        label: 'Rejected candidates',
-      });
-    }
+  const branchCount = document.branchReadback?.branches.length ?? 0;
+  if (branchCount > 0) {
+    const kind = document.branchReadback?.countLabel ?? 'branches';
+    counts.push({
+      kind,
+      count: branchCount,
+      label: kind === 'candidateRoots' ? 'Candidate roots' : kind === 'roots' ? 'Roots' : 'Branches',
+    });
   }
-  if (outcome.warnings.length > 0) {
+  const rejectedCandidateCount = document.metadata?.rejectedCandidateCount;
+  if (typeof rejectedCandidateCount === 'number' && rejectedCandidateCount > 0) {
+    counts.push({
+      kind: 'rejectedCandidates',
+      count: rejectedCandidateCount,
+      label: 'Rejected candidates',
+    });
+  }
+  if (document.warnings.length > 0) {
     counts.push({
       kind: 'warnings',
-      count: outcome.warnings.length,
+      count: document.warnings.length,
       label: 'Warnings',
     });
   }
@@ -199,6 +199,11 @@ function countDtosFor(outcome: DisplayOutcome, facts: readonly SurfaceFactDto[])
     });
   }
   return counts;
+}
+
+function detailPartsText(lines: CanonicalResultDetailPartV1[][] | undefined) {
+  return lines?.map((line) => line.map((part) =>
+    part.kind === 'math' ? part.math.canonicalLatex : part.text).join('')).join('; ');
 }
 
 export function emptySurfaceResultSummary(
@@ -220,31 +225,52 @@ export function displayOutcomeToSurfaceResultSummary(
   workspaceKind: SurfaceWorkspaceKind,
   outcome: DisplayOutcome,
 ): SurfaceResultSummaryDto {
-  const status: SurfaceResultStatus = outcome.kind;
+  if (outcome.kind === 'prompt') {
+    const primaryLatex = outcome.carryLatex.trim() || undefined;
+    return {
+      protocolVersion: SURFACE_PROTOCOL_VERSION,
+      workspaceKind,
+      status: 'prompt',
+      title: outcome.title,
+      resultKind: 'prompt',
+      ...(primaryLatex ? { primaryLatex } : {}),
+      facts: [],
+      warnings: outcome.warnings.map((warning) => ({ text: warning })),
+      counts: outcome.warnings.length > 0
+        ? [{ kind: 'warnings', count: outcome.warnings.length, label: 'Warnings' }]
+        : [],
+    };
+  }
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  if (!resolution.ok) {
+    throw new Error(`Surface result canonical resolution failed: ${resolution.failure.message}`);
+  }
+  const document = resolution.document;
+  const metadata = document.metadata;
+  const status: SurfaceResultStatus = document.outcomeKind;
   const facts: SurfaceFactDto[] = [
-    ...latexFacts('Valid when', outcome.kind === 'prompt' ? undefined : outcome.exactSupplementLatex),
-    ...textFact('summary', 'Solve summary', outcome.kind === 'prompt' ? undefined : outcome.solveSummaryText),
-    ...textFact('summary', 'Transform summary', outcome.kind === 'prompt' ? undefined : outcome.transformSummaryText),
-    ...textFact('method', 'Numeric method', outcome.kind === 'prompt' ? undefined : outcome.numericMethod),
-    ...textFact('domain', 'Answer domain', outcome.kind === 'prompt' ? undefined : outcome.answerDomain),
+    ...latexFacts('Valid when', document.supplements?.map((value) => value.canonicalLatex)),
+    ...textFact('summary', 'Solve summary', detailPartsText(document.summaries?.solve)),
+    ...textFact('summary', 'Transform summary', document.summaries?.transform?.text),
+    ...textFact('method', 'Numeric method', metadata?.numericMethod),
+    ...textFact('domain', 'Answer domain', metadata?.answerDomain),
   ];
-  const warnings = outcome.warnings.map((warning) => ({ text: warning }));
+  const warnings = document.warnings.map((warning) => ({ text: warning }));
+  const primaryLatex = primaryLatexFor(document);
   return {
     protocolVersion: SURFACE_PROTOCOL_VERSION,
     workspaceKind,
     status,
-    title: outcome.title,
-    resultKind: solutionKindToResultKind(status, outcome.kind === 'prompt' ? undefined : outcome.solutionKind),
-    ...(primaryLatexFor(outcome) ? { primaryLatex: primaryLatexFor(outcome) } : {}),
-    ...(
-      outcome.kind !== 'prompt' && outcome.approxText
-        ? { approximateText: outcome.approxText }
-        : {}
-    ),
-    ...(outcome.kind !== 'prompt' && outcome.answerDomain ? { answerDomain: outcome.answerDomain } : {}),
-    ...(outcome.kind !== 'prompt' && outcome.solutionKind ? { solutionKind: outcome.solutionKind } : {}),
+    title: document.title,
+    resultKind: solutionKindToResultKind(status, metadata?.solutionKind),
+    ...(primaryLatex ? { primaryLatex } : {}),
+    ...(document.approximations?.primary
+      ? { approximateText: document.approximations.primary }
+      : {}),
+    ...(metadata?.answerDomain ? { answerDomain: metadata.answerDomain } : {}),
+    ...(metadata?.solutionKind ? { solutionKind: metadata.solutionKind } : {}),
     facts,
     warnings,
-    counts: countDtosFor(outcome, facts),
+    counts: countDtosFor(document, facts),
   };
 }

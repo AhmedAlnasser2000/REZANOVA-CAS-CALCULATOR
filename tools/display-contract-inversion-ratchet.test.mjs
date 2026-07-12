@@ -419,7 +419,7 @@ describe('display contract inversion ratchet', () => {
     );
   });
 
-  it('keeps Display blocks canonical-first with only deferred hygiene and legacy History reads', () => {
+  it('keeps Display blocks and hygiene canonical-first with only legacy History inference', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
     const lane = report.lanes['display-read-model'];
     const legacyReads = report.entries['legacy-read']
@@ -431,11 +431,9 @@ describe('display contract inversion ratchet', () => {
 
     assert.equal(lane['canonical-projection'], 1);
     assert.equal(lane['compatibility-projection'], 0);
-    assert.equal(lane['canonical-read'], 1);
-    assert.equal(lane['legacy-read'], 21);
+    assert.equal(lane['canonical-read'], 0);
+    assert.equal(lane['legacy-read'], 1);
     assert.deepEqual(legacyReadsByFile, {
-      'src/lib/display/notation/symbolic-output-hygiene.ts': 5,
-      'src/lib/display/print-hygiene.ts': 15,
       'src/lib/display/result/display-read-model.ts': 1,
     });
     assert.deepEqual(
@@ -444,6 +442,20 @@ describe('display contract inversion ratchet', () => {
         .map((entry) => [entry.detail, entry.context]),
       [['detailSections', 'canonicalDocumentForDisplay']],
     );
+  });
+
+  it('pins the canonical consumer inversion floors', () => {
+    const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
+
+    assert.equal(report.summary.compatibilityProjectionCount, 1);
+    assert.equal(report.summary.legacyReadCount, 411);
+    assert.equal(report.lanes['app-display']['legacy-read'], 0);
+    assert.equal(report.lanes['app-shell']?.['legacy-read'] ?? 0, 0);
+    assert.equal(report.lanes['display-read-model']['legacy-read'], 1);
+    assert.equal(report.lanes['history-replay']['legacy-read'], 2);
+    assert.equal(report.lanes['surface-protocol']['legacy-read'], 4);
+    assert.equal(report.lanes.history['legacy-read'], 14);
+    assert.equal(report.lanes['app-runtime']['legacy-read'], 12);
   });
 
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {

@@ -202,9 +202,16 @@ export const CANONICAL_PROJECTION_REGISTRATIONS = [
     functions: ['projectCanonicalResultToDisplayOutcome'],
   },
   {
-    id: 'display-canonical-read-model-projection-v1',
+    id: 'canonical-result-consumer-resolution-v1',
+    owner: 'canonical-result-contract',
+    rationale: 'Consumers validate and prefer native canonical truth, projecting typed compatibility outcomes only when native truth is absent.',
+    matchers: exact('src/lib/result-contract/consumer.ts'),
+    functions: ['resolveCanonicalResultForConsumer'],
+  },
+  {
+    id: 'display-legacy-history-detail-projection-v1',
     owner: 'display-result-read-model',
-    rationale: 'Display resolves native canonical truth first and projects typed compatibility outcomes once, preserving only the explicit undeclared-detail boundary required by legacy History.',
+    rationale: 'Display preserves raw undeclared detail sections only for legacy History when canonical projection otherwise succeeds.',
     matchers: exact('src/lib/display/result/display-read-model.ts'),
     functions: ['canonicalDocumentForDisplay'],
   },

@@ -24,6 +24,7 @@ describe('Surface Protocol DTO firewall', () => {
       answerDomain: 'real',
       solutionKind: 'exact-symbolic',
       solveSummaryText: 'Solved exactly.',
+      solveSummaryParts: [[{ kind: 'text', text: 'Solved exactly.' }]],
       branchReadback: {
         targetLatex: 'x',
         relationLatex: '=',
@@ -68,7 +69,7 @@ describe('Surface Protocol DTO firewall', () => {
       title: 'Unsupported',
       error: 'No route.',
       warnings: [],
-      detailSections: [{ title: 'Diagnostics', lines: ['internal route missed'] }],
+      detailSections: [{ title: 'Diagnostics', lines: ['internal route missed'], lineKind: 'text' }],
       runtimeAdvisories: {
         stopReason: { kind: 'unsupported-family', source: 'host' },
       },
