@@ -13,6 +13,7 @@ import type {
   TransformBadge,
 } from './solver-types';
 import type { DisplayMathPayloadV1 } from './math-payload-types';
+import type { CanonicalResultDocumentV1 } from './canonical-result-types';
 
 export type { DisplayMathPayloadV1, SerializableMathJson } from './math-payload-types';
 
@@ -121,6 +122,7 @@ export type DisplayOutcome =
       title: string;
       exactLatex?: string;
       canonicalMath?: DisplayMathPayloadV1;
+      canonicalResult?: CanonicalResultDocumentV1;
       answerRows?: DisplayAnswerRowsReadback;
       branchReadback?: DisplayBranchReadback;
       systemReadback?: DisplaySystemSolutionReadback;
@@ -169,6 +171,8 @@ export type DisplayOutcome =
       error: string;
       warnings: string[];
       exactLatex?: string;
+      canonicalMath?: DisplayMathPayloadV1;
+      canonicalResult?: CanonicalResultDocumentV1;
       branchReadback?: DisplayBranchReadback;
       periodicFamily?: PeriodicFamilyInfo;
       exactSupplementLatex?: string[];

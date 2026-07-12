@@ -1,0 +1,111 @@
+import { describe, expect, it } from 'vitest';
+import { goldenCases } from '../__golden__/golden-cases';
+import { runGoldenCase, type GoldenExecution } from '../__golden__/golden-execution';
+import {
+  collectDisplayOutcomeMathFragments,
+  collectTableResponseMathFragments,
+  normalizePrintHygieneValue,
+} from '../display/print-hygiene';
+import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
+import { executeHistoryReplayRequest } from '../history-replay/native-execution';
+import type { HistoryReplayExecution } from '../history-replay/fixture-contract';
+import {
+  projectCanonicalResultToDisplayOutcome,
+  projectCanonicalResultToTableResponse,
+  projectDisplayOutcomeToCanonicalResult,
+} from './projection';
+
+function stableMathValues(execution: GoldenExecution | HistoryReplayExecution) {
+  return [
+    ...collectDisplayOutcomeMathFragments(execution.outcome),
+    ...collectTableResponseMathFragments(execution.tableResponse),
+  ]
+    .filter((fragment) => fragment.kind !== 'action' && fragment.kind !== 'canonical-payload')
+    .map((fragment) => normalizePrintHygieneValue(fragment.value));
+}
+
+function detailLines(execution: GoldenExecution | HistoryReplayExecution) {
+  return execution.outcome.kind === 'prompt'
+    ? []
+    : execution.outcome.detailSections?.map((section) => ({
+        title: section.title,
+        lines: [...section.lines],
+      })) ?? [];
+}
+
+function stableOutcomeMetadata(execution: GoldenExecution | HistoryReplayExecution) {
+  const outcome = execution.outcome;
+  if (outcome.kind === 'prompt') return { kind: outcome.kind, title: outcome.title };
+  return {
+    kind: outcome.kind,
+    title: outcome.title,
+    ...(outcome.kind === 'error' ? { error: outcome.error } : {}),
+    warnings: outcome.warnings,
+    approxText: outcome.approxText,
+    answerMode: outcome.answerMode,
+    answerDomain: outcome.answerDomain,
+    solutionKind: outcome.solutionKind,
+    plannerBadges: outcome.plannerBadges ?? [],
+    solveBadges: outcome.solveBadges ?? [],
+    transformBadges: outcome.transformBadges ?? [],
+    rejectedCandidateCount: outcome.rejectedCandidateCount,
+    substitutionDiagnostics: outcome.substitutionDiagnostics,
+    numericMethod: outcome.numericMethod,
+    sourceMode: outcome.sourceMode,
+    ...(outcome.kind === 'success'
+      ? {
+          resultOrigin: outcome.resultOrigin,
+          calculusStrategy: outcome.calculusStrategy,
+          calculusDerivativeStrategies: outcome.calculusDerivativeStrategies ?? [],
+          candidateValues: outcome.candidateValues ?? [],
+          variableSubstitutions: outcome.variableSubstitutions ?? [],
+        }
+      : {}),
+  };
+}
+
+function assertCanonicalRoundTrip(
+  execution: GoldenExecution | HistoryReplayExecution,
+  label: string,
+) {
+  const projected = projectDisplayOutcomeToCanonicalResult(execution.outcome, {
+    tableResponse: execution.tableResponse,
+  });
+  if (!projected.ok) {
+    throw new Error(`${label}: ${projected.failure.reason}: ${projected.failure.message}`);
+  }
+  expect(projected.ok, label).toBe(true);
+
+  const restored: GoldenExecution = {
+    outcome: projectCanonicalResultToDisplayOutcome(projected.document),
+    tableResponse: projectCanonicalResultToTableResponse(projected.document),
+  };
+  expect(stableMathValues(restored), `${label} math values`).toEqual(stableMathValues(execution));
+  expect(detailLines(restored), `${label} details`).toEqual(detailLines(execution));
+  expect(stableOutcomeMetadata(restored), `${label} metadata`).toEqual(stableOutcomeMetadata(execution));
+  expect(restored.tableResponse, `${label} Table response`).toEqual(execution.tableResponse);
+  expect(restored.outcome.kind === 'prompt' ? undefined : restored.outcome.actions).toBeUndefined();
+  expect(restored.outcome.runtimeAdvisories).toBeUndefined();
+
+  const repeated = projectDisplayOutcomeToCanonicalResult(restored.outcome, {
+    tableResponse: restored.tableResponse,
+  });
+  expect(repeated, `${label} idempotence`).toEqual(projected);
+}
+
+describe('canonical result corpus coverage', () => {
+  it('projects all 43 golden executions without visible or mathematical drift', async () => {
+    expect(goldenCases).toHaveLength(43);
+    for (const goldenCase of goldenCases) {
+      assertCanonicalRoundTrip(await runGoldenCase(goldenCase), goldenCase.id);
+    }
+  }, 60_000);
+
+  it('projects all 100 deterministic History replay executions', async () => {
+    expect(HISTORY_REPLAY_FIXTURES).toHaveLength(100);
+    for (const fixture of HISTORY_REPLAY_FIXTURES) {
+      const execution = await executeHistoryReplayRequest(fixture.workspace, fixture.request);
+      assertCanonicalRoundTrip(execution, fixture.id);
+    }
+  }, 60_000);
+});

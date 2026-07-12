@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "PRINT-PROFILE-PRODUCER-CLOSEOUT1 routes the final three shared polynomial-factor and transform result helpers through the explicit shared-algebra profile, closing all production compatibility debt without changing canonical output.",
-  "registryDigest": "11229e8e725fa539737c",
+  "acceptedReason": "CANONICAL-RESULT-DOCUMENT1 classifies three validated canonical-to-Display compatibility projections as downstream presentation without adding producer fallback debt.",
+  "registryDigest": "4b7849830da9ca1d0884",
   "resultProperties": [
     "answerLatex",
     "exactLatex",
@@ -28,11 +28,11 @@
   "categoryCounts": {
     "canonical-printer": 5,
     "downstream-presentation": 11,
-    "input-syntax": 855,
-    "presentation-math": 2801,
-    "prose-only": 3892,
+    "input-syntax": 860,
+    "presentation-math": 2875,
+    "prose-only": 4008,
     "reference-content": 2565,
-    "result-path": 519
+    "result-path": 522
   },
   "compatibilityAssignments": []
 }

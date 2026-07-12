@@ -33,6 +33,14 @@ export const NON_PRODUCER_RESULT_REGISTRATIONS = [
     matchers: exact('src/lib/app-state/schemas.ts'),
     properties: ['resultLatex'],
   },
+  {
+    id: 'canonical-result-display-projection-v1',
+    category: 'downstream-presentation',
+    owner: 'canonical-result-contract',
+    rationale: 'The validated canonical-result read model projects producer-owned math into legacy Display fields without authoring or transforming it.',
+    matchers: exact('src/lib/result-contract/projection.ts'),
+    properties: ['exactLatex', 'resultLatex'],
+  },
 ];
 
 export const FALLBACK_REGISTRATIONS = [

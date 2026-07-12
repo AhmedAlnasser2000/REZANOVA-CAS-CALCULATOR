@@ -136,6 +136,27 @@ export const COMPARTMENT_MANIFEST = [
     ],
   },
   {
+    id: 'canonical-result-contract',
+    label: 'Canonical Result Contract',
+    diagnosticsLabel: 'Result Contract',
+    stateSurface: 'static',
+    surfaceExposureCandidate: 'none',
+    ownedPaths: [
+      'src/lib/result-contract/',
+    ],
+    publicSeams: [
+      'src/lib/result-contract/index.ts',
+    ],
+    privatePaths: [
+      'src/lib/result-contract/projection.ts',
+      'src/lib/result-contract/validation.ts',
+    ],
+    dependencyPolicies: [
+      'library-no-app-ui',
+      'no-source-mirrors',
+    ],
+  },
+  {
     id: 'display',
     label: 'Display',
     diagnosticsLabel: 'Display',

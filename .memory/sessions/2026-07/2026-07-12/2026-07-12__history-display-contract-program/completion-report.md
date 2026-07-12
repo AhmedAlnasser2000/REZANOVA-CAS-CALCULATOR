@@ -40,3 +40,18 @@
 ### Next Step
 
 - Commit this prerequisite as its separately approved milestone, then resume `CANONICAL-RESULT-DOCUMENT1` from the already isolated uncommitted result-contract slice.
+
+## CANONICAL-RESULT-DOCUMENT1
+
+### Completed
+
+- Added a neutral canonical-result compartment and exported strict version-1 types for primary math, answer rows, branches, systems, periodic families, supplements, typed details/summaries, warnings, approximations, stable metadata, and bounded Table rows.
+- Added whole-document structured-clone validation at 10,000 nodes, depth 64, and 640,000 UTF-8 bytes, while reusing the existing per-MathJSON 2,000-node, depth-64, and 320,000-byte validation.
+- Rejected functions, symbols, accessors, array gaps/custom properties, non-finite numbers, cycles, non-plain objects, malformed/future shapes, prohibited transient fields, and empty controlled-error text.
+- Added no-reparse Display-to-document and document-to-Display/Table projections. Prompts fail closed; actions and runtime advisories are intentionally absent; exact legacy field parity is retained.
+- Added optional `DisplayOutcome.canonicalResult` carriage without adding a live producer, History field, Surface DTO field, OOE authority, or visible output change.
+- Added a focused command, additive seam selection, compartment ownership, and a downstream-presentation printer registration with zero fallback debt.
+
+### Next Step
+
+- Commit `CANONICAL-RESULT-DOCUMENT1`, then implement `HISTORY-STRUCTURED-RESULT2` as the first durable consumer and dual-write boundary.

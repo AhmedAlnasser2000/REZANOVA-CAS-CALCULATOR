@@ -15,6 +15,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:display-contracts'],
   },
   {
+    id: 'result-contracts',
+    label: 'Canonical result document contracts',
+    argv: ['npm', 'run', 'test:result-contract'],
+  },
+  {
     id: 'app-state-contracts',
     label: 'App-state and shared schema contracts',
     argv: ['npm', 'run', 'test:app-state-contracts'],
@@ -198,6 +203,26 @@ export const SEAM_REGISTRY = [
     ],
   },
   {
+    id: 'canonical-result-contract',
+    label: 'Canonical result document and compatibility projections',
+    matchers: [
+      ...prefix('src/lib/result-contract/'),
+      ...exact('src/types/calculator/canonical-result-types.ts'),
+    ],
+    additionalCommandIds: [
+      'result-contracts',
+      'display-contracts',
+      'printer-migration-ratchet',
+    ],
+    baselineEvidenceIds: [
+      'workspace-canaries',
+      'surface-protocol',
+      'compartment-boundaries',
+      'ui-tests',
+      'file-sizes',
+    ],
+  },
+  {
     id: 'app-state-schema',
     label: 'App-state and replay schemas',
     matchers: exact(
@@ -240,6 +265,7 @@ export const SEAM_REGISTRY = [
     additionalCommandIds: [
       'workspace-runtime-contracts',
       'display-contracts',
+      'result-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
@@ -278,6 +304,7 @@ export const SEAM_REGISTRY = [
       'workspace-runtime-contracts',
       'app-runtime-contracts',
       'display-contracts',
+      'result-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',

@@ -30,6 +30,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'workspace-runtime-contracts',
       'display-contracts',
+      'result-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
@@ -92,11 +93,33 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'app-runtime-contracts',
       'display-contracts',
+      'result-contracts',
       'app-state-contracts',
       'printer-migration-ratchet',
       'detail-segment-migration-ratchet',
       'clipboard-contracts',
       'history-replay',
+    ]);
+  });
+
+  it('selects canonical result contracts for the neutral document district', () => {
+    const plan = buildExplicitPathPlan([
+      'src/lib/result-contract/projection.ts',
+      'src/types/calculator/canonical-result-types.ts',
+    ]);
+
+    assert.deepEqual(plan.triggeredSeams.map((entry) => entry.id), [
+      'canonical-result-contract',
+      'shared-type-contract',
+    ]);
+    assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
+      'workspace-runtime-contracts',
+      'display-contracts',
+      'result-contracts',
+      'app-state-contracts',
+      'printer-migration-ratchet',
+      'detail-segment-migration-ratchet',
+      'clipboard-contracts',
     ]);
   });
 
