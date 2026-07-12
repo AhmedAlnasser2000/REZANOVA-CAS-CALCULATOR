@@ -8,6 +8,7 @@ import {
   type CreateCalculateWorker,
 } from '../worker-clients/calculate-worker-client';
 import type { DisplayOutcome } from '../../../types/calculator';
+import { requireNativeSuccessfulResult } from '../../result-contract';
 import {
   buildCalculateRuntimeOoeSnapshot,
   calculateCapabilityIdForRuntimeRequest,
@@ -27,13 +28,17 @@ type RunCalculateRuntimeWithOoePilotOptions = OoeJobContextOptions & {
 export function runCalculateRuntimeRequest(
   request: RunCalculateRuntimeRequest,
 ): DisplayOutcome {
+  let outcome: DisplayOutcome;
   switch (request.kind) {
     case 'standard':
     case 'legacyWorkbench':
-      return runCalculateMode(request.request);
+      outcome = runCalculateMode(request.request);
+      break;
     case 'algebraTransform':
-      return runCalculateAlgebraTransform(request.request);
+      outcome = runCalculateAlgebraTransform(request.request);
+      break;
   }
+  return requireNativeSuccessfulResult(outcome, 'Calculate');
 }
 
 export async function runCalculateRuntimeWithOoePilot(

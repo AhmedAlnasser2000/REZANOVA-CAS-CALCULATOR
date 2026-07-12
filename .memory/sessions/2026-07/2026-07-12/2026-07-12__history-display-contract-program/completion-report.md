@@ -305,3 +305,27 @@
 ### Next Step
 
 - Commit `RESULT-DOCUMENT-LINEAR-ALGEBRA1`, then audit and eliminate the remaining successful-producer compatibility projections in `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`.
+
+## RESULT-DOCUMENT-PRODUCER-CLOSEOUT1
+
+### Completed
+
+- Reclassified the former 37 compatibility findings into 29 exact pre-final owner assemblies, seven OOE cancellation controls, and one legitimate legacy History reconstruction adapter.
+- Added a shared final-boundary assertion for every non-Equation workspace success. Equation retains its stronger assertion for every non-prompt result; completed Table checks include its structured response rows.
+- Ratcheted every computational producer lane to zero compatibility projections while retaining the legacy History compatibility path for old records.
+
+### Measured Posture
+
+- Accepted inventory: 611 producer boundaries, 775 consumer reads, one compatibility projection, 29 owner assemblies, 554 legacy reads, and 150 native calls.
+- All 43 golden executions and all 100 sanitized replay fixtures resolve successful outcomes from native authority with exact visible and structural parity.
+- Full unit verification passes 529 files and 3,680 tests. Result-contract, inversion, runtime, printer, detail, feature-probe, TypeScript, build, lint, Rust, file-size, CI, seam, Surface, OOE, and compartment gates pass.
+
+### Runtime And UI
+
+- Nineteen Chromium workspace canaries and nine structured History create/replay journeys pass on the current shared tree.
+- Existing inspected evidence across all nine workspaces was reviewed again; answer cards, details, branches, warnings, Table rows, and Linear Algebra profiles remain readable without malformed fragments or result-card overflow.
+- This enforcement-only gate changes no mathematics, wording, formatting, request, worker, host, capability, OOE, History-ticket, or Surface behavior.
+
+### Next Step
+
+- Commit `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`, then derive Display blocks, render scheduling, and Formula Viewer content from canonical documents in `DISPLAY-READ-MODEL-INVERSION1`.

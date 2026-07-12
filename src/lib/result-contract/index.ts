@@ -1,3 +1,4 @@
+export * from './native-result';
 export * from './projection';
 export * from './producer';
 export * from './storage';

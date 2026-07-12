@@ -4,6 +4,7 @@ import type {
   TrigScreen,
 } from '../../types/calculator';
 import { runTrigonometryCoreDraft } from './core';
+import { requireNativeSuccessfulResult } from '../result-contract';
 import { trigRequestToScreen } from './parser';
 import { createTrigonometryResultOutcome } from './result-document';
 import type { RunTrigonometryRuntimeRequest } from './runtime-input';
@@ -27,9 +28,9 @@ export function buildTrigonometryModeRunPayload(
     ? trigRequestToScreen(parsed.request, request.screenHint)
     : request.screenHint;
 
-  const ownedOutcome = outcome.kind === 'prompt'
+  const ownedOutcome = requireNativeSuccessfulResult(outcome.kind === 'prompt'
     ? outcome
-    : createTrigonometryResultOutcome(outcome);
+    : createTrigonometryResultOutcome(outcome), 'Trigonometry');
 
   return {
     outcome: ownedOutcome,

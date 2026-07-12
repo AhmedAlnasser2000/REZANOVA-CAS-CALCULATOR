@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "RESULT-DOCUMENT-LINEAR-ALGEBRA1 adds independent Matrix and Vector native result adapters while compatibility projections and legacy reads remain flat.",
-  "registryDigest": "fc2b3aef3bfdcbc62a6a",
+  "acceptedReason": "RESULT-DOCUMENT-PRODUCER-CLOSEOUT1 classifies pre-final owner assemblies and OOE cancellation controls explicitly, enforces native authority for every successful workspace boundary, and leaves only legacy History compatibility.",
+  "registryDigest": "400df82c3883fce89039",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -14,7 +14,7 @@
       "nativeDocument": 0
     },
     "app-runtime": {
-      "compatibilityProjection": 2,
+      "compatibilityProjection": 0,
       "legacyRead": 17,
       "nativeDocument": 0
     },
@@ -24,14 +24,14 @@
       "nativeDocument": 0
     },
     "calculate": {
-      "compatibilityProjection": 1,
+      "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 2
+      "nativeDocument": 3
     },
     "calculus": {
-      "compatibilityProjection": 7,
+      "compatibilityProjection": 0,
       "legacyRead": 2,
-      "nativeDocument": 2
+      "nativeDocument": 3
     },
     "display-read-model": {
       "compatibilityProjection": 0,
@@ -44,9 +44,9 @@
       "nativeDocument": 124
     },
     "geometry": {
-      "compatibilityProjection": 3,
+      "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 2
+      "nativeDocument": 3
     },
     "golden-evidence": {
       "compatibilityProjection": 0,
@@ -64,19 +64,19 @@
       "nativeDocument": 0
     },
     "kernel-runtime": {
-      "compatibilityProjection": 3,
+      "compatibilityProjection": 0,
       "legacyRead": 5,
       "nativeDocument": 0
     },
     "linear-algebra-shared": {
-      "compatibilityProjection": 5,
+      "compatibilityProjection": 0,
       "legacyRead": 0,
       "nativeDocument": 0
     },
     "matrix": {
-      "compatibilityProjection": 2,
+      "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 2
+      "nativeDocument": 3
     },
     "ooe-observability": {
       "compatibilityProjection": 0,
@@ -89,9 +89,9 @@
       "nativeDocument": 0
     },
     "statistics": {
-      "compatibilityProjection": 3,
+      "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 2
+      "nativeDocument": 3
     },
     "surface-protocol": {
       "compatibilityProjection": 0,
@@ -99,19 +99,19 @@
       "nativeDocument": 0
     },
     "table": {
-      "compatibilityProjection": 2,
+      "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 3
+      "nativeDocument": 4
     },
     "trigonometry": {
-      "compatibilityProjection": 6,
+      "compatibilityProjection": 0,
       "legacyRead": 14,
-      "nativeDocument": 2
+      "nativeDocument": 3
     },
     "vector": {
-      "compatibilityProjection": 2,
+      "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 2
+      "nativeDocument": 3
     }
   },
   "entries": {
@@ -120,7 +120,8 @@
         "9babe825561a6da699df:1"
       ],
       "src/lib/calculus/workspace/engine.ts": [
-        "d3423b3106cf5ac27634:1"
+        "d3423b3106cf5ac27634:1",
+        "9b1666039b57225c517f:1"
       ],
       "src/lib/calculus/workspace/result-document.ts": [
         "7deceff4c56c69341cbf:1"
@@ -213,7 +214,11 @@
         "f980cd0168646f72e051:1"
       ],
       "src/lib/geometry/runtime-run.ts": [
+        "55e6dfbd8f6cabcb805d:1",
         "cfef16f4ba56c3e35ec4:1"
+      ],
+      "src/lib/modes/calculate/runtime.ts": [
+        "771f164721b2e5d24f16:1"
       ],
       "src/lib/modes/calculate/standard.ts": [
         "7e96ac33b94ae918912d:1"
@@ -347,10 +352,12 @@
         "6e6008d1b6c3c57e7b95:1"
       ],
       "src/lib/modes/matrix.ts": [
+        "271bc24bb943e19a94db:1",
         "df438a19396eda15a2e5:1"
       ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
+        "a0e9910d4c35d95fa8ce:1",
         "5596fa01d9903a06a317:2"
       ],
       "src/lib/modes/table-result-document.ts": [
@@ -360,18 +367,21 @@
         "232d96a92419bf302444:1"
       ],
       "src/lib/modes/vector.ts": [
+        "36cd0397d65764699573:1",
         "4a64247ba7f8be36af3f:1"
       ],
       "src/lib/statistics/result-document.ts": [
         "22161a254a67642b0931:1"
       ],
       "src/lib/statistics/runtime-run.ts": [
+        "194d285648f9125af57a:1",
         "3ed4bc9878d98105cb56:1"
       ],
       "src/lib/trigonometry/result-document.ts": [
         "9144cfbff36e2fc364ab:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
+        "8c6a7bc4dcd2bc5cd975:1",
         "c5ea9b6510259df12ebf:1"
       ]
     },
@@ -384,74 +394,57 @@
     "compatibility-projection": {
       "src/app/runtime/historyDisplayEntry.ts": [
         "2d14f3e22c6e65d27a5d:1"
-      ],
+      ]
+    },
+    "owner-assembly": {
       "src/app/runtime/useCalculateRuntime.ts": [
-        "ad1f8a20b4ae0ec5c6ef:1",
-        "725db18f5a44468cbc82:1"
+        "bfc2cc6398b4979445cf:1",
+        "bfc2cc6398b4979445cf:2"
       ],
       "src/lib/calculus/workspace/engine.ts": [
-        "064ef96e3e5df54fd6af:1",
-        "51e622f1b12a925aeed3:1",
-        "d1749fb688e6d0676145:1",
-        "564904924f8a838663e0:1",
-        "83ee6edf68ac2efdee74:1",
-        "b864a3a7691b244aeb9e:1"
+        "38457ffb293e1a321e58:1",
+        "9fe36c9fb5da25f66c10:1",
+        "a4c230e826bda908fbf4:1",
+        "601a765545b3e80d6f05:1",
+        "6d135e2b26c7358cd8b6:1",
+        "a4816f5cb77f118cbd8b:1"
       ],
       "src/lib/geometry/core.ts": [
-        "73c8b3624b0f7b980d41:1",
-        "ad4d9ff45a4bdd7027d5:1"
+        "8ef960f607afeaca81ab:1",
+        "75acda5a31f73c0c81b5:1"
       ],
       "src/lib/kernel/runtime-envelope.ts": [
-        "dbce9e0c8c676a0d629f:1",
-        "8538fc3f30eba96e21ee:1",
-        "c52442e9f5389087f062:1"
+        "7d6fbfbb37b25d793872:1",
+        "b92e13963cb1ff8d8ff5:1",
+        "2f141d40d9f53db33cc5:1"
       ],
       "src/lib/linear-algebra/matrix-system.ts": [
-        "74bef1897411fa739a8c:1",
-        "2c6f078eff47ca5df8ac:1",
-        "0a4f585a1fb67dac68b3:1",
-        "b22cdbfed25030256634:1"
+        "82553181240aad7e9fcc:1",
+        "9e640e75742f60d94097:1",
+        "46e00e0ebf4f33630556:1",
+        "1832cd9594b51df35489:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "e9a5d8e3e5bd51100a39:1",
-        "db55cf0d8c6aad7133e1:1"
+        "ab584d6a57ae1f131391:1",
+        "1f172046565c5c817c01:1"
       ],
       "src/lib/modes/table-core.ts": [
-        "e79dc3225ea7c6f9366b:1",
-        "d9d55ffce475822e089d:1"
+        "17ef19ff3a1139358f9b:1"
       ],
       "src/lib/modes/vector.ts": [
-        "b919c5a170ed0bea2722:1",
-        "06b523de2f2437dc8d45:1"
-      ],
-      "src/lib/modes/worker-clients/calculate-worker-client.ts": [
-        "b2f8bce0dc5e5e5cdafb:1"
-      ],
-      "src/lib/modes/worker-clients/calculus-worker-client.ts": [
-        "359e885116635a6e9873:1"
-      ],
-      "src/lib/modes/worker-clients/geometry-worker-client.ts": [
-        "b37bdfc609b17c347ced:1"
-      ],
-      "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
-        "093c65d48150b297f51e:1"
-      ],
-      "src/lib/modes/worker-clients/statistics-worker-client.ts": [
-        "3ffb9f7d0b8ba2e02527:1"
-      ],
-      "src/lib/modes/worker-clients/trigonometry-worker-client.ts": [
-        "3cb837a4649bc6301a9a:1"
+        "3fc0f40c777bb48c9a92:1",
+        "17fb9ef6d8092a018939:1"
       ],
       "src/lib/statistics/core.ts": [
-        "9dd0443ee891bf3e3ef6:1",
-        "7ca89ef7ea89776bec9e:1"
+        "4d2f023d12da623801ae:1",
+        "88b887a606f6171917ab:1"
       ],
       "src/lib/trigonometry/core.ts": [
-        "e3787ab7751bc691bf36:1",
-        "dd985c26d344800c6a41:1",
-        "292a62d6402dd734873c:1",
-        "527a3dce07712010fc4c:1",
-        "e681c9fbc3414b2f0208:1"
+        "86ce8490875073913cc7:1",
+        "1236cad6800e8398d411:1",
+        "667b1ef93504421eef5a:1",
+        "c7ceff1ad9a56ef4af2e:1",
+        "4bcdb3d67314bf474cbb:1"
       ]
     },
     "forwarder": {
@@ -469,9 +462,7 @@
       "src/lib/calculus/workspace/engine.ts": [
         "7e3028849fc3b0a8e60f:1",
         "c7aa4a26355adbd0365e:1",
-        "9289e78676ec3c44e16e:1",
-        "b1c3f9cf48948fc0930a:1",
-        "9f67cfedf7e6e35511bc:1"
+        "9289e78676ec3c44e16e:1"
       ],
       "src/lib/equation/analysis-evidence.ts": [
         "db8c7fd8a8e856d011d3:1",
@@ -683,8 +674,6 @@
         "a5482cdfc9af2bf6486e:1"
       ],
       "src/lib/modes/calculate/runtime.ts": [
-        "da481474f733b0186b35:1",
-        "5cda8be2a241d8c03b7d:1",
         "988177e8b710bf5b52d6:1",
         "439462364eb26ed737ce:1"
       ],
@@ -848,7 +837,6 @@
         "76f4f6a9485c37b0a467:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "2c59efe713c78684a4a0:1",
         "9deb4d41d5ce4c300ad1:1",
         "44abfe464f008636033c:1"
       ],
@@ -856,7 +844,6 @@
         "0107a7063dbfbbbe6402:1"
       ],
       "src/lib/modes/vector.ts": [
-        "f83bb13d31bd0f11af36:1",
         "f09a01c6224260303184:1",
         "531b0ad8cb10e2ea3234:1"
       ],
@@ -887,6 +874,10 @@
       "src/lib/ooe/pilots/equation-pilot.ts": [
         "0e84ef2380233134a87a:1",
         "bb0a529baf1786afa5c3:1"
+      ],
+      "src/lib/result-contract/native-result.ts": [
+        "5f6bde993466d1c952a6:1",
+        "5f6bde993466d1c952a6:2"
       ],
       "src/lib/statistics/core.ts": [
         "56b38bafc5b300e35c2f:1",
@@ -1042,7 +1033,26 @@
         "f16a26f325e74f03c48f:2"
       ],
       "src/lib/modes/table-core.ts": [
-        "fb436a86a0c823c0331c:1"
+        "fb436a86a0c823c0331c:1",
+        "de2589046833bc80de31:1"
+      ],
+      "src/lib/modes/worker-clients/calculate-worker-client.ts": [
+        "f0bf66579ae025e2ae45:1"
+      ],
+      "src/lib/modes/worker-clients/calculus-worker-client.ts": [
+        "c4b66e429589318da600:1"
+      ],
+      "src/lib/modes/worker-clients/geometry-worker-client.ts": [
+        "7076661ed59941c298a7:1"
+      ],
+      "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
+        "8f6d9fc195594fd3f753:1"
+      ],
+      "src/lib/modes/worker-clients/statistics-worker-client.ts": [
+        "8b0f349d3582f3bcd139:1"
+      ],
+      "src/lib/modes/worker-clients/trigonometry-worker-client.ts": [
+        "c9bb4f0fe8bf57f048ce:1"
       ],
       "src/lib/statistics/core.ts": [
         "2a276e36ec77c0c6f828:1"
@@ -2018,6 +2028,9 @@
         "fc2a2fcf7918907bd3f1:3",
         "fc2a2fcf7918907bd3f1:4",
         "fc2a2fcf7918907bd3f1:5"
+      ],
+      "src/lib/result-contract/native-result.ts": [
+        "fccbce851ea2e7b82617:1"
       ],
       "src/lib/result-contract/projection.ts": [
         "e25ca208b5c003f1b0a8:1",

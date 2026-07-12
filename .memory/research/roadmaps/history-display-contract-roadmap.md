@@ -2,7 +2,7 @@
 
 Date: 2026-07-11
 Last updated: 2026-07-12
-Status: active; Guided Domains is committed as `1a2a4742`; Linear Algebra is verified through Gate 15 and entering its approved commit; `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1` is next; no push is authorized
+Status: active; producer ownership is closed through Gate 16; `DISPLAY-READ-MODEL-INVERSION1` is next; no push is authorized
 
 ## Attribution
 
@@ -136,12 +136,17 @@ This is an expandable sequence of named gates, not a fixed commit count. A newly
 - Accepted inventory: 1,155 source files, 601 producer boundaries, 772 consumer reads, 37 compatibility projections, 554 legacy reads, and 138 native calls. Native calls rose by nine while compatibility and legacy debt stayed flat.
 - Focused guided-domain and worker coverage passes 31 files and 169 tests; canonical result coverage passes 29 tests across all 43 golden and 100 replay executions. Nineteen Chromium canaries, nine workspace History replays, and four focused browser journeys across eight inspected screenshots preserve visible mathematics and result-card layout.
 - The Guided Domains mixed-checkout full unit, UI, and lint failures were confined to then-concurrent Notebook section work and were excluded from that commit. TypeScript, production Vite build, owned lint, file size, printer/detail/clipboard, runtime, CI, seam, Surface, OOE, compartment, and diff gates passed. Long guided request-preview formulas have pre-existing narrow-card clipping outside the result card and are tracked separately.
-- `RESULT-DOCUMENT-LINEAR-ALGEBRA1`: verified and entering its approved commit. Separate Matrix and Vector adapters attach validated canonical truth once at each exported mode-owner boundary, which is shared by that workspace's worker and fallback without merging their runtime topology.
+- `RESULT-DOCUMENT-LINEAR-ALGEBRA1`: committed as `97b2da88`. Separate Matrix and Vector adapters attach validated canonical truth once at each exported mode-owner boundary, which is shared by that workspace's worker and fallback without merging their runtime topology.
 - All four Linear Algebra golden executions and all ten Linear Algebra replay fixtures require native documents. Matrix Equation-transfer actions remain transient, and both success and math-bearing controlled errors retain their established visible fields.
 - Accepted inventory: 1,158 source files, 607 producer boundaries, 774 consumer reads, 37 compatibility projections, 554 legacy reads, and 142 native calls. Native coverage rose by four while compatibility and legacy debt stayed flat. The printer inventory remains at zero compatibility fallbacks.
 - Focused Linear Algebra and result-contract coverage passes 28 files and 187 tests. All 43 golden and 100 replay executions pass; 19 Chromium canaries and nine workspace History create/replay cases pass. Two focused headless journeys and four inspected screenshots preserve the singular/tall Matrix profiles and dependent/Gram-Schmidt Vector results without malformed fragments or overflow.
 - Full UI passes 65 files and 473 tests. The full unit run passes 527 of 528 files and 3,676 of 3,677 tests; its only failure is an unrelated Equation numeric-trace soft elapsed budget at 10,538 ms under full parallel load, and that exact eight-test file passes in isolation with the case at 2,918 ms. Global lint is blocked only by separately owned Notebook and untracked transient-layer work; the complete milestone-owned lint slice passes.
 - Matrix keeps `linearAlgebra.matrix`, `matrix-worker-runtime`, `matrix-runtime`, and `matrix-worker-shell`; Vector keeps `linearAlgebra.vector`, `vector-worker-runtime`, `vector-runtime`, and `vector-worker-shell`. Requests, seeds, cancellation, stale/commit rules, diagnostics, History tickets, OOE authority, Surface DTOs, mathematics, and visible wording are unchanged. Producer closeout is next.
+- `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`: verified for its approved commit. The inventory now distinguishes 29 internal owner assemblies and seven OOE cancellation controls from live result authority, leaving one compatibility projection in the legacy History reader and zero in every computational producer lane.
+- A shared success-only assertion now verifies native storage resolution at the final Calculate, Calculus, Trigonometry, Geometry, Statistics, Matrix, Vector, and completed Table boundaries. Equation retains its stronger non-prompt assertion. Table passes its structured response to the assertion because row truth is intentionally outside `DisplayOutcome`.
+- Accepted inventory: 611 producer boundaries, 775 consumer reads, one compatibility projection, 29 owner assemblies, 554 legacy reads, and 150 native calls. All 43 golden executions and all 100 replay fixtures retain native authority and exact visible/structural parity.
+- Full verification passes 529 unit files and 3,680 tests, focused result/runtime/printer/detail gates, TypeScript, production build, lint, Rust check, file size, CI, seam, Surface, OOE, and compartment boundaries. Nineteen Chromium canaries and nine structured History browser journeys pass; prior all-nine screenshot evidence was re-inspected and remains readable because this gate changes enforcement only.
+- No mathematical output, visible wording, request shape, runtime host, capability identity, OOE authority, cancellation, fallback, History-ticket behavior, or Surface DTO changed. Display read-model inversion is next.
 
 ## Verification Contract
 

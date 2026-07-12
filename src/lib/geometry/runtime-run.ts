@@ -4,6 +4,7 @@ import type {
   GeometryScreen,
 } from '../../types/calculator';
 import { runGeometryCoreDraft } from './core';
+import { requireNativeSuccessfulResult } from '../result-contract';
 import { geometryRequestToScreen } from './parser';
 import { createGeometryResultOutcome } from './result-document';
 import type { RunGeometryRuntimeRequest } from './runtime-input';
@@ -23,9 +24,9 @@ export function buildGeometryModeRunPayload(
     ? geometryRequestToScreen(parsed.request)
     : request.screenHint;
 
-  const ownedOutcome = outcome.kind === 'prompt'
+  const ownedOutcome = requireNativeSuccessfulResult(outcome.kind === 'prompt'
     ? outcome
-    : createGeometryResultOutcome(outcome);
+    : createGeometryResultOutcome(outcome), 'Geometry');
 
   return {
     outcome: ownedOutcome,

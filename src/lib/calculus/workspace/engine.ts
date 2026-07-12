@@ -61,6 +61,7 @@ import {
 } from '../limit-variable-analysis';
 import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
+import { requireNativeSuccessfulResult } from '../../result-contract';
 import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
@@ -630,10 +631,10 @@ export async function runCalculusWorkspaceMode(
     protectedNameDescriptions,
     Boolean(request.variableSubstitutionSnapshot),
   );
-  if (hasNativeCalculusResultDocument(request.screen)) {
-    return finalOutcome.kind === 'prompt'
+  const ownedOutcome = hasNativeCalculusResultDocument(request.screen)
+    ? finalOutcome.kind === 'prompt'
       ? finalOutcome
-      : createCalculusResultOutcome(finalOutcome);
-  }
-  return finalOutcome;
+      : createCalculusResultOutcome(finalOutcome)
+    : finalOutcome;
+  return requireNativeSuccessfulResult(ownedOutcome, 'Calculus');
 }

@@ -351,6 +351,74 @@ describe('display contract inversion ratchet', () => {
     }
   });
 
+  it('separates registered owner assembly from live compatibility debt', () => {
+    const rootDir = fixture({
+      'src/lib/geometry/core.ts': `
+        import type { DisplayOutcome } from '../../types/calculator/display-types';
+        export function evaluationToOutcome(): DisplayOutcome {
+          return { kind: 'success', title: 'Geometry', exactLatex: '4', warnings: [] };
+        }
+        export function unregisteredOutcome(): DisplayOutcome {
+          return { kind: 'success', title: 'Geometry', exactLatex: '5', warnings: [] };
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.geometry['owner-assembly'], 1);
+    assert.equal(report.lanes.geometry['compatibility-projection'], 1);
+    assert.equal(report.summary.ownerAssemblyCount, 1);
+  });
+
+  it('classifies workspace hard-stop payloads as control outcomes', () => {
+    const rootDir = fixture({
+      'src/lib/modes/worker-clients/calculate-worker-client.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        export function buildCancelledPayload(): DisplayOutcome {
+          return {
+            kind: 'error',
+            title: 'Calculate',
+            error: 'Stopped',
+            warnings: [],
+            solveSummaryText: 'The worker was stopped.',
+          };
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.calculate['control-outcome'], 1);
+    assert.equal(report.lanes.calculate['compatibility-projection'], 0);
+  });
+
+  it('keeps live producer lanes at zero compatibility after owner closeout', () => {
+    const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
+    const producerLanes = [
+      'app-runtime',
+      'calculate',
+      'calculus',
+      'equation',
+      'geometry',
+      'kernel-runtime',
+      'linear-algebra-shared',
+      'matrix',
+      'statistics',
+      'table',
+      'trigonometry',
+      'vector',
+    ];
+
+    for (const lane of producerLanes) {
+      assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
+    }
+    assert.equal(report.summary.compatibilityProjectionCount, 1);
+    assert.equal(report.summary.ownerAssemblyCount, 29);
+    assert.deepEqual(
+      report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
+      [['src/app/runtime/historyDisplayEntry.ts', 'legacyHistoryOutcome']],
+    );
+  });
+
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `

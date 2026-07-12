@@ -2426,3 +2426,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Notebook prose formatting is selection-scoped: Bold, Italic, Highlight, and Text Color restore the exact saved prose range, while embedded math nodes do not inherit prose marks unless separately selected through their own math controls.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Text Color and Highlight remain separate palette modes. Curated and custom colors are allowed, low contrast warns without blocking, and one Escape closes the palette before the contextual toolbar without clearing the document selection.
+
+## 2026-07-12 - RESULT-DOCUMENT-PRODUCER-CLOSEOUT1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] A final workspace success is legal only when its canonical document validates and exactly matches the typed compatibility projection. Prompts and OOE cancellation controls remain outside this success-only invariant; Equation keeps its stronger non-prompt invariant.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Pre-final `DisplayOutcome` assembly is measured as `owner-assembly`, not compatibility debt, only through exact owner/function registrations with durable rationale. Completed Table authority must be checked with its companion `TableResponse` because bounded row truth is intentionally not duplicated onto `DisplayOutcome`.

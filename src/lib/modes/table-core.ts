@@ -18,6 +18,7 @@ import type {
 import { textDetailSection } from '../display/result/result-detail-lines';
 import { profileTableResult } from '../display/printer';
 import { createTableResultOutcome } from './table-result-document';
+import { requireNativeSuccessfulResult } from '../result-contract';
 
 export type RunTableModeRequest = {
   primaryLatex: string;
@@ -183,7 +184,11 @@ function buildTableModeResult(
   });
   return {
     response,
-    outcome: createTableResultOutcome(outcome, response),
+    outcome: requireNativeSuccessfulResult(
+      createTableResultOutcome(outcome, response),
+      'Table',
+      { tableResponse: response },
+    ),
   };
 }
 

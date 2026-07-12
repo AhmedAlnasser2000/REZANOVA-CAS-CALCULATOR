@@ -354,3 +354,28 @@
 - Matrix keeps `linearAlgebra.matrix`, `matrix-worker-runtime`, `matrix-runtime`, and `matrix-worker-shell`; Vector keeps `linearAlgebra.vector`, `vector-worker-runtime`, `vector-runtime`, and `vector-worker-shell`.
 - Shared lifecycle ritual and exact math cores remain shared; requests, replay seeds, cancellation, stale/commit legality, diagnostics, History tickets, Surface DTOs, OOE authority, mathematics, and visible wording are unchanged.
 - The separately owned untracked Notebook transient-UI directory, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.
+
+## RESULT-DOCUMENT-PRODUCER-CLOSEOUT1 Gate
+
+- Kind: `backend` final producer-authority enforcement with mandatory `ui` no-drift evidence.
+- Intentional mathematical or visible formatting change: no.
+- Result: pass.
+
+### Contract Evidence
+
+- Display inversion passes 18 tests and the accepted baseline: 611 producers, 775 reads, one compatibility projection, 29 owner assemblies, 554 legacy reads, 150 native calls, and zero violations.
+- Result-contract passes 34 tests, including all 43 golden and 100 replay executions. Focused workspace-boundary tests pass 33 assertions; runtime contracts pass 12 files and 76 tests.
+- Printer, detail, result-intent, print-hygiene, feature-probe, Equation carrier, TypeScript, production build, global lint, Rust check, file-size, CI, seam, identity, Surface, OOE, compartment, and source-mirror gates pass.
+- Full unit passes 529 files and 3,680 tests. `git diff --check` and memory protocol are commit gates after durable records are staged.
+
+### Browser Evidence
+
+- Chromium workspace canaries: 19/19 passed in 1.3 minutes.
+- Structured History create/replay: 9/9 workspaces passed in 40.9 seconds.
+- Inspected all-nine prior screenshot evidence after current browser parity: Calculate inverse trig, Equation roots, Calculus derivative, Trigonometry period/phase, Geometry branches, Statistics regression, Matrix profile, Vector Gram-Schmidt, and partial-domain Table remain readable without malformed fragments or result-card overflow.
+
+### Boundaries
+
+- The assertion checks successful final results only. Prompts and OOE cancellation remain control outcomes; Equation retains its stronger non-prompt assertion.
+- Completed Table supplies its companion response because table rows are canonical truth outside `DisplayOutcome`.
+- Notebook source, ignored `.task_tmp/` evidence, and untracked `test-results/` are excluded. No push is authorized.

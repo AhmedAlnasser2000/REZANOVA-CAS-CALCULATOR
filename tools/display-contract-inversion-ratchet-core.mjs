@@ -13,6 +13,7 @@ import {
   DISPLAY_OUTCOME_TRANSIENT_PROPERTIES,
   NATIVE_DOCUMENT_CALL_NAMES,
   NATIVE_DOCUMENT_WRAPPER_CALL_NAMES,
+  OWNER_ASSEMBLY_REGISTRATIONS,
   PRODUCER_INPUT_REGISTRATIONS,
   REFERENCE_OUTCOME_MATCHERS,
 } from './display-contract-inversion-registry.mjs';
@@ -23,6 +24,7 @@ const TRACKED_CATEGORIES = [
   'native-document',
   'canonical-projection',
   'compatibility-projection',
+  'owner-assembly',
   'forwarder',
   'control-outcome',
   'canonical-read',
@@ -282,6 +284,11 @@ function controlOutcomeRegistration(file, context) {
     matchesAny(file, registration.matchers) && registration.functions.includes(context));
 }
 
+function ownerAssemblyRegistration(file, context) {
+  return OWNER_ASSEMBLY_REGISTRATIONS.find((registration) =>
+    matchesAny(file, registration.matchers) && registration.functions.includes(context));
+}
+
 function nativeDocumentWrapperName(node) {
   const parent = node.parent;
   if (!ts.isCallExpression(parent) || !parent.arguments.includes(node)) return undefined;
@@ -319,6 +326,10 @@ function classifyProducer(node, file, checker) {
   if (objectCarriesCanonicalResult(node, checker)) {
     return { category: 'native-document', detail: kind ?? 'result', context };
   }
+  const ownerAssembly = ownerAssemblyRegistration(file, context);
+  if (ownerAssembly) {
+    return { category: 'owner-assembly', detail: ownerAssembly.id, context };
+  }
   return { category: 'compatibility-projection', detail: kind ?? 'result', context };
 }
 
@@ -346,7 +357,12 @@ function validateRegistry(displayType, checker) {
       }
     }
   }
-  for (const registration of CANONICAL_PROJECTION_REGISTRATIONS) {
+  for (const registration of [
+    ...CANONICAL_PROJECTION_REGISTRATIONS,
+    ...CONTROL_OUTCOME_REGISTRATIONS,
+    ...OWNER_ASSEMBLY_REGISTRATIONS,
+    ...PRODUCER_INPUT_REGISTRATIONS,
+  ]) {
     if (!registration.id || ids.has(registration.id)) {
       throw new Error(`Display contract registration id must be unique: ${registration.id || '<empty>'}`);
     }
@@ -375,6 +391,7 @@ function registryDigest() {
     lanes: DISPLAY_CONTRACT_LANES,
     canonicalProjections: CANONICAL_PROJECTION_REGISTRATIONS,
     controlOutcomeRegistrations: CONTROL_OUTCOME_REGISTRATIONS,
+    ownerAssemblyRegistrations: OWNER_ASSEMBLY_REGISTRATIONS,
     canonicalProperties: [...DISPLAY_OUTCOME_CANONICAL_PROPERTIES].sort(),
     controlProperties: [...DISPLAY_OUTCOME_CONTROL_PROPERTIES].sort(),
     legacyProperties: [...DISPLAY_OUTCOME_LEGACY_PROPERTIES].sort(),
@@ -677,11 +694,13 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         'native-document',
         'canonical-projection',
         'compatibility-projection',
+        'owner-assembly',
         'forwarder',
         'control-outcome',
       ].includes(entry.category)).length,
       consumerCount: entries.filter((entry) => entry.category.endsWith('-read')).length,
       compatibilityProjectionCount: categoryCounts.get('compatibility-projection'),
+      ownerAssemblyCount: categoryCounts.get('owner-assembly'),
       legacyReadCount: categoryCounts.get('legacy-read'),
       nativeDocumentCount: categoryCounts.get('native-document'),
       violationCount: violations.length,
@@ -746,6 +765,7 @@ function validateBaselineShape(baseline) {
   }
   for (const category of TRACKED_CATEGORIES) {
     const entries = baseline.entries?.[category];
+    if (category === 'owner-assembly' && entries === undefined) continue;
     if (!Array.isArray(entries) && (!entries || typeof entries !== 'object')) {
       throw new Error(`Display contract inversion baseline requires ${category} entries`);
     }
@@ -833,6 +853,7 @@ export function formatDisplayContractInversionReport(report, validation) {
     `Producer boundaries: ${report.summary.producerCount}`,
     `Consumer reads: ${report.summary.consumerCount}`,
     `Compatibility projections: ${report.summary.compatibilityProjectionCount}`,
+    `Owner assemblies: ${report.summary.ownerAssemblyCount}`,
     `Legacy reads: ${report.summary.legacyReadCount}`,
     `Native documents: ${report.summary.nativeDocumentCount}`,
     '',
@@ -840,7 +861,7 @@ export function formatDisplayContractInversionReport(report, validation) {
   ];
   for (const [lane, counts] of Object.entries(report.lanes)) {
     lines.push(
-      `  ${lane}: ${counts['native-document']} native, ${counts['compatibility-projection']} compatibility, ${counts.forwarder} forwarders, ${counts['control-outcome']} control, ${counts['legacy-read']} legacy reads, ${counts['canonical-read']} canonical reads`,
+      `  ${lane}: ${counts['native-document']} native, ${counts['compatibility-projection']} compatibility, ${counts['owner-assembly']} owner assembly, ${counts.forwarder} forwarders, ${counts['control-outcome']} control, ${counts['legacy-read']} legacy reads, ${counts['canonical-read']} canonical reads`,
     );
   }
   if (validation) {

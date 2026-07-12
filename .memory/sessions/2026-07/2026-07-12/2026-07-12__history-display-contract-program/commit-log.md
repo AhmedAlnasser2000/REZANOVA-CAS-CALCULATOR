@@ -130,10 +130,19 @@
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and all Notebook source files
 
-## Pending Commit
+## RESULT-DOCUMENT-LINEAR-ALGEBRA1
 
+- commit_hash: `97b2da88`
 - commit_message: `RESULT-DOCUMENT-LINEAR-ALGEBRA1`
 - scope: separate Matrix and Vector owner adapters, native golden/replay ratchets, accepted inversion and printer baselines, split-runtime parity, focused/full regression, four-screen Chromium evidence, and durable records
 - approval: covered by the user's standing approval for named roadmap milestones
 - push: not authorized
 - excluded: `test-results/`, ignored `.task_tmp/` evidence, and the separately owned Notebook transient-UI directory
+
+## RESULT-DOCUMENT-PRODUCER-CLOSEOUT1
+
+- commit_message: `RESULT-DOCUMENT-PRODUCER-CLOSEOUT1`
+- scope: explicit owner-assembly and cancellation-control classifications, final success native-authority assertion across all workspaces, Table companion-evidence handling, accepted inversion baseline, full regression/browser evidence, and durable records
+- approval: covered by the user's standing approval for named roadmap milestones
+- push: not authorized
+- excluded: `test-results/`, ignored `.task_tmp/` evidence, and all separately owned Notebook files

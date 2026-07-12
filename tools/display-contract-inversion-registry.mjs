@@ -211,6 +211,106 @@ export const CONTROL_OUTCOME_REGISTRATIONS = [
     matchers: exact('src/lib/equation/solve-result/boundary.ts'),
     functions: ['projectEquationOutcomeBoundaryToDisplay'],
   },
+  {
+    id: 'workspace-worker-cancellation-display-control-v1',
+    owner: 'workspace-runtime-control',
+    rationale: 'Calculate, Geometry, Statistics, Trigonometry, Matrix, and Vector worker hard stops are OOE control outcomes rather than mathematical result producers.',
+    matchers: exact(
+      'src/lib/modes/worker-clients/calculate-worker-client.ts',
+      'src/lib/modes/worker-clients/geometry-worker-client.ts',
+      'src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts',
+      'src/lib/modes/worker-clients/statistics-worker-client.ts',
+      'src/lib/modes/worker-clients/trigonometry-worker-client.ts',
+    ),
+    functions: ['buildCancelledPayload'],
+  },
+  {
+    id: 'calculus-worker-cancellation-display-control-v1',
+    owner: 'calculus-runtime-control',
+    rationale: 'Calculus worker hard stops are OOE control outcomes rather than mathematical result producers.',
+    matchers: exact('src/lib/modes/worker-clients/calculus-worker-client.ts'),
+    functions: ['buildCancelledOutcome'],
+  },
+  {
+    id: 'table-cancellation-display-control-v1',
+    owner: 'table-runtime-control',
+    rationale: 'A stopped Table build carries no completed rows and remains an OOE control outcome.',
+    matchers: exact('src/lib/modes/table-core.ts'),
+    functions: ['buildCancelledTableModeResult'],
+  },
+];
+
+export const OWNER_ASSEMBLY_REGISTRATIONS = [
+  {
+    id: 'app-runtime-result-retitle-assembly-v1',
+    owner: 'app-runtime-result-routing',
+    rationale: 'Legacy Calculate workbench routing retitles an already-owned outcome before commit; it does not author mathematical truth.',
+    matchers: exact('src/app/runtime/useCalculateRuntime.ts'),
+    functions: ['retitleOutcome'],
+  },
+  {
+    id: 'calculus-result-owner-assembly-v1',
+    owner: 'calculus-result-contract',
+    rationale: 'Calculus assembles and enriches compatibility fields internally before its unconditional final result-document adapter.',
+    matchers: exact('src/lib/calculus/workspace/engine.ts'),
+    functions: ['toOutcome', 'withStoredValueDetails', 'withDerivativeSteps', 'runCalculusWorkspaceMode'],
+  },
+  {
+    id: 'geometry-result-owner-assembly-v1',
+    owner: 'geometry-result-contract',
+    rationale: 'Geometry converts typed domain evaluations before the runtime owner attaches the final canonical document.',
+    matchers: exact('src/lib/geometry/core.ts'),
+    functions: ['evaluationToOutcome'],
+  },
+  {
+    id: 'kernel-runtime-result-assembly-v1',
+    owner: 'workspace-runtime-envelope',
+    rationale: 'The shared runtime envelope assembles or enriches compatibility fields before workspace-owned finalization and never owns mathematical truth.',
+    matchers: exact('src/lib/kernel/runtime-envelope.ts'),
+    functions: ['buildRuntimeOutcome', 'attachRuntimeEnvelope'],
+  },
+  {
+    id: 'matrix-system-result-owner-assembly-v1',
+    owner: 'matrix-result-contract',
+    rationale: 'The shared exact Matrix-system path assembles Matrix fields before the exported Matrix owner attaches the final canonical document.',
+    matchers: exact('src/lib/linear-algebra/matrix-system.ts'),
+    functions: ['matrixSystemStop', 'runMatrixLinearSystem'],
+  },
+  {
+    id: 'matrix-mode-result-owner-assembly-v1',
+    owner: 'matrix-result-contract',
+    rationale: 'Matrix mode assembly is finalized by createMatrixResultOutcome at the exported worker and fallback boundary.',
+    matchers: exact('src/lib/modes/matrix.ts'),
+    functions: ['runMatrixModeOutcome'],
+  },
+  {
+    id: 'statistics-result-owner-assembly-v1',
+    owner: 'statistics-result-contract',
+    rationale: 'Statistics converts typed domain evaluations before the runtime owner attaches the final canonical document.',
+    matchers: exact('src/lib/statistics/core.ts'),
+    functions: ['toOutcome'],
+  },
+  {
+    id: 'table-result-owner-assembly-v1',
+    owner: 'table-result-contract',
+    rationale: 'Table profiles completed row evidence immediately before createTableResultOutcome attaches the final document.',
+    matchers: exact('src/lib/modes/table-core.ts'),
+    functions: ['buildTableModeResult'],
+  },
+  {
+    id: 'trigonometry-result-owner-assembly-v1',
+    owner: 'trigonometry-result-contract',
+    rationale: 'Trigonometry assembles typed domain and cross-workspace presentation fields before its runtime owner attaches final truth.',
+    matchers: exact('src/lib/trigonometry/core.ts'),
+    functions: ['toOutcome', 'withCanonicalMetadata', 'runTrigRequest'],
+  },
+  {
+    id: 'vector-mode-result-owner-assembly-v1',
+    owner: 'vector-result-contract',
+    rationale: 'Vector mode assembly is finalized by createVectorResultOutcome at the exported worker and fallback boundary.',
+    matchers: exact('src/lib/modes/vector.ts'),
+    functions: ['runVectorModeOutcome'],
+  },
 ];
 
 export const REFERENCE_OUTCOME_MATCHERS = exact(
@@ -230,6 +330,7 @@ export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
   'createTableResultOutcome',
   'createTrigonometryResultOutcome',
   'createVectorResultOutcome',
+  'requireNativeSuccessfulResult',
 ]);
 
 export const PRODUCER_INPUT_REGISTRATIONS = [
