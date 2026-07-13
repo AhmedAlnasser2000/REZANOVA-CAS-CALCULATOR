@@ -84,3 +84,11 @@
 - scope: carrier-typed guarded runners, descriptors, cancellation checkpoints, sync/async orchestration, final public Display projection, focused regression and Chromium parity, and durable evidence
 - push: not authorized
 - excluded: direct-symbolic worker-envelope migration reserved for Move 12, ignored `.task_tmp/` screenshots, and untracked `test-results/`
+
+## CANONICAL-RUNTIME-OUTCOME1
+
+- commit_message: `CANONICAL-RUNTIME-OUTCOME1`
+- status: verified; covered by standing commit approval
+- scope: shared canonical runtime result/action/prompt types, clone-safe strict validator, focused result-contract/static verification, and durable evidence
+- push: not authorized
+- excluded: workspace worker migrations reserved for Moves 13-16, app-visible behavior, and untracked `test-results/`

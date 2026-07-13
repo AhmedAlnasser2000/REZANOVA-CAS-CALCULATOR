@@ -14,6 +14,7 @@ import type {
 } from './solver-types';
 import type { DisplayMathPayloadV1 } from './math-payload-types';
 import type { CanonicalResultDocumentV1 } from './canonical-result-types';
+import type { PromptOutcome } from './canonical-runtime-outcome-types';
 
 export type { DisplayMathPayloadV1, SerializableMathJson } from './math-payload-types';
 
@@ -156,15 +157,7 @@ export type DisplayOutcome =
       runtimeAdvisories?: RuntimeAdvisories;
       variableSubstitutions?: VariableSubstitutionSnapshot[];
     }
-  | {
-      kind: 'prompt';
-      title: string;
-      message: string;
-      targetMode: ModeId;
-      carryLatex: string;
-      warnings: string[];
-      runtimeAdvisories?: RuntimeAdvisories;
-    }
+  | PromptOutcome
   | {
       kind: 'error';
       title: string;

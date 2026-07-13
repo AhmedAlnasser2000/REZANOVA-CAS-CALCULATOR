@@ -133,3 +133,16 @@
 - visual: five Chromium Equation flows pass with one worker and zero retries; three inspected screenshots preserve domain facts, periodic structure, candidate evidence, collapsed summaries, and horizontal readability
 - resource posture: no full unit, UI, or 19-canary suite ran; no heavy verifier remains running
 - residual: `CANONICAL-RUNTIME-OUTCOME1` defines the shared runtime result/action/advisory envelope before workspace migrations
+
+## CANONICAL-RUNTIME-OUTCOME1
+
+- kind: backend shared runtime contract foundation
+- result: pass
+- contract: canonical result documents plus optional math-valued actions and compact advisories; prompt control flow retains `carryLatex` and does not require a result document
+- bounds: 64 actions, 11,024 nodes, depth 65, and 704,000 serialized bytes; nested documents and MathJSON retain their stricter existing bounds
+- negative evidence: document-kind mismatch, undeclared display fields, action LaTeX, invalid action MathJSON, malformed advisories, overflow, cycles, and class instances fail closed
+- regression: all 13 result-contract files and 70 tests pass; the 22-test inversion ratchet passes with unchanged authority and debt counts
+- static: incremental TypeScript, focused lint, production build, file-size, and diff hygiene pass
+- visual: not applicable because no runtime producer, worker, consumer, or rendered path changed
+- resource posture: no full unit, UI, canary, or browser suite ran
+- residual: `CANONICAL-OUTCOME-CALCULATE-EQUATION1` is the first workspace migration onto the validated envelope
