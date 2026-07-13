@@ -206,12 +206,26 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(canvas.querySelector('strong')).toBeNull());
   });
 
+  it('organizes authoring controls into the visible Notebook ribbon', async () => {
+    render(<NotebookHarness />);
+
+    const toolbar = await screen.findByLabelText('Notebook formatting toolbar');
+    expect(within(toolbar).getByRole('region', { name: 'Font' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Paragraph' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Structure' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Math' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Edit' })).toBeVisible();
+    expect(within(toolbar).getByRole('button', { name: 'In text' })).toBeVisible();
+    expect(within(toolbar).getByRole('button', { name: 'Separate equation' })).toBeVisible();
+    expect(within(toolbar).getByRole('button', { name: 'Add section' })).toBeVisible();
+  });
+
   it('opens supported display math in the selected workspace', async () => {
     const user = userEvent.setup();
     const onOpenMathInTool = vi.fn();
     render(<NotebookHarness onOpenMathInTool={onOpenMathInTool} />);
 
-    await user.click(await screen.findByRole('button', { name: 'Insert separate equation' }));
+    await user.click(await screen.findByRole('button', { name: 'Separate equation' }));
     const field = await screen.findByTestId('notebook-display-math-field') as HTMLElement & {
       setValue: (value: string) => void;
     };
@@ -234,7 +248,7 @@ describe('NotebookPage', () => {
   it('converts selected math explicitly between inline and display placement', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
-    await user.click(await screen.findByRole('button', { name: 'Insert math in text' }));
+    await user.click(await screen.findByRole('button', { name: 'In text' }));
     const inlineField = await screen.findByTestId('notebook-inline-math-field');
     await user.click(inlineField);
 
@@ -256,7 +270,7 @@ describe('NotebookPage', () => {
   it('keeps document-only structures in Notebook instead of sending them to a tool', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
-    await user.click(await screen.findByRole('button', { name: 'Insert separate equation' }));
+    await user.click(await screen.findByRole('button', { name: 'Separate equation' }));
     const field = await screen.findByTestId('notebook-display-math-field') as HTMLElement & {
       setValue: (value: string) => void;
     };

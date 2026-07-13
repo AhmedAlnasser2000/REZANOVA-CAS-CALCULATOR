@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-07-13 - NOTEBOOK-RIBBON-ARCHITECTURE1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Notebook uses a labelled five-group ribbon as its primary authoring surface: Font, Paragraph, Structure, Math, and Edit. Daily prose controls remain visible; Math owns only In text and Separate equation, avoiding duplicate insertion paths.
+
 ## 2026-07-12 - NOTEBOOK-AUTHORING-POLISH1
 
 - [agent: codex | model: gpt-5.6 | agent_family: terra | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: terra | attribution_basis: live] Notebook academic structure uses the fixed container catalog Theorem, Definition, Lemma, Corollary, Proof, Example, Solution, Exercise, Hint, Answer, Note, and Warning. Labels and numbers are optional and author-owned; only Hint and Answer may collapse.

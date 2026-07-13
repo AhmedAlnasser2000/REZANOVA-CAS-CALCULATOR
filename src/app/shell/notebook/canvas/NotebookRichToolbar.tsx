@@ -3,6 +3,11 @@ import {
   Bold,
   BookOpenCheck,
   Braces,
+  ChevronDown,
+  FolderPlus,
+  Heading1,
+  Heading2,
+  Heading3,
   Highlighter,
   Italic,
   List,
@@ -11,7 +16,6 @@ import {
   Redo2,
   Sigma,
   Strikethrough,
-  Type,
   Undo2,
 } from 'lucide-react';
 import { type ReactNode } from 'react';
@@ -20,6 +24,7 @@ import { NOTEBOOK_SEMANTIC_DEFINITIONS } from '../../../../lib/notebook';
 
 import {
   insertNotebookSemanticBlock,
+  insertNotebookSection,
 } from './selection';
 import { useNotebookTransientLayer } from '../transient-ui';
 import type { NotebookPaletteMode } from './NotebookSelectionToolbar';
@@ -62,6 +67,23 @@ function ToolButton({
   );
 }
 
+function RibbonGroup({
+  label,
+  children,
+  className = '',
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={`notebook-ribbon-group ${className}`.trim()} aria-label={label}>
+      <div className="notebook-ribbon-group-tools">{children}</div>
+      <span className="notebook-ribbon-group-label">{label}</span>
+    </section>
+  );
+}
+
 export function NotebookRichToolbar({
   editor,
   hasProseSelection,
@@ -79,7 +101,7 @@ export function NotebookRichToolbar({
 
   return (
     <div className="notebook-rich-toolbar" aria-label="Notebook formatting toolbar">
-      <div className="notebook-rich-toolbar-group">
+      <RibbonGroup label="Font">
         <ToolButton
           active={editor.isActive('bold')}
           label="Bold"
@@ -112,31 +134,45 @@ export function NotebookRichToolbar({
           onApply={(fontSize) => editor.chain().focus().setMark('textStyle', { fontSize }).run()}
           onReset={() => editor.chain().focus().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()}
         />
-      </div>
-      <div className="notebook-rich-toolbar-group">
+      </RibbonGroup>
+      <RibbonGroup label="Paragraph">
+        <div className="notebook-ribbon-split-control">
+          <ToolButton
+            active={editor.isActive('bulletList')}
+            label="Bullet list"
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+          ><List size={16} /></ToolButton>
+          <span aria-hidden="true"><ChevronDown size={12} /></span>
+        </div>
+        <div className="notebook-ribbon-split-control">
+          <ToolButton
+            active={editor.isActive('orderedList')}
+            label="Numbered list"
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          ><ListOrdered size={16} /></ToolButton>
+          <span aria-hidden="true"><ChevronDown size={12} /></span>
+        </div>
+      </RibbonGroup>
+      <RibbonGroup label="Structure">
+        <ToolButton
+          active={editor.isActive('heading', { level: 1 })}
+          label="Heading 1"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        ><Heading1 size={17} /></ToolButton>
         <ToolButton
           active={editor.isActive('heading', { level: 2 })}
-          label="Heading"
+          label="Heading 2"
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        ><Type size={16} /></ToolButton>
+        ><Heading2 size={17} /></ToolButton>
         <ToolButton
-          active={editor.isActive('bulletList')}
-          label="Bullet list"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        ><List size={16} /></ToolButton>
+          active={editor.isActive('heading', { level: 3 })}
+          label="Heading 3"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        ><Heading3 size={17} /></ToolButton>
         <ToolButton
-          active={editor.isActive('orderedList')}
-          label="Numbered list"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        ><ListOrdered size={16} /></ToolButton>
-      </div>
-      <div className="notebook-rich-toolbar-group">
-        <ToolButton label="Insert math in text" onClick={onInsertInlineMath}>
-          <Braces size={16} />
-        </ToolButton>
-        <ToolButton label="Insert separate equation" onClick={onInsertDisplayMath}>
-          <Sigma size={16} />
-        </ToolButton>
+          label="Add section"
+          onClick={() => insertNotebookSection(editor)}
+        ><FolderPlus size={16} /></ToolButton>
         <div className="notebook-semantic-insert">
           <ToolButton
             active={semanticMenu.isOpen}
@@ -166,15 +202,23 @@ export function NotebookRichToolbar({
             </div>
           ) : null}
         </div>
-      </div>
-      <div className="notebook-rich-toolbar-group is-history">
+      </RibbonGroup>
+      <RibbonGroup label="Math" className="is-math">
+        <ToolButton label="In text" onClick={onInsertInlineMath}>
+          <Braces size={16} /> <span>In text</span>
+        </ToolButton>
+        <ToolButton label="Separate equation" onClick={onInsertDisplayMath}>
+          <Sigma size={16} /> <span>Separate equation</span>
+        </ToolButton>
+      </RibbonGroup>
+      <RibbonGroup label="Edit" className="is-history">
         <ToolButton label="Undo" onClick={() => editor.chain().focus().undo().run()}>
           <Undo2 size={16} />
         </ToolButton>
         <ToolButton label="Redo" onClick={() => editor.chain().focus().redo().run()}>
           <Redo2 size={16} />
         </ToolButton>
-      </div>
+      </RibbonGroup>
     </div>
   );
 }

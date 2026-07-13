@@ -23,27 +23,45 @@
   position: relative;
   z-index: 8;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 48px;
+  align-items: stretch;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0;
+  min-height: 76px;
+  overflow-x: clip;
   border-bottom: 1px solid var(--notebook-border);
-  padding: 7px 12px;
+  padding: 5px 12px 4px;
   background: rgba(12, 26, 27, 0.96);
 }
 
-.notebook-rich-toolbar-group {
+.notebook-ribbon-group {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding-right: 8px;
+  display: grid;
+  grid-template-rows: minmax(38px, 1fr) auto;
+  min-width: max-content;
+  padding: 0 10px 2px;
   border-right: 1px solid var(--notebook-border);
 }
 
-.notebook-rich-toolbar-group:last-child {
+.notebook-ribbon-group:last-child {
   margin-left: auto;
-  padding-right: 0;
   border-right: 0;
+}
+
+.notebook-ribbon-group-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.notebook-ribbon-group-label {
+  display: block;
+  padding-top: 2px;
+  color: var(--page-subtle);
+  font: 0.62rem 'IBM Plex Mono', monospace;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
 }
 
 .notebook-rich-toolbar button {
@@ -56,6 +74,16 @@
   padding: 0;
   background: transparent;
   color: var(--page-muted);
+}
+
+.notebook-ribbon-group.is-math button {
+  grid-auto-flow: column;
+  grid-template-columns: auto auto;
+  width: auto;
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 0.76rem;
+  font-weight: 750;
 }
 
 .notebook-rich-toolbar button:hover,
@@ -76,6 +104,28 @@
   gap: 2px;
   min-height: 34px;
   color: var(--page-muted);
+}
+
+.notebook-ribbon-split-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.notebook-ribbon-split-control > span {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 28px;
+  color: var(--page-subtle);
+}
+
+.notebook-ribbon-split-control:hover,
+.notebook-ribbon-split-control:focus-within {
+  border-color: var(--notebook-border-strong);
+  background: var(--notebook-accent-soft);
 }
 
 .notebook-rich-toolbar .notebook-font-size-control button,
@@ -787,10 +837,11 @@
 
 @media (max-width: 720px) {
   .notebook-rich-toolbar {
+    flex-wrap: nowrap;
     overflow-x: auto;
   }
 
-  .notebook-rich-toolbar-group.is-history {
+  .notebook-ribbon-group.is-history {
     margin-left: 0;
   }
 
