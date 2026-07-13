@@ -187,3 +187,17 @@
 - startup note: the first six-canary attempt had one pre-computation Trigonometry Settings-panel miss; a single zero-retry reproduction passed, as did the final Geometry and Statistics evidence
 - resource posture: no full unit, UI, or 19-canary suite ran; verification remained impact-selected and no heavy process remains active
 - residual: `CANONICAL-OUTCOME-LINEAR-ALGEBRA-TABLE1` migrates Matrix, Vector, and Table without merging their runtime ownership
+
+## CANONICAL-OUTCOME-LINEAR-ALGEBRA-TABLE1
+
+- kind: backend Linear Algebra/Table worker and OOE result-envelope migration with focused UI parity evidence
+- result: pass
+- contract: Matrix and Vector preserve independent worker entrypoints, clients, hosts, capabilities, shells, fallback hosts, request shapes, and replay ownership; the shared lifecycle ritual now transports validated canonical outcomes
+- Table boundary: canonical result truth travels beside the established structured response; malformed completions preserve Table's cooperative fallback semantics, while Matrix and Vector fail closed without post-start retry
+- cancellation: Matrix, Vector, and Table hard-stop results are canonical errors; Table stores empty headers/rows and never exposes partial rows
+- regression: 32 focused runtime/Table tests pass after one stale cancellation assertion received a targeted rerun; 35 Matrix/Vector/producer tests, four affected result-contract tests, 21 runtime probes, and 82 workspace runtime contracts pass
+- inventory: 641 producers, 613 consumers, 176 native documents, 47 owner assemblies, one legacy-History compatibility projection, 411 legacy reads, and zero violations
+- static: incremental TypeScript, lint, production build, file-size, OOE boundaries, compartments, seam classification, and diff hygiene pass
+- visual: six canaries pass with one worker and zero retries; node captures show Matrix `-2`, Vector `[0,0,1]^T`, and Table rows `(-1,1)`, `(0,0)`, `(1,1)` without clipping
+- resource posture: no full unit, UI, or 19-canary suite ran; the broad result-contract attempt exposed one stale assertion and only that affected file was rerun
+- residual: `CANONICAL-CONSUMER-DIRECT1` moves remaining semantic consumers onto direct canonical reads

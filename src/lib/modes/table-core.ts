@@ -11,6 +11,7 @@ import {
   storedValueReadbackSections,
 } from '../algebra/variable-memory';
 import type {
+  CanonicalRuntimeOutcome,
   DisplayOutcome,
   StoredVariableValue,
   TableResponse,
@@ -19,7 +20,11 @@ import type {
 import { textDetailSection } from '../display/result/result-detail-lines';
 import { profileTableResult } from '../display/printer';
 import { createTableResultOutcome } from './table-result-document';
-import { requireCanonicalResultAuthority } from '../result-contract';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalResultAuthority,
+} from '../result-contract';
 import { tableMathJsonRoute, tableMathValuesFromEvidence } from './table-math-values';
 
 export type RunTableModeRequest = {
@@ -38,6 +43,26 @@ export type TableModeResult = {
   response: TableResponse;
   runtimeStatus?: 'cancelled';
 };
+
+export type CanonicalTableModeResult = Omit<TableModeResult, 'outcome'> & {
+  outcome: CanonicalRuntimeOutcome;
+};
+
+export function buildCanonicalTableModeResult(result: TableModeResult): CanonicalTableModeResult {
+  return {
+    ...result,
+    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(result.outcome, 'Table runtime'),
+  };
+}
+
+export function projectCanonicalTableModeResult(result: CanonicalTableModeResult): TableModeResult {
+  return {
+    ...result,
+    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(result.outcome, {
+      includeCanonicalMath: false,
+    }),
+  };
+}
 
 export function buildTableOoeSnapshot(request: RunTableModeRequest) {
   return {
@@ -205,14 +230,15 @@ function buildTableModeResult(
 }
 
 export function buildCancelledTableModeResult(): TableModeResult {
+  const response: TableResponse = {
+    headers: [],
+    rows: [],
+    warnings: [],
+  };
   return {
     runtimeStatus: 'cancelled',
-    response: {
-      headers: [],
-      rows: [],
-      warnings: [],
-    },
-    outcome: {
+    response,
+    outcome: createTableResultOutcome({
       kind: 'error',
       title: 'Table',
       error: 'Table build was stopped before it finished.',
@@ -222,7 +248,7 @@ export function buildCancelledTableModeResult(): TableModeResult {
           'The active Table job observed a Stop request and exited before committing rows.',
         ]),
       ],
-    },
+    }, response),
   };
 }
 

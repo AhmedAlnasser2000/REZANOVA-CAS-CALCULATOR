@@ -21,6 +21,8 @@ import type {
   TableWorkerInboundMessage,
   TableWorkerOutboundMessage,
 } from './worker-entrypoints/table.worker';
+import { buildCanonicalTableModeResult } from './table-core';
+import type { CanonicalTableModeResult } from './table-core';
 
 type Listener = (event: MessageEvent<TableWorkerOutboundMessage>) => void;
 type ErrorListener = (event: Event) => void;
@@ -29,9 +31,9 @@ class FakeTableRuntimeWorker {
   readonly listeners = new Set<Listener>();
   readonly errorListeners = new Set<ErrorListener>();
   terminated = false;
-  private readonly behavior: 'complete' | 'fail' | 'silent';
+  private readonly behavior: 'complete' | 'fail' | 'invalid' | 'silent';
 
-  constructor(behavior: 'complete' | 'fail' | 'silent') {
+  constructor(behavior: 'complete' | 'fail' | 'invalid' | 'silent') {
     this.behavior = behavior;
   }
 
@@ -60,10 +62,21 @@ class FakeTableRuntimeWorker {
       });
       return;
     }
+    if (this.behavior === 'invalid') {
+      this.emit({
+        kind: 'completed',
+        requestId: message.requestId,
+        payload: {
+          ...buildCanonicalTableModeResult(runTableMode(message.request)),
+          outcome: { kind: 'success' },
+        } as unknown as CanonicalTableModeResult,
+      });
+      return;
+    }
     this.emit({
       kind: 'completed',
       requestId: message.requestId,
-      payload: runTableMode(message.request),
+      payload: buildCanonicalTableModeResult(runTableMode(message.request)),
     });
   }
 
@@ -86,7 +99,7 @@ const request: RunTableModeRequest = {
   step: 1,
 };
 
-function createWorker(behavior: 'complete' | 'fail' | 'silent'): CreateTableWorker {
+function createWorker(behavior: 'complete' | 'fail' | 'invalid' | 'silent'): CreateTableWorker {
   return () => new FakeTableRuntimeWorker(behavior) as unknown as ReturnType<CreateTableWorker>;
 }
 
@@ -154,6 +167,23 @@ describe('Table worker runtime shell', () => {
     expect(listOoeDiagnostics()[0]?.provenance?.runtimeHost).toBe('table-runtime');
   });
 
+  it('preserves Table fallback semantics for malformed canonical completions', async () => {
+    const result = await runTableModeWithOoePilot(request, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: createWorker('invalid'),
+    });
+
+    expect(result.payload).toEqual(runTableMode(request));
+    expect(result.ooe.tableHostExecution).toMatchObject({
+      kind: 'fallback',
+      hostId: 'table-runtime',
+      fallbackFromHostId: 'table-worker-runtime',
+    });
+    expect(result.ooe.tableHostExecution?.kind === 'fallback'
+      ? result.ooe.tableHostExecution.reason
+      : '').toContain('invalid-completed-outcome');
+  });
+
   it('hard-stops a running Table worker on cancellation', async () => {
     const worker = new FakeTableRuntimeWorker('silent');
     let cancelled = false;
@@ -162,7 +192,7 @@ describe('Table worker runtime shell', () => {
       control(() => cancelled),
       {
         createWorker: () => worker as unknown as ReturnType<CreateTableWorker>,
-        fallback: async () => runTableMode(request),
+        fallback: async () => buildCanonicalTableModeResult(runTableMode(request)),
       },
     );
 

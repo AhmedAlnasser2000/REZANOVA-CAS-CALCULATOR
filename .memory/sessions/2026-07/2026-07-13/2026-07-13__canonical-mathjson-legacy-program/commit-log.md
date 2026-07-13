@@ -116,3 +116,11 @@
 - scope: Trigonometry, Geometry, and Statistics canonical worker/OOE outcomes, sibling replay metadata, fail-closed validation, unchanged public projection, focused runtime and Chromium evidence, and durable records
 - push: not authorized
 - excluded: Linear Algebra/Table migration, concurrent Notebook work, extracted temporary visual evidence, and untracked `test-results/`
+
+## CANONICAL-OUTCOME-LINEAR-ALGEBRA-TABLE1
+
+- commit_message: `CANONICAL-OUTCOME-LINEAR-ALGEBRA-TABLE1`
+- status: verified; covered by standing commit approval
+- scope: independent Matrix/Vector canonical worker and OOE outcomes, Table canonical outcome plus structured response transport, preserved lane-specific failure semantics, focused runtime and Chromium evidence, and durable records
+- push: not authorized
+- excluded: direct consumer inversion, concurrent Notebook work, temporary visual evidence, and untracked `test-results/`

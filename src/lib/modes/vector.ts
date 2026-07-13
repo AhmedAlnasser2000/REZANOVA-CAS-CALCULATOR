@@ -17,7 +17,11 @@ import {
   vectorMathValuesFromOwnedLeaves,
   vectorOwnedMathJsonLeaves,
 } from './vector-math-values';
-import { requireCanonicalResultAuthority } from '../result-contract';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalResultAuthority,
+} from '../result-contract';
 import type {
   AngleUnit,
   DisplayOutcome,
@@ -212,7 +216,7 @@ export async function runVectorModeWithOoePilot(
 ) {
   let hostExecution: LinearAlgebraHostExecution | undefined;
   const routeSnapshot = buildVectorOoeSnapshot(request);
-  return runLinearAlgebraWithOoePilot(
+  const result = await runLinearAlgebraWithOoePilot(
     'vector',
     async (control) => {
       const result = await runVectorModeViaIsolatedWorker(
@@ -220,7 +224,10 @@ export async function runVectorModeWithOoePilot(
         control,
         {
           createWorker: options?.createWorker,
-          fallback: () => runVectorMode(request),
+          fallback: () => projectDisplayOutcomeToCanonicalRuntimeOutcome(
+            runVectorMode(request),
+            'Vector fallback',
+          ),
         },
       );
       hostExecution = result.hostExecution;
@@ -229,5 +236,14 @@ export async function runVectorModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
+    (payload) => projectCanonicalRuntimeOutcomeToDisplayOutcome(payload, {
+      includeCanonicalMath: false,
+    }),
   );
+  return {
+    ...result,
+    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(result.payload, {
+      includeCanonicalMath: false,
+    }),
+  };
 }

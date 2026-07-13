@@ -18,7 +18,11 @@ import {
   matrixMathValuesFromOwnedLeaves,
   matrixOwnedMathJsonLeaves,
 } from './matrix-math-values';
-import { requireCanonicalResultAuthority } from '../result-contract';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalResultAuthority,
+} from '../result-contract';
 import type {
   DisplayOutcome,
   ExactScalarWire,
@@ -307,7 +311,7 @@ export async function runMatrixModeWithOoePilot(
 ) {
   let hostExecution: LinearAlgebraHostExecution | undefined;
   const routeSnapshot = buildMatrixOoeSnapshot(request);
-  return runLinearAlgebraWithOoePilot(
+  const result = await runLinearAlgebraWithOoePilot(
     'matrix',
     async (control) => {
       const result = await runMatrixModeViaIsolatedWorker(
@@ -315,7 +319,10 @@ export async function runMatrixModeWithOoePilot(
         control,
         {
           createWorker: options?.createWorker,
-          fallback: () => runMatrixMode(request),
+          fallback: () => projectDisplayOutcomeToCanonicalRuntimeOutcome(
+            runMatrixMode(request),
+            'Matrix fallback',
+          ),
         },
       );
       hostExecution = result.hostExecution;
@@ -324,5 +331,14 @@ export async function runMatrixModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
+    (payload) => projectCanonicalRuntimeOutcomeToDisplayOutcome(payload, {
+      includeCanonicalMath: false,
+    }),
   );
+  return {
+    ...result,
+    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(result.payload, {
+      includeCanonicalMath: false,
+    }),
+  };
 }

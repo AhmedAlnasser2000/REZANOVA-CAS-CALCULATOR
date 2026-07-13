@@ -61,7 +61,7 @@ describe('guided-domain canonical result producers', () => {
       .toBe(true);
   });
 
-  it('stores exact Table headers and rows while leaving cancellation control-only', () => {
+  it('stores exact Table rows and canonical cancellation without partial values', () => {
     const result = runTableMode({
       primaryLatex: '\\sqrt{x}',
       secondaryLatex: '',
@@ -95,6 +95,8 @@ describe('guided-domain canonical result producers', () => {
     const cancelled = buildCancelledTableModeResult();
     expect(cancelled.runtimeStatus).toBe('cancelled');
     if (cancelled.outcome.kind === 'prompt') throw new Error('Expected Table cancellation result.');
-    expect(cancelled.outcome.canonicalResult).toBeUndefined();
+    expect(resolveCanonicalResultForStorage(cancelled.outcome, { tableResponse: cancelled.response }))
+      .toMatchObject({ ok: true, source: 'native' });
+    expect(cancelled.outcome.canonicalResult?.table).toEqual({ headers: [], rows: [] });
   });
 });

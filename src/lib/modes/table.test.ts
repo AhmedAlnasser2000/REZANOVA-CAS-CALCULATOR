@@ -14,6 +14,11 @@ import type {
   TableWorkerInboundMessage,
   TableWorkerOutboundMessage,
 } from './worker-entrypoints/table.worker'
+import { buildCanonicalTableModeResult } from './table-core'
+
+async function runCanonicalTableModeCooperatively(request: RunTableModeRequest) {
+  return buildCanonicalTableModeResult(await runTableModeCooperatively(request))
+}
 
 class FakeTableWorker {
   readonly listeners = new Map<string, Set<EventListenerOrEventListenerObject>>()
@@ -204,7 +209,7 @@ describe('runTableMode', () => {
       throw new Error('Expected a cancellation note')
     }
     expect(result.outcome.error).toBe('Table build was stopped before it finished.')
-    expect(result.outcome.canonicalResult).toBeUndefined()
+    expect(result.outcome.canonicalResult?.title).toBe('Table')
   })
 
   it('isolated worker table completion matches the synchronous table result', async () => {
@@ -224,7 +229,7 @@ describe('runTableMode', () => {
       fakeWorker.emitMessage({
         kind: 'completed',
         requestId: message.requestId,
-        payload: runTableMode(message.request),
+        payload: buildCanonicalTableModeResult(runTableMode(message.request)),
       })
     })
 
@@ -233,11 +238,11 @@ describe('runTableMode', () => {
       tableWorkerContext(),
       {
         createWorker: () => worker as unknown as Worker,
-        fallback: async () => runTableModeCooperatively(request),
+        fallback: async () => runCanonicalTableModeCooperatively(request),
       },
     )
 
-    expect(result.payload).toEqual(runTableMode(request))
+    expect(result.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)))
     expect(result.hostExecution).toEqual({
       kind: 'worker',
       hostId: 'table-worker-runtime',
@@ -269,7 +274,7 @@ describe('runTableMode', () => {
       }),
       {
         createWorker: () => worker as unknown as Worker,
-        fallback: async () => runTableModeCooperatively(request),
+        fallback: async () => runCanonicalTableModeCooperatively(request),
       },
     )
 
@@ -286,8 +291,11 @@ describe('runTableMode', () => {
     })
     expect(result.payload.runtimeStatus).toBe('cancelled')
     expect(result.payload.response.rows).toEqual([])
-    expect(result.payload.outcome).toMatchObject({
-      kind: 'error',
+    if (result.payload.outcome.kind === 'prompt') {
+      throw new Error('Expected a canonical Table cancellation result')
+    }
+    expect(result.payload.outcome.kind).toBe('error')
+    expect(result.payload.outcome.canonicalResult).toMatchObject({
       title: 'Table',
       error: 'Table build was stopped before it finished.',
     })
@@ -311,11 +319,11 @@ describe('runTableMode', () => {
         createWorker: () => {
           throw new Error('workers disabled')
         },
-        fallback: async () => runTableModeCooperatively(request),
+        fallback: async () => runCanonicalTableModeCooperatively(request),
       },
     )
 
-    expect(result.payload).toEqual(runTableMode(request))
+    expect(result.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)))
     expect(result.hostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'table-runtime',
@@ -352,12 +360,12 @@ describe('runTableMode', () => {
       tableWorkerContext({ checkpoints }),
       {
         createWorker: () => worker as unknown as Worker,
-        fallback: async () => runTableModeCooperatively(request),
+        fallback: async () => runCanonicalTableModeCooperatively(request),
       },
     )
 
     expect(worker.terminate).toHaveBeenCalledTimes(1)
-    expect(result.payload).toEqual(runTableMode(request))
+    expect(result.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)))
     expect(result.hostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'table-runtime',

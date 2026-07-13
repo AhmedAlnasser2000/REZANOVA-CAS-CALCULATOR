@@ -1,14 +1,16 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import {
+  buildCanonicalTableModeResult,
   buildCancelledTableModeResult,
+  type CanonicalTableModeResult,
   type RunTableModeRequest,
-  type TableModeResult,
 } from '../table-core';
 import type {
   TableWorkerInboundMessage,
   TableWorkerOutboundMessage,
 } from '../worker-entrypoints/table.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import { validateCanonicalRuntimeOutcome } from '../../result-contract';
 
 export type TableWorkerHostExecution =
   | {
@@ -31,7 +33,7 @@ export type TableWorkerHostExecution =
     };
 
 export type TableWorkerRunResult = {
-  payload: TableModeResult;
+  payload: CanonicalTableModeResult;
   hostExecution: TableWorkerHostExecution;
 };
 
@@ -44,7 +46,7 @@ export type CreateTableWorker = () => TableWorkerLike;
 
 type RunTableModeViaIsolatedWorkerOptions = {
   createWorker?: CreateTableWorker;
-  fallback: () => Promise<TableModeResult>;
+  fallback: () => Promise<CanonicalTableModeResult>;
 };
 
 let tableWorkerRequestCounter = 0;
@@ -64,7 +66,7 @@ function nextRequestId() {
 async function runFallback(
   context: OoeRuntimeControlContext,
   reason: string,
-  fallback: () => Promise<TableModeResult>,
+  fallback: () => Promise<CanonicalTableModeResult>,
 ): Promise<TableWorkerRunResult> {
   context.checkpoint(`Table worker unavailable; falling back to main-thread Table runtime (${reason}).`);
   return {
@@ -86,7 +88,7 @@ export async function runTableModeViaIsolatedWorker(
 ): Promise<TableWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledTableModeResult(),
+      payload: buildCanonicalTableModeResult(buildCancelledTableModeResult()),
       hostExecution: {
         kind: 'worker-cancelled',
         hostId: 'table-worker-runtime',
@@ -153,7 +155,7 @@ export async function runTableModeViaIsolatedWorker(
       worker.terminate();
       context.checkpoint('Table worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledTableModeResult(),
+        payload: buildCanonicalTableModeResult(buildCancelledTableModeResult()),
         hostExecution: {
           kind: 'worker-cancelled',
           hostId: 'table-worker-runtime',
@@ -188,8 +190,18 @@ export async function runTableModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.payload.outcome);
+        if (!validation.ok) {
+          fallbackFromWorkerFailure(
+            `invalid-completed-outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          );
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          payload: {
+            ...event.data.payload,
+            outcome: validation.validated.value,
+          },
           hostExecution: {
             kind: 'worker',
             hostId: 'table-worker-runtime',

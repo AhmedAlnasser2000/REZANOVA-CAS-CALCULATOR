@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 
 export type LinearAlgebraWorkerInboundMessage<TRequest> = {
   kind: 'run';
@@ -14,7 +14,7 @@ export type LinearAlgebraWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: DisplayOutcome;
+      payload: CanonicalRuntimeOutcome;
     }
   | {
       kind: 'failed';

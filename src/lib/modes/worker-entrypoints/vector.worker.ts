@@ -1,4 +1,5 @@
 import { runVectorMode, type RunVectorModeRequest } from '../vector';
+import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
 import type {
   LinearAlgebraWorkerInboundMessage,
   LinearAlgebraWorkerOutboundMessage,
@@ -29,7 +30,10 @@ workerSelf.addEventListener('message', (event) => {
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: runVectorMode(event.data.request),
+      payload: projectDisplayOutcomeToCanonicalRuntimeOutcome(
+        runVectorMode(event.data.request),
+        'Vector worker',
+      ),
     });
   } catch (error: unknown) {
     workerSelf.postMessage({

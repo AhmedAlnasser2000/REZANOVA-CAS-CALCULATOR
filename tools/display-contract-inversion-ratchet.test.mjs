@@ -511,11 +511,11 @@ describe('display contract inversion ratchet', () => {
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
-    assert.equal(report.summary.producerCount, 648);
+    assert.equal(report.summary.producerCount, 641);
     assert.equal(report.summary.consumerCount, 613);
     assert.equal(report.summary.compatibilityProjectionCount, 1);
     assert.equal(report.summary.legacyReadCount, 411);
-    assert.equal(report.summary.nativeDocumentCount, 174);
+    assert.equal(report.summary.nativeDocumentCount, 176);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 4);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Carry Trigonometry, Geometry, and Statistics worker and OOE results as validated canonical transport payloads while preserving parsed replay metadata and the existing public Display projection.",
+  "acceptedReason": "Carry Matrix, Vector, and Table worker and OOE results as validated canonical runtime outcomes while preserving independent Linear Algebra shells, Table row evidence, and Table fallback semantics.",
   "registryDigest": "42e1068ee93b1b3d5682",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -71,7 +71,7 @@
     "matrix": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 3
+      "nativeDocument": 4
     },
     "ooe-observability": {
       "compatibilityProjection": 0,
@@ -106,7 +106,7 @@
     "vector": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 3
+      "nativeDocument": 4
     }
   },
   "entries": {
@@ -402,6 +402,12 @@
       ],
       "src/lib/modes/worker-clients/equation-worker-client.ts": [
         "5350c87bcc0b704ab889:1"
+      ],
+      "src/lib/modes/worker-clients/matrix-worker-client.ts": [
+        "f926adfe20f4f4881a3e:1"
+      ],
+      "src/lib/modes/worker-clients/vector-worker-client.ts": [
+        "78985c0ec4fc0926a2e5:1"
       ],
       "src/lib/result-contract/projection.ts": [
         "b845e5a0379f98960e45:1"
@@ -915,33 +921,17 @@
       "src/lib/modes/geometry.ts": [
         "ba4d4325c0ff82a2e511:1"
       ],
-      "src/lib/modes/matrix.ts": [
-        "9deb4d41d5ce4c300ad1:1",
-        "44abfe464f008636033c:1"
-      ],
       "src/lib/modes/runtime-probes/registry.ts": [
         "0107a7063dbfbbbe6402:1"
       ],
       "src/lib/modes/statistics.ts": [
         "b271ebeb6db9f51616f2:1"
       ],
+      "src/lib/modes/table.ts": [
+        "4ce7a6565f3b1f618685:1"
+      ],
       "src/lib/modes/trigonometry.ts": [
         "e92327e20a6e0bb3bd9d:1"
-      ],
-      "src/lib/modes/vector.ts": [
-        "f09a01c6224260303184:1",
-        "531b0ad8cb10e2ea3234:1"
-      ],
-      "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
-        "8224da9626514cc4fbe6:1",
-        "83dfe0c713bed0a4d9b7:1",
-        "03204821746bef87222c:1"
-      ],
-      "src/lib/modes/worker-entrypoints/matrix.worker.ts": [
-        "c1d844bb944bb5ad302a:1"
-      ],
-      "src/lib/modes/worker-entrypoints/vector.worker.ts": [
-        "a3a5dcc4339dac08c668:1"
       ],
       "src/lib/ooe/pilots/equation-pilot.ts": [
         "0e84ef2380233134a87a:1",
@@ -1122,9 +1112,6 @@
       ],
       "src/lib/modes/worker-clients/geometry-worker-client.ts": [
         "7076661ed59941c298a7:1"
-      ],
-      "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
-        "8f6d9fc195594fd3f753:1"
       ],
       "src/lib/modes/worker-clients/statistics-worker-client.ts": [
         "8b0f349d3582f3bcd139:1"

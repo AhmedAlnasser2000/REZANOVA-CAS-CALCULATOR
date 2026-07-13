@@ -5,6 +5,8 @@ import {
 } from '../ooe/pilots/table-pilot';
 import {
   buildTableOoeSnapshot,
+  buildCanonicalTableModeResult,
+  projectCanonicalTableModeResult,
   runTableModeCooperatively,
   type RunTableModeRequest,
 } from './table-core';
@@ -34,19 +36,25 @@ export async function runTableModeWithOoePilot(
   },
 ) {
   let hostExecution: TableHostExecution | undefined;
-  return runTableWithOoePilot(async (context) => {
+  const result = await runTableWithOoePilot(async (context) => {
     const isolatedResult = await runTableModeViaIsolatedWorker(request, context, {
       createWorker: options?.createWorker,
-      fallback: () => runTableModeCooperatively(request, {
+      fallback: async () => buildCanonicalTableModeResult(await runTableModeCooperatively(request, {
         rowsPerBatch: 5,
         shouldCancel: context.shouldCancel,
         onCheckpoint: ({ completedRows, totalRows }) => {
           context.checkpoint(`Table fallback checkpoint: ${completedRows}/${totalRows} row(s) prepared.`);
         },
         yieldIfBudgetExceeded: context.yieldIfBudgetExceeded,
-      }),
+      })),
     });
     hostExecution = isolatedResult.hostExecution;
     return isolatedResult.payload;
-  }, buildTableOoeSnapshot(request), options, () => hostExecution);
+  }, buildTableOoeSnapshot(request), options, () => hostExecution, (payload) => (
+    projectCanonicalTableModeResult(payload).outcome
+  ));
+  return {
+    ...result,
+    payload: projectCanonicalTableModeResult(result.payload),
+  };
 }

@@ -1,4 +1,5 @@
 import type { TableModeResult } from '../../modes/table-core';
+import type { DisplayOutcome, TableResponse } from '../../../types/calculator';
 import type { OoeTraceEvent } from '../bridge-schema/ooe-bridge';
 import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
 import {
@@ -61,7 +62,13 @@ export type TableOoePilotMetadata = OoeRuntimeMetadata<
   runtimeShell?: OoeRuntimeShellEvidence;
 };
 
-export type TableOoePilotRunResult = OoeRuntimeEnvelope<TableModeResult, TableOoePilotMetadata>;
+type TablePilotPayload = {
+  response: TableResponse;
+  runtimeStatus?: TableModeResult['runtimeStatus'];
+};
+
+export type TableOoePilotRunResult<TPayload extends TablePilotPayload = TableModeResult> =
+  OoeRuntimeEnvelope<TPayload, TableOoePilotMetadata>;
 
 function tablePilotDefinition(): TablePilotDefinition {
   return {
@@ -191,12 +198,13 @@ export function buildTableOoePilotMetadata(
   };
 }
 
-export async function runTableWithOoePilot(
-  run: (context: OoeRuntimeControlContext) => TableModeResult | Promise<TableModeResult>,
+export async function runTableWithOoePilot<TPayload extends TablePilotPayload = TableModeResult>(
+  run: (context: OoeRuntimeControlContext) => TPayload | Promise<TPayload>,
   routeSnapshot: unknown = { capabilityId: 'table.build' },
   options?: OoeJobContextOptions,
   getHostExecution?: () => TableHostExecution | undefined,
-): Promise<TableOoePilotRunResult> {
+  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+): Promise<TableOoePilotRunResult<TPayload>> {
   const definition = tablePilotDefinition();
   return runOoeRuntimeJob({
     definition,
@@ -226,6 +234,9 @@ export async function runTableWithOoePilot(
           step?: number;
         };
       };
+      const output = resolveDisplayOutcome
+        ? resolveDisplayOutcome(payload)
+        : (payload as unknown as TableModeResult).outcome;
       return {
         depth: 'coarse',
         mode: 'table',
@@ -239,7 +250,7 @@ export async function runTableWithOoePilot(
           end: snapshot.request?.end,
           step: snapshot.request?.step,
         },
-        outputSummary: summarizeDisplayOutcome(payload.outcome),
+        outputSummary: summarizeDisplayOutcome(output),
         runtimeHost: metadata.tableHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

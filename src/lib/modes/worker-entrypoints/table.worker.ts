@@ -1,7 +1,8 @@
 import {
+  buildCanonicalTableModeResult,
   runTableMode,
+  type CanonicalTableModeResult,
   type RunTableModeRequest,
-  type TableModeResult,
 } from '../table-core';
 
 export type TableWorkerInboundMessage = {
@@ -18,7 +19,7 @@ export type TableWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: TableModeResult;
+      payload: CanonicalTableModeResult;
     }
   | {
       kind: 'failed';
@@ -53,7 +54,7 @@ workerSelf.addEventListener('message', (event: MessageEvent<TableWorkerInboundMe
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: runTableMode(event.data.request),
+      payload: buildCanonicalTableModeResult(runTableMode(event.data.request)),
     } satisfies TableWorkerOutboundMessage);
   } catch (error) {
     workerSelf.postMessage({

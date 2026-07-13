@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import type {
   LinearAlgebraHostExecution,
   OOE_MATRIX_FALLBACK_HOST_ID,
@@ -12,7 +12,7 @@ import type {
   LinearAlgebraWorkerOutboundMessage,
 } from '../worker-entrypoints/linear-algebra-worker-contract';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
-import { proseSolveSummary } from '../../display/result-detail-lines';
+import { validateCanonicalRuntimeOutcome } from '../../result-contract';
 
 export type LinearAlgebraWorkerLike<TRequest> = {
   addEventListener(
@@ -32,7 +32,7 @@ export type LinearAlgebraWorkerLike<TRequest> = {
 export type CreateLinearAlgebraWorkspaceWorker<TRequest> = () => LinearAlgebraWorkerLike<TRequest>;
 
 export type LinearAlgebraWorkerRunResult = {
-  payload: DisplayOutcome;
+  payload: CanonicalRuntimeOutcome;
   hostExecution: LinearAlgebraHostExecution;
 };
 
@@ -51,11 +51,12 @@ type LinearAlgebraWorkerConfig<TRequest> = (
     }
 ) & {
   createDefaultWorker: CreateLinearAlgebraWorkspaceWorker<TRequest>;
+  buildCancelledPayload: () => CanonicalRuntimeOutcome;
 };
 
 type RunLinearAlgebraWorkspaceViaIsolatedWorkerOptions<TRequest> = {
   createWorker?: CreateLinearAlgebraWorkspaceWorker<TRequest>;
-  fallback: () => Promise<DisplayOutcome> | DisplayOutcome;
+  fallback: () => Promise<CanonicalRuntimeOutcome> | CanonicalRuntimeOutcome;
 };
 
 const requestCounters = new Map<string, number>();
@@ -70,21 +71,11 @@ function stoppedMessage(label: string) {
   return `${label} operation stopped before it finished.`;
 }
 
-function buildCancelledPayload(label: string): DisplayOutcome {
-  return {
-    kind: 'error',
-    title: label,
-    error: stoppedMessage(label),
-    warnings: [],
-    ...proseSolveSummary(`${label} operation stopped after the worker runtime was hard-stopped.`),
-  };
-}
-
 async function runFallback<TRequest>(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
   config: LinearAlgebraWorkerConfig<TRequest>,
-  fallback: () => Promise<DisplayOutcome> | DisplayOutcome,
+  fallback: () => Promise<CanonicalRuntimeOutcome> | CanonicalRuntimeOutcome,
 ): Promise<LinearAlgebraWorkerRunResult> {
   context.checkpoint(
     `${config.label} worker runtime unavailable; falling back to main-thread ${config.label} runtime (${reason}).`,
@@ -115,7 +106,7 @@ export async function runLinearAlgebraWorkspaceViaIsolatedWorker<TRequest>(
 ): Promise<LinearAlgebraWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledPayload(config.label),
+      payload: config.buildCancelledPayload(),
       hostExecution: {
         kind: 'worker-cancelled',
         hostId: config.primaryHostId,
@@ -194,7 +185,7 @@ export async function runLinearAlgebraWorkspaceViaIsolatedWorker<TRequest>(
       worker.terminate();
       context.checkpoint(`${config.label} worker runtime was terminated after a Stop request.`);
       settle({
-        payload: buildCancelledPayload(config.label),
+        payload: config.buildCancelledPayload(),
         hostExecution: {
           kind: 'worker-cancelled',
           hostId: config.primaryHostId,
@@ -220,8 +211,16 @@ export async function runLinearAlgebraWorkspaceViaIsolatedWorker<TRequest>(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.payload);
+        if (!validation.ok) {
+          fail(workerRuntimeError(
+            config.label,
+            `invalid completed outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          ));
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          payload: validation.validated.value,
           hostExecution: {
             kind: 'worker',
             hostId: config.primaryHostId,

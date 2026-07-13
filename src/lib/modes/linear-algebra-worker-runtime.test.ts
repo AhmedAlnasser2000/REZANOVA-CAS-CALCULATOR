@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
 import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import type {
@@ -20,6 +20,7 @@ import {
   runVectorModeWithOoePilot,
   type RunVectorModeRequest,
 } from './vector';
+import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../result-contract';
 
 type Listener = (event: MessageEvent<LinearAlgebraWorkerOutboundMessage>) => void;
 type ErrorListener = (event: Event) => void;
@@ -29,11 +30,11 @@ class FakeWorkspaceWorker<TRequest> {
   readonly errorListeners = new Set<ErrorListener>();
   terminated = false;
   private readonly behavior: 'complete' | 'fail' | 'silent';
-  private readonly run: (request: TRequest) => DisplayOutcome;
+  private readonly run: (request: TRequest) => CanonicalRuntimeOutcome;
 
   constructor(
     behavior: 'complete' | 'fail' | 'silent',
-    run: (request: TRequest) => DisplayOutcome,
+    run: (request: TRequest) => CanonicalRuntimeOutcome,
   ) {
     this.behavior = behavior;
     this.run = run;
@@ -113,6 +114,14 @@ const runtimeContext = (shouldCancel: () => boolean) => ({
   yieldIfBudgetExceeded: async () => false,
 });
 
+const runCanonicalMatrixMode = (request: RunMatrixModeRequest) => (
+  projectDisplayOutcomeToCanonicalRuntimeOutcome(runMatrixMode(request), 'Matrix test worker')
+);
+
+const runCanonicalVectorMode = (request: RunVectorModeRequest) => (
+  projectDisplayOutcomeToCanonicalRuntimeOutcome(runVectorMode(request), 'Vector test worker')
+);
+
 beforeEach(() => {
   clearOoeJobRegistry();
   clearOoeDiagnostics();
@@ -135,11 +144,11 @@ describe('Matrix and Vector worker runtime shells', () => {
   it('returns parity payloads through distinct primary hosts and shells', async () => {
     const matrix = await runMatrixModeWithOoePilot(matrixRequest, {
       commitPolicy: 'alwaysCommit',
-      createWorker: () => new FakeWorkspaceWorker('complete', runMatrixMode),
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalMatrixMode),
     });
     const vector = await runVectorModeWithOoePilot(vectorRequest, {
       commitPolicy: 'alwaysCommit',
-      createWorker: () => new FakeWorkspaceWorker('complete', runVectorMode),
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalVectorMode),
     });
 
     expect(matrix.payload).toEqual(runMatrixMode(matrixRequest));
@@ -183,11 +192,11 @@ describe('Matrix and Vector worker runtime shells', () => {
   it('records Matrix and Vector worker failures without main-thread retry', async () => {
     await expect(runMatrixModeWithOoePilot(matrixRequest, {
       commitPolicy: 'alwaysCommit',
-      createWorker: () => new FakeWorkspaceWorker('fail', runMatrixMode),
+      createWorker: () => new FakeWorkspaceWorker('fail', runCanonicalMatrixMode),
     })).rejects.toThrow('Matrix worker runtime failed: synthetic worker failure');
     await expect(runVectorModeWithOoePilot(vectorRequest, {
       commitPolicy: 'alwaysCommit',
-      createWorker: () => new FakeWorkspaceWorker('fail', runVectorMode),
+      createWorker: () => new FakeWorkspaceWorker('fail', runCanonicalVectorMode),
     })).rejects.toThrow('Vector worker runtime failed: synthetic worker failure');
 
     const diagnostics = listOoeDiagnostics().filter((record) => record.terminalStatus === 'failed');
@@ -198,19 +207,32 @@ describe('Matrix and Vector worker runtime shells', () => {
     ]);
   });
 
+  it('rejects malformed canonical Matrix and Vector completions without retry', async () => {
+    const invalid = () => ({ kind: 'success' } as unknown as CanonicalRuntimeOutcome);
+
+    await expect(runMatrixModeWithOoePilot(matrixRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', invalid),
+    })).rejects.toThrow('Matrix worker runtime failed: invalid completed outcome');
+    await expect(runVectorModeWithOoePilot(vectorRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', invalid),
+    })).rejects.toThrow('Vector worker runtime failed: invalid completed outcome');
+  });
+
   it('hard-stops Matrix and Vector workers independently', async () => {
-    const matrixWorker = new FakeWorkspaceWorker<RunMatrixModeRequest>('silent', runMatrixMode);
-    const vectorWorker = new FakeWorkspaceWorker<RunVectorModeRequest>('silent', runVectorMode);
+    const matrixWorker = new FakeWorkspaceWorker<RunMatrixModeRequest>('silent', runCanonicalMatrixMode);
+    const vectorWorker = new FakeWorkspaceWorker<RunVectorModeRequest>('silent', runCanonicalVectorMode);
     let shouldCancel = false;
     const matrixPromise = runMatrixModeViaIsolatedWorker(
       matrixRequest,
       runtimeContext(() => shouldCancel),
-      { createWorker: () => matrixWorker, fallback: () => runMatrixMode(matrixRequest) },
+      { createWorker: () => matrixWorker, fallback: () => runCanonicalMatrixMode(matrixRequest) },
     );
     const vectorPromise = runVectorModeViaIsolatedWorker(
       vectorRequest,
       runtimeContext(() => shouldCancel),
-      { createWorker: () => vectorWorker, fallback: () => runVectorMode(vectorRequest) },
+      { createWorker: () => vectorWorker, fallback: () => runCanonicalVectorMode(vectorRequest) },
     );
 
     await new Promise((resolve) => setTimeout(resolve, 5));

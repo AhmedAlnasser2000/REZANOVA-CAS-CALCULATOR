@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import {
   OOE_VECTOR_FALLBACK_HOST_ID,
   OOE_VECTOR_WORKER_HOST_ID,
@@ -10,6 +10,9 @@ import {
   type LinearAlgebraWorkerLike,
 } from './linear-algebra-worker-client-core';
 import type { RunVectorModeRequest } from '../vector';
+import { proseSolveSummary } from '../../display/result-detail-lines';
+import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
+import { createVectorResultOutcome } from '../vector-result-document';
 
 export type CreateVectorWorker = CreateLinearAlgebraWorkspaceWorker<RunVectorModeRequest>;
 
@@ -25,7 +28,7 @@ export function runVectorModeViaIsolatedWorker(
   context: OoeRuntimeControlContext,
   options: {
     createWorker?: CreateVectorWorker;
-    fallback: () => Promise<DisplayOutcome> | DisplayOutcome;
+    fallback: () => Promise<CanonicalRuntimeOutcome> | CanonicalRuntimeOutcome;
   },
 ) {
   return runLinearAlgebraWorkspaceViaIsolatedWorker(
@@ -37,6 +40,16 @@ export function runVectorModeViaIsolatedWorker(
       primaryHostId: OOE_VECTOR_WORKER_HOST_ID,
       fallbackHostId: OOE_VECTOR_FALLBACK_HOST_ID,
       createDefaultWorker: createDefaultVectorWorker,
+      buildCancelledPayload: () => projectDisplayOutcomeToCanonicalRuntimeOutcome(
+        createVectorResultOutcome({
+          kind: 'error',
+          title: 'Vector',
+          error: 'Vector operation stopped before it finished.',
+          warnings: [],
+          ...proseSolveSummary('Vector operation stopped after the worker runtime was hard-stopped.'),
+        }),
+        'Vector cancellation',
+      ),
     },
     options,
   );

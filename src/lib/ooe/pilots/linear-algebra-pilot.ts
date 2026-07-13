@@ -278,6 +278,7 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: linearAlgebraPilotDefinition(kind).capabilityId },
   options?: OoeJobContextOptions,
   getHostExecution?: () => LinearAlgebraHostExecution | undefined,
+  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
 ): Promise<LinearAlgebraOoePilotRunResult<TPayload>> {
   const definition = linearAlgebraPilotDefinition(kind);
   return runOoeRuntimeJob({
@@ -298,6 +299,9 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
     ),
     buildProvenance: ({ payload, metadata, routeSnapshot }) => {
       const snapshot = routeSnapshot as LinearAlgebraRouteSnapshot;
+      const output = resolveDisplayOutcome
+        ? resolveDisplayOutcome(payload)
+        : payload as DisplayOutcome;
       return {
         depth: 'coarse',
         mode: snapshot.kind,
@@ -305,7 +309,7 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
         screen: snapshot.kind,
         action: snapshot.request?.operation,
         inputSummary: snapshot.request,
-        outputSummary: summarizeDisplayOutcome(payload as DisplayOutcome),
+        outputSummary: summarizeDisplayOutcome(output),
         runtimeHost: metadata.linearAlgebraHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,
