@@ -73,6 +73,15 @@
 - Playwright evidence must cover the rendered answer/error card, visible facts or assumptions, relevant detail/boundary cards, and obvious overflow/readability problems for the changed or benchmarked surface.
 - If Playwright cannot run, the agent must record the blocker, the command attempted, and the missing visual risk in the active session dossier and final handoff. Do not present the output as visually verified.
 
+## Resource-Safe Verification Policy
+- After an ordinary implementation or repair, run only the affected tests and relevant contract ratchets. Do not substitute the full unit, UI, or canary suite for impact analysis.
+- Before a milestone commit, use focused workspace tests, incremental TypeScript, memory validation, file-size validation, and diff hygiene. Add broader gates only when the milestone's actual blast radius requires them.
+- Run complete unit, UI, or canary suites only at a major program closeout, release preparation, or after a genuinely cross-cutting change invalidates broad evidence. `npm run test:gate` is a closeout-scale command, not a routine per-edit gate.
+- Any necessary full Vitest run must use at most four workers, run without another heavy gate concurrently, and be announced to the user before launch. The repository Vitest configs and full-suite scripts must retain this four-worker cap.
+- A small correction after a successful full run invalidates only its affected evidence when it does not change shared runtime contracts, worker topology, global test infrastructure, or broad behavior. Run targeted regression tests and record that delta; never restart the entire suite automatically.
+- A lost terminal transcript, interrupted reporter, or uncertainty about a still-running process is not automatic permission to rerun a full suite. Inspect process state and retained evidence first; if a new full run is still necessary, explain why before starting it.
+- Stop orphaned Vitest, Playwright, preview, or dev-server processes when their evidence is complete. Do not leave heavy verification running across a handoff or final response.
+
 ## File-Size Ratchet Policy
 - `tools/validate-file-sizes.mjs` is a hard anti-regrowth gate for TypeScript source files.
 - Baseline caps must ratchet to the current line count after slimming; do not add percentage headroom or soft buffers.

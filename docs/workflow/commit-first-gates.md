@@ -28,6 +28,14 @@
 - Every completed task or gate summary must list which durable memory files were updated.
 - If one agent hands work to another, record the handoff in the active session dossier before the next agent continues implementation.
 
+## Resource-Safe Gate Selection
+- Ordinary edits use affected tests and the contract ratchets selected by the changed seams.
+- Milestone commits add incremental TypeScript, memory protocol, file-size, and diff-hygiene checks. They do not require an automatic full-suite rerun.
+- Complete unit, UI, canary, or aggregate `test:gate` runs belong to program closeout, release preparation, or genuinely cross-cutting changes.
+- Vitest full runs are capped at four workers and must run alone. Announce the run before starting it and stop any orphaned test or preview process afterward.
+- Preserve a successful broad result across a later bounded correction by recording the prior broad evidence plus targeted post-correction evidence. Rerun broadly only when the correction changes shared contracts, worker topology, global test infrastructure, or similarly broad behavior.
+- When a terminal or reporter disappears, inspect the process and available result before deciding whether another run is justified. Do not rerun reflexively.
+
 ## Agent Attribution
 - Durable memory must follow `.memory/PROTOCOL.md`.
 - Session dossiers, journal entries, and current-state updates must record:

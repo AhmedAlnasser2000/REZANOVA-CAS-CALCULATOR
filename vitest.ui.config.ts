@@ -7,6 +7,7 @@ export default mergeConfig(
     test: {
       environment: 'jsdom',
       include: ['src/**/*.ui.test.ts', 'src/**/*.ui.test.tsx'],
+      maxWorkers: 4,
       setupFiles: ['src/test/setup-ui.ts'],
       reporters: ['default'],
       testTimeout: 30000,
