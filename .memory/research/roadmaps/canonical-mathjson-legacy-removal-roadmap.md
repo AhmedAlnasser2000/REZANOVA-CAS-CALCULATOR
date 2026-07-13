@@ -1,8 +1,8 @@
 # CANONICAL-MATHJSON-LEGACY-ROADMAP0
 
 Date: 2026-07-12
-Last updated: 2026-07-12
-Status: active; Moves 0-1 verified; no push is authorized
+Last updated: 2026-07-13
+Status: active; Moves 0-2 verified; no push is authorized
 
 ## Attribution
 
@@ -103,3 +103,4 @@ This is an expandable sequence of named gates. A discovered prerequisite must be
 - Roadmap contract accepted by the user on 2026-07-12.
 - `CANONICAL-MATHJSON-LEGACY-ROADMAP0`: verified. Memory protocol, Display inversion, result contract, printer migration, file-size, and diff-hygiene gates pass; standing commit approval is recorded.
 - `MATHJSON-COVERAGE-REGISTRY1`: verified. The registry covers 51 operation families, 27 canonical math path patterns, and all 100 native replay probes. Its accepted baseline is 262 leaves, 26 proven, 236 missing, and zero exemptions. CI, release, and seam selection run the additive gate.
+- `PROVEN-ANSWER-MATHJSON-CONTRACT1`: verified. Producer ownership and answer identity are compile-time branded and runtime checked; accepted trees pass existing bounds, structured-clone safety, standard Compute Engine boxing, semantic equivalence, and compatibility-printer parity. Canonical-LaTeX parsing is validation evidence only, and the proof returns the original producer tree rather than manufacturing an answer tree from formatted output.
