@@ -132,3 +132,11 @@
 - scope: strict native consumer resolution, isolated legacy-History resolver, direct Clipboard/workspace/diagnostics/Surface reads, accepted hygiene and inversion baselines, focused browser evidence, and durable records
 - push: not authorized
 - excluded: History field removal reserved for the next gate, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`
+
+## HISTORY-CANONICAL-ONLY1
+
+- commit_message: `HISTORY-CANONICAL-ONLY1`
+- status: verified; covered by standing commit approval
+- scope: canonical-only current History rows, bounded MathJSON stripping fallback, atomic browser/Tauri cleanup, opaque future-version preservation, focused native/browser evidence, and durable records
+- push: not authorized
+- excluded: Display/detail compatibility removal reserved for the next gate, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`

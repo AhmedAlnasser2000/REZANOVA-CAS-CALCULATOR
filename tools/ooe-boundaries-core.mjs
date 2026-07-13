@@ -79,6 +79,7 @@ const TS_CORE_ALLOWED_TARGETS = new Set([
   'src/lib/compartments/manifest',
   'src/lib/compartments/ui-boundary',
   'src/lib/compartments/ui-boundary-records',
+  'src/lib/result-contract',
 ]);
 
 const TS_PILOT_ALLOWED_TARGETS = new Set([

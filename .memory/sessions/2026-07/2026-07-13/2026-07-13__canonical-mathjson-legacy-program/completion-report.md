@@ -17,8 +17,8 @@
 ## Program Status
 
 - Status: active.
-- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`, `CANONICAL-PRODUCER-MATH-VALUE1`, `MATHJSON-COVERAGE-CALCULATE-EQUATION1`, `MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1`, `MATHJSON-COVERAGE-GUIDED-DOMAINS1`, `MATHJSON-COVERAGE-LINEAR-ALGEBRA1`, `MATHJSON-COVERAGE-CLOSEOUT1`, `EQUATION-STAGE-CARRIER-GUARDED1`, `EQUATION-STAGE-CARRIER-CLOSEOUT1`, `CANONICAL-RUNTIME-OUTCOME1`, `CANONICAL-OUTCOME-CALCULATE-EQUATION1`, `CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1`, `CANONICAL-OUTCOME-GUIDED-DOMAINS1`, `CANONICAL-OUTCOME-LINEAR-ALGEBRA-TABLE1`, `CANONICAL-CONSUMER-DIRECT1`.
-- Next gate: `HISTORY-CANONICAL-ONLY1`.
+- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`, `CANONICAL-PRODUCER-MATH-VALUE1`, `MATHJSON-COVERAGE-CALCULATE-EQUATION1`, `MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1`, `MATHJSON-COVERAGE-GUIDED-DOMAINS1`, `MATHJSON-COVERAGE-LINEAR-ALGEBRA1`, `MATHJSON-COVERAGE-CLOSEOUT1`, `EQUATION-STAGE-CARRIER-GUARDED1`, `EQUATION-STAGE-CARRIER-CLOSEOUT1`, `CANONICAL-RUNTIME-OUTCOME1`, `CANONICAL-OUTCOME-CALCULATE-EQUATION1`, `CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1`, `CANONICAL-OUTCOME-GUIDED-DOMAINS1`, `CANONICAL-OUTCOME-LINEAR-ALGEBRA-TABLE1`, `CANONICAL-CONSUMER-DIRECT1`, `HISTORY-CANONICAL-ONLY1`.
+- Next gate: `DISPLAY-DETAIL-LEGACY-CLOSEOUT1`.
 - Starting commit: `0a173b61`.
 - Push: not authorized.
 - Commit approval: standing approval covers all 19 numbered program moves and paired named subgates.
@@ -45,6 +45,8 @@
 - Trigonometry, Geometry, and Statistics carry validated canonical runtime outcomes through worker and OOE boundaries; parsed request and replay metadata remains separate host transport, and their public Display payloads remain unchanged.
 - Matrix, Vector, and Table complete the nine-workspace runtime migration. Linear Algebra topology stays split, Table response evidence remains sibling transport for existing consumers, and all public Display shapes remain derived compatibility read models.
 - Semantic consumers require native canonical documents. The old-History display adapter is the only remaining compatibility projection; current Clipboard, `Ans`, workspace state, diagnostics, replay, hygiene, and Surface reads fail closed instead of consulting result strings.
+- History V1 rows require a canonical result document and retain replay identity, context, and seeds without duplicate result strings. Old and malformed V1 rows are removed with a non-blocking count notice; future versions remain hidden, byte-preserved, and outside V1 clear/retention operations.
+- History append overflow retries once by stripping optional MathJSON and recording `canonical-only-fallback`; canonical structure and canonical LaTeX are never truncated or rewritten.
 
 ## Durable Files
 

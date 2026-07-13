@@ -1,17 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { HistoryEntry } from '../../types/calculator';
 import { hasValidHistoryResultDocument, historyEntrySchema } from './schemas';
+import { historyResultDocument } from '../../test-utils/history-result-document';
 
 const HISTORY_ENTRY_FIELDS = [
   'id',
   'mode',
   'inputLatex',
-  'resolvedInputLatex',
-  'resultLatex',
-  'exactSupplementLatex',
-  'approxText',
-  'detailSections',
-  'systemReadback',
   'calculateScreen',
   'calculateSeed',
   'calculusScreen',
@@ -30,15 +25,12 @@ const HISTORY_ENTRY_FIELDS = [
   'equationAnswerMode',
   'equationDomainIntent',
   'complexExactForm',
-  'answerDomain',
-  'solutionKind',
   'numericInterval',
-  'variableSubstitutions',
   'historyLaunchOrder',
   'runtimeElapsedMs',
   'replaySnapshot',
   'resultDocument',
-  'resultDocumentOmissionReason',
+  'resultStorageMode',
   'timestamp',
 ] as const satisfies readonly (keyof HistoryEntry)[];
 
@@ -51,21 +43,28 @@ const HISTORY_ENTRY_FIELD_PARITY: [MissingHistoryEntryField, ExtraHistoryEntryFi
 describe('HistoryEntry persistence parity', () => {
   it('ratchets exact HistoryEntry field parity', () => {
     expect(HISTORY_ENTRY_FIELD_PARITY).toBe(true);
-    expect([...historyEntrySchema.keyof().options].sort()).toEqual([...HISTORY_ENTRY_FIELDS].sort());
+    expect([...historyEntrySchema.keyof().options].sort())
+      .toEqual([...HISTORY_ENTRY_FIELDS].sort());
   });
 
-  it('accepts complete Equation replay and system readback context', () => {
+  it('accepts complete Equation replay and canonical system context', () => {
     const parsed = historyEntrySchema.parse({
       id: 'equation-system-replay-1',
       mode: 'equation',
       inputLatex: 'x+y=3, x-y=-1',
-      resultLatex: '(x,y)=(1,2)',
-      systemReadback: {
-        variablesLatex: ['x', 'y'],
-        rows: [{ valuesLatex: ['1', '2'], approxText: '(1.0, 2.0)' }],
-        label: 'Solution',
-        source: 'linear-system',
-      },
+      resultDocument: historyResultDocument('(x,y)=(1,2)', {
+        overrides: {
+          systemReadback: {
+            variables: [{ canonicalLatex: 'x' }, { canonicalLatex: 'y' }],
+            rows: [{
+              values: [{ canonicalLatex: '1' }, { canonicalLatex: '2' }],
+              approxText: '(1.0, 2.0)',
+            }],
+            label: 'Solution',
+            source: 'linear-system',
+          },
+        },
+      }),
       equationScreen: 'symbolic',
       equationSeed: {
         screen: 'symbolic',
@@ -83,7 +82,10 @@ describe('HistoryEntry persistence parity', () => {
       timestamp: '2026-07-11T00:00:00.000Z',
     });
 
-    expect(parsed.systemReadback?.rows[0]?.valuesLatex).toEqual(['1', '2']);
+    expect(parsed.resultDocument.systemReadback?.rows[0]?.values).toEqual([
+      { canonicalLatex: '1' },
+      { canonicalLatex: '2' },
+    ]);
     expect(parsed.equationScreen).toBe('symbolic');
     expect(parsed.equationSeed).toMatchObject({
       screen: 'symbolic',
@@ -96,7 +98,7 @@ describe('HistoryEntry persistence parity', () => {
       id: 'future-extension-1',
       mode: 'calculate',
       inputLatex: '2+2',
-      resultLatex: '4',
+      resultDocument: historyResultDocument('4'),
       futureHistoryExtension: {
         version: 2,
         payload: ['kept', 'verbatim'],
@@ -110,12 +112,11 @@ describe('HistoryEntry persistence parity', () => {
     });
   });
 
-  it('accepts valid success documents while leaving malformed extensions loadable for legacy fallback', () => {
+  it('accepts valid success documents and rejects malformed V1 authority', () => {
     const valid = historyEntrySchema.parse({
       id: 'structured-result-1',
       mode: 'calculate',
       inputLatex: '2+2',
-      resultLatex: '4',
       resultDocument: {
         version: 1,
         outcomeKind: 'success',
@@ -127,15 +128,12 @@ describe('HistoryEntry persistence parity', () => {
     });
     expect(hasValidHistoryResultDocument(valid)).toBe(true);
 
-    const malformed = historyEntrySchema.parse({
+    expect(() => historyEntrySchema.parse({
       id: 'structured-result-malformed',
       mode: 'calculate',
       inputLatex: '2+2',
-      resultLatex: '4',
-      resultDocument: { version: 2, title: 'Future shape' },
+      resultDocument: { version: 1, title: 'Malformed V1 shape' },
       timestamp: '2026-07-12T00:00:00.000Z',
-    });
-    expect(malformed.resultDocument).toEqual({ version: 2, title: 'Future shape' });
-    expect(hasValidHistoryResultDocument(malformed)).toBe(false);
+    })).toThrow();
   });
 });

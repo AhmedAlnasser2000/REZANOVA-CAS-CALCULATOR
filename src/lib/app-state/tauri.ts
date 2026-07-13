@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   type AppBootstrap,
   type CalculatorMemorySnapshot,
+  type CanonicalResultDocumentV1,
   type HistoryEntry,
   type LauncherCategory,
   type MenuNode,
@@ -16,6 +17,7 @@ import {
   type SettingsPatch,
   type StoredVariableValue,
 } from '../../types/calculator';
+import { validateCanonicalResultDocument } from '../result-contract';
 import {
   appBootstrapSchema,
   calculatorMemorySnapshotSchema,
@@ -34,13 +36,13 @@ export const HISTORY_ENTRY_LIMIT = 80;
 export const HISTORY_ENTRY_MAX_SERIALIZED_BYTES = 2_000_000;
 
 export type HistoryPersistenceWriteResult =
-  | { ok: true }
+  | { ok: true; storageMode?: 'canonical-only-fallback' }
   | { ok: false; reason: 'invalid' | 'over-size' | 'unavailable' };
 
 type WebPreviewState = {
   currentMode: ModeId;
   settings: Settings;
-  history: HistoryEntry[];
+  history: unknown[];
   variableMemory: StoredVariableValue[];
   calculatorMemory: CalculatorMemorySnapshot | null;
 };
@@ -79,20 +81,108 @@ function getWebPreviewStorage(): Storage | null {
   }
 }
 
-function parseHistoryEntries(payload: unknown): HistoryEntry[] {
+const LEGACY_HISTORY_RESULT_FIELDS = [
+  'resolvedInputLatex',
+  'resultLatex',
+  'exactSupplementLatex',
+  'approxText',
+  'detailSections',
+  'systemReadback',
+  'answerDomain',
+  'solutionKind',
+  'variableSubstitutions',
+  'resultDocumentOmissionReason',
+] as const;
+
+export const HISTORY_CANONICAL_CLEANUP_NOTICE =
+  (count: number) => `${count} incompatible History ${count === 1 ? 'record was' : 'records were'} removed.`;
+
+export type HistoryLoadResult = {
+  entries: HistoryEntry[];
+  removedCount: number;
+};
+
+type ParsedHistoryLedger = HistoryLoadResult & {
+  storageRows: unknown[];
+  changed: boolean;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasHistoryEnvelope(value: unknown): value is Record<string, unknown> {
+  if (!isRecord(value)) return false;
+  return typeof value.id === 'string'
+    && value.id.trim().length > 0
+    && modeIdSchema.safeParse(value.mode).success
+    && typeof value.inputLatex === 'string'
+    && typeof value.timestamp === 'string'
+    && value.timestamp.trim().length > 0;
+}
+
+function isFutureHistoryRow(value: unknown) {
+  if (!hasHistoryEnvelope(value) || !isRecord(value.resultDocument)) return false;
+  const version = value.resultDocument.version;
+  return typeof version === 'number' && Number.isInteger(version) && version > 1;
+}
+
+function sanitizeCurrentHistoryEntry(value: unknown): HistoryEntry | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const sanitized: Record<string, unknown> = { ...value };
+  for (const field of LEGACY_HISTORY_RESULT_FIELDS) {
+    Reflect.deleteProperty(sanitized, field);
+  }
+  const parsed = historyEntrySchema.safeParse(sanitized);
+  if (!parsed.success || !hasValidHistoryResultDocument(sanitized)) return null;
+  const validation = validateCanonicalResultDocument(sanitized.resultDocument);
+  if (!validation.ok || validation.validated.value.outcomeKind !== 'success') return null;
+  sanitized.resultDocument = validation.validated.value;
+  return sanitized as HistoryEntry;
+}
+
+export function parseHistoryLedger(payload: unknown): ParsedHistoryLedger {
   if (!Array.isArray(payload)) {
-    return [];
+    return { entries: [], storageRows: [], removedCount: 0, changed: payload !== undefined };
   }
 
-  const entries: HistoryEntry[] = [];
-  for (const entry of payload) {
-    const parsed = historyEntrySchema.safeParse(entry);
-    if (parsed.success) {
-      entries.push(entry as HistoryEntry);
+  const classified: Array<
+    | { kind: 'current'; value: HistoryEntry; changed: boolean }
+    | { kind: 'future'; value: unknown }
+  > = [];
+  let removedCount = 0;
+  for (const row of payload) {
+    if (isFutureHistoryRow(row)) {
+      classified.push({ kind: 'future', value: row });
+      continue;
     }
+    const current = sanitizeCurrentHistoryEntry(row);
+    if (!current) {
+      removedCount += 1;
+      continue;
+    }
+    const changed = LEGACY_HISTORY_RESULT_FIELDS.some((field) =>
+      isRecord(row) && Object.prototype.hasOwnProperty.call(row, field));
+    classified.push({ kind: 'current', value: current, changed });
   }
 
-  return entries.slice(-HISTORY_ENTRY_LIMIT);
+  let visibleCount = 0;
+  const retained = classified.filter((row, index) => {
+    if (row.kind === 'future') return true;
+    const currentAfter = classified.slice(index + 1)
+      .filter((candidate) => candidate.kind === 'current').length;
+    const keep = currentAfter < HISTORY_ENTRY_LIMIT;
+    if (keep) visibleCount += 1;
+    return keep;
+  });
+  const entries = retained.flatMap((row) => row.kind === 'current' ? [row.value] : []);
+  const storageRows = retained.map((row) => row.value);
+  const changed = removedCount > 0
+    || classified.some((row) => row.kind === 'current' && row.changed)
+    || visibleCount !== classified.filter((row) => row.kind === 'current').length;
+  return { entries, storageRows, removedCount, changed };
 }
 
 function parseVariableMemory(payload: unknown): StoredVariableValue[] {
@@ -112,7 +202,7 @@ function parseCalculatorMemory(payload: unknown): CalculatorMemorySnapshot | nul
   }
 
   const candidate = payload as Record<string, unknown>;
-  const history = parseHistoryEntries(candidate.history);
+  const history = parseHistoryLedger(candidate.history).entries;
   const parsed = calculatorMemorySnapshotSchema.safeParse({
     ...candidate,
     currentMode: 'calculate',
@@ -127,7 +217,7 @@ function parseCalculatorMemory(payload: unknown): CalculatorMemorySnapshot | nul
 
   return {
     ...parsed.data,
-    history: history.slice(-HISTORY_ENTRY_LIMIT),
+    history,
   };
 }
 
@@ -161,7 +251,7 @@ function readWebPreviewState(): WebPreviewState {
     return {
       currentMode: currentMode.success ? currentMode.data : 'calculate',
       settings: settings.success ? settings.data : DEFAULT_SETTINGS,
-      history: parseHistoryEntries(payload.history),
+      history: Array.isArray(payload.history) ? payload.history : [],
       variableMemory: parseVariableMemory(payload.variableMemory),
       calculatorMemory: parseCalculatorMemory(payload.calculatorMemory),
     };
@@ -178,7 +268,7 @@ function writeWebPreviewState(updater: (state: WebPreviewState) => WebPreviewSta
     version: 1,
     currentMode: nextState.currentMode,
     settings: nextState.settings,
-    history: nextState.history.slice(-HISTORY_ENTRY_LIMIT),
+    history: parseHistoryLedger(nextState.history).storageRows,
     variableMemory: nextState.variableMemory,
     calculatorMemory: nextState.calculatorMemory,
   }));
@@ -193,7 +283,7 @@ export async function bootApp(): Promise<AppBootstrap> {
       currentMode: state.currentMode,
       settings: state.settings,
       modeTree: DEFAULT_MODE_TREE,
-      historyCount: state.history.length,
+      historyCount: parseHistoryLedger(state.history).entries.length,
       variableMemory: state.variableMemory,
       version: 'web-preview',
     };
@@ -249,30 +339,73 @@ export async function persistSettings(settingsPatch: SettingsPatch): Promise<Set
   })).settings;
 }
 
+export async function loadHistoryEntriesWithCleanup(): Promise<HistoryLoadResult> {
+  const nativePayload = await optionalInvoke<unknown[]>('load_history');
+  const browserState = nativePayload ? null : readWebPreviewState();
+  const parsed = parseHistoryLedger(nativePayload ?? browserState?.history);
+  if (parsed.changed) {
+    if (nativePayload) {
+      await optionalInvoke('replace_history', { entries: parsed.storageRows });
+    } else {
+      writeWebPreviewState((state) => ({ ...state, history: parsed.storageRows }));
+    }
+  }
+  return { entries: parsed.entries, removedCount: parsed.removedCount };
+}
+
 export async function loadHistoryEntries(): Promise<HistoryEntry[]> {
-  const payload = await optionalInvoke<HistoryEntry[]>('load_history');
-  return payload ? parseHistoryEntries(payload) : readWebPreviewState().history;
+  return (await loadHistoryEntriesWithCleanup()).entries;
+}
+
+function stripOptionalMathJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripOptionalMathJson);
+  if (!isRecord(value)) return value;
+  const result: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (key === 'mathJson' && typeof value.canonicalLatex === 'string') continue;
+    result[key] = stripOptionalMathJson(entry);
+  }
+  return result;
+}
+
+export function prepareHistoryEntryForPersistence(
+  entry: HistoryEntry,
+): { ok: true; entry: HistoryEntry } | { ok: false; reason: 'invalid' | 'over-size' } {
+  if (!historyEntrySchema.safeParse(entry).success || !hasValidHistoryResultDocument(entry)) {
+    return { ok: false, reason: 'invalid' };
+  }
+  const entryBytes = serializedByteLength(entry);
+  if (entryBytes === null) return { ok: false, reason: 'invalid' };
+  if (entryBytes <= HISTORY_ENTRY_MAX_SERIALIZED_BYTES) return { ok: true, entry };
+
+  const canonicalOnlyEntry = {
+    ...entry,
+    resultDocument: stripOptionalMathJson(entry.resultDocument) as CanonicalResultDocumentV1,
+    resultStorageMode: 'canonical-only-fallback' as const,
+  };
+  if (!hasValidHistoryResultDocument(canonicalOnlyEntry)) {
+    return { ok: false, reason: 'invalid' };
+  }
+  const canonicalOnlyBytes = serializedByteLength(canonicalOnlyEntry);
+  return canonicalOnlyBytes !== null && canonicalOnlyBytes <= HISTORY_ENTRY_MAX_SERIALIZED_BYTES
+    ? { ok: true, entry: canonicalOnlyEntry }
+    : { ok: false, reason: 'over-size' };
 }
 
 export async function appendHistoryEntry(
   entry: HistoryEntry,
 ): Promise<HistoryPersistenceWriteResult> {
-  if (!historyEntrySchema.safeParse(entry).success || !hasValidHistoryResultDocument(entry)) {
-    return { ok: false, reason: 'invalid' };
-  }
-
-  const entryBytes = serializedByteLength(entry);
-  if (entryBytes === null) {
-    return { ok: false, reason: 'invalid' };
-  }
-  if (entryBytes > HISTORY_ENTRY_MAX_SERIALIZED_BYTES) {
-    return { ok: false, reason: 'over-size' };
-  }
+  const prepared = prepareHistoryEntryForPersistence(entry);
+  if (!prepared.ok) return prepared;
+  const persistedEntry = prepared.entry;
 
   try {
     if (hasTauriRuntime()) {
-      await optionalInvoke('append_history', { entry });
-      return { ok: true };
+      await optionalInvoke('append_history', { entry: persistedEntry });
+      return {
+        ok: true,
+        ...(persistedEntry.resultStorageMode ? { storageMode: persistedEntry.resultStorageMode } : {}),
+      };
     }
 
     if (!getWebPreviewStorage()) {
@@ -281,9 +414,12 @@ export async function appendHistoryEntry(
 
     writeWebPreviewState((state) => ({
       ...state,
-      history: [...state.history, entry].slice(-HISTORY_ENTRY_LIMIT),
+      history: [...state.history, persistedEntry],
     }));
-    return { ok: true };
+    return {
+      ok: true,
+      ...(persistedEntry.resultStorageMode ? { storageMode: persistedEntry.resultStorageMode } : {}),
+    };
   } catch {
     return { ok: false, reason: 'unavailable' };
   }
@@ -297,7 +433,7 @@ export async function clearHistoryEntries() {
 
   writeWebPreviewState((state) => ({
     ...state,
-    history: [],
+    history: state.history.filter(isFutureHistoryRow),
   }));
 }
 
@@ -309,7 +445,7 @@ export async function deleteHistoryEntry(id: string) {
 
   writeWebPreviewState((state) => ({
     ...state,
-    history: state.history.filter((entry) => entry.id !== id),
+    history: state.history.filter((entry) => !isRecord(entry) || entry.id !== id),
   }));
 }
 

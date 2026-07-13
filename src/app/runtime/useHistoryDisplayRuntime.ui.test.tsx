@@ -29,6 +29,7 @@ import type {
   WorkspaceInstanceStateSlotUpdater,
 } from './workspace-instances';
 import { withCanonicalResult } from './canonical-outcome-test-helper';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 vi.mock('../../lib/app-state/persistence', () => ({
   appendHistoryEntry: vi.fn(),
@@ -225,13 +226,13 @@ describe('useHistoryDisplayRuntime', () => {
 
     act(() => {
       hook.result.current.restoreLoadedHistory([
-        {
+        historyEntryFixture({
           id: 'entry.delete',
           mode: 'calculate',
           inputLatex: '2+2',
           resultLatex: '4',
           timestamp: '2026-06-14T00:00:00Z',
-        },
+        }),
       ]);
       hook.result.current.deleteHistoryEntryById('entry.delete');
     });
@@ -401,18 +402,18 @@ describe('useHistoryDisplayRuntime', () => {
     expect(hook.result.current.history[0]).toMatchObject({
       mode: 'calculate',
       inputLatex: '2+2',
-      resultLatex: '4',
       runtimeElapsedMs: 42,
       calculateScreen: 'standard',
-      variableSubstitutions: [
-        { name: 'a', valueLatex: '2', numericValue: 2 },
-      ],
+      resultDocument: {
+        primaryMath: { canonicalLatex: '4' },
+        metadata: { variableSubstitutions: [{ name: 'a', value: { canonicalLatex: '2' }, numericValue: 2 }] },
+      },
     });
     expect(appendHistoryEntry).toHaveBeenCalledWith(
       expect.objectContaining({
         inputLatex: '2+2',
-        resultLatex: '4',
         runtimeElapsedMs: 42,
+        resultDocument: expect.objectContaining({ primaryMath: expect.objectContaining({ canonicalLatex: '4' }) }),
       }),
     );
     expect(delegates.setRuntimeElapsedMs).toHaveBeenLastCalledWith(42);
@@ -505,8 +506,8 @@ describe('useHistoryDisplayRuntime', () => {
     expect(hook.result.current.history[0]).toMatchObject({
       mode: 'calculate',
       inputLatex: '6+7',
-      resultLatex: '13',
       runtimeElapsedMs: 125,
+      resultDocument: expect.objectContaining({ primaryMath: expect.objectContaining({ canonicalLatex: '13' }) }),
     });
   });
 
@@ -613,8 +614,8 @@ describe('useHistoryDisplayRuntime', () => {
     expect(hook.result.current.history).toHaveLength(1);
     expect(hook.result.current.history[0]).toMatchObject({
       mode: 'calculus',
-      resultLatex: '9',
       calculusScreen: 'finiteLimit',
+      resultDocument: expect.objectContaining({ primaryMath: expect.objectContaining({ canonicalLatex: '9' }) }),
     });
   });
 
@@ -749,7 +750,7 @@ describe('useHistoryDisplayRuntime', () => {
     ];
 
     act(() => {
-      hook.result.current.replayHistoryEntry({
+      hook.result.current.replayHistoryEntry(historyEntryFixture({
         id: 'history.equation',
         mode: 'equation',
         inputLatex: 'x+a=4',
@@ -763,7 +764,7 @@ describe('useHistoryDisplayRuntime', () => {
         ],
         variableSubstitutions: substitutions,
         timestamp: '2026-06-14T00:00:00Z',
-      });
+      }));
     });
 
     expect(delegates.setLauncherSurfaceApp).toHaveBeenCalledTimes(1);
@@ -795,7 +796,7 @@ describe('useHistoryDisplayRuntime', () => {
     expect(delegates.closeHistoryPanel).toHaveBeenCalledTimes(1);
 
     act(() => {
-      hook.result.current.replayHistoryEntry({
+      hook.result.current.replayHistoryEntry(historyEntryFixture({
         id: 'history.legacy-calculus',
         mode: 'calculate',
         inputLatex: '\\int x dx',
@@ -804,7 +805,7 @@ describe('useHistoryDisplayRuntime', () => {
         calculateSeed: { kind: 'definite' },
         variableSubstitutions: substitutions,
         timestamp: '2026-06-14T00:00:01Z',
-      });
+      }));
     });
 
     expect(delegates.setMode).toHaveBeenCalledWith('calculus');
@@ -873,7 +874,7 @@ describe('useHistoryDisplayRuntime', () => {
           id: 'memory.entry',
           mode: 'calculate' as ModeId,
           inputLatex: '6*7',
-          resultLatex: '42',
+          resultDocument: historyEntryFixture({ resultLatex: '42' }).resultDocument,
           timestamp: '2026-06-14T00:00:00Z',
         },
       ],

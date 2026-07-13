@@ -2575,3 +2575,9 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] `resolveCanonicalResultForConsumer` is strict: semantic consumers require a validated native canonical document and never project result strings. Missing or malformed authority fails closed.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Compatibility projection is isolated behind `resolveLegacyCanonicalResultForConsumer` and used only by the registered old-History display boundary. `HISTORY-CANONICAL-ONLY1` removes that boundary rather than widening it.
+
+## 2026-07-13 - HISTORY-CANONICAL-ONLY1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Current V1 History authority is one validated `CanonicalResultDocumentV1`; legacy result fields and reconstruction from result strings are prohibited. Old and malformed V1 rows are removed with a non-blocking count notice rather than guessed forward.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Future result-document versions are hidden but preserved byte-for-byte. V1 display, clear, and 80-row retention operations cannot erase opaque future rows.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] A History append over budget may retry after removing only optional MathJSON from the otherwise identical canonical document and recording `canonical-only-fallback`; mathematical structure and canonical LaTeX are never truncated.

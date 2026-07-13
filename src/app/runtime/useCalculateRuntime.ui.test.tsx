@@ -18,7 +18,6 @@ import {
 import type {
   CalculateScreen,
   DisplayOutcome,
-  HistoryEntry,
   ModeId,
 } from '../../types/calculator';
 import {
@@ -31,6 +30,7 @@ import {
 } from '../../lib/modes/calculate';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useCalculateRuntime } from './useCalculateRuntime';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 vi.mock('../../lib/modes/calculate', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/modes/calculate')>();
@@ -277,14 +277,14 @@ describe('useCalculateRuntime', () => {
       calculateEnvelope('commitAllowed'),
     );
     const { hook } = renderCalculateRuntime();
-    const entry = {
+    const entry = historyEntryFixture({
       id: 'history.calculate.variables',
       mode: 'calculate',
       inputLatex: 'a+1',
       resultLatex: '5',
       variableSubstitutions: [{ name: 'a', valueLatex: '4', numericValue: 4 }],
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreCalculateHistoryEntry(entry);

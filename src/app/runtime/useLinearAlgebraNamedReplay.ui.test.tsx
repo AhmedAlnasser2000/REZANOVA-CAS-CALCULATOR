@@ -1,8 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { useRef, type RefObject } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { HistoryEntry, ModeId } from '../../types/calculator';
+import type { ModeId } from '../../types/calculator';
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 function renderLinearAlgebraTableShell(currentMode: ModeId = 'matrix') {
   const currentModeRef = { current: currentMode } as RefObject<ModeId>;
@@ -33,7 +34,7 @@ function renderLinearAlgebraTableShell(currentMode: ModeId = 'matrix') {
 describe('linear algebra named replay snapshots', () => {
   it('restores named Matrix and Vector history snapshots after live names changed', () => {
     const { hook } = renderLinearAlgebraTableShell('matrix');
-    const matrixEntry = {
+    const matrixEntry = historyEntryFixture({
       id: 'history.matrix.named',
       mode: 'matrix',
       inputLatex: 'C+B',
@@ -54,8 +55,8 @@ describe('linear algebra named replay snapshots', () => {
         activeMatrixRightId: 'matrix-b',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
-    const vectorEntry = {
+    });
+    const vectorEntry = historyEntryFixture({
       id: 'history.vector.named',
       mode: 'vector',
       inputLatex: 'q·v',
@@ -77,7 +78,7 @@ describe('linear algebra named replay snapshots', () => {
         activeVectorRightId: 'vector-v',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       const liveMatrixId = hook.result.current.linearAlgebraRuntime.addMatrixValue('D', [[4]]);
@@ -104,7 +105,7 @@ describe('linear algebra named replay snapshots', () => {
 
   it('restores a variadic Vector family snapshot after live values are replaced', () => {
     const { hook } = renderLinearAlgebraTableShell('vector');
-    const familyEntry = {
+    const familyEntry = historyEntryFixture({
       id: 'history.vector.family',
       mode: 'vector',
       inputLatex: '\\operatorname{span}\\left(p,q,r\\right)',
@@ -131,14 +132,15 @@ describe('linear algebra named replay snapshots', () => {
         angleUnit: 'rad',
       },
       timestamp: '2026-07-10T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.addVectorValue('p', [9, 9]);
       hook.result.current.restoreLinearAlgebraTableHistoryEntry(familyEntry);
     });
 
-    expect(hook.result.current.linearAlgebraRuntime.vectorValues).toEqual(familyEntry.vectorSeed.vectorValues);
+    expect(hook.result.current.linearAlgebraRuntime.vectorValues)
+      .toEqual(familyEntry.vectorSeed?.vectorValues);
     expect(hook.result.current.linearAlgebraRuntime.vectorEditorLatex).toBe(familyEntry.inputLatex);
     expect(hook.result.current.linearAlgebraRuntime.activeVectorLeftId).toBe('vector-p');
     expect(hook.result.current.linearAlgebraRuntime.activeVectorRightId).toBe('vector-q');

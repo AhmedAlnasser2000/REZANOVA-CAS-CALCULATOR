@@ -1,23 +1,44 @@
 import { describe, expect, it } from 'vitest';
 import { historyEntrySchema } from './schemas';
+import { historyResultDocument } from '../../test-utils/history-result-document';
+
+function parseHistoryEntry(input: Record<string, unknown>) {
+  const resultLatex = input.resultLatex;
+  const current = { ...input };
+  for (const key of [
+    'resolvedInputLatex',
+    'resultLatex',
+    'exactSupplementLatex',
+    'approxText',
+    'detailSections',
+    'systemReadback',
+    'answerDomain',
+    'solutionKind',
+    'variableSubstitutions',
+    'resultDocumentOmissionReason',
+  ]) {
+    delete current[key];
+  }
+  return historyEntrySchema.parse({
+    ...current,
+    resultDocument: input.resultDocument
+      ?? historyResultDocument(typeof resultLatex === 'string' ? resultLatex : '1'),
+  });
+}
 
 describe('history entry schema', () => {
-  it('accepts legacy history entries without calculus replay context', () => {
-    const parsed = historyEntrySchema.parse({
+  it('requires a canonical V1 result document', () => {
+    expect(() => historyEntrySchema.parse({
       id: 'legacy-1',
       mode: 'calculate',
       inputLatex: '2+2',
       resultLatex: '4',
       timestamp: '2026-04-28T00:00:00.000Z',
-    });
-
-    expect(parsed.calculateScreen).toBeUndefined();
-    expect(parsed.calculusScreen).toBeUndefined();
-    expect(parsed.replaySnapshot).toBeUndefined();
+    })).toThrow();
   });
 
   it('accepts a complete versioned deterministic replay snapshot', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'versioned-replay-1',
       mode: 'calculate',
       inputLatex: 'arcsin(1)',
@@ -48,7 +69,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts optional Equation selected-target replay context', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'equation-target-1',
       mode: 'equation',
       inputLatex: 'x+z=5',
@@ -61,7 +82,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts optional runtime elapsed milliseconds', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'runtime-elapsed-1',
       mode: 'equation',
       inputLatex: 'x+1=2',
@@ -73,56 +94,59 @@ describe('history entry schema', () => {
     expect(parsed.runtimeElapsedMs).toBe(42);
   });
 
-  it('accepts optional Calculate stored-value substitution snapshots', () => {
-    const parsed = historyEntrySchema.parse({
+  it('accepts canonical stored-value substitution snapshots', () => {
+    const parsed = parseHistoryEntry({
       id: 'calculate-vars-1',
       mode: 'calculate',
       inputLatex: 'a+1',
       resolvedInputLatex: '4+1',
       resultLatex: '5',
-      variableSubstitutions: [
-        { name: 'a', valueLatex: '4', numericValue: 4 },
-      ],
+      resultDocument: historyResultDocument('5', {
+        metadata: {
+          resolvedInput: { canonicalLatex: '4+1' },
+          variableSubstitutions: [
+            { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
+          ],
+        },
+      }),
       timestamp: '2026-05-24T00:00:00.000Z',
     });
 
-    expect(parsed.variableSubstitutions).toEqual([
-      { name: 'a', valueLatex: '4', numericValue: 4 },
+    expect(parsed.resultDocument.metadata?.variableSubstitutions).toEqual([
+      { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
     ]);
   });
 
-  it('accepts persisted display detail sections for history replay cards', () => {
-    const parsed = historyEntrySchema.parse({
+  it('accepts canonical typed detail sections for history replay cards', () => {
+    const parsed = parseHistoryEntry({
       id: 'matrix-history-cards-1',
       mode: 'matrix',
       inputLatex: '\\operatorname{coords}(A,b)',
       resultLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
-      detailSections: [
-        {
-          title: 'Coordinate Proof',
-          lines: ['A c=b', 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}'],
-          lineKinds: ['math', 'math'],
-          lineParts: [
-            [{ kind: 'math', latex: 'A c=b' }],
-            [
-              { kind: 'text', text: 'Therefore ' },
-              { kind: 'math', latex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}' },
+      resultDocument: historyResultDocument('c=\\begin{bmatrix}1\\\\2\\end{bmatrix}', {
+        overrides: {
+          details: [{
+            title: 'Coordinate Proof',
+            lines: [
+              [{ kind: 'math', math: { canonicalLatex: 'A c=b' } }],
+              [
+                { kind: 'text', text: 'Therefore ' },
+                { kind: 'math', math: { canonicalLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}' } },
+              ],
             ],
-          ],
+          }],
         },
-      ],
+      }),
       timestamp: '2026-07-03T00:00:00.000Z',
     });
 
-    expect(parsed.detailSections?.[0]).toMatchObject({
+    expect(parsed.resultDocument.details?.[0]).toMatchObject({
       title: 'Coordinate Proof',
-      lines: ['A c=b', 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}'],
-      lineKinds: ['math', 'math'],
     });
   });
 
   it('accepts typed Basic Calculus replay context', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'calc-limit-1',
       mode: 'calculate',
       inputLatex: '\\lim_{x\\to 0^-}\\frac{1}{x}',
@@ -142,7 +166,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts typed Calculus replay context', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'calculus-series-1',
       mode: 'calculus',
       inputLatex: '\\text{Maclaurin}_{5}\\left(\\sin(x)\\right)',
@@ -168,7 +192,7 @@ describe('history entry schema', () => {
     const retiredSeedField = `${retiredPrefix}${'Calc'}Seed`;
 
     expect(() =>
-      historyEntrySchema.parse({
+      parseHistoryEntry({
         id: 'retired-calculus-series-1',
         mode: retiredMode,
         inputLatex: '\\text{Maclaurin}_{5}\\left(\\sin(x)\\right)',
@@ -191,7 +215,7 @@ describe('history entry schema', () => {
     ['integral', { kind: 'definite', bodyLatex: '2x', lower: '0', upper: '1' }],
     ['limit', { bodyLatex: '\\frac{1}{x}', target: '0', direction: 'right', targetKind: 'finite' }],
   ] as const)('accepts typed Basic Calculus %s seeds', (calculateScreen, calculateSeed) => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: `calc-${calculateScreen}`,
       mode: 'calculate',
       inputLatex: 'x',
@@ -222,7 +246,7 @@ describe('history entry schema', () => {
     ['odeSecondOrder', { a2: '1', a1: '0', a0: '1', forcingLatex: '0' }],
     ['odeNumericIvp', { rhsLatex: 'xy', x0: '0', y0: '1', xEnd: '1', step: '0.1', method: 'rk4' }],
   ] as const)('accepts typed Calculus %s seeds', (calculusScreen, calculusSeed) => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: `calculus-${calculusScreen}`,
       mode: 'calculus',
       inputLatex: 'x',
@@ -236,7 +260,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts natural Calculus derivative request seeds and still validates optional side variables', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'calculus-derivative-target-canonical',
       mode: 'calculus',
       inputLatex: '\\frac{d}{d\\theta}\\left(\\theta^2\\right)',
@@ -249,7 +273,7 @@ describe('history entry schema', () => {
 
     expect(parsed.calculusSeed?.bodyLatex).toBe('\\frac{d}{d\\theta}\\left(\\theta^2\\right)');
     expect(() =>
-      historyEntrySchema.parse({
+      parseHistoryEntry({
         id: 'calculus-derivative-target-invalid',
         mode: 'calculus',
         inputLatex: '\\frac{d}{dxy}\\left(xy\\right)',
@@ -264,7 +288,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts natural higher-order Calculus derivative request seeds for replay', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'calculus-derivative-operator-seed',
       mode: 'calculus',
       inputLatex: '\\frac{d^{3}}{dt^{3}}\\left(t^5\\right)',
@@ -282,7 +306,7 @@ describe('history entry schema', () => {
   });
 
   it('canonicalizes and validates Calculus implicit derivative variables in seeds', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'calculus-implicit-derivative-seed',
       mode: 'calculus',
       inputLatex: '\\operatorname{implicitD}_{\\theta,t}\\left(t^2+\\theta^2=1\\right)',
@@ -301,7 +325,7 @@ describe('history entry schema', () => {
       dependentVariable: 'theta',
     });
     expect(() =>
-      historyEntrySchema.parse({
+      parseHistoryEntry({
         id: 'calculus-implicit-derivative-invalid',
         mode: 'calculus',
         inputLatex: 'x^2+y^2=1',
@@ -317,7 +341,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts typed Matrix replay seeds', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'matrix-seed-1',
       mode: 'matrix',
       inputLatex: 'A\\times B',
@@ -354,7 +378,7 @@ describe('history entry schema', () => {
       activeMatrixRightId: 'matrix-b',
     });
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-rref',
       mode: 'matrix',
       inputLatex: '\\operatorname{rref}\\left(A\\right)',
@@ -367,7 +391,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('rrefA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-invertible',
       mode: 'matrix',
       inputLatex: '\\operatorname{invertible}\\left(A\\right)',
@@ -380,7 +404,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('invertibilityA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-basis',
       mode: 'matrix',
       inputLatex: '\\operatorname{basis}\\left(A\\right)',
@@ -393,7 +417,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('basisA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-coordinates',
       mode: 'matrix',
       inputLatex: '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
@@ -414,7 +438,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.coordinateVector).toEqual([5, 11]);
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-change-basis',
       mode: 'matrix',
       inputLatex: '\\operatorname{change}\\left(A,B\\right)',
@@ -430,7 +454,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('changeBasis');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-lu',
       mode: 'matrix',
       inputLatex: '\\operatorname{lu}\\left(A\\right)',
@@ -445,7 +469,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('luA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-plu',
       mode: 'matrix',
       inputLatex: '\\operatorname{plu}\\left(A\\right)',
@@ -460,7 +484,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('pluA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-lu-solve',
       mode: 'matrix',
       inputLatex: '\\operatorname{lusolve}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)',
@@ -481,7 +505,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.systemRhs).toEqual([5, 11]);
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-multi-rhs',
       mode: 'matrix',
       inputLatex: 'A X = B',
@@ -497,7 +521,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('multiRhsSolve');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-qr',
       mode: 'matrix',
       inputLatex: '\\operatorname{qr}\\left(A\\right)',
@@ -510,7 +534,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('qrA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-column-projection',
       mode: 'matrix',
       inputLatex: '\\operatorname{projcol}\\left(A,\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)',
@@ -524,7 +548,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('columnProjectionA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-least-squares',
       mode: 'matrix',
       inputLatex: '\\operatorname{ls}\\left(A,\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)',
@@ -538,7 +562,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('leastSquaresA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-eigen',
       mode: 'matrix',
       inputLatex: '\\operatorname{eigen}\\left(A\\right)',
@@ -551,7 +575,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('eigenA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-diagonalize',
       mode: 'matrix',
       inputLatex: '\\operatorname{diag}\\left(A\\right)',
@@ -564,7 +588,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('diagonalizeA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-spectral-power',
       mode: 'matrix',
       inputLatex: '\\operatorname{mpow}\\left(A,3\\right)',
@@ -579,7 +603,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).matrixSeed?.operation).toBe('spectralPowerA');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-seed-system',
       mode: 'matrix',
       inputLatex: 'Ax=\\begin{bmatrix}5\\\\11\\end{bmatrix}',
@@ -599,7 +623,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts typed Vector replay seeds', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'vector-seed-1',
       mode: 'vector',
       inputLatex: '\\angle(A,B)',
@@ -638,7 +662,7 @@ describe('history entry schema', () => {
       activeVectorRightId: 'vector-v',
     });
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'vector-seed-projection',
       mode: 'vector',
       inputLatex: '\\operatorname{proj}_{u}\\left(v\\right)',
@@ -662,7 +686,7 @@ describe('history entry schema', () => {
       ],
     });
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'vector-seed-gram',
       mode: 'vector',
       inputLatex: '\\operatorname{gram}\\left(u,v\\right)',
@@ -676,7 +700,7 @@ describe('history entry schema', () => {
       timestamp: '2026-06-08T00:00:00.000Z',
     }).vectorSeed?.operation).toBe('gramSchmidtUV');
 
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'vector-seed-combination',
       mode: 'vector',
       inputLatex: '2p-\\frac{q}{3}',
@@ -690,7 +714,7 @@ describe('history entry schema', () => {
       timestamp: '2026-07-10T00:00:00.000Z',
     }).vectorSeed?.operation).toBe('linearCombination');
 
-    const familySeed = historyEntrySchema.parse({
+    const familySeed = parseHistoryEntry({
       id: 'vector-seed-span',
       mode: 'vector',
       inputLatex: '\\operatorname{span}\\left(p,q,r\\right)',
@@ -718,7 +742,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts Matrix linear-map profile replay seeds', () => {
-    expect(historyEntrySchema.parse({
+    expect(parseHistoryEntry({
       id: 'matrix-profile-seed',
       mode: 'matrix',
       inputLatex: '\\operatorname{profile}\\left(A\\right)',
@@ -735,7 +759,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts typed Trigonometry Period & Phase replay seeds', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'trig-period-phase-seed-1',
       mode: 'trigonometry',
       inputLatex: '2\\sin(3x-\\pi)+1',
@@ -766,7 +790,7 @@ describe('history entry schema', () => {
   });
 
   it('accepts typed Geometry replay seeds while preserving legacy screen hints', () => {
-    const parsed = historyEntrySchema.parse({
+    const parsed = parseHistoryEntry({
       id: 'geometry-seed-1',
       mode: 'geometry',
       inputLatex: 'rectangle(width=?, height=5, area=40)',

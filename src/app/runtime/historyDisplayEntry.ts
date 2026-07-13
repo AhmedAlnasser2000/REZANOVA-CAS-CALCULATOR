@@ -8,11 +8,12 @@ import type {
   StatisticsScreen,
   TableResponse,
   TrigScreen,
+  VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import {
   projectCanonicalResultToDisplayOutcome,
   projectCanonicalResultToTableResponse,
-  resolveCanonicalResultForStorage,
+  resolveCanonicalResultForConsumer,
   validateCanonicalResultDocument,
 } from '../../lib/result-contract';
 
@@ -38,16 +39,16 @@ export type CommitHistoryDisplayContext = Partial<Pick<
   | 'equationAnswerMode'
   | 'equationDomainIntent'
   | 'complexExactForm'
-  | 'answerDomain'
-  | 'solutionKind'
   | 'numericInterval'
   | 'runtimeElapsedMs'
-  | 'variableSubstitutions'
 >> & {
+  answerDomain?: SuccessfulDisplayOutcome['answerDomain'];
   historyTicketId?: string | null;
   historyLaunchOrder?: number;
+  solutionKind?: SuccessfulDisplayOutcome['solutionKind'];
   suppressDisplayCommit?: boolean;
   tableResponse?: TableResponse;
+  variableSubstitutions?: VariableSubstitutionSnapshot[];
 };
 
 export type BuildHistoryDisplayEntryOptions = {
@@ -63,11 +64,12 @@ export type BuildHistoryDisplayEntryOptions = {
 };
 
 export type HistoryResultReadModel = {
-  source: 'structured' | 'legacy';
+  source: 'structured';
   outcome: SuccessfulDisplayOutcome;
-  document?: CanonicalResultDocumentV1;
+  document: CanonicalResultDocumentV1;
   title: string;
   primaryLatex?: string;
+  resolvedInputLatex?: string;
   approxText?: string;
   answerDomain?: SuccessfulDisplayOutcome['answerDomain'];
   solutionKind?: SuccessfulDisplayOutcome['solutionKind'];
@@ -85,21 +87,6 @@ function canonicalDetailSearchText(document: CanonicalResultDocumentV1) {
   ]) ?? [];
 }
 
-function legacyHistoryOutcome(entry: HistoryEntry): SuccessfulDisplayOutcome {
-  return {
-    kind: 'success',
-    title: 'History',
-    exactLatex: entry.resultLatex,
-    exactSupplementLatex: entry.exactSupplementLatex,
-    approxText: entry.approxText,
-    detailSections: entry.detailSections,
-    systemReadback: entry.systemReadback,
-    answerDomain: entry.answerDomain,
-    solutionKind: entry.solutionKind,
-    warnings: [],
-  };
-}
-
 export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
   const validation = validateCanonicalResultDocument(entry.resultDocument);
   if (validation.ok && validation.validated.value.outcomeKind === 'success') {
@@ -112,6 +99,7 @@ export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
         document,
         title: document.title,
         primaryLatex: document.primaryMath?.canonicalLatex,
+        resolvedInputLatex: document.metadata?.resolvedInput?.canonicalLatex,
         approxText: document.approximations?.primary,
         answerDomain: document.metadata?.answerDomain,
         solutionKind: document.metadata?.solutionKind,
@@ -122,23 +110,7 @@ export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
       };
     }
   }
-
-  const outcome = legacyHistoryOutcome(entry);
-  return {
-    source: 'legacy',
-    outcome,
-    title: 'History',
-    primaryLatex: entry.resultLatex,
-    approxText: entry.approxText,
-    answerDomain: entry.answerDomain,
-    solutionKind: entry.solutionKind,
-    supplementLatex: entry.exactSupplementLatex ?? [],
-    detailSearchText: entry.detailSections?.flatMap((section) => [
-      section.title,
-      ...section.lines,
-    ]) ?? [],
-    warnings: [],
-  };
+  throw new Error('History entry requires a valid canonical result document.');
 }
 
 export function buildHistoryDisplayEntry({
@@ -152,31 +124,16 @@ export function buildHistoryDisplayEntry({
   trigScreen,
   statisticsScreen,
 }: BuildHistoryDisplayEntryOptions): HistoryEntry {
-  const resultDocument = resolveCanonicalResultForStorage(outcome, {
-    tableResponse: context.tableResponse,
-  });
-  const compatibilityOutcome = outcome;
-  const variableSubstitutions =
-    context.variableSubstitutions
-    ?? compatibilityOutcome.variableSubstitutions;
+  const resultDocument = resolveCanonicalResultForConsumer(outcome);
+  if (!resultDocument.ok || resultDocument.document.outcomeKind !== 'success') {
+    throw new Error('History success entries require native canonical result authority.');
+  }
 
   return {
     id: createId(),
     mode: mode,
     inputLatex,
-    resolvedInputLatex: compatibilityOutcome.resolvedInputLatex,
-    resultLatex: compatibilityOutcome.exactLatex,
-    exactSupplementLatex: compatibilityOutcome.exactSupplementLatex,
-    approxText: compatibilityOutcome.approxText,
-    ...(compatibilityOutcome.detailSections && compatibilityOutcome.detailSections.length > 0
-      ? { detailSections: compatibilityOutcome.detailSections }
-      : {}),
-    ...(compatibilityOutcome.systemReadback
-      ? { systemReadback: compatibilityOutcome.systemReadback }
-      : {}),
-    ...(resultDocument.ok
-      ? { resultDocument: resultDocument.document }
-      : { resultDocumentOmissionReason: resultDocument.omissionReason }),
+    resultDocument: resultDocument.document,
     ...(mode === 'calculate'
       ? {
           ...currentCalculateHistoryContext(),
@@ -233,17 +190,8 @@ export function buildHistoryDisplayEntry({
     ...(mode === 'equation' && context.complexExactForm
       ? { complexExactForm: context.complexExactForm }
       : {}),
-    ...(mode === 'equation' && (compatibilityOutcome.answerDomain ?? context.answerDomain)
-      ? { answerDomain: compatibilityOutcome.answerDomain ?? context.answerDomain }
-      : {}),
-    ...(mode === 'equation' && (compatibilityOutcome.solutionKind ?? context.solutionKind)
-      ? { solutionKind: compatibilityOutcome.solutionKind ?? context.solutionKind }
-      : {}),
     ...(context.numericInterval
       ? { numericInterval: context.numericInterval }
-      : {}),
-    ...(variableSubstitutions && variableSubstitutions.length > 0
-      ? { variableSubstitutions }
       : {}),
     ...(context.historyLaunchOrder !== undefined
       ? { historyLaunchOrder: context.historyLaunchOrder }

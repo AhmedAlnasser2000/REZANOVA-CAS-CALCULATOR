@@ -11,6 +11,7 @@ import type {
   PendingHistoryTicket,
 } from '../../types/calculator';
 import { HistoryPage } from './HistoryPage';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 import '../../styles/app/shell.css';
 import '../../styles/app/side-surfaces.css';
 
@@ -29,7 +30,7 @@ const modeLabels: Record<ModeId, string> = {
 };
 
 function historyEntry(index: number): HistoryEntry {
-  return {
+  return historyEntryFixture({
     id: `entry.${index}`,
     historyLaunchOrder: index,
     inputLatex: `x^2+${index}x+1=0`,
@@ -39,7 +40,7 @@ function historyEntry(index: number): HistoryEntry {
     timestamp: index % 2 === 0
       ? '2026-07-02T12:00:00Z'
       : '2026-07-01T12:00:00Z',
-  };
+  });
 }
 
 function pendingTicket(id: string, order: number, startedAtMs?: number): PendingHistoryTicket {

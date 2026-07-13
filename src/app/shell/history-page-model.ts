@@ -79,7 +79,7 @@ function entrySearchText(
   return [
     modeLabel,
     entry.inputLatex,
-    entry.resolvedInputLatex,
+    result.resolvedInputLatex,
     result.title,
     result.primaryLatex,
     result.approxText,

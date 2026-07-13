@@ -11,6 +11,7 @@ import type {
   TrigScreen,
 } from '../../types/calculator';
 import { mapLegacyCalculateScreenToCalculusScreen } from '../../lib/calculus/calculus-identity';
+import { readHistoryResult } from '../runtime/historyDisplayEntry';
 import { clearCurrentModeWithDeps } from './modeReset';
 
 export function createAppFlowHandlers(deps: any) {
@@ -1328,16 +1329,7 @@ function replayHistoryEntry(entry: HistoryEntry) {
     }
   }
 
-  setDisplayOutcome({
-    kind: 'success',
-    title: 'History',
-    exactLatex: entry.resultLatex,
-    exactSupplementLatex: entry.exactSupplementLatex,
-    approxText: entry.approxText,
-    answerDomain: entry.answerDomain,
-    solutionKind: entry.solutionKind,
-    warnings: [],
-  });
+  setDisplayOutcome(readHistoryResult(entry).outcome);
   setHistoryOpen(false);
 }
 

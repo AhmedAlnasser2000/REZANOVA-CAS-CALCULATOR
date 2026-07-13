@@ -1,4 +1,5 @@
 export {
+  HISTORY_CANONICAL_CLEANUP_NOTICE,
   appendHistoryEntry,
   bootApp,
   clearCalculatorMemorySnapshot,
@@ -7,6 +8,7 @@ export {
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
+  loadHistoryEntriesWithCleanup,
   loadLauncherCategories,
   persistCalculatorMemorySnapshot,
   persistMode,

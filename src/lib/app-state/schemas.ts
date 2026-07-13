@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import type { LauncherCategory, LauncherLaunchTarget, MenuNode } from '../../types/calculator';
+import type {
+  CanonicalResultDocumentV1,
+  LauncherCategory,
+  LauncherLaunchTarget,
+  MenuNode,
+} from '../../types/calculator';
 import {
   DEFAULT_LANGUAGE_CODE,
   resolveLanguageCode,
@@ -645,27 +650,6 @@ export const variableSubstitutionSnapshotSchema = z.object({
   valueLatex: z.string(),
   numericValue: z.number().finite(),
 });
-const displayDetailLineKindSchema = z.enum(['text', 'math']);
-const displayDetailLinePartSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('text'), text: z.string() }),
-  z.object({ kind: z.literal('math'), latex: z.string() }),
-]);
-const displayDetailSectionSchema = z.object({
-  title: z.string(),
-  lines: z.array(z.string()),
-  lineKind: displayDetailLineKindSchema.optional(),
-  lineKinds: z.array(displayDetailLineKindSchema).optional(),
-  lineParts: z.array(z.array(displayDetailLinePartSchema)).optional(),
-});
-const displaySystemSolutionReadbackSchema = z.object({
-  variablesLatex: z.array(z.string()),
-  rows: z.array(z.object({
-    valuesLatex: z.array(z.string()),
-    approxText: z.string().optional(),
-  })),
-  label: z.string().optional(),
-  source: z.string().optional(),
-});
 const calculateSeedSchema = z.object({
   bodyLatex: z.string().optional(),
   point: z.string().optional(),
@@ -759,12 +743,6 @@ export const historyEntrySchema = z.object({
   id: z.string(),
   mode: modeIdSchema,
   inputLatex: z.string(),
-  resolvedInputLatex: z.string().optional(),
-  resultLatex: z.string().optional(),
-  exactSupplementLatex: z.array(z.string()).optional(),
-  approxText: z.string().optional(),
-  detailSections: z.array(displayDetailSectionSchema).optional(),
-  systemReadback: displaySystemSolutionReadbackSchema.optional(),
   calculateScreen: calculateScreenSchema.optional(),
   calculateSeed: calculateSeedSchema.optional(),
   calculusScreen: calculusScreenSchema.optional(),
@@ -783,10 +761,7 @@ export const historyEntrySchema = z.object({
   equationAnswerMode: legacyEquationAnswerModeSchema.optional(),
   equationDomainIntent: equationDomainIntentSchema.optional(),
   complexExactForm: complexExactFormSchema.optional(),
-  answerDomain: answerDomainSchema.optional(),
-  solutionKind: solutionKindSchema.optional(),
   numericInterval: numericSolveIntervalSchema.optional(),
-  variableSubstitutions: z.array(variableSubstitutionSnapshotSchema).optional(),
   historyLaunchOrder: z.number().finite().optional(),
   runtimeElapsedMs: z.number().int().nonnegative().optional(),
   replaySnapshot: z.object({
@@ -807,15 +782,38 @@ export const historyEntrySchema = z.object({
     scientificNotationStyle: scientificNotationStyleSchema,
     detailedFactsEnabled: z.boolean(),
   }).optional(),
-  resultDocument: z.unknown().optional(),
-  resultDocumentOmissionReason: z.enum(['unavailable', 'invalid', 'over-size']).optional(),
+  resultDocument: z.custom<CanonicalResultDocumentV1>((value) => {
+    const validation = validateCanonicalResultDocument(value);
+    return validation.ok && validation.validated.value.outcomeKind === 'success';
+  }, 'Expected a valid success CanonicalResultDocumentV1'),
+  resultStorageMode: z.literal('canonical-only-fallback').optional(),
   timestamp: z.string(),
-}).passthrough();
+}).passthrough().superRefine((entry, context) => {
+  for (const field of [
+    'resolvedInputLatex',
+    'resultLatex',
+    'exactSupplementLatex',
+    'approxText',
+    'detailSections',
+    'systemReadback',
+    'answerDomain',
+    'solutionKind',
+    'variableSubstitutions',
+    'resultDocumentOmissionReason',
+  ] as const) {
+    if (Object.prototype.hasOwnProperty.call(entry, field)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [field],
+        message: `History result field ${field} has been removed.`,
+      });
+    }
+  }
+});
 
 export function hasValidHistoryResultDocument(entry: unknown) {
   if (entry === null || typeof entry !== 'object') return false;
   const document = (entry as Record<string, unknown>).resultDocument;
-  if (document === undefined) return true;
   const validation = validateCanonicalResultDocument(document);
   return validation.ok && validation.validated.value.outcomeKind === 'success';
 }

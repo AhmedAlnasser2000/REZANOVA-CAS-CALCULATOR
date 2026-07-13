@@ -57,6 +57,25 @@ describe('OOE boundary validation', () => {
     );
   });
 
+  it('allows OOE diagnostics to consume the public canonical result facade', () => {
+    const rootDir = makeRoot();
+    writeFile(
+      rootDir,
+      'src/lib/ooe/diagnostics-buffer.ts',
+      "import { resolveCanonicalResultForConsumer } from '../result-contract';\n",
+    );
+    writeFile(
+      rootDir,
+      'src/lib/result-contract.ts',
+      'export const resolveCanonicalResultForConsumer = () => undefined;\n',
+    );
+
+    assert.deepEqual(validateOoeBoundaries({ rootDir }), {
+      tsFiles: 1,
+      rustFiles: 0,
+    });
+  });
+
   it('accepts TypeScript OOE pilots importing their narrow runtime allowlist', () => {
     const rootDir = makeRoot();
     writeFile(

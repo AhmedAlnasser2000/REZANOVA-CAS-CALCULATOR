@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EDITOR_ANALYSIS_DEBOUNCE_MS } from './lib/editor/editor-analysis-runtime';
 import { WEB_PREVIEW_APP_STATE_STORAGE_KEY } from './lib/app-state/tauri';
 import { DEFAULT_SETTINGS, type HistoryEntry } from './types/calculator';
+import { historyEntryFixture } from './test-utils/history-result-document';
 import { displayedDetailLatex, displayedSupplementLatex, revealDetailSection, revealValidWhenIfCollapsed } from './test/displayResultAssertions';
 import {
   expectMathStaticLatex,
@@ -15,7 +16,6 @@ import {
   setMathFieldLatex,
   setVisibleSecondaryMathFieldLatex,
 } from './test/renderAppMain';
-
 function setViewportWidth(width: number) {
   Object.defineProperty(window, 'innerWidth', {
     configurable: true,
@@ -134,14 +134,14 @@ describe('AppMain UI automation flows', () => {
   });
 
   it('restores durable calculator memory but starts with a clean editor session', async () => {
-    const historyEntry: HistoryEntry = {
+    const historyEntry: HistoryEntry = historyEntryFixture({
       id: 'memory-history',
       mode: 'equation',
       inputLatex: 'x+1=2',
       resultLatex: 'x=1',
       equationSolveTarget: 'x',
       timestamp: '2026-05-25T00:00:00Z',
-    };
+    });
     window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
       currentMode: 'calculate',
       settings: DEFAULT_SETTINGS,
@@ -366,20 +366,20 @@ describe('AppMain UI automation flows', () => {
   });
 
   it('deletes one history entry without clearing all history', async () => {
-    const firstEntry: HistoryEntry = {
+    const firstEntry: HistoryEntry = historyEntryFixture({
       id: 'delete-me',
       mode: 'calculate',
       inputLatex: '1+1',
       resultLatex: '2',
       timestamp: '2026-05-29T00:00:00Z',
-    };
-    const secondEntry: HistoryEntry = {
+    });
+    const secondEntry: HistoryEntry = historyEntryFixture({
       id: 'keep-me',
       mode: 'calculate',
       inputLatex: '2+2',
       resultLatex: '4',
       timestamp: '2026-05-29T00:00:01Z',
-    };
+    });
     window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
       currentMode: 'calculate',
       settings: DEFAULT_SETTINGS,
@@ -401,7 +401,7 @@ describe('AppMain UI automation flows', () => {
   });
 
   it('restores many history entries as compact cards after bootstrap', async () => {
-    const restoredHistory: HistoryEntry[] = Array.from({ length: 36 }, (_, index) => ({
+    const restoredHistory: HistoryEntry[] = Array.from({ length: 36 }, (_, index) => historyEntryFixture({
       id: `restored-${index}`,
       mode: index % 2 === 0 ? 'equation' : 'calculate',
       inputLatex: index % 2 === 0 ? `x+${index}=5` : `${index}+1`,

@@ -171,7 +171,12 @@ export function inferEquationReplayTarget(entry: HistoryEntry): EquationReplayTa
     return polynomialTarget;
   }
 
-  const simultaneousScreen = inferSimultaneousReplayScreen(entry.resultLatex);
+  const systemVariableCount = entry.resultDocument.systemReadback?.variables.length ?? 0;
+  const simultaneousScreen = systemVariableCount >= 3
+    ? 'linear3'
+    : systemVariableCount >= 2
+      ? 'linear2'
+      : null;
   if (entry.inputLatex === 'linear-system' && simultaneousScreen) {
     return {
       screen: simultaneousScreen,

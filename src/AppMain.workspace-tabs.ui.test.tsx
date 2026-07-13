@@ -21,6 +21,7 @@ import {
   renderAppMain,
   setMathFieldLatex,
 } from './test/renderAppMain';
+import { historyEntryFixture } from './test-utils/history-result-document';
 
 function setViewportWidth(width: number) {
   Object.defineProperty(window, 'innerWidth', {
@@ -187,14 +188,14 @@ describe('AppMain workspace tabs', () => {
   });
 
   it('replays an Equation history card into its destination on the first click', async () => {
-    const historyEntry: HistoryEntry = {
+    const historyEntry: HistoryEntry = historyEntryFixture({
       id: 'history.equation.destination',
       mode: 'equation',
       inputLatex: 'x+1=2',
       resultLatex: 'x=1',
       equationSolveTarget: 'x',
       timestamp: '2026-07-01T00:00:00.000Z',
-    };
+    });
     window.localStorage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
       currentMode: 'calculate',
       settings: DEFAULT_SETTINGS,

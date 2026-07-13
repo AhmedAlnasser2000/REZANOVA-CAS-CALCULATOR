@@ -589,6 +589,11 @@ export function useHistoryDisplayRuntime({
       )
       : null;
     const replayMode: ModeId = legacyCalculusScreen ? 'calculus' : entry.mode;
+    const substitutions = entry.resultDocument.metadata?.variableSubstitutions?.map((item) => ({
+      name: item.name,
+      valueLatex: item.value.canonicalLatex,
+      numericValue: item.numericValue,
+    }));
 
     routeHistoryDestination(replayMode, () => {
       if (replayMode !== 'calculate') {
@@ -596,8 +601,8 @@ export function useHistoryDisplayRuntime({
       }
 
       setReplayVariableSubstitutions(
-        replayMode !== 'calculate' && entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-          ? { mode: replayMode, inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
+        replayMode !== 'calculate' && substitutions && substitutions.length > 0
+          ? { mode: replayMode, inputLatex: entry.inputLatex, substitutions }
           : null,
       );
 

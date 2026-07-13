@@ -10,6 +10,10 @@ import type {
 } from '../../types/calculator';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useEquationRuntime } from './useEquationRuntime';
+import {
+  historyEntryFixture,
+  type HistoryEntryFixtureInput,
+} from '../../test-utils/history-result-document';
 
 function renderEquationRuntime(
   initialProps: {
@@ -123,15 +127,15 @@ function renderEquationRuntime(
   };
 }
 
-function historyEntry(overrides: Partial<HistoryEntry>): HistoryEntry {
-  return {
+function historyEntry(overrides: HistoryEntryFixtureInput): HistoryEntry {
+  return historyEntryFixture({
     id: 'history.test',
     mode: 'equation',
     inputLatex: 'x=1',
     resultLatex: 'x=1',
     timestamp: '2026-06-14T00:00:00.000Z',
     ...overrides,
-  };
+  });
 }
 
 describe('useEquationRuntime', () => {

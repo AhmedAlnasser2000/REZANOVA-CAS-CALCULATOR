@@ -13,6 +13,7 @@ import {
   type WorkspaceInstance,
 } from '../runtime/workspace-instances';
 import { ActiveSurfaceHost } from './ActiveSurfaceHost';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 import type { ModeId } from '../../types/calculator';
 import { createKeyboardContext } from '../../lib/virtual-keyboard/capabilities';
 import { getActiveGuideHomeEntries } from '../../lib/guide/content';
@@ -210,13 +211,13 @@ describe('ActiveSurfaceHost', () => {
         activeInstance={createWorkspaceInstance('history', 3)}
         onCopyResult={onCopyResult}
         history={[
-          {
+          historyEntryFixture({
             id: 'history.1',
             inputLatex: 'x+1=2',
             mode: 'equation',
             resultLatex: 'x=1',
             timestamp: '2026-07-01T10:00:00Z',
-          },
+          }),
         ]}
       />,
     );

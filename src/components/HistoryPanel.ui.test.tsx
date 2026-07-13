@@ -5,6 +5,7 @@ import { getLanguageCatalog } from '../lib/language';
 import type { HistoryEntry, ModeId } from '../types/calculator';
 import '../styles/app/shell.css';
 import '../styles/app/side-surfaces.css';
+import { historyEntryFixture } from '../test-utils/history-result-document';
 
 const historyText = getLanguageCatalog('en').history;
 
@@ -23,14 +24,14 @@ const modeLabels: Record<ModeId, string> = {
 };
 
 function historyEntry(id: string): HistoryEntry {
-  return {
+  return historyEntryFixture({
     id,
     mode: 'equation',
     inputLatex: `x+${id}=5`,
     resultLatex: `x=${id}`,
     exactSupplementLatex: [`x\\ne${id}`],
     timestamp: `2026-05-29T00:00:0${id}Z`,
-  };
+  });
 }
 
 describe('HistoryPanel', () => {
@@ -99,7 +100,6 @@ describe('HistoryPanel', () => {
   it('prefers the structured result preview over a stale legacy projection', () => {
     const structuredEntry: HistoryEntry = {
       ...historyEntry('1'),
-      resultLatex: 'legacy-result-must-not-win',
       resultDocument: {
         version: 1,
         outcomeKind: 'success',

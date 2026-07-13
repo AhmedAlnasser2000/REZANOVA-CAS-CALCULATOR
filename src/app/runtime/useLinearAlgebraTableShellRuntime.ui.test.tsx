@@ -15,10 +15,10 @@ import {
 } from 'react';
 import type {
   DisplayOutcome,
-  HistoryEntry,
   ModeId,
 } from '../../types/calculator';
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 function renderLinearAlgebraTableShell(
   initialProps: {
@@ -797,11 +797,10 @@ describe('useLinearAlgebraTableShellRuntime', () => {
 
   it('restores Table and Matrix history entries through the shell', () => {
     const { hook } = renderLinearAlgebraTableShell({ currentMode: 'table' });
-    const tableEntry = {
+    const tableEntry = historyEntryFixture({
       id: 'history.table',
       mode: 'table',
       inputLatex: 'x^3',
-      resultLatex: 'legacy-table-summary',
       resultDocument: {
         version: 1,
         outcomeKind: 'success',
@@ -824,8 +823,8 @@ describe('useLinearAlgebraTableShellRuntime', () => {
         },
       },
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
-    const matrixEntry = {
+    });
+    const matrixEntry = historyEntryFixture({
       id: 'history.matrix',
       mode: 'matrix',
       inputLatex: 'det(A)',
@@ -837,7 +836,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
         matrixOperandLatexA: 'A',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreLinearAlgebraTableHistoryEntry(tableEntry);
@@ -861,7 +860,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
 
   it('restores Vector history and patches the saved angle unit', () => {
     const { hook, patchSettings } = renderLinearAlgebraTableShell({ currentMode: 'vector' });
-    const vectorEntry = {
+    const vectorEntry = historyEntryFixture({
       id: 'history.vector',
       mode: 'vector',
       inputLatex: 'angle',
@@ -876,7 +875,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
         vectorOperandLatexB: 'v',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreLinearAlgebraTableHistoryEntry(vectorEntry);

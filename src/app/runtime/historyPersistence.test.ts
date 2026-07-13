@@ -5,6 +5,7 @@ import {
   HISTORY_PERSISTENCE_FAILURE_NOTICE,
   persistHistoryEntryWithWarning,
 } from './historyPersistence';
+import { historyResultDocument } from '../../test-utils/history-result-document';
 
 vi.mock('../../lib/app-state/persistence', () => ({
   appendHistoryEntry: vi.fn(),
@@ -14,7 +15,7 @@ const ENTRY: HistoryEntry = {
   id: 'history.persistence.1',
   mode: 'calculate',
   inputLatex: '2+2',
-  resultLatex: '4',
+  resultDocument: historyResultDocument('4'),
   timestamp: '2026-07-11T00:00:00.000Z',
 };
 

@@ -4,11 +4,12 @@ import {
   inferSimultaneousReplayScreen,
   parseGeneratedPolynomialEquationLatex,
 } from './equation-history';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 describe('equation history replay inference', () => {
   it('prefers saved Equation replay seeds over result inference', () => {
     expect(
-      inferEquationReplayTarget({
+      inferEquationReplayTarget(historyEntryFixture({
         id: 'seed-poly-system',
         mode: 'equation',
         inputLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
@@ -20,7 +21,7 @@ describe('equation history replay inference', () => {
           polynomialSystem2Latex: ['x^{2}+y=10', 'x-y=2'],
         },
         timestamp: '2026-07-04T00:00:00.000Z',
-      }),
+      })),
     ).toEqual({
       screen: 'polynomialSystem2',
       equationLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
@@ -28,7 +29,7 @@ describe('equation history replay inference', () => {
     });
 
     expect(
-      inferEquationReplayTarget({
+      inferEquationReplayTarget(historyEntryFixture({
         id: 'seed-linear3',
         mode: 'equation',
         inputLatex: 'linear-system',
@@ -44,7 +45,7 @@ describe('equation history replay inference', () => {
           ],
         },
         timestamp: '2026-07-04T00:00:00.000Z',
-      }),
+      })),
     ).toEqual({
       screen: 'linear3',
       equationLatex: 'linear-system',
@@ -77,14 +78,14 @@ describe('equation history replay inference', () => {
 
   it('falls back to symbolic when the history entry is not inferable', () => {
     expect(
-      inferEquationReplayTarget({
+      inferEquationReplayTarget(historyEntryFixture({
         id: '1',
         mode: 'equation',
         inputLatex: 'x^2+2x+2=0',
         resultLatex: 'x\\approx\\left\\{-1-i,-1+i\\right\\}',
         approxText: 'x ~= -1 - i, -1 + i',
         timestamp: '2026-03-02T00:00:00.000Z',
-      }),
+      })),
     ).toEqual({
       screen: 'symbolic',
       equationLatex: 'x^2+2x+2=0',
@@ -92,14 +93,14 @@ describe('equation history replay inference', () => {
     });
 
     expect(
-      inferEquationReplayTarget({
+      inferEquationReplayTarget(historyEntryFixture({
         id: '2',
         mode: 'equation',
         inputLatex: '5x+6=3',
         resultLatex: 'x=\\frac{-3}{5}',
         approxText: 'x ~= -0.6',
         timestamp: '2026-03-02T00:00:00.000Z',
-      }),
+      })),
     ).toEqual({
       screen: 'symbolic',
       equationLatex: '5x+6=3',
@@ -109,14 +110,14 @@ describe('equation history replay inference', () => {
 
   it('preserves stored selected targets for symbolic equation replay', () => {
     expect(
-      inferEquationReplayTarget({
+      inferEquationReplayTarget(historyEntryFixture({
         id: 'targeted-1',
         mode: 'equation',
         inputLatex: 'x+z=5',
         resultLatex: 'z=5-x',
         equationSolveTarget: 'z',
         timestamp: '2026-05-23T00:00:00.000Z',
-      }),
+      })),
     ).toEqual({
       screen: 'symbolic',
       equationLatex: 'x+z=5',
@@ -126,14 +127,18 @@ describe('equation history replay inference', () => {
 
   it('restores simultaneous branch context without reconstructing the grid', () => {
     expect(
-      inferEquationReplayTarget({
+      inferEquationReplayTarget(historyEntryFixture({
         id: '3',
         mode: 'equation',
         inputLatex: 'linear-system',
         resultLatex: 'x=1,\\;y=2,\\;z=3',
         approxText: 'x ~= 1, y ~= 2, z ~= 3',
+        systemReadback: {
+          variablesLatex: ['x', 'y', 'z'],
+          rows: [{ valuesLatex: ['1', '2', '3'] }],
+        },
         timestamp: '2026-03-02T00:00:00.000Z',
-      }),
+      })),
     ).toEqual({
       screen: 'linear3',
       equationLatex: 'linear-system',

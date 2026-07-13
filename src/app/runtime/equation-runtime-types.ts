@@ -44,11 +44,11 @@ export type CommitEquationOutcome = (
     | 'equationDomainIntent'
     | 'complexExactForm'
     | 'numericInterval'
-    | 'variableSubstitutions'
   >> & {
     historyTicketId?: string | null;
     historyLaunchOrder?: number;
     suppressDisplayCommit?: boolean;
+    variableSubstitutions?: VariableSubstitutionSnapshot[];
   },
 ) => void;
 

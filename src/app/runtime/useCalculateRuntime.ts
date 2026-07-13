@@ -566,9 +566,14 @@ export function useCalculateRuntime({
       openCalculateScreen('standard');
       setCalculateLatex(entry.inputLatex);
     }
+    const substitutions = entry.resultDocument.metadata?.variableSubstitutions?.map((item) => ({
+      name: item.name,
+      valueLatex: item.value.canonicalLatex,
+      numericValue: item.numericValue,
+    }));
     setCalculateReplayVariableSubstitutions(
-      entry.variableSubstitutions && entry.variableSubstitutions.length > 0
-        ? { inputLatex: entry.inputLatex, substitutions: entry.variableSubstitutions }
+      substitutions && substitutions.length > 0
+        ? { inputLatex: entry.inputLatex, substitutions }
         : null,
     );
   }

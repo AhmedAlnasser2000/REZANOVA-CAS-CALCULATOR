@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { HistoryEntry, PendingHistoryTicket } from '../types/calculator';
 import { buildHistoryLaunchRows } from './history-launch-rows';
+import { historyEntryFixture } from '../test-utils/history-result-document';
 
 function entry(id: string, order?: number): HistoryEntry {
-  return {
+  return historyEntryFixture({
     id,
     mode: 'equation',
     inputLatex: `x+${id}=0`,
     resultLatex: `x=-${id}`,
     timestamp: `2026-06-06T00:00:0${id}Z`,
     ...(order !== undefined ? { historyLaunchOrder: order } : {}),
-  };
+  });
 }
 
 function ticket(id: string, order: number): PendingHistoryTicket {

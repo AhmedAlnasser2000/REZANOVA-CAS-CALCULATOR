@@ -215,3 +215,18 @@
 - visual: real Chromium clipboard capability plus Calculate, Equation, and Table canaries pass with one worker; inspected Calculate `14` answer/approximation and copy/editor controls are readable with no overflow
 - resource posture: no full unit, UI, or 19-canary suite ran; focused commands used at most four Vitest workers and no heavy process remains active
 - residual: `HISTORY-CANONICAL-ONLY1` removes legacy result fields and the final compatibility projection while preserving future-version rows inertly
+
+## HISTORY-CANONICAL-ONLY1
+
+- kind: backend History persistence contract with focused UI and real-browser restart evidence
+- result: pass
+- contract: current V1 entries require one validated canonical result document; legacy result fields are absent, and replay seeds/context remain separate
+- cleanup: old and malformed V1 rows are removed atomically with one non-blocking count notice; future result versions stay hidden, byte-preserved, and excluded from V1 retention and clear operations
+- overflow: appends over two million bytes retry once after stripping only optional MathJSON and record `canonical-only-fallback`; canonical structure and LaTeX remain identical, and a second overflow fails closed
+- inventory: 642 producers, 597 consumers, 177 native documents, zero compatibility projections, 396 registered legacy reads, and zero violations
+- regression: 70 focused backend tests, 106 focused UI tests after three targeted stale-assertion corrections, 100 replay fixtures, eight browser-persistence tests, and four Rust History tests pass
+- browser: four real Chromium persistence cases pass; inspected Equation History and replay screenshots preserve title, two-variable solution, validity facts, verification details, and readability without saved actions or overflow
+- transcript limits: the 35-test `AppMain.ui` run emitted all passing dots but its wrapper lost the final footer; the production build produced the assets used by successful Playwright, but its wrapper likewise lost Vite's terminal footer. Neither heavy command was repeated under the resource-safe policy
+- static: incremental TypeScript, accepted inversion baseline, focused lint, memory, file-size, seam, OOE/compartment boundaries, Rust check, and diff hygiene pass. The OOE validator now allows only the exact public result-contract facade used by read-only diagnostics; private result-contract targets remain closed
+- resource posture: no full unit, full UI, or 19-canary suite ran; preview and browser processes used for evidence were stopped
+- residual: `DISPLAY-DETAIL-LEGACY-CLOSEOUT1` removes duplicate detail/readback presentation transport while retaining canonical-derived `DisplayBlock` models

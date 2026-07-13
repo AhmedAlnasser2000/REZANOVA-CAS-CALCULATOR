@@ -1,7 +1,6 @@
 import type {
   CalculusScreen,
   AngleUnit,
-  AnswerDomain,
   CalculateScreen,
   ComplexExactForm,
   EquationAnswerMode,
@@ -19,7 +18,6 @@ import type {
   NumericNotationMode,
   OutputStyle,
   ScientificNotationStyle,
-  SolutionKind,
   StatisticsScreen,
   TrigScreen,
 } from './mode-types';
@@ -33,12 +31,10 @@ import type {
 import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
 import type { HistoryReplaySnapshotV1 } from './history-replay-types';
-import type { CanonicalResultDocumentV1, CanonicalResultOmissionReason } from './canonical-result-types';
+import type { CanonicalResultDocumentV1 } from './canonical-result-types';
 import type {
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
-  DisplaySystemSolutionReadback,
-  VariableSubstitutionSnapshot,
 } from './display-types';
 import {
   DEFAULT_LANGUAGE_CODE,
@@ -872,12 +868,6 @@ export type HistoryEntry = {
   id: string;
   mode: ModeId;
   inputLatex: string;
-  resolvedInputLatex?: string;
-  resultLatex?: string;
-  exactSupplementLatex?: string[];
-  approxText?: string;
-  detailSections?: DisplayDetailSection[];
-  systemReadback?: DisplaySystemSolutionReadback;
   calculateScreen?: CalculateScreen;
   calculateSeed?: Partial<
     DerivativeWorkbenchState
@@ -916,15 +906,12 @@ export type HistoryEntry = {
   equationAnswerMode?: LegacyEquationAnswerMode;
   equationDomainIntent?: EquationDomainIntent;
   complexExactForm?: ComplexExactForm;
-  answerDomain?: AnswerDomain;
-  solutionKind?: SolutionKind;
   numericInterval?: NumericSolveInterval;
-  variableSubstitutions?: VariableSubstitutionSnapshot[];
   historyLaunchOrder?: number;
   runtimeElapsedMs?: number;
   replaySnapshot?: HistoryReplaySnapshotV1;
-  resultDocument?: CanonicalResultDocumentV1;
-  resultDocumentOmissionReason?: CanonicalResultOmissionReason;
+  resultDocument: CanonicalResultDocumentV1;
+  resultStorageMode?: 'canonical-only-fallback';
   timestamp: string;
 };
 

@@ -7,11 +7,12 @@ import {
   type SetStateAction,
 } from 'react';
 import {
+  HISTORY_CANONICAL_CLEANUP_NOTICE,
   bootApp,
   clearCalculatorMemorySnapshot,
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
-  loadHistoryEntries,
+  loadHistoryEntriesWithCleanup,
   persistMode,
   persistSettings,
   persistVariableMemory,
@@ -131,7 +132,10 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
       try {
         const [bootstrap, loadedHistory, savedMemory] = await Promise.all([
           bootApp().catch(() => null),
-          loadHistoryEntries().catch(() => [] as HistoryEntry[]),
+          loadHistoryEntriesWithCleanup().catch(() => ({
+            entries: [] as HistoryEntry[],
+            removedCount: 0,
+          })),
           loadCalculatorMemorySnapshot().catch(() => null),
         ]);
         if (cancelled) {
@@ -151,10 +155,15 @@ export function useAppPersistenceRuntime(options: UseAppPersistenceRuntimeOption
           );
           optionsRef.current.setPreviousNonGuideMode(restoredPreviousMode);
           optionsRef.current.setSettings(bootstrap.settings);
-          optionsRef.current.restoreLoadedHistory(loadedHistory);
+          optionsRef.current.restoreLoadedHistory(loadedHistory.entries);
           setVariableMemory(bootstrap.variableMemory);
         } else {
-          optionsRef.current.restoreLoadedHistory(loadedHistory);
+          optionsRef.current.restoreLoadedHistory(loadedHistory.entries);
+        }
+        if (loadedHistory.removedCount > 0) {
+          optionsRef.current.setClipboardNotice(
+            HISTORY_CANONICAL_CLEANUP_NOTICE(loadedHistory.removedCount),
+          );
         }
       } catch {
         // Keep the default shell state if a non-critical bootstrap read fails.

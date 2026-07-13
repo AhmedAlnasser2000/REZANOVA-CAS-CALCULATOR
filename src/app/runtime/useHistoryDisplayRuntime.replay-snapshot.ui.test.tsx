@@ -106,7 +106,6 @@ describe('useHistoryDisplayRuntime replay snapshot', () => {
         id: 'history.structured-equation',
         mode: 'equation',
         inputLatex: 'x^2=4',
-        resultLatex: 'legacy-result-must-not-win',
         resultDocument: {
           version: 1,
           outcomeKind: 'success',

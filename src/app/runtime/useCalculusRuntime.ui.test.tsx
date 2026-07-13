@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RefObject } from 'react';
 import type {
   DisplayOutcome,
-  HistoryEntry,
   ModeId,
 } from '../../types/calculator';
 import {
@@ -12,6 +11,7 @@ import {
 } from '../../lib/modes/calculus';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useCalculusRuntime } from './useCalculusRuntime';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 vi.mock('../../lib/modes/calculus', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/modes/calculus')>();
@@ -207,7 +207,7 @@ describe('useCalculusRuntime', () => {
       '\\frac{d^{3}}{dt^{3}}\\left(sin(t)\\right)',
     );
 
-    const replayEntry = {
+    const replayEntry = historyEntryFixture({
       id: 'history.calculus.replay',
       mode: 'calculus',
       inputLatex: '\\left.\\frac{d}{dt}\\left(t^2\\right)\\right|_{t=3}',
@@ -218,7 +218,7 @@ describe('useCalculusRuntime', () => {
         point: '3',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreCalculusHistoryEntry(replayEntry);
@@ -437,7 +437,7 @@ describe('useCalculusRuntime', () => {
 
   it('restores canonical Calculus history entries through calculusSeed', () => {
     const { hook } = renderCalculusRuntime();
-    const entry = {
+    const entry = historyEntryFixture({
       id: 'history.calculus.canonical',
       mode: 'calculus',
       inputLatex: '\\lim_{x\\to 0}\\frac{\\sin x}{x}',
@@ -449,7 +449,7 @@ describe('useCalculusRuntime', () => {
         direction: 'two-sided',
       },
       timestamp: '2026-06-13T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreCalculusHistoryEntry(entry);
@@ -506,7 +506,7 @@ describe('useCalculusRuntime', () => {
       }),
     );
 
-    const replayEntry = {
+    const replayEntry = historyEntryFixture({
       id: 'history.calculus.integral-variable',
       mode: 'calculus',
       inputLatex: '\\int y^2\\,dy',
@@ -517,7 +517,7 @@ describe('useCalculusRuntime', () => {
         integrationVariable: 'y',
       },
       timestamp: '2026-06-27T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreCalculusHistoryEntry(replayEntry);
@@ -533,7 +533,7 @@ describe('useCalculusRuntime', () => {
 
   it('roundtrips Laplace state through main-editor Calculus runtime state', () => {
     const { hook } = renderCalculusRuntime();
-    const entry = {
+    const entry = historyEntryFixture({
       id: 'history.calculus.laplace',
       mode: 'calculus',
       inputLatex: '\\mathcal{L}\\left\\{t^2\\right\\}\\left(s\\right)',
@@ -543,7 +543,7 @@ describe('useCalculusRuntime', () => {
         bodyLatex: 't^2',
       },
       timestamp: '2026-06-27T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreCalculusHistoryEntry(entry);
@@ -564,7 +564,7 @@ describe('useCalculusRuntime', () => {
 
   it('roundtrips partial derivatives through main-editor Calculus runtime state', () => {
     const { hook } = renderCalculusRuntime();
-    const entry = {
+    const entry = historyEntryFixture({
       id: 'history.calculus.partial',
       mode: 'calculus',
       inputLatex: '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
@@ -574,7 +574,7 @@ describe('useCalculusRuntime', () => {
         bodyLatex: '\\frac{\\partial}{\\partial y}\\left(x^2y+y^3\\right)',
       },
       timestamp: '2026-06-29T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreCalculusHistoryEntry(entry);
@@ -612,7 +612,7 @@ describe('useCalculusRuntime', () => {
 
   it('roundtrips implicit derivatives through main-editor Calculus runtime state', () => {
     const { hook } = renderCalculusRuntime();
-    const entry = {
+    const entry = historyEntryFixture({
       id: 'history.calculus.implicit',
       mode: 'calculus',
       inputLatex: '\\operatorname{implicitD}_{y,x}\\left(x^2+y^2=25\\right)',
@@ -624,7 +624,7 @@ describe('useCalculusRuntime', () => {
         dependentVariable: 'y',
       },
       timestamp: '2026-06-30T00:00:00.000Z',
-    } satisfies HistoryEntry;
+    });
 
     act(() => {
       hook.result.current.restoreCalculusHistoryEntry(entry);

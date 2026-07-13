@@ -14,6 +14,7 @@ import type {
 } from '../../types/calculator';
 import { getLanguageCatalog } from '../../lib/language';
 import { HistoryPage } from './HistoryPage';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 import '../../styles/app/shell.css';
 
 const historyText = getLanguageCatalog('en').history;
@@ -33,7 +34,7 @@ const modeLabels: Record<ModeId, string> = {
 };
 
 function entry(id: string, inputLatex = `x+${id}=5`): HistoryEntry {
-  return {
+  return historyEntryFixture({
     id,
     historyLaunchOrder: Number(id),
     inputLatex,
@@ -43,7 +44,7 @@ function entry(id: string, inputLatex = `x+${id}=5`): HistoryEntry {
     timestamp: Number(id) % 2 === 0
       ? '2026-07-01T12:00:00Z'
       : '2026-06-30T12:00:00Z',
-  };
+  });
 }
 
 function renderHistoryPage(options: {
@@ -160,10 +161,9 @@ describe('HistoryPage', () => {
     expect(handlers.onDeleteSelected).toHaveBeenCalledWith(['2']);
   });
 
-  it('reads structured results before intentionally stale legacy projections', () => {
+  it('reads canonical structured results directly', () => {
     const structuredEntry: HistoryEntry = {
       ...entry('1'),
-      resultLatex: 'legacy-result-must-not-win',
       resultDocument: {
         version: 1,
         outcomeKind: 'success',

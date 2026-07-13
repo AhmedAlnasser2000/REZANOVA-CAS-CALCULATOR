@@ -415,16 +415,67 @@ fn validate_history_envelope(
     Ok(())
 }
 
-fn sanitize_history_values(history: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
+fn history_result_document_version(entry: &serde_json::Value) -> Option<u64> {
+    entry
+        .get("resultDocument")
+        .and_then(serde_json::Value::as_object)
+        .and_then(|document| document.get("version"))
+        .and_then(serde_json::Value::as_u64)
+}
+
+fn is_future_history_value(entry: &serde_json::Value) -> bool {
+    history_result_document_version(entry).is_some_and(|version| version > 1)
+}
+
+fn validate_current_history_append(entry: &serde_json::Value) -> Result<(), String> {
+    validate_history_envelope(entry, true)?;
+    if history_result_document_version(entry) != Some(1) {
+        return Err("History append requires a version-1 canonical result document.".into());
+    }
+    let object = entry
+        .as_object()
+        .ok_or_else(|| "History entry must be a JSON object.".to_string())?;
+    for field in [
+        "resolvedInputLatex",
+        "resultLatex",
+        "exactSupplementLatex",
+        "approxText",
+        "detailSections",
+        "systemReadback",
+        "answerDomain",
+        "solutionKind",
+        "variableSubstitutions",
+        "resultDocumentOmissionReason",
+    ] {
+        if object.contains_key(field) {
+            return Err(format!("History append contains removed legacy field {field}."));
+        }
+    }
+    Ok(())
+}
+
+fn preserve_history_envelopes(history: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
     history
         .into_iter()
         .filter(|entry| validate_history_envelope(entry, false).is_ok())
-        .rev()
-        .take(HISTORY_ENTRY_LIMIT)
-        .collect::<Vec<_>>()
+        .collect()
+}
+
+fn sanitize_history_values(history: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
+    let mut current_count = 0;
+    let mut retained = preserve_history_envelopes(history)
         .into_iter()
         .rev()
-        .collect()
+        .filter(|entry| {
+            if is_future_history_value(entry) {
+                return true;
+            }
+            current_count += 1;
+            current_count <= HISTORY_ENTRY_LIMIT
+        })
+        .collect::<Vec<_>>();
+    retained.reverse();
+    retained
 }
 
 fn sanitize_language_code(language_code: String) -> String {
@@ -475,7 +526,7 @@ impl AppState {
             Ok(contents) => serde_json::from_str::<PersistedState>(&contents).unwrap_or_default(),
             Err(_) => PersistedState::default(),
         };
-        persisted.history = sanitize_history_values(persisted.history);
+        persisted.history = preserve_history_envelopes(persisted.history);
         sanitize_settings(&mut persisted.settings);
 
         Ok(Self {
@@ -490,21 +541,20 @@ impl AppState {
 
     fn save_snapshot(&self, snapshot: &PersistedState) -> Result<(), String> {
         let contents = serde_json::to_string_pretty(snapshot).map_err(|error| error.to_string())?;
-        fs::write(self.file_path(), contents).map_err(|error| error.to_string())
+        let temporary_path = self.storage_dir.join("calculator-state.json.tmp");
+        fs::write(&temporary_path, contents).map_err(|error| error.to_string())?;
+        fs::rename(temporary_path, self.file_path()).map_err(|error| error.to_string())
     }
 }
 
 fn append_history_value(entry: serde_json::Value, state: &AppState) -> Result<(), String> {
-    validate_history_envelope(&entry, true)?;
+    validate_current_history_append(&entry)?;
     let mut snapshot = state
         .state
         .lock()
         .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
     snapshot.history.push(entry);
-    if snapshot.history.len() > HISTORY_ENTRY_LIMIT {
-        let overflow = snapshot.history.len() - HISTORY_ENTRY_LIMIT;
-        snapshot.history.drain(0..overflow);
-    }
+    snapshot.history = sanitize_history_values(std::mem::take(&mut snapshot.history));
     let clone = snapshot.clone();
     drop(snapshot);
     state.save_snapshot(&clone)
@@ -517,7 +567,27 @@ fn load_history_values(state: &AppState) -> Result<Vec<serde_json::Value>, Strin
         .map_err(|_| "Calculator state is currently unavailable.".to_string())?
         .history
         .clone();
-    Ok(sanitize_history_values(history))
+    Ok(preserve_history_envelopes(history))
+}
+
+fn replace_history_values(
+    entries: Vec<serde_json::Value>,
+    state: &AppState,
+) -> Result<(), String> {
+    for entry in &entries {
+        validate_history_envelope(entry, false)?;
+        if !is_future_history_value(entry) {
+            validate_current_history_append(entry)?;
+        }
+    }
+    let mut snapshot = state
+        .state
+        .lock()
+        .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
+    snapshot.history = sanitize_history_values(entries);
+    let clone = snapshot.clone();
+    drop(snapshot);
+    state.save_snapshot(&clone)
 }
 
 fn clear_history_values(state: &AppState) -> Result<(), String> {
@@ -525,7 +595,7 @@ fn clear_history_values(state: &AppState) -> Result<(), String> {
         .state
         .lock()
         .map_err(|_| "Calculator state is currently unavailable.".to_string())?;
-    snapshot.history.clear();
+    snapshot.history.retain(is_future_history_value);
     let clone = snapshot.clone();
     drop(snapshot);
     state.save_snapshot(&clone)
@@ -1135,17 +1205,6 @@ mod tests {
             "id": "history.rich.1",
             "mode": "equation",
             "inputLatex": "x+y=3",
-            "resultLatex": "(x,y)=(1,2)",
-            "detailSections": [{
-                "title": "Verification",
-                "lines": ["x+y=3"],
-                "lineParts": [[{"kind": "math", "latex": "x+y=3"}]]
-            }],
-            "systemReadback": {
-                "variablesLatex": ["x", "y"],
-                "rows": [{"valuesLatex": ["1", "2"]}],
-                "source": "linear-system"
-            },
             "calculusScreen": "finiteLimit",
             "calculusSeed": {"bodyLatex": "1/x", "target": "0"},
             "trigSeed": {
@@ -1163,6 +1222,10 @@ mod tests {
                 "outcomeKind": "success",
                 "title": "Solved system",
                 "primaryMath": {"canonicalLatex": "(x,y)=(1,2)"},
+                "details": [{
+                    "title": "Verification",
+                    "lines": [[{"kind": "math", "math": {"canonicalLatex": "x+y=3"}}]]
+                }],
                 "systemReadback": {
                     "variables": [{"canonicalLatex": "x"}, {"canonicalLatex": "y"}],
                     "rows": [{"values": [
@@ -1243,6 +1306,13 @@ mod tests {
                 "id": format!("history.{index}"),
                 "mode": "calculate",
                 "inputLatex": format!("{index}+1"),
+                "resultDocument": {
+                    "version": 1,
+                    "outcomeKind": "success",
+                    "title": "Result",
+                    "primaryMath": {"canonicalLatex": format!("{}", index + 1)},
+                    "warnings": []
+                },
                 "futureExtension": {"index": index},
                 "timestamp": "2026-07-11T00:00:00.000Z"
             })
@@ -1252,6 +1322,47 @@ mod tests {
         assert_eq!(sanitized.len(), HISTORY_ENTRY_LIMIT);
         assert_eq!(sanitized[0]["id"], "history.5");
         assert_eq!(sanitized[79]["futureExtension"]["index"], 84);
+    }
+
+    #[test]
+    fn preserves_future_history_rows_through_retention_clear_and_restart() {
+        let storage_dir = unique_test_storage_dir("history-future-preservation");
+        let future = serde_json::json!({
+            "id": "history.future.v2",
+            "mode": "calculate",
+            "inputLatex": "future()",
+            "resultDocument": {
+                "version": 2,
+                "title": "Future result",
+                "payload": ["kept", "verbatim"]
+            },
+            "timestamp": "2026-07-13T00:00:00.000Z"
+        });
+        let current = serde_json::json!({
+            "id": "history.current.v1",
+            "mode": "calculate",
+            "inputLatex": "2+2",
+            "resultDocument": {
+                "version": 1,
+                "outcomeKind": "success",
+                "title": "Calculate",
+                "primaryMath": {"canonicalLatex": "4"},
+                "warnings": []
+            },
+            "timestamp": "2026-07-13T00:00:01.000Z"
+        });
+
+        {
+            let state = AppState::load(storage_dir.clone()).expect("state should initialize");
+            replace_history_values(vec![future.clone(), current], &state)
+                .expect("mixed-version ledger should persist");
+            clear_history_values(&state).expect("clear should preserve future rows");
+            assert_eq!(load_history_values(&state).unwrap(), vec![future.clone()]);
+        }
+
+        let restarted = AppState::load(storage_dir.clone()).expect("state should restart");
+        assert_eq!(load_history_values(&restarted).unwrap(), vec![future]);
+        fs::remove_dir_all(storage_dir).expect("temporary state should be removed");
     }
 }
 
@@ -1270,7 +1381,10 @@ fn boot_app(state: State<'_, AppState>) -> Result<AppBootstrap, String> {
         history_count: snapshot
             .history
             .iter()
-            .filter(|entry| validate_history_envelope(entry, false).is_ok())
+            .filter(|entry| {
+                validate_history_envelope(entry, false).is_ok()
+                    && history_result_document_version(entry) == Some(1)
+            })
             .count(),
         variable_memory: snapshot.variable_memory,
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -1480,6 +1594,11 @@ fn load_history(state: State<'_, AppState>) -> Result<Vec<serde_json::Value>, St
 }
 
 #[tauri::command]
+fn replace_history(entries: Vec<serde_json::Value>, state: State<'_, AppState>) -> Result<(), String> {
+    replace_history_values(entries, &state)
+}
+
+#[tauri::command]
 fn clear_history(state: State<'_, AppState>) -> Result<(), String> {
     clear_history_values(&state)
 }
@@ -1574,6 +1693,7 @@ pub fn run() {
             save_settings,
             append_history,
             load_history,
+            replace_history,
             clear_history,
             delete_history_entry,
             save_variable_memory,

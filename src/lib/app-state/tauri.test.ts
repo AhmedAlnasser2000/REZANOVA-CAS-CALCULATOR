@@ -10,11 +10,13 @@ import {
   deleteHistoryEntry,
   loadCalculatorMemorySnapshot,
   loadHistoryEntries,
+  loadHistoryEntriesWithCleanup,
   persistCalculatorMemorySnapshot,
   persistMode,
   persistSettings,
   persistVariableMemory,
 } from './tauri';
+import { historyResultDocument } from '../../test-utils/history-result-document';
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -41,7 +43,7 @@ function createHistoryEntry(id: string): HistoryEntry {
     id,
     mode: 'calculate',
     inputLatex: `${id}+1`,
-    resultLatex: `${id}+1`,
+    resultDocument: historyResultDocument(`${id}+1`),
     timestamp: `2026-05-25T00:00:${id.padStart(2, '0')}Z`,
   };
 }
@@ -53,22 +55,6 @@ function createRichHistoryEntry(): HistoryEntry & {
     id: 'history.rich.1',
     mode: 'equation',
     inputLatex: 'x+y=3, x-y=-1',
-    resolvedInputLatex: 'x+y=3, x-y=-1',
-    resultLatex: '(x,y)=(1,2)',
-    exactSupplementLatex: ['x=1', 'y=2'],
-    approxText: '(1.0, 2.0)',
-    detailSections: [{
-      title: 'Verification',
-      lines: ['x+y=3'],
-      lineKinds: ['math'],
-      lineParts: [[{ kind: 'math', latex: 'x+y=3' }]],
-    }],
-    systemReadback: {
-      variablesLatex: ['x', 'y'],
-      rows: [{ valuesLatex: ['1', '2'], approxText: '(1.0, 2.0)' }],
-      label: 'Solution',
-      source: 'linear-system',
-    },
     calculateScreen: 'limit',
     calculateSeed: {
       bodyLatex: '1/x',
@@ -132,10 +118,7 @@ function createRichHistoryEntry(): HistoryEntry & {
     equationAnswerMode: 'exact',
     equationDomainIntent: 'complex',
     complexExactForm: 'rectangular',
-    answerDomain: 'complex',
-    solutionKind: 'exact-symbolic',
     numericInterval: { start: '-10', end: '10', subdivisions: 40 },
-    variableSubstitutions: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
     historyLaunchOrder: 7,
     runtimeElapsedMs: 42,
     replaySnapshot: {
@@ -161,6 +144,12 @@ function createRichHistoryEntry(): HistoryEntry & {
       outcomeKind: 'success',
       title: 'Solved system',
       primaryMath: { canonicalLatex: '(x,y)=(1,2)' },
+      supplements: [{ canonicalLatex: 'x=1' }, { canonicalLatex: 'y=2' }],
+      approximations: { primary: '(1.0, 2.0)' },
+      details: [{
+        title: 'Verification',
+        lines: [[{ kind: 'math', math: { canonicalLatex: 'x+y=3' } }]],
+      }],
       systemReadback: {
         variables: [{ canonicalLatex: 'x' }, { canonicalLatex: 'y' }],
         rows: [{
@@ -169,6 +158,16 @@ function createRichHistoryEntry(): HistoryEntry & {
         }],
         label: 'Solution',
         source: 'linear-system',
+      },
+      metadata: {
+        resolvedInput: { canonicalLatex: 'x+y=3, x-y=-1' },
+        answerDomain: 'complex',
+        solutionKind: 'exact-symbolic',
+        variableSubstitutions: [{
+          name: 'a',
+          value: { canonicalLatex: '2' },
+          numericValue: 2,
+        }],
       },
       warnings: [],
     },
@@ -274,9 +273,26 @@ describe('web-preview app-state persistence', () => {
       resultDocument: { version: 2, title: 'Future shape' },
     } as unknown as HistoryEntry)).toEqual({ ok: false, reason: 'invalid' });
 
+    const fallback = createHistoryEntry('fallback');
+    fallback.inputLatex = 'x'.repeat(1_760_000);
+    fallback.resultDocument.primaryMath = {
+      canonicalLatex: '1',
+      mathJson: 'x'.repeat(300_000),
+    };
+    expect(await appendHistoryEntry(fallback)).toEqual({
+      ok: true,
+      storageMode: 'canonical-only-fallback',
+    });
+    expect((await loadHistoryEntries()).at(-1)).toMatchObject({
+      resultStorageMode: 'canonical-only-fallback',
+      resultDocument: { primaryMath: { canonicalLatex: '1' } },
+    });
+    expect((await loadHistoryEntries()).at(-1)?.resultDocument.primaryMath)
+      .not.toHaveProperty('mathJson');
+
     expect(await appendHistoryEntry({
       ...createHistoryEntry('oversized'),
-      resultLatex: 'x'.repeat(HISTORY_ENTRY_MAX_SERIALIZED_BYTES),
+      inputLatex: 'x'.repeat(HISTORY_ENTRY_MAX_SERIALIZED_BYTES),
     })).toEqual({ ok: false, reason: 'over-size' });
 
     vi.spyOn(storage, 'setItem').mockImplementation(() => {
@@ -345,6 +361,46 @@ describe('web-preview app-state persistence', () => {
       historyCount: 0,
       variableMemory: [],
     });
+  });
+
+  it('removes legacy rows once while preserving future versions verbatim and outside retention', async () => {
+    const future = {
+      id: 'future-result-v2',
+      mode: 'calculate',
+      inputLatex: 'future()',
+      resultDocument: { version: 2, title: 'Future result', payload: ['kept', 'verbatim'] },
+      timestamp: '2026-07-12T00:00:00.000Z',
+    };
+    storage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
+      currentMode: 'calculate',
+      settings: DEFAULT_SETTINGS,
+      history: [
+        future,
+        { id: 'legacy', mode: 'calculate', inputLatex: '2+2', resultLatex: '4', timestamp: '2026-07-10T00:00:00.000Z' },
+        ...Array.from({ length: 82 }, (_, index) => createHistoryEntry(String(index))),
+      ],
+      variableMemory: [],
+      calculatorMemory: null,
+    }));
+
+    const loaded = await loadHistoryEntriesWithCleanup();
+    expect(loaded.removedCount).toBe(1);
+    expect(loaded.entries).toHaveLength(80);
+    expect(loaded.entries[0]?.id).toBe('2');
+
+    const stored = JSON.parse(storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}') as {
+      history: unknown[];
+    };
+    expect(stored.history).toContainEqual(future);
+    expect(stored.history).toHaveLength(81);
+    await expect(loadHistoryEntriesWithCleanup()).resolves.toMatchObject({ removedCount: 0 });
+
+    await clearHistoryEntries();
+    expect(await loadHistoryEntries()).toEqual([]);
+    const afterClear = JSON.parse(
+      storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}',
+    ) as { history: unknown[] };
+    expect(afterClear.history).toEqual([future]);
   });
 
   it('clears calculator memory without clearing settings or history', async () => {

@@ -23,7 +23,7 @@ import {
   clearCalculatorMemorySnapshot,
   isDesktopRuntime,
   loadCalculatorMemorySnapshot,
-  loadHistoryEntries,
+  loadHistoryEntriesWithCleanup,
   persistCalculatorMemorySnapshot,
   persistMode,
   persistSettings,
@@ -33,13 +33,16 @@ import {
   useAppPersistenceDirtySignal,
   useAppPersistenceRuntime,
 } from './useAppPersistenceRuntime';
+import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 vi.mock('../../lib/app-state/persistence', () => ({
+  HISTORY_CANONICAL_CLEANUP_NOTICE: (count: number) =>
+    `${count} incompatible History ${count === 1 ? 'record was' : 'records were'} removed.`,
   bootApp: vi.fn(),
   clearCalculatorMemorySnapshot: vi.fn(),
   isDesktopRuntime: vi.fn(),
   loadCalculatorMemorySnapshot: vi.fn(),
-  loadHistoryEntries: vi.fn(),
+  loadHistoryEntriesWithCleanup: vi.fn(),
   persistCalculatorMemorySnapshot: vi.fn(),
   persistMode: vi.fn(),
   persistSettings: vi.fn(),
@@ -49,13 +52,13 @@ vi.mock('../../lib/app-state/persistence', () => ({
 type Delegates = ReturnType<typeof createDelegates>;
 
 function createHistoryEntry(id = 'history.1'): HistoryEntry {
-  return {
+  return historyEntryFixture({
     id,
     inputLatex: '2+2',
     mode: 'calculate',
     resultLatex: '4',
     timestamp: '2026-06-15T00:00:00.000Z',
-  };
+  });
 }
 
 function createBootstrap(overrides: Partial<AppBootstrap> = {}): AppBootstrap {
@@ -166,7 +169,7 @@ describe('useAppPersistenceRuntime', () => {
     vi.clearAllMocks();
     vi.mocked(isDesktopRuntime).mockReturnValue(false);
     vi.mocked(bootApp).mockResolvedValue(null as unknown as AppBootstrap);
-    vi.mocked(loadHistoryEntries).mockResolvedValue([]);
+    vi.mocked(loadHistoryEntriesWithCleanup).mockResolvedValue({ entries: [], removedCount: 0 });
     vi.mocked(loadCalculatorMemorySnapshot).mockResolvedValue(null);
     vi.mocked(persistCalculatorMemorySnapshot).mockImplementation(async (snapshot) => snapshot);
     vi.mocked(persistMode).mockResolvedValue({
@@ -226,7 +229,10 @@ describe('useAppPersistenceRuntime', () => {
       currentMode: 'labs',
       variableMemory: [bootstrapVariable],
     }));
-    vi.mocked(loadHistoryEntries).mockResolvedValue(loadedHistory);
+    vi.mocked(loadHistoryEntriesWithCleanup).mockResolvedValue({
+      entries: loadedHistory,
+      removedCount: 0,
+    });
 
     const { hook } = renderAppPersistenceRuntime({ delegates, labsEnabled: false });
 
@@ -237,6 +243,22 @@ describe('useAppPersistenceRuntime', () => {
     expect(delegates.setSettings).toHaveBeenCalledWith(DEFAULT_SETTINGS);
     expect(delegates.restoreLoadedHistory).toHaveBeenCalledWith(loadedHistory);
     expect(hook.result.current.variableMemory).toEqual([bootstrapVariable]);
+  });
+
+  it('notifies once when incompatible persisted History rows are cleaned', async () => {
+    const delegates = createDelegates();
+    vi.mocked(bootApp).mockResolvedValue(createBootstrap());
+    vi.mocked(loadHistoryEntriesWithCleanup).mockResolvedValue({
+      entries: [createHistoryEntry()],
+      removedCount: 2,
+    });
+
+    const { hook } = renderAppPersistenceRuntime({ delegates });
+    await waitFor(() => expect(hook.result.current.hydrated).toBe(true));
+
+    expect(delegates.setClipboardNotice).toHaveBeenCalledWith(
+      '2 incompatible History records were removed.',
+    );
   });
 
   it('persists settings only after the hydrated settings baseline is established', async () => {

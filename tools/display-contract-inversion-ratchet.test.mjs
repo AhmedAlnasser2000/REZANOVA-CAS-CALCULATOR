@@ -461,11 +461,11 @@ describe('display contract inversion ratchet', () => {
     for (const lane of producerLanes) {
       assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
     }
-    assert.equal(report.summary.compatibilityProjectionCount, 1);
+    assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.ownerAssemblyCount, 47);
     assert.deepEqual(
       report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
-      [['src/app/runtime/historyDisplayEntry.ts', 'legacyHistoryOutcome']],
+      [],
     );
     assert.doesNotMatch(mergeSource, /DisplayOutcome|mergeDisplayOutcomes/u);
     assert.doesNotMatch(orchestratorSource, /DisplayOutcome/u);
@@ -512,10 +512,10 @@ describe('display contract inversion ratchet', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
     assert.equal(report.summary.producerCount, 642);
-    assert.equal(report.summary.consumerCount, 611);
-    assert.equal(report.summary.compatibilityProjectionCount, 1);
-    assert.equal(report.summary.legacyReadCount, 410);
-    assert.equal(report.summary.nativeDocumentCount, 176);
+    assert.equal(report.summary.consumerCount, 597);
+    assert.equal(report.summary.compatibilityProjectionCount, 0);
+    assert.equal(report.summary.legacyReadCount, 396);
+    assert.equal(report.summary.nativeDocumentCount, 177);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 4);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);
@@ -525,7 +525,7 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes['display-read-model']['legacy-read'], 1);
     assert.equal(report.lanes['history-replay']['legacy-read'], 2);
     assert.equal(report.lanes['surface-protocol']['legacy-read'], 4);
-    assert.equal(report.lanes.history['legacy-read'], 14);
+    assert.equal(report.lanes.history['legacy-read'], 0);
     assert.equal(report.lanes['app-runtime']['legacy-read'], 11);
   });
 

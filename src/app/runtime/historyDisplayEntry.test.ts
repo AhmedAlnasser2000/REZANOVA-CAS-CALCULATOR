@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayDetailSection, HistoryEntry, TableResponse } from '../../types/calculator';
 import { buildHistoryDisplayEntry, readHistoryResult } from './historyDisplayEntry';
+import { withCanonicalResult } from './canonical-outcome-test-helper';
 
 describe('buildHistoryDisplayEntry', () => {
   it('persists display detail sections so History replay can restore result cards', () => {
@@ -13,7 +14,7 @@ describe('buildHistoryDisplayEntry', () => {
     ];
 
     const entry = buildHistoryDisplayEntry({
-      outcome: {
+      outcome: withCanonicalResult({
         kind: 'success',
         title: '\\operatorname{coords}(A,b)',
         exactLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
@@ -26,7 +27,7 @@ describe('buildHistoryDisplayEntry', () => {
         actions: [{ kind: 'send', target: 'equation', latex: 'c=1' }],
         runtimeAdvisories: { stopReason: { kind: 'range-guard', source: 'stage' } },
         warnings: [],
-      },
+      }),
       inputLatex: '\\operatorname{coords}(A,b)',
       mode: 'matrix',
       context: {
@@ -48,8 +49,6 @@ describe('buildHistoryDisplayEntry', () => {
     expect(entry).toMatchObject({
       mode: 'matrix',
       inputLatex: '\\operatorname{coords}(A,b)',
-      resultLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
-      detailSections,
       resultDocument: {
         version: 1,
         outcomeKind: 'success',
@@ -61,6 +60,8 @@ describe('buildHistoryDisplayEntry', () => {
         warnings: [],
       },
     });
+    expect(entry).not.toHaveProperty('resultLatex');
+    expect(entry).not.toHaveProperty('detailSections');
     expect(entry).not.toHaveProperty('canonicalMath');
     expect(JSON.stringify(entry.resultDocument)).not.toMatch(/actions|runtimeAdvisories/u);
     expect(readHistoryResult(entry)).toMatchObject({
@@ -75,7 +76,7 @@ describe('buildHistoryDisplayEntry', () => {
 
   it('persists Equation route seeds for guided screen history replay', () => {
     const entry = buildHistoryDisplayEntry({
-      outcome: {
+      outcome: withCanonicalResult({
         kind: 'success',
         title: 'Polynomial 2x2',
         exactLatex: '\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\left(3,1\\right)\\right\\}',
@@ -88,7 +89,7 @@ describe('buildHistoryDisplayEntry', () => {
           ],
         },
         warnings: [],
-      },
+      }),
       inputLatex: 'x^{2}+y=10\\quad;\\quadx-y=2',
       mode: 'equation',
       context: {
@@ -113,13 +114,15 @@ describe('buildHistoryDisplayEntry', () => {
         screen: 'polynomialSystem2',
         polynomialSystem2Latex: ['x^{2}+y=10', 'x-y=2'],
       },
-      systemReadback: {
-        label: 'Solution pairs',
-        variablesLatex: ['x', 'y'],
-        rows: [
-          { valuesLatex: ['-4', '-6'] },
-          { valuesLatex: ['3', '1'] },
-        ],
+      resultDocument: {
+        systemReadback: {
+          label: 'Solution pairs',
+          variables: [{ canonicalLatex: 'x' }, { canonicalLatex: 'y' }],
+          rows: [
+            { values: [{ canonicalLatex: '-4' }, { canonicalLatex: '-6' }] },
+            { values: [{ canonicalLatex: '3' }, { canonicalLatex: '1' }] },
+          ],
+        },
       },
     });
   });
@@ -138,6 +141,20 @@ describe('buildHistoryDisplayEntry', () => {
         kind: 'success',
         title: 'Table',
         exactLatex: '\\operatorname{Table}(\\sqrt{x})',
+        canonicalResult: {
+          version: 1,
+          outcomeKind: 'success',
+          title: 'Table',
+          primaryMath: { canonicalLatex: '\\operatorname{Table}(\\sqrt{x})' },
+          warnings: [...tableResponse.warnings],
+          table: {
+            headers: [...tableResponse.headers],
+            rows: tableResponse.rows.map((row) => ({
+              x: { canonicalLatex: row.x },
+              primary: { canonicalLatex: row.primary },
+            })),
+          },
+        },
         warnings: [...tableResponse.warnings],
       },
       inputLatex: '\\sqrt{x}',
@@ -161,8 +178,8 @@ describe('buildHistoryDisplayEntry', () => {
     expect(entry).not.toHaveProperty('tableResponse');
   });
 
-  it('keeps legacy fields and records a durable reason when native structure is oversized', () => {
-    const entry = buildHistoryDisplayEntry({
+  it('fails closed when native canonical structure is oversized', () => {
+    expect(() => buildHistoryDisplayEntry({
       outcome: {
         kind: 'success',
         title: 'Large result',
@@ -184,26 +201,20 @@ describe('buildHistoryDisplayEntry', () => {
       geometryScreen: 'triangleArea',
       trigScreen: 'functions',
       statisticsScreen: 'descriptive',
-    });
-
-    expect(entry.resultLatex).toBe('x=1');
-    expect(entry.resultDocument).toBeUndefined();
-    expect(entry.resultDocumentOmissionReason).toBe('over-size');
+    })).toThrow('History success entries require native canonical result authority.');
   });
 
-  it('loads malformed structured extensions through the legacy read path', () => {
+  it('rejects malformed or future documents from the V1 read path', () => {
     const entry = {
       id: 'legacy-with-bad-extension',
       mode: 'calculate',
       inputLatex: '2+2',
-      resultLatex: '4',
       resultDocument: { version: 2, title: 'future' },
       timestamp: '2026-07-12T00:00:00.000Z',
     } as unknown as HistoryEntry;
 
-    expect(readHistoryResult(entry)).toMatchObject({
-      source: 'legacy',
-      outcome: { title: 'History', exactLatex: '4' },
-    });
+    expect(() => readHistoryResult(entry)).toThrow(
+      'History entry requires a valid canonical result document.',
+    );
   });
 });

@@ -14,21 +14,6 @@ const RICH_HISTORY_ENTRY: HistoryEntry & {
   id: 'history.browser-reload.1',
   mode: 'equation',
   inputLatex: 'x+y=3, x-y=-1',
-  resolvedInputLatex: 'x+y=3, x-y=-1',
-  resultLatex: '(x,y)=(1,2)',
-  exactSupplementLatex: ['x=1', 'y=2'],
-  approxText: '(1.0, 2.0)',
-  detailSections: [{
-    title: 'Verification',
-    lines: ['x+y=3'],
-    lineKinds: ['math'],
-    lineParts: [[{ kind: 'math', latex: 'x+y=3' }]],
-  }],
-  systemReadback: {
-    variablesLatex: ['x', 'y'],
-    rows: [{ valuesLatex: ['1', '2'] }],
-    source: 'linear-system',
-  },
   calculateScreen: 'limit',
   calculateSeed: { bodyLatex: '1/x', target: '0', direction: 'left', targetKind: 'finite' },
   calculusScreen: 'finiteLimit',
@@ -62,10 +47,7 @@ const RICH_HISTORY_ENTRY: HistoryEntry & {
   equationAnswerMode: 'exact',
   equationDomainIntent: 'complex',
   complexExactForm: 'rectangular',
-  answerDomain: 'complex',
-  solutionKind: 'exact-symbolic',
   numericInterval: { start: '-10', end: '10', subdivisions: 40 },
-  variableSubstitutions: [{ name: 'a', valueLatex: '2', numericValue: 2 }],
   historyLaunchOrder: 7,
   runtimeElapsedMs: 42,
   replaySnapshot: {
@@ -105,6 +87,16 @@ const RICH_HISTORY_ENTRY: HistoryEntry & {
     }],
     supplements: [{ canonicalLatex: 'x=1' }, { canonicalLatex: 'y=2' }],
     approximations: { primary: '(1.0, 2.0)' },
+    metadata: {
+      resolvedInput: { canonicalLatex: 'x+y=3, x-y=-1' },
+      answerDomain: 'complex',
+      solutionKind: 'exact-symbolic',
+      variableSubstitutions: [{
+        name: 'a',
+        value: { canonicalLatex: '2' },
+        numericValue: 2,
+      }],
+    },
     warnings: [],
   },
   timestamp: '2026-07-11T00:00:00.000Z',
@@ -198,7 +190,6 @@ test('renders stored canonical History math with current root and power preferen
     id: 'history.current-presentation.1',
     mode: 'calculate',
     inputLatex: String.raw`(\sqrt{x})^{1/3}`,
-    resultLatex: 'legacy-result-must-not-win',
     resultDocument: {
       version: 1,
       outcomeKind: 'success',
@@ -248,30 +239,67 @@ test('renders stored canonical History math with current root and power preferen
     .toHaveAttribute('aria-label', String.raw`\sqrt[6]{x}`);
 });
 
-test('keeps legacy-only History rows replayable without inventing structured content', async ({ page }) => {
-  const legacyEntry: HistoryEntry = {
+test('removes old and malformed rows while preserving future result versions verbatim', async ({ page }) => {
+  const legacyEntry = {
     id: 'history.legacy-only.1',
     mode: 'calculate',
     inputLatex: '2+3',
     resultLatex: '5',
     timestamp: '2026-07-12T00:00:00.000Z',
   };
-  await page.addInitScript(({ key, entry, settings }) => {
+  const malformedV1 = {
+    id: 'history.malformed-v1.1',
+    mode: 'calculate',
+    inputLatex: '3+3',
+    resultDocument: { version: 1, title: 'Missing canonical fields' },
+    timestamp: '2026-07-12T00:00:01.000Z',
+  };
+  const futureV2 = {
+    id: 'history.future-v2.1',
+    mode: 'calculate',
+    inputLatex: 'future()',
+    resultDocument: {
+      version: 2,
+      title: 'Future result',
+      payload: ['kept', 'verbatim'],
+    },
+    timestamp: '2026-07-12T00:00:02.000Z',
+  };
+  await page.addInitScript(({ key, legacy, malformed, future, settings }) => {
     window.localStorage.setItem(key, JSON.stringify({
       version: 1,
       currentMode: 'calculate',
       settings,
-      history: [entry],
+      history: [legacy, malformed, future],
       variableMemory: [],
     }));
-  }, { key: APP_STATE_KEY, entry: legacyEntry, settings: DEFAULT_SETTINGS });
+  }, {
+    key: APP_STATE_KEY,
+    legacy: legacyEntry,
+    malformed: malformedV1,
+    future: futureV2,
+    settings: DEFAULT_SETTINGS,
+  });
 
   await page.goto('/');
   await expect(page.getByTestId('main-editor')).toBeVisible();
+  await expect(page.getByTestId('display-status')).toHaveText(
+    '2 incompatible History records were removed.',
+  );
   await page.getByTestId('history-toggle').click();
-  await page.getByTestId('history-entry').click();
+  await expect(page.getByTestId('history-entry')).toHaveCount(0);
 
-  await expect(page.getByTestId('display-outcome-title')).toHaveText('History');
-  await expect(page.getByTestId('display-outcome-exact').locator('[data-raw-latex]'))
-    .toHaveAttribute('data-raw-latex', '5');
+  const persisted = await page.evaluate((key) => {
+    const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
+    return state.history ?? [];
+  }, APP_STATE_KEY);
+  expect(persisted).toEqual([futureV2]);
+
+  await page.reload();
+  await expect(page.getByTestId('main-editor')).toBeVisible();
+  const afterReload = await page.evaluate((key) => {
+    const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
+    return state.history ?? [];
+  }, APP_STATE_KEY);
+  expect(afterReload).toEqual([futureV2]);
 });
