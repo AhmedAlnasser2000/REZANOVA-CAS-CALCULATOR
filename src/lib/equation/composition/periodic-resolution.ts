@@ -15,6 +15,7 @@ import {
 import { buildTrigPeriodicTemplate } from '../../trigonometry/equations';
 import { dependsOnVariable, isNodeArray } from '../../symbolic-engine/patterns';
 import { normalizeAst } from '../../symbolic-engine/normalize';
+import { solveSummaryPlainText } from '../../display/result-detail-lines';
 import type {
   AngleUnit,
   EquationExecutionBudget,
@@ -664,17 +665,18 @@ function solveTrigPeriodicFamily(
   }
 
   if (normalizedTrig.kind === 'impossible') {
+    const normalizedSummaryText = solveSummaryPlainText(normalizedTrig);
     return {
       kind: 'guided',
       family: {
-        carrierLatex: normalizedTrig.reducedCarrierLatex ?? normalizedTrig.solveSummaryText,
+        carrierLatex: normalizedTrig.reducedCarrierLatex ?? normalizedSummaryText,
         parameterLatex: 'k\\in\\mathbb{Z}',
         branchesLatex: [],
         reducedCarrierLatex: normalizedTrig.reducedCarrierLatex,
         structuredStopReason: normalizedTrig.structuredStopReason,
       },
       error: normalizedTrig.error,
-      summaryText: normalizedTrig.solveSummaryText,
+      summaryText: normalizedSummaryText,
       solveBadges: normalizedTrig.solveBadges,
     };
   }
@@ -696,7 +698,7 @@ function solveTrigPeriodicFamily(
         reducedCarrierLatex,
       },
       error: 'No real solutions because this trig target lies outside the real range of the carrier.',
-      summaryText: summaryPrefix?.solveSummaryText ?? '',
+      summaryText: summaryPrefix ? solveSummaryPlainText(summaryPrefix) : '',
       solveBadges,
     };
   }
@@ -714,6 +716,8 @@ function solveTrigPeriodicFamily(
     return resolved;
   }
 
+  const summaryPrefixText = summaryPrefix ? solveSummaryPlainText(summaryPrefix) : '';
+
   return {
     ...resolved,
     family: {
@@ -722,12 +726,12 @@ function solveTrigPeriodicFamily(
     },
     summaryText: summaryPrefix
       ? resolved.kind === 'solved'
-        && summaryPrefix.solveSummaryText.startsWith('Sawtooth closure:')
+        && summaryPrefixText.startsWith('Sawtooth closure:')
         && isReducedCarrierExactFamily(resolved.family)
           ? `Exact reduced-carrier sawtooth family: ${boxLatex(normalizeAst(node))}=${target.latex} closes over ${resolved.family.carrierLatex}.`
           : resolved.summaryText
-            ? `${summaryPrefix.solveSummaryText} ${resolved.summaryText}`
-            : summaryPrefix.solveSummaryText
+            ? `${summaryPrefixText} ${resolved.summaryText}`
+            : summaryPrefixText
       : resolved.summaryText,
     solveBadges: dedupe([...(resolved.solveBadges ?? []), ...(solveBadges ?? [])]),
   };

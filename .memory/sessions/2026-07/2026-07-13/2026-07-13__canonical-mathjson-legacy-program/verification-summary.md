@@ -230,3 +230,18 @@
 - static: incremental TypeScript, accepted inversion baseline, focused lint, memory, file-size, seam, OOE/compartment boundaries, Rust check, and diff hygiene pass. The OOE validator now allows only the exact public result-contract facade used by read-only diagnostics; private result-contract targets remain closed
 - resource posture: no full unit, full UI, or 19-canary suite ran; preview and browser processes used for evidence were stopped
 - residual: `DISPLAY-DETAIL-LEGACY-CLOSEOUT1` removes duplicate detail/readback presentation transport while retaining canonical-derived `DisplayBlock` models
+
+## DISPLAY-DETAIL-LEGACY-CLOSEOUT1
+
+- kind: backend Display/detail authority closeout with focused UI and real-browser evidence
+- result: pass
+- contract: live Display details and solve summaries derive from validated canonical documents; `solveSummaryText`, legacy line inference, and compatibility detail recovery are removed
+- declaration: all 452 live detail producers declare typed math/text intent; the Display lane has zero registered legacy reads
+- inventory: 641 producers, 595 consumers, 177 native documents, 47 owner assemblies, zero compatibility projections, 393 registered legacy reads outside Display, and zero violations
+- printer: 527 production result paths contain 289 migrated producers, 225 forwarders, and zero compatibility fallbacks
+- regression: 347 affected backend tests, 73 Display-district tests, 14 focused UI tests, 60 app-logic tests, 142 app-runtime UI tests, and 76 result-contract tests pass; the contract corpus includes all 43 golden and 100 replay executions
+- boundary repairs: canonical Calculate advisories omit absent fields instead of transporting `undefined`; inline Matrix profile leaves prove against the producer-owned exact matrix node, and Compute Engine comparison exceptions fail closed
+- visual: production Chromium inspection covers Equation composition success, Equation range-stop error, Matrix system details, and Vector Gram-Schmidt details; answer/error cards, facts, typed detail math, prose, and overflow remain readable
+- static: incremental TypeScript, production build, focused lint, file-size, inversion, compartments, and diff hygiene pass
+- resource posture: the user authorized one broader app-runtime pass; it used at most four workers with no concurrent heavy gate. After the two failures were isolated, only the invalidated runtime UI suite was rerun. No full unit or 19-canary suite ran
+- residual: test-only Display fixture bridges remain isolated outside production inventory and are removed with `DisplayOutcome`, compatibility projections, and legacy aliases in `RESULT-COMPATIBILITY-REMOVAL1`

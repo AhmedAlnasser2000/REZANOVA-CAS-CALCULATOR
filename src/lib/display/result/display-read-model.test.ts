@@ -70,7 +70,7 @@ describe('display canonical read model', () => {
     });
   });
 
-  it('projects typed legacy outcomes once and keeps cancellation cards renderable', () => {
+  it('rejects compatibility-only outcomes and keeps canonical cancellation cards renderable', () => {
     const legacy = {
       kind: 'success' as const,
       title: 'Legacy typed result',
@@ -78,22 +78,24 @@ describe('display canonical read model', () => {
       detailSections: [{ title: 'Method', lineKind: 'text' as const, lines: ['Exact route'] }],
       warnings: [],
     };
-    expect(displayResultReadModelFromOutcome(legacy)).toMatchObject({
-      authority: 'compatibility',
-      primaryLatex: 'y=2',
-      detailSections: [{ title: 'Method', lineKind: 'text', lines: ['Exact route'] }],
-    });
-    expect(buildDisplayBlocks(legacy).find((block) => block.id === 'answer'))
-      .toMatchObject({ latex: 'y=2' });
+    expect(() => displayResultReadModelFromOutcome(legacy))
+      .toThrow('missing-document');
 
+    const cancelledDocument = buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'error',
+      title: 'Stopped',
+      error: 'Calculation stopped.',
+      warnings: [],
+    });
     const cancelled = {
       kind: 'error' as const,
       title: 'Stopped',
       error: 'Calculation stopped.',
       warnings: [],
+      canonicalResult: cancelledDocument,
     };
     expect(displayResultReadModelFromOutcome(cancelled)).toMatchObject({
-      authority: 'compatibility',
+      authority: 'native',
       outcomeKind: 'error',
       errorText: 'Calculation stopped.',
     });

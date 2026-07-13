@@ -627,7 +627,6 @@ export const DISPLAY_OUTCOME_LEGACY_PROPERTIES = new Set([
   'solutionKind',
   'solveBadges',
   'solveSummaryParts',
-  'solveSummaryText',
   'sourceMode',
   'substitutionDiagnostics',
   'systemReadback',

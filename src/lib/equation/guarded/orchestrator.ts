@@ -58,7 +58,6 @@ function rangeGuardOutcome(
     [],
     ['Range Guard'],
     {
-      solveSummaryText: range.summaryText,
       solveSummaryParts: range.summaryParts,
     },
   );

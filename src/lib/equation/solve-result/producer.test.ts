@@ -76,7 +76,7 @@ describe('Equation result producer', () => {
     });
   });
 
-  it('fails closed on mismatched MathJSON or undeclared summary intent', () => {
+  it('fails closed on mismatched MathJSON and stores typed summaries', () => {
     expect(() => createEquationResultOutcome({
       kind: 'success',
       title: 'Solve',
@@ -88,12 +88,16 @@ describe('Equation result producer', () => {
       },
       warnings: [],
     })).toThrow('must match');
-    expect(() => createEquationResultOutcome({
+    const summarized = createEquationResultOutcome({
       kind: 'success',
       title: 'Solve',
       exactLatex: 'x=1',
-      solveSummaryText: 'x=1',
+      solveSummaryParts: [[{ kind: 'math', latex: 'x=1' }]],
       warnings: [],
-    })).toThrow('typed producer parts');
+    });
+    expect(summarized.canonicalResult?.summaries?.solve?.[0]?.[0]).toMatchObject({
+      kind: 'math',
+      math: { canonicalLatex: 'x=1' },
+    });
   });
 });

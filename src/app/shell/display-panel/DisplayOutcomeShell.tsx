@@ -9,6 +9,7 @@ import {
 } from '../../runtime/formula-viewer-artifacts';
 import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import type { DisplayBlock } from '../../../lib/display/result/display-blocks';
+import { displaySolveSummaryPartsFromOutcome } from '../../../lib/display/result/display-read-model';
 import { solveSummaryDetailLines } from '../../../lib/display/result-detail-lines';
 import { DetailLineContent } from './DetailLineContent';
 import { ResultSummaryBlock, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
@@ -80,6 +81,7 @@ export function DisplayOutcomeShell({
   visibleDisplayBlockIds,
 }: DisplayOutcomeShellProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
+  const solveSummaryParts = displaySolveSummaryPartsFromOutcome(displayOutcome);
   const canOpenFormulaViewer = typeof onOpenFormulaViewer === 'function';
   const suppressResolvedInputReadback =
     isCalculusMode(currentMode)
@@ -371,17 +373,14 @@ export function DisplayOutcomeShell({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && (displayOutcome.solveSummaryText || displayOutcome.solveSummaryParts?.length) ? (
+      && solveSummaryParts?.length ? (
         <ResultSummaryBlock
           collapsible
           defaultCollapsed
           label="Solve Note"
           testId="display-outcome-solve-summary"
         >
-          {solveSummaryDetailLines(
-            displayOutcome.solveSummaryText ?? '',
-            displayOutcome.solveSummaryParts,
-          ).map(({ line, parts }, index: number) => (
+          {solveSummaryDetailLines(solveSummaryParts).map(({ line, parts }, index: number) => (
             <div
               key={`${line}-${index}`}
               className="result-approx result-summary-text result-detail-line"

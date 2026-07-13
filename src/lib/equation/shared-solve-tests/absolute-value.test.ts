@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { baseEquationSolveRequest as request } from '../test-support/equation-request';
 import { runSharedEquationSolve } from '../shared-solve';
+import { solveSummaryPlainText } from '../../display/result-detail-lines';
 
 describe('runSharedEquationSolve absolute-value routing', () => {
   it('solves bounded absolute-value follow-ons produced by exact square-root squares', () => {
@@ -403,7 +404,7 @@ describe('runSharedEquationSolve absolute-value routing', () => {
     }
     expect(logarithmic.exactLatex).toContain('\\exponentialE^{2}-1');
     expect(logarithmic.exactLatex).toContain('1-\\exponentialE^{2}');
-    expect(logarithmic.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
+    expect(solveSummaryPlainText(logarithmic)).toBe('Solved a bounded outer non-periodic absolute-value family');
     expect(logarithmic.detailSections?.[0]?.title).toBe('Absolute-Value Reduction');
     expect(logarithmic.detailSections?.[0]?.lines.join(' ')).toContain('t = |x|');
 
@@ -420,7 +421,7 @@ describe('runSharedEquationSolve absolute-value routing', () => {
     }
     expect(stacked.exactLatex).toContain('\\exponentialE^{4}');
     expect(stacked.exactLatex).toContain('2-\\exponentialE^{4}');
-    expect(stacked.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
+    expect(solveSummaryPlainText(stacked)).toBe('Solved a bounded outer non-periodic absolute-value family');
     expect(stacked.detailSections?.[0]?.title).toBe('Absolute-Value Reduction');
   });
 
@@ -450,7 +451,7 @@ describe('runSharedEquationSolve absolute-value routing', () => {
     expect(composition.exactLatex ?? '').toContain('x^3+x');
     expect(composition.solveBadges).toContain('Periodic Family');
     expect(composition.solveBadges).toContain('Composition Branch');
-    expect(composition.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
+    expect(solveSummaryPlainText(composition)).toBe('Solved a bounded outer non-periodic absolute-value family');
     expect(composition.detailSections?.[0]?.title).toBe('Absolute-Value Reduction');
     expect(composition.detailSections?.[1]?.title).toBe('Generated Branches');
   });
@@ -472,7 +473,7 @@ describe('runSharedEquationSolve absolute-value routing', () => {
       throw new Error('Expected a bounded-depth error outcome');
     }
     expect(depthLimited.error).toContain('more than one extra bounded non-periodic outer layer');
-    expect(depthLimited.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
+    expect(solveSummaryPlainText(depthLimited)).toBe('Solved a bounded outer non-periodic absolute-value family');
     expect(depthLimited.detailSections?.some((section) => section.title === 'Exact Closure Boundary')).toBe(true);
 
     expect(unresolvedComposition.kind).toBe('error');
@@ -481,7 +482,7 @@ describe('runSharedEquationSolve absolute-value routing', () => {
     }
     expect(unresolvedComposition.error).toContain('bounded non-periodic outer layer');
     expect(unresolvedComposition.solveBadges).toContain('Periodic Family');
-    expect(unresolvedComposition.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
+    expect(solveSummaryPlainText(unresolvedComposition)).toBe('Solved a bounded outer non-periodic absolute-value family');
     expect(unresolvedComposition.detailSections?.some((section) => section.title === 'Exact Closure Boundary')).toBe(true);
   });
 });

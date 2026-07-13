@@ -8,6 +8,7 @@ import {
   resolveDetailLinePresentation,
   solveSummaryDetailLines,
   solveSummaryFromParts,
+  solveSummaryPlainText,
   textDetailSection,
   textPart,
 } from './result-detail-lines';
@@ -28,17 +29,14 @@ describe('detail segment contract', () => {
       .toBe('explicit-text');
   });
 
-  it('derives compatibility solve-summary text from canonical typed parts', () => {
+  it('derives readable solve-summary text only from canonical typed parts', () => {
     const summary = solveSummaryFromParts([
       [textPart('Reduced carrier: '), mathPart('u=x^2')],
       [textPart('Generated equation: '), mathPart('u=1')],
     ]);
 
-    expect(summary.solveSummaryText).toBe('Reduced carrier: u=x^2; Generated equation: u=1');
-    expect(solveSummaryDetailLines(
-      summary.solveSummaryText,
-      summary.solveSummaryParts,
-    )).toEqual([
+    expect(solveSummaryPlainText(summary)).toBe('Reduced carrier: u=x^2; Generated equation: u=1');
+    expect(solveSummaryDetailLines(summary.solveSummaryParts)).toEqual([
       { line: 'Reduced carrier: u=x^2', parts: [textPart('Reduced carrier: '), mathPart('u=x^2')] },
       { line: 'Generated equation: u=1', parts: [textPart('Generated equation: '), mathPart('u=1')] },
     ]);
@@ -51,11 +49,9 @@ describe('detail segment contract', () => {
     ]);
 
     expect(prose).toEqual({
-      solveSummaryText: 'Validated one exact branch.',
       solveSummaryParts: [[textPart('Validated one exact branch.')]],
     });
     expect(mergeSolveSummaries(prose, undefined, mixed)).toEqual({
-      solveSummaryText: 'Validated one exact branch.; Generated equation: x=1',
       solveSummaryParts: [
         [textPart('Validated one exact branch.')],
         [textPart('Generated equation: '), mathPart('x=1')],
@@ -63,7 +59,7 @@ describe('detail segment contract', () => {
     });
   });
 
-  it('resolves typed parts, explicit kind, and legacy inference in that order', () => {
+  it('resolves typed parts and explicit kinds without text inference', () => {
     expect(resolveDetailLinePresentation({
       line: 'Generated equation: x=1',
       lineKind: 'math',
@@ -83,11 +79,6 @@ describe('detail segment contract', () => {
 
     expect(resolveDetailLinePresentation({
       line: 'Generated equation: x=1',
-    })).toMatchObject({ source: 'legacy-inference', kind: 'parts' });
-
-    expect(resolveDetailLinePresentation({
-      line: 'Generated equation: x=1',
-      allowLegacyInference: false,
     })).toEqual({ source: 'undeclared', kind: 'text' });
   });
 });

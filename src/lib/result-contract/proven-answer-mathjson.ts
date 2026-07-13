@@ -182,11 +182,21 @@ export function proveAnswerMathJson(input: {
     return failure('canonical-latex-invalid', 'Compute Engine rejected the canonical LaTeX proof value.');
   }
 
-  const structurallySame = answerExpression.isSame(canonicalExpression);
-  const directlyEqual = structurallySame || answerExpression.isEqual(canonicalExpression) === true;
-  const simplifiedSame = directlyEqual
-    ? false
-    : answerExpression.simplify().latex === canonicalExpression.simplify().latex;
+  let structurallySame: boolean;
+  let directlyEqual: boolean;
+  let simplifiedSame: boolean;
+  try {
+    structurallySame = answerExpression.isSame(canonicalExpression);
+    directlyEqual = structurallySame || answerExpression.isEqual(canonicalExpression) === true;
+    simplifiedSame = directlyEqual
+      ? false
+      : answerExpression.simplify().latex === canonicalExpression.simplify().latex;
+  } catch {
+    return failure(
+      'compute-engine-invalid',
+      'Compute Engine could not compare the answer MathJSON with canonical LaTeX.',
+    );
+  }
   const mathematicallyEqual = directlyEqual || simplifiedSame;
   if (!mathematicallyEqual) {
     return failure(

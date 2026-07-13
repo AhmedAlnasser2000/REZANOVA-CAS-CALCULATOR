@@ -20,7 +20,7 @@ describe('DetailLineContent', () => {
     expect(container.querySelector('[data-raw-latex]')).toHaveAttribute('data-raw-latex', 'x=2');
   });
 
-  it('lets explicit prose block legacy math inference', () => {
+  it('renders explicitly declared prose as prose', () => {
     const { container } = render(
       <DetailLineContent
         line="Generated equation: x=1"
@@ -33,7 +33,7 @@ describe('DetailLineContent', () => {
     expect(container.querySelector('[data-raw-latex]')).toBeNull();
   });
 
-  it('keeps inference only as an undeclared compatibility fallback', () => {
+  it('renders undeclared lines as prose without inference', () => {
     const { container } = render(
       <DetailLineContent
         line="Generated equation: x=1"
@@ -41,7 +41,7 @@ describe('DetailLineContent', () => {
       />,
     );
 
-    expect(container).toHaveTextContent('Generated equation:');
-    expect(container.querySelector('[data-raw-latex]')).toHaveAttribute('data-raw-latex', 'x=1');
+    expect(container).toHaveTextContent('Generated equation: x = 1');
+    expect(container.querySelector('[data-raw-latex]')).toBeNull();
   });
 });

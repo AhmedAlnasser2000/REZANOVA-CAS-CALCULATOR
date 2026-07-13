@@ -1,4 +1,5 @@
 import type { AngleUnit, ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, NumericSolveInterval } from '../../types/calculator';
+import { solveSummaryPlainText } from '../display/result-detail-lines';
 import { equationToZeroFormLatex, evaluateLatexAtTarget } from './domain-guards';
 import {
   buildEquationNumericSegmentationPlan,
@@ -515,7 +516,7 @@ function hasSturmCertifiedRoots(outcome: DisplayOutcome) {
   if (outcome.kind === 'prompt') {
     return false;
   }
-  const summary = outcome.solveSummaryText ?? '';
+  const summary = solveSummaryPlainText(outcome);
   const certificationLines = outcomeDetailLines(outcome, 'Real Root Certification').join(' ');
   return /with Sturm certification/u.test(summary)
     || /All real polynomial roots certified/u.test(certificationLines);

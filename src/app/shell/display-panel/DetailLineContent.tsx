@@ -13,7 +13,6 @@ type DetailLineContentProps = {
   lineKind?: DisplayDetailLineKind;
   parts?: readonly DisplayDetailLinePart[];
   symbolicDisplayPrefs: SymbolicDisplayPrefs | undefined;
-  allowLegacyInference?: boolean;
   renderMath?: (latex: string) => ReactNode;
 };
 
@@ -22,14 +21,12 @@ export function DetailLineContent({
   lineKind,
   parts,
   symbolicDisplayPrefs,
-  allowLegacyInference = true,
   renderMath,
 }: DetailLineContentProps) {
   const presentation = resolveDetailLinePresentation({
     line,
     lineKind,
     parts,
-    allowLegacyInference,
   });
 
   if (presentation.kind === 'math') {

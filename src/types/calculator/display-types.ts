@@ -25,7 +25,6 @@ export type DisplayDetailLinePart =
   | { kind: 'math'; latex: string };
 
 export type DisplaySolveSummary = {
-  solveSummaryText: string;
   solveSummaryParts: DisplayDetailLinePart[][];
 };
 
@@ -142,9 +141,6 @@ export type DisplayOutcome =
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];
-      /** Compatibility projection for older consumers and stored History. */
-      solveSummaryText?: string;
-      /** Canonical live-producer shape for mixed summary text and canonical LaTeX. */
       solveSummaryParts?: DisplayDetailLinePart[][];
       transformBadges?: TransformBadge[];
       transformSummaryText?: string;
@@ -178,9 +174,6 @@ export type DisplayOutcome =
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];
-      /** Compatibility projection for older consumers and stored History. */
-      solveSummaryText?: string;
-      /** Canonical live-producer shape for mixed summary text and canonical LaTeX. */
       solveSummaryParts?: DisplayDetailLinePart[][];
       transformBadges?: TransformBadge[];
       transformSummaryText?: string;

@@ -30,7 +30,7 @@ describe('Equation stage result carrier', () => {
     expect(readEquationStageResultCarrier(cloned)).toMatchObject({
       kind: 'success',
       exactLatex: 'x=1',
-      solveSummaryText: 'Solved through a guarded branch.',
+      solveSummaryParts: [[{ kind: 'text', text: 'Solved through a guarded branch.' }]],
     });
   });
 

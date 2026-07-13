@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { baseEquationSolveRequest as request } from '../test-support/equation-request';
 import { runSharedEquationSolve } from '../shared-solve';
+import { solveSummaryPlainText } from '../../display/result-detail-lines';
 
 describe('runSharedEquationSolve transforms', () => {
   it('solves bounded trig equations through the shared trig backend', () => {
@@ -46,7 +47,7 @@ describe('runSharedEquationSolve transforms', () => {
       throw new Error('Expected a success outcome');
     }
     expect(result.solveBadges).toContain('Trig Rewrite');
-    expect(result.solveSummaryText).toContain('double-angle');
+    expect(solveSummaryPlainText(result)).toContain('double-angle');
   });
 
   it('solves bounded trig-square equations through split branches', () => {

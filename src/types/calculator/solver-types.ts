@@ -69,7 +69,6 @@ export type RangeImpossibilityResult =
   | {
       kind: 'impossible';
       error: string;
-      summaryText: string;
       summaryParts: Array<Array<
         | { kind: 'text'; text: string }
         | { kind: 'math'; latex: string }

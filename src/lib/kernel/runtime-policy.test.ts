@@ -99,7 +99,7 @@ describe('runtime-policy', () => {
   it('classifies calculate unsupported errors without widening controller behavior', () => {
     expect(classifyCalculateRuntimeAdvisories({
       error: 'Expression action is not supported by the shared runtime host.',
-    })).toEqual({
+    })).toStrictEqual({
       stopReason: {
         kind: 'unsupported-family',
         source: 'host',

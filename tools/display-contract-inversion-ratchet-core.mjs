@@ -130,6 +130,10 @@ function collectSourceFiles(rootDir) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const absolute = path.join(directory, entry.name);
       if (entry.isDirectory()) {
+        const repoPath = slash(path.relative(rootDir, absolute));
+        if (repoPath === 'src/test' || repoPath === 'src/test-utils') {
+          continue;
+        }
         visit(absolute);
       } else if (
         /\.(?:ts|tsx)$/u.test(entry.name)

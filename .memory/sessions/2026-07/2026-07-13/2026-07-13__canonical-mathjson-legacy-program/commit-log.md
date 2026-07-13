@@ -140,3 +140,11 @@
 - scope: canonical-only current History rows, bounded MathJSON stripping fallback, atomic browser/Tauri cleanup, opaque future-version preservation, focused native/browser evidence, and durable records
 - push: not authorized
 - excluded: Display/detail compatibility removal reserved for the next gate, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`
+
+## DISPLAY-DETAIL-LEGACY-CLOSEOUT1
+
+- commit_message: `DISPLAY-DETAIL-LEGACY-CLOSEOUT1`
+- status: verified; covered by standing commit approval
+- scope: canonical-derived Display details and summaries, removal of legacy inference/readback aliases, strict live detail intent, clone-safe Calculate advisories, honest inline Matrix profile MathJSON, broad runtime confirmation, Chromium evidence, and durable records
+- push: not authorized
+- excluded: result-envelope compatibility removal reserved for the next gate, concurrent Notebook source/styles/tests, ignored `.task_tmp/` evidence, and untracked `test-results/`

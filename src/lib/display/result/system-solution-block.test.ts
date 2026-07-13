@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDisplayBlocks } from './display-blocks';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
 
 describe('system solution display blocks', () => {
   it('can hide exact answer readback in decimal display style when an approximation exists', () => {

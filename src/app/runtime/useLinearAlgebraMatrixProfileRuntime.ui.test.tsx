@@ -56,10 +56,12 @@ describe('useLinearAlgebraTableShellRuntime Matrix linear-map profile', () => {
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
     const outcome = commitOutcome.mock.calls.at(-1)?.[0] as DisplayOutcome;
+    if (outcome.kind === 'error') {
+      throw new Error(outcome.error);
+    }
     expect(outcome).toMatchObject({
       kind: 'success',
       sourceMode: 'matrix',
-      approxText: undefined,
       answerRows: {
         rows: [
           { latex: expect.stringContaining('\\mathbb{R}^{2}\\to\\mathbb{R}^{2}') },

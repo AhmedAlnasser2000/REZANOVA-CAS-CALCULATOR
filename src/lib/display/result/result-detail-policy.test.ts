@@ -4,7 +4,6 @@ import type { DisplayDetailSection } from '../../../types/calculator';
 import {
   detailLineKindAt,
   detailLinePartsAt,
-  inferDetailLinePartsFromText,
   mathPart,
   textPart,
 } from './result-detail-lines';
@@ -128,31 +127,14 @@ describe('displayDetailSectionsForPolicy', () => {
     expect(detailed?.[0]?.lines[16]).toContain('numeric diagnostics cap');
   });
 
-  it('infers mixed math fragments for known Equation route prose lines', () => {
-    const parts = inferDetailLinePartsFromText(
-      'Composition branch: \\cos(|3x^2+1|) stays in [-1, 1], so \\tan(\\cos(|3x^2+1|))=1 reduces to \\cos(|3x^2+1|)=\\frac{\\pi}{4}.',
-    );
-
-    expect(parts).toEqual([
-      textPart('Composition branch: '),
-      mathPart('\\cos(|3x^2+1|)'),
-      textPart(' stays in '),
-      mathPart('[-1, 1]'),
-      textPart(', so '),
-      mathPart('\\tan(\\cos(|3x^2+1|))=1'),
-      textPart(' reduces to '),
-      mathPart('\\cos(|3x^2+1|)=\\frac{\\pi}{4}'),
-      textPart('.'),
-    ]);
-  });
-
-  it('splits crowded solve notes at solver narrative boundaries', () => {
+  it('splits declared prose solve notes without inferring math from text', () => {
     const [section] = displayDetailSectionsForPolicy([
       {
         title: 'Solve Note',
         lines: [
           'Composition branch: sin(ln(x)+1) stays in [-1, 1], so tan(sin(ln(x)+1))=1 reduces to sin(ln(x)+1)=\\frac{\\pi}{4}.; Periodic family: sin(ln(x)+1)=\\frac{\\pi}{4} yields x\\in\\left\\{e^{2\\pi k-1}\\right\\}.',
         ],
+        lineKind: 'text',
       },
     ], { detailedFactsEnabled: false }) ?? [];
 
@@ -160,7 +142,9 @@ describe('displayDetailSectionsForPolicy', () => {
       'Composition branch: sin(ln(x)+1) stays in [-1, 1], so tan(sin(ln(x)+1))=1 reduces to sin(ln(x)+1)=\\frac{\\pi}{4}.',
       'Periodic family: sin(ln(x)+1)=\\frac{\\pi}{4} yields x\\in\\left\\{e^{2\\pi k-1}\\right\\}.',
     ]);
-    expect(section?.lineParts?.[0].some((part) => part.kind === 'math')).toBe(true);
+    expect(section?.lineParts?.[0]).toEqual([
+      textPart('Composition branch: sin(ln(x)+1) stays in [-1, 1], so tan(sin(ln(x)+1))=1 reduces to sin(ln(x)+1)=\\frac{\\pi}{4}.'),
+    ]);
     expect(section?.lineParts?.[1]).toEqual([
       textPart('Periodic family: sin(ln(x)+1)=\\frac{\\pi}{4} yields x\\in\\left\\{e^{2\\pi k-1}\\right\\}.'),
     ]);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator/display-types';
-import { buildDisplayBlocks } from './display-blocks';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
 
 describe('display answer rows adapter', () => {
   it('renders structured answer rows while preserving exact latex as raw content', () => {

@@ -83,7 +83,7 @@ export function calculateIndefiniteMathJsonLeaves(input: {
   variable: string;
   evaluatedNode: unknown;
   evaluatedLatex: string;
-  exactLatex: string;
+  canonicalLatex: string;
 }): CalculusOwnedMathJsonLeaf[] {
   const evaluatedAnswer = input.evaluatedLatex.includes('\\int')
     ? undefined
@@ -95,7 +95,7 @@ export function calculateIndefiniteMathJsonLeaves(input: {
   const constant = input.variable === 'C' ? 'K' : 'C';
   return [
     {
-      canonicalLatex: input.exactLatex,
+      canonicalLatex: input.canonicalLatex,
       mathJson: add(antiderivative, constant),
       source: 'calculate.calculus:verified-native-antiderivative',
     },

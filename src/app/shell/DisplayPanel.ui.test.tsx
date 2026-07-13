@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { DisplayPanel } from './DisplayPanel';
+import { CanonicalDisplayPanel as DisplayPanel } from '../../test-utils/CanonicalDisplayPanel';
 import { expectMathStaticLatex } from '../../test/renderAppMain';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
 import { getEquationAlgebraActionLabel } from '../../lib/modes/equation';
@@ -97,7 +97,6 @@ describe('DisplayPanel result shell', () => {
           title: 'Symbolic',
           warnings: [],
           exactLatex: 'x=1',
-          solveSummaryText: 'Composition branch: reduced carrier; Periodic family: generated branches.',
           solveSummaryParts: [[{ kind: 'text', text: 'Composition branch: reduced carrier; Periodic family: generated branches.' }]],
         }}
         getPeriodicStopReasonText={(reason: string) => reason}
@@ -111,62 +110,6 @@ describe('DisplayPanel result shell', () => {
     expect(solveNote.tagName.toLowerCase()).toBe('details');
     expect(solveNote.open).toBe(false);
     expect(within(solveNote).getByText('Solve Note')).toBeInTheDocument();
-  });
-
-  it('renders math-marked result detail lines through the shared math display path', async () => {
-    render(
-      <DisplayPanel
-        activeResultCopyText={() => 'x=\\sqrt{2}'}
-        activeResultEditorLatex={() => ''}
-        copyText={() => undefined}
-        currentMode="equation"
-        displayHeaderLabel="Equation"
-        displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
-          title: 'Symbolic',
-          warnings: [],
-          exactLatex: 'x=\\sqrt{2}',
-          detailSections: [
-            {
-              title: 'Expanded Branches',
-              lines: ['x=\\sqrt{2}', 'x=-\\sqrt{2}'],
-              lineKind: 'math',
-            },
-            {
-              title: 'Composition Branch',
-              lines: [
-                'Composition branch: \\cos(|3x^2+1|) stays in [-1, 1], so \\tan(\\cos(|3x^2+1|))=1 reduces to \\cos(|3x^2+1|)=\\frac{\\pi}{4}.',
-              ],
-            },
-            {
-              title: 'Solve Note',
-              lines: ['Use Exact mode with one variable and exact numeric constants.'],
-            },
-          ],
-        }}
-        getPeriodicStopReasonText={(reason: string) => reason}
-        hydrated
-        settings={{
-          ...DEFAULT_SETTINGS,
-          detailedFactsEnabled: true,
-          outputStyle: 'exact',
-        }}
-        symbolicDisplayPrefs={DEFAULT_SETTINGS}
-      />,
-    );
-
-    await waitForDisplayQueueToSettle();
-    const details = screen.getByTestId('display-outcome-detail-sections');
-    expect(details).toHaveTextContent('Composition Branch');
-    const mathRawLatex = [...details.querySelectorAll('[data-raw-latex]')]
-      .map((node) => node.getAttribute('data-raw-latex') ?? '');
-    expect(mathRawLatex).toContain('x=\\sqrt{2}');
-    expect(mathRawLatex).toContain('x=-\\sqrt{2}');
-    expect(mathRawLatex.some((latex) => latex.includes('\\cos(|3x^2+1|)'))).toBe(true);
-    expect(mathRawLatex.some((latex) => latex.includes('\\tan(\\cos(|3x^2+1|))=1'))).toBe(true);
-    expect(details.querySelector('[data-raw-latex^="Composition branch:"]'))
-      .toBeNull();
   });
 
   it('keeps oversized result blocks compact until full rendering is requested', async () => {

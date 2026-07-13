@@ -99,6 +99,18 @@ describe('producer-proven answer MathJSON', () => {
     })).toMatchObject({ ok: false, failure: { reason: 'private-operator' } });
   });
 
+  it('fails closed when Compute Engine cannot compare a boxed candidate', () => {
+    const inlineMatrixLatex = String.raw`\begin{bmatrix}1&1\\2&2\end{bmatrix}`;
+    expect(proveAnswerMathJson({
+      canonicalLatex: String.raw`\det(${inlineMatrixLatex})=0`,
+      candidate: candidate([
+        'Equal',
+        ['Determinant', inlineMatrixLatex],
+        0,
+      ]),
+    })).toMatchObject({ ok: false, failure: { reason: 'compute-engine-invalid' } });
+  });
+
   it('preserves existing validation limits and rejects malformed values', () => {
     const cyclic: unknown[] = ['Add', 1];
     cyclic.push(cyclic);

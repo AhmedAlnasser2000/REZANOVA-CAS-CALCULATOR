@@ -93,7 +93,6 @@ function compareAgainstConstant(
   return {
     kind: 'impossible',
     error: rangeError(expression.reason),
-    summaryText: summary.solveSummaryText,
     summaryParts: summary.solveSummaryParts,
     badge: 'Range Guard',
     reason: expression.reason,
@@ -174,7 +173,6 @@ export function detectRealRangeImpossibility(
     return {
       kind: 'impossible',
       error: 'No real solutions because the two sides have disjoint real ranges.',
-      summaryText: summary.solveSummaryText,
       summaryParts: summary.solveSummaryParts,
       badge: 'Range Guard',
       reason: leftProof.reason === 'bounded-sum' || rightProof.reason === 'bounded-sum'

@@ -187,12 +187,6 @@ function projectSolveSummary(
   if (outcome.solveSummaryParts?.length) {
     return outcome.solveSummaryParts.map((line) => line.map(projectDetailPart));
   }
-  if (outcome.solveSummaryText?.trim()) {
-    return {
-      reason: 'undeclared-summary',
-      message: 'Solve summary text has no typed math/prose parts.',
-    };
-  }
   return undefined;
 }
 
@@ -456,9 +450,6 @@ export function projectCanonicalResultToDisplayOutcome(
     ...(solveSummaryParts
       ? {
           solveSummaryParts,
-          solveSummaryText: solveSummaryParts
-            .map((line) => line.map((part) => part.kind === 'math' ? part.latex : part.text).join(''))
-            .join('; '),
         }
       : {}),
     ...(metadata?.transformBadges ? { transformBadges: [...metadata.transformBadges] } : {}),

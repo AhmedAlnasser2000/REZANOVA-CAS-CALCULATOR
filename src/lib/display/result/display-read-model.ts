@@ -13,11 +13,11 @@ import type {
   ResultOrigin,
   SolutionKind,
 } from '../../../types/calculator';
-import { resolveLegacyCanonicalResultForConsumer } from '../../result-contract';
+import { resolveCanonicalResultForConsumer } from '../../result-contract';
 import { trustSummaryForCanonicalResult } from './display-trust-summary';
 
 export type DisplayResultReadModel = {
-  authority: 'native' | 'compatibility';
+  authority: 'native';
   outcomeKind: 'success' | 'error';
   title: string;
   errorText?: string;
@@ -40,6 +40,19 @@ function displayDetailPart(part: CanonicalResultDetailPartV1): DisplayDetailLine
   return part.kind === 'math'
     ? { kind: 'math', latex: part.math.canonicalLatex }
     : { kind: 'text', text: part.text };
+}
+
+export function displaySolveSummaryPartsFromOutcome(
+  outcome: DisplayOutcome | null | undefined,
+): DisplayDetailLinePart[][] | undefined {
+  if (!outcome || outcome.kind === 'prompt') return undefined;
+  const projected = resolveCanonicalResultForConsumer(outcome);
+  if (!projected.ok) {
+    throw new Error(
+      `Display solve-summary projection failed: ${projected.failure.reason}: ${projected.failure.message}`,
+    );
+  }
+  return projected.document.summaries?.solve?.map((line) => line.map(displayDetailPart));
 }
 
 function displayDetailSections(
@@ -160,39 +173,20 @@ function displaySystemReadback(document: CanonicalResultDocumentV1) {
 }
 
 function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
-  const projected = resolveLegacyCanonicalResultForConsumer(outcome);
-  const legacyDetailSections = outcome.detailSections;
-  if (
-    !projected.ok
-    && projected.failure.reason === 'undeclared-detail'
-    && legacyDetailSections?.length
-  ) {
-    const outcomeWithoutLegacyDetails = { ...outcome };
-    Reflect.deleteProperty(outcomeWithoutLegacyDetails, 'detailSections');
-    const projectedWithoutLegacyDetails = resolveLegacyCanonicalResultForConsumer(
-      outcomeWithoutLegacyDetails,
-    );
-    if (projectedWithoutLegacyDetails.ok) {
-      return {
-        authority: projectedWithoutLegacyDetails.source,
-        document: projectedWithoutLegacyDetails.document,
-        legacyDetailSections,
-      };
-    }
-  }
+  const projected = resolveCanonicalResultForConsumer(outcome);
   if (!projected.ok) {
     throw new Error(
       `Display read model projection failed: ${projected.failure.reason}: ${projected.failure.message}`,
     );
   }
-  return { authority: projected.source, document: projected.document };
+  return { authority: 'native' as const, document: projected.document };
 }
 
 export function displayResultReadModelFromOutcome(
   outcome: DisplayOutcome | null | undefined,
 ): DisplayResultReadModel | null {
   if (!outcome || outcome.kind === 'prompt') return null;
-  const { authority, document, legacyDetailSections } = canonicalDocumentForDisplay(outcome);
+  const { authority, document } = canonicalDocumentForDisplay(outcome);
   const metadata = document.metadata;
   const trustSummary = trustSummaryForCanonicalResult(document, outcome);
   return {
@@ -213,11 +207,7 @@ export function displayResultReadModelFromOutcome(
     ...(document.approximations?.primary
       ? { approximateText: document.approximations.primary }
       : {}),
-    ...(legacyDetailSections
-      ? { detailSections: legacyDetailSections }
-      : document.details
-        ? { detailSections: displayDetailSections(document) }
-        : {}),
+    ...(document.details ? { detailSections: displayDetailSections(document) } : {}),
     warnings: [...document.warnings],
     ...(metadata?.solutionKind ? { solutionKind: metadata.solutionKind } : {}),
     ...(metadata?.resultOrigin ? { resultOrigin: metadata.resultOrigin } : {}),

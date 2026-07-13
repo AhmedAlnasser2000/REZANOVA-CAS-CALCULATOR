@@ -66,7 +66,6 @@ type NonPeriodicTransform = {
   detailSections?: DisplayDetailSection[];
   periodicFamilyExtras?: Partial<PeriodicFamilyInfo>;
 } & (DisplaySolveSummary | {
-  solveSummaryText?: undefined;
   solveSummaryParts?: undefined;
 });
 

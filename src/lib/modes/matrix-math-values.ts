@@ -179,8 +179,15 @@ function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonL
   return leaves;
 }
 
-function matrixOperator(name: string, label: string) {
-  return ['InvisibleOperator', name, ['Delimiter', label]];
+function matrixOperator(name: string, operand: unknown) {
+  return ['InvisibleOperator', name, ['Delimiter', operand]];
+}
+
+function profileOperandMathJson(label: string, matrix: ExactMatrix) {
+  if (label.startsWith('\\begin{bmatrix}')) {
+    return exactMatrixMathJson(matrix);
+  }
+  return /^[A-Za-z][A-Za-z0-9_]*$/u.test(label) ? label : undefined;
 }
 
 function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[] {
@@ -193,29 +200,31 @@ function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[]
   const label = request.operation === 'profileA'
     ? request.matrixOperandLatexA ?? 'A'
     : request.matrixOperandLatexB ?? 'B';
+  const operand = profileOperandMathJson(label, matrix);
+  if (operand === undefined) return [];
   const columns = matrix[0]?.length ?? 0;
   const leaves = [
     leaf(
       `\\operatorname{rank}(${label})=${analysis.rank}`,
-      ['Equal', matrixOperator('rank', label), analysis.rank],
+      ['Equal', matrixOperator('rank', operand), analysis.rank],
       'matrix.profile.native-rank',
     ),
     leaf(
       `\\operatorname{nullity}(${label})=${analysis.nullity}`,
-      ['Equal', matrixOperator('nullity', label), analysis.nullity],
+      ['Equal', matrixOperator('nullity', operand), analysis.nullity],
       'matrix.profile.native-nullity',
     ),
     leaf(
       `\\operatorname{rank}(${label})+\\operatorname{nullity}(${label})=${columns}`,
       ['Equal', ['Add',
-        matrixOperator('rank', label),
-        matrixOperator('nullity', label),
+        matrixOperator('rank', operand),
+        matrixOperator('nullity', operand),
       ], columns],
       'matrix.profile.native-rank-nullity',
     ),
     leaf(
       `\\operatorname{rref}(${label})=${exactMatrixToLatex(analysis.rref)}`,
-      ['Equal', matrixOperator('rref', label), exactMatrixMathJson(analysis.rref)],
+      ['Equal', matrixOperator('rref', operand), exactMatrixMathJson(analysis.rref)],
       'matrix.profile.native-rref',
     ),
   ];
@@ -224,7 +233,7 @@ function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[]
     if (determinant.kind === 'success') {
       leaves.push(leaf(
         `\\det(${label})=${exactScalarToLatex(determinant.determinant)}`,
-        ['Equal', ['Determinant', label], buildExactScalarNode(determinant.determinant)],
+        ['Equal', ['Determinant', operand], buildExactScalarNode(determinant.determinant)],
         'matrix.profile.native-determinant',
       ));
     }

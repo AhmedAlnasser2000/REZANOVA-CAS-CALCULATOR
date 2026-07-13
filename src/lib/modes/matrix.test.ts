@@ -53,6 +53,22 @@ describe('runMatrixMode', () => {
     }
   });
 
+  it('proves inline Matrix profile leaves from the owned exact matrix', () => {
+    const matrixLatex = '\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}';
+    const result = runMatrixMode({
+      operation: 'profileA',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[5, 6], [7, 8]],
+      matrixOperandLatexA: matrixLatex,
+      editorExpressionLatex: `\\operatorname{profile}\\left(${matrixLatex}\\right)`,
+    });
+
+    expect(result.kind).toBe('success');
+    expect(result.kind === 'success'
+      ? result.canonicalResult?.answerRows?.rows[1]?.math.mathJson
+      : undefined).toBeDefined();
+  });
+
   it('uses editor expressions as Matrix coordinate titles', () => {
     const expressionLatex = '\\operatorname{coords}\\left(A,\\begin{bmatrix}5\\\\11\\end{bmatrix}\\right)';
     const result = runMatrixMode({

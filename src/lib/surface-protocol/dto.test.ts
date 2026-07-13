@@ -27,7 +27,6 @@ describe('Surface Protocol DTO firewall', () => {
       exactSupplementLatex: ['x\\ne0'],
       answerDomain: 'real',
       solutionKind: 'exact-symbolic',
-      solveSummaryText: 'Solved exactly.',
       solveSummaryParts: [[{ kind: 'text', text: 'Solved exactly.' }]],
       branchReadback: {
         targetLatex: 'x',

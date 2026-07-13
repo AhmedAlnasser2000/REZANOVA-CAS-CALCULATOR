@@ -392,7 +392,7 @@ export function resolveCalculusEvaluation(
             variable: integral.variable,
             evaluatedNode: evaluatedExpr.json,
             evaluatedLatex: evaluatedExpr.latex,
-            exactLatex: presented.exactLatex ?? '',
+            canonicalLatex: presented.exactLatex ?? '',
           }),
         ],
       });

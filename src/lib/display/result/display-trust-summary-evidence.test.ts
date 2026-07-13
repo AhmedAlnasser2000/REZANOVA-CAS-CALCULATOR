@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
 import { attachEquationAnalysisEvidence, getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
 import { runEquationMode } from '../../modes/equation';
 import { makeRequest } from '../../modes/equation/test-support';
-import { buildDisplayBlocks, displayBlockSummaryText } from './display-blocks';
+import { displayBlockSummaryText } from './display-blocks';
 import { buildFormulaViewerArtifact } from '../../../app/runtime/formula-viewer-artifacts';
 
 function solve(extra: Partial<Parameters<typeof runEquationMode>[0]>) {

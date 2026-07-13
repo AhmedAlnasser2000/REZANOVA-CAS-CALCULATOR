@@ -173,7 +173,6 @@ function mergeEquationStageCarriers(
       : 'symbolic' as const,
     plannerBadges,
     solveBadges: badgeSet,
-    solveSummaryText: solveSummary.solveSummaryText,
     solveSummaryParts: solveSummary.solveSummaryParts,
     candidateValues: candidateValues.length > 0 ? candidateValues : undefined,
     rejectedCandidateCount: rejectedCandidateCount > 0 ? rejectedCandidateCount : undefined,

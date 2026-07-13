@@ -15,8 +15,8 @@ function advisories(
   }
 
   return {
-    stopReason,
-    equationNumericSolve,
+    ...(stopReason ? { stopReason } : {}),
+    ...(equationNumericSolve ? { equationNumericSolve } : {}),
   };
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { baseEquationSolveRequest as request } from '../test-support/equation-request';
 import { runGuardedEquationSolve } from '../guarded-solve';
+import { solveSummaryPlainText } from '../../display/result-detail-lines';
 
 describe('runGuardedEquationSolve stage routing', () => {
   it('solves supported symbolic substitution families', () => {
@@ -397,7 +398,7 @@ describe('runGuardedEquationSolve stage routing', () => {
       throw new Error('Expected guarded solve error');
     }
     expect(result.solveBadges).toContain('Range Guard');
-    expect(result.solveSummaryText).toContain('[-1, 1]');
+    expect(solveSummaryPlainText(result)).toContain('[-1, 1]');
   });
 
   it('solves bounded log-combination equations through the guarded backend', () => {

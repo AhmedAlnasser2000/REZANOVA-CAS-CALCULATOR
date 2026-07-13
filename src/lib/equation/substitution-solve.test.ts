@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { matchSubstitutionSolve } from './substitution-solve';
+import { solveSummaryPlainText } from '../display/result-detail-lines';
 
 describe('matchSubstitutionSolve', () => {
   it('matches bounded trig carrier substitution', () => {
@@ -10,7 +11,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected substitution branches');
     }
     expect(result.solveBadges).toContain('Symbolic Substitution');
-    expect(result.solveSummaryText).toContain('t = \\sin');
+    expect(solveSummaryPlainText(result)).toContain('t = \\sin');
     expect(result.equations).toContain('\\sin\\left(x\\right)=1');
     expect(result.equations).toContain('\\sin\\left(x\\right)=\\frac{1}{2}');
     expect(result.diagnostics?.family).toBe('trig-polynomial');
@@ -46,7 +47,7 @@ describe('matchSubstitutionSolve', () => {
     if (result.kind !== 'branches') {
       throw new Error('Expected substitution branches');
     }
-    expect(result.solveSummaryText).toContain('t = e^x');
+    expect(solveSummaryPlainText(result)).toContain('t = e^x');
     expect(result.equations).toContain('e^x=3');
     expect(result.equations).toContain('e^x=2');
     expect(result.diagnostics?.family).toBe('exp-polynomial');
@@ -59,7 +60,7 @@ describe('matchSubstitutionSolve', () => {
     if (result.kind !== 'branches') {
       throw new Error('Expected substitution branches');
     }
-    expect(result.solveSummaryText).toContain('t = e^x');
+    expect(solveSummaryPlainText(result)).toContain('t = e^x');
     expect(result.equations).toContain('e^x=3');
     expect(result.equations).toContain('e^x=2');
     expect(result.diagnostics?.family).toBe('exp-polynomial');
@@ -73,7 +74,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected inverse-isolation branch');
     }
     expect(result.solveBadges).toContain('Inverse Isolation');
-    expect(result.solveSummaryText).toContain('x+1=ln(2)');
+    expect(solveSummaryPlainText(result)).toContain('x+1=ln(2)');
     expect(result.equations[0]).toBe('x+1=\\ln\\left(2\\right)');
     expect(result.diagnostics?.family).toBe('inverse-isolation');
   });
@@ -86,7 +87,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected inverse-isolation branch');
     }
     expect(result.solveBadges).toContain('Inverse Isolation');
-    expect(result.solveSummaryText).toContain('2x+1=e^(3)');
+    expect(solveSummaryPlainText(result)).toContain('2x+1=e^(3)');
     expect(result.equations[0]).toBe('2x+1=e^{3}');
     expect(result.diagnostics?.family).toBe('inverse-isolation');
   });
@@ -125,7 +126,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected log-combine branch');
     }
     expect(result.solveBadges).toContain('Log Combine');
-    expect(result.solveSummaryText).toContain('Combined ln(x)+ln(x+1) into (x)(x+1)=e^(2)');
+    expect(solveSummaryPlainText(result)).toContain('Combined ln(x)+ln(x+1) into (x)(x+1)=e^(2)');
     expect(result.equations[0]).toContain('\\left(x\\right)\\left(x+1\\right)=e^{2}');
     expect(result.diagnostics?.family).toBe('log-same-base');
   });
@@ -183,7 +184,7 @@ describe('matchSubstitutionSolve', () => {
       throw new Error('Expected mixed-base normalized branch');
     }
     expect(result.solveBadges).toContain('Log Base Normalize');
-    expect(result.solveSummaryText).toContain('Normalized mixed-base logs via change-of-base');
+    expect(solveSummaryPlainText(result)).toContain('Normalized mixed-base logs via change-of-base');
     expect(result.diagnostics?.family).toBe('log-mixed-base');
   });
 

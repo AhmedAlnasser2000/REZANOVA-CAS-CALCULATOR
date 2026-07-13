@@ -35,7 +35,6 @@ function lineOf(sourceFile, node) {
 export function scanResultIntent({ rootDir = process.cwd() } = {}) {
   const violations = [];
   let directSummaryAssignments = 0;
-  let declaredDirectAssignments = 0;
 
   for (const absolute of sourceFiles(rootDir)) {
     const sourceFile = ts.createSourceFile(
@@ -55,15 +54,11 @@ export function scanResultIntent({ rootDir = process.cwd() } = {}) {
           .map(propertyName));
         if (properties.has('solveSummaryText')) {
           directSummaryAssignments += 1;
-          if (properties.has('solveSummaryParts')) {
-            declaredDirectAssignments += 1;
-          } else {
-            violations.push({
-              file,
-              line: lineOf(sourceFile, node),
-              message: 'Direct solveSummaryText assignment must declare solveSummaryParts.',
-            });
-          }
+          violations.push({
+            file,
+            line: lineOf(sourceFile, node),
+            message: 'Direct solveSummaryText assignment is forbidden; use typed solveSummaryParts.',
+          });
         }
       }
       ts.forEachChild(node, visit);
@@ -74,7 +69,6 @@ export function scanResultIntent({ rootDir = process.cwd() } = {}) {
   return {
     summary: {
       directSummaryAssignments,
-      declaredDirectAssignments,
       violationCount: violations.length,
     },
     violations,

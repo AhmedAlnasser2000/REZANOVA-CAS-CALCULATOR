@@ -41,10 +41,6 @@ export function createEquationResultOutcome(
   ) {
     throw new Error('Equation canonical math must match the producer exact LaTeX.');
   }
-  if (input.solveSummaryText && !input.solveSummaryParts?.length) {
-    throw new Error('Equation solve summaries require typed producer parts.');
-  }
-
   const success = input.kind === 'success' ? input : undefined;
   const ownedMathValues = input.canonicalMath?.mathJson !== undefined
     ? equationMathValuesFromOwnedPayload({

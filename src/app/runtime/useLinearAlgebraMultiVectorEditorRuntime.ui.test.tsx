@@ -89,7 +89,6 @@ describe('useLinearAlgebraTableShellRuntime multi-vector editor expressions', ()
       title: '2p-\\frac{q}{3}',
       sourceMode: 'vector',
       exactLatex: '\\begin{bmatrix}\\frac{5}{3}\\\\2\\end{bmatrix}',
-      approxText: undefined,
     });
 
     const composedGram = await runVectorExpression('\\operatorname{gram}\\left(p,q\\right)');
@@ -106,7 +105,6 @@ describe('useLinearAlgebraTableShellRuntime multi-vector editor expressions', ()
       kind: 'success',
       title: '\\operatorname{span}\\left(p,q,r\\right)',
       exactLatex: '\\operatorname{span}\\left(p,q,r\\right)=\\operatorname{span}\\left\\{p,q\\right\\}',
-      approxText: undefined,
     });
     expect(span.kind === 'success' ? span.detailSections?.[1]?.lines : []).toContain('p-q-r=0');
 

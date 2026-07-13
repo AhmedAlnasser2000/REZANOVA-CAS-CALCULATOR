@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runEquationMode } from '../equation';
 import { collectOutcomeText, makeRequest } from './test-support';
+import { solveSummaryPlainText } from '../../display/result-detail-lines';
 
 function solve(equationLatex: string, target = 'x', extra: Partial<Parameters<typeof runEquationMode>[0]> = {}) {
   return runEquationMode({
@@ -35,7 +36,7 @@ describe('Equation deterministic numeric algebraic fallback', () => {
     expect(text).toContain('Root engine: aberth-ehrlich');
     expect(text).toContain('Sturm sequence certified 1 distinct real root.');
     expect(text).toContain('All real polynomial roots certified and validated against the original equation.');
-    expect(result.solveSummaryText).toContain('with Sturm certification');
+    expect(solveSummaryPlainText(result)).toContain('with Sturm certification');
     expect(text).toContain('Conditioning passes: 1.');
     expect(text).toContain('Nearest root separation:');
     expect(text).not.toContain('Higher precision is recommended');

@@ -1,8 +1,7 @@
-import type { DisplayDetailSection } from '../../../types/calculator';
+import type { DisplayDetailLinePart, DisplayDetailSection } from '../../../types/calculator';
 import {
   cloneDisplayDetailSection,
   detailLineFromParts,
-  inferDetailLinePartsFromText,
   mathPart,
   textDetailSection,
   textPart,
@@ -123,23 +122,11 @@ function splitReadableSolveNoteLine(line: string) {
     .filter(Boolean);
 }
 
-function legacyDeclaredParts(line: string) {
-  const inferred = inferDetailLinePartsFromText(line);
-  if (!inferred?.length) {
-    return [textPart(line)];
-  }
-
-  const inferredLine = detailLineFromParts(inferred).line;
-  if (inferredLine === line) {
-    return inferred;
-  }
-  if (line.startsWith(inferredLine)) {
-    return [...inferred, textPart(line.slice(inferredLine.length))];
-  }
-  return [textPart(line)];
-}
-
-function originalDeclaredParts(section: DisplayDetailSection, index: number, line: string) {
+function originalDeclaredParts(
+  section: DisplayDetailSection,
+  index: number,
+  line: string,
+): DisplayDetailLinePart[] {
   const parts = section.lineParts?.[index];
   if (parts?.length) {
     return parts.map((part) => ({ ...part }));
@@ -151,17 +138,20 @@ function originalDeclaredParts(section: DisplayDetailSection, index: number, lin
   if (lineKind === 'text') {
     return [textPart(line)];
   }
-  return legacyDeclaredParts(line);
+  return [textPart(line)];
 }
 
 function readableSolveNoteSection(section: DisplayDetailSection): DisplayDetailSection {
   const rows = section.lines.flatMap((line, index) => {
     const splitLines = splitReadableSolveNoteLine(line);
-    return splitLines.map((splitLine) => (
-      splitLines.length === 1
-        ? originalDeclaredParts(section, index, splitLine)
-        : legacyDeclaredParts(splitLine)
-    ));
+    if (splitLines.length === 1) {
+      return [originalDeclaredParts(section, index, line)];
+    }
+    const originalParts = originalDeclaredParts(section, index, line);
+    if (originalParts.length !== 1 || originalParts[0]?.kind !== 'text') {
+      return [originalParts];
+    }
+    return splitLines.map((splitLine) => [textPart(splitLine)]);
   });
 
   return {

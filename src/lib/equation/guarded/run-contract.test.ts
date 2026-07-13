@@ -41,7 +41,6 @@ describe('runGuardedEquationSolve contract', () => {
     expect(replayed.outcome).toMatchObject({
       kind: direct.kind,
       exactLatex: direct.kind === 'prompt' ? undefined : direct.exactLatex,
-      solveSummaryText: direct.kind === 'prompt' ? undefined : direct.solveSummaryText,
     });
     expect(replayed.trace.winningStageId).toBeDefined();
     expect(replayed.trace.attempts.some((attempt) => attempt.depth === 0 && attempt.returnedOutcome)).toBe(true);

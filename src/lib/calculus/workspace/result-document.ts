@@ -60,10 +60,6 @@ export function createCalculusResultOutcome(
   ) {
     throw new Error('Calculus canonical math must match the producer exact LaTeX.');
   }
-  if (input.solveSummaryText && !input.solveSummaryParts?.length) {
-    throw new Error('Calculus solve summaries require typed producer parts.');
-  }
-
   const success = input.kind === 'success' ? input : undefined;
   const canonicalResult = buildCanonicalResultDocumentFromProducer({
     outcomeKind: input.kind,

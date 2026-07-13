@@ -68,7 +68,7 @@ describe('Calculus result document producer', () => {
     expect(structuredClone(outcome.canonicalResult)).toEqual(outcome.canonicalResult);
   });
 
-  it('keeps typed controlled-stop evidence and fails closed on ambiguous input', () => {
+  it('keeps typed controlled-stop and solve-summary evidence', () => {
     const outcome = createCalculusResultOutcome({
       kind: 'error',
       title: 'Limit',
@@ -83,12 +83,13 @@ describe('Calculus result document producer', () => {
     expect(outcome.canonicalResult?.outcomeKind).toBe('error');
     expect(outcome.canonicalResult?.details?.[0]?.title).toBe('Why This Limit Fails');
 
-    expect(() => createCalculusResultOutcome({
+    const summarized = createCalculusResultOutcome({
       kind: 'success',
       title: 'Limit',
       exactLatex: '1',
       warnings: [],
-      solveSummaryText: 'Unspecified math intent.',
-    })).toThrow('typed producer parts');
+      solveSummaryParts: [[{ kind: 'text', text: 'Proved by the bounded limit route.' }]],
+    });
+    expect(summarized.canonicalResult?.summaries?.solve).toHaveLength(1);
   });
 });

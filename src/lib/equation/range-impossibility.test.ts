@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { detectRealRangeImpossibility } from './range-impossibility';
+import { solveSummaryPlainText } from '../display/result-detail-lines';
 
 describe('detectRealRangeImpossibility', () => {
   it('proves direct trig carrier impossibility', () => {
@@ -20,7 +21,8 @@ describe('detectRealRangeImpossibility', () => {
     if (result.kind !== 'impossible') {
       throw new Error('Expected a range impossibility');
     }
-    expect(result.summaryText).toContain('stays in [-1, 1]');
+    expect(solveSummaryPlainText({ solveSummaryParts: result.summaryParts }))
+      .toContain('stays in [-1, 1]');
   });
 
   it('proves affine and sum-based bounded impossibility', () => {

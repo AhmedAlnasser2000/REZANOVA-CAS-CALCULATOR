@@ -10,7 +10,10 @@ describe('runMatrixLinearSystem', () => {
     })).toMatchObject({
       kind: 'success',
       exactLatex: 'x=\\begin{bmatrix}2\\\\1\\end{bmatrix}',
-      solveSummaryText: 'Exactly one solution. Only this vector x satisfies the system.',
+      solveSummaryParts: [[{
+        kind: 'text',
+        text: 'Exactly one solution. Only this vector x satisfies the system.',
+      }]],
     });
     const outcome = runMatrixLinearSystem({
       coefficients: [[2, 1], [1, -1]],
@@ -80,7 +83,7 @@ describe('runMatrixLinearSystem', () => {
     })).toMatchObject({
       kind: 'success',
       exactLatex: '\\text{No solution}',
-      solveSummaryText: 'No solution.',
+      solveSummaryParts: [[{ kind: 'text', text: 'No solution.' }]],
     });
     const outcome = runMatrixLinearSystem({
       coefficients: [[1, 1], [2, 2]],
@@ -105,7 +108,10 @@ describe('runMatrixLinearSystem', () => {
     })).toMatchObject({
       kind: 'success',
       exactLatex: 'x=\\begin{bmatrix}2-t\\\\t\\end{bmatrix}\\quad t\\in\\mathbb{R}',
-      solveSummaryText: 'Infinitely many solutions. The parameterized vector describes all solution vectors.',
+      solveSummaryParts: [[{
+        kind: 'text',
+        text: 'Infinitely many solutions. The parameterized vector describes all solution vectors.',
+      }]],
     });
     const outcome = runMatrixLinearSystem({
       coefficients: [[1, 1], [2, 2]],

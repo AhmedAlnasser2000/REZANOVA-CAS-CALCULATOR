@@ -3,6 +3,7 @@ import {
   runEquationMode,
 } from '../equation';
 import { makeRequest } from './test-support';
+import { solveSummaryPlainText } from '../../display/result-detail-lines';
 
 describe('Equation mode shared symbolic backend', () => {
   it('solves symbolic equations in x', () => {
@@ -215,7 +216,7 @@ describe('Equation mode shared symbolic backend', () => {
     }
     expect(composition.exactLatex ?? '').toContain('x^3+x');
     expect(composition.periodicFamily?.branchesLatex.length ?? 0).toBeGreaterThan(1);
-    expect(composition.solveSummaryText).toBe('Solved a bounded outer non-periodic absolute-value family');
+    expect(solveSummaryPlainText(composition)).toBe('Solved a bounded outer non-periodic absolute-value family');
     expect(composition.detailSections?.some((section) => section.title === 'Generated Branches')).toBe(true);
   });
 
@@ -263,7 +264,7 @@ describe('Equation mode shared symbolic backend', () => {
     expect(result.exactLatex ?? '').toContain('\\sqrt{x+1}-2');
     expect(result.periodicFamily?.reducedCarrierLatex ?? '').toContain('\\sqrt{x+1}-2');
     expect(result.periodicFamily?.piecewiseBranches?.length ?? 0).toBeGreaterThan(1);
-    expect(result.solveSummaryText ?? '').toContain('Exact reduced-carrier sawtooth family');
+    expect(solveSummaryPlainText(result)).toContain('Exact reduced-carrier sawtooth family');
   });
 
   it('keeps explicit-x composition closure when sin(ln(x+1))=1/2 can still solve back to x', () => {
@@ -279,7 +280,7 @@ describe('Equation mode shared symbolic backend', () => {
     }
     expect(result.periodicFamily?.carrierLatex).toBe('x');
     expect(result.exactLatex ?? '').not.toContain('\\ln\\left(x+1\\right)');
-    expect(result.solveSummaryText ?? '').not.toContain('Exact reduced-carrier');
+    expect(solveSummaryPlainText(result)).not.toContain('Exact reduced-carrier');
   });
 
   it('reduces embedded derivatives before solving for x', () => {
@@ -491,7 +492,7 @@ describe('Equation mode shared symbolic backend', () => {
     }
     expect(result.exactLatex).toContain('4');
     expect(result.exactLatex).toContain('9');
-    expect(result.solveSummaryText).toContain('Factored the mixed carrier expression');
+    expect(solveSummaryPlainText(result)).toContain('Factored the mixed carrier expression');
   });
 
   it('solves exact square-root-square families through bounded absolute-value follow-on solving', () => {

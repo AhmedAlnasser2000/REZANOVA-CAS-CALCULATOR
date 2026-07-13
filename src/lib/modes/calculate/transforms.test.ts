@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { resolveCanonicalResultForStorage } from '../../result-contract';
-import { runCalculateAlgebraTransform } from '../calculate';
+import {
+  runCalculateAlgebraTransform,
+  runCalculateCanonicalRuntimeRequest,
+} from '../calculate';
 
 describe('runCalculateAlgebraTransform', () => {
   it('runs explicit algebra transforms without changing the broad simplify action', () => {
@@ -28,6 +31,27 @@ describe('runCalculateAlgebraTransform', () => {
       ok: true,
       source: 'native',
     });
+  });
+
+  it('keeps algebra-transform runtime advisories JSON-compatible', () => {
+    const result = runCalculateCanonicalRuntimeRequest({
+      kind: 'algebraTransform',
+      request: {
+        action: 'cancelFactors',
+        latex: 'x+0',
+        angleUnit: 'deg',
+        storedVariables: [],
+      },
+    });
+
+    expect(result).toMatchObject({
+      kind: 'error',
+      canonicalResult: { title: 'Cancel Factors' },
+      runtimeAdvisories: {
+        stopReason: { kind: 'unsupported-family', source: 'host' },
+      },
+    });
+    expect(JSON.parse(JSON.stringify(result))).toEqual(result);
   });
 
   it('preserves removable-denominator restrictions in Calculate transforms', () => {

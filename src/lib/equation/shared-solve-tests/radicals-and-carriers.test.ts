@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { baseEquationSolveRequest as request } from '../test-support/equation-request';
 import { runSharedEquationSolve } from '../shared-solve';
+import { solveSummaryPlainText } from '../../display/result-detail-lines';
 
 describe('runSharedEquationSolve radicals and carriers', () => {
   it('solves bounded radical equations that polynomialize into algebraic biquadratic follow-ons', () => {
@@ -157,7 +158,7 @@ describe('runSharedEquationSolve radicals and carriers', () => {
     }
     expect(result.exactLatex).toContain('4');
     expect(result.exactLatex).toContain('9');
-    expect(result.solveSummaryText).toContain('Factored the mixed carrier expression');
+    expect(solveSummaryPlainText(result)).toContain('Factored the mixed carrier expression');
     expect(result.exactSupplementLatex).toEqual(['\\text{Conditions: } x\\ge0']);
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator';
-import { buildDisplayBlocks } from './display-blocks';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
 
 describe('display case-math block adapter', () => {
   it('promotes Real Cardano producer case rows into a case-math answer block', () => {

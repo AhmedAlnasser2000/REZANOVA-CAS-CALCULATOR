@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "HISTORY-CANONICAL-ONLY1 removes legacy History result reads and records one additional canonical document path.",
-  "registryDigest": "d7110c9fe932a5010fd7",
+  "acceptedReason": "DISPLAY-DETAIL-LEGACY-CLOSEOUT1 removes duplicate solve-summary text transport and all Display detail inference reads while excluding test-only fixtures from production inventory.",
+  "registryDigest": "4da061d4342146b907b8",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -30,12 +30,12 @@
     },
     "display-read-model": {
       "compatibilityProjection": 0,
-      "legacyRead": 1,
+      "legacyRead": 0,
       "nativeDocument": 0
     },
     "equation": {
       "compatibilityProjection": 0,
-      "legacyRead": 265,
+      "legacyRead": 264,
       "nativeDocument": 142
     },
     "geometry": {
@@ -80,7 +80,7 @@
     },
     "result-contract": {
       "compatibilityProjection": 0,
-      "legacyRead": 80,
+      "legacyRead": 79,
       "nativeDocument": 2
     },
     "statistics": {
@@ -170,8 +170,8 @@
         "186bb33d872326ed777c:1"
       ],
       "src/lib/equation/guarded/outcome.ts": [
-        "b74c4f8919671f749dde:1",
-        "eb0683e5302d1efba18b:1"
+        "820c332ef2fbc9b86fa0:1",
+        "9c3d5d465c96149a456e:1"
       ],
       "src/lib/equation/guarded/polynomial-stage.ts": [
         "943716d0bcc7913660ff:1",
@@ -434,9 +434,6 @@
       ]
     },
     "canonical-projection": {
-      "src/lib/display/result/display-read-model.ts": [
-        "3107f6a2829270b39a67:1"
-      ],
       "src/lib/result-contract/projection.ts": [
         "11c19875e55f29584268:1",
         "b81db50f2f3f5ab9190c:1",
@@ -465,7 +462,7 @@
         "d57a4c1d991032d18bc7:1"
       ],
       "src/lib/equation/guarded/merge.ts": [
-        "d53e851b2342b3ec0c87:1"
+        "e347ddd04cb855b9be2d:1"
       ],
       "src/lib/equation/guarded/polynomial-stage.ts": [
         "150b811aa1ad87a11720:1",
@@ -1206,16 +1203,12 @@
         "d29ead8685ae1c208ef0:1",
         "fcee6a1699c5aa8211b0:1"
       ],
-      "src/lib/display/result/display-read-model.ts": [
-        "914d369c46b42f64dbef:1"
-      ],
       "src/lib/equation/analysis-evidence.ts": [
         "ac1f2da195976b6389e7:1",
         "b485f07593f1c0fd2f8e:1",
         "b485f07593f1c0fd2f8e:2",
         "a9c9a3f2c087e8ff2a55:1",
         "46d28537a044aeecc9fc:1",
-        "346bd7e0ddab7dce4745:1",
         "35623e4f5e135b84345c:1",
         "7735df048e97236dbe31:1",
         "7735df048e97236dbe31:2",
@@ -1583,7 +1576,6 @@
         "b49d74616c3c79b81c9d:1",
         "1ed48ba82c353a01a9c5:1",
         "1ed48ba82c353a01a9c5:2",
-        "c47d4ca783d02ce55aac:1",
         "31357ff4e0cd8bdfa7ad:1",
         "31357ff4e0cd8bdfa7ad:2",
         "119de97c42ab5908d326:1",
@@ -1714,6 +1706,7 @@
         "29269ba4894a33fef42d:1"
       ],
       "src/lib/display/result/display-read-model.ts": [
+        "53b27207833eac92cf0a:1",
         "09d0df2e40da61afa8ce:1"
       ],
       "src/lib/equation/analysis-evidence.ts": [

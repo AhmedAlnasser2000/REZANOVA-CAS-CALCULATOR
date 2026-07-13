@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator';
-import { buildDisplayBlocks } from './display-blocks';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
 
 describe('Linear Algebra display block defaults', () => {
   it('opens Vector span facts and relations while collapsing dense RREF evidence', () => {

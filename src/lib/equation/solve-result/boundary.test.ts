@@ -69,7 +69,10 @@ describe('Equation outcome boundary', () => {
       kind: 'error',
       title: 'Solve',
       error: 'Equation solve was stopped before it finished.',
-      solveSummaryText: 'Equation solve stopped after the Equation worker runtime was hard-stopped.',
+      solveSummaryParts: [[{
+        kind: 'text',
+        text: 'Equation solve stopped after the Equation worker runtime was hard-stopped.',
+      }]],
     });
   });
 

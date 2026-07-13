@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator';
-import { buildDisplayBlocks, displayBlockSummaryText } from './display-blocks';
-
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
+import { displayBlockSummaryText } from './display-blocks';
 describe('display block adapter', () => {
   it('builds answer, approx, valid-when, detail, and warning blocks', () => {
     const outcome: DisplayOutcome = {

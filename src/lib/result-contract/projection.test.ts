@@ -76,7 +76,6 @@ function richOutcome(): Extract<DisplayOutcome, { kind: 'success' }> {
     resolvedInputLatex: 'x+1=2',
     plannerBadges: ['Canonicalized'],
     solveBadges: ['Candidate Checked'],
-    solveSummaryText: 'Candidate: x=1',
     solveSummaryParts: [[
       { kind: 'text', text: 'Candidate: ' },
       { kind: 'math', latex: 'x=1' },
@@ -234,7 +233,7 @@ describe('canonical result compatibility projections', () => {
     });
   });
 
-  it('rejects prompts, mismatched payloads, and undeclared math-bearing compatibility text', () => {
+  it('rejects prompts, mismatched payloads, and undeclared detail text', () => {
     expect(projectDisplayOutcomeToCanonicalResult({
       kind: 'prompt',
       title: 'Open Equation',
@@ -258,11 +257,13 @@ describe('canonical result compatibility projections', () => {
       failure: { reason: 'undeclared-detail' },
     });
 
-    const undeclaredSummary = richOutcome();
-    delete undeclaredSummary.solveSummaryParts;
-    expect(projectDisplayOutcomeToCanonicalResult(undeclaredSummary)).toMatchObject({
-      ok: false,
-      failure: { reason: 'undeclared-summary' },
-    });
+    const noSummary = richOutcome();
+    delete noSummary.solveSummaryParts;
+    const projectedNoSummary = projectDisplayOutcomeToCanonicalResult(noSummary);
+    expect(projectedNoSummary.ok).toBe(true);
+    if (projectedNoSummary.ok) {
+      expect(projectedNoSummary.document.summaries?.solve).toBeUndefined();
+      expect(projectedNoSummary.document.summaries?.transform).toBeDefined();
+    }
   });
 });

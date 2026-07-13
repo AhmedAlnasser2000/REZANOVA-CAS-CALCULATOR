@@ -34,10 +34,6 @@ export function createStatisticsResultOutcome(
   if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Statistics canonical math must match the producer exact LaTeX.');
   }
-  if (input.solveSummaryText && !input.solveSummaryParts?.length) {
-    throw new Error('Statistics solve summaries require typed producer parts.');
-  }
-
   const success = input.kind === 'success' ? input : undefined;
   const canonicalResult = buildCanonicalResultDocumentFromProducer({
     outcomeKind: input.kind,

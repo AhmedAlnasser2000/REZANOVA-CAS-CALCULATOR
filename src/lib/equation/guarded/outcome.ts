@@ -38,7 +38,6 @@ function successOutcome(
     solveBadges,
     ...(solveSummary
       ? {
-          solveSummaryText: solveSummary.solveSummaryText,
           solveSummaryParts: solveSummary.solveSummaryParts,
         }
       : {}),
@@ -68,7 +67,6 @@ function errorOutcome(
     solveBadges,
     ...(solveSummary
       ? {
-          solveSummaryText: solveSummary.solveSummaryText,
           solveSummaryParts: solveSummary.solveSummaryParts,
         }
       : {}),

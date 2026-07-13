@@ -49,7 +49,6 @@ describe('print hygiene fragment collection', () => {
         },
         { title: 'Prose', lines: ['NaN is a token name in this explanation.'], lineKind: 'text' },
       ],
-      solveSummaryText: 'Reduced carrier: x^2=1',
       solveSummaryParts: [[
         { kind: 'text', text: 'Reduced carrier: ' },
         { kind: 'math', latex: 'x^2=1' },

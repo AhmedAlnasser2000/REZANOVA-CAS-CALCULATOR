@@ -16,10 +16,10 @@ test('rejects an ambiguous direct solve summary', () => {
   const rootDir = fixture(`const outcome = { solveSummaryText: 'Solved.' };`);
   const report = scanResultIntent({ rootDir });
   assert.equal(report.summary.violationCount, 1);
-  assert.match(report.violations[0].message, /solveSummaryParts/u);
+  assert.match(report.violations[0].message, /forbidden/u);
 });
 
-test('accepts paired direct fields and typed helper spreads', () => {
+test('rejects paired legacy fields and accepts typed helper spreads', () => {
   const rootDir = fixture(`
     const paired = { solveSummaryText: 'Solved.', solveSummaryParts: [[{ kind: 'text', text: 'Solved.' }]] };
     const spread = { ...proseSolveSummary('Solved.') };
@@ -27,7 +27,6 @@ test('accepts paired direct fields and typed helper spreads', () => {
   const report = scanResultIntent({ rootDir });
   assert.deepEqual(report.summary, {
     directSummaryAssignments: 1,
-    declaredDirectAssignments: 1,
-    violationCount: 0,
+    violationCount: 1,
   });
 });

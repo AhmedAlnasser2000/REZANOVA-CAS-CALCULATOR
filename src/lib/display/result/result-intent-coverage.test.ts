@@ -6,19 +6,15 @@ import { executeHistoryReplayRequest } from '../../history-replay/native-executi
 import type { DisplayOutcome } from '../../../types/calculator';
 import {
   detailLineIntentAt,
-  solveSummaryFromParts,
+  solveSummaryPlainText,
 } from './result-detail-lines';
 
 function assertDeclaredResultIntent(outcome: DisplayOutcome, label: string) {
   if (outcome.kind === 'prompt') return;
 
-  if (outcome.solveSummaryText !== undefined || outcome.solveSummaryParts !== undefined) {
-    expect(outcome.solveSummaryText, `${label} summary text`).toBeTruthy();
+  if (outcome.solveSummaryParts !== undefined) {
     expect(outcome.solveSummaryParts?.length, `${label} summary parts`).toBeGreaterThan(0);
-    expect(
-      solveSummaryFromParts(outcome.solveSummaryParts ?? []).solveSummaryText,
-      `${label} summary compatibility parity`,
-    ).toBe(outcome.solveSummaryText);
+    expect(solveSummaryPlainText(outcome), `${label} summary text`).toBeTruthy();
   }
 
   for (const [sectionIndex, section] of (outcome.detailSections ?? []).entries()) {

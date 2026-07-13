@@ -36,7 +36,6 @@ const DISPLAY_TYPES = `
     resolvedInputLatex?: string;
     plannerBadges?: unknown;
     solveBadges?: unknown;
-    solveSummaryText?: string;
     solveSummaryParts?: unknown;
     transformBadges?: unknown;
     transformSummaryText?: string;
@@ -139,7 +138,7 @@ describe('display contract inversion ratchet', () => {
             error: reason,
             warnings: [],
             plannerBadges: [],
-            solveSummaryText: 'The worker was stopped.',
+            solveSummaryParts: [[{ kind: 'text', text: 'The worker was stopped.' }]],
           };
         }
       `,
@@ -422,7 +421,7 @@ describe('display contract inversion ratchet', () => {
             title: 'Calculate',
             error: 'Stopped',
             warnings: [],
-            solveSummaryText: 'The worker was stopped.',
+            solveSummaryParts: [[{ kind: 'text', text: 'The worker was stopped.' }]],
           };
         }
       `,
@@ -483,7 +482,7 @@ describe('display contract inversion ratchet', () => {
     assert.match(selectedCarrierSources, /mergeEquationStageCarriers/u);
   });
 
-  it('keeps Display blocks and hygiene canonical-first with only legacy History inference', () => {
+  it('keeps Display blocks and hygiene canonical-first with no legacy detail inference', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
     const lane = report.lanes['display-read-model'];
     const legacyReads = report.entries['legacy-read']
@@ -493,28 +492,20 @@ describe('display contract inversion ratchet', () => {
         .map((file) => [file, legacyReads.filter((entry) => entry.file === file).length]),
     );
 
-    assert.equal(lane['canonical-projection'], 1);
+    assert.equal(lane['canonical-projection'], 0);
     assert.equal(lane['compatibility-projection'], 0);
     assert.equal(lane['canonical-read'], 0);
-    assert.equal(lane['legacy-read'], 1);
-    assert.deepEqual(legacyReadsByFile, {
-      'src/lib/display/result/display-read-model.ts': 1,
-    });
-    assert.deepEqual(
-      legacyReads
-        .filter((entry) => entry.file === 'src/lib/display/result/display-read-model.ts')
-        .map((entry) => [entry.detail, entry.context]),
-      [['detailSections', 'canonicalDocumentForDisplay']],
-    );
+    assert.equal(lane['legacy-read'], 0);
+    assert.deepEqual(legacyReadsByFile, {});
   });
 
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
-    assert.equal(report.summary.producerCount, 642);
-    assert.equal(report.summary.consumerCount, 597);
+    assert.equal(report.summary.producerCount, 641);
+    assert.equal(report.summary.consumerCount, 595);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
-    assert.equal(report.summary.legacyReadCount, 396);
+    assert.equal(report.summary.legacyReadCount, 393);
     assert.equal(report.summary.nativeDocumentCount, 177);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 4);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
@@ -522,7 +513,7 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.calculate['native-document'], 7);
     assert.equal(report.lanes['app-display']['legacy-read'], 0);
     assert.equal(report.lanes['app-shell']?.['legacy-read'] ?? 0, 0);
-    assert.equal(report.lanes['display-read-model']['legacy-read'], 1);
+    assert.equal(report.lanes['display-read-model']['legacy-read'], 0);
     assert.equal(report.lanes['history-replay']['legacy-read'], 2);
     assert.equal(report.lanes['surface-protocol']['legacy-read'], 4);
     assert.equal(report.lanes.history['legacy-read'], 0);
