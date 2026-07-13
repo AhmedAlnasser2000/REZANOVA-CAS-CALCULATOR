@@ -511,10 +511,10 @@ describe('display contract inversion ratchet', () => {
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
-    assert.equal(report.summary.producerCount, 641);
-    assert.equal(report.summary.consumerCount, 613);
+    assert.equal(report.summary.producerCount, 642);
+    assert.equal(report.summary.consumerCount, 611);
     assert.equal(report.summary.compatibilityProjectionCount, 1);
-    assert.equal(report.summary.legacyReadCount, 411);
+    assert.equal(report.summary.legacyReadCount, 410);
     assert.equal(report.summary.nativeDocumentCount, 176);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 4);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
@@ -526,7 +526,7 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes['history-replay']['legacy-read'], 2);
     assert.equal(report.lanes['surface-protocol']['legacy-read'], 4);
     assert.equal(report.lanes.history['legacy-read'], 14);
-    assert.equal(report.lanes['app-runtime']['legacy-read'], 12);
+    assert.equal(report.lanes['app-runtime']['legacy-read'], 11);
   });
 
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {

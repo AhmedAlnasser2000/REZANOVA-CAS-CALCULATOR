@@ -48,12 +48,16 @@ export function applyWorkspaceDisplayOutcome(
   outcome: DisplayOutcome,
 ): WorkspaceDisplayState {
   const current = normalizeWorkspaceDisplayState(currentValue);
-  const resolution = outcome.kind === 'prompt'
-    ? undefined
-    : resolveCanonicalResultForConsumer(outcome);
-  const primaryLatex = resolution?.ok
-    ? resolution.document.primaryMath?.canonicalLatex
-    : undefined;
+  if (outcome.kind === 'prompt') {
+    return { ...current, displayOutcome: outcome };
+  }
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  if (!resolution.ok) {
+    throw new Error(
+      `Workspace display state requires canonical result authority: ${resolution.failure.reason}.`,
+    );
+  }
+  const primaryLatex = resolution.document.primaryMath?.canonicalLatex;
   return {
     ...current,
     displayOutcome: outcome,

@@ -207,9 +207,12 @@ export const CANONICAL_PROJECTION_REGISTRATIONS = [
   {
     id: 'canonical-result-consumer-resolution-v1',
     owner: 'canonical-result-contract',
-    rationale: 'Consumers validate and prefer native canonical truth, projecting typed compatibility outcomes only when native truth is absent.',
+    rationale: 'Semantic consumers require validated native canonical truth; the separately named legacy resolver isolates compatibility projection for old History display only.',
     matchers: exact('src/lib/result-contract/consumer.ts'),
-    functions: ['resolveCanonicalResultForConsumer'],
+    functions: [
+      'resolveCanonicalResultForConsumer',
+      'resolveLegacyCanonicalResultForConsumer',
+    ],
   },
   {
     id: 'canonical-runtime-display-projection-v1',
@@ -224,7 +227,7 @@ export const CANONICAL_PROJECTION_REGISTRATIONS = [
   {
     id: 'display-legacy-history-detail-projection-v1',
     owner: 'display-result-read-model',
-    rationale: 'Display preserves raw undeclared detail sections only for legacy History when canonical projection otherwise succeeds.',
+    rationale: 'Display invokes the explicit legacy resolver and preserves raw undeclared detail sections only for old History rows until canonical-only History cleanup.',
     matchers: exact('src/lib/display/result/display-read-model.ts'),
     functions: ['canonicalDocumentForDisplay'],
   },

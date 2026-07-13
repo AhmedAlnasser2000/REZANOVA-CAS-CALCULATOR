@@ -124,3 +124,11 @@
 - scope: independent Matrix/Vector canonical worker and OOE outcomes, Table canonical outcome plus structured response transport, preserved lane-specific failure semantics, focused runtime and Chromium evidence, and durable records
 - push: not authorized
 - excluded: direct consumer inversion, concurrent Notebook work, temporary visual evidence, and untracked `test-results/`
+
+## CANONICAL-CONSUMER-DIRECT1
+
+- commit_message: `CANONICAL-CONSUMER-DIRECT1`
+- status: verified; covered by standing commit approval
+- scope: strict native consumer resolution, isolated legacy-History resolver, direct Clipboard/workspace/diagnostics/Surface reads, accepted hygiene and inversion baselines, focused browser evidence, and durable records
+- push: not authorized
+- excluded: History field removal reserved for the next gate, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`

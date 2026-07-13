@@ -1,6 +1,10 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_SETTINGS, type Settings } from '../../types/calculator';
+import {
+  DEFAULT_SETTINGS,
+  type Settings,
+} from '../../types/calculator';
+import { withCanonicalResult } from './canonical-outcome-test-helper';
 import { useHistoryDisplayRuntime } from './useHistoryDisplayRuntime';
 
 vi.mock('../../lib/app-state/persistence', () => ({
@@ -72,7 +76,12 @@ describe('useHistoryDisplayRuntime replay snapshot', () => {
     });
     act(() => {
       hook.result.current.commitOutcome(
-        { kind: 'success', title: 'Numeric', exactLatex: '\\frac{\\pi}{2}', warnings: [] },
+        withCanonicalResult({
+          kind: 'success',
+          title: 'Numeric',
+          exactLatex: '\\frac{\\pi}{2}',
+          warnings: [],
+        }),
         'arcsin(1)',
         'calculate',
         { historyLaunchOrder: reservation!.historyLaunchOrder, historyTicketId: reservation!.id },

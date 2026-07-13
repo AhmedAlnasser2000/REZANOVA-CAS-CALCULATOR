@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Move 8 records the proven Vector Gram-Schmidt canonical payload mirror; visible and canonical answer LaTeX remain unchanged.",
+  "acceptedReason": "CANONICAL-CONSUMER-DIRECT1 records newly proven producer-owned MathJSON payload fragments; canonical LaTeX and visible output are unchanged.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -193,6 +193,11 @@
           "value": "\\arctan(x)+C"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "\\arctan(x)+C"
+        },
+        {
           "path": "answerRows.rows[0].latex",
           "kind": "answer-row",
           "value": "\\arctan(x)+C"
@@ -218,6 +223,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
         },
         {
@@ -249,6 +259,11 @@
           "value": "-\\frac{1}{x-1}+C"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "-\\frac{1}{x-1}+C"
+        },
+        {
           "path": "answerRows.rows[0].latex",
           "kind": "answer-row",
           "value": "-\\frac{1}{x-1}+C"
@@ -274,6 +289,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
         },
         {
@@ -305,6 +325,11 @@
           "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
+        },
+        {
           "path": "answerRows.rows[0].latex",
           "kind": "answer-row",
           "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
@@ -333,6 +358,11 @@
           "value": "1"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "1"
+        },
+        {
           "path": "detailSections[1].lineParts[0][1].latex",
           "kind": "detail-math-part",
           "value": "[0, 1]"
@@ -353,6 +383,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "0.310268"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "0.310268"
         },
         {
@@ -412,6 +447,11 @@
           "value": "1"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "1"
+        },
+        {
           "path": "detailSections[0].lineParts[1][1].latex",
           "kind": "detail-math-part",
           "value": "u=x"
@@ -447,6 +487,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "\\infty"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "\\infty"
         },
         {
@@ -498,6 +543,11 @@
           "value": "-\\infty"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "-\\infty"
+        },
+        {
           "path": "detailSections[0].lineParts[2][1].latex",
           "kind": "detail-math-part",
           "value": "1"
@@ -546,6 +596,11 @@
           "value": "2"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "2"
+        },
+        {
           "path": "resolvedInputLatex",
           "kind": "resolved-input",
           "value": "\\lim_{x\\to1}\\frac{x^2-1}{x-1}"
@@ -561,6 +616,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "1"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "1"
         },
         {
@@ -640,6 +700,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "x\\in\\left\\{3, 2\\right\\}"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "x\\in\\left\\{3, 2\\right\\}"
         }
       ]
@@ -1013,6 +1078,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "y_2^{(1)}=4,\\ y_2^{(2)}=-4,\\ d=5"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "y_2^{(1)}=4,\\ y_2^{(2)}=-4,\\ d=5"
         },
         {

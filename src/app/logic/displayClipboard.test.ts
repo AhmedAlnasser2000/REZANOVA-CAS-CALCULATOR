@@ -24,6 +24,15 @@ describe('Display canonical clipboard routing', () => {
           mathJson: ['Power', 'x', ['Divide', 1, 6]],
         },
         warnings: [],
+        canonicalResult: buildCanonicalResultDocumentFromProducer({
+          outcomeKind: 'success',
+          title: 'Result',
+          primaryMath: canonicalMathValue(
+            String.raw`x^{\frac{1}{6}}`,
+            ['Power', 'x', ['Divide', 1, 6]],
+          ),
+          warnings: [],
+        }),
       },
       visibleText: 'x^(1/6)',
       currentMode: 'calculate',
@@ -40,7 +49,7 @@ describe('Display canonical clipboard routing', () => {
     expect(setClipboardNotice).toHaveBeenCalledWith('Result copied');
   });
 
-  it('uses compatibility exact LaTeX and refuses an empty result', async () => {
+  it('refuses string-only and empty results', async () => {
     const write = vi.fn().mockResolvedValue({
       ok: true,
       host: 'browser',
@@ -60,7 +69,8 @@ describe('Display canonical clipboard routing', () => {
       setClipboardNotice,
       write,
     });
-    expect(write).toHaveBeenCalledWith(expect.objectContaining({ canonicalLatex: 'x=1' }));
+    expect(write).not.toHaveBeenCalled();
+    expect(setClipboardNotice).toHaveBeenLastCalledWith('Result unavailable');
 
     write.mockClear();
     await copyDisplayResultWithDeps({
@@ -74,12 +84,13 @@ describe('Display canonical clipboard routing', () => {
     expect(setClipboardNotice).toHaveBeenLastCalledWith('Nothing to copy');
   });
 
-  it('drops a mismatched canonical payload and falls back to compatibility exact LaTeX', async () => {
+  it('does not fall back to a mismatched compatibility payload', async () => {
     const write = vi.fn().mockResolvedValue({
       ok: true,
       host: 'browser',
       fidelity: 'canonical-text',
     });
+    const setClipboardNotice = vi.fn();
     await copyDisplayResultWithDeps({
       displayOutcome: {
         kind: 'success',
@@ -94,15 +105,11 @@ describe('Display canonical clipboard routing', () => {
       },
       visibleText: 'x = 1',
       currentMode: 'equation',
-      setClipboardNotice: vi.fn(),
+      setClipboardNotice,
       write,
     });
-    expect(write).toHaveBeenCalledWith({
-      canonicalLatex: 'x=1',
-      visibleText: 'x = 1',
-      mathJson: undefined,
-      metadata: { surface: 'display', mode: 'equation' },
-    });
+    expect(write).not.toHaveBeenCalled();
+    expect(setClipboardNotice).toHaveBeenCalledWith('Result unavailable');
   });
 
   it('copies native canonical truth when compatibility fields disagree', async () => {

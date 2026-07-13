@@ -201,3 +201,17 @@
 - visual: six canaries pass with one worker and zero retries; node captures show Matrix `-2`, Vector `[0,0,1]^T`, and Table rows `(-1,1)`, `(0,0)`, `(1,1)` without clipping
 - resource posture: no full unit, UI, or 19-canary suite ran; the broad result-contract attempt exposed one stale assertion and only that affected file was rerun
 - residual: `CANONICAL-CONSUMER-DIRECT1` moves remaining semantic consumers onto direct canonical reads
+
+## CANONICAL-CONSUMER-DIRECT1
+
+- kind: backend consumer-authority inversion with focused UI and browser parity evidence
+- result: pass
+- contract: semantic consumers accept only validated native `CanonicalResultDocumentV1`; `resolveLegacyCanonicalResultForConsumer` isolates the sole old-History display projection
+- direct reads: Clipboard, `Ans`, workspace display state, diagnostics, History replay harness, print hygiene, Surface mapping, and current Display/Formula Viewer paths consume canonical documents without result-string fallback
+- inventory: 642 producers, 611 consumers, 176 native documents, 47 owner assemblies, one compatibility projection, 410 legacy reads, and zero violations
+- regression: 75 result-contract tests, all 100 replay fixtures, 39 Surface tests, 60 Clipboard tests, 26 focused authority/hygiene tests, and 33 History/UI state tests pass
+- baselines: print hygiene records newly proven MathJSON fragments with unchanged canonical LaTeX; the inversion baseline records two fewer consumers and one fewer legacy read
+- static: incremental TypeScript, lint, production artifact, file-size, Surface boundaries, and diff hygiene pass
+- visual: real Chromium clipboard capability plus Calculate, Equation, and Table canaries pass with one worker; inspected Calculate `14` answer/approximation and copy/editor controls are readable with no overflow
+- resource posture: no full unit, UI, or 19-canary suite ran; focused commands used at most four Vitest workers and no heavy process remains active
+- residual: `HISTORY-CANONICAL-ONLY1` removes legacy result fields and the final compatibility projection while preserving future-version rows inertly

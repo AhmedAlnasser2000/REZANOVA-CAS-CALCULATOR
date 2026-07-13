@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Carry Matrix, Vector, and Table worker and OOE results as validated canonical runtime outcomes while preserving independent Linear Algebra shells, Table row evidence, and Table fallback semantics.",
-  "registryDigest": "42e1068ee93b1b3d5682",
+  "acceptedReason": "CANONICAL-CONSUMER-DIRECT1 requires native canonical documents at semantic consumers and isolates the sole legacy History display projection.",
+  "registryDigest": "d7110c9fe932a5010fd7",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -15,7 +15,7 @@
     },
     "app-runtime": {
       "compatibilityProjection": 0,
-      "legacyRead": 12,
+      "legacyRead": 11,
       "nativeDocument": 0
     },
     "calculate": {
@@ -1119,6 +1119,9 @@
       "src/lib/modes/worker-clients/trigonometry-worker-client.ts": [
         "c9bb4f0fe8bf57f048ce:1"
       ],
+      "src/lib/ooe/diagnostics/diagnostics-buffer.ts": [
+        "ed9f598cb154f863fda9:1"
+      ],
       "src/lib/statistics/core.ts": [
         "2a276e36ec77c0c6f828:1"
       ],
@@ -1180,9 +1183,6 @@
       ]
     },
     "legacy-read": {
-      "src/app/logic/displayClipboard.ts": [
-        "54ac33c805a3bf53b6bf:1"
-      ],
       "src/app/logic/equationNumericIntervalRuntime.ts": [
         "ebb6b8e06080b97c3eea:1"
       ],
@@ -1672,8 +1672,7 @@
     },
     "control-read": {
       "src/app/logic/displayClipboard.ts": [
-        "e1c29c817e6a4d936f08:1",
-        "e1c29c817e6a4d936f08:2"
+        "e1c29c817e6a4d936f08:1"
       ],
       "src/app/logic/equationNumericIntervalRuntime.ts": [
         "5024288f9b2c289e0538:1"

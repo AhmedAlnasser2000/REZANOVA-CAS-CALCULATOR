@@ -28,6 +28,7 @@ import type {
   WorkspaceInstanceStateSlot,
   WorkspaceInstanceStateSlotUpdater,
 } from './workspace-instances';
+import { withCanonicalResult } from './canonical-outcome-test-helper';
 
 vi.mock('../../lib/app-state/persistence', () => ({
   appendHistoryEntry: vi.fn(),
@@ -370,7 +371,7 @@ describe('useHistoryDisplayRuntime', () => {
     vi.setSystemTime(200_042);
     act(() => {
       hook.result.current.commitOutcome(
-        {
+        withCanonicalResult({
           kind: 'success',
           title: 'Simplify',
           exactLatex: '4',
@@ -379,7 +380,7 @@ describe('useHistoryDisplayRuntime', () => {
             { name: 'a', valueLatex: '2', numericValue: 2 },
           ],
           warnings: [],
-        },
+        }),
         '2+2',
         'calculate',
         {
@@ -463,13 +464,13 @@ describe('useHistoryDisplayRuntime', () => {
     vi.setSystemTime(300_125);
     act(() => {
       hook.result.current.commitOutcome(
-        {
+        withCanonicalResult({
           kind: 'success',
           title: 'Simplify',
           exactLatex: '13',
           resolvedInputLatex: '6+7',
           warnings: [],
-        },
+        }),
         '6+7',
         'calculate',
         {
@@ -557,13 +558,13 @@ describe('useHistoryDisplayRuntime', () => {
 
     act(() => {
       hook.result.current.commitOutcome(
-        {
+        withCanonicalResult({
           kind: 'success',
           title: 'Simplify',
           exactLatex: '13',
           resolvedInputLatex: '8+5',
           warnings: [],
-        },
+        }),
         '8+5',
         'calculate',
         {
@@ -592,12 +593,12 @@ describe('useHistoryDisplayRuntime', () => {
 
     act(() => {
       hook.result.current.commitOutcome(
-        {
+        withCanonicalResult({
           kind: 'success',
           title: 'Background',
           exactLatex: '9',
           warnings: [],
-        },
+        }),
         '3^2',
         'calculus',
         {
@@ -663,12 +664,12 @@ describe('useHistoryDisplayRuntime', () => {
 
     act(() => {
       hook.result.current.commitOutcome(
-        {
+        withCanonicalResult({
           kind: 'success',
           title: 'Simplify',
           exactLatex: '10',
           warnings: [],
-        },
+        }),
         '5+5',
         'calculate',
         {

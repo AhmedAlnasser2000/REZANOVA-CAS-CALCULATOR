@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../../result-contract';
+import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
   listOoeDiagnostics,
@@ -131,14 +135,25 @@ describe('OOE diagnostics buffer', () => {
   });
 
   it('summarizes display outcomes without storing full math payloads', () => {
+    const canonicalResult = buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'success',
+      title: 'Equation',
+      primaryMath: canonicalMathValue('x=1'),
+      supplements: ['x\\ne0'],
+      warnings: ['domain warning'],
+      detailSections: [{
+        title: 'Solve Target',
+        lineParts: [[{ kind: 'text', text: 'Selected target: x' }]],
+        lines: ['Selected target: x'],
+      }],
+      metadata: { solveBadges: ['Candidate Checked'] },
+    });
     expect(summarizeDisplayOutcome({
       kind: 'success',
-      title: 'Equation',
-      exactLatex: 'x=1',
-      exactSupplementLatex: ['x\\ne0'],
-      warnings: ['domain warning'],
-      solveBadges: ['Symbolic'],
-      detailSections: [{ title: 'Solve Target', lines: ['Selected target: x'] }],
+      title: 'Stale title',
+      exactLatex: 'x=999',
+      warnings: [],
+      canonicalResult,
     })).toEqual({
       kind: 'success',
       title: 'Equation',
@@ -148,7 +163,7 @@ describe('OOE diagnostics buffer', () => {
       calculusStrategy: undefined,
       calculusDerivativeStrategies: undefined,
       plannerBadges: undefined,
-      solveBadges: ['Symbolic'],
+      solveBadges: ['Candidate Checked'],
       transformBadges: undefined,
       hasExactLatex: true,
       exactLatexLength: 3,
@@ -164,11 +179,30 @@ describe('OOE diagnostics buffer', () => {
   });
 
   it('detects unsafe readback markers in summaries', () => {
+    const canonicalResult = buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'success',
+      title: 'Equation',
+      primaryMath: canonicalMathValue('\\mathtip{\\blacksquare}'),
+      warnings: [],
+    });
     expect(summarizeDisplayOutcome({
       kind: 'success',
       title: 'Equation',
+      exactLatex: 'stale',
+      warnings: [],
+      canonicalResult,
+    }).unsafeReadbackMarkers).toEqual(['\\blacksquare', '\\mathtip']);
+  });
+
+  it('does not inspect compatibility strings without canonical authority', () => {
+    expect(summarizeDisplayOutcome({
+      kind: 'success',
+      title: 'Legacy',
       exactLatex: '\\mathtip{\\blacksquare}',
       warnings: [],
-    }).unsafeReadbackMarkers).toEqual(['\\blacksquare', '\\mathtip']);
+    })).toEqual({
+      kind: 'success',
+      errorSummary: 'Canonical result unavailable: missing-document',
+    });
   });
 });

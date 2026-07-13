@@ -26,4 +26,16 @@ describe('workspace display state canonical consumers', () => {
     expect(next.ansLatex).toBe('x=1');
     expect(next.displayOutcome).toMatchObject({ exactLatex: 'x=999' });
   });
+
+  it('rejects string-only live state instead of retaining compatibility truth', () => {
+    expect(() => applyWorkspaceDisplayOutcome(
+      { ansLatex: '0', displayOutcome: null, replayVariableSubstitutions: null },
+      {
+        kind: 'success',
+        title: 'Legacy result',
+        exactLatex: 'x=1',
+        warnings: [],
+      },
+    )).toThrow('requires canonical result authority: missing-document');
+  });
 });

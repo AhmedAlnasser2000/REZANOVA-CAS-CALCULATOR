@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
 import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../result-contract';
+import {
   SURFACE_PROTOCOL_VERSION,
   displayOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
@@ -33,6 +37,26 @@ describe('Surface Protocol DTO firewall', () => {
       },
       warnings: ['Check denominator exclusions.'],
       rejectedCandidateCount: 1,
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Equation Result',
+        primaryMath: canonicalMathValue('x=2', ['Equal', 'x', 2]),
+        approxText: 'x ≈ 2',
+        supplements: ['x\\ne0'],
+        solveSummaryParts: [[{ kind: 'text', text: 'Solved exactly.' }]],
+        branchReadback: {
+          targetLatex: 'x',
+          relationLatex: '=',
+          branchesLatex: ['2'],
+          countLabel: 'roots',
+        },
+        warnings: ['Check denominator exclusions.'],
+        metadata: {
+          answerDomain: 'real',
+          solutionKind: 'exact-symbolic',
+          rejectedCandidateCount: 1,
+        },
+      }),
     };
 
     expect(displayOutcomeToSurfaceResultSummary('equation', outcome)).toEqual({
@@ -73,6 +97,17 @@ describe('Surface Protocol DTO firewall', () => {
       runtimeAdvisories: {
         stopReason: { kind: 'unsupported-family', source: 'host' },
       },
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'error',
+        title: 'Unsupported',
+        error: 'No route.',
+        detailSections: [{
+          title: 'Diagnostics',
+          lines: ['internal route missed'],
+          lineKind: 'text',
+        }],
+        warnings: [],
+      }),
     });
 
     const serialized = JSON.stringify(summary);

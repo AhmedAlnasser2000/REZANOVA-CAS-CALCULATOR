@@ -5,6 +5,15 @@ import type {
 } from '../bridge-schema/ooe-bridge';
 import type { OoeHostAdapterDiagnostics } from '../runtime-control/host-adapter';
 import type { OoeRuntimeShellEvidence } from '../runtime-control/runtime-shell-contract';
+import type {
+  CanonicalResultDetailPartV1,
+  CanonicalResultDocumentV1,
+  DisplayOutcome,
+} from '../../../types/calculator';
+import {
+  collectCanonicalResultMathValues,
+  resolveCanonicalResultForConsumer,
+} from '../../result-contract';
 
 export const DEFAULT_OOE_DIAGNOSTICS_LIMIT = 100;
 
@@ -170,12 +179,6 @@ function compactText(value: unknown, maxLength = 120) {
   return `${singleLine.slice(0, maxLength - 1)}…`;
 }
 
-function stringArray(value: unknown) {
-  return Array.isArray(value)
-    ? value.filter((entry): entry is string => typeof entry === 'string')
-    : undefined;
-}
-
 function badgeSummaries(value: unknown) {
   if (!Array.isArray(value)) {
     return undefined;
@@ -193,20 +196,6 @@ function badgeSummaries(value: unknown) {
   });
 }
 
-function detailSectionTitles(value: unknown) {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
-  return value.flatMap((entry) => {
-    if (!entry || typeof entry !== 'object' || !('title' in entry)) {
-      return [];
-    }
-
-    return typeof entry.title === 'string' ? [entry.title] : [];
-  });
-}
-
 function collectUnsafeMarkersFromString(value: unknown, target: Set<string>) {
   if (typeof value !== 'string') {
     return;
@@ -219,15 +208,31 @@ function collectUnsafeMarkersFromString(value: unknown, target: Set<string>) {
   }
 }
 
-function unsafeMarkersFromOutcome(outcome: Record<string, unknown>) {
+function unsafeMarkersFromDocument(document: CanonicalResultDocumentV1) {
   const markers = new Set<string>();
-  collectUnsafeMarkersFromString(outcome.exactLatex, markers);
-  collectUnsafeMarkersFromString(outcome.approxText, markers);
-  collectUnsafeMarkersFromString(outcome.error, markers);
-  for (const entry of stringArray(outcome.exactSupplementLatex) ?? []) {
-    collectUnsafeMarkersFromString(entry, markers);
+  for (const reference of collectCanonicalResultMathValues(document)) {
+    collectUnsafeMarkersFromString(reference.value.canonicalLatex, markers);
   }
+  collectUnsafeMarkersFromString(document.approximations?.primary, markers);
+  collectUnsafeMarkersFromString(document.error, markers);
   return markers.size > 0 ? Array.from(markers).sort() : undefined;
+}
+
+function detailPartsText(parts: CanonicalResultDetailPartV1[]) {
+  return parts.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.text).join('');
+}
+
+function canonicalSummaryText(document: CanonicalResultDocumentV1) {
+  const solve = document.summaries?.solve
+    ?.map(detailPartsText)
+    .filter(Boolean)
+    .join(' ');
+  const transform = document.summaries?.transform;
+  return compactText(
+    solve
+    ?? transform?.text
+    ?? transform?.math?.canonicalLatex,
+  );
 }
 
 export function summarizeDisplayOutcome(outcome: unknown): OoeDiagnosticsOutputSummary {
@@ -236,36 +241,45 @@ export function summarizeDisplayOutcome(outcome: unknown): OoeDiagnosticsOutputS
   }
 
   const record = outcome as Record<string, unknown>;
-  const exactLatex = typeof record.exactLatex === 'string' ? record.exactLatex : undefined;
-  const approxText = typeof record.approxText === 'string' ? record.approxText : undefined;
-  const error = typeof record.error === 'string' ? record.error : undefined;
-  const warningValues = stringArray(record.warnings);
-  const exactSupplement = stringArray(record.exactSupplementLatex);
+  const kind = record.kind;
+  if (kind === 'prompt') {
+    return { kind: 'prompt' };
+  }
+  if (kind !== 'success' && kind !== 'error') {
+    return { kind: 'unknown' };
+  }
+  const resolution = resolveCanonicalResultForConsumer(outcome as DisplayOutcome);
+  if (!resolution.ok) {
+    return { kind, errorSummary: `Canonical result unavailable: ${resolution.failure.reason}` };
+  }
+
+  const document = resolution.document;
+  const metadata = document.metadata;
+  const exactLatex = document.primaryMath?.canonicalLatex;
+  const approxText = document.approximations?.primary;
 
   return {
-    kind: String(record.kind),
-    title: typeof record.title === 'string' ? record.title : undefined,
-    warningsCount: warningValues?.length ?? 0,
-    answerDomain: typeof record.answerDomain === 'string' ? record.answerDomain : undefined,
-    solutionKind: typeof record.solutionKind === 'string' ? record.solutionKind : undefined,
-    resultOrigin: typeof record.resultOrigin === 'string' ? record.resultOrigin : undefined,
-    calculusStrategy: typeof record.calculusStrategy === 'string'
-      ? record.calculusStrategy
-      : undefined,
-    calculusDerivativeStrategies: stringArray(record.calculusDerivativeStrategies),
-    plannerBadges: badgeSummaries(record.plannerBadges),
-    solveBadges: badgeSummaries(record.solveBadges),
-    transformBadges: badgeSummaries(record.transformBadges),
+    kind: document.outcomeKind,
+    title: document.title,
+    warningsCount: document.warnings.length,
+    answerDomain: metadata?.answerDomain,
+    solutionKind: metadata?.solutionKind,
+    resultOrigin: metadata?.resultOrigin,
+    calculusStrategy: metadata?.calculusStrategy,
+    calculusDerivativeStrategies: metadata?.calculusDerivativeStrategies,
+    plannerBadges: badgeSummaries(metadata?.plannerBadges),
+    solveBadges: badgeSummaries(metadata?.solveBadges),
+    transformBadges: badgeSummaries(metadata?.transformBadges),
     hasExactLatex: Boolean(exactLatex),
     exactLatexLength: exactLatex?.length,
-    exactSupplementCount: exactSupplement?.length ?? 0,
-    hasPeriodicFamily: Boolean(record.periodicFamily),
+    exactSupplementCount: document.supplements?.length ?? 0,
+    hasPeriodicFamily: Boolean(document.periodicFamily),
     hasApproxText: Boolean(approxText),
     approxTextLength: approxText?.length,
-    detailSectionTitles: detailSectionTitles(record.detailSections),
-    summaryText: compactText(record.solveSummaryText ?? record.transformSummaryText),
-    errorSummary: compactText(error),
-    unsafeReadbackMarkers: unsafeMarkersFromOutcome(record),
+    detailSectionTitles: document.details?.map((section) => section.title),
+    summaryText: canonicalSummaryText(document),
+    errorSummary: compactText(document.error),
+    unsafeReadbackMarkers: unsafeMarkersFromDocument(document),
   };
 }
 

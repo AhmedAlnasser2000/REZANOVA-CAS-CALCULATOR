@@ -19,6 +19,7 @@ import {
 export type CanonicalResultProjectionFailure = {
   reason:
     | 'prompt-outcome'
+    | 'missing-document'
     | 'canonical-math-mismatch'
     | 'undeclared-detail'
     | 'undeclared-summary'

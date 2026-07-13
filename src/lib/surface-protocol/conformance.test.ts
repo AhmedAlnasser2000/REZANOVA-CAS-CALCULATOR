@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
 import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../result-contract';
+import {
   recordOoeEvent,
   resetOoeEventOutboxForTests,
 } from '../ooe/events/event-outbox';
@@ -100,6 +104,24 @@ describe('Surface Protocol conformance', () => {
       variableSubstitutions: [{ name: 'x', valueLatex: '2', numericValue: 2 }],
       mathJsonTree: ['Add', 'x', 2],
       nonSerializable: () => 'hidden',
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Equation Result',
+        primaryMath: canonicalMathValue('x=2'),
+        detailSections: [{
+          title: 'DisplayBlock',
+          lines: ['MathJSON tree', 'solver object', '/home/ahmed/local'],
+          lineKind: 'text',
+        }],
+        warnings: [],
+        metadata: {
+          variableSubstitutions: [{
+            name: 'x',
+            value: canonicalMathValue('2'),
+            numericValue: 2,
+          }],
+        },
+      }),
     } as unknown as DisplayOutcome;
 
     const summary = displayOutcomeToSurfaceResultSummary('equation', outcome);

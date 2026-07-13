@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
+import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../result-contract';
 import { SURFACE_PROTOCOL_VERSION } from './dto';
 import {
   querySurfaceCurrentResult,
@@ -24,6 +28,17 @@ describe('Surface Protocol snapshot queries', () => {
       history: { entries: ['hidden history'] },
       variables: { x: 2 },
       nonSerializable: () => 'hidden',
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Equation Result',
+        primaryMath: canonicalMathValue('x=2'),
+        detailSections: [{
+          title: 'Internal details',
+          lines: ['solver object should stay hidden'],
+          lineKind: 'text',
+        }],
+        warnings: [],
+      }),
     } as unknown as DisplayOutcome;
 
     const result = querySurfaceCurrentResult({

@@ -11,7 +11,7 @@ import { validateCanonicalResultDocument } from './validation';
 export type CanonicalResultConsumerResolution =
   | {
       ok: true;
-      source: 'native' | 'compatibility';
+      source: 'native';
       document: CanonicalResultDocumentV1;
     }
   | {
@@ -32,25 +32,49 @@ export function resolveCanonicalResultForConsumer(
     };
   }
 
-  if (outcome.canonicalResult !== undefined) {
-    const validation = validateCanonicalResultDocument(outcome.canonicalResult);
-    if (!validation.ok) {
-      return {
-        ok: false,
-        failure: {
-          reason: 'invalid-document',
-          message: validation.failure.message,
-          validationFailure: validation.failure,
-        },
-      };
-    }
+  if (outcome.canonicalResult === undefined) {
     return {
-      ok: true,
-      source: 'native',
-      document: validation.validated.value,
+      ok: false,
+      failure: {
+        reason: 'missing-document',
+        message: 'Semantic result consumers require a native canonical result document.',
+      },
     };
   }
 
+  const validation = validateCanonicalResultDocument(outcome.canonicalResult);
+  if (!validation.ok) {
+    return {
+      ok: false,
+      failure: {
+        reason: 'invalid-document',
+        message: validation.failure.message,
+        validationFailure: validation.failure,
+      },
+    };
+  }
+  return {
+    ok: true,
+    source: 'native',
+    document: validation.validated.value,
+  };
+}
+
+export type LegacyCanonicalResultConsumerResolution =
+  | CanonicalResultConsumerResolution
+  | {
+      ok: true;
+      source: 'compatibility';
+      document: CanonicalResultDocumentV1;
+    };
+
+export function resolveLegacyCanonicalResultForConsumer(
+  outcome: DisplayOutcome,
+): LegacyCanonicalResultConsumerResolution {
+  const native = resolveCanonicalResultForConsumer(outcome);
+  if (native.ok || native.failure.reason !== 'missing-document') {
+    return native;
+  }
   const projected = projectDisplayOutcomeToCanonicalResult(outcome);
   return projected.ok
     ? { ok: true, source: 'compatibility', document: projected.document }

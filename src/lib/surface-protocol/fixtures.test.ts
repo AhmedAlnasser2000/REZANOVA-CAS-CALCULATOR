@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
 import type { OoeEventEnvelope } from '../ooe/events/event-outbox';
 import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../result-contract';
+import {
   SURFACE_CONTRACT_CURRENT_RESULT_FIXTURE,
   SURFACE_CONTRACT_FAILURE_FIXTURE,
   SURFACE_CONTRACT_FIXTURES,
@@ -35,6 +39,26 @@ const resultFixtureOutcome: DisplayOutcome = {
   },
   warnings: ['Check denominator exclusions.'],
   rejectedCandidateCount: 1,
+  canonicalResult: buildCanonicalResultDocumentFromProducer({
+    outcomeKind: 'success',
+    title: 'Equation Result',
+    primaryMath: canonicalMathValue('x=2'),
+    approxText: 'x ≈ 2',
+    supplements: ['x\\ne0'],
+    solveSummaryParts: [[{ kind: 'text', text: 'Solved exactly.' }]],
+    branchReadback: {
+      targetLatex: 'x',
+      relationLatex: '=',
+      branchesLatex: ['2'],
+      countLabel: 'roots',
+    },
+    warnings: ['Check denominator exclusions.'],
+    metadata: {
+      answerDomain: 'real',
+      solutionKind: 'exact-symbolic',
+      rejectedCandidateCount: 1,
+    },
+  }),
 };
 
 describe('Surface Protocol contract fixtures', () => {

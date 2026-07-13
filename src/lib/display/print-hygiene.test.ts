@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome, TableResponse } from '../../types/calculator';
+import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../result-contract';
 import baseline from '../__golden__/print-hygiene-baseline.json';
 import { buildPrintHygieneBaseline } from '../__golden__/print-hygiene-baseline';
 import { parsePrintHygieneUpdateArgs } from '../__golden__/print-hygiene-update-policy';
@@ -55,6 +59,49 @@ describe('print hygiene fragment collection', () => {
       resolvedInputLatex: 'x^2=1',
       variableSubstitutions: [{ name: 'a', valueLatex: '\\frac{1}{2}', numericValue: 0.5 }],
       warnings: [],
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Coverage',
+        primaryMath: canonicalMathValue('(x+1)', ['Add', 'x', 1]),
+        answerRows: { rows: [{ latex: 'x=1' }] },
+        branchReadback: { targetLatex: 'x', relationLatex: '=', branchesLatex: ['1', '-1'] },
+        systemReadback: { variablesLatex: ['x', 'y'], rows: [{ valuesLatex: ['1', '2'] }] },
+        periodicFamily: {
+          carrierLatex: '\\sin(x)',
+          parameterLatex: 'n',
+          parameterConstraintLatex: ['n\\in\\mathbb{Z}'],
+          branchesLatex: ['x=2\\pi n'],
+          representatives: [{ label: 'principal', exactLatex: '0' }],
+          suggestedIntervals: [{ label: 'cycle', start: '0', end: '2\\pi' }],
+          piecewiseBranches: [{ conditionLatex: 'n>0', resultLatex: '2\\pi n' }],
+          principalRangeLatex: '[-\\pi,\\pi]',
+          reducedCarrierLatex: '\\sin(x)=0',
+        },
+        supplements: ['x\\ne0'],
+        detailSections: [
+          { title: 'Math', lines: ['x^2'], lineKind: 'math' },
+          {
+            title: 'Mixed',
+            lines: ['Root: x=1'],
+            lineParts: [[{ kind: 'text', text: 'Root: ' }, { kind: 'math', latex: 'x=1' }]],
+          },
+          { title: 'Prose', lines: ['NaN is a token name in this explanation.'], lineKind: 'text' },
+        ],
+        solveSummaryParts: [[
+          { kind: 'text', text: 'Reduced carrier: ' },
+          { kind: 'math', latex: 'x^2=1' },
+        ]],
+        transformSummaryLatex: 'x\\mapsto x+1',
+        warnings: [],
+        metadata: {
+          resolvedInput: canonicalMathValue('x^2=1'),
+          variableSubstitutions: [{
+            name: 'a',
+            value: canonicalMathValue('\\frac{1}{2}'),
+            numericValue: 0.5,
+          }],
+        },
+      }),
     };
 
     const fragments = collectDisplayOutcomeMathFragments(outcome);

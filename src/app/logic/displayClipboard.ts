@@ -20,13 +20,12 @@ export async function copyDisplayResultWithDeps({
   const resolution = displayOutcome && displayOutcome.kind !== 'prompt'
     ? resolveCanonicalResultForConsumer(displayOutcome)
     : undefined;
+  if (resolution && !resolution.ok) {
+    setClipboardNotice('Result unavailable');
+    return;
+  }
   const primaryMath = resolution?.ok ? resolution.document.primaryMath : undefined;
-  const compatibilityLatex = !resolution?.ok
-    && displayOutcome
-    && displayOutcome.kind !== 'prompt'
-    ? displayOutcome.exactLatex
-    : undefined;
-  const canonicalLatex = primaryMath?.canonicalLatex ?? compatibilityLatex ?? visibleText;
+  const canonicalLatex = primaryMath?.canonicalLatex ?? (displayOutcome ? '' : visibleText);
   if (!canonicalLatex.trim()) {
     setClipboardNotice('Nothing to copy');
     return;

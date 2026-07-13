@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
 import { buildCanonicalResultDocumentFromProducer, canonicalMathValue } from './producer';
-import { resolveCanonicalResultForConsumer } from './consumer';
+import {
+  resolveCanonicalResultForConsumer,
+  resolveLegacyCanonicalResultForConsumer,
+} from './consumer';
 
 describe('canonical result consumer resolution', () => {
   it('keeps valid native truth authoritative over contradictory compatibility fields', () => {
@@ -26,8 +29,23 @@ describe('canonical result consumer resolution', () => {
     });
   });
 
-  it('projects a typed compatibility outcome only when native truth is absent', () => {
+  it('fails closed when native truth is absent', () => {
     const resolution = resolveCanonicalResultForConsumer({
+      kind: 'success',
+      title: 'Legacy typed result',
+      exactLatex: 'y=2',
+      detailSections: [{ title: 'Method', lineKind: 'text', lines: ['Exact route'] }],
+      warnings: [],
+    });
+
+    expect(resolution).toMatchObject({
+      ok: false,
+      failure: { reason: 'missing-document' },
+    });
+  });
+
+  it('keeps compatibility projection behind an explicit legacy-only resolver', () => {
+    const resolution = resolveLegacyCanonicalResultForConsumer({
       kind: 'success',
       title: 'Legacy typed result',
       exactLatex: 'y=2',
@@ -38,10 +56,7 @@ describe('canonical result consumer resolution', () => {
     expect(resolution).toMatchObject({
       ok: true,
       source: 'compatibility',
-      document: {
-        title: 'Legacy typed result',
-        primaryMath: { canonicalLatex: 'y=2' },
-      },
+      document: { title: 'Legacy typed result', primaryMath: { canonicalLatex: 'y=2' } },
     });
   });
 

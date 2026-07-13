@@ -13,7 +13,7 @@ import type {
   ResultOrigin,
   SolutionKind,
 } from '../../../types/calculator';
-import { resolveCanonicalResultForConsumer } from '../../result-contract';
+import { resolveLegacyCanonicalResultForConsumer } from '../../result-contract';
 import { trustSummaryForCanonicalResult } from './display-trust-summary';
 
 export type DisplayResultReadModel = {
@@ -160,7 +160,7 @@ function displaySystemReadback(document: CanonicalResultDocumentV1) {
 }
 
 function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
-  const projected = resolveCanonicalResultForConsumer(outcome);
+  const projected = resolveLegacyCanonicalResultForConsumer(outcome);
   const legacyDetailSections = outcome.detailSections;
   if (
     !projected.ok
@@ -169,7 +169,7 @@ function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'p
   ) {
     const outcomeWithoutLegacyDetails = { ...outcome };
     Reflect.deleteProperty(outcomeWithoutLegacyDetails, 'detailSections');
-    const projectedWithoutLegacyDetails = resolveCanonicalResultForConsumer(
+    const projectedWithoutLegacyDetails = resolveLegacyCanonicalResultForConsumer(
       outcomeWithoutLegacyDetails,
     );
     if (projectedWithoutLegacyDetails.ok) {
