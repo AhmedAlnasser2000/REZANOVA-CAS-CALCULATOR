@@ -58,6 +58,28 @@ function formatScientific(value: number, digits: number, style: ScientificNotati
   return `${mantissaText} × 10^${exponent}`;
 }
 
+export function roundedApproxNumberValue(
+  value: number,
+  overrides?: Partial<NumericOutputSettings>,
+) {
+  if (!Number.isFinite(value)) return undefined;
+  const settings = resolveNumericOutputSettings(overrides);
+  const normalized = normalizeZero(value);
+  if (normalized === 0) return 0;
+
+  if (shouldUseScientific(normalized, settings.numericNotationMode)) {
+    const exponent = Math.floor(Math.log10(Math.abs(normalized)));
+    const mantissa = normalized / (10 ** exponent);
+    return Number(mantissa.toFixed(settings.approxDigits)) * (10 ** exponent);
+  }
+
+  const fractionalDigits = Math.abs(normalized) >= 1
+    ? settings.approxDigits
+    : Math.max(0, Math.ceil(-Math.log10(Math.abs(normalized))) - 1)
+      + settings.approxDigits;
+  return Number(normalized.toFixed(fractionalDigits));
+}
+
 function resolveNumericOutputSettings(
   overrides?: Partial<NumericOutputSettings>,
 ): NumericOutputSettings {

@@ -25,6 +25,16 @@ import {
 } from './quality-readback';
 import { formatStatisticsNumber, parseIntegerDraft, parseNumericDraft } from './shared';
 import { profileStatisticsResult } from '../display/printer';
+import {
+  binomialMathJsonLeaves,
+  confidenceIntervalMathJsonLeaves,
+  descriptiveSummaryMathJsonLeaves,
+  frequencySummaryMathJsonLeaves,
+  regressionMathJsonLeaves,
+  type StatisticsOwnedMathJsonLeaf,
+} from './math-values';
+
+const ownedMathJsonByOutcome = new WeakMap<object, readonly StatisticsOwnedMathJsonLeaf[]>();
 
 type NumericFrequencyRow = {
   value: number;
@@ -42,6 +52,7 @@ type StatisticsEvaluation = {
   detailSections?: DisplayDetailSection[];
   warnings: string[];
   error?: string;
+  mathJsonLeaves?: StatisticsOwnedMathJsonLeaf[];
 };
 
 function statisticsError(error: string): StatisticsEvaluation {
@@ -52,8 +63,9 @@ function statisticsError(error: string): StatisticsEvaluation {
 }
 
 function toOutcome(title: string, evaluation: StatisticsEvaluation): DisplayOutcome {
+  let outcome: DisplayOutcome;
   if (evaluation.error) {
-    return {
+    outcome = {
       kind: 'error',
       title,
       error: evaluation.error,
@@ -62,16 +74,20 @@ function toOutcome(title: string, evaluation: StatisticsEvaluation): DisplayOutc
       approxText: evaluation.approxText,
       detailSections: evaluation.detailSections,
     };
+  } else {
+    outcome = {
+      kind: 'success',
+      title,
+      exactLatex: evaluation.exactLatex,
+      approxText: evaluation.approxText,
+      detailSections: evaluation.detailSections,
+      warnings: evaluation.warnings,
+    };
   }
-
-  return {
-    kind: 'success',
-    title,
-    exactLatex: evaluation.exactLatex,
-    approxText: evaluation.approxText,
-    detailSections: evaluation.detailSections,
-    warnings: evaluation.warnings,
-  };
+  if (evaluation.mathJsonLeaves?.length) {
+    ownedMathJsonByOutcome.set(outcome, evaluation.mathJsonLeaves);
+  }
+  return outcome;
 }
 
 function requestTitle(request: StatisticsRequest) {
@@ -333,8 +349,7 @@ function descriptiveOutcomeFromSummary(summary: MeanInferenceSummary & ReturnTyp
   const warnings = summary.count < 2
     ? ['Sample variance and sample standard deviation need at least two values.']
     : [];
-  return profileStatisticsResult({
-    exactLatex: [
+  const exactLatex = [
       `n=${summary.count}`,
       `\\sum x=${numberToLatex(summary.sum)}`,
       `\\bar{x}=${numberToLatex(summary.mean)}`,
@@ -346,9 +361,12 @@ function descriptiveOutcomeFromSummary(summary: MeanInferenceSummary & ReturnTyp
       `\\sigma=${numberToLatex(summary.standardDeviation)}`,
       summary.sampleVariance === null ? '' : `s^2=${numberToLatex(summary.sampleVariance)}`,
       summary.sampleStandardDeviation === null ? '' : `s=${numberToLatex(summary.sampleStandardDeviation)}`,
-    ].filter(Boolean).join(',\\ '),
+    ].filter(Boolean).join(',\\ ');
+  return profileStatisticsResult({
+    exactLatex,
     approxText: `n=${summary.count}, mean=${formatStatisticsNumber(summary.mean)}, median=${formatStatisticsNumber(summary.median)}, population sd=${formatStatisticsNumber(summary.standardDeviation)}${summary.sampleStandardDeviation === null ? '' : `, sample sd=${formatStatisticsNumber(summary.sampleStandardDeviation)}`}`,
     warnings,
+    mathJsonLeaves: descriptiveSummaryMathJsonLeaves(exactLatex, summary),
   });
 }
 
@@ -373,10 +391,17 @@ function frequencyOutcomeFromRows(rows: NumericFrequencyRow[]): StatisticsEvalua
       ? `,\\ \\operatorname{mode}=${numberToLatex(modeRows[0].value)}`
       : '';
 
+  const exactLatex = `n=${totalCount},\\ \\left\\{${rows.map((row) => `${numberToLatex(row.value)}:${row.frequency}`).join(',\\ ')}\\right\\}${modeLatex}`;
   return profileStatisticsResult({
-    exactLatex: `n=${totalCount},\\ \\left\\{${rows.map((row) => `${numberToLatex(row.value)}:${row.frequency}`).join(',\\ ')}\\right\\}${modeLatex}`,
+    exactLatex,
     approxText: `n=${totalCount}, ${rows.map((row) => `${formatStatisticsNumber(row.value)}:${row.frequency}`).join(', ')}`,
     warnings,
+    mathJsonLeaves: frequencySummaryMathJsonLeaves({
+      canonicalLatex: exactLatex,
+      rows,
+      totalCount,
+      modeValue: modeRows.length === 1 ? modeRows[0].value : undefined,
+    }),
   });
 }
 
@@ -436,17 +461,23 @@ function meanInferenceOutcome(
       return statisticsError('Mean confidence intervals need at least two numeric observations.');
     }
 
-    return profileStatisticsResult({
-      exactLatex: [
+    const exactLatex = [
         `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
         `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
         `n=${summary.summary.count}`,
         `t^*=${numberToLatex(result.criticalValue)}`,
         `ME=${numberToLatex(result.marginOfError)}`,
         `CI=${numberToLatex(result.lowerBound)}\\le\\mu\\le${numberToLatex(result.upperBound)}`,
-      ].join(',\\ '),
+      ].join(',\\ ');
+    return profileStatisticsResult({
+      exactLatex,
       approxText: `${formatStatisticsNumber(level * 100)}% CI: (${formatStatisticsNumber(result.lowerBound)}, ${formatStatisticsNumber(result.upperBound)})`,
       warnings: [],
+      mathJsonLeaves: confidenceIntervalMathJsonLeaves({
+        canonicalLatex: exactLatex,
+        summary: summary.summary,
+        result,
+      }),
     });
   }
 
@@ -549,10 +580,17 @@ function binomialOutcome(request: Extract<StatisticsRequest, { kind: 'binomial' 
       : Array.from({ length: x + 1 }, (_, index) => binomialPmf(n, p, index))
         .reduce((total, probability) => total + probability, 0);
 
+  const exactLatex = `P(X${request.mode === 'pmf' ? '=' : '\\le'}${x})=${numberToLatex(value)}`;
   return profileStatisticsResult({
-    exactLatex: `P(X${request.mode === 'pmf' ? '=' : '\\le'}${x})=${numberToLatex(value)}`,
+    exactLatex,
     approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
     warnings: [],
+    mathJsonLeaves: binomialMathJsonLeaves({
+      canonicalLatex: exactLatex,
+      mode: request.mode,
+      x,
+      value,
+    }),
   });
 }
 
@@ -704,18 +742,20 @@ function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regressi
     warnings.push('Residual variance and residual standard error need at least 3 points.');
   }
 
-  return profileStatisticsResult({
-    exactLatex: [
+  const exactLatex = [
       `\\hat{y}=${numberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${numberToLatex(summary.intercept)}`,
       `m=${numberToLatex(summary.slope)}`,
       `b=${numberToLatex(summary.intercept)}`,
       `r=${numberToLatex(summary.r)}`,
       `r^2=${numberToLatex(summary.rSquared)}`,
       `n=${summary.count}`,
-    ].join(',\\ '),
+    ].join(',\\ ');
+  return profileStatisticsResult({
+    exactLatex,
     approxText: `ŷ=${formatStatisticsNumber(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${formatStatisticsNumber(summary.intercept)}, r=${formatStatisticsNumber(summary.r)}, r²=${formatStatisticsNumber(summary.rSquared)}, n=${summary.count}`,
     detailSections: [regressionQualitySection(summary, diagnostics)],
     warnings,
+    mathJsonLeaves: regressionMathJsonLeaves(exactLatex, summary, diagnostics),
   });
 }
 
@@ -831,11 +871,14 @@ export function runStatisticsCoreDraft(
     return {
       outcome: parseFailureToOutcome(parsed),
       parsed,
+      mathJsonLeaves: [],
     };
   }
 
+  const outcome = runStatisticsRequest(parsed.request);
   return {
-    outcome: runStatisticsRequest(parsed.request),
+    outcome,
     parsed,
+    mathJsonLeaves: ownedMathJsonByOutcome.get(outcome) ?? [],
   };
 }

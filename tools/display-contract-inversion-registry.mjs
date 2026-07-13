@@ -478,6 +478,13 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     functions: ['createGeometryResultOutcome'],
   },
   {
+    id: 'geometry-math-value-producer-input-v1',
+    owner: 'geometry-result-contract',
+    rationale: 'The Geometry final adapter overlays workspace-owned native values onto the typed producer result before canonical validation; these reads are producer assembly, not downstream presentation consumption.',
+    matchers: exact('src/lib/geometry/math-values.ts'),
+    functions: ['geometryMathValuesFromOwnedLeaves'],
+  },
+  {
     id: 'matrix-result-producer-input-v1',
     owner: 'matrix-result-contract',
     rationale: 'The Matrix owner adapter reads typed result evidence before attaching native canonical truth without changing its independent runtime shell.',
@@ -492,6 +499,13 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     functions: ['createStatisticsResultOutcome'],
   },
   {
+    id: 'statistics-math-value-producer-input-v1',
+    owner: 'statistics-result-contract',
+    rationale: 'The Statistics final adapter overlays native summary and diagnostic values onto typed result evidence before canonical validation.',
+    matchers: exact('src/lib/statistics/math-values.ts'),
+    functions: ['statisticsMathValuesFromOwnedLeaves'],
+  },
+  {
     id: 'table-result-producer-input-v1',
     owner: 'table-result-contract',
     rationale: 'The Table owner adapter reads typed result evidence and the completed structured response before attaching native canonical truth.',
@@ -499,11 +513,32 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     functions: ['createTableResultOutcome'],
   },
   {
+    id: 'table-math-value-producer-input-v1',
+    owner: 'table-result-contract',
+    rationale: 'The Table final adapter combines internal CE and numeric row evidence with the typed Table response before canonical validation.',
+    matchers: exact('src/lib/modes/table-math-values.ts'),
+    functions: ['tableMathValuesFromEvidence'],
+  },
+  {
     id: 'trigonometry-result-producer-input-v1',
     owner: 'trigonometry-result-contract',
     rationale: 'The Trigonometry owner adapter reads typed result evidence after cross-workspace presentation changes.',
     matchers: exact('src/lib/trigonometry/result-document.ts'),
     functions: ['createTrigonometryResultOutcome'],
+  },
+  {
+    id: 'trigonometry-math-value-producer-input-v1',
+    owner: 'trigonometry-result-contract',
+    rationale: 'The Trigonometry final adapter retains producer-owned native leaves and shared Equation proof trees before emitting the workspace-owned canonical result.',
+    matchers: exact('src/lib/trigonometry/math-values.ts'),
+    functions: ['trigonometryMathValuesFromOwnedLeaves'],
+  },
+  {
+    id: 'trigonometry-shared-equation-proof-forwarder-v1',
+    owner: 'trigonometry-result-contract',
+    rationale: 'The Trigonometry Equation boundary forwards already-proven shared Equation trees into its own final adapter before dropping the foreign canonical wrapper.',
+    matchers: exact('src/lib/trigonometry/core.ts'),
+    functions: ['canonicalLeavesFromSharedEquation'],
   },
   {
     id: 'vector-result-producer-input-v1',

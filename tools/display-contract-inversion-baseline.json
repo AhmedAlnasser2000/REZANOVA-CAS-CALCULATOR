@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1 registers the final Calculus MathJSON overlay as producer-owned assembly, removes a compatibility substitution read, and refreshes only native evidence fingerprints without growing legacy or compatibility floors.",
-  "registryDigest": "8f46a8e9245e4e965402",
+  "acceptedReason": "Register guided-domain MathJSON proof overlays and the shared Equation proof forwarder as producer-owned canonical assembly with unchanged compatibility and consumer floors.",
+  "registryDigest": "5e371be65b50841045c7",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -214,8 +214,8 @@
         "2f25f9250244efd23832:1"
       ],
       "src/lib/geometry/runtime-run.ts": [
-        "dab6958a2a206493a9ac:1",
-        "cfef16f4ba56c3e35ec4:1"
+        "001328740af0a1c57d3f:1",
+        "551b7c657b95f84d05fd:1"
       ],
       "src/lib/modes/calculate/result-document.ts": [
         "a37e23c446896b5ad16a:1"
@@ -373,8 +373,8 @@
       ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
-        "35721bcaa7cb18ee70bd:1",
-        "5596fa01d9903a06a317:2"
+        "f5abd1d26f262ca9c875:1",
+        "e1700bf94e158f5c6ec2:1"
       ],
       "src/lib/modes/table-result-document.ts": [
         "e469ea41a47c83a31862:1"
@@ -393,15 +393,15 @@
         "438c5c3707f4f8780809:1"
       ],
       "src/lib/statistics/runtime-run.ts": [
-        "ba495893a95fea5ab417:1",
-        "3ed4bc9878d98105cb56:1"
+        "144a801ac5e689a4ae74:1",
+        "20da8f6c29141f38c01d:1"
       ],
       "src/lib/trigonometry/result-document.ts": [
         "63a95d91ed4002597d26:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
-        "e0c4e9a7c6dddbdbfba9:1",
-        "c5ea9b6510259df12ebf:1"
+        "43cda8f5e8a4a246e268:1",
+        "7b03bd81ef68c5e4bae6:1"
       ]
     },
     "canonical-projection": {
@@ -706,6 +706,7 @@
         "b45836e08c747a442a09:1"
       ],
       "src/lib/geometry/core.ts": [
+        "3db3bdff880cb04fe309:1",
         "9bef0bd4223ffdf7d22a:1",
         "cdc8023f438f7ed59c8e:1",
         "a247e00935cf63b6592f:1",
@@ -721,8 +722,7 @@
         "df7dc90a8e19d5a14ec2:1",
         "14df4ca9eddb771be31d:1",
         "df8a9c887910dafd4b0b:1",
-        "4b5deef1721a534f5802:1",
-        "711fbcd0676b8d943a14:1"
+        "4b5deef1721a534f5802:1"
       ],
       "src/lib/geometry/runtime-run.ts": [
         "bfbef6f54dafe32ea510:1"
@@ -965,6 +965,7 @@
         "776ae81dba1d5b0b967b:1"
       ],
       "src/lib/statistics/core.ts": [
+        "ccb74c86b71528bf3884:1",
         "56b38bafc5b300e35c2f:1",
         "bff7a549d85254181ed0:1",
         "a160d3d4fb8395cd5e37:1",
@@ -976,20 +977,19 @@
         "518544bfcf68ac56ce7e:1",
         "d263fd990ee8e29ed468:1",
         "65262d7ef9fa07e8dc72:1",
-        "1ae33380a7063d0377fe:1",
-        "b52c670547b92f2a7e32:1"
+        "1ae33380a7063d0377fe:1"
       ],
       "src/lib/statistics/runtime-run.ts": [
         "b57fa6106228daccb420:1"
       ],
       "src/lib/trigonometry/core.ts": [
+        "76685e604035a5c820ce:1",
         "288f8b617a537fefbfcc:1",
+        "c7440153dceb8f883b0a:1",
         "2d14a11de1170c8e603e:1",
         "e606efa10998c121aa6d:1",
-        "d04377bd25fbe694183b:1",
-        "519b0ad46ea11b72a784:1",
-        "2adb8ca51a8d71f1b16e:1",
-        "480651ecd9659ae1757d:1"
+        "3c22f0804629cecd288b:1",
+        "519b0ad46ea11b72a784:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
         "2e674a69a0ca35c35c19:1"

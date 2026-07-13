@@ -8,6 +8,7 @@ import { requireCanonicalResultAuthority } from '../result-contract';
 import { geometryRequestToScreen } from './parser';
 import { createGeometryResultOutcome } from './result-document';
 import type { RunGeometryRuntimeRequest } from './runtime-input';
+import { geometryMathJsonRouteForRequest, geometryMathValuesFromOwnedLeaves } from './math-values';
 
 export type GeometryModeRunPayload = {
   outcome: ReturnType<typeof runGeometryCoreDraft>['outcome'];
@@ -19,14 +20,25 @@ export type GeometryModeRunPayload = {
 export function buildGeometryModeRunPayload(
   request: RunGeometryRuntimeRequest,
 ): GeometryModeRunPayload {
-  const { outcome, parsed } = runGeometryCoreDraft(request.inputLatex, request.screenHint);
+  const { outcome, parsed, mathJsonLeaves } = runGeometryCoreDraft(
+    request.inputLatex,
+    request.screenHint,
+  );
   const replayScreen = parsed.ok
     ? geometryRequestToScreen(parsed.request)
     : request.screenHint;
 
   const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
     ? outcome
-    : createGeometryResultOutcome(outcome), 'Geometry');
+    : createGeometryResultOutcome(outcome, parsed.ok
+      ? {
+          mathValues: geometryMathValuesFromOwnedLeaves({
+            outcome,
+            routeId: geometryMathJsonRouteForRequest(parsed.request),
+            leaves: mathJsonLeaves,
+          }),
+        }
+      : undefined), 'Geometry');
 
   return {
     outcome: ownedOutcome,

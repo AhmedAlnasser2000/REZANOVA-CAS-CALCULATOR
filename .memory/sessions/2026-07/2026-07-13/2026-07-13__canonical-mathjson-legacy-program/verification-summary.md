@@ -68,3 +68,15 @@
 - static: TypeScript, global lint, 2,973-module production build, file-size ratchet over 1,775 files and seven caps, and diff hygiene pass.
 - visual: the 11-test Calculus Chromium smoke passes. Seven inspected 1440px cards cover derivative, implicit derivative, indefinite integral, one-sided limit, Maclaurin, Laplace, and numeric IVP; all render expected answers/details with zero card or page horizontal overflow.
 - residual: Laplace's existing table detail exposes raw-looking `Le^(()a t) = 1/(s-a)` text. It predates this no-output-drift milestone and is recorded separately for presentation review.
+
+## MATHJSON-COVERAGE-GUIDED-DOMAINS1
+
+- kind: backend producer coverage with app-visible parity verification
+- result: pass
+- coverage: 100 fixtures, 51 route families, 262 leaves, 212 proven, 24 bounded exemptions, 26 missing Matrix/Vector leaves, 60,801 serialized bytes, and a 2,753-byte maximum document
+- producer evidence: native Trigonometry, Geometry, Statistics, and Table values reach their workspace-owned final adapters without parsing formatted output or promoting normalized input
+- payload: 20 guided documents grow from 8,237 bytes without optional MathJSON to 11,592 current bytes; three five-cold/fifty-warm reruns report zero blocked metrics
+- regression: all 100 native probes, 43 golden cases, 100 replay fixtures, 54 result-contract tests, 76 worker/runtime contracts, 180 Display contract tests, and 485 UI tests pass
+- static: TypeScript, global lint, production build, file-size, OOE, compartments, Surface, seam, printer, detail, clipboard, inversion, Equation-carrier, and diff-hygiene gates pass
+- visual: all 19 Chromium canaries pass with zero retries; eight focused guided cards/tables preserve exact results, warnings, rows, and horizontal overflow behavior
+- residual: 26 Matrix/Vector leaves remain for `MATHJSON-COVERAGE-LINEAR-ALGEBRA1`; no Notebook source or untracked `test-results/` is part of this checkpoint

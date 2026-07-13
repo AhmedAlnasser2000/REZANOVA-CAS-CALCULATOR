@@ -7,6 +7,7 @@ import type {
 } from '../../types/calculator';
 import { formatApproxNumber, formatNumber } from '../display/format';
 import { parseSignedNumberInput } from '../numeric/signed-number';
+import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
 
 const DEG_PER_RAD = 180 / Math.PI;
 const DEG_PER_GRAD = 0.9;
@@ -24,6 +25,7 @@ export type TrigEvaluation = {
   warnings: string[];
   error?: string;
   resultOrigin?: TrigResultOrigin;
+  mathJsonLeaves?: TrigonometryOwnedMathJsonLeaf[];
 };
 
 export type SpecialAngleRow = {
@@ -175,6 +177,32 @@ function approximateFraction(value: number, maxDenominator = 360): Ratio | undef
   }
 
   return undefined;
+}
+
+export function roundedTrigMathJsonNumber(value: number) {
+  if (!Number.isFinite(value)) return undefined;
+  const normalized = Math.abs(value) < 1e-10 ? 0 : value;
+  return Number(normalized.toFixed(6));
+}
+
+export function formatDegreesAsUnitMathJson(degrees: number, unit: AngleUnit): unknown {
+  if (unit === 'deg') {
+    return ['Degrees', roundedTrigMathJsonNumber(degrees) ?? degrees];
+  }
+  if (unit === 'grad') {
+    return roundedTrigMathJsonNumber(convertAngle(degrees, 'deg', 'grad')) ?? degrees;
+  }
+
+  const fraction = approximateFraction(degrees / 180);
+  if (!fraction) {
+    return roundedTrigMathJsonNumber(convertAngle(degrees, 'deg', 'rad')) ?? degrees;
+  }
+  const pi = fraction.numerator === 1
+    ? 'Pi'
+    : fraction.numerator === -1
+      ? ['Negate', 'Pi']
+      : ['Multiply', fraction.numerator, 'Pi'];
+  return fraction.denominator === 1 ? pi : ['Divide', pi, fraction.denominator];
 }
 
 function degreesToExactRadianLatex(degrees: number) {
@@ -389,6 +417,57 @@ export function evaluateSpecialTrig(kind: 'sin' | 'cos' | 'tan', degrees: number
   return ratioLatex(base, sineSign(normalized) * cosineSign(normalized));
 }
 
+export function evaluateSpecialTrigMathJson(
+  kind: 'sin' | 'cos' | 'tan',
+  degrees: number,
+): unknown | undefined {
+  const normalized = normalizeDegrees(degrees);
+  const reference = referenceAngle(normalized);
+  const sign = kind === 'sin'
+    ? sineSign(normalized)
+    : kind === 'cos'
+      ? cosineSign(normalized)
+      : sineSign(normalized) * cosineSign(normalized);
+  let value: unknown;
+  if (kind === 'sin') {
+    value = Math.abs(reference - 0) < EPSILON
+      ? 0
+      : Math.abs(reference - 30) < EPSILON
+        ? ['Divide', 1, 2]
+        : Math.abs(reference - 45) < EPSILON
+          ? ['Divide', ['Sqrt', 2], 2]
+          : Math.abs(reference - 60) < EPSILON
+            ? ['Divide', ['Sqrt', 3], 2]
+            : Math.abs(reference - 90) < EPSILON
+              ? 1
+              : undefined;
+  } else if (kind === 'cos') {
+    value = Math.abs(reference - 0) < EPSILON
+      ? 1
+      : Math.abs(reference - 30) < EPSILON
+        ? ['Divide', ['Sqrt', 3], 2]
+        : Math.abs(reference - 45) < EPSILON
+          ? ['Divide', ['Sqrt', 2], 2]
+          : Math.abs(reference - 60) < EPSILON
+            ? ['Divide', 1, 2]
+            : Math.abs(reference - 90) < EPSILON
+              ? 0
+              : undefined;
+  } else {
+    value = Math.abs(reference - 0) < EPSILON
+      ? 0
+      : Math.abs(reference - 30) < EPSILON
+        ? ['Divide', ['Sqrt', 3], 3]
+        : Math.abs(reference - 45) < EPSILON
+          ? 1
+          : Math.abs(reference - 60) < EPSILON
+            ? ['Sqrt', 3]
+            : undefined;
+  }
+  if (value === undefined) return undefined;
+  return sign < 0 && value !== 0 ? ['Negate', value] : value;
+}
+
 export function convertAngleState(state: AngleConvertState): TrigEvaluation {
   const parsed = parseSignedNumberInput(state.value);
   if (parsed === null) {
@@ -412,5 +491,10 @@ export function convertAngleState(state: AngleConvertState): TrigEvaluation {
     approxText: formatApproxNumber(converted),
     warnings: [`Converted from ${state.from.toUpperCase()} to ${state.to.toUpperCase()}.`],
     resultOrigin: state.to === 'rad' && degreesToExactRadianLatex(degrees) ? 'exact-special-angle' : 'numeric',
+    mathJsonLeaves: [{
+      canonicalLatex: exactLatex,
+      mathJson: formatDegreesAsUnitMathJson(degrees, state.to),
+      source: 'trigonometry.angle-conversion.native-angle-value',
+    }],
   };
 }

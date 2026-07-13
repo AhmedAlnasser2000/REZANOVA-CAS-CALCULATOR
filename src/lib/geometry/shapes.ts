@@ -11,6 +11,7 @@ import {
   geometryError,
   geometryResult,
   nearlyEqual,
+  numericGeometryMathJson,
   numericLatex,
   parsePositiveDraft,
   type GeometryEvaluation,
@@ -25,10 +26,10 @@ export function solveSquare(state: SquareState): GeometryEvaluation {
   }
 
   return geometryResult([
-    { label: 's', latex: numericLatex(side) },
-    { label: 'A', latex: numericLatex(side ** 2) },
-    { label: 'P', latex: numericLatex(4 * side) },
-    { label: 'd', latex: numericLatex(side * Math.SQRT2) },
+    { label: 's', latex: numericLatex(side), mathJson: numericGeometryMathJson(side) },
+    { label: 'A', latex: numericLatex(side ** 2), mathJson: numericGeometryMathJson(side ** 2) },
+    { label: 'P', latex: numericLatex(4 * side), mathJson: numericGeometryMathJson(4 * side) },
+    { label: 'd', latex: numericLatex(side * Math.SQRT2), mathJson: numericGeometryMathJson(side * Math.SQRT2) },
   ], [], 'geometry-formula');
 }
 
@@ -145,4 +146,3 @@ export function solveSphere(state: SphereState): GeometryEvaluation {
     { label: 'SA', latex: numericLatex(4 * PI * radius ** 2) },
   ], [], 'geometry-formula');
 }
-

@@ -44,6 +44,9 @@ import { solveTriangleArea, solveTriangleHeron } from './triangles';
 import {
   type GeometryEvaluation,
 } from './shared';
+import type { GeometryOwnedMathJsonLeaf } from './math-values';
+
+const ownedMathJsonByOutcome = new WeakMap<object, readonly GeometryOwnedMathJsonLeaf[]>();
 
 function requestTitle(request: GeometryRequest): string {
   switch (request.kind) {
@@ -119,8 +122,9 @@ function evaluationToOutcome(
   evaluation: GeometryEvaluation,
   actions?: DisplayOutcomeAction[],
 ): DisplayOutcome {
+  let outcome: DisplayOutcome;
   if (evaluation.error) {
-    return {
+    outcome = {
       kind: 'error',
       title,
       error: evaluation.error,
@@ -130,18 +134,22 @@ function evaluationToOutcome(
       approxText: evaluation.approxText,
       actions,
     };
+  } else {
+    outcome = {
+      kind: 'success',
+      title,
+      exactLatex: evaluation.exactLatex,
+      branchReadback: evaluation.branchReadback,
+      approxText: evaluation.approxText,
+      warnings: evaluation.warnings,
+      resultOrigin: evaluation.resultOrigin,
+      actions,
+    };
   }
-
-  return {
-    kind: 'success',
-    title,
-    exactLatex: evaluation.exactLatex,
-    branchReadback: evaluation.branchReadback,
-    approxText: evaluation.approxText,
-    warnings: evaluation.warnings,
-    resultOrigin: evaluation.resultOrigin,
-    actions,
-  };
+  if (evaluation.mathJsonLeaves?.length) {
+    ownedMathJsonByOutcome.set(outcome, evaluation.mathJsonLeaves);
+  }
+  return outcome;
 }
 
 function solveMissingToOutcome(
@@ -407,11 +415,14 @@ export function runGeometryCoreDraft(
     return {
       outcome: toOutcome(parsed),
       parsed,
+      mathJsonLeaves: [],
     };
   }
 
+  const outcome = runGeometryRequest(parsed.request);
   return {
-    outcome: runGeometryRequest(parsed.request),
+    outcome,
     parsed,
+    mathJsonLeaves: ownedMathJsonByOutcome.get(outcome) ?? [],
   };
 }

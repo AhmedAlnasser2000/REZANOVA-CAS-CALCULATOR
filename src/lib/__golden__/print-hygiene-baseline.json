@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1 records newly producer-proven MathJSON payloads for seven existing golden outputs without changing canonical LaTeX, visible formatting, or mathematical content.",
+  "acceptedReason": "Accept producer-proven guided-domain canonical payload fragments with canonical LaTeX parity and no visible printer change.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -1044,6 +1044,11 @@
           "value": "2x-y=0"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "2x-y=0"
+        },
+        {
           "path": "actions[0].latex",
           "kind": "action",
           "value": "2x-y=0"
@@ -1062,6 +1067,11 @@
           "value": "\\hat{y}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "\\hat{y}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
+        },
+        {
           "path": "detailSections[0].lineParts[1][1].latex",
           "kind": "detail-math-part",
           "value": "0"
@@ -1077,6 +1087,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
         }
       ]
@@ -1340,6 +1355,11 @@
           "value": "f(x)=\\sqrt{x}"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "f(x)=\\sqrt{x}"
+        },
+        {
           "path": "detailSections[0].lineParts[0][0].latex",
           "kind": "detail-math-part",
           "value": "x"
@@ -1385,6 +1405,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "f(x)=x^2,\\;g(x)=x+1"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "f(x)=x^2,\\;g(x)=x+1"
         },
         {

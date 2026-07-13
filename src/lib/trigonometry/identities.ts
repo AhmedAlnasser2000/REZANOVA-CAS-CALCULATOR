@@ -278,5 +278,14 @@ export function evaluateTrigIdentity(state: TrigIdentityState): TrigEvaluation {
     approxText: undefined,
     warnings: ['Bounded identity conversion applied.'],
     resultOrigin: 'symbolic',
+    ...(state.targetForm === 'simplified' && exactLatex === '1'
+      ? {
+          mathJsonLeaves: [{
+            canonicalLatex: exactLatex,
+            mathJson: 1,
+            source: 'trigonometry.identity.pythagorean-normalized-ast',
+          }],
+        }
+      : {}),
   };
 }

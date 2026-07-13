@@ -16,13 +16,43 @@ import { evaluateTrigIdentity } from './identities';
 import { parseTrigDraft } from './parser';
 import { analyzePeriodPhase } from './period-phase';
 import { solveCosineRule, solveRightTriangle, solveSineRule } from './triangles';
+import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
+
+const ownedMathJsonByOutcome = new WeakMap<object, readonly TrigonometryOwnedMathJsonLeaf[]>();
+
+function rememberOwnedMathJson(
+  outcome: DisplayOutcome,
+  leaves: readonly TrigonometryOwnedMathJsonLeaf[] | undefined,
+) {
+  if (leaves?.length) ownedMathJsonByOutcome.set(outcome, leaves);
+  return outcome;
+}
+
+function canonicalLeavesFromSharedEquation(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
+  const document = outcome.canonicalResult;
+  if (!document) return [];
+  const values = [
+    document.primaryMath,
+    document.branchReadback?.target,
+    ...(document.branchReadback?.branches ?? []),
+    ...(document.supplements ?? []),
+  ];
+  return values.flatMap((value): TrigonometryOwnedMathJsonLeaf[] =>
+    value?.mathJson === undefined
+      ? []
+      : [{
+          canonicalLatex: value.canonicalLatex,
+          mathJson: value.mathJson,
+          source: 'trigonometry.equation.shared-equation-canonical-result',
+        }]);
+}
 
 function toOutcome(
   title: string,
   evaluation: TrigEvaluation,
 ): DisplayOutcome {
   if (evaluation.error) {
-    return {
+    return rememberOwnedMathJson({
       kind: 'error',
       title,
       error: evaluation.error,
@@ -32,10 +62,10 @@ function toOutcome(
       exactSupplementLatex: evaluation.exactSupplementLatex,
       approxText: evaluation.approxText,
       detailSections: evaluation.detailSections,
-    };
+    }, evaluation.mathJsonLeaves);
   }
 
-  return {
+  return rememberOwnedMathJson({
     kind: 'success',
     title,
     exactLatex: evaluation.exactLatex,
@@ -45,7 +75,7 @@ function toOutcome(
     warnings: evaluation.warnings,
     resultOrigin: evaluation.resultOrigin,
     detailSections: evaluation.detailSections,
-  };
+  }, evaluation.mathJsonLeaves);
 }
 
 function withCanonicalMetadata(
@@ -57,11 +87,12 @@ function withCanonicalMetadata(
     return outcome;
   }
 
-  return {
+  const updated: DisplayOutcome = {
     ...outcome,
     resolvedInputLatex: resolvedLatex !== originalLatex.trim() ? resolvedLatex : undefined,
     plannerBadges: resolvedLatex !== originalLatex.trim() ? ['Canonicalized'] : outcome.plannerBadges,
   };
+  return rememberOwnedMathJson(updated, ownedMathJsonByOutcome.get(outcome));
 }
 
 function requestTitle(request: TrigRequest, screenHint?: TrigScreen) {
@@ -167,8 +198,9 @@ function runTrigRequest(
           ...((outcome.plannerBadges ?? []).filter((badge) => !(planner.badges ?? []).includes(badge))),
         ],
       };
+      const equationLeaves = canonicalLeavesFromSharedEquation(outcome);
       delete trigonometryOutcome.canonicalResult;
-      return trigonometryOutcome;
+      return rememberOwnedMathJson(trigonometryOutcome, equationLeaves);
     }
     case 'rightTriangle':
       return toOutcome(title, solveRightTriangle({
@@ -234,14 +266,22 @@ export function runTrigonometryCoreDraft(
   const source = canonicalized.ok ? canonicalized.canonicalLatex : rawLatex;
   const parsed = parseTrigDraft(source, options);
   if (!parsed.ok) {
+    const outcome = withCanonicalMetadata(parseFailureToOutcome(parsed), rawLatex, source);
     return {
-      outcome: withCanonicalMetadata(parseFailureToOutcome(parsed), rawLatex, source),
+      outcome,
       parsed,
+      mathJsonLeaves: ownedMathJsonByOutcome.get(outcome) ?? [],
     };
   }
 
+  const outcome = withCanonicalMetadata(
+    runTrigRequest(parsed.request, options.angleUnit, options.screenHint),
+    rawLatex,
+    source,
+  );
   return {
-    outcome: withCanonicalMetadata(runTrigRequest(parsed.request, options.angleUnit, options.screenHint), rawLatex, source),
+    outcome,
     parsed,
+    mathJsonLeaves: ownedMathJsonByOutcome.get(outcome) ?? [],
   };
 }

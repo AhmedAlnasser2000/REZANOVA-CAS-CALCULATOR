@@ -47,7 +47,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{2}"
+        "normalizedLatex": "exactLatex=\\frac{1}{2}\ncanonicalMath.canonicalLatex=\\frac{1}{2}"
       }
     },
     {
@@ -94,7 +94,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1"
+        "normalizedLatex": "exactLatex=1\ncanonicalMath.canonicalLatex=1"
       }
     },
     {
@@ -188,7 +188,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=a=3,\\ b=4,\\ c=5,\\ A=36.869898^{\\circ},\\ B=53.130102^{\\circ},\\ C=90^{\\circ}\nresolvedInputLatex=rightTriangle(a=3,b=4)"
+        "normalizedLatex": "exactLatex=a=3,\\ b=4,\\ c=5,\\ A=36.869898^{\\circ},\\ B=53.130102^{\\circ},\\ C=90^{\\circ}\ncanonicalMath.canonicalLatex=a=3,\\ b=4,\\ c=5,\\ A=36.869898^{\\circ},\\ B=53.130102^{\\circ},\\ C=90^{\\circ}\nresolvedInputLatex=rightTriangle(a=3,b=4)"
       }
     },
     {
@@ -235,7 +235,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{\\pi}{6}\nresolvedInputLatex=angleConvert(value=30,from=deg,to=rad)"
+        "normalizedLatex": "exactLatex=\\frac{\\pi}{6}\ncanonicalMath.canonicalLatex=\\frac{\\pi}{6}\nresolvedInputLatex=angleConvert(value=30,from=deg,to=rad)"
       }
     }
   ]

@@ -1,7 +1,7 @@
 import type { CosineRuleState, RightTriangleState, SineRuleState } from '../../types/calculator';
 import { formatApproxNumber, formatNumber } from '../display/format';
 import { parseSignedNumberInput } from '../numeric/signed-number';
-import type { TrigEvaluation } from './angles';
+import { roundedTrigMathJsonNumber, type TrigEvaluation } from './angles';
 import { profileTrigonometryResult } from '../display/printer';
 
 const DEGREE = Math.PI / 180;
@@ -44,8 +44,10 @@ function asLatex(solution: TriangleSolution) {
 }
 
 function triangleResult(solution: TriangleSolution, warnings: string[] = []): TrigEvaluation {
+  const exactLatex = asLatex(solution);
+  const scalar = (value: number) => roundedTrigMathJsonNumber(value) ?? value;
   return profileTrigonometryResult({
-    exactLatex: asLatex(solution),
+    exactLatex,
     approxText: [
       `a=${formatApproxNumber(solution.sideA)}`,
       `b=${formatApproxNumber(solution.sideB)}`,
@@ -56,6 +58,22 @@ function triangleResult(solution: TriangleSolution, warnings: string[] = []): Tr
     ].join(', '),
     warnings,
     resultOrigin: 'triangle-solver',
+    mathJsonLeaves: [{
+      canonicalLatex: exactLatex,
+      mathJson: [
+        'Delimiter',
+        ['Sequence',
+          ['Equal', 'a', scalar(solution.sideA)],
+          ['Equal', 'b', scalar(solution.sideB)],
+          ['Equal', 'c', scalar(solution.sideC)],
+          ['Equal', 'A', ['Degrees', scalar(solution.angleA)]],
+          ['Equal', 'B', ['Degrees', scalar(solution.angleB)]],
+          ['Equal', 'C', ['Degrees', scalar(solution.angleC)]],
+        ],
+        "','",
+      ],
+      source: 'trigonometry.triangle.native-solution',
+    }],
   });
 }
 

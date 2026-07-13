@@ -9,6 +9,10 @@ import { statisticsRequestToScreen } from './parser';
 import { createStatisticsResultOutcome } from './result-document';
 import { statisticsRequestToWorkingSource } from './shared';
 import type { RunStatisticsRuntimeRequest } from './runtime-input';
+import {
+  statisticsMathJsonRouteForRequest,
+  statisticsMathValuesFromOwnedLeaves,
+} from './math-values';
 
 export type StatisticsModeRunPayload = {
   outcome: ReturnType<typeof runStatisticsCoreDraft>['outcome'];
@@ -20,7 +24,7 @@ export type StatisticsModeRunPayload = {
 export function buildStatisticsModeRunPayload(
   request: RunStatisticsRuntimeRequest,
 ): StatisticsModeRunPayload {
-  const { outcome, parsed } = runStatisticsCoreDraft(request.inputLatex, {
+  const { outcome, parsed, mathJsonLeaves } = runStatisticsCoreDraft(request.inputLatex, {
     screenHint: request.screenHint,
     workingSourceHint: request.workingSourceHint,
   });
@@ -34,7 +38,15 @@ export function buildStatisticsModeRunPayload(
 
   const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
     ? outcome
-    : createStatisticsResultOutcome(outcome), 'Statistics');
+    : createStatisticsResultOutcome(outcome, parsed.ok
+      ? {
+          mathValues: statisticsMathValuesFromOwnedLeaves({
+            outcome,
+            routeId: statisticsMathJsonRouteForRequest(parsed.request),
+            leaves: mathJsonLeaves,
+          }),
+        }
+      : undefined), 'Statistics');
 
   return {
     outcome: ownedOutcome,

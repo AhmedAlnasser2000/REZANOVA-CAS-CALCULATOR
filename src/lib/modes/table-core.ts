@@ -1,6 +1,7 @@
 import {
-  buildTable,
-  buildTableCooperatively,
+  buildTableCooperativelyWithEvidence,
+  buildTableWithEvidence,
+  type TableMathJsonEvidence,
 } from '../engine/math-engine';
 import { assumptionFactsToDetailSections } from '../algebra/assumption-readback';
 import { buildDomainSamplingReadiness } from '../algebra/domain-sampling-readiness';
@@ -19,6 +20,7 @@ import { textDetailSection } from '../display/result/result-detail-lines';
 import { profileTableResult } from '../display/printer';
 import { createTableResultOutcome } from './table-result-document';
 import { requireCanonicalResultAuthority } from '../result-contract';
+import { tableMathJsonRoute, tableMathValuesFromEvidence } from './table-math-values';
 
 export type RunTableModeRequest = {
   primaryLatex: string;
@@ -151,6 +153,7 @@ function prepareTableRuntime(request: RunTableModeRequest) {
 function buildTableModeResult(
   prepared: ReturnType<typeof prepareTableRuntime>,
   response: TableResponse,
+  evidence?: TableMathJsonEvidence,
 ): TableModeResult {
   if (response.error) {
     const outcome: Extract<DisplayOutcome, { kind: 'error' }> = {
@@ -185,7 +188,16 @@ function buildTableModeResult(
   return {
     response,
     outcome: requireCanonicalResultAuthority(
-      createTableResultOutcome(outcome, response),
+      createTableResultOutcome(outcome, response, evidence
+        ? {
+            mathValues: tableMathValuesFromEvidence({
+              outcome,
+              response,
+              routeId: tableMathJsonRoute(prepared),
+              evidence,
+            }),
+          }
+        : undefined),
       'Table',
       { tableResponse: response },
     ),
@@ -216,7 +228,7 @@ export function buildCancelledTableModeResult(): TableModeResult {
 
 export function runTableMode(request: RunTableModeRequest): TableModeResult {
   const prepared = prepareTableRuntime(request);
-  const response = buildTable({
+  const result = buildTableWithEvidence({
     primaryExpression: { latex: prepared.primaryLatex },
     secondaryExpression: prepared.secondaryEnabled ? { latex: prepared.secondaryLatex } : null,
     variable: 'x',
@@ -225,7 +237,7 @@ export function runTableMode(request: RunTableModeRequest): TableModeResult {
     step: prepared.step,
   });
 
-  return buildTableModeResult(prepared, response);
+  return buildTableModeResult(prepared, result.response, result.evidence);
 }
 
 export async function runTableModeCooperatively(
@@ -241,7 +253,7 @@ export async function runTableModeCooperatively(
   } = {},
 ): Promise<TableModeResult> {
   const prepared = prepareTableRuntime(request);
-  const result = await buildTableCooperatively({
+  const result = await buildTableCooperativelyWithEvidence({
     primaryExpression: { latex: prepared.primaryLatex },
     secondaryExpression: prepared.secondaryEnabled ? { latex: prepared.secondaryLatex } : null,
     variable: 'x',
@@ -254,5 +266,5 @@ export async function runTableModeCooperatively(
     return buildCancelledTableModeResult();
   }
 
-  return buildTableModeResult(prepared, result.response);
+  return buildTableModeResult(prepared, result.response, result.evidence);
 }

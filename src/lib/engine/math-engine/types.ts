@@ -77,6 +77,36 @@ export type PreparedTableBuild =
       estimatedRows: number;
     };
 
+export type TableMathJsonCellEvidence = {
+  canonicalLatex: string;
+  mathJson?: SerializableMathJson;
+};
+
+export type TableMathJsonEvidence = {
+  functions: TableMathJsonCellEvidence;
+  variable: TableMathJsonCellEvidence;
+  rows: Array<{
+    x: TableMathJsonCellEvidence;
+    primary: TableMathJsonCellEvidence;
+    secondary?: TableMathJsonCellEvidence;
+  }>;
+};
+
+export type TableBuildWithEvidence = {
+  response: TableResponse;
+  evidence?: TableMathJsonEvidence;
+};
+
+export type CooperativeTableBuildWithEvidenceResult =
+  | {
+      kind: 'completed';
+      response: TableResponse;
+      evidence?: TableMathJsonEvidence;
+    }
+  | {
+      kind: 'cancelled';
+    };
+
 export type CooperativeTableBuildOptions = {
   rowsPerBatch?: number;
   shouldCancel?: () => boolean;

@@ -5,9 +5,12 @@ import {
   type TrigEvaluation,
   convertAngle,
   evaluateSpecialTrig,
+  evaluateSpecialTrigMathJson,
   formatDegreesAsUnitLatex,
+  formatDegreesAsUnitMathJson,
   parseAngleInput,
   parseSupportedRatio,
+  roundedTrigMathJsonNumber,
 } from './angles';
 import { profileTrigonometryResult } from '../display/printer';
 
@@ -60,6 +63,11 @@ function toNumericTrigResult(kind: 'sin' | 'cos' | 'tan', degrees: number): Trig
     approxText: formatApproxNumber(value),
     warnings: [],
     resultOrigin: 'numeric',
+    mathJsonLeaves: [{
+      canonicalLatex: formatNumber(value),
+      mathJson: roundedTrigMathJsonNumber(value),
+      source: 'trigonometry.function.native-numeric-value',
+    }],
   });
 }
 
@@ -82,11 +90,21 @@ function evaluateDirectTrig(kind: 'sin' | 'cos' | 'tan', argumentLatex: string, 
 
   const numeric = toNumericTrigResult(kind, degrees);
   if (exact) {
+    const mathJson = evaluateSpecialTrigMathJson(kind, degrees);
     return profileTrigonometryResult({
       exactLatex: exact,
       approxText: numeric.approxText,
       warnings: [`Angle unit: ${angleUnit.toUpperCase()}.`],
       resultOrigin: 'exact-special-angle',
+      ...(mathJson !== undefined
+        ? {
+            mathJsonLeaves: [{
+              canonicalLatex: exact,
+              mathJson,
+              source: 'trigonometry.function.special-angle-table',
+            }],
+          }
+        : {}),
     });
   }
 
@@ -114,11 +132,17 @@ function evaluateInverseTrig(kind: 'asin' | 'acos' | 'atan', argumentLatex: stri
 
   const exactDegrees = exactInverseTrigDegrees(kind, value);
   if (exactDegrees !== undefined) {
+    const exactLatex = formatDegreesAsUnitLatex(exactDegrees, angleUnit);
     return profileTrigonometryResult({
-      exactLatex: formatDegreesAsUnitLatex(exactDegrees, angleUnit),
+      exactLatex,
       approxText: formatApproxNumber(convertAngle(exactDegrees, 'deg', angleUnit)),
       warnings: ['Principal value returned.'],
       resultOrigin: 'exact-special-angle',
+      mathJsonLeaves: [{
+        canonicalLatex: exactLatex,
+        mathJson: formatDegreesAsUnitMathJson(exactDegrees, angleUnit),
+        source: 'trigonometry.function.inverse-special-angle-table',
+      }],
     });
   }
 
@@ -129,11 +153,17 @@ function evaluateInverseTrig(kind: 'asin' | 'acos' | 'atan', argumentLatex: stri
       : Math.atan(value);
   const numeric = convertAngle(radians, 'rad', angleUnit);
 
+  const exactLatex = formatNumber(numeric);
   return profileTrigonometryResult({
-    exactLatex: formatNumber(numeric),
+    exactLatex,
     approxText: formatApproxNumber(numeric),
     warnings: ['Principal value returned.'],
     resultOrigin: 'numeric',
+    mathJsonLeaves: [{
+      canonicalLatex: exactLatex,
+      mathJson: roundedTrigMathJsonNumber(numeric),
+      source: 'trigonometry.function.native-inverse-value',
+    }],
   });
 }
 

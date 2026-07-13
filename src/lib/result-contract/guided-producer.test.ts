@@ -20,6 +20,11 @@ describe('guided-domain canonical result producers', () => {
     if (result.outcome.kind === 'prompt') throw new Error('Expected Trigonometry result.');
     expect(resolveCanonicalResultForStorage(result.outcome))
       .toMatchObject({ ok: true, source: 'native' });
+    expect(result.outcome.canonicalResult?.branchReadback?.target.mathJson).toBe('x');
+    expect(result.outcome.canonicalResult?.branchReadback?.branches
+      .every((branch) => branch.mathJson !== undefined)).toBe(true);
+    expect(result.outcome.canonicalResult?.supplements?.[0]?.mathJson)
+      .toEqual(['Element', 'n', 'Integers']);
     expect(JSON.stringify(result.outcome.canonicalResult)).not.toContain('actions');
   });
 
@@ -34,6 +39,7 @@ describe('guided-domain canonical result producers', () => {
     expect(result.outcome.actions?.[0]?.kind).toBe('send');
     expect(resolveCanonicalResultForStorage(result.outcome))
       .toMatchObject({ ok: true, source: 'native' });
+    expect(result.outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
     expect(JSON.stringify(result.outcome.canonicalResult)).not.toContain('actions');
   });
 
@@ -49,6 +55,10 @@ describe('guided-domain canonical result producers', () => {
     expect(result.outcome.detailSections?.[0]?.title).toBe('Quality Summary');
     expect(resolveCanonicalResultForStorage(result.outcome))
       .toMatchObject({ ok: true, source: 'native' });
+    expect(result.outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
+    expect(result.outcome.canonicalResult?.details?.[0]?.lines.slice(1)
+      .every((line) => line.some((part) => part.kind === 'math' && part.math.mathJson !== undefined)))
+      .toBe(true);
   });
 
   it('stores exact Table headers and rows while leaving cancellation control-only', () => {
@@ -68,16 +78,16 @@ describe('guided-domain canonical result producers', () => {
       headers: ['x', '\\sqrt{x}'],
       rows: [
         {
-          x: { canonicalLatex: '-1' },
+          x: { canonicalLatex: '-1', mathJson: -1 },
           primary: { canonicalLatex: 'undefined' },
         },
         {
-          x: { canonicalLatex: '0' },
-          primary: { canonicalLatex: '0' },
+          x: { canonicalLatex: '0', mathJson: 0 },
+          primary: { canonicalLatex: '0', mathJson: 0 },
         },
         {
-          x: { canonicalLatex: '1' },
-          primary: { canonicalLatex: '1' },
+          x: { canonicalLatex: '1', mathJson: 1 },
+          primary: { canonicalLatex: '1', mathJson: 1 },
         },
       ],
     });

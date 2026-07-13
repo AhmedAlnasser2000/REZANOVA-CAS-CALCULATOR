@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "reason": "MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1 adds producer-proven standard MathJSON to every representable Calculus replay leaf while retaining existing bounds and bounded compatibility exemptions.",
+  "reason": "Accept producer-proven MathJSON for Trigonometry, Geometry, Statistics, and Table; retain four bounded control or undefined-cell exemptions with no visible output change.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -66,16 +66,20 @@
     "equation-denominator-exclusion-labeled-supplement",
     "equation-even-root-labeled-supplement",
     "equation-rational-hole-labeled-supplement",
-    "equation-rational-simple-labeled-supplement"
+    "equation-rational-simple-labeled-supplement",
+    "table-partial-domain-undefined-cell",
+    "table-rational-pole-undefined-cell",
+    "trigonometry-angle-convert-control-input",
+    "trigonometry-right-triangle-control-input"
   ],
   "totals": {
     "fixtures": 100,
-    "bytes": 57642,
+    "bytes": 60801,
     "maxBytes": 2753,
     "leaves": 262,
-    "proven": 149,
-    "exempt": 20,
-    "missing": 93
+    "proven": 212,
+    "exempt": 24,
+    "missing": 26
   },
   "routes": {
     "calculate.ans": {
@@ -269,48 +273,48 @@
     },
     "geometry.circle": {
       "fixtures": 1,
-      "bytes": 249,
-      "maxBytes": 249,
+      "bytes": 411,
+      "maxBytes": 411,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "geometry.coordinate-distance": {
       "fixtures": 1,
-      "bytes": 268,
-      "maxBytes": 268,
+      "bytes": 438,
+      "maxBytes": 438,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "geometry.line-equation": {
       "fixtures": 1,
-      "bytes": 205,
-      "maxBytes": 205,
+      "bytes": 275,
+      "maxBytes": 275,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "geometry.shape-2d": {
       "fixtures": 1,
-      "bytes": 243,
-      "maxBytes": 243,
+      "bytes": 360,
+      "maxBytes": 360,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "geometry.triangle": {
       "fixtures": 1,
-      "bytes": 252,
-      "maxBytes": 252,
+      "bytes": 384,
+      "maxBytes": 384,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "matrix.determinant": {
       "fixtures": 1,
@@ -359,138 +363,138 @@
     },
     "statistics.descriptive": {
       "fixtures": 1,
-      "bytes": 380,
-      "maxBytes": 380,
+      "bytes": 693,
+      "maxBytes": 693,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "statistics.frequency": {
       "fixtures": 1,
-      "bytes": 226,
-      "maxBytes": 226,
+      "bytes": 355,
+      "maxBytes": 355,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "statistics.inference": {
       "fixtures": 1,
-      "bytes": 274,
-      "maxBytes": 274,
+      "bytes": 548,
+      "maxBytes": 548,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "statistics.probability": {
       "fixtures": 1,
-      "bytes": 165,
-      "maxBytes": 165,
+      "bytes": 217,
+      "maxBytes": 217,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "statistics.relationship": {
       "fixtures": 1,
-      "bytes": 681,
-      "maxBytes": 681,
+      "bytes": 920,
+      "maxBytes": 920,
       "leaves": 4,
-      "proven": 0,
+      "proven": 4,
       "exempt": 0,
-      "missing": 4
+      "missing": 0
     },
     "table.domain-boundary": {
       "fixtures": 1,
-      "bytes": 830,
-      "maxBytes": 830,
+      "bytes": 989,
+      "maxBytes": 989,
       "leaves": 8,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 8
+      "proven": 7,
+      "exempt": 1,
+      "missing": 0
     },
     "table.rational-function": {
       "fixtures": 1,
-      "bytes": 833,
-      "maxBytes": 833,
+      "bytes": 997,
+      "maxBytes": 997,
       "leaves": 8,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 8
+      "proven": 7,
+      "exempt": 1,
+      "missing": 0
     },
     "table.single-function": {
       "fixtures": 1,
-      "bytes": 512,
-      "maxBytes": 512,
+      "bytes": 725,
+      "maxBytes": 725,
       "leaves": 11,
-      "proven": 0,
+      "proven": 11,
       "exempt": 0,
-      "missing": 11
+      "missing": 0
     },
     "table.trigonometric-function": {
       "fixtures": 1,
-      "bytes": 410,
-      "maxBytes": 410,
+      "bytes": 579,
+      "maxBytes": 579,
       "leaves": 7,
-      "proven": 0,
+      "proven": 7,
       "exempt": 0,
-      "missing": 7
+      "missing": 0
     },
     "table.two-functions": {
       "fixtures": 1,
-      "bytes": 509,
-      "maxBytes": 509,
+      "bytes": 808,
+      "maxBytes": 808,
       "leaves": 10,
-      "proven": 0,
+      "proven": 10,
       "exempt": 0,
-      "missing": 10
+      "missing": 0
     },
     "trigonometry.angle-conversion": {
       "fixtures": 1,
-      "bytes": 354,
-      "maxBytes": 354,
+      "bytes": 383,
+      "maxBytes": 383,
       "leaves": 2,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 2
+      "proven": 1,
+      "exempt": 1,
+      "missing": 0
     },
     "trigonometry.equation": {
       "fixtures": 1,
-      "bytes": 1199,
-      "maxBytes": 1199,
+      "bytes": 1435,
+      "maxBytes": 1435,
       "leaves": 5,
-      "proven": 1,
+      "proven": 5,
       "exempt": 0,
-      "missing": 4
+      "missing": 0
     },
     "trigonometry.function": {
       "fixtures": 1,
-      "bytes": 227,
-      "maxBytes": 227,
+      "bytes": 253,
+      "maxBytes": 253,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "trigonometry.identity": {
       "fixtures": 1,
-      "bytes": 193,
-      "maxBytes": 193,
+      "bytes": 206,
+      "maxBytes": 206,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "trigonometry.right-triangle": {
       "fixtures": 1,
-      "bytes": 423,
-      "maxBytes": 423,
+      "bytes": 616,
+      "maxBytes": 616,
       "leaves": 2,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 2
+      "proven": 1,
+      "exempt": 1,
+      "missing": 0
     },
     "vector.angle": {
       "fixtures": 1,

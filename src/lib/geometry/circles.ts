@@ -6,6 +6,7 @@ import { convertAngle } from '../trigonometry/angles';
 import {
   geometryError,
   geometryResult,
+  numericGeometryMathJson,
   numericLatex,
   parsePositiveDraft,
   type GeometryEvaluation,
@@ -24,17 +25,19 @@ export function solveCircle(state: CircleState): GeometryEvaluation {
   }
 
   return geometryResult([
-    { label: 'r', latex: numericLatex(radius) },
-    { label: 'd', latex: numericLatex(2 * radius) },
+    { label: 'r', latex: numericLatex(radius), mathJson: numericGeometryMathJson(radius) },
+    { label: 'd', latex: numericLatex(2 * radius), mathJson: numericGeometryMathJson(2 * radius) },
     {
       label: 'C',
       latex: piMultipleLatex(2 * radius),
       text: numericLatex(2 * PI * radius),
+      mathJson: ['InvisibleOperator', numericGeometryMathJson(2 * radius), 'Pi'],
     },
     {
       label: 'A',
       latex: piMultipleLatex(radius ** 2),
       text: numericLatex(PI * radius ** 2),
+      mathJson: ['InvisibleOperator', numericGeometryMathJson(radius ** 2), 'Pi'],
     },
   ], [], 'geometry-formula');
 }

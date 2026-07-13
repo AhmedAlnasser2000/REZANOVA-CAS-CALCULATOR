@@ -8,6 +8,10 @@ import { requireCanonicalResultAuthority } from '../result-contract';
 import { trigRequestToScreen } from './parser';
 import { createTrigonometryResultOutcome } from './result-document';
 import type { RunTrigonometryRuntimeRequest } from './runtime-input';
+import {
+  trigonometryMathJsonRouteForRequest,
+  trigonometryMathValuesFromOwnedLeaves,
+} from './math-values';
 
 export type TrigonometryModeRunPayload = {
   outcome: ReturnType<typeof runTrigonometryCoreDraft>['outcome'];
@@ -19,7 +23,7 @@ export type TrigonometryModeRunPayload = {
 export function buildTrigonometryModeRunPayload(
   request: RunTrigonometryRuntimeRequest,
 ): TrigonometryModeRunPayload {
-  const { outcome, parsed } = runTrigonometryCoreDraft(request.inputLatex, {
+  const { outcome, parsed, mathJsonLeaves } = runTrigonometryCoreDraft(request.inputLatex, {
     screenHint: request.screenHint,
     angleUnit: request.angleUnit,
     identityTargetForm: request.identityTargetForm,
@@ -30,7 +34,15 @@ export function buildTrigonometryModeRunPayload(
 
   const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
     ? outcome
-    : createTrigonometryResultOutcome(outcome), 'Trigonometry');
+    : createTrigonometryResultOutcome(outcome, parsed.ok
+      ? {
+          mathValues: trigonometryMathValuesFromOwnedLeaves({
+            outcome,
+            routeId: trigonometryMathJsonRouteForRequest(parsed.request),
+            leaves: mathJsonLeaves,
+          }),
+        }
+      : undefined), 'Trigonometry');
 
   return {
     outcome: ownedOutcome,

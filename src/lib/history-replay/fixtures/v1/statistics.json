@@ -46,7 +46,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=n=5,\\ \\sum x=80,\\ \\bar{x}=16,\\ \\operatorname{median}=15,\\ \\min=12,\\ \\max=20,\\ \\operatorname{range}=8,\\ \\sigma^2=7.6,\\ \\sigma=2.75681,\\ s^2=9.5,\\ s=3.082207"
+        "normalizedLatex": "exactLatex=n=5,\\ \\sum x=80,\\ \\bar{x}=16,\\ \\operatorname{median}=15,\\ \\min=12,\\ \\max=20,\\ \\operatorname{range}=8,\\ \\sigma^2=7.6,\\ \\sigma=2.75681,\\ s^2=9.5,\\ s=3.082207\ncanonicalMath.canonicalLatex=n=5,\\ \\sum x=80,\\ \\bar{x}=16,\\ \\operatorname{median}=15,\\ \\min=12,\\ \\max=20,\\ \\operatorname{range}=8,\\ \\sigma^2=7.6,\\ \\sigma=2.75681,\\ s^2=9.5,\\ s=3.082207"
       }
     },
     {
@@ -92,7 +92,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=n=6,\\ \\left\\{1:2,\\ 2:3,\\ 4:1\\right\\},\\ \\operatorname{mode}=2"
+        "normalizedLatex": "exactLatex=n=6,\\ \\left\\{1:2,\\ 2:3,\\ 4:1\\right\\},\\ \\operatorname{mode}=2\ncanonicalMath.canonicalLatex=n=6,\\ \\left\\{1:2,\\ 2:3,\\ 4:1\\right\\},\\ \\operatorname{mode}=2"
       }
     },
     {
@@ -137,7 +137,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=P(X=3)=0.117188"
+        "normalizedLatex": "exactLatex=P(X=3)=0.117188\ncanonicalMath.canonicalLatex=P(X=3)=0.117188"
       }
     },
     {
@@ -183,7 +183,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\hat{y}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3\ndetailSections[0].lineParts[1][1].latex=0\ndetailSections[0].lineParts[2][1].latex=0\ndetailSections[0].lineParts[3][1].latex=0"
+        "normalizedLatex": "exactLatex=\\hat{y}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3\ncanonicalMath.canonicalLatex=\\hat{y}=2x+0,\\ m=2,\\ b=0,\\ r=1,\\ r^2=1,\\ n=3\ndetailSections[0].lineParts[1][1].latex=0\ndetailSections[0].lineParts[2][1].latex=0\ndetailSections[0].lineParts[3][1].latex=0"
       }
     },
     {
@@ -229,7 +229,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+        "normalizedLatex": "exactLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065\ncanonicalMath.canonicalLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
       }
     }
   ]

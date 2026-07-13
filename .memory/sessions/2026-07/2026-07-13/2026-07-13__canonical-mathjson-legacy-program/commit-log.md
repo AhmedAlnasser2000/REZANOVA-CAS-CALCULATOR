@@ -21,7 +21,6 @@
 - scope: branded producer-owned candidate and proof types, validation constructors, focused tests, and durable evidence
 - push: not authorized
 - excluded: concurrent Notebook files and untracked `test-results/`
-
 ## CANONICAL-PRODUCER-MATH-VALUE1
 
 - commit_message: `CANONICAL-PRODUCER-MATH-VALUE1`
@@ -43,5 +42,13 @@
 - commit_message: `MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1`
 - status: verified; covered by standing commit approval
 - scope: producer-owned Symbolic/Calculus MathJSON coverage, bounded exemptions, proof-presence replay/print baselines, inversion fingerprints, payload evidence, Chromium inspection, and durable records
+- push: not authorized
+- excluded: concurrent Notebook files and untracked `test-results/`
+
+## MATHJSON-COVERAGE-GUIDED-DOMAINS1
+
+- commit_message: `MATHJSON-COVERAGE-GUIDED-DOMAINS1`
+- status: verified; covered by standing commit approval
+- scope: producer-owned Trigonometry, Geometry, Statistics, and Table MathJSON coverage, bounded non-value/control exemptions, proof-presence replay/print baselines, payload evidence, Chromium inspection, and durable records
 - push: not authorized
 - excluded: concurrent Notebook files and untracked `test-results/`

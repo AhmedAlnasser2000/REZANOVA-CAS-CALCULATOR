@@ -9,8 +9,10 @@ import {
   geometryResult,
   nearlyEqual,
   numericLatex,
+  numericGeometryMathJson,
   parsePointDraft,
   pointLatex,
+  pointGeometryMathJson,
   type GeometryEvaluation,
 } from './shared';
 import { profileGeometryResult } from '../display/printer';
@@ -99,9 +101,9 @@ export function solveDistance(state: DistanceState): GeometryEvaluation {
   }
 
   return geometryResult([
-    { label: 'P_1', latex: pointLatex(parsed.p1.x, parsed.p1.y) },
-    { label: 'P_2', latex: pointLatex(parsed.p2.x, parsed.p2.y) },
-    { label: 'd', latex: numericLatex(Math.sqrt(parsed.dx ** 2 + parsed.dy ** 2)) },
+    { label: 'P_1', latex: pointLatex(parsed.p1.x, parsed.p1.y), mathJson: pointGeometryMathJson(parsed.p1.x, parsed.p1.y) },
+    { label: 'P_2', latex: pointLatex(parsed.p2.x, parsed.p2.y), mathJson: pointGeometryMathJson(parsed.p2.x, parsed.p2.y) },
+    { label: 'd', latex: numericLatex(Math.sqrt(parsed.dx ** 2 + parsed.dy ** 2)), mathJson: numericGeometryMathJson(Math.sqrt(parsed.dx ** 2 + parsed.dy ** 2)) },
   ], [], 'geometry-coordinate');
 }
 
@@ -169,11 +171,20 @@ export function solveLineEquation(state: LineEquationState): GeometryEvaluation 
     exactLatex = `y=${formatSignedTerm(slope, 'x', true)}${formatSignedConstant(intercept)}`;
   }
 
+  const lineMathJson = state.form === 'standard'
+    ? ['Equal', ['Add', ['Multiply', parsed.dy, 'x'], ['Multiply', -parsed.dx, 'y']], parsed.dy * parsed.p1.x - parsed.dx * parsed.p1.y]
+    : state.form === 'point-slope'
+      ? ['Equal', ['Subtract', 'y', parsed.p1.y], ['Multiply', slope, ['Subtract', 'x', parsed.p1.x]]]
+      : ['Equal', 'y', ['Add', ['Multiply', slope, 'x'], intercept]];
   return {
     exactLatex,
     approxText: exactLatex.replaceAll('\\left', '').replaceAll('\\right', ''),
     warnings: [],
     resultOrigin: 'geometry-coordinate',
+    mathJsonLeaves: [{
+      canonicalLatex: exactLatex,
+      mathJson: lineMathJson,
+      source: 'geometry.coordinate.native-line-coefficients',
+    }],
   };
 }
-

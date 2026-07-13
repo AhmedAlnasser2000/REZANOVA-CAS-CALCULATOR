@@ -3,14 +3,19 @@ import type {
   TableResponse,
 } from '../../../types/calculator';
 import { formatApproxNumber, latexToApproxText } from '../../display/format';
+import { roundedApproxNumberValue } from '../../display/notation/numeric-output';
 import { canonicalizeMathInput } from '../../input/input-canonicalization';
 import { evaluateRealNumericExpression } from '../../numeric/real-numeric-eval';
 import { ce } from './math-json';
 import type {
   BoxedLike,
   CooperativeTableBuildOptions,
+  CooperativeTableBuildWithEvidenceResult,
   CooperativeTableBuildResult,
   PreparedTableBuild,
+  TableBuildWithEvidence,
+  TableMathJsonCellEvidence,
+  TableMathJsonEvidence,
 } from './types';
 
 function evaluateAtPoint(latex: string, variable: string, value: number) {
@@ -21,6 +26,7 @@ function evaluateAtPoint(latex: string, variable: string, value: number) {
     return {
       text: numeric.approxText,
       warning: null,
+      mathJson: roundedApproxNumberValue(numeric.value),
     };
   }
 
@@ -28,6 +34,7 @@ function evaluateAtPoint(latex: string, variable: string, value: number) {
     return {
       text: 'undefined',
       warning: 'Some sampled rows were outside the real domain and are shown as undefined.',
+      mathJson: undefined,
     };
   }
 
@@ -38,13 +45,46 @@ function evaluateAtPoint(latex: string, variable: string, value: number) {
     return {
       text: 'undefined',
       warning: 'Some sampled rows were outside the real domain and are shown as undefined.',
+      mathJson: undefined,
     };
   }
 
   return {
     text: approxText,
     warning: null,
+    mathJson: (() => {
+      const evidence = evaluateRealNumericExpression(numericFallback.json, numericFallback.latex);
+      return evidence.kind === 'success'
+        ? roundedApproxNumberValue(evidence.value)
+        : undefined;
+    })(),
   };
+}
+
+function cellEvidence(canonicalLatex: string, mathJson: unknown): TableMathJsonCellEvidence {
+  return {
+    canonicalLatex,
+    ...(mathJson !== undefined ? { mathJson: mathJson as TableMathJsonCellEvidence['mathJson'] } : {}),
+  };
+}
+
+function functionCall(name: 'f' | 'g', variable: string) {
+  return ['InvisibleOperator', name, ['Delimiter', variable]];
+}
+
+function tableFunctionEvidence(
+  prepared: Extract<PreparedTableBuild, { kind: 'ready' }>,
+  variable: string,
+): TableMathJsonCellEvidence {
+  const primary = ['Equal', functionCall('f', variable), ce.parse(prepared.primaryLatex).json];
+  if (!prepared.secondaryLatex) {
+    return cellEvidence(`f(${variable})=${prepared.primaryLatex}`, primary);
+  }
+  const secondary = ['Equal', functionCall('g', variable), ce.parse(prepared.secondaryLatex).json];
+  return cellEvidence(
+    `f(${variable})=${prepared.primaryLatex},\\;g(${variable})=${prepared.secondaryLatex}`,
+    ['Delimiter', ['Sequence', primary, secondary], "','"],
+  );
 }
 
 function prepareTableBuild(request: TableRequest): PreparedTableBuild {
@@ -122,8 +162,9 @@ function tableEvaluationError(): TableResponse {
 function buildCompletedTableResponse(
   request: TableRequest,
   prepared: Extract<PreparedTableBuild, { kind: 'ready' }>,
-): TableResponse {
+): TableBuildWithEvidence {
   const warningSet = new Set<string>();
+  const evidenceRows: TableMathJsonEvidence['rows'] = [];
   const rows = Array.from({ length: prepared.estimatedRows }, (_, index) => {
     const x = request.start + request.step * index;
     const primary = evaluateAtPoint(prepared.primaryLatex, request.variable, x);
@@ -136,13 +177,22 @@ function buildCompletedTableResponse(
     if (secondary?.warning) {
       warningSet.add(secondary.warning);
     }
-    return {
-      x: formatApproxNumber(x),
+    const xText = formatApproxNumber(x);
+    const row = {
+      x: xText,
       primary: primary.text,
       secondary: prepared.secondaryLatex
         ? secondary?.text
         : undefined,
     };
+    evidenceRows.push({
+      x: cellEvidence(xText, roundedApproxNumberValue(x)),
+      primary: cellEvidence(primary.text, primary.mathJson),
+      ...(secondary
+        ? { secondary: cellEvidence(secondary.text, secondary.mathJson) }
+        : {}),
+    });
+    return row;
   });
 
   const headers = [
@@ -152,29 +202,40 @@ function buildCompletedTableResponse(
   ];
 
   return {
-    headers,
-    rows,
-    warnings: [...warningSet],
+    response: {
+      headers,
+      rows,
+      warnings: [...warningSet],
+    },
+    evidence: {
+      functions: tableFunctionEvidence(prepared, request.variable),
+      variable: cellEvidence(request.variable, request.variable),
+      rows: evidenceRows,
+    },
   };
 }
 
 export function buildTable(request: TableRequest): TableResponse {
+  return buildTableWithEvidence(request).response;
+}
+
+export function buildTableWithEvidence(request: TableRequest): TableBuildWithEvidence {
   const prepared = prepareTableBuild(request);
   if (prepared.kind === 'error') {
-    return prepared.response;
+    return { response: prepared.response };
   }
 
   try {
     return buildCompletedTableResponse(request, prepared);
   } catch {
-    return tableEvaluationError();
+    return { response: tableEvaluationError() };
   }
 }
 
-export async function buildTableCooperatively(
+export async function buildTableCooperativelyWithEvidence(
   request: TableRequest,
   options: CooperativeTableBuildOptions = {},
-): Promise<CooperativeTableBuildResult> {
+): Promise<CooperativeTableBuildWithEvidenceResult> {
   const prepared = prepareTableBuild(request);
   if (prepared.kind === 'error') {
     return {
@@ -186,6 +247,7 @@ export async function buildTableCooperatively(
   try {
     const warningSet = new Set<string>();
     const rows: TableResponse['rows'] = [];
+    const evidenceRows: TableMathJsonEvidence['rows'] = [];
     const rowsPerBatch = Math.max(1, options.rowsPerBatch ?? 5);
 
     for (let index = 0; index < prepared.estimatedRows; index += 1) {
@@ -204,12 +266,20 @@ export async function buildTableCooperatively(
       if (secondary?.warning) {
         warningSet.add(secondary.warning);
       }
+      const xText = formatApproxNumber(x);
       rows.push({
-        x: formatApproxNumber(x),
+        x: xText,
         primary: primary.text,
         secondary: prepared.secondaryLatex
           ? secondary?.text
           : undefined,
+      });
+      evidenceRows.push({
+        x: cellEvidence(xText, roundedApproxNumberValue(x)),
+        primary: cellEvidence(primary.text, primary.mathJson),
+        ...(secondary
+          ? { secondary: cellEvidence(secondary.text, secondary.mathJson) }
+          : {}),
       });
 
       const completedRows = index + 1;
@@ -243,6 +313,11 @@ export async function buildTableCooperatively(
         rows,
         warnings: [...warningSet],
       },
+      evidence: {
+        functions: tableFunctionEvidence(prepared, request.variable),
+        variable: cellEvidence(request.variable, request.variable),
+        rows: evidenceRows,
+      },
     };
   } catch {
     return {
@@ -250,4 +325,14 @@ export async function buildTableCooperatively(
       response: tableEvaluationError(),
     };
   }
+}
+
+export async function buildTableCooperatively(
+  request: TableRequest,
+  options: CooperativeTableBuildOptions = {},
+): Promise<CooperativeTableBuildResult> {
+  const result = await buildTableCooperativelyWithEvidence(request, options);
+  return result.kind === 'cancelled'
+    ? result
+    : { kind: 'completed', response: result.response };
 }

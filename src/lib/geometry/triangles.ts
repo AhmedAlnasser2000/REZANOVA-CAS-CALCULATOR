@@ -5,6 +5,7 @@ import type {
 import {
   geometryError,
   geometryResult,
+  numericGeometryMathJson,
   numericLatex,
   parsePositiveDraft,
   type GeometryEvaluation,
@@ -46,10 +47,10 @@ export function solveTriangleHeron(state: TriangleHeronState): GeometryEvaluatio
   );
 
   return geometryResult([
-    { label: 'a', latex: numericLatex(a) },
-    { label: 'b', latex: numericLatex(b) },
-    { label: 'c', latex: numericLatex(c) },
-    { label: 's', latex: numericLatex(semiperimeter) },
-    { label: 'A', latex: numericLatex(area) },
+    { label: 'a', latex: numericLatex(a), mathJson: numericGeometryMathJson(a) },
+    { label: 'b', latex: numericLatex(b), mathJson: numericGeometryMathJson(b) },
+    { label: 'c', latex: numericLatex(c), mathJson: numericGeometryMathJson(c) },
+    { label: 's', latex: numericLatex(semiperimeter), mathJson: numericGeometryMathJson(semiperimeter) },
+    { label: 'A', latex: numericLatex(area), mathJson: numericGeometryMathJson(area) },
   ], [], 'geometry-formula');
 }
