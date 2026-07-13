@@ -76,8 +76,8 @@ export type CalculusOoePilotMetadata = OoeRuntimeMetadata<
   runtimeShell?: OoeRuntimeShellEvidence;
 };
 
-export type CalculusOoePilotRunResult = OoeRuntimeEnvelope<
-  DisplayOutcome,
+export type CalculusOoePilotRunResult<TPayload = DisplayOutcome> = OoeRuntimeEnvelope<
+  TPayload,
   CalculusOoePilotMetadata
 >;
 
@@ -235,12 +235,13 @@ function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
 }
 
-export async function runCalculusWithOoePilot(
-  run: (context: OoeRuntimeControlContext) => DisplayOutcome | Promise<DisplayOutcome>,
+export async function runCalculusWithOoePilot<TPayload>(
+  run: (context: OoeRuntimeControlContext) => TPayload | Promise<TPayload>,
   routeSnapshot: unknown = { capabilityId: OOE_CALCULUS_EVALUATE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
   getHostExecution?: () => CalculusHostExecution | undefined,
-): Promise<CalculusOoePilotRunResult> {
+  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+): Promise<CalculusOoePilotRunResult<TPayload>> {
   const definition = calculusPilotDefinition();
   return runOoeRuntimeJob({
     definition,
@@ -272,7 +273,9 @@ export async function runCalculusWithOoePilot(
           screen: snapshot.request?.screen,
           latexLength: snapshot.generatedLatex?.length,
         },
-        outputSummary: summarizeDisplayOutcome(payload),
+        outputSummary: summarizeDisplayOutcome(
+          resolveDisplayOutcome ? resolveDisplayOutcome(payload) : payload as DisplayOutcome,
+        ),
         runtimeHost: metadata.calculusHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

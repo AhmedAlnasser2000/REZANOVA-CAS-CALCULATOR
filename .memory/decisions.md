@@ -2510,6 +2510,11 @@
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Calculate and Equation worker and OOE result payloads use `CanonicalRuntimeOutcome`; Display is a derived compatibility read model only at the existing public mode boundary.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Equation analysis evidence remains private host/provenance metadata beside the canonical result rather than widening `CanonicalResultDocumentV1` with runtime diagnostics.
 
+## 2026-07-13 - CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Symbolic calculus does not gain a second runtime shell: all current derivative, integral, limit, series, transform, partial, ODE, and IVP routes retain their native IR and converge through the existing Calculus workspace-owned final adapter and `calculus-worker-runtime`.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Canonical-to-Display projection always restores canonical LaTeX as `exactLatex`. The optional compatibility `canonicalMath` payload remains conditional on producer-proven MathJSON; suppressing an unproven tree must never suppress canonical text.
+
 ## 2026-07-13 - MATHJSON-COVERAGE-CALCULATE-EQUATION1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Optional answer MathJSON is transactional enrichment: if a producer tree fails semantic, bounds, clone, or printer proof, omit that tree and retain unchanged canonical LaTeX. Do not turn an optional proof failure into a runtime failure and do not reconstruct the tree from formatted output.

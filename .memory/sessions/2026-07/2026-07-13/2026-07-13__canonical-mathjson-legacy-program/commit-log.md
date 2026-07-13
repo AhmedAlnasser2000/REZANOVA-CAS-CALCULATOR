@@ -100,3 +100,11 @@
 - scope: Calculate and Equation canonical worker/OOE outcomes, direct-symbolic worker validation, one canonical Display projection, focused runtime and post-build Chromium evidence, and durable records
 - push: not authorized
 - excluded: later workspace migrations, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`
+
+## CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1
+
+- commit_message: `CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1`
+- status: verified; covered by standing commit approval
+- scope: Symbolic/Calculus canonical worker and OOE outcomes, fail-closed worker validation, canonical-only `exactLatex` projection repair, focused runtime and fresh Chromium evidence, and durable records
+- push: not authorized
+- excluded: guided/Linear Algebra/Table migrations, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`

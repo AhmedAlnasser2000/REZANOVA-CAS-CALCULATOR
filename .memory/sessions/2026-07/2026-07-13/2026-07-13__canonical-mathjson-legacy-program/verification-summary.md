@@ -160,3 +160,16 @@
 - verification correction: the first Playwright preview used the prior `dist` and is not counted; the app was rebuilt and the representative cases were rerun against the new worker assets before acceptance
 - resource posture: no full unit, UI, or 19-canary suite ran; no heavy process remains active
 - residual: `CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1` migrates the next runtime lanes
+
+## CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1
+
+- kind: backend Symbolic/Calculus worker and OOE result-envelope migration with focused UI parity evidence
+- result: pass
+- contract: the existing Calculus workspace adapter remains the single final owner for derivatives, integrals, limits, series, Laplace, partials, ODE, and IVP; worker, fallback, cancellation, and OOE traffic now carry validated `CanonicalRuntimeOutcome`
+- compatibility correction: canonical-result projection always restores `exactLatex`; optional `canonicalMath` remains absent unless primary MathJSON is proven
+- regression: 31 focused Calculus/result tests, 12 UI runtime tests, 19 runtime probes, and the 77-test workspace runtime matrix pass; malformed worker completions fail closed
+- inventory: 645 producers, 613 consumers, 174 native documents, 47 owner assemblies, one legacy-History compatibility projection, 411 legacy reads, and zero violations
+- static: incremental TypeScript, lint, two current production builds, file-size, OOE boundaries, compartments, seam classification, memory protocol, and diff hygiene pass
+- visual: fresh Chromium shows derivative `2x`, integral `x^2/2+C`, and canonical-only Calculate cancel-factors `(x+1)/x` with both validity facts and no overflow; one initial Settings-panel startup miss was isolated and the deliberate zero-retry reproduction plus final two-case evidence passed
+- resource posture: no full unit, UI, or 19-canary suite ran; verification remained impact-selected
+- residual: `CANONICAL-OUTCOME-GUIDED-DOMAINS1` migrates Trigonometry, Geometry, and Statistics worker/OOE envelopes

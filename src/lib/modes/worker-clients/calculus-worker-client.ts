@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { CalculusHostExecution } from '../../ooe/pilots/calculus-pilot';
 import type { RunCalculusWorkspaceModeRequest } from '../../calculus/workspace/engine';
@@ -8,12 +8,17 @@ import type {
 } from '../worker-entrypoints/calculus.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import {
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  validateCanonicalRuntimeOutcome,
+} from '../../result-contract';
+import { createCalculusResultOutcome } from '../../calculus/workspace/result-document';
 
 export const CALCULUS_WORKER_RUNTIME_HOST_ID = 'calculus-worker-runtime' as const;
 export const CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculus-runtime' as const;
 
 export type CalculusWorkerRunResult = {
-  payload: DisplayOutcome;
+  outcome: CanonicalRuntimeOutcome;
   hostExecution: CalculusHostExecution;
 };
 
@@ -36,7 +41,7 @@ type CreateCalculusWorker = () => CalculusWorkerLike;
 
 type RunCalculusModeViaIsolatedWorkerOptions = {
   createWorker?: CreateCalculusWorker;
-  fallback: () => Promise<DisplayOutcome>;
+  fallback: () => Promise<CanonicalRuntimeOutcome>;
 };
 
 let calculusWorkerRequestCounter = 0;
@@ -53,25 +58,25 @@ function nextRequestId() {
   return `calculus-worker-${calculusWorkerRequestCounter}`;
 }
 
-function buildCancelledOutcome(): DisplayOutcome {
-  return {
+function buildCancelledOutcome(): CanonicalRuntimeOutcome {
+  return projectDisplayOutcomeToCanonicalRuntimeOutcome(createCalculusResultOutcome({
     kind: 'error',
     title: 'Calculus',
     error: 'Calculus evaluation stopped before it finished.',
     warnings: [],
     ...proseSolveSummary('Calculus evaluation stopped after the worker runtime was hard-stopped.'),
-  };
+  }), 'Calculus cancellation');
 }
 
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<DisplayOutcome>,
+  fallback: () => Promise<CanonicalRuntimeOutcome>,
 ): Promise<CalculusWorkerRunResult> {
   context.checkpoint(`Calculus worker runtime unavailable; falling back to main-thread Calculus runtime (${reason}).`);
-  const payload = await fallback();
+  const outcome = await fallback();
   return {
-    payload,
+    outcome,
     hostExecution: {
       kind: 'fallback',
       hostId: CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID,
@@ -94,7 +99,7 @@ export async function runCalculusModeViaIsolatedWorker(
 ): Promise<CalculusWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledOutcome(),
+      outcome: buildCancelledOutcome(),
       hostExecution: {
         kind: 'worker-cancelled',
         hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
@@ -183,7 +188,7 @@ export async function runCalculusModeViaIsolatedWorker(
       worker.terminate();
       context.checkpoint('Calculus worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledOutcome(),
+        outcome: buildCancelledOutcome(),
         hostExecution: {
           kind: 'worker-cancelled',
           hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
@@ -213,8 +218,15 @@ export async function runCalculusModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.outcome);
+        if (!validation.ok) {
+          fail(workerRuntimeError(
+            `invalid completed outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          ));
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          outcome: validation.validated.value,
           hostExecution: {
             kind: 'worker',
             hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,

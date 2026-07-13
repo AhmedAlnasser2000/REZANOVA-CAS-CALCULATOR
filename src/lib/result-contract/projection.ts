@@ -410,9 +410,13 @@ export function projectCanonicalResultToDisplayOutcome(
     title: document.title,
     warnings: [...document.warnings],
     canonicalResult: document,
-    ...(document.primaryMath && options.includeCanonicalMath !== false
+    ...(document.primaryMath
       ? {
           exactLatex: document.primaryMath.canonicalLatex,
+        }
+      : {}),
+    ...(document.primaryMath && options.includeCanonicalMath !== false
+      ? {
           canonicalMath: {
             version: 1 as const,
             canonicalLatex: document.primaryMath.canonicalLatex,

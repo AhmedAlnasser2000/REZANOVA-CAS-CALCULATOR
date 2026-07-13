@@ -11,6 +11,8 @@ import {
   runCalculusModeViaIsolatedWorker,
 } from './worker-clients/calculus-worker-client';
 import type { RunCalculusModeRequest } from './calculus';
+import { createCalculusResultOutcome } from '../calculus/workspace/result-document';
+import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../result-contract';
 
 function makeRequest(): RunCalculusModeRequest {
   return {
@@ -37,13 +39,20 @@ function makeRequest(): RunCalculusModeRequest {
   };
 }
 
-function successOutcome(): DisplayOutcome {
+function successOutcome(): Extract<DisplayOutcome, { kind: 'success' }> {
   return {
     kind: 'success',
     title: 'Calculus',
     exactLatex: '4',
     warnings: [],
   };
+}
+
+function successRuntimeOutcome() {
+  return projectDisplayOutcomeToCanonicalRuntimeOutcome(
+    createCalculusResultOutcome(successOutcome()),
+    'Calculus worker test',
+  );
 }
 
 type FakePostMessageHandler = (
@@ -140,7 +149,7 @@ function waitForTimerTick() {
 
 describe('runCalculusModeViaIsolatedWorker', () => {
   it('returns the worker payload and records isolated host evidence on completion', async () => {
-    const fallback = vi.fn(async () => successOutcome());
+    const fallback = vi.fn(async () => successRuntimeOutcome());
     const createdWorkers: FakeCalculusWorker[] = [];
 
     const result = await runCalculusModeViaIsolatedWorker(makeRequest(), control(), {
@@ -150,7 +159,7 @@ describe('runCalculusModeViaIsolatedWorker', () => {
           fakeWorker.emitMessage({
             kind: 'completed',
             requestId: message.requestId,
-            payload: successOutcome(),
+            outcome: successRuntimeOutcome(),
           });
         });
         createdWorkers.push(worker);
@@ -158,7 +167,7 @@ describe('runCalculusModeViaIsolatedWorker', () => {
       },
     });
 
-    expect(result.payload).toEqual(successOutcome());
+    expect(result.outcome).toEqual(successRuntimeOutcome());
     expect(result.hostExecution).toEqual({
       kind: 'worker',
       hostId: CALCULUS_WORKER_RUNTIME_HOST_ID,
@@ -171,7 +180,7 @@ describe('runCalculusModeViaIsolatedWorker', () => {
 
   it('falls back to the main-thread Calculus runtime when worker creation fails', async () => {
     const checkpoints: string[] = [];
-    const fallback = vi.fn(async () => successOutcome());
+    const fallback = vi.fn(async () => successRuntimeOutcome());
 
     const result = await runCalculusModeViaIsolatedWorker(makeRequest(), control(checkpoints), {
       fallback,
@@ -180,7 +189,7 @@ describe('runCalculusModeViaIsolatedWorker', () => {
       },
     });
 
-    expect(result.payload).toEqual(successOutcome());
+    expect(result.outcome).toEqual(successRuntimeOutcome());
     expect(result.hostExecution).toMatchObject({
       kind: 'fallback',
       hostId: CALCULUS_WORKER_RUNTIME_FALLBACK_HOST_ID,
@@ -193,7 +202,7 @@ describe('runCalculusModeViaIsolatedWorker', () => {
   });
 
   it('does not fall back after a worker runtime failure', async () => {
-    const fallback = vi.fn(async () => successOutcome());
+    const fallback = vi.fn(async () => successRuntimeOutcome());
     const createdWorkers: FakeCalculusWorker[] = [];
 
     await expect(
@@ -219,7 +228,7 @@ describe('runCalculusModeViaIsolatedWorker', () => {
 
   it('hard-stops the worker on cancellation and never falls back', async () => {
     let shouldCancel = false;
-    const fallback = vi.fn(async () => successOutcome());
+    const fallback = vi.fn(async () => successRuntimeOutcome());
     const createdWorkers: FakeCalculusWorker[] = [];
 
     const pending = runCalculusModeViaIsolatedWorker(
@@ -239,9 +248,9 @@ describe('runCalculusModeViaIsolatedWorker', () => {
 
     const result = await pending;
 
-    expect(result.payload).toMatchObject({
+    expect(result.outcome).toMatchObject({
       kind: 'error',
-      title: 'Calculus',
+      canonicalResult: { title: 'Calculus' },
     });
     expect(result.hostExecution).toMatchObject({
       kind: 'worker-cancelled',
@@ -251,6 +260,23 @@ describe('runCalculusModeViaIsolatedWorker', () => {
       termination: 'hardStop',
     });
     expect(createdWorkers[0]?.terminated).toBe(true);
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when a worker returns an invalid canonical runtime outcome', async () => {
+    const fallback = vi.fn(async () => successRuntimeOutcome());
+
+    await expect(runCalculusModeViaIsolatedWorker(makeRequest(), control(), {
+      fallback,
+      createWorker: () => new FakeCalculusWorker((message, fakeWorker) => {
+        fakeWorker.emitMessage({
+          kind: 'completed',
+          requestId: message.requestId,
+          outcome: { kind: 'success' } as never,
+        });
+      }),
+    })).rejects.toThrow('invalid completed outcome');
+
     expect(fallback).not.toHaveBeenCalled();
   });
 });

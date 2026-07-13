@@ -9,6 +9,11 @@ import {
   type RunCalculusWorkspaceModeRequest,
 } from '../calculus/workspace/engine';
 import { runCalculusModeViaIsolatedWorker } from './worker-clients/calculus-worker-client';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+} from '../result-contract';
 
 export type { RunCalculusWorkspaceModeRequest as RunCalculusModeRequest } from '../calculus/workspace/engine';
 export { runCalculusWorkspaceMode as runCalculusMode } from '../calculus/workspace/engine';
@@ -34,6 +39,15 @@ export function buildCalculusOoeInputRevisionId(
   );
 }
 
+export async function runCalculusCanonicalRuntimeRequest(
+  request: RunCalculusWorkspaceModeRequest,
+): Promise<CanonicalRuntimeOutcome> {
+  return projectDisplayOutcomeToCanonicalRuntimeOutcome(
+    await runCalculusWorkspaceMode(request),
+    'Calculus',
+  );
+}
+
 export async function runCalculusModeWithOoePilot(
   request: RunCalculusWorkspaceModeRequest,
   options?: OoeJobContextOptions & {
@@ -42,11 +56,17 @@ export async function runCalculusModeWithOoePilot(
 ) {
   let hostExecution: CalculusHostExecution | undefined;
   const routeSnapshot = buildCalculusOoeSnapshot(request, options?.generatedLatex);
-  return runCalculusWithOoePilot(async (context) => {
+  const envelope = await runCalculusWithOoePilot(async (context) => {
     const isolatedResult = await runCalculusModeViaIsolatedWorker(request, context, {
-      fallback: () => runCalculusWorkspaceMode(request),
+      fallback: () => runCalculusCanonicalRuntimeRequest(request),
     });
     hostExecution = isolatedResult.hostExecution;
-    return isolatedResult.payload;
-  }, routeSnapshot, options, () => hostExecution);
+    return isolatedResult.outcome;
+  }, routeSnapshot, options, () => hostExecution, (payload) => (
+    projectCanonicalRuntimeOutcomeToDisplayOutcome(payload)
+  ));
+  return {
+    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(envelope.payload),
+    ooe: envelope.ooe,
+  };
 }

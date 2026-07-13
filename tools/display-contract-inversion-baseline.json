@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Migrate Calculate and Equation worker and OOE payloads to validated CanonicalRuntimeOutcome while retaining one canonical Display read-model projection.",
+  "acceptedReason": "Migrate the Calculus and symbolic workspace worker and OOE payload to validated CanonicalRuntimeOutcome while retaining one canonical Display read-model projection.",
   "registryDigest": "42e1068ee93b1b3d5682",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -743,7 +743,8 @@
         "12cdd8c6a64269e665e7:1"
       ],
       "src/lib/modes/calculus.ts": [
-        "84159a8f8fc647500cbd:1"
+        "3c8c8420ba4cafaa00a4:1",
+        "ba080186ba75a97727fd:1"
       ],
       "src/lib/modes/equation/complex-benchmark-region-runner.ts": [
         "e5c7b06408c4af6c2f23:1",
@@ -921,11 +922,6 @@
       "src/lib/modes/vector.ts": [
         "f09a01c6224260303184:1",
         "531b0ad8cb10e2ea3234:1"
-      ],
-      "src/lib/modes/worker-clients/calculus-worker-client.ts": [
-        "b9cc3eb6f1372fc8f001:1",
-        "7f86786fa151409ca039:1",
-        "5a50ca63e9532f6958af:1"
       ],
       "src/lib/modes/worker-clients/linear-algebra-worker-client-core.ts": [
         "8224da9626514cc4fbe6:1",

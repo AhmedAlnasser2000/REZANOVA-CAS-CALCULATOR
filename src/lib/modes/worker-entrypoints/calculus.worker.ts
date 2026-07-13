@@ -1,13 +1,13 @@
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import {
-  runCalculusWorkspaceMode,
-  type RunCalculusWorkspaceModeRequest,
-} from '../../calculus/workspace/engine';
-import type { DisplayOutcome } from '../../../types/calculator';
+  runCalculusCanonicalRuntimeRequest,
+  type RunCalculusModeRequest,
+} from '../calculus';
 
 export type CalculusWorkerInboundMessage = {
   kind: 'run';
   requestId: string;
-  request: RunCalculusWorkspaceModeRequest;
+  request: RunCalculusModeRequest;
 };
 
 export type CalculusWorkerOutboundMessage =
@@ -18,7 +18,7 @@ export type CalculusWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: DisplayOutcome;
+      outcome: CanonicalRuntimeOutcome;
     }
   | {
       kind: 'failed';
@@ -50,12 +50,12 @@ workerSelf.addEventListener('message', (event: MessageEvent<CalculusWorkerInboun
     requestId: event.data.requestId,
   } satisfies CalculusWorkerOutboundMessage);
 
-  void runCalculusWorkspaceMode(event.data.request)
-    .then((payload) => {
+  void runCalculusCanonicalRuntimeRequest(event.data.request)
+    .then((outcome) => {
       workerSelf.postMessage({
         kind: 'completed',
         requestId: event.data.requestId,
-        payload,
+        outcome,
       } satisfies CalculusWorkerOutboundMessage);
     })
     .catch((error: unknown) => {

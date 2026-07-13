@@ -53,6 +53,23 @@ describe('canonical runtime projection', () => {
     expect(projectCanonicalRuntimeOutcomeToDisplayOutcome(runtime)).toEqual(prompt);
   });
 
+  it('retains canonical LaTeX when no proven MathJSON payload is available', () => {
+    const canonicalResult = buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'success',
+      title: 'Cancel Factors',
+      primaryMath: canonicalMathValue('x+1'),
+      warnings: [],
+    });
+
+    const display = projectCanonicalRuntimeOutcomeToDisplayOutcome({
+      kind: 'success',
+      canonicalResult,
+    });
+
+    expect(display).toMatchObject({ exactLatex: 'x+1' });
+    expect(display).not.toHaveProperty('canonicalMath');
+  });
+
   it('fails closed for string-only result payloads', () => {
     expect(() => projectDisplayOutcomeToCanonicalRuntimeOutcome({
       kind: 'error',
