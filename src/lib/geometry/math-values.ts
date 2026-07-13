@@ -30,12 +30,26 @@ export function geometryMathValuesFromOwnedLeaves(input: {
     });
     if (value) proven.set(leaf.canonicalLatex, value);
   }
-  return input.outcome.exactLatex
-    ? {
-        primaryMath: proven.get(input.outcome.exactLatex)
-          ?? { canonicalLatex: input.outcome.exactLatex },
-      }
-    : {};
+  const values: CanonicalResultProducerMathValuesV1 = {};
+  if (input.outcome.exactLatex) {
+    values.primaryMath = proven.get(input.outcome.exactLatex)
+      ?? { canonicalLatex: input.outcome.exactLatex };
+  }
+  if (input.outcome.branchReadback) {
+    values.branchReadback = {
+      target: proven.get(input.outcome.branchReadback.targetLatex)
+        ?? { canonicalLatex: input.outcome.branchReadback.targetLatex },
+      relation: input.outcome.branchReadback.relationLatex,
+      branches: input.outcome.branchReadback.branchesLatex.map((latex) =>
+        proven.get(latex) ?? { canonicalLatex: latex }),
+      ...(input.outcome.branchReadback.countLabel
+        ? { countLabel: input.outcome.branchReadback.countLabel }
+        : {}),
+      ...(input.outcome.branchReadback.label ? { label: input.outcome.branchReadback.label } : {}),
+      ...(input.outcome.branchReadback.source ? { source: input.outcome.branchReadback.source } : {}),
+    };
+  }
+  return values;
 }
 
 export function geometryMathJsonRouteForRequest(request: GeometryRequest): GeometryMathJsonRouteId {

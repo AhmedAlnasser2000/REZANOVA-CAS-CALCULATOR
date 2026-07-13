@@ -541,6 +541,18 @@ export function evaluateNumericDefiniteIntegralFromAst(input: {
     approxText,
     warnings: ['Symbolic integral unavailable; showing a numeric definite integral.'],
     resultOrigin: 'numeric-fallback',
+    mathJsonLeaves: [
+      {
+        canonicalLatex: exactLatex,
+        mathJson: Number.parseFloat(result.value.toFixed(6)),
+        source: 'calculus.definite-integral:native-numeric-result',
+      },
+      {
+        canonicalLatex: `[${numberToLatex(Math.min(input.lower, input.upper))}, ${numberToLatex(Math.max(input.lower, input.upper))}]`,
+        mathJson: ['List', Math.min(input.lower, input.upper), Math.max(input.lower, input.upper)],
+        source: 'calculus.definite-integral:native-interval',
+      },
+    ],
     detailSections: domainCheckDetails(
       [
         integralMethodDetail(

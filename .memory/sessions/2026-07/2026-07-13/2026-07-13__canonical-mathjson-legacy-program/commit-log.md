@@ -60,3 +60,11 @@
 - scope: independent Matrix/Vector producer-owned MathJSON coverage, bounded operator-narration exemptions, proof-presence replay/print baselines, payload evidence, Chromium inspection, exhaustive-probe timeout hardening, and durable records
 - push: not authorized
 - excluded: concurrent Notebook files and untracked `test-results/`
+
+## MATHJSON-COVERAGE-CLOSEOUT1
+
+- commit_message: `MATHJSON-COVERAGE-CLOSEOUT1`
+- status: verified; covered by standing commit approval
+- scope: exact replay-plus-golden route registry, aggregate producer-owned proofs, exact non-growing exemptions, version-2 payload baseline, resource-safe focused verification, and durable evidence
+- push: not authorized
+- excluded: concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/`

@@ -115,5 +115,6 @@ export function trigonometryMathJsonRouteForRequest(
   }
   if (request.kind === 'equationSolve') return 'trigonometry.equation';
   if (request.kind === 'angleConvert') return 'trigonometry.angle-conversion';
+  if (request.kind === 'periodPhase') return 'trigonometry.period-phase';
   return 'trigonometry.right-triangle';
 }

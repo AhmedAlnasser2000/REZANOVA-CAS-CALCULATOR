@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import coverageBaseline from '../../../tools/mathjson-coverage-baseline.json';
 import type { CanonicalResultDocumentV1 } from '../../types/calculator';
+import { goldenCases } from '../__golden__/golden-cases';
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
 import {
   buildMathJsonCoverageReport,
@@ -12,6 +14,7 @@ import {
 } from './mathjson-coverage-ratchet';
 import {
   CANONICAL_MATH_LEAF_PATHS,
+  GOLDEN_CASE_ROUTE_REGISTRY,
   MATHJSON_COVERAGE_EXEMPTIONS,
   MATHJSON_ROUTE_REGISTRY,
 } from './mathjson-route-registry';
@@ -61,55 +64,95 @@ describe('MathJSON coverage registry', () => {
   });
 
   it('has exact route-family parity and native executable probes', () => {
-    const fixtureRouteIds = [...new Set(HISTORY_REPLAY_FIXTURES.map(
+    const replayRouteIds = HISTORY_REPLAY_FIXTURES.map(
       (fixture) => `${fixture.workspace}.${fixture.family}`,
-    ))].sort();
-    expect(Object.keys(MATHJSON_ROUTE_REGISTRY).sort()).toEqual(fixtureRouteIds);
+    );
+    const goldenRouteIds = Object.values(GOLDEN_CASE_ROUTE_REGISTRY);
+    const evidenceRouteIds = [...new Set([...replayRouteIds, ...goldenRouteIds])].sort();
+    expect(Object.keys(MATHJSON_ROUTE_REGISTRY).sort()).toEqual(evidenceRouteIds);
     const fixtureById = new Map(HISTORY_REPLAY_FIXTURES.map((fixture) => [fixture.id, fixture]));
     for (const [routeId, policy] of Object.entries(MATHJSON_ROUTE_REGISTRY)) {
-      expect(policy.probeFixtureIds.length, routeId).toBeGreaterThan(0);
-      for (const fixtureId of policy.probeFixtureIds) {
+      const routeGoldenCases = Object.entries(GOLDEN_CASE_ROUTE_REGISTRY)
+        .filter(([, goldenRouteId]) => goldenRouteId === routeId);
+      expect(policy.replayFixtureIds.length + routeGoldenCases.length, routeId).toBeGreaterThan(0);
+      for (const fixtureId of policy.replayFixtureIds) {
         const fixture = fixtureById.get(fixtureId);
         expect(fixture, fixtureId).toBeDefined();
         expect(`${fixture?.workspace}.${fixture?.family}`).toBe(routeId);
         expect(policy.owner).toBe(fixture?.workspace);
       }
     }
+    expect(Object.keys(GOLDEN_CASE_ROUTE_REGISTRY).sort()).toEqual(
+      goldenCases.map((goldenCase) => goldenCase.id).sort(),
+    );
+    const goldenCaseById = new Map(goldenCases.map((goldenCase) => [goldenCase.id, goldenCase]));
+    for (const [goldenCaseId, routeId] of Object.entries(GOLDEN_CASE_ROUTE_REGISTRY)) {
+      const goldenCase = goldenCaseById.get(goldenCaseId);
+      expect(goldenCase, goldenCaseId).toBeDefined();
+      expect(MATHJSON_ROUTE_REGISTRY[routeId].owner).toBe(goldenCase?.mode);
+    }
   });
 
-  it('executes all 100 native probes and reports classified coverage', async () => {
+  it('executes all replay and golden native probes and reports classified coverage', async () => {
     const report = await buildMathJsonCoverageReport();
-    expect(report.fixtureCount).toBe(100);
+    expect(report.replayFixtureCount).toBe(100);
+    expect(report.goldenCaseCount).toBe(43);
+    expect(report.evidenceCount).toBe(143);
     expect(report.routeCount).toBe(Object.keys(MATHJSON_ROUTE_REGISTRY).length);
     expect(report.totals.leaves).toBeGreaterThan(0);
     expect(report.totals.proven).toBeGreaterThan(0);
     expect(report.totals.missing).toBe(report.gaps.length);
-    expect(report.exemptionIds).toEqual(MATHJSON_COVERAGE_EXEMPTIONS.map((entry) => entry.id));
+    expect(report.exemptionIds).toEqual(
+      MATHJSON_COVERAGE_EXEMPTIONS.map((entry) => entry.id).sort(),
+    );
+    const baseline = coverageBaseline as Parameters<typeof validateMathJsonCoverageBaseline>[1];
+    expect(validateMathJsonCoverageBaseline(report, baseline).errors).toEqual([]);
   }, 120_000);
 
   it('rejects debt, coverage, payload, route, and exemption regressions', () => {
     const report: MathJsonCoverageReport = {
-      version: 1 as const,
-      fixtureCount: 1,
+      version: 2 as const,
+      evidenceCount: 1,
+      replayFixtureCount: 1,
+      goldenCaseCount: 0,
       routeCount: 1,
       exemptionIds: [],
-      totals: { fixtures: 1, bytes: 10, maxBytes: 10, leaves: 1, proven: 0, exempt: 0, missing: 1 },
+      totals: {
+        evidence: 1,
+        replayFixtures: 1,
+        goldenCases: 0,
+        bytes: 10,
+        maxBytes: 10,
+        leaves: 1,
+        proven: 0,
+        exempt: 0,
+        missing: 1,
+      },
       routes: {
         'calculate.arithmetic': {
-          fixtures: 1, bytes: 10, maxBytes: 10, leaves: 1, proven: 0, exempt: 0, missing: 1,
+          evidence: 1,
+          replayFixtures: 1,
+          goldenCases: 0,
+          bytes: 10,
+          maxBytes: 10,
+          leaves: 1,
+          proven: 0,
+          exempt: 0,
+          missing: 1,
         },
       } as MathJsonCoverageReport['routes'],
       gaps: [],
     };
     const baseline = createMathJsonCoverageBaseline(report, 'initial');
     const regressed = structuredClone(report);
-    regressed.routes['calculate.arithmetic'].fixtures = 2;
+    regressed.routes['calculate.arithmetic'].evidence = 2;
+    regressed.routes['calculate.arithmetic'].replayFixtures = 2;
     regressed.routes['calculate.arithmetic'].leaves = 2;
     regressed.routes['calculate.arithmetic'].missing = 2;
     regressed.routes['calculate.arithmetic'].maxBytes = 11;
     regressed.exemptionIds = ['new-exemption'];
     const validation = validateMathJsonCoverageBaseline(regressed, baseline);
     expect(validation.ok).toBe(false);
-    expect(validation.errors.join('\n')).toMatch(/fixture count|leaf count|missing MathJSON|payload|exemption/u);
+    expect(validation.errors.join('\n')).toMatch(/evidence count|fixture count|leaf count|missing MathJSON|payload|exemption/u);
   });
 });

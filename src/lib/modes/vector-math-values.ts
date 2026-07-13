@@ -3,7 +3,11 @@ import type {
   DisplayDetailSection,
   DisplayOutcome,
 } from '../../types/calculator';
-import { buildExactScalarNode } from '../algebra/polynomial-core';
+import {
+  buildExactScalarNode,
+  exactScalarIsZero,
+  type ExactScalar,
+} from '../algebra/polynomial-core';
 import { scalarToLatex } from '../display/format';
 import type { ExactMatrix, ExactVector } from '../linear-algebra/exact-matrix-core';
 import {
@@ -18,6 +22,10 @@ import {
   exactGramSchmidtTwoVectors,
   exactScalarSquareRoot,
 } from '../linear-algebra/exact-vector-core';
+import {
+  analyzeExactColumnFamily,
+  exactMatrixFromColumnVectors,
+} from '../linear-algebra/matrix-column-family';
 import { runNumericVectorOperation } from '../linear-algebra/vector-core';
 import {
   tryProvenCanonicalMathValue,
@@ -168,11 +176,114 @@ function gramSchmidtLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLe
   return leaves;
 }
 
+function familyLabels(request: RunVectorModeRequest, count: number) {
+  return Array.from({ length: count }, (_, index) => (
+    request.vectorOperandLatexList?.[index]
+    ?? (index === 0
+      ? request.vectorOperandLatexA
+      : index === 1
+        ? request.vectorOperandLatexB
+        : undefined)
+    ?? `v_{${index + 1}}`
+  ));
+}
+
+function negateRelation(relation: ExactVector): ExactVector {
+  return relation.map((value) => ({
+    numerator: -value.numerator,
+    denominator: value.denominator,
+  }));
+}
+
+function canonicalRelation(relation: ExactVector): ExactVector {
+  const last = [...relation].reverse().find((value) => !exactScalarIsZero(value));
+  return last && last.numerator > 0 ? negateRelation(relation) : relation;
+}
+
+function relationNode(relation: ExactVector, labels: readonly string[]) {
+  const terms = relation.flatMap((value, index): unknown[] => {
+    if (exactScalarIsZero(value)) return [];
+    if (value.numerator === value.denominator) return [labels[index]];
+    if (value.numerator === -value.denominator) return [['Negate', labels[index]]];
+    return [['Multiply', buildExactScalarNode(value), labels[index]]];
+  });
+  return terms.length === 1 ? terms[0] : ['Add', ...terms];
+}
+
+function relationTerm(value: ExactScalar, label: string) {
+  const magnitude = {
+    numerator: Math.abs(value.numerator),
+    denominator: value.denominator,
+  };
+  const coefficient = magnitude.numerator === magnitude.denominator
+    ? ''
+    : exactScalarToLatex(magnitude);
+  return `${coefficient}${label}`;
+}
+
+function relationLatex(relation: ExactVector, labels: readonly string[]) {
+  const terms = relation.flatMap((value, index) => {
+    if (exactScalarIsZero(value)) return [];
+    return [{ negative: value.numerator < 0, term: relationTerm(value, labels[index]) }];
+  });
+  return terms.map(({ negative, term }, index) => (
+    index === 0 ? `${negative ? '-' : ''}${term}` : `${negative ? '-' : '+'}${term}`
+  )).join('') || '0';
+}
+
+function familyLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] {
+  if (request.operation !== 'span' && request.operation !== 'independent') return [];
+  const operands = request.vectorOperands ?? [];
+  const exactVectors = operands.map((vector, index) => (
+    exactVectorFromWire(request.exactVectorOperands?.[index])
+    ?? exactVectorFromNumeric(vector)
+  ));
+  if (!exactVectors.every((vector): vector is ExactVector => vector !== null)) return [];
+  const matrix = exactMatrixFromColumnVectors(exactVectors);
+  if (!matrix) return [];
+  const analysis = analyzeExactColumnFamily(matrix);
+  if (analysis.kind === 'stop') return [];
+  const labels = familyLabels(request, exactVectors.length);
+  const leaves = analysis.pivotColumns.map((column, index) => leaf(
+    `b_{${index + 1}}=${labels[column]}=${exactVectorToColumnLatex(analysis.imageBasis[index])}`,
+    ['Equal', `b_${index + 1}`, ['Equal', labels[column], exactVectorMathJson(analysis.imageBasis[index])]],
+    'vector.span-independence.native-selected-basis',
+  ));
+  const witness = analysis.kernelBasis[0];
+  if (!witness) return leaves;
+  const relation = canonicalRelation(witness);
+  leaves.push(leaf(
+    `${relationLatex(relation, labels)}=0`,
+    ['Equal', relationNode(relation, labels), 0],
+    'vector.span-independence.native-dependence-relation',
+  ));
+  let target = relation.length - 1;
+  while (target >= 0 && exactScalarIsZero(relation[target])) target -= 1;
+  if (
+    target >= 0
+    && relation[target].numerator === -1
+    && relation[target].denominator === 1
+  ) {
+    const right = relation.map((value, index) => index === target
+      ? { numerator: 0, denominator: 1 }
+      : value);
+    leaves.push(leaf(
+      `${labels[target]}=${relationLatex(right, labels)}`,
+      ['Equal', labels[target], relationNode(right, labels)],
+      'vector.span-independence.native-solved-relation',
+    ));
+  }
+  return leaves;
+}
+
 export function vectorOwnedMathJsonLeaves(
   request: RunVectorModeRequest,
 ): readonly VectorOwnedMathJsonLeaf[] {
   if (request.operation === 'angle') return angleLeaves(request);
   if (request.operation === 'gramSchmidtUV') return gramSchmidtLeaves(request);
+  if (request.operation === 'span' || request.operation === 'independent') {
+    return familyLeaves(request);
+  }
   return exactOperationLeaves(request);
 }
 
@@ -247,5 +358,8 @@ export function vectorMathJsonRouteForRequest(
   if (request.operation === 'cross') return 'vector.cross-product';
   if (request.operation === 'normA' || request.operation === 'normB') return 'vector.norm';
   if (request.operation === 'angle') return 'vector.angle';
+  if (request.operation === 'span' || request.operation === 'independent') {
+    return 'vector.span-independence';
+  }
   return 'vector.orthogonalization';
 }

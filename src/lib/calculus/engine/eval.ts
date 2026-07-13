@@ -5,6 +5,7 @@ import {
   evaluateBodyAt,
   nodeToFiniteNumber,
   type BoxedLike,
+  type CalculusOwnedMathJsonLeaf,
 } from './shared';
 import {
   evaluateDefiniteIntegralFromAst,
@@ -30,6 +31,11 @@ import type {
   CalculusIntegrationStrategy,
 } from '../../../types/calculator';
 import { profileCalculusResult } from '../../display/printer';
+import {
+  calculateDefiniteMathJsonLeaves,
+  calculateFiniteLimitMathJsonLeaves,
+  calculateIndefiniteMathJsonLeaves,
+} from './mathjson-evidence';
 
 type CalculusEvaluation =
   | {
@@ -42,12 +48,14 @@ type CalculusEvaluation =
       integrationStrategy?: CalculusIntegrationStrategy;
       derivativeStrategies?: CalculusDerivativeStrategy[];
       detailSections?: { title: string; lines: string[] }[];
+      mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
     }
   | {
       kind: 'error';
       error: string;
       warnings: string[];
       detailSections?: { title: string; lines: string[] }[];
+      mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
     }
   | {
       kind: 'unhandled';
@@ -377,6 +385,16 @@ export function resolveCalculusEvaluation(
         resultOrigin: presented.resultOrigin,
         integrationStrategy: presented.integrationStrategy,
         detailSections: presented.detailSections,
+        mathJsonLeaves: [
+          ...(presented.mathJsonLeaves ?? []),
+          ...calculateIndefiniteMathJsonLeaves({
+            body: integral.body,
+            variable: integral.variable,
+            evaluatedNode: evaluatedExpr.json,
+            evaluatedLatex: evaluatedExpr.latex,
+            exactLatex: presented.exactLatex ?? '',
+          }),
+        ],
       });
     }
 
@@ -397,12 +415,23 @@ export function resolveCalculusEvaluation(
       upper,
       unreliableError: 'This definite integral could not be evaluated reliably in this milestone.',
     });
+    const definiteMathJsonLeaves = calculateDefiniteMathJsonLeaves({
+      evaluation: definite,
+      body: integral.body,
+      variable: integral.variable,
+      lower,
+      upper,
+    });
     if (definite.error) {
       return {
         kind: 'error',
         error: definite.error,
         warnings: definite.warnings,
         detailSections: definite.detailSections,
+        mathJsonLeaves: [
+          ...(definite.mathJsonLeaves ?? []),
+          ...definiteMathJsonLeaves,
+        ],
       };
     }
 
@@ -414,6 +443,10 @@ export function resolveCalculusEvaluation(
       resultOrigin: definite.resultOrigin,
       integrationStrategy: definite.integrationStrategy,
       detailSections: definite.detailSections,
+      mathJsonLeaves: [
+        ...(definite.mathJsonLeaves ?? []),
+        ...definiteMathJsonLeaves,
+      ],
     });
   }
 
@@ -455,12 +488,23 @@ export function resolveCalculusEvaluation(
             `${side === 'left' ? 'Left-hand' : 'Right-hand'} behavior is outside the real domain near the target.`,
         },
       });
+      const limitMathJsonLeaves = calculateFiniteLimitMathJsonLeaves({
+        evaluation: resolved,
+        body: limit.body,
+        variable: limit.variable,
+        target,
+        direction,
+      });
       if (resolved.error) {
         return {
           kind: 'error',
           error: resolved.error,
           warnings: resolved.warnings,
           detailSections: resolved.detailSections,
+          mathJsonLeaves: [
+            ...(resolved.mathJsonLeaves ?? []),
+            ...limitMathJsonLeaves,
+          ],
         };
       }
 
@@ -471,6 +515,10 @@ export function resolveCalculusEvaluation(
         warnings: resolved.warnings,
         resultOrigin: resolved.resultOrigin,
         detailSections: resolved.detailSections,
+        mathJsonLeaves: [
+          ...(resolved.mathJsonLeaves ?? []),
+          ...limitMathJsonLeaves,
+        ],
       });
     }
 

@@ -34,7 +34,7 @@ describe('runCalculateMode', () => {
     }
   });
 
-  it('pins inverse-trig canonical nodes by angle unit and omits unproven calculus nodes', () => {
+  it('pins inverse-trig nodes by angle unit and attaches proven calculus answer trees', () => {
     const degrees = runCalculateMode({
       action: 'evaluate',
       latex: '\\arcsin(1)',
@@ -74,11 +74,8 @@ describe('runCalculateMode', () => {
     expect(integral).not.toHaveProperty('canonicalMath');
     expect(integral.kind === 'success' ? integral.canonicalResult?.primaryMath : undefined)
       .toMatchObject({ canonicalLatex: expect.any(String) });
-    expect(
-      integral.kind === 'success'
-        ? integral.canonicalResult?.primaryMath
-        : undefined,
-    ).not.toHaveProperty('mathJson');
+    expect(integral.kind === 'success' ? integral.canonicalResult?.primaryMath : undefined)
+      .toHaveProperty('mathJson');
   });
 
   it('substitutes stored numeric values only in standard Evaluate', () => {

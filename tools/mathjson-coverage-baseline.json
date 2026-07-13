@@ -1,11 +1,14 @@
 {
-  "version": 1,
-  "reason": "Move 8 adds producer-proven standard MathJSON to all representable Matrix and Vector replay leaves; seven parser-invalid Matrix-system detail lines remain one bounded fixture-scoped exemption.",
+  "version": 2,
+  "reason": "MATHJSON-COVERAGE-CLOSEOUT1 adds exact 43-golden plus 100-replay evidence parity, six golden-only route families, producer-proven native trees, and fixture-scoped non-growing compatibility exemptions.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
+    "calculate.derivatives",
     "calculate.exact-forms",
+    "calculate.integrals",
     "calculate.inverse-trigonometry",
+    "calculate.limits",
     "calculate.numeric-format",
     "calculate.transforms",
     "calculate.trigonometry",
@@ -32,6 +35,7 @@
     "matrix.inverse",
     "matrix.linear-system",
     "matrix.matrix-arithmetic",
+    "matrix.profile",
     "matrix.rank",
     "statistics.descriptive",
     "statistics.frequency",
@@ -47,12 +51,14 @@
     "trigonometry.equation",
     "trigonometry.function",
     "trigonometry.identity",
+    "trigonometry.period-phase",
     "trigonometry.right-triangle",
     "vector.angle",
     "vector.cross-product",
     "vector.dot-product",
     "vector.norm",
-    "vector.orthogonalization"
+    "vector.orthogonalization",
+    "vector.span-independence"
   ],
   "exemptionIds": [
     "calculus-derivative-at-point-detail-compatibility",
@@ -67,6 +73,19 @@
     "equation-even-root-labeled-supplement",
     "equation-rational-hole-labeled-supplement",
     "equation-rational-simple-labeled-supplement",
+    "golden-equation-rational-exclusion-label",
+    "golden-matrix-profile-singular-compound-primary",
+    "golden-matrix-profile-singular-labeled-details",
+    "golden-matrix-profile-singular-map-row",
+    "golden-matrix-profile-tall-compound-primary",
+    "golden-matrix-profile-tall-labeled-details",
+    "golden-matrix-profile-tall-map-row",
+    "golden-table-partial-domain-undefined-cell",
+    "golden-trigonometry-period-phase-compound-primary",
+    "golden-trigonometry-period-phase-labeled-facts",
+    "golden-vector-independence-labeled-answer-row",
+    "golden-vector-independence-labeled-details",
+    "golden-vector-independence-labeled-primary",
     "matrix-linear-system-legacy-operator-details",
     "table-partial-domain-undefined-cell",
     "table-rational-pole-undefined-cell",
@@ -74,17 +93,21 @@
     "trigonometry-right-triangle-control-input"
   ],
   "totals": {
-    "fixtures": 100,
-    "bytes": 62074,
+    "evidence": 143,
+    "replayFixtures": 100,
+    "goldenCases": 43,
+    "bytes": 107318,
     "maxBytes": 2753,
-    "leaves": 262,
-    "proven": 231,
-    "exempt": 31,
+    "leaves": 458,
+    "proven": 394,
+    "exempt": 64,
     "missing": 0
   },
   "routes": {
     "calculate.ans": {
-      "fixtures": 2,
+      "evidence": 2,
+      "replayFixtures": 2,
+      "goldenCases": 0,
       "bytes": 299,
       "maxBytes": 152,
       "leaves": 2,
@@ -93,16 +116,31 @@
       "missing": 0
     },
     "calculate.arithmetic": {
-      "fixtures": 2,
-      "bytes": 488,
+      "evidence": 3,
+      "replayFixtures": 2,
+      "goldenCases": 1,
+      "bytes": 705,
       "maxBytes": 271,
-      "leaves": 4,
-      "proven": 4,
+      "leaves": 6,
+      "proven": 6,
+      "exempt": 0,
+      "missing": 0
+    },
+    "calculate.derivatives": {
+      "evidence": 3,
+      "replayFixtures": 0,
+      "goldenCases": 3,
+      "bytes": 1805,
+      "maxBytes": 748,
+      "leaves": 6,
+      "proven": 6,
       "exempt": 0,
       "missing": 0
     },
     "calculate.exact-forms": {
-      "fixtures": 2,
+      "evidence": 2,
+      "replayFixtures": 2,
+      "goldenCases": 0,
       "bytes": 612,
       "maxBytes": 340,
       "leaves": 4,
@@ -110,17 +148,43 @@
       "exempt": 0,
       "missing": 0
     },
+    "calculate.integrals": {
+      "evidence": 8,
+      "replayFixtures": 0,
+      "goldenCases": 8,
+      "bytes": 10410,
+      "maxBytes": 1809,
+      "leaves": 31,
+      "proven": 31,
+      "exempt": 0,
+      "missing": 0
+    },
     "calculate.inverse-trigonometry": {
-      "fixtures": 4,
-      "bytes": 888,
-      "maxBytes": 239,
-      "leaves": 4,
-      "proven": 4,
+      "evidence": 6,
+      "replayFixtures": 4,
+      "goldenCases": 2,
+      "bytes": 1478,
+      "maxBytes": 312,
+      "leaves": 8,
+      "proven": 8,
+      "exempt": 0,
+      "missing": 0
+    },
+    "calculate.limits": {
+      "evidence": 6,
+      "replayFixtures": 0,
+      "goldenCases": 6,
+      "bytes": 8398,
+      "maxBytes": 2119,
+      "leaves": 33,
+      "proven": 33,
       "exempt": 0,
       "missing": 0
     },
     "calculate.numeric-format": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 197,
       "maxBytes": 197,
       "leaves": 1,
@@ -129,16 +193,20 @@
       "missing": 0
     },
     "calculate.transforms": {
-      "fixtures": 6,
-      "bytes": 1279,
+      "evidence": 9,
+      "replayFixtures": 6,
+      "goldenCases": 3,
+      "bytes": 2103,
       "maxBytes": 349,
-      "leaves": 7,
-      "proven": 7,
+      "leaves": 12,
+      "proven": 12,
       "exempt": 0,
       "missing": 0
     },
     "calculate.trigonometry": {
-      "fixtures": 3,
+      "evidence": 3,
+      "replayFixtures": 3,
+      "goldenCases": 0,
       "bytes": 512,
       "maxBytes": 180,
       "leaves": 3,
@@ -147,7 +215,9 @@
       "missing": 0
     },
     "calculus.derivatives": {
-      "fixtures": 5,
+      "evidence": 5,
+      "replayFixtures": 5,
+      "goldenCases": 0,
       "bytes": 4605,
       "maxBytes": 1815,
       "leaves": 27,
@@ -156,25 +226,31 @@
       "missing": 0
     },
     "calculus.integrals": {
-      "fixtures": 6,
-      "bytes": 4255,
+      "evidence": 7,
+      "replayFixtures": 6,
+      "goldenCases": 1,
+      "bytes": 4783,
       "maxBytes": 916,
-      "leaves": 12,
-      "proven": 12,
+      "leaves": 13,
+      "proven": 13,
       "exempt": 0,
       "missing": 0
     },
     "calculus.limits": {
-      "fixtures": 5,
-      "bytes": 7506,
+      "evidence": 6,
+      "replayFixtures": 5,
+      "goldenCases": 1,
+      "bytes": 9501,
       "maxBytes": 1995,
-      "leaves": 30,
-      "proven": 30,
+      "leaves": 37,
+      "proven": 37,
       "exempt": 0,
       "missing": 0
     },
     "calculus.ode-ivp": {
-      "fixtures": 3,
+      "evidence": 3,
+      "replayFixtures": 3,
+      "goldenCases": 0,
       "bytes": 1063,
       "maxBytes": 409,
       "leaves": 3,
@@ -183,7 +259,9 @@
       "missing": 0
     },
     "calculus.partials": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 535,
       "maxBytes": 535,
       "leaves": 4,
@@ -192,7 +270,9 @@
       "missing": 0
     },
     "calculus.series-transforms": {
-      "fixtures": 5,
+      "evidence": 5,
+      "replayFixtures": 5,
+      "goldenCases": 0,
       "bytes": 1709,
       "maxBytes": 442,
       "leaves": 4,
@@ -201,16 +281,20 @@
       "missing": 0
     },
     "equation.absolute-value": {
-      "fixtures": 1,
-      "bytes": 651,
-      "maxBytes": 651,
-      "leaves": 2,
-      "proven": 2,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 1542,
+      "maxBytes": 891,
+      "leaves": 4,
+      "proven": 4,
       "exempt": 0,
       "missing": 0
     },
     "equation.answer-mode": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 858,
       "maxBytes": 858,
       "leaves": 3,
@@ -219,25 +303,31 @@
       "missing": 0
     },
     "equation.domain-boundary": {
-      "fixtures": 4,
-      "bytes": 3145,
+      "evidence": 5,
+      "replayFixtures": 4,
+      "goldenCases": 1,
+      "bytes": 3833,
       "maxBytes": 1016,
-      "leaves": 15,
-      "proven": 13,
+      "leaves": 19,
+      "proven": 17,
       "exempt": 2,
       "missing": 0
     },
     "equation.linear": {
-      "fixtures": 3,
-      "bytes": 807,
+      "evidence": 4,
+      "replayFixtures": 3,
+      "goldenCases": 1,
+      "bytes": 1094,
       "maxBytes": 289,
-      "leaves": 3,
-      "proven": 3,
+      "leaves": 4,
+      "proven": 4,
       "exempt": 0,
       "missing": 0
     },
     "equation.numeric-boundary": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 2753,
       "maxBytes": 2753,
       "leaves": 0,
@@ -246,25 +336,31 @@
       "missing": 0
     },
     "equation.polynomial": {
-      "fixtures": 5,
-      "bytes": 3715,
+      "evidence": 6,
+      "replayFixtures": 5,
+      "goldenCases": 1,
+      "bytes": 3969,
       "maxBytes": 1065,
-      "leaves": 11,
-      "proven": 11,
+      "leaves": 12,
+      "proven": 12,
       "exempt": 0,
       "missing": 0
     },
     "equation.rational-radical": {
-      "fixtures": 4,
-      "bytes": 3787,
-      "maxBytes": 1175,
-      "leaves": 14,
-      "proven": 12,
-      "exempt": 2,
+      "evidence": 6,
+      "replayFixtures": 4,
+      "goldenCases": 2,
+      "bytes": 6488,
+      "maxBytes": 1853,
+      "leaves": 25,
+      "proven": 22,
+      "exempt": 3,
       "missing": 0
     },
     "equation.trig-exp-log": {
-      "fixtures": 6,
+      "evidence": 6,
+      "replayFixtures": 6,
+      "goldenCases": 0,
       "bytes": 5702,
       "maxBytes": 1569,
       "leaves": 15,
@@ -273,7 +369,9 @@
       "missing": 0
     },
     "geometry.circle": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 411,
       "maxBytes": 411,
       "leaves": 1,
@@ -282,25 +380,31 @@
       "missing": 0
     },
     "geometry.coordinate-distance": {
-      "fixtures": 1,
-      "bytes": 438,
-      "maxBytes": 438,
-      "leaves": 1,
-      "proven": 1,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 1081,
+      "maxBytes": 643,
+      "leaves": 5,
+      "proven": 5,
       "exempt": 0,
       "missing": 0
     },
     "geometry.line-equation": {
-      "fixtures": 1,
-      "bytes": 275,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 550,
       "maxBytes": 275,
-      "leaves": 1,
-      "proven": 1,
+      "leaves": 2,
+      "proven": 2,
       "exempt": 0,
       "missing": 0
     },
     "geometry.shape-2d": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 360,
       "maxBytes": 360,
       "leaves": 1,
@@ -309,7 +413,9 @@
       "missing": 0
     },
     "geometry.triangle": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 384,
       "maxBytes": 384,
       "leaves": 1,
@@ -318,7 +424,9 @@
       "missing": 0
     },
     "matrix.determinant": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 155,
       "maxBytes": 155,
       "leaves": 1,
@@ -327,7 +435,9 @@
       "missing": 0
     },
     "matrix.inverse": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 254,
       "maxBytes": 254,
       "leaves": 1,
@@ -336,7 +446,9 @@
       "missing": 0
     },
     "matrix.linear-system": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 1752,
       "maxBytes": 1752,
       "leaves": 11,
@@ -345,7 +457,9 @@
       "missing": 0
     },
     "matrix.matrix-arithmetic": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 244,
       "maxBytes": 244,
       "leaves": 1,
@@ -353,8 +467,21 @@
       "exempt": 0,
       "missing": 0
     },
+    "matrix.profile": {
+      "evidence": 2,
+      "replayFixtures": 0,
+      "goldenCases": 2,
+      "bytes": 5146,
+      "maxBytes": 2624,
+      "leaves": 26,
+      "proven": 9,
+      "exempt": 17,
+      "missing": 0
+    },
     "matrix.rank": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 154,
       "maxBytes": 154,
       "leaves": 1,
@@ -363,7 +490,9 @@
       "missing": 0
     },
     "statistics.descriptive": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 693,
       "maxBytes": 693,
       "leaves": 1,
@@ -372,7 +501,9 @@
       "missing": 0
     },
     "statistics.frequency": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 355,
       "maxBytes": 355,
       "leaves": 1,
@@ -381,16 +512,20 @@
       "missing": 0
     },
     "statistics.inference": {
-      "fixtures": 1,
-      "bytes": 548,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 1096,
       "maxBytes": 548,
-      "leaves": 1,
-      "proven": 1,
+      "leaves": 2,
+      "proven": 2,
       "exempt": 0,
       "missing": 0
     },
     "statistics.probability": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 217,
       "maxBytes": 217,
       "leaves": 1,
@@ -399,25 +534,31 @@
       "missing": 0
     },
     "statistics.relationship": {
-      "fixtures": 1,
-      "bytes": 920,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 1786,
       "maxBytes": 920,
-      "leaves": 4,
-      "proven": 4,
+      "leaves": 6,
+      "proven": 6,
       "exempt": 0,
       "missing": 0
     },
     "table.domain-boundary": {
-      "fixtures": 1,
-      "bytes": 989,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 1978,
       "maxBytes": 989,
-      "leaves": 8,
-      "proven": 7,
-      "exempt": 1,
+      "leaves": 16,
+      "proven": 14,
+      "exempt": 2,
       "missing": 0
     },
     "table.rational-function": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 997,
       "maxBytes": 997,
       "leaves": 8,
@@ -426,7 +567,9 @@
       "missing": 0
     },
     "table.single-function": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 725,
       "maxBytes": 725,
       "leaves": 11,
@@ -435,7 +578,9 @@
       "missing": 0
     },
     "table.trigonometric-function": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 579,
       "maxBytes": 579,
       "leaves": 7,
@@ -444,16 +589,20 @@
       "missing": 0
     },
     "table.two-functions": {
-      "fixtures": 1,
-      "bytes": 808,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 1616,
       "maxBytes": 808,
-      "leaves": 10,
-      "proven": 10,
+      "leaves": 20,
+      "proven": 20,
       "exempt": 0,
       "missing": 0
     },
     "trigonometry.angle-conversion": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 383,
       "maxBytes": 383,
       "leaves": 2,
@@ -462,16 +611,20 @@
       "missing": 0
     },
     "trigonometry.equation": {
-      "fixtures": 1,
-      "bytes": 1435,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 2870,
       "maxBytes": 1435,
-      "leaves": 5,
-      "proven": 5,
+      "leaves": 10,
+      "proven": 10,
       "exempt": 0,
       "missing": 0
     },
     "trigonometry.function": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 253,
       "maxBytes": 253,
       "leaves": 1,
@@ -480,7 +633,9 @@
       "missing": 0
     },
     "trigonometry.identity": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 206,
       "maxBytes": 206,
       "leaves": 1,
@@ -488,8 +643,21 @@
       "exempt": 0,
       "missing": 0
     },
+    "trigonometry.period-phase": {
+      "evidence": 1,
+      "replayFixtures": 0,
+      "goldenCases": 1,
+      "bytes": 1560,
+      "maxBytes": 1560,
+      "leaves": 14,
+      "proven": 6,
+      "exempt": 8,
+      "missing": 0
+    },
     "trigonometry.right-triangle": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 616,
       "maxBytes": 616,
       "leaves": 2,
@@ -498,7 +666,9 @@
       "missing": 0
     },
     "vector.angle": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 212,
       "maxBytes": 212,
       "leaves": 1,
@@ -507,7 +677,9 @@
       "missing": 0
     },
     "vector.cross-product": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 249,
       "maxBytes": 249,
       "leaves": 1,
@@ -516,7 +688,9 @@
       "missing": 0
     },
     "vector.dot-product": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 187,
       "maxBytes": 187,
       "leaves": 1,
@@ -525,7 +699,9 @@
       "missing": 0
     },
     "vector.norm": {
-      "fixtures": 1,
+      "evidence": 1,
+      "replayFixtures": 1,
+      "goldenCases": 0,
       "bytes": 187,
       "maxBytes": 187,
       "leaves": 1,
@@ -534,12 +710,25 @@
       "missing": 0
     },
     "vector.orthogonalization": {
-      "fixtures": 1,
-      "bytes": 1722,
+      "evidence": 2,
+      "replayFixtures": 1,
+      "goldenCases": 1,
+      "bytes": 3444,
       "maxBytes": 1722,
-      "leaves": 7,
-      "proven": 7,
+      "leaves": 14,
+      "proven": 14,
       "exempt": 0,
+      "missing": 0
+    },
+    "vector.span-independence": {
+      "evidence": 1,
+      "replayFixtures": 0,
+      "goldenCases": 1,
+      "bytes": 1664,
+      "maxBytes": 1664,
+      "leaves": 10,
+      "proven": 4,
+      "exempt": 6,
       "missing": 0
     }
   }

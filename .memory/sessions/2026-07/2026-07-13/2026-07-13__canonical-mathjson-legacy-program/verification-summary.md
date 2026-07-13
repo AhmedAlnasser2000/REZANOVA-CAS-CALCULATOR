@@ -94,3 +94,17 @@
 - visual: ten focused Matrix/Vector Chromium routes preserve exact answers, established detail counts, and zero card/page horizontal overflow
 - verification repair: the intentionally exhaustive 100-probe test uses a 120-second local timeout after the full suite demonstrated the previous 30-second cap was contention-sensitive; focused execution remains about 15 seconds and no payload or correctness threshold changed
 - residual: coverage classification is complete; `MATHJSON-COVERAGE-CLOSEOUT1` must prove the aggregate corpus and registry closeout before runtime-envelope migration begins
+
+## MATHJSON-COVERAGE-CLOSEOUT1
+
+- kind: backend aggregate MathJSON coverage closeout
+- result: pass
+- coverage: 143 native executions across 57 route families, comprising all 100 replay fixtures and all 43 golden cases; 458 leaves divide into 394 producer-proven standard MathJSON trees, 64 exact exemptions, and zero missing classifications
+- corpus split: replay remains 262 leaves with 231 proven and 31 exempt; golden contributes 196 leaves with 163 proven and 33 exempt
+- producer evidence: Calculate calculus ASTs and bounds, guided route facts, exact Trigonometry landmarks, Geometry branch values, Matrix profiles, and Vector independence relations enter only through workspace-owned proof adapters; formatted output and normalized input remain prohibited sources
+- payload: aggregate accepted bytes are 107,318 with a 2,753-byte maximum; 43 golden documents grow from 35,711 compatibility bytes to 45,244 current bytes and three five-cold/fifty-warm clone comparisons report warm P95 of 0.377-0.381 ms with no blocked metric
+- focused regression: four coverage-ratchet tests, 27 producer-contract tests, 38 Calculate/Calculus tests, 80 guided/Linear Algebra tests, and 44 golden-output tests pass
+- static: incremental TypeScript, focused changed-file lint, file-size, memory-protocol, and diff-hygiene gates pass
+- visible behavior: no display string, result, branch, action, warning, detail, or Table row changes; per-workspace Playwright evidence from the preceding coverage slices remains valid and was not redundantly rerun
+- resource posture: no full unit, UI, canary, build, or browser suite ran; the one failed sorted-ID assertion received only its targeted rerun
+- residual: `EQUATION-STAGE-CARRIER-GUARDED1` begins the approved Equation transport cleanup

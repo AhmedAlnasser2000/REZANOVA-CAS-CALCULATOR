@@ -6,7 +6,11 @@ import {
   resolvePositiveScalar,
   resolveScalar,
 } from '../resolvers';
-import { geometryError, geometryResult } from '../shared';
+import {
+  geometryError,
+  geometryResult,
+  numericGeometryMathJson,
+} from '../shared';
 import type { SolveMissingResult } from './shared';
 
 export function solveDistanceMissing(request: Extract<GeometryRequest, { kind: 'distanceSolveMissing' }>): SolveMissingResult {
@@ -89,9 +93,17 @@ export function solveDistanceMissing(request: Extract<GeometryRequest, { kind: '
   const coordinateBranches = [formatNumber(first), formatNumber(second)];
   const evaluation = geometryResult(
     [
-      { label: `${variableLabel}^{(1)}`, latex: coordinateBranches[0] },
-      { label: `${variableLabel}^{(2)}`, latex: coordinateBranches[1] },
-      { label: 'd', latex: d.normalizedLatex },
+      {
+        label: `${variableLabel}^{(1)}`,
+        latex: coordinateBranches[0],
+        mathJson: numericGeometryMathJson(first),
+      },
+      {
+        label: `${variableLabel}^{(2)}`,
+        latex: coordinateBranches[1],
+        mathJson: numericGeometryMathJson(second),
+      },
+      { label: 'd', latex: d.normalizedLatex, mathJson: numericGeometryMathJson(d.value) },
     ],
     ['Two real coordinate branches satisfy this distance constraint.'],
     'geometry-coordinate',
@@ -99,6 +111,24 @@ export function solveDistanceMissing(request: Extract<GeometryRequest, { kind: '
   return {
     evaluation: {
       ...evaluation,
+      mathJsonLeaves: [
+        ...(evaluation.mathJsonLeaves ?? []),
+        {
+          canonicalLatex: variableLabel,
+          mathJson: variableLabel,
+          source: 'geometry.distance-solve-missing:native-target',
+        },
+        {
+          canonicalLatex: coordinateBranches[0],
+          mathJson: numericGeometryMathJson(first),
+          source: 'geometry.distance-solve-missing:native-branch-1',
+        },
+        {
+          canonicalLatex: coordinateBranches[1],
+          mathJson: numericGeometryMathJson(second),
+          source: 'geometry.distance-solve-missing:native-branch-2',
+        },
+      ],
       branchReadback: finiteBranchReadbackMetadata({
         targetLatex: variableLabel,
         relationLatex: '\\in',

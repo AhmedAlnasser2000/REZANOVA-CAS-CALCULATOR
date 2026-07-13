@@ -33,8 +33,10 @@ const validation = validateMathJsonCoverageBaseline(report, baseline);
 if (json) {
   console.log(JSON.stringify({ ...report, validation }, null, 2));
 } else {
-  console.log('MathJSON coverage ratchet v1');
-  console.log(`Fixtures: ${report.fixtureCount}`);
+  console.log('MathJSON coverage ratchet v2');
+  console.log(`Replay fixtures: ${report.replayFixtureCount}`);
+  console.log(`Golden cases: ${report.goldenCaseCount}`);
+  console.log(`Executable evidence: ${report.evidenceCount}`);
   console.log(`Route families: ${report.routeCount}`);
   console.log(`Canonical leaves: ${report.totals.leaves}`);
   console.log(`Proven MathJSON: ${report.totals.proven}`);

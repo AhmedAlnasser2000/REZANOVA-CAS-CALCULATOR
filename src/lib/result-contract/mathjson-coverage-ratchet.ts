@@ -5,7 +5,7 @@ import type {
 import type { MathJsonRouteId } from './mathjson-route-registry';
 
 export type MathJsonCoverageBaseline = {
-  version: 1;
+  version: 2;
   reason: string;
   routeIds: MathJsonRouteId[];
   exemptionIds: string[];
@@ -18,7 +18,7 @@ export function createMathJsonCoverageBaseline(
   reason: string,
 ): MathJsonCoverageBaseline {
   return {
-    version: 1,
+    version: 2,
     reason,
     routeIds: Object.keys(report.routes).sort() as MathJsonRouteId[],
     exemptionIds: [...report.exemptionIds].sort(),
@@ -47,8 +47,14 @@ export function validateMathJsonCoverageBaseline(
     const current = report.routes[routeId];
     const accepted = baseline.routes[routeId];
     if (!accepted) continue;
-    if (current.fixtures !== accepted.fixtures) {
-      errors.push(`${routeId} executable fixture count changed (${accepted.fixtures} -> ${current.fixtures}).`);
+    if (current.evidence !== accepted.evidence) {
+      errors.push(`${routeId} executable evidence count changed (${accepted.evidence} -> ${current.evidence}).`);
+    }
+    if (current.replayFixtures !== accepted.replayFixtures) {
+      errors.push(`${routeId} replay fixture count changed (${accepted.replayFixtures} -> ${current.replayFixtures}).`);
+    }
+    if (current.goldenCases !== accepted.goldenCases) {
+      errors.push(`${routeId} golden case count changed (${accepted.goldenCases} -> ${current.goldenCases}).`);
     }
     if (current.leaves !== accepted.leaves) {
       errors.push(`${routeId} canonical leaf count changed (${accepted.leaves} -> ${current.leaves}).`);

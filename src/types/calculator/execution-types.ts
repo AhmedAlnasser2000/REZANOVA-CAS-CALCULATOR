@@ -195,4 +195,9 @@ export type EvaluateResponse = {
   calculusStrategy?: CalculusIntegrationStrategy;
   calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
   detailSections?: EvaluateDetailSection[];
+  mathJsonLeaves?: Array<{
+    canonicalLatex: string;
+    mathJson: unknown;
+    source: string;
+  }>;
 };

@@ -20,6 +20,7 @@ import {
   tryProvenCanonicalMathValue,
 } from '../../result-contract';
 import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
+import { calculateMathValuesFromOwnedLeaves } from './math-values';
 import {
   applyCalculateStoredVariableSubstitutions,
   calculateSubstitutionPolicy,
@@ -39,8 +40,12 @@ function calculateMathJsonRouteId(input: {
   action: RunCalculateModeRequest['action'];
   latex: string;
   outputStyle: RunCalculateModeRequest['outputStyle'];
-}): MathJsonRouteId {
+  responseTitle: string;
+}): Extract<MathJsonRouteId, `calculate.${string}`> {
   if (input.action !== 'evaluate') return 'calculate.transforms';
+  if (input.responseTitle === 'Derivative') return 'calculate.derivatives';
+  if (input.responseTitle === 'Integral') return 'calculate.integrals';
+  if (input.responseTitle === 'Limit') return 'calculate.limits';
   if (/\bAns\b/u.test(input.latex)) return 'calculate.ans';
   if (input.outputStyle === 'decimal') return 'calculate.numeric-format';
   if (/\\arc(?:sin|cos|tan)/u.test(input.latex)) {
@@ -233,19 +238,32 @@ export function runCalculateMode({
   const variableSubstitutions = !response.error && substitution.substitutions.length > 0
     ? substitution.substitutions
     : undefined;
-  const routeId = calculateMathJsonRouteId({ action, latex, outputStyle });
+  const routeId = calculateMathJsonRouteId({
+    action,
+    latex,
+    outputStyle,
+    responseTitle: responseTitleText,
+  });
   const ownsCalculateCoverage = calculateScreen === 'standard';
-  const primaryMath = ownsCalculateCoverage
-    && !response.error
-    && profiledMath?.canonicalMath?.mathJson !== undefined
-    ? tryProvenCanonicalMathValue({
-        canonicalLatex: exactLatex!,
-        mathJson: profiledMath.canonicalMath.mathJson,
-        owner: 'calculate',
-        routeId,
-        source: 'calculate-expression-answer',
-      })
-    : undefined;
+  const ownedMathValues = calculateMathValuesFromOwnedLeaves({
+    routeId,
+    exactLatex,
+    answerRows: response.answerRows,
+    supplements: response.exactSupplementLatex,
+    detailSections: detailSections.length > 0 ? detailSections : undefined,
+    leaves: ownsCalculateCoverage
+      ? [
+          ...(profiledMath?.canonicalMath?.mathJson !== undefined && exactLatex
+            ? [{
+                canonicalLatex: exactLatex,
+                mathJson: profiledMath.canonicalMath.mathJson,
+                source: 'calculate-expression-answer',
+              }]
+            : []),
+          ...(response.mathJsonLeaves ?? []),
+        ]
+      : [],
+  });
   const resolvedInput = ownsCalculateCoverage
     && resolvedInputLatex
     && executionLatex === planner.resolvedLatex
@@ -276,7 +294,7 @@ export function runCalculateMode({
     variableSubstitutions,
   }, {
     mathValues: {
-      ...(primaryMath ? { primaryMath } : {}),
+      ...ownedMathValues,
       ...(resolvedInput ? { metadata: { resolvedInput } } : {}),
     },
   });

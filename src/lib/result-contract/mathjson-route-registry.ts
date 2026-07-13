@@ -34,14 +34,14 @@ export type CanonicalMathLeafPath = typeof CANONICAL_MATH_LEAF_PATHS[number];
 
 export type MathJsonRoutePolicy = {
   owner: HistoryReplayWorkspace;
-  probeFixtureIds: readonly [string, ...string[]];
+  replayFixtureIds: readonly string[];
   leafPolicy: 'required-when-present';
 };
 
 const route = (
   owner: HistoryReplayWorkspace,
-  ...probeFixtureIds: [string, ...string[]]
-): MathJsonRoutePolicy => ({ owner, probeFixtureIds, leafPolicy: 'required-when-present' });
+  ...replayFixtureIds: string[]
+): MathJsonRoutePolicy => ({ owner, replayFixtureIds, leafPolicy: 'required-when-present' });
 
 export const MATHJSON_ROUTE_REGISTRY = {
   'calculate.arithmetic': route('calculate', 'calculate-arithmetic-add'),
@@ -51,6 +51,9 @@ export const MATHJSON_ROUTE_REGISTRY = {
   'calculate.transforms': route('calculate', 'calculate-simplify-like-terms'),
   'calculate.ans': route('calculate', 'calculate-ans-addition'),
   'calculate.numeric-format': route('calculate', 'calculate-decimal-output'),
+  'calculate.derivatives': route('calculate'),
+  'calculate.integrals': route('calculate'),
+  'calculate.limits': route('calculate'),
   'equation.linear': route('equation', 'equation-linear-basic'),
   'equation.polynomial': route('equation', 'equation-quadratic-factor'),
   'equation.rational-radical': route('equation', 'equation-rational-simple'),
@@ -70,6 +73,7 @@ export const MATHJSON_ROUTE_REGISTRY = {
   'trigonometry.equation': route('trigonometry', 'trigonometry-equation'),
   'trigonometry.right-triangle': route('trigonometry', 'trigonometry-triangle'),
   'trigonometry.angle-conversion': route('trigonometry', 'trigonometry-convert'),
+  'trigonometry.period-phase': route('trigonometry'),
   'geometry.shape-2d': route('geometry', 'geometry-square'),
   'geometry.coordinate-distance': route('geometry', 'geometry-distance'),
   'geometry.circle': route('geometry', 'geometry-circle'),
@@ -85,11 +89,13 @@ export const MATHJSON_ROUTE_REGISTRY = {
   'matrix.inverse': route('matrix', 'matrix-inverse'),
   'matrix.rank': route('matrix', 'matrix-rank'),
   'matrix.linear-system': route('matrix', 'matrix-linear-system'),
+  'matrix.profile': route('matrix'),
   'vector.dot-product': route('vector', 'vector-dot'),
   'vector.cross-product': route('vector', 'vector-cross'),
   'vector.norm': route('vector', 'vector-norm'),
   'vector.angle': route('vector', 'vector-angle'),
   'vector.orthogonalization': route('vector', 'vector-gram-schmidt'),
+  'vector.span-independence': route('vector'),
   'table.single-function': route('table', 'table-polynomial'),
   'table.two-functions': route('table', 'table-two-functions'),
   'table.domain-boundary': route('table', 'table-partial-domain'),
@@ -98,6 +104,56 @@ export const MATHJSON_ROUTE_REGISTRY = {
 } as const satisfies Record<string, MathJsonRoutePolicy>;
 
 export type MathJsonRouteId = keyof typeof MATHJSON_ROUTE_REGISTRY;
+
+export const GOLDEN_CASE_ROUTE_REGISTRY = {
+  'calculate-arithmetic-basic': 'calculate.arithmetic',
+  'calculate-simplify-zero-polynomial-difference': 'calculate.transforms',
+  'calculate-factor-perfect-square': 'calculate.transforms',
+  'calculate-expand-affine-square': 'calculate.transforms',
+  'calculus-derivative-function-power': 'calculate.derivatives',
+  'calculus-derivative-general-power': 'calculate.derivatives',
+  'calculus-derivative-known-inverse-trig': 'calculate.derivatives',
+  'calculus-integral-inverse-trig': 'calculate.integrals',
+  'calculus-integral-partial-fractions': 'calculate.integrals',
+  'calculus-integral-repeated-linear-partial-fractions': 'calculate.integrals',
+  'calculus-integral-quadratic-partial-fractions': 'calculate.integrals',
+  'calculus-integral-u-substitution-log': 'calculate.integrals',
+  'calculus-definite-integral-exact': 'calculate.integrals',
+  'calculus-definite-integral-numeric-fallback': 'calculate.integrals',
+  'calculus-definite-integral-unsafe-stop': 'calculate.integrals',
+  'limit-known-form-sin-over-x': 'calculate.limits',
+  'limit-directional-positive-pole': 'calculate.limits',
+  'limit-directional-negative-pole': 'calculate.limits',
+  'limit-removable-rational-hole': 'calculate.limits',
+  'limit-local-equivalent-product': 'calculate.limits',
+  'limit-one-sided-real-domain-stop': 'calculate.limits',
+  'equation-linear-symbolic': 'equation.linear',
+  'equation-guided-quadratic-symbolic': 'equation.polynomial',
+  'equation-rational-exclusion': 'equation.rational-radical',
+  'equation-radical-candidate-rejection': 'equation.rational-radical',
+  'equation-absolute-value-bounded': 'equation.absolute-value',
+  'equation-range-impossibility-stop': 'equation.domain-boundary',
+  'calculate-arcsin-one-deg': 'calculate.inverse-trigonometry',
+  'calculate-arcsin-one-rad': 'calculate.inverse-trigonometry',
+  'calculus-left-pole-limit': 'calculus.limits',
+  'calculus-improper-arctan-integral': 'calculus.integrals',
+  'trigonometry-period-phase-rad': 'trigonometry.period-phase',
+  'trigonometry-periodic-sine-equation': 'trigonometry.equation',
+  'geometry-distance-solve-missing-branches': 'geometry.coordinate-distance',
+  'geometry-line-equation-transfer': 'geometry.line-equation',
+  'statistics-two-point-regression-warning': 'statistics.relationship',
+  'statistics-mean-confidence-interval': 'statistics.inference',
+  'matrix-profile-singular-square': 'matrix.profile',
+  'matrix-profile-tall-rectangular': 'matrix.profile',
+  'vector-dependent-independence-relation': 'vector.span-independence',
+  'vector-exact-gram-schmidt': 'vector.orthogonalization',
+  'table-partial-real-domain': 'table.domain-boundary',
+  'table-two-function-grid': 'table.two-functions',
+} as const satisfies Record<string, MathJsonRouteId>;
+
+export function mathJsonRouteForGoldenCase(caseId: string): MathJsonRouteId | undefined {
+  return (GOLDEN_CASE_ROUTE_REGISTRY as Record<string, MathJsonRouteId>)[caseId];
+}
 
 export type MathJsonCoverageExemption = {
   id: string;
@@ -262,5 +318,122 @@ export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] 
     owner: 'trigonometry',
     reason: 'standard-mathjson-unrepresentable',
     rationale: 'The retained resolved-input value is a typed right-triangle request description rather than a mathematical result tree; the native solution is producer-proven.',
+  },
+  {
+    id: 'golden-equation-rational-exclusion-label',
+    routeId: 'equation.rational-radical',
+    leafPath: 'supplements[*]',
+    fixtureId: 'equation-rational-exclusion',
+    owner: 'equation',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The golden compatibility supplement combines the prose label "Exclusions" with a condition in one math fragment; the accepted root and domain evidence are separately producer-proven.',
+  },
+  {
+    id: 'golden-trigonometry-period-phase-compound-primary',
+    routeId: 'trigonometry.period-phase',
+    leafPath: 'primaryMath',
+    fixtureId: 'trigonometry-period-phase-rad',
+    owner: 'trigonometry',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility primary joins a wave equation, period, and phase declaration with presentation separators rather than one standard MathJSON expression; all five landmarks and the native coefficient are separately proven.',
+  },
+  {
+    id: 'golden-trigonometry-period-phase-labeled-facts',
+    routeId: 'trigonometry.period-phase',
+    leafPath: 'details[*].lines[*][*].math',
+    fixtureId: 'trigonometry-period-phase-rad',
+    owner: 'trigonometry',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The remaining wave facts encode prose labels such as carrier, amplitude, phase shift, and midline inside math-only strings; the coefficient and exact landmark equations are separately producer-proven.',
+  },
+  {
+    id: 'golden-matrix-profile-singular-compound-primary',
+    routeId: 'matrix.profile',
+    leafPath: 'primaryMath',
+    fixtureId: 'matrix-profile-singular-square',
+    owner: 'matrix',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility primary combines a map declaration, rank, and nullity through presentation separators; rank and nullity are separately proven from the native exact profile.',
+  },
+  {
+    id: 'golden-matrix-profile-singular-map-row',
+    routeId: 'matrix.profile',
+    leafPath: 'answerRows.rows[*].math',
+    fixtureId: 'matrix-profile-singular-square',
+    owner: 'matrix',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The retained map-type declaration is presentation notation rather than a standard Compute Engine answer expression; the profile rank and nullity rows are proven.',
+  },
+  {
+    id: 'golden-matrix-profile-singular-labeled-details',
+    routeId: 'matrix.profile',
+    leafPath: 'details[*].lines[*][*].math',
+    fixtureId: 'matrix-profile-singular-square',
+    owner: 'matrix',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The remaining profile details use custom pivot-column, kernel/image span, and Yes/No operator labels that have no standard MathJSON heads. Native rank-nullity, determinant, and RREF values are separately proven.',
+  },
+  {
+    id: 'golden-matrix-profile-tall-compound-primary',
+    routeId: 'matrix.profile',
+    leafPath: 'primaryMath',
+    fixtureId: 'matrix-profile-tall-rectangular',
+    owner: 'matrix',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility primary combines a rectangular map declaration, rank, and nullity through presentation separators; rank and nullity are separately proven from the native exact profile.',
+  },
+  {
+    id: 'golden-matrix-profile-tall-map-row',
+    routeId: 'matrix.profile',
+    leafPath: 'answerRows.rows[*].math',
+    fixtureId: 'matrix-profile-tall-rectangular',
+    owner: 'matrix',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The retained rectangular map-type declaration is presentation notation rather than a standard Compute Engine answer expression; the profile rank and nullity rows are proven.',
+  },
+  {
+    id: 'golden-matrix-profile-tall-labeled-details',
+    routeId: 'matrix.profile',
+    leafPath: 'details[*].lines[*][*].math',
+    fixtureId: 'matrix-profile-tall-rectangular',
+    owner: 'matrix',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The remaining profile details use custom pivot-column, kernel/image span, and Yes/No operator labels that have no standard MathJSON heads. Native rank-nullity and RREF values are separately proven.',
+  },
+  {
+    id: 'golden-vector-independence-labeled-primary',
+    routeId: 'vector.span-independence',
+    leafPath: 'primaryMath',
+    fixtureId: 'vector-dependent-independence-relation',
+    owner: 'vector',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility primary encodes a custom independence predicate with a textual Yes/No result; the exact dependence relation and selected basis vectors are separately proven.',
+  },
+  {
+    id: 'golden-vector-independence-labeled-answer-row',
+    routeId: 'vector.span-independence',
+    leafPath: 'answerRows.rows[*].math',
+    fixtureId: 'vector-dependent-independence-relation',
+    owner: 'vector',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility answer row repeats the custom independence predicate with a textual result; exact relation evidence is separately producer-proven.',
+  },
+  {
+    id: 'golden-vector-independence-labeled-details',
+    routeId: 'vector.span-independence',
+    leafPath: 'details[*].lines[*][*].math',
+    fixtureId: 'vector-dependent-independence-relation',
+    owner: 'vector',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The remaining details use custom dimension, pivot, selected-basis, and symbolic-column RREF labels without standard MathJSON heads. Both basis vectors and both dependence equations are separately proven.',
+  },
+  {
+    id: 'golden-table-partial-domain-undefined-cell',
+    routeId: 'table.domain-boundary',
+    leafPath: 'table.rows[*].primary',
+    fixtureId: 'table-partial-real-domain',
+    owner: 'table',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The golden cell marks an out-of-real-domain sample as undefined; it is absence of a mathematical value while every defined coordinate and cell remains producer-proven.',
   },
 ];

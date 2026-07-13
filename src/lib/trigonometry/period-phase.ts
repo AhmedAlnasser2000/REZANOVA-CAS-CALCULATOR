@@ -1,7 +1,11 @@
 import type { AngleUnit } from '../../types/calculator';
 import { formatNumber } from '../display/format';
 import { mathDetailSection } from '../display/result-detail-lines';
-import { formatDegreesAsUnitLatex, type TrigEvaluation } from './angles';
+import {
+  degreesToUnitMathJson,
+  formatDegreesAsUnitLatex,
+  type TrigEvaluation,
+} from './angles';
 import { profileTrigonometryResult } from '../display/printer';
 
 type TrigCarrier = 'sin' | 'cos' | 'tan';
@@ -385,6 +389,25 @@ export function analyzePeriodPhase(
   const phase = phaseShiftLatex(parsed, angleUnit);
   const period = periodLatex(parsed, angleUnit);
   const normalized = normalizedWaveLatex(parsed, phase);
+  const phaseDegrees = phaseShiftDegrees(parsed, angleUnit);
+  const periodInDegrees = periodDegrees(parsed);
+  const mathJsonLeaves = [
+    {
+      canonicalLatex: `B=${parsed.coefficient.latex}`,
+      mathJson: ['Equal', 'B', parsed.coefficient.value],
+      source: 'trigonometry.period-phase:native-frequency-coefficient',
+    },
+    ...(phaseDegrees === null || parsed.carrier === 'tan'
+      ? []
+      : Array.from({ length: 5 }, (_, index) => {
+          const degrees = phaseDegrees + index * periodInDegrees / 4;
+          return {
+            canonicalLatex: `x_${index}=${formatDegreesAsUnitLatex(degrees, angleUnit)}`,
+            mathJson: ['Equal', `x_${index}`, degreesToUnitMathJson(degrees, angleUnit)],
+            source: `trigonometry.period-phase:native-landmark-${index}`,
+          };
+        })),
+  ];
   return profileTrigonometryResult({
     exactLatex: `y=${normalized},\\quad P=${period},\\quad h=${phase}`,
     approxText: `Carrier ${parsed.carrier}; period ${period}; phase shift ${phase}.`,
@@ -393,5 +416,6 @@ export function analyzePeriodPhase(
       mathDetailSection('Wave Facts', waveFacts(parsed, phase, period, angleUnit)),
       mathDetailSection('First Cycle Landmarks', landmarkFacts(parsed, phase, period, angleUnit)),
     ],
+    mathJsonLeaves,
   });
 }

@@ -18,6 +18,7 @@ import {
 import type { AngleUnit, DisplayOutcome, EquationDomainIntent, OutputStyle, PolynomialEquationView } from '../../../types/calculator';
 import { profileEquationResult } from '../../display/printer';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
+import { tryEquationMathValuesFromOwnedPayload } from '../../equation/solve-result/math-values';
 
 const ce = new ComputeEngine();
 
@@ -105,14 +106,29 @@ export function solvePolynomial(
     };
 
   if (screen === 'quadratic' && !response.error && response.exactLatex) {
-    return createEquationResultOutcome(buildRuntimeOutcome({
+    const outcome = buildRuntimeOutcome({
       title: meta.title,
       exactLatex: response.exactLatex,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,
       warnings: response.warnings,
       resultOrigin: 'symbolic',
-    }));
+    });
+    const mathValues = response.answerMathJson === undefined
+      ? undefined
+      : tryEquationMathValuesFromOwnedPayload({
+          canonicalMath: {
+            version: 1,
+            canonicalLatex: response.exactLatex,
+            mathJson: response.answerMathJson,
+          },
+          routeId: 'equation.polynomial',
+          source: 'equation.guided-quadratic:native-expression-answer',
+        });
+    return createEquationResultOutcome(
+      outcome,
+      mathValues ? { mathValues } : undefined,
+    );
   }
 
   const numericRoots = solvePolynomialRoots({ coefficients: normalized });

@@ -441,6 +441,7 @@ export function executePreparedExpressionAction(
             warnings: [...warnings, ...calculus.warnings],
             error: calculus.error,
             detailSections: calculus.detailSections,
+            mathJsonLeaves: calculus.mathJsonLeaves,
           };
         }
 
@@ -464,6 +465,7 @@ export function executePreparedExpressionAction(
             calculusStrategy: calculus.integrationStrategy,
             calculusDerivativeStrategies: calculus.derivativeStrategies,
             detailSections: calculus.detailSections,
+            mathJsonLeaves: calculus.mathJsonLeaves,
           };
         }
 

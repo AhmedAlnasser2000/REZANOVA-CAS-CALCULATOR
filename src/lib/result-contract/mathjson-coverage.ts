@@ -3,12 +3,15 @@ import type {
   CanonicalResultDetailPartV1,
   CanonicalResultDocumentV1,
 } from '../../types/calculator';
+import { goldenCases } from '../__golden__/golden-cases';
+import { runGoldenCase } from '../__golden__/golden-execution';
 import { executeHistoryReplayRequest } from '../history-replay/native-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
 import { resolveCanonicalResultForConsumer } from './consumer';
 import {
   MATHJSON_COVERAGE_EXEMPTIONS,
   MATHJSON_ROUTE_REGISTRY,
+  mathJsonRouteForGoldenCase,
   type CanonicalMathLeafPath,
   type MathJsonRouteId,
 } from './mathjson-route-registry';
@@ -20,7 +23,9 @@ export type CanonicalMathLeafReference = {
 };
 
 export type MathJsonCoverageRouteSummary = {
-  fixtures: number;
+  evidence: number;
+  replayFixtures: number;
+  goldenCases: number;
   bytes: number;
   maxBytes: number;
   leaves: number;
@@ -30,7 +35,8 @@ export type MathJsonCoverageRouteSummary = {
 };
 
 export type MathJsonCoverageGap = {
-  fixtureId: string;
+  evidenceKind: 'replay-fixture' | 'golden-case';
+  evidenceId: string;
   routeId: MathJsonRouteId;
   path: string;
   leafPath: CanonicalMathLeafPath;
@@ -38,14 +44,13 @@ export type MathJsonCoverageGap = {
 };
 
 export type MathJsonCoverageReport = {
-  version: 1;
-  fixtureCount: number;
+  version: 2;
+  evidenceCount: number;
+  replayFixtureCount: number;
+  goldenCaseCount: number;
   routeCount: number;
   exemptionIds: string[];
-  totals: Omit<MathJsonCoverageRouteSummary, 'fixtures' | 'maxBytes'> & {
-    fixtures: number;
-    maxBytes: number;
-  };
+  totals: MathJsonCoverageRouteSummary;
   routes: Record<MathJsonRouteId, MathJsonCoverageRouteSummary>;
   gaps: MathJsonCoverageGap[];
 };
@@ -141,7 +146,59 @@ export function collectCanonicalMathLeaves(
 }
 
 function emptySummary(): MathJsonCoverageRouteSummary {
-  return { fixtures: 0, bytes: 0, maxBytes: 0, leaves: 0, proven: 0, exempt: 0, missing: 0 };
+  return {
+    evidence: 0,
+    replayFixtures: 0,
+    goldenCases: 0,
+    bytes: 0,
+    maxBytes: 0,
+    leaves: 0,
+    proven: 0,
+    exempt: 0,
+    missing: 0,
+  };
+}
+
+function recordDocumentCoverage(input: {
+  document: CanonicalResultDocumentV1;
+  evidenceKind: MathJsonCoverageGap['evidenceKind'];
+  evidenceId: string;
+  routeId: MathJsonRouteId;
+  summary: MathJsonCoverageRouteSummary;
+  gaps: MathJsonCoverageGap[];
+}) {
+  const leaves = collectCanonicalMathLeaves(input.document);
+  const bytes = new TextEncoder().encode(JSON.stringify(input.document)).byteLength;
+  input.summary.evidence += 1;
+  if (input.evidenceKind === 'replay-fixture') input.summary.replayFixtures += 1;
+  else input.summary.goldenCases += 1;
+  input.summary.bytes += bytes;
+  input.summary.maxBytes = Math.max(input.summary.maxBytes, bytes);
+  input.summary.leaves += leaves.length;
+
+  for (const leaf of leaves) {
+    if (leaf.value.mathJson !== undefined) {
+      input.summary.proven += 1;
+      continue;
+    }
+    const exemption = MATHJSON_COVERAGE_EXEMPTIONS.find((candidate) =>
+      candidate.routeId === input.routeId
+      && candidate.leafPath === leaf.leafPath
+      && candidate.fixtureId === input.evidenceId);
+    if (exemption) {
+      input.summary.exempt += 1;
+    } else {
+      input.summary.missing += 1;
+      input.gaps.push({
+        evidenceKind: input.evidenceKind,
+        evidenceId: input.evidenceId,
+        routeId: input.routeId,
+        path: leaf.path,
+        leafPath: leaf.leafPath,
+        canonicalLatex: leaf.value.canonicalLatex,
+      });
+    }
+  }
 }
 
 export async function buildMathJsonCoverageReport(): Promise<MathJsonCoverageReport> {
@@ -164,47 +221,53 @@ export async function buildMathJsonCoverageReport(): Promise<MathJsonCoverageRep
     if (!resolution.ok || resolution.source !== 'native') {
       throw new Error(`MathJSON probe ${fixture.id} did not resolve a native canonical result.`);
     }
-    const document = resolution.document;
-    const leaves = collectCanonicalMathLeaves(document);
-    const bytes = new TextEncoder().encode(JSON.stringify(document)).byteLength;
-    const summary = routes[routeId];
-    summary.fixtures += 1;
-    summary.bytes += bytes;
-    summary.maxBytes = Math.max(summary.maxBytes, bytes);
-    summary.leaves += leaves.length;
+    recordDocumentCoverage({
+      document: resolution.document,
+      evidenceKind: 'replay-fixture',
+      evidenceId: fixture.id,
+      routeId,
+      summary: routes[routeId],
+      gaps,
+    });
+  }
 
-    for (const leaf of leaves) {
-      if (leaf.value.mathJson !== undefined) {
-        summary.proven += 1;
-        continue;
-      }
-      const exemption = MATHJSON_COVERAGE_EXEMPTIONS.find((candidate) =>
-        candidate.routeId === routeId
-        && candidate.leafPath === leaf.leafPath
-        && candidate.fixtureId === fixture.id);
-      if (exemption) {
-        summary.exempt += 1;
-      } else {
-        summary.missing += 1;
-        gaps.push({
-          fixtureId: fixture.id,
-          routeId,
-          path: leaf.path,
-          leafPath: leaf.leafPath,
-          canonicalLatex: leaf.value.canonicalLatex,
-        });
-      }
+  for (const goldenCase of goldenCases) {
+    const routeId = mathJsonRouteForGoldenCase(goldenCase.id);
+    if (!routeId) throw new Error(`Unregistered golden MathJSON case ${goldenCase.id}.`);
+    const policy = MATHJSON_ROUTE_REGISTRY[routeId];
+    if (!policy || policy.owner !== goldenCase.mode) {
+      throw new Error(`Golden MathJSON case ${goldenCase.id} has mismatched route ownership.`);
     }
+    const execution = await runGoldenCase(goldenCase);
+    if (execution.outcome.kind === 'prompt') {
+      throw new Error(`Golden MathJSON case ${goldenCase.id} produced a prompt instead of a canonical result.`);
+    }
+    const resolution = resolveCanonicalResultForConsumer(execution.outcome);
+    if (!resolution.ok || resolution.source !== 'native') {
+      throw new Error(`Golden MathJSON case ${goldenCase.id} did not resolve a native canonical result.`);
+    }
+    recordDocumentCoverage({
+      document: resolution.document,
+      evidenceKind: 'golden-case',
+      evidenceId: goldenCase.id,
+      routeId,
+      summary: routes[routeId],
+      gaps,
+    });
   }
 
   const summaries = Object.values(routes);
   return {
-    version: 1,
-    fixtureCount: HISTORY_REPLAY_FIXTURES.length,
+    version: 2,
+    evidenceCount: HISTORY_REPLAY_FIXTURES.length + goldenCases.length,
+    replayFixtureCount: HISTORY_REPLAY_FIXTURES.length,
+    goldenCaseCount: goldenCases.length,
     routeCount: routeIds.length,
     exemptionIds: MATHJSON_COVERAGE_EXEMPTIONS.map((entry) => entry.id).sort(),
     totals: {
-      fixtures: summaries.reduce((sum, entry) => sum + entry.fixtures, 0),
+      evidence: summaries.reduce((sum, entry) => sum + entry.evidence, 0),
+      replayFixtures: summaries.reduce((sum, entry) => sum + entry.replayFixtures, 0),
+      goldenCases: summaries.reduce((sum, entry) => sum + entry.goldenCases, 0),
       bytes: summaries.reduce((sum, entry) => sum + entry.bytes, 0),
       maxBytes: Math.max(...summaries.map((entry) => entry.maxBytes)),
       leaves: summaries.reduce((sum, entry) => sum + entry.leaves, 0),
@@ -215,7 +278,8 @@ export async function buildMathJsonCoverageReport(): Promise<MathJsonCoverageRep
     routes,
     gaps: gaps.sort((left, right) =>
       left.routeId.localeCompare(right.routeId)
-      || left.fixtureId.localeCompare(right.fixtureId)
+      || left.evidenceKind.localeCompare(right.evidenceKind)
+      || left.evidenceId.localeCompare(right.evidenceId)
       || left.path.localeCompare(right.path)),
   };
 }

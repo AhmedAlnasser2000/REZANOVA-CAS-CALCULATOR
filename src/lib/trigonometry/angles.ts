@@ -331,6 +331,23 @@ export function formatDegreesAsUnitLatex(degrees: number, unit: AngleUnit) {
   return formatNumber(convertAngle(degrees, 'deg', 'grad'));
 }
 
+export function degreesToUnitMathJson(degrees: number, unit: AngleUnit): unknown {
+  if (unit === 'deg') return ['Degrees', degrees];
+  if (unit === 'grad') return Number((degrees / DEG_PER_GRAD).toFixed(6));
+  if (degrees === 0) return 0;
+  const divisor = gcd(degrees, 180);
+  const numerator = degrees / divisor;
+  const denominator = 180 / divisor;
+  const absoluteNumerator = Math.abs(numerator);
+  const piTerm = absoluteNumerator === 1
+    ? 'Pi'
+    : ['Multiply', absoluteNumerator, 'Pi'];
+  const magnitude = denominator === 1
+    ? piTerm
+    : ['Divide', piTerm, denominator];
+  return numerator < 0 ? ['Negate', magnitude] : magnitude;
+}
+
 export function formatDegreesAsUnitText(degrees: number, unit: AngleUnit) {
   if (unit === 'deg') {
     return `${formatNumber(degrees)} deg`;

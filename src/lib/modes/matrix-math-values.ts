@@ -27,6 +27,7 @@ import {
   exactSubtractMatrices,
   exactTransposeMatrix,
 } from '../linear-algebra/matrix-exact-ops';
+import { analyzeExactColumnFamily } from '../linear-algebra/matrix-column-family';
 import {
   tryProvenCanonicalMathValue,
   type CanonicalResultProducerMathValuesV1,
@@ -178,6 +179,59 @@ function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonL
   return leaves;
 }
 
+function matrixOperator(name: string, label: string) {
+  return ['InvisibleOperator', name, ['Delimiter', label]];
+}
+
+function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[] {
+  if (request.operation !== 'profileA' && request.operation !== 'profileB') return [];
+  const { matrixA, matrixB } = exactInputs(request);
+  const matrix = request.operation === 'profileA' ? matrixA : matrixB;
+  if (!matrix) return [];
+  const analysis = analyzeExactColumnFamily(matrix);
+  if (analysis.kind === 'stop') return [];
+  const label = request.operation === 'profileA'
+    ? request.matrixOperandLatexA ?? 'A'
+    : request.matrixOperandLatexB ?? 'B';
+  const columns = matrix[0]?.length ?? 0;
+  const leaves = [
+    leaf(
+      `\\operatorname{rank}(${label})=${analysis.rank}`,
+      ['Equal', matrixOperator('rank', label), analysis.rank],
+      'matrix.profile.native-rank',
+    ),
+    leaf(
+      `\\operatorname{nullity}(${label})=${analysis.nullity}`,
+      ['Equal', matrixOperator('nullity', label), analysis.nullity],
+      'matrix.profile.native-nullity',
+    ),
+    leaf(
+      `\\operatorname{rank}(${label})+\\operatorname{nullity}(${label})=${columns}`,
+      ['Equal', ['Add',
+        matrixOperator('rank', label),
+        matrixOperator('nullity', label),
+      ], columns],
+      'matrix.profile.native-rank-nullity',
+    ),
+    leaf(
+      `\\operatorname{rref}(${label})=${exactMatrixToLatex(analysis.rref)}`,
+      ['Equal', matrixOperator('rref', label), exactMatrixMathJson(analysis.rref)],
+      'matrix.profile.native-rref',
+    ),
+  ];
+  if (matrix.length === columns) {
+    const determinant = determinantExactMatrix(matrix);
+    if (determinant.kind === 'success') {
+      leaves.push(leaf(
+        `\\det(${label})=${exactScalarToLatex(determinant.determinant)}`,
+        ['Equal', ['Determinant', label], buildExactScalarNode(determinant.determinant)],
+        'matrix.profile.native-determinant',
+      ));
+    }
+  }
+  return leaves;
+}
+
 export function matrixOwnedMathJsonLeaves(
   request: RunMatrixModeRequest,
 ): readonly MatrixOwnedMathJsonLeaf[] {
@@ -192,6 +246,9 @@ export function matrixOwnedMathJsonLeaves(
     return rankLeaves(request);
   }
   if (request.operation === 'linearSystem') return linearSystemLeaves(request);
+  if (request.operation === 'profileA' || request.operation === 'profileB') {
+    return profileLeaves(request);
+  }
   return arithmeticLeaves(request);
 }
 
@@ -245,6 +302,15 @@ export function matrixMathValuesFromOwnedLeaves(input: {
     values.primaryMath = proven.get(input.outcome.exactLatex)
       ?? unproven(input.outcome.exactLatex);
   }
+  if (input.outcome.kind === 'success' && input.outcome.answerRows) {
+    values.answerRows = {
+      ...(input.outcome.answerRows.label ? { label: input.outcome.answerRows.label } : {}),
+      rows: input.outcome.answerRows.rows.map((row) => ({
+        math: proven.get(row.latex) ?? unproven(row.latex),
+        ...(row.label ? { label: row.label } : {}),
+      })),
+    };
+  }
   const detailValues = details(input.outcome.detailSections, proven);
   if (detailValues?.length) values.details = detailValues;
   return values;
@@ -258,5 +324,6 @@ export function matrixMathJsonRouteForRequest(
   if (request.operation === 'rankA' || request.operation === 'rankB'
     || request.operation === 'rrefA' || request.operation === 'rrefB') return 'matrix.rank';
   if (request.operation === 'linearSystem') return 'matrix.linear-system';
+  if (request.operation === 'profileA' || request.operation === 'profileB') return 'matrix.profile';
   return 'matrix.matrix-arithmetic';
 }
