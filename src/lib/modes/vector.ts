@@ -12,6 +12,11 @@ import {
   type CreateVectorWorker,
 } from './worker-clients/vector-worker-client';
 import { createVectorResultOutcome } from './vector-result-document';
+import {
+  vectorMathJsonRouteForRequest,
+  vectorMathValuesFromOwnedLeaves,
+  vectorOwnedMathJsonLeaves,
+} from './vector-math-values';
 import { requireCanonicalResultAuthority } from '../result-contract';
 import type {
   AngleUnit,
@@ -157,7 +162,15 @@ function runVectorModeOutcome(request: RunVectorModeRequest): DisplayOutcome {
 export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
   const outcome = runVectorModeOutcome(request);
   return requireCanonicalResultAuthority(
-    outcome.kind === 'prompt' ? outcome : createVectorResultOutcome(outcome),
+    outcome.kind === 'prompt'
+      ? outcome
+      : createVectorResultOutcome(outcome, {
+          mathValues: vectorMathValuesFromOwnedLeaves({
+            outcome,
+            routeId: vectorMathJsonRouteForRequest(request),
+            leaves: vectorOwnedMathJsonLeaves(request),
+          }),
+        }),
     'Vector',
   );
 }

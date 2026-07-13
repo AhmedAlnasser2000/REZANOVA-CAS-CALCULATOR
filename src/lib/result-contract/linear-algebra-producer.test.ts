@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runMatrixMode } from '../modes/matrix';
 import { runVectorMode } from '../modes/vector';
+import { collectCanonicalMathLeaves } from './mathjson-coverage';
 import { resolveCanonicalResultForStorage } from './storage';
 
 describe('Linear Algebra canonical result producers', () => {
@@ -46,5 +47,78 @@ describe('Linear Algebra canonical result producers', () => {
     expect(resolveCanonicalResultForStorage(outcome))
       .toMatchObject({ ok: true, source: 'native' });
     expect(outcome.canonicalResult?.metadata?.sourceMode).toBe('vector');
+  });
+
+  it.each([
+    ['matrix-arithmetic', { operation: 'add' as const, matrixA: [[1, 2], [3, 4]], matrixB: [[4, 3], [2, 1]] }],
+    ['determinant', { operation: 'detA' as const, matrixA: [[1, 2], [3, 4]], matrixB: [[1, 0], [0, 1]] }],
+    ['inverse', { operation: 'inverseA' as const, matrixA: [[2, 1], [1, 1]], matrixB: [[1, 0], [0, 1]] }],
+    ['rank', { operation: 'rankA' as const, matrixA: [[1, 2], [2, 4]], matrixB: [[1, 0], [0, 1]] }],
+  ])('attaches producer-proven Matrix MathJSON for %s', (_family, request) => {
+    const outcome = runMatrixMode(request);
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') throw new Error('Expected Matrix success.');
+    expect(outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
+  });
+
+  it('proves representable Matrix-system leaves without inventing row-operation trees', () => {
+    const outcome = runMatrixMode({
+      operation: 'linearSystem',
+      matrixA: [[2, 1], [1, -1]],
+      matrixB: [[1, 0], [0, 1]],
+      systemRhs: [5, 1],
+      systemForm: 'Ax=b',
+    });
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success' || !outcome.canonicalResult) {
+      throw new Error('Expected Matrix-system canonical result.');
+    }
+    const leaves = collectCanonicalMathLeaves(outcome.canonicalResult);
+    expect(leaves).toHaveLength(11);
+    expect(leaves.filter((entry) => entry.value.mathJson !== undefined)).toHaveLength(4);
+    expect(leaves.find((entry) => entry.path === 'primaryMath')?.value.mathJson).toBeDefined();
+    expect(leaves.find((entry) => entry.path === 'details[3].lines[0][0].math')?.value.mathJson)
+      .toBeUndefined();
+  });
+
+  it.each([
+    ['dot-product', { operation: 'dot' as const, vectorA: [1, 2, 3], vectorB: [4, 5, 6], angleUnit: 'rad' as const }],
+    ['cross-product', { operation: 'cross' as const, vectorA: [1, 0, 0], vectorB: [0, 1, 0], angleUnit: 'rad' as const }],
+    ['norm', { operation: 'normA' as const, vectorA: [3, 4], vectorB: [0, 1], angleUnit: 'rad' as const }],
+    ['angle', { operation: 'angle' as const, vectorA: [1, 0], vectorB: [0, 1], angleUnit: 'deg' as const }],
+  ])('attaches producer-proven Vector MathJSON for %s', (_family, request) => {
+    const outcome = runVectorMode(request);
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') throw new Error('Expected Vector success.');
+    expect(outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
+  });
+
+  it('proves every Gram-Schmidt replay leaf from exact Vector evidence', () => {
+    const outcome = runVectorMode({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 0],
+      vectorB: [1, 1],
+      angleUnit: 'rad',
+    });
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success' || !outcome.canonicalResult) {
+      throw new Error('Expected Vector canonical result.');
+    }
+    const leaves = collectCanonicalMathLeaves(outcome.canonicalResult);
+    expect(leaves).toHaveLength(7);
+    expect(leaves.every((entry) => entry.value.mathJson !== undefined)).toBe(true);
+  });
+
+  it('does not misrepresent a gradian angle marker as an exponent tree', () => {
+    const outcome = runVectorMode({
+      operation: 'angle',
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      angleUnit: 'grad',
+    });
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success') throw new Error('Expected Vector angle success.');
+    expect(outcome.exactLatex).toBe('100^{g}');
+    expect(outcome.canonicalResult?.primaryMath?.mathJson).toBeUndefined();
   });
 });

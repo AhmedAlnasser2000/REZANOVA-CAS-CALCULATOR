@@ -492,6 +492,13 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     functions: ['createMatrixResultOutcome'],
   },
   {
+    id: 'matrix-math-value-producer-input-v1',
+    owner: 'matrix-result-contract',
+    rationale: 'The Matrix final adapter overlays exact Matrix and linear-system evidence onto typed producer results before canonical validation; these reads are producer assembly, not downstream presentation consumption.',
+    matchers: exact('src/lib/modes/matrix-math-values.ts'),
+    functions: ['matrixMathValuesFromOwnedLeaves'],
+  },
+  {
     id: 'statistics-result-producer-input-v1',
     owner: 'statistics-result-contract',
     rationale: 'The Statistics owner adapter reads typed result evidence before attaching native canonical truth.',
@@ -546,6 +553,13 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     rationale: 'The Vector owner adapter reads typed result evidence before attaching native canonical truth without changing its independent runtime shell.',
     matchers: exact('src/lib/modes/vector-result-document.ts'),
     functions: ['createVectorResultOutcome'],
+  },
+  {
+    id: 'vector-math-value-producer-input-v1',
+    owner: 'vector-result-contract',
+    rationale: 'The Vector final adapter overlays exact vector, angle, and Gram-Schmidt evidence onto typed producer results before canonical validation; these reads are producer assembly, not downstream presentation consumption.',
+    matchers: exact('src/lib/modes/vector-math-values.ts'),
+    functions: ['vectorMathValuesFromOwnedLeaves'],
   },
 ];
 

@@ -80,3 +80,17 @@
 - static: TypeScript, global lint, production build, file-size, OOE, compartments, Surface, seam, printer, detail, clipboard, inversion, Equation-carrier, and diff-hygiene gates pass
 - visual: all 19 Chromium canaries pass with zero retries; eight focused guided cards/tables preserve exact results, warnings, rows, and horizontal overflow behavior
 - residual: 26 Matrix/Vector leaves remain for `MATHJSON-COVERAGE-LINEAR-ALGEBRA1`; no Notebook source or untracked `test-results/` is part of this checkpoint
+
+## MATHJSON-COVERAGE-LINEAR-ALGEBRA1
+
+- kind: backend producer coverage with app-visible parity verification
+- result: pass
+- coverage: 100 fixtures, 51 route families, 262 leaves, 231 proven, 31 bounded exemptions, zero missing, 62,074 serialized bytes, and a 2,753-byte maximum document
+- producer evidence: Matrix and Vector preserve native exact values through independent workspace-owned final adapters; DEG/RAD angles carry proven trees while GRAD remains canonical-only rather than misrepresenting its unit marker as an exponent; no formatted output parsing, input-tree promotion, universal AST, or runtime-topology change is present
+- exemptions: seven Matrix linear-system detail leaves retain exact augmented-rank, augmented-RREF, and row-operation narration because those compatibility strings are not valid standalone trees; separately structured solution, rank, and count math is proven
+- payload: ten Matrix/Vector documents grow from 3,843 bytes without optional MathJSON to 5,116 current bytes; three five-cold/fifty-warm reruns report warm P95 of 0.040-0.042 ms and zero blocked metrics
+- regression: all 535 unit files and 3,718 tests, 67 UI files and 485 tests, 100 coverage probes, 43 golden cases, 100 replay fixtures, 19 Chromium canaries, nine History browser journeys, and three Linear Algebra trust flows pass
+- static: result, printer, detail, clipboard, inversion, Surface, seam, OOE, compartment, CI, app-identity, TypeScript, lint, production build, Rust, file-size, and diff-hygiene gates pass
+- visual: ten focused Matrix/Vector Chromium routes preserve exact answers, established detail counts, and zero card/page horizontal overflow
+- verification repair: the intentionally exhaustive 100-probe test uses a 120-second local timeout after the full suite demonstrated the previous 30-second cap was contention-sensitive; focused execution remains about 15 seconds and no payload or correctness threshold changed
+- residual: coverage classification is complete; `MATHJSON-COVERAGE-CLOSEOUT1` must prove the aggregate corpus and registry closeout before runtime-envelope migration begins

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Accept producer-proven guided-domain canonical payload fragments with canonical LaTeX parity and no visible printer change.",
+  "acceptedReason": "Move 8 records the proven Vector Gram-Schmidt canonical payload mirror; visible and canonical answer LaTeX remain unchanged.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -1309,6 +1309,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}"
         },
         {

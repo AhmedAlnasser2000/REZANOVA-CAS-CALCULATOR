@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Register guided-domain MathJSON proof overlays and the shared Equation proof forwarder as producer-owned canonical assembly with unchanged compatibility and consumer floors.",
-  "registryDigest": "5e371be65b50841045c7",
+  "acceptedReason": "Register independent Matrix and Vector MathJSON proof overlays as producer-owned assembly and refresh final-adapter fingerprints with unchanged compatibility and consumer floors.",
+  "registryDigest": "74157f8c293a4db35d97",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -368,8 +368,8 @@
         "5b85802fa5e4a06a4593:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "9156e48df70ba77207e8:1",
-        "df438a19396eda15a2e5:1"
+        "8c342a54409081e6fad7:1",
+        "6b1849ae67ee24bc40ba:1"
       ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
@@ -383,8 +383,8 @@
         "39b7ad54b33d16bd6af6:1"
       ],
       "src/lib/modes/vector.ts": [
-        "1781bedd66f05cb91171:1",
-        "4a64247ba7f8be36af3f:1"
+        "d81e62307399f1ba9448:1",
+        "ab82579773584989b4ad:1"
       ],
       "src/lib/result-contract/projection.ts": [
         "b845e5a0379f98960e45:1"

@@ -1,0 +1,251 @@
+import type {
+  DisplayDetailLinePart,
+  DisplayDetailSection,
+  DisplayOutcome,
+} from '../../types/calculator';
+import { buildExactScalarNode } from '../algebra/polynomial-core';
+import { scalarToLatex } from '../display/format';
+import type { ExactMatrix, ExactVector } from '../linear-algebra/exact-matrix-core';
+import {
+  exactVectorFromNumeric,
+  exactVectorFromWire,
+  exactVectorToColumnLatex,
+  exactScalarToLatex,
+} from '../linear-algebra/exact-matrix-format';
+import {
+  exactCrossVectors,
+  exactDotVectors,
+  exactGramSchmidtTwoVectors,
+  exactScalarSquareRoot,
+} from '../linear-algebra/exact-vector-core';
+import { runNumericVectorOperation } from '../linear-algebra/vector-core';
+import {
+  tryProvenCanonicalMathValue,
+  type CanonicalResultProducerMathValuesV1,
+  type ProvenCanonicalMathValue,
+} from '../result-contract';
+import type { MathJsonRouteId } from '../result-contract/mathjson-route-registry';
+import type { RunVectorModeRequest } from './vector';
+
+export type VectorMathJsonRouteId = Extract<MathJsonRouteId, `vector.${string}`>;
+
+type VectorOwnedMathJsonLeaf = {
+  canonicalLatex: string;
+  mathJson: unknown;
+  source: string;
+};
+
+function unproven(canonicalLatex: string) {
+  return { canonicalLatex };
+}
+
+function exactMatrixMathJson(matrix: ExactMatrix) {
+  return ['Matrix', ['List', ...matrix.map((row) => [
+    'List',
+    ...row.map(buildExactScalarNode),
+  ])], "'[]'"];
+}
+
+function exactVectorMathJson(vector: ExactVector) {
+  return exactMatrixMathJson(vector.map((value) => [value]));
+}
+
+function exactVectorSetLatex(label: string, vectors: readonly ExactVector[]) {
+  return `${label}=\\left\\{${vectors.map(exactVectorToColumnLatex).join(',')}\\right\\}`;
+}
+
+function exactVectorSetMathJson(label: string, vectors: readonly ExactVector[]) {
+  return ['Equal', label, ['Set', ...vectors.map(exactVectorMathJson)]];
+}
+
+function leaf(canonicalLatex: string, mathJson: unknown, source: string) {
+  return { canonicalLatex, mathJson, source } satisfies VectorOwnedMathJsonLeaf;
+}
+
+function exactInputs(request: RunVectorModeRequest) {
+  return {
+    vectorA: exactVectorFromWire(request.exactVectorA)
+      ?? exactVectorFromNumeric(request.vectorA),
+    vectorB: exactVectorFromWire(request.exactVectorB)
+      ?? exactVectorFromNumeric(request.vectorB),
+  };
+}
+
+function exactOperationLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] {
+  if (!['dot', 'cross', 'normA', 'normB'].includes(request.operation)) return [];
+  const { vectorA, vectorB } = exactInputs(request);
+  if (request.operation === 'dot' && vectorA && vectorB) {
+    const value = exactDotVectors(vectorA, vectorB);
+    return [leaf(
+      exactScalarToLatex(value),
+      buildExactScalarNode(value),
+      'vector.dot.native-exact-vectors',
+    )];
+  }
+  if (request.operation === 'cross' && vectorA && vectorB) {
+    const value = exactCrossVectors(vectorA, vectorB);
+    return value
+      ? [leaf(
+          exactVectorToColumnLatex(value),
+          exactVectorMathJson(value),
+          'vector.cross.native-exact-vectors',
+        )]
+      : [];
+  }
+  if ((request.operation === 'normA' || request.operation === 'normB')) {
+    const vector = request.operation === 'normA' ? vectorA : vectorB;
+    const value = vector ? exactScalarSquareRoot(exactDotVectors(vector, vector)) : null;
+    if (!value) return [];
+    return [leaf(
+      exactScalarToLatex(value),
+      buildExactScalarNode(value),
+      'vector.norm.native-exact-vectors',
+    )];
+  }
+  return [];
+}
+
+function angleLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] {
+  const result = runNumericVectorOperation({ ...request, operation: 'angle' });
+  if (result.kind !== 'scalar') return [];
+  if (result.angleUnit === 'grad') return [];
+  const roundedValue = Number(scalarToLatex(result.value));
+  const suffix = result.angleUnit === 'deg' ? '^{\\circ}' : '';
+  const mathJson = result.angleUnit === 'deg'
+    ? ['Degrees', roundedValue]
+    : roundedValue;
+  return [leaf(
+    `${scalarToLatex(result.value)}${suffix}`,
+    mathJson,
+    'vector.angle.native-dot-and-norm-evaluation',
+  )];
+}
+
+function gramSchmidtLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] {
+  const { vectorA, vectorB } = exactInputs(request);
+  if (!vectorA || !vectorB) return [];
+  const result = exactGramSchmidtTwoVectors(vectorA, vectorB);
+  if (!result) return [];
+
+  const leaves: VectorOwnedMathJsonLeaf[] = [
+    leaf(
+      exactVectorSetLatex('\\operatorname{orthogonal\\ basis}', result.orthogonalBasis),
+      exactVectorSetMathJson('orthogonalbasis', result.orthogonalBasis),
+      'vector.gram-schmidt.native-exact-orthogonal-basis',
+    ),
+    ...result.orthogonalBasis.map((vector, index) => leaf(
+      `w_{${index + 1}}=${exactVectorToColumnLatex(vector)}`,
+      ['Equal', `w_${index + 1}`, exactVectorMathJson(vector)],
+      'vector.gram-schmidt.native-exact-orthogonal-vector',
+    )),
+  ];
+
+  if (result.orthonormalBasis?.length === result.orthogonalBasis.length) {
+    leaves.push(leaf(
+      exactVectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis),
+      exactVectorSetMathJson('orthonormalbasis', result.orthonormalBasis),
+      'vector.gram-schmidt.native-exact-orthonormal-basis',
+    ));
+  }
+
+  if (result.orthogonalBasis[1]
+    && (request.vectorOperandLatexB === undefined || request.vectorOperandLatexB === 'v')) {
+    leaves.push(leaf(
+      `w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=${exactVectorToColumnLatex(result.orthogonalBasis[1])}`,
+      ['Equal', 'w_2', ['Equal',
+        ['Subtract', 'v', ['InvisibleOperator', ['Subscript', 'proj', 'w_1'], ['Delimiter', 'v']]],
+        exactVectorMathJson(result.orthogonalBasis[1]),
+      ]],
+      'vector.gram-schmidt.native-exact-projection-step',
+    ));
+    const dot = exactDotVectors(result.orthogonalBasis[0], result.orthogonalBasis[1]);
+    leaves.push(leaf(
+      `w_{1}\\cdot w_{2}=${exactScalarToLatex(dot)}`,
+      ['Equal', ['Multiply', 'w_1', 'w_2'], buildExactScalarNode(dot)],
+      'vector.gram-schmidt.native-exact-orthogonality-check',
+    ));
+  }
+  return leaves;
+}
+
+export function vectorOwnedMathJsonLeaves(
+  request: RunVectorModeRequest,
+): readonly VectorOwnedMathJsonLeaf[] {
+  if (request.operation === 'angle') return angleLeaves(request);
+  if (request.operation === 'gramSchmidtUV') return gramSchmidtLeaves(request);
+  return exactOperationLeaves(request);
+}
+
+function detailPart(
+  part: DisplayDetailLinePart,
+  proven: ReadonlyMap<string, ProvenCanonicalMathValue>,
+) {
+  return part.kind === 'math'
+    ? { kind: 'math' as const, math: proven.get(part.latex) ?? unproven(part.latex) }
+    : { kind: 'text' as const, text: part.text };
+}
+
+function details(
+  sections: readonly DisplayDetailSection[] | undefined,
+  proven: ReadonlyMap<string, ProvenCanonicalMathValue>,
+) {
+  return sections?.map((section, sectionIndex) => ({
+    title: section.title,
+    lines: section.lines.map((line, lineIndex) => {
+      const parts = section.lineParts?.[lineIndex];
+      if (parts?.length) return parts.map((part) => detailPart(part, proven));
+      const kind = section.lineKinds?.[lineIndex] ?? section.lineKind;
+      if (kind === 'math') {
+        return [{ kind: 'math' as const, math: proven.get(line) ?? unproven(line) }];
+      }
+      if (kind === 'text') return [{ kind: 'text' as const, text: line }];
+      throw new Error(`Vector producer detail ${sectionIndex}:${lineIndex} has no typed intent.`);
+    }),
+  }));
+}
+
+export function vectorMathValuesFromOwnedLeaves(input: {
+  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  routeId: VectorMathJsonRouteId;
+  leaves: readonly VectorOwnedMathJsonLeaf[];
+}): CanonicalResultProducerMathValuesV1 {
+  const proven = new Map<string, ProvenCanonicalMathValue>();
+  for (const candidate of input.leaves) {
+    const value = tryProvenCanonicalMathValue({
+      canonicalLatex: candidate.canonicalLatex,
+      mathJson: candidate.mathJson,
+      owner: 'vector',
+      routeId: input.routeId,
+      source: candidate.source,
+    });
+    if (value) proven.set(candidate.canonicalLatex, value);
+  }
+
+  const values: CanonicalResultProducerMathValuesV1 = {};
+  if (input.outcome.exactLatex) {
+    values.primaryMath = proven.get(input.outcome.exactLatex)
+      ?? unproven(input.outcome.exactLatex);
+  }
+  if (input.outcome.kind === 'success' && input.outcome.answerRows) {
+    values.answerRows = {
+      ...(input.outcome.answerRows.label ? { label: input.outcome.answerRows.label } : {}),
+      rows: input.outcome.answerRows.rows.map((row) => ({
+        math: proven.get(row.latex) ?? unproven(row.latex),
+        ...(row.label ? { label: row.label } : {}),
+      })),
+    };
+  }
+  const detailValues = details(input.outcome.detailSections, proven);
+  if (detailValues?.length) values.details = detailValues;
+  return values;
+}
+
+export function vectorMathJsonRouteForRequest(
+  request: RunVectorModeRequest,
+): VectorMathJsonRouteId {
+  if (request.operation === 'dot') return 'vector.dot-product';
+  if (request.operation === 'cross') return 'vector.cross-product';
+  if (request.operation === 'normA' || request.operation === 'normB') return 'vector.norm';
+  if (request.operation === 'angle') return 'vector.angle';
+  return 'vector.orthogonalization';
+}

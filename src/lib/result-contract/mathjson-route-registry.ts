@@ -219,6 +219,15 @@ export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] 
     rationale: 'The compatibility supplement combines the prose label "Exclusions" with a denominator condition; the denominator expression is separately proven in typed domain facts.',
   },
   {
+    id: 'matrix-linear-system-legacy-operator-details',
+    routeId: 'matrix.linear-system',
+    leafPath: 'details[*].lines[*][*].math',
+    fixtureId: 'matrix-linear-system',
+    owner: 'matrix',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'Seven retained Matrix-system detail lines use legacy augmented-matrix bars, rref call syntax, chained rank notation, or row-operation arrows that the Compute Engine rejects as valid canonical expressions. The solution vector, coefficient rank, and unknown counts are separately producer-proven.',
+  },
+  {
     id: 'table-partial-domain-undefined-cell',
     routeId: 'table.domain-boundary',
     leafPath: 'table.rows[*].primary',

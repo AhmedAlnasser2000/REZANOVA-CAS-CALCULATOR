@@ -13,6 +13,11 @@ import {
   type CreateMatrixWorker,
 } from './worker-clients/matrix-worker-client';
 import { createMatrixResultOutcome } from './matrix-result-document';
+import {
+  matrixMathJsonRouteForRequest,
+  matrixMathValuesFromOwnedLeaves,
+  matrixOwnedMathJsonLeaves,
+} from './matrix-math-values';
 import { requireCanonicalResultAuthority } from '../result-contract';
 import type {
   DisplayOutcome,
@@ -247,7 +252,15 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): DisplayOutcome {
 export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
   const outcome = runMatrixModeOutcome(request);
   return requireCanonicalResultAuthority(
-    outcome.kind === 'prompt' ? outcome : createMatrixResultOutcome(outcome),
+    outcome.kind === 'prompt'
+      ? outcome
+      : createMatrixResultOutcome(outcome, {
+          mathValues: matrixMathValuesFromOwnedLeaves({
+            outcome,
+            routeId: matrixMathJsonRouteForRequest(request),
+            leaves: matrixOwnedMathJsonLeaves(request),
+          }),
+        }),
     'Matrix',
   );
 }

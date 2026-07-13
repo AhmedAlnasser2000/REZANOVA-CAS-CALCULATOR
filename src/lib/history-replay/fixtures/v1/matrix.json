@@ -64,7 +64,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\begin{bmatrix}5 & 5\\\\5 & 5\\end{bmatrix}"
+        "normalizedLatex": "exactLatex=\\begin{bmatrix}5 & 5\\\\5 & 5\\end{bmatrix}\ncanonicalMath.canonicalLatex=\\begin{bmatrix}5 & 5\\\\5 & 5\\end{bmatrix}"
       }
     },
     {
@@ -128,7 +128,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=-2"
+        "normalizedLatex": "exactLatex=-2\ncanonicalMath.canonicalLatex=-2"
       }
     },
     {
@@ -192,7 +192,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\begin{bmatrix}1 & -1\\\\-1 & 2\\end{bmatrix}"
+        "normalizedLatex": "exactLatex=\\begin{bmatrix}1 & -1\\\\-1 & 2\\end{bmatrix}\ncanonicalMath.canonicalLatex=\\begin{bmatrix}1 & -1\\\\-1 & 2\\end{bmatrix}"
       }
     },
     {
@@ -256,7 +256,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1"
+        "normalizedLatex": "exactLatex=1\ncanonicalMath.canonicalLatex=1"
       }
     },
     {
@@ -325,7 +325,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=\\begin{bmatrix}2\\\\1\\end{bmatrix}\ndetailSections[0].lines[0]=\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=2\ndetailSections[0].lines[1]=\\operatorname{unknowns}=2\ndetailSections[1].lines[0]=\\operatorname{rank}(A)=2\ndetailSections[1].lines[1]=\\operatorname{rank}([A|b])=2\ndetailSections[1].lines[2]=unknowns = 2\ndetailSections[2].lines[0]=\\operatorname{rref}\\left([A|b]\\right)=\\begin{bmatrix}1 & 0 & 2\\\\0 & 1 & 1\\end{bmatrix}\ndetailSections[3].lines[0]=R_{1}\\leftarrow \\frac{1}{2}R_{1}\ndetailSections[3].lines[1]=R_{2}\\leftarrow R_{2}-R_{1}\ndetailSections[3].lines[2]=R_{2}\\leftarrow -\\frac{2}{3}R_{2}\ndetailSections[3].lines[3]=R_{1}\\leftarrow R_{1}-\\frac{1}{2}R_{2}"
+        "normalizedLatex": "exactLatex=x=\\begin{bmatrix}2\\\\1\\end{bmatrix}\ncanonicalMath.canonicalLatex=x=\\begin{bmatrix}2\\\\1\\end{bmatrix}\ndetailSections[0].lines[0]=\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=2\ndetailSections[0].lines[1]=\\operatorname{unknowns}=2\ndetailSections[1].lines[0]=\\operatorname{rank}(A)=2\ndetailSections[1].lines[1]=\\operatorname{rank}([A|b])=2\ndetailSections[1].lines[2]=unknowns = 2\ndetailSections[2].lines[0]=\\operatorname{rref}\\left([A|b]\\right)=\\begin{bmatrix}1 & 0 & 2\\\\0 & 1 & 1\\end{bmatrix}\ndetailSections[3].lines[0]=R_{1}\\leftarrow \\frac{1}{2}R_{1}\ndetailSections[3].lines[1]=R_{2}\\leftarrow R_{2}-R_{1}\ndetailSections[3].lines[2]=R_{2}\\leftarrow -\\frac{2}{3}R_{2}\ndetailSections[3].lines[3]=R_{1}\\leftarrow R_{1}-\\frac{1}{2}R_{2}"
       }
     }
   ]

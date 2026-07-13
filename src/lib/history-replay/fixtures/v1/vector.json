@@ -55,7 +55,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=32"
+        "normalizedLatex": "exactLatex=32\ncanonicalMath.canonicalLatex=32"
       }
     },
     {
@@ -110,7 +110,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}"
+        "normalizedLatex": "exactLatex=\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}\ncanonicalMath.canonicalLatex=\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}"
       }
     },
     {
@@ -163,7 +163,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=5"
+        "normalizedLatex": "exactLatex=5\ncanonicalMath.canonicalLatex=5"
       }
     },
     {
@@ -216,7 +216,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=90^{\\circ}"
+        "normalizedLatex": "exactLatex=90^{\\circ}\ncanonicalMath.canonicalLatex=90^{\\circ}"
       }
     },
     {
@@ -269,7 +269,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}\nanswerRows.rows[0].latex=w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}\nanswerRows.rows[1].latex=w_{2}=\\begin{bmatrix}0\\\\1\\end{bmatrix}\ndetailSections[0].lines[0]=\\operatorname{orthonormal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}\ndetailSections[1].lines[0]=w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}\ndetailSections[1].lines[1]=w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=\\begin{bmatrix}0\\\\1\\end{bmatrix}\ndetailSections[1].lines[2]=w_{1}\\cdot w_{2}=0"
+        "normalizedLatex": "exactLatex=\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}\ncanonicalMath.canonicalLatex=\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}\nanswerRows.rows[0].latex=w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}\nanswerRows.rows[1].latex=w_{2}=\\begin{bmatrix}0\\\\1\\end{bmatrix}\ndetailSections[0].lines[0]=\\operatorname{orthonormal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}\ndetailSections[1].lines[0]=w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}\ndetailSections[1].lines[1]=w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=\\begin{bmatrix}0\\\\1\\end{bmatrix}\ndetailSections[1].lines[2]=w_{1}\\cdot w_{2}=0"
       }
     }
   ]

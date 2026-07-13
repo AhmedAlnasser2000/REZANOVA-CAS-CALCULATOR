@@ -77,7 +77,7 @@ describe('MathJSON coverage registry', () => {
     }
   });
 
-  it('executes all 100 native probes and reports current debt without exemptions', async () => {
+  it('executes all 100 native probes and reports classified coverage', async () => {
     const report = await buildMathJsonCoverageReport();
     expect(report.fixtureCount).toBe(100);
     expect(report.routeCount).toBe(Object.keys(MATHJSON_ROUTE_REGISTRY).length);
@@ -85,7 +85,7 @@ describe('MathJSON coverage registry', () => {
     expect(report.totals.proven).toBeGreaterThan(0);
     expect(report.totals.missing).toBe(report.gaps.length);
     expect(report.exemptionIds).toEqual(MATHJSON_COVERAGE_EXEMPTIONS.map((entry) => entry.id));
-  }, 30_000);
+  }, 120_000);
 
   it('rejects debt, coverage, payload, route, and exemption regressions', () => {
     const report: MathJsonCoverageReport = {

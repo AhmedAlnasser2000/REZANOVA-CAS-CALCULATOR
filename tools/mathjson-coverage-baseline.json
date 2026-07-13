@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "reason": "Accept producer-proven MathJSON for Trigonometry, Geometry, Statistics, and Table; retain four bounded control or undefined-cell exemptions with no visible output change.",
+  "reason": "Move 8 adds producer-proven standard MathJSON to all representable Matrix and Vector replay leaves; seven parser-invalid Matrix-system detail lines remain one bounded fixture-scoped exemption.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -67,6 +67,7 @@
     "equation-even-root-labeled-supplement",
     "equation-rational-hole-labeled-supplement",
     "equation-rational-simple-labeled-supplement",
+    "matrix-linear-system-legacy-operator-details",
     "table-partial-domain-undefined-cell",
     "table-rational-pole-undefined-cell",
     "trigonometry-angle-convert-control-input",
@@ -74,12 +75,12 @@
   ],
   "totals": {
     "fixtures": 100,
-    "bytes": 60801,
+    "bytes": 62074,
     "maxBytes": 2753,
     "leaves": 262,
-    "proven": 212,
-    "exempt": 24,
-    "missing": 26
+    "proven": 231,
+    "exempt": 31,
+    "missing": 0
   },
   "routes": {
     "calculate.ans": {
@@ -318,48 +319,48 @@
     },
     "matrix.determinant": {
       "fixtures": 1,
-      "bytes": 141,
-      "maxBytes": 141,
+      "bytes": 155,
+      "maxBytes": 155,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "matrix.inverse": {
       "fixtures": 1,
-      "bytes": 188,
-      "maxBytes": 188,
+      "bytes": 254,
+      "maxBytes": 254,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "matrix.linear-system": {
       "fixtures": 1,
-      "bytes": 1497,
-      "maxBytes": 1497,
+      "bytes": 1752,
+      "maxBytes": 1752,
       "leaves": 11,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 11
+      "proven": 4,
+      "exempt": 7,
+      "missing": 0
     },
     "matrix.matrix-arithmetic": {
       "fixtures": 1,
-      "bytes": 180,
-      "maxBytes": 180,
+      "bytes": 244,
+      "maxBytes": 244,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "matrix.rank": {
       "fixtures": 1,
-      "bytes": 141,
-      "maxBytes": 141,
+      "bytes": 154,
+      "maxBytes": 154,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "statistics.descriptive": {
       "fixtures": 1,
@@ -498,48 +499,48 @@
     },
     "vector.angle": {
       "fixtures": 1,
-      "bytes": 186,
-      "maxBytes": 186,
+      "bytes": 212,
+      "maxBytes": 212,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "vector.cross-product": {
       "fixtures": 1,
-      "bytes": 178,
-      "maxBytes": 178,
+      "bytes": 249,
+      "maxBytes": 249,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "vector.dot-product": {
       "fixtures": 1,
-      "bytes": 173,
-      "maxBytes": 173,
+      "bytes": 187,
+      "maxBytes": 187,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "vector.norm": {
       "fixtures": 1,
-      "bytes": 174,
-      "maxBytes": 174,
+      "bytes": 187,
+      "maxBytes": 187,
       "leaves": 1,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "vector.orthogonalization": {
       "fixtures": 1,
-      "bytes": 985,
-      "maxBytes": 985,
+      "bytes": 1722,
+      "maxBytes": 1722,
       "leaves": 7,
-      "proven": 0,
+      "proven": 7,
       "exempt": 0,
-      "missing": 7
+      "missing": 0
     }
   }
 }

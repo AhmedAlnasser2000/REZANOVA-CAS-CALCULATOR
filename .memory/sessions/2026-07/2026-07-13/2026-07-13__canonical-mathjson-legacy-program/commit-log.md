@@ -52,3 +52,11 @@
 - scope: producer-owned Trigonometry, Geometry, Statistics, and Table MathJSON coverage, bounded non-value/control exemptions, proof-presence replay/print baselines, payload evidence, Chromium inspection, and durable records
 - push: not authorized
 - excluded: concurrent Notebook files and untracked `test-results/`
+
+## MATHJSON-COVERAGE-LINEAR-ALGEBRA1
+
+- commit_message: `MATHJSON-COVERAGE-LINEAR-ALGEBRA1`
+- status: verified; covered by standing commit approval
+- scope: independent Matrix/Vector producer-owned MathJSON coverage, bounded operator-narration exemptions, proof-presence replay/print baselines, payload evidence, Chromium inspection, exhaustive-probe timeout hardening, and durable records
+- push: not authorized
+- excluded: concurrent Notebook files and untracked `test-results/`
