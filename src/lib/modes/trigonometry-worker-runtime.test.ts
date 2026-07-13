@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
 import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import type { RunTrigonometryRuntimeRequest } from '../trigonometry/runtime-input';
-import { buildTrigonometryModeRunPayload } from '../trigonometry/runtime-run';
+import {
+  buildCanonicalTrigonometryModeRunPayload,
+  buildTrigonometryModeRunPayload,
+} from '../trigonometry/runtime-run';
 import {
   runTrigonometryModeViaIsolatedWorker,
   type CreateTrigonometryWorker,
@@ -22,9 +25,9 @@ class FakeTrigonometryWorker {
   readonly listeners = new Set<Listener>();
   readonly errorListeners = new Set<ErrorListener>();
   terminated = false;
-  private readonly behavior: 'complete' | 'fail' | 'silent';
+  private readonly behavior: 'complete' | 'fail' | 'invalid' | 'silent';
 
-  constructor(behavior: 'complete' | 'fail' | 'silent') {
+  constructor(behavior: 'complete' | 'fail' | 'invalid' | 'silent') {
     this.behavior = behavior;
   }
 
@@ -70,7 +73,9 @@ class FakeTrigonometryWorker {
     this.emit({
       kind: 'completed',
       requestId: message.requestId,
-      payload: buildTrigonometryModeRunPayload(message.request),
+      payload: this.behavior === 'invalid'
+        ? { ...buildCanonicalTrigonometryModeRunPayload(message.request), outcome: { kind: 'success' } as never }
+        : buildCanonicalTrigonometryModeRunPayload(message.request),
     });
   }
 
@@ -109,13 +114,17 @@ const representativeRequests: RunTrigonometryRuntimeRequest[] = [
   },
 ];
 
-const createWorker = (behavior: 'complete' | 'fail' | 'silent'): CreateTrigonometryWorker =>
+const createWorker = (behavior: 'complete' | 'fail' | 'invalid' | 'silent'): CreateTrigonometryWorker =>
   () => new FakeTrigonometryWorker(behavior);
 
 beforeEach(() => {
   clearOoeJobRegistry();
   clearOoeDiagnostics();
 });
+
+function serialized(value: unknown) {
+  return JSON.parse(JSON.stringify(value));
+}
 
 describe('trigonometry worker runtime shell', () => {
   it('returns worker payloads matching the main-thread Trigonometry core', async () => {
@@ -125,7 +134,7 @@ describe('trigonometry worker runtime shell', () => {
         createWorker: createWorker('complete'),
       });
 
-      expect(result.payload).toEqual(buildTrigonometryModeRunPayload(request));
+      expect(serialized(result.payload)).toEqual(serialized(buildTrigonometryModeRunPayload(request)));
       expect(result.ooe.trigonometryHostExecution).toMatchObject({
         kind: 'worker',
         hostId: 'trigonometry-worker-runtime',
@@ -145,7 +154,7 @@ describe('trigonometry worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(result.payload).toEqual(buildTrigonometryModeRunPayload(request));
+    expect(serialized(result.payload)).toEqual(serialized(buildTrigonometryModeRunPayload(request)));
     expect(result.ooe.trigonometryHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'trigonometry-runtime',
@@ -167,6 +176,13 @@ describe('trigonometry worker runtime shell', () => {
     expect(failedDiagnostic?.provenance?.runtimeHost).toBe('trigonometry-worker-runtime');
   });
 
+  it('fails closed for an invalid canonical worker outcome', async () => {
+    await expect(runTrigonometryModeWithOoePilot(representativeRequests[0], {
+      commitPolicy: 'alwaysCommit',
+      createWorker: createWorker('invalid'),
+    })).rejects.toThrow('invalid completed outcome');
+  });
+
   it('hard-stops a running worker when cancellation is requested', async () => {
     const request = representativeRequests[3];
     const worker = new FakeTrigonometryWorker('silent');
@@ -181,7 +197,7 @@ describe('trigonometry worker runtime shell', () => {
       },
       {
         createWorker: () => worker,
-        fallback: () => buildTrigonometryModeRunPayload(request),
+        fallback: () => buildCanonicalTrigonometryModeRunPayload(request),
       },
     );
 

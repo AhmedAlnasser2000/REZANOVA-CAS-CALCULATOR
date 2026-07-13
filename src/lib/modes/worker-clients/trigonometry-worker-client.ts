@@ -1,19 +1,24 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { TrigonometryHostExecution } from '../../ooe/pilots/trigonometry-pilot';
 import type { RunTrigonometryRuntimeRequest } from '../../trigonometry/runtime-input';
-import type { TrigonometryModeRunPayload } from '../../trigonometry/runtime-run';
+import type { CanonicalTrigonometryModeRunPayload } from '../../trigonometry/runtime-run';
 import type {
   TrigonometryWorkerInboundMessage,
   TrigonometryWorkerOutboundMessage,
 } from '../worker-entrypoints/trigonometry.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import {
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  validateCanonicalRuntimeOutcome,
+} from '../../result-contract';
+import { createTrigonometryResultOutcome } from '../../trigonometry/result-document';
 
 export const TRIGONOMETRY_WORKER_RUNTIME_HOST_ID = 'trigonometry-worker-runtime' as const;
 export const TRIGONOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID = 'trigonometry-runtime' as const;
 
 export type TrigonometryWorkerRunResult = {
-  payload: TrigonometryModeRunPayload;
+  payload: CanonicalTrigonometryModeRunPayload;
   hostExecution: TrigonometryHostExecution;
 };
 
@@ -36,7 +41,7 @@ export type CreateTrigonometryWorker = () => TrigonometryWorkerLike;
 
 type RunTrigonometryModeViaIsolatedWorkerOptions = {
   createWorker?: CreateTrigonometryWorker;
-  fallback: () => Promise<TrigonometryModeRunPayload> | TrigonometryModeRunPayload;
+  fallback: () => Promise<CanonicalTrigonometryModeRunPayload> | CanonicalTrigonometryModeRunPayload;
 };
 
 let trigonometryWorkerRequestCounter = 0;
@@ -53,15 +58,15 @@ function nextRequestId() {
   return `trigonometry-worker-${trigonometryWorkerRequestCounter}`;
 }
 
-function buildCancelledPayload(request: RunTrigonometryRuntimeRequest): TrigonometryModeRunPayload {
+function buildCancelledPayload(request: RunTrigonometryRuntimeRequest): CanonicalTrigonometryModeRunPayload {
   return {
-    outcome: {
+    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(createTrigonometryResultOutcome({
       kind: 'error',
       title: 'Trigonometry',
       error: 'Trigonometry evaluation stopped before it finished.',
       warnings: [],
       ...proseSolveSummary('Trigonometry evaluation stopped after the worker runtime was hard-stopped.'),
-    },
+    }), 'Trigonometry cancellation'),
     parsed: {
       ok: false,
       error: 'Trigonometry evaluation stopped before it finished.',
@@ -73,7 +78,7 @@ function buildCancelledPayload(request: RunTrigonometryRuntimeRequest): Trigonom
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<TrigonometryModeRunPayload> | TrigonometryModeRunPayload,
+  fallback: () => Promise<CanonicalTrigonometryModeRunPayload> | CanonicalTrigonometryModeRunPayload,
 ): Promise<TrigonometryWorkerRunResult> {
   context.checkpoint(`Trigonometry worker runtime unavailable; falling back to main-thread Trigonometry runtime (${reason}).`);
   const payload = await fallback();
@@ -218,8 +223,18 @@ export async function runTrigonometryModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.payload.outcome);
+        if (!validation.ok) {
+          fail(workerRuntimeError(
+            `invalid completed outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          ));
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          payload: {
+            ...event.data.payload,
+            outcome: validation.validated.value,
+          },
           hostExecution: {
             kind: 'worker',
             hostId: TRIGONOMETRY_WORKER_RUNTIME_HOST_ID,

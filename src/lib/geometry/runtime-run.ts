@@ -1,10 +1,15 @@
 import type {
+  CanonicalRuntimeOutcome,
   GeometryParseResult,
   GeometryReplaySeed,
   GeometryScreen,
 } from '../../types/calculator';
 import { runGeometryCoreDraft } from './core';
-import { requireCanonicalResultAuthority } from '../result-contract';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalResultAuthority,
+} from '../result-contract';
 import { geometryRequestToScreen } from './parser';
 import { createGeometryResultOutcome } from './result-document';
 import type { RunGeometryRuntimeRequest } from './runtime-input';
@@ -15,6 +20,10 @@ export type GeometryModeRunPayload = {
   parsed: GeometryParseResult;
   replayScreen: GeometryScreen;
   replaySeed?: GeometryReplaySeed;
+};
+
+export type CanonicalGeometryModeRunPayload = Omit<GeometryModeRunPayload, 'outcome'> & {
+  outcome: CanonicalRuntimeOutcome;
 };
 
 export function buildGeometryModeRunPayload(
@@ -52,5 +61,26 @@ export function buildGeometryModeRunPayload(
           },
         }
       : {}),
+  };
+}
+
+export function buildCanonicalGeometryModeRunPayload(
+  request: RunGeometryRuntimeRequest,
+): CanonicalGeometryModeRunPayload {
+  const payload = buildGeometryModeRunPayload(request);
+  return {
+    ...payload,
+    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload.outcome, 'Geometry'),
+  };
+}
+
+export function projectCanonicalGeometryModeRunPayload(
+  payload: CanonicalGeometryModeRunPayload,
+): GeometryModeRunPayload {
+  return {
+    ...payload,
+    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(payload.outcome, {
+      includeCanonicalMath: false,
+    }),
   };
 }

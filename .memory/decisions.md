@@ -2559,3 +2559,8 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Guarded Equation recursion carries the existing validated `EquationSolveResultContractV1`; it must not introduce a second Equation IR. Display projections are temporary read models at current stage exits and are removed by the following closeout gate.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The Display inversion inventory treats registered canonical carrier-returning calls as native producer evidence. Compatibility floors cannot be preserved by hiding carrier authority from the AST scanner, and prompts remain outside result carriers.
+
+## 2026-07-13 - CANONICAL-OUTCOME-GUIDED-DOMAINS1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Guided-domain parsed requests, replay screens, and replay seeds remain sibling host transport. They support replay and OOE provenance but are not mathematical result truth and do not enter `CanonicalResultDocumentV1`.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Trigonometry, Geometry, and Statistics derive their established public Display payload from the canonical runtime outcome with `canonicalMath` compatibility duplication disabled. Proven MathJSON remains authoritative inside the canonical document; this preserves the existing structured-clone-visible public shape until direct consumer inversion.

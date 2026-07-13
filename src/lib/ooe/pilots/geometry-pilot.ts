@@ -241,6 +241,7 @@ export async function runGeometryWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: OOE_GEOMETRY_EVALUATE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
   getHostExecution?: () => GeometryHostExecution | undefined,
+  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
 ): Promise<GeometryOoePilotRunResult<TPayload>> {
   const definition = geometryPilotDefinition();
   return runOoeRuntimeJob({
@@ -262,9 +263,9 @@ export async function runGeometryWithOoePilot<TPayload>(
       const snapshot = routeSnapshot as {
         request?: GeometryRouteRequestSnapshot;
       };
-      const output =
-        (payload as { outcome?: DisplayOutcome }).outcome
-        ?? (payload as DisplayOutcome);
+      const output = resolveDisplayOutcome
+        ? resolveDisplayOutcome(payload)
+        : (payload as { outcome?: DisplayOutcome }).outcome ?? payload as DisplayOutcome;
       return {
         depth: 'coarse',
         mode: 'geometry',

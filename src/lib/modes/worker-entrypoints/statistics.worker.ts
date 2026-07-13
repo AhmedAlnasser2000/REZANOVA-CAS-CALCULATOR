@@ -2,8 +2,8 @@ import type {
   RunStatisticsRuntimeRequest,
 } from '../../statistics/runtime-input';
 import {
-  buildStatisticsModeRunPayload,
-  type StatisticsModeRunPayload,
+  buildCanonicalStatisticsModeRunPayload,
+  type CanonicalStatisticsModeRunPayload,
 } from '../../statistics/runtime-run';
 
 export type StatisticsWorkerInboundMessage = {
@@ -20,7 +20,7 @@ export type StatisticsWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: StatisticsModeRunPayload;
+      payload: CanonicalStatisticsModeRunPayload;
     }
   | {
       kind: 'failed';
@@ -55,7 +55,7 @@ workerSelf.addEventListener('message', (event: MessageEvent<StatisticsWorkerInbo
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: buildStatisticsModeRunPayload(event.data.request),
+      payload: buildCanonicalStatisticsModeRunPayload(event.data.request),
     } satisfies StatisticsWorkerOutboundMessage);
   } catch (error: unknown) {
     workerSelf.postMessage({

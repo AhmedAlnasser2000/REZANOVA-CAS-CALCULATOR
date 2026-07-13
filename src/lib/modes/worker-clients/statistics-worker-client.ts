@@ -1,6 +1,6 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { StatisticsHostExecution } from '../../ooe/pilots/statistics-pilot';
-import type { StatisticsModeRunPayload } from '../../statistics/runtime-run';
+import type { CanonicalStatisticsModeRunPayload } from '../../statistics/runtime-run';
 import type { RunStatisticsRuntimeRequest } from '../../statistics/runtime-input';
 import type {
   StatisticsWorkerInboundMessage,
@@ -8,12 +8,17 @@ import type {
 } from '../worker-entrypoints/statistics.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import {
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  validateCanonicalRuntimeOutcome,
+} from '../../result-contract';
+import { createStatisticsResultOutcome } from '../../statistics/result-document';
 
 export const STATISTICS_WORKER_RUNTIME_HOST_ID = 'statistics-worker-runtime' as const;
 export const STATISTICS_WORKER_RUNTIME_FALLBACK_HOST_ID = 'statistics-runtime' as const;
 
 export type StatisticsWorkerRunResult = {
-  payload: StatisticsModeRunPayload;
+  payload: CanonicalStatisticsModeRunPayload;
   hostExecution: StatisticsHostExecution;
 };
 
@@ -36,7 +41,7 @@ export type CreateStatisticsWorker = () => StatisticsWorkerLike;
 
 type RunStatisticsModeViaIsolatedWorkerOptions = {
   createWorker?: CreateStatisticsWorker;
-  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload;
+  fallback: () => Promise<CanonicalStatisticsModeRunPayload> | CanonicalStatisticsModeRunPayload;
 };
 
 let statisticsWorkerRequestCounter = 0;
@@ -53,15 +58,15 @@ function nextRequestId() {
   return `statistics-worker-${statisticsWorkerRequestCounter}`;
 }
 
-function buildCancelledPayload(request: RunStatisticsRuntimeRequest): StatisticsModeRunPayload {
+function buildCancelledPayload(request: RunStatisticsRuntimeRequest): CanonicalStatisticsModeRunPayload {
   return {
-    outcome: {
+    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(createStatisticsResultOutcome({
       kind: 'error',
       title: 'Statistics',
       error: 'Statistics evaluation stopped before it finished.',
       warnings: [],
       ...proseSolveSummary('Statistics evaluation stopped after the worker runtime was hard-stopped.'),
-    },
+    }), 'Statistics cancellation'),
     parsed: {
       ok: false,
       error: 'Statistics evaluation stopped before it finished.',
@@ -73,7 +78,7 @@ function buildCancelledPayload(request: RunStatisticsRuntimeRequest): Statistics
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<StatisticsModeRunPayload> | StatisticsModeRunPayload,
+  fallback: () => Promise<CanonicalStatisticsModeRunPayload> | CanonicalStatisticsModeRunPayload,
 ): Promise<StatisticsWorkerRunResult> {
   context.checkpoint(`Statistics worker runtime unavailable; falling back to main-thread Statistics runtime (${reason}).`);
   const payload = await fallback();
@@ -220,8 +225,18 @@ export async function runStatisticsModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.payload.outcome);
+        if (!validation.ok) {
+          fail(workerRuntimeError(
+            `invalid completed outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          ));
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          payload: {
+            ...event.data.payload,
+            outcome: validation.validated.value,
+          },
           hostExecution: {
             kind: 'worker',
             hostId: STATISTICS_WORKER_RUNTIME_HOST_ID,

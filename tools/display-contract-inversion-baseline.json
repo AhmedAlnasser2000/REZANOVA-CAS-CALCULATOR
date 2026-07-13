@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Migrate the Calculus and symbolic workspace worker and OOE payload to validated CanonicalRuntimeOutcome while retaining one canonical Display read-model projection.",
+  "acceptedReason": "Carry Trigonometry, Geometry, and Statistics worker and OOE results as validated canonical transport payloads while preserving parsed replay metadata and the existing public Display projection.",
   "registryDigest": "42e1068ee93b1b3d5682",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -407,7 +407,7 @@
         "b845e5a0379f98960e45:1"
       ],
       "src/lib/result-contract/runtime-projection.ts": [
-        "8bdac4537ec776c61d0d:1"
+        "59bb5f6608150bcf6440:1"
       ],
       "src/lib/statistics/result-document.ts": [
         "438c5c3707f4f8780809:1"
@@ -912,12 +912,21 @@
         "747c98569f3869b7c44a:1",
         "76f4f6a9485c37b0a467:1"
       ],
+      "src/lib/modes/geometry.ts": [
+        "ba4d4325c0ff82a2e511:1"
+      ],
       "src/lib/modes/matrix.ts": [
         "9deb4d41d5ce4c300ad1:1",
         "44abfe464f008636033c:1"
       ],
       "src/lib/modes/runtime-probes/registry.ts": [
         "0107a7063dbfbbbe6402:1"
+      ],
+      "src/lib/modes/statistics.ts": [
+        "b271ebeb6db9f51616f2:1"
+      ],
+      "src/lib/modes/trigonometry.ts": [
+        "e92327e20a6e0bb3bd9d:1"
       ],
       "src/lib/modes/vector.ts": [
         "f09a01c6224260303184:1",

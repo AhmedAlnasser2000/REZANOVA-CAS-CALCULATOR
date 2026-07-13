@@ -242,6 +242,7 @@ export async function runStatisticsWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: OOE_STATISTICS_EVALUATE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
   getHostExecution?: () => StatisticsHostExecution | undefined,
+  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
 ): Promise<StatisticsOoePilotRunResult<TPayload>> {
   const definition = statisticsPilotDefinition();
   return runOoeRuntimeJob({
@@ -263,9 +264,9 @@ export async function runStatisticsWithOoePilot<TPayload>(
       const snapshot = routeSnapshot as {
         request?: StatisticsRouteRequestSnapshot;
       };
-      const output =
-        (payload as { outcome?: DisplayOutcome }).outcome
-        ?? (payload as DisplayOutcome);
+      const output = resolveDisplayOutcome
+        ? resolveDisplayOutcome(payload)
+        : (payload as { outcome?: DisplayOutcome }).outcome ?? payload as DisplayOutcome;
       return {
         depth: 'coarse',
         mode: 'statistics',

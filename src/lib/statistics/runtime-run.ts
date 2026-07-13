@@ -1,10 +1,15 @@
 import type {
+  CanonicalRuntimeOutcome,
   StatisticsParseResult,
   StatisticsReplaySeed,
   StatisticsScreen,
 } from '../../types/calculator';
 import { runStatisticsCoreDraft } from './core';
-import { requireCanonicalResultAuthority } from '../result-contract';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalResultAuthority,
+} from '../result-contract';
 import { statisticsRequestToScreen } from './parser';
 import { createStatisticsResultOutcome } from './result-document';
 import { statisticsRequestToWorkingSource } from './shared';
@@ -19,6 +24,10 @@ export type StatisticsModeRunPayload = {
   parsed: StatisticsParseResult;
   replayScreen: StatisticsScreen;
   replaySeed?: StatisticsReplaySeed;
+};
+
+export type CanonicalStatisticsModeRunPayload = Omit<StatisticsModeRunPayload, 'outcome'> & {
+  outcome: CanonicalRuntimeOutcome;
 };
 
 export function buildStatisticsModeRunPayload(
@@ -61,5 +70,26 @@ export function buildStatisticsModeRunPayload(
           },
         }
       : {}),
+  };
+}
+
+export function buildCanonicalStatisticsModeRunPayload(
+  request: RunStatisticsRuntimeRequest,
+): CanonicalStatisticsModeRunPayload {
+  const payload = buildStatisticsModeRunPayload(request);
+  return {
+    ...payload,
+    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload.outcome, 'Statistics'),
+  };
+}
+
+export function projectCanonicalStatisticsModeRunPayload(
+  payload: CanonicalStatisticsModeRunPayload,
+): StatisticsModeRunPayload {
+  return {
+    ...payload,
+    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(payload.outcome, {
+      includeCanonicalMath: false,
+    }),
   };
 }

@@ -108,3 +108,11 @@
 - scope: Symbolic/Calculus canonical worker and OOE outcomes, fail-closed worker validation, canonical-only `exactLatex` projection repair, focused runtime and fresh Chromium evidence, and durable records
 - push: not authorized
 - excluded: guided/Linear Algebra/Table migrations, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`
+
+## CANONICAL-OUTCOME-GUIDED-DOMAINS1
+
+- commit_message: `CANONICAL-OUTCOME-GUIDED-DOMAINS1`
+- status: verified; covered by standing commit approval
+- scope: Trigonometry, Geometry, and Statistics canonical worker/OOE outcomes, sibling replay metadata, fail-closed validation, unchanged public projection, focused runtime and Chromium evidence, and durable records
+- push: not authorized
+- excluded: Linear Algebra/Table migration, concurrent Notebook work, extracted temporary visual evidence, and untracked `test-results/`

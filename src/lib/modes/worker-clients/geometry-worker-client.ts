@@ -1,5 +1,5 @@
 import type { RunGeometryRuntimeRequest } from '../../geometry/runtime-input';
-import type { GeometryModeRunPayload } from '../../geometry/runtime-run';
+import type { CanonicalGeometryModeRunPayload } from '../../geometry/runtime-run';
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { GeometryHostExecution } from '../../ooe/pilots/geometry-pilot';
 import type {
@@ -8,12 +8,17 @@ import type {
 } from '../worker-entrypoints/geometry.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import {
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  validateCanonicalRuntimeOutcome,
+} from '../../result-contract';
+import { createGeometryResultOutcome } from '../../geometry/result-document';
 
 export const GEOMETRY_WORKER_RUNTIME_HOST_ID = 'geometry-worker-runtime' as const;
 export const GEOMETRY_WORKER_RUNTIME_FALLBACK_HOST_ID = 'geometry-runtime' as const;
 
 export type GeometryWorkerRunResult = {
-  payload: GeometryModeRunPayload;
+  payload: CanonicalGeometryModeRunPayload;
   hostExecution: GeometryHostExecution;
 };
 
@@ -36,7 +41,7 @@ export type CreateGeometryWorker = () => GeometryWorkerLike;
 
 type RunGeometryModeViaIsolatedWorkerOptions = {
   createWorker?: CreateGeometryWorker;
-  fallback: () => Promise<GeometryModeRunPayload> | GeometryModeRunPayload;
+  fallback: () => Promise<CanonicalGeometryModeRunPayload> | CanonicalGeometryModeRunPayload;
 };
 
 let geometryWorkerRequestCounter = 0;
@@ -53,15 +58,15 @@ function nextRequestId() {
   return `geometry-worker-${geometryWorkerRequestCounter}`;
 }
 
-function buildCancelledPayload(request: RunGeometryRuntimeRequest): GeometryModeRunPayload {
+function buildCancelledPayload(request: RunGeometryRuntimeRequest): CanonicalGeometryModeRunPayload {
   return {
-    outcome: {
+    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(createGeometryResultOutcome({
       kind: 'error',
       title: 'Geometry',
       error: 'Geometry evaluation stopped before it finished.',
       warnings: [],
       ...proseSolveSummary('Geometry evaluation stopped after the worker runtime was hard-stopped.'),
-    },
+    }), 'Geometry cancellation'),
     parsed: {
       ok: false,
       error: 'Geometry evaluation stopped before it finished.',
@@ -73,7 +78,7 @@ function buildCancelledPayload(request: RunGeometryRuntimeRequest): GeometryMode
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<GeometryModeRunPayload> | GeometryModeRunPayload,
+  fallback: () => Promise<CanonicalGeometryModeRunPayload> | CanonicalGeometryModeRunPayload,
 ): Promise<GeometryWorkerRunResult> {
   context.checkpoint(`Geometry worker runtime unavailable; falling back to main-thread Geometry runtime (${reason}).`);
   const payload = await fallback();
@@ -218,8 +223,18 @@ export async function runGeometryModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.payload.outcome);
+        if (!validation.ok) {
+          fail(workerRuntimeError(
+            `invalid completed outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          ));
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          payload: {
+            ...event.data.payload,
+            outcome: validation.validated.value,
+          },
           hostExecution: {
             kind: 'worker',
             hostId: GEOMETRY_WORKER_RUNTIME_HOST_ID,

@@ -1,7 +1,7 @@
 import type { RunGeometryRuntimeRequest } from '../../geometry/runtime-input';
 import {
-  buildGeometryModeRunPayload,
-  type GeometryModeRunPayload,
+  buildCanonicalGeometryModeRunPayload,
+  type CanonicalGeometryModeRunPayload,
 } from '../../geometry/runtime-run';
 
 export type GeometryWorkerInboundMessage = {
@@ -18,7 +18,7 @@ export type GeometryWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: GeometryModeRunPayload;
+      payload: CanonicalGeometryModeRunPayload;
     }
   | {
       kind: 'failed';
@@ -53,7 +53,7 @@ workerSelf.addEventListener('message', (event: MessageEvent<GeometryWorkerInboun
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: buildGeometryModeRunPayload(event.data.request),
+      payload: buildCanonicalGeometryModeRunPayload(event.data.request),
     } satisfies GeometryWorkerOutboundMessage);
   } catch (error: unknown) {
     workerSelf.postMessage({

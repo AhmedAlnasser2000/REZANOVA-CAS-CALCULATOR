@@ -1,7 +1,7 @@
 import type { RunTrigonometryRuntimeRequest } from '../../trigonometry/runtime-input';
 import {
-  buildTrigonometryModeRunPayload,
-  type TrigonometryModeRunPayload,
+  buildCanonicalTrigonometryModeRunPayload,
+  type CanonicalTrigonometryModeRunPayload,
 } from '../../trigonometry/runtime-run';
 
 export type TrigonometryWorkerInboundMessage = {
@@ -18,7 +18,7 @@ export type TrigonometryWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: TrigonometryModeRunPayload;
+      payload: CanonicalTrigonometryModeRunPayload;
     }
   | {
       kind: 'failed';
@@ -53,7 +53,7 @@ workerSelf.addEventListener('message', (event: MessageEvent<TrigonometryWorkerIn
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: buildTrigonometryModeRunPayload(event.data.request),
+      payload: buildCanonicalTrigonometryModeRunPayload(event.data.request),
     } satisfies TrigonometryWorkerOutboundMessage);
   } catch (error: unknown) {
     workerSelf.postMessage({

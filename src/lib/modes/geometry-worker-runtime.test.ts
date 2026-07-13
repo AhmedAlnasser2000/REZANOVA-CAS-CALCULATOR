@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { RunGeometryRuntimeRequest } from '../geometry/runtime-input';
-import { buildGeometryModeRunPayload } from '../geometry/runtime-run';
+import {
+  buildCanonicalGeometryModeRunPayload,
+  buildGeometryModeRunPayload,
+} from '../geometry/runtime-run';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
 import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import {
@@ -22,9 +25,9 @@ class FakeGeometryWorker {
   readonly listeners = new Set<Listener>();
   readonly errorListeners = new Set<ErrorListener>();
   terminated = false;
-  private readonly behavior: 'complete' | 'fail' | 'silent';
+  private readonly behavior: 'complete' | 'fail' | 'invalid' | 'silent';
 
-  constructor(behavior: 'complete' | 'fail' | 'silent') {
+  constructor(behavior: 'complete' | 'fail' | 'invalid' | 'silent') {
     this.behavior = behavior;
   }
 
@@ -70,7 +73,9 @@ class FakeGeometryWorker {
     this.emit({
       kind: 'completed',
       requestId: message.requestId,
-      payload: buildGeometryModeRunPayload(message.request),
+      payload: this.behavior === 'invalid'
+        ? { ...buildCanonicalGeometryModeRunPayload(message.request), outcome: { kind: 'success' } as never }
+        : buildCanonicalGeometryModeRunPayload(message.request),
     });
   }
 
@@ -105,13 +110,17 @@ const representativeRequests: RunGeometryRuntimeRequest[] = [
   },
 ];
 
-const createWorker = (behavior: 'complete' | 'fail' | 'silent'): CreateGeometryWorker =>
+const createWorker = (behavior: 'complete' | 'fail' | 'invalid' | 'silent'): CreateGeometryWorker =>
   () => new FakeGeometryWorker(behavior);
 
 beforeEach(() => {
   clearOoeJobRegistry();
   clearOoeDiagnostics();
 });
+
+function serialized(value: unknown) {
+  return JSON.parse(JSON.stringify(value));
+}
 
 describe('geometry worker runtime shell', () => {
   it('returns worker payloads matching the main-thread Geometry core', async () => {
@@ -121,7 +130,7 @@ describe('geometry worker runtime shell', () => {
         createWorker: createWorker('complete'),
       });
 
-      expect(result.payload).toEqual(buildGeometryModeRunPayload(request));
+      expect(serialized(result.payload)).toEqual(serialized(buildGeometryModeRunPayload(request)));
       expect(result.ooe.geometryHostExecution).toMatchObject({
         kind: 'worker',
         hostId: 'geometry-worker-runtime',
@@ -141,7 +150,7 @@ describe('geometry worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(result.payload).toEqual(buildGeometryModeRunPayload(request));
+    expect(serialized(result.payload)).toEqual(serialized(buildGeometryModeRunPayload(request)));
     expect(result.ooe.geometryHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'geometry-runtime',
@@ -163,6 +172,13 @@ describe('geometry worker runtime shell', () => {
     expect(failedDiagnostic?.provenance?.runtimeHost).toBe('geometry-worker-runtime');
   });
 
+  it('fails closed for an invalid canonical worker outcome', async () => {
+    await expect(runGeometryModeWithOoePilot(representativeRequests[0], {
+      commitPolicy: 'alwaysCommit',
+      createWorker: createWorker('invalid'),
+    })).rejects.toThrow('invalid completed outcome');
+  });
+
   it('hard-stops a running worker when cancellation is requested', async () => {
     const request = representativeRequests[3];
     const worker = new FakeGeometryWorker('silent');
@@ -177,7 +193,7 @@ describe('geometry worker runtime shell', () => {
       },
       {
         createWorker: () => worker,
-        fallback: () => buildGeometryModeRunPayload(request),
+        fallback: () => buildCanonicalGeometryModeRunPayload(request),
       },
     );
 

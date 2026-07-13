@@ -4,7 +4,8 @@ import {
   type StatisticsHostExecution,
 } from '../ooe/pilots/statistics-pilot';
 import {
-  buildStatisticsModeRunPayload,
+  buildCanonicalStatisticsModeRunPayload,
+  projectCanonicalStatisticsModeRunPayload,
   type StatisticsModeRunPayload,
 } from '../statistics/runtime-run';
 import {
@@ -33,11 +34,11 @@ export async function runStatisticsModeWithOoePilot(
 ) {
   let hostExecution: StatisticsHostExecution | undefined;
   const routeSnapshot = buildStatisticsOoeSnapshot(request);
-  return runStatisticsWithOoePilot(
+  const envelope = await runStatisticsWithOoePilot(
     async (context) => {
       const result = await runStatisticsModeViaIsolatedWorker(request, context, {
         createWorker: options.createWorker,
-        fallback: () => buildStatisticsModeRunPayload(request),
+        fallback: () => buildCanonicalStatisticsModeRunPayload(request),
       });
       hostExecution = result.hostExecution;
       return result.payload;
@@ -45,5 +46,10 @@ export async function runStatisticsModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
+    (payload) => projectCanonicalStatisticsModeRunPayload(payload).outcome,
   );
+  return {
+    payload: projectCanonicalStatisticsModeRunPayload(envelope.payload),
+    ooe: envelope.ooe,
+  };
 }

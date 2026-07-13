@@ -9,7 +9,8 @@ import {
   type RunTrigonometryRuntimeRequest,
 } from '../trigonometry/runtime-input';
 import {
-  buildTrigonometryModeRunPayload,
+  buildCanonicalTrigonometryModeRunPayload,
+  projectCanonicalTrigonometryModeRunPayload,
   type TrigonometryModeRunPayload,
 } from '../trigonometry/runtime-run';
 import {
@@ -33,11 +34,11 @@ export async function runTrigonometryModeWithOoePilot(
 ) {
   let hostExecution: TrigonometryHostExecution | undefined;
   const routeSnapshot = buildTrigonometryOoeSnapshot(request);
-  return runTrigonometryWithOoePilot(
+  const envelope = await runTrigonometryWithOoePilot(
     async (context) => {
       const result = await runTrigonometryModeViaIsolatedWorker(request, context, {
         createWorker: options.createWorker,
-        fallback: () => buildTrigonometryModeRunPayload(request),
+        fallback: () => buildCanonicalTrigonometryModeRunPayload(request),
       });
       hostExecution = result.hostExecution;
       return result.payload;
@@ -45,5 +46,10 @@ export async function runTrigonometryModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
+    (payload) => projectCanonicalTrigonometryModeRunPayload(payload).outcome,
   );
+  return {
+    payload: projectCanonicalTrigonometryModeRunPayload(envelope.payload),
+    ooe: envelope.ooe,
+  };
 }

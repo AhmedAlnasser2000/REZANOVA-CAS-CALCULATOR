@@ -47,12 +47,14 @@ export function projectDisplayOutcomeToCanonicalRuntimeOutcome(
 
 export function projectCanonicalRuntimeOutcomeToDisplayOutcome(
   outcome: CanonicalRuntimeOutcome,
+  options: { includeCanonicalMath?: boolean } = {},
 ): DisplayOutcome {
   if (outcome.kind === 'prompt') {
     return structuredClone(outcome);
   }
   const display = projectCanonicalResultToDisplayOutcome(outcome.canonicalResult, {
-    includeCanonicalMath: outcome.canonicalResult.primaryMath?.mathJson !== undefined,
+    includeCanonicalMath: options.includeCanonicalMath
+      ?? outcome.canonicalResult.primaryMath?.mathJson !== undefined,
   });
   return {
     ...display,

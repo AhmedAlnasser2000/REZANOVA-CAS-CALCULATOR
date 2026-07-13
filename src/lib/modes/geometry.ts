@@ -1,5 +1,6 @@
 import {
-  buildGeometryModeRunPayload,
+  buildCanonicalGeometryModeRunPayload,
+  projectCanonicalGeometryModeRunPayload,
   type GeometryModeRunPayload,
 } from '../geometry/runtime-run';
 import {
@@ -33,11 +34,11 @@ export async function runGeometryModeWithOoePilot(
 ) {
   let hostExecution: GeometryHostExecution | undefined;
   const routeSnapshot = buildGeometryOoeSnapshot(request);
-  return runGeometryWithOoePilot(
+  const envelope = await runGeometryWithOoePilot(
     async (context) => {
       const result = await runGeometryModeViaIsolatedWorker(request, context, {
         createWorker: options.createWorker,
-        fallback: () => buildGeometryModeRunPayload(request),
+        fallback: () => buildCanonicalGeometryModeRunPayload(request),
       });
       hostExecution = result.hostExecution;
       return result.payload;
@@ -45,5 +46,10 @@ export async function runGeometryModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
+    (payload) => projectCanonicalGeometryModeRunPayload(payload).outcome,
   );
+  return {
+    payload: projectCanonicalGeometryModeRunPayload(envelope.payload),
+    ooe: envelope.ooe,
+  };
 }

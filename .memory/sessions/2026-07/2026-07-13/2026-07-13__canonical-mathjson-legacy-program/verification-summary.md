@@ -173,3 +173,17 @@
 - visual: fresh Chromium shows derivative `2x`, integral `x^2/2+C`, and canonical-only Calculate cancel-factors `(x+1)/x` with both validity facts and no overflow; one initial Settings-panel startup miss was isolated and the deliberate zero-retry reproduction plus final two-case evidence passed
 - resource posture: no full unit, UI, or 19-canary suite ran; verification remained impact-selected
 - residual: `CANONICAL-OUTCOME-GUIDED-DOMAINS1` migrates Trigonometry, Geometry, and Statistics worker/OOE envelopes
+
+## CANONICAL-OUTCOME-GUIDED-DOMAINS1
+
+- kind: backend guided-domain worker and OOE result-envelope migration with focused UI parity evidence
+- result: pass
+- contract: Trigonometry, Geometry, and Statistics workers, fallbacks, cancellation, and OOE jobs carry validated `CanonicalRuntimeOutcome`; parsed request, replay screen, and replay seed stay sibling host metadata and never enter canonical result truth
+- public compatibility: each mode derives its established Display payload after OOE completion and suppresses a duplicate `canonicalMath` compatibility field while retaining proven trees in the canonical document
+- regression: 19 focused worker/projection tests, four guided producer tests, 25 guided UI runtime tests, 20 runtime probes, and 80 workspace runtime contracts pass; malformed worker outcomes fail closed
+- inventory: 648 producers, 613 consumers, 174 native documents, 47 owner assemblies, one legacy-History compatibility projection, 411 legacy reads, and zero violations
+- static: incremental TypeScript, lint, production build, file-size, OOE boundaries, compartments, seam classification, and diff hygiene pass
+- visual: six guided canaries pass with one worker and zero retries; inspected Trigonometry identity `1`, Geometry `d=5`, and Statistics exact/approximate descriptive summaries remain readable without clipping
+- startup note: the first six-canary attempt had one pre-computation Trigonometry Settings-panel miss; a single zero-retry reproduction passed, as did the final Geometry and Statistics evidence
+- resource posture: no full unit, UI, or 19-canary suite ran; verification remained impact-selected and no heavy process remains active
+- residual: `CANONICAL-OUTCOME-LINEAR-ALGEBRA-TABLE1` migrates Matrix, Vector, and Table without merging their runtime ownership

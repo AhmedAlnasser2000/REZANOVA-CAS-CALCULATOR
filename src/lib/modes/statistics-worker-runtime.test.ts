@@ -9,7 +9,10 @@ import {
 } from '../ooe/job-launch/active-job-registry';
 import type { OoeRuntimeControlContext } from '../ooe/runtime-control/runtime-coordinator';
 import type { RunStatisticsRuntimeRequest } from '../statistics/runtime-input';
-import { buildStatisticsModeRunPayload } from '../statistics/runtime-run';
+import {
+  buildCanonicalStatisticsModeRunPayload,
+  buildStatisticsModeRunPayload,
+} from '../statistics/runtime-run';
 import { runStatisticsModeWithOoePilot } from './statistics';
 import {
   runStatisticsModeViaIsolatedWorker,
@@ -27,9 +30,9 @@ class FakeStatisticsWorker {
   readonly listeners = new Set<Listener>();
   readonly errorListeners = new Set<ErrorListener>();
   terminated = false;
-  private readonly behavior: 'complete' | 'fail' | 'silent';
+  private readonly behavior: 'complete' | 'fail' | 'invalid' | 'silent';
 
-  constructor(behavior: 'complete' | 'fail' | 'silent') {
+  constructor(behavior: 'complete' | 'fail' | 'invalid' | 'silent') {
     this.behavior = behavior;
   }
 
@@ -61,7 +64,9 @@ class FakeStatisticsWorker {
     this.emit({
       kind: 'completed',
       requestId: message.requestId,
-      payload: buildStatisticsModeRunPayload(message.request),
+      payload: this.behavior === 'invalid'
+        ? { ...buildCanonicalStatisticsModeRunPayload(message.request), outcome: { kind: 'success' } as never }
+        : buildCanonicalStatisticsModeRunPayload(message.request),
     });
   }
 
@@ -81,7 +86,7 @@ const request: RunStatisticsRuntimeRequest = {
   workingSourceHint: 'dataset',
 };
 
-const createWorker = (behavior: 'complete' | 'fail' | 'silent'): CreateStatisticsWorker =>
+const createWorker = (behavior: 'complete' | 'fail' | 'invalid' | 'silent'): CreateStatisticsWorker =>
   () => new FakeStatisticsWorker(behavior);
 
 function control(shouldCancel = () => false): OoeRuntimeControlContext {
@@ -98,6 +103,10 @@ beforeEach(() => {
   clearOoeDiagnostics();
 });
 
+function serialized(value: unknown) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 describe('Statistics worker runtime shell', () => {
   it('returns native worker payloads with Statistics host evidence', async () => {
     const result = await runStatisticsModeWithOoePilot(request, {
@@ -105,7 +114,7 @@ describe('Statistics worker runtime shell', () => {
       createWorker: createWorker('complete'),
     });
 
-    expect(result.payload).toEqual(buildStatisticsModeRunPayload(request));
+    expect(serialized(result.payload)).toEqual(serialized(buildStatisticsModeRunPayload(request)));
     expect(result.ooe.statisticsHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'statistics-worker-runtime',
@@ -123,7 +132,7 @@ describe('Statistics worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(result.payload).toEqual(buildStatisticsModeRunPayload(request));
+    expect(serialized(result.payload)).toEqual(serialized(buildStatisticsModeRunPayload(request)));
     expect(result.ooe.statisticsHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'statistics-runtime',
@@ -145,6 +154,13 @@ describe('Statistics worker runtime shell', () => {
     expect(failedDiagnostic?.provenance?.runtimeHost).toBe('statistics-worker-runtime');
   });
 
+  it('fails closed for an invalid canonical worker outcome', async () => {
+    await expect(runStatisticsModeWithOoePilot(request, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: createWorker('invalid'),
+    })).rejects.toThrow('invalid completed outcome');
+  });
+
   it('hard-stops a running Statistics worker on cancellation', async () => {
     const worker = new FakeStatisticsWorker('silent');
     let cancelled = false;
@@ -153,7 +169,7 @@ describe('Statistics worker runtime shell', () => {
       control(() => cancelled),
       {
         createWorker: () => worker,
-        fallback: () => buildStatisticsModeRunPayload(request),
+        fallback: () => buildCanonicalStatisticsModeRunPayload(request),
       },
     );
 

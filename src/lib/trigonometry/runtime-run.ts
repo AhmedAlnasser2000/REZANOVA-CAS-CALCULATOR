@@ -1,10 +1,15 @@
 import type {
+  CanonicalRuntimeOutcome,
   TrigParseResult,
   TrigReplaySeed,
   TrigScreen,
 } from '../../types/calculator';
 import { runTrigonometryCoreDraft } from './core';
-import { requireCanonicalResultAuthority } from '../result-contract';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalResultAuthority,
+} from '../result-contract';
 import { trigRequestToScreen } from './parser';
 import { createTrigonometryResultOutcome } from './result-document';
 import type { RunTrigonometryRuntimeRequest } from './runtime-input';
@@ -18,6 +23,13 @@ export type TrigonometryModeRunPayload = {
   parsed: TrigParseResult;
   replayScreen: TrigScreen;
   replaySeed?: TrigReplaySeed;
+};
+
+export type CanonicalTrigonometryModeRunPayload = Omit<
+  TrigonometryModeRunPayload,
+  'outcome'
+> & {
+  outcome: CanonicalRuntimeOutcome;
 };
 
 export function buildTrigonometryModeRunPayload(
@@ -61,5 +73,26 @@ export function buildTrigonometryModeRunPayload(
           },
         }
       : {}),
+  };
+}
+
+export function buildCanonicalTrigonometryModeRunPayload(
+  request: RunTrigonometryRuntimeRequest,
+): CanonicalTrigonometryModeRunPayload {
+  const payload = buildTrigonometryModeRunPayload(request);
+  return {
+    ...payload,
+    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload.outcome, 'Trigonometry'),
+  };
+}
+
+export function projectCanonicalTrigonometryModeRunPayload(
+  payload: CanonicalTrigonometryModeRunPayload,
+): TrigonometryModeRunPayload {
+  return {
+    ...payload,
+    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(payload.outcome, {
+      includeCanonicalMath: false,
+    }),
   };
 }
