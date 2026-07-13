@@ -42,10 +42,34 @@ import {
   mergeSolveSummaries,
   solveSummaryFromDisplayFields,
 } from '../../display/result-detail-lines';
-import { createEquationResultOutcome } from '../solve-result/producer';
+import {
+  createEquationResultOutcome,
+  type EquationResultProducerInput,
+} from '../solve-result/producer';
+import {
+  equationMathValuesFromOwnedLeaves,
+  equationOwnedMathJsonLeavesFromDocument,
+  inferEquationMathJsonRoute,
+} from '../solve-result/math-values';
 
 const RADICAL_STEP_BUDGET_ERROR = 'This recognized radical family would require more than two bounded radical transform steps. Use Numeric Solve with an interval in Equation mode.';
 const REPEATED_CLEARING_BUDGET_ERROR = 'This recognized repeated-clearing radical family would require more than one extra bounded radical clear. Use Numeric Solve with an interval in Equation mode.';
+
+function rebuildEquationOutcome(
+  input: EquationResultProducerInput,
+  previous: Exclude<DisplayOutcome, { kind: 'prompt' }>,
+) {
+  return createEquationResultOutcome(input, {
+    mathValues: equationMathValuesFromOwnedLeaves({
+      outcome: input,
+      routeId: inferEquationMathJsonRoute(input),
+      leaves: equationOwnedMathJsonLeavesFromDocument(
+        previous.canonicalResult,
+        'equation-algebra-rebuild',
+      ),
+    }),
+  });
+}
 
 function appendSolveMetadata(
   outcome: DisplayOutcome,
@@ -71,12 +95,12 @@ function appendSolveMetadata(
     ...(outcome.detailSections ?? []).map((section) => JSON.stringify(section)),
   ]).map((section) => JSON.parse(section) as DisplayDetailSection);
 
-  return createEquationResultOutcome({
+  return rebuildEquationOutcome({
     ...outcome,
     solveBadges,
     ...solveSummary,
     detailSections: mergedDetailSections.length > 0 ? mergedDetailSections : outcome.detailSections,
-  });
+  }, outcome);
 }
 
 function recurseTransform(
@@ -141,10 +165,10 @@ function recurseTransform(
         transform,
       ) as Extract<DisplayOutcome, { kind: 'error' }>;
       if (transform.emptyDetailSections?.length) {
-        return createEquationResultOutcome({
+        return rebuildEquationOutcome({
           ...outcome,
           detailSections: transform.emptyDetailSections,
-        });
+        }, outcome);
       }
       return outcome;
     }
@@ -186,6 +210,13 @@ function recurseTransform(
               return summary ? [summary] : [];
             }),
           ) ?? transform,
+        undefined,
+        transform.mathJsonRouteId
+          ? {
+              routeId: transform.mathJsonRouteId,
+              source: 'equation-algebra-branch-merge',
+            }
+          : undefined,
       );
 
   if (
@@ -216,13 +247,13 @@ function recurseTransform(
       recursiveOutcome.numericMethod,
     ) as Extract<DisplayOutcome, { kind: 'error' }>;
     if (transform.unresolvedDetailSections?.length) {
-      return createEquationResultOutcome({
+      return rebuildEquationOutcome({
         ...outcome,
         detailSections: dedupe([
           ...transform.unresolvedDetailSections.map((section) => JSON.stringify(section)),
           ...(recursiveOutcome.detailSections ?? []).map((section) => JSON.stringify(section)),
         ]).map((section) => JSON.parse(section) as DisplayDetailSection),
-      });
+      }, outcome);
     }
     return outcome;
   }
@@ -238,10 +269,10 @@ function recurseTransform(
             { latex: recursiveOutcome.exactSupplementLatex, source: 'legacy' },
             { constraints: newTransformConstraints, source: 'transform' },
           );
-          return createEquationResultOutcome({
+          return rebuildEquationOutcome({
             ...recursiveOutcome,
             exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
-          });
+          }, recursiveOutcome);
         })()
       : recursiveOutcome;
 

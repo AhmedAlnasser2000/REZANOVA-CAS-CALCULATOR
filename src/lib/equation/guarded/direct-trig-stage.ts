@@ -7,12 +7,17 @@ import { solveTrigEquation } from '../../trigonometry/equations';
 import type {
   DisplayOutcome,
   GuardedSolveRequest,
+  PlannerBadge,
 } from '../../../types/calculator';
 import {
   errorOutcome,
   successOutcome,
 } from './outcome';
-import { createEquationResultOutcome } from '../solve-result/producer';
+import {
+  createEquationFiniteRootSuccessOutcome,
+  createEquationResultOutcome,
+  equationMathValuesFromOwnedLeaves,
+} from '../solve-result';
 
 type SolveLike = ReturnType<typeof solveTrigEquation>;
 
@@ -33,17 +38,35 @@ function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
     request.angleUnit,
   );
   if (parameterized.kind === 'success') {
-    return createEquationResultOutcome({
-      kind: 'success',
+    const producerInput = {
+      kind: 'success' as const,
       title: 'Solve',
       exactLatex: parameterized.exactLatex,
       branchReadback: parameterized.branchReadback,
       exactSupplementLatex: parameterized.exactSupplementLatex,
       detailSections: parameterized.detailSections,
       warnings: [],
-      resultOrigin: 'symbolic',
-      plannerBadges: ['Trig Solve Backend'],
-    });
+      resultOrigin: 'symbolic' as const,
+      plannerBadges: ['Trig Solve Backend'] as PlannerBadge[],
+    };
+    if (parameterized.canonicalMath) {
+      const supplementalValues = equationMathValuesFromOwnedLeaves({
+        outcome: producerInput,
+        routeId: 'equation.trig-exp-log',
+        leaves: parameterized.mathJsonLeaves ?? [],
+      });
+      return createEquationFiniteRootSuccessOutcome({
+        ...producerInput,
+        canonicalMath: parameterized.canonicalMath,
+        mathJsonRouteId: 'equation.trig-exp-log',
+        mathJsonSource: 'equation-parameterized-trig-branches',
+      }, {
+        mathValues: supplementalValues.supplements
+          ? { supplements: supplementalValues.supplements }
+          : undefined,
+      });
+    }
+    return createEquationResultOutcome(producerInput);
   }
 
   const trig = solveTrigEquation({

@@ -5,6 +5,7 @@ import { formatApproxNumber, solutionsToLatex } from '../../display/format';
 import { normalizeExactRadicalNode } from '../../symbolic-engine/radical';
 import { normalizeExactRationalNode } from '../../symbolic-engine/rational';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
+import { mergeSolveDomainConstraints } from '../../algebra/radical-core';
 import {
   assumptionFactsFromCandidateRejection,
 } from '../../algebra/assumption-adapters';
@@ -26,6 +27,7 @@ import type {
   DisplayDetailSection,
   DisplayOutcome,
   GuardedSolveRequest,
+  SerializableMathJson,
   SolveDomainConstraint,
 } from '../../../types/calculator';
 import { errorOutcome } from './outcome';
@@ -35,7 +37,16 @@ import {
   mixedDetailSection,
   textPart,
 } from '../../display/result-detail-lines';
-import { createEquationResultOutcome } from '../solve-result/producer';
+import {
+  createEquationResultOutcome,
+  type EquationResultProducerInput,
+} from '../solve-result/producer';
+import { tryProvenCanonicalMathValue } from '../../result-contract';
+import {
+  equationMathValuesFromOwnedLeaves,
+  equationOwnedMathJsonLeavesFromDocument,
+  inferEquationMathJsonRoute,
+} from '../solve-result/math-values';
 
 const ce = new ComputeEngine();
 const NUMERIC_MATCH_TOLERANCE = 1e-6;
@@ -54,18 +65,41 @@ function isZeroNode(node: unknown) {
     );
 }
 
+function findOwnedExpressionMathJson(
+  root: SerializableMathJson | undefined,
+  canonicalLatex: string,
+): SerializableMathJson | undefined {
+  if (root === undefined) return undefined;
+  const visit = (node: SerializableMathJson): SerializableMathJson | undefined => {
+    try {
+      if (ce.box(node as Parameters<typeof ce.box>[0]).latex === canonicalLatex) {
+        return node;
+      }
+    } catch {
+      // Keep searching descendants when a container is not directly boxable.
+    }
+    if (Array.isArray(node)) {
+      for (const child of node.slice(1)) {
+        const found = visit(child);
+        if (found !== undefined) return found;
+      }
+    } else if (node && typeof node === 'object') {
+      for (const child of Object.values(node)) {
+        if (child === undefined) continue;
+        const found = visit(child);
+        if (found !== undefined) return found;
+      }
+    }
+    return undefined;
+  };
+  return visit(root);
+}
+
 function mergeDomainConstraints(
   left: SolveDomainConstraint[] = [],
   right: SolveDomainConstraint[] = [],
 ) {
-  const merged = new Map<string, SolveDomainConstraint>();
-  for (const constraint of [...left, ...right]) {
-    const key = JSON.stringify(constraint);
-    if (!merged.has(key)) {
-      merged.set(key, constraint);
-    }
-  }
-  return [...merged.values()];
+  return mergeSolveDomainConstraints(left, right);
 }
 
 function formatAcceptedApproximations(values: number[]) {
@@ -243,15 +277,81 @@ function attachAlgebraMetadata(
       : [],
   );
 
-  return createEquationResultOutcome({
+  const resolvedInputLatex = outcome.resolvedInputLatex
+    ?? (request.resolvedLatex !== originalResolvedLatex ? request.resolvedLatex : undefined);
+  const producerInput: EquationResultProducerInput = {
     ...outcome,
     exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,
     detailSections: usesNumericTrustTaxonomy(outcome)
       ? mergeDomainConstraintDetailSection(outcome.detailSections, request.domainConstraints)
       : mergeAssumptionDetailSections(outcome.detailSections, assumptionFacts),
-    resolvedInputLatex:
-      outcome.resolvedInputLatex
-      ?? (request.resolvedLatex !== originalResolvedLatex ? request.resolvedLatex : undefined),
+    resolvedInputLatex,
+  };
+  const nativeLeaves = equationOwnedMathJsonLeavesFromDocument(
+    outcome.canonicalResult,
+    'equation-algebra-metadata-input',
+  );
+  const routeId = inferEquationMathJsonRoute(producerInput);
+  const addConstraintLeaf = (
+    canonicalLatex: string,
+    mathJson: SerializableMathJson,
+    source: string,
+  ) => {
+    const proof = tryProvenCanonicalMathValue({
+      canonicalLatex,
+      mathJson,
+      owner: 'equation',
+      routeId,
+      source,
+    });
+    if (proof) nativeLeaves.push({ canonicalLatex, mathJson, source });
+  };
+  for (const constraint of request.domainConstraints ?? []) {
+    if (!('expressionLatex' in constraint)) continue;
+    const expressionMathJson = constraint.expressionMathJson
+      ?? findOwnedExpressionMathJson(request.resolvedMathJson, constraint.expressionLatex)
+      ?? (/^[A-Za-z]$/u.test(constraint.expressionLatex)
+        ? constraint.expressionLatex
+        : undefined);
+    if (expressionMathJson === undefined) continue;
+    addConstraintLeaf(
+      constraint.expressionLatex,
+      expressionMathJson,
+      `equation-domain-constraint:${constraint.kind}:expression`,
+    );
+    const relation = constraint.kind === 'nonzero'
+      ? { operator: 'NotEqual', latex: `${constraint.expressionLatex}\\ne 0` }
+      : constraint.kind === 'positive'
+        ? { operator: 'Greater', latex: `${constraint.expressionLatex}>0` }
+        : constraint.kind === 'nonnegative'
+          ? { operator: 'GreaterEqual', latex: `${constraint.expressionLatex}\\ge 0` }
+          : constraint.kind === 'expression-interval'
+            && constraint.min === 0
+            && constraint.minInclusive
+            && constraint.max === undefined
+            ? { operator: 'GreaterEqual', latex: `${constraint.expressionLatex}\\ge 0` }
+          : undefined;
+    if (relation) {
+      addConstraintLeaf(
+        relation.latex,
+        [relation.operator, expressionMathJson, 0],
+        `equation-domain-constraint:${constraint.kind}:relation`,
+      );
+    }
+  }
+  if (resolvedInputLatex && request.resolvedMathJson !== undefined) {
+    addConstraintLeaf(
+      resolvedInputLatex,
+      request.resolvedMathJson,
+      'equation-algebra-resolved-input',
+    );
+  }
+  return createEquationResultOutcome(producerInput, {
+    mathValues: equationMathValuesFromOwnedLeaves({
+      outcome: producerInput,
+      routeId,
+      leaves: nativeLeaves,
+    }),
   });
 }
 
@@ -302,11 +402,14 @@ function prepareAlgebraSolveRequest(request: GuardedSolveRequest): GuardedSolveR
   );
 
   let resolvedLatex = ce.box(['Equal', leftNode, rightNode] as Parameters<typeof ce.box>[0]).latex;
+  let resolvedMathJson = ['Equal', leftNode, rightNode] as SerializableMathJson;
 
   if (leftNormalization?.denominatorNode && isZeroNode(rightNode)) {
     resolvedLatex = `${leftNormalization.numeratorLatex}=0`;
+    resolvedMathJson = ['Equal', leftNormalization.numeratorNode as SerializableMathJson, 0];
   } else if (rightNormalization?.denominatorNode && isZeroNode(leftNode)) {
     resolvedLatex = `${rightNormalization.numeratorLatex}=0`;
+    resolvedMathJson = ['Equal', rightNormalization.numeratorNode as SerializableMathJson, 0];
   } else if (leftLatex !== ce.box(json[1] as Parameters<typeof ce.box>[0]).latex || rightLatex !== ce.box(json[2] as Parameters<typeof ce.box>[0]).latex) {
     resolvedLatex = `${leftLatex}=${rightLatex}`;
   }
@@ -314,6 +417,7 @@ function prepareAlgebraSolveRequest(request: GuardedSolveRequest): GuardedSolveR
   return {
     ...request,
     resolvedLatex,
+    resolvedMathJson,
     validationLatex: request.validationLatex ?? request.resolvedLatex,
     domainConstraints,
     exactSupplementLatex,
@@ -357,6 +461,24 @@ function validateDirectSymbolicOutcome(
     );
   }
 
+  const answerRoot = Array.isArray(symbolic.answerMathJson) ? symbolic.answerMathJson : undefined;
+  const solutionMathJson: SerializableMathJson[] = answerRoot?.[0] === 'Equal'
+    && answerRoot.length === 3
+      ? [answerRoot[2] as SerializableMathJson]
+      : answerRoot?.[0] === 'Element'
+        && Array.isArray(answerRoot[2])
+        && answerRoot[2][0] === 'Set'
+          ? answerRoot[2].slice(1) as SerializableMathJson[]
+          : [];
+  const candidateLeaves = rawSolutionLatex.flatMap((canonicalLatex, index) =>
+    solutionMathJson[index] === undefined
+      ? []
+      : [{
+          canonicalLatex,
+          mathJson: solutionMathJson[index],
+          source: `equation-symbolic-candidate:${index}`,
+        }]);
+
   const validation = validateCandidateRoots(
     request.validationLatex ?? request.resolvedLatex,
     finiteSolutions,
@@ -377,7 +499,7 @@ function validateDirectSymbolicOutcome(
       undefined,
       validation.rejected.length,
     );
-    return createEquationResultOutcome({
+    const producerInput = {
       ...outcome,
       detailSections: appendExtraneousSolutionsDetailSection(
         outcome.detailSections,
@@ -385,11 +507,19 @@ function validateDirectSymbolicOutcome(
           exactCandidatesLatex: rawSolutionLatex,
         }),
       ),
+    };
+    return createEquationResultOutcome(producerInput, {
+      mathValues: equationMathValuesFromOwnedLeaves({
+        outcome: producerInput,
+        routeId: inferEquationMathJsonRoute(producerInput),
+        leaves: candidateLeaves,
+      }),
     });
   }
 
   const acceptedLatex: string[] = [];
   const acceptedValues: number[] = [];
+  const acceptedMathJson: SerializableMathJson[] = [];
   for (const acceptedValue of validation.accepted) {
     const matchIndex = numericPairs.findIndex((entry) =>
       Math.abs(entry.value - acceptedValue) <= NUMERIC_MATCH_TOLERANCE
@@ -398,21 +528,34 @@ function validateDirectSymbolicOutcome(
     if (matchIndex >= 0) {
       acceptedValues.push(numericPairs[matchIndex].value);
       acceptedLatex.push(numericPairs[matchIndex].latex);
+      if (solutionMathJson[matchIndex] !== undefined) {
+        acceptedMathJson.push(solutionMathJson[matchIndex]);
+      }
     }
   }
 
   const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
     ? solutionsToLatex('x', acceptedLatex)
     : undefined;
+  const canonicalMath = exactLatex && acceptedMathJson.length === acceptedLatex.length
+    ? {
+        version: 1 as const,
+        canonicalLatex: exactLatex,
+        mathJson: acceptedMathJson.length === 1
+          ? ['Equal', 'x', acceptedMathJson[0]] as SerializableMathJson
+          : ['Element', 'x', ['Set', ...acceptedMathJson]] as SerializableMathJson,
+      }
+    : undefined;
 
   const extraneousEvidence = extraneousEvidenceFromRejectedCandidates(validation.rejected, {
     exactCandidatesLatex: rawSolutionLatex,
   });
 
-  return createEquationResultOutcome({
+  const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
     exactLatex,
+    ...(canonicalMath ? { canonicalMath } : {}),
     branchReadback: branchReadbackForAcceptedCandidates(
       acceptedLatex,
       acceptedValues,
@@ -427,6 +570,17 @@ function validateDirectSymbolicOutcome(
     candidateValues: acceptedValues,
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : undefined,
     detailSections: appendExtraneousSolutionsDetailSection(undefined, extraneousEvidence),
+  };
+  const candidateMathValues = equationMathValuesFromOwnedLeaves({
+    outcome: producerInput,
+    routeId: inferEquationMathJsonRoute(producerInput),
+    leaves: candidateLeaves,
+  });
+  const supplementalMathValues = { ...candidateMathValues };
+  delete supplementalMathValues.primaryMath;
+  delete supplementalMathValues.branchReadback;
+  return createEquationResultOutcome(producerInput, {
+    mathValues: supplementalMathValues,
   });
 }
 

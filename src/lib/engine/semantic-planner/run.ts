@@ -5,6 +5,7 @@ import type {
   PlannerContext,
   PlannerOutcome,
   PlannerStep,
+  SerializableMathJson,
 } from '../../../types/calculator';
 import {
   box,
@@ -120,7 +121,8 @@ export function planMathExecution(
       };
     }
 
-    const resolvedLatex = box(['Equal', left.node, right.node]).latex;
+    const resolvedMathJson = ['Equal', left.node, right.node] as SerializableMathJson;
+    const resolvedLatex = box(resolvedMathJson).latex;
     if (resolvedLatex !== canonicalized.canonicalLatex) {
       steps.push({
         kind: 'normalize-equation',
@@ -134,6 +136,7 @@ export function planMathExecution(
       originalLatex: latex,
       canonicalLatex: canonicalized.canonicalLatex,
       resolvedLatex,
+      resolvedMathJson,
       badges: plannerBadgesFromSteps(latex, canonicalized.canonicalLatex, steps),
       steps,
     };
@@ -163,13 +166,15 @@ export function planMathExecution(
     const parsed = parseLatex(derivativeReduced.latex);
     const compacted = compactRepeatedFactors(parsed.json, steps);
     const numericReduced = reduceNumericOperators(compacted, steps);
-    const resolvedLatex = box(simplifyNode(numericReduced)).latex;
+    const resolvedMathJson = simplifyNode(numericReduced) as SerializableMathJson;
+    const resolvedLatex = box(resolvedMathJson).latex;
 
     return {
       kind: 'ready',
       originalLatex: latex,
       canonicalLatex: canonicalized.canonicalLatex,
       resolvedLatex,
+      resolvedMathJson,
       badges: plannerBadgesFromSteps(latex, canonicalized.canonicalLatex, steps),
       steps,
       derivativeStrategies: derivativeReduced.derivativeStrategies.length > 0

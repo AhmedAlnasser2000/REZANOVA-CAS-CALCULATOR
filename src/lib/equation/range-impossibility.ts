@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { RangeImpossibilityResult, RangeProofReason, RealRangeInterval } from '../../types/calculator';
+import type { RangeImpossibilityResult, RangeProofReason, RealRangeInterval, SerializableMathJson } from '../../types/calculator';
 import {
   formatRangeInterval,
   intervalsDisjoint,
@@ -24,6 +24,16 @@ function boxLatex(node: unknown) {
 
 function interval(min: number, max: number, minInclusive = true, maxInclusive = true): RealRangeInterval {
   return { min, max, minInclusive, maxInclusive };
+}
+
+function intervalMathJson(value: RealRangeInterval): SerializableMathJson {
+  const endpoint = (entry: number): SerializableMathJson =>
+    entry === Number.POSITIVE_INFINITY
+      ? 'PositiveInfinity'
+      : entry === Number.NEGATIVE_INFINITY
+        ? 'NegativeInfinity'
+        : entry;
+  return ['List', endpoint(value.min), endpoint(value.max)];
 }
 
 function constantValue(node: unknown): number | null {
@@ -60,9 +70,11 @@ function compareAgainstConstant(
     interval: RealRangeInterval;
     reason: RangeProofReason;
     expressionLatex: string;
+    expressionMathJson: SerializableMathJson;
   },
   constant: number,
   constantLatex: string,
+  constantMathJson: SerializableMathJson,
 ): RangeImpossibilityResult | null {
   const target = interval(constant, constant);
   if (!intervalsDisjoint(expression.interval, target)) {
@@ -87,6 +99,23 @@ function compareAgainstConstant(
     reason: expression.reason,
     derivedRange: expression.interval,
     comparedTarget: constantLatex,
+    mathJsonLeaves: [
+      {
+        canonicalLatex: expression.expressionLatex,
+        mathJson: expression.expressionMathJson,
+        source: 'equation-range-guard-expression',
+      },
+      {
+        canonicalLatex: formatRangeInterval(expression.interval),
+        mathJson: intervalMathJson(expression.interval),
+        source: 'equation-range-guard-interval',
+      },
+      {
+        canonicalLatex: constantLatex,
+        mathJson: constantMathJson,
+        source: 'equation-range-guard-target',
+      },
+    ],
   };
 }
 
@@ -111,14 +140,24 @@ export function detectRealRangeImpossibility(
   const rightConstant = constantValue(right);
 
   if (leftProof.kind === 'exact' && rightConstant !== null) {
-    const impossible = compareAgainstConstant(leftProof, rightConstant, boxLatex(right));
+    const impossible = compareAgainstConstant(
+      { ...leftProof, expressionMathJson: left as SerializableMathJson },
+      rightConstant,
+      boxLatex(right),
+      right as SerializableMathJson,
+    );
     if (impossible) {
       return impossible;
     }
   }
 
   if (rightProof.kind === 'exact' && leftConstant !== null) {
-    const impossible = compareAgainstConstant(rightProof, leftConstant, boxLatex(left));
+    const impossible = compareAgainstConstant(
+      { ...rightProof, expressionMathJson: right as SerializableMathJson },
+      leftConstant,
+      boxLatex(left),
+      left as SerializableMathJson,
+    );
     if (impossible) {
       return impossible;
     }
@@ -144,6 +183,18 @@ export function detectRealRangeImpossibility(
           ? 'bounded-product'
           : leftProof.reason,
       derivedRange: leftProof.interval,
+      mathJsonLeaves: [
+        {
+          canonicalLatex: formatRangeInterval(leftProof.interval),
+          mathJson: intervalMathJson(leftProof.interval),
+          source: 'equation-range-guard-left-interval',
+        },
+        {
+          canonicalLatex: formatRangeInterval(rightProof.interval),
+          mathJson: intervalMathJson(rightProof.interval),
+          source: 'equation-range-guard-right-interval',
+        },
+      ],
     };
   }
 

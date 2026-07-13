@@ -16,6 +16,7 @@ export type PeelStep = {
   expression: MathJson;
   otherSide: MathJson;
   facts: string[];
+  factNodes: MathJson[];
   line: string;
 };
 
@@ -71,6 +72,7 @@ function peelAdd<Reason extends string>(
       expression: targetTerm,
       otherSide: subtractNodes(otherSide, targetFreeSum),
       facts: [],
+      factNodes: [],
       line: `Moved target-free additive terms away from ${latexForNode(targetTerm)}.`,
     },
   };
@@ -107,6 +109,7 @@ function peelMultiply<Reason extends string>(
       expression: targetFactors[0],
       otherSide: divideNodes(otherSide, targetFreeProduct),
       facts: nonzeroFact ? [nonzeroFact] : [],
+      factNodes: nonzeroFact ? [['NotEqual', targetFreeProduct, 0]] : [],
       line: `Divided by the target-free factor ${latexForNode(targetFreeProduct)}.`,
     },
   };
@@ -162,6 +165,7 @@ function peelDivide<Reason extends string>(
       expression: numerator,
       otherSide: multiplyNodes(otherSide, denominator),
       facts: nonzeroFact ? [nonzeroFact] : [],
+      factNodes: nonzeroFact ? [['NotEqual', denominator, 0]] : [],
       line: `Multiplied by the target-free denominator ${latexForNode(denominator)}.`,
     },
   };
@@ -200,6 +204,7 @@ export function peelOnce<Reason extends string>(
         expression: expression[1] as MathJson,
         otherSide: negateNode(otherSide),
         facts: [],
+        factNodes: [],
         line: 'Removed a leading negative sign from the selected-target expression.',
       },
     };

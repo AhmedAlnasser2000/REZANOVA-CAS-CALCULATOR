@@ -212,6 +212,7 @@ export function solveParameterizedExpLogEquation(
 
   const sameBase = sameBaseDirectEquation(equationJson[1], equationJson[2], target);
   let generatedEquationLatex: string;
+  let generatedEquationMathJson: import('../../../types/calculator').SerializableMathJson | undefined;
   let domainFacts: string[];
   let carrierLabel = 'same-base exp/log carriers';
 
@@ -273,6 +274,7 @@ export function solveParameterizedExpLogEquation(
     }
     carrierLabel = `${carrier.labelLatex}=${latexForNode(carrierValue)}`;
     generatedEquationLatex = generated.equationLatex;
+    generatedEquationMathJson = generated.equationMathJson;
     domainFacts = [...new Set([
       nonzeroFactForNode(normalized.affine.coefficient),
       ...normalized.affine.facts,
@@ -284,6 +286,7 @@ export function solveParameterizedExpLogEquation(
     target,
     parameterNames,
     generatedEquationLatex,
+    generatedEquationMathJson,
     domainFacts,
     carrierLabel,
     searchTrace: options.searchTrace,

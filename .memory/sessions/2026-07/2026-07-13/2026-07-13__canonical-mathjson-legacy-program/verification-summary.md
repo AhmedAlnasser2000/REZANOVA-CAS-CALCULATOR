@@ -44,3 +44,14 @@
 - runtime/static evidence: 76 runtime-contract tests, History replay, 20 inversion tests, 26 printer tests, 14 seam tests, 36 compartment tests, TypeScript, global lint, 2,966-module build, and diff hygiene pass.
 - inversion repair: the registry reporter's audit-only `kind` read is now classified; consumer count is 595 with compatibility, legacy, and native floors unchanged.
 - shared file-size blocker: live validation fails only because concurrent `src/AppMain.tsx` is 3,312 lines against its 3,306 cap. A non-writing scoped validation of all 1,768 files passes when that single foreign edit is excluded.
+
+## MATHJSON-COVERAGE-CALCULATE-EQUATION1
+
+- kind: backend producer coverage with app-visible parity verification
+- result: pass for milestone-owned scope
+- coverage: 100 fixtures, 262 leaves, 89 proven, four bounded mixed prose/math exemptions, 169 missing, 55,009 current serialized bytes under the 55,053-byte accepted cap, and a 2,753-byte maximum document
+- regression: 180 Equation/algebra/engine files and 1,506 tests pass after repairing 13 initially exposed compatibility regressions
+- authority: Equation remains at 134 native documents, zero compatibility projections, and 265 registered legacy reads; the repository keeps one known History compatibility projection
+- visual: isolated Chromium confirms established complex `i` output, DEG periodic family structure, radical range-guard evidence, and no horizontal overflow
+- static: result contract, printer, seam, OOE, compartments, TypeScript, production build, file size, and diff hygiene pass
+- shared blocker: global lint is blocked only by concurrent Notebook `src/app/shell/notebook/canvas/extensions.tsx` at `react-refresh/only-export-components`

@@ -6,6 +6,7 @@ import type {
   AbsoluteValueTargetDescriptor,
   DisplayDetailLinePart,
   DisplayDetailSection,
+  SerializableMathJson,
   SolveDomainConstraint,
 } from '../../../types/calculator';
 import {
@@ -70,6 +71,7 @@ export function buildAbsoluteValueNonnegativeConstraint(expression: unknown): So
   return {
     kind: 'nonnegative',
     expressionLatex: boxLatex(expression),
+    expressionMathJson: normalizeAst(expression) as SerializableMathJson,
   };
 }
 

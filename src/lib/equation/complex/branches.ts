@@ -1,5 +1,11 @@
-import type { ComplexExactForm, OutputStyle } from '../../../types/calculator';
-import { exactScalarToNumber, normalizeExactScalar, type ExactScalar } from '../../algebra/polynomial-core';
+import type {
+  ComplexExactForm,
+  DisplayBranchReadback,
+  DisplayMathPayloadV1,
+  OutputStyle,
+  SerializableMathJson,
+} from '../../../types/calculator';
+import { buildExactScalarNode, exactScalarToNumber, normalizeExactScalar, type ExactScalar } from '../../algebra/polynomial-core';
 import { complex, complexToApproxText, complexToLatex, type ComplexValue } from '../../numeric/complex';
 import {
   type EquationFiniteBranchExpression,
@@ -92,7 +98,12 @@ export function buildBranchReadback(
   outputStyle: OutputStyle = 'exact',
   complexExactForm: ComplexExactForm = 'rectangular',
   options: { preserveOrder?: boolean } = {},
-) {
+): {
+  exactLatex: string;
+  canonicalMath?: DisplayMathPayloadV1;
+  branchReadback?: DisplayBranchReadback;
+  approxText?: string;
+} {
   const uniqueBranches = [...new Map(
     branches.map((branch) => [branch.exactLatex, branch] as const),
   ).values()];
@@ -129,14 +140,30 @@ export function buildBranchReadback(
       };
     }
 
+    const realNode = buildExactScalarNode(branch.exactComplex.re);
+    const imaginaryNode = buildExactScalarNode(branch.exactComplex.im);
+    const node = exactScalarIsZero(branch.exactComplex.im)
+      ? realNode
+      : exactScalarIsZero(branch.exactComplex.re)
+        ? ['Multiply', imaginaryNode, 'ImaginaryUnit']
+        : ['Add', realNode, ['Multiply', imaginaryNode, 'ImaginaryUnit']];
     return {
       latex: exactComplexToFormLatex(branch.exactComplex, complexExactForm) ?? branch.exactLatex,
+      node,
     };
   });
+  const presentationBranchExpressions = exactBranchExpressions.map((branch, index) => ({
+    latex: branch.latex,
+    ...(!unique[index].exactComplex && branch.node !== undefined ? { node: branch.node } : {}),
+  }));
   const renderedRoots = renderFiniteRootSet(
     createFiniteRootSet({
       targetLatex: target,
-      branches: exactBranchExpressions,
+      branches: presentationBranchExpressions.map((branch) => ({
+        latex: branch.latex,
+        ...(branch.node !== undefined ? { node: branch.node } : {}),
+        source: 'equation-complex',
+      })),
       source: 'equation-complex',
     }),
     {
@@ -146,8 +173,28 @@ export function buildBranchReadback(
       presentationContext: { complexExactForm },
     },
   );
+  const answerMathJson: SerializableMathJson | undefined = renderedRoots.exactLatex
+    && exactBranchExpressions.every((branch) => branch.node !== undefined)
+    && renderedRoots.branchesLatex.length === exactBranchExpressions.length
+    ? exactBranchExpressions.length === 1
+      ? ['Equal', target, exactBranchExpressions[0].node as SerializableMathJson]
+      : [
+          'Element',
+          target,
+          ['Set', ...exactBranchExpressions.map((branch) => branch.node as SerializableMathJson)],
+        ]
+    : undefined;
   return profileEquationResult({
     exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{${renderedRoots.branchesLatex.join(',\\ ')}\\right\\}`,
+    ...(answerMathJson
+      ? {
+          canonicalMath: {
+            version: 1 as const,
+            canonicalLatex: renderedRoots.exactLatex as string,
+            mathJson: answerMathJson,
+          },
+        }
+      : {}),
     branchReadback: renderedRoots.branchReadback,
     approxText: outputStyle === 'both' ? approximateText : undefined,
   });

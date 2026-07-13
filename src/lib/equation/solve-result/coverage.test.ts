@@ -3,7 +3,7 @@ import { goldenCases } from '../../__golden__/golden-cases';
 import { runGoldenCase } from '../../__golden__/golden-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../../history-replay/fixtures';
 import { executeHistoryReplayRequest } from '../../history-replay/native-execution';
-import { projectDisplayOutcomeToCanonicalResult } from '../../result-contract';
+import { resolveCanonicalResultForStorage } from '../../result-contract';
 import {
   projectEquationDisplayOutcomeToBoundaryOrThrow,
   projectEquationOutcomeBoundaryToDisplay,
@@ -12,16 +12,17 @@ import { projectEquationDisplayOutcomeToSolveResult } from './compatibility';
 import { validateEquationSolveResultContract } from './validation';
 
 function assertCarrier(outcome: Awaited<ReturnType<typeof runGoldenCase>>['outcome'], label: string) {
-  const direct = projectDisplayOutcomeToCanonicalResult(outcome);
+  if (outcome.kind === 'prompt') throw new Error(`${label}: unexpected prompt.`);
+  const direct = resolveCanonicalResultForStorage(outcome);
   if (!direct.ok) {
-    throw new Error(`${label}: ${direct.failure.reason}: ${direct.failure.message}`);
+    throw new Error(`${label}: ${direct.omissionReason}: ${direct.message}`);
   }
   const projected = projectEquationDisplayOutcomeToSolveResult(outcome);
   if (!projected.ok) {
     throw new Error(`${label}: ${projected.failure.reason}`);
   }
   expect(projected.result.document, `${label} canonical document`).toEqual(direct.document);
-  if (outcome.kind !== 'prompt' && outcome.canonicalResult) {
+  if (outcome.canonicalResult) {
     expect(projected.result.document, `${label} native document authority`).toEqual(
       outcome.canonicalResult,
     );
@@ -31,16 +32,15 @@ function assertCarrier(outcome: Awaited<ReturnType<typeof runGoldenCase>>['outco
 
   const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(outcome);
   const restored = projectEquationOutcomeBoundaryToDisplay(boundary);
-  const restoredDocument = projectDisplayOutcomeToCanonicalResult(restored);
+  if (restored.kind === 'prompt') throw new Error(`${label}: restored prompt.`);
+  const restoredDocument = resolveCanonicalResultForStorage(restored);
   expect(restoredDocument.ok, `${label} restored canonical document`).toBe(true);
   if (!restoredDocument.ok) return;
   expect(restoredDocument.document, `${label} boundary canonical parity`).toEqual(direct.document);
   expect(restored.runtimeAdvisories, `${label} runtime advisory parity`).toEqual(
     outcome.runtimeAdvisories,
   );
-  if (outcome.kind !== 'prompt') {
-    expect(outcome.actions, `${label} Equation actions require a boundary policy`).toBeUndefined();
-  }
+  expect(outcome.actions, `${label} Equation actions require a boundary policy`).toBeUndefined();
 }
 
 describe('Equation solve result corpus coverage', () => {

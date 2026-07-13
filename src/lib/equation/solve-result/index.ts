@@ -3,6 +3,7 @@ export * from './compatibility';
 export * from './contract';
 export * from './factory';
 export * from './finite-root-producer';
+export * from './math-values';
 export * from './native-result';
 export * from './producer';
 export * from './validation';

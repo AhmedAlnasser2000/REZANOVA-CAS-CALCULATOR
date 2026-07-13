@@ -24,6 +24,7 @@ import {
   generatedFormulaValidationTraceDetails,
   inspectGeneratedFormulaPayloadValidation,
 } from './generated-formula-validation';
+import type { SerializableMathJson } from '../../../types/calculator';
 
 const GENERATED_BRANCH_OPTIONS = { allowGeneratedImplicitProducts: true };
 const GENERATED_BRANCH_PHASE = 'generated-handoff';
@@ -70,6 +71,7 @@ export type GeneratedBranchHandoffSolvedBranch = {
   exactLatex: string;
   exactSupplementLatex?: string[];
   solutionExpressions: string[];
+  solutionMathJson?: SerializableMathJson[];
   formulaPayload?: GeneratedFormulaHandoffPayload;
 };
 
@@ -77,6 +79,7 @@ export type GeneratedBranchHandoffSuccess = {
   kind: 'success';
   branches: GeneratedBranchHandoffSolvedBranch[];
   solutionExpressions: string[];
+  solutionMathJson?: SerializableMathJson[];
   exactSupplementLatex: string[];
   formulaPayloads?: GeneratedFormulaHandoffPayload[];
 };
@@ -219,6 +222,19 @@ function solveGeneratedBranchEquation<Reason extends string>({
           ...formulaPayloadSupplements,
         ]),
       ];
+      const canonicalRoot = Array.isArray(result.canonicalMath?.mathJson)
+        ? result.canonicalMath.mathJson
+        : undefined;
+      const solutionMathJson = canonicalRoot?.[0] === 'Equal'
+        && canonicalRoot[1] === target
+        && canonicalRoot.length === 3
+          ? [canonicalRoot[2]]
+          : canonicalRoot?.[0] === 'Element'
+            && canonicalRoot[1] === target
+            && Array.isArray(canonicalRoot[2])
+            && canonicalRoot[2][0] === 'Set'
+              ? canonicalRoot[2].slice(1)
+              : undefined;
       return {
         branchLatex,
         family: family.family,
@@ -229,6 +245,7 @@ function solveGeneratedBranchEquation<Reason extends string>({
           : solutionExpressionsFromExactLatex(result.exactLatex, target, {
               dropComplexInfinity,
             }),
+        ...(solutionMathJson ? { solutionMathJson } : {}),
         ...(result.formulaPayload ? { formulaPayload: result.formulaPayload } : {}),
       };
     }
@@ -277,6 +294,10 @@ export function solveGeneratedBranchEquations<Reason extends string = string>({
     kind: 'success',
     branches,
     solutionExpressions: branches.flatMap((branch) => branch.solutionExpressions),
+    ...(branches.every((branch) =>
+      branch.solutionMathJson?.length === branch.solutionExpressions.length)
+      ? { solutionMathJson: branches.flatMap((branch) => branch.solutionMathJson ?? []) }
+      : {}),
     exactSupplementLatex: [...new Set(branches.flatMap((branch) => branch.exactSupplementLatex ?? []))],
     ...(
       branches.some((branch) => branch.formulaPayload)

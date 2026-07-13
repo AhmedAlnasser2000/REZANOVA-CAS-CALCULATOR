@@ -82,14 +82,39 @@ export function expressionHasVariable(node: unknown) {
   return variables.size > 0;
 }
 
+export function solveDomainConstraintKey(constraint: SolveDomainConstraint) {
+  return constraint.kind === 'nonzero'
+      || constraint.kind === 'positive'
+      || constraint.kind === 'nonnegative'
+      ? JSON.stringify({ kind: constraint.kind, expressionLatex: constraint.expressionLatex })
+      : constraint.kind === 'expression-interval'
+        ? JSON.stringify({
+            kind: constraint.kind,
+            expressionLatex: constraint.expressionLatex,
+            min: constraint.min,
+            minInclusive: constraint.minInclusive,
+            max: constraint.max,
+            maxInclusive: constraint.maxInclusive,
+          })
+        : JSON.stringify(constraint);
+}
+
 export function mergeSolveDomainConstraints(
   left: SolveDomainConstraint[] = [],
   right: SolveDomainConstraint[] = [],
 ) {
   const merged = new Map<string, SolveDomainConstraint>();
   for (const constraint of [...left, ...right]) {
-    const key = JSON.stringify(constraint);
-    if (!merged.has(key)) {
+    const key = solveDomainConstraintKey(constraint);
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, constraint);
+    } else if (
+      'expressionMathJson' in constraint
+      && constraint.expressionMathJson !== undefined
+      && 'expressionMathJson' in existing
+      && existing.expressionMathJson === undefined
+    ) {
       merged.set(key, constraint);
     }
   }

@@ -16,7 +16,6 @@ import { solveBoundedComplexEquation, solveComplexSpecialFormRootsEquation } fro
 import { buildBranchReadback } from '../../equation/complex/branches';
 import { solveParameterizedRealCubicCardanoEquation } from '../../equation/parameterized/cubic-cardano';
 import { buildParameterizedBoundaryReadback } from '../../equation/parameterized/readback';
-import { solutionsToLatex } from '../../display/format';
 import {
   resolveEquationSolveTarget,
   retargetDomainConstraintsToX,
@@ -49,7 +48,14 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
   finalizeSharedSymbolicOutcome,
 } from './outcomes';
-import { createEquationResultOutcome } from '../../equation/equation-solve-result';
+import {
+  createEquationResultOutcome,
+} from '../../equation/equation-solve-result';
+import { createBoundedComplexEquationOutcome } from './parameterized-result-outcomes';
+import {
+  createSelectedTargetIsolationOutcome,
+  createSymbolicPolynomialCarrierOutcome,
+} from './symbolic-result-outcomes';
 
 const ce = new ComputeEngine();
 
@@ -344,15 +350,7 @@ export function solveSymbolicEquation(
     );
 
     if (isolated.kind === 'success') {
-      const outcome: DisplayOutcome = createEquationResultOutcome({
-        kind: 'success',
-        title: 'Solve',
-        exactLatex: isolated.exactLatex,
-        exactSupplementLatex: isolated.exactSupplementLatex,
-        detailSections: isolated.detailSections,
-        warnings: [],
-        resultOrigin: 'symbolic',
-      });
+      const outcome = createSelectedTargetIsolationOutcome(isolated);
 
       const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, targetResolution.selectedTarget);
 
@@ -421,6 +419,7 @@ export function solveSymbolicEquation(
       equationLatex,
       angleUnit,
       plannerResolvedLatex: planner.resolvedLatex,
+      plannerResolvedMathJson: planner.resolvedMathJson,
       plannerBadges: planner.badges,
       targetResolution,
     });
@@ -509,18 +508,10 @@ export function solveSymbolicEquation(
     );
 
     if (boundedComplex) {
-      const outcome: DisplayOutcome = createEquationResultOutcome({
-        kind: 'success',
-        title: 'Solve',
-        exactLatex: boundedComplex.exactLatex,
-        branchReadback: boundedComplex.branchReadback,
-        approxText: boundedComplex.approxText,
-        exactSupplementLatex: boundedComplex.exactSupplementLatex,
-        detailSections: boundedComplex.detailSections,
-        warnings: [],
-        resultOrigin: 'symbolic',
-        answerDomain: 'complex',
-      });
+      const outcome = createBoundedComplexEquationOutcome(
+        boundedComplex,
+        'equation-bounded-complex-roots',
+      );
 
       const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
 
@@ -631,24 +622,7 @@ export function solveSymbolicEquation(
     try {
       const carrierAttempt = solveBoundedPolynomialCarrierEquationAst(ce.parse(planner.resolvedLatex).json);
       if (carrierAttempt.kind === 'solved') {
-        const exactSolutions = carrierAttempt.roots.map((root) => root.latex);
-        const exactLatex = exactSolutions.length > 0
-          ? solutionsToLatex('x', exactSolutions)
-          : undefined;
-        const outcome: DisplayOutcome = createEquationResultOutcome({
-          kind: 'success',
-          title: 'Solve',
-          exactLatex,
-          exactSupplementLatex:
-            carrierAttempt.exactSupplementLatex && carrierAttempt.exactSupplementLatex.length > 0
-              ? carrierAttempt.exactSupplementLatex
-              : undefined,
-          approxText: carrierAttempt.roots.length > 0
-            ? `x \\approx ${carrierAttempt.roots.map((root) => root.numeric.toPrecision(8)).join(', ')}`
-            : undefined,
-          warnings: [],
-          resultOrigin: 'symbolic',
-        });
+        const outcome = createSymbolicPolynomialCarrierOutcome(carrierAttempt);
         const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, solveTarget);
 
         return attachEquationRuntimeEnvelope(
@@ -790,6 +764,7 @@ export function solveSymbolicEquation(
     answerMode: activeAnswerMode,
     equationLatex,
     sharedResolvedLatex,
+    sharedResolvedMathJson: planner.resolvedMathJson,
     plannerBadges: planner.badges,
     allowNumericOnly: Boolean(numericInterval),
     realDomainOnly: equationDomainIntent === 'real',
@@ -891,6 +866,7 @@ export async function solveSymbolicEquationAsync(
       answerMode: activeAnswerMode,
       equationLatex: normalizedEquationLatex,
       sharedResolvedLatex: error.sharedResolvedLatex ?? error.request.resolvedLatex,
+      sharedResolvedMathJson: planner.kind === 'blocked' ? undefined : planner.resolvedMathJson,
       plannerBadges,
       allowNumericOnly: Boolean(numericInterval),
       realDomainOnly: equationDomainIntent === 'real',

@@ -276,6 +276,16 @@ export function rootSetToExactLatex(
   }).exactLatex;
 }
 
+export function rootSetToCanonicalMath(
+  rootSet: EquationRootSet,
+  options: Pick<FiniteRootSetRenderOptions, 'setSeparator' | 'context' | 'presentationContext'> = {},
+) {
+  return renderFiniteRootSet(finiteRootSetFromRootSet(rootSet), {
+    preserveOrder: true,
+    ...options,
+  }).canonicalMath;
+}
+
 export function rootSetToBranchReadback(
   rootSet: EquationRootSet,
   options: {

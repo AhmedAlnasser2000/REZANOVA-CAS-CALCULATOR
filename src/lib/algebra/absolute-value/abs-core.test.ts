@@ -28,7 +28,15 @@ describe('abs-core', () => {
     expect(boxLatex(family?.comparisonNode)).toBe('\\frac{x}{2}+\\frac{3}{2}');
     expect(family?.branchEquations).toContain('x+1=\\frac{x}{2}+\\frac{3}{2}');
     expect(family?.branchEquations).toContain('x+1=\\frac{-x}{2}-\\frac{3}{2}');
-    expect(family?.branchConstraints).toEqual([{ kind: 'nonnegative', expressionLatex: '\\frac{x}{2}+\\frac{3}{2}' }]);
+    expect(family?.branchConstraints).toEqual([{
+      kind: 'nonnegative',
+      expressionLatex: '\\frac{x}{2}+\\frac{3}{2}',
+      expressionMathJson: [
+        'Add',
+        ['Multiply', 'x', ['Rational', 1, 2]],
+        ['Rational', 3, 2],
+      ],
+    }]);
   });
 
   it('rejects direct sums of unrelated absolute-value families', () => {

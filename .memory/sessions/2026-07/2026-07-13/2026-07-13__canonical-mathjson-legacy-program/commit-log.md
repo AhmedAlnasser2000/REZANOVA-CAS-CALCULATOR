@@ -29,3 +29,11 @@
 - scope: deep proven producer values, all-nine owner adapter options, enrichment-only authority parity, focused tests, inversion baseline repair, and durable evidence
 - push: not authorized
 - excluded: concurrent Notebook and AppMain files plus untracked `test-results/`
+
+## MATHJSON-COVERAGE-CALCULATE-EQUATION1
+
+- commit_message: `MATHJSON-COVERAGE-CALCULATE-EQUATION1`
+- status: verified; covered by standing commit approval
+- scope: Calculate and Equation producer-owned MathJSON coverage, bounded exemptions, fail-closed optional proof, inversion baseline refresh, visual evidence, and durable records
+- push: not authorized
+- excluded: concurrent Notebook files and untracked `test-results/`

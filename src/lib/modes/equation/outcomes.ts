@@ -6,12 +6,21 @@ import { normalizeRelationOperatorLatex } from '../../input/input-canonicalizati
 import { formatNamedEquationOutcomeTarget, rewriteEquationOutcomeTarget } from '../../equation/equation-target';
 import {
   canonicalMathValue,
+  tryProvenCanonicalMathValue,
   updateCanonicalResultMetadata,
 } from '../../result-contract';
 import type { ComplexLocusPolicyReport } from '../../equation/complex/locus-policy';
 import { buildComplexLocusEvidenceSections } from '../../equation/complex/locus-evidence';
-import type { ComplexSolveRegion, DisplayOutcome, EquationAnswerMode, PlannerBadge, SolutionKind } from '../../../types/calculator';
-import { createEquationResultOutcome } from '../../equation/equation-solve-result';
+import type { ComplexSolveRegion, DisplayOutcome, EquationAnswerMode, PlannerBadge, SerializableMathJson, SolutionKind } from '../../../types/calculator';
+import {
+  createEquationResultOutcome,
+  type EquationResultProducerInput,
+} from '../../equation/equation-solve-result';
+import {
+  equationMathValuesFromOwnedLeaves,
+  equationOwnedMathJsonLeavesFromDocument,
+  inferEquationMathJsonRoute,
+} from '../../equation/solve-result/math-values';
 
 const ce = new ComputeEngine();
 
@@ -21,6 +30,7 @@ export function attachEquationRuntimeEnvelope(
   resolvedLatex: string,
   plannerBadges: PlannerBadge[] | undefined,
   runtimeAdvisories?: DisplayOutcome['runtimeAdvisories'],
+  resolvedMathJson?: SerializableMathJson,
 ) {
   const attached = attachRuntimeEnvelope(outcome, {
     originalLatex,
@@ -37,8 +47,24 @@ export function attachEquationRuntimeEnvelope(
     ...(plannerBadges ?? []),
     ...(existingMetadata?.plannerBadges ?? []),
   ])];
-  const resolvedInput = existingMetadata?.resolvedInput
-    ?? (resolvedLatex !== originalLatex.trim() ? canonicalMathValue(resolvedLatex) : undefined);
+  const attachedResolvedLatex = existingMetadata?.resolvedInput?.canonicalLatex
+    ?? (resolvedLatex !== originalLatex.trim() ? resolvedLatex : undefined);
+  const existingResolvedInput = existingMetadata?.resolvedInput;
+  const compatibleExistingResolvedInput = existingResolvedInput?.canonicalLatex === attachedResolvedLatex
+    ? existingResolvedInput
+    : undefined;
+  const provenResolvedInput = attachedResolvedLatex !== undefined && resolvedMathJson !== undefined
+    ? tryProvenCanonicalMathValue({
+        canonicalLatex: attachedResolvedLatex,
+        mathJson: resolvedMathJson,
+        owner: 'equation',
+        routeId: inferEquationMathJsonRoute(outcome),
+        source: 'equation-semantic-planner-resolved-input',
+      })
+    : undefined;
+  const resolvedInput = provenResolvedInput
+    ?? compatibleExistingResolvedInput
+    ?? (attachedResolvedLatex ? canonicalMathValue(attachedResolvedLatex) : undefined);
   return {
     ...attached,
     canonicalResult: updateCanonicalResultMetadata(outcome.canonicalResult, {
@@ -85,20 +111,32 @@ export function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: Equa
   if (outcome.kind === 'prompt' || outcome.solutionKind === 'approximate-numeric') {
     return outcome;
   }
-  return createEquationResultOutcome({
+  if (!outcome.canonicalResult) {
+    return createEquationResultOutcome({ ...outcome, answerMode });
+  }
+  return {
     ...outcome,
     answerMode,
-  });
+    canonicalResult: updateCanonicalResultMetadata(outcome.canonicalResult, {
+      answerMode,
+    }),
+  };
 }
 
 export function withEquationSolutionKind(outcome: DisplayOutcome, solutionKind: SolutionKind): DisplayOutcome {
   if (outcome.kind !== 'success' || outcome.solutionKind) {
     return outcome;
   }
-  return createEquationResultOutcome({
+  if (!outcome.canonicalResult) {
+    return createEquationResultOutcome({ ...outcome, solutionKind });
+  }
+  return {
     ...outcome,
     solutionKind,
-  });
+    canonicalResult: updateCanonicalResultMetadata(outcome.canonicalResult, {
+      solutionKind,
+    }),
+  };
 }
 
 export function withEquationNumericRouteKind(outcome: DisplayOutcome): DisplayOutcome {
@@ -438,8 +476,10 @@ function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: st
 
   const remaining = outcome.exactSupplementLatex.filter((fact) =>
     !isTargetDependentConditionSupplement(fact, target));
-  return createEquationResultOutcome({
-    ...outcome,
+  const compatibilityOutcome = { ...outcome };
+  delete compatibilityOutcome.canonicalResult;
+  const producerInput: EquationResultProducerInput = {
+    ...compatibilityOutcome,
     exactSupplementLatex: remaining.length > 0 ? remaining : undefined,
     detailSections: [
       ...(outcome.detailSections ?? []),
@@ -450,6 +490,16 @@ function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: st
           `${conditionTextFromLegacySupplement(fact)} was checked against the displayed candidate root(s).`),
       },
     ],
+  };
+  return createEquationResultOutcome(producerInput, {
+    mathValues: equationMathValuesFromOwnedLeaves({
+      outcome: producerInput,
+      routeId: inferEquationMathJsonRoute(producerInput),
+      leaves: equationOwnedMathJsonLeavesFromDocument(
+        outcome.canonicalResult,
+        'equation-scoped-condition-rebuild',
+      ),
+    }),
   });
 }
 
@@ -460,6 +510,7 @@ export function finalizeSharedSymbolicOutcome(input: {
   equationLatex: string;
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
+  sharedResolvedMathJson?: SerializableMathJson;
   allowNumericOnly?: boolean;
   realDomainOnly?: boolean;
 }): DisplayOutcome {
@@ -482,6 +533,7 @@ export function finalizeSharedSymbolicOutcome(input: {
     input.sharedResolvedLatex,
     input.plannerBadges,
     classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+    input.sharedResolvedMathJson,
   );
 }
 

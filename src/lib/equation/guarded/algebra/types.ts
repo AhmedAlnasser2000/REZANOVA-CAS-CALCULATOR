@@ -10,6 +10,7 @@ import type {
   SupportedRadical,
   SupportedRationalPower,
 } from '../../../algebra/radical-core';
+import type { EquationMathJsonRouteId } from '../../solve-result/math-values';
 
 export type ExactScalar = {
   numerator: number;
@@ -55,6 +56,7 @@ export type AlgebraTransform = {
   radicalStepCost?: number;
   repeatedClearingStepCost?: number;
   polynomialCarrierHints?: unknown[];
+  mathJsonRouteId?: EquationMathJsonRouteId;
 } & DisplaySolveSummary;
 
 export type GuardedSolveRunner = (

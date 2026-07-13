@@ -5,6 +5,10 @@ import {
   deriveDisplayOutcomeFromCanonicalResult,
   type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
+import {
+  equationMathValuesFromOwnedPayload,
+  inferEquationMathJsonRoute,
+} from './math-values';
 
 type EquationSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
 type EquationErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
@@ -42,6 +46,14 @@ export function createEquationResultOutcome(
   }
 
   const success = input.kind === 'success' ? input : undefined;
+  const ownedMathValues = input.canonicalMath?.mathJson !== undefined
+    ? equationMathValuesFromOwnedPayload({
+        canonicalMath: input.canonicalMath,
+        branchReadback: input.branchReadback,
+        routeId: inferEquationMathJsonRoute(input),
+        source: 'equation-final-owner-canonical-math',
+      })
+    : undefined;
   const canonicalResult = buildCanonicalResultDocumentFromProducer({
     outcomeKind: input.kind,
     title: input.title,
@@ -109,7 +121,13 @@ export function createEquationResultOutcome(
           }
         : {}),
     },
-  }, options);
+  }, {
+    ...options,
+    mathValues: {
+      ...ownedMathValues,
+      ...options.mathValues,
+    },
+  });
 
   return deriveDisplayOutcomeFromCanonicalResult<EquationResultProducerOutcome>(
     canonicalResult,

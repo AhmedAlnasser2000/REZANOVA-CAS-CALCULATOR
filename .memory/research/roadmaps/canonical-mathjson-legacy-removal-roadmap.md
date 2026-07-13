@@ -2,7 +2,7 @@
 
 Date: 2026-07-12
 Last updated: 2026-07-13
-Status: active; Moves 0-3 verified; no push is authorized
+Status: active; verified through `MATHJSON-COVERAGE-CALCULATE-EQUATION1`; no push is authorized
 
 ## Attribution
 
@@ -105,3 +105,4 @@ This is an expandable sequence of named gates. A discovered prerequisite must be
 - `MATHJSON-COVERAGE-REGISTRY1`: verified. The registry covers 51 operation families, 27 canonical math path patterns, and all 100 native replay probes. Its accepted baseline is 262 leaves, 26 proven, 236 missing, and zero exemptions. CI, release, and seam selection run the additive gate.
 - `PROVEN-ANSWER-MATHJSON-CONTRACT1`: verified. Producer ownership and answer identity are compile-time branded and runtime checked; accepted trees pass existing bounds, structured-clone safety, standard Compute Engine boxing, semantic equivalence, and compatibility-printer parity. Canonical-LaTeX parsing is validation evidence only, and the proof returns the original producer tree rather than manufacturing an answer tree from formatted output.
 - `CANONICAL-PRODUCER-MATH-VALUE1`: verified. Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Table, Matrix, and Vector owner adapters accept direct canonical math structures whose optional trees require the proven-answer brand. Direct values may add MathJSON only when their complete non-MathJSON structure matches the existing compatibility projection. The inversion inventory also classifies the coverage reporter's previously omitted control read, bringing the audit-only consumer count from 594 to 595 without runtime authority growth.
+- `MATHJSON-COVERAGE-CALCULATE-EQUATION1`: verified. All 20 Calculate fixtures and every representable canonical leaf in the 25 Equation fixtures now carry producer-proven standard MathJSON. Coverage advances from 26 to 89 proven leaves, leaving 169 missing across later workspaces. Four exact fixture-scoped Equation supplements remain exempt because each compatibility string mixes a prose label with math; no displayed LaTeX was reparsed to invent a tree. Optional producer trees that fail semantic proof are omitted transactionally while canonical LaTeX remains authoritative. Broad verification passes 180 Equation/algebra/engine files and 1,506 tests, and isolated Chromium inspection confirms stable complex `i` notation, periodic-family rendering, radical range-guard evidence, and no overflow.

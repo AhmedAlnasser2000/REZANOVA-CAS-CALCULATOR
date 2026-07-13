@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "reason": "Initial MATHJSON-COVERAGE-REGISTRY1 native replay baseline",
+  "reason": "Calculate and Equation producer-owned answer coverage completed; four mixed prose/math compatibility supplements remain fixture-scoped standard MathJSON exemptions",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -54,15 +54,20 @@
     "vector.norm",
     "vector.orthogonalization"
   ],
-  "exemptionIds": [],
+  "exemptionIds": [
+    "equation-denominator-exclusion-labeled-supplement",
+    "equation-even-root-labeled-supplement",
+    "equation-rational-hole-labeled-supplement",
+    "equation-rational-simple-labeled-supplement"
+  ],
   "totals": {
     "fixtures": 100,
-    "bytes": 51813,
+    "bytes": 55053,
     "maxBytes": 2753,
     "leaves": 262,
-    "proven": 26,
-    "exempt": 0,
-    "missing": 236
+    "proven": 89,
+    "exempt": 4,
+    "missing": 169
   },
   "routes": {
     "calculate.ans": {
@@ -76,21 +81,21 @@
     },
     "calculate.arithmetic": {
       "fixtures": 2,
-      "bytes": 447,
-      "maxBytes": 243,
+      "bytes": 488,
+      "maxBytes": 271,
       "leaves": 4,
-      "proven": 2,
+      "proven": 4,
       "exempt": 0,
-      "missing": 2
+      "missing": 0
     },
     "calculate.exact-forms": {
       "fixtures": 2,
-      "bytes": 529,
-      "maxBytes": 273,
+      "bytes": 612,
+      "maxBytes": 340,
       "leaves": 4,
-      "proven": 1,
+      "proven": 4,
       "exempt": 0,
-      "missing": 3
+      "missing": 0
     },
     "calculate.inverse-trigonometry": {
       "fixtures": 4,
@@ -112,12 +117,12 @@
     },
     "calculate.transforms": {
       "fixtures": 6,
-      "bytes": 1184,
-      "maxBytes": 254,
+      "bytes": 1279,
+      "maxBytes": 349,
       "leaves": 7,
-      "proven": 6,
+      "proven": 7,
       "exempt": 0,
-      "missing": 1
+      "missing": 0
     },
     "calculate.trigonometry": {
       "fixtures": 3,
@@ -184,39 +189,39 @@
     },
     "equation.absolute-value": {
       "fixtures": 1,
-      "bytes": 565,
-      "maxBytes": 565,
+      "bytes": 651,
+      "maxBytes": 651,
       "leaves": 2,
-      "proven": 0,
+      "proven": 2,
       "exempt": 0,
-      "missing": 2
+      "missing": 0
     },
     "equation.answer-mode": {
       "fixtures": 1,
-      "bytes": 718,
-      "maxBytes": 718,
+      "bytes": 858,
+      "maxBytes": 858,
       "leaves": 3,
-      "proven": 0,
+      "proven": 3,
       "exempt": 0,
-      "missing": 3
+      "missing": 0
     },
     "equation.domain-boundary": {
       "fixtures": 4,
-      "bytes": 2729,
-      "maxBytes": 818,
+      "bytes": 3189,
+      "maxBytes": 1060,
       "leaves": 15,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 15
+      "proven": 13,
+      "exempt": 2,
+      "missing": 0
     },
     "equation.linear": {
       "fixtures": 3,
-      "bytes": 654,
-      "maxBytes": 218,
+      "bytes": 807,
+      "maxBytes": 289,
       "leaves": 3,
-      "proven": 0,
+      "proven": 3,
       "exempt": 0,
-      "missing": 3
+      "missing": 0
     },
     "equation.numeric-boundary": {
       "fixtures": 1,
@@ -229,30 +234,30 @@
     },
     "equation.polynomial": {
       "fixtures": 5,
-      "bytes": 3016,
-      "maxBytes": 969,
+      "bytes": 3715,
+      "maxBytes": 1065,
       "leaves": 11,
-      "proven": 3,
+      "proven": 11,
       "exempt": 0,
-      "missing": 8
+      "missing": 0
     },
     "equation.rational-radical": {
       "fixtures": 4,
-      "bytes": 3391,
-      "maxBytes": 1034,
+      "bytes": 3787,
+      "maxBytes": 1175,
       "leaves": 14,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 14
+      "proven": 12,
+      "exempt": 2,
+      "missing": 0
     },
     "equation.trig-exp-log": {
       "fixtures": 6,
-      "bytes": 4811,
-      "maxBytes": 1235,
+      "bytes": 5702,
+      "maxBytes": 1569,
       "leaves": 15,
-      "proven": 0,
+      "proven": 15,
       "exempt": 0,
-      "missing": 15
+      "missing": 0
     },
     "geometry.circle": {
       "fixtures": 1,
@@ -445,12 +450,12 @@
     },
     "trigonometry.equation": {
       "fixtures": 1,
-      "bytes": 1003,
-      "maxBytes": 1003,
+      "bytes": 1199,
+      "maxBytes": 1199,
       "leaves": 5,
-      "proven": 0,
+      "proven": 1,
       "exempt": 0,
-      "missing": 5
+      "missing": 4
     },
     "trigonometry.function": {
       "fixtures": 1,

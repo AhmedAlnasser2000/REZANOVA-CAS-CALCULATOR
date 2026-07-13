@@ -64,6 +64,11 @@ export type SelectedTargetIsolationSuccess = {
   exactLatex: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
+  mathJsonLeaves?: Array<{
+    canonicalLatex: string;
+    mathJson: MathJson;
+    source: string;
+  }>;
 };
 
 export type SelectedTargetIsolationStop = {
@@ -448,15 +453,20 @@ function formulaTargetLatex(
   latex: string;
   facts: string[];
   branchRows: ReturnType<typeof detailLineFromParts>[];
+  answerMathJson?: MathJson;
+  factMathJson?: MathJson[];
 } | null {
   const rhsLatex = latexForNode(otherSide);
   let candidate: string | null = null;
+  let answerMathJson: MathJson | undefined;
   const facts: string[] = [];
+  const factMathJson: MathJson[] = [];
   const branchRows: ReturnType<typeof detailLineFromParts>[] = [];
   const formattedTarget = formatTargetLatex(target);
 
   if (typeof expression === 'string' && expression === target) {
     candidate = `${formattedTarget}=${rhsLatex}`;
+    answerMathJson = ['Equal', target, otherSide];
   } else if (
     isArrayNode(expression)
     && expression[0] === 'Power'
@@ -467,6 +477,7 @@ function formulaTargetLatex(
     const exponent = expression[2];
     if (exponent === 1) {
       candidate = `${formattedTarget}=${rhsLatex}`;
+      answerMathJson = ['Equal', target, otherSide];
     } else if (exponent % 2 === 0) {
       const root = rootFormulaLatex(rhsLatex, exponent);
       candidate = `${formattedTarget}=\\pm ${root}`;
@@ -475,13 +486,15 @@ function formulaTargetLatex(
         `${formattedTarget}=-${root}, ${formattedTarget}=${root}`,
       )));
       facts.push(`${rhsLatex}\\ge0`);
+      factMathJson.push(['GreaterEqual', otherSide, 0]);
     } else {
       candidate = `${formattedTarget}=${rootFormulaLatex(rhsLatex, exponent)}`;
+      answerMathJson = ['Equal', target, ['Root', otherSide, exponent]];
     }
   }
 
   return candidate && candidate.length <= maxLatexLength
-    ? { latex: candidate, facts, branchRows }
+    ? { latex: candidate, facts, branchRows, answerMathJson, factMathJson }
     : null;
 }
 
@@ -584,6 +597,7 @@ export function isolateSelectedTargetEquation(
   let otherSide = leftHasTarget ? right : left;
   const steps: PeelStep[] = [];
   const facts: string[] = [];
+  const factMathJsonLeaves: NonNullable<SelectedTargetIsolationSuccess['mathJsonLeaves']> = [];
   const maxPeels = options.maxPeels ?? DEFAULT_MAX_PEELS;
   const compactTargetMaxLatexLength =
     options.compactTargetMaxLatexLength ?? DEFAULT_COMPACT_TARGET_MAX_LATEX_LENGTH;
@@ -625,6 +639,19 @@ export function isolateSelectedTargetEquation(
             allFacts,
             formula?.branchRows,
           ),
+          mathJsonLeaves: [
+            {
+              canonicalLatex: exactLatex,
+              mathJson: formula?.answerMathJson ?? ['Equal', expression, otherSide],
+              source: 'equation-selected-target-isolation-answer',
+            },
+            ...factMathJsonLeaves,
+            ...(formula?.facts ?? []).map((canonicalLatex, index) => ({
+              canonicalLatex,
+              mathJson: formula?.factMathJson?.[index] ?? ['GreaterEqual', otherSide, 0],
+              source: 'equation-selected-target-isolation-fact',
+            })),
+          ],
         };
       }
 
@@ -633,6 +660,11 @@ export function isolateSelectedTargetEquation(
 
     steps.push(peel.step);
     facts.push(...peel.step.facts);
+    factMathJsonLeaves.push(...peel.step.facts.map((canonicalLatex, index) => ({
+      canonicalLatex,
+      mathJson: peel.step.factNodes[index],
+      source: 'equation-selected-target-isolation-peel-fact',
+    })));
     expression = peel.step.expression;
     otherSide = peel.step.otherSide;
 
@@ -665,6 +697,21 @@ export function isolateSelectedTargetEquation(
           allFacts,
           formula.branchRows,
         ),
+        mathJsonLeaves: [
+          ...(formula.answerMathJson
+            ? [{
+                canonicalLatex: formula.latex,
+                mathJson: formula.answerMathJson,
+                source: 'equation-selected-target-isolation-answer',
+              }]
+            : []),
+          ...factMathJsonLeaves,
+          ...formula.facts.map((canonicalLatex, index) => ({
+            canonicalLatex,
+            mathJson: formula.factMathJson?.[index] ?? ['GreaterEqual', otherSide, 0],
+            source: 'equation-selected-target-isolation-fact',
+          })),
+        ],
       });
     }
   }
@@ -687,6 +734,14 @@ export function isolateSelectedTargetEquation(
         isolatedEquationLatex,
         unique(facts),
       ),
+      mathJsonLeaves: [
+        {
+          canonicalLatex: isolatedEquationLatex,
+          mathJson: ['Equal', expression, otherSide],
+          source: 'equation-selected-target-isolation-answer',
+        },
+        ...factMathJsonLeaves,
+      ],
     });
   }
 

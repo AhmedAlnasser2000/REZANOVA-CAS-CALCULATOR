@@ -42,7 +42,7 @@ export type ProvenAnswerMathJsonEvidence = {
   nodeCount: number;
   depth: number;
   byteLength: number;
-  semanticRelation: 'structural' | 'equal';
+  semanticRelation: 'structural' | 'equal' | 'simplified';
   serializedLatex: string;
   printerSource: 'math-json' | 'compatibility-fallback';
 };
@@ -183,7 +183,11 @@ export function proveAnswerMathJson(input: {
   }
 
   const structurallySame = answerExpression.isSame(canonicalExpression);
-  const mathematicallyEqual = structurallySame || answerExpression.isEqual(canonicalExpression) === true;
+  const directlyEqual = structurallySame || answerExpression.isEqual(canonicalExpression) === true;
+  const simplifiedSame = directlyEqual
+    ? false
+    : answerExpression.simplify().latex === canonicalExpression.simplify().latex;
+  const mathematicallyEqual = directlyEqual || simplifiedSame;
   if (!mathematicallyEqual) {
     return failure(
       'semantic-mismatch',
@@ -215,7 +219,11 @@ export function proveAnswerMathJson(input: {
       nodeCount: validation.validated.nodeCount,
       depth: validation.validated.depth,
       byteLength: validation.validated.byteLength,
-      semanticRelation: structurallySame ? 'structural' : 'equal',
+      semanticRelation: structurallySame
+        ? 'structural'
+        : simplifiedSame
+          ? 'simplified'
+          : 'equal',
       serializedLatex: printed.serializedLatex ?? printed.canonicalLatex,
       printerSource: printed.source === 'math-json' ? 'math-json' : 'compatibility-fallback',
     },
@@ -229,4 +237,49 @@ export function canonicalMathValueFromProof(
     canonicalLatex: evidence.canonicalLatex,
     mathJson: evidence.mathJson,
   };
+}
+
+export function requireProvenCanonicalMathValue(input: {
+  canonicalLatex: string;
+  mathJson: unknown;
+  owner: HistoryReplayWorkspace;
+  routeId: MathJsonRouteId;
+  source: string;
+}): ProvenCanonicalMathValue {
+  const value = tryProvenCanonicalMathValue(input);
+  if (!value) {
+    const result = proveAnswerMathJson({
+      canonicalLatex: input.canonicalLatex,
+      candidate: declareProducerOwnedAnswerMathJson({
+        mathJson: input.mathJson,
+        owner: input.owner,
+        routeId: input.routeId,
+        source: input.source,
+      }),
+    });
+    if (result.ok) return canonicalMathValueFromProof(result.evidence);
+    throw new Error(
+      `Producer MathJSON proof failed for ${input.routeId}: ${result.failure.reason}: ${result.failure.message}`,
+    );
+  }
+  return value;
+}
+
+export function tryProvenCanonicalMathValue(input: {
+  canonicalLatex: string;
+  mathJson: unknown;
+  owner: HistoryReplayWorkspace;
+  routeId: MathJsonRouteId;
+  source: string;
+}): ProvenCanonicalMathValue | undefined {
+  const result = proveAnswerMathJson({
+    canonicalLatex: input.canonicalLatex,
+    candidate: declareProducerOwnedAnswerMathJson({
+      mathJson: input.mathJson,
+      owner: input.owner,
+      routeId: input.routeId,
+      source: input.source,
+    }),
+  });
+  return result.ok ? canonicalMathValueFromProof(result.evidence) : undefined;
 }

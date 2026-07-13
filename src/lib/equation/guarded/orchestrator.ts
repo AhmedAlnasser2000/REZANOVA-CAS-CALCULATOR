@@ -4,6 +4,7 @@ import { detectRealRangeImpossibility } from '../range-impossibility';
 import type {
   DisplayOutcome,
   GuardedSolveRequest,
+  RangeImpossibilityResult,
 } from '../../../types/calculator';
 import {
   UNSUPPORTED_FAMILY_ERROR,
@@ -28,6 +29,31 @@ import type {
   GuardedEquationStageReplayTrace,
   GuardedSolveRunner,
 } from './types';
+import { createEquationResultOutcome } from '../solve-result/producer';
+import { equationMathValuesFromOwnedLeaves } from '../solve-result/math-values';
+
+function rangeGuardOutcome(
+  range: Extract<RangeImpossibilityResult, { kind: 'impossible' }>,
+) {
+  const outcome = errorOutcome(
+    'Solve',
+    range.error,
+    [],
+    [],
+    ['Range Guard'],
+    {
+      solveSummaryText: range.summaryText,
+      solveSummaryParts: range.summaryParts,
+    },
+  );
+  return createEquationResultOutcome(outcome, {
+    mathValues: equationMathValuesFromOwnedLeaves({
+      outcome,
+      routeId: 'equation.domain-boundary',
+      leaves: range.mathJsonLeaves ?? [],
+    }),
+  });
+}
 
 function runGuardedStageSequence(
   descriptors: GuardedEquationStageDescriptor[],
@@ -226,17 +252,11 @@ function runGuardedEquationSolveInternal(
   const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
 
   if (rangeImpossibility.kind === 'impossible') {
-    return attachAlgebraMetadata(errorOutcome(
-      'Solve',
-      rangeImpossibility.error,
-      [],
-      [],
-      ['Range Guard'],
-      {
-        solveSummaryText: rangeImpossibility.summaryText,
-        solveSummaryParts: rangeImpossibility.summaryParts,
-      },
-    ), request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(
+      rangeGuardOutcome(rangeImpossibility),
+      request.resolvedLatex,
+      preparedRequest,
+    );
   }
 
   const stagedOutcome = runGuardedStageSequence(
@@ -323,17 +343,11 @@ async function runGuardedEquationSolveInternalAsync(
   const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
 
   if (rangeImpossibility.kind === 'impossible') {
-    return attachAlgebraMetadata(errorOutcome(
-      'Solve',
-      rangeImpossibility.error,
-      [],
-      [],
-      ['Range Guard'],
-      {
-        solveSummaryText: rangeImpossibility.summaryText,
-        solveSummaryParts: rangeImpossibility.summaryParts,
-      },
-    ), request.resolvedLatex, preparedRequest);
+    return attachAlgebraMetadata(
+      rangeGuardOutcome(rangeImpossibility),
+      request.resolvedLatex,
+      preparedRequest,
+    );
   }
 
   const stagedOutcome = await runGuardedStageSequenceAsync(

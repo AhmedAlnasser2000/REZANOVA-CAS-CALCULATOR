@@ -78,6 +78,11 @@ export type RangeImpossibilityResult =
       reason: RangeProofReason;
       derivedRange: RealRangeInterval;
       comparedTarget?: string;
+      mathJsonLeaves?: Array<{
+        canonicalLatex: string;
+        mathJson: import('./math-payload-types').SerializableMathJson;
+        source: string;
+      }>;
     };
 
 export type PlannerStep =
@@ -95,6 +100,7 @@ export type PlannerOutcome =
       originalLatex: string;
       canonicalLatex: string;
       resolvedLatex: string;
+      resolvedMathJson: import('./math-payload-types').SerializableMathJson;
       badges: PlannerBadge[];
       steps: PlannerStep[];
       derivativeStrategies?: CalculusDerivativeStrategy[];
@@ -141,10 +147,10 @@ export type ComplexSolveRegion = {
 
 export type SolveDomainConstraint =
   | { kind: 'interval'; variable: 'x'; min?: number; minInclusive: boolean; max?: number; maxInclusive: boolean }
-  | { kind: 'nonzero'; expressionLatex: string }
-  | { kind: 'positive'; expressionLatex: string }
-  | { kind: 'nonnegative'; expressionLatex: string }
-  | { kind: 'expression-interval'; expressionLatex: string; min?: number; minInclusive: boolean; max?: number; maxInclusive: boolean }
+  | { kind: 'nonzero'; expressionLatex: string; expressionMathJson?: import('./math-payload-types').SerializableMathJson }
+  | { kind: 'positive'; expressionLatex: string; expressionMathJson?: import('./math-payload-types').SerializableMathJson }
+  | { kind: 'nonnegative'; expressionLatex: string; expressionMathJson?: import('./math-payload-types').SerializableMathJson }
+  | { kind: 'expression-interval'; expressionLatex: string; expressionMathJson?: import('./math-payload-types').SerializableMathJson; min?: number; minInclusive: boolean; max?: number; maxInclusive: boolean }
   | { kind: 'carrier-range'; carrier: 'sin' | 'cos'; min: -1; max: 1 }
   | { kind: 'carrier-square-range'; carrier: 'sin2' | 'cos2'; min: 0; max: 1 }
   | { kind: 'exp-positive' };
@@ -216,6 +222,7 @@ export type SubstitutionSolveDiagnostics = {
 export type GuardedSolveRequest = {
   originalLatex: string;
   resolvedLatex: string;
+  resolvedMathJson?: import('./math-payload-types').SerializableMathJson;
   solveTarget?: string;
   validationLatex?: string;
   compositionInversionDepth?: number;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { DisplayOutcome } from '../../../types/calculator';
 import { getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
 import {
-  projectDisplayOutcomeToCanonicalResult,
+  resolveCanonicalResultForConsumer,
   resolveCanonicalResultForStorage,
 } from '../../result-contract';
 import {
@@ -14,8 +14,8 @@ import {
 import { makeRequest } from './test-support';
 
 function expectBoundaryParity(direct: DisplayOutcome, wrapped: DisplayOutcome) {
-  const directDocument = projectDisplayOutcomeToCanonicalResult(direct);
-  const wrappedDocument = projectDisplayOutcomeToCanonicalResult(wrapped);
+  const directDocument = resolveCanonicalResultForConsumer(direct);
+  const wrappedDocument = resolveCanonicalResultForConsumer(wrapped);
   expect(directDocument.ok).toBe(true);
   expect(wrappedDocument.ok).toBe(true);
   if (!directDocument.ok || !wrappedDocument.ok) return;

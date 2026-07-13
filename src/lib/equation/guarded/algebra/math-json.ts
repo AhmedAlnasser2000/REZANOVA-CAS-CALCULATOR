@@ -7,6 +7,7 @@ import type {
   SolveDomainConstraint,
 } from '../../../../types/calculator';
 import type { ExactScalar, PlaceholderLinearExpression } from './types';
+import { solveDomainConstraintKey } from '../../../algebra/radical-core';
 
 const ce = new ComputeEngine();
 export const PLACEHOLDER_SYMBOL = '__calcwiz_r3_u';
@@ -409,8 +410,8 @@ function subtractConstraints(
     return [];
   }
 
-  const existingKeys = new Set(existing.map((constraint) => JSON.stringify(constraint)));
-  return constraints.filter((constraint) => !existingKeys.has(JSON.stringify(constraint)));
+  const existingKeys = new Set(existing.map(solveDomainConstraintKey));
+  return constraints.filter((constraint) => !existingKeys.has(solveDomainConstraintKey(constraint)));
 }
 
 function getRadicalTransformDepth(request: GuardedSolveRequest) {

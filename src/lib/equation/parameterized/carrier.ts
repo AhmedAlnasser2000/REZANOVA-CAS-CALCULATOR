@@ -1,5 +1,9 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayBranchReadback, DisplayDetailSection } from '../../../types/calculator';
+import type {
+  DisplayBranchReadback,
+  DisplayDetailSection,
+  DisplayMathPayloadV1,
+} from '../../../types/calculator';
 import { exactScalarToNumber, readExactScalarNode } from '../../algebra/polynomial-core';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import { mathDetailSection } from '../../display/result-detail-lines';
@@ -50,6 +54,7 @@ export type ParameterizedCarrierSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
+  canonicalMath?: DisplayMathPayloadV1;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
@@ -592,14 +597,28 @@ export function solveParameterizedCarrierEquation(
     extraSections: [mathDetailSection('Carrier Branches', branchEquations)],
   });
 
+  const solutionExpressions = dedupe(solvedBranches.solutionExpressions);
+  const exactLatex = exactLatexForSolutions(target, solutionExpressions);
+  const solutionMathJson = solvedBranches.solutionMathJson;
+  const canonicalMath: DisplayMathPayloadV1 | undefined = solutionMathJson?.length === solutionExpressions.length
+    ? {
+        version: 1 as const,
+        canonicalLatex: exactLatex,
+        mathJson: solutionMathJson.length === 1
+          ? ['Equal', target, solutionMathJson[0]]
+          : ['Element', target, ['Set', ...solutionMathJson]],
+      }
+    : undefined;
+
   return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: exactLatexForSolutions(target, solvedBranches.solutionExpressions),
+    exactLatex,
+    ...(canonicalMath ? { canonicalMath } : {}),
     branchReadback: finiteBranchReadbackForNormalizedBranches({
       targetLatex: target,
-      branchesLatex: dedupe(solvedBranches.solutionExpressions),
+      branchesLatex: solutionExpressions,
       preserveOrder: true,
       source: 'equation-parameterized-carrier',
     }),

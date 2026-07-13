@@ -17,6 +17,7 @@ import type {
   DisplayOutcome,
   EquationExecutionBudget,
   GuardedSolveRequest,
+  SerializableMathJson,
 } from '../../../types/calculator';
 import type {
   GuardedEquationCooperativeCheckpoint,
@@ -33,10 +34,124 @@ import {
 } from './merge';
 import { equationStateKey } from './state-key';
 import { solveSummaryFromDisplayFields } from '../../display/result-detail-lines';
-import { createEquationResultOutcome } from '../solve-result/producer';
+import {
+  createEquationResultOutcome,
+  type EquationResultProducerInput,
+} from '../solve-result/producer';
+import {
+  equationMathValuesFromOwnedLeaves,
+  equationOwnedMathJsonLeavesFromDocument,
+  inferEquationMathJsonRoute,
+  type EquationOwnedMathJsonLeaf,
+} from '../solve-result/math-values';
 
 const ce = new ComputeEngine();
 const EXACT_MATCH_TOLERANCE = 1e-6;
+
+function rebuildSubstitutionOutcome(
+  input: EquationResultProducerInput,
+  source: DisplayOutcome,
+  additionalLeaves: readonly EquationOwnedMathJsonLeaf[] = [],
+) {
+  const leaves = [
+    ...equationOwnedMathJsonLeavesFromDocument(
+      source.kind === 'prompt' ? undefined : source.canonicalResult,
+      'equation-substitution-validation-input',
+    ),
+    ...additionalLeaves,
+  ];
+  return createEquationResultOutcome(input, {
+    mathValues: equationMathValuesFromOwnedLeaves({
+      outcome: input,
+      routeId: inferEquationMathJsonRoute(input),
+      leaves,
+    }),
+  });
+}
+
+function acceptedCanonicalEvidence(
+  source: DisplayOutcome,
+  exactLatex: string | undefined,
+  acceptedLatex: readonly string[],
+) {
+  if (!exactLatex || source.kind === 'prompt') return undefined;
+  const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
+    source.canonicalResult,
+    'equation-substitution-accepted-input',
+  );
+  const nodes = acceptedLatex.map((latex) =>
+    sourceLeaves.find((leaf) => leaf.canonicalLatex === latex)?.mathJson);
+  if (nodes.some((node) => node === undefined)) return undefined;
+  const mathJson: SerializableMathJson = nodes.length === 1
+    ? ['Equal', 'x', nodes[0] as SerializableMathJson]
+    : ['Element', 'x', ['Set', ...nodes] as SerializableMathJson];
+  return {
+    canonicalMath: { version: 1 as const, canonicalLatex: exactLatex, mathJson },
+    leaves: [{
+      canonicalLatex: exactLatex,
+      mathJson,
+      source: 'equation-substitution-accepted-result',
+    }],
+  };
+}
+
+function rejectedCandidateEvidence(
+  sources: readonly DisplayOutcome[],
+  rejected: ReturnType<typeof validateCandidateRoots>['rejected'],
+  exactCandidatesLatex: readonly string[],
+) {
+  const evidence = extraneousEvidenceFromRejectedCandidates(rejected, { exactCandidatesLatex });
+  const nativeCandidates = sources.flatMap((source, sourceIndex) => {
+    if (source.kind === 'prompt') return [];
+    const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
+      source.canonicalResult,
+      `equation-substitution-rejected-input:${sourceIndex}`,
+    );
+    const answerRoot = source.canonicalResult?.primaryMath?.mathJson;
+    const answerNodes: unknown[] = Array.isArray(answerRoot)
+      && answerRoot[0] === 'Equal'
+      && answerRoot.length === 3
+        ? [answerRoot[2]]
+        : Array.isArray(answerRoot)
+          && answerRoot[0] === 'Element'
+          && Array.isArray(answerRoot[2])
+          && answerRoot[2][0] === 'Set'
+            ? answerRoot[2].slice(1)
+            : [];
+    return [
+      ...sourceLeaves.map((leaf) => ({ mathJson: leaf.mathJson, source: leaf.source })),
+      ...answerNodes.map((mathJson, index) => ({
+        mathJson,
+        source: `equation-substitution-rejected-answer:${sourceIndex}:${index}`,
+      })),
+    ];
+  });
+  const leaves = evidence.flatMap((entry): EquationOwnedMathJsonLeaf[] => {
+    if (!entry.candidateLatex || entry.approxValue === undefined) return [];
+    const native = nativeCandidates.find((leaf) => {
+      try {
+        const numeric = ce.box(leaf.mathJson as Parameters<typeof ce.box>[0]).N?.().json;
+        const value = typeof numeric === 'number'
+          ? numeric
+          : numeric && typeof numeric === 'object' && 'num' in numeric
+            ? Number((numeric as { num: string }).num)
+            : Number.NaN;
+        return Number.isFinite(value)
+          && Math.abs(value - entry.approxValue!) <= EXACT_MATCH_TOLERANCE;
+      } catch {
+        return false;
+      }
+    });
+    return native
+      ? [{
+          canonicalLatex: entry.candidateLatex,
+          mathJson: native.mathJson,
+          source: `${native.source}:rejected-candidate`,
+        }]
+      : [];
+  });
+  return { evidence, leaves };
+}
 
 type GuardedSolveRunner = (
   request: GuardedSolveRequest,
@@ -257,6 +372,11 @@ function substitutionSolve(
   );
 
   if (validation.accepted.length === 0) {
+    const rejectedEvidence = rejectedCandidateEvidence(
+      outcomes,
+      validation.rejected,
+      extractExactSolutions(merged.exactLatex),
+    );
     const outcome = errorOutcome(
       'Solve',
       buildEquationCandidateRejectionMessage(
@@ -270,15 +390,14 @@ function substitutionSolve(
       substitution.diagnostics,
       merged.numericMethod,
     );
-    return createEquationResultOutcome({
+    const producerInput: EquationResultProducerInput = {
       ...outcome,
       detailSections: appendExtraneousSolutionsDetailSection(
         outcome.detailSections,
-        extraneousEvidenceFromRejectedCandidates(validation.rejected, {
-          exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
-        }),
+        rejectedEvidence.evidence,
       ),
-    });
+    };
+    return rebuildSubstitutionOutcome(producerInput, merged, rejectedEvidence.leaves);
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -289,11 +408,18 @@ function substitutionSolve(
     ? solutionsToLatex('x', acceptedLatex)
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
+  const rejectedEvidence = rejectedCandidateEvidence(
+    outcomes,
+    validation.rejected,
+    extractExactSolutions(merged.exactLatex),
+  );
 
-  return createEquationResultOutcome({
+  const acceptedEvidence = acceptedCanonicalEvidence(merged, exactLatex, acceptedLatex);
+  const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
     exactLatex,
+    ...(acceptedEvidence ? { canonicalMath: acceptedEvidence.canonicalMath } : {}),
     branchReadback: branchReadbackForValidatedCandidates(
       acceptedLatex,
       validation.accepted,
@@ -314,13 +440,16 @@ function substitutionSolve(
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
     detailSections: appendExtraneousSolutionsDetailSection(
       merged.detailSections,
-      extraneousEvidenceFromRejectedCandidates(validation.rejected, {
-        exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
-      }),
+      rejectedEvidence.evidence,
     ),
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
-  });
+  };
+  return rebuildSubstitutionOutcome(
+    producerInput,
+    merged,
+    [...(acceptedEvidence?.leaves ?? []), ...rejectedEvidence.leaves],
+  );
 }
 
 async function substitutionSolveAsync(
@@ -476,6 +605,11 @@ async function substitutionSolveAsync(
   );
 
   if (validation.accepted.length === 0) {
+    const rejectedEvidence = rejectedCandidateEvidence(
+      outcomes,
+      validation.rejected,
+      extractExactSolutions(merged.exactLatex),
+    );
     const outcome = errorOutcome(
       'Solve',
       buildEquationCandidateRejectionMessage(
@@ -489,15 +623,14 @@ async function substitutionSolveAsync(
       substitution.diagnostics,
       merged.numericMethod,
     );
-    return createEquationResultOutcome({
+    const producerInput: EquationResultProducerInput = {
       ...outcome,
       detailSections: appendExtraneousSolutionsDetailSection(
         outcome.detailSections,
-        extraneousEvidenceFromRejectedCandidates(validation.rejected, {
-          exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
-        }),
+        rejectedEvidence.evidence,
       ),
-    });
+    };
+    return rebuildSubstitutionOutcome(producerInput, merged, rejectedEvidence.leaves);
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -508,11 +641,18 @@ async function substitutionSolveAsync(
     ? solutionsToLatex('x', acceptedLatex)
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
+  const rejectedEvidence = rejectedCandidateEvidence(
+    outcomes,
+    validation.rejected,
+    extractExactSolutions(merged.exactLatex),
+  );
 
-  return createEquationResultOutcome({
+  const acceptedEvidence = acceptedCanonicalEvidence(merged, exactLatex, acceptedLatex);
+  const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
     exactLatex,
+    ...(acceptedEvidence ? { canonicalMath: acceptedEvidence.canonicalMath } : {}),
     branchReadback: branchReadbackForValidatedCandidates(
       acceptedLatex,
       validation.accepted,
@@ -533,13 +673,16 @@ async function substitutionSolveAsync(
     rejectedCandidateCount: validation.rejected.length > 0 ? validation.rejected.length : merged.rejectedCandidateCount,
     detailSections: appendExtraneousSolutionsDetailSection(
       merged.detailSections,
-      extraneousEvidenceFromRejectedCandidates(validation.rejected, {
-        exactCandidatesLatex: extractExactSolutions(merged.exactLatex),
-      }),
+      rejectedEvidence.evidence,
     ),
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
-  });
+  };
+  return rebuildSubstitutionOutcome(
+    producerInput,
+    merged,
+    [...(acceptedEvidence?.leaves ?? []), ...rejectedEvidence.leaves],
+  );
 }
 
 export { substitutionSolve, substitutionSolveAsync };

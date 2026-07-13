@@ -17,8 +17,8 @@
 ## Program Status
 
 - Status: active.
-- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`, `CANONICAL-PRODUCER-MATH-VALUE1`.
-- Next gate: `MATHJSON-COVERAGE-CALCULATE-EQUATION1`.
+- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`, `CANONICAL-PRODUCER-MATH-VALUE1`, `MATHJSON-COVERAGE-CALCULATE-EQUATION1`.
+- Next gate: `MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1`.
 - Starting commit: `0a173b61`.
 - Push: not authorized.
 - Commit approval: standing approval covers all 19 numbered program moves and paired named subgates.
@@ -31,6 +31,8 @@
 - The original producer tree becomes authority; a parsed validation tree never does.
 - Private Calcwiz/Rezanova MathJSON heads are rejected; domain-native IR stays behind workspace-owned adapters.
 - All nine owner adapters accept deeply typed proven canonical values with exact compatibility-shape parity.
+- Calculate and Equation carry 89 proven leaves across the executable corpus; four mixed prose/math supplements are bounded exemptions and 169 later-lane leaves remain missing.
+- Optional Equation trees fail proof closed by omitting MathJSON while retaining identical canonical LaTeX and visible output.
 
 ## Durable Files
 

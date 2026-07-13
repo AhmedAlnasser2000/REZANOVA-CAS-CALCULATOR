@@ -4,6 +4,26 @@ import { createEquationFiniteRootSuccessOutcome } from './finite-root-producer';
 import { requireNativeEquationResult } from './native-result';
 
 describe('Equation native result parity', () => {
+  it('fails optional MathJSON proof closed without changing the visible result', () => {
+    const native = createEquationFiniteRootSuccessOutcome({
+      title: 'Solve',
+      exactLatex: 'x=1',
+      canonicalMath: {
+        version: 1,
+        canonicalLatex: 'x=1',
+        mathJson: ['Equal', 'x', 2],
+      },
+      warnings: [],
+      resultOrigin: 'symbolic',
+      mathJsonRouteId: 'equation.linear',
+      mathJsonSource: 'native-result-test:mismatched-tree',
+    });
+
+    expect(native.exactLatex).toBe('x=1');
+    expect(native.canonicalMath).toBeUndefined();
+    expect(native.canonicalResult?.primaryMath).toEqual({ canonicalLatex: 'x=1' });
+  });
+
   it('retains matching documents and rejects stale legacy enrichment', () => {
     const native = createEquationFiniteRootSuccessOutcome({
       title: 'Solve',
@@ -15,6 +35,8 @@ describe('Equation native result parity', () => {
       },
       warnings: [],
       resultOrigin: 'symbolic',
+      mathJsonRouteId: 'equation.linear',
+      mathJsonSource: 'native-result-test',
     });
     expect(requireNativeEquationResult(native)).toBe(native);
 

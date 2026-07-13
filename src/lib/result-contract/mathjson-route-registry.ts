@@ -109,4 +109,41 @@ export type MathJsonCoverageExemption = {
   rationale: string;
 };
 
-export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] = [];
+export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] = [
+  {
+    id: 'equation-denominator-exclusion-labeled-supplement',
+    routeId: 'equation.domain-boundary',
+    leafPath: 'supplements[*]',
+    fixtureId: 'equation-denominator-exclusion',
+    owner: 'equation',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility supplement combines the prose label "Exclusions" with a mathematical nonzero condition; its condition is separately proven in typed details.',
+  },
+  {
+    id: 'equation-even-root-labeled-supplement',
+    routeId: 'equation.domain-boundary',
+    leafPath: 'supplements[*]',
+    fixtureId: 'equation-even-root-domain',
+    owner: 'equation',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility supplement combines the prose label "Conditions" with a mathematical inequality; its condition is separately proven in typed details.',
+  },
+  {
+    id: 'equation-rational-hole-labeled-supplement',
+    routeId: 'equation.rational-radical',
+    leafPath: 'supplements[*]',
+    fixtureId: 'equation-rational-hole',
+    owner: 'equation',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility supplement combines the prose label "Exclusions" with a denominator condition; the denominator expression is separately proven in typed domain facts.',
+  },
+  {
+    id: 'equation-rational-simple-labeled-supplement',
+    routeId: 'equation.rational-radical',
+    leafPath: 'supplements[*]',
+    fixtureId: 'equation-rational-simple',
+    owner: 'equation',
+    reason: 'standard-mathjson-unrepresentable',
+    rationale: 'The compatibility supplement combines the prose label "Exclusions" with a denominator condition; the denominator expression is separately proven in typed domain facts.',
+  },
+];

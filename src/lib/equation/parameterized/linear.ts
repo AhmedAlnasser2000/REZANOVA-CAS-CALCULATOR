@@ -9,6 +9,7 @@ import {
   createFiniteRootSet,
   renderFiniteRootSet,
 } from '../solution/finite-root-set';
+import { simplifyNode } from '../../symbolic-engine/differentiation';
 
 const ce = new ComputeEngine();
 
@@ -481,7 +482,9 @@ export function solveParameterizedLinearEquation(
     );
   }
 
-  const solution = divideNodes(negateNode(normalized.constant), normalized.coefficient);
+  const solution = simplifyNode(
+    divideNodes(negateNode(normalized.constant), normalized.coefficient),
+  ) as MathJson;
   const renderedRoots = renderFiniteRootSet(
     createFiniteRootSet({
       targetLatex: target,

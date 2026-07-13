@@ -15,7 +15,10 @@ import {
 } from '../candidate/extraneous';
 import {
   adaptBoundedPolynomialSolveResultToRootSet,
+  createExactFiniteRoot,
+  createRootSet,
   rootSetToBranchReadback,
+  rootSetToCanonicalMath,
   rootSetToExactLatex,
 } from '../roots/representation';
 import { solutionsToLatex } from '../../display/format';
@@ -38,9 +41,54 @@ import {
   isMathJsonArray,
 } from './request-prep';
 import { profileEquationResult } from '../../display/printer';
-import { createEquationResultOutcome } from '../solve-result/producer';
+import {
+  createEquationResultOutcome,
+  type EquationResultProducerInput,
+} from '../solve-result/producer';
+import {
+  equationMathValuesFromOwnedLeaves,
+  inferEquationMathJsonRoute,
+} from '../solve-result/math-values';
+import { tryProvenCanonicalMathValue } from '../../result-contract';
 
 const ce = new ComputeEngine();
+
+function provenCarrierRootLeaves(
+  roots: Array<{ latex: string; node?: unknown }>,
+  source: string,
+) {
+  return roots.flatMap((root, index) => {
+    if (root.node === undefined) return [];
+    const leafSource = `${source}:${index}`;
+    const proof = tryProvenCanonicalMathValue({
+      canonicalLatex: root.latex,
+      mathJson: root.node,
+      owner: 'equation',
+      routeId: 'equation.polynomial',
+      source: leafSource,
+    });
+    return proof
+      ? [{ canonicalLatex: root.latex, mathJson: root.node, source: leafSource }]
+      : [];
+  });
+}
+
+function provenCarrierCanonicalMath(
+  canonicalMath: ReturnType<typeof rootSetToCanonicalMath>,
+  canonicalLatex: string | undefined,
+  source: string,
+) {
+  if (!canonicalMath || !canonicalLatex || canonicalMath.mathJson === undefined) return undefined;
+  return tryProvenCanonicalMathValue({
+    canonicalLatex,
+    mathJson: canonicalMath.mathJson,
+    owner: 'equation',
+    routeId: 'equation.polynomial',
+    source,
+  })
+    ? { ...canonicalMath, canonicalLatex }
+    : undefined;
+}
 
 function shouldAttemptPolynomialCarrierFollowOn(request: GuardedSolveRequest) {
   return (request.radicalTransformDepth ?? 0) > 0
@@ -136,11 +184,11 @@ function runMixedFactorEquationSolve(
 }
 
 function matchAcceptedSolvedRoots(
-  roots: Array<{ latex: string; numeric: number }>,
+  roots: Array<{ latex: string; numeric: number; node?: unknown }>,
   acceptedValues: number[],
 ) {
   const used = new Set<number>();
-  const matched: string[] = [];
+  const matched: Array<{ latex: string; numeric: number; node?: unknown }> = [];
 
   for (const acceptedValue of acceptedValues) {
     const matchIndex = roots.findIndex((root, index) =>
@@ -150,7 +198,7 @@ function matchAcceptedSolvedRoots(
       continue;
     }
     used.add(matchIndex);
-    matched.push(roots[matchIndex].latex);
+    matched.push(roots[matchIndex]);
   }
 
   return matched;
@@ -174,10 +222,17 @@ function runBoundedPolynomialSolve(
         const rootSet = adaptBoundedPolynomialSolveResultToRootSet(solved, {
           source: 'equation-guarded-bounded-polynomial',
         });
+        const exactLatex = rootSetToExactLatex(rootSet);
+        const canonicalMath = provenCarrierCanonicalMath(
+          rootSetToCanonicalMath(rootSet),
+          exactLatex,
+          'equation-guarded-bounded-polynomial',
+        );
         return profileEquationResult(createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
-          exactLatex: rootSetToExactLatex(rootSet),
+          exactLatex,
+          ...(canonicalMath ? { canonicalMath } : {}),
           branchReadback: rootSetToBranchReadback(rootSet, {
             source: 'equation-guarded-bounded-polynomial',
           }),
@@ -206,10 +261,31 @@ function runBoundedPolynomialSolve(
         const exactLatex = exactSolutions.length > 0 && exactSolutions.every((value) => !isApproximateOnlySolutionLatex(value))
           ? solutionsToLatex('x', exactSolutions)
           : undefined;
+        const rootSet = createRootSet({
+          target: 'x',
+          source: 'equation-polynomial-carrier',
+          entries: carrierAttempt.roots.map((root) => createExactFiniteRoot(root.latex, {
+            source: 'equation-polynomial-carrier',
+            ...(root.node !== undefined ? { node: root.node } : {}),
+          })),
+        });
+        const renderedCanonicalMath = rootSetToCanonicalMath(rootSet);
+        const provenRoots = provenCarrierRootLeaves(
+          carrierAttempt.roots,
+          'equation-polynomial-carrier',
+        );
+        const canonicalMath = provenRoots.length === carrierAttempt.roots.length
+          ? provenCarrierCanonicalMath(
+              renderedCanonicalMath,
+              exactLatex,
+              'equation-polynomial-carrier',
+            )
+          : undefined;
         return createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex,
+          ...(canonicalMath ? { canonicalMath } : {}),
           exactSupplementLatex:
             carrierAttempt.exactSupplementLatex && carrierAttempt.exactSupplementLatex.length > 0
               ? carrierAttempt.exactSupplementLatex
@@ -232,7 +308,7 @@ function runBoundedPolynomialSolve(
       );
 
       if (validation.accepted.length === 0) {
-        return createEquationResultOutcome({
+        const producerInput: EquationResultProducerInput = {
           kind: 'error',
           title: 'Solve',
           error: buildEquationCandidateRejectionMessage(
@@ -252,18 +328,50 @@ function runBoundedPolynomialSolve(
               exactCandidatesLatex: carrierAttempt.roots.map((root) => root.latex),
             }),
           ),
+        };
+        return createEquationResultOutcome(producerInput, {
+          mathValues: equationMathValuesFromOwnedLeaves({
+            outcome: producerInput,
+            routeId: inferEquationMathJsonRoute(producerInput),
+            leaves: provenCarrierRootLeaves(
+              carrierAttempt.roots,
+              'equation-polynomial-carrier-rejected-root',
+            ),
+          }),
         });
       }
 
-      const acceptedLatex = matchAcceptedSolvedRoots(carrierAttempt.roots, validation.accepted);
+      const acceptedRoots = matchAcceptedSolvedRoots(carrierAttempt.roots, validation.accepted);
+      const acceptedLatex = acceptedRoots.map((root) => root.latex);
       const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
         ? solutionsToLatex('x', acceptedLatex)
         : undefined;
+      const rootSet = createRootSet({
+        target: 'x',
+        source: 'equation-polynomial-carrier-candidate-validation',
+        entries: acceptedRoots.map((root) => createExactFiniteRoot(root.latex, {
+          source: 'equation-polynomial-carrier-candidate-validation',
+          ...(root.node !== undefined ? { node: root.node } : {}),
+        })),
+      });
+      const renderedCanonicalMath = rootSetToCanonicalMath(rootSet);
+      const provenAcceptedRoots = provenCarrierRootLeaves(
+        acceptedRoots,
+        'equation-polynomial-carrier-candidate-validation',
+      );
+      const canonicalMath = provenAcceptedRoots.length === acceptedRoots.length
+        ? provenCarrierCanonicalMath(
+            renderedCanonicalMath,
+            exactLatex,
+            'equation-polynomial-carrier-candidate-validation',
+          )
+        : undefined;
 
-      return createEquationResultOutcome({
+      const producerInput: EquationResultProducerInput = {
         kind: 'success',
         title: 'Solve',
         exactLatex,
+        ...(canonicalMath ? { canonicalMath } : {}),
         branchReadback: branchReadbackForAcceptedCandidates(
           acceptedLatex,
           validation.accepted,
@@ -287,6 +395,20 @@ function runBoundedPolynomialSolve(
             exactCandidatesLatex: carrierAttempt.roots.map((root) => root.latex),
           }),
         ),
+      };
+      const allRootValues = equationMathValuesFromOwnedLeaves({
+        outcome: producerInput,
+        routeId: inferEquationMathJsonRoute(producerInput),
+        leaves: provenCarrierRootLeaves(
+          carrierAttempt.roots,
+          'equation-polynomial-carrier-root',
+        ),
+      });
+      const supplementalMathValues = { ...allRootValues };
+      delete supplementalMathValues.primaryMath;
+      delete supplementalMathValues.branchReadback;
+      return createEquationResultOutcome(producerInput, {
+        mathValues: supplementalMathValues,
       });
     }
 

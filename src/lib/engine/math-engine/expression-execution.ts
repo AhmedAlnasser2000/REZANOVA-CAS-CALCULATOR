@@ -192,6 +192,7 @@ export function executePreparedExpressionAction(
 
           return {
             exactLatex: numeric.exactLatex,
+            answerMathJson: numeric.answerMathJson,
             exactSupplementLatex,
             approxText: numeric.approxText,
             normalizedMathJson: rational.normalizedNode,
@@ -274,6 +275,7 @@ export function executePreparedExpressionAction(
 
           return {
             exactLatex: numeric.exactLatex,
+            answerMathJson: numeric.answerMathJson,
             exactSupplementLatex: simplifySupplementLatex.length > 0 ? simplifySupplementLatex : undefined,
             approxText: numeric.approxText,
             normalizedMathJson: simplifyNormalizedExpr.json,
@@ -333,6 +335,7 @@ export function executePreparedExpressionAction(
 
             return {
               exactLatex: numeric.exactLatex,
+              answerMathJson: numeric.answerMathJson,
               approxText: numeric.approxText,
               normalizedMathJson: expr.json,
               warnings,
@@ -399,9 +402,16 @@ export function executePreparedExpressionAction(
         'x',
         solutions.map((solution) => ce.box(solution).latex),
       );
+      const solutionNodes = solutions.map((solution) =>
+        ce.box(solution as Parameters<typeof ce.box>[0]).json);
 
       return {
         exactLatex,
+        answerMathJson: answerMathJson(
+          solutionNodes.length === 1
+            ? ['Equal', 'x', solutionNodes[0]]
+            : ['Element', 'x', ['Set', ...solutionNodes]],
+        ),
         approxText: solutionApproximationText('x', solutions),
         normalizedMathJson: expr.json,
         rawSolutions: solutions,
@@ -477,6 +487,7 @@ export function executePreparedExpressionAction(
 
           return {
             exactLatex: numeric.exactLatex,
+            answerMathJson: numeric.answerMathJson,
             approxText: numeric.approxText,
             normalizedMathJson: expr.json,
             warnings,
@@ -533,6 +544,7 @@ export function executePreparedExpressionAction(
 
         return {
           exactLatex: numeric.exactLatex,
+          answerMathJson: numeric.answerMathJson,
           exactSupplementLatex: radicalSupplementLatex.length > 0 ? radicalSupplementLatex : undefined,
           approxText: numeric.approxText,
           normalizedMathJson: radical?.normalizedNode ?? expr.json,

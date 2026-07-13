@@ -4,6 +4,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
 } from '../../result-contract';
+import { equationMathValuesFromOwnedPayload } from '../solve-result/math-values';
 import {
   createFiniteRootSet,
   renderFiniteRootSet,
@@ -108,6 +109,7 @@ function hasNonFiniteRawSolutions(symbolic: ReturnType<typeof runExpressionActio
 function canonicalDirectSymbolicOutcome(
   symbolic: ReturnType<typeof runExpressionAction>,
   outcome: DisplayOutcome,
+  preparedRequest: GuardedSolveRequest,
 ) {
   if (
     outcome.kind !== 'success'
@@ -123,7 +125,9 @@ function canonicalDirectSymbolicOutcome(
     createFiniteRootSet({
       targetLatex: 'x',
       branches: symbolic.rawSolutions.map((node, index) => ({
-        node,
+        node: node && typeof node === 'object' && 'json' in node
+          ? (node as { json: unknown }).json
+          : node,
         latex: symbolic.rawSolutionLatex![index],
         source: 'equation-direct-symbolic',
       })),
@@ -135,6 +139,13 @@ function canonicalDirectSymbolicOutcome(
   if (rendered.exactLatex !== symbolic.exactLatex || !rendered.canonicalMath) {
     return outcome;
   }
+  const routeId = /\\(?:sqrt|frac)|\//u.test(preparedRequest.resolvedLatex)
+    ? 'equation.rational-radical' as const
+    : /\\(?:sin|cos|tan|ln|log)|(?:^|[^A-Za-z])e\^/u.test(preparedRequest.resolvedLatex)
+      ? 'equation.trig-exp-log' as const
+      : symbolic.rawSolutions.length > 1
+        ? 'equation.polynomial' as const
+        : 'equation.linear' as const;
   const canonicalResult = buildCanonicalResultDocumentFromProducer({
     outcomeKind: 'success',
     title: 'Solve',
@@ -145,6 +156,12 @@ function canonicalDirectSymbolicOutcome(
     approxText: symbolic.approxText,
     warnings: symbolic.warnings,
     metadata: { resultOrigin: 'symbolic' },
+  }, {
+    mathValues: equationMathValuesFromOwnedPayload({
+      canonicalMath: rendered.canonicalMath,
+      routeId,
+      source: 'equation-direct-symbolic-raw-solutions',
+    }),
   });
   return {
     ...outcome,
@@ -178,7 +195,7 @@ function runDirectSymbolicFallbackPrepared(
       symbolic.exactLatex,
       symbolic.approxText,
       symbolic.warnings,
-    ));
+    ), preparedRequest);
   }
 
   return errorOutcome(

@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection } from '../../../types/calculator';
+import type { DisplayDetailSection, SerializableMathJson } from '../../../types/calculator';
 import { formatApproxNumber } from '../../display/format';
 import { evaluateLatexAtTarget } from '../domain-guards';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
@@ -25,6 +25,19 @@ import { buildParameterizedDetailSections, normalizeParameterizedSupplementLatex
 import { profileEquationResult } from '../../display/printer';
 
 const ce = new ComputeEngine();
+
+function targetDomainMathJsonLeaves(
+  target: string,
+  exactSupplementLatex: readonly string[] | undefined,
+) {
+  return exactSupplementLatex?.includes(`${target}>0`)
+    ? [{
+        canonicalLatex: `${target}>0`,
+        mathJson: ['Greater', target, 0] as SerializableMathJson,
+        source: 'equation-parameterized-exp-log-domain',
+      }]
+    : undefined;
+}
 
 function positiveBaseFacts(base: BaseProfile): string[] {
   if (base.kind !== 'symbolic') {
@@ -204,7 +217,7 @@ function powerLatexForBase(base: BaseProfile, exponent: MathJson) {
 export function generatedEquationForCarrier(
   carrier: ExpLogCarrierProfile,
   value: MathJson,
-): { kind: 'ok'; equationLatex: string; facts: string[] } | { kind: 'unsupported'; reason: ParameterizedExpLogStopReason; message: string } {
+): { kind: 'ok'; equationLatex: string; equationMathJson: SerializableMathJson; facts: string[] } | { kind: 'unsupported'; reason: ParameterizedExpLogStopReason; message: string } {
   if (carrier.kind === 'exponential') {
     const numericValue = numericValueOfNode(value);
     if (numericValue !== null && numericValue <= 0) {
@@ -217,6 +230,13 @@ export function generatedEquationForCarrier(
     return {
       kind: 'ok',
       equationLatex: `${latexForNode(carrier.inner)}=${logLatexForBase(carrier.base, value)}`,
+      equationMathJson: [
+        'Equal',
+        carrier.inner,
+        carrier.base.kind === 'natural'
+          ? ['Ln', value]
+          : ['Log', value, carrier.base.kind === 'symbolic' ? carrier.base.node : carrier.base.value],
+      ] as SerializableMathJson,
       facts: [
         ...positiveBaseFacts(carrier.base),
         positiveFactForNode(value),
@@ -227,6 +247,15 @@ export function generatedEquationForCarrier(
   return {
     kind: 'ok',
     equationLatex: `${latexForNode(carrier.inner)}=${powerLatexForBase(carrier.base, value)}`,
+    equationMathJson: [
+      'Equal',
+      carrier.inner,
+      ['Power', carrier.base.kind === 'natural'
+        ? 'ExponentialE'
+        : carrier.base.kind === 'symbolic'
+          ? carrier.base.node
+          : carrier.base.value, value],
+    ] as SerializableMathJson,
     facts: [
       ...positiveBaseFacts(carrier.base),
       positiveFactForNode(carrier.inner),
@@ -331,6 +360,7 @@ export function finalizeGeneratedExpLogSolve({
   target,
   parameterNames,
   generatedEquationLatex,
+  generatedEquationMathJson,
   domainFacts = [],
   carrierLabel,
   searchTrace,
@@ -339,6 +369,7 @@ export function finalizeGeneratedExpLogSolve({
   target: string;
   parameterNames: string[];
   generatedEquationLatex: string;
+  generatedEquationMathJson?: SerializableMathJson;
   domainFacts?: string[];
   carrierLabel: string;
   searchTrace?: EquationSelectedTargetSearchTraceRecorder;
@@ -364,11 +395,21 @@ export function finalizeGeneratedExpLogSolve({
     if (domainStop) {
       return domainStop;
     }
+    const canonicalMath = Array.isArray(generatedEquationMathJson)
+      && generatedEquationMathJson[0] === 'Equal'
+      && generatedEquationMathJson[1] === target
+      ? {
+          version: 1 as const,
+          canonicalLatex: `${target}=${directAssignment}`,
+          mathJson: generatedEquationMathJson,
+        }
+      : undefined;
     return profileEquationResult({
       kind: 'success',
       target,
       parameterNames,
       exactLatex: `${target}=${directAssignment}`,
+      ...(canonicalMath ? { canonicalMath } : {}),
       branchReadback: finiteBranchReadbackForNormalizedBranches({
         targetLatex: target,
         branchesLatex: [directAssignment],
@@ -384,6 +425,7 @@ export function finalizeGeneratedExpLogSolve({
       }),
       generatedEquationLatex,
       answerDomain: 'real',
+      mathJsonLeaves: targetDomainMathJsonLeaves(target, exactSupplementLatex),
     });
   }
 
@@ -421,6 +463,7 @@ export function finalizeGeneratedExpLogSolve({
       }),
       generatedEquationLatex,
       answerDomain: 'real',
+      mathJsonLeaves: targetDomainMathJsonLeaves(target, exactSupplementLatex),
     });
   }
 
@@ -454,6 +497,7 @@ export function finalizeGeneratedExpLogSolve({
       }),
       generatedEquationLatex,
       answerDomain: 'real',
+      mathJsonLeaves: targetDomainMathJsonLeaves(target, exactSupplementLatex),
     });
   }
 
@@ -490,6 +534,7 @@ export function finalizeGeneratedExpLogSolve({
       detailSections,
       generatedEquationLatex,
       answerDomain: 'real',
+      mathJsonLeaves: targetDomainMathJsonLeaves(target, exactSupplementLatex),
     });
   }
 
@@ -515,17 +560,29 @@ export function finalizeGeneratedExpLogSolve({
     familyTitle: 'Parameterized Exp/Log Solve',
     familyLines,
   });
+  const solutionMathJson = solved.solutionMathJson;
+  const canonicalMath = solutionMathJson?.length === renderedFamily.branchesLatex.length
+    ? {
+        version: 1 as const,
+        canonicalLatex: renderedFamily.exactLatex,
+        mathJson: solutionMathJson.length === 1
+          ? ['Equal', target, solutionMathJson[0]] as SerializableMathJson
+          : ['Element', target, ['Set', ...solutionMathJson]] as SerializableMathJson,
+      }
+    : undefined;
 
   return {
     kind: 'success',
     target,
     parameterNames,
     exactLatex: renderedFamily.exactLatex,
+    ...(canonicalMath ? { canonicalMath } : {}),
     branchReadback: renderedFamily.branchReadback,
     approxText: approxTextForBranches(target, renderedFamily.branchesLatex),
     exactSupplementLatex,
     detailSections,
     generatedEquationLatex,
+    mathJsonLeaves: targetDomainMathJsonLeaves(target, exactSupplementLatex),
   };
 }
 

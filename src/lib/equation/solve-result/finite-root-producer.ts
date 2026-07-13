@@ -4,6 +4,7 @@ import type {
   DisplayDetailSection,
   DisplayMathPayloadV1,
   DisplayOutcome,
+  PlannerBadge,
   ResultOrigin,
 } from '../../../types/calculator';
 import {
@@ -11,6 +12,10 @@ import {
   canonicalMathValue,
   type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
+import {
+  tryEquationMathValuesFromOwnedPayload,
+  type EquationMathJsonRouteId,
+} from './math-values';
 
 export type EquationFiniteRootSuccessInput = {
   title: string;
@@ -23,6 +28,9 @@ export type EquationFiniteRootSuccessInput = {
   warnings: string[];
   resultOrigin: ResultOrigin;
   answerDomain?: AnswerDomain;
+  plannerBadges?: PlannerBadge[];
+  mathJsonRouteId: EquationMathJsonRouteId;
+  mathJsonSource: string;
 };
 
 export function createEquationFiniteRootSuccessOutcome(
@@ -35,12 +43,19 @@ export function createEquationFiniteRootSuccessOutcome(
   ) {
     throw new Error('Equation finite-root producers require matching proven answer MathJSON.');
   }
+  const ownedMathValues = tryEquationMathValuesFromOwnedPayload({
+    canonicalMath: input.canonicalMath,
+    branchReadback: input.branchReadback,
+    routeId: input.mathJsonRouteId,
+    source: input.mathJsonSource,
+  });
+  const provenCanonicalMath = ownedMathValues ? input.canonicalMath : undefined;
   const canonicalResult = buildCanonicalResultDocumentFromProducer({
     outcomeKind: 'success',
     title: input.title,
     primaryMath: canonicalMathValue(
       input.canonicalMath.canonicalLatex,
-      input.canonicalMath.mathJson,
+      provenCanonicalMath?.mathJson,
     ),
     branchReadback: input.branchReadback,
     supplements: input.exactSupplementLatex,
@@ -49,14 +64,21 @@ export function createEquationFiniteRootSuccessOutcome(
     warnings: input.warnings,
     metadata: {
       resultOrigin: input.resultOrigin,
+      ...(input.plannerBadges?.length ? { plannerBadges: input.plannerBadges } : {}),
       ...(input.answerDomain ? { answerDomain: input.answerDomain } : {}),
     },
-  }, options);
+  }, {
+    ...options,
+    mathValues: {
+      ...ownedMathValues,
+      ...options.mathValues,
+    },
+  });
   return {
     kind: 'success',
     title: input.title,
     exactLatex: input.exactLatex,
-    canonicalMath: input.canonicalMath,
+    ...(provenCanonicalMath ? { canonicalMath: provenCanonicalMath } : {}),
     canonicalResult,
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
     exactSupplementLatex: input.exactSupplementLatex,
@@ -64,6 +86,7 @@ export function createEquationFiniteRootSuccessOutcome(
     detailSections: input.detailSections,
     warnings: input.warnings,
     resultOrigin: input.resultOrigin,
+    ...(input.plannerBadges?.length ? { plannerBadges: input.plannerBadges } : {}),
     ...(input.answerDomain ? { answerDomain: input.answerDomain } : {}),
   };
 }

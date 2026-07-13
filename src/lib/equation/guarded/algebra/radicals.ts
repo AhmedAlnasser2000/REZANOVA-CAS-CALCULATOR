@@ -15,6 +15,7 @@ import { normalizeAst } from '../../../symbolic-engine/normalize';
 import { boxLatex, dependsOnVariable, isNodeArray, termKey } from '../../../symbolic-engine/patterns';
 import type {
   GuardedSolveRequest,
+  SerializableMathJson,
   SolveDomainConstraint,
 } from '../../../../types/calculator';
 import { equationStateKey } from '../state-key';
@@ -571,6 +572,7 @@ function matchRadicalIsolationTransform(request: GuardedSolveRequest): AlgebraTr
       const transform = buildRadicalPowerTransform(candidate.root, radicalExpression, [{
         kind: 'nonzero',
         expressionLatex: boxLatex(isolatedBase.isolated),
+        expressionMathJson: isolatedBase.isolated as SerializableMathJson,
       }]);
       if (equationStateKey(transform.equationLatex) !== equationStateKey(request.resolvedLatex)) {
         return transform;

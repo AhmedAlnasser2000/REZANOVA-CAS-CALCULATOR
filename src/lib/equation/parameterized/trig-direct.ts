@@ -1,4 +1,4 @@
-import type { AngleUnit, DisplayDetailSection } from '../../../types/calculator';
+import type { AngleUnit, DisplayDetailSection, SerializableMathJson } from '../../../types/calculator';
 import { readExactScalarNode } from '../../algebra/polynomial-core';
 import {
   createPeriodicFamily,
@@ -190,6 +190,43 @@ function periodicBranchValues(
   return [
     `${inverse}+${fullPeriod}`,
     `-${inverse}+${fullPeriod}`,
+  ];
+}
+
+function periodicParameterNode(coefficient: MathJson) {
+  return ['Multiply', coefficient, 'n'] as MathJson;
+}
+
+function periodicBranchMathJson(
+  kind: TrigCarrierKind,
+  value: MathJson,
+  angleUnit: AngleUnit,
+): MathJson[] {
+  const halfTurn = angleUnit === 'rad' ? 'Pi' : angleUnit === 'deg' ? 180 : 200;
+  const fullTurn = angleUnit === 'rad' ? ['Multiply', 2, 'Pi'] as MathJson : angleUnit === 'deg' ? 360 : 400;
+  const halfPeriod = periodicParameterNode(halfTurn);
+  if (isZeroNode(value)) {
+    return kind === 'cos'
+      ? [['Add', angleUnit === 'rad' ? ['Divide', 'Pi', 2] : angleUnit === 'deg' ? 90 : 100, halfPeriod]]
+      : [halfPeriod];
+  }
+
+  const inverseHead = kind === 'sin' ? 'Arcsin' : kind === 'cos' ? 'Arccos' : 'Arctan';
+  const inverse = [inverseHead, value] as MathJson;
+  const scaledInverse = angleUnit === 'rad'
+    ? inverse
+    : ['Multiply', ['Divide', angleUnit === 'deg' ? 180 : 200, 'Pi'], inverse] as MathJson;
+  const period = periodicParameterNode(kind === 'tan' ? halfTurn : fullTurn);
+  if (kind === 'tan') return [['Add', scaledInverse, period]];
+  if (kind === 'sin') {
+    return [
+      ['Add', scaledInverse, period],
+      ['Add', halfTurn, ['Negate', scaledInverse], period],
+    ];
+  }
+  return [
+    ['Add', scaledInverse, period],
+    ['Add', ['Negate', scaledInverse], period],
   ];
 }
 
@@ -621,6 +658,12 @@ export function solveDirectParameterizedTrigFromJson(
     ? renderedFamilies.branchesLatex
     : branchValues.map((branchValue) =>
       solveArgumentForTarget(argument.affine, branchValue));
+  const solutionMathJson = periodicBranchMathJson(carrier.kind, carrierValue, angleUnit)
+    .map((branch) => simplifyNode([
+      'Divide',
+      ['Subtract', branch, argument.affine.constant],
+      argument.affine.coefficient,
+    ] as MathJson));
   const exactSupplementLatex = normalizeParameterizedSupplementLatex(dedupe([
     nonzeroFactForNode(normalized.affine.coefficient),
     nonzeroFactForNode(argument.affine.coefficient),
@@ -638,14 +681,32 @@ export function solveDirectParameterizedTrigFromJson(
     ],
   });
 
+  const exactLatex = renderedFamilies?.exactLatex ?? exactLatexForSolutions(target, solutionExpressions);
+  const canonicalMath = solutionMathJson.length === solutionExpressions.length
+    ? {
+        version: 1 as const,
+        canonicalLatex: exactLatex,
+        mathJson: solutionMathJson.length === 1
+          ? ['Element', target, ['Set', solutionMathJson[0]]] as SerializableMathJson
+          : ['Element', target, ['Set', ...solutionMathJson]] as SerializableMathJson,
+      }
+    : undefined;
+  const parameterLatex = renderedFamilies?.parameterLatex ?? 'n\\in\\mathbb{Z}';
+
   return profileEquationResult({
     kind: 'success',
     target,
     parameterNames,
-    exactLatex: renderedFamilies?.exactLatex ?? exactLatexForSolutions(target, solutionExpressions),
+    exactLatex,
+    ...(canonicalMath ? { canonicalMath } : {}),
     branchReadback: renderedFamilies?.branchReadback ?? branchReadbackForSolutions(target, solutionExpressions),
     exactSupplementLatex,
     detailSections,
     carrierValueLatex,
+    mathJsonLeaves: [{
+      canonicalLatex: parameterLatex,
+      mathJson: ['Element', 'n', 'Integers'] as SerializableMathJson,
+      source: 'equation-parameterized-trig-integer-parameter',
+    }],
   });
 }

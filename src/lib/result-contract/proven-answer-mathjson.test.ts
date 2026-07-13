@@ -54,6 +54,24 @@ describe('producer-proven answer MathJSON', () => {
     });
   });
 
+  it('accepts independently simplified producer and presentation forms', () => {
+    const result = proveAnswerMathJson({
+      canonicalLatex: String.raw`\frac{1}{2}\sqrt{x^2-4}-\frac{x}{2}`,
+      candidate: candidate([
+        'Add',
+        ['Multiply', ['Rational', -1, 2], 'x'],
+        ['Multiply', ['Rational', 1, 2], ['Sqrt', ['Add', ['Power', 'x', 2], -4]]],
+      ]),
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      evidence: {
+        semanticRelation: 'simplified',
+        printerSource: 'compatibility-fallback',
+      },
+    });
+  });
+
   it('rejects mismatched answers and mismatched ownership', () => {
     expect(proveAnswerMathJson({
       canonicalLatex: 'x+2',

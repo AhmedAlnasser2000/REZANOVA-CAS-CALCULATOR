@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { SolveDomainConstraint } from '../../../types/calculator';
+import type { SerializableMathJson, SolveDomainConstraint } from '../../../types/calculator';
 import {
   exactPolynomialDegree,
   exactPolynomialToNode,
@@ -201,6 +201,7 @@ export function buildExclusionMetadata(terms: RationalTerm[]) {
   const constraints = bases.map<SolveDomainConstraint>((node) => ({
     kind: 'nonzero',
     expressionLatex: boxLatex(node),
+    expressionMathJson: node as SerializableMathJson,
   }));
 
   if (constraints.length === 0) {

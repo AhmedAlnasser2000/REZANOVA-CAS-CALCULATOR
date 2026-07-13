@@ -92,6 +92,7 @@ function buildAbsoluteValueRadicalTransform(
       ...proseSolveSummary('Reduced an exact square-root square into a bounded absolute-value carrier'),
       unresolvedError: buildAbsoluteValueUnresolvedError(family),
       radicalStepCost: 1,
+      mathJsonRouteId: 'equation.absolute-value',
     };
   }
 
@@ -101,6 +102,7 @@ function buildAbsoluteValueRadicalTransform(
     ...proseSolveSummary('Reduced an exact square-root square into a bounded absolute-value carrier'),
     unresolvedError: 'This recognized absolute-value family is outside the current exact bounded solve set. Use Numeric Solve with an interval in Equation mode.',
     radicalStepCost: 1,
+    mathJsonRouteId: 'equation.absolute-value',
   };
 }
 
@@ -137,6 +139,7 @@ function buildAbsoluteValueBranchTransform(family: RecognizedAbsoluteValueEquati
     unresolvedError: buildAbsoluteValueUnresolvedError(family),
     emptyBranchError: family.emptyBranchError,
     blockOnGuidedBranchError: family.blockOnGuidedBranchError,
+    mathJsonRouteId: 'equation.absolute-value',
   };
 }
 

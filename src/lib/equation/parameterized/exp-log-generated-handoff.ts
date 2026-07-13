@@ -144,6 +144,7 @@ export function solveGeneratedExpLogEquation(
     kind: 'success',
     exactLatex: branch.exactLatex,
     exactSupplementLatex: solved.exactSupplementLatex,
+    ...(branch.solutionMathJson ? { solutionMathJson: branch.solutionMathJson } : {}),
     ...(branch.formulaPayload ? { formulaPayload: branch.formulaPayload } : {}),
   };
 }

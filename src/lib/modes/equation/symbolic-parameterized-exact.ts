@@ -9,6 +9,7 @@ import { resolveEquationSolveTarget } from '../../equation/equation-target';
 import {
   createEquationFiniteRootSuccessOutcome,
   createEquationResultOutcome,
+  equationMathValuesFromOwnedLeaves,
 } from '../../equation/equation-solve-result';
 import { matchTrigEquationRewriteForSolve } from '../../trigonometry/rewrite-solve';
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
@@ -26,6 +27,7 @@ import {
   finalizeSelectedTargetSymbolicOutcome,
 } from './outcomes';
 import { profileEquationResult } from '../../display/printer';
+import type { EquationMathJsonRouteId } from '../../equation/equation-solve-result';
 
 type TargetResolution = ReturnType<typeof resolveEquationSolveTarget>;
 
@@ -37,6 +39,11 @@ type SelectedTargetParameterizedSuccess = {
   detailSections?: DisplayDetailSection[];
   approxText?: string;
   answerDomain?: 'real' | 'complex';
+  mathJsonLeaves?: Array<{
+    canonicalLatex: string;
+    mathJson: import('../../../types/calculator').SerializableMathJson;
+    source: string;
+  }>;
 };
 
 function parameterizedOptionsFromTargetResolution(targetResolution: TargetResolution) {
@@ -166,8 +173,27 @@ function attachParameterizedSelectedTargetOutcome(input: {
   selectedTarget: string;
   equationLatex: string;
   plannerResolvedLatex: string;
+  plannerResolvedMathJson?: import('../../../types/calculator').SerializableMathJson;
   plannerBadges?: PlannerBadge[];
+  mathJsonRouteId: EquationMathJsonRouteId;
 }) {
+  const producerInput = {
+    kind: 'success' as const,
+    title: 'Solve',
+    exactLatex: input.result.exactLatex,
+    branchReadback: input.result.branchReadback,
+    approxText: input.result.approxText,
+    exactSupplementLatex: input.result.exactSupplementLatex,
+    detailSections: input.result.detailSections,
+    warnings: [],
+    resultOrigin: 'symbolic' as const,
+    ...(input.result.answerDomain ? { answerDomain: input.result.answerDomain } : {}),
+  };
+  const supplementalValues = equationMathValuesFromOwnedLeaves({
+    outcome: producerInput,
+    routeId: input.mathJsonRouteId,
+    leaves: input.result.mathJsonLeaves ?? [],
+  });
   const outcome: DisplayOutcome = input.result.canonicalMath
     ? createEquationFiniteRootSuccessOutcome({
         title: 'Solve',
@@ -180,19 +206,14 @@ function attachParameterizedSelectedTargetOutcome(input: {
         warnings: [],
         resultOrigin: 'symbolic',
         answerDomain: input.result.answerDomain,
+        mathJsonRouteId: input.mathJsonRouteId,
+        mathJsonSource: 'equation-selected-target-parameterized-roots',
+      }, {
+        mathValues: supplementalValues.supplements
+          ? { supplements: supplementalValues.supplements }
+          : undefined,
       })
-    : createEquationResultOutcome({
-        kind: 'success',
-        title: 'Solve',
-        exactLatex: input.result.exactLatex,
-        branchReadback: input.result.branchReadback,
-        approxText: input.result.approxText,
-        exactSupplementLatex: input.result.exactSupplementLatex,
-        detailSections: input.result.detailSections,
-        warnings: [],
-        resultOrigin: 'symbolic',
-        ...(input.result.answerDomain ? { answerDomain: input.result.answerDomain } : {}),
-      });
+    : createEquationResultOutcome(producerInput);
   const finalOutcome = finalizeSelectedTargetSymbolicOutcome(outcome, input.selectedTarget);
 
   return attachEquationRuntimeEnvelope(
@@ -201,6 +222,7 @@ function attachParameterizedSelectedTargetOutcome(input: {
     input.plannerResolvedLatex,
     input.plannerBadges,
     classifyEquationRuntimeAdvisories({ outcome: finalOutcome }),
+    input.plannerResolvedMathJson,
   );
 }
 
@@ -208,6 +230,7 @@ export function trySelectedTargetParameterizedExactSolve(input: {
   equationLatex: string;
   angleUnit: AngleUnit;
   plannerResolvedLatex: string;
+  plannerResolvedMathJson?: import('../../../types/calculator').SerializableMathJson;
   plannerBadges?: PlannerBadge[];
   targetResolution: TargetResolution;
 }): DisplayOutcome | undefined {
@@ -235,7 +258,9 @@ export function trySelectedTargetParameterizedExactSolve(input: {
       selectedTarget,
       equationLatex: input.equationLatex,
       plannerResolvedLatex: input.plannerResolvedLatex,
+      plannerResolvedMathJson: input.plannerResolvedMathJson,
       plannerBadges: input.plannerBadges,
+      mathJsonRouteId: 'equation.rational-radical',
     });
   }
 
@@ -251,7 +276,9 @@ export function trySelectedTargetParameterizedExactSolve(input: {
         selectedTarget,
         equationLatex: input.equationLatex,
         plannerResolvedLatex: input.plannerResolvedLatex,
+        plannerResolvedMathJson: input.plannerResolvedMathJson,
         plannerBadges: input.plannerBadges,
+        mathJsonRouteId: 'equation.polynomial',
       });
     }
   }
@@ -268,7 +295,9 @@ export function trySelectedTargetParameterizedExactSolve(input: {
         selectedTarget,
         equationLatex: input.equationLatex,
         plannerResolvedLatex: input.plannerResolvedLatex,
+        plannerResolvedMathJson: input.plannerResolvedMathJson,
         plannerBadges: input.plannerBadges,
+        mathJsonRouteId: 'equation.polynomial',
       });
     }
   }
@@ -287,7 +316,9 @@ export function trySelectedTargetParameterizedExactSolve(input: {
       selectedTarget,
       equationLatex: input.equationLatex,
       plannerResolvedLatex: input.plannerResolvedLatex,
+      plannerResolvedMathJson: input.plannerResolvedMathJson,
       plannerBadges: input.plannerBadges,
+      mathJsonRouteId: 'equation.trig-exp-log',
     });
   }
 
@@ -303,7 +334,9 @@ export function trySelectedTargetParameterizedExactSolve(input: {
       selectedTarget,
       equationLatex: input.equationLatex,
       plannerResolvedLatex: input.plannerResolvedLatex,
+      plannerResolvedMathJson: input.plannerResolvedMathJson,
       plannerBadges: input.plannerBadges,
+      mathJsonRouteId: 'equation.trig-exp-log',
     });
   }
 
@@ -319,7 +352,9 @@ export function trySelectedTargetParameterizedExactSolve(input: {
       selectedTarget,
       equationLatex: input.equationLatex,
       plannerResolvedLatex: input.plannerResolvedLatex,
+      plannerResolvedMathJson: input.plannerResolvedMathJson,
       plannerBadges: input.plannerBadges,
+      mathJsonRouteId: 'equation.trig-exp-log',
     })
     : undefined;
 }

@@ -5,6 +5,7 @@ import type {
   PeriodicPiecewiseBranch,
   SolveDomainConstraint,
 } from '../../types/calculator';
+import { solveDomainConstraintKey } from './radical-core';
 
 export type BranchEquationSet = {
   equations: string[];
@@ -52,7 +53,7 @@ function cleanStructuredList<T>(values: T[] = []) {
 export function mergeBranchConstraints(...lists: Array<SolveDomainConstraint[] | undefined>) {
   const merged = new Map<string, SolveDomainConstraint>();
   for (const constraint of lists.flatMap((entry) => entry ?? [])) {
-    const key = JSON.stringify(constraint);
+    const key = solveDomainConstraintKey(constraint);
     if (!merged.has(key)) {
       merged.set(key, constraint);
     }

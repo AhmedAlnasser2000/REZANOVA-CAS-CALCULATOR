@@ -35,6 +35,12 @@ import {
 } from '../../equation/equation-target-shape';
 import type { EquationSolveTargetResolution } from '../../equation/equation-target';
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
+import {
+  createBoundedComplexEquationOutcome,
+  createParameterizedCarrierOutcome,
+  createParameterizedExpLogOutcome,
+  createParameterizedTrigOutcome,
+} from './parameterized-result-outcomes';
 import type {
   AngleUnit,
   ComplexExactForm,
@@ -208,20 +214,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         );
 
         if (boundedComplex) {
-          const outcome: DisplayOutcome = createEquationResultOutcome({
-            kind: 'success',
-            title: 'Solve',
-            exactLatex: boundedComplex.exactLatex,
-            branchReadback: boundedComplex.branchReadback,
-            approxText: boundedComplex.approxText,
-            exactSupplementLatex: boundedComplex.exactSupplementLatex,
-            detailSections: boundedComplex.detailSections,
-            warnings: [],
-            resultOrigin: 'symbolic',
-            answerDomain: 'complex',
-          });
-
-          return attachTopLevelOutcome(outcome);
+          return attachTopLevelOutcome(createBoundedComplexEquationOutcome(
+            boundedComplex,
+            'equation-parameterized-bounded-complex-roots',
+          ));
         }
 
         const complexWrapperOutcome = tryComplexWrapperRoutes({
@@ -293,6 +289,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
               detailSections: parameterizedLinear.detailSections,
               warnings: [],
               resultOrigin: 'symbolic',
+              mathJsonRouteId: 'equation.linear',
+              mathJsonSource: 'equation-parameterized-linear-roots',
             })
           : createEquationResultOutcome({
               kind: 'success',
@@ -329,6 +327,8 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
               detailSections: parameterizedPolynomial.detailSections,
               warnings: [],
               resultOrigin: 'symbolic',
+              mathJsonRouteId: 'equation.polynomial',
+              mathJsonSource: 'equation-parameterized-polynomial-roots',
             })
           : createEquationResultOutcome({
               kind: 'success',
@@ -471,19 +471,10 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedCarrier?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'carrier');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
-          kind: 'success',
-          title: 'Solve',
-          exactLatex: parameterizedCarrier.exactLatex,
-          branchReadback: parameterizedCarrier.branchReadback,
-          exactSupplementLatex: parameterizedCarrier.exactSupplementLatex,
-          detailSections: parameterizedCarrier.detailSections,
-          warnings: [],
-          resultOrigin: 'symbolic',
-        });
-
-
-        return attachTopLevelOutcome(outcome);
+        return attachTopLevelOutcome(createParameterizedCarrierOutcome(
+          parameterizedCarrier,
+          parameterizedEquationLatex,
+        ));
       }
 
       const parameterizedAlgebraicIsolation = shouldAttemptSelectedTargetRoute(routePlan, 'algebraic-isolation')
@@ -556,23 +547,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedExpLog?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'exp-log');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
-          kind: 'success',
-          title: 'Solve',
-          exactLatex: parameterizedExpLog.exactLatex,
-          branchReadback: parameterizedExpLog.branchReadback,
-          approxText: parameterizedExpLog.approxText,
-          exactSupplementLatex: parameterizedExpLog.exactSupplementLatex,
-          detailSections: parameterizedExpLog.detailSections,
-          warnings: [],
-          resultOrigin: 'symbolic',
-          ...(parameterizedExpLog.answerDomain
-            ? { answerDomain: parameterizedExpLog.answerDomain }
-            : {}),
-        });
-
-
-        return attachTopLevelOutcome(outcome);
+        return attachTopLevelOutcome(createParameterizedExpLogOutcome(parameterizedExpLog));
       }
 
       const parameterizedTrig = shouldAttemptSelectedTargetRoute(routePlan, 'trig')
@@ -591,22 +566,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedTrig?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'trig');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
-          kind: 'success',
-          title: 'Solve',
-          exactLatex: parameterizedTrig.exactLatex,
-          branchReadback: parameterizedTrig.branchReadback,
-          exactSupplementLatex: parameterizedTrig.exactSupplementLatex,
-          detailSections: parameterizedTrig.detailSections,
-          warnings: [],
-          resultOrigin: 'symbolic',
-          ...(parameterizedTrig.answerDomain
-            ? { answerDomain: parameterizedTrig.answerDomain }
-            : {}),
-        });
-
-
-        return attachTopLevelOutcome(outcome);
+        return attachTopLevelOutcome(createParameterizedTrigOutcome(parameterizedTrig));
       }
 
       const parameterizedComposition = shouldAttemptSelectedTargetRoute(routePlan, 'composition')

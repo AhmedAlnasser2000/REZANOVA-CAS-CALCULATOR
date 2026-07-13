@@ -14,6 +14,7 @@ export {
   detectSingleVariable,
   expressionHasVariable,
   mergeSolveDomainConstraints,
+  solveDomainConstraintKey,
   parseInteger,
 } from './math-json';
 export {

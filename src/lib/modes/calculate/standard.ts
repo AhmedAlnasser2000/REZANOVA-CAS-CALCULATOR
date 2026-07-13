@@ -15,7 +15,11 @@ import {
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
 import type { DisplayOutcome } from '../../../types/calculator';
 import { profileDomainDisplayMathPayload } from '../../display/printer';
-import { deriveDisplayOutcomeFromCanonicalResult } from '../../result-contract';
+import {
+  deriveDisplayOutcomeFromCanonicalResult,
+  tryProvenCanonicalMathValue,
+} from '../../result-contract';
+import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
 import {
   applyCalculateStoredVariableSubstitutions,
   calculateSubstitutionPolicy,
@@ -30,6 +34,22 @@ import {
 } from './titles';
 import { buildCalculateResultDocument } from './result-document';
 import type { RunCalculateModeRequest } from './types';
+
+function calculateMathJsonRouteId(input: {
+  action: RunCalculateModeRequest['action'];
+  latex: string;
+  outputStyle: RunCalculateModeRequest['outputStyle'];
+}): MathJsonRouteId {
+  if (input.action !== 'evaluate') return 'calculate.transforms';
+  if (/\bAns\b/u.test(input.latex)) return 'calculate.ans';
+  if (input.outputStyle === 'decimal') return 'calculate.numeric-format';
+  if (/\\arc(?:sin|cos|tan)/u.test(input.latex)) {
+    return 'calculate.inverse-trigonometry';
+  }
+  if (/\\(?:sin|cos|tan)/u.test(input.latex)) return 'calculate.trigonometry';
+  if (/\\sqrt|\^/u.test(input.latex)) return 'calculate.exact-forms';
+  return 'calculate.arithmetic';
+}
 
 export function runCalculateMode({
   action,
@@ -213,6 +233,30 @@ export function runCalculateMode({
   const variableSubstitutions = !response.error && substitution.substitutions.length > 0
     ? substitution.substitutions
     : undefined;
+  const routeId = calculateMathJsonRouteId({ action, latex, outputStyle });
+  const ownsCalculateCoverage = calculateScreen === 'standard';
+  const primaryMath = ownsCalculateCoverage
+    && !response.error
+    && profiledMath?.canonicalMath?.mathJson !== undefined
+    ? tryProvenCanonicalMathValue({
+        canonicalLatex: exactLatex!,
+        mathJson: profiledMath.canonicalMath.mathJson,
+        owner: 'calculate',
+        routeId,
+        source: 'calculate-expression-answer',
+      })
+    : undefined;
+  const resolvedInput = ownsCalculateCoverage
+    && resolvedInputLatex
+    && executionLatex === planner.resolvedLatex
+    ? tryProvenCanonicalMathValue({
+        canonicalLatex: resolvedInputLatex,
+        mathJson: planner.resolvedMathJson,
+        owner: 'calculate',
+        routeId,
+        source: 'calculate-semantic-planner-resolved-input',
+      })
+    : undefined;
   const canonicalResult = buildCalculateResultDocument({
     outcomeKind: response.error ? 'error' : 'success',
     title: responseTitleText,
@@ -230,6 +274,11 @@ export function runCalculateMode({
     plannerBadges: planner.badges,
     resolvedInputLatex,
     variableSubstitutions,
+  }, {
+    mathValues: {
+      ...(primaryMath ? { primaryMath } : {}),
+      ...(resolvedInput ? { metadata: { resolvedInput } } : {}),
+    },
   });
   const outcome = attachRuntimeEnvelope(
     buildRuntimeOutcome({

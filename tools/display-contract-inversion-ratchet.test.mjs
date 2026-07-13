@@ -214,6 +214,29 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.equation.forwarder, 0);
   });
 
+  it('separates registered Equation owner assembly from its canonical rebuild wrapper', () => {
+    const rootDir = fixture({
+      'src/lib/equation/guarded/substitution-stage.ts': `
+        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        declare function rebuildSubstitutionOutcome(input: DisplayOutcome): DisplayOutcome;
+        export function substitutionSolve(): DisplayOutcome {
+          const producerInput: DisplayOutcome = {
+            kind: 'success',
+            title: 'Solve',
+            exactLatex: 'x=1',
+            warnings: [],
+          };
+          return rebuildSubstitutionOutcome(producerInput);
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.equation['owner-assembly'], 1);
+    assert.equal(report.lanes.equation['native-document'], 1);
+    assert.equal(report.lanes.equation['compatibility-projection'], 0);
+  });
+
   it('does not misclassify the exact producer adapter input as a downstream consumer', () => {
     const rootDir = fixture({
       'src/lib/equation/solve-result/producer.ts': `
@@ -412,7 +435,7 @@ describe('display contract inversion ratchet', () => {
       assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
     }
     assert.equal(report.summary.compatibilityProjectionCount, 1);
-    assert.equal(report.summary.ownerAssemblyCount, 29);
+    assert.equal(report.summary.ownerAssemblyCount, 47);
     assert.deepEqual(
       report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
       [['src/app/runtime/historyDisplayEntry.ts', 'legacyHistoryOutcome']],
@@ -447,11 +470,11 @@ describe('display contract inversion ratchet', () => {
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
-    assert.equal(report.summary.producerCount, 619);
-    assert.equal(report.summary.consumerCount, 595);
+    assert.equal(report.summary.producerCount, 664);
+    assert.equal(report.summary.consumerCount, 613);
     assert.equal(report.summary.compatibilityProjectionCount, 1);
     assert.equal(report.summary.legacyReadCount, 411);
-    assert.equal(report.summary.nativeDocumentCount, 154);
+    assert.equal(report.summary.nativeDocumentCount, 164);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 3);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);

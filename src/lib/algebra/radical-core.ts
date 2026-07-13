@@ -20,6 +20,7 @@ export {
   matchSupportedRadical,
   matchSupportedRationalPower,
   mergeSolveDomainConstraints,
+  solveDomainConstraintKey,
   needsEvenRootConstraint,
   parseAffine,
   parseInteger,
