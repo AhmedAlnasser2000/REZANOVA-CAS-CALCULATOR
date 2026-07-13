@@ -1,10 +1,8 @@
 import { runGuardedDirectSymbolicFallback } from '../../equation/guarded-solve';
 import {
   projectEquationDisplayOutcomeToBoundaryOrThrow,
-  projectEquationOutcomeBoundaryToDisplay,
   createEquationResultOutcome,
   requireNativeEquationResult,
-  type EquationOutcomeBoundaryV1,
 } from '../../equation/equation-solve-result';
 import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
 import { solvePolynomialSystem2x2 } from '../../equation/equation-polynomial-system';
@@ -16,6 +14,7 @@ import {
   buildEquationRangeBehaviorEvidence,
   buildEquationRouteEvidence,
   buildEquationSingularityEvidence,
+  type EquationAnalysisEvidence,
 } from '../../equation/analysis-evidence';
 import { runSharedEquationSolveWithTraceAsync } from '../../equation/shared-solve';
 import { buildEquationTrustEvidence } from '../../equation/trust-evidence';
@@ -31,7 +30,12 @@ import {
 import type { OoeRuntimeEnvelope } from '../../ooe/runtime-control/runtime-envelope';
 import { runOoeRuntimeJob } from '../../ooe/runtime-control/runtime-coordinator';
 import type { OoeJobContextOptions } from '../../ooe/job-launch/job-contract';
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome, DisplayOutcome } from '../../../types/calculator';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalRuntimeOutcome,
+} from '../../result-contract';
 import { solveSystem, solvePolynomial } from './guided-polynomial';
 import { buildEquationOoeRevisionSnapshot } from './ooe-snapshot';
 import {
@@ -508,8 +512,23 @@ export async function runEquationModeForIsolatedWorker(
     },
   );
 
+  if (payload.kind === 'prompt') {
+    return {
+      outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload, 'Equation'),
+      analysisEvidence: [],
+      guardedTrace,
+    };
+  }
+  const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(payload);
   return {
-    boundary: projectEquationDisplayOutcomeToBoundaryOrThrow(payload),
+    outcome: requireCanonicalRuntimeOutcome({
+      kind: boundary.result.document.outcomeKind,
+      canonicalResult: boundary.result.document,
+      ...(boundary.runtimeAdvisories
+        ? { runtimeAdvisories: boundary.runtimeAdvisories }
+        : {}),
+    }),
+    analysisEvidence: boundary.result.diagnostics.analysisEvidence,
     guardedTrace,
   };
 }
@@ -521,12 +540,19 @@ export async function runEquationModeWithOoePilot(
   let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
   let runtimeHostExecution: EquationRuntimeHostExecution | undefined;
   const routeSnapshot = buildEquationOoeRevisionSnapshot(request);
-  let projectedBoundary: EquationOutcomeBoundaryV1 | undefined;
+  let projectedRuntimeOutcome: CanonicalRuntimeOutcome | undefined;
   let projectedOutcome: DisplayOutcome | undefined;
-  const displayOutcomeForBoundary = (boundary: EquationOutcomeBoundaryV1) => {
-    if (projectedBoundary !== boundary || !projectedOutcome) {
-      projectedBoundary = boundary;
-      projectedOutcome = projectEquationOutcomeBoundaryToDisplay(boundary);
+  let projectedAnalysisEvidence: EquationAnalysisEvidence[] = [];
+  const displayOutcomeForRuntime = (
+    outcome: CanonicalRuntimeOutcome,
+    analysisEvidence: readonly EquationAnalysisEvidence[] = projectedAnalysisEvidence,
+  ) => {
+    if (projectedRuntimeOutcome !== outcome || !projectedOutcome) {
+      projectedRuntimeOutcome = outcome;
+      projectedOutcome = attachEquationAnalysisEvidence(
+        projectCanonicalRuntimeOutcomeToDisplayOutcome(outcome),
+        analysisEvidence,
+      );
     }
     return projectedOutcome;
   };
@@ -570,16 +596,32 @@ export async function runEquationModeWithOoePilot(
                 return traced.outcome;
               },
             );
+            if (payload.kind === 'prompt') {
+              return {
+                outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload, 'Equation'),
+                analysisEvidence: [],
+                guardedTrace,
+              };
+            }
+            const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(payload);
             return {
-              boundary: projectEquationDisplayOutcomeToBoundaryOrThrow(payload),
+              outcome: requireCanonicalRuntimeOutcome({
+                kind: boundary.result.document.outcomeKind,
+                canonicalResult: boundary.result.document,
+                ...(boundary.runtimeAdvisories
+                  ? { runtimeAdvisories: boundary.runtimeAdvisories }
+                  : {}),
+              }),
+              analysisEvidence: boundary.result.diagnostics.analysisEvidence,
               guardedTrace,
             };
           },
         },
       );
       guardedTrace = result.guardedTrace;
+      projectedAnalysisEvidence = result.analysisEvidence;
       runtimeHostExecution = result.hostExecution;
-      return result.boundary;
+      return result.outcome;
     },
     buildMetadata: ({ status, jobContext, controlTraceEvents }) => buildEquationOoePilotMetadata(
       status,
@@ -591,14 +633,14 @@ export async function runEquationModeWithOoePilot(
       runtimeHostExecution,
     ),
     buildProvenance: ({ payload, metadata, routeSnapshot }) => buildEquationProvenance({
-      payload: displayOutcomeForBoundary(payload),
+      payload: displayOutcomeForRuntime(payload),
       metadata,
       routeSnapshot,
     }),
   });
 
   return {
-    payload: displayOutcomeForBoundary(envelope.payload),
+    payload: displayOutcomeForRuntime(envelope.payload),
     ooe: envelope.ooe,
   };
 }

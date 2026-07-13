@@ -13,6 +13,10 @@ import type {
 } from './messages';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { createEquationResultOutcome } from '../solve-result/producer';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  validateCanonicalRuntimeOutcome,
+} from '../../result-contract';
 
 export const EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID =
   'equation-direct-symbolic-worker-runtime' as const;
@@ -184,8 +188,15 @@ export async function runEquationDirectSymbolicViaIsolatedWorker(
       }
 
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.outcome);
+        if (!validation.ok) {
+          fallbackFromWorkerFailure(
+            `invalid-completed-outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          );
+          return;
+        }
         settle({
-          outcome: event.data.payload,
+          outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(validation.validated.value),
           hostEvidence: workerHostEvidence(input.depth, 'completed'),
         });
         return;

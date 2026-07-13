@@ -1,8 +1,9 @@
 import type { SharedSolveRequest } from '../../equation/shared-solve';
-import type { EquationResultOutcomeBoundaryV1 } from '../../equation/equation-solve-result';
+import type { EquationAnalysisEvidence } from '../../equation/analysis-evidence';
 import type { EquationOoePilotMetadata } from '../../ooe/pilots/equation-pilot';
 import type {
   AngleUnit,
+  CanonicalRuntimeOutcome,
   ComplexExactForm,
   ComplexSolveRegion,
   DisplayOutcome,
@@ -48,6 +49,7 @@ export type EquationModeOoePilotRunResult = {
 };
 
 export type EquationModeIsolatedWorkerRunResult = {
-  boundary: EquationResultOutcomeBoundaryV1;
+  outcome: CanonicalRuntimeOutcome;
+  analysisEvidence: EquationAnalysisEvidence[];
   guardedTrace?: EquationOoePilotMetadata['guardedTrace'];
 };

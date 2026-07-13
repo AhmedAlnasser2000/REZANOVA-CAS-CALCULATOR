@@ -92,3 +92,11 @@
 - scope: shared canonical runtime result/action/prompt types, clone-safe strict validator, focused result-contract/static verification, and durable evidence
 - push: not authorized
 - excluded: workspace worker migrations reserved for Moves 13-16, app-visible behavior, and untracked `test-results/`
+
+## CANONICAL-OUTCOME-CALCULATE-EQUATION1
+
+- commit_message: `CANONICAL-OUTCOME-CALCULATE-EQUATION1`
+- status: verified; covered by standing commit approval
+- scope: Calculate and Equation canonical worker/OOE outcomes, direct-symbolic worker validation, one canonical Display projection, focused runtime and post-build Chromium evidence, and durable records
+- push: not authorized
+- excluded: later workspace migrations, concurrent Notebook work, ignored `.task_tmp/` visual evidence, and untracked `test-results/`

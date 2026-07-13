@@ -2,7 +2,8 @@ import {
   runEquationModeForIsolatedWorker,
   type RunEquationModeRequest,
 } from '../equation';
-import type { EquationResultOutcomeBoundaryV1 } from '../../equation/equation-solve-result';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import type { EquationAnalysisEvidence } from '../../equation/analysis-evidence';
 import type { GuardedEquationStageReplayTrace } from '../../equation/guarded-solve';
 
 export type EquationWorkerInboundMessage = {
@@ -19,7 +20,8 @@ export type EquationWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      boundary: EquationResultOutcomeBoundaryV1;
+      outcome: CanonicalRuntimeOutcome;
+      analysisEvidence: EquationAnalysisEvidence[];
       guardedTrace?: GuardedEquationStageReplayTrace;
     }
   | {
@@ -57,7 +59,8 @@ workerSelf.addEventListener('message', (event: MessageEvent<EquationWorkerInboun
       workerSelf.postMessage({
         kind: 'completed',
         requestId: event.data.requestId,
-        boundary: result.boundary,
+        outcome: result.outcome,
+        analysisEvidence: result.analysisEvidence,
         guardedTrace: result.guardedTrace,
       } satisfies EquationWorkerOutboundMessage);
     })

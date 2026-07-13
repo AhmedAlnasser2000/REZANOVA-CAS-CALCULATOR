@@ -7,6 +7,7 @@ import {
 } from '../equation-direct-symbolic-worker-client';
 import { runGuardedDirectSymbolicFallback } from '../guarded-solve';
 import type { EquationDirectSymbolicWorkerOutboundMessage } from '../equation-direct-symbolic.worker';
+import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
 
 const guardedRequest: GuardedSolveRequest = {
   originalLatex: '\\sin\\left(x\\right)+x=1',
@@ -112,7 +113,7 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
             fakeWorker.emitMessage({
               kind: 'completed',
               requestId,
-              payload: expected,
+              outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(expected, 'Equation test'),
             });
           });
           createdWorkers.push(worker);
@@ -122,7 +123,9 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
       },
     );
 
-    expect(result.outcome).toEqual(expected);
+    expect(JSON.parse(JSON.stringify(result.outcome))).toEqual(
+      JSON.parse(JSON.stringify(expected)),
+    );
     expect(result.hostEvidence).toMatchObject({
       helperId: 'direct-symbolic',
       stageId: 'direct-symbolic',
@@ -152,14 +155,16 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
           fakeWorker.emitMessage({
             kind: 'completed',
             requestId: (message as { requestId: string }).requestId,
-            payload: expected,
+            outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(expected, 'Equation test'),
           });
         }),
         fallback,
       },
     );
 
-    expect(result.outcome).toEqual(expected);
+    expect(JSON.parse(JSON.stringify(result.outcome))).toEqual(
+      JSON.parse(JSON.stringify(expected)),
+    );
     expect(result.hostEvidence).toMatchObject({
       selectedHostId: EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID,
       terminalStatus: 'completed',

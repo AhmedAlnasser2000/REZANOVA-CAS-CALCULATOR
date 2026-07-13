@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   GuardedSolveRequest,
 } from '../../../types/calculator';
 
@@ -13,7 +13,7 @@ export type EquationDirectSymbolicWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: DisplayOutcome;
+      outcome: CanonicalRuntimeOutcome;
     }
   | {
       kind: 'failed';

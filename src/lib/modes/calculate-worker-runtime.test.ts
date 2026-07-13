@@ -13,6 +13,7 @@ import {
 } from './worker-clients/calculate-worker-client';
 import {
   runCalculateRuntimeRequest,
+  runCalculateCanonicalRuntimeRequest,
   runCalculateRuntimeWithOoePilot,
   type RunCalculateRuntimeRequest,
 } from './calculate';
@@ -76,7 +77,7 @@ class FakeCalculateWorker {
     this.emit({
       kind: 'completed',
       requestId: message.requestId,
-      payload: runCalculateRuntimeRequest(message.request),
+      outcome: runCalculateCanonicalRuntimeRequest(message.request),
     });
   }
 
@@ -164,7 +165,12 @@ describe('calculate worker runtime shell', () => {
       });
       const mainThreadPayload = runCalculateRuntimeRequest(request);
 
-      expect(result.payload).toEqual(mainThreadPayload);
+      const serializedWorker = JSON.parse(JSON.stringify(result.payload));
+      const serializedMainThread = JSON.parse(JSON.stringify(mainThreadPayload));
+      if (serializedMainThread.plannerBadges?.length === 0) {
+        delete serializedMainThread.plannerBadges;
+      }
+      expect(serializedWorker).toEqual(serializedMainThread);
       expect(structuredClone(result.payload)).toEqual(result.payload);
       if (request.kind === 'standard') {
         expect(result.payload.kind).toBe('success');
@@ -231,7 +237,7 @@ describe('calculate worker runtime shell', () => {
       },
       {
         createWorker: () => worker,
-        fallback: () => runCalculateRuntimeRequest(request),
+        fallback: () => runCalculateCanonicalRuntimeRequest(request),
       },
     );
 
@@ -240,7 +246,7 @@ describe('calculate worker runtime shell', () => {
     const result = await promise;
 
     expect(worker.terminated).toBe(true);
-    expect(result.payload.kind).toBe('error');
+    expect(result.outcome.kind).toBe('error');
     expect(result.hostExecution).toMatchObject({
       kind: 'worker-cancelled',
       hostId: 'calculate-worker-runtime',

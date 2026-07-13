@@ -402,6 +402,7 @@ function restorePeriodicFamily(
 
 export function projectCanonicalResultToDisplayOutcome(
   document: CanonicalResultDocumentV1,
+  options: { includeCanonicalMath?: boolean } = {},
 ): Exclude<DisplayOutcome, { kind: 'prompt' }> {
   const metadata = document.metadata;
   const solveSummaryParts = document.summaries?.solve?.map((line) => line.map(restoreDetailPart));
@@ -409,7 +410,7 @@ export function projectCanonicalResultToDisplayOutcome(
     title: document.title,
     warnings: [...document.warnings],
     canonicalResult: document,
-    ...(document.primaryMath
+    ...(document.primaryMath && options.includeCanonicalMath !== false
       ? {
           exactLatex: document.primaryMath.canonicalLatex,
           canonicalMath: {

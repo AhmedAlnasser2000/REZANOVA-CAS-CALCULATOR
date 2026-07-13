@@ -1,10 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DisplayOutcome } from '../../types/calculator';
-import {
-  buildEquationCancelledOutcomeBoundary,
-  projectEquationDisplayOutcomeToBoundaryOrThrow,
-  projectEquationOutcomeBoundaryToDisplay,
-} from '../equation/equation-solve-result';
+import { projectEquationDisplayOutcomeToBoundaryOrThrow } from '../equation/equation-solve-result';
+import { projectCanonicalRuntimeOutcomeToDisplayOutcome } from '../result-contract';
 import { runEquationModeViaIsolatedWorker } from './worker-clients/equation-worker-client';
 import type { EquationWorkerInboundMessage, EquationWorkerOutboundMessage } from './worker-entrypoints/equation.worker';
 import type { OoeRuntimeControlContext } from '../ooe/runtime-control/runtime-coordinator';
@@ -23,6 +20,11 @@ const successPayload: DisplayOutcome = {
   warnings: [],
 };
 const successBoundary = projectEquationDisplayOutcomeToBoundaryOrThrow(successPayload);
+const successOutcome = {
+  kind: 'success' as const,
+  canonicalResult: successBoundary.result.document,
+};
+const successWorkerPayload = { outcome: successOutcome, analysisEvidence: [] };
 
 const request: RunEquationModeRequest = {
   equationScreen: 'symbolic',
@@ -115,7 +117,7 @@ describe('Equation worker runtime client', () => {
     const worker = new FakeEquationWorker();
     const resultPromise = runEquationModeViaIsolatedWorker(request, controlContext(), {
       createWorker: () => worker,
-      fallback: async () => ({ boundary: successBoundary }),
+      fallback: async () => successWorkerPayload,
     });
 
     await vi.waitFor(() => {
@@ -124,12 +126,13 @@ describe('Equation worker runtime client', () => {
     worker.emit({
       kind: 'completed',
       requestId: worker.messages[0].requestId,
-      boundary: successBoundary,
+      outcome: successOutcome,
+      analysisEvidence: [],
     });
 
     const result = await resultPromise;
     expect(result).toMatchObject({
-      boundary: successBoundary,
+      outcome: successOutcome,
       hostExecution: {
         kind: 'worker',
         hostId: 'equation-worker-runtime',
@@ -137,14 +140,14 @@ describe('Equation worker runtime client', () => {
         terminalStatus: 'completed',
       },
     });
-    expect(projectEquationOutcomeBoundaryToDisplay(result.boundary)).toMatchObject(successPayload);
-    expect(structuredClone(successBoundary)).toEqual(successBoundary);
+    expect(projectCanonicalRuntimeOutcomeToDisplayOutcome(result.outcome)).toMatchObject(successPayload);
+    expect(structuredClone(successOutcome)).toEqual(successOutcome);
   });
 
   it('falls back only when the worker is unavailable before start', async () => {
     vi.stubGlobal('Worker', undefined);
     const checkpoint = vi.fn();
-    const fallback = vi.fn(async () => ({ boundary: successBoundary }));
+    const fallback = vi.fn(async () => successWorkerPayload);
 
     const result = await runEquationModeViaIsolatedWorker(request, controlContext({ checkpoint }), {
       fallback,
@@ -161,7 +164,7 @@ describe('Equation worker runtime client', () => {
 
   it('does not fallback after worker runtime failure', async () => {
     const worker = new FakeEquationWorker();
-    const fallback = vi.fn(async () => ({ boundary: successBoundary }));
+    const fallback = vi.fn(async () => successWorkerPayload);
     const resultPromise = runEquationModeViaIsolatedWorker(request, controlContext(), {
       createWorker: () => worker,
       fallback,
@@ -181,9 +184,9 @@ describe('Equation worker runtime client', () => {
     expect(worker.terminated).toBe(true);
   });
 
-  it('rejects malformed completed boundaries without falling back', async () => {
+  it('rejects malformed completed outcomes without falling back', async () => {
     const worker = new FakeEquationWorker();
-    const fallback = vi.fn(async () => ({ boundary: successBoundary }));
+    const fallback = vi.fn(async () => successWorkerPayload);
     const resultPromise = runEquationModeViaIsolatedWorker(request, controlContext(), {
       createWorker: () => worker,
       fallback,
@@ -195,20 +198,21 @@ describe('Equation worker runtime client', () => {
     worker.emit({
       kind: 'completed',
       requestId: worker.messages[0].requestId,
-      boundary: {
-        ...successBoundary,
-        result: { ...successBoundary.result, status: 'unknown' },
+      outcome: {
+        ...successOutcome,
+        canonicalResult: { ...successOutcome.canonicalResult, version: 2 },
       },
+      analysisEvidence: [],
     } as unknown as EquationWorkerOutboundMessage);
 
-    await expect(resultPromise).rejects.toThrow('invalid completed boundary: invalid-result');
+    await expect(resultPromise).rejects.toThrow('invalid completed outcome: invalid-document');
     expect(fallback).not.toHaveBeenCalled();
     expect(worker.terminated).toBe(true);
   });
 
-  it('rejects cancellation-shaped completed messages', async () => {
+  it('rejects string-only completed messages', async () => {
     const worker = new FakeEquationWorker();
-    const fallback = vi.fn(async () => ({ boundary: successBoundary }));
+    const fallback = vi.fn(async () => successWorkerPayload);
     const resultPromise = runEquationModeViaIsolatedWorker(request, controlContext(), {
       createWorker: () => worker,
       fallback,
@@ -220,11 +224,16 @@ describe('Equation worker runtime client', () => {
     worker.emit({
       kind: 'completed',
       requestId: worker.messages[0].requestId,
-      boundary: buildEquationCancelledOutcomeBoundary('Forged cancellation.'),
+      outcome: {
+        kind: 'error',
+        title: 'Solve',
+        error: 'Forged string-only cancellation.',
+      },
+      analysisEvidence: [],
     } as unknown as EquationWorkerOutboundMessage);
 
     await expect(resultPromise).rejects.toThrow(
-      'A completed Equation worker message requires a result boundary.',
+      'invalid completed outcome: invalid-outcome',
     );
     expect(fallback).not.toHaveBeenCalled();
     expect(worker.terminated).toBe(true);
@@ -239,7 +248,7 @@ describe('Equation worker runtime client', () => {
       controlContext({ shouldCancel: () => cancelled }),
       {
         createWorker: () => worker,
-        fallback: async () => ({ boundary: successBoundary }),
+        fallback: async () => successWorkerPayload,
       },
     );
 
@@ -250,9 +259,12 @@ describe('Equation worker runtime client', () => {
     await vi.advanceTimersByTimeAsync(WORKER_CANCEL_POLL_INTERVAL_MS + 1);
 
     await expect(resultPromise).resolves.toMatchObject({
-      boundary: {
-        kind: 'cancelled',
-        reason: 'Equation solve was stopped before it finished.',
+      outcome: {
+        kind: 'error',
+        canonicalResult: {
+          outcomeKind: 'error',
+          error: 'Equation solve was stopped before it finished.',
+        },
       },
       hostExecution: {
         kind: 'worker-cancelled',

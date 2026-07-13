@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "EQUATION-STAGE-CARRIER-CLOSEOUT1 replaces guarded runner, stage descriptor, cancellation, and orchestration DisplayOutcome transport with validated Equation stage carriers while retaining the direct-symbolic worker payload as the Move 12 boundary.",
-  "registryDigest": "5e4bf594cbc4e3acf74c",
+  "acceptedReason": "Migrate Calculate and Equation worker and OOE payloads to validated CanonicalRuntimeOutcome while retaining one canonical Display read-model projection.",
+  "registryDigest": "42e1068ee93b1b3d5682",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -21,7 +21,7 @@
     "calculate": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 6
+      "nativeDocument": 7
     },
     "calculus": {
       "compatibilityProjection": 0,
@@ -36,7 +36,7 @@
     "equation": {
       "compatibilityProjection": 0,
       "legacyRead": 265,
-      "nativeDocument": 141
+      "nativeDocument": 142
     },
     "geometry": {
       "compatibilityProjection": 0,
@@ -81,7 +81,7 @@
     "result-contract": {
       "compatibilityProjection": 0,
       "legacyRead": 80,
-      "nativeDocument": 1
+      "nativeDocument": 2
     },
     "statistics": {
       "compatibilityProjection": 0,
@@ -397,8 +397,17 @@
         "d81e62307399f1ba9448:1",
         "ab82579773584989b4ad:1"
       ],
+      "src/lib/modes/worker-clients/calculate-worker-client.ts": [
+        "c8926857a84285f09e5d:1"
+      ],
+      "src/lib/modes/worker-clients/equation-worker-client.ts": [
+        "5350c87bcc0b704ab889:1"
+      ],
       "src/lib/result-contract/projection.ts": [
         "b845e5a0379f98960e45:1"
+      ],
+      "src/lib/result-contract/runtime-projection.ts": [
+        "8bdac4537ec776c61d0d:1"
       ],
       "src/lib/statistics/result-document.ts": [
         "438c5c3707f4f8780809:1"
@@ -423,6 +432,9 @@
         "11c19875e55f29584268:1",
         "b81db50f2f3f5ab9190c:1",
         "c1fa2a7926c2a4c2cb67:1"
+      ],
+      "src/lib/result-contract/runtime-projection.ts": [
+        "75dde79f112af5a7236d:1"
       ]
     },
     "compatibility-projection": {
@@ -561,10 +573,7 @@
         "43ab67f7af46e28da966:1",
         "05b475bf4407a9b4b0a5:1",
         "210c0badc082ec42c35c:1",
-        "335dcec927a2c91f9d9a:1"
-      ],
-      "src/lib/equation/direct-symbolic-worker/worker-runtime.ts": [
-        "c6abbe07d8b67d78e609:1"
+        "a6c7c22794a0ca507a9c:1"
       ],
       "src/lib/equation/guarded/algebra-stage.ts": [
         "6433d838179a4ba32f2c:1",
@@ -730,8 +739,8 @@
         "a5482cdfc9af2bf6486e:1"
       ],
       "src/lib/modes/calculate/runtime.ts": [
-        "988177e8b710bf5b52d6:1",
-        "439462364eb26ed737ce:1"
+        "128ade374519581646ad:1",
+        "12cdd8c6a64269e665e7:1"
       ],
       "src/lib/modes/calculus.ts": [
         "84159a8f8fc647500cbd:1"
@@ -859,11 +868,11 @@
         "1d2794e5729f3fd54755:1",
         "c2353dd4a4d52be43868:1",
         "c93c71647e54b7deeaa1:1",
-        "873900740cd797b0e608:1",
+        "8571d28b4e3c9a558de5:1",
         "3a14428deb05597e64d9:1",
         "c93c71647e54b7deeaa1:2",
-        "052f1450c7bdde95295e:1",
-        "6c1a9de8b2b047762e8e:1"
+        "308ecea57bce18ab83bc:1",
+        "b55b95febe0a1aa0c829:1"
       ],
       "src/lib/modes/equation/stored-values.ts": [
         "397f61f1ea5d479ec7f5:1"
@@ -913,11 +922,6 @@
         "f09a01c6224260303184:1",
         "531b0ad8cb10e2ea3234:1"
       ],
-      "src/lib/modes/worker-clients/calculate-worker-client.ts": [
-        "76a8b0e344811804f160:1",
-        "371915f58588d47ea6c9:1",
-        "2884896bd335d627e80f:1"
-      ],
       "src/lib/modes/worker-clients/calculus-worker-client.ts": [
         "b9cc3eb6f1372fc8f001:1",
         "7f86786fa151409ca039:1",
@@ -927,9 +931,6 @@
         "8224da9626514cc4fbe6:1",
         "83dfe0c713bed0a4d9b7:1",
         "03204821746bef87222c:1"
-      ],
-      "src/lib/modes/worker-entrypoints/calculate.worker.ts": [
-        "0268bd07a3e847e42a22:1"
       ],
       "src/lib/modes/worker-entrypoints/matrix.worker.ts": [
         "c1d844bb944bb5ad302a:1"
@@ -947,6 +948,9 @@
       ],
       "src/lib/result-contract/projection.ts": [
         "776ae81dba1d5b0b967b:1"
+      ],
+      "src/lib/result-contract/runtime-projection.ts": [
+        "62dd834de0ab2a683449:1"
       ],
       "src/lib/statistics/core.ts": [
         "ccb74c86b71528bf3884:1",
@@ -1108,9 +1112,6 @@
         "fb436a86a0c823c0331c:1",
         "de2589046833bc80de31:1"
       ],
-      "src/lib/modes/worker-clients/calculate-worker-client.ts": [
-        "f0bf66579ae025e2ae45:1"
-      ],
       "src/lib/modes/worker-clients/calculus-worker-client.ts": [
         "c4b66e429589318da600:1"
       ],
@@ -1173,6 +1174,10 @@
       "src/lib/result-contract/consumer.ts": [
         "bee03b3be25575ea25f8:1",
         "bee03b3be25575ea25f8:2"
+      ],
+      "src/lib/result-contract/runtime-projection.ts": [
+        "2f91294adc1de6c670a1:1",
+        "2f91294adc1de6c670a1:2"
       ],
       "src/lib/result-contract/storage.ts": [
         "ddd00484a1c1d06528b1:1",
@@ -1893,7 +1898,9 @@
         "69d325b4f5ead5c4763a:1"
       ],
       "src/lib/modes/equation/run.ts": [
-        "1858df8af85fe7b00493:1"
+        "1858df8af85fe7b00493:1",
+        "c82a01be7c15d2716c8a:1",
+        "5dd829c4f32075fddc4b:1"
       ],
       "src/lib/modes/equation/stored-values.ts": [
         "7d9832d184df16490f7a:1",
@@ -1938,6 +1945,10 @@
         "a0b84eb385db03660c82:3",
         "a0b84eb385db03660c82:4"
       ],
+      "src/lib/result-contract/runtime-projection.ts": [
+        "09bcf6ae2d2473b264f2:1",
+        "09bcf6ae2d2473b264f2:2"
+      ],
       "src/lib/statistics/runtime-run.ts": [
         "3226a414e7478b46c356:1"
       ],
@@ -1972,6 +1983,12 @@
       ],
       "src/lib/kernel/runtime-envelope.ts": [
         "9f50643a5a4aa74d3290:1"
+      ],
+      "src/lib/result-contract/runtime-projection.ts": [
+        "aee856bb100c5b753cd0:1",
+        "aee856bb100c5b753cd0:2",
+        "f707795cc2f389347d26:1",
+        "f707795cc2f389347d26:2"
       ],
       "src/lib/trigonometry/core.ts": [
         "e6e63cf79e478e9698c5:1"

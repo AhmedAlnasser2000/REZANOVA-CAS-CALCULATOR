@@ -264,6 +264,7 @@ export async function runCalculateWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId },
   options?: OoeJobContextOptions,
   getHostExecution?: () => CalculateHostExecution | undefined,
+  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
 ): Promise<CalculateOoePilotRunResult<TPayload>> {
   const definition = calculatePilotDefinition(capabilityId);
   return runOoeRuntimeJob({
@@ -285,7 +286,9 @@ export async function runCalculateWithOoePilot<TPayload>(
     buildProvenance: ({ payload, metadata, routeSnapshot }) => {
       const snapshot = routeSnapshot as CalculateRuntimeRouteSnapshot;
       const input = routeSnapshotInput(routeSnapshot);
-      const output = payload as DisplayOutcome;
+      const output = resolveDisplayOutcome
+        ? resolveDisplayOutcome(payload)
+        : payload as DisplayOutcome;
       return {
         depth: 'coarse',
         mode: 'calculate',

@@ -212,6 +212,16 @@ export const CANONICAL_PROJECTION_REGISTRATIONS = [
     functions: ['resolveCanonicalResultForConsumer'],
   },
   {
+    id: 'canonical-runtime-display-projection-v1',
+    owner: 'canonical-runtime-contract',
+    rationale: 'One validated runtime adapter derives the temporary Display read model from canonical result truth and transient math-valued actions.',
+    matchers: exact('src/lib/result-contract/runtime-projection.ts'),
+    functions: [
+      'projectCanonicalRuntimeOutcomeToDisplayOutcome',
+      'projectDisplayOutcomeToCanonicalRuntimeOutcome',
+    ],
+  },
+  {
     id: 'display-legacy-history-detail-projection-v1',
     owner: 'display-result-read-model',
     rationale: 'Display preserves raw undeclared detail sections only for legacy History when canonical projection otherwise succeeds.',

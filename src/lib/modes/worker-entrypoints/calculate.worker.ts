@@ -1,6 +1,6 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import {
-  runCalculateRuntimeRequest,
+  runCalculateCanonicalRuntimeRequest,
   type RunCalculateRuntimeRequest,
 } from '../calculate';
 
@@ -18,7 +18,7 @@ export type CalculateWorkerOutboundMessage =
   | {
       kind: 'completed';
       requestId: string;
-      payload: DisplayOutcome;
+      outcome: CanonicalRuntimeOutcome;
     }
   | {
       kind: 'failed';
@@ -53,7 +53,7 @@ workerSelf.addEventListener('message', (event: MessageEvent<CalculateWorkerInbou
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: runCalculateRuntimeRequest(event.data.request),
+      outcome: runCalculateCanonicalRuntimeRequest(event.data.request),
     } satisfies CalculateWorkerOutboundMessage);
   } catch (error: unknown) {
     workerSelf.postMessage({

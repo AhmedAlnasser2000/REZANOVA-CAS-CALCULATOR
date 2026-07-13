@@ -146,3 +146,17 @@
 - visual: not applicable because no runtime producer, worker, consumer, or rendered path changed
 - resource posture: no full unit, UI, canary, or browser suite ran
 - residual: `CANONICAL-OUTCOME-CALCULATE-EQUATION1` is the first workspace migration onto the validated envelope
+
+## CANONICAL-OUTCOME-CALCULATE-EQUATION1
+
+- kind: backend worker and OOE result-envelope migration with focused UI parity evidence
+- result: pass
+- contract: Calculate, Equation, and Equation direct-symbolic worker completions carry validated `CanonicalRuntimeOutcome`; public mode wrappers derive the current Display read model only after OOE completes
+- Equation evidence: solve-result validation remains the final Equation adapter, while private analysis evidence travels separately for OOE provenance and never becomes canonical result content
+- regression: 23 focused worker/OOE/runtime tests and 73 result-contract tests pass; malformed canonical completions fail without fallback and existing cancellation/fallback host semantics remain unchanged
+- inventory: 647 producers, 613 consumers, 174 native documents, 47 owner assemblies, one legacy-History compatibility projection, 411 legacy reads, and zero violations
+- static: incremental TypeScript, lint, production build, file-size, OOE boundaries, compartments, seam classification, and diff hygiene pass
+- visual: the post-build Chromium run passes RAD inverse-trig and Equation quadratic canaries; inspected frames show the Calculate answer/approximation card and Equation `x=2`, `x=3` answer plus Solve Target details without overflow
+- verification correction: the first Playwright preview used the prior `dist` and is not counted; the app was rebuilt and the representative cases were rerun against the new worker assets before acceptance
+- resource posture: no full unit, UI, or 19-canary suite ran; no heavy process remains active
+- residual: `CANONICAL-OUTCOME-SYMBOLIC-CALCULUS1` migrates the next runtime lanes

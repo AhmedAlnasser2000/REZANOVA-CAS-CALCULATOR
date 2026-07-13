@@ -1,6 +1,6 @@
 import type { OoeRuntimeControlContext } from '../../ooe/runtime-control/runtime-coordinator';
 import type { CalculateHostExecution } from '../../ooe/pilots/calculate-pilot';
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import type { RunCalculateRuntimeRequest } from '../calculate';
 import type {
   CalculateWorkerInboundMessage,
@@ -8,12 +8,17 @@ import type {
 } from '../worker-entrypoints/calculate.worker';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import {
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  validateCanonicalRuntimeOutcome,
+} from '../../result-contract';
+import { createCalculateErrorResultOutcome } from '../calculate/result-document';
 
 export const CALCULATE_WORKER_RUNTIME_HOST_ID = 'calculate-worker-runtime' as const;
 export const CALCULATE_WORKER_RUNTIME_FALLBACK_HOST_ID = 'calculate-runtime' as const;
 
 export type CalculateWorkerRunResult = {
-  payload: DisplayOutcome;
+  outcome: CanonicalRuntimeOutcome;
   hostExecution: CalculateHostExecution;
 };
 
@@ -36,7 +41,7 @@ export type CreateCalculateWorker = () => CalculateWorkerLike;
 
 type RunCalculateModeViaIsolatedWorkerOptions = {
   createWorker?: CreateCalculateWorker;
-  fallback: () => Promise<DisplayOutcome> | DisplayOutcome;
+  fallback: () => Promise<CanonicalRuntimeOutcome> | CanonicalRuntimeOutcome;
 };
 
 let calculateWorkerRequestCounter = 0;
@@ -53,25 +58,25 @@ function nextRequestId() {
   return `calculate-worker-${calculateWorkerRequestCounter}`;
 }
 
-function buildCancelledPayload(): DisplayOutcome {
-  return {
+function buildCancelledOutcome(): CanonicalRuntimeOutcome {
+  return projectDisplayOutcomeToCanonicalRuntimeOutcome(createCalculateErrorResultOutcome({
     kind: 'error',
     title: 'Calculate',
     error: 'Calculate stopped before it finished.',
     warnings: [],
     ...proseSolveSummary('Calculate stopped after the worker runtime was hard-stopped.'),
-  };
+  }), 'Calculate cancellation');
 }
 
 async function runFallback(
   context: Pick<OoeRuntimeControlContext, 'checkpoint'>,
   reason: string,
-  fallback: () => Promise<DisplayOutcome> | DisplayOutcome,
+  fallback: () => Promise<CanonicalRuntimeOutcome> | CanonicalRuntimeOutcome,
 ): Promise<CalculateWorkerRunResult> {
   context.checkpoint(`Calculate worker runtime unavailable; falling back to main-thread Calculate runtime (${reason}).`);
-  const payload = await fallback();
+  const outcome = await fallback();
   return {
-    payload,
+    outcome,
     hostExecution: {
       kind: 'fallback',
       hostId: CALCULATE_WORKER_RUNTIME_FALLBACK_HOST_ID,
@@ -94,7 +99,7 @@ export async function runCalculateModeViaIsolatedWorker(
 ): Promise<CalculateWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      payload: buildCancelledPayload(),
+      outcome: buildCancelledOutcome(),
       hostExecution: {
         kind: 'worker-cancelled',
         hostId: CALCULATE_WORKER_RUNTIME_HOST_ID,
@@ -184,7 +189,7 @@ export async function runCalculateModeViaIsolatedWorker(
       worker.terminate();
       context.checkpoint('Calculate worker runtime was terminated after a Stop request.');
       settle({
-        payload: buildCancelledPayload(),
+        outcome: buildCancelledOutcome(),
         hostExecution: {
           kind: 'worker-cancelled',
           hostId: CALCULATE_WORKER_RUNTIME_HOST_ID,
@@ -214,8 +219,15 @@ export async function runCalculateModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
+        const validation = validateCanonicalRuntimeOutcome(event.data.outcome);
+        if (!validation.ok) {
+          fail(workerRuntimeError(
+            `invalid completed outcome: ${validation.failure.reason}: ${validation.failure.message}`,
+          ));
+          return;
+        }
         settle({
-          payload: event.data.payload,
+          outcome: validation.validated.value,
           hostExecution: {
             kind: 'worker',
             hostId: CALCULATE_WORKER_RUNTIME_HOST_ID,

@@ -1,9 +1,7 @@
 import {
-  buildEquationCancelledOutcomeBoundary,
-  type EquationOutcomeBoundaryV1,
-  type EquationResultOutcomeBoundaryV1,
-  validateEquationResultOutcomeBoundary,
+  createEquationResultOutcome,
 } from '../../equation/equation-solve-result';
+import type { EquationAnalysisEvidence } from '../../equation/analysis-evidence';
 import {
   EQUATION_SOLVE_CANCELLED_MESSAGE,
   type GuardedEquationStageReplayTrace,
@@ -16,17 +14,25 @@ import type {
 } from '../worker-entrypoints/equation.worker';
 import type { RunEquationModeRequest } from '../equation';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import {
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  validateCanonicalRuntimeOutcome,
+} from '../../result-contract';
+import { proseSolveSummary } from '../../display/result-detail-lines';
 
 export const EQUATION_WORKER_RUNTIME_HOST_ID = 'equation-worker-runtime' as const;
 export const EQUATION_WORKER_RUNTIME_FALLBACK_HOST_ID = 'equation-runtime' as const;
 
 export type EquationWorkerRunPayload = {
-  boundary: EquationResultOutcomeBoundaryV1;
+  outcome: CanonicalRuntimeOutcome;
+  analysisEvidence: EquationAnalysisEvidence[];
   guardedTrace?: GuardedEquationStageReplayTrace;
 };
 
 export type EquationWorkerRunResult = {
-  boundary: EquationOutcomeBoundaryV1;
+  outcome: CanonicalRuntimeOutcome;
+  analysisEvidence: EquationAnalysisEvidence[];
   guardedTrace?: GuardedEquationStageReplayTrace;
   hostExecution: EquationRuntimeHostExecution;
 };
@@ -54,6 +60,19 @@ type RunEquationModeViaIsolatedWorkerOptions = {
 };
 
 let equationWorkerRequestCounter = 0;
+
+function buildCancelledOutcome(): CanonicalRuntimeOutcome {
+  return projectDisplayOutcomeToCanonicalRuntimeOutcome(createEquationResultOutcome({
+    kind: 'error',
+    title: 'Solve',
+    error: EQUATION_SOLVE_CANCELLED_MESSAGE,
+    warnings: [],
+    plannerBadges: [],
+    ...proseSolveSummary(
+      'Equation solve stopped after the Equation worker runtime was hard-stopped.',
+    ),
+  }), 'Equation cancellation');
+}
 
 function createDefaultEquationWorker(): EquationWorkerLike {
   return new Worker(new URL('../worker-entrypoints/equation.worker.ts', import.meta.url), {
@@ -98,7 +117,8 @@ export async function runEquationModeViaIsolatedWorker(
 ): Promise<EquationWorkerRunResult> {
   if (context.shouldCancel()) {
     return {
-      boundary: buildEquationCancelledOutcomeBoundary(EQUATION_SOLVE_CANCELLED_MESSAGE),
+      outcome: buildCancelledOutcome(),
+      analysisEvidence: [],
       hostExecution: {
         kind: 'worker-cancelled',
         hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
@@ -189,7 +209,8 @@ export async function runEquationModeViaIsolatedWorker(
       worker.terminate();
       context.checkpoint('Equation worker runtime was terminated after a Stop request.');
       settle({
-        boundary: buildEquationCancelledOutcomeBoundary(EQUATION_SOLVE_CANCELLED_MESSAGE),
+        outcome: buildCancelledOutcome(),
+        analysisEvidence: [],
         hostExecution: {
           kind: 'worker-cancelled',
           hostId: EQUATION_WORKER_RUNTIME_HOST_ID,
@@ -219,15 +240,16 @@ export async function runEquationModeViaIsolatedWorker(
 
       clearStartupTimer();
       if (event.data.kind === 'completed') {
-        const validation = validateEquationResultOutcomeBoundary(event.data.boundary);
+        const validation = validateCanonicalRuntimeOutcome(event.data.outcome);
         if (!validation.ok) {
           fail(workerRuntimeError(
-            `invalid completed boundary: ${validation.failure.reason}: ${validation.failure.message}`,
+            `invalid completed outcome: ${validation.failure.reason}: ${validation.failure.message}`,
           ));
           return;
         }
         settle({
-          boundary: validation.boundary,
+          outcome: validation.validated.value,
+          analysisEvidence: structuredClone(event.data.analysisEvidence),
           guardedTrace: event.data.guardedTrace,
           hostExecution: {
             kind: 'worker',

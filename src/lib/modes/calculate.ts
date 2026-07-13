@@ -8,6 +8,7 @@ export {
 } from './calculate/ooe-snapshot';
 export {
   runCalculateAlgebraTransformWithOoePilot,
+  runCalculateCanonicalRuntimeRequest,
   runCalculateModeWithOoePilot,
   runCalculateRuntimeRequest,
   runCalculateRuntimeWithOoePilot,

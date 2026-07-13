@@ -7,8 +7,12 @@ import {
   runCalculateModeViaIsolatedWorker,
   type CreateCalculateWorker,
 } from '../worker-clients/calculate-worker-client';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { requireCanonicalResultAuthority } from '../../result-contract';
+import type { CanonicalRuntimeOutcome, DisplayOutcome } from '../../../types/calculator';
+import {
+  projectCanonicalRuntimeOutcomeToDisplayOutcome,
+  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  requireCanonicalResultAuthority,
+} from '../../result-contract';
 import {
   buildCalculateRuntimeOoeSnapshot,
   calculateCapabilityIdForRuntimeRequest,
@@ -45,26 +49,40 @@ export function runCalculateRuntimeRequest(
   return requireCanonicalResultAuthority(ownedOutcome, 'Calculate');
 }
 
+export function runCalculateCanonicalRuntimeRequest(
+  request: RunCalculateRuntimeRequest,
+): CanonicalRuntimeOutcome {
+  return projectDisplayOutcomeToCanonicalRuntimeOutcome(
+    runCalculateRuntimeRequest(request),
+    'Calculate',
+  );
+}
+
 export async function runCalculateRuntimeWithOoePilot(
   request: RunCalculateRuntimeRequest,
   options: RunCalculateRuntimeWithOoePilotOptions = {},
 ) {
   let hostExecution: CalculateHostExecution | undefined;
   const routeSnapshot = buildCalculateRuntimeOoeSnapshot(request);
-  return runCalculateWithOoePilot(
+  const envelope = await runCalculateWithOoePilot(
     calculateCapabilityIdForRuntimeRequest(request),
     async (context) => {
       const result = await runCalculateModeViaIsolatedWorker(request, context, {
         createWorker: options.createWorker,
-        fallback: () => runCalculateRuntimeRequest(request),
+        fallback: () => runCalculateCanonicalRuntimeRequest(request),
       });
       hostExecution = result.hostExecution;
-      return result.payload;
+      return result.outcome;
     },
     routeSnapshot,
     options,
     () => hostExecution,
+    (payload) => projectCanonicalRuntimeOutcomeToDisplayOutcome(payload),
   );
+  return {
+    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(envelope.payload),
+    ooe: envelope.ooe,
+  };
 }
 
 export async function runCalculateModeWithOoePilot(

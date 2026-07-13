@@ -2505,6 +2505,11 @@
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The final runtime result union carries only `kind`, a validated `CanonicalResultDocumentV1`, optional math-valued `CanonicalRuntimeActionV1` entries, and optional runtime advisories. Prompt outcomes retain their current control fields and `carryLatex`.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Runtime action payloads use `CanonicalMathValueV1`; free-standing result LaTeX is rejected. The runtime validator requires document/outcome-kind parity, declared fields, standard bounded MathJSON, plain clone-safe data, at most 64 actions, 11,024 nodes, depth 65, and 704,000 serialized bytes.
 
+## 2026-07-13 - CANONICAL-OUTCOME-CALCULATE-EQUATION1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Calculate and Equation worker and OOE result payloads use `CanonicalRuntimeOutcome`; Display is a derived compatibility read model only at the existing public mode boundary.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Equation analysis evidence remains private host/provenance metadata beside the canonical result rather than widening `CanonicalResultDocumentV1` with runtime diagnostics.
+
 ## 2026-07-13 - MATHJSON-COVERAGE-CALCULATE-EQUATION1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Optional answer MathJSON is transactional enrichment: if a producer tree fails semantic, bounds, clone, or printer proof, omit that tree and retain unchanged canonical LaTeX. Do not turn an optional proof failure into a runtime failure and do not reconstruct the tree from formatted output.
