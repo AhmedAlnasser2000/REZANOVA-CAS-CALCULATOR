@@ -17,8 +17,8 @@
 ## Program Status
 
 - Status: active.
-- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`.
-- Next gate: `CANONICAL-PRODUCER-MATH-VALUE1`.
+- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`, `CANONICAL-PRODUCER-MATH-VALUE1`.
+- Next gate: `MATHJSON-COVERAGE-CALCULATE-EQUATION1`.
 - Starting commit: `0a173b61`.
 - Push: not authorized.
 - Commit approval: standing approval covers all 19 numbered program moves and paired named subgates.
@@ -30,6 +30,7 @@
 - Proof validates bounds, clone safety, standard Compute Engine boxing, semantic identity, and compatibility-printer parity.
 - The original producer tree becomes authority; a parsed validation tree never does.
 - Private Calcwiz/Rezanova MathJSON heads are rejected; domain-native IR stays behind workspace-owned adapters.
+- All nine owner adapters accept deeply typed proven canonical values with exact compatibility-shape parity.
 
 ## Durable Files
 

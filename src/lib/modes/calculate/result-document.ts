@@ -14,6 +14,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
 
 export type CalculateResultDocumentInput = {
@@ -38,7 +39,10 @@ export type CalculateResultDocumentInput = {
   transformSummaryLatex?: string;
 };
 
-export function buildCalculateResultDocument(input: CalculateResultDocumentInput) {
+export function buildCalculateResultDocument(
+  input: CalculateResultDocumentInput,
+  options: CanonicalResultProducerOptionsV1 = {},
+) {
   if (
     input.canonicalMath
     && input.canonicalMath.canonicalLatex !== input.exactLatex
@@ -94,13 +98,14 @@ export function buildCalculateResultDocument(input: CalculateResultDocumentInput
         ? { transformBadges: [...input.transformBadges] }
         : {}),
     },
-  });
+  }, options);
 }
 
 type CalculateErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
 
 export function createCalculateErrorResultOutcome(
   input: Omit<CalculateErrorOutcome, 'canonicalResult'>,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): CalculateErrorOutcome {
   const canonicalResult = buildCalculateResultDocument({
     outcomeKind: 'error',
@@ -116,6 +121,6 @@ export function createCalculateErrorResultOutcome(
     resolvedInputLatex: input.resolvedInputLatex,
     transformSummaryText: input.transformSummaryText,
     transformSummaryLatex: input.transformSummaryLatex,
-  });
+  }, options);
   return deriveDisplayOutcomeFromCanonicalResult(canonicalResult, input);
 }

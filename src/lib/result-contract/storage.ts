@@ -40,7 +40,7 @@ function invalidResolution(
   };
 }
 
-function structuredEqual(left: unknown, right: unknown): boolean {
+function canonicalAuthorityEqual(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) return true;
   if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
     return false;
@@ -49,15 +49,17 @@ function structuredEqual(left: unknown, right: unknown): boolean {
     return Array.isArray(left)
       && Array.isArray(right)
       && left.length === right.length
-      && left.every((value, index) => structuredEqual(value, right[index]));
+      && left.every((value, index) => canonicalAuthorityEqual(value, right[index]));
   }
   const leftRecord = left as Record<string, unknown>;
   const rightRecord = right as Record<string, unknown>;
-  const leftKeys = Object.keys(leftRecord).sort();
+  const leftKeys = Object.keys(leftRecord).filter((key) =>
+    key !== 'mathJson' || key in rightRecord).sort();
   const rightKeys = Object.keys(rightRecord).sort();
   return leftKeys.length === rightKeys.length
     && leftKeys.every((key, index) =>
-      key === rightKeys[index] && structuredEqual(leftRecord[key], rightRecord[key]));
+      key === rightKeys[index]
+      && canonicalAuthorityEqual(leftRecord[key], rightRecord[key]));
 }
 
 export function resolveCanonicalResultForStorage(
@@ -85,7 +87,7 @@ export function resolveCanonicalResultForStorage(
         compatibility.failure.validationFailure,
       );
     }
-    if (!structuredEqual(nativeValidation.validated.value, compatibility.document)) {
+    if (!canonicalAuthorityEqual(nativeValidation.validated.value, compatibility.document)) {
       return invalidResolution(
         'Native canonical result does not match the typed compatibility projection.',
       );

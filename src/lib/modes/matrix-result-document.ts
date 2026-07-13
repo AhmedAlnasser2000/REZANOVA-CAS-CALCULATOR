@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
 type MatrixSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -16,15 +17,19 @@ type MatrixResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
 
 export function createMatrixResultOutcome(
   input: Omit<MatrixSuccessOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): MatrixSuccessOutcome;
 export function createMatrixResultOutcome(
   input: Omit<MatrixErrorOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): MatrixErrorOutcome;
 export function createMatrixResultOutcome(
   input: MatrixResultProducerInput,
+  options?: CanonicalResultProducerOptionsV1,
 ): MatrixResultProducerOutcome;
 export function createMatrixResultOutcome(
   input: MatrixResultProducerInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): MatrixResultProducerOutcome {
   if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Matrix canonical math must match the producer exact LaTeX.');
@@ -86,7 +91,7 @@ export function createMatrixResultOutcome(
           }
         : {}),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<MatrixResultProducerOutcome>(
     canonicalResult,

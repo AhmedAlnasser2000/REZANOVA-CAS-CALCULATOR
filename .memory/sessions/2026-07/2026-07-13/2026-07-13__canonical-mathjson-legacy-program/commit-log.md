@@ -21,3 +21,11 @@
 - scope: branded producer-owned candidate and proof types, validation constructors, focused tests, and durable evidence
 - push: not authorized
 - excluded: concurrent Notebook files and untracked `test-results/`
+
+## CANONICAL-PRODUCER-MATH-VALUE1
+
+- commit_message: `CANONICAL-PRODUCER-MATH-VALUE1`
+- status: verified for owned scope; covered by standing commit approval
+- scope: deep proven producer values, all-nine owner adapter options, enrichment-only authority parity, focused tests, inversion baseline repair, and durable evidence
+- push: not authorized
+- excluded: concurrent Notebook and AppMain files plus untracked `test-results/`

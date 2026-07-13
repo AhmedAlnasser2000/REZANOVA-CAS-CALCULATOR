@@ -17,6 +17,7 @@ import type {
   SerializableMathJson,
 } from '../../types/calculator';
 import { validateCanonicalResultDocument } from './validation';
+import type { ProvenAnswerMathJson } from './proven-answer-mathjson';
 
 export type CanonicalResultProducerInputV1 = {
   outcomeKind: 'success' | 'error';
@@ -36,6 +37,41 @@ export type CanonicalResultProducerInputV1 = {
   warnings: readonly string[];
   metadata?: CanonicalResultSemanticMetadataV1;
   table?: CanonicalResultTableV1;
+};
+
+type CanonicalResultProducerMathFieldsV1 = Partial<Pick<
+  CanonicalResultDocumentV1,
+  | 'primaryMath'
+  | 'answerRows'
+  | 'branchReadback'
+  | 'systemReadback'
+  | 'periodicFamily'
+  | 'supplements'
+  | 'details'
+  | 'summaries'
+  | 'table'
+>> & {
+  metadata?: Pick<
+    CanonicalResultSemanticMetadataV1,
+    'resolvedInput' | 'variableSubstitutions'
+  >;
+};
+
+type ProducerOwnedMathShape<Value> =
+  Value extends CanonicalMathValueV1
+    ? Omit<Value, 'mathJson'> & { mathJson?: ProvenAnswerMathJson }
+    : Value extends readonly (infer Entry)[]
+      ? ProducerOwnedMathShape<Entry>[]
+      : Value extends object
+        ? { [Key in keyof Value]: ProducerOwnedMathShape<Value[Key]> }
+        : Value;
+
+export type CanonicalResultProducerMathValuesV1 = ProducerOwnedMathShape<
+  CanonicalResultProducerMathFieldsV1
+>;
+
+export type CanonicalResultProducerOptionsV1 = {
+  mathValues?: CanonicalResultProducerMathValuesV1;
 };
 
 export function canonicalMathValue(
@@ -162,8 +198,96 @@ function canonicalPeriodicFamily(
   };
 }
 
+type CanonicalMathField = Exclude<
+  keyof CanonicalResultProducerMathValuesV1,
+  'metadata'
+>;
+
+const CANONICAL_MATH_FIELDS: readonly CanonicalMathField[] = [
+  'primaryMath',
+  'answerRows',
+  'branchReadback',
+  'systemReadback',
+  'periodicFamily',
+  'supplements',
+  'details',
+  'summaries',
+  'table',
+];
+
+function withoutMathJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(withoutMathJson);
+  if (!value || typeof value !== 'object') return value;
+  const result: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value)) {
+    if (key !== 'mathJson') result[key] = withoutMathJson(child);
+  }
+  return result;
+}
+
+function structuredEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') {
+    return false;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return Array.isArray(left)
+      && Array.isArray(right)
+      && left.length === right.length
+      && left.every((value, index) => structuredEqual(value, right[index]));
+  }
+  const leftRecord = left as Record<string, unknown>;
+  const rightRecord = right as Record<string, unknown>;
+  const leftKeys = Object.keys(leftRecord).sort();
+  const rightKeys = Object.keys(rightRecord).sort();
+  return leftKeys.length === rightKeys.length
+    && leftKeys.every((key, index) =>
+      key === rightKeys[index] && structuredEqual(leftRecord[key], rightRecord[key]));
+}
+
+function assertMathValueParity(
+  field: string,
+  compatibilityValue: unknown,
+  producerValue: unknown,
+) {
+  if (!structuredEqual(
+    withoutMathJson(compatibilityValue),
+    withoutMathJson(producerValue),
+  )) {
+    throw new Error(
+      `Canonical producer math values changed compatibility field ${field}.`,
+    );
+  }
+}
+
+function applyProducerMathValues(
+  candidate: CanonicalResultDocumentV1,
+  mathValues: CanonicalResultProducerMathValuesV1 | undefined,
+) {
+  if (!mathValues) return;
+  const candidateRecord = candidate as unknown as Record<string, unknown>;
+  const valuesRecord = mathValues as unknown as Record<string, unknown>;
+  for (const field of CANONICAL_MATH_FIELDS) {
+    const producerValue = valuesRecord[field];
+    if (producerValue === undefined) continue;
+    assertMathValueParity(field, candidateRecord[field], producerValue);
+    candidateRecord[field] = producerValue;
+  }
+
+  if (!mathValues.metadata) return;
+  const metadata = candidate.metadata ?? {};
+  for (const field of ['resolvedInput', 'variableSubstitutions'] as const) {
+    const producerValue = mathValues.metadata[field];
+    if (producerValue === undefined) continue;
+    assertMathValueParity(`metadata.${field}`, metadata[field], producerValue);
+    Object.assign(metadata, { [field]: producerValue });
+  }
+  candidate.metadata = metadata;
+}
+
 export function buildCanonicalResultDocumentFromProducer(
   input: CanonicalResultProducerInputV1,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): CanonicalResultDocumentV1 {
   const details = canonicalDetailSections(input.detailSections);
   const branchReadback = canonicalBranchReadback(input.branchReadback);
@@ -222,6 +346,8 @@ export function buildCanonicalResultDocumentFromProducer(
       : {}),
     ...(input.table ? { table: input.table } : {}),
   };
+
+  applyProducerMathValues(candidate, options.mathValues);
 
   const validation = validateCanonicalResultDocument(candidate);
   if (!validation.ok) {

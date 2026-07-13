@@ -448,7 +448,7 @@ describe('display contract inversion ratchet', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
     assert.equal(report.summary.producerCount, 619);
-    assert.equal(report.summary.consumerCount, 594);
+    assert.equal(report.summary.consumerCount, 595);
     assert.equal(report.summary.compatibilityProjectionCount, 1);
     assert.equal(report.summary.legacyReadCount, 411);
     assert.equal(report.summary.nativeDocumentCount, 154);

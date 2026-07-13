@@ -9,6 +9,7 @@ import type {
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
+  type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
 
 export type EquationFiniteRootSuccessInput = {
@@ -26,6 +27,7 @@ export type EquationFiniteRootSuccessInput = {
 
 export function createEquationFiniteRootSuccessOutcome(
   input: EquationFiniteRootSuccessInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): Extract<DisplayOutcome, { kind: 'success' }> {
   if (
     input.canonicalMath.canonicalLatex !== input.exactLatex
@@ -49,7 +51,7 @@ export function createEquationFiniteRootSuccessOutcome(
       resultOrigin: input.resultOrigin,
       ...(input.answerDomain ? { answerDomain: input.answerDomain } : {}),
     },
-  });
+  }, options);
   return {
     kind: 'success',
     title: input.title,

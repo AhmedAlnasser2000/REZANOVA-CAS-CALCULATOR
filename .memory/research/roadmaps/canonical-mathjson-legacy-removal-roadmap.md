@@ -2,7 +2,7 @@
 
 Date: 2026-07-12
 Last updated: 2026-07-13
-Status: active; Moves 0-2 verified; no push is authorized
+Status: active; Moves 0-3 verified; no push is authorized
 
 ## Attribution
 
@@ -104,3 +104,4 @@ This is an expandable sequence of named gates. A discovered prerequisite must be
 - `CANONICAL-MATHJSON-LEGACY-ROADMAP0`: verified. Memory protocol, Display inversion, result contract, printer migration, file-size, and diff-hygiene gates pass; standing commit approval is recorded.
 - `MATHJSON-COVERAGE-REGISTRY1`: verified. The registry covers 51 operation families, 27 canonical math path patterns, and all 100 native replay probes. Its accepted baseline is 262 leaves, 26 proven, 236 missing, and zero exemptions. CI, release, and seam selection run the additive gate.
 - `PROVEN-ANSWER-MATHJSON-CONTRACT1`: verified. Producer ownership and answer identity are compile-time branded and runtime checked; accepted trees pass existing bounds, structured-clone safety, standard Compute Engine boxing, semantic equivalence, and compatibility-printer parity. Canonical-LaTeX parsing is validation evidence only, and the proof returns the original producer tree rather than manufacturing an answer tree from formatted output.
+- `CANONICAL-PRODUCER-MATH-VALUE1`: verified. Calculate, Equation, Calculus, Trigonometry, Geometry, Statistics, Table, Matrix, and Vector owner adapters accept direct canonical math structures whose optional trees require the proven-answer brand. Direct values may add MathJSON only when their complete non-MathJSON structure matches the existing compatibility projection. The inversion inventory also classifies the coverage reporter's previously omitted control read, bringing the audit-only consumer count from 594 to 595 without runtime authority growth.

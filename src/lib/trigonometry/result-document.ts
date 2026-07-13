@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
 type TrigonometrySuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -16,15 +17,19 @@ type TrigonometryResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt
 
 export function createTrigonometryResultOutcome(
   input: Omit<TrigonometrySuccessOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): TrigonometrySuccessOutcome;
 export function createTrigonometryResultOutcome(
   input: Omit<TrigonometryErrorOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): TrigonometryErrorOutcome;
 export function createTrigonometryResultOutcome(
   input: TrigonometryResultProducerInput,
+  options?: CanonicalResultProducerOptionsV1,
 ): TrigonometryResultProducerOutcome;
 export function createTrigonometryResultOutcome(
   input: TrigonometryResultProducerInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): TrigonometryResultProducerOutcome {
   if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Trigonometry canonical math must match the producer exact LaTeX.');
@@ -86,7 +91,7 @@ export function createTrigonometryResultOutcome(
           }
         : {}),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<TrigonometryResultProducerOutcome>(
     canonicalResult,

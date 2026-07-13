@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
 type StatisticsSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -16,15 +17,19 @@ type StatisticsResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' 
 
 export function createStatisticsResultOutcome(
   input: Omit<StatisticsSuccessOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): StatisticsSuccessOutcome;
 export function createStatisticsResultOutcome(
   input: Omit<StatisticsErrorOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): StatisticsErrorOutcome;
 export function createStatisticsResultOutcome(
   input: StatisticsResultProducerInput,
+  options?: CanonicalResultProducerOptionsV1,
 ): StatisticsResultProducerOutcome;
 export function createStatisticsResultOutcome(
   input: StatisticsResultProducerInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): StatisticsResultProducerOutcome {
   if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Statistics canonical math must match the producer exact LaTeX.');
@@ -86,7 +91,7 @@ export function createStatisticsResultOutcome(
           }
         : {}),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<StatisticsResultProducerOutcome>(
     canonicalResult,

@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
 type TableSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -17,18 +18,22 @@ type TableResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
 export function createTableResultOutcome(
   input: Omit<TableSuccessOutcome, 'canonicalResult'>,
   response: TableResponse,
+  options?: CanonicalResultProducerOptionsV1,
 ): TableSuccessOutcome;
 export function createTableResultOutcome(
   input: Omit<TableErrorOutcome, 'canonicalResult'>,
   response: TableResponse,
+  options?: CanonicalResultProducerOptionsV1,
 ): TableErrorOutcome;
 export function createTableResultOutcome(
   input: TableResultProducerInput,
   response: TableResponse,
+  options?: CanonicalResultProducerOptionsV1,
 ): TableResultProducerOutcome;
 export function createTableResultOutcome(
   input: TableResultProducerInput,
   response: TableResponse,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): TableResultProducerOutcome {
   if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Table canonical math must match the producer exact LaTeX.');
@@ -100,7 +105,7 @@ export function createTableResultOutcome(
           : {}),
       })),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<TableResultProducerOutcome>(
     canonicalResult,

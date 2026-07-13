@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
 type VectorSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -16,15 +17,19 @@ type VectorResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
 
 export function createVectorResultOutcome(
   input: Omit<VectorSuccessOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): VectorSuccessOutcome;
 export function createVectorResultOutcome(
   input: Omit<VectorErrorOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): VectorErrorOutcome;
 export function createVectorResultOutcome(
   input: VectorResultProducerInput,
+  options?: CanonicalResultProducerOptionsV1,
 ): VectorResultProducerOutcome;
 export function createVectorResultOutcome(
   input: VectorResultProducerInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): VectorResultProducerOutcome {
   if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Vector canonical math must match the producer exact LaTeX.');
@@ -86,7 +91,7 @@ export function createVectorResultOutcome(
           }
         : {}),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<VectorResultProducerOutcome>(
     canonicalResult,

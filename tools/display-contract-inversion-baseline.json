@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DISPLAY-CONTRACT-INVERSION1 makes validated canonical documents authoritative for every live success and math-bearing controlled error, derives compatibility values from canonical truth while preserving optional-field shape, and keeps prompts plus registered OOE cancellations as control outcomes.",
+  "acceptedReason": "Classify the MathJSON coverage reporter outcome-kind read introduced by MATHJSON-COVERAGE-REGISTRY1; no runtime consumer authority changed.",
   "registryDigest": "5698b6e6412b3ecbe7a2",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -1854,6 +1854,9 @@
       ],
       "src/lib/result-contract/consumer.ts": [
         "a8a5fbbcf92bd3e5fbef:1"
+      ],
+      "src/lib/result-contract/mathjson-coverage.ts": [
+        "ec5654ca5e440428f225:1"
       ],
       "src/lib/result-contract/projection.ts": [
         "e25ca208b5c003f1b0a8:1",

@@ -56,6 +56,44 @@ describe('canonical result storage resolution', () => {
     })).toMatchObject({ ok: false, omissionReason: 'invalid' });
   });
 
+  it('allows producer-proven MathJSON where the legacy projection carries only LaTeX', () => {
+    const displayOutcome = outcome();
+    const projected = projectDisplayOutcomeToCanonicalResult(displayOutcome, {
+      tableResponse: TABLE_RESPONSE,
+    });
+    if (!projected.ok) throw new Error(projected.failure.message);
+    const document = structuredClone(projected.document);
+    document.details![0].lines[0][0] = {
+      kind: 'math',
+      math: { canonicalLatex: 'x\\ge 0', mathJson: ['GreaterEqual', 'x', 0] },
+    };
+    document.table!.rows[1].primary.mathJson = 0;
+    displayOutcome.canonicalResult = document;
+
+    expect(resolveCanonicalResultForStorage(displayOutcome, {
+      tableResponse: TABLE_RESPONSE,
+    })).toMatchObject({ ok: true, source: 'native' });
+  });
+
+  it('still rejects conflicting MathJSON when compatibility carries the same leaf', () => {
+    const displayOutcome = outcome();
+    displayOutcome.canonicalMath = {
+      version: 1,
+      canonicalLatex: displayOutcome.exactLatex!,
+      mathJson: ['Table', 'f'],
+    };
+    const projected = projectDisplayOutcomeToCanonicalResult(displayOutcome, {
+      tableResponse: TABLE_RESPONSE,
+    });
+    if (!projected.ok) throw new Error(projected.failure.message);
+    displayOutcome.canonicalResult = structuredClone(projected.document);
+    displayOutcome.canonicalResult.primaryMath!.mathJson = ['Table', 'g'];
+
+    expect(resolveCanonicalResultForStorage(displayOutcome, {
+      tableResponse: TABLE_RESPONSE,
+    })).toMatchObject({ ok: false, omissionReason: 'invalid' });
+  });
+
   it('maps whole-document and nested MathJSON limits to durable over-size omission', () => {
     const oversizedDocument = projectDisplayOutcomeToCanonicalResult(outcome());
     if (!oversizedDocument.ok) throw new Error(oversizedDocument.failure.message);

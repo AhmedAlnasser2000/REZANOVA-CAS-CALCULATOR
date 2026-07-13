@@ -31,3 +31,16 @@
 - Printer contract: 5 files and 26 tests pass; seam selector: 14 tests; compartment boundaries: 36 tests.
 - TypeScript, global lint, production build with 2,966 modules, file-size ratchet over 1,767 files and 7 caps, and diff hygiene pass.
 - Concurrent Notebook files and untracked `test-results/` were not staged or modified by this gate.
+
+## CANONICAL-PRODUCER-MATH-VALUE1
+
+- kind: backend workspace producer-boundary contract
+- result: pass for milestone-owned scope
+- runtime behavior changed: no producer currently supplies the new direct-value option
+- intentional mathematical or visible output change: no
+- visual verification: not required for this inactive backend contract gate
+- focused result contract: 12 files and 53 tests pass, including direct-value coverage for all nine workspace owners.
+- corpus evidence: all 43 golden and 100 replay executions pass; the accepted coverage baseline remains 262 leaves, 26 proven, 236 missing, and zero exempt.
+- runtime/static evidence: 76 runtime-contract tests, History replay, 20 inversion tests, 26 printer tests, 14 seam tests, 36 compartment tests, TypeScript, global lint, 2,966-module build, and diff hygiene pass.
+- inversion repair: the registry reporter's audit-only `kind` read is now classified; consumer count is 595 with compatibility, legacy, and native floors unchanged.
+- shared file-size blocker: live validation fails only because concurrent `src/AppMain.tsx` is 3,312 lines against its 3,306 cap. A non-writing scoped validation of all 1,768 files passes when that single foreign edit is excluded.

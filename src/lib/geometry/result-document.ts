@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
 type GeometrySuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -16,15 +17,19 @@ type GeometryResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>
 
 export function createGeometryResultOutcome(
   input: Omit<GeometrySuccessOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): GeometrySuccessOutcome;
 export function createGeometryResultOutcome(
   input: Omit<GeometryErrorOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): GeometryErrorOutcome;
 export function createGeometryResultOutcome(
   input: GeometryResultProducerInput,
+  options?: CanonicalResultProducerOptionsV1,
 ): GeometryResultProducerOutcome;
 export function createGeometryResultOutcome(
   input: GeometryResultProducerInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): GeometryResultProducerOutcome {
   if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Geometry canonical math must match the producer exact LaTeX.');
@@ -86,7 +91,7 @@ export function createGeometryResultOutcome(
           }
         : {}),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<GeometryResultProducerOutcome>(
     canonicalResult,

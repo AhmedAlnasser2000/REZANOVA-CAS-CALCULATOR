@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
 
 type CalculusSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -39,15 +40,19 @@ export function hasNativeCalculusResultDocument(screen: CalculusScreen) {
 
 export function createCalculusResultOutcome(
   input: Omit<CalculusSuccessOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): CalculusSuccessOutcome;
 export function createCalculusResultOutcome(
   input: Omit<CalculusErrorOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): CalculusErrorOutcome;
 export function createCalculusResultOutcome(
   input: CalculusResultProducerInput,
+  options?: CanonicalResultProducerOptionsV1,
 ): CalculusResultProducerOutcome;
 export function createCalculusResultOutcome(
   input: CalculusResultProducerInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): CalculusResultProducerOutcome {
   if (
     input.canonicalMath
@@ -127,7 +132,7 @@ export function createCalculusResultOutcome(
           }
         : {}),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<CalculusResultProducerOutcome>(
     canonicalResult,

@@ -29,6 +29,10 @@ export type ProvenAnswerMathJson = SerializableMathJson & {
   readonly [provenAnswerMathJsonBrand]: true;
 };
 
+export type ProvenCanonicalMathValue = Omit<CanonicalMathValueV1, 'mathJson'> & {
+  mathJson: ProvenAnswerMathJson;
+};
+
 export type ProvenAnswerMathJsonEvidence = {
   canonicalLatex: string;
   mathJson: ProvenAnswerMathJson;
@@ -220,7 +224,7 @@ export function proveAnswerMathJson(input: {
 
 export function canonicalMathValueFromProof(
   evidence: ProvenAnswerMathJsonEvidence,
-): CanonicalMathValueV1 {
+): ProvenCanonicalMathValue {
   return {
     canonicalLatex: evidence.canonicalLatex,
     mathJson: evidence.mathJson,

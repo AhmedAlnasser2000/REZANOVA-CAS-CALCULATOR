@@ -3,6 +3,7 @@ import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   deriveDisplayOutcomeFromCanonicalResult,
+  type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
 
 type EquationSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
@@ -16,15 +17,19 @@ export type EquationResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'pro
 
 export function createEquationResultOutcome(
   input: Omit<EquationSuccessOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): EquationSuccessOutcome;
 export function createEquationResultOutcome(
   input: Omit<EquationErrorOutcome, 'canonicalResult'>,
+  options?: CanonicalResultProducerOptionsV1,
 ): EquationErrorOutcome;
 export function createEquationResultOutcome(
   input: EquationResultProducerInput,
+  options?: CanonicalResultProducerOptionsV1,
 ): EquationResultProducerOutcome;
 export function createEquationResultOutcome(
   input: EquationResultProducerInput,
+  options: CanonicalResultProducerOptionsV1 = {},
 ): EquationResultProducerOutcome {
   if (
     input.canonicalMath
@@ -104,7 +109,7 @@ export function createEquationResultOutcome(
           }
         : {}),
     },
-  });
+  }, options);
 
   return deriveDisplayOutcomeFromCanonicalResult<EquationResultProducerOutcome>(
     canonicalResult,
