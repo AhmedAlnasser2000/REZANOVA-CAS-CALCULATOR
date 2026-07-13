@@ -2495,6 +2495,11 @@
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Direct canonical values are enrichment-only during compatibility migration. After removing optional MathJSON, primary values, rows, branches, systems, periodic families, supplements, details, summaries, substitutions, and Table structure must exactly equal the existing typed projection or the producer fails closed.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Native authority may contain proven MathJSON where the legacy projection has no tree. If compatibility already carries MathJSON for that leaf, exact tree equality remains mandatory; stale canonical strings and non-math structure are never tolerated.
 
+## 2026-07-13 - EQUATION-STAGE-CARRIER-CLOSEOUT1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Equation guarded recursion, stage descriptors, cancellation checkpoints, and orchestration transport validated `EquationSolveResultContractV1` carriers. Public guarded-solve APIs derive their compatibility Display read model only at `guarded/run.ts`.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] The isolated direct-symbolic worker payload remains unchanged until `CANONICAL-RUNTIME-OUTCOME1`; its result is converted immediately on entry to the guarded stage corridor. This preserves worker topology and avoids preempting the approved runtime-envelope contract.
+
 ## 2026-07-13 - MATHJSON-COVERAGE-CALCULATE-EQUATION1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Optional answer MathJSON is transactional enrichment: if a producer tree fails semantic, bounds, clone, or printer proof, omit that tree and retain unchanged canonical LaTeX. Do not turn an optional proof failure into a runtime failure and do not reconstruct the tree from formatted output.

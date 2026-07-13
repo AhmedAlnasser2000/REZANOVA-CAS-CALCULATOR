@@ -161,13 +161,13 @@ type GuardedSolveRunner = (
   request: GuardedSolveRequest,
   depth: number,
   trail: Set<string>,
-) => DisplayOutcome;
+) => EquationStageResultCarrierV1;
 
 type AsyncGuardedSolveRunner = (
   request: GuardedSolveRequest,
   depth: number,
   trail: Set<string>,
-) => Promise<DisplayOutcome>;
+) => Promise<EquationStageResultCarrierV1>;
 
 function parseFiniteNumericValue(latex: string) {
   try {
@@ -291,12 +291,12 @@ function substitutionSolve(
   }
 
   const carriers = branchEquations.map((equationLatex) =>
-    buildEquationStageResultCarrier(runGuardedEquationSolve({
+    runGuardedEquationSolve({
       ...request,
       originalLatex: equationLatex,
       resolvedLatex: equationLatex,
       numericInterval: undefined,
-    }, depth + 1, new Set(trail))));
+    }, depth + 1, new Set(trail)));
 
   const mergedCarrier = mergeEquationStageCarriers(
     carriers,
@@ -515,15 +515,15 @@ async function substitutionSolveAsync(
       message: `Preparing substitution branch ${branchIndex + 1} of ${branchEquations.length}.`,
     });
     if (cancellation) {
-      return cancellation;
+      return readEquationStageResultCarrier(cancellation);
     }
 
-    carriers.push(buildEquationStageResultCarrier(await runGuardedEquationSolve({
+    carriers.push(await runGuardedEquationSolve({
       ...request,
       originalLatex: equationLatex,
       resolvedLatex: equationLatex,
       numericInterval: undefined,
-    }, depth + 1, new Set(trail))));
+    }, depth + 1, new Set(trail)));
   }
 
   const mergedCarrier = mergeEquationStageCarriers(
@@ -604,7 +604,7 @@ async function substitutionSolveAsync(
       message: `Preparing substitution candidate ${candidateIndex + 1} of ${validationCandidates.length}.`,
     });
     if (cancellation) {
-      return cancellation;
+      return readEquationStageResultCarrier(cancellation);
     }
   }
 

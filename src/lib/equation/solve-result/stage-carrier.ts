@@ -20,6 +20,12 @@ export function buildEquationStageResultCarrier(
   return projection.result;
 }
 
+export function buildOptionalEquationStageResultCarrier(
+  outcome: DisplayOutcome | null | undefined,
+): EquationStageResultCarrierV1 | null {
+  return outcome ? buildEquationStageResultCarrier(outcome) : null;
+}
+
 export function readEquationStageResultCarrier(
   carrier: EquationStageResultCarrierV1,
 ): EquationStageResultReadModel {

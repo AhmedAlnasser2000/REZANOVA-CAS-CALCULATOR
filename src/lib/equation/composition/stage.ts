@@ -74,8 +74,8 @@ import {
 } from '../../display/result-detail-lines';
 import { createEquationResultOutcome } from '../solve-result/producer';
 import {
-  buildEquationStageResultCarrier,
   readEquationStageResultCarrier,
+  type EquationStageResultCarrierV1,
 } from '../solve-result/stage-carrier';
 
 const ce = new ComputeEngine();
@@ -83,7 +83,7 @@ type GuardedSolveRunner = (
   request: GuardedSolveRequest,
   depth: number,
   trail: Set<string>,
-) => DisplayOutcome;
+) => EquationStageResultCarrierV1;
 
 function boxLatex(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]).latex;
@@ -187,7 +187,7 @@ function recurseComposition(
   }
 
   const recursiveCarriers = branchEquations.map((equationLatex) =>
-    buildEquationStageResultCarrier(runGuardedEquationSolve(
+    runGuardedEquationSolve(
       {
         ...request,
         originalLatex: equationLatex,
@@ -199,7 +199,7 @@ function recurseComposition(
       },
       depth + 1,
       new Set(trail),
-    )));
+    ));
 
   const mergedCarrier = recursiveCarriers.length === 1
     ? recursiveCarriers[0]

@@ -1,9 +1,10 @@
 import { runExpressionAction } from '../../engine/math-engine';
 import type {
-  DisplayOutcome,
   EquationExecutionBudget,
   GuardedSolveRequest,
 } from '../../../types/calculator';
+import type { DisplayOutcome } from '../../../types/calculator';
+import type { EquationStageResultCarrierV1 } from '../solve-result/stage-carrier';
 
 export type GuardedEquationStageId =
   | 'numeric-interval'
@@ -21,13 +22,13 @@ export type GuardedSolveRunner = (
   request: GuardedSolveRequest,
   depth: number,
   trail: Set<string>,
-) => DisplayOutcome;
+) => EquationStageResultCarrierV1;
 
 export type AsyncGuardedSolveRunner = (
   request: GuardedSolveRequest,
   depth: number,
   trail: Set<string>,
-) => Promise<DisplayOutcome>;
+) => Promise<EquationStageResultCarrierV1>;
 
 export type GuardedEquationDirectSymbolicHostEvidence = {
   helperId: 'direct-symbolic';
@@ -110,7 +111,7 @@ export type GuardedEquationCooperativeCheckpointInput = {
 
 export type GuardedEquationCooperativeCheckpoint = (
   input: GuardedEquationCooperativeCheckpointInput,
-) => Promise<DisplayOutcome | null>;
+) => Promise<EquationStageResultCarrierV1 | null>;
 
 export type GuardedEquationStageAsyncContext = GuardedEquationStageContext & {
   asyncRunner: AsyncGuardedSolveRunner;
@@ -120,8 +121,8 @@ export type GuardedEquationStageAsyncContext = GuardedEquationStageContext & {
 export type GuardedEquationStageDescriptor = {
   id: GuardedEquationStageId;
   label: string;
-  execute: (context: GuardedEquationStageContext) => DisplayOutcome | null | undefined;
-  executeAsync?: (context: GuardedEquationStageAsyncContext) => Promise<DisplayOutcome | null | undefined>;
+  execute: (context: GuardedEquationStageContext) => EquationStageResultCarrierV1 | null | undefined;
+  executeAsync?: (context: GuardedEquationStageAsyncContext) => Promise<EquationStageResultCarrierV1 | null | undefined>;
   canRecurse?: boolean;
 };
 

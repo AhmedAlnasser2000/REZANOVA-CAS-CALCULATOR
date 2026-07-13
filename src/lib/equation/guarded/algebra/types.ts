@@ -1,11 +1,11 @@
 import type {
   DisplayDetailSection,
-  DisplayOutcome,
   DisplaySolveSummary,
   GuardedSolveRequest,
   SolveBadge,
   SolveDomainConstraint,
 } from '../../../../types/calculator';
+import type { EquationStageResultCarrierV1 } from '../../solve-result/stage-carrier';
 import type {
   SupportedRadical,
   SupportedRationalPower,
@@ -63,4 +63,4 @@ export type GuardedSolveRunner = (
   request: GuardedSolveRequest,
   depth: number,
   trail: Set<string>,
-) => DisplayOutcome;
+) => EquationStageResultCarrierV1;

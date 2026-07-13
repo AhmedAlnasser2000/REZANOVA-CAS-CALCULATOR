@@ -436,6 +436,9 @@ describe('display contract inversion ratchet', () => {
   it('keeps live producer lanes at zero compatibility after owner closeout', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
     const mergeSource = fs.readFileSync('src/lib/equation/guarded/merge.ts', 'utf8');
+    const guardedTypesSource = fs.readFileSync('src/lib/equation/guarded/types.ts', 'utf8');
+    const orchestratorSource = fs.readFileSync('src/lib/equation/guarded/orchestrator.ts', 'utf8');
+    const guardedRunSource = fs.readFileSync('src/lib/equation/guarded/run.ts', 'utf8');
     const selectedCarrierSources = [
       'src/lib/equation/guarded/substitution-stage.ts',
       'src/lib/equation/composition/stage.ts',
@@ -465,6 +468,16 @@ describe('display contract inversion ratchet', () => {
       [['src/app/runtime/historyDisplayEntry.ts', 'legacyHistoryOutcome']],
     );
     assert.doesNotMatch(mergeSource, /DisplayOutcome|mergeDisplayOutcomes/u);
+    assert.doesNotMatch(orchestratorSource, /DisplayOutcome/u);
+    assert.doesNotMatch(
+      guardedTypesSource,
+      /(?:GuardedSolveRunner|AsyncGuardedSolveRunner)[\s\S]{0,220}=>\s*(?:Promise<)?DisplayOutcome/u,
+    );
+    assert.doesNotMatch(
+      guardedTypesSource,
+      /GuardedEquationStageDescriptor[\s\S]{0,400}DisplayOutcome/u,
+    );
+    assert.match(guardedRunSource, /readEquationStageResultCarrier\(runGuardedEquationSolveInternal/u);
     assert.doesNotMatch(selectedCarrierSources, /DisplayOutcome\[\]/u);
     assert.match(selectedCarrierSources, /buildEquationStageResultCarrier/u);
     assert.match(selectedCarrierSources, /mergeEquationStageCarriers/u);
@@ -498,7 +511,7 @@ describe('display contract inversion ratchet', () => {
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
-    assert.equal(report.summary.producerCount, 677);
+    assert.equal(report.summary.producerCount, 648);
     assert.equal(report.summary.consumerCount, 603);
     assert.equal(report.summary.compatibilityProjectionCount, 1);
     assert.equal(report.summary.legacyReadCount, 411);

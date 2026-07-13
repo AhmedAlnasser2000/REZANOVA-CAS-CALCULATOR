@@ -31,6 +31,7 @@ import {
   type GuardedEquationStageReplayTrace,
 } from './types';
 import { checkpointAndMaybeCancel } from './cancellation';
+import { readEquationStageResultCarrier } from '../solve-result/stage-carrier';
 
 const ce = new ComputeEngine();
 const DIRECT_TRIG_OPERATORS = new Set(['Sin', 'Cos', 'Tan', 'Sec', 'Csc', 'Cot']);
@@ -240,7 +241,7 @@ function runDirectSymbolicStage(
     stageId: 'direct-symbolic',
   });
   if (cancellation) {
-    return cancellation;
+    return readEquationStageResultCarrier(cancellation);
   }
 
   return runDirectSymbolicFallbackPrepared(preparedRequest);
@@ -277,7 +278,7 @@ async function runDirectSymbolicStageAsync(
     stageId: 'direct-symbolic',
   });
   if (cancellation) {
-    return cancellation;
+    return readEquationStageResultCarrier(cancellation);
   }
 
   if (!context.directSymbolicRunner) {

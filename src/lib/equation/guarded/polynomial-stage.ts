@@ -46,7 +46,6 @@ import {
   type EquationResultProducerInput,
 } from '../solve-result/producer';
 import {
-  buildEquationStageResultCarrier,
   readEquationStageResultCarrier,
   type EquationStageResultCarrierV1,
 } from '../solve-result/stage-carrier';
@@ -167,10 +166,11 @@ function runMixedFactorEquationSolve(
         resolvedLatex: factorEquationLatex,
         validationLatex: baseValidationLatex,
       };
-      const outcome = runner(nextRequest, depth + 1, new Set(trail));
+      const carrier = runner(nextRequest, depth + 1, new Set(trail));
+      const outcome = readEquationStageResultCarrier(carrier);
 
       if (outcome.kind === 'success') {
-        carriers.push(buildEquationStageResultCarrier(outcome));
+        carriers.push(carrier);
       }
     }
 

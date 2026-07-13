@@ -120,3 +120,16 @@
 - visual: five Chromium Equation flows pass; three inspected screenshots preserve domain facts, periodic structure, candidate evidence, solve summaries, and horizontal readability
 - resource posture: no full unit, UI, or 19-canary suite ran; verification stayed impact-selected
 - residual: `EQUATION-STAGE-CARRIER-CLOSEOUT1` removes remaining guarded-stage Display return/read-model transport
+
+## EQUATION-STAGE-CARRIER-CLOSEOUT1
+
+- kind: backend Equation stage-transport closeout with focused UI parity evidence
+- result: pass
+- contract: guarded runners, synchronous/asynchronous recursion, descriptors, cooperative cancellation, and orchestration carry validated Equation solve-result contracts; public guarded APIs derive Display only at `guarded/run.ts`
+- deferred boundary: the established direct-symbolic isolated-worker payload remains Display until `CANONICAL-RUNTIME-OUTCOME1` and is converted immediately at stage entry
+- inventory: 648 producer observations, 603 consumer observations, 171 native paths, 47 owner assemblies, one legacy-History compatibility projection, 411 registered legacy reads, and no violations
+- regression: 12 focused Equation files and 192 tests pass; the 22-test AST ratchet pins carrier transport and the accepted inventory
+- static: incremental TypeScript, focused lint, file-size, and diff hygiene pass; the production build regenerated final artifacts at 16:09:15, while the execution channel lost only Vite's terminal footer after the process exited
+- visual: five Chromium Equation flows pass with one worker and zero retries; three inspected screenshots preserve domain facts, periodic structure, candidate evidence, collapsed summaries, and horizontal readability
+- resource posture: no full unit, UI, or 19-canary suite ran; no heavy verifier remains running
+- residual: `CANONICAL-RUNTIME-OUTCOME1` defines the shared runtime result/action/advisory envelope before workspace migrations

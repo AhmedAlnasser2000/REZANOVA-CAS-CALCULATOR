@@ -52,7 +52,6 @@ import {
   inferEquationMathJsonRoute,
 } from '../solve-result/math-values';
 import {
-  buildEquationStageResultCarrier,
   readEquationStageResultCarrier,
 } from '../solve-result/stage-carrier';
 
@@ -180,7 +179,7 @@ function recurseTransform(
   }
 
   const recursiveCarriers = branchEquations.map((equationLatex) =>
-    buildEquationStageResultCarrier(runGuardedEquationSolve(
+    runGuardedEquationSolve(
       {
         ...request,
         originalLatex: equationLatex,
@@ -197,7 +196,7 @@ function recurseTransform(
       },
       depth + 1,
       new Set(trail),
-    )));
+    ));
   const recursiveOutcomes = recursiveCarriers.map(readEquationStageResultCarrier);
 
   const recursiveCarrier = recursiveCarriers.length === 1

@@ -2,7 +2,6 @@ import { runExpressionAction } from '../../engine/math-engine';
 import { getEquationExecutionBudget } from '../../kernel/runtime-profile';
 import { detectRealRangeImpossibility } from '../range-impossibility';
 import type {
-  DisplayOutcome,
   GuardedSolveRequest,
   RangeImpossibilityResult,
 } from '../../../types/calculator';
@@ -31,6 +30,23 @@ import type {
 } from './types';
 import { createEquationResultOutcome } from '../solve-result/producer';
 import { equationMathValuesFromOwnedLeaves } from '../solve-result/math-values';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+  type EquationStageResultCarrierV1,
+} from '../solve-result/stage-carrier';
+
+function attachCarrierAlgebraMetadata(
+  carrier: EquationStageResultCarrierV1,
+  originalResolvedLatex: string,
+  request: GuardedSolveRequest,
+) {
+  return buildEquationStageResultCarrier(attachAlgebraMetadata(
+    readEquationStageResultCarrier(carrier),
+    originalResolvedLatex,
+    request,
+  ));
+}
 
 function rangeGuardOutcome(
   range: Extract<RangeImpossibilityResult, { kind: 'impossible' }>,
@@ -46,26 +62,26 @@ function rangeGuardOutcome(
       solveSummaryParts: range.summaryParts,
     },
   );
-  return createEquationResultOutcome(outcome, {
+  return buildEquationStageResultCarrier(createEquationResultOutcome(outcome, {
     mathValues: equationMathValuesFromOwnedLeaves({
       outcome,
       routeId: 'equation.domain-boundary',
       leaves: range.mathJsonLeaves ?? [],
     }),
-  });
+  }));
 }
 
 function runGuardedStageSequence(
   descriptors: GuardedEquationStageDescriptor[],
   context: GuardedEquationStageContext,
-): DisplayOutcome | null {
+): EquationStageResultCarrierV1 | null {
   for (const descriptor of descriptors) {
     const beforeStageCancellation = checkpointAndMaybeCancel(context, {
       phase: 'before-stage',
       stageId: descriptor.id,
     });
     if (beforeStageCancellation) {
-      return attachAlgebraMetadata(
+      return attachCarrierAlgebraMetadata(
         beforeStageCancellation,
         context.originalResolvedLatex,
         context.preparedRequest,
@@ -94,7 +110,7 @@ function runGuardedStageSequence(
       returnedOutcome: Boolean(outcome),
     });
     if (outcome) {
-      return attachAlgebraMetadata(
+      return attachCarrierAlgebraMetadata(
         outcome,
         context.originalResolvedLatex,
         context.preparedRequest,
@@ -106,7 +122,7 @@ function runGuardedStageSequence(
       stageId: descriptor.id,
     });
     if (afterNoOutcomeCancellation) {
-      return attachAlgebraMetadata(
+      return attachCarrierAlgebraMetadata(
         afterNoOutcomeCancellation,
         context.originalResolvedLatex,
         context.preparedRequest,
@@ -120,14 +136,14 @@ function runGuardedStageSequence(
 async function runGuardedStageSequenceAsync(
   descriptors: GuardedEquationStageDescriptor[],
   context: GuardedEquationStageContext,
-): Promise<DisplayOutcome | null> {
+): Promise<EquationStageResultCarrierV1 | null> {
   for (const descriptor of descriptors) {
     const beforeStageCancellation = await checkpointYieldAndMaybeCancel(context, {
       phase: 'before-stage',
       stageId: descriptor.id,
     });
     if (beforeStageCancellation) {
-      return attachAlgebraMetadata(
+      return attachCarrierAlgebraMetadata(
         beforeStageCancellation,
         context.originalResolvedLatex,
         context.preparedRequest,
@@ -170,7 +186,7 @@ async function runGuardedStageSequenceAsync(
     };
 
     const outcome = descriptor.id === 'direct-symbolic'
-      ? await runDirectSymbolicStageAsync(stageContext)
+      ? buildEquationStageResultCarrier(await runDirectSymbolicStageAsync(stageContext))
       : descriptor.executeAsync
         ? await descriptor.executeAsync(stageContext)
         : descriptor.execute(stageContext);
@@ -180,7 +196,7 @@ async function runGuardedStageSequenceAsync(
       returnedOutcome: Boolean(outcome),
     });
     if (outcome) {
-      return attachAlgebraMetadata(
+      return attachCarrierAlgebraMetadata(
         outcome,
         context.originalResolvedLatex,
         context.preparedRequest,
@@ -192,7 +208,7 @@ async function runGuardedStageSequenceAsync(
       stageId: descriptor.id,
     });
     if (afterNoOutcomeCancellation) {
-      return attachAlgebraMetadata(
+      return attachCarrierAlgebraMetadata(
         afterNoOutcomeCancellation,
         context.originalResolvedLatex,
         context.preparedRequest,
@@ -210,7 +226,7 @@ function runGuardedEquationSolveInternal(
   descriptors: GuardedEquationStageDescriptor[],
   options: GuardedEquationSolveOptions = {},
   trace?: GuardedEquationStageReplayTrace,
-): DisplayOutcome {
+): EquationStageResultCarrierV1 {
   const executionBudget = getEquationExecutionBudget();
   const preparedRequest = prepareAlgebraSolveRequest(request);
   let symbolicCache: ReturnType<typeof runExpressionAction> | null = null;
@@ -242,17 +258,21 @@ function runGuardedEquationSolveInternal(
   );
   const stateKey = equationStateKey(preparedRequest.resolvedLatex);
   if (trail.has(stateKey)) {
-    return attachAlgebraMetadata(errorOutcome(
-      'Solve',
-      'This equation re-entered an equivalent guarded-solve state. Use Numeric Solve with a chosen interval.',
-    ), request.resolvedLatex, preparedRequest);
+    return attachCarrierAlgebraMetadata(
+      buildEquationStageResultCarrier(errorOutcome(
+        'Solve',
+        'This equation re-entered an equivalent guarded-solve state. Use Numeric Solve with a chosen interval.',
+      )),
+      request.resolvedLatex,
+      preparedRequest,
+    );
   }
   trail.add(stateKey);
 
   const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
 
   if (rangeImpossibility.kind === 'impossible') {
-    return attachAlgebraMetadata(
+    return attachCarrierAlgebraMetadata(
       rangeGuardOutcome(rangeImpossibility),
       request.resolvedLatex,
       preparedRequest,
@@ -276,11 +296,11 @@ function runGuardedEquationSolveInternal(
   if (stagedOutcome) {
     return stagedOutcome;
   }
-  return attachAlgebraMetadata(
-    errorOutcome(
+  return attachCarrierAlgebraMetadata(
+    buildEquationStageResultCarrier(errorOutcome(
       'Solve',
       UNSUPPORTED_FAMILY_ERROR,
-    ),
+    )),
     request.resolvedLatex,
     preparedRequest,
   );
@@ -293,7 +313,7 @@ async function runGuardedEquationSolveInternalAsync(
   descriptors: GuardedEquationStageDescriptor[],
   options: GuardedEquationSolveOptions = {},
   trace?: GuardedEquationStageReplayTrace,
-): Promise<DisplayOutcome> {
+): Promise<EquationStageResultCarrierV1> {
   const executionBudget = getEquationExecutionBudget();
   const preparedRequest = prepareAlgebraSolveRequest(request);
   let symbolicCache: ReturnType<typeof runExpressionAction> | null = null;
@@ -333,17 +353,21 @@ async function runGuardedEquationSolveInternalAsync(
   );
   const stateKey = equationStateKey(preparedRequest.resolvedLatex);
   if (trail.has(stateKey)) {
-    return attachAlgebraMetadata(errorOutcome(
-      'Solve',
-      'This equation re-entered an equivalent guarded-solve state. Use Numeric Solve with a chosen interval.',
-    ), request.resolvedLatex, preparedRequest);
+    return attachCarrierAlgebraMetadata(
+      buildEquationStageResultCarrier(errorOutcome(
+        'Solve',
+        'This equation re-entered an equivalent guarded-solve state. Use Numeric Solve with a chosen interval.',
+      )),
+      request.resolvedLatex,
+      preparedRequest,
+    );
   }
   trail.add(stateKey);
 
   const rangeImpossibility = detectRealRangeImpossibility(preparedRequest.resolvedLatex);
 
   if (rangeImpossibility.kind === 'impossible') {
-    return attachAlgebraMetadata(
+    return attachCarrierAlgebraMetadata(
       rangeGuardOutcome(rangeImpossibility),
       request.resolvedLatex,
       preparedRequest,
@@ -369,11 +393,11 @@ async function runGuardedEquationSolveInternalAsync(
   if (stagedOutcome) {
     return stagedOutcome;
   }
-  return attachAlgebraMetadata(
-    errorOutcome(
+  return attachCarrierAlgebraMetadata(
+    buildEquationStageResultCarrier(errorOutcome(
       'Solve',
       UNSUPPORTED_FAMILY_ERROR,
-    ),
+    )),
     request.resolvedLatex,
     preparedRequest,
   );

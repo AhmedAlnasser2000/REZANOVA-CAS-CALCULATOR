@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "EQUATION-STAGE-CARRIER-GUARDED1 replaces guarded branch DisplayOutcome collections with validated Equation stage carriers, adds explicit carrier-call inventory, and preserves zero live compatibility growth.",
+  "acceptedReason": "EQUATION-STAGE-CARRIER-CLOSEOUT1 replaces guarded runner, stage descriptor, cancellation, and orchestration DisplayOutcome transport with validated Equation stage carriers while retaining the direct-symbolic worker payload as the Move 12 boundary.",
   "registryDigest": "5e4bf594cbc4e3acf74c",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -585,11 +585,6 @@
         "09cad90b40201c687107:6",
         "09cad90b40201c687107:7"
       ],
-      "src/lib/equation/guarded/cancellation.ts": [
-        "b9742a79db3d0025bc01:1",
-        "9d3a8640a452a421ae44:1",
-        "d10884df13510f2dceb3:1"
-      ],
       "src/lib/equation/guarded/direct-symbolic.ts": [
         "a30c7483853663e781c1:1",
         "a30c7483853663e781c1:2",
@@ -599,10 +594,10 @@
         "085883eb7c5cb535b272:1",
         "a7237334f9e87318718e:1",
         "93c46eaaeb7c6263ef9d:1",
-        "8381b99cc54ea5857b11:1",
+        "f8a7ba87344aba8cda0c:1",
         "ce95282987cd3d67141e:1",
         "b06f319297926c1f9d8a:1",
-        "6c921f10436a9b2b458f:1",
+        "82a990bece7f0ae264c5:1",
         "11e37f3ccb1ef322c2a6:1",
         "8c1d749d0cb829fedd4e:1"
       ],
@@ -613,29 +608,6 @@
       ],
       "src/lib/equation/guarded/merge.ts": [
         "a89b4105c9a2847861ab:1"
-      ],
-      "src/lib/equation/guarded/orchestrator.ts": [
-        "f686cced2e3cee407f0c:1",
-        "7d913bb59f581c75e2ed:1",
-        "d17b86961f5a37be47b4:1",
-        "b5895fccfc1f4388dc86:1",
-        "fec82c3bfeaccbacc19a:1",
-        "93d99518c1ee1106157d:1",
-        "7d913bb59f581c75e2ed:2",
-        "d17b86961f5a37be47b4:2",
-        "b791d33d40c6d2fb436d:1",
-        "2e17c764454a26cdc529:1",
-        "19e3824a14333bb168f1:1",
-        "0ecff731d2e534ebdaf3:1",
-        "7dfebb1e144db3747cf4:1",
-        "78ff1f1932bf095d5b33:1",
-        "c35d17504e5a07469343:1",
-        "24166f58b15ce6b50942:1",
-        "564bfee82e69dff8d6ef:1",
-        "c5d1fa81b969c6ddebd6:1",
-        "256738a914d1023e7b9b:1",
-        "d0fd559e4fa4e8493d55:1",
-        "59eca442808fa2f0afd6:1"
       ],
       "src/lib/equation/guarded/polynomial-stage.ts": [
         "afb8140150c149f77f0f:1",
@@ -666,14 +638,9 @@
         "97537bfcbd850d71ba2d:1"
       ],
       "src/lib/equation/guarded/run.ts": [
-        "c6309dec5c7502ee57db:1",
-        "8bd7ab2c0951cd5f6a23:1",
-        "d77798fa8d505632f66c:1",
-        "8de408fbdf4ed0b9e3d8:1",
-        "90c3adf9d546bf063f7c:1",
-        "0b5cf600777947783d4d:1",
-        "b862b7cbc4f89432934b:1",
-        "cd3de826cad1c553c4bb:1"
+        "778fafb359697de07c93:1",
+        "541a36074f10a1fb49f9:1",
+        "2a385414fd3acd2ae8d9:1"
       ],
       "src/lib/equation/guarded/substitution-stage.ts": [
         "65d42119ddf17e66271b:1",
@@ -687,12 +654,12 @@
         "66ee2040657f41e7e42c:1",
         "7f45456714e465a68680:1",
         "14a0a6919a5c9e14c05b:1",
-        "e54d7df5ff50918656fe:1",
+        "3378a0b165cc825569e8:1",
         "7b4b0c13092f1157b2a4:1",
         "7d232bf7efc666c2bac7:1",
         "54b92122d959f08e8c31:1",
         "54b92122d959f08e8c31:2",
-        "e54d7df5ff50918656fe:2",
+        "3378a0b165cc825569e8:2",
         "9e2ad816ddc4126fdbdf:1",
         "4bc2d2d7056e7c8ead11:1"
       ],

@@ -76,3 +76,11 @@
 - scope: Equation stage-carrier facade, carrier-native guarded merge and recursive branch collections, carrier-aware AST inventory, focused regression and Chromium parity, and durable evidence
 - push: not authorized
 - excluded: ignored `.task_tmp/` screenshots and untracked `test-results/`
+
+## EQUATION-STAGE-CARRIER-CLOSEOUT1
+
+- commit_message: `EQUATION-STAGE-CARRIER-CLOSEOUT1`
+- status: verified; covered by standing commit approval
+- scope: carrier-typed guarded runners, descriptors, cancellation checkpoints, sync/async orchestration, final public Display projection, focused regression and Chromium parity, and durable evidence
+- push: not authorized
+- excluded: direct-symbolic worker-envelope migration reserved for Move 12, ignored `.task_tmp/` screenshots, and untracked `test-results/`

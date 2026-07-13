@@ -21,6 +21,10 @@ import type {
   GuardedEquationStageOrderedSolveResult,
   GuardedEquationStageReplayTrace,
 } from './types';
+import {
+  buildOptionalEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+} from '../solve-result/stage-carrier';
 export {
   EQUATION_SOLVE_CANCELLED_MESSAGE,
 } from './types';
@@ -43,78 +47,78 @@ const GUARDED_EQUATION_STAGE_DESCRIPTORS: GuardedEquationStageDescriptor[] = [
   {
     id: 'numeric-interval',
     label: 'Numeric Interval',
-    execute: ({ preparedRequest }) => (
-      preparedRequest.numericInterval ? numericIntervalSolve(preparedRequest) : null
+    execute: ({ preparedRequest }) => buildOptionalEquationStageResultCarrier(
+      preparedRequest.numericInterval ? numericIntervalSolve(preparedRequest) : null,
     ),
   },
   {
     id: 'bounded-polynomial',
     label: 'Bounded Polynomial',
-    execute: ({ preparedRequest, depth, trail, runner }) => runBoundedPolynomialSolve(
+    execute: ({ preparedRequest, depth, trail, runner }) => buildOptionalEquationStageResultCarrier(runBoundedPolynomialSolve(
       preparedRequest,
       depth,
       trail,
       runner,
-    ),
+    )),
   },
   {
     id: 'algebra-transform',
     label: 'Algebra Transform',
     canRecurse: true,
-    execute: ({ preparedRequest, depth, trail, executionBudget, runner }) => algebraTransformSolve(
+    execute: ({ preparedRequest, depth, trail, executionBudget, runner }) => buildOptionalEquationStageResultCarrier(algebraTransformSolve(
       preparedRequest,
       depth,
       trail,
       executionBudget,
       runner,
-    ),
+    )),
   },
   {
     id: 'composition',
     label: 'Composition',
     canRecurse: true,
-    execute: ({ preparedRequest, depth, trail, executionBudget, runner }) => compositionSolve(
+    execute: ({ preparedRequest, depth, trail, executionBudget, runner }) => buildOptionalEquationStageResultCarrier(compositionSolve(
       preparedRequest,
       depth,
       trail,
       executionBudget,
       runner,
-    ),
+    )),
   },
   {
     id: 'direct-trig',
     label: 'Direct Trig',
-    execute: ({ preparedRequest }) => directTrigSolve(preparedRequest),
+    execute: ({ preparedRequest }) => buildOptionalEquationStageResultCarrier(directTrigSolve(preparedRequest)),
   },
   {
     id: 'rewrite-trig',
     label: 'Rewrite Trig',
-    execute: ({ preparedRequest }) => rewriteTrigSolve(preparedRequest),
+    execute: ({ preparedRequest }) => buildOptionalEquationStageResultCarrier(rewriteTrigSolve(preparedRequest)),
   },
   {
     id: 'substitution',
     label: 'Substitution',
     canRecurse: true,
-    execute: ({ preparedRequest, depth, trail, executionBudget, runner }) => substitutionSolve(
+    execute: ({ preparedRequest, depth, trail, executionBudget, runner }) => buildOptionalEquationStageResultCarrier(substitutionSolve(
       preparedRequest,
       depth,
       trail,
       executionBudget,
       runner,
-    ),
-    executeAsync: ({ preparedRequest, depth, trail, executionBudget, asyncRunner, cooperativeCheckpoint }) => substitutionSolveAsync(
+    )),
+    executeAsync: async ({ preparedRequest, depth, trail, executionBudget, asyncRunner, cooperativeCheckpoint }) => buildOptionalEquationStageResultCarrier(await substitutionSolveAsync(
       preparedRequest,
       depth,
       trail,
       executionBudget,
       asyncRunner,
       cooperativeCheckpoint,
-    ),
+    )),
   },
   {
     id: 'direct-symbolic',
     label: 'Direct Symbolic',
-    execute: runDirectSymbolicStage,
+    execute: (context) => buildOptionalEquationStageResultCarrier(runDirectSymbolicStage(context)),
   },
 ];
 
@@ -157,13 +161,13 @@ function runGuardedEquationSolve(
   trail = new Set<string>(),
   options: GuardedEquationSolveOptions = {},
 ): DisplayOutcome {
-  return runGuardedEquationSolveInternal(
+  return readEquationStageResultCarrier(runGuardedEquationSolveInternal(
     request,
     depth,
     trail,
     GUARDED_EQUATION_STAGE_DESCRIPTORS,
     options,
-  );
+  ));
 }
 
 function runGuardedEquationSolveWithStageOrder(
@@ -188,7 +192,7 @@ function runGuardedEquationSolveWithStageOrder(
     trace.winningStageId = winningAttempt.stageId;
   }
   return {
-    outcome,
+    outcome: readEquationStageResultCarrier(outcome),
     trace,
   };
 }
@@ -215,7 +219,7 @@ async function runGuardedEquationSolveWithStageOrderAsync(
     trace.winningStageId = winningAttempt.stageId;
   }
   return {
-    outcome,
+    outcome: readEquationStageResultCarrier(outcome),
     trace,
   };
 }

@@ -1,4 +1,3 @@
-import type { DisplayOutcome } from '../../../types/calculator';
 import {
   EQUATION_SOLVE_CANCELLED_MESSAGE,
   type GuardedEquationCancellationPhase,
@@ -7,6 +6,10 @@ import {
 } from './types';
 import { errorOutcome } from './outcome';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import {
+  buildEquationStageResultCarrier,
+  type EquationStageResultCarrierV1,
+} from '../solve-result/stage-carrier';
 
 function cancellationCheckpointMessage(input: {
   phase: GuardedEquationCancellationPhase;
@@ -28,14 +31,14 @@ function cancellationCheckpointMessage(input: {
 }
 
 function buildCancellationOutcome() {
-  return errorOutcome(
+  return buildEquationStageResultCarrier(errorOutcome(
     'Solve',
     EQUATION_SOLVE_CANCELLED_MESSAGE,
     [],
     [],
     [],
     proseSolveSummary('Equation solve stopped at an OOE cancellation checkpoint.'),
-  );
+  ));
 }
 
 function checkpointAndMaybeCancel(
@@ -49,7 +52,7 @@ function checkpointAndMaybeCancel(
     candidateIndex?: number;
     message?: string;
   },
-): DisplayOutcome | null {
+): EquationStageResultCarrierV1 | null {
   const message = cancellationCheckpointMessage({
     phase: input.phase,
     stageId: input.stageId,
@@ -94,7 +97,7 @@ async function checkpointYieldAndMaybeCancel(
     candidateIndex?: number;
     message?: string;
   },
-): Promise<DisplayOutcome | null> {
+): Promise<EquationStageResultCarrierV1 | null> {
   const beforeYieldCancellation = checkpointAndMaybeCancel(context, input);
   if (beforeYieldCancellation) {
     return beforeYieldCancellation;
