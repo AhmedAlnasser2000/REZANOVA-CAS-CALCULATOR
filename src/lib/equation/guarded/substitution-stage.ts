@@ -30,7 +30,7 @@ import {
   dedupe,
   extractApproxSolutions,
   extractExactSolutions,
-  mergeDisplayOutcomes,
+  mergeEquationStageCarriers,
 } from './merge';
 import { equationStateKey } from './state-key';
 import { solveSummaryFromDisplayFields } from '../../display/result-detail-lines';
@@ -44,39 +44,44 @@ import {
   inferEquationMathJsonRoute,
   type EquationOwnedMathJsonLeaf,
 } from '../solve-result/math-values';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+  type EquationStageResultCarrierV1,
+} from '../solve-result/stage-carrier';
 
 const ce = new ComputeEngine();
 const EXACT_MATCH_TOLERANCE = 1e-6;
 
 function rebuildSubstitutionOutcome(
   input: EquationResultProducerInput,
-  source: DisplayOutcome,
+  source: EquationStageResultCarrierV1,
   additionalLeaves: readonly EquationOwnedMathJsonLeaf[] = [],
 ) {
   const leaves = [
     ...equationOwnedMathJsonLeavesFromDocument(
-      source.kind === 'prompt' ? undefined : source.canonicalResult,
+      source.document,
       'equation-substitution-validation-input',
     ),
     ...additionalLeaves,
   ];
-  return createEquationResultOutcome(input, {
+  return buildEquationStageResultCarrier(createEquationResultOutcome(input, {
     mathValues: equationMathValuesFromOwnedLeaves({
       outcome: input,
       routeId: inferEquationMathJsonRoute(input),
       leaves,
     }),
-  });
+  }));
 }
 
 function acceptedCanonicalEvidence(
-  source: DisplayOutcome,
+  source: EquationStageResultCarrierV1,
   exactLatex: string | undefined,
   acceptedLatex: readonly string[],
 ) {
-  if (!exactLatex || source.kind === 'prompt') return undefined;
+  if (!exactLatex) return undefined;
   const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
-    source.canonicalResult,
+    source.document,
     'equation-substitution-accepted-input',
   );
   const nodes = acceptedLatex.map((latex) =>
@@ -96,18 +101,17 @@ function acceptedCanonicalEvidence(
 }
 
 function rejectedCandidateEvidence(
-  sources: readonly DisplayOutcome[],
+  sources: readonly EquationStageResultCarrierV1[],
   rejected: ReturnType<typeof validateCandidateRoots>['rejected'],
   exactCandidatesLatex: readonly string[],
 ) {
   const evidence = extraneousEvidenceFromRejectedCandidates(rejected, { exactCandidatesLatex });
   const nativeCandidates = sources.flatMap((source, sourceIndex) => {
-    if (source.kind === 'prompt') return [];
     const sourceLeaves = equationOwnedMathJsonLeavesFromDocument(
-      source.canonicalResult,
+      source.document,
       `equation-substitution-rejected-input:${sourceIndex}`,
     );
-    const answerRoot = source.canonicalResult?.primaryMath?.mathJson;
+    const answerRoot = source.document.primaryMath?.mathJson;
     const answerNodes: unknown[] = Array.isArray(answerRoot)
       && answerRoot[0] === 'Equal'
       && answerRoot.length === 3
@@ -286,20 +290,21 @@ function substitutionSolve(
     return null;
   }
 
-  const outcomes = branchEquations.map((equationLatex) =>
-    runGuardedEquationSolve({
+  const carriers = branchEquations.map((equationLatex) =>
+    buildEquationStageResultCarrier(runGuardedEquationSolve({
       ...request,
       originalLatex: equationLatex,
       resolvedLatex: equationLatex,
       numericInterval: undefined,
-    }, depth + 1, new Set(trail)));
+    }, depth + 1, new Set(trail))));
 
-  const merged = mergeDisplayOutcomes(
-    outcomes,
+  const mergedCarrier = mergeEquationStageCarriers(
+    carriers,
     substitution.solveBadges,
     substitution,
     substitution.diagnostics,
   );
+  const merged = readEquationStageResultCarrier(mergedCarrier);
   const substitutionSupplementLatex = buildConstraintSupplementLatex(
     substitution.domainConstraints,
     'transform',
@@ -373,7 +378,7 @@ function substitutionSolve(
 
   if (validation.accepted.length === 0) {
     const rejectedEvidence = rejectedCandidateEvidence(
-      outcomes,
+      carriers,
       validation.rejected,
       extractExactSolutions(merged.exactLatex),
     );
@@ -397,7 +402,12 @@ function substitutionSolve(
         rejectedEvidence.evidence,
       ),
     };
-    return rebuildSubstitutionOutcome(producerInput, merged, rejectedEvidence.leaves);
+    const carrier = rebuildSubstitutionOutcome(
+      producerInput,
+      mergedCarrier,
+      rejectedEvidence.leaves,
+    );
+    return readEquationStageResultCarrier(carrier);
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -409,12 +419,12 @@ function substitutionSolve(
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
   const rejectedEvidence = rejectedCandidateEvidence(
-    outcomes,
+    carriers,
     validation.rejected,
     extractExactSolutions(merged.exactLatex),
   );
 
-  const acceptedEvidence = acceptedCanonicalEvidence(merged, exactLatex, acceptedLatex);
+  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex);
   const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
@@ -445,11 +455,12 @@ function substitutionSolve(
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
   };
-  return rebuildSubstitutionOutcome(
+  const resultCarrier = rebuildSubstitutionOutcome(
     producerInput,
-    merged,
+    mergedCarrier,
     [...(acceptedEvidence?.leaves ?? []), ...rejectedEvidence.leaves],
   );
+  return readEquationStageResultCarrier(resultCarrier);
 }
 
 async function substitutionSolveAsync(
@@ -495,7 +506,7 @@ async function substitutionSolveAsync(
     return null;
   }
 
-  const outcomes: DisplayOutcome[] = [];
+  const carriers: EquationStageResultCarrierV1[] = [];
   for (const [branchIndex, equationLatex] of branchEquations.entries()) {
     const cancellation = await checkpoint({
       helperId: 'substitution',
@@ -507,20 +518,21 @@ async function substitutionSolveAsync(
       return cancellation;
     }
 
-    outcomes.push(await runGuardedEquationSolve({
+    carriers.push(buildEquationStageResultCarrier(await runGuardedEquationSolve({
       ...request,
       originalLatex: equationLatex,
       resolvedLatex: equationLatex,
       numericInterval: undefined,
-    }, depth + 1, new Set(trail)));
+    }, depth + 1, new Set(trail))));
   }
 
-  const merged = mergeDisplayOutcomes(
-    outcomes,
+  const mergedCarrier = mergeEquationStageCarriers(
+    carriers,
     substitution.solveBadges,
     substitution,
     substitution.diagnostics,
   );
+  const merged = readEquationStageResultCarrier(mergedCarrier);
   const substitutionSupplementLatex = buildConstraintSupplementLatex(
     substitution.domainConstraints,
     'transform',
@@ -606,7 +618,7 @@ async function substitutionSolveAsync(
 
   if (validation.accepted.length === 0) {
     const rejectedEvidence = rejectedCandidateEvidence(
-      outcomes,
+      carriers,
       validation.rejected,
       extractExactSolutions(merged.exactLatex),
     );
@@ -630,7 +642,12 @@ async function substitutionSolveAsync(
         rejectedEvidence.evidence,
       ),
     };
-    return rebuildSubstitutionOutcome(producerInput, merged, rejectedEvidence.leaves);
+    const carrier = rebuildSubstitutionOutcome(
+      producerInput,
+      mergedCarrier,
+      rejectedEvidence.leaves,
+    );
+    return readEquationStageResultCarrier(carrier);
   }
 
   const acceptedExactLatex = matchAcceptedExactSolutions(merged.exactLatex, validation.accepted);
@@ -642,12 +659,12 @@ async function substitutionSolveAsync(
     : undefined;
   const formattedAccepted = validation.accepted.map((value) => formatApproxNumber(value));
   const rejectedEvidence = rejectedCandidateEvidence(
-    outcomes,
+    carriers,
     validation.rejected,
     extractExactSolutions(merged.exactLatex),
   );
 
-  const acceptedEvidence = acceptedCanonicalEvidence(merged, exactLatex, acceptedLatex);
+  const acceptedEvidence = acceptedCanonicalEvidence(mergedCarrier, exactLatex, acceptedLatex);
   const producerInput: EquationResultProducerInput = {
     kind: 'success',
     title: 'Solve',
@@ -678,11 +695,12 @@ async function substitutionSolveAsync(
     substitutionDiagnostics: substitution.diagnostics,
     numericMethod: merged.numericMethod,
   };
-  return rebuildSubstitutionOutcome(
+  const resultCarrier = rebuildSubstitutionOutcome(
     producerInput,
-    merged,
+    mergedCarrier,
     [...(acceptedEvidence?.leaves ?? []), ...rejectedEvidence.leaves],
   );
+  return readEquationStageResultCarrier(resultCarrier);
 }
 
 export { substitutionSolve, substitutionSolveAsync };

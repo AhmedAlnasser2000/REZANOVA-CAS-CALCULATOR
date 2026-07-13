@@ -1,7 +1,6 @@
 import { solutionsToLatex } from '../../display/format';
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import type {
-  DisplayOutcome,
   DisplaySolveSummary,
   PeriodicFamilyInfo,
   SerializableMathJson,
@@ -21,6 +20,12 @@ import {
   inferEquationMathJsonRoute,
   type EquationMathJsonRouteId,
 } from '../solve-result/math-values';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+  type EquationStageResultCarrierV1,
+  type EquationStageResultReadModel,
+} from '../solve-result/stage-carrier';
 
 function extractExactSolutions(exactLatex?: string) {
   if (!exactLatex) {
@@ -60,22 +65,23 @@ function dedupe<T>(values: T[]) {
   return [...new Set(values)];
 }
 
-function mergeDetailSections(outcomes: DisplayOutcome[]) {
+function mergeDetailSections(outcomes: EquationStageResultReadModel[]) {
   const encoded = dedupe(
     outcomes
-      .flatMap((outcome) => outcome.kind === 'prompt' ? [] : outcome.detailSections ?? [])
+      .flatMap((outcome) => outcome.detailSections ?? [])
       .map((section) => JSON.stringify(section)),
   );
   return encoded.map((entry) => JSON.parse(entry));
 }
 
-function mergeDisplayOutcomes(
-  outcomes: DisplayOutcome[],
+function mergeEquationStageCarriers(
+  carriers: readonly EquationStageResultCarrierV1[],
   solveBadges: SolveBadge[],
   solveSummary: DisplaySolveSummary,
   substitutionDiagnostics?: SubstitutionSolveDiagnostics,
   mathJsonOptions?: { routeId: EquationMathJsonRouteId; source: string },
-): DisplayOutcome {
+): EquationStageResultCarrierV1 {
+  const outcomes = carriers.map(readEquationStageResultCarrier);
   const successes = outcomes.filter((outcome) => outcome.kind === 'success');
   if (successes.length === 0) {
     const firstError = outcomes.find((outcome) => outcome.kind === 'error');
@@ -91,13 +97,13 @@ function mergeDisplayOutcomes(
         substitutionDiagnostics ?? firstError.substitutionDiagnostics,
         firstError.numericMethod,
       );
-      return createEquationResultOutcome({
+      return buildEquationStageResultCarrier(createEquationResultOutcome({
         ...outcome,
         detailSections: firstError.detailSections,
-      });
+      }));
     }
 
-    return errorOutcome(
+    return buildEquationStageResultCarrier(errorOutcome(
       'Solve',
       UNSUPPORTED_FAMILY_ERROR,
       [],
@@ -106,7 +112,7 @@ function mergeDisplayOutcomes(
       solveSummary,
       undefined,
       substitutionDiagnostics,
-    );
+    ));
   }
 
   const exactValues = dedupe(successes.flatMap((outcome) => extractExactSolutions(outcome.exactLatex)));
@@ -206,14 +212,14 @@ function mergeDisplayOutcomes(
   const supplementalMathValues = { ...mergedMathValues };
   delete supplementalMathValues.primaryMath;
   delete supplementalMathValues.branchReadback;
-  return profileEquationResult(createEquationResultOutcome(producerInput, {
+  return buildEquationStageResultCarrier(profileEquationResult(createEquationResultOutcome(producerInput, {
     mathValues: supplementalMathValues,
-  }));
+  })));
 }
 
 export {
   dedupe,
   extractApproxSolutions,
   extractExactSolutions,
-  mergeDisplayOutcomes,
+  mergeEquationStageCarriers,
 };

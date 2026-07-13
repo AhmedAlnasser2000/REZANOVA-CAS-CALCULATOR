@@ -30,7 +30,7 @@ import {
   UNSUPPORTED_FAMILY_ERROR,
   errorOutcome,
 } from './outcome';
-import { mergeDisplayOutcomes } from './merge';
+import { mergeEquationStageCarriers } from './merge';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import type { GuardedSolveRunner } from './types';
 import {
@@ -45,6 +45,11 @@ import {
   createEquationResultOutcome,
   type EquationResultProducerInput,
 } from '../solve-result/producer';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+  type EquationStageResultCarrierV1,
+} from '../solve-result/stage-carrier';
 import {
   equationMathValuesFromOwnedLeaves,
   inferEquationMathJsonRoute,
@@ -151,7 +156,7 @@ function runMixedFactorEquationSolve(
       return null;
     }
 
-    const outcomes: DisplayOutcome[] = [];
+    const carriers: EquationStageResultCarrierV1[] = [];
     const baseValidationLatex = request.validationLatex ?? request.resolvedLatex;
 
     for (const factor of factors) {
@@ -165,18 +170,20 @@ function runMixedFactorEquationSolve(
       const outcome = runner(nextRequest, depth + 1, new Set(trail));
 
       if (outcome.kind === 'success') {
-        outcomes.push(outcome);
+        carriers.push(buildEquationStageResultCarrier(outcome));
       }
     }
 
-    if (outcomes.length === 0) {
+    if (carriers.length === 0) {
       return null;
     }
 
-    return mergeDisplayOutcomes(
-      outcomes,
-      [],
-      proseSolveSummary('Factored the mixed carrier expression into bounded exact factors.'),
+    return readEquationStageResultCarrier(
+      mergeEquationStageCarriers(
+        carriers,
+        [],
+        proseSolveSummary('Factored the mixed carrier expression into bounded exact factors.'),
+      ),
     );
   } catch {
     return null;

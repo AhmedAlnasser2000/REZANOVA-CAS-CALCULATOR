@@ -280,11 +280,18 @@ export const OWNER_ASSEMBLY_REGISTRATIONS = [
     functions: ['directTrigSolve'],
   },
   {
-    id: 'equation-guarded-merge-mathjson-assembly-v1',
+    id: 'equation-guarded-merge-carrier-assembly-v1',
     owner: 'equation-result-contract',
-    rationale: 'Guarded Equation merge assembles validated candidate and nested MathJSON evidence before its unconditional final canonical adapter.',
+    rationale: 'Guarded Equation merge authors one validated Equation stage carrier from branch-owned canonical documents.',
     matchers: exact('src/lib/equation/guarded/merge.ts'),
-    functions: ['mergeDisplayOutcomes'],
+    functions: ['mergeEquationStageCarriers'],
+  },
+  {
+    id: 'equation-stage-carrier-assembly-v1',
+    owner: 'equation-result-contract',
+    rationale: 'The guarded-stage adapter captures an already validated Equation canonical document and solver evidence without reparsing display strings.',
+    matchers: exact('src/lib/equation/solve-result/stage-carrier.ts'),
+    functions: ['buildEquationStageResultCarrier'],
   },
   {
     id: 'equation-polynomial-mathjson-assembly-v1',
@@ -399,6 +406,11 @@ export const REFERENCE_OUTCOME_MATCHERS = exact(
 
 export const NATIVE_DOCUMENT_CALL_NAMES = new Set([
   'projectCanonicalResultToDisplayOutcome',
+]);
+
+export const NATIVE_RESULT_CARRIER_CALL_NAMES = new Set([
+  'mergeEquationStageCarriers',
+  'rebuildSubstitutionOutcome',
 ]);
 
 export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([

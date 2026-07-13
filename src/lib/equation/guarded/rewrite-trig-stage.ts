@@ -9,9 +9,25 @@ import {
   errorOutcome,
   successOutcome,
 } from './outcome';
-import { mergeDisplayOutcomes } from './merge';
+import { mergeEquationStageCarriers } from './merge';
 import { isTrigSolveSuccess } from './direct-trig-stage';
 import { proseSolveSummary } from '../../display/result-detail-lines';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+} from '../solve-result/stage-carrier';
+
+function mergeRewriteOutcomes(
+  outcomes: DisplayOutcome[],
+  solveBadges: Parameters<typeof mergeEquationStageCarriers>[1],
+  solveSummary: Parameters<typeof mergeEquationStageCarriers>[2],
+) {
+  return readEquationStageResultCarrier(mergeEquationStageCarriers(
+    outcomes.map(buildEquationStageResultCarrier),
+    solveBadges,
+    solveSummary,
+  ));
+}
 
 function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
   const rewriteMatch = matchTrigEquationRewriteForSolve(request.resolvedLatex, request.angleUnit);
@@ -94,7 +110,7 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
       );
     });
 
-    return mergeDisplayOutcomes(
+    return mergeRewriteOutcomes(
       outcomes,
       ['Trig Sum-Product'],
       proseSolveSummary(rewriteMatch.candidate.summaryText),
@@ -131,7 +147,7 @@ function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
     );
   });
 
-  return mergeDisplayOutcomes(
+  return mergeRewriteOutcomes(
     outcomes,
     ['Trig Rewrite', 'Trig Square Split'],
     proseSolveSummary(rewriteMatch.candidate.summaryText),

@@ -17,8 +17,8 @@
 ## Program Status
 
 - Status: active.
-- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`, `CANONICAL-PRODUCER-MATH-VALUE1`, `MATHJSON-COVERAGE-CALCULATE-EQUATION1`, `MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1`, `MATHJSON-COVERAGE-GUIDED-DOMAINS1`, `MATHJSON-COVERAGE-LINEAR-ALGEBRA1`, `MATHJSON-COVERAGE-CLOSEOUT1`.
-- Next gate: `EQUATION-STAGE-CARRIER-GUARDED1`.
+- Completed gates: `CANONICAL-MATHJSON-LEGACY-ROADMAP0`, `MATHJSON-COVERAGE-REGISTRY1`, `PROVEN-ANSWER-MATHJSON-CONTRACT1`, `CANONICAL-PRODUCER-MATH-VALUE1`, `MATHJSON-COVERAGE-CALCULATE-EQUATION1`, `MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1`, `MATHJSON-COVERAGE-GUIDED-DOMAINS1`, `MATHJSON-COVERAGE-LINEAR-ALGEBRA1`, `MATHJSON-COVERAGE-CLOSEOUT1`, `EQUATION-STAGE-CARRIER-GUARDED1`.
+- Next gate: `EQUATION-STAGE-CARRIER-CLOSEOUT1`.
 - Starting commit: `0a173b61`.
 - Push: not authorized.
 - Commit approval: standing approval covers all 19 numbered program moves and paired named subgates.
@@ -41,6 +41,7 @@
 - Seven Matrix augmented-system and row-operation narration leaves remain explicit exemptions; their mathematical solution, rank, and count values are proven separately.
 - The aggregate payload baseline is 107,318 serialized bytes with a 2,753-byte maximum document. No structured-clone metric blocks the closeout.
 - Resource-safe verification is now authoritative: focused milestone evidence replaces redundant full-suite repetition until major closeout, release, or genuine cross-cutting invalidation.
+- Guarded Equation branch collections and shared merge now use the validated Equation solve-result carrier. Stage exits still derive temporary Display read models until the next closeout gate.
 
 ## Durable Files
 

@@ -108,3 +108,15 @@
 - visible behavior: no display string, result, branch, action, warning, detail, or Table row changes; per-workspace Playwright evidence from the preceding coverage slices remains valid and was not redundantly rerun
 - resource posture: no full unit, UI, canary, build, or browser suite ran; the one failed sorted-ID assertion received only its targeted rerun
 - residual: `EQUATION-STAGE-CARRIER-GUARDED1` begins the approved Equation transport cleanup
+
+## EQUATION-STAGE-CARRIER-GUARDED1
+
+- kind: backend Equation stage-transport migration with focused UI parity evidence
+- result: pass
+- contract: shared merge accepts and returns `EquationSolveResultContractV1`; synchronous/asynchronous substitution and composition convert recursive outcomes immediately, while prompts fail closed
+- inventory: 677 producer boundaries, 603 consumer observations, 171 native paths, 47 owner assemblies, one legacy-History compatibility projection, and 411 registered legacy reads; Equation has 141 native paths and zero compatibility producers
+- regression: 12 focused Equation files and 192 tests pass, including six golden Equation executions, 25 replay fixtures, recursive stage routing, substitution, composition, and solve-result contracts; the 22-test AST ratchet also passes
+- static: incremental TypeScript, production build, inversion ratchet and accepted baseline, focused lint, file-size, memory protocol, and diff hygiene pass
+- visual: five Chromium Equation flows pass; three inspected screenshots preserve domain facts, periodic structure, candidate evidence, solve summaries, and horizontal readability
+- resource posture: no full unit, UI, or 19-canary suite ran; verification stayed impact-selected
+- residual: `EQUATION-STAGE-CARRIER-CLOSEOUT1` removes remaining guarded-stage Display return/read-model transport

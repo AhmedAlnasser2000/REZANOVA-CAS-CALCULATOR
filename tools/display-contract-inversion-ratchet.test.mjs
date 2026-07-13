@@ -166,6 +166,25 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.categoryCounts.forwarder, 0);
   });
 
+  it('recognizes registered canonical carrier calls as native producer coverage', () => {
+    const rootDir = fixture({
+      'src/lib/equation/guarded/sample.ts': `
+        declare function mergeEquationStageCarriers(): {
+          version: 1;
+          status: 'solved';
+          document: { version: 1 };
+        };
+        export function run() {
+          return mergeEquationStageCarriers();
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.summary.nativeDocumentCount, 1);
+    assert.equal(report.categoryCounts.forwarder, 0);
+  });
+
   it('counts only directly wrapped authored results as native documents', () => {
     const rootDir = fixture({
       'src/lib/modes/equation/wrapped.ts': `
@@ -416,6 +435,11 @@ describe('display contract inversion ratchet', () => {
 
   it('keeps live producer lanes at zero compatibility after owner closeout', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
+    const mergeSource = fs.readFileSync('src/lib/equation/guarded/merge.ts', 'utf8');
+    const selectedCarrierSources = [
+      'src/lib/equation/guarded/substitution-stage.ts',
+      'src/lib/equation/composition/stage.ts',
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
     const producerLanes = [
       'app-runtime',
       'calculate',
@@ -440,6 +464,10 @@ describe('display contract inversion ratchet', () => {
       report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
       [['src/app/runtime/historyDisplayEntry.ts', 'legacyHistoryOutcome']],
     );
+    assert.doesNotMatch(mergeSource, /DisplayOutcome|mergeDisplayOutcomes/u);
+    assert.doesNotMatch(selectedCarrierSources, /DisplayOutcome\[\]/u);
+    assert.match(selectedCarrierSources, /buildEquationStageResultCarrier/u);
+    assert.match(selectedCarrierSources, /mergeEquationStageCarriers/u);
   });
 
   it('keeps Display blocks and hygiene canonical-first with only legacy History inference', () => {
@@ -470,11 +498,11 @@ describe('display contract inversion ratchet', () => {
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
-    assert.equal(report.summary.producerCount, 666);
-    assert.equal(report.summary.consumerCount, 613);
+    assert.equal(report.summary.producerCount, 677);
+    assert.equal(report.summary.consumerCount, 603);
     assert.equal(report.summary.compatibilityProjectionCount, 1);
     assert.equal(report.summary.legacyReadCount, 411);
-    assert.equal(report.summary.nativeDocumentCount, 164);
+    assert.equal(report.summary.nativeDocumentCount, 171);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 3);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);

@@ -7,7 +7,7 @@ import {
 import {
   mergeBranchConstraints as mergeSharedBranchConstraints,
 } from '../../algebra/branch-core';
-import { dedupe, extractExactSolutions, mergeDisplayOutcomes } from '../guarded/merge';
+import { dedupe, extractExactSolutions, mergeEquationStageCarriers } from '../guarded/merge';
 import {
   appendExtraneousSolutionsDetailSection,
   extraneousEvidenceFromRejectedCandidates,
@@ -73,6 +73,10 @@ import {
   solveSummaryFromDisplayFields,
 } from '../../display/result-detail-lines';
 import { createEquationResultOutcome } from '../solve-result/producer';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+} from '../solve-result/stage-carrier';
 
 const ce = new ComputeEngine();
 type GuardedSolveRunner = (
@@ -182,8 +186,8 @@ function recurseComposition(
     return null;
   }
 
-  const recursiveOutcomes = branchEquations.map((equationLatex) =>
-    runGuardedEquationSolve(
+  const recursiveCarriers = branchEquations.map((equationLatex) =>
+    buildEquationStageResultCarrier(runGuardedEquationSolve(
       {
         ...request,
         originalLatex: equationLatex,
@@ -195,16 +199,15 @@ function recurseComposition(
       },
       depth + 1,
       new Set(trail),
-    ));
+    )));
 
-  const merged = recursiveOutcomes.length === 1
-    ? recursiveOutcomes[0]
-    : mergeDisplayOutcomes(recursiveOutcomes, effectiveBadges, solveSummary);
+  const mergedCarrier = recursiveCarriers.length === 1
+    ? recursiveCarriers[0]
+    : mergeEquationStageCarriers(recursiveCarriers, effectiveBadges, solveSummary);
+  const merged = readEquationStageResultCarrier(mergedCarrier);
 
   const mergedPeriodicFamilyWithStructuredStop = (() => {
-    const mergedFamily = merged.kind === 'prompt'
-      ? undefined
-      : mergePeriodicFamilyExtras(merged.periodicFamily, periodicFamilyExtras);
+    const mergedFamily = mergePeriodicFamilyExtras(merged.periodicFamily, periodicFamilyExtras);
     if (
       merged.kind === 'error'
       && mergedFamily
@@ -246,10 +249,6 @@ function recurseComposition(
       exactSupplementLatex: supplements.length > 0 ? supplements : undefined,
       detailSections: detailSections.length > 0 ? detailSections : undefined,
     }), effectiveBadges, solveSummary);
-  }
-
-  if (merged.kind === 'prompt') {
-    return appendSolveMetadata(merged, effectiveBadges, solveSummary);
   }
 
   const validationCandidates = collectOutcomeCandidates(merged);

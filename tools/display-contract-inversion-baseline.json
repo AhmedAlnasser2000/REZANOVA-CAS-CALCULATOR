@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Register independent Matrix and Vector MathJSON proof overlays as producer-owned assembly and refresh final-adapter fingerprints with unchanged compatibility and consumer floors.",
-  "registryDigest": "74157f8c293a4db35d97",
+  "acceptedReason": "EQUATION-STAGE-CARRIER-GUARDED1 replaces guarded branch DisplayOutcome collections with validated Equation stage carriers, adds explicit carrier-call inventory, and preserves zero live compatibility growth.",
+  "registryDigest": "5e4bf594cbc4e3acf74c",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -36,7 +36,7 @@
     "equation": {
       "compatibilityProjection": 0,
       "legacyRead": 265,
-      "nativeDocument": 134
+      "nativeDocument": 141
     },
     "geometry": {
       "compatibilityProjection": 0,
@@ -123,6 +123,7 @@
       ],
       "src/lib/equation/composition/stage.ts": [
         "df332d2a9869a9eb8f0f:1",
+        "c176099dc84a634bfe6d:1",
         "606c8a63877ea84aa711:1",
         "6c6fedbea32693465d52:1",
         "5cf625bbdcd1abf90b12:1",
@@ -141,6 +142,7 @@
         "08775e4fc522803aadc3:1",
         "8edd814f99eda973b2c5:1",
         "2113b7c128bb3c6c566e:1",
+        "0f45cce54c2bb75c3954:1",
         "d4b8b1cb7270e2067284:1",
         "23907070017d60da50a1:1"
       ],
@@ -154,8 +156,8 @@
         "5e7f7e68f09de3d452ce:1"
       ],
       "src/lib/equation/guarded/merge.ts": [
-        "3f7da2410c1de434c60d:1",
-        "57445ff5d4c0e10567a2:1"
+        "851ee4680b9132de16bb:1",
+        "9992991fa4e7d742e39b:1"
       ],
       "src/lib/equation/guarded/numeric-stage.ts": [
         "060b837e1bfd06739dcb:1",
@@ -169,6 +171,7 @@
         "eb0683e5302d1efba18b:1"
       ],
       "src/lib/equation/guarded/polynomial-stage.ts": [
+        "943716d0bcc7913660ff:1",
         "7855b236c199abfa97b5:1",
         "df7bfcc2531ec8918d5a:1",
         "0afd0d31d1b478f5f950:1",
@@ -179,12 +182,17 @@
         "346bbfa73f07c4a26763:1",
         "83b9ed07d8876dcc3ed8:1"
       ],
+      "src/lib/equation/guarded/rewrite-trig-stage.ts": [
+        "7dd8643c2e56e1e8af21:1"
+      ],
       "src/lib/equation/guarded/substitution-stage.ts": [
         "868b22e7e341d62835e2:1",
-        "b85dcea55cb2c72c2eb0:1",
-        "e3ff4410ed9875b5a6a5:1",
-        "400a0c9e247b82774eec:1",
-        "feafc82e751f065ee515:1"
+        "5cd0307d40298eafed12:1",
+        "c7e62b29cf9b24562792:1",
+        "0fb3001f3ade0bd1d70a:1",
+        "b660ba1559050c18f758:1",
+        "0722e942080eaaeb3dbd:1",
+        "2e018431d281b54c6234:1"
       ],
       "src/lib/equation/inequality/outcome.ts": [
         "5f4a20a0fb7c443eb8f9:1",
@@ -205,6 +213,9 @@
       ],
       "src/lib/equation/solve-result/producer.ts": [
         "3f9e73631084dfd4dafb:1"
+      ],
+      "src/lib/equation/solve-result/stage-carrier.ts": [
+        "070d7a1bab6926a70815:1"
       ],
       "src/lib/equation/target/surface.ts": [
         "eecf7c3b9563761ba5dd:1",
@@ -272,7 +283,7 @@
       "src/lib/modes/equation/guided-polynomial.ts": [
         "9c195600205406dd26f0:1",
         "467e86eac850405ec53b:1",
-        "46815c2e87245431d736:1",
+        "aac6aea4e45ffea03952:1",
         "c76ff4542a367a493a4a:1"
       ],
       "src/lib/modes/equation/outcomes.ts": [
@@ -437,7 +448,7 @@
         "d57a4c1d991032d18bc7:1"
       ],
       "src/lib/equation/guarded/merge.ts": [
-        "1495b776606b4f954a4d:1"
+        "d53e851b2342b3ec0c87:1"
       ],
       "src/lib/equation/guarded/polynomial-stage.ts": [
         "150b811aa1ad87a11720:1",
@@ -540,7 +551,6 @@
         "63a10765a97624e04c64:1",
         "b35b88eef59609e660bc:1",
         "7f0bcbedae6defab99ea:1",
-        "56a9ce66eaf5be2ac747:1",
         "1052e18a9824a81d2973:1",
         "45a678039f9e4675d77a:1",
         "f37f10aee857f3cd2c99:1",
@@ -602,8 +612,7 @@
         "b5b391fe660fd20135a9:1"
       ],
       "src/lib/equation/guarded/merge.ts": [
-        "c601763d4fb9ce819a58:1",
-        "c31672d7e990d987225a:1"
+        "a89b4105c9a2847861ab:1"
       ],
       "src/lib/equation/guarded/orchestrator.ts": [
         "f686cced2e3cee407f0c:1",
@@ -629,7 +638,7 @@
         "59eca442808fa2f0afd6:1"
       ],
       "src/lib/equation/guarded/polynomial-stage.ts": [
-        "cbfaf9695ffe8b40f1a1:1",
+        "afb8140150c149f77f0f:1",
         "2de6375cc0f92ca13079:1",
         "2de6375cc0f92ca13079:2",
         "34bb93eb8165e2a8aa95:1",
@@ -644,16 +653,17 @@
         "a37869019e156630f2b0:2"
       ],
       "src/lib/equation/guarded/rewrite-trig-stage.ts": [
+        "c122bee55dab1da04269:1",
         "eef343acf4d4578b091d:1",
         "b2ea8edfbd7a22cffdc9:1",
         "0af19e3e48af9eee11f3:1",
         "31668cdf622c1c814654:1",
         "081608e91fa0a7312da1:1",
         "dd3f40a186dfb69c2c05:1",
-        "f8b91f165077985bbf65:1",
+        "84a824f192dd97f81952:1",
         "081608e91fa0a7312da1:2",
         "dd3f40a186dfb69c2c05:2",
-        "aa7c743a44e25403c59f:1"
+        "97537bfcbd850d71ba2d:1"
       ],
       "src/lib/equation/guarded/run.ts": [
         "c6309dec5c7502ee57db:1",
@@ -673,6 +683,8 @@
         "3ef16aba538bb2eb85c7:1",
         "8467c463282a0433a29f:1",
         "8467c463282a0433a29f:2",
+        "2d8121a67633c03cee98:1",
+        "66ee2040657f41e7e42c:1",
         "7f45456714e465a68680:1",
         "14a0a6919a5c9e14c05b:1",
         "e54d7df5ff50918656fe:1",
@@ -680,7 +692,9 @@
         "7d232bf7efc666c2bac7:1",
         "54b92122d959f08e8c31:1",
         "54b92122d959f08e8c31:2",
-        "e54d7df5ff50918656fe:2"
+        "e54d7df5ff50918656fe:2",
+        "9e2ad816ddc4126fdbdf:1",
+        "4bc2d2d7056e7c8ead11:1"
       ],
       "src/lib/equation/polynomial/system.ts": [
         "8a60a7198bcbb55284b5:1",
@@ -697,6 +711,9 @@
       "src/lib/equation/solve-result/native-result.ts": [
         "ad96c14b2bff596c39d7:1",
         "ad96c14b2bff596c39d7:2"
+      ],
+      "src/lib/equation/solve-result/stage-carrier.ts": [
+        "ce1f6b1177f04da38f1a:1"
       ],
       "src/lib/equation/target/surface.ts": [
         "2723fbe0a4322980e75a:1",
@@ -1161,18 +1178,12 @@
         "7d0eeb8e1d70566f8823:1"
       ],
       "src/lib/equation/guarded/merge.ts": [
-        "22c8a5670a86f80dd7e3:1",
-        "22c8a5670a86f80dd7e3:2",
+        "42aa814464937bac5d7c:1",
+        "42aa814464937bac5d7c:2",
         "a35e6ecf683613066a46:1"
       ],
       "src/lib/equation/guarded/request-prep.ts": [
         "ae59fcd67eddc55bd91f:1"
-      ],
-      "src/lib/equation/guarded/substitution-stage.ts": [
-        "78926a517b5390643a82:1",
-        "971c16aa736ca639b9d7:1",
-        "da57bb42585b9c02959c:1",
-        "da57bb42585b9c02959c:2"
       ],
       "src/lib/equation/target/surface.ts": [
         "d88da38fa175a9b5d055:1",
@@ -1345,14 +1356,14 @@
       ],
       "src/lib/equation/guarded/merge.ts": [
         "e589f279206f7c73d131:1",
-        "18011aabba256ac8beaf:1",
-        "8c5247b25dfc06acac56:1",
-        "2b314d5ac36d3c016efb:1",
-        "29e5bda6e1dc649b0385:1",
-        "6c5915173784e8fdf218:1",
-        "7ab91cc1a6c0bd79ff04:1",
-        "17467f50b6cecb3fb85e:1",
-        "9fbb2c0ce1e40894517f:1",
+        "121b3ac9743d49dd0c42:1",
+        "dc6b281669ae34c27ec3:1",
+        "0d2ee8830c1aff76c3fd:1",
+        "d2d5d4c7c1ac40f92152:1",
+        "7215e5519bfb162e186f:1",
+        "2706cb7b5ac477e08546:1",
+        "582ce6766be249540e7e:1",
+        "0b45cad696be12dc18cd:1",
         "63f831c5a86f0a2dd1aa:1",
         "efc4a37fc9f0b4cf2f60:1",
         "720ec3e8f90ed23956af:1",
@@ -1363,7 +1374,7 @@
         "5ccd8fe21534ee8fc06a:1",
         "8f225913182d843bada9:1",
         "bfc9388ef74d712f4322:1",
-        "e1d18b5e88c9c1979f34:1",
+        "7f339d958cf64cafc6e8:1",
         "57b655bb30548485f4a6:1"
       ],
       "src/lib/equation/guarded/request-prep.ts": [
@@ -1775,10 +1786,8 @@
       "src/lib/equation/composition/stage.ts": [
         "58c2174c6686a258773e:1",
         "13683e80a18a8f9a40b1:1",
-        "13683e80a18a8f9a40b1:2",
         "0faba9e87acb6966442d:1",
         "0faba9e87acb6966442d:2",
-        "0faba9e87acb6966442d:3",
         "ad8e5eef5790e886f42a:1"
       ],
       "src/lib/equation/composition/validation.ts": [
@@ -1791,7 +1800,6 @@
       ],
       "src/lib/equation/guarded/algebra-stage.ts": [
         "4f5466e76bd6eb00410f:1",
-        "3ce6db2ee7db857283a4:1",
         "5ae1a874d204f478f90b:1",
         "5ae1a874d204f478f90b:2"
       ],
@@ -1811,8 +1819,7 @@
       "src/lib/equation/guarded/merge.ts": [
         "0eea67175b197f31ea1b:1",
         "0eea67175b197f31ea1b:2",
-        "0eea67175b197f31ea1b:3",
-        "aec87770bdd637868243:1"
+        "a50bc691e0c492d4c2a3:1"
       ],
       "src/lib/equation/guarded/polynomial-stage.ts": [
         "48e2c92073bc94585efb:1"
@@ -1822,9 +1829,6 @@
         "baf507384d87068a62f8:1"
       ],
       "src/lib/equation/guarded/substitution-stage.ts": [
-        "58038e41ff0e88633479:1",
-        "7f0faa4498267c453e6d:1",
-        "39183d8f5873860bf1f1:1",
         "62df0c93899267eacfc8:1",
         "62df0c93899267eacfc8:2",
         "eff5fe34931ac950c8b3:1",
@@ -1957,7 +1961,8 @@
         "a8a5fbbcf92bd3e5fbef:1"
       ],
       "src/lib/result-contract/mathjson-coverage.ts": [
-        "ec5654ca5e440428f225:1"
+        "ec5654ca5e440428f225:1",
+        "ec5654ca5e440428f225:2"
       ],
       "src/lib/result-contract/projection.ts": [
         "e25ca208b5c003f1b0a8:1",

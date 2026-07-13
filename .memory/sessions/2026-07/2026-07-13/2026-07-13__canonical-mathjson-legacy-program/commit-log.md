@@ -68,3 +68,11 @@
 - scope: exact replay-plus-golden route registry, aggregate producer-owned proofs, exact non-growing exemptions, version-2 payload baseline, resource-safe focused verification, and durable evidence
 - push: not authorized
 - excluded: concurrent Notebook files, ignored `.task_tmp/` evidence, and untracked `test-results/`
+
+## EQUATION-STAGE-CARRIER-GUARDED1
+
+- commit_message: `EQUATION-STAGE-CARRIER-GUARDED1`
+- status: verified; covered by standing commit approval
+- scope: Equation stage-carrier facade, carrier-native guarded merge and recursive branch collections, carrier-aware AST inventory, focused regression and Chromium parity, and durable evidence
+- push: not authorized
+- excluded: ignored `.task_tmp/` screenshots and untracked `test-results/`

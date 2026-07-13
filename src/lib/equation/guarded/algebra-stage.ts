@@ -13,7 +13,7 @@ import {
   UNSUPPORTED_FAMILY_ERROR,
   errorOutcome,
 } from './outcome';
-import { dedupe, mergeDisplayOutcomes } from './merge';
+import { dedupe, mergeEquationStageCarriers } from './merge';
 import { equationStateKey } from './state-key';
 import type { AlgebraTransform, GuardedSolveRunner } from './algebra/types';
 import {
@@ -51,6 +51,10 @@ import {
   equationOwnedMathJsonLeavesFromDocument,
   inferEquationMathJsonRoute,
 } from '../solve-result/math-values';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+} from '../solve-result/stage-carrier';
 
 const RADICAL_STEP_BUDGET_ERROR = 'This recognized radical family would require more than two bounded radical transform steps. Use Numeric Solve with an interval in Equation mode.';
 const REPEATED_CLEARING_BUDGET_ERROR = 'This recognized repeated-clearing radical family would require more than one extra bounded radical clear. Use Numeric Solve with an interval in Equation mode.';
@@ -175,8 +179,8 @@ function recurseTransform(
     return null;
   }
 
-  const recursiveOutcomes = branchEquations.map((equationLatex) =>
-    runGuardedEquationSolve(
+  const recursiveCarriers = branchEquations.map((equationLatex) =>
+    buildEquationStageResultCarrier(runGuardedEquationSolve(
       {
         ...request,
         originalLatex: equationLatex,
@@ -193,19 +197,19 @@ function recurseTransform(
       },
       depth + 1,
       new Set(trail),
-    ));
+    )));
+  const recursiveOutcomes = recursiveCarriers.map(readEquationStageResultCarrier);
 
-  const recursiveOutcome = recursiveOutcomes.length === 1
-    ? recursiveOutcomes[0]
-    : mergeDisplayOutcomes(
-        recursiveOutcomes,
+  const recursiveCarrier = recursiveCarriers.length === 1
+    ? recursiveCarriers[0]
+    : mergeEquationStageCarriers(
+        recursiveCarriers,
         transform.solveBadges,
         transform.summaryMergeMode === 'replace'
           ? transform
           : dedupeSolveSummaries(
             transform,
             ...recursiveOutcomes.flatMap((outcome) => {
-              if (outcome.kind === 'prompt') return [];
               const summary = solveSummaryFromDisplayFields(outcome);
               return summary ? [summary] : [];
             }),
@@ -218,6 +222,7 @@ function recurseTransform(
             }
           : undefined,
       );
+  const recursiveOutcome = readEquationStageResultCarrier(recursiveCarrier);
 
   if (
     transform.blockOnGuidedBranchError

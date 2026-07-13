@@ -13,6 +13,7 @@ import {
   DISPLAY_OUTCOME_TRANSIENT_PROPERTIES,
   NATIVE_DOCUMENT_CALL_NAMES,
   NATIVE_DOCUMENT_WRAPPER_CALL_NAMES,
+  NATIVE_RESULT_CARRIER_CALL_NAMES,
   OWNER_ASSEMBLY_REGISTRATIONS,
   PRODUCER_INPUT_REGISTRATIONS,
   REFERENCE_OUTCOME_MATCHERS,
@@ -400,6 +401,7 @@ function registryDigest() {
     referenceOutcomeMatchers: REFERENCE_OUTCOME_MATCHERS,
     nativeDocumentCallNames: [...NATIVE_DOCUMENT_CALL_NAMES].sort(),
     nativeDocumentWrapperCallNames: [...NATIVE_DOCUMENT_WRAPPER_CALL_NAMES].sort(),
+    nativeResultCarrierCallNames: [...NATIVE_RESULT_CARRIER_CALL_NAMES].sort(),
     producerInputRegistrations: PRODUCER_INPUT_REGISTRATIONS,
     trackedCategories: TRACKED_CATEGORIES,
   }));
@@ -494,6 +496,7 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         ts.isCallExpression(node)
         && (
           NATIVE_DOCUMENT_CALL_NAMES.has(calleeName(node.expression))
+          || NATIVE_RESULT_CARRIER_CALL_NAMES.has(calleeName(node.expression))
           || (
             NATIVE_DOCUMENT_WRAPPER_CALL_NAMES.has(calleeName(node.expression))
             && !unwrapToObject(node.arguments[0])
@@ -501,7 +504,10 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         )
       ) {
         const type = checker.getTypeAtLocation(node);
-        if (typeIncludesDisplayOutcome(type, displayType, checker)) {
+        if (
+          NATIVE_RESULT_CARRIER_CALL_NAMES.has(calleeName(node.expression))
+          || typeIncludesDisplayOutcome(type, displayType, checker)
+        ) {
           add({
             category: 'native-document',
             detail: `call:${calleeName(node.expression)}`,
@@ -613,6 +619,7 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         const isNativeDocumentCall = ts.isCallExpression(expression)
           && (
             NATIVE_DOCUMENT_CALL_NAMES.has(calleeName(expression.expression))
+            || NATIVE_RESULT_CARRIER_CALL_NAMES.has(calleeName(expression.expression))
             || NATIVE_DOCUMENT_WRAPPER_CALL_NAMES.has(calleeName(expression.expression))
           );
         if (
