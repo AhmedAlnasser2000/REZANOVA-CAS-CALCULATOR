@@ -86,6 +86,7 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
         field.focus();
       };
       const handleKeydown = (event: KeyboardEvent) => {
+        event.stopPropagation();
         if (event.key === 'Enter' && !event.shiftKey && onSubmitRef.current) {
           event.preventDefault();
           onSubmitRef.current();

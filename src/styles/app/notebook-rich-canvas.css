@@ -106,11 +106,26 @@
 }
 
 .notebook-rich-scroll-region {
+  position: relative;
   min-height: 0;
   flex: 1;
   overflow: auto;
   overscroll-behavior: contain;
   scroll-padding-bottom: 320px;
+}
+
+.notebook-rich-editor-host {
+  min-height: 100%;
+}
+
+.notebook-empty-writing-prompt {
+  position: absolute;
+  z-index: 1;
+  top: 36px;
+  left: max(26px, calc((100% - 1120px) / 2 + 48px));
+  color: var(--page-subtle);
+  font-style: italic;
+  pointer-events: none;
 }
 
 .notebook-selection-toolbar {
@@ -236,14 +251,23 @@
 
 .notebook-rich-editor {
   min-height: 100%;
-  max-width: 980px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 34px clamp(26px, 5vw, 72px) 160px;
+  padding: 34px clamp(26px, 4vw, 64px) 120px;
   color: var(--page-ink);
   font-family: 'Fira Sans Condensed', sans-serif;
   font-size: 1rem;
   line-height: 1.72;
   outline: none;
+}
+
+.notebook-rich-scroll-region[data-empty='true'] .notebook-rich-editor-host {
+  min-height: 0;
+}
+
+.notebook-rich-scroll-region[data-empty='true'] .notebook-rich-editor {
+  min-height: clamp(250px, 38vh, 390px);
+  padding-bottom: 36px;
 }
 
 .notebook-rich-editor > * {
@@ -349,22 +373,37 @@
 }
 
 .notebook-rich-inline-math {
-  display: inline-flex;
+  display: inline;
+  align-items: center;
   max-width: min(100%, 520px);
-  margin-inline: 0.18em;
-  vertical-align: -0.28em;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: rgba(184, 212, 156, 0.075);
+  margin-inline: 0.08em;
+  vertical-align: baseline;
 }
 
 .notebook-rich-inline-field {
-  min-width: 2.2em;
+  display: inline-block;
+  min-width: 0.7em;
   max-width: 100%;
-  min-height: 1.7em;
-  padding: 0 0.22em;
+  min-height: 1.2em;
+  box-sizing: border-box;
+  border: 0;
+  padding: 0;
   background: transparent;
   color: var(--page-ink);
+  outline: none;
+}
+
+.notebook-rich-editor .notebook-rich-inline-math.ProseMirror-selectednode,
+.notebook-rich-inline-math.is-selected {
+  outline: none;
+  outline-offset: 0;
+}
+
+.notebook-rich-inline-math.is-selected,
+.notebook-rich-inline-math:focus-within {
+  outline: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .notebook-rich-display-math,
@@ -376,6 +415,13 @@
   padding: 13px 15px;
   background: rgba(10, 22, 23, 0.74);
   box-shadow: inset 3px 0 0 rgba(184, 212, 156, 0.26);
+}
+
+.notebook-rich-display-math:focus-within {
+  border-color: rgba(184, 212, 156, 0.72);
+  box-shadow:
+    inset 3px 0 0 rgba(184, 212, 156, 0.62),
+    0 0 0 1px rgba(184, 212, 156, 0.18);
 }
 
 .notebook-rich-display-math > header,
@@ -590,19 +636,19 @@
 }
 
 .notebook-template-start {
-  position: absolute;
+  position: relative;
   z-index: 7;
-  top: 70px;
-  left: 50%;
-  width: min(620px, calc(100% - 42px));
-  transform: translateX(-50%);
+  width: min(920px, calc(100% - 52px));
+  margin: 0 auto 34px;
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 16px;
   border: 1px solid var(--notebook-border-strong);
   border-radius: 8px;
-  padding: 16px;
-  background: rgba(12, 27, 27, 0.98);
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  padding: 12px 14px;
+  background: rgba(12, 27, 27, 0.76);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2);
 }
 
 .notebook-template-start > div:first-child {
@@ -613,6 +659,7 @@
 }
 
 .notebook-template-menu {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -693,6 +740,16 @@
 
   .notebook-rich-editor {
     padding: 24px 18px 170px;
+  }
+
+  .notebook-empty-writing-prompt {
+    top: 26px;
+    left: 18px;
+  }
+
+  .notebook-template-start {
+    width: calc(100% - 28px);
+    grid-template-columns: 1fr;
   }
 
   .notebook-rich-display-math-row,

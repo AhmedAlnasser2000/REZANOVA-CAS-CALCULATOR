@@ -123,6 +123,10 @@ export function NotebookOutline({
   });
   const outline = useMemo(() => buildNotebookOutline(document.content), [document.content]);
   const visibleEntries = useMemo(() => visibleOutlineEntries(outline, query), [outline, query]);
+  const selectedEntry = useMemo(
+    () => outline.find((entry) => entry.id === selectedNodeId) ?? null,
+    [outline, selectedNodeId],
+  );
 
   function addParagraph() {
     editor?.chain().focus('end').insertContent({
@@ -212,6 +216,14 @@ export function NotebookOutline({
         <span className="sr-only">Find in document</span>
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find in document" />
       </label>
+      <nav className="notebook-outline-breadcrumbs" aria-label="Selected block path" title={selectedEntry?.path.join(' / ') ?? document.title}>
+        {(selectedEntry?.path ?? [document.title]).map((part, index, path) => (
+          <span key={`${part}-${index}`}>
+            <span>{part}</span>
+            {index < path.length - 1 ? <ChevronRight aria-hidden="true" size={12} /> : null}
+          </span>
+        ))}
+      </nav>
       <div className="notebook-outline-list" onDragLeave={() => setDropTarget(null)}>
         {visibleEntries.length > 0 ? visibleEntries.map((entry) => {
           const kindLabel = entryKindLabel(entry);

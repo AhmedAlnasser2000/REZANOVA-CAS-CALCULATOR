@@ -2,6 +2,7 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import { NodeSelection } from '@tiptap/pm/state';
 import { Send, Sigma } from 'lucide-react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 
 import {
   isNotebookLatexRunnable,
@@ -40,7 +41,7 @@ export function createNotebookMathNodeView(
       && Boolean(latex.trim())
       && canOpenNotebookToolTarget(workspaceTarget)
       && isNotebookLatexRunnable(latex);
-    const selectMathNode = () => {
+    const selectDisplayNode = () => {
       const position = getPos();
       if (typeof position === 'number' && !editor.isDestroyed) {
         editor.view.dispatch(
@@ -48,10 +49,12 @@ export function createNotebookMathNodeView(
         );
       }
     };
-    const selectMathNodeAfterFocus = () => {
-      queueMicrotask(selectMathNode);
+    const selectDisplayCard = (event: ReactPointerEvent<HTMLElement>) => {
+      if ((event.target as HTMLElement).closest('math-field, button')) {
+        return;
+      }
+      selectDisplayNode();
     };
-
     if (role === 'inline') {
       return (
         <NodeViewWrapper
@@ -59,7 +62,6 @@ export function createNotebookMathNodeView(
           className={`notebook-rich-inline-math${selected ? ' is-selected' : ''}`}
           data-testid="notebook-inline-math-node"
           contentEditable={false}
-          onPointerDown={selectMathNode}
         >
           <NotebookMathField
             className="notebook-rich-inline-field"
@@ -69,7 +71,6 @@ export function createNotebookMathNodeView(
             value={latex}
             workspaceTarget={workspaceTarget}
             onChange={(nextLatex) => updateAttributes({ latex: nextLatex })}
-            onFocus={selectMathNodeAfterFocus}
           />
         </NodeViewWrapper>
       );
@@ -80,7 +81,7 @@ export function createNotebookMathNodeView(
         className={`notebook-rich-display-math${selected ? ' is-selected' : ''}`}
         data-testid="notebook-display-math-node"
         contentEditable={false}
-        onPointerDown={selectMathNode}
+        onPointerDown={selectDisplayCard}
       >
         <header>
           <span><Sigma aria-hidden="true" size={15} /> Separate equation</span>
@@ -96,7 +97,6 @@ export function createNotebookMathNodeView(
             value={latex}
             workspaceTarget={workspaceTarget}
             onChange={(nextLatex) => updateAttributes({ latex: nextLatex })}
-            onFocus={selectMathNodeAfterFocus}
             onSubmit={() => {
               if (canOpen) {
                 onOpenMathInTool(workspaceTarget, latex);

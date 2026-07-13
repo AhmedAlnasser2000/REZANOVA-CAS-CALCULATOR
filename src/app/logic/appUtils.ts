@@ -19,12 +19,16 @@ export function cycleAngleUnit(angleUnit: AngleUnit): AngleUnit {
 
 export function isAnyFormTarget(target: EventTarget | null) {
   const element = target instanceof Element ? target : null;
-  return !!element?.closest('input, select, button, textarea, math-field');
+  return !!element?.closest(
+    'input, select, button, textarea, math-field, [data-app-keyboard-input="true"]',
+  );
 }
 
 export function isPlainFormTarget(target: EventTarget | null) {
   const element = target instanceof Element ? target : null;
-  return !!element?.closest('input, select, button, textarea');
+  return !!element?.closest(
+    'input, select, button, textarea, [data-app-keyboard-input="true"]',
+  );
 }
 
 export function emptySystem(size: 2 | 3) {

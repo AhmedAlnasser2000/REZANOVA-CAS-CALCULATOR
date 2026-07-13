@@ -1,0 +1,111 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+
+import { MathNotationProvider } from '../../../components/MathNotationContext';
+import {
+  createNotebookRichSurfaceState,
+  type NotebookSurfaceState,
+} from '../../../lib/notebook';
+import { NotebookPage } from '../NotebookPage';
+
+beforeAll(() => {
+  if (!Range.prototype.getClientRects) {
+    Range.prototype.getClientRects = () => [] as unknown as DOMRectList;
+  }
+  if (!Range.prototype.getBoundingClientRect) {
+    Range.prototype.getBoundingClientRect = () => new DOMRect();
+  }
+  if (!document.elementFromPoint) {
+    document.elementFromPoint = () =>
+      document.querySelector('.notebook-rich-editor') ?? document.body;
+  }
+  if (!ShadowRoot.prototype.elementFromPoint) {
+    ShadowRoot.prototype.elementFromPoint = () => null;
+  }
+});
+
+function NotebookWorkbenchHarness({ instanceId }: { instanceId: string }) {
+  const [surfaceState, setSurfaceState] = useState<NotebookSurfaceState>(() =>
+    createNotebookRichSurfaceState({
+      idPrefix: instanceId,
+      now: () => new Date('2026-07-12T12:00:00.000Z'),
+      title: 'Workbench Notebook',
+    }));
+
+  return (
+    <MathNotationProvider notationMode="latex">
+      <NotebookPage
+        instanceId={instanceId}
+        surfaceState={surfaceState}
+        onOpenMathInTool={vi.fn()}
+        onUpdateSurfaceState={(_, nextState) => setSurfaceState(nextState)}
+      />
+    </MathNotationProvider>
+  );
+}
+
+function setDesktopWorkbenchWidth() {
+  Object.defineProperty(document.querySelector('.notebook-page-workbench'), 'clientWidth', {
+    configurable: true,
+    value: 1440,
+  });
+}
+
+describe('Notebook workbench', () => {
+  it('focuses an empty writing region before presenting templates below it', async () => {
+    render(<NotebookWorkbenchHarness instanceId="workbench-empty" />);
+
+    const editor = await screen.findByLabelText('Notebook rich document');
+    await waitFor(() => expect(editor).toHaveFocus());
+    expect(screen.getByText('Start writing your explanation...')).toBeVisible();
+    const template = screen.getByTestId('notebook-template-start');
+    expect(editor.compareDocumentPosition(template) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(0);
+    expect(screen.getByRole('button', { name: 'Start from template' })).toBeVisible();
+  });
+
+  it('resizes both panes accessibly and restores their defaults on double-click', async () => {
+    render(<NotebookWorkbenchHarness instanceId="workbench-resize" />);
+    await screen.findByLabelText('Notebook rich document');
+    setDesktopWorkbenchWidth();
+
+    const outline = screen.getByRole('separator', { name: 'Resize Notebook outline' });
+    const inspector = screen.getByRole('separator', { name: 'Resize Notebook inspector' });
+    expect(outline).toHaveAttribute('aria-valuenow', '320');
+    expect(inspector).toHaveAttribute('aria-valuenow', '300');
+
+    fireEvent.keyDown(outline, { key: 'ArrowRight' });
+    fireEvent.keyDown(inspector, { key: 'ArrowLeft' });
+    expect(outline).toHaveAttribute('aria-valuenow', '332');
+    expect(inspector).toHaveAttribute('aria-valuenow', '312');
+
+    fireEvent.doubleClick(outline);
+    fireEvent.doubleClick(inspector);
+    expect(outline).toHaveAttribute('aria-valuenow', '320');
+    expect(inspector).toHaveAttribute('aria-valuenow', '300');
+  });
+
+  it('retains pane widths for one Notebook tab without sharing them with another', async () => {
+    const first = render(<NotebookWorkbenchHarness instanceId="workbench-tab-a" />);
+    await screen.findByLabelText('Notebook rich document');
+    setDesktopWorkbenchWidth();
+    fireEvent.keyDown(
+      screen.getByRole('separator', { name: 'Resize Notebook outline' }),
+      { key: 'ArrowRight' },
+    );
+    expect(screen.getByRole('separator', { name: 'Resize Notebook outline' }))
+      .toHaveAttribute('aria-valuenow', '332');
+    first.unmount();
+
+    const restored = render(<NotebookWorkbenchHarness instanceId="workbench-tab-a" />);
+    await screen.findByLabelText('Notebook rich document');
+    expect(screen.getByRole('separator', { name: 'Resize Notebook outline' }))
+      .toHaveAttribute('aria-valuenow', '332');
+    restored.unmount();
+
+    render(<NotebookWorkbenchHarness instanceId="workbench-tab-b" />);
+    await screen.findByLabelText('Notebook rich document');
+    expect(screen.getByRole('separator', { name: 'Resize Notebook outline' }))
+      .toHaveAttribute('aria-valuenow', '320');
+  });
+});

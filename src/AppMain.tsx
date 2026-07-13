@@ -128,9 +128,7 @@ import {
   createKeyboardContext,
 } from './lib/virtual-keyboard/capabilities';
 import { buildVirtualKeyboardLayouts } from './lib/virtual-keyboard/layouts';
-import {
-  cycleAngleUnit,
-} from './app/logic/appUtils';
+import { cycleAngleUnit, isAnyFormTarget } from './app/logic/appUtils';
 import { namedVariableEditorLatex } from './lib/algebra/named-variable';
 import { executePrimaryActionWithDeps } from './app/logic/primaryActionRouter';
 import { handleSoftActionWithDeps } from './app/logic/softActionRouter';
@@ -2392,9 +2390,7 @@ export default function App() {
 
   const handleWindowModifierKeydown = useEffectEvent((event: KeyboardEvent) => {
     const modifierLayer = physicalModifierLayer(event.key);
-    if (!modifierLayer) {
-      return;
-    }
+    if (isAnyFormTarget(event.target) || !modifierLayer) return;
 
     event.preventDefault();
     event.stopPropagation();
@@ -2402,9 +2398,7 @@ export default function App() {
   });
 
   const handleWindowModifierKeyup = useEffectEvent((event: KeyboardEvent) => {
-    if (!physicalModifierLayer(event.key)) {
-      return;
-    }
+    if (isAnyFormTarget(event.target) || !physicalModifierLayer(event.key)) return;
 
     event.preventDefault();
     event.stopPropagation();

@@ -3,7 +3,12 @@ import {
   PanelLeftOpen,
   PanelRightOpen,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import {
+  useCallback,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 
 import {
   countNotebookBlocks,
@@ -16,15 +21,21 @@ import type { WorkspaceInstanceStateSlot } from '../runtime/workspace-instances'
 import { NotebookAuthoringKeyboard } from './notebook/authoring-keyboard';
 import {
   NotebookRichCanvas,
+  notebookEditorNodeById,
   type NotebookEditorSelection,
 } from './notebook/canvas';
-import { NotebookMathFieldProvider } from './notebook/math-field';
+import {
+  NotebookMathFieldProvider,
+  useNotebookMathFieldController,
+} from './notebook/math-field';
 import { NotebookInspector } from './notebook/NotebookInspector';
 import { NotebookOutline } from './notebook/NotebookOutline';
+import { NotebookPaneResizer } from './notebook/NotebookPaneResizer';
 import {
   NotebookTransientLayerProvider,
   useNotebookTransientLayer,
 } from './notebook/transient-ui';
+import { useNotebookUiState } from './notebook/useNotebookUiState';
 
 type NotebookPageProps = {
   instanceId: string;
@@ -43,6 +54,9 @@ function NotebookPageContent({
 }: NotebookPageProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [selection, setSelection] = useState<NotebookEditorSelection | null>(null);
+  const { active: activeMathField } = useNotebookMathFieldController();
+  const workbenchRef = useRef<HTMLDivElement | null>(null);
+  const { patchUiState, uiState } = useNotebookUiState(instanceId);
   const outlineDrawer = useNotebookTransientLayer({ id: 'notebook-outline-drawer' });
   const inspectorDrawer = useNotebookTransientLayer({ id: 'notebook-inspector-drawer' });
   const activeDrawer: NotebookDrawer = outlineDrawer.isOpen
@@ -52,6 +66,15 @@ function NotebookPageContent({
     idPrefix: instanceId,
   });
   const { document } = notebookState;
+  const workbenchStyle = {
+    '--notebook-inspector-width': `${uiState.inspectorWidth}px`,
+    '--notebook-outline-width': `${uiState.outlineWidth}px`,
+  } as CSSProperties;
+  const focusedMathSelection = editor
+    && activeMathField?.field.matches(':focus')
+    ? notebookEditorNodeById(editor, activeMathField.nodeId)
+    : null;
+  const inspectedSelection = focusedMathSelection ?? selection;
 
   const commitDocument = useCallback((nextDocument: NotebookRichDocument) => {
     onUpdateSurfaceState(instanceId, {
@@ -71,13 +94,27 @@ function NotebookPageContent({
   return (
       <section className="app-page app-page--notebook" data-testid="notebook-page">
         <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
-        <div className="notebook-page-workbench">
+        <div
+          ref={workbenchRef}
+          className="notebook-page-workbench"
+          style={workbenchStyle}
+        >
           <NotebookOutline
             className={activeDrawer === 'outline' ? 'is-drawer-open' : undefined}
             document={document}
             editor={editor}
-            selectedNodeId={selection?.id ?? document.selectedNodeId}
+            selectedNodeId={inspectedSelection?.id ?? document.selectedNodeId}
             onClose={() => outlineDrawer.close()}
+          />
+          <NotebookPaneResizer
+            containerRef={workbenchRef}
+            defaultWidth={320}
+            maxWidth={480}
+            minWidth={240}
+            onResize={(outlineWidth) => patchUiState({ outlineWidth })}
+            otherPaneWidth={uiState.inspectorWidth}
+            side="outline"
+            width={uiState.outlineWidth}
           />
           <main className="notebook-canvas" data-testid="notebook-canvas">
             <div className="notebook-canvas-header">
@@ -125,10 +162,20 @@ function NotebookPageContent({
             />
             <NotebookAuthoringKeyboard instanceId={instanceId} />
           </main>
+          <NotebookPaneResizer
+            containerRef={workbenchRef}
+            defaultWidth={300}
+            maxWidth={460}
+            minWidth={250}
+            onResize={(inspectorWidth) => patchUiState({ inspectorWidth })}
+            otherPaneWidth={uiState.outlineWidth}
+            side="inspector"
+            width={uiState.inspectorWidth}
+          />
           <NotebookInspector
             className={activeDrawer === 'inspector' ? 'is-drawer-open' : undefined}
             editor={editor}
-            selection={selection}
+            selection={inspectedSelection}
             onClose={() => inspectorDrawer.close()}
             onOpenMathInTool={onOpenMathInTool}
           />

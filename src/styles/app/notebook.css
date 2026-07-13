@@ -1,3 +1,5 @@
+@import '@fontsource/fira-sans-condensed/400-italic.css';
+@import '@fontsource/fira-sans-condensed/600-italic.css';
 @import './notebook-keyboard.css';
 @import './notebook-rich-canvas.css';
 
@@ -8,19 +10,30 @@
   --notebook-border-strong: rgba(184, 212, 156, 0.42);
   --notebook-accent: #b8d49c;
   --notebook-accent-soft: rgba(184, 212, 156, 0.17);
-  width: calc(min(1668px, calc(100vw - 36px)) / var(--page-ui-scale, 1));
-  height: calc(min(900px, calc(100vh - 154px)) / var(--page-ui-scale, 1));
-  min-height: calc(min(900px, calc(100vh - 154px)) / var(--page-ui-scale, 1));
+  width: calc(100% / var(--page-ui-scale, 1));
+  max-width: none;
+  height: calc(calc(100vh - 154px) / var(--page-ui-scale, 1));
+  min-height: calc(680px / var(--page-ui-scale, 1));
+  margin-inline: 0;
+}
+
+.active-surface--page:has(.app-page--notebook) {
+  overflow: clip;
 }
 
 .notebook-page-workbench {
   position: relative;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(230px, 0.72fr) minmax(420px, 2.1fr) minmax(250px, 0.86fr);
-  grid-template-areas: 'outline canvas inspector';
-  gap: 16px;
-  padding: 16px;
+  grid-template-columns:
+    var(--notebook-outline-width, 320px)
+    14px
+    minmax(460px, 1fr)
+    14px
+    var(--notebook-inspector-width, 300px);
+  grid-template-areas: 'outline outline-resizer canvas inspector-resizer inspector';
+  gap: 0;
+  padding: 14px;
 }
 
 .notebook-outline,
@@ -45,7 +58,7 @@
 .notebook-outline {
   grid-area: outline;
   display: grid;
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto;
 }
 
 .notebook-inspector {
@@ -58,6 +71,41 @@
 .notebook-canvas {
   grid-area: canvas;
   position: relative;
+}
+
+.notebook-pane-resizer {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  min-width: 14px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.notebook-pane-resizer--outline { grid-area: outline-resizer; }
+.notebook-pane-resizer--inspector { grid-area: inspector-resizer; }
+
+.notebook-pane-resizer > span {
+  width: 2px;
+  height: 54px;
+  border-radius: 999px;
+  background: rgba(184, 212, 156, 0.16);
+  transition: height 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+
+.notebook-pane-resizer:hover > span,
+.notebook-pane-resizer:focus-visible > span {
+  height: 88px;
+  background: var(--notebook-accent);
+  box-shadow: 0 0 0 3px rgba(184, 212, 156, 0.12);
+}
+
+.notebook-pane-resizer:focus-visible {
+  outline: none;
 }
 
 .notebook-title {
@@ -152,6 +200,35 @@
   padding: 8px 0;
   background: transparent;
   color: var(--page-ink);
+}
+
+.notebook-outline-breadcrumbs {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--notebook-border);
+  padding: 0 2px 9px;
+  color: var(--page-subtle);
+  font: 0.7rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-outline-breadcrumbs > span {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.notebook-outline-breadcrumbs > span > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-outline-breadcrumbs > span:last-child > span {
+  color: var(--page-accent);
 }
 
 .notebook-outline-list {
@@ -625,15 +702,40 @@
   background: transparent;
 }
 
-.app-page--notebook .notebook-math-field::part(virtual-keyboard-toggle) {
+.app-page--notebook .notebook-math-field::part(virtual-keyboard-toggle),
+.app-page--notebook .notebook-math-field::part(menu-toggle) {
   display: none;
 }
 
 .app-page--notebook .notebook-math-field {
   --caret-color: #d7dfab;
-  --selection-color: #f7ffed;
-  --selection-background-color: rgba(184, 212, 156, 0.25);
+  --contains-highlight-background-color: transparent;
+  --contains-highlight-color: #d7dfab;
+  --placeholder-color: #aeb99a;
+  --placeholder-opacity: 0.5;
+  --selection-color: var(--page-ink);
+  --selection-background-color: rgba(184, 212, 156, 0.18);
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
   color: var(--page-ink);
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.app-page--notebook .notebook-math-field:focus,
+.app-page--notebook .notebook-math-field:focus-within {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.app-page--notebook .notebook-math-field::part(container),
+.app-page--notebook .notebook-math-field::part(content) {
+  border: 0;
+  outline: none;
+  padding: 0;
+  background: transparent;
 }
 
 .notebook-math-candidates,
@@ -914,7 +1016,7 @@
   display: none;
 }
 
-@media (max-width: 1120px) {
+@media (max-width: 1160px) {
   .notebook-page-workbench {
     grid-template-areas: 'canvas';
     grid-template-columns: 1fr;
@@ -953,6 +1055,10 @@
 
   .notebook-canvas {
     min-height: 0;
+  }
+
+  .notebook-pane-resizer {
+    display: none;
   }
 
   .notebook-drawer-toggles,

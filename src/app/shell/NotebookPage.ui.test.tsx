@@ -166,7 +166,7 @@ describe('NotebookPage', () => {
     expect(screen.getByLabelText('Notebook outline')).not.toHaveClass('is-drawer-open');
   });
 
-  it('suggests likely math but converts it only after explicit acceptance', async () => {
+  it('keeps typing uninterrupted and suggests math only after explicit selection', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
     const canvas = await screen.findByLabelText('Notebook rich document');
@@ -175,6 +175,10 @@ describe('NotebookPage', () => {
     await user.type(canvas, 'Solve x^2-5x+6=0 before checking roots.');
 
     expect(screen.queryByTestId('notebook-inline-math-node')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('notebook-math-suggestion')).not.toBeInTheDocument();
+    expect(canvas).toHaveTextContent('Solve x^2-5x+6=0 before checking roots.');
+
+    await user.keyboard('{Control>}a{/Control}');
     const suggestion = await screen.findByTestId('notebook-math-suggestion');
     expect(suggestion).toHaveTextContent('x^2-5x+6=0');
     await user.click(within(suggestion).getByRole('button', { name: 'Convert selected text' }));

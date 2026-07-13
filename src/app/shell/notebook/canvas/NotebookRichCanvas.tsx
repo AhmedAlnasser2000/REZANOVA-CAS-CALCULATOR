@@ -1,4 +1,5 @@
 import type { Editor } from '@tiptap/core';
+import type { MathfieldElement } from 'mathlive';
 import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Check, Sparkles } from 'lucide-react';
@@ -24,10 +25,12 @@ import {
 import { createNotebookExtensions } from './extensions';
 import { NotebookRichToolbar } from './NotebookRichToolbar';
 import {
+  insertNotebookDisplayMath,
   insertNotebookInlineMath,
   notebookEditorSelection,
   type NotebookEditorSelection,
 } from './selection';
+import { useNotebookMathFieldController } from '../math-field';
 import { useNotebookTransientLayer } from '../transient-ui';
 import {
   NotebookSelectionToolbar,
@@ -48,24 +51,17 @@ function selectedParagraphSuggestion(editor: Editor | null) {
   if (!editor) {
     return null;
   }
-  const { $from } = editor.state.selection;
-  for (let depth = $from.depth; depth > 0; depth -= 1) {
-    const node = $from.node(depth);
-    if (node.type.name !== 'paragraph' || !node.textContent.trim()) {
-      continue;
-    }
-    const candidate = detectNotebookMathCandidates(node.textContent)[0];
-    if (!candidate) {
-      return null;
-    }
-    const start = $from.start(depth);
-    return {
-      ...candidate,
-      from: start + candidate.start,
-      to: start + candidate.end,
-    };
+  const { selection } = editor.state;
+  if (selection.empty) {
+    return null;
   }
-  return null;
+  const selectedText = editor.state.doc.textBetween(selection.from, selection.to, ' ');
+  const candidate = detectNotebookMathCandidates(selectedText)[0];
+  return candidate ? {
+    ...candidate,
+    from: selection.from + candidate.start,
+    to: selection.from + candidate.end,
+  } : null;
 }
 
 function selectedProseRange(editor: Editor): NotebookProseSelection | null {
@@ -94,9 +90,11 @@ export function NotebookRichCanvas({
   const changeRef = useRef(onChange);
   const selectionRef = useRef(onSelectionChange);
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
+  const { activate: activateMathField } = useNotebookMathFieldController();
   const [revision, setRevision] = useState(0);
   const [paletteRequest, setPaletteRequest] = useState<NotebookPaletteRequest | null>(null);
   const [proseSelection, setProseSelection] = useState<NotebookProseSelection | null>(null);
+  const [pendingMathFocusId, setPendingMathFocusId] = useState<string | null>(null);
   const templateMenu = useNotebookTransientLayer({ id: 'notebook-starter-templates' });
   const extensions = useMemo(
     () => createNotebookExtensions(onOpenMathInTool),
@@ -109,6 +107,7 @@ export function NotebookRichCanvas({
       attributes: {
         class: 'notebook-rich-editor',
         'aria-label': 'Notebook rich document',
+        'data-app-keyboard-input': 'true',
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
@@ -146,6 +145,18 @@ export function NotebookRichCanvas({
   }, [editor, onEditorChange, onSelectionChange]);
 
   useEffect(() => {
+    if (!editor || !editor.isEmpty) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      if (!editor.isDestroyed) {
+        editor.chain().focus('start').run();
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [editor]);
+
+  useEffect(() => {
     if (!editor || editor.isDestroyed) {
       return;
     }
@@ -155,6 +166,35 @@ export function NotebookRichCanvas({
     loadedDocumentIdRef.current = document.id;
     editor.commands.setContent(notebookDocumentToTiptap(document), { emitUpdate: false });
   }, [document, editor]);
+
+  useEffect(() => {
+    if (!pendingMathFocusId) {
+      return;
+    }
+    let frame = 0;
+    let attempts = 0;
+    const activateInsertedField = () => {
+      const field = globalThis.document.querySelector<MathfieldElement>(
+        `math-field[data-notebook-node-id="${pendingMathFocusId}"]`,
+      );
+      if (field?.isConnected) {
+        activateMathField(
+          field,
+          pendingMathFocusId,
+          field.dataset.notebookFieldRole === 'display' ? 'display' : 'inline',
+        );
+        field.focus();
+        setPendingMathFocusId(null);
+        return;
+      }
+      attempts += 1;
+      if (attempts < 60) {
+        frame = requestAnimationFrame(activateInsertedField);
+      }
+    };
+    frame = requestAnimationFrame(activateInsertedField);
+    return () => cancelAnimationFrame(frame);
+  }, [activateMathField, pendingMathFocusId]);
 
   useEffect(() => {
     const scrollRegion = scrollRegionRef.current;
@@ -238,30 +278,47 @@ export function NotebookRichCanvas({
       <NotebookRichToolbar
         editor={editor}
         hasProseSelection={Boolean(proseSelection)}
+        onInsertDisplayMath={() => insertNotebookDisplayMath(editor, {
+          onInserted: setPendingMathFocusId,
+        })}
+        onInsertInlineMath={() => insertNotebookInlineMath(editor, {
+          onInserted: setPendingMathFocusId,
+        })}
         onRequestPalette={requestPalette}
       />
-      {isBlank ? (
-        <div className="notebook-template-start" data-testid="notebook-template-start">
-          <div>
-            <Sparkles aria-hidden="true" size={18} />
-            <span>Begin with an empty page or a structured starting point.</span>
-          </div>
-          <button data-notebook-transient-trigger={templateMenu.id} type="button" onClick={templateMenu.toggle}>
-            Start from template
-          </button>
-          {templateMenu.isOpen ? (
-            <div data-notebook-transient-layer={templateMenu.id} className="notebook-template-menu">
-              {NOTEBOOK_STARTER_TEMPLATES.map((template) => (
-                <button key={template.id} type="button" onClick={() => applyTemplate(template.id)}>
-                  <strong>{template.label}</strong>
-                  <span>{template.description}</span>
-                </button>
-              ))}
+      <div
+        ref={scrollRegionRef}
+        className="notebook-rich-scroll-region"
+        data-empty={isBlank ? 'true' : 'false'}
+      >
+        {isBlank ? (
+          <span className="notebook-empty-writing-prompt" aria-hidden="true">
+            Start writing your explanation...
+          </span>
+        ) : null}
+        <EditorContent className="notebook-rich-editor-host" editor={editor} />
+        {isBlank ? (
+          <div className="notebook-template-start" data-testid="notebook-template-start">
+            <div>
+              <Sparkles aria-hidden="true" size={18} />
+              <span>Prefer a structured starting point?</span>
             </div>
-          ) : null}
-        </div>
-      ) : null}
-      <EditorContent ref={scrollRegionRef} className="notebook-rich-scroll-region" editor={editor} />
+            <button data-notebook-transient-trigger={templateMenu.id} type="button" onClick={templateMenu.toggle}>
+              Start from template
+            </button>
+            {templateMenu.isOpen ? (
+              <div data-notebook-transient-layer={templateMenu.id} className="notebook-template-menu">
+                {NOTEBOOK_STARTER_TEMPLATES.map((template) => (
+                  <button key={template.id} type="button" onClick={() => applyTemplate(template.id)}>
+                    <strong>{template.label}</strong>
+                    <span>{template.description}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       <NotebookSelectionToolbar
         key={paletteRequest?.nonce ?? 0}
         editor={editor}
@@ -283,6 +340,7 @@ export function NotebookRichCanvas({
                 to: suggestion.to,
               }).run();
               insertNotebookInlineMath(editor, {
+                onInserted: setPendingMathFocusId,
                 sourceText: suggestion.sourceText,
               });
             }}

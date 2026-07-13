@@ -16,6 +16,16 @@ function focusField(field: MathfieldElement) {
   field.focus();
 }
 
+function collapseInsertedPlaceholder(field: MathfieldElement) {
+  if (field.selectionIsCollapsed) {
+    return;
+  }
+  const firstRange = field.selection.ranges[0];
+  if (firstRange) {
+    field.position = firstRange[0];
+  }
+}
+
 function runWithInputFallback(
   field: MathfieldElement,
   operation: () => boolean,
@@ -69,6 +79,7 @@ export function NotebookMathFieldProvider({ children }: { children: ReactNode })
       mode: 'math',
       selectionMode: 'placeholder',
     }));
+    collapseInsertedPlaceholder(active.field);
     focusField(active.field);
     return inserted;
   }, [active]);

@@ -46,8 +46,17 @@
 
 ## NOTEBOOK-MATH-AUTHORING-SURFACE1
 
+- commit_hash: `1c82b577`
 - commit_message: `NOTEBOOK-MATH-AUTHORING-SURFACE1`
 - scope: one draggable Notebook-owned Math Authoring surface, compact and expanded modes, symbol-first keys, Notebook-only MathLive menu suppression, 1 by 1 through 8 by 8 matrix picker, per-tab session position, focused tests, Chromium evidence, and durable memory
 - approval: explicitly approved as the fourth of five commits in the Notebook Authoring Recovery And Enhancement Plan
 - push: not authorized
 - excluded: active output-inversion/result-document/History files and untracked `test-results/`
+
+## NOTEBOOK-WORKBENCH-RESIZE-POLISH1
+
+- commit_message: `NOTEBOOK-WORKBENCH-RESIZE-POLISH1`
+- scope: full-stage resizable Notebook workbench, empty-document writing-first state, in-text math visual/caret correction, reliable toolbar-to-keyboard activation, placeholder-caret insertion, Notebook prose keyboard-routing boundary, suggestion non-interruption, focused tests, source-Chromium visual evidence, and durable memory
+- approval: explicitly approved as the fifth of five commits in the Notebook Authoring Recovery And Enhancement Plan
+- push: not authorized
+- excluded: active output-inversion/result-document files and untracked `test-results/`

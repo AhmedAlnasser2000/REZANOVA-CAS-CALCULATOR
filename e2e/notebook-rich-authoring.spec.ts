@@ -100,10 +100,77 @@ test('Notebook unifies compact tools, symbols, and matrix dimensions in one floa
   await page.locator('.notebook-rich-display-field').first().click({ button: 'right' });
   await expect(surface).toBeVisible();
 
+  const nativeMathLiveChrome = await page.locator('.notebook-rich-display-field').first()
+    .evaluate((field) => {
+      const shadow = field.shadowRoot;
+      if (!shadow) {
+        return null;
+      }
+      return {
+        menu: getComputedStyle(shadow.querySelector('[part="menu-toggle"]')!).display,
+        keyboard: getComputedStyle(shadow.querySelector('[part="virtual-keyboard-toggle"]')!).display,
+      };
+    });
+  expect(nativeMathLiveChrome).toEqual({ menu: 'none', keyboard: 'none' });
+
   await test.info().attach('notebook-unified-math-authoring-surface', {
     body: await page.screenshot(),
     contentType: 'image/png',
   });
+});
+
+test('Notebook inline math stays visually seamless and template insertion leaves a caret', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openBlankNotebook(page);
+
+  await page.getByRole('button', { name: 'Insert math in text' }).click();
+  const field = page.getByTestId('notebook-inline-math-field');
+  const keyboard = page.getByTestId('notebook-authoring-keyboard');
+  await expect(keyboard).toBeVisible();
+
+  const chrome = await page.getByTestId('notebook-inline-math-node').evaluate((node) => {
+    const style = getComputedStyle(node);
+    return {
+      background: style.backgroundColor,
+      border: style.borderWidth,
+      boxShadow: style.boxShadow,
+      outline: style.outlineStyle,
+    };
+  });
+  expect(chrome).toEqual({
+    background: 'rgba(0, 0, 0, 0)',
+    border: '0px',
+    boxShadow: 'none',
+    outline: 'none',
+  });
+
+  await keyboard.getByRole('button', { name: 'Fraction' }).click();
+  const insertionState = await field.evaluate((mathField) => ({
+    collapsed: mathField.selectionIsCollapsed,
+    groupHighlight: getComputedStyle(
+      mathField.shadowRoot!.querySelector('.ML__contains-highlight')!,
+    ).backgroundColor,
+    value: mathField.getValue('latex'),
+  }));
+  expect(insertionState.collapsed).toBe(true);
+  expect(insertionState.groupHighlight).toBe('rgba(0, 0, 0, 0)');
+  expect(insertionState.value).toContain('\\frac');
+
+  await page.keyboard.type('x');
+  await expect.poll(() => field.evaluate((mathField) => mathField.getValue('latex')))
+    .toContain('\\frac{x}');
+});
+
+test('Notebook prose keeps calculator keystrokes and math suggestions passive', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openBlankNotebook(page);
+
+  const editor = page.getByLabel('Notebook rich document');
+  await editor.click();
+  await page.keyboard.type('Use sin(x)+1 = 2, then x^2 = 1.');
+
+  await expect(editor).toContainText('Use sin(x)+1 = 2, then x^2 = 1.');
+  await expect(page.getByTestId('notebook-math-suggestion')).toBeHidden();
 });
 
 test('Notebook preserves a dominant canvas and clear keyboard at drawer width', async ({ page }) => {
@@ -193,6 +260,10 @@ test('Notebook keeps prose formatting palettes close to the selected text', asyn
 
   const selectionToolbar = page.getByTestId('notebook-selection-toolbar');
   await expect(selectionToolbar).toBeVisible();
+  await selectionToolbar.getByRole('button', { name: 'Italicize selection' }).click();
+  const italicText = editor.locator('em').first();
+  await expect(italicText).toBeVisible();
+  expect(await italicText.evaluate((element) => getComputedStyle(element).fontStyle)).toBe('italic');
   await selectionToolbar.getByRole('button', { name: 'Highlight selection' }).click();
   const palette = page.getByLabel('Notebook selection colors');
   await expect(palette).toBeVisible();
@@ -214,4 +285,75 @@ test('Notebook keeps prose formatting palettes close to the selected text', asyn
     body: await page.screenshot(),
     contentType: 'image/png',
   });
+});
+
+test('Notebook fills the wide stage, resizes panes, and compensates page scale', async ({ page }) => {
+  await page.setViewportSize({ width: 2400, height: 1100 });
+  await openBlankNotebook(page);
+
+  const stage = page.getByTestId('app-stage');
+  const notebook = page.getByTestId('notebook-page');
+  const editor = page.getByLabel('Notebook rich document');
+  const template = page.getByTestId('notebook-template-start');
+  await expect(editor).toBeFocused();
+  await expect(page.getByText('Start writing your explanation...')).toBeVisible();
+
+  const initialGeometry = await page.evaluate(() => {
+    const stageBounds = document.querySelector('[data-testid="app-stage"]')!.getBoundingClientRect();
+    const notebookBounds = document.querySelector('[data-testid="notebook-page"]')!.getBoundingClientRect();
+    const editorBounds = document.querySelector('.notebook-rich-editor')!.getBoundingClientRect();
+    const templateBounds = document.querySelector('[data-testid="notebook-template-start"]')!.getBoundingClientRect();
+    return {
+      stageWidth: stageBounds.width,
+      notebookWidth: notebookBounds.width,
+      templateBelowEditor: templateBounds.top >= editorBounds.bottom - 1,
+    };
+  });
+  expect(initialGeometry.notebookWidth).toBeGreaterThanOrEqual(initialGeometry.stageWidth - 2);
+  expect(initialGeometry.templateBelowEditor).toBe(true);
+
+  const outline = page.getByRole('complementary', { name: 'Notebook outline' });
+  const outlineWidthBefore = (await outline.boundingBox())!.width;
+  const separator = page.getByRole('separator', { name: 'Resize Notebook outline' });
+  const separatorBounds = (await separator.boundingBox())!;
+  await page.mouse.move(separatorBounds.x + separatorBounds.width / 2, separatorBounds.y + 120);
+  await page.mouse.down();
+  await page.mouse.move(separatorBounds.x + 84, separatorBounds.y + 120, { steps: 6 });
+  await page.mouse.up();
+  expect((await outline.boundingBox())!.width).toBeGreaterThan(outlineWidthBefore + 50);
+  await separator.dblclick();
+  expect(Math.round((await outline.boundingBox())!.width)).toBe(320);
+
+  const tabsBefore = await page.locator('.workspace-tabs-shell').boundingBox();
+  await page.locator('.active-surface--page').evaluate((element) => {
+    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
+    element.classList.add('is-high-contrast');
+  });
+  const scaledGeometry = await page.evaluate(() => {
+    const bounds = document.querySelector('[data-testid="notebook-page"]')!.getBoundingClientRect();
+    return {
+      left: bounds.left,
+      right: bounds.right,
+      overflow: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  });
+  const tabsAfter = await page.locator('.workspace-tabs-shell').boundingBox();
+  expect(scaledGeometry.left).toBeGreaterThanOrEqual(0);
+  expect(scaledGeometry.right).toBeLessThanOrEqual(2400);
+  expect(scaledGeometry.overflow).toBeLessThanOrEqual(0);
+  expect(tabsAfter).toEqual(tabsBefore);
+
+  await test.info().attach('notebook-wide-high-contrast-130', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+
+  await page.locator('.active-surface--page').evaluate((element) => {
+    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
+  });
+  await expect(stage).toBeVisible();
+  await expect(notebook).toBeVisible();
+  await expect(template).toBeVisible();
+  const reducedOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(reducedOverflow).toBeLessThanOrEqual(0);
 });

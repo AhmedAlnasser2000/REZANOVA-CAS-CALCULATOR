@@ -83,6 +83,26 @@ describe('NotebookMathField', () => {
     expect(document.activeElement).toBe(field);
   });
 
+  it('collapses a newly selected template slot to a thin insertion caret', () => {
+    render(<FieldHarness />);
+    const field = screen.getByTestId('notebook-field') as HTMLElement & {
+      position: number;
+      selectionIsCollapsed: boolean;
+    };
+    Object.defineProperty(field, 'selection', {
+      configurable: true,
+      value: { ranges: [[1, 2]], direction: 'none' },
+    });
+    field.selectionIsCollapsed = false;
+    field.focus();
+    fireEvent.focus(field);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Insert fraction' }));
+
+    expect(field.position).toBe(1);
+    expect(document.activeElement).toBe(field);
+  });
+
   it('reports normalized relation input through the Notebook-local wrapper', () => {
     const onChange = vi.fn();
     render(<FieldHarness onChange={onChange} />);

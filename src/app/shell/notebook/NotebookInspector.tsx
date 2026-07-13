@@ -171,12 +171,12 @@ export function NotebookInspector({
               <button
                 type="button"
                 className={selection?.type === 'inlineMath' ? 'is-active' : undefined}
-                onClick={() => convertSelectedNotebookMath(editor, 'inline')}
+                onClick={() => convertSelectedNotebookMath(editor, 'inline', selection)}
               >In text</button>
               <button
                 type="button"
                 className={selection?.type === 'displayMath' ? 'is-active' : undefined}
-                onClick={() => convertSelectedNotebookMath(editor, 'display')}
+                onClick={() => convertSelectedNotebookMath(editor, 'display', selection)}
               >Separate equation</button>
             </div>
           </div>
@@ -188,6 +188,7 @@ export function NotebookInspector({
               onChange={(event) => updateSelectedNotebookMathTarget(
                 editor,
                 event.target.value as NotebookWorkspaceTarget,
+                selection,
               )}
             >
               {NOTEBOOK_TOOL_TARGETS.map((item) => (
@@ -216,12 +217,12 @@ export function NotebookInspector({
             <button
               type="button"
               disabled={!moveState.canMoveUp}
-              onClick={() => moveSelectedNotebookTopLevelNode(editor, 'up')}
+              onClick={() => moveSelectedNotebookTopLevelNode(editor, 'up', selection.id)}
             ><ArrowUp size={15} /> Move Up</button>
             <button
               type="button"
               disabled={!moveState.canMoveDown}
-              onClick={() => moveSelectedNotebookTopLevelNode(editor, 'down')}
+              onClick={() => moveSelectedNotebookTopLevelNode(editor, 'down', selection.id)}
             ><ArrowDown size={15} /> Move Down</button>
           </div>
         </div>

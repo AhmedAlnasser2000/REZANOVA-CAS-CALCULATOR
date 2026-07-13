@@ -2433,6 +2433,11 @@
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] User-facing keys are symbol-first with accessible labels, while MathLive insertion recipes remain internal. MathLive's native menu is suppressed only for Notebook-owned fields; calculator MathLive behavior remains unchanged.
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Notebook matrix authoring uses a keyboard-accessible 1 by 1 through 8 by 8 picker with square brackets by default. Floating position is per-Notebook-tab session UI state and remains outside document and package contracts.
 
+## 2026-07-13 - NOTEBOOK-WORKBENCH-RESIZE-POLISH1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] In-text Notebook math is a seamless authoring element, not a selected object with boxed chrome; Separate Equation is the explicit framed math object. The Notebook toolbar activates the keyboard only after the requested math node is confirmed in the document.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] Notebook prose is an explicit local input boundary for calculator keyboard routing, and possible-math recognition is review-only after an intentional selection. It must never interrupt normal authoring or require accepting a suggestion to keep typing.
+
 ## 2026-07-12 - RESULT-DOCUMENT-PRODUCER-CLOSEOUT1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | attribution_basis: live] A final workspace success is legal only when its canonical document validates and exactly matches the typed compatibility projection. Prompts and OOE cancellation controls remain outside this success-only invariant; Equation keeps its stronger non-prompt invariant.

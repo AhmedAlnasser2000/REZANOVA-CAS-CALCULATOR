@@ -49,6 +49,27 @@ export function notebookEditorSelection(
   return null;
 }
 
+export function notebookEditorNodeById(
+  editor: Editor,
+  id: string,
+): NotebookEditorSelection | null {
+  let match: NotebookEditorSelection | null = null;
+  editor.state.doc.descendants((node, position) => {
+    if (node.attrs.id !== id) {
+      return match == null;
+    }
+    match = {
+      id,
+      type: node.type.name,
+      attrs: { ...node.attrs },
+      from: position,
+      to: position + node.nodeSize,
+    };
+    return false;
+  });
+  return match;
+}
+
 export function selectNotebookEditorNode(editor: Editor, id: string) {
   let position: number | null = null;
   editor.state.doc.descendants((node, pos) => {
@@ -71,14 +92,18 @@ function selectedSource(editor: Editor) {
 
 export function insertNotebookInlineMath(
   editor: Editor,
-  options: { sourceText?: string; workspaceTarget?: NotebookWorkspaceTarget } = {},
+  options: {
+    onInserted?: (nodeId: string) => void;
+    sourceText?: string;
+    workspaceTarget?: NotebookWorkspaceTarget;
+  } = {},
 ) {
   const sourceText = options.sourceText ?? selectedSource(editor);
   const normalized = normalizeNotebookMathSource(sourceText, {
     mode: options.workspaceTarget ?? 'calculate',
   });
   const id = newNodeId('inlineMath');
-  const inserted = editor.chain().focus().deleteSelection().insertContent({
+  editor.chain().focus().deleteSelection().insertContent({
     type: 'inlineMath',
     attrs: {
       id,
@@ -87,27 +112,27 @@ export function insertNotebookInlineMath(
       workspaceTarget: normalized.workspaceTarget,
     },
   }).run();
+  const inserted = Boolean(notebookEditorNodeById(editor, id));
   if (inserted) {
-    requestAnimationFrame(() => {
-      const field = document.querySelector<HTMLElement>(
-        `math-field[data-notebook-node-id="${id}"]`,
-      );
-      field?.focus();
-    });
+    options.onInserted?.(id);
   }
   return inserted;
 }
 
 export function insertNotebookDisplayMath(
   editor: Editor,
-  options: { sourceText?: string; workspaceTarget?: NotebookWorkspaceTarget } = {},
+  options: {
+    onInserted?: (nodeId: string) => void;
+    sourceText?: string;
+    workspaceTarget?: NotebookWorkspaceTarget;
+  } = {},
 ) {
   const sourceText = options.sourceText ?? selectedSource(editor);
   const normalized = normalizeNotebookMathSource(sourceText, {
     mode: options.workspaceTarget ?? 'calculate',
   });
   const id = newNodeId('displayMath');
-  const inserted = editor.chain().focus().deleteSelection().insertContent({
+  editor.chain().focus().deleteSelection().insertContent({
     type: 'displayMath',
     attrs: {
       id,
@@ -117,13 +142,9 @@ export function insertNotebookDisplayMath(
       workspaceTarget: normalized.workspaceTarget,
     },
   }).run();
+  const inserted = Boolean(notebookEditorNodeById(editor, id));
   if (inserted) {
-    requestAnimationFrame(() => {
-      const field = document.querySelector<HTMLElement>(
-        `math-field[data-notebook-node-id="${id}"]`,
-      );
-      field?.focus();
-    });
+    options.onInserted?.(id);
   }
   return inserted;
 }
@@ -131,8 +152,11 @@ export function insertNotebookDisplayMath(
 export function convertSelectedNotebookMath(
   editor: Editor,
   role: 'inline' | 'display',
+  selectionOverride?: NotebookEditorSelection | null,
 ) {
-  const selection = notebookEditorSelection(editor);
+  const selection = selectionOverride?.id
+    ? notebookEditorNodeById(editor, selectionOverride.id)
+    : notebookEditorSelection(editor);
   if (!selection || !['inlineMath', 'displayMath'].includes(selection.type)) {
     return false;
   }
@@ -163,12 +187,23 @@ export function convertSelectedNotebookMath(
 export function updateSelectedNotebookMathTarget(
   editor: Editor,
   workspaceTarget: NotebookWorkspaceTarget,
+  selectionOverride?: NotebookEditorSelection | null,
 ) {
-  const selection = notebookEditorSelection(editor);
+  const selection = selectionOverride?.id
+    ? notebookEditorNodeById(editor, selectionOverride.id)
+    : notebookEditorSelection(editor);
   if (!selection || !['inlineMath', 'displayMath'].includes(selection.type)) {
     return false;
   }
-  return editor.chain().focus().updateAttributes(selection.type, { workspaceTarget }).run();
+  const node = editor.state.doc.nodeAt(selection.from);
+  if (!node || node.type.name !== selection.type) {
+    return false;
+  }
+  editor.view.dispatch(editor.state.tr.setNodeMarkup(selection.from, undefined, {
+    ...node.attrs,
+    workspaceTarget,
+  }));
+  return true;
 }
 
 export function insertNotebookSemanticBlock(
@@ -461,13 +496,14 @@ export function moveNotebookTopLevelNode(
 export function moveSelectedNotebookTopLevelNode(
   editor: Editor,
   direction: 'up' | 'down',
+  selectedNodeId?: string | null,
 ) {
-  const selection = notebookEditorSelection(editor);
-  if (!selection?.id) {
+  const selectionId = selectedNodeId ?? notebookEditorSelection(editor)?.id;
+  if (!selectionId) {
     return false;
   }
   const nodes = notebookTopLevelNodes(editor);
-  const sourceIndex = nodes.findIndex((node) => node.id === selection.id);
+  const sourceIndex = nodes.findIndex((node) => node.id === selectionId);
   if (sourceIndex < 0) {
     return false;
   }
@@ -477,7 +513,7 @@ export function moveSelectedNotebookTopLevelNode(
   }
   return moveNotebookTopLevelNode(
     editor,
-    selection.id,
+    selectionId,
     target.id,
     direction === 'up' ? 'before' : 'after',
   );

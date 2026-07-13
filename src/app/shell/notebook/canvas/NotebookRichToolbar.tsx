@@ -18,8 +18,6 @@ import { type ReactNode } from 'react';
 import { NOTEBOOK_SEMANTIC_DEFINITIONS } from '../../../../lib/notebook';
 
 import {
-  insertNotebookDisplayMath,
-  insertNotebookInlineMath,
   insertNotebookSemanticBlock,
 } from './selection';
 import { useNotebookTransientLayer } from '../transient-ui';
@@ -60,10 +58,14 @@ function ToolButton({
 export function NotebookRichToolbar({
   editor,
   hasProseSelection,
+  onInsertDisplayMath,
+  onInsertInlineMath,
   onRequestPalette,
 }: {
   editor: Editor;
   hasProseSelection: boolean;
+  onInsertDisplayMath: () => void;
+  onInsertInlineMath: () => void;
   onRequestPalette: (mode: NotebookPaletteMode) => void;
 }) {
   const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
@@ -111,10 +113,10 @@ export function NotebookRichToolbar({
         ><ListOrdered size={16} /></ToolButton>
       </div>
       <div className="notebook-rich-toolbar-group">
-        <ToolButton label="Insert math in text" onClick={() => insertNotebookInlineMath(editor)}>
+        <ToolButton label="Insert math in text" onClick={onInsertInlineMath}>
           <Braces size={16} />
         </ToolButton>
-        <ToolButton label="Insert separate equation" onClick={() => insertNotebookDisplayMath(editor)}>
+        <ToolButton label="Insert separate equation" onClick={onInsertDisplayMath}>
           <Sigma size={16} />
         </ToolButton>
         <div className="notebook-semantic-insert">
