@@ -11,6 +11,7 @@ import type {
   NotebookRichMark,
   NotebookSemanticKind,
 } from './types';
+import { isNotebookFontSize } from './types';
 
 const WORKSPACE_TARGETS = new Set<NotebookWorkspaceTarget>([
   'calculate',
@@ -64,17 +65,27 @@ function markToTiptap(mark: NotebookRichMark): {
   type: string;
   attrs?: Record<string, unknown>;
 } {
-  if (mark.type === 'highlight' || mark.type === 'textStyle') {
+  if (mark.type === 'highlight') {
     return {
       type: mark.type,
       ...(mark.color ? { attrs: { color: mark.color } } : {}),
+    };
+  }
+  if (mark.type === 'textStyle') {
+    const attrs = {
+      ...(mark.color ? { color: mark.color } : {}),
+      ...(isNotebookFontSize(mark.fontSize) ? { fontSize: mark.fontSize } : {}),
+    };
+    return {
+      type: mark.type,
+      ...(Object.keys(attrs).length ? { attrs } : {}),
     };
   }
   return { type: mark.type };
 }
 
 function markFromTiptap(mark: JSONContent): NotebookRichMark | null {
-  if (mark.type === 'bold' || mark.type === 'italic') {
+  if (mark.type === 'bold' || mark.type === 'italic' || mark.type === 'strike') {
     return { type: mark.type };
   }
   if (mark.type === 'highlight') {
@@ -83,7 +94,13 @@ function markFromTiptap(mark: JSONContent): NotebookRichMark | null {
   }
   if (mark.type === 'textStyle') {
     const color = stringAttr(mark, 'color');
-    return { type: 'textStyle', ...(color ? { color } : {}) };
+    const rawFontSize = mark.attrs?.fontSize;
+    const fontSize = isNotebookFontSize(rawFontSize) ? rawFontSize : undefined;
+    return {
+      type: 'textStyle',
+      ...(color ? { color } : {}),
+      ...(fontSize ? { fontSize } : {}),
+    };
   }
   return null;
 }

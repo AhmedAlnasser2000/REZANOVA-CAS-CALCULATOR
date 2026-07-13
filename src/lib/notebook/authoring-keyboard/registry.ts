@@ -181,6 +181,7 @@ export function notebookMatrixLatex(rows: number, columns: number) {
 const DOCUMENT_ONLY_PATTERNS = [
   /\\begin\{(?:bmatrix|pmatrix|matrix|cases|aligned)\}/,
   /\\(?:Longrightarrow|Longleftrightarrow|approx|forall|exists|notin|cup|cap)\b/,
+  /\\(?:cancel|bcancel|xcancel)\b/,
 ];
 const HIDDEN_PATTERNS = [/\\(?:href|htmlData|class|cssId|includegraphics)\b/];
 

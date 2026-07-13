@@ -1,9 +1,13 @@
 import {
+  isNotebookFontSize,
   NOTEBOOK_RICH_DOCUMENT_VERSION,
   type NotebookDocumentSummary,
+  type NotebookInlineNode,
   type NotebookRichBlockNode,
   type NotebookRichDocument,
   type NotebookRichDocumentV2,
+  type NotebookRichDocumentV3,
+  type NotebookRichMark,
 } from './types';
 
 export type NotebookRichFactoryOptions = {
@@ -45,7 +49,44 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
-function isRichBlockNode(value: unknown, allowSection = true): value is NotebookRichBlockNode {
+function isRichMark(value: unknown, validateTypography: boolean): value is NotebookRichMark {
+  if (!isRecord(value) || typeof value.type !== 'string') {
+    return false;
+  }
+  if (value.type === 'bold' || value.type === 'italic' || value.type === 'strike') {
+    return true;
+  }
+  if (value.type === 'highlight') {
+    return value.color === undefined || typeof value.color === 'string';
+  }
+  if (value.type === 'textStyle') {
+    return (value.color === undefined || typeof value.color === 'string')
+      && (!validateTypography || value.fontSize === undefined || isNotebookFontSize(value.fontSize));
+  }
+  return false;
+}
+
+function isInlineNode(value: unknown, validateTypography: boolean): value is NotebookInlineNode {
+  if (!isRecord(value) || typeof value.type !== 'string') {
+    return false;
+  }
+  if (value.type === 'text') {
+    return typeof value.text === 'string'
+      && (value.marks === undefined
+        || (Array.isArray(value.marks) && value.marks.every((mark) => isRichMark(mark, validateTypography))));
+  }
+  return value.type === 'inlineMath'
+    && typeof value.id === 'string'
+    && typeof value.sourceText === 'string'
+    && typeof value.latex === 'string'
+    && typeof value.workspaceTarget === 'string';
+}
+
+function isRichBlockNode(
+  value: unknown,
+  allowSection = true,
+  validateTypography = true,
+): value is NotebookRichBlockNode {
   if (!isRecord(value) || typeof value.type !== 'string' || typeof value.id !== 'string') {
     return false;
   }
@@ -54,11 +95,11 @@ function isRichBlockNode(value: unknown, allowSection = true): value is Notebook
       && typeof value.title === 'string'
       && (value.collapsed === undefined || typeof value.collapsed === 'boolean')
       && Array.isArray(value.content)
-      && value.content.every((child) => isRichBlockNode(child, allowSection));
+      && value.content.every((child) => isRichBlockNode(child, allowSection, validateTypography));
   }
   if (value.type === 'semanticBlock') {
     return Array.isArray(value.content)
-      && value.content.every((child) => isRichBlockNode(child, allowSection));
+      && value.content.every((child) => isRichBlockNode(child, allowSection, validateTypography));
   }
   if (value.type === 'bulletList' || value.type === 'orderedList') {
     return Array.isArray(value.content) && value.content.every((item) =>
@@ -66,11 +107,18 @@ function isRichBlockNode(value: unknown, allowSection = true): value is Notebook
         && item.type === 'listItem'
         && typeof item.id === 'string'
         && Array.isArray(item.content)
-        && item.content.every((child) => isRichBlockNode(child, allowSection)));
+        && item.content.every((child) => isRichBlockNode(child, allowSection, validateTypography)));
+  }
+  if (value.type === 'paragraph') {
+    return value.content === undefined
+      || (Array.isArray(value.content) && value.content.every((node) => isInlineNode(node, validateTypography)));
+  }
+  if (value.type === 'heading') {
+    return (value.level === 1 || value.level === 2 || value.level === 3)
+      && (value.content === undefined
+        || (Array.isArray(value.content) && value.content.every((node) => isInlineNode(node, validateTypography))));
   }
   return [
-    'paragraph',
-    'heading',
     'displayMath',
     'evidenceSnapshot',
     'horizontalRule',
@@ -98,7 +146,19 @@ export function isNotebookRichDocumentV2(value: unknown): value is NotebookRichD
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node, false));
+    && value.content.every((node) => isRichBlockNode(node, false, false));
+}
+
+export function isNotebookRichDocumentV3(value: unknown): value is NotebookRichDocumentV3 {
+  return isRecord(value)
+    && value.version === 3
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.updatedAt === 'string'
+    && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
+    && Array.isArray(value.content)
+    && value.content.every((node) => isRichBlockNode(node, true, false));
 }
 
 export function countNotebookBlocks(nodes: readonly NotebookRichBlockNode[]): number {

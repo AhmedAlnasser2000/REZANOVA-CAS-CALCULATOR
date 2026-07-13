@@ -6,8 +6,9 @@ import StarterKit from '@tiptap/starter-kit';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 
-import type { NotebookWorkspaceTarget } from '../../../../lib/notebook';
+import { type NotebookWorkspaceTarget } from '../../../../lib/notebook';
 import { NotebookEvidenceNodeView } from './NotebookEvidenceNodeView';
+import { NotebookFontSize } from './NotebookFontSizeExtension';
 import {
   createNotebookMathNodeView,
   type NotebookOpenMathHandler,
@@ -253,6 +254,7 @@ export function createNotebookExtensions(
     StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
     Highlight.configure({ multicolor: true }),
     TextStyle,
+    NotebookFontSize,
     Color,
     NotebookNodeIds,
     InlineMath.extend({

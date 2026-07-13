@@ -8,6 +8,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { NotebookTransientLayerProvider } from '../transient-ui';
+import { NotebookFontSize } from './NotebookFontSizeExtension';
 import { NotebookSelectionToolbar } from './NotebookSelectionToolbar';
 
 let editor: Editor | null = null;
@@ -24,6 +25,7 @@ function renderSelectionToolbar() {
       StarterKit,
       Highlight.configure({ multicolor: true }),
       TextStyle,
+      NotebookFontSize,
       Color,
     ],
   });
@@ -49,6 +51,22 @@ describe('NotebookSelectionToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Italicize selection' }));
 
     expect(currentEditor.getHTML()).toContain('<strong><em>Alpha</em></strong>');
+    expect(currentEditor.state.selection.from).toBe(1);
+    expect(currentEditor.state.selection.to).toBe(6);
+  });
+
+  it('applies strikethrough and an exact typed font size to the selected prose range', async () => {
+    const user = userEvent.setup();
+    const currentEditor = renderSelectionToolbar();
+
+    await user.click(await screen.findByRole('button', { name: 'Strikethrough selection' }));
+    const size = screen.getByRole('textbox', { name: 'Selected text font size percent' });
+    await user.clear(size);
+    await user.type(size, '143');
+    fireEvent.keyDown(size, { key: 'Enter' });
+
+    expect(currentEditor.getHTML()).toContain('<s');
+    expect(currentEditor.getHTML()).toContain('font-size: 143%');
     expect(currentEditor.state.selection.from).toBe(1);
     expect(currentEditor.state.selection.to).toBe(6);
   });

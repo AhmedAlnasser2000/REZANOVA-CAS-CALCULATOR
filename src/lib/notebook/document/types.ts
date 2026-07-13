@@ -1,6 +1,15 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 3 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 4 as const;
+export const NOTEBOOK_FONT_SIZE_MIN = 50;
+export const NOTEBOOK_FONT_SIZE_MAX = 249;
+
+export function isNotebookFontSize(value: unknown): value is number {
+  return typeof value === 'number'
+    && Number.isInteger(value)
+    && value >= NOTEBOOK_FONT_SIZE_MIN
+    && value <= NOTEBOOK_FONT_SIZE_MAX;
+}
 
 export type NotebookRichDocumentVersion = typeof NOTEBOOK_RICH_DOCUMENT_VERSION;
 export type NotebookSemanticKind =
@@ -20,8 +29,9 @@ export type NotebookSemanticKind =
 export type NotebookRichMark =
   | { type: 'bold' }
   | { type: 'italic' }
+  | { type: 'strike' }
   | { type: 'highlight'; color?: string }
-  | { type: 'textStyle'; color?: string };
+  | { type: 'textStyle'; color?: string; fontSize?: number };
 
 export type NotebookRichTextNode = {
   type: 'text';
@@ -129,6 +139,10 @@ export type NotebookRichDocument = {
 
 export type NotebookRichDocumentV2 = Omit<NotebookRichDocument, 'version'> & {
   version: 2;
+};
+
+export type NotebookRichDocumentV3 = Omit<NotebookRichDocument, 'version'> & {
+  version: 3;
 };
 
 export type NotebookDocumentSummary = {

@@ -82,6 +82,91 @@
   transform: rotate(180deg);
 }
 
+.notebook-authoring-style-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border-bottom: 1px solid rgba(214, 225, 205, 0.1);
+  padding: 5px 8px;
+  background: rgba(4, 15, 16, 0.48);
+}
+
+.notebook-authoring-style-controls .notebook-font-size-control button,
+.notebook-math-cancellation > button {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 29px;
+  border: 1px solid rgba(214, 225, 205, 0.14);
+  border-radius: 5px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--page-muted);
+}
+
+.notebook-authoring-style-controls .notebook-font-size-control input {
+  width: 42px;
+}
+
+.notebook-math-size-notice {
+  overflow: hidden;
+  min-width: 0;
+  max-width: 250px;
+  color: var(--page-muted);
+  font: 0.7rem 'IBM Plex Mono', monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notebook-math-cancellation {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.notebook-math-cancellation > button:hover:not(:disabled),
+.notebook-authoring-style-controls .notebook-font-size-control button:hover:not(:disabled) {
+  border-color: rgba(184, 212, 156, 0.5);
+  background: rgba(184, 212, 156, 0.12);
+  color: var(--page-ink);
+}
+
+.notebook-math-cancellation > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.36;
+}
+
+.notebook-math-cancellation-menu {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  top: calc(100% + 6px);
+  display: grid;
+  min-width: 172px;
+  border: 1px solid rgba(184, 212, 156, 0.38);
+  border-radius: 6px;
+  padding: 5px;
+  background: #102021;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.42);
+}
+
+.notebook-math-cancellation-menu button {
+  min-height: 31px;
+  border: 0;
+  border-radius: 4px;
+  padding: 5px 8px;
+  background: transparent;
+  color: var(--page-ink);
+  text-align: left;
+}
+
+.notebook-math-cancellation-menu button:hover {
+  background: rgba(184, 212, 156, 0.13);
+}
+
 .notebook-authoring-quick-keys {
   display: grid;
   grid-template-columns: repeat(6, minmax(56px, 1fr));

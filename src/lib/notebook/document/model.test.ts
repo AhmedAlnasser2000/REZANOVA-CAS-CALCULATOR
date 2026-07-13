@@ -6,12 +6,16 @@ import {
   isNotebookRichDocument,
   summarizeNotebookDocument,
 } from './model';
-import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
+import {
+  NOTEBOOK_FONT_SIZE_MAX,
+  NOTEBOOK_FONT_SIZE_MIN,
+  NOTEBOOK_RICH_DOCUMENT_VERSION,
+} from './types';
 
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 3 document with an empty starter paragraph', () => {
+  it('creates an app-owned version 4 document with an empty starter paragraph', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -24,6 +28,34 @@ describe('Notebook rich document model', () => {
       expect.objectContaining({ type: 'paragraph', id: document.selectedNodeId }),
     ]);
     expect(isNotebookRichDocument(JSON.parse(JSON.stringify(document)))).toBe(true);
+  });
+
+  it('validates prose strike and exact Word-like font-size marks', () => {
+    const document = createNotebookRichDocument({ now: fixedNow });
+    document.content = [{
+      type: 'paragraph',
+      id: 'paragraph.typography',
+      content: [{
+        type: 'text',
+        text: 'Retain this authored correction.',
+        marks: [
+          { type: 'strike' },
+          { type: 'textStyle', color: '#9dcdf0', fontSize: 149 },
+        ],
+      }],
+    }];
+
+    expect(isNotebookRichDocument(document)).toBe(true);
+
+    const tooSmall = structuredClone(document);
+    (tooSmall.content[0] as { content: Array<{ marks: Array<{ fontSize?: number }> }> })
+      .content[0].marks[1].fontSize = NOTEBOOK_FONT_SIZE_MIN - 1;
+    expect(isNotebookRichDocument(tooSmall)).toBe(false);
+
+    const tooLarge = structuredClone(document);
+    (tooLarge.content[0] as { content: Array<{ marks: Array<{ fontSize?: number }> }> })
+      .content[0].marks[1].fontSize = NOTEBOOK_FONT_SIZE_MAX + 1;
+    expect(isNotebookRichDocument(tooLarge)).toBe(false);
   });
 
   it('counts nested sections, semantic blocks, and list content for summaries', () => {

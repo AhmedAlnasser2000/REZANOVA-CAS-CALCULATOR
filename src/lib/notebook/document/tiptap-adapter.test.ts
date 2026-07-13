@@ -66,6 +66,42 @@ describe('Notebook Tiptap adapter', () => {
     expect(JSON.stringify(restored)).not.toContain('Editor');
   });
 
+  it('round-trips prose strikethrough and exact font-size marks without changing math source', () => {
+    const base = createNotebookRichDocument({ idPrefix: 'typography', now: NOW });
+    const document: NotebookRichDocument = {
+      ...base,
+      content: [{
+        type: 'paragraph',
+        id: 'paragraph.typography',
+        content: [
+          {
+            type: 'text',
+            text: 'Superseded wording',
+            marks: [
+              { type: 'strike' },
+              { type: 'textStyle', color: '#f3d37b', fontSize: 173 },
+            ],
+          },
+          {
+            type: 'inlineMath',
+            id: 'math.source',
+            sourceText: 'x^2',
+            latex: 'x^2',
+            workspaceTarget: 'calculate',
+          },
+        ],
+      }],
+    };
+
+    const restored = notebookDocumentFromTiptap(
+      notebookDocumentToTiptap(document),
+      document,
+      { now: NOW },
+    );
+
+    expect(restored.content).toEqual(document.content);
+  });
+
   it('falls back to preserved prose for unknown editor nodes', () => {
     const document = createNotebookRichDocument({ idPrefix: 'fallback', now: NOW });
     const restored = notebookDocumentFromTiptap({

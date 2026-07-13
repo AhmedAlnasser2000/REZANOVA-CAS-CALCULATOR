@@ -9,6 +9,16 @@
     rgba(3, 12, 13, 0.52);
 }
 
+.notebook-page-workbench .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .notebook-rich-toolbar {
   position: relative;
   z-index: 8;
@@ -58,6 +68,46 @@
 .notebook-rich-toolbar button:disabled {
   cursor: not-allowed;
   opacity: 0.38;
+}
+
+.notebook-font-size-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 34px;
+  color: var(--page-muted);
+}
+
+.notebook-rich-toolbar .notebook-font-size-control button,
+.notebook-selection-toolbar .notebook-font-size-control button {
+  width: 28px;
+  height: 28px;
+}
+
+.notebook-font-size-control label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.notebook-font-size-control input {
+  width: 42px;
+  min-height: 28px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 0 4px;
+  background: rgba(2, 11, 12, 0.74);
+  color: var(--page-ink);
+  font: 0.74rem 'IBM Plex Mono', monospace;
+  text-align: right;
+}
+
+.notebook-font-size-control input:focus-visible {
+  outline: 1px solid var(--page-accent);
+  outline-offset: 1px;
+}
+
+.notebook-font-size-control > span {
+  font: 0.72rem 'IBM Plex Mono', monospace;
 }
 
 .notebook-semantic-insert {
@@ -132,7 +182,11 @@
   position: absolute;
   z-index: 36;
   display: flex;
+  box-sizing: border-box;
   align-items: center;
+  max-width: calc(100% - 16px);
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 3px;
   transform: translate(-50%, -100%);
   border: 1px solid var(--notebook-border-strong);
@@ -390,6 +444,7 @@
   padding: 0;
   background: transparent;
   color: var(--page-ink);
+  font-size: clamp(1.08rem, 1.22em, 1.5rem);
   outline: none;
 }
 
@@ -464,6 +519,7 @@
   padding: 10px 12px;
   background: rgba(2, 11, 12, 0.68);
   color: var(--page-ink);
+  font-size: clamp(1.18rem, 1.65vw, 1.7rem);
 }
 
 .notebook-rich-display-math-row button,

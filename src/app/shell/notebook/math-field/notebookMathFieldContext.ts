@@ -3,6 +3,13 @@ import { createContext, useContext } from 'react';
 
 export type NotebookMathFieldRole = 'inline' | 'display';
 
+export type NotebookMathCancellationVariant = 'diagonal' | 'reverse-diagonal' | 'cross';
+
+export type NotebookMathFontSizeResult = {
+  applied: number;
+  requested: number;
+};
+
 export type ActiveNotebookMathField = {
   field: MathfieldElement;
   nodeId: string;
@@ -15,6 +22,11 @@ export type NotebookMathFieldController = {
   release: (field: MathfieldElement) => void;
   insert: (latex: string) => boolean;
   execute: (command: string | [string, ...unknown[]]) => boolean;
+  applyFontSize: (size: number) => NotebookMathFontSizeResult | null;
+  resetFontSize: () => boolean;
+  canApplyTypography: () => boolean;
+  canApplyCancellation: () => boolean;
+  applyCancellation: (variant: NotebookMathCancellationVariant) => boolean;
   focusActive: () => boolean;
 };
 

@@ -80,6 +80,9 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
         activate(field, nodeId, role);
         onFocusRef.current?.();
       };
+      const handleSelectionChange = () => {
+        activate(field, nodeId, role);
+      };
       const handleContextMenu = (event: MouseEvent) => {
         event.preventDefault();
         activate(field, nodeId, role);
@@ -95,6 +98,7 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
 
       field.addEventListener('input', handleInput);
       field.addEventListener('focus', handleFocus);
+      field.addEventListener('selection-change', handleSelectionChange);
       field.addEventListener('contextmenu', handleContextMenu);
       field.addEventListener('keydown', handleKeydown);
       field.addEventListener('mount', suppressNativeMenu);
@@ -102,6 +106,7 @@ export const NotebookMathField = forwardRef<MathfieldElement, NotebookMathFieldP
       return () => {
         field.removeEventListener('input', handleInput);
         field.removeEventListener('focus', handleFocus);
+        field.removeEventListener('selection-change', handleSelectionChange);
         field.removeEventListener('contextmenu', handleContextMenu);
         field.removeEventListener('keydown', handleKeydown);
         field.removeEventListener('mount', suppressNativeMenu);

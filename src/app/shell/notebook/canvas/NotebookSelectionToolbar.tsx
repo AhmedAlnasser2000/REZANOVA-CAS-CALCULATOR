@@ -5,6 +5,7 @@ import {
   Italic,
   Palette,
   RotateCcw,
+  Strikethrough,
 } from 'lucide-react';
 import {
   useEffect,
@@ -15,6 +16,7 @@ import {
 } from 'react';
 
 import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFontSizeControl } from './NotebookFontSizeControl';
 
 export type NotebookProseSelection = {
   from: number;
@@ -68,20 +70,24 @@ function contrast(first: string, second: string) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-function selectionPosition(editor: Editor): CSSProperties {
+function selectionPosition(editor: Editor, toolbarWidth = 264): CSSProperties {
   const selection = window.getSelection();
   if (!selection?.rangeCount) {
     return { left: '50%', top: 72 };
   }
   const range = selection.getRangeAt(0);
+  if (typeof range.getBoundingClientRect !== 'function') {
+    return { left: '50%', top: 72 };
+  }
   const rangeBounds = range.getBoundingClientRect();
   const canvasBounds = editor.view.dom.closest('.notebook-rich-canvas')?.getBoundingClientRect();
   if (!canvasBounds || (!rangeBounds.width && !rangeBounds.height)) {
     return { left: '50%', top: 72 };
   }
-  const left = Math.max(132, Math.min(
+  const horizontalClearance = Math.max(12, toolbarWidth / 2 + 8);
+  const left = Math.max(horizontalClearance, Math.min(
     rangeBounds.left - canvasBounds.left + rangeBounds.width / 2,
-    canvasBounds.width - 132,
+    canvasBounds.width - horizontalClearance,
   ));
   const top = Math.max(58, rangeBounds.top - canvasBounds.top - 12);
   return { left, top };
@@ -120,12 +126,15 @@ export function NotebookSelectionToolbar({
   });
   const lastSelectionRef = useRef<string | null>(null);
   const lastPaletteRequestRef = useRef(0);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
 
   useLayoutEffect(() => {
-    if (!selection) {
+    if (!selection || !toolbarLayer.isOpen) {
       return;
     }
-    const update = () => setPosition(selectionPosition(editor));
+    const update = () => {
+      setPosition(selectionPosition(editor, toolbarRef.current?.getBoundingClientRect().width));
+    };
     update();
     window.addEventListener('resize', update);
     window.addEventListener('scroll', update, true);
@@ -133,7 +142,7 @@ export function NotebookSelectionToolbar({
       window.removeEventListener('resize', update);
       window.removeEventListener('scroll', update, true);
     };
-  }, [editor, selection]);
+  }, [editor, selection, toolbarLayer.isOpen]);
 
   useEffect(() => {
     if (!selection) {
@@ -163,13 +172,20 @@ export function NotebookSelectionToolbar({
   }
   const currentSelection = selection;
 
-  function applyMark(mark: 'bold' | 'italic') {
+  function applyMark(mark: 'bold' | 'italic' | 'strike') {
     const chain = restoreSelection(editor, currentSelection);
     if (mark === 'bold') {
       chain.toggleBold().run();
-    } else {
+    } else if (mark === 'italic') {
       chain.toggleItalic().run();
+    } else {
+      chain.toggleStrike().run();
     }
+  }
+
+  function selectionFontSize() {
+    const value = editor.getAttributes('textStyle').fontSize;
+    return typeof value === 'number' ? value : null;
   }
 
   function requestPalette(mode: NotebookPaletteMode) {
@@ -205,17 +221,26 @@ export function NotebookSelectionToolbar({
 
   return (
     <div
+      ref={toolbarRef}
       data-notebook-transient-layer={toolbarLayer.id}
       data-testid="notebook-selection-toolbar"
       className="notebook-selection-toolbar"
       style={position}
-      onPointerDown={(event) => event.preventDefault()}
+      onPointerDown={(event) => {
+        if (event.target instanceof HTMLInputElement) {
+          return;
+        }
+        event.preventDefault();
+      }}
     >
       <button type="button" aria-label="Bold selection" aria-pressed={editor.isActive('bold')} onClick={() => applyMark('bold')}>
         <Bold aria-hidden="true" size={15} />
       </button>
       <button type="button" aria-label="Italicize selection" aria-pressed={editor.isActive('italic')} onClick={() => applyMark('italic')}>
         <Italic aria-hidden="true" size={15} />
+      </button>
+      <button type="button" aria-label="Strikethrough selection" aria-pressed={editor.isActive('strike')} onClick={() => applyMark('strike')}>
+        <Strikethrough aria-hidden="true" size={15} />
       </button>
       <button
         data-notebook-transient-trigger={paletteLayer.id}
@@ -235,6 +260,12 @@ export function NotebookSelectionToolbar({
       >
         <Palette aria-hidden="true" size={15} />
       </button>
+      <NotebookFontSizeControl
+        label="Selected text font size"
+        value={selectionFontSize()}
+        onApply={(fontSize) => restoreSelection(editor, currentSelection).setMark('textStyle', { fontSize }).run()}
+        onReset={() => restoreSelection(editor, currentSelection).setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()}
+      />
       {paletteLayer.isOpen ? (
         <section
           data-notebook-transient-layer={paletteLayer.id}

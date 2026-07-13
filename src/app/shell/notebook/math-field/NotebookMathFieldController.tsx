@@ -8,9 +8,37 @@ import {
 import {
   NotebookMathFieldContext,
   type ActiveNotebookMathField,
+  type NotebookMathCancellationVariant,
   type NotebookMathFieldController,
   type NotebookMathFieldRole,
 } from './notebookMathFieldContext';
+
+const MATH_FONT_SIZE_STEPS = [
+  { level: 1, percentage: 50 },
+  { level: 2, percentage: 62 },
+  { level: 3, percentage: 75 },
+  { level: 4, percentage: 87 },
+  { level: 5, percentage: 100 },
+  { level: 6, percentage: 115 },
+  { level: 7, percentage: 130 },
+  { level: 8, percentage: 155 },
+  { level: 9, percentage: 185 },
+  { level: 10, percentage: 225 },
+] as const;
+
+const CANCELLATION_LATEX: Record<NotebookMathCancellationVariant, string> = {
+  diagonal: '\\cancel{#@}',
+  'reverse-diagonal': '\\bcancel{#@}',
+  cross: '\\xcancel{#@}',
+};
+
+function closestMathFontSize(requested: number) {
+  return MATH_FONT_SIZE_STEPS.reduce((closest, step) => (
+    Math.abs(step.percentage - requested) < Math.abs(closest.percentage - requested)
+      ? step
+      : closest
+  ));
+}
 
 function focusField(field: MathfieldElement) {
   field.focus();
@@ -99,14 +127,76 @@ export function NotebookMathFieldProvider({ children }: { children: ReactNode })
     return executed;
   }, [active]);
 
+  const applyFontSize = useCallback((requested: number) => {
+    if (!active?.field.isConnected || active.field.selectionIsCollapsed) {
+      return null;
+    }
+    const step = closestMathFontSize(requested);
+    runWithInputFallback(active.field, () => {
+      active.field.applyStyle({ fontSize: step.level });
+      return true;
+    });
+    focusField(active.field);
+    return { applied: step.percentage, requested };
+  }, [active]);
+
+  const resetFontSize = useCallback(() => {
+    if (!active?.field.isConnected || active.field.selectionIsCollapsed) {
+      return false;
+    }
+    runWithInputFallback(active.field, () => {
+      active.field.applyStyle({ fontSize: 'auto' });
+      return true;
+    });
+    focusField(active.field);
+    return true;
+  }, [active]);
+
+  const canApplyCancellation = useCallback(() => Boolean(
+    active?.field.isConnected && !active.field.selectionIsCollapsed,
+  ), [active]);
+
+  const canApplyTypography = useCallback(() => Boolean(
+    active?.field.isConnected && !active.field.selectionIsCollapsed,
+  ), [active]);
+
+  const applyCancellation = useCallback((variant: NotebookMathCancellationVariant) => {
+    if (!active?.field.isConnected || active.field.selectionIsCollapsed) {
+      return false;
+    }
+    const applied = runWithInputFallback(active.field, () => active.field.insert(
+      CANCELLATION_LATEX[variant],
+      { focus: true, mode: 'math', selectionMode: 'item' },
+    ));
+    focusField(active.field);
+    return applied;
+  }, [active]);
+
   const value = useMemo<NotebookMathFieldController>(() => ({
     active,
     activate,
+    applyCancellation,
+    applyFontSize,
+    canApplyCancellation,
+    canApplyTypography,
     execute,
     focusActive,
     insert,
     release,
-  }), [active, activate, execute, focusActive, insert, release]);
+    resetFontSize,
+  }), [
+    active,
+    activate,
+    applyCancellation,
+    applyFontSize,
+    canApplyCancellation,
+    canApplyTypography,
+    execute,
+    focusActive,
+    insert,
+    release,
+    resetFontSize,
+  ]);
 
   return (
     <NotebookMathFieldContext.Provider value={value}>

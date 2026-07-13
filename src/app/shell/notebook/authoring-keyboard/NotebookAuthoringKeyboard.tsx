@@ -6,6 +6,7 @@ import {
   GripHorizontal,
   Grid3X3,
   Keyboard,
+  Slash,
   Redo2,
   Search,
   Undo2,
@@ -31,6 +32,7 @@ import {
 import { useNotebookMathFieldController } from '../math-field';
 import { useNotebookTransientLayer } from '../transient-ui';
 import { useNotebookUiState } from '../useNotebookUiState';
+import { NotebookFontSizeControl } from '../canvas/NotebookFontSizeControl';
 
 const QUICK_ENTRY_IDS = ['fraction', 'square-root', 'power', 'limit', 'integral', 'matrix'];
 
@@ -64,6 +66,7 @@ function NotebookTemplateButton({
         ? `${entry.label} is available for authored documents but is not sent to calculator tools.`
         : `Insert ${entry.label}`}
       onClick={() => entry.id === 'matrix' ? onOpenMatrix() : onInsert(entry)}
+      onPointerDown={(event) => event.preventDefault()}
     >
       <span className="notebook-authoring-key-symbol" aria-hidden="true">
         {entry.visualKeycap === 'matrix-grid' ? <MatrixGridIcon /> : entry.visualKeycap}
@@ -165,6 +168,10 @@ export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }
     id: 'notebook-matrix-picker',
     parentId: symbolsLayer.id,
   });
+  const cancellationLayer = useNotebookTransientLayer({
+    id: 'notebook-math-cancellation-variants',
+    parentId: toolsLayer.id,
+  });
   const closeTools = toolsLayer.close;
   const openTools = toolsLayer.open;
   const toolsOpen = toolsLayer.isOpen;
@@ -172,6 +179,8 @@ export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }
   const [tab, setTab] = useState<NotebookKeyboardTabId>('core');
   const [anchor, setAnchor] = useState<CSSProperties>({ left: 24, top: 120 });
   const [dragging, setDragging] = useState(false);
+  const [mathFontSize, setMathFontSize] = useState(100);
+  const [fontSizeNotice, setFontSizeNotice] = useState('Math size: 100%');
   const surfaceRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -214,6 +223,7 @@ export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }
   const quickEntries = QUICK_ENTRY_IDS
     .map(keyboardEntry)
     .filter((entry): entry is NotebookKeyboardEntry => Boolean(entry));
+  const canApplyMathTypography = controller.canApplyTypography();
 
   if (!active || !toolsOpen) {
     return null;
@@ -226,6 +236,25 @@ export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }
   function insertMatrix(rows: number, columns: number) {
     controller.insert(notebookMatrixLatex(rows, columns));
     matrixLayer.close(false);
+  }
+
+  function applyMathFontSize(size: number) {
+    const result = controller.applyFontSize(size);
+    if (!result) {
+      return;
+    }
+    setMathFontSize(result.applied);
+    setFontSizeNotice(
+      result.applied === result.requested
+        ? `Math size: ${result.applied}%`
+        : `Math uses ${result.applied}% for your ${result.requested}% request`,
+    );
+  }
+
+  function applyCancellation(variant: 'diagonal' | 'reverse-diagonal' | 'cross') {
+    if (controller.applyCancellation(variant)) {
+      cancellationLayer.close(false);
+    }
   }
 
   function startDrag(event: ReactPointerEvent<HTMLElement>) {
@@ -312,6 +341,55 @@ export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }
           </button>
         </div>
       </header>
+      <div className="notebook-authoring-style-controls">
+        <NotebookFontSizeControl
+          label="Selected math size"
+          value={mathFontSize}
+          disabled={!canApplyMathTypography}
+          onApply={applyMathFontSize}
+          onReset={() => {
+            if (controller.resetFontSize()) {
+              setMathFontSize(100);
+              setFontSizeNotice('Math size reset to automatic');
+            }
+          }}
+        />
+        <output className="notebook-math-size-notice" aria-live="polite">
+          {canApplyMathTypography ? fontSizeNotice : 'Select a math term to resize it'}
+        </output>
+        <div className="notebook-math-cancellation">
+          <button
+            type="button"
+            aria-label="Cancel selected math diagonally"
+            title="Cancel selected math diagonally"
+            disabled={!controller.canApplyCancellation()}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={() => applyCancellation('diagonal')}
+          ><Slash aria-hidden="true" size={16} /></button>
+          <button
+            data-notebook-transient-trigger={cancellationLayer.id}
+            type="button"
+            aria-label="More mathematical cancellation options"
+            aria-expanded={cancellationLayer.isOpen}
+            title="More mathematical cancellation options"
+            disabled={!controller.canApplyCancellation()}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={() => cancellationLayer.toggle()}
+          ><ChevronDown aria-hidden="true" size={15} /></button>
+          {cancellationLayer.isOpen ? (
+            <div
+              data-notebook-transient-layer={cancellationLayer.id}
+              className="notebook-math-cancellation-menu"
+              role="menu"
+              aria-label="Mathematical cancellation options"
+            >
+              <button type="button" role="menuitem" onClick={() => applyCancellation('diagonal')}>Diagonal cancel</button>
+              <button type="button" role="menuitem" onClick={() => applyCancellation('reverse-diagonal')}>Reverse diagonal</button>
+              <button type="button" role="menuitem" onClick={() => applyCancellation('cross')}>Cross cancel</button>
+            </div>
+          ) : null}
+        </div>
+      </div>
       {!symbolsLayer.isOpen ? (
         <div className="notebook-authoring-quick-keys" aria-label="Math structure shortcuts">
           {quickEntries.map((entry) => (

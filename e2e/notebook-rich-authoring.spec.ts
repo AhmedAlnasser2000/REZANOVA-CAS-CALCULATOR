@@ -357,3 +357,48 @@ test('Notebook fills the wide stage, resizes panes, and compensates page scale',
   const reducedOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(reducedOverflow).toBeLessThanOrEqual(0);
 });
+
+test('Notebook keeps math size and cancellation scoped to an explicit selected term', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await openBlankNotebook(page);
+
+  await page.getByRole('button', { name: 'Insert separate equation' }).click();
+  const field = page.locator('.notebook-rich-display-field').first();
+  await expect(field).toBeVisible();
+  const keyboard = page.getByTestId('notebook-authoring-keyboard');
+  await expect(keyboard).toBeVisible();
+
+  const size = keyboard.getByRole('textbox', { name: 'Selected math size percent' });
+  await expect(size).toBeDisabled();
+  await expect(keyboard.getByRole('button', { name: 'Cancel selected math diagonally' })).toBeDisabled();
+
+  await field.evaluate((element) => {
+    const mathField = element as unknown as {
+      dispatchEvent: (event: Event) => boolean;
+      executeCommand: (command: string) => boolean;
+      focus: () => void;
+      setValue: (value: string) => void;
+      selection: { ranges: Array<[number, number]> };
+    };
+    mathField.setValue('z+\\frac{x^2+1}{x-1}+\\lim_{t\\to0}\\frac{\\sin t}{t}');
+    mathField.focus();
+    mathField.selection = { ranges: [[0, 1]] };
+    mathField.dispatchEvent(new Event('selection-change'));
+  });
+
+  await expect(size).toBeEnabled();
+  await size.fill('185');
+  await size.press('Enter');
+  await expect(keyboard.getByText(/Math uses 185%|Math size: 185%/)).toBeVisible();
+
+  await keyboard.getByRole('button', { name: 'Cancel selected math diagonally' }).click();
+  await expect.poll(() => field.evaluate((element) => (
+    (element as unknown as { getValue: (format: string) => string }).getValue('latex')
+  ))).toContain('\\cancel');
+  await expect(page.getByRole('button', { name: 'Open in Tool' }).first()).toBeDisabled();
+
+  await test.info().attach('notebook-typography-cancellation', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+});

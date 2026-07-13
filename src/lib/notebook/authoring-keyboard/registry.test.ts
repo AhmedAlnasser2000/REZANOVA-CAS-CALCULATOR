@@ -57,5 +57,7 @@ describe('Notebook authoring keyboard registry', () => {
     expect(notebookLatexSupport('\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}'))
       .toBe('document-only');
     expect(notebookLatexSupport('\\href{https://example.com}{x}')).toBe('hidden');
+    expect(notebookLatexSupport('\\cancel{x}')).toBe('document-only');
+    expect(isNotebookLatexRunnable('\\xcancel{x+y}')).toBe(false);
   });
 });

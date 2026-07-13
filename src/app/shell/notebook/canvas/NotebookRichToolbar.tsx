@@ -10,6 +10,7 @@ import {
   Palette,
   Redo2,
   Sigma,
+  Strikethrough,
   Type,
   Undo2,
 } from 'lucide-react';
@@ -22,6 +23,12 @@ import {
 } from './selection';
 import { useNotebookTransientLayer } from '../transient-ui';
 import type { NotebookPaletteMode } from './NotebookSelectionToolbar';
+import { NotebookFontSizeControl } from './NotebookFontSizeControl';
+
+function activeFontSize(editor: Editor) {
+  const value = editor.getAttributes('textStyle').fontSize;
+  return typeof value === 'number' ? value : null;
+}
 
 function ToolButton({
   active = false,
@@ -84,6 +91,11 @@ export function NotebookRichToolbar({
           onClick={() => editor.chain().focus().toggleItalic().run()}
         ><Italic size={16} /></ToolButton>
         <ToolButton
+          active={editor.isActive('strike')}
+          label="Strikethrough"
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+        ><Strikethrough size={16} /></ToolButton>
+        <ToolButton
           disabled={!hasProseSelection}
           active={editor.isActive('highlight')}
           label="Highlight"
@@ -94,6 +106,12 @@ export function NotebookRichToolbar({
           label="Text color"
           onClick={() => onRequestPalette('text-color')}
         ><Palette size={16} /></ToolButton>
+        <NotebookFontSizeControl
+          label="Selected text font size"
+          value={activeFontSize(editor)}
+          onApply={(fontSize) => editor.chain().focus().setMark('textStyle', { fontSize }).run()}
+          onReset={() => editor.chain().focus().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()}
+        />
       </div>
       <div className="notebook-rich-toolbar-group">
         <ToolButton
