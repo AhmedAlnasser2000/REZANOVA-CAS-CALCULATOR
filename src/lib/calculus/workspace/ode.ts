@@ -11,6 +11,7 @@ import type {
   SecondOrderOdeState,
 } from '../../../types/calculator';
 import { profileCalculusResult } from '../../display/printer';
+import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 
 const ce = new ComputeEngine();
 
@@ -26,7 +27,32 @@ export type AdvancedOdeEvaluation = {
   warnings: string[];
   error?: string;
   resultOrigin?: 'symbolic' | 'numeric-fallback';
+  mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
 };
+
+type OdeMathValue = { latex: string; mathJson: unknown };
+
+function roundedCanonicalScalar(value: number) {
+  return Number.parseFloat(value.toFixed(6));
+}
+
+function odeResult(
+  exactLatex: string,
+  mathJson: unknown,
+  source: string,
+  resultOrigin: 'symbolic' | 'numeric-fallback' = 'symbolic',
+): AdvancedOdeEvaluation {
+  return profileCalculusResult({
+    exactLatex,
+    warnings: [],
+    resultOrigin,
+    mathJsonLeaves: [{ canonicalLatex: exactLatex, mathJson, source }],
+  });
+}
+
+function scaledVariable(value: number, variable: string): unknown {
+  return ['Multiply', roundedCanonicalScalar(value), variable];
+}
 
 function box(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]) as BoxedLike;
@@ -230,7 +256,7 @@ function parseLinearConstantRhs(node: unknown): { a: number; b: number } | undef
   return undefined;
 }
 
-function parseSeparableRhs(node: unknown) {
+function parseSeparableRhs(node: unknown): { latex: string; mathJson: unknown } | undefined {
   if (!isNodeArray(node) || node[0] !== 'Multiply') {
     return undefined;
   }
@@ -247,7 +273,7 @@ function parseSeparableRhs(node: unknown) {
   }
 
   const body = xFactors.length === 1 ? xFactors[0] : ['Multiply', ...xFactors];
-  return box(body).latex;
+  return { latex: box(body).latex, mathJson: body };
 }
 
 export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvaluation {
@@ -262,15 +288,15 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
   const rhs = ce.parse(rhsLatex) as BoxedLike;
 
   if (state.classification === 'separable') {
-    const xFactorLatex = parseSeparableRhs(rhs.json);
-    if (!xFactorLatex) {
+    const xFactor = parseSeparableRhs(rhs.json);
+    if (!xFactor) {
       return {
         warnings: [],
         error: 'This separable ODE is outside the supported Calculus rules.',
       };
     }
 
-    const integral = evaluateCalculusIndefiniteIntegral({ bodyLatex: xFactorLatex });
+    const integral = evaluateCalculusIndefiniteIntegral({ bodyLatex: xFactor.latex });
     if (integral.error || !integral.exactLatex) {
       return {
         warnings: integral.warnings,
@@ -278,11 +304,22 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
       };
     }
 
-    return profileCalculusResult({
-      exactLatex: `y=C\\,e^{${wrapExpExponent(integral.exactLatex)}}`,
-      warnings: [],
-      resultOrigin: 'symbolic',
-    });
+    const integralMathJson = integral.mathJsonLeaves?.find(
+      (leaf) => leaf.canonicalLatex === integral.exactLatex,
+    )?.mathJson;
+    if (!integralMathJson) {
+      return profileCalculusResult({
+        exactLatex: `y=C\\,e^{${wrapExpExponent(integral.exactLatex)}}`,
+        warnings: [],
+        resultOrigin: 'symbolic',
+      });
+    }
+    const exactLatex = `y=C\\,e^{${wrapExpExponent(integral.exactLatex)}}`;
+    return odeResult(
+      exactLatex,
+      ['Equal', 'y', ['Multiply', 'C', ['Power', 'ExponentialE', integralMathJson]]],
+      'calculus.ode:separable-answer',
+    );
   }
 
   if (state.classification === 'linear') {
@@ -295,30 +332,45 @@ export function solveFirstOrderOde(state: FirstOrderOdeState): AdvancedOdeEvalua
     }
 
     if (linear.a === 0) {
-      return profileCalculusResult({
-        exactLatex: `y=${numberToLatex(linear.b)}x+C`,
-        warnings: [],
-        resultOrigin: 'symbolic',
-      });
+      const exactLatex = `y=${numberToLatex(linear.b)}x+C`;
+      return odeResult(
+        exactLatex,
+        ['Equal', 'y', ['Add', scaledVariable(linear.b, 'x'), 'C']],
+        'calculus.ode:first-order-linear-constant-answer',
+      );
     }
 
     const offset = linear.b === 0 ? '' : `${numberToLatex(-linear.b / linear.a)}`;
     const homogeneous = `Ce^{${numberToLatex(linear.a)}x}`;
-    return profileCalculusResult({
-      exactLatex: offset ? `y=${homogeneous}+${offset}` : `y=${homogeneous}`,
-      warnings: [],
-      resultOrigin: 'symbolic',
-    });
+    const exactLatex = offset ? `y=${homogeneous}+${offset}` : `y=${homogeneous}`;
+    const homogeneousMathJson: unknown = [
+      'Multiply',
+      'C',
+      ['Power', 'ExponentialE', scaledVariable(linear.a, 'x')],
+    ];
+    return odeResult(
+      exactLatex,
+      ['Equal', 'y', offset
+        ? ['Add', homogeneousMathJson, roundedCanonicalScalar(-linear.b / linear.a)]
+        : homogeneousMathJson],
+      'calculus.ode:first-order-linear-answer',
+    );
   }
 
   if (!dependsOnVariable(rhs.json, 'y')) {
     const integral = evaluateCalculusIndefiniteIntegral({ bodyLatex: rhsLatex });
     if (!integral.error && integral.exactLatex) {
-      return profileCalculusResult({
-        exactLatex: `y=${integral.exactLatex}+C`,
-        warnings: [],
-        resultOrigin: 'symbolic',
-      });
+      const integralMathJson = integral.mathJsonLeaves?.find(
+        (leaf) => leaf.canonicalLatex === integral.exactLatex,
+      )?.mathJson;
+      const exactLatex = `y=${integral.exactLatex}+C`;
+      return integralMathJson
+        ? odeResult(
+            exactLatex,
+            ['Equal', 'y', ['Add', integralMathJson, 'C']],
+            'calculus.ode:first-order-independent-answer',
+          )
+        : profileCalculusResult({ exactLatex, warnings: [], resultOrigin: 'symbolic' });
     }
   }
 
@@ -332,23 +384,48 @@ function wrapExpExponent(latex: string) {
   return /^[-+]?\w+$/.test(latex) ? latex : `\\left(${latex}\\right)`;
 }
 
-function homogeneousSecondOrderLatex(a2: number, a1: number, a0: number) {
+function homogeneousSecondOrder(a2: number, a1: number, a0: number): OdeMathValue {
   const discriminant = a1 ** 2 - 4 * a2 * a0;
   if (Math.abs(discriminant) < 1e-10) {
     const root = -a1 / (2 * a2);
-    return `\\left(C_1+C_2x\\right)e^{${numberToLatex(root)}x}`;
+    return {
+      latex: `\\left(C_1+C_2x\\right)e^{${numberToLatex(root)}x}`,
+      mathJson: [
+        'Multiply',
+        ['Add', 'C_1', ['Multiply', 'C_2', 'x']],
+        ['Power', 'ExponentialE', scaledVariable(root, 'x')],
+      ],
+    };
   }
 
   if (discriminant > 0) {
     const sqrt = Math.sqrt(discriminant);
     const r1 = (-a1 + sqrt) / (2 * a2);
     const r2 = (-a1 - sqrt) / (2 * a2);
-    return `C_1e^{${numberToLatex(r1)}x}+C_2e^{${numberToLatex(r2)}x}`;
+    return {
+      latex: `C_1e^{${numberToLatex(r1)}x}+C_2e^{${numberToLatex(r2)}x}`,
+      mathJson: [
+        'Add',
+        ['Multiply', 'C_1', ['Power', 'ExponentialE', scaledVariable(r1, 'x')]],
+        ['Multiply', 'C_2', ['Power', 'ExponentialE', scaledVariable(r2, 'x')]],
+      ],
+    };
   }
 
   const alpha = -a1 / (2 * a2);
   const beta = Math.sqrt(-discriminant) / (2 * a2);
-  return `e^{${numberToLatex(alpha)}x}\\left(C_1\\cos\\left(${numberToLatex(beta)}x\\right)+C_2\\sin\\left(${numberToLatex(beta)}x\\right)\\right)`;
+  return {
+    latex: `e^{${numberToLatex(alpha)}x}\\left(C_1\\cos\\left(${numberToLatex(beta)}x\\right)+C_2\\sin\\left(${numberToLatex(beta)}x\\right)\\right)`,
+    mathJson: [
+      'Multiply',
+      ['Power', 'ExponentialE', scaledVariable(alpha, 'x')],
+      [
+        'Add',
+        ['Multiply', 'C_1', ['Cos', scaledVariable(beta, 'x')]],
+        ['Multiply', 'C_2', ['Sin', scaledVariable(beta, 'x')]],
+      ],
+    ],
+  };
 }
 
 function parseExpForcing(latex: string) {
@@ -397,23 +474,26 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
     };
   }
 
-  const homogeneous = homogeneousSecondOrderLatex(a2, a1, a0);
+  const homogeneous = homogeneousSecondOrder(a2, a1, a0);
   const forcingLatex = state.forcingLatex.trim();
   if (!forcingLatex || forcingLatex === '0') {
-    return profileCalculusResult({
-      exactLatex: `y=${homogeneous}`,
-      warnings: [],
-      resultOrigin: 'symbolic',
-    });
+    const exactLatex = `y=${homogeneous.latex}`;
+    return odeResult(
+      exactLatex,
+      ['Equal', 'y', homogeneous.mathJson],
+      'calculus.ode:second-order-homogeneous-answer',
+    );
   }
 
   const constantForcing = Number(forcingLatex);
   if (Number.isFinite(constantForcing) && Math.abs(a0) > 1e-10) {
-    return profileCalculusResult({
-      exactLatex: `y=${homogeneous}+${numberToLatex(constantForcing / a0)}`,
-      warnings: [],
-      resultOrigin: 'symbolic',
-    });
+    const particular = roundedCanonicalScalar(constantForcing / a0);
+    const exactLatex = `y=${homogeneous.latex}+${numberToLatex(constantForcing / a0)}`;
+    return odeResult(
+      exactLatex,
+      ['Equal', 'y', ['Add', homogeneous.mathJson, particular]],
+      'calculus.ode:second-order-constant-forcing-answer',
+    );
   }
 
   const expForcing = parseExpForcing(forcingLatex);
@@ -427,11 +507,17 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
     }
 
     const coefficient = expForcing.amplitude / characteristic;
-    return profileCalculusResult({
-      exactLatex: `y=${homogeneous}+${numberToLatex(coefficient)}e^{${numberToLatex(expForcing.rate)}x}`,
-      warnings: [],
-      resultOrigin: 'symbolic',
-    });
+    const particular: unknown = [
+      'Multiply',
+      roundedCanonicalScalar(coefficient),
+      ['Power', 'ExponentialE', scaledVariable(expForcing.rate, 'x')],
+    ];
+    const exactLatex = `y=${homogeneous.latex}+${numberToLatex(coefficient)}e^{${numberToLatex(expForcing.rate)}x}`;
+    return odeResult(
+      exactLatex,
+      ['Equal', 'y', ['Add', homogeneous.mathJson, particular]],
+      'calculus.ode:second-order-exponential-forcing-answer',
+    );
   }
 
   const trigForcing = parseTrigForcing(forcingLatex);
@@ -453,11 +539,14 @@ export function solveSecondOrderOde(state: SecondOrderOdeState): AdvancedOdeEval
       ? (-trigForcing.amplitude * mu) / determinant
       : (trigForcing.amplitude * lambda) / determinant;
 
-    return profileCalculusResult({
-      exactLatex: `y=${homogeneous}+${numberToLatex(sinCoeff)}\\sin\\left(${numberToLatex(trigForcing.rate)}x\\right)+${numberToLatex(cosCoeff)}\\cos\\left(${numberToLatex(trigForcing.rate)}x\\right)`,
-      warnings: [],
-      resultOrigin: 'symbolic',
-    });
+    const sinTerm: unknown = ['Multiply', roundedCanonicalScalar(sinCoeff), ['Sin', scaledVariable(trigForcing.rate, 'x')]];
+    const cosTerm: unknown = ['Multiply', roundedCanonicalScalar(cosCoeff), ['Cos', scaledVariable(trigForcing.rate, 'x')]];
+    const exactLatex = `y=${homogeneous.latex}+${numberToLatex(sinCoeff)}\\sin\\left(${numberToLatex(trigForcing.rate)}x\\right)+${numberToLatex(cosCoeff)}\\cos\\left(${numberToLatex(trigForcing.rate)}x\\right)`;
+    return odeResult(
+      exactLatex,
+      ['Equal', 'y', ['Add', homogeneous.mathJson, sinTerm, cosTerm]],
+      'calculus.ode:second-order-trig-forcing-answer',
+    );
   }
 
   return {
@@ -483,10 +572,20 @@ export async function solveNumericIvp(state: NumericIvpState): Promise<AdvancedO
     };
   }
 
+  const exactLatex = `y\\left(${numberToLatex(response.finalX)}\\right)\\approx${numberToLatex(response.finalY)}`;
   return profileCalculusResult({
-    exactLatex: `y\\left(${numberToLatex(response.finalX)}\\right)\\approx${numberToLatex(response.finalY)}`,
+    exactLatex,
     approxText: `Final value ~= ${formatApproxNumber(response.finalY)}`,
     warnings: response.warnings,
     resultOrigin: 'numeric-fallback',
+    mathJsonLeaves: [{
+      canonicalLatex: exactLatex,
+      mathJson: [
+        'Approx',
+        ['y', roundedCanonicalScalar(response.finalX)],
+        roundedCanonicalScalar(response.finalY),
+      ],
+      source: 'calculus.ode:numeric-ivp-final-point',
+    }],
   });
 }

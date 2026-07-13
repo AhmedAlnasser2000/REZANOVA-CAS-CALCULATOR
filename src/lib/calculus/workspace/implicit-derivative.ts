@@ -525,5 +525,9 @@ export function evaluateCalculusImplicitDerivative(
       baseDetail,
       ...solveResult.detailSections,
     ],
+    mathJsonLeaves: solveResult.mathJsonLeaves?.map((leaf) => ({
+      ...leaf,
+      source: `calculus.implicit-derivative:${leaf.source}`,
+    })),
   };
 }

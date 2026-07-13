@@ -38,6 +38,7 @@ type BoxedLike = {
   latex: string;
   json: unknown;
   evaluate: () => BoxedLike;
+  simplify?: () => BoxedLike;
   N?: () => BoxedLike;
   subs: (scope: Record<string, number>) => BoxedLike;
 };
@@ -95,6 +96,99 @@ function parseIntegralBody(bodyLatex: string) {
   };
 }
 
+function directAntiderivativeMathJson(body: unknown, variable: string): unknown | undefined {
+  if (body === variable) {
+    return ['Divide', ['Power', variable, 2], 2];
+  }
+  if (!Array.isArray(body)) return undefined;
+  if (
+    body[0] === 'Power'
+    && body[1] === variable
+    && typeof body[2] === 'number'
+    && Number.isFinite(body[2])
+    && body[2] !== -1
+  ) {
+    const exponent = body[2] + 1;
+    return ['Divide', ['Power', variable, exponent], exponent];
+  }
+  if (body[0] === 'Divide' && body[1] === 1 && body[2] === variable) {
+    return ['Ln', ['Abs', variable]];
+  }
+  if (body[0] === 'Sin' && body[1] === variable) {
+    return ['Negate', ['Cos', variable]];
+  }
+  return undefined;
+}
+
+function substituteMathJson(node: unknown, variable: string, value: number): unknown {
+  if (node === variable) return value;
+  if (!Array.isArray(node)) return node;
+  return node.map((child, index) => index === 0 ? child : substituteMathJson(child, variable, value));
+}
+
+function indefiniteMathJsonLeaves(
+  evaluation: CalculusWorkspaceEvaluation,
+  body: unknown,
+  variable: string,
+) {
+  if (evaluation.error || !evaluation.exactLatex) return evaluation;
+  const antiderivative = directAntiderivativeMathJson(body, variable);
+  if (!antiderivative) return evaluation;
+  const constant = variable === 'C' ? 'K' : 'C';
+  const answer = ['Add', antiderivative, constant];
+  return {
+    ...evaluation,
+    mathJsonLeaves: [
+      ...(evaluation.mathJsonLeaves ?? []),
+      {
+        canonicalLatex: evaluation.exactLatex,
+        mathJson: answer,
+        source: 'calculus.indefinite-integral:verified-direct-answer',
+      },
+      {
+        canonicalLatex: constant,
+        mathJson: constant,
+        source: 'calculus.indefinite-integral:constant',
+      },
+    ],
+  } satisfies CalculusWorkspaceEvaluation;
+}
+
+function definiteMathJsonLeaves(
+  evaluation: CalculusWorkspaceEvaluation,
+  body: unknown,
+  variable: string,
+  lower: number,
+  upper: number,
+) {
+  if (evaluation.error || !evaluation.exactLatex) return evaluation;
+  const antiderivative = directAntiderivativeMathJson(body, variable);
+  if (!antiderivative) return evaluation;
+  const difference = box([
+    'Subtract',
+    substituteMathJson(antiderivative, variable, upper),
+    substituteMathJson(antiderivative, variable, lower),
+  ]).simplify?.();
+  if (!difference) return evaluation;
+  const intervalLatex = `[${numberToLatex(Math.min(lower, upper))}, ${numberToLatex(Math.max(lower, upper))}]`;
+  return {
+    ...evaluation,
+    mathJsonLeaves: [
+      ...(evaluation.mathJsonLeaves ?? []),
+      {
+        canonicalLatex: evaluation.exactLatex,
+        mathJson: difference.json,
+        source: 'calculus.definite-integral:verified-bounds-answer',
+      },
+      {
+        canonicalLatex: intervalLatex,
+        mathJson: ['List', Math.min(lower, upper), Math.max(lower, upper)],
+        source: 'calculus.definite-integral:interval',
+      },
+    ],
+  } satisfies CalculusWorkspaceEvaluation;
+}
+
 function boxedToFiniteNumber(expr: BoxedLike) {
   const numeric = expr.N?.() ?? expr.evaluate();
   if (typeof numeric.json === 'number' && Number.isFinite(numeric.json)) {
@@ -131,6 +225,10 @@ function evaluateAt(body: unknown, variable: string, value: number) {
 }
 
 const IMPROPER_EPSILON = 1e-8;
+
+function roundedCanonicalScalar(value: number) {
+  return Number.parseFloat(value.toFixed(6));
+}
 
 function improperEndpointDomainStop(
   violation: DomainConstraintViolation | null,
@@ -234,6 +332,11 @@ function integrateHalfInfinite(
         'The result remains labeled as numeric fallback.',
       ]),
     )],
+    mathJsonLeaves: [{
+      canonicalLatex: numberToLatex(result.value),
+      mathJson: roundedCanonicalScalar(result.value),
+      source: 'calculus.improper-integral:numeric-half-infinite-answer',
+    }],
   }) satisfies CalculusWorkspaceEvaluation;
 }
 
@@ -273,7 +376,11 @@ export function evaluateCalculusIndefiniteIntegral(
       unsupportedError: 'This antiderivative could not be determined symbolically in Calculus.',
       performanceBudgetMs: INDEFINITE_INTEGRAL_PERFORMANCE_BUDGET_MS,
     });
-    return presentCalculusIndefiniteEvaluation(resolved, integrand.body, variable.id);
+    return indefiniteMathJsonLeaves(
+      presentCalculusIndefiniteEvaluation(resolved, integrand.body, variable.id),
+      integrand.body,
+      variable.id,
+    );
   } catch {
     return {
       warnings: [],
@@ -304,13 +411,13 @@ export function evaluateCalculusDefiniteIntegral(
 
   try {
     const integrand = parseIntegralBody(bodyLatex);
-    return evaluateDefiniteIntegralFromAst({
+    return definiteMathJsonLeaves(evaluateDefiniteIntegralFromAst({
       body: integrand.body,
       variable: variable.id,
       lower,
       upper,
       unreliableError: 'This definite integral could not be evaluated reliably in Calculus.',
-    });
+    }), integrand.body, variable.id, lower, upper);
   } catch {
     return {
       warnings: [],
@@ -419,5 +526,10 @@ export function evaluateCalculusImproperIntegral(
         'The result remains labeled as numeric fallback.',
       ]),
     )],
+    mathJsonLeaves: [{
+      canonicalLatex: numberToLatex(total),
+      mathJson: roundedCanonicalScalar(total),
+      source: 'calculus.improper-integral:numeric-two-sided-answer',
+    }],
   });
 }

@@ -107,7 +107,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=2"
+        "normalizedLatex": "exactLatex=x=2\ncanonicalMath.canonicalLatex=x=2"
       }
     },
     {
@@ -214,7 +214,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=9"
+        "normalizedLatex": "exactLatex=x=9\ncanonicalMath.canonicalLatex=x=9"
       }
     },
     {
@@ -321,7 +321,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=5"
+        "normalizedLatex": "exactLatex=x=5\ncanonicalMath.canonicalLatex=x=5"
       }
     },
     {
@@ -749,7 +749,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{1, 2, 3\\right\\}"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{1, 2, 3\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{1, 2, 3\\right\\}"
       }
     },
     {
@@ -856,7 +856,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{20}{-10}, \\frac{10}{-10}, 1, \\frac{-20}{-10}\\right\\}"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{20}{-10}, \\frac{10}{-10}, 1, \\frac{-20}{-10}\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{\\frac{20}{-10}, \\frac{10}{-10}, 1, \\frac{-20}{-10}\\right\\}"
       }
     },
     {
@@ -963,7 +963,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=3\nexactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][0].latex=x-1"
+        "normalizedLatex": "exactLatex=x=3\ncanonicalMath.canonicalLatex=x=3\nexactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][0].latex=x-1"
       }
     },
     {
@@ -1176,7 +1176,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=8\ndetailSections[0].lineParts[0][0].latex=x+1\ndetailSections[0].lineParts[1][0].latex=3"
+        "normalizedLatex": "exactLatex=x=8\ncanonicalMath.canonicalLatex=x=8\ndetailSections[0].lineParts[0][0].latex=x+1\ndetailSections[0].lineParts[1][0].latex=3"
       }
     },
     {
@@ -1283,7 +1283,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=12\ndetailSections[0].lineParts[0][0].latex=2x+1\ndetailSections[0].lineParts[1][0].latex=5"
+        "normalizedLatex": "exactLatex=x=12\ncanonicalMath.canonicalLatex=x=12\ndetailSections[0].lineParts[0][0].latex=2x+1\ndetailSections[0].lineParts[1][0].latex=5"
       }
     },
     {
@@ -1390,7 +1390,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{5, -1\\right\\}\nresolvedInputLatex=\\vert x-2\\vert=3"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{5, -1\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{5, -1\\right\\}\nresolvedInputLatex=\\vert x-2\\vert=3"
       }
     },
     {
@@ -1497,7 +1497,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{180n\\right\\}\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{180n\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{180n\\right\\}\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
       }
     },
     {
@@ -1604,7 +1604,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arccos(1)+360n,\\ -\\frac{180}{\\pi}\\arccos(1)+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arccos(1)+360n\nbranchReadback.branchesLatex[1]=-\\frac{180}{\\pi}\\arccos(1)+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arccos(1)+360n,\\ -\\frac{180}{\\pi}\\arccos(1)+360n\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arccos(1)+360n,\\ -\\frac{180}{\\pi}\\arccos(1)+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arccos(1)+360n\nbranchReadback.branchesLatex[1]=-\\frac{180}{\\pi}\\arccos(1)+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
       }
     },
     {
@@ -1711,7 +1711,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=3\nresolvedInputLatex=2^{x}=8"
+        "normalizedLatex": "exactLatex=x=3\ncanonicalMath.canonicalLatex=x=3\nresolvedInputLatex=2^{x}=8"
       }
     },
     {
@@ -1924,7 +1924,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=e^{2}\nexactSupplementLatex[0]=x>0"
+        "normalizedLatex": "exactLatex=x=e^{2}\ncanonicalMath.canonicalLatex=x=e^{2}\nexactSupplementLatex[0]=x>0"
       }
     },
     {
@@ -2031,7 +2031,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ndetailSections[0].lineParts[0][1].latex=\\frac{1}{2}(-\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\nresolvedInputLatex=\\ln(x)+\\ln(x+1)=2"
+        "normalizedLatex": "exactLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalMath.canonicalLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ndetailSections[0].lineParts[0][1].latex=\\frac{1}{2}(-\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\nresolvedInputLatex=\\ln(x)+\\ln(x+1)=2"
       }
     },
     {
@@ -2245,7 +2245,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{-i,\\ i\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-i\nbranchReadback.branchesLatex[1]=i"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{-i,\\ i\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{-i,\\ i\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-i\nbranchReadback.branchesLatex[1]=i"
       }
     },
     {
@@ -2564,7 +2564,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=\\frac{-b}{a}\nexactSupplementLatex[0]=a\\ne0\ndetailSections[1].lineParts[2][1].latex=x=\\frac{-b}{a}"
+        "normalizedLatex": "exactLatex=x=\\frac{-b}{a}\ncanonicalMath.canonicalLatex=x=\\frac{-b}{a}\nexactSupplementLatex[0]=a\\ne0\ndetailSections[1].lineParts[2][1].latex=x=\\frac{-b}{a}"
       }
     },
     {

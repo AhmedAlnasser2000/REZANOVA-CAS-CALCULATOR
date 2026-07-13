@@ -22,7 +22,46 @@ export type EquationImplicitDerivativeSolveSuccess = {
   generatedEquationLatex: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
+  mathJsonLeaves?: Array<{
+    canonicalLatex: string;
+    mathJson: unknown;
+    source: string;
+  }>;
 };
+
+function displayDerivativeMathJson(displayDerivativeLatex: string) {
+  const match = displayDerivativeLatex.match(/^\\frac\{d([A-Za-z])\}\{d([A-Za-z])\}$/u);
+  return match
+    ? ['Divide', ['InvisibleOperator', 'd', match[1]], ['InvisibleOperator', 'd', match[2]]]
+    : undefined;
+}
+
+function isolatePlaceholderProduct(
+  equation: unknown,
+  placeholder: string,
+): { rhs: unknown; nonzeroFactor?: unknown } | undefined {
+  if (!Array.isArray(equation) || equation[0] !== 'Equal' || equation.length !== 3) {
+    return undefined;
+  }
+  const [left, right] = equation.slice(1);
+  if (left === placeholder) return { rhs: right };
+  if (
+    !Array.isArray(left)
+    || (left[0] !== 'Multiply' && left[0] !== 'InvisibleOperator')
+  ) return undefined;
+  const factors = left.slice(1);
+  if (factors.filter((factor) => factor === placeholder).length !== 1) return undefined;
+  const remaining = factors.filter((factor) => factor !== placeholder);
+  const nonzeroFactor = remaining.length === 0
+    ? 1
+    : remaining.length === 1
+      ? remaining[0]
+      : ['Multiply', ...remaining];
+  return {
+    rhs: nonzeroFactor === 1 ? right : ['Divide', right, nonzeroFactor],
+    ...(nonzeroFactor === 1 ? {} : { nonzeroFactor }),
+  };
+}
 
 export type EquationImplicitDerivativeSolveStopReason =
   | 'invalid-placeholder'
@@ -144,6 +183,19 @@ export function solveImplicitDerivativePlaceholder({
   }
 
   const exactLatex = `${displayDerivative}=${rhsLatex}`;
+  const solvedAnswer = solved.mathJsonLeaves?.find(
+    (leaf) => leaf.canonicalLatex === solved.exactLatex,
+  )?.mathJson;
+  const generatedEquation = solved.mathJsonLeaves?.find(
+    (leaf) => leaf.canonicalLatex === solved.generatedEquationLatex,
+  )?.mathJson;
+  const isolated = isolatePlaceholderProduct(generatedEquation, placeholder);
+  const rhsMathJson = Array.isArray(solvedAnswer)
+    && solvedAnswer[0] === 'Equal'
+    && solvedAnswer[1] === placeholder
+      ? solvedAnswer[2]
+      : isolated?.rhs;
+  const derivativeMathJson = displayDerivativeMathJson(displayDerivative);
   return {
     kind: 'success',
     derivativePlaceholder: placeholder,
@@ -165,6 +217,23 @@ export function solveImplicitDerivativePlaceholder({
         ],
       },
       ...solved.detailSections,
+    ],
+    mathJsonLeaves: [
+      ...(solved.mathJsonLeaves ?? []),
+      ...(rhsMathJson !== undefined && derivativeMathJson
+        ? [{
+            canonicalLatex: exactLatex,
+            mathJson: ['Equal', derivativeMathJson, rhsMathJson],
+            source: 'calculus-implicit-derivative-mapped-answer',
+          }]
+        : []),
+      ...(isolated?.nonzeroFactor !== undefined
+        ? (solved.exactSupplementLatex ?? []).map((canonicalLatex) => ({
+            canonicalLatex,
+            mathJson: ['NotEqual', isolated.nonzeroFactor, 0],
+            source: 'calculus-implicit-derivative-nonzero-factor',
+          }))
+        : []),
     ],
   };
 }

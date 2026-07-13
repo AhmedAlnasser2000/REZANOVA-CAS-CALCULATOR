@@ -10,6 +10,7 @@ export type PartialDerivativeResolution =
   | {
       kind: 'success';
       exactLatex: string;
+      mathJson: unknown;
       variable: DerivativeVariable;
     }
   | {
@@ -57,6 +58,7 @@ export function resolvePartialDerivative(
       kind: 'success',
       variable: request.variable,
       exactLatex: ce.box(differentiated as Parameters<typeof ce.box>[0]).latex,
+      mathJson: differentiated,
     });
   } catch {
     return {

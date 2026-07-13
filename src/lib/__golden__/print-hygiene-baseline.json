@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "RESULT-INTENT-DECLARATION-CLOSURE1 exposes existing range-guard math through explicit solve-summary parts without changing visible wording",
+  "acceptedReason": "MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1 records newly producer-proven MathJSON payloads for seven existing golden outputs without changing canonical LaTeX, visible formatting, or mathematical content.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -623,6 +623,11 @@
           "path": "exactLatex",
           "kind": "primary-answer",
           "value": "x=\\frac{-3}{5}"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "x=\\frac{-3}{5}"
         }
       ]
     },
@@ -651,6 +656,11 @@
           "value": "x=\\frac{1}{4}"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "x=\\frac{1}{4}"
+        },
+        {
           "path": "exactSupplementLatex[0]",
           "kind": "supplement",
           "value": "\\text{Exclusions: } x\\ne0"
@@ -676,6 +686,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "x=3"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "x=3"
         },
         {
@@ -719,6 +734,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "x\\in\\left\\{-(\\frac{\\sqrt{21}}{2})-\\frac{1}{2}, \\frac{\\sqrt{21}}{2}-\\frac{1}{2}\\right\\}"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "x\\in\\left\\{-(\\frac{\\sqrt{21}}{2})-\\frac{1}{2}, \\frac{\\sqrt{21}}{2}-\\frac{1}{2}\\right\\}"
         },
         {
@@ -814,6 +834,11 @@
           "value": "-\\infty"
         },
         {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
+          "value": "-\\infty"
+        },
+        {
           "path": "detailSections[0].lineParts[2][1].latex",
           "kind": "detail-math-part",
           "value": "1"
@@ -854,6 +879,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "1.570796"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "1.570796"
         }
       ]
@@ -945,6 +975,11 @@
         {
           "path": "exactLatex",
           "kind": "primary-answer",
+          "value": "x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}"
+        },
+        {
+          "path": "canonicalMath.canonicalLatex",
+          "kind": "canonical-payload",
           "value": "x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}"
         },
         {

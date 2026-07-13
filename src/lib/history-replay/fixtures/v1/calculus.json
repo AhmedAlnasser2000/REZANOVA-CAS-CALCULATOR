@@ -508,7 +508,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\left.\\left((2x)\\right)\\right|_{}_{x=\\error{\\blacksquare}}_{x=3}\ncanonicalMath.canonicalLatex=\\left.\\left((2x)\\right)\\right|_{}_{x=\\error{\\blacksquare}}_{x=3}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2x\ndetailSections[0].lines[3]=D_{1}\\big|_{x=3}=6\nresolvedInputLatex=\\left.\\left(2x\\right)\\right|_{x=}_{x=3}"
+        "normalizedLatex": "exactLatex=\\left.\\left((2x)\\right)\\right|_{}_{x=\\error{\\blacksquare}}_{x=3}\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{d}{dx}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2x\ndetailSections[0].lines[3]=D_{1}\\big|_{x=3}=6\nresolvedInputLatex=\\left.\\left(2x\\right)\\right|_{x=}_{x=3}"
       }
     },
     {
@@ -636,7 +636,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{dy}{dx}=-\\frac{x}{y}\nexactSupplementLatex[0]=2y\\ne0\ndetailSections[0].lines[0]=\\operatorname{relation}\\quad x^2+y^2=1\ndetailSections[0].lines[1]=\\operatorname{differentiate}\\quad \\frac{dy}{dx}\ndetailSections[0].lines[2]=\\operatorname{differentiated}\\quad 2uy+2x=0\ndetailSections[3].lineParts[1][1].latex=2uy=-2x"
+        "normalizedLatex": "exactLatex=\\frac{dy}{dx}=-\\frac{x}{y}\ncanonicalMath.canonicalLatex=\\frac{dy}{dx}=-\\frac{x}{y}\nexactSupplementLatex[0]=2y\\ne0\ndetailSections[0].lines[0]=\\operatorname{relation}\\quad x^2+y^2=1\ndetailSections[0].lines[1]=\\operatorname{differentiate}\\quad \\frac{dy}{dx}\ndetailSections[0].lines[2]=\\operatorname{differentiated}\\quad 2uy+2x=0\ndetailSections[3].lineParts[1][1].latex=2uy=-2x"
       }
     },
     {
@@ -766,7 +766,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{x^{3}}{3}+C\nanswerRows.rows[0].latex=\\frac{x^{3}}{3}+C\ndetailSections[0].lineParts[0][1].latex=C"
+        "normalizedLatex": "exactLatex=\\frac{x^{3}}{3}+C\ncanonicalMath.canonicalLatex=\\frac{x^{3}}{3}+C\nanswerRows.rows[0].latex=\\frac{x^{3}}{3}+C\ndetailSections[0].lineParts[0][1].latex=C"
       }
     },
     {
@@ -896,7 +896,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=-\\cos\\left(x\\right)+C\nanswerRows.rows[0].latex=-\\cos\\left(x\\right)+C\ndetailSections[0].lineParts[0][1].latex=C"
+        "normalizedLatex": "exactLatex=-\\cos\\left(x\\right)+C\ncanonicalMath.canonicalLatex=-\\cos\\left(x\\right)+C\nanswerRows.rows[0].latex=-\\cos\\left(x\\right)+C\ndetailSections[0].lineParts[0][1].latex=C"
       }
     },
     {
@@ -1026,7 +1026,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\ln\\left|x\\right|+C\nanswerRows.rows[0].latex=\\ln\\left|x\\right|+C\ndetailSections[0].lineParts[0][1].latex=C"
+        "normalizedLatex": "exactLatex=\\ln\\left|x\\right|+C\ncanonicalMath.canonicalLatex=\\ln\\left|x\\right|+C\nanswerRows.rows[0].latex=\\ln\\left|x\\right|+C\ndetailSections[0].lineParts[0][1].latex=C"
       }
     },
     {
@@ -1156,7 +1156,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{8}{3}\ndetailSections[1].lineParts[0][1].latex=[0, 2]"
+        "normalizedLatex": "exactLatex=\\frac{8}{3}\ncanonicalMath.canonicalLatex=\\frac{8}{3}\ndetailSections[1].lineParts[0][1].latex=[0, 2]"
       }
     },
     {
@@ -1413,7 +1413,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1.570796"
+        "normalizedLatex": "exactLatex=1.570796\ncanonicalMath.canonicalLatex=1.570796"
       }
     },
     {
@@ -1542,7 +1542,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1\ndetailSections[0].lineParts[1][1].latex=u=x\ndetailSections[0].lineParts[1][3].latex=\\lim_{x\\to 0}u=0\ndetailSections[0].lineParts[2][1].latex=\\frac{\\sin(u)}{u}\\to 1\ndetailSections[0].lineParts[3][1].latex=1"
+        "normalizedLatex": "exactLatex=1\ncanonicalMath.canonicalLatex=1\ndetailSections[0].lineParts[1][1].latex=u=x\ndetailSections[0].lineParts[1][3].latex=\\lim_{x\\to 0}u=0\ndetailSections[0].lineParts[2][1].latex=\\frac{\\sin(u)}{u}\\to 1\ndetailSections[0].lineParts[3][1].latex=1"
       }
     },
     {
@@ -1671,7 +1671,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=-\\infty\ndetailSections[0].lineParts[2][1].latex=1\ndetailSections[0].lineParts[2][3].latex=-1\ndetailSections[0].lineParts[5][1].latex=-\\infty\ndetailSections[1].lineParts[0][1].latex=x\\to 0^{-}\ndetailSections[1].lineParts[2][1].latex=\\lim_{x\\to 0^{-}} f(x)=-\\infty\ndetailSections[1].lineParts[3][1].latex=-\\infty"
+        "normalizedLatex": "exactLatex=-\\infty\ncanonicalMath.canonicalLatex=-\\infty\ndetailSections[0].lineParts[2][1].latex=1\ndetailSections[0].lineParts[2][3].latex=-1\ndetailSections[0].lineParts[5][1].latex=-\\infty\ndetailSections[1].lineParts[0][1].latex=x\\to 0^{-}\ndetailSections[1].lineParts[2][1].latex=\\lim_{x\\to 0^{-}} f(x)=-\\infty\ndetailSections[1].lineParts[3][1].latex=-\\infty"
       }
     },
     {
@@ -1800,7 +1800,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\infty\ndetailSections[0].lineParts[2][1].latex=1\ndetailSections[0].lineParts[2][3].latex=-1\ndetailSections[0].lineParts[5][1].latex=\\infty\ndetailSections[1].lineParts[0][1].latex=x\\to 0^{+}\ndetailSections[1].lineParts[2][1].latex=\\lim_{x\\to 0^{+}} f(x)=\\infty\ndetailSections[1].lineParts[3][1].latex=\\infty"
+        "normalizedLatex": "exactLatex=\\infty\ncanonicalMath.canonicalLatex=\\infty\ndetailSections[0].lineParts[2][1].latex=1\ndetailSections[0].lineParts[2][3].latex=-1\ndetailSections[0].lineParts[5][1].latex=\\infty\ndetailSections[1].lineParts[0][1].latex=x\\to 0^{+}\ndetailSections[1].lineParts[2][1].latex=\\lim_{x\\to 0^{+}} f(x)=\\infty\ndetailSections[1].lineParts[3][1].latex=\\infty"
       }
     },
     {
@@ -1929,7 +1929,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=0\ndetailSections[0].lineParts[1][1].latex=x^{-1}\ndetailSections[0].lineParts[1][3].latex=1\ndetailSections[0].lineParts[2][1].latex=x^{-1}\ndetailSections[0].lineParts[2][3].latex=1\ndetailSections[0].lineParts[4][1].latex=0"
+        "normalizedLatex": "exactLatex=0\ncanonicalMath.canonicalLatex=0\ndetailSections[0].lineParts[1][1].latex=x^{-1}\ndetailSections[0].lineParts[1][3].latex=1\ndetailSections[0].lineParts[2][1].latex=x^{-1}\ndetailSections[0].lineParts[2][3].latex=1\ndetailSections[0].lineParts[4][1].latex=0"
       }
     },
     {
@@ -2058,7 +2058,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1\ndetailSections[0].lineParts[1][1].latex=u=x\ndetailSections[0].lineParts[1][3].latex=\\lim_{x\\to 0}u=0\ndetailSections[0].lineParts[2][1].latex=\\frac{\\sin(u)}{u}\\to 1\ndetailSections[0].lineParts[3][1].latex=1"
+        "normalizedLatex": "exactLatex=1\ncanonicalMath.canonicalLatex=1\ndetailSections[0].lineParts[1][1].latex=u=x\ndetailSections[0].lineParts[1][3].latex=\\lim_{x\\to 0}u=0\ndetailSections[0].lineParts[2][1].latex=\\frac{\\sin(u)}{u}\\to 1\ndetailSections[0].lineParts[3][1].latex=1"
       }
     },
     {
@@ -2186,7 +2186,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1+x+\\frac{1}{2}x^{2}+\\frac{1}{6}x^{3}+\\frac{1}{24}x^{4}"
+        "normalizedLatex": "exactLatex=1+x+\\frac{1}{2}x^{2}+\\frac{1}{6}x^{3}+\\frac{1}{24}x^{4}\ncanonicalMath.canonicalLatex=1+x+\\frac{1}{2}x^{2}+\\frac{1}{6}x^{3}+\\frac{1}{24}x^{4}"
       }
     },
     {
@@ -2314,7 +2314,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x+\\frac{-1}{6}x^{3}+\\frac{1}{120}x^{5}"
+        "normalizedLatex": "exactLatex=x+\\frac{-1}{6}x^{3}+\\frac{1}{120}x^{5}\ncanonicalMath.canonicalLatex=x+\\frac{-1}{6}x^{3}+\\frac{1}{120}x^{5}"
       }
     },
     {
@@ -2569,7 +2569,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{s}"
+        "normalizedLatex": "exactLatex=\\frac{1}{s}\ncanonicalMath.canonicalLatex=\\frac{1}{s}"
       }
     },
     {
@@ -2697,7 +2697,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{s-2}"
+        "normalizedLatex": "exactLatex=\\frac{1}{s-2}\ncanonicalMath.canonicalLatex=\\frac{1}{s-2}"
       }
     },
     {
@@ -2825,7 +2825,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=2xy\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{\\partial}{\\partial x}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2xy"
+        "normalizedLatex": "exactLatex=2xy\ncanonicalMath.canonicalLatex=2xy\ndetailSections[0].lines[0]=\\operatorname{operator}\\quad \\frac{\\partial}{\\partial x}\ndetailSections[0].lines[1]=\\operatorname{applied}\\quad x\ndetailSections[0].lines[2]=D_{1}=2xy"
       }
     },
     {
@@ -2953,7 +2953,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=y=C\\,e^{\\left(\\frac{x^{2}}{2}+C\\right)}"
+        "normalizedLatex": "exactLatex=y=C\\,e^{\\left(\\frac{x^{2}}{2}+C\\right)}\ncanonicalMath.canonicalLatex=y=C\\,e^{\\left(\\frac{x^{2}}{2}+C\\right)}"
       }
     },
     {
@@ -3081,7 +3081,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=y=e^{0x}\\left(C_1\\cos\\left(1x\\right)+C_2\\sin\\left(1x\\right)\\right)"
+        "normalizedLatex": "exactLatex=y=e^{0x}\\left(C_1\\cos\\left(1x\\right)+C_2\\sin\\left(1x\\right)\\right)\ncanonicalMath.canonicalLatex=y=e^{0x}\\left(C_1\\cos\\left(1x\\right)+C_2\\sin\\left(1x\\right)\\right)"
       }
     },
     {
@@ -3209,7 +3209,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=y\\left(1\\right)\\approx2.71828"
+        "normalizedLatex": "exactLatex=y\\left(1\\right)\\approx2.71828\ncanonicalMath.canonicalLatex=y\\left(1\\right)\\approx2.71828"
       }
     }
   ]

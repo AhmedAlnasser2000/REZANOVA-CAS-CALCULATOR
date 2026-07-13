@@ -3,6 +3,7 @@ import type {
   CalculusResultOrigin,
   PartialDerivativeWorkbenchState,
 } from '../../../types/calculator';
+import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 
 export type AdvancedPartialEvaluation = {
   exactLatex?: string;
@@ -10,6 +11,7 @@ export type AdvancedPartialEvaluation = {
   warnings: string[];
   error?: string;
   resultOrigin?: CalculusResultOrigin;
+  mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
 };
 
 export function evaluateCalculusPartialDerivative(
@@ -39,5 +41,10 @@ export function evaluateCalculusPartialDerivative(
     exactLatex: resolved.exactLatex,
     warnings: [],
     resultOrigin: 'symbolic',
+    mathJsonLeaves: [{
+      canonicalLatex: resolved.exactLatex,
+      mathJson: resolved.mathJson,
+      source: 'calculus.partial-derivative:answer',
+    }],
   };
 }

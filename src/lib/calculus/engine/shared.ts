@@ -40,6 +40,13 @@ export type CalculusCoreEvaluation = {
   integrationCandidate?: IntegrationCandidateMetadata;
   antiderivativeBackcheck?: AntiderivativeBackcheck;
   detailSections?: DisplayDetailSection[];
+  mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
+};
+
+export type CalculusOwnedMathJsonLeaf = {
+  canonicalLatex: string;
+  mathJson: unknown;
+  source: string;
 };
 
 export type BoxedLike = {

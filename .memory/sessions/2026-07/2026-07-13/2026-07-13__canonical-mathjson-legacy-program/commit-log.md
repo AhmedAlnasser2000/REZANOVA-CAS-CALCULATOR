@@ -37,3 +37,11 @@
 - scope: Calculate and Equation producer-owned MathJSON coverage, bounded exemptions, fail-closed optional proof, inversion baseline refresh, visual evidence, and durable records
 - push: not authorized
 - excluded: concurrent Notebook files and untracked `test-results/`
+
+## MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1
+
+- commit_message: `MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1`
+- status: verified; covered by standing commit approval
+- scope: producer-owned Symbolic/Calculus MathJSON coverage, bounded exemptions, proof-presence replay/print baselines, inversion fingerprints, payload evidence, Chromium inspection, and durable records
+- push: not authorized
+- excluded: concurrent Notebook files and untracked `test-results/`

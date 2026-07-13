@@ -145,7 +145,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=3.464\\,101\\,615\\,137\\,754\\,4\nresolvedInputLatex=2\\sqrt{3}"
+        "normalizedLatex": "exactLatex=3.464\\,101\\,615\\,137\\,754\\,4\ncanonicalMath.canonicalLatex=3.464\\,101\\,615\\,137\\,754\\,4\nresolvedInputLatex=2\\sqrt{3}"
       }
     },
     {

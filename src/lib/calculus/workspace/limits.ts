@@ -24,7 +24,11 @@ import {
   limitVariableMismatchError,
 } from '../limit-variable-analysis';
 import { resolvePiecewiseLimit } from '../../symbolic-engine/limits';
-import type { CalculusCoreEvaluation } from '../engine/shared';
+import {
+  limitValueToLatex,
+  type CalculusCoreEvaluation,
+  type CalculusOwnedMathJsonLeaf,
+} from '../engine/shared';
 import type {
   CalculusFiniteLimitState,
   CalculusInfiniteLimitState,
@@ -57,6 +61,153 @@ type LimitRouteOptions = {
   allowNumericFallback?: boolean;
   equationDomainIntent?: EquationDomainIntent;
 };
+
+function limitValueMathJson(value: number | 'posInfinity' | 'negInfinity') {
+  if (value === 'posInfinity') return 'PositiveInfinity';
+  if (value === 'negInfinity') return ['Negate', 'PositiveInfinity'];
+  return value;
+}
+
+function isReciprocalVariable(node: unknown, variable: string) {
+  return Array.isArray(node)
+    && ((node[0] === 'Divide' && node[1] === 1 && node[2] === variable)
+      || (node[0] === 'Power' && node[1] === variable && node[2] === -1));
+}
+
+function sincInner(node: unknown, variable: string): unknown | undefined {
+  if (!Array.isArray(node) || node[0] !== 'Divide' || node.length !== 3) return undefined;
+  const numerator = node[1];
+  if (!Array.isArray(numerator) || numerator[0] !== 'Sin') return undefined;
+  return JSON.stringify(numerator[1]) === JSON.stringify(node[2]) && node[2] === variable
+    ? node[2]
+    : undefined;
+}
+
+function appendMathJsonLeaves(
+  evaluation: AdvancedLimitEvaluation,
+  leaves: readonly CalculusOwnedMathJsonLeaf[],
+): AdvancedLimitEvaluation {
+  return leaves.length === 0
+    ? evaluation
+    : {
+        ...evaluation,
+        mathJsonLeaves: [...(evaluation.mathJsonLeaves ?? []), ...leaves],
+      };
+}
+
+function finiteLimitMathJsonEvidence(input: {
+  evaluation: AdvancedLimitEvaluation;
+  body: unknown;
+  variable: string;
+  target: number;
+  direction: LimitDirection;
+}) {
+  if (input.evaluation.error || !input.evaluation.exactLatex) return input.evaluation;
+  const leaves: CalculusOwnedMathJsonLeaf[] = [];
+  const inner = sincInner(input.body, input.variable);
+  if (inner !== undefined && input.target === 0) {
+    const innerLatex = (ce.box(inner as Parameters<typeof ce.box>[0]) as BoxedLike).latex;
+    leaves.push(
+      {
+        canonicalLatex: input.evaluation.exactLatex,
+        mathJson: 1,
+        source: 'calculus.limit:known-sinc-answer',
+      },
+      {
+        canonicalLatex: `u=${innerLatex}`,
+        mathJson: ['Equal', 'u', inner],
+        source: 'calculus.limit:known-sinc-substitution',
+      },
+      {
+        canonicalLatex: `\\lim_{${input.variable}\\to ${limitValueToLatex(input.target)}}u=0`,
+        mathJson: ['Equal', ['Limit', ['Function', 'u', input.variable], input.target], 0],
+        source: 'calculus.limit:known-sinc-inner-limit',
+      },
+      {
+        canonicalLatex: '\\frac{\\sin(u)}{u}\\to 1',
+        mathJson: ['To', ['Divide', ['Sin', 'u'], 'u'], 1],
+        source: 'calculus.limit:known-sinc-equivalent',
+      },
+    );
+  }
+
+  if (isReciprocalVariable(input.body, input.variable) && input.target === 0) {
+    const answer = input.direction === 'left' ? 'negInfinity' : 'posInfinity';
+    const answerMathJson = limitValueMathJson(answer);
+    const sideTarget = input.direction === 'left'
+      ? ['Superminus', input.target]
+      : ['PseudoInverse', input.target];
+    const sideLatex = input.direction === 'left' ? '-' : '+';
+    const approachLatex = `${input.variable}\\to ${limitValueToLatex(input.target)}^{${sideLatex}}`;
+    leaves.push(
+      {
+        canonicalLatex: input.evaluation.exactLatex,
+        mathJson: answerMathJson,
+        source: `calculus.limit:reciprocal-${input.direction}-answer`,
+      },
+      {
+        canonicalLatex: '1',
+        mathJson: 1,
+        source: 'calculus.limit:reciprocal-coefficient',
+      },
+      {
+        canonicalLatex: '-1',
+        mathJson: -1,
+        source: 'calculus.limit:reciprocal-scale',
+      },
+      {
+        canonicalLatex: approachLatex,
+        mathJson: ['To', input.variable, sideTarget],
+        source: `calculus.limit:reciprocal-${input.direction}-approach`,
+      },
+      {
+        canonicalLatex: `\\lim_{${approachLatex}} f(${input.variable})=${input.evaluation.exactLatex}`,
+        mathJson: [
+          'Equal',
+          ['Limit', ['Function', ['InvisibleOperator', 'f', ['Delimiter', input.variable]], input.variable], sideTarget],
+          answerMathJson,
+        ],
+        source: `calculus.limit:reciprocal-${input.direction}-calculation`,
+      },
+    );
+  }
+  return appendMathJsonLeaves(input.evaluation, leaves);
+}
+
+function infiniteLimitMathJsonEvidence(input: {
+  evaluation: AdvancedLimitEvaluation;
+  body: unknown;
+  variable: string;
+}) {
+  if (
+    input.evaluation.error
+    || !input.evaluation.exactLatex
+    || !isReciprocalVariable(input.body, input.variable)
+  ) return input.evaluation;
+  const bodyLatex = (ce.box(input.body as Parameters<typeof ce.box>[0]) as BoxedLike).latex;
+  return appendMathJsonLeaves(input.evaluation, [
+    {
+      canonicalLatex: input.evaluation.exactLatex,
+      mathJson: 0,
+      source: 'calculus.limit:infinite-reciprocal-answer',
+    },
+    {
+      canonicalLatex: bodyLatex,
+      mathJson: input.body,
+      source: 'calculus.limit:infinite-reciprocal-scale',
+    },
+    {
+      canonicalLatex: `${input.variable}^{-1}`,
+      mathJson: input.body,
+      source: 'calculus.limit:infinite-reciprocal-scale-readback',
+    },
+    {
+      canonicalLatex: '1',
+      mathJson: 1,
+      source: 'calculus.limit:infinite-reciprocal-coefficient',
+    },
+  ]);
+}
 
 function formatBodyVariables(bodyVariables: readonly string[]) {
   return bodyVariables.length > 0
@@ -228,10 +379,16 @@ export function evaluateCalculusFiniteLimit(
         approxText: latexToApproxText((exact.N?.() ?? exact).latex),
         warnings: [],
         resultOrigin: 'symbolic',
+        mathJsonLeaves: [{
+          canonicalLatex: exact.latex,
+          mathJson: exact.json,
+          source: 'calculus.limit:compute-engine-answer',
+        }],
       });
     }
 
-    return evaluateFiniteLimitFromAst({
+    return finiteLimitMathJsonEvidence({
+      evaluation: evaluateFiniteLimitFromAst({
       body: body.json,
       variable,
       target,
@@ -249,6 +406,11 @@ export function evaluateCalculusFiniteLimit(
         oneSidedDomainError: (side) =>
           `${finiteTargetLabel(side)} behavior is outside the real domain near the target.`,
       },
+      }),
+      body: body.json,
+      variable,
+      target,
+      direction,
     });
   } catch {
     return {
@@ -271,8 +433,9 @@ export function evaluateCalculusInfiniteLimit(
   }
 
   const body = ce.parse(bodyLatex).json;
-  return evaluateInfiniteLimitFromAst({
-    body,
+  return infiniteLimitMathJsonEvidence({
+    evaluation: evaluateInfiniteLimitFromAst({
+      body,
     variable,
     targetKind: state.targetKind,
     routeKind: state.routeKind,
@@ -283,6 +446,9 @@ export function evaluateCalculusInfiniteLimit(
       unstableError: 'This limit could not be stabilized numerically in Calculus.',
       numericFallbackWarning: 'Symbolic limit unavailable; showing a numeric infinite-target approximation.',
     },
+    }),
+    body,
+    variable,
   });
 }
 

@@ -5,6 +5,7 @@ import type {
   SeriesState,
 } from '../../../types/calculator';
 import { profileCalculusResult } from '../../display/printer';
+import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 
 const ce = new ComputeEngine();
 
@@ -23,7 +24,11 @@ export type AdvancedSeriesEvaluation = {
   warnings: string[];
   error?: string;
   resultOrigin?: CalculusResultOrigin;
+  mathJsonLeaves?: CalculusOwnedMathJsonLeaf[];
 };
+
+type SeriesCoefficient = { latex: string; mathJson: unknown };
+type SeriesTerm = { latex: string; mathJson: unknown };
 
 function box(node: unknown) {
   return ce.box(node as Parameters<typeof ce.box>[0]) as BoxedLike;
@@ -37,17 +42,18 @@ function factorial(value: number) {
   return result;
 }
 
-function coefficientLatex(derivative: BoxedLike, center: number, order: number) {
+function seriesCoefficient(derivative: BoxedLike, center: number, order: number): SeriesCoefficient | undefined {
   const value = derivative.subs({ x: center }).evaluate();
   if (value.latex.includes('x')) {
     return undefined;
   }
 
   if (order === 0) {
-    return value.latex;
+    return { latex: value.latex, mathJson: value.json };
   }
 
-  return box(['Divide', value.json, factorial(order)]).simplify().latex;
+  const coefficient = box(['Divide', value.json, factorial(order)]).simplify();
+  return { latex: coefficient.latex, mathJson: coefficient.json };
 }
 
 function normalizeCoefficient(latex: string) {
@@ -58,40 +64,45 @@ function normalizeCoefficient(latex: string) {
     .trim();
 }
 
-function buildTerm(coefficient: string, order: number, center: number) {
-  const normalized = normalizeCoefficient(coefficient);
+function buildTerm(coefficient: SeriesCoefficient, order: number, center: number): SeriesTerm | undefined {
+  const normalized = normalizeCoefficient(coefficient.latex);
   if (normalized === '0') {
     return undefined;
   }
 
   if (order === 0) {
-    return coefficient;
+    return { latex: coefficient.latex, mathJson: coefficient.mathJson };
   }
 
-  const base = center === 0
+  const baseLatex = center === 0
     ? (order === 1 ? 'x' : `x^{${order}}`)
     : (order === 1
       ? `\\left(x-${center}\\right)`
       : `\\left(x-${center}\\right)^{${order}}`);
+  const centered: unknown = center === 0 ? 'x' : ['Subtract', 'x', center];
+  const baseMathJson: unknown = order === 1 ? centered : ['Power', centered, order];
 
   if (normalized === '1') {
-    return base;
+    return { latex: baseLatex, mathJson: baseMathJson };
   }
 
   if (normalized === '-1') {
-    return `-${base}`;
+    return { latex: `-${baseLatex}`, mathJson: ['Negate', baseMathJson] };
   }
 
-  return `${coefficient}${base}`;
+  return {
+    latex: `${coefficient.latex}${baseLatex}`,
+    mathJson: ['Multiply', coefficient.mathJson, baseMathJson],
+  };
 }
 
-function joinTerms(terms: string[]) {
+function joinTerms(terms: readonly SeriesTerm[]) {
   return terms.reduce((result, term, index) => {
     if (index === 0) {
-      return term;
+      return term.latex;
     }
 
-    return term.startsWith('-') ? `${result}${term}` : `${result}+${term}`;
+    return term.latex.startsWith('-') ? `${result}${term.latex}` : `${result}+${term.latex}`;
   }, '');
 }
 
@@ -106,11 +117,11 @@ function evaluateSeries(state: SeriesState, center: number) {
 
   const order = clampSeriesOrder(state.order);
   const parsed = ce.parse(bodyLatex) as BoxedLike;
-  const terms: string[] = [];
+  const terms: SeriesTerm[] = [];
   let derivative = parsed;
 
   for (let degree = 0; degree <= order; degree += 1) {
-    const coeff = coefficientLatex(derivative, center, degree);
+    const coeff = seriesCoefficient(derivative, center, degree);
     if (!coeff) {
       return {
         warnings: [],
@@ -132,10 +143,21 @@ function evaluateSeries(state: SeriesState, center: number) {
     }
   }
 
+  const exactLatex = joinTerms(terms) || '0';
+  const answerMathJson = terms.length === 0
+    ? 0
+    : terms.length === 1
+      ? terms[0].mathJson
+      : ['Add', ...terms.map((term) => term.mathJson)];
   return profileCalculusResult({
-    exactLatex: joinTerms(terms) || '0',
+    exactLatex,
     warnings: [],
     resultOrigin: 'heuristic-symbolic',
+    mathJsonLeaves: [{
+      canonicalLatex: exactLatex,
+      mathJson: answerMathJson,
+      source: 'calculus.series:native-coefficients-answer',
+    }],
   }) satisfies AdvancedSeriesEvaluation;
 }
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "Refresh two native Equation source fingerprints after fail-closed optional MathJSON proof repair; Equation remains at 134 native, zero compatibility, and 265 registered legacy reads.",
-  "registryDigest": "f30650f08c72504f8640",
+  "acceptedReason": "MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1 registers the final Calculus MathJSON overlay as producer-owned assembly, removes a compatibility substitution read, and refreshes only native evidence fingerprints without growing legacy or compatibility floors.",
+  "registryDigest": "8f46a8e9245e4e965402",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -115,7 +115,7 @@
         "9babe825561a6da699df:1"
       ],
       "src/lib/calculus/workspace/engine.ts": [
-        "d3423b3106cf5ac27634:1",
+        "b1f4fe3b27ac4520e41b:1",
         "65afd2d6e9a26cb45590:1"
       ],
       "src/lib/calculus/workspace/result-document.ts": [
@@ -521,7 +521,9 @@
       "src/lib/calculus/workspace/engine.ts": [
         "7e3028849fc3b0a8e60f:1",
         "c7aa4a26355adbd0365e:1",
-        "9289e78676ec3c44e16e:1"
+        "9289e78676ec3c44e16e:1",
+        "edd6f139f6aa655632f4:1",
+        "d0107692061129e4602e:1"
       ],
       "src/lib/equation/analysis-evidence.ts": [
         "db8c7fd8a8e856d011d3:1",

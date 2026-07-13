@@ -141,7 +141,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nbranchReadback.branchesLatex[1]=180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nbranchReadback.branchesLatex[1]=180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
       }
     },
     {

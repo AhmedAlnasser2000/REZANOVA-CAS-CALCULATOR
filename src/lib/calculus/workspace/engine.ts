@@ -16,6 +16,10 @@ import {
   hasNativeCalculusResultDocument,
 } from './result-document';
 import {
+  calculusMathJsonRouteForScreen,
+  calculusMathValuesFromOwnedLeaves,
+} from './math-values';
+import {
   solveFirstOrderOde,
   solveNumericIvp,
   solveSecondOrderOde,
@@ -36,7 +40,7 @@ import {
 } from '../../numeric/signed-number';
 import { buildDerivativeLatex } from '../calculus-workbench';
 import {
-  buildCalculusDerivativeStepsDetail,
+  buildCalculusDerivativeStepsEvidence,
   evaluateCalculusHigherOrderDerivative,
   evaluateCalculusHigherOrderDerivativeAtPoint,
   evaluateCalculusMixedPartialDerivative,
@@ -87,6 +91,7 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../../types/calculator';
+import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 
 export type RunCalculusWorkspaceModeRequest = {
   screen: CalculusScreen;
@@ -308,6 +313,11 @@ export async function runCalculusWorkspaceMode(
     };
   };
   let outcome: DisplayOutcome;
+  let mathJsonLeaves: CalculusOwnedMathJsonLeaf[] = [];
+  const captureEvaluation = (title: string, evaluation: CalculusWorkspaceEvaluation) => {
+    mathJsonLeaves = [...(evaluation.mathJsonLeaves ?? [])];
+    return toOutcome(title, evaluation);
+  };
 
   switch (request.screen) {
     case 'derivative': {
@@ -330,13 +340,12 @@ export async function runCalculusWorkspaceMode(
       if (derivativeInput.operator.order > 1) {
         const variable = derivativeInput.operator.writtenFactors[0]?.variable ?? derivative.variable ?? 'x';
         setProtectedDescriptions([variable], 'the derivative variable');
-        outcome = toOutcome('Derivative', evaluateCalculusHigherOrderDerivative({
+        outcome = captureEvaluation('Derivative', evaluateCalculusHigherOrderDerivative({
           bodyLatex: substituteBody(derivativeInput.bodyLatex, [variable]),
           operator: derivativeInput.operator,
         }));
       } else {
-        outcome = withDerivativeSteps(
-          runCalculateMode({
+        const calculated = runCalculateMode({
             action: 'evaluate',
             latex: derivativeInput.canonicalLatex,
             calculateScreen: 'derivative',
@@ -345,12 +354,13 @@ export async function runCalculusWorkspaceMode(
             ansLatex: request.ansLatex ?? '0',
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
-          }),
-          buildCalculusDerivativeStepsDetail({
-            bodyLatex: derivativeInput.bodyLatex,
-            operator: derivativeInput.operator,
-          }),
-        );
+          });
+        const steps = buildCalculusDerivativeStepsEvidence({
+          bodyLatex: derivativeInput.bodyLatex,
+          operator: derivativeInput.operator,
+        });
+        mathJsonLeaves.push(...(steps?.mathJsonLeaves ?? []));
+        outcome = withDerivativeSteps(calculated, steps?.detailSection);
       }
       break;
     }
@@ -384,14 +394,13 @@ export async function runCalculusWorkspaceMode(
       if (derivativeInput.operator.order > 1) {
         const variable = derivativeInput.operator.writtenFactors[0]?.variable ?? derivativePoint.variable ?? 'x';
         setProtectedDescriptions([variable], 'the derivative variable');
-        outcome = toOutcome('Derivative at Point', evaluateCalculusHigherOrderDerivativeAtPoint({
+        outcome = captureEvaluation('Derivative at Point', evaluateCalculusHigherOrderDerivativeAtPoint({
           bodyLatex: substituteBody(derivativeInput.bodyLatex, [variable]),
           pointLatex: normalizedPoint,
           operator: derivativeInput.operator,
         }));
       } else {
-        outcome = withDerivativeSteps(
-          runCalculateMode({
+        const calculated = runCalculateMode({
             action: 'evaluate',
             latex,
             calculateScreen: 'derivativePoint',
@@ -400,13 +409,14 @@ export async function runCalculusWorkspaceMode(
             ansLatex: request.ansLatex ?? '0',
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
-          }),
-          buildCalculusDerivativeStepsDetail({
-            bodyLatex: derivativeInput.bodyLatex,
-            operator: derivativeInput.operator,
-            pointLatex: normalizedPoint,
-          }),
-        );
+          });
+        const steps = buildCalculusDerivativeStepsEvidence({
+          bodyLatex: derivativeInput.bodyLatex,
+          operator: derivativeInput.operator,
+          pointLatex: normalizedPoint,
+        });
+        mathJsonLeaves.push(...(steps?.mathJsonLeaves ?? []));
+        outcome = withDerivativeSteps(calculated, steps?.detailSection);
       }
       break;
     }
@@ -417,7 +427,7 @@ export async function runCalculusWorkspaceMode(
         ...request.indefiniteIntegral,
         bodyLatex: substituteBody(request.indefiniteIntegral.bodyLatex, [variable]),
       };
-      outcome = toOutcome('Indefinite Integral', evaluateCalculusIndefiniteIntegral(state));
+      outcome = captureEvaluation('Indefinite Integral', evaluateCalculusIndefiniteIntegral(state));
       break;
     }
     case 'definiteIntegral': {
@@ -427,7 +437,7 @@ export async function runCalculusWorkspaceMode(
         ...request.definiteIntegral,
         bodyLatex: substituteBody(request.definiteIntegral.bodyLatex, [variable]),
       };
-      outcome = toOutcome('Definite Integral', evaluateCalculusDefiniteIntegral(state));
+      outcome = captureEvaluation('Definite Integral', evaluateCalculusDefiniteIntegral(state));
       break;
     }
     case 'improperIntegral': {
@@ -437,7 +447,7 @@ export async function runCalculusWorkspaceMode(
         ...request.improperIntegral,
         bodyLatex: substituteBody(request.improperIntegral.bodyLatex, [variable]),
       };
-      outcome = toOutcome('Improper Integral', evaluateCalculusImproperIntegral(state));
+      outcome = captureEvaluation('Improper Integral', evaluateCalculusImproperIntegral(state));
       break;
     }
     case 'limit': {
@@ -468,7 +478,7 @@ export async function runCalculusWorkspaceMode(
         ...parsedLimit.request,
         bodyLatex: substituteBody(parsedLimit.request.bodyLatex, [variable]),
       });
-      outcome = toOutcome('Limit', evaluateCalculusLimit({
+      outcome = captureEvaluation('Limit', evaluateCalculusLimit({
         requestLatex,
         equationDomainIntent: request.equationDomainIntent,
       }));
@@ -482,7 +492,7 @@ export async function runCalculusWorkspaceMode(
         equationDomainIntent: request.equationDomainIntent,
         bodyLatex: substituteBody(request.finiteLimit.bodyLatex, [variable]),
       };
-      outcome = toOutcome('Finite Limit', evaluateCalculusFiniteLimit(state));
+      outcome = captureEvaluation('Finite Limit', evaluateCalculusFiniteLimit(state));
       break;
     }
     case 'infiniteLimit': {
@@ -492,7 +502,7 @@ export async function runCalculusWorkspaceMode(
         ...request.infiniteLimit,
         bodyLatex: substituteBody(request.infiniteLimit.bodyLatex, [variable]),
       };
-      outcome = toOutcome('Infinite Limit', evaluateCalculusInfiniteLimit(state));
+      outcome = captureEvaluation('Infinite Limit', evaluateCalculusInfiniteLimit(state));
       break;
     }
     case 'maclaurin': {
@@ -501,7 +511,7 @@ export async function runCalculusWorkspaceMode(
         ...request.maclaurin,
         bodyLatex: substituteBody(request.maclaurin.bodyLatex, ['x']),
       };
-      outcome = toOutcome('Maclaurin Series', evaluateMaclaurinSeries(state));
+      outcome = captureEvaluation('Maclaurin Series', evaluateMaclaurinSeries(state));
       break;
     }
     case 'taylor': {
@@ -510,7 +520,7 @@ export async function runCalculusWorkspaceMode(
         ...request.taylor,
         bodyLatex: substituteBody(request.taylor.bodyLatex, ['x']),
       };
-      outcome = toOutcome('Taylor Series', evaluateTaylorSeries(state));
+      outcome = captureEvaluation('Taylor Series', evaluateTaylorSeries(state));
       break;
     }
     case 'laplace': {
@@ -520,7 +530,7 @@ export async function runCalculusWorkspaceMode(
         ...request.laplace,
         bodyLatex: substituteBody(request.laplace.bodyLatex, ['t', 's']),
       };
-      outcome = toOutcome('Laplace Transform', evaluateCalculusLaplaceTransform(state));
+      outcome = captureEvaluation('Laplace Transform', evaluateCalculusLaplaceTransform(state));
       break;
     }
     case 'partialDerivative': {
@@ -542,7 +552,7 @@ export async function runCalculusWorkspaceMode(
       if (partialInput.operator.order > 1) {
         const partialVariables = [...new Set(partialInput.operator.appliedPath)];
         setProtectedDescriptions(partialVariables, 'a partial derivative variable');
-        outcome = toOutcome('Partial Derivative', evaluateCalculusMixedPartialDerivative({
+        outcome = captureEvaluation('Partial Derivative', evaluateCalculusMixedPartialDerivative({
           bodyLatex: substituteBody(partialInput.bodyLatex, partialVariables),
           operator: partialInput.operator,
         }));
@@ -555,13 +565,13 @@ export async function runCalculusWorkspaceMode(
         variable: partialVariable,
         bodyLatex: substituteBody(partialInput.bodyLatex, [partialVariable]),
       };
-      outcome = withDerivativeSteps(
-        toOutcome('Partial Derivative', evaluateCalculusPartialDerivative(state)),
-        buildCalculusDerivativeStepsDetail({
-          bodyLatex: state.bodyLatex,
-          operator: partialInput.operator,
-        }),
-      );
+      outcome = captureEvaluation('Partial Derivative', evaluateCalculusPartialDerivative(state));
+      const steps = buildCalculusDerivativeStepsEvidence({
+        bodyLatex: state.bodyLatex,
+        operator: partialInput.operator,
+      });
+      mathJsonLeaves.push(...(steps?.mathJsonLeaves ?? []));
+      outcome = withDerivativeSteps(outcome, steps?.detailSection);
       break;
     }
     case 'implicitDerivative': {
@@ -581,7 +591,7 @@ export async function runCalculusWorkspaceMode(
           [independentVariable, dependentVariable],
         ),
       };
-      outcome = toOutcome('Implicit Derivative', evaluateCalculusImplicitDerivative(state));
+      outcome = captureEvaluation('Implicit Derivative', evaluateCalculusImplicitDerivative(state));
       break;
     }
     case 'odeFirstOrder': {
@@ -592,7 +602,7 @@ export async function runCalculusWorkspaceMode(
         lhsLatex: substituteBody(request.firstOrderOde.lhsLatex, ['x', 'y']),
         rhsLatex: substituteBody(request.firstOrderOde.rhsLatex, ['x', 'y']),
       };
-      outcome = toOutcome('First-Order ODE', solveFirstOrderOde(state));
+      outcome = captureEvaluation('First-Order ODE', solveFirstOrderOde(state));
       break;
     }
     case 'odeSecondOrder': {
@@ -602,7 +612,7 @@ export async function runCalculusWorkspaceMode(
         ...request.secondOrderOde,
         forcingLatex: substituteBody(request.secondOrderOde.forcingLatex, ['x', 'y']),
       };
-      outcome = toOutcome('Second-Order ODE', solveSecondOrderOde(state));
+      outcome = captureEvaluation('Second-Order ODE', solveSecondOrderOde(state));
       break;
     }
     case 'odeNumericIvp': {
@@ -612,7 +622,7 @@ export async function runCalculusWorkspaceMode(
         ...request.numericIvp,
         bodyLatex: substituteBody(request.numericIvp.bodyLatex, ['x', 'y']),
       };
-      outcome = toOutcome('Numeric IVP', await solveNumericIvp(state));
+      outcome = captureEvaluation('Numeric IVP', await solveNumericIvp(state));
       break;
     }
     default:
@@ -631,10 +641,30 @@ export async function runCalculusWorkspaceMode(
     protectedNameDescriptions,
     Boolean(request.variableSubstitutionSnapshot),
   );
+  for (const substitution of substitutions) {
+    mathJsonLeaves.push(
+      {
+        canonicalLatex: substitution.valueLatex,
+        mathJson: substitution.numericValue,
+        source: `calculus.stored-value:${substitution.name}`,
+      },
+      {
+        canonicalLatex: `${substitution.name}=${substitution.valueLatex}`,
+        mathJson: ['Equal', substitution.name, substitution.numericValue],
+        source: `calculus.stored-value-readback:${substitution.name}`,
+      },
+    );
+  }
   const ownedOutcome = hasNativeCalculusResultDocument(request.screen)
     ? finalOutcome.kind === 'prompt'
       ? finalOutcome
-      : createCalculusResultOutcome(finalOutcome)
+      : createCalculusResultOutcome(finalOutcome, {
+          mathValues: calculusMathValuesFromOwnedLeaves({
+            outcome: finalOutcome,
+            routeId: calculusMathJsonRouteForScreen(request.screen),
+            leaves: mathJsonLeaves,
+          }),
+        })
     : finalOutcome;
   return requireCanonicalResultAuthority(ownedOutcome, 'Calculus');
 }

@@ -457,6 +457,13 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
     functions: ['createCalculusResultOutcome'],
   },
   {
+    id: 'calculus-math-value-producer-input-v1',
+    owner: 'calculus-result-contract',
+    rationale: 'The Calculus final adapter overlays producer-owned MathJSON leaves onto typed result evidence before canonical document validation; these reads do not consume rendered presentation as semantic truth.',
+    matchers: exact('src/lib/calculus/workspace/math-values.ts'),
+    functions: ['calculusMathValuesFromOwnedLeaves'],
+  },
+  {
     id: 'equation-result-producer-input-v1',
     owner: 'equation-result-contract',
     rationale: 'The Equation producer adapter reads its authored dual-write input before emitting both canonical and compatibility projections; these are producer assembly reads, not downstream Display consumers.',

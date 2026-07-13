@@ -55,3 +55,16 @@
 - visual: isolated Chromium confirms established complex `i` output, DEG periodic family structure, radical range-guard evidence, and no horizontal overflow
 - static: result contract, printer, seam, OOE, compartments, TypeScript, production build, file size, and diff hygiene pass
 - shared blocker: global lint is blocked only by concurrent Notebook `src/app/shell/notebook/canvas/extensions.tsx` at `react-refresh/only-export-components`
+
+## MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1
+
+- kind: backend producer coverage with app-visible parity verification
+- result: pass
+- coverage: all 80 Calculus replay leaves are classified; 64 carry proven MathJSON and 16 are bounded exact exemptions. Global coverage is 262 leaves, 149 proven, 20 exempt, and 93 missing, with 57,642 serialized bytes and a 2,753-byte maximum document.
+- producer evidence: differentiated ASTs, integral and limit route values, series terms, Laplace table structures, ODE/IVP values, implicit-derivative carrier trees, and stored-value snapshots reach the final Calculus adapter without reparsing formatted output.
+- payload: 25 Calculus documents total 19,673 bytes. Three runs of five cold and 50 warm structured-clone corpus passes record warm P95 of 0.175-0.181 ms per pass, approximately 0.007 ms per document; committed bounds are unchanged.
+- regression: 156 Calculus/Symbolic files and 1,022 tests pass. MathJSON coverage, result contract, Equation solve-result, History replay, all 43 golden executions, print hygiene, feature probes, printer migration, display inversion, seam selection, OOE, and compartment gates pass.
+- baselines: 38 replay fixtures and seven print-hygiene golden entries changed only by canonical-MathJSON proof-presence markers. Identity, cardinalities, canonical LaTeX, visible formatting, and mathematics are unchanged.
+- static: TypeScript, global lint, 2,973-module production build, file-size ratchet over 1,775 files and seven caps, and diff hygiene pass.
+- visual: the 11-test Calculus Chromium smoke passes. Seven inspected 1440px cards cover derivative, implicit derivative, indefinite integral, one-sided limit, Maclaurin, Laplace, and numeric IVP; all render expected answers/details with zero card or page horizontal overflow.
+- residual: Laplace's existing table detail exposes raw-looking `Le^(()a t) = 1/(s-a)` text. It predates this no-output-drift milestone and is recorded separately for presentation review.

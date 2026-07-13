@@ -66,7 +66,7 @@ export type SelectedTargetIsolationSuccess = {
   detailSections: DisplayDetailSection[];
   mathJsonLeaves?: Array<{
     canonicalLatex: string;
-    mathJson: MathJson;
+    mathJson: unknown;
     source: string;
   }>;
 };
@@ -95,6 +95,7 @@ type HandoffSolveSuccess = {
   exactLatex: string;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
+  mathJsonLeaves?: SelectedTargetIsolationSuccess['mathJsonLeaves'];
 };
 
 const DEFAULT_MAX_PEELS = 6;
@@ -368,6 +369,14 @@ export function solveSelectedTargetIsolationEquation(
             unique(facts),
             delegated.detailSections,
           ),
+          mathJsonLeaves: [
+            {
+              canonicalLatex: generatedEquationLatex,
+              mathJson: ['Equal', expression, otherSide],
+              source: 'equation-selected-target-generated-equation',
+            },
+            ...(delegated.mathJsonLeaves ?? []),
+          ],
         };
       }
 
@@ -419,6 +428,14 @@ export function solveSelectedTargetIsolationEquation(
           unique(facts),
           delegated.detailSections,
         ),
+        mathJsonLeaves: [
+          {
+            canonicalLatex: generatedEquationLatex,
+            mathJson: ['Equal', expression, otherSide],
+            source: 'equation-selected-target-generated-equation',
+          },
+          ...(delegated.mathJsonLeaves ?? []),
+        ],
       };
     }
   }

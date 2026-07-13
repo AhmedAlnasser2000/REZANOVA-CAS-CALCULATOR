@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "reason": "Calculate and Equation producer-owned answer coverage completed; four mixed prose/math compatibility supplements remain fixture-scoped standard MathJSON exemptions",
+  "reason": "MATHJSON-COVERAGE-SYMBOLIC-CALCULUS1 adds producer-proven standard MathJSON to every representable Calculus replay leaf while retaining existing bounds and bounded compatibility exemptions.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -55,6 +55,14 @@
     "vector.orthogonalization"
   ],
   "exemptionIds": [
+    "calculus-derivative-at-point-detail-compatibility",
+    "calculus-derivative-at-point-primary-compatibility",
+    "calculus-derivative-at-point-resolved-input-compatibility",
+    "calculus-derivative-exp-labeled-details",
+    "calculus-derivative-polynomial-labeled-details",
+    "calculus-derivative-trig-labeled-details",
+    "calculus-implicit-derivative-labeled-details",
+    "calculus-partial-polynomial-labeled-details",
     "equation-denominator-exclusion-labeled-supplement",
     "equation-even-root-labeled-supplement",
     "equation-rational-hole-labeled-supplement",
@@ -62,12 +70,12 @@
   ],
   "totals": {
     "fixtures": 100,
-    "bytes": 55053,
+    "bytes": 57642,
     "maxBytes": 2753,
     "leaves": 262,
-    "proven": 89,
-    "exempt": 4,
-    "missing": 169
+    "proven": 149,
+    "exempt": 20,
+    "missing": 93
   },
   "routes": {
     "calculate.ans": {
@@ -135,57 +143,57 @@
     },
     "calculus.derivatives": {
       "fixtures": 5,
-      "bytes": 4176,
-      "maxBytes": 1564,
+      "bytes": 4605,
+      "maxBytes": 1815,
       "leaves": 27,
-      "proven": 4,
-      "exempt": 0,
-      "missing": 23
+      "proven": 13,
+      "exempt": 14,
+      "missing": 0
     },
     "calculus.integrals": {
       "fixtures": 6,
-      "bytes": 3858,
-      "maxBytes": 810,
+      "bytes": 4255,
+      "maxBytes": 916,
       "leaves": 12,
-      "proven": 0,
+      "proven": 12,
       "exempt": 0,
-      "missing": 12
+      "missing": 0
     },
     "calculus.limits": {
       "fixtures": 5,
-      "bytes": 6464,
-      "maxBytes": 1667,
+      "bytes": 7506,
+      "maxBytes": 1995,
       "leaves": 30,
-      "proven": 0,
+      "proven": 30,
       "exempt": 0,
-      "missing": 30
+      "missing": 0
     },
     "calculus.ode-ivp": {
       "fixtures": 3,
-      "bytes": 735,
-      "maxBytes": 313,
+      "bytes": 1063,
+      "maxBytes": 409,
       "leaves": 3,
-      "proven": 0,
+      "proven": 3,
       "exempt": 0,
-      "missing": 3
+      "missing": 0
     },
     "calculus.partials": {
       "fixtures": 1,
-      "bytes": 451,
-      "maxBytes": 451,
+      "bytes": 535,
+      "maxBytes": 535,
       "leaves": 4,
-      "proven": 0,
-      "exempt": 0,
-      "missing": 4
+      "proven": 2,
+      "exempt": 2,
+      "missing": 0
     },
     "calculus.series-transforms": {
       "fixtures": 5,
-      "bytes": 1356,
-      "maxBytes": 399,
+      "bytes": 1709,
+      "maxBytes": 442,
       "leaves": 4,
-      "proven": 0,
+      "proven": 4,
       "exempt": 0,
-      "missing": 4
+      "missing": 0
     },
     "equation.absolute-value": {
       "fixtures": 1,
@@ -207,8 +215,8 @@
     },
     "equation.domain-boundary": {
       "fixtures": 4,
-      "bytes": 3189,
-      "maxBytes": 1060,
+      "bytes": 3145,
+      "maxBytes": 1016,
       "leaves": 15,
       "proven": 13,
       "exempt": 2,
