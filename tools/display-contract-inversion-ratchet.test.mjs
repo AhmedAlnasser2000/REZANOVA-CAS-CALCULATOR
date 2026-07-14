@@ -505,9 +505,13 @@ describe('display contract inversion ratchet', () => {
 
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
+    const equationPilotSource = fs.readFileSync(
+      'src/lib/ooe/pilots/equation-pilot.ts',
+      'utf8',
+    );
 
     assert.equal(report.summary.producerCount, 404);
-    assert.equal(report.summary.consumerCount, 59);
+    assert.equal(report.summary.consumerCount, 57);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
     assert.equal(report.summary.producerDraftReadCount, 92);
@@ -523,6 +527,8 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes['surface-protocol']['canonical-read'], 1);
     assert.equal(report.lanes.history['legacy-read'], 0);
     assert.equal(report.lanes['app-runtime']['canonical-read'], 5);
+    assert.match(equationPilotSource, /readEquationCanonicalDiagnostics/u);
+    assert.doesNotMatch(equationPilotSource, /from ['"]\.\.\/\.\.\/result-contract['"]/u);
   });
 
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {

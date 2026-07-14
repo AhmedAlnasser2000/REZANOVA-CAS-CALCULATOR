@@ -186,12 +186,15 @@ describe('MathJSON coverage registry', () => {
     expect(report.goldenCaseCount).toBe(43);
     expect(report.evidenceCount).toBe(143);
     expect(report.routeCount).toBe(Object.keys(MATHJSON_ROUTE_REGISTRY).length);
-    expect(report.totals.leaves).toBeGreaterThan(0);
-    expect(report.totals.proven).toBeGreaterThan(0);
-    expect(report.totals.missing).toBe(report.gaps.length);
-    expect(report.exemptionIds).toEqual(
-      MATHJSON_COVERAGE_EXEMPTIONS.map((entry) => entry.id).sort(),
-    );
+    expect(report.totals).toMatchObject({
+      leaves: 452,
+      proven: 452,
+      exempt: 0,
+      missing: 0,
+    });
+    expect(report.gaps).toEqual([]);
+    expect(MATHJSON_COVERAGE_EXEMPTIONS).toEqual([]);
+    expect(report.exemptionIds).toEqual([]);
     const baseline = coverageBaseline as Parameters<typeof validateMathJsonCoverageBaseline>[1];
     expect(validateMathJsonCoverageBaseline(report, baseline).errors).toEqual([]);
   }, 120_000);

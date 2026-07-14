@@ -1,7 +1,7 @@
 # Canonical Result V2 Program
 
 Date: 2026-07-14
-Status: active; first six named gates committed, Linear Algebra verified, Closeout pending; standing approval remains; no push authorized
+Status: complete; all eight named gates implemented and verified, with the eighth recorded by the closeout commit containing this update; no push authorized
 
 ## Attribution
 
@@ -33,6 +33,8 @@ The detailed schema laws, residual list, producer-version inventory, consumer ma
 6. `CANONICAL-RESULT-V2-TRIGONOMETRY1` (`ui`): migrate Period and Phase compound primary; remove one residual leaf.
 7. `CANONICAL-RESULT-V2-LINEAR-ALGEBRA1` (`ui`): migrate Matrix row operations/profiles and Vector independence; remove ten residual leaves.
 8. `CANONICAL-RESULT-V2-CLOSEOUT0` (`backend`): retain an empty anti-regression exemption registry, rebaseline the 143-case executable corpus at zero exemptions/missing, run the announced closeout gate, and publish the final handoff.
+
+All eight gates completed in order. The final accepted corpus is 143 cases / 452 leaves / 452 producer-proven / zero exempt / zero missing, and the separate browser closeout matrix passes 21/21 scenarios.
 
 ## Gate Contract
 

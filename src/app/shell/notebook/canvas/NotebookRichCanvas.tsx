@@ -13,6 +13,9 @@ import {
 } from 'react';
 
 import {
+  readClipboardEventFile,
+} from '../../../../lib/clipboard';
+import {
   NOTEBOOK_STARTER_TEMPLATES,
   createNotebookStarterContent,
   detectNotebookMathCandidates,
@@ -676,7 +679,7 @@ export function NotebookRichCanvas({
           }
         }}
         onPaste={(event) => {
-          const file = [...event.clipboardData.files][0];
+          const file = readClipboardEventFile(event);
           if (!file) return;
           event.preventDefault();
           if (isNotebookVideoFile(file)) {

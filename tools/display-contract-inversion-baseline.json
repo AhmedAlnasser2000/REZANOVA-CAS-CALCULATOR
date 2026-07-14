@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "CANONICAL-RESULT-V2-LINEAR-ALGEBRA1 adds reviewed V2 Matrix and Vector producer adapters without compatibility or legacy reads.",
+  "acceptedReason": "CANONICAL-RESULT-V2-CLOSEOUT0 moves Equation provenance behind the diagnostics-owned canonical read seam and removes two duplicate pilot reads",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -1064,12 +1064,8 @@
         "2e676bfb0de151462391:1"
       ],
       "src/lib/ooe/diagnostics/diagnostics-buffer.ts": [
-        "a38be4c2d858859cf6b7:1"
-      ],
-      "src/lib/ooe/pilots/equation-pilot.ts": [
-        "9939923d2ecbe3f9adec:1",
-        "a35df5aab1233e8455b1:1",
-        "da58a6974556773f21ef:1"
+        "a38be4c2d858859cf6b7:1",
+        "460215011ba296477c53:1"
       ],
       "src/lib/result-contract/consumer.ts": [
         "3ff7d4c54b0a1ee0ad4a:1",

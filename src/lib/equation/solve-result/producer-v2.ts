@@ -27,12 +27,14 @@ function normalizedLatex(value: string) {
   return value.replace(/\s+/gu, '');
 }
 
-function equationV2Route(outcome: EquationOutcome): EquationV2RouteId {
-  return outcome.kind === 'error' && outcome.solveBadges?.includes('Range Guard')
-    ? 'equation.domain-boundary'
-    : inferEquationMathJsonRoute(outcome) === 'equation.domain-boundary'
-      ? 'equation.domain-boundary'
-      : 'equation.rational-radical';
+function equationV2Route(outcome: EquationOutcome): EquationV2RouteId | undefined {
+  if (outcome.kind === 'error' && outcome.solveBadges?.includes('Range Guard')) {
+    return 'equation.domain-boundary';
+  }
+  const routeId = inferEquationMathJsonRoute(outcome);
+  return routeId === 'equation.domain-boundary' || routeId === 'equation.rational-radical'
+    ? routeId
+    : undefined;
 }
 
 function selectTypedSupplements(input: {
@@ -81,10 +83,12 @@ export function buildEquationCanonicalResultDocumentForRuntime(input: {
   document: CanonicalResultDocumentV1;
   analysisEvidence: readonly EquationAnalysisEvidence[];
 }): CanonicalResultDocumentV1 | CanonicalResultDocumentV2 {
+  const routeId = equationV2Route(input.outcome);
+  if (!routeId) return input.document;
+
   const typedSupplements = selectTypedSupplements(input);
   if (!typedSupplements) return input.document;
 
-  const routeId = equationV2Route(input.outcome);
   if (canonicalResultVersionForProducer({
     routeId,
     selector: 'typedLabeledSupplement',

@@ -168,3 +168,10 @@ export function readMathClipboardEvent(
 ): MathClipboardReadResult {
   return readMathClipboardData(event.clipboardData);
 }
+
+export function readClipboardEventFile(
+  event: Pick<ClipboardEvent, 'clipboardData'>,
+): File | undefined {
+  const files = event.clipboardData?.files;
+  return files?.item?.(0) ?? files?.[0] ?? undefined;
+}

@@ -66,7 +66,7 @@ describe('printer migration ratchet', () => {
     assert.deepEqual(scanPrinterMigrationRepository({ rootDir }), report);
   });
 
-  it('recognizes canonical and answer-node dual writes as migrated result paths', () => {
+  it('recognizes canonical, answer-node, and producer-evidence dual writes as migrated result paths', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `
         export const first = { exactLatex: '4', answerMathJson: 4 };
@@ -74,11 +74,13 @@ describe('printer migration ratchet', () => {
           exactLatex: 'x=1',
           primaryMath: { canonicalLatex: 'x=1' },
         };
+        export const third = { resultLatex: '6', resultMathJson: 6 };
+        export const fourth = { exactLatex: 'x=t', primaryMathJson: ['Equal', 'x', 't'] };
       `,
     });
     const report = scanPrinterMigrationRepository({ rootDir });
 
-    assert.equal(report.summary.migratedDualWriteCount, 2);
+    assert.equal(report.summary.migratedDualWriteCount, 4);
     assert.equal(report.summary.compatibilityFallbackCount, 0);
   });
 

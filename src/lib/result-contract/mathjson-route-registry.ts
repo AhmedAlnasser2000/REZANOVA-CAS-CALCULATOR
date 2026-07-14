@@ -171,14 +171,4 @@ export function mathJsonRouteForGoldenCase(caseId: string): MathJsonRouteId | un
   return (GOLDEN_CASE_ROUTE_REGISTRY as Record<string, MathJsonRouteId>)[caseId];
 }
 
-export type MathJsonCoverageExemption = {
-  id: string;
-  routeId: MathJsonRouteId;
-  leafPath: CanonicalMathLeafPath;
-  fixtureId: string;
-  owner: HistoryReplayWorkspace;
-  reason: 'standard-mathjson-unrepresentable' | 'committed-bound-exceeded';
-  rationale: string;
-};
-
-export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] = [];
+export const MATHJSON_COVERAGE_EXEMPTIONS: readonly never[] = [];

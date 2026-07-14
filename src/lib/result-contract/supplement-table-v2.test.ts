@@ -3,6 +3,8 @@ import { goldenCases } from '../__golden__/golden-cases';
 import { runGoldenCase } from '../__golden__/golden-execution';
 import { executeHistoryReplayRequest } from '../history-replay/native-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
+import { runEquationModeWithOoePilot } from '../modes/equation';
+import { makeRequest } from '../modes/equation/test-support';
 import { collectCanonicalMathLeaves } from './mathjson-coverage';
 import { MATHJSON_COVERAGE_EXEMPTIONS } from './mathjson-route-registry';
 
@@ -46,6 +48,25 @@ describe('Canonical Result V2 typed supplements and Table cells', () => {
     });
   });
 
+  it('keeps untouched periodic Equation producers on V1 when primary proof is unavailable', async () => {
+    const execution = await runEquationModeWithOoePilot({
+      ...makeRequest(),
+      angleUnit: 'rad',
+      equationScreen: 'symbolic',
+      equationLatex: '\\sin\\left(\\sqrt{x+1}-2\\right)=\\frac{1}{2}',
+    });
+    expect(execution.payload.kind).toBe('success');
+    if (execution.payload.kind !== 'success') {
+      throw new Error('Expected shifted-radical periodic success.');
+    }
+    expect(execution.payload.canonicalResult.version).toBe(1);
+    if (execution.payload.canonicalResult.version !== 1) {
+      throw new Error('Shifted-radical periodic result did not remain on V1.');
+    }
+    expect(execution.payload.canonicalResult.primaryMath?.canonicalLatex)
+      .toContain('\\sqrt{x+1}-2');
+  });
+
   it.each([
     ['table-partial-domain', 'outside-real-domain', 0],
     ['table-reciprocal', 'pole', 1],
@@ -65,22 +86,12 @@ describe('Canonical Result V2 typed supplements and Table cells', () => {
       .toBe(true);
   });
 
-  it('migrates the golden partial-domain Table case and removes all eight gate exemptions', async () => {
+  it('migrates the golden partial-domain Table case without residual exemptions', async () => {
     const goldenCase = goldenCases.find((entry) => entry.id === 'table-partial-real-domain');
     if (!goldenCase) throw new Error('Missing partial-domain Table golden case.');
     const execution = await runGoldenCase(goldenCase);
     if (execution.outcome.kind === 'prompt') throw new Error('Unexpected Table golden prompt.');
     expect(execution.outcome.canonicalResult.version).toBe(2);
-    const removedIds = new Set([
-      'equation-denominator-exclusion-labeled-supplement',
-      'equation-even-root-labeled-supplement',
-      'equation-rational-hole-labeled-supplement',
-      'equation-rational-simple-labeled-supplement',
-      'golden-equation-rational-exclusion-label',
-      'table-partial-domain-undefined-cell',
-      'table-rational-pole-undefined-cell',
-      'golden-table-partial-domain-undefined-cell',
-    ]);
-    expect(MATHJSON_COVERAGE_EXEMPTIONS.some((entry) => removedIds.has(entry.id))).toBe(false);
+    expect(MATHJSON_COVERAGE_EXEMPTIONS).toEqual([]);
   });
 });

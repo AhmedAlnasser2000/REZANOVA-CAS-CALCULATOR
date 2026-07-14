@@ -5,6 +5,7 @@ import {
   MATH_CLIPBOARD_MIME,
   buildMathClipboardHtml,
   createMathClipboardEnvelope,
+  readClipboardEventFile,
   readBrowserMathClipboard,
   readMathClipboardData,
   writeBrowserMathClipboard,
@@ -98,6 +99,21 @@ describe('browser math clipboard adapter', () => {
       reason: 'mismatched',
       textFallback: request.visibleText,
     });
+  });
+
+  it('keeps pasted-file access inside the browser clipboard adapter', () => {
+    const file = new File(['image'], 'diagram.png', { type: 'image/png' });
+    const event = {
+      clipboardData: {
+        files: { item: (index: number) => index === 0 ? file : null },
+      },
+    } as Pick<ClipboardEvent, 'clipboardData'>;
+    expect(readClipboardEventFile(event)).toBe(file);
+
+    const arrayBackedEvent = {
+      clipboardData: { files: [file] },
+    } as unknown as Pick<ClipboardEvent, 'clipboardData'>;
+    expect(readClipboardEventFile(arrayBackedEvent)).toBe(file);
   });
 
   it('uses plain text when malformed rich data is accompanied by a safe fallback', () => {

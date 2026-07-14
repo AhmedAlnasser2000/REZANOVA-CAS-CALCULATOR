@@ -84,7 +84,7 @@
 
 ## CANONICAL-RESULT-V2-LINEAR-ALGEBRA1
 
-- result: pass; pending commit creation under standing approval
+- result: pass; committed as `ee74ee71`
 - kind: UI producer migration
 - scope: Matrix linear-system row operations, Matrix linear-map profiles, and Vector independence migrated to typed V2 semantics; all ten remaining residual leaves removed
 - production impact: Matrix linear-system/profile routes default to V2; only the Vector `independent` selector uses V2 while `span` remains frozen V1; visible output is unchanged
@@ -95,3 +95,16 @@
 - closeout boundary: the executable report already has an empty exemption registry and 452/452 proof; the committed coverage-baseline refresh remains intentionally assigned to `CANONICAL-RESULT-V2-CLOSEOUT0`
 - file-size status: exact staged-index validation passes all 1,850 tracked TypeScript caps; the mutable shared-tree command is blocked only by concurrent Notebook `NotebookRichCanvas.tsx` at 1,120 lines
 - protected state: concurrent Notebook and Rust OOE files plus `test-results/` excluded
+
+## CANONICAL-RESULT-V2-CLOSEOUT0
+
+- result: pass; recorded by the memory-bearing closeout commit containing this summary
+- kind: backend program closeout
+- scope: accepted coverage baseline, empty exemption ratchet, obsolete residual-classification removal, printer/clipboard/OOE boundary cleanup, final dual-version regression evidence, and durable handoff
+- corpus: 143 executable cases / 452 leaves / 452 producer-proven / zero exempt / zero missing; 57 registered routes; 112,166 serialized MathJSON bytes; largest tree 2,753 bytes
+- aggregate gate: announced and run alone with the repository four-worker cap; all static/contract/runtime ratchets passed, full unit passed 559 files / 3,889 tests, and full UI passed 73 files / 520 tests
+- aggregate delta: the subsequent build exposed two test-only TypeScript narrowings; after correcting them, the exact staged snapshot production build passes and both affected files pass 17/17. Repository policy preserves the completed full-suite evidence for this bounded non-runtime delta.
+- browser verification: separate exact-snapshot Chromium matrix passes 21/21 across V2 request evidence, supplements/Table, Period & Phase, Matrix/Vector, V1/V2 History persistence, future-version preservation, and nine-workspace replay; no observed horizontal overflow
+- ratchets: result contract, display inversion at 57 normalized consumer reads with zero compatibility/legacy reads, printer migration at zero compatibility fallbacks, clipboard audit, OOE boundary, incremental TypeScript/build, file-size, memory, and diff hygiene
+- process hygiene: gate-owned preview and Playwright processes exited; the foreign long-lived Playwright test server was not modified
+- protected state: concurrent Notebook and Rust OOE files plus untracked `test-results/` excluded; no push authorized

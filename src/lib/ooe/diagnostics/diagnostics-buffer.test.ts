@@ -7,6 +7,7 @@ import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
   listOoeDiagnostics,
+  readEquationCanonicalDiagnostics,
   recordOoeDiagnostics,
   summarizeCanonicalRuntimeOutcome,
 } from './diagnostics-buffer';
@@ -179,6 +180,39 @@ describe('OOE diagnostics buffer', () => {
       summaryText: undefined,
       errorSummary: undefined,
       unsafeReadbackMarkers: undefined,
+    });
+  });
+
+  it('projects Equation provenance through the diagnostics-owned canonical seam', () => {
+    const canonicalResult = buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'success',
+      title: 'Equation',
+      primaryMath: canonicalMathValue('x=1'),
+      warnings: [],
+      detailSections: [{
+        title: 'Isolation steps',
+        lineParts: [[
+          { kind: 'text', text: 'Generated equation: ' },
+          { kind: 'math', latex: 'x=1' },
+        ]],
+        lines: ['Generated equation: x=1'],
+      }],
+      metadata: {
+        answerDomain: 'real',
+        solutionKind: 'exact-symbolic',
+      },
+    });
+
+    expect(readEquationCanonicalDiagnostics({
+      kind: 'success',
+      canonicalResult,
+    })).toEqual({
+      answerDomain: 'real',
+      solutionKind: 'exact-symbolic',
+      primaryLatexLength: 3,
+      error: undefined,
+      detailSectionTitles: ['Isolation steps'],
+      generatedRewriteOrIsolationDetails: ['Generated equation: x=1'],
     });
   });
 

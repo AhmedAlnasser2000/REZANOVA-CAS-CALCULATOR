@@ -47,6 +47,15 @@ export type OoeDiagnosticsOutputSummary = {
   unsafeReadbackMarkers?: string[];
 };
 
+export type OoeEquationCanonicalDiagnostics = {
+  answerDomain?: string;
+  solutionKind?: string;
+  primaryLatexLength?: number;
+  error?: string;
+  detailSectionTitles: string[];
+  generatedRewriteOrIsolationDetails: string[];
+};
+
 export type OoeDiagnosticsProvenance = {
   depth: 'coarse' | 'rich';
   mode: string;
@@ -284,6 +293,50 @@ export function summarizeCanonicalRuntimeOutcome(outcome: unknown): OoeDiagnosti
     summaryText: canonicalSummaryText(presentation),
     errorSummary: compactText(presentation.error),
     unsafeReadbackMarkers: unsafeMarkersFromPresentation(presentation),
+  };
+}
+
+export function readEquationCanonicalDiagnostics(
+  outcome: CanonicalRuntimeOutcome,
+): OoeEquationCanonicalDiagnostics {
+  if (outcome.kind === 'prompt') {
+    return {
+      detailSectionTitles: [],
+      generatedRewriteOrIsolationDetails: [],
+    };
+  }
+
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  if (!resolution.ok) {
+    return {
+      detailSectionTitles: [],
+      generatedRewriteOrIsolationDetails: [],
+    };
+  }
+
+  const { presentation, semantics } = resolution;
+  const details = presentation.details ?? [];
+  return {
+    answerDomain: semantics.metadata?.answerDomain,
+    solutionKind: semantics.metadata?.solutionKind,
+    primaryLatexLength: presentation.primaryLatex?.length,
+    error: presentation.error,
+    detailSectionTitles: details.map((section) => section.title),
+    generatedRewriteOrIsolationDetails: details.flatMap((section) => {
+      const title = section.title.toLowerCase();
+      if (
+        !title.includes('isolation')
+        && !title.includes('solve')
+        && !title.includes('transform')
+      ) {
+        return [];
+      }
+
+      return section.lines
+        .map(detailPartsText)
+        .filter((line) =>
+          /generated equation|isolated form|formula form|formula branches|isolation facts/i.test(line));
+    }),
   };
 }
 

@@ -29,11 +29,17 @@
 - `CANONICAL-RESULT-V2-REQUEST-EVIDENCE1`: committed as `2bf24bf6`.
 - `CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1`: committed as `ffaf4f2a`.
 - `CANONICAL-RESULT-V2-TRIGONOMETRY1`: committed as `94ea5c52`.
-- `CANONICAL-RESULT-V2-LINEAR-ALGEBRA1`: verified; pending commit creation under standing approval.
-- `CANONICAL-RESULT-V2-CLOSEOUT0`: pending.
+- `CANONICAL-RESULT-V2-LINEAR-ALGEBRA1`: committed as `ee74ee71`.
+- `CANONICAL-RESULT-V2-CLOSEOUT0`: implemented and verified; recorded by the memory-bearing closeout commit containing this status.
 
 ## Cross-Lane Boundary
 
-- V2 program baseline is `94ea5c52` after `CANONICAL-RESULT-V2-TRIGONOMETRY1`; concurrent Notebook and Rust OOE work remains independently owned.
+- V2 program baseline before Closeout is `ee74ee71` after `CANONICAL-RESULT-V2-LINEAR-ALGEBRA1`; concurrent Notebook and Rust OOE work remains independently owned.
 - Untracked `test-results/` is foreign to V2 and must not be staged, cleaned, or used as gate evidence.
 - V2 may add optional workspace-owned semantic evidence but may not merge workers, hosts, capabilities, replay seeds, or OOE authority.
+
+## Final State
+
+- The executable corpus is accepted at 143 cases / 452 leaves / 452 producer-proven / zero exempt / zero missing.
+- The empty exemption registry remains as an anti-regression ratchet.
+- The announced aggregate closeout and separate 21-case Chromium History/V2 matrix are recorded in `verification-summary.md` and `gate-canonical-result-v2-closeout0.md`.

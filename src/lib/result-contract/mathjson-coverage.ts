@@ -270,23 +270,15 @@ function recordDocumentCoverage(input: {
       input.summary.proven += 1;
       continue;
     }
-    const exemption = MATHJSON_COVERAGE_EXEMPTIONS.find((candidate) =>
-      candidate.routeId === input.routeId
-      && candidate.leafPath === leaf.leafPath
-      && candidate.fixtureId === input.evidenceId);
-    if (exemption) {
-      input.summary.exempt += 1;
-    } else {
-      input.summary.missing += 1;
-      input.gaps.push({
-        evidenceKind: input.evidenceKind,
-        evidenceId: input.evidenceId,
-        routeId: input.routeId,
-        path: leaf.path,
-        leafPath: leaf.leafPath,
-        canonicalLatex: leaf.value.canonicalLatex,
-      });
-    }
+    input.summary.missing += 1;
+    input.gaps.push({
+      evidenceKind: input.evidenceKind,
+      evidenceId: input.evidenceId,
+      routeId: input.routeId,
+      path: leaf.path,
+      leafPath: leaf.leafPath,
+      canonicalLatex: leaf.value.canonicalLatex,
+    });
   }
 }
 
@@ -352,7 +344,7 @@ export async function buildMathJsonCoverageReport(): Promise<MathJsonCoverageRep
     replayFixtureCount: HISTORY_REPLAY_FIXTURES.length,
     goldenCaseCount: goldenCases.length,
     routeCount: routeIds.length,
-    exemptionIds: MATHJSON_COVERAGE_EXEMPTIONS.map((entry) => entry.id).sort(),
+    exemptionIds: [...MATHJSON_COVERAGE_EXEMPTIONS],
     totals: {
       evidence: summaries.reduce((sum, entry) => sum + entry.evidence, 0),
       replayFixtures: summaries.reduce((sum, entry) => sum + entry.replayFixtures, 0),

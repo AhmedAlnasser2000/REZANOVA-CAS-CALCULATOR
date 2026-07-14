@@ -51,11 +51,20 @@ export const NON_PRODUCER_RESULT_REGISTRATIONS = [
     rationale: 'Notebook evidence snapshots preserve authored reference LaTeX through document schemas, templates, and Tiptap attributes without computing solver output.',
     matchers: exact(
       'src/app/shell/notebook/canvas/extensions.tsx',
+      'src/app/shell/notebook/canvas/selection.ts',
       'src/lib/notebook/document/migrate-v1.ts',
       'src/lib/notebook/document/templates.ts',
       'src/lib/notebook/document/tiptap-adapter.ts',
     ),
     properties: ['resultLatex'],
+  },
+  {
+    id: 'canonical-result-normalized-presentation-v2',
+    category: 'downstream-presentation',
+    owner: 'canonical-result-consumer-authority',
+    rationale: 'The normalized V1/V2 authority copies producer-owned canonical values into version-neutral presentation fields without reparsing or authoring mathematical output.',
+    matchers: exact('src/lib/result-contract/normalized-result.ts'),
+    properties: ['exactLatex', 'resultLatex'],
   },
 ];
 
@@ -155,6 +164,7 @@ export const FALLBACK_REGISTRATIONS = [
       ...prefix('src/lib/linear-algebra/'),
       ...exact(
         'src/lib/modes/matrix-result-document.ts',
+        'src/lib/modes/matrix-math-values.ts',
         'src/lib/modes/matrix.ts',
         'src/lib/modes/vector-result-document.ts',
         'src/lib/modes/vector.ts',
@@ -221,6 +231,8 @@ export const PROSE_PROPERTY_NAMES = new Set([
 export const MIGRATION_MARKER_NAMES = new Set([
   'answerMathJson',
   'primaryMath',
+  'primaryMathJson',
+  'resultMathJson',
 ]);
 
 export const MIGRATION_WRAPPER_NAMES = new Set([

@@ -554,9 +554,13 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       expect.objectContaining({
         kind: 'success',
         canonicalResult: expect.objectContaining({
+          version: 2,
           outcomeKind: 'success',
-          primaryMath: expect.objectContaining({
-            canonicalLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+          primary: expect.objectContaining({
+            kind: 'math',
+            value: expect.objectContaining({
+              canonicalLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+            }),
           }),
           summaries: {
             solve: [[{

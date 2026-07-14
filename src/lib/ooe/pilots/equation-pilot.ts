@@ -1,6 +1,5 @@
 import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import { finalizeEquationCanonicalRuntimeOutcome } from '../../equation/equation-solve-result';
-import { resolveCanonicalResultForConsumer } from '../../result-contract';
 import {
   listSharedEquationSolveStageOrder,
   runSharedEquationSolveWithTraceAsync,
@@ -13,7 +12,10 @@ import {
   type GuardedEquationStageReplayTrace,
 } from '../../equation/guarded-solve';
 import { type OoeTraceEvent } from '../bridge-schema/ooe-bridge';
-import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
+import {
+  readEquationCanonicalDiagnostics,
+  summarizeCanonicalRuntimeOutcome,
+} from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -256,39 +258,6 @@ function buildEquationOoeTraceEvents(
   ];
 }
 
-function detailSectionTitles(outcome: CanonicalRuntimeOutcome) {
-  if (outcome.kind === 'prompt') return [];
-  const resolution = resolveCanonicalResultForConsumer(outcome);
-  return resolution.ok
-    ? resolution.presentation.details?.map((section) => section.title) ?? []
-    : [];
-}
-
-function generatedEquationDetails(outcome: CanonicalRuntimeOutcome) {
-  if (outcome.kind === 'prompt') {
-    return [];
-  }
-  const resolution = resolveCanonicalResultForConsumer(outcome);
-  const details = resolution.ok ? resolution.presentation.details : undefined;
-  if (!details) return [];
-
-  return details.flatMap((section) => {
-    const title = section.title.toLowerCase();
-    if (
-      !title.includes('isolation')
-      && !title.includes('solve')
-      && !title.includes('transform')
-    ) {
-      return [];
-    }
-
-    return section.lines
-      .map((line) => line.map((part) => part.kind === 'text' ? part.text : part.latex).join(''))
-      .filter((line) =>
-        /generated equation|isolated form|formula form|formula branches|isolation facts/i.test(line));
-  });
-}
-
 function explicitImaginaryInputFromSnapshot(snapshot: {
   explicitImaginaryInput?: unknown;
 }) {
@@ -318,11 +287,8 @@ export function buildEquationProvenance(input: {
   const cancellation = input.metadata.guardedTrace?.cancellation;
   const runtimeHostExecution = input.metadata.runtimeHostExecution;
   const explicitImaginaryInput = explicitImaginaryInputFromSnapshot(snapshot);
-  const resolution = input.payload.kind === 'prompt'
-    ? undefined
-    : resolveCanonicalResultForConsumer(input.payload);
-  const presentation = resolution?.ok ? resolution.presentation : undefined;
-  const resultMetadata = resolution?.ok ? resolution.semantics.metadata : undefined;
+  const canonicalDiagnostics = readEquationCanonicalDiagnostics(input.payload);
+  const outputSummary = summarizeCanonicalRuntimeOutcome(input.payload);
 
   return {
     depth: 'rich' as const,
@@ -335,7 +301,7 @@ export function buildEquationProvenance(input: {
       latexLength: snapshot.request?.equationLatex?.length,
       hasNumericInterval: Boolean(snapshot.request?.numericInterval),
     },
-    outputSummary: summarizeCanonicalRuntimeOutcome(input.payload),
+    outputSummary,
     runtimeHost: input.metadata.hostId,
     runtimeShell: input.metadata.runtimeShell,
     runtimeHostExecution,
@@ -344,19 +310,19 @@ export function buildEquationProvenance(input: {
       answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
       domainIntent: snapshot.request?.equationDomainIntent ?? 'real',
       complexExactForm: snapshot.request?.complexExactForm ?? 'rectangular',
-      answerDomain: resultMetadata?.answerDomain,
-      solutionKind: resultMetadata?.solutionKind,
-      inequalityRouteEvidence: resultMetadata?.solutionKind === 'inequality-solution-set'
+      answerDomain: canonicalDiagnostics.answerDomain,
+      solutionKind: canonicalDiagnostics.solutionKind,
+      inequalityRouteEvidence: canonicalDiagnostics.solutionKind === 'inequality-solution-set'
         ? {
             relation: snapshot.request?.equationLatex?.match(/\\(?:le|leq|ge|geq)(?![A-Za-z])|[<>≤≥]/u)?.[0],
-            detailSectionTitles: detailSectionTitles(input.payload),
-            exactLatexLength: presentation?.primaryLatex?.length,
+            detailSectionTitles: canonicalDiagnostics.detailSectionTitles,
+            exactLatexLength: canonicalDiagnostics.primaryLatexLength,
           }
         : undefined,
-      complexRouteEvidence: resultMetadata?.answerDomain === 'complex'
+      complexRouteEvidence: canonicalDiagnostics.answerDomain === 'complex'
         ? {
-            detailSectionTitles: detailSectionTitles(input.payload),
-            exactLatexLength: presentation?.primaryLatex?.length,
+            detailSectionTitles: canonicalDiagnostics.detailSectionTitles,
+            exactLatexLength: canonicalDiagnostics.primaryLatexLength,
             explicitImaginaryInput,
           }
         : undefined,
@@ -396,10 +362,10 @@ export function buildEquationProvenance(input: {
           }
         : undefined,
       winningStageId: cancellation ? null : winningAttempt?.stageId ?? null,
-      stopReason: input.payload.kind === 'error' ? presentation?.error ?? null : null,
-      detailSectionTitles: detailSectionTitles(input.payload),
-      generatedRewriteOrIsolationDetails: generatedEquationDetails(input.payload),
-      outputHygiene: summarizeCanonicalRuntimeOutcome(input.payload).unsafeReadbackMarkers?.length
+      stopReason: input.payload.kind === 'error' ? canonicalDiagnostics.error ?? null : null,
+      detailSectionTitles: canonicalDiagnostics.detailSectionTitles,
+      generatedRewriteOrIsolationDetails: canonicalDiagnostics.generatedRewriteOrIsolationDetails,
+      outputHygiene: outputSummary.unsafeReadbackMarkers?.length
         ? 'unsafe-markers-detected'
         : 'display-safe',
     },

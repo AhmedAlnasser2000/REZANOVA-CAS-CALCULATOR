@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "CANONICAL-RESULT-V2-TRIGONOMETRY1 replaces the Period and Phase compound-primary exemption with three producer-proven typed V2 components.",
+  "reason": "CANONICAL-RESULT-V2-CLOSEOUT0 accepts the 143-case typed V2 corpus at 452/452 producer-proven leaves, zero exemptions, and zero missing proof.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -60,24 +60,16 @@
     "vector.orthogonalization",
     "vector.span-independence"
   ],
-  "exemptionIds": [
-    "golden-matrix-profile-singular-compound-primary",
-    "golden-matrix-profile-singular-map-row",
-    "golden-matrix-profile-tall-compound-primary",
-    "golden-matrix-profile-tall-map-row",
-    "golden-vector-independence-labeled-answer-row",
-    "golden-vector-independence-labeled-primary",
-    "matrix-linear-system-legacy-operator-details"
-  ],
+  "exemptionIds": [],
   "totals": {
     "evidence": 143,
     "replayFixtures": 100,
     "goldenCases": 43,
-    "bytes": 111151,
+    "bytes": 112166,
     "maxBytes": 2753,
-    "leaves": 457,
-    "proven": 447,
-    "exempt": 10,
+    "leaves": 452,
+    "proven": 452,
+    "exempt": 0,
     "missing": 0
   },
   "routes": {
@@ -426,11 +418,11 @@
       "evidence": 1,
       "replayFixtures": 1,
       "goldenCases": 0,
-      "bytes": 2069,
-      "maxBytes": 2069,
+      "bytes": 2557,
+      "maxBytes": 2557,
       "leaves": 12,
-      "proven": 8,
-      "exempt": 4,
+      "proven": 12,
+      "exempt": 0,
       "missing": 0
     },
     "matrix.matrix-arithmetic": {
@@ -448,11 +440,11 @@
       "evidence": 2,
       "replayFixtures": 0,
       "goldenCases": 2,
-      "bytes": 5139,
-      "maxBytes": 2572,
-      "leaves": 21,
-      "proven": 17,
-      "exempt": 4,
+      "bytes": 5251,
+      "maxBytes": 2634,
+      "leaves": 15,
+      "proven": 15,
+      "exempt": 0,
       "missing": 0
     },
     "matrix.rank": {
@@ -701,11 +693,11 @@
       "evidence": 1,
       "replayFixtures": 0,
       "goldenCases": 1,
-      "bytes": 1794,
-      "maxBytes": 1794,
-      "leaves": 10,
-      "proven": 8,
-      "exempt": 2,
+      "bytes": 2209,
+      "maxBytes": 2209,
+      "leaves": 11,
+      "proven": 11,
+      "exempt": 0,
       "missing": 0
     }
   }

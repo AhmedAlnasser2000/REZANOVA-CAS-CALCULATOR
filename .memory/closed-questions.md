@@ -76,3 +76,4 @@ Closed during the July 3 memory cleanup:
 
 - Closed the V2 shape question. The approved contract uses clean typed V2 primaries, requests, supplements, Table cells, and Matrix row-operation parts, with mandatory producer-proven standard MathJSON only for genuine math leaves.
 - Closed the dual-version transition question. V1 remains immutable and visible, V2 becomes a current visible History version, future versions remain opaque, and all semantic consumers converge on one normalized presentation/semantics authority.
+- Closed the V2 residual-closeout question. All 23 reviewed V1 residual leaves now have typed V2 semantics or typed non-value reasons, the executable exemption registry is empty, and no residual-only compatibility mechanism remains necessary.
