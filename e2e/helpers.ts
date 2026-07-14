@@ -178,7 +178,9 @@ export async function openGeometrySlope(page: Page) {
 
 export async function openStatisticsRegression(page: Page) {
   await openLauncherApp(page, 'Data', 'Statistics');
-  await page.getByTestId('keypad-6').click();
+  await page.getByRole('tab', { name: 'Relationships' }).click();
+  await page.getByRole('combobox', { name: 'Statistics tool' })
+    .selectOption({ label: 'Regression' });
   await expect(page.getByTestId('main-editor')).toBeVisible();
 }
 

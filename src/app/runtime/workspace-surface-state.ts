@@ -45,6 +45,8 @@ import type {
   SphereState,
   SquareState,
   StatisticsScreen,
+  StatisticsSection,
+  StatisticsInputMode,
   StatisticsSourceSyncState,
   StatisticsWorkingSource,
   StatsDataset,
@@ -58,6 +60,7 @@ import type {
   TriangleHeronState,
   VariableSubstitutionSnapshot,
   EquationScreen,
+  CanonicalRuntimeOutcome,
 } from '../../types/calculator';
 import type {
   LinearAlgebraMatrixNamedValue,
@@ -158,6 +161,14 @@ export type TrigonometrySurfaceState = {
 
 export type StatisticsSurfaceState = {
   statisticsScreen: StatisticsScreen;
+  statisticsSection: StatisticsSection;
+  statisticsInputMode: StatisticsInputMode;
+  statisticsSectionScreens: Record<StatisticsSection, StatisticsScreen>;
+  statisticsSectionResults: Partial<Record<StatisticsSection, {
+    outcome: CanonicalRuntimeOutcome;
+    inputLatex: string;
+    inputRevisionId: string;
+  }>>;
   statisticsMenuSelection: {
     home: number;
     probabilityHome: number;

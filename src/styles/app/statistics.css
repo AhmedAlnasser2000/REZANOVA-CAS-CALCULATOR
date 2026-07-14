@@ -157,3 +157,53 @@
   color: rgba(244, 248, 232, 0.6);
   cursor: not-allowed;
 }
+.statistics-section-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.statistics-section-tabs button {
+  min-height: 42px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.statistics-section-tabs button.is-active {
+  border-color: var(--control-border-strong);
+  background: var(--control-surface-hover);
+}
+
+.statistics-tool-select {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 280px);
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.statistics-tool-select span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.statistics-tool-select select {
+  min-height: 38px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  padding: 0 10px;
+}
+
+@media (max-width: 720px) {
+  .statistics-section-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

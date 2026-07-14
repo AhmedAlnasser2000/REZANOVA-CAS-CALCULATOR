@@ -1,5 +1,14 @@
-import type { CoreDraftState } from '../../types/calculator';
+import type {
+  CoreDraftState,
+  StatisticsScreen,
+  StatisticsSection,
+} from '../../types/calculator';
 import { datasetTextFromValues } from '../../lib/statistics/runtime-request';
+import {
+  defaultStatisticsScreenForSection,
+  statisticsSectionForScreen,
+  statisticsWorkspaceScreenForLegacyScreen,
+} from '../../lib/statistics/navigation';
 import type { StatisticsSurfaceState } from './workspace-surface-state';
 
 type StatisticsMenuScreen = 'home' | 'probabilityHome' | 'inferenceHome';
@@ -12,9 +21,29 @@ function copyCoreDraftState(state: CoreDraftState): CoreDraftState {
   return { ...state };
 }
 
+export function defaultStatisticsSectionScreens(): Record<StatisticsSection, StatisticsScreen> {
+  return {
+    dataSummary: defaultStatisticsScreenForSection('dataSummary'),
+    probability: defaultStatisticsScreenForSection('probability'),
+    inference: defaultStatisticsScreenForSection('inference'),
+    relationships: defaultStatisticsScreenForSection('relationships'),
+  };
+}
+
 export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): StatisticsSurfaceState {
+  const statisticsScreen = statisticsWorkspaceScreenForLegacyScreen(state.statisticsScreen);
+  const statisticsSection = state.statisticsSection ?? statisticsSectionForScreen(statisticsScreen);
   return {
     ...state,
+    statisticsScreen,
+    statisticsSection,
+    statisticsInputMode: state.statisticsInputMode ?? 'guided',
+    statisticsSectionScreens: {
+      ...defaultStatisticsSectionScreens(),
+      ...state.statisticsSectionScreens,
+      [statisticsSection]: statisticsScreen,
+    },
+    statisticsSectionResults: { ...state.statisticsSectionResults },
     statisticsMenuSelection: copyStatisticsMenuSelection(state.statisticsMenuSelection),
     statisticsSourceSyncState: { ...state.statisticsSourceSyncState },
     statsDataset: { values: [...state.statsDataset.values] },

@@ -339,8 +339,74 @@ describe('useStatisticsRuntime', () => {
         historyTicketId: 'ticket.statistics.success',
         historyLaunchOrder: 51,
         suppressDisplayCommit: false,
+        suppressWorkspaceDisplayCommit: false,
       },
     );
+  });
+
+  it('caches a hidden completion in its originating section without replacing the visible section', async () => {
+    let resolveRun: ((value: ReturnType<typeof statisticsEnvelope>) => void) | undefined;
+    vi.mocked(runStatisticsModeWithOoePilot).mockImplementation(() => new Promise((resolve) => {
+      resolveRun = resolve;
+    }));
+    const { commitOutcome, hook, setDisplayOutcome } = renderStatisticsRuntime();
+
+    act(() => {
+      hook.result.current.openStatisticsScreen('binomial');
+    });
+    act(() => {
+      hook.result.current.runStatisticsAction();
+    });
+    act(() => {
+      hook.result.current.openStatisticsSection('inference');
+    });
+    expect(hook.result.current.statisticsSection).toBe('inference');
+
+    await waitFor(() => expect(runStatisticsModeWithOoePilot).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      resolveRun?.(statisticsEnvelope('commitAllowed'));
+    });
+    await waitFor(() => expect(commitOutcome).toHaveBeenCalledTimes(1));
+    expect(commitOutcome).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.any(String),
+      'statistics',
+      expect.objectContaining({
+        suppressDisplayCommit: true,
+        suppressWorkspaceDisplayCommit: true,
+      }),
+    );
+    expect(hook.result.current.activeStatisticsSectionResult).toBeNull();
+
+    setDisplayOutcome.mockClear();
+    act(() => {
+      hook.result.current.openStatisticsSection('probability');
+    });
+    expect(setDisplayOutcome).toHaveBeenCalledWith(statisticsPayload().outcome);
+    expect(hook.result.current.activeStatisticsSectionResult?.outcome).toEqual(
+      statisticsPayload().outcome,
+    );
+  });
+
+  it('clears only the active section and resets shared data only from Data & Summary', () => {
+    const { hook } = renderStatisticsRuntime();
+
+    act(() => {
+      hook.result.current.updateStatisticsDataset('4, 8, 15, 16, 23, 42');
+      hook.result.current.openStatisticsSection('inference');
+    });
+    act(() => {
+      hook.result.current.resetCurrentStatisticsScreen();
+    });
+    expect(hook.result.current.statsDataset.values).toEqual(['4', '8', '15', '16', '23', '42']);
+
+    act(() => {
+      hook.result.current.openStatisticsSection('dataSummary');
+    });
+    act(() => {
+      hook.result.current.resetCurrentStatisticsScreen();
+    });
+    expect(hook.result.current.statsDataset.values).toEqual(['12', '15', '15', '18', '20']);
   });
 
   it('drops stale Statistics commits without publishing an outcome', async () => {
@@ -420,7 +486,7 @@ describe('useStatisticsRuntime', () => {
       hook.result.current.restoreStatisticsSurfaceState(null);
     });
 
-    expect(hook.result.current.statisticsScreen).toBe('home');
+    expect(hook.result.current.statisticsScreen).toBe('descriptive');
     expect(hook.result.current.statisticsWorkingSource).toBe('dataset');
     expect(hook.result.current.binomialState).toMatchObject({
       n: '10',
@@ -486,8 +552,10 @@ describe('useStatisticsRuntime', () => {
       hook.result.current.resetStatisticsRuntime();
     });
 
-    expect(hook.result.current.statisticsScreen).toBe('home');
+    expect(hook.result.current.statisticsScreen).toBe('descriptive');
     expect(hook.result.current.normalState.mean).toBe('0');
-    expect(hook.result.current.statisticsDraftState.rawLatex).toBe('');
+    expect(hook.result.current.statisticsDraftState.rawLatex).toBe(
+      'descriptive(values={12,15,15,18,20})',
+    );
   });
 });

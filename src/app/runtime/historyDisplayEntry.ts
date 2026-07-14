@@ -46,6 +46,7 @@ export type CommitHistoryDisplayContext = Partial<Pick<
   historyLaunchOrder?: number;
   solutionKind?: SolutionKind;
   suppressDisplayCommit?: boolean;
+  suppressWorkspaceDisplayCommit?: boolean;
   tableResponse?: TableResponse;
   variableSubstitutions?: VariableSubstitutionSnapshot[];
 };

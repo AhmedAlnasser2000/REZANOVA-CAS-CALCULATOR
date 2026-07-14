@@ -460,6 +460,9 @@ export function useHistoryDisplayRuntime({
     }
 
     const updateOriginDisplayState = () => {
+      if (context.suppressWorkspaceDisplayCommit) {
+        return;
+      }
       updateWorkspaceInstanceDisplayState?.(
         workspaceInstanceId,
         (currentDisplayState) => applyWorkspaceDisplayOutcome(currentDisplayState, outcome),

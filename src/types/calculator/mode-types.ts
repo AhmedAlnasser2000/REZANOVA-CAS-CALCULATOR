@@ -137,6 +137,24 @@ export type StatisticsScreen =
   | 'regression'
   | 'correlation';
 
+export type StatisticsSection =
+  | 'dataSummary'
+  | 'probability'
+  | 'inference'
+  | 'relationships';
+export type StatisticsInputMode = 'guided' | 'expression';
+export type StatisticsQuartileMethod = 'halves' | 'linear';
+export type StatisticsDataContext = 'compare' | 'sample' | 'population';
+export type StatisticsProbabilityEvent =
+  | 'exactly'
+  | 'density'
+  | 'lessThan'
+  | 'atMost'
+  | 'moreThan'
+  | 'atLeast'
+  | 'between';
+export type MeanTestAlternative = 'twoSided' | 'less' | 'greater';
+
 export type EquationScreen =
   | 'home'
   | 'symbolic'

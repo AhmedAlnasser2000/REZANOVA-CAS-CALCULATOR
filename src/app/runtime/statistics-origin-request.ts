@@ -84,3 +84,38 @@ export function statisticsRequestFromSurfaceState(
     ? ({ inputLatex, screenHint, workingSourceHint } satisfies RunStatisticsRuntimeRequest)
     : null;
 }
+
+export function statisticsRequestFromSurfaceStateForScreen(
+  surfaceState: WorkspaceInstanceStateSlot,
+  instance: WorkspaceInstance,
+  screenHint: StatisticsScreen,
+  useExpressionDraft = false,
+) {
+  if (
+    instance.workspaceKind !== 'statistics'
+    || !isStatisticsSurfaceState(surfaceState)
+  ) {
+    return null;
+  }
+
+  const workingSourceHint = surfaceState.statisticsWorkingSource;
+  const inputLatex = useExpressionDraft
+    ? surfaceState.statisticsDraftState.rawLatex.trim()
+    : buildStatisticsInputLatex(
+        screenHint,
+        {
+          dataset: surfaceState.statsDataset,
+          frequencyTable: surfaceState.frequencyTable,
+          binomial: surfaceState.binomialState,
+          normal: surfaceState.normalState,
+          poisson: surfaceState.poissonState,
+          meanInference: surfaceState.meanInferenceState,
+          regression: surfaceState.regressionState,
+          correlation: surfaceState.correlationState,
+        },
+        workingSourceHint,
+      );
+  return inputLatex
+    ? ({ inputLatex, screenHint, workingSourceHint } satisfies RunStatisticsRuntimeRequest)
+    : null;
+}

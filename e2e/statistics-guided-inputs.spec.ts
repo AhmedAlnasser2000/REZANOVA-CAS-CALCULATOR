@@ -7,10 +7,27 @@ function exactText(label: string) {
 
 async function openStatisticsTool(page: Page, ...labels: string[]) {
   await openLauncherApp(page, 'Data', 'Statistics');
-  for (const label of labels) {
-    await page.locator('button.statistics-menu-entry:visible')
-      .filter({ has: page.locator('strong', { hasText: exactText(label) }) })
-      .click();
+  const sectionByLabel: Record<string, string> = {
+    'Data Entry': 'Data & Summary',
+    Descriptive: 'Data & Summary',
+    Frequency: 'Data & Summary',
+    Probability: 'Probability',
+    Binomial: 'Probability',
+    Normal: 'Probability',
+    Poisson: 'Probability',
+    Inference: 'Inference',
+    Mean: 'Inference',
+    Regression: 'Relationships',
+    Correlation: 'Relationships',
+  };
+  const target = labels.at(-1) ?? 'Descriptive';
+  const section = sectionByLabel[target] ?? sectionByLabel[labels[0]];
+  if (section) {
+    await page.getByRole('tab', { name: exactText(section) }).click();
+  }
+  const toolSelect = page.getByRole('combobox', { name: 'Statistics tool' });
+  if (await toolSelect.count() > 0 && !['Probability', 'Inference'].includes(target)) {
+    await toolSelect.selectOption({ label: target });
   }
 }
 

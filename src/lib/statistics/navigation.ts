@@ -1,4 +1,4 @@
-import type { StatisticsScreen } from '../../types/calculator';
+import type { StatisticsScreen, StatisticsSection } from '../../types/calculator';
 import type { SoftAction } from '../navigation/menu';
 
 type StatisticsMenuEntry = {
@@ -8,6 +8,55 @@ type StatisticsMenuEntry = {
   hotkey: string;
   target: StatisticsScreen;
 };
+
+export const STATISTICS_SECTIONS: ReadonlyArray<{
+  id: StatisticsSection;
+  label: string;
+  defaultScreen: StatisticsScreen;
+}> = [
+  { id: 'dataSummary', label: 'Data & Summary', defaultScreen: 'descriptive' },
+  { id: 'probability', label: 'Probability', defaultScreen: 'binomial' },
+  { id: 'inference', label: 'Inference', defaultScreen: 'meanInference' },
+  { id: 'relationships', label: 'Relationships', defaultScreen: 'regression' },
+];
+
+export function statisticsSectionForScreen(screen: StatisticsScreen): StatisticsSection {
+  switch (screen) {
+    case 'probabilityHome':
+    case 'binomial':
+    case 'normal':
+    case 'poisson':
+      return 'probability';
+    case 'inferenceHome':
+    case 'meanInference':
+      return 'inference';
+    case 'regression':
+    case 'correlation':
+      return 'relationships';
+    default:
+      return 'dataSummary';
+  }
+}
+
+export function defaultStatisticsScreenForSection(section: StatisticsSection): StatisticsScreen {
+  return STATISTICS_SECTIONS.find((candidate) => candidate.id === section)?.defaultScreen
+    ?? 'descriptive';
+}
+
+export function statisticsWorkspaceScreenForLegacyScreen(
+  screen: StatisticsScreen,
+): StatisticsScreen {
+  switch (screen) {
+    case 'home':
+      return 'descriptive';
+    case 'probabilityHome':
+      return 'binomial';
+    case 'inferenceHome':
+      return 'meanInference';
+    default:
+      return screen;
+  }
+}
 
 export type StatisticsRouteMeta = {
   screen: StatisticsScreen;

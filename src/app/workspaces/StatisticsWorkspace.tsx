@@ -10,6 +10,7 @@ import type {
   PoissonState,
   RegressionState,
   StatisticsScreen,
+  StatisticsSection,
   StatisticsWorkingSource,
   StatsDataset,
 } from '../../types/calculator';
@@ -28,9 +29,33 @@ type StatisticsMenuEntryLike = {
   target: StatisticsScreen;
 };
 
+const SECTION_TOOLS: Record<StatisticsSection, Array<{
+  label: string;
+  screen: StatisticsScreen;
+}>> = {
+  dataSummary: [
+    { label: 'Data Entry', screen: 'dataEntry' },
+    { label: 'Descriptive', screen: 'descriptive' },
+    { label: 'Frequency', screen: 'frequency' },
+  ],
+  probability: [
+    { label: 'Binomial', screen: 'binomial' },
+    { label: 'Normal', screen: 'normal' },
+    { label: 'Poisson', screen: 'poisson' },
+  ],
+  inference: [{ label: 'Mean', screen: 'meanInference' }],
+  relationships: [
+    { label: 'Regression', screen: 'regression' },
+    { label: 'Correlation', screen: 'correlation' },
+  ],
+};
+
 type StatisticsWorkspaceProps = {
   routeMeta: StatisticsRouteMetaLike | null;
   screen: StatisticsScreen;
+  activeSection: StatisticsSection;
+  resultIsStale: boolean;
+  onOpenSection: (section: StatisticsSection) => void;
   isMenuOpen: boolean;
   menuPanelRef: RefObject<HTMLDivElement | null>;
   menuEntries: StatisticsMenuEntryLike[];
@@ -89,6 +114,9 @@ type StatisticsWorkspaceProps = {
 function StatisticsWorkspace({
   routeMeta,
   screen,
+  activeSection,
+  resultIsStale,
+  onOpenSection,
   isMenuOpen,
   menuPanelRef,
   menuEntries,
@@ -144,6 +172,39 @@ function StatisticsWorkspace({
 
   return (
     <section className={`mode-panel ${isMenuOpen ? 'statistics-menu-panel' : 'statistics-panel'}`}>
+      <div className="statistics-section-tabs" role="tablist" aria-label="Statistics sections">
+        {([
+          ['dataSummary', 'Data & Summary'],
+          ['probability', 'Probability'],
+          ['inference', 'Inference'],
+          ['relationships', 'Relationships'],
+        ] as const).map(([section, label]) => (
+          <button
+            key={section}
+            type="button"
+            role="tab"
+            aria-selected={activeSection === section}
+            className={activeSection === section ? 'is-active' : ''}
+            onClick={() => onOpenSection(section)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {SECTION_TOOLS[activeSection].length > 1 ? (
+        <label className="statistics-tool-select">
+          <span>{activeSection === 'relationships' ? 'Analysis' : 'Tool'}</span>
+          <select
+            aria-label="Statistics tool"
+            value={screen}
+            onChange={(event) => onOpenScreen(event.target.value as StatisticsScreen)}
+          >
+            {SECTION_TOOLS[activeSection].map((tool) => (
+              <option key={tool.screen} value={tool.screen}>{tool.label}</option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <div className="equation-panel-header statistics-panel-header">
         <div className="equation-panel-copy">
           <div className="equation-breadcrumbs">
@@ -155,7 +216,9 @@ function StatisticsWorkspace({
           </div>
           <div className="card-title-row">
             <strong>{routeMeta.label}</strong>
-            <span className="equation-badge">Statistics</span>
+            <span className="equation-badge">
+              {resultIsStale ? 'Result stale' : 'Statistics'}
+            </span>
           </div>
           <p className="equation-hint statistics-panel-subtitle">{routeMeta.description}</p>
           <div className="guide-related-links">

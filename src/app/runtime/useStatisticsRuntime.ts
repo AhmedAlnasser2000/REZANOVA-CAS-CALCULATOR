@@ -1,7 +1,6 @@
 import {
   useRef,
   useState,
-  type RefObject,
 } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import { createCoreDraftState, isCoreDraftEditable } from '../../lib/modes/core-mode';
@@ -24,8 +23,11 @@ import {
   getStatisticsMenuFooterText,
   getStatisticsParentScreen,
   getStatisticsRouteMeta,
+  defaultStatisticsScreenForSection,
   isStatisticsMenuScreen,
   moveStatisticsMenuIndex,
+  statisticsSectionForScreen,
+  statisticsWorkspaceScreenForLegacyScreen,
 } from '../../lib/statistics/navigation';
 import {
   parseStatisticsDraft,
@@ -46,55 +48,28 @@ import {
 } from '../../lib/statistics/runtime-request';
 import type {
   CoreDraftState,
-  CanonicalRuntimeOutcome,
   HistoryEntry,
-  ModeId,
   StatisticsRequest,
   StatisticsScreen,
+  StatisticsSection,
+  StatisticsInputMode,
   StatisticsWorkingSource,
 } from '../../types/calculator';
-import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
-import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
 import { createCanonicalRuntimeError } from '../../lib/result-contract';
-import { statisticsRequestFromSurfaceState } from './statistics-origin-request';
-import { copyStatisticsSurfaceState } from './statistics-surface-state';
+import { statisticsRequestFromSurfaceStateForScreen } from './statistics-origin-request';
+import {
+  copyStatisticsSurfaceState,
+  defaultStatisticsSectionScreens,
+} from './statistics-surface-state';
 import type { StatisticsSurfaceState } from './workspace-surface-state';
-import type { WorkspaceInstance } from './workspace-instances';
+import type { UseStatisticsRuntimeOptions } from './statistics-runtime-types';
+import {
+  cacheStatisticsSectionOutcome,
+  statisticsSectionIsActiveInOrigin,
+} from './statistics-section-results';
 
-type CommitStatisticsOutcome = (
-  outcome: CanonicalRuntimeOutcome,
-  inputLatex: string,
-  mode: 'statistics',
-  context?: Partial<Pick<HistoryEntry, 'statisticsScreen' | 'statisticsSeed'>> & {
-    historyTicketId?: string | null;
-    historyLaunchOrder?: number;
-    suppressDisplayCommit?: boolean;
-  },
-) => void;
-
-type UseStatisticsRuntimeOptions = {
-  activeFieldRef: RefObject<MathfieldElement | null>;
-  commitOutcome: CommitStatisticsOutcome;
-  currentMode: ModeId;
-  currentModeRef: RefObject<ModeId>;
-  discardHistoryTicket: (ticketId?: string | null) => void;
-  getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
-  getWorkspaceInstances?: () => readonly WorkspaceInstance[];
-  isLauncherOpen: boolean;
-  openLauncher: () => void;
-  reserveHistoryTicket: (input: {
-    mode: ModeId;
-    inputLatex: string;
-    capabilityId?: string;
-    inputRevisionId?: string;
-    workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
-  }) => PendingHistoryTicketReservation | null;
-  setClipboardNotice: (notice: string | null) => void;
-  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome | null) => void;
-  setRuntimeStatusOverride: (status: string | null) => void;
-  startTransition: (callback: () => void) => void;
-};
+type StatisticsStateSnapshot = Parameters<typeof buildStatisticsInputLatex>[1];
 
 export function useStatisticsRuntime({
   activeFieldRef,
@@ -111,8 +86,19 @@ export function useStatisticsRuntime({
   setDisplayOutcome,
   setRuntimeStatusOverride,
   startTransition,
+  updateWorkspaceInstanceSurfaceState,
 }: UseStatisticsRuntimeOptions) {
-  const [statisticsScreen, setStatisticsScreen] = useState<StatisticsScreen>('home');
+  const [statisticsScreen, setStatisticsScreen] = useState<StatisticsScreen>('descriptive');
+  const [statisticsSection, setStatisticsSection] =
+    useState<StatisticsSection>('dataSummary');
+  const [statisticsInputMode, setStatisticsInputMode] =
+    useState<StatisticsInputMode>('guided');
+  const [statisticsSectionScreens, setStatisticsSectionScreens] = useState(
+    defaultStatisticsSectionScreens,
+  );
+  const [statisticsSectionResults, setStatisticsSectionResults] = useState<
+    StatisticsSurfaceState['statisticsSectionResults']
+  >({});
   const [statisticsMenuSelection, setStatisticsMenuSelection] = useState({
     home: 0,
     probabilityHome: 0,
@@ -134,8 +120,17 @@ export function useStatisticsRuntime({
   const [regressionState, setRegressionState] = useState(DEFAULT_REGRESSION_STATE);
   const [correlationState, setCorrelationState] = useState(DEFAULT_CORRELATION_STATE);
   const [statisticsDraftState, setStatisticsDraftState] = useState<CoreDraftState>(() =>
-    createCoreDraftState('', 'structured', 'guided', true),
+    createCoreDraftState(
+      defaultStatisticsDraftForScreen('descriptive', 'dataset'),
+      'structured',
+      'guided',
+      true,
+    ),
   );
+  const statisticsSectionRef = useRef(statisticsSection);
+  const statisticsWorkingSourceRef = useRef(statisticsWorkingSource);
+  const statisticsStateSnapshotRef = useRef<StatisticsStateSnapshot | null>(null);
+  const statisticsDraftStateRef = useRef(statisticsDraftState);
   const statisticsMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const statisticsDraftFieldRef = useRef<MathfieldElement | null>(null);
   const statisticsBinomialNRef = useRef<HTMLInputElement | null>(null);
@@ -174,6 +169,10 @@ export function useStatisticsRuntime({
     regression: regressionState,
     correlation: correlationState,
   };
+  statisticsSectionRef.current = statisticsSection;
+  statisticsWorkingSourceRef.current = statisticsWorkingSource;
+  statisticsStateSnapshotRef.current = statisticsStateSnapshot;
+  statisticsDraftStateRef.current = statisticsDraftState;
   const statisticsWorkbenchExpression =
     currentMode === 'statistics'
       ? buildStatisticsInputLatex(
@@ -202,6 +201,21 @@ export function useStatisticsRuntime({
       : statisticsSourceSyncState.frequencyTableStale
         ? 'Frequency table is stale relative to the dataset.'
         : 'Dataset and frequency table are in sync.';
+  const activeStatisticsSectionResult = statisticsSectionResults[statisticsSection] ?? null;
+  const activeStatisticsInputLatex = buildStatisticsInputLatex(
+    statisticsSectionScreens[statisticsSection],
+    statisticsStateSnapshot,
+    statisticsWorkingSource,
+  );
+  const activeStatisticsInputRevisionId = buildStatisticsOoeInputRevisionId({
+    inputLatex: activeStatisticsInputLatex,
+    screenHint: statisticsSectionScreens[statisticsSection],
+    workingSourceHint: statisticsWorkingSource,
+  });
+  const activeStatisticsResultIsStale = Boolean(
+    activeStatisticsSectionResult
+    && activeStatisticsSectionResult.inputRevisionId !== activeStatisticsInputRevisionId,
+  );
 
   function statisticsDraftStateForScreen(
     _screen: StatisticsScreen,
@@ -356,7 +370,7 @@ export function useStatisticsRuntime({
       return buildStatisticsDraftForScreen(screenHint);
     }
 
-    let inputLatex = statisticsDraftState.rawLatex.trim();
+    let inputLatex = statisticsDraftStateRef.current.rawLatex.trim();
     if (currentModeRef.current === 'statistics' && statisticsEditorIsEditable) {
       const liveField = statisticsDraftFieldRef.current
         ?? (document.querySelector('[data-testid="main-editor"]') as MathfieldElement | null);
@@ -369,13 +383,24 @@ export function useStatisticsRuntime({
     return inputLatex;
   }
 
-  function readLiveStatisticsRuntimeRequest() {
+  function readLiveStatisticsRuntimeRequestForScreen(
+    screenHint: StatisticsScreen,
+    useExpressionDraft: boolean,
+  ) {
     if (currentModeRef.current !== 'statistics') {
       return null;
     }
 
-    const screenHint = statisticsLeafScreenForContext(statisticsScreen);
-    const inputLatex = readLiveStatisticsInputLatex(screenHint, isStatisticsDraftFocused());
+    const liveSnapshot = statisticsStateSnapshotRef.current;
+    const inputLatex = useExpressionDraft
+      ? readLiveStatisticsInputLatex(screenHint, true)
+      : liveSnapshot
+        ? buildStatisticsInputLatex(
+            screenHint,
+            liveSnapshot,
+            statisticsWorkingSourceRef.current,
+          )
+        : '';
     if (!inputLatex) {
       return null;
     }
@@ -383,25 +408,40 @@ export function useStatisticsRuntime({
     return {
       inputLatex,
       screenHint,
-      workingSourceHint: statisticsWorkingSource,
+      workingSourceHint: statisticsWorkingSourceRef.current,
     } satisfies RunStatisticsRuntimeRequest;
   }
 
   function openStatisticsScreen(screen: StatisticsScreen) {
-    setStatisticsScreen(screen);
-    const nextWorkingSource = statisticsWorkingSourceForScreen(screen);
+    const workspaceScreen = statisticsWorkspaceScreenForLegacyScreen(screen);
+    const nextSection = statisticsSectionForScreen(workspaceScreen);
+    setStatisticsScreen(workspaceScreen);
+    setStatisticsSection(nextSection);
+    setStatisticsSectionScreens((currentScreens) => ({
+      ...currentScreens,
+      [nextSection]: workspaceScreen,
+    }));
+    const nextWorkingSource = statisticsWorkingSourceForScreen(workspaceScreen);
     setStatisticsWorkingSource(nextWorkingSource);
-    if (!isStatisticsMenuScreen(screen)) {
+    if (!isStatisticsMenuScreen(workspaceScreen)) {
       setStatisticsDraftState(
         statisticsDraftStateForScreen(
-          screen,
-          buildStatisticsDraftForScreen(screen, nextWorkingSource)
-            || defaultStatisticsDraftForScreen(screen, nextWorkingSource),
+          workspaceScreen,
+          buildStatisticsDraftForScreen(workspaceScreen, nextWorkingSource)
+            || defaultStatisticsDraftForScreen(workspaceScreen, nextWorkingSource),
           'guided',
         ),
       );
     }
-    setDisplayOutcome(null);
+    setDisplayOutcome(statisticsSectionResults[nextSection]?.outcome ?? null);
+  }
+
+  function openStatisticsSection(section: StatisticsSection) {
+    const screen = statisticsSectionScreens[section]
+      ?? defaultStatisticsScreenForSection(section);
+    setStatisticsSection(section);
+    setStatisticsScreen(screen);
+    setDisplayOutcome(statisticsSectionResults[section]?.outcome ?? null);
   }
 
   function setCurrentStatisticsMenuIndex(screen: keyof typeof statisticsMenuSelection, index: number) {
@@ -726,53 +766,41 @@ export function useStatisticsRuntime({
   }
 
   function resetCurrentStatisticsScreen() {
-    if (isStatisticsMenuOpen) {
-      goBackInStatistics();
-      return;
-    }
-
-    switch (statisticsScreen) {
-      case 'dataEntry':
-      case 'descriptive':
+    switch (statisticsSection) {
+      case 'dataSummary':
         resetStatisticsSourceState('dataset');
         resetStatisticsDraftForScreen(statisticsScreen, 'dataset');
         break;
-      case 'frequency':
-        resetStatisticsSourceState('frequencyTable');
-        resetStatisticsDraftForScreen('frequency', 'frequencyTable');
-        break;
-      case 'binomial':
+      case 'probability':
         setBinomialState(DEFAULT_BINOMIAL_STATE);
-        resetStatisticsDraftForScreen('binomial');
-        break;
-      case 'normal':
         setNormalState(DEFAULT_NORMAL_STATE);
-        resetStatisticsDraftForScreen('normal');
-        break;
-      case 'poisson':
         setPoissonState(DEFAULT_POISSON_STATE);
-        resetStatisticsDraftForScreen('poisson');
+        resetStatisticsDraftForScreen(statisticsScreen);
         break;
-      case 'meanInference':
-        resetStatisticsSourceState('dataset');
+      case 'inference':
         setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
-        resetStatisticsDraftForScreen('meanInference', 'dataset');
+        resetStatisticsDraftForScreen('meanInference', statisticsWorkingSource);
         break;
-      case 'regression':
+      case 'relationships':
         setRegressionState(DEFAULT_REGRESSION_STATE);
-        resetStatisticsDraftForScreen('regression');
-        break;
-      case 'correlation':
         setCorrelationState(DEFAULT_CORRELATION_STATE);
-        resetStatisticsDraftForScreen('correlation');
-        break;
-      default:
+        resetStatisticsDraftForScreen(statisticsScreen);
         break;
     }
+    setStatisticsSectionResults((currentResults) => {
+      const nextResults = { ...currentResults };
+      delete nextResults[statisticsSection];
+      return nextResults;
+    });
+    setDisplayOutcome(null);
   }
 
   function resetStatisticsRuntime() {
-    setStatisticsScreen('home');
+    setStatisticsScreen('descriptive');
+    setStatisticsSection('dataSummary');
+    setStatisticsInputMode('guided');
+    setStatisticsSectionScreens(defaultStatisticsSectionScreens());
+    setStatisticsSectionResults({});
     setStatisticsMenuSelection({ home: 0, probabilityHome: 0, inferenceHome: 0 });
     setStatisticsWorkingSource('dataset');
     setStatisticsSourceSyncState(DEFAULT_STATISTICS_SOURCE_SYNC_STATE);
@@ -780,12 +808,19 @@ export function useStatisticsRuntime({
     setBinomialState(DEFAULT_BINOMIAL_STATE); setNormalState(DEFAULT_NORMAL_STATE);
     setPoissonState(DEFAULT_POISSON_STATE); setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
     setRegressionState(DEFAULT_REGRESSION_STATE); setCorrelationState(DEFAULT_CORRELATION_STATE);
-    setStatisticsDraftState(createCoreDraftState('', 'structured', 'guided', true));
+    setStatisticsDraftState(createCoreDraftState(
+      defaultStatisticsDraftForScreen('descriptive', 'dataset'),
+      'structured',
+      'guided',
+      true,
+    ));
   }
 
   function captureStatisticsSurfaceState(): StatisticsSurfaceState {
     return copyStatisticsSurfaceState({
-      statisticsScreen, statisticsMenuSelection, statisticsWorkingSource,
+      statisticsScreen, statisticsSection, statisticsInputMode,
+      statisticsSectionScreens, statisticsSectionResults,
+      statisticsMenuSelection, statisticsWorkingSource,
       statisticsSourceSyncState, statsDataset, statisticsDatasetDraftText, frequencyTable, binomialState,
       normalState, poissonState, meanInferenceState, regressionState,
       correlationState, statisticsDraftState,
@@ -800,6 +835,10 @@ export function useStatisticsRuntime({
 
     const copy = copyStatisticsSurfaceState(state);
     setStatisticsScreen(copy.statisticsScreen);
+    setStatisticsSection(copy.statisticsSection);
+    setStatisticsInputMode(copy.statisticsInputMode);
+    setStatisticsSectionScreens(copy.statisticsSectionScreens);
+    setStatisticsSectionResults(copy.statisticsSectionResults);
     setStatisticsMenuSelection(copy.statisticsMenuSelection); setStatisticsWorkingSource(copy.statisticsWorkingSource);
     setStatisticsSourceSyncState(copy.statisticsSourceSyncState); setStatsDataset(copy.statsDataset); setStatisticsDatasetDraftText(copy.statisticsDatasetDraftText);
     setFrequencyTable(copy.frequencyTable); setBinomialState(copy.binomialState); setNormalState(copy.normalState);
@@ -816,6 +855,9 @@ export function useStatisticsRuntime({
 
     startTransition(() => {
       const screenHint = statisticsLeafScreenForContext(statisticsScreen);
+      const originSection = statisticsSectionForScreen(screenHint);
+      const originWorkspace = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
+      const useExpressionDraft = editorFocused;
       const inputLatex = readLiveStatisticsInputLatex(screenHint, editorFocused);
 
       if (!inputLatex) {
@@ -835,6 +877,7 @@ export function useStatisticsRuntime({
         screenHint,
         workingSourceHint: statisticsWorkingSource,
       };
+      const inputRevisionId = buildStatisticsOoeInputRevisionId(request);
       launchWorkspaceRuntimeJob({
         mode: 'statistics',
         modeLabel: 'Statistics',
@@ -842,11 +885,28 @@ export function useStatisticsRuntime({
         request,
         ticketInputLatex: inputLatex,
         buildInputRevisionId: buildStatisticsOoeInputRevisionId,
-        readLiveRequest: readLiveStatisticsRuntimeRequest,
+        readLiveRequest: () => readLiveStatisticsRuntimeRequestForScreen(
+          screenHint,
+          useExpressionDraft,
+        ),
         getActiveWorkspaceInstanceRuntimeContext,
         getWorkspaceInstances,
-        readRequestFromSurfaceState: statisticsRequestFromSurfaceState,
-        isModeVisible: () => currentModeRef.current === 'statistics',
+        readRequestFromSurfaceState: (surfaceState, instance) =>
+          statisticsRequestFromSurfaceStateForScreen(
+            surfaceState,
+            instance,
+            screenHint,
+            useExpressionDraft,
+          ),
+        isModeVisible: () => {
+          const activeWorkspace = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
+          return currentModeRef.current === 'statistics'
+            && statisticsSectionRef.current === originSection
+            && (
+              !originWorkspace
+              || activeWorkspace?.workspaceInstanceId === originWorkspace.workspaceInstanceId
+            );
+        },
         loadRunner: async () =>
           (await import('../../lib/modes/statistics')).runStatisticsModeWithOoePilot,
         reserveHistoryTicket,
@@ -854,6 +914,22 @@ export function useStatisticsRuntime({
         setDisplayOutcome,
         setRuntimeStatusOverride,
         commit: (payload, ticket, visible) => {
+          const originSectionActive = statisticsSectionIsActiveInOrigin({
+            activeSection: statisticsSectionRef.current,
+            originWorkspace,
+            originSection,
+            getActiveWorkspace: getActiveWorkspaceInstanceRuntimeContext,
+            getWorkspaceInstances,
+          });
+          cacheStatisticsSectionOutcome({
+            originWorkspace,
+            originSection,
+            entry: { outcome: payload.outcome, inputLatex, inputRevisionId },
+            getActiveWorkspace: getActiveWorkspaceInstanceRuntimeContext,
+            getWorkspaceInstances,
+            setActiveResults: setStatisticsSectionResults,
+            updateWorkspaceSurface: updateWorkspaceInstanceSurfaceState,
+          });
           if (visible && payload.replaySeed) {
             setStatisticsWorkingSource(payload.replaySeed.workingSource);
           }
@@ -864,6 +940,7 @@ export function useStatisticsRuntime({
             historyTicketId: ticket?.id,
             historyLaunchOrder: ticket?.historyLaunchOrder,
             suppressDisplayCommit: !visible,
+            suppressWorkspaceDisplayCommit: !originSectionActive,
           });
         },
       });
@@ -877,7 +954,7 @@ export function useStatisticsRuntime({
     goBackInStatistics, importDatasetIntoFrequencyTable, isStatisticsDraftFocused,
     isStatisticsMenuOpen, loadStatisticsDraft, loadStatisticsDraftForLatex, loadStatisticsExample,
     meanInferenceState, moveCurrentStatisticsMenuSelection, normalState, openSelectedStatisticsMenuEntry,
-    openStatisticsScreen, poissonState, regressionState, removeRegressionPoint, removeStatisticsFrequencyRow,
+    openStatisticsScreen, openStatisticsSection, poissonState, regressionState, removeRegressionPoint, removeStatisticsFrequencyRow,
     resetCurrentStatisticsScreen, resetStatisticsRuntime,
     restoreStatisticsHistoryEntry, restoreStatisticsSurfaceState, runStatisticsAction,
     selectedStatisticsMenuEntry, setBinomialState, setCurrentStatisticsMenuIndex, setMeanInferenceState, setNormalState,
@@ -886,7 +963,10 @@ export function useStatisticsRuntime({
     statisticsDraftState, statisticsEditorIsEditable, statisticsFilledFrequencyRowCount, statisticsFrequencyValueRef,
     statisticsMeanInferenceLevelRef, statisticsMenuEntries, statisticsMenuFooterText, statisticsMenuPanelRef,
     statisticsMenuSelection, statisticsNormalMeanRef, statisticsPoissonLambdaRef, statisticsRegressionText,
-    statisticsRegressionXRef, statisticsRouteMeta, statisticsScreen, statisticsSourceSyncState,
+    statisticsRegressionXRef, statisticsRouteMeta, statisticsScreen, statisticsSection,
+    statisticsInputMode, setStatisticsInputMode, statisticsSectionScreens,
+    activeStatisticsSectionResult, activeStatisticsResultIsStale,
+    statisticsSourceSyncState,
     statisticsSourceSyncSummary, statisticsWorkbenchExpression,
     statisticsWorkingSource, statsDataset, switchStatisticsSource,
     updateRegressionPointDraft, updateStatisticsDataset, updateStatisticsDraft,

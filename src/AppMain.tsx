@@ -799,6 +799,7 @@ export default function App() {
     setDisplayOutcome,
     setRuntimeStatusOverride: setEditorRuntimeStatusOverride,
     startTransition,
+    updateWorkspaceInstanceSurfaceState: workspaceInstancesRuntime.updateInstanceSurfaceState,
   });
   const {
     addRegressionPoint,
@@ -858,6 +859,7 @@ export default function App() {
     statisticsRegressionXRef,
     statisticsRouteMeta,
     statisticsScreen,
+    statisticsSection, activeStatisticsResultIsStale,
     statisticsSourceSyncState,
     statisticsSourceSyncSummary,
     statisticsWorkbenchExpression,
@@ -3097,6 +3099,9 @@ export default function App() {
               <StatisticsWorkspace
                 routeMeta={statisticsRouteMeta}
                 screen={statisticsScreen}
+                activeSection={statisticsSection}
+                resultIsStale={activeStatisticsResultIsStale}
+                onOpenSection={statisticsRuntime.openStatisticsSection}
                 isMenuOpen={isStatisticsMenuOpen}
                 menuPanelRef={statisticsMenuPanelRef}
                 menuEntries={statisticsMenuEntries}
