@@ -9,6 +9,7 @@ import {
   isNotebookRichDocumentV6,
   isNotebookRichDocumentV7,
   isNotebookRichDocumentV8,
+  isNotebookRichDocumentV9,
   summarizeNotebookDocument,
 } from './model';
 import {
@@ -20,7 +21,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 9 document with default print geometry', () => {
+  it('creates an app-owned version 10 document with default print geometry', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -40,7 +41,7 @@ describe('Notebook rich document model', () => {
     expect(isNotebookRichDocument(JSON.parse(JSON.stringify(document)))).toBe(true);
   });
 
-  it('strictly validates V9 video figures and keeps them out of V8', () => {
+  it('strictly validates V10 video geometry and keeps it out of V9', () => {
     const document = createNotebookRichDocument({ now: fixedNow });
     document.content = [{
       type: 'videoFigure',
@@ -61,11 +62,14 @@ describe('Notebook rich document model', () => {
       }],
       widthPercent: 75,
       alignment: 'right',
+      placement: 'square-right',
+      displayAspectRatio: 16 / 9,
       loop: true,
     }];
 
     expect(isNotebookRichDocument(document)).toBe(true);
     expect(isNotebookRichDocumentV8({ ...document, version: 8 })).toBe(false);
+    expect(isNotebookRichDocumentV9({ ...document, version: 9 })).toBe(false);
     expect(summarizeNotebookDocument(document).wordCount).toBe(15);
 
     const duplicateDefault = structuredClone(document) as {
@@ -134,7 +138,7 @@ describe('Notebook rich document model', () => {
     expect(isNotebookRichDocument(nestedBreak)).toBe(false);
   });
 
-  it('strictly validates V7 image figures and keeps them out of V6', () => {
+  it('strictly validates V10 image geometry and keeps it out of V9', () => {
     const document = createNotebookRichDocument({ now: fixedNow });
     document.content = [{
       type: 'imageFigure',
@@ -146,12 +150,14 @@ describe('Notebook rich document model', () => {
       widthPercent: 75,
       alignment: 'center',
       placement: 'top-and-bottom',
-      rotation: 90,
+      displayAspectRatio: 1.25,
+      rotation: 137,
       crop: { x: 0.1, y: 0.05, width: 0.8, height: 0.9 },
     }];
 
     expect(isNotebookRichDocument(document)).toBe(true);
     expect(isNotebookRichDocumentV6({ ...document, version: 6 })).toBe(false);
+    expect(isNotebookRichDocumentV9({ ...document, version: 9 })).toBe(false);
     expect(summarizeNotebookDocument(document).wordCount).toBe(2);
 
     const invalidCrop = structuredClone(document) as {
@@ -173,6 +179,18 @@ describe('Notebook rich document model', () => {
     incompatibleWrap.content[0]!.alignment = 'right';
     incompatibleWrap.content[0]!.placement = 'square-left';
     expect(isNotebookRichDocument(incompatibleWrap)).toBe(false);
+
+    const invalidRotation = structuredClone(document) as {
+      content: Array<{ rotation: number }>;
+    };
+    invalidRotation.content[0]!.rotation = 360;
+    expect(isNotebookRichDocument(invalidRotation)).toBe(false);
+
+    const invalidAspectRatio = structuredClone(document) as {
+      content: Array<{ displayAspectRatio: number }>;
+    };
+    invalidAspectRatio.content[0]!.displayAspectRatio = 0.09;
+    expect(isNotebookRichDocument(invalidAspectRatio)).toBe(false);
   });
 
   it('validates underline, paragraph formatting, and exact Word-like font-size marks', () => {
@@ -185,6 +203,7 @@ describe('Notebook rich document model', () => {
         lineSpacing: 1.5,
         spaceBeforePt: 6,
         spaceAfterPt: 12,
+        leftIndentPt: 72,
       },
       content: [{
         type: 'text',
@@ -226,6 +245,14 @@ describe('Notebook rich document model', () => {
     };
     invalidParagraphSpace.content[0]!.format.spaceAfterPt = 10;
     expect(isNotebookRichDocument(invalidParagraphSpace)).toBe(false);
+
+    const invalidLeftIndent = structuredClone(document) as {
+      content: Array<{ format: { leftIndentPt: number } }>;
+    };
+    invalidLeftIndent.content[0]!.format.leftIndentPt = 35;
+    expect(isNotebookRichDocument(invalidLeftIndent)).toBe(false);
+
+    expect(isNotebookRichDocumentV9({ ...document, version: 9 })).toBe(false);
 
     const version4 = { ...structuredClone(document), version: 4 as const };
     expect(isNotebookRichDocumentV4(version4)).toBe(false);

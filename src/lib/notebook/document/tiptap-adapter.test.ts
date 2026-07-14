@@ -78,6 +78,7 @@ describe('Notebook Tiptap adapter', () => {
           lineSpacing: 1.15,
           spaceBeforePt: 18,
           spaceAfterPt: 24,
+          leftIndentPt: 72,
         },
         content: [
           {
@@ -107,7 +108,7 @@ describe('Notebook Tiptap adapter', () => {
           content: [{
             type: 'paragraph',
             id: 'paragraph.bullet',
-            format: { alignment: 'right', lineSpacing: 2 },
+            format: { alignment: 'right', lineSpacing: 2, leftIndentPt: 36 },
             content: [{ type: 'text', text: 'Nested formatting' }],
           }],
         }],
@@ -179,7 +180,8 @@ describe('Notebook Tiptap adapter', () => {
         widthPercent: 50,
         alignment: 'left',
         placement: 'square-left',
-        rotation: 270,
+        displayAspectRatio: 1.25,
+        rotation: 137,
         crop: { x: 0.1, y: 0.2, width: 0.7, height: 0.6 },
       }],
     };
@@ -194,7 +196,7 @@ describe('Notebook Tiptap adapter', () => {
     expect(isNotebookRichDocument(restored)).toBe(true);
   });
 
-  it('round-trips video details, poster, tracks, size, alignment, and loop state', () => {
+  it('round-trips video details, poster, tracks, geometry, and loop state', () => {
     const base = createNotebookRichDocument({ idPrefix: 'video', now: NOW });
     const document: NotebookRichDocument = {
       ...base,
@@ -217,6 +219,8 @@ describe('Notebook Tiptap adapter', () => {
         }],
         widthPercent: 75,
         alignment: 'left',
+        placement: 'square-left',
+        displayAspectRatio: 1.777,
         loop: true,
       }],
     };

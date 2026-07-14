@@ -6,19 +6,35 @@ import {
   AlignLeft,
   AlignRight,
   Captions,
+  ChevronDown,
   Image as ImageIcon,
   ImageOff,
   ListVideo,
   Trash2,
+  WrapText,
 } from 'lucide-react';
 
-import type {
-  NotebookVideoAlignment,
-  NotebookVideoTrack,
+import {
+  notebookEffectiveImagePlacement,
+  type NotebookImagePlacement,
+  type NotebookPageSetup,
+  type NotebookVideoAlignment,
+  type NotebookVideoTrack,
 } from '../../../../lib/notebook';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import { notebookEditorNodeById, notebookEditorSelection } from './selection';
 
 const WIDTH_PRESETS = [25, 50, 75, 100] as const;
+const WRAP_OPTIONS: ReadonlyArray<{
+  value: NotebookImagePlacement;
+  label: string;
+  description: string;
+}> = [
+  { value: 'normal', label: 'Normal flow', description: 'Place the video between paragraphs.' },
+  { value: 'top-and-bottom', label: 'Top and Bottom', description: 'Keep text above and below the video.' },
+  { value: 'square-left', label: 'Square Left', description: 'Wrap text beside a left-aligned video.' },
+  { value: 'square-right', label: 'Square Right', description: 'Wrap text beside a right-aligned video.' },
+];
 
 function selectedVideo(editor: Editor) {
   const selection = notebookEditorSelection(editor);
@@ -33,6 +49,21 @@ function videoAlignment(value: unknown): NotebookVideoAlignment {
   return value === 'left' || value === 'right' ? value : 'center';
 }
 
+function videoPlacement(value: unknown): NotebookImagePlacement {
+  return value === 'top-and-bottom' || value === 'square-left' || value === 'square-right'
+    ? value
+    : 'normal';
+}
+
+function editorContentWidth(editor: Editor) {
+  const element = editor.view.dom as HTMLElement;
+  const style = getComputedStyle(element);
+  const width = element.clientWidth
+    - (Number.parseFloat(style.paddingLeft) || 0)
+    - (Number.parseFloat(style.paddingRight) || 0);
+  return width > 0 ? width : undefined;
+}
+
 function videoTracks(value: unknown): NotebookVideoTrack[] {
   return Array.isArray(value) ? value as NotebookVideoTrack[] : [];
 }
@@ -44,6 +75,7 @@ export function NotebookVideoFormatControls({
   onEditDetails,
   onRemovePoster,
   onRemoveTrack,
+  pageSetup,
 }: {
   editor: Editor;
   onChoosePoster: () => void;
@@ -51,10 +83,19 @@ export function NotebookVideoFormatControls({
   onEditDetails: () => void;
   onRemovePoster: () => void;
   onRemoveTrack: (trackId: string) => void;
+  pageSetup: NotebookPageSetup;
 }) {
+  const wrapLayer = useNotebookTransientLayer({ id: 'notebook-video-wrap' });
   const target = selectedVideo(editor);
   const width = videoWidth(target?.attrs.widthPercent);
   const alignment = videoAlignment(target?.attrs.alignment);
+  const placement = videoPlacement(target?.attrs.placement);
+  const effectivePlacement = notebookEffectiveImagePlacement(
+    pageSetup,
+    placement,
+    width,
+    editorContentWidth(editor),
+  );
   const tracks = videoTracks(target?.attrs.tracks);
   const hasPoster = typeof target?.attrs.posterAssetId === 'string';
 
@@ -73,6 +114,15 @@ export function NotebookVideoFormatControls({
     editor.view.dispatch(transaction);
     editor.view.focus();
     return true;
+  }
+
+  function setPlacement(nextPlacement: NotebookImagePlacement) {
+    updateVideo({
+      placement: nextPlacement === 'normal' ? null : nextPlacement,
+      ...(nextPlacement === 'square-left' ? { alignment: 'left' } : {}),
+      ...(nextPlacement === 'square-right' ? { alignment: 'right' } : {}),
+    });
+    wrapLayer.close(false);
   }
 
   return (
@@ -127,6 +177,50 @@ export function NotebookVideoFormatControls({
           ))}
         </div>
         <span className="notebook-ribbon-group-label">Alignment</span>
+      </section>
+      <section className="notebook-ribbon-group" aria-label="Video wrapping">
+        <div className="notebook-ribbon-group-tools">
+          <div className="notebook-picture-control">
+            <button
+              data-notebook-transient-trigger={wrapLayer.id}
+              type="button"
+              className={placement !== 'normal' ? 'is-active' : undefined}
+              aria-label={`Wrap text: ${WRAP_OPTIONS.find((option) => option.value === placement)?.label}`}
+              aria-haspopup="menu"
+              aria-expanded={wrapLayer.isOpen}
+              title="Wrap text"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={wrapLayer.toggle}
+            ><WrapText aria-hidden="true" size={16} /><ChevronDown aria-hidden="true" size={11} /></button>
+            {wrapLayer.isOpen ? (
+              <NotebookFloatingLayer
+                layerId={wrapLayer.id}
+                className="notebook-picture-menu"
+                role="menu"
+                aria-label="Video wrapping"
+              >
+                {WRAP_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={placement === option.value}
+                    className={placement === option.value ? 'is-active' : undefined}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => setPlacement(option.value)}
+                  >
+                    <strong>{option.label}</strong>
+                    <small>{option.description}</small>
+                  </button>
+                ))}
+                {effectivePlacement !== placement ? (
+                  <p role="status">Normal flow is used at this size to keep the text column readable.</p>
+                ) : null}
+              </NotebookFloatingLayer>
+            ) : null}
+          </div>
+        </div>
+        <span className="notebook-ribbon-group-label">Wrap</span>
       </section>
       <section className="notebook-ribbon-group" aria-label="Video details">
         <div className="notebook-ribbon-group-tools">

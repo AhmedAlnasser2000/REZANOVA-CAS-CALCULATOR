@@ -24,3 +24,11 @@
 - status: verified; committed by the checkpoint containing this entry
 - staged_scope: Notebook transient source, focused tests, styles, and required durable memory only
 - excluded: untracked `test-results/` and unrelated workspace work
+
+## NOTEBOOK-DIRECT-MEDIA-AND-INDENT1
+
+- commit_message: `NOTEBOOK-DIRECT-MEDIA-AND-INDENT1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: V10 Notebook document/source, focused Rust and browser tests, styles, and required durable memory only
+- excluded: Library-file-operation work, concurrent Linear Algebra work, untracked `test-results/`, and unrelated workspace changes

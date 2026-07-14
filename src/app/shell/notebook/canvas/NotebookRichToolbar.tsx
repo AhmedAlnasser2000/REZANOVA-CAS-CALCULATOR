@@ -510,6 +510,7 @@ export function NotebookRichToolbar({
         {activeTab === 'video-format' ? (
           <NotebookVideoFormatControls
             editor={editor}
+            pageSetup={pageSetup}
             onChoosePoster={onChooseVideoPoster}
             onChooseTrack={onChooseVideoTrack}
             onEditDetails={onEditVideoDetails}

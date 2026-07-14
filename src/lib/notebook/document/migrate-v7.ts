@@ -2,19 +2,20 @@ import {
   DEFAULT_NOTEBOOK_HEADER_FOOTER,
   DEFAULT_NOTEBOOK_PAGE_SETUP,
 } from './page-layout';
-import {
-  NOTEBOOK_RICH_DOCUMENT_VERSION,
-  type NotebookRichDocument,
-  type NotebookRichDocumentV7,
+import { migrateNotebookDocumentV8 } from './migrate-v8';
+import type {
+  NotebookRichDocument,
+  NotebookRichDocumentV7,
+  NotebookRichDocumentV8,
 } from './types';
 
 /** V8 adds persisted page geometry, simple running matter, and explicit page breaks. */
 export function migrateNotebookDocumentV7(
   document: NotebookRichDocumentV7,
 ): NotebookRichDocument {
-  return {
+  const version8: NotebookRichDocumentV8 = {
     ...document,
-    version: NOTEBOOK_RICH_DOCUMENT_VERSION,
+    version: 8,
     pageSetup: {
       ...DEFAULT_NOTEBOOK_PAGE_SETUP,
       marginsPt: { ...DEFAULT_NOTEBOOK_PAGE_SETUP.marginsPt },
@@ -24,4 +25,5 @@ export function migrateNotebookDocumentV7(
       pageNumbering: { ...DEFAULT_NOTEBOOK_HEADER_FOOTER.pageNumbering },
     },
   };
+  return migrateNotebookDocumentV8(version8);
 }

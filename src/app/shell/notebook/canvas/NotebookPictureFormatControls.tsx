@@ -11,7 +11,7 @@ import {
   Scaling,
   WrapText,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   notebookEffectiveImagePlacement,
@@ -21,13 +21,6 @@ import {
 } from '../../../../lib/notebook';
 import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import { notebookEditorNodeById, notebookEditorSelection } from './selection';
-
-type CropInsets = {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-};
 
 const WIDTH_PRESETS = [25, 50, 75, 100] as const;
 const WRAP_OPTIONS: ReadonlyArray<{
@@ -60,24 +53,6 @@ function imagePlacement(value: unknown): NotebookImagePlacement {
     : 'normal';
 }
 
-function cropInsets(attrs: Record<string, unknown>): CropInsets {
-  const x = typeof attrs.cropX === 'number' ? attrs.cropX : 0;
-  const y = typeof attrs.cropY === 'number' ? attrs.cropY : 0;
-  const width = typeof attrs.cropWidth === 'number' ? attrs.cropWidth : 1;
-  const height = typeof attrs.cropHeight === 'number' ? attrs.cropHeight : 1;
-  return {
-    top: Math.round(y * 100),
-    right: Math.round((1 - x - width) * 100),
-    bottom: Math.round((1 - y - height) * 100),
-    left: Math.round(x * 100),
-  };
-}
-
-function boundedPercent(value: string) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(0, Math.min(90, Math.round(parsed))) : 0;
-}
-
 function boundedWidth(value: string) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.max(10, Math.min(100, Math.round(parsed))) : 10;
@@ -101,7 +76,6 @@ export function NotebookPictureFormatControls({
 }) {
   const widthLayer = useNotebookTransientLayer({ id: 'notebook-picture-width' });
   const wrapLayer = useNotebookTransientLayer({ id: 'notebook-picture-wrap' });
-  const cropLayer = useNotebookTransientLayer({ id: 'notebook-picture-crop' });
   const targetIdRef = useRef<string | null>(null);
   const image = selectedImage(editor);
   const attrs = image?.attrs ?? {};
@@ -118,7 +92,17 @@ export function NotebookPictureFormatControls({
     editorContentWidth(editor),
   );
   const [customWidth, setCustomWidth] = useState(width);
-  const [cropDraft, setCropDraft] = useState<CropInsets>(() => cropInsets(attrs));
+  const [cropModeTargetId, setCropModeTargetId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const editorElement = editor.view.dom as HTMLElement;
+    const handleCropMode = (event: Event) => {
+      const detail = (event as CustomEvent<{ active: boolean; nodeId: string | null }>).detail;
+      setCropModeTargetId(detail?.active ? detail.nodeId : null);
+    };
+    editorElement.addEventListener('notebook-image-crop-mode-change', handleCropMode);
+    return () => editorElement.removeEventListener('notebook-image-crop-mode-change', handleCropMode);
+  }, [editor]);
 
   function rememberTarget() {
     const current = selectedImage(editor);
@@ -180,14 +164,16 @@ export function NotebookPictureFormatControls({
     wrapLayer.toggle();
   }
 
-  function openCrop() {
+  function toggleCropMode() {
     const current = rememberTarget();
-    setCropDraft(cropInsets(current?.attrs ?? {}));
-    cropLayer.toggle();
+    if (!current?.id) return;
+    const active = cropModeTargetId !== current.id;
+    (editor.view.dom as HTMLElement).dispatchEvent(new CustomEvent(
+      'notebook-image-crop-mode-request',
+      { detail: { active, nodeId: current.id } },
+    ));
+    setCropModeTargetId(active ? current.id : null);
   }
-
-  const cropIsValid = cropDraft.left + cropDraft.right <= 90
-    && cropDraft.top + cropDraft.bottom <= 90;
 
   return (
     <>
@@ -341,74 +327,31 @@ export function NotebookPictureFormatControls({
         <div className="notebook-ribbon-group-tools">
           <div className="notebook-picture-control">
             <button
-              data-notebook-transient-trigger={cropLayer.id}
               type="button"
-              className={hasCrop ? 'is-active' : undefined}
-              aria-label="Crop image"
-              aria-haspopup="dialog"
-              aria-expanded={cropLayer.isOpen}
-              title="Crop image"
+              className={cropModeTargetId === image?.id || hasCrop ? 'is-active' : undefined}
+              aria-label={cropModeTargetId === image?.id ? 'Finish cropping image' : 'Crop image'}
+              aria-pressed={cropModeTargetId === image?.id}
+              title={cropModeTargetId === image?.id ? 'Finish crop' : 'Crop image directly'}
               onMouseDown={(event) => event.preventDefault()}
-              onClick={openCrop}
+              onClick={toggleCropMode}
             ><Crop aria-hidden="true" size={16} /></button>
-            {cropLayer.isOpen ? (
-              <NotebookFloatingLayer
-                align="end"
-                layerId={cropLayer.id}
-                className="notebook-picture-popover notebook-picture-crop-popover"
-                role="dialog"
-                aria-label="Crop image"
-              >
-                <span>Trim from each edge</span>
-                <div>
-                  {(Object.keys(cropDraft) as Array<keyof CropInsets>).map((edge) => (
-                    <label key={edge}>
-                      <span>{edge}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="90"
-                        step="1"
-                        value={cropDraft[edge]}
-                        aria-label={`${edge} crop percentage`}
-                        onChange={(event) => setCropDraft((current) => ({
-                          ...current,
-                          [edge]: boundedPercent(event.target.value),
-                        }))}
-                      />
-                    </label>
-                  ))}
-                </div>
-                {!cropIsValid ? <p role="alert">Leave at least 10% of the image visible.</p> : null}
-                <footer>
-                  <button type="button" onClick={() => {
-                    updateImage({
-                      cropX: null,
-                      cropY: null,
-                      cropWidth: null,
-                      cropHeight: null,
-                    });
-                    cropLayer.close(false);
-                  }}>Reset</button>
-                  <button type="button" disabled={!cropIsValid} onClick={() => {
-                    const isFull = Object.values(cropDraft).every((value) => value === 0);
-                    updateImage(isFull ? {
-                      cropX: null,
-                      cropY: null,
-                      cropWidth: null,
-                      cropHeight: null,
-                    } : {
-                      cropX: cropDraft.left / 100,
-                      cropY: cropDraft.top / 100,
-                      cropWidth: (100 - cropDraft.left - cropDraft.right) / 100,
-                      cropHeight: (100 - cropDraft.top - cropDraft.bottom) / 100,
-                    });
-                    cropLayer.close(false);
-                  }}>Apply</button>
-                </footer>
-              </NotebookFloatingLayer>
-            ) : null}
           </div>
+          <button
+            type="button"
+            disabled={!hasCrop}
+            aria-label="Reset image crop"
+            title="Reset image crop"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              rememberTarget();
+              updateImage({
+                cropX: null,
+                cropY: null,
+                cropWidth: null,
+                cropHeight: null,
+              });
+            }}
+          ><Crop aria-hidden="true" size={14} /></button>
           <button
             type="button"
             aria-label="Rotate image right 90 degrees"

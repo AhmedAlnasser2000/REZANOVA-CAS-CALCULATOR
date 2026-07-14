@@ -166,14 +166,14 @@ function compatibilityReport(
           : 'Interactive video has no poster and will be represented by descriptive text only.',
       });
     }
-    if (node.type === 'imageFigure'
+    if ((node.type === 'imageFigure' || node.type === 'videoFigure')
       && request.format !== 'pdf'
       && node.placement
       && node.placement !== 'normal') {
       findings.push({
         kind: 'layout-approximation',
         nodeId: node.id,
-        message: 'The target will approximate the Notebook image wrapping preference.',
+        message: `The target will approximate the Notebook ${node.type === 'imageFigure' ? 'image' : 'video'} wrapping preference.`,
       });
     }
   });

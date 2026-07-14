@@ -84,21 +84,29 @@ function InlineContent({ content }: { content?: readonly NotebookInlineNode[] })
 function PublicationImage({
   alt,
   crop,
+  displayAspectRatio,
   rotation = 0,
   src,
 }: {
   alt: string;
   crop?: { height: number; width: number; x: number; y: number };
+  displayAspectRatio?: number;
   rotation?: number;
   src?: string;
 }) {
   const [naturalSize, setNaturalSize] = useState<{ height: number; width: number } | null>(null);
   if (!crop) {
-    return <img alt={alt} src={src} style={{ transform: `rotate(${rotation}deg)` }} />;
+    return <img alt={alt} src={src} style={{
+      aspectRatio: displayAspectRatio,
+      objectFit: displayAspectRatio ? 'fill' : undefined,
+      transform: `rotate(${rotation}deg)`,
+    }} />;
   }
-  const viewportStyle: CSSProperties | undefined = naturalSize ? {
-    aspectRatio: `${naturalSize.width * crop.width} / ${naturalSize.height * crop.height}`,
-  } : undefined;
+  const viewportStyle: CSSProperties | undefined = displayAspectRatio
+    ? { aspectRatio: displayAspectRatio }
+    : naturalSize ? {
+      aspectRatio: `${naturalSize.width * crop.width} / ${naturalSize.height * crop.height}`,
+    } : undefined;
   return (
     <span className="notebook-print-crop" style={viewportStyle}>
       <img
@@ -125,6 +133,7 @@ function paragraphStyle(format?: NotebookParagraphFormat): CSSProperties {
     lineHeight: format?.lineSpacing ?? 1.15,
     marginBlockStart: `${format?.spaceBeforePt ?? 0}pt`,
     marginBlockEnd: `${format?.spaceAfterPt ?? 6}pt`,
+    marginInlineStart: `${format?.leftIndentPt ?? 0}pt`,
     textAlign: format?.alignment ?? 'left',
   };
 }
@@ -199,6 +208,7 @@ function PublicationNode({
         <PublicationImage
           alt={node.decorative ? '' : node.altText ?? ''}
           crop={node.crop}
+          displayAspectRatio={node.displayAspectRatio}
           rotation={node.rotation}
           src={assetUrls.get(node.assetId)}
         />
@@ -208,8 +218,11 @@ function PublicationNode({
   }
   if (node.type === 'videoFigure') {
     return (
-      <figure className={`notebook-print-media notebook-print-video is-${node.alignment ?? 'center'}`} style={{ width: `${node.widthPercent ?? 100}%` }}>
-        {node.posterAssetId ? <img alt="" src={assetUrls.get(node.posterAssetId)} /> : null}
+      <figure className={`notebook-print-media notebook-print-video is-${node.alignment ?? 'center'} is-${node.placement ?? 'normal'}`} style={{ width: `${node.widthPercent ?? 100}%` }}>
+        {node.posterAssetId ? <img alt="" src={assetUrls.get(node.posterAssetId)} style={{
+          aspectRatio: node.displayAspectRatio,
+          objectFit: node.displayAspectRatio ? 'fill' : undefined,
+        }} /> : null}
         <strong>{node.title}</strong>
         {node.description ? <p>{node.description}</p> : null}
         {node.caption ? <figcaption>{labels.get(node.id)}{labels.has(node.id) ? ': ' : ''}{node.caption}</figcaption> : null}

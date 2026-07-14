@@ -125,21 +125,23 @@ describe('IndexedDB Notebook persistence ports', () => {
     expect(await ports.library.listVersions(record.libraryId)).toEqual([]);
   });
 
-  it('hydrates V6 and V7 records and snapshots through the V9 browser contract', async () => {
-    const name = 'legacy-v6-v7';
+  it('hydrates V6 through V9 records and snapshots through the V10 browser contract', async () => {
+    const name = 'legacy-v6-v9';
     const databaseName = `notebook-persistence-${name}`;
     const indexedDb = new IDBFactory();
     const ports = createPorts(name, indexedDb);
     const current = createRecord();
     await ports.library.save(current, { expectedRevision: null });
 
-    const legacyRecords = [6, 7].map((version) => {
+    const legacyRecords = [6, 7, 9].map((version) => {
       const legacy = JSON.parse(JSON.stringify(current));
       legacy.libraryId = `browser.record.v${version}`;
       legacy.document.id = `notebook.browser.v${version}`;
       legacy.document.version = version;
-      delete legacy.document.pageSetup;
-      delete legacy.document.headerFooter;
+      if (version < 8) {
+        delete legacy.document.pageSetup;
+        delete legacy.document.headerFooter;
+      }
       return legacy;
     });
     const database = await openDatabase(indexedDb, databaseName);
@@ -161,10 +163,10 @@ describe('IndexedDB Notebook persistence ports', () => {
 
     for (const legacy of legacyRecords) {
       const loaded = await ports.library.load(legacy.libraryId);
-      expect(loaded?.document.version).toBe(9);
+      expect(loaded?.document.version).toBe(10);
       expect(loaded?.document.content).toEqual(legacy.document.content);
       const versions = await ports.library.listVersions(legacy.libraryId);
-      expect(versions[0]?.record.document.version).toBe(9);
+      expect(versions[0]?.record.document.version).toBe(10);
       expect(versions[0]?.record.document.content).toEqual(legacy.document.content);
     }
   });

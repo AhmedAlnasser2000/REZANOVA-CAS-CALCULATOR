@@ -55,6 +55,10 @@ import {
   type NotebookEditorSelection,
 } from './selection';
 import {
+  useNotebookDirectMediaCanvasCoordinator,
+  type NotebookMediaStatus,
+} from './NotebookDirectMediaCanvasCoordinator';
+import {
   useNotebookPagination,
   type NotebookPaginationMetrics,
   type NotebookViewMode,
@@ -89,9 +93,12 @@ type NotebookRichCanvasProps = {
   onVideoInserted: () => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
   onPaginationChange: (metrics: NotebookPaginationMetrics) => void;
+  onMediaStatusChange: (status: NotebookMediaStatus | null) => void;
   onViewModeChange: (mode: NotebookViewMode) => void;
   viewMode: NotebookViewMode;
 };
+
+export type { NotebookMediaStatus } from './NotebookDirectMediaCanvasCoordinator';
 
 type PendingImageInsert = {
   mode: 'insert';
@@ -153,7 +160,8 @@ function isPristineNotebook(editor: Editor) {
     && paragraph.attrs.notebookAlignment == null
     && paragraph.attrs.notebookLineSpacing == null
     && paragraph.attrs.notebookSpaceBeforePt == null
-    && paragraph.attrs.notebookSpaceAfterPt == null;
+    && paragraph.attrs.notebookSpaceAfterPt == null
+    && paragraph.attrs.notebookLeftIndentPt == null;
 }
 
 export function NotebookRichCanvas({
@@ -172,10 +180,12 @@ export function NotebookRichCanvas({
   onVideoInserted,
   onSelectionChange,
   onPaginationChange,
+  onMediaStatusChange,
   onViewModeChange,
   viewMode,
 }: NotebookRichCanvasProps) {
   const documentRef = useRef(document);
+  const editorRef = useRef<Editor | null>(null);
   const loadedDocumentIdRef = useRef(document.id);
   const changeRef = useRef(onChange);
   const proseSelectionChangeRef = useRef(onProseSelectionChange);
@@ -200,9 +210,37 @@ export function NotebookRichCanvas({
   const openImageDialog = imageDialog.open;
   const imageDialogWasOpenRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const {
+    handleMediaDragGrip,
+    handleMediaInteraction,
+    imageCropMode,
+    publishImageCropMode,
+    refreshSelectedMediaStatus,
+    setPaginationMetrics,
+  } = useNotebookDirectMediaCanvasCoordinator({
+    documentRef,
+    editorRef,
+    onMediaStatusChange,
+    pageStageRef,
+    viewMode,
+  });
+
   const extensions = useMemo(
-    () => createNotebookExtensions(onOpenMathInTool, assetPort),
-    [assetPort, onOpenMathInTool],
+    () => createNotebookExtensions(onOpenMathInTool, assetPort, {
+      cropMode: imageCropMode,
+      minimumSizePx: 48,
+      onCropModeChange: ({ nodeId, active }) => publishImageCropMode(nodeId, active),
+      onMediaDragGrip: handleMediaDragGrip,
+      onMediaInteraction: handleMediaInteraction,
+    }),
+    [
+      assetPort,
+      handleMediaDragGrip,
+      handleMediaInteraction,
+      imageCropMode,
+      onOpenMathInTool,
+      publishImageCropMode,
+    ],
   );
   const cancelDocumentSync = useCallback(() => {
     const scheduled = documentSyncHandleRef.current;
@@ -260,6 +298,7 @@ export function NotebookRichCanvas({
       setProseSelection(nextProseSelection);
       proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
+      requestAnimationFrame(refreshSelectedMediaStatus);
     },
     onDestroy: () => {
       cancelDocumentSync();
@@ -272,6 +311,7 @@ export function NotebookRichCanvas({
       setProseSelection(nextProseSelection);
       proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
+      requestAnimationFrame(refreshSelectedMediaStatus);
     },
   });
   const videoAuthoring = useNotebookVideoAuthoring({
@@ -289,6 +329,35 @@ export function NotebookRichCanvas({
     viewMode,
     onChange: onPaginationChange,
   });
+
+  useEffect(() => {
+    editorRef.current = editor;
+    return () => {
+      if (editorRef.current === editor) {
+        editorRef.current = null;
+      }
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    setPaginationMetrics(paginationMetrics);
+    const frame = requestAnimationFrame(refreshSelectedMediaStatus);
+    return () => cancelAnimationFrame(frame);
+  }, [paginationMetrics, refreshSelectedMediaStatus, setPaginationMetrics, viewMode]);
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    const editorElement = editor.view.dom as HTMLElement;
+    const onCropModeRequest = (event: Event) => {
+      const detail = (event as CustomEvent<{ active?: boolean; nodeId?: string | null }>).detail;
+      if (!detail?.nodeId) return;
+      const selected = notebookEditorSelection(editor);
+      if (selected?.type !== 'imageFigure' || selected.id !== detail.nodeId) return;
+      publishImageCropMode(detail.nodeId, detail.active === true);
+    };
+    editorElement.addEventListener('notebook-image-crop-mode-request', onCropModeRequest);
+    return () => editorElement.removeEventListener('notebook-image-crop-mode-request', onCropModeRequest);
+  }, [editor, publishImageCropMode]);
 
   useEffect(() => {
     documentRef.current = document;
@@ -594,6 +663,7 @@ export function NotebookRichCanvas({
           alignment: null,
           placement: null,
           rotation: null,
+          displayAspectRatio: null,
           cropX: null,
           cropY: null,
           cropWidth: null,

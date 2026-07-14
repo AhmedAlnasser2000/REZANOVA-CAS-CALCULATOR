@@ -58,6 +58,7 @@ math { font-family: "Cambria Math", "STIX Two Math", serif; }
 .evidence .warning { color: #8b3d27; }
 .media { max-width: 100%; margin: 1.25rem auto; text-align: center; }
 .media img, .media video { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.media.has-display-aspect img, .media.has-display-aspect video { width: 100%; height: 100%; object-fit: fill; }
 .media video { width: 100%; background: #111; }
 .media.is-left { margin-left: 0; }
 .media.is-right { margin-right: 0; }
@@ -76,9 +77,6 @@ math { font-family: "Cambria Math", "STIX Two Math", serif; }
 .align-center { text-align: center; }
 .align-right { text-align: right; }
 .align-justify { text-align: justify; }
-.rotate-90 { transform: rotate(90deg); }
-.rotate-180 { transform: rotate(180deg); }
-.rotate-270 { transform: rotate(270deg); }
 .decorative-caption { font-style: italic; }
 .cwiz-notebook > footer { clear: both; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #d9ded7; }
 @media (max-width: 700px) {
@@ -219,6 +217,7 @@ function paragraphClass(format: NotebookParagraphFormat | undefined, styles: Sty
   if (format?.lineSpacing) declarations.push(`line-height: ${format.lineSpacing}`);
   if (format?.spaceBeforePt !== undefined) declarations.push(`margin-top: ${format.spaceBeforePt}pt`);
   if (format?.spaceAfterPt !== undefined) declarations.push(`margin-bottom: ${format.spaceAfterPt}pt`);
+  if (format?.leftIndentPt !== undefined) declarations.push(`margin-inline-start: ${format.leftIndentPt}pt`);
   if (declarations.length) classes.push(styles.add(`paragraph:${declarations.join(';')}`, declarations.join('; ')));
   return classes.join(' ');
 }
@@ -246,9 +245,19 @@ type RenderContext = {
   readonly styles: StyleRegistry;
 };
 
-function mediaClasses(widthPercent: number | undefined, alignment: string | undefined, placement: string | undefined, styles: StyleRegistry) {
+function mediaClasses(
+  widthPercent: number | undefined,
+  alignment: string | undefined,
+  placement: string | undefined,
+  displayAspectRatio: number | undefined,
+  styles: StyleRegistry,
+) {
   const classes = ['media', `is-${alignment ?? 'center'}`];
   if (placement && placement !== 'normal') classes.push(`is-${placement}`);
+  if (displayAspectRatio) {
+    classes.push('has-display-aspect');
+    classes.push(styles.add(`aspect:${displayAspectRatio}`, `aspect-ratio: ${displayAspectRatio}`));
+  }
   const width = Math.max(10, Math.min(100, widthPercent ?? 100));
   classes.push(styles.add(`width:${width}`, `width: ${width}%`));
   return classes.join(' ');
@@ -280,12 +289,15 @@ function renderNode(node: NotebookRichBlockNode, context: RenderContext): string
   if (node.type === 'imageFigure') {
     const path = context.assetPaths.get(node.assetId);
     if (!path) throw new Error(`Web image asset ${node.assetId} is unavailable.`);
-    const rotation = node.rotation ? ` rotate-${node.rotation}` : '';
+    const rotation = node.rotation ? context.styles.add(
+      `rotation:${node.rotation}`,
+      `transform: rotate(${node.rotation}deg)`,
+    ) : '';
     const crop = node.crop ? context.styles.add(
       `crop:${node.crop.x}:${node.crop.y}:${node.crop.width}:${node.crop.height}`,
       `clip-path: inset(${node.crop.y * 100}% ${(1 - node.crop.x - node.crop.width) * 100}% ${(1 - node.crop.y - node.crop.height) * 100}% ${node.crop.x * 100}%)`,
     ) : '';
-    return `<figure class="${mediaClasses(node.widthPercent, node.alignment, node.placement, context.styles)}"><img class="${crop}${rotation}" src="${path}" alt="${node.decorative ? '' : escapeHtml(node.altText ?? '')}" loading="lazy">${captionHtml(node.id, node.caption, context)}</figure>`;
+    return `<figure class="${mediaClasses(node.widthPercent, node.alignment, node.placement, node.displayAspectRatio, context.styles)}"><img class="${[crop, rotation].filter(Boolean).join(' ')}" src="${path}" alt="${node.decorative ? '' : escapeHtml(node.altText ?? '')}" loading="lazy">${captionHtml(node.id, node.caption, context)}</figure>`;
   }
   if (node.type === 'videoFigure') {
     const source = context.assetPaths.get(node.assetId);
@@ -297,7 +309,7 @@ function renderNode(node: NotebookRichBlockNode, context: RenderContext): string
       if (!trackPath) throw new Error(`Web caption asset ${track.assetId} is unavailable.`);
       return `<track src="${trackPath}" kind="${track.kind}" srclang="${escapeHtml(track.language)}" label="${escapeHtml(track.label)}"${track.default ? ' default' : ''}>`;
     }).join('') ?? '';
-    return `<figure class="${mediaClasses(node.widthPercent, node.alignment, 'normal', context.styles)}"><video controls preload="metadata"${node.loop ? ' loop' : ''}${poster ? ` poster="${poster}"` : ''}><source src="${source}" type="${sourceAssetType}">${tracks}<p>Your browser cannot play this local video.</p></video><div class="media-description"><strong>${escapeHtml(node.title)}</strong>${node.description ? `<p>${escapeHtml(node.description)}</p>` : ''}</div>${captionHtml(node.id, node.caption, context)}<p class="video-note">Interactive local playback is included in this Web package.</p></figure>`;
+    return `<figure class="${mediaClasses(node.widthPercent, node.alignment, node.placement, node.displayAspectRatio, context.styles)}"><video controls preload="metadata"${node.loop ? ' loop' : ''}${poster ? ` poster="${poster}"` : ''}><source src="${source}" type="${sourceAssetType}">${tracks}<p>Your browser cannot play this local video.</p></video><div class="media-description"><strong>${escapeHtml(node.title)}</strong>${node.description ? `<p>${escapeHtml(node.description)}</p>` : ''}</div>${captionHtml(node.id, node.caption, context)}<p class="video-note">Interactive local playback is included in this Web package.</p></figure>`;
   }
   if (node.type === 'bulletList' || node.type === 'orderedList') {
     const tag = node.type === 'bulletList' ? 'ul' : 'ol';

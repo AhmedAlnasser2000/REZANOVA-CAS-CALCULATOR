@@ -26,7 +26,7 @@ describe('Notebook durable persistence contracts', () => {
       savedAt: '2026-07-14T00:01:00.000Z',
     });
     expect(record.version).toBe(1);
-    expect(record.document.version).toBe(9);
+    expect(record.document.version).toBe(10);
     expect(record.libraryId).not.toBe(record.document.id);
     expect(isNotebookStoredRecordV1(record)).toBe(true);
     expect(summarizeNotebookStoredRecordV1(record)).toMatchObject({
@@ -80,6 +80,42 @@ describe('Notebook durable persistence contracts', () => {
     expect(isNotebookStoredRecordV1({ ...record, assetIds: [] })).toBe(false);
   });
 
+  it('preserves V10 indentation and direct-media geometry in durable records', () => {
+    const imageAssetId = `sha256:${'d'.repeat(64)}`;
+    const videoAssetId = `sha256:${'e'.repeat(64)}`;
+    const document = createNotebookRichDocument({
+      now: () => new Date('2026-07-14T00:00:00.000Z'),
+    });
+    document.content = [{
+      type: 'paragraph',
+      id: 'paragraph.direct',
+      format: { leftIndentPt: 108 },
+    }, {
+      type: 'imageFigure',
+      id: 'image.direct',
+      assetId: imageAssetId,
+      displayAspectRatio: 1.25,
+      rotation: 137,
+    }, {
+      type: 'videoFigure',
+      id: 'video.direct',
+      assetId: videoAssetId,
+      title: 'Direct media',
+      description: '',
+      alignment: 'left',
+      placement: 'square-left',
+      displayAspectRatio: 16 / 9,
+    }];
+    const record = createNotebookStoredRecordV1(document, {
+      libraryId: 'library.v10-geometry',
+      savedAt: '2026-07-14T00:01:00.000Z',
+    });
+
+    expect(isNotebookStoredRecordV1(record)).toBe(true);
+    expect(record.assetIds).toEqual([imageAssetId, videoAssetId]);
+    expect(record.document.content).toEqual(document.content);
+  });
+
   it('validates version snapshots against their owning library revision', () => {
     const document = createNotebookRichDocument({
       now: () => new Date('2026-07-14T00:00:00.000Z'),
@@ -99,7 +135,7 @@ describe('Notebook durable persistence contracts', () => {
     expect(isNotebookVersionSnapshotV1({ ...snapshot, libraryId: '../escape' })).toBe(false);
   });
 
-  it('migrates V6 and V7 records and snapshots losslessly into the V9 envelope', () => {
+  it('migrates V6 through V9 records and snapshots losslessly into the V10 envelope', () => {
     const current = createNotebookStoredRecordV1(createNotebookRichDocument({
       now: () => new Date('2026-07-14T00:00:00.000Z'),
       title: 'Legacy document',
@@ -114,7 +150,7 @@ describe('Notebook durable persistence contracts', () => {
     delete legacyDocument.pageSetup;
     delete legacyDocument.headerFooter;
     const migrated = migrateNotebookStoredRecordV1(legacy);
-    expect(migrated?.document.version).toBe(9);
+    expect(migrated?.document.version).toBe(10);
     expect(migrated?.document.content).toEqual(
       (legacy.document as { content: unknown }).content,
     );
@@ -129,7 +165,7 @@ describe('Notebook durable persistence contracts', () => {
       record: legacy,
     };
     const migratedSnapshot = migrateNotebookVersionSnapshotV1(legacySnapshot);
-    expect(migratedSnapshot?.record.document.version).toBe(9);
+    expect(migratedSnapshot?.record.document.version).toBe(10);
     expect(migratedSnapshot?.record.document.content).toEqual(
       (legacy.document as { content: unknown }).content,
     );
@@ -137,9 +173,17 @@ describe('Notebook durable persistence contracts', () => {
     const version7 = structuredClone(legacy);
     (version7.document as Record<string, unknown>).version = 7;
     const migratedV7 = migrateNotebookStoredRecordV1(version7);
-    expect(migratedV7?.document.version).toBe(9);
+    expect(migratedV7?.document.version).toBe(10);
     expect(migratedV7?.document.content).toEqual(
       (version7.document as { content: unknown }).content,
+    );
+
+    const version9 = structuredClone(current) as unknown as Record<string, unknown>;
+    (version9.document as Record<string, unknown>).version = 9;
+    const migratedV9 = migrateNotebookStoredRecordV1(version9);
+    expect(migratedV9?.document.version).toBe(10);
+    expect(migratedV9?.document.content).toEqual(
+      (version9.document as { content: unknown }).content,
     );
   });
 });

@@ -7,6 +7,7 @@ import { migrateNotebookDocumentV5 } from './migrate-v5';
 import { migrateNotebookDocumentV6 } from './migrate-v6';
 import { migrateNotebookDocumentV7 } from './migrate-v7';
 import { migrateNotebookDocumentV8 } from './migrate-v8';
+import { migrateNotebookDocumentV9 } from './migrate-v9';
 import {
   isNotebookRichDocument,
   isNotebookRichDocumentV2,
@@ -16,6 +17,7 @@ import {
   isNotebookRichDocumentV6,
   isNotebookRichDocumentV7,
   isNotebookRichDocumentV8,
+  isNotebookRichDocumentV9,
 } from './model';
 import type { NotebookRichDocument } from './types';
 
@@ -43,5 +45,6 @@ export function migrateNotebookRichDocument(
   if (isNotebookRichDocumentV6(value)) return migrateNotebookDocumentV6(value);
   if (isNotebookRichDocumentV7(value)) return migrateNotebookDocumentV7(value);
   if (isNotebookRichDocumentV8(value)) return migrateNotebookDocumentV8(value);
+  if (isNotebookRichDocumentV9(value)) return migrateNotebookDocumentV9(value);
   return null;
 }

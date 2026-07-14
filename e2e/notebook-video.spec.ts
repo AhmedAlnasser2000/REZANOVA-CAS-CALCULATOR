@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const SAMPLE_WEBM = Buffer.from('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', 'base64');
 const POSTER_SVG = Buffer.from(
@@ -17,6 +17,26 @@ async function openBlankNotebook(page: Page) {
   await page.getByTestId('workspace-tab-add-menu').click();
   await page.getByRole('menuitem', { name: 'New Notebook' }).click();
   await expect(page.getByLabel('Notebook rich document')).toBeVisible();
+}
+
+async function attachScreenshot(page: Page, name: string) {
+  const path = test.info().outputPath(`${name}.png`);
+  await page.screenshot({ path });
+  await test.info().attach(name, { path, contentType: 'image/png' });
+}
+
+async function dragNotebookControl(
+  page: Page,
+  control: Locator,
+  destination: { x: number; y: number },
+) {
+  const bounds = await control.boundingBox();
+  if (!bounds) throw new Error('Notebook media control is not visible.');
+  const start = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(destination.x, destination.y, { steps: 8 });
+  await page.mouse.up();
 }
 
 async function expectVideoContained(page: Page) {
@@ -91,6 +111,35 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
   await expect(figure).toHaveAttribute('data-video-alignment', 'right');
   await expect(figure).toHaveCSS('width', /.+/);
 
+  await figure.click();
+  const videoFrame = figure.locator('.notebook-video-frame');
+  const videoFrameBounds = await videoFrame.boundingBox();
+  if (!videoFrameBounds) throw new Error('Video frame is not visible.');
+  await dragNotebookControl(
+    page,
+    figure.getByRole('button', { name: 'Resize video from the right' }),
+    {
+      x: videoFrameBounds.x + videoFrameBounds.width + Math.max(48, videoFrameBounds.width * 0.12),
+      y: videoFrameBounds.y + videoFrameBounds.height / 2,
+    },
+  );
+  await expect(page.getByText(/^Page 1 · X \d+\.\d pt · Y \d+\.\d pt$/)).toBeVisible();
+
+  const stageBounds = await page.locator('.notebook-page-stage').boundingBox();
+  if (!stageBounds) throw new Error('Notebook page stage is not visible.');
+  await dragNotebookControl(
+    page,
+    figure.getByRole('button', { name: 'Drag video to reposition' }),
+    {
+      x: stageBounds.x + stageBounds.width * 0.12,
+      y: stageBounds.y + stageBounds.height * 0.5,
+    },
+  );
+  await expect(figure).toHaveAttribute('data-video-placement', 'square-left');
+  await expect(figure).toHaveAttribute('data-video-alignment', 'left');
+  await expect(page.getByText(/^Page 1 · X \d+\.\d pt · Y \d+\.\d pt$/)).toBeVisible();
+  await attachScreenshot(page, 'notebook-video-direct-media');
+
   await toolbar.getByRole('button', { name: 'Poster', exact: true }).click();
   await page.getByLabel('Choose video poster image').setInputFiles({
     name: 'lesson-poster.svg',
@@ -126,45 +175,55 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
     } }>>((resolve, reject) => {
       recordsRequest.onsuccess = () => resolve(recordsRequest.result);
       recordsRequest.onerror = () => reject(recordsRequest.error);
-    });
-    database.close();
-    const record = records.find((candidate) => candidate.document?.content?.some(
-      (node) => node.type === 'videoFigure',
-    ));
-    const storedVideo = record?.document?.content?.find((node) => node.type === 'videoFigure');
-    return {
-      alignment: storedVideo?.alignment,
-      assetCount: record?.assetIds?.length,
-      caption: storedVideo?.caption,
-      hasPoster: typeof storedVideo?.posterAssetId === 'string',
-      trackCount: Array.isArray(storedVideo?.tracks) ? storedVideo.tracks.length : 0,
-      version: record?.document?.version,
-      widthPercent: storedVideo?.widthPercent,
-    };
-  })).toEqual({
-    alignment: 'right',
+      });
+      database.close();
+      const record = records.find((candidate) => candidate.document?.content?.some(
+        (node) => node.type === 'videoFigure',
+      ));
+      const storedVideo = record?.document?.content?.find((node) => node.type === 'videoFigure');
+      return {
+        alignment: storedVideo?.alignment,
+        assetCount: record?.assetIds?.length,
+        caption: storedVideo?.caption,
+        displayAspectRatio: storedVideo?.displayAspectRatio,
+        hasPoster: typeof storedVideo?.posterAssetId === 'string',
+        placement: storedVideo?.placement,
+        resizedAbovePreset: typeof storedVideo?.widthPercent === 'number'
+          && storedVideo.widthPercent > 50,
+        trackCount: Array.isArray(storedVideo?.tracks) ? storedVideo.tracks.length : 0,
+        version: record?.document?.version,
+        widthPercent: storedVideo?.widthPercent,
+      };
+    })).toEqual({
+    alignment: 'left',
     assetCount: 3,
     caption: 'Approaching a finite limit',
+    displayAspectRatio: expect.any(Number),
     hasPoster: true,
+    placement: 'square-left',
+    resizedAbovePreset: true,
     trackCount: 1,
-    version: 9,
-    widthPercent: 50,
+    version: 10,
+    widthPercent: expect.any(Number),
   });
 
   for (const width of [2400, 1440, 1100]) {
     await page.setViewportSize({ width, height: 960 });
     await expectVideoContained(page);
+    await attachScreenshot(page, `notebook-video-${width}`);
   }
   await page.setViewportSize({ width: 1440, height: 960 });
   await page.locator('.active-surface--page').evaluate((element) => {
     (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
   });
   await expectVideoContained(page);
-  await page.emulateMedia({ forcedColors: 'active' });
+  await attachScreenshot(page, 'notebook-video-80');
+  await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
   await page.setViewportSize({ width: 2400, height: 1050 });
   await page.locator('.active-surface--page').evaluate((element) => {
     (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
   });
   await expectVideoContained(page);
   await expect(figure).toHaveCSS('outline-style', 'solid');
+  await attachScreenshot(page, 'notebook-video-forced-colors-130');
 });

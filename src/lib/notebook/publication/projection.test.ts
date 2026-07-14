@@ -38,7 +38,12 @@ async function fixture(): Promise<Fixture> {
     ...base,
     selectedNodeId: null,
     content: [
-      { type: 'paragraph', id: 'intro', content: [{ type: 'text', text: 'Introduction' }] },
+      {
+        type: 'paragraph',
+        id: 'intro',
+        format: { leftIndentPt: 72 },
+        content: [{ type: 'text', text: 'Introduction' }],
+      },
       {
         type: 'section',
         id: 'section-a',
@@ -50,6 +55,8 @@ async function fixture(): Promise<Fixture> {
           altText: 'Limit graph',
           caption: 'A finite limit',
           placement: 'square-left',
+          displayAspectRatio: 1.25,
+          rotation: 137,
         }],
       },
       {
@@ -64,6 +71,9 @@ async function fixture(): Promise<Fixture> {
           description: 'A short explanation.',
           caption: 'Approaching the limit',
           numbered: true,
+          alignment: 'right',
+          placement: 'square-right',
+          displayAspectRatio: 16 / 9,
           posterAssetId: poster.id,
           tracks: [{
             id: 'track-a',
@@ -126,6 +136,22 @@ describe('Notebook publication projection', () => {
     });
     expect(Object.isFrozen(projection)).toBe(true);
     expect(Object.isFrozen(projection.content[1])).toBe(true);
+    const intro = projection.content.find((node) => node.id === 'intro');
+    const figure = projection.content.find((node) => node.id === 'section-a');
+    const video = projection.content.find((node) => node.id === 'section-b');
+    expect(intro).toMatchObject({ type: 'paragraph', format: { leftIndentPt: 72 } });
+    expect(figure).toMatchObject({
+      type: 'section',
+      content: [{ displayAspectRatio: 1.25, rotation: 137, type: 'imageFigure' }],
+    });
+    expect(video).toMatchObject({
+      type: 'section',
+      content: [{
+        displayAspectRatio: 16 / 9,
+        placement: 'square-right',
+        type: 'videoFigure',
+      }],
+    });
     expect((await projection.assets[0].blob.arrayBuffer()).byteLength).toBe(
       projection.assets[0].metadata.byteLength,
     );
@@ -147,7 +173,12 @@ describe('Notebook publication projection', () => {
       source.ids.video,
     ].sort());
     expect(projection.compatibility.summary.videoSubstitutions).toBe(0);
-    expect(projection.compatibility.summary.layoutApproximations).toBe(2);
+    expect(projection.compatibility.summary.layoutApproximations).toBe(3);
+    expect(projection.compatibility.findings).toContainEqual(expect.objectContaining({
+      kind: 'layout-approximation',
+      nodeId: 'video-a',
+      message: expect.stringContaining('video wrapping preference'),
+    }));
   });
 
   it('selects top-level Section subtrees in document order', async () => {

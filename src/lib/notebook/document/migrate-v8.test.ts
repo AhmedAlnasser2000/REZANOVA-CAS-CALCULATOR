@@ -38,7 +38,7 @@ describe('Notebook rich document V8 migration', () => {
 
     expect(isNotebookRichDocumentV8(version8)).toBe(true);
     const migrated = migrateNotebookDocumentV8(version8);
-    expect(migrated).toEqual({ ...version8, version: 9 });
+    expect(migrated).toEqual({ ...version8, version: 10 });
     expect(isNotebookRichDocument(migrated)).toBe(true);
   });
 

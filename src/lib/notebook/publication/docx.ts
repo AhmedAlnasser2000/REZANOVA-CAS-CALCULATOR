@@ -141,6 +141,9 @@ function alignment(value?: NotebookParagraphFormat['alignment']) {
 function paragraphOptions(format?: NotebookParagraphFormat) {
   return {
     alignment: alignment(format?.alignment),
+    indent: format?.leftIndentPt
+      ? { left: format.leftIndentPt * 20 }
+      : undefined,
     spacing: {
       before: (format?.spaceBeforePt ?? 0) * 20,
       after: (format?.spaceAfterPt ?? 6) * 20,
@@ -168,12 +171,19 @@ function textRun(text: string, marks: readonly NotebookRichMark[] = []) {
   });
 }
 
-function imageRun(image: PreparedImage, widthPercent = 100, rotation = 0, alt = '') {
+function imageRun(
+  image: PreparedImage,
+  widthPercent = 100,
+  rotation = 0,
+  alt = '',
+  displayAspectRatio?: number,
+) {
   const maximumWidth = 624 * Math.max(0.1, Math.min(1, widthPercent / 100));
   const scale = Math.min(1, maximumWidth / image.width);
+  const width = Math.max(1, Math.round(image.width * scale));
   const transformation = {
-    width: Math.max(1, Math.round(image.width * scale)),
-    height: Math.max(1, Math.round(image.height * scale)),
+    width,
+    height: Math.max(1, Math.round(displayAspectRatio ? width / displayAspectRatio : image.height * scale)),
     rotation,
   };
   const altText = { name: alt || 'Notebook image', description: alt };
@@ -361,7 +371,13 @@ function renderNodes(nodes: readonly NotebookRichBlockNode[], context: RenderCon
       const image = context.assets.get(node.assetId);
       if (!image) throw new Error(`Image asset ${node.assetId} is unavailable.`);
       output.push(new Paragraph({
-        children: [imageRun(image, node.widthPercent, node.rotation, node.decorative ? '' : node.altText)],
+        children: [imageRun(
+          image,
+          node.widthPercent,
+          node.rotation,
+          node.decorative ? '' : node.altText,
+          node.displayAspectRatio,
+        )],
         alignment: alignment(node.alignment),
       }));
       const imageCaption = caption(node.id, node.caption, context);
@@ -369,7 +385,10 @@ function renderNodes(nodes: readonly NotebookRichBlockNode[], context: RenderCon
     } else if (node.type === 'videoFigure') {
       if (node.posterAssetId) {
         const poster = context.assets.get(node.posterAssetId);
-        if (poster) output.push(new Paragraph({ children: [imageRun(poster, node.widthPercent)], alignment: alignment(node.alignment) }));
+        if (poster) output.push(new Paragraph({
+          children: [imageRun(poster, node.widthPercent, 0, '', node.displayAspectRatio)],
+          alignment: alignment(node.alignment),
+        }));
       }
       output.push(new Paragraph({ children: [new TextRun({ text: node.title || 'Video', bold: true })] }));
       if (node.description) output.push(new Paragraph(node.description));

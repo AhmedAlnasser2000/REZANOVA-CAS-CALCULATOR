@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 type StoredBrowserNotebook = {
   assetIds?: string[];
@@ -7,6 +7,7 @@ type StoredBrowserNotebook = {
       alignment?: string;
       caption?: string;
       crop?: { height?: number; width?: number; x?: number; y?: number };
+      displayAspectRatio?: number;
       placement?: string;
       rotation?: number;
       type?: string;
@@ -40,6 +41,20 @@ async function attachScreenshot(page: Page, name: string) {
   const path = test.info().outputPath(`${name}.png`);
   await page.screenshot({ path });
   await test.info().attach(name, { path, contentType: 'image/png' });
+}
+
+async function dragNotebookControl(
+  page: Page,
+  control: Locator,
+  destination: { x: number; y: number },
+) {
+  const bounds = await control.boundingBox();
+  if (!bounds) throw new Error('Notebook media control is not visible.');
+  const start = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(destination.x, destination.y, { steps: 8 });
+  await page.mouse.up();
 }
 
 async function expectImageContained(page: Page) {
@@ -135,7 +150,7 @@ test('Notebook inserts a durable safe SVG figure and exposes contextual Picture 
     assetIds: [expect.stringMatching(/^sha256:[0-9a-f]{64}$/)],
     caption: 'Limit diagram',
     mimeType: 'image/svg+xml',
-    version: 9,
+    version: 10,
   });
 
   await ribbonTabs.getByRole('tab', { name: 'Home' }).click();
@@ -223,16 +238,6 @@ test('Picture Format persists page-aware wrap, crop, rotation, size, and alignme
   await expect(figure).toHaveAttribute('data-image-placement', 'square-left');
   await expect(figure).toHaveCSS('float', 'left');
 
-  await toolbar.getByRole('button', { name: 'Crop image' }).click();
-  const cropDialog = page.getByRole('dialog', { name: 'Crop image' });
-  await cropDialog.getByLabel('left crop percentage').fill('10');
-  await cropDialog.getByLabel('right crop percentage').fill('10');
-  await cropDialog.getByLabel('top crop percentage').fill('5');
-  await cropDialog.getByRole('button', { name: 'Apply' }).click();
-  await toolbar.getByRole('button', { name: 'Rotate image right 90 degrees' }).click();
-  await expect(figure).toHaveCSS('width', /.+/);
-  await expect(figure.locator('img')).toHaveCSS('transform', /matrix\(0, 1, -1, 0/);
-
   await ribbonTabs.getByRole('tab', { name: 'Layout' }).click();
   await toolbar.getByLabel('Page margins').selectOption('wide');
   await ribbonTabs.getByRole('tab', { name: 'Picture Format' }).click();
@@ -244,6 +249,48 @@ test('Picture Format persists page-aware wrap, crop, rotation, size, and alignme
   await toolbar.getByLabel('Page margins').selectOption('normal');
   await ribbonTabs.getByRole('tab', { name: 'Picture Format' }).click();
   await expect(figure).toHaveAttribute('data-image-placement', 'square-left');
+
+  await figure.click();
+  const imageFrame = figure.locator('.notebook-image-frame');
+  const resizeFrame = await imageFrame.boundingBox();
+  if (!resizeFrame) throw new Error('Image frame is not visible.');
+  await dragNotebookControl(
+    page,
+    figure.getByRole('button', { name: 'Resize image from the right' }),
+    {
+      x: resizeFrame.x + resizeFrame.width + Math.max(48, resizeFrame.width * 0.12),
+      y: resizeFrame.y + resizeFrame.height / 2,
+    },
+  );
+
+  await toolbar.getByRole('button', { name: 'Crop image' }).click();
+  const cropOverlay = page.getByTestId('notebook-image-crop-overlay');
+  await expect(cropOverlay).toBeVisible();
+  const cropFrame = await imageFrame.boundingBox();
+  const cropWestHandle = figure.getByRole('button', { name: 'Crop image from the left' });
+  if (!cropFrame) throw new Error('Image crop frame is not visible.');
+  const cropHandleBounds = await cropWestHandle.boundingBox();
+  if (!cropHandleBounds) throw new Error('Image crop control is not visible.');
+  await dragNotebookControl(page, cropWestHandle, {
+    x: cropHandleBounds.x + cropHandleBounds.width / 2 + Math.max(24, cropFrame.width * 0.1),
+    y: cropHandleBounds.y + cropHandleBounds.height / 2,
+  });
+  await expect(figure).toHaveAttribute('data-notebook-image-crop-mode', 'true');
+  await toolbar.getByRole('button', { name: 'Finish cropping image' }).click();
+  await expect(cropOverlay).toBeHidden();
+
+  const rotationFrame = await imageFrame.boundingBox();
+  if (!rotationFrame) throw new Error('Image rotation frame is not visible.');
+  await dragNotebookControl(
+    page,
+    figure.getByRole('button', { name: 'Rotate image' }),
+    {
+      x: rotationFrame.x + rotationFrame.width * 0.8,
+      y: rotationFrame.y + rotationFrame.height * 0.25,
+    },
+  );
+  await expect(figure).toHaveCSS('width', /.+/);
+  await expect(figure.locator('.notebook-media-transform-shell')).toHaveCSS('transform', /matrix\(.+/);
 
   await editor.press('Control+End');
   await page.keyboard.press('Enter');
@@ -276,34 +323,60 @@ test('Picture Format persists page-aware wrap, crop, rotation, size, and alignme
       .find((node) => node.type === 'imageFigure');
   })).toMatchObject({
     alignment: 'left',
-    crop: { height: 0.95, width: 0.8, x: 0.1, y: 0.05 },
+    crop: { height: 1, width: expect.any(Number), x: expect.any(Number), y: 0 },
+    displayAspectRatio: expect.any(Number),
     placement: 'square-left',
-    rotation: 90,
+    rotation: expect.any(Number),
     type: 'imageFigure',
-    widthPercent: 50,
+    widthPercent: expect.any(Number),
   });
+  const storedImage = await page.evaluate(async () => {
+    const request = indexedDB.open('calcwiz-notebook-library-v1', 2);
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const recordsRequest = database.transaction('records', 'readonly')
+      .objectStore('records').getAll();
+    const records = await new Promise<StoredBrowserNotebook[]>((resolve, reject) => {
+      recordsRequest.onsuccess = () => resolve(recordsRequest.result as StoredBrowserNotebook[]);
+      recordsRequest.onerror = () => reject(recordsRequest.error);
+    });
+    database.close();
+    return records.flatMap((record) => record.document?.content ?? [])
+      .find((node) => node.type === 'imageFigure');
+  });
+  expect(storedImage?.crop?.x).toBeGreaterThan(0);
+  expect(storedImage?.crop?.width).toBeLessThan(1);
+  expect(storedImage?.displayAspectRatio).toBeGreaterThan(0.1);
+  expect(storedImage?.widthPercent).toBeGreaterThan(50);
+  expect(storedImage?.rotation).toBeGreaterThan(10);
+  expect(storedImage?.rotation).toBeLessThan(85);
 
   for (const width of [2400, 1440, 1100]) {
     await page.setViewportSize({ width, height: 1000 });
     await expectImageContained(page);
     await toolbar.getByRole('button', { name: 'Crop image' }).click();
-    const bounds = await page.getByRole('dialog', { name: 'Crop image' }).evaluate((element) => {
-      const popover = element.getBoundingClientRect();
-      const ribbon = document.querySelector('.notebook-rich-toolbar')!.getBoundingClientRect();
+    await expect(cropOverlay).toBeVisible();
+    const bounds = await cropOverlay.evaluate((element) => {
+      const overlay = element.getBoundingClientRect();
+      const canvas = document.querySelector('.notebook-rich-scroll-region')!.getBoundingClientRect();
       return {
-        bottom: popover.bottom,
-        left: popover.left,
-        ribbonBottom: ribbon.bottom,
-        ribbonLeft: ribbon.left,
-        ribbonRight: ribbon.right,
-        right: popover.right,
+        bottom: overlay.bottom,
+        canvasBottom: canvas.bottom,
+        canvasLeft: canvas.left,
+        canvasRight: canvas.right,
+        left: overlay.left,
+        right: overlay.right,
+        top: overlay.top,
       };
     });
-    expect(bounds.left).toBeGreaterThanOrEqual(bounds.ribbonLeft);
-    expect(bounds.right).toBeLessThanOrEqual(bounds.ribbonRight);
-    expect(bounds.bottom).toBeLessThanOrEqual(bounds.ribbonBottom + 1);
-    await page.keyboard.press('Escape');
+    expect(bounds.left).toBeGreaterThanOrEqual(bounds.canvasLeft);
+    expect(bounds.right).toBeLessThanOrEqual(bounds.canvasRight);
+    expect(bounds.top).toBeGreaterThanOrEqual(0);
+    expect(bounds.bottom).toBeLessThanOrEqual(bounds.canvasBottom);
     await attachScreenshot(page, `notebook-picture-format-${width}`);
+    await toolbar.getByRole('button', { name: 'Finish cropping image' }).click();
   }
 
   await page.setViewportSize({ width: 1440, height: 1000 });

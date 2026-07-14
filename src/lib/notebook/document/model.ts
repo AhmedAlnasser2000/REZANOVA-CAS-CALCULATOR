@@ -1,9 +1,11 @@
 import {
+  isNotebookDisplayAspectRatio,
   isNotebookFontSize,
+  isNotebookImageRotation,
+  isNotebookParagraphLeftIndentPt,
   NOTEBOOK_BULLET_STYLES,
   NOTEBOOK_IMAGE_ALIGNMENTS,
   NOTEBOOK_IMAGE_PLACEMENTS,
-  NOTEBOOK_IMAGE_ROTATIONS,
   NOTEBOOK_LINE_SPACINGS,
   NOTEBOOK_ORDERED_STYLES,
   NOTEBOOK_PAGE_NUMBER_POSITIONS,
@@ -27,6 +29,7 @@ import {
   type NotebookRichDocumentV6,
   type NotebookRichDocumentV7,
   type NotebookRichDocumentV8,
+  type NotebookRichDocumentV9,
   type NotebookRichMark,
 } from './types';
 import {
@@ -137,7 +140,10 @@ function isOneOf<T>(value: unknown, options: readonly T[]): value is T {
   return options.some((option) => option === value);
 }
 
-function isParagraphFormat(value: unknown): value is NotebookParagraphFormat {
+function isParagraphFormat(
+  value: unknown,
+  allowV10MediaAndIndent: boolean,
+): value is NotebookParagraphFormat {
   if (!isRecord(value)) {
     return false;
   }
@@ -146,6 +152,7 @@ function isParagraphFormat(value: unknown): value is NotebookParagraphFormat {
     'lineSpacing',
     'spaceBeforePt',
     'spaceAfterPt',
+    ...(allowV10MediaAndIndent ? ['leftIndentPt'] : []),
   ].includes(key))) {
     return false;
   }
@@ -154,7 +161,9 @@ function isParagraphFormat(value: unknown): value is NotebookParagraphFormat {
     && (value.spaceBeforePt === undefined
       || isOneOf(value.spaceBeforePt, NOTEBOOK_PARAGRAPH_SPACES_PT))
     && (value.spaceAfterPt === undefined
-      || isOneOf(value.spaceAfterPt, NOTEBOOK_PARAGRAPH_SPACES_PT));
+      || isOneOf(value.spaceAfterPt, NOTEBOOK_PARAGRAPH_SPACES_PT))
+    && (value.leftIndentPt === undefined
+      || (allowV10MediaAndIndent && isNotebookParagraphLeftIndentPt(value.leftIndentPt)));
 }
 
 function isPageSetup(value: unknown): value is NotebookPageSetup {
@@ -212,6 +221,7 @@ function isRichBlockNode(
   allowImages = true,
   allowVideos = true,
   allowPageLayout = true,
+  allowV10MediaAndIndent = true,
 ): value is NotebookRichBlockNode {
   if (!isRecord(value) || typeof value.type !== 'string' || typeof value.id !== 'string') {
     return false;
@@ -249,6 +259,7 @@ function isRichBlockNode(
         allowImages,
         allowVideos,
         false,
+        allowV10MediaAndIndent,
       ));
   }
   if (value.type === 'semanticBlock') {
@@ -279,6 +290,7 @@ function isRichBlockNode(
         allowImages,
         allowVideos,
         false,
+        allowV10MediaAndIndent,
       ));
   }
   if (value.type === 'bulletList' || value.type === 'orderedList') {
@@ -301,10 +313,14 @@ function isRichBlockNode(
           allowImages,
           allowVideos,
           false,
+          allowV10MediaAndIndent,
         )));
   }
   if (value.type === 'paragraph') {
-    return (value.format === undefined || (allowParagraphTools && isParagraphFormat(value.format)))
+    return (value.format === undefined || (allowParagraphTools && isParagraphFormat(
+      value.format,
+      allowV10MediaAndIndent,
+    )))
       && (value.content === undefined
         || (Array.isArray(value.content) && value.content.every((node) => isInlineNode(
           node,
@@ -314,7 +330,10 @@ function isRichBlockNode(
   }
   if (value.type === 'heading') {
     return (value.level === 1 || value.level === 2 || value.level === 3)
-      && (value.format === undefined || (allowParagraphTools && isParagraphFormat(value.format)))
+      && (value.format === undefined || (allowParagraphTools && isParagraphFormat(
+        value.format,
+        allowV10MediaAndIndent,
+      )))
       && (value.content === undefined
         || (Array.isArray(value.content) && value.content.every((node) => isInlineNode(
           node,
@@ -323,7 +342,23 @@ function isRichBlockNode(
         ))));
   }
   if (value.type === 'imageFigure') {
-    if (!allowImages || !/^sha256:[0-9a-f]{64}$/.test(String(value.assetId ?? ''))) {
+    if (!allowImages
+      || !/^sha256:[0-9a-f]{64}$/.test(String(value.assetId ?? ''))
+      || !Object.keys(value).every((key) => [
+        'type',
+        'id',
+        'assetId',
+        'altText',
+        'decorative',
+        'caption',
+        'numbered',
+        'widthPercent',
+        'alignment',
+        'placement',
+        'rotation',
+        'crop',
+        ...(allowV10MediaAndIndent ? ['displayAspectRatio'] : []),
+      ].includes(key))) {
       return false;
     }
     const crop = value.crop;
@@ -363,7 +398,12 @@ function isRichBlockNode(
       && alignment !== null
       && placement !== null
       && placementAlignmentIsValid
-      && (value.rotation === undefined || isOneOf(value.rotation, NOTEBOOK_IMAGE_ROTATIONS))
+      && (value.displayAspectRatio === undefined
+        || (allowV10MediaAndIndent && isNotebookDisplayAspectRatio(value.displayAspectRatio)))
+      && (value.rotation === undefined || (allowV10MediaAndIndent
+        ? isNotebookImageRotation(value.rotation)
+        : value.rotation === 0 || value.rotation === 90
+          || value.rotation === 180 || value.rotation === 270))
       && cropIsValid;
   }
   if (value.type === 'videoFigure') {
@@ -382,11 +422,22 @@ function isRichBlockNode(
         'tracks',
         'widthPercent',
         'alignment',
+        ...(allowV10MediaAndIndent ? ['placement', 'displayAspectRatio'] : []),
         'loop',
       ].includes(key))) {
       return false;
     }
     const tracks = value.tracks;
+    const alignment = value.alignment === undefined
+      ? undefined
+      : isOneOf(value.alignment, NOTEBOOK_IMAGE_ALIGNMENTS) ? value.alignment : null;
+    const placement = value.placement === undefined
+      ? undefined
+      : isOneOf(value.placement, NOTEBOOK_IMAGE_PLACEMENTS) ? value.placement : null;
+    const placementAlignmentIsValid = !(
+      (placement === 'square-left' && alignment !== undefined && alignment !== 'left')
+      || (placement === 'square-right' && alignment !== undefined && alignment !== 'right')
+    );
     const trackIds = new Set<string>();
     const trackAssets = new Set<string>();
     let defaultTracks = 0;
@@ -424,7 +475,11 @@ function isRichBlockNode(
         && Number(value.widthPercent) >= 10
         && Number(value.widthPercent) <= 100
       ))
-      && (value.alignment === undefined || isOneOf(value.alignment, NOTEBOOK_IMAGE_ALIGNMENTS))
+      && alignment !== null
+      && placement !== null
+      && placementAlignmentIsValid
+      && (value.displayAspectRatio === undefined
+        || (allowV10MediaAndIndent && isNotebookDisplayAspectRatio(value.displayAspectRatio)))
       && (value.loop === undefined || typeof value.loop === 'boolean')
       && tracksAreValid;
   }
@@ -473,7 +528,7 @@ export function isNotebookRichDocumentV2(value: unknown): value is NotebookRichD
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, false, false, false, false, false, false, false,
+      node, false, false, false, false, false, false, false, false,
     ));
 }
 
@@ -487,7 +542,7 @@ export function isNotebookRichDocumentV3(value: unknown): value is NotebookRichD
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, false, false, false, false, false, false,
+      node, true, false, false, false, false, false, false, false,
     ));
 }
 
@@ -501,7 +556,7 @@ export function isNotebookRichDocumentV4(value: unknown): value is NotebookRichD
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, true, false, false, false, false, false,
+      node, true, true, false, false, false, false, false, false,
     ));
 }
 
@@ -515,7 +570,7 @@ export function isNotebookRichDocumentV5(value: unknown): value is NotebookRichD
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, true, true, false, false, false, false,
+      node, true, true, true, false, false, false, false, false,
     ));
 }
 
@@ -529,7 +584,7 @@ export function isNotebookRichDocumentV6(value: unknown): value is NotebookRichD
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, true, true, true, false, false, false,
+      node, true, true, true, true, false, false, false, false,
     ));
 }
 
@@ -552,7 +607,7 @@ export function isNotebookRichDocumentV7(value: unknown): value is NotebookRichD
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, true, true, true, true, false, false,
+      node, true, true, true, true, true, false, false, false,
     ));
 }
 
@@ -577,7 +632,34 @@ export function isNotebookRichDocumentV8(value: unknown): value is NotebookRichD
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
     && value.content.every((node) => isRichBlockNode(
-      node, true, true, true, true, true, false, true,
+      node, true, true, true, true, true, false, true, false,
+    ))
+    && isPageSetup(value.pageSetup)
+    && isHeaderFooter(value.headerFooter);
+}
+
+export function isNotebookRichDocumentV9(value: unknown): value is NotebookRichDocumentV9 {
+  return isRecord(value)
+    && value.version === 9
+    && Object.keys(value).every((key) => [
+      'version',
+      'id',
+      'title',
+      'createdAt',
+      'updatedAt',
+      'selectedNodeId',
+      'content',
+      'pageSetup',
+      'headerFooter',
+    ].includes(key))
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.updatedAt === 'string'
+    && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
+    && Array.isArray(value.content)
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, true, true, false,
     ))
     && isPageSetup(value.pageSetup)
     && isHeaderFooter(value.headerFooter);

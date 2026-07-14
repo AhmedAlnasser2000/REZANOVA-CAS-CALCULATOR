@@ -5,7 +5,7 @@
 - primary_agent: codex
 - primary_agent_model: gpt-5.5
 - primary_agent_family: sol
-- contributors:
+- contributors: v10_contract_audit; crop_persistence_fix; v10_media_ui_audit; v10_scope_review; v10_playwright_update
 - recorded_by_agent: codex
 - recorded_by_agent_model: gpt-5.5
 - recorded_by_agent_family: sol
@@ -26,7 +26,7 @@
 | Gate | Kind | Status |
 | --- | --- | --- |
 | `NOTEBOOK-TRANSIENT-CHROME-REPAIRS1` | ui | verified; committed by this checkpoint |
-| `NOTEBOOK-DIRECT-MEDIA-AND-INDENT1` | ui/document | pending |
+| `NOTEBOOK-DIRECT-MEDIA-AND-INDENT1` | ui/document | verified; included in this commit checkpoint |
 | `NOTEBOOK-LIBRARY-FILE-OPERATIONS1` | ui/backend | pending |
 | `NOTEBOOK-VIDEO-PLAYBACK-SHELL1` | ui | pending |
 
@@ -35,3 +35,4 @@
 - The first gate has a focused, body-portaled floating layer for Notebook transient menus, the current Notebook title in the internal strip, and truthful Section hierarchy actions.
 - The current `selection.ts` correction selects inserted math nodes before focus activation, avoiding a narrow-layout viewport-hydration race that hid Math Authoring after equation insertion.
 - Focused UI, TypeScript, lint, file-size, diff, and Chromium evidence are recorded in `gate-notebook-transient-chrome-repairs1.md`.
+- V10 now persists paragraph left indentation, arbitrary image rotation/display aspect ratio, and video placement while adding direct image/video resize, image crop/rotation, snap-and-wrap drag feedback, insertion guides, and contextual status coordinates without persisted X/Y state. Evidence is recorded in `gate-notebook-direct-media-and-indent1.md`.

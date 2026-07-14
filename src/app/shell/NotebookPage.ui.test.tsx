@@ -264,7 +264,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Control>}s{/Control}');
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const storedDocument = await readOnlyStoredDocument(libraryService);
-    expect(storedDocument.version).toBe(9);
+    expect(storedDocument.version).toBe(10);
     const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
@@ -484,6 +484,38 @@ describe('NotebookPage', () => {
     expect(canvas.querySelectorAll("p[data-notebook-alignment='justify']")).toHaveLength(2);
   });
 
+  it('persists left indentation and only shows onboarding for a truly pristine paragraph', async () => {
+    const user = userEvent.setup();
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} />);
+    const canvas = await screen.findByLabelText('Notebook rich document');
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+
+    expect(screen.getByTestId('notebook-template-start')).toBeInTheDocument();
+    await user.click(canvas);
+    await user.click(within(toolbar).getByRole('button', { name: 'Increase indent' }));
+
+    expect(canvas.querySelector("p[data-notebook-left-indent-pt='36']")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByTestId('notebook-template-start')).not.toBeInTheDocument();
+      expect(screen.queryByText('Start writing your explanation...')).not.toBeInTheDocument();
+    });
+
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const storedDocument = await readOnlyStoredDocument(libraryService);
+    expect(storedDocument.content).toEqual([
+      expect.objectContaining({
+        type: 'paragraph',
+        format: { leftIndentPt: 36 },
+      }),
+    ]);
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Decrease indent' }));
+    await waitFor(() => expect(screen.getByTestId('notebook-template-start')).toBeInTheDocument());
+    expect(canvas.querySelector('[data-notebook-left-indent-pt]')).toBeNull();
+  });
+
   it('creates and converts visibly styled lists while preserving serialized list style', async () => {
     const user = userEvent.setup();
     const onSurfaceState = vi.fn();
@@ -640,7 +672,7 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const stored = await readOnlyStoredDocument(libraryService);
     expect(stored).toMatchObject({
-      version: 9,
+      version: 10,
       pageSetup: {
         paperSize: 'letter',
         orientation: 'landscape',
@@ -925,7 +957,7 @@ describe('NotebookPage', () => {
       .some((entry) => entry.dataset.outlineKind === 'imageFigure')).toBe(false);
   });
 
-  it('formats picture size, alignment, wrapping, crop, and rotation as undoable V9 state', async () => {
+  it('formats picture size, alignment, wrapping, crop, and rotation as undoable V10 state', async () => {
     const user = userEvent.setup();
     const libraryService = createNotebookLibraryService();
     render(<NotebookHarness libraryService={libraryService} />);
@@ -937,7 +969,7 @@ describe('NotebookPage', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Insert image' }));
 
     const toolbar = screen.getByLabelText('Notebook formatting toolbar');
-    const figure = await screen.findByTestId('notebook-image-figure');
+    let figure = await screen.findByTestId('notebook-image-figure');
     await user.click(within(toolbar).getByRole('button', { name: 'Set image width to 50%' }));
     expect(figure.style.getPropertyValue('--notebook-image-width')).toBe('50%');
     await user.click(within(toolbar).getByRole('button', { name: 'Align image right' }));
@@ -969,22 +1001,81 @@ describe('NotebookPage', () => {
     expect(figure).toHaveAttribute('data-image-wrap-fallback', 'true');
 
     await user.click(within(toolbar).getByRole('button', { name: 'Set image width to 50%' }));
-    await user.click(within(toolbar).getByRole('button', { name: 'Crop image' }));
-    const cropDialog = await screen.findByRole('dialog', { name: 'Crop image' });
-    await user.clear(within(cropDialog).getByLabelText('left crop percentage'));
-    await user.type(within(cropDialog).getByLabelText('left crop percentage'), '10');
-    await user.clear(within(cropDialog).getByLabelText('right crop percentage'));
-    await user.type(within(cropDialog).getByLabelText('right crop percentage'), '10');
-    await user.click(within(cropDialog).getByRole('button', { name: 'Apply' }));
-    expect(figure.querySelector('img')).toHaveStyle({
-      left: '-12.5%',
-      width: '125%',
+    const mediaShell = figure.querySelector<HTMLElement>('.notebook-media-transform-shell')!;
+    const editorElement = screen.getByLabelText('Notebook rich document');
+    document.querySelector<HTMLElement>('.notebook-page-stage')!
+      .style.setProperty('--notebook-object-max-height-px', '900px');
+    const mediaRect = {
+      bottom: 400,
+      height: 300,
+      left: 100,
+      right: 500,
+      top: 100,
+      width: 400,
+      x: 100,
+      y: 100,
+      toJSON: () => ({}),
+    } as DOMRect;
+    Object.defineProperty(mediaShell, 'getBoundingClientRect', { configurable: true, value: () => mediaRect });
+    Object.defineProperty(editorElement, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ ...mediaRect, width: 800, right: 900 }),
     });
 
-    await user.click(within(toolbar).getByRole('button', {
-      name: 'Rotate image right 90 degrees',
+    await user.click(figure);
+    const eastHandle = within(figure).getByRole('button', { name: 'Resize image from the right' });
+    fireEvent.pointerDown(eastHandle, { button: 0, clientX: 500, clientY: 250, pointerId: 41 });
+    fireEvent.pointerMove(figure, { clientX: 600, clientY: 250, pointerId: 41 });
+    fireEvent.pointerUp(figure, { clientX: 600, clientY: 250, pointerId: 41 });
+    await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
+      .getPropertyValue('--notebook-image-width')).toBe('63%'));
+    figure = screen.getByTestId('notebook-image-figure');
+
+    await user.click(screen.getByRole('tab', { name: 'Picture Format' }));
+    Object.defineProperty(figure.querySelector('.notebook-media-transform-shell')!, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => mediaRect,
+    });
+    await user.click(within(toolbar).getByRole('button', { name: 'Crop image' }));
+    const cropOverlay = await screen.findByTestId('notebook-image-crop-overlay');
+    const cropWestHandle = within(cropOverlay).getByRole('button', {
+      name: 'Crop image from the left',
+    });
+    fireEvent.pointerDown(cropWestHandle, { button: 0, clientX: 100, clientY: 250, pointerId: 42 });
+    expect(figure).toHaveClass('is-media-manipulating');
+    fireEvent.pointerMove(cropWestHandle, { clientX: 140, clientY: 250, pointerId: 42 });
+    expect(figure.querySelector('img')).toHaveStyle({
+      left: '-11.111111111111112%',
+      width: '111.11111111111111%',
+    });
+    fireEvent.pointerUp(cropWestHandle, { clientX: 140, clientY: 250, pointerId: 42 });
+    await waitFor(() => expect(screen.getByTestId('notebook-image-figure').querySelector('img')).toHaveStyle({
+      left: '-11.111111111111112%',
+      width: '111.11111111111111%',
     }));
-    expect(figure.style.getPropertyValue('--notebook-image-rotation')).toBe('90deg');
+    figure = screen.getByTestId('notebook-image-figure');
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Finish cropping image' }));
+    const rotationHandle = within(figure).getByRole('button', { name: 'Rotate image' });
+    fireEvent.pointerDown(rotationHandle, { button: 0, clientX: 300, clientY: 100, pointerId: 43 });
+    fireEvent.pointerMove(figure, { clientX: 500, clientY: 250, pointerId: 43 });
+    fireEvent.pointerUp(figure, { clientX: 500, clientY: 250, pointerId: 43 });
+    await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
+      .getPropertyValue('--notebook-image-rotation')).toBe('90deg'));
+    figure = screen.getByTestId('notebook-image-figure');
+    Object.defineProperty(figure.querySelector('.notebook-media-transform-shell')!, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ ...mediaRect, width: 500, right: 600 }),
+    });
+    const rotatedEastHandle = within(figure).getByRole('button', { name: 'Resize image from the right' });
+    fireEvent.pointerDown(rotatedEastHandle, { button: 0, clientX: 500, clientY: 250, pointerId: 46 });
+    fireEvent.pointerMove(figure, { clientX: 500, clientY: 350, pointerId: 46 });
+    await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
+      .getPropertyValue('--notebook-image-width')).toBe('75%'));
+    fireEvent.keyDown(window, { key: 'Escape' });
+    await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
+      .getPropertyValue('--notebook-image-width')).toBe('63%'));
+    figure = screen.getByTestId('notebook-image-figure');
     await user.click(within(toolbar).getByRole('button', { name: /Wrap text:/ }));
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu', { name: 'Picture wrapping' })).not.toBeInTheDocument();
@@ -995,11 +1086,12 @@ describe('NotebookPage', () => {
     expect(stored.content).toEqual(expect.arrayContaining([
       expect.objectContaining({
         type: 'imageFigure',
-        widthPercent: 50,
+        widthPercent: 63,
         alignment: 'left',
         placement: 'square-left',
         rotation: 90,
-        crop: { x: 0.1, y: 0, width: 0.8, height: 1 },
+        displayAspectRatio: 1.667,
+        crop: { x: 0.1, y: 0, width: 0.9, height: 1 },
       }),
     ]));
 
@@ -1013,14 +1105,16 @@ describe('NotebookPage', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Picture Format' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Crop image' }));
-    await user.click(within(await screen.findByRole('dialog', { name: 'Crop image' }))
-      .getByRole('button', { name: 'Reset' }));
-    expect(figure.querySelector('img')).toHaveStyle({ left: '0%', width: '100%' });
+    await user.click(within(await screen.findByTestId('notebook-image-crop-overlay'))
+      .getByRole('button', { name: 'Reset crop' }));
+    await waitFor(() => expect(screen.getByTestId('notebook-image-figure').querySelector('img'))
+      .toHaveStyle({ left: '0%', width: '100%' }));
+    figure = screen.getByTestId('notebook-image-figure');
     await user.click(screen.getByRole('tab', { name: 'Home' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
-    await waitFor(() => expect(figure.querySelector('img')).toHaveStyle({
-      left: '-12.5%',
-      width: '125%',
+    await waitFor(() => expect(screen.getByTestId('notebook-image-figure').querySelector('img')).toHaveStyle({
+      left: '-11.111111111111112%',
+      width: '111.11111111111111%',
     }));
   });
 
@@ -1103,7 +1197,7 @@ describe('NotebookPage', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: 'Loop playback' }));
     await user.click(within(dialog).getByRole('button', { name: 'Insert video' }));
 
-    const figure = await screen.findByTestId('notebook-video-figure');
+    let figure = await screen.findByTestId('notebook-video-figure');
     const video = figure.querySelector('video');
     expect(video).not.toBeNull();
     expect(video).toHaveAttribute('controls');
@@ -1126,6 +1220,60 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(figure).toHaveAttribute('data-video-alignment', 'right'));
     await user.click(screen.getByRole('tab', { name: 'Video Format' }));
 
+    const mediaShell = figure.querySelector<HTMLElement>('.notebook-media-transform-shell')!;
+    const mediaRect = {
+      bottom: 400,
+      height: 300,
+      left: 100,
+      right: 500,
+      top: 100,
+      width: 400,
+      x: 100,
+      y: 100,
+      toJSON: () => ({}),
+    } as DOMRect;
+    const editorElement = screen.getByLabelText('Notebook rich document');
+    const pageStage = document.querySelector<HTMLElement>('.notebook-page-stage')!;
+    pageStage.style.setProperty('--notebook-object-max-height-px', '900px');
+    Object.defineProperty(mediaShell, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => mediaRect,
+    });
+    Object.defineProperty(editorElement, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ ...mediaRect, width: 800, right: 900 }),
+    });
+    Object.defineProperty(pageStage, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ ...mediaRect, left: 0, top: 0, width: 800, right: 800 }),
+    });
+    await user.click(figure);
+    await waitFor(() => expect(screen.getByText(/Page 1 · X .* pt · Y .* pt/)).toBeInTheDocument());
+    const eastHandle = within(figure).getByRole('button', { name: 'Resize video from the right' });
+    fireEvent.pointerDown(eastHandle, { button: 0, clientX: 500, clientY: 250, pointerId: 44 });
+    fireEvent.pointerMove(figure, { clientX: 600, clientY: 250, pointerId: 44 });
+    fireEvent.pointerUp(figure, { clientX: 600, clientY: 250, pointerId: 44 });
+    await waitFor(() => expect(screen.getByTestId('notebook-video-figure').style
+      .getPropertyValue('--notebook-video-width')).toBe('63%'));
+    figure = screen.getByTestId('notebook-video-figure');
+
+    const elementFromPoint = vi.spyOn(document, 'elementFromPoint').mockReturnValue(document.body);
+    const dragGrip = within(figure).getByRole('button', { name: 'Drag video to reposition' });
+    fireEvent.pointerDown(dragGrip, { button: 0, clientX: 400, clientY: 250, pointerId: 45 });
+    fireEvent.pointerMove(figure, { clientX: 50, clientY: 250, pointerId: 45 });
+    await waitFor(() => expect(document.querySelector('.notebook-media-drag-ghost'))
+      .toHaveStyle({ transform: 'translate(-350px, 0px)' }));
+    await waitFor(() => expect(screen.getByText(/Page 1 · X 0.0 pt · Y .* pt/)).toBeInTheDocument());
+    fireEvent.pointerUp(figure, { clientX: 50, clientY: 250, pointerId: 45 });
+    elementFromPoint.mockRestore();
+    await waitFor(() => {
+      const movedFigure = screen.getByTestId('notebook-video-figure');
+      expect(movedFigure).toHaveAttribute('data-video-alignment', 'left');
+      expect(movedFigure).toHaveAttribute('data-video-placement', 'square-left');
+    });
+    expect(document.querySelector('.notebook-media-drag-ghost')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Video Format' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Poster' }));
     await user.upload(screen.getByLabelText('Choose video poster image'), notebookSvgFile('poster.svg'));
     await waitFor(() => expect(figure.querySelector('video')).toHaveAttribute('poster'));
@@ -1146,8 +1294,10 @@ describe('NotebookPage', () => {
         description: 'A narrated limit demonstration.',
         caption: 'Approaching a finite limit',
         numbered: true,
-        widthPercent: 50,
-        alignment: 'right',
+        widthPercent: 63,
+        alignment: 'left',
+        placement: 'square-left',
+        displayAspectRatio: 1.667,
         loop: true,
         posterAssetId: expect.stringMatching(/^sha256:/),
         tracks: [expect.objectContaining({

@@ -1,8 +1,9 @@
 use super::{
     assets::sha256_hex,
     model::{
-        NotebookAssetMetadataV1, NotebookPackageManifestV1, NotebookStoredRecordV1,
-        NotebookVersionSnapshotV1, DOCUMENT_PATH, PACKAGE_KIND, PACKAGE_MANIFEST_VERSION,
+        migrate_notebook_document, NotebookAssetMetadataV1, NotebookPackageManifestV1,
+        NotebookStoredRecordV1, NotebookVersionSnapshotV1, DOCUMENT_PATH, PACKAGE_KIND,
+        PACKAGE_MANIFEST_VERSION,
     },
     NotebookStorage,
 };
@@ -28,7 +29,7 @@ fn unique_storage(label: &str) -> PathBuf {
 
 fn document(title: &str) -> serde_json::Value {
     serde_json::json!({
-        "version": 9,
+        "version": 10,
         "id": "document.storage.1",
         "title": title,
         "createdAt": "2026-07-14T00:00:00.000Z",
@@ -181,7 +182,7 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
 }
 
 #[test]
-fn migrates_v6_v7_and_v8_records_versions_and_packages_without_content_changes() {
+fn migrates_v6_through_v9_records_versions_and_packages_without_content_changes() {
     let root = unique_storage("v6-migration");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let mut legacy = record("library.legacy", 1, "Legacy notebook");
@@ -207,7 +208,7 @@ fn migrates_v6_v7_and_v8_records_versions_and_packages_without_content_changes()
         .load_record(&legacy.library_id)
         .expect("legacy record should load")
         .expect("legacy record should exist");
-    assert_eq!(loaded.document["version"], 9);
+    assert_eq!(loaded.document["version"], 10);
     assert_eq!(loaded.document["pageSetup"]["paperSize"], "a4");
     assert_eq!(loaded.document["content"], legacy.document["content"]);
 
@@ -230,7 +231,7 @@ fn migrates_v6_v7_and_v8_records_versions_and_packages_without_content_changes()
     let versions = storage
         .list_versions(&legacy.library_id)
         .expect("legacy version should list");
-    assert_eq!(versions[0].record.document["version"], 9);
+    assert_eq!(versions[0].record.document["version"], 10);
     assert_eq!(
         versions[0].record.document["content"],
         legacy.document["content"]
@@ -256,7 +257,7 @@ fn migrates_v6_v7_and_v8_records_versions_and_packages_without_content_changes()
     let inspection = storage
         .inspect_package(&package)
         .expect("legacy package should inspect");
-    assert_eq!(inspection.document["version"], 9);
+    assert_eq!(inspection.document["version"], 10);
     assert_eq!(inspection.document["content"], legacy.document["content"]);
 
     let mut version7 = record("library.legacy-v7", 1, "Image-era notebook");
@@ -281,7 +282,7 @@ fn migrates_v6_v7_and_v8_records_versions_and_packages_without_content_changes()
         .load_record(&version7.library_id)
         .expect("V7 record should load")
         .expect("V7 record should exist");
-    assert_eq!(loaded_v7.document["version"], 9);
+    assert_eq!(loaded_v7.document["version"], 10);
     assert_eq!(loaded_v7.document["content"], version7.document["content"]);
 
     let mut version8 = record("library.legacy-v8", 1, "Page-era notebook");
@@ -296,13 +297,29 @@ fn migrates_v6_v7_and_v8_records_versions_and_packages_without_content_changes()
         .load_record(&version8.library_id)
         .expect("V8 record should load")
         .expect("V8 record should exist");
-    assert_eq!(loaded_v8.document["version"], 9);
+    assert_eq!(loaded_v8.document["version"], 10);
     assert_eq!(loaded_v8.document["content"], version8.document["content"]);
+
+    let mut version9 = record("library.legacy-v9", 1, "Video-era notebook");
+    version9.document["version"] = 9.into();
+    let version9_content = version9.document["content"].clone();
+    let version9_paths = storage.record_paths(&version9.library_id);
+    NotebookStorage::write_synced(
+        &version9_paths.target,
+        &serde_json::to_vec_pretty(&version9).expect("V9 record should serialize"),
+    )
+    .expect("V9 record should write");
+    let loaded_v9 = storage
+        .load_record(&version9.library_id)
+        .expect("V9 record should load")
+        .expect("V9 record should exist");
+    assert_eq!(loaded_v9.document["version"], 10);
+    assert_eq!(loaded_v9.document["content"], version9_content);
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn validates_v9_page_layout_and_explicit_top_level_breaks() {
+fn validates_v10_page_layout_and_explicit_top_level_breaks() {
     let root = unique_storage("v8-page-layout");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let mut valid = record("library.pages", 1, "Paginated notebook");
@@ -324,7 +341,7 @@ fn validates_v9_page_layout_and_explicit_top_level_breaks() {
     ]);
     storage
         .save_record(valid.clone(), None, true)
-        .expect("valid V9 page layout should save");
+        .expect("valid V10 page layout should save");
 
     let mut invalid_number = valid.clone();
     invalid_number.library_id = "library.pages.invalid-number".into();
@@ -358,7 +375,7 @@ fn validates_v9_page_layout_and_explicit_top_level_breaks() {
 }
 
 #[test]
-fn validates_v9_image_metadata_and_crop_bounds() {
+fn validates_v10_image_metadata_and_crop_bounds() {
     let root = unique_storage("v7-image-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let asset_id = format!("sha256:{}", "a".repeat(64));
@@ -374,7 +391,8 @@ fn validates_v9_image_metadata_and_crop_bounds() {
         "widthPercent": 75,
         "alignment": "center",
         "placement": "normal",
-        "rotation": 90,
+        "rotation": 137,
+        "displayAspectRatio": 1.25,
         "crop": { "x": 0.1, "y": 0.1, "width": 0.8, "height": 0.8 }
     }]);
     storage
@@ -408,7 +426,38 @@ fn validates_v9_image_metadata_and_crop_bounds() {
 }
 
 #[test]
-fn validates_v9_video_metadata_and_referenced_assets() {
+fn migrates_v9_losslessly_and_rejects_v10_only_formatting_before_migration() {
+    let mut legacy = document("V9 document");
+    legacy["version"] = 9.into();
+    let original = legacy.clone();
+    let migrated = migrate_notebook_document(legacy).expect("V9 document should migrate");
+    assert_eq!(migrated["version"], 10);
+    assert_eq!(migrated["content"], original["content"]);
+    assert_eq!(migrated["pageSetup"], original["pageSetup"]);
+    assert_eq!(migrated["headerFooter"], original["headerFooter"]);
+
+    let mut v9_indent = document("V9 strict indent");
+    v9_indent["version"] = 9.into();
+    v9_indent["content"][0]["format"] = serde_json::json!({ "leftIndentPt": 36 });
+    assert!(migrate_notebook_document(v9_indent)
+        .expect_err("V9 must reject V10 paragraph formatting")
+        .contains("left indent"));
+
+    let mut v9_image = document("V9 strict image");
+    v9_image["version"] = 9.into();
+    v9_image["content"] = serde_json::json!([{
+        "type": "imageFigure",
+        "id": "image.v9",
+        "assetId": format!("sha256:{}", "a".repeat(64)),
+        "displayAspectRatio": 1.5
+    }]);
+    assert!(migrate_notebook_document(v9_image)
+        .expect_err("V9 must reject V10 image fields")
+        .contains("unknown field"));
+}
+
+#[test]
+fn validates_v10_video_metadata_and_referenced_assets() {
     let root = unique_storage("v9-video-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let video_id = format!("sha256:{}", "a".repeat(64));
@@ -435,6 +484,8 @@ fn validates_v9_video_metadata_and_referenced_assets() {
         }],
         "widthPercent": 75,
         "alignment": "left",
+        "placement": "square-left",
+        "displayAspectRatio": 1.777,
         "loop": true
     }]);
     storage
@@ -710,7 +761,7 @@ fn rejects_revision_races_and_invalid_collapsed_documents() {
     }]);
     assert!(storage
         .save_record(invalid, None, true)
-        .expect_err("invalid V9 document should fail")
+        .expect_err("invalid V10 document should fail")
         .contains("collapsed state"));
     assert_eq!(storage.list_records().unwrap().len(), 1);
     fs::remove_dir_all(root).expect("temporary storage should be removed");

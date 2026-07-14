@@ -34,6 +34,7 @@ import {
   NotebookRichCanvas,
   notebookEditorNodeById,
   type NotebookEditorSelection,
+  type NotebookMediaStatus,
   type NotebookPaginationMetrics,
   type NotebookRibbonTab,
 } from './notebook/canvas';
@@ -101,6 +102,7 @@ function NotebookPageContent({
     pageGapPx: 24,
     pageHeightPx: 1,
   });
+  const [mediaStatus, setMediaStatus] = useState<NotebookMediaStatus | null>(null);
   const [pdfRecord, setPdfRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [docxRecord, setDocxRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [webRecord, setWebRecord] = useState<NotebookStoredRecordV1 | null>(null);
@@ -213,6 +215,18 @@ function NotebookPageContent({
         ? current
         : next
     ));
+  }, []);
+
+  const handleMediaStatusChange = useCallback((next: NotebookMediaStatus | null) => {
+    setMediaStatus((current) => {
+      if (
+        current?.page === next?.page
+        && current?.viewMode === next?.viewMode
+        && current?.xPt === next?.xPt
+        && current?.yPt === next?.yPt
+      ) return current;
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -414,6 +428,7 @@ function NotebookPageContent({
               onContextualSelectionChange={handleContextualSelectionChange}
               onImageInserted={() => setActiveRibbonTab('picture-format')}
               onVideoInserted={() => setActiveRibbonTab('video-format')}
+              onMediaStatusChange={handleMediaStatusChange}
               onPaginationChange={handlePaginationChange}
               onSelectionChange={handleSelectionChange}
               onViewModeChange={(viewMode) => patchUiState({ viewMode })}
@@ -510,9 +525,13 @@ function NotebookPageContent({
           </Suspense>
         ) : null}
         <footer className="app-page-shell-footer">
-          <span>{effectiveViewMode === 'draft'
-            ? 'Draft view'
-            : `Page ${pagination.currentPage} of ${pagination.pageCount}`}</span>
+          <span>{mediaStatus
+            ? mediaStatus.viewMode === 'draft'
+              ? `Draft · X ${mediaStatus.xPt.toFixed(1)} pt · Y ${mediaStatus.yPt.toFixed(1)} pt`
+              : `Page ${mediaStatus.page} · X ${mediaStatus.xPt.toFixed(1)} pt · Y ${mediaStatus.yPt.toFixed(1)} pt`
+            : effectiveViewMode === 'draft'
+              ? 'Draft view'
+              : `Page ${pagination.currentPage} of ${pagination.pageCount}`}</span>
           <span>{documentAnalysis
             ? `${documentAnalysis.wordCount.toLocaleString()} ${documentAnalysis.wordCount === 1 ? 'word' : 'words'}`
             : 'Counting words…'}</span>

@@ -15,12 +15,25 @@ afterEach(() => {
   editor = null;
 });
 
-function renderControls(content: string | Record<string, unknown> = '<p>Alpha</p><p>Beta</p>') {
+function renderControls(
+  content: string | Record<string, unknown> = '<p>Alpha</p><p>Beta</p>',
+  selectionText?: string,
+) {
   editor = new Editor({
     content,
     extensions: [StarterKit, NotebookParagraphFormatting],
   });
-  editor.commands.setTextSelection({ from: 1, to: editor.state.doc.content.size - 1 });
+  if (selectionText) {
+    let selectionPosition = 0;
+    editor.state.doc.descendants((node, position) => {
+      if (node.type.name === 'paragraph' && node.textContent === selectionText) {
+        selectionPosition = position + 1;
+      }
+    });
+    editor.commands.setTextSelection(selectionPosition);
+  } else {
+    editor.commands.setTextSelection({ from: 1, to: editor.state.doc.content.size - 1 });
+  }
   render(
     <NotebookTransientLayerProvider>
       <div className="notebook-rich-toolbar">
@@ -42,6 +55,84 @@ function paragraphAttrs(currentEditor: Editor) {
 }
 
 describe('NotebookParagraphControls', () => {
+  it('changes prose and heading left indents in 36-point steps without losing the range', async () => {
+    const user = userEvent.setup();
+    const currentEditor = renderControls({
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'Alpha' }],
+      }, {
+        type: 'heading',
+        attrs: { level: 2 },
+        content: [{ type: 'text', text: 'Beta' }],
+      }],
+    });
+    const originalSelection = currentEditor.state.selection.toJSON();
+
+    await user.click(screen.getByRole('button', { name: 'Increase indent' }));
+    expect(paragraphAttrs(currentEditor).slice(0, 2).map((attrs) => attrs.notebookLeftIndentPt))
+      .toEqual([36, 36]);
+    expect(currentEditor.getHTML()).toContain('data-notebook-left-indent-pt="36"');
+    expect(currentEditor.state.selection.toJSON()).toEqual(originalSelection);
+
+    expect(currentEditor.commands.undo()).toBe(true);
+    expect(paragraphAttrs(currentEditor).slice(0, 2).map((attrs) => attrs.notebookLeftIndentPt))
+      .toEqual([null, null]);
+  });
+
+  it('decreases prose indentation back to the unformatted default', async () => {
+    const user = userEvent.setup();
+    const currentEditor = renderControls({
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        attrs: { notebookLeftIndentPt: 36 },
+        content: [{ type: 'text', text: 'Alpha' }],
+      }],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Decrease indent' }));
+    expect(paragraphAttrs(currentEditor)[0]?.notebookLeftIndentPt).toBeNull();
+  });
+
+  it('uses the existing list-item sink behavior', async () => {
+    const user = userEvent.setup();
+    const nestedEditor = renderControls(
+      '<ul><li><p>Alpha</p></li><li><p>Beta</p></li></ul>',
+      'Beta',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Increase indent' }));
+    expect(nestedEditor.getJSON().content?.[0]).toMatchObject({
+      type: 'bulletList',
+      content: [{
+        content: expect.arrayContaining([
+          expect.objectContaining({ type: 'bulletList' }),
+        ]),
+      }],
+    });
+  });
+
+  it('uses the existing list-item lift behavior', async () => {
+    const user = userEvent.setup();
+    const liftedEditor = renderControls(
+      '<ul><li><p>Alpha</p><ul><li><p>Beta</p></li></ul></li></ul>',
+      'Beta',
+    );
+    await user.click(screen.getByRole('button', { name: 'Decrease indent' }));
+    expect(liftedEditor.getJSON().content?.[0]).toMatchObject({
+      type: 'bulletList',
+      content: [expect.any(Object), expect.any(Object)],
+    });
+  });
+
+  it('disables direct indentation for mixed prose and list selections', () => {
+    renderControls('<p>Prose</p><ul><li><p>List item</p></li></ul>');
+    expect(screen.getByRole('button', { name: 'Increase indent' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Decrease indent' })).toBeDisabled();
+  });
+
   it('normalizes alignment and line/paragraph spacing across the preserved selection', async () => {
     const user = userEvent.setup();
     const currentEditor = renderControls();

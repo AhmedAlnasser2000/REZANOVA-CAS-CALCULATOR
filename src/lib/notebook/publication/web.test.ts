@@ -31,7 +31,9 @@ async function fixture() {
         content: [{ type: 'text', text: 'Limit laws', marks: [{ type: 'bold' }, { type: 'textStyle', color: '#335577', fontSize: 120 }] }],
       },
       {
-        type: 'paragraph', id: 'prose', format: { alignment: 'justify', lineSpacing: 1.5, spaceAfterPt: 12 },
+        type: 'paragraph', id: 'prose', format: {
+          alignment: 'justify', lineSpacing: 1.5, spaceAfterPt: 12, leftIndentPt: 72,
+        },
         content: [
           { type: 'text', text: '<img src=x onerror=alert(1)> For ' },
           { type: 'inlineMath', id: 'inline', sourceText: 'x^2', latex: 'x^2', workspaceTarget: 'calculate' },
@@ -46,11 +48,16 @@ async function fixture() {
         type: 'orderedList', id: 'list', style: 'lower-roman',
         content: [{ type: 'listItem', id: 'item', content: [{ type: 'paragraph', id: 'item-p', content: [{ type: 'text', text: 'First' }] }] }],
       },
-      { type: 'imageFigure', id: 'figure', assetId: image.id, altText: 'Limit graph', caption: 'Finite limit', numbered: true, widthPercent: 50, placement: 'square-left', crop: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 } },
+      {
+        type: 'imageFigure', id: 'figure', assetId: image.id, altText: 'Limit graph', caption: 'Finite limit',
+        numbered: true, widthPercent: 50, placement: 'square-left', displayAspectRatio: 1.25,
+        rotation: 137, crop: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 },
+      },
       { type: 'imageFigure', id: 'vector', assetId: svg.id, decorative: true, widthPercent: 25 },
       {
         type: 'videoFigure', id: 'video', assetId: video.id, posterAssetId: poster.id,
         title: 'Limit lesson', description: 'An offline video.', caption: 'Worked limit', numbered: true, loop: true,
+        alignment: 'left', placement: 'square-left', displayAspectRatio: 16 / 9,
         tracks: [{ id: 'captions', assetId: track.id, kind: 'captions', label: 'English', language: 'en', default: true }],
       },
       {
@@ -98,12 +105,17 @@ describe('Notebook Web publication', () => {
     expect(html).toContain('<math xmlns="http://www.w3.org/1998/Math/MathML"');
     expect(html).toContain('<video controls preload="metadata" loop');
     expect(html).toContain('<track src="assets/');
+    expect(html).toContain('is-square-left');
     expect(html).not.toMatch(/\b(?:src|href)=["'](?:file:|https?:|data:|blob:)/u);
     expect(html).not.toContain('serviceWorker');
     expect(css).toContain('.cwiz-notebook');
     expect(css).toContain('mtext { padding-inline: .16em; }');
     expect(css).toContain('@media print');
     expect(css).toContain('@page { size: Letter landscape;');
+    expect(css).toContain('margin-inline-start: 72pt');
+    expect(css).toContain('aspect-ratio: 1.25');
+    expect(css).toContain(`aspect-ratio: ${16 / 9}`);
+    expect(css).toContain('transform: rotate(137deg)');
     const assetFiles = Object.keys(zip.files).filter((name) => name.startsWith('assets/') && !name.endsWith('/'));
     expect(assetFiles).toHaveLength(5);
     expect(assetFiles.every((name) => /^assets\/[a-f0-9]{64}\.(?:jpg|png|svg|webp|mp4|webm|vtt)$/u.test(name))).toBe(true);

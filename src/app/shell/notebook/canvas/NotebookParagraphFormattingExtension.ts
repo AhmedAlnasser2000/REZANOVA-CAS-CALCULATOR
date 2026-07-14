@@ -4,6 +4,7 @@ import {
   NOTEBOOK_BULLET_STYLES,
   NOTEBOOK_LINE_SPACINGS,
   NOTEBOOK_ORDERED_STYLES,
+  NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT,
   NOTEBOOK_PARAGRAPH_SPACES_PT,
   NOTEBOOK_TEXT_ALIGNMENTS,
 } from '../../../../lib/notebook';
@@ -74,6 +75,19 @@ export const NotebookParagraphFormatting = Extension.create({
             NOTEBOOK_PARAGRAPH_SPACES_PT,
           ) !== null
             ? { 'data-notebook-space-after-pt': String(attributes.notebookSpaceAfterPt) }
+            : {},
+        },
+        notebookLeftIndentPt: {
+          default: null,
+          parseHTML: (element) => oneOf(
+            numberAttribute(element, 'data-notebook-left-indent-pt'),
+            NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT,
+          ),
+          renderHTML: (attributes) => oneOf(
+            attributes.notebookLeftIndentPt,
+            NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT,
+          ) !== null
+            ? { 'data-notebook-left-indent-pt': String(attributes.notebookLeftIndentPt) }
             : {},
         },
       },

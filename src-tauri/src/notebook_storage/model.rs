@@ -132,12 +132,12 @@ fn optional_bool(object: &Map<String, Value>, field: &str) -> Result<Option<bool
     }
 }
 
-fn validate_paragraph_format(value: &Value) -> Result<(), String> {
+fn validate_paragraph_format(value: &Value, allow_left_indent: bool) -> Result<(), String> {
     let format = object(value)?;
     if format.keys().any(|key| {
         !matches!(
             key.as_str(),
-            "alignment" | "lineSpacing" | "spaceBeforePt" | "spaceAfterPt"
+            "alignment" | "lineSpacing" | "spaceBeforePt" | "spaceAfterPt" | "leftIndentPt"
         )
     }) {
         return Err("Notebook paragraph format contains an unknown field.".into());
@@ -168,6 +168,13 @@ fn validate_paragraph_format(value: &Value) -> Result<(), String> {
         } else if format.contains_key(field) {
             return Err(format!("Notebook {field} is invalid."));
         }
+    }
+    if let Some(indent) = format.get("leftIndentPt").and_then(Value::as_u64) {
+        if !allow_left_indent || indent > 288 || indent % 36 != 0 {
+            return Err("Notebook paragraph left indent is invalid.".into());
+        }
+    } else if format.contains_key("leftIndentPt") {
+        return Err("Notebook paragraph left indent is invalid.".into());
     }
     Ok(())
 }
@@ -263,7 +270,98 @@ fn validate_accent(value: Option<&Value>) -> Result<(), String> {
     }
 }
 
-fn validate_image_figure(node: &Map<String, Value>) -> Result<(), String> {
+fn validate_display_aspect_ratio(value: Option<&Value>, kind: &str) -> Result<(), String> {
+    let Some(value) = value else {
+        return Ok(());
+    };
+    if value
+        .as_f64()
+        .is_some_and(|ratio| ratio.is_finite() && (0.1..=10.0).contains(&ratio))
+    {
+        Ok(())
+    } else {
+        Err(format!("Notebook {kind} display aspect ratio is invalid."))
+    }
+}
+
+fn validate_media_placement(node: &Map<String, Value>, kind: &str) -> Result<(), String> {
+    let alignment = node
+        .get("alignment")
+        .map(|value| {
+            value
+                .as_str()
+                .filter(|value| matches!(*value, "left" | "center" | "right"))
+                .ok_or_else(|| format!("Notebook {kind} alignment is invalid."))
+        })
+        .transpose()?;
+    let placement = node
+        .get("placement")
+        .map(|value| {
+            value
+                .as_str()
+                .filter(|value| {
+                    matches!(
+                        *value,
+                        "normal" | "top-and-bottom" | "square-left" | "square-right"
+                    )
+                })
+                .ok_or_else(|| format!("Notebook {kind} placement is invalid."))
+        })
+        .transpose()?;
+    if matches!((placement, alignment), (Some("square-left"), Some(value)) if value != "left")
+        || matches!((placement, alignment), (Some("square-right"), Some(value)) if value != "right")
+    {
+        return Err(format!(
+            "Notebook {kind} placement and alignment are incompatible."
+        ));
+    }
+    Ok(())
+}
+
+fn validate_image_figure(
+    node: &Map<String, Value>,
+    allow_direct_media: bool,
+) -> Result<(), String> {
+    const LEGACY_FIELDS: &[&str] = &[
+        "type",
+        "id",
+        "assetId",
+        "altText",
+        "decorative",
+        "caption",
+        "numbered",
+        "widthPercent",
+        "alignment",
+        "placement",
+        "rotation",
+        "crop",
+    ];
+    const V10_FIELDS: &[&str] = &[
+        "type",
+        "id",
+        "assetId",
+        "altText",
+        "decorative",
+        "caption",
+        "numbered",
+        "widthPercent",
+        "alignment",
+        "placement",
+        "rotation",
+        "crop",
+        "displayAspectRatio",
+    ];
+    let allowed_fields = if allow_direct_media {
+        V10_FIELDS
+    } else {
+        LEGACY_FIELDS
+    };
+    if node
+        .keys()
+        .any(|field| !allowed_fields.contains(&field.as_str()))
+    {
+        return Err("Notebook image figure contains an unknown field.".into());
+    }
     if !is_asset_id(required_string(node, "assetId")?) {
         return Err("Notebook image asset identity is invalid.".into());
     }
@@ -287,41 +385,21 @@ fn validate_image_figure(node: &Map<String, Value>) -> Result<(), String> {
             return Err("Notebook image width is invalid.".into());
         }
     }
-    let alignment = node
-        .get("alignment")
-        .map(|value| {
-            value
-                .as_str()
-                .filter(|value| matches!(*value, "left" | "center" | "right"))
-                .ok_or_else(|| "Notebook image alignment is invalid.".to_string())
-        })
-        .transpose()?;
-    let placement = node
-        .get("placement")
-        .map(|value| {
-            value
-                .as_str()
-                .filter(|value| {
-                    matches!(
-                        *value,
-                        "normal" | "top-and-bottom" | "square-left" | "square-right"
-                    )
-                })
-                .ok_or_else(|| "Notebook image placement is invalid.".to_string())
-        })
-        .transpose()?;
-    if matches!((placement, alignment), (Some("square-left"), Some(value)) if value != "left")
-        || matches!((placement, alignment), (Some("square-right"), Some(value)) if value != "right")
-    {
-        return Err("Notebook image placement and alignment are incompatible.".into());
-    }
+    validate_media_placement(node, "image")?;
     if let Some(rotation) = node.get("rotation") {
-        if !rotation
-            .as_u64()
-            .is_some_and(|value| [0, 90, 180, 270].contains(&value))
-        {
+        let valid_rotation = rotation.as_u64().is_some_and(|value| {
+            if allow_direct_media {
+                value <= 359
+            } else {
+                [0, 90, 180, 270].contains(&value)
+            }
+        });
+        if !valid_rotation {
             return Err("Notebook image rotation is invalid.".into());
         }
+    }
+    if allow_direct_media {
+        validate_display_aspect_ratio(node.get("displayAspectRatio"), "image")?;
     }
     if let Some(crop_value) = node.get("crop") {
         let crop = object(crop_value)?;
@@ -365,7 +443,10 @@ fn is_video_track_language(value: &str) -> bool {
         })
 }
 
-fn validate_video_figure(node: &Map<String, Value>) -> Result<(), String> {
+fn validate_video_figure(
+    node: &Map<String, Value>,
+    allow_direct_media: bool,
+) -> Result<(), String> {
     const ALLOWED_FIELDS: &[&str] = &[
         "type",
         "id",
@@ -380,9 +461,30 @@ fn validate_video_figure(node: &Map<String, Value>) -> Result<(), String> {
         "alignment",
         "loop",
     ];
+    const V10_ALLOWED_FIELDS: &[&str] = &[
+        "type",
+        "id",
+        "assetId",
+        "title",
+        "description",
+        "caption",
+        "numbered",
+        "posterAssetId",
+        "tracks",
+        "widthPercent",
+        "alignment",
+        "placement",
+        "displayAspectRatio",
+        "loop",
+    ];
+    let allowed_fields = if allow_direct_media {
+        V10_ALLOWED_FIELDS
+    } else {
+        ALLOWED_FIELDS
+    };
     if node
         .keys()
-        .any(|field| !ALLOWED_FIELDS.contains(&field.as_str()))
+        .any(|field| !allowed_fields.contains(&field.as_str()))
         || !is_asset_id(required_string(node, "assetId")?)
     {
         return Err("Notebook video figure is invalid.".into());
@@ -407,10 +509,9 @@ fn validate_video_figure(node: &Map<String, Value>) -> Result<(), String> {
             return Err("Notebook video width is invalid.".into());
         }
     }
-    if let Some(alignment) = node.get("alignment") {
-        if !matches!(alignment.as_str(), Some("left" | "center" | "right")) {
-            return Err("Notebook video alignment is invalid.".into());
-        }
+    validate_media_placement(node, "video")?;
+    if allow_direct_media {
+        validate_display_aspect_ratio(node.get("displayAspectRatio"), "video")?;
     }
     if let Some(tracks) = node.get("tracks") {
         let tracks = tracks
@@ -456,6 +557,7 @@ fn validate_block(
     allow_images: bool,
     allow_videos: bool,
     allow_page_layout: bool,
+    allow_direct_media: bool,
 ) -> Result<(), String> {
     if depth > 256 {
         return Err("Notebook nesting exceeds the safety limit.".into());
@@ -477,7 +579,7 @@ fn validate_block(
                 return Err("Notebook heading level is invalid.".into());
             }
             if let Some(format) = node.get("format") {
-                validate_paragraph_format(format)?;
+                validate_paragraph_format(format, allow_direct_media)?;
             }
             if let Some(content) = node.get("content") {
                 for inline in content
@@ -544,7 +646,14 @@ fn validate_block(
                     return Err("Notebook list contains a non-item node.".into());
                 }
                 required_string(item, "id")?;
-                validate_block_content(item, depth + 1, allow_images, allow_videos, false)?;
+                validate_block_content(
+                    item,
+                    depth + 1,
+                    allow_images,
+                    allow_videos,
+                    false,
+                    allow_direct_media,
+                )?;
             }
             Ok(())
         }
@@ -581,10 +690,17 @@ fn validate_block(
             if collapsed == Some(true) && !collapsible.unwrap_or(default_collapsible) {
                 return Err("Notebook collapsed state is incompatible with behavior.".into());
             }
-            validate_block_content(node, depth + 1, allow_images, allow_videos, false)
+            validate_block_content(
+                node,
+                depth + 1,
+                allow_images,
+                allow_videos,
+                false,
+                allow_direct_media,
+            )
         }
-        "imageFigure" if allow_images => validate_image_figure(node),
-        "videoFigure" if allow_videos => validate_video_figure(node),
+        "imageFigure" if allow_images => validate_image_figure(node, allow_direct_media),
+        "videoFigure" if allow_videos => validate_video_figure(node, allow_direct_media),
         "pageBreak" if allow_page_layout && node.len() == 2 => Ok(()),
         _ => Err("Notebook block type is unsupported.".into()),
     }
@@ -596,13 +712,21 @@ fn validate_block_content(
     allow_images: bool,
     allow_videos: bool,
     allow_page_layout: bool,
+    allow_direct_media: bool,
 ) -> Result<(), String> {
     for child in node
         .get("content")
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook block content must be an array.".to_string())?
     {
-        validate_block(child, depth, allow_images, allow_videos, allow_page_layout)?;
+        validate_block(
+            child,
+            depth,
+            allow_images,
+            allow_videos,
+            allow_page_layout,
+            allow_direct_media,
+        )?;
     }
     Ok(())
 }
@@ -690,6 +814,7 @@ fn validate_notebook_document_version(
     allow_images: bool,
     allow_videos: bool,
     allow_page_layout: bool,
+    allow_direct_media: bool,
 ) -> Result<(), String> {
     let document = object(document)?;
     if document.get("version").and_then(Value::as_u64) != Some(version) {
@@ -745,7 +870,14 @@ fn validate_notebook_document_version(
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook document content must be an array.".to_string())?
     {
-        validate_block(node, 0, allow_images, allow_videos, allow_page_layout)?;
+        validate_block(
+            node,
+            0,
+            allow_images,
+            allow_videos,
+            allow_page_layout,
+            allow_direct_media,
+        )?;
     }
     if allow_page_layout {
         validate_page_setup(
@@ -763,7 +895,7 @@ fn validate_notebook_document_version(
 }
 
 pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
-    validate_notebook_document_version(document, 9, true, true, true)
+    validate_notebook_document_version(document, 10, true, true, true, true)
 }
 
 fn add_default_page_layout(document: &mut Value) {
@@ -782,21 +914,26 @@ fn add_default_page_layout(document: &mut Value) {
 
 pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(9) => validate_notebook_document(&document)?,
+        Some(10) => validate_notebook_document(&document)?,
+        Some(9) => {
+            validate_notebook_document_version(&document, 9, true, true, true, false)?;
+            document["version"] = Value::from(10);
+            validate_notebook_document(&document)?;
+        }
         Some(8) => {
-            validate_notebook_document_version(&document, 8, true, false, true)?;
-            document["version"] = Value::from(9);
+            validate_notebook_document_version(&document, 8, true, false, true, false)?;
+            document["version"] = Value::from(10);
             validate_notebook_document(&document)?;
         }
         Some(7) => {
-            validate_notebook_document_version(&document, 7, true, false, false)?;
-            document["version"] = Value::from(9);
+            validate_notebook_document_version(&document, 7, true, false, false, false)?;
+            document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
             validate_notebook_document(&document)?;
         }
         Some(6) => {
-            validate_notebook_document_version(&document, 6, false, false, false)?;
-            document["version"] = Value::from(9);
+            validate_notebook_document_version(&document, 6, false, false, false, false)?;
+            document["version"] = Value::from(10);
             add_default_page_layout(&mut document);
             validate_notebook_document(&document)?;
         }

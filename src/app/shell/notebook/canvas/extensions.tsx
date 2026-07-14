@@ -12,8 +12,14 @@ import {
 } from '../../../../lib/notebook';
 import { NotebookEvidenceNodeView } from './NotebookEvidenceNodeView';
 import { NotebookFontSize } from './NotebookFontSizeExtension';
-import { createNotebookImageNodeView } from './NotebookImageNodeView';
-import { createNotebookVideoNodeView } from './NotebookVideoNodeView';
+import {
+  createNotebookImageNodeView,
+  type NotebookImageNodeViewOptions,
+} from './NotebookImageNodeView';
+import {
+  createNotebookVideoNodeView,
+  type NotebookDirectMediaNodeViewOptions,
+} from './NotebookVideoNodeView';
 import { NotebookParagraphFormatting } from './NotebookParagraphFormattingExtension';
 import {
   createNotebookMathNodeView,
@@ -232,6 +238,7 @@ const ImageFigure = Node.create({
       alignment: { default: null },
       placement: { default: null },
       rotation: { default: null },
+      displayAspectRatio: { default: null },
       cropX: { default: null },
       cropY: { default: null },
       cropWidth: { default: null },
@@ -267,6 +274,8 @@ const VideoFigure = Node.create({
       tracks: { default: null },
       widthPercent: { default: null },
       alignment: { default: null },
+      placement: { default: null },
+      displayAspectRatio: { default: null },
       loop: { default: null },
     };
   },
@@ -389,6 +398,7 @@ const NotebookSection = Node.create({
 export function createNotebookExtensions(
   onOpenMathInTool: NotebookOpenMathHandler,
   assetPort: NotebookAssetPort,
+  mediaNodeViewOptions: NotebookImageNodeViewOptions & NotebookDirectMediaNodeViewOptions = {},
 ) {
   return [
     StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
@@ -417,12 +427,12 @@ export function createNotebookExtensions(
     EvidenceSnapshot,
     ImageFigure.extend({
       addNodeView() {
-        return ReactNodeViewRenderer(createNotebookImageNodeView(assetPort));
+        return ReactNodeViewRenderer(createNotebookImageNodeView(assetPort, mediaNodeViewOptions));
       },
     }),
     VideoFigure.extend({
       addNodeView() {
-        return ReactNodeViewRenderer(createNotebookVideoNodeView(assetPort));
+        return ReactNodeViewRenderer(createNotebookVideoNodeView(assetPort, mediaNodeViewOptions));
       },
     }),
     PageBreak,

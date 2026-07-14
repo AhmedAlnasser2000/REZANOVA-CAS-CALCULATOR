@@ -199,6 +199,8 @@ export function useNotebookVideoAuthoring({
           tracks: null,
           widthPercent: null,
           alignment: null,
+          placement: null,
+          displayAspectRatio: null,
           loop: details.loop || null,
         },
       };

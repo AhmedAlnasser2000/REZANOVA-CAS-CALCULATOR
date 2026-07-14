@@ -43,7 +43,9 @@ describe('Notebook DOCX publication', () => {
           content: [{ type: 'text', text: 'Limit laws', marks: [{ type: 'underline' }] }],
         },
         {
-          type: 'paragraph', id: 'prose', format: { alignment: 'justify', lineSpacing: 1.5, spaceAfterPt: 12 },
+          type: 'paragraph', id: 'prose', format: {
+            alignment: 'justify', lineSpacing: 1.5, spaceAfterPt: 12, leftIndentPt: 72,
+          },
           content: [
             { type: 'text', text: 'For ' },
             { type: 'inlineMath', id: 'inline', sourceText: 'x^2', latex: 'x^2', workspaceTarget: 'calculate' },
@@ -58,10 +60,14 @@ describe('Notebook DOCX publication', () => {
           type: 'semanticBlock', id: 'theorem', variant: 'theorem', label: 'Limit law', accentColor: '#84bfe8',
           content: [{ type: 'displayMath', id: 'equation', sourceText: '\\frac{a}{b}', latex: '\\frac{a}{b}', workspaceTarget: 'calculate' }],
         },
-        { type: 'imageFigure', id: 'image', assetId: image.id, altText: 'Limit graph', caption: 'A graph', numbered: true, rotation: 90 },
+        {
+          type: 'imageFigure', id: 'image', assetId: image.id, altText: 'Limit graph', caption: 'A graph',
+          numbered: true, widthPercent: 100, displayAspectRatio: 1.25, rotation: 137,
+        },
         {
           type: 'videoFigure', id: 'video', assetId: `sha256:${'b'.repeat(64)}`, posterAssetId: poster.id,
           title: 'Limit lesson', description: 'A video explanation.', caption: 'Worked example', numbered: true,
+          alignment: 'right', placement: 'square-right', widthPercent: 100, displayAspectRatio: 16 / 9,
         },
         {
           type: 'section', id: 'section', title: 'Applications',
@@ -98,6 +104,9 @@ describe('Notebook DOCX publication', () => {
     expect(documentXml).toContain('<mc:AlternateContent>');
     expect(documentXml).toContain('<mc:Fallback>');
     expect(documentXml).toContain('<w:numPr>');
+    expect(documentXml).toContain('<w:ind w:left="1440"/>');
+    expect(documentXml).toContain('rot="8220000"');
+    expect(documentXml).toContain('cx="5943600" cy="4752975"');
     expect(documentXml).toContain('Limit law');
     expect(documentXml).toContain('Interactive playback is available in the Web package.');
     expect(documentXml).toContain('w:pgSz');

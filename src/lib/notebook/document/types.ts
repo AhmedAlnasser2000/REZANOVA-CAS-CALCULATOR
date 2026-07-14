@@ -1,12 +1,13 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 9 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 10 as const;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
 
 export const NOTEBOOK_TEXT_ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
 export const NOTEBOOK_LINE_SPACINGS = [1, 1.15, 1.5, 2] as const;
 export const NOTEBOOK_PARAGRAPH_SPACES_PT = [0, 6, 12, 18, 24] as const;
+export const NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT = [0, 36, 72, 108, 144, 180, 216, 252, 288] as const;
 export const NOTEBOOK_BULLET_STYLES = ['disc', 'circle', 'square', 'dash'] as const;
 export const NOTEBOOK_ORDERED_STYLES = ['decimal', 'lower-alpha', 'lower-roman'] as const;
 export const NOTEBOOK_IMAGE_ALIGNMENTS = ['left', 'center', 'right'] as const;
@@ -16,7 +17,7 @@ export const NOTEBOOK_IMAGE_PLACEMENTS = [
   'square-left',
   'square-right',
 ] as const;
-export const NOTEBOOK_IMAGE_ROTATIONS = [0, 90, 180, 270] as const;
+export const NOTEBOOK_IMAGE_ROTATION_PRESETS = [0, 90, 180, 270] as const;
 export const NOTEBOOK_VIDEO_TRACK_KINDS = ['captions', 'subtitles'] as const;
 export const NOTEBOOK_PAPER_SIZES = ['a4', 'letter', 'legal'] as const;
 export const NOTEBOOK_PAGE_ORIENTATIONS = ['portrait', 'landscape'] as const;
@@ -29,16 +30,37 @@ export function isNotebookFontSize(value: unknown): value is number {
     && value <= NOTEBOOK_FONT_SIZE_MAX;
 }
 
+export function isNotebookParagraphLeftIndentPt(value: unknown): value is NotebookParagraphLeftIndentPt {
+  return typeof value === 'number'
+    && NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT.includes(value as NotebookParagraphLeftIndentPt);
+}
+
+export function isNotebookDisplayAspectRatio(value: unknown): value is number {
+  return typeof value === 'number'
+    && Number.isFinite(value)
+    && value >= 0.1
+    && value <= 10;
+}
+
+export function isNotebookImageRotation(value: unknown): value is NotebookImageRotation {
+  return typeof value === 'number'
+    && Number.isInteger(value)
+    && value >= 0
+    && value <= 359;
+}
+
 export type NotebookRichDocumentVersion = typeof NOTEBOOK_RICH_DOCUMENT_VERSION;
 export type NotebookTextAlignment = typeof NOTEBOOK_TEXT_ALIGNMENTS[number];
 export type NotebookLineSpacing = typeof NOTEBOOK_LINE_SPACINGS[number];
 export type NotebookParagraphSpacePt = typeof NOTEBOOK_PARAGRAPH_SPACES_PT[number];
+export type NotebookParagraphLeftIndentPt = typeof NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT[number];
 export type NotebookBulletStyle = typeof NOTEBOOK_BULLET_STYLES[number];
 export type NotebookOrderedStyle = typeof NOTEBOOK_ORDERED_STYLES[number];
 export type NotebookImageAlignment = typeof NOTEBOOK_IMAGE_ALIGNMENTS[number];
 export type NotebookImagePlacement = typeof NOTEBOOK_IMAGE_PLACEMENTS[number];
-export type NotebookImageRotation = typeof NOTEBOOK_IMAGE_ROTATIONS[number];
+export type NotebookImageRotation = number;
 export type NotebookVideoAlignment = NotebookImageAlignment;
+export type NotebookVideoPlacement = NotebookImagePlacement;
 export type NotebookVideoTrackKind = typeof NOTEBOOK_VIDEO_TRACK_KINDS[number];
 export type NotebookPaperSize = typeof NOTEBOOK_PAPER_SIZES[number];
 export type NotebookPageOrientation = typeof NOTEBOOK_PAGE_ORIENTATIONS[number];
@@ -69,6 +91,7 @@ export type NotebookParagraphFormat = {
   lineSpacing?: NotebookLineSpacing;
   spaceBeforePt?: NotebookParagraphSpacePt;
   spaceAfterPt?: NotebookParagraphSpacePt;
+  leftIndentPt?: NotebookParagraphLeftIndentPt;
 };
 export type NotebookSemanticKind =
   | 'theorem'
@@ -171,6 +194,7 @@ export type NotebookImageNode = {
   widthPercent?: number;
   alignment?: NotebookImageAlignment;
   placement?: NotebookImagePlacement;
+  displayAspectRatio?: number;
   rotation?: NotebookImageRotation;
   crop?: NotebookImageCrop;
 };
@@ -196,6 +220,8 @@ export type NotebookVideoNode = {
   tracks?: NotebookVideoTrack[];
   widthPercent?: number;
   alignment?: NotebookVideoAlignment;
+  placement?: NotebookVideoPlacement;
+  displayAspectRatio?: number;
   loop?: boolean;
 };
 
@@ -297,6 +323,12 @@ export type NotebookRichDocumentV7 = NotebookRichDocumentBase & {
 
 export type NotebookRichDocumentV8 = NotebookRichDocumentBase & {
   version: 8;
+  pageSetup: NotebookPageSetup;
+  headerFooter: NotebookHeaderFooterSettings;
+};
+
+export type NotebookRichDocumentV9 = NotebookRichDocumentBase & {
+  version: 9;
   pageSetup: NotebookPageSetup;
   headerFooter: NotebookHeaderFooterSettings;
 };

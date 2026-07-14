@@ -15,6 +15,7 @@ import type {
   NotebookLineSpacing,
   NotebookOrderedStyle,
   NotebookParagraphFormat,
+  NotebookParagraphLeftIndentPt,
   NotebookParagraphSpacePt,
   NotebookPageSetup,
   NotebookRichBlockNode,
@@ -23,15 +24,18 @@ import type {
   NotebookSemanticKind,
   NotebookTextAlignment,
   NotebookVideoAlignment,
+  NotebookVideoPlacement,
   NotebookVideoTrack,
   NotebookVideoTrackKind,
 } from './types';
 import {
+  isNotebookDisplayAspectRatio,
   isNotebookFontSize,
+  isNotebookImageRotation,
+  isNotebookParagraphLeftIndentPt,
   NOTEBOOK_BULLET_STYLES,
   NOTEBOOK_IMAGE_ALIGNMENTS,
   NOTEBOOK_IMAGE_PLACEMENTS,
-  NOTEBOOK_IMAGE_ROTATIONS,
   NOTEBOOK_LINE_SPACINGS,
   NOTEBOOK_ORDERED_STYLES,
   NOTEBOOK_PARAGRAPH_SPACES_PT,
@@ -136,6 +140,7 @@ function paragraphFormatAttrs(format: NotebookParagraphFormat | undefined) {
     notebookLineSpacing: format?.lineSpacing ?? null,
     notebookSpaceBeforePt: format?.spaceBeforePt ?? null,
     notebookSpaceAfterPt: format?.spaceAfterPt ?? null,
+    notebookLeftIndentPt: format?.leftIndentPt ?? null,
   };
 }
 
@@ -156,11 +161,15 @@ function paragraphFormatFromTiptap(node: JSONContent): NotebookParagraphFormat |
     node.attrs?.notebookSpaceAfterPt,
     NOTEBOOK_PARAGRAPH_SPACES_PT,
   );
+  const leftIndentPt = isNotebookParagraphLeftIndentPt(node.attrs?.notebookLeftIndentPt)
+    ? node.attrs?.notebookLeftIndentPt as NotebookParagraphLeftIndentPt
+    : undefined;
   const format = {
     ...(alignment ? { alignment } : {}),
     ...(lineSpacing ? { lineSpacing } : {}),
     ...(spaceBeforePt !== undefined ? { spaceBeforePt } : {}),
     ...(spaceAfterPt !== undefined ? { spaceAfterPt } : {}),
+    ...(leftIndentPt !== undefined ? { leftIndentPt } : {}),
   };
   return Object.keys(format).length ? format : undefined;
 }
@@ -290,6 +299,7 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         widthPercent: node.widthPercent ?? null,
         alignment: node.alignment ?? null,
         placement: node.placement ?? null,
+        displayAspectRatio: node.displayAspectRatio ?? null,
         rotation: node.rotation ?? null,
         cropX: node.crop?.x ?? null,
         cropY: node.crop?.y ?? null,
@@ -312,6 +322,8 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         tracks: node.tracks ?? null,
         widthPercent: node.widthPercent ?? null,
         alignment: node.alignment ?? null,
+        placement: node.placement ?? null,
+        displayAspectRatio: node.displayAspectRatio ?? null,
         loop: node.loop ?? null,
       },
     };
@@ -480,10 +492,12 @@ function blockFromTiptap(
       node.attrs?.placement,
       NOTEBOOK_IMAGE_PLACEMENTS,
     );
-    const rotation = oneOf<NotebookImageRotation>(
-      node.attrs?.rotation,
-      NOTEBOOK_IMAGE_ROTATIONS,
-    );
+    const rotation = isNotebookImageRotation(node.attrs?.rotation)
+      ? node.attrs?.rotation as NotebookImageRotation
+      : undefined;
+    const displayAspectRatio = isNotebookDisplayAspectRatio(node.attrs?.displayAspectRatio)
+      ? node.attrs?.displayAspectRatio
+      : undefined;
     const crop = imageCropFromTiptap(node);
     return {
       type: 'imageFigure',
@@ -496,6 +510,7 @@ function blockFromTiptap(
       ...(widthPercent !== undefined ? { widthPercent } : {}),
       ...(alignment ? { alignment } : {}),
       ...(placement ? { placement } : {}),
+      ...(displayAspectRatio !== undefined ? { displayAspectRatio } : {}),
       ...(rotation !== undefined ? { rotation } : {}),
       ...(crop ? { crop } : {}),
     };
@@ -510,6 +525,13 @@ function blockFromTiptap(
       node.attrs?.alignment,
       NOTEBOOK_IMAGE_ALIGNMENTS,
     );
+    const placement = oneOf<NotebookVideoPlacement>(
+      node.attrs?.placement,
+      NOTEBOOK_IMAGE_PLACEMENTS,
+    );
+    const displayAspectRatio = isNotebookDisplayAspectRatio(node.attrs?.displayAspectRatio)
+      ? node.attrs?.displayAspectRatio
+      : undefined;
     const loop = optionalBooleanAttr(node, 'loop');
     return {
       type: 'videoFigure',
@@ -523,6 +545,8 @@ function blockFromTiptap(
       ...(tracks ? { tracks } : {}),
       ...(widthPercent !== undefined ? { widthPercent } : {}),
       ...(alignment ? { alignment } : {}),
+      ...(placement ? { placement } : {}),
+      ...(displayAspectRatio !== undefined ? { displayAspectRatio } : {}),
       ...(loop !== undefined ? { loop } : {}),
     };
   }

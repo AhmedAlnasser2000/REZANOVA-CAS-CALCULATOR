@@ -1,15 +1,17 @@
-import {
-  NOTEBOOK_RICH_DOCUMENT_VERSION,
-  type NotebookRichDocument,
-  type NotebookRichDocumentV8,
+import { migrateNotebookDocumentV9 } from './migrate-v9';
+import type {
+  NotebookRichDocument,
+  NotebookRichDocumentV8,
+  NotebookRichDocumentV9,
 } from './types';
 
 /** V9 adds local video figures without changing existing V8 content or page settings. */
 export function migrateNotebookDocumentV8(
   document: NotebookRichDocumentV8,
 ): NotebookRichDocument {
-  return {
+  const version9: NotebookRichDocumentV9 = {
     ...document,
-    version: NOTEBOOK_RICH_DOCUMENT_VERSION,
+    version: 9,
   };
+  return migrateNotebookDocumentV9(version9);
 }

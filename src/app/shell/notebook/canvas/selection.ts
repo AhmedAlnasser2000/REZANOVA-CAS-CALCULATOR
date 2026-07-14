@@ -438,6 +438,7 @@ export function moveNotebookNode(
   sourceId: string,
   targetId: string,
   placement: NotebookMovePlacement,
+  options: { sourceAttributes?: Record<string, unknown> } = {},
 ) {
   if (sourceId === targetId) {
     return false;
@@ -482,7 +483,14 @@ export function moveNotebookNode(
   )) {
     return false;
   }
-  transaction.insert(insertionPosition, source.node);
+  const movedNode = options.sourceAttributes
+    ? source.node.type.create(
+        { ...source.node.attrs, ...options.sourceAttributes },
+        source.node.content,
+        source.node.marks,
+      )
+    : source.node;
+  transaction.insert(insertionPosition, movedNode);
   if (placement === 'inside' && mappedTarget.attrs.collapsed === true) {
     transaction.setNodeMarkup(mappedTargetPosition, undefined, {
       ...mappedTarget.attrs,

@@ -1,5 +1,5 @@
 import type { Editor } from '@tiptap/core';
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import type { Node as ProseMirrorNode, ResolvedPos } from '@tiptap/pm/model';
 import { AllSelection, TextSelection } from '@tiptap/pm/state';
 import {
   AlignCenter,
@@ -9,6 +9,8 @@ import {
   ChevronDown,
   List,
   ListCollapse,
+  ListIndentDecrease,
+  ListIndentIncrease,
   ListOrdered,
 } from 'lucide-react';
 import { useRef } from 'react';
@@ -17,6 +19,7 @@ import {
   NOTEBOOK_BULLET_STYLES,
   NOTEBOOK_LINE_SPACINGS,
   NOTEBOOK_ORDERED_STYLES,
+  NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT,
   NOTEBOOK_PARAGRAPH_SPACES_PT,
   type NotebookBulletStyle,
   type NotebookLineSpacing,
@@ -36,6 +39,14 @@ type AttributeState<T> = {
   mixed: boolean;
   value: T | null;
 };
+
+type IndentTarget = {
+  node: ProseMirrorNode;
+  position: number;
+  insideList: boolean;
+};
+
+type IndentSelectionKind = 'prose' | 'list' | 'mixed' | 'none';
 
 function selectedNodes(editor: Editor, types: readonly string[]) {
   const nodes: ProseMirrorNode[] = [];
@@ -61,6 +72,92 @@ function selectedNodes(editor: Editor, types: readonly string[]) {
     }
   }
   return nodes;
+}
+
+function textBlockAt($position: ResolvedPos): IndentTarget | null {
+  let textBlockDepth = -1;
+  let insideList = false;
+  for (let depth = $position.depth; depth >= 0; depth -= 1) {
+    const node = $position.node(depth);
+    if (node.type.name === 'listItem') {
+      insideList = true;
+    }
+    if (textBlockDepth < 0 && (node.type.name === 'paragraph' || node.type.name === 'heading')) {
+      textBlockDepth = depth;
+    }
+  }
+  if (textBlockDepth < 0) {
+    return null;
+  }
+  return {
+    node: $position.node(textBlockDepth),
+    position: $position.before(textBlockDepth),
+    insideList,
+  };
+}
+
+function selectedIndentTargets(editor: Editor): IndentTarget[] {
+  const { doc, selection } = editor.state;
+  const targets = new Map<number, IndentTarget>();
+  const add = (target: IndentTarget | null) => {
+    if (target) {
+      targets.set(target.position, target);
+    }
+  };
+
+  if (selection.empty) {
+    add(textBlockAt(selection.$from));
+  } else {
+    doc.nodesBetween(selection.from, selection.to, (node, position) => {
+      if (node.type.name === 'paragraph' || node.type.name === 'heading') {
+        add(textBlockAt(doc.resolve(position + 1)));
+      }
+    });
+    add(textBlockAt(selection.$from));
+    add(textBlockAt(selection.$to));
+  }
+
+  return [...targets.values()];
+}
+
+function indentSelectionKind(targets: readonly IndentTarget[]): IndentSelectionKind {
+  if (!targets.length) {
+    return 'none';
+  }
+  const kinds = new Set(targets.map((target) => target.insideList ? 'list' : 'prose'));
+  return kinds.size === 1 ? [...kinds][0]! : 'mixed';
+}
+
+function currentLeftIndentPt(node: ProseMirrorNode) {
+  return NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT.find(
+    (value) => value === node.attrs.notebookLeftIndentPt,
+  ) ?? 0;
+}
+
+function applyProseIndent(
+  editor: Editor,
+  selection: NotebookToolbarSelection | null,
+  amount: number,
+) {
+  restoreNotebookToolbarSelection(editor, selection).run();
+  const transaction = editor.state.tr;
+  const minimum = NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT[0] ?? 0;
+  const maximum = NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT.at(-1) ?? 288;
+  selectedIndentTargets(editor)
+    .filter((target) => !target.insideList)
+    .forEach((target) => {
+      const next = Math.max(minimum, Math.min(maximum, currentLeftIndentPt(target.node) + amount));
+      const nextAttribute = next === minimum ? null : next;
+      if ((target.node.attrs.notebookLeftIndentPt ?? null) !== nextAttribute) {
+        transaction.setNodeMarkup(target.position, undefined, {
+          ...target.node.attrs,
+          notebookLeftIndentPt: nextAttribute,
+        });
+      }
+    });
+  if (transaction.docChanged) {
+    editor.view.dispatch(transaction.scrollIntoView());
+  }
 }
 
 function attributeState<T>(
@@ -275,6 +372,85 @@ function ListSplitControl({
   );
 }
 
+function IndentControls({ editor }: { editor: Editor }) {
+  const targets = selectedIndentTargets(editor);
+  const kind = indentSelectionKind(targets);
+  const minimum = NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT[0] ?? 0;
+  const maximum = NOTEBOOK_PARAGRAPH_LEFT_INDENTS_PT.at(-1) ?? 288;
+  const proseCanIncrease = targets.some(
+    (target) => !target.insideList && currentLeftIndentPt(target.node) < maximum,
+  );
+  const proseCanDecrease = targets.some(
+    (target) => !target.insideList && currentLeftIndentPt(target.node) > minimum,
+  );
+  const canIncrease = kind === 'prose'
+    ? proseCanIncrease
+    : kind === 'list'
+      ? editor.can().sinkListItem('listItem')
+      : false;
+  const canDecrease = kind === 'prose'
+    ? proseCanDecrease
+    : kind === 'list'
+      ? editor.can().liftListItem('listItem')
+      : false;
+  const blockedMessage = kind === 'mixed'
+    ? 'Select only prose or only list items to change indentation'
+    : kind === 'none'
+      ? 'Select a paragraph, heading, or list item to change indentation'
+      : null;
+
+  function increaseIndent() {
+    const selection = captureNotebookToolbarSelection(editor);
+    if (kind === 'list') {
+      restoreNotebookToolbarSelection(editor, selection).sinkListItem('listItem').run();
+      return;
+    }
+    if (kind === 'prose') {
+      applyProseIndent(editor, selection, 36);
+    }
+  }
+
+  function decreaseIndent() {
+    const selection = captureNotebookToolbarSelection(editor);
+    if (kind === 'list') {
+      restoreNotebookToolbarSelection(editor, selection).liftListItem('listItem').run();
+      return;
+    }
+    if (kind === 'prose') {
+      applyProseIndent(editor, selection, -36);
+    }
+  }
+
+  return (
+    <div className="notebook-indent-controls" role="group" aria-label="Paragraph indentation">
+      <button
+        type="button"
+        disabled={!canDecrease}
+        aria-label="Decrease indent"
+        title={blockedMessage ?? (kind === 'list'
+          ? 'Promote list item'
+          : canDecrease ? 'Decrease indent' : 'Already at the minimum indent')}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={decreaseIndent}
+      >
+        <ListIndentDecrease aria-hidden="true" size={16} />
+      </button>
+      <button
+        type="button"
+        disabled={!canIncrease}
+        aria-label="Increase indent"
+        title={blockedMessage ?? (kind === 'list'
+          ? 'Make list item a subitem'
+          : canIncrease ? 'Increase indent' : 'Already at the maximum indent')}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={increaseIndent}
+      >
+        <ListIndentIncrease aria-hidden="true" size={16} />
+      </button>
+    </div>
+  );
+}
+
 function SpacingControl({ editor }: { editor: Editor }) {
   const menu = useNotebookTransientLayer({ id: 'notebook-paragraph-spacing-menu' });
   const selectionRef = useRef<NotebookToolbarSelection | null>(null);
@@ -417,6 +593,7 @@ export function NotebookParagraphControls({ editor }: { editor: Editor }) {
     <>
       <ListSplitControl editor={editor} kind="bulletList" />
       <ListSplitControl editor={editor} kind="orderedList" />
+      <IndentControls editor={editor} />
       <div className="notebook-alignment-controls" role="group" aria-label="Paragraph alignment">
         {ALIGNMENTS.map(({ value, label, icon: Icon }) => (
           <button
