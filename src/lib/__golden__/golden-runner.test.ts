@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import { goldenCases, type GoldenExpectation } from './golden-cases';
 import { runGoldenCase, type GoldenExecution } from './golden-execution';
+import { resolveCanonicalResultForConsumer } from '../result-contract';
 
 function assertIncludesAll(label: string, actual: string | undefined, expected: readonly string[] | undefined) {
   for (const expectedSubstring of expected ?? []) {
@@ -11,56 +12,59 @@ function assertIncludesAll(label: string, actual: string | undefined, expected: 
 
 function assertExpectation(execution: GoldenExecution, expected: GoldenExpectation) {
   const { outcome, tableResponse } = execution;
-  const document = outcome.kind === 'prompt' ? undefined : outcome.canonicalResult;
-  const metadata = document?.metadata;
+  const resolution = outcome.kind === 'prompt'
+    ? undefined
+    : resolveCanonicalResultForConsumer(outcome);
+  const presentation = resolution?.ok ? resolution.presentation : undefined;
+  const metadata = resolution?.ok ? resolution.semantics.metadata : undefined;
   expect(outcome.kind).toBe(expected.kind);
-  expect(outcome.kind === 'prompt' ? outcome.title : document?.title)
-    .toBe(expected.title ?? (outcome.kind === 'prompt' ? outcome.title : document?.title));
+  expect(outcome.kind === 'prompt' ? outcome.title : presentation?.title)
+    .toBe(expected.title ?? (outcome.kind === 'prompt' ? outcome.title : presentation?.title));
 
   if (expected.exactEquals !== undefined) {
-    expect(document?.primaryMath?.canonicalLatex).toBe(expected.exactEquals);
+    expect(presentation?.primaryLatex).toBe(expected.exactEquals);
   }
 
-  assertIncludesAll('exactLatex', document?.primaryMath?.canonicalLatex, expected.exactIncludes);
+  assertIncludesAll('exactLatex', presentation?.primaryLatex, expected.exactIncludes);
   assertIncludesAll(
     'answerRows',
     outcome.kind === 'success'
-      ? document?.answerRows?.rows.map((row) => row.math.canonicalLatex).join(' ')
+      ? presentation?.answerRows?.rows.map((row) => row.latex).join(' ')
       : undefined,
     expected.answerRowsInclude,
   );
   assertIncludesAll(
     'branchReadback',
-    document?.branchReadback?.branches.map((branch) => branch.canonicalLatex).join(' '),
+    presentation?.branchReadback?.branchesLatex.join(' '),
     expected.branchIncludes,
   );
   assertIncludesAll(
     'periodicFamily',
-    document?.periodicFamily?.branches.map((branch) => branch.canonicalLatex).join(' '),
+    presentation?.periodicFamily?.branchesLatex.join(' '),
     expected.periodicBranchesInclude,
   );
-  assertIncludesAll('approxText', document?.approximations?.primary, expected.approxIncludes);
+  assertIncludesAll('approxText', presentation?.approximations?.primary, expected.approxIncludes);
   assertIncludesAll(
     'warnings',
-    (document?.warnings ?? (outcome.kind === 'prompt' ? outcome.warnings : [])).join(' '),
+    (presentation?.warnings ?? (outcome.kind === 'prompt' ? outcome.warnings : [])).join(' '),
     expected.warningIncludes,
   );
   assertIncludesAll(
     'exactSupplementLatex',
-    document?.supplements?.map((value) => value.canonicalLatex).join(' '),
+    presentation?.supplements?.join(' '),
     expected.supplementIncludes,
   );
 
   if (expected.detailTitlesInclude) {
-    const titles = document?.details?.map((section) => section.title) ?? [];
+    const titles = presentation?.details?.map((section) => section.title) ?? [];
     for (const expectedTitle of expected.detailTitlesInclude) {
       expect(titles).toContain(expectedTitle);
     }
   }
 
   if (expected.detailLinesInclude) {
-    const lines = document?.details?.flatMap((section) => section.lines.map((line) =>
-      line.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.text).join('')))
+    const lines = presentation?.details?.flatMap((section) => section.lines.map((line) =>
+      line.map((part) => part.kind === 'math' ? part.latex : part.text).join('')))
       .join(' ') ?? '';
     assertIncludesAll('detail lines', lines, expected.detailLinesInclude);
   }
@@ -81,7 +85,7 @@ function assertExpectation(execution: GoldenExecution, expected: GoldenExpectati
   }
 
   if (expected.errorIncludes !== undefined) {
-    expect(outcome.kind === 'error' ? document?.error : '').toContain(expected.errorIncludes);
+    expect(outcome.kind === 'error' ? presentation?.error : '').toContain(expected.errorIncludes);
   }
 
   if (expected.solveBadgesInclude) {

@@ -31,7 +31,7 @@ import type {
 import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
 import type { HistoryReplaySnapshotV1 } from './history-replay-types';
-import type { CanonicalResultDocumentV1 } from './canonical-result-types';
+import type { CanonicalResultDocument } from './canonical-result-v2-types';
 import type {
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
@@ -910,7 +910,7 @@ export type HistoryEntry = {
   historyLaunchOrder?: number;
   runtimeElapsedMs?: number;
   replaySnapshot?: HistoryReplaySnapshotV1;
-  resultDocument: CanonicalResultDocumentV1;
+  resultDocument: CanonicalResultDocument;
   resultStorageMode?: 'canonical-only-fallback';
   timestamp: string;
 };

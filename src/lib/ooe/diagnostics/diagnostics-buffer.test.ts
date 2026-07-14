@@ -11,6 +11,10 @@ import {
   summarizeCanonicalRuntimeOutcome,
 } from './diagnostics-buffer';
 import type { OoeCommitAssessment, OoeJobIdentity } from '../bridge-schema/ooe-bridge';
+import {
+  canonicalRuntimeResultV2Fixture,
+  standardV2MathValue,
+} from '../../../test-utils/canonical-result-v2-fixture';
 
 const job: OoeJobIdentity = {
   jobId: 'job.expression.evaluate.abc',
@@ -192,6 +196,26 @@ describe('OOE diagnostics buffer', () => {
       warnings: [],
       canonicalResult,
     }).unsafeReadbackMarkers).toEqual(['\\blacksquare', '\\mathtip']);
+  });
+
+  it('summarizes V2 adapter presentation without exposing typed payloads', () => {
+    expect(summarizeCanonicalRuntimeOutcome(canonicalRuntimeResultV2Fixture({
+      outcomeKind: 'success',
+      title: 'Typed result',
+      primary: { kind: 'math', value: standardV2MathValue('2', 2) },
+      supplements: [{
+        role: 'condition',
+        presentationLatex: 'x>0',
+        math: standardV2MathValue('x>0', ['Greater', 'x', 0]),
+      }],
+      warnings: ['typed warning'],
+    }))).toMatchObject({
+      kind: 'success',
+      title: 'Typed result',
+      warningsCount: 1,
+      exactLatexLength: 1,
+      exactSupplementCount: 1,
+    });
   });
 
   it('does not inspect compatibility strings without canonical authority', () => {

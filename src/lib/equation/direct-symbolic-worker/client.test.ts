@@ -129,9 +129,12 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
       },
     );
 
+    const expectedOutcome = finalizeEquationCanonicalRuntimeOutcome(expected, 'Equation test');
+    if (expectedOutcome.kind === 'prompt') throw new Error('Expected Equation result outcome');
+    if (expectedOutcome.canonicalResult.version !== 1) throw new Error('Expected V1 Equation result');
     expect(JSON.parse(JSON.stringify(result.outcome))).toEqual(
       JSON.parse(JSON.stringify(buildEquationStageResultCarrierFromRuntime(
-        finalizeEquationCanonicalRuntimeOutcome(expected, 'Equation test'),
+        expectedOutcome as Parameters<typeof buildEquationStageResultCarrierFromRuntime>[0],
       ))),
     );
     expect(result.hostEvidence).toMatchObject({

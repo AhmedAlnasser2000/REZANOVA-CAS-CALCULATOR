@@ -1,8 +1,17 @@
 import type {
   CanonicalRuntimeOutcome,
-  CanonicalResultDocumentV1,
 } from '../../types/calculator';
-import { validateCanonicalResultDocument } from './validation';
+import {
+  normalizeCanonicalResultDocument,
+  type NormalizedCanonicalResult,
+} from './normalized-result';
+import { validateCanonicalResultDocumentVersioned } from './validation-router';
+
+export type {
+  CanonicalResultPresentation,
+  CanonicalResultPresentationDetailPart,
+  CanonicalResultSemantics,
+} from './normalized-result';
 
 export type CanonicalResultConsumerFailure = {
   reason: 'prompt-outcome' | 'missing-document' | 'invalid-document';
@@ -13,7 +22,10 @@ export type CanonicalResultConsumerResolution =
   | {
       ok: true;
       source: 'native';
-      document: CanonicalResultDocumentV1;
+      sourceVersion: 1 | 2;
+      rawDocument: NormalizedCanonicalResult['rawDocument'];
+      presentation: NormalizedCanonicalResult['presentation'];
+      semantics: NormalizedCanonicalResult['semantics'];
     }
   | {
       ok: false;
@@ -43,7 +55,7 @@ export function resolveCanonicalResultForConsumer(
     };
   }
 
-  const validation = validateCanonicalResultDocument(outcome.canonicalResult);
+  const validation = validateCanonicalResultDocumentVersioned(outcome.canonicalResult);
   if (!validation.ok) {
     return {
       ok: false,
@@ -62,9 +74,10 @@ export function resolveCanonicalResultForConsumer(
       },
     };
   }
+  const normalized = normalizeCanonicalResultDocument(validation.validated.value);
   return {
     ok: true,
     source: 'native',
-    document: validation.validated.value,
+    ...normalized,
   };
 }

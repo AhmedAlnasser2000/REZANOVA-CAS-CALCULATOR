@@ -692,6 +692,9 @@ describe('Equation mode parameterized families', () => {
     if (direct.kind !== 'success' || absoluteZero.kind !== 'success') {
       throw new Error('Expected isolated worker path to keep Real Cardano/formula fallback live');
     }
+    if (direct.canonicalResult.version !== 1 || absoluteZero.canonicalResult.version !== 1) {
+      throw new Error('Expected the untouched Equation producers to remain V1');
+    }
     expect(direct.canonicalResult.primaryMath?.canonicalLatex).toContain('z\\in\\begin{cases}');
     expect(direct.canonicalResult.details?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
     expect(absoluteZero.canonicalResult.primaryMath?.canonicalLatex).toContain('z^3+z+1=0');

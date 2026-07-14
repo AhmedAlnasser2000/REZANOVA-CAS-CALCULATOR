@@ -6,13 +6,12 @@ import type {
 import type { OoeHostAdapterDiagnostics } from '../runtime-control/host-adapter';
 import type { OoeRuntimeShellEvidence } from '../runtime-control/runtime-shell-contract';
 import type {
-  CanonicalResultDetailPartV1,
-  CanonicalResultDocumentV1,
   CanonicalRuntimeOutcome,
 } from '../../../types/calculator';
 import {
-  collectCanonicalResultMathValues,
   resolveCanonicalResultForConsumer,
+  type CanonicalResultPresentation,
+  type CanonicalResultPresentationDetailPart,
 } from '../../result-contract';
 
 export const DEFAULT_OOE_DIAGNOSTICS_LIMIT = 100;
@@ -208,30 +207,35 @@ function collectUnsafeMarkersFromString(value: unknown, target: Set<string>) {
   }
 }
 
-function unsafeMarkersFromDocument(document: CanonicalResultDocumentV1) {
+function unsafeMarkersFromPresentation(presentation: CanonicalResultPresentation) {
   const markers = new Set<string>();
-  for (const reference of collectCanonicalResultMathValues(document)) {
-    collectUnsafeMarkersFromString(reference.value.canonicalLatex, markers);
-  }
-  collectUnsafeMarkersFromString(document.approximations?.primary, markers);
-  collectUnsafeMarkersFromString(document.error, markers);
+  const visit = (value: unknown) => {
+    if (typeof value === 'string') {
+      collectUnsafeMarkersFromString(value, markers);
+    } else if (Array.isArray(value)) {
+      value.forEach(visit);
+    } else if (value && typeof value === 'object') {
+      Object.values(value).forEach(visit);
+    }
+  };
+  visit(presentation);
   return markers.size > 0 ? Array.from(markers).sort() : undefined;
 }
 
-function detailPartsText(parts: CanonicalResultDetailPartV1[]) {
-  return parts.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.text).join('');
+function detailPartsText(parts: CanonicalResultPresentationDetailPart[]) {
+  return parts.map((part) => part.kind === 'math' ? part.latex : part.text).join('');
 }
 
-function canonicalSummaryText(document: CanonicalResultDocumentV1) {
-  const solve = document.summaries?.solve
+function canonicalSummaryText(presentation: CanonicalResultPresentation) {
+  const solve = presentation.summaries?.solve
     ?.map(detailPartsText)
     .filter(Boolean)
     .join(' ');
-  const transform = document.summaries?.transform;
+  const transform = presentation.summaries?.transform;
   return compactText(
     solve
     ?? transform?.text
-    ?? transform?.math?.canonicalLatex,
+    ?? transform?.mathLatex,
   );
 }
 
@@ -253,15 +257,15 @@ export function summarizeCanonicalRuntimeOutcome(outcome: unknown): OoeDiagnosti
     return { kind, errorSummary: `Canonical result unavailable: ${resolution.failure.reason}` };
   }
 
-  const document = resolution.document;
-  const metadata = document.metadata;
-  const exactLatex = document.primaryMath?.canonicalLatex;
-  const approxText = document.approximations?.primary;
+  const { presentation, semantics } = resolution;
+  const metadata = semantics.metadata;
+  const exactLatex = presentation.primaryLatex;
+  const approxText = presentation.approximations?.primary;
 
   return {
-    kind: document.outcomeKind,
-    title: document.title,
-    warningsCount: document.warnings.length,
+    kind: presentation.outcomeKind,
+    title: presentation.title,
+    warningsCount: presentation.warnings.length,
     answerDomain: metadata?.answerDomain,
     solutionKind: metadata?.solutionKind,
     resultOrigin: metadata?.resultOrigin,
@@ -272,14 +276,14 @@ export function summarizeCanonicalRuntimeOutcome(outcome: unknown): OoeDiagnosti
     transformBadges: badgeSummaries(metadata?.transformBadges),
     hasExactLatex: Boolean(exactLatex),
     exactLatexLength: exactLatex?.length,
-    exactSupplementCount: document.supplements?.length ?? 0,
-    hasPeriodicFamily: Boolean(document.periodicFamily),
+    exactSupplementCount: presentation.supplements?.length ?? 0,
+    hasPeriodicFamily: Boolean(presentation.periodicFamily),
     hasApproxText: Boolean(approxText),
     approxTextLength: approxText?.length,
-    detailSectionTitles: document.details?.map((section) => section.title),
-    summaryText: canonicalSummaryText(document),
-    errorSummary: compactText(document.error),
-    unsafeReadbackMarkers: unsafeMarkersFromDocument(document),
+    detailSectionTitles: presentation.details?.map((section) => section.title),
+    summaryText: canonicalSummaryText(presentation),
+    errorSummary: compactText(presentation.error),
+    unsafeReadbackMarkers: unsafeMarkersFromPresentation(presentation),
   };
 }
 

@@ -3,8 +3,44 @@ import type { DisplayDetailSection, HistoryEntry, TableResponse } from '../../ty
 import { buildHistoryDisplayEntry, readHistoryResult } from './historyDisplayEntry';
 import { canonicalMathValue } from '../../lib/result-contract';
 import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
+import {
+  canonicalResultDocumentV2Fixture,
+  standardV2MathValue,
+} from '../../test-utils/canonical-result-v2-fixture';
 
 describe('buildHistoryDisplayEntry', () => {
+  it('reads V2 History through the same presentation and semantic authority', () => {
+    const entry: HistoryEntry = {
+      id: 'v2-history',
+      mode: 'calculate',
+      inputLatex: '1+1',
+      resultDocument: canonicalResultDocumentV2Fixture({
+        outcomeKind: 'success',
+        title: 'Typed result',
+        primary: { kind: 'math', value: standardV2MathValue('2', 2) },
+        request: { kind: 'math', value: standardV2MathValue('1+1', ['Add', 1, 1]) },
+        supplements: [{
+          role: 'condition',
+          presentationLatex: 'x>0',
+          math: standardV2MathValue('x>0', ['Greater', 'x', 0]),
+        }],
+        warnings: ['Typed warning'],
+      }),
+      timestamp: '2026-07-14T00:00:00.000Z',
+    };
+
+    expect(readHistoryResult(entry)).toMatchObject({
+      source: 'structured',
+      sourceVersion: 2,
+      title: 'Typed result',
+      primaryLatex: '2',
+      resolvedInputLatex: '1+1',
+      supplementLatex: ['x>0'],
+      warnings: ['Typed warning'],
+      outcome: { canonicalResult: { version: 2 } },
+    });
+  });
+
   it('persists display detail sections so History replay can restore result cards', () => {
     const detailSections: DisplayDetailSection[] = [
       {

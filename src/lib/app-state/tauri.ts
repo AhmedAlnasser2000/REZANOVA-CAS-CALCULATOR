@@ -17,7 +17,7 @@ import {
   type SettingsPatch,
   type StoredVariableValue,
 } from '../../types/calculator';
-import { validateCanonicalResultDocument } from '../result-contract';
+import { validateCanonicalResultDocumentVersioned } from '../result-contract';
 import {
   appBootstrapSchema,
   calculatorMemorySnapshotSchema,
@@ -124,7 +124,7 @@ function hasHistoryEnvelope(value: unknown): value is Record<string, unknown> {
 function isFutureHistoryRow(value: unknown) {
   if (!hasHistoryEnvelope(value) || !isRecord(value.resultDocument)) return false;
   const version = value.resultDocument.version;
-  return typeof version === 'number' && Number.isInteger(version) && version > 1;
+  return typeof version === 'number' && Number.isInteger(version) && version > 2;
 }
 
 function sanitizeCurrentHistoryEntry(value: unknown): HistoryEntry | null {
@@ -137,7 +137,7 @@ function sanitizeCurrentHistoryEntry(value: unknown): HistoryEntry | null {
   }
   const parsed = historyEntrySchema.safeParse(sanitized);
   if (!parsed.success || !hasValidHistoryResultDocument(sanitized)) return null;
-  const validation = validateCanonicalResultDocument(sanitized.resultDocument);
+  const validation = validateCanonicalResultDocumentVersioned(sanitized.resultDocument);
   if (!validation.ok || validation.validated.value.outcomeKind !== 'success') return null;
   sanitized.resultDocument = validation.validated.value;
   return sanitized as HistoryEntry;
@@ -377,6 +377,7 @@ export function prepareHistoryEntryForPersistence(
   const entryBytes = serializedByteLength(entry);
   if (entryBytes === null) return { ok: false, reason: 'invalid' };
   if (entryBytes <= HISTORY_ENTRY_MAX_SERIALIZED_BYTES) return { ok: true, entry };
+  if (entry.resultDocument.version === 2) return { ok: false, reason: 'over-size' };
 
   const canonicalOnlyEntry = {
     ...entry,

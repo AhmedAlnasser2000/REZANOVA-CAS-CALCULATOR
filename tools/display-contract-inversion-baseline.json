@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "V1-TYPED-DETAIL-MATRIX-SYSTEM1 moves three Matrix-system owner-assembly call sites from composite math strings to typed prose and native values without changing authority counts or adding compatibility reads.",
+  "acceptedReason": "CANONICAL-RESULT-V2-CONSUMER-HISTORY1 normalized dual-version consumer authority",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -982,16 +982,17 @@
         "5a6382b347b57e136336:1"
       ],
       "src/app/logic/equationNumericIntervalRuntime.ts": [
-        "6ff4a61318400c0991f3:1"
+        "630f3af4b7b731062433:1"
       ],
       "src/app/runtime/equation-explicit-numeric-panels.ts": [
-        "484dbce77c9f506f01b9:1"
+        "7e94924f98dcbf4c617d:1"
       ],
       "src/app/runtime/historyDisplayEntry.ts": [
+        "fff4dda9a106c09d493a:1",
         "39fde1548c89ecd01fc2:1"
       ],
       "src/app/runtime/useEquationRuntime.ts": [
-        "2602c1306bdf0bf10129:1"
+        "03f6819b4b5e74f58554:1"
       ],
       "src/app/runtime/useHistoryDisplayRuntime.ts": [
         "18b0b5b51d78fffb770f:1"
@@ -1017,7 +1018,7 @@
       ],
       "src/lib/display/result/display-read-model.ts": [
         "4ac57f41f5ca09f9d67d:1",
-        "3ba8a9eb4c29ebd27200:1"
+        "14c8abd384109fb442cf:1"
       ],
       "src/lib/equation/guarded/algebra-stage.ts": [
         "b73cd7ebaffb09bbf737:1"
@@ -1066,10 +1067,9 @@
         "a38be4c2d858859cf6b7:1"
       ],
       "src/lib/ooe/pilots/equation-pilot.ts": [
-        "ea8d7700ca5eba6f2197:1",
-        "4a269f987be1353d444c:1",
-        "4a269f987be1353d444c:2",
-        "17db3ca524433aa81716:1"
+        "9939923d2ecbe3f9adec:1",
+        "a35df5aab1233e8455b1:1",
+        "da58a6974556773f21ef:1"
       ],
       "src/lib/result-contract/consumer.ts": [
         "3ff7d4c54b0a1ee0ad4a:1",

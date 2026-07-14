@@ -1,5 +1,6 @@
 import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import { finalizeEquationCanonicalRuntimeOutcome } from '../../equation/equation-solve-result';
+import { resolveCanonicalResultForConsumer } from '../../result-contract';
 import {
   listSharedEquationSolveStageOrder,
   runSharedEquationSolveWithTraceAsync,
@@ -256,17 +257,22 @@ function buildEquationOoeTraceEvents(
 }
 
 function detailSectionTitles(outcome: CanonicalRuntimeOutcome) {
-  return outcome.kind === 'prompt'
-    ? []
-    : outcome.canonicalResult.details?.map((section) => section.title) ?? [];
+  if (outcome.kind === 'prompt') return [];
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  return resolution.ok
+    ? resolution.presentation.details?.map((section) => section.title) ?? []
+    : [];
 }
 
 function generatedEquationDetails(outcome: CanonicalRuntimeOutcome) {
-  if (outcome.kind === 'prompt' || !outcome.canonicalResult.details) {
+  if (outcome.kind === 'prompt') {
     return [];
   }
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  const details = resolution.ok ? resolution.presentation.details : undefined;
+  if (!details) return [];
 
-  return outcome.canonicalResult.details.flatMap((section) => {
+  return details.flatMap((section) => {
     const title = section.title.toLowerCase();
     if (
       !title.includes('isolation')
@@ -277,9 +283,7 @@ function generatedEquationDetails(outcome: CanonicalRuntimeOutcome) {
     }
 
     return section.lines
-      .map((line) => line.map((part) => part.kind === 'text'
-        ? part.text
-        : part.math.canonicalLatex).join(''))
+      .map((line) => line.map((part) => part.kind === 'text' ? part.text : part.latex).join(''))
       .filter((line) =>
         /generated equation|isolated form|formula form|formula branches|isolation facts/i.test(line));
   });
@@ -314,8 +318,11 @@ export function buildEquationProvenance(input: {
   const cancellation = input.metadata.guardedTrace?.cancellation;
   const runtimeHostExecution = input.metadata.runtimeHostExecution;
   const explicitImaginaryInput = explicitImaginaryInputFromSnapshot(snapshot);
-  const document = input.payload.kind === 'prompt' ? undefined : input.payload.canonicalResult;
-  const resultMetadata = document?.metadata;
+  const resolution = input.payload.kind === 'prompt'
+    ? undefined
+    : resolveCanonicalResultForConsumer(input.payload);
+  const presentation = resolution?.ok ? resolution.presentation : undefined;
+  const resultMetadata = resolution?.ok ? resolution.semantics.metadata : undefined;
 
   return {
     depth: 'rich' as const,
@@ -343,13 +350,13 @@ export function buildEquationProvenance(input: {
         ? {
             relation: snapshot.request?.equationLatex?.match(/\\(?:le|leq|ge|geq)(?![A-Za-z])|[<>≤≥]/u)?.[0],
             detailSectionTitles: detailSectionTitles(input.payload),
-            exactLatexLength: document?.primaryMath?.canonicalLatex.length,
+            exactLatexLength: presentation?.primaryLatex?.length,
           }
         : undefined,
       complexRouteEvidence: resultMetadata?.answerDomain === 'complex'
         ? {
             detailSectionTitles: detailSectionTitles(input.payload),
-            exactLatexLength: document?.primaryMath?.canonicalLatex.length,
+            exactLatexLength: presentation?.primaryLatex?.length,
             explicitImaginaryInput,
           }
         : undefined,
@@ -389,7 +396,7 @@ export function buildEquationProvenance(input: {
           }
         : undefined,
       winningStageId: cancellation ? null : winningAttempt?.stageId ?? null,
-      stopReason: input.payload.kind === 'error' ? document?.error ?? null : null,
+      stopReason: input.payload.kind === 'error' ? presentation?.error ?? null : null,
       detailSectionTitles: detailSectionTitles(input.payload),
       generatedRewriteOrIsolationDetails: generatedEquationDetails(input.payload),
       outputHygiene: summarizeCanonicalRuntimeOutcome(input.payload).unsafeReadbackMarkers?.length

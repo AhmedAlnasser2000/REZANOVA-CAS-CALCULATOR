@@ -2,7 +2,7 @@ import type {
   CanonicalResultDetailPartV1,
   CanonicalResultDocumentV1,
   CanonicalResultPeriodicFamilyV1,
-  CanonicalRuntimeOutcome,
+  CanonicalRuntimeResultOutcome,
   DisplayDetailLinePart,
   DisplayDetailSection,
   PeriodicFamilyInfo,
@@ -207,11 +207,8 @@ export function buildOptionalEquationStageResultCarrier(
 }
 
 export function buildEquationStageResultCarrierFromRuntime(
-  outcome: CanonicalRuntimeOutcome,
+  outcome: CanonicalRuntimeResultOutcome,
 ): EquationStageResultCarrierV1 {
-  if (outcome.kind === 'prompt') {
-    throw new Error('Equation stage carriers cannot be built from prompt control outcomes.');
-  }
   return buildEquationSolveResultContract({
     document: outcome.canonicalResult,
     ...(outcome.kind === 'error'

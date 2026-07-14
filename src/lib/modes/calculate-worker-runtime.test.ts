@@ -171,6 +171,9 @@ describe('calculate worker runtime shell', () => {
       if (request.kind === 'standard') {
         expect(result.payload.kind).toBe('success');
         if (result.payload.kind === 'success') {
+          if (result.payload.canonicalResult.version !== 1) {
+            throw new Error('Expected the untouched Calculate producer to remain V1');
+          }
           expect(result.payload.canonicalResult.primaryMath?.canonicalLatex).toBeTruthy();
           expect(result.payload.canonicalResult.primaryMath?.mathJson).toBeDefined();
         }

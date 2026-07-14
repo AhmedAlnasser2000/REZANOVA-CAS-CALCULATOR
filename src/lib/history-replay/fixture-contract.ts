@@ -85,11 +85,11 @@ export function historyReplayIdentity(outcome: CanonicalRuntimeOutcome): History
   if (!resolution.ok) {
     throw new Error(`History replay canonical resolution failed: ${resolution.failure.message}`);
   }
-  const document = resolution.document;
-  const metadata = document.metadata;
+  const { presentation, semantics } = resolution;
+  const metadata = semantics.metadata;
   return {
-    kind: document.outcomeKind,
-    title: document.title,
+    kind: presentation.outcomeKind,
+    title: presentation.title,
     ...(metadata?.resultOrigin ? { resultOrigin: metadata.resultOrigin } : {}),
     ...(metadata?.answerDomain ? { answerDomain: metadata.answerDomain } : {}),
     ...(metadata?.solutionKind ? { solutionKind: metadata.solutionKind } : {}),
@@ -119,17 +119,17 @@ export function historyReplayCardinalities(
   if (!resolution.ok) {
     throw new Error(`History replay canonical resolution failed: ${resolution.failure.message}`);
   }
-  const document = resolution.document;
+  const { presentation } = resolution;
   return {
-    warnings: document.warnings.length,
-    supplements: document.supplements?.length ?? 0,
-    answerRows: document.answerRows?.rows.length ?? 0,
-    branchRows: document.branchReadback?.branches.length ?? 0,
-    systemRows: document.systemReadback?.rows.length ?? 0,
-    periodicBranches: document.periodicFamily?.branches.length ?? 0,
-    detailSections: document.details?.length ?? 0,
+    warnings: presentation.warnings.length,
+    supplements: presentation.supplements?.length ?? 0,
+    answerRows: presentation.answerRows?.rows.length ?? 0,
+    branchRows: presentation.branchReadback?.branchesLatex.length ?? 0,
+    systemRows: presentation.systemReadback?.rows.length ?? 0,
+    periodicBranches: presentation.periodicFamily?.branchesLatex.length ?? 0,
+    detailSections: presentation.details?.length ?? 0,
     actions: outcome.actions?.length ?? 0,
-    tableRows: document.table?.rows.length ?? execution.tableResponse?.rows.length ?? 0,
+    tableRows: presentation.table?.rows.length ?? execution.tableResponse?.rows.length ?? 0,
   };
 }
 

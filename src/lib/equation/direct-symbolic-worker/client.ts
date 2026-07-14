@@ -1,4 +1,5 @@
 import type {
+  CanonicalRuntimeResultOutcome,
   ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../types/calculator';
@@ -198,10 +199,22 @@ export async function runEquationDirectSymbolicViaIsolatedWorker(
           );
           return;
         }
-        settle({
-          outcome: buildEquationStageResultCarrierFromRuntime(validation.validated.value),
-          hostEvidence: workerHostEvidence(input.depth, 'completed'),
-        });
+        if (validation.validated.value.kind === 'prompt') {
+          fallbackFromWorkerFailure('invalid-completed-outcome: prompt-control-outcome');
+          return;
+        }
+        try {
+          settle({
+            outcome: buildEquationStageResultCarrierFromRuntime(
+              validation.validated.value as CanonicalRuntimeResultOutcome,
+            ),
+            hostEvidence: workerHostEvidence(input.depth, 'completed'),
+          });
+        } catch (error) {
+          fallbackFromWorkerFailure(
+            `invalid-completed-outcome: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
         return;
       }
 

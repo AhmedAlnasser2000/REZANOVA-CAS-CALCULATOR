@@ -1,4 +1,5 @@
 export * from './consumer';
+export * from './normalized-result';
 export * from './native-result';
 export * from './producer';
 export * from './producer-v2';

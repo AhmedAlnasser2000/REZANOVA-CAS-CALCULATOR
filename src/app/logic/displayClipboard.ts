@@ -24,15 +24,16 @@ export async function copyDisplayResultWithDeps({
     setClipboardNotice('Result unavailable');
     return;
   }
-  const document = resolution?.ok ? resolution.document : undefined;
-  const primaryMath = document?.primaryMath;
-  const approximationOnlyText = document
-    && document.outcomeKind === 'success'
-    && !primaryMath
-    && document.approximations?.primary
-      ? visibleText || document.approximations.primary
+  const authority = resolution?.ok ? resolution : undefined;
+  const primary = authority?.semantics.primary;
+  const primaryMath = primary?.kind === 'math' ? primary.value : undefined;
+  const approximationOnlyText = authority
+    && authority.presentation.outcomeKind === 'success'
+    && !authority.presentation.primaryLatex
+    && authority.presentation.approximations?.primary
+      ? visibleText || authority.presentation.approximations.primary
       : undefined;
-  const canonicalLatex = primaryMath?.canonicalLatex
+  const canonicalLatex = authority?.presentation.primaryLatex
     ?? approximationOnlyText
     ?? (displayOutcome ? '' : visibleText);
   if (!canonicalLatex.trim()) {

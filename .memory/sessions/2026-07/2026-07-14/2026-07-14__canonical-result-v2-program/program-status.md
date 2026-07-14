@@ -24,8 +24,8 @@
 ## Gates
 
 - `CANONICAL-RESULT-V2-AUDIT0`: committed as `a3fce955`.
-- `CANONICAL-RESULT-V2-CONTRACT1`: verified; pending commit creation under standing approval.
-- `CANONICAL-RESULT-V2-CONSUMER-HISTORY1`: pending.
+- `CANONICAL-RESULT-V2-CONTRACT1`: committed as `8dd5ca29`.
+- `CANONICAL-RESULT-V2-CONSUMER-HISTORY1`: verified; pending commit creation under standing approval.
 - `CANONICAL-RESULT-V2-REQUEST-EVIDENCE1`: pending.
 - `CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1`: pending.
 - `CANONICAL-RESULT-V2-TRIGONOMETRY1`: pending.
@@ -34,6 +34,6 @@
 
 ## Cross-Lane Boundary
 
-- V2 program baseline is `a3fce955` after `CANONICAL-RESULT-V2-AUDIT0`; concurrent Notebook work remains independently owned.
+- V2 program baseline is `8dd5ca29` after `CANONICAL-RESULT-V2-CONTRACT1`; concurrent Notebook work remains independently owned.
 - Untracked `test-results/` is foreign to V2 and must not be staged, cleaned, or used as gate evidence.
 - V2 may add optional workspace-owned semantic evidence but may not merge workers, hosts, capabilities, replay seeds, or OOE authority.

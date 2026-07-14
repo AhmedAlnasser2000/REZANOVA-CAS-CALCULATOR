@@ -67,5 +67,6 @@ export type CanonicalRuntimeVersionedResultOutcome =
   | CanonicalRuntimeResultOutcome
   | CanonicalRuntimeResultOutcomeV2;
 
-// Live producers remain V1 until the normalized runtime/consumer gate.
-export type CanonicalRuntimeOutcome = CanonicalRuntimeResultOutcome | PromptOutcome;
+export type CanonicalRuntimeAction = CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2;
+
+export type CanonicalRuntimeOutcome = CanonicalRuntimeVersionedResultOutcome | PromptOutcome;

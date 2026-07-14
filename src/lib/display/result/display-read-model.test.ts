@@ -8,6 +8,10 @@ import {
 import { orderDisplayBlocksForReveal } from '../scheduling/display-render-scheduler';
 import { buildDisplayBlocks } from './display-blocks';
 import { displayResultReadModelFromOutcome } from './display-read-model';
+import {
+  canonicalRuntimeResultV2Fixture,
+  standardV2MathValue,
+} from '../../../test-utils/canonical-result-v2-fixture';
 
 describe('display canonical read model', () => {
   it('keeps native canonical truth authoritative through blocks, scheduling, and Formula Viewer', () => {
@@ -94,5 +98,49 @@ describe('display canonical read model', () => {
         text: 'Calculation stopped.',
       }),
     ]);
+  });
+
+  it('renders V2 adapter presentation while retaining typed semantics behind the authority', () => {
+    const outcome = canonicalRuntimeResultV2Fixture({
+      outcomeKind: 'success',
+      title: 'Typed profile',
+      primary: {
+        kind: 'linear-map-profile',
+        presentation: {
+          primaryLatex: '\\operatorname{profile}(A)',
+          answerRows: { rows: [{ label: 'Rank', latex: '2' }] },
+        },
+        operand: standardV2MathValue('A', 'A'),
+        domainDimension: 2,
+        codomainDimension: 2,
+        rank: 2,
+        nullity: 0,
+      },
+      details: [{
+        title: 'Rows',
+        lines: [[{
+          kind: 'row-operation',
+          presentationLatex: 'R_2\\leftarrow R_2-R_1',
+          operation: {
+            kind: 'eliminate',
+            targetRow: 2,
+            sourceRow: 1,
+            factor: standardV2MathValue('-1', -1),
+          },
+        }]],
+      }],
+      warnings: [],
+    });
+
+    expect(displayResultReadModelFromOutcome(outcome)).toMatchObject({
+      title: 'Typed profile',
+      primaryLatex: '\\operatorname{profile}(A)',
+      answerRows: { rows: [{ label: 'Rank', latex: '2' }] },
+      detailSections: [{
+        title: 'Rows',
+        lines: ['R_2\\leftarrow R_2-R_1'],
+        lineKind: 'math',
+      }],
+    });
   });
 });

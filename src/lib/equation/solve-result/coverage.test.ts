@@ -9,6 +9,7 @@ import { validateEquationSolveResultContract } from './validation';
 
 function assertCarrier(outcome: CanonicalRuntimeOutcome, label: string) {
   if (outcome.kind === 'prompt') throw new Error(`${label}: unexpected prompt.`);
+  if (outcome.canonicalResult.version !== 1) throw new Error(`${label}: expected V1 producer.`);
   const carrier = buildEquationSolveResultContract({
     document: outcome.canonicalResult,
     ...(outcome.kind === 'error'

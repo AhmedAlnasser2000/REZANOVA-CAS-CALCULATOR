@@ -20,9 +20,13 @@
   - committed_by_agent: codex
   - committed_by_agent_model: gpt-5.6
   - committed_by_agent_family: sol
+- `CANONICAL-RESULT-V2-CONTRACT1`: `8dd5ca29`
+  - committed_by_agent: codex
+  - committed_by_agent_model: gpt-5.6
+  - committed_by_agent_family: sol
 
 ## Planned
 
-- `CANONICAL-RESULT-V2-CONTRACT1`: verified; standing approval covers commit creation.
-- The six gates after Contract1 retain standing approval only within the approved roadmap scope.
+- `CANONICAL-RESULT-V2-CONSUMER-HISTORY1`: verified; standing approval covers commit creation.
+- The five gates after Consumer/History retain standing approval only within the approved roadmap scope.
 - No push is authorized.

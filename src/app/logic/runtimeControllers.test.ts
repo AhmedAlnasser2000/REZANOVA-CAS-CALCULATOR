@@ -303,6 +303,9 @@ describe('runtimeControllers', () => {
     if (outcome.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
+    if (outcome.canonicalResult.version !== 1) {
+      throw new Error('Expected the untouched Calculate producer to remain V1');
+    }
     expect(outcome.canonicalResult.metadata?.variableSubstitutions).toEqual([
       { name: 'c', value: { canonicalLatex: '4' }, numericValue: 4 },
     ]);

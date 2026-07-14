@@ -11,6 +11,10 @@ import {
   surfaceFailure,
   surfaceOk,
 } from './dto';
+import {
+  canonicalRuntimeResultV2Fixture,
+  standardV2MathValue,
+} from '../../test-utils/canonical-result-v2-fixture';
 
 describe('Surface Protocol DTO firewall', () => {
   it('maps a canonical runtime outcome to a compact Surface result summary', () => {
@@ -90,6 +94,33 @@ describe('Surface Protocol DTO firewall', () => {
     expect(serialized).not.toContain('runtimeAdvisories');
     expect(serialized).not.toContain('DisplayBlock');
     expect(serialized).not.toContain('internal route missed');
+  });
+
+  it('maps V2 through the same normalized Surface DTO without leaking typed internals', () => {
+    const outcome = canonicalRuntimeResultV2Fixture({
+      outcomeKind: 'success',
+      title: 'Typed Equation Result',
+      primary: { kind: 'math', value: standardV2MathValue('x=2', ['Equal', 'x', 2]) },
+      supplements: [{
+        role: 'exclusion',
+        presentationLatex: 'x\\ne0',
+        math: standardV2MathValue('x\\ne0', ['NotEqual', 'x', 0]),
+      }],
+      warnings: [],
+      metadata: { answerDomain: 'real', solutionKind: 'exact-symbolic' },
+    });
+
+    const summary = canonicalOutcomeToSurfaceResultSummary('equation', outcome);
+    expect(summary).toMatchObject({
+      status: 'success',
+      title: 'Typed Equation Result',
+      primaryLatex: 'x=2',
+    });
+    expect(summary.facts).toContainEqual(expect.objectContaining({
+      kind: 'condition',
+      latex: 'x\\ne0',
+    }));
+    expect(JSON.stringify(summary)).not.toMatch(/mathJson|presentationLatex|"kind":"exclusion"/u);
   });
 
   it('creates explicit empty and wrapper DTOs', () => {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type {
-  CanonicalResultDocumentV1,
+  CanonicalResultDocument,
   LauncherCategory,
   LauncherLaunchTarget,
   MenuNode,
@@ -10,7 +10,7 @@ import {
   resolveLanguageCode,
 } from '../language';
 import { parseDerivativeVariable } from '../calculus/derivative-target';
-import { validateCanonicalResultDocument } from '../result-contract';
+import { validateCanonicalResultDocumentVersioned } from '../result-contract';
 
 export const modeIdSchema = z.enum([
   'calculate',
@@ -782,13 +782,20 @@ export const historyEntrySchema = z.object({
     scientificNotationStyle: scientificNotationStyleSchema,
     detailedFactsEnabled: z.boolean(),
   }).optional(),
-  resultDocument: z.custom<CanonicalResultDocumentV1>((value) => {
-    const validation = validateCanonicalResultDocument(value);
+  resultDocument: z.custom<CanonicalResultDocument>((value) => {
+    const validation = validateCanonicalResultDocumentVersioned(value);
     return validation.ok && validation.validated.value.outcomeKind === 'success';
-  }, 'Expected a valid success CanonicalResultDocumentV1'),
+  }, 'Expected a valid success CanonicalResultDocumentV1 or CanonicalResultDocumentV2'),
   resultStorageMode: z.literal('canonical-only-fallback').optional(),
   timestamp: z.string(),
 }).passthrough().superRefine((entry, context) => {
+  if (entry.resultDocument.version === 2 && entry.resultStorageMode) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['resultStorageMode'],
+      message: 'Canonical-only History fallback is limited to V1 documents.',
+    });
+  }
   for (const field of [
     'resolvedInputLatex',
     'resultLatex',
@@ -814,7 +821,7 @@ export const historyEntrySchema = z.object({
 export function hasValidHistoryResultDocument(entry: unknown) {
   if (entry === null || typeof entry !== 'object') return false;
   const document = (entry as Record<string, unknown>).resultDocument;
-  const validation = validateCanonicalResultDocument(document);
+  const validation = validateCanonicalResultDocumentVersioned(document);
   return validation.ok && validation.validated.value.outcomeKind === 'success';
 }
 

@@ -239,6 +239,55 @@ test('renders stored canonical History math with current root and power preferen
     .toHaveAttribute('aria-label', String.raw`\sqrt[6]{x}`);
 });
 
+test('loads, renders, and replays a current V2 History result', async ({ page }) => {
+  const entry: HistoryEntry = {
+    id: 'history.v2-visible.1',
+    mode: 'calculate',
+    inputLatex: 'x=2',
+    resultDocument: {
+      version: 2,
+      outcomeKind: 'success',
+      title: 'Typed History Result',
+      primary: {
+        kind: 'math',
+        value: { canonicalLatex: 'x=2', mathJson: ['Equal', 'x', 2] },
+      },
+      request: {
+        kind: 'math',
+        value: { canonicalLatex: 'x=2', mathJson: ['Equal', 'x', 2] },
+      },
+      supplements: [{
+        role: 'exclusion',
+        presentationLatex: 'x\\ne0',
+        math: { canonicalLatex: 'x\\ne0', mathJson: ['NotEqual', 'x', 0] },
+      }],
+      warnings: [],
+    },
+    timestamp: '2026-07-14T00:00:00.000Z',
+  };
+  await page.addInitScript(({ key, historyEntry, settings }) => {
+    window.localStorage.setItem(key, JSON.stringify({
+      version: 1,
+      currentMode: 'calculate',
+      settings,
+      history: [historyEntry],
+      variableMemory: [],
+    }));
+  }, { key: APP_STATE_KEY, historyEntry: entry, settings: DEFAULT_SETTINGS });
+
+  await page.goto('/');
+  await expect(page.getByTestId('main-editor')).toBeVisible();
+  await page.getByTestId('history-toggle').click();
+  await expect(page.getByTestId('history-entry')).toHaveCount(1);
+  await expect(page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]'))
+    .toHaveAttribute('data-raw-latex', 'x=2');
+  await page.getByTestId('history-entry-replay').click();
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-title')).toHaveText('Typed History Result');
+  await expect(page.locator('[data-testid="display-outcome-success"] [data-raw-latex]').first())
+    .toHaveAttribute('data-raw-latex', 'x=2');
+});
+
 test('removes old and malformed rows while preserving future result versions verbatim', async ({ page }) => {
   const legacyEntry = {
     id: 'history.legacy-only.1',
@@ -254,12 +303,12 @@ test('removes old and malformed rows while preserving future result versions ver
     resultDocument: { version: 1, title: 'Missing canonical fields' },
     timestamp: '2026-07-12T00:00:01.000Z',
   };
-  const futureV2 = {
-    id: 'history.future-v2.1',
+  const futureV3 = {
+    id: 'history.future-v3.1',
     mode: 'calculate',
     inputLatex: 'future()',
     resultDocument: {
-      version: 2,
+      version: 3,
       title: 'Future result',
       payload: ['kept', 'verbatim'],
     },
@@ -277,7 +326,7 @@ test('removes old and malformed rows while preserving future result versions ver
     key: APP_STATE_KEY,
     legacy: legacyEntry,
     malformed: malformedV1,
-    future: futureV2,
+    future: futureV3,
     settings: DEFAULT_SETTINGS,
   });
 
@@ -293,7 +342,7 @@ test('removes old and malformed rows while preserving future result versions ver
     const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
     return state.history ?? [];
   }, APP_STATE_KEY);
-  expect(persisted).toEqual([futureV2]);
+  expect(persisted).toEqual([futureV3]);
 
   await page.reload();
   await expect(page.getByTestId('main-editor')).toBeVisible();
@@ -301,5 +350,5 @@ test('removes old and malformed rows while preserving future result versions ver
     const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
     return state.history ?? [];
   }, APP_STATE_KEY);
-  expect(afterReload).toEqual([futureV2]);
+  expect(afterReload).toEqual([futureV3]);
 });

@@ -1,4 +1,8 @@
-import type { CanonicalRuntimeOutcome } from '../types/calculator';
+import type {
+  CanonicalRuntimeActionV1,
+  CanonicalRuntimeOutcome,
+  RuntimeAdvisories,
+} from '../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   createCanonicalRuntimeResult,
@@ -11,7 +15,10 @@ import {
 
 export function canonicalResultFixture<Kind extends 'success' | 'error'>(
   input: CanonicalResultProducerInputV1 & { outcomeKind: Kind },
-  options?: Parameters<typeof createCanonicalRuntimeResult>[1],
+  options?: {
+    actions?: readonly CanonicalRuntimeActionV1[];
+    runtimeAdvisories?: RuntimeAdvisories;
+  },
 ): Extract<CanonicalRuntimeOutcome, { kind: Kind }> {
   return createCanonicalRuntimeResult(
     buildCanonicalResultDocumentFromProducer(input),

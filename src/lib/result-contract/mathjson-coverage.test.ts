@@ -18,6 +18,7 @@ import {
   MATHJSON_COVERAGE_EXEMPTIONS,
   MATHJSON_ROUTE_REGISTRY,
 } from './mathjson-route-registry';
+import { standardV2MathValue } from '../../test-utils/canonical-result-v2-fixture';
 
 const math = (canonicalLatex: string) => ({ canonicalLatex });
 
@@ -57,9 +58,95 @@ function completeDocument(): CanonicalResultDocumentV1 {
   };
 }
 
+function completeV2SemanticInputs(): Array<Parameters<typeof collectCanonicalMathLeaves>[0]> {
+  const value = standardV2MathValue('1', 1);
+  return [
+    {
+      sourceVersion: 2,
+      semantics: {
+        primary: {
+          kind: 'period-phase',
+          presentation: { primaryLatex: '1' },
+          normalizedEquation: value,
+          period: value,
+          phaseShift: value,
+        },
+        request: {
+          kind: 'derivative-at-point',
+          presentationLatex: '1',
+          body: value,
+          appliedVariablePath: [value],
+          point: value,
+        },
+        supplements: [{ role: 'condition', math: value }],
+        details: [{
+          title: 'Rows',
+          lines: [[{
+            kind: 'row-operation',
+            operation: { kind: 'scale', row: 1, factor: value },
+          }]],
+        }],
+        summaries: {
+          solve: [[{
+            kind: 'row-operation',
+            operation: { kind: 'eliminate', targetRow: 2, sourceRow: 1, factor: value },
+          }]],
+        },
+        table: {
+          headers: ['x', 'f(x)', 'g(x)'],
+          rows: [{
+            x: value,
+            primary: { kind: 'value', value },
+            secondary: { kind: 'value', value },
+          }],
+        },
+      },
+    },
+    {
+      sourceVersion: 2,
+      semantics: {
+        primary: {
+          kind: 'linear-map-profile',
+          presentation: { primaryLatex: '1' },
+          operand: value,
+          domainDimension: 1,
+          codomainDimension: 1,
+          rank: 1,
+          nullity: 0,
+        },
+        request: { kind: 'math', value },
+      },
+    },
+    {
+      sourceVersion: 2,
+      semantics: {
+        primary: {
+          kind: 'linear-independence',
+          presentation: { primaryLatex: '1' },
+          operandVectors: [value],
+          independent: true,
+        },
+        request: {
+          kind: 'right-triangle',
+          presentationLatex: '1',
+          angleUnit: 'rad',
+          knownQuantities: [{ kind: 'side', name: 'a', value }],
+        },
+      },
+    },
+    {
+      sourceVersion: 2,
+      semantics: {
+        primary: { kind: 'math', value },
+      },
+    },
+  ];
+}
+
 describe('MathJSON coverage registry', () => {
   it('enumerates every canonical math leaf path exactly once', () => {
-    const paths = collectCanonicalMathLeaves(completeDocument()).map((entry) => entry.leafPath);
+    const paths = [completeDocument(), ...completeV2SemanticInputs()].flatMap((document) =>
+      collectCanonicalMathLeaves(document).map((entry) => entry.leafPath));
     expect([...new Set(paths)].sort()).toEqual([...CANONICAL_MATH_LEAF_PATHS].sort());
   });
 

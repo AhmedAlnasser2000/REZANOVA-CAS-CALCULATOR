@@ -12,7 +12,7 @@ import {
   CANONICAL_RUNTIME_OUTCOME_MAX_DEPTH,
   CANONICAL_RUNTIME_OUTCOME_MAX_NODES,
   validateRuntimeAdvisories,
-} from './runtime-outcome';
+} from './runtime-outcome-common';
 import {
   inspectJsonCompatibleStructuredValue,
   type StructuredValueInspectionFailure,

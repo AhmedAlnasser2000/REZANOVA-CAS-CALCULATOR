@@ -9,6 +9,7 @@ import {
   runEquationModeWithOoePilot,
   type RunEquationModeRequest,
 } from '../../lib/modes/equation';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
 import type {
   AngleUnit,
   ComplexExactForm,
@@ -211,6 +212,9 @@ export function runEquationNumericIntervalRuntimeAction({
           return;
         }
 
+        const payloadResolution = envelope.payload.kind === 'prompt'
+          ? undefined
+          : resolveCanonicalResultForConsumer(envelope.payload);
         deps.commitOutcome(
           envelope.payload,
           committedInput,
@@ -219,7 +223,8 @@ export function runEquationNumericIntervalRuntimeAction({
             equationScreen: request.equationScreen,
             equationSeed: equationReplaySeedFromRequest(request, committedInput),
             ...(envelope.payload.kind === 'success'
-              && envelope.payload.canonicalResult.metadata?.solveBadges?.includes('Numeric Interval')
+              && payloadResolution?.ok
+              && payloadResolution.semantics.metadata?.solveBadges?.includes('Numeric Interval')
               ? { numericInterval: interval }
               : {}),
             ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),

@@ -1,13 +1,16 @@
 import type {
-  CanonicalMathValueV1,
-  CanonicalResultDetailPartV1,
-  CanonicalResultDocumentV1,
+  CanonicalResultDocument,
 } from '../../types/calculator';
 import { goldenCases } from '../__golden__/golden-cases';
 import { runGoldenCase } from '../__golden__/golden-execution';
 import { executeHistoryReplayRequest } from '../history-replay/native-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../history-replay/fixtures';
 import { resolveCanonicalResultForConsumer } from './consumer';
+import type {
+  CanonicalResultSemantics,
+  NormalizedCanonicalResult,
+} from './normalized-result';
+import { normalizeCanonicalResultDocument } from './normalized-result';
 import {
   MATHJSON_COVERAGE_EXEMPTIONS,
   MATHJSON_ROUTE_REGISTRY,
@@ -16,10 +19,12 @@ import {
   type MathJsonRouteId,
 } from './mathjson-route-registry';
 
+type SemanticDetailLines = NonNullable<CanonicalResultSemantics['details']>[number]['lines'];
+
 export type CanonicalMathLeafReference = {
   path: string;
   leafPath: CanonicalMathLeafPath;
-  value: CanonicalMathValueV1;
+  value: { canonicalLatex: string; mathJson?: unknown };
 };
 
 export type MathJsonCoverageRouteSummary = {
@@ -57,7 +62,7 @@ export type MathJsonCoverageReport = {
 
 function add(
   references: CanonicalMathLeafReference[],
-  value: CanonicalMathValueV1 | undefined,
+  value: { canonicalLatex: string; mathJson?: unknown } | undefined,
   path: string,
   leafPath: CanonicalMathLeafPath,
 ) {
@@ -66,40 +71,89 @@ function add(
 
 function addParts(
   references: CanonicalMathLeafReference[],
-  parts: CanonicalResultDetailPartV1[][] | undefined,
+  parts: SemanticDetailLines | undefined,
   path: string,
-  leafPath: CanonicalMathLeafPath,
+  mathLeafPath: CanonicalMathLeafPath,
+  operationLeafPath: CanonicalMathLeafPath,
 ) {
   parts?.forEach((line, lineIndex) => line.forEach((part, partIndex) => {
     if (part.kind === 'math') {
-      add(references, part.math, `${path}[${lineIndex}][${partIndex}].math`, leafPath);
+      add(references, part.math, `${path}[${lineIndex}][${partIndex}].math`, mathLeafPath);
+    } else if (part.kind === 'row-operation' && 'factor' in part.operation) {
+      add(
+        references,
+        part.operation.factor,
+        `${path}[${lineIndex}][${partIndex}].operation.factor`,
+        operationLeafPath,
+      );
     }
   }));
 }
 
 export function collectCanonicalMathLeaves(
-  document: CanonicalResultDocumentV1,
+  input: CanonicalResultDocument | Pick<NormalizedCanonicalResult, 'sourceVersion' | 'semantics'>,
 ): CanonicalMathLeafReference[] {
+  const result = 'semantics' in input ? input : normalizeCanonicalResultDocument(input);
+  const { semantics } = result;
   const references: CanonicalMathLeafReference[] = [];
-  add(references, document.primaryMath, 'primaryMath', 'primaryMath');
-  document.answerRows?.rows.forEach((row, index) => add(
+  const primary = semantics.primary;
+  if (primary?.kind === 'math') {
+    add(
+      references,
+      primary.value,
+      result.sourceVersion === 1 ? 'primaryMath' : 'primary.value',
+      result.sourceVersion === 1 ? 'primaryMath' : 'primary.value',
+    );
+  } else if (primary?.kind === 'period-phase') {
+    add(references, primary.normalizedEquation, 'primary.normalizedEquation', 'primary.normalizedEquation');
+    add(references, primary.period, 'primary.period', 'primary.period');
+    add(references, primary.phaseShift, 'primary.phaseShift', 'primary.phaseShift');
+  } else if (primary?.kind === 'linear-map-profile') {
+    add(references, primary.operand, 'primary.operand', 'primary.operand');
+  } else if (primary?.kind === 'linear-independence') {
+    primary.operandVectors.forEach((value, index) => add(
+      references, value, `primary.operandVectors[${index}]`, 'primary.operandVectors[*]',
+    ));
+  }
+
+  const request = semantics.request;
+  if (request?.kind === 'math') {
+    add(references, request.value, 'request.value', 'request.value');
+  } else if (request?.kind === 'derivative-at-point') {
+    add(references, request.body, 'request.body', 'request.body');
+    request.appliedVariablePath.forEach((value, index) => add(
+      references, value, `request.appliedVariablePath[${index}]`, 'request.appliedVariablePath[*]',
+    ));
+    add(references, request.point, 'request.point', 'request.point');
+  } else if (request?.kind === 'angle-conversion') {
+    add(references, request.value, 'request.value', 'request.value');
+  } else if (request?.kind === 'right-triangle') {
+    request.knownQuantities.forEach((quantity, index) => add(
+      references,
+      quantity.value,
+      `request.knownQuantities[${index}].value`,
+      'request.knownQuantities[*].value',
+    ));
+  }
+
+  semantics.answerRows?.rows.forEach((row, index) => add(
     references, row.math, `answerRows.rows[${index}].math`, 'answerRows.rows[*].math',
   ));
-  add(references, document.branchReadback?.target, 'branchReadback.target', 'branchReadback.target');
-  document.branchReadback?.branches.forEach((value, index) => add(
+  add(references, semantics.branchReadback?.target, 'branchReadback.target', 'branchReadback.target');
+  semantics.branchReadback?.branches.forEach((value, index) => add(
     references, value, `branchReadback.branches[${index}]`, 'branchReadback.branches[*]',
   ));
-  document.systemReadback?.variables.forEach((value, index) => add(
+  semantics.systemReadback?.variables.forEach((value, index) => add(
     references, value, `systemReadback.variables[${index}]`, 'systemReadback.variables[*]',
   ));
-  document.systemReadback?.rows.forEach((row, rowIndex) => row.values.forEach((value, valueIndex) => add(
+  semantics.systemReadback?.rows.forEach((row, rowIndex) => row.values.forEach((value, valueIndex) => add(
     references,
     value,
     `systemReadback.rows[${rowIndex}].values[${valueIndex}]`,
     'systemReadback.rows[*].values[*]',
   )));
 
-  const periodic = document.periodicFamily;
+  const periodic = semantics.periodicFamily;
   add(references, periodic?.carrier, 'periodicFamily.carrier', 'periodicFamily.carrier');
   add(references, periodic?.parameter, 'periodicFamily.parameter', 'periodicFamily.parameter');
   periodic?.parameterConstraints?.forEach((value, index) => add(
@@ -125,22 +179,57 @@ export function collectCanonicalMathLeaves(
   add(references, periodic?.principalRange, 'periodicFamily.principalRange', 'periodicFamily.principalRange');
   add(references, periodic?.reducedCarrier, 'periodicFamily.reducedCarrier', 'periodicFamily.reducedCarrier');
 
-  document.supplements?.forEach((value, index) => add(
-    references, value, `supplements[${index}]`, 'supplements[*]',
+  semantics.supplements?.forEach((value, index) => add(
+    references,
+    value.math,
+    result.sourceVersion === 1 ? `supplements[${index}]` : `supplements[${index}].math`,
+    result.sourceVersion === 1 ? 'supplements[*]' : 'supplements[*].math',
   ));
-  document.details?.forEach((section, sectionIndex) => addParts(
-    references, section.lines, `details[${sectionIndex}].lines`, 'details[*].lines[*][*].math',
+  semantics.details?.forEach((section, sectionIndex) => addParts(
+    references,
+    section.lines,
+    `details[${sectionIndex}].lines`,
+    'details[*].lines[*][*].math',
+    'details[*].lines[*][*].operation.factor',
   ));
-  addParts(references, document.summaries?.solve, 'summaries.solve', 'summaries.solve[*][*].math');
-  add(references, document.summaries?.transform?.math, 'summaries.transform.math', 'summaries.transform.math');
-  add(references, document.metadata?.resolvedInput, 'metadata.resolvedInput', 'metadata.resolvedInput');
-  document.metadata?.variableSubstitutions?.forEach((value, index) => add(
+  addParts(
+    references,
+    semantics.summaries?.solve,
+    'summaries.solve',
+    'summaries.solve[*][*].math',
+    'summaries.solve[*][*].operation.factor',
+  );
+  add(references, semantics.summaries?.transform?.math, 'summaries.transform.math', 'summaries.transform.math');
+  add(references, semantics.metadata?.resolvedInput, 'metadata.resolvedInput', 'metadata.resolvedInput');
+  semantics.metadata?.variableSubstitutions?.forEach((value, index) => add(
     references, value.value, `metadata.variableSubstitutions[${index}].value`, 'metadata.variableSubstitutions[*].value',
   ));
-  document.table?.rows.forEach((row, index) => {
+  semantics.table?.rows.forEach((row, index) => {
     add(references, row.x, `table.rows[${index}].x`, 'table.rows[*].x');
-    add(references, row.primary, `table.rows[${index}].primary`, 'table.rows[*].primary');
-    add(references, row.secondary, `table.rows[${index}].secondary`, 'table.rows[*].secondary');
+    if (row.primary.kind !== 'undefined') {
+      add(
+        references,
+        row.primary.value,
+        result.sourceVersion === 1
+          ? `table.rows[${index}].primary`
+          : `table.rows[${index}].primary.value`,
+        result.sourceVersion === 1
+          ? 'table.rows[*].primary'
+          : 'table.rows[*].primary.value',
+      );
+    }
+    if (row.secondary && row.secondary.kind !== 'undefined') {
+      add(
+        references,
+        row.secondary.value,
+        result.sourceVersion === 1
+          ? `table.rows[${index}].secondary`
+          : `table.rows[${index}].secondary.value`,
+        result.sourceVersion === 1
+          ? 'table.rows[*].secondary'
+          : 'table.rows[*].secondary.value',
+      );
+    }
   });
   return references;
 }
@@ -160,15 +249,15 @@ function emptySummary(): MathJsonCoverageRouteSummary {
 }
 
 function recordDocumentCoverage(input: {
-  document: CanonicalResultDocumentV1;
+  result: NormalizedCanonicalResult;
   evidenceKind: MathJsonCoverageGap['evidenceKind'];
   evidenceId: string;
   routeId: MathJsonRouteId;
   summary: MathJsonCoverageRouteSummary;
   gaps: MathJsonCoverageGap[];
 }) {
-  const leaves = collectCanonicalMathLeaves(input.document);
-  const bytes = new TextEncoder().encode(JSON.stringify(input.document)).byteLength;
+  const leaves = collectCanonicalMathLeaves(input.result);
+  const bytes = new TextEncoder().encode(JSON.stringify(input.result.rawDocument)).byteLength;
   input.summary.evidence += 1;
   if (input.evidenceKind === 'replay-fixture') input.summary.replayFixtures += 1;
   else input.summary.goldenCases += 1;
@@ -222,7 +311,7 @@ export async function buildMathJsonCoverageReport(): Promise<MathJsonCoverageRep
       throw new Error(`MathJSON probe ${fixture.id} did not resolve a native canonical result.`);
     }
     recordDocumentCoverage({
-      document: resolution.document,
+      result: resolution,
       evidenceKind: 'replay-fixture',
       evidenceId: fixture.id,
       routeId,
@@ -247,7 +336,7 @@ export async function buildMathJsonCoverageReport(): Promise<MathJsonCoverageRep
       throw new Error(`Golden MathJSON case ${goldenCase.id} did not resolve a native canonical result.`);
     }
     recordDocumentCoverage({
-      document: resolution.document,
+      result: resolution,
       evidenceKind: 'golden-case',
       evidenceId: goldenCase.id,
       routeId,

@@ -516,14 +516,14 @@ export function useHistoryDisplayRuntime({
     if (
       !resultResolution.ok
       || (
-        !resultResolution.document.primaryMath
-        && !resultResolution.document.approximations?.primary
+        !resultResolution.presentation.primaryLatex
+        && !resultResolution.presentation.approximations?.primary
       )
     ) {
       discardPendingHistoryTicket(context.historyTicketId);
       return;
     }
-    const primaryLatex = resultResolution.document.primaryMath?.canonicalLatex;
+    const primaryLatex = resultResolution.presentation.primaryLatex;
 
     if (primaryLatex && !context.suppressDisplayCommit && isActiveWorkspaceCommit) {
       setAnsLatex(primaryLatex);

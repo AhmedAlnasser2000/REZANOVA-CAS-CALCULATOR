@@ -4,9 +4,13 @@ import { canonicalMathValue } from './producer';
 import { buildCanonicalResultDocumentFromProducer } from './producer';
 import {
   CANONICAL_RUNTIME_OUTCOME_MAX_ACTIONS,
+  createCanonicalRuntimeResult,
   requireCanonicalRuntimeOutcome,
+  retitleCanonicalRuntimeOutcome,
   validateCanonicalRuntimeOutcome,
 } from './runtime-outcome';
+import { buildCanonicalResultDocumentV2 } from './producer-v2';
+import { standardV2MathValue } from '../../test-utils/canonical-result-v2-fixture';
 
 function successOutcome(): CanonicalRuntimeOutcome {
   return {
@@ -55,6 +59,44 @@ describe('canonical runtime outcome contract', () => {
       targetMode: 'equation',
       carryLatex: 'x=1',
       warnings: [],
+    });
+  });
+
+  it('accepts live V2 runtime results and preserves their version through retitling', () => {
+    const one = standardV2MathValue('1', 1);
+    const document = buildCanonicalResultDocumentV2({
+      outcomeKind: 'success',
+      title: 'Typed result',
+      primary: { kind: 'math', value: one },
+      warnings: [],
+    });
+    const outcome = createCanonicalRuntimeResult(document, {
+      actions: [{ version: 2, kind: 'send', target: 'equation', math: one }],
+    });
+
+    expect(requireCanonicalRuntimeOutcome(structuredClone(outcome))).toEqual(outcome);
+    expect(retitleCanonicalRuntimeOutcome(outcome, 'Retitled')).toMatchObject({
+      kind: 'success',
+      canonicalResult: { version: 2, title: 'Retitled' },
+      actions: [{ version: 2, math: { canonicalLatex: '1', mathJson: 1 } }],
+    });
+  });
+
+  it('rejects action/document version mismatches through the live validator', () => {
+    const one = standardV2MathValue('1', 1);
+    const document = buildCanonicalResultDocumentV2({
+      outcomeKind: 'success',
+      title: 'Typed result',
+      primary: { kind: 'math', value: one },
+      warnings: [],
+    });
+    expect(validateCanonicalRuntimeOutcome({
+      kind: 'success',
+      canonicalResult: document,
+      actions: [{ kind: 'send', target: 'equation', math: one }],
+    })).toMatchObject({
+      ok: false,
+      failure: { reason: 'action-version-mismatch', path: '$.actions[0].version' },
     });
   });
 

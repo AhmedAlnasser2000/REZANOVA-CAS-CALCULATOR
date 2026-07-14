@@ -19,9 +19,10 @@ function expectBoundaryParity(direct: ResultProducerDraft, wrapped: CanonicalRun
   expect(directDocument.ok).toBe(true);
   expect(wrappedDocument.ok).toBe(true);
   if (!directDocument.ok || !wrappedDocument.ok) return;
-  expect(wrappedDocument.document).toEqual(directDocument.document);
+  expect(wrappedDocument.presentation).toEqual(directDocument.presentation);
+  expect(wrappedDocument.semantics).toEqual(directDocument.semantics);
   expect(wrapped.kind === 'prompt' ? undefined : wrapped.canonicalResult).toEqual(
-    directDocument.document,
+    directDocument.rawDocument,
   );
   expect(wrapped.runtimeAdvisories).toEqual(finalizedDirect.runtimeAdvisories);
 }

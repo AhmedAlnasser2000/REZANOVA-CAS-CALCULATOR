@@ -1,11 +1,14 @@
 import type {
   AnswerDomain,
   CanonicalRuntimeOutcome,
-  CanonicalResultDetailPartV1,
-  CanonicalResultDocumentV1,
   SolutionKind,
 } from '../../types/calculator';
-import { resolveCanonicalResultForConsumer } from '../result-contract/consumer';
+import {
+  resolveCanonicalResultForConsumer,
+  type CanonicalResultPresentation,
+  type CanonicalResultPresentationDetailPart,
+  type CanonicalResultSemantics,
+} from '../result-contract/consumer';
 
 export const SURFACE_PROTOCOL_VERSION = 1 as const;
 
@@ -160,23 +163,27 @@ function solutionKindToResultKind(
   }
 }
 
-function primaryLatexFor(document: CanonicalResultDocumentV1): string | undefined {
-  return document.primaryMath?.canonicalLatex.trim()
-    || document.branchReadback?.branches.map((branch) => branch.canonicalLatex).join(', ');
+function primaryLatexFor(presentation: CanonicalResultPresentation): string | undefined {
+  return presentation.primaryLatex?.trim()
+    || presentation.branchReadback?.branchesLatex.join(', ');
 }
 
-function countDtosFor(document: CanonicalResultDocumentV1, facts: readonly SurfaceFactDto[]) {
+function countDtosFor(
+  presentation: CanonicalResultPresentation,
+  semantics: CanonicalResultSemantics,
+  facts: readonly SurfaceFactDto[],
+) {
   const counts: SurfaceCountDto[] = [];
-  const branchCount = document.branchReadback?.branches.length ?? 0;
+  const branchCount = presentation.branchReadback?.branchesLatex.length ?? 0;
   if (branchCount > 0) {
-    const kind = document.branchReadback?.countLabel ?? 'branches';
+    const kind = presentation.branchReadback?.countLabel ?? 'branches';
     counts.push({
       kind,
       count: branchCount,
       label: kind === 'candidateRoots' ? 'Candidate roots' : kind === 'roots' ? 'Roots' : 'Branches',
     });
   }
-  const rejectedCandidateCount = document.metadata?.rejectedCandidateCount;
+  const rejectedCandidateCount = semantics.metadata?.rejectedCandidateCount;
   if (typeof rejectedCandidateCount === 'number' && rejectedCandidateCount > 0) {
     counts.push({
       kind: 'rejectedCandidates',
@@ -184,10 +191,10 @@ function countDtosFor(document: CanonicalResultDocumentV1, facts: readonly Surfa
       label: 'Rejected candidates',
     });
   }
-  if (document.warnings.length > 0) {
+  if (presentation.warnings.length > 0) {
     counts.push({
       kind: 'warnings',
-      count: document.warnings.length,
+      count: presentation.warnings.length,
       label: 'Warnings',
     });
   }
@@ -201,9 +208,9 @@ function countDtosFor(document: CanonicalResultDocumentV1, facts: readonly Surfa
   return counts;
 }
 
-function detailPartsText(lines: CanonicalResultDetailPartV1[][] | undefined) {
+function detailPartsText(lines: CanonicalResultPresentationDetailPart[][] | undefined) {
   return lines?.map((line) => line.map((part) =>
-    part.kind === 'math' ? part.math.canonicalLatex : part.text).join('')).join('; ');
+    part.kind === 'math' ? part.latex : part.text).join('')).join('; ');
 }
 
 export function emptySurfaceResultSummary(
@@ -245,32 +252,32 @@ export function canonicalOutcomeToSurfaceResultSummary(
   if (!resolution.ok) {
     throw new Error(`Surface result canonical resolution failed: ${resolution.failure.message}`);
   }
-  const document = resolution.document;
-  const metadata = document.metadata;
-  const status: SurfaceResultStatus = document.outcomeKind;
+  const { presentation, semantics } = resolution;
+  const metadata = semantics.metadata;
+  const status: SurfaceResultStatus = presentation.outcomeKind;
   const facts: SurfaceFactDto[] = [
-    ...latexFacts('Valid when', document.supplements?.map((value) => value.canonicalLatex)),
-    ...textFact('summary', 'Solve summary', detailPartsText(document.summaries?.solve)),
-    ...textFact('summary', 'Transform summary', document.summaries?.transform?.text),
+    ...latexFacts('Valid when', presentation.supplements),
+    ...textFact('summary', 'Solve summary', detailPartsText(presentation.summaries?.solve)),
+    ...textFact('summary', 'Transform summary', presentation.summaries?.transform?.text),
     ...textFact('method', 'Numeric method', metadata?.numericMethod),
     ...textFact('domain', 'Answer domain', metadata?.answerDomain),
   ];
-  const warnings = document.warnings.map((warning) => ({ text: warning }));
-  const primaryLatex = primaryLatexFor(document);
+  const warnings = presentation.warnings.map((warning) => ({ text: warning }));
+  const primaryLatex = primaryLatexFor(presentation);
   return {
     protocolVersion: SURFACE_PROTOCOL_VERSION,
     workspaceKind,
     status,
-    title: document.title,
+    title: presentation.title,
     resultKind: solutionKindToResultKind(status, metadata?.solutionKind),
     ...(primaryLatex ? { primaryLatex } : {}),
-    ...(document.approximations?.primary
-      ? { approximateText: document.approximations.primary }
+    ...(presentation.approximations?.primary
+      ? { approximateText: presentation.approximations.primary }
       : {}),
     ...(metadata?.answerDomain ? { answerDomain: metadata.answerDomain } : {}),
     ...(metadata?.solutionKind ? { solutionKind: metadata.solutionKind } : {}),
     facts,
     warnings,
-    counts: countDtosFor(document, facts),
+    counts: countDtosFor(presentation, semantics, facts),
   };
 }

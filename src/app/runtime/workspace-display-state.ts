@@ -57,7 +57,7 @@ export function applyWorkspaceDisplayOutcome(
       `Workspace display state requires canonical result authority: ${resolution.failure.reason}.`,
     );
   }
-  const primaryLatex = resolution.document.primaryMath?.canonicalLatex;
+  const primaryLatex = resolution.presentation.primaryLatex;
   return {
     ...current,
     displayOutcome: outcome,

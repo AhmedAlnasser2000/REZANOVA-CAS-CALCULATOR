@@ -17,6 +17,10 @@ import {
   persistVariableMemory,
 } from './tauri';
 import { historyResultDocument } from '../../test-utils/history-result-document';
+import {
+  canonicalResultDocumentV2Fixture,
+  standardV2MathValue,
+} from '../../test-utils/canonical-result-v2-fixture';
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -45,6 +49,22 @@ function createHistoryEntry(id: string): HistoryEntry {
     inputLatex: `${id}+1`,
     resultDocument: historyResultDocument(`${id}+1`),
     timestamp: `2026-05-25T00:00:${id.padStart(2, '0')}Z`,
+  };
+}
+
+function createV2HistoryEntry(id: string): HistoryEntry {
+  return {
+    id,
+    mode: 'calculate',
+    inputLatex: `${id}+1`,
+    resultDocument: canonicalResultDocumentV2Fixture({
+      outcomeKind: 'success',
+      title: 'V2 result',
+      primary: { kind: 'math', value: standardV2MathValue('2', 2) },
+      request: { kind: 'math', value: standardV2MathValue('1+1', ['Add', 1, 1]) },
+      warnings: [],
+    }),
+    timestamp: '2026-07-14T00:00:00.000Z',
   };
 }
 
@@ -261,6 +281,19 @@ describe('web-preview app-state persistence', () => {
     expect((await loadCalculatorMemorySnapshot())?.history).toEqual([entry]);
   });
 
+  it('round-trips V2 as a current visible History version alongside byte-preserved V1 rows', async () => {
+    const v1 = createRichHistoryEntry();
+    const v2 = createV2HistoryEntry('history.v2.1');
+    expect(await appendHistoryEntry(v1)).toEqual({ ok: true });
+    expect(await appendHistoryEntry(v2)).toEqual({ ok: true });
+
+    expect(await loadHistoryEntries()).toEqual([v1, v2]);
+    const stored = JSON.parse(
+      storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}',
+    ) as { history: unknown[] };
+    expect(stored.history).toEqual([v1, v2]);
+  });
+
   it('reports invalid, oversized, and unavailable History persistence without discarding session ownership', async () => {
     expect(await appendHistoryEntry({
       id: 'invalid',
@@ -275,6 +308,7 @@ describe('web-preview app-state persistence', () => {
 
     const fallback = createHistoryEntry('fallback');
     fallback.inputLatex = 'x'.repeat(1_760_000);
+    if (fallback.resultDocument.version !== 1) throw new Error('Expected V1 fixture');
     fallback.resultDocument.primaryMath = {
       canonicalLatex: '1',
       mathJson: 'x'.repeat(300_000),
@@ -287,11 +321,18 @@ describe('web-preview app-state persistence', () => {
       resultStorageMode: 'canonical-only-fallback',
       resultDocument: { primaryMath: { canonicalLatex: '1' } },
     });
-    expect((await loadHistoryEntries()).at(-1)?.resultDocument.primaryMath)
-      .not.toHaveProperty('mathJson');
+    const loadedFallback = (await loadHistoryEntries()).at(-1)?.resultDocument;
+    expect(loadedFallback?.version).toBe(1);
+    if (loadedFallback?.version !== 1) throw new Error('Expected V1 fallback');
+    expect(loadedFallback.primaryMath).not.toHaveProperty('mathJson');
 
     expect(await appendHistoryEntry({
       ...createHistoryEntry('oversized'),
+      inputLatex: 'x'.repeat(HISTORY_ENTRY_MAX_SERIALIZED_BYTES),
+    })).toEqual({ ok: false, reason: 'over-size' });
+
+    expect(await appendHistoryEntry({
+      ...createV2HistoryEntry('oversized-v2'),
       inputLatex: 'x'.repeat(HISTORY_ENTRY_MAX_SERIALIZED_BYTES),
     })).toEqual({ ok: false, reason: 'over-size' });
 
@@ -363,12 +404,12 @@ describe('web-preview app-state persistence', () => {
     });
   });
 
-  it('removes legacy rows once while preserving future versions verbatim and outside retention', async () => {
+  it('removes legacy rows once while preserving versions above V2 verbatim and outside retention', async () => {
     const future = {
-      id: 'future-result-v2',
+      id: 'future-result-v3',
       mode: 'calculate',
       inputLatex: 'future()',
-      resultDocument: { version: 2, title: 'Future result', payload: ['kept', 'verbatim'] },
+      resultDocument: { version: 3, title: 'Future result', payload: ['kept', 'verbatim'] },
       timestamp: '2026-07-12T00:00:00.000Z',
     };
     storage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({
@@ -377,7 +418,9 @@ describe('web-preview app-state persistence', () => {
       history: [
         future,
         { id: 'legacy', mode: 'calculate', inputLatex: '2+2', resultLatex: '4', timestamp: '2026-07-10T00:00:00.000Z' },
-        ...Array.from({ length: 82 }, (_, index) => createHistoryEntry(String(index))),
+        ...Array.from({ length: 41 }, (_, index) => createHistoryEntry(String(index))),
+        createV2HistoryEntry('mixed-v2'),
+        ...Array.from({ length: 41 }, (_, index) => createHistoryEntry(String(index + 41))),
       ],
       variableMemory: [],
       calculatorMemory: null,
@@ -386,7 +429,8 @@ describe('web-preview app-state persistence', () => {
     const loaded = await loadHistoryEntriesWithCleanup();
     expect(loaded.removedCount).toBe(1);
     expect(loaded.entries).toHaveLength(80);
-    expect(loaded.entries[0]?.id).toBe('2');
+    expect(loaded.entries[0]?.id).toBe('3');
+    expect(loaded.entries.some((entry) => entry.id === 'mixed-v2')).toBe(true);
 
     const stored = JSON.parse(storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}') as {
       history: unknown[];

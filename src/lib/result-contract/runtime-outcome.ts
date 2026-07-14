@@ -1,29 +1,41 @@
 import type {
   CanonicalMathValueV1,
+  CanonicalResultDocument,
   CanonicalResultDocumentV1,
   CanonicalRuntimeActionV1,
+  CanonicalRuntimeActionV2,
   CanonicalRuntimeOutcome,
+  CanonicalRuntimeResultOutcome,
+  CanonicalRuntimeResultOutcomeV2,
   PromptOutcome,
   ResultProducerActionDraft,
   ResultProducerDraft,
   RuntimeAdvisories,
 } from '../../types/calculator';
 import {
-  CANONICAL_RESULT_MAX_BYTES,
-  CANONICAL_RESULT_MAX_DEPTH,
-  CANONICAL_RESULT_MAX_NODES,
   validateCanonicalResultDocument,
   type CanonicalResultValidationFailure,
 } from './validation';
 import {
+  CANONICAL_RUNTIME_OUTCOME_MAX_ACTIONS,
+  CANONICAL_RUNTIME_OUTCOME_MAX_BYTES,
+  CANONICAL_RUNTIME_OUTCOME_MAX_DEPTH,
+  CANONICAL_RUNTIME_OUTCOME_MAX_NODES,
+  validateRuntimeAdvisories,
+} from './runtime-outcome-common';
+import {
   inspectJsonCompatibleStructuredValue,
   type StructuredValueInspectionFailure,
 } from './structured-value';
+import { validateCanonicalRuntimeVersionedResultOutcome } from './runtime-outcome-versioned';
 
-export const CANONICAL_RUNTIME_OUTCOME_MAX_ACTIONS = 64;
-export const CANONICAL_RUNTIME_OUTCOME_MAX_NODES = CANONICAL_RESULT_MAX_NODES + 1_024;
-export const CANONICAL_RUNTIME_OUTCOME_MAX_DEPTH = CANONICAL_RESULT_MAX_DEPTH + 1;
-export const CANONICAL_RUNTIME_OUTCOME_MAX_BYTES = CANONICAL_RESULT_MAX_BYTES + 64_000;
+export {
+  CANONICAL_RUNTIME_OUTCOME_MAX_ACTIONS,
+  CANONICAL_RUNTIME_OUTCOME_MAX_BYTES,
+  CANONICAL_RUNTIME_OUTCOME_MAX_DEPTH,
+  CANONICAL_RUNTIME_OUTCOME_MAX_NODES,
+  validateRuntimeAdvisories,
+} from './runtime-outcome-common';
 
 const MODE_IDS = new Set([
   'calculate',
@@ -42,7 +54,12 @@ const TRANSFER_TARGETS = new Set(['calculate', 'equation']);
 const CORE_DRAFT_MODES = new Set(['geometry', 'trigonometry', 'statistics']);
 
 export type CanonicalRuntimeOutcomeValidationFailure = {
-  reason: 'invalid-outcome' | 'invalid-document' | 'invalid-action' | 'invalid-advisories'
+  reason:
+    | 'invalid-outcome'
+    | 'invalid-document'
+    | 'invalid-action'
+    | 'action-version-mismatch'
+    | 'invalid-advisories'
     | StructuredValueInspectionFailure['reason'];
   message: string;
   path?: string;
@@ -83,41 +100,6 @@ function fail(
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
-}
-
-export function validateRuntimeAdvisories(value: unknown): value is RuntimeAdvisories {
-  if (!isRecord(value) || !hasOnlyKeys(value, ['stopReason', 'equationNumericSolve'])) {
-    return false;
-  }
-  if (value.stopReason !== undefined) {
-    if (
-      !isRecord(value.stopReason)
-      || !hasOnlyKeys(value.stopReason, ['kind', 'source'])
-      || !['invalid-request', 'planner-hard-stop', 'range-guard', 'unsupported-family']
-        .includes(String(value.stopReason.kind))
-      || !['planner', 'host', 'stage'].includes(String(value.stopReason.source))
-    ) {
-      return false;
-    }
-  }
-  if (value.equationNumericSolve !== undefined) {
-    const advisory = value.equationNumericSolve;
-    if (!isRecord(advisory) || typeof advisory.kind !== 'string') return false;
-    if (advisory.kind === 'blocked') {
-      if (
-        !hasOnlyKeys(advisory, ['kind', 'reason'])
-        || !['range-guard', 'invalid-request'].includes(String(advisory.reason))
-      ) {
-        return false;
-      }
-    } else if (
-      !['manual-only', 'suggest-on-error'].includes(advisory.kind)
-      || !hasOnlyKeys(advisory, ['kind'])
-    ) {
-      return false;
-    }
-  }
-  return true;
 }
 
 function validateActionMath(
@@ -248,6 +230,38 @@ export function validateCanonicalRuntimeOutcome(
     return fail('invalid-outcome', 'Result outcomes contain only canonical result authority and transient runtime fields.', '$');
   }
 
+  if (
+    isRecord(value.canonicalResult)
+    && value.canonicalResult.version !== 1
+  ) {
+    const versioned = validateCanonicalRuntimeVersionedResultOutcome(value);
+    if (!versioned.ok) {
+      return {
+        ok: false,
+        failure: {
+          reason: versioned.failure.reason === 'invalid-document'
+            ? 'invalid-document'
+            : versioned.failure.reason === 'invalid-advisories'
+              ? 'invalid-advisories'
+              : versioned.failure.reason === 'action-version-mismatch'
+                ? 'action-version-mismatch'
+                : versioned.failure.reason === 'invalid-action'
+                  ? 'invalid-action'
+                : 'invalid-outcome',
+          message: versioned.failure.message,
+          ...(versioned.failure.path ? { path: versioned.failure.path } : {}),
+          ...(versioned.failure.documentFailure
+            ? { documentFailure: versioned.failure.documentFailure }
+            : {}),
+        },
+      };
+    }
+    return {
+      ok: true,
+      validated: versioned.validated,
+    };
+  }
+
   const document = validateCanonicalResultDocument(value.canonicalResult);
   if (!document.ok) {
     return {
@@ -300,7 +314,7 @@ export function validateCanonicalRuntimeOutcome(
         ...(value.runtimeAdvisories
           ? { runtimeAdvisories: value.runtimeAdvisories as RuntimeAdvisories }
           : {}),
-      },
+      } as CanonicalRuntimeResultOutcome,
       nodeCount: inspection.nodeCount,
       depth: inspection.depth,
       byteLength: inspection.byteLength,
@@ -345,8 +359,22 @@ export function createCanonicalRuntimeError(
 
 export function createCanonicalRuntimeResult(
   canonicalResult: CanonicalResultDocumentV1,
-  options: {
+  options?: {
     actions?: readonly CanonicalRuntimeActionV1[];
+    runtimeAdvisories?: RuntimeAdvisories;
+  },
+): CanonicalRuntimeResultOutcome;
+export function createCanonicalRuntimeResult(
+  canonicalResult: Extract<CanonicalResultDocument, { version: 2 }>,
+  options?: {
+    actions?: readonly CanonicalRuntimeActionV2[];
+    runtimeAdvisories?: RuntimeAdvisories;
+  },
+): CanonicalRuntimeResultOutcomeV2;
+export function createCanonicalRuntimeResult(
+  canonicalResult: CanonicalResultDocument,
+  options: {
+    actions?: readonly (CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2)[];
     runtimeAdvisories?: RuntimeAdvisories;
   } = {},
 ): Exclude<CanonicalRuntimeOutcome, PromptOutcome> {

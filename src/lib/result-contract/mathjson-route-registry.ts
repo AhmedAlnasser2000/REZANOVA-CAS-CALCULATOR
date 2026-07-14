@@ -2,6 +2,17 @@ import type { HistoryReplayWorkspace } from '../history-replay/fixture-contract'
 
 export const CANONICAL_MATH_LEAF_PATHS = [
   'primaryMath',
+  'primary.value',
+  'primary.normalizedEquation',
+  'primary.period',
+  'primary.phaseShift',
+  'primary.operand',
+  'primary.operandVectors[*]',
+  'request.value',
+  'request.body',
+  'request.appliedVariablePath[*]',
+  'request.point',
+  'request.knownQuantities[*].value',
   'answerRows.rows[*].math',
   'branchReadback.target',
   'branchReadback.branches[*]',
@@ -20,14 +31,19 @@ export const CANONICAL_MATH_LEAF_PATHS = [
   'periodicFamily.principalRange',
   'periodicFamily.reducedCarrier',
   'supplements[*]',
+  'supplements[*].math',
   'details[*].lines[*][*].math',
+  'details[*].lines[*][*].operation.factor',
   'summaries.solve[*][*].math',
+  'summaries.solve[*][*].operation.factor',
   'summaries.transform.math',
   'metadata.resolvedInput',
   'metadata.variableSubstitutions[*].value',
   'table.rows[*].x',
   'table.rows[*].primary',
+  'table.rows[*].primary.value',
   'table.rows[*].secondary',
+  'table.rows[*].secondary.value',
 ] as const;
 
 export type CanonicalMathLeafPath = typeof CANONICAL_MATH_LEAF_PATHS[number];

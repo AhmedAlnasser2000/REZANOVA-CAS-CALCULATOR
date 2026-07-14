@@ -5,6 +5,10 @@ import {
   canonicalMathValue,
 } from '../../lib/result-contract';
 import { copyDisplayResultWithDeps } from './displayClipboard';
+import {
+  canonicalRuntimeResultV2Fixture,
+  standardV2MathValue,
+} from '../../test-utils/canonical-result-v2-fixture';
 
 describe('Display canonical clipboard routing', () => {
   it('keeps visible text beside a proven canonical payload', async () => {
@@ -161,6 +165,52 @@ describe('Display canonical clipboard routing', () => {
     expect(write).toHaveBeenCalledWith(expect.objectContaining({
       canonicalLatex: 'x=1',
       mathJson: ['Equal', 'x', 1],
+    }));
+  });
+
+  it('copies V2 math proof but keeps compound presentation free of reconstructed MathJSON', async () => {
+    const write = vi.fn().mockResolvedValue({ ok: true, host: 'browser', fidelity: 'custom-mime' });
+    const setClipboardNotice = vi.fn();
+    await copyDisplayResultWithDeps({
+      displayOutcome: canonicalRuntimeResultV2Fixture({
+        outcomeKind: 'success',
+        title: 'Typed math',
+        primary: { kind: 'math', value: standardV2MathValue('2', 2) },
+        warnings: [],
+      }),
+      visibleText: '2',
+      currentMode: 'calculate',
+      setClipboardNotice,
+      write,
+    });
+    expect(write).toHaveBeenLastCalledWith(expect.objectContaining({
+      canonicalLatex: '2',
+      mathJson: 2,
+    }));
+
+    await copyDisplayResultWithDeps({
+      displayOutcome: canonicalRuntimeResultV2Fixture({
+        outcomeKind: 'success',
+        title: 'Typed profile',
+        primary: {
+          kind: 'linear-map-profile',
+          presentation: { primaryLatex: '\\operatorname{profile}(A)' },
+          operand: standardV2MathValue('A', 'A'),
+          domainDimension: 2,
+          codomainDimension: 2,
+          rank: 2,
+          nullity: 0,
+        },
+        warnings: [],
+      }),
+      visibleText: 'profile(A)',
+      currentMode: 'matrix',
+      setClipboardNotice,
+      write,
+    });
+    expect(write).toHaveBeenLastCalledWith(expect.objectContaining({
+      canonicalLatex: '\\operatorname{profile}(A)',
+      mathJson: undefined,
     }));
   });
 });

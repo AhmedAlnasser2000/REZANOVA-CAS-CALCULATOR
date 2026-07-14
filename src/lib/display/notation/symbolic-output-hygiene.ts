@@ -1,9 +1,8 @@
-import type {
-  CanonicalResultDocumentV1,
-  CanonicalResultPeriodicFamilyV1,
-  CanonicalRuntimeOutcome,
-} from '../../../types/calculator';
-import { resolveCanonicalResultForConsumer } from '../../result-contract';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import {
+  resolveCanonicalResultForConsumer,
+  type CanonicalResultPresentation,
+} from '../../result-contract';
 
 export const INTERNAL_SYMBOLIC_ERROR_LATEX =
   '\\text{Unsupported symbolic fragment. Re-run to refresh.}';
@@ -15,52 +14,50 @@ export function hasInternalSymbolicErrorLatex(latex: string | null | undefined) 
   return typeof latex === 'string' && INTERNAL_SYMBOLIC_ERROR_PATTERN.test(latex);
 }
 
-function periodicFamilyLatexFragments(family: CanonicalResultPeriodicFamilyV1 | undefined) {
-  if (!family) {
-    return [];
-  }
-
+function periodicFamilyLatexFragments(
+  family: CanonicalResultPresentation['periodicFamily'],
+) {
+  if (!family) return [];
   return [
-    family.carrier.canonicalLatex,
-    family.parameter.canonicalLatex,
-    ...(family.parameterConstraints?.map((value) => value.canonicalLatex) ?? []),
-    ...family.branches.map((value) => value.canonicalLatex),
-    ...(family.discoveredFamilies?.map((value) => value.canonicalLatex) ?? []),
+    family.carrierLatex,
+    family.parameterLatex,
+    ...(family.parameterConstraintLatex ?? []),
+    ...family.branchesLatex,
+    ...(family.discoveredFamilies ?? []),
     ...(family.representatives?.flatMap((entry) => [
-      entry.exact?.canonicalLatex,
+      entry.exactLatex,
       entry.approxText,
     ]) ?? []),
     ...(family.piecewiseBranches?.flatMap((entry) => [
-      entry.condition.canonicalLatex,
-      entry.result.canonicalLatex,
+      entry.conditionLatex,
+      entry.resultLatex,
     ]) ?? []),
-    family.principalRange?.canonicalLatex,
-    family.reducedCarrier?.canonicalLatex,
+    family.principalRangeLatex,
+    family.reducedCarrierLatex,
   ];
 }
 
-function detailFragments(document: CanonicalResultDocumentV1) {
-  return document.details?.flatMap((section) =>
+function detailFragments(presentation: CanonicalResultPresentation) {
+  return presentation.details?.flatMap((section) =>
     section.lines.map((line) => line.map((part) =>
-      part.kind === 'math' ? part.math.canonicalLatex : part.text).join(''))) ?? [];
+      part.kind === 'math' ? part.latex : part.text).join(''))) ?? [];
 }
 
-export function collectUnsafeSymbolicOutputFragments(outcome: CanonicalRuntimeOutcome | null | undefined) {
-  if (!outcome || outcome.kind === 'prompt') {
-    return [];
-  }
+export function collectUnsafeSymbolicOutputFragments(
+  outcome: CanonicalRuntimeOutcome | null | undefined,
+) {
+  if (!outcome || outcome.kind === 'prompt') return [];
 
   const resolution = resolveCanonicalResultForConsumer(outcome);
   if (!resolution.ok) return [INTERNAL_SYMBOLIC_ERROR_LATEX];
-  const document = resolution.document;
+  const presentation = resolution.presentation;
   const fragments = [
-    document.primaryMath?.canonicalLatex,
-    ...(document.supplements?.map((value) => value.canonicalLatex) ?? []),
-    ...detailFragments(document),
-    document.summaries?.transform?.math?.canonicalLatex,
-    ...periodicFamilyLatexFragments(document.periodicFamily),
+    presentation.primaryLatex,
+    ...(presentation.supplements ?? []),
+    ...detailFragments(presentation),
+    presentation.summaries?.transform?.mathLatex,
+    ...periodicFamilyLatexFragments(presentation.periodicFamily),
   ];
-
   return fragments.filter(hasInternalSymbolicErrorLatex);
 }
 

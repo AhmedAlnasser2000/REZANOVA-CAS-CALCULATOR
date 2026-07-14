@@ -1,6 +1,5 @@
 import { createId } from '../logic/appUtils';
 import type {
-  CanonicalResultDocumentV1,
   CanonicalRuntimeOutcome,
   AnswerDomain,
   GeometryScreen,
@@ -14,7 +13,7 @@ import type {
 } from '../../types/calculator';
 import {
   resolveCanonicalResultForConsumer,
-  validateCanonicalResultDocument,
+  type CanonicalResultPresentation,
 } from '../../lib/result-contract';
 
 type SuccessfulCanonicalOutcome = Extract<CanonicalRuntimeOutcome, { kind: 'success' }>;
@@ -65,8 +64,8 @@ export type BuildHistoryDisplayEntryOptions = {
 
 export type HistoryResultReadModel = {
   source: 'structured';
+  sourceVersion: 1 | 2;
   outcome: SuccessfulCanonicalOutcome;
-  document: CanonicalResultDocumentV1;
   title: string;
   primaryLatex?: string;
   resolvedInputLatex?: string;
@@ -79,50 +78,61 @@ export type HistoryResultReadModel = {
   tableResponse?: TableResponse;
 };
 
-function canonicalDetailSearchText(document: CanonicalResultDocumentV1) {
-  return document.details?.flatMap((section) => [
+function canonicalDetailSearchText(
+  details: CanonicalResultPresentation['details'],
+) {
+  return details?.flatMap((section) => [
     section.title,
     ...section.lines.map((line) => line.map((part) =>
-      part.kind === 'math' ? part.math.canonicalLatex : part.text).join('')),
+      part.kind === 'math' ? part.latex : part.text).join('')),
   ]) ?? [];
 }
 
-function canonicalTableResponse(document: CanonicalResultDocumentV1): TableResponse | undefined {
-  if (!document.table) return undefined;
+function canonicalTableResponse(
+  presentation: {
+    outcomeKind: 'success' | 'error';
+    error?: string;
+    warnings: string[];
+    table?: { headers: string[]; rows: Array<{ x: string; primary: string; secondary?: string }> };
+  },
+): TableResponse | undefined {
+  if (!presentation.table) return undefined;
   return {
-    headers: [...document.table.headers],
-    rows: document.table.rows.map((row) => ({
-      x: row.x.canonicalLatex,
-      primary: row.primary.canonicalLatex,
-      ...(row.secondary ? { secondary: row.secondary.canonicalLatex } : {}),
+    headers: [...presentation.table.headers],
+    rows: presentation.table.rows.map((row) => ({
+      x: row.x,
+      primary: row.primary,
+      ...(row.secondary ? { secondary: row.secondary } : {}),
     })),
-    warnings: [...document.warnings],
-    ...(document.outcomeKind === 'error' && document.error ? { error: document.error } : {}),
+    warnings: [...presentation.warnings],
+    ...(presentation.outcomeKind === 'error' && presentation.error
+      ? { error: presentation.error }
+      : {}),
   };
 }
 
 export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
-  const validation = validateCanonicalResultDocument(entry.resultDocument);
-  if (validation.ok && validation.validated.value.outcomeKind === 'success') {
-    const document = validation.validated.value;
-    const outcome: SuccessfulCanonicalOutcome = {
-      kind: 'success',
-      canonicalResult: document,
-    };
+  const outcome = {
+    kind: 'success',
+    canonicalResult: entry.resultDocument,
+  } as SuccessfulCanonicalOutcome;
+  const resolution = resolveCanonicalResultForConsumer(outcome);
+  if (resolution.ok && resolution.presentation.outcomeKind === 'success') {
+    const { presentation, semantics } = resolution;
     return {
       source: 'structured',
+      sourceVersion: resolution.sourceVersion,
       outcome,
-      document,
-      title: document.title,
-      primaryLatex: document.primaryMath?.canonicalLatex,
-      resolvedInputLatex: document.metadata?.resolvedInput?.canonicalLatex,
-      approxText: document.approximations?.primary,
-      answerDomain: document.metadata?.answerDomain,
-      solutionKind: document.metadata?.solutionKind,
-      supplementLatex: document.supplements?.map((value) => value.canonicalLatex) ?? [],
-      detailSearchText: canonicalDetailSearchText(document),
-      warnings: [...document.warnings],
-      tableResponse: canonicalTableResponse(document),
+      title: presentation.title,
+      primaryLatex: presentation.primaryLatex,
+      resolvedInputLatex: presentation.requestLatex,
+      approxText: presentation.approximations?.primary,
+      answerDomain: semantics.metadata?.answerDomain,
+      solutionKind: semantics.metadata?.solutionKind,
+      supplementLatex: presentation.supplements ?? [],
+      detailSearchText: canonicalDetailSearchText(presentation.details),
+      warnings: [...presentation.warnings],
+      tableResponse: canonicalTableResponse(presentation),
     };
   }
   throw new Error('History entry requires a valid canonical result document.');
@@ -140,7 +150,7 @@ export function buildHistoryDisplayEntry({
   statisticsScreen,
 }: BuildHistoryDisplayEntryOptions): HistoryEntry {
   const resultDocument = resolveCanonicalResultForConsumer(outcome);
-  if (!resultDocument.ok || resultDocument.document.outcomeKind !== 'success') {
+  if (!resultDocument.ok || resultDocument.presentation.outcomeKind !== 'success') {
     throw new Error('History success entries require native canonical result authority.');
   }
 
@@ -148,7 +158,7 @@ export function buildHistoryDisplayEntry({
     id: createId(),
     mode: mode,
     inputLatex,
-    resultDocument: resultDocument.document,
+    resultDocument: resultDocument.rawDocument,
     ...(mode === 'calculate'
       ? {
           ...currentCalculateHistoryContext(),

@@ -41,6 +41,7 @@ import {
 } from '../../lib/modes/equation-ui-model';
 import type { RunEquationModeRequest } from '../../lib/modes/equation';
 import { useEditorAnalysis } from '../../lib/editor/use-editor-analysis';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
 import type { OoeJobIdentity } from '../../lib/ooe/job-launch/job-contract';
 import {
   createEquationRuntimeController,
@@ -277,10 +278,11 @@ export function useEquationRuntime({
         : activePolynomialView === 'quartic'
           ? quarticCoefficients
         : null;
-  const equationResultMetadata = displayOutcome?.kind === 'success'
-    || displayOutcome?.kind === 'error'
-    ? displayOutcome.canonicalResult.metadata
-    : undefined;
+  const equationResultMetadata = useMemo(() => {
+    if (!displayOutcome || displayOutcome.kind === 'prompt') return undefined;
+    const resolution = resolveCanonicalResultForConsumer(displayOutcome);
+    return resolution.ok ? resolution.semantics.metadata : undefined;
+  }, [displayOutcome]);
 
   const equationAnswerModeLabel =
     equationScreen === 'symbolic' && displayOutcome && displayOutcome.kind !== 'prompt'

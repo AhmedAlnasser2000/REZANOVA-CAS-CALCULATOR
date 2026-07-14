@@ -1232,13 +1232,13 @@ export default function App() {
     currentMode === 'matrix' || currentMode === 'vector'
       ? displayInputLatex
       : previewAnalysis.value;
-  const displayResultDocument = useMemo(() => {
+  const displayResultAuthority = useMemo(() => {
     if (!displayOutcome || displayOutcome.kind === 'prompt') return undefined;
     const resolution = resolveCanonicalResultForConsumer(displayOutcome);
-    return resolution.ok ? resolution.document : undefined;
+    return resolution.ok ? resolution : undefined;
   }, [displayOutcome]);
-  const displayResultMetadata = displayResultDocument?.metadata;
-  const displayMathLatex = displayResultDocument?.primaryMath?.canonicalLatex;
+  const displayResultMetadata = displayResultAuthority?.semantics.metadata;
+  const displayMathLatex = displayResultAuthority?.presentation.primaryLatex;
   const activeSoftMenu = isLauncherOpen
     ? LAUNCHER_SOFT_ACTIONS
     : currentMode === 'guide'
@@ -1684,15 +1684,15 @@ export default function App() {
   }
 
   function activeResultEditorLatex() {
-    return displayResultDocument?.primaryMath?.canonicalLatex ?? '';
+    return displayResultAuthority?.presentation.primaryLatex ?? '';
   }
 
   function activeResultCopyText() {
-    if (displayResultDocument) {
+    if (displayResultAuthority) {
       const visibleLines: string[] = [];
-      const exactLatex = displayResultDocument.primaryMath?.canonicalLatex;
-      const approxText = displayResultDocument.approximations?.primary;
-      const hasPrimaryApproxResult = displayResultDocument.outcomeKind === 'success' && !exactLatex
+      const exactLatex = displayResultAuthority.presentation.primaryLatex;
+      const approxText = displayResultAuthority.presentation.approximations?.primary;
+      const hasPrimaryApproxResult = displayResultAuthority.presentation.outcomeKind === 'success' && !exactLatex
         && Boolean(approxText) && (displayResultMetadata?.solutionKind === 'approximate-numeric'
           || displayResultMetadata?.resultOrigin === 'numeric-fallback');
 
@@ -2426,19 +2426,19 @@ export default function App() {
   }, []);
 
   const calculusProvenanceBadge =
-    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayResultDocument?.outcomeKind === 'success'
+    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayResultAuthority?.presentation.outcomeKind === 'success'
       ? getCalculusProvenanceBadge(displayResultMetadata?.resultOrigin as CalculusResultOrigin | undefined)
       : undefined;
   const calculusResultBadges =
-    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayResultDocument?.outcomeKind === 'success'
+    isCalculusMode(currentMode) && !isCalculusMenuOpen && displayResultAuthority?.presentation.outcomeKind === 'success'
       ? ['Calculus']
       : [];
   const calculusStrategyBadge =
-    displayResultDocument?.outcomeKind === 'success'
+    displayResultAuthority?.presentation.outcomeKind === 'success'
       ? getCalculusStrategyBadge(displayResultMetadata?.calculusStrategy)
       : undefined;
   const calculusDerivativeStrategyBadges =
-    displayResultDocument?.outcomeKind === 'success'
+    displayResultAuthority?.presentation.outcomeKind === 'success'
       ? getCalculusDerivativeStrategyBadges(displayResultMetadata?.calculusDerivativeStrategies)
       : [];
   const calculateResolvedInputLatex = displayResultMetadata?.resolvedInput?.canonicalLatex;
@@ -2448,7 +2448,7 @@ export default function App() {
       : '';
   const isCalculateCalculusOutcome =
     currentMode === 'calculate'
-    && displayResultDocument?.outcomeKind === 'success'
+    && displayResultAuthority?.presentation.outcomeKind === 'success'
     && (
       calculateScreen !== 'standard'
       || displayResultMetadata?.calculusStrategy !== undefined
@@ -2459,7 +2459,7 @@ export default function App() {
       || calculateOutcomeLatex.includes('\\frac{\\mathrm{d}}')
     );
   const calculateCalculusProvenanceBadge =
-    isCalculateCalculusOutcome && displayResultDocument?.outcomeKind === 'success'
+    isCalculateCalculusOutcome && displayResultAuthority?.presentation.outcomeKind === 'success'
       ? getCalculusProvenanceLabel(displayResultMetadata?.resultOrigin)
       : undefined;
   const calculateResultBadges =
@@ -2474,13 +2474,13 @@ export default function App() {
       ? [
           'Trigonometry',
           ...(
-            displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'exact-special-angle'
+            displayResultAuthority?.presentation.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'exact-special-angle'
               ? ['Exact special angle']
-              : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'triangle-solver'
+              : displayResultAuthority?.presentation.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'triangle-solver'
                 ? ['Triangle solver']
-                : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'numeric'
+                : displayResultAuthority?.presentation.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'numeric'
                   ? ['Numeric']
-                  : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'symbolic'
+                  : displayResultAuthority?.presentation.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'symbolic'
                     ? ['Symbolic']
                     : []
           ),
@@ -2491,9 +2491,9 @@ export default function App() {
       ? [
           'Geometry',
           ...(
-            displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'geometry-coordinate'
+            displayResultAuthority?.presentation.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'geometry-coordinate'
               ? ['Coordinate']
-              : displayResultDocument?.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'geometry-formula'
+              : displayResultAuthority?.presentation.outcomeKind === 'success' && displayResultMetadata?.resultOrigin === 'geometry-formula'
                 ? ['Formula']
                 : []
           ),

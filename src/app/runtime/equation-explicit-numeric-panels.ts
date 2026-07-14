@@ -6,6 +6,7 @@ import type {
   ModeId,
   PeriodicIntervalSuggestion,
 } from '../../types/calculator';
+import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
 
 type ComplexRegionPanelState = ReturnType<typeof defaultEquationComplexRegionPanelState>;
 
@@ -82,12 +83,15 @@ export function buildEquationExplicitNumericPanelWorkspaceProps(input: {
     updatePanel: (patch: Partial<ComplexRegionPanelState>) => void;
   };
 }) {
+  const resultAuthority = input.displayOutcome && input.displayOutcome.kind !== 'prompt'
+    ? resolveCanonicalResultForConsumer(input.displayOutcome)
+    : undefined;
   const numericIntervalSuggestions: readonly PeriodicIntervalSuggestion[] =
-    input.displayOutcome?.kind === 'success' || input.displayOutcome?.kind === 'error'
-      ? input.displayOutcome.canonicalResult.periodicFamily?.suggestedIntervals?.map((interval) => ({
+    resultAuthority?.ok
+      ? resultAuthority.presentation.periodicFamily?.suggestedIntervals?.map((interval) => ({
           label: interval.label,
-          start: interval.start.canonicalLatex,
-          end: interval.end.canonicalLatex,
+          start: interval.start,
+          end: interval.end,
         })) ?? []
       : [];
   return {
