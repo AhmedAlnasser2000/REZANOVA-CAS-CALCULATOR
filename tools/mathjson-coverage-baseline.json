@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "CANONICAL-RESULT-V2-REQUEST-EVIDENCE1 removes four reviewed request-evidence exemptions with producer-proven V2 MathJSON.",
+  "reason": "Gate 5 migrates five typed Equation supplements and three typed Table undefined-cell residuals to V2.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -61,32 +61,24 @@
     "vector.span-independence"
   ],
   "exemptionIds": [
-    "equation-denominator-exclusion-labeled-supplement",
-    "equation-even-root-labeled-supplement",
-    "equation-rational-hole-labeled-supplement",
-    "equation-rational-simple-labeled-supplement",
-    "golden-equation-rational-exclusion-label",
     "golden-matrix-profile-singular-compound-primary",
     "golden-matrix-profile-singular-map-row",
     "golden-matrix-profile-tall-compound-primary",
     "golden-matrix-profile-tall-map-row",
-    "golden-table-partial-domain-undefined-cell",
     "golden-trigonometry-period-phase-compound-primary",
     "golden-vector-independence-labeled-answer-row",
     "golden-vector-independence-labeled-primary",
-    "matrix-linear-system-legacy-operator-details",
-    "table-partial-domain-undefined-cell",
-    "table-rational-pole-undefined-cell"
+    "matrix-linear-system-legacy-operator-details"
   ],
   "totals": {
     "evidence": 143,
     "replayFixtures": 100,
     "goldenCases": 43,
-    "bytes": 109801,
+    "bytes": 110661,
     "maxBytes": 2753,
-    "leaves": 458,
-    "proven": 439,
-    "exempt": 19,
+    "leaves": 455,
+    "proven": 444,
+    "exempt": 11,
     "missing": 0
   },
   "routes": {
@@ -292,11 +284,11 @@
       "evidence": 5,
       "replayFixtures": 4,
       "goldenCases": 1,
-      "bytes": 3833,
+      "bytes": 4012,
       "maxBytes": 1016,
       "leaves": 19,
-      "proven": 17,
-      "exempt": 2,
+      "proven": 19,
+      "exempt": 0,
       "missing": 0
     },
     "equation.linear": {
@@ -336,11 +328,11 @@
       "evidence": 6,
       "replayFixtures": 4,
       "goldenCases": 2,
-      "bytes": 6488,
+      "bytes": 6815,
       "maxBytes": 1853,
       "leaves": 25,
-      "proven": 22,
-      "exempt": 3,
+      "proven": 25,
+      "exempt": 0,
       "missing": 0
     },
     "equation.trig-exp-log": {
@@ -534,22 +526,22 @@
       "evidence": 2,
       "replayFixtures": 1,
       "goldenCases": 1,
-      "bytes": 1978,
-      "maxBytes": 989,
-      "leaves": 16,
+      "bytes": 2224,
+      "maxBytes": 1112,
+      "leaves": 14,
       "proven": 14,
-      "exempt": 2,
+      "exempt": 0,
       "missing": 0
     },
     "table.rational-function": {
       "evidence": 1,
       "replayFixtures": 1,
       "goldenCases": 0,
-      "bytes": 997,
-      "maxBytes": 997,
-      "leaves": 8,
+      "bytes": 1105,
+      "maxBytes": 1105,
+      "leaves": 7,
       "proven": 7,
-      "exempt": 1,
+      "exempt": 0,
       "missing": 0
     },
     "table.single-function": {

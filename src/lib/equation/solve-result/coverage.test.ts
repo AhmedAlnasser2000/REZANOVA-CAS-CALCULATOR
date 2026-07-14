@@ -6,10 +6,16 @@ import { executeHistoryReplayRequest } from '../../history-replay/native-executi
 import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import { buildEquationSolveResultContract } from './factory';
 import { validateEquationSolveResultContract } from './validation';
+import { validateCanonicalResultDocumentV2 } from '../../result-contract';
 
 function assertCarrier(outcome: CanonicalRuntimeOutcome, label: string) {
   if (outcome.kind === 'prompt') throw new Error(`${label}: unexpected prompt.`);
-  if (outcome.canonicalResult.version !== 1) throw new Error(`${label}: expected V1 producer.`);
+  if (outcome.canonicalResult.version === 2) {
+    expect(validateCanonicalResultDocumentV2(outcome.canonicalResult).ok, `${label} V2 contract`).toBe(true);
+    expect(structuredClone(outcome.canonicalResult), `${label} V2 clone parity`)
+      .toEqual(outcome.canonicalResult);
+    return;
+  }
   const carrier = buildEquationSolveResultContract({
     document: outcome.canonicalResult,
     ...(outcome.kind === 'error'

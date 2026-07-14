@@ -46,7 +46,7 @@
 
 ## CANONICAL-RESULT-V2-REQUEST-EVIDENCE1
 
-- result: pass; pending commit creation under standing approval
+- result: pass; committed as `2bf24bf6`
 - kind: UI producer migration
 - scope: derivative-at-point, angle conversion, and right-triangle typed request evidence; four reviewed exemptions removed
 - production impact: three approved selectors emit V2; all other frozen routes remain V1; only approved visible correction is derivative `x^2` at `x=3` to primary `6` with title `Derivative`
@@ -55,3 +55,16 @@
 - browser verification: 2 Chromium scenarios cover three real routes, V2 persistence/replay, request presentation, details, and overflow
 - ratchets: incremental TypeScript; Vite build; display inversion 401 producers / 150 native documents / 59 canonical reads / zero compatibility / zero legacy; file-size validation
 - protected state: concurrent Notebook files and `test-results/` excluded
+
+## CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1
+
+- result: pass; pending commit creation under standing approval
+- kind: UI producer migration
+- scope: five Equation labeled supplements and three Table undefined cells migrated from reviewed residuals to typed V2 semantics
+- production impact: selected Equation results use producer-native `exclusion`/`condition` relations; Table domain-boundary and rational-function cells distinguish values, real-domain failures, and poles
+- focused verification: 83 result-contract tests; 19 Equation solve-result tests; 59 Table/replay/golden tests
+- corpus: 143 executable cases / 455 leaves / 444 proven / 11 exempt / zero missing
+- browser verification: 2 Chromium scenarios cover all five Equation cases, both Table reasons, defined neighbors, V2 persistence/replay for successful results, and overflow
+- ratchets: Vite build; display inversion 401 producers / 150 native documents / 59 canonical reads / zero compatibility / zero legacy; file-size validation; diff hygiene
+- TypeScript evidence: V2 implementation checkpoint passed; final shared recheck blocked only by concurrent Notebook `NotebookVideoNodeView` import
+- protected state: concurrent Notebook and Rust OOE files plus `test-results/` excluded

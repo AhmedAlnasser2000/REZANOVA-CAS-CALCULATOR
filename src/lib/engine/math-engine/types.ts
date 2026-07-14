@@ -80,6 +80,7 @@ export type PreparedTableBuild =
 export type TableMathJsonCellEvidence = {
   canonicalLatex: string;
   mathJson?: SerializableMathJson;
+  undefinedReason?: 'outside-real-domain' | 'pole';
 };
 
 export type TableMathJsonEvidence = {

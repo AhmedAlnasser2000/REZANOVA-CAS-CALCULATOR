@@ -5,5 +5,6 @@ export * from './finite-root-producer';
 export * from './math-values';
 export * from './native-result';
 export * from './producer';
+export * from './producer-v2';
 export * from './producer-adapter';
 export * from './validation';

@@ -6,13 +6,40 @@ import type {
 } from '../../types/calculator';
 import type { TableMathJsonEvidence } from '../engine/math-engine';
 import {
+  requireProvenCanonicalMathValueV2,
   tryProvenCanonicalMathValue,
+  type CanonicalResultV2MathResolver,
   type CanonicalResultProducerMathValuesV1,
   type ProvenCanonicalMathValue,
 } from '../result-contract';
 import type { MathJsonRouteId } from '../result-contract/mathjson-route-registry';
 
 export type TableMathJsonRouteId = Extract<MathJsonRouteId, `table.${string}`>;
+
+export function tableV2MathResolverFromEvidence(input: {
+  routeId: TableMathJsonRouteId;
+  evidence: TableMathJsonEvidence;
+}): CanonicalResultV2MathResolver {
+  const cells = [
+    input.evidence.functions,
+    input.evidence.variable,
+    ...input.evidence.rows.flatMap((row) => [row.x, row.primary, row.secondary]),
+  ].filter((cell): cell is NonNullable<typeof cell> => Boolean(cell));
+  return (canonicalLatex, path) => {
+    const cell = cells.find((candidate) =>
+      candidate.canonicalLatex === canonicalLatex && candidate.mathJson !== undefined);
+    if (!cell || cell.mathJson === undefined) {
+      throw new Error(`Table selected V2 without producer MathJSON for ${path}.`);
+    }
+    return requireProvenCanonicalMathValueV2({
+      canonicalLatex,
+      mathJson: cell.mathJson,
+      owner: 'table',
+      routeId: input.routeId,
+      source: `table.native-expression-and-row-evidence:${path}`,
+    });
+  };
+}
 
 function unproven(canonicalLatex: string) {
   return { canonicalLatex };

@@ -5,6 +5,7 @@ import type {
   CanonicalResultTrustEvidenceV1,
   CanonicalRuntimeOutcome,
   ResultProducerDraft,
+  VersionedResultProducerDraft,
 } from '../../../types/calculator';
 import {
   finalizeCanonicalRuntimeOutcomeFromProducer,
@@ -20,6 +21,7 @@ import type {
   EquationSolveResultContractV1,
 } from './contract';
 import { buildEquationSolveResultContract } from './factory';
+import { buildEquationCanonicalResultDocumentForRuntime } from './producer-v2';
 
 export type EquationSolveResultBuildFailure =
   { reason: 'contract'; message: string };
@@ -155,8 +157,14 @@ export function finalizeEquationCanonicalRuntimeOutcome(
       `${owner} runtime outcome rejected solve-result: ${projected.failure.message}`,
     );
   }
+  const analysisEvidence = getEquationAnalysisEvidence(outcome);
+  const canonicalResult = buildEquationCanonicalResultDocumentForRuntime({
+    outcome,
+    document: projected.result.document,
+    analysisEvidence,
+  });
   return finalizeCanonicalRuntimeOutcomeFromProducer({
     ...outcome,
-    canonicalResult: projected.result.document,
-  }, owner);
+    canonicalResult,
+  } as VersionedResultProducerDraft, owner);
 }

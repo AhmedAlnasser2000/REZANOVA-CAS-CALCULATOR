@@ -21,12 +21,14 @@ import type {
 function evaluateAtPoint(latex: string, variable: string, value: number) {
   const expr = ce.parse(latex) as BoxedLike;
   const substituted = expr.subs({ [variable]: value });
+  const hasPole = containsZeroDenominator(expr.json, variable, value);
   const numeric = evaluateRealNumericExpression(substituted.json, substituted.latex);
   if (numeric.kind === 'success') {
     return {
       text: numeric.approxText,
       warning: null,
       mathJson: roundedApproxNumberValue(numeric.value),
+      undefinedReason: undefined,
     };
   }
 
@@ -35,6 +37,7 @@ function evaluateAtPoint(latex: string, variable: string, value: number) {
       text: 'undefined',
       warning: 'Some sampled rows were outside the real domain and are shown as undefined.',
       mathJson: undefined,
+      undefinedReason: hasPole ? 'pole' as const : 'outside-real-domain' as const,
     };
   }
 
@@ -46,6 +49,7 @@ function evaluateAtPoint(latex: string, variable: string, value: number) {
       text: 'undefined',
       warning: 'Some sampled rows were outside the real domain and are shown as undefined.',
       mathJson: undefined,
+      undefinedReason: hasPole ? 'pole' as const : 'outside-real-domain' as const,
     };
   }
 
@@ -58,13 +62,51 @@ function evaluateAtPoint(latex: string, variable: string, value: number) {
         ? roundedApproxNumberValue(evidence.value)
         : undefined;
     })(),
+    undefinedReason: undefined,
   };
 }
 
-function cellEvidence(canonicalLatex: string, mathJson: unknown): TableMathJsonCellEvidence {
+function numericZero(node: unknown, variable: string, value: number) {
+  const substituted = (() => {
+    try {
+      return ce.box(node as Parameters<typeof ce.box>[0]).subs({ [variable]: value });
+    } catch {
+      return undefined;
+    }
+  })();
+  if (!substituted) return false;
+  const result = evaluateRealNumericExpression(substituted.json, substituted.latex);
+  return result.kind === 'success' && result.value === 0;
+}
+
+function containsZeroDenominator(node: unknown, variable: string, value: number): boolean {
+  if (!Array.isArray(node)) return false;
+  if (
+    node[0] === 'Divide'
+    && node.length >= 3
+    && numericZero(node[2], variable, value)
+  ) return true;
+  if (
+    node[0] === 'Power'
+    && node.length >= 3
+    && numericZero(node[1], variable, value)
+    && (node[2] === -1
+      || (Array.isArray(node[2]) && node[2][0] === 'Rational' && Number(node[2][1]) < 0))
+  ) {
+    return true;
+  }
+  return node.slice(1).some((child) => containsZeroDenominator(child, variable, value));
+}
+
+function cellEvidence(
+  canonicalLatex: string,
+  mathJson: unknown,
+  undefinedReason?: TableMathJsonCellEvidence['undefinedReason'],
+): TableMathJsonCellEvidence {
   return {
     canonicalLatex,
     ...(mathJson !== undefined ? { mathJson: mathJson as TableMathJsonCellEvidence['mathJson'] } : {}),
+    ...(undefinedReason ? { undefinedReason } : {}),
   };
 }
 
@@ -187,9 +229,9 @@ function buildCompletedTableResponse(
     };
     evidenceRows.push({
       x: cellEvidence(xText, roundedApproxNumberValue(x)),
-      primary: cellEvidence(primary.text, primary.mathJson),
+      primary: cellEvidence(primary.text, primary.mathJson, primary.undefinedReason),
       ...(secondary
-        ? { secondary: cellEvidence(secondary.text, secondary.mathJson) }
+        ? { secondary: cellEvidence(secondary.text, secondary.mathJson, secondary.undefinedReason) }
         : {}),
     });
     return row;
@@ -276,9 +318,9 @@ export async function buildTableCooperativelyWithEvidence(
       });
       evidenceRows.push({
         x: cellEvidence(xText, roundedApproxNumberValue(x)),
-        primary: cellEvidence(primary.text, primary.mathJson),
+        primary: cellEvidence(primary.text, primary.mathJson, primary.undefinedReason),
         ...(secondary
-          ? { secondary: cellEvidence(secondary.text, secondary.mathJson) }
+          ? { secondary: cellEvidence(secondary.text, secondary.mathJson, secondary.undefinedReason) }
           : {}),
       });
 

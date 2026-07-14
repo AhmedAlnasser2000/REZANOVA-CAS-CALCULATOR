@@ -1,6 +1,7 @@
 import { runGuardedDirectSymbolicFallback } from '../../equation/guarded-solve';
 import {
   buildEquationOutcomeBoundaryFromProducerOrThrow,
+  buildEquationCanonicalResultDocumentForRuntime,
   createEquationResultOutcome,
   finalizeEquationCanonicalRuntimeOutcome,
   requireNativeEquationResult,
@@ -15,6 +16,7 @@ import {
   buildEquationRangeBehaviorEvidence,
   buildEquationRouteEvidence,
   buildEquationSingularityEvidence,
+  getEquationAnalysisEvidence,
 } from '../../equation/analysis-evidence';
 import { runSharedEquationSolveWithTraceAsync } from '../../equation/shared-solve';
 import { buildEquationTrustEvidence } from '../../equation/trust-evidence';
@@ -518,10 +520,15 @@ export async function runEquationModeForIsolatedWorker(
     };
   }
   const boundary = buildEquationOutcomeBoundaryFromProducerOrThrow(payload);
+  const canonicalResult = buildEquationCanonicalResultDocumentForRuntime({
+    outcome: payload,
+    document: boundary.result.document,
+    analysisEvidence: getEquationAnalysisEvidence(payload),
+  });
   return {
     outcome: requireCanonicalRuntimeOutcome({
-      kind: boundary.result.document.outcomeKind,
-      canonicalResult: boundary.result.document,
+      kind: canonicalResult.outcomeKind,
+      canonicalResult,
       ...(boundary.runtimeAdvisories
         ? { runtimeAdvisories: boundary.runtimeAdvisories }
         : {}),
@@ -586,10 +593,15 @@ export async function runEquationModeWithOoePilot(
               };
             }
             const boundary = buildEquationOutcomeBoundaryFromProducerOrThrow(payload);
+            const canonicalResult = buildEquationCanonicalResultDocumentForRuntime({
+              outcome: payload,
+              document: boundary.result.document,
+              analysisEvidence: getEquationAnalysisEvidence(payload),
+            });
             return {
               outcome: requireCanonicalRuntimeOutcome({
-                kind: boundary.result.document.outcomeKind,
-                canonicalResult: boundary.result.document,
+                kind: canonicalResult.outcomeKind,
+                canonicalResult,
                 ...(boundary.runtimeAdvisories
                   ? { runtimeAdvisories: boundary.runtimeAdvisories }
                   : {}),

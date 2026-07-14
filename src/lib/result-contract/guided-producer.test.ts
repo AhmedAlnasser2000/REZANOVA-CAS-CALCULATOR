@@ -79,20 +79,31 @@ describe('guided-domain canonical result producers', () => {
       result.outcome,
       'Table test',
     ).canonicalResult).toBeDefined();
+    expect(result.outcome.canonicalResult?.version).toBe(2);
     expect(result.outcome.canonicalResult?.table).toEqual({
       headers: ['x', '\\sqrt{x}'],
       rows: [
         {
           x: { canonicalLatex: '-1', mathJson: -1 },
-          primary: { canonicalLatex: 'undefined' },
+          primary: {
+            kind: 'undefined',
+            reason: 'outside-real-domain',
+            presentationLatex: 'undefined',
+          },
         },
         {
           x: { canonicalLatex: '0', mathJson: 0 },
-          primary: { canonicalLatex: '0', mathJson: 0 },
+          primary: {
+            kind: 'value',
+            value: { canonicalLatex: '0', mathJson: 0 },
+          },
         },
         {
           x: { canonicalLatex: '1', mathJson: 1 },
-          primary: { canonicalLatex: '1', mathJson: 1 },
+          primary: {
+            kind: 'value',
+            value: { canonicalLatex: '1', mathJson: 1 },
+          },
         },
       ],
     });

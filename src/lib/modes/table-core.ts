@@ -13,18 +13,27 @@ import {
 import type {
   CanonicalRuntimeOutcome,
   ResultProducerDraft,
+  VersionedResultProducerDraft,
   StoredVariableValue,
   TableResponse,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import { textDetailSection } from '../display/result/result-detail-lines';
 import { profileTableResult } from '../display/printer';
-import { createTableResultOutcome } from './table-result-document';
+import {
+  createTableResultOutcome,
+  createTableResultOutcomeV2,
+} from './table-result-document';
 import {
   finalizeCanonicalRuntimeOutcomeFromProducer,
+  canonicalResultVersionForProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
-import { tableMathJsonRoute, tableMathValuesFromEvidence } from './table-math-values';
+import {
+  tableMathJsonRoute,
+  tableMathValuesFromEvidence,
+  tableV2MathResolverFromEvidence,
+} from './table-math-values';
 
 export type RunTableModeRequest = {
   primaryLatex: string;
@@ -38,7 +47,7 @@ export type RunTableModeRequest = {
 };
 
 export type TableModeResult = {
-  outcome: ResultProducerDraft;
+  outcome: VersionedResultProducerDraft;
   response: TableResponse;
   runtimeStatus?: 'cancelled';
 };
@@ -178,9 +187,17 @@ function buildTableModeResult(
       error: response.error,
       warnings: response.warnings,
     };
+    const routeId = tableMathJsonRoute(prepared);
+    const version = canonicalResultVersionForProducer({ routeId });
     return {
       response,
-      outcome: createTableResultOutcome(outcome, response),
+      outcome: version === 2
+        ? createTableResultOutcomeV2(outcome, response, {
+            mathValue: (_canonicalLatex, path) => {
+              throw new Error(`Table V2 error unexpectedly requested math at ${path}.`);
+            },
+          })
+        : createTableResultOutcome(outcome, response),
     };
   }
 
@@ -201,19 +218,29 @@ function buildTableModeResult(
     ],
     variableSubstitutions: prepared.substitutions.length > 0 ? prepared.substitutions : undefined,
   });
+  const routeId = tableMathJsonRoute(prepared);
+  const version = canonicalResultVersionForProducer({ routeId });
+  if (version === 2 && !evidence) {
+    throw new Error('Table selected V2 without producer-owned row evidence.');
+  }
   return {
     response,
     outcome: requireCanonicalResultAuthority(
-      createTableResultOutcome(outcome, response, evidence
-        ? {
-            mathValues: tableMathValuesFromEvidence({
-              outcome,
-              response,
-              routeId: tableMathJsonRoute(prepared),
-              evidence,
-            }),
-          }
-        : undefined),
+      version === 2
+        ? createTableResultOutcomeV2(outcome, response, {
+            mathValue: tableV2MathResolverFromEvidence({ routeId, evidence: evidence! }),
+            tableEvidence: evidence,
+          })
+        : createTableResultOutcome(outcome, response, evidence
+          ? {
+              mathValues: tableMathValuesFromEvidence({
+                outcome,
+                response,
+                routeId,
+                evidence,
+              }),
+            }
+          : undefined),
       'Table',
     ),
   };

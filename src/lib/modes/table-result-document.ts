@@ -1,10 +1,18 @@
-import type { ResultProducerDraft, TableResponse } from '../../types/calculator';
+import type {
+  ResultProducerDraft,
+  ResultProducerDraftV2,
+  TableResponse,
+} from '../../types/calculator';
 import {
+  attachCanonicalResultV2ToProducerDraft,
+  buildCanonicalResultDocumentV2FromProducerDraft,
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
+  type CanonicalResultV2MathResolver,
 } from '../result-contract';
+import type { TableMathJsonEvidence } from '../engine/math-engine';
 
 type TableSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
 type TableErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
@@ -14,6 +22,64 @@ type TableResultProducerInput =
   | Omit<TableErrorOutcome, 'canonicalResult'>;
 
 type TableResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
+
+export function createTableResultOutcomeV2(
+  input: TableResultProducerInput,
+  response: TableResponse,
+  evidence: {
+    mathValue: CanonicalResultV2MathResolver;
+    tableEvidence?: TableMathJsonEvidence;
+  },
+): ResultProducerDraftV2 {
+  if (response.rows.length !== (evidence.tableEvidence?.rows.length ?? 0)) {
+    throw new Error('Table selected V2 without row-aligned producer evidence.');
+  }
+  const tableEvidence = evidence.tableEvidence;
+  const table = {
+    headers: [...response.headers],
+    rows: response.rows.map((row, index) => {
+      const rowEvidence = tableEvidence?.rows[index];
+      if (!rowEvidence) throw new Error(`Table selected V2 without evidence for row ${index}.`);
+      const cell = (
+        value: string,
+        cellEvidence: typeof rowEvidence.primary | undefined,
+        path: string,
+      ) => {
+        if (!cellEvidence) throw new Error(`Table selected V2 without evidence for ${path}.`);
+        if (cellEvidence.undefinedReason) {
+          return {
+            kind: 'undefined' as const,
+            reason: cellEvidence.undefinedReason,
+            presentationLatex: value,
+          };
+        }
+        return {
+          kind: 'value' as const,
+          value: evidence.mathValue(value, `${path}.value`),
+        };
+      };
+      return {
+        x: evidence.mathValue(row.x, `table.rows[${index}].x`),
+        primary: cell(row.primary, rowEvidence.primary, `table.rows[${index}].primary`),
+        ...(row.secondary !== undefined
+          ? {
+              secondary: cell(
+                row.secondary,
+                rowEvidence.secondary,
+                `table.rows[${index}].secondary`,
+              ),
+            }
+          : {}),
+      };
+    }),
+  };
+  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+    draft: input,
+    mathValue: evidence.mathValue,
+    table,
+  });
+  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
+}
 
 export function createTableResultOutcome(
   input: Omit<TableSuccessOutcome, 'canonicalResult'>,

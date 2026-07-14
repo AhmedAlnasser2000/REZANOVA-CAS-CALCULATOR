@@ -447,7 +447,11 @@ function normalizeV2(document: CanonicalResultDocumentV2): NormalizedCanonicalRe
               : document.primary.presentation.primaryLatex,
           }
         : {}),
-      ...(document.request ? { requestLatex: v2RequestLatex(document.request) } : {}),
+      ...(document.request
+        ? { requestLatex: v2RequestLatex(document.request) }
+        : document.metadata?.resolvedInput
+          ? { requestLatex: document.metadata.resolvedInput.canonicalLatex }
+          : {}),
       ...(answerRows ? { answerRows } : {}),
       ...(document.supplements
         ? { supplements: document.supplements.map((value) => value.presentationLatex) }

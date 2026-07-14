@@ -53,6 +53,12 @@ export type EquationAnalysisEvidence = {
   text?: string;
   interval?: EquationAnalysisEvidenceInterval;
   point?: EquationAnalysisEvidencePoint;
+  supplementEvidence?: {
+    role: 'exclusion' | 'condition';
+    expressionLatex?: string;
+    canonicalLatex: string;
+    mathJson: import('../../types/calculator').SerializableMathJson;
+  };
 };
 
 export const EQUATION_ANALYSIS_EVIDENCE = Symbol.for('calcwiz.equation.analysisEvidence');
@@ -198,6 +204,20 @@ export function buildEquationDomainFactEvidence(input: {
       confidence: confidenceForDomainFact(fact),
       latex: latexForDomainFact(fact),
       text: fact.message,
+      ...(fact.relationCanonicalLatex && fact.relationMathJson !== undefined
+        ? {
+            supplementEvidence: {
+              role: fact.kind === 'denominator-exclusion'
+                || fact.kind === 'solved-denominator-exclusion'
+                || fact.kind === 'trig-pole'
+                ? 'exclusion' as const
+                : 'condition' as const,
+              ...(fact.expressionLatex ? { expressionLatex: fact.expressionLatex } : {}),
+              canonicalLatex: fact.relationCanonicalLatex,
+              mathJson: fact.relationMathJson,
+            },
+          }
+        : {}),
     }));
 }
 

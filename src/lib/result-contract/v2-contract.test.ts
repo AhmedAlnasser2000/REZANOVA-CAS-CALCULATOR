@@ -313,21 +313,33 @@ describe('Canonical Result V2 contract', () => {
     });
   });
 
-  it('keeps the frozen 57-route inventory while enabling only Gate 3 V2 selectors', () => {
+  it('keeps the frozen 57-route inventory while enabling the reviewed V2 producer gates', () => {
     const routeIds = Object.keys(MATHJSON_ROUTE_REGISTRY).sort();
     expect(FROZEN_V1_PRODUCER_ROUTE_IDS).toHaveLength(57);
     expect([...FROZEN_V1_PRODUCER_ROUTE_IDS].sort()).toEqual(routeIds);
     expect(Object.keys(CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY).sort()).toEqual(routeIds);
     expect(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES)
-      .toEqual(['trigonometry.angle-conversion']);
+      .toEqual([
+        'trigonometry.angle-conversion',
+        'table.domain-boundary',
+        'table.rational-function',
+      ]);
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
+      'equation.domain-boundary': ['typedLabeledSupplement'],
+      'equation.rational-radical': ['typedLabeledSupplement'],
       'trigonometry.right-triangle': ['rightTriangle'],
     });
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
-      const defaultVersion = routeId === 'trigonometry.angle-conversion' ? 2 : 1;
+      const defaultVersion = [
+        'trigonometry.angle-conversion',
+        'table.domain-boundary',
+        'table.rational-function',
+      ].includes(routeId) ? 2 : 1;
       const v2Selectors = routeId === 'calculus.derivatives'
         ? ['derivativePoint']
+        : routeId === 'equation.domain-boundary' || routeId === 'equation.rational-radical'
+          ? ['typedLabeledSupplement']
         : routeId === 'trigonometry.right-triangle'
           ? ['rightTriangle']
           : [];
@@ -340,6 +352,10 @@ describe('Canonical Result V2 contract', () => {
     expect(canonicalResultVersionForProducer({
       routeId: 'calculus.derivatives',
       selector: 'derivativePoint',
+    })).toBe(2);
+    expect(canonicalResultVersionForProducer({
+      routeId: 'equation.rational-radical',
+      selector: 'typedLabeledSupplement',
     })).toBe(2);
     expect(canonicalResultVersionForProducer({
       routeId: 'trigonometry.right-triangle',

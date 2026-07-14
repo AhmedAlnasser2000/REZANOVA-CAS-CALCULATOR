@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { SolveDomainConstraint } from '../../types/calculator';
+import type { SerializableMathJson, SolveDomainConstraint } from '../../types/calculator';
 import { formatApproxNumber } from '../display/format';
 import { evaluateLatexAtTarget, readNumericNode } from './domain-guards';
 import {
@@ -31,6 +31,8 @@ export type EquationNumericDomainFact = {
   kind: EquationNumericDomainFactKind;
   expressionLatex?: string;
   relationLatex?: string;
+  relationCanonicalLatex?: string;
+  relationMathJson?: SerializableMathJson;
   message: string;
   source: 'symbolic-scan' | 'sample-probe' | 'polynomial-boundary';
 };
@@ -92,6 +94,22 @@ function nodeLatex(node: unknown) {
   } catch {
     return undefined;
   }
+}
+
+function relationalMath(
+  operator: 'NotEqual' | 'Greater' | 'GreaterEqual',
+  expression: unknown,
+  right: SerializableMathJson = 0,
+) {
+  const relationMathJson = [
+    operator,
+    expression as SerializableMathJson,
+    right,
+  ] as SerializableMathJson;
+  const relationCanonicalLatex = nodeLatex(relationMathJson);
+  return relationCanonicalLatex
+    ? { relationCanonicalLatex, relationMathJson }
+    : {};
 }
 
 function numericConstant(node: unknown): number | null {
@@ -320,6 +338,7 @@ function collectSymbolicFacts(node: unknown, facts: EquationNumericDomainFact[],
       kind: 'denominator-exclusion',
       expressionLatex: denominatorLatex,
       relationLatex: '\\ne0',
+      ...relationalMath('NotEqual', operands[1]),
       message: factMessage(denominatorLatex, '\\ne0', 'Denominator must be nonzero.'),
       source: 'symbolic-scan',
     });
@@ -332,6 +351,7 @@ function collectSymbolicFacts(node: unknown, facts: EquationNumericDomainFact[],
       kind: 'log-domain',
       expressionLatex: argumentLatex,
       relationLatex: '>0',
+      ...relationalMath('Greater', operands[0]),
       message: factMessage(argumentLatex, '>0', 'Log argument must be positive.'),
       source: 'symbolic-scan',
     });
@@ -342,6 +362,7 @@ function collectSymbolicFacts(node: unknown, facts: EquationNumericDomainFact[],
         kind: 'log-domain',
         expressionLatex: baseLatex,
         relationLatex: '>0',
+        ...relationalMath('Greater', operands[1]),
         message: factMessage(baseLatex, '>0', 'Log base must be positive.'),
         source: 'symbolic-scan',
       });
@@ -361,6 +382,7 @@ function collectSymbolicFacts(node: unknown, facts: EquationNumericDomainFact[],
       kind: 'root-domain',
       expressionLatex: radicandLatex,
       relationLatex: '\\ge0',
+      ...relationalMath('GreaterEqual', operands[0]),
       message: factMessage(radicandLatex, '\\ge0', 'Even root radicand must be nonnegative.'),
       source: 'symbolic-scan',
     });
@@ -374,6 +396,7 @@ function collectSymbolicFacts(node: unknown, facts: EquationNumericDomainFact[],
         kind: 'root-domain',
         expressionLatex: radicandLatex,
         relationLatex: '\\ge0',
+        ...relationalMath('GreaterEqual', operands[0]),
         message: factMessage(radicandLatex, '\\ge0', 'Even root radicand must be nonnegative.'),
         source: 'symbolic-scan',
       });
@@ -388,6 +411,7 @@ function collectSymbolicFacts(node: unknown, facts: EquationNumericDomainFact[],
         kind: 'fractional-power-domain',
         expressionLatex: baseLatex,
         relationLatex: '\\ge0',
+        ...relationalMath('GreaterEqual', operands[0]),
         message: factMessage(baseLatex, '\\ge0', 'Even-denominator fractional powers require nonnegative bases in the real domain.'),
         source: 'symbolic-scan',
       });

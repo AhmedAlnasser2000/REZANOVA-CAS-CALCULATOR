@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "CANONICAL-RESULT-V2-REQUEST-EVIDENCE1 registers the V2 draft adapter and version-paired runtime reads without compatibility or legacy growth.",
+  "acceptedReason": "CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1 migrates reviewed Equation supplement and Table undefined-cell producers to V2 without compatibility or legacy-read growth.",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -386,8 +386,8 @@
       ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
-        "b0d26aa4f45c127d8498:1",
-        "e1700bf94e158f5c6ec2:1"
+        "163401b8d594f6f442c9:1",
+        "4819b592f07a94cb25f1:1"
       ],
       "src/lib/modes/table-result-document.ts": [
         "9708d74d9677fb0670f3:1"
@@ -413,7 +413,7 @@
         "adc15ebcbf4b34ff165a:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
-        "beed7b3ed81dbb23d56f:1",
+        "2180c5ccadd4716ff46e:1",
         "481d01b9855acf48d904:1",
         "c5ea9b6510259df12ebf:1"
       ]

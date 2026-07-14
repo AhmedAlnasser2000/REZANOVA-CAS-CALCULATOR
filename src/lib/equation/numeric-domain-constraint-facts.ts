@@ -56,10 +56,13 @@ export function addSolvedDenominatorExclusions(
   target: string,
 ) {
   for (const root of realRootsForPolynomialLatex(denominatorLatex, target)) {
+    const relationMathJson = ['NotEqual', target, root] as const;
     addFact(facts, {
       kind: 'solved-denominator-exclusion',
       expressionLatex: target,
       relationLatex: `\\ne ${formatApproxNumber(root)}`,
+      relationCanonicalLatex: ce.box(relationMathJson).latex,
+      relationMathJson: [...relationMathJson],
       message: `${target}\\ne ${formatApproxNumber(root)}`,
       source: 'polynomial-boundary',
     });
