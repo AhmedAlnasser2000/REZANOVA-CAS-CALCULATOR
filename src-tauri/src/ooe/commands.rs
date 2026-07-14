@@ -135,7 +135,10 @@ mod tests {
             "trigonometry-worker-runtime",
             "vector-runtime",
             "vector-worker-runtime",
-        ].into_iter().map(String::from).collect::<BTreeSet<_>>();
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect::<BTreeSet<_>>();
 
         assert_eq!(host_ids, expected_host_ids);
     }

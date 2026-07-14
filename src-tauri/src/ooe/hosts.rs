@@ -1,6 +1,4 @@
-use super::{
-    OoeCancellationPolicy, OoeHostId, OoeResultStability, OoeTaskClass, OoeThreadSafety,
-};
+use super::{OoeCancellationPolicy, OoeHostId, OoeResultStability, OoeTaskClass, OoeThreadSafety};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -48,10 +46,8 @@ struct OoeBuiltinHostDefinition {
 }
 
 const EXPLICIT_ONLY: &[OoeTaskClass] = &[OoeTaskClass::Explicit];
-const EDITOR_ANALYSIS_TASKS: &[OoeTaskClass] = &[
-    OoeTaskClass::Deferred,
-    OoeTaskClass::RenderLimited,
-];
+const EDITOR_ANALYSIS_TASKS: &[OoeTaskClass] =
+    &[OoeTaskClass::Deferred, OoeTaskClass::RenderLimited];
 
 const BUILTIN_HOST_DEFINITIONS: &[OoeBuiltinHostDefinition] = &[
     OoeBuiltinHostDefinition {
@@ -322,29 +318,32 @@ mod tests {
             .map(|descriptor| descriptor.host_id.as_str().to_string())
             .collect();
 
-        assert_eq!(host_ids, BTreeSet::from([
-            "calculus-runtime".to_string(),
-            "calculus-worker-runtime".to_string(),
-            "calculate-runtime".to_string(),
-            "calculate-worker-runtime".to_string(),
-            "editor-analysis-runtime".to_string(),
-            "equation-direct-symbolic-worker-runtime".to_string(),
-            "equation-runtime".to_string(),
-            "equation-worker-runtime".to_string(),
-            "expression-runtime".to_string(),
-            "geometry-runtime".to_string(),
-            "geometry-worker-runtime".to_string(),
-            "matrix-runtime".to_string(),
-            "matrix-worker-runtime".to_string(),
-            "statistics-runtime".to_string(),
-            "statistics-worker-runtime".to_string(),
-            "table-runtime".to_string(),
-            "table-worker-runtime".to_string(),
-            "trigonometry-runtime".to_string(),
-            "trigonometry-worker-runtime".to_string(),
-            "vector-runtime".to_string(),
-            "vector-worker-runtime".to_string(),
-        ]));
+        assert_eq!(
+            host_ids,
+            BTreeSet::from([
+                "calculus-runtime".to_string(),
+                "calculus-worker-runtime".to_string(),
+                "calculate-runtime".to_string(),
+                "calculate-worker-runtime".to_string(),
+                "editor-analysis-runtime".to_string(),
+                "equation-direct-symbolic-worker-runtime".to_string(),
+                "equation-runtime".to_string(),
+                "equation-worker-runtime".to_string(),
+                "expression-runtime".to_string(),
+                "geometry-runtime".to_string(),
+                "geometry-worker-runtime".to_string(),
+                "matrix-runtime".to_string(),
+                "matrix-worker-runtime".to_string(),
+                "statistics-runtime".to_string(),
+                "statistics-worker-runtime".to_string(),
+                "table-runtime".to_string(),
+                "table-worker-runtime".to_string(),
+                "trigonometry-runtime".to_string(),
+                "trigonometry-worker-runtime".to_string(),
+                "vector-runtime".to_string(),
+                "vector-worker-runtime".to_string(),
+            ])
+        );
     }
 
     #[test]

@@ -449,7 +449,9 @@ fn validate_current_history_append(entry: &serde_json::Value) -> Result<(), Stri
         "resultDocumentOmissionReason",
     ] {
         if object.contains_key(field) {
-            return Err(format!("History append contains removed legacy field {field}."));
+            return Err(format!(
+                "History append contains removed legacy field {field}."
+            ));
         }
     }
     Ok(())
@@ -491,10 +493,7 @@ fn sanitize_settings(settings: &mut Settings) {
     if settings.language_code != "en" {
         settings.language_code = "en".into();
     }
-    if !matches!(
-        settings.equation_answer_mode.as_str(),
-        "exact" | "isolate"
-    ) {
+    if !matches!(settings.equation_answer_mode.as_str(), "exact" | "isolate") {
         settings.equation_answer_mode = "exact".into();
     }
     if !matches!(settings.equation_domain_intent.as_str(), "real" | "complex") {
@@ -571,10 +570,7 @@ fn load_history_values(state: &AppState) -> Result<Vec<serde_json::Value>, Strin
     Ok(preserve_history_envelopes(history))
 }
 
-fn replace_history_values(
-    entries: Vec<serde_json::Value>,
-    state: &AppState,
-) -> Result<(), String> {
+fn replace_history_values(entries: Vec<serde_json::Value>, state: &AppState) -> Result<(), String> {
     for entry in &entries {
         validate_history_envelope(entry, false)?;
         if !is_future_history_value(entry) {
@@ -861,19 +857,17 @@ fn launcher_categories() -> Vec<LauncherCategory> {
             label: "Calculus".into(),
             description: "Derivatives, integrals, limits, series, ODEs, and partials".into(),
             hotkey: "3".into(),
-            entries: vec![
-                LauncherAppEntry {
-                    id: "calculus".into(),
-                    label: "Calculus".into(),
-                    description: "Unified guided calculus workspace".into(),
-                    hotkey: "1".into(),
-                    launch: LauncherLaunchTarget {
-                        mode: ModeId::Calculus,
-                        advanced_calc_screen: Some("home".into()),
-                        ..LauncherLaunchTarget::default()
-                    },
+            entries: vec![LauncherAppEntry {
+                id: "calculus".into(),
+                label: "Calculus".into(),
+                description: "Unified guided calculus workspace".into(),
+                hotkey: "1".into(),
+                launch: LauncherLaunchTarget {
+                    mode: ModeId::Calculus,
+                    advanced_calc_screen: Some("home".into()),
+                    ..LauncherLaunchTarget::default()
                 },
-            ],
+            }],
         },
         LauncherCategory {
             id: "shapeMath".into(),
@@ -1595,7 +1589,10 @@ fn load_history(state: State<'_, AppState>) -> Result<Vec<serde_json::Value>, St
 }
 
 #[tauri::command]
-fn replace_history(entries: Vec<serde_json::Value>, state: State<'_, AppState>) -> Result<(), String> {
+fn replace_history(
+    entries: Vec<serde_json::Value>,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
     replace_history_values(entries, &state)
 }
 
