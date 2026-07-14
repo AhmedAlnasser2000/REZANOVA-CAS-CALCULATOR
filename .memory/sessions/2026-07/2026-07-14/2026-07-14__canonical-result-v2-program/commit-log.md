@@ -14,8 +14,15 @@
 - verified_by_agent_family: sol
 - attribution_basis: live
 
+## Completed
+
+- `CANONICAL-RESULT-V2-AUDIT0`: `a3fce955`
+  - committed_by_agent: codex
+  - committed_by_agent_model: gpt-5.6
+  - committed_by_agent_family: sol
+
 ## Planned
 
-- `CANONICAL-RESULT-V2-AUDIT0`: verified; standing approval covers commit creation.
-- Remaining seven gates retain standing approval only within the approved roadmap scope.
+- `CANONICAL-RESULT-V2-CONTRACT1`: verified; standing approval covers commit creation.
+- The six gates after Contract1 retain standing approval only within the approved roadmap scope.
 - No push is authorized.

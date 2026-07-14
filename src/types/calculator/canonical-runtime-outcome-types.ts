@@ -1,4 +1,8 @@
 import type { CanonicalMathValueV1, CanonicalResultDocumentV1 } from './canonical-result-types';
+import type {
+  CanonicalMathValueV2,
+  CanonicalResultDocumentV2,
+} from './canonical-result-v2-types';
 import type { TransferTarget } from './execution-types';
 import type { ModeId } from './mode-types';
 import type { RuntimeAdvisories } from './runtime-policy-types';
@@ -25,6 +29,20 @@ export type CanonicalRuntimeActionV1 =
       math: CanonicalMathValueV1;
     };
 
+export type CanonicalRuntimeActionV2 =
+  | {
+      version: 2;
+      kind: 'send';
+      target: TransferTarget;
+      math: CanonicalMathValueV2;
+    }
+  | {
+      version: 2;
+      kind: 'load-core-draft';
+      mode: 'geometry' | 'trigonometry' | 'statistics';
+      math: CanonicalMathValueV2;
+    };
+
 type CanonicalRuntimeResultBase = {
   canonicalResult: CanonicalResultDocumentV1;
   actions?: CanonicalRuntimeActionV1[];
@@ -35,4 +53,19 @@ export type CanonicalRuntimeResultOutcome =
   | (CanonicalRuntimeResultBase & { kind: 'success' })
   | (CanonicalRuntimeResultBase & { kind: 'error' });
 
+type CanonicalRuntimeResultBaseV2 = {
+  canonicalResult: CanonicalResultDocumentV2;
+  actions?: CanonicalRuntimeActionV2[];
+  runtimeAdvisories?: RuntimeAdvisories;
+};
+
+export type CanonicalRuntimeResultOutcomeV2 =
+  | (CanonicalRuntimeResultBaseV2 & { kind: 'success' })
+  | (CanonicalRuntimeResultBaseV2 & { kind: 'error' });
+
+export type CanonicalRuntimeVersionedResultOutcome =
+  | CanonicalRuntimeResultOutcome
+  | CanonicalRuntimeResultOutcomeV2;
+
+// Live producers remain V1 until the normalized runtime/consumer gate.
 export type CanonicalRuntimeOutcome = CanonicalRuntimeResultOutcome | PromptOutcome;

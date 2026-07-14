@@ -1,6 +1,7 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   CanonicalMathValueV1,
+  CanonicalMathValueV2,
   SerializableMathJson,
 } from '../../types/calculator';
 import {
@@ -13,6 +14,7 @@ import type { MathJsonRouteId } from './mathjson-route-registry';
 
 declare const producerOwnedCandidateBrand: unique symbol;
 declare const provenAnswerMathJsonBrand: unique symbol;
+declare const provenStandardAnswerMathJsonBrand: unique symbol;
 
 export type ProducerOwnedAnswerMathJsonCandidate = {
   readonly mathJson: unknown;
@@ -29,8 +31,16 @@ export type ProvenAnswerMathJson = SerializableMathJson & {
   readonly [provenAnswerMathJsonBrand]: true;
 };
 
+export type ProvenStandardAnswerMathJson = ProvenAnswerMathJson & {
+  readonly [provenStandardAnswerMathJsonBrand]: true;
+};
+
 export type ProvenCanonicalMathValue = Omit<CanonicalMathValueV1, 'mathJson'> & {
   mathJson: ProvenAnswerMathJson;
+};
+
+export type ProvenCanonicalMathValueV2 = Omit<CanonicalMathValueV2, 'mathJson'> & {
+  mathJson: ProvenStandardAnswerMathJson;
 };
 
 export type ProvenAnswerMathJsonEvidence = {
@@ -45,6 +55,13 @@ export type ProvenAnswerMathJsonEvidence = {
   semanticRelation: 'structural' | 'equal' | 'simplified';
   serializedLatex: string;
   printerSource: 'math-json' | 'compatibility-fallback';
+};
+
+export type ProvenStandardAnswerMathJsonEvidence = Omit<
+  ProvenAnswerMathJsonEvidence,
+  'mathJson'
+> & {
+  mathJson: ProvenStandardAnswerMathJson;
 };
 
 export type ProvenAnswerMathJsonFailure = {
@@ -66,7 +83,17 @@ export type ProvenAnswerMathJsonResult =
   | { ok: true; evidence: ProvenAnswerMathJsonEvidence }
   | { ok: false; failure: ProvenAnswerMathJsonFailure };
 
+export type ProvenStandardAnswerMathJsonFailure = ProvenAnswerMathJsonFailure | {
+  reason: 'custom-operator';
+  message: string;
+};
+
+export type ProvenStandardAnswerMathJsonResult =
+  | { ok: true; evidence: ProvenStandardAnswerMathJsonEvidence }
+  | { ok: false; failure: ProvenStandardAnswerMathJsonFailure };
+
 const PRIVATE_OPERATOR_PREFIXES = ['Calcwiz', 'Rezanova'] as const;
+const standardOperatorEngine = new ComputeEngine();
 
 function failure(
   reason: ProvenAnswerMathJsonFailure['reason'],
@@ -92,6 +119,32 @@ function privateOperator(value: unknown): string | undefined {
       if (
         typeof operator === 'string'
         && PRIVATE_OPERATOR_PREFIXES.some((prefix) => operator.startsWith(prefix))
+      ) {
+        return operator;
+      }
+      pending.push(...operands);
+      continue;
+    }
+    if (current && typeof current === 'object') {
+      const record = current as Record<string, unknown>;
+      if (Array.isArray(record.fn)) pending.push(record.fn);
+      if (record.dict && typeof record.dict === 'object') {
+        pending.push(...Object.values(record.dict));
+      }
+    }
+  }
+  return undefined;
+}
+
+export function findCustomMathJsonOperator(value: unknown): string | undefined {
+  const pending = [value];
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (Array.isArray(current)) {
+      const [operator, ...operands] = current;
+      if (
+        typeof operator === 'string'
+        && standardOperatorEngine.lookupDefinition(operator) === undefined
       ) {
         return operator;
       }
@@ -238,6 +291,62 @@ export function proveAnswerMathJson(input: {
       printerSource: printed.source === 'math-json' ? 'math-json' : 'compatibility-fallback',
     },
   };
+}
+
+export function proveStandardAnswerMathJson(input: {
+  canonicalLatex: string;
+  candidate: ProducerOwnedAnswerMathJsonCandidate;
+}): ProvenStandardAnswerMathJsonResult {
+  const result = proveAnswerMathJson(input);
+  if (!result.ok) return result;
+  const customOperator = findCustomMathJsonOperator(result.evidence.mathJson);
+  if (customOperator) {
+    return {
+      ok: false,
+      failure: {
+        reason: 'custom-operator',
+        message: `V2 answer MathJSON uses the non-standard operator ${customOperator}.`,
+      },
+    };
+  }
+  return {
+    ok: true,
+    evidence: {
+      ...result.evidence,
+      mathJson: result.evidence.mathJson as ProvenStandardAnswerMathJson,
+    },
+  };
+}
+
+export function canonicalMathValueV2FromProof(
+  evidence: ProvenStandardAnswerMathJsonEvidence,
+): ProvenCanonicalMathValueV2 {
+  return {
+    canonicalLatex: evidence.canonicalLatex,
+    mathJson: evidence.mathJson,
+  };
+}
+
+export function requireProvenCanonicalMathValueV2(input: {
+  canonicalLatex: string;
+  mathJson: unknown;
+  owner: HistoryReplayWorkspace;
+  routeId: MathJsonRouteId;
+  source: string;
+}): ProvenCanonicalMathValueV2 {
+  const result = proveStandardAnswerMathJson({
+    canonicalLatex: input.canonicalLatex,
+    candidate: declareProducerOwnedAnswerMathJson({
+      mathJson: input.mathJson,
+      owner: input.owner,
+      routeId: input.routeId,
+      source: input.source,
+    }),
+  });
+  if (result.ok) return canonicalMathValueV2FromProof(result.evidence);
+  throw new Error(
+    `V2 producer MathJSON proof failed for ${input.routeId}: ${result.failure.reason}: ${result.failure.message}`,
+  );
 }
 
 export function canonicalMathValueFromProof(

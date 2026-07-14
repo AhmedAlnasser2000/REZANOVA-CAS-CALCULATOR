@@ -85,7 +85,7 @@ function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string');
 }
 
-function validateAdvisories(value: unknown): value is RuntimeAdvisories {
+export function validateRuntimeAdvisories(value: unknown): value is RuntimeAdvisories {
   if (!isRecord(value) || !hasOnlyKeys(value, ['stopReason', 'equationNumericSolve'])) {
     return false;
   }
@@ -204,7 +204,7 @@ function validatePrompt(value: Record<string, unknown>): CanonicalRuntimeOutcome
   ) {
     return fail('invalid-outcome', 'Prompt outcome shape is invalid.', '$');
   }
-  if (value.runtimeAdvisories !== undefined && !validateAdvisories(value.runtimeAdvisories)) {
+  if (value.runtimeAdvisories !== undefined && !validateRuntimeAdvisories(value.runtimeAdvisories)) {
     return fail('invalid-advisories', 'Prompt runtime advisories are invalid.', '$.runtimeAdvisories');
   }
   return {
@@ -269,7 +269,7 @@ export function validateCanonicalRuntimeOutcome(
       '$.kind',
     );
   }
-  if (value.runtimeAdvisories !== undefined && !validateAdvisories(value.runtimeAdvisories)) {
+  if (value.runtimeAdvisories !== undefined && !validateRuntimeAdvisories(value.runtimeAdvisories)) {
     return fail('invalid-advisories', 'Runtime advisories are invalid.', '$.runtimeAdvisories');
   }
 

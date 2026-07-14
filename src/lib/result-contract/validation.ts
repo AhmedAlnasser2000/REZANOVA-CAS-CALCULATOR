@@ -32,7 +32,9 @@ export type CanonicalResultValidationFailure = {
     | 'depth-limit'
     | 'byte-limit'
     | 'invalid-shape'
-    | 'invalid-math-json';
+    | 'invalid-math-json'
+    | 'custom-math-json-operator'
+    | 'unsupported-version';
   message: string;
   path?: string;
   mathJsonFailure?: MathJsonValidationFailure;
@@ -164,7 +166,7 @@ const trustEvidenceSchema = z.object({
     end: nonEmptyString,
   }).strict().optional(),
 }).strict();
-const metadataSchema = z.object({
+export const canonicalResultMetadataSchemaV1 = z.object({
   answerMode: z.enum(['exact', 'approximate', 'isolate']).optional(),
   answerDomain: z.enum(['real', 'complex', 'conditional-real', 'unknown-domain']).optional(),
   solutionKind: z.enum([
@@ -302,7 +304,7 @@ const canonicalResultDocumentSchema = z.object({
   details: z.array(detailSectionSchema).optional(),
   summaries: summariesSchema.optional(),
   warnings: z.array(z.string()),
-  metadata: metadataSchema.optional(),
+  metadata: canonicalResultMetadataSchemaV1.optional(),
   table: tableSchema.optional(),
 }).strict().superRefine((document, context) => {
   if (document.outcomeKind === 'error' && document.error === undefined) {
@@ -396,3 +398,5 @@ export function validateCanonicalResultDocument(
     },
   };
 }
+
+export const validateCanonicalResultDocumentV1 = validateCanonicalResultDocument;
