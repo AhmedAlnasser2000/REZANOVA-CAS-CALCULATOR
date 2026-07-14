@@ -249,6 +249,55 @@ describe('NotebookPage', () => {
     expect(within(toolbar).getByRole('button', { name: 'Add section' })).toBeVisible();
   });
 
+  it('keeps the Outline and Inspector independent when either desktop rail closes', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+
+    await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
+    await user.click(within(screen.getByRole('menu', { name: 'Academic containers' }))
+      .getByRole('menuitem', { name: /Theorem/ }));
+    await user.click(within(await screen.findByTestId('notebook-semantic-theorem')).getByText('Theorem'));
+
+    const workbench = screen.getByTestId('notebook-canvas').parentElement!;
+    expect(screen.getByTestId('notebook-inspector')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Close Notebook outline' }));
+    expect(workbench).toHaveClass('is-outline-collapsed');
+    expect(screen.queryByRole('separator', { name: 'Resize Notebook outline' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('notebook-inspector')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Restore Notebook outline' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Restore Notebook outline' }));
+    expect(workbench).not.toHaveClass('is-outline-collapsed');
+    expect(screen.getByRole('separator', { name: 'Resize Notebook outline' })).toBeInTheDocument();
+
+    await user.click(within(screen.getByTestId('notebook-inspector'))
+      .getByRole('button', { name: 'Close block inspector' }));
+    expect(workbench).toHaveClass('is-inspector-collapsed');
+    expect(screen.getByLabelText('Notebook outline')).toBeInTheDocument();
+  });
+
+  it('uses one selection-preserving paragraph style menu for Normal and heading levels', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+    const canvas = await screen.findByLabelText('Notebook rich document');
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+
+    await user.click(canvas);
+    await user.type(canvas, 'Chapter title');
+    await user.click(within(toolbar).getByRole('button', { name: 'Paragraph style: Normal' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Heading 2' }));
+    expect(canvas.querySelector('h2')).toHaveTextContent('Chapter title');
+    expect(within(toolbar).getByRole('button', { name: 'Paragraph style: Heading 2' })).toBeInTheDocument();
+
+    await user.keyboard('{Enter}Body text');
+    await user.keyboard('{Control>}a{/Control}');
+    expect(within(toolbar).getByRole('button', { name: 'Paragraph style: Mixed' })).toBeInTheDocument();
+    await user.click(within(toolbar).getByRole('button', { name: 'Paragraph style: Mixed' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Normal' }));
+    expect(canvas.querySelector('h1, h2, h3')).toBeNull();
+    expect(canvas).toHaveTextContent('Chapter titleBody text');
+  });
+
   it('opens supported display math in the selected workspace', async () => {
     const user = userEvent.setup();
     const onOpenMathInTool = vi.fn();

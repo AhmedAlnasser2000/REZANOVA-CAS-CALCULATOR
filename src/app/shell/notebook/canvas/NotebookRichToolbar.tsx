@@ -6,8 +6,6 @@ import {
   ChevronDown,
   FolderPlus,
   Heading1,
-  Heading2,
-  Heading3,
   Highlighter,
   Italic,
   List,
@@ -29,6 +27,43 @@ import {
 import { useNotebookTransientLayer } from '../transient-ui';
 import type { NotebookPaletteMode } from './NotebookSelectionToolbar';
 import { NotebookFontSizeControl } from './NotebookFontSizeControl';
+
+type NotebookParagraphStyle = 'normal' | 'heading-1' | 'heading-2' | 'heading-3' | 'mixed';
+
+const PARAGRAPH_STYLE_LABELS: Record<NotebookParagraphStyle, string> = {
+  normal: 'Normal',
+  'heading-1': 'Heading 1',
+  'heading-2': 'Heading 2',
+  'heading-3': 'Heading 3',
+  mixed: 'Mixed',
+};
+
+function paragraphStyleForNode(node: { type: { name: string }; attrs: Record<string, unknown> }) {
+  if (node.type.name !== 'heading') {
+    return node.type.name === 'paragraph' ? 'normal' : null;
+  }
+  const level = node.attrs.level;
+  return level === 2 || level === 3 ? `heading-${level}` as const : 'heading-1';
+}
+
+function activeParagraphStyle(editor: Editor): NotebookParagraphStyle {
+  const { doc, selection } = editor.state;
+  const styles = new Set<Exclude<NotebookParagraphStyle, 'mixed'>>();
+  if (selection.empty) {
+    const style = paragraphStyleForNode(selection.$from.parent);
+    return style ?? 'normal';
+  }
+  doc.nodesBetween(selection.from, selection.to, (node) => {
+    const style = paragraphStyleForNode(node);
+    if (style) {
+      styles.add(style);
+    }
+  });
+  if (styles.size === 0) {
+    return 'normal';
+  }
+  return styles.size === 1 ? [...styles][0]! : 'mixed';
+}
 
 function activeFontSize(editor: Editor) {
   const value = editor.getAttributes('textStyle').fontSize;
@@ -98,6 +133,19 @@ export function NotebookRichToolbar({
   onRequestPalette: (mode: NotebookPaletteMode) => void;
 }) {
   const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
+  const paragraphStyleMenu = useNotebookTransientLayer({ id: 'notebook-paragraph-style-menu' });
+  const paragraphStyle = activeParagraphStyle(editor);
+
+  function applyParagraphStyle(style: Exclude<NotebookParagraphStyle, 'mixed'>) {
+    const chain = editor.chain().focus();
+    if (style === 'normal') {
+      chain.setParagraph().run();
+    } else {
+      const level = Number(style.at(-1)) as 1 | 2 | 3;
+      chain.setHeading({ level }).run();
+    }
+    paragraphStyleMenu.close(false);
+  }
 
   return (
     <div className="notebook-rich-toolbar" aria-label="Notebook formatting toolbar">
@@ -154,21 +202,44 @@ export function NotebookRichToolbar({
         </div>
       </RibbonGroup>
       <RibbonGroup label="Structure">
-        <ToolButton
-          active={editor.isActive('heading', { level: 1 })}
-          label="Heading 1"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        ><Heading1 size={17} /></ToolButton>
-        <ToolButton
-          active={editor.isActive('heading', { level: 2 })}
-          label="Heading 2"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        ><Heading2 size={17} /></ToolButton>
-        <ToolButton
-          active={editor.isActive('heading', { level: 3 })}
-          label="Heading 3"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        ><Heading3 size={17} /></ToolButton>
+        <div className="notebook-paragraph-style">
+          <button
+            data-notebook-transient-trigger={paragraphStyleMenu.id}
+            type="button"
+            className={paragraphStyle.startsWith('heading') ? 'is-active' : undefined}
+            aria-label={`Paragraph style: ${PARAGRAPH_STYLE_LABELS[paragraphStyle]}`}
+            aria-haspopup="menu"
+            aria-expanded={paragraphStyleMenu.isOpen}
+            title="Paragraph style"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={paragraphStyleMenu.toggle}
+          >
+            <Heading1 aria-hidden="true" size={16} />
+            <span>{PARAGRAPH_STYLE_LABELS[paragraphStyle]}</span>
+            <ChevronDown aria-hidden="true" size={12} />
+          </button>
+          {paragraphStyleMenu.isOpen ? (
+            <div
+              data-notebook-transient-layer={paragraphStyleMenu.id}
+              className="notebook-paragraph-style-menu"
+              role="menu"
+              aria-label="Paragraph styles"
+            >
+              {(['normal', 'heading-1', 'heading-2', 'heading-3'] as const).map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={paragraphStyle === style}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyParagraphStyle(style)}
+                >
+                  {PARAGRAPH_STYLE_LABELS[style]}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <ToolButton
           label="Add section"
           onClick={() => insertNotebookSection(editor)}

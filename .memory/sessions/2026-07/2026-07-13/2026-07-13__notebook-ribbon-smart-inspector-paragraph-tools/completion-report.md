@@ -26,6 +26,7 @@
 | --- | --- | --- |
 | `NOTEBOOK-RIBBON-ARCHITECTURE1` | ui | verified; committed in this checkpoint |
 | `NOTEBOOK-SMART-INSPECTOR1` | ui | verified; committed in this checkpoint |
+| `NOTEBOOK-RIBBON-RAIL-FIXES1` | ui | verified; ready for selective commit |
 | `NOTEBOOK-PARAGRAPH-TOOLS1` | ui | pending |
 
 ## NOTEBOOK-SMART-INSPECTOR1 Outcome
@@ -35,3 +36,11 @@
 - The Outline remains manual-only. Collapsed desktop rails release their grid width; narrow drawers remain mutually exclusive.
 - Academic-container headers and empty bodies select on one click while editable content remains directly accessible.
 - The output-inversion pause remains unchanged. `NOTEBOOK-PARAGRAPH-TOOLS1` is the next program gate.
+
+## NOTEBOOK-RIBBON-RAIL-FIXES1 Outcome
+
+- Desktop Outline collapse now removes the mounted pane from layout and accessibility exposure while retaining it for narrow drawer behavior.
+- Outline collapse/removal never mutates Inspector state. Outline restores only on the left and Inspector only on the right; closing both releases both rail widths.
+- The three heading buttons are now one selection-preserving paragraph-style menu for Normal and Heading 1 through Heading 3, including a neutral Mixed label for heterogeneous selections.
+- Heading semantics and Outline depth remain unchanged; Sections and Academic Containers remain separate structural controls.
+- The Notebook-facing result-projection pause remains unchanged. `NOTEBOOK-PARAGRAPH-TOOLS1` remains the next program gate.

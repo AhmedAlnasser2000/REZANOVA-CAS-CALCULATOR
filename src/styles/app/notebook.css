@@ -37,6 +37,10 @@
 }
 
 @media (min-width: 1161px) {
+  .notebook-page-workbench.is-outline-collapsed > .notebook-outline {
+    display: none;
+  }
+
   .notebook-page-workbench.is-outline-collapsed {
     grid-template-columns:
       minmax(460px, 1fr)

@@ -164,6 +164,51 @@
   position: relative;
 }
 
+.notebook-paragraph-style {
+  position: relative;
+}
+
+.notebook-rich-toolbar .notebook-paragraph-style > button {
+  grid-auto-flow: column;
+  grid-template-columns: auto minmax(64px, auto) auto;
+  width: auto;
+  gap: 6px;
+  padding: 0 8px;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.notebook-paragraph-style-menu {
+  position: absolute;
+  z-index: 31;
+  top: calc(100% + 9px);
+  left: 0;
+  width: 180px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 7px;
+  padding: 7px;
+  background: #102021;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.42);
+}
+
+.notebook-rich-toolbar .notebook-paragraph-style-menu button {
+  width: 100%;
+  height: auto;
+  min-height: 34px;
+  display: flex;
+  justify-content: flex-start;
+  padding: 6px 9px;
+  text-align: left;
+}
+
+.notebook-paragraph-style-menu button[aria-checked='true'] {
+  border-color: var(--notebook-border-strong);
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
+}
+
 .notebook-semantic-menu {
   position: absolute;
   z-index: 30;
