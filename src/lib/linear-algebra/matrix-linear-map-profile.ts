@@ -18,6 +18,11 @@ import {
   type ExactColumnFamilyAnalysis,
 } from './matrix-column-family';
 import { profileLinearAlgebraResult } from '../display/printer';
+import {
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../display/result-detail-lines';
 
 export type MatrixLinearMapProfileInput = {
   label: string;
@@ -29,18 +34,19 @@ function profileStop(message: string): MatrixResponse {
   return { warnings: [], error: message };
 }
 
-function subspaceLatex(vectors: readonly ExactVector[]) {
+function vectorSetLatex(vectors: readonly ExactVector[]) {
   return vectors.length > 0
-    ? `\\operatorname{span}\\left\\{${vectors.map(exactVectorToColumnLatex).join(',')}\\right\\}`
-    : '\\{0\\}';
+    ? `\\left\\{${vectors.map(exactVectorToColumnLatex).join(',')}\\right\\}`
+    : '\\varnothing';
 }
 
-function pivotColumnsLatex(columns: readonly number[]) {
-  return columns.length > 0 ? columns.map((column) => column + 1).join(',') : '\\text{none}';
+function pivotColumnSetLatex(columns: readonly number[]) {
+  return columns.length > 0
+    ? `\\left\\{${columns.map((column) => column + 1).join(',')}\\right\\}`
+    : '\\varnothing';
 }
 
 function profileFacts(
-  input: MatrixLinearMapProfileInput,
   analysis: ExactColumnFamilyAnalysis,
 ): DisplayDetailSection[] {
   const rows = analysis.matrix.length;
@@ -48,42 +54,41 @@ function profileFacts(
   const oneToOne = analysis.nullity === 0;
   const onto = analysis.rank === rows;
   return [
-    {
-      title: 'Rank-Nullity Facts',
-      lines: [
-        `\\operatorname{rank}(${input.label})+\\operatorname{nullity}(${input.label})=${columns}`,
-        `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(analysis.pivotColumns)}\\}`,
-        'Rank counts independent output directions; nullity counts independent input directions that map to zero.',
+    mixedDetailSection('Rank-Nullity Facts', [
+      [
+        textPart('Rank-nullity: '),
+        mathPart(`${analysis.rank}+${analysis.nullity}=${columns}`),
       ],
-      lineKinds: ['math', 'math', 'text'],
-    },
-    {
-      title: 'Kernel',
-      lines: [
-        `\\ker(${input.label})=${subspaceLatex(analysis.kernelBasis)}`,
-        `\\operatorname{one\\text{-}to\\text{-}one}(${input.label})=\\text{${oneToOne ? 'Yes' : 'No'}}`,
-        oneToOne
-          ? 'Nullity is 0, so only the zero vector maps to zero.'
-          : `Nullity is ${analysis.nullity}, so nonzero vectors in the kernel map to zero.`,
+      [
+        textPart('Pivot columns: '),
+        mathPart(pivotColumnSetLatex(analysis.pivotColumns)),
       ],
-      lineKinds: ['math', 'math', 'text'],
-    },
-    {
-      title: 'Image',
-      lines: [
-        `\\operatorname{Im}(${input.label})=${subspaceLatex(analysis.imageBasis)}`,
-        `\\operatorname{onto}(${input.label})=\\text{${onto ? 'Yes' : 'No'}}`,
-        onto
-          ? 'The rank equals the codomain dimension, so every codomain vector is reached.'
-          : `The rank is ${analysis.rank}, smaller than the codomain dimension ${rows}, so some codomain directions are not reached.`,
+      [textPart('Rank counts independent output directions; nullity counts independent input directions that map to zero.')],
+    ]),
+    mixedDetailSection('Kernel', [
+      [
+        textPart('Kernel spanning set: '),
+        mathPart(vectorSetLatex(analysis.kernelBasis)),
       ],
-      lineKinds: ['math', 'math', 'text'],
-    },
+      [textPart(`One-to-one: ${oneToOne ? 'yes' : 'no'}.`)],
+      [textPart(oneToOne
+        ? 'Nullity is 0, so only the zero vector maps to zero.'
+        : `Nullity is ${analysis.nullity}, so nonzero vectors in the kernel map to zero.`)],
+    ]),
+    mixedDetailSection('Image', [
+      [
+        textPart('Image spanning set: '),
+        mathPart(vectorSetLatex(analysis.imageBasis)),
+      ],
+      [textPart(`Onto: ${onto ? 'yes' : 'no'}.`)],
+      [textPart(onto
+        ? 'The rank equals the codomain dimension, so every codomain vector is reached.'
+        : `The rank is ${analysis.rank}, smaller than the codomain dimension ${rows}, so some codomain directions are not reached.`)],
+    ]),
   ];
 }
 
 function invertibilityFacts(
-  input: MatrixLinearMapProfileInput,
   analysis: ExactColumnFamilyAnalysis,
 ): DisplayDetailSection | MatrixResponse {
   const rows = analysis.matrix.length;
@@ -104,17 +109,16 @@ function invertibilityFacts(
     return profileStop('This profile could not compute the square-matrix determinant exactly.');
   }
   const invertible = !exactScalarIsZero(determinant.determinant);
-  return {
-    title: 'Invertibility',
-    lines: [
-      `\\det(${input.label})=${exactScalarToLatex(determinant.determinant)}`,
-      `\\operatorname{invertible}(${input.label})=\\text{${invertible ? 'Yes' : 'No'}}`,
-      invertible
-        ? 'The determinant is nonzero, so the map is both one-to-one and onto.'
-        : 'The determinant is zero, so the square matrix is not invertible.',
+  return mixedDetailSection('Invertibility', [
+    [
+      textPart('Determinant: '),
+      mathPart(exactScalarToLatex(determinant.determinant)),
     ],
-    lineKinds: ['math', 'math', 'text'],
-  };
+    [textPart(`Invertible: ${invertible ? 'yes' : 'no'}.`)],
+    [textPart(invertible
+      ? 'The determinant is nonzero, so the map is both one-to-one and onto.'
+      : 'The determinant is zero, so the square matrix is not invertible.')],
+  ]);
 }
 
 export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): MatrixResponse {
@@ -131,7 +135,7 @@ export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): M
   }
   const rows = exactMatrix.length;
   const columns = exactMatrix[0]?.length ?? 0;
-  const invertibility = invertibilityFacts(input, analysis);
+  const invertibility = invertibilityFacts(analysis);
   if ('warnings' in invertibility) return invertibility;
 
   const mapLatex = `${input.label}:\\mathbb{R}^{${columns}}\\to\\mathbb{R}^{${rows}}`;
@@ -145,17 +149,19 @@ export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): M
       ],
     },
     detailSections: [
-      ...profileFacts(input, analysis),
+      ...profileFacts(analysis),
       invertibility,
-      {
-        title: 'RREF Evidence',
-        lines: [
-          `\\operatorname{rref}(${input.label})=${exactMatrixToLatex(analysis.rref)}`,
-          `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(analysis.pivotColumns)}\\}`,
-          'The pivot columns determine rank and image; the free columns determine nullity and the kernel basis.',
+      mixedDetailSection('RREF Evidence', [
+        [
+          textPart('RREF: '),
+          mathPart(exactMatrixToLatex(analysis.rref)),
         ],
-        lineKinds: ['math', 'math', 'text'],
-      },
+        [
+          textPart('Pivot columns: '),
+          mathPart(pivotColumnSetLatex(analysis.pivotColumns)),
+        ],
+        [textPart('The pivot columns determine rank and image; the free columns determine nullity and the kernel basis.')],
+      ]),
     ],
     warnings: [],
   });

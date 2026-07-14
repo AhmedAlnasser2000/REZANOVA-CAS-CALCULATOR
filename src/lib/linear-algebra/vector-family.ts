@@ -21,6 +21,11 @@ import {
   exactMatrixFromColumnVectors,
   type ExactColumnFamilyAnalysis,
 } from './matrix-column-family';
+import {
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../display/result-detail-lines';
 
 function vectorFamilyStop(message: string): VectorResponse {
   return { warnings: [], error: message };
@@ -49,10 +54,17 @@ function familyCall(name: string, labels: readonly string[]) {
   return `\\operatorname{${name}}\\left(${labels.join(',')}\\right)`;
 }
 
-function pivotColumnsLatex(pivotColumns: readonly number[]) {
+function pivotColumnSetLatex(pivotColumns: readonly number[]) {
   return pivotColumns.length > 0
-    ? pivotColumns.map((column) => column + 1).join(',')
-    : '\\text{none}';
+    ? `\\left\\{${pivotColumns.map((column) => column + 1).join(',')}\\right\\}`
+    : '\\varnothing';
+}
+
+function selectedBasisSetLatex(labels: readonly string[], pivotColumns: readonly number[]) {
+  const selected = pivotColumns.map((column) => labels[column]);
+  return selected.length > 0
+    ? `\\left\\{${selected.join(',')}\\right\\}`
+    : '\\varnothing';
 }
 
 function selectedBasisLatex(labels: readonly string[], pivotColumns: readonly number[]) {
@@ -134,31 +146,28 @@ function familyDetailSections(
   analysis: ExactColumnFamilyAnalysis,
   labels: readonly string[],
 ): DisplayDetailSection[] {
-  const selected = analysis.pivotColumns.map((column) => labels[column]);
   return [
-    {
-      title: 'Span Facts',
-      lines: [
-        `\\dim\\operatorname{span}\\left(${labels.join(',')}\\right)=${analysis.rank}`,
-        `\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(analysis.pivotColumns)}\\}`,
-        `\\operatorname{basis\\ selected}=\\left\\{${selected.join(',')}\\right\\}`,
-        ...analysis.pivotColumns.map((column, index) => (
-          `b_{${index + 1}}=${labels[column]}=${exactVectorToColumnLatex(analysis.imageBasis[index])}`
-        )),
+    mixedDetailSection('Span Facts', [
+      [textPart('Span dimension: '), mathPart(`${analysis.rank}`)],
+      [
+        textPart('Pivot columns: '),
+        mathPart(pivotColumnSetLatex(analysis.pivotColumns)),
       ],
-      lineKind: 'math',
-    },
+      [
+        textPart('Selected basis: '),
+        mathPart(selectedBasisSetLatex(labels, analysis.pivotColumns)),
+      ],
+      ...analysis.pivotColumns.map((column, index) => [mathPart(
+        `b_{${index + 1}}=${labels[column]}=${exactVectorToColumnLatex(analysis.imageBasis[index])}`,
+      )]),
+    ]),
     ...relationDetails(analysis, labels),
-    {
-      title: 'RREF Evidence',
-      lines: [
-        `\\operatorname{rref}\\left(\\left[${labels.join('\\;')}\\right]\\right)=${exactMatrixToLatex(analysis.rref)}`,
-        analysis.nullity === 0
-          ? 'Every input column is a pivot column, so the vector family is linearly independent.'
-          : `${analysis.nullity} free coefficient${analysis.nullity === 1 ? ' produces' : 's produce'} nonzero dependence relations.`,
-      ],
-      lineKinds: ['math', 'text'],
-    },
+    mixedDetailSection('RREF Evidence', [
+      [textPart('RREF: '), mathPart(exactMatrixToLatex(analysis.rref))],
+      [textPart(analysis.nullity === 0
+        ? 'Every input column is a pivot column, so the vector family is linearly independent.'
+        : `${analysis.nullity} free coefficient${analysis.nullity === 1 ? ' produces' : 's produce'} nonzero dependence relations.`)],
+    ]),
   ];
 }
 

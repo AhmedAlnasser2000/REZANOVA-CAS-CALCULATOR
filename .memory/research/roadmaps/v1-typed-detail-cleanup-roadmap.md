@@ -2,7 +2,7 @@
 
 Date: 2026-07-14
 Last updated: 2026-07-14
-Status: active; Moves 1-3 verified, with Move 3 approved and awaiting commit creation; no push is authorized
+Status: active; Moves 1-3 committed and Move 4 verified under the user's standing approval; no push is authorized
 
 ## Attribution
 
@@ -42,8 +42,8 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 
 1. `V1-TYPED-DETAIL-CALCULUS1`: committed as `b7e2f081`. Calculus coverage moved to 460 leaves, 410 proven, 50 exempt, and zero missing. `calculus.derivatives` moved from 14 to 2 exemptions and `calculus.partials` from 2 to 0.
 2. `V1-TYPED-DETAIL-TRIGONOMETRY1`: committed as `f083d222`. Coverage is 459 leaves, 416 proven, 43 exempt, and zero missing. `trigonometry.period-phase` moved from 14/6/8/0 to 13/12/1/0; the removed leaf is the carrier classification, now correctly prose.
-3. `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: verified; approved and awaiting commit creation. Coverage is 460 leaves, 420 proven, 40 exempt, and zero missing. `matrix.linear-system` moved from 11/4/7/0 to 12/8/4/0, retaining only the four row-operation arrows.
-4. `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: pending. Target `matrix.profile` from 17 to 4 and `vector.span-independence` from 6 to 2.
+3. `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: committed as `67e101e7`. Coverage is 460 leaves, 420 proven, 40 exempt, and zero missing. `matrix.linear-system` moved from 11/4/7/0 to 12/8/4/0, retaining only the four row-operation arrows.
+4. `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: verified; approved and awaiting commit creation. Coverage is 455 leaves, 432 proven, 23 exempt, and zero missing. `matrix.profile` is 21/17/4/0 and `vector.span-independence` is 10/8/2/0.
 5. `V1-TYPED-DETAIL-CLOSEOUT0`: pending. Remove obsolete exemption rules, accept exactly 23 exemptions and zero missing classifications, and close the fixtures, print-hygiene, memory, and visual evidence.
 
 ## Move 1 Evidence
@@ -69,6 +69,14 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 - Focused Matrix tests, all 63 result-contract tests, the 100-fixture replay harness, all 43 golden and 100 replay intent executions, TypeScript, lint, file-size, and diff hygiene pass.
 - The display-inversion baseline refresh accepts only three moved Matrix owner-assembly fingerprints; authority counts remain unchanged with zero compatibility projections and zero legacy reads.
 - One-worker Chromium inspection covers expanded proof/rank/RREF details, collapsed row operations, History replay, and overflow. This compact result exposes no Formula Viewer control.
+
+## Move 4 Evidence
+
+- Matrix profile rank-nullity, pivot, kernel, image, determinant, and RREF facts now use prose labels around producer-owned native values; classification sentences remain prose.
+- Vector span dimension, pivot columns, selected basis, and RREF evidence now use typed math parts while exact basis-vector and dependence-relation rows retain their established math structure.
+- Coverage reaches the final 23-exemption floor with zero missing classifications before obsolete registry rules are removed.
+- Focused Matrix/Vector tests, result contracts, all 43 golden and 100 replay intent executions, TypeScript, lint, file-size, production build, and diff hygiene pass.
+- One-worker Chromium inspection covers Vector span/independence, singular and rectangular Matrix profiles, readable compact History replay, overflow, and Formula Viewer absence.
 
 ## Verification Policy
 

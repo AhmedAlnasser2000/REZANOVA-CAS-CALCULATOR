@@ -217,6 +217,28 @@ function profileOperandMathJson(label: string, matrix: ExactMatrix) {
   return /^[A-Za-z][A-Za-z0-9_]*$/u.test(label) ? label : undefined;
 }
 
+function exactVectorSetLatex(vectors: readonly ExactVector[]) {
+  return vectors.length > 0
+    ? `\\left\\{${vectors.map(exactVectorToColumnLatex).join(',')}\\right\\}`
+    : '\\varnothing';
+}
+
+function exactVectorSetMathJson(vectors: readonly ExactVector[]) {
+  return vectors.length > 0
+    ? ['Set', ...vectors.map(exactVectorMathJson)]
+    : 'EmptySet';
+}
+
+function indexSetLatex(indices: readonly number[]) {
+  return indices.length > 0
+    ? `\\left\\{${indices.join(',')}\\right\\}`
+    : '\\varnothing';
+}
+
+function indexSetMathJson(indices: readonly number[]) {
+  return indices.length > 0 ? ['Set', ...indices] : 'EmptySet';
+}
+
 function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[] {
   if (request.operation !== 'profileA' && request.operation !== 'profileB') return [];
   const { matrixA, matrixB } = exactInputs(request);
@@ -230,6 +252,7 @@ function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[]
   const operand = profileOperandMathJson(label, matrix);
   if (operand === undefined) return [];
   const columns = matrix[0]?.length ?? 0;
+  const pivotColumns = analysis.pivotColumns.map((column) => column + 1);
   const leaves = [
     leaf(
       `\\operatorname{rank}(${label})=${analysis.rank}`,
@@ -249,9 +272,31 @@ function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[]
       ], columns],
       'matrix.profile.native-rank-nullity',
     ),
+    leaf(`${analysis.rank}`, analysis.rank, 'matrix.profile.native-rank-value'),
+    leaf(`${analysis.nullity}`, analysis.nullity, 'matrix.profile.native-nullity-value'),
     leaf(
-      `\\operatorname{rref}(${label})=${exactMatrixToLatex(analysis.rref)}`,
-      ['Equal', matrixOperator('rref', operand), exactMatrixMathJson(analysis.rref)],
+      `${analysis.rank}+${analysis.nullity}=${columns}`,
+      ['Equal', ['Add', analysis.rank, analysis.nullity], columns],
+      'matrix.profile.native-rank-nullity-values',
+    ),
+    leaf(
+      indexSetLatex(pivotColumns),
+      indexSetMathJson(pivotColumns),
+      'matrix.profile.native-pivot-column-set',
+    ),
+    leaf(
+      exactVectorSetLatex(analysis.kernelBasis),
+      exactVectorSetMathJson(analysis.kernelBasis),
+      'matrix.profile.native-kernel-spanning-set',
+    ),
+    leaf(
+      exactVectorSetLatex(analysis.imageBasis),
+      exactVectorSetMathJson(analysis.imageBasis),
+      'matrix.profile.native-image-spanning-set',
+    ),
+    leaf(
+      exactMatrixToLatex(analysis.rref),
+      exactMatrixMathJson(analysis.rref),
       'matrix.profile.native-rref',
     ),
   ];
@@ -259,8 +304,8 @@ function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[]
     const determinant = determinantExactMatrix(matrix);
     if (determinant.kind === 'success') {
       leaves.push(leaf(
-        `\\det(${label})=${exactScalarToLatex(determinant.determinant)}`,
-        ['Equal', ['Determinant', operand], buildExactScalarNode(determinant.determinant)],
+        exactScalarToLatex(determinant.determinant),
+        buildExactScalarNode(determinant.determinant),
         'matrix.profile.native-determinant',
       ));
     }

@@ -74,8 +74,8 @@ describe('Linear Algebra canonical result producers', () => {
       throw new Error('Expected Matrix-system canonical result.');
     }
     const leaves = collectCanonicalMathLeaves(outcome.canonicalResult);
-    expect(leaves).toHaveLength(11);
-    expect(leaves.filter((entry) => entry.value.mathJson !== undefined)).toHaveLength(4);
+    expect(leaves).toHaveLength(12);
+    expect(leaves.filter((entry) => entry.value.mathJson !== undefined)).toHaveLength(8);
     expect(leaves.find((entry) => entry.path === 'primaryMath')?.value.mathJson).toBeDefined();
     expect(leaves.find((entry) => entry.path === 'details[3].lines[0][0].math')?.value.mathJson)
       .toBeUndefined();

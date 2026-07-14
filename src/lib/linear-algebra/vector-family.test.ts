@@ -43,8 +43,20 @@ describe('runVectorFamilyOperation', () => {
       'Dependence Relation',
       'RREF Evidence',
     ]);
+    expect(response.detailSections?.[0]?.lines.slice(0, 3)).toEqual([
+      'Span dimension: 2',
+      'Pivot columns: \\left\\{1,2\\right\\}',
+      'Selected basis: \\left\\{p,q\\right\\}',
+    ]);
+    expect(response.detailSections?.[0]?.lineParts?.[2]).toEqual([
+      { kind: 'text', text: 'Selected basis: ' },
+      { kind: 'math', latex: '\\left\\{p,q\\right\\}' },
+    ]);
     expect(response.detailSections?.[1]?.lines).toContain('p+q-r=0');
     expect(response.detailSections?.[1]?.lines).toContain('r=p+q');
+    expect(response.detailSections?.[2]?.lines[0]).toBe(
+      'RREF: \\begin{bmatrix}1 & 0 & 1\\\\0 & 1 & 1\\end{bmatrix}',
+    );
   });
 
   it('classifies independent and dependent vector families exactly', () => {

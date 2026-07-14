@@ -8,6 +8,13 @@ function sectionLines(
   return response.detailSections?.find((section) => section.title === title)?.lines ?? [];
 }
 
+function section(
+  response: ReturnType<typeof runMatrixLinearMapProfile>,
+  title: string,
+) {
+  return response.detailSections?.find((candidate) => candidate.title === title);
+}
+
 describe('runMatrixLinearMapProfile', () => {
   it('profiles a singular square map with exact kernel, image, and invertibility facts', () => {
     const response = runMatrixLinearMapProfile({
@@ -21,20 +28,27 @@ describe('runMatrixLinearMapProfile', () => {
       '\\operatorname{rank}(A)=1',
       '\\operatorname{nullity}(A)=1',
     ]);
+    expect(sectionLines(response, 'Rank-Nullity Facts')).toEqual([
+      'Rank-nullity: 1+1=2',
+      'Pivot columns: \\left\\{1\\right\\}',
+      'Rank counts independent output directions; nullity counts independent input directions that map to zero.',
+    ]);
     expect(sectionLines(response, 'Kernel')).toContain(
-      '\\ker(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}',
+      'Kernel spanning set: \\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}',
     );
-    expect(sectionLines(response, 'Kernel')).toContain(
-      '\\operatorname{one\\text{-}to\\text{-}one}(A)=\\text{No}',
-    );
+    expect(sectionLines(response, 'Kernel')).toContain('One-to-one: no.');
     expect(sectionLines(response, 'Image')).toContain(
-      '\\operatorname{Im}(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\2\\end{bmatrix}\\right\\}',
+      'Image spanning set: \\left\\{\\begin{bmatrix}1\\\\2\\end{bmatrix}\\right\\}',
     );
-    expect(sectionLines(response, 'Image')).toContain('\\operatorname{onto}(A)=\\text{No}');
+    expect(sectionLines(response, 'Image')).toContain('Onto: no.');
     expect(sectionLines(response, 'Invertibility')).toEqual([
-      '\\det(A)=0',
-      '\\operatorname{invertible}(A)=\\text{No}',
+      'Determinant: 0',
+      'Invertible: no.',
       'The determinant is zero, so the square matrix is not invertible.',
+    ]);
+    expect(section(response, 'Kernel')?.lineParts?.[0]).toEqual([
+      { kind: 'text', text: 'Kernel spanning set: ' },
+      { kind: 'math', latex: '\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}' },
     ]);
     expect(response.detailSections?.at(-1)?.title).toBe('RREF Evidence');
   });
@@ -44,10 +58,9 @@ describe('runMatrixLinearMapProfile', () => {
       label: 'T',
       matrix: [[1, 0], [0, 1], [0, 0]],
     });
-    expect(sectionLines(tall, 'Kernel')).toContain(
-      '\\operatorname{one\\text{-}to\\text{-}one}(T)=\\text{Yes}',
-    );
-    expect(sectionLines(tall, 'Image')).toContain('\\operatorname{onto}(T)=\\text{No}');
+    expect(sectionLines(tall, 'Kernel')).toContain('One-to-one: yes.');
+    expect(sectionLines(tall, 'Kernel')).toContain('Kernel spanning set: \\varnothing');
+    expect(sectionLines(tall, 'Image')).toContain('Onto: no.');
     expect(sectionLines(tall, 'Invertibility')).toContain(
       'Invertibility is not applicable to rectangular matrices.',
     );
@@ -56,10 +69,8 @@ describe('runMatrixLinearMapProfile', () => {
       label: 'W',
       matrix: [[1, 0, 0], [0, 1, 0]],
     });
-    expect(sectionLines(wide, 'Kernel')).toContain(
-      '\\operatorname{one\\text{-}to\\text{-}one}(W)=\\text{No}',
-    );
-    expect(sectionLines(wide, 'Image')).toContain('\\operatorname{onto}(W)=\\text{Yes}');
+    expect(sectionLines(wide, 'Kernel')).toContain('One-to-one: no.');
+    expect(sectionLines(wide, 'Image')).toContain('Onto: yes.');
     expect(sectionLines(wide, 'Invertibility')).toContain(
       'Invertibility is not applicable to rectangular matrices.',
     );
@@ -70,13 +81,9 @@ describe('runMatrixLinearMapProfile', () => {
       label: 'I',
       matrix: [[1, 0], [0, 1]],
     });
-    expect(sectionLines(response, 'Kernel')).toContain(
-      '\\operatorname{one\\text{-}to\\text{-}one}(I)=\\text{Yes}',
-    );
-    expect(sectionLines(response, 'Image')).toContain('\\operatorname{onto}(I)=\\text{Yes}');
-    expect(sectionLines(response, 'Invertibility')).toContain(
-      '\\operatorname{invertible}(I)=\\text{Yes}',
-    );
+    expect(sectionLines(response, 'Kernel')).toContain('One-to-one: yes.');
+    expect(sectionLines(response, 'Image')).toContain('Onto: yes.');
+    expect(sectionLines(response, 'Invertibility')).toContain('Invertible: yes.');
   });
 
   it('stops above the exact 6 by 6 profile limit', () => {

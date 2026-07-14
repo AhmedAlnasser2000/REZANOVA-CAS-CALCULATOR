@@ -655,7 +655,7 @@ export const goldenCases: GoldenCase[] = [
       kind: 'success',
       answerRowsInclude: ['\\operatorname{rank}(A)=1', '\\operatorname{nullity}(A)=1'],
       detailTitlesInclude: ['Kernel', 'Image', 'Invertibility', 'RREF Evidence'],
-      detailLinesInclude: ['\\det(A)=0', '\\operatorname{invertible}(A)=\\text{No}'],
+      detailLinesInclude: ['Determinant: 0', 'Invertible: no.'],
     },
   },
   {
@@ -672,8 +672,8 @@ export const goldenCases: GoldenCase[] = [
       kind: 'success',
       answerRowsInclude: ['T:\\mathbb{R}^{2}\\to\\mathbb{R}^{3}', '\\operatorname{rank}(T)=2'],
       detailLinesInclude: [
-        '\\operatorname{one\\text{-}to\\text{-}one}(T)=\\text{Yes}',
-        '\\operatorname{onto}(T)=\\text{No}',
+        'One-to-one: yes.',
+        'Onto: no.',
         'Invertibility is not applicable to rectangular matrices.',
       ],
     },

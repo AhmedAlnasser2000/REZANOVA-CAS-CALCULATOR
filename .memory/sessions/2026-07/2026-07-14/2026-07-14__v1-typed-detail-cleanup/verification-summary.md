@@ -49,3 +49,14 @@
 - visual: expanded System Proof, Rank Facts, and Augmented RREF, collapsed row operations, History replay, and overflow inspected in one-worker Chromium; Formula Viewer is not exposed for this compact result
 - static: incremental TypeScript, changed-file lint, file-size, and diff hygiene pass
 - protected lane: Notebook changes committed independently; `test-results/` excluded; no push
+
+## V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1
+
+- kind: backend producer-detail cleanup with focused UI and browser evidence
+- result: pass; approved for commit
+- coverage: 455 leaves, 432 proven, 23 exemptions, zero missing; Matrix profile is 21/17/4/0 and Vector span/independence is 10/8/2/0
+- contracts: MathJSON coverage, detail migration, result intent, display inversion, and focused producer authority pass; one stale Matrix-system count assertion found by the broad result-contract run was corrected and its focused 14-test contract passes
+- focused regression: 30 Matrix/Vector producer and mode tests pass; all 43 golden executions pass
+- visual: Vector span/independence, singular and rectangular Matrix profiles, compact History replay, and overflow were inspected in Chromium; no Formula Viewer control appears for these compact results
+- static: incremental TypeScript, changed-file lint, file-size, Vite production build, and diff hygiene pass
+- protected lane: concurrent Notebook persistence/library work and `test-results/` excluded; no push

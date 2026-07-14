@@ -11,6 +11,7 @@ import {
 import { scalarToLatex } from '../display/format';
 import type { ExactMatrix, ExactVector } from '../linear-algebra/exact-matrix-core';
 import {
+  exactMatrixToLatex,
   exactVectorFromNumeric,
   exactVectorFromWire,
   exactVectorToColumnLatex,
@@ -231,6 +232,23 @@ function relationLatex(relation: ExactVector, labels: readonly string[]) {
   )).join('') || '0';
 }
 
+function setLatex(values: readonly string[]) {
+  return values.length > 0
+    ? `\\left\\{${values.join(',')}\\right\\}`
+    : '\\varnothing';
+}
+
+function setMathJson(values: readonly unknown[]) {
+  return values.length > 0 ? ['Set', ...values] : 'EmptySet';
+}
+
+function familyOperandMathJson(label: string, vector: ExactVector) {
+  if (label.startsWith('\\begin{bmatrix}')) return exactVectorMathJson(vector);
+  if (/^[A-Za-z][A-Za-z0-9_]*$/u.test(label)) return label;
+  const subscript = /^([A-Za-z])_\{([1-9][0-9]*)\}$/u.exec(label);
+  return subscript ? ['Subscript', subscript[1], Number(subscript[2])] : undefined;
+}
+
 function familyLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] {
   if (request.operation !== 'span' && request.operation !== 'independent') return [];
   const operands = request.vectorOperands ?? [];
@@ -244,11 +262,36 @@ function familyLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] 
   const analysis = analyzeExactColumnFamily(matrix);
   if (analysis.kind === 'stop') return [];
   const labels = familyLabels(request, exactVectors.length);
-  const leaves = analysis.pivotColumns.map((column, index) => leaf(
+  const pivotColumns = analysis.pivotColumns.map((column) => column + 1);
+  const selectedLabels = analysis.pivotColumns.map((column) => labels[column]);
+  const selectedOperands = analysis.pivotColumns.map((column) => (
+    familyOperandMathJson(labels[column], exactVectors[column])
+  ));
+  const leaves: VectorOwnedMathJsonLeaf[] = [
+    leaf(`${analysis.rank}`, analysis.rank, 'vector.span-independence.native-span-dimension'),
+    leaf(
+      setLatex(pivotColumns.map(String)),
+      setMathJson(pivotColumns),
+      'vector.span-independence.native-pivot-column-set',
+    ),
+    ...(selectedOperands.every((operand) => operand !== undefined)
+      ? [leaf(
+          setLatex(selectedLabels),
+          setMathJson(selectedOperands),
+          'vector.span-independence.native-selected-basis-set',
+        )]
+      : []),
+    leaf(
+      exactMatrixToLatex(analysis.rref),
+      exactMatrixMathJson(analysis.rref),
+      'vector.span-independence.native-rref',
+    ),
+    ...analysis.pivotColumns.map((column, index) => leaf(
     `b_{${index + 1}}=${labels[column]}=${exactVectorToColumnLatex(analysis.imageBasis[index])}`,
     ['Equal', `b_${index + 1}`, ['Equal', labels[column], exactVectorMathJson(analysis.imageBasis[index])]],
     'vector.span-independence.native-selected-basis',
-  ));
+    )),
+  ];
   const witness = analysis.kernelBasis[0];
   if (!witness) return leaves;
   const relation = canonicalRelation(witness);

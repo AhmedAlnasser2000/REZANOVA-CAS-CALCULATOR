@@ -1,6 +1,10 @@
 import { mkdir } from 'node:fs/promises';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { openLauncherApp, setMathFieldLatex } from './helpers';
+import {
+  expectAnswerOverflowReady,
+  replayLatestHistoryEntry,
+} from './calculus-integral-evidence';
 
 const screenshotDir = '.task_tmp/vector-foundations-linear-map-profile';
 
@@ -111,6 +115,15 @@ test('span and independence show an input-selected basis and exact dependence pr
   await expect(page.getByTestId('display-outcome-detail-line-1-0')).toBeVisible();
   await expect(page.getByTestId('display-outcome-detail-line-1-1')).toBeVisible();
   await expect(page.getByTestId('display-outcome-detail-section-2')).not.toHaveAttribute('open');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Span dimension:');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Pivot columns:');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Selected basis:');
+  await expect(page.getByRole('button', { name: 'Open Formula Viewer' })).toHaveCount(0);
+  await expectAnswerOverflowReady(page);
+
+  const replayed = await replayLatestHistoryEntry(page);
+  expect(replayed).toContain('independent');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Selected basis:');
 
   await page.getByRole('button', { name: 'Shift', exact: true }).click();
   await expect(page.getByRole('button', { name: /independent/u })).toBeVisible();
@@ -119,7 +132,7 @@ test('span and independence show an input-selected basis and exact dependence pr
 
   await page.screenshot({
     fullPage: true,
-    path: `${screenshotDir}/vector-span-independence.png`,
+    path: `${screenshotDir}/vector-span-independence-history.png`,
   });
 });
 
@@ -149,11 +162,26 @@ test('linear-map profile explains square and rectangular maps without misleading
   await expect(page.getByTestId('display-outcome-root')).toContainText(
     'The rank is 1, smaller than the codomain dimension 2',
   );
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Rank-nullity:');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Kernel spanning set:');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Image spanning set:');
+  await expect(page.getByTestId('display-outcome-root')).toContainText('Determinant:');
   await expect(page.getByTestId('display-outcome-root')).not.toContainText(/APPROX|Unsupported/u);
+  await expect(page.getByRole('button', { name: 'Open Formula Viewer' })).toHaveCount(0);
+  await expectAnswerOverflowReady(page);
 
   await page.screenshot({
     fullPage: true,
     path: `${screenshotDir}/matrix-linear-map-profile-singular.png`,
+  });
+
+  const replayed = await replayLatestHistoryEntry(page);
+  expect(replayed).toContain('profile');
+  const replayedOutcome = page.getByTestId('display-outcome-root');
+  await expect(replayedOutcome).toContainText('Kernel spanning set:');
+  await page.waitForTimeout(300);
+  await replayedOutcome.screenshot({
+    path: `${screenshotDir}/matrix-linear-map-profile-history.png`,
   });
 
   await setMatrix(page, 'A', 3, 2, [1, 0, 0, 1, 0, 0]);

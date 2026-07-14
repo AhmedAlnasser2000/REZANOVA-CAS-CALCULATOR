@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "V1-TYPED-DETAIL-MATRIX-SYSTEM1 replaces three Matrix pseudo-operator exemptions with producer-proven scalar and augmented-RREF values while retaining four honest row-operation arrows.",
+  "reason": "V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1 converts Matrix and Vector profile detail labels to typed prose plus producer-owned rank, pivot-set, spanning-set, basis, determinant, relation, and RREF values; compound primaries and map or independence declarations remain unchanged.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -96,11 +96,11 @@
     "evidence": 143,
     "replayFixtures": 100,
     "goldenCases": 43,
-    "bytes": 109172,
+    "bytes": 109295,
     "maxBytes": 2753,
-    "leaves": 460,
-    "proven": 420,
-    "exempt": 40,
+    "leaves": 455,
+    "proven": 432,
+    "exempt": 23,
     "missing": 0
   },
   "routes": {
@@ -471,11 +471,11 @@
       "evidence": 2,
       "replayFixtures": 0,
       "goldenCases": 2,
-      "bytes": 5146,
-      "maxBytes": 2624,
-      "leaves": 26,
-      "proven": 9,
-      "exempt": 17,
+      "bytes": 5139,
+      "maxBytes": 2572,
+      "leaves": 21,
+      "proven": 17,
+      "exempt": 4,
       "missing": 0
     },
     "matrix.rank": {
@@ -724,11 +724,11 @@
       "evidence": 1,
       "replayFixtures": 0,
       "goldenCases": 1,
-      "bytes": 1664,
-      "maxBytes": 1664,
+      "bytes": 1794,
+      "maxBytes": 1794,
       "leaves": 10,
-      "proven": 4,
-      "exempt": 6,
+      "proven": 8,
+      "exempt": 2,
       "missing": 0
     }
   }

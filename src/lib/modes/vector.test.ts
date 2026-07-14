@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { buildVectorOoeSnapshot, runVectorMode } from './vector';
 
+function detailMathValues(result: ReturnType<typeof runVectorMode>) {
+  if (result.kind === 'prompt') return [];
+  return result.canonicalResult?.details?.flatMap((section) =>
+    section.lines.flatMap((line) => line)
+      .filter((part) => part.kind === 'math')
+      .map((part) => part.math)) ?? [];
+}
+
 describe('runVectorMode', () => {
   it('reads exact linear combinations without nonnumeric approximation text', () => {
     expect(runVectorMode({
@@ -53,6 +61,14 @@ describe('runVectorMode', () => {
     });
     expect(outcome.kind === 'success' ? outcome.detailSections?.map((section) => section.title) : [])
       .toEqual(['Span Facts', 'Dependence Relation', 'RREF Evidence']);
+    const detailValues = detailMathValues(outcome);
+    expect(detailValues.find((value) => value.canonicalLatex === '2')?.mathJson).toBe(2);
+    expect(detailValues.find((value) => value.canonicalLatex === '\\left\\{1,2\\right\\}')?.mathJson)
+      .toEqual(['Set', 1, 2]);
+    expect(detailValues.find((value) => value.canonicalLatex === '\\left\\{p,q\\right\\}')?.mathJson)
+      .toEqual(['Set', 'p', 'q']);
+    expect(detailValues.find((value) => value.canonicalLatex.startsWith('\\begin{bmatrix}1 & 0 & 1'))?.mathJson)
+      .toBeDefined();
   });
 
   it('uses editor expressions as Vector result titles when present', () => {

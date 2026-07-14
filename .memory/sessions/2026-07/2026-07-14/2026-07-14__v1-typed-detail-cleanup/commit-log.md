@@ -18,8 +18,8 @@
 
 - `V1-TYPED-DETAIL-CALCULUS1`: `b7e2f081`.
 - `V1-TYPED-DETAIL-TRIGONOMETRY1`: `f083d222`.
-- `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: verified and approved; commit hash will be recorded in the next milestone checkpoint.
-- `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: pending.
+- `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: `67e101e7`.
+- `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: verified and approved; commit hash will be recorded in the closeout checkpoint.
 - `V1-TYPED-DETAIL-CLOSEOUT0`: pending.
 
 No push is authorized.

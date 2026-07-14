@@ -18,15 +18,16 @@
 
 - `V1-TYPED-DETAIL-CALCULUS1`: committed as `b7e2f081`.
 - `V1-TYPED-DETAIL-TRIGONOMETRY1`: committed as `f083d222`.
-- `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: verified and approved; awaiting commit creation.
-- Remaining: Linear Algebra profiles and closeout.
-- Current coverage: 460 leaves, 420 proven MathJSON trees, 40 exemptions, zero missing classifications.
+- `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: committed as `67e101e7`.
+- `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: verified and approved; awaiting commit creation.
+- Remaining: closeout.
+- Current coverage: 455 leaves, 432 proven MathJSON trees, 23 exemptions, zero missing classifications.
 - Final target: 23 exemptions and zero missing classifications.
 
 ## Cross-Agent Boundary
 
-- The requested start was `eceffe89`; committed Notebook work advanced the shared live branch through `afa682e4` while this program preserved its lane.
+- The requested start was `eceffe89`; committed Notebook work advanced the shared live branch through `a1c2b708` while this program preserved its lane.
 - Notebook source, tests, styles, and migrations remain outside this program and were not staged or modified here.
 - Untracked `test-results/` is protected.
-- The live Vite server on port 1420 is shared evidence infrastructure owned by the concurrent lane; this program used it without stopping or reconfiguring it.
+- The foreign Playwright test-server process remained untouched; focused V1 preview servers were stopped automatically after evidence collection.
 - No push is authorized.

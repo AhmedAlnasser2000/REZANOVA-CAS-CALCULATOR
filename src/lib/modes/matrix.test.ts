@@ -75,6 +75,15 @@ describe('runMatrixMode', () => {
     expect(result.kind === 'success'
       ? result.canonicalResult?.answerRows?.rows[1]?.math.mathJson
       : undefined).toBeDefined();
+    const detailValues = detailMathValues(result);
+    expect(detailValues.find((value) => value.canonicalLatex === '1+1=2')?.mathJson)
+      .toEqual(['Equal', ['Add', 1, 1], 2]);
+    expect(detailValues.find((value) => value.canonicalLatex === '\\left\\{1\\right\\}')?.mathJson)
+      .toEqual(['Set', 1]);
+    expect(detailValues.find((value) => value.canonicalLatex.startsWith('\\left\\{\\begin{bmatrix}-1'))?.mathJson)
+      .toBeDefined();
+    expect(detailValues.find((value) => value.canonicalLatex.startsWith('\\begin{bmatrix}1 & 1'))?.mathJson)
+      .toBeDefined();
   });
 
   it('uses editor expressions as Matrix coordinate titles', () => {
