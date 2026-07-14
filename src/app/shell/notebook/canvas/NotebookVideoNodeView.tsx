@@ -1,7 +1,19 @@
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper, useEditorState } from '@tiptap/react';
-import { GripVertical, VideoOff } from 'lucide-react';
 import {
+  Captions,
+  Expand,
+  GripVertical,
+  Minimize2,
+  Pause,
+  Play,
+  Theater,
+  VideoOff,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
+import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -27,8 +39,25 @@ type VideoLoadState =
   | { status: 'missing' }
   | { status: 'ready'; posterUrl?: string; trackUrls: string[]; url: string };
 
+type NotebookVideoFullscreenMode = 'browser' | 'desktop' | null;
+
 function videoTracks(value: unknown): NotebookVideoTrack[] {
   return Array.isArray(value) ? value as NotebookVideoTrack[] : [];
+}
+
+function formatVideoTime(value: number) {
+  const seconds = Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  }
+  return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+}
+
+function isTauriWindow() {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 }
 
 export function createNotebookVideoNodeView(
@@ -44,6 +73,10 @@ export function createNotebookVideoNodeView(
   }: ReactNodeViewProps) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const frameRef = useRef<HTMLDivElement | null>(null);
+    const presentationRef = useRef<HTMLDivElement | null>(null);
+    const fullscreenModeRef = useRef<NotebookVideoFullscreenMode>(null);
+    const fullscreenRequestIdRef = useRef(0);
+    const fullscreenEntryRequestRef = useRef<number | null>(null);
     const nodeId = String(node.attrs.id ?? 'notebook.video');
     const assetId = String(node.attrs.assetId ?? '');
     const posterAssetId = typeof node.attrs.posterAssetId === 'string'
@@ -55,6 +88,19 @@ export function createNotebookVideoNodeView(
       [serializedTracks],
     );
     const [loadState, setLoadState] = useState<VideoLoadState>({ status: 'loading' });
+    const [captionTrackIndex, setCaptionTrackIndex] = useState<number | null>(() => {
+      const defaultIndex = tracks.findIndex((track) => track.default === true);
+      return defaultIndex >= 0 ? defaultIndex : null;
+    });
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [isMuted, setIsMuted] = useState(false);
+    const [volume, setVolume] = useState(1);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [playbackError, setPlaybackError] = useState<string | null>(null);
+    const [theaterMode, setTheaterMode] = useState(false);
+    const [fullscreenMode, setFullscreenMode] = useState<NotebookVideoFullscreenMode>(null);
+    const [fullscreenPending, setFullscreenPending] = useState(false);
     const videoNumber = useEditorState({
       editor,
       selector: ({ editor: currentEditor }) => {
@@ -74,6 +120,10 @@ export function createNotebookVideoNodeView(
       let cancelled = false;
       const objectUrls: string[] = [];
       setLoadState({ status: 'loading' });
+      setPlaybackError(null);
+      setCurrentTime(0);
+      setDuration(0);
+      setIsPlaying(false);
 
       async function resolveAsset(assetIdentity: string) {
         const nativeUrl = await assetPort.resolveUrl?.(assetIdentity);
@@ -115,6 +165,11 @@ export function createNotebookVideoNodeView(
     }, [assetId, posterAssetId, tracks]);
 
     useEffect(() => {
+      const defaultIndex = tracks.findIndex((track) => track.default === true);
+      setCaptionTrackIndex(defaultIndex >= 0 ? defaultIndex : null);
+    }, [serializedTracks, tracks]);
+
+    useEffect(() => {
       if (loadState.status !== 'ready') return;
       const video = videoRef.current;
       return () => {
@@ -124,6 +179,238 @@ export function createNotebookVideoNodeView(
         video.load();
       };
     }, [loadState]);
+
+    useEffect(() => {
+      fullscreenModeRef.current = fullscreenMode;
+    }, [fullscreenMode]);
+
+    const syncPlaybackState = useCallback(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      setCurrentTime(Number.isFinite(video.currentTime) ? video.currentTime : 0);
+      setDuration(Number.isFinite(video.duration) ? video.duration : 0);
+      setIsMuted(video.muted);
+      setVolume(video.volume);
+      setIsPlaying(!video.paused && !video.ended);
+    }, []);
+
+    const applyCaptionTrack = useCallback((nextIndex: number | null) => {
+      const textTracks = videoRef.current?.textTracks;
+      if (!textTracks) return;
+      for (let index = 0; index < textTracks.length; index += 1) {
+        textTracks[index]!.mode = index === nextIndex ? 'showing' : 'disabled';
+      }
+    }, []);
+
+    useEffect(() => {
+      if (loadState.status !== 'ready') return undefined;
+      const timeout = window.setTimeout(() => applyCaptionTrack(captionTrackIndex));
+      return () => window.clearTimeout(timeout);
+    }, [applyCaptionTrack, captionTrackIndex, loadState.status, serializedTracks]);
+
+    const closePresentation = useCallback(async () => {
+      fullscreenRequestIdRef.current += 1;
+      const entryRequestIsPending = fullscreenEntryRequestRef.current !== null;
+      if (!entryRequestIsPending) setFullscreenPending(false);
+      const mode = fullscreenModeRef.current;
+      if (mode === 'desktop' && isTauriWindow()) {
+        try {
+          const { getCurrentWindow } = await import('@tauri-apps/api/window');
+          await getCurrentWindow().setFullscreen(false);
+        } catch {
+          // The Notebook overlay still restores even if the host window rejects exit.
+        }
+      } else if (mode === 'browser' && document.fullscreenElement) {
+        await document.exitFullscreen?.().catch(() => {});
+      }
+      fullscreenModeRef.current = null;
+      setFullscreenMode(null);
+      setTheaterMode(false);
+    }, []);
+
+    const toggleTheater = useCallback(() => {
+      if (fullscreenPending) return;
+      if (theaterMode || fullscreenModeRef.current) {
+        void closePresentation();
+      } else {
+        setTheaterMode(true);
+      }
+    }, [closePresentation, fullscreenPending, theaterMode]);
+
+    const toggleFullscreen = useCallback(() => {
+      if (fullscreenModeRef.current) {
+        void closePresentation();
+        return;
+      }
+      if (fullscreenPending || fullscreenEntryRequestRef.current !== null) return;
+
+      const requestId = fullscreenRequestIdRef.current + 1;
+      fullscreenRequestIdRef.current = requestId;
+      fullscreenEntryRequestRef.current = requestId;
+      setTheaterMode(true);
+      setFullscreenPending(true);
+      const requestIsCurrent = () => fullscreenRequestIdRef.current === requestId;
+      const settleRequest = () => {
+        if (fullscreenEntryRequestRef.current !== requestId) return;
+        fullscreenEntryRequestRef.current = null;
+        setFullscreenPending(false);
+      };
+      if (isTauriWindow()) {
+        void import('@tauri-apps/api/window')
+          .then(async ({ getCurrentWindow }) => {
+            if (!requestIsCurrent()) return;
+            const appWindow = getCurrentWindow();
+            await appWindow.setFullscreen(true);
+            if (!requestIsCurrent()) {
+              await appWindow.setFullscreen(false).catch(() => {});
+              return;
+            }
+            fullscreenModeRef.current = 'desktop';
+            setFullscreenMode('desktop');
+          })
+          .catch(() => {
+            if (requestIsCurrent()) {
+              setPlaybackError('Fullscreen is unavailable in this Notebook window.');
+            }
+          })
+          .finally(settleRequest);
+        return;
+      }
+
+      const presentation = presentationRef.current;
+      if (!presentation?.requestFullscreen) {
+        fullscreenEntryRequestRef.current = null;
+        setFullscreenPending(false);
+        setPlaybackError('Fullscreen is unavailable in this browser.');
+        return;
+      }
+      void presentation.requestFullscreen()
+        .then(async () => {
+          if (!requestIsCurrent() || document.fullscreenElement !== presentation) {
+            if (requestIsCurrent()) {
+              fullscreenRequestIdRef.current += 1;
+              setTheaterMode(false);
+            }
+            if (document.fullscreenElement === presentation) {
+              await document.exitFullscreen?.().catch(() => {});
+            }
+            return;
+          }
+          fullscreenModeRef.current = 'browser';
+          setFullscreenMode('browser');
+        })
+        .catch(() => {
+          if (requestIsCurrent()) {
+            setPlaybackError('Fullscreen is unavailable in this browser.');
+          }
+        })
+        .finally(settleRequest);
+    }, [closePresentation, fullscreenPending]);
+
+    useEffect(() => {
+      if (!theaterMode && !fullscreenMode) return undefined;
+      const onKeyDown = (event: KeyboardEvent) => {
+        if (event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        void closePresentation();
+      };
+      window.addEventListener('keydown', onKeyDown, true);
+      return () => window.removeEventListener('keydown', onKeyDown, true);
+    }, [closePresentation, fullscreenMode, theaterMode]);
+
+    useEffect(() => {
+      const onFullscreenChange = () => {
+        if (
+          (fullscreenModeRef.current === 'browser' || fullscreenEntryRequestRef.current !== null)
+          && document.fullscreenElement !== presentationRef.current
+        ) {
+          fullscreenRequestIdRef.current += 1;
+          fullscreenModeRef.current = null;
+          if (fullscreenEntryRequestRef.current === null) {
+            setFullscreenPending(false);
+          }
+          setFullscreenMode(null);
+          setTheaterMode(false);
+        }
+      };
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+      return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+    }, []);
+
+    useEffect(() => () => {
+      fullscreenRequestIdRef.current += 1;
+      fullscreenEntryRequestRef.current = null;
+      const mode = fullscreenModeRef.current;
+      if (mode === 'browser' && document.fullscreenElement === presentationRef.current) {
+        void document.exitFullscreen?.().catch(() => {});
+      } else if (mode === 'desktop' && isTauriWindow()) {
+        void import('@tauri-apps/api/window')
+          .then(({ getCurrentWindow }) => getCurrentWindow().setFullscreen(false))
+          .catch(() => {});
+      }
+    }, []);
+
+    const playOrPause = useCallback(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      if (video.paused) {
+        void Promise.resolve(video.play())
+          .then(() => {
+            setPlaybackError(null);
+            syncPlaybackState();
+          })
+          .catch(() => {
+            setIsPlaying(false);
+            setPlaybackError('Playback could not start. Check that this local video is supported.');
+          });
+      } else {
+        video.pause();
+        syncPlaybackState();
+      }
+    }, [syncPlaybackState]);
+
+    const seekTo = useCallback((value: number) => {
+      const video = videoRef.current;
+      if (!video || !Number.isFinite(value)) return;
+      video.currentTime = Math.max(0, Math.min(duration || 0, value));
+      setCurrentTime(video.currentTime);
+    }, [duration]);
+
+    const changeVolume = useCallback((value: number) => {
+      const video = videoRef.current;
+      if (!video || !Number.isFinite(value)) return;
+      video.volume = Math.min(1, Math.max(0, value));
+      if (video.volume > 0) video.muted = false;
+      setIsMuted(video.muted);
+      setVolume(video.volume);
+    }, []);
+
+    const toggleMuted = useCallback(() => {
+      const video = videoRef.current;
+      if (!video) return;
+      video.muted = !video.muted;
+      setIsMuted(video.muted);
+    }, []);
+
+    const selectCaptionTrack = useCallback((value: string) => {
+      const nextIndex = value === 'off' ? null : Number(value);
+      if (nextIndex !== null && (!Number.isInteger(nextIndex) || nextIndex < 0 || nextIndex >= tracks.length)) {
+        return;
+      }
+      setCaptionTrackIndex(nextIndex);
+      applyCaptionTrack(nextIndex);
+    }, [applyCaptionTrack, tracks.length]);
+
+    const toggleCaptions = useCallback(() => {
+      const defaultIndex = tracks.findIndex((track) => track.default === true);
+      const nextIndex = captionTrackIndex === null
+        ? (defaultIndex >= 0 ? defaultIndex : 0)
+        : null;
+      if (tracks.length === 0) return;
+      setCaptionTrackIndex(nextIndex);
+      applyCaptionTrack(nextIndex);
+    }, [applyCaptionTrack, captionTrackIndex, tracks]);
 
     const caption = String(node.attrs.caption ?? '').trim();
     const title = String(node.attrs.title ?? 'Untitled video');
@@ -159,6 +446,7 @@ export function createNotebookVideoNodeView(
         ? {}
         : { '--notebook-media-display-aspect-ratio': String(effectiveAspectRatio) }),
     } as CSSProperties;
+    const isPresenting = theaterMode || fullscreenMode !== null;
 
     return (
       <NodeViewWrapper
@@ -187,49 +475,85 @@ export function createNotebookVideoNodeView(
           <strong>{title}</strong>
           {description ? <span>{description}</span> : null}
         </div>
-        <div ref={frameRef} className="notebook-media-transform-shell notebook-media-transform-shell--video">
-          <div
-            className="notebook-video-frame"
-            style={effectiveAspectRatio === undefined
-              ? undefined
-              : { aspectRatio: String(effectiveAspectRatio) }}
-          >
-            {loadState.status === 'ready' ? (
-            <video
-              ref={videoRef}
-              controls
-              crossOrigin="anonymous"
-              loop={node.attrs.loop === true}
-              playsInline
-              poster={loadState.posterUrl}
-              preload="metadata"
-              src={loadState.url}
-              title={title}
+        <div
+          ref={presentationRef}
+          className={`notebook-video-presentation${isPresenting ? ' is-theater' : ''}`}
+          data-notebook-video-presentation={isPresenting ? 'true' : undefined}
+        >
+          <div ref={frameRef} className="notebook-media-transform-shell notebook-media-transform-shell--video">
+            <div
+              className="notebook-video-frame"
               style={effectiveAspectRatio === undefined
                 ? undefined
-                : { height: '100%', objectFit: 'fill' }}
+                : { aspectRatio: String(effectiveAspectRatio) }}
             >
-              {tracks.map((track, index) => (
-                <track
-                  key={track.id}
-                  default={track.default === true}
-                  kind={track.kind}
-                  label={track.label}
-                  src={loadState.trackUrls[index]}
-                  srcLang={track.language}
-                />
-              ))}
-            </video>
-          ) : loadState.status === 'missing' ? (
-            <div className="notebook-video-missing" role="img" aria-label="Video asset is unavailable">
-              <VideoOff aria-hidden="true" size={26} />
-              <span>Video asset unavailable</span>
+              {loadState.status === 'ready' ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    className={playbackError ? 'is-playback-error' : undefined}
+                    crossOrigin="anonymous"
+                    loop={node.attrs.loop === true}
+                    playsInline
+                    poster={loadState.posterUrl}
+                    preload="metadata"
+                    src={loadState.url}
+                    title={title}
+                    onDurationChange={syncPlaybackState}
+                    onEnded={syncPlaybackState}
+                    onError={() => {
+                      videoRef.current?.pause();
+                      setIsPlaying(false);
+                      setPlaybackError('This video could not be decoded or played.');
+                    }}
+                    onLoadedData={() => {
+                      setPlaybackError(null);
+                      syncPlaybackState();
+                      applyCaptionTrack(captionTrackIndex);
+                    }}
+                    onLoadedMetadata={() => {
+                      syncPlaybackState();
+                      applyCaptionTrack(captionTrackIndex);
+                    }}
+                    onPause={syncPlaybackState}
+                    onPlay={() => {
+                      setPlaybackError(null);
+                      syncPlaybackState();
+                    }}
+                    onTimeUpdate={syncPlaybackState}
+                    onVolumeChange={syncPlaybackState}
+                    style={effectiveAspectRatio === undefined
+                      ? undefined
+                      : { height: '100%', objectFit: 'fill' }}
+                  >
+                    {tracks.map((track, index) => (
+                      <track
+                        key={track.id}
+                        default={track.default === true}
+                        kind={track.kind}
+                        label={track.label}
+                        src={loadState.trackUrls[index]}
+                        srcLang={track.language}
+                      />
+                    ))}
+                  </video>
+                  {playbackError ? (
+                    <div className="notebook-video-playback-error" role="alert">
+                      {loadState.posterUrl ? <img alt="" src={loadState.posterUrl} /> : null}
+                      <span>{playbackError}</span>
+                    </div>
+                  ) : null}
+                </>
+              ) : loadState.status === 'missing' ? (
+                <div className="notebook-video-missing" role="img" aria-label="Video asset is unavailable">
+                  <VideoOff aria-hidden="true" size={26} />
+                  <span>Video asset unavailable</span>
+                </div>
+              ) : (
+                <div className="notebook-video-loading" role="status">Loading video…</div>
+              )}
             </div>
-            ) : (
-              <div className="notebook-video-loading" role="status">Loading video…</div>
-            )}
-          </div>
-          {selected ? (
+            {selected && !isPresenting ? (
           <div className="notebook-media-direct-controls" role="group" aria-label="Video controls">
             <button
               type="button"
@@ -259,6 +583,104 @@ export function createNotebookVideoNodeView(
               ))}
             </div>
           </div>
+            ) : null}
+          </div>
+          {loadState.status === 'ready' ? (
+            <div
+              className="notebook-video-playback-controls"
+              role="group"
+              aria-label="Video playback controls"
+              onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                aria-label={isPlaying ? 'Pause video' : 'Play video'}
+                title={isPlaying ? 'Pause video' : 'Play video'}
+                onClick={playOrPause}
+              >
+                {isPlaying ? <Pause aria-hidden="true" size={16} /> : <Play aria-hidden="true" size={16} />}
+              </button>
+              <span className="notebook-video-time" aria-live="off">
+                {formatVideoTime(currentTime)} / {formatVideoTime(duration)}
+              </span>
+              <input
+                aria-label="Video seek"
+                className="notebook-video-seek"
+                disabled={duration <= 0}
+                max={duration || 0}
+                min="0"
+                step="0.05"
+                type="range"
+                value={Math.min(currentTime, duration || 0)}
+                onChange={(event) => seekTo(Number(event.currentTarget.value))}
+              />
+              <button
+                type="button"
+                aria-label={isMuted ? 'Unmute video' : 'Mute video'}
+                aria-pressed={isMuted}
+                title={isMuted ? 'Unmute video' : 'Mute video'}
+                onClick={toggleMuted}
+              >
+                {isMuted ? <VolumeX aria-hidden="true" size={16} /> : <Volume2 aria-hidden="true" size={16} />}
+              </button>
+              <input
+                aria-label="Video volume"
+                className="notebook-video-volume"
+                max="1"
+                min="0"
+                step="0.05"
+                type="range"
+                value={isMuted ? 0 : volume}
+                onChange={(event) => changeVolume(Number(event.currentTarget.value))}
+              />
+              <button
+                type="button"
+                aria-label={captionTrackIndex === null ? 'Show captions' : 'Hide captions'}
+                aria-pressed={captionTrackIndex !== null}
+                disabled={tracks.length === 0}
+                title={captionTrackIndex === null ? 'Show captions' : 'Hide captions'}
+                onClick={toggleCaptions}
+              >
+                <Captions aria-hidden="true" size={16} />
+              </button>
+              <label className="notebook-video-captions">
+                <span className="sr-only">Captions</span>
+                <select
+                  aria-label="Captions"
+                  disabled={tracks.length === 0}
+                  value={captionTrackIndex === null ? 'off' : String(captionTrackIndex)}
+                  onChange={(event) => selectCaptionTrack(event.currentTarget.value)}
+                >
+                  <option value="off">Off</option>
+                  {tracks.map((track, index) => (
+                    <option key={track.id} value={index}>{track.label}</option>
+                  ))}
+                </select>
+              </label>
+              {fullscreenMode === null ? (
+                <button
+                  type="button"
+                  aria-label={theaterMode ? 'Exit theater mode' : 'Enter theater mode'}
+                  aria-pressed={theaterMode}
+                  disabled={fullscreenPending}
+                  title={theaterMode ? 'Exit theater mode' : 'Enter theater mode'}
+                  onClick={toggleTheater}
+                >
+                  {theaterMode ? <Minimize2 aria-hidden="true" size={16} /> : <Theater aria-hidden="true" size={16} />}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                aria-label={fullscreenMode ? 'Exit fullscreen' : 'Enter fullscreen'}
+                aria-pressed={fullscreenMode !== null}
+                disabled={fullscreenPending}
+                title={fullscreenMode ? 'Exit fullscreen' : 'Enter fullscreen'}
+                onClick={toggleFullscreen}
+              >
+                {fullscreenMode ? <Minimize2 aria-hidden="true" size={16} /> : <Expand aria-hidden="true" size={16} />}
+              </button>
+            </div>
           ) : null}
         </div>
         {caption ? (

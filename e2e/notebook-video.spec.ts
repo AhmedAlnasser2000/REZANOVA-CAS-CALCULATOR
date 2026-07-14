@@ -44,15 +44,13 @@ async function expectVideoContained(page: Page) {
     const figure = element.getBoundingClientRect();
     const canvas = document.querySelector('.notebook-rich-scroll-region')!.getBoundingClientRect();
     const toolbar = document.querySelector('.notebook-rich-toolbar')!.getBoundingClientRect();
-    const surface = document.querySelector('.active-surface--page')!;
-    const scale = Number.parseFloat(getComputedStyle(surface).getPropertyValue('--page-ui-scale')) || 1;
     return {
       canvasLeft: canvas.left,
       canvasRight: canvas.right,
       figureLeft: figure.left,
       figureRight: figure.right,
       overflow: document.documentElement.scrollWidth - window.innerWidth,
-      toolbarRight: toolbar.right * scale,
+      toolbarRight: toolbar.right,
       viewport: window.innerWidth,
     };
   });
@@ -85,14 +83,17 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
   const figure = page.getByTestId('notebook-video-figure');
   const video = figure.locator('video');
   await expect(figure).toBeVisible();
-  await expect(video).toHaveJSProperty('controls', true);
+  await expect(video).toHaveJSProperty('controls', false);
   await expect(video).toHaveJSProperty('autoplay', false);
   await expect(video).toHaveJSProperty('loop', true);
+  await expect(figure.getByRole('group', { name: 'Video playback controls' })).toBeVisible();
+  await expect(figure.getByRole('button', { name: 'Play video' })).toBeVisible();
   await expect(figure).toContainText('Video 1. Approaching a finite limit');
   await expect(ribbonTabs.getByRole('tab', { name: 'Video Format' }))
     .toHaveAttribute('aria-selected', 'true');
   await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.duration))
     .toBeGreaterThan(0.9);
+  await expect(figure.getByRole('slider', { name: 'Video seek' })).toBeEnabled();
   await video.evaluate(async (element: HTMLVideoElement) => {
     await new Promise<void>((resolve, reject) => {
       const timeout = window.setTimeout(() => reject(new Error('Video seek timed out.')), 4_000);
@@ -140,6 +141,7 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
   await expect(page.getByText(/^Page 1 · X \d+\.\d pt · Y \d+\.\d pt$/)).toBeVisible();
   await attachScreenshot(page, 'notebook-video-direct-media');
 
+  await ribbonTabs.getByRole('tab', { name: 'Video Format' }).click();
   await toolbar.getByRole('button', { name: 'Poster', exact: true }).click();
   await page.getByLabel('Choose video poster image').setInputFiles({
     name: 'lesson-poster.svg',
@@ -155,9 +157,20 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
     buffer: CAPTIONS,
   });
   await expect(video.locator('track')).toHaveCount(1);
+  const captions = figure.getByRole('combobox', { name: 'Captions' });
+  await expect(captions).toBeEnabled();
+  await captions.selectOption('off');
+  await expect(captions).toHaveValue('off');
   await expect(page.getByTestId('notebook-outline-entry').filter({
     hasText: 'Approaching a finite limit',
   })).toBeVisible();
+
+  const presentation = figure.locator('.notebook-video-presentation');
+  await figure.getByRole('button', { name: 'Enter theater mode' }).click();
+  await expect(presentation).toHaveClass(/is-theater/);
+  await attachScreenshot(page, 'notebook-video-theater');
+  await page.keyboard.press('Escape');
+  await expect(presentation).not.toHaveClass(/is-theater/);
 
   await page.keyboard.press('Control+S');
   await expect(page.getByText('Saved locally').first()).toBeVisible();

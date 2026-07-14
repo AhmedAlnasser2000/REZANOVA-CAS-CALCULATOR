@@ -1200,9 +1200,12 @@ describe('NotebookPage', () => {
     let figure = await screen.findByTestId('notebook-video-figure');
     const video = figure.querySelector('video');
     expect(video).not.toBeNull();
-    expect(video).toHaveAttribute('controls');
+    expect(video).not.toHaveAttribute('controls');
     expect(video).not.toHaveAttribute('autoplay');
     expect(video).toHaveAttribute('loop');
+    expect(within(figure).getByRole('group', { name: 'Video playback controls' })).toBeInTheDocument();
+    expect(within(figure).getByRole('button', { name: 'Play video' })).toBeInTheDocument();
+    expect(within(figure).getByRole('slider', { name: 'Video seek' })).toBeDisabled();
     expect(figure).toHaveTextContent('Video 1. Approaching a finite limit');
     expect(screen.getByRole('tab', { name: 'Video Format' })).toHaveAttribute(
       'aria-selected',
@@ -1281,6 +1284,104 @@ describe('NotebookPage', () => {
     await user.upload(screen.getByLabelText('Choose WebVTT captions'), notebookVttFile());
     await waitFor(() => expect(figure.querySelectorAll('track')).toHaveLength(1));
     expect(figure.querySelector('track')).toHaveAttribute('srclang', 'en');
+    const captions = within(figure).getByRole('combobox', { name: 'Captions' });
+    expect(captions).toHaveValue('0');
+    await user.click(within(figure).getByRole('button', { name: 'Hide captions' }));
+    expect(captions).toHaveValue('off');
+    await user.selectOptions(captions, '0');
+    expect(captions).toHaveValue('0');
+
+    const volume = within(figure).getByRole('slider', { name: 'Video volume' });
+    fireEvent.change(volume, { target: { value: '0.4' } });
+    expect(volume).toHaveValue('0.4');
+    const videoElement = video!;
+    fireEvent.error(videoElement);
+    expect(within(figure).getByRole('alert')).toHaveTextContent('could not be decoded or played');
+    expect(figure.querySelector('video')).toBe(videoElement);
+
+    const presentation = figure.querySelector<HTMLElement>('.notebook-video-presentation')!;
+    const originalFullscreen = Object.getOwnPropertyDescriptor(document, 'fullscreenElement');
+    const originalExitFullscreen = Object.getOwnPropertyDescriptor(document, 'exitFullscreen');
+    const originalRequestFullscreen = Object.getOwnPropertyDescriptor(presentation, 'requestFullscreen');
+    const exitFullscreen = vi.fn(async () => {
+      Object.defineProperty(document, 'fullscreenElement', {
+        configurable: true,
+        writable: true,
+        value: null,
+      });
+      document.dispatchEvent(new Event('fullscreenchange'));
+    });
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      writable: true,
+      value: null,
+    });
+    Object.defineProperty(document, 'exitFullscreen', {
+      configurable: true,
+      value: exitFullscreen,
+    });
+    Object.defineProperty(presentation, 'requestFullscreen', {
+      configurable: true,
+      value: vi.fn(async () => {
+        Object.defineProperty(document, 'fullscreenElement', {
+          configurable: true,
+          writable: true,
+          value: presentation,
+        });
+        document.dispatchEvent(new Event('fullscreenchange'));
+      }),
+    });
+    await user.click(within(figure).getByRole('button', { name: 'Enter theater mode' }));
+    expect(presentation).toHaveClass('is-theater');
+    expect(within(figure).queryByRole('button', { name: 'Drag video to reposition' })).toBeNull();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(presentation).not.toHaveClass('is-theater'));
+    await user.click(within(figure).getByRole('button', { name: 'Enter fullscreen' }));
+    await waitFor(() => expect(presentation).toHaveClass('is-theater'));
+    expect(document.fullscreenElement).toBe(presentation);
+    expect(figure.querySelector('video')).toBe(videoElement);
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(document.fullscreenElement).toBeNull());
+    const exitsBeforePendingRequest = exitFullscreen.mock.calls.length;
+    let resolveFullscreenRequest: (() => void) | undefined;
+    Object.defineProperty(presentation, 'requestFullscreen', {
+      configurable: true,
+      value: vi.fn(() => new Promise<void>((resolve) => {
+        resolveFullscreenRequest = () => {
+          Object.defineProperty(document, 'fullscreenElement', {
+            configurable: true,
+            writable: true,
+            value: presentation,
+          });
+          document.dispatchEvent(new Event('fullscreenchange'));
+          resolve();
+        };
+      })),
+    });
+    await user.click(within(figure).getByRole('button', { name: 'Enter fullscreen' }));
+    expect(within(figure).getByRole('button', { name: 'Enter fullscreen' })).toBeDisabled();
+    await user.keyboard('{Escape}');
+    expect(presentation).not.toHaveClass('is-theater');
+    expect(within(figure).getByRole('button', { name: 'Enter fullscreen' })).toBeDisabled();
+    resolveFullscreenRequest?.();
+    await waitFor(() => expect(exitFullscreen.mock.calls.length).toBeGreaterThan(exitsBeforePendingRequest));
+    await waitFor(() => expect(document.fullscreenElement).toBeNull());
+    await waitFor(() => expect(within(figure).getByRole('button', { name: 'Enter fullscreen' })).not.toBeDisabled());
+    if (originalFullscreen) {
+      Object.defineProperty(document, 'fullscreenElement', originalFullscreen);
+    } else {
+      Reflect.deleteProperty(document, 'fullscreenElement');
+    }
+    if (originalExitFullscreen) {
+      Object.defineProperty(document, 'exitFullscreen', originalExitFullscreen);
+    } else {
+      Reflect.deleteProperty(document, 'exitFullscreen');
+    }
+    if (originalRequestFullscreen) {
+      Object.defineProperty(presentation, 'requestFullscreen', originalRequestFullscreen);
+    } else {
+      Reflect.deleteProperty(presentation, 'requestFullscreen');
+    }
     expect(screen.getAllByTestId('notebook-outline-entry')
       .some((entry) => entry.dataset.outlineKind === 'videoFigure')).toBe(true);
 

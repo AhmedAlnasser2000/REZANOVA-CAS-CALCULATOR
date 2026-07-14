@@ -1583,6 +1583,165 @@
   background: #000;
 }
 
+.notebook-video-frame video.is-playback-error {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.notebook-video-presentation {
+  position: relative;
+}
+
+.notebook-video-presentation.is-theater {
+  position: fixed;
+  z-index: 1200;
+  inset: 16px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: clamp(12px, 2vw, 28px);
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 10px;
+  background: rgba(4, 11, 12, 0.98);
+  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.58);
+}
+
+.notebook-video-presentation.is-theater .notebook-media-transform-shell--video {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.notebook-video-presentation.is-theater .notebook-video-frame {
+  width: min(100%, 1400px);
+  max-height: calc(100dvh - 180px);
+  min-height: 0;
+}
+
+.notebook-video-presentation.is-theater .notebook-video-frame video {
+  width: 100%;
+  height: 100%;
+  max-height: calc(100dvh - 180px);
+  object-fit: contain !important;
+}
+
+.notebook-video-playback-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  background: #071112;
+  color: var(--page-ink);
+}
+
+.notebook-video-playback-error img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.46;
+}
+
+.notebook-video-playback-error span {
+  z-index: 1;
+  max-width: min(90%, 430px);
+  padding: 9px 12px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 6px;
+  background: rgba(7, 21, 22, 0.88);
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.notebook-video-playback-controls {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 7px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--notebook-panel-strong) 92%, transparent);
+  color: var(--page-ink);
+}
+
+.notebook-video-playback-controls button {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 5px;
+  padding: 0;
+  background: #102021;
+  color: var(--page-ink);
+}
+
+.notebook-video-playback-controls button:hover,
+.notebook-video-playback-controls button[aria-pressed='true'] {
+  border-color: var(--notebook-accent);
+  background: var(--notebook-accent-soft);
+}
+
+.notebook-video-playback-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.54;
+}
+
+.notebook-video-playback-controls button:focus-visible,
+.notebook-video-playback-controls input:focus-visible,
+.notebook-video-playback-controls select:focus-visible {
+  outline: 2px solid var(--notebook-accent);
+  outline-offset: 2px;
+}
+
+.notebook-video-time {
+  min-width: 76px;
+  color: var(--page-muted);
+  white-space: nowrap;
+  font: 0.68rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-video-seek {
+  min-width: 86px;
+  flex: 1 1 150px;
+  accent-color: var(--notebook-accent);
+}
+
+.notebook-video-volume {
+  width: 62px;
+  accent-color: var(--notebook-accent);
+}
+
+.notebook-video-captions {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  color: var(--page-muted);
+}
+
+.notebook-video-captions select {
+  max-width: 124px;
+  min-height: 30px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 5px;
+  padding: 0 6px;
+  background: #102021;
+  color: var(--page-ink);
+  font: 0.68rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-video-captions select:disabled {
+  opacity: 0.58;
+}
+
 .notebook-video-loading,
 .notebook-video-missing {
   display: flex;
@@ -2137,7 +2296,10 @@
   .notebook-image-dialog-warning,
   .notebook-image-error,
   .notebook-image-frame,
-  .notebook-video-frame {
+  .notebook-video-frame,
+  .notebook-video-presentation.is-theater,
+  .notebook-video-playback-controls,
+  .notebook-video-playback-error {
     border-color: CanvasText;
     background: Canvas;
     color: CanvasText;
@@ -2171,6 +2333,25 @@
     color: FieldText;
     -webkit-text-fill-color: FieldText;
     forced-color-adjust: auto;
+  }
+
+  .notebook-video-playback-controls button,
+  .notebook-video-captions select {
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+    forced-color-adjust: auto;
+  }
+
+  .notebook-video-playback-controls input {
+    accent-color: Highlight;
+    forced-color-adjust: auto;
+  }
+
+  .notebook-video-playback-error span {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
   }
 
   .notebook-page-break::before,

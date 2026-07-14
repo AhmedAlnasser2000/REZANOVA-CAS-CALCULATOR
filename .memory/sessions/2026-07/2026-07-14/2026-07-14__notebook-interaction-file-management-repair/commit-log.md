@@ -40,3 +40,11 @@
 - status: verified; committed by the checkpoint containing this entry
 - staged_scope: Notebook library/save source, focused tests, Tauri save seam, styles, and required durable memory only
 - excluded: concurrent Linear Algebra work and untracked `test-results/`
+
+## NOTEBOOK-VIDEO-PLAYBACK-SHELL1
+
+- commit_message: `NOTEBOOK-VIDEO-PLAYBACK-SHELL1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by this checkpoint
+- staged_scope: Notebook video NodeView, focused tests, one Tauri window permission, styles, and required durable memory only
+- excluded: concurrent Linear Algebra/Statistics work and untracked `test-results/`
