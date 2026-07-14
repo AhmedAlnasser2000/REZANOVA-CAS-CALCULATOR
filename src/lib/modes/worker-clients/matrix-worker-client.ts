@@ -12,7 +12,7 @@ import {
 import type { RunMatrixModeRequest } from '../matrix';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
-import { createMatrixResultOutcome } from '../matrix-result-document';
+import { createMatrixResultOutcomeV2 } from '../matrix-result-document';
 
 export type CreateMatrixWorker = CreateLinearAlgebraWorkspaceWorker<RunMatrixModeRequest>;
 
@@ -41,12 +41,18 @@ export function runMatrixModeViaIsolatedWorker(
       fallbackHostId: OOE_MATRIX_FALLBACK_HOST_ID,
       createDefaultWorker: createDefaultMatrixWorker,
       buildCancelledPayload: () => finalizeCanonicalRuntimeOutcomeFromProducer(
-        createMatrixResultOutcome({
+        createMatrixResultOutcomeV2({
           kind: 'error',
           title: 'Matrix',
           error: 'Matrix operation stopped before it finished.',
           warnings: [],
           ...proseSolveSummary('Matrix operation stopped after the worker runtime was hard-stopped.'),
+        }, {
+          routeId: 'matrix.matrix-arithmetic',
+          evidence: {},
+          mathValue: (_canonicalLatex, path) => {
+            throw new Error(`Matrix cancellation unexpectedly requested math at ${path}.`);
+          },
         }),
         'Matrix cancellation',
       ),

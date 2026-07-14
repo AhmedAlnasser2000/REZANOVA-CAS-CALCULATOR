@@ -347,7 +347,14 @@ describe('runMatrixMode', () => {
       kind: 'error',
       title: 'eigen(A)',
       error: 'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.',
-      actions: [{ kind: 'send', target: 'equation', latex: '\\lambda^{2}+1=0' }],
+      actions: [{
+        version: 2,
+        kind: 'send',
+        target: 'equation',
+        math: {
+          canonicalLatex: '\\lambda^{2}+1=0',
+        },
+      }],
     });
   });
 });

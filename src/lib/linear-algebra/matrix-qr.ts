@@ -5,6 +5,7 @@ import {
   exactScalarIsZero,
   multiplyExactScalars,
   type ExactScalar,
+  buildExactScalarNode,
 } from '../algebra/polynomial-core';
 import { scalar, validateExactMatrix, type ExactMatrix, type ExactMatrixStopReason, type ExactVector } from './exact-matrix-core';
 import { solveExactLinearSystem } from './exact-matrix-core';
@@ -20,6 +21,17 @@ import {
 import { exactDotVectors, exactScalarSquareRoot, exactScaleVector, exactSubtractVectors } from './exact-vector-core';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
+import { mathPart, mixedDetailSection, textPart } from '../display/result-detail-lines';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  exactVectorMathJson,
+  labelMathJson,
+  operatorMathJson,
+  type LinearAlgebraCanonicalLeafEvidence,
+} from './canonical-evidence';
 
 export type MatrixQrInput = {
   label: string;
@@ -36,7 +48,7 @@ export type MatrixColumnProjectionInput = MatrixQrInput & {
 export type MatrixLeastSquaresInput = MatrixColumnProjectionInput;
 
 type QrResult =
-  | { kind: 'success'; q: ExactMatrix; r: ExactMatrix; product: ExactMatrix; qtq: ExactMatrix; steps: string[] }
+  | { kind: 'success'; q: ExactMatrix; r: ExactMatrix; product: ExactMatrix; qtq: ExactMatrix; steps: string[]; stepEvidence: LinearAlgebraCanonicalLeafEvidence[] }
   | { kind: 'stop'; reason: ExactMatrixStopReason | 'wide-matrix' | 'dependent-columns' | 'irrational-norm'; column?: number };
 
 function stop(message: string): MatrixResponse {
@@ -108,17 +120,26 @@ function exactQr(matrix: ExactMatrix): QrResult {
   const qColumns: ExactVector[] = [];
   const r = zeroMatrix(columns, columns);
   const steps: string[] = [];
+  const stepEvidence: LinearAlgebraCanonicalLeafEvidence[] = [];
 
   for (let column = 0; column < columns; column += 1) {
     const original = matrixColumn(validation.matrix, column);
     let residual = [...original];
-    steps.push(`a_{${column + 1}}=${exactVectorToColumnLatex(original)}`);
+    const originalLatex = `a_{${column + 1}}=${exactVectorToColumnLatex(original)}`;
+    steps.push(originalLatex);
+    stepEvidence.push(canonicalLeafEvidence(originalLatex, equationMathJson(['Subscript', 'a', column + 1], exactVectorMathJson(original)), `matrix.qr.native-column-${column + 1}`));
 
     for (let previous = 0; previous < qColumns.length; previous += 1) {
       const coefficient = exactDotVectors(qColumns[previous], original);
       r[previous][column] = coefficient;
       residual = exactSubtractVectors(residual, exactScaleVector(qColumns[previous], coefficient));
-      steps.push(`r_{${previous + 1}${column + 1}}=q_{${previous + 1}}^{T}a_{${column + 1}}=${exactScalarToLatex(coefficient)}`);
+      const coefficientLatex = `r_{${previous + 1}${column + 1}}=q_{${previous + 1}}^{T}a_{${column + 1}}=${exactScalarToLatex(coefficient)}`;
+      steps.push(coefficientLatex);
+      stepEvidence.push(canonicalLeafEvidence(
+        coefficientLatex,
+        ['Equal', ['Subscript', 'r', Number(`${previous + 1}${column + 1}`)], ['Multiply', ['Transpose', exactVectorMathJson(qColumns[previous])], exactVectorMathJson(original)], buildExactScalarNode(coefficient)],
+        `matrix.qr.native-projection-coefficient-${previous + 1}-${column + 1}`,
+      ));
     }
 
     const normSquared = exactDotVectors(residual, residual);
@@ -137,14 +158,20 @@ function exactQr(matrix: ExactMatrix): QrResult {
     }
     r[column][column] = norm;
     qColumns.push(qColumn);
-    steps.push(`r_{${column + 1}${column + 1}}=\\left\\|u_{${column + 1}}\\right\\|=${exactScalarToLatex(norm)}`);
-    steps.push(`q_{${column + 1}}=${exactVectorToColumnLatex(qColumn)}`);
+    const normLatex = `r_{${column + 1}${column + 1}}=\\Vert u_{${column + 1}}\\Vert=${exactScalarToLatex(norm)}`;
+    const qLatex = `q_{${column + 1}}=${exactVectorToColumnLatex(qColumn)}`;
+    steps.push(normLatex);
+    steps.push(qLatex);
+    stepEvidence.push(
+      canonicalLeafEvidence(normLatex, ['Equal', `r_${column + 1}${column + 1}`, ['Equal', ['Norm', `u_${column + 1}`], buildExactScalarNode(norm)]], `matrix.qr.native-norm-${column + 1}`),
+      canonicalLeafEvidence(qLatex, equationMathJson(['Subscript', 'q', column + 1], exactVectorMathJson(qColumn)), `matrix.qr.native-orthonormal-column-${column + 1}`),
+    );
   }
 
   const q = matrixFromColumns(qColumns);
   const qtq = multiplyExactMatrices(transposeMatrix(q), q);
   const product = multiplyExactMatrices(q, r);
-  return { kind: 'success', q, r, product, qtq, steps };
+  return { kind: 'success', q, r, product, qtq, steps, stepEvidence };
 }
 
 function qrStopMessage(result: Extract<QrResult, { kind: 'stop' }>): string {
@@ -235,17 +262,16 @@ function leastSquaresDetails(
   solution: ExactVector,
   fitted: ExactVector,
   residual: ExactVector,
-): DisplayDetailSection[] {
+): {
+  sections: DisplayDetailSection[];
+  residualSquared: ExactScalar;
+  residualNorm: ExactScalar | null;
+  residualCheck: ExactVector;
+} {
   const residualSquared = exactDotVectors(residual, residual);
   const residualNorm = exactScalarSquareRoot(residualSquared);
-  const residualLines = [
-    `\\hat{b}=${input.label}x_{\\mathrm{LS}}=${exactVectorToColumnLatex(fitted)}`,
-    `r=${input.vectorLabel}-\\hat{b}=${exactVectorToColumnLatex(residual)}`,
-    `\\left\\|r\\right\\|^{2}=${exactScalarToLatex(residualSquared)}`,
-    ...(residualNorm ? [`\\left\\|r\\right\\|=${exactScalarToLatex(residualNorm)}`] : []),
-  ];
-
-  return [
+  const residualCheck = multiplyMatrixVector(transposeMatrix(qr.q), residual);
+  return { residualSquared, residualNorm, residualCheck, sections: [
     {
       title: 'Least-Squares Solution',
       lines: [
@@ -257,19 +283,36 @@ function leastSquaresDetails(
       lineKind: 'math',
     },
     {
-      title: 'Residual Vector',
-      lines: residualLines,
-      lineKind: 'math',
+      ...mixedDetailSection('Residual Vector', [
+      [textPart('b̂='), mathPart(`${input.label}x_{\\mathrm{LS}}=${exactVectorToColumnLatex(fitted)}`)],
+      [mathPart('r'), textPart('='), mathPart(input.vectorLabel), textPart('-b̂='), mathPart(exactVectorToColumnLatex(residual))],
+      [mathPart(`\\Vert r\\Vert^{2}=${exactScalarToLatex(residualSquared)}`)],
+      ...(residualNorm ? [[mathPart(`\\Vert r\\Vert=${exactScalarToLatex(residualNorm)}`)]] : []),
+      ]),
+      lines: [
+        `\\hat{b}=${input.label}x_{\\mathrm{LS}}=${exactVectorToColumnLatex(fitted)}`,
+        `r=${input.vectorLabel}-\\hat{b}=${exactVectorToColumnLatex(residual)}`,
+        `\\left\\|r\\right\\|^{2}=${exactScalarToLatex(residualSquared)}`,
+        ...(residualNorm ? [`\\left\\|r\\right\\|=${exactScalarToLatex(residualNorm)}`] : []),
+      ],
     },
     {
       title: 'Least-Squares Proof',
       lines: [
-        `Q^{T}(${input.vectorLabel}-${input.label}x_{\\mathrm{LS}})=${exactVectorToColumnLatex(multiplyMatrixVector(transposeMatrix(qr.q), residual))}`,
+        `Q^{T}(${input.vectorLabel}-${input.label}x_{\\mathrm{LS}})=${exactVectorToColumnLatex(residualCheck)}`,
         'The residual is orthogonal to the column space, so this x minimizes the squared residual.',
       ],
       lineKinds: ['math', 'text'],
     },
-  ];
+  ] };
+}
+
+function mathEvidence(value: LinearAlgebraCanonicalLeafEvidence) {
+  return { kind: 'math' as const, value };
+}
+
+function leaf(canonicalLatex: string, mathJson: unknown, source: string) {
+  return canonicalLeafEvidence(canonicalLatex, mathJson, source);
 }
 
 export function runMatrixQr(input: MatrixQrInput): MatrixResponse {
@@ -284,11 +327,25 @@ export function runMatrixQr(input: MatrixQrInput): MatrixResponse {
   }
 
   const columns = result.r.length;
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `${input.label}=QR`,
     approxText: `${columns} QR ${columns === 1 ? 'column' : 'columns'}`,
     detailSections: qrDetails(result),
     warnings: [],
+  });
+  const operand = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const qNode = exactMatrixMathJson(result.q);
+  const rNode = exactMatrixMathJson(result.r);
+  const primaryLatex = `${input.label}=QR`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: leaf(primaryLatex, equationMathJson(operand, ['Multiply', qNode, rNode]), 'matrix.qr.native-factorization'),
+    details: [
+      mathEvidence(leaf(`Q=${exactMatrixToLatex(result.q)}`, equationMathJson('Q', qNode), 'matrix.qr.native-q')),
+      mathEvidence(leaf(`R=${exactMatrixToLatex(result.r)}`, equationMathJson('R', rNode), 'matrix.qr.native-r')),
+      mathEvidence(leaf(`Q^{T}Q=${exactMatrixToLatex(result.qtq)}`, equationMathJson(['Multiply', ['Transpose', qNode], qNode], exactMatrixMathJson(result.qtq)), 'matrix.qr.native-orthonormal-check')),
+      mathEvidence(leaf(`QR=${exactMatrixToLatex(result.product)}`, equationMathJson(['Multiply', qNode, rNode], exactMatrixMathJson(result.product)), 'matrix.qr.native-product')),
+      ...result.stepEvidence.map(mathEvidence),
+    ],
   });
 }
 
@@ -314,11 +371,32 @@ export function runMatrixColumnProjection(input: MatrixColumnProjectionInput): M
   const residual = exactSubtractVectors(vector, projected);
   const residualCheck = multiplyMatrixVector(qTranspose, residual);
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `${columnProjectionLabel(input)}=${exactVectorToColumnLatex(projected)}`,
     approxText: `projection in \\mathbb{R}^{${vector.length}}`,
     detailSections: columnProjectionDetails(input, qr, coordinates, projected, residual, residualCheck),
     warnings: [],
+  });
+  const matrixNode = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const vectorNode = labelMathJson(input.vectorLabel, exactVectorMathJson(vector));
+  const qNode = exactMatrixMathJson(qr.q);
+  const coordinatesNode = exactVectorMathJson(coordinates);
+  const projectedNode = exactVectorMathJson(projected);
+  const residualNode = exactVectorMathJson(residual);
+  const labelLatex = columnProjectionLabel(input);
+  const projectionNode = operatorMathJson('projection', ['List', matrixNode, vectorNode]);
+  const primaryLatex = `${labelLatex}=${exactVectorToColumnLatex(projected)}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: leaf(primaryLatex, equationMathJson(projectionNode, projectedNode), 'matrix.column-projection.native-projected-vector'),
+    details: [
+      mathEvidence(leaf(`Q=${exactMatrixToLatex(qr.q)}`, equationMathJson('Q', qNode), 'matrix.column-projection.native-q')),
+      mathEvidence(leaf(`Q^{T}Q=${exactMatrixToLatex(qr.qtq)}`, equationMathJson(['Multiply', ['Transpose', qNode], qNode], exactMatrixMathJson(qr.qtq)), 'matrix.column-projection.native-orthonormal-check')),
+      mathEvidence(leaf(`Q^{T}${input.vectorLabel}=${exactVectorToColumnLatex(coordinates)}`, equationMathJson(['Multiply', ['Transpose', qNode], vectorNode], coordinatesNode), 'matrix.column-projection.native-coordinates')),
+      mathEvidence(leaf(`${labelLatex}=QQ^{T}${input.vectorLabel}`, equationMathJson(projectionNode, ['Multiply', qNode, ['Transpose', qNode], vectorNode]), 'matrix.column-projection.native-formula')),
+      mathEvidence(leaf(primaryLatex, equationMathJson(projectionNode, projectedNode), 'matrix.column-projection.native-projected-vector-detail')),
+      mathEvidence(leaf(`${input.vectorLabel}-${labelLatex}=${exactVectorToColumnLatex(residual)}`, equationMathJson(['Subtract', vectorNode, projectionNode], residualNode), 'matrix.column-projection.native-residual')),
+      mathEvidence(leaf(`Q^{T}(${input.vectorLabel}-${labelLatex})=${exactVectorToColumnLatex(residualCheck)}`, equationMathJson(['Multiply', ['Transpose', qNode], residualNode], exactVectorMathJson(residualCheck)), 'matrix.column-projection.native-residual-check')),
+    ],
   });
 }
 
@@ -347,10 +425,37 @@ export function runMatrixLeastSquares(input: MatrixLeastSquaresInput): MatrixRes
   const fitted = multiplyMatrixVector(exactMatrix, solved.solution);
   const residual = exactSubtractVectors(vector, fitted);
 
-  return profileLinearAlgebraResult({
+  const readback = leastSquaresDetails(input, qr, coordinates, solved.solution, fitted, residual);
+  const response = profileLinearAlgebraResult({
     resultLatex: `x_{\\mathrm{LS}}=${exactVectorToColumnLatex(solved.solution)}`,
     approxText: 'least-squares solution',
-    detailSections: leastSquaresDetails(input, qr, coordinates, solved.solution, fitted, residual),
+    detailSections: readback.sections,
     warnings: [],
+  });
+  const matrixNode = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const vectorNode = labelMathJson(input.vectorLabel, exactVectorMathJson(vector));
+  const qNode = exactMatrixMathJson(qr.q);
+  const rNode = exactMatrixMathJson(qr.r);
+  const coordinatesNode = exactVectorMathJson(coordinates);
+  const solutionNode = exactVectorMathJson(solved.solution);
+  const fittedNode = exactVectorMathJson(fitted);
+  const residualNode = exactVectorMathJson(residual);
+  const lsNode = ['Subscript', 'x', 'LS'];
+  const primaryLatex = `x_{\\mathrm{LS}}=${exactVectorToColumnLatex(solved.solution)}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: leaf(primaryLatex, equationMathJson(lsNode, solutionNode), 'matrix.least-squares.native-solution'),
+    details: [
+      mathEvidence(leaf(`${input.label}=QR`, equationMathJson(matrixNode, ['Multiply', qNode, rNode]), 'matrix.least-squares.native-factorization')),
+      mathEvidence(leaf(`R x=Q^{T}${input.vectorLabel}`, equationMathJson(['Multiply', rNode, 'x'], ['Multiply', ['Transpose', qNode], vectorNode]), 'matrix.least-squares.native-triangular-system')),
+      mathEvidence(leaf(`Q^{T}${input.vectorLabel}=${exactVectorToColumnLatex(coordinates)}`, equationMathJson(['Multiply', ['Transpose', qNode], vectorNode], coordinatesNode), 'matrix.least-squares.native-coordinates')),
+      mathEvidence(leaf(primaryLatex, equationMathJson(lsNode, solutionNode), 'matrix.least-squares.native-solution-detail')),
+      mathEvidence(leaf(`${input.label}x_{\\mathrm{LS}}=${exactVectorToColumnLatex(fitted)}`, equationMathJson(['InvisibleOperator', matrixNode, lsNode], fittedNode), 'matrix.least-squares.native-fitted')),
+      mathEvidence(leaf('r', 'r', 'matrix.least-squares.native-residual-symbol')),
+      mathEvidence(leaf(input.vectorLabel, vectorNode, 'matrix.least-squares.native-rhs-symbol')),
+      mathEvidence(leaf(exactVectorToColumnLatex(residual), residualNode, 'matrix.least-squares.native-residual-vector')),
+      mathEvidence(leaf(`\\Vert r\\Vert^{2}=${exactScalarToLatex(readback.residualSquared)}`, equationMathJson(['Power', ['Norm', 'r'], 2], buildExactScalarNode(readback.residualSquared)), 'matrix.least-squares.native-residual-squared')),
+      ...(readback.residualNorm ? [mathEvidence(leaf(`\\Vert r\\Vert=${exactScalarToLatex(readback.residualNorm)}`, equationMathJson(['Norm', 'r'], buildExactScalarNode(readback.residualNorm)), 'matrix.least-squares.native-residual-norm'))] : []),
+      mathEvidence(leaf(`Q^{T}(${input.vectorLabel}-${input.label}x_{\\mathrm{LS}})=${exactVectorToColumnLatex(readback.residualCheck)}`, equationMathJson(['Multiply', ['Transpose', qNode], residualNode], exactVectorMathJson(readback.residualCheck)), 'matrix.least-squares.native-residual-check')),
+    ],
   });
 }

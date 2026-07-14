@@ -1,4 +1,4 @@
-import { runVectorOperation } from '../linear-algebra/vector';
+import { runVectorOperationWithEvidence } from '../linear-algebra/vector';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
@@ -12,15 +12,12 @@ import {
   type CreateVectorWorker,
 } from './worker-clients/vector-worker-client';
 import {
-  createVectorIndependenceResultOutcomeV2,
-  createVectorResultOutcome,
+  createVectorAngleResultOutcomeV3,
+  createVectorResultOutcomeV2,
 } from './vector-result-document';
 import {
-  vectorIndependenceV2EvidenceForRequest,
   vectorMathJsonRouteForRequest,
-  vectorMathValuesFromOwnedLeaves,
-  vectorOwnedMathJsonLeaves,
-  vectorV2MathResolverFromOwnedLeaves,
+  vectorV2MathResolverFromEvidence,
 } from './vector-math-values';
 import {
   canonicalResultVersionForProducer,
@@ -29,7 +26,6 @@ import {
 } from '../result-contract';
 import type {
   AngleUnit,
-  ResultProducerDraft,
   VersionedResultProducerDraft,
   ExactScalarWire,
   VectorOperation,
@@ -116,7 +112,7 @@ function vectorUserFacingApproxText(approxText?: string) {
   return approxText && isNumericApproxText(approxText) ? approxText : undefined;
 }
 
-function runVectorModeOutcome(request: RunVectorModeRequest): ResultProducerDraft {
+function runVectorModeOutcome(request: RunVectorModeRequest) {
   const {
     operation,
     vectorA,
@@ -131,7 +127,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest): ResultProducerDraf
     exactVectorOperands,
     vectorOperandLatexList,
   } = request;
-  const response = runVectorOperation({
+  const execution = runVectorOperationWithEvidence({
     operation,
     vectorA,
     vectorB,
@@ -145,52 +141,52 @@ function runVectorModeOutcome(request: RunVectorModeRequest): ResultProducerDraf
     exactVectorOperands,
     vectorOperandLatexList,
   });
+  const { response, evidence } = execution;
   if (response.error) {
     return {
-      kind: 'error',
-      title: vectorResultTitle(request),
-      error: response.error,
-      warnings: response.warnings,
-      exactLatex: response.resultLatex,
-      approxText: vectorUserFacingApproxText(response.approxText),
-      sourceMode: 'vector',
+      outcome: {
+        kind: 'error' as const,
+        title: vectorResultTitle(request),
+        error: response.error,
+        warnings: response.warnings,
+        exactLatex: response.resultLatex,
+        approxText: vectorUserFacingApproxText(response.approxText),
+        detailSections: response.detailSections,
+        sourceMode: 'vector' as const,
+      },
+      evidence,
     };
   }
 
   return {
-    kind: 'success',
-    title: vectorResultTitle(request),
-    exactLatex: response.resultLatex,
-    answerRows: response.answerRows,
-    approxText: vectorUserFacingApproxText(response.approxText),
-    detailSections: response.detailSections,
-    warnings: response.warnings,
-    sourceMode: 'vector',
+    outcome: {
+      kind: 'success' as const,
+      title: vectorResultTitle(request),
+      exactLatex: response.resultLatex,
+      answerRows: response.answerRows,
+      approxText: vectorUserFacingApproxText(response.approxText),
+      detailSections: response.detailSections,
+      warnings: response.warnings,
+      sourceMode: 'vector' as const,
+    },
+    evidence,
   };
 }
 
 export function runVectorMode(request: RunVectorModeRequest): VersionedResultProducerDraft {
-  const outcome = runVectorModeOutcome(request);
-  if (outcome.kind === 'prompt') return outcome;
+  const { outcome, evidence } = runVectorModeOutcome(request);
   const routeId = vectorMathJsonRouteForRequest(request);
-  const leaves = vectorOwnedMathJsonLeaves(request);
   const version = canonicalResultVersionForProducer({
     routeId,
-    selector: request.operation,
+    selector: request.operation === 'angle'
+      ? `angle:${request.angleUnit}`
+      : request.operation,
   });
+  const mathValue = vectorV2MathResolverFromEvidence({ routeId, evidence });
   return requireCanonicalResultAuthority(
-    version === 2
-      ? createVectorIndependenceResultOutcomeV2(outcome, {
-          independence: vectorIndependenceV2EvidenceForRequest(request),
-          mathValue: vectorV2MathResolverFromOwnedLeaves({ routeId, leaves }),
-        })
-      : createVectorResultOutcome(outcome, {
-          mathValues: vectorMathValuesFromOwnedLeaves({
-            outcome,
-            routeId,
-            leaves,
-          }),
-        }),
+    version === 3
+      ? createVectorAngleResultOutcomeV3(outcome, { routeId, evidence, mathValue })
+      : createVectorResultOutcomeV2(outcome, { routeId, evidence, mathValue }),
     'Vector',
   );
 }

@@ -1,7 +1,15 @@
+import { mkdir } from 'node:fs/promises';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { openLauncherApp, setMathFieldLatex } from './helpers';
+import {
+  closeSidePanelIfOpen,
+  getMathFieldLatex,
+  openLauncherApp,
+  openSettingsPanel,
+  setMathFieldLatex,
+} from './helpers';
 
 const APP_STATE_KEY = 'rezanova-classwiz-calculator:app-state:v1';
+const SCREENSHOT_DIR = '.task_tmp/linear-algebra-canonical-v2-completion1';
 
 function matrixCard(page: Page, name: string) {
   return page.locator('.linear-algebra-value-card')
@@ -122,6 +130,10 @@ test.beforeEach(async ({ page }) => {
   await expect(page.getByTestId('main-editor')).toBeVisible();
 });
 
+test.beforeAll(async () => {
+  await mkdir(SCREENSHOT_DIR, { recursive: true });
+});
+
 test('renders typed Matrix profiles and exact row operations through V2 History', async ({ page }) => {
   await openLauncherApp(page, 'Linear', 'Matrix');
   await setMatrix(page, 'A', 2, 2, [1, 1, 2, 2]);
@@ -228,4 +240,62 @@ test('renders dependent and independent Vector families with typed V2 operands',
   await page.getByTestId('history-entry-replay').last().click();
   await expect(page.getByTestId('display-outcome-success')).toBeVisible();
   await expectNoHorizontalOverflow(page.getByTestId('display-outcome-success'));
+});
+
+test('renders the live gradian Vector angle as V3 and preserves copy and History replay', async ({ page }) => {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await openSettingsPanel(page);
+  await page.getByTestId('settings-angle-unit-grad').click();
+  await closeSidePanelIfOpen(page);
+  await openLauncherApp(page, 'Linear', 'Vector');
+  await setVector(page, 'u', [1, 0]);
+  await setVector(page, 'v', [0, 1]);
+
+  await runEditor(page, 'angle(u,v)');
+  await expect(page.getByTestId('display-outcome-answer-block').locator('[data-raw-latex]').first())
+    .toHaveAttribute('data-raw-latex', '100^{g}');
+  await expect.poll(async () => latestResultDocument(page)).toMatchObject({
+    version: 3,
+    primary: {
+      kind: 'angle-quantity',
+      presentation: { primaryLatex: '100^{g}' },
+      magnitude: { canonicalLatex: '100', mathJson: 100 },
+      unit: 'grad',
+    },
+  });
+  await page.getByTestId('display-outcome-action-copy-result').click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain('100^{g}');
+  await expectNoHorizontalOverflow(page.getByTestId('display-outcome-success'));
+  await page.screenshot({
+    fullPage: true,
+    path: `${SCREENSHOT_DIR}/vector-grad-angle.png`,
+  });
+
+  await page.getByTestId('history-toggle').click();
+  await expect(page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]'))
+    .toHaveAttribute('data-raw-latex', '100^{g}');
+  await page.getByTestId('history-entry-replay').click();
+  await expect(page.getByTestId('display-outcome-answer-block').locator('[data-raw-latex]').first())
+    .toHaveAttribute('data-raw-latex', '100^{g}');
+});
+
+test('renders the Matrix spectral controlled stop and opens its native polynomial in Equation', async ({ page }) => {
+  await openLauncherApp(page, 'Linear', 'Matrix');
+  await setMatrix(page, 'A', 2, 2, [0, -1, 1, 0]);
+  await setMathFieldLatex(page, 'eigen(A)');
+  await page.getByTestId('editor-runtime-run').click();
+
+  await expect(page.getByTestId('display-outcome-error')).toBeVisible();
+  await expect(page.getByText('Characteristic Polynomial', { exact: true })).toBeVisible();
+  await expect(page.getByText('How Eigenvalues Were Found', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('display-outcome-action-send-equation')).toHaveText('Open in Equation');
+  await expectNoHorizontalOverflow(page.getByTestId('display-outcome-error'));
+  await page.screenshot({
+    fullPage: true,
+    path: `${SCREENSHOT_DIR}/matrix-spectral-controlled-stop.png`,
+  });
+
+  await page.getByTestId('display-outcome-action-send-equation').click();
+  await expect.poll(() => getMathFieldLatex(page)).toContain('\\lambda');
+  await expect.poll(() => getMathFieldLatex(page)).toContain('+1=0');
 });

@@ -12,7 +12,7 @@ import {
 import type { RunVectorModeRequest } from '../vector';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
-import { createVectorResultOutcome } from '../vector-result-document';
+import { createVectorResultOutcomeV2 } from '../vector-result-document';
 
 export type CreateVectorWorker = CreateLinearAlgebraWorkspaceWorker<RunVectorModeRequest>;
 
@@ -41,12 +41,18 @@ export function runVectorModeViaIsolatedWorker(
       fallbackHostId: OOE_VECTOR_FALLBACK_HOST_ID,
       createDefaultWorker: createDefaultVectorWorker,
       buildCancelledPayload: () => finalizeCanonicalRuntimeOutcomeFromProducer(
-        createVectorResultOutcome({
+        createVectorResultOutcomeV2({
           kind: 'error',
           title: 'Vector',
           error: 'Vector operation stopped before it finished.',
           warnings: [],
           ...proseSolveSummary('Vector operation stopped after the worker runtime was hard-stopped.'),
+        }, {
+          routeId: 'vector.orthogonalization',
+          evidence: {},
+          mathValue: (_canonicalLatex, path) => {
+            throw new Error(`Vector cancellation unexpectedly requested math at ${path}.`);
+          },
         }),
         'Vector cancellation',
       ),

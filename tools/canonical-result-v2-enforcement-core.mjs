@@ -112,7 +112,7 @@ function sameOrderedValues(left, right) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-export function validateBaselineShape(baseline) {
+export function validateBaselineShape(baseline, v2DefaultRouteIds = []) {
   const errors = [];
   if (baseline.version !== 1) errors.push('Enforcement baseline version must be 1.');
   if (baseline.bootstrapMilestone !== 'CANONICAL-RESULT-V2-ENFORCEMENT1') {
@@ -150,8 +150,9 @@ export function validateBaselineShape(baseline) {
       }
     }
   }
+  const v2Defaults = new Set(v2DefaultRouteIds);
   for (const routeId of baseline.frozenRouteIds) {
-    if (!ownedRoutes.has(routeId)) {
+    if (!ownedRoutes.has(routeId) && !v2Defaults.has(routeId)) {
       errors.push(`Frozen V1 route has no owning producer file: ${routeId}.`);
     }
   }
@@ -192,8 +193,8 @@ export function compareEnforcementBaselines(current, base, v2DefaultRouteIds) {
 }
 
 export function validateCurrentRepository(root, baseline, baseBaseline) {
-  const errors = [...validateBaselineShape(baseline)];
   const policy = readProducerVersionPolicy(root);
+  const errors = [...validateBaselineShape(baseline, policy.explicitV2DefaultRouteIds)];
   const routeIds = readMathJsonRouteIds(root);
   if (!sameOrderedValues(policy.frozenRouteIds, baseline.frozenRouteIds)) {
     errors.push('Producer-version registry no longer matches the immutable 57-route V1 inventory.');

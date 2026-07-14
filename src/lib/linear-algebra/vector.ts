@@ -36,6 +36,27 @@ import {
 } from './vector-core';
 import { runVectorFamilyOperation } from './vector-family';
 import { profileLinearAlgebraResult } from '../display/printer';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactScalarMathJson,
+  exactVectorMathJson,
+  exactVectorSetMathJson,
+  labelMathJson,
+  linearAlgebraCanonicalEvidenceForResponse,
+  numericVectorMathJson,
+  numericVectorSetMathJson,
+  operatorMathJson,
+  textMathJson,
+  type LinearAlgebraCanonicalDetailEvidence,
+  type LinearAlgebraCanonicalEvidence,
+} from './canonical-evidence';
+import {
+  parseLinearAlgebraEditorLatex,
+  type LinearAlgebraEditorExpression,
+} from './editor-parser';
+import { buildExactScalarNode } from '../algebra/polynomial-core';
 
 function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
   switch (reason) {
@@ -208,11 +229,26 @@ function exactVectorInputs(req: VectorRequest) {
   };
 }
 
-function exactScalarResponse(value: ReturnType<typeof exactDotVectors>): VectorResponse {
-  return profileLinearAlgebraResult({
-    resultLatex: exactScalarToLatex(value),
+function mathDetail(
+  canonicalLatex: string,
+  mathJson: unknown,
+  source: string,
+): LinearAlgebraCanonicalDetailEvidence {
+  return { kind: 'math', value: canonicalLeafEvidence(canonicalLatex, mathJson, source) };
+}
+
+function exactScalarResponse(
+  value: ReturnType<typeof exactDotVectors>,
+  source: string,
+): VectorResponse {
+  const resultLatex = exactScalarToLatex(value);
+  const response = profileLinearAlgebraResult({
+    resultLatex,
     approxText: formatApproxNumber(exactScalarToNumber(value)),
     warnings: [],
+  });
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(resultLatex, exactScalarMathJson(value), source),
   });
 }
 
@@ -224,16 +260,37 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
   const { vectorA, vectorB } = exactVectorInputs(req);
 
   switch (req.operation) {
-    case 'add':
-      return vectorA && vectorB ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(exactAddVectors(vectorA, vectorB)), warnings: [] }) : null;
-    case 'subtract':
-      return vectorA && vectorB ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(exactSubtractVectors(vectorA, vectorB)), warnings: [] }) : null;
+    case 'add': {
+      if (!vectorA || !vectorB) return null;
+      const vector = exactAddVectors(vectorA, vectorB);
+      const resultLatex = exactVectorToColumnLatex(vector);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(vector), 'vector.add.native-exact-vector') },
+      );
+    }
+    case 'subtract': {
+      if (!vectorA || !vectorB) return null;
+      const vector = exactSubtractVectors(vectorA, vectorB);
+      const resultLatex = exactVectorToColumnLatex(vector);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(vector), 'vector.subtract.native-exact-vector') },
+      );
+    }
     case 'cross': {
       const vector = vectorA && vectorB ? exactCrossVectors(vectorA, vectorB) : null;
-      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
+      if (!vector) return null;
+      const resultLatex = exactVectorToColumnLatex(vector);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(vector), 'vector.cross.native-exact-vector') },
+      );
     }
     case 'dot':
-      return vectorA && vectorB ? exactScalarResponse(exactDotVectors(vectorA, vectorB)) : null;
+      return vectorA && vectorB
+        ? exactScalarResponse(exactDotVectors(vectorA, vectorB), 'vector.dot.native-exact-scalar')
+        : null;
     case 'normA':
     case 'normB': {
       const vector = req.operation === 'normA' ? vectorA : vectorB;
@@ -242,39 +299,72 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
       }
 
       const norm = exactScalarSquareRoot(exactDotVectors(vector, vector));
-      return norm ? exactScalarResponse(norm) : null;
+      return norm ? exactScalarResponse(norm, 'vector.norm.native-exact-radical') : null;
     }
     case 'projectionUofV': {
       const vector = vectorA && vectorB ? exactProjectionOntoVector(vectorA, vectorB) : null;
-      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
+      if (!vector) return null;
+      const resultLatex = exactVectorToColumnLatex(vector);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(vector), 'vector.projection-u.native-exact-vector') },
+      );
     }
     case 'projectionVofU': {
       const vector = vectorA && vectorB ? exactProjectionOntoVector(vectorB, vectorA) : null;
-      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
+      if (!vector) return null;
+      const resultLatex = exactVectorToColumnLatex(vector);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(vector), 'vector.projection-v.native-exact-vector') },
+      );
     }
     case 'orthogonalToU': {
       const vector = vectorA && vectorB ? exactOrthogonalComponentToVector(vectorA, vectorB) : null;
-      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
+      if (!vector) return null;
+      const resultLatex = exactVectorToColumnLatex(vector);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(vector), 'vector.orthogonal-u.native-exact-vector') },
+      );
     }
     case 'orthogonalToV': {
       const vector = vectorA && vectorB ? exactOrthogonalComponentToVector(vectorB, vectorA) : null;
-      return vector ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(vector), warnings: [] }) : null;
+      if (!vector) return null;
+      const resultLatex = exactVectorToColumnLatex(vector);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(vector), 'vector.orthogonal-v.native-exact-vector') },
+      );
     }
     case 'unitA':
     case 'unitB': {
       const vector = req.operation === 'unitA' ? vectorA : vectorB;
       const unit = vector ? exactUnitVector(vector) : null;
-      return unit ? profileLinearAlgebraResult({ resultLatex: exactVectorToColumnLatex(unit), warnings: [] }) : null;
+      if (!unit) return null;
+      const resultLatex = exactVectorToColumnLatex(unit);
+      return attachLinearAlgebraCanonicalEvidence(
+        profileLinearAlgebraResult({ resultLatex, warnings: [] }),
+        { primary: canonicalLeafEvidence(resultLatex, exactVectorMathJson(unit), 'vector.unit.native-exact-vector') },
+      );
     }
     case 'orthogonalCheck': {
       if (!vectorA || !vectorB) {
         return null;
       }
       const dot = exactDotVectors(vectorA, vectorB);
-      return profileLinearAlgebraResult({
-        resultLatex: exactScalarIsZero(dot) ? '\\text{Orthogonal}' : '\\text{Not orthogonal}',
+      const orthogonal = exactScalarIsZero(dot);
+      const resultLatex = orthogonal ? '\\text{Orthogonal}' : '\\text{Not orthogonal}';
+      return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+        resultLatex,
         approxText: `dot = ${exactScalarToLatex(dot)}`,
         warnings: [],
+      }), {
+        primary: canonicalLeafEvidence(
+          resultLatex,
+          textMathJson(orthogonal ? 'Orthogonal' : 'Not orthogonal'),
+          'vector.orthogonality.native-exact-dot-classification',
+        ),
       });
     }
     case 'gramSchmidtUV': {
@@ -282,15 +372,77 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
         return null;
       }
       const exactResult = exactGramSchmidtTwoVectors(vectorA, vectorB);
-      return exactResult ? profileLinearAlgebraResult({
-        resultLatex: exactVectorSetLatex('\\operatorname{orthogonal\\ basis}', exactResult.orthogonalBasis),
-        answerRows: exactVectorBasisAnswerRows(exactResult.orthogonalBasis),
+      if (!exactResult) return null;
+      const resultLatex = exactVectorSetLatex('\\operatorname{orthogonal\\ basis}', exactResult.orthogonalBasis);
+      const answerRows = exactVectorBasisAnswerRows(exactResult.orthogonalBasis);
+      const detailEvidence: LinearAlgebraCanonicalDetailEvidence[] = [];
+      if (exactResult.orthonormalBasis?.length === exactResult.orthogonalBasis.length) {
+        const latex = exactVectorSetLatex('\\operatorname{orthonormal\\ basis}', exactResult.orthonormalBasis);
+        detailEvidence.push(mathDetail(
+          latex,
+          equationMathJson('orthonormalbasis', exactVectorSetMathJson(exactResult.orthonormalBasis)),
+          'vector.gram-schmidt.native-exact-orthonormal-basis',
+        ));
+      } else if (result.orthonormalBasis.length === result.orthogonalBasis.length) {
+        const latex = vectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis);
+        detailEvidence.push(mathDetail(
+          latex,
+          equationMathJson('orthonormalbasis', numericVectorSetMathJson(result.orthonormalBasis)),
+          'vector.gram-schmidt.native-numeric-orthonormal-basis',
+        ));
+      }
+      exactResult.orthogonalBasis.forEach((vector, index) => {
+        if (index > 0) return;
+        const latex = `w_{${index + 1}}=${exactVectorToColumnLatex(vector)}`;
+        detailEvidence.push(mathDetail(
+          latex,
+          equationMathJson(`w_${index + 1}`, exactVectorMathJson(vector)),
+          'vector.gram-schmidt.native-exact-orthogonal-vector',
+        ));
+      });
+      if (exactResult.orthogonalBasis[1]) {
+        const secondInputLatex = req.vectorOperandLatexB ?? 'v';
+        const secondOperand = labelMathJson(secondInputLatex, exactVectorMathJson(vectorB));
+        const vector = exactResult.orthogonalBasis[1];
+        const latex = `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${exactVectorToColumnLatex(vector)}`;
+        detailEvidence.push(mathDetail(
+          latex,
+          equationMathJson('w_2', equationMathJson(
+            ['Subtract', secondOperand, operatorMathJson('proj_w_1', secondOperand)],
+            exactVectorMathJson(vector),
+          )),
+          'vector.gram-schmidt.native-exact-projection-step',
+        ));
+        const dot = exactDotVectors(exactResult.orthogonalBasis[0], vector);
+        const dotLatex = `w_{1}\\cdot w_{2}=${exactScalarToLatex(dot)}`;
+        detailEvidence.push(mathDetail(
+          dotLatex,
+          equationMathJson(['Multiply', 'w_1', 'w_2'], exactScalarMathJson(dot)),
+          'vector.gram-schmidt.native-exact-orthogonality-check',
+        ));
+      }
+      const response = profileLinearAlgebraResult({
+        resultLatex,
+        answerRows,
         approxText: result.notes.length > 0
           ? `${exactResult.orthogonalBasis.length} basis direction${exactResult.orthogonalBasis.length === 1 ? '' : 's'}; dependent input skipped`
           : `${exactResult.orthogonalBasis.length} basis directions`,
         detailSections: exactGramSchmidtDetailSections(req, exactResult, result),
         warnings: [],
-      }) : null;
+      });
+      return attachLinearAlgebraCanonicalEvidence(response, {
+        primary: canonicalLeafEvidence(
+          resultLatex,
+          equationMathJson('orthogonalbasis', exactVectorSetMathJson(exactResult.orthogonalBasis)),
+          'vector.gram-schmidt.native-exact-basis',
+        ),
+        answerRows: exactResult.orthogonalBasis.map((vector, index) => canonicalLeafEvidence(
+          answerRows.rows[index].latex,
+          equationMathJson(`w_${index + 1}`, exactVectorMathJson(vector)),
+          'vector.gram-schmidt.native-exact-answer-row',
+        )),
+        details: detailEvidence,
+      });
     }
     default:
       return null;
@@ -307,40 +459,125 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
 
   if (result.kind === 'scalar') {
     const suffix = result.angleUnit === 'deg' ? '^{\\circ}' : result.angleUnit === 'grad' ? '^{g}' : '';
-    return profileLinearAlgebraResult({
-      resultLatex: `${scalarToLatex(result.value)}${suffix}`,
+    const magnitudeLatex = scalarToLatex(result.value);
+    const resultLatex = `${magnitudeLatex}${suffix}`;
+    const response = profileLinearAlgebraResult({
+      resultLatex,
       approxText: formatApproxNumber(result.value),
       warnings: [],
     });
+    const magnitude = canonicalLeafEvidence(
+      magnitudeLatex,
+      Number(magnitudeLatex),
+      'vector.angle.native-dot-and-norm-magnitude',
+    );
+    return attachLinearAlgebraCanonicalEvidence(response, result.angleUnit === 'grad'
+      ? {
+          semanticPrimary: { kind: 'angle-quantity', magnitude, unit: 'grad' },
+        }
+      : {
+          primary: canonicalLeafEvidence(
+            resultLatex,
+            result.angleUnit === 'deg' ? ['Degrees', Number(magnitudeLatex)] : Number(magnitudeLatex),
+            'vector.scalar.native-numeric-evaluation',
+          ),
+        });
   }
 
   if (result.kind === 'orthogonality') {
-    return profileLinearAlgebraResult({
-      resultLatex: result.orthogonal ? '\\text{Orthogonal}' : '\\text{Not orthogonal}',
+    const resultLatex = result.orthogonal ? '\\text{Orthogonal}' : '\\text{Not orthogonal}';
+    return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+      resultLatex,
       approxText: `dot = ${formatApproxNumber(result.dot)}`,
       warnings: [],
+    }), {
+      primary: canonicalLeafEvidence(
+        resultLatex,
+        textMathJson(result.orthogonal ? 'Orthogonal' : 'Not orthogonal'),
+        'vector.orthogonality.native-numeric-classification',
+      ),
     });
   }
 
   if (result.kind === 'gramSchmidt') {
-    return profileLinearAlgebraResult({
-      resultLatex: vectorSetLatex('\\operatorname{orthogonal\\ basis}', result.orthogonalBasis),
-      answerRows: vectorBasisAnswerRows(result.orthogonalBasis),
+    const resultLatex = vectorSetLatex('\\operatorname{orthogonal\\ basis}', result.orthogonalBasis);
+    const answerRows = vectorBasisAnswerRows(result.orthogonalBasis);
+    const detailEvidence: LinearAlgebraCanonicalDetailEvidence[] = [];
+    if (result.orthonormalBasis.length === result.orthogonalBasis.length) {
+      const latex = vectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis);
+      detailEvidence.push(mathDetail(
+        latex,
+        equationMathJson('orthonormalbasis', numericVectorSetMathJson(result.orthonormalBasis)),
+        'vector.gram-schmidt.native-numeric-orthonormal-basis',
+      ));
+    }
+    result.orthogonalBasis.forEach((vector, index) => {
+      if (index > 0) return;
+      const latex = `w_{${index + 1}}=${vectorToLatex(vector)}`;
+      detailEvidence.push(mathDetail(
+        latex,
+        equationMathJson(`w_${index + 1}`, numericVectorMathJson(vector)),
+        'vector.gram-schmidt.native-numeric-orthogonal-vector',
+      ));
+    });
+    if (result.orthogonalBasis[1]) {
+      const secondInputLatex = req.vectorOperandLatexB ?? 'v';
+      const secondOperand = labelMathJson(secondInputLatex, numericVectorMathJson(req.vectorB ?? []));
+      const vector = result.orthogonalBasis[1];
+      const latex = `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${vectorToLatex(vector)}`;
+      detailEvidence.push(mathDetail(
+        latex,
+        equationMathJson('w_2', equationMathJson(
+          ['Subtract', secondOperand, operatorMathJson('proj_w_1', secondOperand)],
+          numericVectorMathJson(vector),
+        )),
+        'vector.gram-schmidt.native-numeric-projection-step',
+      ));
+      const dot = dotVectors(result.orthogonalBasis[0], vector);
+      const dotLatex = `w_{1}\\cdot w_{2}=${scalarToLatex(dot)}`;
+      detailEvidence.push(mathDetail(
+        dotLatex,
+        equationMathJson(['Multiply', 'w_1', 'w_2'], Number(scalarToLatex(dot))),
+        'vector.gram-schmidt.native-numeric-orthogonality-check',
+      ));
+    }
+    return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+      resultLatex,
+      answerRows,
       approxText: result.notes.length > 0
         ? `${result.orthogonalBasis.length} basis direction${result.orthogonalBasis.length === 1 ? '' : 's'}; dependent input skipped`
         : `${result.orthogonalBasis.length} basis directions`,
       detailSections: gramSchmidtDetailSections(req, result),
       warnings: [],
+    }), {
+      primary: canonicalLeafEvidence(
+        resultLatex,
+        equationMathJson('orthogonalbasis', numericVectorSetMathJson(result.orthogonalBasis)),
+        'vector.gram-schmidt.native-numeric-basis',
+      ),
+      answerRows: result.orthogonalBasis.map((vector, index) => canonicalLeafEvidence(
+        answerRows.rows[index].latex,
+        equationMathJson(`w_${index + 1}`, numericVectorMathJson(vector)),
+        'vector.gram-schmidt.native-numeric-answer-row',
+      )),
+      details: detailEvidence,
     });
   }
 
-  return profileLinearAlgebraResult({
-    resultLatex: vectorToLatex(result.value),
+  const resultLatex = vectorToLatex(result.value);
+  return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+    resultLatex,
     warnings: [],
+  }), {
+    primary: canonicalLeafEvidence(
+      resultLatex,
+      numericVectorMathJson(result.value),
+      'vector.operation.native-numeric-vector',
+    ),
   });
 }
 
-export function runVectorOperation(req: VectorRequest): VectorResponse {
+function runVectorOperationInternal(req: VectorRequest): VectorResponse {
   const dimensionError = vectorEditingDimensionError(req.vectorA)
     ?? (req.vectorB ? vectorEditingDimensionError(req.vectorB) : null);
   if (dimensionError) {
@@ -354,11 +591,35 @@ export function runVectorOperation(req: VectorRequest): VectorResponse {
     const answerLatex = req.editorExpressionLatex
       ? `${req.editorExpressionLatex}=${resultLatex}`
       : resultLatex;
-    return {
+    const response = {
       resultLatex,
       answerRows: { rows: [{ latex: answerLatex }] },
       warnings: [],
     };
+    const vectorNode = exact ? exactVectorMathJson(exact) : numericVectorMathJson(req.vectorA);
+    const expressionMathJson = req.editorExpressionLatex
+      ? vectorExpressionMathJson(req.editorExpressionLatex)
+      : undefined;
+    if (req.editorExpressionLatex && expressionMathJson === undefined) {
+      return {
+        warnings: [],
+        error: 'This Vector combination is missing producer-owned expression evidence.',
+      };
+    }
+    return attachLinearAlgebraCanonicalEvidence(response, {
+      primary: canonicalLeafEvidence(
+        resultLatex,
+        vectorNode,
+        'vector.linear-combination.native-evaluated-vector',
+      ),
+      answerRows: [canonicalLeafEvidence(
+        answerLatex,
+        answerLatex === resultLatex
+          ? vectorNode
+          : equationMathJson(expressionMathJson, vectorNode),
+        'vector.linear-combination.native-evaluated-answer-row',
+      )],
+    });
   }
   if (operation === 'span' || operation === 'independent') {
     return runVectorFamilyOperation(req);
@@ -367,4 +628,68 @@ export function runVectorOperation(req: VectorRequest): VectorResponse {
   const numericRequest: NumericVectorRequest = { ...req, operation };
   const result = runNumericVectorOperation(numericRequest);
   return exactVectorResponse(req, result) ?? vectorCoreResultToResponse(req, result);
+}
+
+function vectorExpressionNode(expression: LinearAlgebraEditorExpression): unknown | undefined {
+  switch (expression.kind) {
+    case 'named':
+      return expression.name;
+    case 'vectorLiteral':
+      return exactVectorMathJson(expression.exactValue);
+    case 'scalar':
+      return buildExactScalarNode(expression.exactValue);
+    case 'negate': {
+      const value = vectorExpressionNode(expression.value);
+      return value === undefined ? undefined : ['Negate', value];
+    }
+    case 'scale': {
+      const value = vectorExpressionNode(expression.vector);
+      if (value === undefined) return undefined;
+      const operand = expression.vector.kind === 'binary'
+        ? ['Delimiter', value]
+        : value;
+      return ['InvisibleOperator', buildExactScalarNode(expression.scalar.exactValue), operand];
+    }
+    case 'vectorDivide': {
+      const value = vectorExpressionNode(expression.vector);
+      return value === undefined
+        ? undefined
+        : ['Divide', value, buildExactScalarNode(expression.scalar.exactValue)];
+    }
+    case 'binary': {
+      const left = vectorExpressionNode(expression.left);
+      const right = vectorExpressionNode(expression.right);
+      if (left === undefined || right === undefined) return undefined;
+      if (expression.operator === 'add') return ['Add', left, right];
+      if (expression.operator === 'subtract') return ['Subtract', left, right];
+      if (expression.operator === 'dot') return ['Dot', left, right];
+      if (expression.operator === 'cross') return ['Cross', left, right];
+      return ['Multiply', left, right];
+    }
+    default:
+      return undefined;
+  }
+}
+
+function vectorExpressionMathJson(latex: string) {
+  const parsed = parseLinearAlgebraEditorLatex(latex, {
+    mode: 'vector',
+    vectorNamedValues: 'abcdefghijklmnopqrstuvwxyz'.split(''),
+  });
+  return parsed.ok ? vectorExpressionNode(parsed.expression) : undefined;
+}
+
+export function runVectorOperationWithEvidence(req: VectorRequest): {
+  response: VectorResponse;
+  evidence: LinearAlgebraCanonicalEvidence;
+} {
+  const response = runVectorOperationInternal(req);
+  return {
+    response,
+    evidence: linearAlgebraCanonicalEvidenceForResponse(response),
+  };
+}
+
+export function runVectorOperation(req: VectorRequest): VectorResponse {
+  return runVectorOperationWithEvidence(req).response;
 }

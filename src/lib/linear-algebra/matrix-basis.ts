@@ -9,6 +9,16 @@ import {
 } from './exact-matrix-format';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
+import { buildExactScalarNode } from '../algebra/polynomial-core';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  integerSetMathJson,
+  labelMathJson,
+  operatorMathJson,
+} from './canonical-evidence';
 
 export type MatrixBasisInput = {
   label: string;
@@ -98,7 +108,7 @@ export function runMatrixBasis(input: MatrixBasisInput): MatrixResponse {
     && determinant?.kind === 'success'
     && !exactScalarIsZero(determinant.determinant);
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `\\operatorname{basis}(${input.label})=\\text{${isBasis ? 'Yes' : 'No'}}`,
     approxText: determinantLatex ? `det(${input.label}) = ${determinantLatex}` : `rank ${rank}, ${columns} column vectors in R^${rows}`,
     detailSections: basisDetails({
@@ -112,5 +122,31 @@ export function runMatrixBasis(input: MatrixBasisInput): MatrixResponse {
       isBasis,
     }),
     warnings: [],
+  });
+  const operand = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const pivotNumbers = pivotColumns.map((column) => column + 1);
+  const math = (canonicalLatex: string, mathJson: unknown, source: string) => ({
+    kind: 'math' as const,
+    value: canonicalLeafEvidence(canonicalLatex, mathJson, source),
+  });
+  const resultLatex = `\\operatorname{basis}(${input.label})=\\text{${isBasis ? 'Yes' : 'No'}}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(
+      resultLatex,
+      equationMathJson(operatorMathJson('basis', operand), isBasis ? 'True' : 'False'),
+      'matrix.basis.native-classification',
+    ),
+    details: [
+      math(`\\operatorname{rank}(${input.label})=${rank}`, equationMathJson(operatorMathJson('rank', operand), rank), 'matrix.basis.native-rank'),
+      math(`\\operatorname{columns}(${input.label})=${columns}`, equationMathJson(operatorMathJson('columns', operand), columns), 'matrix.basis.native-column-count'),
+      math(`\\text{column vectors live in }\\mathbb{R}^{${rows}}`, ['InvisibleOperator', "'column vectors live in '", ['Power', 'RealNumbers', rows]], 'matrix.basis.native-ambient-space'),
+      math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotNumbers)), 'matrix.basis.native-pivots'),
+      ...(determinant?.kind === 'success' && determinantLatex ? [math(
+        `\\det(${input.label})=${determinantLatex}`,
+        equationMathJson(operatorMathJson('det', operand), buildExactScalarNode(determinant.determinant)),
+        'matrix.basis.native-determinant',
+      )] : []),
+      math(`\\operatorname{rref}(${input.label})=${exactMatrixToLatex(reduced.matrix)}`, equationMathJson(operatorMathJson('rref', operand), exactMatrixMathJson(reduced.matrix)), 'matrix.basis.native-rref'),
+    ],
   });
 }

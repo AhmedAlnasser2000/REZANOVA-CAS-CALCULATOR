@@ -1,5 +1,5 @@
 import type { ResultProducerDraft, MatrixSystemForm } from '../../types/calculator';
-import type { ExactScalar } from '../algebra/polynomial-core';
+import { buildExactScalarNode, type ExactScalar } from '../algebra/polynomial-core';
 import {
   rrefExactMatrix,
   solveExactLinearSystem,
@@ -18,6 +18,7 @@ import {
 } from './exact-matrix-format';
 import type { ExactScalarWire } from '../../types/calculator';
 import { rowOperationDetailSection } from './row-operation-readback';
+import { formatRowOperation } from './row-operation-readback';
 import {
   exactMatrixDimensionLimitMessage,
   LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
@@ -29,6 +30,16 @@ import {
   proseSolveSummary,
   textPart,
 } from '../display/result-detail-lines';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  exactVectorMathJson,
+  rowOperationEvidence,
+  textMathJson,
+  type LinearAlgebraCanonicalEvidence,
+} from './canonical-evidence';
 
 export type MatrixSystemRunInput = {
   coefficients: number[][];
@@ -191,6 +202,70 @@ function solutionFamilyFromRref(
   });
 }
 
+function parameterMathJson(parameter: string) {
+  const subscript = /^t_\{([1-9][0-9]*)\}$/u.exec(parameter);
+  return subscript ? ['Subscript', 't', Number(subscript[1])] : parameter;
+}
+
+function parameterTermMathJson(coefficient: ExactScalar, parameter: string): unknown | null {
+  if (scalarIsZero(coefficient)) return null;
+  const symbol = parameterMathJson(parameter);
+  if (coefficient.numerator === coefficient.denominator) return symbol;
+  if (coefficient.numerator === -coefficient.denominator) return ['Negate', symbol];
+  return ['Multiply', buildExactScalarNode(coefficient), symbol];
+}
+
+function parameterExpressionMathJson(constant: ExactScalar, terms: unknown[]) {
+  const pieces = scalarIsZero(constant) ? [] : [buildExactScalarNode(constant)];
+  pieces.push(...terms);
+  if (pieces.length === 0) return 0;
+  return pieces.length === 1 ? pieces[0] : ['Add', ...pieces];
+}
+
+function solutionFamilyCanonicalEvidence(
+  rref: ExactMatrix,
+  pivotColumns: number[],
+  unknowns: number,
+) {
+  const coefficientPivots = pivotColumns.filter((column) => column < unknowns);
+  const freeColumns = Array.from({ length: unknowns }, (_, index) => index)
+    .filter((column) => !coefficientPivots.includes(column));
+  if (freeColumns.length === 0) return null;
+
+  const parameterByColumn = new Map<number, string>();
+  freeColumns.forEach((column, index) => {
+    parameterByColumn.set(column, parameterName(index, freeColumns.length));
+  });
+  const entries: unknown[] = Array.from({ length: unknowns }, () => 0);
+  freeColumns.forEach((column) => {
+    entries[column] = parameterMathJson(parameterByColumn.get(column) ?? 't');
+  });
+  coefficientPivots.forEach((pivotColumn, pivotRow) => {
+    const row = rref[pivotRow];
+    if (!row) return;
+    entries[pivotColumn] = parameterExpressionMathJson(
+      row[unknowns],
+      freeColumns
+        .map((freeColumn) => parameterTermMathJson(
+          negateScalar(row[freeColumn]),
+          parameterByColumn.get(freeColumn) ?? 't',
+        ))
+        .filter((term): term is unknown => term !== null),
+    );
+  });
+  const vector = ['Matrix', ['List', ...entries.map((entry) => ['List', entry])], "'[]'"];
+  const parameters = freeColumns.map((column) => parameterByColumn.get(column) ?? 't');
+  const symbols = parameters.map(parameterMathJson);
+  const domain = symbols.length === 1
+    ? ['Element', symbols[0], 'RealNumbers']
+    : ['Delimiter', ['Sequence', ...symbols.slice(0, -1), ['Element', symbols.at(-1), 'RealNumbers']], "','"];
+  const spacedEquation = ['Equal', 'x', ['InvisibleOperator', vector, ['HorizontalSpacing', 18], symbols[0]]];
+  const primary = symbols.length === 1
+    ? ['Element', spacedEquation, 'RealNumbers']
+    : ['Delimiter', ['Sequence', spacedEquation, ...symbols.slice(1, -1), ['Element', symbols.at(-1), 'RealNumbers']], "','"];
+  return { vector, domain, primary };
+}
+
 function inconsistentRowLatex(rref: ExactMatrix, coefficientColumns: number) {
   const row = rref.find((candidate) =>
     candidate
@@ -257,31 +332,34 @@ function systemTitle(form: MatrixSystemForm) {
   return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
 }
 
-export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProducerDraft {
+export function runMatrixLinearSystemWithEvidence(input: MatrixSystemRunInput): {
+  outcome: ResultProducerDraft;
+  evidence: LinearAlgebraCanonicalEvidence;
+} {
   const coefficients = exactMatrixFromWire(input.exactCoefficients) ?? exactMatrixFromNumeric(input.coefficients);
   const constants = exactVectorFromWire(input.exactConstants) ?? exactVectorFromNumeric(input.constants);
   if (!coefficients || !constants) {
-    return matrixSystemStop('Structured Matrix systems need exact Matrix entries in this move.');
+    return { outcome: matrixSystemStop('Structured Matrix systems need exact Matrix entries in this move.'), evidence: {} };
   }
 
   if (coefficients.length === 0 || coefficients[0]?.length === 0) {
-    return matrixSystemStop('The coefficient matrix is empty.');
+    return { outcome: matrixSystemStop('The coefficient matrix is empty.'), evidence: {} };
   }
 
   if (coefficients.length !== constants.length) {
-    return matrixSystemStop('The RHS vector length must match the coefficient matrix row count.');
+    return { outcome: matrixSystemStop('The RHS vector length must match the coefficient matrix row count.'), evidence: {} };
   }
 
   const coefficientRref = rrefExactMatrix(coefficients);
   if (coefficientRref.kind === 'stop') {
-    return matrixSystemStop(exactStopReasonToMessage(coefficientRref.reason));
+    return { outcome: matrixSystemStop(exactStopReasonToMessage(coefficientRref.reason)), evidence: {} };
   }
 
   const augmentedRref = rrefExactMatrix(augmentedMatrix(coefficients, constants), {
     maxDimension: LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
   });
   if (augmentedRref.kind === 'stop') {
-    return matrixSystemStop(exactStopReasonToMessage(augmentedRref.reason));
+    return { outcome: matrixSystemStop(exactStopReasonToMessage(augmentedRref.reason)), evidence: {} };
   }
 
   const rankA = coefficientRref.rank;
@@ -289,7 +367,7 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
   const unknowns = coefficients[0].length;
   const title = input.editorExpressionLatex ?? systemTitle(input.form);
   if (rankA < rankAugmented) {
-    return profileLinearAlgebraResult({
+    const outcome: ResultProducerDraft = profileLinearAlgebraResult({
       kind: 'success',
       title,
       exactLatex: '\\text{No solution}',
@@ -302,11 +380,47 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
       warnings: [],
       sourceMode: 'matrix',
     });
+    const contradiction = inconsistentRowLatex(augmentedRref.matrix, unknowns);
+    const contradictionValue = augmentedRref.matrix.find((row) =>
+      row.slice(0, unknowns).every(scalarIsZero) && !scalarIsZero(row[unknowns]))?.[unknowns];
+    const details = [
+      canonicalLeafEvidence(`${rankA}`, rankA, 'matrix.linear-system.native-coefficient-rank'),
+      canonicalLeafEvidence(`${rankAugmented}`, rankAugmented, 'matrix.linear-system.native-augmented-rank'),
+      ...(contradiction && contradictionValue ? [canonicalLeafEvidence(
+        contradiction,
+        equationMathJson(0, buildExactScalarNode(contradictionValue)),
+        'matrix.linear-system.native-contradiction',
+      )] : []),
+      canonicalLeafEvidence(`${rankA}`, rankA, 'matrix.linear-system.native-rank-facts-coefficient'),
+      canonicalLeafEvidence(`${rankAugmented}`, rankAugmented, 'matrix.linear-system.native-rank-facts-augmented'),
+      canonicalLeafEvidence(`${unknowns}`, unknowns, 'matrix.linear-system.native-unknown-count'),
+      canonicalLeafEvidence(
+        exactMatrixToLatex(augmentedRref.matrix),
+        exactMatrixMathJson(augmentedRref.matrix),
+        'matrix.linear-system.native-augmented-rref',
+      ),
+      ...augmentedRref.rowOperations.flatMap((operation, index) => {
+        const presentation = formatRowOperation(operation);
+        return presentation
+          ? [rowOperationEvidence(presentation, operation, `matrix.linear-system.native-row-operation-${index}`)]
+          : [];
+      }),
+    ].map((value) => 'kind' in value ? value : ({ kind: 'math' as const, value }));
+    const evidence = {
+      primary: canonicalLeafEvidence(
+        '\\text{No solution}',
+        textMathJson('No solution'),
+        'matrix.linear-system.native-inconsistent-classification',
+      ),
+      details,
+    } satisfies LinearAlgebraCanonicalEvidence;
+    attachLinearAlgebraCanonicalEvidence(outcome, evidence);
+    return { outcome, evidence };
   }
 
   if (rankA < unknowns) {
     const family = solutionFamilyFromRref(augmentedRref.matrix, augmentedRref.pivotColumns, unknowns);
-    return profileLinearAlgebraResult({
+    const outcome: ResultProducerDraft = profileLinearAlgebraResult({
       kind: 'success',
       title,
       exactLatex: family?.exactLatex ?? '\\text{Infinitely many solutions}',
@@ -322,14 +436,67 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
       warnings: [],
       sourceMode: 'matrix',
     });
+    const familyCanonical = solutionFamilyCanonicalEvidence(
+      augmentedRref.matrix,
+      augmentedRref.pivotColumns,
+      unknowns,
+    );
+    const freeCount = unknowns - rankA;
+    const vectorLatex = family ? `x=${family.vectorLatex}` : undefined;
+    const details = [
+      ...(family && familyCanonical && vectorLatex ? [
+        canonicalLeafEvidence(
+          vectorLatex,
+          equationMathJson('x', familyCanonical.vector),
+          'matrix.linear-system.native-solution-family-vector',
+        ),
+        canonicalLeafEvidence(
+          family.domain,
+          familyCanonical.domain,
+          'matrix.linear-system.native-solution-family-domain',
+        ),
+      ] : []),
+      canonicalLeafEvidence(`${rankA}`, rankA, 'matrix.linear-system.native-coefficient-rank'),
+      canonicalLeafEvidence(`${rankAugmented}`, rankAugmented, 'matrix.linear-system.native-augmented-rank'),
+      canonicalLeafEvidence(`${unknowns}`, unknowns, 'matrix.linear-system.native-unknown-count'),
+      canonicalLeafEvidence(`${freeCount}`, freeCount, 'matrix.linear-system.native-free-variable-count'),
+      canonicalLeafEvidence(`${rankA}`, rankA, 'matrix.linear-system.native-rank-facts-coefficient'),
+      canonicalLeafEvidence(`${rankAugmented}`, rankAugmented, 'matrix.linear-system.native-rank-facts-augmented'),
+      canonicalLeafEvidence(`${unknowns}`, unknowns, 'matrix.linear-system.native-rank-facts-unknown-count'),
+      canonicalLeafEvidence(
+        exactMatrixToLatex(augmentedRref.matrix),
+        exactMatrixMathJson(augmentedRref.matrix),
+        'matrix.linear-system.native-augmented-rref',
+      ),
+      ...augmentedRref.rowOperations.flatMap((operation, index) => {
+        const presentation = formatRowOperation(operation);
+        return presentation
+          ? [rowOperationEvidence(presentation, operation, `matrix.linear-system.native-row-operation-${index}`)]
+          : [];
+      }),
+    ].map((value) => 'kind' in value ? value : ({ kind: 'math' as const, value }));
+    const primary = family && familyCanonical
+      ? canonicalLeafEvidence(
+          family.exactLatex,
+          familyCanonical.primary,
+          'matrix.linear-system.native-solution-family',
+        )
+      : canonicalLeafEvidence(
+          '\\text{Infinitely many solutions}',
+          textMathJson('Infinitely many solutions'),
+          'matrix.linear-system.native-infinite-classification',
+        );
+    const evidence = { primary, details } satisfies LinearAlgebraCanonicalEvidence;
+    attachLinearAlgebraCanonicalEvidence(outcome, evidence);
+    return { outcome, evidence };
   }
 
   const solved = solveExactLinearSystem(coefficients, constants);
   if (solved.kind === 'stop') {
-    return matrixSystemStop(exactStopReasonToMessage(solved.reason));
+    return { outcome: matrixSystemStop(exactStopReasonToMessage(solved.reason)), evidence: {} };
   }
 
-  return profileLinearAlgebraResult({
+  const outcome: ResultProducerDraft = profileLinearAlgebraResult({
     kind: 'success',
     title,
     exactLatex: `x=${exactVectorToColumnLatex(solved.solution)}`,
@@ -342,4 +509,38 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
     warnings: [],
     sourceMode: 'matrix',
   });
+  const solutionLatex = `x=${exactVectorToColumnLatex(solved.solution)}`;
+  const details = [
+    canonicalLeafEvidence(`${rankA}`, rankA, 'matrix.linear-system.native-coefficient-rank'),
+    canonicalLeafEvidence(`${rankAugmented}`, rankAugmented, 'matrix.linear-system.native-augmented-rank'),
+    canonicalLeafEvidence(`${unknowns}`, unknowns, 'matrix.linear-system.native-unknown-count'),
+    canonicalLeafEvidence(`${rankA}`, rankA, 'matrix.linear-system.native-rank-facts-coefficient'),
+    canonicalLeafEvidence(`${rankAugmented}`, rankAugmented, 'matrix.linear-system.native-rank-facts-augmented'),
+    canonicalLeafEvidence(`${unknowns}`, unknowns, 'matrix.linear-system.native-rank-facts-unknown-count'),
+    canonicalLeafEvidence(
+      exactMatrixToLatex(augmentedRref.matrix),
+      exactMatrixMathJson(augmentedRref.matrix),
+      'matrix.linear-system.native-augmented-rref',
+    ),
+    ...augmentedRref.rowOperations.flatMap((operation, index) => {
+      const presentation = formatRowOperation(operation);
+      return presentation
+        ? [rowOperationEvidence(presentation, operation, `matrix.linear-system.native-row-operation-${index}`)]
+        : [];
+    }),
+  ].map((value) => 'kind' in value ? value : ({ kind: 'math' as const, value }));
+  const evidence = {
+    primary: canonicalLeafEvidence(
+      solutionLatex,
+      equationMathJson('x', exactVectorMathJson(solved.solution)),
+      'matrix.linear-system.native-exact-solution',
+    ),
+    details,
+  } satisfies LinearAlgebraCanonicalEvidence;
+  attachLinearAlgebraCanonicalEvidence(outcome, evidence);
+  return { outcome, evidence };
+}
+
+export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProducerDraft {
+  return runMatrixLinearSystemWithEvidence(input).outcome;
 }

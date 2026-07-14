@@ -25,9 +25,13 @@ function canonicalSuccessMatcher(primaryLatex: string, title?: string) {
   return expect.objectContaining({
     kind: 'success',
     canonicalResult: expect.objectContaining({
+      version: 2,
       outcomeKind: 'success',
       ...(title ? { title } : {}),
-      primaryMath: expect.objectContaining({ canonicalLatex: primaryLatex }),
+      primary: expect.objectContaining({
+        kind: 'math',
+        value: expect.objectContaining({ canonicalLatex: primaryLatex }),
+      }),
     }),
   });
 }

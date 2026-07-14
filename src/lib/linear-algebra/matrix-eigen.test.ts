@@ -9,7 +9,7 @@ describe('matrix eigen analysis', () => {
     });
 
     expect(response.resultLatex).toBe(
-      '\\operatorname{eigen}(A)=\\left\\{\\lambda=3:E_{3}=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\},\\lambda=1:E_{1}=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}\\right\\}',
+      '\\operatorname{eigen}(A)=\\left\\{\\lambda=3\\text{:}E_{3}=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\},\\lambda=1\\text{:}E_{1}=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}\\right\\}',
     );
     expect(response.approxText).toBe('eigenvalues 3, 1');
     expect(response.detailSections?.map((section) => section.title)).toEqual([

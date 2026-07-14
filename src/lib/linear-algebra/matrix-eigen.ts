@@ -7,6 +7,7 @@ import {
   negateExactScalar,
   normalizeExactScalar,
   subtractExactScalars,
+  buildExactScalarNode,
 } from '../algebra/polynomial-core';
 import { solveEquationExactQuadraticBoundary } from '../equation/exact-polynomial-boundary';
 import { rrefExactMatrix, scalar, type ExactMatrix, type ExactVector } from './exact-matrix-core';
@@ -19,6 +20,15 @@ import {
 } from './exact-matrix-format';
 import { LINEAR_ALGEBRA_SPECTRAL_V1_MATRIX_SIZE } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  exactVectorSetMathJson,
+  labelMathJson,
+  operatorMathJson,
+} from './canonical-evidence';
 
 export type MatrixEigenInput = {
   label: string;
@@ -111,6 +121,38 @@ function characteristicData(matrix: ExactMatrix) {
   };
 }
 
+function characteristicEquationMathJson(input: ReturnType<typeof characteristicData>) {
+  return equationMathJson([
+    'Add',
+    ['Power', 'lambda', 2],
+    ['Multiply', buildExactScalarNode(input.coefficients.linear), 'lambda'],
+    buildExactScalarNode(input.coefficients.constant),
+  ], 0);
+}
+
+function characteristicEvidence(
+  label: string,
+  matrix: ExactMatrix,
+  characteristic: ReturnType<typeof characteristicData>,
+  equationLatex: string,
+) {
+  const operand = labelMathJson(label, exactMatrixMathJson(matrix));
+  return [
+    {
+      kind: 'math' as const,
+      value: canonicalLeafEvidence(`\\operatorname{tr}(${label})=${exactScalarToLatex(characteristic.trace)}`, equationMathJson(operatorMathJson('tr', operand), buildExactScalarNode(characteristic.trace)), 'matrix.eigen.native-trace'),
+    },
+    {
+      kind: 'math' as const,
+      value: canonicalLeafEvidence(`\\det(${label})=${exactScalarToLatex(characteristic.determinant)}`, equationMathJson(operatorMathJson('det', operand), buildExactScalarNode(characteristic.determinant)), 'matrix.eigen.native-determinant'),
+    },
+    {
+      kind: 'math' as const,
+      value: canonicalLeafEvidence(equationLatex, characteristicEquationMathJson(characteristic), 'matrix.eigen.native-characteristic-polynomial'),
+    },
+  ];
+}
+
 function shiftedMatrix(matrix: ExactMatrix, eigenvalue: ExactScalar): ExactMatrix {
   const [[a, b], [c, d]] = matrix;
   return [
@@ -161,6 +203,38 @@ function eigenspaceDetails(lines: string[]): DisplayDetailSection {
   };
 }
 
+export function matrixEigenspaceLabelLatex(root: MatrixEigenAnalysisRoot) {
+  if (root.eigenvalue.denominator !== 1) {
+    return `\\operatorname{E}\\left(${root.eigenvalueLatex}\\right)`;
+  }
+  return root.eigenvalue.numerator >= 0
+    ? `E_{${root.eigenvalueLatex}}`
+    : `\\mathrm{E_{${root.eigenvalueLatex}}}`;
+}
+
+export function matrixEigenspaceMathJson(root: MatrixEigenAnalysisRoot) {
+  if (root.eigenvalue.denominator !== 1) {
+    return operatorMathJson('E', buildExactScalarNode(root.eigenvalue));
+  }
+  return root.eigenvalue.numerator >= 0
+    ? `E_${root.eigenvalue.numerator}`
+    : `E_minus${Math.abs(root.eigenvalue.numerator)}`;
+}
+
+function eigenEntryMathJson(root: MatrixEigenAnalysisRoot) {
+  const space = ['InvisibleOperator', 'span', exactVectorSetMathJson(root.basis)];
+  const joined = ['Equal',
+    ['InvisibleOperator', buildExactScalarNode(root.eigenvalue), "':'", matrixEigenspaceMathJson(root)],
+    space,
+  ];
+  return root.multiplicity === 2
+    ? ['Delimiter', ['Sequence',
+        equationMathJson('lambda', buildExactScalarNode(root.eigenvalue)),
+        equationMathJson('m', joined),
+      ], "','"]
+    : equationMathJson('lambda', joined);
+}
+
 export function analyzeMatrixEigen2x2(input: MatrixEigenInput): MatrixEigenAnalysisResult {
   const exactMatrix = exactInputMatrix(input);
   if (!exactMatrix) {
@@ -188,23 +262,33 @@ export function analyzeMatrixEigen2x2(input: MatrixEigenInput): MatrixEigenAnaly
   });
 
   if (solved.kind === 'unsupported') {
+    const response = matrixEigenStop(
+      solved.reason === 'complex-roots'
+        ? 'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.'
+        : 'Irrational eigenvalue vector readback is deferred for Matrix V1.',
+      {
+        detailSections: characteristicDetails({
+          label: input.label,
+          trace: characteristic.trace,
+          determinant: characteristic.determinant,
+          equationLatex: solved.equationLatex,
+          boundaryLine: solved.message,
+        }),
+        handoffEquationLatex: solved.equationLatex,
+      },
+    );
+    const equationEvidence = canonicalLeafEvidence(
+      solved.equationLatex,
+      characteristicEquationMathJson(characteristic),
+      'matrix.eigen.native-characteristic-polynomial-action',
+    );
+    attachLinearAlgebraCanonicalEvidence(response, {
+      details: characteristicEvidence(input.label, exactMatrix, characteristic, solved.equationLatex),
+      runtimeActions: [equationEvidence],
+    });
     return {
       kind: 'stop',
-      response: matrixEigenStop(
-        solved.reason === 'complex-roots'
-          ? 'Complex eigenvalue and eigenvector readback is deferred for Matrix V1.'
-          : 'Irrational eigenvalue vector readback is deferred for Matrix V1.',
-        {
-          detailSections: characteristicDetails({
-            label: input.label,
-            trace: characteristic.trace,
-            determinant: characteristic.determinant,
-            equationLatex: solved.equationLatex,
-            boundaryLine: solved.message,
-          }),
-          handoffEquationLatex: solved.equationLatex,
-        },
-      ),
+      response,
     };
   }
 
@@ -263,14 +347,14 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
 
   for (const root of analysis.roots) {
     const multiplicityText = root.multiplicity === 2 ? ',\\ m=2' : '';
-    resultEntries.push(`\\lambda=${root.eigenvalueLatex}${multiplicityText}:E_{${root.eigenvalueLatex}}=${root.spaceLatex}`);
+    resultEntries.push(`\\lambda=${root.eigenvalueLatex}${multiplicityText}\\text{:}${matrixEigenspaceLabelLatex(root)}=${root.spaceLatex}`);
     eigenspaceLines.push(
-      `E_{${root.eigenvalueLatex}}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`,
+      `${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`,
       `${analysis.label}-${root.eigenvalueLatex}I=${exactMatrixToLatex(root.shifted)}`,
     );
   }
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `\\operatorname{eigen}(${analysis.label})=\\left\\{${resultEntries.join(',')}\\right\\}`,
     answerRows: {
       rows: resultEntries.map((entry) => ({ latex: entry })),
@@ -289,10 +373,43 @@ export function runMatrixEigen(input: MatrixEigenInput): MatrixResponse {
           'Matrix formed the characteristic polynomial, then Equation found the exact eigenvalues.',
           'Matrix used those rational eigenvalues to compute the eigenspaces locally.',
         ],
-        lineKind: 'text',
+        lineKind: 'text' as const,
       },
       eigenspaceDetails(eigenspaceLines),
     ],
     warnings: [],
+  });
+  const characteristic = characteristicData(analysis.exactMatrix);
+  const operand = labelMathJson(analysis.label, exactMatrixMathJson(analysis.exactMatrix));
+  const entryNodes = analysis.roots.map(eigenEntryMathJson);
+  const entryLatex = resultEntries;
+  const primaryLatex = `\\operatorname{eigen}(${analysis.label})=\\left\\{${entryLatex.join(',')}\\right\\}`;
+  const details = [
+    ...characteristicEvidence(analysis.label, analysis.exactMatrix, characteristic, analysis.equationLatex),
+    ...analysis.roots.flatMap((root, index) => {
+      const eigenspaceLatex = `${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`;
+      const shiftedLatex = `${analysis.label}-${root.eigenvalueLatex}I=${exactMatrixToLatex(root.shifted)}`;
+      return [
+        {
+          kind: 'math' as const,
+          value: canonicalLeafEvidence(eigenspaceLatex, equationMathJson(
+            matrixEigenspaceMathJson(root),
+            equationMathJson(
+              operatorMathJson('Null', ['Subtract', operand, ['InvisibleOperator', buildExactScalarNode(root.eigenvalue), 'I']]),
+              ['InvisibleOperator', 'span', exactVectorSetMathJson(root.basis)],
+            ),
+          ), `matrix.eigen.native-eigenspace-${index}`),
+        },
+        {
+          kind: 'math' as const,
+          value: canonicalLeafEvidence(shiftedLatex, equationMathJson(['Subtract', operand, ['Multiply', buildExactScalarNode(root.eigenvalue), 'IdentityMatrix']], exactMatrixMathJson(root.shifted)), `matrix.eigen.native-shifted-matrix-${index}`),
+        },
+      ];
+    }),
+  ];
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(primaryLatex, equationMathJson(operatorMathJson('eigen', operand), ['Set', ...entryNodes]), 'matrix.eigen.native-eigenpairs'),
+    answerRows: entryLatex.map((latex, index) => canonicalLeafEvidence(latex, entryNodes[index], `matrix.eigen.native-eigenpair-${index}`)),
+    details,
   });
 }

@@ -2,6 +2,7 @@ import type { DisplayDetailSection, ExactScalarWire, MatrixResponse } from '../.
 import type { ExactScalar } from '../algebra/polynomial-core';
 import {
   addExactScalars,
+  buildExactScalarNode,
   exactScalarEquals,
   multiplyExactScalars,
   normalizeExactScalar,
@@ -14,10 +15,24 @@ import {
 } from './exact-matrix-format';
 import {
   analyzeMatrixEigen2x2,
+  matrixEigenspaceLabelLatex,
+  matrixEigenspaceMathJson,
   type MatrixEigenAnalysis,
   type MatrixEigenAnalysisRoot,
 } from './matrix-eigen';
 import { profileLinearAlgebraResult } from '../display/printer';
+import { mathPart, mixedDetailSection, textPart } from '../display/result-detail-lines';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  exactVectorMathJson,
+  exactVectorSetMathJson,
+  labelMathJson,
+  linearAlgebraCanonicalEvidenceForResponse,
+  operatorMathJson,
+} from './canonical-evidence';
 
 export type MatrixDiagonalizationInput = {
   label: string;
@@ -59,10 +74,14 @@ function diagonalizationStopFromEigen(response: MatrixResponse): MatrixResponse 
           ? 'Diagonalization with irrational eigenvectors is deferred for Matrix V1.'
           : response.error;
 
-  return {
+  const next = {
     ...response,
     ...(error ? { error } : {}),
   };
+  return attachLinearAlgebraCanonicalEvidence(
+    next,
+    linearAlgebraCanonicalEvidenceForResponse(response),
+  );
 }
 
 function characteristicSection(analysis: MatrixEigenAnalysis): DisplayDetailSection {
@@ -91,7 +110,7 @@ function availableEigenvectorCount(roots: readonly MatrixEigenAnalysisRoot[]) {
 
 function eigenpairLines(analysis: MatrixEigenAnalysis): string[] {
   return analysis.roots.flatMap((root) => [
-    `E_{${root.eigenvalueLatex}}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`,
+    `${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`,
     `${analysis.label}-${root.eigenvalueLatex}I=${exactMatrixToLatex(root.shifted)}`,
   ]);
 }
@@ -162,14 +181,48 @@ function defectiveDetails(analysis: MatrixEigenAnalysis, root: MatrixEigenAnalys
     {
       title: 'Why It Cannot Diagonalize',
       lines: [
-        `E_{${root.eigenvalueLatex}}=${root.spaceLatex}`,
-        `\\dim E_{${root.eigenvalueLatex}}=${root.basis.length}`,
+        `${matrixEigenspaceLabelLatex(root)}=${root.spaceLatex}`,
+        `\\dim ${matrixEigenspaceLabelLatex(root)}=${root.basis.length}`,
         `\\text{independent eigenvectors needed}=${needed}`,
         `\\text{independent eigenvectors found}=${available}`,
         'A 2 by 2 matrix diagonalizes only when it has two independent eigenvectors. This repeated-eigenvalue case does not, so it is defective.',
       ],
       lineKinds: ['math', 'math', 'math', 'math', 'text'],
     },
+  ];
+}
+
+function spectralMathEvidence(canonicalLatex: string, mathJson: unknown, source: string) {
+  return { kind: 'math' as const, value: canonicalLeafEvidence(canonicalLatex, mathJson, source) };
+}
+
+function characteristicMathJson(analysis: MatrixEigenAnalysis) {
+  return equationMathJson([
+    'Add',
+    ['Power', 'lambda', 2],
+    ['Multiply', ['Negate', buildExactScalarNode(analysis.trace)], 'lambda'],
+    buildExactScalarNode(analysis.determinant),
+  ], 0);
+}
+
+function characteristicCanonicalEvidence(analysis: MatrixEigenAnalysis) {
+  const operand = labelMathJson(analysis.label, exactMatrixMathJson(analysis.exactMatrix));
+  return [
+    spectralMathEvidence(`\\operatorname{tr}(${analysis.label})=${exactScalarToLatex(analysis.trace)}`, equationMathJson(operatorMathJson('tr', operand), buildExactScalarNode(analysis.trace)), 'matrix.spectral.native-trace'),
+    spectralMathEvidence(`\\det(${analysis.label})=${exactScalarToLatex(analysis.determinant)}`, equationMathJson(operatorMathJson('det', operand), buildExactScalarNode(analysis.determinant)), 'matrix.spectral.native-determinant'),
+    spectralMathEvidence(analysis.equationLatex, characteristicMathJson(analysis), 'matrix.spectral.native-characteristic-polynomial'),
+  ];
+}
+
+function defectiveCanonicalEvidence(analysis: MatrixEigenAnalysis, root: MatrixEigenAnalysisRoot) {
+  const needed = vectorCountNeeded(analysis.roots);
+  const available = availableEigenvectorCount(analysis.roots);
+  return [
+    ...characteristicCanonicalEvidence(analysis),
+    spectralMathEvidence(`${matrixEigenspaceLabelLatex(root)}=${root.spaceLatex}`, equationMathJson(matrixEigenspaceMathJson(root), ['InvisibleOperator', 'span', exactVectorSetMathJson(root.basis)]), 'matrix.diagonalization.native-defective-eigenspace'),
+    spectralMathEvidence(`\\dim ${matrixEigenspaceLabelLatex(root)}=${root.basis.length}`, equationMathJson(operatorMathJson('dim', matrixEigenspaceMathJson(root)), root.basis.length), 'matrix.diagonalization.native-defective-eigenspace-dimension'),
+    spectralMathEvidence(`\\text{independent eigenvectors needed}=${needed}`, equationMathJson('eigenvectorsNeeded', needed), 'matrix.diagonalization.native-needed-eigenvectors'),
+    spectralMathEvidence(`\\text{independent eigenvectors found}=${available}`, equationMathJson('eigenvectorsFound', available), 'matrix.diagonalization.native-found-eigenvectors'),
   ];
 }
 
@@ -206,13 +259,12 @@ function diagonalizationDetails(input: {
       ],
       lineKinds: ['math', 'text', 'text'],
     },
-    {
-      title: 'Eigenvector Columns',
-      lines: input.analysis.roots.flatMap((root) =>
-        root.basis.slice(0, root.multiplicity).map((vector) =>
-          `\\lambda=${root.eigenvalueLatex}:\\ ${exactVectorToColumnLatex(vector)}`)),
-      lineKind: 'math',
-    },
+    mixedDetailSection('Eigenvector Columns', input.analysis.roots.flatMap((root) =>
+      root.basis.slice(0, root.multiplicity).map((vector) => [
+        mathPart(`\\lambda=${root.eigenvalueLatex}`),
+        textPart(': '),
+        mathPart(exactVectorToColumnLatex(vector)),
+      ]))),
     {
       title: 'Eigenspaces',
       lines: eigenpairLines(input.analysis),
@@ -232,12 +284,16 @@ function computeDiagonalizationFactors(
   const { analysis } = analyzed;
   const selected = selectDiagonalizationColumns(analysis);
   if (selected.kind === 'defective') {
+    const response = matrixStop(
+      'This matrix is not diagonalizable because it does not have enough independent eigenvectors.',
+      defectiveDetails(analysis, selected.root),
+    );
+    attachLinearAlgebraCanonicalEvidence(response, {
+      details: defectiveCanonicalEvidence(analysis, selected.root),
+    });
     return {
       kind: 'stop',
-      response: matrixStop(
-        'This matrix is not diagonalizable because it does not have enough independent eigenvectors.',
-        defectiveDetails(analysis, selected.root),
-      ),
+      response,
     };
   }
 
@@ -249,12 +305,16 @@ function computeDiagonalizationFactors(
   const d = diagonalMatrix(selected.eigenvalues);
   const pInverse = inverseExactMatrix(p);
   if (pInverse.kind === 'stop') {
+    const response = matrixStop(
+      'This matrix is not diagonalizable because the eigenvector matrix is singular.',
+      defectiveDetails(analysis, analysis.roots[0]),
+    );
+    attachLinearAlgebraCanonicalEvidence(response, {
+      details: defectiveCanonicalEvidence(analysis, analysis.roots[0]),
+    });
     return {
       kind: 'stop',
-      response: matrixStop(
-        'This matrix is not diagonalizable because the eigenvector matrix is singular.',
-        defectiveDetails(analysis, analysis.roots[0]),
-      ),
+      response,
     };
   }
 
@@ -281,11 +341,51 @@ export function runMatrixDiagonalization(input: MatrixDiagonalizationInput): Mat
   }
   const { factors } = computed;
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `\\operatorname{diag}(${factors.analysis.label})=${factors.analysis.label}=PDP^{-1}`,
     approxText: `diagonalizable; eigenvalues ${rootsSummary(factors.analysis.roots)}`,
     detailSections: diagonalizationDetails(factors),
     warnings: [],
+  });
+  const analysis = factors.analysis;
+  const operand = labelMathJson(analysis.label, exactMatrixMathJson(analysis.exactMatrix));
+  const pNode = exactMatrixMathJson(factors.p);
+  const dNode = exactMatrixMathJson(factors.d);
+  const inverseNode = exactMatrixMathJson(factors.pInverse);
+  const decomposition = ['Multiply', pNode, dNode, inverseNode];
+  const primaryLatex = `\\operatorname{diag}(${analysis.label})=${analysis.label}=PDP^{-1}`;
+  const equality = exactMatricesEqual(factors.ap, factors.pd)
+    ? `(${analysis.label})P=PD=${exactMatrixToLatex(factors.ap)}`
+    : `(${analysis.label})P=${exactMatrixToLatex(factors.ap)},\\ PD=${exactMatrixToLatex(factors.pd)}`;
+  const eigenvectorDetails = analysis.roots.flatMap((root) =>
+    root.basis.slice(0, root.multiplicity).flatMap((vector) => [
+      spectralMathEvidence(
+        `\\lambda=${root.eigenvalueLatex}`,
+        equationMathJson('lambda', buildExactScalarNode(root.eigenvalue)),
+        'matrix.diagonalization.native-eigenvalue-column',
+      ),
+      spectralMathEvidence(
+        exactVectorToColumnLatex(vector),
+        exactVectorMathJson(vector),
+        'matrix.diagonalization.native-eigenvector-column',
+      ),
+    ]));
+  const eigenspaceDetails = analysis.roots.flatMap((root) => [
+    spectralMathEvidence(`${matrixEigenspaceLabelLatex(root)}=\\operatorname{Null}(${analysis.label}-${root.eigenvalueLatex}I)=${root.spaceLatex}`, equationMathJson(matrixEigenspaceMathJson(root), equationMathJson(operatorMathJson('Null', ['Subtract', operand, ['InvisibleOperator', buildExactScalarNode(root.eigenvalue), 'I']]), ['InvisibleOperator', 'span', exactVectorSetMathJson(root.basis)])), 'matrix.diagonalization.native-eigenspace'),
+    spectralMathEvidence(`${analysis.label}-${root.eigenvalueLatex}I=${exactMatrixToLatex(root.shifted)}`, equationMathJson(['Subtract', operand, ['Multiply', buildExactScalarNode(root.eigenvalue), 'IdentityMatrix']], exactMatrixMathJson(root.shifted)), 'matrix.diagonalization.native-shifted-matrix'),
+  ]);
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(primaryLatex, ['Equal', operatorMathJson('diag', operand), operand, decomposition], 'matrix.diagonalization.native-decomposition'),
+    details: [
+      ...characteristicCanonicalEvidence(analysis),
+      spectralMathEvidence(`P=${exactMatrixToLatex(factors.p)}`, equationMathJson('P', pNode), 'matrix.diagonalization.native-p'),
+      spectralMathEvidence(`D=${exactMatrixToLatex(factors.d)}`, equationMathJson('D', dNode), 'matrix.diagonalization.native-d'),
+      spectralMathEvidence(`P^{-1}=${exactMatrixToLatex(factors.pInverse)}`, equationMathJson(['Power', 'P', -1], inverseNode), 'matrix.diagonalization.native-p-inverse'),
+      spectralMathEvidence(`${analysis.label}=PDP^{-1}`, equationMathJson(operand, decomposition), 'matrix.diagonalization.native-formula'),
+      spectralMathEvidence(equality, equationMathJson(['Multiply', operand, pNode], exactMatrixMathJson(factors.ap)), 'matrix.diagonalization.native-proof-product'),
+      ...eigenvectorDetails,
+      ...eigenspaceDetails,
+    ],
   });
 }
 
@@ -345,7 +445,7 @@ export function runMatrixSpectralPower(input: MatrixSpectralPowerInput): MatrixR
     : diagonalMatrix(factors.d.map((row, index) => exactScalarPower(row[index], input.exponent)));
   const result = multiplyExactMatrices(multiplyExactMatrices(factors.p, dPower), factors.pInverse);
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `${factors.analysis.label}^{${input.exponent}}=${exactMatrixToLatex(result)}`,
     approxText: `power via diagonalization; eigenvalues ${rootsSummary(factors.analysis.roots)}`,
     detailSections: spectralPowerDetails({
@@ -355,5 +455,27 @@ export function runMatrixSpectralPower(input: MatrixSpectralPowerInput): MatrixR
       result,
     }),
     warnings: [],
+  });
+  const analysis = factors.analysis;
+  const operand = labelMathJson(analysis.label, exactMatrixMathJson(analysis.exactMatrix));
+  const pNode = exactMatrixMathJson(factors.p);
+  const dNode = exactMatrixMathJson(factors.d);
+  const inverseNode = exactMatrixMathJson(factors.pInverse);
+  const dPowerNode = exactMatrixMathJson(dPower);
+  const resultNode = exactMatrixMathJson(result);
+  const powerNode = ['Power', operand, input.exponent];
+  const primaryLatex = `${analysis.label}^{${input.exponent}}=${exactMatrixToLatex(result)}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(primaryLatex, equationMathJson(powerNode, resultNode), 'matrix.spectral-power.native-result'),
+    details: [
+      ...characteristicCanonicalEvidence(analysis),
+      spectralMathEvidence(`P=${exactMatrixToLatex(factors.p)}`, equationMathJson('P', pNode), 'matrix.spectral-power.native-p'),
+      spectralMathEvidence(`D=${exactMatrixToLatex(factors.d)}`, equationMathJson('D', dNode), 'matrix.spectral-power.native-d'),
+      spectralMathEvidence(`P^{-1}=${exactMatrixToLatex(factors.pInverse)}`, equationMathJson(['Power', 'P', -1], inverseNode), 'matrix.spectral-power.native-p-inverse'),
+      spectralMathEvidence(`D^{${input.exponent}}=${exactMatrixToLatex(dPower)}`, equationMathJson(['Power', dNode, input.exponent], dPowerNode), 'matrix.spectral-power.native-d-power'),
+      spectralMathEvidence(`${analysis.label}^{${input.exponent}}=PD^{${input.exponent}}P^{-1}=${exactMatrixToLatex(result)}`, ['Equal', powerNode, ['Multiply', pNode, dPowerNode, inverseNode], resultNode], 'matrix.spectral-power.native-formula'),
+      spectralMathEvidence(`${analysis.label}=PDP^{-1}`, equationMathJson(operand, ['Multiply', pNode, dNode, inverseNode]), 'matrix.spectral-power.native-decomposition'),
+      spectralMathEvidence(`(${analysis.label})P=PD=${exactMatrixToLatex(factors.ap)}`, ['Equal', ['Multiply', operand, pNode], ['Multiply', pNode, dNode], exactMatrixMathJson(factors.ap)], 'matrix.spectral-power.native-proof-product'),
+    ],
   });
 }

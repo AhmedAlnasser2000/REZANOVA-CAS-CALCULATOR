@@ -21,6 +21,18 @@ import {
   LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
 } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
+import { mathPart, mixedDetailSection, textPart } from '../display/result-detail-lines';
+import { buildExactScalarNode } from '../algebra/polynomial-core';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  exactVectorMathJson,
+  integerSetMathJson,
+  labelMathJson,
+  operatorMathJson,
+} from './canonical-evidence';
 
 export type MatrixCoordinatesInput = {
   basisLabel: string;
@@ -123,14 +135,26 @@ function coordinateDetails(input: {
       lineKind: 'math',
     },
     {
-      title: 'Coordinate Proof',
+      ...mixedDetailSection('Coordinate Proof', [
+      [mathPart(`${input.basisLabel}c=${input.vectorLabel}`)],
+      [
+        mathPart('\\operatorname{rref}'),
+        textPart('(['),
+        mathPart(input.basisLabel),
+        textPart('|'),
+        mathPart(input.vectorLabel),
+        textPart('])='),
+        mathPart(exactMatrixToLatex(input.rref)),
+      ],
+      [mathPart(`c=${exactVectorToColumnLatex(input.solution)}`)],
+      [textPart('The basis matrix has one pivot in every column, so the coordinate vector is unique.')],
+      ]),
       lines: [
         `${input.basisLabel}c=${input.vectorLabel}`,
         `\\operatorname{rref}\\left([${input.basisLabel}|${input.vectorLabel}]\\right)=${exactMatrixToLatex(input.rref)}`,
         `c=${exactVectorToColumnLatex(input.solution)}`,
         'The basis matrix has one pivot in every column, so the coordinate vector is unique.',
       ],
-      lineKinds: ['math', 'math', 'math', 'text'],
     },
   ];
 }
@@ -158,7 +182,7 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
   const rank = pivotColumns.length;
   const isBasis = square && rank === columns;
   if (!isBasis) {
-    return matrixStop(
+    const response = matrixStop(
       'Coordinates need a square full-rank basis matrix. Run basis(...) to inspect this matrix.',
       notBasisDetails({
         basisLabel: input.basisLabel,
@@ -169,6 +193,17 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
         pivotColumns,
       }),
     );
+    const operand = labelMathJson(input.basisLabel, exactMatrixMathJson(basis));
+    const math = (canonicalLatex: string, mathJson: unknown, source: string) => ({
+      kind: 'math' as const,
+      value: canonicalLeafEvidence(canonicalLatex, mathJson, source),
+    });
+    return attachLinearAlgebraCanonicalEvidence(response, { details: [
+      math(`\\operatorname{rank}(${input.basisLabel})=${rank}`, equationMathJson(operatorMathJson('rank', operand), rank), 'matrix.coordinates.native-rank-stop'),
+      math(`\\operatorname{columns}(${input.basisLabel})=${columns}`, equationMathJson(operatorMathJson('columns', operand), columns), 'matrix.coordinates.native-column-count-stop'),
+      math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotColumns.map((column) => column + 1))), 'matrix.coordinates.native-pivots-stop'),
+      math(`\\operatorname{rref}(${input.basisLabel})=${exactMatrixToLatex(reducedBasis.matrix)}`, equationMathJson(operatorMathJson('rref', operand), exactMatrixMathJson(reducedBasis.matrix)), 'matrix.coordinates.native-rref-stop'),
+    ] });
   }
 
   const determinant = determinantExactMatrix(basis);
@@ -189,7 +224,7 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
   }
 
   const coordinateLatex = exactVectorToColumnLatex(solved.solution);
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `[${input.vectorLabel}]_{${input.basisLabel}}=${coordinateLatex}`,
     approxText: `${solved.solution.length} coordinates`,
     detailSections: coordinateDetails({
@@ -201,5 +236,32 @@ export function runMatrixCoordinates(input: MatrixCoordinatesInput): MatrixRespo
       pivotColumns: solved.pivotColumns,
     }),
     warnings: [],
+  });
+  const basisOperand = labelMathJson(input.basisLabel, exactMatrixMathJson(basis));
+  const vectorOperand = labelMathJson(input.vectorLabel, exactVectorMathJson(vector));
+  const solutionNode = exactVectorMathJson(solved.solution);
+  const determinantLatex = exactScalarToLatex(determinant.determinant);
+  const math = (canonicalLatex: string, mathJson: unknown, source: string) => ({
+    kind: 'math' as const,
+    value: canonicalLeafEvidence(canonicalLatex, mathJson, source),
+  });
+  const primaryLatex = `[${input.vectorLabel}]_{${input.basisLabel}}=${coordinateLatex}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(
+      primaryLatex,
+      equationMathJson(['Subscript', ['Delimiter', vectorOperand], basisOperand], solutionNode),
+      'matrix.coordinates.native-solution',
+    ),
+    details: [
+      math(`\\det(${input.basisLabel})=${determinantLatex}`, equationMathJson(operatorMathJson('det', basisOperand), buildExactScalarNode(determinant.determinant)), 'matrix.coordinates.native-determinant'),
+      math(`\\operatorname{rank}(${input.basisLabel})=${solved.solution.length}`, equationMathJson(operatorMathJson('rank', basisOperand), solved.solution.length), 'matrix.coordinates.native-rank'),
+      math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(solved.pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', basisOperand), integerSetMathJson(solved.pivotColumns.map((column) => column + 1))), 'matrix.coordinates.native-pivots'),
+      math(`${input.basisLabel}c=${input.vectorLabel}`, equationMathJson(['Multiply', basisOperand, 'c'], vectorOperand), 'matrix.coordinates.native-system'),
+      math('\\operatorname{rref}', 'rref', 'matrix.coordinates.native-rref-operator'),
+      math(input.basisLabel, basisOperand, 'matrix.coordinates.native-rref-basis-label'),
+      math(input.vectorLabel, vectorOperand, 'matrix.coordinates.native-rref-vector-label'),
+      math(exactMatrixToLatex(augmented.matrix), exactMatrixMathJson(augmented.matrix), 'matrix.coordinates.native-augmented-rref'),
+      math(`c=${coordinateLatex}`, equationMathJson('c', solutionNode), 'matrix.coordinates.native-coordinate-vector'),
+    ],
   });
 }

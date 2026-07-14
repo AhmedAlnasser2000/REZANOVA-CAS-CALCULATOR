@@ -1,5 +1,6 @@
-import { runMatrixOperation } from '../linear-algebra/matrix';
-import { runMatrixLinearSystem } from '../linear-algebra/matrix-system';
+import { runMatrixOperationWithEvidence } from '../linear-algebra/matrix';
+import { runMatrixLinearSystemWithEvidence } from '../linear-algebra/matrix-system';
+import type { LinearAlgebraCanonicalEvidence } from '../linear-algebra/canonical-evidence';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
@@ -12,19 +13,14 @@ import {
   runMatrixModeViaIsolatedWorker,
   type CreateMatrixWorker,
 } from './worker-clients/matrix-worker-client';
+import { createMatrixResultOutcomeV2 } from './matrix-result-document';
 import {
-  createMatrixResultOutcome,
-  createMatrixResultOutcomeV2,
-} from './matrix-result-document';
-import {
-  matrixLinearSystemRowOperationsV2,
   matrixMathJsonRouteForRequest,
-  matrixMathValuesFromOwnedLeaves,
-  matrixOwnedMathJsonLeaves,
-  matrixProfileV2EvidenceForRequest,
-  matrixV2MathResolverFromOwnedLeaves,
+  matrixV2MathResolverFromEvidence,
+  proveMatrixCanonicalEvidence,
 } from './matrix-math-values';
 import {
+  buildCanonicalRuntimeActionV2,
   canonicalResultVersionForProducer,
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
@@ -179,7 +175,10 @@ function matrixUserFacingApproxText() {
   return undefined;
 }
 
-function runMatrixModeOutcome(request: RunMatrixModeRequest): ResultProducerDraft {
+function runMatrixModeOutcome(request: RunMatrixModeRequest): {
+  outcome: ResultProducerDraft;
+  evidence: LinearAlgebraCanonicalEvidence;
+} {
   const {
     operation,
     matrixA,
@@ -200,7 +199,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): ResultProducerDraf
     matrixPowerExponentLatex,
   } = request;
   if (operation === 'linearSystem') {
-    return runMatrixLinearSystem({
+    return runMatrixLinearSystemWithEvidence({
       coefficients: matrixA,
       constants: systemRhs ?? [],
       form: systemForm ?? 'Ax=b',
@@ -212,7 +211,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): ResultProducerDraf
     });
   }
 
-  const response = runMatrixOperation({
+  const execution = runMatrixOperationWithEvidence({
     operation,
     matrixA,
     matrixB,
@@ -230,61 +229,61 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): ResultProducerDraf
     coordinateVectorLatex,
     matrixPowerExponentLatex,
   });
-  const actions = response.handoffEquationLatex
-    ? [{ kind: 'send' as const, target: 'equation' as const, latex: response.handoffEquationLatex }]
-    : undefined;
+  const { response, evidence } = execution;
+  const actionEvidence = evidence.runtimeActions ?? [];
+  if (response.handoffEquationLatex) {
+    if (actionEvidence.length !== 1
+      || actionEvidence[0]?.canonicalLatex !== response.handoffEquationLatex) {
+      throw new Error('Matrix native Equation handoff is missing aligned canonical evidence.');
+    }
+  } else if (actionEvidence.length > 0) {
+    throw new Error('Matrix canonical action evidence has no matching native handoff.');
+  }
   if (response.error) {
-    return {
-      kind: 'error',
-      title: matrixResultTitle(request),
-      error: response.error,
-      warnings: response.warnings,
-      exactLatex: response.resultLatex,
-      approxText: matrixUserFacingApproxText(),
-      detailSections: response.detailSections,
-      actions,
-      sourceMode: 'matrix',
-    };
+    return { evidence, outcome: {
+        kind: 'error',
+        title: matrixResultTitle(request),
+        error: response.error,
+        warnings: response.warnings,
+        exactLatex: response.resultLatex,
+        approxText: matrixUserFacingApproxText(),
+        detailSections: response.detailSections,
+        sourceMode: 'matrix',
+      } };
   }
 
-  return {
-    kind: 'success',
-    title: matrixResultTitle(request),
-    exactLatex: response.resultLatex,
-    answerRows: response.answerRows,
-    approxText: matrixUserFacingApproxText(),
-    detailSections: response.detailSections,
-    warnings: response.warnings,
-    actions,
-    sourceMode: 'matrix',
-  };
+  return { evidence, outcome: {
+      kind: 'success',
+      title: matrixResultTitle(request),
+      exactLatex: response.resultLatex,
+      answerRows: response.answerRows,
+      approxText: matrixUserFacingApproxText(),
+      detailSections: response.detailSections,
+      warnings: response.warnings,
+      sourceMode: 'matrix',
+    } };
 }
 
 export function runMatrixMode(request: RunMatrixModeRequest): VersionedResultProducerDraft {
-  const outcome = runMatrixModeOutcome(request);
+  const { outcome, evidence } = runMatrixModeOutcome(request);
   if (outcome.kind === 'prompt') return outcome;
   const routeId = matrixMathJsonRouteForRequest(request);
-  const leaves = matrixOwnedMathJsonLeaves(request);
   const version = canonicalResultVersionForProducer({ routeId });
+  if (version !== 2) {
+    throw new Error(`Matrix route ${routeId} must select canonical result V2.`);
+  }
+  const canonical = createMatrixResultOutcomeV2(outcome, {
+    routeId,
+    evidence,
+    mathValue: matrixV2MathResolverFromEvidence({ routeId, evidence }),
+  });
+  const actions = evidence.runtimeActions?.map((action, index) => buildCanonicalRuntimeActionV2({
+    kind: 'send',
+    target: 'equation',
+    math: proveMatrixCanonicalEvidence(routeId, action, `actions[${index}].math`),
+  }));
   return requireCanonicalResultAuthority(
-    version === 2
-      ? createMatrixResultOutcomeV2(outcome, {
-          routeId,
-          mathValue: matrixV2MathResolverFromOwnedLeaves({ routeId, leaves }),
-          ...(routeId === 'matrix.profile'
-            ? { profile: matrixProfileV2EvidenceForRequest(request) }
-            : {}),
-          ...(routeId === 'matrix.linear-system'
-            ? { rowOperations: matrixLinearSystemRowOperationsV2(request) }
-            : {}),
-        })
-      : createMatrixResultOutcome(outcome, {
-          mathValues: matrixMathValuesFromOwnedLeaves({
-            outcome,
-            routeId,
-            leaves,
-          }),
-        }),
+    actions?.length ? { ...canonical, actions } : canonical,
     'Matrix',
   );
 }

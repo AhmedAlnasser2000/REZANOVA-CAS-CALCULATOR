@@ -7,6 +7,7 @@ import {
   negateExactScalar,
   subtractExactScalars,
   type ExactScalar,
+  buildExactScalarNode,
 } from '../algebra/polynomial-core';
 import {
   validateExactMatrix,
@@ -28,6 +29,17 @@ import {
 import { formatRowOperation } from './row-operation-readback';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  exactVectorMathJson,
+  labelMathJson,
+  rowOperationEvidence,
+  textMathJson,
+  type LinearAlgebraCanonicalDetailEvidence,
+} from './canonical-evidence';
 
 export type MatrixLuInput = {
   label: string;
@@ -244,6 +256,40 @@ function formatSwap(rowA: number, rowB: number) {
   return `R_{${rowA + 1}}\\leftrightarrow R_{${rowB + 1}}`;
 }
 
+function mathEvidence(canonicalLatex: string, mathJson: unknown, source: string) {
+  return {
+    kind: 'math' as const,
+    value: canonicalLeafEvidence(canonicalLatex, mathJson, source),
+  };
+}
+
+function factorRowEvidence(
+  operations: readonly ExactRowOperation[],
+  source: string,
+): LinearAlgebraCanonicalDetailEvidence[] {
+  return operations.flatMap((operation, index) => {
+    const presentation = formatRowOperation(operation);
+    return presentation ? [rowOperationEvidence(presentation, operation, `${source}-${index}`)] : [];
+  });
+}
+
+function swapEvidence(
+  swaps: readonly { rowA: number; rowB: number }[],
+  source: string,
+): LinearAlgebraCanonicalDetailEvidence[] {
+  return swaps.length > 0
+    ? swaps.map((swap, index) => rowOperationEvidence(
+        formatSwap(swap.rowA, swap.rowB),
+        { kind: 'swap', rowA: swap.rowA, rowB: swap.rowB },
+        `${source}-${index}`,
+      ))
+    : [mathEvidence(
+        '\\text{No row swaps were needed.}',
+        textMathJson('No row swaps were needed.'),
+        `${source}-none`,
+      )];
+}
+
 function pluFactorization(matrix: ExactMatrix): PluResult {
   const validated = validateExactMatrix(matrix);
   if (validated.kind === 'stop') {
@@ -393,7 +439,7 @@ export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
   }
 
   const product = multiplyExactMatrices(factored.lower, factored.upper);
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `${input.label}=LU`,
     approxText: `det(${input.label}) = ${exactScalarToLatex(factored.determinant)}`,
     detailSections: luDetails({
@@ -405,6 +451,22 @@ export function runMatrixLu(input: MatrixLuInput): MatrixResponse {
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
+  });
+  const operand = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const lowerNode = exactMatrixMathJson(factored.lower);
+  const upperNode = exactMatrixMathJson(factored.upper);
+  const factorNode = ['Multiply', lowerNode, upperNode];
+  const primaryLatex = `${input.label}=LU`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(primaryLatex, equationMathJson(operand, factorNode), 'matrix.lu.native-factorization'),
+    details: [
+      mathEvidence(`L=${exactMatrixToLatex(factored.lower)}`, equationMathJson('L', lowerNode), 'matrix.lu.native-lower'),
+      mathEvidence(`U=${exactMatrixToLatex(factored.upper)}`, equationMathJson('U', upperNode), 'matrix.lu.native-upper'),
+      ...factorRowEvidence(factored.rowOperations, 'matrix.lu.native-row-operation'),
+      mathEvidence(primaryLatex, equationMathJson(operand, factorNode), 'matrix.lu.native-factorization-detail'),
+      mathEvidence(`LU=${exactMatrixToLatex(product)}`, equationMathJson(factorNode, exactMatrixMathJson(product)), 'matrix.lu.native-product'),
+      mathEvidence(`\\det(${input.label})=\\prod_i U_{ii}=${exactScalarToLatex(factored.determinant)}`, ['Equal', ['Determinant', operand], ['Equal', ['Product', 'U_ii', ['Tuple', 'i']], buildExactScalarNode(factored.determinant)]], 'matrix.lu.native-determinant'),
+    ],
   });
 }
 
@@ -431,7 +493,7 @@ export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
     };
   }
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `${prefixedMatrixLabel('P', input.label)}=LU`,
     approxText: `det(${input.label}) = ${exactScalarToLatex(factored.determinant)}`,
     detailSections: pluDetails({
@@ -445,6 +507,30 @@ export function runMatrixPlu(input: MatrixPluInput): MatrixResponse {
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
+  });
+  const operand = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const permutationNode = exactMatrixMathJson(factored.permutation);
+  const lowerNode = exactMatrixMathJson(factored.lower);
+  const upperNode = exactMatrixMathJson(factored.upper);
+  const permutedNode = ['Multiply', permutationNode, operand];
+  const factorNode = ['Multiply', lowerNode, upperNode];
+  const permutedLatex = prefixedMatrixLabel('P', input.label);
+  const primaryLatex = `${permutedLatex}=LU`;
+  const permutedProduct = multiplyExactMatrices(factored.permutation, exactMatrix);
+  const factorProduct = multiplyExactMatrices(factored.lower, factored.upper);
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(primaryLatex, equationMathJson(permutedNode, factorNode), 'matrix.plu.native-factorization'),
+    details: [
+      mathEvidence(`P=${exactMatrixToLatex(factored.permutation)}`, equationMathJson('P', permutationNode), 'matrix.plu.native-permutation'),
+      mathEvidence(`L=${exactMatrixToLatex(factored.lower)}`, equationMathJson('L', lowerNode), 'matrix.plu.native-lower'),
+      mathEvidence(`U=${exactMatrixToLatex(factored.upper)}`, equationMathJson('U', upperNode), 'matrix.plu.native-upper'),
+      ...swapEvidence(factored.swaps, 'matrix.plu.native-swap'),
+      ...factorRowEvidence(factored.rowOperations, 'matrix.plu.native-row-operation'),
+      mathEvidence(primaryLatex, equationMathJson(permutedNode, factorNode), 'matrix.plu.native-factorization-detail'),
+      mathEvidence(`${permutedLatex}=${exactMatrixToLatex(permutedProduct)}`, equationMathJson(permutedNode, exactMatrixMathJson(permutedProduct)), 'matrix.plu.native-permuted-product'),
+      mathEvidence(`LU=${exactMatrixToLatex(factorProduct)}`, equationMathJson(factorNode, exactMatrixMathJson(factorProduct)), 'matrix.plu.native-factor-product'),
+      mathEvidence(`\\det(${input.label})=(-1)^{${factored.swaps.length}}\\prod_i U_{ii}=${exactScalarToLatex(factored.determinant)}`, ['Equal', ['Determinant', operand], ['Equal', ['InvisibleOperator', ['Power', ['Delimiter', -1], factored.swaps.length], ['Product', 'U_ii', ['Tuple', 'i']]], buildExactScalarNode(factored.determinant)]], 'matrix.plu.native-determinant'),
+    ],
   });
 }
 
@@ -591,7 +677,7 @@ export function runMatrixLuSolve(input: MatrixFactorSolveInput): MatrixResponse 
     return factorSolveStop('LU solve stopped because the factorization has a zero pivot.');
   }
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `x=${exactVectorToColumnLatex(solution)}`,
     approxText: 'LU solve',
     detailSections: luSolveDetails({
@@ -604,6 +690,26 @@ export function runMatrixLuSolve(input: MatrixFactorSolveInput): MatrixResponse 
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
+  });
+  const operand = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const rhsNode = labelMathJson(input.rhsLabel, exactVectorMathJson(rhs));
+  const lowerNode = exactMatrixMathJson(factored.lower);
+  const upperNode = exactMatrixMathJson(factored.upper);
+  const solutionNode = exactVectorMathJson(solution);
+  const intermediateNode = exactVectorMathJson(intermediate);
+  const primaryLatex = `x=${exactVectorToColumnLatex(solution)}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(primaryLatex, equationMathJson('x', solutionNode), 'matrix.lu-solve.native-solution'),
+    details: [
+      mathEvidence(`L=${exactMatrixToLatex(factored.lower)}`, equationMathJson('L', lowerNode), 'matrix.lu-solve.native-lower'),
+      mathEvidence(`U=${exactMatrixToLatex(factored.upper)}`, equationMathJson('U', upperNode), 'matrix.lu-solve.native-upper'),
+      ...factorRowEvidence(factored.rowOperations, 'matrix.lu-solve.native-row-operation'),
+      mathEvidence(`${input.label}=LU`, equationMathJson(operand, ['Multiply', lowerNode, upperNode]), 'matrix.lu-solve.native-factorization'),
+      mathEvidence(`Ly=${input.rhsLabel}`, equationMathJson(['Multiply', lowerNode, 'y'], rhsNode), 'matrix.lu-solve.native-forward-system'),
+      mathEvidence(`y=${exactVectorToColumnLatex(intermediate)}`, equationMathJson('y', intermediateNode), 'matrix.lu-solve.native-intermediate'),
+      mathEvidence('Ux=y', equationMathJson(['Multiply', upperNode, 'x'], 'y'), 'matrix.lu-solve.native-back-system'),
+      mathEvidence(primaryLatex, equationMathJson('x', solutionNode), 'matrix.lu-solve.native-solution-detail'),
+    ],
   });
 }
 
@@ -632,7 +738,7 @@ export function runMatrixPluSolve(input: MatrixFactorSolveInput): MatrixResponse
     return factorSolveStop('PLU solve stopped because the factorization has a zero pivot.');
   }
 
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `x=${exactVectorToColumnLatex(solution)}`,
     approxText: 'PLU solve',
     detailSections: pluSolveDetails({
@@ -648,5 +754,32 @@ export function runMatrixPluSolve(input: MatrixFactorSolveInput): MatrixResponse
       rowOperations: factored.rowOperations,
     }),
     warnings: [],
+  });
+  const operand = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const rhsNode = labelMathJson(input.rhsLabel, exactVectorMathJson(rhs));
+  const permutationNode = exactMatrixMathJson(factored.permutation);
+  const lowerNode = exactMatrixMathJson(factored.lower);
+  const upperNode = exactMatrixMathJson(factored.upper);
+  const permutedRhsNode = exactVectorMathJson(permutedRhs);
+  const intermediateNode = exactVectorMathJson(intermediate);
+  const solutionNode = exactVectorMathJson(solution);
+  const permutedMatrixLatex = prefixedMatrixLabel('P', input.label);
+  const permutedRhsLatex = prefixedVectorLabel('P', input.rhsLabel);
+  const primaryLatex = `x=${exactVectorToColumnLatex(solution)}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(primaryLatex, equationMathJson('x', solutionNode), 'matrix.plu-solve.native-solution'),
+    details: [
+      mathEvidence(`P=${exactMatrixToLatex(factored.permutation)}`, equationMathJson('P', permutationNode), 'matrix.plu-solve.native-permutation'),
+      mathEvidence(`L=${exactMatrixToLatex(factored.lower)}`, equationMathJson('L', lowerNode), 'matrix.plu-solve.native-lower'),
+      mathEvidence(`U=${exactMatrixToLatex(factored.upper)}`, equationMathJson('U', upperNode), 'matrix.plu-solve.native-upper'),
+      ...swapEvidence(factored.swaps, 'matrix.plu-solve.native-swap'),
+      ...factorRowEvidence(factored.rowOperations, 'matrix.plu-solve.native-row-operation'),
+      mathEvidence(`${permutedMatrixLatex}=LU`, equationMathJson(['Multiply', permutationNode, operand], ['Multiply', lowerNode, upperNode]), 'matrix.plu-solve.native-factorization'),
+      mathEvidence(`${permutedRhsLatex}=${exactVectorToColumnLatex(permutedRhs)}`, equationMathJson(['Multiply', permutationNode, rhsNode], permutedRhsNode), 'matrix.plu-solve.native-permuted-rhs'),
+      mathEvidence(`Ly=${permutedRhsLatex}`, equationMathJson(['Multiply', lowerNode, 'y'], ['Multiply', permutationNode, rhsNode]), 'matrix.plu-solve.native-forward-system'),
+      mathEvidence(`y=${exactVectorToColumnLatex(intermediate)}`, equationMathJson('y', intermediateNode), 'matrix.plu-solve.native-intermediate'),
+      mathEvidence('Ux=y', equationMathJson(['Multiply', upperNode, 'x'], 'y'), 'matrix.plu-solve.native-back-system'),
+      mathEvidence(primaryLatex, equationMathJson('x', solutionNode), 'matrix.plu-solve.native-solution-detail'),
+    ],
   });
 }

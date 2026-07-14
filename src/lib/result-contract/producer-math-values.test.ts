@@ -3,9 +3,7 @@ import { createCalculusResultOutcome } from '../calculus/workspace/result-docume
 import { createEquationResultOutcome } from '../equation/equation-solve-result';
 import { createGeometryResultOutcome } from '../geometry/result-document';
 import { buildCalculateResultDocument } from '../modes/calculate/result-document';
-import { createMatrixResultOutcome } from '../modes/matrix-result-document';
 import { createTableResultOutcome } from '../modes/table-result-document';
-import { createVectorResultOutcome } from '../modes/vector-result-document';
 import { createStatisticsResultOutcome } from '../statistics/result-document';
 import { createTrigonometryResultOutcome } from '../trigonometry/result-document';
 import type { ResultProducerDraft, TableResponse } from '../../types/calculator';
@@ -68,10 +66,5 @@ describe('workspace canonical producer math values', () => {
       warnings: [],
     };
     expectNativeProvenPrimary(createTableResultOutcome(success, response, options));
-  });
-
-  it('passes direct proven values through independent Matrix and Vector owners', () => {
-    expectNativeProvenPrimary(createMatrixResultOutcome(success, options));
-    expectNativeProvenPrimary(createVectorResultOutcome(success, options));
   });
 });

@@ -327,25 +327,46 @@ describe('Canonical Result V2 contract', () => {
         'trigonometry.period-phase',
         'table.domain-boundary',
         'table.rational-function',
+        'matrix.matrix-arithmetic',
+        'matrix.determinant',
+        'matrix.inverse',
+        'matrix.rank',
         'matrix.linear-system',
         'matrix.profile',
+        'vector.dot-product',
+        'vector.cross-product',
+        'vector.norm',
+        'vector.angle',
+        'vector.orthogonalization',
+        'vector.span-independence',
       ]);
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
       'equation.domain-boundary': ['typedLabeledSupplement'],
       'equation.rational-radical': ['typedLabeledSupplement'],
       'trigonometry.right-triangle': ['rightTriangle'],
-      'vector.span-independence': ['independent'],
     });
-    expect(CANONICAL_RESULT_V3_PRODUCER_SELECTORS).toEqual({});
+    expect(CANONICAL_RESULT_V3_PRODUCER_SELECTORS).toEqual({
+      'vector.angle': ['angle:grad'],
+    });
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
       const defaultVersion = [
         'trigonometry.angle-conversion',
         'trigonometry.period-phase',
         'table.domain-boundary',
         'table.rational-function',
+        'matrix.matrix-arithmetic',
+        'matrix.determinant',
+        'matrix.inverse',
+        'matrix.rank',
         'matrix.linear-system',
         'matrix.profile',
+        'vector.dot-product',
+        'vector.cross-product',
+        'vector.norm',
+        'vector.angle',
+        'vector.orthogonalization',
+        'vector.span-independence',
       ].includes(routeId) ? 2 : 1;
       const selectorVersions = routeId === 'calculus.derivatives'
         ? { derivativePoint: 2 }
@@ -353,8 +374,8 @@ describe('Canonical Result V2 contract', () => {
           ? { typedLabeledSupplement: 2 }
         : routeId === 'trigonometry.right-triangle'
           ? { rightTriangle: 2 }
-        : routeId === 'vector.span-independence'
-          ? { independent: 2 }
+        : routeId === 'vector.angle'
+          ? { 'angle:grad': 3 }
           : {};
       expect(canonicalResultVersionForProducer({ routeId })).toBe(defaultVersion);
       expect(CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY[routeId]).toEqual({
@@ -378,5 +399,9 @@ describe('Canonical Result V2 contract', () => {
       routeId: 'vector.span-independence',
       selector: 'independent',
     })).toBe(2);
+    expect(canonicalResultVersionForProducer({
+      routeId: 'vector.angle',
+      selector: 'angle:grad',
+    })).toBe(3);
   });
 });

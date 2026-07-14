@@ -9,6 +9,16 @@ import {
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 import { analyzeExactColumnFamily } from './matrix-column-family';
 import { profileLinearAlgebraResult } from '../display/printer';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  equationMathJson,
+  exactMatrixMathJson,
+  exactVectorSetMathJson,
+  integerSetMathJson,
+  labelMathJson,
+  operatorMathJson,
+} from './canonical-evidence';
 
 type MatrixSpaceKind = 'nullSpace' | 'columnSpace';
 
@@ -115,23 +125,57 @@ export function runMatrixSpaceOperation(input: MatrixSpaceInput): MatrixResponse
 
   const columns = exactMatrix[0]?.length ?? 0;
   const { pivotColumns, rank } = analysis;
+  const operand = labelMathJson(input.label, exactMatrixMathJson(exactMatrix));
+  const pivotNumbers = pivotColumns.map((column) => column + 1);
+  const math = (canonicalLatex: string, mathJson: unknown, source: string) => ({
+    kind: 'math' as const,
+    value: canonicalLeafEvidence(canonicalLatex, mathJson, source),
+  });
 
   if (input.kind === 'nullSpace') {
     const basis = analysis.kernelBasis;
     const nullity = analysis.nullity;
-    return profileLinearAlgebraResult({
+    const response = profileLinearAlgebraResult({
       resultLatex: `\\operatorname{Null}(${input.label})=${basisLatex(basis)}`,
       approxText: `dimension ${nullity}`,
       detailSections: nullSpaceDetails(input.label, analysis.rref, rank, pivotColumns, nullity, columns),
       warnings: [],
     });
+    const primaryLatex = `\\operatorname{Null}(${input.label})=${basisLatex(basis)}`;
+    return attachLinearAlgebraCanonicalEvidence(response, {
+      primary: canonicalLeafEvidence(
+        primaryLatex,
+        equationMathJson(operatorMathJson('Null', operand), basis.length > 0 ? exactVectorSetMathJson(basis) : 0),
+        'matrix.spaces.native-null-space',
+      ),
+      details: [
+        math(`\\operatorname{rank}(${input.label})=${rank}`, equationMathJson(operatorMathJson('rank', operand), rank), 'matrix.spaces.native-rank'),
+        math(`\\operatorname{nullity}(${input.label})=${nullity}`, equationMathJson(operatorMathJson('nullity', operand), nullity), 'matrix.spaces.native-nullity'),
+        math(`\\operatorname{rank}(${input.label})+\\operatorname{nullity}(${input.label})=${columns}`, equationMathJson(['Add', operatorMathJson('rank', operand), operatorMathJson('nullity', operand)], columns), 'matrix.spaces.native-rank-nullity'),
+        math(`\\operatorname{rref}(${input.label})=${exactMatrixToLatex(analysis.rref)}`, equationMathJson(operatorMathJson('rref', operand), exactMatrixMathJson(analysis.rref)), 'matrix.spaces.native-rref'),
+        math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotNumbers)), 'matrix.spaces.native-pivots'),
+      ],
+    });
   }
 
   const basis = analysis.imageBasis;
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `\\operatorname{Col}(${input.label})=${basisLatex(basis)}`,
     approxText: `dimension ${rank}`,
     detailSections: columnSpaceDetails(input.label, analysis.rref, rank, pivotColumns),
     warnings: [],
+  });
+  const primaryLatex = `\\operatorname{Col}(${input.label})=${basisLatex(basis)}`;
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    primary: canonicalLeafEvidence(
+      primaryLatex,
+      equationMathJson(operatorMathJson('Col', operand), exactVectorSetMathJson(basis)),
+      'matrix.spaces.native-column-space',
+    ),
+    details: [
+      math(`\\dim\\operatorname{Col}(${input.label})=\\operatorname{rank}(${input.label})=${rank}`, ['Equal', operatorMathJson('dim', operatorMathJson('Col', operand)), operatorMathJson('rank', operand), rank], 'matrix.spaces.native-column-space-dimension'),
+      math(`\\operatorname{pivot\\ columns}=\\{${pivotColumnsLatex(pivotColumns)}\\}`, equationMathJson(operatorMathJson('pivotColumns', operand), integerSetMathJson(pivotNumbers)), 'matrix.spaces.native-pivots'),
+      math(`\\operatorname{rref}(${input.label})=${exactMatrixToLatex(analysis.rref)}`, equationMathJson(operatorMathJson('rref', operand), exactMatrixMathJson(analysis.rref)), 'matrix.spaces.native-rref'),
+    ],
   });
 }

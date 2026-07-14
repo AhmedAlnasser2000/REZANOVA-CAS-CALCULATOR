@@ -3,7 +3,7 @@ import type {
   ExactScalarWire,
   MatrixResponse,
 } from '../../types/calculator';
-import { exactScalarIsZero } from '../algebra/polynomial-core';
+import { buildExactScalarNode, exactScalarIsZero, type ExactScalar } from '../algebra/polynomial-core';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 import { determinantExactMatrix, type ExactVector } from './exact-matrix-core';
 import {
@@ -23,6 +23,13 @@ import {
   mixedDetailSection,
   textPart,
 } from '../display/result-detail-lines';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  exactMatrixMathJson,
+  exactVectorSetMathJson,
+  integerSetMathJson,
+} from './canonical-evidence';
 
 export type MatrixLinearMapProfileInput = {
   label: string;
@@ -90,17 +97,19 @@ function profileFacts(
 
 function invertibilityFacts(
   analysis: ExactColumnFamilyAnalysis,
-): DisplayDetailSection | MatrixResponse {
+): { section: DisplayDetailSection; determinant?: ExactScalar } | MatrixResponse {
   const rows = analysis.matrix.length;
   const columns = analysis.matrix[0]?.length ?? 0;
   if (rows !== columns) {
     return {
-      title: 'Invertibility',
-      lines: [
-        'Invertibility is not applicable to rectangular matrices.',
-        'Use the one-to-one and onto facts above to describe this linear map.',
-      ],
-      lineKind: 'text',
+      section: {
+        title: 'Invertibility',
+        lines: [
+          'Invertibility is not applicable to rectangular matrices.',
+          'Use the one-to-one and onto facts above to describe this linear map.',
+        ],
+        lineKind: 'text',
+      },
     };
   }
 
@@ -109,16 +118,19 @@ function invertibilityFacts(
     return profileStop('This profile could not compute the square-matrix determinant exactly.');
   }
   const invertible = !exactScalarIsZero(determinant.determinant);
-  return mixedDetailSection('Invertibility', [
-    [
-      textPart('Determinant: '),
-      mathPart(exactScalarToLatex(determinant.determinant)),
-    ],
-    [textPart(`Invertible: ${invertible ? 'yes' : 'no'}.`)],
-    [textPart(invertible
-      ? 'The determinant is nonzero, so the map is both one-to-one and onto.'
-      : 'The determinant is zero, so the square matrix is not invertible.')],
-  ]);
+  return {
+    determinant: determinant.determinant,
+    section: mixedDetailSection('Invertibility', [
+      [
+        textPart('Determinant: '),
+        mathPart(exactScalarToLatex(determinant.determinant)),
+      ],
+      [textPart(`Invertible: ${invertible ? 'yes' : 'no'}.`)],
+      [textPart(invertible
+        ? 'The determinant is nonzero, so the map is both one-to-one and onto.'
+        : 'The determinant is zero, so the square matrix is not invertible.')],
+    ]),
+  };
 }
 
 export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): MatrixResponse {
@@ -139,7 +151,7 @@ export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): M
   if ('warnings' in invertibility) return invertibility;
 
   const mapLatex = `${input.label}:\\mathbb{R}^{${columns}}\\to\\mathbb{R}^{${rows}}`;
-  return profileLinearAlgebraResult({
+  const response = profileLinearAlgebraResult({
     resultLatex: `${mapLatex},\\quad\\operatorname{rank}(${input.label})=${analysis.rank},\\quad\\operatorname{nullity}(${input.label})=${analysis.nullity}`,
     answerRows: {
       rows: [
@@ -150,7 +162,7 @@ export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): M
     },
     detailSections: [
       ...profileFacts(analysis),
-      invertibility,
+      invertibility.section,
       mixedDetailSection('RREF Evidence', [
         [
           textPart('RREF: '),
@@ -164,5 +176,37 @@ export function runMatrixLinearMapProfile(input: MatrixLinearMapProfileInput): M
       ]),
     ],
     warnings: [],
+  });
+  const pivotNumbers = analysis.pivotColumns.map((column) => column + 1);
+  const math = (canonicalLatex: string, mathJson: unknown, source: string) => ({
+    kind: 'math' as const,
+    value: canonicalLeafEvidence(canonicalLatex, mathJson, source),
+  });
+  return attachLinearAlgebraCanonicalEvidence(response, {
+    semanticPrimary: {
+      kind: 'linear-map-profile',
+      operand: canonicalLeafEvidence(
+        exactMatrixToLatex(exactMatrix),
+        exactMatrixMathJson(exactMatrix),
+        'matrix.profile.native-exact-operand',
+      ),
+      domainDimension: columns,
+      codomainDimension: rows,
+      rank: analysis.rank,
+      nullity: analysis.nullity,
+    },
+    details: [
+      math(`${analysis.rank}+${analysis.nullity}=${columns}`, ['Equal', ['Add', analysis.rank, analysis.nullity], columns], 'matrix.profile.native-rank-nullity-values'),
+      math(pivotColumnSetLatex(analysis.pivotColumns), integerSetMathJson(pivotNumbers), 'matrix.profile.native-pivots'),
+      math(vectorSetLatex(analysis.kernelBasis), exactVectorSetMathJson(analysis.kernelBasis), 'matrix.profile.native-kernel'),
+      math(vectorSetLatex(analysis.imageBasis), exactVectorSetMathJson(analysis.imageBasis), 'matrix.profile.native-image'),
+      ...(invertibility.determinant ? [math(
+        exactScalarToLatex(invertibility.determinant),
+        buildExactScalarNode(invertibility.determinant),
+        'matrix.profile.native-determinant',
+      )] : []),
+      math(exactMatrixToLatex(analysis.rref), exactMatrixMathJson(analysis.rref), 'matrix.profile.native-rref'),
+      math(pivotColumnSetLatex(analysis.pivotColumns), integerSetMathJson(pivotNumbers), 'matrix.profile.native-rref-pivots'),
+    ],
   });
 }

@@ -58,9 +58,10 @@ describe('Linear Algebra canonical result producers', () => {
     const outcome = runMatrixMode(request);
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Matrix success.');
-    expect(outcome.canonicalResult?.version).toBe(1);
-    expect(outcome.canonicalResult?.version === 1
-      ? outcome.canonicalResult.primaryMath?.mathJson
+    expect(outcome.canonicalResult?.version).toBe(2);
+    expect(outcome.canonicalResult
+      ? collectCanonicalMathLeaves(outcome.canonicalResult)
+        .find((entry) => entry.path === 'primary.value')?.value.mathJson
       : undefined).toBeDefined();
   });
 
@@ -99,9 +100,10 @@ describe('Linear Algebra canonical result producers', () => {
     const outcome = runVectorMode(request);
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Vector success.');
-    expect(outcome.canonicalResult?.version).toBe(1);
-    expect(outcome.canonicalResult?.version === 1
-      ? outcome.canonicalResult.primaryMath?.mathJson
+    expect(outcome.canonicalResult?.version).toBe(2);
+    expect(outcome.canonicalResult
+      ? collectCanonicalMathLeaves(outcome.canonicalResult)
+        .find((entry) => entry.path === 'primary.value')?.value.mathJson
       : undefined).toBeDefined();
   });
 
@@ -131,9 +133,14 @@ describe('Linear Algebra canonical result producers', () => {
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Vector angle success.');
     expect(outcome.exactLatex).toBe('100^{g}');
-    expect(outcome.canonicalResult?.version).toBe(1);
-    expect(outcome.canonicalResult?.version === 1
-      ? outcome.canonicalResult.primaryMath?.mathJson
-      : undefined).toBeUndefined();
+    expect(outcome.canonicalResult).toMatchObject({
+      version: 3,
+      primary: {
+        kind: 'angle-quantity',
+        presentation: { primaryLatex: '100^{g}' },
+        magnitude: { canonicalLatex: '100', mathJson: 100 },
+        unit: 'grad',
+      },
+    });
   });
 });

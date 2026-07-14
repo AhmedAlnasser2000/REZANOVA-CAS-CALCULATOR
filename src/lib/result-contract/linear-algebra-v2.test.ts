@@ -151,7 +151,7 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       .toBe(true);
   });
 
-  it('keeps the untouched Vector span selector on frozen V1', () => {
+  it('defaults the Vector span selector to canonical result V2', () => {
     const outcome = runVectorMode({
       operation: 'span',
       vectorA: [1, 0],
@@ -160,7 +160,7 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       angleUnit: 'rad',
     });
     expect(outcome.kind).toBe('success');
-    expect(outcome.kind === 'success' ? outcome.canonicalResult?.version : undefined).toBe(1);
+    expect(outcome.kind === 'success' ? outcome.canonicalResult?.version : undefined).toBe(2);
   });
 
   it.each([

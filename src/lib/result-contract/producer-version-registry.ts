@@ -72,16 +72,26 @@ export const FROZEN_V1_PRODUCER_ROUTE_IDS = [
 
 const frozenV1Routes = new Set<string>(FROZEN_V1_PRODUCER_ROUTE_IDS);
 
-// These ratchets stay empty in Contract1. Producer gates may only add the
-// selectors or route defaults approved by the V2 audit.
+// Producer gates may add only the route defaults and selector overrides
+// approved by a canonical-result milestone.
 export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
   [
     'trigonometry.angle-conversion',
     'trigonometry.period-phase',
     'table.domain-boundary',
     'table.rational-function',
+    'matrix.matrix-arithmetic',
+    'matrix.determinant',
+    'matrix.inverse',
+    'matrix.rank',
     'matrix.linear-system',
     'matrix.profile',
+    'vector.dot-product',
+    'vector.cross-product',
+    'vector.norm',
+    'vector.angle',
+    'vector.orthogonalization',
+    'vector.span-independence',
   ] as const satisfies readonly MathJsonRouteId[]
 );
 
@@ -91,12 +101,13 @@ export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
     'equation.domain-boundary': ['typedLabeledSupplement'],
     'equation.rational-radical': ['typedLabeledSupplement'],
     'trigonometry.right-triangle': ['rightTriangle'],
-    'vector.span-independence': ['independent'],
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );
 
 export const CANONICAL_RESULT_V3_PRODUCER_SELECTORS = (
-  {} as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
+  {
+    'vector.angle': ['angle:grad'],
+  } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );
 
 const v2DefaultRoutes = new Set<string>(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES);

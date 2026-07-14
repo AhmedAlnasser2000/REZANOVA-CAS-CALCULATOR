@@ -38,12 +38,23 @@ import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from '
 import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
 import { runMatrixColumnProjection, runMatrixLeastSquares, runMatrixQr } from './matrix-qr';
 import { runMatrixSpaceOperation } from './matrix-spaces';
-import { rowOperationDetailSection } from './row-operation-readback';
+import { formatRowOperation, rowOperationDetailSection } from './row-operation-readback';
 import {
   exactMatrixDimensionLimitMessage,
   matrixEditingDimensionError,
 } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
+import {
+  attachLinearAlgebraCanonicalEvidence,
+  canonicalLeafEvidence,
+  exactMatrixMathJson,
+  exactScalarMathJson,
+  linearAlgebraCanonicalEvidenceForResponse,
+  numericMatrixMathJson,
+  rowOperationEvidence,
+  type LinearAlgebraCanonicalEvidence,
+  type LinearAlgebraCanonicalLeafEvidence,
+} from './canonical-evidence';
 
 function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   switch (reason) {
@@ -68,7 +79,7 @@ function matrixStopReasonToMessage(reason: MatrixCoreStopReason): string {
   }
 }
 
-function exactMatrixReadback(req: MatrixRequest): string | null {
+function exactMatrixReadback(req: MatrixRequest): LinearAlgebraCanonicalLeafEvidence | null {
   const exactA = exactMatrixFromWire(req.exactMatrixA) ?? exactMatrixFromNumeric(req.matrixA);
   const exactB = req.matrixB
     ? exactMatrixFromWire(req.exactMatrixB) ?? exactMatrixFromNumeric(req.matrixB)
@@ -83,7 +94,11 @@ function exactMatrixReadback(req: MatrixRequest): string | null {
       : req.operation === 'subtract'
         ? exactSubtractMatrices(exactA, exactB)
         : exactMultiplyMatrices(exactA, exactB);
-    return result ? exactMatrixToLatex(result) : null;
+    return result ? canonicalLeafEvidence(
+      exactMatrixToLatex(result),
+      exactMatrixMathJson(result),
+      `matrix.${req.operation}.native-exact-matrix`,
+    ) : null;
   }
 
   if (req.operation === 'transposeA' || req.operation === 'transposeB') {
@@ -92,7 +107,11 @@ function exactMatrixReadback(req: MatrixRequest): string | null {
       return null;
     }
     const result = exactTransposeMatrix(exactMatrix);
-    return result ? exactMatrixToLatex(result) : null;
+    return result ? canonicalLeafEvidence(
+      exactMatrixToLatex(result),
+      exactMatrixMathJson(result),
+      `matrix.${req.operation}.native-exact-transpose`,
+    ) : null;
   }
 
   const exactMatrix =
@@ -106,14 +125,22 @@ function exactMatrixReadback(req: MatrixRequest): string | null {
   if (req.operation === 'detA' || req.operation === 'detB') {
     const determinant = determinantExactMatrix(exactMatrix);
     return determinant.kind === 'success'
-      ? exactScalarToLatex(determinant.determinant)
+      ? canonicalLeafEvidence(
+          exactScalarToLatex(determinant.determinant),
+          exactScalarMathJson(determinant.determinant),
+          `matrix.${req.operation}.native-exact-determinant`,
+        )
       : null;
   }
 
   if (req.operation === 'inverseA' || req.operation === 'inverseB') {
     const inverse = inverseExactMatrix(exactMatrix);
     return inverse.kind === 'success'
-      ? exactMatrixToLatex(inverse.inverse)
+      ? canonicalLeafEvidence(
+          exactMatrixToLatex(inverse.inverse),
+          exactMatrixMathJson(inverse.inverse),
+          `matrix.${req.operation}.native-exact-inverse`,
+        )
       : null;
   }
 
@@ -164,17 +191,37 @@ function exactRankRrefResponse(req: MatrixRequest): MatrixResponse | null {
   }
 
   if (req.operation === 'rankA' || req.operation === 'rankB') {
-    return profileLinearAlgebraResult({
-      resultLatex: `${reduced.rank}`,
+    const resultLatex = `${reduced.rank}`;
+    return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+      resultLatex,
       approxText: formatApproxNumber(reduced.rank),
       warnings: [],
+    }), {
+      primary: canonicalLeafEvidence(
+        resultLatex,
+        reduced.rank,
+        'matrix.rank.native-exact-rref-rank',
+      ),
     });
   }
 
-  return profileLinearAlgebraResult({
-    resultLatex: exactMatrixToLatex(reduced.matrix),
+  const resultLatex = exactMatrixToLatex(reduced.matrix);
+  return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+    resultLatex,
     detailSections: [rowOperationDetailSection(reduced.rowOperations)],
     warnings: [],
+  }), {
+    primary: canonicalLeafEvidence(
+      resultLatex,
+      exactMatrixMathJson(reduced.matrix),
+      'matrix.rref.native-exact-rref-matrix',
+    ),
+    details: reduced.rowOperations.flatMap((operation) => {
+      const presentation = formatRowOperation(operation);
+      return presentation
+        ? [rowOperationEvidence(presentation, operation, 'matrix.rref.native-row-operation')]
+        : [];
+    }),
   });
 }
 
@@ -627,16 +674,32 @@ function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult
   }
 
   if (result.kind === 'scalar') {
-    return profileLinearAlgebraResult({
-      resultLatex: exactMatrixReadback(req) ?? scalarToLatex(result.value),
+    const exact = exactMatrixReadback(req);
+    const resultLatex = exact?.canonicalLatex ?? scalarToLatex(result.value);
+    return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+      resultLatex,
       approxText: formatApproxNumber(result.value),
       warnings: [],
+    }), {
+      primary: exact ?? canonicalLeafEvidence(
+        resultLatex,
+        Number(resultLatex),
+        'matrix.scalar.native-numeric-operation',
+      ),
     });
   }
 
-  return profileLinearAlgebraResult({
-    resultLatex: exactMatrixReadback(req) ?? matrixToLatex(result.value),
+  const exact = exactMatrixReadback(req);
+  const resultLatex = exact?.canonicalLatex ?? matrixToLatex(result.value);
+  return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
+    resultLatex,
     warnings: [],
+  }), {
+    primary: exact ?? canonicalLeafEvidence(
+      resultLatex,
+      numericMatrixMathJson(result.value),
+      'matrix.operation.native-numeric-matrix',
+    ),
   });
 }
 
@@ -644,7 +707,7 @@ export function solveLinearSystem(coefficients: number[][], constants: number[])
   return solveNumericLinearSystem(coefficients, constants);
 }
 
-export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
+function runMatrixOperationInternal(req: MatrixRequest): MatrixResponse {
   const matrixDimensionError = matrixEditingDimensionError(req.matrixA)
     ?? (req.matrixB ? matrixEditingDimensionError(req.matrixB) : null);
   if (matrixDimensionError) {
@@ -749,4 +812,19 @@ export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
     matrixB: req.matrixB,
   };
   return matrixCoreResultToResponse(req, runNumericMatrixOperation(numericRequest));
+}
+
+export function runMatrixOperationWithEvidence(req: MatrixRequest): {
+  response: MatrixResponse;
+  evidence: LinearAlgebraCanonicalEvidence;
+} {
+  const response = runMatrixOperationInternal(req);
+  return {
+    response,
+    evidence: linearAlgebraCanonicalEvidenceForResponse(response),
+  };
+}
+
+export function runMatrixOperation(req: MatrixRequest): MatrixResponse {
+  return runMatrixOperationWithEvidence(req).response;
 }
