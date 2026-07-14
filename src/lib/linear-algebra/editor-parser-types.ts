@@ -55,7 +55,7 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'vectorDivide'; vector: LinearAlgebraEditorExpression; scalar: LinearAlgebraScalarExpression }
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
-  | { kind: 'gramSchmidt'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
+  | { kind: 'gramSchmidt'; operands: LinearAlgebraEditorExpression[] }
   | { kind: 'vectorFamily'; operator: 'span' | 'independent'; operands: LinearAlgebraEditorExpression[] }
   | { kind: 'projection'; base: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | { kind: 'scalarTripleProduct'; first: LinearAlgebraEditorExpression; second: LinearAlgebraEditorExpression; third: LinearAlgebraEditorExpression }

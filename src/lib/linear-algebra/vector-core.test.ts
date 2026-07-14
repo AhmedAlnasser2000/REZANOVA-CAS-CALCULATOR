@@ -6,6 +6,7 @@ import {
   dotVectors,
   getVectorShapeFacts,
   gramSchmidtTwoVectors,
+  gramSchmidtVectors,
   haveSameVectorDimension,
   normVector,
   orthogonalComponentToVector,
@@ -58,6 +59,20 @@ describe('vector-core operations', () => {
     expect(dependent?.notes).toEqual([
       'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.',
     ]);
+  });
+
+  it('orthogonalizes one through six vectors with variadic residual evidence', () => {
+    const result = gramSchmidtVectors([
+      [1, 0, 0],
+      [1, 1, 0],
+      [1, 1, 1],
+    ]);
+    expect(result?.orthogonalBasis).toEqual([
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+    ]);
+    expect(result?.steps.map((step) => step.projectionBasisIndices)).toEqual([[], [0], [0, 1]]);
   });
 
   it('returns typed vector/scalar results from the operation boundary', () => {

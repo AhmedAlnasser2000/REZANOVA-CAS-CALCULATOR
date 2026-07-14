@@ -1,5 +1,8 @@
 import type { ExactScalarWire, VectorRequest } from '../../types/calculator';
-import { exactVectorFamilyDimensionLimitMessage } from './dimension-contract';
+import {
+  exactVectorFamilyDimensionLimitMessage,
+  gramSchmidtDimensionLimitMessage,
+} from './dimension-contract';
 import type { LinearAlgebraEditorExpression } from './editor-parser';
 import {
   evaluateVectorExpression,
@@ -7,6 +10,7 @@ import {
 } from './vector-expression-evaluator';
 
 type VectorFamilyExpression = Extract<LinearAlgebraEditorExpression, { kind: 'vectorFamily' }>;
+type GramSchmidtExpression = Extract<LinearAlgebraEditorExpression, { kind: 'gramSchmidt' }>;
 
 export type VectorFamilyDispatchInput = VectorExpressionEvaluationInput & {
   latex: string;
@@ -65,6 +69,53 @@ export function dispatchVectorFamilyExpression(
       exactVectorB: cloneExactVector(second.exactVector!),
       vectorOperands: operands.map((operand) => cloneVector(operand.vector)),
       exactVectorOperands: exactVectors,
+      vectorOperandLatexList: operands.map((operand) => operand.displayLatex),
+      vectorOperandLatexA: first.displayLatex,
+      vectorOperandLatexB: second.displayLatex,
+      editorExpressionLatex: input.latex,
+    },
+  };
+}
+
+export function dispatchGramSchmidtExpression(
+  expression: GramSchmidtExpression,
+  input: VectorFamilyDispatchInput,
+): VectorFamilyDispatchResult {
+  if (expression.operands.length < 1 || expression.operands.length > 6) {
+    return { ok: false, message: gramSchmidtDimensionLimitMessage() };
+  }
+
+  const operands = [];
+  for (const operandExpression of expression.operands) {
+    const evaluated = evaluateVectorExpression(operandExpression, input);
+    if (!evaluated.ok) return evaluated;
+    operands.push(evaluated.operand);
+  }
+
+  const length = operands[0]?.vector.length ?? 0;
+  if (length < 1 || length > 8) {
+    return { ok: false, message: gramSchmidtDimensionLimitMessage() };
+  }
+  if (operands.some((operand) => operand.vector.length !== length)) {
+    return { ok: false, message: 'All Gram-Schmidt vectors must have the same length.' };
+  }
+
+  const first = operands[0];
+  const second = operands[1] ?? first;
+  const allExact = operands.every((operand) => operand.exactVector);
+  return {
+    ok: true,
+    request: {
+      operation: 'gramSchmidtUV',
+      vectorA: cloneVector(first.vector),
+      vectorB: cloneVector(second.vector),
+      angleUnit: input.angleUnit,
+      ...(first.exactVector ? { exactVectorA: cloneExactVector(first.exactVector) } : {}),
+      ...(second.exactVector ? { exactVectorB: cloneExactVector(second.exactVector) } : {}),
+      vectorOperands: operands.map((operand) => cloneVector(operand.vector)),
+      ...(allExact
+        ? { exactVectorOperands: operands.map((operand) => cloneExactVector(operand.exactVector!)) }
+        : {}),
       vectorOperandLatexList: operands.map((operand) => operand.displayLatex),
       vectorOperandLatexA: first.displayLatex,
       vectorOperandLatexB: second.displayLatex,

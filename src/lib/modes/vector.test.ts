@@ -15,7 +15,7 @@ function detailMathValues(result: ReturnType<typeof runVectorMode>) {
 }
 
 describe('runVectorMode', () => {
-  it('reads exact linear combinations without nonnumeric approximation text', () => {
+  it('reads exact linear combinations with structural decimal readback', () => {
     expect(runVectorMode({
       operation: 'linearCombination',
       vectorA: [4.5, 4.5],
@@ -36,7 +36,7 @@ describe('runVectorMode', () => {
           latex: '\\frac{1}{2}\\left(p+q\\right)=\\begin{bmatrix}\\frac{9}{2}\\\\\\frac{9}{2}\\end{bmatrix}',
         }],
       },
-      approxText: undefined,
+      approxText: '\\begin{bmatrix}4.5\\\\\n4.5\\end{bmatrix}',
     });
   });
 
@@ -148,7 +148,7 @@ describe('runVectorMode', () => {
     expect(gram.title).toBe('gram(u,v)');
     expect(gram.kind).toBe('success');
     if (gram.kind === 'success') {
-      expect(gram.approxText).toBeUndefined();
+      expect(gram.approxText).toContain('0.5');
       expect(gram.detailSections?.map((section) => section.title)).toContain('Gram-Schmidt Proof');
     }
   });
@@ -173,7 +173,7 @@ describe('runVectorMode', () => {
     });
     expect(gram.kind).toBe('success');
     if (gram.kind === 'success') {
-      expect(gram.approxText).toBeUndefined();
+      expect(gram.approxText).toContain('0.5');
     }
   });
 

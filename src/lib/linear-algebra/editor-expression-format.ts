@@ -126,8 +126,7 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
     case 'gramSchmidt':
       return callLatex(
         'gram',
-        formatLinearAlgebraEditorExpression(expression.left),
-        formatLinearAlgebraEditorExpression(expression.right),
+        ...expression.operands.map(formatLinearAlgebraEditorExpression),
       );
     case 'vectorFamily':
       return callLatex(

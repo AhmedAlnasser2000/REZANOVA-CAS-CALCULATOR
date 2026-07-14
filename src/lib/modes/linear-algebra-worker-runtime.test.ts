@@ -107,6 +107,16 @@ const vectorRequest: RunVectorModeRequest = {
   activeVectorRightId: 'vector-v',
 };
 
+const variadicVectorRequest: RunVectorModeRequest = {
+  operation: 'gramSchmidtUV',
+  vectorA: [1, 0, 0],
+  vectorB: [1, 1, 0],
+  vectorOperands: [[1, 0, 0], [1, 1, 0], [1, 1, 1]],
+  vectorOperandLatexList: ['p', 'q', 'r'],
+  editorExpressionLatex: '\\operatorname{gram}\\left(p,q,r\\right)',
+  angleUnit: 'rad',
+};
+
 const runtimeContext = (shouldCancel: () => boolean) => ({
   registryId: 'test.linear-algebra.cancel',
   checkpoint: () => undefined,
@@ -170,6 +180,34 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(vector.ooe.runtimeShell).toMatchObject({
       shellId: 'vector-worker-shell',
       selectedHostId: 'vector-worker-runtime',
+    });
+  });
+
+  it('carries variadic Gram-Schmidt through the Vector worker and OOE snapshot', async () => {
+    expect(buildVectorOoeSnapshot(variadicVectorRequest).request).toMatchObject({
+      vectorOperands: variadicVectorRequest.vectorOperands,
+      vectorOperandLatexList: ['p', 'q', 'r'],
+    });
+    const result = await runVectorModeWithOoePilot(variadicVectorRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalVectorMode),
+    });
+    expect(result.payload).toEqual(runCanonicalVectorMode(variadicVectorRequest));
+    const canonical = result.payload.kind === 'success'
+      && result.payload.canonicalResult?.version === 2
+      ? result.payload.canonicalResult
+      : undefined;
+    expect(canonical?.primary)
+      .toMatchObject({
+        kind: 'math',
+        value: {
+          canonicalLatex: expect.stringContaining('\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}'),
+        },
+      });
+    expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
+      kind: 'worker',
+      hostId: 'vector-worker-runtime',
+      terminalStatus: 'completed',
     });
   });
 

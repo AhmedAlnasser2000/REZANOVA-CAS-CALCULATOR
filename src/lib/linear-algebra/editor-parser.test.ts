@@ -234,8 +234,21 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
     expect(parsed('\\operatorname{gram}\\left(u,v\\right)', 'vector')).toEqual({
       kind: 'gramSchmidt',
-      left: { kind: 'named', name: 'u', displayLatex: 'u' },
-      right: { kind: 'named', name: 'v', displayLatex: 'v' },
+      operands: [
+        { kind: 'named', name: 'u', displayLatex: 'u' },
+        { kind: 'named', name: 'v', displayLatex: 'v' },
+      ],
+    });
+    expect(parsedWithOptions('gram(p,q,r)', {
+      mode: 'vector',
+      vectorNamedValues: ['p', 'q', 'r'],
+    })).toMatchObject({
+      kind: 'gramSchmidt',
+      operands: [
+        { kind: 'named', name: 'p' },
+        { kind: 'named', name: 'q' },
+        { kind: 'named', name: 'r' },
+      ],
     });
     expect(parsed('\\operatorname{proj}\\left(u,v\\right)', 'vector')).toEqual({
       kind: 'projection',
@@ -471,8 +484,10 @@ describe('parseLinearAlgebraEditorLatex', () => {
     });
     expect(parsed('gram([1,1],[1,0])', 'vector')).toMatchObject({
       kind: 'gramSchmidt',
-      left: { kind: 'vectorLiteral', value: [1, 1] },
-      right: { kind: 'vectorLiteral', value: [1, 0] },
+      operands: [
+        { kind: 'vectorLiteral', value: [1, 1] },
+        { kind: 'vectorLiteral', value: [1, 0] },
+      ],
     });
   });
 
@@ -532,6 +547,17 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parseLinearAlgebraEditorLatex('', { mode: 'matrix' })).toMatchObject({
       ok: false,
       reason: 'empty-expression',
+    });
+    expect(parseLinearAlgebraEditorLatex('gram()', { mode: 'vector' })).toMatchObject({
+      ok: false,
+      message: 'Gram-Schmidt requires one through six vector operands.',
+    });
+    expect(parseLinearAlgebraEditorLatex('gram(u,u,u,u,u,u,u)', {
+      mode: 'vector',
+      vectorNamedValues: ['u'],
+    })).toMatchObject({
+      ok: false,
+      message: 'Gram-Schmidt requires one through six vector operands.',
     });
     expect(parseLinearAlgebraEditorLatex('\\begin{bmatrix}#0 & #?\\\\#? & #?\\end{bmatrix}', { mode: 'matrix' })).toMatchObject({
       ok: false,

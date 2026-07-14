@@ -100,6 +100,21 @@ describe('linear algebra editor dispatch named values', () => {
       },
     });
     expect(dispatchVectorEditorLatex({
+      latex: 'gram(p,q,r)',
+      vectorA,
+      vectorB,
+      vectorValues: threeDimensionalVectorValues,
+      angleUnit: 'rad',
+    })).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'gramSchmidtUV',
+        vectorOperands: [[1, 0, 0], [0, 1, 0], [0, 0, 2]],
+        vectorOperandLatexList: ['p', 'q', 'r'],
+        editorExpressionLatex: '\\operatorname{gram}\\left(p,q,r\\right)',
+      },
+    });
+    expect(dispatchVectorEditorLatex({
       latex: 'norm(p-q)',
       vectorA,
       vectorB,

@@ -646,14 +646,13 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
 
   const gramArgument = functionArgument(input, 'gram');
   if (gramArgument !== null) {
-    const parts = splitTopLevelComma(gramArgument);
-    if (!parts) {
-      fail('unsupported-expression', 'Gram-Schmidt requires two vector operands.');
+    const operands = splitTopLevelArguments(gramArgument);
+    if (!operands || operands.length < 1 || operands.length > 6) {
+      fail('unsupported-expression', 'Gram-Schmidt requires one through six vector operands.');
     }
     return {
       kind: 'gramSchmidt',
-      left: parseExpression(parts[0], options),
-      right: parseExpression(parts[1], options),
+      operands: operands.map((operand) => parseExpression(operand, options)),
     };
   }
 

@@ -35,7 +35,10 @@ import {
   type VectorExpressionEvaluation,
 } from './vector-expression-evaluator';
 import { containsVectorScalarArithmetic } from './editor-vector-scalars';
-import { dispatchVectorFamilyExpression } from './vector-family-dispatch';
+import {
+  dispatchGramSchmidtExpression,
+  dispatchVectorFamilyExpression,
+} from './vector-family-dispatch';
 
 type MatrixOperand = EvaluatedMatrixOperand;
 type VectorOperand = EvaluatedVectorOperand;
@@ -779,6 +782,9 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
   if (expression.kind === 'vectorFamily') {
     return dispatchVectorFamilyExpression(expression, canonicalInput);
   }
+  if (expression.kind === 'gramSchmidt') {
+    return dispatchGramSchmidtExpression(expression, canonicalInput);
+  }
   if (containsVectorScalarArithmetic(expression)) {
     return vectorLinearCombinationRequest(canonicalInput, expression);
   }
@@ -842,24 +848,6 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
       },
     };
   }
-  if (expression.kind === 'gramSchmidt') {
-    const leftResult = vectorOperand(expression.left, canonicalInput);
-    if (!leftResult.ok) return vectorEvaluationError(leftResult);
-    const rightResult = vectorOperand(expression.right, canonicalInput);
-    if (!rightResult.ok) return vectorEvaluationError(rightResult);
-    const left = leftResult.operand;
-    const right = rightResult.operand;
-    return {
-      ok: true,
-      request: {
-        operation: 'gramSchmidtUV',
-        vectorA: left.vector,
-        vectorB: right.vector,
-        angleUnit: canonicalInput.angleUnit,
-        ...vectorMetadata(canonicalInput, { operandA: left, operandB: right }),
-      },
-    };
-  }
   if (expression.kind === 'scalarTripleProduct') {
     const firstResult = vectorOperand(expression.first, canonicalInput);
     if (!firstResult.ok) return vectorEvaluationError(firstResult);
@@ -886,6 +874,6 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
 
   return {
     ok: false,
-    message: 'Enter a Vector operation such as u+v, u·v, proj(u,v), cross(u,v), gram(u,v), or angle(u,v).',
+    message: 'Enter a Vector operation such as u+v, u·v, proj(u,v), cross(u,v), gram(u,v,...), or angle(u,v).',
   };
 }

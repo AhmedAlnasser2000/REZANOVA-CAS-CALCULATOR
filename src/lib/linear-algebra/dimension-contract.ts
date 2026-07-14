@@ -111,3 +111,7 @@ export function exactMatrixDimensionLimitMessage(subject: string) {
 export function exactVectorFamilyDimensionLimitMessage() {
   return `Exact span and independence support one through ${LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION} vectors with length up to ${LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION}.`;
 }
+
+export function gramSchmidtDimensionLimitMessage() {
+  return `Gram-Schmidt supports one through ${LINEAR_ALGEBRA_EXACT_MATRIX_MAX_DIMENSION} vectors with length up to ${LINEAR_ALGEBRA_VECTOR_MAX_LENGTH}.`;
+}

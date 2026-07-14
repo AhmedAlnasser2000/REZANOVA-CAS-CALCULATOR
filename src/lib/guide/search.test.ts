@@ -24,6 +24,7 @@ describe('guide search', () => {
   it('still finds linear algebra meaning terms', () => {
     expect(searchGuide('transpose', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
     expect(searchGuide('dot', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
+    expect(searchGuide('Gram-Schmidt', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
   })
 
   it('finds active Trigonometry and Statistics articles that were added after the initial Guide page', () => {

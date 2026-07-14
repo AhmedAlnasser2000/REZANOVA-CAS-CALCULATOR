@@ -8,6 +8,10 @@ import {
 } from '../algebra/polynomial-core';
 import type { ExactVector } from './exact-matrix-core';
 import { scalar } from './exact-matrix-core';
+import {
+  orthogonalizeExactVectors,
+  type ExactOrthogonalizationStep,
+} from './exact-orthogonalization';
 
 export function exactVectorIsZero(vector: ExactVector): boolean {
   return vector.every(exactScalarIsZero);
@@ -108,35 +112,25 @@ export type ExactGramSchmidtResult = {
   orthogonalBasis: ExactVector[];
   orthonormalBasis: ExactVector[] | null;
   notes: string[];
+  steps: ExactOrthogonalizationStep[];
 };
 
-export function exactGramSchmidtTwoVectors(
-  first: ExactVector,
-  second: ExactVector,
-): ExactGramSchmidtResult | null {
-  const orthogonalBasis: ExactVector[] = [];
-  const notes: string[] = [];
-
-  for (const [index, vector] of [first, second].entries()) {
-    let residual = [...vector];
-    for (const basisVector of orthogonalBasis) {
-      const next = exactOrthogonalComponentToVector(basisVector, residual);
-      if (!next) {
-        notes.push(`Basis vector ${orthogonalBasis.indexOf(basisVector) + 1} is zero, so this projection was skipped.`);
-        continue;
-      }
-      residual = next;
-    }
-
-    if (exactVectorIsZero(residual)) {
-      notes.push(index === 0
-        ? 'The first vector is zero and contributes no basis direction.'
-        : 'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.');
-      continue;
-    }
-
-    orthogonalBasis.push(residual);
+function discardedVectorNote(index: number) {
+  if (index === 0) {
+    return 'The first vector is zero and contributes no basis direction.';
   }
+  if (index === 1) {
+    return 'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.';
+  }
+  return `Input vector ${index + 1} has zero residual after projection, so it is dependent on the earlier basis vectors.`;
+}
+
+export function exactGramSchmidtVectors(
+  vectors: readonly ExactVector[],
+): ExactGramSchmidtResult | null {
+  const orthogonalization = orthogonalizeExactVectors(vectors);
+  const { orthogonalBasis, steps } = orthogonalization;
+  const notes = orthogonalization.discardedInputIndices.map(discardedVectorNote);
 
   if (orthogonalBasis.length === 0) {
     return null;
@@ -150,6 +144,7 @@ export function exactGramSchmidtTwoVectors(
         orthogonalBasis,
         orthonormalBasis: null,
         notes,
+        steps,
       };
     }
     orthonormalBasis.push(unit);
@@ -159,5 +154,13 @@ export function exactGramSchmidtTwoVectors(
     orthogonalBasis,
     orthonormalBasis,
     notes,
+    steps,
   };
+}
+
+export function exactGramSchmidtTwoVectors(
+  first: ExactVector,
+  second: ExactVector,
+): ExactGramSchmidtResult | null {
+  return exactGramSchmidtVectors([first, second]);
 }

@@ -95,7 +95,12 @@ export function vectorOperationLabel(operation: VectorOperation) {
 }
 
 function vectorResultTitle(request: RunVectorModeRequest) {
-  if ((request.operation === 'span' || request.operation === 'independent') && request.editorExpressionLatex) {
+  if (
+    (request.operation === 'span'
+      || request.operation === 'independent'
+      || (request.operation === 'gramSchmidtUV' && (request.vectorOperands?.length ?? 2) > 2))
+    && request.editorExpressionLatex
+  ) {
     return request.editorExpressionLatex;
   }
   const usesInlineOperand =

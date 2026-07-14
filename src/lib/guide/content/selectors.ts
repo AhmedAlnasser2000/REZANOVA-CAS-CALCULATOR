@@ -873,10 +873,12 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'A transpose means swapping rows and columns.',
       'A inverse means the matrix that undoes A when the inverse exists.',
       'u dot v is the dot product, u cross v is the cross product, and norm(u) is the length of a vector.',
+      'gram(p,q,r,...) applies Gram-Schmidt to one through six equal-length vectors and discards any zero residual as a dependent direction.',
     ],
     howToUse: [
       'Open Matrix for matrix operations and Vector for vector operations.',
       'Use the main editor and soft keys for Matrix A/B, Vector u/v, and common operator forms.',
+      'In Vector, use gram(p,q,r,...) for an orthogonal basis and expand Gram-Schmidt Proof for the residual and dependence evidence.',
       'Treat the Matrix and Vector editors as structured operation surfaces, not as a promise of full free-form symbolic matrix CAS.',
     ],
     concepts: [
@@ -921,11 +923,11 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       {
         id: 'linear-open-vector',
         title: 'Open Vector mode',
-        explanation: 'Use Vector mode for dot, cross, norm, angle, and reusing the current vectors inside textbook notation.',
+        explanation: 'Use Vector mode for dot, cross, norm, angle, Gram-Schmidt, and reusing named vectors inside textbook notation.',
         steps: [
           'Open Vector from the launcher.',
           'Enter the numeric values for Vector u and Vector v.',
-          'Run dot, cross, norm, or angle from Vector mode, then use the main editor when you want to copy the structured form.',
+          'Run dot, cross, norm, angle, or gram(p,q,r,...) from Vector mode, then use the main editor when you want to copy the structured form.',
         ],
         expected: 'Vector mode opens with the main editor available for structured entry and copy/reuse.',
         launch: {
@@ -938,6 +940,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     pitfalls: [
       'The MatrixVec keyboard page is notation-first. It does not turn Calculate into a full symbolic matrix CAS.',
       'Use Matrix for matrix operations and Vector for vector operations instead of expecting free-form editor evaluation everywhere.',
+      'Gram-Schmidt accepts at most six vectors of length eight; a zero residual is reported and omitted from the returned basis.',
     ],
     exactVsNumeric: [
       'Matrix and Vector modes use their dedicated operation flows.',

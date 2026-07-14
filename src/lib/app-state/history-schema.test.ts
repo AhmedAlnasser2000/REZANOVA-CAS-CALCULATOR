@@ -699,10 +699,16 @@ describe('history entry schema', () => {
         operation: 'gramSchmidtUV',
         vectorA: [1, 1],
         vectorB: [2, 2],
+        vectorOperands: [[1, 1], [2, 2], [0, 1]],
+        vectorOperandLatexList: ['p', 'q', 'r'],
         angleUnit: 'deg',
       },
       timestamp: '2026-06-08T00:00:00.000Z',
-    }).vectorSeed?.operation).toBe('gramSchmidtUV');
+    }).vectorSeed).toMatchObject({
+      operation: 'gramSchmidtUV',
+      vectorOperands: [[1, 1], [2, 2], [0, 1]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+    });
 
     expect(parseHistoryEntry({
       id: 'vector-seed-combination',

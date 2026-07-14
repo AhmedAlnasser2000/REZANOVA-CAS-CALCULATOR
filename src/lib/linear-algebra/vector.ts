@@ -3,7 +3,10 @@ import type {
   VectorRequest,
   VectorResponse,
 } from '../../types/calculator';
-import { vectorEditingDimensionError } from './dimension-contract';
+import {
+  gramSchmidtDimensionLimitMessage,
+  vectorEditingDimensionError,
+} from './dimension-contract';
 import {
   exactScalarIsZero,
   exactScalarToNumber,
@@ -20,17 +23,19 @@ import {
   exactAddVectors,
   exactCrossVectors,
   exactDotVectors,
-  exactGramSchmidtTwoVectors,
+  exactGramSchmidtVectors,
   exactOrthogonalComponentToVector,
   exactProjectionOntoVector,
   exactScalarSquareRoot,
   exactSubtractVectors,
   exactUnitVector,
+  type ExactGramSchmidtResult,
 } from './exact-vector-core';
 import {
   dotVectors,
   runNumericVectorOperation,
   type NumericVectorRequest,
+  type NumericOrthogonalizationStep,
   type VectorCoreResult,
   type VectorCoreStopReason,
 } from './vector-core';
@@ -76,6 +81,9 @@ function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
       return 'Projection needs a nonzero vector to project onto.';
     case 'unit-zero-vector':
       return 'Unit vector is undefined for the zero vector.';
+    case 'gram-schmidt-vector-count':
+    case 'gram-schmidt-dimension-limit':
+      return gramSchmidtDimensionLimitMessage();
     case 'gram-schmidt-zero-span':
       return 'Gram-Schmidt needs at least one nonzero vector.';
     case 'unsupported-operation':
@@ -107,100 +115,138 @@ function exactVectorBasisAnswerRows(vectors: readonly ExactVector[]) {
   };
 }
 
+function gramSchmidtLabels(req: VectorRequest, count: number) {
+  return Array.from({ length: count }, (_, index) => (
+    req.vectorOperandLatexList?.[index]
+    ?? (index === 0 ? req.vectorOperandLatexA : index === 1 ? req.vectorOperandLatexB : undefined)
+    ?? (index === 0 ? 'u' : index === 1 ? 'v' : `v_{${index + 1}}`)
+  ));
+}
+
+function projectedResidualLatex(label: string, basisIndices: readonly number[]) {
+  return `${label}${basisIndices.map((basisIndex) => (
+    `-\\operatorname{proj}_{w_{${basisIndex + 1}}}(${label})`
+  )).join('')}`;
+}
+
+function numericGramSchmidtProofLines(
+  labels: readonly string[],
+  result: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>,
+) {
+  return result.steps.flatMap((step): string[] => {
+    if (step.discarded || step.basisIndex === undefined) return [];
+    const basisIndex = step.basisIndex;
+    const basis = result.orthogonalBasis[basisIndex];
+    const stepLatex = basisIndex === 0 && step.inputIndex === 0
+      ? `w_{1}=${vectorToLatex(basis)}`
+      : `w_{${basisIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], step.projectionBasisIndices)}=${vectorToLatex(basis)}`;
+    return [
+      stepLatex,
+      ...Array.from({ length: basisIndex }, (_, previous) => (
+        `w_{${previous + 1}}\\cdot w_{${basisIndex + 1}}=${scalarToLatex(dotVectors(result.orthogonalBasis[previous], basis))}`
+      )),
+    ];
+  });
+}
+
+function exactGramSchmidtProofLines(
+  labels: readonly string[],
+  result: ExactGramSchmidtResult,
+) {
+  return result.steps.flatMap((step): string[] => {
+    if (step.discarded || step.basisIndex === undefined) return [];
+    const basisIndex = step.basisIndex;
+    const basis = result.orthogonalBasis[basisIndex];
+    const stepLatex = basisIndex === 0 && step.inputIndex === 0
+      ? `w_{1}=${exactVectorToColumnLatex(basis)}`
+      : `w_{${basisIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], step.projections.map((projection) => projection.basisIndex))}=${exactVectorToColumnLatex(basis)}`;
+    return [
+      stepLatex,
+      ...Array.from({ length: basisIndex }, (_, previous) => (
+        `w_{${previous + 1}}\\cdot w_{${basisIndex + 1}}=${exactScalarToLatex(exactDotVectors(result.orthogonalBasis[previous], basis))}`
+      )),
+    ];
+  });
+}
+
+function dependencyResidualLines(
+  labels: readonly string[],
+  steps: readonly (NumericOrthogonalizationStep | ExactGramSchmidtResult['steps'][number])[],
+) {
+  return steps.flatMap((step) => step.discarded
+    ? [`r_{${step.inputIndex + 1}}=${projectedResidualLatex(
+        labels[step.inputIndex],
+        'projections' in step
+          ? step.projections.map((projection) => projection.basisIndex)
+          : step.projectionBasisIndices,
+      )}=0`]
+    : []);
+}
+
 function gramSchmidtDetailSections(
   req: VectorRequest,
   result: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>,
 ): DisplayDetailSection[] {
   const sections: DisplayDetailSection[] = [];
-  const secondInputLatex = req.vectorOperandLatexB ?? 'v';
+  const labels = gramSchmidtLabels(req, result.steps.length);
 
   if (result.orthonormalBasis.length === result.orthogonalBasis.length) {
     sections.push({
       title: 'Orthonormal Basis',
       lineKind: 'math',
-      lines: [
-        vectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis),
-      ],
+      lines: [vectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis)],
     });
   }
-
-  const proofLines = [
-    `w_{1}=${vectorToLatex(result.orthogonalBasis[0])}`,
-    ...(result.orthogonalBasis[1]
-      ? [
-          `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${vectorToLatex(result.orthogonalBasis[1])}`,
-          `w_{1}\\cdot w_{2}=${scalarToLatex(dotVectors(result.orthogonalBasis[0], result.orthogonalBasis[1]))}`,
-        ]
-      : []),
-  ];
-
   sections.push({
     title: 'Gram-Schmidt Proof',
     lineKind: 'math',
-    lines: proofLines,
+    lines: numericGramSchmidtProofLines(labels, result),
   });
-
   if (result.notes.length > 0) {
+    const residualLines = dependencyResidualLines(labels, result.steps);
     sections.push({
       title: 'Dependency Note',
-      lineKind: 'text',
-      lines: result.notes,
+      lines: [...residualLines, ...result.notes],
+      lineKinds: [...residualLines.map(() => 'math' as const), ...result.notes.map(() => 'text' as const)],
     });
   }
-
   return sections;
 }
 
 function exactGramSchmidtDetailSections(
   req: VectorRequest,
-  result: NonNullable<ReturnType<typeof exactGramSchmidtTwoVectors>>,
+  result: ExactGramSchmidtResult,
   numericResult: Extract<VectorCoreResult, { kind: 'gramSchmidt' }>,
 ): DisplayDetailSection[] {
   const sections: DisplayDetailSection[] = [];
-  const secondInputLatex = req.vectorOperandLatexB ?? 'v';
+  const labels = gramSchmidtLabels(req, result.steps.length);
 
   if (result.orthonormalBasis?.length === result.orthogonalBasis.length) {
     sections.push({
       title: 'Orthonormal Basis',
       lineKind: 'math',
-      lines: [
-        exactVectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis),
-      ],
+      lines: [exactVectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis)],
     });
   } else if (numericResult.orthonormalBasis.length === numericResult.orthogonalBasis.length) {
     sections.push({
       title: 'Orthonormal Basis',
       lineKind: 'math',
-      lines: [
-        vectorSetLatex('\\operatorname{orthonormal\\ basis}', numericResult.orthonormalBasis),
-      ],
+      lines: [vectorSetLatex('\\operatorname{orthonormal\\ basis}', numericResult.orthonormalBasis)],
     });
   }
-
-  const proofLines = [
-    `w_{1}=${exactVectorToColumnLatex(result.orthogonalBasis[0])}`,
-    ...(result.orthogonalBasis[1]
-      ? [
-          `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${exactVectorToColumnLatex(result.orthogonalBasis[1])}`,
-          `w_{1}\\cdot w_{2}=${exactScalarToLatex(exactDotVectors(result.orthogonalBasis[0], result.orthogonalBasis[1]))}`,
-        ]
-      : []),
-  ];
-
   sections.push({
     title: 'Gram-Schmidt Proof',
     lineKind: 'math',
-    lines: proofLines,
+    lines: exactGramSchmidtProofLines(labels, result),
   });
-
   if (result.notes.length > 0) {
+    const residualLines = dependencyResidualLines(labels, result.steps);
     sections.push({
       title: 'Dependency Note',
-      lineKind: 'text',
-      lines: result.notes,
+      lines: [...residualLines, ...result.notes],
+      lineKinds: [...residualLines.map(() => 'math' as const), ...result.notes.map(() => 'text' as const)],
     });
   }
-
   return sections;
 }
 
@@ -227,6 +273,35 @@ function exactVectorInputs(req: VectorRequest) {
     vectorA: exactRequestVector(req.vectorA, req.exactVectorA),
     vectorB: exactRequestVector(req.vectorB, req.exactVectorB),
   };
+}
+
+function gramSchmidtNumericOperands(req: VectorRequest) {
+  return req.vectorOperands?.length
+    ? req.vectorOperands
+    : [req.vectorA, ...(req.vectorB ? [req.vectorB] : [])];
+}
+
+function gramSchmidtExactOperands(req: VectorRequest): ExactVector[] | null {
+  const operands = gramSchmidtNumericOperands(req);
+  const exactOperands = operands.map((operand, index) => exactRequestVector(
+    operand,
+    req.exactVectorOperands?.[index]
+      ?? (index === 0 ? req.exactVectorA : index === 1 ? req.exactVectorB : undefined),
+  ));
+  return exactOperands.every((operand): operand is ExactVector => operand !== null)
+    ? exactOperands
+    : null;
+}
+
+function residualExpressionMathJson(
+  label: string,
+  inputNode: unknown,
+  basisIndices: readonly number[],
+) {
+  const operand = labelMathJson(label, inputNode);
+  return basisIndices.reduce<unknown>((expression, basisIndex) => (
+    ['Subtract', expression, operatorMathJson(`proj_w_${basisIndex + 1}`, operand)]
+  ), operand);
 }
 
 function mathDetail(
@@ -375,13 +450,16 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
       });
     }
     case 'gramSchmidtUV': {
-      if (!vectorA || !vectorB || result.kind !== 'gramSchmidt') {
+      if (result.kind !== 'gramSchmidt') {
         return null;
       }
-      const exactResult = exactGramSchmidtTwoVectors(vectorA, vectorB);
+      const exactOperands = gramSchmidtExactOperands(req);
+      if (!exactOperands) return null;
+      const exactResult = exactGramSchmidtVectors(exactOperands);
       if (!exactResult) return null;
       const resultLatex = exactVectorSetLatex('\\operatorname{orthogonal\\ basis}', exactResult.orthogonalBasis);
       const answerRows = exactVectorBasisAnswerRows(exactResult.orthogonalBasis);
+      const labels = gramSchmidtLabels(req, exactOperands.length);
       const detailEvidence: LinearAlgebraCanonicalDetailEvidence[] = [];
       if (exactResult.orthonormalBasis?.length === exactResult.orthogonalBasis.length) {
         const latex = exactVectorSetLatex('\\operatorname{orthonormal\\ basis}', exactResult.orthonormalBasis);
@@ -398,36 +476,59 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
           'vector.gram-schmidt.native-numeric-orthonormal-basis',
         ));
       }
-      exactResult.orthogonalBasis.forEach((vector, index) => {
-        if (index > 0) return;
-        const latex = `w_{${index + 1}}=${exactVectorToColumnLatex(vector)}`;
+
+      exactResult.steps.forEach((step) => {
+        if (step.discarded || step.basisIndex === undefined) return;
+        const vector = exactResult.orthogonalBasis[step.basisIndex];
+        const basisIndices = step.projections.map((projection) => projection.basisIndex);
+        const expressionNode = residualExpressionMathJson(
+          labels[step.inputIndex],
+          exactVectorMathJson(exactOperands[step.inputIndex]),
+          basisIndices,
+        );
+        const latex = step.basisIndex === 0 && step.inputIndex === 0
+          ? `w_{1}=${exactVectorToColumnLatex(vector)}`
+          : `w_{${step.basisIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], basisIndices)}=${exactVectorToColumnLatex(vector)}`;
         detailEvidence.push(mathDetail(
           latex,
-          equationMathJson(`w_${index + 1}`, exactVectorMathJson(vector)),
-          'vector.gram-schmidt.native-exact-orthogonal-vector',
+          equationMathJson(
+            `w_${step.basisIndex + 1}`,
+            step.basisIndex === 0 && step.inputIndex === 0
+              ? exactVectorMathJson(vector)
+              : equationMathJson(expressionNode, exactVectorMathJson(vector)),
+          ),
+          'vector.gram-schmidt.native-exact-residual-step',
+        ));
+        for (let previous = 0; previous < step.basisIndex; previous += 1) {
+          const dot = exactDotVectors(exactResult.orthogonalBasis[previous], vector);
+          const dotLatex = `w_{${previous + 1}}\\cdot w_{${step.basisIndex + 1}}=${exactScalarToLatex(dot)}`;
+          detailEvidence.push(mathDetail(
+            dotLatex,
+            equationMathJson(
+              ['Multiply', `w_${previous + 1}`, `w_${step.basisIndex + 1}`],
+              exactScalarMathJson(dot),
+            ),
+            'vector.gram-schmidt.native-exact-orthogonality-check',
+          ));
+        }
+      });
+      exactResult.steps.filter((step) => step.discarded).forEach((step) => {
+        const basisIndices = step.projections.map((projection) => projection.basisIndex);
+        const expressionNode = residualExpressionMathJson(
+          labels[step.inputIndex],
+          exactVectorMathJson(exactOperands[step.inputIndex]),
+          basisIndices,
+        );
+        const latex = `r_{${step.inputIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], basisIndices)}=0`;
+        detailEvidence.push(mathDetail(
+          latex,
+          equationMathJson(
+            `r_${step.inputIndex + 1}`,
+            equationMathJson(expressionNode, exactVectorMathJson(step.residual)),
+          ),
+          'vector.gram-schmidt.native-exact-zero-residual',
         ));
       });
-      if (exactResult.orthogonalBasis[1]) {
-        const secondInputLatex = req.vectorOperandLatexB ?? 'v';
-        const secondOperand = labelMathJson(secondInputLatex, exactVectorMathJson(vectorB));
-        const vector = exactResult.orthogonalBasis[1];
-        const latex = `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${exactVectorToColumnLatex(vector)}`;
-        detailEvidence.push(mathDetail(
-          latex,
-          equationMathJson('w_2', equationMathJson(
-            ['Subtract', secondOperand, operatorMathJson('proj_w_1', secondOperand)],
-            exactVectorMathJson(vector),
-          )),
-          'vector.gram-schmidt.native-exact-projection-step',
-        ));
-        const dot = exactDotVectors(exactResult.orthogonalBasis[0], vector);
-        const dotLatex = `w_{1}\\cdot w_{2}=${exactScalarToLatex(dot)}`;
-        detailEvidence.push(mathDetail(
-          dotLatex,
-          equationMathJson(['Multiply', 'w_1', 'w_2'], exactScalarMathJson(dot)),
-          'vector.gram-schmidt.native-exact-orthogonality-check',
-        ));
-      }
       const response = profileLinearAlgebraResult({
         resultLatex,
         answerRows,
@@ -509,6 +610,8 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
   if (result.kind === 'gramSchmidt') {
     const resultLatex = vectorSetLatex('\\operatorname{orthogonal\\ basis}', result.orthogonalBasis);
     const answerRows = vectorBasisAnswerRows(result.orthogonalBasis);
+    const numericOperands = gramSchmidtNumericOperands(req);
+    const labels = gramSchmidtLabels(req, numericOperands.length);
     const detailEvidence: LinearAlgebraCanonicalDetailEvidence[] = [];
     if (result.orthonormalBasis.length === result.orthogonalBasis.length) {
       const latex = vectorSetLatex('\\operatorname{orthonormal\\ basis}', result.orthonormalBasis);
@@ -518,36 +621,56 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
         'vector.gram-schmidt.native-numeric-orthonormal-basis',
       ));
     }
-    result.orthogonalBasis.forEach((vector, index) => {
-      if (index > 0) return;
-      const latex = `w_{${index + 1}}=${vectorToLatex(vector)}`;
+    result.steps.forEach((step) => {
+      if (step.discarded || step.basisIndex === undefined) return;
+      const vector = result.orthogonalBasis[step.basisIndex];
+      const expressionNode = residualExpressionMathJson(
+        labels[step.inputIndex],
+        numericVectorMathJson(numericOperands[step.inputIndex]),
+        step.projectionBasisIndices,
+      );
+      const latex = step.basisIndex === 0 && step.inputIndex === 0
+        ? `w_{1}=${vectorToLatex(vector)}`
+        : `w_{${step.basisIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], step.projectionBasisIndices)}=${vectorToLatex(vector)}`;
       detailEvidence.push(mathDetail(
         latex,
-        equationMathJson(`w_${index + 1}`, numericVectorMathJson(vector)),
-        'vector.gram-schmidt.native-numeric-orthogonal-vector',
+        equationMathJson(
+          `w_${step.basisIndex + 1}`,
+          step.basisIndex === 0 && step.inputIndex === 0
+            ? numericVectorMathJson(vector)
+            : equationMathJson(expressionNode, numericVectorMathJson(vector)),
+        ),
+        'vector.gram-schmidt.native-numeric-residual-step',
+      ));
+      for (let previous = 0; previous < step.basisIndex; previous += 1) {
+        const dot = dotVectors(result.orthogonalBasis[previous], vector);
+        const dotLatex = `w_{${previous + 1}}\\cdot w_{${step.basisIndex + 1}}=${scalarToLatex(dot)}`;
+        detailEvidence.push(mathDetail(
+          dotLatex,
+          equationMathJson(
+            ['Multiply', `w_${previous + 1}`, `w_${step.basisIndex + 1}`],
+            Number(scalarToLatex(dot)),
+          ),
+          'vector.gram-schmidt.native-numeric-orthogonality-check',
+        ));
+      }
+    });
+    result.steps.filter((step) => step.discarded).forEach((step) => {
+      const expressionNode = residualExpressionMathJson(
+        labels[step.inputIndex],
+        numericVectorMathJson(numericOperands[step.inputIndex]),
+        step.projectionBasisIndices,
+      );
+      const latex = `r_{${step.inputIndex + 1}}=${projectedResidualLatex(labels[step.inputIndex], step.projectionBasisIndices)}=0`;
+      detailEvidence.push(mathDetail(
+        latex,
+        equationMathJson(
+          `r_${step.inputIndex + 1}`,
+          equationMathJson(expressionNode, numericVectorMathJson(step.residual)),
+        ),
+        'vector.gram-schmidt.native-numeric-zero-residual',
       ));
     });
-    if (result.orthogonalBasis[1]) {
-      const secondInputLatex = req.vectorOperandLatexB ?? 'v';
-      const secondOperand = labelMathJson(secondInputLatex, numericVectorMathJson(req.vectorB ?? []));
-      const vector = result.orthogonalBasis[1];
-      const latex = `w_{2}=${secondInputLatex}-\\operatorname{proj}_{w_{1}}(${secondInputLatex})=${vectorToLatex(vector)}`;
-      detailEvidence.push(mathDetail(
-        latex,
-        equationMathJson('w_2', equationMathJson(
-          ['Subtract', secondOperand, operatorMathJson('proj_w_1', secondOperand)],
-          numericVectorMathJson(vector),
-        )),
-        'vector.gram-schmidt.native-numeric-projection-step',
-      ));
-      const dot = dotVectors(result.orthogonalBasis[0], vector);
-      const dotLatex = `w_{1}\\cdot w_{2}=${scalarToLatex(dot)}`;
-      detailEvidence.push(mathDetail(
-        dotLatex,
-        equationMathJson(['Multiply', 'w_1', 'w_2'], Number(scalarToLatex(dot))),
-        'vector.gram-schmidt.native-numeric-orthogonality-check',
-      ));
-    }
     return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
       resultLatex,
       answerRows,
@@ -585,8 +708,11 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
 }
 
 function runVectorOperationInternal(req: VectorRequest): VectorResponse {
-  const dimensionError = vectorEditingDimensionError(req.vectorA)
-    ?? (req.vectorB ? vectorEditingDimensionError(req.vectorB) : null);
+  const dimensionError = (req.operation === 'gramSchmidtUV'
+    ? gramSchmidtNumericOperands(req)
+    : [req.vectorA, ...(req.vectorB ? [req.vectorB] : [])])
+    .map(vectorEditingDimensionError)
+    .find((error): error is string => error !== null) ?? null;
   if (dimensionError) {
     return { warnings: [], error: dimensionError };
   }

@@ -120,8 +120,57 @@ describe('runVectorOperation', () => {
     });
     expect(dependent.approxText).toBe('1 basis direction; dependent input skipped');
     expect(dependent.detailSections?.find((section) => section.title === 'Dependency Note')?.lines).toEqual([
+      'r_{2}=v-\\operatorname{proj}_{w_{1}}(v)=0',
       'The second vector has zero residual after projection, so it is dependent on the earlier basis vectors.',
     ]);
+  });
+
+  it('runs variadic Gram-Schmidt through length eight and exposes every residual proof', () => {
+    const response = runVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 0, 0],
+      vectorB: [1, 1, 0],
+      vectorOperands: [
+        [1, 0, 0],
+        [1, 1, 0],
+        [1, 1, 1],
+      ],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      angleUnit: 'deg',
+    });
+
+    expect(response.resultLatex).toBe(
+      '\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}\\right\\}',
+    );
+    expect(response.answerRows?.rows).toHaveLength(3);
+    expect(response.detailSections?.find((section) => section.title === 'Gram-Schmidt Proof')?.lines).toContain(
+      'w_{3}=r-\\operatorname{proj}_{w_{1}}(r)-\\operatorname{proj}_{w_{2}}(r)=\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}',
+    );
+
+    const maximumFamily = Array.from({ length: 6 }, (_, column) => (
+      Array.from({ length: 8 }, (_entry, row) => (row === column ? 1 : 0))
+    ));
+    const lengthEight = runVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: maximumFamily[0],
+      vectorB: maximumFamily[1],
+      vectorOperands: maximumFamily,
+      angleUnit: 'deg',
+    });
+    expect(lengthEight.error).toBeUndefined();
+    expect(lengthEight.answerRows?.rows).toHaveLength(6);
+
+    const dependent = runVectorOperation({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      angleUnit: 'deg',
+    });
+    expect(dependent.answerRows?.rows).toHaveLength(2);
+    expect(dependent.detailSections?.find((section) => section.title === 'Dependency Note')?.lines)
+      .toContain('r_{3}=r-\\operatorname{proj}_{w_{1}}(r)-\\operatorname{proj}_{w_{2}}(r)=0');
   });
 
   it('uses exact vector sidecars for finite-decimal projection and orthogonality readback', () => {

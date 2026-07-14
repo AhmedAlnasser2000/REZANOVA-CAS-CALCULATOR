@@ -163,6 +163,30 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
     expect(outcome.kind === 'success' ? outcome.canonicalResult?.version : undefined).toBe(2);
   });
 
+  it('keeps variadic Gram-Schmidt residuals producer-proven in canonical V2', () => {
+    const document = vectorDocument({
+      operation: 'gramSchmidtUV',
+      vectorA: [1, 0, 0],
+      vectorB: [1, 1, 0],
+      vectorOperands: [[1, 0, 0], [1, 1, 0], [1, 1, 1]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      editorExpressionLatex: '\\operatorname{gram}\\left(p,q,r\\right)',
+      angleUnit: 'rad',
+    });
+
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: {
+        canonicalLatex: expect.stringContaining('\\operatorname{orthogonal\\ basis}'),
+        mathJson: ['Equal', 'orthogonalbasis', ['Set', expect.anything(), expect.anything(), expect.anything()]],
+      },
+    });
+    const proof = document.details?.find((section) => section.title === 'Gram-Schmidt Proof');
+    expect(proof?.lines).toHaveLength(6);
+    expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined))
+      .toBe(true);
+  });
+
   it('keeps an exact projection primary while adding a precision-aware decimal readback', () => {
     const document = vectorDocument({
       operation: 'projectionUofV',

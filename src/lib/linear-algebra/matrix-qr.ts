@@ -18,7 +18,8 @@ import {
   exactVectorFromWire,
   exactVectorToColumnLatex,
 } from './exact-matrix-format';
-import { exactDotVectors, exactScalarSquareRoot, exactScaleVector, exactSubtractVectors } from './exact-vector-core';
+import { exactDotVectors, exactScalarSquareRoot, exactSubtractVectors } from './exact-vector-core';
+import { orthogonalizeExactVectors } from './exact-orthogonalization';
 import { exactMatrixDimensionLimitMessage } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
 import { mathPart, mixedDetailSection, textPart } from '../display/result-detail-lines';
@@ -121,10 +122,13 @@ function exactQr(matrix: ExactMatrix): QrResult {
   const r = zeroMatrix(columns, columns);
   const steps: string[] = [];
   const stepEvidence: LinearAlgebraCanonicalLeafEvidence[] = [];
+  const originals = Array.from({ length: columns }, (_, column) => matrixColumn(validation.matrix, column));
+  const orthogonalization = orthogonalizeExactVectors(originals);
 
   for (let column = 0; column < columns; column += 1) {
-    const original = matrixColumn(validation.matrix, column);
-    let residual = [...original];
+    const original = originals[column];
+    const orthogonalizationStep = orthogonalization.steps[column];
+    const residual = orthogonalizationStep.residual;
     const originalLatex = `a_{${column + 1}}=${exactVectorToColumnLatex(original)}`;
     steps.push(originalLatex);
     stepEvidence.push(canonicalLeafEvidence(originalLatex, equationMathJson(['Subscript', 'a', column + 1], exactVectorMathJson(original)), `matrix.qr.native-column-${column + 1}`));
@@ -132,7 +136,6 @@ function exactQr(matrix: ExactMatrix): QrResult {
     for (let previous = 0; previous < qColumns.length; previous += 1) {
       const coefficient = exactDotVectors(qColumns[previous], original);
       r[previous][column] = coefficient;
-      residual = exactSubtractVectors(residual, exactScaleVector(qColumns[previous], coefficient));
       const coefficientLatex = `r_{${previous + 1}${column + 1}}=q_{${previous + 1}}^{T}a_{${column + 1}}=${exactScalarToLatex(coefficient)}`;
       steps.push(coefficientLatex);
       stepEvidence.push(canonicalLeafEvidence(
@@ -143,7 +146,7 @@ function exactQr(matrix: ExactMatrix): QrResult {
     }
 
     const normSquared = exactDotVectors(residual, residual);
-    if (exactScalarIsZero(normSquared)) {
+    if (orthogonalizationStep.discarded || exactScalarIsZero(normSquared)) {
       return { kind: 'stop', reason: 'dependent-columns', column };
     }
 
