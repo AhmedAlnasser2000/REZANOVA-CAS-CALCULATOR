@@ -13,6 +13,12 @@ import { solveImplicitDerivativePlaceholder } from '../../equation/implicit-deri
 import { normalizeAst } from '../../symbolic-engine/normalize';
 import { simplifyNode } from '../../symbolic-engine/differentiation';
 import type { CalculusWorkspaceEvaluation } from './integrals';
+import {
+  calculusDetailSection,
+  calculusMathPart,
+  calculusTextPart,
+} from '../detail-readback';
+import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 
 type ImplicitDifferentiationContext = {
   independentVariable: DerivativeVariable;
@@ -409,21 +415,65 @@ function displayDerivativeLatex(
 function implicitDifferentiationDetail({
   relationLatex,
   differentiatedRelationLatex,
-  displayDerivative,
+  independentVariable,
+  dependentVariable,
 }: {
   relationLatex: string;
   differentiatedRelationLatex: string;
-  displayDerivative: string;
+  independentVariable: DerivativeVariable;
+  dependentVariable: DerivativeVariable;
 }): DisplayDetailSection {
-  return {
-    title: 'Implicit Differentiation',
-    lines: [
-      `\\operatorname{relation}\\quad ${relationLatex}`,
-      `\\operatorname{differentiate}\\quad ${displayDerivative}`,
-      `\\operatorname{differentiated}\\quad ${differentiatedRelationLatex}`,
+  return calculusDetailSection('Implicit Differentiation', [
+    [
+      calculusTextPart('Relation: '),
+      calculusMathPart(relationLatex),
+      calculusTextPart('.'),
     ],
-    lineKind: 'math',
-  };
+    [
+      calculusTextPart('Differentiate '),
+      calculusMathPart(derivativeVariableLatex(dependentVariable)),
+      calculusTextPart(' with respect to '),
+      calculusMathPart(derivativeVariableLatex(independentVariable)),
+      calculusTextPart('.'),
+    ],
+    [
+      calculusTextPart('Differentiated relation: '),
+      calculusMathPart(differentiatedRelationLatex),
+      calculusTextPart('.'),
+    ],
+  ]);
+}
+
+function implicitDetailMathJsonLeaves(input: {
+  relationLatex: string;
+  relationMathJson: unknown;
+  differentiatedRelationLatex: string;
+  differentiatedRelationMathJson: unknown;
+  independentVariable: DerivativeVariable;
+  dependentVariable: DerivativeVariable;
+}): CalculusOwnedMathJsonLeaf[] {
+  return [
+    {
+      canonicalLatex: input.relationLatex,
+      mathJson: input.relationMathJson,
+      source: 'calculus.implicit-derivative:input-relation',
+    },
+    {
+      canonicalLatex: derivativeVariableLatex(input.dependentVariable),
+      mathJson: input.dependentVariable,
+      source: 'calculus.implicit-derivative:dependent-variable',
+    },
+    {
+      canonicalLatex: derivativeVariableLatex(input.independentVariable),
+      mathJson: input.independentVariable,
+      source: 'calculus.implicit-derivative:independent-variable',
+    },
+    {
+      canonicalLatex: input.differentiatedRelationLatex,
+      mathJson: input.differentiatedRelationMathJson,
+      source: 'calculus.implicit-derivative:differentiated-relation',
+    },
+  ];
 }
 
 export function evaluateCalculusImplicitDerivative(
@@ -488,7 +538,10 @@ export function evaluateCalculusImplicitDerivative(
     return { warnings: [], error: rightDerivative.error };
   }
 
-  const differentiatedRelationLatex = `${renderNodeLatex(leftDerivative.ast)}=${renderNodeLatex(rightDerivative.ast)}`;
+  const differentiatedLeft = normalizeAst(simplifyNode(leftDerivative.ast));
+  const differentiatedRight = normalizeAst(simplifyNode(rightDerivative.ast));
+  const differentiatedRelationLatex = `${renderNodeLatex(differentiatedLeft)}=${renderNodeLatex(differentiatedRight)}`;
+  const differentiatedRelationMathJson = ['Equal', differentiatedLeft, differentiatedRight];
   const displayDerivative = displayDerivativeLatex(dependent.variable, independent.variable);
   const solveResult = solveImplicitDerivativePlaceholder({
     differentiatedRelationLatex,
@@ -498,7 +551,16 @@ export function evaluateCalculusImplicitDerivative(
   const baseDetail = implicitDifferentiationDetail({
     relationLatex,
     differentiatedRelationLatex,
-    displayDerivative,
+    independentVariable: independent.variable,
+    dependentVariable: dependent.variable,
+  });
+  const detailMathJsonLeaves = implicitDetailMathJsonLeaves({
+    relationLatex,
+    relationMathJson: relation.ast,
+    differentiatedRelationLatex,
+    differentiatedRelationMathJson,
+    independentVariable: independent.variable,
+    dependentVariable: dependent.variable,
   });
 
   if (solveResult.kind === 'unsupported') {
@@ -509,6 +571,7 @@ export function evaluateCalculusImplicitDerivative(
         baseDetail,
         ...(solveResult.detailSections ?? []),
       ],
+      mathJsonLeaves: detailMathJsonLeaves,
     };
   }
 
@@ -525,9 +588,12 @@ export function evaluateCalculusImplicitDerivative(
       baseDetail,
       ...solveResult.detailSections,
     ],
-    mathJsonLeaves: solveResult.mathJsonLeaves?.map((leaf) => ({
-      ...leaf,
-      source: `calculus.implicit-derivative:${leaf.source}`,
-    })),
+    mathJsonLeaves: [
+      ...detailMathJsonLeaves,
+      ...(solveResult.mathJsonLeaves?.map((leaf) => ({
+        ...leaf,
+        source: `calculus.implicit-derivative:${leaf.source}`,
+      })) ?? []),
+    ],
   };
 }

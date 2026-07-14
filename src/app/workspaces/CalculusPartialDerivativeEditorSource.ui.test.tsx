@@ -96,9 +96,11 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('x');
 
     const stepsCard = await openDerivativeStepsCard();
+    expect(stepsCard).toHaveTextContent('Take partial derivatives with respect to y.');
+    expect(stepsCard).toHaveTextContent('Applied in order: y.');
     const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
       .map((node) => node.getAttribute('data-raw-latex') ?? '');
-    expect(rawLatex).toContain('\\operatorname{operator}\\quad \\frac{\\partial}{\\partial y}');
+    expect(rawLatex).toContain('y');
     expect(rawLatex).toContain('D_{1}=x^2+3y^2');
   });
 
@@ -162,9 +164,13 @@ describe('Calculus partial derivative editor source', () => {
     expect(screen.getByTestId('display-outcome-answer-block')).toHaveTextContent('x');
 
     const stepsCard = await openDerivativeStepsCard();
+    expect(stepsCard).toHaveTextContent(
+      'Take partial derivatives with respect to x, then y, then y.',
+    );
+    expect(stepsCard).toHaveTextContent('Applied in order: y, then y, then x.');
     const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
       .map((node) => node.getAttribute('data-raw-latex') ?? '');
-    expect(rawLatex).toContain('\\operatorname{applied}\\quad y\\to y\\to x');
+    expect(rawLatex).toEqual(expect.arrayContaining(['x', 'y']));
     expect(rawLatex).toContain('D_{3}=6x^2');
   });
 });

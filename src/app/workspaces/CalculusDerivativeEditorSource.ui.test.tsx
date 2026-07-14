@@ -119,9 +119,11 @@ describe('Calculus derivative editor source', () => {
     expect(screen.getAllByTestId('display-outcome-answer-block')).toHaveLength(1);
 
     const stepsCard = await openDerivativeStepsCard();
+    expect(stepsCard).toHaveTextContent('Differentiate with respect to t.');
+    expect(stepsCard).toHaveTextContent('Applied in order: t.');
     const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
       .map((node) => node.getAttribute('data-raw-latex') ?? '');
-    expect(rawLatex).toContain('\\operatorname{operator}\\quad \\frac{d}{dt}');
+    expect(rawLatex).toContain('t');
     expect(rawLatex).toContain('D_{1}=3t^2+2');
   });
 
@@ -246,8 +248,10 @@ describe('Calculus derivative editor source', () => {
     const stepsCard = await openDerivativeStepsCard();
     const rawLatex = [...stepsCard.querySelectorAll('[data-raw-latex]')]
       .map((node) => node.getAttribute('data-raw-latex') ?? '');
+    expect(stepsCard).toHaveTextContent(/At t=3, D1.*=6\./);
     expect(rawLatex).toContain('D_{1}=2t');
-    expect(rawLatex).toContain('D_{1}\\big|_{t=3}=6');
+    expect(rawLatex).toContain('t=3');
+    expect(rawLatex).toContain('D_{1}=6');
   });
 
   it('previews and evaluates higher-order natural derivative requests', async () => {

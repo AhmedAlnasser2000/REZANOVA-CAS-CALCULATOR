@@ -14,8 +14,13 @@ describe('evaluateCalculusImplicitDerivative', () => {
     expect(result.exactSupplementLatex).toContain('2y\\ne0');
     expect(result.detailSections?.[0]?.title).toBe('Implicit Differentiation');
     expect(result.detailSections?.[0]?.lines).toContain(
-      '\\operatorname{differentiated}\\quad 2uy+2x=0',
+      'Differentiated relation: 2uy+2x=0.',
     );
+    expect(result.detailSections?.[0]?.lineParts?.[0]).toEqual([
+      { kind: 'text', text: 'Relation: ' },
+      { kind: 'math', latex: 'x^2+y^2=25' },
+      { kind: 'text', text: '.' },
+    ]);
   });
 
   it('handles product and chain rule terms before Equation isolation', () => {

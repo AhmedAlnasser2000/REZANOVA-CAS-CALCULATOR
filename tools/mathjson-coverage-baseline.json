@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "MATHJSON-COVERAGE-CLOSEOUT1 adds exact 43-golden plus 100-replay evidence parity, six golden-only route families, producer-proven native trees, and fixture-scoped non-growing compatibility exemptions.",
+  "reason": "V1-TYPED-DETAIL-CALCULUS1 replaces Calculus pseudo-label math strings with typed prose and producer-proven derivative, relation, variable, and substitution values.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -96,11 +96,11 @@
     "evidence": 143,
     "replayFixtures": 100,
     "goldenCases": 43,
-    "bytes": 107318,
+    "bytes": 108389,
     "maxBytes": 2753,
-    "leaves": 458,
-    "proven": 394,
-    "exempt": 64,
+    "leaves": 460,
+    "proven": 410,
+    "exempt": 50,
     "missing": 0
   },
   "routes": {
@@ -218,11 +218,11 @@
       "evidence": 5,
       "replayFixtures": 5,
       "goldenCases": 0,
-      "bytes": 4605,
-      "maxBytes": 1815,
-      "leaves": 27,
-      "proven": 13,
-      "exempt": 14,
+      "bytes": 5571,
+      "maxBytes": 2161,
+      "leaves": 29,
+      "proven": 27,
+      "exempt": 2,
       "missing": 0
     },
     "calculus.integrals": {
@@ -262,11 +262,11 @@
       "evidence": 1,
       "replayFixtures": 1,
       "goldenCases": 0,
-      "bytes": 535,
-      "maxBytes": 535,
+      "bytes": 640,
+      "maxBytes": 640,
       "leaves": 4,
-      "proven": 2,
-      "exempt": 2,
+      "proven": 4,
+      "exempt": 0,
       "missing": 0
     },
     "calculus.series-transforms": {

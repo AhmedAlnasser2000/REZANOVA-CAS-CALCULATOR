@@ -322,9 +322,9 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(requireCanonicalResultAuthority(result, 'Calculus derivative test').canonicalResult)
       .toBeDefined();
     const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
-    expect(steps?.lineKind).toBe('math');
-    expect(steps?.lines).toContain('\\operatorname{operator}\\quad \\frac{d}{dt}');
-    expect(steps?.lines).toContain('\\operatorname{applied}\\quad t');
+    expect(steps?.lineParts).toBeDefined();
+    expect(steps?.lines).toContain('Differentiate with respect to t.');
+    expect(steps?.lines).toContain('Applied in order: t.');
     expect(steps?.lines).toContain('D_{1}=2t');
   });
 
@@ -432,7 +432,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
     expect(steps?.lines).toContain('D_{1}=3x^2');
     expect(steps?.lines).toContain('D_{2}=6x');
-    expect(steps?.lines).toContain('D_{2}\\big|_{x=2}=12');
+    expect(steps?.lines).toContain('At x=2, D_{2}=12.');
   });
 
   it('evaluates mixed partials from the parsed applied path', async () => {
@@ -449,7 +449,7 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toBe('6x^2');
     const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
-    expect(steps?.lines).toContain('\\operatorname{applied}\\quad y\\to y\\to x');
+    expect(steps?.lines).toContain('Applied in order: y, then y, then x.');
     expect(steps?.lines).toContain('D_{3}=6x^2');
   });
 

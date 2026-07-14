@@ -24,6 +24,12 @@ import type { DerivativeOperatorSpec } from '../derivative-operator';
 import type { CalculusWorkspaceEvaluation } from './integrals';
 import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 import { profileCalculusResult } from '../../display/printer';
+import {
+  calculusDetailSection,
+  calculusMathPart,
+  calculusTextPart,
+  type CalculusDetailRow,
+} from '../detail-readback';
 
 type HigherOrderDerivativeRequest = {
   bodyLatex: string;
@@ -44,6 +50,14 @@ type DerivativeStep = {
   variable: DerivativeVariable;
   latex: string;
   mathJson: unknown;
+};
+
+type DerivativeSubstitutionEvidence = {
+  variable: DerivativeVariable;
+  pointLatex: string;
+  pointMathJson: unknown;
+  resultLatex: string;
+  resultMathJson: unknown;
 };
 
 export type CalculusDerivativeStepsEvidence = {
@@ -113,38 +127,93 @@ function uniqueStrategies(strategies: readonly CalculusDerivativeStrategy[]) {
   return [...new Set(strategies)];
 }
 
-function appliedPathLatex(path: readonly DerivativeVariable[]) {
-  return path
-    .map((variable) => derivativeVariableLatex(variable))
-    .join('\\to ');
+function variableSequenceParts(
+  variables: readonly DerivativeVariable[],
+  separator: string,
+): CalculusDetailRow {
+  return variables.flatMap((variable, index) => [
+    ...(index > 0 ? [calculusTextPart(separator)] : []),
+    calculusMathPart(derivativeVariableLatex(variable)),
+  ]);
+}
+
+function differentiationInstructionParts(operator: DerivativeOperatorSpec): CalculusDetailRow {
+  const factors = operator.writtenFactors.flatMap((factor) => (
+    Array.from({ length: factor.exponent }, () => factor.variable)
+  ));
+  return [
+    calculusTextPart(operator.kind === 'partial'
+      ? 'Take partial derivatives with respect to '
+      : 'Differentiate with respect to '),
+    ...variableSequenceParts(factors, ', then '),
+    calculusTextPart('.'),
+  ];
+}
+
+function appliedPathParts(path: readonly DerivativeVariable[]): CalculusDetailRow {
+  return [
+    calculusTextPart('Applied in order: '),
+    ...variableSequenceParts(path, ', then '),
+    calculusTextPart('.'),
+  ];
 }
 
 function derivativeStepsDetailSection(
   operator: DerivativeOperatorSpec,
   steps: readonly DerivativeStep[],
-  substitution?: {
-    variable: DerivativeVariable;
-    pointLatex: string;
-    resultLatex: string;
-  },
+  substitution?: DerivativeSubstitutionEvidence,
 ): DisplayDetailSection {
-  const lines = [
-    `\\operatorname{operator}\\quad ${operator.canonicalLatex}`,
-    `\\operatorname{applied}\\quad ${appliedPathLatex(operator.appliedPath)}`,
-    ...steps.map((step) => `D_{${step.index}}=${step.latex}`),
+  const rows: CalculusDetailRow[] = [
+    differentiationInstructionParts(operator),
+    appliedPathParts(operator.appliedPath),
+    ...steps.map((step) => [calculusMathPart(`D_{${step.index}}=${step.latex}`)]),
   ];
 
   if (substitution) {
-    lines.push(
-      `D_{${steps.length}}\\big|_{${derivativeVariableLatex(substitution.variable)}=${substitution.pointLatex}}=${substitution.resultLatex}`,
-    );
+    rows.push([
+      calculusTextPart('At '),
+      calculusMathPart(`${derivativeVariableLatex(substitution.variable)}=${substitution.pointLatex}`),
+      calculusTextPart(', '),
+      calculusMathPart(`D_{${steps.length}}=${substitution.resultLatex}`),
+      calculusTextPart('.'),
+    ]);
   }
 
-  return {
-    title: 'Derivative Steps',
-    lines,
-    lineKind: 'math',
-  };
+  return calculusDetailSection('Derivative Steps', rows);
+}
+
+function derivativeVariableMathJsonLeaves(
+  operator: DerivativeOperatorSpec,
+  source: string,
+): CalculusOwnedMathJsonLeaf[] {
+  return [...new Set([
+    ...operator.writtenFactors.map((factor) => factor.variable),
+    ...operator.appliedPath,
+  ])].map((variable) => ({
+    canonicalLatex: derivativeVariableLatex(variable),
+    mathJson: variable,
+    source: `${source}:${variable}`,
+  }));
+}
+
+function derivativeSubstitutionMathJsonLeaves(
+  substitution: DerivativeSubstitutionEvidence | undefined,
+  stepCount: number,
+  source: string,
+): CalculusOwnedMathJsonLeaf[] {
+  if (!substitution) return [];
+  return [
+    {
+      canonicalLatex: `${derivativeVariableLatex(substitution.variable)}=${substitution.pointLatex}`,
+      mathJson: ['Equal', substitution.variable, substitution.pointMathJson],
+      source: `${source}:point`,
+    },
+    {
+      canonicalLatex: `D_{${stepCount}}=${substitution.resultLatex}`,
+      mathJson: ['Equal', `D_${stepCount}`, substitution.resultMathJson],
+      source: `${source}:result`,
+    },
+  ];
 }
 
 function derivativeStepMathJsonLeaves(
@@ -245,16 +314,18 @@ export function buildCalculusDerivativeStepsEvidence({
 
   const point = pointLatex?.trim() ?? '';
   const variable = operator.appliedPath[0] ?? operator.writtenFactors[0]?.variable;
-  let substitution: { variable: DerivativeVariable; pointLatex: string; resultLatex: string } | undefined;
+  let substitution: DerivativeSubstitutionEvidence | undefined;
   if (operator.kind === 'derivative' && point && variable) {
     const pointAst = parseLatexNode(point);
     if (nodeToFiniteNumber(pointAst) !== undefined) {
       const substituted = renderedNode(replaceSymbol(differentiated.ast, variable, pointAst));
-      substitution = profileCalculusResult({
+      substitution = {
         variable,
         pointLatex: point,
+        pointMathJson: pointAst,
         resultLatex: substituted.latex,
-      });
+        resultMathJson: substituted.mathJson,
+      };
     }
   }
 
@@ -262,7 +333,13 @@ export function buildCalculusDerivativeStepsEvidence({
     detailSection: derivativeStepsDetailSection(operator, differentiated.steps, substitution),
     mathJsonLeaves: [
       ...derivativeAnswerMathJsonLeaf(differentiated.steps),
+      ...derivativeVariableMathJsonLeaves(operator, 'calculus.derivative-step:variable'),
       ...derivativeStepMathJsonLeaves(differentiated.steps, 'calculus.derivative-step'),
+      ...derivativeSubstitutionMathJsonLeaves(
+        substitution,
+        differentiated.steps.length,
+        'calculus.derivative-step:substitution',
+      ),
     ],
   };
 }
@@ -317,6 +394,10 @@ export function evaluateCalculusHigherOrderDerivative({
         mathJson: rendered.mathJson,
         source: 'calculus.higher-order-derivative:answer',
       },
+      ...derivativeVariableMathJsonLeaves(
+        operator,
+        'calculus.higher-order-derivative:variable',
+      ),
       ...derivativeStepMathJsonLeaves(differentiated.steps, 'calculus.higher-order-derivative:step'),
     ],
   });
@@ -371,17 +452,21 @@ export function evaluateCalculusHigherOrderDerivativeAtPoint({
   const rendered = renderedNode(substituted);
   const exactLatex = rendered.latex;
 
+  const substitution: DerivativeSubstitutionEvidence = {
+    variable,
+    pointLatex: point,
+    pointMathJson: pointAst,
+    resultLatex: exactLatex,
+    resultMathJson: rendered.mathJson,
+  };
+
   return {
     exactLatex,
     warnings: [],
     resultOrigin: 'symbolic-engine',
     derivativeStrategies: differentiated.strategies,
     detailSections: [
-      derivativeStepsDetailSection(operator, differentiated.steps, profileCalculusResult({
-        variable,
-        pointLatex: point,
-        resultLatex: exactLatex,
-      })),
+      derivativeStepsDetailSection(operator, differentiated.steps, substitution),
     ],
     mathJsonLeaves: [
       {
@@ -389,7 +474,16 @@ export function evaluateCalculusHigherOrderDerivativeAtPoint({
         mathJson: rendered.mathJson,
         source: 'calculus.higher-order-derivative-point:answer',
       },
+      ...derivativeVariableMathJsonLeaves(
+        operator,
+        'calculus.higher-order-derivative-point:variable',
+      ),
       ...derivativeStepMathJsonLeaves(differentiated.steps, 'calculus.higher-order-derivative-point:step'),
+      ...derivativeSubstitutionMathJsonLeaves(
+        substitution,
+        differentiated.steps.length,
+        'calculus.higher-order-derivative-point:substitution',
+      ),
     ],
   };
 }
@@ -436,6 +530,7 @@ export function evaluateCalculusMixedPartialDerivative({
         mathJson: rendered.mathJson,
         source: 'calculus.mixed-partial:answer',
       },
+      ...derivativeVariableMathJsonLeaves(operator, 'calculus.mixed-partial:variable'),
       ...derivativeStepMathJsonLeaves(differentiated.steps, 'calculus.mixed-partial:step'),
     ],
   });
