@@ -507,11 +507,11 @@ describe('display contract inversion ratchet', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
     assert.equal(report.summary.producerCount, 401);
-    assert.equal(report.summary.consumerCount, 57);
+    assert.equal(report.summary.consumerCount, 59);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
     assert.equal(report.summary.producerDraftReadCount, 92);
-    assert.equal(report.summary.nativeDocumentCount, 149);
+    assert.equal(report.summary.nativeDocumentCount, 150);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);

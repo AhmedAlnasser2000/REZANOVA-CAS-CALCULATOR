@@ -24,9 +24,13 @@
   - committed_by_agent: codex
   - committed_by_agent_model: gpt-5.6
   - committed_by_agent_family: sol
+- `CANONICAL-RESULT-V2-CONSUMER-HISTORY1`: `12a91729`
+  - committed_by_agent: codex
+  - committed_by_agent_model: gpt-5.6
+  - committed_by_agent_family: sol
 
 ## Planned
 
-- `CANONICAL-RESULT-V2-CONSUMER-HISTORY1`: verified; standing approval covers commit creation.
-- The five gates after Consumer/History retain standing approval only within the approved roadmap scope.
+- `CANONICAL-RESULT-V2-REQUEST-EVIDENCE1`: verified; standing approval covers commit creation.
+- The four gates after Request Evidence retain standing approval only within the approved roadmap scope.
 - No push is authorized.

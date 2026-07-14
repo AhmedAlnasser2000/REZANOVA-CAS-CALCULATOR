@@ -13,6 +13,7 @@ import type {
   TransformBadge,
 } from './solver-types';
 import type { CanonicalMathValueV1, CanonicalResultDocumentV1 } from './canonical-result-types';
+import type { CanonicalResultDocumentV2 } from './canonical-result-v2-types';
 import type { PromptOutcome } from './canonical-runtime-outcome-types';
 
 export type { CanonicalMathValueV1 } from './canonical-result-types';
@@ -184,3 +185,13 @@ export type ResultProducerDraft =
       sourceMode?: ModeId;
       runtimeAdvisories?: RuntimeAdvisories;
     };
+
+export type ResultProducerDraftV2 =
+  | (Omit<Extract<ResultProducerDraft, { kind: 'success' }>, 'canonicalResult'> & {
+      canonicalResult: CanonicalResultDocumentV2;
+    })
+  | (Omit<Extract<ResultProducerDraft, { kind: 'error' }>, 'canonicalResult'> & {
+      canonicalResult: CanonicalResultDocumentV2;
+    });
+
+export type VersionedResultProducerDraft = ResultProducerDraft | ResultProducerDraftV2;

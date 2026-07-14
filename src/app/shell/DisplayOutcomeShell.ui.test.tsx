@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { canonicalMathValue } from '../../lib/result-contract';
+import { getCalculusRouteMeta } from '../../lib/calculus/workspace/navigation';
 import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
 import { DisplayPanel } from './DisplayPanel';
 import { expectMathStaticLatex } from '../../test/renderAppMain';
@@ -16,6 +17,57 @@ function successOutcome(title: string, exactLatex: string) {
 }
 
 describe('DisplayOutcomeShell result title', () => {
+  it('prefers the canonical Calculus title over the derivative-at-point route label', () => {
+    render(
+      <DisplayPanel
+        activeExpressionLatex={() => 'x^2'}
+        activeResultCopyText={() => '6'}
+        activeResultEditorLatex={() => '6'}
+        calculateLatex=""
+        calculusRouteMeta={getCalculusRouteMeta('derivativePoint')}
+        calculusScreen="derivativePoint"
+        copyText={() => undefined}
+        currentMode="calculus"
+        displayHeaderLabel="Calculus"
+        displayResultBadges={[]}
+        displayOutcome={{
+          kind: 'success',
+          title: 'Derivative',
+          exactLatex: '6',
+          warnings: [],
+          canonicalResult: {
+            version: 2,
+            outcomeKind: 'success',
+            title: 'Derivative',
+            primary: {
+              kind: 'math',
+              value: { canonicalLatex: '6', mathJson: 6 },
+            },
+            request: {
+              kind: 'derivative-at-point',
+              presentationLatex: '\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}',
+              body: { canonicalLatex: 'x^2', mathJson: ['Power', 'x', 2] },
+              appliedVariablePath: [{ canonicalLatex: 'x', mathJson: 'x' }],
+              point: { canonicalLatex: '3', mathJson: 3 },
+            },
+            warnings: [],
+          },
+        }}
+        getPeriodicStopReasonText={(reason: string) => reason}
+        hydrated
+        matrixEditorLatex=""
+        setMatrixEditorLatex={() => undefined}
+        setVectorEditorLatex={() => undefined}
+        settings={{ ...DEFAULT_SETTINGS, outputStyle: 'exact' }}
+        symbolicDisplayPrefs={DEFAULT_SETTINGS}
+        vectorEditorLatex=""
+      />,
+    );
+
+    expect(screen.getByTestId('display-outcome-title')).toHaveTextContent('Derivative');
+    expect(screen.getByTestId('display-outcome-title')).not.toHaveTextContent('at Point');
+  });
+
   it('hides Matrix expression titles when the editor preview already shows the same expression', () => {
     const titleLatex = String.raw`\operatorname{ls}\left(\begin{bmatrix}1&0\\0&1\\0&0\end{bmatrix},\begin{bmatrix}2\\3\\4\end{bmatrix}\right)`;
 

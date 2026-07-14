@@ -11,6 +11,7 @@ import { isCalculusMode } from '../../../lib/calculus/calculus-identity';
 import type { DisplayBlock } from '../../../lib/display/result/display-blocks';
 import { displaySolveSummaryPartsFromOutcome } from '../../../lib/display/result/display-read-model';
 import { solveSummaryDetailLines } from '../../../lib/display/result-detail-lines';
+import { resolveCanonicalResultForConsumer } from '../../../lib/result-contract';
 import { DetailLineContent } from './DetailLineContent';
 import { ResultSummaryBlock, ScheduledOutcomeBlocks } from './DisplayResultBlocks';
 
@@ -81,10 +82,12 @@ export function DisplayOutcomeShell({
   visibleDisplayBlockIds,
 }: DisplayOutcomeShellProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
-  const displayDocument = displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
-    ? displayOutcome.canonicalResult
+  const displayResolution = displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
+    ? resolveCanonicalResultForConsumer(displayOutcome)
     : undefined;
-  const displayMetadata = displayDocument?.metadata;
+  const displayPresentation = displayResolution?.ok ? displayResolution.presentation : undefined;
+  const displayMetadata = displayResolution?.ok ? displayResolution.semantics.metadata : undefined;
+  const resolvedInputLatex = displayPresentation?.requestLatex ?? '';
   const solveSummaryParts = displaySolveSummaryPartsFromOutcome(displayOutcome);
   const canOpenFormulaViewer = typeof onOpenFormulaViewer === 'function';
   const suppressResolvedInputReadback =
@@ -106,16 +109,16 @@ export function DisplayOutcomeShell({
     : currentMode === 'statistics' && statisticsRouteMeta
       ? statisticsRouteMeta.label
     : isCalculusMode(currentMode) && calculusRouteMeta
-      ? calculusRouteMeta.label
+      ? displayPresentation?.title ?? calculusRouteMeta.label
     : currentMode === 'trigonometry' && trigRouteMeta
-      ? displayDocument?.title ?? trigRouteMeta.label
+      ? displayPresentation?.title ?? trigRouteMeta.label
     : currentMode === 'geometry' && geometryRouteMeta
-      ? displayDocument?.title ?? geometryRouteMeta.label
+      ? displayPresentation?.title ?? geometryRouteMeta.label
     : currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta
       ? calculateRouteMeta.label
     : currentMode === 'equation' && equationResultTitle
       ? equationResultTitle
-    : displayDocument?.title ?? displayOutcome?.title ?? 'Result';
+    : displayPresentation?.title ?? displayOutcome?.title ?? 'Result';
   const titleText = typeof resultTitle === 'string' ? resultTitle : String(resultTitle);
   const renderTitleAsMath = shouldRenderTitleAsMath(titleText);
   const activeExpressionLatexText =
@@ -136,8 +139,8 @@ export function DisplayOutcomeShell({
     const sourceContext: FormulaViewerSourceContext = {
       ...(formulaViewerSourceContext ?? {}),
       copyLatex: activeResultCopyText(),
-      resolvedInputLatex: displayMetadata?.resolvedInput?.canonicalLatex ?? '',
-      resultTitle: displayDocument?.title ?? equationResultTitle ?? 'Result',
+      resolvedInputLatex,
+      resultTitle: displayPresentation?.title ?? equationResultTitle ?? 'Result',
       sourceExpressionLatex: activeExpressionLatexText,
     };
     const artifact: FormulaViewerArtifact = buildFormulaViewerArtifact({
@@ -149,11 +152,11 @@ export function DisplayOutcomeShell({
   }, [
     activeExpressionLatexText,
     activeResultCopyText,
-    displayDocument?.title,
-    displayMetadata?.resolvedInput?.canonicalLatex,
+    displayPresentation?.title,
     equationResultTitle,
     formulaViewerSourceContext,
     onOpenFormulaViewer,
+    resolvedInputLatex,
     scheduledDisplayBlocks,
   ]);
 
@@ -298,13 +301,13 @@ export function DisplayOutcomeShell({
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && !suppressResolvedInputReadback
-      && displayMetadata?.resolvedInput?.canonicalLatex
-      && displayMetadata.resolvedInput.canonicalLatex.trim() !== activeExpressionLatexText.trim() ? (
+      && resolvedInputLatex
+      && resolvedInputLatex.trim() !== activeExpressionLatexText.trim() ? (
         <>
           <div className="result-approx">Resolved form</div>
           <MathStatic
             className="preview-math resolved-preview-math"
-            latex={displayMetadata.resolvedInput.canonicalLatex}
+            latex={resolvedInputLatex}
           />
         </>
       ) : null}
@@ -316,18 +319,18 @@ export function DisplayOutcomeShell({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayDocument?.summaries?.transform?.text ? (
+      && displayPresentation?.summaries?.transform?.text ? (
           <div className="result-summary-block">
             <div className="result-summary-label">Transform</div>
             <NotationText
               className="result-approx result-summary-text"
-              text={displayDocument.summaries.transform.text}
+              text={displayPresentation.summaries.transform.text}
             />
-            {displayDocument.summaries.transform.math ? (
+            {displayPresentation.summaries.transform.mathLatex ? (
               <MathStatic
                 className="preview-math result-summary-math"
                 displayPrefs={symbolicDisplayPrefs}
-                latex={displayDocument.summaries.transform.math.canonicalLatex}
+                latex={displayPresentation.summaries.transform.mathLatex}
                 block={false}
               />
             ) : null}

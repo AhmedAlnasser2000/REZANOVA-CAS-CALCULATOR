@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "V1-TYPED-DETAIL-CLOSEOUT0 removes ten obsolete detail-label exemption registrations after the five approved V1 migrations while preserving the 23 observed bounded exemptions and zero missing classifications.",
+  "reason": "CANONICAL-RESULT-V2-REQUEST-EVIDENCE1 removes four reviewed request-evidence exemptions with producer-proven V2 MathJSON.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -61,8 +61,6 @@
     "vector.span-independence"
   ],
   "exemptionIds": [
-    "calculus-derivative-at-point-primary-compatibility",
-    "calculus-derivative-at-point-resolved-input-compatibility",
     "equation-denominator-exclusion-labeled-supplement",
     "equation-even-root-labeled-supplement",
     "equation-rational-hole-labeled-supplement",
@@ -78,19 +76,17 @@
     "golden-vector-independence-labeled-primary",
     "matrix-linear-system-legacy-operator-details",
     "table-partial-domain-undefined-cell",
-    "table-rational-pole-undefined-cell",
-    "trigonometry-angle-convert-control-input",
-    "trigonometry-right-triangle-control-input"
+    "table-rational-pole-undefined-cell"
   ],
   "totals": {
     "evidence": 143,
     "replayFixtures": 100,
     "goldenCases": 43,
-    "bytes": 109295,
+    "bytes": 109801,
     "maxBytes": 2753,
-    "leaves": 455,
-    "proven": 432,
-    "exempt": 23,
+    "leaves": 458,
+    "proven": 439,
+    "exempt": 19,
     "missing": 0
   },
   "routes": {
@@ -208,11 +204,11 @@
       "evidence": 5,
       "replayFixtures": 5,
       "goldenCases": 0,
-      "bytes": 5571,
+      "bytes": 5735,
       "maxBytes": 2161,
-      "leaves": 29,
-      "proven": 27,
-      "exempt": 2,
+      "leaves": 31,
+      "proven": 31,
+      "exempt": 0,
       "missing": 0
     },
     "calculus.integrals": {
@@ -593,11 +589,11 @@
       "evidence": 1,
       "replayFixtures": 1,
       "goldenCases": 0,
-      "bytes": 383,
-      "maxBytes": 383,
+      "bytes": 504,
+      "maxBytes": 504,
       "leaves": 2,
-      "proven": 1,
-      "exempt": 1,
+      "proven": 2,
+      "exempt": 0,
       "missing": 0
     },
     "trigonometry.equation": {
@@ -648,11 +644,11 @@
       "evidence": 1,
       "replayFixtures": 1,
       "goldenCases": 0,
-      "bytes": 616,
-      "maxBytes": 616,
-      "leaves": 2,
-      "proven": 1,
-      "exempt": 1,
+      "bytes": 837,
+      "maxBytes": 837,
+      "leaves": 3,
+      "proven": 3,
+      "exempt": 0,
       "missing": 0
     },
     "vector.angle": {

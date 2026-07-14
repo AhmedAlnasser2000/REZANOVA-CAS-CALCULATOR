@@ -512,6 +512,10 @@ export function convertAngleState(state: AngleConvertState): TrigEvaluation {
       canonicalLatex: exactLatex,
       mathJson: formatDegreesAsUnitMathJson(degrees, state.to),
       source: 'trigonometry.angle-conversion.native-angle-value',
+    }, {
+      canonicalLatex: state.value.trim(),
+      mathJson: parsed,
+      source: 'trigonometry.angle-conversion.request-value',
     }],
   };
 }

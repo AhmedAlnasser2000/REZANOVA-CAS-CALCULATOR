@@ -183,24 +183,6 @@ export type MathJsonCoverageExemption = {
 
 export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] = [
   {
-    id: 'calculus-derivative-at-point-primary-compatibility',
-    routeId: 'calculus.derivatives',
-    leafPath: 'primaryMath',
-    fixtureId: 'calculus-derivative-at-point',
-    owner: 'calculus',
-    reason: 'standard-mathjson-unrepresentable',
-    rationale: 'The legacy Calculate-derived primary projection contains an explicit parser error marker and cannot be asserted as a valid answer tree without an output-changing correction.',
-  },
-  {
-    id: 'calculus-derivative-at-point-resolved-input-compatibility',
-    routeId: 'calculus.derivatives',
-    leafPath: 'metadata.resolvedInput',
-    fixtureId: 'calculus-derivative-at-point',
-    owner: 'calculus',
-    reason: 'standard-mathjson-unrepresentable',
-    rationale: 'The legacy resolved-input projection contains an incomplete evaluation subscript and is not valid canonical mathematics; it is retained unchanged only for output parity.',
-  },
-  {
     id: 'equation-denominator-exclusion-labeled-supplement',
     routeId: 'equation.domain-boundary',
     leafPath: 'supplements[*]',
@@ -262,24 +244,6 @@ export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] 
     owner: 'table',
     reason: 'standard-mathjson-unrepresentable',
     rationale: 'The compatibility cell marks a sampled pole as undefined; the row coordinate and all defined cells remain producer-proven.',
-  },
-  {
-    id: 'trigonometry-angle-convert-control-input',
-    routeId: 'trigonometry.angle-conversion',
-    leafPath: 'metadata.resolvedInput',
-    fixtureId: 'trigonometry-convert',
-    owner: 'trigonometry',
-    reason: 'standard-mathjson-unrepresentable',
-    rationale: 'The retained resolved-input value is Trigonometry request-control syntax rather than a mathematical answer; the converted angle itself is producer-proven.',
-  },
-  {
-    id: 'trigonometry-right-triangle-control-input',
-    routeId: 'trigonometry.right-triangle',
-    leafPath: 'metadata.resolvedInput',
-    fixtureId: 'trigonometry-triangle',
-    owner: 'trigonometry',
-    reason: 'standard-mathjson-unrepresentable',
-    rationale: 'The retained resolved-input value is a typed right-triangle request description rather than a mathematical result tree; the native solution is producer-proven.',
   },
   {
     id: 'golden-equation-rational-exclusion-label',

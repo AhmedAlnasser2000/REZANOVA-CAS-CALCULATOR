@@ -35,11 +35,23 @@
 
 ## CANONICAL-RESULT-V2-CONSUMER-HISTORY1
 
-- result: pass; pending commit creation under standing approval
+- result: pass; committed as `12a91729`
 - kind: backend consumer/runtime/History migration
 - scope: normalized V1/V2 authority, live version-paired V2 runtime, dual-version History, and normalized Display/clipboard/print/diagnostics/Surface consumers
 - production impact: V2 is readable and persistable; all 57 production producer routes remain V1
 - focused verification: 75 result-contract tests; 6 History replay tests plus import boundary; 40 Surface Protocol tests plus boundary; focused History/runtime/Display/clipboard/diagnostics/worker tests
 - browser verification: 5 History persistence/load/render/replay cases and the nine-workspace V1 History replay matrix pass against the current Vite build
 - ratchets: incremental TypeScript; display inversion 401 producers / 149 native documents / 57 consumer reads / zero compatibility / zero legacy; file-size validation
+- protected state: concurrent Notebook files and `test-results/` excluded
+
+## CANONICAL-RESULT-V2-REQUEST-EVIDENCE1
+
+- result: pass; pending commit creation under standing approval
+- kind: UI producer migration
+- scope: derivative-at-point, angle conversion, and right-triangle typed request evidence; four reviewed exemptions removed
+- production impact: three approved selectors emit V2; all other frozen routes remain V1; only approved visible correction is derivative `x^2` at `x=3` to primary `6` with title `Derivative`
+- focused verification: Calculus/Trigonometry/V2/Display regressions; 75 result-contract tests; 6 History replay tests; 40 Surface Protocol tests
+- corpus: 143 executable cases / 458 leaves / 439 proven / 19 exempt / zero missing
+- browser verification: 2 Chromium scenarios cover three real routes, V2 persistence/replay, request presentation, details, and overflow
+- ratchets: incremental TypeScript; Vite build; display inversion 401 producers / 150 native documents / 59 canonical reads / zero compatibility / zero legacy; file-size validation
 - protected state: concurrent Notebook files and `test-results/` excluded

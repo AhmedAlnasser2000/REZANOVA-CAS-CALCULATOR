@@ -75,11 +75,16 @@ const frozenV1Routes = new Set<string>(FROZEN_V1_PRODUCER_ROUTE_IDS);
 // These ratchets stay empty in Contract1. Producer gates may only add the
 // selectors or route defaults approved by the V2 audit.
 export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
-  [] as const satisfies readonly MathJsonRouteId[]
+  [
+    'trigonometry.angle-conversion',
+  ] as const satisfies readonly MathJsonRouteId[]
 );
 
 export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
-  {} as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
+  {
+    'calculus.derivatives': ['derivativePoint'],
+    'trigonometry.right-triangle': ['rightTriangle'],
+  } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );
 
 const v2DefaultRoutes = new Set<string>(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES);

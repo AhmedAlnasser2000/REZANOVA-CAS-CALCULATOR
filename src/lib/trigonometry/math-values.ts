@@ -6,8 +6,11 @@ import type {
 } from '../../types/calculator';
 import {
   tryProvenCanonicalMathValue,
+  requireProvenCanonicalMathValueV2,
   type CanonicalResultProducerMathValuesV1,
+  type CanonicalResultV2MathResolver,
   type ProvenCanonicalMathValue,
+  type ProvenCanonicalMathValueV2,
 } from '../result-contract';
 import type { MathJsonRouteId } from '../result-contract/mathjson-route-registry';
 
@@ -104,6 +107,34 @@ export function trigonometryMathValuesFromOwnedLeaves(input: {
     };
   }
   return values;
+}
+
+export function trigonometryV2MathResolverFromOwnedLeaves(input: {
+  routeId: TrigonometryMathJsonRouteId;
+  leaves: readonly TrigonometryOwnedMathJsonLeaf[];
+}): CanonicalResultV2MathResolver {
+  const proven = new Map<string, ProvenCanonicalMathValueV2>();
+  for (const leaf of input.leaves) {
+    const value = requireProvenCanonicalMathValueV2({
+      canonicalLatex: leaf.canonicalLatex,
+      mathJson: leaf.mathJson,
+      owner: 'trigonometry',
+      routeId: input.routeId,
+      source: leaf.source,
+    });
+    const existing = proven.get(leaf.canonicalLatex);
+    if (existing && JSON.stringify(existing.mathJson) !== JSON.stringify(value.mathJson)) {
+      throw new Error(`Trigonometry V2 producer supplied conflicting trees for ${leaf.canonicalLatex}.`);
+    }
+    proven.set(leaf.canonicalLatex, value);
+  }
+  return (canonicalLatex, path) => {
+    const value = proven.get(canonicalLatex);
+    if (!value) {
+      throw new Error(`Trigonometry V2 producer is missing MathJSON proof at ${path}.`);
+    }
+    return value;
+  };
 }
 
 export function trigonometryMathJsonRouteForRequest(

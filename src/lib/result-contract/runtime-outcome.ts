@@ -9,7 +9,7 @@ import type {
   CanonicalRuntimeResultOutcomeV2,
   PromptOutcome,
   ResultProducerActionDraft,
-  ResultProducerDraft,
+  VersionedResultProducerDraft,
   RuntimeAdvisories,
 } from '../../types/calculator';
 import {
@@ -405,7 +405,7 @@ function canonicalActionFromProducerDraft(
 }
 
 export function finalizeCanonicalRuntimeOutcomeFromProducer(
-  outcome: ResultProducerDraft,
+  outcome: VersionedResultProducerDraft,
   owner: string,
 ): CanonicalRuntimeOutcome {
   if (outcome.kind === 'prompt') {
@@ -413,6 +413,9 @@ export function finalizeCanonicalRuntimeOutcomeFromProducer(
   }
   if (!outcome.canonicalResult) {
     throw new Error(`${owner} runtime outcome is missing native canonical result authority.`);
+  }
+  if (outcome.canonicalResult.version === 2 && outcome.actions?.length) {
+    throw new Error(`${owner} V2 runtime actions require producer-owned V2 MathJSON proof.`);
   }
   return requireCanonicalRuntimeOutcome({
     kind: outcome.kind,

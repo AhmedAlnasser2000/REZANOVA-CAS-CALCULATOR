@@ -17,8 +17,32 @@ import { parseTrigDraft } from './parser';
 import { analyzePeriodPhase } from './period-phase';
 import { solveCosineRule, solveRightTriangle, solveSineRule } from './triangles';
 import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
+import { parseSignedNumberInput } from '../numeric/signed-number';
 
 const ownedMathJsonByOutcome = new WeakMap<object, readonly TrigonometryOwnedMathJsonLeaf[]>();
+
+export type TrigonometryV2RequestEvidence =
+  | {
+      kind: 'angleConvert';
+      value: TrigonometryOwnedMathJsonLeaf;
+      from: AngleUnit;
+      to: AngleUnit;
+    }
+  | {
+      kind: 'rightTriangle';
+      knownQuantities: Array<
+        | {
+            kind: 'side';
+            name: 'a' | 'b' | 'c';
+            value: TrigonometryOwnedMathJsonLeaf;
+          }
+        | {
+            kind: 'angle';
+            name: 'A' | 'B';
+            value: TrigonometryOwnedMathJsonLeaf;
+          }
+      >;
+    };
 
 function rememberOwnedMathJson(
   outcome: ResultProducerDraft,
@@ -118,6 +142,56 @@ function requestTitle(request: TrigRequest, screenHint?: TrigScreen) {
   }
 }
 
+function rightTriangleRequestLeaves(
+  request: Extract<TrigRequest, { kind: 'rightTriangle' }>,
+): TrigonometryOwnedMathJsonLeaf[] {
+  const quantities = [
+    ['a', request.knownSideA],
+    ['b', request.knownSideB],
+    ['c', request.knownSideC],
+    ['A', request.knownAngleA],
+    ['B', request.knownAngleB],
+  ] as const;
+  return quantities.flatMap(([name, raw]) => {
+    const canonicalLatex = raw?.trim() ?? '';
+    const value = parseSignedNumberInput(canonicalLatex);
+    return value === null
+      ? []
+      : [{
+          canonicalLatex,
+          mathJson: value,
+          source: `trigonometry.right-triangle.request-${name}`,
+        }];
+  });
+}
+
+function v2RequestEvidenceFromOwnedLeaves(
+  request: TrigRequest,
+  leaves: readonly TrigonometryOwnedMathJsonLeaf[],
+): TrigonometryV2RequestEvidence | undefined {
+  if (request.kind === 'angleConvert') {
+    const value = leaves.find((leaf) =>
+      leaf.source === 'trigonometry.angle-conversion.request-value');
+    return value
+      ? { kind: 'angleConvert', value, from: request.from, to: request.to }
+      : undefined;
+  }
+  if (request.kind !== 'rightTriangle') return undefined;
+
+  const quantities = [
+    { kind: 'side' as const, name: 'a' as const },
+    { kind: 'side' as const, name: 'b' as const },
+    { kind: 'side' as const, name: 'c' as const },
+    { kind: 'angle' as const, name: 'A' as const },
+    { kind: 'angle' as const, name: 'B' as const },
+  ].flatMap((quantity) => {
+    const value = leaves.find((leaf) =>
+      leaf.source === `trigonometry.right-triangle.request-${quantity.name}`);
+    return value ? [{ ...quantity, value }] : [];
+  });
+  return { kind: 'rightTriangle', knownQuantities: quantities };
+}
+
 function runTrigRequest(
   request: TrigRequest,
   angleUnit: AngleUnit,
@@ -202,14 +276,22 @@ function runTrigRequest(
       delete trigonometryOutcome.canonicalResult;
       return rememberOwnedMathJson(trigonometryOutcome, equationLeaves);
     }
-    case 'rightTriangle':
-      return toOutcome(title, solveRightTriangle({
+    case 'rightTriangle': {
+      const evaluation = solveRightTriangle({
         knownSideA: request.knownSideA ?? '',
         knownSideB: request.knownSideB ?? '',
         knownSideC: request.knownSideC ?? '',
         knownAngleA: request.knownAngleA ?? '',
         knownAngleB: request.knownAngleB ?? '',
-      }));
+      });
+      return toOutcome(title, {
+        ...evaluation,
+        mathJsonLeaves: [
+          ...(evaluation.mathJsonLeaves ?? []),
+          ...rightTriangleRequestLeaves(request),
+        ],
+      });
+    }
     case 'sineRule':
       return toOutcome(title, solveSineRule({
         sideA: request.sideA ?? '',
@@ -271,6 +353,7 @@ export function runTrigonometryCoreDraft(
       outcome,
       parsed,
       mathJsonLeaves: ownedMathJsonByOutcome.get(outcome) ?? [],
+      requestEvidence: undefined,
     };
   }
 
@@ -279,9 +362,11 @@ export function runTrigonometryCoreDraft(
     rawLatex,
     source,
   );
+  const mathJsonLeaves = ownedMathJsonByOutcome.get(outcome) ?? [];
   return {
     outcome,
     parsed,
-    mathJsonLeaves: ownedMathJsonByOutcome.get(outcome) ?? [],
+    mathJsonLeaves,
+    requestEvidence: v2RequestEvidenceFromOwnedLeaves(parsed.request, mathJsonLeaves),
   };
 }

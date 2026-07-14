@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { requireCanonicalResultAuthority } from '../../result-contract';
+import { collectCanonicalMathLeaves } from '../../result-contract/mathjson-coverage';
 import { runCalculusWorkspaceMode } from './engine';
-import type { CalculusScreen } from '../../../types/calculator';
+import type {
+  CalculusScreen,
+  CanonicalResultDocumentV2,
+  VersionedResultProducerDraft,
+} from '../../../types/calculator';
 
 function makeRequest(screen: CalculusScreen, overrides = {}) {
   return {
@@ -21,6 +26,15 @@ function makeRequest(screen: CalculusScreen, overrides = {}) {
     numericIvp: { bodyLatex: '', x0: '0', y0: '1', xEnd: '1', step: '0.1', method: 'rk4' as const },
     ...overrides,
   };
+}
+
+function requireV2Document(
+  result: VersionedResultProducerDraft,
+): CanonicalResultDocumentV2 {
+  if (result.kind === 'prompt' || result.canonicalResult?.version !== 2) {
+    throw new Error('Expected a V2 canonical result document.');
+  }
+  return result.canonicalResult;
 }
 
 describe('runCalculusWorkspaceMode stored values', () => {
@@ -416,6 +430,75 @@ describe('runCalculusWorkspaceMode stored values', () => {
       throw new Error('Expected success');
     }
     expect(result.exactLatex).toContain('26');
+    const document = requireV2Document(result);
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: { canonicalLatex: '26', mathJson: 26 },
+    });
+    expect(document.request).toMatchObject({
+      kind: 'derivative-at-point',
+      body: { canonicalLatex: '4t^2+2t' },
+      appliedVariablePath: [{ canonicalLatex: 't', mathJson: 't' }],
+      point: { canonicalLatex: '3', mathJson: 3 },
+    });
+    expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined))
+      .toBe(true);
+  });
+
+  it('corrects the derivative-at-point primary while preserving the reviewed presentation', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
+      derivativePoint: { bodyLatex: 'x^2', point: '3', variable: 'x' },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    expect(result.title).toBe('Derivative');
+    expect(result.exactLatex).not.toBe('6');
+    expect(result.detailSections?.find((section) => section.title === 'Derivative Steps')?.lines)
+      .toEqual([
+        'Differentiate with respect to x.',
+        'Applied in order: x.',
+        'D_{1}=2x',
+        'At x=3, D_{1}=6.',
+      ]);
+
+    const document = requireV2Document(result);
+    expect(document.title).toBe('Derivative');
+    expect(document.primary).toEqual({
+      kind: 'math',
+      value: { canonicalLatex: '6', mathJson: 6 },
+    });
+    expect(document.request).toEqual({
+      kind: 'derivative-at-point',
+      presentationLatex: '\\left.\\frac{d}{dx}\\left(x^2\\right)\\right|_{x=3}',
+      body: { canonicalLatex: 'x^2', mathJson: ['Power', 'x', 2] },
+      appliedVariablePath: [{ canonicalLatex: 'x', mathJson: 'x' }],
+      point: { canonicalLatex: '3', mathJson: 3 },
+    });
+    expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined))
+      .toBe(true);
+  });
+
+  it('keeps negative derivative points as typed V2 request evidence', async () => {
+    const result = await runCalculusWorkspaceMode(makeRequest('derivativePoint', {
+      derivativePoint: { bodyLatex: 'x^2', point: '-3', variable: 'x' },
+    }));
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') {
+      throw new Error('Expected success');
+    }
+    const document = requireV2Document(result);
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: { canonicalLatex: '-6', mathJson: -6 },
+    });
+    expect(document.request).toMatchObject({
+      kind: 'derivative-at-point',
+      point: { canonicalLatex: '-3', mathJson: -3 },
+    });
   });
 
   it('evaluates higher-order derivative-at-point by symbolic differentiation then substitution', async () => {
@@ -433,6 +516,19 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(steps?.lines).toContain('D_{1}=3x^2');
     expect(steps?.lines).toContain('D_{2}=6x');
     expect(steps?.lines).toContain('At x=2, D_{2}=12.');
+    const document = requireV2Document(result);
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: { canonicalLatex: '12', mathJson: 12 },
+    });
+    expect(document.request).toMatchObject({
+      kind: 'derivative-at-point',
+      appliedVariablePath: [
+        { canonicalLatex: 'x', mathJson: 'x' },
+        { canonicalLatex: 'x', mathJson: 'x' },
+      ],
+      point: { canonicalLatex: '2', mathJson: 2 },
+    });
   });
 
   it('evaluates mixed partials from the parsed applied path', async () => {

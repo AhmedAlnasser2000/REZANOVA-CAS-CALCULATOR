@@ -12,12 +12,15 @@ import {
 } from './limits';
 import { evaluateCalculusImplicitDerivative } from './implicit-derivative';
 import {
+  createCalculusDerivativeAtPointErrorOutcomeV2,
+  createCalculusDerivativeAtPointResultOutcomeV2,
   createCalculusResultOutcome,
   hasNativeCalculusResultDocument,
 } from './result-document';
 import {
   calculusMathJsonRouteForScreen,
   calculusMathValuesFromOwnedLeaves,
+  calculusV2MathResolverFromOwnedLeaves,
 } from './math-values';
 import {
   solveFirstOrderOde,
@@ -44,6 +47,7 @@ import {
   evaluateCalculusHigherOrderDerivative,
   evaluateCalculusHigherOrderDerivativeAtPoint,
   evaluateCalculusMixedPartialDerivative,
+  type CalculusDerivativeAtPointEvidence,
 } from './derivatives';
 import {
   buildDerivativeAtPointRequestLatex,
@@ -65,7 +69,10 @@ import {
 } from '../limit-variable-analysis';
 import { integralVariableOrDefault } from './integral-variable';
 import { runCalculateMode } from '../../modes/calculate';
-import { requireCanonicalResultAuthority } from '../../result-contract';
+import {
+  canonicalResultVersionForProducer,
+  requireCanonicalResultAuthority,
+} from '../../result-contract';
 import type {
   CalculusScreen,
   CalculusDefiniteIntegralState,
@@ -90,6 +97,7 @@ import type {
   SeriesState,
   StoredVariableValue,
   VariableSubstitutionSnapshot,
+  VersionedResultProducerDraft,
 } from '../../../types/calculator';
 import type { CalculusOwnedMathJsonLeaf } from '../engine/shared';
 
@@ -299,7 +307,7 @@ function withDerivativeSteps(
 
 export async function runCalculusWorkspaceMode(
   request: RunCalculusWorkspaceModeRequest,
-): Promise<ResultProducerDraft> {
+): Promise<VersionedResultProducerDraft> {
   const substitutionSource = request.variableSubstitutionSnapshot ?? request.storedVariables;
   const substitutions: VariableSubstitutionSnapshot[] = [];
   const protectedSubstitutions: VariableSubstitutionSnapshot[] = [];
@@ -314,6 +322,11 @@ export async function runCalculusWorkspaceMode(
   };
   let outcome: ResultProducerDraft;
   let mathJsonLeaves: CalculusOwnedMathJsonLeaf[] = [];
+  let derivativePointV2Evidence: {
+    presentationLatex: string;
+    request: CalculusDerivativeAtPointEvidence;
+    primary: CalculusDerivativeAtPointEvidence['result'];
+  } | undefined;
   const captureEvaluation = (title: string, evaluation: CalculusWorkspaceEvaluation) => {
     mathJsonLeaves = [...(evaluation.mathJsonLeaves ?? [])];
     return toOutcome(title, evaluation);
@@ -391,14 +404,48 @@ export async function runCalculusWorkspaceMode(
         };
         break;
       }
+      const variable = derivativeInput.operator.writtenFactors[0]?.variable
+        ?? derivativePoint.variable
+        ?? 'x';
+      setProtectedDescriptions([variable], 'the derivative variable');
+      const storedValuePolicy = resolveStoredValueModePolicy({
+        mode: 'calculus',
+        action: 'calculus-workspace-evaluate',
+        protectedNames: [variable],
+      });
+      const effectiveBodyResult = storedValuePolicy.kind === 'apply'
+        ? applyStoredVariableSubstitutions(
+            derivativeInput.bodyLatex,
+            substitutionSource,
+            { protectedNames: storedValuePolicy.protectedNames },
+          )
+        : { latex: derivativeInput.bodyLatex, substitutions: [], protectedSubstitutions: [] };
+      const requestSteps = buildCalculusDerivativeStepsEvidence({
+        bodyLatex: derivativeInput.bodyLatex,
+        operator: derivativeInput.operator,
+        pointLatex: normalizedPoint,
+      });
+      const effectiveSteps = effectiveBodyResult.latex === derivativeInput.bodyLatex
+        ? requestSteps
+        : buildCalculusDerivativeStepsEvidence({
+            bodyLatex: effectiveBodyResult.latex,
+            operator: derivativeInput.operator,
+            pointLatex: normalizedPoint,
+          });
+      for (const substitution of effectiveBodyResult.substitutions) {
+        mathJsonLeaves.push({
+          canonicalLatex: `${substitution.name}=${substitution.valueLatex}`,
+          mathJson: ['Equal', substitution.name, substitution.numericValue],
+          source: `calculus.derivative-at-point:stored-value:${substitution.name}`,
+        });
+      }
       if (derivativeInput.operator.order > 1) {
-        const variable = derivativeInput.operator.writtenFactors[0]?.variable ?? derivativePoint.variable ?? 'x';
-        setProtectedDescriptions([variable], 'the derivative variable');
         outcome = captureEvaluation('Derivative at Point', evaluateCalculusHigherOrderDerivativeAtPoint({
           bodyLatex: substituteBody(derivativeInput.bodyLatex, [variable]),
           pointLatex: normalizedPoint,
           operator: derivativeInput.operator,
         }));
+        mathJsonLeaves.push(...(requestSteps?.mathJsonLeaves ?? []));
       } else {
         const calculated = runCalculateMode({
             action: 'evaluate',
@@ -410,13 +457,39 @@ export async function runCalculusWorkspaceMode(
             storedVariables: request.storedVariables,
             variableSubstitutionSnapshot: request.variableSubstitutionSnapshot,
           });
-        const steps = buildCalculusDerivativeStepsEvidence({
-          bodyLatex: derivativeInput.bodyLatex,
-          operator: derivativeInput.operator,
-          pointLatex: normalizedPoint,
-        });
+        const steps = requestSteps;
         mathJsonLeaves.push(...(steps?.mathJsonLeaves ?? []));
+        if (effectiveSteps !== requestSteps) {
+          mathJsonLeaves.push(...(effectiveSteps?.mathJsonLeaves ?? []));
+        }
+        if (
+          effectiveBodyResult.substitutions.length > 0
+          && calculated.kind !== 'prompt'
+          && calculated.resolvedInputLatex
+          && effectiveSteps?.derivativeAtPoint?.requestMathJson
+        ) {
+          mathJsonLeaves.push({
+            canonicalLatex: calculated.resolvedInputLatex,
+            mathJson: effectiveSteps.derivativeAtPoint.requestMathJson,
+            source: 'calculus.derivative-at-point:effective-request',
+          });
+        }
         outcome = withDerivativeSteps(calculated, steps?.detailSection);
+      }
+      const requestEvidence = effectiveBodyResult.substitutions.length > 0
+        ? effectiveSteps?.derivativeAtPoint
+        : requestSteps?.derivativeAtPoint;
+      const primaryEvidence = effectiveSteps?.derivativeAtPoint?.result;
+      if (requestEvidence && primaryEvidence) {
+        derivativePointV2Evidence = {
+          presentationLatex: effectiveBodyResult.substitutions.length > 0
+            && outcome.kind !== 'prompt'
+            && outcome.resolvedInputLatex
+            ? outcome.resolvedInputLatex
+            : latex,
+          request: requestEvidence,
+          primary: primaryEvidence,
+        };
       }
       break;
     }
@@ -655,16 +728,57 @@ export async function runCalculusWorkspaceMode(
       },
     );
   }
+  const routeId = calculusMathJsonRouteForScreen(request.screen);
+  const producerVersion = canonicalResultVersionForProducer({
+    routeId,
+    selector: request.screen,
+  });
   const ownedOutcome = hasNativeCalculusResultDocument(request.screen)
     ? finalOutcome.kind === 'prompt'
       ? finalOutcome
-      : createCalculusResultOutcome(finalOutcome, {
-          mathValues: calculusMathValuesFromOwnedLeaves({
-            outcome: finalOutcome,
-            routeId: calculusMathJsonRouteForScreen(request.screen),
-            leaves: mathJsonLeaves,
-          }),
-        })
+      : producerVersion === 2
+        ? (() => {
+            const mathValue = calculusV2MathResolverFromOwnedLeaves({
+              routeId,
+              leaves: mathJsonLeaves,
+            });
+            if (finalOutcome.kind === 'success') {
+              if (!derivativePointV2Evidence) {
+                throw new Error(
+                  'Calculus derivativePoint selected V2 without complete producer proof.',
+                );
+              }
+              return createCalculusDerivativeAtPointResultOutcomeV2(finalOutcome, {
+                presentationLatex: derivativePointV2Evidence.presentationLatex,
+                primaryLatex: derivativePointV2Evidence.primary.canonicalLatex,
+                bodyLatex: derivativePointV2Evidence.request.body.canonicalLatex,
+                appliedVariablePathLatex: derivativePointV2Evidence.request.appliedVariablePath
+                  .map((value) => value.canonicalLatex),
+                pointLatex: derivativePointV2Evidence.request.point.canonicalLatex,
+                mathValue,
+              });
+            }
+            return createCalculusDerivativeAtPointErrorOutcomeV2(finalOutcome, {
+              mathValue,
+              ...(derivativePointV2Evidence
+                ? {
+                    presentationLatex: derivativePointV2Evidence.presentationLatex,
+                    bodyLatex: derivativePointV2Evidence.request.body.canonicalLatex,
+                    appliedVariablePathLatex:
+                      derivativePointV2Evidence.request.appliedVariablePath
+                        .map((value) => value.canonicalLatex),
+                    pointLatex: derivativePointV2Evidence.request.point.canonicalLatex,
+                  }
+                : {}),
+            });
+          })()
+        : createCalculusResultOutcome(finalOutcome, {
+            mathValues: calculusMathValuesFromOwnedLeaves({
+              outcome: finalOutcome,
+                routeId,
+                leaves: mathJsonLeaves,
+            }),
+          })
     : finalOutcome;
   return requireCanonicalResultAuthority(ownedOutcome, 'Calculus');
 }

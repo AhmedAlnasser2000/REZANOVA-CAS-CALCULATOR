@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "CANONICAL-RESULT-V2-CONSUMER-HISTORY1 normalized dual-version consumer authority",
+  "acceptedReason": "CANONICAL-RESULT-V2-REQUEST-EVIDENCE1 registers the V2 draft adapter and version-paired runtime reads without compatibility or legacy growth.",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -141,7 +141,7 @@
     "trigonometry": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 3
+      "nativeDocument": 4
     },
     "vector": {
       "compatibilityProjection": 0,
@@ -152,7 +152,7 @@
   "entries": {
     "native-document": {
       "src/lib/calculus/workspace/engine.ts": [
-        "b1f4fe3b27ac4520e41b:1",
+        "f50a96b8992833d7cb0c:1",
         "65afd2d6e9a26cb45590:1"
       ],
       "src/lib/calculus/workspace/result-document.ts": [
@@ -413,8 +413,9 @@
         "adc15ebcbf4b34ff165a:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
-        "43cda8f5e8a4a246e268:1",
-        "7b03bd81ef68c5e4bae6:1"
+        "beed7b3ed81dbb23d56f:1",
+        "481d01b9855acf48d904:1",
+        "c5ea9b6510259df12ebf:1"
       ]
     },
     "canonical-projection": {},
@@ -703,9 +704,6 @@
         "2d14a11de1170c8e603e:1",
         "3c22f0804629cecd288b:1",
         "519b0ad46ea11b72a784:1"
-      ],
-      "src/lib/trigonometry/runtime-run.ts": [
-        "2e674a69a0ca35c35c19:1"
       ]
     },
     "control-outcome": {
@@ -811,6 +809,8 @@
       "src/lib/calculus/workspace/engine.ts": [
         "28b0a2d56bca3cf52068:1",
         "4b002d8bc91be72275d1:1",
+        "132218ff5aac5fe4a38b:1",
+        "d5b85f7d5f58ade9d147:1",
         "97f8b20965d34d966544:1"
       ],
       "src/lib/equation/analysis-evidence.ts": [
@@ -960,12 +960,6 @@
       "src/lib/modes/vector.ts": [
         "b50a378ef23e613d017f:1"
       ],
-      "src/lib/result-contract/native-result.ts": [
-        "f5c6ab79bc2e134c25ec:1"
-      ],
-      "src/lib/result-contract/runtime-outcome.ts": [
-        "471508583714f25a682e:1"
-      ],
       "src/lib/statistics/runtime-run.ts": [
         "55a57bd2347c84eb1362:1"
       ],
@@ -999,6 +993,9 @@
       ],
       "src/app/runtime/workspace-display-state.ts": [
         "3e589fec5a5de4d347e1:1"
+      ],
+      "src/app/shell/display-panel/DisplayOutcomeShell.tsx": [
+        "4ea53afe994af66c389f:1"
       ],
       "src/AppMain.tsx": [
         "b1ed9d5768e352d08fd4:1"
@@ -1086,6 +1083,7 @@
       "src/lib/result-contract/runtime-outcome.ts": [
         "cf70fe714f59cc4159ac:1",
         "cf70fe714f59cc4159ac:2",
+        "cf70fe714f59cc4159ac:3",
         "f23a244889841e152640:1"
       ],
       "src/lib/surface-protocol/dto.ts": [

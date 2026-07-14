@@ -1,10 +1,18 @@
-import type { ResultProducerDraft } from '../../types/calculator';
+import type {
+  ResultProducerDraft,
+  ResultProducerDraftV2,
+} from '../../types/calculator';
 import {
+  attachCanonicalResultV2ToProducerDraft,
   buildCanonicalResultDocumentFromProducer,
+  buildCanonicalResultDocumentV2FromProducerDraft,
   canonicalMathValue,
   attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
+  type CanonicalResultV2MathResolver,
+  type ProvenCanonicalMathValueV2,
 } from '../result-contract';
+import type { TrigonometryV2RequestEvidence } from './core';
 
 type TrigonometrySuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
 type TrigonometryErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
@@ -93,4 +101,68 @@ export function createTrigonometryResultOutcome(
     canonicalResult,
     input,
   );
+}
+
+export function createTrigonometryRequestResultOutcomeV2(
+  input: TrigonometryResultProducerInput,
+  evidence: {
+    requestEvidence: TrigonometryV2RequestEvidence;
+    presentationLatex: string;
+    mathValue: CanonicalResultV2MathResolver;
+  },
+): ResultProducerDraftV2 {
+  const rightTriangleQuantities: Array<
+    | { kind: 'side'; name: 'a' | 'b' | 'c'; value: ProvenCanonicalMathValueV2 }
+    | { kind: 'angle'; name: 'A' | 'B'; value: ProvenCanonicalMathValueV2 }
+  > = [];
+  if (evidence.requestEvidence.kind === 'rightTriangle') {
+    evidence.requestEvidence.knownQuantities.forEach((quantity, index) => {
+      const value = evidence.mathValue(
+        quantity.value.canonicalLatex,
+        `request.knownQuantities[${index}].value`,
+      );
+      rightTriangleQuantities.push(quantity.kind === 'side'
+        ? { kind: 'side', name: quantity.name, value }
+        : { kind: 'angle', name: quantity.name, value });
+    });
+  }
+  const request = input.kind === 'success'
+    ? evidence.requestEvidence.kind === 'angleConvert'
+      ? {
+          kind: 'angle-conversion' as const,
+          presentationLatex: evidence.presentationLatex,
+          value: evidence.mathValue(
+            evidence.requestEvidence.value.canonicalLatex,
+            'request.value',
+          ),
+          fromUnit: evidence.requestEvidence.from,
+          toUnit: evidence.requestEvidence.to,
+        }
+      : {
+          kind: 'right-triangle' as const,
+          presentationLatex: evidence.presentationLatex,
+          angleUnit: 'deg' as const,
+          knownQuantities: rightTriangleQuantities,
+        }
+    : undefined;
+  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+    draft: input,
+    mathValue: evidence.mathValue,
+    ...(request ? { request } : {}),
+  });
+  return attachCanonicalResultV2ToProducerDraft(
+    canonicalResult,
+    input,
+  );
+}
+
+export function createTrigonometryRequestErrorOutcomeV2(
+  input: Omit<TrigonometryErrorOutcome, 'canonicalResult'>,
+  mathValue: CanonicalResultV2MathResolver,
+): ResultProducerDraftV2 {
+  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+    draft: input,
+    mathValue,
+  });
+  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
 }

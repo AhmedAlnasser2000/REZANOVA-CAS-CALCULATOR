@@ -1,9 +1,16 @@
-import type { CalculusScreen, ResultProducerDraft } from '../../../types/calculator';
+import type {
+  CalculusScreen,
+  ResultProducerDraft,
+  ResultProducerDraftV2,
+} from '../../../types/calculator';
 import {
+  attachCanonicalResultV2ToProducerDraft,
   buildCanonicalResultDocumentFromProducer,
+  buildCanonicalResultDocumentV2FromProducerDraft,
   canonicalMathValue,
   attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
+  type CanonicalResultV2MathResolver,
 } from '../../result-contract';
 
 type CalculusSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
@@ -134,4 +141,71 @@ export function createCalculusResultOutcome(
     canonicalResult,
     input,
   );
+}
+
+export function createCalculusDerivativeAtPointResultOutcomeV2(
+  input: Omit<CalculusSuccessOutcome, 'canonicalResult'>,
+  evidence: {
+    presentationLatex: string;
+    primaryLatex: string;
+    bodyLatex: string;
+    appliedVariablePathLatex: string[];
+    pointLatex: string;
+    mathValue: CanonicalResultV2MathResolver;
+  },
+): ResultProducerDraftV2 {
+  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+    draft: input,
+    mathValue: evidence.mathValue,
+    primary: {
+      kind: 'math',
+      value: evidence.mathValue(evidence.primaryLatex, 'primary.value'),
+    },
+    request: {
+      kind: 'derivative-at-point',
+      presentationLatex: evidence.presentationLatex,
+      body: evidence.mathValue(evidence.bodyLatex, 'request.body'),
+      appliedVariablePath: evidence.appliedVariablePathLatex.map((value, index) =>
+        evidence.mathValue(value, `request.appliedVariablePath[${index}]`)),
+      point: evidence.mathValue(evidence.pointLatex, 'request.point'),
+    },
+  });
+  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
+}
+
+export function createCalculusDerivativeAtPointErrorOutcomeV2(
+  input: Omit<CalculusErrorOutcome, 'canonicalResult'>,
+  evidence: {
+    mathValue: CanonicalResultV2MathResolver;
+    presentationLatex?: string;
+    bodyLatex?: string;
+    appliedVariablePathLatex?: string[];
+    pointLatex?: string;
+  },
+): ResultProducerDraftV2 {
+  const hasRequest = evidence.presentationLatex
+    && evidence.bodyLatex
+    && evidence.appliedVariablePathLatex?.length
+    && evidence.pointLatex;
+  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+    draft: input,
+    mathValue: evidence.mathValue,
+    ...(hasRequest
+      ? {
+          request: {
+            kind: 'derivative-at-point' as const,
+            presentationLatex: evidence.presentationLatex as string,
+            body: evidence.mathValue(evidence.bodyLatex as string, 'request.body'),
+            appliedVariablePath: (evidence.appliedVariablePathLatex ?? []).map(
+              (value, index) => evidence.mathValue(
+                value,
+                `request.appliedVariablePath[${index}]`,
+              ),
+            ),
+            point: evidence.mathValue(evidence.pointLatex as string, 'request.point'),
+          },
+        }
+      : {}),
+  });
+  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
 }

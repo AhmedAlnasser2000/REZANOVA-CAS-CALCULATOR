@@ -313,19 +313,37 @@ describe('Canonical Result V2 contract', () => {
     });
   });
 
-  it('freezes the 57 existing routes on V1 without enabling a production V2 selector', () => {
+  it('keeps the frozen 57-route inventory while enabling only Gate 3 V2 selectors', () => {
     const routeIds = Object.keys(MATHJSON_ROUTE_REGISTRY).sort();
     expect(FROZEN_V1_PRODUCER_ROUTE_IDS).toHaveLength(57);
     expect([...FROZEN_V1_PRODUCER_ROUTE_IDS].sort()).toEqual(routeIds);
     expect(Object.keys(CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY).sort()).toEqual(routeIds);
-    expect(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES).toEqual([]);
-    expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({});
+    expect(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES)
+      .toEqual(['trigonometry.angle-conversion']);
+    expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
+      'calculus.derivatives': ['derivativePoint'],
+      'trigonometry.right-triangle': ['rightTriangle'],
+    });
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
-      expect(canonicalResultVersionForProducer({ routeId })).toBe(1);
+      const defaultVersion = routeId === 'trigonometry.angle-conversion' ? 2 : 1;
+      const v2Selectors = routeId === 'calculus.derivatives'
+        ? ['derivativePoint']
+        : routeId === 'trigonometry.right-triangle'
+          ? ['rightTriangle']
+          : [];
+      expect(canonicalResultVersionForProducer({ routeId })).toBe(defaultVersion);
       expect(CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY[routeId]).toEqual({
-        defaultVersion: 1,
-        v2Selectors: [],
+        defaultVersion,
+        v2Selectors,
       });
     }
+    expect(canonicalResultVersionForProducer({
+      routeId: 'calculus.derivatives',
+      selector: 'derivativePoint',
+    })).toBe(2);
+    expect(canonicalResultVersionForProducer({
+      routeId: 'trigonometry.right-triangle',
+      selector: 'rightTriangle',
+    })).toBe(2);
   });
 });

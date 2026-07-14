@@ -63,6 +63,15 @@ type DerivativeSubstitutionEvidence = {
 export type CalculusDerivativeStepsEvidence = {
   detailSection: DisplayDetailSection;
   mathJsonLeaves: CalculusOwnedMathJsonLeaf[];
+  derivativeAtPoint?: CalculusDerivativeAtPointEvidence;
+};
+
+export type CalculusDerivativeAtPointEvidence = {
+  body: CalculusOwnedMathJsonLeaf;
+  appliedVariablePath: CalculusOwnedMathJsonLeaf[];
+  point: CalculusOwnedMathJsonLeaf;
+  result: CalculusOwnedMathJsonLeaf;
+  requestMathJson?: unknown;
 };
 
 type DifferentiationPassResult =
@@ -315,7 +324,9 @@ export function buildCalculusDerivativeStepsEvidence({
   const point = pointLatex?.trim() ?? '';
   const variable = operator.appliedPath[0] ?? operator.writtenFactors[0]?.variable;
   let substitution: DerivativeSubstitutionEvidence | undefined;
+  let derivativeAtPoint: CalculusDerivativeAtPointEvidence | undefined;
   if (operator.kind === 'derivative' && point && variable) {
+    const bodyAst = parseLatexNode(body);
     const pointAst = parseLatexNode(point);
     if (nodeToFiniteNumber(pointAst) !== undefined) {
       const substituted = renderedNode(replaceSymbol(differentiated.ast, variable, pointAst));
@@ -325,6 +336,37 @@ export function buildCalculusDerivativeStepsEvidence({
         pointMathJson: pointAst,
         resultLatex: substituted.latex,
         resultMathJson: substituted.mathJson,
+      };
+      derivativeAtPoint = {
+        body: {
+          canonicalLatex: body,
+          mathJson: bodyAst,
+          source: 'calculus.derivative-at-point:request-body',
+        },
+        appliedVariablePath: operator.appliedPath.map((pathVariable, index) => ({
+          canonicalLatex: derivativeVariableLatex(pathVariable),
+          mathJson: pathVariable,
+          source: `calculus.derivative-at-point:applied-path:${index}`,
+        })),
+        point: {
+          canonicalLatex: point,
+          mathJson: pointAst,
+          source: 'calculus.derivative-at-point:request-point',
+        },
+        result: {
+          canonicalLatex: substituted.latex,
+          mathJson: substituted.mathJson,
+          source: 'calculus.derivative-at-point:result',
+        },
+        ...(operator.order === 1
+          ? {
+              requestMathJson: [
+                'Subscript',
+                ['EvaluateAt', ['Function', ['Block', ['D', bodyAst, variable]], variable]],
+                ['Equal', variable, pointAst],
+              ],
+            }
+          : {}),
       };
     }
   }
@@ -340,7 +382,16 @@ export function buildCalculusDerivativeStepsEvidence({
         differentiated.steps.length,
         'calculus.derivative-step:substitution',
       ),
+      ...(derivativeAtPoint
+        ? [
+            derivativeAtPoint.body,
+            ...derivativeAtPoint.appliedVariablePath,
+            derivativeAtPoint.point,
+            derivativeAtPoint.result,
+          ]
+        : []),
     ],
+    ...(derivativeAtPoint ? { derivativeAtPoint } : {}),
   };
 }
 

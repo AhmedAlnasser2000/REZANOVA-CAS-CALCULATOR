@@ -3,22 +3,29 @@ import type {
   TrigParseResult,
   TrigReplaySeed,
   TrigScreen,
+  VersionedResultProducerDraft,
 } from '../../types/calculator';
 import { runTrigonometryCoreDraft } from './core';
 import {
+  canonicalResultVersionForProducer,
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import { trigRequestToScreen } from './parser';
-import { createTrigonometryResultOutcome } from './result-document';
+import {
+  createTrigonometryRequestErrorOutcomeV2,
+  createTrigonometryRequestResultOutcomeV2,
+  createTrigonometryResultOutcome,
+} from './result-document';
 import type { RunTrigonometryRuntimeRequest } from './runtime-input';
 import {
   trigonometryMathJsonRouteForRequest,
   trigonometryMathValuesFromOwnedLeaves,
+  trigonometryV2MathResolverFromOwnedLeaves,
 } from './math-values';
 
 export type TrigonometryModeRunPayload = {
-  outcome: ReturnType<typeof runTrigonometryCoreDraft>['outcome'];
+  outcome: VersionedResultProducerDraft;
   parsed: TrigParseResult;
   replayScreen: TrigScreen;
   replaySeed?: TrigReplaySeed;
@@ -34,7 +41,12 @@ export type CanonicalTrigonometryModeRunPayload = Omit<
 export function buildTrigonometryModeRunPayload(
   request: RunTrigonometryRuntimeRequest,
 ): TrigonometryModeRunPayload {
-  const { outcome, parsed, mathJsonLeaves } = runTrigonometryCoreDraft(request.inputLatex, {
+  const {
+    outcome,
+    parsed,
+    mathJsonLeaves,
+    requestEvidence,
+  } = runTrigonometryCoreDraft(request.inputLatex, {
     screenHint: request.screenHint,
     angleUnit: request.angleUnit,
     identityTargetForm: request.identityTargetForm,
@@ -45,15 +57,44 @@ export function buildTrigonometryModeRunPayload(
 
   const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
     ? outcome
-    : createTrigonometryResultOutcome(outcome, parsed.ok
-      ? {
-          mathValues: trigonometryMathValuesFromOwnedLeaves({
-            outcome,
-            routeId: trigonometryMathJsonRouteForRequest(parsed.request),
-            leaves: mathJsonLeaves,
-          }),
-        }
-      : undefined), 'Trigonometry');
+    : parsed.ok
+      ? (() => {
+          const routeId = trigonometryMathJsonRouteForRequest(parsed.request);
+          const version = canonicalResultVersionForProducer({
+            routeId,
+            selector: parsed.request.kind,
+          });
+          if (
+            version === 2
+            && (parsed.request.kind === 'angleConvert' || parsed.request.kind === 'rightTriangle')
+          ) {
+            const mathValue = trigonometryV2MathResolverFromOwnedLeaves({
+              routeId,
+              leaves: mathJsonLeaves,
+            });
+            if (outcome.kind === 'error' && !requestEvidence) {
+              return createTrigonometryRequestErrorOutcomeV2(outcome, mathValue);
+            }
+            if (!requestEvidence || requestEvidence.kind !== parsed.request.kind) {
+              throw new Error(
+                'Trigonometry selected V2 without complete producer-owned request evidence.',
+              );
+            }
+            return createTrigonometryRequestResultOutcomeV2(outcome, {
+              requestEvidence,
+              presentationLatex: outcome.resolvedInputLatex ?? request.inputLatex.trim(),
+              mathValue,
+            });
+          }
+          return createTrigonometryResultOutcome(outcome, {
+            mathValues: trigonometryMathValuesFromOwnedLeaves({
+              outcome,
+              routeId,
+              leaves: mathJsonLeaves,
+            }),
+          });
+        })()
+      : createTrigonometryResultOutcome(outcome), 'Trigonometry');
 
   return {
     outcome: ownedOutcome,
