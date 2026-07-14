@@ -1,0 +1,29 @@
+# Verification Summary
+
+## Attribution
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.5
+- primary_agent_family: sol
+- contributors:
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.5
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.5
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+## NOTEBOOK-LARGE-DOCUMENT-READINESS1
+
+- gate: ui
+- status: verified
+- model evidence: 2 files and 11 tests pass across 100, 1,000, 5,000, and 50,000-block fixtures; the 5,000-block fixture contains 2,000 inline-math nodes and all fixtures pass strict V6 validation.
+- UI evidence: 3 files and 24 tests pass, including the real Tiptap 5,000-block edit contract and viewport-aware MathLive hydration.
+- Chromium evidence: 5,000 paragraphs and 2,000 inline-math nodes become ready in 1,211.80 ms; 100 scripted edits measure 77.47 ms P95 and 113.97 ms maximum. Fourteen MathLive fields hydrate near the viewport while 1,986 remain deferred.
+- cross-workspace evidence: switching from the large Notebook to Calculate takes 472.22 ms and leaves zero Notebook math views mounted. The same `Calculate` exact solve measures 1,804.21 ms before the Notebook and 1,846.59 ms after it, a 42.38 ms difference inside the relative no-regression bound.
+- visual evidence: 2400px, 1440px, and 1100px plus 80%, 130%, high contrast, and forced colors show contained word/save-state status with no page overflow. The inspected large-document view shows the Draft notice, 32,004 words after the edit, readable math, and no clipping.
+- static evidence: incremental TypeScript, Notebook-scoped ESLint, file-size validation, memory validation, and diff hygiene pass.
+- correction evidence: the first idle-callback app-document sync starved after a large browser edit. It was rejected and replaced with a 350 ms settled-edit sync that resets on each update and flushes on editor destruction; the final Chromium measurements above use the corrected path.
+- discarded probe evidence: one strict-locator ambiguity and one absolute Calculate cap below the fresh baseline were harness errors, not product failures. The final probe compares pre-Notebook and post-Notebook latency on the same page.
+- resource evidence: no full unit, UI, or canary suite ran; the Vite and Playwright processes used by this gate are stopped after evidence capture.

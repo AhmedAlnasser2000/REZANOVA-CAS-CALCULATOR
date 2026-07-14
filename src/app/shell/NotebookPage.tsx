@@ -12,8 +12,11 @@ import {
 } from 'react';
 
 import {
-  countNotebookBlocks,
+  NOTEBOOK_LIVE_BLOCK_TARGET,
+  NOTEBOOK_PERFORMANCE_PROFILES,
+  createNotebookPerformanceFixture,
   notebookRichSurfaceStateFromSlot,
+  type NotebookPerformanceProfile,
   type NotebookRichDocument,
   type NotebookSurfaceState,
   type NotebookWorkspaceTarget,
@@ -37,6 +40,7 @@ import {
   useNotebookTransientLayer,
 } from './notebook/transient-ui';
 import { useNotebookUiState } from './notebook/useNotebookUiState';
+import { useNotebookDocumentAnalysis } from './notebook/useNotebookDocumentAnalysis';
 
 type NotebookPageProps = {
   instanceId: string;
@@ -77,7 +81,26 @@ function NotebookPageContent({
   const notebookState = notebookRichSurfaceStateFromSlot(surfaceState, {
     idPrefix: instanceId,
   });
-  const { document } = notebookState;
+  const [developmentFixture] = useState<NotebookRichDocument | null>(() => {
+    if (!import.meta.env.DEV) {
+      return null;
+    }
+    const requestedProfile = new URLSearchParams(window.location.search)
+      .get('notebookPerformance');
+    if (
+      !requestedProfile
+      || !Object.hasOwn(NOTEBOOK_PERFORMANCE_PROFILES, requestedProfile)
+    ) {
+      return null;
+    }
+    return createNotebookPerformanceFixture(requestedProfile as NotebookPerformanceProfile);
+  });
+  const document = developmentFixture
+    && notebookState.document.id !== developmentFixture.id
+    ? developmentFixture
+    : notebookState.document;
+  const documentAnalysis = useNotebookDocumentAnalysis(document);
+  const isLargeDocument = (documentAnalysis?.blockCount ?? 0) > NOTEBOOK_LIVE_BLOCK_TARGET;
   const workbenchStyle = {
     '--notebook-inspector-width': `${uiState.inspectorWidth}px`,
     '--notebook-outline-width': `${uiState.outlineWidth}px`,
@@ -238,9 +261,20 @@ function NotebookPageContent({
                 })}
               />
               <div className="notebook-canvas-meta">
-                <span>{countNotebookBlocks(document.content)} blocks</span>
-                <span>Session draft</span>
+                <span aria-live="polite">
+                  {documentAnalysis
+                    ? `${documentAnalysis.wordCount.toLocaleString()} ${documentAnalysis.wordCount === 1 ? 'word' : 'words'}`
+                    : 'Counting words…'}
+                </span>
+                <span title="Durable local saving begins in the next Notebook milestone">
+                  Session only
+                </span>
               </div>
+              {isLargeDocument ? (
+                <div className="notebook-large-document-notice" role="status">
+                  Large notebook — Draft view is active to protect responsiveness.
+                </div>
+              ) : null}
             </div>
             <NotebookRichCanvas
               document={document}
@@ -313,9 +347,9 @@ function NotebookPageContent({
           ) : null}
         </div>
         <footer className="app-page-shell-footer">
-          <span>Ready</span>
+          <span>{isLargeDocument ? 'Draft view' : 'Ready'}</span>
           <span>Workspace: Notebook</span>
-          <span>Session draft</span>
+          <span>Session only</span>
         </footer>
       </section>
   );

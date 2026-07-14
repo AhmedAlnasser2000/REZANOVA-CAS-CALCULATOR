@@ -321,13 +321,83 @@ export function countNotebookBlocks(nodes: readonly NotebookRichBlockNode[]): nu
   }, 0);
 }
 
+const NOTEBOOK_WORD_PATTERN = /[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu;
+
+function countWordsInText(value: string | undefined) {
+  return value?.match(NOTEBOOK_WORD_PATTERN)?.length ?? 0;
+}
+
+export type NotebookDocumentMetrics = {
+  blockCount: number;
+  inlineMathCount: number;
+  wordCount: number;
+};
+
+export function measureNotebookDocument(
+  nodes: readonly NotebookRichBlockNode[],
+): NotebookDocumentMetrics {
+  const metrics: NotebookDocumentMetrics = {
+    blockCount: 0,
+    inlineMathCount: 0,
+    wordCount: 0,
+  };
+  const pending = [...nodes];
+
+  while (pending.length > 0) {
+    const node = pending.pop();
+    if (!node) {
+      continue;
+    }
+    metrics.blockCount += 1;
+    if (node.type === 'paragraph' || node.type === 'heading') {
+      for (const inline of node.content ?? []) {
+        if (inline.type === 'inlineMath') {
+          metrics.inlineMathCount += 1;
+        } else {
+          metrics.wordCount += countWordsInText(inline.text);
+        }
+      }
+      continue;
+    }
+    if (node.type === 'semanticBlock') {
+      metrics.wordCount += countWordsInText(node.label);
+      pending.push(...node.content);
+      continue;
+    }
+    if (node.type === 'section') {
+      metrics.wordCount += countWordsInText(node.title);
+      pending.push(...node.content);
+      continue;
+    }
+    if (node.type === 'bulletList' || node.type === 'orderedList') {
+      for (const item of node.content) {
+        pending.push(...item.content);
+      }
+      continue;
+    }
+    if (node.type === 'evidenceSnapshot') {
+      metrics.wordCount += countWordsInText(node.title);
+      for (const fact of node.facts) {
+        metrics.wordCount += countWordsInText(fact);
+      }
+      for (const warning of node.warnings) {
+        metrics.wordCount += countWordsInText(warning);
+      }
+    }
+  }
+
+  return metrics;
+}
+
 export function summarizeNotebookDocument(
   document: NotebookRichDocument,
 ): NotebookDocumentSummary {
+  const metrics = measureNotebookDocument(document.content);
   return {
     id: document.id,
     title: document.title,
     updatedAt: document.updatedAt,
-    blockCount: countNotebookBlocks(document.content),
+    blockCount: metrics.blockCount,
+    wordCount: metrics.wordCount,
   };
 }

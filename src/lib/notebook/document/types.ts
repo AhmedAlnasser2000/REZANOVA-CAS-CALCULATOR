@@ -192,6 +192,7 @@ export type NotebookDocumentSummary = {
   title: string;
   updatedAt: string;
   blockCount: number;
+  wordCount: number;
 };
 
 export type NotebookStarterTemplateId =

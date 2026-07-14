@@ -4,6 +4,7 @@ import { AllSelection, TextSelection } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Check, Sparkles } from 'lucide-react';
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -49,6 +50,9 @@ type NotebookRichCanvasProps = {
   onProseSelectionChange: (selection: NotebookProseSelection | null) => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
 };
+
+const NOTEBOOK_IMMEDIATE_SYNC_NODE_SIZE_MAX = 150_000;
+const NOTEBOOK_LARGE_DOCUMENT_SYNC_DELAY_MS = 350;
 
 function selectedParagraphSuggestion(editor: Editor | null) {
   if (!editor) {
@@ -109,6 +113,8 @@ export function NotebookRichCanvas({
   const selectionRef = useRef(onSelectionChange);
   const restoredProseSelectionRef = useRef(false);
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
+  const pendingDocumentSyncRef = useRef<Editor | null>(null);
+  const documentSyncHandleRef = useRef<number | null>(null);
   const { activate: activateMathField } = useNotebookMathFieldController();
   const [revision, setRevision] = useState(0);
   const [paletteRequest, setPaletteRequest] = useState<NotebookPaletteRequest | null>(null);
@@ -119,6 +125,39 @@ export function NotebookRichCanvas({
     () => createNotebookExtensions(onOpenMathInTool),
     [onOpenMathInTool],
   );
+  const cancelDocumentSync = useCallback(() => {
+    const scheduled = documentSyncHandleRef.current;
+    if (scheduled === null) {
+      return;
+    }
+    window.clearTimeout(scheduled);
+    documentSyncHandleRef.current = null;
+  }, []);
+  const flushDocumentSync = useCallback((currentEditor?: Editor | null) => {
+    const editorToSync = currentEditor ?? pendingDocumentSyncRef.current;
+    pendingDocumentSyncRef.current = null;
+    if (!editorToSync) {
+      return;
+    }
+    const selection = notebookEditorSelection(editorToSync);
+    const nextDocument = notebookDocumentFromTiptap(
+      editorToSync.getJSON(),
+      documentRef.current,
+      { selectedNodeId: selection?.id ?? null },
+    );
+    documentRef.current = nextDocument;
+    changeRef.current(nextDocument);
+  }, []);
+  const scheduleDocumentSync = useCallback((currentEditor: Editor) => {
+    pendingDocumentSyncRef.current = currentEditor;
+    if (documentSyncHandleRef.current !== null) {
+      window.clearTimeout(documentSyncHandleRef.current);
+    }
+    documentSyncHandleRef.current = window.setTimeout(() => {
+      documentSyncHandleRef.current = null;
+      flushDocumentSync();
+    }, NOTEBOOK_LARGE_DOCUMENT_SYNC_DELAY_MS);
+  }, [flushDocumentSync]);
   const editor = useEditor({
     extensions,
     content: notebookDocumentToTiptap(document),
@@ -130,19 +169,21 @@ export function NotebookRichCanvas({
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
-      const selection = notebookEditorSelection(currentEditor);
-      const nextDocument = notebookDocumentFromTiptap(
-        currentEditor.getJSON(),
-        documentRef.current,
-        { selectedNodeId: selection?.id ?? null },
-      );
-      documentRef.current = nextDocument;
-      changeRef.current(nextDocument);
+      if (currentEditor.state.doc.nodeSize <= NOTEBOOK_IMMEDIATE_SYNC_NODE_SIZE_MAX) {
+        cancelDocumentSync();
+        flushDocumentSync(currentEditor);
+      } else {
+        scheduleDocumentSync(currentEditor);
+      }
       selectionRef.current(notebookInspectorSelection(currentEditor));
       const nextProseSelection = selectedProseRange(currentEditor);
       setProseSelection(nextProseSelection);
       proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
+    },
+    onDestroy: () => {
+      cancelDocumentSync();
+      flushDocumentSync();
     },
     onSelectionUpdate: ({ editor: currentEditor }) => {
       selectionRef.current(notebookInspectorSelection(currentEditor));
@@ -167,6 +208,11 @@ export function NotebookRichCanvas({
     }
     return () => onEditorChange(null);
   }, [editor, onEditorChange, onSelectionChange]);
+
+  useEffect(() => () => {
+    cancelDocumentSync();
+    flushDocumentSync();
+  }, [cancelDocumentSync, flushDocumentSync]);
 
   useEffect(() => {
     if (!editor || !isPristineNotebook(editor)) {
@@ -297,6 +343,8 @@ export function NotebookRichCanvas({
   const isBlank = isPristineNotebook(editor);
 
   function applyTemplate(templateId: NotebookStarterTemplateId) {
+    cancelDocumentSync();
+    pendingDocumentSyncRef.current = null;
     const nextDocument: NotebookRichDocument = {
       ...documentRef.current,
       content: createNotebookStarterContent(templateId, {

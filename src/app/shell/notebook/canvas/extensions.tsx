@@ -31,6 +31,23 @@ const ID_NODE_TYPES = new Set([
   'notebookSection',
 ]);
 
+function valueContainsUnidentifiedNotebookNode(value: unknown): boolean {
+  if (Array.isArray(value)) {
+    return value.some(valueContainsUnidentifiedNotebookNode);
+  }
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  if (typeof record.type === 'string' && ID_NODE_TYPES.has(record.type)) {
+    const attrs = record.attrs;
+    if (!attrs || typeof attrs !== 'object' || !(attrs as Record<string, unknown>).id) {
+      return true;
+    }
+  }
+  return Object.values(record).some(valueContainsUnidentifiedNotebookNode);
+}
+
 function nodeIdFactory() {
   let sequence = 0;
   const seed = Date.now();
@@ -62,7 +79,14 @@ const NotebookNodeIds = Extension.create({
     const nextId = nodeIdFactory();
     return [new Plugin({
       key: new PluginKey('notebook-node-ids'),
-      appendTransaction: (_transactions, _oldState, newState) => {
+      appendTransaction: (transactions, _oldState, newState) => {
+        const mayNeedIds = transactions.some((transaction) =>
+          transaction.docChanged
+          && transaction.steps.some((step) =>
+            valueContainsUnidentifiedNotebookNode(step.toJSON())));
+        if (!mayNeedIds) {
+          return null;
+        }
         const transaction = newState.tr;
         let changed = false;
         newState.doc.descendants((node, position) => {

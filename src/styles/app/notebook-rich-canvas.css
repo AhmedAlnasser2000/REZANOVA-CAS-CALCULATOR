@@ -1106,6 +1106,16 @@
   color: var(--page-muted);
 }
 
+.notebook-math-field-viewport {
+  display: inline-block;
+  min-width: 1ch;
+}
+
+.notebook-deferred-math-placeholder {
+  opacity: 0;
+  white-space: nowrap;
+}
+
 @media (max-width: 720px) {
   .notebook-rich-toolbar {
     flex-wrap: nowrap;

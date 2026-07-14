@@ -690,6 +690,15 @@
   background: rgba(255, 255, 255, 0.035);
 }
 
+.notebook-large-document-notice {
+  width: fit-content;
+  max-width: 100%;
+  border-left: 3px solid var(--page-accent);
+  padding: 4px 9px;
+  color: var(--page-muted);
+  font-size: 0.82rem;
+}
+
 .notebook-block-stack {
   min-height: 0;
   display: grid;

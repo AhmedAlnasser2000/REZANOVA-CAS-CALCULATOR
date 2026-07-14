@@ -76,7 +76,8 @@ describe('NotebookPage', () => {
     expect(screen.getByTestId('notebook-canvas')).toBeInTheDocument();
     expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore block inspector' })).toBeInTheDocument();
-    expect(screen.getAllByText('Session draft')).not.toHaveLength(0);
+    expect(screen.getAllByText('Session only')).not.toHaveLength(0);
+    expect(await screen.findByText('0 words')).toBeInTheDocument();
     expect(await screen.findByLabelText('Notebook rich document')).toBeInTheDocument();
     expect(document.querySelector('.notebook-rich-scroll-region')).not.toBeNull();
     expect(screen.queryByLabelText('Notebook text')).not.toBeInTheDocument();
@@ -601,6 +602,16 @@ describe('NotebookPage', () => {
     await waitFor(() => {
       expect(getNotebookNodeViewRenderStats().totalRenders).toBeLessThanOrEqual(4);
     });
+  });
+
+  it('reports authored words instead of presenting the internal block count as a limit', async () => {
+    render(<NotebookHarness initialState={{
+      kind: 'notebook-surface-state',
+      document: createNotebookPerformanceFixture('medium'),
+    }} />);
+
+    expect(await screen.findByText('6,400 words')).toBeInTheDocument();
+    expect(screen.queryByText(/1,000 blocks/)).not.toBeInTheDocument();
   });
 
   it('creates, nests, renames, and collapses visible document sections', async () => {

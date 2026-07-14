@@ -200,6 +200,29 @@ describe('Notebook rich document model', () => {
       id: document.id,
       blockCount: 5,
       title: 'Untitled Notebook',
+      wordCount: 2,
     });
+  });
+
+  it('counts authored prose while excluding mathematical source text', () => {
+    const document = createNotebookRichDocument({ now: fixedNow });
+    document.content = [{
+      type: 'section',
+      id: 'section.words',
+      title: 'Limit laws',
+      content: [{
+        type: 'paragraph',
+        id: 'paragraph.words',
+        content: [{ type: 'text', text: "Euler's useful identity" }, {
+          type: 'inlineMath',
+          id: 'math.words',
+          sourceText: 'e^(i*pi)+1=0',
+          latex: 'e^{i\\pi}+1=0',
+          workspaceTarget: 'calculate',
+        }],
+      }],
+    }];
+
+    expect(summarizeNotebookDocument(document).wordCount).toBe(5);
   });
 });

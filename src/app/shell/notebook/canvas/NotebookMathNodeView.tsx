@@ -8,12 +8,12 @@ import {
   isNotebookLatexRunnable,
   type NotebookWorkspaceTarget,
 } from '../../../../lib/notebook';
-import { NotebookMathField } from '../math-field';
 import {
   canOpenNotebookToolTarget,
   notebookToolTargetLabel,
 } from '../tool-targets';
 import { recordNotebookNodeViewRender } from './node-view-stats';
+import { NotebookViewportMathField } from './NotebookViewportMathField';
 
 export type NotebookOpenMathHandler = (
   target: NotebookWorkspaceTarget,
@@ -63,11 +63,12 @@ export function createNotebookMathNodeView(
           data-testid="notebook-inline-math-node"
           contentEditable={false}
         >
-          <NotebookMathField
+          <NotebookViewportMathField
             className="notebook-rich-inline-field"
             dataTestId="notebook-inline-math-field"
             nodeId={id}
             role="inline"
+            selected={selected}
             value={latex}
             workspaceTarget={workspaceTarget}
             onChange={(nextLatex) => updateAttributes({ latex: nextLatex })}
@@ -88,12 +89,13 @@ export function createNotebookMathNodeView(
           <small>{notebookToolTargetLabel(workspaceTarget)}</small>
         </header>
         <div className="notebook-rich-display-math-row">
-          <NotebookMathField
+          <NotebookViewportMathField
             className="notebook-rich-display-field"
             dataTestId="notebook-display-math-field"
             nodeId={id}
             placeholder="Enter math"
             role="display"
+            selected={selected}
             value={latex}
             workspaceTarget={workspaceTarget}
             onChange={(nextLatex) => updateAttributes({ latex: nextLatex })}
