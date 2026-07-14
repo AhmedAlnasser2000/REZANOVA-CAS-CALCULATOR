@@ -93,3 +93,11 @@
 - status: verified; committed by the checkpoint containing this entry
 - staged_scope: Notebook publication projection/job contracts, focused tests, public export, and required durable memory only
 - excluded: untracked `test-results/` and concurrent Canonical Result/OOE work
+
+## NOTEBOOK-EXPORT-PDF1
+
+- commit_message: `NOTEBOOK-EXPORT-PDF1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook PDF publication UI/renderer, layout-fragment export seam, focused tests, styles, Chromium specification, Tauri print capability, and required durable memory only
+- excluded: untracked `test-results/`, concurrent clipboard/result-contract/OOE work, and unrelated staged changes

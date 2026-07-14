@@ -9,13 +9,16 @@ import {
 
 import {
   notebookPageGeometry,
+  paginateNotebookBlocks,
   type NotebookPageSetup,
+  type NotebookPaginationFragment,
 } from '../../../../lib/notebook';
 
 export type NotebookViewMode = 'print' | 'draft';
 
 export type NotebookPaginationMetrics = {
   currentPage: number;
+  fragments: NotebookPaginationFragment[];
   pageCount: number;
   pageGapPx: number;
   pageHeightPx: number;
@@ -52,6 +55,7 @@ export function useNotebookPagination({
 }) {
   const [metrics, setMetrics] = useState<NotebookPaginationMetrics>({
     currentPage: 1,
+    fragments: [],
     pageCount: 1,
     pageGapPx: PAGE_GAP_PX,
     pageHeightPx: 1,
@@ -76,10 +80,22 @@ export function useNotebookPagination({
 
     const commitMetrics = (next: NotebookPaginationMetrics) => {
       const current = metricsRef.current;
+      const fragmentsMatch = current.fragments.length === next.fragments.length
+        && current.fragments.every((fragment, index) => {
+          const candidate = next.fragments[index];
+          return candidate
+            && fragment.id === candidate.id
+            && fragment.page === candidate.page
+            && fragment.fragment === candidate.fragment
+            && Math.abs(fragment.offsetPt - candidate.offsetPt) < 0.1
+            && Math.abs(fragment.heightPt - candidate.heightPt) < 0.1
+            && Math.abs(fragment.scale - candidate.scale) < 0.001;
+        });
       if (
         current.currentPage === next.currentPage
         && current.pageCount === next.pageCount
         && Math.abs(current.pageHeightPx - next.pageHeightPx) < 0.5
+        && fragmentsMatch
       ) return;
       metricsRef.current = next;
       setMetrics(next);
@@ -97,6 +113,23 @@ export function useNotebookPagination({
     const paginate = () => {
       frame = 0;
       const children = [...editorElement.children] as HTMLElement[];
+      const geometry = notebookPageGeometry(pageSetup);
+      const measuredLayout = (pointsPerPixel: number) => paginateNotebookBlocks(
+        children.map((element, index) => {
+          const computed = getComputedStyle(element);
+          const marginTop = Number.parseFloat(computed.marginTop) || 0;
+          const marginBottom = Number.parseFloat(computed.marginBottom) || 0;
+          return {
+            id: element.dataset.notebookNodeId ?? `notebook.block.${index}`,
+            kind: blockKind(element),
+            heightPt: Math.max(
+              0,
+              (element.getBoundingClientRect().height + marginTop + marginBottom) * pointsPerPixel,
+            ),
+          };
+        }),
+        geometry.usableHeight,
+      );
       styleElement.textContent = '';
       stage.style.removeProperty('--notebook-page-count');
       stage.style.removeProperty('--notebook-page-height-px');
@@ -108,16 +141,18 @@ export function useNotebookPagination({
       stage.style.removeProperty('--notebook-object-max-height-px');
       stage.style.removeProperty('max-width');
       if (viewMode === 'draft') {
+        const renderedContentWidth = Math.max(1, editorElement.getBoundingClientRect().width);
+        const draftLayout = measuredLayout(geometry.usableWidth / renderedContentWidth);
         commitMetrics({
           currentPage: 1,
-          pageCount: 1,
+          fragments: draftLayout.fragments,
+          pageCount: draftLayout.pageCount,
           pageGapPx: PAGE_GAP_PX,
-          pageHeightPx: Math.max(1, stage.clientHeight),
+          pageHeightPx: geometry.height * (renderedContentWidth / geometry.usableWidth),
         });
         return;
       }
 
-      const geometry = notebookPageGeometry(pageSetup);
       stage.style.maxWidth = `${geometry.width * (96 / 72)}px`;
       const pageWidthPx = Math.max(1, stage.getBoundingClientRect().width);
       const scale = pageWidthPx / geometry.width;
@@ -209,11 +244,13 @@ export function useNotebookPagination({
         pageIndex,
         Math.floor(Math.max(0, Math.max(cursor, activeFloatBottom) - 1) / stride),
       );
-      const pageCount = Math.max(1, pageIndex + 1);
       styleElement.textContent = layoutRules.join('\n');
+      const publicationLayout = measuredLayout(1 / scale);
+      const pageCount = Math.max(1, pageIndex + 1, publicationLayout.pageCount);
       stage.style.setProperty('--notebook-page-count', String(pageCount));
       commitMetrics({
         currentPage: currentPage(pageHeightPx, pageCount),
+        fragments: publicationLayout.fragments,
         pageCount,
         pageGapPx: PAGE_GAP_PX,
         pageHeightPx,

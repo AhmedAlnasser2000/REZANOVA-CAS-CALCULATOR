@@ -9,12 +9,13 @@ import { downloadNotebookPackage } from './downloadNotebookPackage';
 import type { useNotebookLibrarySession } from './useNotebookLibrarySession';
 
 type NotebookFileBackstageProps = {
+  onExportPdf: () => void;
   session: ReturnType<typeof useNotebookLibrarySession>;
 };
 
 type BackstageView = 'home' | 'open' | 'history' | 'trash';
 
-export function NotebookFileBackstage({ session }: NotebookFileBackstageProps) {
+export function NotebookFileBackstage({ onExportPdf, session }: NotebookFileBackstageProps) {
   const backstage = useNotebookTransientLayer({ id: 'notebook-file-backstage' });
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [view, setView] = useState<BackstageView>('home');
@@ -100,6 +101,16 @@ export function NotebookFileBackstage({ session }: NotebookFileBackstageProps) {
                   <button type="button" onClick={() => setView('open')}>
                     <strong>Open</strong>
                     <span>Browse recent and all local notebooks.</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      backstage.close(false);
+                      onExportPdf();
+                    }}
+                  >
+                    <strong>Print / Save as PDF</strong>
+                    <span>Preview compatibility, then use the system print dialog.</span>
                   </button>
                   <button
                     type="button"

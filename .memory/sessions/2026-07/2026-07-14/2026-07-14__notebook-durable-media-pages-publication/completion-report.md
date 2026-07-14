@@ -42,4 +42,7 @@
 - `NOTEBOOK-VIDEO1` is committed as `8b00acef`.
 - `NOTEBOOK-EXPORT-PROJECTION1` is verified under the standing commit approval. The immutable version-1 projection freezes source identity/revision, app blocks, page geometry, target-required assets, scope, and compatibility evidence before format adapters run.
 - Whole-document, exact PDF page-range, and document-ordered top-level Section scopes are live at the contract layer. DOCX/Web reflow is explicit, and low-priority cancellable jobs remain independent from mounted Notebook tabs without mutating documents or History.
-- The next gate is `NOTEBOOK-EXPORT-PDF1`.
+- `NOTEBOOK-EXPORT-PROJECTION1` is committed as `e4710c76`.
+- `NOTEBOOK-EXPORT-PDF1` is verified under the standing commit approval. File backstage now prepares a compatibility report and dedicated typed physical-page preview from the frozen current revision, then invokes the system Print/Save as PDF dialog.
+- Whole document, exact physical page range, and selected top-level Sections are supported. Static math, selectable text, safe SVG/image formatting, captions, structured colors, headers/footers, numbering, explicit breaks, and static video descriptions are included without a second PDF engine or direct PDF byte generation.
+- The next gate is `NOTEBOOK-EXPORT-DOCX1`.

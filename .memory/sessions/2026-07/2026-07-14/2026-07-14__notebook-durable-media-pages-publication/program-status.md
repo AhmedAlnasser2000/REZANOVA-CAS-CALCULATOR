@@ -33,14 +33,14 @@
 | `NOTEBOOK-PAGE-LAYOUT1` | ui | committed `f3a9a95d` |
 | `NOTEBOOK-IMAGE-LAYOUT1` | ui | committed `3356786e` |
 | `NOTEBOOK-VIDEO1` | ui | committed `8b00acef` |
-| `NOTEBOOK-EXPORT-PROJECTION1` | backend | verified; standing commit approval |
-| `NOTEBOOK-EXPORT-PDF1` | ui | pending |
+| `NOTEBOOK-EXPORT-PROJECTION1` | backend | committed `e4710c76` |
+| `NOTEBOOK-EXPORT-PDF1` | ui | verified; standing commit approval |
 | `NOTEBOOK-EXPORT-DOCX1` | backend | pending |
 | `NOTEBOOK-EXPORT-WEB1` | backend | pending |
 
 ## Current Handoff
 
-- `NOTEBOOK-EXPORT-PROJECTION1` meets its frozen-snapshot, scope, asset-resolution, compatibility-report, cancellation, static, and repository gates.
-- Later adapters receive only immutable app-owned blocks, source revision, page geometry, resolved target assets, scope, and compatibility findings. They cannot parse Tiptap JSON, editor DOM, or calculator rendering.
-- Exact page ranges remain PDF-only; DOCX and Web reflow, while selected top-level Sections are normalized into document order for every target.
-- The next implementation gate is `NOTEBOOK-EXPORT-PDF1` after this standing-approved selective commit.
+- `NOTEBOOK-EXPORT-PDF1` meets its dedicated typed renderer, static math/media, compatibility preview, exact page-range, system-print, responsive, forced-colors, static, and repository gates.
+- File backstage prepares a frozen current-revision projection, offers whole-document, physical-page, or selected-Section scope, and invokes the platform print dialog without generating PDF bytes.
+- Print pages preserve V8 geometry, running matter, numbering, explicit breaks, app-owned structured content, image crop/rotation/wrapping preferences, safe SVG assets, and static video descriptions.
+- The next implementation gate is `NOTEBOOK-EXPORT-DOCX1` after this standing-approved selective commit.

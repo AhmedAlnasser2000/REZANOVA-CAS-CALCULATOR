@@ -6,6 +6,7 @@ import {
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -21,6 +22,7 @@ import {
   type NotebookLibraryService,
   type NotebookPerformanceProfile,
   type NotebookRichDocument,
+  type NotebookStoredRecordV1,
   type NotebookSurfaceState,
   type NotebookWorkspaceTarget,
 } from '../../lib/notebook';
@@ -49,6 +51,7 @@ import { useNotebookDocumentAnalysis } from './notebook/useNotebookDocumentAnaly
 import { NotebookFileBackstage } from './notebook/library/NotebookFileBackstage';
 import { downloadNotebookPackage } from './notebook/library/downloadNotebookPackage';
 import { useNotebookLibrarySession } from './notebook/library/useNotebookLibrarySession';
+import { NotebookPdfExportDialog } from './notebook/publication';
 
 type NotebookPageProps = {
   instanceId: string;
@@ -81,10 +84,12 @@ function NotebookPageContent({
   const [activeRibbonTab, setActiveRibbonTab] = useState<NotebookRibbonTab>('home');
   const [pagination, setPagination] = useState<NotebookPaginationMetrics>({
     currentPage: 1,
+    fragments: [],
     pageCount: 1,
     pageGapPx: 24,
     pageHeightPx: 1,
   });
+  const [pdfRecord, setPdfRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
@@ -127,6 +132,10 @@ function NotebookPageContent({
   const documentAnalysis = useNotebookDocumentAnalysis(document);
   const isLargeDocument = (documentAnalysis?.blockCount ?? 0) > NOTEBOOK_LIVE_BLOCK_TARGET;
   const effectiveViewMode = isLargeDocument ? 'draft' : uiState.viewMode;
+  const publicationLayout = useMemo(() => ({
+    fragments: pagination.fragments,
+    pageCount: pagination.pageCount,
+  }), [pagination.fragments, pagination.pageCount]);
   const workbenchStyle = {
     '--notebook-inspector-width': `${uiState.inspectorWidth}px`,
     '--notebook-outline-width': `${uiState.outlineWidth}px`,
@@ -370,7 +379,12 @@ function NotebookPageContent({
               activeRibbonTab={activeRibbonTab}
               assetPort={service.asset}
               document={document}
-              fileControl={<NotebookFileBackstage session={librarySession} />}
+              fileControl={(
+                <NotebookFileBackstage
+                  session={librarySession}
+                  onExportPdf={() => setPdfRecord(librarySession.snapshotCurrentRecord())}
+                />
+              )}
               initialProseSelection={uiState.proseSelection}
               onChange={commitDocument}
               onEditorChange={setEditor}
@@ -446,6 +460,15 @@ function NotebookPageContent({
             />
           ) : null}
         </div>
+        {pdfRecord ? (
+          <NotebookPdfExportDialog
+            assetPort={service.asset}
+            layout={publicationLayout}
+            record={pdfRecord}
+            sourceViewMode={effectiveViewMode}
+            onClose={() => setPdfRecord(null)}
+          />
+        ) : null}
         <footer className="app-page-shell-footer">
           <span>{effectiveViewMode === 'draft'
             ? 'Draft view'

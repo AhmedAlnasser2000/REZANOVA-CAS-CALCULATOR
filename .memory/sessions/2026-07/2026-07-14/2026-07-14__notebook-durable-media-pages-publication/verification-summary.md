@@ -122,3 +122,16 @@
 - compatibility evidence: report summaries always expose video substitution, equation fallback, font substitution, and layout-approximation counts. PDF static-video assets exclude the original video; Web retains video/WebVTT; DOCX/Web report reflow and reject physical page ranges.
 - static evidence: incremental TypeScript, Notebook-publication ESLint, file-size validation, memory validation, and diff hygiene pass. Production source remains between 3 and 271 lines.
 - resource evidence: no UI, Playwright, Rust, production-build, broad unit, or canary gate ran because this is a backend-only contract milestone. Concurrent Canonical Result/OOE work and untracked `test-results/` remain excluded.
+
+## NOTEBOOK-EXPORT-PDF1
+
+- gate: ui
+- status: verified
+- model evidence: 9 focused publication tests pass for the immutable projection and static MathLive compatibility preflight.
+- UI evidence: 2 focused cases pass for compatibility preview, static video substitution, whole/page/Section scopes, running matter, and system print invocation. The adjacent Notebook page suite passes 28 of 29; its one clipboard-paste failure is caused by the concurrent adapter's new `FileList.item()` expectation and does not execute this PDF surface.
+- Chromium evidence: one dedicated scenario passes at 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors. Two physical pages, exact page 2 selection, headers/footers/numbering, zero document overflow, and stubbed system print invocation are proven.
+- visual evidence: inspected screenshots show a readable white publication page, contained dark preview controls, internal horizontal paper scrolling at 1100px, and strong system-color contrast.
+- contract evidence: the renderer consumes only `NotebookPublicationProjectionV1`, uses V8 point geometry and measured fragments, preserves selectable text/static math/safe SVG and image formatting, and substitutes video with poster/text plus the Web-package note.
+- platform evidence: the desktop capability includes `core:webview:allow-print`, while the actual cross-platform call remains the webview-native `window.print()` flow. No PDF bytes are created.
+- static evidence: focused Notebook/publication ESLint, file-size validation, memory validation, diff hygiene, and exact-patch incremental TypeScript from clean `e4710c76` pass. The shared-checkout recheck is blocked only by one concurrent OOE diagnostics fixture error; that foreign file is excluded.
+- resource evidence: no full unit/UI/canary suite or production build ran. Gate-owned Vite and Playwright processes stopped, and untracked `test-results/` remains excluded.

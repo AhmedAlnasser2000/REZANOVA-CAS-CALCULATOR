@@ -288,6 +288,18 @@ export function useNotebookLibrarySession({
     };
   }, [service.package]);
 
+  const snapshotCurrentRecord = useCallback(() => {
+    if (!recordRef.current || !documentRef.current) return null;
+    const current = recordWithDocument(recordRef.current, documentRef.current);
+    return dirtyRef.current
+      ? {
+          ...current,
+          revision: current.revision + 1,
+          savedAt: new Date().toISOString(),
+        }
+      : current;
+  }, []);
+
   const importPortable = useCallback(async (bytes: Uint8Array) => {
     if (!service.package) {
       throw new Error('Portable Notebook import is available in the desktop app.');
@@ -441,6 +453,7 @@ export function useNotebookLibrarySession({
     saveError,
     saveNow,
     saveStatus,
+    snapshotCurrentRecord,
     trash,
     versions,
   };

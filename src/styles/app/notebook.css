@@ -3,6 +3,7 @@
 @import './notebook-keyboard.css';
 @import './notebook-rich-canvas.css';
 @import './notebook-library.css';
+@import './notebook-publication.css';
 
 .app-page--notebook {
   --notebook-panel: rgba(18, 31, 32, 0.94);
