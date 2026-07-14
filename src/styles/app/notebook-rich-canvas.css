@@ -659,10 +659,12 @@
 }
 
 .notebook-section {
+  --notebook-accent: #b8d49c;
   overflow: hidden;
   border: 1px solid rgba(184, 212, 156, 0.22);
+  border-left: 4px solid var(--notebook-accent);
   border-radius: 8px;
-  background: rgba(184, 212, 156, 0.025);
+  background: rgba(255, 255, 255, 0.018);
 }
 
 .notebook-section > header {
@@ -672,7 +674,7 @@
   gap: 6px;
   border-bottom: 1px solid var(--notebook-border);
   padding: 7px 9px;
-  background: rgba(184, 212, 156, 0.09);
+  background: color-mix(in srgb, var(--notebook-accent) 11%, transparent);
 }
 
 .notebook-section > header button,
@@ -689,6 +691,15 @@
 }
 
 .notebook-section-drag { cursor: grab; }
+
+.notebook-section-chevron-placeholder {
+  width: 28px;
+  height: 28px;
+}
+
+.notebook-section-icon {
+  color: var(--notebook-accent);
+}
 
 .notebook-section > header input {
   min-width: 0;
@@ -888,11 +899,12 @@
 }
 
 .notebook-semantic-block {
+  --notebook-accent: #b8d49c;
   overflow: hidden;
   border: 1px solid var(--notebook-border);
   border-left: 4px solid var(--notebook-accent);
   border-radius: 7px;
-  background: rgba(184, 212, 156, 0.045);
+  background: rgba(255, 255, 255, 0.018);
 }
 
 .notebook-semantic-block > header {
@@ -902,7 +914,7 @@
   gap: 8px;
   border-bottom: 1px solid var(--notebook-border);
   padding: 8px 10px;
-  background: rgba(184, 212, 156, 0.12);
+  background: color-mix(in srgb, var(--notebook-accent) 12%, transparent);
   color: var(--page-ink);
 }
 
@@ -963,18 +975,6 @@
   --notebook-accent: #e8997c;
 }
 
-.notebook-semantic-block[data-semantic-tone='reasoning'] > header {
-  background: rgba(93, 151, 191, 0.13);
-}
-
-.notebook-semantic-block[data-semantic-tone='practice'] > header {
-  background: rgba(173, 126, 55, 0.14);
-}
-
-.notebook-semantic-block[data-semantic-tone='support'] > header {
-  background: rgba(170, 158, 94, 0.12);
-}
-
 .notebook-semantic-content {
   min-height: 54px;
   padding: 13px 16px;
@@ -986,6 +986,30 @@
 
 .notebook-semantic-content[hidden] {
   display: none;
+}
+
+@media (forced-colors: active) {
+  .notebook-section,
+  .notebook-semantic-block {
+    --notebook-accent: Highlight !important;
+    border-color: CanvasText;
+    border-left-color: Highlight;
+    background: Canvas;
+    color: CanvasText;
+    forced-color-adjust: auto;
+  }
+
+  .notebook-section > header,
+  .notebook-semantic-block > header {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .notebook-section-icon,
+  .notebook-semantic-icon {
+    color: Highlight;
+  }
 }
 
 .notebook-template-start {

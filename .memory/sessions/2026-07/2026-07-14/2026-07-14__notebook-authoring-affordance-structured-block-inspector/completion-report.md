@@ -25,8 +25,8 @@
 
 | Gate | Kind | Status |
 | --- | --- | --- |
-| `NOTEBOOK-AUTHORING-AFFORDANCE-FIXES1` | ui | verified; selective commit approved |
-| `NOTEBOOK-STRUCTURED-BLOCK-INSPECTOR1` | ui | pending; not started |
+| `NOTEBOOK-AUTHORING-AFFORDANCE-FIXES1` | ui | committed as `8e966e65` |
+| `NOTEBOOK-STRUCTURED-BLOCK-INSPECTOR1` | ui | verified; selective commit approved |
 
 ## NOTEBOOK-AUTHORING-AFFORDANCE-FIXES1 Outcome
 
@@ -34,4 +34,13 @@
 - Exactly one empty, unformatted paragraph is pristine; structural insertions hide both onboarding prompts.
 - The editing caret and Inspector target are separate. A single click inside structured content inspects the nearest enclosing shell, while direct math selection takes precedence.
 - Inspector visibility now distinguishes auto, manual, pinned, and collapsed behavior. Manual restore remains visible and presents the approved empty-state guidance when nothing is inspectable.
-- Gate 2 remains unopened until the approved Gate 1 selective commit is created.
+- Gate 1 is committed as `8e966e65`.
+
+## NOTEBOOK-STRUCTURED-BLOCK-INSPECTOR1 Outcome
+
+- The app-owned Notebook document contract is version 6 with strict version-5 validation, continuous migrations from versions 1 through 6, and loss-preserving version-5 migration that removes only historically ignored incompatible collapse flags.
+- Academic containers and Sections persist optional six-digit accent colors, explicit collapsibility overrides, and compatible current collapsed state through the Tiptap adapter.
+- The Inspector separates Identity, Appearance, Behavior, and Arrangement. Appearance offers Automatic, six named presets, a custom picker, contrast guidance, and reset; Behavior has one Collapsible switch.
+- Automatic collapsibility remains Hint/Answer for academic containers and enabled for Sections. Explicit overrides survive type changes, while incompatible current collapse state is cleared.
+- Only the structured-block header chevron changes persisted collapsed state; Outline controls remain navigation-only.
+- Both pre-media gates are complete. Media remains a separately planned document-version milestone and is not implemented here.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createNotebookRichDocument } from './model';
+import { createNotebookRichDocument, isNotebookRichDocument } from './model';
 import {
   notebookDocumentFromTiptap,
   notebookDocumentToTiptap,
@@ -130,6 +130,38 @@ describe('Notebook Tiptap adapter', () => {
     );
 
     expect(restored.content).toEqual(document.content);
+  });
+
+  it('round-trips structured accents, collapsibility overrides, and collapsed state', () => {
+    const base = createNotebookRichDocument({ idPrefix: 'structured', now: NOW });
+    const document: NotebookRichDocument = {
+      ...base,
+      content: [{
+        type: 'section',
+        id: 'section.structured',
+        title: 'Colored section',
+        accentColor: '#75c7bc',
+        collapsible: false,
+        content: [{
+          type: 'semanticBlock',
+          id: 'semantic.structured',
+          variant: 'theorem',
+          accentColor: '#b8a0e6',
+          collapsible: true,
+          collapsed: true,
+          content: [{ type: 'paragraph', id: 'paragraph.structured' }],
+        }],
+      }],
+    };
+
+    const restored = notebookDocumentFromTiptap(
+      notebookDocumentToTiptap(document),
+      document,
+      { now: NOW },
+    );
+
+    expect(restored.content).toEqual(document.content);
+    expect(isNotebookRichDocument(restored)).toBe(true);
   });
 
   it('falls back to preserved prose for unknown editor nodes', () => {

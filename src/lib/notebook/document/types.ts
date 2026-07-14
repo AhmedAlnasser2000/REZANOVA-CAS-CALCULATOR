@@ -1,6 +1,6 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 5 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 6 as const;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
 
@@ -135,6 +135,8 @@ export type NotebookSemanticNode = {
   variant: NotebookSemanticKind;
   label?: string;
   number?: string;
+  accentColor?: string;
+  collapsible?: boolean;
   collapsed?: boolean;
   content: NotebookRichBlockNode[];
 };
@@ -143,6 +145,8 @@ export type NotebookSectionNode = {
   type: 'section';
   id: string;
   title: string;
+  accentColor?: string;
+  collapsible?: boolean;
   collapsed?: boolean;
   content: NotebookRichBlockNode[];
 };
@@ -177,6 +181,10 @@ export type NotebookRichDocumentV3 = Omit<NotebookRichDocument, 'version'> & {
 
 export type NotebookRichDocumentV4 = Omit<NotebookRichDocument, 'version'> & {
   version: 4;
+};
+
+export type NotebookRichDocumentV5 = Omit<NotebookRichDocument, 'version'> & {
+  version: 5;
 };
 
 export type NotebookDocumentSummary = {

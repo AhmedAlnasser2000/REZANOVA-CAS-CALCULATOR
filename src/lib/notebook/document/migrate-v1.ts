@@ -5,11 +5,12 @@ import type {
   NotebookTextBlock,
   NotebookTextMark,
 } from '../types';
-import { NOTEBOOK_RICH_DOCUMENT_VERSION } from './types';
+import { migrateNotebookDocumentV5 } from './migrate-v5';
 import type {
   NotebookInlineNode,
   NotebookRichBlockNode,
   NotebookRichDocument,
+  NotebookRichDocumentV5,
   NotebookRichMark,
 } from './types';
 
@@ -138,8 +139,8 @@ export function migrateNotebookDocumentV1(
     ? document.selectedBlockId
     : content[0]?.id ?? null;
 
-  return {
-    version: NOTEBOOK_RICH_DOCUMENT_VERSION,
+  const version5: NotebookRichDocumentV5 = {
+    version: 5,
     id: document.id,
     title: document.title,
     createdAt: document.createdAt,
@@ -147,4 +148,5 @@ export function migrateNotebookDocumentV1(
     selectedNodeId,
     content,
   };
+  return migrateNotebookDocumentV5(version5);
 }

@@ -1,6 +1,7 @@
 import { NodeSelection } from '@tiptap/pm/state';
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
+import type { CSSProperties } from 'react';
 import {
   BookMarked,
   CheckCircle2,
@@ -13,6 +14,7 @@ import {
 
 import {
   notebookSemanticDefinition,
+  notebookSemanticIsCollapsible,
   notebookSemanticTitle,
   type NotebookSemanticKind,
 } from '../../../../lib/notebook';
@@ -45,7 +47,14 @@ export function NotebookSemanticNodeView({
   const variant = String(node.attrs.variant ?? 'note') as NotebookSemanticKind;
   recordNotebookNodeViewRender(String(node.attrs.id ?? `notebook.semantic.${variant}`));
   const definition = notebookSemanticDefinition(variant);
-  const collapsed = definition.collapsible && node.attrs.collapsed === true;
+  const collapsible = notebookSemanticIsCollapsible(
+    variant,
+    typeof node.attrs.collapsible === 'boolean' ? node.attrs.collapsible : null,
+  );
+  const collapsed = collapsible && node.attrs.collapsed === true;
+  const accentColor = typeof node.attrs.accentColor === 'string'
+    ? node.attrs.accentColor
+    : null;
   const title = notebookSemanticTitle(
     variant,
     String(node.attrs.number ?? ''),
@@ -68,7 +77,9 @@ export function NotebookSemanticNodeView({
       className={`notebook-semantic-block is-${variant}${selected ? ' is-selected' : ''}`}
       data-notebook-semantic={variant}
       data-semantic-tone={definition.tone}
+      data-notebook-accent={accentColor ?? 'automatic'}
       data-testid={`notebook-semantic-${variant}`}
+      style={accentColor ? { '--notebook-accent': accentColor } as CSSProperties : undefined}
     >
       <header onPointerDown={selectContainer} onClick={selectContainer}>
         <button
@@ -83,7 +94,7 @@ export function NotebookSemanticNodeView({
         </button>
         <span className="notebook-semantic-icon"><SemanticIcon kind={variant} /></span>
         <strong>{title}</strong>
-        {definition.collapsible ? (
+        {collapsible ? (
           <button
             type="button"
             className="notebook-semantic-collapse"
@@ -91,7 +102,10 @@ export function NotebookSemanticNodeView({
             aria-label={`${collapsed ? 'Expand' : 'Collapse'} ${title}`}
             title={collapsed ? 'Expand' : 'Collapse'}
             onPointerDown={(event) => event.stopPropagation()}
-            onClick={() => updateAttributes({ collapsed: !collapsed })}
+            onClick={(event) => {
+              event.stopPropagation();
+              updateAttributes({ collapsed: !collapsed });
+            }}
           >
             {collapsed
               ? <ChevronRight aria-hidden="true" size={17} />

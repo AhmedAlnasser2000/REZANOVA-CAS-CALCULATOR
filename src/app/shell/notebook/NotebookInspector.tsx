@@ -12,10 +12,7 @@ import {
 
 import {
   isNotebookLatexRunnable,
-  NOTEBOOK_SEMANTIC_DEFINITIONS,
-  notebookSemanticDefinition,
   type NotebookInspectorMode,
-  type NotebookSemanticKind,
   type NotebookWorkspaceTarget,
 } from '../../../lib/notebook';
 import {
@@ -23,9 +20,9 @@ import {
   moveSelectedNotebookTopLevelNode,
   notebookTopLevelMoveState,
   updateSelectedNotebookMathTarget,
-  updateSelectedNotebookSemantic,
   type NotebookEditorSelection,
 } from './canvas';
+import { NotebookStructuredBlockInspector } from './NotebookStructuredBlockInspector';
 import {
   canOpenNotebookToolTarget,
   NOTEBOOK_TOOL_TARGETS,
@@ -70,10 +67,9 @@ export function NotebookInspector({
 }: NotebookInspectorProps) {
   const isMath = selection?.type === 'inlineMath' || selection?.type === 'displayMath';
   const isSemantic = selection?.type === 'semanticBlock';
+  const isSection = selection?.type === 'notebookSection';
   const target = String(selection?.attrs.workspaceTarget ?? 'calculate') as NotebookWorkspaceTarget;
   const latex = String(selection?.attrs.latex ?? '');
-  const semanticKind = String(selection?.attrs.variant ?? 'note') as NotebookSemanticKind;
-  const semanticDefinition = notebookSemanticDefinition(semanticKind);
   const moveState = editor && selection?.id
     ? notebookTopLevelMoveState(editor, selection.id)
     : { canMoveUp: false, canMoveDown: false };
@@ -124,62 +120,8 @@ export function NotebookInspector({
         </div>
       ) : null}
 
-      {editor && isSemantic ? (
-        <div className="notebook-inspector-section notebook-semantic-controls">
-          <label htmlFor="notebook-semantic-kind">Container</label>
-          <select
-            id="notebook-semantic-kind"
-            aria-label="Academic container type"
-            value={semanticKind}
-            onChange={(event) => updateSelectedNotebookSemantic(editor, {
-              variant: event.target.value as NotebookSemanticKind,
-              collapsed: false,
-            })}
-          >
-            {NOTEBOOK_SEMANTIC_DEFINITIONS.map((definition) => (
-              <option key={definition.kind} value={definition.kind}>{definition.label}</option>
-            ))}
-          </select>
-          <div className="notebook-semantic-fields">
-            <label>
-              <span>Number</span>
-              <input
-                aria-label="Container number"
-                value={String(selection?.attrs.number ?? '')}
-                placeholder="Optional"
-                onChange={(event) => updateSelectedNotebookSemantic(editor, {
-                  number: event.target.value,
-                })}
-              />
-            </label>
-            <label>
-              <span>Label</span>
-              <input
-                aria-label="Container label"
-                value={String(selection?.attrs.label ?? '')}
-                placeholder="Optional"
-                onChange={(event) => updateSelectedNotebookSemantic(editor, {
-                  label: event.target.value,
-                })}
-              />
-            </label>
-          </div>
-          {semanticDefinition.collapsible ? (
-            <div className="notebook-semantic-collapse-setting">
-              <span>Start collapsed</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={selection?.attrs.collapsed === true}
-                aria-label="Start container collapsed"
-                className={selection?.attrs.collapsed === true ? 'is-on' : undefined}
-                onClick={() => updateSelectedNotebookSemantic(editor, {
-                  collapsed: selection?.attrs.collapsed !== true,
-                })}
-              ><span /></button>
-            </div>
-          ) : null}
-        </div>
+      {editor && selection && (isSemantic || isSection) ? (
+        <NotebookStructuredBlockInspector editor={editor} selection={selection} />
       ) : null}
 
       {editor && isMath ? (
@@ -231,7 +173,7 @@ export function NotebookInspector({
 
       {editor && selection?.id ? (
         <div className="notebook-inspector-section">
-          <span>Block order</span>
+          <span>{isSemantic || isSection ? 'Arrangement' : 'Block order'}</span>
           <div className="notebook-inspector-actions">
             <button
               type="button"

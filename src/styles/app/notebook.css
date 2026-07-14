@@ -1033,6 +1033,129 @@
   font: inherit;
 }
 
+.notebook-structured-title-field {
+  display: grid;
+  gap: 5px;
+}
+
+.notebook-structured-title-field > span {
+  color: var(--page-subtle);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.notebook-structured-title-field input {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 9px;
+  background: #0b1718;
+  color: var(--page-ink);
+  font: inherit;
+}
+
+.notebook-structured-appearance > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.notebook-accent-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.notebook-accent-options button {
+  min-width: 0;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--page-muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.notebook-accent-options button.is-automatic {
+  grid-column: 1 / -1;
+  justify-content: center;
+}
+
+.notebook-accent-options button > span {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 5px;
+  background: var(--notebook-accent-option);
+}
+
+.notebook-accent-options button.is-selected {
+  border-color: var(--notebook-border-strong);
+  background: rgba(184, 212, 156, 0.13);
+  color: var(--page-ink);
+  box-shadow: inset 0 0 0 1px rgba(184, 212, 156, 0.18);
+}
+
+.notebook-custom-accent {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.notebook-custom-accent label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--page-subtle);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.notebook-custom-accent input[type='color'] {
+  width: 34px;
+  height: 30px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 6px;
+  padding: 2px;
+  background: #0b1718;
+}
+
+.notebook-custom-accent code {
+  overflow: hidden;
+  color: var(--page-muted);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+}
+
+.notebook-custom-accent button {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+}
+
+.notebook-custom-accent button:disabled {
+  opacity: 0.38;
+}
+
+.notebook-accent-warning {
+  border: 1px solid rgba(232, 153, 124, 0.34);
+  border-radius: 7px;
+  padding: 8px;
+  background: rgba(232, 153, 124, 0.08);
+  color: #f1b39d !important;
+  font-size: 0.74rem;
+}
+
 .notebook-semantic-fields input:focus,
 .notebook-inspector-section select:focus {
   border-color: var(--notebook-border-strong);

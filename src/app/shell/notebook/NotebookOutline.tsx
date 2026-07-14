@@ -286,17 +286,12 @@ export function NotebookOutline({
               }}
             >
               {entry.nodeType === 'section' ? (
-                <button
-                  type="button"
+                <span
                   className="notebook-outline-collapse"
-                  aria-label={entry.collapsed ? `Expand ${entry.label}` : `Collapse ${entry.label}`}
-                  aria-expanded={!entry.collapsed}
-                  onClick={() => {
-                    if (editor) updateNotebookSection(editor, entry.id, { collapsed: !entry.collapsed });
-                  }}
+                  aria-hidden="true"
                 >
                   {entry.collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-                </button>
+                </span>
               ) : entry.nodeType === 'heading'
                 ? <Heading2 aria-hidden="true" size={15} />
                 : <BookMarked aria-hidden="true" size={15} />}

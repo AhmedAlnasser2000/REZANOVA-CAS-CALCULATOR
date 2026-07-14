@@ -181,6 +181,8 @@ const SemanticBlock = Node.create({
       variant: { default: 'note' },
       label: { default: '' },
       number: { default: '' },
+      accentColor: { default: null },
+      collapsible: { default: null },
       collapsed: { default: false },
     };
   },
@@ -224,6 +226,8 @@ const NotebookSection = Node.create({
   addAttributes() {
     return {
       title: { default: 'Untitled section' },
+      accentColor: { default: null },
+      collapsible: { default: null },
       collapsed: { default: false },
     };
   },

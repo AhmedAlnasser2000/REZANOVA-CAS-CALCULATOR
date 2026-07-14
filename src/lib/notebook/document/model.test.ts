@@ -5,6 +5,7 @@ import {
   createNotebookRichDocument,
   isNotebookRichDocument,
   isNotebookRichDocumentV4,
+  isNotebookRichDocumentV5,
   summarizeNotebookDocument,
 } from './model';
 import {
@@ -16,7 +17,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 5 document with an empty starter paragraph', () => {
+  it('creates an app-owned version 6 document with an empty starter paragraph', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -115,6 +116,60 @@ describe('Notebook rich document model', () => {
     };
     invalid.content[0]!.style = 'decimal';
     expect(isNotebookRichDocument(invalid)).toBe(false);
+  });
+
+  it('strictly validates structured accents, collapse defaults, and overrides', () => {
+    const document = createNotebookRichDocument({ now: fixedNow });
+    document.content = [{
+      type: 'semanticBlock',
+      id: 'theorem.1',
+      variant: 'theorem',
+      accentColor: '#b8d49c',
+      collapsible: true,
+      collapsed: true,
+      content: [{ type: 'paragraph', id: 'paragraph.1' }],
+    }, {
+      type: 'semanticBlock',
+      id: 'hint.1',
+      variant: 'hint',
+      collapsed: true,
+      content: [{ type: 'paragraph', id: 'paragraph.2' }],
+    }, {
+      type: 'section',
+      id: 'section.1',
+      title: 'Visible section',
+      accentColor: '#84BFE8',
+      collapsed: true,
+      content: [{ type: 'paragraph', id: 'paragraph.3' }],
+    }];
+    expect(isNotebookRichDocument(document)).toBe(true);
+
+    const invalidColor = structuredClone(document) as {
+      content: Array<{ accentColor?: string }>;
+    };
+    invalidColor.content[0]!.accentColor = '#abcd';
+    expect(isNotebookRichDocument(invalidColor)).toBe(false);
+
+    const incompatibleCollapse = structuredClone(document) as {
+      content: Array<{ collapsible?: boolean; collapsed?: boolean }>;
+    };
+    delete incompatibleCollapse.content[0]!.collapsible;
+    expect(isNotebookRichDocument(incompatibleCollapse)).toBe(false);
+
+    const disabledCollapse = structuredClone(document) as {
+      content: Array<{ collapsible?: boolean; collapsed?: boolean }>;
+    };
+    disabledCollapse.content[0]!.collapsible = false;
+    expect(isNotebookRichDocument(disabledCollapse)).toBe(false);
+
+    const invalidOverride = structuredClone(document) as {
+      content: Array<{ collapsible?: unknown }>;
+    };
+    invalidOverride.content[0]!.collapsible = 'sometimes';
+    expect(isNotebookRichDocument(invalidOverride)).toBe(false);
+
+    const version5 = { ...structuredClone(document), version: 5 as const };
+    expect(isNotebookRichDocumentV5(version5)).toBe(false);
   });
 
   it('counts nested sections, semantic blocks, and list content for summaries', () => {

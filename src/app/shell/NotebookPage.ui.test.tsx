@@ -99,7 +99,8 @@ describe('NotebookPage', () => {
 
   it('inserts and configures every academic container through one catalog', async () => {
     const user = userEvent.setup();
-    render(<NotebookHarness />);
+    const onSurfaceState = vi.fn();
+    render(<NotebookHarness onSurfaceState={onSurfaceState} />);
 
     await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
     const menu = screen.getByRole('menu', { name: 'Academic containers' });
@@ -119,12 +120,72 @@ describe('NotebookPage', () => {
     fireEvent.change(within(inspector).getByLabelText('Container label'), {
       target: { value: 'Try substitution' },
     });
-    await user.click(within(inspector).getByRole('switch', { name: 'Start container collapsed' }));
+    expect(within(inspector).getAllByRole('radio')).toHaveLength(7);
+    await new Promise((resolve) => setTimeout(resolve, 550));
+    await user.click(within(inspector).getByRole('radio', { name: /Violet accent/ }));
 
-    const hint = await screen.findByTestId('notebook-semantic-hint');
+    let hint = await screen.findByTestId('notebook-semantic-hint');
     expect(hint).toHaveTextContent('Hint 2.3 Try substitution');
-    expect(within(inspector).getByRole('switch')).toHaveAttribute('aria-checked', 'true');
+    expect(hint).toHaveAttribute('data-notebook-accent', '#b8a0e6');
+    expect(hint).toHaveStyle({ '--notebook-accent': '#b8a0e6' });
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    expect(screen.getByTestId('notebook-semantic-hint'))
+      .toHaveAttribute('data-notebook-accent', 'automatic');
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    expect(screen.getByTestId('notebook-semantic-hint'))
+      .toHaveAttribute('data-notebook-accent', '#b8a0e6');
+    hint = screen.getByTestId('notebook-semantic-hint');
+
+    fireEvent.change(within(inspector).getByLabelText('Custom accent color'), {
+      target: { value: '#000000' },
+    });
+    expect(await within(inspector).findByTestId('notebook-accent-warning')).toHaveTextContent('below 3:1');
+    expect(screen.getByTestId('notebook-semantic-hint'))
+      .toHaveAttribute('data-notebook-accent', '#000000');
+    await user.click(within(inspector).getByRole('button', { name: 'Reset accent color' }));
+    expect(hint).toHaveAttribute('data-notebook-accent', 'automatic');
+    await user.click(within(inspector).getByRole('radio', { name: /Violet accent/ }));
+
+    expect(within(inspector).getByRole('switch', { name: 'Collapsible' }))
+      .toHaveAttribute('aria-checked', 'true');
+    await user.click(within(hint).getByRole('button', { name: /Collapse Hint 2.3/ }));
     expect(within(hint).getByRole('button', { name: /Expand Hint 2.3/ })).toBeInTheDocument();
+
+    fireEvent.change(kindSelect, { target: { value: 'theorem' } });
+    const restoredTheorem = await screen.findByTestId('notebook-semantic-theorem');
+    expect(restoredTheorem).toHaveAttribute('data-notebook-accent', '#b8a0e6');
+    expect(within(restoredTheorem).queryByRole('button', { name: /Expand|Collapse/ })).toBeNull();
+    expect(within(inspector).getByRole('switch', { name: 'Collapsible' }))
+      .toHaveAttribute('aria-checked', 'false');
+
+    await user.click(within(inspector).getByRole('switch', { name: 'Collapsible' }));
+    expect(within(restoredTheorem).getByRole('button', { name: /Collapse Theorem 2.3/ }))
+      .toBeInTheDocument();
+    await user.click(within(restoredTheorem).getByRole('button', { name: /Collapse Theorem 2.3/ }));
+    await user.click(within(inspector).getByRole('switch', { name: 'Collapsible' }));
+    expect(within(restoredTheorem).queryByRole('button', { name: /Expand|Collapse/ })).toBeNull();
+    expect(restoredTheorem.querySelector('.notebook-semantic-content')).not.toHaveAttribute('hidden');
+    expect(within(inspector).queryByText('Start collapsed')).toBeNull();
+
+    fireEvent.change(kindSelect, { target: { value: 'hint' } });
+    const overriddenHint = await screen.findByTestId('notebook-semantic-hint');
+    expect(overriddenHint).toHaveAttribute('data-notebook-accent', '#b8a0e6');
+    expect(within(overriddenHint).queryByRole('button', { name: /Expand|Collapse/ })).toBeNull();
+    expect(within(inspector).getByRole('switch', { name: 'Collapsible' }))
+      .toHaveAttribute('aria-checked', 'false');
+    fireEvent.change(kindSelect, { target: { value: 'theorem' } });
+
+    const lastState = onSurfaceState.mock.calls.at(-1)?.[0] as NotebookRichSurfaceState;
+    expect(lastState.document.version).toBe(6);
+    const persistedContainer = lastState.document.content.find((node) => node.type === 'semanticBlock');
+    expect(persistedContainer).toMatchObject({
+      type: 'semanticBlock',
+      variant: 'theorem',
+      accentColor: '#b8a0e6',
+      collapsible: false,
+    });
+    expect(persistedContainer).not.toHaveProperty('collapsed', true);
   });
 
   it('keeps the inspector contextual and supports pinned, collapsed, and manual-empty modes', async () => {
@@ -551,6 +612,25 @@ describe('NotebookPage', () => {
       .filter((entry) => entry.dataset.outlineKind === 'section');
     expect(sectionEntries).toHaveLength(1);
     expect(screen.getAllByTestId('notebook-section')).toHaveLength(1);
+    const firstSection = screen.getAllByTestId('notebook-section')[0]!;
+    const sectionInspector = screen.getByTestId('notebook-inspector');
+    expect(within(sectionInspector).getByLabelText('Inspector section title'))
+      .toHaveValue('Untitled section');
+    fireEvent.change(within(sectionInspector).getByLabelText('Inspector section title'), {
+      target: { value: 'Foundations' },
+    });
+    expect(within(firstSection).getByLabelText('Section title')).toHaveValue('Foundations');
+    fireEvent.change(within(sectionInspector).getByLabelText('Inspector section title'), {
+      target: { value: 'Untitled section' },
+    });
+    await user.click(within(sectionInspector).getByRole('radio', { name: /Amber accent/ }));
+    expect(firstSection).toHaveAttribute('data-notebook-accent', '#d3ad63');
+    const sectionCollapsible = within(sectionInspector).getByRole('switch', { name: 'Collapsible' });
+    await user.click(sectionCollapsible);
+    expect(within(firstSection).queryByRole('button', { name: 'Collapse Untitled section' })).toBeNull();
+    await user.click(sectionCollapsible);
+    expect(within(firstSection).getByRole('button', { name: 'Collapse Untitled section' }))
+      .toBeInTheDocument();
 
     await user.click(within(sectionEntries[0]!).getByRole('button', { name: /actions/ }));
     await user.click(screen.getByRole('menuitem', { name: 'Add subsection' }));
@@ -581,10 +661,13 @@ describe('NotebookPage', () => {
     await user.type(rename, 'Worked examples{Enter}');
     expect(screen.getAllByText('Worked examples')).not.toHaveLength(0);
 
-    const outline = screen.getByLabelText('Notebook outline');
-    await user.click(within(outline).getByRole('button', { name: 'Collapse Untitled section' }));
+    await user.click(within(firstSection).getByRole('button', { name: 'Collapse Untitled section' }));
     expect(screen.getAllByTestId('notebook-outline-entry')
       .filter((entry) => entry.textContent?.includes('Worked examples'))).toHaveLength(0);
-    expect(within(outline).getByRole('button', { name: 'Expand Untitled section' })).toBeInTheDocument();
+    expect(within(firstSection).getByRole('button', { name: 'Expand Untitled section' }))
+      .toBeInTheDocument();
+    expect(within(screen.getByLabelText('Notebook outline'))
+      .queryByRole('button', { name: /Expand Untitled section|Collapse Untitled section/ }))
+      .toBeNull();
   });
 });

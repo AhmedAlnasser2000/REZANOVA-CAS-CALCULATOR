@@ -5,7 +5,7 @@ import { migrateNotebookDocumentV4 } from './migrate-v4';
 import type { NotebookRichDocumentV4 } from './types';
 
 describe('Notebook rich document V4 migration', () => {
-  it('changes only the version for a valid unformatted V4 tree', () => {
+  it('continues through V5 and changes only the version for an unformatted tree', () => {
     const version4: NotebookRichDocumentV4 = {
       version: 4,
       id: 'notebook.v4',
@@ -31,7 +31,7 @@ describe('Notebook rich document V4 migration', () => {
 
     expect(isNotebookRichDocumentV4(version4)).toBe(true);
     const migrated = migrateNotebookDocumentV4(version4);
-    expect(migrated).toEqual({ ...version4, version: 5 });
+    expect(migrated).toEqual({ ...version4, version: 6 });
     expect(migrated.content).toEqual(version4.content);
     expect(isNotebookRichDocument(migrated)).toBe(true);
   });

@@ -20,9 +20,10 @@
 ## NOTEBOOK-AUTHORING-AFFORDANCE-FIXES1
 
 - commit_message: `NOTEBOOK-AUTHORING-AFFORDANCE-FIXES1`
-- status: verified selective UI checkpoint; explicit commit approval received
+- commit: `8e966e65`
+- status: committed selective UI checkpoint; explicit commit approval received
 
 ## NOTEBOOK-STRUCTURED-BLOCK-INSPECTOR1
 
 - commit_message: `NOTEBOOK-STRUCTURED-BLOCK-INSPECTOR1`
-- status: pending; not started
+- status: verified selective UI checkpoint; user approved commit creation for all remaining gates

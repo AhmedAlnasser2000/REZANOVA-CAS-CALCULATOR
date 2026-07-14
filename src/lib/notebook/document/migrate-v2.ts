@@ -1,14 +1,16 @@
-import {
-  NOTEBOOK_RICH_DOCUMENT_VERSION,
-  type NotebookRichDocument,
-  type NotebookRichDocumentV2,
+import { migrateNotebookDocumentV3 } from './migrate-v3';
+import type {
+  NotebookRichDocument,
+  NotebookRichDocumentV2,
+  NotebookRichDocumentV3,
 } from './types';
 
 export function migrateNotebookDocumentV2(
   document: NotebookRichDocumentV2,
 ): NotebookRichDocument {
-  return {
+  const version3: NotebookRichDocumentV3 = {
     ...document,
-    version: NOTEBOOK_RICH_DOCUMENT_VERSION,
+    version: 3,
   };
+  return migrateNotebookDocumentV3(version3);
 }

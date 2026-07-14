@@ -25,6 +25,12 @@ import {
   NOTEBOOK_PARAGRAPH_SPACES_PT,
   NOTEBOOK_TEXT_ALIGNMENTS,
 } from './types';
+import {
+  normalizeNotebookAccentColor,
+  NOTEBOOK_SEMANTIC_KINDS,
+  notebookSectionIsCollapsible,
+  notebookSemanticIsCollapsible,
+} from './structured-blocks';
 
 const WORKSPACE_TARGETS = new Set<NotebookWorkspaceTarget>([
   'calculate',
@@ -38,20 +44,7 @@ const WORKSPACE_TARGETS = new Set<NotebookWorkspaceTarget>([
   'table',
 ]);
 
-const SEMANTIC_KINDS = new Set<NotebookSemanticKind>([
-  'theorem',
-  'definition',
-  'lemma',
-  'corollary',
-  'proof',
-  'example',
-  'solution',
-  'exercise',
-  'hint',
-  'answer',
-  'note',
-  'warning',
-]);
+const SEMANTIC_KINDS = new Set<NotebookSemanticKind>(NOTEBOOK_SEMANTIC_KINDS);
 
 function stringAttr(node: JSONContent, name: string, fallback = '') {
   const value = node.attrs?.[name];
@@ -60,6 +53,11 @@ function stringAttr(node: JSONContent, name: string, fallback = '') {
 
 function booleanAttr(node: JSONContent, name: string) {
   return node.attrs?.[name] === true;
+}
+
+function optionalBooleanAttr(node: JSONContent, name: string) {
+  const value = node.attrs?.[name];
+  return typeof value === 'boolean' ? value : undefined;
 }
 
 function stringArrayAttr(node: JSONContent, name: string) {
@@ -229,6 +227,8 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         id: node.id,
         title: node.title,
         collapsed: node.collapsed ?? false,
+        accentColor: node.accentColor ?? null,
+        collapsible: node.collapsible ?? null,
       },
       content: node.content.map(blockToTiptap),
     };
@@ -242,6 +242,8 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         label: node.label ?? '',
         number: node.number ?? '',
         collapsed: node.collapsed ?? false,
+        accentColor: node.accentColor ?? null,
+        collapsible: node.collapsible ?? null,
       },
       content: node.content.map(blockToTiptap),
     };
@@ -369,11 +371,16 @@ function blockFromTiptap(
     const content = node.content
       ?.map((child) => blockFromTiptap(child, nextId))
       .filter((child): child is NotebookRichBlockNode => Boolean(child));
+    const accentColor = normalizeNotebookAccentColor(stringAttr(node, 'accentColor'));
+    const collapsible = optionalBooleanAttr(node, 'collapsible');
+    const collapsed = notebookSectionIsCollapsible(collapsible) && booleanAttr(node, 'collapsed');
     return {
       type: 'section',
       id,
       title: stringAttr(node, 'title', 'Untitled section'),
-      ...(booleanAttr(node, 'collapsed') ? { collapsed: true } : {}),
+      ...(accentColor ? { accentColor } : {}),
+      ...(collapsible !== undefined ? { collapsible } : {}),
+      ...(collapsed ? { collapsed: true } : {}),
       content: content?.length
         ? content
         : [{ type: 'paragraph', id: nextId('paragraph') }],
@@ -423,13 +430,19 @@ function blockFromTiptap(
       .filter((child): child is NotebookRichBlockNode => Boolean(child));
     const label = stringAttr(node, 'label');
     const number = stringAttr(node, 'number');
+    const accentColor = normalizeNotebookAccentColor(stringAttr(node, 'accentColor'));
+    const collapsible = optionalBooleanAttr(node, 'collapsible');
+    const collapsed = notebookSemanticIsCollapsible(variant, collapsible)
+      && booleanAttr(node, 'collapsed');
     return {
       type: 'semanticBlock',
       id,
       variant,
       ...(label ? { label } : {}),
       ...(number ? { number } : {}),
-      ...(booleanAttr(node, 'collapsed') ? { collapsed: true } : {}),
+      ...(accentColor ? { accentColor } : {}),
+      ...(collapsible !== undefined ? { collapsible } : {}),
+      ...(collapsed ? { collapsed: true } : {}),
       content: content?.length
         ? content
         : [{ type: 'paragraph', id: nextId('paragraph') }],

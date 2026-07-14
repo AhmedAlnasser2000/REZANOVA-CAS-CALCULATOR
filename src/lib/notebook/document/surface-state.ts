@@ -7,12 +7,14 @@ import { migrateNotebookDocumentV1 } from './migrate-v1';
 import { migrateNotebookDocumentV2 } from './migrate-v2';
 import { migrateNotebookDocumentV3 } from './migrate-v3';
 import { migrateNotebookDocumentV4 } from './migrate-v4';
+import { migrateNotebookDocumentV5 } from './migrate-v5';
 import {
   createNotebookRichDocument,
   isNotebookRichDocument,
   isNotebookRichDocumentV2,
   isNotebookRichDocumentV3,
   isNotebookRichDocumentV4,
+  isNotebookRichDocumentV5,
   type NotebookRichFactoryOptions,
 } from './model';
 
@@ -70,6 +72,12 @@ export function notebookRichSurfaceStateFromSlot(
       return {
         kind: NOTEBOOK_SURFACE_STATE_KIND,
         document: migrateNotebookDocumentV4(value.document),
+      };
+    }
+    if (isNotebookRichDocumentV5(value.document)) {
+      return {
+        kind: NOTEBOOK_SURFACE_STATE_KIND,
+        document: migrateNotebookDocumentV5(value.document),
       };
     }
   }

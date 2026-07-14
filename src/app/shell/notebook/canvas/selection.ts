@@ -3,7 +3,10 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { NodeSelection } from '@tiptap/pm/state';
 
 import {
+  normalizeNotebookAccentColor,
   normalizeNotebookMathSource,
+  notebookSectionIsCollapsible,
+  notebookSemanticIsCollapsible,
   type NotebookSemanticKind,
   type NotebookWorkspaceTarget,
 } from '../../../../lib/notebook';
@@ -253,6 +256,8 @@ export function insertNotebookSemanticBlock(
       variant,
       label: '',
       number: '',
+      accentColor: null,
+      collapsible: null,
       collapsed: false,
     },
     content: [{
@@ -274,6 +279,8 @@ export function insertNotebookSection(
   const section = sectionType.create({
     id: newNodeId('section'),
     title: options.title ?? 'Untitled section',
+    accentColor: null,
+    collapsible: null,
     collapsed: false,
   }, paragraphType.create({ id: newNodeId('paragraph') }));
   const parent = options.parentId ? locateNotebookNode(editor, options.parentId) : null;
@@ -298,23 +305,47 @@ export function updateSelectedNotebookSemantic(
     variant: NotebookSemanticKind;
     label: string;
     number: string;
+    accentColor: string | null;
+    collapsible: boolean | null;
     collapsed: boolean;
   }>,
+  targetSelection?: NotebookEditorSelection | null,
 ) {
-  const selection = notebookEditorSelection(editor);
-  if (selection?.type !== 'semanticBlock') {
+  const selection = targetSelection?.type === 'semanticBlock'
+    ? targetSelection
+    : notebookEditorSelection(editor);
+  if (selection?.type !== 'semanticBlock' || !selection.id) {
     return false;
   }
-  const node = editor.state.doc.nodeAt(selection.from);
-  if (!node || node.type.name !== 'semanticBlock') {
+  const located = locateNotebookNode(editor, selection.id);
+  if (!located || located.node.type.name !== 'semanticBlock') {
     return false;
   }
-  const transaction = editor.state.tr.setNodeMarkup(selection.from, undefined, {
-    ...node.attrs,
+  const accentColor = attributes.accentColor;
+  const normalizedAccent = typeof accentColor === 'string'
+    ? normalizeNotebookAccentColor(accentColor)
+    : accentColor;
+  if (typeof accentColor === 'string' && !normalizedAccent) {
+    return false;
+  }
+  const nextAttributes = {
+    ...located.node.attrs,
     ...attributes,
-  });
-  transaction.setSelection(NodeSelection.create(transaction.doc, selection.from));
-  editor.view.dispatch(transaction);
+    ...(accentColor !== undefined ? { accentColor: normalizedAccent } : {}),
+  };
+  const nextVariant = String(nextAttributes.variant ?? 'note') as NotebookSemanticKind;
+  const effectiveCollapsible = notebookSemanticIsCollapsible(
+    nextVariant,
+    typeof nextAttributes.collapsible === 'boolean' ? nextAttributes.collapsible : null,
+  );
+  if (!effectiveCollapsible) {
+    nextAttributes.collapsed = false;
+  }
+  editor.view.dispatch(editor.state.tr.setNodeMarkup(
+    located.position,
+    undefined,
+    nextAttributes,
+  ));
   return true;
 }
 
@@ -425,16 +456,40 @@ export function moveNotebookNode(
 export function updateNotebookSection(
   editor: Editor,
   id: string,
-  attributes: Partial<{ title: string; collapsed: boolean }>,
+  attributes: Partial<{
+    title: string;
+    accentColor: string | null;
+    collapsible: boolean | null;
+    collapsed: boolean;
+  }>,
 ) {
   const section = locateNotebookNode(editor, id);
   if (!section || section.node.type.name !== 'notebookSection') {
     return false;
   }
-  editor.view.dispatch(editor.state.tr.setNodeMarkup(section.position, undefined, {
+  const accentColor = attributes.accentColor;
+  const normalizedAccent = typeof accentColor === 'string'
+    ? normalizeNotebookAccentColor(accentColor)
+    : accentColor;
+  if (typeof accentColor === 'string' && !normalizedAccent) {
+    return false;
+  }
+  const nextAttributes = {
     ...section.node.attrs,
     ...attributes,
-  }));
+    ...(accentColor !== undefined ? { accentColor: normalizedAccent } : {}),
+  };
+  const effectiveCollapsible = notebookSectionIsCollapsible(
+    typeof nextAttributes.collapsible === 'boolean' ? nextAttributes.collapsible : null,
+  );
+  if (!effectiveCollapsible) {
+    nextAttributes.collapsed = false;
+  }
+  editor.view.dispatch(editor.state.tr.setNodeMarkup(
+    section.position,
+    undefined,
+    nextAttributes,
+  ));
   return true;
 }
 

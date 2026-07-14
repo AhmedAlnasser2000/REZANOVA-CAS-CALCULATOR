@@ -1,6 +1,7 @@
 import { NodeSelection } from '@tiptap/pm/state';
 import type { ReactNodeViewProps } from '@tiptap/react';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
+import type { CSSProperties } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -8,6 +9,7 @@ import {
   GripVertical,
 } from 'lucide-react';
 
+import { notebookSectionIsCollapsible } from '../../../../lib/notebook';
 import { recordNotebookNodeViewRender } from './node-view-stats';
 
 export function NotebookSectionNodeView({
@@ -18,7 +20,13 @@ export function NotebookSectionNodeView({
   updateAttributes,
 }: ReactNodeViewProps) {
   const id = String(node.attrs.id ?? 'notebook.section');
-  const collapsed = node.attrs.collapsed === true;
+  const collapsible = notebookSectionIsCollapsible(
+    typeof node.attrs.collapsible === 'boolean' ? node.attrs.collapsible : null,
+  );
+  const collapsed = collapsible && node.attrs.collapsed === true;
+  const accentColor = typeof node.attrs.accentColor === 'string'
+    ? node.attrs.accentColor
+    : null;
   const title = String(node.attrs.title ?? 'Untitled section');
   recordNotebookNodeViewRender(id);
 
@@ -37,24 +45,28 @@ export function NotebookSectionNodeView({
       as="section"
       className={`notebook-section${collapsed ? ' is-collapsed' : ''}${selected ? ' is-selected' : ''}`}
       data-notebook-section=""
+      data-notebook-accent={accentColor ?? 'automatic'}
       data-testid="notebook-section"
+      style={accentColor ? { '--notebook-accent': accentColor } as CSSProperties : undefined}
     >
       <header onPointerDown={selectSection}>
         <span className="notebook-section-drag" data-drag-handle="" title="Drag section">
           <GripVertical aria-hidden="true" size={15} />
         </span>
-        <button
-          type="button"
-          aria-label={collapsed ? `Expand ${title}` : `Collapse ${title}`}
-          aria-expanded={!collapsed}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={() => updateAttributes({ collapsed: !collapsed })}
-        >
-          {collapsed
-            ? <ChevronRight aria-hidden="true" size={16} />
-            : <ChevronDown aria-hidden="true" size={16} />}
-        </button>
-        <FolderOpen aria-hidden="true" size={16} />
+        {collapsible ? (
+          <button
+            type="button"
+            aria-label={collapsed ? `Expand ${title}` : `Collapse ${title}`}
+            aria-expanded={!collapsed}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => updateAttributes({ collapsed: !collapsed })}
+          >
+            {collapsed
+              ? <ChevronRight aria-hidden="true" size={16} />
+              : <ChevronDown aria-hidden="true" size={16} />}
+          </button>
+        ) : <span className="notebook-section-chevron-placeholder" />}
+        <FolderOpen className="notebook-section-icon" aria-hidden="true" size={16} />
         <input
           aria-label="Section title"
           value={title}

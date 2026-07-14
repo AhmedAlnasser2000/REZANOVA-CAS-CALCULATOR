@@ -2,6 +2,10 @@ import type {
   NotebookRichBlockNode,
   NotebookSemanticKind,
 } from './types';
+import {
+  notebookSectionIsCollapsible,
+  notebookSemanticIsCollapsible,
+} from './structured-blocks';
 
 export type NotebookSemanticDefinition = {
   kind: NotebookSemanticKind;
@@ -89,7 +93,7 @@ export function buildNotebookOutline(
           depth,
           path: [...path, label],
           childCount: node.content.length,
-          collapsed: node.collapsed === true,
+          collapsed: notebookSectionIsCollapsible(node.collapsible) && node.collapsed === true,
           topLevelIndex: rootIndex,
         };
         entries.push(entry);
@@ -122,7 +126,8 @@ export function buildNotebookOutline(
           depth,
           path: [...path, label],
           childCount: node.content.length,
-          collapsed: node.collapsed === true,
+          collapsed: notebookSemanticIsCollapsible(node.variant, node.collapsible)
+            && node.collapsed === true,
           topLevelIndex: rootIndex,
         };
         entries.push(entry);
