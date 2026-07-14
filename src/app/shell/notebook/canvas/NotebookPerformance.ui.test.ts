@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createNotebookPerformanceFixture,
+  createInMemoryNotebookAssetPort,
   isNotebookRichDocument,
 } from '../../../../lib/notebook';
 import {
@@ -22,7 +23,7 @@ describe('Notebook large-document performance contract', () => {
     const fixture = createNotebookPerformanceFixture('live');
     const editor = new Editor({
       content: notebookDocumentToTiptap(fixture),
-      extensions: createNotebookExtensions(() => undefined),
+      extensions: createNotebookExtensions(() => undefined, createInMemoryNotebookAssetPort()),
     });
     const readyDuration = performance.now() - startedAt;
     const editDurations: number[] = [];
@@ -31,7 +32,7 @@ describe('Notebook large-document performance contract', () => {
       editor.commands.setTextSelection(editor.state.doc.content.size - 1);
       for (let index = 0; index < 100; index += 1) {
         const editStartedAt = performance.now();
-        editor.commands.insertContent('x');
+        editor.commands.insertContent({ type: 'text', text: 'x' });
         editDurations.push(performance.now() - editStartedAt);
       }
 

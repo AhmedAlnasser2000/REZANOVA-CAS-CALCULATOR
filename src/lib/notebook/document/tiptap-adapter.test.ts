@@ -164,6 +164,36 @@ describe('Notebook Tiptap adapter', () => {
     expect(isNotebookRichDocument(restored)).toBe(true);
   });
 
+  it('round-trips image accessibility, caption, layout, rotation, and crop metadata', () => {
+    const base = createNotebookRichDocument({ idPrefix: 'image', now: NOW });
+    const document: NotebookRichDocument = {
+      ...base,
+      content: [{
+        type: 'imageFigure',
+        id: 'figure.image',
+        assetId: `sha256:${'c'.repeat(64)}`,
+        altText: 'A graph approaching a horizontal limit.',
+        decorative: false,
+        caption: 'Limit behavior near infinity',
+        numbered: true,
+        widthPercent: 50,
+        alignment: 'left',
+        placement: 'square-left',
+        rotation: 270,
+        crop: { x: 0.1, y: 0.2, width: 0.7, height: 0.6 },
+      }],
+    };
+
+    const restored = notebookDocumentFromTiptap(
+      notebookDocumentToTiptap(document),
+      document,
+      { now: NOW },
+    );
+
+    expect(restored.content).toEqual(document.content);
+    expect(isNotebookRichDocument(restored)).toBe(true);
+  });
+
   it('falls back to preserved prose for unknown editor nodes', () => {
     const document = createNotebookRichDocument({ idPrefix: 'fallback', now: NOW });
     const restored = notebookDocumentFromTiptap({

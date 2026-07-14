@@ -1,7 +1,9 @@
 import {
+  collectNotebookAssetIds,
   isNotebookRichDocument,
   summarizeNotebookDocument,
 } from '../document/model';
+import { migrateNotebookRichDocument } from '../document/migrate';
 import type { NotebookRichDocument } from '../document/types';
 
 export const NOTEBOOK_STORED_RECORD_VERSION = 1 as const;
@@ -254,7 +256,49 @@ export function isNotebookStoredRecordV1(value: unknown): value is NotebookStore
   ) {
     return false;
   }
-  return new Set(value.assetIds).size === value.assetIds.length;
+  const assets = new Set(value.assetIds);
+  return assets.size === value.assetIds.length
+    && collectNotebookAssetIds(value.document.content).every((assetId) => assets.has(assetId));
+}
+
+export function migrateNotebookStoredRecordV1(
+  value: unknown,
+): NotebookStoredRecordV1 | null {
+  if (!isRecord(value)) return null;
+  const document = migrateNotebookRichDocument(value.document);
+  if (
+    value.version !== NOTEBOOK_STORED_RECORD_VERSION
+    || !isNotebookLibraryId(value.libraryId)
+    || !Number.isSafeInteger(value.revision)
+    || Number(value.revision) < 1
+    || !isIsoDate(value.savedAt)
+    || !document
+    || !Array.isArray(value.assetIds)
+    || !value.assetIds.every(isNotebookAssetId)
+  ) {
+    return null;
+  }
+  const candidate: NotebookStoredRecordV1 = {
+    version: NOTEBOOK_STORED_RECORD_VERSION,
+    libraryId: value.libraryId,
+    revision: Number(value.revision),
+    savedAt: value.savedAt,
+    document,
+    assetIds: [...value.assetIds],
+  };
+  return isNotebookStoredRecordV1(candidate) ? candidate : null;
+}
+
+export function migrateNotebookVersionSnapshotV1(
+  value: unknown,
+): NotebookVersionSnapshotV1 | null {
+  if (!isRecord(value)) return null;
+  const record = migrateNotebookStoredRecordV1(value.record);
+  if (!record) return null;
+  const candidate = { ...value, record };
+  return isNotebookVersionSnapshotV1(candidate)
+    ? candidate as NotebookVersionSnapshotV1
+    : null;
 }
 
 export function createNotebookStoredRecordV1(
@@ -272,7 +316,9 @@ export function createNotebookStoredRecordV1(
     revision: options.revision ?? 1,
     savedAt: options.savedAt ?? new Date().toISOString(),
     document: cloneNotebookStoredDocument(document),
-    assetIds: [...new Set(options.assetIds ?? [])].sort(),
+    assetIds: [...new Set(
+      options.assetIds ?? collectNotebookAssetIds(document.content),
+    )].sort(),
   };
   if (!isNotebookStoredRecordV1(record)) {
     throw new TypeError('Notebook stored record is invalid.');

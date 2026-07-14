@@ -1,9 +1,10 @@
 use super::{
     assets::{sha256_hex, validate_asset_bytes},
     model::{
-        is_asset_id, is_library_id, is_sha256, validate_asset_metadata, validate_notebook_document,
-        NotebookAssetPayloadV1, NotebookPackageInspectionV1, NotebookPackageManifestV1,
-        NotebookStoredRecordV1, DOCUMENT_PATH, PACKAGE_KIND, PACKAGE_MANIFEST_VERSION,
+        collect_notebook_asset_ids, is_asset_id, is_library_id, is_sha256,
+        migrate_notebook_document, validate_asset_metadata, NotebookAssetPayloadV1,
+        NotebookPackageInspectionV1, NotebookPackageManifestV1, NotebookStoredRecordV1,
+        DOCUMENT_PATH, PACKAGE_KIND, PACKAGE_MANIFEST_VERSION,
     },
 };
 use std::{
@@ -212,7 +213,18 @@ pub fn inspect_package(bytes: &[u8]) -> Result<ValidatedNotebookPackage, String>
     }
     let document = serde_json::from_slice(&document_bytes)
         .map_err(|error| format!("Notebook package document is malformed: {error}"))?;
-    validate_notebook_document(&document)?;
+    let document = migrate_notebook_document(document)?;
+    let package_asset_ids = manifest
+        .assets
+        .iter()
+        .map(|asset| asset.id.as_str())
+        .collect::<HashSet<_>>();
+    if collect_notebook_asset_ids(&document)
+        .iter()
+        .any(|asset_id| !package_asset_ids.contains(asset_id.as_str()))
+    {
+        return Err("Notebook package is missing a document asset.".into());
+    }
 
     let mut assets = Vec::with_capacity(manifest.assets.len());
     for metadata in &manifest.assets {

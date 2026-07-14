@@ -7,6 +7,7 @@ import {
 
 import {
   createNotebookLibrarySurfaceState,
+  collectNotebookAssetIds,
   createNotebookRichDocument,
   createNotebookStarterContent,
   createNotebookStoredRecordV1,
@@ -50,6 +51,7 @@ function recordWithDocument(
   return {
     ...record,
     document,
+    assetIds: collectNotebookAssetIds(document.content),
   };
 }
 
@@ -175,10 +177,9 @@ export function useNotebookLibrarySession({
     }
     const startedAtSequence = editSequenceRef.current;
     const nextRecord: NotebookStoredRecordV1 = {
-      ...currentRecord,
+      ...recordWithDocument(currentRecord, currentDocument),
       revision: currentRecord.revision + 1,
       savedAt: new Date().toISOString(),
-      document: currentDocument,
     };
     if (mountedRef.current) {
       setSaveStatus('saving');
@@ -226,6 +227,10 @@ export function useNotebookLibrarySession({
   const commitDocument = useCallback((nextDocument: NotebookRichDocument) => {
     const titleChanged = documentRef.current?.title !== nextDocument.title;
     documentRef.current = nextDocument;
+    if (recordRef.current) {
+      recordRef.current = recordWithDocument(recordRef.current, nextDocument);
+      setRecord(recordRef.current);
+    }
     dirtyRef.current = true;
     editSequenceRef.current += 1;
     setDocument(nextDocument);
@@ -272,10 +277,9 @@ export function useNotebookLibrarySession({
     }
     const currentRecord = dirtyRef.current
       ? {
-          ...recordRef.current,
+          ...recordWithDocument(recordRef.current, documentRef.current),
           revision: recordRef.current.revision + 1,
           savedAt: new Date().toISOString(),
-          document: documentRef.current,
         }
       : recordWithDocument(recordRef.current, documentRef.current);
     return {
@@ -303,12 +307,11 @@ export function useNotebookLibrarySession({
     }
     const current = recordRef.current;
     await saveSnapshot(current, 'before-restore');
-    const restored: NotebookStoredRecordV1 = {
+    const restored: NotebookStoredRecordV1 = recordWithDocument({
       ...current,
       revision: current.revision + 1,
       savedAt: new Date().toISOString(),
-      document: snapshot.record.document,
-    };
+    }, snapshot.record.document);
     const stored = await service.saveRecord(restored, { expectedRevision: current.revision });
     activateRecord(stored);
     await refreshCatalog();

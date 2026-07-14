@@ -263,7 +263,97 @@ fn validate_accent(value: Option<&Value>) -> Result<(), String> {
     }
 }
 
-fn validate_block(value: &Value, depth: usize) -> Result<(), String> {
+fn validate_image_figure(node: &Map<String, Value>) -> Result<(), String> {
+    if !is_asset_id(required_string(node, "assetId")?) {
+        return Err("Notebook image asset identity is invalid.".into());
+    }
+    optional_string(node, "altText")?;
+    optional_string(node, "caption")?;
+    let decorative = optional_bool(node, "decorative")?;
+    optional_bool(node, "numbered")?;
+    if decorative == Some(true)
+        && node
+            .get("altText")
+            .and_then(Value::as_str)
+            .is_some_and(|value| !value.trim().is_empty())
+    {
+        return Err("Notebook decorative image cannot carry alternative text.".into());
+    }
+    if let Some(width) = node.get("widthPercent") {
+        if !width
+            .as_u64()
+            .is_some_and(|value| (10..=100).contains(&value))
+        {
+            return Err("Notebook image width is invalid.".into());
+        }
+    }
+    let alignment = node
+        .get("alignment")
+        .map(|value| {
+            value
+                .as_str()
+                .filter(|value| matches!(*value, "left" | "center" | "right"))
+                .ok_or_else(|| "Notebook image alignment is invalid.".to_string())
+        })
+        .transpose()?;
+    let placement = node
+        .get("placement")
+        .map(|value| {
+            value
+                .as_str()
+                .filter(|value| {
+                    matches!(
+                        *value,
+                        "normal" | "top-and-bottom" | "square-left" | "square-right"
+                    )
+                })
+                .ok_or_else(|| "Notebook image placement is invalid.".to_string())
+        })
+        .transpose()?;
+    if matches!((placement, alignment), (Some("square-left"), Some(value)) if value != "left")
+        || matches!((placement, alignment), (Some("square-right"), Some(value)) if value != "right")
+    {
+        return Err("Notebook image placement and alignment are incompatible.".into());
+    }
+    if let Some(rotation) = node.get("rotation") {
+        if !rotation
+            .as_u64()
+            .is_some_and(|value| [0, 90, 180, 270].contains(&value))
+        {
+            return Err("Notebook image rotation is invalid.".into());
+        }
+    }
+    if let Some(crop_value) = node.get("crop") {
+        let crop = object(crop_value)?;
+        if crop.len() != 4
+            || !["x", "y", "width", "height"]
+                .iter()
+                .all(|field| crop.contains_key(*field))
+        {
+            return Err("Notebook image crop is invalid.".into());
+        }
+        let x = crop.get("x").and_then(Value::as_f64).unwrap_or(-1.0);
+        let y = crop.get("y").and_then(Value::as_f64).unwrap_or(-1.0);
+        let width = crop.get("width").and_then(Value::as_f64).unwrap_or(-1.0);
+        let height = crop.get("height").and_then(Value::as_f64).unwrap_or(-1.0);
+        if !x.is_finite()
+            || !y.is_finite()
+            || !width.is_finite()
+            || !height.is_finite()
+            || x < 0.0
+            || y < 0.0
+            || width <= 0.0
+            || height <= 0.0
+            || x + width > 1.0
+            || y + height > 1.0
+        {
+            return Err("Notebook image crop is invalid.".into());
+        }
+    }
+    Ok(())
+}
+
+fn validate_block(value: &Value, depth: usize, allow_images: bool) -> Result<(), String> {
     if depth > 256 {
         return Err("Notebook nesting exceeds the safety limit.".into());
     }
@@ -351,7 +441,7 @@ fn validate_block(value: &Value, depth: usize) -> Result<(), String> {
                     return Err("Notebook list contains a non-item node.".into());
                 }
                 required_string(item, "id")?;
-                validate_block_content(item, depth + 1)?;
+                validate_block_content(item, depth + 1, allow_images)?;
             }
             Ok(())
         }
@@ -388,27 +478,38 @@ fn validate_block(value: &Value, depth: usize) -> Result<(), String> {
             if collapsed == Some(true) && !collapsible.unwrap_or(default_collapsible) {
                 return Err("Notebook collapsed state is incompatible with behavior.".into());
             }
-            validate_block_content(node, depth + 1)
+            validate_block_content(node, depth + 1, allow_images)
         }
+        "imageFigure" if allow_images => validate_image_figure(node),
         _ => Err("Notebook block type is unsupported.".into()),
     }
 }
 
-fn validate_block_content(node: &Map<String, Value>, depth: usize) -> Result<(), String> {
+fn validate_block_content(
+    node: &Map<String, Value>,
+    depth: usize,
+    allow_images: bool,
+) -> Result<(), String> {
     for child in node
         .get("content")
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook block content must be an array.".to_string())?
     {
-        validate_block(child, depth)?;
+        validate_block(child, depth, allow_images)?;
     }
     Ok(())
 }
 
-pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
+fn validate_notebook_document_version(
+    document: &Value,
+    version: u64,
+    allow_images: bool,
+) -> Result<(), String> {
     let document = object(document)?;
-    if document.get("version").and_then(Value::as_u64) != Some(6) {
-        return Err("Notebook package requires an app-document version 6.".into());
+    if document.get("version").and_then(Value::as_u64) != Some(version) {
+        return Err(format!(
+            "Notebook package requires app-document version {version}."
+        ));
     }
     required_string(document, "id")?;
     document
@@ -428,9 +529,42 @@ pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook document content must be an array.".to_string())?
     {
-        validate_block(node, 0)?;
+        validate_block(node, 0, allow_images)?;
     }
     Ok(())
+}
+
+pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
+    validate_notebook_document_version(document, 7, true)
+}
+
+pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
+    match document.get("version").and_then(Value::as_u64) {
+        Some(7) => validate_notebook_document(&document)?,
+        Some(6) => {
+            validate_notebook_document_version(&document, 6, false)?;
+            document["version"] = Value::from(7);
+            validate_notebook_document(&document)?;
+        }
+        _ => return Err("Notebook document version is unsupported.".into()),
+    }
+    Ok(document)
+}
+
+pub fn migrate_stored_record(
+    mut record: NotebookStoredRecordV1,
+) -> Result<NotebookStoredRecordV1, String> {
+    record.document = migrate_notebook_document(record.document)?;
+    validate_stored_record(&record)?;
+    Ok(record)
+}
+
+pub fn migrate_version_snapshot(
+    mut snapshot: NotebookVersionSnapshotV1,
+) -> Result<NotebookVersionSnapshotV1, String> {
+    snapshot.record = migrate_stored_record(snapshot.record)?;
+    validate_version_snapshot(&snapshot)?;
+    Ok(snapshot)
 }
 
 pub fn is_library_id(value: &str) -> bool {
@@ -450,6 +584,38 @@ pub fn is_sha256(value: &str) -> bool {
 
 pub fn is_asset_id(value: &str) -> bool {
     value.strip_prefix("sha256:").is_some_and(is_sha256)
+}
+
+fn collect_node_asset_ids(value: &Value, asset_ids: &mut HashSet<String>) {
+    let Some(node) = value.as_object() else {
+        return;
+    };
+    if node.get("type").and_then(Value::as_str) == Some("imageFigure") {
+        if let Some(asset_id) = node.get("assetId").and_then(Value::as_str) {
+            asset_ids.insert(asset_id.to_string());
+        }
+    }
+    for child in node
+        .get("content")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        collect_node_asset_ids(child, asset_ids);
+    }
+}
+
+pub fn collect_notebook_asset_ids(document: &Value) -> HashSet<String> {
+    let mut asset_ids = HashSet::new();
+    for node in document
+        .get("content")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        collect_node_asset_ids(node, &mut asset_ids);
+    }
+    asset_ids
 }
 
 pub fn validate_version_snapshot(snapshot: &NotebookVersionSnapshotV1) -> Result<(), String> {
@@ -513,6 +679,12 @@ pub fn validate_stored_record(record: &NotebookStoredRecordV1) -> Result<(), Str
             return Err("Notebook stored record contains invalid or duplicate assets.".into());
         }
     }
+    if collect_notebook_asset_ids(&record.document)
+        .iter()
+        .any(|asset_id| !assets.contains(asset_id))
+    {
+        return Err("Notebook stored record is missing a referenced asset.".into());
+    }
     Ok(())
 }
 
@@ -562,6 +734,9 @@ fn measure_node(value: &Value, block_count: &mut u64, word_count: &mut u64) {
                     *word_count += count_words(text.as_str().unwrap_or(""));
                 }
             }
+        }
+        Some("imageFigure") => {
+            *word_count += count_words(node.get("caption").and_then(Value::as_str).unwrap_or(""));
         }
         _ => {}
     }

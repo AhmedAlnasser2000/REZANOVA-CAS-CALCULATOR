@@ -28,8 +28,8 @@
 | `NOTEBOOK-LARGE-DOCUMENT-READINESS1` | ui | committed `4e275f06` |
 | `NOTEBOOK-PERSISTENCE-FOUNDATION1` | backend | committed `a1c2b708` |
 | `NOTEBOOK-DOCUMENT-LIBRARY1` | ui | committed `98530d12` |
-| `NOTEBOOK-RIBBON-TABS1` | ui | verified; standing commit approval |
-| `NOTEBOOK-IMAGE1` | ui | pending |
+| `NOTEBOOK-RIBBON-TABS1` | ui | committed `64f3b955` |
+| `NOTEBOOK-IMAGE1` | ui | verified; standing commit approval |
 | `NOTEBOOK-PAGE-LAYOUT1` | ui | pending |
 | `NOTEBOOK-IMAGE-LAYOUT1` | ui | pending |
 | `NOTEBOOK-VIDEO1` | ui | pending |
@@ -40,7 +40,7 @@
 
 ## Current Handoff
 
-- `NOTEBOOK-RIBBON-TABS1` meets its focused UI, responsive Chromium, static, and repository gates.
-- Notebook now keeps File backstage beside Home and Insert while preserving the app-level Workspace Tab strip. Home owns prose formatting; Insert owns structure, math, media entry points, evidence, and dividers.
-- Image and Video remain honest disabled entry points until their named gates; Layout and contextual media tabs do not appear without functional page/media controls.
-- The next implementation gate is `NOTEBOOK-IMAGE1` after this standing-approved selective commit.
+- `NOTEBOOK-IMAGE1` meets its focused model, persistence, Rust, UI, responsive Chromium, production-build, and repository gates.
+- Notebook documents now use strict V7 image figures backed by durable content-addressed assets. PNG, JPEG, static WebP, and safe static SVG are accepted; animated, executable, external-reference, unsupported, or over-budget content is rejected before document mutation.
+- Picker, clipboard, and drag/drop insertion are one undoable document change, Picture Format is contextual, accessibility details are explicit, and only captioned figures enter Outline.
+- The next implementation gate is `NOTEBOOK-PAGE-LAYOUT1` after this standing-approved selective commit.

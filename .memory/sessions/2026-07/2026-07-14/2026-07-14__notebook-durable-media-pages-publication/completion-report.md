@@ -27,5 +27,7 @@
 - File backstage now owns New, templates, Recent, All Notebooks, `.cwiznb` import/export, bounded version history, and Trash. Workspace Tabs retain only library identity, revision, title, and view state; an already-open document is focused instead of duplicated.
 - `NOTEBOOK-DOCUMENT-LIBRARY1` is committed as `98530d12`.
 - `NOTEBOOK-RIBBON-TABS1` is verified under the standing commit approval. File backstage now sits beside Home and Insert, Home owns Font/Paragraph/Styles/Edit, and Insert owns Structure/Math/Media/Document without altering app-level Workspace Tabs.
-- Evidence and Divider are live undoable insertions. Image and Video remain visible disabled commands until V7/V9, Layout waits for functional page controls, and contextual media tabs remain selection-driven future surfaces.
-- The next gate is `NOTEBOOK-IMAGE1`; pages and publication remain sequenced after it.
+- Evidence and Divider are live undoable insertions. `NOTEBOOK-RIBBON-TABS1` is committed as `64f3b955`.
+- `NOTEBOOK-IMAGE1` is verified under the standing commit approval. Strict V7 adds durable block image figures backed by content-addressed assets, with PNG, JPEG, static WebP, and safe static SVG ingestion through picker, paste, or drop.
+- Unsafe, animated, unsupported, over-dimension, and over-complexity content is rejected before document mutation. Accessibility details, optional caption numbering, Outline projection, and contextual Picture Format behavior are live; page-aware image layout remains sequenced after V8.
+- The next gate is `NOTEBOOK-PAGE-LAYOUT1`; video and publication remain sequenced after pages and image layout.

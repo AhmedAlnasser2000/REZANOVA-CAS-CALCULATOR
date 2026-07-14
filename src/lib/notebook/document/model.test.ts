@@ -6,6 +6,7 @@ import {
   isNotebookRichDocument,
   isNotebookRichDocumentV4,
   isNotebookRichDocumentV5,
+  isNotebookRichDocumentV6,
   summarizeNotebookDocument,
 } from './model';
 import {
@@ -17,7 +18,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 6 document with an empty starter paragraph', () => {
+  it('creates an app-owned version 7 document with an empty starter paragraph', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -30,6 +31,47 @@ describe('Notebook rich document model', () => {
       expect.objectContaining({ type: 'paragraph', id: document.selectedNodeId }),
     ]);
     expect(isNotebookRichDocument(JSON.parse(JSON.stringify(document)))).toBe(true);
+  });
+
+  it('strictly validates V7 image figures and keeps them out of V6', () => {
+    const document = createNotebookRichDocument({ now: fixedNow });
+    document.content = [{
+      type: 'imageFigure',
+      id: 'figure.1',
+      assetId: `sha256:${'a'.repeat(64)}`,
+      altText: 'A unit circle annotated with sine and cosine.',
+      caption: 'Unit-circle coordinates',
+      numbered: true,
+      widthPercent: 75,
+      alignment: 'center',
+      placement: 'top-and-bottom',
+      rotation: 90,
+      crop: { x: 0.1, y: 0.05, width: 0.8, height: 0.9 },
+    }];
+
+    expect(isNotebookRichDocument(document)).toBe(true);
+    expect(isNotebookRichDocumentV6({ ...document, version: 6 })).toBe(false);
+    expect(summarizeNotebookDocument(document).wordCount).toBe(2);
+
+    const invalidCrop = structuredClone(document) as {
+      content: Array<{ crop: { x: number; width: number } }>;
+    };
+    invalidCrop.content[0]!.crop.x = 0.5;
+    invalidCrop.content[0]!.crop.width = 0.8;
+    expect(isNotebookRichDocument(invalidCrop)).toBe(false);
+
+    const decorativeWithAlt = structuredClone(document) as {
+      content: Array<{ decorative?: boolean }>;
+    };
+    decorativeWithAlt.content[0]!.decorative = true;
+    expect(isNotebookRichDocument(decorativeWithAlt)).toBe(false);
+
+    const incompatibleWrap = structuredClone(document) as {
+      content: Array<{ alignment?: string; placement?: string }>;
+    };
+    incompatibleWrap.content[0]!.alignment = 'right';
+    incompatibleWrap.content[0]!.placement = 'square-left';
+    expect(isNotebookRichDocument(incompatibleWrap)).toBe(false);
   });
 
   it('validates underline, paragraph formatting, and exact Word-like font-size marks', () => {

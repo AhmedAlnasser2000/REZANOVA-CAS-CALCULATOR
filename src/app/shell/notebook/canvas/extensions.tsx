@@ -6,9 +6,13 @@ import StarterKit from '@tiptap/starter-kit';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 
-import { type NotebookWorkspaceTarget } from '../../../../lib/notebook';
+import {
+  type NotebookAssetPort,
+  type NotebookWorkspaceTarget,
+} from '../../../../lib/notebook';
 import { NotebookEvidenceNodeView } from './NotebookEvidenceNodeView';
 import { NotebookFontSize } from './NotebookFontSizeExtension';
+import { createNotebookImageNodeView } from './NotebookImageNodeView';
 import { NotebookParagraphFormatting } from './NotebookParagraphFormattingExtension';
 import {
   createNotebookMathNodeView,
@@ -29,6 +33,7 @@ const ID_NODE_TYPES = new Set([
   'evidenceSnapshot',
   'semanticBlock',
   'notebookSection',
+  'imageFigure',
 ]);
 
 function valueContainsUnidentifiedNotebookNode(value: unknown): boolean {
@@ -191,6 +196,40 @@ const EvidenceSnapshot = Node.create({
   },
 });
 
+const ImageFigure = Node.create({
+  name: 'imageFigure',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      assetId: { default: '' },
+      altText: { default: null },
+      decorative: { default: null },
+      caption: { default: null },
+      numbered: { default: null },
+      widthPercent: { default: null },
+      alignment: { default: null },
+      placement: { default: null },
+      rotation: { default: null },
+      cropX: { default: null },
+      cropY: { default: null },
+      cropWidth: { default: null },
+      cropHeight: { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'figure[data-notebook-image]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['figure', mergeAttributes(HTMLAttributes, { 'data-notebook-image': '' })];
+  },
+});
+
 const SemanticBlock = Node.create({
   name: 'semanticBlock',
   group: 'block',
@@ -278,6 +317,7 @@ const NotebookSection = Node.create({
 
 export function createNotebookExtensions(
   onOpenMathInTool: NotebookOpenMathHandler,
+  assetPort: NotebookAssetPort,
 ) {
   return [
     StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
@@ -303,6 +343,11 @@ export function createNotebookExtensions(
       },
     }),
     EvidenceSnapshot,
+    ImageFigure.extend({
+      addNodeView() {
+        return ReactNodeViewRenderer(createNotebookImageNodeView(assetPort));
+      },
+    }),
     SemanticBlock,
     NotebookSection,
   ];

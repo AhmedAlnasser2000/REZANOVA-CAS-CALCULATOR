@@ -25,7 +25,7 @@ describe('Notebook V1 to V2 migration', () => {
     const migrated = migrateNotebookDocumentV1(legacy);
     const paragraph = migrated.content[index];
 
-    expect(migrated.version).toBe(6);
+    expect(migrated.version).toBe(7);
     expect(paragraph.type).toBe('paragraph');
     expect(paragraph).toMatchObject({ id: original.id });
     if (paragraph.type !== 'paragraph') {

@@ -162,6 +162,11 @@ function NotebookPageContent({
     patchUiState({ proseSelection });
   }, [patchUiState]);
 
+  const handleContextualSelectionChange = useCallback((nextSelection: NotebookEditorSelection | null) => {
+    if (nextSelection?.type === 'imageFigure') return;
+    setActiveRibbonTab((current) => current === 'picture-format' ? 'home' : current);
+  }, []);
+
   useEffect(() => {
     if (!editor || !focusedMathSelectionId || !focusedMathSelectionType) {
       return;
@@ -338,6 +343,7 @@ function NotebookPageContent({
             </div>
             <NotebookRichCanvas
               activeRibbonTab={activeRibbonTab}
+              assetPort={service.asset}
               document={document}
               fileControl={<NotebookFileBackstage session={librarySession} />}
               initialProseSelection={uiState.proseSelection}
@@ -346,6 +352,8 @@ function NotebookPageContent({
               onOpenMathInTool={onOpenMathInTool}
               onProseSelectionChange={handleProseSelectionChange}
               onSelectRibbonTab={setActiveRibbonTab}
+              onContextualSelectionChange={handleContextualSelectionChange}
+              onImageInserted={() => setActiveRibbonTab('picture-format')}
               onSelectionChange={handleSelectionChange}
             />
             <NotebookAuthoringKeyboard instanceId={instanceId} />

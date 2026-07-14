@@ -8,6 +8,7 @@ import {
   Folder,
   FolderPlus,
   Heading2,
+  Image as ImageIcon,
   IndentIncrease,
   ListTree,
   MoreHorizontal,
@@ -58,6 +59,9 @@ function entryKindLabel(entry: NotebookOutlineEntry) {
   }
   if (entry.nodeType === 'heading') {
     return `H${Math.min(3, entry.depth + 1)}`;
+  }
+  if (entry.nodeType === 'imageFigure') {
+    return 'Figure';
   }
   return notebookSemanticDefinition(entry.semanticKind ?? 'note').label;
 }
@@ -294,6 +298,8 @@ export function NotebookOutline({
                 </span>
               ) : entry.nodeType === 'heading'
                 ? <Heading2 aria-hidden="true" size={15} />
+                : entry.nodeType === 'imageFigure'
+                  ? <ImageIcon aria-hidden="true" size={15} />
                 : <BookMarked aria-hidden="true" size={15} />}
               <div className="notebook-outline-entry-main">
                 <span className="notebook-outline-entry-copy">
@@ -370,7 +376,9 @@ export function NotebookOutline({
           );
         }) : (
           <div className="notebook-outline-empty">
-            {query ? 'No matching headings or academic containers.' : 'No headings or academic containers yet.'}
+            {query
+              ? 'No matching headings, figures, or academic containers.'
+              : 'No headings, captioned figures, or academic containers yet.'}
           </div>
         )}
       </div>

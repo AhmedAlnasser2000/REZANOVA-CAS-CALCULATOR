@@ -1,6 +1,6 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 6 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 7 as const;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
 
@@ -9,6 +9,14 @@ export const NOTEBOOK_LINE_SPACINGS = [1, 1.15, 1.5, 2] as const;
 export const NOTEBOOK_PARAGRAPH_SPACES_PT = [0, 6, 12, 18, 24] as const;
 export const NOTEBOOK_BULLET_STYLES = ['disc', 'circle', 'square', 'dash'] as const;
 export const NOTEBOOK_ORDERED_STYLES = ['decimal', 'lower-alpha', 'lower-roman'] as const;
+export const NOTEBOOK_IMAGE_ALIGNMENTS = ['left', 'center', 'right'] as const;
+export const NOTEBOOK_IMAGE_PLACEMENTS = [
+  'normal',
+  'top-and-bottom',
+  'square-left',
+  'square-right',
+] as const;
+export const NOTEBOOK_IMAGE_ROTATIONS = [0, 90, 180, 270] as const;
 
 export function isNotebookFontSize(value: unknown): value is number {
   return typeof value === 'number'
@@ -23,6 +31,9 @@ export type NotebookLineSpacing = typeof NOTEBOOK_LINE_SPACINGS[number];
 export type NotebookParagraphSpacePt = typeof NOTEBOOK_PARAGRAPH_SPACES_PT[number];
 export type NotebookBulletStyle = typeof NOTEBOOK_BULLET_STYLES[number];
 export type NotebookOrderedStyle = typeof NOTEBOOK_ORDERED_STYLES[number];
+export type NotebookImageAlignment = typeof NOTEBOOK_IMAGE_ALIGNMENTS[number];
+export type NotebookImagePlacement = typeof NOTEBOOK_IMAGE_PLACEMENTS[number];
+export type NotebookImageRotation = typeof NOTEBOOK_IMAGE_ROTATIONS[number];
 export type NotebookParagraphFormat = {
   alignment?: NotebookTextAlignment;
   lineSpacing?: NotebookLineSpacing;
@@ -107,6 +118,28 @@ export type NotebookDividerNode = {
   id: string;
 };
 
+export type NotebookImageCrop = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type NotebookImageNode = {
+  type: 'imageFigure';
+  id: string;
+  assetId: string;
+  altText?: string;
+  decorative?: boolean;
+  caption?: string;
+  numbered?: boolean;
+  widthPercent?: number;
+  alignment?: NotebookImageAlignment;
+  placement?: NotebookImagePlacement;
+  rotation?: NotebookImageRotation;
+  crop?: NotebookImageCrop;
+};
+
 export type NotebookListItemNode = {
   type: 'listItem';
   id: string;
@@ -157,6 +190,7 @@ export type NotebookRichBlockNode =
   | NotebookDisplayMathNode
   | NotebookEvidenceNode
   | NotebookDividerNode
+  | NotebookImageNode
   | NotebookListNode
   | NotebookSemanticNode
   | NotebookSectionNode;
@@ -185,6 +219,10 @@ export type NotebookRichDocumentV4 = Omit<NotebookRichDocument, 'version'> & {
 
 export type NotebookRichDocumentV5 = Omit<NotebookRichDocument, 'version'> & {
   version: 5;
+};
+
+export type NotebookRichDocumentV6 = Omit<NotebookRichDocument, 'version'> & {
+  version: 6;
 };
 
 export type NotebookDocumentSummary = {

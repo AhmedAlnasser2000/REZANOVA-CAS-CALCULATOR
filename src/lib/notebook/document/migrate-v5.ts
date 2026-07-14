@@ -1,10 +1,11 @@
 import { notebookSemanticIsCollapsible } from './structured-blocks';
 import {
-  NOTEBOOK_RICH_DOCUMENT_VERSION,
   type NotebookRichBlockNode,
   type NotebookRichDocument,
   type NotebookRichDocumentV5,
+  type NotebookRichDocumentV6,
 } from './types';
+import { migrateNotebookDocumentV6 } from './migrate-v6';
 
 function migrateBlock(node: NotebookRichBlockNode): NotebookRichBlockNode {
   if (node.type === 'semanticBlock') {
@@ -35,9 +36,10 @@ function migrateBlock(node: NotebookRichBlockNode): NotebookRichBlockNode {
 export function migrateNotebookDocumentV5(
   document: NotebookRichDocumentV5,
 ): NotebookRichDocument {
-  return {
+  const version6: NotebookRichDocumentV6 = {
     ...document,
-    version: NOTEBOOK_RICH_DOCUMENT_VERSION,
+    version: 6,
     content: document.content.map(migrateBlock),
   };
+  return migrateNotebookDocumentV6(version6);
 }

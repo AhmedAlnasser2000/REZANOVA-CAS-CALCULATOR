@@ -3,6 +3,7 @@ import {
   Bold,
   BookOpenCheck,
   Braces,
+  Captions,
   ChevronDown,
   FileCheck2,
   FolderPlus,
@@ -148,6 +149,8 @@ export function NotebookRichToolbar({
   onSelectTab,
   onInsertDisplayMath,
   onInsertInlineMath,
+  onInsertImage,
+  onEditImageDetails,
   onRequestPalette,
 }: {
   activeTab: NotebookRibbonTab;
@@ -158,6 +161,8 @@ export function NotebookRichToolbar({
   onSelectTab: (tab: NotebookRibbonTab) => void;
   onInsertDisplayMath: () => void;
   onInsertInlineMath: () => void;
+  onInsertImage: () => void;
+  onEditImageDetails: () => void;
   onRequestPalette: (mode: NotebookPaletteMode) => void;
 }) {
   const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
@@ -396,7 +401,11 @@ export function NotebookRichToolbar({
             </ToolButton>
           </RibbonGroup>
           <RibbonGroup label="Media">
-            <ToolButton disabled label="Image — available in the next media gate" onClick={() => {}}>
+            <ToolButton
+              label="Image"
+              onClick={onInsertImage}
+              transientTriggerId="notebook-image-details"
+            >
               <ImageIcon size={16} />
             </ToolButton>
             <ToolButton disabled label="Video — available in the video gate" onClick={() => {}}>
@@ -413,9 +422,27 @@ export function NotebookRichToolbar({
           </RibbonGroup>
         </> : null}
         {activeTab === 'picture-format' ? (
-          <RibbonGroup label="Picture Format">
-            <span className="notebook-contextual-tools-pending">Picture tools appear with a selected image.</span>
-          </RibbonGroup>
+          <>
+            <RibbonGroup label="Accessibility">
+              <ToolButton
+                label="Edit image alternative text and decorative state"
+                onClick={onEditImageDetails}
+                transientTriggerId="notebook-image-details"
+              ><ImageIcon size={16} /></ToolButton>
+            </RibbonGroup>
+            <RibbonGroup label="Caption">
+              <ToolButton
+                label="Edit image caption and Figure numbering"
+                onClick={onEditImageDetails}
+                transientTriggerId="notebook-image-details"
+              ><Captions size={16} /></ToolButton>
+            </RibbonGroup>
+            <RibbonGroup label="Layout">
+              <span className="notebook-contextual-tools-pending">
+                Size, wrap, crop, and rotation arrive with page-aware picture layout.
+              </span>
+            </RibbonGroup>
+          </>
         ) : null}
         {activeTab === 'video-format' ? (
           <RibbonGroup label="Video Format">

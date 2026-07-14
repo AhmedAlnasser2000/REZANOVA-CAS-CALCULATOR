@@ -9,8 +9,8 @@ pub use model::{
 
 use assets::{sha256_hex, validate_asset_bytes};
 use model::{
-    is_asset_id, summarize_record, validate_stored_record, validate_version_snapshot,
-    NotebookRecoveryMetadataV1,
+    is_asset_id, migrate_stored_record, migrate_version_snapshot, summarize_record,
+    validate_stored_record, validate_version_snapshot, NotebookRecoveryMetadataV1,
 };
 use package::{export_package, inspect_package, inspection};
 use std::{
@@ -125,8 +125,7 @@ impl NotebookStorage {
         let bytes = fs::read(path).map_err(|error| error.to_string())?;
         let record = serde_json::from_slice::<NotebookStoredRecordV1>(&bytes)
             .map_err(|error| error.to_string())?;
-        validate_stored_record(&record)?;
-        Ok(record)
+        migrate_stored_record(record)
     }
 
     fn recover_paths(&self, paths: &RecordPaths) -> Result<Option<NotebookStoredRecordV1>, String> {
@@ -354,7 +353,7 @@ impl NotebookStorage {
                 &fs::read(path).map_err(|error| error.to_string())?,
             )
             .map_err(|error| error.to_string())?;
-            validate_version_snapshot(&snapshot)?;
+            let snapshot = migrate_version_snapshot(snapshot)?;
             if snapshot.library_id != library_id {
                 return Err("Notebook version identity does not match its directory.".into());
             }

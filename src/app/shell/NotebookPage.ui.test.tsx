@@ -35,6 +35,10 @@ beforeAll(() => {
   if (!ShadowRoot.prototype.elementFromPoint) {
     ShadowRoot.prototype.elementFromPoint = () => null;
   }
+  if (!URL.createObjectURL) {
+    URL.createObjectURL = vi.fn(() => 'blob:notebook-image');
+    URL.revokeObjectURL = vi.fn();
+  }
 });
 
 function NotebookHarness({
@@ -81,6 +85,18 @@ async function readOnlyStoredDocument(
   const stored = await service.library.load(summary!.libraryId);
   expect(stored).not.toBeNull();
   return stored!.document;
+}
+
+function notebookSvgFile(name = 'limit-diagram.svg') {
+  const bytes = new TextEncoder().encode(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 30"><path d="M0 20 L40 10"/></svg>',
+  );
+  const file = new File([bytes], name, { type: 'image/svg+xml' });
+  Object.defineProperty(file, 'arrayBuffer', {
+    configurable: true,
+    value: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+  });
+  return file;
 }
 
 describe('NotebookPage', () => {
@@ -199,7 +215,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Control>}s{/Control}');
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const storedDocument = await readOnlyStoredDocument(libraryService);
-    expect(storedDocument.version).toBe(6);
+    expect(storedDocument.version).toBe(7);
     const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
@@ -488,7 +504,7 @@ describe('NotebookPage', () => {
     expect(within(toolbar).getByRole('button', { name: 'In text' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Separate equation' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Add section' })).toBeVisible();
-    expect(within(toolbar).getByRole('button', { name: /Image/ })).toBeDisabled();
+    expect(within(toolbar).getByRole('button', { name: /Image/ })).toBeEnabled();
     expect(within(toolbar).getByRole('button', { name: /Video/ })).toBeDisabled();
     expect(within(toolbar).getByRole('button', { name: 'Insert evidence' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Insert divider' })).toBeVisible();
@@ -696,6 +712,133 @@ describe('NotebookPage', () => {
 
     expect(await screen.findByText('6,400 words')).toBeInTheDocument();
     expect(screen.queryByText(/1,000 blocks/)).not.toBeInTheDocument();
+  });
+
+  it('inserts a safe image as one durable figure with accessibility and caption metadata', async () => {
+    const user = userEvent.setup();
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} />);
+
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
+    await user.upload(screen.getByLabelText('Choose image'), notebookSvgFile());
+    const dialog = await screen.findByRole('dialog', { name: 'Insert image' });
+    await user.click(within(dialog).getByRole('button', { name: 'Insert image' }));
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Alternative text is empty');
+    await user.type(within(dialog).getByLabelText('Alternative text'), 'A line approaching a finite limit.');
+    await user.type(within(dialog).getByLabelText(/Caption/), 'Limit diagram');
+    await user.click(within(dialog).getByRole('button', { name: 'Insert image' }));
+
+    const figure = await screen.findByTestId('notebook-image-figure');
+    expect(within(figure).getByRole('img', { name: 'A line approaching a finite limit.' }))
+      .toBeInTheDocument();
+    expect(figure).toHaveTextContent('Figure 1. Limit diagram');
+    expect(screen.getByRole('tab', { name: 'Picture Format' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const figureOutline = screen.getAllByTestId('notebook-outline-entry')
+      .find((entry) => entry.dataset.outlineKind === 'imageFigure');
+    expect(figureOutline).toHaveTextContent('Limit diagram');
+
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const [summary] = await libraryService.library.list();
+    const stored = await libraryService.library.load(summary!.libraryId);
+    expect(stored?.assetIds).toHaveLength(1);
+    expect(stored?.document.content).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'imageFigure',
+        altText: 'A line approaching a finite limit.',
+        caption: 'Limit diagram',
+        numbered: true,
+      }),
+    ]));
+    expect(await libraryService.asset.load(stored!.assetIds[0]!)).not.toBeNull();
+
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(screen.getByLabelText('Notebook formatting toolbar'))
+      .getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByTestId('notebook-image-figure')).not.toBeInTheDocument();
+    await user.click(within(screen.getByLabelText('Notebook formatting toolbar'))
+      .getByRole('button', { name: 'Redo' }));
+    const restoredFigure = await screen.findByTestId('notebook-image-figure');
+    expect(screen.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
+    await user.click(restoredFigure);
+    expect(screen.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Picture Format' }));
+    await user.click(within(screen.getByLabelText('Notebook formatting toolbar')).getByRole(
+      'button',
+      { name: 'Edit image alternative text and decorative state' },
+    ));
+    const details = await screen.findByRole('dialog', { name: 'Picture details' });
+    await user.click(within(details).getByRole('checkbox', { name: /Decorative image/ }));
+    await user.clear(within(details).getByLabelText(/Caption/));
+    await user.click(within(details).getByRole('button', { name: 'Save details' }));
+    expect(restoredFigure.querySelector('img')).toHaveAttribute('alt', '');
+    expect(screen.queryAllByTestId('notebook-outline-entry')
+      .some((entry) => entry.dataset.outlineKind === 'imageFigure')).toBe(false);
+  });
+
+  it('accepts image paste and drop paths while rejecting GIF before asset storage', async () => {
+    const user = userEvent.setup();
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} />);
+    await screen.findByLabelText('Notebook rich document');
+    const scrollRegion = document.querySelector('.notebook-rich-scroll-region')!;
+
+    fireEvent.paste(scrollRegion, {
+      clipboardData: { files: [notebookSvgFile('pasted.svg')] },
+    });
+    let dialog = await screen.findByRole('dialog', { name: 'Insert image' });
+    await user.click(within(dialog).getByRole('checkbox', { name: /Decorative image/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Insert image' }));
+    expect(await screen.findAllByTestId('notebook-image-figure')).toHaveLength(1);
+
+    const dropped = notebookSvgFile('dropped.svg');
+    fireEvent.drop(scrollRegion, {
+      clientX: 40,
+      clientY: 40,
+      dataTransfer: {
+        files: { length: 1, item: () => dropped },
+      },
+    });
+    dialog = await screen.findByRole('dialog', { name: 'Insert image' });
+    await user.click(within(dialog).getByRole('checkbox', { name: /Decorative image/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Insert image' }));
+    expect(await screen.findAllByTestId('notebook-image-figure')).toHaveLength(2);
+
+    await user.click(screen.getByRole('tab', { name: 'Insert' }));
+    const gifBytes = new TextEncoder().encode('GIF89a');
+    const gif = new File([gifBytes], 'animated.gif', { type: 'image/gif' });
+    Object.defineProperty(gif, 'arrayBuffer', { value: async () => gifBytes.buffer });
+    fireEvent.change(screen.getByLabelText('Choose image'), { target: { files: [gif] } });
+    expect(await screen.findByRole('alert')).toHaveTextContent('GIF images are not supported');
+    expect(screen.getAllByTestId('notebook-image-figure')).toHaveLength(2);
+  });
+
+  it('dismisses image staging with Escape and creates no node when durable storage fails', async () => {
+    const user = userEvent.setup();
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} />);
+
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
+    await user.upload(screen.getByLabelText('Choose image'), notebookSvgFile('cancelled.svg'));
+    expect(await screen.findByRole('dialog', { name: 'Insert image' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(
+      screen.queryByRole('dialog', { name: 'Insert image' }),
+    ).not.toBeInTheDocument());
+    expect(screen.queryByTestId('notebook-image-figure')).not.toBeInTheDocument();
+
+    vi.spyOn(libraryService.asset, 'put')
+      .mockRejectedValueOnce(new Error('Notebook storage quota is unavailable.'));
+    await user.upload(screen.getByLabelText('Choose image'), notebookSvgFile('quota.svg'));
+    const dialog = await screen.findByRole('dialog', { name: 'Insert image' });
+    await user.click(within(dialog).getByRole('checkbox', { name: /Decorative image/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Insert image' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('storage quota is unavailable');
+    expect(screen.queryByTestId('notebook-image-figure')).not.toBeInTheDocument();
+    expect((await libraryService.library.list())[0]?.assetCount).toBe(0);
   });
 
   it('creates, nests, renames, and collapses visible document sections', async () => {

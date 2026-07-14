@@ -67,7 +67,7 @@ test('Notebook ribbon separates Home, Insert, and File without disturbing Worksp
   await expect(toolbar.getByRole('region', { name: 'Math' })).toBeVisible();
   await expect(toolbar.getByRole('region', { name: 'Media' })).toBeVisible();
   await expect(toolbar.getByRole('region', { name: 'Document' })).toBeVisible();
-  await expect(toolbar.getByRole('button', { name: /Image/ })).toBeDisabled();
+  await expect(toolbar.getByRole('button', { name: /Image/ })).toBeEnabled();
   await expect(toolbar.getByRole('button', { name: /Video/ })).toBeDisabled();
   expect(await workspaceTabs.boundingBox()).toEqual(workspaceTabsBefore);
 
@@ -97,7 +97,7 @@ test('Notebook ribbon separates Home, Insert, and File without disturbing Worksp
     expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(width);
     await page.keyboard.press('Escape');
     await ribbonTabs.getByRole('tab', { name: 'Insert' }).click();
-    await expect(toolbar.getByRole('button', { name: /Image/ })).toBeDisabled();
+    await expect(toolbar.getByRole('button', { name: /Image/ })).toBeEnabled();
     await attachScreenshot(page, `notebook-ribbon-${width}`);
   }
 

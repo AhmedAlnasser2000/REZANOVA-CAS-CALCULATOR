@@ -16,6 +16,10 @@ import {
   NOTEBOOK_STARTER_TEMPLATES,
   createNotebookStarterContent,
   detectNotebookMathCandidates,
+  notebookSha256Hex,
+  validateNotebookImage,
+  type NotebookAssetPort,
+  type NotebookImageInspection,
   type NotebookRichDocument,
   type NotebookStarterTemplateId,
   type NotebookWorkspaceTarget,
@@ -26,11 +30,21 @@ import {
 } from '../../../../lib/notebook/document/tiptap-adapter';
 import { createNotebookExtensions } from './extensions';
 import { NotebookRichToolbar } from './NotebookRichToolbar';
+import {
+  NotebookImageDetailsDialog,
+  type NotebookImageDetails,
+} from './NotebookImageDetailsDialog';
+import {
+  captureNotebookToolbarSelection,
+  restoreNotebookToolbarSelection,
+  type NotebookToolbarSelection,
+} from './notebookToolbarSelection';
 import type { NotebookRibbonTab } from './ribbon-types';
 import {
   insertNotebookDisplayMath,
   insertNotebookInlineMath,
   notebookEditorSelection,
+  notebookEditorNodeById,
   notebookInspectorSelection,
   type NotebookEditorSelection,
 } from './selection';
@@ -45,6 +59,7 @@ import {
 
 type NotebookRichCanvasProps = {
   activeRibbonTab: NotebookRibbonTab;
+  assetPort: NotebookAssetPort;
   document: NotebookRichDocument;
   fileControl: ReactNode;
   onChange: (document: NotebookRichDocument) => void;
@@ -53,8 +68,27 @@ type NotebookRichCanvasProps = {
   initialProseSelection: NotebookProseSelection | null;
   onProseSelectionChange: (selection: NotebookProseSelection | null) => void;
   onSelectRibbonTab: (tab: NotebookRibbonTab) => void;
+  onContextualSelectionChange: (selection: NotebookEditorSelection | null) => void;
+  onImageInserted: () => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
 };
+
+type PendingImageInsert = {
+  mode: 'insert';
+  bytes: Uint8Array;
+  fileName: string;
+  inspection: NotebookImageInspection;
+  selection: NotebookToolbarSelection;
+  insertionPosition?: number;
+};
+
+type PendingImageEdit = {
+  mode: 'edit';
+  nodeId: string;
+  initial: NotebookImageDetails;
+};
+
+type PendingImageDialog = PendingImageInsert | PendingImageEdit;
 
 const NOTEBOOK_IMMEDIATE_SYNC_NODE_SIZE_MAX = 150_000;
 const NOTEBOOK_LARGE_DOCUMENT_SYNC_DELAY_MS = 350;
@@ -104,6 +138,7 @@ function isPristineNotebook(editor: Editor) {
 
 export function NotebookRichCanvas({
   activeRibbonTab,
+  assetPort,
   document,
   fileControl,
   onChange,
@@ -112,6 +147,8 @@ export function NotebookRichCanvas({
   initialProseSelection,
   onProseSelectionChange,
   onSelectRibbonTab,
+  onContextualSelectionChange,
+  onImageInserted,
   onSelectionChange,
 }: NotebookRichCanvasProps) {
   const documentRef = useRef(document);
@@ -119,6 +156,7 @@ export function NotebookRichCanvas({
   const changeRef = useRef(onChange);
   const proseSelectionChangeRef = useRef(onProseSelectionChange);
   const selectionRef = useRef(onSelectionChange);
+  const contextualSelectionRef = useRef(onContextualSelectionChange);
   const restoredProseSelectionRef = useRef(false);
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
   const pendingDocumentSyncRef = useRef<Editor | null>(null);
@@ -128,10 +166,18 @@ export function NotebookRichCanvas({
   const [paletteRequest, setPaletteRequest] = useState<NotebookPaletteRequest | null>(null);
   const [proseSelection, setProseSelection] = useState<NotebookProseSelection | null>(null);
   const [pendingMathFocusId, setPendingMathFocusId] = useState<string | null>(null);
+  const [pendingImageDialog, setPendingImageDialog] = useState<PendingImageDialog | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
   const templateMenu = useNotebookTransientLayer({ id: 'notebook-starter-templates' });
+  const imageDialog = useNotebookTransientLayer({ id: 'notebook-image-details' });
+  const imageDialogIsOpen = imageDialog.isOpen;
+  const openImageDialog = imageDialog.open;
+  const imageDialogWasOpenRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const extensions = useMemo(
-    () => createNotebookExtensions(onOpenMathInTool),
-    [onOpenMathInTool],
+    () => createNotebookExtensions(onOpenMathInTool, assetPort),
+    [assetPort, onOpenMathInTool],
   );
   const cancelDocumentSync = useCallback(() => {
     const scheduled = documentSyncHandleRef.current;
@@ -184,6 +230,7 @@ export function NotebookRichCanvas({
         scheduleDocumentSync(currentEditor);
       }
       selectionRef.current(notebookInspectorSelection(currentEditor));
+      contextualSelectionRef.current(notebookEditorSelection(currentEditor));
       const nextProseSelection = selectedProseRange(currentEditor);
       setProseSelection(nextProseSelection);
       proseSelectionChangeRef.current(nextProseSelection);
@@ -195,6 +242,7 @@ export function NotebookRichCanvas({
     },
     onSelectionUpdate: ({ editor: currentEditor }) => {
       selectionRef.current(notebookInspectorSelection(currentEditor));
+      contextualSelectionRef.current(notebookEditorSelection(currentEditor));
       const nextProseSelection = selectedProseRange(currentEditor);
       setProseSelection(nextProseSelection);
       proseSelectionChangeRef.current(nextProseSelection);
@@ -207,15 +255,27 @@ export function NotebookRichCanvas({
     changeRef.current = onChange;
     proseSelectionChangeRef.current = onProseSelectionChange;
     selectionRef.current = onSelectionChange;
-  }, [document, onChange, onOpenMathInTool, onProseSelectionChange, onSelectionChange]);
+    contextualSelectionRef.current = onContextualSelectionChange;
+  }, [
+    document,
+    onChange,
+    onContextualSelectionChange,
+    onOpenMathInTool,
+    onProseSelectionChange,
+    onSelectionChange,
+  ]);
 
   useEffect(() => {
     onEditorChange(editor);
     if (editor) {
       onSelectionChange(notebookInspectorSelection(editor));
+      onContextualSelectionChange(notebookEditorSelection(editor));
     }
-    return () => onEditorChange(null);
-  }, [editor, onEditorChange, onSelectionChange]);
+    return () => {
+      onContextualSelectionChange(null);
+      onEditorChange(null);
+    };
+  }, [editor, onContextualSelectionChange, onEditorChange, onSelectionChange]);
 
   useEffect(() => () => {
     cancelDocumentSync();
@@ -343,6 +403,24 @@ export function NotebookRichCanvas({
     };
   }, [editor]);
 
+  useEffect(() => {
+    if (!pendingImageDialog) {
+      imageDialogWasOpenRef.current = false;
+      return;
+    }
+    if (imageDialogIsOpen) {
+      imageDialogWasOpenRef.current = true;
+      return;
+    }
+    if (imageDialogWasOpenRef.current) {
+      imageDialogWasOpenRef.current = false;
+      setPendingImageDialog(null);
+      setImageBusy(false);
+      return;
+    }
+    openImageDialog();
+  }, [imageDialogIsOpen, openImageDialog, pendingImageDialog]);
+
   if (!editor) {
     return <div className="notebook-rich-canvas-loading">Preparing document…</div>;
   }
@@ -376,10 +454,130 @@ export function NotebookRichCanvas({
     setPaletteRequest((current) => ({ mode, nonce: (current?.nonce ?? 0) + 1 }));
   }
 
+  async function stageImage(file: File, insertionPosition?: number) {
+    const selection = captureNotebookToolbarSelection(editor);
+    setImageError(null);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const declaredType = file.type.startsWith('image/') ? file.type : undefined;
+      const inspection = await validateNotebookImage(bytes, declaredType);
+      setPendingImageDialog({
+        mode: 'insert',
+        bytes,
+        fileName: file.name || 'Pasted image',
+        inspection,
+        selection,
+        ...(insertionPosition !== undefined ? { insertionPosition } : {}),
+      });
+    } catch (error) {
+      setImageError(error instanceof Error ? error.message : 'This image could not be inserted.');
+    }
+  }
+
+  function openSelectedImageDetails() {
+    const selected = notebookEditorSelection(editor);
+    if (selected?.type !== 'imageFigure' || !selected.id) return;
+    setPendingImageDialog({
+      mode: 'edit',
+      nodeId: selected.id,
+      initial: {
+        altText: String(selected.attrs.altText ?? ''),
+        decorative: selected.attrs.decorative === true,
+        caption: String(selected.attrs.caption ?? ''),
+        numbered: selected.attrs.numbered === true,
+      },
+    });
+  }
+
+  function updateImageDetails(nodeId: string, details: NotebookImageDetails) {
+    const selected = notebookEditorNodeById(editor, nodeId);
+    if (!selected || selected.type !== 'imageFigure') return false;
+    const node = editor.state.doc.nodeAt(selected.from);
+    if (!node) return false;
+    editor.view.dispatch(editor.state.tr.setNodeMarkup(selected.from, undefined, {
+      ...node.attrs,
+      altText: details.altText || null,
+      decorative: details.decorative,
+      caption: details.caption || null,
+      numbered: details.numbered,
+    }));
+    return true;
+  }
+
+  async function confirmImageDetails(details: NotebookImageDetails) {
+    if (!pendingImageDialog) return;
+    setImageBusy(true);
+    setImageError(null);
+    if (pendingImageDialog.mode === 'edit') {
+      if (!updateImageDetails(pendingImageDialog.nodeId, details)) {
+        setImageError('The selected image is no longer available.');
+        setImageBusy(false);
+        return;
+      }
+      setPendingImageDialog(null);
+      imageDialog.close(false);
+      setImageBusy(false);
+      return;
+    }
+
+    const pending = pendingImageDialog;
+    let storedAssetId: string | null = null;
+    let assetAlreadyExisted = false;
+    try {
+      const expectedAssetId = `sha256:${await notebookSha256Hex(pending.bytes)}`;
+      assetAlreadyExisted = Boolean(await assetPort.load(expectedAssetId));
+      const metadata = await assetPort.put(pending.bytes, pending.inspection.mimeType);
+      storedAssetId = metadata.id;
+      const nodeId = `notebook.imageFigure.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
+      const imageContent = {
+        type: 'imageFigure',
+        attrs: {
+          id: nodeId,
+          assetId: metadata.id,
+          altText: details.altText || null,
+          decorative: details.decorative,
+          caption: details.caption || null,
+          numbered: details.numbered,
+          widthPercent: null,
+          alignment: null,
+          placement: null,
+          rotation: null,
+          cropX: null,
+          cropY: null,
+          cropWidth: null,
+          cropHeight: null,
+        },
+      };
+      const inserted = pending.insertionPosition === undefined
+        ? restoreNotebookToolbarSelection(editor, pending.selection).insertContent(imageContent).run()
+        : editor.chain().focus().insertContentAt(
+            Math.max(0, Math.min(editor.state.doc.content.size, pending.insertionPosition)),
+            imageContent,
+          ).run();
+      const image = notebookEditorNodeById(editor, nodeId);
+      if (!inserted || !image) throw new Error('The editor could not place this image.');
+      editor.commands.setNodeSelection(image.from);
+      setPendingImageDialog(null);
+      imageDialog.close(false);
+      onImageInserted();
+    } catch (error) {
+      if (storedAssetId && !assetAlreadyExisted) {
+        await assetPort.delete(storedAssetId).catch(() => {});
+      }
+      setImageError(error instanceof Error ? error.message : 'This image could not be inserted.');
+    } finally {
+      setImageBusy(false);
+    }
+  }
+
+  const contextualSelection = notebookEditorSelection(editor);
+  const contextualTab = contextualSelection?.type === 'imageFigure' ? 'picture-format' : null;
+
   return (
     <div className="notebook-rich-canvas" data-revision={revision}>
       <NotebookRichToolbar
         activeTab={activeRibbonTab}
+        contextualTab={contextualTab}
         editor={editor}
         fileControl={fileControl}
         hasProseSelection={Boolean(proseSelection)}
@@ -390,12 +588,30 @@ export function NotebookRichCanvas({
         onInsertInlineMath={() => insertNotebookInlineMath(editor, {
           onInserted: setPendingMathFocusId,
         })}
+        onInsertImage={() => fileInputRef.current?.click()}
+        onEditImageDetails={openSelectedImageDetails}
         onRequestPalette={requestPalette}
       />
       <div
         ref={scrollRegionRef}
         className="notebook-rich-scroll-region"
         data-empty={isBlank ? 'true' : 'false'}
+        onDragOver={(event) => {
+          if (event.dataTransfer.files.length > 0) event.preventDefault();
+        }}
+        onDrop={(event) => {
+          const file = event.dataTransfer.files.item(0);
+          if (!file) return;
+          event.preventDefault();
+          const position = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
+          void stageImage(file, position?.pos ?? editor.state.doc.content.size);
+        }}
+        onPaste={(event) => {
+          const file = [...event.clipboardData.files][0];
+          if (!file) return;
+          event.preventDefault();
+          void stageImage(file);
+        }}
       >
         {isBlank ? (
           <span className="notebook-empty-writing-prompt" aria-hidden="true">
@@ -425,6 +641,43 @@ export function NotebookRichCanvas({
           </div>
         ) : null}
       </div>
+      <input
+        ref={fileInputRef}
+        className="sr-only"
+        type="file"
+        accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+        aria-label="Choose image"
+        onChange={(event) => {
+          const files = event.currentTarget.files;
+          const file = files?.item?.(0) ?? files?.[0] ?? null;
+          event.currentTarget.value = '';
+          if (file) void stageImage(file);
+        }}
+      />
+      {imageError ? (
+        <div className="notebook-image-error" role="alert">
+          <span>{imageError}</span>
+          <button type="button" aria-label="Dismiss image error" onClick={() => setImageError(null)}>×</button>
+        </div>
+      ) : null}
+      {pendingImageDialog && imageDialog.isOpen ? (
+        <NotebookImageDetailsDialog
+          key={pendingImageDialog.mode === 'insert'
+            ? pendingImageDialog.fileName
+            : pendingImageDialog.nodeId}
+          busy={imageBusy}
+          fileName={pendingImageDialog.mode === 'insert' ? pendingImageDialog.fileName : undefined}
+          initial={pendingImageDialog.mode === 'insert'
+            ? { altText: '', decorative: false, caption: '', numbered: true }
+            : pendingImageDialog.initial}
+          mode={pendingImageDialog.mode}
+          warnings={pendingImageDialog.mode === 'insert'
+            ? pendingImageDialog.inspection.warnings
+            : []}
+          onCancel={() => imageDialog.close()}
+          onConfirm={(details) => void confirmImageDetails(details)}
+        />
+      ) : null}
       <NotebookSelectionToolbar
         key={paletteRequest?.nonce ?? 0}
         editor={editor}

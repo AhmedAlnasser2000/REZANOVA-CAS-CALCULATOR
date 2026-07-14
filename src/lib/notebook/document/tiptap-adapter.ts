@@ -5,6 +5,10 @@ import { createNotebookNodeIdFactory } from './model';
 import type {
   NotebookBulletStyle,
   NotebookEvidenceNode,
+  NotebookImageAlignment,
+  NotebookImageCrop,
+  NotebookImagePlacement,
+  NotebookImageRotation,
   NotebookInlineNode,
   NotebookListItemNode,
   NotebookLineSpacing,
@@ -20,6 +24,9 @@ import type {
 import {
   isNotebookFontSize,
   NOTEBOOK_BULLET_STYLES,
+  NOTEBOOK_IMAGE_ALIGNMENTS,
+  NOTEBOOK_IMAGE_PLACEMENTS,
+  NOTEBOOK_IMAGE_ROTATIONS,
   NOTEBOOK_LINE_SPACINGS,
   NOTEBOOK_ORDERED_STYLES,
   NOTEBOOK_PARAGRAPH_SPACES_PT,
@@ -58,6 +65,21 @@ function booleanAttr(node: JSONContent, name: string) {
 function optionalBooleanAttr(node: JSONContent, name: string) {
   const value = node.attrs?.[name];
   return typeof value === 'boolean' ? value : undefined;
+}
+
+function optionalNumberAttr(node: JSONContent, name: string) {
+  const value = node.attrs?.[name];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function imageCropFromTiptap(node: JSONContent): NotebookImageCrop | undefined {
+  const x = optionalNumberAttr(node, 'cropX');
+  const y = optionalNumberAttr(node, 'cropY');
+  const width = optionalNumberAttr(node, 'cropWidth');
+  const height = optionalNumberAttr(node, 'cropHeight');
+  return x !== undefined && y !== undefined && width !== undefined && height !== undefined
+    ? { x, y, width, height }
+    : undefined;
 }
 
 function stringArrayAttr(node: JSONContent, name: string) {
@@ -220,6 +242,27 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
   if (node.type === 'horizontalRule') {
     return { type: 'horizontalRule', attrs: { id: node.id } };
   }
+  if (node.type === 'imageFigure') {
+    return {
+      type: 'imageFigure',
+      attrs: {
+        id: node.id,
+        assetId: node.assetId,
+        altText: node.altText ?? null,
+        decorative: node.decorative ?? null,
+        caption: node.caption ?? null,
+        numbered: node.numbered ?? null,
+        widthPercent: node.widthPercent ?? null,
+        alignment: node.alignment ?? null,
+        placement: node.placement ?? null,
+        rotation: node.rotation ?? null,
+        cropX: node.crop?.x ?? null,
+        cropY: node.crop?.y ?? null,
+        cropWidth: node.crop?.width ?? null,
+        cropHeight: node.crop?.height ?? null,
+      },
+    };
+  }
   if (node.type === 'section') {
     return {
       type: 'notebookSection',
@@ -366,6 +409,40 @@ function blockFromTiptap(
   }
   if (node.type === 'horizontalRule') {
     return { type: 'horizontalRule', id };
+  }
+  if (node.type === 'imageFigure') {
+    const altText = stringAttr(node, 'altText');
+    const caption = stringAttr(node, 'caption');
+    const decorative = optionalBooleanAttr(node, 'decorative');
+    const numbered = optionalBooleanAttr(node, 'numbered');
+    const widthPercent = optionalNumberAttr(node, 'widthPercent');
+    const alignment = oneOf<NotebookImageAlignment>(
+      node.attrs?.alignment,
+      NOTEBOOK_IMAGE_ALIGNMENTS,
+    );
+    const placement = oneOf<NotebookImagePlacement>(
+      node.attrs?.placement,
+      NOTEBOOK_IMAGE_PLACEMENTS,
+    );
+    const rotation = oneOf<NotebookImageRotation>(
+      node.attrs?.rotation,
+      NOTEBOOK_IMAGE_ROTATIONS,
+    );
+    const crop = imageCropFromTiptap(node);
+    return {
+      type: 'imageFigure',
+      id,
+      assetId: stringAttr(node, 'assetId'),
+      ...(altText ? { altText } : {}),
+      ...(decorative !== undefined ? { decorative } : {}),
+      ...(caption ? { caption } : {}),
+      ...(numbered !== undefined ? { numbered } : {}),
+      ...(widthPercent !== undefined ? { widthPercent } : {}),
+      ...(alignment ? { alignment } : {}),
+      ...(placement ? { placement } : {}),
+      ...(rotation !== undefined ? { rotation } : {}),
+      ...(crop ? { crop } : {}),
+    };
   }
   if (node.type === 'notebookSection') {
     const content = node.content

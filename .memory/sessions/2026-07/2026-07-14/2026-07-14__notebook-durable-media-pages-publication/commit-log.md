@@ -48,6 +48,15 @@
 
 - commit_message: `NOTEBOOK-RIBBON-TABS1`
 - approval: standing user approval recorded on 2026-07-14
-- status: verified; committed by the checkpoint containing this entry
+- status: committed
+- commit_hash: `64f3b955`
 - staged_scope: Notebook ribbon source, focused tests, styles, Chromium specification, and required durable memory only
 - excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and unrelated workspace work
+
+## NOTEBOOK-IMAGE1
+
+- commit_message: `NOTEBOOK-IMAGE1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook V7 document/media source, persistence and package safety, image UI, focused tests, styles, Chromium specification, and required durable memory only
+- excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and concurrent Canonical Result V2 work

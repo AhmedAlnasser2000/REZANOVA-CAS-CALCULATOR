@@ -8,10 +8,26 @@ import {
 } from './contracts';
 import { createIndexedDbNotebookPorts } from './indexed-db';
 
-function createPorts(name: string) {
+function createPorts(name: string, indexedDb = new IDBFactory()) {
   return createIndexedDbNotebookPorts({
     databaseName: `notebook-persistence-${name}`,
-    indexedDb: new IDBFactory(),
+    indexedDb,
+  });
+}
+
+function openDatabase(indexedDb: IDBFactory, name: string): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDb.open(name, 2);
+    request.addEventListener('success', () => resolve(request.result), { once: true });
+    request.addEventListener('error', () => reject(request.error), { once: true });
+  });
+}
+
+function complete(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.addEventListener('complete', () => resolve(), { once: true });
+    transaction.addEventListener('error', () => reject(transaction.error), { once: true });
+    transaction.addEventListener('abort', () => reject(transaction.error), { once: true });
   });
 }
 
@@ -107,5 +123,39 @@ describe('IndexedDB Notebook persistence ports', () => {
     await ports.library.deletePermanently(record.libraryId);
     expect(await ports.library.listTrash()).toEqual([]);
     expect(await ports.library.listVersions(record.libraryId)).toEqual([]);
+  });
+
+  it('hydrates V6 records and version snapshots through the V7 browser contract', async () => {
+    const name = 'legacy-v6';
+    const databaseName = `notebook-persistence-${name}`;
+    const indexedDb = new IDBFactory();
+    const ports = createPorts(name, indexedDb);
+    const current = createRecord();
+    await ports.library.save(current, { expectedRevision: null });
+
+    const legacy = JSON.parse(JSON.stringify(current));
+    legacy.document.version = 6;
+    const legacySnapshot = {
+      version: 1,
+      snapshotId: 'snapshot.browser.legacy',
+      libraryId: legacy.libraryId,
+      revision: legacy.revision,
+      createdAt: '2026-07-14T00:05:00.000Z',
+      reason: 'periodic',
+      record: legacy,
+    };
+    const database = await openDatabase(indexedDb, databaseName);
+    const transaction = database.transaction(['records', 'versions'], 'readwrite');
+    transaction.objectStore('records').put(legacy);
+    transaction.objectStore('versions').put(legacySnapshot);
+    await complete(transaction);
+    database.close();
+
+    const loaded = await ports.library.load(legacy.libraryId);
+    expect(loaded?.document.version).toBe(7);
+    expect(loaded?.document.content).toEqual(legacy.document.content);
+    const versions = await ports.library.listVersions(legacy.libraryId);
+    expect(versions[0]?.record.document.version).toBe(7);
+    expect(versions[0]?.record.document.content).toEqual(legacy.document.content);
   });
 });

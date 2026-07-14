@@ -62,3 +62,15 @@
 - interaction evidence: switching tabs closes excluded transient menus without losing the Tiptap range; returning to Home applies formatting to that preserved range. File backstage opens and dismisses through the same transient coordinator.
 - static evidence: incremental TypeScript, Notebook-scoped ESLint, file-size validation, memory validation, and diff hygiene pass.
 - resource evidence: no full unit, UI, canary, or production-build gate ran. Gate-owned Vite and Playwright processes stopped after evidence; untracked `test-results/` remains excluded.
+
+## NOTEBOOK-IMAGE1
+
+- gate: ui
+- status: verified
+- model evidence: focused document, migration, adapter, semantic, media, and persistence evidence passes 14 files and 58 tests; the final image/storage delta passes 22 of 22 tests.
+- Rust evidence: all 8 focused Notebook storage tests pass for V6-to-V7 migration, V7 metadata and crop round trips, content-addressed completeness, safe SVG acceptance, unsafe SVG rejection, and over-100-MP rejection.
+- UI evidence: the 25-case Notebook page suite passes its established behavior, the final image delta passes 3 of 3 cases, and the real 5,000-block editor performance regression passes independently.
+- Chromium evidence: dedicated scenarios cover 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors. Safe SVG insertion, explicit alt warning, Decorative, caption and Figure Outline entry, Picture Format activation/reveal, IndexedDB V7 asset serialization, Escape, GIF rejection, containment, and selected-image visibility all pass.
+- correction evidence: Chromium exposed unsupported `createImageBitmap` SVG decoding and a missing selected-node outline. Safe SVG decoding now uses the browser image decoder, with a unit regression, and forced-colors selection uses an explicit system outline.
+- static evidence: Notebook-scoped ESLint, file-size validation, exact-patch production build, and diff hygiene pass. The exact staged Notebook patch builds in an isolated clean worktree at `8dd5ca29`; shared-checkout incremental TypeScript/build remains blocked only by concurrent Canonical Result V2 edits outside this gate.
+- resource evidence: no full unit, UI, or canary suite ran. Gate-owned Vite and Playwright processes stopped, the temporary clean worktree was removed, and untracked `test-results/` remains excluded.

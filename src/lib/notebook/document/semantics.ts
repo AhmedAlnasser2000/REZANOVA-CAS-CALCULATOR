@@ -50,7 +50,7 @@ export function notebookSemanticTitle(
 export type NotebookOutlineEntry = {
   id: string;
   label: string;
-  nodeType: 'heading' | 'semanticBlock' | 'section';
+  nodeType: 'heading' | 'imageFigure' | 'semanticBlock' | 'section';
   semanticKind?: NotebookSemanticKind;
   parentId: string | null;
   depth: number;
@@ -132,6 +132,21 @@ export function buildNotebookOutline(
         };
         entries.push(entry);
         visit(node.content, node.id, depth + 1, entry.path, rootIndex);
+        return;
+      }
+      if (node.type === 'imageFigure' && node.caption?.trim()) {
+        const label = node.caption.trim();
+        entries.push({
+          id: node.id,
+          label,
+          nodeType: 'imageFigure',
+          parentId,
+          depth,
+          path: [...path, label],
+          childCount: 0,
+          collapsed: false,
+          topLevelIndex: rootIndex,
+        });
         return;
       }
       if (node.type === 'bulletList' || node.type === 'orderedList') {

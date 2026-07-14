@@ -47,7 +47,7 @@ describe('Notebook rich document V5 migration', () => {
 
     expect(isNotebookRichDocumentV5(version5)).toBe(true);
     const migrated = migrateNotebookDocumentV5(version5);
-    expect(migrated.version).toBe(6);
+    expect(migrated.version).toBe(7);
     expect(migrated.content[0]).toMatchObject({
       type: 'section',
       id: 'section.1',
