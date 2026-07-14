@@ -39,4 +39,7 @@
 - `NOTEBOOK-IMAGE-LAYOUT1` is committed as `3356786e`.
 - `NOTEBOOK-VIDEO1` is verified under the standing commit approval. Strict V9 adds local MP4/WebM figures with title/description/caption numbering, poster, WebVTT, width/alignment, loop state, Outline projection, and inactive playback cleanup.
 - Desktop videos stream into content-addressed storage and play through an opaque randomized loopback capability URL with GET/HEAD and byte ranges. Packaged WebKitGTK metadata and seeking pass after the unsupported custom URI approach was removed.
-- The next gate is `NOTEBOOK-EXPORT-PROJECTION1`; publication adapters remain downstream of the typed frozen projection.
+- `NOTEBOOK-VIDEO1` is committed as `8b00acef`.
+- `NOTEBOOK-EXPORT-PROJECTION1` is verified under the standing commit approval. The immutable version-1 projection freezes source identity/revision, app blocks, page geometry, target-required assets, scope, and compatibility evidence before format adapters run.
+- Whole-document, exact PDF page-range, and document-ordered top-level Section scopes are live at the contract layer. DOCX/Web reflow is explicit, and low-priority cancellable jobs remain independent from mounted Notebook tabs without mutating documents or History.
+- The next gate is `NOTEBOOK-EXPORT-PDF1`.

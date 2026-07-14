@@ -112,3 +112,13 @@
 - visual evidence: the inspected 130% forced-colors screenshot shows readable Video Format controls, title/description, poster/native player, caption, Outline entry, and no page overflow.
 - static evidence: production build, incremental TypeScript, Notebook-scoped ESLint, file-size validation, and diff hygiene pass. The final extraction reduces `NotebookRichCanvas.tsx` from 1,120 to 800 lines; its affected TypeScript, lint, 29-case UI, and Chromium evidence were rerun.
 - resource evidence: no broad unit/UI/canary suite ran. Gate-owned Tauri, WebKitWebDriver, Vite, and Playwright processes stopped; ignored `.task_tmp/`, untracked `test-results/`, and concurrent Canonical Result/OOE work remain excluded.
+
+## NOTEBOOK-EXPORT-PROJECTION1
+
+- gate: backend
+- status: verified
+- model evidence: 8 focused tests pass for immutable projection snapshots, target-specific asset resolution, static video reporting, document-order Section scope, exact PDF page-range geometry, invalid-scope rejection, frozen revisions, low-priority scheduling, cancellation, missing assets, and source non-mutation.
+- contract evidence: the projection contains only app-owned block subtrees, source identity/revision, V8 page setup/running matter/derived fragments, resolved immutable target assets, typed request scope, and compatibility evidence. Tiptap JSON, editor DOM, calculator output, and History mutation are absent.
+- compatibility evidence: report summaries always expose video substitution, equation fallback, font substitution, and layout-approximation counts. PDF static-video assets exclude the original video; Web retains video/WebVTT; DOCX/Web report reflow and reject physical page ranges.
+- static evidence: incremental TypeScript, Notebook-publication ESLint, file-size validation, memory validation, and diff hygiene pass. Production source remains between 3 and 271 lines.
+- resource evidence: no UI, Playwright, Rust, production-build, broad unit, or canary gate ran because this is a backend-only contract milestone. Concurrent Canonical Result/OOE work and untracked `test-results/` remain excluded.

@@ -32,15 +32,15 @@
 | `NOTEBOOK-IMAGE1` | ui | committed `b61dd6dc` |
 | `NOTEBOOK-PAGE-LAYOUT1` | ui | committed `f3a9a95d` |
 | `NOTEBOOK-IMAGE-LAYOUT1` | ui | committed `3356786e` |
-| `NOTEBOOK-VIDEO1` | ui | verified; standing commit approval |
-| `NOTEBOOK-EXPORT-PROJECTION1` | backend | pending |
+| `NOTEBOOK-VIDEO1` | ui | committed `8b00acef` |
+| `NOTEBOOK-EXPORT-PROJECTION1` | backend | verified; standing commit approval |
 | `NOTEBOOK-EXPORT-PDF1` | ui | pending |
 | `NOTEBOOK-EXPORT-DOCX1` | backend | pending |
 | `NOTEBOOK-EXPORT-WEB1` | backend | pending |
 
 ## Current Handoff
 
-- `NOTEBOOK-VIDEO1` meets its focused V9 model, native storage, streamed ingestion, UI, Chromium, and packaged-Linux range-playback gates.
-- Video Format owns bounded size/alignment, details, poster, and WebVTT controls. Playback remains local, visible-control, non-autoplay, non-wrapping, and session-state-only.
-- Native media uses a randomized capability-scoped loopback server because packaged WebKitGTK rejected the custom URI media protocol; real WebM metadata and seeking now pass in the Tauri shell.
-- The next implementation gate is `NOTEBOOK-EXPORT-PROJECTION1` after this standing-approved selective commit.
+- `NOTEBOOK-EXPORT-PROJECTION1` meets its frozen-snapshot, scope, asset-resolution, compatibility-report, cancellation, static, and repository gates.
+- Later adapters receive only immutable app-owned blocks, source revision, page geometry, resolved target assets, scope, and compatibility findings. They cannot parse Tiptap JSON, editor DOM, or calculator rendering.
+- Exact page ranges remain PDF-only; DOCX and Web reflow, while selected top-level Sections are normalized into document order for every target.
+- The next implementation gate is `NOTEBOOK-EXPORT-PDF1` after this standing-approved selective commit.

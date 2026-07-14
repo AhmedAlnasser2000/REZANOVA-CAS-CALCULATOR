@@ -85,3 +85,11 @@
 - status: verified; committed by the checkpoint containing this entry
 - staged_scope: Notebook V9 document/media source, native streamed/ranged asset delivery, focused tests, styles, Chromium specification, and required durable memory only
 - excluded: untracked `test-results/`, ignored `.task_tmp/` evidence, and concurrent Canonical Result/OOE work
+
+## NOTEBOOK-EXPORT-PROJECTION1
+
+- commit_message: `NOTEBOOK-EXPORT-PROJECTION1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook publication projection/job contracts, focused tests, public export, and required durable memory only
+- excluded: untracked `test-results/` and concurrent Canonical Result/OOE work
