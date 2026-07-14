@@ -60,3 +60,19 @@ Closed during the July 3 memory cleanup:
 - Closed the cross-arc ordering question. Canonical Clipboard follows the printer substrate and precedes broad detail migration.
 - Closed the printer-profile question. Profiles are internal compatibility and pedagogical contracts rather than a new Settings control.
 - Closed the detail-payload question. Every live line becomes explicit, while detail parts remain canonical-LaTeX-only until the later structured-History design.
+
+## 2026-07-14 - Canonical Result V2 Contract
+
+- primary_agent: codex
+- primary_agent_model: gpt-5.6
+- primary_agent_family: sol
+- recorded_by_agent: codex
+- recorded_by_agent_model: gpt-5.6
+- recorded_by_agent_family: sol
+- verified_by_agent: codex
+- verified_by_agent_model: gpt-5.6
+- verified_by_agent_family: sol
+- attribution_basis: live
+
+- Closed the V2 shape question. The approved contract uses clean typed V2 primaries, requests, supplements, Table cells, and Matrix row-operation parts, with mandatory producer-proven standard MathJSON only for genuine math leaves.
+- Closed the dual-version transition question. V1 remains immutable and visible, V2 becomes a current visible History version, future versions remain opaque, and all semantic consumers converge on one normalized presentation/semantics authority.

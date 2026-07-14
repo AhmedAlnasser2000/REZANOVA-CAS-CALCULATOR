@@ -1,14 +1,14 @@
 # Research Index
 
 ## Categories
-- `roadmaps/` - 38 roadmap and sequencing documents.
+- `roadmaps/` - 41 roadmap and sequencing documents.
 - `checklists/2026-03/YYYY-MM-DD/` - 26 manual verification checklists across 5 day folders.
 - `checklists/2026-04/YYYY-MM-DD/` - 35 manual verification checklists across 11 day folders.
 - `checklists/2026-05/YYYY-MM-DD/` - 98 manual verification checklists across 10 day folders.
 - `checklists/2026-06/YYYY-MM-DD/` - 15 manual verification checklists across 2 day folders.
-- `checklists/2026-07/YYYY-MM-DD/` - 6 manual verification checklists across 2 day folders.
+- `checklists/2026-07/YYYY-MM-DD/` - 14 manual verification checklists across 6 day folders.
 - `readiness/` - 5 readiness, dependency, or candidate-metadata documents.
-- `audits/` - 57 audit/status documents.
+- `audits/` - 84 audit/status documents.
 - `source-context/fricas/` - 6 FriCAS context research outputs.
 - `architecture/` - 4 architecture or boundary notes.
 - `references/` - 3 interpreted reference/source notes.
@@ -18,6 +18,7 @@
 - `.memory/research/roadmaps/printer-detail-clipboard-roadmap.md`
 - `.memory/research/roadmaps/history-display-contract-roadmap.md`
 - `.memory/research/roadmaps/canonical-mathjson-legacy-removal-roadmap.md`
+- `.memory/research/roadmaps/canonical-result-v2-roadmap.md`
 - `.memory/research/roadmaps/linear-algebra-vector-matrix-roadmap.md`
 - `.memory/research/roadmaps/statistics-workspace-consolidation-roadmap.md`
 - `.memory/research/roadmaps/PLAN.md`

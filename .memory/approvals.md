@@ -87,3 +87,12 @@
   source: chat-2026-07-12-canonical-mathjson-legacy-program-approval
   canonical_targets: .memory/research/roadmaps/canonical-mathjson-legacy-removal-roadmap.md; .memory/sessions/2026-07/2026-07-12/2026-07-12__canonical-mathjson-legacy-program/
   notes: The user subsequently granted standing commit approval for all 19 numbered program moves, including paired named subgates inside the producer-lane moves. No push is authorized; concurrent Notebook files and test-results remain excluded.
+- approved_at_local: 2026-07-14 +03:00
+  approver: user
+  decision: Approve the clean Canonical Result V2 program and grant standing commit approval for all eight named gates.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-07-14-canonical-result-v2-program-approval
+  canonical_targets: .memory/research/audits/canonical-result-v2-audit0.md; .memory/research/roadmaps/canonical-result-v2-roadmap.md; .memory/sessions/2026-07/2026-07-14/2026-07-14__canonical-result-v2-program/
+  notes: Standing approval covers only the eight named commits and the single approved derivative-at-point output correction. Scope changes or other visible output changes require renewed approval. No push is authorized; test-results remains excluded.
