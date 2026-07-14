@@ -80,6 +80,11 @@ export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
     'trigonometry.period-phase',
     'table.domain-boundary',
     'table.rational-function',
+    'statistics.descriptive',
+    'statistics.frequency',
+    'statistics.probability',
+    'statistics.relationship',
+    'statistics.inference',
     'matrix.matrix-arithmetic',
     'matrix.determinant',
     'matrix.inverse',
@@ -92,6 +97,7 @@ export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
     'vector.angle',
     'vector.orthogonalization',
     'vector.span-independence',
+    'vector.geometric-measures',
   ] as const satisfies readonly MathJsonRouteId[]
 );
 

@@ -48,6 +48,7 @@ export function statisticsWorkspaceScreenForLegacyScreen(
 ): StatisticsScreen {
   switch (screen) {
     case 'home':
+    case 'dataEntry':
       return 'descriptive';
     case 'probabilityHome':
       return 'binomial';
@@ -56,6 +57,29 @@ export function statisticsWorkspaceScreenForLegacyScreen(
     default:
       return screen;
   }
+}
+
+export function statisticsLeafScreenForContext(
+  screen: StatisticsScreen,
+  menuSelection: { home: number; probabilityHome: number; inferenceHome: number },
+): StatisticsScreen {
+  const probabilityLeaf = () => getStatisticsMenuEntryAtIndex(
+    'probabilityHome',
+    menuSelection.probabilityHome,
+  )?.target ?? 'binomial';
+  const inferenceLeaf = () => getStatisticsMenuEntryAtIndex(
+    'inferenceHome',
+    menuSelection.inferenceHome,
+  )?.target ?? 'meanInference';
+  if (screen === 'probabilityHome') return probabilityLeaf();
+  if (screen === 'inferenceHome') return inferenceLeaf();
+  if (screen !== 'home') return screen;
+
+  const homeTarget = getStatisticsMenuEntryAtIndex('home', menuSelection.home)?.target
+    ?? 'descriptive';
+  if (homeTarget === 'probabilityHome') return probabilityLeaf();
+  if (homeTarget === 'inferenceHome') return inferenceLeaf();
+  return statisticsWorkspaceScreenForLegacyScreen(homeTarget);
 }
 
 export type StatisticsRouteMeta = {

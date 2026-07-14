@@ -26,10 +26,18 @@ import {
 import { formatStatisticsNumber, parseIntegerDraft, parseNumericDraft } from './shared';
 import { profileStatisticsResult } from '../display/printer';
 import {
-  binomialMathJsonLeaves,
+  descriptiveStatisticsFromFrequencyRows,
+  descriptiveStatisticsFromValues,
+  type DescriptiveStatisticsSummary,
+} from './descriptive';
+import {
+  correlationMathJsonLeaves,
   confidenceIntervalMathJsonLeaves,
+  datasetMathJsonLeaves,
   descriptiveSummaryMathJsonLeaves,
   frequencySummaryMathJsonLeaves,
+  meanTestMathJsonLeaves,
+  probabilityValueMathJsonLeaves,
   regressionMathJsonLeaves,
   type StatisticsOwnedMathJsonLeaf,
 } from './math-values';
@@ -345,36 +353,91 @@ function descriptiveRowsFromFrequency(rows: NumericFrequencyRow[]) {
   };
 }
 
-function descriptiveOutcomeFromSummary(summary: MeanInferenceSummary & ReturnType<typeof descriptiveRowsFromValues>): StatisticsEvaluation {
+function descriptiveOutcomeFromSummary(
+  summary: DescriptiveStatisticsSummary,
+  context: 'compare' | 'sample' | 'population',
+): StatisticsEvaluation {
   const warnings = summary.count < 2
     ? ['Sample variance and sample standard deviation need at least two values.']
     : [];
+  const modeLatex = summary.modes.length === 1
+    ? `,\\ \\operatorname{mode}=${numberToLatex(summary.modes[0])}`
+    : summary.modes.length > 1
+      ? `,\\ \\operatorname{modes}=\\left\\{${summary.modes.map(numberToLatex).join(',\\ ')}\\right\\}`
+      : '';
+  const outlierLatex = summary.potentialOutliers.length > 0
+    ? `,\\ \\operatorname{outliers}=\\left\\{${summary.potentialOutliers.map(numberToLatex).join(',\\ ')}\\right\\}`
+    : '';
   const exactLatex = [
       `n=${summary.count}`,
       `\\sum x=${numberToLatex(summary.sum)}`,
       `\\bar{x}=${numberToLatex(summary.mean)}`,
       `\\operatorname{median}=${numberToLatex(summary.median)}`,
       `\\min=${numberToLatex(summary.min)}`,
+      `Q_1=${numberToLatex(summary.q1)}`,
+      `Q_3=${numberToLatex(summary.q3)}`,
       `\\max=${numberToLatex(summary.max)}`,
       `\\operatorname{range}=${numberToLatex(summary.range)}`,
-      `\\sigma^2=${numberToLatex(summary.variance)}`,
-      `\\sigma=${numberToLatex(summary.standardDeviation)}`,
+      `\\operatorname{IQR}=${numberToLatex(summary.iqr)}`,
+      `F_L=${numberToLatex(summary.lowerFence)}`,
+      `F_U=${numberToLatex(summary.upperFence)}`,
+      `\\sigma^2=${numberToLatex(summary.populationVariance)}`,
+      `\\sigma=${numberToLatex(summary.populationStandardDeviation)}`,
       summary.sampleVariance === null ? '' : `s^2=${numberToLatex(summary.sampleVariance)}`,
       summary.sampleStandardDeviation === null ? '' : `s=${numberToLatex(summary.sampleStandardDeviation)}`,
-    ].filter(Boolean).join(',\\ ');
+    ].filter(Boolean).join(',\\ ') + modeLatex + outlierLatex;
+  const populationSpread = `Population: variance ${formatStatisticsNumber(summary.populationVariance)}, SD ${formatStatisticsNumber(summary.populationStandardDeviation)}.`;
+  const sampleSpread = summary.sampleVariance === null || summary.sampleStandardDeviation === null
+    ? 'Sample variance and SD need at least two observations.'
+    : `Sample: variance ${formatStatisticsNumber(summary.sampleVariance)}, SD ${formatStatisticsNumber(summary.sampleStandardDeviation)}.`;
+  const spreadLines = context === 'sample'
+    ? [sampleSpread, populationSpread]
+    : context === 'population'
+      ? [populationSpread, sampleSpread]
+      : [populationSpread, sampleSpread];
   return profileStatisticsResult({
     exactLatex,
-    approxText: `n=${summary.count}, mean=${formatStatisticsNumber(summary.mean)}, median=${formatStatisticsNumber(summary.median)}, population sd=${formatStatisticsNumber(summary.standardDeviation)}${summary.sampleStandardDeviation === null ? '' : `, sample sd=${formatStatisticsNumber(summary.sampleStandardDeviation)}`}`,
+    approxText: `n=${summary.count}, mean=${formatStatisticsNumber(summary.mean)}, median=${formatStatisticsNumber(summary.median)}, IQR=${formatStatisticsNumber(summary.iqr)}, population SD=${formatStatisticsNumber(summary.populationStandardDeviation)}${summary.sampleStandardDeviation === null ? '' : `, sample SD=${formatStatisticsNumber(summary.sampleStandardDeviation)}`}`,
+    detailSections: [
+      {
+        title: 'Quartiles and fences',
+        lines: [
+          summary.quartileMethod === 'halves'
+            ? 'Halves method: the median is excluded when n is odd.'
+            : 'Linear method: Type-7 interpolation with h=(n-1)p+1.',
+          summary.potentialOutliers.length === 0
+            ? 'No potential outliers fall beyond the 1.5-IQR fences.'
+            : `Potential outliers: ${summary.potentialOutliers.map(formatStatisticsNumber).join(', ')}.`,
+        ],
+        lineKind: 'text',
+      },
+      {
+        title: 'Spread',
+        lines: spreadLines,
+        lineKind: 'text',
+      },
+      {
+        title: 'Mode',
+        lines: [summary.modes.length === 0
+          ? 'No mode: every observed value has the same frequency.'
+          : summary.modes.length === 1
+            ? `Mode: ${formatStatisticsNumber(summary.modes[0])}.`
+            : `Multiple modes: ${summary.modes.map(formatStatisticsNumber).join(', ')}.`],
+        lineKind: 'text',
+      },
+    ],
     warnings,
     mathJsonLeaves: descriptiveSummaryMathJsonLeaves(exactLatex, summary),
   });
 }
 
 function datasetOutcome(values: number[]): StatisticsEvaluation {
+  const exactLatex = `n=${values.length},\\ \\left[${values.map(numberToLatex).join(',\\ ')}\\right]`;
   return profileStatisticsResult({
-    exactLatex: `n=${values.length},\\ \\left\\{${values.map(numberToLatex).join(',\\ ')}\\right\\}`,
+    exactLatex,
     approxText: `${values.length} values loaded`,
     warnings: [],
+    mathJsonLeaves: datasetMathJsonLeaves(exactLatex, values),
   });
 }
 
@@ -391,7 +454,7 @@ function frequencyOutcomeFromRows(rows: NumericFrequencyRow[]): StatisticsEvalua
       ? `,\\ \\operatorname{mode}=${numberToLatex(modeRows[0].value)}`
       : '';
 
-  const exactLatex = `n=${totalCount},\\ \\left\\{${rows.map((row) => `${numberToLatex(row.value)}:${row.frequency}`).join(',\\ ')}\\right\\}${modeLatex}`;
+  const exactLatex = `n=${totalCount},\\ \\left\\{${rows.map((row) => `(${numberToLatex(row.value)},${row.frequency})`).join(',\\ ')}\\right\\}${modeLatex}`;
   return profileStatisticsResult({
     exactLatex,
     approxText: `n=${totalCount}, ${rows.map((row) => `${formatStatisticsNumber(row.value)}:${row.frequency}`).join(', ')}`,
@@ -465,7 +528,7 @@ function meanInferenceOutcome(
         `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
         `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
         `n=${summary.summary.count}`,
-        `t^*=${numberToLatex(result.criticalValue)}`,
+        `t_{\\mathrm{critical}}=${numberToLatex(result.criticalValue)}`,
         `ME=${numberToLatex(result.marginOfError)}`,
         `CI=${numberToLatex(result.lowerBound)}\\le\\mu\\le${numberToLatex(result.upperBound)}`,
       ].join(',\\ ');
@@ -494,8 +557,7 @@ function meanInferenceOutcome(
   const tStatisticLatex = Number.isFinite(result.tStatistic) ? numberToLatex(result.tStatistic) : '\\infty';
   const tStatisticApprox = Number.isFinite(result.tStatistic) ? formatStatisticsNumber(result.tStatistic) : 'infinity';
 
-  return profileStatisticsResult({
-    exactLatex: [
+  const exactLatex = [
       `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
       `\\mu_0=${numberToLatex(mu0)}`,
       `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
@@ -503,9 +565,19 @@ function meanInferenceOutcome(
       `t=${tStatisticLatex}`,
       `p=${numberToLatex(result.pValue)}`,
       `\\alpha=${numberToLatex(result.alpha)}`,
-    ].join(',\\ '),
+    ].join(',\\ ');
+  return profileStatisticsResult({
+    exactLatex,
     approxText: `two-sided t-test: t=${tStatisticApprox}, p=${formatStatisticsNumber(result.pValue)}, ${result.rejectNull ? 'reject H0' : 'fail to reject H0'}`,
     warnings: [],
+    mathJsonLeaves: meanTestMathJsonLeaves({
+      canonicalLatex: exactLatex,
+      summary: summary.summary,
+      mu0,
+      tStatistic: result.tStatistic,
+      pValue: result.pValue,
+      alpha: result.alpha,
+    }),
   });
 }
 
@@ -580,16 +652,17 @@ function binomialOutcome(request: Extract<StatisticsRequest, { kind: 'binomial' 
       : Array.from({ length: x + 1 }, (_, index) => binomialPmf(n, p, index))
         .reduce((total, probability) => total + probability, 0);
 
-  const exactLatex = `P(X${request.mode === 'pmf' ? '=' : '\\le'}${x})=${numberToLatex(value)}`;
+  const exactLatex = `x=${x},\\ p=${numberToLatex(value)}`;
   return profileStatisticsResult({
     exactLatex,
     approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
     warnings: [],
-    mathJsonLeaves: binomialMathJsonLeaves({
+    mathJsonLeaves: probabilityValueMathJsonLeaves({
       canonicalLatex: exactLatex,
-      mode: request.mode,
       x,
       value,
+      valueSymbol: 'p',
+      source: 'statistics.probability.native-binomial-value',
     }),
   });
 }
@@ -614,12 +687,18 @@ function normalOutcome(request: Extract<StatisticsRequest, { kind: 'normal' }>):
       ? normalPdf(mean, standardDeviation, x)
       : normalCdf(mean, standardDeviation, x);
 
+  const exactLatex = `x=${numberToLatex(x)},\\ ${request.mode === 'pdf' ? 'd' : 'p'}=${numberToLatex(value)}`;
   return profileStatisticsResult({
-    exactLatex: request.mode === 'pdf'
-      ? `f(${numberToLatex(x)})=${numberToLatex(value)}`
-      : `P(X\\le${numberToLatex(x)})=${numberToLatex(value)}`,
+    exactLatex,
     approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
     warnings: [],
+    mathJsonLeaves: probabilityValueMathJsonLeaves({
+      canonicalLatex: exactLatex,
+      x,
+      value,
+      valueSymbol: request.mode === 'pdf' ? 'd' : 'p',
+      source: 'statistics.probability.native-normal-value',
+    }),
   });
 }
 
@@ -640,10 +719,18 @@ function poissonOutcome(request: Extract<StatisticsRequest, { kind: 'poisson' }>
       : Array.from({ length: x + 1 }, (_, index) => poissonPmf(lambda, index))
         .reduce((total, probability) => total + probability, 0);
 
+  const exactLatex = `x=${x},\\ p=${numberToLatex(value)}`;
   return profileStatisticsResult({
-    exactLatex: `P(X${request.mode === 'pmf' ? '=' : '\\le'}${x})=${numberToLatex(value)}`,
+    exactLatex,
     approxText: `${request.mode.toUpperCase()}=${formatStatisticsNumber(value)}`,
     warnings: [],
+    mathJsonLeaves: probabilityValueMathJsonLeaves({
+      canonicalLatex: exactLatex,
+      x,
+      value,
+      valueSymbol: 'p',
+      source: 'statistics.probability.native-poisson-value',
+    }),
   });
 }
 
@@ -743,7 +830,7 @@ function regressionOutcome(request: Extract<StatisticsRequest, { kind: 'regressi
   }
 
   const exactLatex = [
-      `\\hat{y}=${numberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${numberToLatex(summary.intercept)}`,
+      `y_{\\mathrm{fit}}=${numberToLatex(summary.slope)}x${summary.intercept < 0 ? '' : '+'}${numberToLatex(summary.intercept)}`,
       `m=${numberToLatex(summary.slope)}`,
       `b=${numberToLatex(summary.intercept)}`,
       `r=${numberToLatex(summary.r)}`,
@@ -773,16 +860,17 @@ function correlationOutcome(request: Extract<StatisticsRequest, { kind: 'correla
   }
 
   const strength = correlationStrength(summary.r);
-  return profileStatisticsResult({
-    exactLatex: [
+  const exactLatex = [
       `r=${numberToLatex(summary.r)}`,
       `r^2=${numberToLatex(summary.rSquared)}`,
       `n=${summary.count}`,
-      `\\text{${strength}}`,
-    ].join(',\\ '),
+    ].join(',\\ ');
+  return profileStatisticsResult({
+    exactLatex,
     approxText: `r=${formatStatisticsNumber(summary.r)}, r²=${formatStatisticsNumber(summary.rSquared)}, ${strength}, n=${summary.count}`,
     detailSections: [correlationQualitySection(summary)],
     warnings: fitQualityWarnings(summary.r, summary.count),
+    mathJsonLeaves: correlationMathJsonLeaves(exactLatex, summary),
   });
 }
 
@@ -795,18 +883,30 @@ export function runStatisticsRequest(request: StatisticsRequest): ResultProducer
       return toOutcome(title, parsed.ok ? datasetOutcome(parsed.values) : statisticsError(parsed.error));
     }
     case 'descriptive': {
+      const quartiles = request.quartiles ?? 'halves';
+      const context = request.context ?? 'compare';
       if (request.source === 'dataset') {
         const parsed = parseDatasetValues(request.values);
         return toOutcome(
           title,
-          parsed.ok ? descriptiveOutcomeFromSummary(descriptiveRowsFromValues(parsed.values)) : statisticsError(parsed.error),
+          parsed.ok
+            ? descriptiveOutcomeFromSummary(
+                descriptiveStatisticsFromValues(parsed.values, quartiles),
+                context,
+              )
+            : statisticsError(parsed.error),
         );
       }
 
       const parsed = parseFrequencyRows(request.rows);
       return toOutcome(
         title,
-        parsed.ok ? descriptiveOutcomeFromSummary(descriptiveRowsFromFrequency(parsed.rows)) : statisticsError(parsed.error),
+        parsed.ok
+          ? descriptiveOutcomeFromSummary(
+              descriptiveStatisticsFromFrequencyRows(parsed.rows, quartiles),
+              context,
+            )
+          : statisticsError(parsed.error),
       );
     }
     case 'frequency': {

@@ -14,24 +14,24 @@
 - verified_by_agent_family: sol
 - attribution_basis: live
 
-## Gate 1 Result
+## Gate 2 Result
 
-- milestone: `STATISTICS-SECTION-NAVIGATION1`
-- gate: ui
+- milestone: `STATISTICS-DATA-SUMMARY1`
+- gates: backend and ui
 - status: verified pass
-- next milestone: `STATISTICS-DATA-SUMMARY1`
+- next milestone: `STATISTICS-PROBABILITY1`
 
 ## Evidence
 
-- Focused Statistics navigation and parser unit tests passed.
-- Statistics runtime UI and History display runtime tests passed, including hidden completion caching and active-section Clear behavior.
-- Focused AppMain Statistics result-card test passed.
-- TypeScript, production build, file-size ratchet, and diff hygiene passed.
-- A final incremental TypeScript rerun was externally blocked after fresh Linear Algebra edits appeared: `editor-dispatch.ts` reads missing `gramSchmidt.left/right` properties and `matrix-qr.ts` references missing `exactSubtractVectors`. The successful Statistics-era TypeScript result above predates those unstaged changes; no Linear Algebra file was modified or staged here.
-- Chromium passed 3/3 for trailing-comma entry and one-keystroke focus retention in Probability, Inference, Regression, and Correlation.
-- Desktop inspection confirmed four equal section tabs. Mobile inspection confirmed a stable two-by-two tab arrangement; page-level mobile overflow remains an explicit Gate 7 polish item.
+- Focused Statistics unit coverage passed 39 tests across 10 files; runtime/AppMain UI coverage passed 12 tests.
+- Canonical Result V2 enforcement, result-contract, hard History replay comparison, print hygiene, and the golden runner passed for the migrated Statistics routes.
+- Direct runtime probes proved V2 MathJSON for dataset, descriptive, frequency, binomial, normal, Poisson, regression, correlation, confidence interval, and mean test outcomes.
+- Chromium passed the real expanded Data & Summary output, independent draft persistence, desktop two-column layout, mobile stacking, trailing commas, and one-keystroke focus retention across the four sections.
+- Statistics-era TypeScript and production build evidence passed before later concurrent Linear Algebra edits appeared.
+- The latest build is externally blocked by concurrent `vector-geometric.ts` type/MathJSON work. The latest file-size gate is externally blocked by concurrent `guide/content/selectors.ts` at 2,533 lines against 2,528. Statistics-owned files remain within their caps.
+- Diff hygiene is rerun immediately before the checkpoint commit.
 
 ## Protected Worktree
 
-- Concurrent Notebook/video work and untracked `test-results/` remain unstaged.
+- Concurrent staged Linear Algebra work and untracked `test-results/` remain untouched.
 - No push is authorized.

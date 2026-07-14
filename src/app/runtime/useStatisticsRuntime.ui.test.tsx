@@ -555,7 +555,7 @@ describe('useStatisticsRuntime', () => {
     expect(hook.result.current.statisticsScreen).toBe('descriptive');
     expect(hook.result.current.normalState.mean).toBe('0');
     expect(hook.result.current.statisticsDraftState.rawLatex).toBe(
-      'descriptive(values={12,15,15,18,20})',
+      'descriptive(values={12,15,15,18,20}, quartiles=halves, context=compare)',
     );
   });
 });

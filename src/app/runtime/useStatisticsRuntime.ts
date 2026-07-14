@@ -15,6 +15,7 @@ import {
   DEFAULT_NORMAL_STATE,
   DEFAULT_POISSON_STATE,
   DEFAULT_REGRESSION_STATE,
+  DEFAULT_STATISTICS_DATA_SUMMARY_STATE,
   DEFAULT_STATS_DATASET,
 } from '../../lib/statistics/examples';
 import {
@@ -27,6 +28,7 @@ import {
   isStatisticsMenuScreen,
   moveStatisticsMenuIndex,
   statisticsSectionForScreen,
+  statisticsLeafScreenForContext,
   statisticsWorkspaceScreenForLegacyScreen,
 } from '../../lib/statistics/navigation';
 import {
@@ -35,11 +37,9 @@ import {
   statisticsRequestToScreen,
   buildStatisticsOoeInputRevisionId,
   clearStatisticsSourceSyncState,
-  collapseDatasetToFrequencyTable,
   DEFAULT_STATISTICS_SOURCE_SYNC_STATE,
   datasetTextFromValues,
   datasetValuesFromText,
-  expandFrequencyTableToDataset,
   pointsTextFromState,
   statisticsRequestToWorkingSource,
   statisticsSourceSyncFromDatasetEdit,
@@ -68,6 +68,10 @@ import {
   cacheStatisticsSectionOutcome,
   statisticsSectionIsActiveInOrigin,
 } from './statistics-section-results';
+import {
+  prepareStatisticsDataset,
+  prepareStatisticsFrequencyTable,
+} from './statistics-data-conversion';
 
 type StatisticsStateSnapshot = Parameters<typeof buildStatisticsInputLatex>[1];
 
@@ -112,6 +116,9 @@ export function useStatisticsRuntime({
   const [statsDataset, setStatsDataset] = useState(DEFAULT_STATS_DATASET);
   const [statisticsDatasetDraftText, setStatisticsDatasetDraftText] = useState(datasetTextFromValues(DEFAULT_STATS_DATASET.values));
   const [frequencyTable, setFrequencyTable] = useState(DEFAULT_FREQUENCY_TABLE);
+  const [dataSummaryState, setDataSummaryState] = useState(
+    DEFAULT_STATISTICS_DATA_SUMMARY_STATE,
+  );
   const [binomialState, setBinomialState] = useState(DEFAULT_BINOMIAL_STATE);
   const [normalState, setNormalState] = useState(DEFAULT_NORMAL_STATE);
   const [poissonState, setPoissonState] = useState(DEFAULT_POISSON_STATE);
@@ -162,6 +169,7 @@ export function useStatisticsRuntime({
   const statisticsStateSnapshot = {
     dataset: statsDataset,
     frequencyTable,
+    dataSummary: dataSummaryState,
     binomial: binomialState,
     normal: normalState,
     poisson: poissonState,
@@ -197,10 +205,10 @@ export function useStatisticsRuntime({
   ).length;
   const statisticsSourceSyncSummary =
     statisticsSourceSyncState.datasetStale
-      ? 'Dataset is stale relative to the manual frequency table.'
+      ? 'Frequency table has newer edits; the list draft is preserved.'
       : statisticsSourceSyncState.frequencyTableStale
-        ? 'Frequency table is stale relative to the dataset.'
-        : 'Dataset and frequency table are in sync.';
+        ? 'List has newer edits; the frequency-table draft is preserved.'
+        : 'List and frequency table currently represent the same data.';
   const activeStatisticsSectionResult = statisticsSectionResults[statisticsSection] ?? null;
   const activeStatisticsInputLatex = buildStatisticsInputLatex(
     statisticsSectionScreens[statisticsSection],
@@ -244,51 +252,6 @@ export function useStatisticsRuntime({
     }
 
     return 'dataset';
-  }
-
-  function defaultStatisticsLeafForMenu(screen: StatisticsScreen): StatisticsScreen {
-    if (screen === 'probabilityHome') {
-      return getStatisticsMenuEntryAtIndex(
-        'probabilityHome',
-        statisticsMenuSelection.probabilityHome,
-      )?.target ?? 'binomial';
-    }
-
-    if (screen === 'inferenceHome') {
-      return getStatisticsMenuEntryAtIndex(
-        'inferenceHome',
-        statisticsMenuSelection.inferenceHome,
-      )?.target ?? 'meanInference';
-    }
-
-    const homeTarget = getStatisticsMenuEntryAtIndex(
-      'home',
-      statisticsMenuSelection.home,
-    )?.target ?? 'dataEntry';
-
-    if (homeTarget === 'probabilityHome') {
-      return getStatisticsMenuEntryAtIndex(
-        'probabilityHome',
-        statisticsMenuSelection.probabilityHome,
-      )?.target ?? 'binomial';
-    }
-
-    if (homeTarget === 'inferenceHome') {
-      return getStatisticsMenuEntryAtIndex(
-        'inferenceHome',
-        statisticsMenuSelection.inferenceHome,
-      )?.target ?? 'meanInference';
-    }
-
-    return homeTarget;
-  }
-
-  function statisticsLeafScreenForContext(screen: StatisticsScreen): StatisticsScreen {
-    if (screen === 'home' || screen === 'probabilityHome') {
-      return defaultStatisticsLeafForMenu(screen);
-    }
-
-    return screen;
   }
 
   function buildStatisticsDraftForScreen(
@@ -415,6 +378,12 @@ export function useStatisticsRuntime({
   function openStatisticsScreen(screen: StatisticsScreen) {
     const workspaceScreen = statisticsWorkspaceScreenForLegacyScreen(screen);
     const nextSection = statisticsSectionForScreen(workspaceScreen);
+    if (workspaceScreen === 'descriptive' || workspaceScreen === 'frequency') {
+      setDataSummaryState((currentState) => ({
+        ...currentState,
+        analysis: workspaceScreen,
+      }));
+    }
     setStatisticsScreen(workspaceScreen);
     setStatisticsSection(nextSection);
     setStatisticsSectionScreens((currentScreens) => ({
@@ -556,7 +525,6 @@ export function useStatisticsRuntime({
 
   function switchStatisticsSource(source: StatisticsWorkingSource) {
     setStatisticsWorkingSource(source);
-    setStatisticsSourceSyncState(clearStatisticsSourceSyncState());
     if (
       !isStatisticsMenuScreen(statisticsScreen)
       && (statisticsScreen === 'descriptive'
@@ -572,7 +540,12 @@ export function useStatisticsRuntime({
   }
 
   function importDatasetIntoFrequencyTable() {
-    const nextTable = collapseDatasetToFrequencyTable(statsDataset);
+    const nextTable = prepareStatisticsFrequencyTable({
+      dataset: statsDataset,
+      syncState: statisticsSourceSyncState,
+      confirmReplace: (message) => typeof window === 'undefined' || window.confirm(message),
+    });
+    if (!nextTable) return;
     setFrequencyTable(nextTable);
     setStatisticsWorkingSource('frequencyTable');
     setStatisticsSourceSyncState(clearStatisticsSourceSyncState());
@@ -598,7 +571,16 @@ export function useStatisticsRuntime({
   }
 
   function expandStatisticsTableToDataset() {
-    const nextDataset = expandFrequencyTableToDataset(frequencyTable);
+    const conversion = prepareStatisticsDataset({
+      table: frequencyTable,
+      syncState: statisticsSourceSyncState,
+      confirmReplace: (message) => typeof window === 'undefined' || window.confirm(message),
+    });
+    if (!conversion.ok) {
+      if (conversion.notice) setClipboardNotice(conversion.notice);
+      return;
+    }
+    const nextDataset = conversion.dataset;
     setStatsDataset(nextDataset);
     setStatisticsDatasetDraftText(datasetTextFromValues(nextDataset.values));
     setStatisticsWorkingSource('dataset');
@@ -627,6 +609,7 @@ export function useStatisticsRuntime({
 
   function applyStatisticsRequest(request: StatisticsRequest) {
     if (request.kind === 'dataset') {
+      setDataSummaryState((currentState) => ({ ...currentState, analysis: 'descriptive' }));
       setStatsDataset({ values: request.values });
       setStatisticsDatasetDraftText(datasetTextFromValues(request.values));
       setStatisticsWorkingSource('dataset');
@@ -640,6 +623,15 @@ export function useStatisticsRuntime({
       || request.kind === 'meanInference'
     ) {
       const nextSource = request.source;
+      if (request.kind === 'descriptive') {
+        setDataSummaryState({
+          analysis: 'descriptive',
+          quartiles: request.quartiles ?? 'halves',
+          context: request.context ?? 'compare',
+        });
+      } else if (request.kind === 'frequency') {
+        setDataSummaryState((currentState) => ({ ...currentState, analysis: 'frequency' }));
+      }
       setStatisticsWorkingSource(nextSource);
       if (nextSource === 'dataset') {
         setStatsDataset({ values: request.values });
@@ -769,6 +761,7 @@ export function useStatisticsRuntime({
     switch (statisticsSection) {
       case 'dataSummary':
         resetStatisticsSourceState('dataset');
+        setDataSummaryState(DEFAULT_STATISTICS_DATA_SUMMARY_STATE);
         resetStatisticsDraftForScreen(statisticsScreen, 'dataset');
         break;
       case 'probability':
@@ -805,6 +798,7 @@ export function useStatisticsRuntime({
     setStatisticsWorkingSource('dataset');
     setStatisticsSourceSyncState(DEFAULT_STATISTICS_SOURCE_SYNC_STATE);
     setStatsDataset(DEFAULT_STATS_DATASET); setFrequencyTable(DEFAULT_FREQUENCY_TABLE); setStatisticsDatasetDraftText(datasetTextFromValues(DEFAULT_STATS_DATASET.values));
+    setDataSummaryState(DEFAULT_STATISTICS_DATA_SUMMARY_STATE);
     setBinomialState(DEFAULT_BINOMIAL_STATE); setNormalState(DEFAULT_NORMAL_STATE);
     setPoissonState(DEFAULT_POISSON_STATE); setMeanInferenceState(DEFAULT_MEAN_INFERENCE_STATE);
     setRegressionState(DEFAULT_REGRESSION_STATE); setCorrelationState(DEFAULT_CORRELATION_STATE);
@@ -821,7 +815,8 @@ export function useStatisticsRuntime({
       statisticsScreen, statisticsSection, statisticsInputMode,
       statisticsSectionScreens, statisticsSectionResults,
       statisticsMenuSelection, statisticsWorkingSource,
-      statisticsSourceSyncState, statsDataset, statisticsDatasetDraftText, frequencyTable, binomialState,
+      statisticsSourceSyncState, statsDataset, statisticsDatasetDraftText, frequencyTable,
+      dataSummaryState, binomialState,
       normalState, poissonState, meanInferenceState, regressionState,
       correlationState, statisticsDraftState,
     });
@@ -841,7 +836,8 @@ export function useStatisticsRuntime({
     setStatisticsSectionResults(copy.statisticsSectionResults);
     setStatisticsMenuSelection(copy.statisticsMenuSelection); setStatisticsWorkingSource(copy.statisticsWorkingSource);
     setStatisticsSourceSyncState(copy.statisticsSourceSyncState); setStatsDataset(copy.statsDataset); setStatisticsDatasetDraftText(copy.statisticsDatasetDraftText);
-    setFrequencyTable(copy.frequencyTable); setBinomialState(copy.binomialState); setNormalState(copy.normalState);
+    setFrequencyTable(copy.frequencyTable); setDataSummaryState(copy.dataSummaryState);
+    setBinomialState(copy.binomialState); setNormalState(copy.normalState);
     setPoissonState(copy.poissonState); setMeanInferenceState(copy.meanInferenceState);
     setRegressionState(copy.regressionState); setCorrelationState(copy.correlationState);
     setStatisticsDraftState(copy.statisticsDraftState);
@@ -854,7 +850,10 @@ export function useStatisticsRuntime({
     }
 
     startTransition(() => {
-      const screenHint = statisticsLeafScreenForContext(statisticsScreen);
+      const screenHint = statisticsLeafScreenForContext(
+        statisticsScreen,
+        statisticsMenuSelection,
+      );
       const originSection = statisticsSectionForScreen(screenHint);
       const originWorkspace = getActiveWorkspaceInstanceRuntimeContext?.() ?? null;
       const useExpressionDraft = editorFocused;
@@ -950,6 +949,7 @@ export function useStatisticsRuntime({
   return {
     addRegressionPoint, addStatisticsFrequencyRow, applyStatisticsRequest,
     binomialState, buildStatisticsDraftForScreen, captureStatisticsSurfaceState, correlationState,
+    dataSummaryState, setDataSummaryState,
     currentStatisticsMenuIndex, expandStatisticsTableToDataset, focusStatisticsEditor, frequencyTable,
     goBackInStatistics, importDatasetIntoFrequencyTable, isStatisticsDraftFocused,
     isStatisticsMenuOpen, loadStatisticsDraft, loadStatisticsDraftForLatex, loadStatisticsExample,

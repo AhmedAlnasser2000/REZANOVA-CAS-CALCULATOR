@@ -15,11 +15,12 @@ type SignedNumberDraftInputProps = {
   onFocus?: (element: HTMLInputElement) => void;
   className?: string;
   disabled?: boolean;
+  ariaLabel?: string;
 };
 
 export const SignedNumberDraftInput = forwardRef<HTMLInputElement, SignedNumberDraftInputProps>(
   function SignedNumberDraftInput(
-    { value, onValueChange, onFocus, className, disabled = false },
+    { value, onValueChange, onFocus, className, disabled = false, ariaLabel },
     forwardedRef,
   ) {
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -48,6 +49,7 @@ export const SignedNumberDraftInput = forwardRef<HTMLInputElement, SignedNumberD
         autoComplete="off"
         spellCheck={false}
         disabled={disabled}
+        aria-label={ariaLabel}
         value={isEditing ? value : normalizeDraft(value)}
         onChange={(event) => {
           onValueChange(event.target.value);

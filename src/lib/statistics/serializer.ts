@@ -8,6 +8,7 @@ import type {
   PoissonState,
   RegressionState,
   StatisticsRequest,
+  StatisticsDataSummaryState,
   StatisticsScreen,
   StatisticsSerializerOptions,
   StatisticsWorkingSource,
@@ -43,8 +44,8 @@ export function serializeStatisticsRequest(
       return `dataset(values=${serializeValues(request.values)})`;
     case 'descriptive':
       return request.source === 'dataset'
-        ? `descriptive(values=${serializeValues(request.values)})`
-        : `descriptive(freq=${serializeFrequencyRows(request.rows)})`;
+        ? `descriptive(values=${serializeValues(request.values)}, quartiles=${request.quartiles ?? 'halves'}, context=${request.context ?? 'compare'})`
+        : `descriptive(freq=${serializeFrequencyRows(request.rows)}, quartiles=${request.quartiles ?? 'halves'}, context=${request.context ?? 'compare'})`;
     case 'frequency':
       return request.source === 'dataset'
         ? `frequency(values=${serializeValues(request.values)})`
@@ -71,6 +72,7 @@ export function buildStatisticsStructuredDraft(
   state: {
     dataset: StatsDataset;
     frequencyTable: FrequencyTable;
+    dataSummary?: StatisticsDataSummaryState;
     binomial: BinomialState;
     normal: NormalState;
     poisson: PoissonState;
@@ -80,6 +82,11 @@ export function buildStatisticsStructuredDraft(
   },
   workingSource: StatisticsWorkingSource,
 ) {
+  const dataSummary = state.dataSummary ?? {
+    analysis: 'descriptive',
+    quartiles: 'halves',
+    context: 'compare',
+  };
   switch (screen) {
     case 'dataEntry':
       return serializeStatisticsRequest({
@@ -93,11 +100,15 @@ export function buildStatisticsStructuredDraft(
               kind: 'descriptive',
               source: 'frequencyTable',
               rows: state.frequencyTable.rows,
+              quartiles: dataSummary.quartiles,
+              context: dataSummary.context,
             }
           : {
               kind: 'descriptive',
               source: 'dataset',
               values: state.dataset.values,
+              quartiles: dataSummary.quartiles,
+              context: dataSummary.context,
             },
       );
     case 'frequency':

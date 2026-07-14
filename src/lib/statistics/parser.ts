@@ -93,14 +93,43 @@ function parseStructured(source: string): StatisticsParseResult | null {
   if (kind === 'descriptive' || kind === 'frequency') {
     const values = valueFor(assignments, 'values');
     const freq = valueFor(assignments, 'freq', 'frequencytable');
+    const quartilesDraft = valueFor(assignments, 'quartiles', 'quartilemethod');
+    const contextDraft = valueFor(assignments, 'context', 'spreadcontext');
+    const normalizedQuartiles = quartilesDraft?.trim().toLowerCase() ?? 'halves';
+    const normalizedContext = contextDraft?.trim().toLowerCase() ?? 'compare';
+    if (
+      kind === 'descriptive'
+      && normalizedQuartiles !== 'halves'
+      && normalizedQuartiles !== 'linear'
+    ) {
+      return { ok: false, error: 'descriptive(...) quartiles must be halves or linear.' };
+    }
+    if (
+      kind === 'descriptive'
+      && normalizedContext !== 'compare'
+      && normalizedContext !== 'sample'
+      && normalizedContext !== 'population'
+    ) {
+      return { ok: false, error: 'descriptive(...) context must be compare, sample, or population.' };
+    }
+    const quartiles = normalizedQuartiles === 'linear' ? 'linear' : 'halves';
+    const context = normalizedContext === 'sample'
+      ? 'sample'
+      : normalizedContext === 'population'
+        ? 'population'
+        : 'compare';
     if (values) {
       return {
         ok: true,
-        request: {
-          kind,
-          source: 'dataset',
-          values: parseDatasetValuesSource(values),
-        },
+        request: kind === 'descriptive'
+          ? {
+              kind,
+              source: 'dataset',
+              values: parseDatasetValuesSource(values),
+              quartiles,
+              context,
+            }
+          : { kind, source: 'dataset', values: parseDatasetValuesSource(values) },
         style: 'structured',
       };
     }
@@ -116,11 +145,9 @@ function parseStructured(source: string): StatisticsParseResult | null {
 
       return {
         ok: true,
-        request: {
-          kind,
-          source: 'frequencyTable',
-          rows,
-        },
+        request: kind === 'descriptive'
+          ? { kind, source: 'frequencyTable', rows, quartiles, context }
+          : { kind, source: 'frequencyTable', rows },
         style: 'structured',
       };
     }

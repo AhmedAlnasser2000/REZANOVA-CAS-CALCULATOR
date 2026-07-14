@@ -1,17 +1,12 @@
-import type {
-  DisplayDetailLinePart,
-  DisplayDetailSection,
-  ResultProducerDraft,
-  StatisticsRequest,
-} from '../../types/calculator';
+import type { StatisticsRequest } from '../../types/calculator';
 import {
-  tryProvenCanonicalMathValue,
-  type CanonicalResultProducerMathValuesV1,
-  type ProvenCanonicalMathValue,
+  requireProvenCanonicalMathValueV2,
+  type CanonicalResultV2MathResolver,
 } from '../result-contract';
 import type { MathJsonRouteId } from '../result-contract/mathjson-route-registry';
 import { roundedApproxNumberValue } from '../display/notation/numeric-output';
 import type { MeanInferenceSummary } from './inference';
+import type { DescriptiveStatisticsSummary } from './descriptive';
 import type { RegressionDiagnostics, RegressionFitSummary } from './quality-readback';
 import { formatStatisticsNumber } from './shared';
 
@@ -23,20 +18,18 @@ export type StatisticsOwnedMathJsonLeaf = {
   source: string;
 };
 
-type DescriptiveMathJsonSummary = MeanInferenceSummary & {
-  sum: number;
-  median: number;
-  min: number;
-  max: number;
-  range: number;
-  variance: number;
-  standardDeviation: number;
-};
-
 function statisticsMathNumber(value: number) {
   if (!Number.isFinite(value)) return undefined;
   const normalized = Math.abs(value) < 1e-10 ? 0 : value;
   return Number(normalized.toFixed(6));
+}
+
+function finiteMathNumber(value: number, label: string) {
+  const normalized = statisticsMathNumber(value);
+  if (normalized === undefined) {
+    throw new Error(`Statistics cannot build finite MathJSON for ${label}.`);
+  }
+  return normalized;
 }
 
 function primaryMathJsonLeaf(canonicalLatex: string, mathJson: unknown, source: string) {
@@ -47,9 +40,20 @@ function mathSequence(...values: unknown[]) {
   return ['Delimiter', ['Sequence', ...values], "','"];
 }
 
+export function datasetMathJsonLeaves(canonicalLatex: string, values: readonly number[]) {
+  return primaryMathJsonLeaf(
+    canonicalLatex,
+    mathSequence(
+      ['Equal', 'n', values.length],
+      ['List', ...values.map((value, index) => finiteMathNumber(value, `dataset[${index}]`))],
+    ),
+    'statistics.descriptive.native-dataset',
+  );
+}
+
 export function descriptiveSummaryMathJsonLeaves(
   canonicalLatex: string,
-  summary: DescriptiveMathJsonSummary,
+  summary: DescriptiveStatisticsSummary,
 ) {
   const relations: unknown[] = [
     ['Equal', 'n', summary.count],
@@ -57,16 +61,37 @@ export function descriptiveSummaryMathJsonLeaves(
     ['Equal', ['Mean', 'x'], statisticsMathNumber(summary.mean)],
     ['Equal', 'Median', statisticsMathNumber(summary.median)],
     ['Equal', 'Min', statisticsMathNumber(summary.min)],
+    ['Equal', ['Subscript', 'Q', 1], statisticsMathNumber(summary.q1)],
+    ['Equal', ['Subscript', 'Q', 3], statisticsMathNumber(summary.q3)],
     ['Equal', 'Max', statisticsMathNumber(summary.max)],
     ['Equal', 'range', statisticsMathNumber(summary.range)],
-    ['Equal', ['Power', 'sigma', 2], statisticsMathNumber(summary.variance)],
-    ['Equal', 'sigma', statisticsMathNumber(summary.standardDeviation)],
+    ['Equal', 'IQR', statisticsMathNumber(summary.iqr)],
+    ['Equal', ['Subscript', 'F', 'L'], statisticsMathNumber(summary.lowerFence)],
+    ['Equal', ['Subscript', 'F', 'U'], statisticsMathNumber(summary.upperFence)],
+    ['Equal', ['Power', 'sigma', 2], statisticsMathNumber(summary.populationVariance)],
+    ['Equal', 'sigma', statisticsMathNumber(summary.populationStandardDeviation)],
   ];
   if (summary.sampleVariance !== null) {
     relations.push(['Equal', ['Power', 's', 2], statisticsMathNumber(summary.sampleVariance)]);
   }
   if (summary.sampleStandardDeviation !== null) {
     relations.push(['Equal', 's', statisticsMathNumber(summary.sampleStandardDeviation)]);
+  }
+  if (summary.modes.length === 1) {
+    relations.push(['Equal', 'mode', statisticsMathNumber(summary.modes[0])]);
+  } else if (summary.modes.length > 1) {
+    relations.push([
+      'Equal',
+      'modes',
+      ['Set', ...summary.modes.map((value) => statisticsMathNumber(value))],
+    ]);
+  }
+  if (summary.potentialOutliers.length > 0) {
+    relations.push([
+      'Equal',
+      'outliers',
+      ['Set', ...summary.potentialOutliers.map((value) => statisticsMathNumber(value))],
+    ]);
   }
   return primaryMathJsonLeaf(
     canonicalLatex,
@@ -83,7 +108,11 @@ export function frequencySummaryMathJsonLeaves(input: {
 }) {
   const relations: unknown[] = [
     ['Equal', 'n', input.totalCount],
-    ['Set', ...input.rows.map((row) => ['Colon', statisticsMathNumber(row.value), row.frequency])],
+    ['Set', ...input.rows.map((row, index) => [
+      'Tuple',
+      finiteMathNumber(row.value, `frequency[${index}].value`),
+      row.frequency,
+    ])],
   ];
   if (input.modeValue !== undefined) {
     relations.push(['Equal', 'mode', statisticsMathNumber(input.modeValue)]);
@@ -112,7 +141,7 @@ export function confidenceIntervalMathJsonLeaves(input: {
       ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
       ['Equal', 's', statisticsMathNumber(input.summary.sampleStandardDeviation)],
       ['Equal', 'n', input.summary.count],
-      ['Equal', ['Superstar', 't'], statisticsMathNumber(input.result.criticalValue)],
+      ['Equal', ['Subscript', 't', 'critical'], statisticsMathNumber(input.result.criticalValue)],
       ['Equal', ['InvisibleOperator', 'M', 'E'], statisticsMathNumber(input.result.marginOfError)],
       ['LessEqual',
         ['Equal', ['InvisibleOperator', 'C', 'I'], statisticsMathNumber(input.result.lowerBound)],
@@ -124,19 +153,47 @@ export function confidenceIntervalMathJsonLeaves(input: {
   );
 }
 
-export function binomialMathJsonLeaves(input: {
+export function meanTestMathJsonLeaves(input: {
   canonicalLatex: string;
-  mode: 'pmf' | 'cdf';
+  summary: MeanInferenceSummary;
+  mu0: number;
+  tStatistic: number;
+  pValue: number;
+  alpha: number;
+}) {
+  if (input.summary.sampleStandardDeviation === null) return [];
+  const tValue = Number.isFinite(input.tStatistic)
+    ? statisticsMathNumber(input.tStatistic)
+    : 'PositiveInfinity';
+  return primaryMathJsonLeaf(
+    input.canonicalLatex,
+    mathSequence(
+      ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
+      ['Equal', ['Subscript', 'mu', 0], statisticsMathNumber(input.mu0)],
+      ['Equal', 's', statisticsMathNumber(input.summary.sampleStandardDeviation)],
+      ['Equal', 'n', input.summary.count],
+      ['Equal', 't', tValue],
+      ['Equal', 'p', statisticsMathNumber(input.pValue)],
+      ['Equal', 'alpha', statisticsMathNumber(input.alpha)],
+    ),
+    'statistics.inference.native-mean-test',
+  );
+}
+
+export function probabilityValueMathJsonLeaves(input: {
+  canonicalLatex: string;
   x: number;
   value: number;
+  valueSymbol: 'p' | 'd';
+  source: string;
 }) {
   return primaryMathJsonLeaf(
     input.canonicalLatex,
-    ['Equal',
-      ['P', [input.mode === 'pmf' ? 'Equal' : 'LessEqual', 'X', input.x]],
-      statisticsMathNumber(input.value),
-    ],
-    'statistics.probability.native-binomial-value',
+    mathSequence(
+      ['Equal', 'x', statisticsMathNumber(input.x)],
+      ['Equal', input.valueSymbol, statisticsMathNumber(input.value)],
+    ),
+    input.source,
   );
 }
 
@@ -162,7 +219,7 @@ export function regressionMathJsonLeaves(
     ...primaryMathJsonLeaf(
       canonicalLatex,
       mathSequence(
-        ['Equal', ['OverHat', 'y'], ['Add', ['InvisibleOperator', statisticsMathNumber(summary.slope), 'x'], statisticsMathNumber(summary.intercept)]],
+        ['Equal', ['Subscript', 'y', 'fit'], ['Add', ['InvisibleOperator', statisticsMathNumber(summary.slope), 'x'], statisticsMathNumber(summary.intercept)]],
         ['Equal', 'm', statisticsMathNumber(summary.slope)],
         ['Equal', 'b', statisticsMathNumber(summary.intercept)],
         ['Equal', 'r', statisticsMathNumber(summary.r)],
@@ -175,62 +232,38 @@ export function regressionMathJsonLeaves(
   ];
 }
 
-function unproven(canonicalLatex: string) {
-  return { canonicalLatex };
-}
-
-function detailPart(
-  part: DisplayDetailLinePart,
-  proven: ReadonlyMap<string, ProvenCanonicalMathValue>,
+export function correlationMathJsonLeaves(
+  canonicalLatex: string,
+  summary: RegressionFitSummary,
 ) {
-  return part.kind === 'math'
-    ? { kind: 'math' as const, math: proven.get(part.latex) ?? unproven(part.latex) }
-    : { kind: 'text' as const, text: part.text };
+  return primaryMathJsonLeaf(
+    canonicalLatex,
+    mathSequence(
+      ['Equal', 'r', statisticsMathNumber(summary.r)],
+      ['Equal', ['Power', 'r', 2], statisticsMathNumber(summary.rSquared)],
+      ['Equal', 'n', summary.count],
+    ),
+    'statistics.relationship.native-correlation-summary',
+  );
 }
 
-function details(
-  sections: readonly DisplayDetailSection[] | undefined,
-  proven: ReadonlyMap<string, ProvenCanonicalMathValue>,
-) {
-  return sections?.map((section, sectionIndex) => ({
-    title: section.title,
-    lines: section.lines.map((line, lineIndex) => {
-      const parts = section.lineParts?.[lineIndex];
-      if (parts?.length) return parts.map((part) => detailPart(part, proven));
-      const kind = section.lineKinds?.[lineIndex] ?? section.lineKind;
-      if (kind === 'math') {
-        return [{ kind: 'math' as const, math: proven.get(line) ?? unproven(line) }];
-      }
-      if (kind === 'text') return [{ kind: 'text' as const, text: line }];
-      throw new Error(`Statistics producer detail ${sectionIndex}:${lineIndex} has no typed intent.`);
-    }),
-  }));
-}
-
-export function statisticsMathValuesFromOwnedLeaves(input: {
-  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
+export function statisticsV2MathResolverFromOwnedLeaves(input: {
   routeId: StatisticsMathJsonRouteId;
   leaves: readonly StatisticsOwnedMathJsonLeaf[];
-}): CanonicalResultProducerMathValuesV1 {
-  const proven = new Map<string, ProvenCanonicalMathValue>();
-  for (const leaf of input.leaves) {
-    const value = tryProvenCanonicalMathValue({
-      canonicalLatex: leaf.canonicalLatex,
+}): CanonicalResultV2MathResolver {
+  return (canonicalLatex, path) => {
+    const leaf = input.leaves.find((candidate) => candidate.canonicalLatex === canonicalLatex);
+    if (!leaf) {
+      throw new Error(`Statistics selected Canonical Result V2 without producer MathJSON for ${path}.`);
+    }
+    return requireProvenCanonicalMathValueV2({
+      canonicalLatex,
       mathJson: leaf.mathJson,
       owner: 'statistics',
       routeId: input.routeId,
-      source: leaf.source,
+      source: `${leaf.source}:${path}`,
     });
-    if (value) proven.set(leaf.canonicalLatex, value);
-  }
-
-  const values: CanonicalResultProducerMathValuesV1 = {};
-  if (input.outcome.exactLatex) {
-    values.primaryMath = proven.get(input.outcome.exactLatex) ?? unproven(input.outcome.exactLatex);
-  }
-  const detailValues = details(input.outcome.detailSections, proven);
-  if (detailValues?.length) values.details = detailValues;
-  return values;
+  };
 }
 
 export function statisticsMathJsonRouteForRequest(

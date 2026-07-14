@@ -60,7 +60,7 @@ describe('statistics core', () => {
     if (regression.kind !== 'success' || correlation.kind !== 'success') {
       throw new Error('Expected regression and correlation to succeed');
     }
-    expect(regression.exactLatex).toContain('\\hat{y}');
+    expect(regression.exactLatex).toContain('y_{\\mathrm{fit}}');
     expect(regression.detailSections?.[0]?.title).toBe('Quality Summary');
     expect(regression.detailSections?.[0]?.lines.join(' ')).toContain('SSE');
     expect(correlation.approxText).toContain('positive');

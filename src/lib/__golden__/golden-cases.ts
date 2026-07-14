@@ -623,7 +623,7 @@ export const goldenCases: GoldenCase[] = [
     },
     expected: {
       kind: 'success',
-      exactIncludes: ['\\hat{y}'],
+      exactIncludes: ['y_{\\mathrm{fit}}'],
       warningIncludes: ['small sample', 'at least 3 points'],
       detailTitlesInclude: ['Quality Summary'],
     },
@@ -716,6 +716,25 @@ export const goldenCases: GoldenCase[] = [
       kind: 'success',
       exactIncludes: ['\\operatorname{orthogonal\\ basis}'],
       detailTitlesInclude: ['Orthonormal Basis', 'Gram-Schmidt Proof'],
+    },
+  },
+  {
+    id: 'vector-geometric-measures',
+    lane: 'vector-geometry',
+    mode: 'vector',
+    request: {
+      operation: 'parallelogramArea',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      vectorOperandLatexA: 'p',
+      vectorOperandLatexB: 'q',
+      angleUnit: 'rad',
+    },
+    expected: {
+      kind: 'success',
+      exactEquals: '2',
+      detailTitlesInclude: ['Measure Evidence', '3D Geometry'],
+      detailLinesInclude: ['The cross product gives the right-hand-rule oriented normal.'],
     },
   },
   {

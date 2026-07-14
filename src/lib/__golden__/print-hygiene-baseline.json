@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "V1-TYPED-DETAIL-CLOSEOUT0 accepts the intended typed prose plus inline math output for Calculus, Trigonometry, Matrix system/profile, and Vector span/independence details.",
+  "acceptedReason": "STATISTICS-DATA-SUMMARY1 accepts standard-operator Canonical Result V2 notation for regression and mean inference.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -974,7 +974,7 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\hat{y}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
+          "value": "y_{\\mathrm{fit}}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
         },
         {
           "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
@@ -992,7 +992,7 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
         }
       ]
     },

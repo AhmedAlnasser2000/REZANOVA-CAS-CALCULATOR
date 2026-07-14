@@ -7,6 +7,7 @@ import type {
   PoissonState,
   RegressionState,
   StatisticsScreen,
+  StatisticsDataSummaryState,
   StatisticsWorkingSource,
   StatsDataset,
 } from '../../types/calculator';
@@ -21,6 +22,12 @@ export const DEFAULT_FREQUENCY_TABLE: FrequencyTable = {
     { value: '1', frequency: '2' },
     { value: '2', frequency: '3' },
   ],
+};
+
+export const DEFAULT_STATISTICS_DATA_SUMMARY_STATE: StatisticsDataSummaryState = {
+  analysis: 'descriptive',
+  quartiles: 'halves',
+  context: 'compare',
 };
 
 export const DEFAULT_BINOMIAL_STATE: BinomialState = {
@@ -70,6 +77,7 @@ export function buildStatisticsInputLatex(
   state: {
     dataset: StatsDataset;
     frequencyTable: FrequencyTable;
+    dataSummary: StatisticsDataSummaryState;
     binomial: BinomialState;
     normal: NormalState;
     poisson: PoissonState;
@@ -102,11 +110,15 @@ export function defaultStatisticsDraftForScreen(
             kind: 'descriptive',
             source: 'frequencyTable',
             rows: DEFAULT_FREQUENCY_TABLE.rows,
+            quartiles: DEFAULT_STATISTICS_DATA_SUMMARY_STATE.quartiles,
+            context: DEFAULT_STATISTICS_DATA_SUMMARY_STATE.context,
           })
         : serializeStatisticsRequest({
             kind: 'descriptive',
             source: 'dataset',
             values: DEFAULT_STATS_DATASET.values,
+            quartiles: DEFAULT_STATISTICS_DATA_SUMMARY_STATE.quartiles,
+            context: DEFAULT_STATISTICS_DATA_SUMMARY_STATE.context,
           });
     case 'frequency':
       return workingSource === 'frequencyTable'
@@ -142,6 +154,7 @@ export function defaultStatisticsDraftForScreen(
         {
           dataset: DEFAULT_STATS_DATASET,
           frequencyTable: DEFAULT_FREQUENCY_TABLE,
+          dataSummary: DEFAULT_STATISTICS_DATA_SUMMARY_STATE,
           binomial: DEFAULT_BINOMIAL_STATE,
           normal: DEFAULT_NORMAL_STATE,
           poisson: DEFAULT_POISSON_STATE,

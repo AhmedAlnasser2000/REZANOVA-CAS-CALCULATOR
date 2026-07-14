@@ -3,6 +3,7 @@ import type {
   StatisticsParseResult,
   StatisticsReplaySeed,
   StatisticsScreen,
+  VersionedResultProducerDraft,
 } from '../../types/calculator';
 import { runStatisticsCoreDraft } from './core';
 import {
@@ -15,11 +16,11 @@ import { statisticsRequestToWorkingSource } from './shared';
 import type { RunStatisticsRuntimeRequest } from './runtime-input';
 import {
   statisticsMathJsonRouteForRequest,
-  statisticsMathValuesFromOwnedLeaves,
+  statisticsV2MathResolverFromOwnedLeaves,
 } from './math-values';
 
 export type StatisticsModeRunPayload = {
-  outcome: ReturnType<typeof runStatisticsCoreDraft>['outcome'];
+  outcome: VersionedResultProducerDraft;
   parsed: StatisticsParseResult;
   replayScreen: StatisticsScreen;
   replaySeed?: StatisticsReplaySeed;
@@ -47,13 +48,10 @@ export function buildStatisticsModeRunPayload(
   const ownedOutcome = requireCanonicalResultAuthority(outcome.kind === 'prompt'
     ? outcome
     : createStatisticsResultOutcome(outcome, parsed.ok
-      ? {
-          mathValues: statisticsMathValuesFromOwnedLeaves({
-            outcome,
-            routeId: statisticsMathJsonRouteForRequest(parsed.request),
-            leaves: mathJsonLeaves,
-          }),
-        }
+      ? statisticsV2MathResolverFromOwnedLeaves({
+          routeId: statisticsMathJsonRouteForRequest(parsed.request),
+          leaves: mathJsonLeaves,
+        })
       : undefined), 'Statistics');
 
   return {

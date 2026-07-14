@@ -10,10 +10,12 @@ import type {
   PoissonState,
   RegressionState,
   StatisticsScreen,
+  StatisticsDataSummaryState,
   StatisticsSection,
   StatisticsWorkingSource,
   StatsDataset,
 } from '../../types/calculator';
+import { StatisticsDataSummaryPanel } from './statistics/StatisticsDataSummaryPanel';
 
 type StatisticsRouteMetaLike = {
   breadcrumb: string[];
@@ -79,6 +81,8 @@ type StatisticsWorkspaceProps = {
   workbenchExpression: string;
   onCopyWorkbenchExpression: () => void;
   frequencyTable: FrequencyTable;
+  dataSummaryState: StatisticsDataSummaryState;
+  setDataSummaryState: Dispatch<SetStateAction<StatisticsDataSummaryState>>;
   frequencyValueRef: RefObject<HTMLInputElement | null>;
   onUpdateFrequencyRow: (index: number, field: 'value' | 'frequency', value: string) => void;
   onRemoveFrequencyRow: (index: number) => void;
@@ -140,6 +144,8 @@ function StatisticsWorkspace({
   workbenchExpression,
   onCopyWorkbenchExpression,
   frequencyTable,
+  dataSummaryState,
+  setDataSummaryState,
   frequencyValueRef: statisticsFrequencyValueRef,
   onUpdateFrequencyRow,
   onRemoveFrequencyRow,
@@ -169,6 +175,14 @@ function StatisticsWorkspace({
   if (!routeMeta) {
     return null;
   }
+  const panelMeta = activeSection === 'dataSummary'
+    ? {
+        ...routeMeta,
+        breadcrumb: ['Statistics', 'Data & Summary'],
+        label: 'Data & Summary',
+        description: 'Edit one reusable dataset, choose its representation, and evaluate summaries or compact counts.',
+      }
+    : routeMeta;
 
   return (
     <section className={`mode-panel ${isMenuOpen ? 'statistics-menu-panel' : 'statistics-panel'}`}>
@@ -191,7 +205,7 @@ function StatisticsWorkspace({
           </button>
         ))}
       </div>
-      {SECTION_TOOLS[activeSection].length > 1 ? (
+      {SECTION_TOOLS[activeSection].length > 1 && activeSection !== 'dataSummary' ? (
         <label className="statistics-tool-select">
           <span>{activeSection === 'relationships' ? 'Analysis' : 'Tool'}</span>
           <select
@@ -208,19 +222,19 @@ function StatisticsWorkspace({
       <div className="equation-panel-header statistics-panel-header">
         <div className="equation-panel-copy">
           <div className="equation-breadcrumbs">
-            {routeMeta.breadcrumb.map((segment) => (
+            {panelMeta.breadcrumb.map((segment) => (
               <span key={`${screen}-${segment}`} className="equation-breadcrumb">
                 {segment}
               </span>
             ))}
           </div>
           <div className="card-title-row">
-            <strong>{routeMeta.label}</strong>
+            <strong>{panelMeta.label}</strong>
             <span className="equation-badge">
               {resultIsStale ? 'Result stale' : 'Statistics'}
             </span>
           </div>
-          <p className="equation-hint statistics-panel-subtitle">{routeMeta.description}</p>
+          <p className="equation-hint statistics-panel-subtitle">{panelMeta.description}</p>
           <div className="guide-related-links">
             <button className="guide-chip" onClick={onOpenToolGuide}>
               Guide: This tool
@@ -258,6 +272,31 @@ function StatisticsWorkspace({
             <span>{menuFooterText}</span>
           </div>
         </>
+      ) : activeSection === 'dataSummary' ? (
+        <StatisticsDataSummaryPanel
+          screen={screen}
+          state={dataSummaryState}
+          setState={setDataSummaryState}
+          workingSource={workingSource}
+          onSwitchSource={onSwitchSource}
+          onOpenScreen={onOpenScreen}
+          datasetText={datasetText}
+          datasetValueCount={dataset.values.length}
+          datasetRef={datasetRef}
+          onUpdateDataset={onUpdateDataset}
+          frequencyTable={frequencyTable}
+          filledFrequencyRowCount={filledFrequencyRowCount}
+          frequencyValueRef={statisticsFrequencyValueRef}
+          onUpdateFrequencyRow={onUpdateFrequencyRow}
+          onRemoveFrequencyRow={onRemoveFrequencyRow}
+          onAddFrequencyRow={onAddFrequencyRow}
+          sourceSyncSummary={sourceSyncSummary}
+          onImportDatasetIntoFrequencyTable={onImportDatasetIntoFrequencyTable}
+          onExpandTableToDataset={onExpandTableToDataset}
+          onUseInStatistics={onUseInStatistics}
+          workbenchExpression={workbenchExpression}
+          onCopyWorkbenchExpression={onCopyWorkbenchExpression}
+        />
       ) : screen === 'dataEntry' || screen === 'descriptive' || screen === 'frequency' || screen === 'meanInference' ? (
         <div className="grid-two">
           <div className="editor-card">

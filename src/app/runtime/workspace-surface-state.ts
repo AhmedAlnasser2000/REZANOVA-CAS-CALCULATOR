@@ -45,6 +45,7 @@ import type {
   SphereState,
   SquareState,
   StatisticsScreen,
+  StatisticsDataSummaryState,
   StatisticsSection,
   StatisticsInputMode,
   StatisticsSourceSyncState,
@@ -179,6 +180,7 @@ export type StatisticsSurfaceState = {
   statsDataset: StatsDataset;
   statisticsDatasetDraftText: string;
   frequencyTable: FrequencyTable;
+  dataSummaryState: StatisticsDataSummaryState;
   binomialState: BinomialState;
   normalState: NormalState;
   poissonState: PoissonState;

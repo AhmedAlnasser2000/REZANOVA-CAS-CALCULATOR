@@ -70,6 +70,7 @@ export function statisticsRequestFromSurfaceState(
   const surfaceSnapshot = {
     dataset: surfaceState.statsDataset,
     frequencyTable: surfaceState.frequencyTable,
+    dataSummary: surfaceState.dataSummaryState,
     binomial: surfaceState.binomialState,
     normal: surfaceState.normalState,
     poisson: surfaceState.poissonState,
@@ -106,6 +107,7 @@ export function statisticsRequestFromSurfaceStateForScreen(
         {
           dataset: surfaceState.statsDataset,
           frequencyTable: surfaceState.frequencyTable,
+          dataSummary: surfaceState.dataSummaryState,
           binomial: surfaceState.binomialState,
           normal: surfaceState.normalState,
           poisson: surfaceState.poissonState,

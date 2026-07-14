@@ -807,7 +807,7 @@ export default function App() {
     binomialState,
     buildStatisticsDraftForScreen,
     correlationState,
-    currentStatisticsMenuIndex,
+    currentStatisticsMenuIndex, dataSummaryState,
     expandStatisticsTableToDataset,
     focusStatisticsEditor,
     frequencyTable,
@@ -833,7 +833,7 @@ export default function App() {
     runStatisticsAction,
     selectedStatisticsMenuEntry,
     setBinomialState,
-    setCurrentStatisticsMenuIndex,
+    setCurrentStatisticsMenuIndex, setDataSummaryState,
     setMeanInferenceState,
     setNormalState,
     setPoissonState,
@@ -3124,7 +3124,7 @@ export default function App() {
                 onUseInStatistics={() => loadStatisticsDraft(buildStatisticsDraftForScreen(statisticsScreen), 'guided', true)}
                 workbenchExpression={statisticsWorkbenchExpression}
                 onCopyWorkbenchExpression={copyStatisticsWorkbenchExpression}
-                frequencyTable={frequencyTable}
+                frequencyTable={frequencyTable} dataSummaryState={dataSummaryState} setDataSummaryState={setDataSummaryState}
                 frequencyValueRef={statisticsFrequencyValueRef}
                 onUpdateFrequencyRow={updateStatisticsFrequencyRow}
                 onRemoveFrequencyRow={removeStatisticsFrequencyRow}

@@ -20,6 +20,19 @@ describe('statistics parser', () => {
       throw new Error('Expected descriptive request kind');
     }
     expect(descriptive.request.source).toBe('frequencyTable');
+    expect(descriptive.request.quartiles).toBe('halves');
+    expect(descriptive.request.context).toBe('compare');
+  });
+
+  it('parses explicit descriptive quartile and spread options', () => {
+    const parsed = parseStatisticsDraft(
+      'descriptive(values={1,2,3,4,100}, quartiles=linear, context=sample)',
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok || parsed.request.kind !== 'descriptive') {
+      throw new Error('Expected descriptive options to parse.');
+    }
+    expect(parsed.request).toMatchObject({ quartiles: 'linear', context: 'sample' });
   });
 
   it('parses shorthand dataset, table, probability, and point-set drafts', () => {

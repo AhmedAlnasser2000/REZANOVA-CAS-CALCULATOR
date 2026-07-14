@@ -18,6 +18,8 @@ import type {
   NumericNotationMode,
   OutputStyle,
   ScientificNotationStyle,
+  StatisticsDataContext,
+  StatisticsQuartileMethod,
   StatisticsScreen,
   TrigScreen,
 } from './mode-types';
@@ -575,6 +577,11 @@ export type FrequencyRow = {
 export type FrequencyTable = {
   rows: FrequencyRow[];
 };
+export type StatisticsDataSummaryState = {
+  analysis: 'descriptive' | 'frequency';
+  quartiles: StatisticsQuartileMethod;
+  context: StatisticsDataContext;
+};
 export type BinomialState = {
   n: string;
   p: string;
@@ -749,8 +756,8 @@ export type TrigRewriteSolveCandidate =
     };
 export type StatisticsRequest =
   | { kind: 'dataset'; values: string[] }
-  | { kind: 'descriptive'; source: 'dataset'; values: string[] }
-  | { kind: 'descriptive'; source: 'frequencyTable'; rows: FrequencyRow[] }
+  | { kind: 'descriptive'; source: 'dataset'; values: string[]; quartiles?: StatisticsQuartileMethod; context?: StatisticsDataContext }
+  | { kind: 'descriptive'; source: 'frequencyTable'; rows: FrequencyRow[]; quartiles?: StatisticsQuartileMethod; context?: StatisticsDataContext }
   | { kind: 'frequency'; source: 'dataset'; values: string[] }
   | { kind: 'frequency'; source: 'frequencyTable'; rows: FrequencyRow[] }
   | { kind: 'binomial'; n: string; p: string; x: string; mode: BinomialState['mode'] }
@@ -1018,6 +1025,7 @@ export type MatrixResponse = {
 export type VectorOperation =
   | 'dot' | 'cross' | 'normA' | 'normB' | 'angle' | 'add' | 'subtract'
   | 'projectionUofV' | 'projectionVofU' | 'orthogonalToU' | 'orthogonalToV' | 'unitA' | 'unitB' | 'orthogonalCheck' | 'gramSchmidtUV'
+  | 'parallel' | 'distance' | 'parallelogramArea' | 'triangleArea' | 'volume'
   | 'linearCombination' | 'span' | 'independent';
 
 export type VectorRequest = {

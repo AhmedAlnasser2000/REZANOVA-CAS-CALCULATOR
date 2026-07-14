@@ -5,6 +5,9 @@ import type {
 } from '../../types/calculator';
 import { datasetTextFromValues } from '../../lib/statistics/runtime-request';
 import {
+  DEFAULT_STATISTICS_DATA_SUMMARY_STATE,
+} from '../../lib/statistics/examples';
+import {
   defaultStatisticsScreenForSection,
   statisticsSectionForScreen,
   statisticsWorkspaceScreenForLegacyScreen,
@@ -50,6 +53,7 @@ export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): Stati
     statisticsDatasetDraftText:
       state.statisticsDatasetDraftText ?? datasetTextFromValues(state.statsDataset.values),
     frequencyTable: { rows: state.frequencyTable.rows.map((row) => ({ ...row })) },
+    dataSummaryState: { ...(state.dataSummaryState ?? DEFAULT_STATISTICS_DATA_SUMMARY_STATE) },
     binomialState: { ...state.binomialState },
     normalState: { ...state.normalState },
     poissonState: { ...state.poissonState },

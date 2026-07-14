@@ -11,6 +11,7 @@ import {
   canonicalMathValueFromProof,
   declareProducerOwnedAnswerMathJson,
   proveAnswerMathJson,
+  requireProvenCanonicalMathValueV2,
 } from './proven-answer-mathjson';
 import { requireCanonicalResultAuthority } from './native-result';
 
@@ -58,7 +59,20 @@ describe('workspace canonical producer math values', () => {
   it('passes direct proven values through guided-domain owners', () => {
     expectNativeProvenPrimary(createTrigonometryResultOutcome(success, options));
     expectNativeProvenPrimary(createGeometryResultOutcome(success, options));
-    expectNativeProvenPrimary(createStatisticsResultOutcome(success, options));
+
+    const statisticsMath = requireProvenCanonicalMathValueV2({
+      canonicalLatex: success.exactLatex,
+      mathJson: ['Equal', 'x', 1],
+      owner: 'statistics',
+      routeId: 'statistics.descriptive',
+      source: 'workspace-adapter-test',
+    });
+    const statistics = createStatisticsResultOutcome(success, () => statisticsMath);
+    expect(statistics.canonicalResult.version).toBe(2);
+    expect(statistics.canonicalResult.primary).toEqual({
+      kind: 'math',
+      value: statisticsMath,
+    });
 
     const response: TableResponse = {
       headers: ['x', 'f(x)'],
