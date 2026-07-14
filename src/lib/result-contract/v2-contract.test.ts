@@ -316,7 +316,9 @@ describe('Canonical Result V2 contract', () => {
   it('keeps the frozen 57-route inventory while enabling the reviewed V2 producer gates', () => {
     const routeIds = Object.keys(MATHJSON_ROUTE_REGISTRY).sort();
     expect(FROZEN_V1_PRODUCER_ROUTE_IDS).toHaveLength(57);
-    expect([...FROZEN_V1_PRODUCER_ROUTE_IDS].sort()).toEqual(routeIds);
+    expect(routeIds.filter((routeId) =>
+      (FROZEN_V1_PRODUCER_ROUTE_IDS as readonly string[]).includes(routeId)))
+      .toEqual([...FROZEN_V1_PRODUCER_ROUTE_IDS].sort());
     expect(Object.keys(CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY).sort()).toEqual(routeIds);
     expect(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES)
       .toEqual([

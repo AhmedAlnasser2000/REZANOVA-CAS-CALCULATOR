@@ -96,3 +96,12 @@
   source: chat-2026-07-14-canonical-result-v2-program-approval
   canonical_targets: .memory/research/audits/canonical-result-v2-audit0.md; .memory/research/roadmaps/canonical-result-v2-roadmap.md; .memory/sessions/2026-07/2026-07-14/2026-07-14__canonical-result-v2-program/
   notes: Standing approval covers only the eight named commits and the single approved derivative-at-point output correction. Scope changes or other visible output changes require renewed approval. No push is authorized; test-results remains excluded.
+- approved_at_local: 2026-07-14 +03:00
+  approver: user
+  decision: Approve the Canonical Result V2 enforcement ratchet and its single named local commit.
+  recorded_by_agent: codex
+  recorded_by_agent_model: gpt-5.6
+  recorded_by_agent_family: sol
+  source: chat-2026-07-14-canonical-result-v2-enforcement-approval
+  canonical_targets: AGENTS.md; tools/canonical-result-v2-enforcement-baseline.json; tools/canonical-result-v2-enforcement-core.mjs; .github/workflows/ci.yml; .memory/sessions/2026-07/2026-07-14/2026-07-14__canonical-result-v2-enforcement/
+  notes: Approval covers the named local commit only. No push or GitHub branch-protection mutation is authorized; concurrent Rust OOE files and test-results remain excluded.

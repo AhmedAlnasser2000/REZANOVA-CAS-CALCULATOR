@@ -31,6 +31,7 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
@@ -97,6 +98,7 @@ describe('seam impact selector', () => {
       'app-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
@@ -122,6 +124,7 @@ describe('seam impact selector', () => {
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
@@ -144,6 +147,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.laneIds, ['equation']);
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
     ]);
@@ -161,6 +165,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
@@ -188,6 +193,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
@@ -208,6 +214,7 @@ describe('seam impact selector', () => {
     assert.deepEqual(plan.additionalCommands.map((entry) => entry.id), [
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',

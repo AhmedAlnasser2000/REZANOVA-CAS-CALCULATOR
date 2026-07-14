@@ -69,6 +69,9 @@ jobs:
       - name: Validate memory protocol
         run: npm run test:memory-protocol
 
+      - name: Enforce Canonical Result V2 producers
+        run: npm run test:canonical-result-v2-enforcement
+
       - name: Validate CI gate alignment
         run: npm run test:ci-gate-alignment
 

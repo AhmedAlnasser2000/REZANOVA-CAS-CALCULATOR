@@ -2,6 +2,11 @@
 
 .github/** @AhmedAlnasser2000
 AGENTS.md @AhmedAlnasser2000
+src/lib/result-contract/** @AhmedAlnasser2000
+tools/canonical-result-v2-enforcement* @AhmedAlnasser2000
+tools/mathjson-coverage* @AhmedAlnasser2000
+tools/display-contract-inversion* @AhmedAlnasser2000
+tools/printer-migration* @AhmedAlnasser2000
 CLAUDE.md @AhmedAlnasser2000
 GEMINI.md @AhmedAlnasser2000
 .memory/** @AhmedAlnasser2000

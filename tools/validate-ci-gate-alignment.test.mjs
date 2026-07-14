@@ -5,6 +5,7 @@ import {
   PACKAGE_COMMAND,
   SEAM_IMPACT_COMMAND,
   STATIC_GATE_COMMANDS,
+  V2_ENFORCEMENT_COMMAND,
   validateCiGateAlignment,
   validateRepoCiGateAlignment,
 } from './ci-gate-alignment-core.mjs';
@@ -19,6 +20,8 @@ function fixture(overrides = {}) {
       '    branches:',
       '      - main',
       'jobs:',
+      '  canonical-result-v2-enforcement:',
+      `      - run: ${V2_ENFORCEMENT_COMMAND}`,
       '  ci-linux:',
       staticSteps,
       '      - uses: actions/checkout@v4',
@@ -56,6 +59,27 @@ describe('CI gate alignment validation', () => {
     assert.throws(
       () => validateCiGateAlignment(input),
       new RegExp(`CI workflow must include run: ${STATIC_GATE_COMMANDS[2]}`),
+    );
+  });
+
+  it('rejects a missing or late dedicated V2 enforcement job', () => {
+    const missing = fixture();
+    missing.ciWorkflow = missing.ciWorkflow.replace(
+      `  canonical-result-v2-enforcement:\n      - run: ${V2_ENFORCEMENT_COMMAND}\n`,
+      '',
+    );
+    assert.throws(
+      () => validateCiGateAlignment(missing),
+      /independent canonical-result-v2-enforcement job/u,
+    );
+
+    const late = fixture();
+    late.ciWorkflow = late.ciWorkflow
+      .replace(`  canonical-result-v2-enforcement:\n      - run: ${V2_ENFORCEMENT_COMMAND}\n`, '')
+      .concat(`\n  canonical-result-v2-enforcement:\n      - run: ${V2_ENFORCEMENT_COMMAND}`);
+    assert.throws(
+      () => validateCiGateAlignment(late),
+      /before ci-linux/u,
     );
   });
 

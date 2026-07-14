@@ -3,6 +3,7 @@ import path from 'node:path';
 
 export const STATIC_GATE_COMMANDS = [
   'npm run test:memory-protocol',
+  'npm run test:canonical-result-v2-enforcement',
   'npm run test:ci-gate-alignment',
   'npm run test:seam-impact-selector',
   'npm run test:printer-migration',
@@ -23,6 +24,7 @@ export const STATIC_GATE_COMMANDS = [
 export const CANARY_COMMAND = 'npm run test:canaries:browser';
 export const PACKAGE_COMMAND = 'npm run tauri:build';
 export const SEAM_IMPACT_COMMAND = 'npm run seam:impact -- --github-event --run';
+export const V2_ENFORCEMENT_COMMAND = 'npm run test:canonical-result-v2-enforcement:ci';
 
 function assertIncludes(text, value, label) {
   if (!text.includes(value)) {
@@ -49,6 +51,17 @@ function assertCiCanaryJob(ciWorkflow) {
   }
   if (/\be2e-linux:\s*[\s\S]*?\bneeds:\s*ci-linux\b/u.test(ciWorkflow)) {
     throw new Error('CI e2e-linux job must run independently from ci-linux');
+  }
+}
+
+function assertV2EnforcementJob(ciWorkflow) {
+  const jobIndex = ciWorkflow.indexOf('  canonical-result-v2-enforcement:');
+  const commandIndex = ciWorkflow.indexOf(`run: ${V2_ENFORCEMENT_COMMAND}`);
+  const ciIndex = ciWorkflow.indexOf('  ci-linux:');
+  if (jobIndex < 0 || commandIndex < jobIndex || ciIndex < 0 || jobIndex >= ciIndex) {
+    throw new Error(
+      `CI workflow must run the independent canonical-result-v2-enforcement job before ci-linux with ${V2_ENFORCEMENT_COMMAND}`,
+    );
   }
 }
 
@@ -98,6 +111,7 @@ export function validateCiGateAlignment({
 }) {
   assertCiTriggers(ciWorkflow);
   assertCommands(ciWorkflow, STATIC_GATE_COMMANDS, 'CI workflow');
+  assertV2EnforcementJob(ciWorkflow);
   assertCiCanaryJob(ciWorkflow);
   assertCiSeamImpactRunner(ciWorkflow);
 

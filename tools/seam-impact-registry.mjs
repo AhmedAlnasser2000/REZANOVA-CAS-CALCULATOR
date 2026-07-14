@@ -20,6 +20,11 @@ export const SEAM_COMMANDS = [
     argv: ['npm', 'run', 'test:result-contract'],
   },
   {
+    id: 'canonical-result-v2-enforcement',
+    label: 'Canonical Result V2 frozen-producer enforcement',
+    argv: ['npm', 'run', 'test:canonical-result-v2-enforcement'],
+  },
+  {
     id: 'mathjson-coverage-ratchet',
     label: 'Producer-proven MathJSON coverage ratchet',
     argv: ['npm', 'run', 'test:mathjson-coverage'],
@@ -239,6 +244,7 @@ export const SEAM_REGISTRY = [
     ],
     additionalCommandIds: [
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'display-contracts',
       'equation-solve-result-contracts',
@@ -262,6 +268,7 @@ export const SEAM_REGISTRY = [
     ],
     additionalCommandIds: [
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'equation-solve-result-contracts',
       'display-contract-inversion-ratchet',
     ],
@@ -317,6 +324,7 @@ export const SEAM_REGISTRY = [
       'workspace-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'mathjson-coverage-ratchet',
       'equation-solve-result-contracts',
       'app-state-contracts',
@@ -359,6 +367,7 @@ export const SEAM_REGISTRY = [
       'app-runtime-contracts',
       'display-contracts',
       'result-contracts',
+      'canonical-result-v2-enforcement',
       'equation-solve-result-contracts',
       'app-state-contracts',
       'display-contract-inversion-ratchet',

@@ -32,4 +32,5 @@
 - [ ] Public claims match implemented behavior.
 - [ ] Playground and external-compute work remain non-product unless explicitly scoped.
 - [ ] Math changes include focused tests, or this PR does not change math behavior.
+- [ ] New or changed result producers use V2 with route-specific producer proof; no frozen V1 fingerprint, coverage invariant, or enforcement ratchet was weakened.
 - [ ] I checked whether docs, README, or release notes need updates.
