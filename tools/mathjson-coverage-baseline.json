@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "V1-TYPED-DETAIL-CALCULUS1 replaces Calculus pseudo-label math strings with typed prose and producer-proven derivative, relation, variable, and substitution values.",
+  "reason": "V1-TYPED-DETAIL-TRIGONOMETRY1 makes Period and Phase labels typed prose and attaches producer-proven amplitude, coefficient, period, phase, shift, midline, range, and landmark values.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -96,11 +96,11 @@
     "evidence": 143,
     "replayFixtures": 100,
     "goldenCases": 43,
-    "bytes": 108389,
+    "bytes": 108855,
     "maxBytes": 2753,
-    "leaves": 460,
-    "proven": 410,
-    "exempt": 50,
+    "leaves": 459,
+    "proven": 416,
+    "exempt": 43,
     "missing": 0
   },
   "routes": {
@@ -647,11 +647,11 @@
       "evidence": 1,
       "replayFixtures": 0,
       "goldenCases": 1,
-      "bytes": 1560,
-      "maxBytes": 1560,
-      "leaves": 14,
-      "proven": 6,
-      "exempt": 8,
+      "bytes": 2026,
+      "maxBytes": 2026,
+      "leaves": 13,
+      "proven": 12,
+      "exempt": 1,
       "missing": 0
     },
     "trigonometry.right-triangle": {

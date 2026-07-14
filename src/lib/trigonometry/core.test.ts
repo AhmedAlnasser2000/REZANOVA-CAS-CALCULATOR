@@ -72,7 +72,7 @@ describe('trigonometry core draft runner', () => {
   });
 
   it('analyzes affine period and phase in the selected angle unit', () => {
-    const { outcome } = runTrigonometryCoreDraft('2\\sin\\left(3x-\\pi\\right)+1', {
+    const { outcome, mathJsonLeaves } = runTrigonometryCoreDraft('2\\sin\\left(3x-\\pi\\right)+1', {
       screenHint: 'periodPhase',
       angleUnit: 'deg',
     });
@@ -86,6 +86,23 @@ describe('trigonometry core draft runner', () => {
     expect(outcome.exactLatex).not.toContain('\\\\pi');
     expect(outcome.detailSections?.map((section) => section.title)).toContain('Wave Facts');
     expect(outcome.detailSections?.map((section) => section.title)).toContain('First Cycle Landmarks');
+    const waveFacts = outcome.detailSections?.find((section) => section.title === 'Wave Facts');
+    expect(waveFacts?.lines).toEqual([
+      'Carrier: sine.',
+      'Amplitude: 2.',
+      'Coefficient: B=3.',
+      'Period: 120^{\\circ}.',
+      'Phase shift: 60^{\\circ}.',
+      'Vertical shift: 1.',
+      'Midline: y=1.',
+      'Range: \\left[-1,3\\right].',
+    ]);
+    expect(waveFacts?.lineParts?.[0]).toEqual([
+      { kind: 'text', text: 'Carrier: sine.' },
+    ]);
+    expect(mathJsonLeaves.map((leaf) => leaf.canonicalLatex)).toEqual(
+      expect.arrayContaining(['2', 'B=3', '120^{\\circ}', '60^{\\circ}', '1', 'y=1', '\\left[-1,3\\right]']),
+    );
     const landmarks = outcome.detailSections?.find((section) => section.title === 'First Cycle Landmarks');
     expect(landmarks?.lines).toContain('x_1=90^{\\circ}');
   });

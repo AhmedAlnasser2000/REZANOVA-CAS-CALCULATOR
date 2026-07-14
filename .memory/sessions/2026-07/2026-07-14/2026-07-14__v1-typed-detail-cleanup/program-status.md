@@ -16,9 +16,10 @@
 
 ## Current Gate
 
-- `V1-TYPED-DETAIL-CALCULUS1`: verified; awaiting explicit commit approval.
-- Remaining: Trigonometry, Matrix system, Linear Algebra profiles, and closeout.
-- Current coverage: 460 leaves, 410 proven MathJSON trees, 50 exemptions, zero missing classifications.
+- `V1-TYPED-DETAIL-CALCULUS1`: committed as `b7e2f081`.
+- `V1-TYPED-DETAIL-TRIGONOMETRY1`: verified and approved; awaiting commit creation.
+- Remaining: Matrix system, Linear Algebra profiles, and closeout.
+- Current coverage: 459 leaves, 416 proven MathJSON trees, 43 exemptions, zero missing classifications.
 - Final target: 23 exemptions and zero missing classifications.
 
 ## Cross-Agent Boundary

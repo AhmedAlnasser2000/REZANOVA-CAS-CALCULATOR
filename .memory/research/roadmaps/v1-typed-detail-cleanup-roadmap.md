@@ -2,7 +2,7 @@
 
 Date: 2026-07-14
 Last updated: 2026-07-14
-Status: active; Move 1 verified and awaiting commit approval; no push is authorized
+Status: active; Moves 1-2 verified and committed through `V1-TYPED-DETAIL-TRIGONOMETRY1` pending commit creation; no push is authorized
 
 ## Attribution
 
@@ -40,8 +40,8 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 
 ## Sequence
 
-1. `V1-TYPED-DETAIL-CALCULUS1`: verified; awaiting commit approval. Calculus coverage is now 460 leaves, 410 proven, 50 exempt, and zero missing. `calculus.derivatives` moved from 14 to 2 exemptions and `calculus.partials` from 2 to 0.
-2. `V1-TYPED-DETAIL-TRIGONOMETRY1`: pending. Target `trigonometry.period-phase` from 8 to 1.
+1. `V1-TYPED-DETAIL-CALCULUS1`: committed as `b7e2f081`. Calculus coverage moved to 460 leaves, 410 proven, 50 exempt, and zero missing. `calculus.derivatives` moved from 14 to 2 exemptions and `calculus.partials` from 2 to 0.
+2. `V1-TYPED-DETAIL-TRIGONOMETRY1`: verified; approved and awaiting commit creation. Coverage is 459 leaves, 416 proven, 43 exempt, and zero missing. `trigonometry.period-phase` moved from 14/6/8/0 to 13/12/1/0; the removed leaf is the carrier classification, now correctly prose.
 3. `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: pending. Target `matrix.linear-system` from 7 to 4, retaining the four row-operation arrows.
 4. `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: pending. Target `matrix.profile` from 17 to 4 and `vector.span-independence` from 6 to 2.
 5. `V1-TYPED-DETAIL-CLOSEOUT0`: pending. Remove obsolete exemption rules, accept exactly 23 exemptions and zero missing classifications, and close the fixtures, print-hygiene, memory, and visual evidence.
@@ -53,6 +53,13 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 - All 449 live detail producers remain explicitly declared; result-intent coverage passes.
 - Focused Calculus engine, implicit-derivative, replay, coverage, and UI tests pass.
 - Chromium inspection covers ordinary derivative, implicit derivative, mixed partial, expanded details, compact History, and overflow. Screenshots are retained under `.task_tmp/v1-typed-detail-cleanup/`.
+
+## Move 2 Evidence
+
+- Period and Phase Wave Facts now use prose labels with producer-owned amplitude, coefficient, period, phase, vertical shift, midline, range, and asymptote values; carrier classification is prose.
+- All 63 result-contract tests pass across all 43 golden and 100 replay executions.
+- All 450 live detail producers are declared; result-intent coverage passes.
+- Chromium RAD inspection covers the answer, expanded Wave Facts, collapsed landmarks, compact History, and overflow. This compact result exposes no Formula Viewer control.
 
 ## Verification Policy
 

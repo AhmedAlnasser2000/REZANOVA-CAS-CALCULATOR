@@ -24,3 +24,14 @@
 - visual: ordinary derivative, implicit derivative, mixed partial, expanded details, compact History, and overflow inspected in Chromium
 - static: incremental TypeScript, changed-file lint, file-size, memory, and diff hygiene pass
 - protected lane: concurrent Notebook changes and `test-results/` excluded; no push
+
+## V1-TYPED-DETAIL-TRIGONOMETRY1
+
+- kind: backend producer-detail cleanup with focused UI and browser evidence
+- result: pass; approved for commit
+- coverage: 459 leaves, 416 proven, 43 exemptions, zero missing; Period and Phase is 13/12/1/0
+- contracts: 63 result-contract tests pass; 450 live detail producers are declared; result intent has zero violations
+- focused regression: all 13 Trigonometry core tests pass
+- visual: RAD answer, expanded Wave Facts, collapsed landmarks, compact History, and overflow inspected in Chromium; Formula Viewer is not exposed for this compact result
+- static: incremental TypeScript, changed-file lint, file-size, memory, and diff hygiene pass
+- protected lane: concurrent Notebook changes and `test-results/` excluded; no push

@@ -1,11 +1,20 @@
-import type { AngleUnit } from '../../types/calculator';
+import type {
+  AngleUnit,
+  DisplayDetailLinePart,
+  DisplayDetailSection,
+} from '../../types/calculator';
 import { formatNumber } from '../display/format';
-import { mathDetailSection } from '../display/result-detail-lines';
+import {
+  mathPart,
+  mixedDetailSection,
+  textPart,
+} from '../display/result-detail-lines';
 import {
   degreesToUnitMathJson,
   formatDegreesAsUnitLatex,
   type TrigEvaluation,
 } from './angles';
+import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
 import { profileTrigonometryResult } from '../display/printer';
 
 type TrigCarrier = 'sin' | 'cos' | 'tan';
@@ -13,6 +22,12 @@ type TrigCarrier = 'sin' | 'cos' | 'tan';
 type ParsedScalar = {
   value: number;
   latex: string;
+  mathJson: unknown;
+};
+
+type DetailEvidence = {
+  section: DisplayDetailSection;
+  mathJsonLeaves: TrigonometryOwnedMathJsonLeaf[];
 };
 
 type ParsedPeriodPhase = {
@@ -43,19 +58,31 @@ function normalizeLatex(source: string) {
 function parseScalar(source: string, fallbackValue?: number): ParsedScalar | null {
   let token = source.trim().replaceAll('*', '');
   if (!token && fallbackValue !== undefined) {
-    return { value: fallbackValue, latex: fallbackValue === 1 ? '1' : '-1' };
+    return {
+      value: fallbackValue,
+      latex: fallbackValue === 1 ? '1' : '-1',
+      mathJson: fallbackValue,
+    };
   }
   if (token === '+' && fallbackValue !== undefined) {
-    return { value: fallbackValue, latex: fallbackValue === 1 ? '1' : '-1' };
+    return {
+      value: fallbackValue,
+      latex: fallbackValue === 1 ? '1' : '-1',
+      mathJson: fallbackValue,
+    };
   }
   if (token === '-' && fallbackValue !== undefined) {
-    return { value: -fallbackValue, latex: fallbackValue === 1 ? '-1' : '1' };
+    return {
+      value: -fallbackValue,
+      latex: fallbackValue === 1 ? '-1' : '1',
+      mathJson: -fallbackValue,
+    };
   }
 
   token = token.replace(/^\+/, '');
   const numeric = Number(token);
   if (Number.isFinite(numeric)) {
-    return { value: numeric, latex: formatNumber(numeric) };
+    return { value: numeric, latex: formatNumber(numeric), mathJson: numeric };
   }
 
   const fraction = /^(-?)\\frac\{(-?\d+(?:\.\d+)?)\}\{(\d+(?:\.\d+)?)\}$/.exec(token);
@@ -68,7 +95,12 @@ function parseScalar(source: string, fallbackValue?: number): ParsedScalar | nul
       const latex = value < 0
         ? `-\\frac{${Math.abs(numerator)}}{${denominator}}`
         : `\\frac{${numerator}}{${denominator}}`;
-      return { value, latex };
+      const magnitude = ['Divide', Math.abs(numerator), denominator];
+      return {
+        value,
+        latex,
+        mathJson: value < 0 ? ['Negate', magnitude] : magnitude,
+      };
     }
   }
 
@@ -77,7 +109,7 @@ function parseScalar(source: string, fallbackValue?: number): ParsedScalar | nul
 
 function parseSignedShift(source: string): ParsedScalar | null {
   if (!source) {
-    return { value: 0, latex: '0' };
+    return { value: 0, latex: '0', mathJson: 0 };
   }
   if (!/^[+-]/.test(source)) {
     return null;
@@ -305,31 +337,132 @@ function waveFacts(
   phaseLatex: string,
   period: string,
   angleUnit: AngleUnit,
-) {
+): DetailEvidence {
   const phaseDegrees = phaseShiftDegrees(parsed, angleUnit);
   const periodInDegrees = periodDegrees(parsed);
-  const asymptoteLatex = phaseDegrees !== null
-    ? `${formatDegreesAsUnitLatex(phaseDegrees - periodInDegrees / 2, angleUnit)},\\ ${formatDegreesAsUnitLatex(phaseDegrees + periodInDegrees / 2, angleUnit)}`
-    : `${phaseLatex}\\pm\\frac{${period}}{2}`;
-  const facts = [
-    `\\text{carrier}=\\${parsed.carrier}`,
-    `B=${parsed.coefficient.latex}`,
-    `\\text{period}=${period}`,
-    `\\text{phase shift}=${phaseLatex}`,
-    `\\text{vertical shift}=${parsed.verticalShift.latex}`,
+  const rows: DisplayDetailLinePart[][] = [
+    [textPart(`Carrier: ${parsed.carrier === 'sin'
+      ? 'sine'
+      : parsed.carrier === 'cos' ? 'cosine' : 'tangent'}.`)],
   ];
+  const mathJsonLeaves: TrigonometryOwnedMathJsonLeaf[] = [];
 
-  if (parsed.carrier === 'tan') {
-    facts.push('\\text{amplitude does not apply to tangent}');
-    facts.push(`\\text{range}=\\mathbb{R}`);
-    facts.push(`\\text{asymptotes}: x=${asymptoteLatex}`);
-    return facts;
+  if (parsed.carrier !== 'tan') {
+    const amplitude = formatNumber(Math.abs(parsed.amplitude.value));
+    rows.push([textPart('Amplitude: '), mathPart(amplitude), textPart('.')]);
+    mathJsonLeaves.push({
+      canonicalLatex: amplitude,
+      mathJson: Math.abs(parsed.amplitude.value),
+      source: 'trigonometry.period-phase:native-amplitude',
+    });
   }
 
-  facts.splice(1, 0, `\\text{amplitude}=${formatNumber(Math.abs(parsed.amplitude.value))}`);
-  facts.push(`\\text{midline}: y=${parsed.verticalShift.latex}`);
-  facts.push(`\\text{range}=${formatRange(parsed)}`);
-  return facts;
+  const coefficient = `B=${parsed.coefficient.latex}`;
+  rows.push([textPart('Coefficient: '), mathPart(coefficient), textPart('.')]);
+  mathJsonLeaves.push({
+    canonicalLatex: coefficient,
+    mathJson: ['Equal', 'B', parsed.coefficient.mathJson],
+    source: 'trigonometry.period-phase:native-frequency-coefficient',
+  });
+
+  rows.push([textPart('Period: '), mathPart(period), textPart('.')]);
+  mathJsonLeaves.push({
+    canonicalLatex: period,
+    mathJson: degreesToUnitMathJson(periodInDegrees, angleUnit),
+    source: 'trigonometry.period-phase:native-period',
+  });
+
+  rows.push([textPart('Phase shift: '), mathPart(phaseLatex), textPart('.')]);
+  if (phaseDegrees !== null) {
+    mathJsonLeaves.push({
+      canonicalLatex: phaseLatex,
+      mathJson: degreesToUnitMathJson(phaseDegrees, angleUnit),
+      source: 'trigonometry.period-phase:native-phase-shift',
+    });
+  }
+
+  rows.push([
+    textPart('Vertical shift: '),
+    mathPart(parsed.verticalShift.latex),
+    textPart('.'),
+  ]);
+  mathJsonLeaves.push({
+    canonicalLatex: parsed.verticalShift.latex,
+    mathJson: parsed.verticalShift.mathJson,
+    source: 'trigonometry.period-phase:native-vertical-shift',
+  });
+
+  if (parsed.carrier === 'tan') {
+    rows.push([textPart('Amplitude does not apply to tangent.')]);
+    rows.push([textPart('Range: '), mathPart('\\mathbb{R}'), textPart('.')]);
+    mathJsonLeaves.push({
+      canonicalLatex: '\\mathbb{R}',
+      mathJson: 'RealNumbers',
+      source: 'trigonometry.period-phase:native-range',
+    });
+
+    if (phaseDegrees !== null) {
+      const leftDegrees = phaseDegrees - periodInDegrees / 2;
+      const rightDegrees = phaseDegrees + periodInDegrees / 2;
+      const leftLatex = `x=${formatDegreesAsUnitLatex(leftDegrees, angleUnit)}`;
+      const rightLatex = `x=${formatDegreesAsUnitLatex(rightDegrees, angleUnit)}`;
+      rows.push([
+        textPart('Asymptotes: '),
+        mathPart(leftLatex),
+        textPart(', '),
+        mathPart(rightLatex),
+        textPart('.'),
+      ]);
+      mathJsonLeaves.push(
+        {
+          canonicalLatex: leftLatex,
+          mathJson: ['Equal', 'x', degreesToUnitMathJson(leftDegrees, angleUnit)],
+          source: 'trigonometry.period-phase:native-left-asymptote',
+        },
+        {
+          canonicalLatex: rightLatex,
+          mathJson: ['Equal', 'x', degreesToUnitMathJson(rightDegrees, angleUnit)],
+          source: 'trigonometry.period-phase:native-right-asymptote',
+        },
+      );
+    } else {
+      rows.push([
+        textPart('Asymptotes: '),
+        mathPart(`x=${phaseLatex}\\pm\\frac{${period}}{2}`),
+        textPart('.'),
+      ]);
+    }
+    return {
+      section: mixedDetailSection('Wave Facts', rows),
+      mathJsonLeaves,
+    };
+  }
+
+  const midline = `y=${parsed.verticalShift.latex}`;
+  rows.push([textPart('Midline: '), mathPart(midline), textPart('.')]);
+  mathJsonLeaves.push({
+    canonicalLatex: midline,
+    mathJson: ['Equal', 'y', parsed.verticalShift.mathJson],
+    source: 'trigonometry.period-phase:native-midline',
+  });
+
+  const range = formatRange(parsed);
+  const amplitude = Math.abs(parsed.amplitude.value);
+  rows.push([textPart('Range: '), mathPart(range), textPart('.')]);
+  mathJsonLeaves.push({
+    canonicalLatex: range,
+    mathJson: [
+      'List',
+      parsed.verticalShift.value - amplitude,
+      parsed.verticalShift.value + amplitude,
+    ],
+    source: 'trigonometry.period-phase:native-range',
+  });
+
+  return {
+    section: mixedDetailSection('Wave Facts', rows),
+    mathJsonLeaves,
+  };
 }
 
 function landmarkFacts(
@@ -391,12 +524,9 @@ export function analyzePeriodPhase(
   const normalized = normalizedWaveLatex(parsed, phase);
   const phaseDegrees = phaseShiftDegrees(parsed, angleUnit);
   const periodInDegrees = periodDegrees(parsed);
+  const waveFactEvidence = waveFacts(parsed, phase, period, angleUnit);
   const mathJsonLeaves = [
-    {
-      canonicalLatex: `B=${parsed.coefficient.latex}`,
-      mathJson: ['Equal', 'B', parsed.coefficient.value],
-      source: 'trigonometry.period-phase:native-frequency-coefficient',
-    },
+    ...waveFactEvidence.mathJsonLeaves,
     ...(phaseDegrees === null || parsed.carrier === 'tan'
       ? []
       : Array.from({ length: 5 }, (_, index) => {
@@ -413,8 +543,12 @@ export function analyzePeriodPhase(
     approxText: `Carrier ${parsed.carrier}; period ${period}; phase shift ${phase}.`,
     warnings: [],
     detailSections: [
-      mathDetailSection('Wave Facts', waveFacts(parsed, phase, period, angleUnit)),
-      mathDetailSection('First Cycle Landmarks', landmarkFacts(parsed, phase, period, angleUnit)),
+      waveFactEvidence.section,
+      {
+        title: 'First Cycle Landmarks',
+        lines: landmarkFacts(parsed, phase, period, angleUnit),
+        lineKind: 'math',
+      },
     ],
     mathJsonLeaves,
   });
