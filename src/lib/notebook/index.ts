@@ -10,6 +10,7 @@ export * from './document/migrate-v4';
 export * from './document/migrate-v5';
 export * from './document/migrate-v6';
 export * from './document/migrate-v7';
+export * from './document/migrate-v8';
 export * from './document/model';
 export * from './document/page-layout';
 export * from './document/pagination';

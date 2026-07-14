@@ -1,19 +1,24 @@
 mod assets;
 mod model;
 mod package;
+mod server;
 
 pub use model::{
     NotebookAssetMetadataV1, NotebookAssetPayloadV1, NotebookPackageInspectionV1,
     NotebookStoredRecordSummaryV1, NotebookStoredRecordV1, NotebookVersionSnapshotV1,
 };
 
-use assets::{sha256_hex, validate_asset_bytes};
+use assets::{sha256_hex, validate_asset_bytes, validate_streamed_video_header};
 use model::{
     is_asset_id, migrate_stored_record, migrate_version_snapshot, summarize_record,
-    validate_stored_record, validate_version_snapshot, NotebookRecoveryMetadataV1,
+    validate_asset_metadata, validate_stored_record, validate_version_snapshot,
+    NotebookRecoveryMetadataV1,
 };
 use package::{export_package, inspect_package, inspection};
+use server::NotebookMediaServer;
+use sha2::{Digest, Sha256};
 use std::{
+    collections::HashMap,
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
@@ -25,6 +30,19 @@ use uuid::Uuid;
 pub struct NotebookStorage {
     root: PathBuf,
     operation_lock: Mutex<()>,
+    uploads: Mutex<HashMap<String, NotebookAssetUpload>>,
+    media_server: NotebookMediaServer,
+}
+
+struct NotebookAssetUpload {
+    path: PathBuf,
+    file: File,
+    hasher: Sha256,
+    expected_length: u64,
+    received_length: u64,
+    mime_type: String,
+    created_at: String,
+    header: Vec<u8>,
 }
 
 struct RecordPaths {
@@ -36,11 +54,16 @@ struct RecordPaths {
 
 impl NotebookStorage {
     pub fn load(root: PathBuf) -> Result<Self, String> {
+        fs::create_dir_all(root.join("assets")).map_err(|error| error.to_string())?;
+        let media_server = NotebookMediaServer::start(root.join("assets"))?;
         let storage = Self {
             root,
             operation_lock: Mutex::new(()),
+            uploads: Mutex::new(HashMap::new()),
+            media_server,
         };
         storage.ensure_directories()?;
+        storage.clear_stale_uploads()?;
         storage.recover_all()?;
         Ok(storage)
     }
@@ -57,6 +80,10 @@ impl NotebookStorage {
         self.root.join("recovery")
     }
 
+    fn uploads_dir(&self) -> PathBuf {
+        self.root.join("uploads")
+    }
+
     fn trash_dir(&self) -> PathBuf {
         self.root.join("trash")
     }
@@ -70,12 +97,22 @@ impl NotebookStorage {
             self.documents_dir(),
             self.assets_dir(),
             self.recovery_dir(),
+            self.uploads_dir(),
             self.trash_dir(),
             self.versions_dir(),
         ] {
             fs::create_dir_all(directory).map_err(|error| error.to_string())?;
         }
         Ok(())
+    }
+
+    fn clear_stale_uploads(&self) -> Result<(), String> {
+        match fs::remove_dir_all(self.uploads_dir()) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.to_string()),
+        }
+        fs::create_dir_all(self.uploads_dir()).map_err(|error| error.to_string())
     }
 
     fn record_key(library_id: &str) -> String {
@@ -494,7 +531,7 @@ impl NotebookStorage {
         Ok(())
     }
 
-    fn asset_paths(&self, asset_id: &str) -> Result<(PathBuf, PathBuf), String> {
+    pub(super) fn asset_paths(&self, asset_id: &str) -> Result<(PathBuf, PathBuf), String> {
         let hash = asset_id
             .strip_prefix("sha256:")
             .filter(|hash| model::is_sha256(hash))
@@ -556,6 +593,157 @@ impl NotebookStorage {
             .map(|(metadata, _)| metadata)
     }
 
+    pub fn begin_asset_upload(
+        &self,
+        byte_length: u64,
+        mime_type: String,
+        created_at: String,
+    ) -> Result<String, String> {
+        if byte_length == 0 || !matches!(mime_type.as_str(), "video/mp4" | "video/webm") {
+            return Err("Notebook streamed video upload is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let upload_id = Uuid::new_v4().to_string();
+        let path = self.uploads_dir().join(format!("{upload_id}.part"));
+        let file = File::create(&path).map_err(|error| error.to_string())?;
+        let upload = NotebookAssetUpload {
+            path,
+            file,
+            hasher: Sha256::new(),
+            expected_length: byte_length,
+            received_length: 0,
+            mime_type,
+            created_at,
+            header: Vec::with_capacity(16),
+        };
+        self.uploads
+            .lock()
+            .map_err(|_| "Notebook upload state is unavailable.".to_string())?
+            .insert(upload_id.clone(), upload);
+        Ok(upload_id)
+    }
+
+    pub fn append_asset_upload(&self, upload_id: &str, chunk: &[u8]) -> Result<(), String> {
+        const MAX_CHUNK_BYTES: usize = 1024 * 1024;
+        if chunk.is_empty() || chunk.len() > MAX_CHUNK_BYTES {
+            return Err("Notebook upload chunk is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let mut uploads = self
+            .uploads
+            .lock()
+            .map_err(|_| "Notebook upload state is unavailable.".to_string())?;
+        let upload = uploads
+            .get_mut(upload_id)
+            .ok_or_else(|| "Notebook upload does not exist.".to_string())?;
+        let next_length = upload
+            .received_length
+            .checked_add(chunk.len() as u64)
+            .filter(|length| *length <= upload.expected_length)
+            .ok_or_else(|| "Notebook upload exceeds its declared length.".to_string())?;
+        if upload.header.len() < 16 {
+            let remaining = 16 - upload.header.len();
+            upload
+                .header
+                .extend_from_slice(&chunk[..chunk.len().min(remaining)]);
+        }
+        upload
+            .file
+            .write_all(chunk)
+            .map_err(|error| error.to_string())?;
+        upload.hasher.update(chunk);
+        upload.received_length = next_length;
+        Ok(())
+    }
+
+    pub fn finish_asset_upload(&self, upload_id: &str) -> Result<NotebookAssetMetadataV1, String> {
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let mut upload = self
+            .uploads
+            .lock()
+            .map_err(|_| "Notebook upload state is unavailable.".to_string())?
+            .remove(upload_id)
+            .ok_or_else(|| "Notebook upload does not exist.".to_string())?;
+        let result = (|| {
+            if upload.received_length != upload.expected_length {
+                return Err("Notebook upload is incomplete.".into());
+            }
+            validate_streamed_video_header(&upload.mime_type, &upload.header)?;
+            upload.file.flush().map_err(|error| error.to_string())?;
+            upload.file.sync_all().map_err(|error| error.to_string())?;
+            let sha256 = format!("{:x}", upload.hasher.clone().finalize());
+            let metadata = NotebookAssetMetadataV1 {
+                version: 1,
+                id: format!("sha256:{sha256}"),
+                sha256,
+                byte_length: upload.expected_length,
+                mime_type: upload.mime_type.clone(),
+                created_at: upload.created_at.clone(),
+            };
+            validate_asset_metadata(&metadata)?;
+            let (data_path, metadata_path) = self.asset_paths(&metadata.id)?;
+            if data_path.exists() || metadata_path.exists() {
+                if !data_path.exists() || !metadata_path.exists() {
+                    return Err("Notebook asset store contains an incomplete entry.".into());
+                }
+                let existing = serde_json::from_slice::<NotebookAssetMetadataV1>(
+                    &fs::read(&metadata_path).map_err(|error| error.to_string())?,
+                )
+                .map_err(|error| error.to_string())?;
+                let stored_length = fs::metadata(&data_path)
+                    .map_err(|error| error.to_string())?
+                    .len();
+                if existing.id != metadata.id
+                    || existing.sha256 != metadata.sha256
+                    || existing.mime_type != metadata.mime_type
+                    || existing.byte_length != metadata.byte_length
+                    || stored_length != metadata.byte_length
+                {
+                    return Err("Notebook asset hash conflicts with stored content.".into());
+                }
+                return Ok(existing);
+            }
+            drop(upload.file);
+            fs::rename(&upload.path, &data_path).map_err(|error| error.to_string())?;
+            if let Err(error) = Self::atomic_write_json(&metadata_path, &metadata) {
+                let _ = fs::remove_file(&data_path);
+                return Err(error);
+            }
+            Self::sync_directory(&self.assets_dir())?;
+            Ok(metadata)
+        })();
+        if result.is_err() || upload.path.exists() {
+            let _ = fs::remove_file(&upload.path);
+        }
+        result
+    }
+
+    pub fn abort_asset_upload(&self, upload_id: &str) -> Result<(), String> {
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        if let Some(upload) = self
+            .uploads
+            .lock()
+            .map_err(|_| "Notebook upload state is unavailable.".to_string())?
+            .remove(upload_id)
+        {
+            drop(upload.file);
+            let _ = fs::remove_file(upload.path);
+        }
+        Ok(())
+    }
+
     fn load_asset_locked(&self, asset_id: &str) -> Result<Option<NotebookAssetPayloadV1>, String> {
         if !is_asset_id(asset_id) {
             return Err("Notebook asset identity is invalid.".into());
@@ -590,6 +778,14 @@ impl NotebookStorage {
         let _ = fs::remove_file(data_path);
         let _ = fs::remove_file(metadata_path);
         Ok(())
+    }
+
+    pub fn asset_url(&self, asset_id: &str) -> Result<String, String> {
+        let (data_path, metadata_path) = self.asset_paths(asset_id)?;
+        if !data_path.exists() || !metadata_path.exists() {
+            return Err("Notebook asset does not exist.".into());
+        }
+        self.media_server.url(asset_id)
     }
 
     pub fn export_package(&self, record: NotebookStoredRecordV1) -> Result<Vec<u8>, String> {
@@ -708,6 +904,41 @@ pub fn notebook_put_asset(
 }
 
 #[tauri::command]
+pub fn notebook_begin_asset_upload(
+    byte_length: u64,
+    mime_type: String,
+    created_at: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<String, String> {
+    state.begin_asset_upload(byte_length, mime_type, created_at)
+}
+
+#[tauri::command]
+pub fn notebook_append_asset_upload(
+    upload_id: String,
+    chunk: Vec<u8>,
+    state: State<'_, NotebookStorage>,
+) -> Result<(), String> {
+    state.append_asset_upload(&upload_id, &chunk)
+}
+
+#[tauri::command]
+pub fn notebook_finish_asset_upload(
+    upload_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<NotebookAssetMetadataV1, String> {
+    state.finish_asset_upload(&upload_id)
+}
+
+#[tauri::command]
+pub fn notebook_abort_asset_upload(
+    upload_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<(), String> {
+    state.abort_asset_upload(&upload_id)
+}
+
+#[tauri::command]
 pub fn notebook_load_asset(
     asset_id: String,
     state: State<'_, NotebookStorage>,
@@ -721,6 +952,14 @@ pub fn notebook_delete_asset(
     state: State<'_, NotebookStorage>,
 ) -> Result<(), String> {
     state.delete_asset(&asset_id)
+}
+
+#[tauri::command]
+pub fn notebook_resolve_asset_url(
+    asset_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<String, String> {
+    state.asset_url(&asset_id)
 }
 
 #[tauri::command]

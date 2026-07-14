@@ -22,6 +22,9 @@ import type {
   NotebookRichMark,
   NotebookSemanticKind,
   NotebookTextAlignment,
+  NotebookVideoAlignment,
+  NotebookVideoTrack,
+  NotebookVideoTrackKind,
 } from './types';
 import {
   isNotebookFontSize,
@@ -33,6 +36,7 @@ import {
   NOTEBOOK_ORDERED_STYLES,
   NOTEBOOK_PARAGRAPH_SPACES_PT,
   NOTEBOOK_TEXT_ALIGNMENTS,
+  NOTEBOOK_VIDEO_TRACK_KINDS,
 } from './types';
 import {
   normalizeNotebookAccentColor,
@@ -89,6 +93,32 @@ function stringArrayAttr(node: JSONContent, name: string) {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string')
     : [];
+}
+
+function videoTracksAttr(node: JSONContent): NotebookVideoTrack[] | undefined {
+  const value = node.attrs?.tracks;
+  if (!Array.isArray(value)) return undefined;
+  const tracks = value.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return [];
+    const track = candidate as Record<string, unknown>;
+    const kind = oneOf<NotebookVideoTrackKind>(track.kind, NOTEBOOK_VIDEO_TRACK_KINDS);
+    if (typeof track.id !== 'string'
+      || typeof track.assetId !== 'string'
+      || !kind
+      || typeof track.label !== 'string'
+      || typeof track.language !== 'string') {
+      return [];
+    }
+    return [{
+      id: track.id,
+      assetId: track.assetId,
+      kind,
+      label: track.label,
+      language: track.language,
+      ...(typeof track.default === 'boolean' ? { default: track.default } : {}),
+    } satisfies NotebookVideoTrack];
+  });
+  return tracks.length ? tracks : undefined;
 }
 
 function workspaceTargetAttr(node: JSONContent): NotebookWorkspaceTarget {
@@ -265,6 +295,24 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
         cropY: node.crop?.y ?? null,
         cropWidth: node.crop?.width ?? null,
         cropHeight: node.crop?.height ?? null,
+      },
+    };
+  }
+  if (node.type === 'videoFigure') {
+    return {
+      type: 'videoFigure',
+      attrs: {
+        id: node.id,
+        assetId: node.assetId,
+        title: node.title,
+        description: node.description,
+        caption: node.caption ?? null,
+        numbered: node.numbered ?? null,
+        posterAssetId: node.posterAssetId ?? null,
+        tracks: node.tracks ?? null,
+        widthPercent: node.widthPercent ?? null,
+        alignment: node.alignment ?? null,
+        loop: node.loop ?? null,
       },
     };
   }
@@ -450,6 +498,32 @@ function blockFromTiptap(
       ...(placement ? { placement } : {}),
       ...(rotation !== undefined ? { rotation } : {}),
       ...(crop ? { crop } : {}),
+    };
+  }
+  if (node.type === 'videoFigure') {
+    const caption = stringAttr(node, 'caption');
+    const numbered = optionalBooleanAttr(node, 'numbered');
+    const posterAssetId = stringAttr(node, 'posterAssetId');
+    const tracks = videoTracksAttr(node);
+    const widthPercent = optionalNumberAttr(node, 'widthPercent');
+    const alignment = oneOf<NotebookVideoAlignment>(
+      node.attrs?.alignment,
+      NOTEBOOK_IMAGE_ALIGNMENTS,
+    );
+    const loop = optionalBooleanAttr(node, 'loop');
+    return {
+      type: 'videoFigure',
+      id,
+      assetId: stringAttr(node, 'assetId'),
+      title: stringAttr(node, 'title', 'Untitled video'),
+      description: stringAttr(node, 'description'),
+      ...(caption ? { caption } : {}),
+      ...(numbered !== undefined ? { numbered } : {}),
+      ...(posterAssetId ? { posterAssetId } : {}),
+      ...(tracks ? { tracks } : {}),
+      ...(widthPercent !== undefined ? { widthPercent } : {}),
+      ...(alignment ? { alignment } : {}),
+      ...(loop !== undefined ? { loop } : {}),
     };
   }
   if (node.type === 'notebookSection') {

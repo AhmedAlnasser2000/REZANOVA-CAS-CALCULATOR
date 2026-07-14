@@ -50,6 +50,7 @@ import {
   type NotebookViewMode,
 } from './NotebookLayoutControls';
 import { NotebookPictureFormatControls } from './NotebookPictureFormatControls';
+import { NotebookVideoFormatControls } from './NotebookVideoFormatControls';
 
 type NotebookParagraphStyle = 'normal' | 'heading-1' | 'heading-2' | 'heading-3' | 'mixed';
 
@@ -159,7 +160,13 @@ export function NotebookRichToolbar({
   onInsertDisplayMath,
   onInsertInlineMath,
   onInsertImage,
+  onInsertVideo,
   onEditImageDetails,
+  onEditVideoDetails,
+  onChooseVideoPoster,
+  onRemoveVideoPoster,
+  onChooseVideoTrack,
+  onRemoveVideoTrack,
   headerFooter,
   pageSetup,
   viewMode,
@@ -178,7 +185,13 @@ export function NotebookRichToolbar({
   onInsertDisplayMath: () => void;
   onInsertInlineMath: () => void;
   onInsertImage: () => void;
+  onInsertVideo: () => void;
   onEditImageDetails: () => void;
+  onEditVideoDetails: () => void;
+  onChooseVideoPoster: () => void;
+  onRemoveVideoPoster: () => void;
+  onChooseVideoTrack: () => void;
+  onRemoveVideoTrack: (trackId: string) => void;
   headerFooter: NotebookHeaderFooterSettings;
   pageSetup: NotebookPageSetup;
   viewMode: NotebookViewMode;
@@ -442,7 +455,11 @@ export function NotebookRichToolbar({
             >
               <ImageIcon size={16} />
             </ToolButton>
-            <ToolButton disabled label="Video — available in the video gate" onClick={() => {}}>
+            <ToolButton
+              label="Video"
+              onClick={onInsertVideo}
+              transientTriggerId="notebook-video-details"
+            >
               <Video size={16} />
             </ToolButton>
           </RibbonGroup>
@@ -491,9 +508,14 @@ export function NotebookRichToolbar({
           </>
         ) : null}
         {activeTab === 'video-format' ? (
-          <RibbonGroup label="Video Format">
-            <span className="notebook-contextual-tools-pending">Video tools appear with a selected video.</span>
-          </RibbonGroup>
+          <NotebookVideoFormatControls
+            editor={editor}
+            onChoosePoster={onChooseVideoPoster}
+            onChooseTrack={onChooseVideoTrack}
+            onEditDetails={onEditVideoDetails}
+            onRemovePoster={onRemoveVideoPoster}
+            onRemoveTrack={onRemoveVideoTrack}
+          />
         ) : null}
       </div>
     </div>

@@ -98,3 +98,17 @@
 - visual evidence: the 1100px screenshot shows a 50% cropped/rotated image with comfortable side text; the 130% forced-colors screenshot shows the same saved Square Left image in readable normal flow.
 - static evidence: incremental TypeScript, Notebook-scoped ESLint, file-size validation, and diff hygiene pass. No production build was required because V8 and package contracts did not change.
 - resource evidence: no full unit, UI, or canary suite ran. Gate-owned Vite and Playwright processes stopped; untracked `test-results/` and concurrent solver/result-contract work remain excluded.
+
+## NOTEBOOK-VIDEO1
+
+- gate: ui
+- status: verified
+- model evidence: 12 focused document, migration, adapter, semantics, media, and persistence files pass 43 tests for strict V9, continuous migration, round trips, MP4/WebM inspection, WebVTT validation, and asset behavior.
+- UI evidence: the complete Notebook page suite passes 29 cases, including local video insertion, caption/numbering, poster, WebVTT, sizing/alignment, serialization, selection behavior, and inactive unmount cleanup.
+- Rust evidence: 12 focused Notebook storage tests pass for V9 migration/validation, bounded streamed ingestion, deduplication, abort cleanup, opaque server authorization, HEAD, byte ranges, 206, and 416.
+- Chromium evidence: the dedicated real WebM scenario passes metadata decode, seek, visible controls, poster, captions, caption-only Outline projection, V9 IndexedDB state, and containment at 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors.
+- packaged Linux evidence: a debug Tauri application driven through `tauri-driver` and WebKitWebDriver loads the VP9/Opus fixture to ready state 4 with duration 1.008 seconds, native controls, one seekable range, and a successful seek to 0.6 seconds through the Rust HTTP range server.
+- correction evidence: packaged WebKitGTK rejected the first custom URI source with `MEDIA_ERR_SRC_NOT_SUPPORTED`. The final Rust-owned `127.0.0.1` server uses an ephemeral port, random capability token, asset hash, bounded headers, streaming reads, and no local paths; packaged metadata and seek evidence then passed.
+- visual evidence: the inspected 130% forced-colors screenshot shows readable Video Format controls, title/description, poster/native player, caption, Outline entry, and no page overflow.
+- static evidence: production build, incremental TypeScript, Notebook-scoped ESLint, file-size validation, and diff hygiene pass. The final extraction reduces `NotebookRichCanvas.tsx` from 1,120 to 800 lines; its affected TypeScript, lint, 29-case UI, and Chromium evidence were rerun.
+- resource evidence: no broad unit/UI/canary suite ran. Gate-owned Tauri, WebKitWebDriver, Vite, and Playwright processes stopped; ignored `.task_tmp/`, untracked `test-results/`, and concurrent Canonical Result/OOE work remain excluded.

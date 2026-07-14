@@ -18,6 +18,7 @@ import {
   Sigma,
   Trash2,
   Type,
+  Video,
   X,
 } from 'lucide-react';
 import { useMemo, useState, type CSSProperties } from 'react';
@@ -62,6 +63,9 @@ function entryKindLabel(entry: NotebookOutlineEntry) {
   }
   if (entry.nodeType === 'imageFigure') {
     return 'Figure';
+  }
+  if (entry.nodeType === 'videoFigure') {
+    return 'Video';
   }
   return notebookSemanticDefinition(entry.semanticKind ?? 'note').label;
 }
@@ -300,6 +304,8 @@ export function NotebookOutline({
                 ? <Heading2 aria-hidden="true" size={15} />
                 : entry.nodeType === 'imageFigure'
                   ? <ImageIcon aria-hidden="true" size={15} />
+                : entry.nodeType === 'videoFigure'
+                  ? <Video aria-hidden="true" size={15} />
                 : <BookMarked aria-hidden="true" size={15} />}
               <div className="notebook-outline-entry-main">
                 <span className="notebook-outline-entry-copy">

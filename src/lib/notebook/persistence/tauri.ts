@@ -22,6 +22,8 @@ type TauriAssetPayload = {
   bytes: number[];
 };
 
+const NOTEBOOK_ASSET_UPLOAD_CHUNK_BYTES = 1024 * 1024;
+
 function hasTauriRuntime() {
   return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 }
@@ -165,6 +167,42 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
       requireTauriRuntime();
       await invoke('notebook_delete_asset', { assetId });
     },
+  };
+  asset.putBlob = async (blob, mimeType, createdAt = new Date().toISOString()) => {
+    requireTauriRuntime();
+    if (!isNotebookSupportedAssetMimeType(mimeType)) {
+      throw new TypeError('Notebook asset type is unsupported.');
+    }
+    const uploadId = await invoke<string>('notebook_begin_asset_upload', {
+      byteLength: blob.size,
+      createdAt,
+      mimeType,
+    });
+    try {
+      for (let offset = 0; offset < blob.size; offset += NOTEBOOK_ASSET_UPLOAD_CHUNK_BYTES) {
+        const chunk = new Uint8Array(await blob.slice(
+          offset,
+          Math.min(blob.size, offset + NOTEBOOK_ASSET_UPLOAD_CHUNK_BYTES),
+        ).arrayBuffer());
+        await invoke('notebook_append_asset_upload', { uploadId, chunk: [...chunk] });
+      }
+      const value = await invoke<unknown>('notebook_finish_asset_upload', { uploadId });
+      if (!isNotebookAssetMetadataV1(value)) {
+        throw new TypeError('Notebook desktop storage returned invalid asset metadata.');
+      }
+      return { ...value };
+    } catch (error) {
+      await invoke('notebook_abort_asset_upload', { uploadId }).catch(() => {});
+      throw error;
+    }
+  };
+  asset.resolveUrl = async (assetId) => {
+    if (!hasTauriRuntime() || !/^sha256:[0-9a-f]{64}$/.test(assetId)) return null;
+    const value = await invoke<unknown>('notebook_resolve_asset_url', { assetId });
+    if (typeof value !== 'string' || !/^http:\/\/127\.0\.0\.1:\d+\/[0-9a-f-]+\/[0-9a-f]{64}$/.test(value)) {
+      throw new TypeError('Notebook desktop storage returned an invalid media URL.');
+    }
+    return value;
   };
 
   const packagePort: NotebookPackagePort = {

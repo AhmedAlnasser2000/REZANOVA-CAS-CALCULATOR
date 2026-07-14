@@ -65,6 +65,10 @@ import {
   type NotebookPaletteRequest,
   type NotebookProseSelection,
 } from './NotebookSelectionToolbar';
+import {
+  isNotebookVideoFile,
+  useNotebookVideoAuthoring,
+} from './useNotebookVideoAuthoring';
 
 type NotebookRichCanvasProps = {
   activeRibbonTab: NotebookRibbonTab;
@@ -79,6 +83,7 @@ type NotebookRichCanvasProps = {
   onSelectRibbonTab: (tab: NotebookRibbonTab) => void;
   onContextualSelectionChange: (selection: NotebookEditorSelection | null) => void;
   onImageInserted: () => void;
+  onVideoInserted: () => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
   onPaginationChange: (metrics: NotebookPaginationMetrics) => void;
   onViewModeChange: (mode: NotebookViewMode) => void;
@@ -161,6 +166,7 @@ export function NotebookRichCanvas({
   onSelectRibbonTab,
   onContextualSelectionChange,
   onImageInserted,
+  onVideoInserted,
   onSelectionChange,
   onPaginationChange,
   onViewModeChange,
@@ -264,6 +270,11 @@ export function NotebookRichCanvas({
       proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
     },
+  });
+  const videoAuthoring = useNotebookVideoAuthoring({
+    assetPort,
+    editor,
+    onInserted: onVideoInserted,
   });
 
   const paginationMetrics = useNotebookPagination({
@@ -609,7 +620,9 @@ export function NotebookRichCanvas({
   }
 
   const contextualSelection = notebookEditorSelection(editor);
-  const contextualTab = contextualSelection?.type === 'imageFigure' ? 'picture-format' : null;
+  const contextualTab = contextualSelection?.type === 'imageFigure'
+    ? 'picture-format'
+    : contextualSelection?.type === 'videoFigure' ? 'video-format' : null;
 
   return (
     <div className="notebook-rich-canvas" data-revision={revision}>
@@ -632,7 +645,13 @@ export function NotebookRichCanvas({
           onInserted: setPendingMathFocusId,
         })}
         onInsertImage={() => fileInputRef.current?.click()}
+        onInsertVideo={() => videoAuthoring.fileInputRef.current?.click()}
         onEditImageDetails={openSelectedImageDetails}
+        onEditVideoDetails={videoAuthoring.openDetails}
+        onChooseVideoPoster={videoAuthoring.choosePoster}
+        onRemoveVideoPoster={videoAuthoring.removePoster}
+        onChooseVideoTrack={videoAuthoring.chooseTrack}
+        onRemoveVideoTrack={videoAuthoring.removeTrack}
         onInsertPageBreak={() => insertNotebookPageBreak(editor)}
         onViewModeChange={onViewModeChange}
         onRequestPalette={requestPalette}
@@ -649,13 +668,22 @@ export function NotebookRichCanvas({
           if (!file) return;
           event.preventDefault();
           const position = editor.view.posAtCoords({ left: event.clientX, top: event.clientY });
-          void stageImage(file, position?.pos ?? editor.state.doc.content.size);
+          const insertionPosition = position?.pos ?? editor.state.doc.content.size;
+          if (isNotebookVideoFile(file)) {
+            void videoAuthoring.stage(file, insertionPosition);
+          } else {
+            void stageImage(file, insertionPosition);
+          }
         }}
         onPaste={(event) => {
           const file = [...event.clipboardData.files][0];
           if (!file) return;
           event.preventDefault();
-          void stageImage(file);
+          if (isNotebookVideoFile(file)) {
+            void videoAuthoring.stage(file);
+          } else {
+            void stageImage(file);
+          }
         }}
       >
         {isBlank ? (
@@ -711,6 +739,7 @@ export function NotebookRichCanvas({
           if (file) void stageImage(file);
         }}
       />
+      {videoAuthoring.controls}
       {imageError ? (
         <div className="notebook-image-error" role="alert">
           <span>{imageError}</span>

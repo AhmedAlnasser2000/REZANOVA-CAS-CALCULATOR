@@ -60,7 +60,13 @@ export type NotebookAssetPort = {
     mimeType: NotebookSupportedAssetMimeType,
     createdAt?: string,
   ): Promise<NotebookAssetMetadataV1>;
+  putBlob?(
+    blob: Blob,
+    mimeType: NotebookSupportedAssetMimeType,
+    createdAt?: string,
+  ): Promise<NotebookAssetMetadataV1>;
   load(assetId: string): Promise<NotebookAssetPayloadV1 | null>;
+  resolveUrl?(assetId: string): Promise<string | null> | string | null;
   delete(assetId: string): Promise<void>;
 };
 
@@ -205,7 +211,7 @@ export function createInMemoryNotebookLibraryPort(
 
 export function createInMemoryNotebookAssetPort(): NotebookAssetPort {
   const assets = new Map<string, NotebookAssetPayloadV1>();
-  return {
+  const port: NotebookAssetPort = {
     async put(bytes, mimeType, createdAt = new Date().toISOString()) {
       if (!isNotebookSupportedAssetMimeType(mimeType)) {
         throw new TypeError('Notebook asset type is unsupported.');
@@ -237,4 +243,10 @@ export function createInMemoryNotebookAssetPort(): NotebookAssetPort {
       assets.delete(assetId);
     },
   };
+  port.putBlob = async (blob, mimeType, createdAt) => port.put(
+    new Uint8Array(await blob.arrayBuffer()),
+    mimeType,
+    createdAt,
+  );
+  return port;
 }

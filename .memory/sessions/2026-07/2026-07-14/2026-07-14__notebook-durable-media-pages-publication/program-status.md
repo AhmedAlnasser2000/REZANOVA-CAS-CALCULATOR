@@ -31,8 +31,8 @@
 | `NOTEBOOK-RIBBON-TABS1` | ui | committed `64f3b955` |
 | `NOTEBOOK-IMAGE1` | ui | committed `b61dd6dc` |
 | `NOTEBOOK-PAGE-LAYOUT1` | ui | committed `f3a9a95d` |
-| `NOTEBOOK-IMAGE-LAYOUT1` | ui | verified; standing commit approval |
-| `NOTEBOOK-VIDEO1` | ui | pending |
+| `NOTEBOOK-IMAGE-LAYOUT1` | ui | committed `3356786e` |
+| `NOTEBOOK-VIDEO1` | ui | verified; standing commit approval |
 | `NOTEBOOK-EXPORT-PROJECTION1` | backend | pending |
 | `NOTEBOOK-EXPORT-PDF1` | ui | pending |
 | `NOTEBOOK-EXPORT-DOCX1` | backend | pending |
@@ -40,7 +40,7 @@
 
 ## Current Handoff
 
-- `NOTEBOOK-IMAGE-LAYOUT1` meets its focused model, adapter, UI, responsive Chromium, accessibility-scaling, and repository gates.
-- Picture Format now provides bounded size, alignment, wrapping, crop, and rotation controls over existing V8 image metadata without modifying source assets.
-- Square wrapping preserves the serialized preference but derives effective placement from V8 page geometry and live editor width, falling back to normal flow when the remaining text column would be unreadable.
-- The next implementation gate is `NOTEBOOK-VIDEO1` after this standing-approved selective commit.
+- `NOTEBOOK-VIDEO1` meets its focused V9 model, native storage, streamed ingestion, UI, Chromium, and packaged-Linux range-playback gates.
+- Video Format owns bounded size/alignment, details, poster, and WebVTT controls. Playback remains local, visible-control, non-autoplay, non-wrapping, and session-state-only.
+- Native media uses a randomized capability-scoped loopback server because packaged WebKitGTK rejected the custom URI media protocol; real WebM metadata and seeking now pass in the Tauri shell.
+- The next implementation gate is `NOTEBOOK-EXPORT-PROJECTION1` after this standing-approved selective commit.

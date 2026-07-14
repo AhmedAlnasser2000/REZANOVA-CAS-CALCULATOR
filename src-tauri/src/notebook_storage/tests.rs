@@ -8,7 +8,8 @@ use super::{
 };
 use std::{
     fs,
-    io::{Cursor, Write},
+    io::{Cursor, Read, Write},
+    net::TcpStream,
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -27,7 +28,7 @@ fn unique_storage(label: &str) -> PathBuf {
 
 fn document(title: &str) -> serde_json::Value {
     serde_json::json!({
-        "version": 8,
+        "version": 9,
         "id": "document.storage.1",
         "title": title,
         "createdAt": "2026-07-14T00:00:00.000Z",
@@ -180,7 +181,7 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
 }
 
 #[test]
-fn migrates_v6_and_v7_records_versions_and_packages_without_content_changes() {
+fn migrates_v6_v7_and_v8_records_versions_and_packages_without_content_changes() {
     let root = unique_storage("v6-migration");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let mut legacy = record("library.legacy", 1, "Legacy notebook");
@@ -206,7 +207,7 @@ fn migrates_v6_and_v7_records_versions_and_packages_without_content_changes() {
         .load_record(&legacy.library_id)
         .expect("legacy record should load")
         .expect("legacy record should exist");
-    assert_eq!(loaded.document["version"], 8);
+    assert_eq!(loaded.document["version"], 9);
     assert_eq!(loaded.document["pageSetup"]["paperSize"], "a4");
     assert_eq!(loaded.document["content"], legacy.document["content"]);
 
@@ -229,7 +230,7 @@ fn migrates_v6_and_v7_records_versions_and_packages_without_content_changes() {
     let versions = storage
         .list_versions(&legacy.library_id)
         .expect("legacy version should list");
-    assert_eq!(versions[0].record.document["version"], 8);
+    assert_eq!(versions[0].record.document["version"], 9);
     assert_eq!(
         versions[0].record.document["content"],
         legacy.document["content"]
@@ -255,7 +256,7 @@ fn migrates_v6_and_v7_records_versions_and_packages_without_content_changes() {
     let inspection = storage
         .inspect_package(&package)
         .expect("legacy package should inspect");
-    assert_eq!(inspection.document["version"], 8);
+    assert_eq!(inspection.document["version"], 9);
     assert_eq!(inspection.document["content"], legacy.document["content"]);
 
     let mut version7 = record("library.legacy-v7", 1, "Image-era notebook");
@@ -280,13 +281,28 @@ fn migrates_v6_and_v7_records_versions_and_packages_without_content_changes() {
         .load_record(&version7.library_id)
         .expect("V7 record should load")
         .expect("V7 record should exist");
-    assert_eq!(loaded_v7.document["version"], 8);
+    assert_eq!(loaded_v7.document["version"], 9);
     assert_eq!(loaded_v7.document["content"], version7.document["content"]);
+
+    let mut version8 = record("library.legacy-v8", 1, "Page-era notebook");
+    version8.document["version"] = 8.into();
+    let version8_paths = storage.record_paths(&version8.library_id);
+    NotebookStorage::write_synced(
+        &version8_paths.target,
+        &serde_json::to_vec_pretty(&version8).expect("V8 record should serialize"),
+    )
+    .expect("V8 record should write");
+    let loaded_v8 = storage
+        .load_record(&version8.library_id)
+        .expect("V8 record should load")
+        .expect("V8 record should exist");
+    assert_eq!(loaded_v8.document["version"], 9);
+    assert_eq!(loaded_v8.document["content"], version8.document["content"]);
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn validates_v8_page_layout_and_explicit_top_level_breaks() {
+fn validates_v9_page_layout_and_explicit_top_level_breaks() {
     let root = unique_storage("v8-page-layout");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let mut valid = record("library.pages", 1, "Paginated notebook");
@@ -308,7 +324,7 @@ fn validates_v8_page_layout_and_explicit_top_level_breaks() {
     ]);
     storage
         .save_record(valid.clone(), None, true)
-        .expect("valid V8 page layout should save");
+        .expect("valid V9 page layout should save");
 
     let mut invalid_number = valid.clone();
     invalid_number.library_id = "library.pages.invalid-number".into();
@@ -342,7 +358,7 @@ fn validates_v8_page_layout_and_explicit_top_level_breaks() {
 }
 
 #[test]
-fn validates_v8_image_metadata_and_crop_bounds() {
+fn validates_v9_image_metadata_and_crop_bounds() {
     let root = unique_storage("v7-image-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let asset_id = format!("sha256:{}", "a".repeat(64));
@@ -389,6 +405,158 @@ fn validates_v8_image_metadata_and_crop_bounds() {
         .expect_err("decorative image with alt text should fail")
         .contains("alternative text"));
     fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn validates_v9_video_metadata_and_referenced_assets() {
+    let root = unique_storage("v9-video-model");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    let video_id = format!("sha256:{}", "a".repeat(64));
+    let poster_id = format!("sha256:{}", "b".repeat(64));
+    let track_id = format!("sha256:{}", "c".repeat(64));
+    let mut video_record = record("library.video", 1, "Video notebook");
+    video_record.asset_ids = vec![video_id.clone(), poster_id.clone(), track_id.clone()];
+    video_record.document["content"] = serde_json::json!([{
+        "type": "videoFigure",
+        "id": "video.storage.1",
+        "assetId": video_id,
+        "title": "Worked limit",
+        "description": "A narrated worked example.",
+        "caption": "Evaluating the limit",
+        "numbered": true,
+        "posterAssetId": poster_id,
+        "tracks": [{
+            "id": "track.en",
+            "assetId": track_id,
+            "kind": "captions",
+            "label": "English",
+            "language": "en-US",
+            "default": true
+        }],
+        "widthPercent": 75,
+        "alignment": "left",
+        "loop": true
+    }]);
+    storage
+        .save_record(video_record.clone(), None, true)
+        .expect("valid video metadata should save");
+
+    let mut missing_track = video_record.clone();
+    missing_track.library_id = "library.video.missing-track".into();
+    missing_track.asset_ids.pop();
+    assert!(storage
+        .save_record(missing_track, None, true)
+        .expect_err("missing track asset should fail")
+        .contains("missing a referenced asset"));
+
+    let mut duplicate_default = video_record.clone();
+    duplicate_default.library_id = "library.video.defaults".into();
+    duplicate_default.document["content"][0]["tracks"]
+        .as_array_mut()
+        .expect("tracks should be an array")
+        .push(serde_json::json!({
+            "id": "track.ar",
+            "assetId": format!("sha256:{}", "d".repeat(64)),
+            "kind": "subtitles",
+            "label": "Arabic",
+            "language": "ar",
+            "default": true
+        }));
+    assert!(storage
+        .save_record(duplicate_default, None, true)
+        .expect_err("multiple default tracks should fail")
+        .contains("default text track"));
+
+    let mut image_property = video_record;
+    image_property.library_id = "library.video.image-property".into();
+    image_property.document["content"][0]["rotation"] = 90.into();
+    assert!(storage
+        .save_record(image_property, None, true)
+        .expect_err("image-only video property should fail")
+        .contains("invalid"));
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn streams_video_uploads_in_bounded_chunks_and_cleans_aborts() {
+    let root = unique_storage("streamed-video");
+    let storage = NotebookStorage::load(root.clone()).unwrap();
+    let bytes = b"\0\0\0\x18ftypisomstreamed-video";
+    let upload_id = storage
+        .begin_asset_upload(
+            bytes.len() as u64,
+            "video/mp4".into(),
+            "2026-07-14T00:01:00.000Z".into(),
+        )
+        .unwrap();
+    storage
+        .append_asset_upload(&upload_id, &bytes[..7])
+        .unwrap();
+    storage
+        .append_asset_upload(&upload_id, &bytes[7..])
+        .unwrap();
+    let metadata = storage.finish_asset_upload(&upload_id).unwrap();
+    assert_eq!(metadata.byte_length, bytes.len() as u64);
+    assert_eq!(
+        storage.load_asset(&metadata.id).unwrap().unwrap().bytes,
+        bytes
+    );
+
+    let duplicate_id = storage
+        .begin_asset_upload(
+            bytes.len() as u64,
+            "video/mp4".into(),
+            "2026-07-14T00:00:00.000Z".into(),
+        )
+        .unwrap();
+    storage.append_asset_upload(&duplicate_id, bytes).unwrap();
+    assert_eq!(
+        storage.finish_asset_upload(&duplicate_id).unwrap(),
+        metadata
+    );
+
+    let url = storage.asset_url(&metadata.id).unwrap();
+    let address_and_path = url.strip_prefix("http://").unwrap();
+    let (address, path) = address_and_path.split_once('/').unwrap();
+    let mut range_stream = TcpStream::connect(address).unwrap();
+    write!(
+        range_stream,
+        "GET /{path} HTTP/1.1\r\nHost: {address}\r\nRange: bytes=4-7\r\nConnection: close\r\n\r\n"
+    )
+    .unwrap();
+    let mut range_response = Vec::new();
+    range_stream.read_to_end(&mut range_response).unwrap();
+    let range_response = String::from_utf8_lossy(&range_response);
+    assert!(range_response.starts_with("HTTP/1.1 206 Partial Content"));
+    assert!(range_response.contains(&format!("Content-Range: bytes 4-7/{}", bytes.len())));
+    assert!(range_response.ends_with("ftyp"));
+
+    let mut head_stream = TcpStream::connect(address).unwrap();
+    write!(
+        head_stream,
+        "HEAD /{path} HTTP/1.1\r\nHost: {address}\r\nConnection: close\r\n\r\n"
+    )
+    .unwrap();
+    let mut head_response = String::new();
+    head_stream.read_to_string(&mut head_response).unwrap();
+    assert!(head_response.starts_with("HTTP/1.1 200 OK"));
+    assert!(head_response.contains("Accept-Ranges: bytes"));
+    assert!(head_response.ends_with("\r\n\r\n"));
+
+    let aborted_id = storage
+        .begin_asset_upload(12, "video/mp4".into(), "2026-07-14T00:00:00.000Z".into())
+        .unwrap();
+    storage
+        .append_asset_upload(&aborted_id, b"\0\0\0\x18ftyp")
+        .unwrap();
+    storage.abort_asset_upload(&aborted_id).unwrap();
+    assert!(storage.finish_asset_upload(&aborted_id).is_err());
+    assert!(std::fs::read_dir(root.join("uploads"))
+        .unwrap()
+        .next()
+        .is_none());
+    drop(storage);
+    let _ = std::fs::remove_dir_all(root);
 }
 
 #[test]
@@ -542,7 +710,7 @@ fn rejects_revision_races_and_invalid_collapsed_documents() {
     }]);
     assert!(storage
         .save_record(invalid, None, true)
-        .expect_err("invalid V8 document should fail")
+        .expect_err("invalid V9 document should fail")
         .contains("collapsed state"));
     assert_eq!(storage.list_records().unwrap().len(), 1);
     fs::remove_dir_all(root).expect("temporary storage should be removed");

@@ -28,7 +28,7 @@ function blockKind(element: HTMLElement) {
   if (element.matches('h1, h2, h3')) return 'heading';
   if (element.matches('[data-notebook-section]')) return 'section';
   if (element.matches('[data-notebook-semantic]')) return 'container';
-  if (element.matches('[data-notebook-image]')) return 'media';
+  if (element.matches('[data-notebook-image], [data-notebook-video]')) return 'media';
   if (element.matches('[data-notebook-display-math]')) return 'math';
   return 'prose';
 }

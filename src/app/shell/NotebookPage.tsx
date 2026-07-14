@@ -171,8 +171,15 @@ function NotebookPageContent({
   }, [patchUiState]);
 
   const handleContextualSelectionChange = useCallback((nextSelection: NotebookEditorSelection | null) => {
-    if (nextSelection?.type === 'imageFigure') return;
-    setActiveRibbonTab((current) => current === 'picture-format' ? 'home' : current);
+    setActiveRibbonTab((current) => {
+      if (nextSelection?.type === 'imageFigure') {
+        return current === 'video-format' ? 'home' : current;
+      }
+      if (nextSelection?.type === 'videoFigure') {
+        return current === 'picture-format' ? 'home' : current;
+      }
+      return current === 'picture-format' || current === 'video-format' ? 'home' : current;
+    });
   }, []);
 
   const handlePaginationChange = useCallback((next: NotebookPaginationMetrics) => {
@@ -372,6 +379,7 @@ function NotebookPageContent({
               onSelectRibbonTab={setActiveRibbonTab}
               onContextualSelectionChange={handleContextualSelectionChange}
               onImageInserted={() => setActiveRibbonTab('picture-format')}
+              onVideoInserted={() => setActiveRibbonTab('video-format')}
               onPaginationChange={handlePaginationChange}
               onSelectionChange={handleSelectionChange}
               onViewModeChange={(viewMode) => patchUiState({ viewMode })}

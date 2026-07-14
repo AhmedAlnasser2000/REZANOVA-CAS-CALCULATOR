@@ -304,6 +304,68 @@
   font: 0.7rem 'IBM Plex Mono', monospace;
 }
 
+.notebook-ribbon-group.is-video-size .notebook-ribbon-group-tools > button {
+  width: auto;
+  min-width: 43px;
+  padding-inline: 7px;
+  font: 0.7rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-video-width-input {
+  display: grid;
+  grid-template-columns: auto 48px auto;
+  align-items: center;
+  gap: 4px;
+  color: var(--page-subtle);
+  font: 0.66rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-video-width-input input {
+  width: 48px;
+  min-height: 30px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 4px 6px;
+  background: #071516;
+  color: #f1f5ed;
+  -webkit-text-fill-color: #f1f5ed;
+  font: 0.72rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-rich-toolbar[data-ribbon-tab='video-format'] .notebook-ribbon-group-tools > button:has(span) {
+  grid-auto-flow: column;
+  grid-template-columns: auto auto;
+  width: auto;
+  gap: 6px;
+  padding-inline: 9px;
+  white-space: nowrap;
+}
+
+.notebook-ribbon-group.is-video-tracks {
+  min-width: 170px;
+}
+
+.notebook-ribbon-group.is-video-tracks .notebook-ribbon-group-tools {
+  flex-wrap: wrap;
+}
+
+.notebook-video-track-chip {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 999px;
+  padding-left: 8px;
+  color: var(--page-muted);
+  font-size: 0.7rem;
+}
+
+.notebook-rich-toolbar .notebook-video-track-chip button {
+  width: 26px;
+  height: 26px;
+}
+
 .notebook-picture-popover,
 .notebook-picture-menu {
   position: absolute;
@@ -1404,6 +1466,70 @@
   line-height: 1.45;
 }
 
+.notebook-video-figure {
+  width: min(var(--notebook-video-width, 100%), 100%);
+  clear: both;
+  margin: 18px auto;
+  color: var(--page-muted);
+  text-align: center;
+}
+
+.notebook-video-figure[data-video-alignment='left'] { margin-right: auto; margin-left: 0; }
+.notebook-video-figure[data-video-alignment='right'] { margin-right: 0; margin-left: auto; }
+
+.notebook-video-heading {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.notebook-video-heading strong {
+  color: var(--page-ink);
+  font-size: 0.9rem;
+}
+
+.notebook-video-heading span {
+  color: var(--page-subtle);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.notebook-video-frame {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  background: #050b0c;
+}
+
+.notebook-video-frame video {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+}
+
+.notebook-video-loading,
+.notebook-video-missing {
+  display: flex;
+  min-height: 160px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--page-subtle);
+  font-size: 0.78rem;
+}
+
+.notebook-video-figure figcaption {
+  margin-top: 7px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .notebook-section {
   --notebook-accent: #b8d49c;
   overflow: hidden;
@@ -1766,7 +1892,8 @@
   .notebook-image-dialog,
   .notebook-image-dialog-warning,
   .notebook-image-error,
-  .notebook-image-frame {
+  .notebook-image-frame,
+  .notebook-video-frame {
     border-color: CanvasText;
     background: Canvas;
     color: CanvasText;
@@ -1794,6 +1921,14 @@
     forced-color-adjust: auto;
   }
 
+  .notebook-video-width-input input {
+    border-color: ButtonText;
+    background: Field;
+    color: FieldText;
+    -webkit-text-fill-color: FieldText;
+    forced-color-adjust: auto;
+  }
+
   .notebook-page-break::before,
   .notebook-page-break::after {
     border-color: CanvasText;
@@ -1805,8 +1940,12 @@
   }
 
   .notebook-image-figure.is-selected,
-  .notebook-rich-editor .notebook-image-figure.ProseMirror-selectednode {
-    outline-color: Highlight;
+  .notebook-rich-editor .notebook-image-figure.ProseMirror-selectednode,
+  .notebook-video-figure.is-selected,
+  .notebook-rich-editor .notebook-video-figure.ProseMirror-selectednode {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+    forced-color-adjust: auto;
   }
 }
 

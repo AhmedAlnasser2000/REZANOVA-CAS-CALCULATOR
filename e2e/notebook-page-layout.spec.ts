@@ -93,7 +93,7 @@ async function expectPopoverInsideRibbon(page: Page, dialogName: string) {
   expect(bounds.keyboardOverlap).toBe(false);
 }
 
-test('Notebook V8 persists one-editor page layout and renders two physical sheets', async ({ page }) => {
+test('Notebook V9 persists one-editor page layout and renders two physical sheets', async ({ page }) => {
   await page.setViewportSize({ width: 2400, height: 1050 });
   await openBlankNotebook(page);
   const editor = page.getByLabel('Notebook rich document');
@@ -172,7 +172,7 @@ test('Notebook V8 persists one-editor page layout and renders two physical sheet
       orientation: 'landscape',
       paperSize: 'letter',
     },
-    version: 8,
+    version: 9,
   });
 
   for (const width of [2400, 1440, 1100]) {

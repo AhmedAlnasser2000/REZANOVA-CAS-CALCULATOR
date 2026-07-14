@@ -68,7 +68,7 @@ test('Notebook ribbon separates Home, Insert, Layout, and File without disturbin
   await expect(toolbar.getByRole('region', { name: 'Media' })).toBeVisible();
   await expect(toolbar.getByRole('region', { name: 'Document' })).toBeVisible();
   await expect(toolbar.getByRole('button', { name: /Image/ })).toBeEnabled();
-  await expect(toolbar.getByRole('button', { name: /Video/ })).toBeDisabled();
+  await expect(toolbar.getByRole('button', { name: /Video/ })).toBeEnabled();
   expect(await workspaceTabs.boundingBox()).toEqual(workspaceTabsBefore);
 
   await ribbonTabs.getByRole('tab', { name: 'Layout' }).click();

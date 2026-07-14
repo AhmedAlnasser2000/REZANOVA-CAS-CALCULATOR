@@ -13,6 +13,7 @@ import {
 import { NotebookEvidenceNodeView } from './NotebookEvidenceNodeView';
 import { NotebookFontSize } from './NotebookFontSizeExtension';
 import { createNotebookImageNodeView } from './NotebookImageNodeView';
+import { createNotebookVideoNodeView } from './NotebookVideoNodeView';
 import { NotebookParagraphFormatting } from './NotebookParagraphFormattingExtension';
 import {
   createNotebookMathNodeView,
@@ -34,6 +35,7 @@ const ID_NODE_TYPES = new Set([
   'semanticBlock',
   'notebookSection',
   'imageFigure',
+  'videoFigure',
   'pageBreak',
 ]);
 
@@ -220,6 +222,7 @@ const ImageFigure = Node.create({
 
   addAttributes() {
     return {
+      id: { default: '' },
       assetId: { default: '' },
       altText: { default: null },
       decorative: { default: null },
@@ -242,6 +245,38 @@ const ImageFigure = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     return ['figure', mergeAttributes(HTMLAttributes, { 'data-notebook-image': '' })];
+  },
+});
+
+const VideoFigure = Node.create({
+  name: 'videoFigure',
+  group: 'block',
+  atom: true,
+  draggable: true,
+  selectable: true,
+
+  addAttributes() {
+    return {
+      id: { default: '' },
+      assetId: { default: '' },
+      title: { default: 'Untitled video' },
+      description: { default: '' },
+      caption: { default: null },
+      numbered: { default: null },
+      posterAssetId: { default: null },
+      tracks: { default: null },
+      widthPercent: { default: null },
+      alignment: { default: null },
+      loop: { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'figure[data-notebook-video]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['figure', mergeAttributes(HTMLAttributes, { 'data-notebook-video': '' })];
   },
 });
 
@@ -383,6 +418,11 @@ export function createNotebookExtensions(
     ImageFigure.extend({
       addNodeView() {
         return ReactNodeViewRenderer(createNotebookImageNodeView(assetPort));
+      },
+    }),
+    VideoFigure.extend({
+      addNodeView() {
+        return ReactNodeViewRenderer(createNotebookVideoNodeView(assetPort));
       },
     }),
     PageBreak,

@@ -12,6 +12,7 @@ import {
   NOTEBOOK_PARAGRAPH_SPACES_PT,
   NOTEBOOK_RICH_DOCUMENT_VERSION,
   NOTEBOOK_TEXT_ALIGNMENTS,
+  NOTEBOOK_VIDEO_TRACK_KINDS,
   type NotebookDocumentSummary,
   type NotebookInlineNode,
   type NotebookParagraphFormat,
@@ -25,6 +26,7 @@ import {
   type NotebookRichDocumentV5,
   type NotebookRichDocumentV6,
   type NotebookRichDocumentV7,
+  type NotebookRichDocumentV8,
   type NotebookRichMark,
 } from './types';
 import {
@@ -208,6 +210,7 @@ function isRichBlockNode(
   allowParagraphTools = true,
   allowStructuredAppearance = true,
   allowImages = true,
+  allowVideos = true,
   allowPageLayout = true,
 ): value is NotebookRichBlockNode {
   if (!isRecord(value) || typeof value.type !== 'string' || typeof value.id !== 'string') {
@@ -244,6 +247,7 @@ function isRichBlockNode(
         allowParagraphTools,
         allowStructuredAppearance,
         allowImages,
+        allowVideos,
         false,
       ));
   }
@@ -273,6 +277,7 @@ function isRichBlockNode(
         allowParagraphTools,
         allowStructuredAppearance,
         allowImages,
+        allowVideos,
         false,
       ));
   }
@@ -294,6 +299,7 @@ function isRichBlockNode(
           allowParagraphTools,
           allowStructuredAppearance,
           allowImages,
+          allowVideos,
           false,
         )));
   }
@@ -360,6 +366,68 @@ function isRichBlockNode(
       && (value.rotation === undefined || isOneOf(value.rotation, NOTEBOOK_IMAGE_ROTATIONS))
       && cropIsValid;
   }
+  if (value.type === 'videoFigure') {
+    if (!allowVideos || !/^sha256:[0-9a-f]{64}$/.test(String(value.assetId ?? ''))
+      || typeof value.title !== 'string' || !value.title.trim()
+      || typeof value.description !== 'string'
+      || !Object.keys(value).every((key) => [
+        'type',
+        'id',
+        'assetId',
+        'title',
+        'description',
+        'caption',
+        'numbered',
+        'posterAssetId',
+        'tracks',
+        'widthPercent',
+        'alignment',
+        'loop',
+      ].includes(key))) {
+      return false;
+    }
+    const tracks = value.tracks;
+    const trackIds = new Set<string>();
+    const trackAssets = new Set<string>();
+    let defaultTracks = 0;
+    const tracksAreValid = tracks === undefined || (
+      Array.isArray(tracks)
+      && tracks.length <= 32
+      && tracks.every((track) => {
+        if (!isRecord(track)
+          || !Object.keys(track).every((key) => [
+            'id', 'assetId', 'kind', 'label', 'language', 'default',
+          ].includes(key))
+          || typeof track.id !== 'string' || !track.id
+          || trackIds.has(track.id)
+          || !/^sha256:[0-9a-f]{64}$/.test(String(track.assetId ?? ''))
+          || trackAssets.has(String(track.assetId))
+          || !isOneOf(track.kind, NOTEBOOK_VIDEO_TRACK_KINDS)
+          || typeof track.label !== 'string' || !track.label.trim()
+          || typeof track.language !== 'string'
+          || !/^[a-z]{2,8}(?:-[a-z0-9]{1,8})*$/i.test(track.language)
+          || (track.default !== undefined && typeof track.default !== 'boolean')) {
+          return false;
+        }
+        trackIds.add(track.id);
+        trackAssets.add(String(track.assetId));
+        if (track.default === true) defaultTracks += 1;
+        return defaultTracks <= 1;
+      })
+    );
+    return (value.caption === undefined || typeof value.caption === 'string')
+      && (value.numbered === undefined || typeof value.numbered === 'boolean')
+      && (value.posterAssetId === undefined
+        || /^sha256:[0-9a-f]{64}$/.test(String(value.posterAssetId)))
+      && (value.widthPercent === undefined || (
+        Number.isInteger(value.widthPercent)
+        && Number(value.widthPercent) >= 10
+        && Number(value.widthPercent) <= 100
+      ))
+      && (value.alignment === undefined || isOneOf(value.alignment, NOTEBOOK_IMAGE_ALIGNMENTS))
+      && (value.loop === undefined || typeof value.loop === 'boolean')
+      && tracksAreValid;
+  }
   if (value.type === 'pageBreak') {
     return allowPageLayout && Object.keys(value).every((key) => ['type', 'id'].includes(key));
   }
@@ -404,7 +472,9 @@ export function isNotebookRichDocumentV2(value: unknown): value is NotebookRichD
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node, false, false, false, false, false, false));
+    && value.content.every((node) => isRichBlockNode(
+      node, false, false, false, false, false, false, false,
+    ));
 }
 
 export function isNotebookRichDocumentV3(value: unknown): value is NotebookRichDocumentV3 {
@@ -416,7 +486,9 @@ export function isNotebookRichDocumentV3(value: unknown): value is NotebookRichD
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node, true, false, false, false, false, false));
+    && value.content.every((node) => isRichBlockNode(
+      node, true, false, false, false, false, false, false,
+    ));
 }
 
 export function isNotebookRichDocumentV4(value: unknown): value is NotebookRichDocumentV4 {
@@ -428,7 +500,9 @@ export function isNotebookRichDocumentV4(value: unknown): value is NotebookRichD
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node, true, true, false, false, false, false));
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, false, false, false, false, false,
+    ));
 }
 
 export function isNotebookRichDocumentV5(value: unknown): value is NotebookRichDocumentV5 {
@@ -440,7 +514,9 @@ export function isNotebookRichDocumentV5(value: unknown): value is NotebookRichD
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node, true, true, true, false, false, false));
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, false, false, false, false,
+    ));
 }
 
 export function isNotebookRichDocumentV6(value: unknown): value is NotebookRichDocumentV6 {
@@ -452,7 +528,9 @@ export function isNotebookRichDocumentV6(value: unknown): value is NotebookRichD
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node, true, true, true, true, false, false));
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, false, false, false,
+    ));
 }
 
 export function isNotebookRichDocumentV7(value: unknown): value is NotebookRichDocumentV7 {
@@ -473,7 +551,36 @@ export function isNotebookRichDocumentV7(value: unknown): value is NotebookRichD
     && typeof value.updatedAt === 'string'
     && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
     && Array.isArray(value.content)
-    && value.content.every((node) => isRichBlockNode(node, true, true, true, true, true, false));
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, false, false,
+    ));
+}
+
+export function isNotebookRichDocumentV8(value: unknown): value is NotebookRichDocumentV8 {
+  return isRecord(value)
+    && value.version === 8
+    && Object.keys(value).every((key) => [
+      'version',
+      'id',
+      'title',
+      'createdAt',
+      'updatedAt',
+      'selectedNodeId',
+      'content',
+      'pageSetup',
+      'headerFooter',
+    ].includes(key))
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.updatedAt === 'string'
+    && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
+    && Array.isArray(value.content)
+    && value.content.every((node) => isRichBlockNode(
+      node, true, true, true, true, true, false, true,
+    ))
+    && isPageSetup(value.pageSetup)
+    && isHeaderFooter(value.headerFooter);
 }
 
 export function countNotebookBlocks(nodes: readonly NotebookRichBlockNode[]): number {
@@ -499,6 +606,10 @@ export function collectNotebookAssetIds(nodes: readonly NotebookRichBlockNode[])
     if (!node) continue;
     if (node.type === 'imageFigure') {
       assetIds.add(node.assetId);
+    } else if (node.type === 'videoFigure') {
+      assetIds.add(node.assetId);
+      if (node.posterAssetId) assetIds.add(node.posterAssetId);
+      node.tracks?.forEach((track) => assetIds.add(track.assetId));
     } else if (node.type === 'semanticBlock' || node.type === 'section') {
       pending.push(...node.content);
     } else if (node.type === 'bulletList' || node.type === 'orderedList') {
@@ -573,6 +684,12 @@ export function measureNotebookDocument(
       continue;
     }
     if (node.type === 'imageFigure') {
+      metrics.wordCount += countWordsInText(node.caption);
+      continue;
+    }
+    if (node.type === 'videoFigure') {
+      metrics.wordCount += countWordsInText(node.title);
+      metrics.wordCount += countWordsInText(node.description);
       metrics.wordCount += countWordsInText(node.caption);
     }
   }

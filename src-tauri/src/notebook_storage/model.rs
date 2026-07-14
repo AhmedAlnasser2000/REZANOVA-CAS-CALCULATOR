@@ -353,10 +353,108 @@ fn validate_image_figure(node: &Map<String, Value>) -> Result<(), String> {
     Ok(())
 }
 
+fn is_video_track_language(value: &str) -> bool {
+    let mut parts = value.split('-');
+    let Some(primary) = parts.next() else {
+        return false;
+    };
+    (2..=8).contains(&primary.len())
+        && primary.bytes().all(|byte| byte.is_ascii_alphabetic())
+        && parts.all(|part| {
+            (1..=8).contains(&part.len()) && part.bytes().all(|byte| byte.is_ascii_alphanumeric())
+        })
+}
+
+fn validate_video_figure(node: &Map<String, Value>) -> Result<(), String> {
+    const ALLOWED_FIELDS: &[&str] = &[
+        "type",
+        "id",
+        "assetId",
+        "title",
+        "description",
+        "caption",
+        "numbered",
+        "posterAssetId",
+        "tracks",
+        "widthPercent",
+        "alignment",
+        "loop",
+    ];
+    if node
+        .keys()
+        .any(|field| !ALLOWED_FIELDS.contains(&field.as_str()))
+        || !is_asset_id(required_string(node, "assetId")?)
+    {
+        return Err("Notebook video figure is invalid.".into());
+    }
+    required_string(node, "title")?;
+    if !node.get("description").is_some_and(Value::is_string) {
+        return Err("Notebook video description must be a string.".into());
+    }
+    optional_string(node, "caption")?;
+    optional_bool(node, "numbered")?;
+    optional_bool(node, "loop")?;
+    if let Some(poster_asset_id) = node.get("posterAssetId") {
+        if !poster_asset_id.as_str().is_some_and(is_asset_id) {
+            return Err("Notebook video poster identity is invalid.".into());
+        }
+    }
+    if let Some(width) = node.get("widthPercent") {
+        if !width
+            .as_u64()
+            .is_some_and(|value| (10..=100).contains(&value))
+        {
+            return Err("Notebook video width is invalid.".into());
+        }
+    }
+    if let Some(alignment) = node.get("alignment") {
+        if !matches!(alignment.as_str(), Some("left" | "center" | "right")) {
+            return Err("Notebook video alignment is invalid.".into());
+        }
+    }
+    if let Some(tracks) = node.get("tracks") {
+        let tracks = tracks
+            .as_array()
+            .filter(|tracks| tracks.len() <= 32)
+            .ok_or_else(|| "Notebook video tracks are invalid.".to_string())?;
+        let mut ids = HashSet::new();
+        let mut assets = HashSet::new();
+        let mut default_count = 0;
+        for track in tracks {
+            let track = object(track)?;
+            if track.keys().any(|field| {
+                !["id", "assetId", "kind", "label", "language", "default"].contains(&field.as_str())
+            }) {
+                return Err("Notebook video track contains unknown fields.".into());
+            }
+            let id = required_string(track, "id")?;
+            let asset_id = required_string(track, "assetId")?;
+            let language = required_string(track, "language")?;
+            if !ids.insert(id)
+                || !is_asset_id(asset_id)
+                || !assets.insert(asset_id)
+                || !matches!(required_string(track, "kind")?, "captions" | "subtitles")
+                || required_string(track, "label")?.trim().is_empty()
+                || !is_video_track_language(language)
+            {
+                return Err("Notebook video track is invalid.".into());
+            }
+            if optional_bool(track, "default")? == Some(true) {
+                default_count += 1;
+                if default_count > 1 {
+                    return Err("Notebook video has more than one default text track.".into());
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 fn validate_block(
     value: &Value,
     depth: usize,
     allow_images: bool,
+    allow_videos: bool,
     allow_page_layout: bool,
 ) -> Result<(), String> {
     if depth > 256 {
@@ -446,7 +544,7 @@ fn validate_block(
                     return Err("Notebook list contains a non-item node.".into());
                 }
                 required_string(item, "id")?;
-                validate_block_content(item, depth + 1, allow_images, false)?;
+                validate_block_content(item, depth + 1, allow_images, allow_videos, false)?;
             }
             Ok(())
         }
@@ -483,9 +581,10 @@ fn validate_block(
             if collapsed == Some(true) && !collapsible.unwrap_or(default_collapsible) {
                 return Err("Notebook collapsed state is incompatible with behavior.".into());
             }
-            validate_block_content(node, depth + 1, allow_images, false)
+            validate_block_content(node, depth + 1, allow_images, allow_videos, false)
         }
         "imageFigure" if allow_images => validate_image_figure(node),
+        "videoFigure" if allow_videos => validate_video_figure(node),
         "pageBreak" if allow_page_layout && node.len() == 2 => Ok(()),
         _ => Err("Notebook block type is unsupported.".into()),
     }
@@ -495,6 +594,7 @@ fn validate_block_content(
     node: &Map<String, Value>,
     depth: usize,
     allow_images: bool,
+    allow_videos: bool,
     allow_page_layout: bool,
 ) -> Result<(), String> {
     for child in node
@@ -502,7 +602,7 @@ fn validate_block_content(
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook block content must be an array.".to_string())?
     {
-        validate_block(child, depth, allow_images, allow_page_layout)?;
+        validate_block(child, depth, allow_images, allow_videos, allow_page_layout)?;
     }
     Ok(())
 }
@@ -588,6 +688,7 @@ fn validate_notebook_document_version(
     document: &Value,
     version: u64,
     allow_images: bool,
+    allow_videos: bool,
     allow_page_layout: bool,
 ) -> Result<(), String> {
     let document = object(document)?;
@@ -644,7 +745,7 @@ fn validate_notebook_document_version(
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook document content must be an array.".to_string())?
     {
-        validate_block(node, 0, allow_images, allow_page_layout)?;
+        validate_block(node, 0, allow_images, allow_videos, allow_page_layout)?;
     }
     if allow_page_layout {
         validate_page_setup(
@@ -662,7 +763,7 @@ fn validate_notebook_document_version(
 }
 
 pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
-    validate_notebook_document_version(document, 8, true, true)
+    validate_notebook_document_version(document, 9, true, true, true)
 }
 
 fn add_default_page_layout(document: &mut Value) {
@@ -681,16 +782,21 @@ fn add_default_page_layout(document: &mut Value) {
 
 pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(8) => validate_notebook_document(&document)?,
+        Some(9) => validate_notebook_document(&document)?,
+        Some(8) => {
+            validate_notebook_document_version(&document, 8, true, false, true)?;
+            document["version"] = Value::from(9);
+            validate_notebook_document(&document)?;
+        }
         Some(7) => {
-            validate_notebook_document_version(&document, 7, true, false)?;
-            document["version"] = Value::from(8);
+            validate_notebook_document_version(&document, 7, true, false, false)?;
+            document["version"] = Value::from(9);
             add_default_page_layout(&mut document);
             validate_notebook_document(&document)?;
         }
         Some(6) => {
-            validate_notebook_document_version(&document, 6, false, false)?;
-            document["version"] = Value::from(8);
+            validate_notebook_document_version(&document, 6, false, false, false)?;
+            document["version"] = Value::from(9);
             add_default_page_layout(&mut document);
             validate_notebook_document(&document)?;
         }
@@ -738,9 +844,24 @@ fn collect_node_asset_ids(value: &Value, asset_ids: &mut HashSet<String>) {
     let Some(node) = value.as_object() else {
         return;
     };
-    if node.get("type").and_then(Value::as_str) == Some("imageFigure") {
-        if let Some(asset_id) = node.get("assetId").and_then(Value::as_str) {
-            asset_ids.insert(asset_id.to_string());
+    if matches!(
+        node.get("type").and_then(Value::as_str),
+        Some("imageFigure" | "videoFigure")
+    ) {
+        for field in ["assetId", "posterAssetId"] {
+            if let Some(asset_id) = node.get(field).and_then(Value::as_str) {
+                asset_ids.insert(asset_id.to_string());
+            }
+        }
+        for track in node
+            .get("tracks")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            if let Some(asset_id) = track.get("assetId").and_then(Value::as_str) {
+                asset_ids.insert(asset_id.to_string());
+            }
         }
     }
     for child in node
@@ -885,6 +1006,11 @@ fn measure_node(value: &Value, block_count: &mut u64, word_count: &mut u64) {
         }
         Some("imageFigure") => {
             *word_count += count_words(node.get("caption").and_then(Value::as_str).unwrap_or(""));
+        }
+        Some("videoFigure") => {
+            for field in ["title", "description", "caption"] {
+                *word_count += count_words(node.get(field).and_then(Value::as_str).unwrap_or(""));
+            }
         }
         _ => {}
     }

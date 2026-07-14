@@ -308,6 +308,11 @@ export function createIndexedDbNotebookPorts(options: {
       await transactionComplete(transaction);
     },
   };
+  asset.putBlob = async (blob, mimeType, createdAt) => asset.put(
+    new Uint8Array(await blob.arrayBuffer()),
+    mimeType,
+    createdAt,
+  );
 
   return { asset, library };
 }

@@ -39,6 +39,32 @@ beforeAll(() => {
     URL.createObjectURL = vi.fn(() => 'blob:notebook-image');
     URL.revokeObjectURL = vi.fn();
   }
+  Object.defineProperty(HTMLMediaElement.prototype, 'canPlayType', {
+    configurable: true,
+    value: () => 'probably',
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'load', {
+    configurable: true,
+    value(this: HTMLVideoElement) {
+      queueMicrotask(() => this.onloadedmetadata?.(new Event('loadedmetadata')));
+    },
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'pause', {
+    configurable: true,
+    value: () => undefined,
+  });
+  Object.defineProperty(HTMLVideoElement.prototype, 'videoWidth', {
+    configurable: true,
+    get: () => 1280,
+  });
+  Object.defineProperty(HTMLVideoElement.prototype, 'videoHeight', {
+    configurable: true,
+    get: () => 720,
+  });
+  Object.defineProperty(HTMLMediaElement.prototype, 'duration', {
+    configurable: true,
+    get: () => 12.5,
+  });
 });
 
 function NotebookHarness({
@@ -92,6 +118,26 @@ function notebookSvgFile(name = 'limit-diagram.svg') {
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 30"><path d="M0 20 L40 10"/></svg>',
   );
   const file = new File([bytes], name, { type: 'image/svg+xml' });
+  Object.defineProperty(file, 'arrayBuffer', {
+    configurable: true,
+    value: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+  });
+  return file;
+}
+
+function notebookWebmFile(name = 'limit-lesson.webm') {
+  const bytes = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81]);
+  const file = new File([bytes], name, { type: 'video/webm' });
+  Object.defineProperty(file, 'arrayBuffer', {
+    configurable: true,
+    value: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+  });
+  return file;
+}
+
+function notebookVttFile(name = 'english.vtt') {
+  const bytes = new TextEncoder().encode('WEBVTT\n\n00:00.000 --> 00:01.000\nLimit approaching L.\n');
+  const file = new File([bytes], name, { type: 'text/vtt' });
   Object.defineProperty(file, 'arrayBuffer', {
     configurable: true,
     value: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
@@ -215,7 +261,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Control>}s{/Control}');
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const storedDocument = await readOnlyStoredDocument(libraryService);
-    expect(storedDocument.version).toBe(8);
+    expect(storedDocument.version).toBe(9);
     const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
@@ -508,7 +554,7 @@ describe('NotebookPage', () => {
     expect(within(toolbar).getByRole('button', { name: 'Separate equation' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Add section' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: /Image/ })).toBeEnabled();
-    expect(within(toolbar).getByRole('button', { name: /Video/ })).toBeDisabled();
+    expect(within(toolbar).getByRole('button', { name: /Video/ })).toBeEnabled();
     expect(within(toolbar).getByRole('button', { name: 'Insert evidence' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Insert divider' })).toBeVisible();
   });
@@ -591,7 +637,7 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const stored = await readOnlyStoredDocument(libraryService);
     expect(stored).toMatchObject({
-      version: 8,
+      version: 9,
       pageSetup: {
         paperSize: 'letter',
         orientation: 'landscape',
@@ -876,7 +922,7 @@ describe('NotebookPage', () => {
       .some((entry) => entry.dataset.outlineKind === 'imageFigure')).toBe(false);
   });
 
-  it('formats picture size, alignment, wrapping, crop, and rotation as undoable V8 state', async () => {
+  it('formats picture size, alignment, wrapping, crop, and rotation as undoable V9 state', async () => {
     const user = userEvent.setup();
     const libraryService = createNotebookLibraryService();
     render(<NotebookHarness libraryService={libraryService} />);
@@ -1035,6 +1081,95 @@ describe('NotebookPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('storage quota is unavailable');
     expect(screen.queryByTestId('notebook-image-figure')).not.toBeInTheDocument();
     expect((await libraryService.library.list())[0]?.assetCount).toBe(0);
+  });
+
+  it('inserts, formats, captions, and persists a local video with poster and WebVTT', async () => {
+    const user = userEvent.setup();
+    const libraryService = createNotebookLibraryService();
+    const pauseSpy = vi.spyOn(HTMLMediaElement.prototype, 'pause');
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL');
+    const { unmount } = render(<NotebookHarness libraryService={libraryService} />);
+
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
+    await user.upload(screen.getByLabelText('Choose video'), notebookWebmFile());
+    const dialog = await screen.findByRole('dialog', { name: 'Insert video' });
+    await user.clear(within(dialog).getByLabelText('Title'));
+    await user.type(within(dialog).getByLabelText('Title'), 'Limit lesson');
+    await user.type(within(dialog).getByLabelText(/Description/), 'A narrated limit demonstration.');
+    await user.type(within(dialog).getByLabelText(/Caption/), 'Approaching a finite limit');
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Loop playback' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Insert video' }));
+
+    const figure = await screen.findByTestId('notebook-video-figure');
+    const video = figure.querySelector('video');
+    expect(video).not.toBeNull();
+    expect(video).toHaveAttribute('controls');
+    expect(video).not.toHaveAttribute('autoplay');
+    expect(video).toHaveAttribute('loop');
+    expect(figure).toHaveTextContent('Video 1. Approaching a finite limit');
+    expect(screen.getByRole('tab', { name: 'Video Format' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+    await user.click(within(toolbar).getByRole('button', { name: 'Set video width to 50%' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Align video right' }));
+    expect(figure.style.getPropertyValue('--notebook-video-width')).toBe('50%');
+    expect(figure).toHaveAttribute('data-video-alignment', 'right');
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(figure).toHaveAttribute('data-video-alignment', 'center'));
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    await waitFor(() => expect(figure).toHaveAttribute('data-video-alignment', 'right'));
+    await user.click(screen.getByRole('tab', { name: 'Video Format' }));
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Poster' }));
+    await user.upload(screen.getByLabelText('Choose video poster image'), notebookSvgFile('poster.svg'));
+    await waitFor(() => expect(figure.querySelector('video')).toHaveAttribute('poster'));
+    await user.click(within(toolbar).getByRole('button', { name: 'Add captions' }));
+    await user.upload(screen.getByLabelText('Choose WebVTT captions'), notebookVttFile());
+    await waitFor(() => expect(figure.querySelectorAll('track')).toHaveLength(1));
+    expect(figure.querySelector('track')).toHaveAttribute('srclang', 'en');
+    expect(screen.getAllByTestId('notebook-outline-entry')
+      .some((entry) => entry.dataset.outlineKind === 'videoFigure')).toBe(true);
+
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const stored = await readOnlyStoredDocument(libraryService);
+    expect(stored.content).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'videoFigure',
+        title: 'Limit lesson',
+        description: 'A narrated limit demonstration.',
+        caption: 'Approaching a finite limit',
+        numbered: true,
+        widthPercent: 50,
+        alignment: 'right',
+        loop: true,
+        posterAssetId: expect.stringMatching(/^sha256:/),
+        tracks: [expect.objectContaining({
+          kind: 'captions',
+          label: 'english',
+          language: 'en',
+          default: true,
+        })],
+      }),
+    ]));
+    expect(new Set(stored.content.flatMap((node) => (
+      node.type === 'videoFigure'
+        ? [node.assetId, node.posterAssetId, ...(node.tracks ?? []).map((track) => track.assetId)]
+          .filter(Boolean)
+        : []
+    ))).size).toBe(3);
+
+    const pauseCount = pauseSpy.mock.calls.length;
+    const revokeCount = revokeSpy.mock.calls.length;
+    unmount();
+    expect(pauseSpy.mock.calls.length).toBeGreaterThan(pauseCount);
+    expect(revokeSpy.mock.calls.length).toBeGreaterThan(revokeCount);
+    pauseSpy.mockRestore();
+    revokeSpy.mockRestore();
+
   });
 
   it('creates, nests, renames, and collapses visible document sections', async () => {

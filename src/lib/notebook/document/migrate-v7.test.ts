@@ -24,7 +24,7 @@ describe('Notebook rich document V7 migration', () => {
 
     expect(isNotebookRichDocumentV7(version7)).toBe(true);
     const migrated = migrateNotebookDocumentV7(version7);
-    expect(migrated.version).toBe(8);
+    expect(migrated.version).toBe(9);
     expect(migrated.content).toEqual(version7.content);
     expect(migrated.pageSetup).toEqual({
       paperSize: 'a4',

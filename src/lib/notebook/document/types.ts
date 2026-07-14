@@ -1,6 +1,6 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 8 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 9 as const;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
 
@@ -17,6 +17,7 @@ export const NOTEBOOK_IMAGE_PLACEMENTS = [
   'square-right',
 ] as const;
 export const NOTEBOOK_IMAGE_ROTATIONS = [0, 90, 180, 270] as const;
+export const NOTEBOOK_VIDEO_TRACK_KINDS = ['captions', 'subtitles'] as const;
 export const NOTEBOOK_PAPER_SIZES = ['a4', 'letter', 'legal'] as const;
 export const NOTEBOOK_PAGE_ORIENTATIONS = ['portrait', 'landscape'] as const;
 export const NOTEBOOK_PAGE_NUMBER_POSITIONS = ['left', 'center', 'right'] as const;
@@ -37,6 +38,8 @@ export type NotebookOrderedStyle = typeof NOTEBOOK_ORDERED_STYLES[number];
 export type NotebookImageAlignment = typeof NOTEBOOK_IMAGE_ALIGNMENTS[number];
 export type NotebookImagePlacement = typeof NOTEBOOK_IMAGE_PLACEMENTS[number];
 export type NotebookImageRotation = typeof NOTEBOOK_IMAGE_ROTATIONS[number];
+export type NotebookVideoAlignment = NotebookImageAlignment;
+export type NotebookVideoTrackKind = typeof NOTEBOOK_VIDEO_TRACK_KINDS[number];
 export type NotebookPaperSize = typeof NOTEBOOK_PAPER_SIZES[number];
 export type NotebookPageOrientation = typeof NOTEBOOK_PAGE_ORIENTATIONS[number];
 export type NotebookPageNumberPosition = typeof NOTEBOOK_PAGE_NUMBER_POSITIONS[number];
@@ -172,6 +175,30 @@ export type NotebookImageNode = {
   crop?: NotebookImageCrop;
 };
 
+export type NotebookVideoTrack = {
+  id: string;
+  assetId: string;
+  kind: NotebookVideoTrackKind;
+  label: string;
+  language: string;
+  default?: boolean;
+};
+
+export type NotebookVideoNode = {
+  type: 'videoFigure';
+  id: string;
+  assetId: string;
+  title: string;
+  description: string;
+  caption?: string;
+  numbered?: boolean;
+  posterAssetId?: string;
+  tracks?: NotebookVideoTrack[];
+  widthPercent?: number;
+  alignment?: NotebookVideoAlignment;
+  loop?: boolean;
+};
+
 export type NotebookListItemNode = {
   type: 'listItem';
   id: string;
@@ -224,6 +251,7 @@ export type NotebookRichBlockNode =
   | NotebookDividerNode
   | NotebookPageBreakNode
   | NotebookImageNode
+  | NotebookVideoNode
   | NotebookListNode
   | NotebookSemanticNode
   | NotebookSectionNode;
@@ -265,6 +293,12 @@ export type NotebookRichDocumentV6 = NotebookRichDocumentBase & {
 
 export type NotebookRichDocumentV7 = NotebookRichDocumentBase & {
   version: 7;
+};
+
+export type NotebookRichDocumentV8 = NotebookRichDocumentBase & {
+  version: 8;
+  pageSetup: NotebookPageSetup;
+  headerFooter: NotebookHeaderFooterSettings;
 };
 
 export type NotebookDocumentSummary = {
