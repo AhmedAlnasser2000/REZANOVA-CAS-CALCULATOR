@@ -19,7 +19,7 @@ import type {
   AngleUnit,
   CandidateValidationResult,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   NumericSolveInterval,
 } from '../../../types/calculator';
@@ -85,8 +85,8 @@ export function tryRealNonlinearNumericSearchFallback(input: {
   angleUnit: AngleUnit;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
-  sharedOutcome: DisplayOutcome;
-}): DisplayOutcome | undefined {
+  sharedOutcome: ResultProducerDraft;
+}): ResultProducerDraft | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
     || input.sharedOutcome.error !== UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR

@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
+import {
+  canonicalMathValue,
+  type CanonicalResultProducerInputV1,
+} from '../../result-contract';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-result-fixture';
 import { displayBlockSummaryText } from './display-blocks';
 describe('display block adapter', () => {
   it('builds answer, approx, valid-when, detail, and warning blocks', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex: 'x=2',
+      primaryMath: canonicalMathValue('x=2'),
       approxText: 'x ~= 2',
-      exactSupplementLatex: ['\\text{Conditions: } x\\ne0'],
+      supplements: ['\\text{Conditions: } x\\ne0'],
       detailSections: [
         {
           title: 'Generated',
@@ -72,8 +75,8 @@ describe('display block adapter', () => {
   });
 
   it('converts periodic family fields into stable render blocks', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Periodic',
       periodicFamily: {
         carrierLatex: '\\sin(x)',
@@ -133,11 +136,11 @@ describe('display block adapter', () => {
   });
 
   it('builds error text blocks without requiring result schema migration', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'error',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'error' as const,
       title: 'Symbolic',
       error: 'Unsupported route.',
-      exactLatex: 'x=1',
+      primaryMath: canonicalMathValue('x=1'),
       warnings: [],
     };
 
@@ -150,10 +153,10 @@ describe('display block adapter', () => {
   });
 
   it('keeps extraneous solution detail cards visible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex: 'x=3',
+      primaryMath: canonicalMathValue('x=3'),
       detailSections: [{
         title: 'Extraneous Solutions',
         lineKind: 'text',
@@ -175,10 +178,10 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix system proof details visible but collapsible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Ax=b',
-      exactLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+      primaryMath: canonicalMathValue('x=\\begin{bmatrix}1\\\\2\\end{bmatrix}'),
       detailSections: [{
         title: 'System Proof',
         lines: [
@@ -201,11 +204,11 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix multi-RHS proof details visible but collapsible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'AX=B',
-      exactLatex: 'X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}',
-      sourceMode: 'matrix',
+      primaryMath: canonicalMathValue('X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}'),
+      metadata: { sourceMode: 'matrix' },
       detailSections: [
         {
           title: 'Multi-RHS Proof',
@@ -243,11 +246,11 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix coordinate proof details visible but collapsible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: '\\operatorname{coords}(A,v)',
-      exactLatex: '[v]_{A}=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
-      sourceMode: 'matrix',
+      primaryMath: canonicalMathValue('[v]_{A}=\\begin{bmatrix}1\\\\2\\end{bmatrix}'),
+      metadata: { sourceMode: 'matrix' },
       detailSections: [{
         title: 'Coordinate Proof',
         lines: [
@@ -270,11 +273,11 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix change-of-basis proof details visible but collapsible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: '\\operatorname{change}(A,B)',
-      exactLatex: 'P_{B\\leftarrow A}=\\begin{bmatrix}1 & -1\\\\0 & 1\\end{bmatrix}',
-      sourceMode: 'matrix',
+      primaryMath: canonicalMathValue('P_{B\\leftarrow A}=\\begin{bmatrix}1 & -1\\\\0 & 1\\end{bmatrix}'),
+      metadata: { sourceMode: 'matrix' },
       detailSections: [{
         title: 'Change-of-Basis Proof',
         lines: [
@@ -296,11 +299,11 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix LU proof details visible but collapsible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: '\\operatorname{lu}(A)',
-      exactLatex: 'A=LU',
-      sourceMode: 'matrix',
+      primaryMath: canonicalMathValue('A=LU'),
+      metadata: { sourceMode: 'matrix' },
       detailSections: [{
         title: 'LU Proof',
         lines: [
@@ -322,11 +325,11 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix PLU proof details visible but collapsible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: '\\operatorname{plu}(A)',
-      exactLatex: 'PA=LU',
-      sourceMode: 'matrix',
+      primaryMath: canonicalMathValue('PA=LU'),
+      metadata: { sourceMode: 'matrix' },
       detailSections: [{
         title: 'PLU Proof',
         lines: [
@@ -348,11 +351,11 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix factor solve proof details visible but collapsible by default', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: '\\operatorname{lusolve}(A,b)',
-      exactLatex: 'x=\\begin{bmatrix}2\\\\1\\end{bmatrix}',
-      sourceMode: 'matrix',
+      primaryMath: canonicalMathValue('x=\\begin{bmatrix}2\\\\1\\end{bmatrix}'),
+      metadata: { sourceMode: 'matrix' },
       detailSections: [{
         title: 'Factor Solve Proof',
         lines: [
@@ -375,10 +378,10 @@ describe('display block adapter', () => {
   });
 
   it('keeps solve notes collapsed by default even when the prose is short', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex: 'x=3',
+      primaryMath: canonicalMathValue('x=3'),
       detailSections: [{
         title: 'Solve Note',
         lineKind: 'text',
@@ -396,10 +399,10 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix row-reduction traces collapsed by default even when short', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'rref(A)',
-      exactLatex: '\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}',
+      primaryMath: canonicalMathValue('\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}'),
       detailSections: [{
         title: 'Row Reduction Steps',
         lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
@@ -417,10 +420,10 @@ describe('display block adapter', () => {
   });
 
   it('keeps Matrix factorization row steps collapsed by default even when short', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'lu(A)',
-      exactLatex: 'A=LU',
+      primaryMath: canonicalMathValue('A=LU'),
       detailSections: [{
         title: 'Factorization Row Steps',
         lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
@@ -438,11 +441,11 @@ describe('display block adapter', () => {
   });
 
   it('keeps Linear Algebra proof cards visible even when their math is long', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'gram(u,v)',
-      exactLatex: '\\operatorname{orthogonal\\ basis}=\\left\\{u,v\\right\\}',
-      sourceMode: 'vector',
+      primaryMath: canonicalMathValue('\\operatorname{orthogonal\\ basis}=\\left\\{u,v\\right\\}'),
+      metadata: { sourceMode: 'vector' },
       detailSections: [{
         title: 'Gram-Schmidt Proof',
         lines: [
@@ -463,10 +466,10 @@ describe('display block adapter', () => {
 
   it('adapts safe finite answer sets into branch-list blocks', () => {
     const exactLatex = 's\\in\\left\\{\\frac{d}{4}+r+\\sqrt{x+j},\\ \\frac{d}{4}-r-\\sqrt{x+j}\\right\\}';
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       warnings: [],
     };
 
@@ -499,16 +502,16 @@ describe('display block adapter', () => {
   });
 
   it('does not describe Linear Algebra finite sets as roots', () => {
-    const vectorOutcome: DisplayOutcome = {
-      kind: 'success',
+    const vectorOutcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'gram(u,v)',
-      exactLatex: [
+      primaryMath: canonicalMathValue([
         '\\text{orthogonal basis}=\\left\\{',
         '\\begin{bmatrix}1\\\\2\\\\3\\end{bmatrix},',
         '\\begin{bmatrix}2\\\\0\\\\-1\\end{bmatrix}',
         '\\right\\}',
-      ].join(''),
-      sourceMode: 'vector',
+      ].join('')),
+      metadata: { sourceMode: 'vector' as const },
       warnings: [],
     };
     const vectorAnswer = buildDisplayBlocks(vectorOutcome).find((block) => block.id === 'answer');
@@ -516,16 +519,16 @@ describe('display block adapter', () => {
     expect(vectorAnswer).toMatchObject({
       kind: 'answer',
       renderKind: 'math',
-      latex: vectorOutcome.exactLatex,
+      latex: vectorOutcome.primaryMath?.canonicalLatex,
     });
     expect(vectorAnswer?.countSummary).toBeUndefined();
     expect(displayBlockSummaryText(vectorAnswer!)).toBeUndefined();
 
-    const matrixOutcome: DisplayOutcome = {
-      kind: 'success',
+    const matrixOutcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'eigen(A)',
-      exactLatex: 'eigen(A)=\\left\\{\\lambda=3,\\lambda=1\\right\\}',
-      sourceMode: 'matrix',
+      primaryMath: canonicalMathValue('eigen(A)=\\left\\{\\lambda=3,\\lambda=1\\right\\}'),
+      metadata: { sourceMode: 'matrix' as const },
       warnings: [],
     };
     const matrixAnswer = buildDisplayBlocks(matrixOutcome).find((block) => block.id === 'answer');
@@ -533,16 +536,16 @@ describe('display block adapter', () => {
     expect(matrixAnswer).toMatchObject({
       kind: 'answer',
       renderKind: 'math',
-      latex: matrixOutcome.exactLatex,
+      latex: matrixOutcome.primaryMath?.canonicalLatex,
     });
     expect(displayBlockSummaryText(matrixAnswer!)).toBeUndefined();
   });
 
   it('uses source-mode options to protect older Linear Algebra outcomes', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'gram(u,v)',
-      exactLatex: '\\text{orthogonal basis}=\\left\\{u,v\\right\\}',
+      primaryMath: canonicalMathValue('\\text{orthogonal basis}=\\left\\{u,v\\right\\}'),
       warnings: [],
     };
 
@@ -555,10 +558,10 @@ describe('display block adapter', () => {
 
   it('uses candidate-root count wording for guarded finite branch metadata', () => {
     const exactLatex = 'z\\in\\left\\{b-\\sqrt{a},\\ b+\\sqrt{a}\\right\\}';
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       branchReadback: {
         targetLatex: 'z',
         relationLatex: '\\in',
@@ -580,19 +583,21 @@ describe('display block adapter', () => {
 
   it('adds route-specific trust wording to answer summaries', () => {
     const exact = buildDisplayBlocks({
-      kind: 'success',
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      resultOrigin: 'symbolic',
-      exactLatex: 'x\\in\\left\\{-1,5\\right\\}',
+      metadata: { resultOrigin: 'symbolic' },
+      primaryMath: canonicalMathValue('x\\in\\left\\{-1,5\\right\\}'),
       warnings: [],
     }).find((block) => block.id === 'answer');
     expect(displayBlockSummaryText(exact!)).toBe('Exact roots · 2 roots');
 
     const certified = buildDisplayBlocks({
-      kind: 'success',
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      solutionKind: 'approximate-numeric',
-      resultOrigin: 'numeric-fallback',
+      metadata: {
+        solutionKind: 'approximate-numeric',
+        resultOrigin: 'numeric-fallback',
+      },
       approxText: 'x ≈ 1.300766',
       branchReadback: {
         targetLatex: 'x',
@@ -612,10 +617,12 @@ describe('display block adapter', () => {
     expect(displayBlockSummaryText(certified!)).toBe('Certified polynomial roots');
 
     const interval = buildDisplayBlocks({
-      kind: 'success',
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      solutionKind: 'approximate-numeric',
-      resultOrigin: 'numeric-fallback',
+      metadata: {
+        solutionKind: 'approximate-numeric',
+        resultOrigin: 'numeric-fallback',
+      },
       approxText: 'x ≈ 0, 3.141593',
       branchReadback: {
         targetLatex: 'x',
@@ -638,10 +645,12 @@ describe('display block adapter', () => {
     expect(displayBlockSummaryText(interval!)).toBe('Local numeric roots in [0, 10] · 2 roots');
 
     const bounded = buildDisplayBlocks({
-      kind: 'success',
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      solutionKind: 'approximate-numeric',
-      resultOrigin: 'numeric-fallback',
+      metadata: {
+        solutionKind: 'approximate-numeric',
+        resultOrigin: 'numeric-fallback',
+      },
       approxText: 'x ≈ 0.567143',
       branchReadback: {
         targetLatex: 'x',
@@ -659,10 +668,12 @@ describe('display block adapter', () => {
       .toBe('Validated approximate roots from bounded search');
 
     const complexRegion = buildDisplayBlocks({
-      kind: 'success',
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      solutionKind: 'approximate-numeric',
-      resultOrigin: 'numeric-fallback',
+      metadata: {
+        solutionKind: 'approximate-numeric',
+        resultOrigin: 'numeric-fallback',
+      },
       approxText: 'z ≈ 0+0i',
       branchReadback: {
         targetLatex: 'z',
@@ -685,17 +696,17 @@ describe('display block adapter', () => {
       String.raw`-\frac{A}{3}+U_{1}-\frac{p}{3U_{1}}`,
       String.raw`-\frac{A}{3}+U_{2}-\frac{p}{3U_{2}}`,
     ];
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex: String.raw`x\in\left\{${branchesLatex.join(',\\ ')}\right\}`,
+      primaryMath: canonicalMathValue(String.raw`x\in\left\{${branchesLatex.join(',\\ ')}\right\}`),
       branchReadback: {
         targetLatex: 'x',
         relationLatex: '\\in',
         branchesLatex,
         source: 'equation-cubic-cardano',
       },
-      exactSupplementLatex: [String.raw`a\ne0`, String.raw`R\ne0`],
+      supplements: [String.raw`a\ne0`, String.raw`R\ne0`],
       warnings: [],
     };
 
@@ -725,10 +736,10 @@ describe('display block adapter', () => {
 
   it('prefers validated branch metadata over fallback latex extraction', () => {
     const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       branchReadback: {
         targetLatex: 's',
         relationLatex: '\\in',
@@ -765,10 +776,10 @@ describe('display block adapter', () => {
 
   it('renders approximate producer metadata as branch rows', () => {
     const exactLatex = 'x\\approx\\left\\{0.739,1.414\\right\\}';
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Approximate',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       branchReadback: {
         targetLatex: 'x',
         relationLatex: '\\approx',
@@ -798,12 +809,14 @@ describe('display block adapter', () => {
   });
 
   it('uses numeric interval approx roots as the primary answer when exact output is absent', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Numeric',
       approxText: 'x ~= -1, 1',
-      resultOrigin: 'numeric-fallback',
-      solutionKind: 'approximate-numeric',
+      metadata: {
+        resultOrigin: 'numeric-fallback' as const,
+        solutionKind: 'approximate-numeric' as const,
+      },
       branchReadback: {
         targetLatex: 'x',
         relationLatex: '\\approx',
@@ -836,12 +849,14 @@ describe('display block adapter', () => {
   });
 
   it('uses single numeric interval approx roots as a primary text answer', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Numeric',
       approxText: 'x ~= 0.739',
-      resultOrigin: 'numeric-fallback',
-      solutionKind: 'approximate-numeric',
+      metadata: {
+        resultOrigin: 'numeric-fallback' as const,
+        solutionKind: 'approximate-numeric' as const,
+      },
       warnings: [],
     };
 
@@ -859,10 +874,10 @@ describe('display block adapter', () => {
 
   it('falls back safely when branch metadata is malformed', () => {
     const exactLatex = 'x\\in\\left\\{1,2\\right\\}';
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       branchReadback: {
         targetLatex: '(x,y)',
         relationLatex: '\\in',
@@ -883,10 +898,10 @@ describe('display block adapter', () => {
 
   it('fails closed to a normal answer block for ambiguous branch sets', () => {
     const exactLatex = '(x,y)\\in\\left\\{(1,2),(3,4)\\right\\}';
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       warnings: [],
     };
 

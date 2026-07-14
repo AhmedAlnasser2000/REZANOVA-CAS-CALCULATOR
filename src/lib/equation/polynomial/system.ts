@@ -22,7 +22,7 @@ import {
   eliminateBivariateResultantNodes,
   type SymbolicEliminationSuccess,
 } from '../../symbolic-engine/primitives/elimination/elimination';
-import type { DisplayDetailSection, DisplayOutcome, VariableSubstitutionSnapshot } from '../../../types/calculator';
+import type { DisplayDetailSection, ResultProducerDraft, VariableSubstitutionSnapshot } from '../../../types/calculator';
 import {
   errorOutcome,
   pairApproxText,
@@ -382,7 +382,7 @@ function buildBivariateOptions(options: PolynomialSystem2x2Options) {
 export function solvePolynomialSystem2x2(
   equations: readonly [string, string],
   options: PolynomialSystem2x2Options = {},
-): DisplayOutcome {
+): ResultProducerDraft {
   const zeroForms = equations.map(zeroFormFromLatex) as [ZeroFormResult, ZeroFormResult];
   const firstStop = zeroForms.find((entry): entry is Extract<ZeroFormResult, { kind: 'stop' }> =>
     entry.kind === 'stop');

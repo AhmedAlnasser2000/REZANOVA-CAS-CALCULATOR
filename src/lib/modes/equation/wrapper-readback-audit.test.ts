@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { buildFormulaViewerArtifact } from '../../../app/runtime/formula-viewer-artifacts';
 import { buildDisplayBlocks, type DisplayBlock } from '../../display/result/display-blocks';
@@ -24,13 +25,13 @@ function expectSuccess(equationLatex: string) {
 }
 
 function answerBlock(result: ReturnType<typeof expectSuccess>) {
-  const block = buildDisplayBlocks(result).find((entry) => entry.id === 'answer');
+  const block = buildProducerDisplayBlocks(result).find((entry) => entry.id === 'answer');
   expect(block?.renderKind).toBe('caseMath');
   return block as DisplayBlock & { renderKind: 'caseMath' };
 }
 
 function expectFormulaCopyPreserved(result: ReturnType<typeof expectSuccess>, equationLatex: string) {
-  const blocks = buildDisplayBlocks(result);
+  const blocks = buildProducerDisplayBlocks(result);
   const answer = answerBlock(result);
   const copyLatex = result.exactLatex ?? '';
   const artifact = buildFormulaViewerArtifact({
@@ -92,3 +93,7 @@ describe('Equation Real wrapper formula readback audit', () => {
     }
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

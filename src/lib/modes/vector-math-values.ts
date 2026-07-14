@@ -1,7 +1,7 @@
 import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
 } from '../../types/calculator';
 import {
   buildExactScalarNode,
@@ -316,7 +316,7 @@ function details(
 }
 
 export function vectorMathValuesFromOwnedLeaves(input: {
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
   routeId: VectorMathJsonRouteId;
   leaves: readonly VectorOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {

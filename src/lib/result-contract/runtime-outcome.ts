@@ -1,8 +1,11 @@
 import type {
   CanonicalMathValueV1,
+  CanonicalResultDocumentV1,
   CanonicalRuntimeActionV1,
   CanonicalRuntimeOutcome,
   PromptOutcome,
+  ResultProducerActionDraft,
+  ResultProducerDraft,
   RuntimeAdvisories,
 } from '../../types/calculator';
 import {
@@ -313,4 +316,96 @@ export function requireCanonicalRuntimeOutcome(input: unknown): CanonicalRuntime
     );
   }
   return validation.validated.value;
+}
+
+export function createCanonicalRuntimeError(
+  title: string,
+  error: string,
+  options: {
+    warnings?: readonly string[];
+    actions?: readonly CanonicalRuntimeActionV1[];
+    runtimeAdvisories?: RuntimeAdvisories;
+  } = {},
+): CanonicalRuntimeOutcome {
+  return requireCanonicalRuntimeOutcome({
+    kind: 'error',
+    canonicalResult: {
+      version: 1,
+      outcomeKind: 'error',
+      title,
+      error,
+      warnings: [...(options.warnings ?? [])],
+    },
+    ...(options.actions?.length ? { actions: [...options.actions] } : {}),
+    ...(options.runtimeAdvisories
+      ? { runtimeAdvisories: options.runtimeAdvisories }
+      : {}),
+  });
+}
+
+export function createCanonicalRuntimeResult(
+  canonicalResult: CanonicalResultDocumentV1,
+  options: {
+    actions?: readonly CanonicalRuntimeActionV1[];
+    runtimeAdvisories?: RuntimeAdvisories;
+  } = {},
+): Exclude<CanonicalRuntimeOutcome, PromptOutcome> {
+  return requireCanonicalRuntimeOutcome({
+    kind: canonicalResult.outcomeKind,
+    canonicalResult,
+    ...(options.actions?.length ? { actions: [...options.actions] } : {}),
+    ...(options.runtimeAdvisories
+      ? { runtimeAdvisories: options.runtimeAdvisories }
+      : {}),
+  }) as Exclude<CanonicalRuntimeOutcome, PromptOutcome>;
+}
+
+function canonicalActionFromProducerDraft(
+  action: ResultProducerActionDraft,
+): CanonicalRuntimeActionV1 {
+  return action.kind === 'send'
+    ? {
+        kind: action.kind,
+        target: action.target,
+        math: { canonicalLatex: action.latex },
+      }
+    : {
+        kind: action.kind,
+        mode: action.mode,
+        math: { canonicalLatex: action.latex },
+      };
+}
+
+export function finalizeCanonicalRuntimeOutcomeFromProducer(
+  outcome: ResultProducerDraft,
+  owner: string,
+): CanonicalRuntimeOutcome {
+  if (outcome.kind === 'prompt') {
+    return requireCanonicalRuntimeOutcome(outcome);
+  }
+  if (!outcome.canonicalResult) {
+    throw new Error(`${owner} runtime outcome is missing native canonical result authority.`);
+  }
+  return requireCanonicalRuntimeOutcome({
+    kind: outcome.kind,
+    canonicalResult: outcome.canonicalResult,
+    ...(outcome.actions?.length
+      ? { actions: outcome.actions.map(canonicalActionFromProducerDraft) }
+      : {}),
+    ...(outcome.runtimeAdvisories
+      ? { runtimeAdvisories: outcome.runtimeAdvisories }
+      : {}),
+  });
+}
+
+export function retitleCanonicalRuntimeOutcome(
+  outcome: CanonicalRuntimeOutcome,
+  title: string,
+): CanonicalRuntimeOutcome {
+  return outcome.kind === 'prompt'
+    ? requireCanonicalRuntimeOutcome({ ...outcome, title })
+    : requireCanonicalRuntimeOutcome({
+        ...outcome,
+        canonicalResult: { ...outcome.canonicalResult, title },
+      });
 }

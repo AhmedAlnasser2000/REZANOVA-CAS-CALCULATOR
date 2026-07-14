@@ -6,7 +6,7 @@ import type {
   CanonicalRuntimeOutcome,
   ComplexExactForm,
   ComplexSolveRegion,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   EquationScreen,
   LegacyEquationAnswerMode,
@@ -16,8 +16,8 @@ import type {
   VariableSubstitutionSnapshot,
 } from '../../../types/calculator';
 
-export type SharedEquationSolveRunner = (request: SharedSolveRequest) => DisplayOutcome;
-export type AsyncSharedEquationSolveRunner = (request: SharedSolveRequest) => Promise<DisplayOutcome>;
+export type SharedEquationSolveRunner = (request: SharedSolveRequest) => ResultProducerDraft;
+export type AsyncSharedEquationSolveRunner = (request: SharedSolveRequest) => Promise<ResultProducerDraft>;
 
 export type RunEquationModeRequest = {
   equationScreen: EquationScreen;
@@ -44,7 +44,7 @@ export type RunEquationModeRequest = {
 };
 
 export type EquationModeOoePilotRunResult = {
-  payload: DisplayOutcome;
+  payload: ResultProducerDraft;
   ooe: EquationOoePilotMetadata;
 };
 

@@ -1,7 +1,7 @@
 import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   StatisticsRequest,
 } from '../../types/calculator';
 import {
@@ -208,7 +208,7 @@ function details(
 }
 
 export function statisticsMathValuesFromOwnedLeaves(input: {
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
   routeId: StatisticsMathJsonRouteId;
   leaves: readonly StatisticsOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {

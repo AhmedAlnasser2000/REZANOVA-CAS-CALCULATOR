@@ -28,7 +28,8 @@ import type {
   WorkspaceInstanceStateSlot,
   WorkspaceInstanceStateSlotUpdater,
 } from './workspace-instances';
-import { withCanonicalResult } from './canonical-outcome-test-helper';
+import { canonicalMathValue } from '../../lib/result-contract';
+import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
 import { historyEntryFixture } from '../../test-utils/history-result-document';
 
 vi.mock('../../lib/app-state/persistence', () => ({
@@ -372,15 +373,19 @@ describe('useHistoryDisplayRuntime', () => {
     vi.setSystemTime(200_042);
     act(() => {
       hook.result.current.commitOutcome(
-        withCanonicalResult({
-          kind: 'success',
+        canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Simplify',
-          exactLatex: '4',
-          resolvedInputLatex: '2+2',
-          variableSubstitutions: [
-            { name: 'a', valueLatex: '2', numericValue: 2 },
-          ],
+          primaryMath: canonicalMathValue('4'),
           warnings: [],
+          metadata: {
+            resolvedInput: canonicalMathValue('2+2'),
+            variableSubstitutions: [{
+              name: 'a',
+              value: canonicalMathValue('2'),
+              numericValue: 2,
+            }],
+          },
         }),
         '2+2',
         'calculate',
@@ -394,7 +399,7 @@ describe('useHistoryDisplayRuntime', () => {
 
     expect(hook.result.current.displayOutcome).toMatchObject({
       kind: 'success',
-      exactLatex: '4',
+      canonicalResult: { primaryMath: canonicalMathValue('4') },
     });
     expect(hook.result.current.ansLatex).toBe('4');
     expect(hook.result.current.pendingHistoryTickets).toHaveLength(0);
@@ -465,12 +470,12 @@ describe('useHistoryDisplayRuntime', () => {
     vi.setSystemTime(300_125);
     act(() => {
       hook.result.current.commitOutcome(
-        withCanonicalResult({
-          kind: 'success',
+        canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Simplify',
-          exactLatex: '13',
-          resolvedInputLatex: '6+7',
+          primaryMath: canonicalMathValue('13'),
           warnings: [],
+          metadata: { resolvedInput: canonicalMathValue('6+7') },
         }),
         '6+7',
         'calculate',
@@ -496,7 +501,7 @@ describe('useHistoryDisplayRuntime', () => {
       ansLatex: '13',
       displayOutcome: {
         kind: 'success',
-        exactLatex: '13',
+        canonicalResult: { primaryMath: canonicalMathValue('13') },
       },
     });
     expect(savedRuntimeState).toMatchObject({
@@ -559,12 +564,12 @@ describe('useHistoryDisplayRuntime', () => {
 
     act(() => {
       hook.result.current.commitOutcome(
-        withCanonicalResult({
-          kind: 'success',
+        canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Simplify',
-          exactLatex: '13',
-          resolvedInputLatex: '8+5',
+          primaryMath: canonicalMathValue('13'),
           warnings: [],
+          metadata: { resolvedInput: canonicalMathValue('8+5') },
         }),
         '8+5',
         'calculate',
@@ -584,7 +589,7 @@ describe('useHistoryDisplayRuntime', () => {
       ansLatex: '13',
       displayOutcome: {
         kind: 'success',
-        exactLatex: '13',
+        canonicalResult: { primaryMath: canonicalMathValue('13') },
       },
     });
   });
@@ -594,10 +599,10 @@ describe('useHistoryDisplayRuntime', () => {
 
     act(() => {
       hook.result.current.commitOutcome(
-        withCanonicalResult({
-          kind: 'success',
+        canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Background',
-          exactLatex: '9',
+          primaryMath: canonicalMathValue('9'),
           warnings: [],
         }),
         '3^2',
@@ -665,10 +670,10 @@ describe('useHistoryDisplayRuntime', () => {
 
     act(() => {
       hook.result.current.commitOutcome(
-        withCanonicalResult({
-          kind: 'success',
+        canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Simplify',
-          exactLatex: '10',
+          primaryMath: canonicalMathValue('10'),
           warnings: [],
         }),
         '5+5',
@@ -682,7 +687,7 @@ describe('useHistoryDisplayRuntime', () => {
 
     expect(hook.result.current.displayOutcome).toMatchObject({
       kind: 'success',
-      exactLatex: '10',
+      canonicalResult: { primaryMath: canonicalMathValue('10') },
     });
     expect(hook.result.current.ansLatex).toBe('10');
     expect(hook.result.current.history).toHaveLength(0);
@@ -783,15 +788,11 @@ describe('useHistoryDisplayRuntime', () => {
     );
     expect(hook.result.current.displayOutcome).toMatchObject({
       kind: 'success',
-      title: 'History',
-      exactLatex: 'x=2',
-      detailSections: [
-        {
-          title: 'Replay Proof',
-          lines: ['x+a=4'],
-          lineKind: 'math',
-        },
-      ],
+      canonicalResult: {
+        title: 'History',
+        primaryMath: canonicalMathValue('x=2'),
+        details: [{ title: 'Replay Proof' }],
+      },
     });
     expect(delegates.closeHistoryPanel).toHaveBeenCalledTimes(1);
 
@@ -880,12 +881,12 @@ describe('useHistoryDisplayRuntime', () => {
       ],
       variableMemory: [],
       ansLatex: '42',
-      displayOutcome: {
-        kind: 'success',
+      displayOutcome: canonicalResultFixture({
+        outcomeKind: 'success',
         title: 'Memory',
-        exactLatex: '42',
+        primaryMath: canonicalMathValue('42'),
         warnings: [],
-      },
+      }),
       session: {},
     };
 

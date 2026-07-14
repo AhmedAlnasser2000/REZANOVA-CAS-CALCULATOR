@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../types/calculator';
 import { algebraTransformSolve } from './algebra-stage';
@@ -160,7 +160,7 @@ function runGuardedEquationSolve(
   depth = 0,
   trail = new Set<string>(),
   options: GuardedEquationSolveOptions = {},
-): DisplayOutcome {
+): ResultProducerDraft {
   return readEquationStageResultCarrier(runGuardedEquationSolveInternal(
     request,
     depth,

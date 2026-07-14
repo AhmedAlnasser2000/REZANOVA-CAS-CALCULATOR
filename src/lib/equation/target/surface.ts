@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayOutcome, PeriodicFamilyInfo, SolveDomainConstraint } from '../../../types/calculator';
+import type { ResultProducerDraft, PeriodicFamilyInfo, SolveDomainConstraint } from '../../../types/calculator';
 import {
   analyzeVariablesFromLatex,
   type VariableAnalysis,
@@ -196,21 +196,21 @@ function rewritePeriodicFamilyTarget(
   };
 }
 
-function withoutCanonicalMath(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
+function withoutCanonicalMath(outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>) {
   if (
     outcome.kind !== 'success'
-    || (!outcome.canonicalMath && !outcome.canonicalResult)
+    || (!outcome.primaryMath && !outcome.canonicalResult)
   ) {
     return outcome;
   }
 
   const rest = Object.assign({}, outcome);
-  delete rest.canonicalMath;
+  delete rest.primaryMath;
   delete rest.canonicalResult;
   return rest;
 }
 
-export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: string): DisplayOutcome {
+export function rewriteEquationOutcomeTarget(outcome: ResultProducerDraft, target: string): ResultProducerDraft {
   if (target === 'x') {
     return outcome;
   }
@@ -245,10 +245,10 @@ export function rewriteEquationOutcomeTarget(outcome: DisplayOutcome, target: st
       : outcome.transformSummaryLatex,
   }));
 
-  return rewritten as DisplayOutcome;
+  return rewritten as ResultProducerDraft;
 }
 
-export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target: string): DisplayOutcome {
+export function formatNamedEquationOutcomeTarget(outcome: ResultProducerDraft, target: string): ResultProducerDraft {
   const targetLatex = equationTargetLatex(target);
   if (targetLatex === target) {
     return outcome;
@@ -276,7 +276,7 @@ export function formatNamedEquationOutcomeTarget(outcome: DisplayOutcome, target
     transformSummaryLatex: outcome.transformSummaryLatex
       ? replaceLatexSymbolToken(outcome.transformSummaryLatex, target, targetLatex)
       : outcome.transformSummaryLatex,
-  })) as DisplayOutcome;
+  })) as ResultProducerDraft;
 }
 
 export function retargetDomainConstraintsToX(

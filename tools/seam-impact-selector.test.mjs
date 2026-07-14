@@ -110,7 +110,7 @@ describe('seam impact selector', () => {
 
   it('selects canonical result contracts for the neutral document district', () => {
     const plan = buildExplicitPathPlan([
-      'src/lib/result-contract/projection.ts',
+      'src/lib/result-contract/runtime-outcome.ts',
       'src/types/calculator/canonical-result-types.ts',
     ]);
 

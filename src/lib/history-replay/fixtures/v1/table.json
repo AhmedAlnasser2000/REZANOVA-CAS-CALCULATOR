@@ -49,7 +49,7 @@
           "actions": 0,
           "tableRows": 5
         },
-        "normalizedLatex": "exactLatex=f(x)=x^2\ncanonicalMath.canonicalLatex=f(x)=x^2\ntableResponse.rows[0].x=-2\ntableResponse.rows[0].primary=4\ntableResponse.rows[1].x=-1\ntableResponse.rows[1].primary=1\ntableResponse.rows[2].x=0\ntableResponse.rows[2].primary=0\ntableResponse.rows[3].x=1\ntableResponse.rows[3].primary=1\ntableResponse.rows[4].x=2\ntableResponse.rows[4].primary=4"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=f(x)=x^2\ntableResponse.rows[0].x=-2\ntableResponse.rows[0].primary=4\ntableResponse.rows[1].x=-1\ntableResponse.rows[1].primary=1\ntableResponse.rows[2].x=0\ntableResponse.rows[2].primary=0\ntableResponse.rows[3].x=1\ntableResponse.rows[3].primary=1\ntableResponse.rows[4].x=2\ntableResponse.rows[4].primary=4"
       }
     },
     {
@@ -98,7 +98,7 @@
           "actions": 0,
           "tableRows": 3
         },
-        "normalizedLatex": "exactLatex=f(x)=x^2,\\;g(x)=x+1\ncanonicalMath.canonicalLatex=f(x)=x^2,\\;g(x)=x+1\ntableResponse.rows[0].x=0\ntableResponse.rows[0].primary=0\ntableResponse.rows[0].secondary=1\ntableResponse.rows[1].x=1\ntableResponse.rows[1].primary=1\ntableResponse.rows[1].secondary=2\ntableResponse.rows[2].x=2\ntableResponse.rows[2].primary=4\ntableResponse.rows[2].secondary=3"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=f(x)=x^2,\\;g(x)=x+1\ntableResponse.rows[0].x=0\ntableResponse.rows[0].primary=0\ntableResponse.rows[0].secondary=1\ntableResponse.rows[1].x=1\ntableResponse.rows[1].primary=1\ntableResponse.rows[1].secondary=2\ntableResponse.rows[2].x=2\ntableResponse.rows[2].primary=4\ntableResponse.rows[2].secondary=3"
       }
     },
     {
@@ -147,7 +147,7 @@
           "actions": 0,
           "tableRows": 3
         },
-        "normalizedLatex": "exactLatex=f(x)=\\sqrt{x}\ncanonicalMath.canonicalLatex=f(x)=\\sqrt{x}\ndetailSections[0].lineParts[0][0].latex=x\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=undefined\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=0\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=f(x)=\\sqrt{x}\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=undefined\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=0\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
       }
     },
     {
@@ -196,7 +196,7 @@
           "actions": 0,
           "tableRows": 3
         },
-        "normalizedLatex": "exactLatex=f(x)=\\frac{1}{x}\ncanonicalMath.canonicalLatex=f(x)=\\frac{1}{x}\ndetailSections[0].lineParts[0][0].latex=x\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=-1\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=undefined\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=f(x)=\\frac{1}{x}\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x\ntableResponse.rows[0].x=-1\ntableResponse.rows[0].primary=-1\ntableResponse.rows[1].x=0\ntableResponse.rows[1].primary=undefined\ntableResponse.rows[2].x=1\ntableResponse.rows[2].primary=1"
       }
     },
     {
@@ -245,7 +245,7 @@
           "actions": 0,
           "tableRows": 3
         },
-        "normalizedLatex": "exactLatex=f(x)=\\sin(x)\ncanonicalMath.canonicalLatex=f(x)=\\sin(x)\ntableResponse.rows[0].x=0\ntableResponse.rows[0].primary=0\ntableResponse.rows[1].x=1\ntableResponse.rows[1].primary=0.841471\ntableResponse.rows[2].x=2\ntableResponse.rows[2].primary=0.909297"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=f(x)=\\sin(x)\ntableResponse.rows[0].x=0\ntableResponse.rows[0].primary=0\ntableResponse.rows[1].x=1\ntableResponse.rows[1].primary=0.841471\ntableResponse.rows[2].x=2\ntableResponse.rows[2].primary=0.909297"
       }
     }
   ]

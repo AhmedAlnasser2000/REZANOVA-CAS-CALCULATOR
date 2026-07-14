@@ -1,5 +1,5 @@
 import { ComputeEngine } from '@cortex-js/compute-engine';
-import type { DisplayDetailSection, DisplayMathPayloadV1 } from '../../../types/calculator';
+import type { DisplayDetailSection, CanonicalMathValueV1 } from '../../../types/calculator';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import {
   buildParameterizedDetailSections,
@@ -32,7 +32,7 @@ export type ParameterizedLinearSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
 };
@@ -512,7 +512,7 @@ export function solveParameterizedLinearEquation(
     target,
     parameterNames,
     exactLatex,
-    ...(renderedRoots.canonicalMath ? { canonicalMath: renderedRoots.canonicalMath } : {}),
+    ...(renderedRoots.primaryMath ? { primaryMath: renderedRoots.primaryMath } : {}),
     exactSupplementLatex,
     detailSections,
   };

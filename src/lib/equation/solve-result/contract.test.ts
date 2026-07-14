@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import { attachEquationAnalysisEvidence } from '../analysis-evidence';
-import { projectEquationDisplayOutcomeToSolveResult } from './compatibility';
+import { buildEquationSolveResultFromProducerDraft } from './producer-adapter';
+import { createEquationResultOutcome } from './producer';
 import { validateEquationSolveResultContract } from './validation';
 
 describe('Equation solve result contract', () => {
   it('carries solved candidate, branch, badge, diagnostic, and analysis evidence', () => {
-    const outcome = attachEquationAnalysisEvidence<DisplayOutcome>({
+    const outcome = attachEquationAnalysisEvidence<ResultProducerDraft>(createEquationResultOutcome({
       kind: 'success',
       title: 'Symbolic',
       exactLatex: 'x\\in\\{1,2\\}',
@@ -29,7 +30,7 @@ describe('Equation solve result contract', () => {
       },
       numericMethod: 'validated fixture',
       runtimeAdvisories: { stopReason: { kind: 'unsupported-family', source: 'stage' } },
-    }, [{
+    }), [{
       id: 'route:symbolic-exact:x',
       target: 'x',
       sourceRoute: 'symbolic-exact',
@@ -39,7 +40,7 @@ describe('Equation solve result contract', () => {
       interval: undefined,
     }]);
 
-    const projected = projectEquationDisplayOutcomeToSolveResult(outcome, {
+    const projected = buildEquationSolveResultFromProducerDraft(outcome, {
       candidateValidation: [
         { kind: 'accepted', value: 1, residual: 0 },
         { kind: 'accepted', value: 2, residual: 0 },
@@ -71,26 +72,26 @@ describe('Equation solve result contract', () => {
     expect(validateEquationSolveResultContract(structuredClone(projected.result)).ok).toBe(true);
   });
 
-  it('records Display errors as honest compatibility controlled stops', () => {
-    const projected = projectEquationDisplayOutcomeToSolveResult({
+  it('records producer errors as honest controlled stops', () => {
+    const projected = buildEquationSolveResultFromProducerDraft(createEquationResultOutcome({
       kind: 'error',
       title: 'Equation',
       error: 'This family is outside the supported Equation routes.',
       warnings: [],
-    });
+    }));
 
     expect(projected.ok).toBe(true);
     if (!projected.ok) return;
     expect(projected.result.status).toBe('controlled-stop');
     expect(projected.result.stop).toEqual({
-      code: 'compatibility-display-error',
+      code: 'equation-producer-error',
       message: 'This family is outside the supported Equation routes.',
-      source: 'compatibility-boundary',
+      source: 'producer',
     });
   });
 
   it('rejects prompts and inconsistent mirrored evidence', () => {
-    const prompt = projectEquationDisplayOutcomeToSolveResult({
+    const prompt = buildEquationSolveResultFromProducerDraft({
       kind: 'prompt',
       title: 'Equation',
       message: 'Open Equation.',
@@ -100,16 +101,16 @@ describe('Equation solve result contract', () => {
     });
     expect(prompt).toMatchObject({
       ok: false,
-      failure: { reason: 'projection', projection: { reason: 'prompt-outcome' } },
+      failure: { reason: 'contract' },
     });
 
-    const solved = projectEquationDisplayOutcomeToSolveResult({
+    const solved = buildEquationSolveResultFromProducerDraft(createEquationResultOutcome({
       kind: 'success',
       title: 'Symbolic',
       exactLatex: 'x=1',
       warnings: [],
       solveBadges: ['Candidate Checked'],
-    });
+    }));
     expect(solved.ok).toBe(true);
     if (!solved.ok) return;
     const mismatched = structuredClone(solved.result);
@@ -121,12 +122,12 @@ describe('Equation solve result contract', () => {
   });
 
   it('rejects malformed, cyclic, oversized, and status-inconsistent carriers', () => {
-    const projected = projectEquationDisplayOutcomeToSolveResult({
+    const projected = buildEquationSolveResultFromProducerDraft(createEquationResultOutcome({
       kind: 'error',
       title: 'Equation',
       error: 'Controlled stop.',
       warnings: [],
-    });
+    }));
     expect(projected.ok).toBe(true);
     if (!projected.ok) return;
 

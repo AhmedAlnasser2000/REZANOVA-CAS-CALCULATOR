@@ -1,19 +1,19 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
-type VectorSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type VectorErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type VectorSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type VectorErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 type VectorResultProducerInput =
   | Omit<VectorSuccessOutcome, 'canonicalResult'>
   | Omit<VectorErrorOutcome, 'canonicalResult'>;
 
-type VectorResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+type VectorResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 export function createVectorResultOutcome(
   input: Omit<VectorSuccessOutcome, 'canonicalResult'>,
@@ -31,7 +31,7 @@ export function createVectorResultOutcome(
   input: VectorResultProducerInput,
   options: CanonicalResultProducerOptionsV1 = {},
 ): VectorResultProducerOutcome {
-  if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
+  if (input.primaryMath && input.primaryMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Vector canonical math must match the producer exact LaTeX.');
   }
   const success = input.kind === 'success' ? input : undefined;
@@ -40,7 +40,7 @@ export function createVectorResultOutcome(
     title: input.title,
     ...(input.kind === 'error' ? { error: input.error } : {}),
     ...(input.exactLatex
-      ? { primaryMath: canonicalMathValue(input.exactLatex, input.canonicalMath?.mathJson) }
+      ? { primaryMath: canonicalMathValue(input.exactLatex, input.primaryMath?.mathJson) }
       : {}),
     ...(success?.answerRows ? { answerRows: success.answerRows } : {}),
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
@@ -89,7 +89,7 @@ export function createVectorResultOutcome(
     },
   }, options);
 
-  return deriveDisplayOutcomeFromCanonicalResult<VectorResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<VectorResultProducerOutcome>(
     canonicalResult,
     input,
   );

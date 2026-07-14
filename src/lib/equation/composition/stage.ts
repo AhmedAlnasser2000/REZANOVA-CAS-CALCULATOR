@@ -58,7 +58,7 @@ import { matchTrigBranches } from './trig-carrier';
 import { solveTrigPeriodicFamily } from './periodic-resolution';
 import type {
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   DisplaySolveSummary,
   EquationExecutionBudget,
   GuardedSolveRequest,
@@ -104,10 +104,10 @@ function buildCompositionBranchSet(
 }
 
 function appendSolveMetadata(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   badges: SolveBadge[],
   summary: DisplaySolveSummary,
-): DisplayOutcome {
+): ResultProducerDraft {
   if (outcome.kind === 'prompt') {
     return outcome;
   }
@@ -156,7 +156,7 @@ function recurseComposition(
   extraSupplementLatex: string[] = [],
   extraDetailSections: DisplayDetailSection[] = [],
   periodicFamilyExtras?: Partial<PeriodicFamilyInfo>,
-): DisplayOutcome | null {
+): ResultProducerDraft | null {
   const depthPolicy = resolveCompositionRecursionDepth(
     request.compositionInversionDepth ?? 0,
     executionBudget,
@@ -385,7 +385,7 @@ function compositionSolve(
   trail: Set<string>,
   executionBudget: EquationExecutionBudget,
   runGuardedEquationSolve: GuardedSolveRunner,
-): DisplayOutcome | null {
+): ResultProducerDraft | null {
   const nestedContextBadges = (request.compositionInversionDepth ?? 0) > 0
     ? ['Nested Recursion'] as SolveBadge[]
     : [];

@@ -1,49 +1,42 @@
-import type { DisplayOutcome, TableResponse } from '../../types/calculator';
-import { resolveCanonicalResultForStorage } from './storage';
+import type {
+  CanonicalResultDocumentV1,
+  ResultProducerDraft,
+} from '../../types/calculator';
+import { validateCanonicalResultDocument } from './validation';
 
-function detailSectionsCarryMath(
-  sections: Extract<DisplayOutcome, { kind: 'error' }>['detailSections'],
-) {
-  return sections?.some((section) => section.lines.some((_, lineIndex) =>
-    section.lineParts?.[lineIndex]?.some((part) => part.kind === 'math')
-    || (section.lineKinds?.[lineIndex] ?? section.lineKind) === 'math')) ?? false;
-}
-
-export function isMathBearingControlledError(
-  outcome: Extract<DisplayOutcome, { kind: 'error' }>,
-) {
-  return Boolean(
-    outcome.canonicalResult
-    || outcome.exactLatex
-    || outcome.canonicalMath
-    || outcome.branchReadback
-    || outcome.periodicFamily
-    || outcome.exactSupplementLatex?.length
-    || outcome.transformSummaryLatex
-    || outcome.resolvedInputLatex
-    || outcome.solveSummaryParts?.some((line) => line.some((part) => part.kind === 'math'))
-    || detailSectionsCarryMath(outcome.detailSections),
-  );
-}
-
-export function requireCanonicalResultAuthority(
-  outcome: DisplayOutcome,
+export function requireCanonicalResultAuthority<
+  Outcome extends Exclude<ResultProducerDraft, { kind: 'prompt' }>,
+>(
+  outcome: Outcome,
   owner: string,
-  options: { tableResponse?: TableResponse } = {},
-): DisplayOutcome {
-  if (
-    outcome.kind === 'prompt'
-    || (outcome.kind === 'error' && !isMathBearingControlledError(outcome))
-  ) {
-    return outcome;
+): Outcome & { canonicalResult: CanonicalResultDocumentV1 };
+export function requireCanonicalResultAuthority(
+  outcome: Extract<ResultProducerDraft, { kind: 'prompt' }>,
+  owner: string,
+): Extract<ResultProducerDraft, { kind: 'prompt' }>;
+export function requireCanonicalResultAuthority(
+  outcome: ResultProducerDraft,
+  owner: string,
+): ResultProducerDraft;
+export function requireCanonicalResultAuthority(
+  outcome: ResultProducerDraft,
+  owner: string,
+): ResultProducerDraft {
+  if (outcome.kind === 'prompt') return outcome;
+  if (!outcome.canonicalResult) {
+    throw new Error(`${owner} ${outcome.kind} is missing native canonical result authority.`);
   }
-  const resolution = resolveCanonicalResultForStorage(outcome, options);
-  if (resolution.ok && resolution.source === 'native') {
-    return outcome;
+  const validation = validateCanonicalResultDocument(outcome.canonicalResult);
+  if (!validation.ok) {
+    throw new Error(
+      `${owner} ${outcome.kind} has invalid canonical result authority: ${validation.failure.message}`,
+    );
   }
-  const reason = resolution.ok
-    ? `resolved through ${resolution.source}`
-    : resolution.message;
-  const resultKind = outcome.kind === 'success' ? 'success' : 'math-bearing error';
-  throw new Error(`${owner} ${resultKind} is missing native canonical authority: ${reason}`);
+  if (validation.validated.value.outcomeKind !== outcome.kind) {
+    throw new Error(`${owner} canonical result kind does not match its producer draft.`);
+  }
+  return {
+    ...outcome,
+    canonicalResult: validation.validated.value,
+  } as ResultProducerDraft;
 }

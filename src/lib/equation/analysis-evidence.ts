@@ -1,4 +1,4 @@
-import type { AngleUnit, ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, NumericSolveInterval } from '../../types/calculator';
+import type { AngleUnit, ComplexSolveRegion, ResultProducerDraft, EquationDomainIntent, NumericSolveInterval } from '../../types/calculator';
 import { solveSummaryPlainText } from '../display/result-detail-lines';
 import { equationToZeroFormLatex, evaluateLatexAtTarget } from './domain-guards';
 import {
@@ -75,11 +75,11 @@ function uniqueEvidence(entries: readonly EquationAnalysisEvidence[]) {
   return unique;
 }
 
-export function getEquationAnalysisEvidence(outcome: DisplayOutcome | null | undefined) {
+export function getEquationAnalysisEvidence(outcome: ResultProducerDraft | null | undefined) {
   return [...(((outcome as EquationEvidenceCarrier | null | undefined)?.[EQUATION_ANALYSIS_EVIDENCE]) ?? [])];
 }
 
-export function attachEquationAnalysisEvidence<T extends DisplayOutcome>(
+export function attachEquationAnalysisEvidence<T extends ResultProducerDraft>(
   outcome: T,
   evidence: readonly EquationAnalysisEvidence[],
 ): T {
@@ -100,7 +100,7 @@ export function attachEquationAnalysisEvidence<T extends DisplayOutcome>(
 }
 
 function sourceRouteFor(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   numericInterval?: NumericSolveInterval;
   complexRegion?: ComplexSolveRegion;
   equationDomainIntent: EquationDomainIntent;
@@ -129,7 +129,7 @@ function sourceRouteFor(input: {
 }
 
 export function buildEquationRouteEvidence(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   target?: string;
   numericInterval?: NumericSolveInterval;
   complexRegion?: ComplexSolveRegion;
@@ -502,17 +502,17 @@ export function buildEquationIntervalValidityEvidence(input: {
   ];
 }
 
-function outcomeDetailSection(outcome: DisplayOutcome, title: string) {
+function outcomeDetailSection(outcome: ResultProducerDraft, title: string) {
   return outcome.kind !== 'prompt'
     ? outcome.detailSections?.find((section) => section.title === title)
     : undefined;
 }
 
-function outcomeDetailLines(outcome: DisplayOutcome, title: string) {
+function outcomeDetailLines(outcome: ResultProducerDraft, title: string) {
   return outcomeDetailSection(outcome, title)?.lines ?? [];
 }
 
-function hasSturmCertifiedRoots(outcome: DisplayOutcome) {
+function hasSturmCertifiedRoots(outcome: ResultProducerDraft) {
   if (outcome.kind === 'prompt') {
     return false;
   }
@@ -524,7 +524,7 @@ function hasSturmCertifiedRoots(outcome: DisplayOutcome) {
 
 function numericRootClassification(input: {
   sourceRoute: string;
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   numericInterval?: NumericSolveInterval;
 }) {
   if (hasSturmCertifiedRoots(input.outcome)) {
@@ -574,7 +574,7 @@ function rootValueEvidence(input: {
 
 const APPROX_REAL_BRANCH_PATTERN = /^-?(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?$/iu;
 
-function approximateRealBranchValues(outcome: DisplayOutcome) {
+function approximateRealBranchValues(outcome: ResultProducerDraft) {
   if (
     outcome.kind !== 'success'
     || outcome.answerDomain === 'complex'
@@ -595,7 +595,7 @@ function approximateRealBranchValues(outcome: DisplayOutcome) {
 const EXTRANEOUS_APPROX_PATTERN = /^Candidate approximately\s+(-?(?:\d+(?:\.\d+)?|\.\d+)(?:e[+-]?\d+)?)\s+rejected/iu;
 
 function extraneousEvidenceFromOutcome(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   target: string;
   sourceRoute: string;
   interval?: NumericSolveInterval;
@@ -647,7 +647,7 @@ function extraneousEvidenceFromOutcome(input: {
 }
 
 function sturmCertificationEvidence(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   target: string;
   sourceRoute: string;
 }): EquationAnalysisEvidence[] {
@@ -669,7 +669,7 @@ function sturmCertificationEvidence(input: {
 }
 
 function complexBranchRootEvidence(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   target: string;
   sourceRoute: string;
 }): EquationAnalysisEvidence[] {
@@ -700,7 +700,7 @@ function complexBranchRootEvidence(input: {
 }
 
 function intervalScopeEvidence(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   target: string;
   sourceRoute: string;
   interval?: NumericSolveInterval;
@@ -721,7 +721,7 @@ function intervalScopeEvidence(input: {
 }
 
 export function buildEquationCertifiedFeatureEvidence(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   target: string;
   sourceRoute: string;
   numericInterval?: NumericSolveInterval;

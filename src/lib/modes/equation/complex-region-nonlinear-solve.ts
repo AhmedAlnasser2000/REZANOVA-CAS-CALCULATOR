@@ -34,7 +34,7 @@ import type {
   ComplexExactForm,
   ComplexSolveRegion,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import { NUMERIC_FALLBACK_ELIGIBLE_ERRORS } from './numeric-polynomial-extraction';
@@ -377,7 +377,7 @@ function diagnosticsSections(input: {
 function unsupportedRegionOutcome(input: {
   error: string;
   detailSections: DisplayDetailSection[];
-}): DisplayOutcome {
+}): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -390,7 +390,7 @@ function unsupportedRegionOutcome(input: {
   });
 }
 
-function needsComplexRegionOutcome(input: { target: string }): DisplayOutcome {
+function needsComplexRegionOutcome(input: { target: string }): ResultProducerDraft {
   return unsupportedRegionOutcome({
     error: 'This complex equation needs Complex Region bounds before a bounded numeric search can run.',
     detailSections: [
@@ -421,8 +421,8 @@ export function tryComplexRegionNonlinearSolveFallback(input: {
   angleUnit: AngleUnit;
   complexExactForm: ComplexExactForm;
   complexRegion?: ComplexSolveRegion;
-  sharedOutcome: DisplayOutcome;
-}): DisplayOutcome | undefined {
+  sharedOutcome: ResultProducerDraft;
+}): ResultProducerDraft | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
     || !NUMERIC_FALLBACK_ELIGIBLE_ERRORS.has(input.sharedOutcome.error)

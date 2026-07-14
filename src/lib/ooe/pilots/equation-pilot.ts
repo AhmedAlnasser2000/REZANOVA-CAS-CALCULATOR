@@ -1,4 +1,5 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../../equation/equation-solve-result';
 import {
   listSharedEquationSolveStageOrder,
   runSharedEquationSolveWithTraceAsync,
@@ -11,7 +12,7 @@ import {
   type GuardedEquationStageReplayTrace,
 } from '../../equation/guarded-solve';
 import { type OoeTraceEvent } from '../bridge-schema/ooe-bridge';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -88,7 +89,7 @@ export type EquationRuntimeHostExecution =
     };
 
 export type EquationOoePilotSolveResult = OoeRuntimeEnvelope<
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationOoePilotMetadata
 >;
 
@@ -254,18 +255,18 @@ function buildEquationOoeTraceEvents(
   ];
 }
 
-function detailSectionTitles(outcome: DisplayOutcome) {
-  return 'detailSections' in outcome && outcome.detailSections
-    ? outcome.detailSections.map((section) => section.title)
-    : [];
+function detailSectionTitles(outcome: CanonicalRuntimeOutcome) {
+  return outcome.kind === 'prompt'
+    ? []
+    : outcome.canonicalResult.details?.map((section) => section.title) ?? [];
 }
 
-function generatedEquationDetails(outcome: DisplayOutcome) {
-  if (!('detailSections' in outcome) || !outcome.detailSections) {
+function generatedEquationDetails(outcome: CanonicalRuntimeOutcome) {
+  if (outcome.kind === 'prompt' || !outcome.canonicalResult.details) {
     return [];
   }
 
-  return outcome.detailSections.flatMap((section) => {
+  return outcome.canonicalResult.details.flatMap((section) => {
     const title = section.title.toLowerCase();
     if (
       !title.includes('isolation')
@@ -275,8 +276,12 @@ function generatedEquationDetails(outcome: DisplayOutcome) {
       return [];
     }
 
-    return section.lines.filter((line) =>
-      /generated equation|isolated form|formula form|formula branches|isolation facts/i.test(line));
+    return section.lines
+      .map((line) => line.map((part) => part.kind === 'text'
+        ? part.text
+        : part.math.canonicalLatex).join(''))
+      .filter((line) =>
+        /generated equation|isolated form|formula form|formula branches|isolation facts/i.test(line));
   });
 }
 
@@ -287,7 +292,7 @@ function explicitImaginaryInputFromSnapshot(snapshot: {
 }
 
 export function buildEquationProvenance(input: {
-  payload: DisplayOutcome;
+  payload: CanonicalRuntimeOutcome;
   metadata: EquationOoePilotMetadata;
   routeSnapshot: unknown;
 }) {
@@ -309,6 +314,8 @@ export function buildEquationProvenance(input: {
   const cancellation = input.metadata.guardedTrace?.cancellation;
   const runtimeHostExecution = input.metadata.runtimeHostExecution;
   const explicitImaginaryInput = explicitImaginaryInputFromSnapshot(snapshot);
+  const document = input.payload.kind === 'prompt' ? undefined : input.payload.canonicalResult;
+  const resultMetadata = document?.metadata;
 
   return {
     depth: 'rich' as const,
@@ -321,7 +328,7 @@ export function buildEquationProvenance(input: {
       latexLength: snapshot.request?.equationLatex?.length,
       hasNumericInterval: Boolean(snapshot.request?.numericInterval),
     },
-    outputSummary: summarizeDisplayOutcome(input.payload),
+    outputSummary: summarizeCanonicalRuntimeOutcome(input.payload),
     runtimeHost: input.metadata.hostId,
     runtimeShell: input.metadata.runtimeShell,
     runtimeHostExecution,
@@ -330,19 +337,19 @@ export function buildEquationProvenance(input: {
       answerMode: snapshot.request?.equationAnswerMode ?? 'exact',
       domainIntent: snapshot.request?.equationDomainIntent ?? 'real',
       complexExactForm: snapshot.request?.complexExactForm ?? 'rectangular',
-      answerDomain: input.payload.kind === 'prompt' ? undefined : input.payload.answerDomain,
-      solutionKind: input.payload.kind === 'prompt' ? undefined : input.payload.solutionKind,
-      inequalityRouteEvidence: input.payload.kind !== 'prompt' && input.payload.solutionKind === 'inequality-solution-set'
+      answerDomain: resultMetadata?.answerDomain,
+      solutionKind: resultMetadata?.solutionKind,
+      inequalityRouteEvidence: resultMetadata?.solutionKind === 'inequality-solution-set'
         ? {
             relation: snapshot.request?.equationLatex?.match(/\\(?:le|leq|ge|geq)(?![A-Za-z])|[<>≤≥]/u)?.[0],
             detailSectionTitles: detailSectionTitles(input.payload),
-            exactLatexLength: input.payload.exactLatex?.length,
+            exactLatexLength: document?.primaryMath?.canonicalLatex.length,
           }
         : undefined,
-      complexRouteEvidence: input.payload.kind !== 'prompt' && input.payload.answerDomain === 'complex'
+      complexRouteEvidence: resultMetadata?.answerDomain === 'complex'
         ? {
             detailSectionTitles: detailSectionTitles(input.payload),
-            exactLatexLength: input.payload.exactLatex?.length,
+            exactLatexLength: document?.primaryMath?.canonicalLatex.length,
             explicitImaginaryInput,
           }
         : undefined,
@@ -382,10 +389,10 @@ export function buildEquationProvenance(input: {
           }
         : undefined,
       winningStageId: cancellation ? null : winningAttempt?.stageId ?? null,
-      stopReason: input.payload.kind === 'error' ? input.payload.error : null,
+      stopReason: input.payload.kind === 'error' ? document?.error ?? null : null,
       detailSectionTitles: detailSectionTitles(input.payload),
       generatedRewriteOrIsolationDetails: generatedEquationDetails(input.payload),
-      outputHygiene: summarizeDisplayOutcome(input.payload).unsafeReadbackMarkers?.length
+      outputHygiene: summarizeCanonicalRuntimeOutcome(input.payload).unsafeReadbackMarkers?.length
         ? 'unsafe-markers-detected'
         : 'display-safe',
     },
@@ -489,7 +496,7 @@ export async function runSharedEquationSolveWithOoePilot(
         },
       });
       guardedTrace = traced.trace;
-      return traced.outcome;
+      return finalizeEquationCanonicalRuntimeOutcome(traced.outcome);
     },
     buildMetadata: ({ status, jobContext, controlTraceEvents }) => buildEquationOoePilotMetadata(
       status,

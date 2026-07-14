@@ -6,8 +6,7 @@ import type {
 } from '../../types/calculator';
 import { runGeometryCoreDraft } from './core';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import { geometryRequestToScreen } from './parser';
@@ -70,17 +69,6 @@ export function buildCanonicalGeometryModeRunPayload(
   const payload = buildGeometryModeRunPayload(request);
   return {
     ...payload,
-    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload.outcome, 'Geometry'),
-  };
-}
-
-export function projectCanonicalGeometryModeRunPayload(
-  payload: CanonicalGeometryModeRunPayload,
-): GeometryModeRunPayload {
-  return {
-    ...payload,
-    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(payload.outcome, {
-      includeCanonicalMath: false,
-    }),
+    outcome: finalizeCanonicalRuntimeOutcomeFromProducer(payload.outcome, 'Geometry'),
   };
 }

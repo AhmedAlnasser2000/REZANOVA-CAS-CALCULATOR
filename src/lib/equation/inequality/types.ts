@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
 } from '../../../types/calculator';
 import type { InequalitySet, PeriodicInequalitySet } from '../../algebra/inequality-core';
 import type { EquationPolynomialRelation } from '../equation-polynomial-domain';
@@ -72,7 +72,7 @@ export type NumericPeriodicSet = {
   intervals: readonly NumericPeriodicInterval[];
 };
 
-export type InequalityDisplayOutcome = DisplayOutcome;
+export type InequalityDisplayOutcome = ResultProducerDraft;
 
 export const ROOT_EPSILON = 1e-9;
 export const DEFAULT_MAX_REDUCTION_DEPTH = 4;

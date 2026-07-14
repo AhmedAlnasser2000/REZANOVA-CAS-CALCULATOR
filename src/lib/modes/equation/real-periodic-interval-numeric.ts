@@ -1,7 +1,7 @@
 import type {
   AngleUnit,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   NumericSolveInterval,
 } from '../../../types/calculator';
@@ -18,7 +18,7 @@ const UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR =
   'This equation is outside the supported exact symbolic solve families.';
 const NUMERIC_METHOD_PERIODIC_INTERVAL = 'Real periodic interval numeric solve';
 
-function isPeriodicFallbackMiss(outcome: DisplayOutcome) {
+function isPeriodicFallbackMiss(outcome: ResultProducerDraft) {
   return outcome.kind === 'error'
     && (
       outcome.error === UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR
@@ -43,8 +43,8 @@ export function tryRealPeriodicIntervalNumericFallback(input: {
   angleUnit: AngleUnit;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
-  sharedOutcome: DisplayOutcome;
-}): DisplayOutcome | undefined {
+  sharedOutcome: ResultProducerDraft;
+}): ResultProducerDraft | undefined {
   if (
     !isPeriodicFallbackMiss(input.sharedOutcome)
     || input.equationDomainIntent !== 'real'

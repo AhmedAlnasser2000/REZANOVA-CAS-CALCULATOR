@@ -1,5 +1,5 @@
 import { runMatrixMode, type RunMatrixModeRequest } from '../matrix';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import type {
   LinearAlgebraWorkerInboundMessage,
   LinearAlgebraWorkerOutboundMessage,
@@ -30,7 +30,7 @@ workerSelf.addEventListener('message', (event) => {
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: projectDisplayOutcomeToCanonicalRuntimeOutcome(
+      payload: finalizeCanonicalRuntimeOutcomeFromProducer(
         runMatrixMode(event.data.request),
         'Matrix worker',
       ),

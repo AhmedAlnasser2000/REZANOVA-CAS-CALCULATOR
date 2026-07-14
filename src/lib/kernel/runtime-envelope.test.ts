@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
 import { attachRuntimeEnvelope, buildRuntimeOutcome } from './runtime-envelope';
 
 describe('runtime-envelope', () => {
@@ -68,7 +68,7 @@ describe('runtime-envelope', () => {
   });
 
   it('merges planner badges and runtime advisories for equation-style callers', () => {
-    const outcome: DisplayOutcome = {
+    const outcome: ResultProducerDraft = {
       kind: 'error',
       title: 'Solve',
       error: 'No real solution.',

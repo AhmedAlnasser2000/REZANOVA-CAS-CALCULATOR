@@ -18,13 +18,12 @@ import {
   vectorOwnedMathJsonLeaves,
 } from './vector-math-values';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import type {
   AngleUnit,
-  DisplayOutcome,
+  ResultProducerDraft,
   ExactScalarWire,
   VectorOperation,
 } from '../../types/calculator';
@@ -110,7 +109,7 @@ function vectorUserFacingApproxText(approxText?: string) {
   return approxText && isNumericApproxText(approxText) ? approxText : undefined;
 }
 
-function runVectorModeOutcome(request: RunVectorModeRequest): DisplayOutcome {
+function runVectorModeOutcome(request: RunVectorModeRequest): ResultProducerDraft {
   const {
     operation,
     vectorA,
@@ -163,7 +162,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest): DisplayOutcome {
   };
 }
 
-export function runVectorMode(request: RunVectorModeRequest): DisplayOutcome {
+export function runVectorMode(request: RunVectorModeRequest): ResultProducerDraft {
   const outcome = runVectorModeOutcome(request);
   return requireCanonicalResultAuthority(
     outcome.kind === 'prompt'
@@ -224,7 +223,7 @@ export async function runVectorModeWithOoePilot(
         control,
         {
           createWorker: options?.createWorker,
-          fallback: () => projectDisplayOutcomeToCanonicalRuntimeOutcome(
+          fallback: () => finalizeCanonicalRuntimeOutcomeFromProducer(
             runVectorMode(request),
             'Vector fallback',
           ),
@@ -236,14 +235,10 @@ export async function runVectorModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
-    (payload) => projectCanonicalRuntimeOutcomeToDisplayOutcome(payload, {
-      includeCanonicalMath: false,
-    }),
+    (payload) => payload,
   );
   return {
     ...result,
-    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(result.payload, {
-      includeCanonicalMath: false,
-    }),
+    payload: result.payload,
   };
 }

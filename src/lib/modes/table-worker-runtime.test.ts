@@ -124,7 +124,7 @@ describe('Table worker runtime shell', () => {
       createWorker: createWorker('complete'),
     });
 
-    expect(result.payload).toEqual(runTableMode(request));
+    expect(result.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)));
     expect(result.ooe.tableHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'table-worker-runtime',
@@ -141,7 +141,7 @@ describe('Table worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(result.payload).toEqual(runTableMode(request));
+    expect(result.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)));
     expect(result.ooe.tableHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'table-runtime',
@@ -156,7 +156,7 @@ describe('Table worker runtime shell', () => {
       createWorker: createWorker('fail'),
     });
 
-    expect(result.payload).toEqual(runTableMode(request));
+    expect(result.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)));
     expect(result.ooe.tableHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'table-runtime',
@@ -173,7 +173,7 @@ describe('Table worker runtime shell', () => {
       createWorker: createWorker('invalid'),
     });
 
-    expect(result.payload).toEqual(runTableMode(request));
+    expect(result.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)));
     expect(result.ooe.tableHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'table-runtime',

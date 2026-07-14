@@ -1,7 +1,7 @@
 import type {
   BinomialState,
   CorrelationState,
-  DisplayOutcome,
+  ResultProducerDraft,
   FrequencyTable,
   MeanInferenceState,
   NormalState,
@@ -27,7 +27,7 @@ type RunStatisticsModeRequest = {
   workingSource?: StatisticsWorkingSource;
 };
 
-export function runStatisticsMode(request: RunStatisticsModeRequest): DisplayOutcome {
+export function runStatisticsMode(request: RunStatisticsModeRequest): ResultProducerDraft {
   if (
     request.screen === 'home'
     || request.screen === 'probabilityHome'

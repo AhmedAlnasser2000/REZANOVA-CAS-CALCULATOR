@@ -17,7 +17,7 @@ import { solveParameterizedCompositionEquation } from '../../equation/parameteri
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type {
   AngleUnit,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   LegacyEquationAnswerMode,
   NumericSolveInterval,
@@ -41,14 +41,14 @@ function parameterizedOptionsFromTargetResolution(targetResolution: EquationSolv
   };
 }
 
-function isAbsoluteValueFormulaSharedStop(sharedOutcome: DisplayOutcome) {
+function isAbsoluteValueFormulaSharedStop(sharedOutcome: ResultProducerDraft) {
   return sharedOutcome.kind === 'error'
     && sharedOutcome.error.includes('absolute-value')
     && sharedOutcome.error.includes('outside the current exact bounded solve set');
 }
 
 function isSquarePowerFormulaFallbackCandidate(input: {
-  sharedOutcome: DisplayOutcome;
+  sharedOutcome: ResultProducerDraft;
   sharedResolvedLatex: string;
   targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
 }) {
@@ -72,7 +72,7 @@ function isSquarePowerFormulaFallbackCandidate(input: {
 }
 
 function isOddPowerFormulaFallbackCandidate(input: {
-  sharedOutcome: DisplayOutcome;
+  sharedOutcome: ResultProducerDraft;
   sharedResolvedLatex: string;
   targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
 }) {
@@ -96,7 +96,7 @@ function isOddPowerFormulaFallbackCandidate(input: {
 }
 
 function isEvenPowerFormulaFallbackCandidate(input: {
-  sharedOutcome: DisplayOutcome;
+  sharedOutcome: ResultProducerDraft;
   sharedResolvedLatex: string;
   targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
 }) {
@@ -167,7 +167,7 @@ function solveRealAlgebraicFormulaComposition(input: {
   plannerBadges?: PlannerBadge[];
   targetResolution: ReturnType<typeof resolveEquationSolveTarget>;
   angleUnit: AngleUnit;
-}): DisplayOutcome | undefined {
+}): ResultProducerDraft | undefined {
   const selectedTarget = input.targetResolution.selectedTarget;
   if (!selectedTarget) {
     return undefined;
@@ -205,7 +205,7 @@ function solveRealAlgebraicFormulaComposition(input: {
     return undefined;
   }
 
-  const outcome: DisplayOutcome = createEquationResultOutcome({
+  const outcome: ResultProducerDraft = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: composition.exactLatex,
@@ -236,7 +236,7 @@ export function tryRealAlgebraicFormulaPreSharedFallback(input: {
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
   angleUnit: AngleUnit;
-}): DisplayOutcome | undefined {
+}): ResultProducerDraft | undefined {
   if (
     input.answerMode !== 'exact'
     || input.equationDomainIntent !== 'real'
@@ -258,7 +258,7 @@ export function tryRealAlgebraicFormulaPreSharedFallback(input: {
 }
 
 export function tryRealAlgebraicFormulaSharedFallback(input: {
-  sharedOutcome: DisplayOutcome;
+  sharedOutcome: ResultProducerDraft;
   equationLatex: string;
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
@@ -267,7 +267,7 @@ export function tryRealAlgebraicFormulaSharedFallback(input: {
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
   angleUnit: AngleUnit;
-}): DisplayOutcome | undefined {
+}): ResultProducerDraft | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
     || input.answerMode !== 'exact'

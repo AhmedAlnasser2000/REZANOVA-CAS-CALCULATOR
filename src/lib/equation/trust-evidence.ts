@@ -1,4 +1,4 @@
-import type { DisplayOutcome, NumericSolveInterval } from '../../types/calculator';
+import type { ResultProducerDraft, NumericSolveInterval } from '../../types/calculator';
 import {
   numericIntervalEvidence,
   type EquationAnalysisEvidence,
@@ -13,7 +13,7 @@ function evidenceHasClassification(
 }
 
 function complexNumericPolynomialTrust(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   evidence: readonly EquationAnalysisEvidence[];
 }) {
   if (!evidenceHasClassification(input.evidence, 'complex-polynomial-root')) {
@@ -62,7 +62,7 @@ function trustEvidenceEntry(input: {
 }
 
 export function buildEquationTrustEvidence(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   target: string;
   sourceRoute: string;
   evidence: readonly EquationAnalysisEvidence[];

@@ -283,7 +283,7 @@ export function rootSetToCanonicalMath(
   return renderFiniteRootSet(finiteRootSetFromRootSet(rootSet), {
     preserveOrder: true,
     ...options,
-  }).canonicalMath;
+  }).primaryMath;
 }
 
 export function rootSetToBranchReadback(

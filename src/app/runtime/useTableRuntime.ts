@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   ModeId,
   StoredVariableValue,
   TableResponse,
@@ -21,9 +21,10 @@ import type {
   WorkspaceInstanceStateSlot,
 } from './workspace-instances';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 
 type CommitTableOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'table',
   context?: {
@@ -242,14 +243,12 @@ export function useTableRuntime({
       .catch((error: unknown) => {
         discardHistoryTicket?.(launchedHistoryTicket?.id);
         commitOutcome(
-          {
-            kind: 'error',
-            title: 'Table',
-            error: error instanceof Error
+          createCanonicalRuntimeError(
+            'Table',
+            error instanceof Error
               ? `Could not load the Table runtime: ${error.message}`
               : 'Could not load the Table runtime.',
-            warnings: [],
-          },
+          ),
           tablePrimaryLatex,
           'table',
         );

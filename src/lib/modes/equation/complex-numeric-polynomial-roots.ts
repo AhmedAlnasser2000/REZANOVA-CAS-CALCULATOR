@@ -27,7 +27,7 @@ import type {
   AngleUnit,
   ComplexExactForm,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
 } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import {
@@ -397,8 +397,8 @@ export function tryComplexNumericPolynomialFallback(input: {
   equationSolveTarget: string;
   angleUnit: AngleUnit;
   complexExactForm: ComplexExactForm;
-  sharedOutcome: DisplayOutcome;
-}): DisplayOutcome | undefined {
+  sharedOutcome: ResultProducerDraft;
+}): ResultProducerDraft | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
     || !NUMERIC_FALLBACK_ELIGIBLE_ERRORS.has(input.sharedOutcome.error)

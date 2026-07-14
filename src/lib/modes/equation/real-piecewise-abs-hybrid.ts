@@ -16,7 +16,7 @@ import type {
   AngleUnit,
   CandidateValidationResult,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   NumericSolveInterval,
   SolveDomainConstraint,
@@ -453,8 +453,8 @@ export function tryRealPiecewiseAbsHybridFallback(input: {
   angleUnit: AngleUnit;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
-  sharedOutcome: DisplayOutcome;
-}): DisplayOutcome | undefined {
+  sharedOutcome: ResultProducerDraft;
+}): ResultProducerDraft | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
     || input.equationDomainIntent !== 'real'

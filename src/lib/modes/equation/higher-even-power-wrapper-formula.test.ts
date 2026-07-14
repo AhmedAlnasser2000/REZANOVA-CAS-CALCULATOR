@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { runEquationMode } from '../equation';
@@ -36,7 +37,7 @@ describe('Equation mode higher even-power wrapper formulas', () => {
       expect(result.answerDomain).toBe('real');
       expect(result.exactLatex).not.toContain('PrincipalRoot');
       expect(result.detailSections?.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
-      expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+      expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     }
     expect(cubic.exactSupplementLatex).toContain('b\\ge0');
     expect(quartic.exactSupplementLatex).toContain('b\\ge0');
@@ -56,7 +57,7 @@ describe('Equation mode higher even-power wrapper formulas', () => {
     expect(zero.exactSupplementLatex ?? []).not.toContain('0\\ge0');
     expect(zero.detailSections?.some((section) => section.title === 'Even-Power Formula Cases')).toBe(true);
     expect(zero.detailSections?.some((section) => section.title === 'Even-Power Branch 1 - Substituted Real Cardano Values')).toBe(true);
-    const answer = buildDisplayBlocks(zero).find((block) => block.id === 'answer');
+    const answer = buildProducerDisplayBlocks(zero).find((block) => block.id === 'answer');
     expect(answer?.renderKind).toBe('caseMath');
     const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
     expect(groups).toHaveLength(0);
@@ -73,3 +74,7 @@ describe('Equation mode higher even-power wrapper formulas', () => {
     }
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

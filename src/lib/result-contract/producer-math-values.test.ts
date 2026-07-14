@@ -8,13 +8,13 @@ import { createTableResultOutcome } from '../modes/table-result-document';
 import { createVectorResultOutcome } from '../modes/vector-result-document';
 import { createStatisticsResultOutcome } from '../statistics/result-document';
 import { createTrigonometryResultOutcome } from '../trigonometry/result-document';
-import type { DisplayOutcome, TableResponse } from '../../types/calculator';
+import type { ResultProducerDraft, TableResponse } from '../../types/calculator';
 import {
   canonicalMathValueFromProof,
   declareProducerOwnedAnswerMathJson,
   proveAnswerMathJson,
 } from './proven-answer-mathjson';
-import { resolveCanonicalResultForStorage } from './storage';
+import { requireCanonicalResultAuthority } from './native-result';
 
 const proof = proveAnswerMathJson({
   canonicalLatex: 'x=1',
@@ -36,12 +36,11 @@ const success = {
 };
 
 function expectNativeProvenPrimary(
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>,
-  tableResponse?: TableResponse,
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>,
 ) {
   expect(outcome.canonicalResult?.primaryMath).toEqual(primaryMath);
-  expect(resolveCanonicalResultForStorage(outcome, { tableResponse }))
-    .toMatchObject({ ok: true, source: 'native' });
+  expect(requireCanonicalResultAuthority(outcome, 'Producer math-value test')
+    .canonicalResult).toBeDefined();
 }
 
 describe('workspace canonical producer math values', () => {
@@ -68,7 +67,7 @@ describe('workspace canonical producer math values', () => {
       rows: [{ x: '1', primary: '1' }],
       warnings: [],
     };
-    expectNativeProvenPrimary(createTableResultOutcome(success, response, options), response);
+    expectNativeProvenPrimary(createTableResultOutcome(success, response, options));
   });
 
   it('passes direct proven values through independent Matrix and Vector owners', () => {

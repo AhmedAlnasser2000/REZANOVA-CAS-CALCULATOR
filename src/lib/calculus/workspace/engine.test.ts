@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCanonicalResultForStorage } from '../../result-contract';
+import { requireCanonicalResultAuthority } from '../../result-contract';
 import { runCalculusWorkspaceMode } from './engine';
 import type { CalculusScreen } from '../../../types/calculator';
 
@@ -116,10 +116,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
       title: 'Variable Policy',
       lines: ['Kept t symbolic as the limit variable.'],
     });
-    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
-      ok: true,
-      source: 'native',
-    });
+    expect(requireCanonicalResultAuthority(result, 'Calculus limit test').canonicalResult)
+      .toBeDefined();
   });
 
   it('stops natural limit variable mismatches before stored-value substitution', async () => {
@@ -138,10 +136,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
     expect(result.error).toContain('uses t');
     expect(result.error).toContain('\\lim_{t\\to \\infty}');
     expect(result.detailSections?.[0]?.title).toBe('Limit Variable Check');
-    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
-      ok: true,
-      source: 'native',
-    });
+    expect(requireCanonicalResultAuthority(result, 'Calculus stopped-limit test').canonicalResult)
+      .toBeDefined();
   });
 
   it('threads complex domain intent into natural limit evaluation', async () => {
@@ -174,8 +170,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
     if (finite.kind === 'prompt' || infinite.kind === 'prompt') {
       throw new Error('Limit workspace requests must return results, not prompts.');
     }
-    expect(resolveCanonicalResultForStorage(finite)).toMatchObject({ ok: true, source: 'native' });
-    expect(resolveCanonicalResultForStorage(infinite)).toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(finite, 'Finite Limit test').canonicalResult).toBeDefined();
+    expect(requireCanonicalResultAuthority(infinite, 'Infinite Limit test').canonicalResult).toBeDefined();
   });
 
   it('builds native documents for Symbolic Integration owner screens', async () => {
@@ -226,10 +222,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
       if (result.kind === 'prompt') {
         throw new Error(`${entry.screen} must return a result, not a prompt.`);
       }
-      expect(resolveCanonicalResultForStorage(result), entry.screen).toMatchObject({
-        ok: true,
-        source: 'native',
-      });
+      expect(requireCanonicalResultAuthority(result, `${entry.screen} test`).canonicalResult, entry.screen)
+        .toBeDefined();
     }
   });
 
@@ -309,10 +303,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
       if (result.kind === 'prompt') {
         throw new Error(`${entry.screen} must return a result, not a prompt.`);
       }
-      expect(resolveCanonicalResultForStorage(result), entry.screen).toMatchObject({
-        ok: true,
-        source: 'native',
-      });
+      expect(requireCanonicalResultAuthority(result, `${entry.screen} test`).canonicalResult, entry.screen)
+        .toBeDefined();
     }
   });
 
@@ -327,10 +319,8 @@ describe('runCalculusWorkspaceMode stored values', () => {
     }
     expect(result.exactLatex).toContain('2');
     expect(result.exactLatex).toContain('t');
-    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
-      ok: true,
-      source: 'native',
-    });
+    expect(requireCanonicalResultAuthority(result, 'Calculus derivative test').canonicalResult)
+      .toBeDefined();
     const steps = result.detailSections?.find((section) => section.title === 'Derivative Steps');
     expect(steps?.lineKind).toBe('math');
     expect(steps?.lines).toContain('\\operatorname{operator}\\quad \\frac{d}{dt}');

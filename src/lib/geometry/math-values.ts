@@ -1,4 +1,4 @@
-import type { DisplayOutcome, GeometryRequest } from '../../types/calculator';
+import type { ResultProducerDraft, GeometryRequest } from '../../types/calculator';
 import {
   tryProvenCanonicalMathValue,
   type CanonicalResultProducerMathValuesV1,
@@ -15,7 +15,7 @@ export type GeometryOwnedMathJsonLeaf = {
 };
 
 export function geometryMathValuesFromOwnedLeaves(input: {
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
   routeId: GeometryMathJsonRouteId;
   leaves: readonly GeometryOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {

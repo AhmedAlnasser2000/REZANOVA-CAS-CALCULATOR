@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RefObject } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   ModeId,
 } from '../../types/calculator';
 import {
@@ -12,6 +12,7 @@ import {
   type StatisticsModeRunPayload,
   runStatisticsModeWithOoePilot,
 } from '../../lib/modes/statistics';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useStatisticsRuntime } from './useStatisticsRuntime';
 
@@ -32,7 +33,7 @@ function statisticsPayload(): StatisticsModeRunPayload {
       title: 'Statistics',
       exactLatex: 'P\\left(X=3\\right)=0.1171875',
       warnings: [],
-    } satisfies DisplayOutcome,
+    } satisfies ResultProducerDraft,
     parsed: {
       ok: true,
       request: {
@@ -266,12 +267,10 @@ describe('useStatisticsRuntime', () => {
       hook.result.current.runStatisticsAction();
     });
 
-    expect(setDisplayOutcome).toHaveBeenCalledWith({
-      kind: 'error',
-      title: 'Binomial',
-      error: 'Enter a Statistics request or use a guided statistics tool before evaluating.',
-      warnings: [],
-    });
+    expect(setDisplayOutcome).toHaveBeenCalledWith(createCanonicalRuntimeError(
+      'Binomial',
+      'Enter a Statistics request or use a guided statistics tool before evaluating.',
+    ));
     expect(runStatisticsModeWithOoePilot).not.toHaveBeenCalled();
   });
 

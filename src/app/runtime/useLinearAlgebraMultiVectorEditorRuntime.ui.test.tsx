@@ -14,9 +14,10 @@ import {
   vi,
 } from 'vitest';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   ModeId,
 } from '../../types/calculator';
+import { displayResultReadModelFromOutcome } from '../../lib/display/result/display-read-model';
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
 
 function renderVectorRuntime() {
@@ -55,7 +56,10 @@ describe('useLinearAlgebraTableShellRuntime multi-vector editor expressions', ()
       });
 
       await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
-      return commitOutcome.mock.calls.at(-1)?.[0] as DisplayOutcome;
+      const outcome = commitOutcome.mock.calls.at(-1)?.[0] as CanonicalRuntimeOutcome;
+      const display = displayResultReadModelFromOutcome(outcome);
+      if (!display) throw new Error('Expected a Vector display result.');
+      return display;
     }
 
     let pId = '';
@@ -69,44 +73,44 @@ describe('useLinearAlgebraTableShellRuntime multi-vector editor expressions', ()
 
     const generalProjection = await runVectorExpression('\\operatorname{proj}\\left(p,q\\right)');
     expect(generalProjection).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: '\\operatorname{proj}\\left(p,q\\right)',
       sourceMode: 'vector',
-      exactLatex: '\\begin{bmatrix}\\frac{1}{2}\\\\\\frac{1}{2}\\end{bmatrix}',
+      primaryLatex: '\\begin{bmatrix}\\frac{1}{2}\\\\\\frac{1}{2}\\end{bmatrix}',
     });
 
     const composedNorm = await runVectorExpression('\\left\\lVert p-q\\right\\rVert');
     expect(composedNorm).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: '\\left\\lVert p-q\\right\\rVert',
       sourceMode: 'vector',
-      exactLatex: '1',
+      primaryLatex: '1',
     });
 
     const exactCombination = await runVectorExpression('2p-q/3');
     expect(exactCombination).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: '2p-\\frac{q}{3}',
       sourceMode: 'vector',
-      exactLatex: '\\begin{bmatrix}\\frac{5}{3}\\\\2\\end{bmatrix}',
+      primaryLatex: '\\begin{bmatrix}\\frac{5}{3}\\\\2\\end{bmatrix}',
     });
 
     const composedGram = await runVectorExpression('\\operatorname{gram}\\left(p,q\\right)');
     expect(composedGram).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: '\\operatorname{gram}\\left(p,q\\right)',
       sourceMode: 'vector',
     });
-    expect(composedGram.kind === 'success' ? composedGram.detailSections?.map((section) => section.title) : [])
+    expect(composedGram.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Orthonormal Basis', 'Gram-Schmidt Proof']);
 
     const span = await runVectorExpression('span(p,q,r)');
     expect(span).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: '\\operatorname{span}\\left(p,q,r\\right)',
-      exactLatex: '\\operatorname{span}\\left(p,q,r\\right)=\\operatorname{span}\\left\\{p,q\\right\\}',
+      primaryLatex: '\\operatorname{span}\\left(p,q,r\\right)=\\operatorname{span}\\left\\{p,q\\right\\}',
     });
-    expect(span.kind === 'success' ? span.detailSections?.[1]?.lines : []).toContain('p-q-r=0');
+    expect(span.detailSections?.[1]?.lines ?? []).toContain('p-q-r=0');
 
     act(() => {
       hook.result.current.linearAlgebraRuntime.resizeVectorValueById(pId, 3);
@@ -125,18 +129,18 @@ describe('useLinearAlgebraTableShellRuntime multi-vector editor expressions', ()
 
     const cross = await runVectorExpression('\\operatorname{cross}\\left(p,q\\right)');
     expect(cross).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: 'p\\times q',
       sourceMode: 'vector',
-      exactLatex: '\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}',
+      primaryLatex: '\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}',
     });
 
     const triple = await runVectorExpression('\\operatorname{triple}\\left(p,q,r\\right)');
     expect(triple).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: '\\operatorname{triple}\\left(p,q,r\\right)',
       sourceMode: 'vector',
-      exactLatex: '2',
+      primaryLatex: '2',
     });
   });
 });

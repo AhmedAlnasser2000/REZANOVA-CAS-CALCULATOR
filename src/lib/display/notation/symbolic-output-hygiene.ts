@@ -1,7 +1,7 @@
 import type {
   CanonicalResultDocumentV1,
   CanonicalResultPeriodicFamilyV1,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
 } from '../../../types/calculator';
 import { resolveCanonicalResultForConsumer } from '../../result-contract';
 
@@ -45,7 +45,7 @@ function detailFragments(document: CanonicalResultDocumentV1) {
       part.kind === 'math' ? part.math.canonicalLatex : part.text).join(''))) ?? [];
 }
 
-export function collectUnsafeSymbolicOutputFragments(outcome: DisplayOutcome | null | undefined) {
+export function collectUnsafeSymbolicOutputFragments(outcome: CanonicalRuntimeOutcome | null | undefined) {
   if (!outcome || outcome.kind === 'prompt') {
     return [];
   }
@@ -64,6 +64,6 @@ export function collectUnsafeSymbolicOutputFragments(outcome: DisplayOutcome | n
   return fragments.filter(hasInternalSymbolicErrorLatex);
 }
 
-export function hasUnsafeSymbolicOutput(outcome: DisplayOutcome | null | undefined) {
+export function hasUnsafeSymbolicOutput(outcome: CanonicalRuntimeOutcome | null | undefined) {
   return collectUnsafeSymbolicOutputFragments(outcome).length > 0;
 }

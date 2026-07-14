@@ -1,7 +1,7 @@
 import { normalizeRelationOperatorLatex } from '../input/input-canonicalization';
 import type {
   AngleUnit,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   LegacyEquationAnswerMode,
   OutputStyle,
@@ -221,7 +221,7 @@ export function solveBoundedLinearInequality(input: {
   equationDomainIntent: EquationDomainIntent;
   angleUnit?: AngleUnit;
   outputStyle?: OutputStyle;
-}): DisplayOutcome {
+}): ResultProducerDraft {
   if (input.answerMode !== 'exact') {
     return inequalityAnswerModeGuidanceOutcome({
       answerMode: input.answerMode,

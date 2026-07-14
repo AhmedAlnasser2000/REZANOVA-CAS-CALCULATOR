@@ -1,4 +1,4 @@
-import type { ComplexSolveRegion, DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
+import type { ComplexSolveRegion, DisplayDetailSection, ResultProducerDraft } from '../../../types/calculator';
 import { runEquationMode } from './run';
 import type { RunEquationModeRequest } from './types';
 
@@ -57,7 +57,7 @@ export type EquationComplexBenchmarkEvidence = {
 
 export type EquationComplexBenchmarkAttempt = {
   region: ComplexSolveRegion;
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   evidence: EquationComplexBenchmarkEvidence;
 };
 
@@ -69,7 +69,7 @@ export type EquationComplexBenchmarkRunStatus =
   | 'bounded-region-controlled-stop';
 
 export type EquationComplexBenchmarkRunResult = {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   status: EquationComplexBenchmarkRunStatus;
   evidence?: EquationComplexBenchmarkEvidence;
   attemptedRegions: EquationComplexBenchmarkAttempt[];
@@ -80,15 +80,15 @@ export const DEFAULT_COMPLEX_BENCHMARK_REGION_BOXES: readonly ComplexSolveRegion
   { reMin: '-10', reMax: '10', imMin: '-10', imMax: '10' },
 ] as const;
 
-function detailSections(outcome: DisplayOutcome): readonly DisplayDetailSection[] {
+function detailSections(outcome: ResultProducerDraft): readonly DisplayDetailSection[] {
   return outcome.kind === 'prompt' ? [] : outcome.detailSections ?? [];
 }
 
-function sectionLines(outcome: DisplayOutcome, title: string) {
+function sectionLines(outcome: ResultProducerDraft, title: string) {
   return detailSections(outcome).find((section) => section.title === title)?.lines ?? [];
 }
 
-function allDetailLines(outcome: DisplayOutcome) {
+function allDetailLines(outcome: ResultProducerDraft) {
   return detailSections(outcome).flatMap((section) => section.lines);
 }
 
@@ -121,7 +121,7 @@ function searchedRegionNote(region: ComplexSolveRegion, index: number, total: nu
 }
 
 function boundedRegionNotes(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   region: ComplexSolveRegion;
   index: number;
   total: number;
@@ -136,7 +136,7 @@ function boundedRegionNotes(input: {
   ].join(' ');
 }
 
-function globalPolynomialEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
+function globalPolynomialEvidence(outcome: ResultProducerDraft): EquationComplexBenchmarkEvidence | undefined {
   if (
     outcome.kind !== 'success'
     || outcome.answerDomain !== 'complex'
@@ -160,7 +160,7 @@ function globalPolynomialEvidence(outcome: DisplayOutcome): EquationComplexBench
   };
 }
 
-function symbolicFamilyEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
+function symbolicFamilyEvidence(outcome: ResultProducerDraft): EquationComplexBenchmarkEvidence | undefined {
   if (
     outcome.kind !== 'success'
     || outcome.solutionKind === 'approximate-numeric'
@@ -185,7 +185,7 @@ function symbolicFamilyEvidence(outcome: DisplayOutcome): EquationComplexBenchma
   };
 }
 
-function controlledBoundaryEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
+function controlledBoundaryEvidence(outcome: ResultProducerDraft): EquationComplexBenchmarkEvidence | undefined {
   if (
     outcome.kind !== 'success'
     || sectionLines(outcome, 'Complex Abs Boundary').length === 0
@@ -202,7 +202,7 @@ function controlledBoundaryEvidence(outcome: DisplayOutcome): EquationComplexBen
   };
 }
 
-function locusDeferredEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
+function locusDeferredEvidence(outcome: ResultProducerDraft): EquationComplexBenchmarkEvidence | undefined {
   const locusLines = sectionLines(outcome, 'Complex Locus Policy');
   if (outcome.kind !== 'error' || locusLines.length === 0) {
     return undefined;
@@ -216,7 +216,7 @@ function locusDeferredEvidence(outcome: DisplayOutcome): EquationComplexBenchmar
   };
 }
 
-function primaryEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvidence | undefined {
+function primaryEvidence(outcome: ResultProducerDraft): EquationComplexBenchmarkEvidence | undefined {
   return globalPolynomialEvidence(outcome)
     ?? symbolicFamilyEvidence(outcome)
     ?? controlledBoundaryEvidence(outcome)
@@ -224,7 +224,7 @@ function primaryEvidence(outcome: DisplayOutcome): EquationComplexBenchmarkEvide
 }
 
 function boundedRegionEvidence(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   region: ComplexSolveRegion,
   index: number,
   total: number,
@@ -263,7 +263,7 @@ function isVerifiedZeroRootRegion(evidence: EquationComplexBenchmarkEvidence) {
     && evidence.complex_candidate_count === 0;
 }
 
-function isVerifiedSupportedRegion(outcome: DisplayOutcome, evidence: EquationComplexBenchmarkEvidence) {
+function isVerifiedSupportedRegion(outcome: ResultProducerDraft, evidence: EquationComplexBenchmarkEvidence) {
   return outcome.kind === 'success'
     && evidence.complex_verification_status === 'contour-verified'
     && evidence.complex_contour_root_count === evidence.complex_candidate_count;

@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
+import type { CanonicalRuntimeOutcome, ResultProducerDraft } from '../../../types/calculator';
 import {
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   resolveCanonicalResultForConsumer,
-  resolveCanonicalResultForStorage,
 } from '../../result-contract';
 import {
   buildEquationOoeInputRevisionId,
@@ -13,8 +12,9 @@ import {
 } from '../equation';
 import { makeRequest } from './test-support';
 
-function expectBoundaryParity(direct: DisplayOutcome, wrapped: DisplayOutcome) {
-  const directDocument = resolveCanonicalResultForConsumer(direct);
+function expectBoundaryParity(direct: ResultProducerDraft, wrapped: CanonicalRuntimeOutcome) {
+  const finalizedDirect = finalizeCanonicalRuntimeOutcomeFromProducer(direct, 'Equation test');
+  const directDocument = resolveCanonicalResultForConsumer(finalizedDirect);
   const wrappedDocument = resolveCanonicalResultForConsumer(wrapped);
   expect(directDocument.ok).toBe(true);
   expect(wrappedDocument.ok).toBe(true);
@@ -23,8 +23,7 @@ function expectBoundaryParity(direct: DisplayOutcome, wrapped: DisplayOutcome) {
   expect(wrapped.kind === 'prompt' ? undefined : wrapped.canonicalResult).toEqual(
     directDocument.document,
   );
-  expect(wrapped.runtimeAdvisories).toEqual(direct.runtimeAdvisories);
-  expect(getEquationAnalysisEvidence(wrapped)).toEqual(getEquationAnalysisEvidence(direct));
+  expect(wrapped.runtimeAdvisories).toEqual(finalizedDirect.runtimeAdvisories);
 }
 
 describe('Equation mode OOE runtime', () => {
@@ -104,16 +103,15 @@ describe('Equation mode OOE runtime', () => {
 
     expect(direct.kind).toBe('success');
     if (direct.kind === 'success') {
-      expect(direct.canonicalMath?.canonicalLatex).toBe(direct.exactLatex);
-      expect(direct.canonicalMath?.mathJson).toBeDefined();
-      expect(structuredClone(direct.canonicalMath)).toEqual(direct.canonicalMath);
+      expect(direct.primaryMath?.canonicalLatex).toBe(direct.exactLatex);
+      expect(direct.primaryMath?.mathJson).toBeDefined();
+      expect(structuredClone(direct.primaryMath)).toEqual(direct.primaryMath);
       expect(direct.canonicalResult?.primaryMath?.mathJson).toEqual(
-        direct.canonicalMath?.mathJson,
+        direct.primaryMath?.mathJson,
       );
-      expect(resolveCanonicalResultForStorage(direct)).toMatchObject({
-        ok: true,
-        source: 'native',
-      });
+      expect(resolveCanonicalResultForConsumer(
+        finalizeCanonicalRuntimeOutcomeFromProducer(direct, 'Equation test'),
+      )).toMatchObject({ ok: true, source: 'native' });
     }
     expectBoundaryParity(direct, wrapped.payload);
     expect(wrapped.ooe.status.kind).toBe('unavailable');

@@ -1,4 +1,4 @@
-import type { DisplayMathPayloadV1 } from '../../../types/calculator';
+import type { CanonicalMathValueV1 } from '../../../types/calculator';
 import { validateSerializableMathJson } from './math-json';
 import {
   printCompatibilityLatex,
@@ -8,35 +8,34 @@ import {
 
 export type ProfiledDisplayMath = {
   canonicalLatex: string;
-  canonicalMath: DisplayMathPayloadV1;
+  primaryMath: CanonicalMathValueV1;
   changed: boolean;
   source: Extract<PrintedMath, { ok: true }>['source'];
 };
 
-export function createDisplayMathPayload(
+export function createProfiledMathValue(
   canonicalLatex: string | undefined,
   mathJson: unknown,
-): DisplayMathPayloadV1 | undefined {
+): CanonicalMathValueV1 | undefined {
   if (!canonicalLatex?.trim()) {
     return undefined;
   }
 
   const validation = validateSerializableMathJson(mathJson);
   return {
-    version: 1,
     canonicalLatex,
     ...(validation.ok ? { mathJson: validation.validated.value } : {}),
   };
 }
 
-export function hasDisplayMathPayloadParity(input: {
+export function hasPrimaryMathParity(input: {
   exactLatex?: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
 }) {
-  return !input.canonicalMath || input.canonicalMath.canonicalLatex === input.exactLatex;
+  return !input.primaryMath || input.primaryMath.canonicalLatex === input.exactLatex;
 }
 
-export function profileDisplayMathPayload(
+export function profileMathValue(
   compatibilityLatex: string | undefined,
   mathJson: unknown,
 ): ProfiledDisplayMath | undefined {
@@ -49,18 +48,18 @@ export function profileDisplayMathPayload(
     target: 'canonical-latex',
   });
   const exactLatex = printed.ok ? printed.canonicalLatex : compatibilityLatex;
-  const canonicalMath = createDisplayMathPayload(exactLatex, mathJson);
-  if (!canonicalMath) return undefined;
+  const primaryMath = createProfiledMathValue(exactLatex, mathJson);
+  if (!primaryMath) return undefined;
 
   return {
     canonicalLatex: exactLatex,
-    canonicalMath,
+    primaryMath,
     changed: exactLatex !== compatibilityLatex,
     source: printed.ok ? printed.source : 'compatibility-fallback',
   };
 }
 
-export function profileDomainDisplayMathPayload(
+export function profileDomainMathValue(
   compatibilityLatex: string | undefined,
   mathJson: unknown,
 ): ProfiledDisplayMath | undefined {
@@ -72,12 +71,12 @@ export function profileDomainDisplayMathPayload(
     'domain-adapter',
   );
   const exactLatex = printed.ok ? printed.canonicalLatex : compatibilityLatex;
-  const canonicalMath = createDisplayMathPayload(exactLatex, mathJson);
-  if (!canonicalMath) return undefined;
+  const primaryMath = createProfiledMathValue(exactLatex, mathJson);
+  if (!primaryMath) return undefined;
 
   return {
     canonicalLatex: exactLatex,
-    canonicalMath,
+    primaryMath,
     changed: false,
     source: printed.ok ? printed.source : 'compatibility-fallback',
   };

@@ -17,8 +17,8 @@ import type {
   AngleUnit,
   DisplayBranchReadback,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
-  DisplayOutcome,
+  CanonicalMathValueV1,
+  ResultProducerDraft,
   PlannerBadge,
 } from '../../../types/calculator';
 import {
@@ -33,7 +33,7 @@ type TargetResolution = ReturnType<typeof resolveEquationSolveTarget>;
 
 type SelectedTargetParameterizedSuccess = {
   exactLatex: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections?: DisplayDetailSection[];
@@ -194,11 +194,11 @@ function attachParameterizedSelectedTargetOutcome(input: {
     routeId: input.mathJsonRouteId,
     leaves: input.result.mathJsonLeaves ?? [],
   });
-  const outcome: DisplayOutcome = input.result.canonicalMath
+  const outcome: ResultProducerDraft = input.result.primaryMath
     ? createEquationFiniteRootSuccessOutcome({
         title: 'Solve',
         exactLatex: input.result.exactLatex,
-        canonicalMath: input.result.canonicalMath,
+        primaryMath: input.result.primaryMath,
         branchReadback: input.result.branchReadback,
         approxText: input.result.approxText,
         exactSupplementLatex: input.result.exactSupplementLatex,
@@ -233,7 +233,7 @@ export function trySelectedTargetParameterizedExactSolve(input: {
   plannerResolvedMathJson?: import('../../../types/calculator').SerializableMathJson;
   plannerBadges?: PlannerBadge[];
   targetResolution: TargetResolution;
-}): DisplayOutcome | undefined {
+}): ResultProducerDraft | undefined {
   const selectedTarget = input.targetResolution.selectedTarget;
   if (!selectedTarget) {
     return undefined;

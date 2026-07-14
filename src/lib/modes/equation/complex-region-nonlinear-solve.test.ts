@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import { runEquationMode } from '../equation';
 import { collectOutcomeText, makeRequest } from './test-support';
 import { tryComplexRegionNonlinearSolveFallback } from './complex-region-nonlinear-solve';
 
-const unsupportedExactOutcome: DisplayOutcome = {
+const unsupportedExactOutcome: ResultProducerDraft = {
   kind: 'error',
   title: 'Solve',
   error: 'This equation is outside the supported exact symbolic solve families.',

@@ -1,7 +1,7 @@
 import type {
   AngleUnit,
-  DisplayOutcome,
-  DisplayOutcomeAction,
+  ResultProducerDraft,
+  ResultProducerActionDraft,
   TrigIdentityState,
   TrigParseResult,
   TrigRequest,
@@ -21,14 +21,14 @@ import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
 const ownedMathJsonByOutcome = new WeakMap<object, readonly TrigonometryOwnedMathJsonLeaf[]>();
 
 function rememberOwnedMathJson(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   leaves: readonly TrigonometryOwnedMathJsonLeaf[] | undefined,
 ) {
   if (leaves?.length) ownedMathJsonByOutcome.set(outcome, leaves);
   return outcome;
 }
 
-function canonicalLeavesFromSharedEquation(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
+function canonicalLeavesFromSharedEquation(outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>) {
   const document = outcome.canonicalResult;
   if (!document) return [];
   const values = [
@@ -50,7 +50,7 @@ function canonicalLeavesFromSharedEquation(outcome: Exclude<DisplayOutcome, { ki
 function toOutcome(
   title: string,
   evaluation: TrigEvaluation,
-): DisplayOutcome {
+): ResultProducerDraft {
   if (evaluation.error) {
     return rememberOwnedMathJson({
       kind: 'error',
@@ -79,15 +79,15 @@ function toOutcome(
 }
 
 function withCanonicalMetadata(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   originalLatex: string,
   resolvedLatex: string,
-): DisplayOutcome {
+): ResultProducerDraft {
   if (outcome.kind === 'prompt') {
     return outcome;
   }
 
-  const updated: DisplayOutcome = {
+  const updated: ResultProducerDraft = {
     ...outcome,
     resolvedInputLatex: resolvedLatex !== originalLatex.trim() ? resolvedLatex : undefined,
     plannerBadges: resolvedLatex !== originalLatex.trim() ? ['Canonicalized'] : outcome.plannerBadges,
@@ -122,7 +122,7 @@ function runTrigRequest(
   request: TrigRequest,
   angleUnit: AngleUnit,
   screenHint?: TrigScreen,
-): DisplayOutcome {
+): ResultProducerDraft {
   const title = requestTitle(request, screenHint);
 
   switch (request.kind) {
@@ -182,7 +182,7 @@ function runTrigRequest(
           || outcome.error.includes('No bracketed real roots')
           || outcome.error.includes('No bracketed or near-zero real roots')
           || outcome.error.includes('Candidate roots were found but rejected'));
-      const actions: DisplayOutcomeAction[] | undefined = shouldOfferEquationHandoff
+      const actions: ResultProducerActionDraft[] | undefined = shouldOfferEquationHandoff
         ? [{ kind: 'send', target: 'equation', latex: request.equationLatex }]
         : outcome.actions;
 
@@ -242,7 +242,7 @@ function runTrigRequest(
   }
 }
 
-function parseFailureToOutcome(parsed: Extract<TrigParseResult, { ok: false }>): DisplayOutcome {
+function parseFailureToOutcome(parsed: Extract<TrigParseResult, { ok: false }>): ResultProducerDraft {
   return {
     kind: 'error',
     title: 'Trigonometry',

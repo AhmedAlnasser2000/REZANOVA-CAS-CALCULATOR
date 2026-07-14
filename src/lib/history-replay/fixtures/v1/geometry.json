@@ -46,7 +46,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=s=5,\\ A=25,\\ P=20,\\ d=7.071068\ncanonicalMath.canonicalLatex=s=5,\\ A=25,\\ P=20,\\ d=7.071068"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=s=5,\\ A=25,\\ P=20,\\ d=7.071068"
       }
     },
     {
@@ -92,7 +92,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=P_1=\\left(0,0\\right),\\ P_2=\\left(3,4\\right),\\ d=5\ncanonicalMath.canonicalLatex=P_1=\\left(0,0\\right),\\ P_2=\\left(3,4\\right),\\ d=5"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=P_1=\\left(0,0\\right),\\ P_2=\\left(3,4\\right),\\ d=5"
       }
     },
     {
@@ -138,7 +138,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=r=3,\\ d=6,\\ C=6\\pi,\\ A=9\\pi\ncanonicalMath.canonicalLatex=r=3,\\ d=6,\\ C=6\\pi,\\ A=9\\pi"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=r=3,\\ d=6,\\ C=6\\pi,\\ A=9\\pi"
       }
     },
     {
@@ -184,7 +184,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=a=5,\\ b=6,\\ c=7,\\ s=9,\\ A=14.696938\ncanonicalMath.canonicalLatex=a=5,\\ b=6,\\ c=7,\\ s=9,\\ A=14.696938"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=a=5,\\ b=6,\\ c=7,\\ s=9,\\ A=14.696938"
       }
     },
     {
@@ -230,7 +230,7 @@
           "actions": 1,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=2x-y=0\ncanonicalMath.canonicalLatex=2x-y=0\nactions[0].latex=2x-y=0"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=2x-y=0\nactions[0].math.canonicalLatex=2x-y=0"
       }
     }
   ]

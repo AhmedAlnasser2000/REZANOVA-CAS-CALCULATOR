@@ -1,12 +1,18 @@
-import { buildGeometryModeRunPayload } from '../geometry/runtime-run';
-import { runCalculateMode, type RunCalculateModeRequest } from '../modes/calculate';
-import { runCalculusMode, type RunCalculusModeRequest } from '../modes/calculus';
-import { runEquationMode, type RunEquationModeRequest } from '../modes/equation';
+import { buildCanonicalGeometryModeRunPayload } from '../geometry/runtime-run';
+import { runCalculateCanonicalRuntimeRequest, type RunCalculateModeRequest } from '../modes/calculate';
+import { runCalculusCanonicalRuntimeRequest, type RunCalculusModeRequest } from '../modes/calculus';
+import { runEquationModeForIsolatedWorker, type RunEquationModeRequest } from '../modes/equation';
 import { runMatrixMode, type RunMatrixModeRequest } from '../modes/matrix';
 import { runTableMode, type RunTableModeRequest } from '../modes/table';
 import { runVectorMode, type RunVectorModeRequest } from '../modes/vector';
-import { buildStatisticsModeRunPayload } from '../statistics/runtime-run';
-import { buildTrigonometryModeRunPayload } from '../trigonometry/runtime-run';
+import {
+  buildCanonicalStatisticsModeRunPayload,
+} from '../statistics/runtime-run';
+import {
+  buildCanonicalTrigonometryModeRunPayload,
+} from '../trigonometry/runtime-run';
+import { buildCanonicalTableModeResult } from '../modes/table-core';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../result-contract';
 import type { HistoryReplayExecution, HistoryReplayWorkspace } from './fixture-contract';
 
 export async function executeHistoryReplayRequest(
@@ -15,24 +21,29 @@ export async function executeHistoryReplayRequest(
 ): Promise<HistoryReplayExecution> {
   switch (workspace) {
     case 'calculate':
-      return { outcome: runCalculateMode(request as RunCalculateModeRequest) };
+      return {
+        outcome: runCalculateCanonicalRuntimeRequest({
+          kind: 'standard',
+          request: request as RunCalculateModeRequest,
+        }),
+      };
     case 'equation':
-      return { outcome: runEquationMode(request as RunEquationModeRequest) };
+      return { outcome: (await runEquationModeForIsolatedWorker(request as RunEquationModeRequest)).outcome };
     case 'calculus':
-      return { outcome: await runCalculusMode(request as RunCalculusModeRequest) };
+      return { outcome: await runCalculusCanonicalRuntimeRequest(request as RunCalculusModeRequest) };
     case 'matrix':
-      return { outcome: runMatrixMode(request as RunMatrixModeRequest) };
+      return { outcome: finalizeCanonicalRuntimeOutcomeFromProducer(runMatrixMode(request as RunMatrixModeRequest), 'Matrix replay') };
     case 'vector':
-      return { outcome: runVectorMode(request as RunVectorModeRequest) };
+      return { outcome: finalizeCanonicalRuntimeOutcomeFromProducer(runVectorMode(request as RunVectorModeRequest), 'Vector replay') };
     case 'table': {
-      const result = runTableMode(request as RunTableModeRequest);
+      const result = buildCanonicalTableModeResult(runTableMode(request as RunTableModeRequest));
       return { outcome: result.outcome, tableResponse: result.response };
     }
     case 'trigonometry':
-      return { outcome: buildTrigonometryModeRunPayload(request as never).outcome };
+      return { outcome: buildCanonicalTrigonometryModeRunPayload(request as never).outcome };
     case 'statistics':
-      return { outcome: buildStatisticsModeRunPayload(request as never).outcome };
+      return { outcome: buildCanonicalStatisticsModeRunPayload(request as never).outcome };
     case 'geometry':
-      return { outcome: buildGeometryModeRunPayload(request as never).outcome };
+      return { outcome: buildCanonicalGeometryModeRunPayload(request as never).outcome };
   }
 }

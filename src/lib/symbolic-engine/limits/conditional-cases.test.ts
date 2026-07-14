@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
-import type { DisplayOutcome } from '../../../types/calculator';
+import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+} from '../../result-contract';
 import {
   buildLimitConditionalCases,
   limitConditionLatex,
@@ -72,12 +75,15 @@ describe('limits conditional case surface', () => {
       throw new Error(result.error);
     }
 
-    const outcome: DisplayOutcome = {
-      kind: 'success',
-      title: 'Limit',
-      exactLatex: result.exactLatex,
-      detailSections: result.detailSections,
-      warnings: [],
+    const outcome = {
+      kind: 'success' as const,
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Limit',
+        primaryMath: canonicalMathValue(result.exactLatex),
+        detailSections: result.detailSections,
+        warnings: [],
+      }),
     };
     const answer = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
 
@@ -101,13 +107,14 @@ describe('limits conditional case surface', () => {
 
     const outcome = {
       kind: 'success' as const,
-      title: 'Limit',
-      value: 0,
-      exactLatex: result.exactLatex,
-      detailSections: result.detailSections,
-      solutionKind: 'exact-symbolic' as const,
-      tags: [],
-      warnings: [],
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Limit',
+        primaryMath: canonicalMathValue(result.exactLatex),
+        detailSections: result.detailSections,
+        warnings: [],
+        metadata: { solutionKind: 'exact-symbolic' },
+      }),
     };
     const answer = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
 

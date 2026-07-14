@@ -11,7 +11,7 @@ import {
 } from './linear-algebra-worker-client-core';
 import type { RunMatrixModeRequest } from '../matrix';
 import { proseSolveSummary } from '../../display/result-detail-lines';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { createMatrixResultOutcome } from '../matrix-result-document';
 
 export type CreateMatrixWorker = CreateLinearAlgebraWorkspaceWorker<RunMatrixModeRequest>;
@@ -40,7 +40,7 @@ export function runMatrixModeViaIsolatedWorker(
       primaryHostId: OOE_MATRIX_WORKER_HOST_ID,
       fallbackHostId: OOE_MATRIX_FALLBACK_HOST_ID,
       createDefaultWorker: createDefaultMatrixWorker,
-      buildCancelledPayload: () => projectDisplayOutcomeToCanonicalRuntimeOutcome(
+      buildCancelledPayload: () => finalizeCanonicalRuntimeOutcomeFromProducer(
         createMatrixResultOutcome({
           kind: 'error',
           title: 'Matrix',

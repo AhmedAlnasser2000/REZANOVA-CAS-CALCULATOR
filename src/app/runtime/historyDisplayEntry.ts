@@ -1,23 +1,23 @@
 import { createId } from '../logic/appUtils';
 import type {
   CanonicalResultDocumentV1,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
+  AnswerDomain,
   GeometryScreen,
   HistoryEntry,
   ModeId,
   StatisticsScreen,
+  SolutionKind,
   TableResponse,
   TrigScreen,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
 import {
-  projectCanonicalResultToDisplayOutcome,
-  projectCanonicalResultToTableResponse,
   resolveCanonicalResultForConsumer,
   validateCanonicalResultDocument,
 } from '../../lib/result-contract';
 
-type SuccessfulDisplayOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
+type SuccessfulCanonicalOutcome = Extract<CanonicalRuntimeOutcome, { kind: 'success' }>;
 
 export type CommitHistoryDisplayContext = Partial<Pick<
   HistoryEntry,
@@ -42,17 +42,17 @@ export type CommitHistoryDisplayContext = Partial<Pick<
   | 'numericInterval'
   | 'runtimeElapsedMs'
 >> & {
-  answerDomain?: SuccessfulDisplayOutcome['answerDomain'];
+  answerDomain?: AnswerDomain;
   historyTicketId?: string | null;
   historyLaunchOrder?: number;
-  solutionKind?: SuccessfulDisplayOutcome['solutionKind'];
+  solutionKind?: SolutionKind;
   suppressDisplayCommit?: boolean;
   tableResponse?: TableResponse;
   variableSubstitutions?: VariableSubstitutionSnapshot[];
 };
 
 export type BuildHistoryDisplayEntryOptions = {
-  outcome: SuccessfulDisplayOutcome;
+  outcome: SuccessfulCanonicalOutcome;
   inputLatex: string;
   mode: ModeId;
   context: CommitHistoryDisplayContext;
@@ -65,14 +65,14 @@ export type BuildHistoryDisplayEntryOptions = {
 
 export type HistoryResultReadModel = {
   source: 'structured';
-  outcome: SuccessfulDisplayOutcome;
+  outcome: SuccessfulCanonicalOutcome;
   document: CanonicalResultDocumentV1;
   title: string;
   primaryLatex?: string;
   resolvedInputLatex?: string;
   approxText?: string;
-  answerDomain?: SuccessfulDisplayOutcome['answerDomain'];
-  solutionKind?: SuccessfulDisplayOutcome['solutionKind'];
+  answerDomain?: AnswerDomain;
+  solutionKind?: SolutionKind;
   supplementLatex: string[];
   detailSearchText: string[];
   warnings: string[];
@@ -87,28 +87,43 @@ function canonicalDetailSearchText(document: CanonicalResultDocumentV1) {
   ]) ?? [];
 }
 
+function canonicalTableResponse(document: CanonicalResultDocumentV1): TableResponse | undefined {
+  if (!document.table) return undefined;
+  return {
+    headers: [...document.table.headers],
+    rows: document.table.rows.map((row) => ({
+      x: row.x.canonicalLatex,
+      primary: row.primary.canonicalLatex,
+      ...(row.secondary ? { secondary: row.secondary.canonicalLatex } : {}),
+    })),
+    warnings: [...document.warnings],
+    ...(document.outcomeKind === 'error' && document.error ? { error: document.error } : {}),
+  };
+}
+
 export function readHistoryResult(entry: HistoryEntry): HistoryResultReadModel {
   const validation = validateCanonicalResultDocument(entry.resultDocument);
   if (validation.ok && validation.validated.value.outcomeKind === 'success') {
-    const outcome = projectCanonicalResultToDisplayOutcome(validation.validated.value);
-    if (outcome.kind === 'success') {
-      const document = validation.validated.value;
-      return {
-        source: 'structured',
-        outcome,
-        document,
-        title: document.title,
-        primaryLatex: document.primaryMath?.canonicalLatex,
-        resolvedInputLatex: document.metadata?.resolvedInput?.canonicalLatex,
-        approxText: document.approximations?.primary,
-        answerDomain: document.metadata?.answerDomain,
-        solutionKind: document.metadata?.solutionKind,
-        supplementLatex: document.supplements?.map((value) => value.canonicalLatex) ?? [],
-        detailSearchText: canonicalDetailSearchText(document),
-        warnings: [...document.warnings],
-        tableResponse: projectCanonicalResultToTableResponse(document),
-      };
-    }
+    const document = validation.validated.value;
+    const outcome: SuccessfulCanonicalOutcome = {
+      kind: 'success',
+      canonicalResult: document,
+    };
+    return {
+      source: 'structured',
+      outcome,
+      document,
+      title: document.title,
+      primaryLatex: document.primaryMath?.canonicalLatex,
+      resolvedInputLatex: document.metadata?.resolvedInput?.canonicalLatex,
+      approxText: document.approximations?.primary,
+      answerDomain: document.metadata?.answerDomain,
+      solutionKind: document.metadata?.solutionKind,
+      supplementLatex: document.supplements?.map((value) => value.canonicalLatex) ?? [],
+      detailSearchText: canonicalDetailSearchText(document),
+      warnings: [...document.warnings],
+      tableResponse: canonicalTableResponse(document),
+    };
   }
   throw new Error('History entry requires a valid canonical result document.');
 }

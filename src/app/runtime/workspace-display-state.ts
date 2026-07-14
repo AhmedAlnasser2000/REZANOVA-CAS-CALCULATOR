@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   ModeId,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
@@ -12,7 +12,7 @@ export type WorkspaceDisplayReplayVariableSubstitutions = {
 } | null;
 
 export type WorkspaceDisplayState = {
-  displayOutcome: DisplayOutcome | null;
+  displayOutcome: CanonicalRuntimeOutcome | null;
   ansLatex: string;
   replayVariableSubstitutions: WorkspaceDisplayReplayVariableSubstitutions;
 };
@@ -34,7 +34,7 @@ export function normalizeWorkspaceDisplayState(value: unknown): WorkspaceDisplay
 
   return {
     displayOutcome: isRecord(value.displayOutcome)
-      ? value.displayOutcome as DisplayOutcome
+      ? value.displayOutcome as CanonicalRuntimeOutcome
       : null,
     ansLatex: typeof value.ansLatex === 'string' ? value.ansLatex : '0',
     replayVariableSubstitutions: isRecord(value.replayVariableSubstitutions)
@@ -45,7 +45,7 @@ export function normalizeWorkspaceDisplayState(value: unknown): WorkspaceDisplay
 
 export function applyWorkspaceDisplayOutcome(
   currentValue: unknown,
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
 ): WorkspaceDisplayState {
   const current = normalizeWorkspaceDisplayState(currentValue);
   if (outcome.kind === 'prompt') {

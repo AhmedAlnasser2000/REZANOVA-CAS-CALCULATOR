@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { collectUnsafeSymbolicOutputFragments } from '../../display/symbolic-output-hygiene';
@@ -33,7 +34,7 @@ function expectSuccess(equationLatex: string, target = 'z', angleUnit: TestAngle
 
 function expectCaseMath(result: ReturnType<typeof expectSuccess>) {
   expect(result.answerDomain).toBe('real');
-  expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
 }
 
 function expectDetail(result: ReturnType<typeof expectSuccess>, title: string) {
@@ -64,7 +65,9 @@ function expectFormulaRoute(result: ReturnType<typeof expectSuccess>, route: str
 }
 
 function expectNoUnsafeFragments(result: ReturnType<typeof expectSuccess>) {
-  expect(collectUnsafeSymbolicOutputFragments(result)).toEqual([]);
+  expect(collectUnsafeSymbolicOutputFragments(
+    finalizeCanonicalRuntimeOutcomeFromProducer(result, 'Equation test'),
+  )).toEqual([]);
   expect(JSON.stringify(result)).not.toContain('Unsupported symbolic fragment');
 }
 
@@ -165,3 +168,7 @@ describe('Equation Real mixed trig wrapper formulas', () => {
     }
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

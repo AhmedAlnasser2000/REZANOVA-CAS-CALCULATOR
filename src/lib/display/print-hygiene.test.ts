@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome, TableResponse } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome, TableResponse } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
@@ -8,56 +8,17 @@ import baseline from '../__golden__/print-hygiene-baseline.json';
 import { buildPrintHygieneBaseline } from '../__golden__/print-hygiene-baseline';
 import { parsePrintHygieneUpdateArgs } from '../__golden__/print-hygiene-update-policy';
 import {
-  collectDisplayOutcomeMathFragments,
+  collectCanonicalRuntimeMathFragments,
   collectTableResponseMathFragments,
   findMalformedMathFragments,
   normalizePrintHygieneValue,
 } from './print-hygiene';
 
 describe('print hygiene fragment collection', () => {
-  it('collects stable typed paths across every mathematical DisplayOutcome surface', () => {
-    const outcome: DisplayOutcome = {
+  it('collects stable typed paths across every mathematical ResultProducerDraft surface', () => {
+    const outcome: CanonicalRuntimeOutcome = {
       kind: 'success',
-      title: 'Coverage',
-      exactLatex: '(x+1)',
-      canonicalMath: {
-        version: 1,
-        canonicalLatex: '(x+1)',
-        mathJson: ['Add', 'x', 1],
-      },
-      answerRows: { rows: [{ latex: 'x=1' }] },
-      branchReadback: { targetLatex: 'x', relationLatex: '=', branchesLatex: ['1', '-1'] },
-      systemReadback: { variablesLatex: ['x', 'y'], rows: [{ valuesLatex: ['1', '2'] }] },
-      periodicFamily: {
-        carrierLatex: '\\sin(x)',
-        parameterLatex: 'n',
-        parameterConstraintLatex: ['n\\in\\mathbb{Z}'],
-        branchesLatex: ['x=2\\pi n'],
-        representatives: [{ label: 'principal', exactLatex: '0' }],
-        suggestedIntervals: [{ label: 'cycle', start: '0', end: '2\\pi' }],
-        piecewiseBranches: [{ conditionLatex: 'n>0', resultLatex: '2\\pi n' }],
-        principalRangeLatex: '[-\\pi,\\pi]',
-        reducedCarrierLatex: '\\sin(x)=0',
-      },
-      exactSupplementLatex: ['x\\ne0'],
-      detailSections: [
-        { title: 'Math', lines: ['x^2'], lineKind: 'math' },
-        {
-          title: 'Mixed',
-          lines: ['Root: x=1'],
-          lineParts: [[{ kind: 'text', text: 'Root: ' }, { kind: 'math', latex: 'x=1' }]],
-        },
-        { title: 'Prose', lines: ['NaN is a token name in this explanation.'], lineKind: 'text' },
-      ],
-      solveSummaryParts: [[
-        { kind: 'text', text: 'Reduced carrier: ' },
-        { kind: 'math', latex: 'x^2=1' },
-      ]],
-      actions: [{ kind: 'send', target: 'equation', latex: 'x=1' }],
-      transformSummaryLatex: 'x\\mapsto x+1',
-      resolvedInputLatex: 'x^2=1',
-      variableSubstitutions: [{ name: 'a', valueLatex: '\\frac{1}{2}', numericValue: 0.5 }],
-      warnings: [],
+      actions: [{ kind: 'send', target: 'equation', math: canonicalMathValue('x=1') }],
       canonicalResult: buildCanonicalResultDocumentFromProducer({
         outcomeKind: 'success',
         title: 'Coverage',
@@ -103,29 +64,28 @@ describe('print hygiene fragment collection', () => {
       }),
     };
 
-    const fragments = collectDisplayOutcomeMathFragments(outcome);
-    expect(fragments).toContainEqual({ path: 'exactLatex', kind: 'primary-answer', value: '(x+1)' });
+    const fragments = collectCanonicalRuntimeMathFragments(outcome);
     expect(fragments).toContainEqual({
-      path: 'canonicalMath.canonicalLatex',
-      kind: 'canonical-payload',
+      path: 'canonicalResult.primaryMath.canonicalLatex',
+      kind: 'primary-answer',
       value: '(x+1)',
     });
     expect(fragments).toContainEqual({
-      path: 'detailSections[1].lineParts[0][1].latex',
+      path: 'canonicalResult.details[1].lines[0][1].math.canonicalLatex',
       kind: 'detail-math-part',
       value: 'x=1',
     });
     expect(fragments).toContainEqual({
-      path: 'solveSummaryParts[0][1].latex',
+      path: 'canonicalResult.summaries.solve[0][1].math.canonicalLatex',
       kind: 'solve-summary-math-part',
       value: 'x^2=1',
     });
     expect(fragments.map((fragment) => fragment.value)).not.toContain('NaN is a token name in this explanation.');
-    expect(new Set(fragments.map((fragment) => fragment.kind)).size).toBe(25);
+    expect(new Set(fragments.map((fragment) => fragment.kind)).size).toBe(24);
   });
 
   it('collects prompt carry math without treating its prose as math', () => {
-    const outcome: DisplayOutcome = {
+    const outcome: CanonicalRuntimeOutcome = {
       kind: 'prompt',
       title: 'Route',
       message: 'Internal error is prose here.',
@@ -133,7 +93,7 @@ describe('print hygiene fragment collection', () => {
       carryLatex: 'x=1',
       warnings: [],
     };
-    expect(collectDisplayOutcomeMathFragments(outcome)).toEqual([
+    expect(collectCanonicalRuntimeMathFragments(outcome)).toEqual([
       { path: 'carryLatex', kind: 'prompt-carry', value: 'x=1' },
     ]);
   });

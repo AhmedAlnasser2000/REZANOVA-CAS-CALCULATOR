@@ -12,7 +12,7 @@ import type {
   LabRunnerInputKind,
   LabRunnerSummary,
 } from '../src/lib/labs/runner-types';
-import type { DisplayOutcome } from '../src/types/calculator/display-types';
+import type { ResultProducerDraft } from '../src/types/calculator/display-types';
 
 const LAB_RUNNER_PREFIX = '/__calcwiz_labs';
 const ALL_CORPUS_CASE_ID = '__all__';
@@ -63,7 +63,7 @@ type SymbolicSearchCorpusModule = {
 type ExpressionProbeModule = {
   runExpressionBaselineProbe: (latex: string) => {
     inputLatex: string;
-    outcome: DisplayOutcome;
+    outcome: ResultProducerDraft;
   };
 };
 
@@ -237,7 +237,7 @@ async function runSymbolicSearch(
   };
 }
 
-function outcomeText(outcome: DisplayOutcome) {
+function outcomeText(outcome: ResultProducerDraft) {
   if (outcome.kind === 'success') {
     return outcome.exactLatex ?? outcome.approxText ?? outcome.title;
   }

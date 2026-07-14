@@ -62,15 +62,19 @@ import type {
 } from './workspace-surface-state';
 import type {
   AngleUnit,
-  DisplayOutcome,
-  DisplayOutcomeAction,
+  CanonicalRuntimeOutcome,
+  CanonicalRuntimeActionV1,
   MatrixOperation,
   ModeId,
   VectorOperation,
 } from '../../types/calculator';
+import {
+  canonicalMathValue,
+  createCanonicalRuntimeError,
+} from '../../lib/result-contract';
 
 type CommitLinearAlgebraOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'matrix' | 'vector',
   context?: {
@@ -193,9 +197,9 @@ export function useLinearAlgebraRuntime({
     };
   }, [activeVectorLeftId, activeVectorRightId, angleUnit, vectorA, vectorB, vectorValues]);
 
-  function handoffActions(handoff?: LinearAlgebraEquationHandoff): DisplayOutcomeAction[] | undefined {
+  function handoffActions(handoff?: LinearAlgebraEquationHandoff): CanonicalRuntimeActionV1[] | undefined {
     return handoff
-      ? [{ kind: 'send', target: 'equation', latex: handoff.latex }]
+      ? [{ kind: 'send', target: 'equation', math: canonicalMathValue(handoff.latex) }]
       : undefined;
   }
 
@@ -228,13 +232,9 @@ export function useLinearAlgebraRuntime({
     message: string,
     handoff?: LinearAlgebraEquationHandoff,
   ) {
-    commitOutcome({
-      kind: 'error',
-      title: 'Matrix',
-      error: message,
-      warnings: [],
+    commitOutcome(createCanonicalRuntimeError('Matrix', message, {
       actions: handoffActions(handoff),
-    }, inputLatex, 'matrix');
+    }), inputLatex, 'matrix');
   }
 
   function commitVectorEditorError(
@@ -242,13 +242,9 @@ export function useLinearAlgebraRuntime({
     message: string,
     handoff?: LinearAlgebraEquationHandoff,
   ) {
-    commitOutcome({
-      kind: 'error',
-      title: 'Vector',
-      error: message,
-      warnings: [],
+    commitOutcome(createCanonicalRuntimeError('Vector', message, {
       actions: handoffActions(handoff),
-    }, inputLatex, 'vector');
+    }), inputLatex, 'vector');
   }
 
   function runMatrixRequest(
@@ -296,14 +292,12 @@ export function useLinearAlgebraRuntime({
       });
     }).catch((error: unknown) => {
       discardHistoryTicket?.(historyTicket?.id);
-      const loadError: DisplayOutcome = {
-        kind: 'error',
-        title: 'Matrix',
-        error: error instanceof Error
+      const loadError = createCanonicalRuntimeError(
+        'Matrix',
+        error instanceof Error
           ? `Could not load the Matrix runtime: ${error.message}`
           : 'Could not load the Matrix runtime.',
-        warnings: [],
-      };
+      );
       const visibleStillMatrix = (getCurrentMode?.() ?? 'matrix') === 'matrix';
       commitOutcome(loadError, inputLatex, 'matrix', {
         historyTicketId: historyTicket?.id,
@@ -398,14 +392,12 @@ export function useLinearAlgebraRuntime({
       });
     }).catch((error: unknown) => {
       discardHistoryTicket?.(historyTicket?.id);
-      const loadError: DisplayOutcome = {
-        kind: 'error',
-        title: 'Vector',
-        error: error instanceof Error
+      const loadError = createCanonicalRuntimeError(
+        'Vector',
+        error instanceof Error
           ? `Could not load the Vector runtime: ${error.message}`
           : 'Could not load the Vector runtime.',
-        warnings: [],
-      };
+      );
       const visibleStillVector = (getCurrentMode?.() ?? 'vector') === 'vector';
       commitOutcome(loadError, inputLatex, 'vector', {
         historyTicketId: historyTicket?.id,

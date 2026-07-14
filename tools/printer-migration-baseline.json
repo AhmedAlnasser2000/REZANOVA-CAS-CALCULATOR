@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "DISPLAY-READ-MODEL-INVERSION1 registers the exact Display block and canonical read-model files as downstream presentation consumers of producer-owned canonical values; no result serialization or visible output changes.",
-  "registryDigest": "7ae544f305202073a85c",
+  "acceptedReason": "RESULT-COMPATIBILITY-REMOVAL1 deletes the retired canonical-to-legacy projection registration",
+  "registryDigest": "5e5b5ffff6b17b8cfbb5",
   "resultProperties": [
     "answerLatex",
     "exactLatex",
@@ -13,7 +13,6 @@
     "calculus": 0,
     "equation": 0,
     "geometry": 0,
-    "history-compatibility": 0,
     "linear-algebra": 0,
     "shared-algebra": 0,
     "shared-runtime": 0,
@@ -28,11 +27,11 @@
   "categoryCounts": {
     "canonical-printer": 5,
     "downstream-presentation": 14,
-    "input-syntax": 869,
-    "presentation-math": 2926,
-    "prose-only": 4187,
-    "reference-content": 2565,
-    "result-path": 536
+    "input-syntax": 871,
+    "presentation-math": 3086,
+    "prose-only": 4181,
+    "reference-content": 2567,
+    "result-path": 527
   },
   "compatibilityAssignments": []
 }

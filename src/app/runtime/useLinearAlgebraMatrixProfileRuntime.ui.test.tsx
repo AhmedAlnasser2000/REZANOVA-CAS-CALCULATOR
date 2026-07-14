@@ -14,9 +14,10 @@ import {
   vi,
 } from 'vitest';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   ModeId,
 } from '../../types/calculator';
+import { displayResultReadModelFromOutcome } from '../../lib/display/result/display-read-model';
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
 
 function renderMatrixRuntime() {
@@ -55,12 +56,13 @@ describe('useLinearAlgebraTableShellRuntime Matrix linear-map profile', () => {
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
-    const outcome = commitOutcome.mock.calls.at(-1)?.[0] as DisplayOutcome;
-    if (outcome.kind === 'error') {
-      throw new Error(outcome.error);
+    const outcome = commitOutcome.mock.calls.at(-1)?.[0] as CanonicalRuntimeOutcome;
+    const display = displayResultReadModelFromOutcome(outcome);
+    if (!display || display.outcomeKind === 'error') {
+      throw new Error(display?.errorText ?? 'Expected a Matrix display result.');
     }
-    expect(outcome).toMatchObject({
-      kind: 'success',
+    expect(display).toMatchObject({
+      outcomeKind: 'success',
       sourceMode: 'matrix',
       answerRows: {
         rows: [
@@ -70,11 +72,11 @@ describe('useLinearAlgebraTableShellRuntime Matrix linear-map profile', () => {
         ],
       },
     });
-    expect(outcome.kind === 'success' ? outcome.detailSections?.map((section) => section.title) : [])
+    expect(display.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Rank-Nullity Facts', 'Kernel', 'Image', 'Invertibility', 'RREF Evidence']);
-    expect(outcome.kind === 'success' ? outcome.detailSections?.[1]?.lines : [])
+    expect(display.detailSections?.[1]?.lines ?? [])
       .toContain('Nullity is 1, so nonzero vectors in the kernel map to zero.');
-    expect(outcome.kind === 'success' ? outcome.detailSections?.[2]?.lines : [])
+    expect(display.detailSections?.[2]?.lines ?? [])
       .toContain('The rank is 1, smaller than the codomain dimension 2, so some codomain directions are not reached.');
 
     expect(commitOutcome).toHaveBeenCalledWith(

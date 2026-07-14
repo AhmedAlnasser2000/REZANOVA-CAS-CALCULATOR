@@ -45,7 +45,7 @@ import type {
   AngleUnit,
   ComplexExactForm,
   ComplexSolveRegion,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   LegacyEquationAnswerMode,
   NumericSolveInterval,
@@ -88,7 +88,7 @@ function runTracedTopLevelFamily<T>(
   return run();
 }
 
-export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput): DisplayOutcome | undefined {
+export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput): ResultProducerDraft | undefined {
   const {
     equationLatex,
     answerMode,
@@ -124,13 +124,13 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
         ),
       );
       recordSelectedTargetRoutePlan(searchTrace, routePlan);
-      let deferredComplexWrapperOutcome: DisplayOutcome | undefined;
-      const finalizeTopLevelOutcome = (outcome: DisplayOutcome) =>
+      let deferredComplexWrapperOutcome: ResultProducerDraft | undefined;
+      const finalizeTopLevelOutcome = (outcome: ResultProducerDraft) =>
         withDeferredComplexWrapperBoundary(
           finalizeSelectedTargetSymbolicOutcome(outcome, selectedTarget),
           deferredComplexWrapperOutcome,
         );
-      const attachTopLevelOutcome = (outcome: DisplayOutcome) => {
+      const attachTopLevelOutcome = (outcome: ResultProducerDraft) => {
         const finalOutcome = finalizeTopLevelOutcome(outcome);
         return attachEquationRuntimeEnvelope(
           finalOutcome,
@@ -153,7 +153,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
           },
         );
         if (complexSpecialForm.kind === 'success') {
-          const outcome: DisplayOutcome = createEquationResultOutcome({
+          const outcome: ResultProducerDraft = createEquationResultOutcome({
             kind: 'success',
             title: 'Solve',
             exactLatex: complexSpecialForm.exactLatex,
@@ -280,11 +280,11 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedLinear?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'linear');
-        const outcome: DisplayOutcome = parameterizedLinear.canonicalMath
+        const outcome: ResultProducerDraft = parameterizedLinear.primaryMath
           ? createEquationFiniteRootSuccessOutcome({
               title: 'Solve',
               exactLatex: parameterizedLinear.exactLatex,
-              canonicalMath: parameterizedLinear.canonicalMath,
+              primaryMath: parameterizedLinear.primaryMath,
               exactSupplementLatex: parameterizedLinear.exactSupplementLatex,
               detailSections: parameterizedLinear.detailSections,
               warnings: [],
@@ -317,11 +317,11 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedPolynomial?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'polynomial');
-        const outcome: DisplayOutcome = parameterizedPolynomial.canonicalMath
+        const outcome: ResultProducerDraft = parameterizedPolynomial.primaryMath
           ? createEquationFiniteRootSuccessOutcome({
               title: 'Solve',
               exactLatex: parameterizedPolynomial.exactLatex,
-              canonicalMath: parameterizedPolynomial.canonicalMath,
+              primaryMath: parameterizedPolynomial.primaryMath,
               branchReadback: parameterizedPolynomial.branchReadback,
               exactSupplementLatex: parameterizedPolynomial.exactSupplementLatex,
               detailSections: parameterizedPolynomial.detailSections,
@@ -356,7 +356,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedRational?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'rational');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedRational.exactLatex,
@@ -382,7 +382,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedFactorablePolynomial?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'factorable-polynomial');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedFactorablePolynomial.exactLatex,
@@ -411,7 +411,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedSpecialFormRoots?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'special-form-roots');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedSpecialFormRoots.exactLatex,
@@ -441,7 +441,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedCarrierElimination?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'carrier-elimination');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedCarrierElimination.exactLatex,
@@ -493,7 +493,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedAlgebraicIsolation?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'algebraic-isolation');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedAlgebraicIsolation.exactLatex,
@@ -585,7 +585,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedComposition?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'composition');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedComposition.exactLatex,
@@ -618,7 +618,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (parameterizedMixedAlgebraic?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'mixed-algebraic');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: parameterizedMixedAlgebraic.exactLatex,
@@ -651,7 +651,7 @@ export function runParameterizedUnsupportedRoute(input: ParameterizedRouteInput)
 
       if (selectedTargetIsolation?.kind === 'success') {
         recordSelectedTargetFamilySuccess(searchTrace, 'top-level', 'selected-target-isolation');
-        const outcome: DisplayOutcome = createEquationResultOutcome({
+        const outcome: ResultProducerDraft = createEquationResultOutcome({
           kind: 'success',
           title: 'Solve',
           exactLatex: selectedTargetIsolation.exactLatex,

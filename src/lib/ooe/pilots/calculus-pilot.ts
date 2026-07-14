@@ -1,5 +1,5 @@
-import type { DisplayOutcome } from '../../../types/calculator';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -76,7 +76,7 @@ export type CalculusOoePilotMetadata = OoeRuntimeMetadata<
   runtimeShell?: OoeRuntimeShellEvidence;
 };
 
-export type CalculusOoePilotRunResult<TPayload = DisplayOutcome> = OoeRuntimeEnvelope<
+export type CalculusOoePilotRunResult<TPayload = CanonicalRuntimeOutcome> = OoeRuntimeEnvelope<
   TPayload,
   CalculusOoePilotMetadata
 >;
@@ -125,7 +125,7 @@ function buildCalculusOoeTraceEvents(
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
     startedMessage: 'Calculus evaluation started through the isolated Calculus runtime shell.',
-    finalMessage: 'Calculus evaluation pilot produced a stable DisplayOutcome.',
+    finalMessage: 'Calculus evaluation pilot produced a stable CanonicalRuntimeOutcome.',
   });
   const hostEvent = hostExecution
     ? buildOoeTraceEvent({
@@ -240,7 +240,7 @@ export async function runCalculusWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: OOE_CALCULUS_EVALUATE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
   getHostExecution?: () => CalculusHostExecution | undefined,
-  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+  resolveCanonicalOutcome?: (payload: TPayload) => CanonicalRuntimeOutcome,
 ): Promise<CalculusOoePilotRunResult<TPayload>> {
   const definition = calculusPilotDefinition();
   return runOoeRuntimeJob({
@@ -273,8 +273,8 @@ export async function runCalculusWithOoePilot<TPayload>(
           screen: snapshot.request?.screen,
           latexLength: snapshot.generatedLatex?.length,
         },
-        outputSummary: summarizeDisplayOutcome(
-          resolveDisplayOutcome ? resolveDisplayOutcome(payload) : payload as DisplayOutcome,
+        outputSummary: summarizeCanonicalRuntimeOutcome(
+          resolveCanonicalOutcome ? resolveCanonicalOutcome(payload) : payload as CanonicalRuntimeOutcome,
         ),
         runtimeHost: metadata.calculusHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,

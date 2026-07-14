@@ -77,7 +77,7 @@ export {
 
 export {
   SURFACE_PROTOCOL_VERSION,
-  displayOutcomeToSurfaceResultSummary,
+  canonicalOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
   surfaceFailure,
   surfaceOk,

@@ -6,6 +6,7 @@ import {
   runTableModeWithOoePilot,
   type RunTableModeRequest,
 } from '../../modes/table';
+import { buildCanonicalTableModeResult } from '../../modes/table-core';
 import {
   getBuiltinOoePlan,
   validateOoePlan,
@@ -163,7 +164,7 @@ describe('Table OOE pilot', () => {
 
     const wrapped = await runTableModeWithOoePilot(request);
 
-    expect(wrapped.payload).toEqual(runTableMode(request));
+    expect(wrapped.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)));
     expect(wrapped.ooe.job.jobId).toMatch(/^job\.table\.build\.[a-z0-9]+$/u);
     expect(wrapped.ooe.job.inputRevisionId).toMatch(/^input\.table\.build\.[a-z0-9]+$/u);
     expect(wrapped.ooe.commitAssessment).toMatchObject({
@@ -235,7 +236,7 @@ describe('Table OOE pilot', () => {
       jobId: metadata.job.jobId,
       inputRevisionId: metadata.job.inputRevisionId,
       commitDecision: 'committed',
-      message: 'Table build pilot produced a stable DisplayOutcome.',
+      message: 'Table build pilot produced a stable CanonicalRuntimeOutcome.',
     });
     expect(JSON.stringify(metadata.traceEvents)).not.toContain('"rows"');
   });
@@ -248,7 +249,7 @@ describe('Table OOE pilot', () => {
       activeInputRevisionId: 'input.table.build.stale',
     });
 
-    expect(wrapped.payload).toEqual(runTableMode(request));
+    expect(wrapped.payload).toEqual(buildCanonicalTableModeResult(runTableMode(request)));
     expect(wrapped.ooe.commitAssessment).toMatchObject({
       activeInputRevisionId: 'input.table.build.stale',
       legality: 'staleDrop',

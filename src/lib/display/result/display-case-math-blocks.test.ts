@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
+import {
+  canonicalMathValue,
+  type CanonicalResultProducerInputV1,
+} from '../../result-contract';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-result-fixture';
 
 describe('display case-math block adapter', () => {
   it('promotes Real Cardano producer case rows into a case-math answer block', () => {
     const exactLatex = String.raw`x\in\begin{cases}\left\{-\frac{A}{3}+\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}+\sqrt[3]{-\frac{q}{2}-\sqrt{\Delta}}\right\},&\Delta>0\\left\{-\frac{A}{3}\right\},&\Delta=0,\ p=0,\ q=0\end{cases}`;
     const positiveRoot = String.raw`\left\{-\frac{A}{3}+\sqrt[3]{-\frac{q}{2}+\sqrt{\Delta}}+\sqrt[3]{-\frac{q}{2}-\sqrt{\Delta}}\right\}`;
     const tripleRoot = String.raw`\left\{-\frac{A}{3}\right\}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
-      exactSupplementLatex: [String.raw`a\ne0`],
+      primaryMath: canonicalMathValue(exactLatex),
+      supplements: [String.raw`a\ne0`],
       detailSections: [{
         title: 'Real Cardano Definitions',
         lines: [String.raw`A=\frac{b}{a}`, String.raw`\Delta=\left(\frac{q}{2}\right)^2+\left(\frac{p}{3}\right)^3`],
@@ -74,10 +77,10 @@ describe('display case-math block adapter', () => {
   it('promotes Real Ferrari producer case rows into a case-math answer block', () => {
     const exactLatex = String.raw`z\in\begin{cases}\left\{-\frac{A}{4}+\sqrt{s_{+}}\right\},&s_{+}\ge0\end{cases}`;
     const positiveRoot = String.raw`\left\{-\frac{A}{4}+\sqrt{s_{+}}\right\}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Real Ferrari Definitions',
         lines: [String.raw`s_{+}=\frac{-p+\sqrt{p^2-4r}}{2}`],
@@ -119,10 +122,10 @@ describe('display case-math block adapter', () => {
 
   it('promotes grouped absolute-value formula case rows into one case-math answer block', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=b\\\Delta>0}\\z_2,&\substack{z^3+z+1=-b\\\Delta>0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Absolute-Value Formula Cases',
         lines: [
@@ -185,10 +188,10 @@ describe('display case-math block adapter', () => {
 
   it('promotes grouped square-power formula case rows into one case-math answer block', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=\sqrt{b}\\\Delta>0}\\z_2,&\substack{z^3+z+1=-\sqrt{b}\\\Delta>0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Square-Power Formula Cases',
         lines: [
@@ -237,10 +240,10 @@ describe('display case-math block adapter', () => {
 
   it('promotes grouped higher even-power formula case rows into one case-math answer block', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=\sqrt[4]{b}\\\Delta>0}\\z_2,&\substack{z^3+z+1=-\sqrt[4]{b}\\\Delta>0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Even-Power Formula Cases',
         lines: [
@@ -289,10 +292,10 @@ describe('display case-math block adapter', () => {
 
   it('promotes nth-root formula case rows and hides the single generated-branch label', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=b^3\\\Delta>0}\\z_2,&\substack{z^3+z+1=b^3\\\Delta=0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Nth-Root Formula Cases',
         lines: [
@@ -335,10 +338,10 @@ describe('display case-math block adapter', () => {
 
   it('promotes grouped trig formula case rows into one case-math answer block', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=\arcsin(b)+2\pi n\\\Delta>0}\\z_2,&\substack{z^3+z+1=\pi-\arcsin(b)+2\pi n\\\Delta=0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Trig Formula Cases',
         lines: [
@@ -391,10 +394,10 @@ describe('display case-math block adapter', () => {
 
   it('keeps formula case details on the budgeted case-math path', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=\arcsin(b)+2\pi n\\\Delta>0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Trig Formula Cases',
         lines: [
@@ -433,10 +436,10 @@ describe('display case-math block adapter', () => {
 
   it('rebuilds formula case answers when replayed latex has surrounding whitespace', () => {
     const exactLatex = `\n  ${String.raw`z\in \begin{cases}z_1,&\substack{z^3+z+1=\arcsin(b)+2\pi n\\\Delta>0}\end{cases}`}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Trig Formula Cases',
         lines: [
@@ -465,10 +468,10 @@ describe('display case-math block adapter', () => {
 
   it('parses replayed substack case latex when structured detail rows are unavailable', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{\frac{z^3+z+1}{z-m}=\arcsin(b)+2\pi n\\\Delta>0}\\z_2,&\substack{\frac{z^3+z+1}{z-m}=\pi-\arcsin(b)+2\pi n\\\Delta=0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       warnings: [],
     };
 
@@ -499,10 +502,10 @@ describe('display case-math block adapter', () => {
 
   it('hides redundant grouped absolute-value labels for exact-zero collapse answers', () => {
     const exactLatex = String.raw`z\in\begin{cases}z_1,&\substack{z^3+z+1=0\\\Delta>0}\\z_2,&\substack{z^3+z+1=0\\\Delta=0}\end{cases}`;
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Solve',
-      exactLatex,
+      primaryMath: canonicalMathValue(exactLatex),
       detailSections: [{
         title: 'Absolute-Value Formula Cases',
         lines: [

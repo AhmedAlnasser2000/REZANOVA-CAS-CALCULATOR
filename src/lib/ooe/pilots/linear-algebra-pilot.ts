@@ -1,5 +1,5 @@
-import type { DisplayOutcome } from '../../../types/calculator';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -162,7 +162,7 @@ function buildLinearAlgebraTraceEvents(
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status, kind),
     startedMessage: `Linear Algebra ${kind} started through the isolated worker runtime shell.`,
-    finalMessage: `Linear Algebra ${kind} pilot produced a stable DisplayOutcome.`,
+    finalMessage: `Linear Algebra ${kind} pilot produced a stable CanonicalRuntimeOutcome.`,
   });
   const hostEvent = hostExecution
     ? buildOoeTraceEvent({
@@ -278,7 +278,7 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: linearAlgebraPilotDefinition(kind).capabilityId },
   options?: OoeJobContextOptions,
   getHostExecution?: () => LinearAlgebraHostExecution | undefined,
-  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+  resolveCanonicalOutcome?: (payload: TPayload) => CanonicalRuntimeOutcome,
 ): Promise<LinearAlgebraOoePilotRunResult<TPayload>> {
   const definition = linearAlgebraPilotDefinition(kind);
   return runOoeRuntimeJob({
@@ -299,9 +299,9 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
     ),
     buildProvenance: ({ payload, metadata, routeSnapshot }) => {
       const snapshot = routeSnapshot as LinearAlgebraRouteSnapshot;
-      const output = resolveDisplayOutcome
-        ? resolveDisplayOutcome(payload)
-        : payload as DisplayOutcome;
+      const output = resolveCanonicalOutcome
+        ? resolveCanonicalOutcome(payload)
+        : payload as CanonicalRuntimeOutcome;
       return {
         depth: 'coarse',
         mode: snapshot.kind,
@@ -309,7 +309,7 @@ export async function runLinearAlgebraWithOoePilot<TPayload>(
         screen: snapshot.kind,
         action: snapshot.request?.operation,
         inputSummary: snapshot.request,
-        outputSummary: summarizeDisplayOutcome(output),
+        outputSummary: summarizeCanonicalRuntimeOutcome(output),
         runtimeHost: metadata.linearAlgebraHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

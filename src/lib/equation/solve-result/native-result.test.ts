@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCanonicalResultForStorage } from '../../result-contract';
 import { createEquationFiniteRootSuccessOutcome } from './finite-root-producer';
 import { requireNativeEquationResult } from './native-result';
 
@@ -8,8 +7,7 @@ describe('Equation native result parity', () => {
     const native = createEquationFiniteRootSuccessOutcome({
       title: 'Solve',
       exactLatex: 'x=1',
-      canonicalMath: {
-        version: 1,
+      primaryMath: {
         canonicalLatex: 'x=1',
         mathJson: ['Equal', 'x', 2],
       },
@@ -20,16 +18,15 @@ describe('Equation native result parity', () => {
     });
 
     expect(native.exactLatex).toBe('x=1');
-    expect(native.canonicalMath).toBeUndefined();
+    expect(native.primaryMath).toBeUndefined();
     expect(native.canonicalResult?.primaryMath).toEqual({ canonicalLatex: 'x=1' });
   });
 
-  it('retains matching documents and rejects stale legacy enrichment', () => {
+  it('retains matching documents without consulting stale draft enrichment', () => {
     const native = createEquationFiniteRootSuccessOutcome({
       title: 'Solve',
       exactLatex: 'x=1',
-      canonicalMath: {
-        version: 1,
+      primaryMath: {
         canonicalLatex: 'x=1',
         mathJson: ['Equal', 'x', 1],
       },
@@ -38,19 +35,14 @@ describe('Equation native result parity', () => {
       mathJsonRouteId: 'equation.linear',
       mathJsonSource: 'native-result-test',
     });
-    expect(requireNativeEquationResult(native)).toBe(native);
+    expect(requireNativeEquationResult(native)).toStrictEqual(native);
 
     const enriched = {
       ...native,
       exactSupplementLatex: ['x\\ne 0'],
     };
-    expect(resolveCanonicalResultForStorage(enriched)).toMatchObject({
-      ok: false,
-      omissionReason: 'invalid',
-      message: 'Native canonical result does not match the typed compatibility projection.',
+    expect(requireNativeEquationResult(enriched)).toMatchObject({
+      canonicalResult: native.canonicalResult,
     });
-    expect(() => requireNativeEquationResult(enriched)).toThrow(
-      'missing native canonical authority',
-    );
   });
 });

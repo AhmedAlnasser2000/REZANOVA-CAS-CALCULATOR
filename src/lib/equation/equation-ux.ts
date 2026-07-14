@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationRouteMeta,
   EquationScreen,
 } from '../../types/calculator';
@@ -117,7 +117,7 @@ export function getEquationMenuFooterText(screen: EquationScreen) {
 
 export function getEquationDisplayTitle(
   screen: EquationScreen,
-  outcome: DisplayOutcome | null,
+  outcome: CanonicalRuntimeOutcome | null,
 ) {
   if (screen === 'home' || screen === 'polynomialMenu' || screen === 'simultaneousMenu') {
     return 'Menu';

@@ -11,7 +11,7 @@ import {
 } from '../../result-contract';
 import type { ComplexLocusPolicyReport } from '../../equation/complex/locus-policy';
 import { buildComplexLocusEvidenceSections } from '../../equation/complex/locus-evidence';
-import type { ComplexSolveRegion, DisplayOutcome, EquationAnswerMode, PlannerBadge, SerializableMathJson, SolutionKind } from '../../../types/calculator';
+import type { ComplexSolveRegion, ResultProducerDraft, EquationAnswerMode, PlannerBadge, SerializableMathJson, SolutionKind } from '../../../types/calculator';
 import {
   createEquationResultOutcome,
   type EquationResultProducerInput,
@@ -25,11 +25,11 @@ import {
 const ce = new ComputeEngine();
 
 export function attachEquationRuntimeEnvelope(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   originalLatex: string,
   resolvedLatex: string,
   plannerBadges: PlannerBadge[] | undefined,
-  runtimeAdvisories?: DisplayOutcome['runtimeAdvisories'],
+  runtimeAdvisories?: ResultProducerDraft['runtimeAdvisories'],
   resolvedMathJson?: SerializableMathJson,
 ) {
   const attached = attachRuntimeEnvelope(outcome, {
@@ -74,7 +74,7 @@ export function attachEquationRuntimeEnvelope(
   };
 }
 
-export function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
+export function unsafeSymbolicReadbackOutcome(target?: string): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -101,13 +101,15 @@ export function unsafeSymbolicReadbackOutcome(target?: string): DisplayOutcome {
   });
 }
 
-export function ensureSafeEquationSuccessOutcome(outcome: DisplayOutcome, target?: string): DisplayOutcome {
-  return outcome.kind === 'success' && hasUnsafeSymbolicOutput(outcome)
+export function ensureSafeEquationSuccessOutcome(outcome: ResultProducerDraft, target?: string): ResultProducerDraft {
+  return outcome.kind === 'success'
+    && outcome.canonicalResult
+    && hasUnsafeSymbolicOutput({ kind: 'success', canonicalResult: outcome.canonicalResult })
     ? unsafeSymbolicReadbackOutcome(target)
     : outcome;
 }
 
-export function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: EquationAnswerMode): DisplayOutcome {
+export function withEquationAnswerMode(outcome: ResultProducerDraft, answerMode: EquationAnswerMode): ResultProducerDraft {
   if (outcome.kind === 'prompt' || outcome.solutionKind === 'approximate-numeric') {
     return outcome;
   }
@@ -123,7 +125,7 @@ export function withEquationAnswerMode(outcome: DisplayOutcome, answerMode: Equa
   };
 }
 
-export function withEquationSolutionKind(outcome: DisplayOutcome, solutionKind: SolutionKind): DisplayOutcome {
+export function withEquationSolutionKind(outcome: ResultProducerDraft, solutionKind: SolutionKind): ResultProducerDraft {
   if (outcome.kind !== 'success' || outcome.solutionKind) {
     return outcome;
   }
@@ -139,15 +141,15 @@ export function withEquationSolutionKind(outcome: DisplayOutcome, solutionKind: 
   };
 }
 
-export function withEquationNumericRouteKind(outcome: DisplayOutcome): DisplayOutcome {
+export function withEquationNumericRouteKind(outcome: ResultProducerDraft): ResultProducerDraft {
   return withEquationSolutionKind(outcome, 'approximate-numeric');
 }
 
-export function finalizeSelectedTargetSymbolicOutcome(outcome: DisplayOutcome, target: string): DisplayOutcome {
+export function finalizeSelectedTargetSymbolicOutcome(outcome: ResultProducerDraft, target: string): ResultProducerDraft {
   return ensureSafeEquationSuccessOutcome(formatNamedEquationOutcomeTarget(outcome, target), target);
 }
 
-export function numericIntervalSolveNeedsIntervalOutcome(): DisplayOutcome {
+export function numericIntervalSolveNeedsIntervalOutcome(): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -171,7 +173,7 @@ export function numericIntervalSolveNeedsIntervalOutcome(): DisplayOutcome {
   });
 }
 
-export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: string[]): DisplayOutcome {
+export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: string[]): ResultProducerDraft {
   const missingParameters = [...new Set(parameters)];
   const parameterText = missingParameters.join(', ');
   const missingValueLabel = missingParameters.length === 1 ? 'value' : 'values';
@@ -208,7 +210,7 @@ export function numericIntervalSolveNeedsNumericParametersOutcome(parameters: st
   });
 }
 
-export function complexRegionSolveNeedsNumericParametersOutcome(parameters: string[], protectedTarget?: string): DisplayOutcome {
+export function complexRegionSolveNeedsNumericParametersOutcome(parameters: string[], protectedTarget?: string): ResultProducerDraft {
   const missingParameters = [...new Set(parameters)];
   const parameterText = missingParameters.join(', ');
   const missingValueLabel = missingParameters.length === 1 ? 'value' : 'values';
@@ -251,7 +253,7 @@ export function complexRegionSolveNeedsNumericParametersOutcome(parameters: stri
   });
 }
 
-export function exactModeNeedsExactOutcome(target?: string): DisplayOutcome {
+export function exactModeNeedsExactOutcome(target?: string): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -316,7 +318,7 @@ export function containsTargetedAbsLatex(latex: string, target: string) {
   }
 }
 
-export function complexIntentRequiredOutcome(): DisplayOutcome {
+export function complexIntentRequiredOutcome(): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -344,7 +346,7 @@ export function complexIntentRequiredOutcome(): DisplayOutcome {
   });
 }
 
-export function unsupportedComplexPreimageOutcome(): DisplayOutcome {
+export function unsupportedComplexPreimageOutcome(): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -379,7 +381,7 @@ export function unsupportedComplexLocusOutcome(
     target?: string;
     complexRegion?: ComplexSolveRegion;
   } = {},
-): DisplayOutcome {
+): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -413,7 +415,7 @@ export function unsupportedComplexLocusOutcome(
   });
 }
 
-function exactModeShouldRejectNumericOnlyOutcome(outcome: DisplayOutcome) {
+function exactModeShouldRejectNumericOnlyOutcome(outcome: ResultProducerDraft) {
   return outcome.kind === 'success'
     && (
       outcome.resultOrigin === 'numeric-fallback'
@@ -421,7 +423,7 @@ function exactModeShouldRejectNumericOnlyOutcome(outcome: DisplayOutcome) {
     );
 }
 
-function answerPayloadContainsImaginaryUnit(outcome: DisplayOutcome) {
+function answerPayloadContainsImaginaryUnit(outcome: ResultProducerDraft) {
   if (outcome.kind !== 'success') {
     return false;
   }
@@ -433,7 +435,7 @@ function answerPayloadContainsImaginaryUnit(outcome: DisplayOutcome) {
   return /\\imaginaryI|(?:^|[^A-Za-z\\])i(?:$|[^A-Za-z])/u.test(payload);
 }
 
-function realDomainComplexRootsOutcome(target: string): DisplayOutcome {
+function realDomainComplexRootsOutcome(target: string): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -463,7 +465,7 @@ function isTargetDependentConditionSupplement(fact: string, target: string) {
     && new RegExp(`(^|[^A-Za-z])${target.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')}([^A-Za-z]|$)`, 'u').test(fact);
 }
 
-function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: string): DisplayOutcome {
+function withScopedTargetDependentConditions(outcome: ResultProducerDraft, target: string): ResultProducerDraft {
   if (outcome.kind !== 'success' || !outcome.exactSupplementLatex?.length) {
     return outcome;
   }
@@ -504,7 +506,7 @@ function withScopedTargetDependentConditions(outcome: DisplayOutcome, target: st
 }
 
 export function finalizeSharedSymbolicOutcome(input: {
-  sharedOutcome: DisplayOutcome;
+  sharedOutcome: ResultProducerDraft;
   solveTarget: string;
   answerMode: EquationAnswerMode;
   equationLatex: string;
@@ -513,7 +515,7 @@ export function finalizeSharedSymbolicOutcome(input: {
   sharedResolvedMathJson?: SerializableMathJson;
   allowNumericOnly?: boolean;
   realDomainOnly?: boolean;
-}): DisplayOutcome {
+}): ResultProducerDraft {
   const outcome = withScopedTargetDependentConditions(
     ensureSafeEquationSuccessOutcome(rewriteEquationOutcomeTarget(
       input.sharedOutcome,

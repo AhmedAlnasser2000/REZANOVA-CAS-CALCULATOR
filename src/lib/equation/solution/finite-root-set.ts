@@ -1,11 +1,11 @@
 import type {
   CandidateValidationResult,
   DisplayBranchReadback,
-  DisplayMathPayloadV1,
+  CanonicalMathValueV1,
   SerializableMathJson,
 } from '../../../types/calculator';
 import {
-  profileDomainDisplayMathPayload,
+  profileDomainMathValue,
 } from '../../display/printer';
 import {
   exactLatexForFiniteBranchExpressions,
@@ -47,7 +47,7 @@ export type FiniteRootSetRenderOptions = {
 
 export type FiniteRootSetRender = {
   exactLatex?: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   branchesLatex: string[];
   rejectedBranches: FiniteRootBranch[];
@@ -86,9 +86,9 @@ function profiledFiniteRootMath(
   const answerNode: SerializableMathJson = nodes.length === 1
     ? ['Equal', rootSet.targetLatex, nodes[0]]
     : ['Element', rootSet.targetLatex, ['Set', ...nodes]];
-  const profiled = profileDomainDisplayMathPayload(exactLatex, answerNode);
+  const profiled = profileDomainMathValue(exactLatex, answerNode);
   return profiled
-    ? { exactLatex: profiled.canonicalLatex, canonicalMath: profiled.canonicalMath }
+    ? { exactLatex: profiled.canonicalLatex, primaryMath: profiled.primaryMath }
     : { exactLatex };
 }
 
@@ -173,7 +173,7 @@ export function renderFiniteRootSet(
 
   return {
     exactLatex: profiledMath.exactLatex,
-    ...(profiledMath.canonicalMath ? { canonicalMath: profiledMath.canonicalMath } : {}),
+    ...(profiledMath.primaryMath ? { primaryMath: profiledMath.primaryMath } : {}),
     branchReadback: finiteBranchReadbackForFiniteBranchExpressions({
       targetLatex: rootSet.targetLatex,
       branches,

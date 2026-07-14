@@ -20,7 +20,7 @@ import {
   runVectorModeWithOoePilot,
   type RunVectorModeRequest,
 } from './vector';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../result-contract';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../result-contract';
 
 type Listener = (event: MessageEvent<LinearAlgebraWorkerOutboundMessage>) => void;
 type ErrorListener = (event: Event) => void;
@@ -115,11 +115,11 @@ const runtimeContext = (shouldCancel: () => boolean) => ({
 });
 
 const runCanonicalMatrixMode = (request: RunMatrixModeRequest) => (
-  projectDisplayOutcomeToCanonicalRuntimeOutcome(runMatrixMode(request), 'Matrix test worker')
+  finalizeCanonicalRuntimeOutcomeFromProducer(runMatrixMode(request), 'Matrix test worker')
 );
 
 const runCanonicalVectorMode = (request: RunVectorModeRequest) => (
-  projectDisplayOutcomeToCanonicalRuntimeOutcome(runVectorMode(request), 'Vector test worker')
+  finalizeCanonicalRuntimeOutcomeFromProducer(runVectorMode(request), 'Vector test worker')
 );
 
 beforeEach(() => {
@@ -151,8 +151,8 @@ describe('Matrix and Vector worker runtime shells', () => {
       createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalVectorMode),
     });
 
-    expect(matrix.payload).toEqual(runMatrixMode(matrixRequest));
-    expect(vector.payload).toEqual(runVectorMode(vectorRequest));
+    expect(matrix.payload).toEqual(runCanonicalMatrixMode(matrixRequest));
+    expect(vector.payload).toEqual(runCanonicalVectorMode(vectorRequest));
     expect(matrix.ooe.linearAlgebraHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'matrix-worker-runtime',

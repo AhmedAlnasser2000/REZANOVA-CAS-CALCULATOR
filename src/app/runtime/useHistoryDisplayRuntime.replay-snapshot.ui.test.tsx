@@ -4,7 +4,8 @@ import {
   DEFAULT_SETTINGS,
   type Settings,
 } from '../../types/calculator';
-import { withCanonicalResult } from './canonical-outcome-test-helper';
+import { canonicalMathValue } from '../../lib/result-contract';
+import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
 import { useHistoryDisplayRuntime } from './useHistoryDisplayRuntime';
 
 vi.mock('../../lib/app-state/persistence', () => ({
@@ -76,10 +77,10 @@ describe('useHistoryDisplayRuntime replay snapshot', () => {
     });
     act(() => {
       hook.result.current.commitOutcome(
-        withCanonicalResult({
-          kind: 'success',
+        canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Numeric',
-          exactLatex: '\\frac{\\pi}{2}',
+          primaryMath: canonicalMathValue('\\frac{\\pi}{2}'),
           warnings: [],
         }),
         'arcsin(1)',
@@ -126,17 +127,12 @@ describe('useHistoryDisplayRuntime replay snapshot', () => {
 
     expect(hook.result.current.displayOutcome).toMatchObject({
       kind: 'success',
-      title: 'Equation Solution',
-      exactLatex: 'x=\\pm 2',
-      detailSections: [{
-        title: 'Verification',
-        lines: ['Substitute x=2'],
-        lineParts: [[
-          { kind: 'text', text: 'Substitute ' },
-          { kind: 'math', latex: 'x=2' },
-        ]],
-      }],
-      warnings: ['Both roots were verified.'],
+      canonicalResult: {
+        title: 'Equation Solution',
+        primaryMath: canonicalMathValue('x=\\pm 2'),
+        details: [{ title: 'Verification' }],
+        warnings: ['Both roots were verified.'],
+      },
     });
   });
 });

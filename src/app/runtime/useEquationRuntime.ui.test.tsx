@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRef } from 'react';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   HistoryEntry,
   ModeId,
   SettingsPatch,
@@ -29,7 +29,7 @@ function renderEquationRuntime(
     } | null;
     mainFieldLatex?: string;
     storedVariables?: StoredVariableValue[];
-    displayOutcome?: DisplayOutcome | null;
+    displayOutcome?: CanonicalRuntimeOutcome | null;
     equationDomainIntent?: 'real' | 'complex';
     complexExactForm?: 'rectangular' | 'polar' | 'cis';
   } = {},
@@ -55,7 +55,7 @@ function renderEquationRuntime(
       replayVariableSubstitutions: typeof initialProps.replayVariableSubstitutions;
       mainFieldLatex?: string;
       storedVariables?: StoredVariableValue[];
-      displayOutcome?: DisplayOutcome | null;
+      displayOutcome?: CanonicalRuntimeOutcome | null;
     }) => {
       currentModeRef.current = props.currentMode;
       const mainFieldRef = useRef(null);
@@ -345,15 +345,21 @@ describe('useEquationRuntime', () => {
   });
 
   it('keeps periodic numeric guidance compact until numeric interval is enabled', () => {
-    const periodicGuidance: DisplayOutcome = {
+    const periodicGuidance: CanonicalRuntimeOutcome = {
       kind: 'error',
-      title: 'Solve',
-      error: 'Periodic numeric solving needs a real interval before it can enumerate local roots.',
-      warnings: [],
-      solutionKind: 'approximate-numeric',
-      answerDomain: 'real',
-      solveBadges: ['Numeric Interval', 'Candidate Checked'],
-      numericMethod: 'Real periodic interval numeric solve',
+      canonicalResult: {
+        version: 1,
+        outcomeKind: 'error',
+        title: 'Solve',
+        error: 'Periodic numeric solving needs a real interval before it can enumerate local roots.',
+        warnings: [],
+        metadata: {
+          solutionKind: 'approximate-numeric',
+          answerDomain: 'real',
+          solveBadges: ['Numeric Interval', 'Candidate Checked'],
+          numericMethod: 'Real periodic interval numeric solve',
+        },
+      },
     };
     const { hook } = renderEquationRuntime({ displayOutcome: periodicGuidance });
 
@@ -380,13 +386,19 @@ describe('useEquationRuntime', () => {
   });
 
   it('keeps exact periodic symbolic output from opening numeric interval panel', () => {
-    const exactPeriodic: DisplayOutcome = {
+    const exactPeriodic: CanonicalRuntimeOutcome = {
       kind: 'success',
-      title: 'Solve',
-      exactLatex: 'x\\in\\left\\{\\pi n\\mid n\\in\\mathbb{Z}\\right\\}',
-      warnings: [],
-      solutionKind: 'exact-symbolic',
-      answerDomain: 'real',
+      canonicalResult: {
+        version: 1,
+        outcomeKind: 'success',
+        title: 'Solve',
+        primaryMath: { canonicalLatex: 'x\\in\\left\\{\\pi n\\mid n\\in\\mathbb{Z}\\right\\}' },
+        warnings: [],
+        metadata: {
+          solutionKind: 'exact-symbolic',
+          answerDomain: 'real',
+        },
+      },
     };
     const { hook } = renderEquationRuntime({ displayOutcome: exactPeriodic });
 

@@ -11,9 +11,6 @@ describe('workspace display state canonical consumers', () => {
       { ansLatex: '0', displayOutcome: null, replayVariableSubstitutions: null },
       {
         kind: 'success',
-        title: 'Stale result',
-        exactLatex: 'x=999',
-        warnings: [],
         canonicalResult: buildCanonicalResultDocumentFromProducer({
           outcomeKind: 'success',
           title: 'Canonical result',
@@ -24,7 +21,9 @@ describe('workspace display state canonical consumers', () => {
     );
 
     expect(next.ansLatex).toBe('x=1');
-    expect(next.displayOutcome).toMatchObject({ exactLatex: 'x=999' });
+    expect(next.displayOutcome).toMatchObject({
+      canonicalResult: { primaryMath: { canonicalLatex: 'x=1' } },
+    });
   });
 
   it('rejects string-only live state instead of retaining compatibility truth', () => {
@@ -35,7 +34,7 @@ describe('workspace display state canonical consumers', () => {
         title: 'Legacy result',
         exactLatex: 'x=1',
         warnings: [],
-      },
+      } as never,
     )).toThrow('requires canonical result authority: missing-document');
   });
 });

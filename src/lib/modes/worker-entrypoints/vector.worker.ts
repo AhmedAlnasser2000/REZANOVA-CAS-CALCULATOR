@@ -1,5 +1,5 @@
 import { runVectorMode, type RunVectorModeRequest } from '../vector';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import type {
   LinearAlgebraWorkerInboundMessage,
   LinearAlgebraWorkerOutboundMessage,
@@ -30,7 +30,7 @@ workerSelf.addEventListener('message', (event) => {
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      payload: projectDisplayOutcomeToCanonicalRuntimeOutcome(
+      payload: finalizeCanonicalRuntimeOutcomeFromProducer(
         runVectorMode(event.data.request),
         'Vector worker',
       ),

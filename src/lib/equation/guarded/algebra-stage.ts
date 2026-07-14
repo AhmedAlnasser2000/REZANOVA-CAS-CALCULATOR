@@ -3,7 +3,7 @@ import { mergeSolveDomainConstraints as mergeConstraints } from '../../algebra/r
 import { mergeExactSupplementLatex } from '../../algebra/exact-supplements';
 import type {
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   DisplaySolveSummary,
   EquationExecutionBudget,
   GuardedSolveRequest,
@@ -60,7 +60,7 @@ const REPEATED_CLEARING_BUDGET_ERROR = 'This recognized repeated-clearing radica
 
 function rebuildEquationOutcome(
   input: EquationResultProducerInput,
-  previous: Exclude<DisplayOutcome, { kind: 'prompt' }>,
+  previous: Exclude<ResultProducerDraft, { kind: 'prompt' }>,
 ) {
   return createEquationResultOutcome(input, {
     mathValues: equationMathValuesFromOwnedLeaves({
@@ -75,12 +75,12 @@ function rebuildEquationOutcome(
 }
 
 function appendSolveMetadata(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   badges: SolveBadge[],
   summary: DisplaySolveSummary,
   detailSections: DisplayDetailSection[] = [],
   summaryMergeMode: 'prepend' | 'replace' = 'prepend',
-): DisplayOutcome {
+): ResultProducerDraft {
   if (outcome.kind === 'prompt') {
     return outcome;
   }
@@ -113,7 +113,7 @@ function recurseTransform(
   trail: Set<string>,
   executionBudget: EquationExecutionBudget,
   runGuardedEquationSolve: GuardedSolveRunner,
-): DisplayOutcome | null {
+): ResultProducerDraft | null {
   if (depth >= executionBudget.maxRecursionDepth) {
     return errorOutcome(
       'Solve',
@@ -166,7 +166,7 @@ function recurseTransform(
         [],
         transform.solveBadges,
         transform,
-      ) as Extract<DisplayOutcome, { kind: 'error' }>;
+      ) as Extract<ResultProducerDraft, { kind: 'error' }>;
       if (transform.emptyDetailSections?.length) {
         return rebuildEquationOutcome({
           ...outcome,
@@ -249,7 +249,7 @@ function recurseTransform(
       recursiveOutcome.rejectedCandidateCount,
       recursiveOutcome.substitutionDiagnostics,
       recursiveOutcome.numericMethod,
-    ) as Extract<DisplayOutcome, { kind: 'error' }>;
+    ) as Extract<ResultProducerDraft, { kind: 'error' }>;
     if (transform.unresolvedDetailSections?.length) {
       return rebuildEquationOutcome({
         ...outcome,
@@ -262,7 +262,7 @@ function recurseTransform(
     return outcome;
   }
 
-  const supplementedOutcome: DisplayOutcome =
+  const supplementedOutcome: ResultProducerDraft =
     recursiveOutcome.kind === 'success'
       ? (() => {
           const newTransformConstraints = subtractConstraints(
@@ -305,7 +305,7 @@ function algebraTransformSolve(
   trail: Set<string>,
   executionBudget: EquationExecutionBudget,
   runGuardedEquationSolve: GuardedSolveRunner,
-): DisplayOutcome | null {
+): ResultProducerDraft | null {
   const rationalTransform = matchRationalTransform(request);
   if (rationalTransform) {
     const recursive = recurseTransform(

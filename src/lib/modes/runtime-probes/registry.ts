@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   LauncherLeafId,
 } from '../../../types/calculator';
 import type { OoeJobContextOptions } from '../../ooe/job-launch/job-contract';
@@ -63,15 +63,15 @@ export type WorkspaceRuntimeProbe = {
   request: object;
   requestSnapshot: object;
   execute: (options?: OoeJobContextOptions) => Promise<RuntimeProbeExecution>;
-  outcome: (payload: unknown) => DisplayOutcome;
+  outcome: (payload: unknown) => ResultProducerDraft;
 };
 
 function directOutcome(payload: unknown) {
-  return payload as DisplayOutcome;
+  return payload as ResultProducerDraft;
 }
 
 function nestedOutcome(payload: unknown) {
-  return (payload as { outcome: DisplayOutcome }).outcome;
+  return (payload as { outcome: ResultProducerDraft }).outcome;
 }
 
 const calculateRequest: RunCalculateRuntimeRequest = {

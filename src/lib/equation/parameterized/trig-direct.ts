@@ -682,7 +682,7 @@ export function solveDirectParameterizedTrigFromJson(
   });
 
   const exactLatex = renderedFamilies?.exactLatex ?? exactLatexForSolutions(target, solutionExpressions);
-  const canonicalMath = solutionMathJson.length === solutionExpressions.length
+  const primaryMath = solutionMathJson.length === solutionExpressions.length
     ? {
         version: 1 as const,
         canonicalLatex: exactLatex,
@@ -698,7 +698,7 @@ export function solveDirectParameterizedTrigFromJson(
     target,
     parameterNames,
     exactLatex,
-    ...(canonicalMath ? { canonicalMath } : {}),
+    ...(primaryMath ? { primaryMath } : {}),
     branchReadback: renderedFamilies?.branchReadback ?? branchReadbackForSolutions(target, solutionExpressions),
     exactSupplementLatex,
     detailSections,

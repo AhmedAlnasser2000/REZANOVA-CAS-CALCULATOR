@@ -3,7 +3,7 @@ import type {
   ComplexExactForm,
   DisplayBranchReadback,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
+  CanonicalMathValueV1,
   OutputStyle,
 } from '../../../types/calculator';
 import { equationLabelLineParts } from '../../display/result-detail-lines';
@@ -60,7 +60,7 @@ export type EquationAlgebraicIsolationSuccess = {
   parameterNames: string[];
   generatedEquationLatex: string;
   exactLatex: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   approxText?: string;
   exactSupplementLatex?: string[];

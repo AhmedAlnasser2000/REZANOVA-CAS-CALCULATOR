@@ -395,7 +395,7 @@ export function finalizeGeneratedExpLogSolve({
     if (domainStop) {
       return domainStop;
     }
-    const canonicalMath = Array.isArray(generatedEquationMathJson)
+    const primaryMath = Array.isArray(generatedEquationMathJson)
       && generatedEquationMathJson[0] === 'Equal'
       && generatedEquationMathJson[1] === target
       ? {
@@ -409,7 +409,7 @@ export function finalizeGeneratedExpLogSolve({
       target,
       parameterNames,
       exactLatex: `${target}=${directAssignment}`,
-      ...(canonicalMath ? { canonicalMath } : {}),
+      ...(primaryMath ? { primaryMath } : {}),
       branchReadback: finiteBranchReadbackForNormalizedBranches({
         targetLatex: target,
         branchesLatex: [directAssignment],
@@ -561,7 +561,7 @@ export function finalizeGeneratedExpLogSolve({
     familyLines,
   });
   const solutionMathJson = solved.solutionMathJson;
-  const canonicalMath = solutionMathJson?.length === renderedFamily.branchesLatex.length
+  const primaryMath = solutionMathJson?.length === renderedFamily.branchesLatex.length
     ? {
         version: 1 as const,
         canonicalLatex: renderedFamily.exactLatex,
@@ -576,7 +576,7 @@ export function finalizeGeneratedExpLogSolve({
     target,
     parameterNames,
     exactLatex: renderedFamily.exactLatex,
-    ...(canonicalMath ? { canonicalMath } : {}),
+    ...(primaryMath ? { primaryMath } : {}),
     branchReadback: renderedFamily.branchReadback,
     approxText: approxTextForBranches(target, renderedFamily.branchesLatex),
     exactSupplementLatex,

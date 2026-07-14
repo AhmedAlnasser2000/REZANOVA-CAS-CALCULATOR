@@ -226,7 +226,7 @@ const MATH_CAPABILITY_READINESS: readonly MathCapabilityReadinessDescriptor[] = 
     label: 'Result Envelope',
     layer: 'result-surface',
     status: 'ready',
-    summary: 'DisplayOutcome and runtime envelope helpers provide shared result metadata and detail sections.',
+    summary: 'ResultProducerDraft and runtime envelope helpers provide shared result metadata and detail sections.',
     evidence: ['src/types/calculator/display-types.ts', 'src/lib/kernel/runtime-envelope.ts'],
     blockers: [],
     dependsOn: [],

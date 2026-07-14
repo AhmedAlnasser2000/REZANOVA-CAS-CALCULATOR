@@ -1,9 +1,9 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import {
   runEquationMode,
   runEquationModeForIsolatedWorker,
 } from '../equation';
-import { projectCanonicalRuntimeOutcomeToDisplayOutcome } from '../../result-contract';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { makeRequest } from './test-support';
 
@@ -302,7 +302,7 @@ describe('Equation mode parameterized families', () => {
     expect(cubic.exactLatex).toContain('z\\in\\begin{cases}');
     expect(cubic.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
     expect(cubic.exactSupplementLatex?.some((fact) => fact.includes('>0'))).toBe(true);
-    expect(buildDisplayBlocks(cubic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(cubic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     expect(symbolicBaseQuartic.answerDomain).toBe('real');
     expect(symbolicBaseQuartic.exactSupplementLatex).toContain('a>0');
     expect(symbolicBaseQuartic.exactSupplementLatex).toContain('a\\ne1');
@@ -409,7 +409,7 @@ describe('Equation mode parameterized families', () => {
     expect(result.exactLatex).toContain('z\\in\\begin{cases}');
     expect(result.exactSupplementLatex).toContain('b\\ge0');
     expect(result.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
   it('solves Real square-root rational formula handoffs through Equation mode case math', () => {
@@ -449,10 +449,10 @@ describe('Equation mode parameterized families', () => {
     expect(cubicSlash.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
     expect(quartic.detailSections?.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
     expect(quarticSlash.detailSections?.some((section) => section.title === 'Real Ferrari Cases')).toBe(true);
-    expect(buildDisplayBlocks(cubic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
-    expect(buildDisplayBlocks(cubicSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
-    expect(buildDisplayBlocks(quartic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
-    expect(buildDisplayBlocks(quarticSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(cubic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(cubicSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(quartic).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(quarticSlash).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
   it('solves Real absolute-value formula handoffs through grouped Equation mode case math', () => {
@@ -477,7 +477,7 @@ describe('Equation mode parameterized families', () => {
       expect(result.answerDomain).toBe('real');
       expect(result.exactSupplementLatex).toContain('b\\ge0');
       expect(result.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
-      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      const answer = buildProducerDisplayBlocks(result).find((block) => block.id === 'answer');
       expect(answer?.renderKind).toBe('caseMath');
       expect(answer?.lines?.some((line) => line.groupLatex?.endsWith('=b'))).toBe(true);
       expect(answer?.lines?.some((line) => line.groupLatex?.endsWith('=-b'))).toBe(true);
@@ -511,7 +511,7 @@ describe('Equation mode parameterized families', () => {
       expect(result.exactSupplementLatex).toContain('b\\ge0');
       expect(result.exactSupplementLatex).toContain('z-m\\ne0');
       expect(result.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
-      expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+      expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     }
     for (const result of [cubicSlash, quarticSlash]) {
       expect(result.kind).toBe('error');
@@ -550,7 +550,7 @@ describe('Equation mode parameterized families', () => {
       expect(result.answerDomain).toBe('real');
       expect(result.exactSupplementLatex).toContain('b\\ge0');
       expect(result.detailSections?.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
-      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      const answer = buildProducerDisplayBlocks(result).find((block) => block.id === 'answer');
       expect(answer?.renderKind).toBe('caseMath');
       expect(answer?.lines?.some((line) => line.groupLatex?.includes('=\\sqrt{b}'))).toBe(true);
       expect(answer?.lines?.some((line) => line.groupLatex?.includes('=-\\sqrt{b}'))).toBe(true);
@@ -583,7 +583,7 @@ describe('Equation mode parameterized families', () => {
       expect(result.exactSupplementLatex).toContain('b\\ge0');
       expect(result.exactSupplementLatex).toContain('z-m\\ne0');
       expect(result.detailSections?.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
-      expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+      expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     }
   });
 
@@ -606,7 +606,7 @@ describe('Equation mode parameterized families', () => {
     for (const result of [cubic, quartic]) {
       expect(result.exactSupplementLatex ?? []).not.toContain('b\\ge0');
       expect(result.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
-      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      const answer = buildProducerDisplayBlocks(result).find((block) => block.id === 'answer');
       expect(answer?.renderKind).toBe('caseMath');
       const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
       expect(groups).toHaveLength(0);
@@ -634,7 +634,7 @@ describe('Equation mode parameterized families', () => {
     for (const result of [cubic, quartic]) {
       expect(result.exactSupplementLatex ?? []).not.toContain('0\\ge0');
       expect(result.detailSections?.some((section) => section.title === 'Square-Power Formula Cases')).toBe(true);
-      const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+      const answer = buildProducerDisplayBlocks(result).find((block) => block.id === 'answer');
       expect(answer?.renderKind).toBe('caseMath');
       const groups = [...new Set((answer?.lines ?? []).map((line) => line.groupLatex).filter(Boolean))];
       expect(groups).toHaveLength(0);
@@ -682,7 +682,7 @@ describe('Equation mode parameterized families', () => {
         equationSolveTarget: 'z',
         equationDomainIntent: 'real',
       });
-      return projectCanonicalRuntimeOutcomeToDisplayOutcome(result.outcome);
+      return result.outcome;
     };
     const direct = await solve('z^3+z+1=0');
     const absoluteZero = await solve('\\left|z^3+z+1\\right|=0');
@@ -692,10 +692,10 @@ describe('Equation mode parameterized families', () => {
     if (direct.kind !== 'success' || absoluteZero.kind !== 'success') {
       throw new Error('Expected isolated worker path to keep Real Cardano/formula fallback live');
     }
-    expect(direct.exactLatex).toContain('z\\in\\begin{cases}');
-    expect(direct.detailSections?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
-    expect(absoluteZero.exactLatex).toContain('z^3+z+1=0');
-    expect(absoluteZero.detailSections?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
+    expect(direct.canonicalResult.primaryMath?.canonicalLatex).toContain('z\\in\\begin{cases}');
+    expect(direct.canonicalResult.details?.some((section) => section.title === 'Real Cardano Cases')).toBe(true);
+    expect(absoluteZero.canonicalResult.primaryMath?.canonicalLatex).toContain('z^3+z+1=0');
+    expect(absoluteZero.canonicalResult.details?.some((section) => section.title === 'Absolute-Value Formula Cases')).toBe(true);
   });
 
   it('keeps exact negative absolute-value formula wrappers domain-empty', () => {
@@ -892,3 +892,7 @@ describe('Equation mode parameterized families', () => {
     expect(text).not.toMatch(/(?:EQUATION-)?PARAM\d|milestone/i);
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

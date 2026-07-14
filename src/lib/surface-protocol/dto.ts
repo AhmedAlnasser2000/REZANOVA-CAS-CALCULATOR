@@ -1,8 +1,8 @@
 import type {
   AnswerDomain,
+  CanonicalRuntimeOutcome,
   CanonicalResultDetailPartV1,
   CanonicalResultDocumentV1,
-  DisplayOutcome,
   SolutionKind,
 } from '../../types/calculator';
 import { resolveCanonicalResultForConsumer } from '../result-contract/consumer';
@@ -221,9 +221,9 @@ export function emptySurfaceResultSummary(
   };
 }
 
-export function displayOutcomeToSurfaceResultSummary(
+export function canonicalOutcomeToSurfaceResultSummary(
   workspaceKind: SurfaceWorkspaceKind,
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
 ): SurfaceResultSummaryDto {
   if (outcome.kind === 'prompt') {
     const primaryLatex = outcome.carryLatex.trim() || undefined;

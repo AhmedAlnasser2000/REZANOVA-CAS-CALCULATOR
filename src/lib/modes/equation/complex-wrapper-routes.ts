@@ -1,7 +1,7 @@
 import type {
   AngleUnit,
   ComplexExactForm,
-  DisplayOutcome,
+  ResultProducerDraft,
   OutputStyle,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -29,7 +29,7 @@ type ComplexWrapperRoutesInput = {
   stopOnRecognizedPreimageUnsupported?: boolean;
 };
 
-export function tryComplexWrapperRoutes(input: ComplexWrapperRoutesInput): DisplayOutcome | undefined {
+export function tryComplexWrapperRoutes(input: ComplexWrapperRoutesInput): ResultProducerDraft | undefined {
   const root = tryComplexRootWrapperRoute(input);
   if (root) {
     return root;

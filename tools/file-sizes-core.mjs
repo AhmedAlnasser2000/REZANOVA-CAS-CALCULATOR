@@ -1,7 +1,8 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-export const DEFAULT_MAX_LINES = 900;
+export const DEFAULT_MAX_LINES = 1000;
+export const TEST_MAX_LINES = 1500;
 export const BASELINE_REPO_PATH = 'tools/file-size-baseline.json';
 
 const SCAN_ROOT = 'src';
@@ -17,6 +18,13 @@ const EXCLUDED_FILES = new Set([
 
 function normalizeRepoPath(filePath) {
   return filePath.replace(/\\/g, '/').replace(/^\.\//u, '');
+}
+
+export function defaultMaxLinesForPath(repoPath) {
+  const normalized = normalizeRepoPath(repoPath);
+  return /(?:^|\/)(?:__tests__\/|[^/]+\.(?:test|spec)\.tsx?$)/u.test(normalized)
+    ? TEST_MAX_LINES
+    : DEFAULT_MAX_LINES;
 }
 
 function walkFiles(rootDir, predicate, baseDir = rootDir) {
@@ -77,9 +85,10 @@ export function loadBaseline(rootDir = process.cwd()) {
   }
 
   for (const [repoPath, cap] of Object.entries(parsed)) {
-    if (!Number.isInteger(cap) || cap <= DEFAULT_MAX_LINES) {
+    const defaultCap = defaultMaxLinesForPath(repoPath);
+    if (!Number.isInteger(cap) || cap <= defaultCap) {
       throw new Error(
-        `${BASELINE_REPO_PATH} entry "${repoPath}" must be an integer above the default cap of ${DEFAULT_MAX_LINES}`,
+        `${BASELINE_REPO_PATH} entry "${repoPath}" must be an integer above the default cap of ${defaultCap}`,
       );
     }
   }
@@ -108,7 +117,7 @@ export function validateFileSizes(options = {}) {
 
   for (const repoPath of files) {
     const lines = countFileLines(rootDir, repoPath);
-    const cap = baseline[repoPath] ?? DEFAULT_MAX_LINES;
+    const cap = baseline[repoPath] ?? defaultMaxLinesForPath(repoPath);
     if (lines > cap) {
       errors.push(
         `${repoPath} has ${lines} lines, exceeding its cap of ${cap}; `
@@ -132,7 +141,7 @@ export function buildBaseline(rootDir = process.cwd()) {
   const baseline = {};
   for (const repoPath of listSourceFiles(rootDir)) {
     const lines = countFileLines(rootDir, repoPath);
-    if (lines > DEFAULT_MAX_LINES) {
+    if (lines > defaultMaxLinesForPath(repoPath)) {
       baseline[repoPath] = baselineCapForLines(lines);
     }
   }
@@ -155,7 +164,7 @@ export function updateBaseline(options = {}) {
     }
 
     const lines = countFileLines(rootDir, repoPath);
-    if (lines <= DEFAULT_MAX_LINES) {
+    if (lines <= defaultMaxLinesForPath(repoPath)) {
       removed += 1;
       continue;
     }

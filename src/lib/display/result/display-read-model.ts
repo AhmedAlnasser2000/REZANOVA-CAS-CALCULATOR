@@ -2,11 +2,11 @@ import type {
   CanonicalResultDetailPartV1,
   CanonicalResultDocumentV1,
   CanonicalResultPeriodicFamilyV1,
+  CanonicalRuntimeOutcome,
   DisplayAnswerRowsReadback,
   DisplayBranchReadback,
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
   DisplaySystemSolutionReadback,
   ModeId,
   PeriodicFamilyInfo,
@@ -43,7 +43,7 @@ function displayDetailPart(part: CanonicalResultDetailPartV1): DisplayDetailLine
 }
 
 export function displaySolveSummaryPartsFromOutcome(
-  outcome: DisplayOutcome | null | undefined,
+  outcome: CanonicalRuntimeOutcome | null | undefined,
 ): DisplayDetailLinePart[][] | undefined {
   if (!outcome || outcome.kind === 'prompt') return undefined;
   const projected = resolveCanonicalResultForConsumer(outcome);
@@ -172,7 +172,7 @@ function displaySystemReadback(document: CanonicalResultDocumentV1) {
     : undefined;
 }
 
-function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>) {
+function canonicalDocumentForDisplay(outcome: Exclude<CanonicalRuntimeOutcome, { kind: 'prompt' }>) {
   const projected = resolveCanonicalResultForConsumer(outcome);
   if (!projected.ok) {
     throw new Error(
@@ -183,12 +183,12 @@ function canonicalDocumentForDisplay(outcome: Exclude<DisplayOutcome, { kind: 'p
 }
 
 export function displayResultReadModelFromOutcome(
-  outcome: DisplayOutcome | null | undefined,
+  outcome: CanonicalRuntimeOutcome | null | undefined,
 ): DisplayResultReadModel | null {
   if (!outcome || outcome.kind === 'prompt') return null;
   const { authority, document } = canonicalDocumentForDisplay(outcome);
   const metadata = document.metadata;
-  const trustSummary = trustSummaryForCanonicalResult(document, outcome);
+  const trustSummary = trustSummaryForCanonicalResult(document);
   return {
     authority,
     outcomeKind: document.outcomeKind,

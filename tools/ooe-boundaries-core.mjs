@@ -84,6 +84,7 @@ const TS_CORE_ALLOWED_TARGETS = new Set([
 
 const TS_PILOT_ALLOWED_TARGETS = new Set([
   'src/lib/equation/equation-direct-symbolic-worker-client',
+  'src/lib/equation/equation-solve-result',
   'src/lib/equation/guarded-solve',
   'src/lib/equation/shared-solve',
   'src/lib/modes/table-core',

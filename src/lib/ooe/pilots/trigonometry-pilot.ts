@@ -1,5 +1,5 @@
-import type { DisplayOutcome } from '../../../types/calculator';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -128,7 +128,7 @@ function buildTrigonometryOoeTraceEvents(
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
     startedMessage: 'Trigonometry evaluation started through the isolated Trigonometry runtime shell.',
-    finalMessage: 'Trigonometry evaluation pilot produced a stable DisplayOutcome.',
+    finalMessage: 'Trigonometry evaluation pilot produced a stable CanonicalRuntimeOutcome.',
   });
   const hostEvent = hostExecution
     ? buildOoeTraceEvent({
@@ -243,7 +243,7 @@ export async function runTrigonometryWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: OOE_TRIGONOMETRY_EVALUATE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
   getHostExecution?: () => TrigonometryHostExecution | undefined,
-  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+  resolveCanonicalOutcome?: (payload: TPayload) => CanonicalRuntimeOutcome,
 ): Promise<TrigonometryOoePilotRunResult<TPayload>> {
   const definition = trigonometryPilotDefinition();
   return runOoeRuntimeJob({
@@ -265,9 +265,9 @@ export async function runTrigonometryWithOoePilot<TPayload>(
       const snapshot = routeSnapshot as {
         request?: TrigonometryRouteRequestSnapshot;
       };
-      const output = resolveDisplayOutcome
-        ? resolveDisplayOutcome(payload)
-        : (payload as { outcome?: DisplayOutcome }).outcome ?? payload as DisplayOutcome;
+      const output = resolveCanonicalOutcome
+        ? resolveCanonicalOutcome(payload)
+        : (payload as { outcome?: CanonicalRuntimeOutcome }).outcome ?? payload as CanonicalRuntimeOutcome;
       return {
         depth: 'coarse',
         mode: 'trigonometry',
@@ -280,7 +280,7 @@ export async function runTrigonometryWithOoePilot<TPayload>(
           identityTargetForm: snapshot.request?.identityTargetForm,
           latexLength: snapshot.request?.inputLatex?.length,
         },
-        outputSummary: summarizeDisplayOutcome(output),
+        outputSummary: summarizeCanonicalRuntimeOutcome(output),
         runtimeHost: metadata.trigonometryHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

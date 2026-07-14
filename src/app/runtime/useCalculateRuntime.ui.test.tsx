@@ -17,7 +17,7 @@ import {
 } from 'react';
 import type {
   CalculateScreen,
-  DisplayOutcome,
+  ResultProducerDraft,
   ModeId,
 } from '../../types/calculator';
 import {
@@ -28,6 +28,7 @@ import {
   buildCalculateRuntimeOoeInputRevisionId,
   runCalculateRuntimeWithOoePilot,
 } from '../../lib/modes/calculate';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useCalculateRuntime } from './useCalculateRuntime';
 import { historyEntryFixture } from '../../test-utils/history-result-document';
@@ -40,7 +41,7 @@ vi.mock('../../lib/modes/calculate', async (importOriginal) => {
   };
 });
 
-function calculatePayload(title = 'Calculate'): DisplayOutcome {
+function calculatePayload(title = 'Calculate'): ResultProducerDraft {
   return {
     kind: 'success',
     title,
@@ -191,12 +192,10 @@ describe('useCalculateRuntime', () => {
       hook.result.current.runCalculateWorkbenchAction();
     });
 
-    expect(setDisplayOutcome).toHaveBeenCalledWith({
-      kind: 'error',
-      title: 'Derivative',
-      error: 'Enter an expression in x before differentiating.',
-      warnings: [],
-    });
+    expect(setDisplayOutcome).toHaveBeenCalledWith(createCanonicalRuntimeError(
+      'Derivative',
+      'Enter an expression in x before differentiating.',
+    ));
     expect(runCalculateRuntimeWithOoePilot).not.toHaveBeenCalled();
   });
 

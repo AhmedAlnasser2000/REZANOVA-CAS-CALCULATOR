@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RefObject } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   ModeId,
 } from '../../types/calculator';
 import {
@@ -12,6 +12,7 @@ import {
   type RunGeometryRuntimeRequest,
   runGeometryModeWithOoePilot,
 } from '../../lib/modes/geometry';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useGeometryRuntime } from './useGeometryRuntime';
 
@@ -32,7 +33,7 @@ function geometryPayload(): GeometryModeRunPayload {
       title: 'Geometry',
       exactLatex: 'A=25\\quad P=20',
       warnings: [],
-    } satisfies DisplayOutcome,
+    } satisfies ResultProducerDraft,
     parsed: {
       ok: true,
       request: {
@@ -215,12 +216,10 @@ describe('useGeometryRuntime', () => {
       hook.result.current.runGeometryAction();
     });
 
-    expect(setDisplayOutcome).toHaveBeenCalledWith({
-      kind: 'error',
-      title: 'Square',
-      error: 'Enter a Geometry request or use a guided tool before evaluating.',
-      warnings: [],
-    });
+    expect(setDisplayOutcome).toHaveBeenCalledWith(createCanonicalRuntimeError(
+      'Square',
+      'Enter a Geometry request or use a guided tool before evaluating.',
+    ));
     expect(runGeometryModeWithOoePilot).not.toHaveBeenCalled();
   });
 

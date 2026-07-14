@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { defaultEquationNumericSolvePanelState } from '../logic/appUtils';
-import type { DisplayOutcome, EquationScreen, ModeId } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome, EquationScreen, ModeId } from '../../types/calculator';
 
 type EquationNumericSolvePanelState = ReturnType<typeof defaultEquationNumericSolvePanelState>;
 
 export function useEquationNumericSolvePanelState(input: {
   currentMode: ModeId;
-  displayOutcome: DisplayOutcome | null;
+  displayOutcome: CanonicalRuntimeOutcome | null;
   equationScreen: EquationScreen;
   inputLatex: string;
 }) {

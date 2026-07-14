@@ -14,6 +14,7 @@ import type {
   DisplayDetailSection,
   DisplaySystemSolutionReadback,
   PeriodicFamilyInfo,
+  ResultProducerDraft,
   SerializableMathJson,
 } from '../../types/calculator';
 import { validateCanonicalResultDocument } from './validation';
@@ -82,6 +83,18 @@ export function canonicalMathValue(
     canonicalLatex,
     ...(mathJson !== undefined ? { mathJson } : {}),
   };
+}
+
+export function attachCanonicalResultToProducerDraft<
+  Outcome extends Exclude<ResultProducerDraft, { kind: 'prompt' }>,
+>(
+  document: CanonicalResultDocumentV1,
+  producerDraft: Omit<Outcome, 'canonicalResult'> | Partial<Outcome>,
+): Outcome {
+  return {
+    ...producerDraft,
+    canonicalResult: document,
+  } as Outcome;
 }
 
 function canonicalDetailPart(part: DisplayDetailLinePart): CanonicalResultDetailPartV1 {

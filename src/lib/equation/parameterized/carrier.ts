@@ -2,7 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   DisplayBranchReadback,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
+  CanonicalMathValueV1,
 } from '../../../types/calculator';
 import { exactScalarToNumber, readExactScalarNode } from '../../algebra/polynomial-core';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
@@ -54,7 +54,7 @@ export type ParameterizedCarrierSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
@@ -600,9 +600,8 @@ export function solveParameterizedCarrierEquation(
   const solutionExpressions = dedupe(solvedBranches.solutionExpressions);
   const exactLatex = exactLatexForSolutions(target, solutionExpressions);
   const solutionMathJson = solvedBranches.solutionMathJson;
-  const canonicalMath: DisplayMathPayloadV1 | undefined = solutionMathJson?.length === solutionExpressions.length
+  const primaryMath: CanonicalMathValueV1 | undefined = solutionMathJson?.length === solutionExpressions.length
     ? {
-        version: 1 as const,
         canonicalLatex: exactLatex,
         mathJson: solutionMathJson.length === 1
           ? ['Equal', target, solutionMathJson[0]]
@@ -615,7 +614,7 @@ export function solveParameterizedCarrierEquation(
     target,
     parameterNames,
     exactLatex,
-    ...(canonicalMath ? { canonicalMath } : {}),
+    ...(primaryMath ? { primaryMath } : {}),
     branchReadback: finiteBranchReadbackForNormalizedBranches({
       targetLatex: target,
       branchesLatex: solutionExpressions,

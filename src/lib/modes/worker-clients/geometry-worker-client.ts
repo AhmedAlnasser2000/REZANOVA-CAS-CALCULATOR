@@ -9,7 +9,7 @@ import type {
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import {
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   validateCanonicalRuntimeOutcome,
 } from '../../result-contract';
 import { createGeometryResultOutcome } from '../../geometry/result-document';
@@ -60,7 +60,7 @@ function nextRequestId() {
 
 function buildCancelledPayload(request: RunGeometryRuntimeRequest): CanonicalGeometryModeRunPayload {
   return {
-    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(createGeometryResultOutcome({
+    outcome: finalizeCanonicalRuntimeOutcomeFromProducer(createGeometryResultOutcome({
       kind: 'error',
       title: 'Geometry',
       error: 'Geometry evaluation stopped before it finished.',

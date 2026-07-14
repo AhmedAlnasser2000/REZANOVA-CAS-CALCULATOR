@@ -4,6 +4,7 @@ import path from 'node:path';
 import ts from 'typescript';
 import {
   CANONICAL_PROJECTION_REGISTRATIONS,
+  CANONICAL_CONSUMER_CALL_NAMES,
   CONTROL_OUTCOME_REGISTRATIONS,
   CONTROL_ONLY_ERROR_PROPERTIES,
   DISPLAY_CONTRACT_LANES,
@@ -11,15 +12,17 @@ import {
   DISPLAY_OUTCOME_CONTROL_PROPERTIES,
   DISPLAY_OUTCOME_LEGACY_PROPERTIES,
   DISPLAY_OUTCOME_TRANSIENT_PROPERTIES,
+  FORBIDDEN_RESULT_COMPATIBILITY_SYMBOLS,
   NATIVE_DOCUMENT_CALL_NAMES,
   NATIVE_DOCUMENT_WRAPPER_CALL_NAMES,
   NATIVE_RESULT_CARRIER_CALL_NAMES,
   OWNER_ASSEMBLY_REGISTRATIONS,
+  PRODUCER_DRAFT_OWNER_MATCHERS,
   PRODUCER_INPUT_REGISTRATIONS,
   REFERENCE_OUTCOME_MATCHERS,
 } from './display-contract-inversion-registry.mjs';
 
-export const DISPLAY_CONTRACT_INVERSION_BASELINE_VERSION = 1;
+export const DISPLAY_CONTRACT_INVERSION_BASELINE_VERSION = 2;
 
 const TRACKED_CATEGORIES = [
   'native-document',
@@ -28,6 +31,7 @@ const TRACKED_CATEGORIES = [
   'owner-assembly',
   'forwarder',
   'control-outcome',
+  'producer-draft-read',
   'canonical-read',
   'legacy-read',
   'control-read',
@@ -161,9 +165,9 @@ function findDisplayOutcomeType(program, checker) {
   const sourceFile = program.getSourceFiles().find((source) =>
     slash(source.fileName).endsWith('/src/types/calculator/display-types.ts'));
   const declaration = sourceFile?.statements.find((statement) =>
-    ts.isTypeAliasDeclaration(statement) && statement.name.text === 'DisplayOutcome');
+    ts.isTypeAliasDeclaration(statement) && statement.name.text === 'ResultProducerDraft');
   if (!declaration || !ts.isTypeAliasDeclaration(declaration)) {
-    throw new Error('DisplayOutcome type alias was not found in src/types/calculator/display-types.ts');
+    throw new Error('ResultProducerDraft type alias was not found in src/types/calculator/display-types.ts');
   }
   return checker.getTypeFromTypeNode(declaration.type);
 }
@@ -174,21 +178,18 @@ function typeIncludesDisplayOutcome(type, displayType, checker) {
   }
   const nonNullable = checker.getNonNullableType(type);
   if (nonNullable.flags & ts.TypeFlags.Never) return false;
-  if (!['kind', 'title', 'warnings'].every((property) => checker.getPropertyOfType(nonNullable, property))) {
-    return false;
+  if (nonNullable === displayType || nonNullable.aliasSymbol?.name === 'ResultProducerDraft') {
+    return true;
   }
+  if (nonNullable.aliasSymbol) return false;
   if (nonNullable.isUnion()) {
     return nonNullable.types.some((entry) => typeIncludesDisplayOutcome(entry, displayType, checker));
   }
-  return checker.isTypeAssignableTo(nonNullable, displayType);
+  return false;
 }
 
 function displayOutcomeAssignableTo(type, displayType, checker) {
-  if (!type || (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown | ts.TypeFlags.Never))) {
-    return false;
-  }
-  return checker.isTypeAssignableTo(displayType, type)
-    || (type.isUnion() && type.types.some((entry) => displayOutcomeAssignableTo(entry, displayType, checker)));
+  return typeIncludesDisplayOutcome(type, displayType, checker);
 }
 
 function enclosingFunction(node) {
@@ -346,6 +347,12 @@ function consumerCategory(property) {
   return undefined;
 }
 
+function producerDraftReadCategory(file, property) {
+  return matchesAny(file, PRODUCER_DRAFT_OWNER_MATCHERS)
+    ? 'producer-draft-read'
+    : consumerCategory(property);
+}
+
 function allDisplayOutcomeProperties(displayType, checker) {
   const members = displayType.isUnion() ? displayType.types : [displayType];
   return new Set(members.flatMap((member) => checker.getPropertiesOfType(member).map((entry) => entry.name)));
@@ -387,7 +394,7 @@ function validateRegistry(displayType, checker) {
   const missing = [...actual].filter((property) => !classified.has(property)).sort();
   const stale = [...classified].filter((property) => !actual.has(property)).sort();
   if (missing.length > 0 || stale.length > 0) {
-    throw new Error(`DisplayOutcome property registry mismatch; missing: ${missing.join(', ') || 'none'}; stale: ${stale.join(', ') || 'none'}`);
+    throw new Error(`ResultProducerDraft property registry mismatch; missing: ${missing.join(', ') || 'none'}; stale: ${stale.join(', ') || 'none'}`);
   }
 }
 
@@ -395,6 +402,7 @@ function registryDigest() {
   return stableHash(JSON.stringify({
     lanes: DISPLAY_CONTRACT_LANES,
     canonicalProjections: CANONICAL_PROJECTION_REGISTRATIONS,
+    canonicalConsumerCallNames: [...CANONICAL_CONSUMER_CALL_NAMES].sort(),
     controlOutcomeRegistrations: CONTROL_OUTCOME_REGISTRATIONS,
     ownerAssemblyRegistrations: OWNER_ASSEMBLY_REGISTRATIONS,
     canonicalProperties: [...DISPLAY_OUTCOME_CANONICAL_PROPERTIES].sort(),
@@ -402,10 +410,12 @@ function registryDigest() {
     legacyProperties: [...DISPLAY_OUTCOME_LEGACY_PROPERTIES].sort(),
     transientProperties: [...DISPLAY_OUTCOME_TRANSIENT_PROPERTIES].sort(),
     controlOnlyErrorProperties: [...CONTROL_ONLY_ERROR_PROPERTIES].sort(),
+    forbiddenResultCompatibilitySymbols: [...FORBIDDEN_RESULT_COMPATIBILITY_SYMBOLS].sort(),
     referenceOutcomeMatchers: REFERENCE_OUTCOME_MATCHERS,
     nativeDocumentCallNames: [...NATIVE_DOCUMENT_CALL_NAMES].sort(),
     nativeDocumentWrapperCallNames: [...NATIVE_DOCUMENT_WRAPPER_CALL_NAMES].sort(),
     nativeResultCarrierCallNames: [...NATIVE_RESULT_CARRIER_CALL_NAMES].sort(),
+    producerDraftOwnerMatchers: PRODUCER_DRAFT_OWNER_MATCHERS,
     producerInputRegistrations: PRODUCER_INPUT_REGISTRATIONS,
     trackedCategories: TRACKED_CATEGORIES,
   }));
@@ -463,7 +473,7 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         kind: 'unclassified-display-contract-path',
         file: entry.file,
         line: lineOf(sourceFile, node),
-        message: 'DisplayOutcome producer or consumer is outside every declared lane.',
+        message: 'ResultProducerDraft producer or consumer is outside every declared lane.',
       });
       return;
     }
@@ -480,11 +490,27 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
     const file = slash(path.relative(rootDir, absolute));
 
     const visit = (node) => {
+      if (
+        ts.isIdentifier(node)
+        && FORBIDDEN_RESULT_COMPATIBILITY_SYMBOLS.has(node.text)
+      ) {
+        violations.push({
+          kind: 'retired-result-compatibility-symbol',
+          file,
+          line: lineOf(sourceFile, node),
+          message: `Retired result compatibility symbol is forbidden: ${node.text}.`,
+        });
+      }
+
       if (ts.isObjectLiteralExpression(node) && !matchesAny(file, REFERENCE_OUTCOME_MATCHERS)) {
         const type = checker.getTypeAtLocation(node);
         const kind = literalOutcomeKind(node, checker);
         const isOutcome = typeIncludesDisplayOutcome(type, displayType, checker)
-          || (kind && hasDisplayOutcomeContext(node, displayType, checker));
+          || (kind && hasDisplayOutcomeContext(node, displayType, checker))
+          || (
+            isProducerInputAssembly(file, functionContext(node))
+            && objectCarriesCanonicalResult(node, checker)
+          );
         if (isOutcome) {
           const classification = classifyProducer(node, file, checker);
           add({
@@ -510,6 +536,7 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         const type = checker.getTypeAtLocation(node);
         if (
           NATIVE_RESULT_CARRIER_CALL_NAMES.has(calleeName(node.expression))
+          || NATIVE_DOCUMENT_WRAPPER_CALL_NAMES.has(calleeName(node.expression))
           || typeIncludesDisplayOutcome(type, displayType, checker)
         ) {
           add({
@@ -523,13 +550,26 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         }
       }
 
+
+      if (
+        ts.isCallExpression(node)
+        && CANONICAL_CONSUMER_CALL_NAMES.has(calleeName(node.expression))
+      ) {
+        add({
+          category: 'canonical-read',
+          detail: `call:${calleeName(node.expression)}`,
+          file,
+          context: functionContext(node),
+          sourceKind: 'canonical-consumer-call',
+          sourceText: node.getText(sourceFile),
+        }, node, sourceFile);
+      }
+
       if (ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node)) {
         const receiver = node.expression;
         const receiverType = checker.getTypeAtLocation(receiver);
-        if (
-          typeIncludesDisplayOutcome(receiverType, displayType, checker)
-          && !isProducerInputAssembly(file, functionContext(node))
-        ) {
+        const isProducerDraft = typeIncludesDisplayOutcome(receiverType, displayType, checker);
+        if (isProducerDraft) {
           const property = ts.isPropertyAccessExpression(node)
             ? node.name.text
             : ts.isStringLiteral(node.argumentExpression)
@@ -540,11 +580,19 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
               kind: 'dynamic-display-outcome-read',
               file,
               line: lineOf(sourceFile, node),
-              message: 'Dynamic DisplayOutcome property reads cannot be classified safely.',
+              message: 'Dynamic ResultProducerDraft property reads cannot be classified safely.',
             });
           } else if (property) {
-            const category = consumerCategory(property);
+            const category = producerDraftReadCategory(file, property);
             if (category) {
+              if (!matchesAny(file, PRODUCER_DRAFT_OWNER_MATCHERS)) {
+                violations.push({
+                  kind: 'producer-draft-read-outside-owner',
+                  file,
+                  line: lineOf(sourceFile, node),
+                  message: 'ResultProducerDraft reads are limited to solver-owned producer districts.',
+                });
+              }
               add({
                 category,
                 detail: property,
@@ -555,6 +603,19 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
               }, node, sourceFile);
             }
           }
+        } else if (
+          ts.isPropertyAccessExpression(node)
+          && node.name.text === 'canonicalResult'
+          && checker.getPropertyOfType(checker.getNonNullableType(receiverType), 'kind')
+        ) {
+          add({
+            category: 'canonical-read',
+            detail: 'canonicalResult',
+            file,
+            context: functionContext(node),
+            sourceKind: 'canonical-runtime-property-read',
+            sourceText: node.getText(sourceFile),
+          }, node, sourceFile);
         }
       }
 
@@ -569,7 +630,6 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
             : checker.getTypeAtLocation(node);
         if (
           typeIncludesDisplayOutcome(sourceType, displayType, checker)
-          && !isProducerInputAssembly(file, functionContext(node))
         ) {
           for (const element of node.name.elements) {
             if (element.dotDotDotToken) {
@@ -577,7 +637,7 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
                 kind: 'display-outcome-rest-read',
                 file,
                 line: lineOf(sourceFile, element),
-                message: 'DisplayOutcome rest reads hide legacy and canonical authority.',
+                message: 'ResultProducerDraft rest reads hide legacy and canonical authority.',
               });
               continue;
             }
@@ -587,8 +647,16 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
                 ? element.name.text
                 : undefined;
             if (!property) continue;
-            const category = consumerCategory(property);
+            const category = producerDraftReadCategory(file, property);
             if (category) {
+              if (!matchesAny(file, PRODUCER_DRAFT_OWNER_MATCHERS)) {
+                violations.push({
+                  kind: 'producer-draft-read-outside-owner',
+                  file,
+                  line: lineOf(sourceFile, element),
+                  message: 'ResultProducerDraft reads are limited to solver-owned producer districts.',
+                });
+              }
               add({
                 category,
                 detail: property,
@@ -681,7 +749,10 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
   });
 
   const categoryCounts = new Map(TRACKED_CATEGORIES.map((category) => [category, 0]));
-  const laneStats = new Map();
+  const laneStats = new Map(DISPLAY_CONTRACT_LANES.map((lane) => [
+    lane.id,
+    Object.fromEntries(TRACKED_CATEGORIES.map((category) => [category, 0])),
+  ]));
   for (const entry of entries) {
     categoryCounts.set(entry.category, (categoryCounts.get(entry.category) ?? 0) + 1);
     const lane = laneStats.get(entry.lane) ?? Object.fromEntries(
@@ -697,7 +768,7 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
   ]));
 
   return {
-    version: 1,
+    version: DISPLAY_CONTRACT_INVERSION_BASELINE_VERSION,
     registryDigest: registryDigest(),
     summary: {
       sourceFileCount: files.length,
@@ -709,9 +780,11 @@ export function scanDisplayContractInversionRepository({ rootDir = process.cwd()
         'forwarder',
         'control-outcome',
       ].includes(entry.category)).length,
-      consumerCount: entries.filter((entry) => entry.category.endsWith('-read')).length,
+      consumerCount: entries.filter((entry) =>
+        entry.category.endsWith('-read') && entry.category !== 'producer-draft-read').length,
       compatibilityProjectionCount: categoryCounts.get('compatibility-projection'),
       ownerAssemblyCount: categoryCounts.get('owner-assembly'),
+      producerDraftReadCount: categoryCounts.get('producer-draft-read'),
       legacyReadCount: categoryCounts.get('legacy-read'),
       nativeDocumentCount: categoryCounts.get('native-document'),
       violationCount: violations.length,
@@ -753,7 +826,7 @@ export function buildDisplayContractInversionBaseline(report, acceptedReason) {
     throw new Error('Display contract inversion baseline updates require a non-empty reason');
   }
   if (report.violations.length > 0) {
-    throw new Error(`Cannot baseline ${report.violations.length} unclassified DisplayOutcome path(s)`);
+    throw new Error(`Cannot baseline ${report.violations.length} unclassified ResultProducerDraft path(s)`);
   }
   return {
     schemaVersion: DISPLAY_CONTRACT_INVERSION_BASELINE_VERSION,
@@ -828,9 +901,10 @@ export function validateDisplayContractInversionReport(report, baseline) {
 
 export function assertDisplayContractInversionBaselineUpdateAllowed(report, previousBaseline) {
   if (report.violations.length > 0) {
-    throw new Error(`Cannot update with ${report.violations.length} unclassified DisplayOutcome path(s)`);
+    throw new Error(`Cannot update with ${report.violations.length} unclassified ResultProducerDraft path(s)`);
   }
   if (!previousBaseline) return;
+  if (previousBaseline.schemaVersion !== DISPLAY_CONTRACT_INVERSION_BASELINE_VERSION) return;
   validateBaselineShape(previousBaseline);
   const lanes = new Set([
     ...Object.keys(previousBaseline.laneFloors ?? {}),
@@ -865,6 +939,7 @@ export function formatDisplayContractInversionReport(report, validation) {
     `Consumer reads: ${report.summary.consumerCount}`,
     `Compatibility projections: ${report.summary.compatibilityProjectionCount}`,
     `Owner assemblies: ${report.summary.ownerAssemblyCount}`,
+    `Producer draft reads: ${report.summary.producerDraftReadCount}`,
     `Legacy reads: ${report.summary.legacyReadCount}`,
     `Native documents: ${report.summary.nativeDocumentCount}`,
     '',

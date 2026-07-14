@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   TableResponse,
 } from '../../types/calculator';
 import {
@@ -32,7 +32,7 @@ function tablePayload(label: string): TableModeResult {
     rows: [{ x: '0', primary: label, secondary: undefined }],
     warnings: [],
   };
-  const outcome: DisplayOutcome = {
+  const outcome: ResultProducerDraft = {
     kind: 'success',
     title: 'Table',
     exactLatex: `f(x)=${label}`,
@@ -169,7 +169,7 @@ describe('useTableRuntime OOE stale gate', () => {
         title: 'Table',
         error: 'Table build was stopped before it finished.',
         warnings: [],
-      } satisfies DisplayOutcome,
+      } satisfies ResultProducerDraft,
       response: {
         headers: [],
         rows: [],

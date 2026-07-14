@@ -97,6 +97,6 @@ export function buildOoeFinalOutcomeTraceEvent(input: {
     status: 'completed',
     resultStability: 'stable',
     commitDecision: input.commitDecision ?? 'notApplicable',
-    message: input.message ?? 'Equation pilot produced a stable DisplayOutcome.',
+    message: input.message ?? 'Equation pilot produced a stable canonical result.',
   });
 }

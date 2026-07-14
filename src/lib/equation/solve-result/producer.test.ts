@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCanonicalResultForStorage } from '../../result-contract';
+import { requireCanonicalResultAuthority } from '../../result-contract';
 import { createEquationResultOutcome } from './producer';
 
 describe('Equation result producer', () => {
@@ -8,8 +8,7 @@ describe('Equation result producer', () => {
       kind: 'success',
       title: 'Solve',
       exactLatex: 'x=1',
-      canonicalMath: {
-        version: 1,
+      primaryMath: {
         canonicalLatex: 'x=1',
         mathJson: ['Equal', 'x', 1],
       },
@@ -37,10 +36,8 @@ describe('Equation result producer', () => {
       numericMethod: 'fixture',
     });
 
-    expect(resolveCanonicalResultForStorage(outcome)).toMatchObject({
-      ok: true,
-      source: 'native',
-    });
+    expect(requireCanonicalResultAuthority(outcome, 'Equation producer test').canonicalResult)
+      .toBeDefined();
     if (!outcome.canonicalResult) {
       throw new Error('Expected a native Equation result document');
     }
@@ -70,10 +67,8 @@ describe('Equation result producer', () => {
     });
 
     expect(outcome.canonicalResult).not.toHaveProperty('runtimeAdvisories');
-    expect(resolveCanonicalResultForStorage(outcome)).toMatchObject({
-      ok: true,
-      source: 'native',
-    });
+    expect(requireCanonicalResultAuthority(outcome, 'Equation error producer test').canonicalResult)
+      .toBeDefined();
   });
 
   it('fails closed on mismatched MathJSON and stores typed summaries', () => {
@@ -81,8 +76,7 @@ describe('Equation result producer', () => {
       kind: 'success',
       title: 'Solve',
       exactLatex: 'x=1',
-      canonicalMath: {
-        version: 1,
+      primaryMath: {
         canonicalLatex: 'x=2',
         mathJson: ['Equal', 'x', 2],
       },

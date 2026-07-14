@@ -1,15 +1,14 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { attachRuntimeEnvelope } from '../../kernel/runtime-envelope';
 import {
   inspectJsonCompatibleStructuredValue,
-  projectCanonicalResultToDisplayOutcome,
 } from '../../result-contract';
 import { attachEquationAnalysisEvidence } from '../analysis-evidence';
 import {
-  projectEquationDisplayOutcomeToSolveResult,
-  type EquationSolveResultCompatibilityFailure,
-} from './compatibility';
+  buildEquationSolveResultFromProducerDraft,
+  type EquationSolveResultBuildFailure,
+} from './producer-adapter';
 import {
   EQUATION_SOLVE_RESULT_MAX_BYTES,
   EQUATION_SOLVE_RESULT_MAX_DEPTH,
@@ -17,6 +16,7 @@ import {
   type EquationSolveResultContractV1,
 } from './contract';
 import { validateEquationSolveResultContract } from './validation';
+import { readEquationProducerDraftFromCanonicalResult } from './stage-carrier';
 
 export const EQUATION_OUTCOME_BOUNDARY_VERSION = 1 as const;
 export const EQUATION_OUTCOME_BOUNDARY_MAX_NODES = EQUATION_SOLVE_RESULT_MAX_NODES + 32;
@@ -27,7 +27,7 @@ export type EquationResultOutcomeBoundaryV1 = {
   version: typeof EQUATION_OUTCOME_BOUNDARY_VERSION;
   kind: 'result';
   result: EquationSolveResultContractV1;
-  runtimeAdvisories?: DisplayOutcome['runtimeAdvisories'];
+  runtimeAdvisories?: ResultProducerDraft['runtimeAdvisories'];
 };
 
 export type EquationCancelledOutcomeBoundaryV1 = {
@@ -56,7 +56,7 @@ export type EquationOutcomeBoundaryProjectionFailure =
   | {
       reason: 'solve-result';
       message: string;
-      cause: EquationSolveResultCompatibilityFailure;
+      cause: EquationSolveResultBuildFailure;
     };
 
 export type EquationOutcomeBoundaryProjection =
@@ -72,7 +72,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isRuntimeAdvisories(value: unknown): value is NonNullable<DisplayOutcome['runtimeAdvisories']> {
+function isRuntimeAdvisories(value: unknown): value is NonNullable<ResultProducerDraft['runtimeAdvisories']> {
   if (!isRecord(value) || !hasOnlyKeys(value, ['stopReason', 'equationNumericSolve'])) {
     return false;
   }
@@ -110,9 +110,9 @@ function isRuntimeAdvisories(value: unknown): value is NonNullable<DisplayOutcom
 }
 
 function compactRuntimeAdvisories(
-  advisories: NonNullable<DisplayOutcome['runtimeAdvisories']>,
-): NonNullable<DisplayOutcome['runtimeAdvisories']> | undefined {
-  const compacted: NonNullable<DisplayOutcome['runtimeAdvisories']> = {
+  advisories: NonNullable<ResultProducerDraft['runtimeAdvisories']>,
+): NonNullable<ResultProducerDraft['runtimeAdvisories']> | undefined {
+  const compacted: NonNullable<ResultProducerDraft['runtimeAdvisories']> = {
     ...(advisories.stopReason
       ? {
           stopReason: {
@@ -227,8 +227,8 @@ export function validateEquationResultOutcomeBoundary(
   return { ok: true, boundary: validation.boundary };
 }
 
-export function projectEquationDisplayOutcomeToBoundary(
-  outcome: DisplayOutcome,
+export function buildEquationOutcomeBoundaryFromProducer(
+  outcome: ResultProducerDraft,
 ): EquationOutcomeBoundaryProjection {
   if (outcome.kind === 'prompt') {
     return {
@@ -249,15 +249,13 @@ export function projectEquationDisplayOutcomeToBoundary(
     };
   }
 
-  const projected = projectEquationDisplayOutcomeToSolveResult(outcome);
+  const projected = buildEquationSolveResultFromProducerDraft(outcome);
   if (!projected.ok) {
     return {
       ok: false,
       failure: {
         reason: 'solve-result',
-        message: projected.failure.reason === 'projection'
-          ? projected.failure.projection.message
-          : projected.failure.message,
+        message: projected.failure.message,
         cause: projected.failure,
       },
     };
@@ -279,10 +277,10 @@ export function projectEquationDisplayOutcomeToBoundary(
   };
 }
 
-export function projectEquationDisplayOutcomeToBoundaryOrThrow(
-  outcome: DisplayOutcome,
+export function buildEquationOutcomeBoundaryFromProducerOrThrow(
+  outcome: ResultProducerDraft,
 ): EquationResultOutcomeBoundaryV1 {
-  const projection = projectEquationDisplayOutcomeToBoundary(outcome);
+  const projection = buildEquationOutcomeBoundaryFromProducer(outcome);
   if (!projection.ok) {
     throw new Error(
       `Equation outcome boundary rejected ${projection.failure.reason}: ${projection.failure.message}`,
@@ -301,9 +299,9 @@ export function buildEquationCancelledOutcomeBoundary(
   };
 }
 
-export function projectEquationOutcomeBoundaryToDisplay(
+export function readEquationOutcomeBoundary(
   boundary: EquationOutcomeBoundaryV1,
-): DisplayOutcome {
+): ResultProducerDraft {
   if (boundary.kind === 'cancelled') {
     return {
       kind: 'error',
@@ -318,7 +316,7 @@ export function projectEquationOutcomeBoundaryToDisplay(
   }
 
   const outcome = attachEquationAnalysisEvidence(
-    projectCanonicalResultToDisplayOutcome(boundary.result.document),
+    readEquationProducerDraftFromCanonicalResult(boundary.result.document),
     boundary.result.diagnostics.analysisEvidence,
   );
   return boundary.runtimeAdvisories

@@ -14,7 +14,7 @@ import {
 import { buildNumericConfidenceSection } from '../../equation/numeric-confidence-readback';
 import { evaluateLatexAtTarget } from '../../equation/domain-guards';
 import { equationTargetLatex } from '../../equation/equation-target';
-import type { AngleUnit, DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
+import type { AngleUnit, DisplayDetailSection, ResultProducerDraft } from '../../../types/calculator';
 import { classifyEquationNumericShape } from './numeric-shape-classifier';
 import {
   buildFactSection,
@@ -221,8 +221,8 @@ export function tryDeterministicNumericAlgebraicFallback(input: {
   equationLatex: string;
   equationSolveTarget: string;
   angleUnit: AngleUnit;
-  sharedOutcome: DisplayOutcome;
-}): DisplayOutcome | undefined {
+  sharedOutcome: ResultProducerDraft;
+}): ResultProducerDraft | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
     || !NUMERIC_FALLBACK_ELIGIBLE_ERRORS.has(input.sharedOutcome.error)

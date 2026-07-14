@@ -1,5 +1,5 @@
-import type { DisplayOutcome } from '../../../types/calculator';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -126,7 +126,7 @@ function buildGeometryOoeTraceEvents(
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
     startedMessage: 'Geometry evaluation started through the isolated Geometry runtime shell.',
-    finalMessage: 'Geometry evaluation pilot produced a stable DisplayOutcome.',
+    finalMessage: 'Geometry evaluation pilot produced a stable CanonicalRuntimeOutcome.',
   });
   const hostEvent = hostExecution
     ? buildOoeTraceEvent({
@@ -241,7 +241,7 @@ export async function runGeometryWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: OOE_GEOMETRY_EVALUATE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
   getHostExecution?: () => GeometryHostExecution | undefined,
-  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+  resolveCanonicalOutcome?: (payload: TPayload) => CanonicalRuntimeOutcome,
 ): Promise<GeometryOoePilotRunResult<TPayload>> {
   const definition = geometryPilotDefinition();
   return runOoeRuntimeJob({
@@ -263,9 +263,9 @@ export async function runGeometryWithOoePilot<TPayload>(
       const snapshot = routeSnapshot as {
         request?: GeometryRouteRequestSnapshot;
       };
-      const output = resolveDisplayOutcome
-        ? resolveDisplayOutcome(payload)
-        : (payload as { outcome?: DisplayOutcome }).outcome ?? payload as DisplayOutcome;
+      const output = resolveCanonicalOutcome
+        ? resolveCanonicalOutcome(payload)
+        : (payload as { outcome?: CanonicalRuntimeOutcome }).outcome ?? payload as CanonicalRuntimeOutcome;
       return {
         depth: 'coarse',
         mode: 'geometry',
@@ -276,7 +276,7 @@ export async function runGeometryWithOoePilot<TPayload>(
           screen: snapshot.request?.screenHint,
           latexLength: snapshot.request?.inputLatex?.length,
         },
-        outputSummary: summarizeDisplayOutcome(output),
+        outputSummary: summarizeCanonicalRuntimeOutcome(output),
         runtimeHost: metadata.geometryHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

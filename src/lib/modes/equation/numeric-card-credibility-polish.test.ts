@@ -1,5 +1,6 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
-import type { DisplayDetailSection, DisplayOutcome, NumericSolveInterval } from '../../../types/calculator';
+import type { DisplayDetailSection, ResultProducerDraft, NumericSolveInterval } from '../../../types/calculator';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { createEquationResultOutcome } from '../../equation/solve-result/producer';
 import { runEquationMode } from '../equation';
@@ -23,25 +24,25 @@ function solve(input: {
   });
 }
 
-function allDetails(result: DisplayOutcome) {
+function allDetails(result: ResultProducerDraft) {
   if (result.kind === 'prompt') {
     return '';
   }
   return result.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
 }
 
-function section(result: DisplayOutcome, title: string): DisplayDetailSection | undefined {
+function section(result: ResultProducerDraft, title: string): DisplayDetailSection | undefined {
   if (result.kind === 'prompt') {
     return undefined;
   }
   return result.detailSections?.find((candidate) => candidate.title === title);
 }
 
-function sectionText(result: DisplayOutcome, title: string) {
+function sectionText(result: ResultProducerDraft, title: string) {
   return section(result, title)?.lines.join(' ') ?? '';
 }
 
-function expectSuccess(result: DisplayOutcome) {
+function expectSuccess(result: ResultProducerDraft) {
   expect(result.kind).toBe('success');
   if (result.kind !== 'success') {
     throw new Error(`Expected success, received ${result.kind}`);
@@ -49,7 +50,7 @@ function expectSuccess(result: DisplayOutcome) {
   return result;
 }
 
-function expectError(result: DisplayOutcome) {
+function expectError(result: ResultProducerDraft) {
   expect(result.kind).toBe('error');
   if (result.kind !== 'error') {
     throw new Error(`Expected error, received ${result.kind}`);
@@ -57,7 +58,7 @@ function expectError(result: DisplayOutcome) {
   return result;
 }
 
-function numericRoots(result: Extract<DisplayOutcome, { kind: 'success' }>) {
+function numericRoots(result: Extract<ResultProducerDraft, { kind: 'success' }>) {
   if (result.candidateValues && result.candidateValues.length > 0) {
     return result.candidateValues;
   }
@@ -73,7 +74,7 @@ function numericRoots(result: Extract<DisplayOutcome, { kind: 'success' }>) {
     .filter((value) => Number.isFinite(value)) ?? [];
 }
 
-function expectApproxRoot(result: Extract<DisplayOutcome, { kind: 'success' }>, expected: number, tolerance = 1e-5) {
+function expectApproxRoot(result: Extract<ResultProducerDraft, { kind: 'success' }>, expected: number, tolerance = 1e-5) {
   expect(numericRoots(result).some((root) => Math.abs(root - expected) <= tolerance)).toBe(true);
 }
 
@@ -255,7 +256,7 @@ describe('Equation numeric card credibility polish', () => {
     }));
     const resultInput = { ...result };
     delete resultInput.canonicalResult;
-    const syntheticSolveNote = buildDisplayBlocks(createEquationResultOutcome({
+    const syntheticSolveNote = buildProducerDisplayBlocks(createEquationResultOutcome({
       ...resultInput,
       detailSections: [
         {
@@ -273,3 +274,7 @@ describe('Equation numeric card credibility polish', () => {
     expect(result.exactLatex ?? '').toContain(String.raw`\exp`);
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

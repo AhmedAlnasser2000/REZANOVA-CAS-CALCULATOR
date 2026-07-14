@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../types/calculator';
 import {
@@ -43,6 +43,6 @@ export function runSharedEquationSolveWithTraceAsync(
 export function runSharedEquationSolve(
   request: SharedSolveRequest,
   options: GuardedEquationSolveOptions = {},
-): DisplayOutcome {
+): ResultProducerDraft {
   return runGuardedEquationSolve(request, 0, new Set<string>(), options);
 }

@@ -75,7 +75,7 @@ import type {
   CalculusImproperIntegralState,
   CalculusIndefiniteIntegralState,
   AngleUnit,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
@@ -119,7 +119,7 @@ export type RunCalculusWorkspaceModeRequest = {
   variableSubstitutionSnapshot?: readonly VariableSubstitutionSnapshot[];
 };
 
-function toOutcome(title: string, evaluation: CalculusWorkspaceEvaluation): DisplayOutcome {
+function toOutcome(title: string, evaluation: CalculusWorkspaceEvaluation): ResultProducerDraft {
   if (evaluation.error) {
     return {
       kind: 'error',
@@ -182,12 +182,12 @@ function substituteLatexField(
 }
 
 function withStoredValueDetails(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   substitutions: readonly VariableSubstitutionSnapshot[],
   protectedSubstitutions: readonly VariableSubstitutionSnapshot[],
   protectedNameDescriptions: Readonly<Record<string, string>>,
   replayedSnapshot: boolean,
-): DisplayOutcome {
+): ResultProducerDraft {
   const storedValueDetails = storedValueReadbackSections({
     substitutions,
     protectedSubstitutions,
@@ -279,9 +279,9 @@ function normalizePointDraft(pointLatex: string) {
 }
 
 function withDerivativeSteps(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   detailSection: DisplayDetailSection | undefined,
-): DisplayOutcome {
+): ResultProducerDraft {
   if (!detailSection || outcome.kind !== 'success') {
     return outcome;
   }
@@ -299,7 +299,7 @@ function withDerivativeSteps(
 
 export async function runCalculusWorkspaceMode(
   request: RunCalculusWorkspaceModeRequest,
-): Promise<DisplayOutcome> {
+): Promise<ResultProducerDraft> {
   const substitutionSource = request.variableSubstitutionSnapshot ?? request.storedVariables;
   const substitutions: VariableSubstitutionSnapshot[] = [];
   const protectedSubstitutions: VariableSubstitutionSnapshot[] = [];
@@ -312,7 +312,7 @@ export async function runCalculusWorkspaceMode(
       ...Object.fromEntries(names.map((name) => [name, description])),
     };
   };
-  let outcome: DisplayOutcome;
+  let outcome: ResultProducerDraft;
   let mathJsonLeaves: CalculusOwnedMathJsonLeaf[] = [];
   const captureEvaluation = (title: string, evaluation: CalculusWorkspaceEvaluation) => {
     mathJsonLeaves = [...(evaluation.mathJsonLeaves ?? [])];

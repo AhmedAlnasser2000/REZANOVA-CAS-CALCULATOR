@@ -1,74 +1,50 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
+import { requireCanonicalResultAuthority } from './native-result';
 import { buildCanonicalResultDocumentFromProducer } from './producer';
-import {
-  isMathBearingControlledError,
-  requireCanonicalResultAuthority,
-} from './native-result';
 
-describe('live result native authority', () => {
-  it('retains a matching native success and rejects missing or stale authority', () => {
-    const canonicalResult = buildCanonicalResultDocumentFromProducer({
-      outcomeKind: 'success',
-      title: 'Calculate',
+describe('native canonical result authority', () => {
+  it('accepts prompts and validated producer-owned documents', () => {
+    const prompt: ResultProducerDraft = {
+      kind: 'prompt',
+      title: 'Target',
+      message: 'Choose a variable.',
+      targetMode: 'equation',
+      carryLatex: 'x+y=1',
       warnings: [],
-    });
-    const native: DisplayOutcome = {
-      kind: 'success',
-      title: 'Calculate',
-      warnings: [],
-      canonicalResult,
     };
+    expect(requireCanonicalResultAuthority(prompt, 'test')).toEqual(prompt);
 
-    expect(requireCanonicalResultAuthority(native, 'Calculate')).toBe(native);
-    expect(() => requireCanonicalResultAuthority({
+    const result: ResultProducerDraft = {
       kind: 'success',
-      title: 'Calculate',
+      title: 'Result',
+      exactLatex: '4',
       warnings: [],
-    }, 'Calculate')).toThrow('Calculate success is missing native canonical authority');
-    expect(() => requireCanonicalResultAuthority({
-      ...native,
-      exactSupplementLatex: ['x\\ne0'],
-    }, 'Calculate')).toThrow('Calculate success is missing native canonical authority');
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Result',
+        primaryMath: { canonicalLatex: '4' },
+        warnings: [],
+      }),
+    };
+    expect(requireCanonicalResultAuthority(result, 'test')).toMatchObject({
+      canonicalResult: { primaryMath: { canonicalLatex: '4' } },
+    });
   });
 
-  it('requires native authority for math-bearing errors and leaves control outcomes separate', () => {
-    const prompt: DisplayOutcome = {
-      kind: 'prompt',
-      title: 'Calculate',
-      message: 'Use Equation mode.',
-      targetMode: 'equation',
-      carryLatex: 'x=1',
+  it('fails closed when authority is absent or malformed', () => {
+    expect(() => requireCanonicalResultAuthority({
+      kind: 'success',
+      title: 'Missing',
       warnings: [],
-    };
-    const controlError: DisplayOutcome = {
-      kind: 'error',
-      title: 'Table',
-      error: 'Table build was stopped before it finished.',
-      warnings: [],
-    };
-    const mathError: DisplayOutcome = {
-      kind: 'error',
-      title: 'Boundary',
-      error: 'No real solution.',
-      exactLatex: 'x\\notin\\mathbb{R}',
-      warnings: [],
-    };
-    const canonicalResult = buildCanonicalResultDocumentFromProducer({
-      outcomeKind: 'error',
-      title: mathError.title,
-      error: mathError.error,
-      primaryMath: { canonicalLatex: mathError.exactLatex ?? '' },
-      warnings: [],
-    });
+    }, 'test')).toThrow('missing native canonical result authority');
 
-    expect(isMathBearingControlledError(controlError)).toBe(false);
-    expect(isMathBearingControlledError(mathError)).toBe(true);
-    expect(requireCanonicalResultAuthority(prompt, 'Calculate')).toBe(prompt);
-    expect(requireCanonicalResultAuthority(controlError, 'Table')).toBe(controlError);
-    expect(() => requireCanonicalResultAuthority(mathError, 'Equation'))
-      .toThrow('Equation math-bearing error is missing native canonical authority');
-    expect(requireCanonicalResultAuthority({ ...mathError, canonicalResult }, 'Equation'))
-      .toMatchObject({ canonicalResult });
+    expect(() => requireCanonicalResultAuthority({
+      kind: 'error',
+      title: 'Malformed',
+      error: 'Stop',
+      warnings: [],
+      canonicalResult: { version: 1 } as never,
+    }, 'test')).toThrow('invalid canonical result authority');
   });
 });

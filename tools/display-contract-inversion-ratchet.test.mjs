@@ -18,7 +18,7 @@ const DISPLAY_TYPES = `
     warnings: string[];
     exactLatex?: string;
     canonicalResult?: { version: 1 };
-    canonicalMath?: unknown;
+    primaryMath?: unknown;
     answerRows?: unknown;
     branchReadback?: unknown;
     systemReadback?: unknown;
@@ -48,7 +48,7 @@ const DISPLAY_TYPES = `
     runtimeAdvisories?: unknown;
     variableSubstitutions?: unknown;
   };
-  export type DisplayOutcome = Common & (
+  export type ResultProducerDraft = Common & (
     | { kind: 'success' }
     | { kind: 'prompt'; message: string; targetMode: string; carryLatex: string }
     | { kind: 'error'; error: string }
@@ -86,11 +86,11 @@ describe('display contract inversion ratchet', () => {
   it('separates native, compatibility, control, and consumer authority', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export const legacy = (): DisplayOutcome => ({ kind: 'success', title: 'Legacy', exactLatex: '4', warnings: [] });
-        export const native = (): DisplayOutcome => ({ kind: 'success', title: 'Native', exactLatex: '5', canonicalResult: { version: 1 }, warnings: [] });
-        export const control = (): DisplayOutcome => ({ kind: 'error', title: 'Stop', error: 'No input', warnings: [] });
-        export function read(outcome: DisplayOutcome) {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export const legacy = (): ResultProducerDraft => ({ kind: 'success', title: 'Legacy', exactLatex: '4', warnings: [] });
+        export const native = (): ResultProducerDraft => ({ kind: 'success', title: 'Native', exactLatex: '5', canonicalResult: { version: 1 }, warnings: [] });
+        export const control = (): ResultProducerDraft => ({ kind: 'error', title: 'Stop', error: 'No input', warnings: [] });
+        export function read(outcome: ResultProducerDraft) {
           return [outcome.kind, outcome.title, outcome.canonicalResult, outcome.runtimeAdvisories];
         }
       `,
@@ -100,38 +100,41 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.summary.compatibilityProjectionCount, 1);
     assert.equal(report.summary.nativeDocumentCount, 1);
     assert.equal(report.categoryCounts['control-outcome'], 1);
-    assert.equal(report.categoryCounts['legacy-read'], 1);
-    assert.equal(report.categoryCounts['canonical-read'], 1);
-    assert.equal(report.categoryCounts['control-read'], 1);
-    assert.equal(report.categoryCounts['transient-read'], 1);
+    assert.equal(report.categoryCounts['producer-draft-read'], 4);
+    assert.equal(report.categoryCounts['legacy-read'], 0);
+    assert.equal(report.categoryCounts['canonical-read'], 0);
+    assert.equal(report.categoryCounts['control-read'], 0);
+    assert.equal(report.categoryCounts['transient-read'], 0);
     assert.equal(report.summary.violationCount, 0);
     assert.deepEqual(JSON.parse(JSON.stringify(report)), report);
     assert.deepEqual(scanDisplayContractInversionRepository({ rootDir }), report);
   });
 
-  it('recognizes the registered canonical projection and forwarding boundaries', () => {
+  it('rejects retired reverse projection symbols', () => {
     const rootDir = fixture({
       'src/lib/result-contract/projection.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function projectCanonicalResultToDisplayOutcome(document: { version: 1 }): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function projectCanonicalResultToProducerDraft(document: { version: 1 }): ResultProducerDraft {
           const common = { title: 'Stored', canonicalResult: document, warnings: [] };
           return { kind: 'success', ...common };
         }
-        export function forward(outcome: DisplayOutcome): DisplayOutcome { return outcome; }
+        export function forward(outcome: ResultProducerDraft): ResultProducerDraft { return outcome; }
       `,
     });
     const report = scanDisplayContractInversionRepository({ rootDir });
 
-    assert.equal(report.categoryCounts['canonical-projection'], 1);
+    assert.equal(report.categoryCounts['canonical-projection'], 0);
     assert.equal(report.categoryCounts.forwarder, 1);
-    assert.equal(report.summary.nativeDocumentCount, 0);
+    assert.equal(report.summary.nativeDocumentCount, 1);
+    assert.ok(report.violations.some((entry) =>
+      entry.kind === 'retired-result-compatibility-symbol'));
   });
 
   it('keeps the exact Equation cancellation projection in control authority', () => {
     const rootDir = fixture({
       'src/lib/equation/solve-result/boundary.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export function projectEquationOutcomeBoundaryToDisplay(reason: string): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export function readEquationOutcomeBoundary(reason: string): ResultProducerDraft {
           return {
             kind: 'error',
             title: 'Solve',
@@ -152,10 +155,11 @@ describe('display contract inversion ratchet', () => {
   it('recognizes canonical adapter calls as native producer coverage', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        declare function projectCanonicalResultToDisplayOutcome(document: { version: 1 }): DisplayOutcome;
-        export function run(): DisplayOutcome {
-          return projectCanonicalResultToDisplayOutcome({ version: 1 });
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        declare function requireCanonicalResultAuthority(document: { version: 1 }): ResultProducerDraft;
+        export function run(): ResultProducerDraft {
+          const document = { version: 1 as const };
+          return requireCanonicalResultAuthority(document);
         }
       `,
     });
@@ -187,14 +191,14 @@ describe('display contract inversion ratchet', () => {
   it('counts only directly wrapped authored results as native documents', () => {
     const rootDir = fixture({
       'src/lib/modes/equation/wrapped.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
         declare function createEquationResultOutcome(input: {
           kind: 'success';
           title: string;
           exactLatex: string;
           warnings: string[];
-        }): DisplayOutcome;
-        export function wrapped(): DisplayOutcome {
+        }): ResultProducerDraft;
+        export function wrapped(): ResultProducerDraft {
           return createEquationResultOutcome({
             kind: 'success',
             title: 'Solve',
@@ -202,7 +206,7 @@ describe('display contract inversion ratchet', () => {
             warnings: [],
           });
         }
-        export function unwrapped(): DisplayOutcome {
+        export function unwrapped(): ResultProducerDraft {
           return { kind: 'success', title: 'Solve', exactLatex: 'x=2', warnings: [] };
         }
       `,
@@ -217,10 +221,10 @@ describe('display contract inversion ratchet', () => {
   it('counts a producer wrapper around a typed builder result without double-counting literals', () => {
     const rootDir = fixture({
       'src/lib/modes/equation/builder.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        declare function createEquationResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        declare function buildRuntimeOutcome(): DisplayOutcome;
-        export function built(): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        declare function createEquationResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        declare function buildRuntimeOutcome(): ResultProducerDraft;
+        export function built(): ResultProducerDraft {
           return createEquationResultOutcome(buildRuntimeOutcome());
         }
       `,
@@ -235,10 +239,10 @@ describe('display contract inversion ratchet', () => {
   it('separates registered Equation owner assembly from its canonical rebuild wrapper', () => {
     const rootDir = fixture({
       'src/lib/equation/guarded/substitution-stage.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        declare function rebuildSubstitutionOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function substitutionSolve(): DisplayOutcome {
-          const producerInput: DisplayOutcome = {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        declare function rebuildSubstitutionOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function substitutionSolve(): ResultProducerDraft {
+          const producerInput: ResultProducerDraft = {
             kind: 'success',
             title: 'Solve',
             exactLatex: 'x=1',
@@ -258,8 +262,8 @@ describe('display contract inversion ratchet', () => {
   it('does not misclassify the exact producer adapter input as a downstream consumer', () => {
     const rootDir = fixture({
       'src/lib/equation/solve-result/producer.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export function createEquationResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export function createEquationResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
@@ -275,16 +279,16 @@ describe('display contract inversion ratchet', () => {
   it('classifies the full Calculus adapter and its direct owner boundary as native', () => {
     const rootDir = fixture({
       'src/lib/calculus/workspace/result-document.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export function createCalculusResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export function createCalculusResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
       `,
       'src/lib/calculus/workspace/engine.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        declare function createCalculusResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function runLimit(outcome: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        declare function createCalculusResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function runLimit(outcome: ResultProducerDraft): ResultProducerDraft {
           return createCalculusResultOutcome(outcome);
         }
       `,
@@ -299,52 +303,52 @@ describe('display contract inversion ratchet', () => {
   it('classifies all guided-domain adapters and owner boundaries as native', () => {
     const rootDir = fixture({
       'src/lib/trigonometry/result-document.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function createTrigonometryResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function createTrigonometryResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
       `,
       'src/lib/trigonometry/runtime-run.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        declare function createTrigonometryResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function run(outcome: DisplayOutcome) { return createTrigonometryResultOutcome(outcome); }
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        declare function createTrigonometryResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function run(outcome: ResultProducerDraft) { return createTrigonometryResultOutcome(outcome); }
       `,
       'src/lib/geometry/result-document.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function createGeometryResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function createGeometryResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
       `,
       'src/lib/geometry/runtime-run.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        declare function createGeometryResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function run(outcome: DisplayOutcome) { return createGeometryResultOutcome(outcome); }
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        declare function createGeometryResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function run(outcome: ResultProducerDraft) { return createGeometryResultOutcome(outcome); }
       `,
       'src/lib/statistics/result-document.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function createStatisticsResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function createStatisticsResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
       `,
       'src/lib/statistics/runtime-run.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        declare function createStatisticsResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function run(outcome: DisplayOutcome) { return createStatisticsResultOutcome(outcome); }
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        declare function createStatisticsResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function run(outcome: ResultProducerDraft) { return createStatisticsResultOutcome(outcome); }
       `,
       'src/lib/modes/table-result-document.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function createTableResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function createTableResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
       `,
       'src/lib/modes/table-core.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        declare function createTableResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function run(outcome: DisplayOutcome) { return createTableResultOutcome(outcome); }
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        declare function createTableResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function run(outcome: ResultProducerDraft) { return createTableResultOutcome(outcome); }
       `,
     });
     const report = scanDisplayContractInversionRepository({ rootDir });
@@ -359,28 +363,28 @@ describe('display contract inversion ratchet', () => {
   it('classifies independent Matrix and Vector adapters and owner boundaries as native', () => {
     const rootDir = fixture({
       'src/lib/modes/matrix-result-document.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function createMatrixResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function createMatrixResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
       `,
       'src/lib/modes/matrix.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        declare function createMatrixResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function run(outcome: DisplayOutcome) { return createMatrixResultOutcome(outcome); }
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        declare function createMatrixResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function run(outcome: ResultProducerDraft) { return createMatrixResultOutcome(outcome); }
       `,
       'src/lib/modes/vector-result-document.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function createVectorResultOutcome(input: DisplayOutcome): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function createVectorResultOutcome(input: ResultProducerDraft): ResultProducerDraft {
           if (input.kind === 'prompt') return input;
           return { ...input, canonicalResult: { version: 1 } };
         }
       `,
       'src/lib/modes/vector.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        declare function createVectorResultOutcome(input: DisplayOutcome): DisplayOutcome;
-        export function run(outcome: DisplayOutcome) { return createVectorResultOutcome(outcome); }
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        declare function createVectorResultOutcome(input: ResultProducerDraft): ResultProducerDraft;
+        export function run(outcome: ResultProducerDraft) { return createVectorResultOutcome(outcome); }
       `,
     });
     const report = scanDisplayContractInversionRepository({ rootDir });
@@ -395,11 +399,11 @@ describe('display contract inversion ratchet', () => {
   it('separates registered owner assembly from live compatibility debt', () => {
     const rootDir = fixture({
       'src/lib/geometry/core.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export function evaluationToOutcome(): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function evaluationToOutcome(): ResultProducerDraft {
           return { kind: 'success', title: 'Geometry', exactLatex: '4', warnings: [] };
         }
-        export function unregisteredOutcome(): DisplayOutcome {
+        export function unregisteredOutcome(): ResultProducerDraft {
           return { kind: 'success', title: 'Geometry', exactLatex: '5', warnings: [] };
         }
       `,
@@ -414,8 +418,8 @@ describe('display contract inversion ratchet', () => {
   it('classifies workspace hard-stop payloads as control outcomes', () => {
     const rootDir = fixture({
       'src/lib/modes/worker-clients/calculate-worker-client.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export function buildCancelledPayload(): DisplayOutcome {
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export function buildCancelledPayload(): ResultProducerDraft {
           return {
             kind: 'error',
             title: 'Calculate',
@@ -461,23 +465,23 @@ describe('display contract inversion ratchet', () => {
       assert.equal(report.lanes[lane]['compatibility-projection'], 0, lane);
     }
     assert.equal(report.summary.compatibilityProjectionCount, 0);
-    assert.equal(report.summary.ownerAssemblyCount, 47);
+    assert.equal(report.summary.ownerAssemblyCount, 33);
     assert.deepEqual(
       report.entries['compatibility-projection'].map((entry) => [entry.file, entry.context]),
       [],
     );
-    assert.doesNotMatch(mergeSource, /DisplayOutcome|mergeDisplayOutcomes/u);
-    assert.doesNotMatch(orchestratorSource, /DisplayOutcome/u);
+    assert.doesNotMatch(mergeSource, /ResultProducerDraft|mergeDisplayOutcomes/u);
+    assert.doesNotMatch(orchestratorSource, /ResultProducerDraft/u);
     assert.doesNotMatch(
       guardedTypesSource,
-      /(?:GuardedSolveRunner|AsyncGuardedSolveRunner)[\s\S]{0,220}=>\s*(?:Promise<)?DisplayOutcome/u,
+      /(?:GuardedSolveRunner|AsyncGuardedSolveRunner)[\s\S]{0,220}=>\s*(?:Promise<)?ResultProducerDraft/u,
     );
     assert.doesNotMatch(
       guardedTypesSource,
-      /GuardedEquationStageDescriptor[\s\S]{0,400}DisplayOutcome/u,
+      /GuardedEquationStageDescriptor[\s\S]{0,400}ResultProducerDraft/u,
     );
     assert.match(guardedRunSource, /readEquationStageResultCarrier\(runGuardedEquationSolveInternal/u);
-    assert.doesNotMatch(selectedCarrierSources, /DisplayOutcome\[\]/u);
+    assert.doesNotMatch(selectedCarrierSources, /ResultProducerDraft\[\]/u);
     assert.match(selectedCarrierSources, /buildEquationStageResultCarrier/u);
     assert.match(selectedCarrierSources, /mergeEquationStageCarriers/u);
   });
@@ -494,7 +498,7 @@ describe('display contract inversion ratchet', () => {
 
     assert.equal(lane['canonical-projection'], 0);
     assert.equal(lane['compatibility-projection'], 0);
-    assert.equal(lane['canonical-read'], 0);
+    assert.equal(lane['canonical-read'], 4);
     assert.equal(lane['legacy-read'], 0);
     assert.deepEqual(legacyReadsByFile, {});
   });
@@ -502,37 +506,39 @@ describe('display contract inversion ratchet', () => {
   it('pins final canonical authority and consumer inversion floors', () => {
     const report = scanDisplayContractInversionRepository({ rootDir: process.cwd() });
 
-    assert.equal(report.summary.producerCount, 641);
-    assert.equal(report.summary.consumerCount, 595);
+    assert.equal(report.summary.producerCount, 401);
+    assert.equal(report.summary.consumerCount, 57);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
-    assert.equal(report.summary.legacyReadCount, 393);
-    assert.equal(report.summary.nativeDocumentCount, 177);
-    assert.equal(report.lanes['result-contract']['canonical-projection'], 4);
+    assert.equal(report.summary.legacyReadCount, 0);
+    assert.equal(report.summary.producerDraftReadCount, 92);
+    assert.equal(report.summary.nativeDocumentCount, 149);
+    assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);
-    assert.equal(report.lanes.calculate['native-document'], 7);
+    assert.equal(report.lanes.calculate['native-document'], 6);
     assert.equal(report.lanes['app-display']['legacy-read'], 0);
     assert.equal(report.lanes['app-shell']?.['legacy-read'] ?? 0, 0);
     assert.equal(report.lanes['display-read-model']['legacy-read'], 0);
-    assert.equal(report.lanes['history-replay']['legacy-read'], 2);
-    assert.equal(report.lanes['surface-protocol']['legacy-read'], 4);
+    assert.equal(report.lanes['history-replay']['canonical-read'], 2);
+    assert.equal(report.lanes['surface-protocol']['canonical-read'], 1);
     assert.equal(report.lanes.history['legacy-read'], 0);
-    assert.equal(report.lanes['app-runtime']['legacy-read'], 11);
+    assert.equal(report.lanes['app-runtime']['canonical-read'], 5);
   });
 
   it('classifies parameter destructuring and rejects dynamic or rest reads', () => {
     const rootDir = fixture({
       'src/lib/modes/calculate/sample.ts': `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export function fixed({ exactLatex }: DisplayOutcome) { return exactLatex; }
-        export function dynamic(outcome: DisplayOutcome, key: keyof DisplayOutcome) { return outcome[key]; }
-        export function rest({ kind, ...remaining }: DisplayOutcome) { return [kind, remaining]; }
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export function fixed({ exactLatex }: ResultProducerDraft) { return exactLatex; }
+        export function dynamic(outcome: ResultProducerDraft, key: keyof ResultProducerDraft) { return outcome[key]; }
+        export function rest({ kind, ...remaining }: ResultProducerDraft) { return [kind, remaining]; }
       `,
     });
     const report = scanDisplayContractInversionRepository({ rootDir });
 
-    assert.equal(report.categoryCounts['legacy-read'], 1);
-    assert.equal(report.categoryCounts['control-read'], 1);
+    assert.equal(report.categoryCounts['producer-draft-read'], 2);
+    assert.equal(report.categoryCounts['legacy-read'], 0);
+    assert.equal(report.categoryCounts['control-read'], 0);
     assert.deepEqual(report.violations.map((entry) => entry.kind).sort(), [
       'display-outcome-rest-read',
       'dynamic-display-outcome-read',
@@ -542,8 +548,8 @@ describe('display contract inversion ratchet', () => {
   it('does not count curated golden expectations as live producers', () => {
     const rootDir = fixture({
       'src/lib/__golden__/golden-cases.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export const expected: DisplayOutcome = { kind: 'success', title: 'Fixture', exactLatex: '4', warnings: [] };
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export const expected: ResultProducerDraft = { kind: 'success', title: 'Fixture', exactLatex: '4', warnings: [] };
       `,
     });
     const report = scanDisplayContractInversionRepository({ rootDir });
@@ -555,8 +561,8 @@ describe('display contract inversion ratchet', () => {
   it('rejects producers and consumers outside every declared lane', () => {
     const rootDir = fixture({
       'src/lib/new-domain/result.ts': `
-        import type { DisplayOutcome } from '../../types/calculator/display-types';
-        export const result = (): DisplayOutcome => ({ kind: 'success', title: 'New', warnings: [] });
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export const result = (): ResultProducerDraft => ({ kind: 'success', title: 'New', warnings: [] });
       `,
     });
     const report = scanDisplayContractInversionRepository({ rootDir });
@@ -565,16 +571,30 @@ describe('display contract inversion ratchet', () => {
     assert.match(report.violations[0].kind, /unclassified-display-contract-path/u);
     assert.throws(
       () => buildDisplayContractInversionBaseline(report, 'Not allowed'),
-      /unclassified DisplayOutcome path/u,
+      /unclassified ResultProducerDraft path/u,
     );
+  });
+
+  it('rejects producer drafts in app consumer districts', () => {
+    const rootDir = fixture({
+      'src/app/runtime/consumer.ts': `
+        import type { ResultProducerDraft } from '../../types/calculator/display-types';
+        export function read(outcome: ResultProducerDraft) { return outcome.exactLatex; }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.categoryCounts['legacy-read'], 1);
+    assert.ok(report.violations.some((entry) =>
+      entry.kind === 'producer-draft-read-outside-owner'));
   });
 
   it('pins source fingerprints while ignoring line-only movement', () => {
     const repoPath = 'src/lib/modes/calculate/sample.ts';
     const rootDir = fixture({
       [repoPath]: `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export const result = (): DisplayOutcome => ({ kind: 'success', title: 'Value', exactLatex: '4', warnings: [] });
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export const result = (): ResultProducerDraft => ({ kind: 'success', title: 'Value', exactLatex: '4', warnings: [] });
       `,
     });
     const initial = scanDisplayContractInversionRepository({ rootDir });
@@ -583,8 +603,8 @@ describe('display contract inversion ratchet', () => {
 
     rewrite(rootDir, repoPath, `
 
-      import type { DisplayOutcome } from '../../../types/calculator/display-types';
-      export const result = (): DisplayOutcome => ({ kind: 'success', title: 'Value', exactLatex: '4', warnings: [] });
+      import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+      export const result = (): ResultProducerDraft => ({ kind: 'success', title: 'Value', exactLatex: '4', warnings: [] });
     `);
     assert.equal(
       validateDisplayContractInversionReport(
@@ -595,8 +615,8 @@ describe('display contract inversion ratchet', () => {
     );
 
     rewrite(rootDir, repoPath, `
-      import type { DisplayOutcome } from '../../../types/calculator/display-types';
-      export const result = (): DisplayOutcome => ({ kind: 'success', title: 'Value', exactLatex: '5', warnings: [] });
+      import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+      export const result = (): ResultProducerDraft => ({ kind: 'success', title: 'Value', exactLatex: '5', warnings: [] });
     `);
     const changed = validateDisplayContractInversionReport(
       scanDisplayContractInversionRepository({ rootDir }),
@@ -611,17 +631,17 @@ describe('display contract inversion ratchet', () => {
     const repoPath = 'src/lib/modes/calculate/sample.ts';
     const rootDir = fixture({
       [repoPath]: `
-        import type { DisplayOutcome } from '../../../types/calculator/display-types';
-        export const result = (): DisplayOutcome => ({ kind: 'success', title: 'Value', exactLatex: '4', warnings: [] });
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        export const result = (): ResultProducerDraft => ({ kind: 'success', title: 'Value', exactLatex: '4', warnings: [] });
       `,
     });
     const initial = scanDisplayContractInversionRepository({ rootDir });
     const baseline = buildDisplayContractInversionBaseline(initial, 'Initial authority inventory');
 
     rewrite(rootDir, repoPath, `
-      import type { DisplayOutcome } from '../../../types/calculator/display-types';
-      export const first = (): DisplayOutcome => ({ kind: 'success', title: 'One', exactLatex: '4', warnings: [] });
-      export const second = (): DisplayOutcome => ({ kind: 'success', title: 'Two', exactLatex: '5', warnings: [] });
+      import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+      export const first = (): ResultProducerDraft => ({ kind: 'success', title: 'One', exactLatex: '4', warnings: [] });
+      export const second = (): ResultProducerDraft => ({ kind: 'success', title: 'Two', exactLatex: '5', warnings: [] });
     `);
     assert.throws(
       () => assertDisplayContractInversionBaselineUpdateAllowed(
@@ -632,16 +652,16 @@ describe('display contract inversion ratchet', () => {
     );
 
     rewrite(rootDir, repoPath, `
-      import type { DisplayOutcome } from '../../../types/calculator/display-types';
-      export const result = (): DisplayOutcome => ({ kind: 'success', title: 'Value', exactLatex: '4', canonicalResult: { version: 1 }, warnings: [] });
+      import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+      export const result = (): ResultProducerDraft => ({ kind: 'success', title: 'Value', exactLatex: '4', canonicalResult: { version: 1 }, warnings: [] });
     `);
     const migrated = scanDisplayContractInversionRepository({ rootDir });
     assert.doesNotThrow(() => assertDisplayContractInversionBaselineUpdateAllowed(migrated, baseline));
     const migratedBaseline = buildDisplayContractInversionBaseline(migrated, 'Migrate one producer');
 
     rewrite(rootDir, repoPath, `
-      import type { DisplayOutcome } from '../../../types/calculator/display-types';
-      export const passthrough = (outcome: DisplayOutcome) => outcome.kind;
+      import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+      export const passthrough = (outcome: ResultProducerDraft) => outcome.kind;
     `);
     assert.throws(
       () => assertDisplayContractInversionBaselineUpdateAllowed(

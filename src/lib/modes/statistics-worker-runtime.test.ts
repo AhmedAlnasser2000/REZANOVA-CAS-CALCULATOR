@@ -11,7 +11,6 @@ import type { OoeRuntimeControlContext } from '../ooe/runtime-control/runtime-co
 import type { RunStatisticsRuntimeRequest } from '../statistics/runtime-input';
 import {
   buildCanonicalStatisticsModeRunPayload,
-  buildStatisticsModeRunPayload,
 } from '../statistics/runtime-run';
 import { runStatisticsModeWithOoePilot } from './statistics';
 import {
@@ -114,7 +113,9 @@ describe('Statistics worker runtime shell', () => {
       createWorker: createWorker('complete'),
     });
 
-    expect(serialized(result.payload)).toEqual(serialized(buildStatisticsModeRunPayload(request)));
+    expect(serialized(result.payload)).toEqual(
+      serialized(buildCanonicalStatisticsModeRunPayload(request)),
+    );
     expect(result.ooe.statisticsHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'statistics-worker-runtime',
@@ -132,7 +133,9 @@ describe('Statistics worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(serialized(result.payload)).toEqual(serialized(buildStatisticsModeRunPayload(request)));
+    expect(serialized(result.payload)).toEqual(
+      serialized(buildCanonicalStatisticsModeRunPayload(request)),
+    );
     expect(result.ooe.statisticsHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'statistics-runtime',

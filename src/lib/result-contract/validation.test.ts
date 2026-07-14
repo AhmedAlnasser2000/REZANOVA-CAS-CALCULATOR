@@ -87,6 +87,11 @@ function comprehensiveDocument(): CanonicalResultDocumentV1 {
         filteredBranchCount: 0,
       },
       numericMethod: 'Exact factorization',
+      trustEvidence: [{
+        classification: 'certified-polynomial-roots',
+        text: 'Certified polynomial roots',
+        interval: { start: '-10', end: '10' },
+      }],
       sourceMode: 'equation',
       variableSubstitutions: [{
         name: 'a',
@@ -157,6 +162,28 @@ describe('CanonicalResultDocumentV1 validation', () => {
 
     delete invalid.primaryMath!.mathJson;
     expect(validateCanonicalResultDocument(invalid).ok).toBe(true);
+  });
+
+  it('rejects undeclared or malformed trust evidence', () => {
+    const undeclared = comprehensiveDocument();
+    undeclared.metadata!.trustEvidence = [{
+      classification: 'unknown-route',
+      text: 'Unknown route',
+    } as never];
+    expect(validateCanonicalResultDocument(undeclared)).toMatchObject({
+      ok: false,
+      failure: { reason: 'invalid-shape' },
+    });
+
+    const emptyText = comprehensiveDocument();
+    emptyText.metadata!.trustEvidence = [{
+      classification: 'local-numeric-roots',
+      text: ' ',
+    }];
+    expect(validateCanonicalResultDocument(emptyText)).toMatchObject({
+      ok: false,
+      failure: { reason: 'invalid-shape' },
+    });
   });
 
   it('enforces the existing MathJSON node and byte bounds inside the larger document bound', () => {

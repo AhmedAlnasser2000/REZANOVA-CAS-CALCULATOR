@@ -1,13 +1,13 @@
-import type { DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
+import type { DisplayDetailSection, ResultProducerDraft } from '../../../types/calculator';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
-export function isDeferredComplexWrapperBoundary(outcome: DisplayOutcome) {
+export function isDeferredComplexWrapperBoundary(outcome: ResultProducerDraft) {
   return outcome.kind === 'error'
     && /outside the supported guarded complex (?:wrapper|preimage) families/u.test(outcome.error);
 }
 
 function complexWrapperFallbackSections(
-  deferredOutcome: DisplayOutcome | undefined,
+  deferredOutcome: ResultProducerDraft | undefined,
 ): DisplayDetailSection[] {
   if (!deferredOutcome || deferredOutcome.kind !== 'error') {
     return [];
@@ -26,7 +26,7 @@ function complexWrapperFallbackSections(
   ];
 }
 
-function hasIntegerPeriodicEvidence(outcome: DisplayOutcome) {
+function hasIntegerPeriodicEvidence(outcome: ResultProducerDraft) {
   if (outcome.kind !== 'success') {
     return false;
   }
@@ -38,9 +38,9 @@ function hasIntegerPeriodicEvidence(outcome: DisplayOutcome) {
 }
 
 export function withDeferredComplexWrapperBoundary(
-  outcome: DisplayOutcome,
-  deferredOutcome: DisplayOutcome | undefined,
-): DisplayOutcome {
+  outcome: ResultProducerDraft,
+  deferredOutcome: ResultProducerDraft | undefined,
+): ResultProducerDraft {
   const fallbackSections = complexWrapperFallbackSections(deferredOutcome);
   if (outcome.kind !== 'success' || fallbackSections.length === 0) {
     return outcome;

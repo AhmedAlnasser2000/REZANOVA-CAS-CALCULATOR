@@ -1,7 +1,7 @@
 import type { TableModeResult } from '../../modes/table-core';
-import type { DisplayOutcome, TableResponse } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome, TableResponse } from '../../../types/calculator';
 import type { OoeTraceEvent } from '../bridge-schema/ooe-bridge';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -113,7 +113,7 @@ function buildTableOoeTraceEvents(
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
     startedMessage: 'Table build started through the isolated Table runtime.',
-    finalMessage: 'Table build pilot produced a stable DisplayOutcome.',
+    finalMessage: 'Table build pilot produced a stable CanonicalRuntimeOutcome.',
   });
 
   if (!cancelled) {
@@ -203,7 +203,7 @@ export async function runTableWithOoePilot<TPayload extends TablePilotPayload = 
   routeSnapshot: unknown = { capabilityId: 'table.build' },
   options?: OoeJobContextOptions,
   getHostExecution?: () => TableHostExecution | undefined,
-  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+  resolveCanonicalOutcome?: (payload: TPayload) => CanonicalRuntimeOutcome,
 ): Promise<TableOoePilotRunResult<TPayload>> {
   const definition = tablePilotDefinition();
   return runOoeRuntimeJob({
@@ -234,8 +234,8 @@ export async function runTableWithOoePilot<TPayload extends TablePilotPayload = 
           step?: number;
         };
       };
-      const output = resolveDisplayOutcome
-        ? resolveDisplayOutcome(payload)
+      const output = resolveCanonicalOutcome
+        ? resolveCanonicalOutcome(payload)
         : (payload as unknown as TableModeResult).outcome;
       return {
         depth: 'coarse',
@@ -250,7 +250,7 @@ export async function runTableWithOoePilot<TPayload extends TablePilotPayload = 
           end: snapshot.request?.end,
           step: snapshot.request?.step,
         },
-        outputSummary: summarizeDisplayOutcome(output),
+        outputSummary: summarizeCanonicalRuntimeOutcome(output),
         runtimeHost: metadata.tableHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

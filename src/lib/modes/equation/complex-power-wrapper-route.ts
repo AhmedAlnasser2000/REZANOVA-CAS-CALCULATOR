@@ -2,7 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   ComplexExactForm,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   OutputStyle,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -113,7 +113,7 @@ type UnsupportedComplexWrapperOptions = {
 function unsupportedComplexWrapperOutcome(
   lines: string[],
   options: UnsupportedComplexWrapperOptions = {},
-): DisplayOutcome {
+): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -632,7 +632,7 @@ function solveComplexPowerWrapper(
     ],
   });
 
-  const outcome: DisplayOutcome = createEquationResultOutcome({
+  const outcome: ResultProducerDraft = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -663,7 +663,7 @@ function solveComplexPowerWrapper(
 
 export function tryComplexPowerWrapperRoute(
   input: ComplexPowerWrapperRouteInput,
-): DisplayOutcome | undefined {
+): ResultProducerDraft | undefined {
   let json: MathJson;
   try {
     json = ce.parse(input.parameterizedEquationLatex).json as MathJson;

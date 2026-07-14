@@ -1,19 +1,19 @@
-import type { CalculusScreen, DisplayOutcome } from '../../../types/calculator';
+import type { CalculusScreen, ResultProducerDraft } from '../../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
 
-type CalculusSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type CalculusErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type CalculusSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type CalculusErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 export type CalculusResultProducerInput =
   | Omit<CalculusSuccessOutcome, 'canonicalResult'>
   | Omit<CalculusErrorOutcome, 'canonicalResult'>;
 
-export type CalculusResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+export type CalculusResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 const NATIVE_CALCULUS_RESULT_DOCUMENT_SCREENS = new Set<CalculusScreen>([
   'limit',
@@ -55,8 +55,8 @@ export function createCalculusResultOutcome(
   options: CanonicalResultProducerOptionsV1 = {},
 ): CalculusResultProducerOutcome {
   if (
-    input.canonicalMath
-    && input.canonicalMath.canonicalLatex !== input.exactLatex
+    input.primaryMath
+    && input.primaryMath.canonicalLatex !== input.exactLatex
   ) {
     throw new Error('Calculus canonical math must match the producer exact LaTeX.');
   }
@@ -69,7 +69,7 @@ export function createCalculusResultOutcome(
       ? {
           primaryMath: canonicalMathValue(
             input.exactLatex,
-            input.canonicalMath?.mathJson,
+            input.primaryMath?.mathJson,
           ),
         }
       : {}),
@@ -130,7 +130,7 @@ export function createCalculusResultOutcome(
     },
   }, options);
 
-  return deriveDisplayOutcomeFromCanonicalResult<CalculusResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<CalculusResultProducerOutcome>(
     canonicalResult,
     input,
   );

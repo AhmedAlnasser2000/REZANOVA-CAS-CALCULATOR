@@ -13,10 +13,10 @@ import {
   storedValueReadbackSections,
 } from '../../algebra/variable-memory';
 import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-variable';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { profileDomainDisplayMathPayload } from '../../display/printer';
+import type { ResultProducerDraft } from '../../../types/calculator';
+import { profileDomainMathValue } from '../../display/printer';
 import {
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   tryProvenCanonicalMathValue,
 } from '../../result-contract';
 import type { MathJsonRouteId } from '../../result-contract/mathjson-route-registry';
@@ -67,7 +67,7 @@ export function runCalculateMode({
   limitTargetKind,
   storedVariables,
   variableSubstitutionSnapshot,
-}: RunCalculateModeRequest): DisplayOutcome {
+}: RunCalculateModeRequest): ResultProducerDraft {
   const title = actionTitle(action);
   const directionalLimit = action === 'evaluate'
     ? normalizeDirectionalLimitLatex(latex)
@@ -228,7 +228,7 @@ export function runCalculateMode({
   ];
   const profiledMath = response.answerMathJson === undefined
     ? undefined
-    : profileDomainDisplayMathPayload(response.exactLatex, response.answerMathJson);
+    : profileDomainMathValue(response.exactLatex, response.answerMathJson);
   const exactLatex = profiledMath?.canonicalLatex ?? response.exactLatex;
   const derivativeStrategies = mergeDerivativeStrategies(
     planner.derivativeStrategies,
@@ -253,10 +253,10 @@ export function runCalculateMode({
     detailSections: detailSections.length > 0 ? detailSections : undefined,
     leaves: ownsCalculateCoverage
       ? [
-          ...(profiledMath?.canonicalMath?.mathJson !== undefined && exactLatex
+          ...(profiledMath?.primaryMath?.mathJson !== undefined && exactLatex
             ? [{
                 canonicalLatex: exactLatex,
-                mathJson: profiledMath.canonicalMath.mathJson,
+                mathJson: profiledMath.primaryMath.mathJson,
                 source: 'calculate-expression-answer',
               }]
             : []),
@@ -280,7 +280,7 @@ export function runCalculateMode({
     title: responseTitleText,
     ...(response.error ? { error: response.error } : {}),
     ...(exactLatex ? { exactLatex } : {}),
-    ...(profiledMath?.canonicalMath ? { canonicalMath: profiledMath.canonicalMath } : {}),
+    ...(profiledMath?.primaryMath ? { primaryMath: profiledMath.primaryMath } : {}),
     answerRows: response.answerRows,
     supplements: response.exactSupplementLatex,
     approxText: response.approxText,
@@ -302,7 +302,7 @@ export function runCalculateMode({
     buildRuntimeOutcome({
       title: responseTitleText,
       exactLatex,
-      canonicalMath: profiledMath?.canonicalMath,
+      primaryMath: profiledMath?.primaryMath,
       answerRows: response.answerRows,
       exactSupplementLatex: response.exactSupplementLatex,
       approxText: response.approxText,
@@ -322,7 +322,7 @@ export function runCalculateMode({
     },
   );
 
-  return deriveDisplayOutcomeFromCanonicalResult<Exclude<DisplayOutcome, { kind: 'prompt' }>>(
+  return attachCanonicalResultToProducerDraft<Exclude<ResultProducerDraft, { kind: 'prompt' }>>(
     canonicalResult,
     outcome,
   );

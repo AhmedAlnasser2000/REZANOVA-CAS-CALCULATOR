@@ -1,19 +1,19 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
-type MatrixSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type MatrixErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type MatrixSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type MatrixErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 type MatrixResultProducerInput =
   | Omit<MatrixSuccessOutcome, 'canonicalResult'>
   | Omit<MatrixErrorOutcome, 'canonicalResult'>;
 
-type MatrixResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+type MatrixResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 export function createMatrixResultOutcome(
   input: Omit<MatrixSuccessOutcome, 'canonicalResult'>,
@@ -31,7 +31,7 @@ export function createMatrixResultOutcome(
   input: MatrixResultProducerInput,
   options: CanonicalResultProducerOptionsV1 = {},
 ): MatrixResultProducerOutcome {
-  if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
+  if (input.primaryMath && input.primaryMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Matrix canonical math must match the producer exact LaTeX.');
   }
   const success = input.kind === 'success' ? input : undefined;
@@ -40,7 +40,7 @@ export function createMatrixResultOutcome(
     title: input.title,
     ...(input.kind === 'error' ? { error: input.error } : {}),
     ...(input.exactLatex
-      ? { primaryMath: canonicalMathValue(input.exactLatex, input.canonicalMath?.mathJson) }
+      ? { primaryMath: canonicalMathValue(input.exactLatex, input.primaryMath?.mathJson) }
       : {}),
     ...(success?.answerRows ? { answerRows: success.answerRows } : {}),
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
@@ -89,7 +89,7 @@ export function createMatrixResultOutcome(
     },
   }, options);
 
-  return deriveDisplayOutcomeFromCanonicalResult<MatrixResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<MatrixResultProducerOutcome>(
     canonicalResult,
     input,
   );

@@ -1,9 +1,9 @@
 import type {
   DisplayBranchReadback,
+  CanonicalRuntimeOutcome,
   DisplayDetailLineKind,
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
   OutputStyle,
   ModeId,
   PeriodicFamilyInfo,
@@ -441,7 +441,7 @@ function allowsImplicitBranchReadback(
 }
 
 export function buildDisplayBlocks(
-  outcome: DisplayOutcome | null | undefined,
+  outcome: CanonicalRuntimeOutcome | null | undefined,
   options: BuildDisplayBlocksOptions = {},
 ): DisplayBlock[] {
   const model = displayResultReadModelFromOutcome(outcome);

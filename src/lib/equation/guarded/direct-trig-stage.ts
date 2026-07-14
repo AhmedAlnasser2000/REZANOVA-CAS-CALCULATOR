@@ -5,7 +5,7 @@ import {
 import { solveParameterizedTrigEquation } from '../parameterized/trig';
 import { solveTrigEquation } from '../../trigonometry/equations';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -25,7 +25,7 @@ function isTrigSolveSuccess(outcome: SolveLike) {
   return !outcome.error && Boolean(outcome.exactLatex);
 }
 
-function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
+function directTrigSolve(request: GuardedSolveRequest): ResultProducerDraft | null {
   const directMatch = matchBoundedTrigEquation(request.resolvedLatex);
   const mixedMatch = matchBoundedMixedLinearTrigEquation(request.resolvedLatex);
   if (!directMatch && !mixedMatch) {
@@ -49,7 +49,7 @@ function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
       resultOrigin: 'symbolic' as const,
       plannerBadges: ['Trig Solve Backend'] as PlannerBadge[],
     };
-    if (parameterized.canonicalMath) {
+    if (parameterized.primaryMath) {
       const supplementalValues = equationMathValuesFromOwnedLeaves({
         outcome: producerInput,
         routeId: 'equation.trig-exp-log',
@@ -57,7 +57,7 @@ function directTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
       });
       return createEquationFiniteRootSuccessOutcome({
         ...producerInput,
-        canonicalMath: parameterized.canonicalMath,
+        primaryMath: parameterized.primaryMath,
         mathJsonRouteId: 'equation.trig-exp-log',
         mathJsonSource: 'equation-parameterized-trig-branches',
       }, {

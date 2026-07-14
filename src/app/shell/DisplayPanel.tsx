@@ -145,7 +145,7 @@ function DisplayPanel({
     displayOutcome
     && (displayOutcome.kind === 'success' || displayOutcome.kind === 'error')
     && settings.outputStyle !== 'exact'
-    && displayOutcome.approxText,
+    && displayOutcome.canonicalResult.approximations?.primary,
   );
   const {
     hasDisplayRenderQueue,

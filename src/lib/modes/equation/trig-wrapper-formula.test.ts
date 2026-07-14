@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { runEquationMode } from '../equation';
@@ -30,7 +31,7 @@ describe('Equation mode trig wrapper formulas', () => {
       expect(result.answerDomain).toBe('real');
       expect(result.exactLatex).not.toContain('PrincipalRoot');
       expect(result.detailSections?.some((section) => section.title === 'Trig Formula Cases')).toBe(true);
-      expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+      expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     }
     expect(sine.exactSupplementLatex).toContain('-1\\le b\\le1');
     expect(cosine.exactSupplementLatex).toContain('-1\\le b\\le1');
@@ -49,7 +50,7 @@ describe('Equation mode trig wrapper formulas', () => {
     expect(result.exactSupplementLatex).toContain('-1\\le b\\le1');
     expect(result.exactSupplementLatex).toContain('z-m\\ne0');
     expect(result.detailSections?.some((section) => section.title === 'Trig Formula Cases')).toBe(true);
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
   it('dedupes exact endpoint branches and keeps range-empty cases stopped', () => {
@@ -79,3 +80,7 @@ describe('Equation mode trig wrapper formulas', () => {
     expect(JSON.stringify(complex)).not.toContain('Real Cardano Cases');
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

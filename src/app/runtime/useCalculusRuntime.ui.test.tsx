@@ -2,13 +2,14 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RefObject } from 'react';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   ModeId,
 } from '../../types/calculator';
 import {
   buildCalculusOoeInputRevisionId,
   runCalculusModeWithOoePilot,
 } from '../../lib/modes/calculus';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useCalculusRuntime } from './useCalculusRuntime';
 import { historyEntryFixture } from '../../test-utils/history-result-document';
@@ -23,7 +24,7 @@ vi.mock('../../lib/modes/calculus', async (importOriginal) => {
 
 const DERIVATIVE_LATEX = '\\frac{d}{dt}\\left(t^2\\right)';
 
-function calculusPayload(): DisplayOutcome {
+function calculusPayload(): ResultProducerDraft {
   return {
     kind: 'success',
     title: 'Derivative',
@@ -151,12 +152,10 @@ describe('useCalculusRuntime', () => {
       hook.result.current.runCalculusAction();
     });
 
-    expect(setDisplayOutcome).toHaveBeenCalledWith({
-      kind: 'error',
-      title: 'Derivative',
-      error: 'Fill the derivative inputs before evaluating.',
-      warnings: [],
-    });
+    expect(setDisplayOutcome).toHaveBeenCalledWith(createCanonicalRuntimeError(
+      'Derivative',
+      'Fill the derivative inputs before evaluating.',
+    ));
     expect(runCalculusModeWithOoePilot).not.toHaveBeenCalled();
   });
 

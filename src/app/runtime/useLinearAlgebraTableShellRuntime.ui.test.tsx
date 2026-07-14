@@ -14,11 +14,29 @@ import {
   type RefObject,
 } from 'react';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   ModeId,
 } from '../../types/calculator';
+import { displayResultReadModelFromOutcome } from '../../lib/display/result/display-read-model';
 import { useLinearAlgebraTableShellRuntime } from './useLinearAlgebraTableShellRuntime';
 import { historyEntryFixture } from '../../test-utils/history-result-document';
+
+function canonicalSuccessMatcher(primaryLatex: string, title?: string) {
+  return expect.objectContaining({
+    kind: 'success',
+    canonicalResult: expect.objectContaining({
+      outcomeKind: 'success',
+      ...(title ? { title } : {}),
+      primaryMath: expect.objectContaining({ canonicalLatex: primaryLatex }),
+    }),
+  });
+}
+
+function displayResultFromCommittedOutcome(outcome: CanonicalRuntimeOutcome) {
+  const display = displayResultReadModelFromOutcome(outcome);
+  if (!display) throw new Error('Expected a canonical display result.');
+  return display;
+}
 
 function renderLinearAlgebraTableShell(
   initialProps: {
@@ -362,10 +380,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: 'success',
-        exactLatex: '\\begin{bmatrix}6 & 8\\\\10 & 12\\end{bmatrix}',
-      }),
+      canonicalSuccessMatcher('\\begin{bmatrix}6 & 8\\\\10 & 12\\end{bmatrix}'),
       'A+B',
       'matrix',
       expect.objectContaining({
@@ -388,10 +403,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: 'success',
-        exactLatex: '32',
-      }),
+      canonicalSuccessMatcher('32'),
       'u\\cdot v',
       'vector',
       expect.objectContaining({
@@ -418,10 +430,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: 'success',
-        exactLatex: '\\begin{bmatrix}3 & 2\\\\3 & 4\\end{bmatrix}',
-      }),
+      canonicalSuccessMatcher('\\begin{bmatrix}3 & 2\\\\3 & 4\\end{bmatrix}'),
       'C+D',
       'matrix',
       expect.objectContaining({
@@ -445,10 +454,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: 'success',
-        exactLatex: '2',
-      }),
+      canonicalSuccessMatcher('2'),
       'p\\cdot q',
       'vector',
       expect.objectContaining({
@@ -476,10 +482,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       hook.result.current.runMatrixAction('add');
     });
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: 'success',
-        exactLatex: '\\begin{bmatrix}14 & 6\\\\7 & 17\\end{bmatrix}',
-      }),
+      canonicalSuccessMatcher('\\begin{bmatrix}14 & 6\\\\7 & 17\\end{bmatrix}'),
       'C+B',
       'matrix',
       expect.objectContaining({
@@ -515,10 +518,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       hook.result.current.runVectorAction('dot');
     });
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: 'success',
-        exactLatex: '40',
-      }),
+      canonicalSuccessMatcher('40'),
       'p·v',
       'vector',
       expect.objectContaining({
@@ -553,11 +553,18 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'success',
-        exactLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
-        solveSummaryParts: [[{
-          kind: 'text',
-          text: 'Exactly one solution. Only this vector x satisfies the system.',
-        }]],
+        canonicalResult: expect.objectContaining({
+          outcomeKind: 'success',
+          primaryMath: expect.objectContaining({
+            canonicalLatex: 'x=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+          }),
+          summaries: {
+            solve: [[{
+              kind: 'text',
+              text: 'Exactly one solution. Only this vector x satisfies the system.',
+            }]],
+          },
+        }),
       }),
       'A x = \\begin{bmatrix}5\\\\11\\end{bmatrix}',
       'matrix',
@@ -585,11 +592,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     });
 
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kind: 'success',
-        title: 'rank(A)',
-        exactLatex: '2',
-      }),
+      canonicalSuccessMatcher('2', 'rank(A)'),
       '\\operatorname{rank}\\left(A\\right)',
       'matrix',
       expect.objectContaining({
@@ -611,127 +614,129 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       });
 
       await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
-      return commitOutcome.mock.calls.at(-1)?.[0] as DisplayOutcome;
+      return displayResultFromCommittedOutcome(
+        commitOutcome.mock.calls.at(-1)?.[0] as CanonicalRuntimeOutcome,
+      );
     }
 
     const detLatex = '\\det\\left(\\begin{bmatrix}\\frac{1}{2}&0\\\\0&\\frac{1}{3}\\end{bmatrix}\\right)';
     const det = await runMatrixExpression(detLatex);
     expect(det).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: detLatex,
-      exactLatex: '\\frac{1}{6}',
+      primaryLatex: '\\frac{1}{6}',
       sourceMode: 'matrix',
     });
 
     const rrefLatex = '\\operatorname{rref}\\left(\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}\\right)';
     const rref = await runMatrixExpression(rrefLatex);
     expect(rref).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: rrefLatex,
-      exactLatex: '\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}',
+      primaryLatex: '\\begin{bmatrix}1 & 2\\\\0 & 0\\end{bmatrix}',
     });
-    expect(rref.kind === 'success' ? rref.detailSections?.[0] : undefined).toMatchObject({
+    expect(rref.detailSections?.[0]).toMatchObject({
       title: 'Row Reduction Steps',
       lines: ['R_{2}\\leftarrow R_{2}-2R_{1}'],
     });
 
     const nullLatex = '\\operatorname{null}\\left(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}\\right)';
     const nullSpace = await runMatrixExpression(nullLatex);
-    expect(nullSpace.kind === 'success' ? nullSpace.exactLatex : '').toContain(
+    expect(nullSpace.primaryLatex ?? '').toContain(
       '\\operatorname{Null}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})',
     );
-    expect(nullSpace.kind === 'success' ? nullSpace.detailSections?.[0]?.lines : []).toContain(
+    expect(nullSpace.detailSections?.[0]?.lines ?? []).toContain(
       '\\operatorname{rank}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})=1',
     );
 
     const colLatex = '\\operatorname{col}\\left(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix}\\right)';
     const columnSpace = await runMatrixExpression(colLatex);
-    expect(columnSpace.kind === 'success' ? columnSpace.exactLatex : '').toContain(
+    expect(columnSpace.primaryLatex ?? '').toContain(
       '\\operatorname{Col}(\\begin{bmatrix}1&1\\\\2&2\\end{bmatrix})',
     );
-    expect(columnSpace.kind === 'success' ? columnSpace.detailSections?.[1]?.lines : []).toContain(
+    expect(columnSpace.detailSections?.[1]?.lines ?? []).toContain(
       'The pivot columns of the original matrix form a basis for its column space.',
     );
 
     const basisLatex = '\\operatorname{basis}\\left(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}\\right)';
     const basis = await runMatrixExpression(basisLatex);
     expect(basis).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: basisLatex,
-      exactLatex: '\\operatorname{basis}(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix})=\\text{Yes}',
+      primaryLatex: '\\operatorname{basis}(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix})=\\text{Yes}',
     });
-    expect(basis.kind === 'success' ? basis.detailSections?.map((section) => section.title) : [])
+    expect(basis.detailSections?.map((section) => section.title) ?? [])
       .toContain('Basis Proof');
 
     const qrLatex = '\\operatorname{qr}\\left(\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}\\right)';
     const qr = await runMatrixExpression(qrLatex);
     expect(qr).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: qrLatex,
       sourceMode: 'matrix',
     });
-    expect(qr.kind === 'success' ? qr.approxText : undefined).toBeUndefined();
-    expect(qr.kind === 'success' ? qr.detailSections?.map((section) => section.title) : [])
+    expect(qr.approximateText).toBeUndefined();
+    expect(qr.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['QR Factors', 'QR Proof', 'QR Column Steps']);
 
     const projectionLatex = '\\operatorname{projcol}\\left(\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix},\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)';
     const projection = await runMatrixExpression(projectionLatex);
     expect(projection).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: projectionLatex,
       sourceMode: 'matrix',
     });
-    expect(projection.kind === 'success' ? projection.approxText : undefined).toBeUndefined();
-    expect(projection.kind === 'success' ? projection.detailSections?.map((section) => section.title) : [])
+    expect(projection.approximateText).toBeUndefined();
+    expect(projection.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Column Projection Facts', 'Column Projection Proof']);
 
     const leastSquaresLatex = '\\operatorname{ls}\\left(\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix},\\begin{bmatrix}2\\\\3\\\\4\\end{bmatrix}\\right)';
     const leastSquares = await runMatrixExpression(leastSquaresLatex);
     expect(leastSquares).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: leastSquaresLatex,
       sourceMode: 'matrix',
     });
-    expect(leastSquares.kind === 'success' ? leastSquares.approxText : undefined).toBeUndefined();
-    expect(leastSquares.kind === 'success' ? leastSquares.detailSections?.map((section) => section.title) : [])
+    expect(leastSquares.approximateText).toBeUndefined();
+    expect(leastSquares.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Least-Squares Solution', 'Residual Vector', 'Least-Squares Proof']);
 
     const eigenLatex = '\\operatorname{eigen}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
     const eigen = await runMatrixExpression(eigenLatex);
     expect(eigen).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: eigenLatex,
       sourceMode: 'matrix',
     });
-    expect(eigen.kind === 'success' ? eigen.approxText : undefined).toBeUndefined();
-    expect(eigen.kind === 'success' ? eigen.detailSections?.map((section) => section.title) : [])
+    expect(eigen.approximateText).toBeUndefined();
+    expect(eigen.detailSections?.map((section) => section.title) ?? [])
       .toContain('How Eigenvalues Were Found');
-    expect(eigen.kind === 'success' ? eigen.detailSections?.map((section) => section.title) : [])
+    expect(eigen.detailSections?.map((section) => section.title) ?? [])
       .not.toContain('Equation Boundary');
-    expect(eigen.kind === 'success' ? eigen.detailSections?.[2]?.lines : []).toContain(
+    expect(eigen.detailSections?.[2]?.lines ?? []).toContain(
       'E_{3}=\\operatorname{Null}(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}-3I)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\1\\end{bmatrix}\\right\\}',
     );
 
     const diagonalizeLatex = '\\operatorname{diag}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}\\right)';
     const diagonalized = await runMatrixExpression(diagonalizeLatex);
     expect(diagonalized).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: diagonalizeLatex,
       sourceMode: 'matrix',
     });
-    expect(diagonalized.kind === 'success' ? diagonalized.approxText : undefined).toBeUndefined();
-    expect(diagonalized.kind === 'success' ? diagonalized.detailSections?.map((section) => section.title) : [])
+    expect(diagonalized.approximateText).toBeUndefined();
+    expect(diagonalized.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Characteristic Polynomial', 'Diagonalization Factors', 'Diagonalization Proof', 'Eigenvector Columns', 'Eigenspaces']);
 
     const powerLatex = '\\operatorname{mpow}\\left(\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix},3\\right)';
     const power = await runMatrixExpression(powerLatex);
     expect(power).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: powerLatex,
       sourceMode: 'matrix',
     });
-    expect(power.kind === 'success' ? power.approxText : undefined).toBeUndefined();
-    expect(power.kind === 'success' ? power.detailSections?.map((section) => section.title) : [])
+    expect(power.approximateText).toBeUndefined();
+    expect(power.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Characteristic Polynomial', 'Power Factors', 'Power via Diagonalization', 'Diagonalization Proof']);
   });
 
@@ -748,31 +753,33 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       });
 
       await waitFor(() => expect(commitOutcome).toHaveBeenCalled());
-      return commitOutcome.mock.calls.at(-1)?.[0] as DisplayOutcome;
+      return displayResultFromCommittedOutcome(
+        commitOutcome.mock.calls.at(-1)?.[0] as CanonicalRuntimeOutcome,
+      );
     }
 
     const projection = await runVectorExpression('\\operatorname{proj}_{u}\\left(v\\right)');
     expect(projection).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: 'proj_u(v)',
       sourceMode: 'vector',
     });
 
     const gram = await runVectorExpression('\\operatorname{gram}\\left(u,v\\right)');
     expect(gram).toMatchObject({
-      kind: 'success',
+      outcomeKind: 'success',
       title: 'gram(u,v)',
       sourceMode: 'vector',
     });
-    expect(gram.kind === 'success' ? gram.approxText : undefined).toBeUndefined();
-    expect(gram.kind === 'success' ? gram.detailSections?.map((section) => section.title) : [])
+    expect(gram.approximateText).toBeUndefined();
+    expect(gram.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Orthonormal Basis', 'Gram-Schmidt Proof']);
 
     const unsupported = await runVectorExpression('\\operatorname{invertible}\\left(A\\right)');
     expect(unsupported).toMatchObject({
-      kind: 'error',
+      outcomeKind: 'error',
       title: 'Vector',
-      error: 'This Vector editor expression is not executable in Vector mode.',
+      errorText: 'This Vector editor expression is not executable in Vector mode.',
     });
   });
 
@@ -789,9 +796,16 @@ describe('useLinearAlgebraTableShellRuntime', () => {
     expect(commitOutcome).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'error',
-        title: 'Matrix',
-        error: expect.stringContaining('Open it in Equation'),
-        actions: [{ kind: 'send', target: 'equation', latex: 'A=b' }],
+        canonicalResult: expect.objectContaining({
+          outcomeKind: 'error',
+          title: 'Matrix',
+          error: expect.stringContaining('Open it in Equation'),
+        }),
+        actions: [{
+          kind: 'send',
+          target: 'equation',
+          math: expect.objectContaining({ canonicalLatex: 'A=b' }),
+        }],
       }),
       'A=b',
       'matrix',

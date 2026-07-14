@@ -3,9 +3,9 @@ import type {
   DisplayBranchReadback,
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
+  CanonicalMathValueV1,
   SerializableMathJson,
-  DisplayOutcome,
+  ResultProducerDraft,
 } from '../../../types/calculator';
 import {
   tryProvenCanonicalMathValue,
@@ -41,7 +41,7 @@ function branchNodes(
 }
 
 export function equationMathValuesFromOwnedPayload(input: {
-  canonicalMath: DisplayMathPayloadV1;
+  primaryMath: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   routeId: EquationMathJsonRouteId;
   source: string;
@@ -54,17 +54,17 @@ export function equationMathValuesFromOwnedPayload(input: {
 }
 
 export function tryEquationMathValuesFromOwnedPayload(input: {
-  canonicalMath: DisplayMathPayloadV1;
+  primaryMath: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   routeId: EquationMathJsonRouteId;
   source: string;
 }): CanonicalResultProducerMathValuesV1 | undefined {
-  if (input.canonicalMath.mathJson === undefined) {
+  if (input.primaryMath.mathJson === undefined) {
     return undefined;
   }
   const primaryMath = tryProvenCanonicalMathValue({
-    canonicalLatex: input.canonicalMath.canonicalLatex,
-    mathJson: input.canonicalMath.mathJson,
+    canonicalLatex: input.primaryMath.canonicalLatex,
+    mathJson: input.primaryMath.mathJson,
     owner: 'equation',
     routeId: input.routeId,
     source: input.source,
@@ -72,7 +72,7 @@ export function tryEquationMathValuesFromOwnedPayload(input: {
   if (!primaryMath) return undefined;
   if (!input.branchReadback) return { primaryMath };
 
-  const nodes = branchNodes(input.canonicalMath.mathJson, input.branchReadback.relationLatex);
+  const nodes = branchNodes(input.primaryMath.mathJson, input.branchReadback.relationLatex);
   if (!nodes || nodes.branches.length !== input.branchReadback.branchesLatex.length) {
     return undefined;
   }
@@ -166,7 +166,7 @@ function detailValues(
 }
 
 export function equationMathValuesFromOwnedLeaves(input: {
-  outcome: Omit<Exclude<DisplayOutcome, { kind: 'prompt' }>, 'canonicalResult'>;
+  outcome: Omit<Exclude<ResultProducerDraft, { kind: 'prompt' }>, 'canonicalResult'>;
   routeId: EquationMathJsonRouteId;
   leaves: readonly EquationOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {
@@ -251,7 +251,7 @@ export function equationMathValuesFromOwnedLeaves(input: {
 }
 
 export function inferEquationMathJsonRoute(
-  input: Omit<Exclude<DisplayOutcome, { kind: 'prompt' }>, 'canonicalResult'>,
+  input: Omit<Exclude<ResultProducerDraft, { kind: 'prompt' }>, 'canonicalResult'>,
 ): EquationMathJsonRouteId {
   const detailTitles = input.detailSections?.map((section) => section.title) ?? [];
   const resolved = input.resolvedInputLatex ?? '';

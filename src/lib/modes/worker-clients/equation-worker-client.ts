@@ -16,7 +16,7 @@ import type { RunEquationModeRequest } from '../equation';
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import {
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   validateCanonicalRuntimeOutcome,
 } from '../../result-contract';
 import { proseSolveSummary } from '../../display/result-detail-lines';
@@ -62,7 +62,7 @@ type RunEquationModeViaIsolatedWorkerOptions = {
 let equationWorkerRequestCounter = 0;
 
 function buildCancelledOutcome(): CanonicalRuntimeOutcome {
-  return projectDisplayOutcomeToCanonicalRuntimeOutcome(createEquationResultOutcome({
+  return finalizeCanonicalRuntimeOutcomeFromProducer(createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: EQUATION_SOLVE_CANCELLED_MESSAGE,

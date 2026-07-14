@@ -10,17 +10,17 @@ import { normalizeExplicitNamedVariablesInLatex } from '../../algebra/named-vari
 import { normalizeComplexLocusFunctionSyntax } from '../../equation/complex/locus-policy';
 import { resolveEquationSolveTarget } from '../../equation/equation-target';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   NumericSolveInterval,
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../../types/calculator';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
-type StoredValueConsentErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type StoredValueConsentErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 export function withStoredValueDetails(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   input: {
     substitution: StoredVariableSubstitutionResult;
     target?: string;
@@ -30,7 +30,7 @@ export function withStoredValueDetails(
     ignoredLines?: readonly string[];
     additionalPolicyLines?: readonly string[];
   },
-): DisplayOutcome {
+): ResultProducerDraft {
   const storedValueDetails = storedValueReadbackSections({
     substitutions: input.substitution.substitutions,
     protectedSubstitutions: input.substitution.protectedSubstitutions,

@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { runEquationMode } from '../equation';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
@@ -55,7 +56,7 @@ describe('Equation Complex mixed algebraic wrapper catchup', () => {
 
     expect(affine.branchReadback?.branchesLatex).toHaveLength(2);
     expect(affine.branchReadback?.countLabel).toBe('candidateRoots');
-    expect(buildDisplayBlocks(affine).find((block) => block.id === 'answer')?.countSummary?.text)
+    expect(buildProducerDisplayBlocks(affine).find((block) => block.id === 'answer')?.countSummary?.text)
       .toBe('2 candidate roots');
     expect(quadratic.exactLatex).toBe(String.raw`z=\frac{b}{2}-\frac{1}{2b}`);
   });
@@ -85,3 +86,7 @@ describe('Equation Complex mixed algebraic wrapper catchup', () => {
     }
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

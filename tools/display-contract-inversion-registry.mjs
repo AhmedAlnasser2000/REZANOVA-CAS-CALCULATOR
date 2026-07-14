@@ -193,45 +193,7 @@ export const DISPLAY_CONTRACT_LANES = [
   },
 ];
 
-export const CANONICAL_PROJECTION_REGISTRATIONS = [
-  {
-    id: 'canonical-result-display-projection-v1',
-    owner: 'canonical-result-contract',
-    rationale: 'One validated adapter derives compatibility DisplayOutcome fields from a canonical result document.',
-    matchers: exact('src/lib/result-contract/projection.ts'),
-    functions: [
-      'deriveDisplayOutcomeFromCanonicalResult',
-      'projectCanonicalResultToDisplayOutcome',
-    ],
-  },
-  {
-    id: 'canonical-result-consumer-resolution-v1',
-    owner: 'canonical-result-contract',
-    rationale: 'Semantic consumers require validated native canonical truth; the separately named legacy resolver isolates compatibility projection for old History display only.',
-    matchers: exact('src/lib/result-contract/consumer.ts'),
-    functions: [
-      'resolveCanonicalResultForConsumer',
-      'resolveLegacyCanonicalResultForConsumer',
-    ],
-  },
-  {
-    id: 'canonical-runtime-display-projection-v1',
-    owner: 'canonical-runtime-contract',
-    rationale: 'One validated runtime adapter derives the temporary Display read model from canonical result truth and transient math-valued actions.',
-    matchers: exact('src/lib/result-contract/runtime-projection.ts'),
-    functions: [
-      'projectCanonicalRuntimeOutcomeToDisplayOutcome',
-      'projectDisplayOutcomeToCanonicalRuntimeOutcome',
-    ],
-  },
-  {
-    id: 'display-legacy-history-detail-projection-v1',
-    owner: 'display-result-read-model',
-    rationale: 'Display invokes the explicit legacy resolver and preserves raw undeclared detail sections only for old History rows until canonical-only History cleanup.',
-    matchers: exact('src/lib/display/result/display-read-model.ts'),
-    functions: ['canonicalDocumentForDisplay'],
-  },
-];
+export const CANONICAL_PROJECTION_REGISTRATIONS = [];
 
 export const CONTROL_OUTCOME_REGISTRATIONS = [
   {
@@ -239,7 +201,7 @@ export const CONTROL_OUTCOME_REGISTRATIONS = [
     owner: 'equation-runtime-control',
     rationale: 'The Equation boundary projects an OOE hard-stop cancellation into the existing Display error card without treating runtime cancellation as mathematical result truth.',
     matchers: exact('src/lib/equation/solve-result/boundary.ts'),
-    functions: ['projectEquationOutcomeBoundaryToDisplay'],
+    functions: ['readEquationOutcomeBoundary'],
   },
   {
     id: 'workspace-worker-cancellation-display-control-v1',
@@ -417,8 +379,21 @@ export const REFERENCE_OUTCOME_MATCHERS = exact(
   'src/lib/__golden__/golden-cases.ts',
 );
 
-export const NATIVE_DOCUMENT_CALL_NAMES = new Set([
-  'projectCanonicalResultToDisplayOutcome',
+export const NATIVE_DOCUMENT_CALL_NAMES = new Set();
+
+export const CANONICAL_CONSUMER_CALL_NAMES = new Set([
+  'resolveCanonicalResultForConsumer',
+]);
+
+export const FORBIDDEN_RESULT_COMPATIBILITY_SYMBOLS = new Set([
+  'DisplayMathPayloadV1',
+  'DisplayOutcome',
+  'buildCanonicalResultFromProducerDraft',
+  'deriveProducerDraftFromCanonicalRuntimeOutcome',
+  'legacyHistoryOutcome',
+  'projectCanonicalResultToProducerDraft',
+  'resolveCanonicalResultForStorage',
+  'resolveLegacyCanonicalResultForConsumer',
 ]);
 
 export const NATIVE_RESULT_CARRIER_CALL_NAMES = new Set([
@@ -427,7 +402,7 @@ export const NATIVE_RESULT_CARRIER_CALL_NAMES = new Set([
 ]);
 
 export const NATIVE_DOCUMENT_WRAPPER_CALL_NAMES = new Set([
-  'deriveDisplayOutcomeFromCanonicalResult',
+  'attachCanonicalResultToProducerDraft',
   'attachParameterizedSelectedTargetOutcome',
   'createCalculusResultOutcome',
   'createCalculateErrorResultOutcome',
@@ -459,13 +434,6 @@ export const PRODUCER_INPUT_REGISTRATIONS = [
       'isMathBearingControlledError',
       'requireCanonicalResultAuthority',
     ],
-  },
-  {
-    id: 'canonical-result-display-derivation-input-v1',
-    owner: 'canonical-result-contract',
-    rationale: 'The canonical display derivation reads only compatibility presence policy and transient fields while deriving every mathematical value from the validated document.',
-    matchers: exact('src/lib/result-contract/projection.ts'),
-    functions: ['deriveDisplayOutcomeFromCanonicalResult'],
   },
   {
     id: 'calculate-error-result-producer-input-v1',
@@ -613,7 +581,7 @@ export const DISPLAY_OUTCOME_LEGACY_PROPERTIES = new Set([
   'calculusDerivativeStrategies',
   'calculusStrategy',
   'candidateValues',
-  'canonicalMath',
+  'primaryMath',
   'detailSections',
   'error',
   'exactLatex',
@@ -637,6 +605,19 @@ export const DISPLAY_OUTCOME_LEGACY_PROPERTIES = new Set([
   'variableSubstitutions',
   'warnings',
 ]);
+
+export const PRODUCER_DRAFT_OWNER_MATCHERS = prefix(
+  'src/lib/algebra/',
+  'src/lib/calculus/',
+  'src/lib/equation/',
+  'src/lib/geometry/',
+  'src/lib/kernel/',
+  'src/lib/linear-algebra/',
+  'src/lib/modes/',
+  'src/lib/result-contract/',
+  'src/lib/statistics/',
+  'src/lib/trigonometry/',
+);
 
 export const CONTROL_ONLY_ERROR_PROPERTIES = new Set([
   'actions',

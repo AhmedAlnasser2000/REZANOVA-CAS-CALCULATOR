@@ -8,7 +8,7 @@ import {
 import { runOoeRuntimeJob } from '../runtime-control/runtime-coordinator';
 import type { OoeJobCommitContext } from '../job-launch/job-contract';
 import type { OoeDiagnosticsProvenance } from '../diagnostics/diagnostics-buffer';
-import { summarizeOoeProvenanceDisplayOutcome } from './provenance-summary';
+import { summarizeOoeProvenanceCanonicalOutcome } from './provenance-summary';
 
 export type WorkspaceOoeCapabilityId =
   | 'calculate.workbench'
@@ -61,7 +61,7 @@ type WorkspaceOoeDefinitionConfig = {
   hostId: string;
 };
 
-// Compatibility/coarse provenance only. Active workspace shells should still
+// Coarse provenance only. Active workspace shells should still
 // mirror their worker-primary OOE hosts here so diagnostics do not drift.
 const WORKSPACE_DEFINITIONS: Record<WorkspaceOoeCapabilityId, WorkspaceOoeDefinitionConfig> = {
   'calculate.workbench': {
@@ -122,7 +122,7 @@ function buildWorkspaceMetadata(input: {
       commitAssessment: input.jobContext.commitAssessment,
       preflightMessage: `OOE ${input.routeLabel} preflight completed.`,
       startedMessage: `${input.routeLabel} started through the current TypeScript runtime.`,
-      finalMessage: `${input.routeLabel} produced a DisplayOutcome payload.`,
+      finalMessage: `${input.routeLabel} produced a canonical runtime payload.`,
     }),
   };
 }
@@ -143,7 +143,7 @@ function defaultWorkspaceProvenance<TPayload>(input: {
     screen: input.screen,
     action: input.action,
     inputSummary: input.inputSummary,
-    outputSummary: summarizeOoeProvenanceDisplayOutcome(input.payload),
+    outputSummary: summarizeOoeProvenanceCanonicalOutcome(input.payload),
     runtimeHost: input.metadata.hostId,
     commitDecision: input.metadata.commitAssessment.commitDecision,
   };
@@ -186,7 +186,7 @@ export async function runWorkspaceWithOoeProvenance<TPayload>(
       action: input.action,
       inputSummary: input.inputSummary,
       runtimeHost: definition.hostId,
-      notes: ['Runtime threw before producing a DisplayOutcome payload.'],
+      notes: ['Runtime threw before producing a canonical runtime payload.'],
     }),
   });
 }

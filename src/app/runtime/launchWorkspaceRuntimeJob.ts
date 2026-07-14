@@ -6,13 +6,14 @@ import {
   ooeJobContextFromHistoryTicket,
   type PendingHistoryTicketReservation,
 } from '../../lib/ooe/job-launch/launch-tickets';
-import type { DisplayOutcome, ModeId } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome, ModeId } from '../../types/calculator';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import type {
   WorkspaceInstance,
   WorkspaceInstanceStateSlot,
 } from './workspace-instances';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 
 type OoeCommitAssessment = Parameters<typeof isOoeCommitAllowed>[0];
 
@@ -59,7 +60,7 @@ export type LaunchWorkspaceRuntimeJobOptions<TRequest, TPayload> = {
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   discardHistoryTicket: (ticketId?: string | null) => void;
-  setDisplayOutcome: (outcome: DisplayOutcome) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   commit: (
     payload: TPayload,
@@ -141,14 +142,12 @@ export function launchWorkspaceRuntimeJob<TRequest, TPayload>(
     commit(result.payload, historyTicket, visible);
   }).catch((error: unknown) => {
     discardHistoryTicket(historyTicket?.id);
-    const loadError: DisplayOutcome = {
-      kind: 'error',
-      title: modeLabel,
-      error: error instanceof Error
+    const loadError = createCanonicalRuntimeError(
+      modeLabel,
+      error instanceof Error
         ? `Could not load the ${modeLabel} runtime: ${error.message}`
         : `Could not load the ${modeLabel} runtime.`,
-      warnings: [],
-    };
+    );
     if (isModeVisible()) {
       setDisplayOutcome(loadError);
     }

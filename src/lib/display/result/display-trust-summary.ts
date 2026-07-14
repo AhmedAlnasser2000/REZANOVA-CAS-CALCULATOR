@@ -1,40 +1,19 @@
 import type { CanonicalResultDocumentV1 } from '../../../types/calculator';
 
-type InternalEquationEvidence = {
-  category?: string;
-  classification?: string;
-  text?: string;
-  interval?: {
-    start?: string;
-    end?: string;
-  };
-};
+type CanonicalTrustEvidence = NonNullable<
+  NonNullable<CanonicalResultDocumentV1['metadata']>['trustEvidence']
+>[number];
 
-const EQUATION_ANALYSIS_EVIDENCE = Symbol.for('calcwiz.equation.analysisEvidence');
-
-function equationTrustEvidence(source: unknown): InternalEquationEvidence[] {
-  const evidence = (source as { [EQUATION_ANALYSIS_EVIDENCE]?: unknown } | null | undefined)
-    ?.[EQUATION_ANALYSIS_EVIDENCE];
-  return Array.isArray(evidence)
-    ? evidence.filter((entry): entry is InternalEquationEvidence =>
-      Boolean(entry)
-      && typeof entry === 'object'
-      && (entry as InternalEquationEvidence).category === 'trust')
-    : [];
-}
-
-function intervalTextFromEvidence(entry: InternalEquationEvidence) {
+function intervalTextFromEvidence(entry: CanonicalTrustEvidence) {
   return entry.interval?.start && entry.interval.end
     ? `[${entry.interval.start}, ${entry.interval.end}]`
     : null;
 }
 
-function trustSummaryFromEvidence(source: unknown) {
-  const trustEvidence = equationTrustEvidence(source);
+function trustSummaryFromEvidence(document: CanonicalResultDocumentV1) {
+  const trustEvidence = document.metadata?.trustEvidence ?? [];
   for (const entry of trustEvidence) {
     switch (entry.classification) {
-      case 'exact-roots':
-        return 'Exact roots';
       case 'certified-polynomial-roots':
         return 'Certified polynomial roots';
       case 'local-numeric-roots': {
@@ -86,7 +65,6 @@ function searchedIntervalText(document: CanonicalResultDocumentV1) {
 
 export function trustSummaryForCanonicalResult(
   document: CanonicalResultDocumentV1,
-  equationEvidenceSource?: unknown,
 ): string | undefined {
   if (document.outcomeKind !== 'success') {
     return undefined;
@@ -97,7 +75,7 @@ export function trustSummaryForCanonicalResult(
     return undefined;
   }
 
-  const evidenceSummary = trustSummaryFromEvidence(equationEvidenceSource);
+  const evidenceSummary = trustSummaryFromEvidence(document);
   if (evidenceSummary) {
     return evidenceSummary;
   }

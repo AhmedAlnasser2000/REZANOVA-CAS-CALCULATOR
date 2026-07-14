@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import type { EquationAlgebraicIsolationSuccess } from '../../equation/equation-algebraic-isolation';
 import type { ParameterizedCarrierSolveSuccess } from '../../equation/parameterized/carrier';
 import type { ParameterizedExpLogSolveSuccess } from '../../equation/parameterized/exp-log';
@@ -12,7 +12,7 @@ import {
 export function createBoundedComplexEquationOutcome(
   result: EquationAlgebraicIsolationSuccess,
   source: string,
-): DisplayOutcome {
+): ResultProducerDraft {
   const input = {
     title: 'Solve',
     exactLatex: result.exactLatex,
@@ -24,10 +24,10 @@ export function createBoundedComplexEquationOutcome(
     resultOrigin: 'symbolic' as const,
     answerDomain: 'complex' as const,
   };
-  return result.canonicalMath
+  return result.primaryMath
     ? createEquationFiniteRootSuccessOutcome({
         ...input,
-        canonicalMath: result.canonicalMath,
+        primaryMath: result.primaryMath,
         mathJsonRouteId: 'equation.domain-boundary',
         mathJsonSource: source,
       })
@@ -37,7 +37,7 @@ export function createBoundedComplexEquationOutcome(
 export function createParameterizedCarrierOutcome(
   result: ParameterizedCarrierSolveSuccess,
   sourceEquationLatex: string,
-): DisplayOutcome {
+): ResultProducerDraft {
   const input = {
     title: 'Solve',
     exactLatex: result.exactLatex,
@@ -47,10 +47,10 @@ export function createParameterizedCarrierOutcome(
     warnings: [],
     resultOrigin: 'symbolic' as const,
   };
-  return result.canonicalMath
+  return result.primaryMath
     ? createEquationFiniteRootSuccessOutcome({
         ...input,
-        canonicalMath: result.canonicalMath,
+        primaryMath: result.primaryMath,
         mathJsonRouteId: /\\vert|\\left\|/u.test(sourceEquationLatex)
           ? 'equation.absolute-value'
           : 'equation.rational-radical',
@@ -62,7 +62,7 @@ export function createParameterizedCarrierOutcome(
 function createExpLogOrTrigOutcome(
   result: ParameterizedExpLogSolveSuccess | ParameterizedTrigSolveSuccess,
   source: string,
-): DisplayOutcome {
+): ResultProducerDraft {
   const input = {
     kind: 'success' as const,
     title: 'Solve',
@@ -80,10 +80,10 @@ function createExpLogOrTrigOutcome(
     routeId: 'equation.trig-exp-log',
     leaves: result.mathJsonLeaves ?? [],
   });
-  return result.canonicalMath
+  return result.primaryMath
     ? createEquationFiniteRootSuccessOutcome({
         ...input,
-        canonicalMath: result.canonicalMath,
+        primaryMath: result.primaryMath,
         mathJsonRouteId: 'equation.trig-exp-log',
         mathJsonSource: source,
       }, {

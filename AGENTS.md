@@ -84,6 +84,7 @@
 
 ## File-Size Ratchet Policy
 - `tools/validate-file-sizes.mjs` is a hard anti-regrowth gate for TypeScript source files.
+- The default cap is 1,000 lines for production TypeScript and 1,500 lines for test files (`*.test.*`, `*.spec.*`, and files under `__tests__/`). Existing committed baseline entries above the applicable default remain exact caps.
 - Baseline caps must ratchet to the current line count after slimming; do not add percentage headroom or soft buffers.
 - A file may exceed the default cap only through an existing baseline entry or a deliberate reviewed baseline edit.
 - When a large file shrinks, run `node tools/validate-file-sizes.mjs --update-baseline` so the cap lowers in the same change.

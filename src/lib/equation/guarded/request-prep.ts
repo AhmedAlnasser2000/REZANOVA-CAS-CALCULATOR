@@ -25,7 +25,7 @@ import {
 } from '../candidate-rejection';
 import type {
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
   SerializableMathJson,
   SolveDomainConstraint,
@@ -193,7 +193,7 @@ function uniqueDisplayFactLines(lines: readonly string[]) {
   return result;
 }
 
-function usesNumericTrustTaxonomy(outcome: DisplayOutcome) {
+function usesNumericTrustTaxonomy(outcome: ResultProducerDraft) {
   return outcome.kind !== 'prompt'
     && (
       Boolean(outcome.numericMethod)
@@ -250,10 +250,10 @@ function isApproximateOnlySolutionLatex(latex: string) {
 }
 
 function attachAlgebraMetadata(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   originalResolvedLatex: string,
   request: GuardedSolveRequest,
-): DisplayOutcome {
+): ResultProducerDraft {
   if (outcome.kind === 'prompt') {
     return outcome;
   }
@@ -427,7 +427,7 @@ function prepareAlgebraSolveRequest(request: GuardedSolveRequest): GuardedSolveR
 function validateDirectSymbolicOutcome(
   request: GuardedSolveRequest,
   symbolic: ReturnType<typeof runExpressionAction>,
-): DisplayOutcome | null {
+): ResultProducerDraft | null {
   const needsValidation =
     (request.domainConstraints?.length ?? 0) > 0
     || Boolean(request.validationLatex && request.validationLatex !== request.resolvedLatex);
@@ -537,7 +537,7 @@ function validateDirectSymbolicOutcome(
   const exactLatex = acceptedLatex.length > 0 && acceptedLatex.every((value) => !isApproximateOnlySolutionLatex(value))
     ? solutionsToLatex('x', acceptedLatex)
     : undefined;
-  const canonicalMath = exactLatex && acceptedMathJson.length === acceptedLatex.length
+  const primaryMath = exactLatex && acceptedMathJson.length === acceptedLatex.length
     ? {
         version: 1 as const,
         canonicalLatex: exactLatex,
@@ -555,7 +555,7 @@ function validateDirectSymbolicOutcome(
     kind: 'success',
     title: 'Solve',
     exactLatex,
-    ...(canonicalMath ? { canonicalMath } : {}),
+    ...(primaryMath ? { primaryMath } : {}),
     branchReadback: branchReadbackForAcceptedCandidates(
       acceptedLatex,
       acceptedValues,

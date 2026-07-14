@@ -3,7 +3,7 @@ import type {
   EquationExecutionBudget,
   GuardedSolveRequest,
 } from '../../../types/calculator';
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import type { EquationStageResultCarrierV1 } from '../solve-result/stage-carrier';
 
 export type GuardedEquationStageId =
@@ -43,7 +43,7 @@ export type GuardedEquationDirectSymbolicHostEvidence = {
 };
 
 export type GuardedEquationDirectSymbolicRunnerResult = {
-  outcome: DisplayOutcome;
+  outcome: EquationStageResultCarrierV1;
   hostEvidence: GuardedEquationDirectSymbolicHostEvidence;
 };
 
@@ -140,6 +140,6 @@ export type GuardedEquationStageReplayTrace = {
 };
 
 export type GuardedEquationStageOrderedSolveResult = {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   trace: GuardedEquationStageReplayTrace;
 };

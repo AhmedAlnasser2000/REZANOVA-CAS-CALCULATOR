@@ -1,10 +1,10 @@
-import type { CalculateAction, DisplayOutcome } from '../../../types/calculator';
+import type { CalculateAction, CanonicalRuntimeOutcome } from '../../../types/calculator';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
   type OoeJobContextOptions,
 } from '../job-launch/job-contract';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import { runOoeRuntimeJob } from '../runtime-control/runtime-coordinator';
 import {
   buildCoarseLifecycleOoeTraceEvents,
@@ -32,7 +32,7 @@ export type ExpressionOoePilotMetadata = OoeRuntimeMetadata<
 };
 
 export type ExpressionOoePilotRunResult = OoeRuntimeEnvelope<
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   ExpressionOoePilotMetadata
 >;
 
@@ -80,7 +80,7 @@ function buildExpressionOoeTraceEvents(input: {
     commitAssessment: input.jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(input.action, input.status),
     startedMessage: `Expression ${input.action} started through the TypeScript runtime.`,
-    finalMessage: `Expression ${input.action} pilot produced a stable DisplayOutcome.`,
+    finalMessage: `Expression ${input.action} pilot produced a stable canonical result.`,
   });
 }
 
@@ -108,7 +108,7 @@ export function buildExpressionOoePilotMetadata(
 
 export async function runExpressionWithOoePilot(
   action: CalculateAction,
-  run: () => DisplayOutcome,
+  run: () => CanonicalRuntimeOutcome,
   routeSnapshot: unknown = { action },
   options?: OoeJobContextOptions,
 ): Promise<ExpressionOoePilotRunResult> {
@@ -153,7 +153,7 @@ export async function runExpressionWithOoePilot(
           ? routeSnapshot.request.latex.length
           : undefined,
       },
-      outputSummary: summarizeDisplayOutcome(payload),
+      outputSummary: summarizeCanonicalRuntimeOutcome(payload),
       runtimeHost: metadata.hostId,
       commitDecision: metadata.commitAssessment.commitDecision,
     }),

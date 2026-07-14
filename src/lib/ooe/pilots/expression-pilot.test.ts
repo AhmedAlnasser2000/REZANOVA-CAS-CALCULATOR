@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CalculateAction } from '../../../types/calculator';
 import {
-  runCalculateMode,
   runCalculateModeWithOoePilot,
+  runCalculateCanonicalRuntimeRequest,
   type RunCalculateModeRequest,
 } from '../../modes/calculate';
 import {
@@ -115,13 +115,20 @@ describe('Expression OOE pilot', () => {
       reason: 'desktop-runtime-unavailable',
       data: null,
     });
-    const unavailable = await runExpressionWithOoePilot('evaluate', () => runCalculateMode(calculateRequest('evaluate')));
+    const unavailable = await runExpressionWithOoePilot('evaluate', () =>
+      runCalculateCanonicalRuntimeRequest({
+        kind: 'standard',
+        request: calculateRequest('evaluate'),
+      }));
     expect(unavailable.ooe.status).toEqual({
       kind: 'unavailable',
       planId: 'plan.expression.evaluate',
       reason: 'desktop-runtime-unavailable',
     });
-    expect(unavailable.payload).toEqual(runCalculateMode(calculateRequest('evaluate')));
+    expect(unavailable.payload).toEqual(runCalculateCanonicalRuntimeRequest({
+      kind: 'standard',
+      request: calculateRequest('evaluate'),
+    }));
 
     vi.mocked(getBuiltinOoePlan).mockResolvedValueOnce({
       kind: 'ready',
@@ -166,7 +173,10 @@ describe('Expression OOE pilot', () => {
     for (const [action, latex] of cases) {
       const request = calculateRequest(action, latex);
       const wrapped = await runCalculateModeWithOoePilot(request);
-      expect(wrapped.payload).toEqual(runCalculateMode(request));
+      expect(wrapped.payload).toEqual(runCalculateCanonicalRuntimeRequest({
+        kind: 'standard',
+        request,
+      }));
       expect(wrapped.ooe.job.jobId).toMatch(new RegExp(`^job\\.expression\\.${action}\\.[a-z0-9]+$`, 'u'));
       expect(wrapped.ooe.job.inputRevisionId).toMatch(new RegExp(`^input\\.expression\\.${action}\\.[a-z0-9]+$`, 'u'));
       expect(wrapped.ooe.commitAssessment).toMatchObject({
@@ -189,7 +199,9 @@ describe('Expression OOE pilot', () => {
           action,
           outputSummary: {
             kind: wrapped.payload.kind,
-            title: wrapped.payload.title,
+            title: wrapped.payload.kind === 'prompt'
+              ? wrapped.payload.title
+              : wrapped.payload.canonicalResult.title,
           },
         },
       });
@@ -242,7 +254,7 @@ describe('Expression OOE pilot', () => {
       jobId: metadata.job.jobId,
       inputRevisionId: metadata.job.inputRevisionId,
       commitDecision: 'committed',
-      message: 'Expression evaluate pilot produced a stable DisplayOutcome.',
+      message: 'Expression evaluate pilot produced a stable canonical result.',
     });
   });
 
@@ -252,12 +264,14 @@ describe('Expression OOE pilot', () => {
 
     const wrapped = await runExpressionWithOoePilot(
       'evaluate',
-      () => runCalculateMode(request),
+      () => runCalculateCanonicalRuntimeRequest({ kind: 'standard', request }),
       { action: 'evaluate', request },
       { activeInputRevisionId: 'input.expression.evaluate.stale' },
     );
 
-    expect(wrapped.payload).toEqual(runCalculateMode(request));
+    expect(wrapped.payload).toEqual(
+      runCalculateCanonicalRuntimeRequest({ kind: 'standard', request }),
+    );
     expect(wrapped.ooe.commitAssessment).toMatchObject({
       activeInputRevisionId: 'input.expression.evaluate.stale',
       legality: 'staleDrop',

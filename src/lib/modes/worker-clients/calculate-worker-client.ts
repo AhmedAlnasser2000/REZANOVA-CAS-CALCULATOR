@@ -9,7 +9,7 @@ import type {
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import {
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   validateCanonicalRuntimeOutcome,
 } from '../../result-contract';
 import { createCalculateErrorResultOutcome } from '../calculate/result-document';
@@ -59,7 +59,7 @@ function nextRequestId() {
 }
 
 function buildCancelledOutcome(): CanonicalRuntimeOutcome {
-  return projectDisplayOutcomeToCanonicalRuntimeOutcome(createCalculateErrorResultOutcome({
+  return finalizeCanonicalRuntimeOutcomeFromProducer(createCalculateErrorResultOutcome({
     kind: 'error',
     title: 'Calculate',
     error: 'Calculate stopped before it finished.',

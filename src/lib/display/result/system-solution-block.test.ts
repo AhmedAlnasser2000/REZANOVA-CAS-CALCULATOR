@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
+import { canonicalMathValue } from '../../result-contract';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-result-fixture';
 
 describe('system solution display blocks', () => {
   it('can hide exact answer readback in decimal display style when an approximation exists', () => {
     const blocks = buildDisplayBlocks({
-      kind: 'success',
+      outcomeKind: 'success',
       title: 'Symbolic',
-      exactLatex: 'x=\\frac{\\ln(7)}{\\ln(2)}',
+      primaryMath: canonicalMathValue('x=\\frac{\\ln(7)}{\\ln(2)}'),
       approxText: 'x ~= 2.807355',
       warnings: [],
     }, {
@@ -23,9 +24,9 @@ describe('system solution display blocks', () => {
 
   it('renders system solution readback as solution-pair rows', () => {
     const blocks = buildDisplayBlocks({
-      kind: 'success',
+      outcomeKind: 'success',
       title: 'Polynomial 2x2',
-      exactLatex: '\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\ \\left(3,1\\right)\\right\\}',
+      primaryMath: canonicalMathValue('\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\ \\left(3,1\\right)\\right\\}'),
       systemReadback: {
         label: 'Solution pairs',
         variablesLatex: ['x', 'y'],

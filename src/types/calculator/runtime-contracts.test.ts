@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type {
   AbsoluteValueEquationFamilyKind,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationExecutionBudget,
   EvaluateRequest,
   GuardedSolveRequest,
@@ -35,7 +35,7 @@ describe('calculator runtime contract exports', () => {
       numericInterval: interval,
     };
 
-    const outcome: DisplayOutcome = {
+    const outcome: ResultProducerDraft = {
       kind: 'success',
       title: 'Solve',
       exactLatex: 'x=1',

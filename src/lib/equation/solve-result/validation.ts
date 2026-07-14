@@ -114,7 +114,7 @@ const diagnosticsSchema = z.object({
 const stopSchema = z.object({
   code: nonEmptyString,
   message: nonEmptyString,
-  source: z.enum(['producer', 'compatibility-boundary']),
+  source: z.literal('producer'),
   stageId: nonEmptyString.optional(),
 }).strict();
 const carrierSchema = z.object({

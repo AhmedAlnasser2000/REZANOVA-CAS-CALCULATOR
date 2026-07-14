@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
   createCalculateRuntimeController,
   createEquationRuntimeController,
 } from './runtimeControllers';
 import { runEquationModeWithOoePilot } from '../../lib/modes/equation';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 
 vi.mock('../../lib/modes/equation', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/modes/equation')>();
@@ -16,7 +17,7 @@ vi.mock('../../lib/modes/equation', async (importOriginal) => {
 
 function createCommitOutcomeSpy() {
   return vi.fn<
-    (outcome: DisplayOutcome, inputLatex: string, mode: 'calculate' | 'equation', replayContext?: Record<string, unknown>) => void
+    (outcome: CanonicalRuntimeOutcome, inputLatex: string, mode: 'calculate' | 'equation', replayContext?: Record<string, unknown>) => void
   >();
 }
 
@@ -37,12 +38,10 @@ function cancelledEquationEnvelope(): Awaited<ReturnType<typeof runEquationModeW
     inputRevisionId: 'input.equation.solve.cancelled',
   };
   return {
-    payload: {
-      kind: 'error',
-      title: 'Solve',
-      error: 'Equation solve was stopped before it finished.',
-      warnings: [],
-    },
+    payload: createCanonicalRuntimeError(
+      'Solve',
+      'Equation solve was stopped before it finished.',
+    ),
     ooe: {
       planId: 'plan.equation.solve',
       capabilityId: 'equation.solve',
@@ -87,7 +86,7 @@ describe('runtimeControllers', () => {
   });
 
   it('returns a workbench-specific calculate error before execution when generated input is blank', () => {
-    const setDisplayOutcome = vi.fn<(outcome: DisplayOutcome) => void>();
+    const setDisplayOutcome = vi.fn<(outcome: CanonicalRuntimeOutcome) => void>();
     const controller = createCalculateRuntimeController({
       calculateLatex: '',
       calculateScreen: 'derivative',
@@ -114,12 +113,10 @@ describe('runtimeControllers', () => {
 
     controller.runCalculateWorkbenchAction();
 
-    expect(setDisplayOutcome).toHaveBeenCalledWith({
-      kind: 'error',
-      title: 'Derivative',
-      error: 'Enter an expression in x before differentiating.',
-      warnings: [],
-    });
+    expect(setDisplayOutcome).toHaveBeenCalledWith(createCanonicalRuntimeError(
+      'Derivative',
+      'Enter an expression in x before differentiating.',
+    ));
   });
 
   it('commits only the visible outcome through the standard Calculate OOE pilot', async () => {
@@ -235,7 +232,7 @@ describe('runtimeControllers', () => {
 
     await waitForCommit(commitOutcome);
     const [outcome, inputLatex, mode] = commitOutcome.mock.calls[0];
-    expect(outcome.title).toBe('Derivative');
+    expect(outcome.kind === 'prompt' ? outcome.title : outcome.canonicalResult.title).toBe('Derivative');
     expect(inputLatex).toBe('\\frac{d}{dx}\\left(x^2\\right)');
     expect(mode).toBe('calculate');
   });
@@ -306,10 +303,10 @@ describe('runtimeControllers', () => {
     if (outcome.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(outcome.variableSubstitutions).toEqual([
-      { name: 'c', valueLatex: '4', numericValue: 4 },
+    expect(outcome.canonicalResult.metadata?.variableSubstitutions).toEqual([
+      { name: 'c', value: { canonicalLatex: '4' }, numericValue: 4 },
     ]);
-    expect(outcome.exactLatex).toContain('x^2');
+    expect(outcome.canonicalResult.primaryMath?.canonicalLatex).toContain('x^2');
   });
 
   it('opens prompt targets only for equation prompts', () => {
@@ -688,7 +685,7 @@ describe('runtimeControllers', () => {
     if (outcome.kind !== 'success') {
       throw new Error('Expected numeric solve success');
     }
-    expect(outcome.solutionKind).toBe('approximate-numeric');
+    expect(outcome.canonicalResult.metadata?.solutionKind).toBe('approximate-numeric');
   });
 
   it('routes the primary Equation action through the Complex region pilot when that panel is visible', async () => {
@@ -749,8 +746,8 @@ describe('runtimeControllers', () => {
     if (outcome.kind !== 'success') {
       throw new Error('Expected Complex region solve success');
     }
-    expect(outcome.solutionKind).toBe('approximate-numeric');
-    expect(outcome.answerDomain).toBe('complex');
+    expect(outcome.canonicalResult.metadata?.solutionKind).toBe('approximate-numeric');
+    expect(outcome.canonicalResult.metadata?.answerDomain).toBe('complex');
   });
 
   it('skips stale Equation numeric OOE commits without clearing replay substitutions', async () => {

@@ -1,6 +1,6 @@
 import { formatApproxNumber } from '../../display/format';
 import type { SymbolicEliminationStop } from '../../symbolic-engine/primitives/elimination/elimination';
-import type { DisplayDetailSection, DisplayOutcome } from '../../../types/calculator';
+import type { DisplayDetailSection, ResultProducerDraft } from '../../../types/calculator';
 import type { CandidatePair, SolveStopReason } from './system-types';
 import { createEquationResultOutcome } from '../solve-result/producer';
 
@@ -63,7 +63,7 @@ export function errorOutcome(
     detailSections?: DisplayDetailSection[];
     rejectedCandidateCount?: number;
   } = {},
-): DisplayOutcome {
+): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Polynomial 2x2',
@@ -74,7 +74,7 @@ export function errorOutcome(
   });
 }
 
-export function projectionStopOutcome(projection: SymbolicEliminationStop): DisplayOutcome {
+export function projectionStopOutcome(projection: SymbolicEliminationStop): ResultProducerDraft {
   if (projection.reason === 'constant-polynomial' && projection.constantContext === 'resultant') {
     return errorOutcome('constant-resultant-no-solution', {
       detailSections: [{

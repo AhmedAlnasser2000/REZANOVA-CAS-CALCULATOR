@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
-import { projectDisplayOutcomeToCanonicalResult } from './projection';
+import type { ResultProducerDraft } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
@@ -26,13 +25,12 @@ function provenValue(canonicalLatex: string, mathJson: unknown) {
 }
 
 describe('canonical result producer builder', () => {
-  it('matches the typed compatibility projection without parsing LaTeX', () => {
-    const outcome: Extract<DisplayOutcome, { kind: 'success' }> = {
+  it('builds typed producer truth without parsing LaTeX', () => {
+    const outcome: Extract<ResultProducerDraft, { kind: 'success' }> = {
       kind: 'success',
       title: 'Solve',
       exactLatex: 'x=1',
-      canonicalMath: {
-        version: 1,
+      primaryMath: {
         canonicalLatex: 'x=1',
         mathJson: ['Equal', 'x', 1],
       },
@@ -60,7 +58,7 @@ describe('canonical result producer builder', () => {
       title: outcome.title,
       primaryMath: canonicalMathValue(
         outcome.exactLatex!,
-        outcome.canonicalMath?.mathJson,
+        outcome.primaryMath?.mathJson,
       ),
       branchReadback: outcome.branchReadback,
       detailSections: outcome.detailSections,
@@ -71,10 +69,23 @@ describe('canonical result producer builder', () => {
         resolvedInput: canonicalMathValue(outcome.resolvedInputLatex!),
       },
     });
-    const compatibility = projectDisplayOutcomeToCanonicalResult(outcome);
-    expect(compatibility.ok).toBe(true);
-    if (!compatibility.ok) return;
-    expect(document).toEqual(compatibility.document);
+    expect(document).toMatchObject({
+      version: 1,
+      outcomeKind: 'success',
+      title: 'Solve',
+      primaryMath: { canonicalLatex: 'x=1', mathJson: ['Equal', 'x', 1] },
+      branchReadback: {
+        target: { canonicalLatex: 'x' },
+        relation: '=',
+        branches: [{ canonicalLatex: '1' }],
+      },
+      details: [{ title: 'Proof' }],
+      metadata: {
+        resultOrigin: 'symbolic',
+        plannerBadges: ['Canonicalized'],
+        resolvedInput: { canonicalLatex: 'x+0=1' },
+      },
+    });
     expect(structuredClone(document)).toEqual(document);
   });
 

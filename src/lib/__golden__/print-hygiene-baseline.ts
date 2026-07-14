@@ -1,6 +1,6 @@
 import { DEFAULT_LAUNCHER_CATEGORIES } from '../../types/calculator';
 import {
-  collectDisplayOutcomeMathFragments,
+  collectCanonicalRuntimeMathFragments,
   collectTableResponseMathFragments,
   findMalformedMathFragments,
   normalizePrintHygieneValue,
@@ -8,7 +8,6 @@ import {
 } from '../display/print-hygiene';
 import { goldenCases } from './golden-cases';
 import { runGoldenCase } from './golden-execution';
-import { hasDisplayMathPayloadParity } from '../display/printer';
 
 export type PrintHygieneBaselineEntry = {
   id: string;
@@ -43,14 +42,8 @@ export async function buildPrintHygieneBaseline(
 
   for (const goldenCase of goldenCases) {
     const execution = await runGoldenCase(goldenCase);
-    if (
-      execution.outcome.kind === 'success'
-      && !hasDisplayMathPayloadParity(execution.outcome)
-    ) {
-      throw new Error(`Canonical payload drift: ${goldenCase.id}`);
-    }
     const fragments = [
-      ...collectDisplayOutcomeMathFragments(execution.outcome),
+      ...collectCanonicalRuntimeMathFragments(execution.outcome),
       ...collectTableResponseMathFragments(execution.tableResponse),
     ];
     const malformed = findMalformedMathFragments(fragments);
@@ -67,7 +60,9 @@ export async function buildPrintHygieneBaseline(
       id: goldenCase.id,
       workspace: goldenCase.mode,
       outcomeKind: execution.outcome.kind,
-      title: execution.outcome.title,
+      title: execution.outcome.kind === 'prompt'
+        ? execution.outcome.title
+        : execution.outcome.canonicalResult.title,
       fragments: normalizedFragments(fragments),
     });
   }

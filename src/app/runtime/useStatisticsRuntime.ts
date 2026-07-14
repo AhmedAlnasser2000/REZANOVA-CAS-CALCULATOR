@@ -46,7 +46,7 @@ import {
 } from '../../lib/statistics/runtime-request';
 import type {
   CoreDraftState,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   HistoryEntry,
   ModeId,
   StatisticsRequest,
@@ -56,13 +56,14 @@ import type {
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import { statisticsRequestFromSurfaceState } from './statistics-origin-request';
 import { copyStatisticsSurfaceState } from './statistics-surface-state';
 import type { StatisticsSurfaceState } from './workspace-surface-state';
 import type { WorkspaceInstance } from './workspace-instances';
 
 type CommitStatisticsOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'statistics',
   context?: Partial<Pick<HistoryEntry, 'statisticsScreen' | 'statisticsSeed'>> & {
@@ -90,7 +91,7 @@ type UseStatisticsRuntimeOptions = {
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   setClipboardNotice: (notice: string | null) => void;
-  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   startTransition: (callback: () => void) => void;
 };
@@ -818,12 +819,10 @@ export function useStatisticsRuntime({
       const inputLatex = readLiveStatisticsInputLatex(screenHint, editorFocused);
 
       if (!inputLatex) {
-        setDisplayOutcome({
-          kind: 'error',
-          title: statisticsRouteMeta?.label ?? 'Statistics',
-          error: 'Enter a Statistics request or use a guided statistics tool before evaluating.',
-          warnings: [],
-        });
+        setDisplayOutcome(createCanonicalRuntimeError(
+          statisticsRouteMeta?.label ?? 'Statistics',
+          'Enter a Statistics request or use a guided statistics tool before evaluating.',
+        ));
         return;
       }
 

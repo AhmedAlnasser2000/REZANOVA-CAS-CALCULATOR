@@ -12,7 +12,7 @@ import {
 import type {
   AngleUnit,
   ComplexExactForm,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationAnswerMode,
   EquationScreen,
   ModeId,
@@ -26,7 +26,7 @@ import { equationReplaySeedFromRequest } from './equationHistorySeed';
 
 type TransitionFn = (callback: () => void) => void;
 type CommitOutcomeFn = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'calculate' | 'equation',
   replayContext?: Record<string, unknown>,
@@ -105,7 +105,7 @@ type RunEquationNumericIntervalRuntimeActionInput = {
   handleCancelledEnvelope: (
     envelope: Awaited<ReturnType<typeof runEquationModeWithOoePilot>>,
   ) => boolean;
-  buildRuntimeLoadError: (title: string, error: unknown) => DisplayOutcome;
+  buildRuntimeLoadError: (title: string, error: unknown) => CanonicalRuntimeOutcome;
 };
 
 function intervalFromPanel(panel: EquationNumericSolvePanelState): NumericSolveInterval {
@@ -219,7 +219,7 @@ export function runEquationNumericIntervalRuntimeAction({
             equationScreen: request.equationScreen,
             equationSeed: equationReplaySeedFromRequest(request, committedInput),
             ...(envelope.payload.kind === 'success'
-              && envelope.payload.solveBadges?.includes('Numeric Interval')
+              && envelope.payload.canonicalResult.metadata?.solveBadges?.includes('Numeric Interval')
               ? { numericInterval: interval }
               : {}),
             ...(deps.equationSolveTarget ? { equationSolveTarget: deps.equationSolveTarget } : {}),

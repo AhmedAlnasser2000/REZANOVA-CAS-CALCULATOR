@@ -3,48 +3,31 @@ import { goldenCases } from '../../__golden__/golden-cases';
 import { runGoldenCase } from '../../__golden__/golden-execution';
 import { HISTORY_REPLAY_FIXTURES } from '../../history-replay/fixtures';
 import { executeHistoryReplayRequest } from '../../history-replay/native-execution';
-import { resolveCanonicalResultForStorage } from '../../result-contract';
-import {
-  projectEquationDisplayOutcomeToBoundaryOrThrow,
-  projectEquationOutcomeBoundaryToDisplay,
-} from './boundary';
-import { projectEquationDisplayOutcomeToSolveResult } from './compatibility';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { buildEquationSolveResultContract } from './factory';
 import { validateEquationSolveResultContract } from './validation';
 
-function assertCarrier(outcome: Awaited<ReturnType<typeof runGoldenCase>>['outcome'], label: string) {
+function assertCarrier(outcome: CanonicalRuntimeOutcome, label: string) {
   if (outcome.kind === 'prompt') throw new Error(`${label}: unexpected prompt.`);
-  const direct = resolveCanonicalResultForStorage(outcome);
-  if (!direct.ok) {
-    throw new Error(`${label}: ${direct.omissionReason}: ${direct.message}`);
-  }
-  const projected = projectEquationDisplayOutcomeToSolveResult(outcome);
-  if (!projected.ok) {
-    throw new Error(`${label}: ${projected.failure.reason}`);
-  }
-  expect(projected.result.document, `${label} canonical document`).toEqual(direct.document);
-  if (outcome.canonicalResult) {
-    expect(projected.result.document, `${label} native document authority`).toEqual(
-      outcome.canonicalResult,
-    );
-  }
-  expect(validateEquationSolveResultContract(projected.result).ok, `${label} contract`).toBe(true);
-  expect(structuredClone(projected.result), `${label} clone parity`).toEqual(projected.result);
-
-  const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(outcome);
-  const restored = projectEquationOutcomeBoundaryToDisplay(boundary);
-  if (restored.kind === 'prompt') throw new Error(`${label}: restored prompt.`);
-  const restoredDocument = resolveCanonicalResultForStorage(restored);
-  expect(restoredDocument.ok, `${label} restored canonical document`).toBe(true);
-  if (!restoredDocument.ok) return;
-  expect(restoredDocument.document, `${label} boundary canonical parity`).toEqual(direct.document);
-  expect(restored.runtimeAdvisories, `${label} runtime advisory parity`).toEqual(
-    outcome.runtimeAdvisories,
-  );
-  expect(outcome.actions, `${label} Equation actions require a boundary policy`).toBeUndefined();
+  const carrier = buildEquationSolveResultContract({
+    document: outcome.canonicalResult,
+    ...(outcome.kind === 'error'
+      ? {
+          controlledStop: {
+            code: 'equation-runtime-error',
+            message: outcome.canonicalResult.error ?? 'Equation stopped.',
+            source: 'producer' as const,
+          },
+        }
+      : {}),
+  });
+  expect(carrier.document, `${label} canonical authority`).toEqual(outcome.canonicalResult);
+  expect(validateEquationSolveResultContract(carrier).ok, `${label} contract`).toBe(true);
+  expect(structuredClone(carrier), `${label} clone parity`).toEqual(carrier);
 }
 
 describe('Equation solve result corpus coverage', () => {
-  it('carries every Equation golden execution without changing the canonical document', async () => {
+  it('carries every Equation golden execution without changing canonical authority', async () => {
     const cases = goldenCases.filter((goldenCase) => goldenCase.mode === 'equation');
     expect(cases).toHaveLength(6);
     for (const goldenCase of cases) {

@@ -2,8 +2,8 @@ import type {
   AnswerDomain,
   DisplayBranchReadback,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
-  DisplayOutcome,
+  CanonicalMathValueV1,
+  ResultProducerDraft,
   PlannerBadge,
   ResultOrigin,
 } from '../../../types/calculator';
@@ -20,7 +20,7 @@ import {
 export type EquationFiniteRootSuccessInput = {
   title: string;
   exactLatex: string;
-  canonicalMath: DisplayMathPayloadV1;
+  primaryMath: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   approxText?: string;
@@ -36,25 +36,25 @@ export type EquationFiniteRootSuccessInput = {
 export function createEquationFiniteRootSuccessOutcome(
   input: EquationFiniteRootSuccessInput,
   options: CanonicalResultProducerOptionsV1 = {},
-): Extract<DisplayOutcome, { kind: 'success' }> {
+): Extract<ResultProducerDraft, { kind: 'success' }> {
   if (
-    input.canonicalMath.canonicalLatex !== input.exactLatex
-    || input.canonicalMath.mathJson === undefined
+    input.primaryMath.canonicalLatex !== input.exactLatex
+    || input.primaryMath.mathJson === undefined
   ) {
     throw new Error('Equation finite-root producers require matching proven answer MathJSON.');
   }
   const ownedMathValues = tryEquationMathValuesFromOwnedPayload({
-    canonicalMath: input.canonicalMath,
+    primaryMath: input.primaryMath,
     branchReadback: input.branchReadback,
     routeId: input.mathJsonRouteId,
     source: input.mathJsonSource,
   });
-  const provenCanonicalMath = ownedMathValues ? input.canonicalMath : undefined;
+  const provenCanonicalMath = ownedMathValues ? input.primaryMath : undefined;
   const canonicalResult = buildCanonicalResultDocumentFromProducer({
     outcomeKind: 'success',
     title: input.title,
     primaryMath: canonicalMathValue(
-      input.canonicalMath.canonicalLatex,
+      input.primaryMath.canonicalLatex,
       provenCanonicalMath?.mathJson,
     ),
     branchReadback: input.branchReadback,
@@ -78,7 +78,7 @@ export function createEquationFiniteRootSuccessOutcome(
     kind: 'success',
     title: input.title,
     exactLatex: input.exactLatex,
-    ...(provenCanonicalMath ? { canonicalMath: provenCanonicalMath } : {}),
+    ...(provenCanonicalMath ? { primaryMath: provenCanonicalMath } : {}),
     canonicalResult,
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
     exactSupplementLatex: input.exactSupplementLatex,

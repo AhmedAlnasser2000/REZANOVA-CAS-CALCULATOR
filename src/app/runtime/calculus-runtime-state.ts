@@ -8,7 +8,7 @@ import type {
   CalculusScreen,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   FirstOrderOdeState,
   HistoryEntry,
   ImplicitDerivativeState,
@@ -57,7 +57,7 @@ export type ActiveCalculusRuntimeState = {
 };
 
 export type CommitCalculusOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'calculus',
   context?: Partial<Pick<HistoryEntry, 'calculusScreen' | 'calculusSeed'>> & {

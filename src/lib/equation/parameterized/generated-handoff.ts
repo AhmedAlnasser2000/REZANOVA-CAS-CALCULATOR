@@ -1,13 +1,13 @@
 import { exactLatexForFiniteBranches } from '../readback/finite-branches';
 import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
-import type { DisplayMathPayloadV1 } from '../../../types/calculator';
+import type { CanonicalMathValueV1 } from '../../../types/calculator';
 
 export type GeneratedHandoffSuccess = {
   kind: 'success';
   exactLatex: string;
   exactSupplementLatex?: string[];
   formulaPayload?: GeneratedFormulaHandoffPayload;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
 };
 
 export type GeneratedHandoffFailure<Reason extends string = string> = {

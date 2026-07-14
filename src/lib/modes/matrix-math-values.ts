@@ -1,7 +1,7 @@
 import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
 } from '../../types/calculator';
 import { buildExactScalarNode } from '../algebra/polynomial-core';
 import {
@@ -290,7 +290,7 @@ function details(
 }
 
 export function matrixMathValuesFromOwnedLeaves(input: {
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
   routeId: MatrixMathJsonRouteId;
   leaves: readonly MatrixOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {

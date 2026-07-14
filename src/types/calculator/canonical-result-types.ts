@@ -97,6 +97,23 @@ export type CanonicalResultSummariesV1 = {
   };
 };
 
+export type CanonicalResultTrustClassificationV1 =
+  | 'certified-polynomial-roots'
+  | 'local-numeric-roots'
+  | 'bounded-search-approximate-roots'
+  | 'global-complex-polynomial-roots'
+  | 'global-complex-rational-roots'
+  | 'region-local-complex-roots';
+
+export type CanonicalResultTrustEvidenceV1 = {
+  classification: CanonicalResultTrustClassificationV1;
+  text: string;
+  interval?: {
+    start: string;
+    end: string;
+  };
+};
+
 export type CanonicalResultSemanticMetadataV1 = {
   answerMode?: LegacyEquationAnswerMode;
   answerDomain?: AnswerDomain;
@@ -112,6 +129,7 @@ export type CanonicalResultSemanticMetadataV1 = {
   rejectedCandidateCount?: number;
   substitutionDiagnostics?: SubstitutionSolveDiagnostics;
   numericMethod?: string;
+  trustEvidence?: CanonicalResultTrustEvidenceV1[];
   sourceMode?: ModeId;
   variableSubstitutions?: Array<{
     name: string;

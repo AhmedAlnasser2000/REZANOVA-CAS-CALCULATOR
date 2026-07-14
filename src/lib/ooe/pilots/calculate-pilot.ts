@@ -1,5 +1,5 @@
-import type { DisplayOutcome } from '../../../types/calculator';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -145,7 +145,7 @@ function buildCalculateOoeTraceEvents(
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
     startedMessage: 'Calculate started through the isolated Calculate runtime shell.',
-    finalMessage: 'Calculate runtime shell produced a stable DisplayOutcome.',
+    finalMessage: 'Calculate runtime shell produced a stable CanonicalRuntimeOutcome.',
   });
   const hostEvent = hostExecution
     ? buildOoeTraceEvent({
@@ -264,7 +264,7 @@ export async function runCalculateWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId },
   options?: OoeJobContextOptions,
   getHostExecution?: () => CalculateHostExecution | undefined,
-  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+  resolveCanonicalOutcome?: (payload: TPayload) => CanonicalRuntimeOutcome,
 ): Promise<CalculateOoePilotRunResult<TPayload>> {
   const definition = calculatePilotDefinition(capabilityId);
   return runOoeRuntimeJob({
@@ -286,9 +286,9 @@ export async function runCalculateWithOoePilot<TPayload>(
     buildProvenance: ({ payload, metadata, routeSnapshot }) => {
       const snapshot = routeSnapshot as CalculateRuntimeRouteSnapshot;
       const input = routeSnapshotInput(routeSnapshot);
-      const output = resolveDisplayOutcome
-        ? resolveDisplayOutcome(payload)
-        : payload as DisplayOutcome;
+      const output = resolveCanonicalOutcome
+        ? resolveCanonicalOutcome(payload)
+        : payload as CanonicalRuntimeOutcome;
       return {
         depth: 'coarse',
         mode: 'calculate',
@@ -301,7 +301,7 @@ export async function runCalculateWithOoePilot<TPayload>(
           screen: input?.calculateScreen,
           latexLength: input?.latex?.length,
         },
-        outputSummary: summarizeDisplayOutcome(output),
+        outputSummary: summarizeCanonicalRuntimeOutcome(output),
         runtimeHost: metadata.calculateHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

@@ -1,41 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
 } from '../result-contract';
 import {
   SURFACE_PROTOCOL_VERSION,
-  displayOutcomeToSurfaceResultSummary,
+  canonicalOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
   surfaceFailure,
   surfaceOk,
 } from './dto';
 
 describe('Surface Protocol DTO firewall', () => {
-  it('maps a DisplayOutcome to a compact Surface result summary', () => {
-    const outcome: DisplayOutcome = {
+  it('maps a canonical runtime outcome to a compact Surface result summary', () => {
+    const outcome: CanonicalRuntimeOutcome = {
       kind: 'success',
-      title: 'Equation Result',
-      exactLatex: 'x=2',
-      canonicalMath: {
-        version: 1,
-        canonicalLatex: 'x=2',
-        mathJson: ['Equal', 'x', 2],
-      },
-      approxText: 'x ≈ 2',
-      exactSupplementLatex: ['x\\ne0'],
-      answerDomain: 'real',
-      solutionKind: 'exact-symbolic',
-      solveSummaryParts: [[{ kind: 'text', text: 'Solved exactly.' }]],
-      branchReadback: {
-        targetLatex: 'x',
-        relationLatex: '=',
-        branchesLatex: ['2'],
-        countLabel: 'roots',
-      },
-      warnings: ['Check denominator exclusions.'],
-      rejectedCandidateCount: 1,
       canonicalResult: buildCanonicalResultDocumentFromProducer({
         outcomeKind: 'success',
         title: 'Equation Result',
@@ -58,7 +38,7 @@ describe('Surface Protocol DTO firewall', () => {
       }),
     };
 
-    expect(displayOutcomeToSurfaceResultSummary('equation', outcome)).toEqual({
+    expect(canonicalOutcomeToSurfaceResultSummary('equation', outcome)).toEqual({
       protocolVersion: SURFACE_PROTOCOL_VERSION,
       workspaceKind: 'equation',
       status: 'success',
@@ -81,18 +61,14 @@ describe('Surface Protocol DTO firewall', () => {
         { kind: 'facts', count: 3, label: 'Facts' },
       ],
     });
-    const serialized = JSON.stringify(displayOutcomeToSurfaceResultSummary('equation', outcome));
-    expect(serialized).not.toContain('canonicalMath');
+    const serialized = JSON.stringify(canonicalOutcomeToSurfaceResultSummary('equation', outcome));
+    expect(serialized).not.toContain('primaryMath');
     expect(serialized).not.toContain('Equal');
   });
 
   it('does not expose Display block trees or runtime internals', () => {
-    const summary = displayOutcomeToSurfaceResultSummary('calculate', {
+    const summary = canonicalOutcomeToSurfaceResultSummary('calculate', {
       kind: 'error',
-      title: 'Unsupported',
-      error: 'No route.',
-      warnings: [],
-      detailSections: [{ title: 'Diagnostics', lines: ['internal route missed'], lineKind: 'text' }],
       runtimeAdvisories: {
         stopReason: { kind: 'unsupported-family', source: 'host' },
       },

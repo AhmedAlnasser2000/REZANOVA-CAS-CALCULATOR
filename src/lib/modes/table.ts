@@ -6,7 +6,6 @@ import {
 import {
   buildTableOoeSnapshot,
   buildCanonicalTableModeResult,
-  projectCanonicalTableModeResult,
   runTableModeCooperatively,
   type RunTableModeRequest,
 } from './table-core';
@@ -50,11 +49,9 @@ export async function runTableModeWithOoePilot(
     });
     hostExecution = isolatedResult.hostExecution;
     return isolatedResult.payload;
-  }, buildTableOoeSnapshot(request), options, () => hostExecution, (payload) => (
-    projectCanonicalTableModeResult(payload).outcome
-  ));
+  }, buildTableOoeSnapshot(request), options, () => hostExecution, (payload) => payload.outcome);
   return {
     ...result,
-    payload: projectCanonicalTableModeResult(result.payload),
+    payload: result.payload,
   };
 }

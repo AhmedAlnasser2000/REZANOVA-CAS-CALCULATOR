@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
@@ -16,14 +16,6 @@ describe('Surface Protocol snapshot queries', () => {
   it('returns a compact current-result summary from an explicit Display snapshot', () => {
     const outcome = {
       kind: 'success',
-      title: 'Equation Result',
-      exactLatex: 'x=2',
-      warnings: [],
-      detailSections: [{
-        title: 'Internal details',
-        lines: ['solver object should stay hidden'],
-        lineKind: 'text',
-      }],
       runtimeAdvisories: { advisories: [{ code: 'internal', message: 'hidden advisory' }] },
       history: { entries: ['hidden history'] },
       variables: { x: 2 },
@@ -39,7 +31,7 @@ describe('Surface Protocol snapshot queries', () => {
         }],
         warnings: [],
       }),
-    } as unknown as DisplayOutcome;
+    } as unknown as CanonicalRuntimeOutcome;
 
     const result = querySurfaceCurrentResult({
       protocolVersion: SURFACE_PROTOCOL_VERSION,

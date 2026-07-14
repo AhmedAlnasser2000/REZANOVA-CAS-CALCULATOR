@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { runMatrixMode } from '../modes/matrix';
 import { runVectorMode } from '../modes/vector';
 import { collectCanonicalMathLeaves } from './mathjson-coverage';
-import { resolveCanonicalResultForStorage } from './storage';
+import { requireCanonicalResultAuthority } from './native-result';
 
 describe('Linear Algebra canonical result producers', () => {
   it('stores Matrix profile truth through the Matrix owner boundary', () => {
@@ -14,8 +14,8 @@ describe('Linear Algebra canonical result producers', () => {
 
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Matrix success.');
-    expect(resolveCanonicalResultForStorage(outcome))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(outcome, 'Matrix profile test').canonicalResult)
+      .toBeDefined();
     expect(outcome.canonicalResult?.metadata?.sourceMode).toBe('matrix');
   });
 
@@ -29,8 +29,8 @@ describe('Linear Algebra canonical result producers', () => {
     expect(outcome.kind).toBe('error');
     if (outcome.kind === 'prompt') throw new Error('Expected Matrix result.');
     expect(outcome.actions?.[0]).toMatchObject({ kind: 'send', target: 'equation' });
-    expect(resolveCanonicalResultForStorage(outcome))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(outcome, 'Matrix action test').canonicalResult)
+      .toBeDefined();
     expect(JSON.stringify(outcome.canonicalResult)).not.toContain('actions');
   });
 
@@ -44,8 +44,8 @@ describe('Linear Algebra canonical result producers', () => {
 
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Vector success.');
-    expect(resolveCanonicalResultForStorage(outcome))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(outcome, 'Vector test').canonicalResult)
+      .toBeDefined();
     expect(outcome.canonicalResult?.metadata?.sourceMode).toBe('vector');
   });
 

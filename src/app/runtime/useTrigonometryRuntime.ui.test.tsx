@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RefObject } from 'react';
 import type { MathfieldElement } from 'mathlive';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   ModeId,
 } from '../../types/calculator';
 import {
@@ -12,6 +12,7 @@ import {
   type TrigonometryModeRunPayload,
   runTrigonometryModeWithOoePilot,
 } from '../../lib/modes/trigonometry';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import { useTrigonometryRuntime } from './useTrigonometryRuntime';
 
@@ -30,7 +31,7 @@ function trigPayload(label = '\\cos\\left(0\\right)'): TrigonometryModeRunPayloa
       title: 'Trigonometry',
       exactLatex: label,
       warnings: [],
-    } satisfies DisplayOutcome,
+    } satisfies ResultProducerDraft,
     parsed: {
       ok: true,
       request: {
@@ -207,12 +208,10 @@ describe('useTrigonometryRuntime', () => {
       hook.result.current.runTrigAction();
     });
 
-    expect(setDisplayOutcome).toHaveBeenCalledWith({
-      kind: 'error',
-      title: 'Functions',
-      error: 'Enter a Trigonometry request or use a guided trig tool before evaluating.',
-      warnings: [],
-    });
+    expect(setDisplayOutcome).toHaveBeenCalledWith(createCanonicalRuntimeError(
+      'Functions',
+      'Enter a Trigonometry request or use a guided trig tool before evaluating.',
+    ));
     expect(runTrigonometryModeWithOoePilot).not.toHaveBeenCalled();
   });
 

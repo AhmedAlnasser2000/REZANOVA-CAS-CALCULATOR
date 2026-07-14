@@ -185,7 +185,7 @@ async function runGuardedStageSequenceAsync(
     };
 
     const outcome = descriptor.id === 'direct-symbolic'
-      ? buildEquationStageResultCarrier(await runDirectSymbolicStageAsync(stageContext))
+      ? await runDirectSymbolicStageAsync(stageContext)
       : descriptor.executeAsync
         ? await descriptor.executeAsync(stageContext)
         : descriptor.execute(stageContext);

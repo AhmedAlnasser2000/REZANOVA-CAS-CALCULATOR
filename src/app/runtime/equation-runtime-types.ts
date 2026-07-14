@@ -9,7 +9,7 @@ import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/l
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import type { WorkspaceInstance } from './workspace-instances';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationScreen,
   HistoryEntry,
   ModeId,
@@ -32,7 +32,7 @@ export type TransitionFn = (callback: () => void) => void;
 export type EquationMenuScreen = 'home' | 'polynomialMenu' | 'simultaneousMenu';
 
 export type CommitEquationOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: ModeId,
   context?: Partial<Pick<
@@ -59,7 +59,7 @@ export type UseEquationRuntimeOptions = {
   currentMode: ModeId;
   currentModeRef: RefObject<ModeId>;
   discardHistoryTicket: (ticketId?: string | null) => void;
-  displayOutcome: DisplayOutcome | null;
+  displayOutcome: CanonicalRuntimeOutcome | null;
   editorAnalysisControl: EditorAnalysisControlState;
   getActiveWorkspaceInstanceRuntimeContext?: () => WorkspaceInstanceRuntimeContext | null;
   getWorkspaceInstances?: () => readonly WorkspaceInstance[];
@@ -86,7 +86,7 @@ export type UseEquationRuntimeOptions = {
     | 'equationDomainIntent'
     | 'complexExactForm'
   >;
-  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome | null) => void;
   setMode: (mode: ModeId) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   startTransition: TransitionFn;

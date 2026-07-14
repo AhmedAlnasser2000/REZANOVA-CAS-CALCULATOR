@@ -3,8 +3,8 @@ import type {
   CalculusIntegrationStrategy,
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
-  DisplayOutcome,
+  CanonicalMathValueV1,
+  ResultProducerDraft,
   PlannerBadge,
   ResultOrigin,
   TransformBadge,
@@ -13,7 +13,7 @@ import type {
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
 
@@ -22,7 +22,7 @@ export type CalculateResultDocumentInput = {
   title: string;
   error?: string;
   exactLatex?: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   answerRows?: DisplayAnswerRowsReadback;
   supplements?: readonly string[];
   approxText?: string;
@@ -44,8 +44,8 @@ export function buildCalculateResultDocument(
   options: CanonicalResultProducerOptionsV1 = {},
 ) {
   if (
-    input.canonicalMath
-    && input.canonicalMath.canonicalLatex !== input.exactLatex
+    input.primaryMath
+    && input.primaryMath.canonicalLatex !== input.exactLatex
   ) {
     throw new Error('Calculate canonical math must match the producer exact LaTeX.');
   }
@@ -58,7 +58,7 @@ export function buildCalculateResultDocument(
       ? {
           primaryMath: canonicalMathValue(
             input.exactLatex,
-            isSuccess ? input.canonicalMath?.mathJson : undefined,
+            isSuccess ? input.primaryMath?.mathJson : undefined,
           ),
         }
       : {}),
@@ -101,7 +101,7 @@ export function buildCalculateResultDocument(
   }, options);
 }
 
-type CalculateErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type CalculateErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 export function createCalculateErrorResultOutcome(
   input: Omit<CalculateErrorOutcome, 'canonicalResult'>,
@@ -112,7 +112,7 @@ export function createCalculateErrorResultOutcome(
     title: input.title,
     error: input.error,
     exactLatex: input.exactLatex,
-    canonicalMath: input.canonicalMath,
+    primaryMath: input.primaryMath,
     supplements: input.exactSupplementLatex,
     approxText: input.approxText,
     detailSections: input.detailSections,
@@ -122,5 +122,5 @@ export function createCalculateErrorResultOutcome(
     transformSummaryText: input.transformSummaryText,
     transformSummaryLatex: input.transformSummaryLatex,
   }, options);
-  return deriveDisplayOutcomeFromCanonicalResult(canonicalResult, input);
+  return attachCanonicalResultToProducerDraft(canonicalResult, input);
 }

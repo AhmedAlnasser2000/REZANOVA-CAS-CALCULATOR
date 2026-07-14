@@ -81,6 +81,10 @@ export function DisplayOutcomeShell({
   visibleDisplayBlockIds,
 }: DisplayOutcomeShellProps) {
   const isLabsMode = !isLauncherOpen && currentMode === 'labs';
+  const displayDocument = displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error'
+    ? displayOutcome.canonicalResult
+    : undefined;
+  const displayMetadata = displayDocument?.metadata;
   const solveSummaryParts = displaySolveSummaryPartsFromOutcome(displayOutcome);
   const canOpenFormulaViewer = typeof onOpenFormulaViewer === 'function';
   const suppressResolvedInputReadback =
@@ -104,14 +108,14 @@ export function DisplayOutcomeShell({
     : isCalculusMode(currentMode) && calculusRouteMeta
       ? calculusRouteMeta.label
     : currentMode === 'trigonometry' && trigRouteMeta
-      ? displayOutcome?.title ?? trigRouteMeta.label
+      ? displayDocument?.title ?? trigRouteMeta.label
     : currentMode === 'geometry' && geometryRouteMeta
-      ? displayOutcome?.title ?? geometryRouteMeta.label
+      ? displayDocument?.title ?? geometryRouteMeta.label
     : currentMode === 'calculate' && calculateScreen !== 'standard' && calculateRouteMeta
       ? calculateRouteMeta.label
     : currentMode === 'equation' && equationResultTitle
       ? equationResultTitle
-    : displayOutcome?.title ?? 'Result';
+    : displayDocument?.title ?? displayOutcome?.title ?? 'Result';
   const titleText = typeof resultTitle === 'string' ? resultTitle : String(resultTitle);
   const renderTitleAsMath = shouldRenderTitleAsMath(titleText);
   const activeExpressionLatexText =
@@ -132,8 +136,8 @@ export function DisplayOutcomeShell({
     const sourceContext: FormulaViewerSourceContext = {
       ...(formulaViewerSourceContext ?? {}),
       copyLatex: activeResultCopyText(),
-      resolvedInputLatex: displayOutcome?.resolvedInputLatex ?? '',
-      resultTitle: displayOutcome?.title ?? equationResultTitle ?? 'Result',
+      resolvedInputLatex: displayMetadata?.resolvedInput?.canonicalLatex ?? '',
+      resultTitle: displayDocument?.title ?? equationResultTitle ?? 'Result',
       sourceExpressionLatex: activeExpressionLatexText,
     };
     const artifact: FormulaViewerArtifact = buildFormulaViewerArtifact({
@@ -145,8 +149,8 @@ export function DisplayOutcomeShell({
   }, [
     activeExpressionLatexText,
     activeResultCopyText,
-    displayOutcome?.resolvedInputLatex,
-    displayOutcome?.title,
+    displayDocument?.title,
+    displayMetadata?.resolvedInput?.canonicalLatex,
     equationResultTitle,
     formulaViewerSourceContext,
     onOpenFormulaViewer,
@@ -294,13 +298,13 @@ export function DisplayOutcomeShell({
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
       && !suppressResolvedInputReadback
-      && displayOutcome.resolvedInputLatex
-      && displayOutcome.resolvedInputLatex.trim() !== activeExpressionLatexText.trim() ? (
+      && displayMetadata?.resolvedInput?.canonicalLatex
+      && displayMetadata.resolvedInput.canonicalLatex.trim() !== activeExpressionLatexText.trim() ? (
         <>
           <div className="result-approx">Resolved form</div>
           <MathStatic
             className="preview-math resolved-preview-math"
-            latex={displayOutcome.resolvedInputLatex}
+            latex={displayMetadata.resolvedInput.canonicalLatex}
           />
         </>
       ) : null}
@@ -312,18 +316,18 @@ export function DisplayOutcomeShell({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.transformSummaryText ? (
+      && displayDocument?.summaries?.transform?.text ? (
           <div className="result-summary-block">
             <div className="result-summary-label">Transform</div>
             <NotationText
               className="result-approx result-summary-text"
-              text={displayOutcome.transformSummaryText}
+              text={displayDocument.summaries.transform.text}
             />
-            {displayOutcome.transformSummaryLatex ? (
+            {displayDocument.summaries.transform.math ? (
               <MathStatic
                 className="preview-math result-summary-math"
                 displayPrefs={symbolicDisplayPrefs}
-                latex={displayOutcome.transformSummaryLatex}
+                latex={displayDocument.summaries.transform.math.canonicalLatex}
                 block={false}
               />
             ) : null}
@@ -402,10 +406,10 @@ export function DisplayOutcomeShell({
       && (!isGeometryMenuOpen || currentMode === 'geometry')
       && currentMode !== 'guide' && currentMode !== 'labs'
       && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error')
-      && displayOutcome.numericMethod ? (
+      && displayMetadata?.numericMethod ? (
         <NotationText
           className="result-approx"
-          text={`Numeric method: ${displayOutcome.numericMethod}`}
+          text={`Numeric method: ${displayMetadata.numericMethod}`}
         />
       ) : null}
       {!isLauncherOpen && !isEquationMenuOpen && !isCalculusMenuOpen && !isTrigMenuOpen && !isStatisticsMenuOpen && (!isGeometryMenuOpen || currentMode === 'geometry') && currentMode !== 'guide' && currentMode !== 'labs' && (displayOutcome?.kind === 'success' || displayOutcome?.kind === 'error') ? (
@@ -431,7 +435,7 @@ export function DisplayOutcomeShell({
           {displayOutcome.actions && displayOutcome.actions.length > 0
             ? displayOutcome.actions.map((action: any) => (
               <button
-                key={`${action.kind}-${'target' in action ? action.target : action.mode}-${action.latex}`}
+                key={`${action.kind}-${'target' in action ? action.target : action.mode}-${action.math.canonicalLatex}`}
                 data-testid={
                   action.kind === 'send'
                     ? `display-outcome-action-send-${action.target}`

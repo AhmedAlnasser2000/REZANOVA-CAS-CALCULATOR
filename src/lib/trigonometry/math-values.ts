@@ -1,7 +1,7 @@
 import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   TrigRequest,
 } from '../../types/calculator';
 import {
@@ -52,7 +52,7 @@ function details(
 }
 
 export function trigonometryMathValuesFromOwnedLeaves(input: {
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
   routeId: TrigonometryMathJsonRouteId;
   leaves: readonly TrigonometryOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {

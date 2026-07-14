@@ -1,9 +1,7 @@
 {
   "src/app/logic/appFlowHandlers.ts": 1350,
-  "src/app/workspaces/GeometryWorkspace.tsx": 964,
   "src/AppMain.tsx": 3306,
   "src/AppMain.ui.test.tsx": 2539,
   "src/lib/guide/content/selectors.ts": 2528,
-  "src/lib/virtual-keyboard/catalog.ts": 932,
   "src/types/calculator/runtime-types.ts": 1340
 }

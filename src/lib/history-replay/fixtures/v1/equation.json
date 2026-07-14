@@ -107,7 +107,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=2\ncanonicalMath.canonicalLatex=x=2"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=2"
       }
     },
     {
@@ -214,7 +214,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=9\ncanonicalMath.canonicalLatex=x=9"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=9"
       }
     },
     {
@@ -321,7 +321,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=5\ncanonicalMath.canonicalLatex=x=5"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=5"
       }
     },
     {
@@ -428,7 +428,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{2,\\ 3\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{2,\\ 3\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=2\nbranchReadback.branchesLatex[1]=3"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{2,\\ 3\\right\\}\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=2\ncanonicalResult.branchReadback.branches[1].canonicalLatex=3"
       }
     },
     {
@@ -535,7 +535,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=1\ncanonicalMath.canonicalLatex=x=1"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=1"
       }
     },
     {
@@ -642,7 +642,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{-(\\frac{\\sqrt{8}}{2}),\\ \\frac{\\sqrt{8}}{2}\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{-(\\frac{\\sqrt{8}}{2}),\\ \\frac{\\sqrt{8}}{2}\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-(\\frac{\\sqrt{8}}{2})\nbranchReadback.branchesLatex[1]=\\frac{\\sqrt{8}}{2}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{-(\\frac{\\sqrt{8}}{2}),\\ \\frac{\\sqrt{8}}{2}\\right\\}\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=-(\\frac{\\sqrt{8}}{2})\ncanonicalResult.branchReadback.branches[1].canonicalLatex=\\frac{\\sqrt{8}}{2}"
       }
     },
     {
@@ -749,7 +749,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{1, 2, 3\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{1, 2, 3\\right\\}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{1, 2, 3\\right\\}"
       }
     },
     {
@@ -856,7 +856,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{20}{-10}, \\frac{10}{-10}, 1, \\frac{-20}{-10}\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{\\frac{20}{-10}, \\frac{10}{-10}, 1, \\frac{-20}{-10}\\right\\}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{\\frac{20}{-10}, \\frac{10}{-10}, 1, \\frac{-20}{-10}\\right\\}"
       }
     },
     {
@@ -963,7 +963,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=3\ncanonicalMath.canonicalLatex=x=3\nexactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][0].latex=x-1"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=3\ncanonicalResult.supplements[0].canonicalLatex=\\text{Exclusions: } x-1\\ne0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x-1"
       }
     },
     {
@@ -1069,7 +1069,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x-1\\ne0\ndetailSections[0].lineParts[0][1].latex=1\ndetailSections[1].lineParts[0][0].latex=x-1\ndetailSections[1].lineParts[1][0].latex=x-1\nresolvedInputLatex=x+1=2"
+        "normalizedLatex": "canonicalResult.supplements[0].canonicalLatex=\\text{Exclusions: } x-1\\ne0\ncanonicalResult.details[0].lines[0][1].math.canonicalLatex=1\ncanonicalResult.details[1].lines[0][0].math.canonicalLatex=x-1\ncanonicalResult.details[1].lines[1][0].math.canonicalLatex=x-1\ncanonicalResult.metadata.resolvedInput.canonicalLatex=x+1=2"
       }
     },
     {
@@ -1176,7 +1176,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=8\ncanonicalMath.canonicalLatex=x=8\ndetailSections[0].lineParts[0][0].latex=x+1\ndetailSections[0].lineParts[1][0].latex=3"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=8\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x+1\ncanonicalResult.details[0].lines[1][0].math.canonicalLatex=3"
       }
     },
     {
@@ -1283,7 +1283,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=12\ncanonicalMath.canonicalLatex=x=12\ndetailSections[0].lineParts[0][0].latex=2x+1\ndetailSections[0].lineParts[1][0].latex=5"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=12\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=2x+1\ncanonicalResult.details[0].lines[1][0].math.canonicalLatex=5"
       }
     },
     {
@@ -1390,7 +1390,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{5, -1\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{5, -1\\right\\}\nresolvedInputLatex=\\vert x-2\\vert=3"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{5, -1\\right\\}\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\vert x-2\\vert=3"
       }
     },
     {
@@ -1497,7 +1497,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{180n\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{180n\\right\\}\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{180n\\right\\}\ncanonicalResult.supplements[0].canonicalLatex=n\\in\\mathbb{Z}"
       }
     },
     {
@@ -1604,7 +1604,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arccos(1)+360n,\\ -\\frac{180}{\\pi}\\arccos(1)+360n\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arccos(1)+360n,\\ -\\frac{180}{\\pi}\\arccos(1)+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arccos(1)+360n\nbranchReadback.branchesLatex[1]=-\\frac{180}{\\pi}\\arccos(1)+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arccos(1)+360n,\\ -\\frac{180}{\\pi}\\arccos(1)+360n\\right\\}\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=\\frac{180}{\\pi}\\arccos(1)+360n\ncanonicalResult.branchReadback.branches[1].canonicalLatex=-\\frac{180}{\\pi}\\arccos(1)+360n\ncanonicalResult.supplements[0].canonicalLatex=n\\in\\mathbb{Z}"
       }
     },
     {
@@ -1711,7 +1711,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=3\ncanonicalMath.canonicalLatex=x=3\nresolvedInputLatex=2^{x}=8"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=3\ncanonicalResult.metadata.resolvedInput.canonicalLatex=2^{x}=8"
       }
     },
     {
@@ -1817,7 +1817,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "resolvedInputLatex=6+-5e^{x}+e^{2x}=0"
+        "normalizedLatex": "canonicalResult.metadata.resolvedInput.canonicalLatex=6+-5e^{x}+e^{2x}=0"
       }
     },
     {
@@ -1924,7 +1924,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=e^{2}\ncanonicalMath.canonicalLatex=x=e^{2}\nexactSupplementLatex[0]=x>0"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=e^{2}\ncanonicalResult.supplements[0].canonicalLatex=x>0"
       }
     },
     {
@@ -2031,7 +2031,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalMath.canonicalLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ndetailSections[0].lineParts[0][1].latex=\\frac{1}{2}(-\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\nresolvedInputLatex=\\ln(x)+\\ln(x+1)=2"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=\\frac{1}{2}(\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalResult.details[0].lines[0][1].math.canonicalLatex=\\frac{1}{2}(-\\sqrt{1+4\\exponentialE^{2}})-\\frac{1}{2}\ncanonicalResult.metadata.resolvedInput.canonicalLatex=\\ln(x)+\\ln(x+1)=2"
       }
     },
     {
@@ -2245,7 +2245,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{-i,\\ i\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{-i,\\ i\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=-i\nbranchReadback.branchesLatex[1]=i"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{-i,\\ i\\right\\}\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=-i\ncanonicalResult.branchReadback.branches[1].canonicalLatex=i"
       }
     },
     {
@@ -2338,7 +2338,8 @@
       "expected": {
         "identity": {
           "kind": "error",
-          "title": "Solve"
+          "title": "Solve",
+          "runtimeStopReasonKind": "range-guard"
         },
         "cardinalities": {
           "warnings": 0,
@@ -2351,7 +2352,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactSupplementLatex[0]=\\text{Exclusions: } x\\ne0\ndetailSections[0].lines[0]=x\\ne 0\nsolveSummaryParts[0][1].latex=1\nsolveSummaryParts[0][3].latex=[1, 1]\nsolveSummaryParts[0][5].latex=0\nresolvedInputLatex=1=0"
+        "normalizedLatex": "canonicalResult.supplements[0].canonicalLatex=\\text{Exclusions: } x\\ne0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x\\ne 0\ncanonicalResult.summaries.solve[0][1].math.canonicalLatex=1\ncanonicalResult.summaries.solve[0][3].math.canonicalLatex=[1, 1]\ncanonicalResult.summaries.solve[0][5].math.canonicalLatex=0\ncanonicalResult.metadata.resolvedInput.canonicalLatex=1=0"
       }
     },
     {
@@ -2444,7 +2445,8 @@
       "expected": {
         "identity": {
           "kind": "error",
-          "title": "Solve"
+          "title": "Solve",
+          "runtimeStopReasonKind": "range-guard"
         },
         "cardinalities": {
           "warnings": 0,
@@ -2457,7 +2459,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactSupplementLatex[0]=\\text{Conditions: } x\\ge0\ndetailSections[0].lines[0]=x\\ge 0\nsolveSummaryParts[0][1].latex=\\sqrt{x}\nsolveSummaryParts[0][3].latex=[0, \\infty]\nsolveSummaryParts[0][5].latex=-1"
+        "normalizedLatex": "canonicalResult.supplements[0].canonicalLatex=\\text{Conditions: } x\\ge0\ncanonicalResult.details[0].lines[0][0].math.canonicalLatex=x\\ge 0\ncanonicalResult.summaries.solve[0][1].math.canonicalLatex=\\sqrt{x}\ncanonicalResult.summaries.solve[0][3].math.canonicalLatex=[0, \\infty]\ncanonicalResult.summaries.solve[0][5].math.canonicalLatex=-1"
       }
     },
     {
@@ -2564,7 +2566,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x=\\frac{-b}{a}\ncanonicalMath.canonicalLatex=x=\\frac{-b}{a}\nexactSupplementLatex[0]=a\\ne0\ndetailSections[1].lineParts[2][1].latex=x=\\frac{-b}{a}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x=\\frac{-b}{a}\ncanonicalResult.supplements[0].canonicalLatex=a\\ne0\ncanonicalResult.details[1].lines[2][1].math.canonicalLatex=x=\\frac{-b}{a}"
       }
     },
     {

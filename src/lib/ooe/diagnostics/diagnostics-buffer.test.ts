@@ -8,7 +8,7 @@ import {
   getLatestOoeDiagnostics,
   listOoeDiagnostics,
   recordOoeDiagnostics,
-  summarizeDisplayOutcome,
+  summarizeCanonicalRuntimeOutcome,
 } from './diagnostics-buffer';
 import type { OoeCommitAssessment, OoeJobIdentity } from '../bridge-schema/ooe-bridge';
 
@@ -148,7 +148,7 @@ describe('OOE diagnostics buffer', () => {
       }],
       metadata: { solveBadges: ['Candidate Checked'] },
     });
-    expect(summarizeDisplayOutcome({
+    expect(summarizeCanonicalRuntimeOutcome({
       kind: 'success',
       title: 'Stale title',
       exactLatex: 'x=999',
@@ -185,7 +185,7 @@ describe('OOE diagnostics buffer', () => {
       primaryMath: canonicalMathValue('\\mathtip{\\blacksquare}'),
       warnings: [],
     });
-    expect(summarizeDisplayOutcome({
+    expect(summarizeCanonicalRuntimeOutcome({
       kind: 'success',
       title: 'Equation',
       exactLatex: 'stale',
@@ -195,7 +195,7 @@ describe('OOE diagnostics buffer', () => {
   });
 
   it('does not inspect compatibility strings without canonical authority', () => {
-    expect(summarizeDisplayOutcome({
+    expect(summarizeCanonicalRuntimeOutcome({
       kind: 'success',
       title: 'Legacy',
       exactLatex: '\\mathtip{\\blacksquare}',

@@ -10,7 +10,7 @@ import {
   renderFiniteRootSet,
 } from '../solution/finite-root-set';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../types/calculator';
 import {
@@ -31,7 +31,11 @@ import {
   type GuardedEquationStageReplayTrace,
 } from './types';
 import { checkpointAndMaybeCancel } from './cancellation';
-import { readEquationStageResultCarrier } from '../solve-result/stage-carrier';
+import {
+  buildEquationStageResultCarrier,
+  readEquationStageResultCarrier,
+  type EquationStageResultCarrierV1,
+} from '../solve-result/stage-carrier';
 
 const ce = new ComputeEngine();
 const DIRECT_TRIG_OPERATORS = new Set(['Sin', 'Cos', 'Tan', 'Sec', 'Csc', 'Cot']);
@@ -109,7 +113,7 @@ function hasNonFiniteRawSolutions(symbolic: ReturnType<typeof runExpressionActio
 
 function canonicalDirectSymbolicOutcome(
   symbolic: ReturnType<typeof runExpressionAction>,
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   preparedRequest: GuardedSolveRequest,
 ) {
   if (
@@ -137,7 +141,7 @@ function canonicalDirectSymbolicOutcome(
     { preserveOrder: true },
   );
 
-  if (rendered.exactLatex !== symbolic.exactLatex || !rendered.canonicalMath) {
+  if (rendered.exactLatex !== symbolic.exactLatex || !rendered.primaryMath) {
     return outcome;
   }
   const routeId = /\\(?:sqrt|frac)|\//u.test(preparedRequest.resolvedLatex)
@@ -151,29 +155,29 @@ function canonicalDirectSymbolicOutcome(
     outcomeKind: 'success',
     title: 'Solve',
     primaryMath: canonicalMathValue(
-      rendered.canonicalMath.canonicalLatex,
-      rendered.canonicalMath.mathJson,
+      rendered.primaryMath.canonicalLatex,
+      rendered.primaryMath.mathJson,
     ),
     approxText: symbolic.approxText,
     warnings: symbolic.warnings,
     metadata: { resultOrigin: 'symbolic' },
   }, {
     mathValues: equationMathValuesFromOwnedPayload({
-      canonicalMath: rendered.canonicalMath,
+      primaryMath: rendered.primaryMath,
       routeId,
       source: 'equation-direct-symbolic-raw-solutions',
     }),
   });
   return {
     ...outcome,
-    canonicalMath: rendered.canonicalMath,
+    primaryMath: rendered.primaryMath,
     canonicalResult,
   };
 }
 
 function runDirectSymbolicFallbackPrepared(
   preparedRequest: GuardedSolveRequest,
-): DisplayOutcome {
+): ResultProducerDraft {
   const symbolic = runExpressionAction(
     {
       mode: 'equation',
@@ -208,7 +212,7 @@ function runDirectSymbolicFallbackPrepared(
 
 function runGuardedDirectSymbolicFallback(
   request: GuardedSolveRequest,
-): DisplayOutcome {
+): ResultProducerDraft {
   const preparedRequest = prepareAlgebraSolveRequest(request);
   if (shouldSkipDirectSymbolicSolve(preparedRequest.resolvedLatex)) {
     return errorOutcome(
@@ -226,7 +230,7 @@ function runGuardedDirectSymbolicFallback(
 
 function runDirectSymbolicStage(
   context: GuardedEquationStageContext,
-): DisplayOutcome {
+): ResultProducerDraft {
   const { preparedRequest } = context;
 
   if (shouldSkipDirectSymbolicSolve(preparedRequest.resolvedLatex)) {
@@ -263,14 +267,14 @@ function recordDirectSymbolicHostEvidence(
 
 async function runDirectSymbolicStageAsync(
   context: GuardedEquationStageContext,
-): Promise<DisplayOutcome> {
+): Promise<EquationStageResultCarrierV1> {
   const { preparedRequest } = context;
 
   if (shouldSkipDirectSymbolicSolve(preparedRequest.resolvedLatex)) {
-    return errorOutcome(
+    return buildEquationStageResultCarrier(errorOutcome(
       'Solve',
       UNSUPPORTED_FAMILY_ERROR,
-    );
+    ));
   }
 
   const cancellation = checkpointAndMaybeCancel(context, {
@@ -278,11 +282,11 @@ async function runDirectSymbolicStageAsync(
     stageId: 'direct-symbolic',
   });
   if (cancellation) {
-    return readEquationStageResultCarrier(cancellation);
+    return cancellation;
   }
 
   if (!context.directSymbolicRunner) {
-    return runDirectSymbolicFallbackPrepared(preparedRequest);
+    return buildEquationStageResultCarrier(runDirectSymbolicFallbackPrepared(preparedRequest));
   }
 
   const result = await context.directSymbolicRunner({

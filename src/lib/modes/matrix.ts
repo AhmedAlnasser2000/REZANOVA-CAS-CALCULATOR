@@ -19,12 +19,11 @@ import {
   matrixOwnedMathJsonLeaves,
 } from './matrix-math-values';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   ExactScalarWire,
   MatrixOperation,
   MatrixSystemForm,
@@ -172,7 +171,7 @@ function matrixUserFacingApproxText() {
   return undefined;
 }
 
-function runMatrixModeOutcome(request: RunMatrixModeRequest): DisplayOutcome {
+function runMatrixModeOutcome(request: RunMatrixModeRequest): ResultProducerDraft {
   const {
     operation,
     matrixA,
@@ -253,7 +252,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): DisplayOutcome {
   };
 }
 
-export function runMatrixMode(request: RunMatrixModeRequest): DisplayOutcome {
+export function runMatrixMode(request: RunMatrixModeRequest): ResultProducerDraft {
   const outcome = runMatrixModeOutcome(request);
   return requireCanonicalResultAuthority(
     outcome.kind === 'prompt'
@@ -319,7 +318,7 @@ export async function runMatrixModeWithOoePilot(
         control,
         {
           createWorker: options?.createWorker,
-          fallback: () => projectDisplayOutcomeToCanonicalRuntimeOutcome(
+          fallback: () => finalizeCanonicalRuntimeOutcomeFromProducer(
             runMatrixMode(request),
             'Matrix fallback',
           ),
@@ -331,14 +330,10 @@ export async function runMatrixModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
-    (payload) => projectCanonicalRuntimeOutcomeToDisplayOutcome(payload, {
-      includeCanonicalMath: false,
-    }),
+    (payload) => payload,
   );
   return {
     ...result,
-    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(result.payload, {
-      includeCanonicalMath: false,
-    }),
+    payload: result.payload,
   };
 }

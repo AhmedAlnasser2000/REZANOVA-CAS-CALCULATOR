@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
-import { getEquationAnalysisEvidence } from '../equation/analysis-evidence';
-import { projectDisplayOutcomeToCanonicalResult } from '../result-contract';
+import type { CanonicalRuntimeOutcome, ResultProducerDraft } from '../../types/calculator';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../result-contract';
 import {
   buildEquationOoeInputRevisionId,
   runEquationMode,
@@ -34,18 +33,9 @@ function makeRequest() {
   };
 }
 
-function expectBoundaryParity(direct: DisplayOutcome, wrapped: DisplayOutcome) {
-  const directDocument = projectDisplayOutcomeToCanonicalResult(direct);
-  const wrappedDocument = projectDisplayOutcomeToCanonicalResult(wrapped);
-  expect(directDocument.ok).toBe(true);
-  expect(wrappedDocument.ok).toBe(true);
-  if (!directDocument.ok || !wrappedDocument.ok) return;
-  expect(wrappedDocument.document).toEqual(directDocument.document);
-  expect(wrapped.kind === 'prompt' ? undefined : wrapped.canonicalResult).toEqual(
-    directDocument.document,
-  );
-  expect(wrapped.runtimeAdvisories).toEqual(direct.runtimeAdvisories);
-  expect(getEquationAnalysisEvidence(wrapped)).toEqual(getEquationAnalysisEvidence(direct));
+function expectBoundaryParity(direct: ResultProducerDraft, wrapped: CanonicalRuntimeOutcome) {
+  const finalizedDirect = finalizeCanonicalRuntimeOutcomeFromProducer(direct, 'Equation test');
+  expect(wrapped).toEqual(finalizedDirect);
 }
 
 describe('Equation Complex exact stability', () => {
@@ -77,7 +67,7 @@ describe('Equation Complex exact stability', () => {
       if (wrapped.payload.kind !== 'success') {
         throw new Error(`Expected ${complexExactForm} complex exact output to solve`);
       }
-      expect(wrapped.payload.answerDomain).toBe('complex');
+      expect(wrapped.payload.canonicalResult.metadata?.answerDomain).toBe('complex');
     }
   });
 

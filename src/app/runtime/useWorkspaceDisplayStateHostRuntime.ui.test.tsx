@@ -9,6 +9,19 @@ import type {
 } from './workspace-instances';
 import type { WorkspaceDisplayState } from './workspace-display-state';
 
+function successOutcome(title: string, canonicalLatex: string) {
+  return {
+    kind: 'success' as const,
+    canonicalResult: {
+      version: 1 as const,
+      outcomeKind: 'success' as const,
+      title,
+      primaryMath: { canonicalLatex },
+      warnings: [],
+    },
+  };
+}
+
 function createDeterministicOptions(): Required<WorkspaceInstanceFactoryOptions> {
   let timestamp = 4000;
   return {
@@ -53,12 +66,7 @@ describe('useWorkspaceDisplayStateHostRuntime', () => {
     act(() => {
       hook.result.current.displayStateRef.current = {
         ansLatex: '12',
-        displayOutcome: {
-          kind: 'success',
-          title: 'Calculate',
-          exactLatex: '12',
-          warnings: [],
-        },
+        displayOutcome: successOutcome('Calculate', '12'),
         replayVariableSubstitutions: null,
       };
       hook.result.current.host.captureActiveDisplayState();
@@ -71,7 +79,7 @@ describe('useWorkspaceDisplayStateHostRuntime', () => {
           ansLatex: '12',
           displayOutcome: {
             kind: 'success',
-            exactLatex: '12',
+            canonicalResult: { primaryMath: { canonicalLatex: '12' } },
           },
         },
       });
@@ -90,7 +98,7 @@ describe('useWorkspaceDisplayStateHostRuntime', () => {
       ansLatex: '12',
       displayOutcome: {
         kind: 'success',
-        exactLatex: '12',
+        canonicalResult: { primaryMath: { canonicalLatex: '12' } },
       },
     });
   });
@@ -101,12 +109,7 @@ describe('useWorkspaceDisplayStateHostRuntime', () => {
     act(() => {
       hook.result.current.displayStateRef.current = {
         ansLatex: '48',
-        displayOutcome: {
-          kind: 'success',
-          title: 'Calculate',
-          exactLatex: '48',
-          warnings: [],
-        },
+        displayOutcome: successOutcome('Calculate', '48'),
         replayVariableSubstitutions: null,
       };
       hook.result.current.instances.createBlankInstance('equation');

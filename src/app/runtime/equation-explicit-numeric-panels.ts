@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { defaultEquationComplexRegionPanelState } from '../logic/appUtils';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationScreen,
   ModeId,
   PeriodicIntervalSuggestion,
@@ -52,7 +52,7 @@ export function buildEquationExplicitNumericPanelWorkspaceProps(input: {
     shouldAllowEquationComplexRegionSolve: () => boolean;
     shouldShowEquationComplexRegionPanel: () => boolean;
   };
-  displayOutcome: DisplayOutcome | null;
+  displayOutcome: CanonicalRuntimeOutcome | null;
   setNumericPanelEnabled: (enabled: boolean) => void;
   numericPanel: {
     enabled: boolean;
@@ -83,8 +83,12 @@ export function buildEquationExplicitNumericPanelWorkspaceProps(input: {
   };
 }) {
   const numericIntervalSuggestions: readonly PeriodicIntervalSuggestion[] =
-    input.displayOutcome && 'periodicFamily' in input.displayOutcome
-      ? input.displayOutcome.periodicFamily?.suggestedIntervals ?? []
+    input.displayOutcome?.kind === 'success' || input.displayOutcome?.kind === 'error'
+      ? input.displayOutcome.canonicalResult.periodicFamily?.suggestedIntervals?.map((interval) => ({
+          label: interval.label,
+          start: interval.start.canonicalLatex,
+          end: interval.end.canonicalLatex,
+        })) ?? []
       : [];
   return {
     shouldAllowNumericSolve: input.controller.shouldAllowEquationNumericSolve(),

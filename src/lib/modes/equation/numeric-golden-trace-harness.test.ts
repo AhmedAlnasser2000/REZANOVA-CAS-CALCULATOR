@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome, NumericSolveInterval } from '../../../types/calculator';
+import type { ResultProducerDraft, NumericSolveInterval } from '../../../types/calculator';
 import { runEquationMode } from '../equation';
 import { collectOutcomeText, makeRequest } from './test-support';
 
 type GoldenTrace = {
   equationLatex: string;
   elapsedMs: number;
-  kind: DisplayOutcome['kind'];
+  kind: ResultProducerDraft['kind'];
   solutionKind?: string;
   resultOrigin?: string;
   answerDomain?: string;
@@ -19,7 +19,7 @@ type GoldenTrace = {
   text: string;
 };
 
-type TraceableOutcome = DisplayOutcome & {
+type TraceableOutcome = ResultProducerDraft & {
   solutionKind?: string;
   resultOrigin?: string;
   answerDomain?: string;

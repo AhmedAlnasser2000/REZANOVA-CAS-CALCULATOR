@@ -1,19 +1,19 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
-type StatisticsSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type StatisticsErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type StatisticsSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type StatisticsErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 type StatisticsResultProducerInput =
   | Omit<StatisticsSuccessOutcome, 'canonicalResult'>
   | Omit<StatisticsErrorOutcome, 'canonicalResult'>;
 
-type StatisticsResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+type StatisticsResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 export function createStatisticsResultOutcome(
   input: Omit<StatisticsSuccessOutcome, 'canonicalResult'>,
@@ -31,7 +31,7 @@ export function createStatisticsResultOutcome(
   input: StatisticsResultProducerInput,
   options: CanonicalResultProducerOptionsV1 = {},
 ): StatisticsResultProducerOutcome {
-  if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
+  if (input.primaryMath && input.primaryMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Statistics canonical math must match the producer exact LaTeX.');
   }
   const success = input.kind === 'success' ? input : undefined;
@@ -40,7 +40,7 @@ export function createStatisticsResultOutcome(
     title: input.title,
     ...(input.kind === 'error' ? { error: input.error } : {}),
     ...(input.exactLatex
-      ? { primaryMath: canonicalMathValue(input.exactLatex, input.canonicalMath?.mathJson) }
+      ? { primaryMath: canonicalMathValue(input.exactLatex, input.primaryMath?.mathJson) }
       : {}),
     ...(success?.answerRows ? { answerRows: success.answerRows } : {}),
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
@@ -89,7 +89,7 @@ export function createStatisticsResultOutcome(
     },
   }, options);
 
-  return deriveDisplayOutcomeFromCanonicalResult<StatisticsResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<StatisticsResultProducerOutcome>(
     canonicalResult,
     input,
   );

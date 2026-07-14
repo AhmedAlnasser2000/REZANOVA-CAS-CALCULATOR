@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import type { SelectedTargetIsolationSuccess } from '../../equation/equation-selected-target-isolation';
 import type { PolynomialCarrierSolveAttempt } from '../../equation/polynomial-carrier-follow-on';
 import {
@@ -14,7 +14,7 @@ import { solutionsToLatex } from '../../display/format';
 
 export function createSelectedTargetIsolationOutcome(
   isolated: SelectedTargetIsolationSuccess,
-): DisplayOutcome {
+): ResultProducerDraft {
   const input = {
     kind: 'success' as const,
     title: 'Solve',
@@ -35,7 +35,7 @@ export function createSelectedTargetIsolationOutcome(
 
 export function createSymbolicPolynomialCarrierOutcome(
   attempt: Extract<PolynomialCarrierSolveAttempt, { kind: 'solved' }>,
-): DisplayOutcome {
+): ResultProducerDraft {
   const exactSolutions = attempt.roots.map((root) => root.latex);
   const exactLatex = exactSolutions.length > 0 ? solutionsToLatex('x', exactSolutions) : undefined;
   const rootSet = createRootSet({
@@ -47,14 +47,14 @@ export function createSymbolicPolynomialCarrierOutcome(
     })),
   });
   const renderedCanonicalMath = rootSetToCanonicalMath(rootSet);
-  const canonicalMath = exactLatex && renderedCanonicalMath?.mathJson !== undefined
+  const primaryMath = exactLatex && renderedCanonicalMath?.mathJson !== undefined
     ? { ...renderedCanonicalMath, canonicalLatex: exactLatex }
     : undefined;
   return createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
-    ...(canonicalMath ? { canonicalMath } : {}),
+    ...(primaryMath ? { primaryMath } : {}),
     exactSupplementLatex: attempt.exactSupplementLatex?.length
       ? attempt.exactSupplementLatex
       : undefined,

@@ -14,7 +14,7 @@ import {
 } from '../candidate/extraneous';
 import { createBranchSet } from '../../algebra/branch-core';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationExecutionBudget,
   GuardedSolveRequest,
   SerializableMathJson,
@@ -91,7 +91,7 @@ function acceptedCanonicalEvidence(
     ? ['Equal', 'x', nodes[0] as SerializableMathJson]
     : ['Element', 'x', ['Set', ...nodes] as SerializableMathJson];
   return {
-    canonicalMath: { version: 1 as const, canonicalLatex: exactLatex, mathJson },
+    primaryMath: { canonicalLatex: exactLatex, mathJson },
     leaves: [{
       canonicalLatex: exactLatex,
       mathJson,
@@ -254,7 +254,7 @@ function substitutionSolve(
   trail: Set<string>,
   executionBudget: EquationExecutionBudget,
   runGuardedEquationSolve: GuardedSolveRunner,
-): DisplayOutcome | null {
+): ResultProducerDraft | null {
   const substitution = matchSubstitutionSolve(request.resolvedLatex, request.angleUnit);
   if (substitution.kind === 'none') {
     return null;
@@ -429,7 +429,7 @@ function substitutionSolve(
     kind: 'success',
     title: 'Solve',
     exactLatex,
-    ...(acceptedEvidence ? { canonicalMath: acceptedEvidence.canonicalMath } : {}),
+    ...(acceptedEvidence ? { primaryMath: acceptedEvidence.primaryMath } : {}),
     branchReadback: branchReadbackForValidatedCandidates(
       acceptedLatex,
       validation.accepted,
@@ -470,7 +470,7 @@ async function substitutionSolveAsync(
   executionBudget: EquationExecutionBudget,
   runGuardedEquationSolve: AsyncGuardedSolveRunner,
   checkpoint: GuardedEquationCooperativeCheckpoint,
-): Promise<DisplayOutcome | null> {
+): Promise<ResultProducerDraft | null> {
   const substitution = matchSubstitutionSolve(request.resolvedLatex, request.angleUnit);
   if (substitution.kind === 'none') {
     return null;
@@ -669,7 +669,7 @@ async function substitutionSolveAsync(
     kind: 'success',
     title: 'Solve',
     exactLatex,
-    ...(acceptedEvidence ? { canonicalMath: acceptedEvidence.canonicalMath } : {}),
+    ...(acceptedEvidence ? { primaryMath: acceptedEvidence.primaryMath } : {}),
     branchReadback: branchReadbackForValidatedCandidates(
       acceptedLatex,
       validation.accepted,

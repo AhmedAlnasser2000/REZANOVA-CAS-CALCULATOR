@@ -149,6 +149,21 @@ const substitutionDiagnosticsSchema = z.object({
   branchCount: z.number().int().nonnegative(),
   filteredBranchCount: z.number().int().nonnegative(),
 }).strict();
+const trustEvidenceSchema = z.object({
+  classification: z.enum([
+    'certified-polynomial-roots',
+    'local-numeric-roots',
+    'bounded-search-approximate-roots',
+    'global-complex-polynomial-roots',
+    'global-complex-rational-roots',
+    'region-local-complex-roots',
+  ]),
+  text: nonEmptyString,
+  interval: z.object({
+    start: nonEmptyString,
+    end: nonEmptyString,
+  }).strict().optional(),
+}).strict();
 const metadataSchema = z.object({
   answerMode: z.enum(['exact', 'approximate', 'isolate']).optional(),
   answerDomain: z.enum(['real', 'complex', 'conditional-real', 'unknown-domain']).optional(),
@@ -243,6 +258,7 @@ const metadataSchema = z.object({
   rejectedCandidateCount: z.number().int().nonnegative().optional(),
   substitutionDiagnostics: substitutionDiagnosticsSchema.optional(),
   numericMethod: z.string().optional(),
+  trustEvidence: z.array(trustEvidenceSchema).max(16).optional(),
   sourceMode: z.enum([
     'calculate',
     'equation',

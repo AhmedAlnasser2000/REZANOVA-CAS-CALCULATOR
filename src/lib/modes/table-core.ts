@@ -12,7 +12,7 @@ import {
 } from '../algebra/variable-memory';
 import type {
   CanonicalRuntimeOutcome,
-  DisplayOutcome,
+  ResultProducerDraft,
   StoredVariableValue,
   TableResponse,
   VariableSubstitutionSnapshot,
@@ -21,8 +21,7 @@ import { textDetailSection } from '../display/result/result-detail-lines';
 import { profileTableResult } from '../display/printer';
 import { createTableResultOutcome } from './table-result-document';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import { tableMathJsonRoute, tableMathValuesFromEvidence } from './table-math-values';
@@ -39,7 +38,7 @@ export type RunTableModeRequest = {
 };
 
 export type TableModeResult = {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   response: TableResponse;
   runtimeStatus?: 'cancelled';
 };
@@ -51,18 +50,10 @@ export type CanonicalTableModeResult = Omit<TableModeResult, 'outcome'> & {
 export function buildCanonicalTableModeResult(result: TableModeResult): CanonicalTableModeResult {
   return {
     ...result,
-    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(result.outcome, 'Table runtime'),
+    outcome: finalizeCanonicalRuntimeOutcomeFromProducer(result.outcome, 'Table runtime'),
   };
 }
 
-export function projectCanonicalTableModeResult(result: CanonicalTableModeResult): TableModeResult {
-  return {
-    ...result,
-    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(result.outcome, {
-      includeCanonicalMath: false,
-    }),
-  };
-}
 
 export function buildTableOoeSnapshot(request: RunTableModeRequest) {
   return {
@@ -181,7 +172,7 @@ function buildTableModeResult(
   evidence?: TableMathJsonEvidence,
 ): TableModeResult {
   if (response.error) {
-    const outcome: Extract<DisplayOutcome, { kind: 'error' }> = {
+    const outcome: Extract<ResultProducerDraft, { kind: 'error' }> = {
       kind: 'error',
       title: 'Table',
       error: response.error,
@@ -193,7 +184,7 @@ function buildTableModeResult(
     };
   }
 
-  const outcome = profileTableResult<Extract<DisplayOutcome, { kind: 'success' }>>({
+  const outcome = profileTableResult<Extract<ResultProducerDraft, { kind: 'success' }>>({
     kind: 'success',
     title: 'Table',
     exactLatex: prepared.functions,
@@ -224,7 +215,6 @@ function buildTableModeResult(
           }
         : undefined),
       'Table',
-      { tableResponse: response },
     ),
   };
 }

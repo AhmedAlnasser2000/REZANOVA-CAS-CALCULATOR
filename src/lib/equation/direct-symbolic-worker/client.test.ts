@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DisplayOutcome, GuardedSolveRequest } from '../../../types/calculator';
+import type { ResultProducerDraft, GuardedSolveRequest } from '../../../types/calculator';
 import {
   runEquationDirectSymbolicViaIsolatedWorker,
   EQUATION_DIRECT_SYMBOLIC_FALLBACK_HOST_ID,
@@ -7,7 +7,14 @@ import {
 } from '../equation-direct-symbolic-worker-client';
 import { runGuardedDirectSymbolicFallback } from '../guarded-solve';
 import type { EquationDirectSymbolicWorkerOutboundMessage } from '../equation-direct-symbolic.worker';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
+import {
+  createEquationResultOutcome,
+  finalizeEquationCanonicalRuntimeOutcome,
+} from '../equation-solve-result';
+import {
+  buildEquationStageResultCarrier,
+  buildEquationStageResultCarrierFromRuntime,
+} from '../solve-result/stage-carrier';
 
 const guardedRequest: GuardedSolveRequest = {
   originalLatex: '\\sin\\left(x\\right)+x=1',
@@ -86,15 +93,14 @@ function control(checkpoints: string[] = [], shouldCancel = () => false) {
   };
 }
 
-function fallbackOutcome(): DisplayOutcome {
-  return {
-    kind: 'prompt',
+function fallbackOutcome(): ResultProducerDraft {
+  return createEquationResultOutcome({
+    kind: 'error',
     title: 'Fallback',
-    message: 'fallback',
-    targetMode: 'equation',
-    carryLatex: '',
+    error: 'fallback',
     warnings: [],
-  };
+    plannerBadges: [],
+  });
 }
 
 describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
@@ -113,7 +119,7 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
             fakeWorker.emitMessage({
               kind: 'completed',
               requestId,
-              outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(expected, 'Equation test'),
+              outcome: finalizeEquationCanonicalRuntimeOutcome(expected, 'Equation test'),
             });
           });
           createdWorkers.push(worker);
@@ -124,7 +130,9 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
     );
 
     expect(JSON.parse(JSON.stringify(result.outcome))).toEqual(
-      JSON.parse(JSON.stringify(expected)),
+      JSON.parse(JSON.stringify(buildEquationStageResultCarrierFromRuntime(
+        finalizeEquationCanonicalRuntimeOutcome(expected, 'Equation test'),
+      ))),
     );
     expect(result.hostEvidence).toMatchObject({
       helperId: 'direct-symbolic',
@@ -155,7 +163,7 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
           fakeWorker.emitMessage({
             kind: 'completed',
             requestId: (message as { requestId: string }).requestId,
-            outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(expected, 'Equation test'),
+            outcome: finalizeEquationCanonicalRuntimeOutcome(expected, 'Equation test'),
           });
         }),
         fallback,
@@ -163,7 +171,7 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
     );
 
     expect(JSON.parse(JSON.stringify(result.outcome))).toEqual(
-      JSON.parse(JSON.stringify(expected)),
+      JSON.parse(JSON.stringify(buildEquationStageResultCarrier(expected))),
     );
     expect(result.hostEvidence).toMatchObject({
       selectedHostId: EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID,
@@ -188,7 +196,7 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
       },
     );
 
-    expect(result.outcome).toEqual(fallbackOutcome());
+    expect(result.outcome).toEqual(buildEquationStageResultCarrier(fallbackOutcome()));
     expect(result.hostEvidence).toMatchObject({
       selectedHostId: EQUATION_DIRECT_SYMBOLIC_FALLBACK_HOST_ID,
       fallbackFromHostId: EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID,
@@ -223,7 +231,7 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
       },
     );
 
-    expect(result.outcome).toEqual(fallbackOutcome());
+    expect(result.outcome).toEqual(buildEquationStageResultCarrier(fallbackOutcome()));
     expect(result.hostEvidence).toMatchObject({
       selectedHostId: EQUATION_DIRECT_SYMBOLIC_FALLBACK_HOST_ID,
       fallbackReason: 'worker-runtime-failed: worker exploded',
@@ -255,8 +263,11 @@ describe('runEquationDirectSymbolicViaIsolatedWorker', () => {
     const result = await pending;
 
     expect(result.outcome).toMatchObject({
-      kind: 'error',
-      error: 'Equation solve was stopped before it finished.',
+      status: 'controlled-stop',
+      document: {
+        outcomeKind: 'error',
+        error: 'Equation solve was stopped before it finished.',
+      },
     });
     expect(result.hostEvidence).toMatchObject({
       selectedHostId: EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID,

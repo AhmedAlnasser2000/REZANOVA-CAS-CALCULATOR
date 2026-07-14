@@ -9,7 +9,7 @@ import type {
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import {
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   validateCanonicalRuntimeOutcome,
 } from '../../result-contract';
 import { createTrigonometryResultOutcome } from '../../trigonometry/result-document';
@@ -60,7 +60,7 @@ function nextRequestId() {
 
 function buildCancelledPayload(request: RunTrigonometryRuntimeRequest): CanonicalTrigonometryModeRunPayload {
   return {
-    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(createTrigonometryResultOutcome({
+    outcome: finalizeCanonicalRuntimeOutcomeFromProducer(createTrigonometryResultOutcome({
       kind: 'error',
       title: 'Trigonometry',
       error: 'Trigonometry evaluation stopped before it finished.',

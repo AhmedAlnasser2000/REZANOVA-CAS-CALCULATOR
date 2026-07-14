@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
@@ -11,7 +11,7 @@ import {
 import {
   SURFACE_PROTOCOL_VERSION,
   buildSurfaceCapabilityManifest,
-  displayOutcomeToSurfaceResultSummary,
+  canonicalOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
   listSurfaceLifecycleEvents,
   querySurfaceSnapshot,
@@ -88,17 +88,9 @@ describe('Surface Protocol conformance', () => {
     ]);
   });
 
-  it('maps DisplayOutcome snapshots without leaking Display blocks, solver objects, MathJSON, or app-state payloads', () => {
+  it('maps canonical snapshots without leaking result documents, solver objects, MathJSON, or app-state payloads', () => {
     const outcome = {
       kind: 'success',
-      title: 'Equation Result',
-      exactLatex: 'x=2',
-      warnings: [],
-      detailSections: [{
-        title: 'DisplayBlock',
-        lines: ['MathJSON tree', 'solver object', '/home/ahmed/local'],
-        lineKind: 'text',
-      }],
       runtimeAdvisories: { advisories: [{ code: 'diagnostics', message: 'raw diagnostics' }] },
       appStateSchema: { HistoryEntry: 'hidden' },
       variableSubstitutions: [{ name: 'x', valueLatex: '2', numericValue: 2 }],
@@ -122,9 +114,9 @@ describe('Surface Protocol conformance', () => {
           }],
         },
       }),
-    } as unknown as DisplayOutcome;
+    } as unknown as CanonicalRuntimeOutcome;
 
-    const summary = displayOutcomeToSurfaceResultSummary('equation', outcome);
+    const summary = canonicalOutcomeToSurfaceResultSummary('equation', outcome);
     const queried = querySurfaceSnapshot({
       protocolVersion: SURFACE_PROTOCOL_VERSION,
       workspaceKind: 'equation',

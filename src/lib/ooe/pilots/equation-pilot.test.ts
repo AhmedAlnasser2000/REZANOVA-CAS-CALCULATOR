@@ -5,6 +5,12 @@ import {
   runGuardedEquationSolve,
 } from '../../equation/guarded-solve';
 import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+  createCanonicalRuntimeResult,
+} from '../../result-contract';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../../equation/equation-solve-result';
+import {
   getBuiltinOoePlan,
   validateOoePlan,
   type OoePlan,
@@ -88,6 +94,13 @@ function mockReadyPlan() {
   });
 }
 
+function canonicalGuardedOutcome(request: GuardedSolveRequest) {
+  return finalizeEquationCanonicalRuntimeOutcome(
+    runGuardedEquationSolve(request),
+    'Equation pilot test',
+  );
+}
+
 describe('Equation OOE pilot', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -118,7 +131,7 @@ describe('Equation OOE pilot', () => {
       planId: OOE_EQUATION_SOLVE_PLAN_ID,
       reason: 'desktop-runtime-unavailable',
     });
-    expect(result.payload).toEqual(runGuardedEquationSolve(guardedRequest));
+    expect(result.payload).toEqual(canonicalGuardedOutcome(guardedRequest));
   });
 
   it('reports missing, invalid, and bridge-error states as data', async () => {
@@ -191,7 +204,7 @@ describe('Equation OOE pilot', () => {
       jobId: result.ooe.job.jobId,
       inputRevisionId: result.ooe.job.inputRevisionId,
       commitDecision: 'committed',
-      message: 'Equation pilot produced a stable DisplayOutcome.',
+      message: 'Equation pilot produced a stable canonical result.',
     });
     expect(listActiveOoeJobs()).toEqual([]);
     expect(listRecentOoeJobs()[0]).toMatchObject({
@@ -219,7 +232,7 @@ describe('Equation OOE pilot', () => {
     mockReadyPlan();
 
     const success = await runSharedEquationSolveWithOoePilot(guardedRequest);
-    expect(success.payload).toEqual(runGuardedEquationSolve(guardedRequest));
+    expect(success.payload).toEqual(canonicalGuardedOutcome(guardedRequest));
 
     const unsupportedRequest: GuardedSolveRequest = {
       ...guardedRequest,
@@ -227,7 +240,7 @@ describe('Equation OOE pilot', () => {
       resolvedLatex: 'x+e^x=1',
     };
     const unsupported = await runSharedEquationSolveWithOoePilot(unsupportedRequest);
-    expect(unsupported.payload).toEqual(runGuardedEquationSolve(unsupportedRequest));
+    expect(unsupported.payload).toEqual(canonicalGuardedOutcome(unsupportedRequest));
   });
 
   it('records stale commit assessments as metadata without blocking equation payloads', async () => {
@@ -237,7 +250,7 @@ describe('Equation OOE pilot', () => {
       activeInputRevisionId: 'input.equation.solve.stale',
     });
 
-    expect(result.payload).toEqual(runGuardedEquationSolve(guardedRequest));
+    expect(result.payload).toEqual(canonicalGuardedOutcome(guardedRequest));
     expect(result.ooe.commitAssessment).toMatchObject({
       activeInputRevisionId: 'input.equation.solve.stale',
       legality: 'staleDrop',
@@ -277,8 +290,10 @@ describe('Equation OOE pilot', () => {
 
     expect(result.payload).toMatchObject({
       kind: 'error',
-      title: 'Solve',
-      error: 'Equation solve was stopped before it finished.',
+      canonicalResult: {
+        title: 'Solve',
+        error: 'Equation solve was stopped before it finished.',
+      },
     });
     expect(result.ooe.completion).toEqual({
       kind: 'cancelled',
@@ -324,7 +339,7 @@ describe('Equation OOE pilot', () => {
   });
 
   it('records direct-symbolic helper host evidence while the equation route host stays on the worker shell', () => {
-    const payload = runGuardedEquationSolve(guardedRequest);
+    const payload = canonicalGuardedOutcome(guardedRequest);
     const metadata = buildEquationOoePilotMetadata(
       {
         kind: 'ready',
@@ -371,14 +386,16 @@ describe('Equation OOE pilot', () => {
   });
 
   it('reads explicit imaginary-input evidence from the Equation route snapshot', () => {
-    const payload = {
-      kind: 'success' as const,
+    const payload = createCanonicalRuntimeResult(buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'success',
       title: 'Solve',
-      exactLatex: 'x=-\\imaginaryI',
-      answerDomain: 'complex' as const,
-      solutionKind: 'exact-symbolic' as const,
+      primaryMath: canonicalMathValue('x=-\\imaginaryI'),
       warnings: [],
-    };
+      metadata: {
+        answerDomain: 'complex',
+        solutionKind: 'exact-symbolic',
+      },
+    }));
     const metadata = buildEquationOoePilotMetadata(
       {
         kind: 'ready',

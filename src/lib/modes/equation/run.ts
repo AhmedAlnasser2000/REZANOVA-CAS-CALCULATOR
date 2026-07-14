@@ -1,7 +1,8 @@
 import { runGuardedDirectSymbolicFallback } from '../../equation/guarded-solve';
 import {
-  projectEquationDisplayOutcomeToBoundaryOrThrow,
+  buildEquationOutcomeBoundaryFromProducerOrThrow,
   createEquationResultOutcome,
+  finalizeEquationCanonicalRuntimeOutcome,
   requireNativeEquationResult,
 } from '../../equation/equation-solve-result';
 import { isTopLevelInequalityLatex } from '../../equation/equation-inequality';
@@ -14,7 +15,6 @@ import {
   buildEquationRangeBehaviorEvidence,
   buildEquationRouteEvidence,
   buildEquationSingularityEvidence,
-  type EquationAnalysisEvidence,
 } from '../../equation/analysis-evidence';
 import { runSharedEquationSolveWithTraceAsync } from '../../equation/shared-solve';
 import { buildEquationTrustEvidence } from '../../equation/trust-evidence';
@@ -30,10 +30,8 @@ import {
 import type { OoeRuntimeEnvelope } from '../../ooe/runtime-control/runtime-envelope';
 import { runOoeRuntimeJob } from '../../ooe/runtime-control/runtime-coordinator';
 import type { OoeJobContextOptions } from '../../ooe/job-launch/job-contract';
-import type { CanonicalRuntimeOutcome, DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome, ResultProducerDraft } from '../../../types/calculator';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
   requireCanonicalRuntimeOutcome,
 } from '../../result-contract';
 import { solveSystem, solvePolynomial } from './guided-polynomial';
@@ -114,7 +112,7 @@ function topLevelQuotientZeroDenominator(equationLatex: string) {
   return undefined;
 }
 
-function withOriginalQuotientZeroExclusion(outcome: DisplayOutcome, equationLatex: string): DisplayOutcome {
+function withOriginalQuotientZeroExclusion(outcome: ResultProducerDraft, equationLatex: string): ResultProducerDraft {
   if (
     outcome.kind !== 'success'
     || (outcome.exactSupplementLatex?.length ?? 0) > 0
@@ -142,7 +140,7 @@ function withOriginalQuotientZeroExclusion(outcome: DisplayOutcome, equationLate
 }
 
 function buildEquationRunEvidence(input: {
-  outcome: DisplayOutcome;
+  outcome: ResultProducerDraft;
   equationLatex: string;
   target?: string | null;
   angleUnit: RunEquationModeRequest['angleUnit'];
@@ -238,7 +236,7 @@ export function runEquationMode({
   variableSubstitutionSnapshot,
   useStoredValueSubstitution,
   sharedSolveRunner,
-}: RunEquationModeRequest): DisplayOutcome {
+}: RunEquationModeRequest): ResultProducerDraft {
   if (equationScreen === 'linear2') {
     return requireNativeEquationResult(solveSystem(system2, 2));
   }
@@ -381,7 +379,7 @@ export function runEquationMode({
 export async function runEquationModeWithAsyncSharedSolve(
   request: RunEquationModeRequest,
   asyncSharedSolveRunner: AsyncSharedEquationSolveRunner,
-): Promise<DisplayOutcome> {
+): Promise<ResultProducerDraft> {
   if (request.equationScreen !== 'symbolic') {
     return runEquationMode(request);
   }
@@ -514,12 +512,12 @@ export async function runEquationModeForIsolatedWorker(
 
   if (payload.kind === 'prompt') {
     return {
-      outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload, 'Equation'),
+      outcome: finalizeEquationCanonicalRuntimeOutcome(payload),
       analysisEvidence: [],
       guardedTrace,
     };
   }
-  const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(payload);
+  const boundary = buildEquationOutcomeBoundaryFromProducerOrThrow(payload);
   return {
     outcome: requireCanonicalRuntimeOutcome({
       kind: boundary.result.document.outcomeKind,
@@ -536,26 +534,10 @@ export async function runEquationModeForIsolatedWorker(
 export async function runEquationModeWithOoePilot(
   request: RunEquationModeRequest,
   options?: OoeJobContextOptions,
-): Promise<OoeRuntimeEnvelope<DisplayOutcome, EquationOoePilotMetadata>> {
+): Promise<OoeRuntimeEnvelope<CanonicalRuntimeOutcome, EquationOoePilotMetadata>> {
   let guardedTrace: EquationOoePilotMetadata['guardedTrace'];
   let runtimeHostExecution: EquationRuntimeHostExecution | undefined;
   const routeSnapshot = buildEquationOoeRevisionSnapshot(request);
-  let projectedRuntimeOutcome: CanonicalRuntimeOutcome | undefined;
-  let projectedOutcome: DisplayOutcome | undefined;
-  let projectedAnalysisEvidence: EquationAnalysisEvidence[] = [];
-  const displayOutcomeForRuntime = (
-    outcome: CanonicalRuntimeOutcome,
-    analysisEvidence: readonly EquationAnalysisEvidence[] = projectedAnalysisEvidence,
-  ) => {
-    if (projectedRuntimeOutcome !== outcome || !projectedOutcome) {
-      projectedRuntimeOutcome = outcome;
-      projectedOutcome = attachEquationAnalysisEvidence(
-        projectCanonicalRuntimeOutcomeToDisplayOutcome(outcome),
-        analysisEvidence,
-      );
-    }
-    return projectedOutcome;
-  };
 
   const envelope = await runOoeRuntimeJob({
     definition: equationPilotDefinition(),
@@ -598,12 +580,12 @@ export async function runEquationModeWithOoePilot(
             );
             if (payload.kind === 'prompt') {
               return {
-                outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload, 'Equation'),
+                outcome: finalizeEquationCanonicalRuntimeOutcome(payload),
                 analysisEvidence: [],
                 guardedTrace,
               };
             }
-            const boundary = projectEquationDisplayOutcomeToBoundaryOrThrow(payload);
+            const boundary = buildEquationOutcomeBoundaryFromProducerOrThrow(payload);
             return {
               outcome: requireCanonicalRuntimeOutcome({
                 kind: boundary.result.document.outcomeKind,
@@ -619,7 +601,6 @@ export async function runEquationModeWithOoePilot(
         },
       );
       guardedTrace = result.guardedTrace;
-      projectedAnalysisEvidence = result.analysisEvidence;
       runtimeHostExecution = result.hostExecution;
       return result.outcome;
     },
@@ -633,14 +614,14 @@ export async function runEquationModeWithOoePilot(
       runtimeHostExecution,
     ),
     buildProvenance: ({ payload, metadata, routeSnapshot }) => buildEquationProvenance({
-      payload: displayOutcomeForRuntime(payload),
+      payload,
       metadata,
       routeSnapshot,
     }),
   });
 
   return {
-    payload: displayOutcomeForRuntime(envelope.payload),
+    payload: envelope.payload,
     ooe: envelope.ooe,
   };
 }

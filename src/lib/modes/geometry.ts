@@ -1,6 +1,5 @@
 import {
   buildCanonicalGeometryModeRunPayload,
-  projectCanonicalGeometryModeRunPayload,
   type GeometryModeRunPayload,
 } from '../geometry/runtime-run';
 import {
@@ -46,10 +45,10 @@ export async function runGeometryModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
-    (payload) => projectCanonicalGeometryModeRunPayload(payload).outcome,
+    (payload) => payload.outcome,
   );
   return {
-    payload: projectCanonicalGeometryModeRunPayload(envelope.payload),
+    payload: envelope.payload,
     ooe: envelope.ooe,
   };
 }

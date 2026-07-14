@@ -11,87 +11,97 @@ function assertIncludesAll(label: string, actual: string | undefined, expected: 
 
 function assertExpectation(execution: GoldenExecution, expected: GoldenExpectation) {
   const { outcome, tableResponse } = execution;
-  const richOutcome = outcome.kind === 'prompt' ? undefined : outcome;
+  const document = outcome.kind === 'prompt' ? undefined : outcome.canonicalResult;
+  const metadata = document?.metadata;
   expect(outcome.kind).toBe(expected.kind);
-  expect(outcome.title).toBe(expected.title ?? outcome.title);
+  expect(outcome.kind === 'prompt' ? outcome.title : document?.title)
+    .toBe(expected.title ?? (outcome.kind === 'prompt' ? outcome.title : document?.title));
 
   if (expected.exactEquals !== undefined) {
-    expect(richOutcome?.exactLatex).toBe(expected.exactEquals);
+    expect(document?.primaryMath?.canonicalLatex).toBe(expected.exactEquals);
   }
 
-  assertIncludesAll('exactLatex', richOutcome?.exactLatex, expected.exactIncludes);
+  assertIncludesAll('exactLatex', document?.primaryMath?.canonicalLatex, expected.exactIncludes);
   assertIncludesAll(
     'answerRows',
     outcome.kind === 'success'
-      ? outcome.answerRows?.rows.map((row) => row.latex).join(' ')
+      ? document?.answerRows?.rows.map((row) => row.math.canonicalLatex).join(' ')
       : undefined,
     expected.answerRowsInclude,
   );
   assertIncludesAll(
     'branchReadback',
-    richOutcome?.branchReadback?.branchesLatex.join(' '),
+    document?.branchReadback?.branches.map((branch) => branch.canonicalLatex).join(' '),
     expected.branchIncludes,
   );
   assertIncludesAll(
     'periodicFamily',
-    richOutcome?.periodicFamily?.branchesLatex.join(' '),
+    document?.periodicFamily?.branches.map((branch) => branch.canonicalLatex).join(' '),
     expected.periodicBranchesInclude,
   );
-  assertIncludesAll('approxText', richOutcome?.approxText, expected.approxIncludes);
-  assertIncludesAll('warnings', outcome.warnings.join(' '), expected.warningIncludes);
+  assertIncludesAll('approxText', document?.approximations?.primary, expected.approxIncludes);
+  assertIncludesAll(
+    'warnings',
+    (document?.warnings ?? (outcome.kind === 'prompt' ? outcome.warnings : [])).join(' '),
+    expected.warningIncludes,
+  );
   assertIncludesAll(
     'exactSupplementLatex',
-    richOutcome?.exactSupplementLatex?.join(' '),
+    document?.supplements?.map((value) => value.canonicalLatex).join(' '),
     expected.supplementIncludes,
   );
 
   if (expected.detailTitlesInclude) {
-    const titles = richOutcome?.detailSections?.map((section) => section.title) ?? [];
+    const titles = document?.details?.map((section) => section.title) ?? [];
     for (const expectedTitle of expected.detailTitlesInclude) {
       expect(titles).toContain(expectedTitle);
     }
   }
 
   if (expected.detailLinesInclude) {
-    const lines = richOutcome?.detailSections?.flatMap((section) => section.lines).join(' ') ?? '';
+    const lines = document?.details?.flatMap((section) => section.lines.map((line) =>
+      line.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.text).join('')))
+      .join(' ') ?? '';
     assertIncludesAll('detail lines', lines, expected.detailLinesInclude);
   }
 
   if (expected.resultOrigin !== undefined) {
-    expect(outcome.kind === 'success' ? outcome.resultOrigin : undefined).toBe(expected.resultOrigin);
+    expect(outcome.kind === 'success' ? metadata?.resultOrigin : undefined).toBe(expected.resultOrigin);
   }
 
   if (expected.calculusStrategy !== undefined) {
-    expect(outcome.kind === 'success' ? outcome.calculusStrategy : undefined).toBe(expected.calculusStrategy);
+    expect(outcome.kind === 'success' ? metadata?.calculusStrategy : undefined).toBe(expected.calculusStrategy);
   }
 
   if (expected.derivativeStrategiesInclude) {
-    const strategies = outcome.kind === 'success' ? outcome.calculusDerivativeStrategies ?? [] : [];
+    const strategies = outcome.kind === 'success' ? metadata?.calculusDerivativeStrategies ?? [] : [];
     for (const expectedStrategy of expected.derivativeStrategiesInclude) {
       expect(strategies).toContain(expectedStrategy);
     }
   }
 
   if (expected.errorIncludes !== undefined) {
-    expect(outcome.kind === 'error' ? outcome.error : '').toContain(expected.errorIncludes);
+    expect(outcome.kind === 'error' ? document?.error : '').toContain(expected.errorIncludes);
   }
 
   if (expected.solveBadgesInclude) {
-    const solveBadges = outcome.kind === 'success' ? outcome.solveBadges ?? [] : [];
+    const solveBadges = outcome.kind === 'success' ? metadata?.solveBadges ?? [] : [];
     for (const expectedBadge of expected.solveBadgesInclude) {
       expect(solveBadges).toContain(expectedBadge);
     }
   }
 
   if (expected.plannerBadgesInclude) {
-    const plannerBadges = richOutcome?.plannerBadges ?? [];
+    const plannerBadges = metadata?.plannerBadges ?? [];
     for (const expectedBadge of expected.plannerBadgesInclude) {
       expect(plannerBadges).toContain(expectedBadge);
     }
   }
 
   if (expected.actionLatexIncludes) {
-    const actionLatex = richOutcome?.actions?.map((action) => action.latex).join(' ') ?? '';
+    const actionLatex = outcome.kind === 'prompt'
+      ? ''
+      : outcome.actions?.map((action) => action.math.canonicalLatex).join(' ') ?? '';
     assertIncludesAll('actions', actionLatex, expected.actionLatexIncludes);
   }
 
@@ -104,7 +114,7 @@ function assertExpectation(execution: GoldenExecution, expected: GoldenExpectati
   }
 
   if (expected.rejectedCandidateCount !== undefined) {
-    expect(richOutcome?.rejectedCandidateCount).toBe(expected.rejectedCandidateCount);
+    expect(metadata?.rejectedCandidateCount).toBe(expected.rejectedCandidateCount);
   }
 
   if (expected.runtimeStopReasonKind !== undefined) {

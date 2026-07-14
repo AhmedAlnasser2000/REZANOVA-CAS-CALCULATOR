@@ -1,5 +1,5 @@
-import type { DisplayOutcome } from '../../../types/calculator';
-import { summarizeDisplayOutcome } from '../diagnostics/diagnostics-buffer';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
+import { summarizeCanonicalRuntimeOutcome } from '../diagnostics/diagnostics-buffer';
 import {
   buildOoeJobCommitContext,
   type OoeJobCommitContext,
@@ -127,7 +127,7 @@ function buildStatisticsOoeTraceEvents(
     commitAssessment: jobContext.commitAssessment,
     preflightMessage: traceMessageForStatus(status),
     startedMessage: 'Statistics evaluation started through the isolated Statistics runtime shell.',
-    finalMessage: 'Statistics evaluation pilot produced a stable DisplayOutcome.',
+    finalMessage: 'Statistics evaluation pilot produced a stable CanonicalRuntimeOutcome.',
   });
   const hostEvent = hostExecution
     ? buildOoeTraceEvent({
@@ -242,7 +242,7 @@ export async function runStatisticsWithOoePilot<TPayload>(
   routeSnapshot: unknown = { capabilityId: OOE_STATISTICS_EVALUATE_CAPABILITY_ID },
   options?: OoeJobContextOptions,
   getHostExecution?: () => StatisticsHostExecution | undefined,
-  resolveDisplayOutcome?: (payload: TPayload) => DisplayOutcome,
+  resolveCanonicalOutcome?: (payload: TPayload) => CanonicalRuntimeOutcome,
 ): Promise<StatisticsOoePilotRunResult<TPayload>> {
   const definition = statisticsPilotDefinition();
   return runOoeRuntimeJob({
@@ -264,9 +264,9 @@ export async function runStatisticsWithOoePilot<TPayload>(
       const snapshot = routeSnapshot as {
         request?: StatisticsRouteRequestSnapshot;
       };
-      const output = resolveDisplayOutcome
-        ? resolveDisplayOutcome(payload)
-        : (payload as { outcome?: DisplayOutcome }).outcome ?? payload as DisplayOutcome;
+      const output = resolveCanonicalOutcome
+        ? resolveCanonicalOutcome(payload)
+        : (payload as { outcome?: CanonicalRuntimeOutcome }).outcome ?? payload as CanonicalRuntimeOutcome;
       return {
         depth: 'coarse',
         mode: 'statistics',
@@ -278,7 +278,7 @@ export async function runStatisticsWithOoePilot<TPayload>(
           workingSource: snapshot.request?.workingSourceHint,
           latexLength: snapshot.request?.inputLatex?.length,
         },
-        outputSummary: summarizeDisplayOutcome(output),
+        outputSummary: summarizeCanonicalRuntimeOutcome(output),
         runtimeHost: metadata.statisticsHostExecution?.hostId ?? metadata.hostId,
         runtimeShell: metadata.runtimeShell,
         commitDecision: metadata.commitAssessment.commitDecision,

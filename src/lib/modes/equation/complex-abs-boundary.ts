@@ -1,4 +1,4 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import { profileEquationResult } from '../../display/printer';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 
@@ -33,7 +33,7 @@ function matchesAbsAffineNoSolutionBenchmark(equationLatex: string, target: stri
 export function tryComplexAbsBoundaryNoSolution(input: {
   equationLatex: string;
   target: string;
-}): DisplayOutcome | undefined {
+}): ResultProducerDraft | undefined {
   if (!matchesAbsAffineNoSolutionBenchmark(input.equationLatex, input.target)) {
     return undefined;
   }

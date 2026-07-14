@@ -11,7 +11,7 @@ import {
 } from './linear-algebra-worker-client-core';
 import type { RunVectorModeRequest } from '../vector';
 import { proseSolveSummary } from '../../display/result-detail-lines';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { createVectorResultOutcome } from '../vector-result-document';
 
 export type CreateVectorWorker = CreateLinearAlgebraWorkspaceWorker<RunVectorModeRequest>;
@@ -40,7 +40,7 @@ export function runVectorModeViaIsolatedWorker(
       primaryHostId: OOE_VECTOR_WORKER_HOST_ID,
       fallbackHostId: OOE_VECTOR_FALLBACK_HOST_ID,
       createDefaultWorker: createDefaultVectorWorker,
-      buildCancelledPayload: () => projectDisplayOutcomeToCanonicalRuntimeOutcome(
+      buildCancelledPayload: () => finalizeCanonicalRuntimeOutcomeFromProducer(
         createVectorResultOutcome({
           kind: 'error',
           title: 'Vector',

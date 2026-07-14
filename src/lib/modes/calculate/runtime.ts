@@ -7,10 +7,9 @@ import {
   runCalculateModeViaIsolatedWorker,
   type CreateCalculateWorker,
 } from '../worker-clients/calculate-worker-client';
-import type { CanonicalRuntimeOutcome, DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome, ResultProducerDraft } from '../../../types/calculator';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../../result-contract';
 import {
@@ -32,8 +31,8 @@ type RunCalculateRuntimeWithOoePilotOptions = OoeJobContextOptions & {
 
 export function runCalculateRuntimeRequest(
   request: RunCalculateRuntimeRequest,
-): DisplayOutcome {
-  let outcome: DisplayOutcome;
+): ResultProducerDraft {
+  let outcome: ResultProducerDraft;
   switch (request.kind) {
     case 'standard':
     case 'legacyWorkbench':
@@ -52,7 +51,7 @@ export function runCalculateRuntimeRequest(
 export function runCalculateCanonicalRuntimeRequest(
   request: RunCalculateRuntimeRequest,
 ): CanonicalRuntimeOutcome {
-  return projectDisplayOutcomeToCanonicalRuntimeOutcome(
+  return finalizeCanonicalRuntimeOutcomeFromProducer(
     runCalculateRuntimeRequest(request),
     'Calculate',
   );
@@ -77,10 +76,10 @@ export async function runCalculateRuntimeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
-    (payload) => projectCanonicalRuntimeOutcomeToDisplayOutcome(payload),
+    (payload) => payload,
   );
   return {
-    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(envelope.payload),
+    payload: envelope.payload,
     ooe: envelope.ooe,
   };
 }

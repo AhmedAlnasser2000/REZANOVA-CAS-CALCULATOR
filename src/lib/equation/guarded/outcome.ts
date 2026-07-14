@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   DisplayBranchReadback,
   DisplaySolveSummary,
   PlannerBadge,
@@ -10,8 +10,8 @@ import { createEquationResultOutcome } from '../solve-result/producer';
 
 const UNSUPPORTED_FAMILY_ERROR = 'This equation is outside the supported exact symbolic solve families.';
 
-type GuardedSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type GuardedErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type GuardedSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type GuardedErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 function successOutcome(
   title: string,

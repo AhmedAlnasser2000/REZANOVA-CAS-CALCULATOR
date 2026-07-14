@@ -2,7 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   ComplexExactForm,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   OutputStyle,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -379,7 +379,7 @@ function subtractAffine(left: MixedRootAffine, right: MixedRootAffine): CollectR
   });
 }
 
-function unsupportedOutcome(lines: string[], error = 'This complex mixed algebraic wrapper equation is outside the supported guarded complex wrapper families.'): DisplayOutcome {
+function unsupportedOutcome(lines: string[], error = 'This complex mixed algebraic wrapper equation is outside the supported guarded complex wrapper families.'): ResultProducerDraft {
   return createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
@@ -593,7 +593,7 @@ function solveMixedRootAffine(
       branchLatex: branchEquation,
       exactLatex: `${input.selectedTarget}=${solution}`,
     })));
-    const outcome: DisplayOutcome = createEquationResultOutcome({
+    const outcome: ResultProducerDraft = createEquationResultOutcome({
       kind: 'success',
       title: 'Solve',
       exactLatex,
@@ -693,7 +693,7 @@ function solveMixedRootAffine(
     ...solved.exactSupplementLatex,
   ]);
   const exactLatex = exactLatexForSolutions(input.selectedTarget, solved.solutionExpressions);
-  const outcome: DisplayOutcome = createEquationResultOutcome({
+  const outcome: ResultProducerDraft = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex,
@@ -734,7 +734,7 @@ function solveMixedRootAffine(
 
 export function tryComplexMixedAlgebraicWrapperRoute(
   input: ComplexMixedAlgebraicWrapperRouteInput,
-): DisplayOutcome | undefined {
+): ResultProducerDraft | undefined {
   let json: MathJson;
   try {
     json = ce.parse(input.parameterizedEquationLatex).json as MathJson;

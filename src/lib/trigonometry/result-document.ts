@@ -1,19 +1,19 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
-type TrigonometrySuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type TrigonometryErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type TrigonometrySuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type TrigonometryErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 type TrigonometryResultProducerInput =
   | Omit<TrigonometrySuccessOutcome, 'canonicalResult'>
   | Omit<TrigonometryErrorOutcome, 'canonicalResult'>;
 
-type TrigonometryResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+type TrigonometryResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 export function createTrigonometryResultOutcome(
   input: Omit<TrigonometrySuccessOutcome, 'canonicalResult'>,
@@ -31,7 +31,7 @@ export function createTrigonometryResultOutcome(
   input: TrigonometryResultProducerInput,
   options: CanonicalResultProducerOptionsV1 = {},
 ): TrigonometryResultProducerOutcome {
-  if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
+  if (input.primaryMath && input.primaryMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Trigonometry canonical math must match the producer exact LaTeX.');
   }
   const success = input.kind === 'success' ? input : undefined;
@@ -40,7 +40,7 @@ export function createTrigonometryResultOutcome(
     title: input.title,
     ...(input.kind === 'error' ? { error: input.error } : {}),
     ...(input.exactLatex
-      ? { primaryMath: canonicalMathValue(input.exactLatex, input.canonicalMath?.mathJson) }
+      ? { primaryMath: canonicalMathValue(input.exactLatex, input.primaryMath?.mathJson) }
       : {}),
     ...(success?.answerRows ? { answerRows: success.answerRows } : {}),
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
@@ -89,7 +89,7 @@ export function createTrigonometryResultOutcome(
     },
   }, options);
 
-  return deriveDisplayOutcomeFromCanonicalResult<TrigonometryResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<TrigonometryResultProducerOutcome>(
     canonicalResult,
     input,
   );

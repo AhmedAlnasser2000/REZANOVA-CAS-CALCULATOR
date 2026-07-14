@@ -39,7 +39,7 @@ import { trimHarmlessTrailingMathSpacing } from '../../lib/input/input-canonical
 import type {
   AngleUnit,
   CoreDraftState,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   GuideExample,
   HistoryEntry,
   ModeId,
@@ -51,6 +51,7 @@ import type {
 import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/launch-tickets';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import {
   defaultTrigLeafForMenu,
   trigExecutionLatexForRuntime,
@@ -61,7 +62,7 @@ import type { TrigonometrySurfaceState } from './workspace-surface-state';
 import type { WorkspaceInstance } from './workspace-instances';
 
 type CommitTrigonometryOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'trigonometry',
   context?: Partial<Pick<HistoryEntry, 'trigScreen' | 'trigSeed'>> & {
@@ -89,7 +90,7 @@ type UseTrigonometryRuntimeOptions = {
     inputRevisionId?: string;
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
-  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   startTransition: (callback: () => void) => void;
 };
@@ -780,12 +781,10 @@ export function useTrigonometryRuntime({
       const inputLatex = readLiveTrigInputLatex(screenHint, editorFocused);
 
       if (!inputLatex) {
-        setDisplayOutcome({
-          kind: 'error',
-          title: trigRouteMeta?.label ?? 'Trigonometry',
-          error: 'Enter a Trigonometry request or use a guided trig tool before evaluating.',
-          warnings: [],
-        });
+        setDisplayOutcome(createCanonicalRuntimeError(
+          trigRouteMeta?.label ?? 'Trigonometry',
+          'Enter a Trigonometry request or use a guided trig tool before evaluating.',
+        ));
         return;
       }
 

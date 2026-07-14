@@ -13,7 +13,7 @@ import type {
   AngleUnit,
   ComplexExactForm,
   ComplexSolveRegion,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationAnswerMode,
   EquationScreen,
   ModeId,
@@ -26,7 +26,7 @@ import { equationReplaySeedFromRequest } from './equationHistorySeed';
 
 type TransitionFn = (callback: () => void) => void;
 type CommitOutcomeFn = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'calculate' | 'equation',
   replayContext?: Record<string, unknown>,
@@ -111,7 +111,7 @@ type RunEquationComplexRegionRuntimeActionInput = {
   handleCancelledEnvelope: (
     envelope: Awaited<ReturnType<typeof runEquationModeWithOoePilot>>,
   ) => boolean;
-  buildRuntimeLoadError: (title: string, error: unknown) => DisplayOutcome;
+  buildRuntimeLoadError: (title: string, error: unknown) => CanonicalRuntimeOutcome;
 };
 
 function regionFromPanel(panel: EquationComplexRegionPanelState): ComplexSolveRegion {

@@ -1,12 +1,13 @@
 import type {
+  CanonicalRuntimeOutcome,
   CanonicalResultDocumentV1,
-  DisplayOutcome,
 } from '../../types/calculator';
-import {
-  projectDisplayOutcomeToCanonicalResult,
-  type CanonicalResultProjectionFailure,
-} from './projection';
 import { validateCanonicalResultDocument } from './validation';
+
+export type CanonicalResultConsumerFailure = {
+  reason: 'prompt-outcome' | 'missing-document' | 'invalid-document';
+  message: string;
+};
 
 export type CanonicalResultConsumerResolution =
   | {
@@ -16,11 +17,11 @@ export type CanonicalResultConsumerResolution =
     }
   | {
       ok: false;
-      failure: CanonicalResultProjectionFailure;
+      failure: CanonicalResultConsumerFailure;
     };
 
 export function resolveCanonicalResultForConsumer(
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
 ): CanonicalResultConsumerResolution {
   if (outcome.kind === 'prompt') {
     return {
@@ -32,7 +33,7 @@ export function resolveCanonicalResultForConsumer(
     };
   }
 
-  if (outcome.canonicalResult === undefined) {
+  if (!outcome.canonicalResult) {
     return {
       ok: false,
       failure: {
@@ -49,7 +50,15 @@ export function resolveCanonicalResultForConsumer(
       failure: {
         reason: 'invalid-document',
         message: validation.failure.message,
-        validationFailure: validation.failure,
+      },
+    };
+  }
+  if (validation.validated.value.outcomeKind !== outcome.kind) {
+    return {
+      ok: false,
+      failure: {
+        reason: 'invalid-document',
+        message: 'Runtime kind must match the canonical result document outcome kind.',
       },
     };
   }
@@ -58,25 +67,4 @@ export function resolveCanonicalResultForConsumer(
     source: 'native',
     document: validation.validated.value,
   };
-}
-
-export type LegacyCanonicalResultConsumerResolution =
-  | CanonicalResultConsumerResolution
-  | {
-      ok: true;
-      source: 'compatibility';
-      document: CanonicalResultDocumentV1;
-    };
-
-export function resolveLegacyCanonicalResultForConsumer(
-  outcome: DisplayOutcome,
-): LegacyCanonicalResultConsumerResolution {
-  const native = resolveCanonicalResultForConsumer(outcome);
-  if (native.ok || native.failure.reason !== 'missing-document') {
-    return native;
-  }
-  const projected = projectDisplayOutcomeToCanonicalResult(outcome);
-  return projected.ok
-    ? { ok: true, source: 'compatibility', document: projected.document }
-    : projected;
 }

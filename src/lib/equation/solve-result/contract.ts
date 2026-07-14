@@ -36,7 +36,7 @@ export type EquationSolveDiagnosticsV1 = {
 export type EquationControlledStopV1 = {
   code: string;
   message: string;
-  source: 'producer' | 'compatibility-boundary';
+  source: 'producer';
   stageId?: string;
 };
 

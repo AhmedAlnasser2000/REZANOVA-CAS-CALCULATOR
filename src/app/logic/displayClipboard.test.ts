@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
@@ -16,14 +17,6 @@ describe('Display canonical clipboard routing', () => {
     await copyDisplayResultWithDeps({
       displayOutcome: {
         kind: 'success',
-        title: 'Result',
-        exactLatex: String.raw`x^{\frac{1}{6}}`,
-        canonicalMath: {
-          version: 1,
-          canonicalLatex: String.raw`x^{\frac{1}{6}}`,
-          mathJson: ['Power', 'x', ['Divide', 1, 6]],
-        },
-        warnings: [],
         canonicalResult: buildCanonicalResultDocumentFromProducer({
           outcomeKind: 'success',
           title: 'Result',
@@ -49,6 +42,38 @@ describe('Display canonical clipboard routing', () => {
     expect(setClipboardNotice).toHaveBeenCalledWith('Result copied');
   });
 
+  it('copies a canonical approximation-only result without reviving string-only fallback', async () => {
+    const write = vi.fn().mockResolvedValue({
+      ok: true,
+      host: 'browser',
+      fidelity: 'canonical-text',
+    });
+    const setClipboardNotice = vi.fn();
+    await copyDisplayResultWithDeps({
+      displayOutcome: {
+        kind: 'success',
+        canonicalResult: buildCanonicalResultDocumentFromProducer({
+          outcomeKind: 'success',
+          title: 'Numeric result',
+          approxText: 'x ~= 2.076101',
+          warnings: [],
+        }),
+      },
+      visibleText: 'x \u2248 2.076e0',
+      currentMode: 'equation',
+      setClipboardNotice,
+      write,
+    });
+
+    expect(write).toHaveBeenCalledWith({
+      canonicalLatex: 'x \u2248 2.076e0',
+      visibleText: 'x \u2248 2.076e0',
+      mathJson: undefined,
+      metadata: { surface: 'display', mode: 'equation' },
+    });
+    expect(setClipboardNotice).toHaveBeenCalledWith('Result copied');
+  });
+
   it('refuses string-only and empty results', async () => {
     const write = vi.fn().mockResolvedValue({
       ok: true,
@@ -63,7 +88,7 @@ describe('Display canonical clipboard routing', () => {
         error: 'Controlled stop',
         exactLatex: 'x=1',
         warnings: [],
-      },
+      } as unknown as CanonicalRuntimeOutcome,
       visibleText: 'x = 1',
       currentMode: 'equation',
       setClipboardNotice,
@@ -84,7 +109,7 @@ describe('Display canonical clipboard routing', () => {
     expect(setClipboardNotice).toHaveBeenLastCalledWith('Nothing to copy');
   });
 
-  it('does not fall back to a mismatched compatibility payload', async () => {
+  it('does not fall back from malformed canonical authority', async () => {
     const write = vi.fn().mockResolvedValue({
       ok: true,
       host: 'browser',
@@ -94,15 +119,14 @@ describe('Display canonical clipboard routing', () => {
     await copyDisplayResultWithDeps({
       displayOutcome: {
         kind: 'success',
-        title: 'Result',
-        exactLatex: 'x=1',
-        canonicalMath: {
+        canonicalResult: {
           version: 1,
-          canonicalLatex: 'x=2',
-          mathJson: ['Equal', 'x', 2],
+          outcomeKind: 'error',
+          title: 'Result',
+          error: 'Mismatched kind',
+          warnings: [],
         },
-        warnings: [],
-      },
+      } as unknown as CanonicalRuntimeOutcome,
       visibleText: 'x = 1',
       currentMode: 'equation',
       setClipboardNotice,
@@ -121,9 +145,6 @@ describe('Display canonical clipboard routing', () => {
     await copyDisplayResultWithDeps({
       displayOutcome: {
         kind: 'success',
-        title: 'Stale result',
-        exactLatex: 'x=999',
-        warnings: [],
         canonicalResult: buildCanonicalResultDocumentFromProducer({
           outcomeKind: 'success',
           title: 'Canonical result',

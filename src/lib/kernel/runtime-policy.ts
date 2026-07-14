@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   PlannerOutcome,
   RuntimeAdvisories,
   RuntimeStopReason,
@@ -21,7 +21,7 @@ function advisories(
 }
 
 function deriveEquationNumericSolveAdvisory(
-  outcome: DisplayOutcome | undefined,
+  outcome: ResultProducerDraft | undefined,
   stopReason: RuntimeStopReason | undefined,
 ): RuntimeAdvisories['equationNumericSolve'] {
   if (stopReason?.kind === 'range-guard') {
@@ -87,7 +87,7 @@ export function classifyCalculateRuntimeAdvisories(options: {
 
 export function classifyEquationRuntimeAdvisories(options: {
   invalidRequest?: boolean;
-  outcome?: DisplayOutcome;
+  outcome?: ResultProducerDraft;
 }): RuntimeAdvisories | undefined {
   const { invalidRequest = false, outcome } = options;
 

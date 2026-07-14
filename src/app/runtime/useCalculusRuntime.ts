@@ -65,6 +65,7 @@ import {
 import type { CalculusSurfaceState } from './workspace-surface-state';
 import type { WorkspaceInstance } from './workspace-instances';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import type {
   CalculusScreen,
@@ -76,7 +77,7 @@ import type {
   CalculusLimitState,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   FirstOrderOdeState,
   ImplicitDerivativeState,
   GuideExample,
@@ -112,7 +113,7 @@ type UseCalculusRuntimeOptions = {
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
-  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   startTransition: (callback: () => void) => void;
   storedVariables: StoredVariableValue[];
@@ -699,25 +700,21 @@ export function useCalculusRuntime({
   function runCalculusAction() {
     const generated = trimHarmlessTrailingMathSpacing(calculusWorkbenchExpression);
     if (!generated || !calculusRouteMeta || isCalculusMenuOpen) {
-      setDisplayOutcome({
-        kind: 'error',
-        title: calculusRouteMeta?.label ?? 'Calculus',
-        error: calculusRouteMeta
+      setDisplayOutcome(createCanonicalRuntimeError(
+        calculusRouteMeta?.label ?? 'Calculus',
+        calculusRouteMeta
           ? `Fill the ${calculusRouteMeta.label.toLowerCase()} inputs before evaluating.`
           : 'Choose a Calculus tool before evaluating.',
-        warnings: [],
-      });
+      ));
       return;
     }
 
     const launchedState = activeCalculusRuntimeRef.current;
     if (!launchedState) {
-      setDisplayOutcome({
-        kind: 'error',
-        title: 'Calculus',
-        error: 'Could not prepare the Calculus request.',
-        warnings: [],
-      });
+      setDisplayOutcome(createCanonicalRuntimeError(
+        'Calculus',
+        'Could not prepare the Calculus request.',
+      ));
       return;
     }
 
@@ -788,14 +785,12 @@ export function useCalculusRuntime({
         })
         .catch((error: unknown) => {
           discardHistoryTicket(launchedHistoryTicket?.id);
-          const loadError: DisplayOutcome = {
-            kind: 'error',
-            title: 'Calculus',
-            error: error instanceof Error
+          const loadError = createCanonicalRuntimeError(
+            'Calculus',
+            error instanceof Error
               ? `Could not load the Calculus runtime: ${error.message}`
               : 'Could not load the Calculus runtime.',
-            warnings: [],
-          };
+          );
           if (isCalculusMode(currentModeRef.current)) {
             setDisplayOutcome(loadError);
           }

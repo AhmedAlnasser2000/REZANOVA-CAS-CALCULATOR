@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { expectMathStaticLatex } from '../../../test/renderAppMain';
-import { CanonicalDisplayPanel as DisplayPanel } from '../../../test-utils/CanonicalDisplayPanel';
+import { DisplayPanel } from '../DisplayPanel';
+import { canonicalMathValue } from '../../../lib/result-contract';
+import { canonicalResultFixture } from '../../../test-utils/canonical-result-fixture';
 import { DEFAULT_SETTINGS } from '../../../types/calculator';
 
 describe('Display detail contract', () => {
@@ -15,16 +17,16 @@ describe('Display detail contract', () => {
         currentMode="equation"
         displayHeaderLabel="Equation"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Symbolic',
           warnings: [],
-          exactLatex: 'x=1',
+          primaryMath: canonicalMathValue('x=1'),
           solveSummaryParts: [[
             { kind: 'text', text: 'Reduced carrier: ' },
             { kind: 'math', latex: 'u=x^2' },
           ]],
-        }}
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={DEFAULT_SETTINGS}
@@ -48,11 +50,11 @@ describe('Display detail contract', () => {
         currentMode="equation"
         displayHeaderLabel="Equation"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Symbolic',
           warnings: [],
-          exactLatex: 'x=\\sqrt{2}',
+          primaryMath: canonicalMathValue('x=\\sqrt{2}'),
           detailSections: [
             {
               title: 'Expanded Branches',
@@ -82,7 +84,7 @@ describe('Display detail contract', () => {
               lineKind: 'text',
             },
           ],
-        }}
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={{

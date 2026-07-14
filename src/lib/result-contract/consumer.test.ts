@@ -1,77 +1,66 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import { buildCanonicalResultDocumentFromProducer, canonicalMathValue } from './producer';
-import {
-  resolveCanonicalResultForConsumer,
-  resolveLegacyCanonicalResultForConsumer,
-} from './consumer';
+import { resolveCanonicalResultForConsumer } from './consumer';
 
 describe('canonical result consumer resolution', () => {
-  it('keeps valid native truth authoritative over contradictory compatibility fields', () => {
+  it('returns validated native canonical truth', () => {
     const canonicalResult = buildCanonicalResultDocumentFromProducer({
       outcomeKind: 'success',
       title: 'Canonical',
       primaryMath: canonicalMathValue('x=1'),
       warnings: ['Canonical warning'],
     });
-    const outcome: DisplayOutcome = {
-      kind: 'success',
-      title: 'Stale',
-      exactLatex: 'x=999',
-      warnings: ['Stale warning'],
-      canonicalResult,
-    };
 
-    expect(resolveCanonicalResultForConsumer(outcome)).toEqual({
+    expect(resolveCanonicalResultForConsumer({ kind: 'success', canonicalResult })).toEqual({
       ok: true,
       source: 'native',
       document: canonicalResult,
     });
   });
 
-  it('fails closed when native truth is absent', () => {
-    const resolution = resolveCanonicalResultForConsumer({
-      kind: 'success',
-      title: 'Legacy typed result',
-      exactLatex: 'y=2',
-      detailSections: [{ title: 'Method', lineKind: 'text', lines: ['Exact route'] }],
+  it('rejects prompt control outcomes', () => {
+    expect(resolveCanonicalResultForConsumer({
+      kind: 'prompt',
+      title: 'Choose a target',
+      message: 'Select a variable.',
+      targetMode: 'equation',
+      carryLatex: 'x+y=1',
       warnings: [],
-    });
-
-    expect(resolution).toMatchObject({
+    })).toMatchObject({
       ok: false,
-      failure: { reason: 'missing-document' },
+      failure: { reason: 'prompt-outcome' },
     });
   });
 
-  it('keeps compatibility projection behind an explicit legacy-only resolver', () => {
-    const resolution = resolveLegacyCanonicalResultForConsumer({
+  it('fails closed on an invalid native document', () => {
+    const outcome = {
       kind: 'success',
-      title: 'Legacy typed result',
-      exactLatex: 'y=2',
-      detailSections: [{ title: 'Method', lineKind: 'text', lines: ['Exact route'] }],
-      warnings: [],
-    });
-
-    expect(resolution).toMatchObject({
-      ok: true,
-      source: 'compatibility',
-      document: { title: 'Legacy typed result', primaryMath: { canonicalLatex: 'y=2' } },
-    });
-  });
-
-  it('fails closed on an invalid native document instead of falling back to stale fields', () => {
-    const resolution = resolveCanonicalResultForConsumer({
-      kind: 'success',
-      title: 'Compatibility',
-      exactLatex: 'x=1',
-      warnings: [],
-      canonicalResult: { version: 1 } as never,
-    });
-
-    expect(resolution).toMatchObject({
+      canonicalResult: { version: 1 },
+    } as unknown as CanonicalRuntimeOutcome;
+    expect(resolveCanonicalResultForConsumer(outcome)).toMatchObject({
       ok: false,
       failure: { reason: 'invalid-document' },
+    });
+  });
+
+  it('fails closed when runtime and document outcome kinds disagree', () => {
+    const canonicalResult = buildCanonicalResultDocumentFromProducer({
+      outcomeKind: 'error',
+      title: 'Controlled stop',
+      error: 'No real solution.',
+      warnings: [],
+    });
+
+    expect(resolveCanonicalResultForConsumer({
+      kind: 'success',
+      canonicalResult,
+    } as unknown as CanonicalRuntimeOutcome)).toMatchObject({
+      ok: false,
+      failure: {
+        reason: 'invalid-document',
+        message: 'Runtime kind must match the canonical result document outcome kind.',
+      },
     });
   });
 });

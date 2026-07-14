@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCanonicalResultForStorage } from '../../result-contract';
+import { requireCanonicalResultAuthority } from '../../result-contract';
 import { runCalculateMode } from '../calculate';
+
+function canonicalDocument(result: ReturnType<typeof runCalculateMode>) {
+  if (result.kind === 'prompt' || !result.canonicalResult) {
+    throw new Error('Expected a canonical Calculate result');
+  }
+  return result.canonicalResult;
+}
+
+function detailLines(result: ReturnType<typeof runCalculateMode>, index: number) {
+  return canonicalDocument(result).details?.[index]?.lines.map((line) =>
+    line.map((part) => part.kind === 'math' ? part.math.canonicalLatex : part.text).join(''));
+}
 
 describe('runCalculateMode', () => {
   it('profiles proven Calculate answer nodes with canonical payload parity', () => {
@@ -20,17 +32,15 @@ describe('runCalculateMode', () => {
       });
       expect(result.kind).toBe('success');
       if (result.kind !== 'success') throw new Error('Expected a success outcome');
-      expect(result.canonicalMath?.canonicalLatex).toBe(result.exactLatex);
-      expect(result.canonicalMath?.mathJson).toBeDefined();
-      expect(structuredClone(result.canonicalMath)).toEqual(result.canonicalMath);
+      expect(result.primaryMath?.canonicalLatex).toBe(result.exactLatex);
+      expect(result.primaryMath?.mathJson).toBeDefined();
+      expect(structuredClone(result.primaryMath)).toEqual(result.primaryMath);
       expect(result.canonicalResult?.primaryMath).toEqual({
         canonicalLatex: result.exactLatex,
-        mathJson: result.canonicalMath?.mathJson,
+        mathJson: result.primaryMath?.mathJson,
       });
-      expect(resolveCanonicalResultForStorage(result)).toMatchObject({
-        ok: true,
-        source: 'native',
-      });
+      expect(requireCanonicalResultAuthority(result, 'Calculate standard test').canonicalResult)
+        .toBeDefined();
     }
   });
 
@@ -60,18 +70,17 @@ describe('runCalculateMode', () => {
     expect(degrees).toMatchObject({
       kind: 'success',
       exactLatex: '90',
-      canonicalMath: { version: 1, canonicalLatex: '90', mathJson: 90 },
+      primaryMath: { canonicalLatex: '90', mathJson: 90 },
     });
     expect(radians).toMatchObject({
       kind: 'success',
       exactLatex: '\\frac{\\pi}{2}',
-      canonicalMath: {
-        version: 1,
+      primaryMath: {
         canonicalLatex: '\\frac{\\pi}{2}',
         mathJson: ['Divide', 'Pi', 2],
       },
     });
-    expect(integral).not.toHaveProperty('canonicalMath');
+    expect(integral).not.toHaveProperty('primaryMath');
     expect(integral.kind === 'success' ? integral.canonicalResult?.primaryMath : undefined)
       .toMatchObject({ canonicalLatex: expect.any(String) });
     expect(integral.kind === 'success' ? integral.canonicalResult?.primaryMath : undefined)
@@ -96,17 +105,15 @@ describe('runCalculateMode', () => {
       throw new Error('Expected a success outcome');
     }
     expect(result.exactLatex).toBe('2');
-    expect(result.variableSubstitutions).toEqual([
-      { name: 'a', valueLatex: '4', numericValue: 4 },
-      { name: 'k', valueLatex: '-2', numericValue: -2 },
+    expect(result.canonicalResult?.metadata?.variableSubstitutions).toEqual([
+      { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
+      { name: 'k', value: { canonicalLatex: '-2' }, numericValue: -2 },
     ]);
-    expect(result.detailSections?.[0]).toMatchObject({
-      title: 'Stored Values',
-      lines: [
-        'Used stored values: a=4, k=-2.',
-        'Effective expression: 2.',
-      ],
-    });
+    expect(result.canonicalResult?.details?.[0].title).toBe('Stored Values');
+    expect(detailLines(result, 0)).toEqual([
+      'Used stored values: a=4, k=-2.',
+      'Effective expression: 2.',
+    ]);
   });
 
   it('substitutes explicit named stored values without substituting raw adjacent text', () => {
@@ -124,8 +131,8 @@ describe('runCalculateMode', () => {
       throw new Error('Expected a success outcome');
     }
     expect(explicit.exactLatex).toBe('7');
-    expect(explicit.variableSubstitutions).toEqual([
-      { name: 'mass', valueLatex: '5', numericValue: 5 },
+    expect(explicit.canonicalResult?.metadata?.variableSubstitutions).toEqual([
+      { name: 'mass', value: { canonicalLatex: '5' }, numericValue: 5 },
     ]);
 
     const raw = runCalculateMode({
@@ -141,7 +148,7 @@ describe('runCalculateMode', () => {
     if (raw.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(raw.variableSubstitutions).toBeUndefined();
+    expect(raw.canonicalResult?.metadata?.variableSubstitutions).toBeUndefined();
     expect(raw.exactLatex).not.toBe('7');
   });
 
@@ -160,13 +167,11 @@ describe('runCalculateMode', () => {
       throw new Error('Expected a success outcome');
     }
     expect(simplified.exactLatex).toContain('a');
-    expect(simplified.variableSubstitutions).toBeUndefined();
-    expect(simplified.detailSections?.[0]).toMatchObject({
-      title: 'Variable Policy',
-      lines: [
-        'Ignored stored values: a=4. Symbolic transforms keep variables symbolic.',
-      ],
-    });
+    expect(simplified.canonicalResult?.metadata?.variableSubstitutions).toBeUndefined();
+    expect(simplified.canonicalResult?.details?.[0].title).toBe('Variable Policy');
+    expect(detailLines(simplified, 0)).toEqual([
+      'Ignored stored values: a=4. Symbolic transforms keep variables symbolic.',
+    ]);
 
     const workbench = runCalculateMode({
       action: 'evaluate',
@@ -185,8 +190,8 @@ describe('runCalculateMode', () => {
     if (workbench.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(workbench.variableSubstitutions).toEqual([
-      { name: 'a', valueLatex: '4', numericValue: 4 },
+    expect(workbench.canonicalResult?.metadata?.variableSubstitutions).toEqual([
+      { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
     ]);
     expect(workbench.exactLatex).toContain('x');
     expect(workbench.exactLatex).not.toContain('9');
@@ -209,23 +214,19 @@ describe('runCalculateMode', () => {
     if (result.kind !== 'success') {
       throw new Error('Expected a success outcome');
     }
-    expect(result.title).toBe('Derivative');
-    expect(result.variableSubstitutions).toEqual([
-      { name: 'c', valueLatex: '4', numericValue: 4 },
+    expect(result.canonicalResult?.title).toBe('Derivative');
+    expect(result.canonicalResult?.metadata?.variableSubstitutions).toEqual([
+      { name: 'c', value: { canonicalLatex: '4' }, numericValue: 4 },
     ]);
     expect(result.exactLatex).toContain('x^2');
     expect(result.exactLatex).not.toContain('\\mathrm{d}2');
-    expect(result.detailSections?.[0]).toMatchObject({
-      title: 'Stored Values',
-      lines: [
-        'Used stored values: c=4.',
-        'Effective derivative expression: \\frac{\\mathrm{d}}{\\mathrm{d}f}4fx^2+4x.',
-      ],
-    });
-    expect(result.detailSections?.[1]).toMatchObject({
-      title: 'Variable Policy',
-      lines: ['Kept f symbolic as the derivative variable.'],
-    });
+    expect(result.canonicalResult?.details?.[0].title).toBe('Stored Values');
+    expect(detailLines(result, 0)).toEqual([
+      'Used stored values: c=4.',
+      'Effective derivative expression: \\frac{\\mathrm{d}}{\\mathrm{d}f}4fx^2+4x.',
+    ]);
+    expect(result.canonicalResult?.details?.[1].title).toBe('Variable Policy');
+    expect(detailLines(result, 1)).toEqual(['Kept f symbolic as the derivative variable.']);
   });
 
   it('protects the derivative-at-point variable while substituting parameters', () => {
@@ -248,14 +249,12 @@ describe('runCalculateMode', () => {
       throw new Error('Expected a success outcome');
     }
     expect(result.exactLatex).toContain('26');
-    expect(result.variableSubstitutions).toEqual([
-      { name: 'a', valueLatex: '4', numericValue: 4 },
-      { name: 'c', valueLatex: '2', numericValue: 2 },
+    expect(result.canonicalResult?.metadata?.variableSubstitutions).toEqual([
+      { name: 'a', value: { canonicalLatex: '4' }, numericValue: 4 },
+      { name: 'c', value: { canonicalLatex: '2' }, numericValue: 2 },
     ]);
-    expect(result.detailSections?.[1]).toMatchObject({
-      title: 'Variable Policy',
-      lines: ['Kept x symbolic as the derivative variable.'],
-    });
+    expect(result.canonicalResult?.details?.[1].title).toBe('Variable Policy');
+    expect(detailLines(result, 1)).toEqual(['Kept x symbolic as the derivative variable.']);
   });
 
   it('returns a prompt instead of solving equations', () => {

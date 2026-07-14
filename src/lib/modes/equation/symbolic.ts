@@ -24,7 +24,7 @@ import {
 import { normalizeComplexLocusFunctionSyntax } from '../../equation/complex/locus-policy';
 import { normalizeExactPowerLogNode } from '../../symbolic-engine/power-log';
 import { classifyEquationRuntimeAdvisories, classifyPlannerBlockedRuntimeAdvisories } from '../../kernel/runtime-policy';
-import type { AngleUnit, ComplexExactForm, ComplexSolveRegion, DisplayOutcome, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, PlannerBadge, SolveDomainConstraint } from '../../../types/calculator';
+import type { AngleUnit, ComplexExactForm, ComplexSolveRegion, ResultProducerDraft, EquationDomainIntent, LegacyEquationAnswerMode, NumericSolveInterval, OutputStyle, PlannerBadge, SolveDomainConstraint } from '../../../types/calculator';
 import type { AsyncSharedEquationSolveRunner, SharedEquationSolveRunner } from './types';
 import { runParameterizedUnsupportedRoute } from './parameterized';
 import { tryComplexWrapperRoutes } from './complex-wrapper-routes';
@@ -62,7 +62,7 @@ const ce = new ComputeEngine();
 class AsyncSharedSolveCapture extends Error {
   request: SharedSolveRequest;
   sharedResolvedLatex?: string;
-  deferredComplexWrapperOutcome?: DisplayOutcome;
+  deferredComplexWrapperOutcome?: ResultProducerDraft;
 
   constructor(request: SharedSolveRequest) {
     super('Async shared Equation solve requested.');
@@ -90,7 +90,7 @@ function parameterizedOptionsFromTargetResolution(targetResolution: ReturnType<t
 }
 
 function tryRealCubicCardanoSharedFallback(input: {
-  sharedOutcome: DisplayOutcome;
+  sharedOutcome: ResultProducerDraft;
   equationLatex: string;
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
@@ -98,7 +98,7 @@ function tryRealCubicCardanoSharedFallback(input: {
   answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   numericInterval?: NumericSolveInterval;
-}): DisplayOutcome | undefined {
+}): ResultProducerDraft | undefined {
   if (
     input.sharedOutcome.kind !== 'error'
     || input.sharedOutcome.error !== UNSUPPORTED_EXACT_SYMBOLIC_FAMILY_ERROR
@@ -125,7 +125,7 @@ function tryRealCubicCardanoSharedFallback(input: {
     return undefined;
   }
 
-  const outcome: DisplayOutcome = createEquationResultOutcome({
+  const outcome: ResultProducerDraft = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: cardano.exactLatex,
@@ -158,7 +158,7 @@ export function solveSymbolicEquation(
   complexExactForm: ComplexExactForm = 'rectangular',
   complexRegion: ComplexSolveRegion | undefined = undefined,
   sharedSolveRunner: SharedEquationSolveRunner = runSharedEquationSolve,
-): DisplayOutcome {
+): ResultProducerDraft {
   equationLatex = normalizeComplexEquationInputLatex(equationLatex, equationDomainIntent);
   const activeAnswerMode = answerMode === 'isolate' ? 'isolate' : 'exact';
   if (isTopLevelInequalityLatex(equationLatex)) {
@@ -412,7 +412,7 @@ export function solveSymbolicEquation(
   }
 
   const solveTarget = targetResolution.selectedTarget ?? 'x';
-  let deferredComplexWrapperOutcome: DisplayOutcome | undefined;
+  let deferredComplexWrapperOutcome: ResultProducerDraft | undefined;
 
   if (activeAnswerMode === 'exact' && equationDomainIntent === 'real' && !numericInterval && targetResolution.selectedTarget) {
     const selectedTargetParameterized = trySelectedTargetParameterizedExactSolve({
@@ -445,7 +445,7 @@ export function solveSymbolicEquation(
       },
     );
     if (complexSpecialForm.kind === 'success') {
-      const outcome: DisplayOutcome = createEquationResultOutcome({
+      const outcome: ResultProducerDraft = createEquationResultOutcome({
         kind: 'success',
         title: 'Solve',
         exactLatex: complexSpecialForm.exactLatex,
@@ -561,7 +561,7 @@ export function solveSymbolicEquation(
         const complexCarrier = solveBoundedComplexPolynomialCarrierEquationAst(ce.parse(planner.resolvedLatex).json);
         if (complexCarrier.kind === 'solved') {
           const readback = buildBranchReadback(solveTarget, complexCarrier.branches, outputStyle, complexExactForm);
-          const outcome: DisplayOutcome = createEquationResultOutcome({
+          const outcome: ResultProducerDraft = createEquationResultOutcome({
             kind: 'success',
             title: 'Solve',
             exactLatex: readback.exactLatex,
@@ -705,7 +705,7 @@ export function solveSymbolicEquation(
   if (preSharedAlgebraicFormulaFallback) {
     return preSharedAlgebraicFormulaFallback;
   }
-  let sharedOutcome: DisplayOutcome;
+  let sharedOutcome: ResultProducerDraft;
   try {
     sharedOutcome = sharedSolveRunner(sharedRequest);
   } catch (error) {
@@ -783,7 +783,7 @@ export async function solveSymbolicEquationAsync(
   complexExactForm: ComplexExactForm,
   complexRegion: ComplexSolveRegion | undefined,
   sharedSolveRunner: AsyncSharedEquationSolveRunner,
-): Promise<DisplayOutcome> {
+): Promise<ResultProducerDraft> {
   const activeAnswerMode = answerMode === 'isolate' ? 'isolate' : 'exact';
   try {
     return solveSymbolicEquation(

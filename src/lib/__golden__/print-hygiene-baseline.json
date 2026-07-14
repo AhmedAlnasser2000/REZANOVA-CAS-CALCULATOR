@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "CANONICAL-CONSUMER-DIRECT1 records newly proven producer-owned MathJSON payload fragments; canonical LaTeX and visible output are unchanged.",
+  "acceptedReason": "RESULT-COMPATIBILITY-REMOVAL1 removes duplicate canonical-payload fragments and records each canonical math value once; mathematical values and visible output are unchanged.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -32,17 +32,12 @@
       "title": "Numeric",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "4"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "4"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "4"
         }
@@ -55,17 +50,12 @@
       "title": "Simplify",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "0"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "0"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "-x^2+(x+1)^2-2x-1"
         }
@@ -78,13 +68,8 @@
       "title": "Factor",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "(x+1)(x+1)"
-        },
-        {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
           "value": "(x+1)(x+1)"
         }
       ]
@@ -96,17 +81,12 @@
       "title": "Expand",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "x^2+2x+1"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "x^2+2x+1"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "(x+1)^2"
         }
@@ -119,17 +99,12 @@
       "title": "Derivative",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "-6\\sin(x)\\sin(\\cos(x)^3)\\cos(\\cos(x)^3)\\cos(x)^2"
         }
@@ -142,17 +117,12 @@
       "title": "Derivative",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "2\\ln(\\cos(x))\\cos(x)^{2x}-\\frac{1}{\\cos(x)}(2x\\sin(x)\\cos(x)^{2x})"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "2\\ln(\\cos(x))\\cos(x)^{2x}-\\frac{1}{\\cos(x)}(2x\\sin(x)\\cos(x)^{2x})"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "(2\\ln(\\cos(x))-\\frac{2x\\sin(x)}{\\cos(x)})\\cos(x)^{2x}"
         }
@@ -165,17 +135,12 @@
       "title": "Derivative",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\sqrt{\\frac{1}{1-x^2}}"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\sqrt{\\frac{1}{1-x^2}}"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\sqrt{\\frac{1}{1-x^2}}"
         }
@@ -188,27 +153,22 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\arctan(x)+C"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\arctan(x)+C"
-        },
-        {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\arctan(x)+C"
         },
         {
-          "path": "detailSections[0].lineParts[0][1].latex",
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "C"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{1}{x^2+1}\\, \\mathrm{d}x"
         }
@@ -221,27 +181,22 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
-        },
-        {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\frac{1}{2}\\ln\\left|x-1\\right|-\\frac{1}{2}\\ln\\left|x+1\\right|+C"
         },
         {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "C"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{1}{x^2-1}\\, \\mathrm{d}x"
         }
@@ -254,27 +209,22 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "-\\frac{1}{x-1}+C"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "-\\frac{1}{x-1}+C"
-        },
-        {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "-\\frac{1}{x-1}+C"
         },
         {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "C"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{1}{(x-1)^2}\\, \\mathrm{d}x"
         }
@@ -287,27 +237,22 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
-        },
-        {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\frac{1}{2}\\ln\\left(x^2+1\\right)+\\arctan\\left(x\\right)+C"
         },
         {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "C"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int\\!\\frac{x+1}{x^2+1}\\, \\mathrm{d}x"
         }
@@ -320,27 +265,22 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
-        },
-        {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "-x^2+(x^2+1)\\ln(x^2+1)-1+C"
         },
         {
-          "path": "detailSections[0].lineParts[0][1].latex",
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "C"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int\\!2x\\ln(x^2+1)\\, \\mathrm{d}x"
         }
@@ -353,22 +293,17 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "1"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "1"
-        },
-        {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "[0, 1]"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int_{0}^{1}\\!2x\\, \\mathrm{d}x"
         }
@@ -381,22 +316,17 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "0.310268"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "0.310268"
-        },
-        {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "[0, 1]"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int_{0}^{1}\\!\\sin(x^2)\\, \\mathrm{d}x"
         }
@@ -409,27 +339,27 @@
       "title": "Integral",
       "fragments": [
         {
-          "path": "detailSections[0].lineParts[0][1].latex",
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x=0"
         },
         {
-          "path": "detailSections[0].lineParts[1][0].latex",
+          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x"
         },
         {
-          "path": "detailSections[0].lineParts[1][2].latex",
+          "path": "canonicalResult.details[0].lines[1][2].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "[-1, 1]"
         },
         {
-          "path": "detailSections[1].lineParts[0][0].latex",
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\int_{-1}^{1}\\!\\frac{1}{x}\\, \\mathrm{d}x"
         }
@@ -442,37 +372,32 @@
       "title": "Limit",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "1"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "1"
-        },
-        {
-          "path": "detailSections[0].lineParts[1][1].latex",
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "u=x"
         },
         {
-          "path": "detailSections[0].lineParts[1][3].latex",
+          "path": "canonicalResult.details[0].lines[1][3].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\lim_{x\\to 0}u=0"
         },
         {
-          "path": "detailSections[0].lineParts[2][1].latex",
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\frac{\\sin(u)}{u}\\to 1"
         },
         {
-          "path": "detailSections[0].lineParts[3][1].latex",
+          "path": "canonicalResult.details[0].lines[3][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "1"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\lim_{x\\to0}\\frac{\\sin(x)}{x}"
         }
@@ -485,47 +410,42 @@
       "title": "Limit",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\infty"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\infty"
-        },
-        {
-          "path": "detailSections[0].lineParts[2][1].latex",
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "1"
         },
         {
-          "path": "detailSections[0].lineParts[2][3].latex",
+          "path": "canonicalResult.details[0].lines[2][3].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "-1"
         },
         {
-          "path": "detailSections[0].lineParts[5][1].latex",
+          "path": "canonicalResult.details[0].lines[5][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\infty"
         },
         {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x\\to 0^{+}"
         },
         {
-          "path": "detailSections[1].lineParts[2][1].latex",
+          "path": "canonicalResult.details[1].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\lim_{x\\to 0^{+}} f(x)=\\infty"
         },
         {
-          "path": "detailSections[1].lineParts[3][1].latex",
+          "path": "canonicalResult.details[1].lines[3][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\infty"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\lim_{x\\to0}\\frac{1}{x}"
         }
@@ -538,47 +458,42 @@
       "title": "Limit",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "-\\infty"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "-\\infty"
-        },
-        {
-          "path": "detailSections[0].lineParts[2][1].latex",
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "1"
         },
         {
-          "path": "detailSections[0].lineParts[2][3].latex",
+          "path": "canonicalResult.details[0].lines[2][3].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "-1"
         },
         {
-          "path": "detailSections[0].lineParts[5][1].latex",
+          "path": "canonicalResult.details[0].lines[5][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "-\\infty"
         },
         {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x\\to 0^{-}"
         },
         {
-          "path": "detailSections[1].lineParts[2][1].latex",
+          "path": "canonicalResult.details[1].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\lim_{x\\to 0^{-}} f(x)=-\\infty"
         },
         {
-          "path": "detailSections[1].lineParts[3][1].latex",
+          "path": "canonicalResult.details[1].lines[3][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "-\\infty"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\lim_{x\\to0}\\frac{1}{x}"
         }
@@ -591,17 +506,12 @@
       "title": "Limit",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "2"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "2"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\lim_{x\\to1}\\frac{x^2-1}{x-1}"
         }
@@ -614,32 +524,27 @@
       "title": "Limit",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "1"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "1"
-        },
-        {
-          "path": "detailSections[0].lineParts[2][1].latex",
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "1"
         },
         {
-          "path": "detailSections[0].lineParts[2][3].latex",
+          "path": "canonicalResult.details[0].lines[2][3].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "0"
         },
         {
-          "path": "detailSections[0].lineParts[4][1].latex",
+          "path": "canonicalResult.details[0].lines[4][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "1"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\lim_{x\\to0}\\frac{\\sin(x)\\ln(x+1)}{x^2}"
         }
@@ -652,22 +557,22 @@
       "title": "Limit",
       "fragments": [
         {
-          "path": "detailSections[0].lineParts[0][0].latex",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x"
         },
         {
-          "path": "detailSections[2].lineParts[1][1].latex",
+          "path": "canonicalResult.details[2].lines[1][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x\\to 0^{-}"
         },
         {
-          "path": "detailSections[2].lineParts[2][1].latex",
+          "path": "canonicalResult.details[2].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x\\ge 0"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\lim_{x\\to0}\\sqrt{x}"
         }
@@ -680,13 +585,8 @@
       "title": "Solve",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "x=\\frac{-3}{5}"
-        },
-        {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
           "value": "x=\\frac{-3}{5}"
         }
       ]
@@ -698,13 +598,8 @@
       "title": "Quadratic",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "x\\in\\left\\{3, 2\\right\\}"
-        },
-        {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
           "value": "x\\in\\left\\{3, 2\\right\\}"
         }
       ]
@@ -716,27 +611,22 @@
       "title": "Solve",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "x=\\frac{1}{4}"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "x=\\frac{1}{4}"
-        },
-        {
-          "path": "exactSupplementLatex[0]",
+          "path": "canonicalResult.supplements[0].canonicalLatex",
           "kind": "supplement",
           "value": "\\text{Exclusions: } x\\ne0"
         },
         {
-          "path": "detailSections[0].lineParts[0][0].latex",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\frac{2x+1}{6x}=1"
         }
@@ -749,42 +639,37 @@
       "title": "Solve",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "x=3"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "x=3"
-        },
-        {
-          "path": "detailSections[0].lineParts[0][1].latex",
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "0"
         },
         {
-          "path": "detailSections[1].lineParts[0][0].latex",
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x+1"
         },
         {
-          "path": "detailSections[1].lineParts[1][0].latex",
+          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x-1"
         },
         {
-          "path": "detailSections[1].lineParts[2][0].latex",
+          "path": "canonicalResult.details[1].lines[2][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x+1"
         },
         {
-          "path": "detailSections[1].lineParts[3][0].latex",
+          "path": "canonicalResult.details[1].lines[3][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x-1"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\sqrt{x+1}=x-1"
         }
@@ -797,17 +682,12 @@
       "title": "Solve",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "x\\in\\left\\{-(\\frac{\\sqrt{21}}{2})-\\frac{1}{2}, \\frac{\\sqrt{21}}{2}-\\frac{1}{2}\\right\\}"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "x\\in\\left\\{-(\\frac{\\sqrt{21}}{2})-\\frac{1}{2}, \\frac{\\sqrt{21}}{2}-\\frac{1}{2}\\right\\}"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\vert x^2+x-2\\vert=3"
         }
@@ -820,22 +700,22 @@
       "title": "Solve",
       "fragments": [
         {
-          "path": "solveSummaryParts[0][1].latex",
+          "path": "canonicalResult.summaries.solve[0][1].math.canonicalLatex",
           "kind": "solve-summary-math-part",
           "value": "\\sin(x)"
         },
         {
-          "path": "solveSummaryParts[0][3].latex",
+          "path": "canonicalResult.summaries.solve[0][3].math.canonicalLatex",
           "kind": "solve-summary-math-part",
           "value": "[-1, 1]"
         },
         {
-          "path": "solveSummaryParts[0][5].latex",
+          "path": "canonicalResult.summaries.solve[0][5].math.canonicalLatex",
           "kind": "solve-summary-math-part",
           "value": "2"
         },
         {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\sin(x)=2"
         }
@@ -848,17 +728,12 @@
       "title": "Numeric",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "90"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "90"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\arcsin(1)"
         }
@@ -871,17 +746,12 @@
       "title": "Numeric",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\frac{\\pi}{2}"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\frac{\\pi}{2}"
-        },
-        {
-          "path": "resolvedInputLatex",
+          "path": "canonicalResult.metadata.resolvedInput.canonicalLatex",
           "kind": "resolved-input",
           "value": "\\arcsin(1)"
         }
@@ -894,42 +764,37 @@
       "title": "Finite Limit",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "-\\infty"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "-\\infty"
-        },
-        {
-          "path": "detailSections[0].lineParts[2][1].latex",
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "1"
         },
         {
-          "path": "detailSections[0].lineParts[2][3].latex",
+          "path": "canonicalResult.details[0].lines[2][3].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "-1"
         },
         {
-          "path": "detailSections[0].lineParts[5][1].latex",
+          "path": "canonicalResult.details[0].lines[5][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "-\\infty"
         },
         {
-          "path": "detailSections[1].lineParts[0][1].latex",
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x\\to 0^{-}"
         },
         {
-          "path": "detailSections[1].lineParts[2][1].latex",
+          "path": "canonicalResult.details[1].lines[2][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\lim_{x\\to 0^{-}} f(x)=-\\infty"
         },
         {
-          "path": "detailSections[1].lineParts[3][1].latex",
+          "path": "canonicalResult.details[1].lines[3][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "-\\infty"
         }
@@ -942,13 +807,8 @@
       "title": "Improper Integral",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "1.570796"
-        },
-        {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
           "value": "1.570796"
         }
       ]
@@ -960,72 +820,72 @@
       "title": "Period & Phase",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "y=2\\sin\\left(3\\left(x-\\frac{\\pi}{3}\\right)\\right)+1,\\quad P=\\frac{2\\pi}{3},\\quad h=\\frac{\\pi}{3}"
         },
         {
-          "path": "detailSections[0].lines[0]",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\text{carrier}=\\sin"
         },
         {
-          "path": "detailSections[0].lines[1]",
+          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\text{amplitude}=2"
         },
         {
-          "path": "detailSections[0].lines[2]",
+          "path": "canonicalResult.details[0].lines[2][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "B=3"
         },
         {
-          "path": "detailSections[0].lines[3]",
+          "path": "canonicalResult.details[0].lines[3][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\text{period}=\\frac{2\\pi}{3}"
         },
         {
-          "path": "detailSections[0].lines[4]",
+          "path": "canonicalResult.details[0].lines[4][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\text{phase shift}=\\frac{\\pi}{3}"
         },
         {
-          "path": "detailSections[0].lines[5]",
+          "path": "canonicalResult.details[0].lines[5][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\text{vertical shift}=1"
         },
         {
-          "path": "detailSections[0].lines[6]",
+          "path": "canonicalResult.details[0].lines[6][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\text{midline}: y=1"
         },
         {
-          "path": "detailSections[0].lines[7]",
+          "path": "canonicalResult.details[0].lines[7][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\text{range}=\\left[-1,3\\right]"
         },
         {
-          "path": "detailSections[1].lines[0]",
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "x_0=\\frac{\\pi}{3}"
         },
         {
-          "path": "detailSections[1].lines[1]",
+          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "x_1=\\frac{\\pi}{2}"
         },
         {
-          "path": "detailSections[1].lines[2]",
+          "path": "canonicalResult.details[1].lines[2][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "x_2=\\frac{2\\pi}{3}"
         },
         {
-          "path": "detailSections[1].lines[3]",
+          "path": "canonicalResult.details[1].lines[3][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "x_3=\\frac{5\\pi}{6}"
         },
         {
-          "path": "detailSections[1].lines[4]",
+          "path": "canonicalResult.details[1].lines[4][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "x_4=\\pi"
         }
@@ -1038,32 +898,27 @@
       "title": "Trig Equation",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}"
-        },
-        {
-          "path": "branchReadback.targetLatex",
+          "path": "canonicalResult.branchReadback.target.canonicalLatex",
           "kind": "branch-target",
           "value": "x"
         },
         {
-          "path": "branchReadback.branchesLatex[0]",
+          "path": "canonicalResult.branchReadback.branches[0].canonicalLatex",
           "kind": "branch",
           "value": "\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n"
         },
         {
-          "path": "branchReadback.branchesLatex[1]",
+          "path": "canonicalResult.branchReadback.branches[1].canonicalLatex",
           "kind": "branch",
           "value": "180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n"
         },
         {
-          "path": "exactSupplementLatex[0]",
+          "path": "canonicalResult.supplements[0].canonicalLatex",
           "kind": "supplement",
           "value": "n\\in\\mathbb{Z}"
         }
@@ -1076,27 +931,22 @@
       "title": "Distance",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "y_2^{(1)}=4,\\ y_2^{(2)}=-4,\\ d=5"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "y_2^{(1)}=4,\\ y_2^{(2)}=-4,\\ d=5"
-        },
-        {
-          "path": "branchReadback.targetLatex",
+          "path": "canonicalResult.branchReadback.target.canonicalLatex",
           "kind": "branch-target",
           "value": "y_2"
         },
         {
-          "path": "branchReadback.branchesLatex[0]",
+          "path": "canonicalResult.branchReadback.branches[0].canonicalLatex",
           "kind": "branch",
           "value": "4"
         },
         {
-          "path": "branchReadback.branchesLatex[1]",
+          "path": "canonicalResult.branchReadback.branches[1].canonicalLatex",
           "kind": "branch",
           "value": "-4"
         }
@@ -1109,17 +959,12 @@
       "title": "Line Equation",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "2x-y=0"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "2x-y=0"
-        },
-        {
-          "path": "actions[0].latex",
+          "path": "actions[0].math.canonicalLatex",
           "kind": "action",
           "value": "2x-y=0"
         }
@@ -1132,17 +977,12 @@
       "title": "Regression",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\hat{y}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\hat{y}=3x-1,\\ m=3,\\ b=-1,\\ r=1,\\ r^2=1,\\ n=2"
-        },
-        {
-          "path": "detailSections[0].lineParts[1][1].latex",
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "0"
         }
@@ -1155,13 +995,8 @@
       "title": "Mean Inference",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
-        },
-        {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
           "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t^*=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
         }
       ]
@@ -1173,72 +1008,72 @@
       "title": "profile(A)",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2},\\quad\\operatorname{rank}(A)=1,\\quad\\operatorname{nullity}(A)=1"
         },
         {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2}"
         },
         {
-          "path": "answerRows.rows[1].latex",
+          "path": "canonicalResult.answerRows.rows[1].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\operatorname{rank}(A)=1"
         },
         {
-          "path": "answerRows.rows[2].latex",
+          "path": "canonicalResult.answerRows.rows[2].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\operatorname{nullity}(A)=1"
         },
         {
-          "path": "detailSections[0].lines[0]",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{rank}(A)+\\operatorname{nullity}(A)=2"
         },
         {
-          "path": "detailSections[0].lines[1]",
+          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{pivot\\ columns}=\\{1\\}"
         },
         {
-          "path": "detailSections[1].lines[0]",
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\ker(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "detailSections[1].lines[1]",
+          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{one\\text{-}to\\text{-}one}(A)=\\text{No}"
         },
         {
-          "path": "detailSections[2].lines[0]",
+          "path": "canonicalResult.details[2].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{Im}(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\2\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "detailSections[2].lines[1]",
+          "path": "canonicalResult.details[2].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{onto}(A)=\\text{No}"
         },
         {
-          "path": "detailSections[3].lines[0]",
+          "path": "canonicalResult.details[3].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\det(A)=0"
         },
         {
-          "path": "detailSections[3].lines[1]",
+          "path": "canonicalResult.details[3].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{invertible}(A)=\\text{No}"
         },
         {
-          "path": "detailSections[4].lines[0]",
+          "path": "canonicalResult.details[4].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{rref}(A)=\\begin{bmatrix}1 & 1\\\\0 & 0\\end{bmatrix}"
         },
         {
-          "path": "detailSections[4].lines[1]",
+          "path": "canonicalResult.details[4].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{pivot\\ columns}=\\{1\\}"
         }
@@ -1251,62 +1086,62 @@
       "title": "profile(A)",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "T:\\mathbb{R}^{2}\\to\\mathbb{R}^{3},\\quad\\operatorname{rank}(T)=2,\\quad\\operatorname{nullity}(T)=0"
         },
         {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "T:\\mathbb{R}^{2}\\to\\mathbb{R}^{3}"
         },
         {
-          "path": "answerRows.rows[1].latex",
+          "path": "canonicalResult.answerRows.rows[1].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\operatorname{rank}(T)=2"
         },
         {
-          "path": "answerRows.rows[2].latex",
+          "path": "canonicalResult.answerRows.rows[2].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\operatorname{nullity}(T)=0"
         },
         {
-          "path": "detailSections[0].lines[0]",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{rank}(T)+\\operatorname{nullity}(T)=2"
         },
         {
-          "path": "detailSections[0].lines[1]",
+          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
         },
         {
-          "path": "detailSections[1].lines[0]",
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\ker(T)=\\{0\\}"
         },
         {
-          "path": "detailSections[1].lines[1]",
+          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{one\\text{-}to\\text{-}one}(T)=\\text{Yes}"
         },
         {
-          "path": "detailSections[2].lines[0]",
+          "path": "canonicalResult.details[2].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{Im}(T)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\\\0\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "detailSections[2].lines[1]",
+          "path": "canonicalResult.details[2].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{onto}(T)=\\text{No}"
         },
         {
-          "path": "detailSections[4].lines[0]",
+          "path": "canonicalResult.details[4].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{rref}(T)=\\begin{bmatrix}1 & 0\\\\0 & 1\\\\0 & 0\\end{bmatrix}"
         },
         {
-          "path": "detailSections[4].lines[1]",
+          "path": "canonicalResult.details[4].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
         }
@@ -1319,52 +1154,52 @@
       "title": "independent(...)",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\operatorname{independent}\\left(p,q,r\\right)=\\text{No}"
         },
         {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "\\operatorname{independent}\\left(p,q,r\\right)=\\text{No}"
         },
         {
-          "path": "detailSections[0].lines[0]",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\dim\\operatorname{span}\\left(p,q,r\\right)=2"
         },
         {
-          "path": "detailSections[0].lines[1]",
+          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
         },
         {
-          "path": "detailSections[0].lines[2]",
+          "path": "canonicalResult.details[0].lines[2][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{basis\\ selected}=\\left\\{p,q\\right\\}"
         },
         {
-          "path": "detailSections[0].lines[3]",
+          "path": "canonicalResult.details[0].lines[3][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "b_{1}=p=\\begin{bmatrix}1\\\\0\\end{bmatrix}"
         },
         {
-          "path": "detailSections[0].lines[4]",
+          "path": "canonicalResult.details[0].lines[4][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "b_{2}=q=\\begin{bmatrix}0\\\\1\\end{bmatrix}"
         },
         {
-          "path": "detailSections[1].lines[0]",
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "p+q-r=0"
         },
         {
-          "path": "detailSections[1].lines[1]",
+          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "r=p+q"
         },
         {
-          "path": "detailSections[2].lines[0]",
+          "path": "canonicalResult.details[2].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{rref}\\left(\\left[p\\;q\\;r\\right]\\right)=\\begin{bmatrix}1 & 0 & 1\\\\0 & 1 & 1\\end{bmatrix}"
         }
@@ -1377,42 +1212,37 @@
       "title": "gram(u,v)",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "\\operatorname{orthogonal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}"
-        },
-        {
-          "path": "answerRows.rows[0].latex",
+          "path": "canonicalResult.answerRows.rows[0].math.canonicalLatex",
           "kind": "answer-row",
           "value": "w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}"
         },
         {
-          "path": "answerRows.rows[1].latex",
+          "path": "canonicalResult.answerRows.rows[1].math.canonicalLatex",
           "kind": "answer-row",
           "value": "w_{2}=\\begin{bmatrix}0\\\\1\\end{bmatrix}"
         },
         {
-          "path": "detailSections[0].lines[0]",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "\\operatorname{orthonormal\\ basis}=\\left\\{\\begin{bmatrix}1\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "detailSections[1].lines[0]",
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "w_{1}=\\begin{bmatrix}1\\\\0\\end{bmatrix}"
         },
         {
-          "path": "detailSections[1].lines[1]",
+          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "w_{2}=v-\\operatorname{proj}_{w_{1}}(v)=\\begin{bmatrix}0\\\\1\\end{bmatrix}"
         },
         {
-          "path": "detailSections[1].lines[2]",
+          "path": "canonicalResult.details[1].lines[2][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "w_{1}\\cdot w_{2}=0"
         }
@@ -1425,17 +1255,12 @@
       "title": "Table",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
           "value": "f(x)=\\sqrt{x}"
         },
         {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
-          "value": "f(x)=\\sqrt{x}"
-        },
-        {
-          "path": "detailSections[0].lineParts[0][0].latex",
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "x"
         },
@@ -1478,13 +1303,8 @@
       "title": "Table",
       "fragments": [
         {
-          "path": "exactLatex",
+          "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "f(x)=x^2,\\;g(x)=x+1"
-        },
-        {
-          "path": "canonicalMath.canonicalLatex",
-          "kind": "canonical-payload",
           "value": "f(x)=x^2,\\;g(x)=x+1"
         },
         {

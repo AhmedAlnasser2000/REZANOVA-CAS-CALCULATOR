@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { CanonicalDisplayPanel as DisplayPanel } from '../../test-utils/CanonicalDisplayPanel';
+import { DisplayPanel } from './DisplayPanel';
+import { canonicalMathValue } from '../../lib/result-contract';
+import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
 import { expectMathStaticLatex } from '../../test/renderAppMain';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
 import { getEquationAlgebraActionLabel } from '../../lib/modes/equation';
@@ -92,13 +94,13 @@ describe('DisplayPanel result shell', () => {
         currentMode="equation"
         displayHeaderLabel="Equation"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Symbolic',
           warnings: [],
-          exactLatex: 'x=1',
+          primaryMath: canonicalMathValue('x=1'),
           solveSummaryParts: [[{ kind: 'text', text: 'Composition branch: reduced carrier; Periodic family: generated branches.' }]],
-        }}
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={DEFAULT_SETTINGS}
@@ -128,13 +130,13 @@ describe('DisplayPanel result shell', () => {
         currentMode="calculate"
         displayHeaderLabel="Calculate"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Expand',
           warnings: [],
-          exactLatex,
-          exactSupplementLatex: validWhenLatex,
-        }}
+          primaryMath: canonicalMathValue(exactLatex),
+          supplements: validWhenLatex,
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={{
@@ -178,13 +180,13 @@ describe('DisplayPanel result shell', () => {
         currentMode="calculus"
         displayHeaderLabel="Calculus"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Indefinite Integral',
           warnings: [],
-          exactLatex: 'x',
-          exactSupplementLatex: ['\\text{Conditions: } cn\\ne0, p+1\\ne0'],
-        }}
+          primaryMath: canonicalMathValue('x'),
+          supplements: ['\\text{Conditions: } cn\\ne0, p+1\\ne0'],
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={{
@@ -218,13 +220,13 @@ describe('DisplayPanel result shell', () => {
         currentMode="equation"
         displayHeaderLabel="Equation"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Symbolic',
           warnings: [],
-          exactLatex,
-          resultOrigin: 'symbolic',
-        }}
+          primaryMath: canonicalMathValue(exactLatex),
+          metadata: { resultOrigin: 'symbolic' },
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={{
@@ -269,11 +271,11 @@ describe('DisplayPanel result shell', () => {
         currentMode="equation"
         displayHeaderLabel="Equation"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Symbolic',
           warnings: [],
-          exactLatex,
+          primaryMath: canonicalMathValue(exactLatex),
           detailSections: [
             {
               title: 'Real Cardano Definitions',
@@ -301,7 +303,7 @@ describe('DisplayPanel result shell', () => {
               ],
             },
           ],
-        }}
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={{
@@ -354,12 +356,12 @@ describe('DisplayPanel result shell', () => {
           currentMode="equation"
           displayHeaderLabel="Equation"
           displayResultBadges={[]}
-          displayOutcome={{
-            kind: 'success',
+          displayOutcome={canonicalResultFixture({
+            outcomeKind: 'success',
             title: 'Symbolic',
             warnings: [],
-            exactLatex,
-            exactSupplementLatex: [String.raw`b\ge0`],
+            primaryMath: canonicalMathValue(exactLatex),
+            supplements: [String.raw`b\ge0`],
             detailSections: [
               {
                 title: 'Square-Power Formula Cases',
@@ -390,7 +392,7 @@ describe('DisplayPanel result shell', () => {
                 lineKind: 'math',
               },
             ],
-          }}
+          })}
           getPeriodicStopReasonText={(reason: string) => reason}
           hydrated
           settings={{
@@ -477,13 +479,15 @@ describe('DisplayPanel result shell', () => {
         currentMode="equation"
         displayHeaderLabel="Equation"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Symbolic',
           warnings: [],
-          exactLatex,
-          exactSupplementLatex: [String.raw`b\ge0`],
-          resolvedInputLatex: String.raw`(z^3+z+1)^2=b`,
+          primaryMath: canonicalMathValue(exactLatex),
+          supplements: [String.raw`b\ge0`],
+          metadata: {
+            resolvedInput: canonicalMathValue(String.raw`(z^3+z+1)^2=b`),
+          },
           detailSections: [
             {
               title: 'Square-Power Formula Cases',
@@ -509,7 +513,7 @@ describe('DisplayPanel result shell', () => {
               ],
             },
           ],
-        }}
+        })}
         formulaViewerSourceContext={{
           sourceWorkspaceInstanceId: 'equation.1',
           sourceWorkspaceKind: 'equation',
@@ -593,11 +597,11 @@ describe('DisplayPanel result shell', () => {
           currentMode="equation"
           displayHeaderLabel="Equation"
           displayResultBadges={[]}
-          displayOutcome={{
-            kind: 'success',
+          displayOutcome={canonicalResultFixture({
+            outcomeKind: 'success',
             title: 'Symbolic',
             warnings: [],
-            exactLatex,
+            primaryMath: canonicalMathValue(exactLatex),
             detailSections: [
               {
                 title: 'Trig Formula Cases',
@@ -623,7 +627,7 @@ describe('DisplayPanel result shell', () => {
                 ],
               },
             ],
-          }}
+          })}
           getPeriodicStopReasonText={(reason: string) => reason}
           hydrated
           settings={{
@@ -687,11 +691,11 @@ describe('DisplayPanel result shell', () => {
         currentMode="equation"
         displayHeaderLabel="Equation"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
+        displayOutcome={canonicalResultFixture({
+          outcomeKind: 'success',
           title: 'Symbolic',
           warnings: [],
-          exactLatex,
+          primaryMath: canonicalMathValue(exactLatex),
           detailSections: [
             {
               title: 'Absolute-Value Formula Cases',
@@ -717,7 +721,7 @@ describe('DisplayPanel result shell', () => {
               ],
             },
           ],
-        }}
+        })}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         settings={{
@@ -775,11 +779,11 @@ describe('DisplayPanel result shell', () => {
         <DisplayPanel
           {...baseProps}
           activeResultCopyText={() => heavyExactLatex}
-          displayOutcome={{
-            kind: 'success',
+          displayOutcome={canonicalResultFixture({
+            outcomeKind: 'success',
             title: 'Symbolic',
             warnings: [],
-            exactLatex: heavyExactLatex,
+            primaryMath: canonicalMathValue(heavyExactLatex),
             detailSections: [
               {
                 title: 'Square-Power Formula Cases',
@@ -805,7 +809,7 @@ describe('DisplayPanel result shell', () => {
                 ],
               },
             ],
-          }}
+          })}
         />,
       );
 
@@ -818,12 +822,12 @@ describe('DisplayPanel result shell', () => {
         <DisplayPanel
           {...baseProps}
           activeResultCopyText={() => 'y=1'}
-          displayOutcome={{
-            kind: 'success',
+          displayOutcome={canonicalResultFixture({
+            outcomeKind: 'success',
             title: 'Symbolic',
             warnings: [],
-            exactLatex: 'y=1',
-          }}
+            primaryMath: canonicalMathValue('y=1'),
+          })}
         />,
       );
 

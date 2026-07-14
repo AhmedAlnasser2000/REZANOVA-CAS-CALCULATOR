@@ -2,7 +2,7 @@ import { inequalitySetToLatex, inequalitySetToText, periodicInequalitySetToLatex
 import type {
   DisplayDetailSection,
   DisplayDetailLinePart,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   LegacyEquationAnswerMode,
 } from '../../../types/calculator';
@@ -22,7 +22,7 @@ function unsupportedInequalityOutcome(input: {
   answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
   reason?: string;
-}): DisplayOutcome {
+}): ResultProducerDraft {
   const lines = [
     'The guarded real inequality route supports one-variable inequalities with exact numeric constants: polynomial, factorable rational, textbook abs/radical, monotone log/exp, finite composition through 4 layers, direct affine trig, and representable two-layer trig cases, plus abs-affine periodic preimages.',
     input.reason ?? 'This inequality is outside the guarded real inequality engine.',
@@ -60,7 +60,7 @@ function unsupportedInequalityOutcome(input: {
 function inequalityAnswerModeGuidanceOutcome(input: {
   answerMode: LegacyEquationAnswerMode;
   equationDomainIntent: EquationDomainIntent;
-}): DisplayOutcome {
+}): ResultProducerDraft {
   const modeLabel = input.answerMode === 'approximate' ? 'Approximate' : 'Isolate';
   return createEquationResultOutcome({
     kind: 'error',
@@ -95,7 +95,7 @@ function inequalityAnswerModeGuidanceOutcome(input: {
 function buildSuccessOutcome(input: {
   result: FiniteInequalityResult | PeriodicInequalityResult;
   equationDomainIntent: EquationDomainIntent;
-}): DisplayOutcome {
+}): ResultProducerDraft {
   const exactLatex = input.result.kind === 'finite'
     ? inequalitySetToLatex(input.result.set)
     : input.result.exactLatexOverride ?? periodicInequalitySetToLatex(input.result.set);

@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
-import { attachEquationAnalysisEvidence, getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
+import {
+  canonicalMathValue,
+  type CanonicalResultProducerInputV1,
+} from '../../result-contract';
+import { canonicalResultFixture } from '../../../test-utils/canonical-result-fixture';
+import { getEquationAnalysisEvidence } from '../../equation/analysis-evidence';
 import { runEquationMode } from '../../modes/equation';
 import { makeRequest } from '../../modes/equation/test-support';
-import { displayBlockSummaryText } from './display-blocks';
+import { buildDisplayBlocks, displayBlockSummaryText } from './display-blocks';
 import { buildFormulaViewerArtifact } from '../../../app/runtime/formula-viewer-artifacts';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../../equation/equation-solve-result';
 
 function solve(extra: Partial<Parameters<typeof runEquationMode>[0]>) {
   return runEquationMode({
@@ -22,11 +26,10 @@ function solve(extra: Partial<Parameters<typeof runEquationMode>[0]>) {
 
 describe('Equation consumer trust readback', () => {
   it('uses structured trust evidence before Numeric Confidence prose', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'Symbolic',
-      solutionKind: 'approximate-numeric',
-      resultOrigin: 'numeric-fallback',
+      primaryMath: canonicalMathValue('x\\approx0'),
       approxText: 'x ≈ 0',
       branchReadback: {
         targetLatex: 'x',
@@ -34,22 +37,22 @@ describe('Equation consumer trust readback', () => {
         branchesLatex: ['0'],
       },
       warnings: [],
+      metadata: {
+        solutionKind: 'approximate-numeric' as const,
+        resultOrigin: 'numeric-fallback' as const,
+        numericMethod: 'Local numeric roots in [0, 10]',
+        trustEvidence: [{
+          classification: 'local-numeric-roots',
+          text: 'Local numeric roots in [0, 10]',
+          interval: { start: '0', end: '10' },
+        }],
+      },
     };
-    attachEquationAnalysisEvidence(outcome, [{
-      id: 'trust:numeric-interval:x:local-numeric-roots',
-      target: 'x',
-      sourceRoute: 'numeric-interval',
-      category: 'trust',
-      classification: 'local-numeric-roots',
-      confidence: 'reported',
-      text: 'Local numeric roots in [0, 10]',
-      interval: { start: '0', end: '10', local: true },
-    }]);
 
-    const answer = buildDisplayBlocks(outcome).find((block) => block.id === 'answer');
+    const answer = buildDisplayBlocks(canonicalResultFixture(outcome))
+      .find((block) => block.id === 'answer');
 
     expect(displayBlockSummaryText(answer!)).toBe('Local numeric roots in [0, 10]');
-    expect(JSON.stringify(outcome)).not.toContain('local-numeric-roots');
   });
 
   it('emits certified polynomial trust evidence for real numeric polynomial fallback', () => {
@@ -62,7 +65,10 @@ describe('Equation consumer trust readback', () => {
       text: 'Certified polynomial roots',
     }));
 
-    const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    const answer = buildDisplayBlocks(finalizeEquationCanonicalRuntimeOutcome(
+      result,
+      'Equation trust test',
+    )).find((block) => block.id === 'answer');
     expect(displayBlockSummaryText(answer!)).toBe('Certified polynomial roots');
   });
 
@@ -80,7 +86,10 @@ describe('Equation consumer trust readback', () => {
       text: 'Global complex polynomial roots',
     }));
 
-    const answer = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    const answer = buildDisplayBlocks(finalizeEquationCanonicalRuntimeOutcome(
+      result,
+      'Equation trust test',
+    )).find((block) => block.id === 'answer');
     expect(displayBlockSummaryText(answer!)).toBe('Global complex polynomial roots · 6 roots');
   });
 
@@ -89,7 +98,10 @@ describe('Equation consumer trust readback', () => {
       equationLatex: String.raw`x^2+\sin(x)=2`,
       numericInterval: { start: '-10', end: '10', subdivisions: 256 },
     });
-    const blocks = buildDisplayBlocks(result);
+    const blocks = buildDisplayBlocks(finalizeEquationCanonicalRuntimeOutcome(
+      result,
+      'Equation trust test',
+    ));
     const answer = blocks.find((block) => block.id === 'answer');
 
     expect(answer?.trustSummary).toBe('Local numeric roots in [-10, 10]');

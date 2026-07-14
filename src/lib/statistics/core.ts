@@ -1,6 +1,6 @@
 import type {
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   FrequencyRow,
   RegressionPoint,
   StatisticsParseResult,
@@ -62,8 +62,8 @@ function statisticsError(error: string): StatisticsEvaluation {
   };
 }
 
-function toOutcome(title: string, evaluation: StatisticsEvaluation): DisplayOutcome {
-  let outcome: DisplayOutcome;
+function toOutcome(title: string, evaluation: StatisticsEvaluation): ResultProducerDraft {
+  let outcome: ResultProducerDraft;
   if (evaluation.error) {
     outcome = {
       kind: 'error',
@@ -786,7 +786,7 @@ function correlationOutcome(request: Extract<StatisticsRequest, { kind: 'correla
   });
 }
 
-export function runStatisticsRequest(request: StatisticsRequest): DisplayOutcome {
+export function runStatisticsRequest(request: StatisticsRequest): ResultProducerDraft {
   const title = requestTitle(request);
 
   switch (request.kind) {
@@ -850,7 +850,7 @@ function parseDatasetToFrequencyRows(values: number[]): NumericFrequencyRow[] {
     .map(([value, frequency]) => ({ value, frequency }));
 }
 
-function parseFailureToOutcome(parsed: Extract<StatisticsParseResult, { ok: false }>): DisplayOutcome {
+function parseFailureToOutcome(parsed: Extract<StatisticsParseResult, { ok: false }>): ResultProducerDraft {
   return {
     kind: 'error',
     title: 'Statistics',

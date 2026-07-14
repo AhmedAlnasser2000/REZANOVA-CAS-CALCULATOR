@@ -2,7 +2,7 @@ import type {
   CalculusScreen,
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
 } from '../../../types/calculator';
 import {
   tryProvenCanonicalMathValue,
@@ -47,7 +47,7 @@ function detailValues(
 }
 
 export function calculusMathValuesFromOwnedLeaves(input: {
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
   routeId: CalculusMathJsonRouteId;
   leaves: readonly CalculusOwnedMathJsonLeaf[];
 }): CanonicalResultProducerMathValuesV1 {

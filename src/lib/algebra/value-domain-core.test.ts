@@ -112,7 +112,7 @@ describe('value-domain-core', () => {
     expect(metadata.summary.hasComplexDomainFacts).toBe(true);
   });
 
-  it('can describe complex branch readback without adopting it in DisplayOutcome', () => {
+  it('can describe complex branch readback without adopting it in ResultProducerDraft', () => {
     const branches = complexAllRootsReadback(complex(1, 0), 4);
     const metadata = buildComplexValueDomainMetadata('exact-symbolic', [
       buildComplexDomainNoteFact({

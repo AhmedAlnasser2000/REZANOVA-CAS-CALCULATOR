@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../types/calculator';
 import { finiteBranchReadbackMetadata } from '../../display/branch-readback';
@@ -31,7 +31,7 @@ function numericIntervalDetailSections(request: GuardedSolveRequest) {
   ];
 }
 
-function numericIntervalSolve(request: GuardedSolveRequest): DisplayOutcome | null {
+function numericIntervalSolve(request: GuardedSolveRequest): ResultProducerDraft | null {
   if (!request.numericInterval) {
     return null;
   }

@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../types/calculator';
 import {
@@ -14,9 +14,12 @@ import type {
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import { createEquationResultOutcome } from '../solve-result/producer';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
   validateCanonicalRuntimeOutcome,
 } from '../../result-contract';
+import {
+  buildEquationStageResultCarrier,
+  buildEquationStageResultCarrierFromRuntime,
+} from '../solve-result/stage-carrier';
 
 export const EQUATION_DIRECT_SYMBOLIC_WORKER_HOST_ID =
   'equation-direct-symbolic-worker-runtime' as const;
@@ -36,7 +39,7 @@ type EquationDirectSymbolicWorkerControl = {
 
 type RunEquationDirectSymbolicViaIsolatedWorkerOptions = {
   createWorker?: CreateEquationDirectSymbolicWorker;
-  fallback: () => DisplayOutcome;
+  fallback: () => ResultProducerDraft;
 };
 
 let directSymbolicWorkerRequestCounter = 0;
@@ -53,15 +56,15 @@ function nextRequestId() {
   return `equation-direct-symbolic-worker-${directSymbolicWorkerRequestCounter}`;
 }
 
-function buildCancelledOutcome(): DisplayOutcome {
-  return createEquationResultOutcome({
+function buildCancelledOutcome() {
+  return buildEquationStageResultCarrier(createEquationResultOutcome({
     kind: 'error',
     title: 'Solve',
     error: EQUATION_SOLVE_CANCELLED_MESSAGE,
     warnings: [],
     plannerBadges: [],
     ...proseSolveSummary('Equation solve stopped at an OOE cancellation checkpoint.'),
-  });
+  }));
 }
 
 function workerHostEvidence(
@@ -99,11 +102,11 @@ function runFallback(
   depth: number,
   control: EquationDirectSymbolicWorkerControl,
   reason: string,
-  fallback: () => DisplayOutcome,
+  fallback: () => ResultProducerDraft,
 ): GuardedEquationDirectSymbolicRunnerResult {
   control.checkpoint(`Equation direct-symbolic worker unavailable; falling back to main-thread helper (${reason}).`);
   return {
-    outcome: fallback(),
+    outcome: buildEquationStageResultCarrier(fallback()),
     hostEvidence: fallbackHostEvidence(depth, reason),
   };
 }
@@ -196,7 +199,7 @@ export async function runEquationDirectSymbolicViaIsolatedWorker(
           return;
         }
         settle({
-          outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(validation.validated.value),
+          outcome: buildEquationStageResultCarrierFromRuntime(validation.validated.value),
           hostEvidence: workerHostEvidence(input.depth, 'completed'),
         });
         return;

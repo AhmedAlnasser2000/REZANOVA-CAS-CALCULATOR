@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { runEquationMode } from '../equation';
@@ -35,7 +36,7 @@ describe('Equation mode odd-power wrapper formulas', () => {
     for (const result of [cubic, quartic, expressionRhs, nonX]) {
       expect(result.answerDomain).toBe('real');
       expect(result.exactLatex).not.toContain('PrincipalRoot');
-      expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+      expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
     }
     expect(cubic.exactSupplementLatex ?? []).not.toContain('b\\ge0');
     expect(quartic.exactSupplementLatex ?? []).not.toContain('b\\ge0');
@@ -78,3 +79,7 @@ describe('Equation mode odd-power wrapper formulas', () => {
     expect(JSON.stringify(rootWrapper)).not.toContain('Real Cardano Cases');
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

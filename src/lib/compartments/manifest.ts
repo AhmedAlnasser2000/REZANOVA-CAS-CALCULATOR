@@ -148,7 +148,7 @@ export const COMPARTMENT_MANIFEST = [
       'src/lib/result-contract/index.ts',
     ],
     privatePaths: [
-      'src/lib/result-contract/projection.ts',
+      'src/lib/result-contract/runtime-outcome.ts',
       'src/lib/result-contract/validation.ts',
     ],
     dependencyPolicies: [

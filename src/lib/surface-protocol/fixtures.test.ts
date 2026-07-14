@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import type { OoeEventEnvelope } from '../ooe/events/event-outbox';
 import {
   buildCanonicalResultDocumentFromProducer,
@@ -21,23 +21,8 @@ import {
   surfaceFailure,
 } from './index';
 
-const resultFixtureOutcome: DisplayOutcome = {
+const resultFixtureOutcome: CanonicalRuntimeOutcome = {
   kind: 'success',
-  title: 'Equation Result',
-  exactLatex: 'x=2',
-  approxText: 'x ≈ 2',
-  exactSupplementLatex: ['x\\ne0'],
-  answerDomain: 'real',
-  solutionKind: 'exact-symbolic',
-  solveSummaryParts: [[{ kind: 'text', text: 'Solved exactly.' }]],
-  branchReadback: {
-    targetLatex: 'x',
-    relationLatex: '=',
-    branchesLatex: ['2'],
-    countLabel: 'roots',
-  },
-  warnings: ['Check denominator exclusions.'],
-  rejectedCandidateCount: 1,
   canonicalResult: buildCanonicalResultDocumentFromProducer({
     outcomeKind: 'success',
     title: 'Equation Result',

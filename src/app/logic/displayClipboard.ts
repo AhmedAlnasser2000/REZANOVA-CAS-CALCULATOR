@@ -1,9 +1,9 @@
 import { writeMathClipboard } from '../../lib/clipboard';
 import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
-import type { DisplayOutcome, ModeId } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome, ModeId } from '../../types/calculator';
 
 type DisplayClipboardDeps = {
-  displayOutcome: DisplayOutcome | null;
+  displayOutcome: CanonicalRuntimeOutcome | null;
   visibleText: string;
   currentMode: ModeId;
   setClipboardNotice: (notice: string) => void;
@@ -24,8 +24,17 @@ export async function copyDisplayResultWithDeps({
     setClipboardNotice('Result unavailable');
     return;
   }
-  const primaryMath = resolution?.ok ? resolution.document.primaryMath : undefined;
-  const canonicalLatex = primaryMath?.canonicalLatex ?? (displayOutcome ? '' : visibleText);
+  const document = resolution?.ok ? resolution.document : undefined;
+  const primaryMath = document?.primaryMath;
+  const approximationOnlyText = document
+    && document.outcomeKind === 'success'
+    && !primaryMath
+    && document.approximations?.primary
+      ? visibleText || document.approximations.primary
+      : undefined;
+  const canonicalLatex = primaryMath?.canonicalLatex
+    ?? approximationOnlyText
+    ?? (displayOutcome ? '' : visibleText);
   if (!canonicalLatex.trim()) {
     setClipboardNotice('Nothing to copy');
     return;

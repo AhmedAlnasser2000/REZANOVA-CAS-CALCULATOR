@@ -1,10 +1,10 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   CalculusDerivativeStrategy,
   CalculusIntegrationStrategy,
   DisplayAnswerRowsReadback,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
+  CanonicalMathValueV1,
   PlannerBadge,
   ResultOrigin,
   RuntimeAdvisories,
@@ -15,7 +15,7 @@ type PlannerBadgeMode = 'merge' | 'replace';
 type BuildRuntimeOutcomeOptions = {
   title: string;
   exactLatex?: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   answerRows?: DisplayAnswerRowsReadback;
   exactSupplementLatex?: string[];
   approxText?: string;
@@ -41,7 +41,7 @@ function dedupe<T>(entries: T[]) {
 }
 
 function attachPlannerBadges(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   plannerBadges: PlannerBadge[] | undefined,
   plannerBadgeMode: PlannerBadgeMode,
 ) {
@@ -60,7 +60,7 @@ function attachPlannerBadges(
 export function buildRuntimeOutcome({
   title,
   exactLatex,
-  canonicalMath,
+  primaryMath,
   answerRows,
   exactSupplementLatex,
   approxText,
@@ -71,7 +71,7 @@ export function buildRuntimeOutcome({
   calculusDerivativeStrategies,
   detailSections,
   runtimeAdvisories,
-}: BuildRuntimeOutcomeOptions): Exclude<DisplayOutcome, { kind: 'prompt' }> {
+}: BuildRuntimeOutcomeOptions): Exclude<ResultProducerDraft, { kind: 'prompt' }> {
   if (error) {
     return {
       kind: 'error',
@@ -90,7 +90,7 @@ export function buildRuntimeOutcome({
     kind: 'success',
     title,
     exactLatex,
-    ...(canonicalMath ? { canonicalMath } : {}),
+    ...(primaryMath ? { primaryMath } : {}),
     answerRows,
     exactSupplementLatex,
     approxText,
@@ -104,15 +104,15 @@ export function buildRuntimeOutcome({
 }
 
 export function attachRuntimeEnvelope(
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>,
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>,
   options: AttachRuntimeEnvelopeOptions,
-): Exclude<DisplayOutcome, { kind: 'prompt' }>;
+): Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 export function attachRuntimeEnvelope(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   options: AttachRuntimeEnvelopeOptions,
-): DisplayOutcome;
+): ResultProducerDraft;
 export function attachRuntimeEnvelope(
-  outcome: DisplayOutcome,
+  outcome: ResultProducerDraft,
   {
     originalLatex,
     resolvedLatex,
@@ -120,7 +120,7 @@ export function attachRuntimeEnvelope(
     plannerBadgeMode,
     runtimeAdvisories,
   }: AttachRuntimeEnvelopeOptions,
-): DisplayOutcome {
+): ResultProducerDraft {
   const effectiveRuntimeAdvisories = runtimeAdvisories ?? outcome.runtimeAdvisories;
   const effectivePlannerBadges = attachPlannerBadges(outcome, plannerBadges, plannerBadgeMode);
 

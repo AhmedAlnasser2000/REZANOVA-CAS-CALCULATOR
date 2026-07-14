@@ -1,10 +1,10 @@
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   HistoryReplaySnapshotV1,
   TableResponse,
 } from '../../types/calculator';
 import {
-  collectDisplayOutcomeMathFragments,
+  collectCanonicalRuntimeMathFragments,
   collectTableResponseMathFragments,
   normalizePrintHygieneValue,
 } from '../display/print-hygiene';
@@ -25,7 +25,7 @@ export const HISTORY_REPLAY_WORKSPACES = [
 export type HistoryReplayWorkspace = typeof HISTORY_REPLAY_WORKSPACES[number];
 
 export type HistoryReplayIdentity = {
-  kind: DisplayOutcome['kind'];
+  kind: CanonicalRuntimeOutcome['kind'];
   title: string;
   resultOrigin?: string;
   answerDomain?: string;
@@ -68,14 +68,12 @@ export type HistoryReplayFixtureFile = {
 };
 
 export type HistoryReplayExecution = {
-  outcome: DisplayOutcome;
+  outcome: CanonicalRuntimeOutcome;
   tableResponse?: TableResponse;
 };
 
-export function historyReplayIdentity(outcome: DisplayOutcome): HistoryReplayIdentity {
-  const runtimeStopReasonKind = (
-    outcome as DisplayOutcome & { runtimeStopReason?: { kind?: string } }
-  ).runtimeStopReason?.kind;
+export function historyReplayIdentity(outcome: CanonicalRuntimeOutcome): HistoryReplayIdentity {
+  const runtimeStopReasonKind = outcome.runtimeAdvisories?.stopReason?.kind;
   if (outcome.kind === 'prompt') {
     return {
       kind: outcome.kind,
@@ -137,7 +135,7 @@ export function historyReplayCardinalities(
 
 export function normalizedHistoryReplayLatex(execution: HistoryReplayExecution) {
   return [
-    ...collectDisplayOutcomeMathFragments(execution.outcome),
+    ...collectCanonicalRuntimeMathFragments(execution.outcome),
     ...collectTableResponseMathFragments(execution.tableResponse),
   ]
     .map((fragment) => `${fragment.path}=${normalizePrintHygieneValue(fragment.value)}`)

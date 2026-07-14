@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import { runEquationMode } from '../equation';
@@ -23,7 +24,7 @@ function expectSuccess(equationLatex: string, target = 'z') {
 }
 
 function expectCaseMath(result: ReturnType<typeof expectSuccess>) {
-  expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+  expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   expect(result.answerDomain).toBe('real');
 }
 
@@ -110,3 +111,7 @@ describe('Equation Real mixed exp/log wrapper formulas', () => {
     }
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

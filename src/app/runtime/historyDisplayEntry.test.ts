@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { DisplayDetailSection, HistoryEntry, TableResponse } from '../../types/calculator';
 import { buildHistoryDisplayEntry, readHistoryResult } from './historyDisplayEntry';
-import { withCanonicalResult } from './canonical-outcome-test-helper';
+import { canonicalMathValue } from '../../lib/result-contract';
+import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
 
 describe('buildHistoryDisplayEntry', () => {
   it('persists display detail sections so History replay can restore result cards', () => {
@@ -14,19 +15,22 @@ describe('buildHistoryDisplayEntry', () => {
     ];
 
     const entry = buildHistoryDisplayEntry({
-      outcome: withCanonicalResult({
-        kind: 'success',
+      outcome: canonicalResultFixture({
+        outcomeKind: 'success',
         title: '\\operatorname{coords}(A,b)',
-        exactLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
-        canonicalMath: {
-          version: 1,
+        primaryMath: {
           canonicalLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
           mathJson: ['Equal', 'c', ['List', 1, 2]],
         },
         detailSections,
-        actions: [{ kind: 'send', target: 'equation', latex: 'c=1' }],
-        runtimeAdvisories: { stopReason: { kind: 'range-guard', source: 'stage' } },
         warnings: [],
+      }, {
+        actions: [{
+          kind: 'send',
+          target: 'equation',
+          math: canonicalMathValue('c=1'),
+        }],
+        runtimeAdvisories: { stopReason: { kind: 'range-guard', source: 'stage' } },
       }),
       inputLatex: '\\operatorname{coords}(A,b)',
       mode: 'matrix',
@@ -62,24 +66,26 @@ describe('buildHistoryDisplayEntry', () => {
     });
     expect(entry).not.toHaveProperty('resultLatex');
     expect(entry).not.toHaveProperty('detailSections');
-    expect(entry).not.toHaveProperty('canonicalMath');
+    expect(entry).not.toHaveProperty('primaryMath');
     expect(JSON.stringify(entry.resultDocument)).not.toMatch(/actions|runtimeAdvisories/u);
     expect(readHistoryResult(entry)).toMatchObject({
       source: 'structured',
       outcome: {
         kind: 'success',
-        title: '\\operatorname{coords}(A,b)',
-        exactLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}',
+        canonicalResult: {
+          title: '\\operatorname{coords}(A,b)',
+          primaryMath: { canonicalLatex: 'c=\\begin{bmatrix}1\\\\2\\end{bmatrix}' },
+        },
       },
     });
   });
 
   it('persists Equation route seeds for guided screen history replay', () => {
     const entry = buildHistoryDisplayEntry({
-      outcome: withCanonicalResult({
-        kind: 'success',
+      outcome: canonicalResultFixture({
+        outcomeKind: 'success',
         title: 'Polynomial 2x2',
-        exactLatex: '\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\left(3,1\\right)\\right\\}',
+        primaryMath: canonicalMathValue('\\left(x,y\\right)\\in\\left\\{\\left(-4,-6\\right),\\left(3,1\\right)\\right\\}'),
         systemReadback: {
           label: 'Solution pairs',
           variablesLatex: ['x', 'y'],
@@ -139,8 +145,6 @@ describe('buildHistoryDisplayEntry', () => {
     const entry = buildHistoryDisplayEntry({
       outcome: {
         kind: 'success',
-        title: 'Table',
-        exactLatex: '\\operatorname{Table}(\\sqrt{x})',
         canonicalResult: {
           version: 1,
           outcomeKind: 'success',
@@ -155,7 +159,6 @@ describe('buildHistoryDisplayEntry', () => {
             })),
           },
         },
-        warnings: [...tableResponse.warnings],
       },
       inputLatex: '\\sqrt{x}',
       mode: 'table',
@@ -182,8 +185,6 @@ describe('buildHistoryDisplayEntry', () => {
     expect(() => buildHistoryDisplayEntry({
       outcome: {
         kind: 'success',
-        title: 'Large result',
-        exactLatex: 'x=1',
         canonicalResult: {
           version: 1,
           outcomeKind: 'success',
@@ -191,7 +192,6 @@ describe('buildHistoryDisplayEntry', () => {
           primaryMath: { canonicalLatex: 'x=1' },
           warnings: ['x'.repeat(641_000)],
         },
-        warnings: [],
       },
       inputLatex: 'x=1',
       mode: 'equation',

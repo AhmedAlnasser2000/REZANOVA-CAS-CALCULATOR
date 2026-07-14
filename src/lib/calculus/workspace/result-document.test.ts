@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CalculusScreen, DisplayOutcome } from '../../../types/calculator';
-import { projectDisplayOutcomeToCanonicalResult } from '../../result-contract';
+import type { CalculusScreen, ResultProducerDraft } from '../../../types/calculator';
 import {
   createCalculusResultOutcome,
   hasNativeCalculusResultDocument,
@@ -41,7 +40,7 @@ describe('Calculus result document producer', () => {
   });
 
   it('builds native proof-aware Limit truth from typed fields', () => {
-    const input: Extract<DisplayOutcome, { kind: 'success' }> = {
+    const input: Extract<ResultProducerDraft, { kind: 'success' }> = {
       kind: 'success',
       title: 'Finite Limit',
       exactLatex: '-\\infty',
@@ -61,10 +60,22 @@ describe('Calculus result document producer', () => {
     };
 
     const outcome = createCalculusResultOutcome(input);
-    const compatibility = projectDisplayOutcomeToCanonicalResult(input);
-    expect(compatibility.ok).toBe(true);
-    if (!compatibility.ok) return;
-    expect(outcome.canonicalResult).toEqual(compatibility.document);
+    expect(outcome.canonicalResult).toMatchObject({
+      version: 1,
+      outcomeKind: 'success',
+      title: 'Finite Limit',
+      primaryMath: { canonicalLatex: '-\\infty' },
+      approximations: { primary: '-Infinity' },
+      details: [{ title: 'Side Behavior' }],
+      metadata: {
+        resultOrigin: 'rule-based-symbolic',
+        variableSubstitutions: [{
+          name: 'a',
+          value: { canonicalLatex: '2' },
+          numericValue: 2,
+        }],
+      },
+    });
     expect(structuredClone(outcome.canonicalResult)).toEqual(outcome.canonicalResult);
   });
 

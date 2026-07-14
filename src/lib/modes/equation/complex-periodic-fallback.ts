@@ -1,6 +1,6 @@
 import type {
   AngleUnit,
-  DisplayOutcome,
+  ResultProducerDraft,
   PlannerBadge,
 } from '../../../types/calculator';
 import type { resolveEquationSolveTarget } from '../../equation/equation-target';
@@ -9,7 +9,7 @@ import { withDeferredComplexWrapperBoundary } from './complex-wrapper-fallback';
 
 type TargetResolution = ReturnType<typeof resolveEquationSolveTarget>;
 
-function hasIntegerPeriodicEvidence(outcome: DisplayOutcome) {
+function hasIntegerPeriodicEvidence(outcome: ResultProducerDraft) {
   if (outcome.kind !== 'success') {
     return false;
   }
@@ -21,7 +21,7 @@ function hasIntegerPeriodicEvidence(outcome: DisplayOutcome) {
 }
 
 export function tryDeferredComplexPeriodicFallback(input: {
-  deferredComplexWrapperOutcome: DisplayOutcome | undefined;
+  deferredComplexWrapperOutcome: ResultProducerDraft | undefined;
   equationLatex: string;
   angleUnit: AngleUnit;
   plannerResolvedLatex: string;

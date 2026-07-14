@@ -1,13 +1,12 @@
 import type {
   CanonicalResultDocumentV1,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   TableResponse,
 } from '../../types/calculator';
 import { resolveCanonicalResultForConsumer } from '../result-contract';
 
 export type MathematicalFragmentKind =
   | 'primary-answer'
-  | 'canonical-payload'
   | 'answer-row'
   | 'branch-target'
   | 'branch'
@@ -70,46 +69,46 @@ function collectPeriodicFragments(
   const periodic = document.periodicFamily;
   if (!periodic) return;
 
-  appendFragment(fragments, 'periodicFamily.carrierLatex', 'periodic-carrier', periodic.carrier.canonicalLatex);
-  appendFragment(fragments, 'periodicFamily.parameterLatex', 'periodic-parameter', periodic.parameter.canonicalLatex);
+  appendFragment(fragments, 'canonicalResult.periodicFamily.carrier.canonicalLatex', 'periodic-carrier', periodic.carrier.canonicalLatex);
+  appendFragment(fragments, 'canonicalResult.periodicFamily.parameter.canonicalLatex', 'periodic-parameter', periodic.parameter.canonicalLatex);
   periodic.parameterConstraints?.forEach((value, index) =>
-    appendFragment(fragments, `periodicFamily.parameterConstraintLatex[${index}]`, 'periodic-constraint', value.canonicalLatex));
+    appendFragment(fragments, `canonicalResult.periodicFamily.parameterConstraints[${index}].canonicalLatex`, 'periodic-constraint', value.canonicalLatex));
   periodic.branches.forEach((value, index) =>
-    appendFragment(fragments, `periodicFamily.branchesLatex[${index}]`, 'periodic-branch', value.canonicalLatex));
+    appendFragment(fragments, `canonicalResult.periodicFamily.branches[${index}].canonicalLatex`, 'periodic-branch', value.canonicalLatex));
   periodic.representatives?.forEach((representative, index) =>
     appendFragment(
       fragments,
-      `periodicFamily.representatives[${index}].exactLatex`,
+      `canonicalResult.periodicFamily.representatives[${index}].exact.canonicalLatex`,
       'periodic-representative',
       representative.exact?.canonicalLatex,
     ));
   periodic.suggestedIntervals?.forEach((interval, index) => {
-    appendFragment(fragments, `periodicFamily.suggestedIntervals[${index}].start`, 'periodic-interval-bound', interval.start.canonicalLatex);
-    appendFragment(fragments, `periodicFamily.suggestedIntervals[${index}].end`, 'periodic-interval-bound', interval.end.canonicalLatex);
+    appendFragment(fragments, `canonicalResult.periodicFamily.suggestedIntervals[${index}].start.canonicalLatex`, 'periodic-interval-bound', interval.start.canonicalLatex);
+    appendFragment(fragments, `canonicalResult.periodicFamily.suggestedIntervals[${index}].end.canonicalLatex`, 'periodic-interval-bound', interval.end.canonicalLatex);
   });
   periodic.piecewiseBranches?.forEach((branch, index) => {
     appendFragment(
       fragments,
-      `periodicFamily.piecewiseBranches[${index}].conditionLatex`,
+      `canonicalResult.periodicFamily.piecewiseBranches[${index}].condition.canonicalLatex`,
       'periodic-piecewise-condition',
       branch.condition.canonicalLatex,
     );
     appendFragment(
       fragments,
-      `periodicFamily.piecewiseBranches[${index}].resultLatex`,
+      `canonicalResult.periodicFamily.piecewiseBranches[${index}].result.canonicalLatex`,
       'periodic-piecewise-result',
       branch.result.canonicalLatex,
     );
   });
   appendFragment(
     fragments,
-    'periodicFamily.principalRangeLatex',
+    'canonicalResult.periodicFamily.principalRange.canonicalLatex',
     'periodic-principal-range',
     periodic.principalRange?.canonicalLatex,
   );
   appendFragment(
     fragments,
-    'periodicFamily.reducedCarrierLatex',
+    'canonicalResult.periodicFamily.reducedCarrier.canonicalLatex',
     'periodic-reduced-carrier',
     periodic.reducedCarrier?.canonicalLatex,
   );
@@ -129,7 +128,7 @@ function collectDetailFragments(
       if (parts.length === 1 && parts[0]?.kind === 'math') {
         appendFragment(
           fragments,
-          `detailSections[${sectionIndex}].lines[${lineIndex}]`,
+          `canonicalResult.details[${sectionIndex}].lines[${lineIndex}][0].math.canonicalLatex`,
           'detail-math-line',
           parts[0].math.canonicalLatex,
         );
@@ -137,7 +136,7 @@ function collectDetailFragments(
         mathParts.forEach(({ part, partIndex }) =>
           appendFragment(
             fragments,
-            `detailSections[${sectionIndex}].lineParts[${lineIndex}][${partIndex}].latex`,
+            `canonicalResult.details[${sectionIndex}].lines[${lineIndex}][${partIndex}].math.canonicalLatex`,
             'detail-math-part',
             part.kind === 'math' ? part.math.canonicalLatex : undefined,
           ));
@@ -149,7 +148,7 @@ function collectDetailFragments(
       if (part.kind === 'math') {
         appendFragment(
           fragments,
-          `solveSummaryParts[${lineIndex}][${partIndex}].latex`,
+          `canonicalResult.summaries.solve[${lineIndex}][${partIndex}].math.canonicalLatex`,
           'solve-summary-math-part',
           part.math.canonicalLatex,
         );
@@ -158,7 +157,7 @@ function collectDetailFragments(
   });
 }
 
-export function collectDisplayOutcomeMathFragments(outcome: DisplayOutcome): MathematicalFragment[] {
+export function collectCanonicalRuntimeMathFragments(outcome: CanonicalRuntimeOutcome): MathematicalFragment[] {
   const fragments: MathematicalFragment[] = [];
   if (outcome.kind === 'prompt') {
     appendFragment(fragments, 'carryLatex', 'prompt-carry', outcome.carryLatex);
@@ -172,57 +171,54 @@ export function collectDisplayOutcomeMathFragments(outcome: DisplayOutcome): Mat
     );
   }
   const document = resolution.document;
-  appendFragment(fragments, 'exactLatex', 'primary-answer', document.primaryMath?.canonicalLatex);
-  if (document.primaryMath?.mathJson !== undefined) {
-    appendFragment(
-      fragments,
-      'canonicalMath.canonicalLatex',
-      'canonical-payload',
-      document.primaryMath.canonicalLatex,
-    );
-  }
+  appendFragment(fragments, 'canonicalResult.primaryMath.canonicalLatex', 'primary-answer', document.primaryMath?.canonicalLatex);
   if (document.outcomeKind === 'success') {
     document.answerRows?.rows.forEach((row, index) =>
-      appendFragment(fragments, `answerRows.rows[${index}].latex`, 'answer-row', row.math.canonicalLatex));
+      appendFragment(fragments, `canonicalResult.answerRows.rows[${index}].math.canonicalLatex`, 'answer-row', row.math.canonicalLatex));
     document.systemReadback?.variables.forEach((value, index) =>
-      appendFragment(fragments, `systemReadback.variablesLatex[${index}]`, 'system-variable', value.canonicalLatex));
+      appendFragment(fragments, `canonicalResult.systemReadback.variables[${index}].canonicalLatex`, 'system-variable', value.canonicalLatex));
     document.systemReadback?.rows.forEach((row, rowIndex) =>
       row.values.forEach((value, valueIndex) =>
         appendFragment(
           fragments,
-          `systemReadback.rows[${rowIndex}].valuesLatex[${valueIndex}]`,
+          `canonicalResult.systemReadback.rows[${rowIndex}].values[${valueIndex}].canonicalLatex`,
           'system-value',
           value.canonicalLatex,
         )));
     document.metadata?.variableSubstitutions?.forEach((substitution, index) =>
       appendFragment(
         fragments,
-        `variableSubstitutions[${index}].valueLatex`,
+        `canonicalResult.metadata.variableSubstitutions[${index}].value.canonicalLatex`,
         'substitution-value',
         substitution.value.canonicalLatex,
       ));
   }
 
   if (document.branchReadback) {
-    appendFragment(fragments, 'branchReadback.targetLatex', 'branch-target', document.branchReadback.target.canonicalLatex);
+    appendFragment(fragments, 'canonicalResult.branchReadback.target.canonicalLatex', 'branch-target', document.branchReadback.target.canonicalLatex);
     document.branchReadback.branches.forEach((value, index) =>
-      appendFragment(fragments, `branchReadback.branchesLatex[${index}]`, 'branch', value.canonicalLatex));
+      appendFragment(fragments, `canonicalResult.branchReadback.branches[${index}].canonicalLatex`, 'branch', value.canonicalLatex));
   }
   collectPeriodicFragments(document, fragments);
   document.supplements?.forEach((value, index) =>
-    appendFragment(fragments, `exactSupplementLatex[${index}]`, 'supplement', value.canonicalLatex));
+    appendFragment(fragments, `canonicalResult.supplements[${index}].canonicalLatex`, 'supplement', value.canonicalLatex));
   appendFragment(
     fragments,
-    'transformSummaryLatex',
+    'canonicalResult.summaries.transform.math.canonicalLatex',
     'transform-summary',
     document.summaries?.transform?.math?.canonicalLatex,
   );
   outcome.actions?.forEach((action, index) =>
-    appendFragment(fragments, `actions[${index}].latex`, 'action', action.latex));
+    appendFragment(
+      fragments,
+      `actions[${index}].math.canonicalLatex`,
+      'action',
+      action.math.canonicalLatex,
+    ));
   collectDetailFragments(document, fragments);
   appendFragment(
     fragments,
-    'resolvedInputLatex',
+    'canonicalResult.metadata.resolvedInput.canonicalLatex',
     'resolved-input',
     document.metadata?.resolvedInput?.canonicalLatex,
   );

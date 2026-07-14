@@ -12,11 +12,11 @@ import type {
   SubstitutionSolveDiagnostics,
   TransformBadge,
 } from './solver-types';
-import type { DisplayMathPayloadV1 } from './math-payload-types';
-import type { CanonicalResultDocumentV1 } from './canonical-result-types';
+import type { CanonicalMathValueV1, CanonicalResultDocumentV1 } from './canonical-result-types';
 import type { PromptOutcome } from './canonical-runtime-outcome-types';
 
-export type { DisplayMathPayloadV1, SerializableMathJson } from './math-payload-types';
+export type { CanonicalMathValueV1 } from './canonical-result-types';
+export type { SerializableMathJson } from './math-payload-types';
 
 export type DisplayDetailLineKind = 'text' | 'math';
 
@@ -112,16 +112,16 @@ export type DisplayAnswerRowsReadback = {
   }>;
 };
 
-export type DisplayOutcomeAction =
+export type ResultProducerActionDraft =
   | { kind: 'send'; target: TransferTarget; latex: string }
   | { kind: 'load-core-draft'; mode: 'geometry' | 'trigonometry' | 'statistics'; latex: string };
 
-export type DisplayOutcome =
+export type ResultProducerDraft =
   | {
       kind: 'success';
       title: string;
       exactLatex?: string;
-      canonicalMath?: DisplayMathPayloadV1;
+      primaryMath?: CanonicalMathValueV1;
       canonicalResult?: CanonicalResultDocumentV1;
       answerRows?: DisplayAnswerRowsReadback;
       branchReadback?: DisplayBranchReadback;
@@ -137,7 +137,7 @@ export type DisplayOutcome =
       resultOrigin?: ResultOrigin;
       calculusStrategy?: CalculusIntegrationStrategy;
       calculusDerivativeStrategies?: CalculusDerivativeStrategy[];
-      actions?: DisplayOutcomeAction[];
+      actions?: ResultProducerActionDraft[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];
@@ -160,7 +160,7 @@ export type DisplayOutcome =
       error: string;
       warnings: string[];
       exactLatex?: string;
-      canonicalMath?: DisplayMathPayloadV1;
+      primaryMath?: CanonicalMathValueV1;
       canonicalResult?: CanonicalResultDocumentV1;
       branchReadback?: DisplayBranchReadback;
       periodicFamily?: PeriodicFamilyInfo;
@@ -170,7 +170,7 @@ export type DisplayOutcome =
       answerMode?: LegacyEquationAnswerMode;
       answerDomain?: AnswerDomain;
       solutionKind?: SolutionKind;
-      actions?: DisplayOutcomeAction[];
+      actions?: ResultProducerActionDraft[];
       resolvedInputLatex?: string;
       plannerBadges?: PlannerBadge[];
       solveBadges?: SolveBadge[];

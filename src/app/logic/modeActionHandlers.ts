@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { MatrixOperation, VectorOperation } from '../../types/calculator';
 import {
-  summarizeOoeProvenanceDisplayOutcome as summarizeDisplayOutcome,
+  summarizeOoeProvenanceCanonicalOutcome as summarizeCanonicalRuntimeOutcome,
 } from '../../lib/ooe/pilots/provenance-summary';
 import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/pilots/workspace-pilot';
 import {
@@ -212,7 +212,7 @@ function runTrigAction() {
           screenHint,
           latexLength: executionLatex.length,
         },
-        outputSummary: summarizeDisplayOutcome(payload.outcome),
+        outputSummary: summarizeCanonicalRuntimeOutcome(payload.outcome),
         runtimeHost: metadata.hostId,
         commitDecision: metadata.commitAssessment.commitDecision,
         notes: [`Outcome kind: ${payload.outcome.kind}`],
@@ -290,7 +290,7 @@ function runStatisticsAction() {
           screenHint,
           latexLength: inputLatex.length,
         },
-        outputSummary: summarizeDisplayOutcome(payload.outcome),
+        outputSummary: summarizeCanonicalRuntimeOutcome(payload.outcome),
         runtimeHost: metadata.hostId,
         commitDecision: metadata.commitAssessment.commitDecision,
       }),

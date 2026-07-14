@@ -72,7 +72,7 @@ describe('printer migration ratchet', () => {
         export const first = { exactLatex: '4', answerMathJson: 4 };
         export const second = {
           exactLatex: 'x=1',
-          canonicalMath: { version: 1, canonicalLatex: 'x=1' },
+          primaryMath: { canonicalLatex: 'x=1' },
         };
       `,
     });

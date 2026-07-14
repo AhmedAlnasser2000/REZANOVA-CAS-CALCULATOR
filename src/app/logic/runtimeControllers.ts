@@ -26,7 +26,7 @@ import type {
   CalculateAction,
   CalculateRouteMeta,
   CalculateScreen,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationAnswerMode,
   EquationScreen,
   IntegralWorkbenchState,
@@ -47,17 +47,21 @@ import {
   type EquationNumericSolvePanelState,
 } from './equationNumericIntervalRuntime';
 import { equationReplaySeedFromRequest } from './equationHistorySeed';
+import {
+  createCanonicalRuntimeError,
+} from '../../lib/result-contract';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../../lib/equation/equation-solve-result';
 
 type TransitionFn = (callback: () => void) => void;
 
 type CommitOutcomeFn = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'calculate' | 'equation',
   replayContext?: Record<string, unknown>,
 ) => void;
 
-type RetitleOutcomeFn = (outcome: DisplayOutcome, title: string) => DisplayOutcome;
+type RetitleOutcomeFn = (outcome: CanonicalRuntimeOutcome, title: string) => CanonicalRuntimeOutcome;
 
 type EquationOoeRouteKind = 'symbolic' | 'numeric-interval' | 'complex-region';
 
@@ -99,7 +103,7 @@ type CalculateRuntimeDeps = {
   } | null;
   clearCalculateReplayVariableSubstitutions?: () => void;
   startTransition: TransitionFn;
-  setDisplayOutcome: (outcome: DisplayOutcome) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome) => void;
   commitOutcome: CommitOutcomeFn;
   retitleOutcome: RetitleOutcomeFn;
   setRuntimeStatusOverride?: (message: string) => void;
@@ -140,7 +144,7 @@ type EquationRuntimeDeps = {
   equationNumericSolvePanel: EquationNumericSolvePanelState;
   equationComplexRegionPanel?: EquationComplexRegionPanelState;
   currentMode: ModeId;
-  displayOutcome: DisplayOutcome | null;
+  displayOutcome: CanonicalRuntimeOutcome | null;
   ansLatex: string;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>
     & Partial<Pick<Settings, 'equationAnswerMode' | 'equationDomainIntent' | 'complexExactForm'>>;
@@ -183,7 +187,7 @@ type EquationRuntimeDeps = {
 
 function buildCalculateWorkbenchError(
   deps: CalculateRuntimeDeps,
-): DisplayOutcome {
+): CanonicalRuntimeOutcome {
   const screenTitle =
     deps.calculateScreen === 'derivativePoint'
       ? 'Derivative at Point'
@@ -202,23 +206,16 @@ function buildCalculateWorkbenchError(
             ? 'Enter an expression in x and a numeric target before evaluating the limit.'
             : 'Enter an expression in x before evaluating the limit at infinity.';
 
-  return {
-    kind: 'error',
-    title: screenTitle,
-    error,
-    warnings: [],
-  };
+  return createCanonicalRuntimeError(screenTitle, error);
 }
 
-function buildRuntimeLoadError(title: string, error: unknown): DisplayOutcome {
-  return {
-    kind: 'error',
+function buildRuntimeLoadError(title: string, error: unknown): CanonicalRuntimeOutcome {
+  return createCanonicalRuntimeError(
     title,
-    error: error instanceof Error
+    error instanceof Error
       ? `Could not load the ${title} runtime: ${error.message}`
       : `Could not load the ${title} runtime.`,
-    warnings: [],
-  };
+  );
 }
 
 function shouldSuppressEquationVisibleCommit(
@@ -726,7 +723,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
             variableSubstitutionSnapshot: replayedEquationSubstitutionSnapshot(committedInput),
           });
           if (consent.kind === 'error') {
-            deps.commitOutcome(consent.outcome, committedInput, 'equation');
+            deps.commitOutcome(
+              finalizeEquationCanonicalRuntimeOutcome(consent.outcome),
+              committedInput,
+              'equation',
+            );
             return;
           }
           runEquationAction({
@@ -742,7 +743,11 @@ export function createEquationRuntimeController(deps: EquationRuntimeDeps) {
           angleUnit: deps.settings.angleUnit,
         });
 
-        deps.commitOutcome(outcome, committedInput, 'equation');
+        deps.commitOutcome(
+          finalizeEquationCanonicalRuntimeOutcome(outcome),
+          committedInput,
+          'equation',
+        );
       } catch (error: unknown) {
         deps.commitOutcome(buildRuntimeLoadError('Equation', error), committedInput, 'equation');
       }

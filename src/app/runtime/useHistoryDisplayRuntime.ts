@@ -51,7 +51,7 @@ import { persistHistoryEntryWithWarning } from './historyPersistence';
 import type {
   CalculusScreen,
   CalculatorMemorySnapshot,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   GeometryScreen,
   GuideExample,
   HistoryEntry,
@@ -69,7 +69,7 @@ import { resolveCanonicalResultForConsumer } from '../../lib/result-contract';
 export type HistoryDisplayReplayVariableSubstitutions = WorkspaceDisplayReplayVariableSubstitutions;
 
 export type CommitHistoryDisplayOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: ModeId,
   context?: CommitHistoryDisplayContext,
@@ -167,7 +167,7 @@ export function useHistoryDisplayRuntime({
 }: UseHistoryDisplayRuntimeOptions) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [pendingHistoryTickets, setPendingHistoryTickets] = useState<PendingHistoryTicket[]>([]);
-  const [displayOutcome, setDisplayOutcome] = useState<DisplayOutcome | null>(null);
+  const [displayOutcome, setDisplayOutcome] = useState<CanonicalRuntimeOutcome | null>(null);
   const [ansLatex, setAnsLatex] = useState('0');
   const historyLaunchOrderRef = useRef(0);
   const workspaceInstanceByTicketIdRef = useRef(new Map<string, WorkspaceInstanceRuntimeContext>());
@@ -438,7 +438,7 @@ export function useHistoryDisplayRuntime({
   }
 
   function commitDisplayOutcome(
-    outcome: DisplayOutcome,
+    outcome: CanonicalRuntimeOutcome,
     context: CommitHistoryDisplayContext,
   ) {
     const workspaceInstance = resolveCommitWorkspaceInstance(context);
@@ -479,7 +479,7 @@ export function useHistoryDisplayRuntime({
   }
 
   function commitOutcome(
-    outcome: DisplayOutcome,
+    outcome: CanonicalRuntimeOutcome,
     inputLatex: string,
     mode: ModeId,
     context: CommitHistoryDisplayContext = {},

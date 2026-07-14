@@ -11,11 +11,11 @@ import {
   nextQueuedDisplayBlock,
   orderDisplayBlocksForReveal,
 } from '../../../lib/display/scheduling/display-render-scheduler';
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import type { ModeId, OutputStyle } from '../../../types/calculator/mode-types';
 
 type UseDisplayRenderQueueOptions = {
-  displayOutcome: DisplayOutcome | null | undefined;
+  displayOutcome: CanonicalRuntimeOutcome | null | undefined;
   detailedFactsEnabled: boolean;
   getPeriodicStopReasonText: (reason: string) => string;
   answerReadbackStyle: OutputStyle;

@@ -71,7 +71,7 @@ import {
 import { useEquationNumericSolvePanelState } from './equation-numeric-panel-visibility';
 import { resolveWorkspaceOriginInputRevision } from './workspace-origin-input-revision';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   EquationAnswerMode,
   EquationScreen,
   HistoryEntry,
@@ -276,20 +276,24 @@ export function useEquationRuntime({
         ? cubicCoefficients
         : activePolynomialView === 'quartic'
           ? quarticCoefficients
-          : null;
+        : null;
+  const equationResultMetadata = displayOutcome?.kind === 'success'
+    || displayOutcome?.kind === 'error'
+    ? displayOutcome.canonicalResult.metadata
+    : undefined;
 
   const equationAnswerModeLabel =
     equationScreen === 'symbolic' && displayOutcome && displayOutcome.kind !== 'prompt'
-      ? displayOutcome.answerMode === 'isolate'
+      ? equationResultMetadata?.answerMode === 'isolate'
         ? 'Answer mode: Isolate'
-        : displayOutcome.answerMode === 'exact'
+        : equationResultMetadata?.answerMode === 'exact'
           ? 'Answer mode: Exact'
           : null
       : null;
   const equationNumericRouteLabel =
     currentMode === 'equation' && displayOutcome && displayOutcome.kind !== 'prompt'
-    && (displayOutcome.solutionKind === 'approximate-numeric' || displayOutcome.solveBadges?.includes('Numeric Interval'))
-      ? displayOutcome.solveBadges?.includes('Numeric Interval')
+    && (equationResultMetadata?.solutionKind === 'approximate-numeric' || equationResultMetadata?.solveBadges?.includes('Numeric Interval'))
+      ? equationResultMetadata.solveBadges?.includes('Numeric Interval')
         ? 'Route: Numeric Interval'
         : 'Route: Numeric'
       : null;
@@ -298,21 +302,21 @@ export function useEquationRuntime({
     && displayOutcome
     && displayOutcome.kind !== 'prompt'
     && settings.equationDomainIntent === 'complex'
-    && displayOutcome.answerDomain !== 'complex'
+    && equationResultMetadata?.answerDomain !== 'complex'
       ? 'Domain intent: Complex'
       : null;
   const equationAnswerDomainLabel =
     currentMode === 'equation'
     && displayOutcome
     && displayOutcome.kind !== 'prompt'
-    && displayOutcome.answerDomain === 'complex'
+    && equationResultMetadata?.answerDomain === 'complex'
       ? 'Domain: Complex'
       : null;
   const equationSolutionKindLabel =
     currentMode === 'equation'
     && displayOutcome
     && displayOutcome.kind !== 'prompt'
-    && displayOutcome.solutionKind === 'inequality-solution-set'
+    && equationResultMetadata?.solutionKind === 'inequality-solution-set'
       ? 'Solution: Inequality set'
       : null;
   const equationResultBadges =
@@ -324,7 +328,7 @@ export function useEquationRuntime({
           ...(equationDomainIntentLabel ? [equationDomainIntentLabel] : []),
           ...(equationAnswerDomainLabel ? [equationAnswerDomainLabel] : []),
           ...(equationSolutionKindLabel ? [equationSolutionKindLabel] : []),
-          ...(displayOutcome?.kind === 'success' && displayOutcome.resultOrigin === 'numeric-fallback'
+          ...(displayOutcome?.kind === 'success' && equationResultMetadata?.resultOrigin === 'numeric-fallback'
             ? ['Numeric roots']
             : []),
         ]
@@ -727,7 +731,7 @@ export function useEquationRuntime({
     shouldCommitVisibleEquationOutcome: () => currentModeRef.current === 'equation',
     startTransition,
     commitOutcome: commitOutcome as unknown as (
-      outcome: DisplayOutcome,
+      outcome: CanonicalRuntimeOutcome,
       inputLatex: string,
       mode: 'calculate' | 'equation',
       replayContext?: Record<string, unknown>,

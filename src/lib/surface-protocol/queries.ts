@@ -1,11 +1,11 @@
-import type { AngleUnit, DisplayOutcome } from '../../types/calculator';
+import type { AngleUnit, CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
   getSurfaceWorkspaceCapability,
   type SurfaceCapabilityFlags,
 } from './capabilities';
 import {
   SURFACE_PROTOCOL_VERSION,
-  displayOutcomeToSurfaceResultSummary,
+  canonicalOutcomeToSurfaceResultSummary,
   emptySurfaceResultSummary,
   surfaceOk,
   type SurfaceProtocolVersion,
@@ -27,7 +27,7 @@ export type SurfaceSettingsSnapshotInput = {
 export type SurfaceWorkspaceSnapshotInput = {
   protocolVersion: SurfaceProtocolVersion;
   workspaceKind: SurfaceWorkspaceKind;
-  displayOutcome?: DisplayOutcome | null;
+  displayOutcome?: CanonicalRuntimeOutcome | null;
   settings?: SurfaceSettingsSnapshotInput | null;
 };
 
@@ -63,7 +63,7 @@ export type SurfaceSnapshotQueryInput = {
   protocolVersion: unknown;
   workspaceKind: unknown;
   queryKind?: unknown;
-  displayOutcome?: DisplayOutcome | null;
+  displayOutcome?: CanonicalRuntimeOutcome | null;
   settings?: SurfaceSettingsSnapshotInput | null;
 };
 
@@ -81,7 +81,7 @@ export function querySurfaceCurrentResult(
     workspaceKind: snapshot.workspaceKind,
     queryKind: 'currentResult',
     summary: snapshot.displayOutcome
-      ? displayOutcomeToSurfaceResultSummary(snapshot.workspaceKind, snapshot.displayOutcome)
+      ? canonicalOutcomeToSurfaceResultSummary(snapshot.workspaceKind, snapshot.displayOutcome)
       : emptySurfaceResultSummary(snapshot.workspaceKind),
   });
 }

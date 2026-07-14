@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import { createEquationRuntimeController } from './runtimeControllers';
 import {
   EQUATION_USE_STORED_VALUES_ACTION,
@@ -16,7 +16,7 @@ vi.mock('../../lib/modes/equation', async (importOriginal) => {
 
 function createCommitOutcomeSpy() {
   return vi.fn<
-    (outcome: DisplayOutcome, inputLatex: string, mode: 'calculate' | 'equation', replayContext?: Record<string, unknown>) => void
+    (outcome: CanonicalRuntimeOutcome, inputLatex: string, mode: 'calculate' | 'equation', replayContext?: Record<string, unknown>) => void
   >();
 }
 
@@ -61,11 +61,11 @@ describe('Equation numeric preparation controller action', () => {
     if (outcome.kind !== 'error') {
       throw new Error('Expected a stored-value consent error outcome');
     }
-    expect(outcome.title).toBe('Use Stored Values');
-    expect(outcome.error).toContain('c');
-    expect(outcome.error).toContain('t');
-    expect(outcome.error).toContain('v');
-    expect(JSON.stringify(outcome.detailSections)).toContain('Protected solve target: x.');
+    expect(outcome.canonicalResult.title).toBe('Use Stored Values');
+    expect(outcome.canonicalResult.error).toContain('c');
+    expect(outcome.canonicalResult.error).toContain('t');
+    expect(outcome.canonicalResult.error).toContain('v');
+    expect(JSON.stringify(outcome.canonicalResult.details)).toContain('Protected solve target: x.');
   });
 
   it('launches normal Equation Solve with one-shot stored-value substitution when consent succeeds', async () => {

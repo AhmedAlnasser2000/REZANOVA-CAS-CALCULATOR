@@ -23,7 +23,7 @@ import {
 } from '../roots/representation';
 import { solutionsToLatex } from '../../display/format';
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../types/calculator';
 import {
@@ -78,19 +78,19 @@ function provenCarrierRootLeaves(
 }
 
 function provenCarrierCanonicalMath(
-  canonicalMath: ReturnType<typeof rootSetToCanonicalMath>,
+  primaryMath: ReturnType<typeof rootSetToCanonicalMath>,
   canonicalLatex: string | undefined,
   source: string,
 ) {
-  if (!canonicalMath || !canonicalLatex || canonicalMath.mathJson === undefined) return undefined;
+  if (!primaryMath || !canonicalLatex || primaryMath.mathJson === undefined) return undefined;
   return tryProvenCanonicalMathValue({
     canonicalLatex,
-    mathJson: canonicalMath.mathJson,
+    mathJson: primaryMath.mathJson,
     owner: 'equation',
     routeId: 'equation.polynomial',
     source,
   })
-    ? { ...canonicalMath, canonicalLatex }
+    ? { ...primaryMath, canonicalLatex }
     : undefined;
 }
 
@@ -216,7 +216,7 @@ function runBoundedPolynomialSolve(
   depth: number,
   trail: Set<string>,
   runner: GuardedSolveRunner,
-): DisplayOutcome | null {
+): ResultProducerDraft | null {
   try {
     const parsed = ce.parse(request.resolvedLatex).json;
     let recognizedDirectPolynomial = false;
@@ -230,7 +230,7 @@ function runBoundedPolynomialSolve(
           source: 'equation-guarded-bounded-polynomial',
         });
         const exactLatex = rootSetToExactLatex(rootSet);
-        const canonicalMath = provenCarrierCanonicalMath(
+        const primaryMath = provenCarrierCanonicalMath(
           rootSetToCanonicalMath(rootSet),
           exactLatex,
           'equation-guarded-bounded-polynomial',
@@ -239,7 +239,7 @@ function runBoundedPolynomialSolve(
           kind: 'success',
           title: 'Solve',
           exactLatex,
-          ...(canonicalMath ? { canonicalMath } : {}),
+          ...(primaryMath ? { primaryMath } : {}),
           branchReadback: rootSetToBranchReadback(rootSet, {
             source: 'equation-guarded-bounded-polynomial',
           }),
@@ -281,7 +281,7 @@ function runBoundedPolynomialSolve(
           carrierAttempt.roots,
           'equation-polynomial-carrier',
         );
-        const canonicalMath = provenRoots.length === carrierAttempt.roots.length
+        const primaryMath = provenRoots.length === carrierAttempt.roots.length
           ? provenCarrierCanonicalMath(
               renderedCanonicalMath,
               exactLatex,
@@ -292,7 +292,7 @@ function runBoundedPolynomialSolve(
           kind: 'success',
           title: 'Solve',
           exactLatex,
-          ...(canonicalMath ? { canonicalMath } : {}),
+          ...(primaryMath ? { primaryMath } : {}),
           exactSupplementLatex:
             carrierAttempt.exactSupplementLatex && carrierAttempt.exactSupplementLatex.length > 0
               ? carrierAttempt.exactSupplementLatex
@@ -366,7 +366,7 @@ function runBoundedPolynomialSolve(
         acceptedRoots,
         'equation-polynomial-carrier-candidate-validation',
       );
-      const canonicalMath = provenAcceptedRoots.length === acceptedRoots.length
+      const primaryMath = provenAcceptedRoots.length === acceptedRoots.length
         ? provenCarrierCanonicalMath(
             renderedCanonicalMath,
             exactLatex,
@@ -378,7 +378,7 @@ function runBoundedPolynomialSolve(
         kind: 'success',
         title: 'Solve',
         exactLatex,
-        ...(canonicalMath ? { canonicalMath } : {}),
+        ...(primaryMath ? { primaryMath } : {}),
         branchReadback: branchReadbackForAcceptedCandidates(
           acceptedLatex,
           validation.accepted,

@@ -9,7 +9,7 @@ import type {
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import {
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   validateCanonicalRuntimeOutcome,
 } from '../../result-contract';
 import { createStatisticsResultOutcome } from '../../statistics/result-document';
@@ -60,7 +60,7 @@ function nextRequestId() {
 
 function buildCancelledPayload(request: RunStatisticsRuntimeRequest): CanonicalStatisticsModeRunPayload {
   return {
-    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(createStatisticsResultOutcome({
+    outcome: finalizeCanonicalRuntimeOutcomeFromProducer(createStatisticsResultOutcome({
       kind: 'error',
       title: 'Statistics',
       error: 'Statistics evaluation stopped before it finished.',

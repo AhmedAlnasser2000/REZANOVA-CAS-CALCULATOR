@@ -47,7 +47,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{1}{2}\ncanonicalMath.canonicalLatex=\\frac{1}{2}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\frac{1}{2}"
       }
     },
     {
@@ -94,7 +94,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=1\ncanonicalMath.canonicalLatex=1"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=1"
       }
     },
     {
@@ -141,7 +141,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\ncanonicalMath.canonicalLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\nbranchReadback.targetLatex=x\nbranchReadback.branchesLatex[0]=\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nbranchReadback.branchesLatex[1]=180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\nexactSupplementLatex[0]=n\\in\\mathbb{Z}"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=x\\in\\left\\{\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n,\\ 180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\\right\\}\ncanonicalResult.branchReadback.target.canonicalLatex=x\ncanonicalResult.branchReadback.branches[0].canonicalLatex=\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\ncanonicalResult.branchReadback.branches[1].canonicalLatex=180-\\frac{180}{\\pi}\\arcsin(\\frac{1}{2})+360n\ncanonicalResult.supplements[0].canonicalLatex=n\\in\\mathbb{Z}"
       }
     },
     {
@@ -188,7 +188,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=a=3,\\ b=4,\\ c=5,\\ A=36.869898^{\\circ},\\ B=53.130102^{\\circ},\\ C=90^{\\circ}\ncanonicalMath.canonicalLatex=a=3,\\ b=4,\\ c=5,\\ A=36.869898^{\\circ},\\ B=53.130102^{\\circ},\\ C=90^{\\circ}\nresolvedInputLatex=rightTriangle(a=3,b=4)"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=a=3,\\ b=4,\\ c=5,\\ A=36.869898^{\\circ},\\ B=53.130102^{\\circ},\\ C=90^{\\circ}\ncanonicalResult.metadata.resolvedInput.canonicalLatex=rightTriangle(a=3,b=4)"
       }
     },
     {
@@ -235,7 +235,7 @@
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "exactLatex=\\frac{\\pi}{6}\ncanonicalMath.canonicalLatex=\\frac{\\pi}{6}\nresolvedInputLatex=angleConvert(value=30,from=deg,to=rad)"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\frac{\\pi}{6}\ncanonicalResult.metadata.resolvedInput.canonicalLatex=angleConvert(value=30,from=deg,to=rad)"
       }
     }
   ]

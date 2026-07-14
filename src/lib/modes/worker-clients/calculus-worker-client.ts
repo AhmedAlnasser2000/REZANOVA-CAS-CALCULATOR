@@ -9,7 +9,7 @@ import type {
 import { WORKER_CANCEL_POLL_INTERVAL_MS, WORKER_STARTUP_TIMEOUT_MS } from './runtime-config';
 import { proseSolveSummary } from '../../display/result-detail-lines';
 import {
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   validateCanonicalRuntimeOutcome,
 } from '../../result-contract';
 import { createCalculusResultOutcome } from '../../calculus/workspace/result-document';
@@ -59,7 +59,7 @@ function nextRequestId() {
 }
 
 function buildCancelledOutcome(): CanonicalRuntimeOutcome {
-  return projectDisplayOutcomeToCanonicalRuntimeOutcome(createCalculusResultOutcome({
+  return finalizeCanonicalRuntimeOutcomeFromProducer(createCalculusResultOutcome({
     kind: 'error',
     title: 'Calculus',
     error: 'Calculus evaluation stopped before it finished.',

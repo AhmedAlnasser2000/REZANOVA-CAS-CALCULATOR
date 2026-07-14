@@ -1,4 +1,4 @@
-import type { AngleUnit, ComplexExactForm, DisplayBranchReadback, DisplayDetailSection, DisplayMathPayloadV1, OutputStyle, SerializableMathJson } from '../../../types/calculator';
+import type { AngleUnit, ComplexExactForm, DisplayBranchReadback, DisplayDetailSection, CanonicalMathValueV1, OutputStyle, SerializableMathJson } from '../../../types/calculator';
 import type { EquationSelectedTargetSearchTraceRecorder } from '../equation-target-shape';
 import type { GeneratedFormulaHandoffPayload } from './generated-formula-handoff-payload';
 import type { MathJson } from './math-json';
@@ -23,7 +23,7 @@ export type ParameterizedExpLogSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   mathJsonLeaves?: Array<{ canonicalLatex: string; mathJson: SerializableMathJson; source: string }>;
   branchReadback?: DisplayBranchReadback;
   approxText?: string;

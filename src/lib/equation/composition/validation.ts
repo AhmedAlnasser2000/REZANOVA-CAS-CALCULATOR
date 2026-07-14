@@ -15,7 +15,7 @@ import { isNodeArray } from '../../symbolic-engine/patterns';
 import type {
   AngleUnit,
   CandidateValidationResult,
-  DisplayOutcome,
+  ResultProducerDraft,
   SolveDomainConstraint,
 } from '../../../types/calculator';
 
@@ -245,7 +245,7 @@ function matchAcceptedExactSolutions(exactLatex: string | undefined, accepted: n
   return matched;
 }
 
-function collectOutcomeCandidates(outcome: DisplayOutcome) {
+function collectOutcomeCandidates(outcome: ResultProducerDraft) {
   if (outcome.kind === 'prompt') {
     return [] as number[];
   }

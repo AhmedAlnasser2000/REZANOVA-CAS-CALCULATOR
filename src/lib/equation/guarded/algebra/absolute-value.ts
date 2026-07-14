@@ -18,7 +18,7 @@ import { boxLatex, isNodeArray, termKey } from '../../../symbolic-engine/pattern
 import type {
   AbsoluteValueTargetDescriptor,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../../types/calculator';
 import { UNSUPPORTED_FAMILY_ERROR } from '../outcome';
@@ -235,7 +235,7 @@ function matchBoundedAbsoluteValueTransform(request: GuardedSolveRequest): Algeb
   return null;
 }
 
-function isGuidedUnsupportedAbsBranchOutcome(outcome: DisplayOutcome) {
+function isGuidedUnsupportedAbsBranchOutcome(outcome: ResultProducerDraft) {
   if (outcome.kind !== 'error') {
     return false;
   }
@@ -252,8 +252,8 @@ function isGuidedUnsupportedAbsBranchOutcome(outcome: DisplayOutcome) {
 function buildBlockedAbsBranchOutcome(
   request: GuardedSolveRequest,
   transform: AlgebraTransform,
-  recursiveOutcomes: DisplayOutcome[],
-): DisplayOutcome {
+  recursiveOutcomes: ResultProducerDraft[],
+): ResultProducerDraft {
   const warnings = dedupe(recursiveOutcomes.flatMap((outcome) => outcome.warnings));
   const plannerBadges = dedupe(
     recursiveOutcomes.flatMap((outcome) => outcome.kind === 'prompt' ? [] : outcome.plannerBadges ?? []),

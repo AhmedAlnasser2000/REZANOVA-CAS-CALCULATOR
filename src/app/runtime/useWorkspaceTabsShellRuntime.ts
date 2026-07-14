@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type {
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   ModeId,
 } from '../../types/calculator';
 import type { useWorkspaceInstancesRuntime } from './useWorkspaceInstancesRuntime';
@@ -45,7 +45,7 @@ type WorkspaceTabsShellRuntimeOptions = {
   display: {
     ansLatex: string;
     captureDisplayState: () => WorkspaceInstanceStateSlot;
-    displayOutcome: DisplayOutcome | null;
+    displayOutcome: CanonicalRuntimeOutcome | null;
     replayVariableSubstitutions: WorkspaceDisplayReplayVariableSubstitutions;
     restoreDisplayState: (state: WorkspaceInstanceStateSlot) => void;
   };

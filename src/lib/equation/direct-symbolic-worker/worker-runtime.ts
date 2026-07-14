@@ -1,5 +1,5 @@
 import { runGuardedDirectSymbolicFallback } from '../guarded-solve';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../../result-contract';
+import { finalizeEquationCanonicalRuntimeOutcome } from '../equation-solve-result';
 import type {
   EquationDirectSymbolicWorkerGlobalScope,
   EquationDirectSymbolicWorkerInboundMessage,
@@ -21,7 +21,7 @@ workerSelf.addEventListener('message', (event: MessageEvent<EquationDirectSymbol
     workerSelf.postMessage({
       kind: 'completed',
       requestId: event.data.requestId,
-      outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(
+      outcome: finalizeEquationCanonicalRuntimeOutcome(
         runGuardedDirectSymbolicFallback(event.data.request),
         'Equation direct-symbolic worker',
       ),

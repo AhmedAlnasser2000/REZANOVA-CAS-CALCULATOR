@@ -53,7 +53,7 @@ import type {
   CalculateScreen,
   DerivativePointWorkbenchState,
   DerivativeWorkbenchState,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   GuideExample,
   HistoryEntry,
   IntegralWorkbenchState,
@@ -64,6 +64,7 @@ import type {
   StoredVariableValue,
   VariableSubstitutionSnapshot,
 } from '../../types/calculator';
+import { retitleCanonicalRuntimeOutcome } from '../../lib/result-contract';
 
 type TransitionFn = (callback: () => void) => void;
 
@@ -101,7 +102,7 @@ type CalculateOoeRouteDescriptor =
     };
 
 type CommitCalculateOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'calculate' | 'equation',
   context?: Partial<Pick<HistoryEntry, 'calculateScreen' | 'calculateSeed'>> & {
@@ -135,7 +136,7 @@ type UseCalculateRuntimeOptions = {
   }) => PendingHistoryTicketReservation | null;
   routeToModeDestination?: (mode: ModeId, applyDestination: () => void) => boolean;
   settings: Pick<Settings, 'angleUnit' | 'outputStyle'>;
-  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome | null) => void;
   setMode: (mode: ModeId) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   startTransition: TransitionFn;
@@ -149,16 +150,8 @@ type UseCalculateRuntimeOptions = {
   setDerivativePointWorkbench: Dispatch<SetStateAction<DerivativePointWorkbenchState>>;
 };
 
-function retitleOutcome(outcome: DisplayOutcome, title: string): DisplayOutcome {
-  if (outcome.kind === 'prompt') {
-    return { ...outcome, title };
-  }
-
-  if (outcome.kind === 'error') {
-    return { ...outcome, title };
-  }
-
-  return { ...outcome, title };
+function retitleOutcome(outcome: CanonicalRuntimeOutcome, title: string): CanonicalRuntimeOutcome {
+  return retitleCanonicalRuntimeOutcome(outcome, title);
 }
 
 function isCalculateSurfaceState(value: WorkspaceInstanceStateSlot): value is CalculateSurfaceState {

@@ -6,7 +6,7 @@ import {
 } from '../modes/table-core';
 import { buildStatisticsModeRunPayload } from '../statistics/runtime-run';
 import { buildTrigonometryModeRunPayload } from '../trigonometry/runtime-run';
-import { resolveCanonicalResultForStorage } from './storage';
+import { requireCanonicalResultAuthority } from './native-result';
 
 describe('guided-domain canonical result producers', () => {
   it('re-owns Trigonometry equation truth after the Equation handoff boundary', () => {
@@ -18,8 +18,8 @@ describe('guided-domain canonical result producers', () => {
 
     expect(result.outcome.title).toBe('Trig Equation');
     if (result.outcome.kind === 'prompt') throw new Error('Expected Trigonometry result.');
-    expect(resolveCanonicalResultForStorage(result.outcome))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(result.outcome, 'Trigonometry test').canonicalResult)
+      .toBeDefined();
     expect(result.outcome.canonicalResult?.branchReadback?.target.mathJson).toBe('x');
     expect(result.outcome.canonicalResult?.branchReadback?.branches
       .every((branch) => branch.mathJson !== undefined)).toBe(true);
@@ -37,8 +37,8 @@ describe('guided-domain canonical result producers', () => {
     expect(result.outcome.kind).toBe('success');
     if (result.outcome.kind !== 'success') throw new Error('Expected Geometry success.');
     expect(result.outcome.actions?.[0]?.kind).toBe('send');
-    expect(resolveCanonicalResultForStorage(result.outcome))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(result.outcome, 'Geometry test').canonicalResult)
+      .toBeDefined();
     expect(result.outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
     expect(JSON.stringify(result.outcome.canonicalResult)).not.toContain('actions');
   });
@@ -53,8 +53,8 @@ describe('guided-domain canonical result producers', () => {
     expect(result.outcome.kind).toBe('success');
     if (result.outcome.kind !== 'success') throw new Error('Expected Statistics success.');
     expect(result.outcome.detailSections?.[0]?.title).toBe('Quality Summary');
-    expect(resolveCanonicalResultForStorage(result.outcome))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(result.outcome, 'Statistics test').canonicalResult)
+      .toBeDefined();
     expect(result.outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
     expect(result.outcome.canonicalResult?.details?.[0]?.lines.slice(1)
       .every((line) => line.some((part) => part.kind === 'math' && part.math.mathJson !== undefined)))
@@ -72,8 +72,11 @@ describe('guided-domain canonical result producers', () => {
     });
 
     if (result.outcome.kind === 'prompt') throw new Error('Expected Table result.');
-    expect(resolveCanonicalResultForStorage(result.outcome, { tableResponse: result.response }))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(
+      result.outcome,
+      'Table test',
+      { tableResponse: result.response },
+    ).canonicalResult).toBeDefined();
     expect(result.outcome.canonicalResult?.table).toEqual({
       headers: ['x', '\\sqrt{x}'],
       rows: [
@@ -95,8 +98,11 @@ describe('guided-domain canonical result producers', () => {
     const cancelled = buildCancelledTableModeResult();
     expect(cancelled.runtimeStatus).toBe('cancelled');
     if (cancelled.outcome.kind === 'prompt') throw new Error('Expected Table cancellation result.');
-    expect(resolveCanonicalResultForStorage(cancelled.outcome, { tableResponse: cancelled.response }))
-      .toMatchObject({ ok: true, source: 'native' });
+    expect(requireCanonicalResultAuthority(
+      cancelled.outcome,
+      'Table cancellation test',
+      { tableResponse: cancelled.response },
+    ).canonicalResult).toBeDefined();
     expect(cancelled.outcome.canonicalResult?.table).toEqual({ headers: [], rows: [] });
   });
 });

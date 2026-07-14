@@ -14,8 +14,8 @@ import {
   resolveStoredValueModePolicy,
   storedValueReadbackSections,
 } from '../../algebra/variable-memory';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { deriveDisplayOutcomeFromCanonicalResult } from '../../result-contract';
+import type { ResultProducerDraft } from '../../../types/calculator';
+import { attachCanonicalResultToProducerDraft } from '../../result-contract';
 import { buildCalculateResultDocument } from './result-document';
 import type { RunCalculateAlgebraTransformRequest } from './types';
 
@@ -25,7 +25,7 @@ export function runCalculateAlgebraTransform({
   angleUnit,
   storedVariables,
   variableSubstitutionSnapshot,
-}: RunCalculateAlgebraTransformRequest): DisplayOutcome {
+}: RunCalculateAlgebraTransformRequest): ResultProducerDraft {
   const title = getAlgebraTransformLabel(action);
   const planner = planMathExecution(latex, {
     mode: 'calculate',
@@ -160,7 +160,7 @@ export function runCalculateAlgebraTransform({
   });
 
   return attachRuntimeEnvelope(
-    deriveDisplayOutcomeFromCanonicalResult<Extract<DisplayOutcome, { kind: 'success' }>>(
+    attachCanonicalResultToProducerDraft<Extract<ResultProducerDraft, { kind: 'success' }>>(
       canonicalResult,
       {
         kind: 'success',

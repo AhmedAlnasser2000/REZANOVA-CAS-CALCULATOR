@@ -10,7 +10,6 @@ import {
 } from '../trigonometry/runtime-input';
 import {
   buildCanonicalTrigonometryModeRunPayload,
-  projectCanonicalTrigonometryModeRunPayload,
   type TrigonometryModeRunPayload,
 } from '../trigonometry/runtime-run';
 import {
@@ -46,10 +45,10 @@ export async function runTrigonometryModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
-    (payload) => projectCanonicalTrigonometryModeRunPayload(payload).outcome,
+    (payload) => payload.outcome,
   );
   return {
-    payload: projectCanonicalTrigonometryModeRunPayload(envelope.payload),
+    payload: envelope.payload,
     ooe: envelope.ooe,
   };
 }

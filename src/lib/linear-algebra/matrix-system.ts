@@ -1,4 +1,4 @@
-import type { DisplayOutcome, MatrixSystemForm } from '../../types/calculator';
+import type { ResultProducerDraft, MatrixSystemForm } from '../../types/calculator';
 import type { ExactScalar } from '../algebra/polynomial-core';
 import {
   rrefExactMatrix,
@@ -36,7 +36,7 @@ export type MatrixSystemRunInput = {
   rhsVectorLatex?: string;
 };
 
-function matrixSystemStop(reason: string): DisplayOutcome {
+function matrixSystemStop(reason: string): ResultProducerDraft {
   return {
     kind: 'error',
     title: 'Matrix system',
@@ -281,7 +281,7 @@ function systemDisplayLabels(input: MatrixSystemRunInput) {
   };
 }
 
-export function runMatrixLinearSystem(input: MatrixSystemRunInput): DisplayOutcome {
+export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProducerDraft {
   const coefficients = exactMatrixFromWire(input.exactCoefficients) ?? exactMatrixFromNumeric(input.coefficients);
   const constants = exactVectorFromWire(input.exactConstants) ?? exactVectorFromNumeric(input.constants);
   if (!coefficients || !constants) {

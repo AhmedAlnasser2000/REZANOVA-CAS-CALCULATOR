@@ -7,7 +7,7 @@ import { createKeyboardContext } from '../../lib/virtual-keyboard/capabilities';
 import { buildVirtualKeyboardLayouts } from '../../lib/virtual-keyboard/layouts';
 import type {
   AngleUnit,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   HistoryEntry,
   ModeId,
   SettingsPatch,
@@ -23,7 +23,7 @@ import { useTableRuntime } from './useTableRuntime';
 import { readHistoryResult } from './historyDisplayEntry';
 
 type CommitLinearTableOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'matrix' | 'vector' | 'table',
   context?: Partial<Pick<HistoryEntry, 'matrixSeed' | 'vectorSeed'>> & {

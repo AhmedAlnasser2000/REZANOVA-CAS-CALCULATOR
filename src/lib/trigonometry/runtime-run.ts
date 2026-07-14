@@ -6,8 +6,7 @@ import type {
 } from '../../types/calculator';
 import { runTrigonometryCoreDraft } from './core';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import { trigRequestToScreen } from './parser';
@@ -82,17 +81,6 @@ export function buildCanonicalTrigonometryModeRunPayload(
   const payload = buildTrigonometryModeRunPayload(request);
   return {
     ...payload,
-    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload.outcome, 'Trigonometry'),
-  };
-}
-
-export function projectCanonicalTrigonometryModeRunPayload(
-  payload: CanonicalTrigonometryModeRunPayload,
-): TrigonometryModeRunPayload {
-  return {
-    ...payload,
-    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(payload.outcome, {
-      includeCanonicalMath: false,
-    }),
+    outcome: finalizeCanonicalRuntimeOutcomeFromProducer(payload.outcome, 'Trigonometry'),
   };
 }

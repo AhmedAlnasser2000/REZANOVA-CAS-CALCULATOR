@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
 import type { OoeRuntimeControlContext } from '../ooe/runtime-control/runtime-coordinator';
 import type {
   CalculusWorkerInboundMessage,
@@ -12,7 +12,7 @@ import {
 } from './worker-clients/calculus-worker-client';
 import type { RunCalculusModeRequest } from './calculus';
 import { createCalculusResultOutcome } from '../calculus/workspace/result-document';
-import { projectDisplayOutcomeToCanonicalRuntimeOutcome } from '../result-contract';
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../result-contract';
 
 function makeRequest(): RunCalculusModeRequest {
   return {
@@ -39,7 +39,7 @@ function makeRequest(): RunCalculusModeRequest {
   };
 }
 
-function successOutcome(): Extract<DisplayOutcome, { kind: 'success' }> {
+function successOutcome(): Extract<ResultProducerDraft, { kind: 'success' }> {
   return {
     kind: 'success',
     title: 'Calculus',
@@ -49,7 +49,7 @@ function successOutcome(): Extract<DisplayOutcome, { kind: 'success' }> {
 }
 
 function successRuntimeOutcome() {
-  return projectDisplayOutcomeToCanonicalRuntimeOutcome(
+  return finalizeCanonicalRuntimeOutcomeFromProducer(
     createCalculusResultOutcome(successOutcome()),
     'Calculus worker test',
   );

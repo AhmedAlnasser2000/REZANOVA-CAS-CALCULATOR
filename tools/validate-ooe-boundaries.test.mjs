@@ -86,9 +86,14 @@ describe('OOE boundary validation', () => {
         "import { buildOoeRuntimeEnvelope } from './runtime-envelope';",
       ].join('\n'),
     );
+    writeFile(
+      rootDir,
+      'src/lib/ooe/equation-pilot.ts',
+      "import { finalizeEquationCanonicalRuntimeOutcome } from '../equation/equation-solve-result';\n",
+    );
 
     assert.deepEqual(validateOoeBoundaries({ rootDir }), {
-      tsFiles: 1,
+      tsFiles: 2,
       rustFiles: 0,
     });
   });

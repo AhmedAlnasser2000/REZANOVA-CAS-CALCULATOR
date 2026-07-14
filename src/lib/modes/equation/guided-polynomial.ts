@@ -15,14 +15,14 @@ import {
   normalizedPolynomialCoefficients,
   POLYNOMIAL_VIEW_META,
 } from '../equation-ui-model';
-import type { AngleUnit, DisplayOutcome, EquationDomainIntent, OutputStyle, PolynomialEquationView } from '../../../types/calculator';
+import type { AngleUnit, ResultProducerDraft, EquationDomainIntent, OutputStyle, PolynomialEquationView } from '../../../types/calculator';
 import { profileEquationResult } from '../../display/printer';
 import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 import { tryEquationMathValuesFromOwnedPayload } from '../../equation/solve-result/math-values';
 
 const ce = new ComputeEngine();
 
-export function solveSystem(source: number[][], size: 2 | 3): DisplayOutcome {
+export function solveSystem(source: number[][], size: 2 | 3): ResultProducerDraft {
   const coefficients = source.map((row) => row.slice(0, size));
   const constants = source.map((row) => row[size]);
   const solution = solveLinearSystem(coefficients, constants);
@@ -59,7 +59,7 @@ export function solvePolynomial(
   outputStyle: OutputStyle,
   ansLatex: string,
   equationDomainIntent: EquationDomainIntent = 'real',
-): DisplayOutcome {
+): ResultProducerDraft {
   const meta = POLYNOMIAL_VIEW_META[screen];
   const normalized = normalizedPolynomialCoefficients(coefficients, meta.degree + 1);
 
@@ -117,8 +117,7 @@ export function solvePolynomial(
     const mathValues = response.answerMathJson === undefined
       ? undefined
       : tryEquationMathValuesFromOwnedPayload({
-          canonicalMath: {
-            version: 1,
+          primaryMath: {
             canonicalLatex: response.exactLatex,
             mathJson: response.answerMathJson,
           },

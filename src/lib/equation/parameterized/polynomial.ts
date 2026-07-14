@@ -2,7 +2,7 @@ import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   DisplayBranchReadback,
   DisplayDetailSection,
-  DisplayMathPayloadV1,
+  CanonicalMathValueV1,
 } from '../../../types/calculator';
 import { analyzeVariablesFromLatex } from '../../algebra/variable-core';
 import {
@@ -54,7 +54,7 @@ export type ParameterizedPolynomialSolveSuccess = {
   target: string;
   parameterNames: string[];
   exactLatex: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   exactSupplementLatex?: string[];
   detailSections: DisplayDetailSection[];
@@ -334,7 +334,7 @@ function buildPureSquareTranscendentalRoots(target: string, a: MathJson, b: Math
   );
   return {
     exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{\\right\\}`,
-    ...(renderedRoots.canonicalMath ? { canonicalMath: renderedRoots.canonicalMath } : {}),
+    ...(renderedRoots.primaryMath ? { primaryMath: renderedRoots.primaryMath } : {}),
     branchReadback: renderedRoots.branchReadback,
   };
 }
@@ -372,7 +372,7 @@ function buildQuadraticRootsLatex(target: string, a: MathJson, b: MathJson, c: M
   return {
     discriminant,
     exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{\\right\\}`,
-    ...(renderedRoots.canonicalMath ? { canonicalMath: renderedRoots.canonicalMath } : {}),
+    ...(renderedRoots.primaryMath ? { primaryMath: renderedRoots.primaryMath } : {}),
     branchReadback: renderedRoots.branchReadback,
   };
 }
@@ -449,7 +449,7 @@ export function solveParameterizedPolynomialEquation(
     );
   }
 
-  const { branchReadback, canonicalMath, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
+  const { branchReadback, primaryMath, exactLatex } = buildQuadraticRootsLatex(target, a, b, c);
   const exactSupplementLatex = normalizeParameterizedSupplementLatex([
     nonzeroFactForLeadingCoefficient(a),
     realDiscriminantFact(discriminant),
@@ -469,7 +469,7 @@ export function solveParameterizedPolynomialEquation(
     target,
     parameterNames,
     exactLatex,
-    ...(canonicalMath ? { canonicalMath } : {}),
+    ...(primaryMath ? { primaryMath } : {}),
     branchReadback,
     exactSupplementLatex,
     detailSections,

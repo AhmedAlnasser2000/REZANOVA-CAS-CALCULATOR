@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCanonicalResultForStorage } from '../../result-contract';
+import { requireCanonicalResultAuthority } from '../../result-contract';
 import {
   runCalculateAlgebraTransform,
   runCalculateCanonicalRuntimeRequest,
@@ -27,10 +27,8 @@ describe('runCalculateAlgebraTransform', () => {
         'Ignored stored values: x=4. Symbolic transforms keep variables symbolic.',
       ],
     });
-    expect(resolveCanonicalResultForStorage(result)).toMatchObject({
-      ok: true,
-      source: 'native',
-    });
+    expect(requireCanonicalResultAuthority(result, 'Calculate transform test').canonicalResult)
+      .toBeDefined();
   });
 
   it('keeps algebra-transform runtime advisories JSON-compatible', () => {

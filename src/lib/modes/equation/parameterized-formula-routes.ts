@@ -15,7 +15,7 @@ import type {
   ComplexExactForm,
   DisplayBranchReadback,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   PlannerBadge,
 } from '../../../types/calculator';
 import {
@@ -32,7 +32,7 @@ type FormulaRouteDomain = 'complex' | 'real';
 type CubicCardanoResult = ReturnType<typeof solveParameterizedTopLevelCubicCardanoEquation>;
 type QuarticFerrariResult = ReturnType<typeof solveParameterizedTopLevelQuarticFerrariEquation>;
 export type ParameterizedFormulaRouteResult = {
-  outcome?: DisplayOutcome;
+  outcome?: ResultProducerDraft;
   cubicCardano?: CubicCardanoResult;
   quarticFerrari?: QuarticFerrariResult;
 };
@@ -57,7 +57,7 @@ function attachSymbolicFormulaOutcome(options: {
   exactSupplementLatex?: string[];
   detailSections?: DisplayDetailSection[];
 }) {
-  const outcome: DisplayOutcome = createEquationResultOutcome({
+  const outcome: ResultProducerDraft = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: options.exactLatex,

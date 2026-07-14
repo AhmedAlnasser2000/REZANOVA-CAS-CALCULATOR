@@ -132,7 +132,7 @@ describe('polynomial-domain-core', () => {
     });
   });
 
-  it('builds reusable facts and value-domain metadata without DisplayOutcome adoption', () => {
+  it('builds reusable facts and value-domain metadata without ResultProducerDraft adoption', () => {
     const facts = polynomialDomainFactsFromConstraints([
       { kind: 'nonzero', expressionLatex: 'x-1' },
     ]);

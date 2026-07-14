@@ -1,19 +1,19 @@
-import type { DisplayOutcome, TableResponse } from '../../types/calculator';
+import type { ResultProducerDraft, TableResponse } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
-type TableSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type TableErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type TableSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type TableErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 type TableResultProducerInput =
   | Omit<TableSuccessOutcome, 'canonicalResult'>
   | Omit<TableErrorOutcome, 'canonicalResult'>;
 
-type TableResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+type TableResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 export function createTableResultOutcome(
   input: Omit<TableSuccessOutcome, 'canonicalResult'>,
@@ -35,7 +35,7 @@ export function createTableResultOutcome(
   response: TableResponse,
   options: CanonicalResultProducerOptionsV1 = {},
 ): TableResultProducerOutcome {
-  if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
+  if (input.primaryMath && input.primaryMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Table canonical math must match the producer exact LaTeX.');
   }
   const success = input.kind === 'success' ? input : undefined;
@@ -44,7 +44,7 @@ export function createTableResultOutcome(
     title: input.title,
     ...(input.kind === 'error' ? { error: input.error } : {}),
     ...(input.exactLatex
-      ? { primaryMath: canonicalMathValue(input.exactLatex, input.canonicalMath?.mathJson) }
+      ? { primaryMath: canonicalMathValue(input.exactLatex, input.primaryMath?.mathJson) }
       : {}),
     ...(success?.answerRows ? { answerRows: success.answerRows } : {}),
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
@@ -103,7 +103,7 @@ export function createTableResultOutcome(
     },
   }, options);
 
-  return deriveDisplayOutcomeFromCanonicalResult<TableResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<TableResultProducerOutcome>(
     canonicalResult,
     input,
   );

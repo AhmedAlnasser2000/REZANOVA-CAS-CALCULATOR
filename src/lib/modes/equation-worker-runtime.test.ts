@@ -1,25 +1,26 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { DisplayOutcome } from '../../types/calculator';
-import { projectEquationDisplayOutcomeToBoundaryOrThrow } from '../equation/equation-solve-result';
-import { projectCanonicalRuntimeOutcomeToDisplayOutcome } from '../result-contract';
+import type { ResultProducerDraft } from '../../types/calculator';
+import {
+  buildEquationOutcomeBoundaryFromProducerOrThrow,
+  createEquationResultOutcome,
+} from '../equation/equation-solve-result';
 import { runEquationModeViaIsolatedWorker } from './worker-clients/equation-worker-client';
 import type { EquationWorkerInboundMessage, EquationWorkerOutboundMessage } from './worker-entrypoints/equation.worker';
 import type { OoeRuntimeControlContext } from '../ooe/runtime-control/runtime-coordinator';
 import type { RunEquationModeRequest } from './equation';
 import { WORKER_CANCEL_POLL_INTERVAL_MS } from './worker-clients/runtime-config';
 
-const successPayload: DisplayOutcome = {
+const successPayload: ResultProducerDraft = createEquationResultOutcome({
   kind: 'success',
   title: 'Solve',
   exactLatex: 'x=1',
-  canonicalMath: {
-    version: 1,
+  primaryMath: {
     canonicalLatex: 'x=1',
     mathJson: ['Equal', 'x', 1],
   },
   warnings: [],
-};
-const successBoundary = projectEquationDisplayOutcomeToBoundaryOrThrow(successPayload);
+});
+const successBoundary = buildEquationOutcomeBoundaryFromProducerOrThrow(successPayload);
 const successOutcome = {
   kind: 'success' as const,
   canonicalResult: successBoundary.result.document,
@@ -140,7 +141,7 @@ describe('Equation worker runtime client', () => {
         terminalStatus: 'completed',
       },
     });
-    expect(projectCanonicalRuntimeOutcomeToDisplayOutcome(result.outcome)).toMatchObject(successPayload);
+    expect(result.outcome).toEqual(successOutcome);
     expect(structuredClone(successOutcome)).toEqual(successOutcome);
   });
 

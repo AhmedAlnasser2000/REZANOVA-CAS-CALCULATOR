@@ -1,6 +1,6 @@
 import type {
-  DisplayOutcome,
-  DisplayOutcomeAction,
+  ResultProducerDraft,
+  ResultProducerActionDraft,
   GeometryParseResult,
   GeometryRequest,
   GeometryScreen,
@@ -99,7 +99,7 @@ function requestTitle(request: GeometryRequest): string {
   }
 }
 
-function toOutcome(parseResult: GeometryParseResult, title = 'Geometry'): DisplayOutcome {
+function toOutcome(parseResult: GeometryParseResult, title = 'Geometry'): ResultProducerDraft {
   if (parseResult.ok) {
     return {
       kind: 'error',
@@ -120,9 +120,9 @@ function toOutcome(parseResult: GeometryParseResult, title = 'Geometry'): Displa
 function evaluationToOutcome(
   title: string,
   evaluation: GeometryEvaluation,
-  actions?: DisplayOutcomeAction[],
-): DisplayOutcome {
-  let outcome: DisplayOutcome;
+  actions?: ResultProducerActionDraft[],
+): ResultProducerDraft {
+  let outcome: ResultProducerDraft;
   if (evaluation.error) {
     outcome = {
       kind: 'error',
@@ -158,7 +158,7 @@ function solveMissingToOutcome(
 ) {
   const actions =
     solved.handoffEquationLatex && solved.evaluation.error
-      ? [{ kind: 'send', target: 'equation', latex: solved.handoffEquationLatex } satisfies DisplayOutcomeAction]
+      ? [{ kind: 'send', target: 'equation', latex: solved.handoffEquationLatex } satisfies ResultProducerActionDraft]
       : undefined;
   const evaluation =
     solved.handoffWarning
@@ -172,7 +172,7 @@ function solveMissingToOutcome(
   return evaluationToOutcome(title, evaluation, actions);
 }
 
-function runGeometryRequest(request: GeometryRequest): DisplayOutcome {
+function runGeometryRequest(request: GeometryRequest): ResultProducerDraft {
   const title = requestTitle(request);
 
   switch (request.kind) {

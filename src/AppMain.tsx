@@ -143,7 +143,7 @@ import {
   type CalculusScreen,
   type CalculateScreen,
   type EquationScreen,
-  type DisplayOutcomeAction,
+  type CanonicalRuntimeActionV1,
   type GuideExample,
   type LauncherAppEntry,
   type LauncherLaunchIntent,
@@ -1815,32 +1815,33 @@ export default function App() {
     loadLatexIntoEditor(activeExpressionLatex());
   }
 
-  function triggerDisplayOutcomeAction(action: DisplayOutcomeAction) {
+  function triggerDisplayOutcomeAction(action: CanonicalRuntimeActionV1) {
+    const latex = action.math.canonicalLatex;
     if (action.kind === 'send') {
       if (action.target === 'equation') {
-        sendLatexToEquation(action.latex, {
+        sendLatexToEquation(latex, {
           openNumericSolve: currentMode === 'trigonometry',
         });
       } else {
-        sendLatexToCalculate(action.latex);
+        sendLatexToCalculate(latex);
       }
       return;
     }
 
     if (action.mode === 'geometry') {
       routeToModeDestination('geometry', () =>
-        loadGeometryDraft(action.latex, 'guided', true));
+        loadGeometryDraft(latex, 'guided', true));
       return;
     }
 
     if (action.mode === 'statistics') {
       routeToModeDestination('statistics', () =>
-        loadStatisticsDraftForLatex(action.latex));
+        loadStatisticsDraftForLatex(latex));
       return;
     }
 
     routeToModeDestination('trigonometry', () =>
-      loadTrigDraft(action.latex, 'guided', true));
+      loadTrigDraft(latex, 'guided', true));
   }
 
   async function pasteIntoEditor() {

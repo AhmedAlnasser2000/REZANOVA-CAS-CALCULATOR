@@ -1,3 +1,4 @@
+import { finalizeCanonicalRuntimeOutcomeFromProducer } from '../../result-contract';
 import { describe, expect, it } from 'vitest';
 import { buildDisplayBlocks } from '../../display/result/display-blocks';
 import {
@@ -258,7 +259,7 @@ describe('Equation mode complex domain', () => {
     const definitions = result.detailSections?.find((section) => section.title === 'Cardano Definitions');
     expect(definitions?.lines.join(' ')).toContain(String.raw`\operatorname{PrincipalRoot}_{3}\left(R\right)`);
     expect(definitions?.lines.join(' ')).toContain(String.raw`\operatorname{cis}`);
-    const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    const answerBlock = buildProducerDisplayBlocks(result).find((block) => block.id === 'answer');
     expect(answerBlock?.renderKind).toBe('branchList');
     const answerRows = answerBlock?.renderKind === 'branchList'
       ? (answerBlock.lines ?? []).map((line) => line.latex).join(' ')
@@ -288,7 +289,7 @@ describe('Equation mode complex domain', () => {
     expect(result.exactLatex).toContain(String.raw`\Delta<0,\ p<0`);
     expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`]);
     expect(result.detailSections?.some((section) => section.title === 'Real Cardano Definitions')).toBe(true);
-    const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    const answerBlock = buildProducerDisplayBlocks(result).find((block) => block.id === 'answer');
     expect(answerBlock?.renderKind).toBe('caseMath');
     expect(answerBlock?.lines?.map((line) => line.label)).toEqual([
       String.raw`\Delta>0`,
@@ -336,7 +337,7 @@ describe('Equation mode complex domain', () => {
     expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
     expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
     expect(result.detailSections?.some((section) => section.title === 'Cubic Rational Normalization')).toBe(true);
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
   it('solves top-level rational cubics through Complex Cardano after denominator clearing', () => {
@@ -359,7 +360,7 @@ describe('Equation mode complex domain', () => {
     expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
     expect(result.exactSupplementLatex).toContain(String.raw`R\ne0`);
     expect(result.detailSections?.some((section) => section.title === 'Cubic Rational Normalization')).toBe(true);
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
   });
 
   it('uses Real Cardano as the late exact fallback for non-factorable numeric cubics', () => {
@@ -430,7 +431,7 @@ describe('Equation mode complex domain', () => {
     expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`, String.raw`U\ne0`, String.raw`S\ne0`]);
     expect(result.detailSections?.some((section) => section.title === 'Ferrari Definitions')).toBe(true);
     expect(JSON.stringify(result)).not.toContain('RootOf');
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
   });
 
   it('solves general symbolic quartics with the Real Ferrari route', () => {
@@ -451,7 +452,7 @@ describe('Equation mode complex domain', () => {
     expect(result.exactLatex).not.toContain('PrincipalRoot');
     expect(result.exactSupplementLatex).toEqual([String.raw`a\ne0`]);
     expect(result.detailSections?.some((section) => section.title === 'Real Ferrari Definitions')).toBe(true);
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
   it('solves top-level rational quartics through Real Ferrari after denominator clearing', () => {
@@ -472,7 +473,7 @@ describe('Equation mode complex domain', () => {
     expect(result.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
     expect(result.exactSupplementLatex).toContain(String.raw`a\ne0`);
     expect(result.detailSections?.some((section) => section.title === 'Quartic Rational Normalization')).toBe(true);
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
   });
 
   it('solves top-level rational quartics through Complex Ferrari after denominator clearing', () => {
@@ -495,7 +496,7 @@ describe('Equation mode complex domain', () => {
     expect(result.exactSupplementLatex).toContain(String.raw`U\ne0`);
     expect(result.exactSupplementLatex).toContain(String.raw`S\ne0`);
     expect(result.detailSections?.some((section) => section.title === 'Quartic Rational Normalization')).toBe(true);
-    expect(buildDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
+    expect(buildProducerDisplayBlocks(result).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
   });
 
   it('solves numeric non-factorable rational quartics in Real and Complex exact modes', () => {
@@ -521,8 +522,8 @@ describe('Equation mode complex domain', () => {
     }
     expect(real.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
     expect(complex.exactSupplementLatex).toContain(String.raw`x-m\ne0`);
-    expect(buildDisplayBlocks(real).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
-    expect(buildDisplayBlocks(complex).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
+    expect(buildProducerDisplayBlocks(real).find((block) => block.id === 'answer')?.renderKind).toBe('caseMath');
+    expect(buildProducerDisplayBlocks(complex).find((block) => block.id === 'answer')?.renderKind).toBe('branchList');
   });
 
   it('solves exact-rational pure carrier special forms in Complex exact mode', () => {
@@ -685,7 +686,7 @@ describe('Equation mode complex domain', () => {
     expect(branches).toContain('\\sqrt');
     expect(branches).toContain('\\imaginaryI');
 
-    const answerBlock = buildDisplayBlocks(result).find((block) => block.id === 'answer');
+    const answerBlock = buildProducerDisplayBlocks(result).find((block) => block.id === 'answer');
     expect(answerBlock?.renderKind).toBe('branchList');
     const answerRows = answerBlock?.renderKind === 'branchList'
       ? (answerBlock.lines ?? []).map((line) => line.latex).join(' ')
@@ -767,3 +768,7 @@ describe('Equation mode complex domain', () => {
     );
   });
 });
+
+function buildProducerDisplayBlocks(outcome: Parameters<typeof finalizeCanonicalRuntimeOutcomeFromProducer>[0]) {
+  return buildDisplayBlocks(finalizeCanonicalRuntimeOutcomeFromProducer(outcome, 'Equation test'));
+}

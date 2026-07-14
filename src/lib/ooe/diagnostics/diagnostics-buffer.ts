@@ -8,7 +8,7 @@ import type { OoeRuntimeShellEvidence } from '../runtime-control/runtime-shell-c
 import type {
   CanonicalResultDetailPartV1,
   CanonicalResultDocumentV1,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
 } from '../../../types/calculator';
 import {
   collectCanonicalResultMathValues,
@@ -235,7 +235,7 @@ function canonicalSummaryText(document: CanonicalResultDocumentV1) {
   );
 }
 
-export function summarizeDisplayOutcome(outcome: unknown): OoeDiagnosticsOutputSummary {
+export function summarizeCanonicalRuntimeOutcome(outcome: unknown): OoeDiagnosticsOutputSummary {
   if (!outcome || typeof outcome !== 'object' || !('kind' in outcome)) {
     return { kind: 'unknown' };
   }
@@ -248,7 +248,7 @@ export function summarizeDisplayOutcome(outcome: unknown): OoeDiagnosticsOutputS
   if (kind !== 'success' && kind !== 'error') {
     return { kind: 'unknown' };
   }
-  const resolution = resolveCanonicalResultForConsumer(outcome as DisplayOutcome);
+  const resolution = resolveCanonicalResultForConsumer(outcome as CanonicalRuntimeOutcome);
   if (!resolution.ok) {
     return { kind, errorSummary: `Canonical result unavailable: ${resolution.failure.reason}` };
   }

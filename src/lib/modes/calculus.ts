@@ -11,8 +11,7 @@ import {
 import { runCalculusModeViaIsolatedWorker } from './worker-clients/calculus-worker-client';
 import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
 } from '../result-contract';
 
 export type { RunCalculusWorkspaceModeRequest as RunCalculusModeRequest } from '../calculus/workspace/engine';
@@ -42,7 +41,7 @@ export function buildCalculusOoeInputRevisionId(
 export async function runCalculusCanonicalRuntimeRequest(
   request: RunCalculusWorkspaceModeRequest,
 ): Promise<CanonicalRuntimeOutcome> {
-  return projectDisplayOutcomeToCanonicalRuntimeOutcome(
+  return finalizeCanonicalRuntimeOutcomeFromProducer(
     await runCalculusWorkspaceMode(request),
     'Calculus',
   );
@@ -62,11 +61,9 @@ export async function runCalculusModeWithOoePilot(
     });
     hostExecution = isolatedResult.hostExecution;
     return isolatedResult.outcome;
-  }, routeSnapshot, options, () => hostExecution, (payload) => (
-    projectCanonicalRuntimeOutcomeToDisplayOutcome(payload)
-  ));
+  }, routeSnapshot, options, () => hostExecution, (payload) => payload);
   return {
-    payload: projectCanonicalRuntimeOutcomeToDisplayOutcome(envelope.payload),
+    payload: envelope.payload,
     ooe: envelope.ooe,
   };
 }

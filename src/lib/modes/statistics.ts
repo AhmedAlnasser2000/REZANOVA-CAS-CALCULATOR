@@ -5,7 +5,6 @@ import {
 } from '../ooe/pilots/statistics-pilot';
 import {
   buildCanonicalStatisticsModeRunPayload,
-  projectCanonicalStatisticsModeRunPayload,
   type StatisticsModeRunPayload,
 } from '../statistics/runtime-run';
 import {
@@ -46,10 +45,10 @@ export async function runStatisticsModeWithOoePilot(
     routeSnapshot,
     options,
     () => hostExecution,
-    (payload) => projectCanonicalStatisticsModeRunPayload(payload).outcome,
+    (payload) => payload.outcome,
   );
   return {
-    payload: projectCanonicalStatisticsModeRunPayload(envelope.payload),
+    payload: envelope.payload,
     ooe: envelope.ooe,
   };
 }

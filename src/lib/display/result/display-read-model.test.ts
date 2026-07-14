@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import { buildFormulaViewerArtifact } from '../../../app/runtime/formula-viewer-artifacts';
 import {
   buildCanonicalResultDocumentFromProducer,
@@ -23,14 +24,6 @@ describe('display canonical read model', () => {
     });
     const outcome = {
       kind: 'success' as const,
-      title: 'Stale compatibility title',
-      exactLatex: 'x=999',
-      detailSections: [{
-        title: 'Stale compatibility detail',
-        lineKind: 'text' as const,
-        lines: ['not canonical'],
-      }],
-      warnings: ['Stale compatibility warning'],
       canonicalResult,
     };
 
@@ -54,8 +47,6 @@ describe('display canonical read model', () => {
       lines: [{ lineKind: 'math', text: 'x>0' }],
     });
     expect(warning).toMatchObject({ rawContent: ['Canonical warning'] });
-    expect(JSON.stringify(blocks)).not.toContain('999');
-    expect(JSON.stringify(blocks)).not.toContain('Stale compatibility');
 
     const artifact = buildFormulaViewerArtifact({
       block: answer!,
@@ -78,7 +69,7 @@ describe('display canonical read model', () => {
       detailSections: [{ title: 'Method', lineKind: 'text' as const, lines: ['Exact route'] }],
       warnings: [],
     };
-    expect(() => displayResultReadModelFromOutcome(legacy))
+    expect(() => displayResultReadModelFromOutcome(legacy as unknown as CanonicalRuntimeOutcome))
       .toThrow('missing-document');
 
     const cancelledDocument = buildCanonicalResultDocumentFromProducer({
@@ -89,9 +80,6 @@ describe('display canonical read model', () => {
     });
     const cancelled = {
       kind: 'error' as const,
-      title: 'Stopped',
-      error: 'Calculation stopped.',
-      warnings: [],
       canonicalResult: cancelledDocument,
     };
     expect(displayResultReadModelFromOutcome(cancelled)).toMatchObject({

@@ -1,8 +1,8 @@
-import type { DisplayOutcome } from '../../../types/calculator';
+import type { ResultProducerDraft } from '../../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../../result-contract';
 import {
@@ -10,14 +10,14 @@ import {
   inferEquationMathJsonRoute,
 } from './math-values';
 
-type EquationSuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type EquationErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type EquationSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type EquationErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 export type EquationResultProducerInput =
   | Omit<EquationSuccessOutcome, 'canonicalResult'>
   | Omit<EquationErrorOutcome, 'canonicalResult'>;
 
-export type EquationResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+export type EquationResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 export function createEquationResultOutcome(
   input: Omit<EquationSuccessOutcome, 'canonicalResult'>,
@@ -36,15 +36,15 @@ export function createEquationResultOutcome(
   options: CanonicalResultProducerOptionsV1 = {},
 ): EquationResultProducerOutcome {
   if (
-    input.canonicalMath
-    && input.canonicalMath.canonicalLatex !== input.exactLatex
+    input.primaryMath
+    && input.primaryMath.canonicalLatex !== input.exactLatex
   ) {
     throw new Error('Equation canonical math must match the producer exact LaTeX.');
   }
   const success = input.kind === 'success' ? input : undefined;
-  const ownedMathValues = input.canonicalMath?.mathJson !== undefined
+  const ownedMathValues = input.primaryMath?.mathJson !== undefined
     ? equationMathValuesFromOwnedPayload({
-        canonicalMath: input.canonicalMath,
+        primaryMath: input.primaryMath,
         branchReadback: input.branchReadback,
         routeId: inferEquationMathJsonRoute(input),
         source: 'equation-final-owner-canonical-math',
@@ -58,7 +58,7 @@ export function createEquationResultOutcome(
       ? {
           primaryMath: canonicalMathValue(
             input.exactLatex,
-            input.canonicalMath?.mathJson,
+            input.primaryMath?.mathJson,
           ),
         }
       : {}),
@@ -125,7 +125,7 @@ export function createEquationResultOutcome(
     },
   });
 
-  return deriveDisplayOutcomeFromCanonicalResult<EquationResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<EquationResultProducerOutcome>(
     canonicalResult,
     input,
   );

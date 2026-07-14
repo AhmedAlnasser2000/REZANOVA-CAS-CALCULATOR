@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import { buildDisplayBlocks } from './display-blocks';
 
 describe('display block detail-line intent', () => {
   it('fails closed when a result has no canonical detail authority', () => {
-    expect(() => buildDisplayBlocks({
+    const invalidLegacyShape = {
       kind: 'success',
       title: 'Symbolic',
       exactLatex: 'x=1',
@@ -12,6 +13,9 @@ describe('display block detail-line intent', () => {
         lines: ['Generated equation: x=1'],
       }],
       warnings: [],
-    })).toThrow('Semantic result consumers require a native canonical result document');
+    } as unknown as CanonicalRuntimeOutcome;
+
+    expect(() => buildDisplayBlocks(invalidLegacyShape))
+      .toThrow('Semantic result consumers require a native canonical result document');
   });
 });

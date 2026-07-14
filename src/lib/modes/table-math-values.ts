@@ -1,7 +1,7 @@
 import type {
   DisplayDetailLinePart,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   TableResponse,
 } from '../../types/calculator';
 import type { TableMathJsonEvidence } from '../engine/math-engine';
@@ -47,7 +47,7 @@ function details(
 }
 
 export function tableMathValuesFromEvidence(input: {
-  outcome: Exclude<DisplayOutcome, { kind: 'prompt' }>;
+  outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>;
   response: TableResponse;
   routeId: TableMathJsonRouteId;
   evidence: TableMathJsonEvidence;

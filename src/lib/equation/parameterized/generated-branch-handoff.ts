@@ -222,8 +222,8 @@ function solveGeneratedBranchEquation<Reason extends string>({
           ...formulaPayloadSupplements,
         ]),
       ];
-      const canonicalRoot = Array.isArray(result.canonicalMath?.mathJson)
-        ? result.canonicalMath.mathJson
+      const canonicalRoot = Array.isArray(result.primaryMath?.mathJson)
+        ? result.primaryMath.mathJson
         : undefined;
       const solutionMathJson = canonicalRoot?.[0] === 'Equal'
         && canonicalRoot[1] === target

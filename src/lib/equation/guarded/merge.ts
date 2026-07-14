@@ -161,7 +161,7 @@ function mergeEquationStageCarriers(
     title: 'Solve',
     exactLatex,
     ...(aggregateMathJson
-      ? { canonicalMath: { version: 1 as const, canonicalLatex: exactLatex!, mathJson: aggregateMathJson } }
+      ? { primaryMath: { canonicalLatex: exactLatex!, mathJson: aggregateMathJson } }
       : {}),
     periodicFamily,
     exactSupplementLatex: exactSupplementLatex.length > 0 ? exactSupplementLatex : undefined,

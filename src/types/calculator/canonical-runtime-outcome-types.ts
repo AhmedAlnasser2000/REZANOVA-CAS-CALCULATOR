@@ -25,11 +25,14 @@ export type CanonicalRuntimeActionV1 =
       math: CanonicalMathValueV1;
     };
 
-export type CanonicalRuntimeResultOutcome = {
-  kind: 'success' | 'error';
+type CanonicalRuntimeResultBase = {
   canonicalResult: CanonicalResultDocumentV1;
   actions?: CanonicalRuntimeActionV1[];
   runtimeAdvisories?: RuntimeAdvisories;
 };
+
+export type CanonicalRuntimeResultOutcome =
+  | (CanonicalRuntimeResultBase & { kind: 'success' })
+  | (CanonicalRuntimeResultBase & { kind: 'error' });
 
 export type CanonicalRuntimeOutcome = CanonicalRuntimeResultOutcome | PromptOutcome;

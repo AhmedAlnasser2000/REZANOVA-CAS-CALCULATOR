@@ -1,7 +1,7 @@
 import { classifyEquationRuntimeAdvisories } from '../../kernel/runtime-policy';
 import type {
   AngleUnit,
-  DisplayOutcome,
+  ResultProducerDraft,
   EquationDomainIntent,
   ComplexExactForm,
   ComplexSolveRegion,
@@ -27,7 +27,7 @@ export function tryRealNumericFallbackOutcome(input: {
   numericInterval?: NumericSolveInterval;
   complexRegion?: ComplexSolveRegion;
   complexExactForm: ComplexExactForm;
-  sharedOutcome: DisplayOutcome;
+  sharedOutcome: ResultProducerDraft;
   sharedResolvedLatex: string;
   plannerBadges?: PlannerBadge[];
 }) {

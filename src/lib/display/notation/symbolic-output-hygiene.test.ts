@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildCanonicalResultDocumentFromProducer, canonicalMathValue } from '../../result-contract';
 import {
   collectUnsafeSymbolicOutputFragments,
   hasInternalSymbolicErrorLatex,
@@ -14,20 +15,23 @@ describe('symbolic output hygiene', () => {
   it('scans success outcomes across exact, supplement, detail, and periodic latex', () => {
     const outcome = {
       kind: 'success' as const,
-      title: 'Solve',
-      exactLatex: 'x=2',
-      exactSupplementLatex: ['x\\ne0'],
-      detailSections: [{ title: 'Facts', lines: ['safe'] }],
-      periodicFamily: {
-        carrierLatex: 'x',
-        parameterLatex: 'n\\in\\mathbb{Z}',
-        branchesLatex: ['x=2\\pi n'],
-        piecewiseBranches: [{
-          conditionLatex: 'n\\in\\mathbb{Z}',
-          resultLatex: '\\mathtip{\\error{\\blacksquare}}{tuple<bad>}',
-        }],
-      },
-      warnings: [],
+      canonicalResult: buildCanonicalResultDocumentFromProducer({
+        outcomeKind: 'success',
+        title: 'Solve',
+        primaryMath: canonicalMathValue('x=2'),
+        supplements: ['x\\ne0'],
+        detailSections: [{ title: 'Facts', lines: ['safe'], lineKind: 'text' }],
+        periodicFamily: {
+          carrierLatex: 'x',
+          parameterLatex: 'n\\in\\mathbb{Z}',
+          branchesLatex: ['x=2\\pi n'],
+          piecewiseBranches: [{
+            conditionLatex: 'n\\in\\mathbb{Z}',
+            resultLatex: '\\mathtip{\\error{\\blacksquare}}{tuple<bad>}',
+          }],
+        },
+        warnings: [],
+      }),
     };
 
     expect(hasUnsafeSymbolicOutput(outcome)).toBe(true);

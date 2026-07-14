@@ -14,7 +14,7 @@ import type {
   ComplexExactForm,
   DisplayBranchReadback,
   DisplayDetailSection,
-  DisplayOutcome,
+  ResultProducerDraft,
   OutputStyle,
   PlannerBadge,
 } from '../../../types/calculator';
@@ -72,7 +72,7 @@ function attachSuccess(
   if (input.routePlan) {
     recordSelectedTargetFamilySuccess(input.searchTrace, 'top-level', family);
   }
-  const outcome: DisplayOutcome = createEquationResultOutcome({
+  const outcome: ResultProducerDraft = createEquationResultOutcome({
     kind: 'success',
     title: 'Solve',
     exactLatex: result.exactLatex,
@@ -115,7 +115,7 @@ function hasIntegerPeriodicEvidence(result: { exactLatex: string; exactSupplemen
 
 export function tryComplexPreimageWrapperRoute(
   input: ComplexPreimageWrapperRouteInput,
-): DisplayOutcome | undefined {
+): ResultProducerDraft | undefined {
   const complexPreimageHandoff = {
     domain: 'complex' as const,
     outputStyle: input.outputStyle,

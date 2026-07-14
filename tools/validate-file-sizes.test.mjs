@@ -5,7 +5,9 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import {
   DEFAULT_MAX_LINES,
+  TEST_MAX_LINES,
   baselineCapForLines,
+  defaultMaxLinesForPath,
   updateBaseline,
   validateFileSizes,
 } from './file-sizes-core.mjs';
@@ -49,7 +51,26 @@ describe('file-size ratchet validation', () => {
 
     assert.throws(
       () => validateFileSizes({ rootDir, baseline: {} }),
-      /src\/grown\.ts has 901 lines, exceeding its cap of 900/,
+      /src\/grown\.ts has 1001 lines, exceeding its cap of 1000/,
+    );
+  });
+
+  it('allows test files up to 1500 lines while retaining the production cap', () => {
+    const rootDir = makeRoot();
+    writeFile(rootDir, 'src/large.test.ts', fileWithLines(TEST_MAX_LINES));
+    writeFile(rootDir, 'src/large.ui.test.tsx', fileWithLines(TEST_MAX_LINES));
+    writeFile(rootDir, 'src/widget.spec.ts', fileWithLines(TEST_MAX_LINES));
+    writeFile(rootDir, 'src/__tests__/fixture.ts', fileWithLines(TEST_MAX_LINES));
+    writeFile(rootDir, 'src/production.ts', fileWithLines(DEFAULT_MAX_LINES));
+
+    assert.equal(validateFileSizes({ rootDir, baseline: {} }).files, 5);
+    assert.equal(defaultMaxLinesForPath('src/large.test.ts'), TEST_MAX_LINES);
+    assert.equal(defaultMaxLinesForPath('src/production.ts'), DEFAULT_MAX_LINES);
+
+    writeFile(rootDir, 'src/large.test.ts', fileWithLines(TEST_MAX_LINES + 1));
+    assert.throws(
+      () => validateFileSizes({ rootDir, baseline: {} }),
+      /src\/large\.test\.ts has 1501 lines, exceeding its cap of 1500/,
     );
   });
 
@@ -89,7 +110,7 @@ describe('file-size ratchet validation', () => {
 
   it('update lowers caps when files shrink and never raises them', () => {
     const rootDir = makeRoot();
-    writeFile(rootDir, 'src/shrunk.ts', fileWithLines(1000));
+    writeFile(rootDir, 'src/shrunk.ts', fileWithLines(1100));
     writeFile(rootDir, 'src/grown.ts', fileWithLines(3000));
 
     const previous = {
@@ -99,7 +120,7 @@ describe('file-size ratchet validation', () => {
 
     const result = updateBaseline({ rootDir, baseline: previous, write: false });
 
-    assert.equal(result.baseline['src/shrunk.ts'], baselineCapForLines(1000));
+    assert.equal(result.baseline['src/shrunk.ts'], baselineCapForLines(1100));
     assert.equal(result.baseline['src/grown.ts'], 2000);
     assert.equal(result.lowered, 1);
   });
@@ -117,5 +138,19 @@ describe('file-size ratchet validation', () => {
 
     assert.deepEqual(result.baseline, {});
     assert.equal(result.removed, 2);
+  });
+
+  it('update removes a test baseline entry after it shrinks to the test-file cap', () => {
+    const rootDir = makeRoot();
+    writeFile(rootDir, 'src/now-small.test.ts', fileWithLines(TEST_MAX_LINES));
+
+    const result = updateBaseline({
+      rootDir,
+      baseline: { 'src/now-small.test.ts': 1800 },
+      write: false,
+    });
+
+    assert.deepEqual(result.baseline, {});
+    assert.equal(result.removed, 1);
   });
 });

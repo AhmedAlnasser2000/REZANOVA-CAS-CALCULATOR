@@ -1,5 +1,5 @@
 import type {
-  DisplayOutcome,
+  ResultProducerDraft,
   GuardedSolveRequest,
 } from '../../../types/calculator';
 import { solveTrigEquation } from '../../trigonometry/equations';
@@ -18,7 +18,7 @@ import {
 } from '../solve-result/stage-carrier';
 
 function mergeRewriteOutcomes(
-  outcomes: DisplayOutcome[],
+  outcomes: ResultProducerDraft[],
   solveBadges: Parameters<typeof mergeEquationStageCarriers>[1],
   solveSummary: Parameters<typeof mergeEquationStageCarriers>[2],
 ) {
@@ -29,7 +29,7 @@ function mergeRewriteOutcomes(
   ));
 }
 
-function rewriteTrigSolve(request: GuardedSolveRequest): DisplayOutcome | null {
+function rewriteTrigSolve(request: GuardedSolveRequest): ResultProducerDraft | null {
   const rewriteMatch = matchTrigEquationRewriteForSolve(request.resolvedLatex, request.angleUnit);
   if (rewriteMatch.kind === 'none') {
     return null;

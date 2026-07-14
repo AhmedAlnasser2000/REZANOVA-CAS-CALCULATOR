@@ -12,7 +12,6 @@ import {
   type CreateCalculateWorker,
 } from './worker-clients/calculate-worker-client';
 import {
-  runCalculateRuntimeRequest,
   runCalculateCanonicalRuntimeRequest,
   runCalculateRuntimeWithOoePilot,
   type RunCalculateRuntimeRequest,
@@ -163,23 +162,20 @@ describe('calculate worker runtime shell', () => {
         commitPolicy: 'alwaysCommit',
         createWorker: createWorker('complete'),
       });
-      const mainThreadPayload = runCalculateRuntimeRequest(request);
+      const mainThreadPayload = runCalculateCanonicalRuntimeRequest(request);
 
       const serializedWorker = JSON.parse(JSON.stringify(result.payload));
       const serializedMainThread = JSON.parse(JSON.stringify(mainThreadPayload));
-      if (serializedMainThread.plannerBadges?.length === 0) {
-        delete serializedMainThread.plannerBadges;
-      }
       expect(serializedWorker).toEqual(serializedMainThread);
       expect(structuredClone(result.payload)).toEqual(result.payload);
       if (request.kind === 'standard') {
         expect(result.payload.kind).toBe('success');
         if (result.payload.kind === 'success') {
-          expect(result.payload.canonicalMath?.canonicalLatex).toBe(result.payload.exactLatex);
-          expect(result.payload.canonicalMath?.mathJson).toBeDefined();
+          expect(result.payload.canonicalResult.primaryMath?.canonicalLatex).toBeTruthy();
+          expect(result.payload.canonicalResult.primaryMath?.mathJson).toBeDefined();
         }
       } else {
-        expect(result.payload).not.toHaveProperty('canonicalMath');
+        expect(result.payload).not.toHaveProperty('primaryMath');
       }
       expect(result.ooe.calculateHostExecution).toMatchObject({
         kind: 'worker',
@@ -200,7 +196,7 @@ describe('calculate worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(result.payload).toEqual(runCalculateRuntimeRequest(request));
+    expect(result.payload).toEqual(runCalculateCanonicalRuntimeRequest(request));
     expect(result.ooe.calculateHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'calculate-runtime',

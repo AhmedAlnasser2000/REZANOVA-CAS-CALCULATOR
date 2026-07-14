@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import type { DisplayOutcome } from '../../../types/calculator';
-import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-display-outcome';
+import {
+  canonicalMathValue,
+  type CanonicalResultProducerInputV1,
+} from '../../result-contract';
+import { buildCanonicalDisplayBlocksFixture as buildDisplayBlocks } from '../../../test-utils/canonical-result-fixture';
 
 describe('Linear Algebra display block defaults', () => {
   it('opens Vector span facts and relations while collapsing dense RREF evidence', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'independent(p,q,r)',
-      exactLatex: '\\text{No}',
+      primaryMath: canonicalMathValue('\\text{No}'),
       detailSections: [
         { title: 'Span Facts', lines: ['\\dim\\operatorname{span}(p,q,r)=2'], lineKind: 'math' },
         { title: 'Dependence Relation', lines: ['p+q-r=0'], lineKind: 'math' },
@@ -23,10 +26,10 @@ describe('Linear Algebra display block defaults', () => {
   });
 
   it('opens linear-map facts while keeping RREF evidence collapsed', () => {
-    const outcome: DisplayOutcome = {
-      kind: 'success',
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success' as const,
       title: 'profile(A)',
-      exactLatex: 'A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2}',
+      primaryMath: canonicalMathValue('A:\\mathbb{R}^{2}\\to\\mathbb{R}^{2}'),
       detailSections: [
         { title: 'Rank-Nullity Facts', lines: ['\\operatorname{rank}(A)=1'], lineKind: 'math' },
         { title: 'Kernel', lines: ['\\operatorname{nullity}(A)=1'], lineKind: 'math' },

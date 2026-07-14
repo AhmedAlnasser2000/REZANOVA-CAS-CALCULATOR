@@ -1,19 +1,19 @@
-import type { DisplayOutcome } from '../../types/calculator';
+import type { ResultProducerDraft } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
-  deriveDisplayOutcomeFromCanonicalResult,
+  attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
 } from '../result-contract';
 
-type GeometrySuccessOutcome = Extract<DisplayOutcome, { kind: 'success' }>;
-type GeometryErrorOutcome = Extract<DisplayOutcome, { kind: 'error' }>;
+type GeometrySuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
+type GeometryErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
 
 type GeometryResultProducerInput =
   | Omit<GeometrySuccessOutcome, 'canonicalResult'>
   | Omit<GeometryErrorOutcome, 'canonicalResult'>;
 
-type GeometryResultProducerOutcome = Exclude<DisplayOutcome, { kind: 'prompt' }>;
+type GeometryResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
 
 export function createGeometryResultOutcome(
   input: Omit<GeometrySuccessOutcome, 'canonicalResult'>,
@@ -31,7 +31,7 @@ export function createGeometryResultOutcome(
   input: GeometryResultProducerInput,
   options: CanonicalResultProducerOptionsV1 = {},
 ): GeometryResultProducerOutcome {
-  if (input.canonicalMath && input.canonicalMath.canonicalLatex !== input.exactLatex) {
+  if (input.primaryMath && input.primaryMath.canonicalLatex !== input.exactLatex) {
     throw new Error('Geometry canonical math must match the producer exact LaTeX.');
   }
   const success = input.kind === 'success' ? input : undefined;
@@ -40,7 +40,7 @@ export function createGeometryResultOutcome(
     title: input.title,
     ...(input.kind === 'error' ? { error: input.error } : {}),
     ...(input.exactLatex
-      ? { primaryMath: canonicalMathValue(input.exactLatex, input.canonicalMath?.mathJson) }
+      ? { primaryMath: canonicalMathValue(input.exactLatex, input.primaryMath?.mathJson) }
       : {}),
     ...(success?.answerRows ? { answerRows: success.answerRows } : {}),
     ...(input.branchReadback ? { branchReadback: input.branchReadback } : {}),
@@ -89,7 +89,7 @@ export function createGeometryResultOutcome(
     },
   }, options);
 
-  return deriveDisplayOutcomeFromCanonicalResult<GeometryResultProducerOutcome>(
+  return attachCanonicalResultToProducerDraft<GeometryResultProducerOutcome>(
     canonicalResult,
     input,
   );

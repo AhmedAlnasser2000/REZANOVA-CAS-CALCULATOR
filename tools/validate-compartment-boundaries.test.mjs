@@ -586,7 +586,7 @@ describe('compartment boundary validation', () => {
         "import { reservePendingHistoryTicket } from '../../lib/ooe/job-launch/launch-tickets';",
         "import { markOoeJobStopping } from '../../lib/ooe/job-launch/active-job-registry';",
         "import { runWorkspaceWithOoeProvenance } from '../../lib/ooe/pilots/workspace-pilot';",
-        "import { summarizeOoeProvenanceDisplayOutcome } from '../../lib/ooe/pilots/provenance-summary';",
+        "import { summarizeOoeProvenanceCanonicalOutcome } from '../../lib/ooe/pilots/provenance-summary';",
       ].join('\n'),
     );
 
@@ -856,7 +856,7 @@ describe('compartment boundary validation', () => {
       },
       {
         repoPath: 'src/app/logic/badDiagnosticsBuffer.ts',
-        text: "import { summarizeDisplayOutcome } from '../../lib/ooe/diagnostics/diagnostics-buffer';\n",
+        text: "import { summarizeCanonicalRuntimeOutcome } from '../../lib/ooe/diagnostics/diagnostics-buffer';\n",
       },
     ];
 

@@ -6,7 +6,7 @@ import {
 import { analyzeLatex, isRelationalOperator } from '../../engine/math-analysis';
 import { planMathExecution } from '../../engine/semantic-planner';
 import { classifyEquationRuntimeAdvisories, classifyPlannerBlockedRuntimeAdvisories } from '../../kernel/runtime-policy';
-import type { AngleUnit, DisplayOutcome } from '../../../types/calculator';
+import type { AngleUnit, ResultProducerDraft } from '../../../types/calculator';
 import {
   attachEquationRuntimeEnvelope,
   containsNonEqualityRelation,
@@ -36,7 +36,7 @@ export function runEquationAlgebraTransform({
   action,
   equationLatex,
   angleUnit,
-}: RunEquationAlgebraTransformRequest): DisplayOutcome {
+}: RunEquationAlgebraTransformRequest): ResultProducerDraft {
   const title = getAlgebraTransformLabel(action);
 
   if (containsNonEqualityRelation(equationLatex)) {

@@ -50,7 +50,7 @@ import type {
   CoreDraftState,
   CuboidState,
   CylinderState,
-  DisplayOutcome,
+  CanonicalRuntimeOutcome,
   DistanceState,
   GeometryScreen,
   HistoryEntry,
@@ -69,11 +69,12 @@ import type { PendingHistoryTicketReservation } from '../../lib/ooe/job-launch/l
 import type { WorkspaceInstanceRuntimeContext } from '../../types/calculator/workspace-instance-types';
 import { geometryRequestFromSurfaceState } from './geometry-origin-request';
 import { launchWorkspaceRuntimeJob } from './launchWorkspaceRuntimeJob';
+import { createCanonicalRuntimeError } from '../../lib/result-contract';
 import type { GeometrySurfaceState } from './workspace-surface-state';
 import type { WorkspaceInstance } from './workspace-instances';
 
 type CommitGeometryOutcome = (
-  outcome: DisplayOutcome,
+  outcome: CanonicalRuntimeOutcome,
   inputLatex: string,
   mode: 'geometry',
   context?: Partial<Pick<HistoryEntry, 'geometryScreen' | 'geometrySeed'>> & {
@@ -101,7 +102,7 @@ type UseGeometryRuntimeOptions = {
     workspaceInstance?: WorkspaceInstanceRuntimeContext | null;
   }) => PendingHistoryTicketReservation | null;
   setClipboardNotice: (notice: string | null) => void;
-  setDisplayOutcome: (outcome: DisplayOutcome | null) => void;
+  setDisplayOutcome: (outcome: CanonicalRuntimeOutcome | null) => void;
   setRuntimeStatusOverride: (status: string | null) => void;
   startTransition: (callback: () => void) => void;
 };
@@ -813,12 +814,10 @@ export function useGeometryRuntime({
     startTransition(() => {
       const inputLatex = readLiveGeometryInputLatex(geometryScreen, editorFocused);
       if (!inputLatex) {
-        setDisplayOutcome({
-          kind: 'error',
-          title: geometryRouteMeta?.label ?? 'Geometry',
-          error: 'Enter a Geometry request or use a guided tool before evaluating.',
-          warnings: [],
-        });
+        setDisplayOutcome(createCanonicalRuntimeError(
+          geometryRouteMeta?.label ?? 'Geometry',
+          'Enter a Geometry request or use a guided tool before evaluating.',
+        ));
         return;
       }
 

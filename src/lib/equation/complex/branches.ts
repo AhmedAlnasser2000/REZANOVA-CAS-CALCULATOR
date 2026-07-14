@@ -1,7 +1,7 @@
 import type {
   ComplexExactForm,
   DisplayBranchReadback,
-  DisplayMathPayloadV1,
+  CanonicalMathValueV1,
   OutputStyle,
   SerializableMathJson,
 } from '../../../types/calculator';
@@ -100,7 +100,7 @@ export function buildBranchReadback(
   options: { preserveOrder?: boolean } = {},
 ): {
   exactLatex: string;
-  canonicalMath?: DisplayMathPayloadV1;
+  primaryMath?: CanonicalMathValueV1;
   branchReadback?: DisplayBranchReadback;
   approxText?: string;
 } {
@@ -188,8 +188,7 @@ export function buildBranchReadback(
     exactLatex: renderedRoots.exactLatex ?? `${target}\\in\\left\\{${renderedRoots.branchesLatex.join(',\\ ')}\\right\\}`,
     ...(answerMathJson
       ? {
-          canonicalMath: {
-            version: 1 as const,
+          primaryMath: {
             canonicalLatex: renderedRoots.exactLatex as string,
             mathJson: answerMathJson,
           },

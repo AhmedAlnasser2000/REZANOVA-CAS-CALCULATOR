@@ -6,8 +6,7 @@ import type {
 } from '../../types/calculator';
 import { runStatisticsCoreDraft } from './core';
 import {
-  projectCanonicalRuntimeOutcomeToDisplayOutcome,
-  projectDisplayOutcomeToCanonicalRuntimeOutcome,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import { statisticsRequestToScreen } from './parser';
@@ -79,17 +78,6 @@ export function buildCanonicalStatisticsModeRunPayload(
   const payload = buildStatisticsModeRunPayload(request);
   return {
     ...payload,
-    outcome: projectDisplayOutcomeToCanonicalRuntimeOutcome(payload.outcome, 'Statistics'),
-  };
-}
-
-export function projectCanonicalStatisticsModeRunPayload(
-  payload: CanonicalStatisticsModeRunPayload,
-): StatisticsModeRunPayload {
-  return {
-    ...payload,
-    outcome: projectCanonicalRuntimeOutcomeToDisplayOutcome(payload.outcome, {
-      includeCanonicalMath: false,
-    }),
+    outcome: finalizeCanonicalRuntimeOutcomeFromProducer(payload.outcome, 'Statistics'),
   };
 }
