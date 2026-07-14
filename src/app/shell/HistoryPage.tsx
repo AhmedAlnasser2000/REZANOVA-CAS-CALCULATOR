@@ -418,7 +418,11 @@ function HistoryDetailInspector({
       {result.approxText ? (
         <section>
           <span>{historyText.labels.approx}</span>
-          <p>{result.approxText}</p>
+          {entry.mode === 'matrix' || entry.mode === 'vector' ? (
+            <div className="history-page-inspector-math">
+              <MathStatic latex={result.approxText} />
+            </div>
+          ) : <p>{result.approxText}</p>}
         </section>
       ) : null}
       {result.supplementLatex.length ? (

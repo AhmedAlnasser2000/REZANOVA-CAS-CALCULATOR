@@ -240,11 +240,12 @@ function mathDetail(
 function exactScalarResponse(
   value: ReturnType<typeof exactDotVectors>,
   source: string,
+  approxDigits?: number,
 ): VectorResponse {
   const resultLatex = exactScalarToLatex(value);
   const response = profileLinearAlgebraResult({
     resultLatex,
-    approxText: formatApproxNumber(exactScalarToNumber(value)),
+    approxText: formatApproxNumber(exactScalarToNumber(value), { approxDigits }),
     warnings: [],
   });
   return attachLinearAlgebraCanonicalEvidence(response, {
@@ -289,7 +290,11 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
     }
     case 'dot':
       return vectorA && vectorB
-        ? exactScalarResponse(exactDotVectors(vectorA, vectorB), 'vector.dot.native-exact-scalar')
+        ? exactScalarResponse(
+            exactDotVectors(vectorA, vectorB),
+            'vector.dot.native-exact-scalar',
+            req.approxDigits,
+          )
         : null;
     case 'normA':
     case 'normB': {
@@ -299,7 +304,9 @@ function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): Vect
       }
 
       const norm = exactScalarSquareRoot(exactDotVectors(vector, vector));
-      return norm ? exactScalarResponse(norm, 'vector.norm.native-exact-radical') : null;
+      return norm
+        ? exactScalarResponse(norm, 'vector.norm.native-exact-radical', req.approxDigits)
+        : null;
     }
     case 'projectionUofV': {
       const vector = vectorA && vectorB ? exactProjectionOntoVector(vectorA, vectorB) : null;
@@ -463,7 +470,7 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
     const resultLatex = `${magnitudeLatex}${suffix}`;
     const response = profileLinearAlgebraResult({
       resultLatex,
-      approxText: formatApproxNumber(result.value),
+      approxText: formatApproxNumber(result.value, { approxDigits: req.approxDigits }),
       warnings: [],
     });
     const magnitude = canonicalLeafEvidence(
@@ -488,7 +495,7 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
     const resultLatex = result.orthogonal ? '\\text{Orthogonal}' : '\\text{Not orthogonal}';
     return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
       resultLatex,
-      approxText: `dot = ${formatApproxNumber(result.dot)}`,
+      approxText: `dot = ${formatApproxNumber(result.dot, { approxDigits: req.approxDigits })}`,
       warnings: [],
     }), {
       primary: canonicalLeafEvidence(

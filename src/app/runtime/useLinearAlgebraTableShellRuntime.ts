@@ -43,6 +43,7 @@ type ReplayVariableSubstitutions = {
 type UseLinearAlgebraTableShellRuntimeOptions = {
   activeFieldRef: RefObject<MathfieldElement | null>;
   angleUnit: AngleUnit;
+  approxDigits?: number;
   commitOutcome: CommitLinearTableOutcome;
   currentMode: ModeId;
   currentModeRef: RefObject<ModeId>;
@@ -101,6 +102,7 @@ function cloneVectorValues(values: NonNullable<HistoryEntry['vectorSeed']>['vect
 export function useLinearAlgebraTableShellRuntime({
   activeFieldRef,
   angleUnit,
+  approxDigits,
   commitOutcome,
   currentMode,
   currentModeRef,
@@ -118,6 +120,7 @@ export function useLinearAlgebraTableShellRuntime({
 }: UseLinearAlgebraTableShellRuntimeOptions) {
   const linearAlgebraRuntime = useLinearAlgebraRuntime({
     angleUnit,
+    approxDigits,
     commitOutcome,
     discardHistoryTicket,
     getCurrentMode: () => currentModeRef.current,

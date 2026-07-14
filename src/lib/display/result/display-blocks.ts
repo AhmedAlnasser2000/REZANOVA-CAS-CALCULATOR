@@ -601,12 +601,17 @@ export function buildDisplayBlocks(
   }
 
   if (options.showApproxReadback && model.approximateText && !primaryApproximateBlock) {
+    const linearAlgebraApproximation = isLinearAlgebraSourceMode(
+      options.sourceMode ?? model.sourceMode,
+    );
     blocks.push({
       id: 'approx',
       kind: 'approx',
-      label: 'Approx',
-      renderKind: 'text',
-      text: model.approximateText,
+      label: linearAlgebraApproximation ? 'Decimal' : 'Approx',
+      renderKind: linearAlgebraApproximation ? 'math' : 'text',
+      ...(linearAlgebraApproximation
+        ? { latex: model.approximateText }
+        : { text: model.approximateText }),
       rawContent: [model.approximateText],
       testId: 'display-outcome-approx',
     });

@@ -1,4 +1,5 @@
 import { runVectorOperationWithEvidence } from '../linear-algebra/vector';
+import { linearAlgebraDecimalReadback } from '../linear-algebra/decimal-readback';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
@@ -36,6 +37,7 @@ export type RunVectorModeRequest = {
   vectorA: number[];
   vectorB: number[];
   angleUnit: AngleUnit;
+  approxDigits?: number;
   exactVectorA?: ExactScalarWire[];
   exactVectorB?: ExactScalarWire[];
   editorExpressionLatex?: string;
@@ -126,6 +128,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest) {
     vectorOperands,
     exactVectorOperands,
     vectorOperandLatexList,
+    approxDigits,
   } = request;
   const execution = runVectorOperationWithEvidence({
     operation,
@@ -140,8 +143,11 @@ function runVectorModeOutcome(request: RunVectorModeRequest) {
     vectorOperands,
     exactVectorOperands,
     vectorOperandLatexList,
+    approxDigits,
   });
   const { response, evidence } = execution;
+  const decimalReadback = linearAlgebraDecimalReadback(evidence.primary, approxDigits);
+  const nativeNumericReadback = vectorUserFacingApproxText(response.approxText);
   if (response.error) {
     return {
       outcome: {
@@ -150,7 +156,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest) {
         error: response.error,
         warnings: response.warnings,
         exactLatex: response.resultLatex,
-        approxText: vectorUserFacingApproxText(response.approxText),
+        approxText: nativeNumericReadback ?? decimalReadback,
         detailSections: response.detailSections,
         sourceMode: 'vector' as const,
       },
@@ -164,7 +170,7 @@ function runVectorModeOutcome(request: RunVectorModeRequest) {
       title: vectorResultTitle(request),
       exactLatex: response.resultLatex,
       answerRows: response.answerRows,
-      approxText: vectorUserFacingApproxText(response.approxText),
+      approxText: nativeNumericReadback ?? decimalReadback,
       detailSections: response.detailSections,
       warnings: response.warnings,
       sourceMode: 'vector' as const,
@@ -199,6 +205,7 @@ export function buildVectorOoeSnapshot(request: RunVectorModeRequest) {
       lengthA: request.vectorA.length,
       lengthB: request.vectorB.length,
       angleUnit: request.angleUnit,
+      approxDigits: request.approxDigits,
       vectorA: request.vectorA,
       vectorB: request.vectorB,
       exactVectorA: request.exactVectorA,

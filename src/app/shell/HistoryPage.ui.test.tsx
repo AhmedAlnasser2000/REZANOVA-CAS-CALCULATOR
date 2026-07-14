@@ -184,6 +184,25 @@ describe('HistoryPage', () => {
     expect(handlers.onCopyResult).toHaveBeenCalledWith('x=4');
   });
 
+  it('renders Matrix and Vector approximations as math in the inspector', () => {
+    const vectorEntry = historyEntryFixture({
+      id: 'vector-decimal',
+      inputLatex: '\\operatorname{proj}_{u}(v)',
+      mode: 'vector',
+      resultLatex: '\\begin{bmatrix}\\frac{1}{2}\\\\\\frac{1}{2}\\end{bmatrix}',
+      approxText: '\\begin{bmatrix}0.5\\\\0.5\\end{bmatrix}',
+    });
+    renderHistoryPage({ history: [vectorEntry], historyNotationMode: 'latex' });
+
+    const inspector = screen.getByTestId('history-page-inspector');
+    expect(inspector.querySelectorAll('.history-page-inspector-math')).toHaveLength(3);
+    expect(inspector.querySelector('p')).toBeNull();
+    expect(Array.from(inspector.querySelectorAll('[data-raw-latex]')).some(
+      (element) => element.getAttribute('data-raw-latex')
+        === '\\begin{bmatrix}0.5\\\\0.5\\end{bmatrix}',
+    )).toBe(true);
+  });
+
   it('supports Shift range selection and Ctrl toggled multi-selection', () => {
     const handlers = renderHistoryPage({
       history: [entry('1'), entry('2'), entry('3')],

@@ -74,6 +74,35 @@ describe('display block adapter', () => {
     expect(outcome).toEqual(before);
   });
 
+  it('renders Linear Algebra decimal readback as math and hides exact only in Decimal mode', () => {
+    const outcome: CanonicalResultProducerInputV1 = {
+      outcomeKind: 'success',
+      title: 'Projection',
+      primaryMath: canonicalMathValue('\\begin{bmatrix}\\frac{1}{2}\\\\\\frac{1}{2}\\end{bmatrix}'),
+      approxText: '\\begin{bmatrix}0.5\\\\0.5\\end{bmatrix}',
+      warnings: [],
+    };
+    const both = buildDisplayBlocks(outcome, {
+      answerReadbackStyle: 'both',
+      showApproxReadback: true,
+      sourceMode: 'vector',
+    });
+    expect(both.filter((block) => block.id === 'answer')).toHaveLength(1);
+    expect(both.find((block) => block.id === 'approx')).toMatchObject({
+      label: 'Decimal',
+      renderKind: 'math',
+      latex: '\\begin{bmatrix}0.5\\\\0.5\\end{bmatrix}',
+    });
+
+    const decimal = buildDisplayBlocks(outcome, {
+      answerReadbackStyle: 'decimal',
+      showApproxReadback: true,
+      sourceMode: 'vector',
+    });
+    expect(decimal.some((block) => block.id === 'answer')).toBe(false);
+    expect(decimal.find((block) => block.id === 'approx')?.renderKind).toBe('math');
+  });
+
   it('converts periodic family fields into stable render blocks', () => {
     const outcome: CanonicalResultProducerInputV1 = {
       outcomeKind: 'success' as const,

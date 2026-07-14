@@ -1008,6 +1008,7 @@ export default function App() {
   const linearAlgebraTableShellRuntime = useLinearAlgebraTableShellRuntime({
     activeFieldRef,
     angleUnit: settings.angleUnit,
+    approxDigits: settings.approxDigits,
     commitOutcome,
     currentMode,
     currentModeRef,

@@ -88,6 +88,7 @@ type CommitLinearAlgebraOutcome = (
 
 type UseLinearAlgebraRuntimeOptions = {
   angleUnit: AngleUnit;
+  approxDigits?: number;
   commitOutcome: CommitLinearAlgebraOutcome;
   discardHistoryTicket?: (ticketId?: string | null) => void;
   getCurrentMode?: () => ModeId;
@@ -137,6 +138,7 @@ function resizeVectorValue(vector: number[], length: number) {
 
 export function useLinearAlgebraRuntime({
   angleUnit,
+  approxDigits = 6,
   commitOutcome,
   discardHistoryTicket,
   getCurrentMode,
@@ -164,6 +166,7 @@ export function useLinearAlgebraRuntime({
     matrixValues,
     activeMatrixLeftId,
     activeMatrixRightId,
+    approxDigits,
   });
   const vectorStateRef = useRef({
     vectorA,
@@ -172,6 +175,7 @@ export function useLinearAlgebraRuntime({
     activeVectorLeftId,
     activeVectorRightId,
     angleUnit,
+    approxDigits,
   });
   const latestMatrixRunRevisionRef = useRef<string | null>(null);
   const latestVectorRunRevisionRef = useRef<string | null>(null);
@@ -183,8 +187,9 @@ export function useLinearAlgebraRuntime({
       matrixValues,
       activeMatrixLeftId,
       activeMatrixRightId,
+      approxDigits,
     };
-  }, [activeMatrixLeftId, activeMatrixRightId, matrixA, matrixB, matrixValues]);
+  }, [activeMatrixLeftId, activeMatrixRightId, approxDigits, matrixA, matrixB, matrixValues]);
 
   useEffect(() => {
     vectorStateRef.current = {
@@ -194,8 +199,9 @@ export function useLinearAlgebraRuntime({
       activeVectorLeftId,
       activeVectorRightId,
       angleUnit,
+      approxDigits,
     };
-  }, [activeVectorLeftId, activeVectorRightId, angleUnit, vectorA, vectorB, vectorValues]);
+  }, [activeVectorLeftId, activeVectorRightId, angleUnit, approxDigits, vectorA, vectorB, vectorValues]);
 
   function handoffActions(handoff?: LinearAlgebraEquationHandoff): CanonicalRuntimeActionV1[] | undefined {
     return handoff
@@ -212,6 +218,7 @@ export function useLinearAlgebraRuntime({
       matrixValues: cloneMatrixNamedValues(state.matrixValues),
       activeMatrixLeftId: state.activeMatrixLeftId,
       activeMatrixRightId: state.activeMatrixRightId,
+      approxDigits: state.approxDigits,
     };
   }
 
@@ -224,6 +231,7 @@ export function useLinearAlgebraRuntime({
       vectorValues: cloneVectorNamedValues(state.vectorValues),
       activeVectorLeftId: state.activeVectorLeftId,
       activeVectorRightId: state.activeVectorRightId,
+      approxDigits: state.approxDigits,
     };
   }
 

@@ -163,6 +163,25 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
     expect(outcome.kind === 'success' ? outcome.canonicalResult?.version : undefined).toBe(2);
   });
 
+  it('keeps an exact projection primary while adding a precision-aware decimal readback', () => {
+    const document = vectorDocument({
+      operation: 'projectionUofV',
+      vectorA: [1, 1],
+      vectorB: [1, 0],
+      angleUnit: 'rad',
+      approxDigits: 4,
+    });
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: {
+        canonicalLatex: '\\begin{bmatrix}\\frac{1}{2}\\\\\\frac{1}{2}\\end{bmatrix}',
+        mathJson: ['Matrix', expect.any(Array), "'[]'"],
+      },
+    });
+    expect(document.approximations?.primary).toContain('\\begin{bmatrix}0.5');
+    expect(document.approximations?.primary).toContain('0.5\\end{bmatrix}');
+  });
+
   it.each([
     {
       label: 'inconsistent',

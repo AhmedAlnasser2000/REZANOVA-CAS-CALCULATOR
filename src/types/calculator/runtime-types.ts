@@ -994,6 +994,7 @@ export type MatrixRequest = {
   operation: MatrixOperation;
   matrixA: number[][];
   matrixB?: number[][];
+  approxDigits?: number;
   systemRhs?: number[];
   coordinateVector?: number[]; matrixPowerExponent?: number;
   systemForm?: MatrixSystemForm;
@@ -1024,6 +1025,7 @@ export type VectorRequest = {
   vectorA: number[];
   vectorB?: number[];
   angleUnit: AngleUnit;
+  approxDigits?: number;
   exactVectorA?: ExactScalarWire[]; exactVectorB?: ExactScalarWire[]; editorExpressionLatex?: string; vectorOperandLatexA?: string; vectorOperandLatexB?: string;
   vectorOperands?: number[][]; exactVectorOperands?: ExactScalarWire[][]; vectorOperandLatexList?: string[];
   vectorValues?: { id: string; name: string; value: number[] }[]; activeVectorLeftId?: string; activeVectorRightId?: string;

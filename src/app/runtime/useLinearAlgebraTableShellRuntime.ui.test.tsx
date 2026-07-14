@@ -65,6 +65,7 @@ function renderLinearAlgebraTableShell(
       return useLinearAlgebraTableShellRuntime({
         activeFieldRef,
         angleUnit: 'rad',
+        approxDigits: 9,
         clearReplayVariableSubstitutions,
         commitOutcome,
         currentMode: props.currentMode,
@@ -390,6 +391,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       expect.objectContaining({
         matrixSeed: expect.objectContaining({
           operation: 'add',
+          approxDigits: 9,
           editorExpressionLatex: 'A+B',
           matrixOperandLatexA: 'A',
           matrixOperandLatexB: 'B',
@@ -413,6 +415,7 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       expect.objectContaining({
         vectorSeed: expect.objectContaining({
           operation: 'dot',
+          approxDigits: 9,
           editorExpressionLatex: 'u\\cdot v',
           vectorOperandLatexA: 'u',
           vectorOperandLatexB: 'v',
@@ -683,7 +686,8 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       title: qrLatex,
       sourceMode: 'matrix',
     });
-    expect(qr.approximateText).toBeUndefined();
+    expect(qr.approximateText).toContain('0.6');
+    expect(qr.approximateText).toContain('-0.8');
     expect(qr.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['QR Factors', 'QR Proof', 'QR Column Steps']);
 
@@ -732,7 +736,8 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       title: diagonalizeLatex,
       sourceMode: 'matrix',
     });
-    expect(diagonalized.approximateText).toBeUndefined();
+    expect(diagonalized.approximateText).toContain('0.5');
+    expect(diagonalized.approximateText).toContain('-0.5');
     expect(diagonalized.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Characteristic Polynomial', 'Diagonalization Factors', 'Diagonalization Proof', 'Eigenvector Columns', 'Eigenspaces']);
 
@@ -779,7 +784,8 @@ describe('useLinearAlgebraTableShellRuntime', () => {
       title: 'gram(u,v)',
       sourceMode: 'vector',
     });
-    expect(gram.approximateText).toBeUndefined();
+    expect(gram.approximateText).toContain('1.714');
+    expect(gram.approximateText).toContain('-0.857');
     expect(gram.detailSections?.map((section) => section.title) ?? [])
       .toEqual(['Orthonormal Basis', 'Gram-Schmidt Proof']);
 

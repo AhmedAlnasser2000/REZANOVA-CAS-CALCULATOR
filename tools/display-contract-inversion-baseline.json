@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "LINEAR-ALGEBRA-CANONICAL-V2-COMPLETION1 retires duplicate Matrix and Vector V1 adapter call sites after all 12 routes default to V2; compatibility and legacy debt remain zero.",
+  "acceptedReason": "LINEAR-ALGEBRA-EXACT-DECIMAL-CONTROLS1 threads precision through Matrix and Vector producer requests without changing canonical authority counts or compatibility debt.",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -455,8 +455,8 @@
         "1eaec7752190abda387f:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "86a345beffff6c6dc41f:1",
-        "8d121d91874fe5d3937b:1"
+        "ba8026883500d8b93a49:1",
+        "ee93f6539b869bebc79a:1"
       ],
       "src/lib/statistics/core.ts": [
         "4d2f023d12da623801ae:1",

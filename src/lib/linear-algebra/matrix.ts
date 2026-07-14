@@ -678,7 +678,7 @@ function matrixCoreResultToResponse(req: MatrixRequest, result: MatrixCoreResult
     const resultLatex = exact?.canonicalLatex ?? scalarToLatex(result.value);
     return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
       resultLatex,
-      approxText: formatApproxNumber(result.value),
+      approxText: formatApproxNumber(result.value, { approxDigits: req.approxDigits }),
       warnings: [],
     }), {
       primary: exact ?? canonicalLeafEvidence(

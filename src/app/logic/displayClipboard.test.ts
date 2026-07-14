@@ -3,7 +3,9 @@ import type { CanonicalRuntimeOutcome } from '../../types/calculator';
 import {
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
+  finalizeCanonicalRuntimeOutcomeFromProducer,
 } from '../../lib/result-contract';
+import { runVectorMode } from '../../lib/modes/vector';
 import { copyDisplayResultWithDeps } from './displayClipboard';
 import {
   canonicalRuntimeResultV2Fixture,
@@ -211,6 +213,32 @@ describe('Display canonical clipboard routing', () => {
     expect(write).toHaveBeenLastCalledWith(expect.objectContaining({
       canonicalLatex: '\\operatorname{profile}(A)',
       mathJson: undefined,
+    }));
+  });
+
+  it('copies the exact Linear Algebra primary while Decimal output is visible', async () => {
+    const write = vi.fn().mockResolvedValue({ ok: true, host: 'browser', fidelity: 'custom-mime' });
+    const producer = runVectorMode({
+      operation: 'projectionUofV',
+      vectorA: [1, 1],
+      vectorB: [1, 0],
+      angleUnit: 'rad',
+      approxDigits: 4,
+    });
+    const outcome = finalizeCanonicalRuntimeOutcomeFromProducer(producer, 'Vector projection test');
+
+    await copyDisplayResultWithDeps({
+      displayOutcome: outcome,
+      visibleText: '[0.5, 0.5]',
+      currentMode: 'vector',
+      setClipboardNotice: vi.fn(),
+      write,
+    });
+
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({
+      canonicalLatex: '\\begin{bmatrix}\\frac{1}{2}\\\\\\frac{1}{2}\\end{bmatrix}',
+      mathJson: ['Matrix', expect.any(Array), "'[]'"],
+      visibleText: '[0.5, 0.5]',
     }));
   });
 });

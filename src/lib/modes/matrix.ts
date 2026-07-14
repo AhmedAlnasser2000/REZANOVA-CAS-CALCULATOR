@@ -1,6 +1,7 @@
 import { runMatrixOperationWithEvidence } from '../linear-algebra/matrix';
 import { runMatrixLinearSystemWithEvidence } from '../linear-algebra/matrix-system';
 import type { LinearAlgebraCanonicalEvidence } from '../linear-algebra/canonical-evidence';
+import { linearAlgebraDecimalReadback } from '../linear-algebra/decimal-readback';
 import {
   buildOoeInputRevisionId,
   type OoeJobContextOptions,
@@ -37,6 +38,7 @@ export type RunMatrixModeRequest = {
   operation: MatrixOperation;
   matrixA: number[][];
   matrixB: number[][];
+  approxDigits?: number;
   systemRhs?: number[];
   coordinateVector?: number[];
   matrixPowerExponent?: number;
@@ -171,8 +173,11 @@ function matrixResultTitle(request: RunMatrixModeRequest) {
     : matrixOperationLabel(request.operation, request.systemForm);
 }
 
-function matrixUserFacingApproxText() {
-  return undefined;
+function matrixUserFacingApproxText(
+  evidence: LinearAlgebraCanonicalEvidence,
+  approxDigits: number | undefined,
+) {
+  return linearAlgebraDecimalReadback(evidence.primary, approxDigits);
 }
 
 function runMatrixModeOutcome(request: RunMatrixModeRequest): {
@@ -197,6 +202,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): {
     systemRhsLatex,
     coordinateVectorLatex,
     matrixPowerExponentLatex,
+    approxDigits,
   } = request;
   if (operation === 'linearSystem') {
     return runMatrixLinearSystemWithEvidence({
@@ -228,6 +234,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): {
     systemRhsLatex,
     coordinateVectorLatex,
     matrixPowerExponentLatex,
+    approxDigits,
   });
   const { response, evidence } = execution;
   const actionEvidence = evidence.runtimeActions ?? [];
@@ -246,7 +253,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): {
         error: response.error,
         warnings: response.warnings,
         exactLatex: response.resultLatex,
-        approxText: matrixUserFacingApproxText(),
+        approxText: matrixUserFacingApproxText(evidence, approxDigits),
         detailSections: response.detailSections,
         sourceMode: 'matrix',
       } };
@@ -257,7 +264,7 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): {
       title: matrixResultTitle(request),
       exactLatex: response.resultLatex,
       answerRows: response.answerRows,
-      approxText: matrixUserFacingApproxText(),
+      approxText: matrixUserFacingApproxText(evidence, approxDigits),
       detailSections: response.detailSections,
       warnings: response.warnings,
       sourceMode: 'matrix',
@@ -297,6 +304,7 @@ export function buildMatrixOoeSnapshot(request: RunMatrixModeRequest) {
       rowsB: request.matrixB.length,
       matrixA: request.matrixA,
       matrixB: request.matrixB,
+      approxDigits: request.approxDigits,
       systemRhs: request.systemRhs,
       coordinateVector: request.coordinateVector,
       matrixPowerExponent: request.matrixPowerExponent,
