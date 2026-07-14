@@ -3,11 +3,10 @@ import {
   ArrowDown,
   ArrowUp,
   FilePenLine,
-  Italic,
+  MousePointer2,
   Pin,
   PinOff,
   Send,
-  Type,
   X,
 } from 'lucide-react';
 
@@ -34,7 +33,7 @@ import {
 
 function selectionLabel(selection: NotebookEditorSelection | null) {
   if (!selection) {
-    return 'Document';
+    return 'Nothing selected';
   }
   const labels: Record<string, string> = {
     paragraph: 'Text',
@@ -71,7 +70,6 @@ export function NotebookInspector({
 }: NotebookInspectorProps) {
   const isMath = selection?.type === 'inlineMath' || selection?.type === 'displayMath';
   const isSemantic = selection?.type === 'semanticBlock';
-  const isSection = selection?.type === 'notebookSection';
   const target = String(selection?.attrs.workspaceTarget ?? 'calculate') as NotebookWorkspaceTarget;
   const latex = String(selection?.attrs.latex ?? '');
   const semanticKind = String(selection?.attrs.variant ?? 'note') as NotebookSemanticKind;
@@ -118,13 +116,11 @@ export function NotebookInspector({
         </div>
       </div>
 
-      {editor && !isMath && !isSemantic && !isSection ? (
-        <div className="notebook-inspector-section">
-          <span>Text treatment</span>
-          <div className="notebook-inspector-actions">
-            <button type="button" onClick={() => editor.chain().focus().toggleBold().run()}><Type size={15} /> Bold</button>
-            <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()}><Italic size={15} /> Italic</button>
-          </div>
+      {!selection ? (
+        <div className="notebook-inspector-empty" data-testid="notebook-inspector-empty">
+          <MousePointer2 aria-hidden="true" size={34} />
+          <strong>Nothing selected</strong>
+          <span>Select a container, section, or equation to inspect its settings.</span>
         </div>
       ) : null}
 

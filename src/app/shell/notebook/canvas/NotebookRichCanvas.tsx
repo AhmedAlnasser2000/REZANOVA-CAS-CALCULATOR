@@ -28,6 +28,7 @@ import {
   insertNotebookDisplayMath,
   insertNotebookInlineMath,
   notebookEditorSelection,
+  notebookInspectorSelection,
   type NotebookEditorSelection,
 } from './selection';
 import { useNotebookMathFieldController } from '../math-field';
@@ -80,6 +81,18 @@ function selectedProseRange(editor: Editor): NotebookProseSelection | null {
   return containsText ? { from: selection.from, to: selection.to } : null;
 }
 
+function isPristineNotebook(editor: Editor) {
+  const paragraph = editor.state.doc.firstChild;
+  if (editor.state.doc.childCount !== 1 || paragraph?.type.name !== 'paragraph') {
+    return false;
+  }
+  return paragraph.content.size === 0
+    && paragraph.attrs.notebookAlignment == null
+    && paragraph.attrs.notebookLineSpacing == null
+    && paragraph.attrs.notebookSpaceBeforePt == null
+    && paragraph.attrs.notebookSpaceAfterPt == null;
+}
+
 export function NotebookRichCanvas({
   document,
   onChange,
@@ -125,14 +138,14 @@ export function NotebookRichCanvas({
       );
       documentRef.current = nextDocument;
       changeRef.current(nextDocument);
-      selectionRef.current(selection);
+      selectionRef.current(notebookInspectorSelection(currentEditor));
       const nextProseSelection = selectedProseRange(currentEditor);
       setProseSelection(nextProseSelection);
       proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
     },
     onSelectionUpdate: ({ editor: currentEditor }) => {
-      selectionRef.current(notebookEditorSelection(currentEditor));
+      selectionRef.current(notebookInspectorSelection(currentEditor));
       const nextProseSelection = selectedProseRange(currentEditor);
       setProseSelection(nextProseSelection);
       proseSelectionChangeRef.current(nextProseSelection);
@@ -150,13 +163,13 @@ export function NotebookRichCanvas({
   useEffect(() => {
     onEditorChange(editor);
     if (editor) {
-      onSelectionChange(notebookEditorSelection(editor));
+      onSelectionChange(notebookInspectorSelection(editor));
     }
     return () => onEditorChange(null);
   }, [editor, onEditorChange, onSelectionChange]);
 
   useEffect(() => {
-    if (!editor || !editor.isEmpty) {
+    if (!editor || !isPristineNotebook(editor)) {
       return;
     }
     const frame = requestAnimationFrame(() => {
@@ -281,7 +294,7 @@ export function NotebookRichCanvas({
   }
 
   const suggestion = selectedParagraphSuggestion(editor);
-  const isBlank = editor.isEmpty;
+  const isBlank = isPristineNotebook(editor);
 
   function applyTemplate(templateId: NotebookStarterTemplateId) {
     const nextDocument: NotebookRichDocument = {

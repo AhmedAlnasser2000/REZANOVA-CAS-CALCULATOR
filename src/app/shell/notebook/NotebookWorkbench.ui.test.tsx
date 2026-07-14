@@ -91,6 +91,18 @@ describe('Notebook workbench', () => {
     expect(screen.getByRole('button', { name: 'Start from template' })).toBeVisible();
   });
 
+  it('removes pristine onboarding as soon as an empty structure exists', async () => {
+    const user = userEvent.setup();
+    render(<NotebookWorkbenchHarness instanceId="workbench-structured-start" />);
+
+    await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
+    await user.click(within(screen.getByRole('menu', { name: 'Academic containers' }))
+      .getByRole('menuitem', { name: /Theorem/ }));
+    expect(await screen.findByTestId('notebook-semantic-theorem')).toBeInTheDocument();
+    expect(screen.queryByText('Start writing your explanation...')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('notebook-template-start')).not.toBeInTheDocument();
+  });
+
   it('resizes both panes accessibly and restores their defaults on double-click', async () => {
     const user = userEvent.setup();
     render(<NotebookWorkbenchHarness instanceId="workbench-resize" />);

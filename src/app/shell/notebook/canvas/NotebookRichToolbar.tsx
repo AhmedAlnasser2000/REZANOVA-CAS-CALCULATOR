@@ -5,7 +5,6 @@ import {
   Braces,
   ChevronDown,
   FolderPlus,
-  Heading1,
   Highlighter,
   Italic,
   Palette,
@@ -44,6 +43,13 @@ const PARAGRAPH_STYLE_LABELS: Record<NotebookParagraphStyle, string> = {
   'heading-3': 'Heading 3',
   mixed: 'Mixed',
 };
+
+const PARAGRAPH_STYLE_OPTIONS = [
+  { style: 'normal', description: 'Body text', glyph: 'P' },
+  { style: 'heading-1', description: 'Main topic', glyph: 'H1' },
+  { style: 'heading-2', description: 'Section', glyph: 'H2' },
+  { style: 'heading-3', description: 'Subsection', glyph: 'H3' },
+] as const;
 
 function paragraphStyleForNode(node: { type: { name: string }; attrs: Record<string, unknown> }) {
   if (node.type.name !== 'heading') {
@@ -219,7 +225,11 @@ export function NotebookRichToolbar({
             onMouseDown={(event) => event.preventDefault()}
             onClick={toggleParagraphStyleMenu}
           >
-            <Heading1 aria-hidden="true" size={16} />
+            <span className="notebook-paragraph-style-glyph" aria-hidden="true">
+              {paragraphStyle === 'mixed'
+                ? '—'
+                : PARAGRAPH_STYLE_OPTIONS.find((option) => option.style === paragraphStyle)?.glyph}
+            </span>
             <span>{PARAGRAPH_STYLE_LABELS[paragraphStyle]}</span>
             <ChevronDown aria-hidden="true" size={12} />
           </button>
@@ -230,16 +240,21 @@ export function NotebookRichToolbar({
               role="menu"
               aria-label="Paragraph styles"
             >
-              {(['normal', 'heading-1', 'heading-2', 'heading-3'] as const).map((style) => (
+              {PARAGRAPH_STYLE_OPTIONS.map((option) => (
                 <button
-                  key={style}
+                  key={option.style}
                   type="button"
                   role="menuitemradio"
-                  aria-checked={paragraphStyle === style}
+                  aria-label={PARAGRAPH_STYLE_LABELS[option.style]}
+                  aria-checked={paragraphStyle === option.style}
+                  className={`is-${option.style}`}
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => applyParagraphStyle(style)}
+                  onClick={() => applyParagraphStyle(option.style)}
                 >
-                  {PARAGRAPH_STYLE_LABELS[style]}
+                  <span className="notebook-paragraph-style-preview">
+                    {PARAGRAPH_STYLE_LABELS[option.style]}
+                  </span>
+                  <small>{option.description}</small>
                 </button>
               ))}
             </div>

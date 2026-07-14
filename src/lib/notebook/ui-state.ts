@@ -3,7 +3,7 @@ export type NotebookFloatingPosition = {
   y: number;
 };
 
-export type NotebookInspectorMode = 'auto' | 'pinned' | 'collapsed';
+export type NotebookInspectorMode = 'auto' | 'manual' | 'pinned' | 'collapsed';
 
 export type NotebookProseSelectionState = {
   from: number;

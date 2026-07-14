@@ -17,6 +17,8 @@ import {
   resetNotebookNodeViewRenderStats,
 } from './notebook/canvas';
 
+let notebookHarnessSequence = 0;
+
 beforeAll(() => {
   if (!Range.prototype.getClientRects) {
     Range.prototype.getClientRects = () => [] as unknown as DOMRectList;
@@ -42,6 +44,7 @@ function NotebookHarness({
   onOpenMathInTool?: (target: NotebookWorkspaceTarget, latex: string) => void;
   onSurfaceState?: (state: NotebookSurfaceState) => void;
 }) {
+  const [instanceId] = useState(() => `notebook.ui.${++notebookHarnessSequence}`);
   const [surfaceState, setSurfaceState] = useState<NotebookSurfaceState>(() =>
     initialState ?? createNotebookRichSurfaceState({
       idPrefix: 'test-notebook',
@@ -52,7 +55,7 @@ function NotebookHarness({
   return (
     <MathNotationProvider notationMode="latex">
       <NotebookPage
-        instanceId="notebook.1"
+        instanceId={instanceId}
         surfaceState={surfaceState}
         onOpenMathInTool={onOpenMathInTool}
         onUpdateSurfaceState={(_, nextState) => {
@@ -124,7 +127,7 @@ describe('NotebookPage', () => {
     expect(within(hint).getByRole('button', { name: /Expand Hint 2.3/ })).toBeInTheDocument();
   });
 
-  it('keeps the inspector contextual, allows pinning, and restores the last relevant block after collapse', async () => {
+  it('keeps the inspector contextual and supports pinned, collapsed, and manual-empty modes', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
 
@@ -149,7 +152,39 @@ describe('NotebookPage', () => {
     expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Restore block inspector' }));
+    expect(await screen.findByTestId('notebook-inspector-empty')).toHaveTextContent(
+      'Select a container, section, or equation to inspect its settings.',
+    );
+
+    await user.click(within(theorem).getByText('Theorem'));
+    expect(screen.getByTestId('notebook-inspector')).toHaveTextContent('Academic container');
+    const outsideParagraph = screen.getByLabelText('Notebook rich document').querySelector('p');
+    expect(outsideParagraph).not.toBeNull();
+    await user.click(outsideParagraph!);
+    expect(screen.getByTestId('notebook-inspector')).toBeInTheDocument();
+    expect(screen.getByTestId('notebook-inspector-empty')).toBeInTheDocument();
+  });
+
+  it('inspects a container body with one click while preserving direct prose editing', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+
+    await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
+    await user.click(within(screen.getByRole('menu', { name: 'Academic containers' }))
+      .getByRole('menuitem', { name: /Definition/ }));
+    const definition = await screen.findByTestId('notebook-semantic-definition');
+    const canvas = screen.getByLabelText('Notebook rich document');
+    const outsideParagraph = canvas.querySelector('p');
+    const insideParagraph = definition.querySelector('p');
+    expect(outsideParagraph).not.toBeNull();
+    expect(insideParagraph).not.toBeNull();
+
+    await user.click(outsideParagraph!);
+    expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
+    await user.click(insideParagraph!);
     expect(await screen.findByTestId('notebook-inspector')).toHaveTextContent('Academic container');
+    expect(definition).not.toHaveClass('ProseMirror-selectednode');
+    expect(canvas).toHaveFocus();
   });
 
   it('synchronizes the outline and reorders top-level containers accessibly', async () => {
@@ -198,6 +233,7 @@ describe('NotebookPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Toggle block inspector' }));
     expect(screen.getByTestId('notebook-inspector')).toHaveClass('is-drawer-open');
+    expect(screen.getByTestId('notebook-inspector-empty')).toBeInTheDocument();
     expect(screen.getByLabelText('Notebook outline')).not.toHaveClass('is-drawer-open');
   });
 
@@ -388,6 +424,10 @@ describe('NotebookPage', () => {
     await user.click(canvas);
     await user.type(canvas, 'Chapter title');
     await user.click(within(toolbar).getByRole('button', { name: 'Paragraph style: Normal' }));
+    expect(screen.getByRole('menuitemradio', { name: 'Normal' })).toHaveTextContent('Body text');
+    expect(screen.getByRole('menuitemradio', { name: 'Heading 1' })).toHaveTextContent('Main topic');
+    expect(screen.getByRole('menuitemradio', { name: 'Heading 2' })).toHaveTextContent('Section');
+    expect(screen.getByRole('menuitemradio', { name: 'Heading 3' })).toHaveTextContent('Subsection');
     await user.click(screen.getByRole('menuitemradio', { name: 'Heading 2' }));
     expect(canvas.querySelector('h2')).toHaveTextContent('Chapter title');
     expect(within(toolbar).getByRole('button', { name: 'Paragraph style: Heading 2' })).toBeInTheDocument();
@@ -539,11 +579,12 @@ describe('NotebookPage', () => {
     const rename = screen.getByRole('textbox', { name: 'Rename section' });
     await user.clear(rename);
     await user.type(rename, 'Worked examples{Enter}');
-    expect(screen.getByText('Worked examples')).toBeInTheDocument();
+    expect(screen.getAllByText('Worked examples')).not.toHaveLength(0);
 
     const outline = screen.getByLabelText('Notebook outline');
     await user.click(within(outline).getByRole('button', { name: 'Collapse Untitled section' }));
-    expect(screen.queryByText('Worked examples')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('notebook-outline-entry')
+      .filter((entry) => entry.textContent?.includes('Worked examples'))).toHaveLength(0);
     expect(within(outline).getByRole('button', { name: 'Expand Untitled section' })).toBeInTheDocument();
   });
 });

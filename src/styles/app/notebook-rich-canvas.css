@@ -165,7 +165,7 @@
 }
 
 .notebook-list-style-menu {
-  width: 192px;
+  width: 256px;
   display: grid;
   gap: 4px;
 }
@@ -173,11 +173,42 @@
 .notebook-rich-toolbar .notebook-list-style-menu button {
   width: 100%;
   height: auto;
-  min-height: 32px;
-  display: flex;
-  justify-content: flex-start;
-  padding: 5px 8px;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 98px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  justify-content: stretch;
+  padding: 6px;
   text-align: left;
+}
+
+.notebook-list-style-preview {
+  display: grid;
+  gap: 3px;
+  border: 1px solid rgba(214, 225, 205, 0.12);
+  border-radius: 5px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.notebook-list-style-preview > span {
+  display: grid;
+  grid-template-columns: 23px minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  height: 10px;
+}
+
+.notebook-list-style-preview b {
+  color: var(--page-ink);
+  font: 800 0.66rem 'IBM Plex Mono', monospace;
+  text-align: right;
+}
+
+.notebook-list-style-preview i {
+  display: block;
+  border-top: 2px solid var(--page-muted);
 }
 
 .notebook-list-style-menu button[aria-checked='true'],
@@ -280,12 +311,19 @@
   font-weight: 750;
 }
 
+.notebook-paragraph-style-glyph {
+  min-width: 20px;
+  color: var(--page-accent);
+  font: 800 0.68rem 'IBM Plex Mono', monospace;
+  text-align: center;
+}
+
 .notebook-paragraph-style-menu {
   position: absolute;
   z-index: 31;
   top: calc(100% + 9px);
   left: 0;
-  width: 180px;
+  width: 224px;
   display: grid;
   gap: 4px;
   border: 1px solid var(--notebook-border-strong);
@@ -299,10 +337,41 @@
   width: 100%;
   height: auto;
   min-height: 34px;
-  display: flex;
+  display: grid;
+  gap: 2px;
   justify-content: flex-start;
-  padding: 6px 9px;
+  padding: 8px 10px;
   text-align: left;
+}
+
+.notebook-paragraph-style-preview {
+  line-height: 1.08;
+}
+
+.notebook-paragraph-style-menu button.is-normal .notebook-paragraph-style-preview {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.notebook-paragraph-style-menu button.is-heading-1 .notebook-paragraph-style-preview {
+  font-size: 1.28rem;
+  font-weight: 900;
+}
+
+.notebook-paragraph-style-menu button.is-heading-2 .notebook-paragraph-style-preview {
+  font-size: 1.08rem;
+  font-weight: 850;
+}
+
+.notebook-paragraph-style-menu button.is-heading-3 .notebook-paragraph-style-preview {
+  font-size: 0.96rem;
+  font-weight: 800;
+}
+
+.notebook-paragraph-style-menu small {
+  color: var(--page-subtle);
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .notebook-paragraph-style-menu button[aria-checked='true'] {
@@ -315,7 +384,8 @@
   position: absolute;
   z-index: 30;
   top: calc(100% + 9px);
-  left: 0;
+  right: 0;
+  left: auto;
   width: 286px;
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -100,7 +100,10 @@ describe('NotebookParagraphControls', () => {
     const currentEditor = renderControls();
 
     await user.click(screen.getByRole('button', { name: 'Bullet styles' }));
-    await user.click(screen.getByRole('menuitemradio', { name: 'Square bullets' }));
+    const squareChoice = screen.getByRole('menuitemradio', { name: 'Square bullets' });
+    expect(squareChoice.querySelectorAll('.notebook-list-style-preview b')).toHaveLength(3);
+    expect(squareChoice).toHaveTextContent('▪');
+    await user.click(squareChoice);
     expect(currentEditor.getJSON().content?.[0]).toMatchObject({
       type: 'bulletList',
       attrs: { notebookListStyle: 'square' },
@@ -108,7 +111,9 @@ describe('NotebookParagraphControls', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'Numbering styles' }));
-    await user.click(screen.getByRole('menuitemradio', { name: 'Lower-roman numbering' }));
+    const romanChoice = screen.getByRole('menuitemradio', { name: 'Lower-roman numbering' });
+    expect(romanChoice).toHaveTextContent('i.ii.iii.');
+    await user.click(romanChoice);
     expect(currentEditor.getJSON().content?.[0]).toMatchObject({
       type: 'orderedList',
       attrs: { notebookListStyle: 'lower-roman' },

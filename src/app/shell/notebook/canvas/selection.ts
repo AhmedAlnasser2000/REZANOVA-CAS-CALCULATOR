@@ -16,6 +16,13 @@ export type NotebookEditorSelection = {
   to: number;
 };
 
+const NOTEBOOK_INSPECTOR_NODE_TYPES = new Set([
+  'inlineMath',
+  'displayMath',
+  'semanticBlock',
+  'notebookSection',
+]);
+
 function newNodeId(kind: string) {
   return `notebook.${kind}.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -45,6 +52,35 @@ export function notebookEditorSelection(
         to: selection.$from.after(depth),
       };
     }
+  }
+  return null;
+}
+
+/**
+ * Resolves the block whose settings should be shown without replacing a prose
+ * caret inside a structured block with a node selection.
+ */
+export function notebookInspectorSelection(
+  editor: Editor,
+): NotebookEditorSelection | null {
+  const direct = notebookEditorSelection(editor);
+  if (direct && NOTEBOOK_INSPECTOR_NODE_TYPES.has(direct.type)) {
+    return direct;
+  }
+
+  const { $from } = editor.state.selection;
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    const node = $from.node(depth);
+    if (!NOTEBOOK_INSPECTOR_NODE_TYPES.has(node.type.name)) {
+      continue;
+    }
+    return {
+      id: typeof node.attrs.id === 'string' ? node.attrs.id : null,
+      type: node.type.name,
+      attrs: { ...node.attrs },
+      from: $from.before(depth),
+      to: $from.after(depth),
+    };
   }
   return null;
 }

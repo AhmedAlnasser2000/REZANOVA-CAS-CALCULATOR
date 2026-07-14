@@ -95,6 +95,34 @@
   overflow: auto;
 }
 
+.notebook-inspector-empty {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  padding: 22px 12px;
+  color: var(--page-subtle);
+  text-align: center;
+}
+
+.notebook-inspector-empty svg {
+  margin-bottom: 5px;
+  color: var(--page-accent);
+  opacity: 0.72;
+}
+
+.notebook-inspector-empty strong {
+  color: var(--page-ink);
+  font-size: 1.08rem;
+}
+
+.notebook-inspector-empty span {
+  max-width: 230px;
+  color: var(--page-muted);
+  line-height: 1.45;
+}
+
 .notebook-canvas {
   grid-area: canvas;
   position: relative;

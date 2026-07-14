@@ -116,6 +116,19 @@ const ORDERED_LABELS: Record<NotebookOrderedStyle, string> = {
   'lower-roman': 'Lower-roman numbering',
 };
 
+const BULLET_PREVIEWS: Record<NotebookBulletStyle, readonly string[]> = {
+  disc: ['•', '•', '•'],
+  circle: ['○', '○', '○'],
+  square: ['▪', '▪', '▪'],
+  dash: ['–', '–', '–'],
+};
+
+const ORDERED_PREVIEWS: Record<NotebookOrderedStyle, readonly string[]> = {
+  decimal: ['1.', '2.', '3.'],
+  'lower-alpha': ['a.', 'b.', 'c.'],
+  'lower-roman': ['i.', 'ii.', 'iii.'],
+};
+
 function applyListStyle(
   editor: Editor,
   selection: NotebookToolbarSelection | null,
@@ -228,11 +241,15 @@ function ListSplitControl({
             const label = isBullet
               ? BULLET_LABELS[style as NotebookBulletStyle]
               : ORDERED_LABELS[style as NotebookOrderedStyle];
+            const preview = isBullet
+              ? BULLET_PREVIEWS[style as NotebookBulletStyle]
+              : ORDERED_PREVIEWS[style as NotebookOrderedStyle];
             return (
               <button
                 key={style}
                 type="button"
                 role="menuitemradio"
+                aria-label={label}
                 aria-checked={!currentStyle.mixed && currentStyle.value === style}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
@@ -240,7 +257,15 @@ function ListSplitControl({
                   menu.close(false);
                 }}
               >
-                {label}
+                <span className="notebook-list-style-preview" aria-hidden="true">
+                  {preview.map((marker, index) => (
+                    <span key={`${marker}-${index}`}>
+                      <b>{marker}</b>
+                      <i />
+                    </span>
+                  ))}
+                </span>
+                <span>{label}</span>
               </button>
             );
           })}

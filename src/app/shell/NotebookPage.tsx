@@ -23,7 +23,6 @@ import { NotebookAuthoringKeyboard } from './notebook/authoring-keyboard';
 import {
   NotebookRichCanvas,
   notebookEditorNodeById,
-  selectNotebookEditorNode,
   type NotebookEditorSelection,
 } from './notebook/canvas';
 import {
@@ -91,11 +90,12 @@ function NotebookPageContent({
   const focusedMathSelectionType = focusedMathSelection?.type ?? null;
   const currentRelevantSelection = focusedMathSelection ?? selection;
   const currentSelectionUsesInspector = selectionUsesInspector(currentRelevantSelection);
-  const inspectorIsVisible = uiState.inspectorMode === 'pinned'
+  const inspectorIsVisible = uiState.inspectorMode === 'manual'
+    || uiState.inspectorMode === 'pinned'
     || (uiState.inspectorMode === 'auto' && currentSelectionUsesInspector);
-  const inspectedSelection = uiState.inspectorMode === 'pinned'
-    ? lastRelevantSelection ?? (currentSelectionUsesInspector ? currentRelevantSelection : null)
-    : currentSelectionUsesInspector ? currentRelevantSelection : null;
+  const inspectedSelection = currentSelectionUsesInspector
+    ? currentRelevantSelection
+    : uiState.inspectorMode === 'pinned' ? lastRelevantSelection : null;
 
   const commitDocument = useCallback((nextDocument: NotebookRichDocument) => {
     onUpdateSurfaceState(instanceId, {
@@ -161,9 +161,12 @@ function NotebookPageContent({
       patchUiState({ outlineCollapsed: false });
       outlineDrawer.toggle();
     } else {
-      if (uiState.inspectorMode === 'collapsed') {
+      if (
+        !inspectorDrawer.isOpen
+        && (uiState.inspectorMode === 'collapsed' || !currentSelectionUsesInspector)
+      ) {
         collapsedInspectorSelectionIdRef.current = null;
-        patchUiState({ inspectorMode: 'auto' });
+        patchUiState({ inspectorMode: 'manual' });
       }
       inspectorDrawer.toggle();
     }
@@ -171,10 +174,7 @@ function NotebookPageContent({
 
   function restoreInspector() {
     collapsedInspectorSelectionIdRef.current = null;
-    patchUiState({ inspectorMode: 'auto' });
-    if (editor && lastRelevantSelection?.id) {
-      selectNotebookEditorNode(editor, lastRelevantSelection.id);
-    }
+    patchUiState({ inspectorMode: 'manual' });
   }
 
   return (
