@@ -281,7 +281,7 @@ export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] 
     fixtureId: 'matrix-linear-system',
     owner: 'matrix',
     reason: 'standard-mathjson-unrepresentable',
-    rationale: 'Seven retained Matrix-system detail lines use legacy augmented-matrix bars, rref call syntax, chained rank notation, or row-operation arrows that the Compute Engine rejects as valid canonical expressions. The solution vector, coefficient rank, and unknown counts are separately producer-proven.',
+    rationale: 'Four retained Matrix-system row-operation arrows are honest transformation notation rather than standalone answer trees. Coefficient rank, augmented rank, unknown count, contradiction, and augmented RREF values are separately producer-proven through typed detail parts.',
   },
   {
     id: 'table-partial-domain-undefined-cell',

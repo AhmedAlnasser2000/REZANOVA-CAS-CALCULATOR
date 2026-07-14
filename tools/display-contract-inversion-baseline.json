@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "Move 20 removed the obsolete Table response argument while retaining the same canonical authority boundary and all zero-legacy floors.",
+  "acceptedReason": "V1-TYPED-DETAIL-MATRIX-SYSTEM1 moves three Matrix-system owner-assembly call sites from composite math strings to typed prose and native values without changing authority counts or adding compatibility reads.",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -449,9 +449,9 @@
       ],
       "src/lib/linear-algebra/matrix-system.ts": [
         "82553181240aad7e9fcc:1",
-        "9e640e75742f60d94097:1",
-        "46e00e0ebf4f33630556:1",
-        "1832cd9594b51df35489:1"
+        "473fcb23c88aedbaaf81:1",
+        "55cf6dd9620dcf49902b:1",
+        "629a456861a12c73343c:1"
       ],
       "src/lib/modes/equation/outcomes.ts": [
         "4a1b01bbd71bcfd8fc11:1",

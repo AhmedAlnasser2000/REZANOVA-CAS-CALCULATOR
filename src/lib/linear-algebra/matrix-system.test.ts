@@ -22,9 +22,14 @@ describe('runMatrixLinearSystem', () => {
     });
     expect(outcome.kind === 'success' ? outcome.detailSections?.[0] : undefined).toMatchObject({
       title: 'System Proof',
-      lines: expect.arrayContaining([
-        '\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=2',
-        '\\operatorname{unknowns}=2',
+      lines: [
+        'Coefficient rank: 2.',
+        'Augmented rank: 2.',
+        'Unknowns: 2.',
+        'The ranks match, so the system is consistent. Because the shared rank equals the number of unknowns, every unknown is fixed by a pivot. Only this vector x satisfies the system.',
+      ],
+      lineParts: expect.arrayContaining([
+        expect.arrayContaining([{ kind: 'math', latex: '2' }]),
       ]),
     });
   });
@@ -66,12 +71,15 @@ describe('runMatrixLinearSystem', () => {
     expect(outcome.kind).toBe('success');
     if (outcome.kind === 'success') {
       expect(outcome.title).toBe(expressionLatex);
-      expect(outcome.detailSections?.[0]?.lines).toContain(
-        `\\operatorname{rank}(${coefficientLatex})=\\operatorname{rank}([${coefficientLatex}|${rhsLatex}])=2`,
-      );
-      expect(outcome.detailSections?.[1]?.lines).toContain(
-        `\\operatorname{rank}([${coefficientLatex}|${rhsLatex}])=2`,
-      );
+      expect(outcome.detailSections?.[0]?.lines).toEqual(expect.arrayContaining([
+        'Coefficient rank: 2.',
+        'Augmented rank: 2.',
+      ]));
+      expect(outcome.detailSections?.[1]?.lines).toEqual([
+        'Coefficient rank: 2.',
+        'Augmented rank: 2.',
+        'Unknowns: 2.',
+      ]);
     }
   });
 
@@ -93,9 +101,16 @@ describe('runMatrixLinearSystem', () => {
     expect(outcome.kind === 'success' ? outcome.detailSections?.[0] : undefined).toMatchObject({
       title: 'System Proof',
       lines: expect.arrayContaining([
-        '\\operatorname{rank}(A)=1',
-        '\\operatorname{rank}([A|b])=2',
-        '0=1',
+        'Coefficient rank: 1.',
+        'Augmented rank: 2.',
+        'Contradiction: 0=1.',
+      ]),
+      lineParts: expect.arrayContaining([
+        [
+          { kind: 'text', text: 'Contradiction: ' },
+          { kind: 'math', latex: '0=1' },
+          { kind: 'text', text: '.' },
+        ],
       ]),
     });
   });
@@ -128,9 +143,17 @@ describe('runMatrixLinearSystem', () => {
     expect(outcome.kind === 'success' ? outcome.detailSections?.[1] : undefined).toMatchObject({
       title: 'System Proof',
       lines: expect.arrayContaining([
-        '\\operatorname{rank}(A)=\\operatorname{rank}([A|b])=1',
-        '\\operatorname{unknowns}=2',
-        '\\operatorname{free\\ variables}=1',
+        'Coefficient rank: 1.',
+        'Augmented rank: 1.',
+        'Unknowns: 2.',
+        'Free variables: 1.',
+      ]),
+      lineParts: expect.arrayContaining([
+        [
+          { kind: 'text', text: 'Free variables: ' },
+          { kind: 'math', latex: '1' },
+          { kind: 'text', text: '.' },
+        ],
       ]),
     });
     expect(outcome.kind === 'success' ? outcome.detailSections?.at(-1) : undefined).toMatchObject({

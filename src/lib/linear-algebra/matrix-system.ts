@@ -23,7 +23,12 @@ import {
   LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
 } from './dimension-contract';
 import { profileLinearAlgebraResult } from '../display/printer';
-import { proseSolveSummary } from '../display/result-detail-lines';
+import {
+  mathPart,
+  mixedDetailSection,
+  proseSolveSummary,
+  textPart,
+} from '../display/result-detail-lines';
 
 export type MatrixSystemRunInput = {
   coefficients: number[][];
@@ -73,35 +78,23 @@ function augmentedMatrix(coefficients: ExactMatrix, constants: ExactVector): Exa
   return coefficients.map((row, rowIndex) => [...row, constants[rowIndex]]);
 }
 
-function augmentedLabel(coefficientLabel: string, rhsLabel: string) {
-  return `[${coefficientLabel}|${rhsLabel}]`;
-}
-
 function rankFacts(
   rankA: number,
   rankAugmented: number,
   unknowns: number,
   rref: ExactMatrix,
-  labels: { coefficient: string; rhs: string },
 ) {
-  const augmented = augmentedLabel(labels.coefficient, labels.rhs);
   return [
-    {
-      title: 'Rank Facts',
-      lineKind: 'math' as const,
-      lines: [
-        `\\operatorname{rank}(${labels.coefficient})=${rankA}`,
-        `\\operatorname{rank}(${augmented})=${rankAugmented}`,
-        `unknowns = ${unknowns}`,
-      ],
-    },
-    {
-      title: 'Augmented RREF',
-      lineKind: 'math' as const,
-      lines: [
-        `\\operatorname{rref}\\left(${augmented}\\right)=${exactMatrixToLatex(rref)}`,
-      ],
-    },
+    mixedDetailSection('Rank Facts', [
+      [textPart('Coefficient rank: '), mathPart(`${rankA}`), textPart('.')],
+      [textPart('Augmented rank: '), mathPart(`${rankAugmented}`), textPart('.')],
+      [textPart('Unknowns: '), mathPart(`${unknowns}`), textPart('.')],
+    ]),
+    mixedDetailSection('Augmented RREF', [[
+      textPart('RREF of augmented system: '),
+      mathPart(exactMatrixToLatex(rref)),
+      textPart('.'),
+    ]]),
   ];
 }
 
@@ -217,46 +210,36 @@ function systemProofDetails(
   rankAugmented: number,
   unknowns: number,
   rref: ExactMatrix,
-  labels: { coefficient: string; rhs: string },
 ) {
-  const augmented = augmentedLabel(labels.coefficient, labels.rhs);
   if (kind === 'unique') {
-    return {
-      title: 'System Proof',
-      lines: [
-        `\\operatorname{rank}(${labels.coefficient})=\\operatorname{rank}(${augmented})=${rankA}`,
-        `\\operatorname{unknowns}=${unknowns}`,
-        'The ranks match, so the system is consistent. Because the shared rank equals the number of unknowns, every unknown is fixed by a pivot. Only this vector x satisfies the system.',
-      ],
-      lineKinds: ['math' as const, 'math' as const, 'text' as const],
-    };
+    return mixedDetailSection('System Proof', [
+      [textPart('Coefficient rank: '), mathPart(`${rankA}`), textPart('.')],
+      [textPart('Augmented rank: '), mathPart(`${rankAugmented}`), textPart('.')],
+      [textPart('Unknowns: '), mathPart(`${unknowns}`), textPart('.')],
+      [textPart('The ranks match, so the system is consistent. Because the shared rank equals the number of unknowns, every unknown is fixed by a pivot. Only this vector x satisfies the system.')],
+    ]);
   }
 
   if (kind === 'none') {
     const contradiction = inconsistentRowLatex(rref, unknowns);
-    return {
-      title: 'System Proof',
-      lines: [
-        `\\operatorname{rank}(${labels.coefficient})=${rankA}`,
-        `\\operatorname{rank}(${augmented})=${rankAugmented}`,
-        contradiction ?? `\\operatorname{rank}(${labels.coefficient})<\\operatorname{rank}(${augmented})`,
-        'The augmented matrix has more pivots than the coefficient matrix, so the RHS column creates a contradiction. No vector x can satisfy the system.',
-      ],
-      lineKinds: ['math' as const, 'math' as const, 'math' as const, 'text' as const],
-    };
+    return mixedDetailSection('System Proof', [
+      [textPart('Coefficient rank: '), mathPart(`${rankA}`), textPart('.')],
+      [textPart('Augmented rank: '), mathPart(`${rankAugmented}`), textPart('.')],
+      ...(contradiction
+        ? [[textPart('Contradiction: '), mathPart(contradiction), textPart('.')]]
+        : [[textPart('The augmented rank is greater than the coefficient rank.')]]),
+      [textPart('The augmented matrix has more pivots than the coefficient matrix, so the RHS column creates a contradiction. No vector x can satisfy the system.')],
+    ]);
   }
 
   const freeCount = unknowns - rankA;
-  return {
-    title: 'System Proof',
-    lines: [
-      `\\operatorname{rank}(${labels.coefficient})=\\operatorname{rank}(${augmented})=${rankA}`,
-      `\\operatorname{unknowns}=${unknowns}`,
-      `\\operatorname{free\\ variables}=${freeCount}`,
-      `The ranks match, so the system is consistent. Because the shared rank is smaller than the number of unknowns, ${freeCount} ${plural(freeCount, 'variable')} can vary freely. That creates infinitely many solution vectors.`,
-    ],
-    lineKinds: ['math' as const, 'math' as const, 'math' as const, 'text' as const],
-  };
+  return mixedDetailSection('System Proof', [
+    [textPart('Coefficient rank: '), mathPart(`${rankA}`), textPart('.')],
+    [textPart('Augmented rank: '), mathPart(`${rankAugmented}`), textPart('.')],
+    [textPart('Unknowns: '), mathPart(`${unknowns}`), textPart('.')],
+    [textPart('Free variables: '), mathPart(`${freeCount}`), textPart('.')],
+    [textPart(`The ranks match, so the system is consistent. Because the shared rank is smaller than the number of unknowns, ${freeCount} ${plural(freeCount, 'variable')} can vary freely. That creates infinitely many solution vectors.`)],
+  ]);
 }
 
 function solutionFamilyDetails(family: NonNullable<ReturnType<typeof solutionFamilyFromRref>>) {
@@ -272,13 +255,6 @@ function solutionFamilyDetails(family: NonNullable<ReturnType<typeof solutionFam
 
 function systemTitle(form: MatrixSystemForm) {
   return form === 'Ax+b=0' ? 'Ax+b=0' : 'Ax=b';
-}
-
-function systemDisplayLabels(input: MatrixSystemRunInput) {
-  return {
-    coefficient: input.coefficientMatrixLatex ?? 'A',
-    rhs: input.rhsVectorLatex ?? 'b',
-  };
 }
 
 export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProducerDraft {
@@ -312,8 +288,6 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
   const rankAugmented = augmentedRref.rank;
   const unknowns = coefficients[0].length;
   const title = input.editorExpressionLatex ?? systemTitle(input.form);
-  const labels = systemDisplayLabels(input);
-
   if (rankA < rankAugmented) {
     return profileLinearAlgebraResult({
       kind: 'success',
@@ -321,8 +295,8 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
       exactLatex: '\\text{No solution}',
       ...proseSolveSummary('No solution.'),
       detailSections: [
-        systemProofDetails('none', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
-        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
+        systemProofDetails('none', rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
@@ -341,8 +315,8 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
         : 'Infinitely many solutions.'),
       detailSections: [
         ...(family ? [solutionFamilyDetails(family)] : []),
-        systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
-        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
+        systemProofDetails('infinite', rankA, rankAugmented, unknowns, augmentedRref.matrix),
+        ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
         rowOperationDetailSection(augmentedRref.rowOperations),
       ],
       warnings: [],
@@ -361,8 +335,8 @@ export function runMatrixLinearSystem(input: MatrixSystemRunInput): ResultProduc
     exactLatex: `x=${exactVectorToColumnLatex(solved.solution)}`,
     ...proseSolveSummary('Exactly one solution. Only this vector x satisfies the system.'),
     detailSections: [
-      systemProofDetails('unique', rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
-      ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix, labels),
+      systemProofDetails('unique', rankA, rankAugmented, unknowns, augmentedRref.matrix),
+      ...rankFacts(rankA, rankAugmented, unknowns, augmentedRref.matrix),
       rowOperationDetailSection(augmentedRref.rowOperations),
     ],
     warnings: [],

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { runMatrixMode } from './matrix';
 
+function detailMathValues(result: ReturnType<typeof runMatrixMode>) {
+  if (result.kind === 'prompt') return [];
+  return result.canonicalResult?.details?.flatMap((section) =>
+    section.lines.flatMap((line) => line)
+      .filter((part) => part.kind === 'math')
+      .map((part) => part.math)) ?? [];
+}
+
 describe('runMatrixMode', () => {
   it('uses editor expressions as Matrix result titles when present', () => {
     const expressionLatex = '\\det\\left(\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}\\right)';
@@ -193,6 +201,38 @@ describe('runMatrixMode', () => {
     }
     expect(result.exactLatex).toBe('X=\\begin{bmatrix}1 & 2\\\\2 & 2\\end{bmatrix}');
     expect(result.detailSections?.[0]?.title).toBe('Multi-RHS Proof');
+  });
+
+  it('proves native Matrix-system facts without promoting display labels', () => {
+    const unique = runMatrixMode({
+      operation: 'linearSystem',
+      matrixA: [[2, 1], [1, -1]],
+      matrixB: [[1, 0], [0, 1]],
+      systemRhs: [5, 1],
+      systemForm: 'Ax=b',
+    });
+    const inconsistent = runMatrixMode({
+      operation: 'linearSystem',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[1, 0], [0, 1]],
+      systemRhs: [1, 3],
+      systemForm: 'Ax=b',
+    });
+    const underdetermined = runMatrixMode({
+      operation: 'linearSystem',
+      matrixA: [[1, 1], [2, 2]],
+      matrixB: [[1, 0], [0, 1]],
+      systemRhs: [2, 4],
+      systemForm: 'Ax=b',
+    });
+
+    const uniqueMath = detailMathValues(unique);
+    expect(uniqueMath.find((value) => value.canonicalLatex.startsWith('\\begin{bmatrix}1 & 0 & 2'))?.mathJson)
+      .toBeDefined();
+    expect(detailMathValues(inconsistent).find((value) => value.canonicalLatex === '0=1')?.mathJson)
+      .toBeDefined();
+    expect(detailMathValues(underdetermined).filter((value) => value.canonicalLatex === '1'))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ mathJson: 1 })]));
   });
 
   it('labels QR runs directly', () => {

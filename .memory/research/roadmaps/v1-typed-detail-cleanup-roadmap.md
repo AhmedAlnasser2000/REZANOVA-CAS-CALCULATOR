@@ -2,7 +2,7 @@
 
 Date: 2026-07-14
 Last updated: 2026-07-14
-Status: active; Moves 1-2 verified and committed through `V1-TYPED-DETAIL-TRIGONOMETRY1` pending commit creation; no push is authorized
+Status: active; Moves 1-3 verified, with Move 3 approved and awaiting commit creation; no push is authorized
 
 ## Attribution
 
@@ -41,8 +41,8 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 ## Sequence
 
 1. `V1-TYPED-DETAIL-CALCULUS1`: committed as `b7e2f081`. Calculus coverage moved to 460 leaves, 410 proven, 50 exempt, and zero missing. `calculus.derivatives` moved from 14 to 2 exemptions and `calculus.partials` from 2 to 0.
-2. `V1-TYPED-DETAIL-TRIGONOMETRY1`: verified; approved and awaiting commit creation. Coverage is 459 leaves, 416 proven, 43 exempt, and zero missing. `trigonometry.period-phase` moved from 14/6/8/0 to 13/12/1/0; the removed leaf is the carrier classification, now correctly prose.
-3. `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: pending. Target `matrix.linear-system` from 7 to 4, retaining the four row-operation arrows.
+2. `V1-TYPED-DETAIL-TRIGONOMETRY1`: committed as `f083d222`. Coverage is 459 leaves, 416 proven, 43 exempt, and zero missing. `trigonometry.period-phase` moved from 14/6/8/0 to 13/12/1/0; the removed leaf is the carrier classification, now correctly prose.
+3. `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: verified; approved and awaiting commit creation. Coverage is 460 leaves, 420 proven, 40 exempt, and zero missing. `matrix.linear-system` moved from 11/4/7/0 to 12/8/4/0, retaining only the four row-operation arrows.
 4. `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: pending. Target `matrix.profile` from 17 to 4 and `vector.span-independence` from 6 to 2.
 5. `V1-TYPED-DETAIL-CLOSEOUT0`: pending. Remove obsolete exemption rules, accept exactly 23 exemptions and zero missing classifications, and close the fixtures, print-hygiene, memory, and visual evidence.
 
@@ -60,6 +60,15 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 - All 63 result-contract tests pass across all 43 golden and 100 replay executions.
 - All 450 live detail producers are declared; result-intent coverage passes.
 - Chromium RAD inspection covers the answer, expanded Wave Facts, collapsed landmarks, compact History, and overflow. This compact result exposes no Formula Viewer control.
+
+## Move 3 Evidence
+
+- Matrix system proof, rank, contradiction, free-variable, and augmented-RREF facts now use prose labels around producer-owned scalar or matrix values.
+- The Matrix adapter derives all new trees from exact coefficient/RHS analysis; no displayed labels or rendered LaTeX are parsed.
+- The four row-operation arrows remain explicit LaTeX-only exemptions because they are transformation notation, not standalone answer trees.
+- Focused Matrix tests, all 63 result-contract tests, the 100-fixture replay harness, all 43 golden and 100 replay intent executions, TypeScript, lint, file-size, and diff hygiene pass.
+- The display-inversion baseline refresh accepts only three moved Matrix owner-assembly fingerprints; authority counts remain unchanged with zero compatibility projections and zero legacy reads.
+- One-worker Chromium inspection covers expanded proof/rank/RREF details, collapsed row operations, History replay, and overflow. This compact result exposes no Formula Viewer control.
 
 ## Verification Policy
 

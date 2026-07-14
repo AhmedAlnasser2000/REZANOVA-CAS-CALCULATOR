@@ -28,6 +28,7 @@ import {
   exactTransposeMatrix,
 } from '../linear-algebra/matrix-exact-ops';
 import { analyzeExactColumnFamily } from '../linear-algebra/matrix-column-family';
+import { LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION } from '../linear-algebra/dimension-contract';
 import {
   tryProvenCanonicalMathValue,
   type CanonicalResultProducerMathValuesV1,
@@ -143,38 +144,64 @@ function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonL
   const { matrixA, rhs } = exactInputs(request);
   if (!matrixA || !rhs || matrixA.length === 0 || matrixA.length !== rhs.length) return [];
   const coefficientRref = rrefExactMatrix(matrixA);
-  const solved = solveExactLinearSystem(matrixA, rhs);
-  if (coefficientRref.kind !== 'success' || solved.kind !== 'success') return [];
+  const augmented = matrixA.map((row, rowIndex) => [...row, rhs[rowIndex]]);
+  const augmentedRref = rrefExactMatrix(augmented, {
+    maxDimension: LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
+  });
+  if (coefficientRref.kind !== 'success' || augmentedRref.kind !== 'success') return [];
 
   const unknowns = matrixA[0]?.length ?? 0;
-  const leaves = [
+  const leaves: MatrixOwnedMathJsonLeaf[] = [
     leaf(
+      `${coefficientRref.rank}`,
+      coefficientRref.rank,
+      'matrix.linear-system.native-coefficient-rank',
+    ),
+    leaf(
+      `${augmentedRref.rank}`,
+      augmentedRref.rank,
+      'matrix.linear-system.native-augmented-rank',
+    ),
+    leaf(`${unknowns}`, unknowns, 'matrix.linear-system.native-unknown-count'),
+    leaf(
+      exactMatrixToLatex(augmentedRref.matrix),
+      exactMatrixMathJson(augmentedRref.matrix),
+      'matrix.linear-system.native-augmented-rref',
+    ),
+  ];
+
+  if (coefficientRref.rank < augmentedRref.rank) {
+    const contradictionRow = augmentedRref.matrix.find((row) =>
+      row.slice(0, unknowns).every((value) => value.numerator === 0)
+      && row[unknowns]?.numerator !== 0);
+    const contradiction = contradictionRow?.[unknowns];
+    if (contradiction) {
+      leaves.push(leaf(
+        `0=${exactScalarToLatex(contradiction)}`,
+        ['Equal', 0, buildExactScalarNode(contradiction)],
+        'matrix.linear-system.native-contradiction',
+      ));
+    }
+    return leaves;
+  }
+
+  if (coefficientRref.rank < unknowns) {
+    const freeVariables = unknowns - coefficientRref.rank;
+    leaves.push(leaf(
+      `${freeVariables}`,
+      freeVariables,
+      'matrix.linear-system.native-free-variable-count',
+    ));
+    return leaves;
+  }
+
+  const solved = solveExactLinearSystem(matrixA, rhs);
+  if (solved.kind === 'success') {
+    leaves.push(leaf(
       `x=${exactVectorToColumnLatex(solved.solution)}`,
       ['Equal', 'x', exactVectorMathJson(solved.solution)],
       'matrix.linear-system.native-exact-solution',
-    ),
-  ];
-  if (
-    (request.matrixOperandLatexA === undefined || request.matrixOperandLatexA === 'A')
-    && (request.systemRhsLatex === undefined || request.systemRhsLatex === 'b')
-  ) {
-    leaves.push(
-      leaf(
-        `\\operatorname{unknowns}=${unknowns}`,
-        ['Equal', 'unknowns', unknowns],
-        'matrix.linear-system.native-unknown-count',
-      ),
-      leaf(
-        `\\operatorname{rank}(A)=${coefficientRref.rank}`,
-        ['Equal', ['InvisibleOperator', 'rank', ['Delimiter', 'A']], coefficientRref.rank],
-        'matrix.linear-system.native-coefficient-rank',
-      ),
-      leaf(
-        `unknowns = ${unknowns}`,
-        ['Equal', ['InvisibleOperator', ...'unknowns'], unknowns],
-        'matrix.linear-system.native-unknown-count',
-      ),
-    );
+    ));
   }
   return leaves;
 }

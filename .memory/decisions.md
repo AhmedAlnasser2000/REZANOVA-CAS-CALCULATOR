@@ -2625,6 +2625,10 @@
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Period and Phase carrier classification is human prose, not mathematical structure. Its numerical and exact symbolic quantities retain separate producer-owned MathJSON leaves, while the compound primary remains the one honest V1 exemption.
 
+## 2026-07-14 - V1-TYPED-DETAIL-MATRIX-SYSTEM1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Matrix rank, unknown-count, contradiction, and augmented-RREF facts are typed prose around producer-owned native values. Row-operation arrows remain the four honest LaTeX-only exemptions because they describe transformations rather than standalone answer trees.
+
 ## 2026-07-14 - NOTEBOOK-AUTHORING-AFFORDANCE-FIXES1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Notebook list and paragraph-style choices expose familiar visual meaning without changing document semantics: list menus show marker sequences, and the paragraph-style menu uses typographic hierarchy plus plain-language roles for Normal and Heading 1 through Heading 3.

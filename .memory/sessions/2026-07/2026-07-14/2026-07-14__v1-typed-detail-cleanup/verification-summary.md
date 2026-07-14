@@ -35,3 +35,17 @@
 - visual: RAD answer, expanded Wave Facts, collapsed landmarks, compact History, and overflow inspected in Chromium; Formula Viewer is not exposed for this compact result
 - static: incremental TypeScript, changed-file lint, file-size, memory, and diff hygiene pass
 - protected lane: concurrent Notebook changes and `test-results/` excluded; no push
+
+## V1-TYPED-DETAIL-MATRIX-SYSTEM1
+
+- kind: backend producer-detail cleanup with focused UI and browser evidence
+- result: pass; approved for commit
+- coverage: 460 leaves, 420 proven, 40 exemptions, zero missing; Matrix linear system is 12/8/4/0
+- contracts: all 63 result-contract tests pass; 455 live detail producers are declared; golden and replay result-intent coverage passes
+- replay: the 100-fixture hard-comparison harness passes, including the refreshed Matrix linear-system fixture
+- authority: display-inversion ratchet passes with unchanged counts and zero compatibility or legacy reads after accepting three moved owner-assembly fingerprints
+- seam: Matrix and canonical-result-contract impact is classified without changing baseline CI requirements
+- focused regression: 6 Matrix-system and 17 Matrix-mode tests pass, including unique, inconsistent, and underdetermined native MathJSON evidence
+- visual: expanded System Proof, Rank Facts, and Augmented RREF, collapsed row operations, History replay, and overflow inspected in one-worker Chromium; Formula Viewer is not exposed for this compact result
+- static: incremental TypeScript, changed-file lint, file-size, and diff hygiene pass
+- protected lane: Notebook changes committed independently; `test-results/` excluded; no push
