@@ -60,6 +60,11 @@ const NotebookDocxExportDialog = lazy(async () => {
   return { default: module.NotebookDocxExportDialog };
 });
 
+const NotebookWebExportDialog = lazy(async () => {
+  const module = await import('./notebook/publication/NotebookWebExportDialog');
+  return { default: module.NotebookWebExportDialog };
+});
+
 type NotebookPageProps = {
   instanceId: string;
   libraryService?: NotebookLibraryService;
@@ -98,6 +103,7 @@ function NotebookPageContent({
   });
   const [pdfRecord, setPdfRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [docxRecord, setDocxRecord] = useState<NotebookStoredRecordV1 | null>(null);
+  const [webRecord, setWebRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
@@ -392,6 +398,7 @@ function NotebookPageContent({
                   session={librarySession}
                   onExportDocx={() => setDocxRecord(librarySession.snapshotCurrentRecord())}
                   onExportPdf={() => setPdfRecord(librarySession.snapshotCurrentRecord())}
+                  onExportWeb={() => setWebRecord(librarySession.snapshotCurrentRecord())}
                 />
               )}
               initialProseSelection={uiState.proseSelection}
@@ -485,6 +492,16 @@ function NotebookPageContent({
               layout={publicationLayout}
               record={docxRecord}
               onClose={() => setDocxRecord(null)}
+            />
+          </Suspense>
+        ) : null}
+        {webRecord ? (
+          <Suspense fallback={null}>
+            <NotebookWebExportDialog
+              assetPort={service.asset}
+              layout={publicationLayout}
+              record={webRecord}
+              onClose={() => setWebRecord(null)}
             />
           </Suspense>
         ) : null}

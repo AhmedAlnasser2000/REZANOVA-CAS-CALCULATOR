@@ -148,3 +148,16 @@
 - dependency evidence: production `npm audit --omit=dev` reports zero vulnerabilities. DOCX code is lazy-loaded away from the normal Notebook path.
 - static evidence: focused ESLint and Vite production build pass. Exact-patch TypeScript passes in a clean detached worktree after excluding two pre-existing foreign test-fixture errors; the shared `npm run build` is blocked by one of those concurrent OOE fixtures before Vite runs.
 - resource evidence: no full unit/UI/canary suite ran. Gate-owned preview/Playwright processes stopped, the temporary worktree was removed, and ignored `.task_tmp/`, untracked `test-results/`, and concurrent clipboard/result-contract/OOE work remain excluded.
+
+## NOTEBOOK-EXPORT-WEB1
+
+- gate: backend
+- status: verified under standing user commit approval
+- model evidence: 11 focused publication tests pass. Three Web-package cases cover safe MathML/fail-closed source fallback, escaped author content, strict local asset paths, image/SVG/video/poster/WebVTT reconstruction, responsive/print CSS, whole-document and selected-Section scope, and rejection of non-Web or physical-page requests.
+- UI evidence: 2 Web dialog cases pass for compatibility-before-export, document/Section scope, empty-scope guarding, export-only copy, and Escape dismissal; the adjacent 2 DOCX dialog regressions also pass after publication styles were shared.
+- scope evidence: projection compatibility findings with node identities are filtered to the selected publication subtree, so a selected-Section report cannot describe unexported content.
+- Chromium evidence: one real-download scenario passes at 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors. The dialog remains contained with zero document overflow; the downloaded ZIP is parsed and its CSP, MathML, script absence, scoped CSS, and print CSS are asserted.
+- artifact visual evidence: the downloaded Worked Example renders with readable static math and structured blocks at 1100px and 560px and under print media, with no horizontal overflow. Visual inspection found inline MathML text spacing too tight; scoped `mtext` spacing corrected `x = 2orx = 3` to `x = 2 or x = 3`, and the final browser run passes.
+- media/security evidence: the model package contains five SHA-256-named assets including interactive local WebM, poster, and WebVTT. HTML has no author script, remote source, data/blob URL, service worker, editor runtime, or solver authority; author text and attributes are escaped, unsafe MathML fails closed, and CSP denies scripts, connections, objects, frames, fonts, bases, and forms.
+- static evidence: incremental TypeScript, focused ESLint, production Vite build, file-size validation, memory validation, and diff hygiene pass. The production build retains only existing chunking warnings.
+- resource evidence: no full unit/UI/canary suite ran. Gate-owned Playwright and Vite build processes stopped; the pre-existing reusable test server was not terminated, and untracked `test-results/` plus unrelated Rust OOE work remain excluded.

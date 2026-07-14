@@ -104,7 +104,7 @@ describe('Notebook publication projection', () => {
     const projection = await buildNotebookPublicationProjection({
       assetPort: source.assets,
       compatibilityFindings: [
-        { kind: 'equation-fallback', nodeId: 'equation-a', message: 'Use a visual fallback.' },
+        { kind: 'equation-fallback', message: 'Use a visual fallback.' },
         { kind: 'font-substitution', message: 'Use the target serif font.' },
       ],
       createdAt: NOW,
@@ -154,6 +154,10 @@ describe('Notebook publication projection', () => {
     const source = await fixture();
     const projection = await buildNotebookPublicationProjection({
       assetPort: source.assets,
+      compatibilityFindings: [
+        { kind: 'layout-approximation', nodeId: 'figure-a', message: 'Selected image approximation.' },
+        { kind: 'layout-approximation', nodeId: 'intro', message: 'Unselected introduction approximation.' },
+      ],
       layout: source.layout,
       record: source.record,
       request: {
@@ -165,6 +169,12 @@ describe('Notebook publication projection', () => {
     expect(projection.content.map((node) => node.id)).toEqual(['section-a', 'section-b']);
     expect(projection.content.every((node) => node.type === 'section')).toBe(true);
     expect(projection.compatibility.summary.videoSubstitutions).toBe(1);
+    expect(projection.compatibility.findings).toContainEqual(expect.objectContaining({
+      message: 'Selected image approximation.',
+    }));
+    expect(projection.compatibility.findings).not.toContainEqual(expect.objectContaining({
+      message: 'Unselected introduction approximation.',
+    }));
   });
 
   it('keeps the frozen source layout for an exact PDF page range', async () => {

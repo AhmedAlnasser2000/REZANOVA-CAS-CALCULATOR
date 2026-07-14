@@ -20,7 +20,7 @@
   backdrop-filter: blur(5px);
 }
 
-.notebook-docx-dialog {
+:is(.notebook-docx-dialog, .notebook-web-dialog) {
   width: min(680px, 100%);
   max-height: min(760px, calc(100vh - 48px));
   overflow: auto;
@@ -32,26 +32,26 @@
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
 }
 
-.notebook-docx-dialog > header,
-.notebook-docx-dialog > footer {
+:is(.notebook-docx-dialog, .notebook-web-dialog) > header,
+:is(.notebook-docx-dialog, .notebook-web-dialog) > footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.notebook-docx-dialog > header span {
+:is(.notebook-docx-dialog, .notebook-web-dialog) > header span {
   color: #a9c695;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.notebook-docx-dialog h2,
-.notebook-docx-dialog h3 { margin: 4px 0 0; }
+:is(.notebook-docx-dialog, .notebook-web-dialog) h2,
+:is(.notebook-docx-dialog, .notebook-web-dialog) h3 { margin: 4px 0 0; }
 
-.notebook-docx-dialog > header button,
-.notebook-docx-dialog > footer button {
+:is(.notebook-docx-dialog, .notebook-web-dialog) > header button,
+:is(.notebook-docx-dialog, .notebook-web-dialog) > footer button {
   min-height: 36px;
   padding: 7px 14px;
   color: inherit;
@@ -60,13 +60,13 @@
   border-radius: 6px;
 }
 
-.notebook-docx-dialog > header button {
+:is(.notebook-docx-dialog, .notebook-web-dialog) > header button {
   min-width: 36px;
   padding: 0;
   font-size: 1.35rem;
 }
 
-.notebook-docx-dialog fieldset {
+:is(.notebook-docx-dialog, .notebook-web-dialog) fieldset {
   display: grid;
   gap: 10px;
   margin: 22px 0 16px;
@@ -75,15 +75,15 @@
   border-radius: 8px;
 }
 
-.notebook-docx-dialog label {
+:is(.notebook-docx-dialog, .notebook-web-dialog) label {
   display: flex;
   align-items: center;
   gap: 9px;
 }
 
-.notebook-docx-dialog label.is-disabled { opacity: 0.5; }
+:is(.notebook-docx-dialog, .notebook-web-dialog) label.is-disabled { opacity: 0.5; }
 
-.notebook-docx-sections {
+.notebook-publication-sections {
   display: grid;
   gap: 8px;
   margin: 2px 0 0 25px;
@@ -92,7 +92,7 @@
   border-radius: 6px;
 }
 
-.notebook-docx-compatibility {
+.notebook-publication-compatibility {
   min-height: 110px;
   padding: 14px 16px;
   background: rgba(184, 212, 156, 0.07);
@@ -100,16 +100,17 @@
   border-radius: 8px;
 }
 
-.notebook-docx-compatibility ul { margin-bottom: 0; padding-left: 22px; }
-.notebook-docx-note { color: #b8c5b4; font-size: 0.85rem; }
-.notebook-docx-dialog > footer { justify-content: flex-end; margin-top: 18px; }
-.notebook-docx-dialog > footer button:last-child { color: #102018; background: #b8d49c; font-weight: 700; }
-.notebook-docx-dialog button:disabled { opacity: 0.45; }
+.notebook-publication-compatibility ul { margin-bottom: 0; padding-left: 22px; }
+.notebook-publication-note { color: #b8c5b4; font-size: 0.85rem; }
+:is(.notebook-docx-dialog, .notebook-web-dialog) > footer { justify-content: flex-end; margin-top: 18px; }
+:is(.notebook-docx-dialog, .notebook-web-dialog) > footer button:last-child { color: #102018; background: #b8d49c; font-weight: 700; }
+:is(.notebook-docx-dialog, .notebook-web-dialog) button:disabled { opacity: 0.45; }
 
 @media (forced-colors: active) {
   .notebook-publication-dialog-backdrop,
   .notebook-docx-dialog,
-  .notebook-docx-compatibility { color: CanvasText; background: Canvas; border-color: CanvasText; forced-color-adjust: auto; }
+  .notebook-web-dialog,
+  .notebook-publication-compatibility { color: CanvasText; background: Canvas; border-color: CanvasText; forced-color-adjust: auto; }
 }
 
 .notebook-pdf-dialog-chrome {

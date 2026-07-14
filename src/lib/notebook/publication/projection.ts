@@ -149,7 +149,14 @@ function compatibilityReport(
   additional: readonly NotebookCompatibilityFindingV1[],
 ): NotebookCompatibilityReportV1 {
   const findings: NotebookCompatibilityFindingV1[] = [];
+  const scopedNodeIds = new Set<string>();
   walkNodes(content, (node) => {
+    scopedNodeIds.add(node.id);
+    if (node.type === 'paragraph' || node.type === 'heading') {
+      node.content?.forEach((inline) => {
+        if (inline.type === 'inlineMath') scopedNodeIds.add(inline.id);
+      });
+    }
     if (node.type === 'videoFigure' && request.format !== 'web') {
       findings.push({
         kind: 'video-static-substitution',
@@ -188,6 +195,7 @@ function compatibilityReport(
       || (finding.nodeId !== undefined && (typeof finding.nodeId !== 'string' || !finding.nodeId))) {
       throw new TypeError('Notebook compatibility finding is invalid.');
     }
+    if (finding.nodeId && !scopedNodeIds.has(finding.nodeId)) return;
     findings.push(cloneValue(finding));
   });
   return {

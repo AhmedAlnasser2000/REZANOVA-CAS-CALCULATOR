@@ -11,12 +11,18 @@ import type { useNotebookLibrarySession } from './useNotebookLibrarySession';
 type NotebookFileBackstageProps = {
   onExportDocx: () => void;
   onExportPdf: () => void;
+  onExportWeb: () => void;
   session: ReturnType<typeof useNotebookLibrarySession>;
 };
 
 type BackstageView = 'home' | 'open' | 'history' | 'trash';
 
-export function NotebookFileBackstage({ onExportDocx, onExportPdf, session }: NotebookFileBackstageProps) {
+export function NotebookFileBackstage({
+  onExportDocx,
+  onExportPdf,
+  onExportWeb,
+  session,
+}: NotebookFileBackstageProps) {
   const backstage = useNotebookTransientLayer({ id: 'notebook-file-backstage' });
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [view, setView] = useState<BackstageView>('home');
@@ -122,6 +128,16 @@ export function NotebookFileBackstage({ onExportDocx, onExportPdf, session }: No
                   >
                     <strong>Export Word (.docx)</strong>
                     <span>Create a best-effort editable publication.</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      backstage.close(false);
+                      onExportWeb();
+                    }}
+                  >
+                    <strong>Export Web package (.zip)</strong>
+                    <span>Create a self-contained offline publication.</span>
                   </button>
                   <button
                     type="button"

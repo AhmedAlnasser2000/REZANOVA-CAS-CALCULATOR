@@ -5,3 +5,4 @@ export * from './docx-media';
 export * from './pdf';
 export * from './projection';
 export * from './types';
+export * from './web';

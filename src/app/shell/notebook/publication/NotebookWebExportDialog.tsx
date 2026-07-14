@@ -2,10 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import {
-  browserNotebookDocxRasterizer,
-  buildNotebookDocx,
+  buildNotebookWebPackage,
   createNotebookPublicationJob,
-  notebookDocxCompatibilityFindings,
+  notebookWebCompatibilityFindings,
   type NotebookAssetPort,
   type NotebookExportScope,
   type NotebookPublicationLayoutV1,
@@ -13,10 +12,8 @@ import {
   type NotebookStoredRecordV1,
 } from '../../../../lib/notebook';
 
-function downloadDocx(bytes: Uint8Array, fileName: string) {
-  const url = URL.createObjectURL(new Blob([bytes as BlobPart], {
-    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  }));
+function downloadWebPackage(bytes: Uint8Array, fileName: string) {
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/zip' }));
   const link = document.createElement('a');
   link.href = url;
   link.download = fileName;
@@ -24,7 +21,7 @@ function downloadDocx(bytes: Uint8Array, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-export function NotebookDocxExportDialog({
+export function NotebookWebExportDialog({
   assetPort,
   layout,
   onClose,
@@ -48,6 +45,7 @@ export function NotebookDocxExportDialog({
   const scope = useMemo<NotebookExportScope>(() => scopeMode === 'sections'
     ? { kind: 'sections', sectionIds }
     : { kind: 'document' }, [scopeMode, sectionIds]);
+  const selectionIsValid = scopeMode !== 'sections' || sectionIds.length > 0;
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -60,13 +58,14 @@ export function NotebookDocxExportDialog({
   }, [onClose, status]);
 
   useEffect(() => {
+    if (!selectionIsValid) return;
     const generation = ++generationRef.current;
     const job = createNotebookPublicationJob({
       assetPort,
-      compatibilityFindings: notebookDocxCompatibilityFindings(record.document.content),
+      compatibilityFindings: notebookWebCompatibilityFindings(record.document.content),
       layout,
       record,
-      request: { format: 'docx', scope },
+      request: { format: 'web', scope },
     });
     void job.run().then((next) => {
       if (generation !== generationRef.current) return;
@@ -75,36 +74,35 @@ export function NotebookDocxExportDialog({
     }).catch((reason: unknown) => {
       if (generation !== generationRef.current) return;
       setProjection(null);
-      setError(reason instanceof Error ? reason.message : 'Word export could not be prepared.');
+      setError(reason instanceof Error ? reason.message : 'Web export could not be prepared.');
       setStatus('failed');
     });
     return () => job.cancel();
-  }, [assetPort, layout, record, scope]);
+  }, [assetPort, layout, record, scope, selectionIsValid]);
 
-  async function exportDocx() {
+  async function exportWebPackage() {
     if (!projection) return;
     setStatus('exporting');
     setError(null);
     try {
-      const output = await buildNotebookDocx(projection, { rasterize: browserNotebookDocxRasterizer });
-      downloadDocx(output.bytes, output.fileName);
+      const output = await buildNotebookWebPackage(projection);
+      downloadWebPackage(output.bytes, output.fileName);
       onClose();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Word export failed.');
+      setError(reason instanceof Error ? reason.message : 'Web export failed.');
       setStatus('failed');
     }
   }
 
-  const selectionIsValid = scopeMode !== 'sections' || sectionIds.length > 0;
   return createPortal((
     <div className="notebook-publication-dialog-backdrop">
-      <div className="notebook-docx-dialog" role="dialog" aria-modal="true" aria-label="Export Notebook as Word document">
+      <div className="notebook-web-dialog" role="dialog" aria-modal="true" aria-label="Export Notebook as Web package">
         <header>
           <div>
-            <span>Editable publication</span>
-            <h2>Export Word document</h2>
+            <span>Offline publication</span>
+            <h2>Export Web package</h2>
           </div>
-          <button type="button" aria-label="Close Word export" disabled={status === 'exporting'} onClick={onClose}>×</button>
+          <button type="button" aria-label="Close Web export" disabled={status === 'exporting'} onClick={onClose}>×</button>
         </header>
         <fieldset>
           <legend>Export scope</legend>
@@ -112,6 +110,7 @@ export function NotebookDocxExportDialog({
             <input type="radio" checked={scopeMode === 'document'} onChange={() => {
               setStatus('preparing');
               setError(null);
+              setProjection(null);
               setScopeMode('document');
             }} />
             Entire document
@@ -120,6 +119,7 @@ export function NotebookDocxExportDialog({
             <input type="radio" disabled={!sections.length} checked={scopeMode === 'sections'} onChange={() => {
               setStatus('preparing');
               setError(null);
+              setProjection(null);
               setScopeMode('sections');
             }} />
             Selected Sections
@@ -134,6 +134,7 @@ export function NotebookDocxExportDialog({
                     onChange={(event) => {
                       setStatus('preparing');
                       setError(null);
+                      setProjection(null);
                       setSectionIds((current) => event.target.checked
                         ? [...current, section.id]
                         : current.filter((id) => id !== section.id));
@@ -145,9 +146,10 @@ export function NotebookDocxExportDialog({
             </div>
           ) : null}
         </fieldset>
-        <section className="notebook-publication-compatibility" aria-label="Word compatibility report">
+        <section className="notebook-publication-compatibility" aria-label="Web compatibility report">
           <h3>Compatibility report</h3>
-          {status === 'preparing' ? <p>Preparing a frozen publication snapshot…</p> : null}
+          {!selectionIsValid ? <p>Select at least one Section to prepare the publication.</p> : null}
+          {selectionIsValid && status === 'preparing' ? <p>Preparing a frozen publication snapshot…</p> : null}
           {error ? <p role="alert">{error}</p> : null}
           {projection?.compatibility.findings.length ? (
             <ul>{projection.compatibility.findings.map((finding, index) => (
@@ -156,16 +158,16 @@ export function NotebookDocxExportDialog({
           ) : status === 'ready' ? <p>No substitutions or layout approximations are required.</p> : null}
         </section>
         <p className="notebook-publication-note">
-          The .docx is a best-effort editable publication. It cannot be imported as a lossless Notebook.
+          The ZIP is a self-contained, read-only publication with local media. It cannot be imported as a Notebook.
         </p>
         <footer>
           <button type="button" disabled={status === 'exporting'} onClick={onClose}>Cancel</button>
           <button
             type="button"
             disabled={status !== 'ready' || !projection || !selectionIsValid}
-            onClick={() => void exportDocx()}
+            onClick={() => void exportWebPackage()}
           >
-            {status === 'exporting' ? 'Building .docx…' : 'Download .docx'}
+            {status === 'exporting' ? 'Building Web package…' : 'Download Web package'}
           </button>
         </footer>
       </div>
