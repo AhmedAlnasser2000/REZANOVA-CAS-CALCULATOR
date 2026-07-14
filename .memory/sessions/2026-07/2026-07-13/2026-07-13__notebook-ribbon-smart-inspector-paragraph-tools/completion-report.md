@@ -25,5 +25,13 @@
 | Gate | Kind | Status |
 | --- | --- | --- |
 | `NOTEBOOK-RIBBON-ARCHITECTURE1` | ui | verified; committed in this checkpoint |
-| `NOTEBOOK-SMART-INSPECTOR1` | ui | pending |
+| `NOTEBOOK-SMART-INSPECTOR1` | ui | verified; committed in this checkpoint |
 | `NOTEBOOK-PARAGRAPH-TOOLS1` | ui | pending |
+
+## NOTEBOOK-SMART-INSPECTOR1 Outcome
+
+- Added per-tab `auto`, `pinned`, and `collapsed` inspector state without changing the Notebook document/package contract.
+- `auto` opens for math, sections, and academic containers and yields the canvas for ordinary prose or no active block.
+- The Outline remains manual-only. Collapsed desktop rails release their grid width; narrow drawers remain mutually exclusive.
+- Academic-container headers and empty bodies select on one click while editable content remains directly accessible.
+- The output-inversion pause remains unchanged. `NOTEBOOK-PARAGRAPH-TOOLS1` is the next program gate.

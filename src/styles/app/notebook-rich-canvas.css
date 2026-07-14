@@ -222,7 +222,7 @@
   position: absolute;
   z-index: 1;
   top: 36px;
-  left: max(26px, calc((100% - 1120px) / 2 + 48px));
+  left: max(26px, calc((100% - 1440px) / 2 + 48px));
   color: var(--page-subtle);
   font-style: italic;
   pointer-events: none;
@@ -355,7 +355,7 @@
 
 .notebook-rich-editor {
   min-height: 100%;
-  max-width: 1120px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 34px clamp(26px, 4vw, 64px) 120px;
   color: var(--page-ink);

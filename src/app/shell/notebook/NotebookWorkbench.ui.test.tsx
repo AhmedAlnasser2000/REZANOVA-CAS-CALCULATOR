@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -65,8 +66,11 @@ describe('Notebook workbench', () => {
   });
 
   it('resizes both panes accessibly and restores their defaults on double-click', async () => {
+    const user = userEvent.setup();
     render(<NotebookWorkbenchHarness instanceId="workbench-resize" />);
     await screen.findByLabelText('Notebook rich document');
+    await user.click(screen.getByRole('button', { name: 'Separate equation' }));
+    await screen.findByTestId('notebook-display-math-field');
     setDesktopWorkbenchWidth();
 
     const outline = screen.getByRole('separator', { name: 'Resize Notebook outline' });

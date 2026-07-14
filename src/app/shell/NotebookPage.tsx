@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -22,6 +23,7 @@ import { NotebookAuthoringKeyboard } from './notebook/authoring-keyboard';
 import {
   NotebookRichCanvas,
   notebookEditorNodeById,
+  selectNotebookEditorNode,
   type NotebookEditorSelection,
 } from './notebook/canvas';
 import {
@@ -46,6 +48,15 @@ type NotebookPageProps = {
 
 type NotebookDrawer = 'outline' | 'inspector' | null;
 
+function selectionUsesInspector(
+  selection: NotebookEditorSelection | null,
+): selection is NotebookEditorSelection {
+  return selection?.type === 'inlineMath'
+    || selection?.type === 'displayMath'
+    || selection?.type === 'semanticBlock'
+    || selection?.type === 'notebookSection';
+}
+
 function NotebookPageContent({
   instanceId,
   onOpenMathInTool,
@@ -54,8 +65,10 @@ function NotebookPageContent({
 }: NotebookPageProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [selection, setSelection] = useState<NotebookEditorSelection | null>(null);
+  const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
+  const collapsedInspectorSelectionIdRef = useRef<string | null>(null);
   const { patchUiState, uiState } = useNotebookUiState(instanceId);
   const outlineDrawer = useNotebookTransientLayer({ id: 'notebook-outline-drawer' });
   const inspectorDrawer = useNotebookTransientLayer({ id: 'notebook-inspector-drawer' });
@@ -74,7 +87,13 @@ function NotebookPageContent({
     && activeMathField?.field.matches(':focus')
     ? notebookEditorNodeById(editor, activeMathField.nodeId)
     : null;
-  const inspectedSelection = focusedMathSelection ?? selection;
+  const currentRelevantSelection = focusedMathSelection ?? selection;
+  const currentSelectionUsesInspector = selectionUsesInspector(currentRelevantSelection);
+  const inspectorIsVisible = uiState.inspectorMode === 'pinned'
+    || (uiState.inspectorMode === 'auto' && currentSelectionUsesInspector);
+  const inspectedSelection = uiState.inspectorMode === 'pinned'
+    ? lastRelevantSelection ?? (currentSelectionUsesInspector ? currentRelevantSelection : null)
+    : currentSelectionUsesInspector ? currentRelevantSelection : null;
 
   const commitDocument = useCallback((nextDocument: NotebookRichDocument) => {
     onUpdateSurfaceState(instanceId, {
@@ -83,11 +102,53 @@ function NotebookPageContent({
     });
   }, [instanceId, onUpdateSurfaceState]);
 
+  const handleSelectionChange = useCallback((nextSelection: NotebookEditorSelection | null) => {
+    setSelection(nextSelection);
+    if (!selectionUsesInspector(nextSelection)) {
+      return;
+    }
+    setLastRelevantSelection(nextSelection);
+    if (
+      uiState.inspectorMode === 'collapsed'
+      && nextSelection.id !== collapsedInspectorSelectionIdRef.current
+    ) {
+      collapsedInspectorSelectionIdRef.current = null;
+      patchUiState({ inspectorMode: 'auto' });
+    }
+  }, [patchUiState, uiState.inspectorMode]);
+
+  useEffect(() => {
+    if (!selectionUsesInspector(focusedMathSelection)) {
+      return;
+    }
+    setLastRelevantSelection(focusedMathSelection);
+    if (
+      uiState.inspectorMode === 'collapsed'
+      && focusedMathSelection.id !== collapsedInspectorSelectionIdRef.current
+    ) {
+      collapsedInspectorSelectionIdRef.current = null;
+      patchUiState({ inspectorMode: 'auto' });
+    }
+  }, [focusedMathSelection?.id, focusedMathSelection?.type, patchUiState, uiState.inspectorMode]);
+
   function toggleDrawer(drawer: Exclude<NotebookDrawer, null>) {
     if (drawer === 'outline') {
+      patchUiState({ outlineCollapsed: false });
       outlineDrawer.toggle();
     } else {
+      if (uiState.inspectorMode === 'collapsed') {
+        collapsedInspectorSelectionIdRef.current = null;
+        patchUiState({ inspectorMode: 'auto' });
+      }
       inspectorDrawer.toggle();
+    }
+  }
+
+  function restoreInspector() {
+    collapsedInspectorSelectionIdRef.current = null;
+    patchUiState({ inspectorMode: 'auto' });
+    if (editor && lastRelevantSelection?.id) {
+      selectNotebookEditorNode(editor, lastRelevantSelection.id);
     }
   }
 
@@ -96,7 +157,7 @@ function NotebookPageContent({
         <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
         <div
           ref={workbenchRef}
-          className="notebook-page-workbench"
+          className={`notebook-page-workbench${uiState.outlineCollapsed ? ' is-outline-collapsed' : ''}${!inspectorIsVisible ? ' is-inspector-collapsed' : ''}`}
           style={workbenchStyle}
         >
           <NotebookOutline
@@ -104,9 +165,12 @@ function NotebookPageContent({
             document={document}
             editor={editor}
             selectedNodeId={inspectedSelection?.id ?? document.selectedNodeId}
-            onClose={() => outlineDrawer.close()}
+            onClose={() => {
+              patchUiState({ outlineCollapsed: true });
+              outlineDrawer.close(false);
+            }}
           />
-          <NotebookPaneResizer
+          {!uiState.outlineCollapsed ? <NotebookPaneResizer
             containerRef={workbenchRef}
             defaultWidth={320}
             maxWidth={480}
@@ -115,7 +179,7 @@ function NotebookPageContent({
             otherPaneWidth={uiState.inspectorWidth}
             side="outline"
             width={uiState.outlineWidth}
-          />
+          /> : null}
           <main className="notebook-canvas" data-testid="notebook-canvas">
             <div className="notebook-canvas-header">
               <div className="notebook-canvas-heading-row">
@@ -158,11 +222,11 @@ function NotebookPageContent({
               onChange={commitDocument}
               onEditorChange={setEditor}
               onOpenMathInTool={onOpenMathInTool}
-              onSelectionChange={setSelection}
+              onSelectionChange={handleSelectionChange}
             />
             <NotebookAuthoringKeyboard instanceId={instanceId} />
           </main>
-          <NotebookPaneResizer
+          {inspectorIsVisible ? <NotebookPaneResizer
             containerRef={workbenchRef}
             defaultWidth={300}
             maxWidth={460}
@@ -171,14 +235,45 @@ function NotebookPageContent({
             otherPaneWidth={uiState.outlineWidth}
             side="inspector"
             width={uiState.inspectorWidth}
-          />
-          <NotebookInspector
-            className={activeDrawer === 'inspector' ? 'is-drawer-open' : undefined}
-            editor={editor}
-            selection={inspectedSelection}
-            onClose={() => inspectorDrawer.close()}
-            onOpenMathInTool={onOpenMathInTool}
-          />
+          /> : null}
+          {inspectorIsVisible || activeDrawer === 'inspector' ? (
+            <NotebookInspector
+              className={activeDrawer === 'inspector' ? 'is-drawer-open' : undefined}
+              editor={editor}
+              mode={uiState.inspectorMode}
+              selection={inspectedSelection}
+              onClose={() => {
+                collapsedInspectorSelectionIdRef.current = inspectedSelection?.id ?? null;
+                patchUiState({ inspectorMode: 'collapsed' });
+                inspectorDrawer.close(false);
+              }}
+              onOpenMathInTool={onOpenMathInTool}
+              onPinToggle={() => {
+                collapsedInspectorSelectionIdRef.current = null;
+                patchUiState({
+                  inspectorMode: uiState.inspectorMode === 'pinned' ? 'auto' : 'pinned',
+                });
+              }}
+            />
+          ) : null}
+          {uiState.outlineCollapsed ? (
+            <button
+              type="button"
+              className="notebook-collapsed-rail notebook-collapsed-rail--outline"
+              aria-label="Restore Notebook outline"
+              title="Restore outline"
+              onClick={() => patchUiState({ outlineCollapsed: false })}
+            ><PanelLeftOpen aria-hidden="true" size={17} /></button>
+          ) : null}
+          {!inspectorIsVisible ? (
+            <button
+              type="button"
+              className="notebook-collapsed-rail notebook-collapsed-rail--inspector"
+              aria-label="Restore block inspector"
+              title="Restore inspector"
+              onClick={restoreInspector}
+            ><PanelRightOpen aria-hidden="true" size={17} /></button>
+          ) : null}
           {activeDrawer ? (
             <button
               type="button"

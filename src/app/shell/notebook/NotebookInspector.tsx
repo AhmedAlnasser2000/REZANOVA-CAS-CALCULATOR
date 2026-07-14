@@ -4,6 +4,8 @@ import {
   ArrowUp,
   FilePenLine,
   Italic,
+  Pin,
+  PinOff,
   Send,
   Type,
   X,
@@ -13,6 +15,7 @@ import {
   isNotebookLatexRunnable,
   NOTEBOOK_SEMANTIC_DEFINITIONS,
   notebookSemanticDefinition,
+  type NotebookInspectorMode,
   type NotebookSemanticKind,
   type NotebookWorkspaceTarget,
 } from '../../../lib/notebook';
@@ -40,6 +43,7 @@ function selectionLabel(selection: NotebookEditorSelection | null) {
     displayMath: 'Separate equation',
     semanticBlock: 'Academic container',
     evidenceSnapshot: 'Evidence snapshot',
+    notebookSection: 'Section',
     bulletList: 'Bullet list',
     orderedList: 'Numbered list',
   };
@@ -49,20 +53,25 @@ function selectionLabel(selection: NotebookEditorSelection | null) {
 type NotebookInspectorProps = {
   className?: string;
   editor: Editor | null;
+  mode: NotebookInspectorMode;
   onClose: () => void;
   onOpenMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
+  onPinToggle: () => void;
   selection: NotebookEditorSelection | null;
 };
 
 export function NotebookInspector({
   className,
   editor,
+  mode,
   onClose,
   onOpenMathInTool,
+  onPinToggle,
   selection,
 }: NotebookInspectorProps) {
   const isMath = selection?.type === 'inlineMath' || selection?.type === 'displayMath';
   const isSemantic = selection?.type === 'semanticBlock';
+  const isSection = selection?.type === 'notebookSection';
   const target = String(selection?.attrs.workspaceTarget ?? 'calculate') as NotebookWorkspaceTarget;
   const latex = String(selection?.attrs.latex ?? '');
   const semanticKind = String(selection?.attrs.variant ?? 'note') as NotebookSemanticKind;
@@ -84,18 +93,32 @@ export function NotebookInspector({
           <span>Block inspector</span>
           <strong>{selectionLabel(selection)}</strong>
         </div>
-        <button
-          type="button"
-          className="notebook-drawer-close"
-          aria-label="Close block inspector"
-          title="Close inspector"
-          onClick={onClose}
-        >
-          <X aria-hidden="true" size={17} />
-        </button>
+        <div className="notebook-inspector-heading-actions">
+          <button
+            type="button"
+            className="notebook-inspector-pin"
+            aria-label={mode === 'pinned' ? 'Use automatic block inspector' : 'Pin block inspector'}
+            aria-pressed={mode === 'pinned'}
+            title={mode === 'pinned' ? 'Use automatic inspector' : 'Pin inspector'}
+            onClick={onPinToggle}
+          >
+            {mode === 'pinned'
+              ? <PinOff aria-hidden="true" size={16} />
+              : <Pin aria-hidden="true" size={16} />}
+          </button>
+          <button
+            type="button"
+            className="notebook-drawer-close"
+            aria-label="Close block inspector"
+            title="Collapse inspector"
+            onClick={onClose}
+          >
+            <X aria-hidden="true" size={17} />
+          </button>
+        </div>
       </div>
 
-      {editor && !isMath && !isSemantic ? (
+      {editor && !isMath && !isSemantic && !isSection ? (
         <div className="notebook-inspector-section">
           <span>Text treatment</span>
           <div className="notebook-inspector-actions">

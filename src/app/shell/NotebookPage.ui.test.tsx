@@ -59,13 +59,14 @@ function NotebookHarness({
 }
 
 describe('NotebookPage', () => {
-  it('renders a continuous document surface with outline, canvas, and inspector', async () => {
+  it('renders a continuous document surface with outline and canvas while the inspector stays collapsed for ordinary prose', async () => {
     render(<NotebookHarness />);
 
     expect(screen.getByTestId('notebook-page')).toBeInTheDocument();
     expect(screen.getByLabelText('Notebook outline')).toBeInTheDocument();
     expect(screen.getByTestId('notebook-canvas')).toBeInTheDocument();
-    expect(screen.getByTestId('notebook-inspector')).toBeInTheDocument();
+    expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Restore block inspector' })).toBeInTheDocument();
     expect(screen.getAllByText('Session draft')).not.toHaveLength(0);
     expect(await screen.findByLabelText('Notebook rich document')).toBeInTheDocument();
     expect(document.querySelector('.notebook-rich-scroll-region')).not.toBeNull();
@@ -115,6 +116,34 @@ describe('NotebookPage', () => {
     expect(hint).toHaveTextContent('Hint 2.3 Try substitution');
     expect(within(inspector).getByRole('switch')).toHaveAttribute('aria-checked', 'true');
     expect(within(hint).getByRole('button', { name: /Expand Hint 2.3/ })).toBeInTheDocument();
+  });
+
+  it('keeps the inspector contextual, allows pinning, and restores the last relevant block after collapse', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+
+    await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
+    const menu = screen.getByRole('menu', { name: 'Academic containers' });
+    await user.click(within(menu).getByRole('menuitem', { name: /Theorem/ }));
+
+    const theorem = await screen.findByTestId('notebook-semantic-theorem');
+    await user.click(within(theorem).getByText('Theorem'));
+    const inspector = screen.getByTestId('notebook-inspector');
+    await user.click(within(inspector).getByRole('button', { name: 'Pin block inspector' }));
+
+    await user.click(await screen.findByLabelText('Notebook rich document'));
+    expect(screen.getByTestId('notebook-inspector')).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId('notebook-inspector'))
+        .getByRole('button', { name: 'Use automatic block inspector' }),
+    ).toBeInTheDocument();
+
+    await user.click(within(screen.getByTestId('notebook-inspector'))
+      .getByRole('button', { name: 'Close block inspector' }));
+    expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Restore block inspector' }));
+    expect(await screen.findByTestId('notebook-inspector')).toHaveTextContent('Academic container');
   });
 
   it('synchronizes the outline and reorders top-level containers accessibly', async () => {
@@ -243,6 +272,29 @@ describe('NotebookPage', () => {
     });
     await user.click(within(inspector).getByRole('button', { name: 'Open in Tool' }));
     expect(onOpenMathInTool).toHaveBeenCalledWith('equation', 'x+1=2');
+  });
+
+  it('keeps a focused math inspector closed until another relevant block is selected', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+
+    await user.click(await screen.findByRole('button', { name: 'Separate equation' }));
+    const field = await screen.findByTestId('notebook-display-math-field');
+    await user.click(field);
+
+    const inspector = screen.getByTestId('notebook-inspector');
+    await user.click(within(inspector).getByRole('button', { name: 'Close block inspector' }));
+    await waitFor(() => {
+      expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
+    const menu = screen.getByRole('menu', { name: 'Academic containers' });
+    await user.click(within(menu).getByRole('menuitem', { name: /Definition/ }));
+    const definition = await screen.findByTestId('notebook-semantic-definition');
+    await user.click(within(definition).getByText('Definition'));
+
+    expect(await screen.findByTestId('notebook-inspector')).toHaveTextContent('Academic container');
   });
 
   it('converts selected math explicitly between inline and display placement', async () => {
