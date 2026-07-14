@@ -59,6 +59,12 @@ describe('Linear algebra editor source', () => {
     expect(screen.getByTestId('keypad-linear-vector-v')).toHaveTextContent('v');
     expect(screen.getByTestId('keypad-linear-dot')).toHaveTextContent('dot');
     expect(screen.getByTestId('keypad-linear-cross')).toHaveTextContent('cross');
+    await user.click(screen.getByTestId('keypad-layer-ctrl'));
+    expect(screen.getByTestId('keypad-linear-proj-u')).toHaveTextContent('parallel');
+    expect(screen.getByTestId('keypad-linear-proj-v')).toHaveTextContent('distance');
+    expect(screen.getByTestId('keypad-linear-unit')).toHaveTextContent('area');
+    expect(screen.getByTestId('keypad-linear-gram')).toHaveTextContent('triArea');
+    expect(screen.getByTestId('keypad-linear-orth-u')).toHaveTextContent('volume');
     expect(screen.queryByTestId('keypad-linear-rank')).not.toBeInTheDocument();
     expect(document.querySelector('math-field.secondary-mathfield')).not.toBeInTheDocument();
     expect(screen.queryByText('Vector Notation Pad')).not.toBeInTheDocument();

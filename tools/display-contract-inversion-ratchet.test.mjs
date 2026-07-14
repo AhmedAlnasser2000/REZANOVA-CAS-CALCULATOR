@@ -236,6 +236,27 @@ describe('display contract inversion ratchet', () => {
     assert.equal(report.lanes.equation.forwarder, 0);
   });
 
+  it('recognizes current V2 and V3 attach helpers as native document wrappers', () => {
+    const rootDir = fixture({
+      'src/lib/modes/vector/versioned.ts': `
+        import type { ResultProducerDraft } from '../../../types/calculator/display-types';
+        declare function attachCanonicalResultV2ToProducerDraft(document: { version: 2 }, draft: ResultProducerDraft): ResultProducerDraft;
+        declare function attachCanonicalResultV3ToProducerDraft(document: { version: 3 }, draft: ResultProducerDraft): ResultProducerDraft;
+        export function v2(): ResultProducerDraft {
+          return attachCanonicalResultV2ToProducerDraft({ version: 2 }, { kind: 'success', title: 'V2', warnings: [] });
+        }
+        export function v3(): ResultProducerDraft {
+          return attachCanonicalResultV3ToProducerDraft({ version: 3 }, { kind: 'success', title: 'V3', warnings: [] });
+        }
+      `,
+    });
+    const report = scanDisplayContractInversionRepository({ rootDir });
+
+    assert.equal(report.lanes.vector['native-document'], 2);
+    assert.equal(report.lanes.vector['compatibility-projection'], 0);
+    assert.equal(report.lanes.vector.forwarder, 0);
+  });
+
   it('separates registered Equation owner assembly from its canonical rebuild wrapper', () => {
     const rootDir = fixture({
       'src/lib/equation/guarded/substitution-stage.ts': `
@@ -510,12 +531,12 @@ describe('display contract inversion ratchet', () => {
       'utf8',
     );
 
-    assert.equal(report.summary.producerCount, 396);
+    assert.equal(report.summary.producerCount, 404);
     assert.equal(report.summary.consumerCount, 57);
     assert.equal(report.summary.compatibilityProjectionCount, 0);
     assert.equal(report.summary.legacyReadCount, 0);
     assert.equal(report.summary.producerDraftReadCount, 91);
-    assert.equal(report.summary.nativeDocumentCount, 146);
+    assert.equal(report.summary.nativeDocumentCount, 155);
     assert.equal(report.lanes['result-contract']['canonical-projection'], 0);
     assert.equal(report.lanes.calculate['compatibility-projection'], 0);
     assert.equal(report.lanes.calculate['legacy-read'], 0);

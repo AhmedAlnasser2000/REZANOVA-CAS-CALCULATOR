@@ -280,6 +280,50 @@ describe('linear algebra editor dispatch named values', () => {
     expect(triple.ok ? runVectorOperation(triple.request).resultLatex : '').toBe('2');
   });
 
+  it('dispatches geometric measures with exact named operand snapshots', () => {
+    const area = dispatchVectorEditorLatex({
+      latex: 'parallelogramArea(p,q)',
+      vectorA,
+      vectorB,
+      vectorValues: threeDimensionalVectorValues,
+      angleUnit: 'rad',
+    });
+    expect(area).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'parallelogramArea',
+        vectorA: [1, 0, 0],
+        vectorB: [0, 1, 0],
+        vectorOperands: [[1, 0, 0], [0, 1, 0]],
+        vectorOperandLatexList: ['p', 'q'],
+        editorExpressionLatex: '\\operatorname{parallelogramArea}\\left(p,q\\right)',
+      },
+    });
+    expect(area.ok ? runVectorOperation(area.request).resultLatex : '').toBe('1');
+
+    const volume = dispatchVectorEditorLatex({
+      latex: 'volume(p,q,r)',
+      vectorA,
+      vectorB,
+      vectorValues: threeDimensionalVectorValues,
+      angleUnit: 'rad',
+    });
+    expect(volume).toMatchObject({
+      ok: true,
+      request: {
+        operation: 'volume',
+        vectorOperands: [[1, 0, 0], [0, 1, 0], [0, 0, 2]],
+        exactVectorOperands: [
+          [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }],
+          [{ numerator: 0, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: 2, denominator: 1 }],
+        ],
+        vectorOperandLatexList: ['p', 'q', 'r'],
+      },
+    });
+    expect(volume.ok ? runVectorOperation(volume.request).resultLatex : '').toBe('2');
+  });
+
   it('dispatches variadic span and independence with exact operand snapshots', () => {
     const values = [
       { id: 'vector-p', name: 'p', value: [1, 0] },

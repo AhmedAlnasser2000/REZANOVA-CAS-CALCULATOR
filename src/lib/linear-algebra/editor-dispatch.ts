@@ -37,6 +37,7 @@ import {
 import { containsVectorScalarArithmetic } from './editor-vector-scalars';
 import {
   dispatchGramSchmidtExpression,
+  dispatchVectorGeometricExpression,
   dispatchVectorFamilyExpression,
 } from './vector-family-dispatch';
 
@@ -785,6 +786,9 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
   if (expression.kind === 'gramSchmidt') {
     return dispatchGramSchmidtExpression(expression, canonicalInput);
   }
+  if (expression.kind === 'geometricMeasure') {
+    return dispatchVectorGeometricExpression(expression, canonicalInput);
+  }
   if (containsVectorScalarArithmetic(expression)) {
     return vectorLinearCombinationRequest(canonicalInput, expression);
   }
@@ -874,6 +878,6 @@ export function dispatchVectorEditorLatex(input: VectorEditorDispatchInput): Vec
 
   return {
     ok: false,
-    message: 'Enter a Vector operation such as u+v, u·v, proj(u,v), cross(u,v), gram(u,v,...), or angle(u,v).',
+    message: 'Enter a Vector operation such as u+v, u·v, distance(u,v), volume(u,v,w), gram(u,v,...), or angle(u,v).',
   };
 }

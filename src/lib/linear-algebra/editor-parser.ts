@@ -120,6 +120,7 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{independent\}/g, 'independent')
     .replace(/\\operatorname\{profile\}/g, 'profile')
     .replace(/\\operatorname\{angle\}/g, 'angle')
+    .replace(/\\operatorname\{(parallel|distance|parallelogramArea|triangleArea|volume)\}/g, '$1')
     .replace(/\\det/g, 'det')
     .replace(/\\angle/g, 'angle')
     .replace(/\\dfrac/g, '\\frac')
@@ -654,6 +655,30 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
       kind: 'gramSchmidt',
       operands: operands.map((operand) => parseExpression(operand, options)),
     };
+  }
+
+  for (const [operator, operandCount] of [
+    ['parallel', 2],
+    ['distance', 2],
+    ['parallelogramArea', 2],
+    ['triangleArea', 2],
+    ['volume', 3],
+  ] as const) {
+    const argument = functionArgument(input, operator);
+    if (argument !== null) {
+      const operands = splitTopLevelArguments(argument);
+      if (!operands || operands.length !== operandCount) {
+        fail(
+          'unsupported-expression',
+          `${operator === 'volume' ? 'Volume' : operator} requires exactly ${operandCount} vector operands.`,
+        );
+      }
+      return {
+        kind: 'geometricMeasure',
+        operator,
+        operands: operands.map((operand) => parseExpression(operand, options)),
+      };
+    }
   }
 
   for (const operator of ['span', 'independent'] as const) {

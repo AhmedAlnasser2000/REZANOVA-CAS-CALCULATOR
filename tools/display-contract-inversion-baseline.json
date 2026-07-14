@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "LINEAR-ALGEBRA-EXACT-DECIMAL-CONTROLS1 threads precision through Matrix and Vector producer requests without changing canonical authority counts or compatibility debt.",
-  "registryDigest": "090232146f8105ab1467",
+  "acceptedReason": "VECTOR-GEOMETRIC-MEASURES1 registers current V2 and V3 canonical attach helpers as native document wrappers and preserves Statistics V2 authority after consolidation.",
+  "registryDigest": "eba50f74665771ea4d5f",
   "laneFloors": {
     "anti-regression-evidence": {
       "compatibilityProjection": 0,
@@ -36,7 +36,7 @@
     "calculus": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 3
+      "nativeDocument": 5
     },
     "display-read-model": {
       "compatibilityProjection": 0,
@@ -86,7 +86,7 @@
     "matrix": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 1
+      "nativeDocument": 2
     },
     "ooe-observability": {
       "compatibilityProjection": 0,
@@ -136,17 +136,17 @@
     "table": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 4
+      "nativeDocument": 5
     },
     "trigonometry": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 4
+      "nativeDocument": 7
     },
     "vector": {
       "compatibilityProjection": 0,
       "legacyRead": 0,
-      "nativeDocument": 1
+      "nativeDocument": 3
     }
   },
   "entries": {
@@ -156,7 +156,9 @@
         "65afd2d6e9a26cb45590:1"
       ],
       "src/lib/calculus/workspace/result-document.ts": [
-        "a80cb0dc818ddbe48aed:1"
+        "a80cb0dc818ddbe48aed:1",
+        "64d514e119a79e27d1c8:1",
+        "6294c5784fba7e6b749b:1"
       ],
       "src/lib/equation/composition/stage.ts": [
         "c176099dc84a634bfe6d:1",
@@ -377,6 +379,9 @@
       "src/lib/modes/equation/transforms.ts": [
         "48c5c356a08c2e788f35:1"
       ],
+      "src/lib/modes/matrix-result-document.ts": [
+        "f8e32d27187ad5dc69dc:1"
+      ],
       "src/lib/modes/matrix.ts": [
         "9f7ef7f3358813ec4635:1"
       ],
@@ -386,7 +391,12 @@
         "4819b592f07a94cb25f1:1"
       ],
       "src/lib/modes/table-result-document.ts": [
+        "da63197430f9414d8df4:1",
         "9708d74d9677fb0670f3:1"
+      ],
+      "src/lib/modes/vector-result-document.ts": [
+        "00dc0cb475432b0e40c5:1",
+        "2e491ef4778a20d68759:1"
       ],
       "src/lib/modes/vector.ts": [
         "6a8292aa3f7b5c321673:1"
@@ -395,14 +405,17 @@
         "339eb4b79d8ecba20ea0:1"
       ],
       "src/lib/statistics/result-document.ts": [
-        "bd9c59d6f85ffc2b9ba3:1"
+        "1ac73576eedd880ce64c:1"
       ],
       "src/lib/statistics/runtime-run.ts": [
-        "144a801ac5e689a4ae74:1",
-        "20da8f6c29141f38c01d:1"
+        "5f8417c06e5c61551f6a:1",
+        "d06d5c14c699e6f3f0e9:1"
       ],
       "src/lib/trigonometry/result-document.ts": [
-        "adc15ebcbf4b34ff165a:1"
+        "adc15ebcbf4b34ff165a:1",
+        "ee36b5a2b23ee8018b8b:1",
+        "fa402226216696608f53:1",
+        "f6d039e58852cf9d7f49:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
         "e9610099fe7d673519ae:1",
@@ -669,8 +682,8 @@
       ],
       "src/lib/statistics/core.ts": [
         "56b38bafc5b300e35c2f:1",
-        "bff7a549d85254181ed0:1",
-        "a160d3d4fb8395cd5e37:1",
+        "4638450cc21b2c7f0634:1",
+        "3f6526df7dab2d6174c8:1",
         "7b39416da465e1dfce70:1",
         "192018f9d1755654a67d:1",
         "03a343c9a2bf325c5ad0:1",
@@ -680,9 +693,6 @@
         "d263fd990ee8e29ed468:1",
         "65262d7ef9fa07e8dc72:1",
         "1ae33380a7063d0377fe:1"
-      ],
-      "src/lib/statistics/runtime-run.ts": [
-        "b57fa6106228daccb420:1"
       ],
       "src/lib/trigonometry/core.ts": [
         "76685e604035a5c820ce:1",

@@ -87,6 +87,67 @@ describe('runVectorOperation', () => {
     }).resultLatex).toBe('\\begin{bmatrix}0.5\\\\0\\end{bmatrix}');
   });
 
+  it('runs exact geometric classifications, distances, areas, and oriented 3D volume', () => {
+    const parallel = runVectorOperation({
+      operation: 'parallel',
+      vectorA: [1, 2],
+      vectorB: [-2, -4],
+      angleUnit: 'rad',
+      vectorOperandLatexA: 'p',
+      vectorOperandLatexB: 'q',
+    });
+    expect(parallel.resultLatex).toBe('\\text{Parallel}');
+    expect(parallel.detailSections?.[0]?.title).toBe('Parallelism Evidence');
+
+    expect(runVectorOperation({
+      operation: 'distance',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      angleUnit: 'rad',
+    }).resultLatex).toBe('\\sqrt{5}');
+
+    const area = runVectorOperation({
+      operation: 'parallelogramArea',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      angleUnit: 'rad',
+      vectorOperandLatexA: 'p',
+      vectorOperandLatexB: 'q',
+    });
+    expect(area.resultLatex).toBe('2');
+    expect(area.detailSections?.find((section) => section.title === '3D Geometry')?.lines).toContain(
+      'n=p\\times q=\\begin{bmatrix}0\\\\0\\\\2\\end{bmatrix}',
+    );
+
+    expect(runVectorOperation({
+      operation: 'triangleArea',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      angleUnit: 'rad',
+    }).resultLatex).toBe('1');
+    expect(runVectorOperation({
+      operation: 'parallelogramArea',
+      vectorA: [1, 0],
+      vectorB: [0, 2],
+      angleUnit: 'rad',
+    }).detailSections?.some((section) => section.title === '3D Geometry')).toBe(false);
+
+    const volume = runVectorOperation({
+      operation: 'volume',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      angleUnit: 'rad',
+    });
+    expect(volume.resultLatex).toBe('6');
+    expect(volume.detailSections?.find((section) => section.title === '3D Geometry')?.lines).toEqual([
+      'n=p\\times q=\\begin{bmatrix}0\\\\0\\\\2\\end{bmatrix}',
+      's=(p\\times q)\\cdot r=6',
+      'The ordered vectors have positive right-handed orientation.',
+    ]);
+  });
+
   it('runs two-vector Gram-Schmidt with orthonormal and dependency details', () => {
     const independent = runVectorOperation({
       operation: 'gramSchmidtUV',
@@ -254,6 +315,19 @@ describe('runVectorOperation', () => {
       vectorB: [0, 0],
       angleUnit: 'deg',
     }).error).toBe('Gram-Schmidt needs at least one nonzero vector.');
+    expect(runVectorOperation({
+      operation: 'parallel',
+      vectorA: [0, 0],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    }).error).toBe('Parallel direction requires two nonzero vectors.');
+    expect(runVectorOperation({
+      operation: 'volume',
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      angleUnit: 'deg',
+    }).error).toBe('Volume requires three 3D vectors.');
     expect(runVectorOperation({
       operation: 'normA',
       vectorA: Array(9).fill(1),

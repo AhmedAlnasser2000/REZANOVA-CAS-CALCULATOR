@@ -83,6 +83,16 @@ export function vectorOperationLabel(operation: VectorOperation) {
       return 'orthogonal(u,v)';
     case 'gramSchmidtUV':
       return 'gram(u,v)';
+    case 'parallel':
+      return 'parallel(u,v)';
+    case 'distance':
+      return 'distance(u,v)';
+    case 'parallelogramArea':
+      return 'parallelogramArea(u,v)';
+    case 'triangleArea':
+      return 'triangleArea(u,v)';
+    case 'volume':
+      return 'volume(u,v,w)';
     case 'linearCombination':
       return 'Vector combination';
     case 'span':
@@ -98,6 +108,11 @@ function vectorResultTitle(request: RunVectorModeRequest) {
   if (
     (request.operation === 'span'
       || request.operation === 'independent'
+      || request.operation === 'parallel'
+      || request.operation === 'distance'
+      || request.operation === 'parallelogramArea'
+      || request.operation === 'triangleArea'
+      || request.operation === 'volume'
       || (request.operation === 'gramSchmidtUV' && (request.vectorOperands?.length ?? 2) > 2))
     && request.editorExpressionLatex
   ) {

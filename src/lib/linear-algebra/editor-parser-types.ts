@@ -56,6 +56,11 @@ export type LinearAlgebraEditorExpression =
   | { kind: 'angle'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'orthogonality'; left: LinearAlgebraEditorExpression; right: LinearAlgebraEditorExpression }
   | { kind: 'gramSchmidt'; operands: LinearAlgebraEditorExpression[] }
+  | {
+      kind: 'geometricMeasure';
+      operator: 'parallel' | 'distance' | 'parallelogramArea' | 'triangleArea' | 'volume';
+      operands: LinearAlgebraEditorExpression[];
+    }
   | { kind: 'vectorFamily'; operator: 'span' | 'independent'; operands: LinearAlgebraEditorExpression[] }
   | { kind: 'projection'; base: LinearAlgebraEditorExpression; target: LinearAlgebraEditorExpression }
   | { kind: 'scalarTripleProduct'; first: LinearAlgebraEditorExpression; second: LinearAlgebraEditorExpression; third: LinearAlgebraEditorExpression }

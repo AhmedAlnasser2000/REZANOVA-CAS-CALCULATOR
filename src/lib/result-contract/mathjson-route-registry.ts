@@ -113,6 +113,7 @@ export const MATHJSON_ROUTE_REGISTRY = {
   'vector.angle': route('vector', 'vector-angle'),
   'vector.orthogonalization': route('vector', 'vector-gram-schmidt'),
   'vector.span-independence': route('vector'),
+  'vector.geometric-measures': route('vector'),
   'table.single-function': route('table', 'table-polynomial'),
   'table.two-functions': route('table', 'table-two-functions'),
   'table.domain-boundary': route('table', 'table-partial-domain'),
@@ -164,6 +165,7 @@ export const GOLDEN_CASE_ROUTE_REGISTRY = {
   'matrix-profile-tall-rectangular': 'matrix.profile',
   'vector-dependent-independence-relation': 'vector.span-independence',
   'vector-exact-gram-schmidt': 'vector.orthogonalization',
+  'vector-geometric-measures': 'vector.geometric-measures',
   'table-partial-real-domain': 'table.domain-boundary',
   'table-two-function-grid': 'table.two-functions',
 } as const satisfies Record<string, MathJsonRouteId>;

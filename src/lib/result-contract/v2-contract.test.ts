@@ -344,6 +344,7 @@ describe('Canonical Result V2 contract', () => {
         'vector.angle',
         'vector.orthogonalization',
         'vector.span-independence',
+        'vector.geometric-measures',
       ]);
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
@@ -408,6 +409,10 @@ describe('Canonical Result V2 contract', () => {
     expect(canonicalResultVersionForProducer({
       routeId: 'vector.span-independence',
       selector: 'independent',
+    })).toBe(2);
+    expect(canonicalResultVersionForProducer({
+      routeId: 'vector.geometric-measures',
+      selector: 'volume',
     })).toBe(2);
     expect(canonicalResultVersionForProducer({
       routeId: 'vector.angle',

@@ -68,6 +68,13 @@ export function vectorMathJsonRouteForOperation(
   if (operation === 'cross') return 'vector.cross-product';
   if (operation === 'normA' || operation === 'normB') return 'vector.norm';
   if (operation === 'angle') return 'vector.angle';
+  if (
+    operation === 'parallel'
+    || operation === 'distance'
+    || operation === 'parallelogramArea'
+    || operation === 'triangleArea'
+    || operation === 'volume'
+  ) return 'vector.geometric-measures';
   if (operation === 'span' || operation === 'independent') {
     return 'vector.span-independence';
   }

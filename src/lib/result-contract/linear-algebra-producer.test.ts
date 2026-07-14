@@ -107,6 +107,25 @@ describe('Linear Algebra canonical result producers', () => {
       : undefined).toBeDefined();
   });
 
+  it('attaches producer-proven V2 MathJSON to geometric measure details', () => {
+    const outcome = runVectorMode({
+      operation: 'parallelogramArea',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      vectorOperandLatexA: 'p',
+      vectorOperandLatexB: 'q',
+      angleUnit: 'rad',
+    });
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success' || !outcome.canonicalResult) {
+      throw new Error('Expected geometric Vector canonical result.');
+    }
+    expect(outcome.canonicalResult.version).toBe(2);
+    expect(collectCanonicalMathLeaves(outcome.canonicalResult).every((entry) => (
+      entry.value.mathJson !== undefined
+    ))).toBe(true);
+  });
+
   it('proves every Gram-Schmidt replay leaf from exact Vector evidence', () => {
     const outcome = runVectorMode({
       operation: 'gramSchmidtUV',

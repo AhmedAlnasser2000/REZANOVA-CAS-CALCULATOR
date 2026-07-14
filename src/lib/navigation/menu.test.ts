@@ -142,6 +142,16 @@ describe('workspace keypad overlays', () => {
       .toBe('\\operatorname{gram}\\left(#0,#?\\right)');
     expect(vectorRows.flat().find((button) => button.id === 'linear-gram')?.layers?.shift)
       .toMatchObject({ label: 'span', latex: '\\operatorname{span}\\left(#0,#?\\right)' });
+    expect(vectorRows.flat().find((button) => button.id === 'linear-proj-u')?.layers?.ctrl)
+      .toMatchObject({ label: 'parallel', latex: '\\operatorname{parallel}\\left(#0,#?\\right)' });
+    expect(vectorRows.flat().find((button) => button.id === 'linear-proj-v')?.layers?.ctrl)
+      .toMatchObject({ label: 'distance', latex: '\\operatorname{distance}\\left(#0,#?\\right)' });
+    expect(vectorRows.flat().find((button) => button.id === 'linear-unit')?.layers?.ctrl)
+      .toMatchObject({ label: 'area', latex: '\\operatorname{parallelogramArea}\\left(#0,#?\\right)' });
+    expect(vectorRows.flat().find((button) => button.id === 'linear-gram')?.layers?.ctrl)
+      .toMatchObject({ label: 'triArea', latex: '\\operatorname{triangleArea}\\left(#0,#?\\right)' });
+    expect(vectorRows.flat().find((button) => button.id === 'linear-orth-u')?.layers?.ctrl)
+      .toMatchObject({ label: 'volume', latex: '\\operatorname{volume}\\left(#0,#?,#?\\right)' });
     expect(vectorRows.flat().find((button) => button.id === 'linear-unit')?.layers?.shift)
       .toMatchObject({ label: 'independent', latex: '\\operatorname{independent}\\left(#0,#?\\right)' });
     expect(vectorRows.flat().find((button) => button.id === 'linear-orth-u')?.latex)

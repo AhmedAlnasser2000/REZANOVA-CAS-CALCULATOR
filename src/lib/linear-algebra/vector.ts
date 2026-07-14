@@ -40,6 +40,11 @@ import {
   type VectorCoreStopReason,
 } from './vector-core';
 import { runVectorFamilyOperation } from './vector-family';
+import {
+  isVectorGeometricOperation,
+  vectorGeometricNumericOperands,
+  vectorGeometricResponse,
+} from './vector-geometric';
 import { profileLinearAlgebraResult } from '../display/printer';
 import {
   attachLinearAlgebraCanonicalEvidence,
@@ -81,6 +86,14 @@ function vectorStopReasonToMessage(reason: VectorCoreStopReason): string {
       return 'Projection needs a nonzero vector to project onto.';
     case 'unit-zero-vector':
       return 'Unit vector is undefined for the zero vector.';
+    case 'parallel-zero-vector':
+      return 'Parallel direction requires two nonzero vectors.';
+    case 'vector-c-required':
+      return 'A third vector is required for volume.';
+    case 'vector-c-incomplete':
+      return 'The third vector is incomplete.';
+    case 'volume-requires-3d':
+      return 'Volume requires three 3D vectors.';
     case 'gram-schmidt-vector-count':
     case 'gram-schmidt-dimension-limit':
       return gramSchmidtDimensionLimitMessage();
@@ -331,6 +344,10 @@ function exactScalarResponse(
 function exactVectorResponse(req: VectorRequest, result: VectorCoreResult): VectorResponse | null {
   if (result.kind === 'error') {
     return null;
+  }
+
+  if (isVectorGeometricOperation(req.operation)) {
+    return vectorGeometricResponse(req, result);
   }
 
   const { vectorA, vectorB } = exactVectorInputs(req);
@@ -694,6 +711,13 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
     });
   }
 
+  if (result.kind === 'parallelism' || result.kind === 'geometricScalar') {
+    return vectorGeometricResponse(req, result) ?? {
+      warnings: [],
+      error: 'Geometric measure evidence is unavailable.',
+    };
+  }
+
   const resultLatex = vectorToLatex(result.value);
   return attachLinearAlgebraCanonicalEvidence(profileLinearAlgebraResult({
     resultLatex,
@@ -710,6 +734,8 @@ function vectorCoreResultToResponse(req: VectorRequest, result: VectorCoreResult
 function runVectorOperationInternal(req: VectorRequest): VectorResponse {
   const dimensionError = (req.operation === 'gramSchmidtUV'
     ? gramSchmidtNumericOperands(req)
+    : isVectorGeometricOperation(req.operation)
+      ? vectorGeometricNumericOperands(req)
     : [req.vectorA, ...(req.vectorB ? [req.vectorB] : [])])
     .map(vectorEditingDimensionError)
     .find((error): error is string => error !== null) ?? null;

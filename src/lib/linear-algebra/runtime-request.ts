@@ -134,6 +134,14 @@ export function vectorActionLabel(operation: VectorOperation, leftName: string, 
       return `${leftName}+${rightName}`;
     case 'subtract':
       return `${leftName}-${rightName}`;
+    case 'parallel':
+      return `parallel(${leftName},${rightName})`;
+    case 'distance':
+      return `distance(${leftName},${rightName})`;
+    case 'parallelogramArea':
+      return `parallelogramArea(${leftName},${rightName})`;
+    case 'triangleArea':
+      return `triangleArea(${leftName},${rightName})`;
     default:
       return vectorOperationLabel(operation);
   }

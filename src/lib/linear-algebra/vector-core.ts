@@ -21,7 +21,12 @@ export type NumericVectorOperation =
   | 'unitA'
   | 'unitB'
   | 'orthogonalCheck'
-  | 'gramSchmidtUV';
+  | 'gramSchmidtUV'
+  | 'parallel'
+  | 'distance'
+  | 'parallelogramArea'
+  | 'triangleArea'
+  | 'volume';
 
 export type VectorCoreStopReason =
   | 'vector-a-incomplete'
@@ -32,6 +37,10 @@ export type VectorCoreStopReason =
   | 'angle-zero-vector'
   | 'projection-zero-base'
   | 'unit-zero-vector'
+  | 'parallel-zero-vector'
+  | 'vector-c-required'
+  | 'vector-c-incomplete'
+  | 'volume-requires-3d'
   | 'gram-schmidt-vector-count'
   | 'gram-schmidt-dimension-limit'
   | 'gram-schmidt-zero-span'
@@ -41,6 +50,15 @@ export type VectorCoreResult =
   | { kind: 'vector'; value: NumericVector }
   | { kind: 'scalar'; value: number; angleUnit?: NumericAngleUnit }
   | { kind: 'orthogonality'; orthogonal: boolean; dot: number }
+  | { kind: 'parallelism'; parallel: boolean; gramDeterminant: number }
+  | {
+      kind: 'geometricScalar';
+      measure: 'distance' | 'parallelogramArea' | 'triangleArea' | 'volume';
+      value: number;
+      radicand?: number;
+      normal?: NumericVector;
+      signedVolume?: number;
+    }
   | {
       kind: 'gramSchmidt';
       orthogonalBasis: NumericVector[];
@@ -126,6 +144,19 @@ export function orthogonalComponentToVector(base: NumericVector, target: Numeric
 export function unitVector(vector: NumericVector): NumericVector | null {
   const norm = normVector(vector);
   return norm === 0 ? null : scaleVector(vector, 1 / norm);
+}
+
+export function gramDeterminant(a: NumericVector, b: NumericVector): number {
+  return dotVectors(a, a) * dotVectors(b, b) - dotVectors(a, b) ** 2;
+}
+
+export function scalarTripleProduct(
+  first: NumericVector,
+  second: NumericVector,
+  third: NumericVector,
+): number | null {
+  const normal = crossVectors(first, second);
+  return normal ? dotVectors(normal, third) : null;
 }
 
 function discardedVectorNote(index: number) {
@@ -238,6 +269,11 @@ function vectorBRequired(operation: NumericVectorOperation) {
     'unitB',
     'orthogonalCheck',
     'gramSchmidtUV',
+    'parallel',
+    'distance',
+    'parallelogramArea',
+    'triangleArea',
+    'volume',
   ].includes(operation);
 }
 
@@ -258,6 +294,11 @@ function operationUsesBothVectors(operation: NumericVectorOperation) {
     'orthogonalToV',
     'orthogonalCheck',
     'gramSchmidtUV',
+    'parallel',
+    'distance',
+    'parallelogramArea',
+    'triangleArea',
+    'volume',
   ].includes(operation);
 }
 
@@ -295,6 +336,17 @@ export function runNumericVectorOperation(req: NumericVectorRequest): VectorCore
   }
 
   if (vectorB && operationUsesBothVectors(req.operation) && !haveSameVectorDimension(vectorA, vectorB)) {
+    return { kind: 'error', reason: 'dimension-mismatch' };
+  }
+
+  const thirdVector = req.operation === 'volume' ? req.vectorOperands?.[2] : undefined;
+  if (req.operation === 'volume' && !thirdVector) {
+    return { kind: 'error', reason: 'vector-c-required' };
+  }
+  if (thirdVector && getVectorShapeFacts(thirdVector).isEmpty) {
+    return { kind: 'error', reason: 'vector-c-incomplete' };
+  }
+  if (thirdVector && !haveSameVectorDimension(vectorA, thirdVector)) {
     return { kind: 'error', reason: 'dimension-mismatch' };
   }
 
@@ -348,6 +400,50 @@ export function runNumericVectorOperation(req: NumericVectorRequest): VectorCore
     case 'orthogonalCheck': {
       const dot = dotVectors(vectorA, vectorB!);
       return { kind: 'orthogonality', dot, orthogonal: Math.abs(dot) <= 1e-12 };
+    }
+    case 'parallel': {
+      const squaredNormProduct = dotVectors(vectorA, vectorA) * dotVectors(vectorB!, vectorB!);
+      if (squaredNormProduct === 0) {
+        return { kind: 'error', reason: 'parallel-zero-vector' };
+      }
+      const determinant = gramDeterminant(vectorA, vectorB!);
+      return {
+        kind: 'parallelism',
+        parallel: Math.abs(determinant) <= 1e-12 * Math.max(1, squaredNormProduct),
+        gramDeterminant: determinant,
+      };
+    }
+    case 'distance': {
+      const difference = subtractVectors(vectorA, vectorB!);
+      const radicand = dotVectors(difference, difference);
+      return { kind: 'geometricScalar', measure: 'distance', value: Math.sqrt(radicand), radicand };
+    }
+    case 'parallelogramArea':
+    case 'triangleArea': {
+      const radicand = Math.max(0, gramDeterminant(vectorA, vectorB!));
+      const normal = vectorA.length === 3 ? crossVectors(vectorA, vectorB!) ?? undefined : undefined;
+      const area = Math.sqrt(radicand);
+      return {
+        kind: 'geometricScalar',
+        measure: req.operation,
+        value: req.operation === 'triangleArea' ? area / 2 : area,
+        radicand,
+        ...(normal ? { normal } : {}),
+      };
+    }
+    case 'volume': {
+      if (vectorA.length !== 3 || vectorB!.length !== 3 || thirdVector!.length !== 3) {
+        return { kind: 'error', reason: 'volume-requires-3d' };
+      }
+      const normal = crossVectors(vectorA, vectorB!)!;
+      const signedVolume = dotVectors(normal, thirdVector!);
+      return {
+        kind: 'geometricScalar',
+        measure: 'volume',
+        value: Math.abs(signedVolume),
+        normal,
+        signedVolume,
+      };
     }
     default:
       return { kind: 'error', reason: 'unsupported-operation' };

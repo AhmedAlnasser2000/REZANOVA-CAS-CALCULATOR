@@ -864,21 +864,21 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
     domainId: 'linearAlgebra',
     title: 'Matrix and Vector Editor',
     summary: 'Use the Matrix and Vector editors with their named inputs for structured linear-algebra operations.',
-    whatItIs: [
-      'Matrix and Vector are dedicated numeric workspaces for linear-algebra operations in this app.',
-      'The main editor is the source for structured Matrix and Vector expressions while the named inputs hold reusable values.',
-    ],
+    whatItIs: ['Matrix and Vector are dedicated numeric workspaces for linear-algebra operations in this app.',
+      'The main editor is the source for structured Matrix and Vector expressions while the named inputs hold reusable values.'],
     whatItMeans: [
       'det(A) means the determinant of A, which is a scalar tied to properties like invertibility.',
       'A transpose means swapping rows and columns.',
       'A inverse means the matrix that undoes A when the inverse exists.',
       'u dot v is the dot product, u cross v is the cross product, and norm(u) is the length of a vector.',
       'gram(p,q,r,...) applies Gram-Schmidt to one through six equal-length vectors and discards any zero residual as a dependent direction.',
+      'parallel(p,q), distance(p,q), parallelogramArea(p,q), triangleArea(p,q), and volume(p,q,r) provide bounded geometric measures. Volume requires 3D vectors.',
     ],
     howToUse: [
       'Open Matrix for matrix operations and Vector for vector operations.',
       'Use the main editor and soft keys for Matrix A/B, Vector u/v, and common operator forms.',
       'In Vector, use gram(p,q,r,...) for an orthogonal basis and expand Gram-Schmidt Proof for the residual and dependence evidence.',
+      'Use the Vector Ctrl keypad layer to insert parallel, distance, area, triangle-area, and volume templates.',
       'Treat the Matrix and Vector editors as structured operation surfaces, not as a promise of full free-form symbolic matrix CAS.',
     ],
     concepts: [
@@ -887,11 +887,7 @@ const GUIDE_ARTICLE_DRAFTS: GuideArticleDraft[] = [
       'The main editor in Matrix and Vector helps you draft, copy, and reuse structured linear-algebra expressions without promising full free-form matrix CAS.',
       'Soft keys keep the current Matrix A/B or Vector u/v values available for operations.',
     ],
-    whereToFindIt: [
-      'Virtual keyboard page: MatrixVec',
-      'Matrix mode main editor',
-      'Vector mode main editor',
-    ],
+    whereToFindIt: ['Virtual keyboard page: MatrixVec', 'Matrix mode main editor', 'Vector mode main editor'],
     bestModes: ['matrix', 'vector'],
     symbols: [
       'symbol-matrix-template',

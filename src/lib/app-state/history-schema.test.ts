@@ -711,6 +711,26 @@ describe('history entry schema', () => {
     });
 
     expect(parseHistoryEntry({
+      id: 'vector-seed-volume',
+      mode: 'vector',
+      inputLatex: '\\operatorname{volume}\\left(p,q,r\\right)',
+      resultLatex: '6',
+      vectorSeed: {
+        operation: 'volume',
+        vectorA: [1, 0, 0],
+        vectorB: [0, 2, 0],
+        vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+        vectorOperandLatexList: ['p', 'q', 'r'],
+        angleUnit: 'rad',
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    }).vectorSeed).toMatchObject({
+      operation: 'volume',
+      vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+    });
+
+    expect(parseHistoryEntry({
       id: 'vector-seed-combination',
       mode: 'vector',
       inputLatex: '2p-\\frac{q}{3}',

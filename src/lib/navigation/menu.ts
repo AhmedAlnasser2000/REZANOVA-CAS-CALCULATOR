@@ -513,10 +513,10 @@ const MATRIX_MODIFIER_ROW: KeypadButton[] = [
 const VECTOR_OPERATOR_ROW: KeypadButton[] = [
   { id: 'linear-vector-u', label: 'u', variant: 'function', latex: 'u' },
   { id: 'linear-vector-v', label: 'v', variant: 'function', latex: 'v' },
-  { id: 'linear-proj-u', label: 'proj_u', variant: 'function', latex: '\\operatorname{proj}_{u}\\left(#0\\right)' },
-  { id: 'linear-proj-v', label: 'proj_v', variant: 'function', latex: '\\operatorname{proj}_{v}\\left(#0\\right)' },
-  { id: 'linear-unit', label: 'unit', secondary: 'independent', variant: 'function', latex: '\\operatorname{unit}\\left(#0\\right)', layers: { shift: { label: 'independent', latex: '\\operatorname{independent}\\left(#0,#?\\right)' } } },
-  { id: 'linear-gram', label: 'gram', secondary: 'span', variant: 'function', latex: '\\operatorname{gram}\\left(#0,#?\\right)', layers: { shift: { label: 'span', latex: '\\operatorname{span}\\left(#0,#?\\right)' } } },
+  { id: 'linear-proj-u', label: 'proj_u', ctrl: 'parallel', variant: 'function', latex: '\\operatorname{proj}_{u}\\left(#0\\right)', layers: { ctrl: { label: 'parallel', latex: '\\operatorname{parallel}\\left(#0,#?\\right)' } } },
+  { id: 'linear-proj-v', label: 'proj_v', ctrl: 'distance', variant: 'function', latex: '\\operatorname{proj}_{v}\\left(#0\\right)', layers: { ctrl: { label: 'distance', latex: '\\operatorname{distance}\\left(#0,#?\\right)' } } },
+  { id: 'linear-unit', label: 'unit', secondary: 'independent', ctrl: 'area', variant: 'function', latex: '\\operatorname{unit}\\left(#0\\right)', layers: { shift: { label: 'independent', latex: '\\operatorname{independent}\\left(#0,#?\\right)' }, ctrl: { label: 'area', latex: '\\operatorname{parallelogramArea}\\left(#0,#?\\right)' } } },
+  { id: 'linear-gram', label: 'gram', secondary: 'span', ctrl: 'triArea', variant: 'function', latex: '\\operatorname{gram}\\left(#0,#?\\right)', layers: { shift: { label: 'span', latex: '\\operatorname{span}\\left(#0,#?\\right)' }, ctrl: { label: 'triArea', latex: '\\operatorname{triangleArea}\\left(#0,#?\\right)' } } },
 ];
 
 const VECTOR_MODIFIER_ROW: KeypadButton[] = [
@@ -525,11 +525,13 @@ const VECTOR_MODIFIER_ROW: KeypadButton[] = [
     label: 'orth_u',
     secondary: 'orth?',
     alpha: 'ell',
+    ctrl: 'volume',
     variant: 'function',
     latex: '\\operatorname{orth}_{u}\\left(#0\\right)',
     layers: {
       shift: { label: 'orth?', latex: '\\operatorname{orthogonal}\\left(#0,#?\\right)' },
       alpha: { label: 'ell', latex: '\\ell' },
+      ctrl: { label: 'volume', latex: '\\operatorname{volume}\\left(#0,#?,#?\\right)' },
     },
   },
   {

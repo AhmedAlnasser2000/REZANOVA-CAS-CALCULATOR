@@ -128,6 +128,11 @@ export function formatLinearAlgebraEditorExpression(expression: LinearAlgebraEdi
         'gram',
         ...expression.operands.map(formatLinearAlgebraEditorExpression),
       );
+    case 'geometricMeasure':
+      return callLatex(
+        expression.operator,
+        ...expression.operands.map(formatLinearAlgebraEditorExpression),
+      );
     case 'vectorFamily':
       return callLatex(
         expression.operator,

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "STATISTICS-DATA-SUMMARY1 accepts standard-operator Canonical Result V2 notation for regression and mean inference.",
-  "caseCount": 43,
+  "acceptedReason": "VECTOR-GEOMETRIC-MEASURES1 accepts exact geometric measures and bounded 3D orientation readback.",
+  "caseCount": 44,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -10,7 +10,7 @@
     "geometry": 2,
     "statistics": 2,
     "matrix": 2,
-    "vector": 2,
+    "vector": 3,
     "table": 2
   },
   "successfulWorkspaceCounts": {
@@ -21,7 +21,7 @@
     "geometry": 2,
     "statistics": 2,
     "matrix": 2,
-    "vector": 2,
+    "vector": 3,
     "table": 2
   },
   "entries": [
@@ -1215,6 +1215,29 @@
           "path": "canonicalResult.details[1].lines[2][0].math.canonicalLatex",
           "kind": "detail-math-line",
           "value": "w_{1}\\cdot w_{2}=0"
+        }
+      ]
+    },
+    {
+      "id": "vector-geometric-measures",
+      "workspace": "vector",
+      "outcomeKind": "success",
+      "title": "parallelogramArea(u,v)",
+      "fragments": [
+        {
+          "path": "canonicalResult.primaryMath.canonicalLatex",
+          "kind": "primary-answer",
+          "value": "2"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
+          "kind": "detail-math-line",
+          "value": "\\Delta=(p\\cdot p)(q\\cdot q)-(p\\cdot q)^{2}=4"
+        },
+        {
+          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
+          "kind": "detail-math-line",
+          "value": "n=p\\times q=\\begin{bmatrix}0\\\\0\\\\2\\end{bmatrix}"
         }
       ]
     },

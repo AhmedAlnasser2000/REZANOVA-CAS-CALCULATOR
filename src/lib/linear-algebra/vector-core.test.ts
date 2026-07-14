@@ -48,6 +48,40 @@ describe('vector-core operations', () => {
     expect(unitVector([0, 0])).toBeNull();
   });
 
+  it('runs reusable geometric measures from dot, norm, cross, and triple products', () => {
+    expect(runNumericVectorOperation({
+      operation: 'parallel',
+      vectorA: [1, 2],
+      vectorB: [-2, -4],
+      angleUnit: 'rad',
+    })).toMatchObject({ kind: 'parallelism', parallel: true, gramDeterminant: 0 });
+    expect(runNumericVectorOperation({
+      operation: 'distance',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      angleUnit: 'rad',
+    })).toMatchObject({ kind: 'geometricScalar', measure: 'distance', value: Math.sqrt(5), radicand: 5 });
+    expect(runNumericVectorOperation({
+      operation: 'parallelogramArea',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      angleUnit: 'rad',
+    })).toMatchObject({ kind: 'geometricScalar', measure: 'parallelogramArea', value: 2, normal: [0, 0, 2] });
+    expect(runNumericVectorOperation({
+      operation: 'triangleArea',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      angleUnit: 'rad',
+    })).toMatchObject({ kind: 'geometricScalar', measure: 'triangleArea', value: 1 });
+    expect(runNumericVectorOperation({
+      operation: 'volume',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+      angleUnit: 'rad',
+    })).toMatchObject({ kind: 'geometricScalar', measure: 'volume', value: 6, signedVolume: 6 });
+  });
+
   it('runs two-vector Gram-Schmidt and skips dependent residuals', () => {
     const independent = gramSchmidtTwoVectors([1, 1], [1, 0]);
     expect(independent?.orthogonalBasis).toEqual([[1, 1], [0.5, -0.5]]);
@@ -195,5 +229,18 @@ describe('vector-core operations', () => {
       kind: 'error',
       reason: 'gram-schmidt-zero-span',
     });
+    expect(runNumericVectorOperation({
+      operation: 'parallel',
+      vectorA: [0, 0],
+      vectorB: [1, 0],
+      angleUnit: 'deg',
+    })).toEqual({ kind: 'error', reason: 'parallel-zero-vector' });
+    expect(runNumericVectorOperation({
+      operation: 'volume',
+      vectorA: [1, 0],
+      vectorB: [0, 1],
+      vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      angleUnit: 'deg',
+    })).toEqual({ kind: 'error', reason: 'volume-requires-3d' });
   });
 });

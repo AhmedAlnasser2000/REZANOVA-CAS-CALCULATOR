@@ -187,6 +187,28 @@ describe('Canonical Result V2 Linear Algebra semantics', () => {
       .toBe(true);
   });
 
+  it('keeps exact geometric measures and 3D interpretation producer-proven in canonical V2', () => {
+    const document = vectorDocument({
+      operation: 'volume',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      editorExpressionLatex: '\\operatorname{volume}\\left(p,q,r\\right)',
+      angleUnit: 'rad',
+    });
+
+    expect(document.version).toBe(2);
+    expect(document.primary).toMatchObject({
+      kind: 'math',
+      value: { canonicalLatex: '6', mathJson: 6 },
+    });
+    expect(document.details?.find((section) => section.title === '3D Geometry')?.lines)
+      .toHaveLength(3);
+    expect(collectCanonicalMathLeaves(document).every((leaf) => leaf.value.mathJson !== undefined))
+      .toBe(true);
+  });
+
   it('keeps an exact projection primary while adding a precision-aware decimal readback', () => {
     const document = vectorDocument({
       operation: 'projectionUofV',

@@ -117,6 +117,16 @@ const variadicVectorRequest: RunVectorModeRequest = {
   angleUnit: 'rad',
 };
 
+const geometricVectorRequest: RunVectorModeRequest = {
+  operation: 'volume',
+  vectorA: [1, 0, 0],
+  vectorB: [0, 2, 0],
+  vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+  vectorOperandLatexList: ['p', 'q', 'r'],
+  editorExpressionLatex: '\\operatorname{volume}\\left(p,q,r\\right)',
+  angleUnit: 'rad',
+};
+
 const runtimeContext = (shouldCancel: () => boolean) => ({
   registryId: 'test.linear-algebra.cancel',
   checkpoint: () => undefined,
@@ -204,6 +214,34 @@ describe('Matrix and Vector worker runtime shells', () => {
           canonicalLatex: expect.stringContaining('\\begin{bmatrix}0\\\\0\\\\1\\end{bmatrix}'),
         },
       });
+    expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
+      kind: 'worker',
+      hostId: 'vector-worker-runtime',
+      terminalStatus: 'completed',
+    });
+  });
+
+  it('carries oriented volume through the unchanged Vector worker and OOE shell', async () => {
+    expect(buildVectorOoeSnapshot(geometricVectorRequest).request).toMatchObject({
+      operation: 'volume',
+      vectorOperands: geometricVectorRequest.vectorOperands,
+      vectorOperandLatexList: ['p', 'q', 'r'],
+    });
+    const result = await runVectorModeWithOoePilot(geometricVectorRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalVectorMode),
+    });
+    expect(result.payload).toEqual(runCanonicalVectorMode(geometricVectorRequest));
+    expect(result.payload).toMatchObject({
+      kind: 'success',
+      canonicalResult: {
+        version: 2,
+        primary: {
+          kind: 'math',
+          value: { canonicalLatex: '6' },
+        },
+      },
+    });
     expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'vector-worker-runtime',

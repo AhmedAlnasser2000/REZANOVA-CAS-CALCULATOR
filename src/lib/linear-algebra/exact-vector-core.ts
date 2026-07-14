@@ -53,6 +53,22 @@ export function exactCrossVectors(left: ExactVector, right: ExactVector): ExactV
   ];
 }
 
+export function exactGramDeterminant(left: ExactVector, right: ExactVector): ExactScalar {
+  return subtractExactScalars(
+    multiplyExactScalars(exactDotVectors(left, left), exactDotVectors(right, right)),
+    multiplyExactScalars(exactDotVectors(left, right), exactDotVectors(left, right)),
+  );
+}
+
+export function exactScalarTripleProduct(
+  first: ExactVector,
+  second: ExactVector,
+  third: ExactVector,
+): ExactScalar | null {
+  const normal = exactCrossVectors(first, second);
+  return normal ? exactDotVectors(normal, third) : null;
+}
+
 export function exactScaleVector(vector: ExactVector, factor: ExactScalar): ExactVector {
   return vector.map((value) => multiplyExactScalars(value, factor));
 }

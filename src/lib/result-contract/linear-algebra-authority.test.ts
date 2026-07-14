@@ -19,6 +19,7 @@ const VECTOR_OPERATIONS = [
   'dot', 'cross', 'normA', 'normB', 'angle', 'add', 'subtract',
   'projectionUofV', 'projectionVofU', 'orthogonalToU', 'orthogonalToV',
   'unitA', 'unitB', 'orthogonalCheck', 'gramSchmidtUV', 'linearCombination',
+  'parallel', 'distance', 'parallelogramArea', 'triangleArea', 'volume',
   'span', 'independent',
 ] as const satisfies readonly VectorOperation[];
 
@@ -64,8 +65,8 @@ describe('Linear Algebra canonical authority', () => {
     }
   });
 
-  it('keeps all 18 Vector selectors on V2 except the narrow gradian angle selector', () => {
-    expect(VECTOR_OPERATIONS).toHaveLength(18);
+  it('keeps all 23 Vector selectors on V2 except the narrow gradian angle selector', () => {
+    expect(VECTOR_OPERATIONS).toHaveLength(23);
     for (const operation of VECTOR_OPERATIONS) {
       const outcome = runVectorMode(vectorRequest(operation));
       expect(outcome.kind, operation).not.toBe('prompt');

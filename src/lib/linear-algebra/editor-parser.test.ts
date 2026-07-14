@@ -250,6 +250,26 @@ describe('parseLinearAlgebraEditorLatex', () => {
         { kind: 'named', name: 'r' },
       ],
     });
+    expect(parsedWithOptions('\\operatorname{parallelogramArea}\\left(p,q\\right)', {
+      mode: 'vector',
+      vectorNamedValues: ['p', 'q'],
+    })).toMatchObject({
+      kind: 'geometricMeasure',
+      operator: 'parallelogramArea',
+      operands: [{ kind: 'named', name: 'p' }, { kind: 'named', name: 'q' }],
+    });
+    expect(parsedWithOptions('volume(p,q,r)', {
+      mode: 'vector',
+      vectorNamedValues: ['p', 'q', 'r'],
+    })).toMatchObject({
+      kind: 'geometricMeasure',
+      operator: 'volume',
+      operands: [
+        { kind: 'named', name: 'p' },
+        { kind: 'named', name: 'q' },
+        { kind: 'named', name: 'r' },
+      ],
+    });
     expect(parsed('\\operatorname{proj}\\left(u,v\\right)', 'vector')).toEqual({
       kind: 'projection',
       base: { kind: 'named', name: 'u', displayLatex: 'u' },

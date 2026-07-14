@@ -151,6 +151,18 @@ describe('runVectorMode', () => {
       expect(gram.approxText).toContain('0.5');
       expect(gram.detailSections?.map((section) => section.title)).toContain('Gram-Schmidt Proof');
     }
+    const volumeExpression = '\\operatorname{volume}\\left(p,q,r\\right)';
+    const volume = runVectorMode({
+      operation: 'volume',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      editorExpressionLatex: volumeExpression,
+      angleUnit: 'rad',
+    });
+    expect(volume.title).toBe(volumeExpression);
+    expect(volume.kind === 'success' ? volume.exactLatex : undefined).toBe('6');
   });
 
   it('keeps numeric Vector approximations but hides nonnumeric summaries', () => {
@@ -239,6 +251,25 @@ describe('runVectorMode', () => {
     expect(familySnapshot.request).toMatchObject({
       operation: 'span',
       vectorOperands: [[1, 0], [0, 1], [1, 1]],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+    });
+
+    const volumeSnapshot = buildVectorOoeSnapshot({
+      operation: 'volume',
+      vectorA: [1, 0, 0],
+      vectorB: [0, 2, 0],
+      vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+      exactVectorOperands: [
+        [{ numerator: 1, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 2, denominator: 1 }, { numerator: 0, denominator: 1 }],
+        [{ numerator: 0, denominator: 1 }, { numerator: 0, denominator: 1 }, { numerator: 3, denominator: 1 }],
+      ],
+      vectorOperandLatexList: ['p', 'q', 'r'],
+      angleUnit: 'rad',
+    });
+    expect(volumeSnapshot.request).toMatchObject({
+      operation: 'volume',
+      vectorOperands: [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
       vectorOperandLatexList: ['p', 'q', 'r'],
     });
   });
