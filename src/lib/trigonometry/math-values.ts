@@ -22,6 +22,12 @@ export type TrigonometryOwnedMathJsonLeaf = {
   source: string;
 };
 
+export type TrigonometryPeriodPhaseEvidence = {
+  normalizedEquation: TrigonometryOwnedMathJsonLeaf;
+  period: TrigonometryOwnedMathJsonLeaf;
+  phaseShift: TrigonometryOwnedMathJsonLeaf;
+};
+
 function unproven(canonicalLatex: string) {
   return { canonicalLatex };
 }
@@ -115,13 +121,21 @@ export function trigonometryV2MathResolverFromOwnedLeaves(input: {
 }): CanonicalResultV2MathResolver {
   const proven = new Map<string, ProvenCanonicalMathValueV2>();
   for (const leaf of input.leaves) {
-    const value = requireProvenCanonicalMathValueV2({
-      canonicalLatex: leaf.canonicalLatex,
-      mathJson: leaf.mathJson,
-      owner: 'trigonometry',
-      routeId: input.routeId,
-      source: leaf.source,
-    });
+    const value = (() => {
+      try {
+        return requireProvenCanonicalMathValueV2({
+          canonicalLatex: leaf.canonicalLatex,
+          mathJson: leaf.mathJson,
+          owner: 'trigonometry',
+          routeId: input.routeId,
+          source: leaf.source,
+        });
+      } catch (error) {
+        throw new Error(
+          `Trigonometry V2 proof failed for ${leaf.source} (${leaf.canonicalLatex}): ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    })();
     const existing = proven.get(leaf.canonicalLatex);
     if (existing && JSON.stringify(existing.mathJson) !== JSON.stringify(value.mathJson)) {
       throw new Error(`Trigonometry V2 producer supplied conflicting trees for ${leaf.canonicalLatex}.`);

@@ -13,6 +13,7 @@ import {
   type ProvenCanonicalMathValueV2,
 } from '../result-contract';
 import type { TrigonometryV2RequestEvidence } from './core';
+import type { TrigonometryPeriodPhaseEvidence } from './math-values';
 
 type TrigonometrySuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
 type TrigonometryErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
@@ -163,6 +164,44 @@ export function createTrigonometryRequestErrorOutcomeV2(
   const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
     draft: input,
     mathValue,
+  });
+  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
+}
+
+export function createTrigonometryPeriodPhaseOutcomeV2(
+  input: TrigonometryResultProducerInput,
+  evidence: {
+    periodPhase: TrigonometryPeriodPhaseEvidence;
+    mathValue: CanonicalResultV2MathResolver;
+  },
+): ResultProducerDraftV2 {
+  if (!input.exactLatex) {
+    throw new Error('Trigonometry selected Period & Phase V2 without primary presentation.');
+  }
+  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+    draft: input,
+    mathValue: evidence.mathValue,
+    primary: {
+      kind: 'period-phase',
+      presentation: {
+        primaryLatex: input.exactLatex,
+        ...(input.kind === 'success' && input.answerRows
+          ? { answerRows: input.answerRows }
+          : {}),
+      },
+      normalizedEquation: evidence.mathValue(
+        evidence.periodPhase.normalizedEquation.canonicalLatex,
+        'primary.normalizedEquation',
+      ),
+      period: evidence.mathValue(
+        evidence.periodPhase.period.canonicalLatex,
+        'primary.period',
+      ),
+      phaseShift: evidence.mathValue(
+        evidence.periodPhase.phaseShift.canonicalLatex,
+        'primary.phaseShift',
+      ),
+    },
   });
   return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
 }

@@ -32,9 +32,13 @@
   - committed_by_agent: codex
   - committed_by_agent_model: gpt-5.6
   - committed_by_agent_family: sol
+- `CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1`: `ffaf4f2a`
+  - committed_by_agent: codex
+  - committed_by_agent_model: gpt-5.6
+  - committed_by_agent_family: sol
 
 ## Planned
 
-- `CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1`: verified; standing approval covers commit creation.
-- The three gates after Supplement/Table retain standing approval only within the approved roadmap scope.
+- `CANONICAL-RESULT-V2-TRIGONOMETRY1`: verified; standing approval covers commit creation.
+- The two gates after Trigonometry retain standing approval only within the approved roadmap scope.
 - No push is authorized.

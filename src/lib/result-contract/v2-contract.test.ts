@@ -321,6 +321,7 @@ describe('Canonical Result V2 contract', () => {
     expect(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES)
       .toEqual([
         'trigonometry.angle-conversion',
+        'trigonometry.period-phase',
         'table.domain-boundary',
         'table.rational-function',
       ]);
@@ -333,6 +334,7 @@ describe('Canonical Result V2 contract', () => {
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
       const defaultVersion = [
         'trigonometry.angle-conversion',
+        'trigonometry.period-phase',
         'table.domain-boundary',
         'table.rational-function',
       ].includes(routeId) ? 2 : 1;

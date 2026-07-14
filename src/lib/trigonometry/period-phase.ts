@@ -1,3 +1,4 @@
+import { ComputeEngine } from '@cortex-js/compute-engine';
 import type {
   AngleUnit,
   DisplayDetailLinePart,
@@ -14,7 +15,10 @@ import {
   formatDegreesAsUnitLatex,
   type TrigEvaluation,
 } from './angles';
-import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
+import type {
+  TrigonometryOwnedMathJsonLeaf,
+  TrigonometryPeriodPhaseEvidence,
+} from './math-values';
 import { profileTrigonometryResult } from '../display/printer';
 
 type TrigCarrier = 'sin' | 'cos' | 'tan';
@@ -35,6 +39,7 @@ type ParsedPeriodPhase = {
   amplitude: ParsedScalar;
   coefficient: ParsedScalar;
   offsetLatex: string;
+  offsetMathJson: unknown;
   offsetPiCoefficient: number | null;
   verticalShift: ParsedScalar;
   argumentLatex: string;
@@ -42,6 +47,7 @@ type ParsedPeriodPhase = {
 
 const PERIOD_PHASE_ERROR =
   'Period & Phase supports expression-only affine sin, cos, and tan forms such as 2sin(3x-pi)+1. Use Equation for trig equations.';
+const ce = new ComputeEngine();
 
 function normalizeLatex(source: string) {
   return source
@@ -198,6 +204,7 @@ function formatLinearTerm(coefficient: ParsedScalar, phaseShiftLatex: string) {
 function parseArgument(argumentLatex: string): {
   coefficient: ParsedScalar;
   offsetLatex: string;
+  offsetMathJson: unknown;
   offsetPiCoefficient: number | null;
 } | null {
   const xMatches = argumentLatex.match(/x/g) ?? [];
@@ -218,9 +225,12 @@ function parseArgument(argumentLatex: string): {
   }
 
   const offsetPiCoefficient = parsePiCoefficient(offsetLatex);
+  const offsetExpression = offsetLatex ? ce.parse(offsetLatex) : ce.box(0);
+  if (!offsetExpression.isValid) return null;
   return {
     coefficient,
     offsetLatex,
+    offsetMathJson: offsetExpression.json,
     offsetPiCoefficient,
   };
 }
@@ -332,11 +342,78 @@ function periodDegrees(parsed: ParsedPeriodPhase) {
   return baseDegrees / Math.abs(parsed.coefficient.value);
 }
 
+function multiplyMathJson(factor: ParsedScalar, value: unknown): unknown {
+  if (Math.abs(factor.value - 1) < 1e-10) return value;
+  if (Math.abs(factor.value + 1) < 1e-10) return ['Negate', value];
+  return ['Multiply', factor.mathJson, value];
+}
+
+function periodPhaseUnitMathJson(degrees: number, angleUnit: AngleUnit): unknown {
+  if (angleUnit === 'deg' && degrees < 0) {
+    return ['Negate', degreesToUnitMathJson(Math.abs(degrees), angleUnit)];
+  }
+  return degreesToUnitMathJson(degrees, angleUnit);
+}
+
+function phaseShiftMathJson(parsed: ParsedPeriodPhase, angleUnit: AngleUnit): unknown {
+  const degrees = phaseShiftDegrees(parsed, angleUnit);
+  return degrees !== null
+    ? periodPhaseUnitMathJson(degrees, angleUnit)
+    : ['Negate', ['Divide', parsed.offsetMathJson, parsed.coefficient.mathJson]];
+}
+
+function normalizedWaveMathJson(
+  parsed: ParsedPeriodPhase,
+  phaseLatex: string,
+  phaseMathJson: unknown,
+): unknown {
+  const shifted = phaseLatex === '0'
+    ? 'x'
+    : ['Subtract', 'x', phaseMathJson];
+  const argument = multiplyMathJson(parsed.coefficient, shifted);
+  const carrier = [
+    parsed.carrier === 'sin' ? 'Sin' : parsed.carrier === 'cos' ? 'Cos' : 'Tan',
+    argument,
+  ];
+  const wave = multiplyMathJson(parsed.amplitude, carrier);
+  return Math.abs(parsed.verticalShift.value) < 1e-10
+    ? wave
+    : ['Add', wave, parsed.verticalShift.mathJson];
+}
+
+function periodPhaseEvidence(
+  parsed: ParsedPeriodPhase,
+  normalized: string,
+  period: string,
+  phase: string,
+  angleUnit: AngleUnit,
+): TrigonometryPeriodPhaseEvidence {
+  const phaseMathJson = phaseShiftMathJson(parsed, angleUnit);
+  return {
+    normalizedEquation: {
+      canonicalLatex: `y=${normalized}`,
+      mathJson: ['Equal', 'y', normalizedWaveMathJson(parsed, phase, phaseMathJson)],
+      source: 'trigonometry.period-phase:native-normalized-equation',
+    },
+    period: {
+      canonicalLatex: period,
+      mathJson: periodPhaseUnitMathJson(periodDegrees(parsed), angleUnit),
+      source: 'trigonometry.period-phase:native-primary-period',
+    },
+    phaseShift: {
+      canonicalLatex: phase,
+      mathJson: phaseMathJson,
+      source: 'trigonometry.period-phase:native-primary-phase-shift',
+    },
+  };
+}
+
 function waveFacts(
   parsed: ParsedPeriodPhase,
   phaseLatex: string,
   period: string,
   angleUnit: AngleUnit,
+  primaryEvidence: TrigonometryPeriodPhaseEvidence,
 ): DetailEvidence {
   const phaseDegrees = phaseShiftDegrees(parsed, angleUnit);
   const periodInDegrees = periodDegrees(parsed);
@@ -368,18 +445,16 @@ function waveFacts(
   rows.push([textPart('Period: '), mathPart(period), textPart('.')]);
   mathJsonLeaves.push({
     canonicalLatex: period,
-    mathJson: degreesToUnitMathJson(periodInDegrees, angleUnit),
+    mathJson: primaryEvidence.period.mathJson,
     source: 'trigonometry.period-phase:native-period',
   });
 
   rows.push([textPart('Phase shift: '), mathPart(phaseLatex), textPart('.')]);
-  if (phaseDegrees !== null) {
-    mathJsonLeaves.push({
-      canonicalLatex: phaseLatex,
-      mathJson: degreesToUnitMathJson(phaseDegrees, angleUnit),
-      source: 'trigonometry.period-phase:native-phase-shift',
-    });
-  }
+  mathJsonLeaves.push({
+    canonicalLatex: phaseLatex,
+    mathJson: primaryEvidence.phaseShift.mathJson,
+    source: 'trigonometry.period-phase:native-phase-shift',
+  });
 
   rows.push([
     textPart('Vertical shift: '),
@@ -416,21 +491,35 @@ function waveFacts(
       mathJsonLeaves.push(
         {
           canonicalLatex: leftLatex,
-          mathJson: ['Equal', 'x', degreesToUnitMathJson(leftDegrees, angleUnit)],
+          mathJson: ['Equal', 'x', periodPhaseUnitMathJson(leftDegrees, angleUnit)],
           source: 'trigonometry.period-phase:native-left-asymptote',
         },
         {
           canonicalLatex: rightLatex,
-          mathJson: ['Equal', 'x', degreesToUnitMathJson(rightDegrees, angleUnit)],
+          mathJson: ['Equal', 'x', periodPhaseUnitMathJson(rightDegrees, angleUnit)],
           source: 'trigonometry.period-phase:native-right-asymptote',
         },
       );
     } else {
+      const asymptoteLatex = `x=${phaseLatex}\\pm\\frac{${period}}{2}`;
       rows.push([
         textPart('Asymptotes: '),
-        mathPart(`x=${phaseLatex}\\pm\\frac{${period}}{2}`),
+        mathPart(asymptoteLatex),
         textPart('.'),
       ]);
+      mathJsonLeaves.push({
+        canonicalLatex: asymptoteLatex,
+        mathJson: [
+          'Equal',
+          'x',
+          [
+            'PlusMinus',
+            primaryEvidence.phaseShift.mathJson,
+            ['Divide', primaryEvidence.period.mathJson, 2],
+          ],
+        ],
+        source: 'trigonometry.period-phase:native-symbolic-asymptotes',
+      });
     }
     return {
       section: mixedDetailSection('Wave Facts', rows),
@@ -470,41 +559,130 @@ function landmarkFacts(
   phaseLatex: string,
   period: string,
   angleUnit: AngleUnit,
-) {
+  primaryEvidence: TrigonometryPeriodPhaseEvidence,
+): DetailEvidence {
   const phaseDegrees = phaseShiftDegrees(parsed, angleUnit);
   const periodInDegrees = periodDegrees(parsed);
   if (parsed.carrier === 'tan') {
-    if (phaseDegrees !== null) {
-      return [
-        `x_0=${formatDegreesAsUnitLatex(phaseDegrees, angleUnit)}`,
-        `\\text{one-cycle window}: ${formatDegreesAsUnitLatex(phaseDegrees - periodInDegrees / 2, angleUnit)}<x<${formatDegreesAsUnitLatex(phaseDegrees + periodInDegrees / 2, angleUnit)}`,
-        `\\text{asymptotes}: x=${formatDegreesAsUnitLatex(phaseDegrees - periodInDegrees / 2, angleUnit)},\\ ${formatDegreesAsUnitLatex(phaseDegrees + periodInDegrees / 2, angleUnit)}`,
-      ];
-    }
-    return [
-      `x_0=${phaseLatex}`,
-      `\\text{one-cycle window}: ${phaseLatex}-\\frac{${period}}{2}<x<${phaseLatex}+\\frac{${period}}{2}`,
-      `\\text{asymptotes}: x=${phaseLatex}\\pm\\frac{${period}}{2}`,
-    ];
+    const leftLatex = phaseDegrees !== null
+      ? formatDegreesAsUnitLatex(phaseDegrees - periodInDegrees / 2, angleUnit)
+      : `${phaseLatex}-\\frac{${period}}{2}`;
+    const rightLatex = phaseDegrees !== null
+      ? formatDegreesAsUnitLatex(phaseDegrees + periodInDegrees / 2, angleUnit)
+      : `${phaseLatex}+\\frac{${period}}{2}`;
+    const leftMathJson = phaseDegrees !== null
+      ? periodPhaseUnitMathJson(phaseDegrees - periodInDegrees / 2, angleUnit)
+      : ['Subtract', primaryEvidence.phaseShift.mathJson, ['Divide', primaryEvidence.period.mathJson, 2]];
+    const rightMathJson = phaseDegrees !== null
+      ? periodPhaseUnitMathJson(phaseDegrees + periodInDegrees / 2, angleUnit)
+      : ['Add', primaryEvidence.phaseShift.mathJson, ['Divide', primaryEvidence.period.mathJson, 2]];
+    const centerLatex = `x_0=${phaseLatex}`;
+    const windowLatex = `${leftLatex}<x<${rightLatex}`;
+    const asymptoteLatex = phaseDegrees !== null
+      ? `x=${leftLatex},\\ ${rightLatex}`
+      : `x=${phaseLatex}\\pm\\frac{${period}}{2}`;
+    return {
+      section: {
+        title: 'First Cycle Landmarks',
+        lines: [
+          centerLatex,
+          `\\text{one-cycle window}: ${windowLatex}`,
+          `\\text{asymptotes}: ${asymptoteLatex}`,
+        ],
+        lineParts: [
+          [mathPart(centerLatex)],
+          [textPart('one-cycle window: '), mathPart(windowLatex)],
+          phaseDegrees !== null
+            ? [
+                textPart('asymptotes: '),
+                mathPart(`x=${leftLatex}`),
+                textPart(', '),
+                mathPart(rightLatex),
+              ]
+            : [textPart('asymptotes: '), mathPart(asymptoteLatex)],
+        ],
+      },
+      mathJsonLeaves: [
+        {
+          canonicalLatex: centerLatex,
+          mathJson: ['Equal', 'x_0', primaryEvidence.phaseShift.mathJson],
+          source: 'trigonometry.period-phase:native-tangent-center',
+        },
+        {
+          canonicalLatex: windowLatex,
+          mathJson: ['Less', leftMathJson, 'x', rightMathJson],
+          source: 'trigonometry.period-phase:native-tangent-window',
+        },
+        ...(phaseDegrees !== null
+          ? [
+              {
+                canonicalLatex: `x=${leftLatex}`,
+                mathJson: ['Equal', 'x', leftMathJson],
+                source: 'trigonometry.period-phase:native-tangent-left-asymptote',
+              },
+              {
+                canonicalLatex: rightLatex,
+                mathJson: rightMathJson,
+                source: 'trigonometry.period-phase:native-tangent-right-asymptote',
+              },
+            ]
+          : [{
+              canonicalLatex: asymptoteLatex,
+              mathJson: [
+                'Equal',
+                'x',
+                [
+                  'PlusMinus',
+                  primaryEvidence.phaseShift.mathJson,
+                  ['Divide', primaryEvidence.period.mathJson, 2],
+                ],
+              ],
+              source: 'trigonometry.period-phase:native-tangent-asymptotes',
+            }]),
+      ],
+    };
   }
 
-  if (phaseDegrees !== null) {
-    return [
-      `x_0=${formatDegreesAsUnitLatex(phaseDegrees, angleUnit)}`,
-      `x_1=${formatDegreesAsUnitLatex(phaseDegrees + periodInDegrees / 4, angleUnit)}`,
-      `x_2=${formatDegreesAsUnitLatex(phaseDegrees + periodInDegrees / 2, angleUnit)}`,
-      `x_3=${formatDegreesAsUnitLatex(phaseDegrees + 3 * periodInDegrees / 4, angleUnit)}`,
-      `x_4=${formatDegreesAsUnitLatex(phaseDegrees + periodInDegrees, angleUnit)}`,
-    ];
-  }
-
-  return [
-    `x_0=${phaseLatex}`,
-    `x_1=${phaseLatex}+\\frac{${period}}{4}`,
-    `x_2=${phaseLatex}+\\frac{${period}}{2}`,
-    `x_3=${phaseLatex}+\\frac{3${period}}{4}`,
-    `x_4=${phaseLatex}+${period}`,
-  ];
+  const rows = Array.from({ length: 5 }, (_, index) => {
+    const positionLatex = phaseDegrees !== null
+      ? formatDegreesAsUnitLatex(phaseDegrees + index * periodInDegrees / 4, angleUnit)
+      : index === 0
+        ? phaseLatex
+        : index === 1
+          ? `${phaseLatex}+\\frac{${period}}{4}`
+          : index === 2
+            ? `${phaseLatex}+\\frac{${period}}{2}`
+            : index === 3
+              ? `${phaseLatex}+\\frac{3${period}}{4}`
+              : `${phaseLatex}+${period}`;
+    const deltaMathJson = index === 0
+      ? undefined
+      : index === 1
+        ? ['Divide', primaryEvidence.period.mathJson, 4]
+        : index === 2
+          ? ['Divide', primaryEvidence.period.mathJson, 2]
+          : index === 3
+            ? ['Divide', ['Multiply', 3, primaryEvidence.period.mathJson], 4]
+            : primaryEvidence.period.mathJson;
+    const positionMathJson = phaseDegrees !== null
+      ? periodPhaseUnitMathJson(phaseDegrees + index * periodInDegrees / 4, angleUnit)
+      : deltaMathJson === undefined
+        ? primaryEvidence.phaseShift.mathJson
+        : ['Add', primaryEvidence.phaseShift.mathJson, deltaMathJson];
+    return {
+      canonicalLatex: `x_${index}=${positionLatex}`,
+      mathJson: ['Equal', `x_${index}`, positionMathJson],
+      source: `trigonometry.period-phase:native-landmark-${index}`,
+    };
+  });
+  return {
+    section: {
+      title: 'First Cycle Landmarks',
+      lines: rows.map((row) => row.canonicalLatex),
+      lineKind: 'math',
+    },
+    mathJsonLeaves: rows,
+  };
 }
 
 export function analyzePeriodPhase(
@@ -522,21 +700,15 @@ export function analyzePeriodPhase(
   const phase = phaseShiftLatex(parsed, angleUnit);
   const period = periodLatex(parsed, angleUnit);
   const normalized = normalizedWaveLatex(parsed, phase);
-  const phaseDegrees = phaseShiftDegrees(parsed, angleUnit);
-  const periodInDegrees = periodDegrees(parsed);
-  const waveFactEvidence = waveFacts(parsed, phase, period, angleUnit);
+  const primaryEvidence = periodPhaseEvidence(parsed, normalized, period, phase, angleUnit);
+  const waveFactEvidence = waveFacts(parsed, phase, period, angleUnit, primaryEvidence);
+  const landmarkEvidence = landmarkFacts(parsed, phase, period, angleUnit, primaryEvidence);
   const mathJsonLeaves = [
+    primaryEvidence.normalizedEquation,
+    primaryEvidence.period,
+    primaryEvidence.phaseShift,
     ...waveFactEvidence.mathJsonLeaves,
-    ...(phaseDegrees === null || parsed.carrier === 'tan'
-      ? []
-      : Array.from({ length: 5 }, (_, index) => {
-          const degrees = phaseDegrees + index * periodInDegrees / 4;
-          return {
-            canonicalLatex: `x_${index}=${formatDegreesAsUnitLatex(degrees, angleUnit)}`,
-            mathJson: ['Equal', `x_${index}`, degreesToUnitMathJson(degrees, angleUnit)],
-            source: `trigonometry.period-phase:native-landmark-${index}`,
-          };
-        })),
+    ...landmarkEvidence.mathJsonLeaves,
   ];
   return profileTrigonometryResult({
     exactLatex: `y=${normalized},\\quad P=${period},\\quad h=${phase}`,
@@ -544,12 +716,9 @@ export function analyzePeriodPhase(
     warnings: [],
     detailSections: [
       waveFactEvidence.section,
-      {
-        title: 'First Cycle Landmarks',
-        lines: landmarkFacts(parsed, phase, period, angleUnit),
-        lineKind: 'math',
-      },
+      landmarkEvidence.section,
     ],
     mathJsonLeaves,
+    periodPhaseEvidence: primaryEvidence,
   });
 }

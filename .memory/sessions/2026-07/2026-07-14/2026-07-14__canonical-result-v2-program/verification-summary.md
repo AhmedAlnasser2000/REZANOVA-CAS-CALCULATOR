@@ -58,7 +58,7 @@
 
 ## CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1
 
-- result: pass; pending commit creation under standing approval
+- result: pass; committed as `ffaf4f2a`
 - kind: UI producer migration
 - scope: five Equation labeled supplements and three Table undefined cells migrated from reviewed residuals to typed V2 semantics
 - production impact: selected Equation results use producer-native `exclusion`/`condition` relations; Table domain-boundary and rational-function cells distinguish values, real-domain failures, and poles
@@ -67,4 +67,17 @@
 - browser verification: 2 Chromium scenarios cover all five Equation cases, both Table reasons, defined neighbors, V2 persistence/replay for successful results, and overflow
 - ratchets: Vite build; display inversion 401 producers / 150 native documents / 59 canonical reads / zero compatibility / zero legacy; file-size validation; diff hygiene
 - TypeScript evidence: V2 implementation checkpoint passed; final shared recheck blocked only by concurrent Notebook `NotebookVideoNodeView` import
+- protected state: concurrent Notebook and Rust OOE files plus `test-results/` excluded
+
+## CANONICAL-RESULT-V2-TRIGONOMETRY1
+
+- result: pass; pending commit creation under standing approval
+- kind: UI producer migration
+- scope: Period & Phase typed compound primary with normalized equation, period, and phase-shift semantics; one reviewed exemption removed
+- production impact: Period & Phase emits V2 for sine, cosine, tangent, all angle units, and symbolic affine offsets; existing visible primary/detail presentation is retained
+- focused verification: 75 Trigonometry tests; 87 result-contract tests including all golden and replay executions
+- corpus: 143 executable cases / 457 leaves / 447 proven / 10 exempt / zero missing; route is 15/15/0/0
+- browser verification: 1 Chromium scenario covers all carriers/units, details, three History rows, replay, and overflow
+- ratchets: incremental TypeScript; Vite build; display inversion 404 producers / 150 native documents / 59 canonical reads / zero compatibility / zero legacy; diff hygiene
+- file-size status: exact staged index passes all 1,849 tracked TypeScript caps; mutable shared-tree command is blocked only by concurrent Notebook `NotebookRichCanvas.tsx` at 1,120 lines
 - protected state: concurrent Notebook and Rust OOE files plus `test-results/` excluded

@@ -192,15 +192,6 @@ export const MATHJSON_COVERAGE_EXEMPTIONS: readonly MathJsonCoverageExemption[] 
     rationale: 'Four retained Matrix-system row-operation arrows are honest transformation notation rather than standalone answer trees. Coefficient rank, augmented rank, unknown count, contradiction, and augmented RREF values are separately producer-proven through typed detail parts.',
   },
   {
-    id: 'golden-trigonometry-period-phase-compound-primary',
-    routeId: 'trigonometry.period-phase',
-    leafPath: 'primaryMath',
-    fixtureId: 'trigonometry-period-phase-rad',
-    owner: 'trigonometry',
-    reason: 'standard-mathjson-unrepresentable',
-    rationale: 'The compatibility primary joins a wave equation, period, and phase declaration with presentation separators rather than one standard MathJSON expression; all five landmarks and the native coefficient are separately proven.',
-  },
-  {
     id: 'golden-matrix-profile-singular-compound-primary',
     routeId: 'matrix.profile',
     leafPath: 'primaryMath',

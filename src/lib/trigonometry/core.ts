@@ -16,10 +16,14 @@ import { evaluateTrigIdentity } from './identities';
 import { parseTrigDraft } from './parser';
 import { analyzePeriodPhase } from './period-phase';
 import { solveCosineRule, solveRightTriangle, solveSineRule } from './triangles';
-import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
+import type {
+  TrigonometryOwnedMathJsonLeaf,
+  TrigonometryPeriodPhaseEvidence,
+} from './math-values';
 import { parseSignedNumberInput } from '../numeric/signed-number';
 
 const ownedMathJsonByOutcome = new WeakMap<object, readonly TrigonometryOwnedMathJsonLeaf[]>();
+const periodPhaseEvidenceByOutcome = new WeakMap<object, TrigonometryPeriodPhaseEvidence>();
 
 export type TrigonometryV2RequestEvidence =
   | {
@@ -52,6 +56,14 @@ function rememberOwnedMathJson(
   return outcome;
 }
 
+function rememberPeriodPhaseEvidence(
+  outcome: ResultProducerDraft,
+  evidence: TrigonometryPeriodPhaseEvidence | undefined,
+) {
+  if (evidence) periodPhaseEvidenceByOutcome.set(outcome, evidence);
+  return outcome;
+}
+
 function canonicalLeavesFromSharedEquation(outcome: Exclude<ResultProducerDraft, { kind: 'prompt' }>) {
   const document = outcome.canonicalResult;
   if (!document) return [];
@@ -76,7 +88,7 @@ function toOutcome(
   evaluation: TrigEvaluation,
 ): ResultProducerDraft {
   if (evaluation.error) {
-    return rememberOwnedMathJson({
+    const outcome = rememberOwnedMathJson({
       kind: 'error',
       title,
       error: evaluation.error,
@@ -87,9 +99,10 @@ function toOutcome(
       approxText: evaluation.approxText,
       detailSections: evaluation.detailSections,
     }, evaluation.mathJsonLeaves);
+    return rememberPeriodPhaseEvidence(outcome, evaluation.periodPhaseEvidence);
   }
 
-  return rememberOwnedMathJson({
+  const outcome = rememberOwnedMathJson({
     kind: 'success',
     title,
     exactLatex: evaluation.exactLatex,
@@ -100,6 +113,7 @@ function toOutcome(
     resultOrigin: evaluation.resultOrigin,
     detailSections: evaluation.detailSections,
   }, evaluation.mathJsonLeaves);
+  return rememberPeriodPhaseEvidence(outcome, evaluation.periodPhaseEvidence);
 }
 
 function withCanonicalMetadata(
@@ -116,7 +130,8 @@ function withCanonicalMetadata(
     resolvedInputLatex: resolvedLatex !== originalLatex.trim() ? resolvedLatex : undefined,
     plannerBadges: resolvedLatex !== originalLatex.trim() ? ['Canonicalized'] : outcome.plannerBadges,
   };
-  return rememberOwnedMathJson(updated, ownedMathJsonByOutcome.get(outcome));
+  rememberOwnedMathJson(updated, ownedMathJsonByOutcome.get(outcome));
+  return rememberPeriodPhaseEvidence(updated, periodPhaseEvidenceByOutcome.get(outcome));
 }
 
 function requestTitle(request: TrigRequest, screenHint?: TrigScreen) {
@@ -368,5 +383,6 @@ export function runTrigonometryCoreDraft(
     parsed,
     mathJsonLeaves,
     requestEvidence: v2RequestEvidenceFromOwnedLeaves(parsed.request, mathJsonLeaves),
+    periodPhaseEvidence: periodPhaseEvidenceByOutcome.get(outcome),
   };
 }

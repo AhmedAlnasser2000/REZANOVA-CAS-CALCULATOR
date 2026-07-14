@@ -15,6 +15,7 @@ import { trigRequestToScreen } from './parser';
 import {
   createTrigonometryRequestErrorOutcomeV2,
   createTrigonometryRequestResultOutcomeV2,
+  createTrigonometryPeriodPhaseOutcomeV2,
   createTrigonometryResultOutcome,
 } from './result-document';
 import type { RunTrigonometryRuntimeRequest } from './runtime-input';
@@ -46,6 +47,7 @@ export function buildTrigonometryModeRunPayload(
     parsed,
     mathJsonLeaves,
     requestEvidence,
+    periodPhaseEvidence,
   } = runTrigonometryCoreDraft(request.inputLatex, {
     screenHint: request.screenHint,
     angleUnit: request.angleUnit,
@@ -84,6 +86,20 @@ export function buildTrigonometryModeRunPayload(
               requestEvidence,
               presentationLatex: outcome.resolvedInputLatex ?? request.inputLatex.trim(),
               mathValue,
+            });
+          }
+          if (version === 2 && parsed.request.kind === 'periodPhase') {
+            if (!periodPhaseEvidence) {
+              throw new Error(
+                'Trigonometry selected Period & Phase V2 without complete producer-owned semantics.',
+              );
+            }
+            return createTrigonometryPeriodPhaseOutcomeV2(outcome, {
+              periodPhase: periodPhaseEvidence,
+              mathValue: trigonometryV2MathResolverFromOwnedLeaves({
+                routeId,
+                leaves: mathJsonLeaves,
+              }),
             });
           }
           return createTrigonometryResultOutcome(outcome, {

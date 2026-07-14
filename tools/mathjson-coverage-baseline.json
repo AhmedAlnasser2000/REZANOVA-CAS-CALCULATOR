@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "Gate 5 migrates five typed Equation supplements and three typed Table undefined-cell residuals to V2.",
+  "reason": "CANONICAL-RESULT-V2-TRIGONOMETRY1 replaces the Period and Phase compound-primary exemption with three producer-proven typed V2 components.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -65,7 +65,6 @@
     "golden-matrix-profile-singular-map-row",
     "golden-matrix-profile-tall-compound-primary",
     "golden-matrix-profile-tall-map-row",
-    "golden-trigonometry-period-phase-compound-primary",
     "golden-vector-independence-labeled-answer-row",
     "golden-vector-independence-labeled-primary",
     "matrix-linear-system-legacy-operator-details"
@@ -74,11 +73,11 @@
     "evidence": 143,
     "replayFixtures": 100,
     "goldenCases": 43,
-    "bytes": 110661,
+    "bytes": 111151,
     "maxBytes": 2753,
-    "leaves": 455,
-    "proven": 444,
-    "exempt": 11,
+    "leaves": 457,
+    "proven": 447,
+    "exempt": 10,
     "missing": 0
   },
   "routes": {
@@ -339,7 +338,7 @@
       "evidence": 6,
       "replayFixtures": 6,
       "goldenCases": 0,
-      "bytes": 5702,
+      "bytes": 5780,
       "maxBytes": 1569,
       "leaves": 15,
       "proven": 15,
@@ -625,11 +624,11 @@
       "evidence": 1,
       "replayFixtures": 0,
       "goldenCases": 1,
-      "bytes": 2026,
-      "maxBytes": 2026,
-      "leaves": 13,
-      "proven": 12,
-      "exempt": 1,
+      "bytes": 2438,
+      "maxBytes": 2438,
+      "leaves": 15,
+      "proven": 15,
+      "exempt": 0,
       "missing": 0
     },
     "trigonometry.right-triangle": {

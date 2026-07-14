@@ -77,6 +77,7 @@ const frozenV1Routes = new Set<string>(FROZEN_V1_PRODUCER_ROUTE_IDS);
 export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
   [
     'trigonometry.angle-conversion',
+    'trigonometry.period-phase',
     'table.domain-boundary',
     'table.rational-function',
   ] as const satisfies readonly MathJsonRouteId[]

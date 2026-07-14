@@ -7,7 +7,10 @@ import type {
 } from '../../types/calculator';
 import { formatApproxNumber, formatNumber } from '../display/format';
 import { parseSignedNumberInput } from '../numeric/signed-number';
-import type { TrigonometryOwnedMathJsonLeaf } from './math-values';
+import type {
+  TrigonometryOwnedMathJsonLeaf,
+  TrigonometryPeriodPhaseEvidence,
+} from './math-values';
 
 const DEG_PER_RAD = 180 / Math.PI;
 const DEG_PER_GRAD = 0.9;
@@ -26,6 +29,7 @@ export type TrigEvaluation = {
   error?: string;
   resultOrigin?: TrigResultOrigin;
   mathJsonLeaves?: TrigonometryOwnedMathJsonLeaf[];
+  periodPhaseEvidence?: TrigonometryPeriodPhaseEvidence;
 };
 
 export type SpecialAngleRow = {

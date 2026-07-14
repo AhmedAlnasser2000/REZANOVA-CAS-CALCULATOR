@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "CANONICAL-RESULT-V2-SUPPLEMENT-TABLE1 migrates reviewed Equation supplement and Table undefined-cell producers to V2 without compatibility or legacy-read growth.",
+  "acceptedReason": "CANONICAL-RESULT-V2-TRIGONOMETRY1 adds the reviewed Period and Phase V2 adapter and producer evidence without compatibility or legacy-read growth.",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -413,7 +413,7 @@
         "adc15ebcbf4b34ff165a:1"
       ],
       "src/lib/trigonometry/runtime-run.ts": [
-        "2180c5ccadd4716ff46e:1",
+        "e9610099fe7d673519ae:1",
         "481d01b9855acf48d904:1",
         "c5ea9b6510259df12ebf:1"
       ]
@@ -700,7 +700,10 @@
       ],
       "src/lib/trigonometry/core.ts": [
         "76685e604035a5c820ce:1",
-        "c7440153dceb8f883b0a:1",
+        "88b7864d332d4368ffbe:1",
+        "ac05753cbb62cf54a40e:1",
+        "ac05753cbb62cf54a40e:2",
+        "0469ae3f6b2d960e1612:1",
         "2d14a11de1170c8e603e:1",
         "3c22f0804629cecd288b:1",
         "519b0ad46ea11b72a784:1"
