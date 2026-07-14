@@ -13,6 +13,13 @@
   font-weight: 700;
 }
 
+.notebook-ribbon-tabs .notebook-file-control > button {
+  border: 0;
+  border-radius: 5px 5px 0 0;
+  padding: 6px 12px 7px;
+  background: transparent;
+}
+
 .notebook-file-control > button:hover,
 .notebook-file-control > button[aria-expanded='true'] {
   border-color: var(--notebook-border-strong);

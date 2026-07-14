@@ -299,6 +299,25 @@ export function insertNotebookSection(
   return true;
 }
 
+export function insertNotebookEvidence(editor: Editor) {
+  return editor.chain().focus().insertContent({
+    type: 'evidenceSnapshot',
+    attrs: {
+      id: newNodeId('evidence'),
+      source: 'manual-placeholder',
+      title: 'Evidence snapshot',
+      inputLatex: '',
+      resultLatex: '',
+      facts: [],
+      warnings: [],
+    },
+  }).run();
+}
+
+export function insertNotebookDivider(editor: Editor) {
+  return editor.chain().focus().setHorizontalRule().run();
+}
+
 export function updateSelectedNotebookSemantic(
   editor: Editor,
   attributes: Partial<{

@@ -120,6 +120,7 @@ describe('NotebookPage', () => {
     const libraryService = createNotebookLibraryService();
     render(<NotebookHarness libraryService={libraryService} onSurfaceState={onSurfaceState} />);
 
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
     const menu = screen.getByRole('menu', { name: 'Academic containers' });
     expect(within(menu).getAllByRole('menuitem')).toHaveLength(12);
@@ -146,6 +147,7 @@ describe('NotebookPage', () => {
     expect(hint).toHaveTextContent('Hint 2.3 Try substitution');
     expect(hint).toHaveAttribute('data-notebook-accent', '#b8a0e6');
     expect(hint).toHaveStyle({ '--notebook-accent': '#b8a0e6' });
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
     const toolbar = screen.getByLabelText('Notebook formatting toolbar');
     await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
     expect(screen.getByTestId('notebook-semantic-hint'))
@@ -212,6 +214,7 @@ describe('NotebookPage', () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
 
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
     const menu = screen.getByRole('menu', { name: 'Academic containers' });
     await user.click(within(menu).getByRole('menuitem', { name: /Theorem/ }));
@@ -250,6 +253,7 @@ describe('NotebookPage', () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
 
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
     await user.click(within(screen.getByRole('menu', { name: 'Academic containers' }))
       .getByRole('menuitem', { name: /Definition/ }));
@@ -462,23 +466,74 @@ describe('NotebookPage', () => {
   });
 
   it('organizes authoring controls into the visible Notebook ribbon', async () => {
+    const user = userEvent.setup();
     render(<NotebookHarness />);
 
+    const tabs = await screen.findByRole('tablist', { name: 'Notebook ribbon tabs' });
+    expect(screen.getByRole('button', { name: 'File' })).toBeVisible();
+    expect(within(tabs).getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(tabs).getByRole('tab', { name: 'Insert' })).toHaveAttribute('aria-selected', 'false');
+    expect(within(tabs).queryByRole('tab', { name: 'Layout' })).toBeNull();
     const toolbar = await screen.findByLabelText('Notebook formatting toolbar');
     expect(within(toolbar).getByRole('region', { name: 'Font' })).toBeVisible();
     expect(within(toolbar).getByRole('region', { name: 'Paragraph' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Styles' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Edit' })).toBeVisible();
+
+    await user.click(within(tabs).getByRole('tab', { name: 'Insert' }));
     expect(within(toolbar).getByRole('region', { name: 'Structure' })).toBeVisible();
     expect(within(toolbar).getByRole('region', { name: 'Math' })).toBeVisible();
-    expect(within(toolbar).getByRole('region', { name: 'Edit' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Media' })).toBeVisible();
+    expect(within(toolbar).getByRole('region', { name: 'Document' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'In text' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Separate equation' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Add section' })).toBeVisible();
+    expect(within(toolbar).getByRole('button', { name: /Image/ })).toBeDisabled();
+    expect(within(toolbar).getByRole('button', { name: /Video/ })).toBeDisabled();
+    expect(within(toolbar).getByRole('button', { name: 'Insert evidence' })).toBeVisible();
+    expect(within(toolbar).getByRole('button', { name: 'Insert divider' })).toBeVisible();
+  });
+
+  it('preserves the prose range across ribbon tabs and inserts document blocks with undo and redo', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+    const canvas = await screen.findByLabelText('Notebook rich document');
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+
+    await user.click(canvas);
+    await user.type(canvas, 'Ribbon selection');
+    await user.keyboard('{Control>}a{/Control}');
+    await user.click(within(toolbar).getByRole('button', { name: 'Paragraph style: Normal' }));
+    expect(screen.getByRole('menu', { name: 'Paragraph styles' })).toBeVisible();
+    await user.click(screen.getByRole('tab', { name: 'Insert' }));
+    expect(screen.queryByRole('menu', { name: 'Paragraph styles' })).toBeNull();
+
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Bold' }));
+    expect(canvas.querySelector('strong')).toHaveTextContent('Ribbon selection');
+
+    await user.click(screen.getByRole('tab', { name: 'Insert' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Insert evidence' }));
+    expect(screen.getByTestId('notebook-evidence-node')).toBeInTheDocument();
+    await user.click(within(toolbar).getByRole('button', { name: 'Insert divider' }));
+    expect(canvas.querySelector('hr')).not.toBeNull();
+
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    expect(canvas.querySelector('hr')).toBeNull();
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByTestId('notebook-evidence-node')).toBeNull();
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    expect(screen.getByTestId('notebook-evidence-node')).toBeInTheDocument();
+    expect(canvas.querySelector('hr')).not.toBeNull();
   });
 
   it('keeps the Outline and Inspector independent when either desktop rail closes', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
 
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
     await user.click(within(screen.getByRole('menu', { name: 'Academic containers' }))
       .getByRole('menuitem', { name: /Theorem/ }));
@@ -533,6 +588,7 @@ describe('NotebookPage', () => {
     const onOpenMathInTool = vi.fn();
     render(<NotebookHarness onOpenMathInTool={onOpenMathInTool} />);
 
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Separate equation' }));
     const field = await screen.findByTestId('notebook-display-math-field') as HTMLElement & {
       setValue: (value: string) => void;
@@ -557,6 +613,7 @@ describe('NotebookPage', () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
 
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Separate equation' }));
     const field = await screen.findByTestId('notebook-display-math-field');
     await user.click(field);
@@ -579,6 +636,7 @@ describe('NotebookPage', () => {
   it('converts selected math explicitly between inline and display placement', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'In text' }));
     const inlineField = await screen.findByTestId('notebook-inline-math-field');
     await user.click(inlineField);
@@ -601,6 +659,7 @@ describe('NotebookPage', () => {
   it('keeps document-only structures in Notebook instead of sending them to a tool', async () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Separate equation' }));
     const field = await screen.findByTestId('notebook-display-math-field') as HTMLElement & {
       setValue: (value: string) => void;

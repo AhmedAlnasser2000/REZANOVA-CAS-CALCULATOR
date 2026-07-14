@@ -148,7 +148,7 @@
 .notebook-collapsed-rail {
   position: absolute;
   z-index: 12;
-  top: 50%;
+  top: 60%;
   display: inline-grid;
   place-items: center;
   width: 30px;

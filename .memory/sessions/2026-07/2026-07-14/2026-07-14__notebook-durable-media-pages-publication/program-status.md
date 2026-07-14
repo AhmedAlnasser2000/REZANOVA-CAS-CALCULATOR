@@ -27,8 +27,8 @@
 | --- | --- | --- |
 | `NOTEBOOK-LARGE-DOCUMENT-READINESS1` | ui | committed `4e275f06` |
 | `NOTEBOOK-PERSISTENCE-FOUNDATION1` | backend | committed `a1c2b708` |
-| `NOTEBOOK-DOCUMENT-LIBRARY1` | ui | verified; standing commit approval |
-| `NOTEBOOK-RIBBON-TABS1` | ui | pending |
+| `NOTEBOOK-DOCUMENT-LIBRARY1` | ui | committed `98530d12` |
+| `NOTEBOOK-RIBBON-TABS1` | ui | verified; standing commit approval |
 | `NOTEBOOK-IMAGE1` | ui | pending |
 | `NOTEBOOK-PAGE-LAYOUT1` | ui | pending |
 | `NOTEBOOK-IMAGE-LAYOUT1` | ui | pending |
@@ -40,6 +40,7 @@
 
 ## Current Handoff
 
-- `NOTEBOOK-DOCUMENT-LIBRARY1` meets its focused model, UI, Rust, responsive Chromium, static, and repository gates.
-- Notebook now creates and autosaves durable local documents, carries only a lightweight library reference in Workspace Tabs, and exposes File, version-history, failure-recovery, and Trash flows.
-- The next implementation gate is `NOTEBOOK-RIBBON-TABS1` after this standing-approved selective commit.
+- `NOTEBOOK-RIBBON-TABS1` meets its focused UI, responsive Chromium, static, and repository gates.
+- Notebook now keeps File backstage beside Home and Insert while preserving the app-level Workspace Tab strip. Home owns prose formatting; Insert owns structure, math, media entry points, evidence, and dividers.
+- Image and Video remain honest disabled entry points until their named gates; Layout and contextual media tabs do not appear without functional page/media controls.
+- The next implementation gate is `NOTEBOOK-IMAGE1` after this standing-approved selective commit.

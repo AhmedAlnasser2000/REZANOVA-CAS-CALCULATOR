@@ -123,6 +123,7 @@ test('Notebook inline math stays visually seamless and template insertion leaves
   await page.setViewportSize({ width: 1440, height: 900 });
   await openBlankNotebook(page);
 
+  await page.getByRole('tab', { name: 'Insert' }).click();
   await page.getByRole('button', { name: 'In text' }).click();
   const field = page.getByTestId('notebook-inline-math-field');
   const keyboard = page.getByTestId('notebook-authoring-keyboard');
@@ -362,6 +363,7 @@ test('Notebook keeps math size and cancellation scoped to an explicit selected t
   await page.setViewportSize({ width: 1440, height: 1000 });
   await openBlankNotebook(page);
 
+  await page.getByRole('tab', { name: 'Insert' }).click();
   await page.getByRole('button', { name: 'Separate equation' }).click();
   const field = page.locator('.notebook-rich-display-field').first();
   await expect(field).toBeVisible();

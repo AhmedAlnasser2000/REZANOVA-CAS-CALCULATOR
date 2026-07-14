@@ -95,6 +95,7 @@ describe('Notebook workbench', () => {
     const user = userEvent.setup();
     render(<NotebookWorkbenchHarness instanceId="workbench-structured-start" />);
 
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
     await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
     await user.click(within(screen.getByRole('menu', { name: 'Academic containers' }))
       .getByRole('menuitem', { name: /Theorem/ }));
@@ -107,6 +108,7 @@ describe('Notebook workbench', () => {
     const user = userEvent.setup();
     render(<NotebookWorkbenchHarness instanceId="workbench-resize" />);
     await screen.findByLabelText('Notebook rich document');
+    await user.click(screen.getByRole('tab', { name: 'Insert' }));
     await user.click(screen.getByRole('button', { name: 'Separate equation' }));
     await screen.findByTestId('notebook-display-math-field');
     setDesktopWorkbenchWidth();

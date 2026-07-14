@@ -40,5 +40,14 @@
 - commit_message: `NOTEBOOK-DOCUMENT-LIBRARY1`
 - approval: standing user approval recorded on 2026-07-14
 - status: verified; committed by the checkpoint containing this entry
+- commit_hash: `98530d12`
 - staged_scope: Notebook library UI/runtime seams, persistence history/Trash adapters, focused tests, styles, Chromium specification, and required durable memory only
+- excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and unrelated workspace work
+
+## NOTEBOOK-RIBBON-TABS1
+
+- commit_message: `NOTEBOOK-RIBBON-TABS1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook ribbon source, focused tests, styles, Chromium specification, and required durable memory only
 - excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and unrelated workspace work

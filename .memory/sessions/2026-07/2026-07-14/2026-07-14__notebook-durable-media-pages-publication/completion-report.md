@@ -25,4 +25,7 @@
 - `NOTEBOOK-PERSISTENCE-FOUNDATION1` is committed as `a1c2b708`.
 - `NOTEBOOK-DOCUMENT-LIBRARY1` is verified under the standing commit approval. Notebook documents are created locally immediately, autosave after 750 ms, save immediately on `Ctrl/Cmd+S`, and expose truthful saved/unsaved/failure status.
 - File backstage now owns New, templates, Recent, All Notebooks, `.cwiznb` import/export, bounded version history, and Trash. Workspace Tabs retain only library identity, revision, title, and view state; an already-open document is focused instead of duplicated.
-- The next gate is `NOTEBOOK-RIBBON-TABS1`; media, pages, and publication remain sequenced after it.
+- `NOTEBOOK-DOCUMENT-LIBRARY1` is committed as `98530d12`.
+- `NOTEBOOK-RIBBON-TABS1` is verified under the standing commit approval. File backstage now sits beside Home and Insert, Home owns Font/Paragraph/Styles/Edit, and Insert owns Structure/Math/Media/Document without altering app-level Workspace Tabs.
+- Evidence and Divider are live undoable insertions. Image and Video remain visible disabled commands until V7/V9, Layout waits for functional page controls, and contextual media tabs remain selection-driven future surfaces.
+- The next gate is `NOTEBOOK-IMAGE1`; pages and publication remain sequenced after it.

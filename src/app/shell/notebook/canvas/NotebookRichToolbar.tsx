@@ -4,15 +4,19 @@ import {
   BookOpenCheck,
   Braces,
   ChevronDown,
+  FileCheck2,
   FolderPlus,
   Highlighter,
+  Image as ImageIcon,
   Italic,
+  Minus,
   Palette,
   Redo2,
   Sigma,
   Strikethrough,
   Underline,
   Undo2,
+  Video,
 } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
 
@@ -20,6 +24,8 @@ import { NOTEBOOK_SEMANTIC_DEFINITIONS } from '../../../../lib/notebook';
 
 import {
   insertNotebookSemanticBlock,
+  insertNotebookDivider,
+  insertNotebookEvidence,
   insertNotebookSection,
 } from './selection';
 import { useNotebookTransientLayer } from '../transient-ui';
@@ -33,6 +39,7 @@ import {
   restoreNotebookToolbarSelection,
   type NotebookToolbarSelection,
 } from './notebookToolbarSelection';
+import type { NotebookRibbonTab } from './ribbon-types';
 
 type NotebookParagraphStyle = 'normal' | 'heading-1' | 'heading-2' | 'heading-3' | 'mixed';
 
@@ -133,14 +140,22 @@ function RibbonGroup({
 }
 
 export function NotebookRichToolbar({
+  activeTab,
   editor,
+  fileControl,
   hasProseSelection,
+  contextualTab = null,
+  onSelectTab,
   onInsertDisplayMath,
   onInsertInlineMath,
   onRequestPalette,
 }: {
+  activeTab: NotebookRibbonTab;
   editor: Editor;
+  fileControl: ReactNode;
   hasProseSelection: boolean;
+  contextualTab?: Extract<NotebookRibbonTab, 'picture-format' | 'video-format'> | null;
+  onSelectTab: (tab: NotebookRibbonTab) => void;
   onInsertDisplayMath: () => void;
   onInsertInlineMath: () => void;
   onRequestPalette: (mode: NotebookPaletteMode) => void;
@@ -168,9 +183,75 @@ export function NotebookRichToolbar({
     paragraphStyleMenu.toggle();
   }
 
+  function selectRibbonTab(tab: NotebookRibbonTab) {
+    semanticMenu.close(false);
+    paragraphStyleMenu.close(false);
+    onSelectTab(tab);
+  }
+
+  const tabLabel = activeTab === 'picture-format'
+    ? 'Picture Format'
+    : activeTab === 'video-format' ? 'Video Format' : activeTab === 'insert' ? 'Insert' : 'Home';
+
   return (
-    <div className="notebook-rich-toolbar" aria-label="Notebook formatting toolbar">
-      <RibbonGroup label="Font">
+    <div className="notebook-rich-ribbon">
+      <div className="notebook-ribbon-tabs">
+        {fileControl}
+        <div className="notebook-ribbon-tablist" role="tablist" aria-label="Notebook ribbon tabs">
+          <button
+            id="notebook-ribbon-tab-home"
+            type="button"
+            role="tab"
+            aria-controls="notebook-ribbon-panel"
+            aria-selected={activeTab === 'home'}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => selectRibbonTab('home')}
+          >Home</button>
+          <button
+            id="notebook-ribbon-tab-insert"
+            type="button"
+            role="tab"
+            aria-controls="notebook-ribbon-panel"
+            aria-selected={activeTab === 'insert'}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => selectRibbonTab('insert')}
+          >Insert</button>
+          {contextualTab === 'picture-format' ? (
+            <button
+              id="notebook-ribbon-tab-picture-format"
+              type="button"
+              role="tab"
+              className="is-contextual"
+              aria-controls="notebook-ribbon-panel"
+              aria-selected={activeTab === 'picture-format'}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectRibbonTab('picture-format')}
+            >Picture Format</button>
+          ) : null}
+          {contextualTab === 'video-format' ? (
+            <button
+              id="notebook-ribbon-tab-video-format"
+              type="button"
+              role="tab"
+              className="is-contextual"
+              aria-controls="notebook-ribbon-panel"
+              aria-selected={activeTab === 'video-format'}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectRibbonTab('video-format')}
+            >Video Format</button>
+          ) : null}
+        </div>
+      </div>
+      <div
+        id="notebook-ribbon-panel"
+        className="notebook-rich-toolbar"
+        aria-label="Notebook formatting toolbar"
+        data-ribbon-tab={activeTab}
+        role="tabpanel"
+      >
+        <span className="sr-only">{tabLabel} tools</span>
+        {activeTab === 'home' ? <>
+          <RibbonGroup label="Font">
         <ToolButton
           active={editor.isActive('bold')}
           label="Bold"
@@ -208,12 +289,12 @@ export function NotebookRichToolbar({
           onApply={(fontSize) => editor.chain().focus().setMark('textStyle', { fontSize }).run()}
           onReset={() => editor.chain().focus().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()}
         />
-      </RibbonGroup>
-      <RibbonGroup label="Paragraph">
-        <NotebookParagraphControls editor={editor} />
-      </RibbonGroup>
-      <RibbonGroup label="Structure">
-        <div className="notebook-paragraph-style">
+          </RibbonGroup>
+          <RibbonGroup label="Paragraph">
+            <NotebookParagraphControls editor={editor} />
+          </RibbonGroup>
+          <RibbonGroup label="Styles">
+            <div className="notebook-paragraph-style">
           <button
             data-notebook-transient-trigger={paragraphStyleMenu.id}
             type="button"
@@ -259,57 +340,89 @@ export function NotebookRichToolbar({
               ))}
             </div>
           ) : null}
-        </div>
-        <ToolButton
-          label="Add section"
-          onClick={() => insertNotebookSection(editor)}
-        ><FolderPlus size={16} /></ToolButton>
-        <div className="notebook-semantic-insert">
-          <ToolButton
-            active={semanticMenu.isOpen}
-            label="Insert academic container"
-            onClick={semanticMenu.toggle}
-            transientTriggerId={semanticMenu.id}
-          >
-            <BookOpenCheck size={16} />
-          </ToolButton>
-          {semanticMenu.isOpen ? (
-            <div data-notebook-transient-layer={semanticMenu.id} className="notebook-semantic-menu" role="menu" aria-label="Academic containers">
-              {NOTEBOOK_SEMANTIC_DEFINITIONS.map((definition) => (
-                <button
-                  key={definition.kind}
-                  type="button"
-                  role="menuitem"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    insertNotebookSemanticBlock(editor, definition.kind);
-                    semanticMenu.close(false);
-                  }}
-                >
-                  <span>{definition.label}</span>
-                  <small>{definition.tone}</small>
-                </button>
-              ))}
             </div>
-          ) : null}
-        </div>
-      </RibbonGroup>
-      <RibbonGroup label="Math" className="is-math">
-        <ToolButton label="In text" onClick={onInsertInlineMath}>
-          <Braces size={16} /> <span>In text</span>
-        </ToolButton>
-        <ToolButton label="Separate equation" onClick={onInsertDisplayMath}>
-          <Sigma size={16} /> <span>Separate equation</span>
-        </ToolButton>
-      </RibbonGroup>
-      <RibbonGroup label="Edit" className="is-history">
-        <ToolButton label="Undo" onClick={() => editor.chain().focus().undo().run()}>
-          <Undo2 size={16} />
-        </ToolButton>
-        <ToolButton label="Redo" onClick={() => editor.chain().focus().redo().run()}>
-          <Redo2 size={16} />
-        </ToolButton>
-      </RibbonGroup>
+          </RibbonGroup>
+          <RibbonGroup label="Edit" className="is-history">
+            <ToolButton label="Undo" onClick={() => editor.chain().focus().undo().run()}>
+              <Undo2 size={16} />
+            </ToolButton>
+            <ToolButton label="Redo" onClick={() => editor.chain().focus().redo().run()}>
+              <Redo2 size={16} />
+            </ToolButton>
+          </RibbonGroup>
+        </> : null}
+        {activeTab === 'insert' ? <>
+          <RibbonGroup label="Structure">
+            <ToolButton
+              label="Add section"
+              onClick={() => insertNotebookSection(editor)}
+            ><FolderPlus size={16} /></ToolButton>
+            <div className="notebook-semantic-insert">
+              <ToolButton
+                active={semanticMenu.isOpen}
+                label="Insert academic container"
+                onClick={semanticMenu.toggle}
+                transientTriggerId={semanticMenu.id}
+              >
+                <BookOpenCheck size={16} />
+              </ToolButton>
+              {semanticMenu.isOpen ? (
+                <div data-notebook-transient-layer={semanticMenu.id} className="notebook-semantic-menu" role="menu" aria-label="Academic containers">
+                  {NOTEBOOK_SEMANTIC_DEFINITIONS.map((definition) => (
+                    <button
+                      key={definition.kind}
+                      type="button"
+                      role="menuitem"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        insertNotebookSemanticBlock(editor, definition.kind);
+                        semanticMenu.close(false);
+                      }}
+                    >
+                      <span>{definition.label}</span>
+                      <small>{definition.tone}</small>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </RibbonGroup>
+          <RibbonGroup label="Math" className="is-math">
+            <ToolButton label="In text" onClick={onInsertInlineMath}>
+              <Braces size={16} /> <span>In text</span>
+            </ToolButton>
+            <ToolButton label="Separate equation" onClick={onInsertDisplayMath}>
+              <Sigma size={16} /> <span>Separate equation</span>
+            </ToolButton>
+          </RibbonGroup>
+          <RibbonGroup label="Media">
+            <ToolButton disabled label="Image — available in the next media gate" onClick={() => {}}>
+              <ImageIcon size={16} />
+            </ToolButton>
+            <ToolButton disabled label="Video — available in the video gate" onClick={() => {}}>
+              <Video size={16} />
+            </ToolButton>
+          </RibbonGroup>
+          <RibbonGroup label="Document">
+            <ToolButton label="Insert evidence" onClick={() => insertNotebookEvidence(editor)}>
+              <FileCheck2 size={16} />
+            </ToolButton>
+            <ToolButton label="Insert divider" onClick={() => insertNotebookDivider(editor)}>
+              <Minus size={16} />
+            </ToolButton>
+          </RibbonGroup>
+        </> : null}
+        {activeTab === 'picture-format' ? (
+          <RibbonGroup label="Picture Format">
+            <span className="notebook-contextual-tools-pending">Picture tools appear with a selected image.</span>
+          </RibbonGroup>
+        ) : null}
+        {activeTab === 'video-format' ? (
+          <RibbonGroup label="Video Format">
+            <span className="notebook-contextual-tools-pending">Video tools appear with a selected video.</span>
+          </RibbonGroup>
+        ) : null}
+      </div>
     </div>
   );
 }

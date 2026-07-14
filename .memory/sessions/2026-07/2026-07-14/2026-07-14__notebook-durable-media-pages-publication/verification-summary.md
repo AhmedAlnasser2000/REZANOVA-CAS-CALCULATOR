@@ -51,3 +51,14 @@
 - static evidence: incremental TypeScript, Notebook-scoped ESLint, Rust formatting, file-size validation, memory validation, and diff hygiene pass.
 - correction evidence: the first internal tab-title update incorrectly passed through the manual Rename policy and left the tab labeled `Notebook`; internal Notebook title synchronization is now separate and verified in Chromium. The 130% File card grid was also changed to responsive auto-fit after visual inspection found cramped two-column wrapping.
 - resource evidence: no full unit, UI, canary, or redundant production-build gate ran. Gate-owned Vite and Playwright processes were stopped, and untracked `test-results/` remains excluded.
+
+## NOTEBOOK-RIBBON-TABS1
+
+- gate: ui
+- status: verified
+- UI evidence: 3 focused files and 32 tests pass for Home/Insert grouping, File placement, selection preservation, transient dismissal, evidence/divider insertion with undo/redo, legacy authoring behavior, and per-tab workbench state.
+- Chromium evidence: 2 dedicated scenarios pass at 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors. File, Home, and Insert remain contained; app-level Workspace Tabs do not move; unavailable Image/Video commands are visibly disabled; Layout and contextual tabs remain absent without functional controls.
+- visual correction evidence: the first 130% forced-colors inspection found the collapsed Inspector restore rail overlapping a wrapped Document ribbon group. The rail was moved below the ribbon and the final geometry assertion proves no ribbon/rail intersection.
+- interaction evidence: switching tabs closes excluded transient menus without losing the Tiptap range; returning to Home applies formatting to that preserved range. File backstage opens and dismisses through the same transient coordinator.
+- static evidence: incremental TypeScript, Notebook-scoped ESLint, file-size validation, memory validation, and diff hygiene pass.
+- resource evidence: no full unit, UI, canary, or production-build gate ran. Gate-owned Vite and Playwright processes stopped after evidence; untracked `test-results/` remains excluded.

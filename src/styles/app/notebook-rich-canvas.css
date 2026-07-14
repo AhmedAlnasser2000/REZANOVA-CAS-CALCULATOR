@@ -19,9 +19,76 @@
   white-space: nowrap;
 }
 
+.notebook-rich-ribbon {
+  z-index: 8;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-width: 0;
+  background: rgba(12, 26, 27, 0.96);
+}
+
+.notebook-ribbon-tabs {
+  display: flex;
+  align-items: end;
+  gap: 2px;
+  min-height: 35px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--notebook-border);
+  padding: 3px 10px 0;
+  scrollbar-width: thin;
+}
+
+.notebook-ribbon-tablist {
+  display: flex;
+  align-items: end;
+  gap: 2px;
+}
+
+.notebook-ribbon-tabs button[role='tab'],
+.notebook-ribbon-tabs > .notebook-file-control > button {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 31px;
+  border: 0;
+  border-radius: 5px 5px 0 0;
+  padding: 6px 12px 7px;
+  background: transparent;
+  color: var(--page-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.notebook-ribbon-tabs button[role='tab']::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  bottom: 0;
+  left: 10px;
+  height: 2px;
+  border-radius: 999px 999px 0 0;
+  background: transparent;
+}
+
+.notebook-ribbon-tabs button[role='tab']:hover,
+.notebook-ribbon-tabs button[role='tab'][aria-selected='true'],
+.notebook-ribbon-tabs > .notebook-file-control > button:hover,
+.notebook-ribbon-tabs > .notebook-file-control > button[aria-expanded='true'] {
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
+}
+
+.notebook-ribbon-tabs button[role='tab'][aria-selected='true']::after {
+  background: var(--page-accent);
+}
+
+.notebook-ribbon-tabs button[role='tab'].is-contextual {
+  color: #84bfe8;
+}
+
 .notebook-rich-toolbar {
   position: relative;
-  z-index: 8;
   display: flex;
   align-items: stretch;
   align-content: flex-start;
@@ -32,6 +99,13 @@
   border-bottom: 1px solid var(--notebook-border);
   padding: 5px 12px 4px;
   background: rgba(12, 26, 27, 0.96);
+}
+
+.notebook-contextual-tools-pending {
+  max-width: 250px;
+  color: var(--page-subtle);
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 .notebook-ribbon-group {
@@ -989,6 +1063,12 @@
 }
 
 @media (forced-colors: active) {
+  .notebook-ribbon-tabs button[role='tab'][aria-selected='true'] {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+
   .notebook-section,
   .notebook-semantic-block {
     --notebook-accent: Highlight !important;
@@ -1117,6 +1197,10 @@
 }
 
 @media (max-width: 720px) {
+  .notebook-ribbon-tabs {
+    padding-inline: 6px;
+  }
+
   .notebook-rich-toolbar {
     flex-wrap: nowrap;
     overflow-x: auto;

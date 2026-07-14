@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from 'react';
 
 import {
@@ -25,6 +26,7 @@ import {
 } from '../../../../lib/notebook/document/tiptap-adapter';
 import { createNotebookExtensions } from './extensions';
 import { NotebookRichToolbar } from './NotebookRichToolbar';
+import type { NotebookRibbonTab } from './ribbon-types';
 import {
   insertNotebookDisplayMath,
   insertNotebookInlineMath,
@@ -42,12 +44,15 @@ import {
 } from './NotebookSelectionToolbar';
 
 type NotebookRichCanvasProps = {
+  activeRibbonTab: NotebookRibbonTab;
   document: NotebookRichDocument;
+  fileControl: ReactNode;
   onChange: (document: NotebookRichDocument) => void;
   onEditorChange: (editor: Editor | null) => void;
   onOpenMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
   initialProseSelection: NotebookProseSelection | null;
   onProseSelectionChange: (selection: NotebookProseSelection | null) => void;
+  onSelectRibbonTab: (tab: NotebookRibbonTab) => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
 };
 
@@ -98,12 +103,15 @@ function isPristineNotebook(editor: Editor) {
 }
 
 export function NotebookRichCanvas({
+  activeRibbonTab,
   document,
+  fileControl,
   onChange,
   onEditorChange,
   onOpenMathInTool,
   initialProseSelection,
   onProseSelectionChange,
+  onSelectRibbonTab,
   onSelectionChange,
 }: NotebookRichCanvasProps) {
   const documentRef = useRef(document);
@@ -371,8 +379,11 @@ export function NotebookRichCanvas({
   return (
     <div className="notebook-rich-canvas" data-revision={revision}>
       <NotebookRichToolbar
+        activeTab={activeRibbonTab}
         editor={editor}
+        fileControl={fileControl}
         hasProseSelection={Boolean(proseSelection)}
+        onSelectTab={onSelectRibbonTab}
         onInsertDisplayMath={() => insertNotebookDisplayMath(editor, {
           onInserted: setPendingMathFocusId,
         })}

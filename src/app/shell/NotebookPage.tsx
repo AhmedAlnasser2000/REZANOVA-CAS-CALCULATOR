@@ -30,6 +30,7 @@ import {
   NotebookRichCanvas,
   notebookEditorNodeById,
   type NotebookEditorSelection,
+  type NotebookRibbonTab,
 } from './notebook/canvas';
 import {
   NotebookMathFieldProvider,
@@ -76,6 +77,7 @@ function NotebookPageContent({
 }: NotebookPageProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [selection, setSelection] = useState<NotebookEditorSelection | null>(null);
+  const [activeRibbonTab, setActiveRibbonTab] = useState<NotebookRibbonTab>('home');
   const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
@@ -269,7 +271,6 @@ function NotebookPageContent({
             <div className="notebook-canvas-header">
               <div className="notebook-canvas-heading-row">
                 <div className="notebook-canvas-heading-tools">
-                  <NotebookFileBackstage session={librarySession} />
                   <span>Math-aware document</span>
                 </div>
                 <div className="notebook-drawer-toggles">
@@ -336,12 +337,15 @@ function NotebookPageContent({
               ) : null}
             </div>
             <NotebookRichCanvas
+              activeRibbonTab={activeRibbonTab}
               document={document}
+              fileControl={<NotebookFileBackstage session={librarySession} />}
               initialProseSelection={uiState.proseSelection}
               onChange={commitDocument}
               onEditorChange={setEditor}
               onOpenMathInTool={onOpenMathInTool}
               onProseSelectionChange={handleProseSelectionChange}
+              onSelectRibbonTab={setActiveRibbonTab}
               onSelectionChange={handleSelectionChange}
             />
             <NotebookAuthoringKeyboard instanceId={instanceId} />
