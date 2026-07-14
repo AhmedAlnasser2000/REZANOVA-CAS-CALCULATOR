@@ -876,6 +876,105 @@ describe('NotebookPage', () => {
       .some((entry) => entry.dataset.outlineKind === 'imageFigure')).toBe(false);
   });
 
+  it('formats picture size, alignment, wrapping, crop, and rotation as undoable V8 state', async () => {
+    const user = userEvent.setup();
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} />);
+
+    await user.click(await screen.findByRole('tab', { name: 'Insert' }));
+    await user.upload(screen.getByLabelText('Choose image'), notebookSvgFile('formatted.svg'));
+    const dialog = await screen.findByRole('dialog', { name: 'Insert image' });
+    await user.click(within(dialog).getByRole('checkbox', { name: /Decorative image/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Insert image' }));
+
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+    const figure = await screen.findByTestId('notebook-image-figure');
+    await user.click(within(toolbar).getByRole('button', { name: 'Set image width to 50%' }));
+    expect(figure.style.getPropertyValue('--notebook-image-width')).toBe('50%');
+    await user.click(within(toolbar).getByRole('button', { name: 'Align image right' }));
+    expect(figure).toHaveAttribute('data-image-alignment', 'right');
+    await user.click(within(toolbar).getByRole('button', { name: 'Align image left' }));
+
+    await user.click(within(toolbar).getByRole('button', { name: /Wrap text:/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Top and Bottom/ }));
+    expect(figure).toHaveAttribute('data-image-placement', 'top-and-bottom');
+    await user.click(within(toolbar).getByRole('button', { name: /Wrap text:/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Square Right/ }));
+    expect(figure).toHaveAttribute('data-image-alignment', 'right');
+    expect(figure).toHaveAttribute('data-image-placement', 'square-right');
+    await user.click(within(toolbar).getByRole('button', { name: 'Align image left' }));
+    await user.click(within(toolbar).getByRole('button', { name: /Wrap text:/ }));
+    await user.click(await screen.findByRole('menuitemradio', { name: /Square Left/ }));
+    expect(figure).toHaveAttribute('data-image-alignment', 'left');
+    expect(figure).toHaveAttribute('data-image-requested-placement', 'square-left');
+    expect(figure).toHaveAttribute('data-image-placement', 'square-left');
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Custom image width' }));
+    const widthDialog = await screen.findByRole('dialog', { name: 'Custom image width' });
+    fireEvent.change(within(widthDialog).getByLabelText('Image width percentage'), {
+      target: { value: '75' },
+    });
+    await user.click(within(widthDialog).getByRole('button', { name: 'Apply' }));
+    expect(figure).toHaveAttribute('data-image-requested-placement', 'square-left');
+    expect(figure).toHaveAttribute('data-image-placement', 'normal');
+    expect(figure).toHaveAttribute('data-image-wrap-fallback', 'true');
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Set image width to 50%' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Crop image' }));
+    const cropDialog = await screen.findByRole('dialog', { name: 'Crop image' });
+    await user.clear(within(cropDialog).getByLabelText('left crop percentage'));
+    await user.type(within(cropDialog).getByLabelText('left crop percentage'), '10');
+    await user.clear(within(cropDialog).getByLabelText('right crop percentage'));
+    await user.type(within(cropDialog).getByLabelText('right crop percentage'), '10');
+    await user.click(within(cropDialog).getByRole('button', { name: 'Apply' }));
+    expect(figure.querySelector('img')).toHaveStyle({
+      left: '-12.5%',
+      width: '125%',
+    });
+
+    await user.click(within(toolbar).getByRole('button', {
+      name: 'Rotate image right 90 degrees',
+    }));
+    expect(figure.style.getPropertyValue('--notebook-image-rotation')).toBe('90deg');
+    await user.click(within(toolbar).getByRole('button', { name: /Wrap text:/ }));
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu', { name: 'Picture wrapping' })).not.toBeInTheDocument();
+
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const stored = await readOnlyStoredDocument(libraryService);
+    expect(stored.content).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        type: 'imageFigure',
+        widthPercent: 50,
+        alignment: 'left',
+        placement: 'square-left',
+        rotation: 90,
+        crop: { x: 0.1, y: 0, width: 0.8, height: 1 },
+      }),
+    ]));
+
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(figure.style.getPropertyValue('--notebook-image-rotation'))
+      .toBe('0deg'));
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    await waitFor(() => expect(figure.style.getPropertyValue('--notebook-image-rotation'))
+      .toBe('90deg'));
+
+    await user.click(screen.getByRole('tab', { name: 'Picture Format' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Crop image' }));
+    await user.click(within(await screen.findByRole('dialog', { name: 'Crop image' }))
+      .getByRole('button', { name: 'Reset' }));
+    expect(figure.querySelector('img')).toHaveStyle({ left: '0%', width: '100%' });
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(figure.querySelector('img')).toHaveStyle({
+      left: '-12.5%',
+      width: '125%',
+    }));
+  });
+
   it('accepts image paste and drop paths while rejecting GIF before asset storage', async () => {
     const user = userEvent.setup();
     const libraryService = createNotebookLibraryService();

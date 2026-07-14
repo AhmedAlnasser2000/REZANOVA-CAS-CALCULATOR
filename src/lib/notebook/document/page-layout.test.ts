@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   NOTEBOOK_MARGIN_PRESETS_PT,
   NOTEBOOK_PAPER_DIMENSIONS_PT,
+  notebookEffectiveImagePlacement,
   notebookMarginPreset,
   notebookPageGeometry,
 } from './page-layout';
@@ -33,6 +34,20 @@ describe('Notebook page geometry', () => {
   it('recognizes presets without serializing a derived preset name', () => {
     expect(notebookMarginPreset({ ...NOTEBOOK_MARGIN_PRESETS_PT.wide })).toBe('wide');
     expect(notebookMarginPreset({ top: 40, right: 41, bottom: 42, left: 43 })).toBe('custom');
+  });
+
+  it('falls back to normal flow when a square image would starve the text column', () => {
+    const setup = {
+      paperSize: 'a4' as const,
+      orientation: 'portrait' as const,
+      marginsPt: { ...NOTEBOOK_MARGIN_PRESETS_PT.normal },
+    };
+    expect(notebookEffectiveImagePlacement(setup, 'square-left', 50)).toBe('square-left');
+    expect(notebookEffectiveImagePlacement(setup, 'square-right', 75)).toBe('normal');
+    expect(notebookEffectiveImagePlacement(setup, 'square-left', 50, 480)).toBe('normal');
+    expect(notebookEffectiveImagePlacement(setup, 'square-left', 50, 560)).toBe('square-left');
+    expect(notebookEffectiveImagePlacement(setup, 'top-and-bottom', 100))
+      .toBe('top-and-bottom');
   });
 
   it.each(pageCases)(

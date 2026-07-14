@@ -86,3 +86,15 @@
 - correction evidence: the first pagination implementation mutated ProseMirror-owned node DOM and caused node remounts; the final renderer uses a scoped external offset stylesheet. The final Layout visual correction gives controls deliberate spacing and dark high-contrast select values; its dedicated two-case Chromium gate passes and the 1100px dark plus 130% forced-colors screenshots were inspected.
 - static evidence: Notebook-scoped ESLint, file-size validation, exact-patch production build, and diff hygiene pass. Shared-checkout incremental TypeScript is blocked only by concurrent Canonical Result V2 files outside this gate; `npm run build` passes from clean `12a91729` with exactly the staged Notebook patch and only the existing chunking warnings.
 - resource evidence: no full unit, UI, or canary suite ran. The temporary clean worktree was removed; untracked `test-results/` and unrelated solver/result-contract work remain excluded.
+
+## NOTEBOOK-IMAGE-LAYOUT1
+
+- gate: ui
+- status: verified
+- model evidence: focused page-layout, pagination, and Tiptap-adapter coverage passes 3 files and 37 tests for page-aware effective placement, oversized media, and unchanged V8 serialization.
+- UI evidence: the complete 28-case Notebook page suite passes, including size presets/custom width, alignment, four placement modes, crop/reset, rotation, selection preservation, serialized state, and operation-level undo/redo.
+- Chromium evidence: all 3 image scenarios pass at 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors. Picture popovers remain inside the ribbon, saved V8 state matches the visible image, and no control overlaps Math Authoring.
+- correction evidence: the first responsive rule observed only pre-scaled layout width. The final node view measures the live editor content box, keeps the requested Square preference serialized, derives normal-flow fallback below the 240px text-column floor, and makes pagination follow the actual computed float state.
+- visual evidence: the 1100px screenshot shows a 50% cropped/rotated image with comfortable side text; the 130% forced-colors screenshot shows the same saved Square Left image in readable normal flow.
+- static evidence: incremental TypeScript, Notebook-scoped ESLint, file-size validation, and diff hygiene pass. No production build was required because V8 and package contracts did not change.
+- resource evidence: no full unit, UI, or canary suite ran. Gate-owned Vite and Playwright processes stopped; untracked `test-results/` and concurrent solver/result-contract work remain excluded.

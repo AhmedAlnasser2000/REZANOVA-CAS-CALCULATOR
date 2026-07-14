@@ -66,5 +66,14 @@
 - commit_message: `NOTEBOOK-PAGE-LAYOUT1`
 - approval: standing user approval recorded on 2026-07-14
 - status: verified; committed by the checkpoint containing this entry
+- commit_hash: `f3a9a95d`
 - staged_scope: Notebook V8 page-layout source, focused tests, styles, Chromium specification, and required durable memory only
+- excluded: untracked `test-results/`, ignored `.task_tmp/` evidence, and concurrent solver/result-contract work
+
+## NOTEBOOK-IMAGE-LAYOUT1
+
+- commit_message: `NOTEBOOK-IMAGE-LAYOUT1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook Picture Format source, page-aware image layout, focused tests, styles, Chromium specification, and required durable memory only
 - excluded: untracked `test-results/`, ignored `.task_tmp/` evidence, and concurrent solver/result-contract work

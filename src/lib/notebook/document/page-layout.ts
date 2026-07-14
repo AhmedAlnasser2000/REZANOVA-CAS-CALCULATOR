@@ -1,10 +1,16 @@
 import type {
   NotebookHeaderFooterSettings,
+  NotebookImagePlacement,
   NotebookPageMarginsPt,
   NotebookPageOrientation,
   NotebookPageSetup,
   NotebookPaperSize,
 } from './types';
+
+export const NOTEBOOK_MIN_WRAPPED_TEXT_COLUMN_PT = 180;
+export const NOTEBOOK_IMAGE_WRAP_GAP_PT = 12;
+export const NOTEBOOK_MIN_RENDERED_TEXT_COLUMN_PX = 240;
+export const NOTEBOOK_IMAGE_WRAP_GAP_PX = 18;
 
 export const NOTEBOOK_PAPER_DIMENSIONS_PT: Record<NotebookPaperSize, {
   width: number;
@@ -69,4 +75,26 @@ export function notebookMarginPreset(
     && value.bottom === margins.bottom
     && value.left === margins.left);
   return preset?.[0] as NotebookMarginPreset | undefined ?? 'custom';
+}
+
+export function notebookEffectiveImagePlacement(
+  setup: NotebookPageSetup,
+  placement: NotebookImagePlacement = 'normal',
+  widthPercent = 100,
+  renderedContentWidthPx?: number,
+): NotebookImagePlacement {
+  if (placement !== 'square-left' && placement !== 'square-right') {
+    return placement;
+  }
+  const { usableWidth } = notebookPageGeometry(setup);
+  const clampedWidth = Math.max(10, Math.min(100, widthPercent));
+  const remainingTextWidth = usableWidth * (1 - clampedWidth / 100)
+    - NOTEBOOK_IMAGE_WRAP_GAP_PT;
+  if (remainingTextWidth < NOTEBOOK_MIN_WRAPPED_TEXT_COLUMN_PT) return 'normal';
+  if (renderedContentWidthPx !== undefined) {
+    const renderedTextWidth = renderedContentWidthPx * (1 - clampedWidth / 100)
+      - NOTEBOOK_IMAGE_WRAP_GAP_PX;
+    if (renderedTextWidth < NOTEBOOK_MIN_RENDERED_TEXT_COLUMN_PX) return 'normal';
+  }
+  return placement;
 }

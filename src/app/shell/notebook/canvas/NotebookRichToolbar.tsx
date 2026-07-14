@@ -49,6 +49,7 @@ import {
   NotebookLayoutControls,
   type NotebookViewMode,
 } from './NotebookLayoutControls';
+import { NotebookPictureFormatControls } from './NotebookPictureFormatControls';
 
 type NotebookParagraphStyle = 'normal' | 'heading-1' | 'heading-2' | 'heading-3' | 'mixed';
 
@@ -486,11 +487,7 @@ export function NotebookRichToolbar({
                 transientTriggerId="notebook-image-details"
               ><Captions size={16} /></ToolButton>
             </RibbonGroup>
-            <RibbonGroup label="Layout">
-              <span className="notebook-contextual-tools-pending">
-                Size, wrap, crop, and rotation arrive with page-aware picture layout.
-              </span>
-            </RibbonGroup>
+            <NotebookPictureFormatControls editor={editor} pageSetup={pageSetup} />
           </>
         ) : null}
         {activeTab === 'video-format' ? (

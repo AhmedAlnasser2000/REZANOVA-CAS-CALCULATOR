@@ -139,6 +139,7 @@ export function useNotebookPagination({
 
       let pageIndex = 0;
       let cursor = marginTopPx;
+      let activeFloatBottom = 0;
       const layoutRules: string[] = [];
       const childSelector = (index: number) => (
         `[data-notebook-pagination-scope="${scope}"] .notebook-rich-editor > :nth-child(${index + 1})`
@@ -146,6 +147,12 @@ export function useNotebookPagination({
       children.forEach((element, index) => {
         const kind = blockKind(element);
         const computed = getComputedStyle(element);
+        const squareMedia = kind === 'media'
+          && (computed.float === 'left' || computed.float === 'right');
+        if ((kind === 'pageBreak' || (kind === 'media' && !squareMedia)) && activeFloatBottom) {
+          cursor = Math.max(cursor, activeFloatBottom);
+          activeFloatBottom = 0;
+        }
         const baseMarginTop = Number.parseFloat(computed.marginTop) || 0;
         const marginBottom = Number.parseFloat(computed.marginBottom) || 0;
         const height = element.getBoundingClientRect().height;
@@ -183,12 +190,25 @@ export function useNotebookPagination({
         if (splittable && cursor + height + marginBottom > contentEnd) {
           layoutRules.push(`${childSelector(index)} { box-decoration-break: clone; }`);
         }
+        if (squareMedia) {
+          activeFloatBottom = Math.max(activeFloatBottom, cursor + height + marginBottom);
+          pageIndex = Math.max(
+            pageIndex,
+            Math.floor(Math.max(0, activeFloatBottom - 1) / stride),
+          );
+          return;
+        }
         cursor += height + marginBottom;
+        if (cursor >= activeFloatBottom) activeFloatBottom = 0;
         pageIndex = Math.max(pageIndex, Math.floor(Math.max(0, cursor - 1) / stride));
         const pageTop = pageIndex * stride + marginTopPx;
         if (cursor < pageTop) cursor = pageTop;
       });
 
+      pageIndex = Math.max(
+        pageIndex,
+        Math.floor(Math.max(0, Math.max(cursor, activeFloatBottom) - 1) / stride),
+      );
       const pageCount = Math.max(1, pageIndex + 1);
       styleElement.textContent = layoutRules.join('\n');
       stage.style.setProperty('--notebook-page-count', String(pageCount));

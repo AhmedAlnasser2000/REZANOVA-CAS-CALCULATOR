@@ -33,4 +33,7 @@
 - `NOTEBOOK-IMAGE1` is committed as `b61dd6dc`.
 - `NOTEBOOK-PAGE-LAYOUT1` is verified under the standing commit approval. Strict V8 adds point-based page setup, simple headers and footers, page numbering, and explicit page breaks while keeping all physical pages derived over one Tiptap editor.
 - Print Layout is the per-tab default, Draft remains the continuous performance view, and the Layout ribbon now exposes functional page controls with readable, deliberately spaced responsive affordances.
-- The next gate is `NOTEBOOK-IMAGE-LAYOUT1`; video and publication remain sequenced after image layout.
+- `NOTEBOOK-PAGE-LAYOUT1` is committed as `f3a9a95d`.
+- `NOTEBOOK-IMAGE-LAYOUT1` is verified under the standing commit approval. Picture Format now exposes bounded size, alignment, page-aware wrapping, non-destructive crop, and 90-degree rotation while preserving one editor selection and undo history.
+- Square wrapping retains its serialized preference and falls back to normal flow when canonical page geometry or live rendered width cannot keep body text readable.
+- The next gate is `NOTEBOOK-VIDEO1`; publication remains sequenced after video.

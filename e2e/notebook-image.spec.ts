@@ -3,7 +3,15 @@ import { expect, test, type Page } from '@playwright/test';
 type StoredBrowserNotebook = {
   assetIds?: string[];
   document?: {
-    content?: Array<{ caption?: string; type?: string }>;
+    content?: Array<{
+      alignment?: string;
+      caption?: string;
+      crop?: { height?: number; width?: number; x?: number; y?: number };
+      placement?: string;
+      rotation?: number;
+      type?: string;
+      widthPercent?: number;
+    }>;
     version?: number;
   };
 };
@@ -182,4 +190,142 @@ test('Notebook image staging dismisses with Escape and rejects GIF before creati
   await expect(page.getByRole('alert')).toContainText('GIF images are not supported');
   await expect(page.getByTestId('notebook-image-figure')).toHaveCount(0);
   await attachScreenshot(page, 'notebook-image-gif-rejection-1100');
+});
+
+test('Picture Format persists page-aware wrap, crop, rotation, size, and alignment', async ({ page }) => {
+  await page.setViewportSize({ width: 2400, height: 1050 });
+  await openBlankNotebook(page);
+  const editor = page.getByLabel('Notebook rich document');
+  const ribbonTabs = page.getByRole('tablist', { name: 'Notebook ribbon tabs' });
+  const toolbar = page.getByLabel('Notebook formatting toolbar');
+
+  await editor.click();
+  await page.keyboard.type('A readable text column must remain beside a wrapped mathematical figure.');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Page geometry decides when square wrapping safely falls back to normal flow.');
+  await ribbonTabs.getByRole('tab', { name: 'Insert' }).click();
+  await page.getByLabel('Choose image').setInputFiles({
+    name: 'wrapped-limit.svg',
+    mimeType: 'image/svg+xml',
+    buffer: SAFE_SVG,
+  });
+  const insertDialog = page.getByRole('dialog', { name: 'Insert image' });
+  await insertDialog.getByRole('checkbox', { name: /Decorative image/ }).check();
+  await insertDialog.getByRole('button', { name: 'Insert image' }).click();
+
+  const figure = page.getByTestId('notebook-image-figure');
+  await expect(ribbonTabs.getByRole('tab', { name: 'Picture Format' }))
+    .toHaveAttribute('aria-selected', 'true');
+  await toolbar.getByRole('button', { name: 'Set image width to 50%' }).click();
+  await toolbar.getByRole('button', { name: 'Align image left' }).click();
+  await toolbar.getByRole('button', { name: /Wrap text:/ }).click();
+  await page.getByRole('menuitemradio', { name: /Square Left/ }).click();
+  await expect(figure).toHaveAttribute('data-image-placement', 'square-left');
+  await expect(figure).toHaveCSS('float', 'left');
+
+  await toolbar.getByRole('button', { name: 'Crop image' }).click();
+  const cropDialog = page.getByRole('dialog', { name: 'Crop image' });
+  await cropDialog.getByLabel('left crop percentage').fill('10');
+  await cropDialog.getByLabel('right crop percentage').fill('10');
+  await cropDialog.getByLabel('top crop percentage').fill('5');
+  await cropDialog.getByRole('button', { name: 'Apply' }).click();
+  await toolbar.getByRole('button', { name: 'Rotate image right 90 degrees' }).click();
+  await expect(figure).toHaveCSS('width', /.+/);
+  await expect(figure.locator('img')).toHaveCSS('transform', /matrix\(0, 1, -1, 0/);
+
+  await ribbonTabs.getByRole('tab', { name: 'Layout' }).click();
+  await toolbar.getByLabel('Page margins').selectOption('wide');
+  await ribbonTabs.getByRole('tab', { name: 'Picture Format' }).click();
+  await expect(figure).toHaveAttribute('data-image-requested-placement', 'square-left');
+  await expect(figure).toHaveAttribute('data-image-placement', 'normal');
+  await expect(figure).toHaveAttribute('data-image-wrap-fallback', 'true');
+
+  await ribbonTabs.getByRole('tab', { name: 'Layout' }).click();
+  await toolbar.getByLabel('Page margins').selectOption('normal');
+  await ribbonTabs.getByRole('tab', { name: 'Picture Format' }).click();
+  await expect(figure).toHaveAttribute('data-image-placement', 'square-left');
+
+  await editor.press('Control+End');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type(
+    'This paragraph flows beside the picture while the remaining line length stays comfortable.',
+  );
+  await page.keyboard.press('Enter');
+  await page.keyboard.type(
+    'A second line demonstrates that wrapping remains part of the single editor flow.',
+  );
+  await figure.click();
+  await ribbonTabs.getByRole('tab', { name: 'Picture Format' }).click();
+
+  await page.keyboard.press('Control+S');
+  await expect(page.getByText('Saved locally').first()).toBeVisible();
+  await expect.poll(async () => page.evaluate(async () => {
+    const request = indexedDB.open('calcwiz-notebook-library-v1', 2);
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = database.transaction('records', 'readonly');
+    const recordsRequest = transaction.objectStore('records').getAll();
+    const records = await new Promise<StoredBrowserNotebook[]>((resolve, reject) => {
+      recordsRequest.onsuccess = () => resolve(recordsRequest.result as StoredBrowserNotebook[]);
+      recordsRequest.onerror = () => reject(recordsRequest.error);
+    });
+    database.close();
+    return records.flatMap((record) => record.document?.content ?? [])
+      .find((node) => node.type === 'imageFigure');
+  })).toMatchObject({
+    alignment: 'left',
+    crop: { height: 0.95, width: 0.8, x: 0.1, y: 0.05 },
+    placement: 'square-left',
+    rotation: 90,
+    type: 'imageFigure',
+    widthPercent: 50,
+  });
+
+  for (const width of [2400, 1440, 1100]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await expectImageContained(page);
+    await toolbar.getByRole('button', { name: 'Crop image' }).click();
+    const bounds = await page.getByRole('dialog', { name: 'Crop image' }).evaluate((element) => {
+      const popover = element.getBoundingClientRect();
+      const ribbon = document.querySelector('.notebook-rich-toolbar')!.getBoundingClientRect();
+      return {
+        bottom: popover.bottom,
+        left: popover.left,
+        ribbonBottom: ribbon.bottom,
+        ribbonLeft: ribbon.left,
+        ribbonRight: ribbon.right,
+        right: popover.right,
+      };
+    });
+    expect(bounds.left).toBeGreaterThanOrEqual(bounds.ribbonLeft);
+    expect(bounds.right).toBeLessThanOrEqual(bounds.ribbonRight);
+    expect(bounds.bottom).toBeLessThanOrEqual(bounds.ribbonBottom + 1);
+    await page.keyboard.press('Escape');
+    await attachScreenshot(page, `notebook-picture-format-${width}`);
+  }
+
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.locator('.active-surface--page').evaluate((element) => {
+    (element as HTMLElement).style.setProperty('--page-ui-scale', '0.8');
+  });
+  await expectImageContained(page);
+  await attachScreenshot(page, 'notebook-picture-format-80');
+
+  await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
+  await page.locator('.active-surface--page').evaluate((element) => {
+    (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
+  });
+  await expectImageContained(page);
+  await expect(figure).toHaveAttribute('data-image-requested-placement', 'square-left');
+  await expect(figure).toHaveAttribute('data-image-placement', 'normal');
+  await expect(figure).toHaveAttribute('data-image-wrap-fallback', 'true');
+  await expect(figure).toHaveCSS('float', 'none');
+  await expect(figure).toHaveCSS('outline-style', 'solid');
+  await attachScreenshot(page, 'notebook-picture-format-forced-colors-130');
+  await page.getByRole('button', { name: 'Wrap text: Square Left' }).click();
+  await expect(page.getByRole('menu', { name: 'Picture wrapping' }).getByRole('status'))
+    .toHaveText('Normal flow is used at this size to keep the text column readable.');
+  await page.keyboard.press('Escape');
 });

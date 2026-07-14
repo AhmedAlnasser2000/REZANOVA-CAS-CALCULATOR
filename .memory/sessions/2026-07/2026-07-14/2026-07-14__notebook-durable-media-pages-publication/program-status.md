@@ -30,8 +30,8 @@
 | `NOTEBOOK-DOCUMENT-LIBRARY1` | ui | committed `98530d12` |
 | `NOTEBOOK-RIBBON-TABS1` | ui | committed `64f3b955` |
 | `NOTEBOOK-IMAGE1` | ui | committed `b61dd6dc` |
-| `NOTEBOOK-PAGE-LAYOUT1` | ui | verified; standing commit approval |
-| `NOTEBOOK-IMAGE-LAYOUT1` | ui | pending |
+| `NOTEBOOK-PAGE-LAYOUT1` | ui | committed `f3a9a95d` |
+| `NOTEBOOK-IMAGE-LAYOUT1` | ui | verified; standing commit approval |
 | `NOTEBOOK-VIDEO1` | ui | pending |
 | `NOTEBOOK-EXPORT-PROJECTION1` | backend | pending |
 | `NOTEBOOK-EXPORT-PDF1` | ui | pending |
@@ -40,7 +40,7 @@
 
 ## Current Handoff
 
-- `NOTEBOOK-PAGE-LAYOUT1` meets its focused model, migration, adapter, pagination, Rust, UI, responsive Chromium, exact-patch production-build, and repository gates.
-- Notebook documents now use strict V8 page setup, simple document-wide running matter, and explicit top-level page breaks. Physical page fragments and measurement caches remain derived and are never serialized.
-- Print Layout is the per-tab default and Draft remains a continuous performance view. Both retain one Tiptap editor, one text selection, and one undo history; oversized documents still force Draft without truncation.
-- The next implementation gate is `NOTEBOOK-IMAGE-LAYOUT1` after this standing-approved selective commit.
+- `NOTEBOOK-IMAGE-LAYOUT1` meets its focused model, adapter, UI, responsive Chromium, accessibility-scaling, and repository gates.
+- Picture Format now provides bounded size, alignment, wrapping, crop, and rotation controls over existing V8 image metadata without modifying source assets.
+- Square wrapping preserves the serialized preference but derives effective placement from V8 page geometry and live editor width, falling back to normal flow when the remaining text column would be unreadable.
+- The next implementation gate is `NOTEBOOK-VIDEO1` after this standing-approved selective commit.

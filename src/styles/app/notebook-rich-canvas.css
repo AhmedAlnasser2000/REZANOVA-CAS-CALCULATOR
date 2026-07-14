@@ -109,6 +109,15 @@
   padding-bottom: 320px;
 }
 
+.notebook-rich-toolbar:has(.notebook-picture-width-popover) {
+  padding-bottom: 185px;
+}
+
+.notebook-rich-toolbar:has(.notebook-picture-menu),
+.notebook-rich-toolbar:has(.notebook-picture-crop-popover) {
+  padding-bottom: 270px;
+}
+
 .notebook-contextual-tools-pending {
   max-width: 250px;
   color: var(--page-subtle);
@@ -282,6 +291,151 @@
   display: grid;
   grid-template-columns: 1fr 100px;
   gap: 7px;
+}
+
+.notebook-picture-control {
+  position: relative;
+}
+
+.notebook-ribbon-group.is-picture-size .notebook-ribbon-group-tools > button {
+  width: auto;
+  min-width: 43px;
+  padding-inline: 7px;
+  font: 0.7rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-picture-popover,
+.notebook-picture-menu {
+  position: absolute;
+  z-index: 34;
+  top: calc(100% + 8px);
+  left: 0;
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 8px;
+  padding: 12px;
+  background: #102021;
+  color: var(--page-ink);
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.48);
+}
+
+.notebook-picture-width-popover {
+  width: min(260px, calc(100vw - 40px));
+}
+
+.notebook-picture-width-popover label,
+.notebook-picture-crop-popover label {
+  display: grid;
+  gap: 4px;
+}
+
+.notebook-picture-width-popover label > span,
+.notebook-picture-crop-popover > span,
+.notebook-picture-crop-popover label > span {
+  color: var(--page-subtle);
+  font: 0.64rem 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+}
+
+.notebook-picture-width-popover > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--page-muted);
+  font-size: 0.76rem;
+}
+
+.notebook-picture-width-popover > div label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--page-ink);
+  font: 0.82rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-picture-width-popover input[type='number'] {
+  width: 66px;
+  min-height: 30px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 4px 7px;
+  background: #071516;
+  color: #f1f5ed;
+  font: 0.78rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-picture-popover footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  border-top: 1px solid var(--notebook-border);
+  padding-top: 9px;
+}
+
+.notebook-rich-toolbar .notebook-picture-popover footer button {
+  width: auto;
+  min-width: 68px;
+  height: 30px;
+  padding-inline: 8px;
+}
+
+.notebook-picture-menu {
+  width: min(280px, calc(100vw - 40px));
+  padding: 7px;
+}
+
+.notebook-rich-toolbar .notebook-picture-menu > button {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: start;
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  padding: 7px 9px;
+  text-align: left;
+}
+
+.notebook-picture-menu small {
+  color: var(--page-subtle);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.notebook-picture-menu p,
+.notebook-picture-crop-popover p {
+  margin: 0;
+  color: #e7c27b;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.notebook-picture-crop-popover {
+  right: 0;
+  left: auto;
+  width: min(310px, calc(100vw - 40px));
+}
+
+.notebook-picture-crop-popover > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.notebook-picture-crop-popover input[type='number'] {
+  width: 100%;
+  min-height: 30px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 4px 7px;
+  background: #071516;
+  color: #f1f5ed;
+  font: 0.72rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-rich-toolbar[data-ribbon-tab='picture-format'] .notebook-ribbon-group:last-child {
+  margin-left: 0;
 }
 
 .notebook-image-dialog-backdrop {
@@ -1173,6 +1327,29 @@
 .notebook-image-figure[data-image-alignment='left'] { margin-right: auto; margin-left: 0; }
 .notebook-image-figure[data-image-alignment='right'] { margin-right: 0; margin-left: auto; }
 
+.notebook-image-figure[data-image-placement='normal'],
+.notebook-image-figure[data-image-placement='top-and-bottom'] {
+  clear: both;
+}
+
+.notebook-image-figure[data-image-placement='square-left'],
+.notebook-image-figure[data-image-placement='square-right'] {
+  clear: none;
+  max-width: 52%;
+  margin-top: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.notebook-image-figure[data-image-placement='square-left'] {
+  float: left;
+  margin-right: 18px;
+}
+
+.notebook-image-figure[data-image-placement='square-right'] {
+  float: right;
+  margin-left: 18px;
+}
+
 .notebook-image-frame {
   display: grid;
   min-height: 96px;
@@ -1189,6 +1366,25 @@
   max-height: 70vh;
   transform: rotate(var(--notebook-image-rotation, 0deg));
   transform-origin: center;
+}
+
+.notebook-image-crop-viewport {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.notebook-image-crop-viewport[data-natural-size='pending'] img {
+  position: static;
+  width: auto !important;
+  height: auto !important;
+  margin: auto;
+}
+
+.notebook-image-crop-viewport[data-natural-size='ready'] img {
+  position: absolute;
+  max-width: none;
+  max-height: none;
 }
 
 .notebook-image-loading,
@@ -1578,7 +1774,9 @@
   }
 
   .notebook-page-sheet,
-  .notebook-layout-popover {
+  .notebook-layout-popover,
+  .notebook-picture-popover,
+  .notebook-picture-menu {
     border-color: CanvasText;
     background: Canvas;
     color: CanvasText;
@@ -1587,7 +1785,8 @@
 
   .notebook-layout-field select,
   .notebook-layout-popover select,
-  .notebook-layout-popover input {
+  .notebook-layout-popover input,
+  .notebook-picture-popover input {
     border-color: ButtonText;
     background: Field;
     color: FieldText;
