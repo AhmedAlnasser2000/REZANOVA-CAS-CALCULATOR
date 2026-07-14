@@ -21,6 +21,15 @@
 
 - commit_message: `NOTEBOOK-LARGE-DOCUMENT-READINESS1`
 - approval: standing user approval recorded on 2026-07-14
-- status: verified; selective commit pending
+- status: committed
+- commit_hash: `4e275f06`
 - staged_scope: Notebook source, focused tests, styles, and required durable memory only
 - excluded: untracked `test-results/`, ignored `.task_tmp/` evidence, and unrelated workspace work
+
+## NOTEBOOK-PERSISTENCE-FOUNDATION1
+
+- commit_message: `NOTEBOOK-PERSISTENCE-FOUNDATION1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook persistence contracts/adapters/tests, Rust Notebook storage/package source, dependency locks, and required durable memory only
+- excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and unrelated workspace work

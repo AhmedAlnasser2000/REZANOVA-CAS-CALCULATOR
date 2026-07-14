@@ -27,3 +27,15 @@
 - correction evidence: the first idle-callback app-document sync starved after a large browser edit. It was rejected and replaced with a 350 ms settled-edit sync that resets on each update and flushes on editor destruction; the final Chromium measurements above use the corrected path.
 - discarded probe evidence: one strict-locator ambiguity and one absolute Calculate cap below the fresh baseline were harness errors, not product failures. The final probe compares pre-Notebook and post-Notebook latency on the same page.
 - resource evidence: no full unit, UI, or canary suite ran; the Vite and Playwright processes used by this gate are stopped after evidence capture.
+
+## NOTEBOOK-PERSISTENCE-FOUNDATION1
+
+- gate: backend
+- status: verified
+- TypeScript evidence: 4 focused files and 11 tests pass for stored-record validation, in-memory revision ownership, SHA-256 asset deduplication, IndexedDB persistence, and defensive Tauri response validation.
+- Rust evidence: 5 focused tests pass for interrupted atomic-write recovery, revision races, content-addressed asset deduplication, unsafe SVG rejection, complete package validation before mutation, current-snapshot portable export, and import-copy identity.
+- browser evidence: real Chromium uses the production IndexedDB adapter to save/load/list one record, reject a stale revision, store and reload 41 asset bytes, and deduplicate the repeated asset identity.
+- package evidence: `.cwiznb` uses stored ZIP64 entries for the manifest, V6 app document, and declared assets. Traversal, links, encryption, unsupported compression, duplicate/undeclared/incomplete entries, hash mismatch, unsupported media, scriptable SVG, and bounded-size violations fail before library mutation.
+- static evidence: incremental TypeScript, Notebook-scoped ESLint, Rust formatting, focused Rust compilation/tests, file-size validation, production build, memory validation, and diff hygiene pass. The production build retains only its existing chunk-size/dynamic-import warnings.
+- unavailable optional evidence: `cargo clippy` was attempted but the stable toolchain does not have the Clippy component installed; no lint result is claimed.
+- resource evidence: no full unit, UI, or canary suite ran. The Vite/Chromium process used for browser evidence is stopped, `.task_tmp/` remains ignored, and untracked `test-results/` remains excluded.

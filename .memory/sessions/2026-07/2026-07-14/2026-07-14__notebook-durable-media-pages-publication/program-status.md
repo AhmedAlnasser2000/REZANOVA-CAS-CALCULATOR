@@ -25,8 +25,8 @@
 
 | Gate | Kind | Status |
 | --- | --- | --- |
-| `NOTEBOOK-LARGE-DOCUMENT-READINESS1` | ui | verified; commit approved |
-| `NOTEBOOK-PERSISTENCE-FOUNDATION1` | backend | pending |
+| `NOTEBOOK-LARGE-DOCUMENT-READINESS1` | ui | committed `4e275f06` |
+| `NOTEBOOK-PERSISTENCE-FOUNDATION1` | backend | verified; commit approved |
 | `NOTEBOOK-DOCUMENT-LIBRARY1` | ui | pending |
 | `NOTEBOOK-RIBBON-TABS1` | ui | pending |
 | `NOTEBOOK-IMAGE1` | ui | pending |
@@ -40,6 +40,6 @@
 
 ## Current Handoff
 
-- `NOTEBOOK-LARGE-DOCUMENT-READINESS1` meets its focused model, UI, Chromium, static, and repository gates.
-- The next implementation gate is `NOTEBOOK-PERSISTENCE-FOUNDATION1` after the approved selective commit.
-- The development-only `notebookPerformance` query seam is diagnostic evidence only and is excluded from production behavior.
+- `NOTEBOOK-PERSISTENCE-FOUNDATION1` meets its focused TypeScript, Rust, real-Chromium IndexedDB, production-build, static, and repository gates.
+- Desktop storage and `.cwiznb` package commands are registered, and browser IndexedDB parity is implemented. The active Notebook is not yet wired to them, so `Session only` remains the honest visible state.
+- The next implementation gate is `NOTEBOOK-DOCUMENT-LIBRARY1` after this standing-approved selective commit.

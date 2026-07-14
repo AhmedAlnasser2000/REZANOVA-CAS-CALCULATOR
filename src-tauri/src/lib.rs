@@ -1,3 +1,4 @@
+pub mod notebook_storage;
 pub mod ooe;
 
 use mathexpr::{Executable, Expression};
@@ -1678,6 +1679,15 @@ pub fn run() {
                 AppState::load(storage_dir)
                     .map_err(|error| tauri::Error::Io(std::io::Error::other(error)))?,
             );
+            let notebook_storage_dir = app
+                .path()
+                .app_data_dir()
+                .map_err(|error| tauri::Error::Io(std::io::Error::other(error.to_string())))?
+                .join("notebook-library");
+            app.manage(
+                notebook_storage::NotebookStorage::load(notebook_storage_dir)
+                    .map_err(|error| tauri::Error::Io(std::io::Error::other(error)))?,
+            );
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -1702,6 +1712,16 @@ pub fn run() {
             clear_calculator_memory,
             solve_ode_numeric,
             sample_ode_solution,
+            notebook_storage::notebook_list_records,
+            notebook_storage::notebook_load_record,
+            notebook_storage::notebook_save_record,
+            notebook_storage::notebook_delete_record,
+            notebook_storage::notebook_put_asset,
+            notebook_storage::notebook_load_asset,
+            notebook_storage::notebook_delete_asset,
+            notebook_storage::notebook_export_package,
+            notebook_storage::notebook_inspect_package,
+            notebook_storage::notebook_import_package,
             ooe::commands::ooe_list_builtin_plans,
             ooe::commands::ooe_list_builtin_hosts,
             ooe::commands::ooe_get_builtin_plan,
