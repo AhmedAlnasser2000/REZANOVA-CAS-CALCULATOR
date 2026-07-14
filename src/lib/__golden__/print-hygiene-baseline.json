@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "RESULT-COMPATIBILITY-REMOVAL1 removes duplicate canonical-payload fragments and records each canonical math value once; mathematical values and visible output are unchanged.",
+  "acceptedReason": "V1-TYPED-DETAIL-CLOSEOUT0 accepts the intended typed prose plus inline math output for Calculus, Trigonometry, Matrix system/profile, and Vector span/independence details.",
   "caseCount": 43,
   "workspaceCounts": {
     "calculate": 23,
@@ -825,44 +825,39 @@
           "value": "y=2\\sin\\left(3\\left(x-\\frac{\\pi}{3}\\right)\\right)+1,\\quad P=\\frac{2\\pi}{3},\\quad h=\\frac{\\pi}{3}"
         },
         {
-          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\text{carrier}=\\sin"
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "2"
         },
         {
-          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\text{amplitude}=2"
-        },
-        {
-          "path": "canonicalResult.details[0].lines[2][0].math.canonicalLatex",
-          "kind": "detail-math-line",
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
+          "kind": "detail-math-part",
           "value": "B=3"
         },
         {
-          "path": "canonicalResult.details[0].lines[3][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\text{period}=\\frac{2\\pi}{3}"
+          "path": "canonicalResult.details[0].lines[3][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\frac{2\\pi}{3}"
         },
         {
-          "path": "canonicalResult.details[0].lines[4][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\text{phase shift}=\\frac{\\pi}{3}"
+          "path": "canonicalResult.details[0].lines[4][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\frac{\\pi}{3}"
         },
         {
-          "path": "canonicalResult.details[0].lines[5][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\text{vertical shift}=1"
+          "path": "canonicalResult.details[0].lines[5][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "1"
         },
         {
-          "path": "canonicalResult.details[0].lines[6][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\text{midline}: y=1"
+          "path": "canonicalResult.details[0].lines[6][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "y=1"
         },
         {
-          "path": "canonicalResult.details[0].lines[7][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\text{range}=\\left[-1,3\\right]"
+          "path": "canonicalResult.details[0].lines[7][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left[-1,3\\right]"
         },
         {
           "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
@@ -1028,54 +1023,39 @@
           "value": "\\operatorname{nullity}(A)=1"
         },
         {
-          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{rank}(A)+\\operatorname{nullity}(A)=2"
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "1+1=2"
         },
         {
-          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{pivot\\ columns}=\\{1\\}"
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{1\\right\\}"
         },
         {
-          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\ker(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}"
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{\\begin{bmatrix}-1\\\\1\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{one\\text{-}to\\text{-}one}(A)=\\text{No}"
+          "path": "canonicalResult.details[2].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{\\begin{bmatrix}1\\\\2\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "canonicalResult.details[2].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{Im}(A)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\2\\end{bmatrix}\\right\\}"
+          "path": "canonicalResult.details[3].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "0"
         },
         {
-          "path": "canonicalResult.details[2].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{onto}(A)=\\text{No}"
+          "path": "canonicalResult.details[4].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\begin{bmatrix}1 & 1\\\\0 & 0\\end{bmatrix}"
         },
         {
-          "path": "canonicalResult.details[3].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\det(A)=0"
-        },
-        {
-          "path": "canonicalResult.details[3].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{invertible}(A)=\\text{No}"
-        },
-        {
-          "path": "canonicalResult.details[4].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{rref}(A)=\\begin{bmatrix}1 & 1\\\\0 & 0\\end{bmatrix}"
-        },
-        {
-          "path": "canonicalResult.details[4].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{pivot\\ columns}=\\{1\\}"
+          "path": "canonicalResult.details[4].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{1\\right\\}"
         }
       ]
     },
@@ -1106,44 +1086,34 @@
           "value": "\\operatorname{nullity}(T)=0"
         },
         {
-          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{rank}(T)+\\operatorname{nullity}(T)=2"
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "2+0=2"
         },
         {
-          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{1,2\\right\\}"
         },
         {
-          "path": "canonicalResult.details[1].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\ker(T)=\\{0\\}"
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\varnothing"
         },
         {
-          "path": "canonicalResult.details[1].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{one\\text{-}to\\text{-}one}(T)=\\text{Yes}"
+          "path": "canonicalResult.details[2].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\\\0\\end{bmatrix}\\right\\}"
         },
         {
-          "path": "canonicalResult.details[2].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{Im}(T)=\\operatorname{span}\\left\\{\\begin{bmatrix}1\\\\0\\\\0\\end{bmatrix},\\begin{bmatrix}0\\\\1\\\\0\\end{bmatrix}\\right\\}"
+          "path": "canonicalResult.details[4].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\begin{bmatrix}1 & 0\\\\0 & 1\\\\0 & 0\\end{bmatrix}"
         },
         {
-          "path": "canonicalResult.details[2].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{onto}(T)=\\text{No}"
-        },
-        {
-          "path": "canonicalResult.details[4].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{rref}(T)=\\begin{bmatrix}1 & 0\\\\0 & 1\\\\0 & 0\\end{bmatrix}"
-        },
-        {
-          "path": "canonicalResult.details[4].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
+          "path": "canonicalResult.details[4].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{1,2\\right\\}"
         }
       ]
     },
@@ -1164,19 +1134,19 @@
           "value": "\\operatorname{independent}\\left(p,q,r\\right)=\\text{No}"
         },
         {
-          "path": "canonicalResult.details[0].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\dim\\operatorname{span}\\left(p,q,r\\right)=2"
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "2"
         },
         {
-          "path": "canonicalResult.details[0].lines[1][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{pivot\\ columns}=\\{1,2\\}"
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{1,2\\right\\}"
         },
         {
-          "path": "canonicalResult.details[0].lines[2][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{basis\\ selected}=\\left\\{p,q\\right\\}"
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\left\\{p,q\\right\\}"
         },
         {
           "path": "canonicalResult.details[0].lines[3][0].math.canonicalLatex",
@@ -1199,9 +1169,9 @@
           "value": "r=p+q"
         },
         {
-          "path": "canonicalResult.details[2].lines[0][0].math.canonicalLatex",
-          "kind": "detail-math-line",
-          "value": "\\operatorname{rref}\\left(\\left[p\\;q\\;r\\right]\\right)=\\begin{bmatrix}1 & 0 & 1\\\\0 & 1 & 1\\end{bmatrix}"
+          "path": "canonicalResult.details[2].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\begin{bmatrix}1 & 0 & 1\\\\0 & 1 & 1\\end{bmatrix}"
         }
       ]
     },

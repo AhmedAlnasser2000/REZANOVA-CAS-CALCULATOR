@@ -14,13 +14,14 @@
 - verified_by_agent_family: sol
 - attribution_basis: live
 
-## Current Gate
+## Completed Gates
 
 - `V1-TYPED-DETAIL-CALCULUS1`: committed as `b7e2f081`.
 - `V1-TYPED-DETAIL-TRIGONOMETRY1`: committed as `f083d222`.
 - `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: committed as `67e101e7`.
-- `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: verified and approved; awaiting commit creation.
-- Remaining: closeout.
+- `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: committed as `3c50e68c`.
+- `V1-TYPED-DETAIL-CLOSEOUT0`: verified and approved; awaiting commit creation.
+- Remaining: none inside V1.
 - Current coverage: 455 leaves, 432 proven MathJSON trees, 23 exemptions, zero missing classifications.
 - Final target: 23 exemptions and zero missing classifications.
 

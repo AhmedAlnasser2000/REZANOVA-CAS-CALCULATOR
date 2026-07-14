@@ -2,7 +2,7 @@
 
 Date: 2026-07-14
 Last updated: 2026-07-14
-Status: active; Moves 1-3 committed and Move 4 verified under the user's standing approval; no push is authorized
+Status: complete; all five user-approved moves verified, with Move 5 approved and awaiting commit creation; no push is authorized
 
 ## Attribution
 
@@ -43,8 +43,8 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 1. `V1-TYPED-DETAIL-CALCULUS1`: committed as `b7e2f081`. Calculus coverage moved to 460 leaves, 410 proven, 50 exempt, and zero missing. `calculus.derivatives` moved from 14 to 2 exemptions and `calculus.partials` from 2 to 0.
 2. `V1-TYPED-DETAIL-TRIGONOMETRY1`: committed as `f083d222`. Coverage is 459 leaves, 416 proven, 43 exempt, and zero missing. `trigonometry.period-phase` moved from 14/6/8/0 to 13/12/1/0; the removed leaf is the carrier classification, now correctly prose.
 3. `V1-TYPED-DETAIL-MATRIX-SYSTEM1`: committed as `67e101e7`. Coverage is 460 leaves, 420 proven, 40 exempt, and zero missing. `matrix.linear-system` moved from 11/4/7/0 to 12/8/4/0, retaining only the four row-operation arrows.
-4. `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: verified; approved and awaiting commit creation. Coverage is 455 leaves, 432 proven, 23 exempt, and zero missing. `matrix.profile` is 21/17/4/0 and `vector.span-independence` is 10/8/2/0.
-5. `V1-TYPED-DETAIL-CLOSEOUT0`: pending. Remove obsolete exemption rules, accept exactly 23 exemptions and zero missing classifications, and close the fixtures, print-hygiene, memory, and visual evidence.
+4. `V1-TYPED-DETAIL-LINEAR-ALGEBRA-PROFILES1`: committed as `3c50e68c`. Coverage is 455 leaves, 432 proven, 23 exempt, and zero missing. `matrix.profile` is 21/17/4/0 and `vector.span-independence` is 10/8/2/0.
+5. `V1-TYPED-DETAIL-CLOSEOUT0`: verified; approved and awaiting commit creation. Ten obsolete detail-label exemption rules are removed; 20 live rules classify exactly 23 leaves with zero missing classifications. Fixtures, print hygiene, memory, and visual evidence are closed.
 
 ## Move 1 Evidence
 
@@ -77,6 +77,13 @@ Replace mathematical pseudo-label strings in existing `CanonicalResultDocumentV1
 - Coverage reaches the final 23-exemption floor with zero missing classifications before obsolete registry rules are removed.
 - Focused Matrix/Vector tests, result contracts, all 43 golden and 100 replay intent executions, TypeScript, lint, file-size, production build, and diff hygiene pass.
 - One-worker Chromium inspection covers Vector span/independence, singular and rectangular Matrix profiles, readable compact History replay, overflow, and Formula Viewer absence.
+
+## Move 5 Evidence
+
+- The exemption registry now contains only live V1 rules: 20 rules classify 23 residual leaves because the retained Matrix-system rule covers four row-operation arrows.
+- All 63 result-contract tests pass, including all 43 golden and 100 replay executions; the standalone 100-fixture replay, golden, print-hygiene, and focused Display UI gates also pass.
+- File-size, scoped lint, memory protocol, diff hygiene, and Vite production build pass. The final repository TypeScript recheck is externally blocked only by the concurrent untracked Notebook Library UI test; the Move 4 TypeScript checkpoint passed before that file appeared.
+- The user-facing manual verification checklist and completion report are recorded before any V2 roadmap begins.
 
 ## Verification Policy
 

@@ -60,3 +60,16 @@
 - visual: Vector span/independence, singular and rectangular Matrix profiles, compact History replay, and overflow were inspected in Chromium; no Formula Viewer control appears for these compact results
 - static: incremental TypeScript, changed-file lint, file-size, Vite production build, and diff hygiene pass
 - protected lane: concurrent Notebook persistence/library work and `test-results/` excluded; no push
+
+## V1-TYPED-DETAIL-CLOSEOUT0
+
+- kind: backend contract/fixture/documentation closeout
+- result: pass; approved for commit
+- registry: 20 live rules classify exactly 23 residual leaves; ten obsolete detail-label rules are removed and the four-arrow Matrix row-operation rule remains
+- contracts: all 63 result-contract tests pass, including all 43 golden and 100 replay executions; MathJSON coverage is 455/432/23/0
+- replay and presentation: the standalone 100-fixture replay, 43-case golden corpus, print-hygiene manifest, and 5 focused Display UI tests pass
+- visual: Move 4's final focused Chromium run passes 2/2 with inspected Vector, singular/rectangular Matrix, and readable History replay evidence; closeout changes no app output beyond the already verified moves
+- static: scoped lint, file-size, memory protocol, diff hygiene, and Vite production build pass
+- TypeScript: passed at the Move 4 checkpoint; the closeout recheck is blocked only by three invalid `exact` options in concurrent untracked `NotebookLibrary.ui.test.tsx`, not by V1 files
+- resource posture: focused closeout tests only; no full unit, UI, or canary suite ran
+- protected lane: concurrent Notebook document-library/Rust work and `test-results/` excluded; no push
