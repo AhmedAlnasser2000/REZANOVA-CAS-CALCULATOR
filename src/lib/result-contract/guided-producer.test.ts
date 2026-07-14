@@ -75,7 +75,6 @@ describe('guided-domain canonical result producers', () => {
     expect(requireCanonicalResultAuthority(
       result.outcome,
       'Table test',
-      { tableResponse: result.response },
     ).canonicalResult).toBeDefined();
     expect(result.outcome.canonicalResult?.table).toEqual({
       headers: ['x', '\\sqrt{x}'],
@@ -101,7 +100,6 @@ describe('guided-domain canonical result producers', () => {
     expect(requireCanonicalResultAuthority(
       cancelled.outcome,
       'Table cancellation test',
-      { tableResponse: cancelled.response },
     ).canonicalResult).toBeDefined();
     expect(cancelled.outcome.canonicalResult?.table).toEqual({ headers: [], rows: [] });
   });

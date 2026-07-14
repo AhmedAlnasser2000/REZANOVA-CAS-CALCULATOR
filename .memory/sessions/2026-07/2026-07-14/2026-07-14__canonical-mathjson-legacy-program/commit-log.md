@@ -21,3 +21,11 @@
 - scope: physical compatibility removal, strict canonical runtime/consumer authority, focused browser parity, path-aware file-size policy, and durable evidence
 - push: not authorized
 - excluded: concurrent Notebook source/styles/tests, ignored `.task_tmp/` evidence, and untracked `test-results/`
+
+## CANONICAL-MATHJSON-LEGACY-CLOSEOUT0
+
+- commit_message: `CANONICAL-MATHJSON-LEGACY-CLOSEOUT0`
+- status: verified; covered by standing commit approval
+- scope: final broad evidence, stale canonical-fixture repairs, route-specific Numeric Interval browser timeout, accepted inversion fingerprint, manual checklist, and durable program closure
+- push: not authorized
+- excluded: independently committed Notebook source/styles/tests, ignored `.task_tmp/` evidence, and untracked `test-results/`

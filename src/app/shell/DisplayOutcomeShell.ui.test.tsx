@@ -1,8 +1,19 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { canonicalMathValue } from '../../lib/result-contract';
+import { canonicalResultFixture } from '../../test-utils/canonical-result-fixture';
 import { DisplayPanel } from './DisplayPanel';
 import { expectMathStaticLatex } from '../../test/renderAppMain';
 import { DEFAULT_SETTINGS } from '../../types/calculator';
+
+function successOutcome(title: string, exactLatex: string) {
+  return canonicalResultFixture({
+    outcomeKind: 'success',
+    title,
+    warnings: [],
+    primaryMath: canonicalMathValue(exactLatex),
+  });
+}
 
 describe('DisplayOutcomeShell result title', () => {
   it('hides Matrix expression titles when the editor preview already shows the same expression', () => {
@@ -18,12 +29,10 @@ describe('DisplayOutcomeShell result title', () => {
         currentMode="matrix"
         displayHeaderLabel="Matrix"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
-          title: titleLatex,
-          warnings: [],
-          exactLatex: String.raw`x_{\mathrm{LS}}=\begin{bmatrix}2\\3\end{bmatrix}`,
-        }}
+        displayOutcome={successOutcome(
+          titleLatex,
+          String.raw`x_{\mathrm{LS}}=\begin{bmatrix}2\\3\end{bmatrix}`,
+        )}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         matrixEditorLatex=""
@@ -55,12 +64,10 @@ describe('DisplayOutcomeShell result title', () => {
         currentMode="calculate"
         displayHeaderLabel="Calculate"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
-          title: titleLatex,
-          warnings: [],
-          exactLatex: String.raw`x_{\mathrm{LS}}=\begin{bmatrix}2\\3\end{bmatrix}`,
-        }}
+        displayOutcome={successOutcome(
+          titleLatex,
+          String.raw`x_{\mathrm{LS}}=\begin{bmatrix}2\\3\end{bmatrix}`,
+        )}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         matrixEditorLatex=""
@@ -92,12 +99,7 @@ describe('DisplayOutcomeShell result title', () => {
         currentMode="vector"
         displayHeaderLabel="Vector"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
-          title: 'q·v',
-          warnings: [],
-          exactLatex: '32',
-        }}
+        displayOutcome={successOutcome('q·v', '32')}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         matrixEditorLatex=""
@@ -129,12 +131,7 @@ describe('DisplayOutcomeShell result title', () => {
         currentMode="vector"
         displayHeaderLabel="Vector"
         displayResultBadges={[]}
-        displayOutcome={{
-          kind: 'success',
-          title: 'triple(p,q,r)',
-          warnings: [],
-          exactLatex: '2',
-        }}
+        displayOutcome={successOutcome('triple(p,q,r)', '2')}
         getPeriodicStopReasonText={(reason: string) => reason}
         hydrated
         matrixEditorLatex=""

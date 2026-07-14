@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createEquationResultOutcome } from '../../equation/equation-solve-result';
 import {
   prepareEquationStoredValueSolveConsent,
   runEquationMode,
@@ -232,7 +233,7 @@ describe('Equation mode stored values and targets', () => {
   );
 
   it('fails closed when a symbolic solver outcome contains internal readback fragments', () => {
-    const sharedSolveRunner = vi.fn(() => ({
+    const sharedSolveRunner = vi.fn(() => createEquationResultOutcome({
       kind: 'success' as const,
       title: 'Solve',
       exactLatex: 'x=\\mathtip{\\error{\\blacksquare}}{tuple<bad>}',

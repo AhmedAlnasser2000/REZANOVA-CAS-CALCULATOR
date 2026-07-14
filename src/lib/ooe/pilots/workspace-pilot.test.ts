@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildCanonicalResultDocumentFromProducer,
+  canonicalMathValue,
+  createCanonicalRuntimeResult,
+} from '../../result-contract';
+import {
   clearOoeDiagnostics,
   getLatestOoeDiagnostics,
 } from '../diagnostics/diagnostics-buffer';
@@ -106,15 +111,15 @@ describe('OOE workspace provenance pilot', () => {
         screen: entry.mode,
         action: 'evaluate',
         inputSummary: { routeLabel },
-        run: () => ({
-          kind: 'success' as const,
+        run: () => createCanonicalRuntimeResult(buildCanonicalResultDocumentFromProducer({
+          outcomeKind: 'success',
           title: routeLabel,
-          exactLatex: '1',
+          primaryMath: canonicalMathValue('1'),
           warnings: [],
-        }),
+        })),
       });
 
-      expect(result.payload.title).toBe(routeLabel);
+      expect(result.payload.canonicalResult.title).toBe(routeLabel);
       expect(listRecentOoeJobs()[0]).toMatchObject({
         routeLabel,
         status: 'completed',

@@ -16,12 +16,12 @@
 
 ## Program Status
 
-- Status: active; final closeout pending.
-- Completed through: `RESULT-COMPATIBILITY-REMOVAL1`.
-- Next gate: `CANONICAL-MATHJSON-LEGACY-CLOSEOUT0`.
+- Status: complete; all 21 approved gates verified.
+- Completed through: `CANONICAL-MATHJSON-LEGACY-CLOSEOUT0`.
+- Next gate: none; future capability work follows the canonical-result policies in `AGENTS.md`.
 - Starting commit: `0a173b61`.
 - Push: not authorized.
-- Protected work: concurrent Notebook source/styles/tests and untracked `test-results/`.
+- Protected work: independently committed Notebook source/styles/tests and untracked `test-results/`.
 
 ## Current Contract
 

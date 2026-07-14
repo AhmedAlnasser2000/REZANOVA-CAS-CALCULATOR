@@ -67,7 +67,9 @@ describe('useLinearAlgebraTableShellRuntime editor canonicalization', () => {
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'success',
-        title: canonicalEigen,
+        canonicalResult: expect.objectContaining({
+          title: canonicalEigen,
+        }),
       }),
       canonicalEigen,
       'matrix',
@@ -104,7 +106,9 @@ describe('useLinearAlgebraTableShellRuntime editor canonicalization', () => {
     await waitFor(() => expect(commitOutcome).toHaveBeenCalledWith(
       expect.objectContaining({
         kind: 'success',
-        title: canonicalGram,
+        canonicalResult: expect.objectContaining({
+          title: canonicalGram,
+        }),
       }),
       canonicalGram,
       'vector',

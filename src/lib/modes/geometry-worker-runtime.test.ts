@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { RunGeometryRuntimeRequest } from '../geometry/runtime-input';
-import {
-  buildCanonicalGeometryModeRunPayload,
-  buildGeometryModeRunPayload,
-} from '../geometry/runtime-run';
+import { buildCanonicalGeometryModeRunPayload } from '../geometry/runtime-run';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
 import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import {
@@ -130,7 +127,7 @@ describe('geometry worker runtime shell', () => {
         createWorker: createWorker('complete'),
       });
 
-      expect(serialized(result.payload)).toEqual(serialized(buildGeometryModeRunPayload(request)));
+      expect(serialized(result.payload)).toEqual(serialized(buildCanonicalGeometryModeRunPayload(request)));
       expect(result.ooe.geometryHostExecution).toMatchObject({
         kind: 'worker',
         hostId: 'geometry-worker-runtime',
@@ -150,7 +147,7 @@ describe('geometry worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(serialized(result.payload)).toEqual(serialized(buildGeometryModeRunPayload(request)));
+    expect(serialized(result.payload)).toEqual(serialized(buildCanonicalGeometryModeRunPayload(request)));
     expect(result.ooe.geometryHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'geometry-runtime',

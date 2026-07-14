@@ -2,10 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { clearOoeJobRegistry, listRecentOoeJobs } from '../ooe/job-launch/active-job-registry';
 import { clearOoeDiagnostics, listOoeDiagnostics } from '../ooe/diagnostics/diagnostics-buffer';
 import type { RunTrigonometryRuntimeRequest } from '../trigonometry/runtime-input';
-import {
-  buildCanonicalTrigonometryModeRunPayload,
-  buildTrigonometryModeRunPayload,
-} from '../trigonometry/runtime-run';
+import { buildCanonicalTrigonometryModeRunPayload } from '../trigonometry/runtime-run';
 import {
   runTrigonometryModeViaIsolatedWorker,
   type CreateTrigonometryWorker,
@@ -134,7 +131,7 @@ describe('trigonometry worker runtime shell', () => {
         createWorker: createWorker('complete'),
       });
 
-      expect(serialized(result.payload)).toEqual(serialized(buildTrigonometryModeRunPayload(request)));
+      expect(serialized(result.payload)).toEqual(serialized(buildCanonicalTrigonometryModeRunPayload(request)));
       expect(result.ooe.trigonometryHostExecution).toMatchObject({
         kind: 'worker',
         hostId: 'trigonometry-worker-runtime',
@@ -154,7 +151,7 @@ describe('trigonometry worker runtime shell', () => {
       commitPolicy: 'alwaysCommit',
     });
 
-    expect(serialized(result.payload)).toEqual(serialized(buildTrigonometryModeRunPayload(request)));
+    expect(serialized(result.payload)).toEqual(serialized(buildCanonicalTrigonometryModeRunPayload(request)));
     expect(result.ooe.trigonometryHostExecution).toMatchObject({
       kind: 'fallback',
       hostId: 'trigonometry-runtime',

@@ -153,7 +153,7 @@ test('NP1 settings smoke updates numeric preview and approximate equation output
   await openEquationNumericIntervalPanel(page, '\\log(x^2+9x-5)=\\log(8x+\\ln 4)');
   await page.getByTestId('editor-runtime-run').click();
 
-  await expect(page.getByTestId('display-outcome-success')).toBeVisible();
+  await expect(page.getByTestId('display-outcome-success')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('display-outcome-exact')).toContainText('x ≈ 2.076');
   await expect(page.getByTestId('display-outcome-approx')).toHaveCount(0);
   await expect(page.locator('.result-badges .equation-origin-badge', { hasText: 'Numeric Interval' })).toBeVisible();

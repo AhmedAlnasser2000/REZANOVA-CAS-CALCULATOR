@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "RESULT-COMPATIBILITY-REMOVAL1 records canonical Equation trust metadata at the owner adapter and one additional direct canonical consumer read",
+  "acceptedReason": "Move 20 removed the obsolete Table response argument while retaining the same canonical authority boundary and all zero-legacy floors.",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -386,7 +386,7 @@
       ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
-        "f5abd1d26f262ca9c875:1",
+        "b0d26aa4f45c127d8498:1",
         "e1700bf94e158f5c6ec2:1"
       ],
       "src/lib/modes/table-result-document.ts": [
