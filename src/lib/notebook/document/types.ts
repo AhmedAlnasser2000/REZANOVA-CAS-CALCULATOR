@@ -1,8 +1,14 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 4 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 5 as const;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
+
+export const NOTEBOOK_TEXT_ALIGNMENTS = ['left', 'center', 'right', 'justify'] as const;
+export const NOTEBOOK_LINE_SPACINGS = [1, 1.15, 1.5, 2] as const;
+export const NOTEBOOK_PARAGRAPH_SPACES_PT = [0, 6, 12, 18, 24] as const;
+export const NOTEBOOK_BULLET_STYLES = ['disc', 'circle', 'square', 'dash'] as const;
+export const NOTEBOOK_ORDERED_STYLES = ['decimal', 'lower-alpha', 'lower-roman'] as const;
 
 export function isNotebookFontSize(value: unknown): value is number {
   return typeof value === 'number'
@@ -12,6 +18,17 @@ export function isNotebookFontSize(value: unknown): value is number {
 }
 
 export type NotebookRichDocumentVersion = typeof NOTEBOOK_RICH_DOCUMENT_VERSION;
+export type NotebookTextAlignment = typeof NOTEBOOK_TEXT_ALIGNMENTS[number];
+export type NotebookLineSpacing = typeof NOTEBOOK_LINE_SPACINGS[number];
+export type NotebookParagraphSpacePt = typeof NOTEBOOK_PARAGRAPH_SPACES_PT[number];
+export type NotebookBulletStyle = typeof NOTEBOOK_BULLET_STYLES[number];
+export type NotebookOrderedStyle = typeof NOTEBOOK_ORDERED_STYLES[number];
+export type NotebookParagraphFormat = {
+  alignment?: NotebookTextAlignment;
+  lineSpacing?: NotebookLineSpacing;
+  spaceBeforePt?: NotebookParagraphSpacePt;
+  spaceAfterPt?: NotebookParagraphSpacePt;
+};
 export type NotebookSemanticKind =
   | 'theorem'
   | 'definition'
@@ -30,6 +47,7 @@ export type NotebookRichMark =
   | { type: 'bold' }
   | { type: 'italic' }
   | { type: 'strike' }
+  | { type: 'underline' }
   | { type: 'highlight'; color?: string }
   | { type: 'textStyle'; color?: string; fontSize?: number };
 
@@ -52,6 +70,7 @@ export type NotebookInlineNode = NotebookRichTextNode | NotebookInlineMathNode;
 export type NotebookParagraphNode = {
   type: 'paragraph';
   id: string;
+  format?: NotebookParagraphFormat;
   content?: NotebookInlineNode[];
 };
 
@@ -59,6 +78,7 @@ export type NotebookHeadingNode = {
   type: 'heading';
   id: string;
   level: 1 | 2 | 3;
+  format?: NotebookParagraphFormat;
   content?: NotebookInlineNode[];
 };
 
@@ -93,11 +113,21 @@ export type NotebookListItemNode = {
   content: NotebookRichBlockNode[];
 };
 
-export type NotebookListNode = {
-  type: 'bulletList' | 'orderedList';
+export type NotebookBulletListNode = {
+  type: 'bulletList';
   id: string;
+  style?: NotebookBulletStyle;
   content: NotebookListItemNode[];
 };
+
+export type NotebookOrderedListNode = {
+  type: 'orderedList';
+  id: string;
+  style?: NotebookOrderedStyle;
+  content: NotebookListItemNode[];
+};
+
+export type NotebookListNode = NotebookBulletListNode | NotebookOrderedListNode;
 
 export type NotebookSemanticNode = {
   type: 'semanticBlock';
@@ -143,6 +173,10 @@ export type NotebookRichDocumentV2 = Omit<NotebookRichDocument, 'version'> & {
 
 export type NotebookRichDocumentV3 = Omit<NotebookRichDocument, 'version'> & {
   version: 3;
+};
+
+export type NotebookRichDocumentV4 = Omit<NotebookRichDocument, 'version'> & {
+  version: 4;
 };
 
 export type NotebookDocumentSummary = {

@@ -87,6 +87,8 @@ function NotebookPageContent({
     && activeMathField?.field.matches(':focus')
     ? notebookEditorNodeById(editor, activeMathField.nodeId)
     : null;
+  const focusedMathSelectionId = focusedMathSelection?.id ?? null;
+  const focusedMathSelectionType = focusedMathSelection?.type ?? null;
   const currentRelevantSelection = focusedMathSelection ?? selection;
   const currentSelectionUsesInspector = selectionUsesInspector(currentRelevantSelection);
   const inspectorIsVisible = uiState.inspectorMode === 'pinned'
@@ -117,19 +119,42 @@ function NotebookPageContent({
     }
   }, [patchUiState, uiState.inspectorMode]);
 
+  const handleProseSelectionChange = useCallback((proseSelection: {
+    from: number;
+    to: number;
+  } | null) => {
+    patchUiState({ proseSelection });
+  }, [patchUiState]);
+
   useEffect(() => {
-    if (!selectionUsesInspector(focusedMathSelection)) {
+    if (!editor || !focusedMathSelectionId || !focusedMathSelectionType) {
       return;
     }
-    setLastRelevantSelection(focusedMathSelection);
-    if (
-      uiState.inspectorMode === 'collapsed'
-      && focusedMathSelection.id !== collapsedInspectorSelectionIdRef.current
-    ) {
-      collapsedInspectorSelectionIdRef.current = null;
-      patchUiState({ inspectorMode: 'auto' });
-    }
-  }, [focusedMathSelection?.id, focusedMathSelection?.type, patchUiState, uiState.inspectorMode]);
+    const frame = requestAnimationFrame(() => {
+      const nextFocusedMathSelection = notebookEditorNodeById(editor, focusedMathSelectionId);
+      if (
+        !selectionUsesInspector(nextFocusedMathSelection)
+        || nextFocusedMathSelection.type !== focusedMathSelectionType
+      ) {
+        return;
+      }
+      setLastRelevantSelection(nextFocusedMathSelection);
+      if (
+        uiState.inspectorMode === 'collapsed'
+        && nextFocusedMathSelection.id !== collapsedInspectorSelectionIdRef.current
+      ) {
+        collapsedInspectorSelectionIdRef.current = null;
+        patchUiState({ inspectorMode: 'auto' });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    editor,
+    focusedMathSelectionId,
+    focusedMathSelectionType,
+    patchUiState,
+    uiState.inspectorMode,
+  ]);
 
   function toggleDrawer(drawer: Exclude<NotebookDrawer, null>) {
     if (drawer === 'outline') {
@@ -219,9 +244,11 @@ function NotebookPageContent({
             </div>
             <NotebookRichCanvas
               document={document}
+              initialProseSelection={uiState.proseSelection}
               onChange={commitDocument}
               onEditorChange={setEditor}
               onOpenMathInTool={onOpenMathInTool}
+              onProseSelectionChange={handleProseSelectionChange}
               onSelectionChange={handleSelectionChange}
             />
             <NotebookAuthoringKeyboard instanceId={instanceId} />

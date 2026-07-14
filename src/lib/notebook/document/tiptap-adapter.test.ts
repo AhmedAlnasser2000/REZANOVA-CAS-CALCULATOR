@@ -66,19 +66,26 @@ describe('Notebook Tiptap adapter', () => {
     expect(JSON.stringify(restored)).not.toContain('Editor');
   });
 
-  it('round-trips prose strikethrough and exact font-size marks without changing math source', () => {
+  it('round-trips underline, paragraph formatting, list styles, and exact font size', () => {
     const base = createNotebookRichDocument({ idPrefix: 'typography', now: NOW });
     const document: NotebookRichDocument = {
       ...base,
       content: [{
         type: 'paragraph',
         id: 'paragraph.typography',
+        format: {
+          alignment: 'center',
+          lineSpacing: 1.15,
+          spaceBeforePt: 18,
+          spaceAfterPt: 24,
+        },
         content: [
           {
             type: 'text',
             text: 'Superseded wording',
             marks: [
               { type: 'strike' },
+              { type: 'underline' },
               { type: 'textStyle', color: '#f3d37b', fontSize: 173 },
             ],
           },
@@ -90,6 +97,29 @@ describe('Notebook Tiptap adapter', () => {
             workspaceTarget: 'calculate',
           },
         ],
+      }, {
+        type: 'bulletList',
+        id: 'list.bullets',
+        style: 'square',
+        content: [{
+          type: 'listItem',
+          id: 'item.bullet',
+          content: [{
+            type: 'paragraph',
+            id: 'paragraph.bullet',
+            format: { alignment: 'right', lineSpacing: 2 },
+            content: [{ type: 'text', text: 'Nested formatting' }],
+          }],
+        }],
+      }, {
+        type: 'orderedList',
+        id: 'list.ordered',
+        style: 'lower-alpha',
+        content: [{
+          type: 'listItem',
+          id: 'item.ordered',
+          content: [{ type: 'paragraph', id: 'paragraph.ordered' }],
+        }],
       }],
     };
 

@@ -8,15 +8,14 @@ import {
   Heading1,
   Highlighter,
   Italic,
-  List,
-  ListOrdered,
   Palette,
   Redo2,
   Sigma,
   Strikethrough,
+  Underline,
   Undo2,
 } from 'lucide-react';
-import { type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
 import { NOTEBOOK_SEMANTIC_DEFINITIONS } from '../../../../lib/notebook';
 
@@ -27,6 +26,14 @@ import {
 import { useNotebookTransientLayer } from '../transient-ui';
 import type { NotebookPaletteMode } from './NotebookSelectionToolbar';
 import { NotebookFontSizeControl } from './NotebookFontSizeControl';
+import {
+  NotebookParagraphControls,
+} from './NotebookParagraphControls';
+import {
+  captureNotebookToolbarSelection,
+  restoreNotebookToolbarSelection,
+  type NotebookToolbarSelection,
+} from './notebookToolbarSelection';
 
 type NotebookParagraphStyle = 'normal' | 'heading-1' | 'heading-2' | 'heading-3' | 'mixed';
 
@@ -134,10 +141,11 @@ export function NotebookRichToolbar({
 }) {
   const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
   const paragraphStyleMenu = useNotebookTransientLayer({ id: 'notebook-paragraph-style-menu' });
+  const paragraphStyleSelectionRef = useRef<NotebookToolbarSelection | null>(null);
   const paragraphStyle = activeParagraphStyle(editor);
 
   function applyParagraphStyle(style: Exclude<NotebookParagraphStyle, 'mixed'>) {
-    const chain = editor.chain().focus();
+    const chain = restoreNotebookToolbarSelection(editor, paragraphStyleSelectionRef.current);
     if (style === 'normal') {
       chain.setParagraph().run();
     } else {
@@ -145,6 +153,13 @@ export function NotebookRichToolbar({
       chain.setHeading({ level }).run();
     }
     paragraphStyleMenu.close(false);
+  }
+
+  function toggleParagraphStyleMenu() {
+    if (!paragraphStyleMenu.isOpen) {
+      paragraphStyleSelectionRef.current = captureNotebookToolbarSelection(editor);
+    }
+    paragraphStyleMenu.toggle();
   }
 
   return (
@@ -166,6 +181,11 @@ export function NotebookRichToolbar({
           onClick={() => editor.chain().focus().toggleStrike().run()}
         ><Strikethrough size={16} /></ToolButton>
         <ToolButton
+          active={editor.isActive('underline')}
+          label="Underline"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+        ><Underline size={16} /></ToolButton>
+        <ToolButton
           disabled={!hasProseSelection}
           active={editor.isActive('highlight')}
           label="Highlight"
@@ -184,22 +204,7 @@ export function NotebookRichToolbar({
         />
       </RibbonGroup>
       <RibbonGroup label="Paragraph">
-        <div className="notebook-ribbon-split-control">
-          <ToolButton
-            active={editor.isActive('bulletList')}
-            label="Bullet list"
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-          ><List size={16} /></ToolButton>
-          <span aria-hidden="true"><ChevronDown size={12} /></span>
-        </div>
-        <div className="notebook-ribbon-split-control">
-          <ToolButton
-            active={editor.isActive('orderedList')}
-            label="Numbered list"
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          ><ListOrdered size={16} /></ToolButton>
-          <span aria-hidden="true"><ChevronDown size={12} /></span>
-        </div>
+        <NotebookParagraphControls editor={editor} />
       </RibbonGroup>
       <RibbonGroup label="Structure">
         <div className="notebook-paragraph-style">
@@ -212,7 +217,7 @@ export function NotebookRichToolbar({
             aria-expanded={paragraphStyleMenu.isOpen}
             title="Paragraph style"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={paragraphStyleMenu.toggle}
+            onClick={toggleParagraphStyleMenu}
           >
             <Heading1 aria-hidden="true" size={16} />
             <span>{PARAGRAPH_STYLE_LABELS[paragraphStyle]}</span>

@@ -3,15 +3,28 @@ import type { JSONContent } from '@tiptap/core';
 import type { NotebookWorkspaceTarget } from '../types';
 import { createNotebookNodeIdFactory } from './model';
 import type {
+  NotebookBulletStyle,
   NotebookEvidenceNode,
   NotebookInlineNode,
   NotebookListItemNode,
+  NotebookLineSpacing,
+  NotebookOrderedStyle,
+  NotebookParagraphFormat,
+  NotebookParagraphSpacePt,
   NotebookRichBlockNode,
   NotebookRichDocument,
   NotebookRichMark,
   NotebookSemanticKind,
+  NotebookTextAlignment,
 } from './types';
-import { isNotebookFontSize } from './types';
+import {
+  isNotebookFontSize,
+  NOTEBOOK_BULLET_STYLES,
+  NOTEBOOK_LINE_SPACINGS,
+  NOTEBOOK_ORDERED_STYLES,
+  NOTEBOOK_PARAGRAPH_SPACES_PT,
+  NOTEBOOK_TEXT_ALIGNMENTS,
+} from './types';
 
 const WORKSPACE_TARGETS = new Set<NotebookWorkspaceTarget>([
   'calculate',
@@ -61,6 +74,45 @@ function workspaceTargetAttr(node: JSONContent): NotebookWorkspaceTarget {
   return WORKSPACE_TARGETS.has(value) ? value : 'calculate';
 }
 
+function oneOf<T>(value: unknown, options: readonly T[]): T | undefined {
+  return options.find((option) => option === value);
+}
+
+function paragraphFormatAttrs(format: NotebookParagraphFormat | undefined) {
+  return {
+    notebookAlignment: format?.alignment ?? null,
+    notebookLineSpacing: format?.lineSpacing ?? null,
+    notebookSpaceBeforePt: format?.spaceBeforePt ?? null,
+    notebookSpaceAfterPt: format?.spaceAfterPt ?? null,
+  };
+}
+
+function paragraphFormatFromTiptap(node: JSONContent): NotebookParagraphFormat | undefined {
+  const alignment = oneOf<NotebookTextAlignment>(
+    node.attrs?.notebookAlignment,
+    NOTEBOOK_TEXT_ALIGNMENTS,
+  );
+  const lineSpacing = oneOf<NotebookLineSpacing>(
+    node.attrs?.notebookLineSpacing,
+    NOTEBOOK_LINE_SPACINGS,
+  );
+  const spaceBeforePt = oneOf<NotebookParagraphSpacePt>(
+    node.attrs?.notebookSpaceBeforePt,
+    NOTEBOOK_PARAGRAPH_SPACES_PT,
+  );
+  const spaceAfterPt = oneOf<NotebookParagraphSpacePt>(
+    node.attrs?.notebookSpaceAfterPt,
+    NOTEBOOK_PARAGRAPH_SPACES_PT,
+  );
+  const format = {
+    ...(alignment ? { alignment } : {}),
+    ...(lineSpacing ? { lineSpacing } : {}),
+    ...(spaceBeforePt !== undefined ? { spaceBeforePt } : {}),
+    ...(spaceAfterPt !== undefined ? { spaceAfterPt } : {}),
+  };
+  return Object.keys(format).length ? format : undefined;
+}
+
 function markToTiptap(mark: NotebookRichMark): {
   type: string;
   attrs?: Record<string, unknown>;
@@ -85,7 +137,7 @@ function markToTiptap(mark: NotebookRichMark): {
 }
 
 function markFromTiptap(mark: JSONContent): NotebookRichMark | null {
-  if (mark.type === 'bold' || mark.type === 'italic' || mark.type === 'strike') {
+  if (mark.type === 'bold' || mark.type === 'italic' || mark.type === 'strike' || mark.type === 'underline') {
     return { type: mark.type };
   }
   if (mark.type === 'highlight') {
@@ -130,14 +182,14 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
   if (node.type === 'paragraph') {
     return {
       type: 'paragraph',
-      attrs: { id: node.id },
+      attrs: { id: node.id, ...paragraphFormatAttrs(node.format) },
       ...(node.content?.length ? { content: node.content.map(inlineToTiptap) } : {}),
     };
   }
   if (node.type === 'heading') {
     return {
       type: 'heading',
-      attrs: { id: node.id, level: node.level },
+      attrs: { id: node.id, level: node.level, ...paragraphFormatAttrs(node.format) },
       ...(node.content?.length ? { content: node.content.map(inlineToTiptap) } : {}),
     };
   }
@@ -197,7 +249,10 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
   if (node.type === 'bulletList' || node.type === 'orderedList') {
     return {
       type: node.type,
-      attrs: { id: node.id },
+      attrs: {
+        id: node.id,
+        notebookListStyle: node.style ?? null,
+      },
       content: node.content.map((item) => ({
         type: 'listItem',
         attrs: { id: item.id },
@@ -205,7 +260,7 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
       })),
     };
   }
-  return { type: 'paragraph', attrs: { id: node.id } };
+  return node;
 }
 
 function inlineFromTiptap(node: JSONContent): NotebookInlineNode | null {
@@ -257,6 +312,7 @@ function blockFromTiptap(
     const content = node.content
       ?.map(inlineFromTiptap)
       .filter((item): item is NotebookInlineNode => Boolean(item));
+    const format = paragraphFormatFromTiptap(node);
     if (node.type === 'heading') {
       const rawLevel = node.attrs?.level;
       const level = rawLevel === 2 || rawLevel === 3 ? rawLevel : 1;
@@ -264,12 +320,14 @@ function blockFromTiptap(
         type: 'heading',
         id,
         level,
+        ...(format ? { format } : {}),
         ...(content?.length ? { content } : {}),
       };
     }
     return {
       type: 'paragraph',
       id,
+      ...(format ? { format } : {}),
       ...(content?.length ? { content } : {}),
     };
   }
@@ -332,16 +390,29 @@ function blockFromTiptap(
           .filter((child): child is NotebookRichBlockNode => Boolean(child))
           ?? [{ type: 'paragraph', id: nextId('paragraph') }],
       })) ?? [];
+    const rawStyle = node.attrs?.notebookListStyle;
+    const content = items.length > 0
+      ? items
+      : [{
+          type: 'listItem' as const,
+          id: nextId('listItem'),
+          content: [{ type: 'paragraph' as const, id: nextId('paragraph') }],
+        }];
+    if (node.type === 'bulletList') {
+      const style = oneOf<NotebookBulletStyle>(rawStyle, NOTEBOOK_BULLET_STYLES);
+      return {
+        type: 'bulletList',
+        id,
+        ...(style ? { style } : {}),
+        content,
+      };
+    }
+    const style = oneOf<NotebookOrderedStyle>(rawStyle, NOTEBOOK_ORDERED_STYLES);
     return {
-      type: node.type,
+      type: 'orderedList',
       id,
-      content: items.length > 0
-        ? items
-        : [{
-            type: 'listItem',
-            id: nextId('listItem'),
-            content: [{ type: 'paragraph', id: nextId('paragraph') }],
-          }],
+      ...(style ? { style } : {}),
+      content,
     };
   }
   if (node.type === 'semanticBlock') {

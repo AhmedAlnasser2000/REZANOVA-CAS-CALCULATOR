@@ -9,6 +9,7 @@ import { ReactNodeViewRenderer } from '@tiptap/react';
 import { type NotebookWorkspaceTarget } from '../../../../lib/notebook';
 import { NotebookEvidenceNodeView } from './NotebookEvidenceNodeView';
 import { NotebookFontSize } from './NotebookFontSizeExtension';
+import { NotebookParagraphFormatting } from './NotebookParagraphFormattingExtension';
 import {
   createNotebookMathNodeView,
   type NotebookOpenMathHandler,
@@ -255,6 +256,7 @@ export function createNotebookExtensions(
     Highlight.configure({ multicolor: true }),
     TextStyle,
     NotebookFontSize,
+    NotebookParagraphFormatting,
     Color,
     NotebookNodeIds,
     InlineMath.extend({

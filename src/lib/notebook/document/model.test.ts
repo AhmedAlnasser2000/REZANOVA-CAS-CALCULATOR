@@ -4,6 +4,7 @@ import {
   countNotebookBlocks,
   createNotebookRichDocument,
   isNotebookRichDocument,
+  isNotebookRichDocumentV4,
   summarizeNotebookDocument,
 } from './model';
 import {
@@ -15,7 +16,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 4 document with an empty starter paragraph', () => {
+  it('creates an app-owned version 5 document with an empty starter paragraph', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -30,16 +31,23 @@ describe('Notebook rich document model', () => {
     expect(isNotebookRichDocument(JSON.parse(JSON.stringify(document)))).toBe(true);
   });
 
-  it('validates prose strike and exact Word-like font-size marks', () => {
+  it('validates underline, paragraph formatting, and exact Word-like font-size marks', () => {
     const document = createNotebookRichDocument({ now: fixedNow });
     document.content = [{
       type: 'paragraph',
       id: 'paragraph.typography',
+      format: {
+        alignment: 'justify',
+        lineSpacing: 1.5,
+        spaceBeforePt: 6,
+        spaceAfterPt: 12,
+      },
       content: [{
         type: 'text',
         text: 'Retain this authored correction.',
         marks: [
           { type: 'strike' },
+          { type: 'underline' },
           { type: 'textStyle', color: '#9dcdf0', fontSize: 149 },
         ],
       }],
@@ -49,13 +57,64 @@ describe('Notebook rich document model', () => {
 
     const tooSmall = structuredClone(document);
     (tooSmall.content[0] as { content: Array<{ marks: Array<{ fontSize?: number }> }> })
-      .content[0].marks[1].fontSize = NOTEBOOK_FONT_SIZE_MIN - 1;
+      .content[0].marks[2].fontSize = NOTEBOOK_FONT_SIZE_MIN - 1;
     expect(isNotebookRichDocument(tooSmall)).toBe(false);
 
     const tooLarge = structuredClone(document);
     (tooLarge.content[0] as { content: Array<{ marks: Array<{ fontSize?: number }> }> })
-      .content[0].marks[1].fontSize = NOTEBOOK_FONT_SIZE_MAX + 1;
+      .content[0].marks[2].fontSize = NOTEBOOK_FONT_SIZE_MAX + 1;
     expect(isNotebookRichDocument(tooLarge)).toBe(false);
+
+    const invalidAlignment = structuredClone(document) as {
+      content: Array<{ format: { alignment: string } }>;
+    };
+    invalidAlignment.content[0]!.format.alignment = 'distributed';
+    expect(isNotebookRichDocument(invalidAlignment)).toBe(false);
+
+    const invalidLineSpacing = structuredClone(document) as {
+      content: Array<{ format: { lineSpacing: number } }>;
+    };
+    invalidLineSpacing.content[0]!.format.lineSpacing = 1.2;
+    expect(isNotebookRichDocument(invalidLineSpacing)).toBe(false);
+
+    const invalidParagraphSpace = structuredClone(document) as {
+      content: Array<{ format: { spaceAfterPt: number } }>;
+    };
+    invalidParagraphSpace.content[0]!.format.spaceAfterPt = 10;
+    expect(isNotebookRichDocument(invalidParagraphSpace)).toBe(false);
+
+    const version4 = { ...structuredClone(document), version: 4 as const };
+    expect(isNotebookRichDocumentV4(version4)).toBe(false);
+  });
+
+  it('accepts only list styles belonging to the selected list kind', () => {
+    const document = createNotebookRichDocument({ now: fixedNow });
+    document.content = [{
+      type: 'bulletList',
+      id: 'list.bullets',
+      style: 'dash',
+      content: [{
+        type: 'listItem',
+        id: 'item.1',
+        content: [{ type: 'paragraph', id: 'paragraph.1' }],
+      }],
+    }, {
+      type: 'orderedList',
+      id: 'list.ordered',
+      style: 'lower-roman',
+      content: [{
+        type: 'listItem',
+        id: 'item.2',
+        content: [{ type: 'paragraph', id: 'paragraph.2' }],
+      }],
+    }];
+
+    expect(isNotebookRichDocument(document)).toBe(true);
+    const invalid = structuredClone(document) as {
+      content: Array<{ style?: string }>;
+    };
+    invalid.content[0]!.style = 'decimal';
+    expect(isNotebookRichDocument(invalid)).toBe(false);
   });
 
   it('counts nested sections, semantic blocks, and list content for summaries', () => {

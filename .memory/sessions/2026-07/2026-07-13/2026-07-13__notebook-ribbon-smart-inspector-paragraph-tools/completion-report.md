@@ -26,8 +26,8 @@
 | --- | --- | --- |
 | `NOTEBOOK-RIBBON-ARCHITECTURE1` | ui | verified; committed in this checkpoint |
 | `NOTEBOOK-SMART-INSPECTOR1` | ui | verified; committed in this checkpoint |
-| `NOTEBOOK-RIBBON-RAIL-FIXES1` | ui | verified; ready for selective commit |
-| `NOTEBOOK-PARAGRAPH-TOOLS1` | ui | pending |
+| `NOTEBOOK-RIBBON-RAIL-FIXES1` | ui | verified; committed as `1b96f1d1` |
+| `NOTEBOOK-PARAGRAPH-TOOLS1` | ui | verified; ready for selective commit |
 
 ## NOTEBOOK-SMART-INSPECTOR1 Outcome
 
@@ -43,4 +43,11 @@
 - Outline collapse/removal never mutates Inspector state. Outline restores only on the left and Inspector only on the right; closing both releases both rail widths.
 - The three heading buttons are now one selection-preserving paragraph-style menu for Normal and Heading 1 through Heading 3, including a neutral Mixed label for heterogeneous selections.
 - Heading semantics and Outline depth remain unchanged; Sections and Academic Containers remain separate structural controls.
-- The Notebook-facing result-projection pause remains unchanged. `NOTEBOOK-PARAGRAPH-TOOLS1` remains the next program gate.
+- The Notebook-facing result-projection pause remains unchanged.
+
+## NOTEBOOK-PARAGRAPH-TOOLS1 Outcome
+
+- Advanced the app-owned rich-document contract to version 5 with strict underline, paragraph/heading format, and typed bullet/ordered-list style validation plus lossless version-4 migration.
+- Added selection-preserving Underline, four alignment controls, line/paragraph-spacing presets with reset, and real Bullet/Number split menus. Formatting applies only to eligible paragraph and heading nodes, including nested prose, while container shells, math, evidence, and dividers remain untouched.
+- Prose ranges survive toolbar menus, Escape, undo/redo, and Notebook tab switching. Styled-list conversion preserves nesting behavior and leaves an outside trailing paragraph instead of absorbing it into the list.
+- Media/image nodes and final white-document visual convergence remain deferred to a separate post-completion arc. The Notebook-facing result-projection pause remains unchanged.

@@ -1,6 +1,6 @@
 import type { Editor } from '@tiptap/core';
 import type { MathfieldElement } from 'mathlive';
-import { TextSelection } from '@tiptap/pm/state';
+import { AllSelection, TextSelection } from '@tiptap/pm/state';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Check, Sparkles } from 'lucide-react';
 import {
@@ -44,6 +44,8 @@ type NotebookRichCanvasProps = {
   onChange: (document: NotebookRichDocument) => void;
   onEditorChange: (editor: Editor | null) => void;
   onOpenMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
+  initialProseSelection: NotebookProseSelection | null;
+  onProseSelectionChange: (selection: NotebookProseSelection | null) => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
 };
 
@@ -66,7 +68,7 @@ function selectedParagraphSuggestion(editor: Editor | null) {
 
 function selectedProseRange(editor: Editor): NotebookProseSelection | null {
   const { selection } = editor.state;
-  if (!(selection instanceof TextSelection) || selection.empty) {
+  if (!(selection instanceof TextSelection || selection instanceof AllSelection) || selection.empty) {
     return null;
   }
   let containsText = false;
@@ -83,12 +85,16 @@ export function NotebookRichCanvas({
   onChange,
   onEditorChange,
   onOpenMathInTool,
+  initialProseSelection,
+  onProseSelectionChange,
   onSelectionChange,
 }: NotebookRichCanvasProps) {
   const documentRef = useRef(document);
   const loadedDocumentIdRef = useRef(document.id);
   const changeRef = useRef(onChange);
+  const proseSelectionChangeRef = useRef(onProseSelectionChange);
   const selectionRef = useRef(onSelectionChange);
+  const restoredProseSelectionRef = useRef(false);
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
   const { activate: activateMathField } = useNotebookMathFieldController();
   const [revision, setRevision] = useState(0);
@@ -120,12 +126,16 @@ export function NotebookRichCanvas({
       documentRef.current = nextDocument;
       changeRef.current(nextDocument);
       selectionRef.current(selection);
-      setProseSelection(selectedProseRange(currentEditor));
+      const nextProseSelection = selectedProseRange(currentEditor);
+      setProseSelection(nextProseSelection);
+      proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
     },
     onSelectionUpdate: ({ editor: currentEditor }) => {
       selectionRef.current(notebookEditorSelection(currentEditor));
-      setProseSelection(selectedProseRange(currentEditor));
+      const nextProseSelection = selectedProseRange(currentEditor);
+      setProseSelection(nextProseSelection);
+      proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
     },
   });
@@ -133,8 +143,9 @@ export function NotebookRichCanvas({
   useEffect(() => {
     documentRef.current = document;
     changeRef.current = onChange;
+    proseSelectionChangeRef.current = onProseSelectionChange;
     selectionRef.current = onSelectionChange;
-  }, [document, onChange, onOpenMathInTool, onSelectionChange]);
+  }, [document, onChange, onOpenMathInTool, onProseSelectionChange, onSelectionChange]);
 
   useEffect(() => {
     onEditorChange(editor);
@@ -166,6 +177,29 @@ export function NotebookRichCanvas({
     loadedDocumentIdRef.current = document.id;
     editor.commands.setContent(notebookDocumentToTiptap(document), { emitUpdate: false });
   }, [document, editor]);
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || restoredProseSelectionRef.current) {
+      return;
+    }
+    restoredProseSelectionRef.current = true;
+    if (
+      !initialProseSelection
+      || initialProseSelection.from >= initialProseSelection.to
+      || initialProseSelection.from < 0
+      || initialProseSelection.to > editor.state.doc.content.size
+    ) {
+      return;
+    }
+    if (
+      initialProseSelection.from === 0
+      && initialProseSelection.to === editor.state.doc.content.size
+    ) {
+      editor.commands.selectAll();
+    } else {
+      editor.commands.setTextSelection(initialProseSelection);
+    }
+  }, [editor, initialProseSelection]);
 
   useEffect(() => {
     if (!pendingMathFocusId) {

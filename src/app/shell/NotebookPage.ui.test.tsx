@@ -7,6 +7,7 @@ import { MathNotationProvider } from '../../components/MathNotationContext';
 import {
   createNotebookPerformanceFixture,
   createNotebookRichSurfaceState,
+  type NotebookRichSurfaceState,
   type NotebookSurfaceState,
   type NotebookWorkspaceTarget,
 } from '../../lib/notebook';
@@ -35,9 +36,11 @@ beforeAll(() => {
 function NotebookHarness({
   initialState,
   onOpenMathInTool = vi.fn(),
+  onSurfaceState = vi.fn(),
 }: {
   initialState?: NotebookSurfaceState;
   onOpenMathInTool?: (target: NotebookWorkspaceTarget, latex: string) => void;
+  onSurfaceState?: (state: NotebookSurfaceState) => void;
 }) {
   const [surfaceState, setSurfaceState] = useState<NotebookSurfaceState>(() =>
     initialState ?? createNotebookRichSurfaceState({
@@ -52,7 +55,10 @@ function NotebookHarness({
         instanceId="notebook.1"
         surfaceState={surfaceState}
         onOpenMathInTool={onOpenMathInTool}
-        onUpdateSurfaceState={(_, nextState) => setSurfaceState(nextState)}
+        onUpdateSurfaceState={(_, nextState) => {
+          setSurfaceState(nextState);
+          onSurfaceState(nextState);
+        }}
       />
     </MathNotationProvider>
   );
@@ -233,6 +239,103 @@ describe('NotebookPage', () => {
 
     await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
     await waitFor(() => expect(canvas.querySelector('strong')).toBeNull());
+  });
+
+  it('persists underline, alignment, and line/paragraph spacing with undo and reset', async () => {
+    const user = userEvent.setup();
+    const onSurfaceState = vi.fn();
+    render(<NotebookHarness onSurfaceState={onSurfaceState} />);
+    const canvas = await screen.findByLabelText('Notebook rich document');
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+
+    await user.click(canvas);
+    await user.type(canvas, 'Alpha{Enter}Beta');
+    await user.keyboard('{Control>}a{/Control}');
+    await user.keyboard('{Control>}u{/Control}');
+    expect(within(toolbar).getByRole('button', { name: 'Underline' }))
+      .toHaveAttribute('aria-pressed', 'true');
+    await user.click(within(toolbar).getByRole('button', { name: 'Justify' }));
+    await user.click(within(toolbar).getByRole('button', { name: /Line and paragraph spacing/ }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Line spacing 2' }));
+    await user.click(within(toolbar).getByRole('button', { name: /Line and paragraph spacing/ }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Before 12 pt' }));
+
+    expect(canvas.querySelectorAll('u')).toHaveLength(2);
+    expect(canvas.querySelectorAll("p[data-notebook-alignment='justify']")).toHaveLength(2);
+    expect(canvas.querySelectorAll("p[data-notebook-line-spacing='2']")).toHaveLength(2);
+    expect(canvas.querySelectorAll("p[data-notebook-space-before-pt='12']")).toHaveLength(2);
+    const latest = onSurfaceState.mock.lastCall?.[0] as NotebookRichSurfaceState;
+    expect(latest.document.content).toEqual([
+      expect.objectContaining({
+        type: 'paragraph',
+        format: expect.objectContaining({
+          alignment: 'justify',
+          lineSpacing: 2,
+          spaceBeforePt: 12,
+        }),
+      }),
+      expect.objectContaining({
+        type: 'paragraph',
+        format: expect.objectContaining({
+          alignment: 'justify',
+          lineSpacing: 2,
+          spaceBeforePt: 12,
+        }),
+      }),
+    ]);
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    expect(canvas.querySelector("p[data-notebook-space-before-pt='12']")).toBeNull();
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    expect(canvas.querySelectorAll("p[data-notebook-space-before-pt='12']")).toHaveLength(2);
+    await user.click(within(toolbar).getByRole('button', { name: /Line and paragraph spacing/ }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Default spacing' }));
+    expect(canvas.querySelector('[data-notebook-line-spacing]')).toBeNull();
+    expect(canvas.querySelector('[data-notebook-space-before-pt]')).toBeNull();
+    expect(canvas.querySelectorAll("p[data-notebook-alignment='justify']")).toHaveLength(2);
+  });
+
+  it('creates and converts visibly styled lists while preserving serialized list style', async () => {
+    const user = userEvent.setup();
+    const onSurfaceState = vi.fn();
+    render(<NotebookHarness onSurfaceState={onSurfaceState} />);
+    const canvas = await screen.findByLabelText('Notebook rich document');
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+
+    await user.click(canvas);
+    await user.type(canvas, 'First{Enter}Second');
+    await user.keyboard('{Control>}a{/Control}');
+    await user.click(within(toolbar).getByRole('button', { name: 'Bullet styles' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Dash bullets' }));
+    expect(canvas.querySelector("ul[data-notebook-list-style='dash']")).not.toBeNull();
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Numbering styles' }));
+    await user.click(screen.getByRole('menuitemradio', { name: 'Lower-alpha numbering' }));
+    expect(canvas.querySelector("ol[data-notebook-list-style='lower-alpha']")).not.toBeNull();
+    const latest = onSurfaceState.mock.lastCall?.[0] as NotebookRichSurfaceState;
+    expect(latest.document.content[0]).toMatchObject({
+      type: 'orderedList',
+      style: 'lower-alpha',
+      content: [expect.any(Object), expect.any(Object)],
+    });
+  });
+
+  it('formats eligible prose nested inside sections and academic containers, not their shells', async () => {
+    const user = userEvent.setup();
+    render(<NotebookHarness />);
+    await user.click(await screen.findByRole('button', { name: 'Start from template' }));
+    await user.click(screen.getByRole('button', { name: /Theorem Sheet/ }));
+    const canvas = screen.getByLabelText('Notebook rich document');
+    await user.click(canvas);
+    await user.keyboard('{Control>}a{/Control}');
+    await user.click(within(screen.getByLabelText('Notebook formatting toolbar'))
+      .getByRole('button', { name: 'Align center' }));
+
+    expect(canvas.querySelectorAll('p, h1, h2, h3').length).toBeGreaterThan(1);
+    expect(canvas.querySelectorAll("p[data-notebook-alignment='center'], h1[data-notebook-alignment='center'], h2[data-notebook-alignment='center'], h3[data-notebook-alignment='center']"))
+      .toHaveLength(canvas.querySelectorAll('p, h1, h2, h3').length);
+    expect(canvas.querySelector('[data-notebook-semantic][data-notebook-alignment]')).toBeNull();
+    expect(canvas.querySelector('[data-notebook-section][data-notebook-alignment]')).toBeNull();
   });
 
   it('organizes authoring controls into the visible Notebook ribbon', async () => {

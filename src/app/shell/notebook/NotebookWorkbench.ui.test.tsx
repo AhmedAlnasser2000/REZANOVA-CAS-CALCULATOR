@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -42,6 +42,32 @@ function NotebookWorkbenchHarness({ instanceId }: { instanceId: string }) {
         onOpenMathInTool={vi.fn()}
         onUpdateSurfaceState={(_, nextState) => setSurfaceState(nextState)}
       />
+    </MathNotationProvider>
+  );
+}
+
+function NotebookTabSwitchHarness({ instanceId }: { instanceId: string }) {
+  const [surfaceState, setSurfaceState] = useState<NotebookSurfaceState>(() =>
+    createNotebookRichSurfaceState({
+      idPrefix: instanceId,
+      now: () => new Date('2026-07-14T03:00:00.000Z'),
+      title: 'Selection Notebook',
+    }));
+  const [active, setActive] = useState(true);
+
+  return (
+    <MathNotationProvider notationMode="latex">
+      <button type="button" onClick={() => setActive((current) => !current)}>
+        {active ? 'Switch workspace tab' : 'Return to Notebook tab'}
+      </button>
+      {active ? (
+        <NotebookPage
+          instanceId={instanceId}
+          surfaceState={surfaceState}
+          onOpenMathInTool={vi.fn()}
+          onUpdateSurfaceState={(_, nextState) => setSurfaceState(nextState)}
+        />
+      ) : <div>Another workspace</div>}
     </MathNotationProvider>
   );
 }
@@ -111,5 +137,25 @@ describe('Notebook workbench', () => {
     await screen.findByLabelText('Notebook rich document');
     expect(screen.getByRole('separator', { name: 'Resize Notebook outline' }))
       .toHaveAttribute('aria-valuenow', '320');
+  });
+
+  it('restores a prose range after switching away from and back to one Notebook tab', async () => {
+    const user = userEvent.setup();
+    render(<NotebookTabSwitchHarness instanceId="workbench-selection-tab" />);
+    let canvas = await screen.findByLabelText('Notebook rich document');
+    await user.click(canvas);
+    await user.type(canvas, 'Alpha{Enter}Beta');
+    await user.keyboard('{Control>}a{/Control}');
+    expect(await screen.findByTestId('notebook-selection-toolbar')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Switch workspace tab' }));
+    expect(screen.getByText('Another workspace')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Return to Notebook tab' }));
+    canvas = await screen.findByLabelText('Notebook rich document');
+    expect(await screen.findByTestId('notebook-selection-toolbar')).toBeInTheDocument();
+
+    await user.click(within(screen.getByLabelText('Notebook formatting toolbar'))
+      .getByRole('button', { name: 'Align right' }));
+    expect(canvas.querySelectorAll("p[data-notebook-alignment='right']")).toHaveLength(2);
   });
 });

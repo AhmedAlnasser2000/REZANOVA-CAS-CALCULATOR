@@ -6,6 +6,7 @@ import {
   Palette,
   RotateCcw,
   Strikethrough,
+  Underline,
 } from 'lucide-react';
 import {
   useEffect,
@@ -94,6 +95,9 @@ function selectionPosition(editor: Editor, toolbarWidth = 264): CSSProperties {
 }
 
 function restoreSelection(editor: Editor, selection: NotebookProseSelection) {
+  if (selection.from === 0 && selection.to === editor.state.doc.content.size) {
+    return editor.chain().focus().selectAll();
+  }
   return editor.chain().focus().setTextSelection(selection);
 }
 
@@ -172,14 +176,16 @@ export function NotebookSelectionToolbar({
   }
   const currentSelection = selection;
 
-  function applyMark(mark: 'bold' | 'italic' | 'strike') {
+  function applyMark(mark: 'bold' | 'italic' | 'strike' | 'underline') {
     const chain = restoreSelection(editor, currentSelection);
     if (mark === 'bold') {
       chain.toggleBold().run();
     } else if (mark === 'italic') {
       chain.toggleItalic().run();
-    } else {
+    } else if (mark === 'strike') {
       chain.toggleStrike().run();
+    } else {
+      chain.toggleUnderline().run();
     }
   }
 
@@ -241,6 +247,9 @@ export function NotebookSelectionToolbar({
       </button>
       <button type="button" aria-label="Strikethrough selection" aria-pressed={editor.isActive('strike')} onClick={() => applyMark('strike')}>
         <Strikethrough aria-hidden="true" size={15} />
+      </button>
+      <button type="button" aria-label="Underline selection" aria-pressed={editor.isActive('underline')} onClick={() => applyMark('underline')}>
+        <Underline aria-hidden="true" size={15} />
       </button>
       <button
         data-notebook-transient-trigger={paletteLayer.id}
