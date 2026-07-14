@@ -21,7 +21,11 @@ import {
 } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
 
-import { NOTEBOOK_SEMANTIC_DEFINITIONS } from '../../../../lib/notebook';
+import {
+  NOTEBOOK_SEMANTIC_DEFINITIONS,
+  type NotebookHeaderFooterSettings,
+  type NotebookPageSetup,
+} from '../../../../lib/notebook';
 
 import {
   insertNotebookSemanticBlock,
@@ -41,6 +45,10 @@ import {
   type NotebookToolbarSelection,
 } from './notebookToolbarSelection';
 import type { NotebookRibbonTab } from './ribbon-types';
+import {
+  NotebookLayoutControls,
+  type NotebookViewMode,
+} from './NotebookLayoutControls';
 
 type NotebookParagraphStyle = 'normal' | 'heading-1' | 'heading-2' | 'heading-3' | 'mixed';
 
@@ -151,6 +159,13 @@ export function NotebookRichToolbar({
   onInsertInlineMath,
   onInsertImage,
   onEditImageDetails,
+  headerFooter,
+  pageSetup,
+  viewMode,
+  onChangeHeaderFooter,
+  onChangePageSetup,
+  onInsertPageBreak,
+  onViewModeChange,
   onRequestPalette,
 }: {
   activeTab: NotebookRibbonTab;
@@ -163,6 +178,13 @@ export function NotebookRichToolbar({
   onInsertInlineMath: () => void;
   onInsertImage: () => void;
   onEditImageDetails: () => void;
+  headerFooter: NotebookHeaderFooterSettings;
+  pageSetup: NotebookPageSetup;
+  viewMode: NotebookViewMode;
+  onChangeHeaderFooter: (next: NotebookHeaderFooterSettings) => void;
+  onChangePageSetup: (next: NotebookPageSetup) => void;
+  onInsertPageBreak: () => void;
+  onViewModeChange: (mode: NotebookViewMode) => void;
   onRequestPalette: (mode: NotebookPaletteMode) => void;
 }) {
   const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
@@ -196,7 +218,9 @@ export function NotebookRichToolbar({
 
   const tabLabel = activeTab === 'picture-format'
     ? 'Picture Format'
-    : activeTab === 'video-format' ? 'Video Format' : activeTab === 'insert' ? 'Insert' : 'Home';
+    : activeTab === 'video-format'
+      ? 'Video Format'
+      : activeTab === 'insert' ? 'Insert' : activeTab === 'layout' ? 'Layout' : 'Home';
 
   return (
     <div className="notebook-rich-ribbon">
@@ -221,6 +245,15 @@ export function NotebookRichToolbar({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => selectRibbonTab('insert')}
           >Insert</button>
+          <button
+            id="notebook-ribbon-tab-layout"
+            type="button"
+            role="tab"
+            aria-controls="notebook-ribbon-panel"
+            aria-selected={activeTab === 'layout'}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => selectRibbonTab('layout')}
+          >Layout</button>
           {contextualTab === 'picture-format' ? (
             <button
               id="notebook-ribbon-tab-picture-format"
@@ -421,6 +454,22 @@ export function NotebookRichToolbar({
             </ToolButton>
           </RibbonGroup>
         </> : null}
+        {activeTab === 'layout' ? (
+          <>
+            <RibbonGroup label="Page setup" className="is-page-setup">
+              <NotebookLayoutControls
+                editor={editor}
+                headerFooter={headerFooter}
+                pageSetup={pageSetup}
+                viewMode={viewMode}
+                onChangeHeaderFooter={onChangeHeaderFooter}
+                onChangePageSetup={onChangePageSetup}
+                onInsertPageBreak={onInsertPageBreak}
+                onViewModeChange={onViewModeChange}
+              />
+            </RibbonGroup>
+          </>
+        ) : null}
         {activeTab === 'picture-format' ? (
           <>
             <RibbonGroup label="Accessibility">

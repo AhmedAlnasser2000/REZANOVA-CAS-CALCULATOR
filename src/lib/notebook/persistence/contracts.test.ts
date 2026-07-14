@@ -26,7 +26,7 @@ describe('Notebook durable persistence contracts', () => {
       savedAt: '2026-07-14T00:01:00.000Z',
     });
     expect(record.version).toBe(1);
-    expect(record.document.version).toBe(7);
+    expect(record.document.version).toBe(8);
     expect(record.libraryId).not.toBe(record.document.id);
     expect(isNotebookStoredRecordV1(record)).toBe(true);
     expect(summarizeNotebookStoredRecordV1(record)).toMatchObject({
@@ -99,7 +99,7 @@ describe('Notebook durable persistence contracts', () => {
     expect(isNotebookVersionSnapshotV1({ ...snapshot, libraryId: '../escape' })).toBe(false);
   });
 
-  it('migrates V6 records and snapshots losslessly into the V7 envelope', () => {
+  it('migrates V6 and V7 records and snapshots losslessly into the V8 envelope', () => {
     const current = createNotebookStoredRecordV1(createNotebookRichDocument({
       now: () => new Date('2026-07-14T00:00:00.000Z'),
       title: 'Legacy document',
@@ -109,9 +109,12 @@ describe('Notebook durable persistence contracts', () => {
       savedAt: '2026-07-14T00:01:00.000Z',
     });
     const legacy = JSON.parse(JSON.stringify(current)) as Record<string, unknown>;
-    (legacy.document as Record<string, unknown>).version = 6;
+    const legacyDocument = legacy.document as Record<string, unknown>;
+    legacyDocument.version = 6;
+    delete legacyDocument.pageSetup;
+    delete legacyDocument.headerFooter;
     const migrated = migrateNotebookStoredRecordV1(legacy);
-    expect(migrated?.document.version).toBe(7);
+    expect(migrated?.document.version).toBe(8);
     expect(migrated?.document.content).toEqual(
       (legacy.document as { content: unknown }).content,
     );
@@ -126,9 +129,17 @@ describe('Notebook durable persistence contracts', () => {
       record: legacy,
     };
     const migratedSnapshot = migrateNotebookVersionSnapshotV1(legacySnapshot);
-    expect(migratedSnapshot?.record.document.version).toBe(7);
+    expect(migratedSnapshot?.record.document.version).toBe(8);
     expect(migratedSnapshot?.record.document.content).toEqual(
       (legacy.document as { content: unknown }).content,
+    );
+
+    const version7 = structuredClone(legacy);
+    (version7.document as Record<string, unknown>).version = 7;
+    const migratedV7 = migrateNotebookStoredRecordV1(version7);
+    expect(migratedV7?.document.version).toBe(8);
+    expect(migratedV7?.document.content).toEqual(
+      (version7.document as { content: unknown }).content,
     );
   });
 });

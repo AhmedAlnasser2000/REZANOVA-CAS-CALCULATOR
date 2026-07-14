@@ -74,3 +74,15 @@
 - correction evidence: Chromium exposed unsupported `createImageBitmap` SVG decoding and a missing selected-node outline. Safe SVG decoding now uses the browser image decoder, with a unit regression, and forced-colors selection uses an explicit system outline.
 - static evidence: Notebook-scoped ESLint, file-size validation, exact-patch production build, and diff hygiene pass. The exact staged Notebook patch builds in an isolated clean worktree at `8dd5ca29`; shared-checkout incremental TypeScript/build remains blocked only by concurrent Canonical Result V2 edits outside this gate.
 - resource evidence: no full unit, UI, or canary suite ran. Gate-owned Vite and Playwright processes stopped, the temporary clean worktree was removed, and untracked `test-results/` remains excluded.
+
+## NOTEBOOK-PAGE-LAYOUT1
+
+- gate: ui
+- status: verified
+- model evidence: 22 focused Notebook files and 115 tests pass for strict V8 validation, continuous migration, adapter round trips, all paper/orientation/preset-margin combinations, pagination rules, explicit page breaks, and oversized-object fitting.
+- UI evidence: the focused Notebook page suite passes 27 cases for one-editor selection and undo, document-owned settings, page breaks, Print/Draft state, and existing authoring behavior.
+- Rust evidence: all 9 focused Notebook storage tests pass for V8 validation, V6/V7 migration defaults, current-version persistence, and top-level-only page breaks.
+- Chromium evidence: dedicated page-layout and adjacent ribbon/image scenarios pass at 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors. V8 IndexedDB state, page geometry, headers/footers/numbering, popover containment, Math Authoring exclusion, and Draft/Print switching are covered.
+- correction evidence: the first pagination implementation mutated ProseMirror-owned node DOM and caused node remounts; the final renderer uses a scoped external offset stylesheet. The final Layout visual correction gives controls deliberate spacing and dark high-contrast select values; its dedicated two-case Chromium gate passes and the 1100px dark plus 130% forced-colors screenshots were inspected.
+- static evidence: Notebook-scoped ESLint, file-size validation, exact-patch production build, and diff hygiene pass. Shared-checkout incremental TypeScript is blocked only by concurrent Canonical Result V2 files outside this gate; `npm run build` passes from clean `12a91729` with exactly the staged Notebook patch and only the existing chunking warnings.
+- resource evidence: no full unit, UI, or canary suite ran. The temporary clean worktree was removed; untracked `test-results/` and unrelated solver/result-contract work remain excluded.

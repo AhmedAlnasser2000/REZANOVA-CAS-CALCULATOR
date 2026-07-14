@@ -12,16 +12,16 @@ import {
 const NOW = () => new Date('2026-07-12T00:00:00.000Z');
 
 describe('Notebook rich surface state', () => {
-  it('creates an empty version-7 session document', () => {
+  it('creates an empty version-8 session document', () => {
     const state = createNotebookRichSurfaceState({ idPrefix: 'page', now: NOW });
     expect(state.kind).toBe('notebook-surface-state');
-    expect(state.document.version).toBe(7);
+    expect(state.document.version).toBe(8);
     expect(state.document.content).toEqual([
       expect.objectContaining({ type: 'paragraph' }),
     ]);
   });
 
-  it('keeps version-7 state and migrates version-1 state losslessly', () => {
+  it('keeps version-8 state and migrates version-1 state losslessly', () => {
     const rich = createNotebookRichDocument({ idPrefix: 'rich', now: NOW });
     expect(notebookRichSurfaceStateFromSlot({
       kind: 'notebook-surface-state',
@@ -30,7 +30,7 @@ describe('Notebook rich surface state', () => {
 
     const legacy = createNotebookSurfaceState({ idPrefix: 'legacy', now: NOW });
     const migrated = notebookRichSurfaceStateFromSlot(legacy);
-    expect(migrated.document.version).toBe(7);
+    expect(migrated.document.version).toBe(8);
     expect(migrated.document.id).toBe(legacy.document.id);
     expect(migrated.document.content.length).toBe(legacy.document.blocks.length);
   });
@@ -43,7 +43,7 @@ describe('Notebook rich surface state', () => {
       document: version2,
     });
 
-    expect(migrated.document.version).toBe(7);
+    expect(migrated.document.version).toBe(8);
     expect(migrated.document.content).toEqual(version2.content);
   });
 
@@ -55,11 +55,11 @@ describe('Notebook rich surface state', () => {
       document: version3,
     });
 
-    expect(migrated.document.version).toBe(7);
+    expect(migrated.document.version).toBe(8);
     expect(migrated.document.content).toEqual(version3.content);
   });
 
-  it('migrates version-4 documents continuously to version 7', () => {
+  it('migrates version-4 documents continuously to version 8', () => {
     const current = createNotebookRichDocument({ idPrefix: 'v4', now: NOW });
     const version4 = { ...current, version: 4 as const };
     const migrated = notebookRichSurfaceStateFromSlot({
@@ -67,7 +67,7 @@ describe('Notebook rich surface state', () => {
       document: version4,
     });
 
-    expect(migrated.document).toEqual({ ...version4, version: 7 });
+    expect(migrated.document).toEqual({ ...version4, version: 8 });
   });
 
   it('migrates version-5 documents through the structured-block normalizer', () => {
@@ -78,7 +78,7 @@ describe('Notebook rich surface state', () => {
       document: version5,
     });
 
-    expect(migrated.document).toEqual({ ...version5, version: 7 });
+    expect(migrated.document).toEqual({ ...version5, version: 8 });
   });
 
   it('keeps only durable identity metadata in a hydrated workspace tab', () => {

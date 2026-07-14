@@ -194,6 +194,45 @@ describe('Notebook Tiptap adapter', () => {
     expect(isNotebookRichDocument(restored)).toBe(true);
   });
 
+  it('round-trips explicit page breaks without serializing derived pages', () => {
+    const base = createNotebookRichDocument({ idPrefix: 'pages', now: NOW });
+    const document: NotebookRichDocument = {
+      ...base,
+      pageSetup: {
+        paperSize: 'letter',
+        orientation: 'landscape',
+        marginsPt: { top: 36, right: 54, bottom: 36, left: 54 },
+      },
+      headerFooter: {
+        headerText: 'Limits',
+        footerText: 'Chapter 2',
+        differentFirstPage: true,
+        pageNumbering: { enabled: true, position: 'right', startAt: 5 },
+      },
+      content: [
+        { type: 'paragraph', id: 'paragraph.before' },
+        { type: 'pageBreak', id: 'break.1' },
+        { type: 'paragraph', id: 'paragraph.after' },
+      ],
+    };
+
+    const editorJson = notebookDocumentToTiptap(document);
+    expect(editorJson.attrs).toEqual({
+      notebookPageSetup: document.pageSetup,
+      notebookHeaderFooter: document.headerFooter,
+    });
+    expect(editorJson.content?.[1]).toEqual({
+      type: 'pageBreak',
+      attrs: { id: 'break.1' },
+    });
+    const restored = notebookDocumentFromTiptap(editorJson, document, { now: NOW });
+    expect(restored.content).toEqual(document.content);
+    expect(restored.pageSetup).toEqual(document.pageSetup);
+    expect(restored.headerFooter).toEqual(document.headerFooter);
+    expect(restored).not.toHaveProperty('pages');
+    expect(isNotebookRichDocument(restored)).toBe(true);
+  });
+
   it('falls back to preserved prose for unknown editor nodes', () => {
     const document = createNotebookRichDocument({ idPrefix: 'fallback', now: NOW });
     const restored = notebookDocumentFromTiptap({

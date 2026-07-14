@@ -43,7 +43,7 @@ async function expectRibbonContained(page: Page) {
   expect(geometry.railOverlap).toBe(false);
 }
 
-test('Notebook ribbon separates Home, Insert, and File without disturbing Workspace Tabs', async ({ page }) => {
+test('Notebook ribbon separates Home, Insert, Layout, and File without disturbing Workspace Tabs', async ({ page }) => {
   await page.setViewportSize({ width: 2400, height: 1050 });
   await openBlankNotebook(page);
 
@@ -54,7 +54,7 @@ test('Notebook ribbon separates Home, Insert, and File without disturbing Worksp
   await expect(page.getByRole('button', { name: 'File', exact: true })).toBeVisible();
   await expect(ribbonTabs.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
   await expect(ribbonTabs.getByRole('tab', { name: 'Insert' })).toHaveAttribute('aria-selected', 'false');
-  await expect(ribbonTabs.getByRole('tab', { name: 'Layout' })).toHaveCount(0);
+  await expect(ribbonTabs.getByRole('tab', { name: 'Layout' })).toHaveAttribute('aria-selected', 'false');
   await expect(ribbonTabs.getByRole('tab', { name: 'Picture Format' })).toHaveCount(0);
   await expect(ribbonTabs.getByRole('tab', { name: 'Video Format' })).toHaveCount(0);
   await expect(toolbar.getByRole('region', { name: 'Font' })).toBeVisible();
@@ -70,6 +70,12 @@ test('Notebook ribbon separates Home, Insert, and File without disturbing Worksp
   await expect(toolbar.getByRole('button', { name: /Image/ })).toBeEnabled();
   await expect(toolbar.getByRole('button', { name: /Video/ })).toBeDisabled();
   expect(await workspaceTabs.boundingBox()).toEqual(workspaceTabsBefore);
+
+  await ribbonTabs.getByRole('tab', { name: 'Layout' }).click();
+  await expect(toolbar.getByRole('region', { name: 'Page setup' })).toBeVisible();
+  await expect(toolbar.getByLabel('Paper size')).toHaveValue('a4');
+  await expect(toolbar.getByRole('button', { name: 'Insert page break' })).toBeVisible();
+  await ribbonTabs.getByRole('tab', { name: 'Insert' }).click();
 
   await toolbar.getByRole('button', { name: 'Insert evidence' }).click();
   await expect(page.getByTestId('notebook-evidence-node')).toBeVisible();

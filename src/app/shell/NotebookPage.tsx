@@ -30,6 +30,7 @@ import {
   NotebookRichCanvas,
   notebookEditorNodeById,
   type NotebookEditorSelection,
+  type NotebookPaginationMetrics,
   type NotebookRibbonTab,
 } from './notebook/canvas';
 import {
@@ -78,6 +79,12 @@ function NotebookPageContent({
   const [editor, setEditor] = useState<Editor | null>(null);
   const [selection, setSelection] = useState<NotebookEditorSelection | null>(null);
   const [activeRibbonTab, setActiveRibbonTab] = useState<NotebookRibbonTab>('home');
+  const [pagination, setPagination] = useState<NotebookPaginationMetrics>({
+    currentPage: 1,
+    pageCount: 1,
+    pageGapPx: 24,
+    pageHeightPx: 1,
+  });
   const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
@@ -119,6 +126,7 @@ function NotebookPageContent({
     : sessionDocument;
   const documentAnalysis = useNotebookDocumentAnalysis(document);
   const isLargeDocument = (documentAnalysis?.blockCount ?? 0) > NOTEBOOK_LIVE_BLOCK_TARGET;
+  const effectiveViewMode = isLargeDocument ? 'draft' : uiState.viewMode;
   const workbenchStyle = {
     '--notebook-inspector-width': `${uiState.inspectorWidth}px`,
     '--notebook-outline-width': `${uiState.outlineWidth}px`,
@@ -165,6 +173,16 @@ function NotebookPageContent({
   const handleContextualSelectionChange = useCallback((nextSelection: NotebookEditorSelection | null) => {
     if (nextSelection?.type === 'imageFigure') return;
     setActiveRibbonTab((current) => current === 'picture-format' ? 'home' : current);
+  }, []);
+
+  const handlePaginationChange = useCallback((next: NotebookPaginationMetrics) => {
+    setPagination((current) => (
+      current.currentPage === next.currentPage
+      && current.pageCount === next.pageCount
+      && Math.abs(current.pageHeightPx - next.pageHeightPx) < 0.5
+        ? current
+        : next
+    ));
   }, []);
 
   useEffect(() => {
@@ -354,7 +372,10 @@ function NotebookPageContent({
               onSelectRibbonTab={setActiveRibbonTab}
               onContextualSelectionChange={handleContextualSelectionChange}
               onImageInserted={() => setActiveRibbonTab('picture-format')}
+              onPaginationChange={handlePaginationChange}
               onSelectionChange={handleSelectionChange}
+              onViewModeChange={(viewMode) => patchUiState({ viewMode })}
+              viewMode={effectiveViewMode}
             />
             <NotebookAuthoringKeyboard instanceId={instanceId} />
           </main>
@@ -418,8 +439,12 @@ function NotebookPageContent({
           ) : null}
         </div>
         <footer className="app-page-shell-footer">
-          <span>{isLargeDocument ? 'Draft view' : 'Ready'}</span>
-          <span>Workspace: Notebook</span>
+          <span>{effectiveViewMode === 'draft'
+            ? 'Draft view'
+            : `Page ${pagination.currentPage} of ${pagination.pageCount}`}</span>
+          <span>{documentAnalysis
+            ? `${documentAnalysis.wordCount.toLocaleString()} ${documentAnalysis.wordCount === 1 ? 'word' : 'words'}`
+            : 'Counting words…'}</span>
           <span>{saveStatusLabel}</span>
         </footer>
       </section>

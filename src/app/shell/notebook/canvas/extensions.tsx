@@ -34,6 +34,7 @@ const ID_NODE_TYPES = new Set([
   'semanticBlock',
   'notebookSection',
   'imageFigure',
+  'pageBreak',
 ]);
 
 function valueContainsUnidentifiedNotebookNode(value: unknown): boolean {
@@ -107,6 +108,20 @@ const NotebookNodeIds = Extension.create({
         return changed ? transaction : null;
       },
     })];
+  },
+});
+
+const NotebookDocumentLayout = Extension.create({
+  name: 'notebookDocumentLayout',
+
+  addGlobalAttributes() {
+    return [{
+      types: ['doc'],
+      attributes: {
+        notebookPageSetup: { default: null, rendered: false },
+        notebookHeaderFooter: { default: null, rendered: false },
+      },
+    }];
   },
 });
 
@@ -230,6 +245,27 @@ const ImageFigure = Node.create({
   },
 });
 
+const PageBreak = Node.create({
+  name: 'pageBreak',
+  group: 'block',
+  atom: true,
+  selectable: true,
+
+  parseHTML() {
+    return [{ tag: 'div[data-notebook-page-break]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['div', mergeAttributes(HTMLAttributes, {
+      'data-notebook-page-break': '',
+      class: 'notebook-page-break',
+      contenteditable: 'false',
+      role: 'separator',
+      'aria-label': 'Page break',
+    }), ['span', {}, 'Page break']];
+  },
+});
+
 const SemanticBlock = Node.create({
   name: 'semanticBlock',
   group: 'block',
@@ -326,6 +362,7 @@ export function createNotebookExtensions(
     NotebookFontSize,
     NotebookParagraphFormatting,
     Color,
+    NotebookDocumentLayout,
     NotebookNodeIds,
     InlineMath.extend({
       addNodeView() {
@@ -348,6 +385,7 @@ export function createNotebookExtensions(
         return ReactNodeViewRenderer(createNotebookImageNodeView(assetPort));
       },
     }),
+    PageBreak,
     SemanticBlock,
     NotebookSection,
   ];

@@ -101,11 +101,187 @@
   background: rgba(12, 26, 27, 0.96);
 }
 
+.notebook-rich-toolbar:has(.notebook-margin-popover) {
+  padding-bottom: 230px;
+}
+
+.notebook-rich-toolbar:has(.notebook-running-matter-popover) {
+  padding-bottom: 320px;
+}
+
 .notebook-contextual-tools-pending {
   max-width: 250px;
   color: var(--page-subtle);
   font-size: 0.75rem;
   line-height: 1.35;
+}
+
+.notebook-ribbon-group.is-page-setup .notebook-ribbon-group-tools {
+  position: relative;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.notebook-ribbon-group.is-page-setup {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 14px;
+}
+
+.notebook-ribbon-group.is-page-setup .notebook-ribbon-group-tools > button {
+  grid-auto-flow: column;
+  grid-template-columns: auto auto;
+  width: auto;
+  min-width: 118px;
+  height: 42px;
+  gap: 8px;
+  padding-inline: 11px;
+  white-space: nowrap;
+}
+
+.notebook-layout-field {
+  display: grid;
+  gap: 2px;
+}
+
+.notebook-layout-field > span,
+.notebook-layout-popover label > span,
+.notebook-layout-popover > span {
+  color: var(--page-subtle);
+  font: 0.62rem 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+}
+
+.notebook-layout-field select,
+.notebook-layout-popover select,
+.notebook-layout-popover input {
+  min-height: 30px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 4px 7px;
+  background-color: #071516;
+  color: #f1f5ed;
+  font: 0.72rem 'IBM Plex Mono', monospace;
+}
+
+.notebook-layout-field select,
+.notebook-layout-popover select {
+  color-scheme: dark;
+  -webkit-text-fill-color: #f1f5ed;
+}
+
+.notebook-layout-field select option,
+.notebook-layout-popover select option {
+  background: #071516;
+  color: #f1f5ed;
+}
+
+.notebook-layout-field > select {
+  min-width: 92px;
+}
+
+.notebook-layout-field:nth-child(2) > select {
+  min-width: 112px;
+}
+
+.notebook-layout-field--margins {
+  position: relative;
+  grid-template-columns: minmax(74px, auto) 30px;
+}
+
+.notebook-layout-field--margins > select {
+  min-width: 98px;
+}
+
+.notebook-layout-field--margins > span {
+  grid-column: 1 / -1;
+}
+
+.notebook-rich-toolbar .notebook-layout-field--margins > button {
+  width: 30px;
+  height: 30px;
+}
+
+.notebook-layout-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.notebook-rich-toolbar .notebook-layout-view button {
+  width: auto;
+  min-width: 62px;
+  padding-inline: 7px;
+}
+
+.notebook-layout-popover {
+  position: absolute;
+  z-index: 34;
+  top: calc(100% + 8px);
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 8px;
+  padding: 12px;
+  background: #102021;
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.48);
+  color: var(--page-ink);
+}
+
+.notebook-margin-popover {
+  left: 0;
+  width: min(285px, calc(100vw - 40px));
+}
+
+.notebook-margin-popover > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.notebook-layout-popover label {
+  display: grid;
+  gap: 3px;
+}
+
+.notebook-layout-popover input[type='number'] {
+  width: 100%;
+}
+
+.notebook-layout-popover > footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  border-top: 1px solid var(--notebook-border);
+  padding-top: 9px;
+}
+
+.notebook-rich-toolbar .notebook-layout-popover > footer button {
+  width: auto;
+  min-width: 70px;
+  height: 30px;
+}
+
+.notebook-running-matter-popover {
+  right: 0;
+  left: auto;
+  width: min(390px, calc(100vw - 40px), 100%);
+}
+
+.notebook-layout-check {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.notebook-layout-check input {
+  min-height: auto;
+}
+
+.notebook-page-number-settings {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 7px;
 }
 
 .notebook-image-dialog-backdrop {
@@ -632,7 +808,72 @@
   scroll-padding-bottom: 320px;
 }
 
+.notebook-page-stage {
+  position: relative;
+  min-height: 100%;
+}
+
+.notebook-page-stage.is-print {
+  width: calc(100% - 48px);
+  max-width: 793.71px;
+  min-width: 0;
+  margin: 24px auto 72px;
+}
+
+.notebook-page-sheets {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 auto;
+  pointer-events: none;
+}
+
+.notebook-page-sheet {
+  position: absolute;
+  top: var(--notebook-sheet-top);
+  width: 100%;
+  height: var(--notebook-sheet-height);
+  overflow: hidden;
+  border: 1px solid rgba(214, 225, 205, 0.22);
+  border-radius: 2px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 90px),
+    #102021;
+  box-shadow: 0 11px 28px rgba(0, 0, 0, 0.26);
+}
+
+.notebook-page-sheet > header,
+.notebook-page-sheet > footer {
+  position: absolute;
+  right: var(--notebook-page-margin-right-px, 48px);
+  left: var(--notebook-page-margin-left-px, 48px);
+  min-height: 20px;
+  overflow: hidden;
+  color: var(--page-subtle);
+  font: 0.68rem 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.notebook-page-sheet > header {
+  top: calc(var(--notebook-page-margin-top-px, 48px) * 0.34);
+}
+
+.notebook-page-sheet > footer {
+  bottom: calc(var(--notebook-page-margin-bottom-px, 48px) * 0.28);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.notebook-page-sheet > footer > span { grid-column: 1 / -1; }
+.notebook-page-sheet > footer > b { grid-row: 1; font-weight: 500; }
+.notebook-page-sheet > footer > b.is-left { grid-column: 1; justify-self: start; }
+.notebook-page-sheet > footer > b.is-center { grid-column: 2; justify-self: center; }
+.notebook-page-sheet > footer > b.is-right { grid-column: 3; justify-self: end; }
+
 .notebook-rich-editor-host {
+  position: relative;
+  z-index: 1;
   min-height: 100%;
 }
 
@@ -781,6 +1022,68 @@
   font-size: 1rem;
   line-height: 1.72;
   outline: none;
+}
+
+.notebook-page-stage.is-print .notebook-rich-editor {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  min-height: calc(
+    var(--notebook-page-count, 1) * var(--notebook-page-height-px, 1000px)
+    + (var(--notebook-page-count, 1) - 1) * var(--notebook-page-gap-px, 24px)
+  );
+  margin: 0;
+  padding:
+    var(--notebook-page-margin-top-px, 72px)
+    var(--notebook-page-margin-right-px, 72px)
+    var(--notebook-page-margin-bottom-px, 72px)
+    var(--notebook-page-margin-left-px, 72px);
+  background: transparent;
+}
+
+.notebook-page-stage.is-draft .notebook-rich-editor {
+  min-height: 100%;
+}
+
+.notebook-page-break {
+  position: relative;
+  min-height: 32px;
+  display: grid;
+  place-items: center;
+  color: var(--page-subtle);
+  font: 0.68rem 'IBM Plex Mono', monospace;
+  text-transform: uppercase;
+}
+
+.notebook-page-break::before,
+.notebook-page-break::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  top: 50%;
+  border-top: 1px dashed var(--notebook-border-strong);
+}
+
+.notebook-page-break span {
+  z-index: 1;
+  padding: 2px 8px;
+  background: #102021;
+}
+
+.notebook-page-stage.is-print .notebook-page-break span {
+  position: absolute;
+  top: 4px;
+}
+
+.notebook-page-stage.is-print .notebook-page-break::before,
+.notebook-page-stage.is-print .notebook-page-break::after {
+  top: 16px;
+}
+
+.notebook-page-stage.is-print .notebook-image-frame img {
+  max-height: var(--notebook-object-max-height-px);
+  object-fit: contain;
 }
 
 .notebook-rich-scroll-region[data-empty='true'] .notebook-rich-editor-host {
@@ -1272,6 +1575,34 @@
     background: Canvas;
     color: CanvasText;
     forced-color-adjust: auto;
+  }
+
+  .notebook-page-sheet,
+  .notebook-layout-popover {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    forced-color-adjust: auto;
+  }
+
+  .notebook-layout-field select,
+  .notebook-layout-popover select,
+  .notebook-layout-popover input {
+    border-color: ButtonText;
+    background: Field;
+    color: FieldText;
+    -webkit-text-fill-color: FieldText;
+    forced-color-adjust: auto;
+  }
+
+  .notebook-page-break::before,
+  .notebook-page-break::after {
+    border-color: CanvasText;
+  }
+
+  .notebook-page-break span {
+    background: Canvas;
+    color: CanvasText;
   }
 
   .notebook-image-figure.is-selected,

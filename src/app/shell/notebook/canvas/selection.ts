@@ -318,6 +318,26 @@ export function insertNotebookDivider(editor: Editor) {
   return editor.chain().focus().setHorizontalRule().run();
 }
 
+export function insertNotebookPageBreak(editor: Editor) {
+  const pageBreak = editor.schema.nodes.pageBreak;
+  if (!pageBreak) return false;
+  const { $from } = editor.state.selection;
+  const topLevelIndex = $from.index(0);
+  const topLevelNode = topLevelIndex < editor.state.doc.childCount
+    ? editor.state.doc.child(topLevelIndex)
+    : null;
+  const position = topLevelNode && $from.depth > 0
+    ? $from.before(1) + topLevelNode.nodeSize
+    : editor.state.selection.to;
+  const node = pageBreak.create({ id: newNodeId('pageBreak') });
+  const transaction = editor.state.tr.insert(
+    Math.min(position, editor.state.doc.content.size),
+    node,
+  );
+  editor.view.dispatch(transaction.scrollIntoView());
+  return true;
+}
+
 export function updateSelectedNotebookSemantic(
   editor: Editor,
   attributes: Partial<{

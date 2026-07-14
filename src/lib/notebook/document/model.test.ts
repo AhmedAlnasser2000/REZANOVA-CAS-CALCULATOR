@@ -7,6 +7,7 @@ import {
   isNotebookRichDocumentV4,
   isNotebookRichDocumentV5,
   isNotebookRichDocumentV6,
+  isNotebookRichDocumentV7,
   summarizeNotebookDocument,
 } from './model';
 import {
@@ -18,7 +19,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 7 document with an empty starter paragraph', () => {
+  it('creates an app-owned version 8 document with default print geometry', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -30,7 +31,52 @@ describe('Notebook rich document model', () => {
     expect(document.content).toEqual([
       expect.objectContaining({ type: 'paragraph', id: document.selectedNodeId }),
     ]);
+    expect(document.pageSetup).toEqual({
+      paperSize: 'a4',
+      orientation: 'portrait',
+      marginsPt: { top: 72, right: 72, bottom: 72, left: 72 },
+    });
     expect(isNotebookRichDocument(JSON.parse(JSON.stringify(document)))).toBe(true);
+  });
+
+  it('strictly validates V8 page settings and keeps page breaks out of V7', () => {
+    const document = createNotebookRichDocument({ now: fixedNow });
+    document.pageSetup = {
+      paperSize: 'legal',
+      orientation: 'landscape',
+      marginsPt: { top: 36, right: 54, bottom: 36, left: 54 },
+    };
+    document.headerFooter = {
+      headerText: 'Calculus notes',
+      footerText: 'Rezanova',
+      differentFirstPage: true,
+      pageNumbering: { enabled: true, position: 'right', startAt: 3 },
+    };
+    document.content = [{ type: 'pageBreak', id: 'break.1' }];
+    expect(isNotebookRichDocument(document)).toBe(true);
+
+    const base = structuredClone(document) as unknown as Record<string, unknown>;
+    delete base.pageSetup;
+    delete base.headerFooter;
+    expect(isNotebookRichDocumentV7({ ...base, version: 7 })).toBe(false);
+
+    const invalidMargins = structuredClone(document);
+    invalidMargins.pageSetup.marginsPt.top = 288;
+    invalidMargins.pageSetup.marginsPt.bottom = 288;
+    expect(isNotebookRichDocument(invalidMargins)).toBe(false);
+
+    const invalidNumbering = structuredClone(document);
+    invalidNumbering.headerFooter.pageNumbering.startAt = 0;
+    expect(isNotebookRichDocument(invalidNumbering)).toBe(false);
+
+    const nestedBreak = structuredClone(document);
+    nestedBreak.content = [{
+      type: 'section',
+      id: 'section.with-break',
+      title: 'Invalid nested break',
+      content: [{ type: 'pageBreak', id: 'break.nested' }],
+    }];
+    expect(isNotebookRichDocument(nestedBreak)).toBe(false);
   });
 
   it('strictly validates V7 image figures and keeps them out of V6', () => {

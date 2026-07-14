@@ -1,6 +1,6 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 7 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 8 as const;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
 
@@ -17,6 +17,9 @@ export const NOTEBOOK_IMAGE_PLACEMENTS = [
   'square-right',
 ] as const;
 export const NOTEBOOK_IMAGE_ROTATIONS = [0, 90, 180, 270] as const;
+export const NOTEBOOK_PAPER_SIZES = ['a4', 'letter', 'legal'] as const;
+export const NOTEBOOK_PAGE_ORIENTATIONS = ['portrait', 'landscape'] as const;
+export const NOTEBOOK_PAGE_NUMBER_POSITIONS = ['left', 'center', 'right'] as const;
 
 export function isNotebookFontSize(value: unknown): value is number {
   return typeof value === 'number'
@@ -34,6 +37,30 @@ export type NotebookOrderedStyle = typeof NOTEBOOK_ORDERED_STYLES[number];
 export type NotebookImageAlignment = typeof NOTEBOOK_IMAGE_ALIGNMENTS[number];
 export type NotebookImagePlacement = typeof NOTEBOOK_IMAGE_PLACEMENTS[number];
 export type NotebookImageRotation = typeof NOTEBOOK_IMAGE_ROTATIONS[number];
+export type NotebookPaperSize = typeof NOTEBOOK_PAPER_SIZES[number];
+export type NotebookPageOrientation = typeof NOTEBOOK_PAGE_ORIENTATIONS[number];
+export type NotebookPageNumberPosition = typeof NOTEBOOK_PAGE_NUMBER_POSITIONS[number];
+export type NotebookPageMarginsPt = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+};
+export type NotebookPageSetup = {
+  paperSize: NotebookPaperSize;
+  orientation: NotebookPageOrientation;
+  marginsPt: NotebookPageMarginsPt;
+};
+export type NotebookHeaderFooterSettings = {
+  headerText: string;
+  footerText: string;
+  differentFirstPage: boolean;
+  pageNumbering: {
+    enabled: boolean;
+    position: NotebookPageNumberPosition;
+    startAt: number;
+  };
+};
 export type NotebookParagraphFormat = {
   alignment?: NotebookTextAlignment;
   lineSpacing?: NotebookLineSpacing;
@@ -118,6 +145,11 @@ export type NotebookDividerNode = {
   id: string;
 };
 
+export type NotebookPageBreakNode = {
+  type: 'pageBreak';
+  id: string;
+};
+
 export type NotebookImageCrop = {
   x: number;
   y: number;
@@ -190,13 +222,13 @@ export type NotebookRichBlockNode =
   | NotebookDisplayMathNode
   | NotebookEvidenceNode
   | NotebookDividerNode
+  | NotebookPageBreakNode
   | NotebookImageNode
   | NotebookListNode
   | NotebookSemanticNode
   | NotebookSectionNode;
 
-export type NotebookRichDocument = {
-  version: NotebookRichDocumentVersion;
+type NotebookRichDocumentBase = {
   id: string;
   title: string;
   createdAt: string;
@@ -205,24 +237,34 @@ export type NotebookRichDocument = {
   content: NotebookRichBlockNode[];
 };
 
-export type NotebookRichDocumentV2 = Omit<NotebookRichDocument, 'version'> & {
+export type NotebookRichDocument = NotebookRichDocumentBase & {
+  version: NotebookRichDocumentVersion;
+  pageSetup: NotebookPageSetup;
+  headerFooter: NotebookHeaderFooterSettings;
+};
+
+export type NotebookRichDocumentV2 = NotebookRichDocumentBase & {
   version: 2;
 };
 
-export type NotebookRichDocumentV3 = Omit<NotebookRichDocument, 'version'> & {
+export type NotebookRichDocumentV3 = NotebookRichDocumentBase & {
   version: 3;
 };
 
-export type NotebookRichDocumentV4 = Omit<NotebookRichDocument, 'version'> & {
+export type NotebookRichDocumentV4 = NotebookRichDocumentBase & {
   version: 4;
 };
 
-export type NotebookRichDocumentV5 = Omit<NotebookRichDocument, 'version'> & {
+export type NotebookRichDocumentV5 = NotebookRichDocumentBase & {
   version: 5;
 };
 
-export type NotebookRichDocumentV6 = Omit<NotebookRichDocument, 'version'> & {
+export type NotebookRichDocumentV6 = NotebookRichDocumentBase & {
   version: 6;
+};
+
+export type NotebookRichDocumentV7 = NotebookRichDocumentBase & {
+  version: 7;
 };
 
 export type NotebookDocumentSummary = {

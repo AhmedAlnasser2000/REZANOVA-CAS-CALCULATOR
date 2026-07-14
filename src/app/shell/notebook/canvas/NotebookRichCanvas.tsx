@@ -20,6 +20,8 @@ import {
   validateNotebookImage,
   type NotebookAssetPort,
   type NotebookImageInspection,
+  type NotebookHeaderFooterSettings,
+  type NotebookPageSetup,
   type NotebookRichDocument,
   type NotebookStarterTemplateId,
   type NotebookWorkspaceTarget,
@@ -43,11 +45,18 @@ import type { NotebookRibbonTab } from './ribbon-types';
 import {
   insertNotebookDisplayMath,
   insertNotebookInlineMath,
+  insertNotebookPageBreak,
   notebookEditorSelection,
   notebookEditorNodeById,
   notebookInspectorSelection,
   type NotebookEditorSelection,
 } from './selection';
+import {
+  useNotebookPagination,
+  type NotebookPaginationMetrics,
+  type NotebookViewMode,
+} from './useNotebookPagination';
+import { NotebookPageSheets } from './NotebookPageSheets';
 import { useNotebookMathFieldController } from '../math-field';
 import { useNotebookTransientLayer } from '../transient-ui';
 import {
@@ -71,6 +80,9 @@ type NotebookRichCanvasProps = {
   onContextualSelectionChange: (selection: NotebookEditorSelection | null) => void;
   onImageInserted: () => void;
   onSelectionChange: (selection: NotebookEditorSelection | null) => void;
+  onPaginationChange: (metrics: NotebookPaginationMetrics) => void;
+  onViewModeChange: (mode: NotebookViewMode) => void;
+  viewMode: NotebookViewMode;
 };
 
 type PendingImageInsert = {
@@ -150,6 +162,9 @@ export function NotebookRichCanvas({
   onContextualSelectionChange,
   onImageInserted,
   onSelectionChange,
+  onPaginationChange,
+  onViewModeChange,
+  viewMode,
 }: NotebookRichCanvasProps) {
   const documentRef = useRef(document);
   const loadedDocumentIdRef = useRef(document.id);
@@ -159,6 +174,7 @@ export function NotebookRichCanvas({
   const contextualSelectionRef = useRef(onContextualSelectionChange);
   const restoredProseSelectionRef = useRef(false);
   const scrollRegionRef = useRef<HTMLDivElement | null>(null);
+  const pageStageRef = useRef<HTMLDivElement | null>(null);
   const pendingDocumentSyncRef = useRef<Editor | null>(null);
   const documentSyncHandleRef = useRef<number | null>(null);
   const { activate: activateMathField } = useNotebookMathFieldController();
@@ -248,6 +264,16 @@ export function NotebookRichCanvas({
       proseSelectionChangeRef.current(nextProseSelection);
       setRevision((current) => current + 1);
     },
+  });
+
+  const paginationMetrics = useNotebookPagination({
+    editor,
+    pageSetup: document.pageSetup,
+    revision,
+    scrollRegionRef,
+    stageRef: pageStageRef,
+    viewMode,
+    onChange: onPaginationChange,
   });
 
   useEffect(() => {
@@ -454,6 +480,18 @@ export function NotebookRichCanvas({
     setPaletteRequest((current) => ({ mode, nonce: (current?.nonce ?? 0) + 1 }));
   }
 
+  function changePageSetup(pageSetup: NotebookPageSetup) {
+    editor.view.dispatch(
+      editor.state.tr.setDocAttribute('notebookPageSetup', pageSetup),
+    );
+  }
+
+  function changeHeaderFooter(headerFooter: NotebookHeaderFooterSettings) {
+    editor.view.dispatch(
+      editor.state.tr.setDocAttribute('notebookHeaderFooter', headerFooter),
+    );
+  }
+
   async function stageImage(file: File, insertionPosition?: number) {
     const selection = captureNotebookToolbarSelection(editor);
     setImageError(null);
@@ -581,6 +619,11 @@ export function NotebookRichCanvas({
         editor={editor}
         fileControl={fileControl}
         hasProseSelection={Boolean(proseSelection)}
+        headerFooter={document.headerFooter}
+        pageSetup={document.pageSetup}
+        viewMode={viewMode}
+        onChangeHeaderFooter={changeHeaderFooter}
+        onChangePageSetup={changePageSetup}
         onSelectTab={onSelectRibbonTab}
         onInsertDisplayMath={() => insertNotebookDisplayMath(editor, {
           onInserted: setPendingMathFocusId,
@@ -590,6 +633,8 @@ export function NotebookRichCanvas({
         })}
         onInsertImage={() => fileInputRef.current?.click()}
         onEditImageDetails={openSelectedImageDetails}
+        onInsertPageBreak={() => insertNotebookPageBreak(editor)}
+        onViewModeChange={onViewModeChange}
         onRequestPalette={requestPalette}
       />
       <div
@@ -618,7 +663,19 @@ export function NotebookRichCanvas({
             Start writing your explanation...
           </span>
         ) : null}
-        <EditorContent className="notebook-rich-editor-host" editor={editor} />
+        <div
+          ref={pageStageRef}
+          className={`notebook-page-stage is-${viewMode}`}
+          data-page-count={paginationMetrics.pageCount}
+        >
+          {viewMode === 'print' ? (
+            <NotebookPageSheets
+              headerFooter={document.headerFooter}
+              metrics={paginationMetrics}
+            />
+          ) : null}
+          <EditorContent className="notebook-rich-editor-host" editor={editor} />
+        </div>
         {isBlank ? (
           <div className="notebook-template-start" data-testid="notebook-template-start">
             <div>

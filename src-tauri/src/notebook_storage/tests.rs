@@ -27,7 +27,7 @@ fn unique_storage(label: &str) -> PathBuf {
 
 fn document(title: &str) -> serde_json::Value {
     serde_json::json!({
-        "version": 7,
+        "version": 8,
         "id": "document.storage.1",
         "title": title,
         "createdAt": "2026-07-14T00:00:00.000Z",
@@ -37,7 +37,18 @@ fn document(title: &str) -> serde_json::Value {
             "type": "paragraph",
             "id": "paragraph.storage.1",
             "content": [{"type": "text", "text": "Durable notebook"}]
-        }]
+        }],
+        "pageSetup": {
+            "paperSize": "a4",
+            "orientation": "portrait",
+            "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+        },
+        "headerFooter": {
+            "headerText": "",
+            "footerText": "",
+            "differentFirstPage": false,
+            "pageNumbering": { "enabled": false, "position": "center", "startAt": 1 }
+        }
     })
 }
 
@@ -169,11 +180,21 @@ fn deduplicates_content_addressed_assets_and_rejects_unsafe_svg() {
 }
 
 #[test]
-fn migrates_v6_records_versions_and_packages_without_content_changes() {
+fn migrates_v6_and_v7_records_versions_and_packages_without_content_changes() {
     let root = unique_storage("v6-migration");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let mut legacy = record("library.legacy", 1, "Legacy notebook");
     legacy.document["version"] = 6.into();
+    legacy
+        .document
+        .as_object_mut()
+        .expect("document should be an object")
+        .remove("pageSetup");
+    legacy
+        .document
+        .as_object_mut()
+        .expect("document should be an object")
+        .remove("headerFooter");
     let paths = storage.record_paths(&legacy.library_id);
     NotebookStorage::write_synced(
         &paths.target,
@@ -185,7 +206,8 @@ fn migrates_v6_records_versions_and_packages_without_content_changes() {
         .load_record(&legacy.library_id)
         .expect("legacy record should load")
         .expect("legacy record should exist");
-    assert_eq!(loaded.document["version"], 7);
+    assert_eq!(loaded.document["version"], 8);
+    assert_eq!(loaded.document["pageSetup"]["paperSize"], "a4");
     assert_eq!(loaded.document["content"], legacy.document["content"]);
 
     let version_directory = storage.versions_path(&legacy.library_id);
@@ -207,7 +229,7 @@ fn migrates_v6_records_versions_and_packages_without_content_changes() {
     let versions = storage
         .list_versions(&legacy.library_id)
         .expect("legacy version should list");
-    assert_eq!(versions[0].record.document["version"], 7);
+    assert_eq!(versions[0].record.document["version"], 8);
     assert_eq!(
         versions[0].record.document["content"],
         legacy.document["content"]
@@ -233,13 +255,94 @@ fn migrates_v6_records_versions_and_packages_without_content_changes() {
     let inspection = storage
         .inspect_package(&package)
         .expect("legacy package should inspect");
-    assert_eq!(inspection.document["version"], 7);
+    assert_eq!(inspection.document["version"], 8);
     assert_eq!(inspection.document["content"], legacy.document["content"]);
+
+    let mut version7 = record("library.legacy-v7", 1, "Image-era notebook");
+    version7.document["version"] = 7.into();
+    version7
+        .document
+        .as_object_mut()
+        .expect("document should be an object")
+        .remove("pageSetup");
+    version7
+        .document
+        .as_object_mut()
+        .expect("document should be an object")
+        .remove("headerFooter");
+    let version7_paths = storage.record_paths(&version7.library_id);
+    NotebookStorage::write_synced(
+        &version7_paths.target,
+        &serde_json::to_vec_pretty(&version7).expect("V7 record should serialize"),
+    )
+    .expect("V7 record should write");
+    let loaded_v7 = storage
+        .load_record(&version7.library_id)
+        .expect("V7 record should load")
+        .expect("V7 record should exist");
+    assert_eq!(loaded_v7.document["version"], 8);
+    assert_eq!(loaded_v7.document["content"], version7.document["content"]);
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }
 
 #[test]
-fn validates_v7_image_metadata_and_crop_bounds() {
+fn validates_v8_page_layout_and_explicit_top_level_breaks() {
+    let root = unique_storage("v8-page-layout");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    let mut valid = record("library.pages", 1, "Paginated notebook");
+    valid.document["pageSetup"] = serde_json::json!({
+        "paperSize": "letter",
+        "orientation": "landscape",
+        "marginsPt": { "top": 36, "right": 54, "bottom": 36, "left": 54 }
+    });
+    valid.document["headerFooter"] = serde_json::json!({
+        "headerText": "Limits",
+        "footerText": "Chapter 2",
+        "differentFirstPage": true,
+        "pageNumbering": { "enabled": true, "position": "right", "startAt": 5 }
+    });
+    valid.document["content"] = serde_json::json!([
+        { "type": "paragraph", "id": "paragraph.before" },
+        { "type": "pageBreak", "id": "break.1" },
+        { "type": "paragraph", "id": "paragraph.after" }
+    ]);
+    storage
+        .save_record(valid.clone(), None, true)
+        .expect("valid V8 page layout should save");
+
+    let mut invalid_number = valid.clone();
+    invalid_number.library_id = "library.pages.invalid-number".into();
+    invalid_number.document["headerFooter"]["pageNumbering"]["startAt"] = 0.into();
+    assert!(storage
+        .save_record(invalid_number, None, true)
+        .expect_err("invalid starting number should fail")
+        .contains("page numbering"));
+
+    let mut invalid_margins = valid.clone();
+    invalid_margins.library_id = "library.pages.invalid-margins".into();
+    invalid_margins.document["pageSetup"]["marginsPt"]["left"] = 500.into();
+    assert!(storage
+        .save_record(invalid_margins, None, true)
+        .expect_err("invalid margins should fail")
+        .contains("margin"));
+
+    let mut nested_break = valid;
+    nested_break.library_id = "library.pages.nested-break".into();
+    nested_break.document["content"] = serde_json::json!([{
+        "type": "section",
+        "id": "section.with-break",
+        "title": "Invalid nested break",
+        "content": [{ "type": "pageBreak", "id": "break.nested" }]
+    }]);
+    assert!(storage
+        .save_record(nested_break, None, true)
+        .expect_err("nested page break should fail")
+        .contains("unsupported"));
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn validates_v8_image_metadata_and_crop_bounds() {
     let root = unique_storage("v7-image-model");
     let storage = NotebookStorage::load(root.clone()).expect("storage should load");
     let asset_id = format!("sha256:{}", "a".repeat(64));
@@ -439,7 +542,7 @@ fn rejects_revision_races_and_invalid_collapsed_documents() {
     }]);
     assert!(storage
         .save_record(invalid, None, true)
-        .expect_err("invalid V7 document should fail")
+        .expect_err("invalid V8 document should fail")
         .contains("collapsed state"));
     assert_eq!(storage.list_records().unwrap().len(), 1);
     fs::remove_dir_all(root).expect("temporary storage should be removed");

@@ -109,7 +109,7 @@ describe('NotebookPage', () => {
     expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore block inspector' })).toBeInTheDocument();
     expect(screen.getAllByText('Saved locally')).not.toHaveLength(0);
-    expect(await screen.findByText('0 words')).toBeInTheDocument();
+    expect(await screen.findAllByText('0 words')).toHaveLength(2);
     expect(await screen.findByLabelText('Notebook rich document')).toBeInTheDocument();
     expect(document.querySelector('.notebook-rich-scroll-region')).not.toBeNull();
     expect(screen.queryByLabelText('Notebook text')).not.toBeInTheDocument();
@@ -215,7 +215,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Control>}s{/Control}');
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const storedDocument = await readOnlyStoredDocument(libraryService);
-    expect(storedDocument.version).toBe(7);
+    expect(storedDocument.version).toBe(8);
     const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
@@ -489,7 +489,10 @@ describe('NotebookPage', () => {
     expect(screen.getByRole('button', { name: 'File' })).toBeVisible();
     expect(within(tabs).getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
     expect(within(tabs).getByRole('tab', { name: 'Insert' })).toHaveAttribute('aria-selected', 'false');
-    expect(within(tabs).queryByRole('tab', { name: 'Layout' })).toBeNull();
+    expect(within(tabs).getByRole('tab', { name: 'Layout' })).toHaveAttribute(
+      'aria-selected',
+      'false',
+    );
     const toolbar = await screen.findByLabelText('Notebook formatting toolbar');
     expect(within(toolbar).getByRole('region', { name: 'Font' })).toBeVisible();
     expect(within(toolbar).getByRole('region', { name: 'Paragraph' })).toBeVisible();
@@ -508,6 +511,100 @@ describe('NotebookPage', () => {
     expect(within(toolbar).getByRole('button', { name: /Video/ })).toBeDisabled();
     expect(within(toolbar).getByRole('button', { name: 'Insert evidence' })).toBeVisible();
     expect(within(toolbar).getByRole('button', { name: 'Insert divider' })).toBeVisible();
+  });
+
+  it('persists page setup, running matter, explicit breaks, and per-tab view mode', async () => {
+    const user = userEvent.setup();
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} />);
+    const canvas = await screen.findByLabelText('Notebook rich document');
+    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
+
+    await user.click(canvas);
+    await user.type(canvas, 'A selected opening paragraph');
+    await user.keyboard('{Control>}a{/Control}');
+    await user.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(document.querySelector('.notebook-page-stage')).toHaveClass('is-print');
+    expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
+    await user.selectOptions(within(toolbar).getByLabelText('Paper size'), 'letter');
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    await user.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(within(toolbar).getByLabelText('Paper size')).toHaveValue('a4');
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    await user.click(screen.getByRole('tab', { name: 'Layout' }));
+    expect(within(toolbar).getByLabelText('Paper size')).toHaveValue('letter');
+    await user.selectOptions(within(toolbar).getByLabelText('Page orientation'), 'landscape');
+    await user.selectOptions(within(toolbar).getByLabelText('Page margins'), 'narrow');
+
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Bold' }));
+    expect(canvas.querySelector('strong')).toHaveTextContent('A selected opening paragraph');
+
+    await user.click(screen.getByRole('tab', { name: 'Layout' }));
+    await user.click(within(toolbar).getByRole('button', {
+      name: 'Header, footer, and page numbering',
+    }));
+    const runningMatter = screen.getByRole('dialog', { name: 'Header and footer settings' });
+    await user.type(within(runningMatter).getByLabelText('Header text'), 'Limits course');
+    await user.type(within(runningMatter).getByLabelText('Footer text'), 'Draft notes');
+    await user.click(within(runningMatter).getByRole('checkbox', { name: 'Show page numbers' }));
+    await user.selectOptions(within(runningMatter).getByLabelText('Page number position'), 'right');
+    await user.clear(within(runningMatter).getByLabelText('Starting page number'));
+    await user.type(within(runningMatter).getByLabelText('Starting page number'), '4');
+    await user.click(within(runningMatter).getByRole('button', { name: 'Apply' }));
+    expect(document.querySelector('.notebook-page-sheet header')).toHaveTextContent('Limits course');
+    expect(document.querySelector('.notebook-page-sheet footer')).toHaveTextContent('Draft notes4');
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Insert page break' }));
+    expect(canvas.querySelector('[data-notebook-page-break]')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Page 1 of 2')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    expect(canvas.querySelector('[data-notebook-page-break]')).not.toBeInTheDocument();
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    expect(canvas.querySelector('[data-notebook-page-break]')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Layout' }));
+    await user.click(within(toolbar).getByRole('button', {
+      name: 'Header, footer, and page numbering',
+    }));
+    const firstPageSettings = screen.getByRole('dialog', { name: 'Header and footer settings' });
+    await user.click(within(firstPageSettings).getByRole('checkbox', {
+      name: 'Different first page',
+    }));
+    await user.click(within(firstPageSettings).getByRole('button', { name: 'Apply' }));
+    const sheetHeaders = document.querySelectorAll('.notebook-page-sheet header');
+    expect(sheetHeaders).toHaveLength(2);
+    expect(sheetHeaders[0]).toBeEmptyDOMElement();
+    expect(sheetHeaders[1]).toHaveTextContent('Limits course');
+
+    await user.click(within(toolbar).getByRole('button', { name: 'Draft' }));
+    expect(document.querySelector('.notebook-page-stage')).toHaveClass('is-draft');
+    expect(screen.getByText('Draft view')).toBeInTheDocument();
+    await user.click(within(toolbar).getByRole('button', { name: 'Print' }));
+    expect(document.querySelector('.notebook-page-stage')).toHaveClass('is-print');
+
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const stored = await readOnlyStoredDocument(libraryService);
+    expect(stored).toMatchObject({
+      version: 8,
+      pageSetup: {
+        paperSize: 'letter',
+        orientation: 'landscape',
+        marginsPt: { top: 36, right: 36, bottom: 36, left: 36 },
+      },
+      headerFooter: {
+        headerText: 'Limits course',
+        footerText: 'Draft notes',
+        differentFirstPage: true,
+        pageNumbering: { enabled: true, position: 'right', startAt: 4 },
+      },
+    });
+    expect(stored.content.some((node) => node.type === 'pageBreak')).toBe(true);
   });
 
   it('preserves the prose range across ribbon tabs and inserts document blocks with undo and redo', async () => {
@@ -710,7 +807,7 @@ describe('NotebookPage', () => {
       document: createNotebookPerformanceFixture('medium'),
     }} />);
 
-    expect(await screen.findByText('6,400 words')).toBeInTheDocument();
+    expect(await screen.findAllByText('6,400 words')).toHaveLength(2);
     expect(screen.queryByText(/1,000 blocks/)).not.toBeInTheDocument();
   });
 

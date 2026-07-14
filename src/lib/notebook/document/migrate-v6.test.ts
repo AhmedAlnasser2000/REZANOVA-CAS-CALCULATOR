@@ -5,7 +5,7 @@ import { migrateNotebookDocumentV6 } from './migrate-v6';
 import type { NotebookRichDocumentV6 } from './types';
 
 describe('Notebook rich document V6 migration', () => {
-  it('changes only the document version when no V7 image exists', () => {
+  it('preserves V6 content while adding the default V8 page contract', () => {
     const version6: NotebookRichDocumentV6 = {
       version: 6,
       id: 'notebook.v6',
@@ -24,7 +24,12 @@ describe('Notebook rich document V6 migration', () => {
 
     expect(isNotebookRichDocumentV6(version6)).toBe(true);
     const migrated = migrateNotebookDocumentV6(version6);
-    expect(migrated).toEqual({ ...version6, version: 7 });
+    expect(migrated).toMatchObject({ ...version6, version: 8 });
+    expect(migrated.pageSetup).toEqual({
+      paperSize: 'a4',
+      orientation: 'portrait',
+      marginsPt: { top: 72, right: 72, bottom: 72, left: 72 },
+    });
     expect(isNotebookRichDocument(migrated)).toBe(true);
   });
 });

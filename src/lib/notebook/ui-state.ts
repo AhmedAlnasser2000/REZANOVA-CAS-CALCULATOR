@@ -17,6 +17,7 @@ export type NotebookUiState = {
   outlineCollapsed: boolean;
   outlineWidth: number;
   proseSelection: NotebookProseSelectionState | null;
+  viewMode: 'print' | 'draft';
 };
 
 export const DEFAULT_NOTEBOOK_UI_STATE: NotebookUiState = {
@@ -26,4 +27,5 @@ export const DEFAULT_NOTEBOOK_UI_STATE: NotebookUiState = {
   outlineCollapsed: false,
   outlineWidth: 320,
   proseSelection: null,
+  viewMode: 'print',
 };

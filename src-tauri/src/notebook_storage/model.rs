@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::{json, Map, Value};
 use std::collections::HashSet;
 
 pub const STORED_RECORD_VERSION: u8 = 1;
@@ -353,7 +353,12 @@ fn validate_image_figure(node: &Map<String, Value>) -> Result<(), String> {
     Ok(())
 }
 
-fn validate_block(value: &Value, depth: usize, allow_images: bool) -> Result<(), String> {
+fn validate_block(
+    value: &Value,
+    depth: usize,
+    allow_images: bool,
+    allow_page_layout: bool,
+) -> Result<(), String> {
     if depth > 256 {
         return Err("Notebook nesting exceeds the safety limit.".into());
     }
@@ -441,7 +446,7 @@ fn validate_block(value: &Value, depth: usize, allow_images: bool) -> Result<(),
                     return Err("Notebook list contains a non-item node.".into());
                 }
                 required_string(item, "id")?;
-                validate_block_content(item, depth + 1, allow_images)?;
+                validate_block_content(item, depth + 1, allow_images, false)?;
             }
             Ok(())
         }
@@ -478,9 +483,10 @@ fn validate_block(value: &Value, depth: usize, allow_images: bool) -> Result<(),
             if collapsed == Some(true) && !collapsible.unwrap_or(default_collapsible) {
                 return Err("Notebook collapsed state is incompatible with behavior.".into());
             }
-            validate_block_content(node, depth + 1, allow_images)
+            validate_block_content(node, depth + 1, allow_images, false)
         }
         "imageFigure" if allow_images => validate_image_figure(node),
+        "pageBreak" if allow_page_layout && node.len() == 2 => Ok(()),
         _ => Err("Notebook block type is unsupported.".into()),
     }
 }
@@ -489,13 +495,91 @@ fn validate_block_content(
     node: &Map<String, Value>,
     depth: usize,
     allow_images: bool,
+    allow_page_layout: bool,
 ) -> Result<(), String> {
     for child in node
         .get("content")
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook block content must be an array.".to_string())?
     {
-        validate_block(child, depth, allow_images)?;
+        validate_block(child, depth, allow_images, allow_page_layout)?;
+    }
+    Ok(())
+}
+
+fn validate_page_setup(value: &Value) -> Result<(), String> {
+    let setup = object(value)?;
+    if setup.len() != 3
+        || !matches!(
+            setup.get("paperSize").and_then(Value::as_str),
+            Some("a4" | "letter" | "legal")
+        )
+        || !matches!(
+            setup.get("orientation").and_then(Value::as_str),
+            Some("portrait" | "landscape")
+        )
+    {
+        return Err("Notebook page setup is invalid.".into());
+    }
+    let margins = setup
+        .get("marginsPt")
+        .ok_or_else(|| "Notebook page margins are missing.".to_string())
+        .and_then(object)?;
+    if margins.len() != 4 {
+        return Err("Notebook page margins are invalid.".into());
+    }
+    let margin = |field: &str| -> Result<f64, String> {
+        margins
+            .get(field)
+            .and_then(Value::as_f64)
+            .filter(|value| value.is_finite() && (0.0..=288.0).contains(value))
+            .ok_or_else(|| format!("Notebook {field} page margin is invalid."))
+    };
+    let top = margin("top")?;
+    let right = margin("right")?;
+    let bottom = margin("bottom")?;
+    let left = margin("left")?;
+    let (mut width, mut height) = match setup.get("paperSize").and_then(Value::as_str) {
+        Some("letter") => (612.0, 792.0),
+        Some("legal") => (612.0, 1008.0),
+        _ => (595.28, 841.89),
+    };
+    if setup.get("orientation").and_then(Value::as_str) == Some("landscape") {
+        std::mem::swap(&mut width, &mut height);
+    }
+    if width - left - right < 72.0 || height - top - bottom < 72.0 {
+        return Err("Notebook page margins leave no usable page area.".into());
+    }
+    Ok(())
+}
+
+fn validate_header_footer(value: &Value) -> Result<(), String> {
+    let settings = object(value)?;
+    if settings.len() != 4
+        || !settings.get("headerText").is_some_and(Value::is_string)
+        || !settings.get("footerText").is_some_and(Value::is_string)
+        || !settings
+            .get("differentFirstPage")
+            .is_some_and(Value::is_boolean)
+    {
+        return Err("Notebook header and footer settings are invalid.".into());
+    }
+    let numbering = settings
+        .get("pageNumbering")
+        .ok_or_else(|| "Notebook page numbering is missing.".to_string())
+        .and_then(object)?;
+    if numbering.len() != 3
+        || !numbering.get("enabled").is_some_and(Value::is_boolean)
+        || !matches!(
+            numbering.get("position").and_then(Value::as_str),
+            Some("left" | "center" | "right")
+        )
+        || !numbering
+            .get("startAt")
+            .and_then(Value::as_u64)
+            .is_some_and(|value| (1..=9999).contains(&value))
+    {
+        return Err("Notebook page numbering is invalid.".into());
     }
     Ok(())
 }
@@ -504,12 +588,43 @@ fn validate_notebook_document_version(
     document: &Value,
     version: u64,
     allow_images: bool,
+    allow_page_layout: bool,
 ) -> Result<(), String> {
     let document = object(document)?;
     if document.get("version").and_then(Value::as_u64) != Some(version) {
         return Err(format!(
             "Notebook package requires app-document version {version}."
         ));
+    }
+    let allowed_fields = if allow_page_layout {
+        &[
+            "version",
+            "id",
+            "title",
+            "createdAt",
+            "updatedAt",
+            "selectedNodeId",
+            "content",
+            "pageSetup",
+            "headerFooter",
+        ][..]
+    } else {
+        &[
+            "version",
+            "id",
+            "title",
+            "createdAt",
+            "updatedAt",
+            "selectedNodeId",
+            "content",
+        ][..]
+    };
+    if document.len() != allowed_fields.len()
+        || document
+            .keys()
+            .any(|key| !allowed_fields.contains(&key.as_str()))
+    {
+        return Err("Notebook document contains unknown or missing fields.".into());
     }
     required_string(document, "id")?;
     document
@@ -529,21 +644,54 @@ fn validate_notebook_document_version(
         .and_then(Value::as_array)
         .ok_or_else(|| "Notebook document content must be an array.".to_string())?
     {
-        validate_block(node, 0, allow_images)?;
+        validate_block(node, 0, allow_images, allow_page_layout)?;
+    }
+    if allow_page_layout {
+        validate_page_setup(
+            document
+                .get("pageSetup")
+                .ok_or_else(|| "Notebook page setup is missing.".to_string())?,
+        )?;
+        validate_header_footer(
+            document
+                .get("headerFooter")
+                .ok_or_else(|| "Notebook header and footer settings are missing.".to_string())?,
+        )?;
     }
     Ok(())
 }
 
 pub fn validate_notebook_document(document: &Value) -> Result<(), String> {
-    validate_notebook_document_version(document, 7, true)
+    validate_notebook_document_version(document, 8, true, true)
+}
+
+fn add_default_page_layout(document: &mut Value) {
+    document["pageSetup"] = json!({
+        "paperSize": "a4",
+        "orientation": "portrait",
+        "marginsPt": { "top": 72, "right": 72, "bottom": 72, "left": 72 }
+    });
+    document["headerFooter"] = json!({
+        "headerText": "",
+        "footerText": "",
+        "differentFirstPage": false,
+        "pageNumbering": { "enabled": false, "position": "center", "startAt": 1 }
+    });
 }
 
 pub fn migrate_notebook_document(mut document: Value) -> Result<Value, String> {
     match document.get("version").and_then(Value::as_u64) {
-        Some(7) => validate_notebook_document(&document)?,
+        Some(8) => validate_notebook_document(&document)?,
+        Some(7) => {
+            validate_notebook_document_version(&document, 7, true, false)?;
+            document["version"] = Value::from(8);
+            add_default_page_layout(&mut document);
+            validate_notebook_document(&document)?;
+        }
         Some(6) => {
-            validate_notebook_document_version(&document, 6, false)?;
-            document["version"] = Value::from(7);
+            validate_notebook_document_version(&document, 6, false, false)?;
+            document["version"] = Value::from(8);
+            add_default_page_layout(&mut document);
             validate_notebook_document(&document)?;
         }
         _ => return Err("Notebook document version is unsupported.".into()),

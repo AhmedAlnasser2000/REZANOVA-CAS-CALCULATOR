@@ -60,3 +60,11 @@
 - status: verified; committed by the checkpoint containing this entry
 - staged_scope: Notebook V7 document/media source, persistence and package safety, image UI, focused tests, styles, Chromium specification, and required durable memory only
 - excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and concurrent Canonical Result V2 work
+
+## NOTEBOOK-PAGE-LAYOUT1
+
+- commit_message: `NOTEBOOK-PAGE-LAYOUT1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook V8 page-layout source, focused tests, styles, Chromium specification, and required durable memory only
+- excluded: untracked `test-results/`, ignored `.task_tmp/` evidence, and concurrent solver/result-contract work

@@ -5,6 +5,7 @@ import { createNotebookNodeIdFactory } from './model';
 import type {
   NotebookBulletStyle,
   NotebookEvidenceNode,
+  NotebookHeaderFooterSettings,
   NotebookImageAlignment,
   NotebookImageCrop,
   NotebookImagePlacement,
@@ -15,6 +16,7 @@ import type {
   NotebookOrderedStyle,
   NotebookParagraphFormat,
   NotebookParagraphSpacePt,
+  NotebookPageSetup,
   NotebookRichBlockNode,
   NotebookRichDocument,
   NotebookRichMark,
@@ -242,6 +244,9 @@ function blockToTiptap(node: NotebookRichBlockNode): JSONContent {
   if (node.type === 'horizontalRule') {
     return { type: 'horizontalRule', attrs: { id: node.id } };
   }
+  if (node.type === 'pageBreak') {
+    return { type: 'pageBreak', attrs: { id: node.id } };
+  }
   if (node.type === 'imageFigure') {
     return {
       type: 'imageFigure',
@@ -410,6 +415,9 @@ function blockFromTiptap(
   if (node.type === 'horizontalRule') {
     return { type: 'horizontalRule', id };
   }
+  if (node.type === 'pageBreak') {
+    return { type: 'pageBreak', id };
+  }
   if (node.type === 'imageFigure') {
     const altText = stringAttr(node, 'altText');
     const caption = stringAttr(node, 'caption');
@@ -541,6 +549,10 @@ export function notebookDocumentToTiptap(
 ): JSONContent {
   return {
     type: 'doc',
+    attrs: {
+      notebookPageSetup: document.pageSetup,
+      notebookHeaderFooter: document.headerFooter,
+    },
     content: document.content.map(blockToTiptap),
   };
 }
@@ -563,9 +575,16 @@ export function notebookDocumentFromTiptap(
   const selectedNodeId = options.selectedNodeId === undefined
     ? previous.selectedNodeId
     : options.selectedNodeId;
+  const pageSetup = content.attrs?.notebookPageSetup as NotebookPageSetup | null | undefined;
+  const headerFooter = content.attrs?.notebookHeaderFooter as
+    | NotebookHeaderFooterSettings
+    | null
+    | undefined;
 
   return {
     ...previous,
+    pageSetup: pageSetup ?? previous.pageSetup,
+    headerFooter: headerFooter ?? previous.headerFooter,
     updatedAt: (options.now ?? (() => new Date()))().toISOString(),
     selectedNodeId: selectedNodeId
       && containsNotebookNodeId(nextContent, selectedNodeId)
