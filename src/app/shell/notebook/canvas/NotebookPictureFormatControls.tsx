@@ -19,7 +19,7 @@ import {
   type NotebookImagePlacement,
   type NotebookPageSetup,
 } from '../../../../lib/notebook';
-import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import { notebookEditorNodeById, notebookEditorSelection } from './selection';
 
 type CropInsets = {
@@ -220,8 +220,8 @@ export function NotebookPictureFormatControls({
               onClick={openWidth}
             ><Scaling aria-hidden="true" size={16} /><ChevronDown aria-hidden="true" size={11} /></button>
             {widthLayer.isOpen ? (
-              <div
-                data-notebook-transient-layer={widthLayer.id}
+              <NotebookFloatingLayer
+                layerId={widthLayer.id}
                 className="notebook-picture-popover notebook-picture-width-popover"
                 role="dialog"
                 aria-label="Custom image width"
@@ -260,7 +260,7 @@ export function NotebookPictureFormatControls({
                     widthLayer.close(false);
                   }}>Apply</button>
                 </footer>
-              </div>
+              </NotebookFloatingLayer>
             ) : null}
           </div>
         </div>
@@ -307,8 +307,8 @@ export function NotebookPictureFormatControls({
               onClick={openWrap}
             ><WrapText aria-hidden="true" size={16} /><ChevronDown aria-hidden="true" size={11} /></button>
             {wrapLayer.isOpen ? (
-              <div
-                data-notebook-transient-layer={wrapLayer.id}
+              <NotebookFloatingLayer
+                layerId={wrapLayer.id}
                 className="notebook-picture-menu"
                 role="menu"
                 aria-label="Picture wrapping"
@@ -330,7 +330,7 @@ export function NotebookPictureFormatControls({
                 {effectivePlacement !== placement ? (
                   <p role="status">Normal flow is used at this size to keep the text column readable.</p>
                 ) : null}
-              </div>
+              </NotebookFloatingLayer>
             ) : null}
           </div>
         </div>
@@ -352,8 +352,9 @@ export function NotebookPictureFormatControls({
               onClick={openCrop}
             ><Crop aria-hidden="true" size={16} /></button>
             {cropLayer.isOpen ? (
-              <div
-                data-notebook-transient-layer={cropLayer.id}
+              <NotebookFloatingLayer
+                align="end"
+                layerId={cropLayer.id}
                 className="notebook-picture-popover notebook-picture-crop-popover"
                 role="dialog"
                 aria-label="Crop image"
@@ -405,7 +406,7 @@ export function NotebookPictureFormatControls({
                     cropLayer.close(false);
                   }}>Apply</button>
                 </footer>
-              </div>
+              </NotebookFloatingLayer>
             ) : null}
           </div>
           <button

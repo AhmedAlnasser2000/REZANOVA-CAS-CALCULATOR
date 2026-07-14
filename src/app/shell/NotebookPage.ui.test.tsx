@@ -155,6 +155,9 @@ describe('NotebookPage', () => {
     expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore block inspector' })).toBeInTheDocument();
     expect(screen.getAllByText('Saved locally')).not.toHaveLength(0);
+    const titleStrip = document.querySelector('.app-page-shell-header--notebook');
+    expect(titleStrip).toHaveTextContent('Limits Notebook');
+    expect(titleStrip).not.toHaveTextContent('REZANOVA CLASSWIZ CALCULATOR');
     expect(await screen.findAllByText('0 words')).toHaveLength(2);
     expect(await screen.findByLabelText('Notebook rich document')).toBeInTheDocument();
     expect(document.querySelector('.notebook-rich-scroll-region')).not.toBeNull();
@@ -1202,6 +1205,8 @@ describe('NotebookPage', () => {
       .toBeInTheDocument();
 
     await user.click(within(sectionEntries[0]!).getByRole('button', { name: /actions/ }));
+    expect(screen.getByRole('menuitem', { name: 'Make subsection' })).toBeDisabled();
+    expect(screen.getByRole('menuitem', { name: 'Promote section' })).toBeDisabled();
     await user.click(screen.getByRole('menuitem', { name: 'Add subsection' }));
     sectionEntries = screen.getAllByTestId('notebook-outline-entry')
       .filter((entry) => entry.dataset.outlineKind === 'section');
@@ -1224,6 +1229,7 @@ describe('NotebookPage', () => {
     expect(sectionEntries[1]).toHaveAttribute('data-outline-depth', '1');
 
     await user.click(within(sectionEntries[1]!).getByRole('button', { name: /actions/ }));
+    expect(screen.getByRole('menuitem', { name: 'Promote section' })).toBeEnabled();
     await user.click(screen.getByRole('menuitem', { name: 'Rename' }));
     const rename = screen.getByRole('textbox', { name: 'Rename section' });
     await user.clear(rename);

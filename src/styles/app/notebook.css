@@ -458,6 +458,11 @@
   background: rgba(184, 212, 156, 0.12) !important;
 }
 
+.notebook-outline-menu button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
 .notebook-outline-menu button.is-danger { color: #f0aaa0; }
 
 .notebook-outline-list button,

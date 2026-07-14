@@ -51,6 +51,7 @@ test('Notebook ribbon separates Home, Insert, Layout, and File without disturbin
   const workspaceTabsBefore = await workspaceTabs.boundingBox();
   const ribbonTabs = page.getByRole('tablist', { name: 'Notebook ribbon tabs' });
   const toolbar = page.getByLabel('Notebook formatting toolbar');
+  await expect(page.locator('.app-page-shell-header--notebook')).toHaveText('Untitled Notebook');
   await expect(page.getByRole('button', { name: 'File', exact: true })).toBeVisible();
   await expect(ribbonTabs.getByRole('tab', { name: 'Home' })).toHaveAttribute('aria-selected', 'true');
   await expect(ribbonTabs.getByRole('tab', { name: 'Insert' })).toHaveAttribute('aria-selected', 'false');
@@ -104,6 +105,15 @@ test('Notebook ribbon separates Home, Insert, Layout, and File without disturbin
     await page.keyboard.press('Escape');
     await ribbonTabs.getByRole('tab', { name: 'Insert' }).click();
     await expect(toolbar.getByRole('button', { name: /Image/ })).toBeEnabled();
+    await toolbar.getByRole('button', { name: 'Insert academic container' }).click();
+    const containerMenu = page.getByRole('menu', { name: 'Academic containers' });
+    const containerBounds = await containerMenu.boundingBox();
+    expect(containerBounds).not.toBeNull();
+    expect(containerBounds!.x).toBeGreaterThanOrEqual(8);
+    expect(containerBounds!.x + containerBounds!.width).toBeLessThanOrEqual(width - 8);
+    expect(containerBounds!.y).toBeGreaterThanOrEqual(8);
+    expect(containerBounds!.y + containerBounds!.height).toBeLessThanOrEqual(992);
+    await page.keyboard.press('Escape');
     await attachScreenshot(page, `notebook-ribbon-${width}`);
   }
 

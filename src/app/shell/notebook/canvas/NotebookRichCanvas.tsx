@@ -61,7 +61,7 @@ import {
 } from './useNotebookPagination';
 import { NotebookPageSheets } from './NotebookPageSheets';
 import { useNotebookMathFieldController } from '../math-field';
-import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import {
   NotebookSelectionToolbar,
   type NotebookPaletteMode,
@@ -717,14 +717,14 @@ export function NotebookRichCanvas({
               Start from template
             </button>
             {templateMenu.isOpen ? (
-              <div data-notebook-transient-layer={templateMenu.id} className="notebook-template-menu">
+              <NotebookFloatingLayer align="end" layerId={templateMenu.id} className="notebook-template-menu">
                 {NOTEBOOK_STARTER_TEMPLATES.map((template) => (
                   <button key={template.id} type="button" onClick={() => applyTemplate(template.id)}>
                     <strong>{template.label}</strong>
                     <span>{template.description}</span>
                   </button>
                 ))}
-              </div>
+              </NotebookFloatingLayer>
             ) : null}
           </div>
         ) : null}

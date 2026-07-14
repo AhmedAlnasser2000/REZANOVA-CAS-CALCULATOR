@@ -42,7 +42,7 @@ import {
   updateNotebookSection,
   type NotebookMovePlacement,
 } from './canvas';
-import { useNotebookTransientLayer } from './transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from './transient-ui';
 
 type NotebookOutlineProps = {
   className?: string;
@@ -160,8 +160,13 @@ export function NotebookOutline({
     if (entry.nodeType !== 'section' || menuSectionId !== entry.id || !sectionMenu.isOpen) {
       return null;
     }
+    const siblings = outline.filter((candidate) => candidate.parentId === entry.parentId);
+    const siblingIndex = siblings.findIndex((candidate) => candidate.id === entry.id);
+    const canMakeSubsection = siblingIndex > 0 && siblings[siblingIndex - 1]?.nodeType === 'section';
+    const canPromoteSection = entry.parentId !== null
+      && outline.some((candidate) => candidate.id === entry.parentId && candidate.nodeType === 'section');
     return (
-      <div data-notebook-transient-layer={sectionMenu.id} className="notebook-outline-menu" role="menu" aria-label={`${entry.label} actions`}>
+      <NotebookFloatingLayer align="end" layerId={sectionMenu.id} className="notebook-outline-menu" role="menu" aria-label={`${entry.label} actions`}>
         <button type="button" role="menuitem" onClick={() => {
           setEditingSectionId(entry.id);
           setMenuSectionId(null);
@@ -172,16 +177,26 @@ export function NotebookOutline({
           setMenuSectionId(null);
           sectionMenu.close(false);
         }}><FolderPlus aria-hidden="true" size={14} /> Add subsection</button>
-        <button type="button" role="menuitem" onClick={() => {
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!canMakeSubsection}
+          title={canMakeSubsection ? 'Nest under the preceding Section' : 'A preceding Section is required'}
+          onClick={() => {
           if (editor) indentNotebookNode(editor, entry.id);
           setMenuSectionId(null);
           sectionMenu.close(false);
-        }}><IndentIncrease aria-hidden="true" size={14} /> Indent</button>
-        <button type="button" role="menuitem" onClick={() => {
+        }}><IndentIncrease aria-hidden="true" size={14} /> Make subsection</button>
+        <button
+          type="button"
+          role="menuitem"
+          disabled={!canPromoteSection}
+          title={canPromoteSection ? 'Move out of the parent Section' : 'This is already a top-level Section'}
+          onClick={() => {
           if (editor) outdentNotebookNode(editor, entry.id);
           setMenuSectionId(null);
           sectionMenu.close(false);
-        }}><Outdent aria-hidden="true" size={14} /> Outdent</button>
+        }}><Outdent aria-hidden="true" size={14} /> Promote section</button>
         <button type="button" role="menuitem" onClick={() => {
           if (editor) removeNotebookSection(editor, entry.id, { keepContents: true });
           setMenuSectionId(null);
@@ -194,7 +209,7 @@ export function NotebookOutline({
           setMenuSectionId(null);
           sectionMenu.close(false);
         }}><Trash2 aria-hidden="true" size={14} /> Delete section and contents</button>
-      </div>
+      </NotebookFloatingLayer>
     );
   }
 

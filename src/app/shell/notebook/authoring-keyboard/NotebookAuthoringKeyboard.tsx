@@ -30,7 +30,7 @@ import {
   type NotebookKeyboardTabId,
 } from '../../../../lib/notebook';
 import { useNotebookMathFieldController } from '../math-field';
-import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import { useNotebookUiState } from '../useNotebookUiState';
 import { NotebookFontSizeControl } from '../canvas/NotebookFontSizeControl';
 
@@ -377,8 +377,9 @@ export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }
             onClick={() => cancellationLayer.toggle()}
           ><ChevronDown aria-hidden="true" size={15} /></button>
           {cancellationLayer.isOpen ? (
-            <div
-              data-notebook-transient-layer={cancellationLayer.id}
+            <NotebookFloatingLayer
+              align="end"
+              layerId={cancellationLayer.id}
               className="notebook-math-cancellation-menu"
               role="menu"
               aria-label="Mathematical cancellation options"
@@ -386,7 +387,7 @@ export function NotebookAuthoringKeyboard({ instanceId }: { instanceId: string }
               <button type="button" role="menuitem" onClick={() => applyCancellation('diagonal')}>Diagonal cancel</button>
               <button type="button" role="menuitem" onClick={() => applyCancellation('reverse-diagonal')}>Reverse diagonal</button>
               <button type="button" role="menuitem" onClick={() => applyCancellation('cross')}>Cross cancel</button>
-            </div>
+            </NotebookFloatingLayer>
           ) : null}
         </div>
       </div>

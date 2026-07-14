@@ -57,14 +57,13 @@ async function expectPageStageContained(page: Page) {
   expect(geometry.gap).toBeGreaterThan(0);
 }
 
-async function expectPopoverInsideRibbon(page: Page, dialogName: string) {
+async function expectPopoverInsideViewport(page: Page, dialogName: string) {
   const dialog = page.getByRole('dialog', { name: dialogName });
   await expect(dialog).toBeVisible();
   const bounds = await page.evaluate((name) => {
     const dialog = [...document.querySelectorAll<HTMLElement>('[role="dialog"]')]
       .find((candidate) => candidate.getAttribute('aria-label') === name)!;
     const popover = dialog.getBoundingClientRect();
-    const toolbar = document.querySelector('.notebook-rich-toolbar')!.getBoundingClientRect();
     const keyboard = document.querySelector<HTMLElement>('[data-testid="notebook-authoring-keyboard"]');
     const keyboardBounds = keyboard && getComputedStyle(keyboard).display !== 'none'
       ? keyboard.getBoundingClientRect()
@@ -79,17 +78,16 @@ async function expectPopoverInsideRibbon(page: Page, dialogName: string) {
       keyboardOverlap,
       left: popover.left,
       right: popover.right,
-      toolbarBottom: toolbar.bottom,
-      toolbarLeft: toolbar.left,
-      toolbarRight: toolbar.right,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
       top: popover.top,
       bottom: popover.bottom,
     };
   }, dialogName);
-  expect(bounds.left).toBeGreaterThanOrEqual(bounds.toolbarLeft);
-  expect(bounds.right).toBeLessThanOrEqual(bounds.toolbarRight);
-  expect(bounds.top).toBeGreaterThanOrEqual(0);
-  expect(bounds.bottom).toBeLessThanOrEqual(bounds.toolbarBottom + 1);
+  expect(bounds.left).toBeGreaterThanOrEqual(8);
+  expect(bounds.right).toBeLessThanOrEqual(bounds.viewportWidth - 8);
+  expect(bounds.top).toBeGreaterThanOrEqual(8);
+  expect(bounds.bottom).toBeLessThanOrEqual(bounds.viewportHeight - 8);
   expect(bounds.keyboardOverlap).toBe(false);
 }
 
@@ -116,7 +114,7 @@ test('Notebook V9 persists one-editor page layout and renders two physical sheet
 
   await tabs.getByRole('tab', { name: 'Layout' }).click();
   await toolbar.getByRole('button', { name: 'Header, footer, and page numbering' }).click();
-  await expectPopoverInsideRibbon(page, 'Header and footer settings');
+  await expectPopoverInsideViewport(page, 'Header and footer settings');
   const runningMatter = page.getByRole('dialog', { name: 'Header and footer settings' });
   await runningMatter.getByLabel('Header text').fill('Calculus I');
   await runningMatter.getByLabel('Footer text').fill('Limit laws');
@@ -179,7 +177,7 @@ test('Notebook V9 persists one-editor page layout and renders two physical sheet
     await page.setViewportSize({ width, height: 1000 });
     await expectPageStageContained(page);
     await toolbar.getByRole('button', { name: 'Edit custom margins' }).click();
-    await expectPopoverInsideRibbon(page, 'Custom margins');
+    await expectPopoverInsideViewport(page, 'Custom margins');
     await page.keyboard.press('Escape');
     await attachScreenshot(page, `notebook-pages-${width}`);
   }
@@ -208,11 +206,10 @@ test('Notebook Draft view remains continuous and layout popovers avoid Math Auth
 
   await tabs.getByRole('tab', { name: 'Insert' }).click();
   await toolbar.getByRole('button', { name: 'Separate equation' }).click();
-  await page.getByTestId('notebook-display-math-field').click();
   await expect(page.getByTestId('notebook-authoring-keyboard')).toBeVisible();
   await tabs.getByRole('tab', { name: 'Layout' }).click();
   await toolbar.getByRole('button', { name: 'Edit custom margins' }).click();
-  await expectPopoverInsideRibbon(page, 'Custom margins');
+  await expectPopoverInsideViewport(page, 'Custom margins');
   await page.keyboard.press('Escape');
 
   await toolbar.getByRole('button', { name: 'Draft' }).click();

@@ -14,7 +14,7 @@ import {
   type NotebookMarginPreset,
   type NotebookPageSetup,
 } from '../../../../lib/notebook';
-import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import {
   captureNotebookToolbarSelection,
   restoreNotebookToolbarSelection,
@@ -147,8 +147,8 @@ export function NotebookLayoutControls({
           onClick={openMargins}
         ><BetweenHorizontalStart aria-hidden="true" size={15} /></button>
         {marginsLayer.isOpen ? (
-          <div
-            data-notebook-transient-layer={marginsLayer.id}
+          <NotebookFloatingLayer
+            layerId={marginsLayer.id}
             className="notebook-layout-popover notebook-margin-popover"
             role="dialog"
             aria-label="Custom margins"
@@ -185,7 +185,7 @@ export function NotebookLayoutControls({
                 restoreSelection();
               }}>Apply</button>
             </footer>
-          </div>
+          </NotebookFloatingLayer>
         ) : null}
       </div>
       <button
@@ -197,8 +197,8 @@ export function NotebookLayoutControls({
         onClick={openRunningMatter}
       ><PanelTop aria-hidden="true" size={16} /><span>Header & footer</span></button>
       {runningMatterLayer.isOpen ? (
-        <div
-          data-notebook-transient-layer={runningMatterLayer.id}
+        <NotebookFloatingLayer
+          layerId={runningMatterLayer.id}
           className="notebook-layout-popover notebook-running-matter-popover"
           role="dialog"
           aria-label="Header and footer settings"
@@ -229,7 +229,7 @@ export function NotebookLayoutControls({
               restoreSelection();
             }}>Apply</button>
           </footer>
-        </div>
+        </NotebookFloatingLayer>
       ) : null}
       <button
         type="button"

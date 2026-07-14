@@ -24,7 +24,7 @@ import {
   type NotebookParagraphSpacePt,
   type NotebookTextAlignment,
 } from '../../../../lib/notebook';
-import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import {
   captureNotebookToolbarSelection,
   restoreNotebookToolbarSelection,
@@ -231,8 +231,8 @@ function ListSplitControl({
         <ChevronDown aria-hidden="true" size={12} />
       </button>
       {menu.isOpen ? (
-        <div
-          data-notebook-transient-layer={menu.id}
+        <NotebookFloatingLayer
+          layerId={menu.id}
           className="notebook-list-style-menu"
           role="menu"
           aria-label={menuLabel}
@@ -269,7 +269,7 @@ function ListSplitControl({
               </button>
             );
           })}
-        </div>
+        </NotebookFloatingLayer>
       ) : null}
     </div>
   );
@@ -322,8 +322,9 @@ function SpacingControl({ editor }: { editor: Editor }) {
         <ChevronDown aria-hidden="true" size={12} />
       </button>
       {menu.isOpen ? (
-        <div
-          data-notebook-transient-layer={menu.id}
+        <NotebookFloatingLayer
+          align="end"
+          layerId={menu.id}
           className="notebook-spacing-menu"
           role="menu"
           aria-label="Line and paragraph spacing"
@@ -363,7 +364,7 @@ function SpacingControl({ editor }: { editor: Editor }) {
             suffix=" pt"
             onApply={(value) => apply({ notebookSpaceAfterPt: value })}
           />
-        </div>
+        </NotebookFloatingLayer>
       ) : null}
     </div>
   );

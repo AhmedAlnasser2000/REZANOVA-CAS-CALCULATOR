@@ -33,7 +33,7 @@ import {
   insertNotebookEvidence,
   insertNotebookSection,
 } from './selection';
-import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import type { NotebookPaletteMode } from './NotebookSelectionToolbar';
 import { NotebookFontSizeControl } from './NotebookFontSizeControl';
 import {
@@ -367,8 +367,8 @@ export function NotebookRichToolbar({
             <ChevronDown aria-hidden="true" size={12} />
           </button>
           {paragraphStyleMenu.isOpen ? (
-            <div
-              data-notebook-transient-layer={paragraphStyleMenu.id}
+            <NotebookFloatingLayer
+              layerId={paragraphStyleMenu.id}
               className="notebook-paragraph-style-menu"
               role="menu"
               aria-label="Paragraph styles"
@@ -390,7 +390,7 @@ export function NotebookRichToolbar({
                   <small>{option.description}</small>
                 </button>
               ))}
-            </div>
+            </NotebookFloatingLayer>
           ) : null}
             </div>
           </RibbonGroup>
@@ -419,7 +419,7 @@ export function NotebookRichToolbar({
                 <BookOpenCheck size={16} />
               </ToolButton>
               {semanticMenu.isOpen ? (
-                <div data-notebook-transient-layer={semanticMenu.id} className="notebook-semantic-menu" role="menu" aria-label="Academic containers">
+                <NotebookFloatingLayer align="end" layerId={semanticMenu.id} className="notebook-semantic-menu" role="menu" aria-label="Academic containers">
                   {NOTEBOOK_SEMANTIC_DEFINITIONS.map((definition) => (
                     <button
                       key={definition.kind}
@@ -435,7 +435,7 @@ export function NotebookRichToolbar({
                       <small>{definition.tone}</small>
                     </button>
                   ))}
-                </div>
+                </NotebookFloatingLayer>
               ) : null}
             </div>
           </RibbonGroup>

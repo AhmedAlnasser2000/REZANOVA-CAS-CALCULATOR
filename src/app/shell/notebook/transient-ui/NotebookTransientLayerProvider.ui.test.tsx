@@ -1,7 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import { NotebookFloatingLayer } from './NotebookFloatingLayer';
 import {
   NotebookTransientLayerProvider,
 } from './NotebookTransientLayerProvider';
@@ -29,6 +30,25 @@ function Harness() {
       <Layer id="child" label="Child" parentId="first" />
       <button type="button">Outside</button>
     </NotebookTransientLayerProvider>
+  );
+}
+
+function FloatingHarness() {
+  const layer = useNotebookTransientLayer({ id: 'floating' });
+  return (
+    <div data-testid="floating-owner">
+      <button
+        data-notebook-transient-trigger={layer.id}
+        type="button"
+        aria-expanded={layer.isOpen}
+        onClick={layer.toggle}
+      >Floating</button>
+      {layer.isOpen ? (
+        <NotebookFloatingLayer layerId={layer.id} className="test-floating-menu" role="menu">
+          Floating content
+        </NotebookFloatingLayer>
+      ) : null}
+    </div>
   );
 }
 
@@ -67,5 +87,28 @@ describe('NotebookTransientLayerProvider', () => {
     await user.click(screen.getByRole('button', { name: 'Child' }));
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Outside' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('portals and flips an anchored layer inside the viewport', async () => {
+    const bounds = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function rect(this: HTMLElement) {
+        if (this.classList.contains('test-floating-menu')) {
+          return DOMRect.fromRect({ height: 200, width: 300 });
+        }
+        if (this.dataset.notebookTransientTrigger === 'floating') {
+          return DOMRect.fromRect({ x: 900, y: 700, height: 30, width: 40 });
+        }
+        return DOMRect.fromRect();
+      });
+    const user = userEvent.setup();
+    render(<NotebookTransientLayerProvider><FloatingHarness /></NotebookTransientLayerProvider>);
+
+    await user.click(screen.getByRole('button', { name: 'Floating' }));
+    const menu = screen.getByRole('menu');
+    expect(menu.parentElement).toBe(document.body);
+    expect(menu).toHaveAttribute('data-notebook-floating-placement', 'above');
+    expect(Number.parseFloat(menu.style.left)).toBeLessThanOrEqual(716);
+    expect(Number.parseFloat(menu.style.top)).toBeLessThan(700);
+    bounds.mockRestore();
   });
 });

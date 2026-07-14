@@ -277,7 +277,9 @@ function NotebookPageContent({
   if (!librarySession.document && !developmentFixture) {
     return (
       <section className="app-page app-page--notebook" data-testid="notebook-page">
-        <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
+        <header className="app-page-shell-header app-page-shell-header--notebook" title="Opening Notebook…">
+          Opening Notebook…
+        </header>
         <div className="notebook-library-loading" role={librarySession.saveStatus === 'failed' ? 'alert' : 'status'}>
           {librarySession.saveStatus === 'failed'
             ? `Notebook could not open: ${librarySession.saveError ?? 'Local storage failed.'}`
@@ -294,7 +296,9 @@ function NotebookPageContent({
 
   return (
       <section className="app-page app-page--notebook" data-testid="notebook-page">
-        <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
+        <header className="app-page-shell-header app-page-shell-header--notebook" title={document.title || 'Untitled Notebook'}>
+          <span>{document.title || 'Untitled Notebook'}</span>
+        </header>
         <div
           ref={workbenchRef}
           className={`notebook-page-workbench${uiState.outlineCollapsed ? ' is-outline-collapsed' : ''}${!inspectorIsVisible ? ' is-inspector-collapsed' : ''}`}

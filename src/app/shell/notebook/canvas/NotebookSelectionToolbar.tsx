@@ -16,7 +16,7 @@ import {
   type CSSProperties,
 } from 'react';
 
-import { useNotebookTransientLayer } from '../transient-ui';
+import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import { NotebookFontSizeControl } from './NotebookFontSizeControl';
 
 export type NotebookProseSelection = {
@@ -276,8 +276,9 @@ export function NotebookSelectionToolbar({
         onReset={() => restoreSelection(editor, currentSelection).setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()}
       />
       {paletteLayer.isOpen ? (
-        <section
-          data-notebook-transient-layer={paletteLayer.id}
+        <NotebookFloatingLayer
+          align="end"
+          layerId={paletteLayer.id}
           className="notebook-selection-palette"
           aria-label="Notebook selection colors"
         >
@@ -327,7 +328,7 @@ export function NotebookSelectionToolbar({
             </button>
           </div>
           {lowContrast ? <p role="status">This custom color may be difficult to read.</p> : null}
-        </section>
+        </NotebookFloatingLayer>
       ) : null}
     </div>
   );

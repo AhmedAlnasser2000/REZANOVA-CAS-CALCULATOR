@@ -155,6 +155,17 @@
   letter-spacing: 0;
 }
 
+.app-page-shell-header--notebook {
+  padding-inline: 18px;
+}
+
+.app-page-shell-header--notebook > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .app-page-shell-footer {
   justify-content: space-between;
   gap: 18px;

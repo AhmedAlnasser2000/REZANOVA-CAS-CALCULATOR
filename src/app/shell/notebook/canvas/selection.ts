@@ -151,11 +151,12 @@ export function insertNotebookInlineMath(
       workspaceTarget: normalized.workspaceTarget,
     },
   }).run();
-  const inserted = Boolean(notebookEditorNodeById(editor, id));
-  if (inserted) {
+  const insertedNode = notebookEditorNodeById(editor, id);
+  if (insertedNode) {
+    editor.commands.setNodeSelection(insertedNode.from);
     options.onInserted?.(id);
   }
-  return inserted;
+  return Boolean(insertedNode);
 }
 
 export function insertNotebookDisplayMath(
@@ -181,11 +182,12 @@ export function insertNotebookDisplayMath(
       workspaceTarget: normalized.workspaceTarget,
     },
   }).run();
-  const inserted = Boolean(notebookEditorNodeById(editor, id));
-  if (inserted) {
+  const insertedNode = notebookEditorNodeById(editor, id);
+  if (insertedNode) {
+    editor.commands.setNodeSelection(insertedNode.from);
     options.onInserted?.(id);
   }
-  return inserted;
+  return Boolean(insertedNode);
 }
 
 export function convertSelectedNotebookMath(
