@@ -3,11 +3,11 @@ import {
   type MathJsonRouteId,
 } from './mathjson-route-registry';
 
-export type CanonicalResultProducerVersion = 1 | 2;
+export type CanonicalResultProducerVersion = 1 | 2 | 3;
 
 export type CanonicalResultProducerVersionPolicy = {
   defaultVersion: CanonicalResultProducerVersion;
-  v2Selectors: readonly string[];
+  selectorVersions: Readonly<Record<string, CanonicalResultProducerVersion>>;
 };
 
 export const FROZEN_V1_PRODUCER_ROUTE_IDS = [
@@ -95,8 +95,15 @@ export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );
 
+export const CANONICAL_RESULT_V3_PRODUCER_SELECTORS = (
+  {} as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
+);
+
 const v2DefaultRoutes = new Set<string>(CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES);
 const v2Selectors = CANONICAL_RESULT_V2_PRODUCER_SELECTORS as Partial<
+  Record<MathJsonRouteId, readonly string[]>
+>;
+const v3Selectors = CANONICAL_RESULT_V3_PRODUCER_SELECTORS as Partial<
   Record<MathJsonRouteId, readonly string[]>
 >;
 
@@ -108,7 +115,10 @@ export const CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY = Object.freeze(
         defaultVersion: v2DefaultRoutes.has(routeId) || !frozenV1Routes.has(routeId)
           ? 2
           : 1,
-        v2Selectors: Object.freeze([...(v2Selectors[routeId] ?? [])]),
+        selectorVersions: Object.freeze(Object.fromEntries([
+          ...(v2Selectors[routeId] ?? []).map((selector) => [selector, 2] as const),
+          ...(v3Selectors[routeId] ?? []).map((selector) => [selector, 3] as const),
+        ])),
       },
     ]),
   ),
@@ -122,6 +132,9 @@ export function canonicalResultVersionForProducer(input: {
   if (!policy) {
     throw new Error('Unknown canonical result producer route: ' + input.routeId + '.');
   }
-  if (input.selector && policy.v2Selectors.includes(input.selector)) return 2;
+  if (input.selector) {
+    const selectedVersion = policy.selectorVersions[input.selector];
+    if (selectedVersion !== undefined) return selectedVersion;
+  }
   return policy.defaultVersion;
 }

@@ -1,8 +1,5 @@
 import type { SerializableMathJson } from './math-payload-types';
-import type {
-  CanonicalResultDocumentV1,
-  CanonicalResultSemanticMetadataV1,
-} from './canonical-result-types';
+import type { CanonicalResultSemanticMetadataV1 } from './canonical-result-types';
 
 export type CanonicalMathValueV2 = {
   canonicalLatex: string;
@@ -225,6 +222,3 @@ export type CanonicalResultDocumentV2 = {
   metadata?: CanonicalResultSemanticMetadataV2;
   table?: CanonicalResultTableV2;
 };
-
-export type CanonicalResultDocument = CanonicalResultDocumentV1 | CanonicalResultDocumentV2;
-export type CanonicalResultVersion = CanonicalResultDocument['version'];

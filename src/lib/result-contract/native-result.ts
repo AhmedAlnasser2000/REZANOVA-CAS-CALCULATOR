@@ -2,8 +2,10 @@ import type {
   CanonicalResultDocument,
   CanonicalResultDocumentV1,
   CanonicalResultDocumentV2,
+  CanonicalResultDocumentV3,
   ResultProducerDraft,
   ResultProducerDraftV2,
+  ResultProducerDraftV3,
   VersionedResultProducerDraft,
 } from '../../types/calculator';
 import { validateCanonicalResultDocumentVersioned } from './validation-router';
@@ -20,6 +22,12 @@ export function requireCanonicalResultAuthority<
   outcome: Outcome,
   owner: string,
 ): Outcome & { canonicalResult: CanonicalResultDocumentV2 };
+export function requireCanonicalResultAuthority<
+  Outcome extends ResultProducerDraftV3,
+>(
+  outcome: Outcome,
+  owner: string,
+): Outcome & { canonicalResult: CanonicalResultDocumentV3 };
 export function requireCanonicalResultAuthority(
   outcome: Exclude<VersionedResultProducerDraft, { kind: 'prompt' }>,
   owner: string,

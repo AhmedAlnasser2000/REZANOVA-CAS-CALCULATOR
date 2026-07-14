@@ -136,4 +136,31 @@ describe('HistoryEntry persistence parity', () => {
       timestamp: '2026-07-12T00:00:00.000Z',
     })).toThrow();
   });
+
+  it('accepts typed V3 angle quantities and keeps canonical-only fallback V1-only', () => {
+    const entry = {
+      id: 'vector-angle-grad-v3',
+      mode: 'vector',
+      inputLatex: 'angle(u,v)',
+      resultDocument: {
+        version: 3,
+        outcomeKind: 'success',
+        title: 'Angle',
+        primary: {
+          kind: 'angle-quantity',
+          presentation: { primaryLatex: '100^{g}' },
+          magnitude: { canonicalLatex: '100', mathJson: 100 },
+          unit: 'grad',
+        },
+        warnings: [],
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    } as const;
+
+    expect(historyEntrySchema.parse(entry).resultDocument.version).toBe(3);
+    expect(() => historyEntrySchema.parse({
+      ...entry,
+      resultStorageMode: 'canonical-only-fallback',
+    })).toThrow(/limited to V1/u);
+  });
 });

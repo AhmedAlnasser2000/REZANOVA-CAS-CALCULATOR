@@ -14,7 +14,12 @@ import type {
 } from './solver-types';
 import type { CanonicalMathValueV1, CanonicalResultDocumentV1 } from './canonical-result-types';
 import type { CanonicalResultDocumentV2 } from './canonical-result-v2-types';
-import type { PromptOutcome } from './canonical-runtime-outcome-types';
+import type { CanonicalResultDocumentV3 } from './canonical-result-v3-types';
+import type {
+  CanonicalRuntimeActionV2,
+  CanonicalRuntimeActionV3,
+  PromptOutcome,
+} from './canonical-runtime-outcome-types';
 
 export type { CanonicalMathValueV1 } from './canonical-result-types';
 export type { SerializableMathJson } from './math-payload-types';
@@ -187,11 +192,26 @@ export type ResultProducerDraft =
     };
 
 export type ResultProducerDraftV2 =
-  | (Omit<Extract<ResultProducerDraft, { kind: 'success' }>, 'canonicalResult'> & {
+  | (Omit<Extract<ResultProducerDraft, { kind: 'success' }>, 'canonicalResult' | 'actions'> & {
       canonicalResult: CanonicalResultDocumentV2;
+      actions?: CanonicalRuntimeActionV2[];
     })
-  | (Omit<Extract<ResultProducerDraft, { kind: 'error' }>, 'canonicalResult'> & {
+  | (Omit<Extract<ResultProducerDraft, { kind: 'error' }>, 'canonicalResult' | 'actions'> & {
       canonicalResult: CanonicalResultDocumentV2;
+      actions?: CanonicalRuntimeActionV2[];
     });
 
-export type VersionedResultProducerDraft = ResultProducerDraft | ResultProducerDraftV2;
+export type ResultProducerDraftV3 =
+  | (Omit<Extract<ResultProducerDraft, { kind: 'success' }>, 'canonicalResult' | 'actions'> & {
+      canonicalResult: CanonicalResultDocumentV3;
+      actions?: CanonicalRuntimeActionV3[];
+    })
+  | (Omit<Extract<ResultProducerDraft, { kind: 'error' }>, 'canonicalResult' | 'actions'> & {
+      canonicalResult: CanonicalResultDocumentV3;
+      actions?: CanonicalRuntimeActionV3[];
+    });
+
+export type VersionedResultProducerDraft =
+  | ResultProducerDraft
+  | ResultProducerDraftV2
+  | ResultProducerDraftV3;

@@ -16,6 +16,7 @@ import {
   CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY,
   CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES,
   CANONICAL_RESULT_V2_PRODUCER_SELECTORS,
+  CANONICAL_RESULT_V3_PRODUCER_SELECTORS,
   FROZEN_V1_PRODUCER_ROUTE_IDS,
   canonicalResultVersionForProducer,
 } from './producer-version-registry';
@@ -233,7 +234,7 @@ describe('Canonical Result V2 contract', () => {
       validated: { value: { version: 2 } },
     });
     expect(validateCanonicalResultDocumentVersioned({
-      version: 3,
+      version: 4,
       outcomeKind: 'success',
       title: 'Future',
       warnings: [],
@@ -336,6 +337,7 @@ describe('Canonical Result V2 contract', () => {
       'trigonometry.right-triangle': ['rightTriangle'],
       'vector.span-independence': ['independent'],
     });
+    expect(CANONICAL_RESULT_V3_PRODUCER_SELECTORS).toEqual({});
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
       const defaultVersion = [
         'trigonometry.angle-conversion',
@@ -345,19 +347,19 @@ describe('Canonical Result V2 contract', () => {
         'matrix.linear-system',
         'matrix.profile',
       ].includes(routeId) ? 2 : 1;
-      const v2Selectors = routeId === 'calculus.derivatives'
-        ? ['derivativePoint']
+      const selectorVersions = routeId === 'calculus.derivatives'
+        ? { derivativePoint: 2 }
         : routeId === 'equation.domain-boundary' || routeId === 'equation.rational-radical'
-          ? ['typedLabeledSupplement']
+          ? { typedLabeledSupplement: 2 }
         : routeId === 'trigonometry.right-triangle'
-          ? ['rightTriangle']
+          ? { rightTriangle: 2 }
         : routeId === 'vector.span-independence'
-          ? ['independent']
-          : [];
+          ? { independent: 2 }
+          : {};
       expect(canonicalResultVersionForProducer({ routeId })).toBe(defaultVersion);
       expect(CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY[routeId]).toEqual({
         defaultVersion,
-        v2Selectors,
+        selectorVersions,
       });
     }
     expect(canonicalResultVersionForProducer({

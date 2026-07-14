@@ -3,6 +3,7 @@ import type {
   CanonicalMathValueV2,
   CanonicalRuntimeActionV1,
   CanonicalRuntimeActionV2,
+  CanonicalRuntimeActionV3,
   CanonicalRuntimeVersionedResultOutcome,
   RuntimeAdvisories,
 } from '../../types/calculator';
@@ -21,7 +22,6 @@ import {
   validateCanonicalResultDocumentV1,
   type CanonicalResultValidationFailure,
 } from './validation';
-import { validateCanonicalResultDocumentV2 } from './validation-v2';
 import { validateCanonicalResultDocumentVersioned } from './validation-router';
 
 const TRANSFER_TARGETS = new Set(['calculate', 'equation']);
@@ -144,18 +144,19 @@ function validateActionV1(
       };
 }
 
-function validateActionV2(
+function validateActionVersioned(
   value: unknown,
   index: number,
-): { ok: true; value: CanonicalRuntimeActionV2 } | Failure {
+  version: 2 | 3,
+): { ok: true; value: CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3 } | Failure {
   const path = '$.actions[' + index + ']';
   if (!isRecord(value)) {
-    return fail('invalid-action', 'V2 runtime actions must be typed plain objects.', path);
+    return fail('invalid-action', `V${version} runtime actions must be typed plain objects.`, path);
   }
-  if (value.version !== 2) {
+  if (value.version !== version) {
     return fail(
       'action-version-mismatch',
-      'V2 canonical documents require explicitly versioned V2 runtime actions.',
+      `V${version} canonical documents require explicitly versioned V${version} runtime actions.`,
       path + '.version',
     );
   }
@@ -163,45 +164,41 @@ function validateActionV2(
     ? ['version', 'kind', 'target', 'math']
     : ['version', 'kind', 'mode', 'math'];
   if (!hasOnlyKeys(value, keys)) {
-    return fail('invalid-action', 'V2 runtime action shape is invalid.', path);
+    return fail('invalid-action', `V${version} runtime action shape is invalid.`, path);
   }
   const shapeFailure = validateActionShape(value, path);
   if (shapeFailure) return shapeFailure;
-  const mathValidation = validateCanonicalResultDocumentV2({
-    version: 2,
+  const mathValidation = validateCanonicalResultDocumentVersioned({
+    version,
     outcomeKind: 'success',
     title: 'Runtime action',
     primary: { kind: 'math', value: value.math },
     warnings: [],
   });
-  const primary = mathValidation.ok ? mathValidation.validated.value.primary : undefined;
+  const validatedDocument = mathValidation.ok ? mathValidation.validated.value : undefined;
+  const primary = validatedDocument?.version === 1 ? undefined : validatedDocument?.primary;
   if (!mathValidation.ok || primary?.kind !== 'math') {
     return fail(
       'invalid-action',
-      mathValidation.ok ? 'V2 runtime action math is missing.' : mathValidation.failure.message,
+      mathValidation.ok
+        ? `V${version} runtime action math is missing.`
+        : mathValidation.failure.message,
       path + '.math',
     );
   }
   const math = primary.value as CanonicalMathValueV2;
-  return value.kind === 'send'
-    ? {
-        ok: true,
-        value: {
-          version: 2,
-          kind: 'send',
-          target: value.target as 'calculate' | 'equation',
-          math,
-        },
-      }
+  const action = value.kind === 'send'
+    ? { version, kind: 'send' as const, target: value.target as 'calculate' | 'equation', math }
     : {
-        ok: true,
-        value: {
-          version: 2,
-          kind: 'load-core-draft',
-          mode: value.mode as 'geometry' | 'trigonometry' | 'statistics',
-          math,
-        },
+        version,
+        kind: 'load-core-draft' as const,
+        mode: value.mode as 'geometry' | 'trigonometry' | 'statistics',
+        math,
       };
+  return {
+    ok: true,
+    value: action as CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3,
+  };
 }
 
 export function validateCanonicalRuntimeVersionedResultOutcome(
@@ -251,7 +248,9 @@ export function validateCanonicalRuntimeVersionedResultOutcome(
     return fail('invalid-advisories', 'Runtime advisories are invalid.', '$.runtimeAdvisories');
   }
 
-  let actions: Array<CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2> | undefined;
+  let actions: Array<
+    CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3
+  > | undefined;
   if (value.actions !== undefined) {
     if (!Array.isArray(value.actions) || value.actions.length > CANONICAL_RUNTIME_OUTCOME_MAX_ACTIONS) {
       return fail(
@@ -264,7 +263,7 @@ export function validateCanonicalRuntimeVersionedResultOutcome(
     for (const [index, action] of value.actions.entries()) {
       const actionValidation = document.validated.value.version === 1
         ? validateActionV1(action, index)
-        : validateActionV2(action, index);
+        : validateActionVersioned(action, index, document.validated.value.version);
       if (!actionValidation.ok) return actionValidation;
       actions.push(actionValidation.value);
     }

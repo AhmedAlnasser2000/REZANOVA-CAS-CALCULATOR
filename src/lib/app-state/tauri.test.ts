@@ -68,6 +68,27 @@ function createV2HistoryEntry(id: string): HistoryEntry {
   };
 }
 
+function createV3HistoryEntry(id: string): HistoryEntry {
+  return {
+    id,
+    mode: 'vector',
+    inputLatex: 'angle(u,v)',
+    resultDocument: {
+      version: 3,
+      outcomeKind: 'success',
+      title: 'Angle',
+      primary: {
+        kind: 'angle-quantity',
+        presentation: { primaryLatex: '100^{g}' },
+        magnitude: { canonicalLatex: '100', mathJson: 100 },
+        unit: 'grad',
+      },
+      warnings: [],
+    },
+    timestamp: '2026-07-15T00:00:00.000Z',
+  };
+}
+
 function createRichHistoryEntry(): HistoryEntry & {
   futureHistoryExtension: { version: number; payload: string[] };
 } {
@@ -281,17 +302,19 @@ describe('web-preview app-state persistence', () => {
     expect((await loadCalculatorMemorySnapshot())?.history).toEqual([entry]);
   });
 
-  it('round-trips V2 as a current visible History version alongside byte-preserved V1 rows', async () => {
+  it('round-trips V2 and V3 as current visible History versions beside byte-preserved V1', async () => {
     const v1 = createRichHistoryEntry();
     const v2 = createV2HistoryEntry('history.v2.1');
+    const v3 = createV3HistoryEntry('history.v3.1');
     expect(await appendHistoryEntry(v1)).toEqual({ ok: true });
     expect(await appendHistoryEntry(v2)).toEqual({ ok: true });
+    expect(await appendHistoryEntry(v3)).toEqual({ ok: true });
 
-    expect(await loadHistoryEntries()).toEqual([v1, v2]);
+    expect(await loadHistoryEntries()).toEqual([v1, v2, v3]);
     const stored = JSON.parse(
       storage.getItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY) ?? '{}',
     ) as { history: unknown[] };
-    expect(stored.history).toEqual([v1, v2]);
+    expect(stored.history).toEqual([v1, v2, v3]);
   });
 
   it('reports invalid, oversized, and unavailable History persistence without discarding session ownership', async () => {
@@ -333,6 +356,11 @@ describe('web-preview app-state persistence', () => {
 
     expect(await appendHistoryEntry({
       ...createV2HistoryEntry('oversized-v2'),
+      inputLatex: 'x'.repeat(HISTORY_ENTRY_MAX_SERIALIZED_BYTES),
+    })).toEqual({ ok: false, reason: 'over-size' });
+
+    expect(await appendHistoryEntry({
+      ...createV3HistoryEntry('oversized-v3'),
       inputLatex: 'x'.repeat(HISTORY_ENTRY_MAX_SERIALIZED_BYTES),
     })).toEqual({ ok: false, reason: 'over-size' });
 
@@ -404,12 +432,12 @@ describe('web-preview app-state persistence', () => {
     });
   });
 
-  it('removes legacy rows once while preserving versions above V2 verbatim and outside retention', async () => {
+  it('removes legacy rows once while preserving versions above V3 verbatim and outside retention', async () => {
     const future = {
-      id: 'future-result-v3',
+      id: 'future-result-v4',
       mode: 'calculate',
       inputLatex: 'future()',
-      resultDocument: { version: 3, title: 'Future result', payload: ['kept', 'verbatim'] },
+      resultDocument: { version: 4, title: 'Future result', payload: ['kept', 'verbatim'] },
       timestamp: '2026-07-12T00:00:00.000Z',
     };
     storage.setItem(WEB_PREVIEW_APP_STATE_STORAGE_KEY, JSON.stringify({

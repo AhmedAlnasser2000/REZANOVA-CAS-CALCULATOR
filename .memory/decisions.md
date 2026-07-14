@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-07-15 - CANONICAL-RESULT-V3-ANGLE-QUANTITY1
+
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] V2 remains the default canonical-result authority. V3 is approved only for typed angle quantities that retain the existing compound presentation beside producer-proven magnitude and the unit `deg`, `rad`, or `grad`; no custom gradian MathJSON operator or redundant radians field is allowed.
+- [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Browser and desktop History treat result versions 1-3 as current and version 4+ as opaque future data. Canonical-only size fallback remains V1-only; oversized V2/V3 rows fail closed.
+
 ## 2026-07-13 - NOTEBOOK-RIBBON-ARCHITECTURE1
 
 - [agent: codex | model: gpt-5.6 | agent_family: sol | primary_agent: codex | primary_agent_model: gpt-5.6 | primary_agent_family: sol | recorded_by_agent: codex | recorded_by_agent_model: gpt-5.6 | recorded_by_agent_family: sol | verified_by_agent: codex | verified_by_agent_model: gpt-5.6 | verified_by_agent_family: sol | attribution_basis: live] Notebook uses a labelled five-group ribbon as its primary authoring surface: Font, Paragraph, Structure, Math, and Edit. Daily prose controls remain visible; Math owns only In text and Separate equation, avoiding duplicate insertion paths.

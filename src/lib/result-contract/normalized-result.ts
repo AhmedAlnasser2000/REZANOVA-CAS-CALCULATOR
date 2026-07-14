@@ -6,8 +6,9 @@ import type {
   CanonicalResultDocument,
   CanonicalResultDocumentV1,
   CanonicalResultDocumentV2,
+  CanonicalResultDocumentV3,
   CanonicalResultPeriodicFamilyV1,
-  CanonicalResultPrimaryV2,
+  CanonicalResultPrimaryV3,
   CanonicalResultRequestV2,
   CanonicalResultRowOperationV2,
   CanonicalResultSemanticMetadataV1,
@@ -22,7 +23,7 @@ type RelaxV2Math<Value> =
         ? { [Key in keyof Value]: RelaxV2Math<Value[Key]> }
         : Value;
 
-export type CanonicalResultPrimarySemantics = RelaxV2Math<CanonicalResultPrimaryV2>;
+export type CanonicalResultPrimarySemantics = RelaxV2Math<CanonicalResultPrimaryV3>;
 export type CanonicalResultRequestSemantics = RelaxV2Math<CanonicalResultRequestV2>;
 export type CanonicalResultRowOperationSemantics = RelaxV2Math<CanonicalResultRowOperationV2>;
 
@@ -156,7 +157,7 @@ export type CanonicalResultSemantics = {
 };
 
 export type NormalizedCanonicalResult = {
-  sourceVersion: 1 | 2;
+  sourceVersion: 1 | 2 | 3;
   rawDocument: CanonicalResultDocument;
   presentation: CanonicalResultPresentation;
   semantics: CanonicalResultSemantics;
@@ -415,12 +416,14 @@ function normalizeV1(document: CanonicalResultDocumentV1): NormalizedCanonicalRe
   };
 }
 
-function v2RequestLatex(request: CanonicalResultDocumentV2['request']) {
+function modernRequestLatex(request: CanonicalResultDocumentV2['request']) {
   if (!request) return undefined;
   return request.kind === 'math' ? request.value.canonicalLatex : request.presentationLatex;
 }
 
-function normalizeV2(document: CanonicalResultDocumentV2): NormalizedCanonicalResult {
+function normalizeModern(
+  document: CanonicalResultDocumentV2 | CanonicalResultDocumentV3,
+): NormalizedCanonicalResult {
   const compoundPresentation = document.primary?.kind !== 'math'
     ? document.primary?.presentation
     : undefined;
@@ -436,7 +439,7 @@ function normalizeV2(document: CanonicalResultDocumentV2): NormalizedCanonicalRe
       : undefined
   );
   return {
-    sourceVersion: 2,
+    sourceVersion: document.version,
     rawDocument: document,
     presentation: {
       ...commonPresentation(document),
@@ -448,7 +451,7 @@ function normalizeV2(document: CanonicalResultDocumentV2): NormalizedCanonicalRe
           }
         : {}),
       ...(document.request
-        ? { requestLatex: v2RequestLatex(document.request) }
+        ? { requestLatex: modernRequestLatex(document.request) }
         : document.metadata?.resolvedInput
           ? { requestLatex: document.metadata.resolvedInput.canonicalLatex }
           : {}),
@@ -520,5 +523,5 @@ function normalizeV2(document: CanonicalResultDocumentV2): NormalizedCanonicalRe
 export function normalizeCanonicalResultDocument(
   document: CanonicalResultDocument,
 ): NormalizedCanonicalResult {
-  return document.version === 1 ? normalizeV1(document) : normalizeV2(document);
+  return document.version === 1 ? normalizeV1(document) : normalizeModern(document);
 }

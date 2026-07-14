@@ -425,13 +425,13 @@ fn history_result_document_version(entry: &serde_json::Value) -> Option<u64> {
 }
 
 fn is_future_history_value(entry: &serde_json::Value) -> bool {
-    history_result_document_version(entry).is_some_and(|version| version > 1)
+    history_result_document_version(entry).is_some_and(|version| version > 3)
 }
 
 fn validate_current_history_append(entry: &serde_json::Value) -> Result<(), String> {
     validate_history_envelope(entry, true)?;
-    if history_result_document_version(entry) != Some(1) {
-        return Err("History append requires a version-1 canonical result document.".into());
+    if !matches!(history_result_document_version(entry), Some(1..=3)) {
+        return Err("History append requires a version-1, version-2, or version-3 canonical result document.".into());
     }
     let object = entry
         .as_object()
@@ -1320,14 +1320,37 @@ mod tests {
     }
 
     #[test]
+    fn appends_and_counts_current_v1_v2_v3_history_rows() {
+        let storage_dir = unique_test_storage_dir("history-current-versions");
+        let state = AppState::load(storage_dir.clone()).expect("state should initialize");
+        for version in 1..=3 {
+            let entry = serde_json::json!({
+                "id": format!("history.current.v{version}"),
+                "mode": "calculate",
+                "inputLatex": "1+1",
+                "resultDocument": {
+                    "version": version,
+                    "outcomeKind": "success",
+                    "title": "Result",
+                    "warnings": []
+                },
+                "timestamp": "2026-07-15T00:00:00.000Z"
+            });
+            append_history_value(entry, &state).expect("current history version should append");
+        }
+        assert_eq!(load_history_values(&state).unwrap().len(), 3);
+        fs::remove_dir_all(storage_dir).expect("temporary state should be removed");
+    }
+
+    #[test]
     fn preserves_future_history_rows_through_retention_clear_and_restart() {
         let storage_dir = unique_test_storage_dir("history-future-preservation");
         let future = serde_json::json!({
-            "id": "history.future.v2",
+            "id": "history.future.v4",
             "mode": "calculate",
             "inputLatex": "future()",
             "resultDocument": {
-                "version": 2,
+                "version": 4,
                 "title": "Future result",
                 "payload": ["kept", "verbatim"]
             },
@@ -1378,7 +1401,7 @@ fn boot_app(state: State<'_, AppState>) -> Result<AppBootstrap, String> {
             .iter()
             .filter(|entry| {
                 validate_history_envelope(entry, false).is_ok()
-                    && history_result_document_version(entry) == Some(1)
+                    && matches!(history_result_document_version(entry), Some(1..=3))
             })
             .count(),
         variable_memory: snapshot.variable_memory,

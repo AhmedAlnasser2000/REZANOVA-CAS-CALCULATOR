@@ -124,7 +124,7 @@ function hasHistoryEnvelope(value: unknown): value is Record<string, unknown> {
 function isFutureHistoryRow(value: unknown) {
   if (!hasHistoryEnvelope(value) || !isRecord(value.resultDocument)) return false;
   const version = value.resultDocument.version;
-  return typeof version === 'number' && Number.isInteger(version) && version > 2;
+  return typeof version === 'number' && Number.isInteger(version) && version > 3;
 }
 
 function sanitizeCurrentHistoryEntry(value: unknown): HistoryEntry | null {
@@ -377,7 +377,7 @@ export function prepareHistoryEntryForPersistence(
   const entryBytes = serializedByteLength(entry);
   if (entryBytes === null) return { ok: false, reason: 'invalid' };
   if (entryBytes <= HISTORY_ENTRY_MAX_SERIALIZED_BYTES) return { ok: true, entry };
-  if (entry.resultDocument.version === 2) return { ok: false, reason: 'over-size' };
+  if (entry.resultDocument.version !== 1) return { ok: false, reason: 'over-size' };
 
   const canonicalOnlyEntry = {
     ...entry,

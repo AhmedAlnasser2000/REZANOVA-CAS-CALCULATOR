@@ -31,7 +31,7 @@ import type {
 import type { NumericSolveInterval } from './solver-types';
 import type { EquationReplaySeed } from './equation-replay-types';
 import type { HistoryReplaySnapshotV1 } from './history-replay-types';
-import type { CanonicalResultDocument } from './canonical-result-v2-types';
+import type { CanonicalResultDocument } from './canonical-result-v3-types';
 import type {
   DisplayAnswerRowsReadback,
   DisplayDetailSection,

@@ -22,7 +22,7 @@ export type CanonicalResultConsumerResolution =
   | {
       ok: true;
       source: 'native';
-      sourceVersion: 1 | 2;
+      sourceVersion: 1 | 2 | 3;
       rawDocument: NormalizedCanonicalResult['rawDocument'];
       presentation: NormalizedCanonicalResult['presentation'];
       semantics: NormalizedCanonicalResult['semantics'];

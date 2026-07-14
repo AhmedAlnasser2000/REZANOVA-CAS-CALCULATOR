@@ -114,6 +114,8 @@ export function collectCanonicalMathLeaves(
     primary.operandVectors.forEach((value, index) => add(
       references, value, `primary.operandVectors[${index}]`, 'primary.operandVectors[*]',
     ));
+  } else if (primary?.kind === 'angle-quantity') {
+    add(references, primary.magnitude, 'primary.magnitude', 'primary.magnitude');
   }
 
   const request = semantics.request;

@@ -288,6 +288,59 @@ test('loads, renders, and replays a current V2 History result', async ({ page })
     .toHaveAttribute('data-raw-latex', 'x=2');
 });
 
+test('loads, renders, copies, and replays a current V3 gradian angle quantity', async ({ page }) => {
+  const entry: HistoryEntry = {
+    id: 'history.v3-angle-visible.1',
+    mode: 'vector',
+    inputLatex: 'angle(u,v)',
+    resultDocument: {
+      version: 3,
+      outcomeKind: 'success',
+      title: 'Angle',
+      primary: {
+        kind: 'angle-quantity',
+        presentation: { primaryLatex: '100^{g}' },
+        magnitude: { canonicalLatex: '100', mathJson: 100 },
+        unit: 'grad',
+      },
+      warnings: [],
+    },
+    timestamp: '2026-07-15T00:00:00.000Z',
+  };
+  await page.addInitScript(({ key, historyEntry, settings }) => {
+    window.localStorage.setItem(key, JSON.stringify({
+      version: 1,
+      currentMode: 'vector',
+      settings,
+      history: [historyEntry],
+      variableMemory: [],
+    }));
+  }, { key: APP_STATE_KEY, historyEntry: entry, settings: DEFAULT_SETTINGS });
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+
+  await page.goto('/');
+  await expect(page.getByTestId('main-editor')).toBeVisible();
+  await page.getByTestId('history-toggle').click();
+  await expect(page.getByTestId('history-entry')).toHaveCount(1);
+  await expect(page.getByTestId('history-entry-result-preview').locator('[data-raw-latex]'))
+    .toHaveAttribute('data-raw-latex', '100^{g}');
+  await page.screenshot({
+    path: '.task_tmp/canonical-result-v3-angle-quantity1/history-v3-grad-angle-entry.png',
+    fullPage: true,
+  });
+  await page.getByTestId('history-entry-replay').click();
+  await expect(page.getByTestId('display-outcome-title')).toHaveText('Angle');
+  await expect(page.locator('[data-testid="display-outcome-success"] [data-raw-latex]').first())
+    .toHaveAttribute('data-raw-latex', '100^{g}');
+  await page.getByTestId('display-outcome-action-copy-result').click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText()))
+    .toContain('100^{g}');
+  await page.screenshot({
+    path: '.task_tmp/canonical-result-v3-angle-quantity1/history-v3-grad-angle.png',
+    fullPage: true,
+  });
+});
+
 test('removes old and malformed rows while preserving future result versions verbatim', async ({ page }) => {
   const legacyEntry = {
     id: 'history.legacy-only.1',
@@ -303,12 +356,12 @@ test('removes old and malformed rows while preserving future result versions ver
     resultDocument: { version: 1, title: 'Missing canonical fields' },
     timestamp: '2026-07-12T00:00:01.000Z',
   };
-  const futureV3 = {
-    id: 'history.future-v3.1',
+  const futureV4 = {
+    id: 'history.future-v4.1',
     mode: 'calculate',
     inputLatex: 'future()',
     resultDocument: {
-      version: 3,
+      version: 4,
       title: 'Future result',
       payload: ['kept', 'verbatim'],
     },
@@ -326,7 +379,7 @@ test('removes old and malformed rows while preserving future result versions ver
     key: APP_STATE_KEY,
     legacy: legacyEntry,
     malformed: malformedV1,
-    future: futureV3,
+    future: futureV4,
     settings: DEFAULT_SETTINGS,
   });
 
@@ -342,7 +395,7 @@ test('removes old and malformed rows while preserving future result versions ver
     const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
     return state.history ?? [];
   }, APP_STATE_KEY);
-  expect(persisted).toEqual([futureV3]);
+  expect(persisted).toEqual([futureV4]);
 
   await page.reload();
   await expect(page.getByTestId('main-editor')).toBeVisible();
@@ -350,5 +403,5 @@ test('removes old and malformed rows while preserving future result versions ver
     const state = JSON.parse(window.localStorage.getItem(key) ?? '{}') as { history?: unknown[] };
     return state.history ?? [];
   }, APP_STATE_KEY);
-  expect(afterReload).toEqual([futureV3]);
+  expect(afterReload).toEqual([futureV4]);
 });

@@ -4,9 +4,11 @@ import type {
   CanonicalResultDocumentV1,
   CanonicalRuntimeActionV1,
   CanonicalRuntimeActionV2,
+  CanonicalRuntimeActionV3,
   CanonicalRuntimeOutcome,
   CanonicalRuntimeResultOutcome,
   CanonicalRuntimeResultOutcomeV2,
+  CanonicalRuntimeResultOutcomeV3,
   PromptOutcome,
   ResultProducerActionDraft,
   VersionedResultProducerDraft,
@@ -372,9 +374,18 @@ export function createCanonicalRuntimeResult(
   },
 ): CanonicalRuntimeResultOutcomeV2;
 export function createCanonicalRuntimeResult(
+  canonicalResult: Extract<CanonicalResultDocument, { version: 3 }>,
+  options?: {
+    actions?: readonly CanonicalRuntimeActionV3[];
+    runtimeAdvisories?: RuntimeAdvisories;
+  },
+): CanonicalRuntimeResultOutcomeV3;
+export function createCanonicalRuntimeResult(
   canonicalResult: CanonicalResultDocument,
   options: {
-    actions?: readonly (CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2)[];
+    actions?: readonly (
+      CanonicalRuntimeActionV1 | CanonicalRuntimeActionV2 | CanonicalRuntimeActionV3
+    )[];
     runtimeAdvisories?: RuntimeAdvisories;
   } = {},
 ): Exclude<CanonicalRuntimeOutcome, PromptOutcome> {
@@ -414,14 +425,15 @@ export function finalizeCanonicalRuntimeOutcomeFromProducer(
   if (!outcome.canonicalResult) {
     throw new Error(`${owner} runtime outcome is missing native canonical result authority.`);
   }
-  if (outcome.canonicalResult.version === 2 && outcome.actions?.length) {
-    throw new Error(`${owner} V2 runtime actions require producer-owned V2 MathJSON proof.`);
-  }
+  const actions = outcome.canonicalResult.version === 1
+    ? (outcome.actions as ResultProducerActionDraft[] | undefined)
+        ?.map(canonicalActionFromProducerDraft)
+    : outcome.actions;
   return requireCanonicalRuntimeOutcome({
     kind: outcome.kind,
     canonicalResult: outcome.canonicalResult,
-    ...(outcome.actions?.length
-      ? { actions: outcome.actions.map(canonicalActionFromProducerDraft) }
+    ...(actions?.length
+      ? { actions }
       : {}),
     ...(outcome.runtimeAdvisories
       ? { runtimeAdvisories: outcome.runtimeAdvisories }

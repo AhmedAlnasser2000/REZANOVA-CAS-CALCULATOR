@@ -785,11 +785,11 @@ export const historyEntrySchema = z.object({
   resultDocument: z.custom<CanonicalResultDocument>((value) => {
     const validation = validateCanonicalResultDocumentVersioned(value);
     return validation.ok && validation.validated.value.outcomeKind === 'success';
-  }, 'Expected a valid success CanonicalResultDocumentV1 or CanonicalResultDocumentV2'),
+  }, 'Expected a valid success CanonicalResultDocumentV1, V2, or V3'),
   resultStorageMode: z.literal('canonical-only-fallback').optional(),
   timestamp: z.string(),
 }).passthrough().superRefine((entry, context) => {
-  if (entry.resultDocument.version === 2 && entry.resultStorageMode) {
+  if (entry.resultDocument.version !== 1 && entry.resultStorageMode) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['resultStorageMode'],

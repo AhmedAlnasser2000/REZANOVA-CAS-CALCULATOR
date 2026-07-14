@@ -140,6 +140,17 @@ function completeV2SemanticInputs(): Array<Parameters<typeof collectCanonicalMat
         primary: { kind: 'math', value },
       },
     },
+    {
+      sourceVersion: 3,
+      semantics: {
+        primary: {
+          kind: 'angle-quantity',
+          presentation: { primaryLatex: '100^{g}' },
+          magnitude: value,
+          unit: 'grad',
+        },
+      },
+    },
   ];
 }
 

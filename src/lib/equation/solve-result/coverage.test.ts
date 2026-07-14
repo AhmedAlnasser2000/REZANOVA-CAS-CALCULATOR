@@ -6,13 +6,16 @@ import { executeHistoryReplayRequest } from '../../history-replay/native-executi
 import type { CanonicalRuntimeOutcome } from '../../../types/calculator';
 import { buildEquationSolveResultContract } from './factory';
 import { validateEquationSolveResultContract } from './validation';
-import { validateCanonicalResultDocumentV2 } from '../../result-contract';
+import { validateCanonicalResultDocumentVersioned } from '../../result-contract';
 
 function assertCarrier(outcome: CanonicalRuntimeOutcome, label: string) {
   if (outcome.kind === 'prompt') throw new Error(`${label}: unexpected prompt.`);
-  if (outcome.canonicalResult.version === 2) {
-    expect(validateCanonicalResultDocumentV2(outcome.canonicalResult).ok, `${label} V2 contract`).toBe(true);
-    expect(structuredClone(outcome.canonicalResult), `${label} V2 clone parity`)
+  if (outcome.canonicalResult.version !== 1) {
+    expect(
+      validateCanonicalResultDocumentVersioned(outcome.canonicalResult).ok,
+      `${label} versioned contract`,
+    ).toBe(true);
+    expect(structuredClone(outcome.canonicalResult), `${label} versioned clone parity`)
       .toEqual(outcome.canonicalResult);
     return;
   }
