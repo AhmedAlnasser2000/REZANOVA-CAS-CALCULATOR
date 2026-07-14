@@ -135,3 +135,16 @@
 - platform evidence: the desktop capability includes `core:webview:allow-print`, while the actual cross-platform call remains the webview-native `window.print()` flow. No PDF bytes are created.
 - static evidence: focused Notebook/publication ESLint, file-size validation, memory validation, diff hygiene, and exact-patch incremental TypeScript from clean `e4710c76` pass. The shared-checkout recheck is blocked only by one concurrent OOE diagnostics fixture error; that foreign file is excluded.
 - resource evidence: no full unit/UI/canary suite or production build ran. Gate-owned Vite and Playwright processes stopped, and untracked `test-results/` remains excluded.
+
+## NOTEBOOK-EXPORT-DOCX1
+
+- gate: backend
+- status: verified
+- model evidence: 11 focused publication tests pass; generated OOXML is inspected for headings, paragraph formatting, styled lists, OMML, alternate SVG/PNG content, page setup, breaks, running matter, media, captions, structured tables, and static video text.
+- UI evidence: 2 focused cases pass for compatibility-before-export, document/Section scope, empty-scope guarding, export-only copy, and Escape dismissal.
+- Chromium evidence: one real-download scenario passes at 2400px, 1440px, and 1100px plus 80%, 130%, and forced colors. The dialog stays contained with zero document overflow and the downloaded package has the expected ZIP signature.
+- interoperability evidence: `unzip -t` finds no package errors. LibreOffice 26.2.2.2 renders the rich Worked Example export with headings, prose, structured containers, evidence, and static equation visuals. The initial OMML-only result dropped equations; standards-style alternate content corrected the failure while retaining editable OMML for Word.
+- compatibility evidence: unsupported LaTeX fails closed to reported SVG/PNG visual fallback; accepted SVG images retain vector data plus PNG fallback; video uses the same static poster/caption/note policy as PDF. Microsoft 365 Word smoke remains unavailable and compatibility is therefore provisional.
+- dependency evidence: production `npm audit --omit=dev` reports zero vulnerabilities. DOCX code is lazy-loaded away from the normal Notebook path.
+- static evidence: focused ESLint and Vite production build pass. Exact-patch TypeScript passes in a clean detached worktree after excluding two pre-existing foreign test-fixture errors; the shared `npm run build` is blocked by one of those concurrent OOE fixtures before Vite runs.
+- resource evidence: no full unit/UI/canary suite ran. Gate-owned preview/Playwright processes stopped, the temporary worktree was removed, and ignored `.task_tmp/`, untracked `test-results/`, and concurrent clipboard/result-contract/OOE work remain excluded.

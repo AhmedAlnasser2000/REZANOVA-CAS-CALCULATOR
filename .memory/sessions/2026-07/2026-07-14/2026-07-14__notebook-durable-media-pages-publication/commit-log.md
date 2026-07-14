@@ -101,3 +101,11 @@
 - status: verified; committed by the checkpoint containing this entry
 - staged_scope: Notebook PDF publication UI/renderer, layout-fragment export seam, focused tests, styles, Chromium specification, Tauri print capability, and required durable memory only
 - excluded: untracked `test-results/`, concurrent clipboard/result-contract/OOE work, and unrelated staged changes
+
+## NOTEBOOK-EXPORT-DOCX1
+
+- commit_message: `NOTEBOOK-EXPORT-DOCX1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: DOCX dependency declarations, frozen-projection OOXML/OMML/media adapters, Word export UI, focused tests, Chromium specification, styles, and required durable memory only
+- excluded: untracked `test-results/`, ignored `.task_tmp/` evidence, concurrent clipboard/result-contract/OOE work, and unrelated staged changes

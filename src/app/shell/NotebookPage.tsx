@@ -6,9 +6,11 @@ import {
 import {
   useCallback,
   useEffect,
+  lazy,
   useMemo,
   useRef,
   useState,
+  Suspense,
   type CSSProperties,
 } from 'react';
 
@@ -53,6 +55,11 @@ import { downloadNotebookPackage } from './notebook/library/downloadNotebookPack
 import { useNotebookLibrarySession } from './notebook/library/useNotebookLibrarySession';
 import { NotebookPdfExportDialog } from './notebook/publication';
 
+const NotebookDocxExportDialog = lazy(async () => {
+  const module = await import('./notebook/publication/NotebookDocxExportDialog');
+  return { default: module.NotebookDocxExportDialog };
+});
+
 type NotebookPageProps = {
   instanceId: string;
   libraryService?: NotebookLibraryService;
@@ -90,6 +97,7 @@ function NotebookPageContent({
     pageHeightPx: 1,
   });
   const [pdfRecord, setPdfRecord] = useState<NotebookStoredRecordV1 | null>(null);
+  const [docxRecord, setDocxRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
@@ -382,6 +390,7 @@ function NotebookPageContent({
               fileControl={(
                 <NotebookFileBackstage
                   session={librarySession}
+                  onExportDocx={() => setDocxRecord(librarySession.snapshotCurrentRecord())}
                   onExportPdf={() => setPdfRecord(librarySession.snapshotCurrentRecord())}
                 />
               )}
@@ -468,6 +477,16 @@ function NotebookPageContent({
             sourceViewMode={effectiveViewMode}
             onClose={() => setPdfRecord(null)}
           />
+        ) : null}
+        {docxRecord ? (
+          <Suspense fallback={null}>
+            <NotebookDocxExportDialog
+              assetPort={service.asset}
+              layout={publicationLayout}
+              record={docxRecord}
+              onClose={() => setDocxRecord(null)}
+            />
+          </Suspense>
         ) : null}
         <footer className="app-page-shell-footer">
           <span>{effectiveViewMode === 'draft'

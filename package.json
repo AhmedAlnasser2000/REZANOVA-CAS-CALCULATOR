@@ -100,6 +100,8 @@
     "browserslist": "^4.28.1",
     "caniuse-lite": "^1.0.30001775",
     "decimal.js": "^10.6.0",
+    "docx": "^9.7.1",
+    "jszip": "^3.10.1",
     "lucide-react": "^1.23.0",
     "mathlive": "^0.108.3",
     "react": "^19.2.0",

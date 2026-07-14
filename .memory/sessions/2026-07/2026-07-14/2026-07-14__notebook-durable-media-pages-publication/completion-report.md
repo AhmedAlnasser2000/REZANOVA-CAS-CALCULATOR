@@ -45,4 +45,7 @@
 - `NOTEBOOK-EXPORT-PROJECTION1` is committed as `e4710c76`.
 - `NOTEBOOK-EXPORT-PDF1` is verified under the standing commit approval. File backstage now prepares a compatibility report and dedicated typed physical-page preview from the frozen current revision, then invokes the system Print/Save as PDF dialog.
 - Whole document, exact physical page range, and selected top-level Sections are supported. Static math, selectable text, safe SVG/image formatting, captions, structured colors, headers/footers, numbering, explicit breaks, and static video descriptions are included without a second PDF engine or direct PDF byte generation.
-- The next gate is `NOTEBOOK-EXPORT-DOCX1`.
+- `NOTEBOOK-EXPORT-PDF1` is committed as `4d977b2a`.
+- `NOTEBOOK-EXPORT-DOCX1` is verified under the standing commit approval. File backstage now creates whole-document or selected-Section `.docx` publications from the frozen projection, with editable OOXML structures, bounded OMML conversion, SVG/PNG alternate equation content, image fallbacks, and static video substitutions.
+- Real Chromium download, package inspection, and LibreOffice 26.2.2.2 rendering pass. Microsoft 365 Word smoke remains unavailable, so compatibility is provisional rather than overstated.
+- The next gate is `NOTEBOOK-EXPORT-WEB1`.

@@ -9,6 +9,109 @@
   color: #e5ebe1;
 }
 
+.notebook-publication-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 10, 9, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+.notebook-docx-dialog {
+  width: min(680px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 22px;
+  color: var(--text-primary, #e8efe5);
+  background: #10211f;
+  border: 1px solid rgba(184, 212, 156, 0.32);
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+.notebook-docx-dialog > header,
+.notebook-docx-dialog > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notebook-docx-dialog > header span {
+  color: #a9c695;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.notebook-docx-dialog h2,
+.notebook-docx-dialog h3 { margin: 4px 0 0; }
+
+.notebook-docx-dialog > header button,
+.notebook-docx-dialog > footer button {
+  min-height: 36px;
+  padding: 7px 14px;
+  color: inherit;
+  background: #1a302d;
+  border: 1px solid rgba(214, 225, 205, 0.2);
+  border-radius: 6px;
+}
+
+.notebook-docx-dialog > header button {
+  min-width: 36px;
+  padding: 0;
+  font-size: 1.35rem;
+}
+
+.notebook-docx-dialog fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 22px 0 16px;
+  padding: 16px;
+  border: 1px solid rgba(214, 225, 205, 0.16);
+  border-radius: 8px;
+}
+
+.notebook-docx-dialog label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.notebook-docx-dialog label.is-disabled { opacity: 0.5; }
+
+.notebook-docx-sections {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 0 25px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 6px;
+}
+
+.notebook-docx-compatibility {
+  min-height: 110px;
+  padding: 14px 16px;
+  background: rgba(184, 212, 156, 0.07);
+  border: 1px solid rgba(184, 212, 156, 0.18);
+  border-radius: 8px;
+}
+
+.notebook-docx-compatibility ul { margin-bottom: 0; padding-left: 22px; }
+.notebook-docx-note { color: #b8c5b4; font-size: 0.85rem; }
+.notebook-docx-dialog > footer { justify-content: flex-end; margin-top: 18px; }
+.notebook-docx-dialog > footer button:last-child { color: #102018; background: #b8d49c; font-weight: 700; }
+.notebook-docx-dialog button:disabled { opacity: 0.45; }
+
+@media (forced-colors: active) {
+  .notebook-publication-dialog-backdrop,
+  .notebook-docx-dialog,
+  .notebook-docx-compatibility { color: CanvasText; background: Canvas; border-color: CanvasText; forced-color-adjust: auto; }
+}
+
 .notebook-pdf-dialog-chrome {
   position: relative;
   z-index: 1;
