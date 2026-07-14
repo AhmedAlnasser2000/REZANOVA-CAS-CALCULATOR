@@ -40,7 +40,14 @@ async function expectDialogContained(page: Page) {
   expect(geometry.height).toBeGreaterThan(300);
 }
 
-test('Notebook DOCX publication reports reflow and downloads valid OOXML', async ({ page }) => {
+test('Notebook DOCX publication reports reflow and saves valid OOXML', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: undefined,
+      writable: true,
+    });
+  });
   await page.setViewportSize({ width: 2400, height: 1050 });
   await openWorkedNotebook(page);
 
@@ -73,11 +80,12 @@ test('Notebook DOCX publication reports reflow and downloads valid OOXML', async
   await attachScreenshot(page, 'notebook-docx-80');
 
   const downloadPromise = page.waitForEvent('download');
-  await dialog.getByRole('button', { name: 'Download .docx' }).click();
+  await dialog.getByRole('button', { name: 'Save .docx' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('Untitled Notebook.docx');
   const retainedPath = test.info().outputPath('notebook-docx-publication.docx');
   await download.saveAs(retainedPath);
+  await expect(dialog.getByRole('status')).toContainText('browser cannot choose a save location');
   const signature = [...(await readFile(retainedPath)).subarray(0, 2)];
   expect(signature).toEqual([0x50, 0x4b]);
 });

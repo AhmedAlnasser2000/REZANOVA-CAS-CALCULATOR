@@ -23,6 +23,7 @@ export * from './document/surface-state';
 export * from './document/structured-blocks';
 export * from './persistence/port';
 export * from './persistence/contracts';
+export * from './persistence/export-save';
 export * from './persistence/indexed-db';
 export * from './persistence/tauri';
 export * from './persistence/service';

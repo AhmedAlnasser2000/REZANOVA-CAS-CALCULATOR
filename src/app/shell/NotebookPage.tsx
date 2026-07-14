@@ -17,11 +17,13 @@ import {
 import {
   NOTEBOOK_LIVE_BLOCK_TARGET,
   NOTEBOOK_PERFORMANCE_PROFILES,
+  createNotebookExportSavePort,
   createNotebookPerformanceFixture,
   createNotebookRichDocument,
   getDefaultNotebookLibraryService,
   requestNotebookWorkspaceClose,
   type NotebookLibraryService,
+  type NotebookExportSavePort,
   type NotebookPerformanceProfile,
   type NotebookRichDocument,
   type NotebookStoredRecordV1,
@@ -52,7 +54,6 @@ import {
 import { useNotebookUiState } from './notebook/useNotebookUiState';
 import { useNotebookDocumentAnalysis } from './notebook/useNotebookDocumentAnalysis';
 import { NotebookFileBackstage } from './notebook/library/NotebookFileBackstage';
-import { downloadNotebookPackage } from './notebook/library/downloadNotebookPackage';
 import { useNotebookLibrarySession } from './notebook/library/useNotebookLibrarySession';
 import { NotebookPdfExportDialog } from './notebook/publication';
 
@@ -67,6 +68,7 @@ const NotebookWebExportDialog = lazy(async () => {
 });
 
 type NotebookPageProps = {
+  exportSavePort?: NotebookExportSavePort;
   instanceId: string;
   libraryService?: NotebookLibraryService;
   onOpenMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
@@ -86,6 +88,7 @@ function selectionUsesInspector(
 }
 
 function NotebookPageContent({
+  exportSavePort: suppliedExportSavePort,
   instanceId,
   libraryService,
   onOpenMathInTool,
@@ -106,12 +109,15 @@ function NotebookPageContent({
   const [pdfRecord, setPdfRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [docxRecord, setDocxRecord] = useState<NotebookStoredRecordV1 | null>(null);
   const [webRecord, setWebRecord] = useState<NotebookStoredRecordV1 | null>(null);
+  const [recoveryExportMessage, setRecoveryExportMessage] = useState<string | null>(null);
   const [lastRelevantSelection, setLastRelevantSelection] = useState<NotebookEditorSelection | null>(null);
   const { active: activeMathField } = useNotebookMathFieldController();
   const workbenchRef = useRef<HTMLDivElement | null>(null);
   const collapsedInspectorSelectionIdRef = useRef<string | null>(null);
   const { patchUiState, uiState } = useNotebookUiState(instanceId);
   const [service] = useState(() => libraryService ?? getDefaultNotebookLibraryService());
+  const [fallbackExportSavePort] = useState(() => createNotebookExportSavePort());
+  const exportSavePort = suppliedExportSavePort ?? fallbackExportSavePort;
   const librarySession = useNotebookLibrarySession({
     instanceId,
     onUpdateSurfaceState,
@@ -390,12 +396,29 @@ function NotebookPageContent({
                   <button
                     type="button"
                     disabled={!librarySession.packageAvailable}
-                    onClick={() => void librarySession.exportPortable().then((output) => {
-                      downloadNotebookPackage(output.bytes, `Recovery - ${output.fileName}`);
-                    })}
+                    onClick={() => void (async () => {
+                      try {
+                        const output = await librarySession.exportPortable();
+                        let browserNotice: string | null = null;
+                        const result = await exportSavePort.save({
+                          bytes: output.bytes,
+                          mimeType: 'application/vnd.calcwiz.notebook+zip',
+                          onNotice: (next) => { browserNotice = next.message; },
+                          suggestedFileName: `Recovery - ${output.fileName}`,
+                        });
+                        setRecoveryExportMessage(result === 'cancelled'
+                          ? 'Recovery export cancelled.'
+                          : browserNotice ?? 'Recovery copy saved.');
+                      } catch (error) {
+                        setRecoveryExportMessage(error instanceof Error
+                          ? `Recovery export failed: ${error.message}`
+                          : 'Recovery export failed.');
+                      }
+                    })()}
                   >
                     Export recovery copy
                   </button>
+                  {recoveryExportMessage ? <p role="status">{recoveryExportMessage}</p> : null}
                   <button type="button" onClick={() => requestNotebookWorkspaceClose(instanceId)}>
                     Close without saving
                   </button>
@@ -414,6 +437,7 @@ function NotebookPageContent({
               fileControl={(
                 <NotebookFileBackstage
                   session={librarySession}
+                  savePort={exportSavePort}
                   onExportDocx={() => setDocxRecord(librarySession.snapshotCurrentRecord())}
                   onExportPdf={() => setPdfRecord(librarySession.snapshotCurrentRecord())}
                   onExportWeb={() => setWebRecord(librarySession.snapshotCurrentRecord())}
@@ -510,6 +534,7 @@ function NotebookPageContent({
               assetPort={service.asset}
               layout={publicationLayout}
               record={docxRecord}
+              savePort={exportSavePort}
               onClose={() => setDocxRecord(null)}
             />
           </Suspense>
@@ -520,6 +545,7 @@ function NotebookPageContent({
               assetPort={service.asset}
               layout={publicationLayout}
               record={webRecord}
+              savePort={exportSavePort}
               onClose={() => setWebRecord(null)}
             />
           </Suspense>

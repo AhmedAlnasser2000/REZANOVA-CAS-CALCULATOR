@@ -1,6 +1,7 @@
 export const NOTEBOOK_WORKSPACE_FOCUS_EVENT = 'calcwiz:notebook-workspace-focus';
 export const NOTEBOOK_WORKSPACE_CLOSE_EVENT = 'calcwiz:notebook-workspace-close';
 export const NOTEBOOK_WORKSPACE_TITLE_EVENT = 'calcwiz:notebook-workspace-title';
+export const NOTEBOOK_WORKSPACE_OPEN_QUERY_EVENT = 'calcwiz:notebook-workspace-open-query';
 
 export type NotebookWorkspaceFocusDetail = {
   libraryId: string;
@@ -14,6 +15,12 @@ export type NotebookWorkspaceCloseDetail = {
 export type NotebookWorkspaceTitleDetail = {
   instanceId: string;
   title: string;
+};
+
+export type NotebookWorkspaceOpenQueryDetail = {
+  excludingInstanceId?: string;
+  libraryId: string;
+  open: boolean;
 };
 
 export function requestNotebookWorkspaceFocus(libraryId: string) {
@@ -39,4 +46,20 @@ export function publishNotebookWorkspaceTitle(instanceId: string, title: string)
       detail: { instanceId, title } satisfies NotebookWorkspaceTitleDetail,
     }));
   }
+}
+
+export function isNotebookWorkspaceOpen(
+  libraryId: string,
+  excludingInstanceId?: string,
+) {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  const detail: NotebookWorkspaceOpenQueryDetail = {
+    excludingInstanceId,
+    libraryId,
+    open: false,
+  };
+  window.dispatchEvent(new CustomEvent(NOTEBOOK_WORKSPACE_OPEN_QUERY_EVENT, { detail }));
+  return detail.open;
 }

@@ -12,7 +12,7 @@
   --notebook-border-strong: rgba(184, 212, 156, 0.42);
   --notebook-accent: #b8d49c;
   --notebook-accent-soft: rgba(184, 212, 156, 0.17);
-  width: calc(100% / var(--page-ui-scale, 1));
+  width: 100%;
   max-width: none;
   height: calc(calc(100vh - 154px) / var(--page-ui-scale, 1));
   min-height: calc(680px / var(--page-ui-scale, 1));

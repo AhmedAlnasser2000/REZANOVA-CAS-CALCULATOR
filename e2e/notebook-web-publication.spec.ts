@@ -39,7 +39,14 @@ async function expectDialogContained(page: Page) {
   expect(geometry.width).toBeGreaterThan(300);
 }
 
-test('Notebook Web publication is responsive and downloads a safe offline package', async ({ page }) => {
+test('Notebook Web publication is responsive and saves a safe offline package', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'showSaveFilePicker', {
+      configurable: true,
+      value: undefined,
+      writable: true,
+    });
+  });
   await page.setViewportSize({ width: 2400, height: 1050 });
   await openWorkedNotebook(page);
 
@@ -71,11 +78,12 @@ test('Notebook Web publication is responsive and downloads a safe offline packag
   await attachScreenshot(page, 'notebook-web-80');
 
   const downloadPromise = page.waitForEvent('download');
-  await dialog.getByRole('button', { name: 'Download Web package' }).click();
+  await dialog.getByRole('button', { name: 'Save Web package' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toBe('Untitled Notebook - Web.zip');
   const retainedPath = test.info().outputPath('notebook-web-publication.zip');
   await download.saveAs(retainedPath);
+  await expect(dialog.getByRole('status')).toContainText('browser cannot choose a save location');
 
   const zip = await JSZip.loadAsync(await readFile(retainedPath));
   const html = await zip.file('index.html')!.async('string');

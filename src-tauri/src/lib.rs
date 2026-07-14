@@ -1684,6 +1684,7 @@ fn sample_ode_solution(request: NumericOdeRequest) -> Result<NumericOdeResponse,
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(
             tauri_plugin_log::Builder::default()
                 .level(log::LevelFilter::Info)
@@ -1741,6 +1742,10 @@ pub fn run() {
             notebook_storage::notebook_append_asset_upload,
             notebook_storage::notebook_finish_asset_upload,
             notebook_storage::notebook_abort_asset_upload,
+            notebook_storage::notebook_begin_export_save,
+            notebook_storage::notebook_append_export_save,
+            notebook_storage::notebook_finish_export_save,
+            notebook_storage::notebook_abort_export_save,
             notebook_storage::notebook_load_asset,
             notebook_storage::notebook_delete_asset,
             notebook_storage::notebook_resolve_asset_url,

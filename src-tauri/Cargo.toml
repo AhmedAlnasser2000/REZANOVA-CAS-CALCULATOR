@@ -25,6 +25,7 @@ tauri = { version = "2.10.0", features = [] }
 tauri-plugin-log = "2"
 mathexpr = "0.1.1"
 tauri-plugin-clipboard-manager = "2.3.2"
+tauri-plugin-dialog = "2"
 quick-xml = "0.39.4"
 sha2 = "0.10.9"
 uuid = { version = "1.21.0", features = ["v4"] }

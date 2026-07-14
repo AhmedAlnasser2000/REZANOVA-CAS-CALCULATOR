@@ -24,13 +24,15 @@ use std::{
     path::{Path, PathBuf},
     sync::Mutex,
 };
-use tauri::State;
+use tauri::{AppHandle, State};
+use tauri_plugin_dialog::DialogExt;
 use uuid::Uuid;
 
 pub struct NotebookStorage {
     root: PathBuf,
     operation_lock: Mutex<()>,
     uploads: Mutex<HashMap<String, NotebookAssetUpload>>,
+    export_uploads: Mutex<HashMap<String, NotebookExportUpload>>,
     media_server: NotebookMediaServer,
 }
 
@@ -45,11 +47,30 @@ struct NotebookAssetUpload {
     header: Vec<u8>,
 }
 
+struct NotebookExportUpload {
+    target: PathBuf,
+    temporary: PathBuf,
+    file: File,
+    expected_length: u64,
+    received_length: u64,
+}
+
 struct RecordPaths {
     target: PathBuf,
     next: PathBuf,
     previous: PathBuf,
     recovery: PathBuf,
+}
+
+fn with_export_extension(mut path: PathBuf, extension: &str) -> PathBuf {
+    let has_expected_extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|value| value.eq_ignore_ascii_case(extension));
+    if !has_expected_extension {
+        path.set_extension(extension);
+    }
+    path
 }
 
 impl NotebookStorage {
@@ -60,6 +81,7 @@ impl NotebookStorage {
             root,
             operation_lock: Mutex::new(()),
             uploads: Mutex::new(HashMap::new()),
+            export_uploads: Mutex::new(HashMap::new()),
             media_server,
         };
         storage.ensure_directories()?;
@@ -744,6 +766,115 @@ impl NotebookStorage {
         Ok(())
     }
 
+    pub fn begin_export_write(&self, target: PathBuf, byte_length: u64) -> Result<String, String> {
+        let parent = target
+            .parent()
+            .filter(|path| path.is_dir())
+            .ok_or_else(|| "Notebook export destination is unavailable.".to_string())?;
+        let file_name = target
+            .file_name()
+            .and_then(|value| value.to_str())
+            .filter(|value| !value.is_empty())
+            .ok_or_else(|| "Notebook export destination is invalid.".to_string())?;
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let upload_id = Uuid::new_v4().to_string();
+        let temporary = parent.join(format!(".{file_name}.calcwiz-export-{upload_id}.tmp"));
+        let file = File::create(&temporary).map_err(|error| error.to_string())?;
+        self.export_uploads
+            .lock()
+            .map_err(|_| "Notebook export state is unavailable.".to_string())?
+            .insert(
+                upload_id.clone(),
+                NotebookExportUpload {
+                    target,
+                    temporary,
+                    file,
+                    expected_length: byte_length,
+                    received_length: 0,
+                },
+            );
+        Ok(upload_id)
+    }
+
+    pub fn append_export_write(&self, upload_id: &str, chunk: &[u8]) -> Result<(), String> {
+        const MAX_CHUNK_BYTES: usize = 1024 * 1024;
+        if chunk.is_empty() || chunk.len() > MAX_CHUNK_BYTES {
+            return Err("Notebook export chunk is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let mut uploads = self
+            .export_uploads
+            .lock()
+            .map_err(|_| "Notebook export state is unavailable.".to_string())?;
+        let upload = uploads
+            .get_mut(upload_id)
+            .ok_or_else(|| "Notebook export does not exist.".to_string())?;
+        let next_length = upload
+            .received_length
+            .checked_add(chunk.len() as u64)
+            .filter(|length| *length <= upload.expected_length)
+            .ok_or_else(|| "Notebook export exceeds its declared length.".to_string())?;
+        upload
+            .file
+            .write_all(chunk)
+            .map_err(|error| error.to_string())?;
+        upload.received_length = next_length;
+        Ok(())
+    }
+
+    pub fn finish_export_write(&self, upload_id: &str) -> Result<(), String> {
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let mut upload = self
+            .export_uploads
+            .lock()
+            .map_err(|_| "Notebook export state is unavailable.".to_string())?
+            .remove(upload_id)
+            .ok_or_else(|| "Notebook export does not exist.".to_string())?;
+        let result = (|| {
+            if upload.received_length != upload.expected_length {
+                return Err("Notebook export is incomplete.".into());
+            }
+            upload.file.flush().map_err(|error| error.to_string())?;
+            upload.file.sync_all().map_err(|error| error.to_string())?;
+            drop(upload.file);
+            fs::rename(&upload.temporary, &upload.target).map_err(|error| error.to_string())?;
+            if let Some(parent) = upload.target.parent() {
+                Self::sync_directory(parent)?;
+            }
+            Ok(())
+        })();
+        if result.is_err() || upload.temporary.exists() {
+            let _ = fs::remove_file(&upload.temporary);
+        }
+        result
+    }
+
+    pub fn abort_export_write(&self, upload_id: &str) -> Result<(), String> {
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        if let Some(upload) = self
+            .export_uploads
+            .lock()
+            .map_err(|_| "Notebook export state is unavailable.".to_string())?
+            .remove(upload_id)
+        {
+            drop(upload.file);
+            let _ = fs::remove_file(upload.temporary);
+        }
+        Ok(())
+    }
+
     fn load_asset_locked(&self, asset_id: &str) -> Result<Option<NotebookAssetPayloadV1>, String> {
         if !is_asset_id(asset_id) {
             return Err("Notebook asset identity is invalid.".into());
@@ -936,6 +1067,61 @@ pub fn notebook_abort_asset_upload(
     state: State<'_, NotebookStorage>,
 ) -> Result<(), String> {
     state.abort_asset_upload(&upload_id)
+}
+
+#[tauri::command]
+pub fn notebook_begin_export_save(
+    app: AppHandle,
+    byte_length: u64,
+    extension: String,
+    filter_name: String,
+    suggested_file_name: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<Option<String>, String> {
+    let extension = extension
+        .trim()
+        .trim_start_matches('.')
+        .to_ascii_lowercase();
+    if extension.is_empty() || !extension.chars().all(|value| value.is_ascii_alphanumeric()) {
+        return Err("Notebook export extension is invalid.".into());
+    }
+    let mut selected = match app
+        .dialog()
+        .file()
+        .set_file_name(suggested_file_name)
+        .add_filter(filter_name, &[extension.as_str()])
+        .blocking_save_file()
+    {
+        Some(path) => path.into_path().map_err(|error| error.to_string())?,
+        None => return Ok(None),
+    };
+    selected = with_export_extension(selected, &extension);
+    state.begin_export_write(selected, byte_length).map(Some)
+}
+
+#[tauri::command]
+pub fn notebook_append_export_save(
+    upload_id: String,
+    chunk: Vec<u8>,
+    state: State<'_, NotebookStorage>,
+) -> Result<(), String> {
+    state.append_export_write(&upload_id, &chunk)
+}
+
+#[tauri::command]
+pub fn notebook_finish_export_save(
+    upload_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<(), String> {
+    state.finish_export_write(&upload_id)
+}
+
+#[tauri::command]
+pub fn notebook_abort_export_save(
+    upload_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<(), String> {
+    state.abort_export_write(&upload_id)
 }
 
 #[tauri::command]

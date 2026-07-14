@@ -30,6 +30,11 @@
   position: absolute;
   z-index: 80;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
   min-height: 0;
@@ -141,6 +146,12 @@
   background: var(--notebook-accent-soft);
 }
 
+.notebook-file-record-list > button.is-selected {
+  border-color: var(--page-accent);
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
+}
+
 .notebook-file-actions button:disabled,
 .notebook-file-record-list > button:disabled {
   opacity: 0.48;
@@ -155,6 +166,103 @@
 .notebook-file-record-list {
   display: grid;
   gap: 8px;
+}
+
+.notebook-file-selection-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 34px;
+  color: var(--page-muted);
+  font-size: 0.86rem;
+}
+
+.notebook-file-selection-toolbar > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.notebook-file-selection-toolbar button,
+.notebook-file-inline-form button {
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 6px 9px;
+  background: rgba(8, 18, 19, 0.72);
+  color: var(--page-ink);
+}
+
+.notebook-file-inline-form {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 7px;
+  padding: 13px 14px;
+  background: rgba(184, 212, 156, 0.06);
+}
+
+.notebook-file-inline-form label {
+  display: grid;
+  gap: 5px;
+  color: var(--page-muted);
+  font-size: 0.78rem;
+}
+
+.notebook-file-inline-form input {
+  min-width: 0;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 8px 9px;
+  background: rgba(8, 18, 19, 0.88);
+  color: var(--page-ink);
+}
+
+.notebook-file-inline-form > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.notebook-file-delete-confirmation strong,
+.notebook-file-delete-confirmation span {
+  display: block;
+}
+
+.notebook-file-delete-confirmation span {
+  color: var(--page-muted);
+}
+
+.notebook-library-context-menu {
+  display: grid;
+  min-width: 210px;
+  overflow: auto;
+  border: 1px solid var(--notebook-border-strong);
+  border-radius: 7px;
+  padding: 5px;
+  background: rgba(8, 24, 24, 0.985);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42);
+}
+
+.notebook-library-context-menu button {
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 8px 10px;
+  background: transparent;
+  color: var(--page-ink);
+  text-align: left;
+}
+
+.notebook-library-context-menu button:hover:not(:disabled),
+.notebook-library-context-menu button:focus-visible {
+  border-color: var(--notebook-border);
+  background: var(--notebook-accent-soft);
+}
+
+.notebook-library-context-menu button:disabled {
+  opacity: 0.5;
 }
 
 .notebook-file-record-list article {
@@ -188,6 +296,14 @@
   padding: 10px 12px;
   background: rgba(232, 153, 124, 0.1);
   color: #f2b39c;
+}
+
+.notebook-file-notice {
+  border: 1px solid var(--notebook-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--notebook-accent-soft);
+  color: var(--page-ink);
 }
 
 .notebook-save-failure {
@@ -241,6 +357,15 @@
   .notebook-file-record-list article {
     grid-template-columns: 1fr;
   }
+
+  .notebook-file-selection-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .notebook-file-selection-toolbar > div {
+    justify-content: flex-start;
+  }
 }
 
 @media (forced-colors: active) {
@@ -250,7 +375,11 @@
   .notebook-file-templates button,
   .notebook-file-record-list > button,
   .notebook-file-record-list article,
-  .notebook-save-failure {
+  .notebook-save-failure,
+  .notebook-file-error,
+  .notebook-file-notice,
+  .notebook-file-inline-form,
+  .notebook-library-context-menu {
     background: Canvas;
     color: CanvasText;
     border-color: CanvasText;

@@ -3,35 +3,32 @@ import { createPortal } from 'react-dom';
 
 import {
   buildNotebookWebPackage,
+  createNotebookExportSavePort,
   createNotebookPublicationJob,
   notebookWebCompatibilityFindings,
   type NotebookAssetPort,
+  type NotebookExportSavePort,
   type NotebookExportScope,
   type NotebookPublicationLayoutV1,
   type NotebookPublicationProjectionV1,
   type NotebookStoredRecordV1,
 } from '../../../../lib/notebook';
 
-function downloadWebPackage(bytes: Uint8Array, fileName: string) {
-  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/zip' }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
 export function NotebookWebExportDialog({
   assetPort,
   layout,
   onClose,
   record,
+  savePort,
 }: {
   assetPort: NotebookAssetPort;
   layout: NotebookPublicationLayoutV1;
   onClose: () => void;
   record: NotebookStoredRecordV1;
+  savePort?: NotebookExportSavePort;
 }) {
+  const fallbackSavePort = useMemo(() => createNotebookExportSavePort(), []);
+  const effectiveSavePort = savePort ?? fallbackSavePort;
   const sections = useMemo(
     () => record.document.content.filter((node) => node.type === 'section'),
     [record.document.content],
@@ -41,6 +38,7 @@ export function NotebookWebExportDialog({
   const [projection, setProjection] = useState<NotebookPublicationProjectionV1 | null>(null);
   const [status, setStatus] = useState<'preparing' | 'ready' | 'exporting' | 'failed'>('preparing');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const generationRef = useRef(0);
   const scope = useMemo<NotebookExportScope>(() => scopeMode === 'sections'
     ? { kind: 'sections', sectionIds }
@@ -84,9 +82,25 @@ export function NotebookWebExportDialog({
     if (!projection) return;
     setStatus('exporting');
     setError(null);
+    setNotice(null);
     try {
       const output = await buildNotebookWebPackage(projection);
-      downloadWebPackage(output.bytes, output.fileName);
+      let browserNotice: string | null = null;
+      const result = await effectiveSavePort.save({
+        bytes: output.bytes,
+        mimeType: 'application/zip',
+        onNotice: (next) => { browserNotice = next.message; },
+        suggestedFileName: output.fileName,
+      });
+      if (result === 'cancelled') {
+        setStatus('ready');
+        return;
+      }
+      if (browserNotice) {
+        setNotice(browserNotice);
+        setStatus('ready');
+        return;
+      }
       onClose();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Web export failed.');
@@ -151,6 +165,7 @@ export function NotebookWebExportDialog({
           {!selectionIsValid ? <p>Select at least one Section to prepare the publication.</p> : null}
           {selectionIsValid && status === 'preparing' ? <p>Preparing a frozen publication snapshot…</p> : null}
           {error ? <p role="alert">{error}</p> : null}
+          {notice ? <p role="status">{notice}</p> : null}
           {projection?.compatibility.findings.length ? (
             <ul>{projection.compatibility.findings.map((finding, index) => (
               <li key={`${finding.kind}.${finding.nodeId ?? index}`}>{finding.message}</li>
@@ -167,7 +182,7 @@ export function NotebookWebExportDialog({
             disabled={status !== 'ready' || !projection || !selectionIsValid}
             onClick={() => void exportWebPackage()}
           >
-            {status === 'exporting' ? 'Building Web package…' : 'Download Web package'}
+            {status === 'exporting' ? 'Building Web package…' : 'Save Web package'}
           </button>
         </footer>
       </div>

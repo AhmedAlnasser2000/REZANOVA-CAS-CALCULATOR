@@ -6,6 +6,7 @@ import {
   createNotebookLibraryService,
   createNotebookRichDocument,
   createNotebookStoredRecordV1,
+  type NotebookExportSavePort,
   type NotebookRichDocument,
 } from '../../../../lib/notebook';
 import { NotebookWebExportDialog } from './NotebookWebExportDialog';
@@ -45,7 +46,7 @@ describe('Notebook Web publication dialog', () => {
     expect(await within(dialog).findByText(/safe static MathML conversion failed/u)).toBeInTheDocument();
     expect(within(dialog).getByText(/approximates the Notebook image crop/u)).toBeInTheDocument();
     expect(within(dialog).getByText(/self-contained, read-only publication/u)).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Download Web package' })).toBeEnabled();
+    expect(within(dialog).getByRole('button', { name: 'Save Web package' })).toBeEnabled();
 
     await user.click(within(dialog).getByLabelText('Selected Sections'));
     expect(await within(dialog).findByLabelText('Limits')).toBeChecked();
@@ -54,7 +55,7 @@ describe('Notebook Web publication dialog', () => {
     ).not.toBeInTheDocument());
 
     await user.click(within(dialog).getByLabelText('Limits'));
-    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Download Web package' })).toBeDisabled());
+    await waitFor(() => expect(within(dialog).getByRole('button', { name: 'Save Web package' })).toBeDisabled());
     expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
     expect(within(dialog).queryByText(/safe static MathML conversion failed/u)).not.toBeInTheDocument();
     expect(within(dialog).getByText(/Select at least one Section/u)).toBeInTheDocument();
@@ -64,8 +65,22 @@ describe('Notebook Web publication dialog', () => {
     const onClose = vi.fn();
     const user = userEvent.setup();
     render(<NotebookWebExportDialog {...await fixture()} onClose={onClose} />);
-    await screen.findByRole('button', { name: 'Download Web package' });
+    await screen.findByRole('button', { name: 'Save Web package' });
     await user.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the dialog open when the destination chooser is cancelled', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const savePort = {
+      save: vi.fn(async () => 'cancelled' as const),
+    } satisfies NotebookExportSavePort;
+    render(<NotebookWebExportDialog {...await fixture()} onClose={onClose} savePort={savePort} />);
+    const dialog = screen.getByRole('dialog', { name: 'Export Notebook as Web package' });
+    await user.click(await within(dialog).findByRole('button', { name: 'Save Web package' }));
+    await waitFor(() => expect(savePort.save).toHaveBeenCalledOnce());
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Export Notebook as Web package' })).toBeInTheDocument();
   });
 });

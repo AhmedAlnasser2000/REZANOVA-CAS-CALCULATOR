@@ -5,7 +5,7 @@ use super::{
         NotebookStoredRecordV1, NotebookVersionSnapshotV1, DOCUMENT_PATH, PACKAGE_KIND,
         PACKAGE_MANIFEST_VERSION,
     },
-    NotebookStorage,
+    with_export_extension, NotebookStorage,
 };
 use std::{
     fs,
@@ -822,4 +822,60 @@ fn retains_bounded_version_history_and_round_trips_trash() {
         .unwrap()
         .is_empty());
     fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn writes_export_bytes_through_a_sibling_temp_file_without_touching_incomplete_targets() {
+    let root = unique_storage("export-save");
+    fs::create_dir_all(&root).expect("temporary directory should exist");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    let target = root.join("publication.docx");
+    fs::write(&target, b"previous publication").expect("previous publication should exist");
+
+    let incomplete = storage
+        .begin_export_write(target.clone(), 5)
+        .expect("incomplete export should begin");
+    storage
+        .append_export_write(&incomplete, b"abc")
+        .expect("partial export should append");
+    assert!(storage
+        .finish_export_write(&incomplete)
+        .expect_err("incomplete export should fail")
+        .contains("incomplete"));
+    assert_eq!(fs::read(&target).unwrap(), b"previous publication");
+
+    let bytes = vec![7; 1024 * 1024 + 23];
+    let complete = storage
+        .begin_export_write(target.clone(), bytes.len() as u64)
+        .expect("export should begin");
+    storage
+        .append_export_write(&complete, &bytes[..1024 * 1024])
+        .expect("first chunk should append");
+    storage
+        .append_export_write(&complete, &bytes[1024 * 1024..])
+        .expect("second chunk should append");
+    storage
+        .finish_export_write(&complete)
+        .expect("complete export should replace target");
+    assert_eq!(fs::read(&target).unwrap(), bytes);
+    assert!(fs::read_dir(&root)
+        .expect("temporary directory should list")
+        .all(|entry| !entry
+            .expect("entry should read")
+            .file_name()
+            .to_string_lossy()
+            .contains("calcwiz-export")));
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn export_save_replaces_an_unexpected_extension_with_the_selected_format() {
+    assert_eq!(
+        with_export_extension(PathBuf::from("/tmp/lesson.txt"), "docx"),
+        PathBuf::from("/tmp/lesson.docx")
+    );
+    assert_eq!(
+        with_export_extension(PathBuf::from("/tmp/lesson.DOCX"), "docx"),
+        PathBuf::from("/tmp/lesson.DOCX")
+    );
 }

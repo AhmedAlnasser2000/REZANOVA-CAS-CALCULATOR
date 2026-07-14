@@ -31,6 +31,16 @@ const PERIODIC_SNAPSHOT_INTERVAL_MS = 5 * 60 * 1_000;
 
 export type NotebookSaveStatus = 'saving' | 'saved' | 'unsaved' | 'failed';
 
+export type NotebookLibraryBatchFailure = {
+  libraryId: string;
+  message: string;
+};
+
+export type NotebookLibraryBatchResult = {
+  failures: NotebookLibraryBatchFailure[];
+  succeededIds: string[];
+};
+
 type UseNotebookLibrarySessionOptions = {
   instanceId: string;
   onUpdateSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
@@ -38,7 +48,7 @@ type UseNotebookLibrarySessionOptions = {
   surfaceState: WorkspaceInstanceStateSlot;
 };
 
-function uniqueIdentity(prefix: 'notebook' | 'snapshot') {
+function uniqueIdentity(prefix: 'document' | 'notebook' | 'snapshot') {
   const uuid = globalThis.crypto?.randomUUID?.()
     ?? `${Date.now()}.${Math.random().toString(36).slice(2)}`;
   return `${prefix}.${uuid}`;
@@ -52,6 +62,38 @@ function recordWithDocument(
     ...record,
     document,
     assetIds: collectNotebookAssetIds(document.content),
+  };
+}
+
+function uniqueLibraryIds(libraryIds: readonly string[]) {
+  return [...new Set(libraryIds)];
+}
+
+function operationErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Notebook library operation failed.';
+}
+
+async function settleLibraryOperations(
+  libraryIds: readonly string[],
+  operation: (libraryId: string) => Promise<unknown>,
+): Promise<NotebookLibraryBatchResult> {
+  const outcomes = await Promise.all(uniqueLibraryIds(libraryIds).map(async (libraryId) => {
+    try {
+      await operation(libraryId);
+      return { libraryId, success: true } as const;
+    } catch (error) {
+      return {
+        libraryId,
+        message: operationErrorMessage(error),
+        success: false,
+      } as const;
+    }
+  }));
+  return {
+    failures: outcomes.flatMap((outcome) => outcome.success
+      ? []
+      : [{ libraryId: outcome.libraryId, message: outcome.message }]),
+    succeededIds: outcomes.flatMap((outcome) => outcome.success ? [outcome.libraryId] : []),
   };
 }
 
@@ -300,6 +342,80 @@ export function useNotebookLibrarySession({
       : current;
   }, []);
 
+  const exportPortableRecord = useCallback(async (libraryId: string) => {
+    if (!service.package) {
+      throw new Error('Portable Notebook export is available in the desktop app.');
+    }
+    const source = recordRef.current?.libraryId === libraryId
+      ? snapshotCurrentRecord()
+      : await service.loadRecord(libraryId);
+    if (!source) {
+      throw new Error('Notebook could not be found in the local library.');
+    }
+    return {
+      bytes: await service.package.exportPortable(source),
+      fileName: `${source.document.title.trim() || 'Untitled Notebook'}.cwiznb`,
+    };
+  }, [service, snapshotCurrentRecord]);
+
+  const renameRecord = useCallback(async (libraryId: string, title: string) => {
+    const current = recordRef.current;
+    if (current?.libraryId === libraryId && documentRef.current) {
+      commitDocument({
+        ...documentRef.current,
+        title,
+        updatedAt: new Date().toISOString(),
+      });
+      if (!await saveNow()) {
+        throw new Error('Notebook could not be renamed because it could not be saved.');
+      }
+      await refreshCatalog();
+      return recordRef.current;
+    }
+
+    const source = await service.loadRecord(libraryId);
+    if (!source) {
+      throw new Error('Notebook could not be found in the local library.');
+    }
+    const stored = await service.saveRecord(recordWithDocument({
+      ...source,
+      revision: source.revision + 1,
+      savedAt: new Date().toISOString(),
+    }, {
+      ...source.document,
+      title,
+      updatedAt: new Date().toISOString(),
+    }), { expectedRevision: source.revision });
+    await refreshCatalog();
+    return stored;
+  }, [commitDocument, refreshCatalog, saveNow, service]);
+
+  const duplicateRecord = useCallback(async (libraryId: string) => {
+    const source = recordRef.current?.libraryId === libraryId
+      ? snapshotCurrentRecord()
+      : await service.loadRecord(libraryId);
+    if (!source) {
+      throw new Error('Notebook could not be found in the local library.');
+    }
+    const createdAt = new Date().toISOString();
+    const duplicate = createNotebookStoredRecordV1({
+      ...source.document,
+      createdAt,
+      id: uniqueIdentity('document'),
+      title: `${source.document.title || 'Untitled Notebook'} copy`,
+      updatedAt: createdAt,
+    }, {
+      assetIds: source.assetIds,
+      libraryId: uniqueIdentity('notebook'),
+      revision: 1,
+      savedAt: createdAt,
+    });
+    const stored = await service.saveRecord(duplicate, { expectedRevision: null });
+    await saveSnapshot(stored, 'initial');
+    await refreshCatalog();
+    return stored;
+  }, [refreshCatalog, saveSnapshot, service, snapshotCurrentRecord]);
+
   const importPortable = useCallback(async (bytes: Uint8Array) => {
     if (!service.package) {
       throw new Error('Portable Notebook import is available in the desktop app.');
@@ -349,15 +465,63 @@ export function useNotebookLibrarySession({
     return true;
   }, [activateRecord, createRecord, refreshCatalog, saveNow, saveSnapshot, service]);
 
-  const restoreTrashRecord = useCallback(async (libraryId: string) => {
-    await service.library.restoreFromTrash(libraryId);
+  const moveLibraryRecords = useCallback(async (libraryIds: readonly string[]) => {
+    const requestedIds = uniqueLibraryIds(libraryIds);
+    const currentLibraryId = recordRef.current?.libraryId ?? null;
+    const currentIsRequested = currentLibraryId !== null && requestedIds.includes(currentLibraryId);
+    const otherIds = requestedIds.filter((libraryId) => libraryId !== currentLibraryId);
+    const result = await settleLibraryOperations(otherIds, (libraryId) => (
+      service.library.moveToTrash(libraryId)
+    ));
+
+    if (currentIsRequested) {
+      try {
+        if (!await moveCurrentToTrash()) {
+          throw new Error('Notebook could not be moved to Trash because it could not be saved.');
+        }
+        result.succeededIds.unshift(currentLibraryId);
+      } catch (error) {
+        result.failures.unshift({
+          libraryId: currentLibraryId,
+          message: operationErrorMessage(error),
+        });
+      }
+    }
     await refreshCatalog();
+    return result;
+  }, [moveCurrentToTrash, refreshCatalog, service.library]);
+
+  const restoreTrashRecords = useCallback(async (libraryIds: readonly string[]) => {
+    const result = await settleLibraryOperations(libraryIds, (libraryId) => (
+      service.library.restoreFromTrash(libraryId)
+    ));
+    await refreshCatalog();
+    return result;
   }, [refreshCatalog, service.library]);
 
-  const deleteTrashRecord = useCallback(async (libraryId: string) => {
-    await service.library.deletePermanently(libraryId);
+  const deleteTrashRecords = useCallback(async (libraryIds: readonly string[]) => {
+    const result = await settleLibraryOperations(libraryIds, (libraryId) => (
+      service.library.deletePermanently(libraryId)
+    ));
     await refreshCatalog();
+    return result;
   }, [refreshCatalog, service.library]);
+
+  const restoreTrashRecord = useCallback(async (libraryId: string) => {
+    const result = await restoreTrashRecords([libraryId]);
+    const failure = result.failures[0];
+    if (failure) {
+      throw new Error(failure.message);
+    }
+  }, [restoreTrashRecords]);
+
+  const deleteTrashRecord = useCallback(async (libraryId: string) => {
+    const result = await deleteTrashRecords([libraryId]);
+    const failure = result.failures[0];
+    if (failure) {
+      throw new Error(failure.message);
+    }
+  }, [deleteTrashRecords]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -437,17 +601,24 @@ export function useNotebookLibrarySession({
 
   return {
     commitDocument,
+    deleteTrashRecords,
     deleteTrashRecord,
     document,
+    duplicateRecord,
     exportPortable,
+    exportPortableRecord,
+    instanceId,
     importPortable,
     library,
     moveCurrentToTrash,
+    moveLibraryRecords,
     newRecord,
     openRecord,
     packageAvailable: service.package !== null,
     record,
     refreshCatalog,
+    renameRecord,
+    restoreTrashRecords,
     restoreTrashRecord,
     restoreVersion,
     saveError,

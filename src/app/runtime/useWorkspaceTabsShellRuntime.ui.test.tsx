@@ -14,6 +14,10 @@ import {
   startOoeJob,
 } from '../../lib/ooe/job-launch/active-job-registry';
 import {
+  createNotebookLibrarySurfaceState,
+  isNotebookWorkspaceOpen,
+} from '../../lib/notebook';
+import {
   buildOoeJobCommitContext,
   buildOoeJobCommitContextForJob,
   type OoeJobIdentityDefinition,
@@ -436,6 +440,31 @@ describe('useWorkspaceTabsShellRuntime job lifecycle', () => {
         workspaceKind: NOTEBOOK_PAGE_WORKSPACE_KIND,
       });
     expect(setEditorRuntimeStatusOverride).not.toHaveBeenCalled();
+  });
+
+  it('answers Notebook open-elsewhere queries through the workspace event seam', () => {
+    const { hook } = renderWorkspaceTabsShell();
+
+    act(() => {
+      hook.result.current.shell.workspaceTabsRuntime.onCreateNotebookPageTab();
+    });
+    const notebookId = hook.result.current.workspaceInstances.activeInstance?.id;
+    expect(notebookId).toBeDefined();
+
+    act(() => {
+      hook.result.current.workspaceInstances.updateInstanceSurfaceState(
+        notebookId!,
+        createNotebookLibrarySurfaceState({
+          libraryId: 'library.open-elsewhere',
+          revision: 1,
+          title: 'Open elsewhere',
+        }),
+      );
+    });
+
+    expect(isNotebookWorkspaceOpen('library.open-elsewhere')).toBe(true);
+    expect(isNotebookWorkspaceOpen('library.open-elsewhere', notebookId)).toBe(false);
+    expect(isNotebookWorkspaceOpen('library.not-open')).toBe(false);
   });
 
   it('does not cancel the origin tab job when focusing a different tab', () => {

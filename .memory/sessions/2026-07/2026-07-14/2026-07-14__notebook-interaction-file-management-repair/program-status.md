@@ -26,8 +26,8 @@
 | Gate | Kind | Status |
 | --- | --- | --- |
 | `NOTEBOOK-TRANSIENT-CHROME-REPAIRS1` | ui | verified; committed by this checkpoint |
-| `NOTEBOOK-DIRECT-MEDIA-AND-INDENT1` | ui/document | verified; included in this commit checkpoint |
-| `NOTEBOOK-LIBRARY-FILE-OPERATIONS1` | ui/backend | pending |
+| `NOTEBOOK-DIRECT-MEDIA-AND-INDENT1` | ui/document | verified; committed `e271a87d` |
+| `NOTEBOOK-LIBRARY-FILE-OPERATIONS1` | ui/backend | verified; committed by this checkpoint |
 | `NOTEBOOK-VIDEO-PLAYBACK-SHELL1` | ui | pending |
 
 ## Current Handoff
@@ -36,3 +36,4 @@
 - The current `selection.ts` correction selects inserted math nodes before focus activation, avoiding a narrow-layout viewport-hydration race that hid Math Authoring after equation insertion.
 - Focused UI, TypeScript, lint, file-size, diff, and Chromium evidence are recorded in `gate-notebook-transient-chrome-repairs1.md`.
 - V10 now persists paragraph left indentation, arbitrary image rotation/display aspect ratio, and video placement while adding direct image/video resize, image crop/rotation, snap-and-wrap drag feedback, insertion guides, and contextual status coordinates without persisted X/Y state. Evidence is recorded in `gate-notebook-direct-media-and-indent1.md`.
+- Library records now support deliberate selection, context actions, bounded bulk Trash/Restore/Delete, safe duplicate/rename rules, and destination-picker exports. Desktop writers receive only opaque save handles and stream through sibling temporary files; browser preview uses File System Access when available or an explicit download fallback. Evidence is recorded in `gate-notebook-library-file-operations1.md`.

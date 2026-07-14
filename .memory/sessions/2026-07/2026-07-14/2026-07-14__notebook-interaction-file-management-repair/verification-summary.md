@@ -30,3 +30,12 @@
 - Native storage tests: 13 passed; `cargo fmt --check` passed.
 - Chromium: 6 focused scenarios passed at 2400px, 1440px, 1100px, 80% scale, and 130% forced colors. Direct image/video controls, crop handles, status coordinates, and viewport containment were visually inspected.
 - Incremental TypeScript, scoped ESLint, production build, file-size validation, and diff hygiene passed. The browser preview and Playwright workers were stopped after capture.
+
+## `NOTEBOOK-LIBRARY-FILE-OPERATIONS1`
+
+- Gate kind: UI/backend.
+- Focused Notebook UI tests: 25 passed across library selection/context actions, File backstage behavior, and DOCX/Web export dialogs.
+- Export-save unit tests: 7 passed, covering expected extensions, browser fallback/cancellation, and chunked writes.
+- Native storage tests: 15 passed; Rust formatting passed.
+- Chromium: 3 targeted scenarios passed at 2400px, 1440px, and 1100px, including 80% scaling, forced colors, viewport-contained context menus, and readable export dialogs.
+- Incremental TypeScript, scoped ESLint, production Vite build, file-size validation, memory validation, and diff hygiene passed. Preview and Playwright processes were stopped; unrelated Linear Algebra work and `test-results/` remain excluded.

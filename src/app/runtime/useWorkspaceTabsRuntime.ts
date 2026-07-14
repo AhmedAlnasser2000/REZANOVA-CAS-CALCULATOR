@@ -3,9 +3,11 @@ import {
   isNotebookLibrarySurfaceState,
   NOTEBOOK_WORKSPACE_CLOSE_EVENT,
   NOTEBOOK_WORKSPACE_FOCUS_EVENT,
+  NOTEBOOK_WORKSPACE_OPEN_QUERY_EVENT,
   NOTEBOOK_WORKSPACE_TITLE_EVENT,
   type NotebookWorkspaceCloseDetail,
   type NotebookWorkspaceFocusDetail,
+  type NotebookWorkspaceOpenQueryDetail,
   type NotebookWorkspaceTitleDetail,
 } from '../../lib/notebook';
 import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
@@ -374,13 +376,27 @@ export function useWorkspaceTabsRuntime({
         syncNotebookTitle(detail.instanceId, detail.title);
       }
     };
+    const queryNotebookOpen = (event: Event) => {
+      const detail = (event as CustomEvent<NotebookWorkspaceOpenQueryDetail>).detail;
+      if (!detail?.libraryId) {
+        return;
+      }
+      detail.open = workspaceInstances.workspaceInstances.some((instance) => (
+        instance.id !== detail.excludingInstanceId
+        && instance.workspaceKind === NOTEBOOK_PAGE_WORKSPACE_KIND
+        && isNotebookLibrarySurfaceState(instance.surfaceState)
+        && instance.surfaceState.libraryId === detail.libraryId
+      ));
+    };
     window.addEventListener(NOTEBOOK_WORKSPACE_FOCUS_EVENT, focusNotebook);
     window.addEventListener(NOTEBOOK_WORKSPACE_CLOSE_EVENT, closeNotebook);
     window.addEventListener(NOTEBOOK_WORKSPACE_TITLE_EVENT, titleNotebook);
+    window.addEventListener(NOTEBOOK_WORKSPACE_OPEN_QUERY_EVENT, queryNotebookOpen);
     return () => {
       window.removeEventListener(NOTEBOOK_WORKSPACE_FOCUS_EVENT, focusNotebook);
       window.removeEventListener(NOTEBOOK_WORKSPACE_CLOSE_EVENT, closeNotebook);
       window.removeEventListener(NOTEBOOK_WORKSPACE_TITLE_EVENT, titleNotebook);
+      window.removeEventListener(NOTEBOOK_WORKSPACE_OPEN_QUERY_EVENT, queryNotebookOpen);
     };
   }, [closeTab, focusTab, syncNotebookTitle, workspaceInstances.workspaceInstances]);
 

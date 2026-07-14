@@ -32,3 +32,11 @@
 - status: verified; committed by the checkpoint containing this entry
 - staged_scope: V10 Notebook document/source, focused Rust and browser tests, styles, and required durable memory only
 - excluded: Library-file-operation work, concurrent Linear Algebra work, untracked `test-results/`, and unrelated workspace changes
+
+## NOTEBOOK-LIBRARY-FILE-OPERATIONS1
+
+- commit_message: `NOTEBOOK-LIBRARY-FILE-OPERATIONS1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook library/save source, focused tests, Tauri save seam, styles, and required durable memory only
+- excluded: concurrent Linear Algebra work and untracked `test-results/`
