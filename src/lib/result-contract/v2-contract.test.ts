@@ -324,12 +324,15 @@ describe('Canonical Result V2 contract', () => {
         'trigonometry.period-phase',
         'table.domain-boundary',
         'table.rational-function',
+        'matrix.linear-system',
+        'matrix.profile',
       ]);
     expect(CANONICAL_RESULT_V2_PRODUCER_SELECTORS).toEqual({
       'calculus.derivatives': ['derivativePoint'],
       'equation.domain-boundary': ['typedLabeledSupplement'],
       'equation.rational-radical': ['typedLabeledSupplement'],
       'trigonometry.right-triangle': ['rightTriangle'],
+      'vector.span-independence': ['independent'],
     });
     for (const routeId of FROZEN_V1_PRODUCER_ROUTE_IDS) {
       const defaultVersion = [
@@ -337,6 +340,8 @@ describe('Canonical Result V2 contract', () => {
         'trigonometry.period-phase',
         'table.domain-boundary',
         'table.rational-function',
+        'matrix.linear-system',
+        'matrix.profile',
       ].includes(routeId) ? 2 : 1;
       const v2Selectors = routeId === 'calculus.derivatives'
         ? ['derivativePoint']
@@ -344,6 +349,8 @@ describe('Canonical Result V2 contract', () => {
           ? ['typedLabeledSupplement']
         : routeId === 'trigonometry.right-triangle'
           ? ['rightTriangle']
+        : routeId === 'vector.span-independence'
+          ? ['independent']
           : [];
       expect(canonicalResultVersionForProducer({ routeId })).toBe(defaultVersion);
       expect(CANONICAL_RESULT_PRODUCER_VERSION_REGISTRY[routeId]).toEqual({
@@ -362,6 +369,10 @@ describe('Canonical Result V2 contract', () => {
     expect(canonicalResultVersionForProducer({
       routeId: 'trigonometry.right-triangle',
       selector: 'rightTriangle',
+    })).toBe(2);
+    expect(canonicalResultVersionForProducer({
+      routeId: 'vector.span-independence',
+      selector: 'independent',
     })).toBe(2);
   });
 });

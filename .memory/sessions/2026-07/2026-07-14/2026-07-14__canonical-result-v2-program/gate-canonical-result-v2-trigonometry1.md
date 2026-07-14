@@ -18,6 +18,7 @@
 
 - kind: ui
 - result: pass
+- committed: `94ea5c52`
 - production V2 route: Trigonometry Period & Phase
 - residual change: the compound-primary exemption is removed; 10 exemptions remain
 - protected state: concurrent Notebook video and Rust OOE work plus untracked `test-results/` were excluded

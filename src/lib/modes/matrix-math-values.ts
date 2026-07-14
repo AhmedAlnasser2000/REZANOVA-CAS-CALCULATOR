@@ -3,13 +3,17 @@ import type {
   DisplayDetailSection,
   ResultProducerDraft,
 } from '../../types/calculator';
-import { buildExactScalarNode } from '../algebra/polynomial-core';
+import {
+  buildExactScalarNode,
+  type ExactScalar,
+} from '../algebra/polynomial-core';
 import {
   determinantExactMatrix,
   inverseExactMatrix,
   rrefExactMatrix,
   solveExactLinearSystem,
   type ExactMatrix,
+  type ExactRowOperation,
   type ExactVector,
 } from '../linear-algebra/exact-matrix-core';
 import {
@@ -29,10 +33,14 @@ import {
 } from '../linear-algebra/matrix-exact-ops';
 import { analyzeExactColumnFamily } from '../linear-algebra/matrix-column-family';
 import { LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION } from '../linear-algebra/dimension-contract';
+import { formatRowOperation } from '../linear-algebra/row-operation-readback';
 import {
+  requireProvenCanonicalMathValueV2,
   tryProvenCanonicalMathValue,
   type CanonicalResultProducerMathValuesV1,
+  type CanonicalResultV2MathResolver,
   type ProvenCanonicalMathValue,
+  type ProvenCanonicalMathValueV2,
 } from '../result-contract';
 import type { MathJsonRouteId } from '../result-contract/mathjson-route-registry';
 import type { RunMatrixModeRequest } from './matrix';
@@ -43,6 +51,19 @@ type MatrixOwnedMathJsonLeaf = {
   canonicalLatex: string;
   mathJson: unknown;
   source: string;
+};
+
+export type MatrixProfileV2Evidence = {
+  operandLatex: string;
+  domainDimension: number;
+  codomainDimension: number;
+  rank: number;
+  nullity: number;
+};
+
+export type MatrixRowOperationV2Evidence = {
+  presentationLatex: string;
+  operation: ExactRowOperation;
 };
 
 function unproven(canonicalLatex: string) {
@@ -140,17 +161,185 @@ function rankLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[] {
       )];
 }
 
-function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[] {
+function linearSystemAnalysis(request: RunMatrixModeRequest) {
   const { matrixA, rhs } = exactInputs(request);
-  if (!matrixA || !rhs || matrixA.length === 0 || matrixA.length !== rhs.length) return [];
+  if (!matrixA || !rhs || matrixA.length === 0 || matrixA.length !== rhs.length) return null;
   const coefficientRref = rrefExactMatrix(matrixA);
   const augmented = matrixA.map((row, rowIndex) => [...row, rhs[rowIndex]]);
   const augmentedRref = rrefExactMatrix(augmented, {
     maxDimension: LINEAR_ALGEBRA_SINGLE_RHS_AUGMENTED_MAX_DIMENSION,
   });
-  if (coefficientRref.kind !== 'success' || augmentedRref.kind !== 'success') return [];
+  if (coefficientRref.kind !== 'success' || augmentedRref.kind !== 'success') return null;
+  return {
+    matrixA,
+    rhs,
+    coefficientRref,
+    augmentedRref,
+    unknowns: matrixA[0]?.length ?? 0,
+  };
+}
 
-  const unknowns = matrixA[0]?.length ?? 0;
+function visibleRowOperations(
+  operations: readonly ExactRowOperation[],
+): MatrixRowOperationV2Evidence[] {
+  return operations.flatMap((operation) => {
+    const presentationLatex = formatRowOperation(operation);
+    return presentationLatex ? [{ presentationLatex, operation }] : [];
+  });
+}
+
+function parameterName(index: number, total: number) {
+  return total === 1 ? 't' : `t_{${index + 1}}`;
+}
+
+function parameterMathJson(parameter: string) {
+  const subscript = /^t_\{([1-9][0-9]*)\}$/u.exec(parameter);
+  return subscript ? `t_${subscript[1]}` : parameter;
+}
+
+function negateScalar(value: ExactScalar): ExactScalar {
+  return { numerator: -value.numerator, denominator: value.denominator };
+}
+
+function parameterTermLatex(coefficient: ExactScalar, parameter: string) {
+  if (coefficient.numerator === 0) return null;
+  if (coefficient.numerator === coefficient.denominator) return parameter;
+  if (coefficient.numerator === -coefficient.denominator) return `-${parameter}`;
+  return `${exactScalarToLatex(coefficient)}${parameter}`;
+}
+
+function parameterExpressionLatex(constant: ExactScalar, terms: string[]) {
+  const pieces = constant.numerator === 0 ? [] : [exactScalarToLatex(constant)];
+  for (const term of terms) {
+    pieces.push(pieces.length > 0 && !term.startsWith('-') ? `+${term}` : term);
+  }
+  return pieces.length > 0 ? pieces.join('') : '0';
+}
+
+function parameterTermMathJson(coefficient: ExactScalar, parameter: string) {
+  if (coefficient.numerator === 0) return null;
+  const symbol = parameterMathJson(parameter);
+  if (coefficient.numerator === coefficient.denominator) return symbol;
+  if (coefficient.numerator === -coefficient.denominator) return ['Negate', symbol];
+  return ['Multiply', buildExactScalarNode(coefficient), symbol];
+}
+
+function parameterExpressionMathJson(constant: ExactScalar, terms: unknown[]) {
+  const pieces = constant.numerator === 0 ? [] : [buildExactScalarNode(constant)];
+  pieces.push(...terms);
+  if (pieces.length === 0) return 0;
+  return pieces.length === 1 ? pieces[0] : ['Add', ...pieces];
+}
+
+function expressionColumnLatex(entries: readonly string[]) {
+  return `\\begin{bmatrix}${entries.join('\\\\')}\\end{bmatrix}`;
+}
+
+function expressionColumnMathJson(entries: readonly unknown[]) {
+  return ['Matrix', ['List', ...entries.map((entry) => ['List', entry])], "'[]'"];
+}
+
+function parameterDomainMathJson(parameters: readonly string[]) {
+  const symbols = parameters.map(parameterMathJson);
+  const last = symbols.at(-1);
+  if (!last) return undefined;
+  if (symbols.length === 1) return ['Element', last, 'RealNumbers'];
+  return [
+    'Delimiter',
+    ['Sequence', ...symbols.slice(0, -1), ['Element', last, 'RealNumbers']],
+    "','",
+  ];
+}
+
+function solutionFamilyEvidence(
+  rref: ExactMatrix,
+  pivotColumns: readonly number[],
+  unknowns: number,
+) {
+  const coefficientPivots = pivotColumns.filter((column) => column < unknowns);
+  const freeColumns = Array.from({ length: unknowns }, (_, index) => index)
+    .filter((column) => !coefficientPivots.includes(column));
+  if (freeColumns.length === 0) return null;
+
+  const parameterByColumn = new Map<number, string>();
+  freeColumns.forEach((column, index) => {
+    parameterByColumn.set(column, parameterName(index, freeColumns.length));
+  });
+  const latexEntries = Array.from({ length: unknowns }, () => '0');
+  const mathJsonEntries: unknown[] = Array.from({ length: unknowns }, () => 0);
+  freeColumns.forEach((column) => {
+    const parameter = parameterByColumn.get(column) ?? 't';
+    latexEntries[column] = parameter;
+    mathJsonEntries[column] = parameterMathJson(parameter);
+  });
+  coefficientPivots.forEach((pivotColumn, pivotRow) => {
+    const row = rref[pivotRow];
+    if (!row) return;
+    const constant = row[unknowns];
+    const terms = freeColumns.map((freeColumn) => ({
+      coefficient: negateScalar(row[freeColumn]),
+      parameter: parameterByColumn.get(freeColumn) ?? 't',
+    }));
+    latexEntries[pivotColumn] = parameterExpressionLatex(
+      constant,
+      terms.map(({ coefficient, parameter }) => parameterTermLatex(coefficient, parameter))
+        .filter((term): term is string => Boolean(term)),
+    );
+    mathJsonEntries[pivotColumn] = parameterExpressionMathJson(
+      constant,
+      terms.map(({ coefficient, parameter }) => parameterTermMathJson(coefficient, parameter))
+        .filter((term) => term !== null),
+    );
+  });
+
+  const parameters = freeColumns.map((column) => parameterByColumn.get(column) ?? 't');
+  const domain = parameters.length === 1
+    ? `${parameters[0]}\\in\\mathbb{R}`
+    : `${parameters.join(',')}\\in\\mathbb{R}`;
+  const domainMathJson = parameterDomainMathJson(parameters);
+  if (!domainMathJson) return null;
+  const vectorLatex = expressionColumnLatex(latexEntries);
+  const vectorMathJson = expressionColumnMathJson(mathJsonEntries);
+  const vectorEquation = ['Equal', 'x', vectorMathJson];
+  const firstParameter = parameterMathJson(parameters[0]);
+  const spacedEquation = [
+    'Equal',
+    'x',
+    ['InvisibleOperator', vectorMathJson, ['HorizontalSpacing', 18], firstParameter],
+  ];
+  const primaryMathJson = parameters.length === 1
+    ? ['Element', spacedEquation, 'RealNumbers']
+    : [
+        'Delimiter',
+        [
+          'Sequence',
+          spacedEquation,
+          ...parameters.slice(1, -1).map(parameterMathJson),
+          ['Element', parameterMathJson(parameters.at(-1) ?? 't'), 'RealNumbers'],
+        ],
+        "','",
+      ];
+  return {
+    exactLatex: `x=${vectorLatex}\\quad ${domain}`,
+    vectorEquationLatex: `x=${vectorLatex}`,
+    domain,
+    primaryMathJson,
+    vectorEquation,
+    domainMathJson,
+  };
+}
+
+function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[] {
+  const analysis = linearSystemAnalysis(request);
+  if (!analysis) return [];
+  const {
+    matrixA,
+    rhs,
+    coefficientRref,
+    augmentedRref,
+    unknowns,
+  } = analysis;
+
   const leaves: MatrixOwnedMathJsonLeaf[] = [
     leaf(
       `${coefficientRref.rank}`,
@@ -168,9 +357,23 @@ function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonL
       exactMatrixMathJson(augmentedRref.matrix),
       'matrix.linear-system.native-augmented-rref',
     ),
+    ...visibleRowOperations(augmentedRref.rowOperations).flatMap(({ operation }) => (
+      operation.kind === 'swap'
+        ? []
+        : [leaf(
+            exactScalarToLatex(operation.factor),
+            buildExactScalarNode(operation.factor),
+            `matrix.linear-system.native-${operation.kind}-factor`,
+          )]
+    )),
   ];
 
   if (coefficientRref.rank < augmentedRref.rank) {
+    leaves.push(leaf(
+      '\\text{No solution}',
+      "'No solution'",
+      'matrix.linear-system.native-inconsistent-classification',
+    ));
     const contradictionRow = augmentedRref.matrix.find((row) =>
       row.slice(0, unknowns).every((value) => value.numerator === 0)
       && row[unknowns]?.numerator !== 0);
@@ -192,6 +395,30 @@ function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonL
       freeVariables,
       'matrix.linear-system.native-free-variable-count',
     ));
+    const family = solutionFamilyEvidence(
+      augmentedRref.matrix,
+      augmentedRref.pivotColumns,
+      unknowns,
+    );
+    if (family) {
+      leaves.push(
+        leaf(
+          family.exactLatex,
+          family.primaryMathJson,
+          'matrix.linear-system.native-solution-family',
+        ),
+        leaf(
+          family.vectorEquationLatex,
+          family.vectorEquation,
+          'matrix.linear-system.native-solution-family-vector',
+        ),
+        leaf(
+          family.domain,
+          family.domainMathJson,
+          'matrix.linear-system.native-solution-family-domain',
+        ),
+      );
+    }
     return leaves;
   }
 
@@ -206,8 +433,15 @@ function linearSystemLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonL
   return leaves;
 }
 
+export function matrixLinearSystemRowOperationsV2(
+  request: RunMatrixModeRequest,
+): readonly MatrixRowOperationV2Evidence[] {
+  const analysis = linearSystemAnalysis(request);
+  return analysis ? visibleRowOperations(analysis.augmentedRref.rowOperations) : [];
+}
+
 function matrixOperator(name: string, operand: unknown) {
-  return ['InvisibleOperator', name, ['Delimiter', operand]];
+  return ['InvisibleOperator', name, ['Delimiter', structuredClone(operand)]];
 }
 
 function profileOperandMathJson(label: string, matrix: ExactMatrix) {
@@ -254,6 +488,11 @@ function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[]
   const columns = matrix[0]?.length ?? 0;
   const pivotColumns = analysis.pivotColumns.map((column) => column + 1);
   const leaves = [
+    leaf(
+      exactMatrixToLatex(matrix),
+      exactMatrixMathJson(matrix),
+      'matrix.profile.native-exact-operand',
+    ),
     leaf(
       `\\operatorname{rank}(${label})=${analysis.rank}`,
       ['Equal', matrixOperator('rank', operand), analysis.rank],
@@ -311,6 +550,24 @@ function profileLeaves(request: RunMatrixModeRequest): MatrixOwnedMathJsonLeaf[]
     }
   }
   return leaves;
+}
+
+export function matrixProfileV2EvidenceForRequest(
+  request: RunMatrixModeRequest,
+): MatrixProfileV2Evidence | undefined {
+  if (request.operation !== 'profileA' && request.operation !== 'profileB') return undefined;
+  const { matrixA, matrixB } = exactInputs(request);
+  const matrix = request.operation === 'profileA' ? matrixA : matrixB;
+  if (!matrix) return undefined;
+  const analysis = analyzeExactColumnFamily(matrix);
+  if (analysis.kind === 'stop') return undefined;
+  return {
+    operandLatex: exactMatrixToLatex(matrix),
+    domainDimension: matrix[0]?.length ?? 0,
+    codomainDimension: matrix.length,
+    rank: analysis.rank,
+    nullity: analysis.nullity,
+  };
 }
 
 export function matrixOwnedMathJsonLeaves(
@@ -395,6 +652,41 @@ export function matrixMathValuesFromOwnedLeaves(input: {
   const detailValues = details(input.outcome.detailSections, proven);
   if (detailValues?.length) values.details = detailValues;
   return values;
+}
+
+export function matrixV2MathResolverFromOwnedLeaves(input: {
+  routeId: MatrixMathJsonRouteId;
+  leaves: readonly MatrixOwnedMathJsonLeaf[];
+}): CanonicalResultV2MathResolver {
+  const proven = new Map<string, ProvenCanonicalMathValueV2>();
+  for (const candidate of input.leaves) {
+    let value: ProvenCanonicalMathValueV2;
+    try {
+      value = requireProvenCanonicalMathValueV2({
+        canonicalLatex: candidate.canonicalLatex,
+        mathJson: candidate.mathJson,
+        owner: 'matrix',
+        routeId: input.routeId,
+        source: candidate.source,
+      });
+    } catch (error) {
+      throw new Error(
+        `Matrix V2 proof failed for ${candidate.source} (${candidate.canonicalLatex}): ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    const existing = proven.get(candidate.canonicalLatex);
+    if (existing && JSON.stringify(existing.mathJson) !== JSON.stringify(value.mathJson)) {
+      throw new Error(`Matrix V2 producer supplied conflicting trees for ${candidate.canonicalLatex}.`);
+    }
+    proven.set(candidate.canonicalLatex, value);
+  }
+  return (canonicalLatex, path) => {
+    const value = proven.get(canonicalLatex);
+    if (!value) {
+      throw new Error(`Matrix V2 producer is missing MathJSON proof at ${path}.`);
+    }
+    return value;
+  };
 }
 
 export function matrixMathJsonRouteForRequest(

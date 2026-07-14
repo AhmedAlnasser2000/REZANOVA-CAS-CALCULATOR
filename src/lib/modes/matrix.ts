@@ -12,18 +12,26 @@ import {
   runMatrixModeViaIsolatedWorker,
   type CreateMatrixWorker,
 } from './worker-clients/matrix-worker-client';
-import { createMatrixResultOutcome } from './matrix-result-document';
 import {
+  createMatrixResultOutcome,
+  createMatrixResultOutcomeV2,
+} from './matrix-result-document';
+import {
+  matrixLinearSystemRowOperationsV2,
   matrixMathJsonRouteForRequest,
   matrixMathValuesFromOwnedLeaves,
   matrixOwnedMathJsonLeaves,
+  matrixProfileV2EvidenceForRequest,
+  matrixV2MathResolverFromOwnedLeaves,
 } from './matrix-math-values';
 import {
+  canonicalResultVersionForProducer,
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import type {
   ResultProducerDraft,
+  VersionedResultProducerDraft,
   ExactScalarWire,
   MatrixOperation,
   MatrixSystemForm,
@@ -252,16 +260,29 @@ function runMatrixModeOutcome(request: RunMatrixModeRequest): ResultProducerDraf
   };
 }
 
-export function runMatrixMode(request: RunMatrixModeRequest): ResultProducerDraft {
+export function runMatrixMode(request: RunMatrixModeRequest): VersionedResultProducerDraft {
   const outcome = runMatrixModeOutcome(request);
+  if (outcome.kind === 'prompt') return outcome;
+  const routeId = matrixMathJsonRouteForRequest(request);
+  const leaves = matrixOwnedMathJsonLeaves(request);
+  const version = canonicalResultVersionForProducer({ routeId });
   return requireCanonicalResultAuthority(
-    outcome.kind === 'prompt'
-      ? outcome
+    version === 2
+      ? createMatrixResultOutcomeV2(outcome, {
+          routeId,
+          mathValue: matrixV2MathResolverFromOwnedLeaves({ routeId, leaves }),
+          ...(routeId === 'matrix.profile'
+            ? { profile: matrixProfileV2EvidenceForRequest(request) }
+            : {}),
+          ...(routeId === 'matrix.linear-system'
+            ? { rowOperations: matrixLinearSystemRowOperationsV2(request) }
+            : {}),
+        })
       : createMatrixResultOutcome(outcome, {
           mathValues: matrixMathValuesFromOwnedLeaves({
             outcome,
-            routeId: matrixMathJsonRouteForRequest(request),
-            leaves: matrixOwnedMathJsonLeaves(request),
+            routeId,
+            leaves,
           }),
         }),
     'Matrix',

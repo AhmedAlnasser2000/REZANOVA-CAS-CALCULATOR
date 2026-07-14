@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "CANONICAL-RESULT-V2-TRIGONOMETRY1 adds the reviewed Period and Phase V2 adapter and producer evidence without compatibility or legacy-read growth.",
+  "acceptedReason": "CANONICAL-RESULT-V2-LINEAR-ALGEBRA1 adds reviewed V2 Matrix and Vector producer adapters without compatibility or legacy reads.",
   "registryDigest": "090232146f8105ab1467",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -381,8 +381,8 @@
         "8cdfada0c8b8d3e633be:1"
       ],
       "src/lib/modes/matrix.ts": [
-        "8c342a54409081e6fad7:1",
-        "6b1849ae67ee24bc40ba:1"
+        "7c79ab1b1e9fa0edaa08:1",
+        "9e1061aaf8d75e2c7d58:1"
       ],
       "src/lib/modes/table-core.ts": [
         "5596fa01d9903a06a317:1",
@@ -396,8 +396,8 @@
         "71731a702a442307d10d:1"
       ],
       "src/lib/modes/vector.ts": [
-        "d81e62307399f1ba9448:1",
-        "ab82579773584989b4ad:1"
+        "21ca2d8b6bed2f852862:1",
+        "758541381a8ecc209d7a:1"
       ],
       "src/lib/result-contract/native-result.ts": [
         "339eb4b79d8ecba20ea0:1"

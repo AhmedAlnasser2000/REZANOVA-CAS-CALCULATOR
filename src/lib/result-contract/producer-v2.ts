@@ -49,6 +49,7 @@ export type CanonicalResultProducerDraftAdapterV2 = {
   mathValue: CanonicalResultV2MathResolver;
   primary?: CanonicalResultProducerInputV2['primary'];
   request?: CanonicalResultProducerInputV2['request'];
+  answerRows?: CanonicalResultProducerInputV2['answerRows'] | null;
   supplements?: CanonicalResultProducerInputV2['supplements'];
   details?: CanonicalResultProducerInputV2['details'];
   table?: CanonicalResultProducerInputV2['table'];
@@ -180,6 +181,7 @@ export function buildCanonicalResultDocumentV2FromProducerDraft({
   mathValue,
   primary,
   request,
+  answerRows,
   supplements,
   details,
   table,
@@ -191,6 +193,17 @@ export function buildCanonicalResultDocumentV2FromProducerDraft({
   const adaptedDetails = details ?? detailParts(draft, mathValue);
   const summaries = summaryParts(draft, mathValue);
   const adaptedMetadata = metadata(draft, request, mathValue);
+  const adaptedAnswerRows = answerRows === null
+    ? undefined
+    : answerRows ?? (success?.answerRows
+      ? {
+          ...(success.answerRows.label ? { label: success.answerRows.label } : {}),
+          rows: success.answerRows.rows.map((row, index) => ({
+            math: mathValue(row.latex, `answerRows.rows[${index}].math`),
+            ...(row.label ? { label: row.label } : {}),
+          })),
+        }
+      : undefined);
 
   return buildCanonicalResultDocumentV2({
     outcomeKind: draft.kind,
@@ -198,17 +211,7 @@ export function buildCanonicalResultDocumentV2FromProducerDraft({
     ...(draft.kind === 'error' ? { error: draft.error } : {}),
     ...(adaptedPrimary ? { primary: adaptedPrimary } : {}),
     ...(request ? { request } : {}),
-    ...(success?.answerRows
-      ? {
-          answerRows: {
-            ...(success.answerRows.label ? { label: success.answerRows.label } : {}),
-            rows: success.answerRows.rows.map((row, index) => ({
-              math: mathValue(row.latex, `answerRows.rows[${index}].math`),
-              ...(row.label ? { label: row.label } : {}),
-            })),
-          },
-        }
-      : {}),
+    ...(adaptedAnswerRows ? { answerRows: adaptedAnswerRows } : {}),
     ...(draft.branchReadback
       ? {
           branchReadback: {

@@ -11,19 +11,26 @@ import {
   runVectorModeViaIsolatedWorker,
   type CreateVectorWorker,
 } from './worker-clients/vector-worker-client';
-import { createVectorResultOutcome } from './vector-result-document';
 import {
+  createVectorIndependenceResultOutcomeV2,
+  createVectorResultOutcome,
+} from './vector-result-document';
+import {
+  vectorIndependenceV2EvidenceForRequest,
   vectorMathJsonRouteForRequest,
   vectorMathValuesFromOwnedLeaves,
   vectorOwnedMathJsonLeaves,
+  vectorV2MathResolverFromOwnedLeaves,
 } from './vector-math-values';
 import {
+  canonicalResultVersionForProducer,
   finalizeCanonicalRuntimeOutcomeFromProducer,
   requireCanonicalResultAuthority,
 } from '../result-contract';
 import type {
   AngleUnit,
   ResultProducerDraft,
+  VersionedResultProducerDraft,
   ExactScalarWire,
   VectorOperation,
 } from '../../types/calculator';
@@ -162,16 +169,26 @@ function runVectorModeOutcome(request: RunVectorModeRequest): ResultProducerDraf
   };
 }
 
-export function runVectorMode(request: RunVectorModeRequest): ResultProducerDraft {
+export function runVectorMode(request: RunVectorModeRequest): VersionedResultProducerDraft {
   const outcome = runVectorModeOutcome(request);
+  if (outcome.kind === 'prompt') return outcome;
+  const routeId = vectorMathJsonRouteForRequest(request);
+  const leaves = vectorOwnedMathJsonLeaves(request);
+  const version = canonicalResultVersionForProducer({
+    routeId,
+    selector: request.operation,
+  });
   return requireCanonicalResultAuthority(
-    outcome.kind === 'prompt'
-      ? outcome
+    version === 2
+      ? createVectorIndependenceResultOutcomeV2(outcome, {
+          independence: vectorIndependenceV2EvidenceForRequest(request),
+          mathValue: vectorV2MathResolverFromOwnedLeaves({ routeId, leaves }),
+        })
       : createVectorResultOutcome(outcome, {
           mathValues: vectorMathValuesFromOwnedLeaves({
             outcome,
-            routeId: vectorMathJsonRouteForRequest(request),
-            leaves: vectorOwnedMathJsonLeaves(request),
+            routeId,
+            leaves,
           }),
         }),
     'Vector',

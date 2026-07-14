@@ -1,10 +1,17 @@
-import type { ResultProducerDraft } from '../../types/calculator';
+import type {
+  ResultProducerDraft,
+  ResultProducerDraftV2,
+} from '../../types/calculator';
 import {
+  attachCanonicalResultV2ToProducerDraft,
+  buildCanonicalResultDocumentV2FromProducerDraft,
   buildCanonicalResultDocumentFromProducer,
   canonicalMathValue,
   attachCanonicalResultToProducerDraft,
   type CanonicalResultProducerOptionsV1,
+  type CanonicalResultV2MathResolver,
 } from '../result-contract';
+import type { VectorIndependenceV2Evidence } from './vector-math-values';
 
 type VectorSuccessOutcome = Extract<ResultProducerDraft, { kind: 'success' }>;
 type VectorErrorOutcome = Extract<ResultProducerDraft, { kind: 'error' }>;
@@ -14,6 +21,40 @@ type VectorResultProducerInput =
   | Omit<VectorErrorOutcome, 'canonicalResult'>;
 
 type VectorResultProducerOutcome = Exclude<ResultProducerDraft, { kind: 'prompt' }>;
+
+export function createVectorIndependenceResultOutcomeV2(
+  input: VectorResultProducerInput,
+  evidence: {
+    independence?: VectorIndependenceV2Evidence;
+    mathValue: CanonicalResultV2MathResolver;
+  },
+): ResultProducerDraftV2 {
+  const success = input.kind === 'success' ? input : undefined;
+  if (success && (!input.exactLatex || !evidence.independence)) {
+    throw new Error('Vector selected independence V2 without complete native family evidence.');
+  }
+  const independence = success ? evidence.independence : undefined;
+  const canonicalResult = buildCanonicalResultDocumentV2FromProducerDraft({
+    draft: input,
+    mathValue: evidence.mathValue,
+    ...(independence && input.exactLatex
+      ? {
+          primary: {
+            kind: 'linear-independence' as const,
+            presentation: {
+              primaryLatex: input.exactLatex,
+              ...(success?.answerRows ? { answerRows: success.answerRows } : {}),
+            },
+            operandVectors: independence.operandVectorLatex.map((latex, index) =>
+              evidence.mathValue(latex, `primary.operandVectors[${index}]`)),
+            independent: independence.independent,
+          },
+          answerRows: null,
+        }
+      : {}),
+  });
+  return attachCanonicalResultV2ToProducerDraft(canonicalResult, input);
+}
 
 export function createVectorResultOutcome(
   input: Omit<VectorSuccessOutcome, 'canonicalResult'>,

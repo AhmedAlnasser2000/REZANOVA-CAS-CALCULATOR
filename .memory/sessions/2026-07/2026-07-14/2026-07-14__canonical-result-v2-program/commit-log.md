@@ -36,9 +36,13 @@
   - committed_by_agent: codex
   - committed_by_agent_model: gpt-5.6
   - committed_by_agent_family: sol
+- `CANONICAL-RESULT-V2-TRIGONOMETRY1`: `94ea5c52`
+  - committed_by_agent: codex
+  - committed_by_agent_model: gpt-5.6
+  - committed_by_agent_family: sol
 
 ## Planned
 
-- `CANONICAL-RESULT-V2-TRIGONOMETRY1`: verified; standing approval covers commit creation.
-- The two gates after Trigonometry retain standing approval only within the approved roadmap scope.
+- `CANONICAL-RESULT-V2-LINEAR-ALGEBRA1`: verified; standing approval covers commit creation.
+- `CANONICAL-RESULT-V2-CLOSEOUT0` retains standing approval only within the approved roadmap scope.
 - No push is authorized.

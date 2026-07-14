@@ -3,10 +3,15 @@ import { buildVectorOoeSnapshot, runVectorMode } from './vector';
 
 function detailMathValues(result: ReturnType<typeof runVectorMode>) {
   if (result.kind === 'prompt') return [];
-  return result.canonicalResult?.details?.flatMap((section) =>
-    section.lines.flatMap((line) => line)
-      .filter((part) => part.kind === 'math')
-      .map((part) => part.math)) ?? [];
+  const values = [];
+  for (const section of result.canonicalResult?.details ?? []) {
+    for (const line of section.lines) {
+      for (const part of line) {
+        if (part.kind === 'math') values.push(part.math);
+      }
+    }
+  }
+  return values;
 }
 
 describe('runVectorMode', () => {
@@ -61,6 +66,13 @@ describe('runVectorMode', () => {
     });
     expect(outcome.kind === 'success' ? outcome.detailSections?.map((section) => section.title) : [])
       .toEqual(['Span Facts', 'Dependence Relation', 'RREF Evidence']);
+    const document = outcome.kind === 'success' ? outcome.canonicalResult : undefined;
+    expect(document?.version === 2
+      ? document.primary
+      : undefined).toMatchObject({
+      kind: 'linear-independence',
+      independent: false,
+    });
     const detailValues = detailMathValues(outcome);
     expect(detailValues.find((value) => value.canonicalLatex === '2')?.mathJson).toBe(2);
     expect(detailValues.find((value) => value.canonicalLatex === '\\left\\{1,2\\right\\}')?.mathJson)

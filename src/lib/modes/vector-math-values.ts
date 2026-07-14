@@ -29,9 +29,12 @@ import {
 } from '../linear-algebra/matrix-column-family';
 import { runNumericVectorOperation } from '../linear-algebra/vector-core';
 import {
+  requireProvenCanonicalMathValueV2,
   tryProvenCanonicalMathValue,
   type CanonicalResultProducerMathValuesV1,
+  type CanonicalResultV2MathResolver,
   type ProvenCanonicalMathValue,
+  type ProvenCanonicalMathValueV2,
 } from '../result-contract';
 import type { MathJsonRouteId } from '../result-contract/mathjson-route-registry';
 import type { RunVectorModeRequest } from './vector';
@@ -42,6 +45,11 @@ type VectorOwnedMathJsonLeaf = {
   canonicalLatex: string;
   mathJson: unknown;
   source: string;
+};
+
+export type VectorIndependenceV2Evidence = {
+  operandVectorLatex: string[];
+  independent: boolean;
 };
 
 function unproven(canonicalLatex: string) {
@@ -268,6 +276,11 @@ function familyLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] 
     familyOperandMathJson(labels[column], exactVectors[column])
   ));
   const leaves: VectorOwnedMathJsonLeaf[] = [
+    ...exactVectors.map((vector) => leaf(
+      exactVectorToColumnLatex(vector),
+      exactVectorMathJson(vector),
+      'vector.span-independence.native-exact-operand-vector',
+    )),
     leaf(`${analysis.rank}`, analysis.rank, 'vector.span-independence.native-span-dimension'),
     leaf(
       setLatex(pivotColumns.map(String)),
@@ -317,6 +330,26 @@ function familyLeaves(request: RunVectorModeRequest): VectorOwnedMathJsonLeaf[] 
     ));
   }
   return leaves;
+}
+
+export function vectorIndependenceV2EvidenceForRequest(
+  request: RunVectorModeRequest,
+): VectorIndependenceV2Evidence | undefined {
+  if (request.operation !== 'independent') return undefined;
+  const operands = request.vectorOperands ?? [];
+  const exactVectors = operands.map((vector, index) => (
+    exactVectorFromWire(request.exactVectorOperands?.[index])
+    ?? exactVectorFromNumeric(vector)
+  ));
+  if (!exactVectors.every((vector): vector is ExactVector => vector !== null)) return undefined;
+  const matrix = exactMatrixFromColumnVectors(exactVectors);
+  if (!matrix) return undefined;
+  const analysis = analyzeExactColumnFamily(matrix);
+  if (analysis.kind === 'stop') return undefined;
+  return {
+    operandVectorLatex: exactVectors.map(exactVectorToColumnLatex),
+    independent: analysis.nullity === 0,
+  };
 }
 
 export function vectorOwnedMathJsonLeaves(
@@ -392,6 +425,41 @@ export function vectorMathValuesFromOwnedLeaves(input: {
   const detailValues = details(input.outcome.detailSections, proven);
   if (detailValues?.length) values.details = detailValues;
   return values;
+}
+
+export function vectorV2MathResolverFromOwnedLeaves(input: {
+  routeId: VectorMathJsonRouteId;
+  leaves: readonly VectorOwnedMathJsonLeaf[];
+}): CanonicalResultV2MathResolver {
+  const proven = new Map<string, ProvenCanonicalMathValueV2>();
+  for (const candidate of input.leaves) {
+    let value: ProvenCanonicalMathValueV2;
+    try {
+      value = requireProvenCanonicalMathValueV2({
+        canonicalLatex: candidate.canonicalLatex,
+        mathJson: candidate.mathJson,
+        owner: 'vector',
+        routeId: input.routeId,
+        source: candidate.source,
+      });
+    } catch (error) {
+      throw new Error(
+        `Vector V2 proof failed for ${candidate.source} (${candidate.canonicalLatex}): ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    const existing = proven.get(candidate.canonicalLatex);
+    if (existing && JSON.stringify(existing.mathJson) !== JSON.stringify(value.mathJson)) {
+      throw new Error(`Vector V2 producer supplied conflicting trees for ${candidate.canonicalLatex}.`);
+    }
+    proven.set(candidate.canonicalLatex, value);
+  }
+  return (canonicalLatex, path) => {
+    const value = proven.get(canonicalLatex);
+    if (!value) {
+      throw new Error(`Vector V2 producer is missing MathJSON proof at ${path}.`);
+    }
+    return value;
+  };
 }
 
 export function vectorMathJsonRouteForRequest(

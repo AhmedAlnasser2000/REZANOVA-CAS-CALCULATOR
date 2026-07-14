@@ -58,10 +58,13 @@ describe('Linear Algebra canonical result producers', () => {
     const outcome = runMatrixMode(request);
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Matrix success.');
-    expect(outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
+    expect(outcome.canonicalResult?.version).toBe(1);
+    expect(outcome.canonicalResult?.version === 1
+      ? outcome.canonicalResult.primaryMath?.mathJson
+      : undefined).toBeDefined();
   });
 
-  it('proves representable Matrix-system leaves without inventing row-operation trees', () => {
+  it('stores Matrix-system row operations as typed V2 semantics with proven factors', () => {
     const outcome = runMatrixMode({
       operation: 'linearSystem',
       matrixA: [[2, 1], [1, -1]],
@@ -74,11 +77,17 @@ describe('Linear Algebra canonical result producers', () => {
       throw new Error('Expected Matrix-system canonical result.');
     }
     const leaves = collectCanonicalMathLeaves(outcome.canonicalResult);
+    expect(outcome.canonicalResult.version).toBe(2);
     expect(leaves).toHaveLength(12);
-    expect(leaves.filter((entry) => entry.value.mathJson !== undefined)).toHaveLength(8);
-    expect(leaves.find((entry) => entry.path === 'primaryMath')?.value.mathJson).toBeDefined();
-    expect(leaves.find((entry) => entry.path === 'details[3].lines[0][0].math')?.value.mathJson)
-      .toBeUndefined();
+    expect(leaves.every((entry) => entry.value.mathJson !== undefined)).toBe(true);
+    expect(leaves.find((entry) => entry.path === 'primary.value')?.value.mathJson).toBeDefined();
+    expect(leaves.filter((entry) => entry.path.endsWith('.operation.factor'))).toHaveLength(4);
+    expect(outcome.canonicalResult.version === 2
+      ? outcome.canonicalResult.details?.[3]?.lines[0]?.[0]
+      : undefined).toMatchObject({
+      kind: 'row-operation',
+      operation: { kind: 'scale', row: 1 },
+    });
   });
 
   it.each([
@@ -90,7 +99,10 @@ describe('Linear Algebra canonical result producers', () => {
     const outcome = runVectorMode(request);
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Vector success.');
-    expect(outcome.canonicalResult?.primaryMath?.mathJson).toBeDefined();
+    expect(outcome.canonicalResult?.version).toBe(1);
+    expect(outcome.canonicalResult?.version === 1
+      ? outcome.canonicalResult.primaryMath?.mathJson
+      : undefined).toBeDefined();
   });
 
   it('proves every Gram-Schmidt replay leaf from exact Vector evidence', () => {
@@ -119,6 +131,9 @@ describe('Linear Algebra canonical result producers', () => {
     expect(outcome.kind).toBe('success');
     if (outcome.kind !== 'success') throw new Error('Expected Vector angle success.');
     expect(outcome.exactLatex).toBe('100^{g}');
-    expect(outcome.canonicalResult?.primaryMath?.mathJson).toBeUndefined();
+    expect(outcome.canonicalResult?.version).toBe(1);
+    expect(outcome.canonicalResult?.version === 1
+      ? outcome.canonicalResult.primaryMath?.mathJson
+      : undefined).toBeUndefined();
   });
 });

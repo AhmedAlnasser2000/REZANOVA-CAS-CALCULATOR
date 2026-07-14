@@ -80,6 +80,8 @@ export const CANONICAL_RESULT_V2_DEFAULT_PRODUCER_ROUTES = (
     'trigonometry.period-phase',
     'table.domain-boundary',
     'table.rational-function',
+    'matrix.linear-system',
+    'matrix.profile',
   ] as const satisfies readonly MathJsonRouteId[]
 );
 
@@ -89,6 +91,7 @@ export const CANONICAL_RESULT_V2_PRODUCER_SELECTORS = (
     'equation.domain-boundary': ['typedLabeledSupplement'],
     'equation.rational-radical': ['typedLabeledSupplement'],
     'trigonometry.right-triangle': ['rightTriangle'],
+    'vector.span-independence': ['independent'],
   } as const satisfies Partial<Record<MathJsonRouteId, readonly string[]>>
 );
 

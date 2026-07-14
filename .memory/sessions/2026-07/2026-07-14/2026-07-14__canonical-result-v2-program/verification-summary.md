@@ -71,7 +71,7 @@
 
 ## CANONICAL-RESULT-V2-TRIGONOMETRY1
 
-- result: pass; pending commit creation under standing approval
+- result: pass; committed as `94ea5c52`
 - kind: UI producer migration
 - scope: Period & Phase typed compound primary with normalized equation, period, and phase-shift semantics; one reviewed exemption removed
 - production impact: Period & Phase emits V2 for sine, cosine, tangent, all angle units, and symbolic affine offsets; existing visible primary/detail presentation is retained
@@ -80,4 +80,18 @@
 - browser verification: 1 Chromium scenario covers all carriers/units, details, three History rows, replay, and overflow
 - ratchets: incremental TypeScript; Vite build; display inversion 404 producers / 150 native documents / 59 canonical reads / zero compatibility / zero legacy; diff hygiene
 - file-size status: exact staged index passes all 1,849 tracked TypeScript caps; mutable shared-tree command is blocked only by concurrent Notebook `NotebookRichCanvas.tsx` at 1,120 lines
+- protected state: concurrent Notebook and Rust OOE files plus `test-results/` excluded
+
+## CANONICAL-RESULT-V2-LINEAR-ALGEBRA1
+
+- result: pass; pending commit creation under standing approval
+- kind: UI producer migration
+- scope: Matrix linear-system row operations, Matrix linear-map profiles, and Vector independence migrated to typed V2 semantics; all ten remaining residual leaves removed
+- production impact: Matrix linear-system/profile routes default to V2; only the Vector `independent` selector uses V2 while `span` remains frozen V1; visible output is unchanged
+- focused verification: 12 Linear Algebra V2 cases; 48 focused Matrix/Vector/producer contract cases; 37 worker/History/workspace cases; all 43 golden and 100 replay presentation executions pass
+- corpus: 143 executable cases / 452 leaves / 452 producer-proven / zero exempt / zero missing; Matrix system is 12/12/0/0, profiles are 15/15/0/0, and independence is 11/11/0/0
+- browser verification: 2 Chromium scenarios cover square and rectangular profiles, exact row-operation details, dependent and independent vector families, five V2 History rows, replay, and overflow
+- ratchets: incremental TypeScript; Vite build; display inversion 404 producers / 150 native documents / 59 canonical reads / zero compatibility / zero legacy; focused lint
+- closeout boundary: the executable report already has an empty exemption registry and 452/452 proof; the committed coverage-baseline refresh remains intentionally assigned to `CANONICAL-RESULT-V2-CLOSEOUT0`
+- file-size status: exact staged-index validation passes all 1,850 tracked TypeScript caps; the mutable shared-tree command is blocked only by concurrent Notebook `NotebookRichCanvas.tsx` at 1,120 lines
 - protected state: concurrent Notebook and Rust OOE files plus `test-results/` excluded

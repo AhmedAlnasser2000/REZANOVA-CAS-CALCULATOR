@@ -3,10 +3,15 @@ import { runMatrixMode } from './matrix';
 
 function detailMathValues(result: ReturnType<typeof runMatrixMode>) {
   if (result.kind === 'prompt') return [];
-  return result.canonicalResult?.details?.flatMap((section) =>
-    section.lines.flatMap((line) => line)
-      .filter((part) => part.kind === 'math')
-      .map((part) => part.math)) ?? [];
+  const values = [];
+  for (const section of result.canonicalResult?.details ?? []) {
+    for (const line of section.lines) {
+      for (const part of line) {
+        if (part.kind === 'math') values.push(part.math);
+      }
+    }
+  }
+  return values;
 }
 
 describe('runMatrixMode', () => {
@@ -50,6 +55,16 @@ describe('runMatrixMode', () => {
     expect(result.title).toBe('profile(A)');
     expect(result.kind).toBe('success');
     if (result.kind === 'success') {
+      const document = result.canonicalResult;
+      expect(document?.version).toBe(2);
+      expect(document?.version === 2 ? document.primary : undefined)
+        .toMatchObject({
+          kind: 'linear-map-profile',
+          domainDimension: 2,
+          codomainDimension: 2,
+          rank: 1,
+          nullity: 1,
+        });
       expect(result.approxText).toBeUndefined();
       expect(result.detailSections?.map((section) => section.title)).toEqual([
         'Rank-Nullity Facts',
@@ -72,8 +87,10 @@ describe('runMatrixMode', () => {
     });
 
     expect(result.kind).toBe('success');
-    expect(result.kind === 'success'
-      ? result.canonicalResult?.answerRows?.rows[1]?.math.mathJson
+    const document = result.kind === 'success' ? result.canonicalResult : undefined;
+    expect(document?.version === 2
+      && document.primary?.kind === 'linear-map-profile'
+      ? document.primary.operand.mathJson
       : undefined).toBeDefined();
     const detailValues = detailMathValues(result);
     expect(detailValues.find((value) => value.canonicalLatex === '1+1=2')?.mathJson)
