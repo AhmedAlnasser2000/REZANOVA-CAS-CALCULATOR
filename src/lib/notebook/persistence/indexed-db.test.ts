@@ -2,7 +2,10 @@ import { IDBFactory } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
 
 import { createNotebookRichDocument } from '../document/model';
-import { createNotebookStoredRecordV1 } from './contracts';
+import {
+  createNotebookStoredRecordV1,
+  createNotebookVersionSnapshotV1,
+} from './contracts';
 import { createIndexedDbNotebookPorts } from './indexed-db';
 
 function createPorts(name: string) {
@@ -79,5 +82,30 @@ describe('IndexedDB Notebook persistence ports', () => {
       .rejects.toThrow(/different media type/);
     await ports.asset.delete(first.id);
     expect(await ports.asset.load(first.id)).toBeNull();
+  });
+
+  it('persists version history and moves records through Trash atomically', async () => {
+    const ports = createPorts('history-trash');
+    const record = createRecord();
+    await ports.library.save(record, { expectedRevision: null });
+    const snapshot = createNotebookVersionSnapshotV1(record, {
+      createdAt: '2026-07-14T00:05:00.000Z',
+      reason: 'before-trash',
+      snapshotId: 'snapshot.browser.1',
+    });
+    await ports.library.saveVersion(snapshot);
+    expect(await ports.library.listVersions(record.libraryId)).toEqual([snapshot]);
+
+    await ports.library.moveToTrash(record.libraryId);
+    expect(await ports.library.load(record.libraryId)).toBeNull();
+    expect(await ports.library.listTrash()).toEqual([
+      expect.objectContaining({ libraryId: record.libraryId }),
+    ]);
+    await ports.library.restoreFromTrash(record.libraryId);
+    expect(await ports.library.load(record.libraryId)).toEqual(record);
+    await ports.library.moveToTrash(record.libraryId);
+    await ports.library.deletePermanently(record.libraryId);
+    expect(await ports.library.listTrash()).toEqual([]);
+    expect(await ports.library.listVersions(record.libraryId)).toEqual([]);
   });
 });

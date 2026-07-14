@@ -30,6 +30,15 @@
 
 - commit_message: `NOTEBOOK-PERSISTENCE-FOUNDATION1`
 - approval: standing user approval recorded on 2026-07-14
-- status: verified; committed by the checkpoint containing this entry
+- status: committed
+- commit_hash: `a1c2b708`
 - staged_scope: Notebook persistence contracts/adapters/tests, Rust Notebook storage/package source, dependency locks, and required durable memory only
+- excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and unrelated workspace work
+
+## NOTEBOOK-DOCUMENT-LIBRARY1
+
+- commit_message: `NOTEBOOK-DOCUMENT-LIBRARY1`
+- approval: standing user approval recorded on 2026-07-14
+- status: verified; committed by the checkpoint containing this entry
+- staged_scope: Notebook library UI/runtime seams, persistence history/Trash adapters, focused tests, styles, Chromium specification, and required durable memory only
 - excluded: untracked `test-results/`, ignored `.task_tmp/` browser evidence, and unrelated workspace work

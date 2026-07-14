@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { createNotebookSurfaceState } from '../model';
 import { createNotebookRichDocument } from './model';
 import {
+  createNotebookLibrarySurfaceState,
   createNotebookRichSurfaceState,
+  notebookLibrarySurfaceStateFromSlot,
   notebookRichSurfaceStateFromSlot,
 } from './surface-state';
 
@@ -77,5 +79,19 @@ describe('Notebook rich surface state', () => {
     });
 
     expect(migrated.document).toEqual({ ...version5, version: 6 });
+  });
+
+  it('keeps only durable identity metadata in a hydrated workspace tab', () => {
+    const reference = createNotebookLibrarySurfaceState({
+      libraryId: 'library.workspace.1',
+      revision: 7,
+      title: 'Durable Notebook',
+    });
+    expect(notebookLibrarySurfaceStateFromSlot(reference)).toEqual(reference);
+    expect(reference).not.toHaveProperty('document');
+    expect(notebookLibrarySurfaceStateFromSlot({
+      ...reference,
+      libraryId: '../escape',
+    })).toBeNull();
   });
 });

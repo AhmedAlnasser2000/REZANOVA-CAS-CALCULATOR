@@ -22,4 +22,7 @@
 - Large documents use the continuous Draft view, settled app-document synchronization, off-path metrics and validation, and viewport-aware MathLive hydration without changing the single-editor selection or undo model.
 - `NOTEBOOK-PERSISTENCE-FOUNDATION1` is verified under the standing commit approval. It separates the V6 app document from a versioned library record, adds atomic Rust storage and recovery, content-addressed assets, validated ZIP64 `.cwiznb` packages, Tauri ports, and browser IndexedDB parity.
 - Package import validates every declared entry before mutation and creates a fresh library identity; portable export uses the passed current revision without changing the saved record.
-- Notebook autosave, save-state UI, library navigation, and File backstage remain intentionally deferred to `NOTEBOOK-DOCUMENT-LIBRARY1`, which is the next gate.
+- `NOTEBOOK-PERSISTENCE-FOUNDATION1` is committed as `a1c2b708`.
+- `NOTEBOOK-DOCUMENT-LIBRARY1` is verified under the standing commit approval. Notebook documents are created locally immediately, autosave after 750 ms, save immediately on `Ctrl/Cmd+S`, and expose truthful saved/unsaved/failure status.
+- File backstage now owns New, templates, Recent, All Notebooks, `.cwiznb` import/export, bounded version history, and Trash. Workspace Tabs retain only library identity, revision, title, and view state; an already-open document is focused instead of duplicated.
+- The next gate is `NOTEBOOK-RIBBON-TABS1`; media, pages, and publication remain sequenced after it.

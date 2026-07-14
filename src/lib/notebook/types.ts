@@ -108,7 +108,17 @@ export type NotebookRichSurfaceState = {
   document: NotebookRichDocument;
 };
 
-export type NotebookSurfaceState = NotebookLegacySurfaceState | NotebookRichSurfaceState;
+export type NotebookLibrarySurfaceState = {
+  kind: typeof NOTEBOOK_SURFACE_STATE_KIND;
+  libraryId: string;
+  revision: number;
+  title: string;
+};
+
+export type NotebookSurfaceState =
+  | NotebookLegacySurfaceState
+  | NotebookRichSurfaceState
+  | NotebookLibrarySurfaceState;
 
 export type NotebookPackageBoundary = {
   version: NotebookDtoVersion;

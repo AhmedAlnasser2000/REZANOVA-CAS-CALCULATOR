@@ -26,8 +26,8 @@
 | Gate | Kind | Status |
 | --- | --- | --- |
 | `NOTEBOOK-LARGE-DOCUMENT-READINESS1` | ui | committed `4e275f06` |
-| `NOTEBOOK-PERSISTENCE-FOUNDATION1` | backend | verified; commit approved |
-| `NOTEBOOK-DOCUMENT-LIBRARY1` | ui | pending |
+| `NOTEBOOK-PERSISTENCE-FOUNDATION1` | backend | committed `a1c2b708` |
+| `NOTEBOOK-DOCUMENT-LIBRARY1` | ui | verified; standing commit approval |
 | `NOTEBOOK-RIBBON-TABS1` | ui | pending |
 | `NOTEBOOK-IMAGE1` | ui | pending |
 | `NOTEBOOK-PAGE-LAYOUT1` | ui | pending |
@@ -40,6 +40,6 @@
 
 ## Current Handoff
 
-- `NOTEBOOK-PERSISTENCE-FOUNDATION1` meets its focused TypeScript, Rust, real-Chromium IndexedDB, production-build, static, and repository gates.
-- Desktop storage and `.cwiznb` package commands are registered, and browser IndexedDB parity is implemented. The active Notebook is not yet wired to them, so `Session only` remains the honest visible state.
-- The next implementation gate is `NOTEBOOK-DOCUMENT-LIBRARY1` after this standing-approved selective commit.
+- `NOTEBOOK-DOCUMENT-LIBRARY1` meets its focused model, UI, Rust, responsive Chromium, static, and repository gates.
+- Notebook now creates and autosaves durable local documents, carries only a lightweight library reference in Workspace Tabs, and exposes File, version-history, failure-recovery, and Trash flows.
+- The next implementation gate is `NOTEBOOK-RIBBON-TABS1` after this standing-approved selective commit.

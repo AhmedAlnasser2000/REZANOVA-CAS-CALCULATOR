@@ -1,23 +1,30 @@
 import {
   cloneNotebookAssetPayloadV1,
   cloneNotebookStoredRecordV1,
+  cloneNotebookVersionSnapshotV1,
   isNotebookAssetId,
   isNotebookAssetMetadataV1,
   isNotebookStoredRecordV1,
   isNotebookSupportedAssetMimeType,
+  isNotebookVersionSnapshotV1,
   notebookSha256Hex,
   summarizeNotebookStoredRecordV1,
+  NOTEBOOK_VERSION_HISTORY_MAX_AGE_MS,
+  NOTEBOOK_VERSION_HISTORY_MAX_COUNT,
   type NotebookAssetMetadataV1,
   type NotebookAssetPayloadV1,
+  type NotebookVersionSnapshotV1,
 } from './contracts';
 import type {
   NotebookAssetPort,
   NotebookLibraryPort,
 } from './port';
 
-const NOTEBOOK_INDEXED_DB_VERSION = 1;
+const NOTEBOOK_INDEXED_DB_VERSION = 2;
 const RECORD_STORE = 'records';
 const ASSET_STORE = 'assets';
+const TRASH_STORE = 'trash';
+const VERSION_STORE = 'versions';
 
 type StoredAsset = {
   id: string;
@@ -56,6 +63,12 @@ function openNotebookDatabase(indexedDb: IDBFactory, databaseName: string): Prom
       }
       if (!database.objectStoreNames.contains(ASSET_STORE)) {
         database.createObjectStore(ASSET_STORE, { keyPath: 'id' });
+      }
+      if (!database.objectStoreNames.contains(TRASH_STORE)) {
+        database.createObjectStore(TRASH_STORE, { keyPath: 'libraryId' });
+      }
+      if (!database.objectStoreNames.contains(VERSION_STORE)) {
+        database.createObjectStore(VERSION_STORE, { keyPath: 'snapshotId' });
       }
     });
     request.addEventListener('success', () => resolve(request.result), { once: true });
@@ -131,6 +144,97 @@ export function createIndexedDbNotebookPorts(options: {
       const db = await database;
       const transaction = db.transaction(RECORD_STORE, 'readwrite');
       await requestResult(transaction.objectStore(RECORD_STORE).delete(libraryId));
+      await transactionComplete(transaction);
+    },
+    async listVersions(libraryId) {
+      const db = await database;
+      const transaction = db.transaction(VERSION_STORE, 'readonly');
+      const values = await requestResult(transaction.objectStore(VERSION_STORE).getAll());
+      await transactionComplete(transaction);
+      return values
+        .filter(isNotebookVersionSnapshotV1)
+        .filter((snapshot) => snapshot.libraryId === libraryId)
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+        .map(cloneNotebookVersionSnapshotV1);
+    },
+    async saveVersion(snapshot) {
+      if (!isNotebookVersionSnapshotV1(snapshot)) {
+        throw new TypeError('Notebook IndexedDB accepts snapshot version 1 only.');
+      }
+      const db = await database;
+      const transaction = db.transaction(VERSION_STORE, 'readwrite');
+      const store = transaction.objectStore(VERSION_STORE);
+      await requestResult(store.put(cloneNotebookVersionSnapshotV1(snapshot)));
+      const values = await requestResult(store.getAll()) as NotebookVersionSnapshotV1[];
+      const cutoff = Date.parse(snapshot.createdAt) - NOTEBOOK_VERSION_HISTORY_MAX_AGE_MS;
+      const expired = values
+        .filter(isNotebookVersionSnapshotV1)
+        .filter((candidate) => candidate.libraryId === snapshot.libraryId)
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+        .filter((candidate, index) => (
+          index >= NOTEBOOK_VERSION_HISTORY_MAX_COUNT
+          || Date.parse(candidate.createdAt) < cutoff
+        ));
+      await Promise.all(expired.map((candidate) => requestResult(store.delete(
+        candidate.snapshotId,
+      ))));
+      await transactionComplete(transaction);
+    },
+    async moveToTrash(libraryId) {
+      const db = await database;
+      const transaction = db.transaction([RECORD_STORE, TRASH_STORE], 'readwrite');
+      const recordStore = transaction.objectStore(RECORD_STORE);
+      const value = await requestResult(recordStore.get(libraryId));
+      if (!isNotebookStoredRecordV1(value)) {
+        transaction.abort();
+        throw new Error('Notebook record does not exist.');
+      }
+      await requestResult(transaction.objectStore(TRASH_STORE).put(
+        cloneNotebookStoredRecordV1(value),
+      ));
+      await requestResult(recordStore.delete(libraryId));
+      await transactionComplete(transaction);
+      return cloneNotebookStoredRecordV1(value);
+    },
+    async listTrash() {
+      const db = await database;
+      const transaction = db.transaction(TRASH_STORE, 'readonly');
+      const values = await requestResult(transaction.objectStore(TRASH_STORE).getAll());
+      await transactionComplete(transaction);
+      return values
+        .filter(isNotebookStoredRecordV1)
+        .map(summarizeNotebookStoredRecordV1)
+        .sort((left, right) => right.savedAt.localeCompare(left.savedAt));
+    },
+    async restoreFromTrash(libraryId) {
+      const db = await database;
+      const transaction = db.transaction([RECORD_STORE, TRASH_STORE], 'readwrite');
+      const recordStore = transaction.objectStore(RECORD_STORE);
+      if (isNotebookStoredRecordV1(await requestResult(recordStore.get(libraryId)))) {
+        transaction.abort();
+        throw new Error('Notebook library identity is already active.');
+      }
+      const trashStore = transaction.objectStore(TRASH_STORE);
+      const value = await requestResult(trashStore.get(libraryId));
+      if (!isNotebookStoredRecordV1(value)) {
+        transaction.abort();
+        throw new Error('Notebook trash record does not exist.');
+      }
+      await requestResult(recordStore.put(cloneNotebookStoredRecordV1(value)));
+      await requestResult(trashStore.delete(libraryId));
+      await transactionComplete(transaction);
+      return cloneNotebookStoredRecordV1(value);
+    },
+    async deletePermanently(libraryId) {
+      const db = await database;
+      const transaction = db.transaction([TRASH_STORE, VERSION_STORE], 'readwrite');
+      await requestResult(transaction.objectStore(TRASH_STORE).delete(libraryId));
+      const versionStore = transaction.objectStore(VERSION_STORE);
+      const values = await requestResult(versionStore.getAll());
+      await Promise.all(values
+        .filter(isNotebookVersionSnapshotV1)
+        .filter((snapshot) => snapshot.libraryId === libraryId)
+        .map((snapshot) => requestResult(versionStore.delete(snapshot.snapshotId))));
       await transactionComplete(transaction);
     },
   };

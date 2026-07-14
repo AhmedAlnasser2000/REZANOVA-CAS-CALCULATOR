@@ -4,11 +4,14 @@ mod package;
 
 pub use model::{
     NotebookAssetMetadataV1, NotebookAssetPayloadV1, NotebookPackageInspectionV1,
-    NotebookStoredRecordSummaryV1, NotebookStoredRecordV1,
+    NotebookStoredRecordSummaryV1, NotebookStoredRecordV1, NotebookVersionSnapshotV1,
 };
 
 use assets::{sha256_hex, validate_asset_bytes};
-use model::{is_asset_id, summarize_record, validate_stored_record, NotebookRecoveryMetadataV1};
+use model::{
+    is_asset_id, summarize_record, validate_stored_record, validate_version_snapshot,
+    NotebookRecoveryMetadataV1,
+};
 use package::{export_package, inspect_package, inspection};
 use std::{
     fs::{self, File},
@@ -54,8 +57,22 @@ impl NotebookStorage {
         self.root.join("recovery")
     }
 
+    fn trash_dir(&self) -> PathBuf {
+        self.root.join("trash")
+    }
+
+    fn versions_dir(&self) -> PathBuf {
+        self.root.join("versions")
+    }
+
     fn ensure_directories(&self) -> Result<(), String> {
-        for directory in [self.documents_dir(), self.assets_dir(), self.recovery_dir()] {
+        for directory in [
+            self.documents_dir(),
+            self.assets_dir(),
+            self.recovery_dir(),
+            self.trash_dir(),
+            self.versions_dir(),
+        ] {
             fs::create_dir_all(directory).map_err(|error| error.to_string())?;
         }
         Ok(())
@@ -292,6 +309,188 @@ impl NotebookStorage {
                 Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
                 Err(error) => return Err(error.to_string()),
             }
+        }
+        Ok(())
+    }
+
+    fn trash_path(&self, library_id: &str) -> PathBuf {
+        self.trash_dir()
+            .join(format!("{}.json", Self::record_key(library_id)))
+    }
+
+    fn versions_path(&self, library_id: &str) -> PathBuf {
+        self.versions_dir().join(Self::record_key(library_id))
+    }
+
+    pub fn list_versions(
+        &self,
+        library_id: &str,
+    ) -> Result<Vec<NotebookVersionSnapshotV1>, String> {
+        if !model::is_library_id(library_id) {
+            return Err("Notebook library identity is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        self.list_versions_locked(library_id)
+    }
+
+    fn list_versions_locked(
+        &self,
+        library_id: &str,
+    ) -> Result<Vec<NotebookVersionSnapshotV1>, String> {
+        let directory = self.versions_path(library_id);
+        if !directory.exists() {
+            return Ok(Vec::new());
+        }
+        let mut snapshots = Vec::new();
+        for entry in fs::read_dir(directory).map_err(|error| error.to_string())? {
+            let path = entry.map_err(|error| error.to_string())?.path();
+            if path.extension().and_then(|value| value.to_str()) != Some("json") {
+                continue;
+            }
+            let snapshot = serde_json::from_slice::<NotebookVersionSnapshotV1>(
+                &fs::read(path).map_err(|error| error.to_string())?,
+            )
+            .map_err(|error| error.to_string())?;
+            validate_version_snapshot(&snapshot)?;
+            if snapshot.library_id != library_id {
+                return Err("Notebook version identity does not match its directory.".into());
+            }
+            snapshots.push(snapshot);
+        }
+        snapshots.sort_by(|left, right| right.created_at.cmp(&left.created_at));
+        Ok(snapshots)
+    }
+
+    pub fn save_version(&self, snapshot: NotebookVersionSnapshotV1) -> Result<(), String> {
+        validate_version_snapshot(&snapshot)?;
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let directory = self.versions_path(&snapshot.library_id);
+        fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
+        let path = directory.join(format!(
+            "{}.json",
+            sha256_hex(snapshot.snapshot_id.as_bytes())
+        ));
+        Self::atomic_write_json(&path, &snapshot)?;
+        self.prune_versions_locked(&snapshot.library_id)
+    }
+
+    fn prune_versions_locked(&self, library_id: &str) -> Result<(), String> {
+        const MAX_COUNT: usize = 50;
+        const MAX_AGE: std::time::Duration = std::time::Duration::from_secs(30 * 24 * 60 * 60);
+        let directory = self.versions_path(library_id);
+        let now = std::time::SystemTime::now();
+        let mut entries = fs::read_dir(&directory)
+            .map_err(|error| error.to_string())?
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                entry.path().extension().and_then(|value| value.to_str()) == Some("json")
+            })
+            .map(|entry| {
+                let modified = entry
+                    .metadata()
+                    .and_then(|metadata| metadata.modified())
+                    .unwrap_or(std::time::UNIX_EPOCH);
+                (entry.path(), modified)
+            })
+            .collect::<Vec<_>>();
+        entries.sort_by(|left, right| right.1.cmp(&left.1));
+        for (index, (path, modified)) in entries.into_iter().enumerate() {
+            let expired = now.duration_since(modified).is_ok_and(|age| age > MAX_AGE);
+            if index >= MAX_COUNT || expired {
+                fs::remove_file(path).map_err(|error| error.to_string())?;
+            }
+        }
+        Self::sync_directory(&directory)
+    }
+
+    pub fn move_record_to_trash(&self, library_id: &str) -> Result<NotebookStoredRecordV1, String> {
+        if !model::is_library_id(library_id) {
+            return Err("Notebook library identity is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let paths = self.record_paths(library_id);
+        let record = self
+            .recover_paths(&paths)?
+            .ok_or_else(|| "Notebook record does not exist.".to_string())?;
+        let trash_path = self.trash_path(library_id);
+        Self::atomic_write_json(&trash_path, &record)?;
+        for path in [paths.target, paths.next, paths.previous, paths.recovery] {
+            let _ = fs::remove_file(path);
+        }
+        Self::sync_directory(&self.documents_dir())?;
+        Ok(record)
+    }
+
+    pub fn list_trash(&self) -> Result<Vec<NotebookStoredRecordSummaryV1>, String> {
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let mut summaries = Vec::new();
+        for entry in fs::read_dir(self.trash_dir()).map_err(|error| error.to_string())? {
+            let path = entry.map_err(|error| error.to_string())?.path();
+            if path.extension().and_then(|value| value.to_str()) == Some("json") {
+                summaries.push(summarize_record(&Self::read_record_file(&path)?)?);
+            }
+        }
+        summaries.sort_by(|left, right| right.saved_at.cmp(&left.saved_at));
+        Ok(summaries)
+    }
+
+    pub fn restore_record_from_trash(
+        &self,
+        library_id: &str,
+    ) -> Result<NotebookStoredRecordV1, String> {
+        if !model::is_library_id(library_id) {
+            return Err("Notebook library identity is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        let paths = self.record_paths(library_id);
+        if self.recover_paths(&paths)?.is_some() {
+            return Err("Notebook library identity is already active.".into());
+        }
+        let trash_path = self.trash_path(library_id);
+        let record = Self::read_record_file(&trash_path)
+            .map_err(|_| "Notebook trash record does not exist.".to_string())?;
+        Self::write_synced(
+            &paths.next,
+            &serde_json::to_vec_pretty(&record).map_err(|error| error.to_string())?,
+        )?;
+        fs::rename(&paths.next, &paths.target).map_err(|error| error.to_string())?;
+        fs::remove_file(trash_path).map_err(|error| error.to_string())?;
+        Self::sync_directory(&self.documents_dir())?;
+        Ok(record)
+    }
+
+    pub fn delete_record_permanently(&self, library_id: &str) -> Result<(), String> {
+        if !model::is_library_id(library_id) {
+            return Err("Notebook library identity is invalid.".into());
+        }
+        let _guard = self
+            .operation_lock
+            .lock()
+            .map_err(|_| "Notebook storage is unavailable.".to_string())?;
+        match fs::remove_file(self.trash_path(library_id)) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.to_string()),
+        }
+        match fs::remove_dir_all(self.versions_path(library_id)) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.to_string()),
         }
         Ok(())
     }
@@ -547,6 +746,53 @@ pub fn notebook_import_package(
     state: State<'_, NotebookStorage>,
 ) -> Result<NotebookStoredRecordV1, String> {
     state.import_package(&bytes)
+}
+
+#[tauri::command]
+pub fn notebook_list_versions(
+    library_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<Vec<NotebookVersionSnapshotV1>, String> {
+    state.list_versions(&library_id)
+}
+
+#[tauri::command]
+pub fn notebook_save_version(
+    snapshot: NotebookVersionSnapshotV1,
+    state: State<'_, NotebookStorage>,
+) -> Result<(), String> {
+    state.save_version(snapshot)
+}
+
+#[tauri::command]
+pub fn notebook_move_record_to_trash(
+    library_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<NotebookStoredRecordV1, String> {
+    state.move_record_to_trash(&library_id)
+}
+
+#[tauri::command]
+pub fn notebook_list_trash(
+    state: State<'_, NotebookStorage>,
+) -> Result<Vec<NotebookStoredRecordSummaryV1>, String> {
+    state.list_trash()
+}
+
+#[tauri::command]
+pub fn notebook_restore_record_from_trash(
+    library_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<NotebookStoredRecordV1, String> {
+    state.restore_record_from_trash(&library_id)
+}
+
+#[tauri::command]
+pub fn notebook_delete_record_permanently(
+    library_id: String,
+    state: State<'_, NotebookStorage>,
+) -> Result<(), String> {
+    state.delete_record_permanently(&library_id)
 }
 
 #[cfg(test)]

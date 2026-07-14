@@ -17,5 +17,7 @@ export * from './persistence/port';
 export * from './persistence/contracts';
 export * from './persistence/indexed-db';
 export * from './persistence/tauri';
+export * from './persistence/service';
+export * from './persistence/workspace-events';
 export * from './authoring-keyboard';
 export * from './ui-state';

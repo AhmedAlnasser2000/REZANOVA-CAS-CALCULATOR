@@ -5,9 +5,11 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { MathNotationProvider } from '../../components/MathNotationContext';
 import {
+  createNotebookLibraryService,
   createNotebookPerformanceFixture,
   createNotebookRichSurfaceState,
-  type NotebookRichSurfaceState,
+  type NotebookLibraryService,
+  type NotebookRichDocument,
   type NotebookSurfaceState,
   type NotebookWorkspaceTarget,
 } from '../../lib/notebook';
@@ -37,14 +39,17 @@ beforeAll(() => {
 
 function NotebookHarness({
   initialState,
+  libraryService,
   onOpenMathInTool = vi.fn(),
   onSurfaceState = vi.fn(),
 }: {
   initialState?: NotebookSurfaceState;
+  libraryService?: NotebookLibraryService;
   onOpenMathInTool?: (target: NotebookWorkspaceTarget, latex: string) => void;
   onSurfaceState?: (state: NotebookSurfaceState) => void;
 }) {
   const [instanceId] = useState(() => `notebook.ui.${++notebookHarnessSequence}`);
+  const [fallbackLibraryService] = useState(() => createNotebookLibraryService());
   const [surfaceState, setSurfaceState] = useState<NotebookSurfaceState>(() =>
     initialState ?? createNotebookRichSurfaceState({
       idPrefix: 'test-notebook',
@@ -56,6 +61,7 @@ function NotebookHarness({
     <MathNotationProvider notationMode="latex">
       <NotebookPage
         instanceId={instanceId}
+        libraryService={libraryService ?? fallbackLibraryService}
         surfaceState={surfaceState}
         onOpenMathInTool={onOpenMathInTool}
         onUpdateSurfaceState={(_, nextState) => {
@@ -67,16 +73,26 @@ function NotebookHarness({
   );
 }
 
+async function readOnlyStoredDocument(
+  service: NotebookLibraryService,
+): Promise<NotebookRichDocument> {
+  const [summary] = await service.library.list();
+  expect(summary).toBeDefined();
+  const stored = await service.library.load(summary!.libraryId);
+  expect(stored).not.toBeNull();
+  return stored!.document;
+}
+
 describe('NotebookPage', () => {
   it('renders a continuous document surface with outline and canvas while the inspector stays collapsed for ordinary prose', async () => {
     render(<NotebookHarness />);
 
     expect(screen.getByTestId('notebook-page')).toBeInTheDocument();
-    expect(screen.getByLabelText('Notebook outline')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Notebook outline')).toBeInTheDocument();
     expect(screen.getByTestId('notebook-canvas')).toBeInTheDocument();
     expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore block inspector' })).toBeInTheDocument();
-    expect(screen.getAllByText('Session only')).not.toHaveLength(0);
+    expect(screen.getAllByText('Saved locally')).not.toHaveLength(0);
     expect(await screen.findByText('0 words')).toBeInTheDocument();
     expect(await screen.findByLabelText('Notebook rich document')).toBeInTheDocument();
     expect(document.querySelector('.notebook-rich-scroll-region')).not.toBeNull();
@@ -101,7 +117,8 @@ describe('NotebookPage', () => {
   it('inserts and configures every academic container through one catalog', async () => {
     const user = userEvent.setup();
     const onSurfaceState = vi.fn();
-    render(<NotebookHarness onSurfaceState={onSurfaceState} />);
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} onSurfaceState={onSurfaceState} />);
 
     await user.click(await screen.findByRole('button', { name: 'Insert academic container' }));
     const menu = screen.getByRole('menu', { name: 'Academic containers' });
@@ -177,9 +194,11 @@ describe('NotebookPage', () => {
       .toHaveAttribute('aria-checked', 'false');
     fireEvent.change(kindSelect, { target: { value: 'theorem' } });
 
-    const lastState = onSurfaceState.mock.calls.at(-1)?.[0] as NotebookRichSurfaceState;
-    expect(lastState.document.version).toBe(6);
-    const persistedContainer = lastState.document.content.find((node) => node.type === 'semanticBlock');
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const storedDocument = await readOnlyStoredDocument(libraryService);
+    expect(storedDocument.version).toBe(6);
+    const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
       variant: 'theorem',
@@ -288,7 +307,7 @@ describe('NotebookPage', () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
 
-    await user.click(screen.getByRole('button', { name: 'Toggle Notebook outline' }));
+    await user.click(await screen.findByRole('button', { name: 'Toggle Notebook outline' }));
     expect(screen.getByLabelText('Notebook outline')).toHaveClass('is-drawer-open');
     await user.click(screen.getByRole('button', { name: 'Close Notebook drawer' }));
     expect(screen.getByLabelText('Notebook outline')).not.toHaveClass('is-drawer-open');
@@ -342,7 +361,8 @@ describe('NotebookPage', () => {
   it('persists underline, alignment, and line/paragraph spacing with undo and reset', async () => {
     const user = userEvent.setup();
     const onSurfaceState = vi.fn();
-    render(<NotebookHarness onSurfaceState={onSurfaceState} />);
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} onSurfaceState={onSurfaceState} />);
     const canvas = await screen.findByLabelText('Notebook rich document');
     const toolbar = screen.getByLabelText('Notebook formatting toolbar');
 
@@ -362,8 +382,10 @@ describe('NotebookPage', () => {
     expect(canvas.querySelectorAll("p[data-notebook-alignment='justify']")).toHaveLength(2);
     expect(canvas.querySelectorAll("p[data-notebook-line-spacing='2']")).toHaveLength(2);
     expect(canvas.querySelectorAll("p[data-notebook-space-before-pt='12']")).toHaveLength(2);
-    const latest = onSurfaceState.mock.lastCall?.[0] as NotebookRichSurfaceState;
-    expect(latest.document.content).toEqual([
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const storedDocument = await readOnlyStoredDocument(libraryService);
+    expect(storedDocument.content).toEqual([
       expect.objectContaining({
         type: 'paragraph',
         format: expect.objectContaining({
@@ -396,7 +418,8 @@ describe('NotebookPage', () => {
   it('creates and converts visibly styled lists while preserving serialized list style', async () => {
     const user = userEvent.setup();
     const onSurfaceState = vi.fn();
-    render(<NotebookHarness onSurfaceState={onSurfaceState} />);
+    const libraryService = createNotebookLibraryService();
+    render(<NotebookHarness libraryService={libraryService} onSurfaceState={onSurfaceState} />);
     const canvas = await screen.findByLabelText('Notebook rich document');
     const toolbar = screen.getByLabelText('Notebook formatting toolbar');
 
@@ -410,8 +433,10 @@ describe('NotebookPage', () => {
     await user.click(within(toolbar).getByRole('button', { name: 'Numbering styles' }));
     await user.click(screen.getByRole('menuitemradio', { name: 'Lower-alpha numbering' }));
     expect(canvas.querySelector("ol[data-notebook-list-style='lower-alpha']")).not.toBeNull();
-    const latest = onSurfaceState.mock.lastCall?.[0] as NotebookRichSurfaceState;
-    expect(latest.document.content[0]).toMatchObject({
+    await user.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
+    const storedDocument = await readOnlyStoredDocument(libraryService);
+    expect(storedDocument.content[0]).toMatchObject({
       type: 'orderedList',
       style: 'lower-alpha',
       content: [expect.any(Object), expect.any(Object)],
@@ -618,7 +643,7 @@ describe('NotebookPage', () => {
     const user = userEvent.setup();
     render(<NotebookHarness />);
 
-    await user.click(screen.getByRole('button', { name: 'Add top-level section' }));
+    await user.click(await screen.findByRole('button', { name: 'Add top-level section' }));
     let sectionEntries = screen.getAllByTestId('notebook-outline-entry')
       .filter((entry) => entry.dataset.outlineKind === 'section');
     expect(sectionEntries).toHaveLength(1);

@@ -5,6 +5,7 @@ use std::collections::HashSet;
 pub const STORED_RECORD_VERSION: u8 = 1;
 pub const ASSET_RECORD_VERSION: u8 = 1;
 pub const PACKAGE_MANIFEST_VERSION: u8 = 1;
+pub const VERSION_SNAPSHOT_VERSION: u8 = 1;
 pub const PACKAGE_KIND: &str = "calcwiz-notebook";
 pub const DOCUMENT_PATH: &str = "document.json";
 
@@ -71,6 +72,18 @@ pub struct NotebookPackageManifestV1 {
 pub struct NotebookPackageInspectionV1 {
     pub manifest: NotebookPackageManifestV1,
     pub document: Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct NotebookVersionSnapshotV1 {
+    pub version: u8,
+    pub snapshot_id: String,
+    pub library_id: String,
+    pub revision: u64,
+    pub created_at: String,
+    pub reason: String,
+    pub record: NotebookStoredRecordV1,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -437,6 +450,31 @@ pub fn is_sha256(value: &str) -> bool {
 
 pub fn is_asset_id(value: &str) -> bool {
     value.strip_prefix("sha256:").is_some_and(is_sha256)
+}
+
+pub fn validate_version_snapshot(snapshot: &NotebookVersionSnapshotV1) -> Result<(), String> {
+    validate_stored_record(&snapshot.record)?;
+    if snapshot.version != VERSION_SNAPSHOT_VERSION
+        || !snapshot.snapshot_id.starts_with("snapshot.")
+        || snapshot.snapshot_id.len() > 189
+        || !snapshot
+            .snapshot_id
+            .bytes()
+            .skip("snapshot.".len())
+            .all(|byte| byte.is_ascii_alphanumeric() || b"._:-".contains(&byte))
+        || !is_library_id(&snapshot.library_id)
+        || snapshot.revision == 0
+        || snapshot.created_at.is_empty()
+        || !matches!(
+            snapshot.reason.as_str(),
+            "initial" | "periodic" | "before-restore" | "before-trash"
+        )
+        || snapshot.record.library_id != snapshot.library_id
+        || snapshot.record.revision != snapshot.revision
+    {
+        return Err("Notebook version snapshot is invalid.".into());
+    }
+    Ok(())
 }
 
 pub fn validate_asset_metadata(metadata: &NotebookAssetMetadataV1) -> Result<(), String> {

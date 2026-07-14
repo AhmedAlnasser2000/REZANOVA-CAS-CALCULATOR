@@ -2,6 +2,7 @@
 @import '@fontsource/fira-sans-condensed/600-italic.css';
 @import './notebook-keyboard.css';
 @import './notebook-rich-canvas.css';
+@import './notebook-library.css';
 
 .app-page--notebook {
   --notebook-panel: rgba(18, 31, 32, 0.94);

@@ -1,4 +1,13 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import {
+  isNotebookLibrarySurfaceState,
+  NOTEBOOK_WORKSPACE_CLOSE_EVENT,
+  NOTEBOOK_WORKSPACE_FOCUS_EVENT,
+  NOTEBOOK_WORKSPACE_TITLE_EVENT,
+  type NotebookWorkspaceCloseDetail,
+  type NotebookWorkspaceFocusDetail,
+  type NotebookWorkspaceTitleDetail,
+} from '../../lib/notebook';
 import type { ModeId, PendingHistoryTicket } from '../../types/calculator';
 import type { FormulaViewerArtifact } from './formula-viewer-artifacts';
 import {
@@ -329,6 +338,51 @@ export function useWorkspaceTabsRuntime({
     }
     workspaceInstances.renameInstance(instanceId, title);
   }, [workspaceInstances]);
+
+  const syncNotebookTitle = useCallback((instanceId: WorkspaceInstanceId, title: string) => {
+    const target = workspaceInstances.workspaceInstances.find((instance) => (
+      instance.id === instanceId && instance.workspaceKind === NOTEBOOK_PAGE_WORKSPACE_KIND
+    ));
+    if (target) {
+      workspaceInstances.renameInstance(instanceId, title);
+    }
+  }, [workspaceInstances]);
+
+  useEffect(() => {
+    const focusNotebook = (event: Event) => {
+      const detail = (event as CustomEvent<NotebookWorkspaceFocusDetail>).detail;
+      const target = workspaceInstances.workspaceInstances.find((instance) => (
+        instance.workspaceKind === NOTEBOOK_PAGE_WORKSPACE_KIND
+        && isNotebookLibrarySurfaceState(instance.surfaceState)
+        && instance.surfaceState.libraryId === detail?.libraryId
+      ));
+      if (!target || !detail) {
+        return;
+      }
+      detail.handled = true;
+      focusTab(target.id);
+    };
+    const closeNotebook = (event: Event) => {
+      const detail = (event as CustomEvent<NotebookWorkspaceCloseDetail>).detail;
+      if (detail?.instanceId) {
+        closeTab(detail.instanceId);
+      }
+    };
+    const titleNotebook = (event: Event) => {
+      const detail = (event as CustomEvent<NotebookWorkspaceTitleDetail>).detail;
+      if (detail?.instanceId) {
+        syncNotebookTitle(detail.instanceId, detail.title);
+      }
+    };
+    window.addEventListener(NOTEBOOK_WORKSPACE_FOCUS_EVENT, focusNotebook);
+    window.addEventListener(NOTEBOOK_WORKSPACE_CLOSE_EVENT, closeNotebook);
+    window.addEventListener(NOTEBOOK_WORKSPACE_TITLE_EVENT, titleNotebook);
+    return () => {
+      window.removeEventListener(NOTEBOOK_WORKSPACE_FOCUS_EVENT, focusNotebook);
+      window.removeEventListener(NOTEBOOK_WORKSPACE_CLOSE_EVENT, closeNotebook);
+      window.removeEventListener(NOTEBOOK_WORKSPACE_TITLE_EVENT, titleNotebook);
+    };
+  }, [closeTab, focusTab, syncNotebookTitle, workspaceInstances.workspaceInstances]);
 
   return useMemo(() => ({
     onClearTabState: clearTabState,

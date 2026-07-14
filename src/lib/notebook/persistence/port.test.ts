@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { createNotebookRichDocument } from '../document/model';
-import { createNotebookStoredRecordV1 } from './contracts';
+import {
+  createNotebookStoredRecordV1,
+  createNotebookVersionSnapshotV1,
+} from './contracts';
 import {
   createInMemoryNotebookAssetPort,
   createInMemoryNotebookLibraryPort,
@@ -83,5 +86,42 @@ describe('Notebook persistence port contract', () => {
     expect(loaded?.bytes).toEqual(bytes);
     loaded?.bytes.fill(0);
     expect((await port.load(first.id))?.bytes).toEqual(bytes);
+  });
+
+  it('retains bounded version history and keeps Trash separate from deletion', async () => {
+    const document = createNotebookRichDocument({
+      idPrefix: 'history',
+      now: () => new Date('2026-07-14T00:00:00.000Z'),
+      title: 'History record',
+    });
+    const record = createNotebookStoredRecordV1(document, {
+      libraryId: 'library.history.1',
+      savedAt: '2026-07-14T00:00:00.000Z',
+    });
+    const port = createInMemoryNotebookLibraryPort([record]);
+    for (let index = 0; index < 51; index += 1) {
+      await port.saveVersion(createNotebookVersionSnapshotV1(record, {
+        createdAt: new Date(Date.parse('2026-07-14T00:00:00.000Z') + index * 1_000)
+          .toISOString(),
+        reason: index === 50 ? 'before-trash' : 'periodic',
+        snapshotId: `snapshot.history.${index}`,
+      }));
+    }
+    const versions = await port.listVersions(record.libraryId);
+    expect(versions).toHaveLength(50);
+    expect(versions[0]?.snapshotId).toBe('snapshot.history.50');
+    expect(versions.at(-1)?.snapshotId).toBe('snapshot.history.1');
+
+    await port.moveToTrash(record.libraryId);
+    expect(await port.load(record.libraryId)).toBeNull();
+    expect(await port.listTrash()).toEqual([
+      expect.objectContaining({ libraryId: record.libraryId }),
+    ]);
+    await port.restoreFromTrash(record.libraryId);
+    expect((await port.load(record.libraryId))?.document.title).toBe('History record');
+    await port.moveToTrash(record.libraryId);
+    await port.deletePermanently(record.libraryId);
+    expect(await port.listTrash()).toEqual([]);
+    expect(await port.listVersions(record.libraryId)).toEqual([]);
   });
 });

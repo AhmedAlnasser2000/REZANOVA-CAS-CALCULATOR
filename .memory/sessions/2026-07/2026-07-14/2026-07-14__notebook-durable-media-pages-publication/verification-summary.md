@@ -39,3 +39,15 @@
 - static evidence: incremental TypeScript, Notebook-scoped ESLint, Rust formatting, focused Rust compilation/tests, file-size validation, production build, memory validation, and diff hygiene pass. The production build retains only its existing chunk-size/dynamic-import warnings.
 - unavailable optional evidence: `cargo clippy` was attempted but the stable toolchain does not have the Clippy component installed; no lint result is claimed.
 - resource evidence: no full unit, UI, or canary suite ran. The Vite/Chromium process used for browser evidence is stopped, `.task_tmp/` remains ignored, and untracked `test-results/` remains excluded.
+
+## NOTEBOOK-DOCUMENT-LIBRARY1
+
+- gate: ui
+- status: verified
+- model evidence: 6 focused files and 25 tests pass for lightweight tab references, strict history snapshots, bounded retention, IndexedDB and Tauri parity, Trash, warm-record eviction, and recovery when a dirty inactive revision's in-flight save fails.
+- UI evidence: 3 focused files and 31 tests pass for 750 ms autosave, Save now, all File backstage routes, already-open focus, failure recovery, existing Notebook authoring behavior, and per-tab selection restoration.
+- Rust evidence: all 6 focused Notebook storage tests pass, including 50-snapshot retention and Trash move, restore, and permanent deletion.
+- visual evidence: dedicated Chromium evidence passes at 2400px, 1440px, and 1100px, plus 80%, 130%, and forced colors. The Notebook title survives a Calculate tab switch, File remains within the viewport, wide cards use available space, constrained cards reflow to one readable column, and page overflow remains zero.
+- static evidence: incremental TypeScript, Notebook-scoped ESLint, Rust formatting, file-size validation, memory validation, and diff hygiene pass.
+- correction evidence: the first internal tab-title update incorrectly passed through the manual Rename policy and left the tab labeled `Notebook`; internal Notebook title synchronization is now separate and verified in Chromium. The 130% File card grid was also changed to responsive auto-fit after visual inspection found cramped two-column wrapping.
+- resource evidence: no full unit, UI, canary, or redundant production-build gate ran. Gate-owned Vite and Playwright processes were stopped, and untracked `test-results/` remains excluded.

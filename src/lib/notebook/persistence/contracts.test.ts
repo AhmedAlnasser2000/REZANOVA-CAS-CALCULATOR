@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { createNotebookRichDocument } from '../document/model';
 import {
   createNotebookStoredRecordV1,
+  createNotebookVersionSnapshotV1,
   isNotebookAssetMetadataV1,
   isNotebookStoredRecordV1,
+  isNotebookVersionSnapshotV1,
   summarizeNotebookStoredRecordV1,
 } from './contracts';
 
@@ -55,5 +57,24 @@ describe('Notebook durable persistence contracts', () => {
       mimeType: 'image/png',
       createdAt: '2026-07-14T00:00:00.000Z',
     })).toBe(false);
+  });
+
+  it('validates version snapshots against their owning library revision', () => {
+    const document = createNotebookRichDocument({
+      now: () => new Date('2026-07-14T00:00:00.000Z'),
+    });
+    const record = createNotebookStoredRecordV1(document, {
+      libraryId: 'library.history',
+      revision: 3,
+      savedAt: '2026-07-14T00:00:00.000Z',
+    });
+    const snapshot = createNotebookVersionSnapshotV1(record, {
+      createdAt: '2026-07-14T00:01:00.000Z',
+      reason: 'before-restore',
+      snapshotId: 'snapshot.history.3',
+    });
+    expect(isNotebookVersionSnapshotV1(snapshot)).toBe(true);
+    expect(isNotebookVersionSnapshotV1({ ...snapshot, revision: 2 })).toBe(false);
+    expect(isNotebookVersionSnapshotV1({ ...snapshot, libraryId: '../escape' })).toBe(false);
   });
 });

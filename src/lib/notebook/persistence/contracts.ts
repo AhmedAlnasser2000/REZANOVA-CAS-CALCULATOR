@@ -7,6 +7,9 @@ import type { NotebookRichDocument } from '../document/types';
 export const NOTEBOOK_STORED_RECORD_VERSION = 1 as const;
 export const NOTEBOOK_ASSET_RECORD_VERSION = 1 as const;
 export const NOTEBOOK_PACKAGE_MANIFEST_VERSION = 1 as const;
+export const NOTEBOOK_VERSION_SNAPSHOT_VERSION = 1 as const;
+export const NOTEBOOK_VERSION_HISTORY_MAX_COUNT = 50;
+export const NOTEBOOK_VERSION_HISTORY_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1_000;
 export const NOTEBOOK_PACKAGE_KIND = 'calcwiz-notebook' as const;
 
 export const NOTEBOOK_SUPPORTED_ASSET_MIME_TYPES = [
@@ -75,9 +78,29 @@ export type NotebookPackageInspectionV1 = {
   document: NotebookRichDocument;
 };
 
+export const NOTEBOOK_VERSION_REASONS = [
+  'initial',
+  'periodic',
+  'before-restore',
+  'before-trash',
+] as const;
+
+export type NotebookVersionReason = typeof NOTEBOOK_VERSION_REASONS[number];
+
+export type NotebookVersionSnapshotV1 = {
+  version: typeof NOTEBOOK_VERSION_SNAPSHOT_VERSION;
+  snapshotId: string;
+  libraryId: string;
+  revision: number;
+  createdAt: string;
+  reason: NotebookVersionReason;
+  record: NotebookStoredRecordV1;
+};
+
 const LIBRARY_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const ASSET_ID_PATTERN = /^sha256:[0-9a-f]{64}$/;
+const SNAPSHOT_ID_PATTERN = /^snapshot\.[A-Za-z0-9._:-]{1,180}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -173,6 +196,48 @@ export function isNotebookPackageInspectionV1(
     && isNotebookRichDocument(value.document);
 }
 
+export function isNotebookVersionSnapshotV1(
+  value: unknown,
+): value is NotebookVersionSnapshotV1 {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return value.version === NOTEBOOK_VERSION_SNAPSHOT_VERSION
+    && typeof value.snapshotId === 'string'
+    && SNAPSHOT_ID_PATTERN.test(value.snapshotId)
+    && isNotebookLibraryId(value.libraryId)
+    && Number.isSafeInteger(value.revision)
+    && Number(value.revision) >= 1
+    && isIsoDate(value.createdAt)
+    && NOTEBOOK_VERSION_REASONS.includes(value.reason as NotebookVersionReason)
+    && isNotebookStoredRecordV1(value.record)
+    && value.record.libraryId === value.libraryId
+    && value.record.revision === value.revision;
+}
+
+export function createNotebookVersionSnapshotV1(
+  record: NotebookStoredRecordV1,
+  options: {
+    createdAt?: string;
+    reason: NotebookVersionReason;
+    snapshotId: string;
+  },
+): NotebookVersionSnapshotV1 {
+  const snapshot: NotebookVersionSnapshotV1 = {
+    version: NOTEBOOK_VERSION_SNAPSHOT_VERSION,
+    snapshotId: options.snapshotId,
+    libraryId: record.libraryId,
+    revision: record.revision,
+    createdAt: options.createdAt ?? new Date().toISOString(),
+    reason: options.reason,
+    record: cloneNotebookStoredRecordV1(record),
+  };
+  if (!isNotebookVersionSnapshotV1(snapshot)) {
+    throw new TypeError('Notebook version snapshot is invalid.');
+  }
+  return snapshot;
+}
+
 export function isNotebookStoredRecordV1(value: unknown): value is NotebookStoredRecordV1 {
   if (!isRecord(value)) {
     return false;
@@ -247,6 +312,15 @@ export function cloneNotebookStoredRecordV1(
     ...record,
     document: cloneNotebookStoredDocument(record.document),
     assetIds: [...record.assetIds],
+  };
+}
+
+export function cloneNotebookVersionSnapshotV1(
+  snapshot: NotebookVersionSnapshotV1,
+): NotebookVersionSnapshotV1 {
+  return {
+    ...snapshot,
+    record: cloneNotebookStoredRecordV1(snapshot.record),
   };
 }
 

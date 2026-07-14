@@ -1,8 +1,8 @@
 use super::{
     assets::sha256_hex,
     model::{
-        NotebookAssetMetadataV1, NotebookPackageManifestV1, NotebookStoredRecordV1, DOCUMENT_PATH,
-        PACKAGE_KIND, PACKAGE_MANIFEST_VERSION,
+        NotebookAssetMetadataV1, NotebookPackageManifestV1, NotebookStoredRecordV1,
+        NotebookVersionSnapshotV1, DOCUMENT_PATH, PACKAGE_KIND, PACKAGE_MANIFEST_VERSION,
     },
     NotebookStorage,
 };
@@ -258,5 +258,62 @@ fn rejects_revision_races_and_invalid_collapsed_documents() {
         .expect_err("invalid V6 document should fail")
         .contains("collapsed state"));
     assert_eq!(storage.list_records().unwrap().len(), 1);
+    fs::remove_dir_all(root).expect("temporary storage should be removed");
+}
+
+#[test]
+fn retains_bounded_version_history_and_round_trips_trash() {
+    let root = unique_storage("history-trash");
+    let storage = NotebookStorage::load(root.clone()).expect("storage should load");
+    let stored = record("library.history", 1, "History record");
+    storage
+        .save_record(stored.clone(), None, true)
+        .expect("record should save");
+    for index in 0..51 {
+        storage
+            .save_version(NotebookVersionSnapshotV1 {
+                version: 1,
+                snapshot_id: format!("snapshot.history.{index}"),
+                library_id: stored.library_id.clone(),
+                revision: stored.revision,
+                created_at: format!("2026-07-14T00:00:{index:02}.000Z"),
+                reason: if index == 50 {
+                    "before-trash".into()
+                } else {
+                    "periodic".into()
+                },
+                record: stored.clone(),
+            })
+            .expect("snapshot should save");
+    }
+    assert_eq!(storage.list_versions(&stored.library_id).unwrap().len(), 50);
+
+    storage
+        .move_record_to_trash(&stored.library_id)
+        .expect("record should move to trash");
+    assert!(storage.load_record(&stored.library_id).unwrap().is_none());
+    assert_eq!(storage.list_trash().unwrap().len(), 1);
+    storage
+        .restore_record_from_trash(&stored.library_id)
+        .expect("record should restore");
+    assert_eq!(
+        storage
+            .load_record(&stored.library_id)
+            .unwrap()
+            .unwrap()
+            .document["title"],
+        "History record"
+    );
+    storage
+        .move_record_to_trash(&stored.library_id)
+        .expect("record should move to trash again");
+    storage
+        .delete_record_permanently(&stored.library_id)
+        .expect("record should delete permanently");
+    assert!(storage.list_trash().unwrap().is_empty());
+    assert!(storage
+        .list_versions(&stored.library_id)
+        .unwrap()
+        .is_empty());
     fs::remove_dir_all(root).expect("temporary storage should be removed");
 }

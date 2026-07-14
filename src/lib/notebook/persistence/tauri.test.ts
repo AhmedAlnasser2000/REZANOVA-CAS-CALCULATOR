@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createNotebookRichDocument } from '../document/model';
 import {
   createNotebookStoredRecordV1,
+  createNotebookVersionSnapshotV1,
   summarizeNotebookStoredRecordV1,
 } from './contracts';
 import { createTauriNotebookPorts } from './tauri';
@@ -99,5 +100,37 @@ describe('Tauri Notebook persistence ports', () => {
     });
     await expect(ports.asset.load(`sha256:${'0'.repeat(64)}`))
       .rejects.toThrow(/invalid asset bytes/);
+  });
+
+  it('validates and routes native version-history and Trash operations', async () => {
+    enableDesktopRuntime();
+    const record = createRecord();
+    const snapshot = createNotebookVersionSnapshotV1(record, {
+      createdAt: '2026-07-14T00:05:00.000Z',
+      reason: 'before-trash',
+      snapshotId: 'snapshot.desktop.1',
+    });
+    mockedInvoke.mockImplementation(async (command) => {
+      if (command === 'notebook_list_versions') return [snapshot];
+      if (command === 'notebook_list_trash') return [summarizeNotebookStoredRecordV1(record)];
+      if (command === 'notebook_move_record_to_trash'
+        || command === 'notebook_restore_record_from_trash') return record;
+      if (command === 'notebook_save_version'
+        || command === 'notebook_delete_record_permanently') return null;
+      throw new Error(`Unexpected command: ${command}`);
+    });
+    const ports = createTauriNotebookPorts();
+
+    expect(await ports.library.listVersions(record.libraryId)).toEqual([snapshot]);
+    await ports.library.saveVersion(snapshot);
+    expect(await ports.library.moveToTrash(record.libraryId)).toEqual(record);
+    expect(await ports.library.listTrash()).toEqual([
+      expect.objectContaining({ libraryId: record.libraryId }),
+    ]);
+    expect(await ports.library.restoreFromTrash(record.libraryId)).toEqual(record);
+    await ports.library.deletePermanently(record.libraryId);
+    expect(mockedInvoke).toHaveBeenCalledWith('notebook_delete_record_permanently', {
+      libraryId: record.libraryId,
+    });
   });
 });

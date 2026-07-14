@@ -2,11 +2,13 @@ import { invoke } from '@tauri-apps/api/core';
 
 import {
   cloneNotebookStoredRecordV1,
+  cloneNotebookVersionSnapshotV1,
   isNotebookAssetMetadataV1,
   isNotebookPackageInspectionV1,
   isNotebookStoredRecordV1,
   isNotebookStoredRecordSummaryV1,
   isNotebookSupportedAssetMimeType,
+  isNotebookVersionSnapshotV1,
   type NotebookAssetPayloadV1,
 } from './contracts';
 import type {
@@ -82,6 +84,43 @@ export function createTauriNotebookPorts(): TauriNotebookPorts {
     async delete(libraryId) {
       requireTauriRuntime();
       await invoke('notebook_delete_record', { libraryId });
+    },
+    async listVersions(libraryId) {
+      requireTauriRuntime();
+      const versions = await invoke<unknown[]>('notebook_list_versions', { libraryId });
+      if (!Array.isArray(versions) || !versions.every(isNotebookVersionSnapshotV1)) {
+        throw new TypeError('Notebook desktop storage returned invalid version history.');
+      }
+      return versions.map(cloneNotebookVersionSnapshotV1);
+    },
+    async saveVersion(snapshot) {
+      requireTauriRuntime();
+      if (!isNotebookVersionSnapshotV1(snapshot)) {
+        throw new TypeError('Notebook desktop storage accepts snapshot version 1 only.');
+      }
+      await invoke('notebook_save_version', { snapshot });
+    },
+    async moveToTrash(libraryId) {
+      requireTauriRuntime();
+      return asStoredRecord(await invoke<unknown>('notebook_move_record_to_trash', { libraryId }));
+    },
+    async listTrash() {
+      requireTauriRuntime();
+      const summaries = await invoke<unknown[]>('notebook_list_trash');
+      if (!Array.isArray(summaries) || !summaries.every(isNotebookStoredRecordSummaryV1)) {
+        throw new TypeError('Notebook desktop storage returned an invalid trash list.');
+      }
+      return summaries.map((summary) => ({ ...summary }));
+    },
+    async restoreFromTrash(libraryId) {
+      requireTauriRuntime();
+      return asStoredRecord(await invoke<unknown>('notebook_restore_record_from_trash', {
+        libraryId,
+      }));
+    },
+    async deletePermanently(libraryId) {
+      requireTauriRuntime();
+      await invoke('notebook_delete_record_permanently', { libraryId });
     },
   };
 

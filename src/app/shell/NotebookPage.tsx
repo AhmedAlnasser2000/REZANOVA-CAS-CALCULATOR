@@ -15,7 +15,10 @@ import {
   NOTEBOOK_LIVE_BLOCK_TARGET,
   NOTEBOOK_PERFORMANCE_PROFILES,
   createNotebookPerformanceFixture,
-  notebookRichSurfaceStateFromSlot,
+  createNotebookRichDocument,
+  getDefaultNotebookLibraryService,
+  requestNotebookWorkspaceClose,
+  type NotebookLibraryService,
   type NotebookPerformanceProfile,
   type NotebookRichDocument,
   type NotebookSurfaceState,
@@ -41,9 +44,13 @@ import {
 } from './notebook/transient-ui';
 import { useNotebookUiState } from './notebook/useNotebookUiState';
 import { useNotebookDocumentAnalysis } from './notebook/useNotebookDocumentAnalysis';
+import { NotebookFileBackstage } from './notebook/library/NotebookFileBackstage';
+import { downloadNotebookPackage } from './notebook/library/downloadNotebookPackage';
+import { useNotebookLibrarySession } from './notebook/library/useNotebookLibrarySession';
 
 type NotebookPageProps = {
   instanceId: string;
+  libraryService?: NotebookLibraryService;
   onOpenMathInTool: (target: NotebookWorkspaceTarget, latex: string) => void;
   onUpdateSurfaceState: (instanceId: string, state: NotebookSurfaceState) => void;
   surfaceState: WorkspaceInstanceStateSlot;
@@ -62,6 +69,7 @@ function selectionUsesInspector(
 
 function NotebookPageContent({
   instanceId,
+  libraryService,
   onOpenMathInTool,
   onUpdateSurfaceState,
   surfaceState,
@@ -73,14 +81,21 @@ function NotebookPageContent({
   const workbenchRef = useRef<HTMLDivElement | null>(null);
   const collapsedInspectorSelectionIdRef = useRef<string | null>(null);
   const { patchUiState, uiState } = useNotebookUiState(instanceId);
+  const [service] = useState(() => libraryService ?? getDefaultNotebookLibraryService());
+  const librarySession = useNotebookLibrarySession({
+    instanceId,
+    onUpdateSurfaceState,
+    service,
+    surfaceState,
+  });
   const outlineDrawer = useNotebookTransientLayer({ id: 'notebook-outline-drawer' });
   const inspectorDrawer = useNotebookTransientLayer({ id: 'notebook-inspector-drawer' });
   const activeDrawer: NotebookDrawer = outlineDrawer.isOpen
     ? 'outline'
     : inspectorDrawer.isOpen ? 'inspector' : null;
-  const notebookState = notebookRichSurfaceStateFromSlot(surfaceState, {
-    idPrefix: instanceId,
-  });
+  const [loadingDocument] = useState(() => createNotebookRichDocument({
+    idPrefix: `${instanceId}.loading`,
+  }));
   const [developmentFixture] = useState<NotebookRichDocument | null>(() => {
     if (!import.meta.env.DEV) {
       return null;
@@ -95,10 +110,11 @@ function NotebookPageContent({
     }
     return createNotebookPerformanceFixture(requestedProfile as NotebookPerformanceProfile);
   });
+  const sessionDocument = librarySession.document ?? loadingDocument;
   const document = developmentFixture
-    && notebookState.document.id !== developmentFixture.id
+    && sessionDocument.id !== developmentFixture.id
     ? developmentFixture
-    : notebookState.document;
+    : sessionDocument;
   const documentAnalysis = useNotebookDocumentAnalysis(document);
   const isLargeDocument = (documentAnalysis?.blockCount ?? 0) > NOTEBOOK_LIVE_BLOCK_TARGET;
   const workbenchStyle = {
@@ -120,12 +136,7 @@ function NotebookPageContent({
     ? currentRelevantSelection
     : uiState.inspectorMode === 'pinned' ? lastRelevantSelection : null;
 
-  const commitDocument = useCallback((nextDocument: NotebookRichDocument) => {
-    onUpdateSurfaceState(instanceId, {
-      kind: 'notebook-surface-state',
-      document: nextDocument,
-    });
-  }, [instanceId, onUpdateSurfaceState]);
+  const commitDocument = librarySession.commitDocument;
 
   const handleSelectionChange = useCallback((nextSelection: NotebookEditorSelection | null) => {
     setSelection(nextSelection);
@@ -200,6 +211,32 @@ function NotebookPageContent({
     patchUiState({ inspectorMode: 'manual' });
   }
 
+  const saveStatusLabel = librarySession.saveStatus === 'saving'
+    ? 'Saving…'
+    : librarySession.saveStatus === 'saved'
+      ? 'Saved locally'
+      : librarySession.saveStatus === 'unsaved'
+        ? 'Unsaved changes'
+        : 'Save failed';
+
+  if (!librarySession.document && !developmentFixture) {
+    return (
+      <section className="app-page app-page--notebook" data-testid="notebook-page">
+        <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
+        <div className="notebook-library-loading" role={librarySession.saveStatus === 'failed' ? 'alert' : 'status'}>
+          {librarySession.saveStatus === 'failed'
+            ? `Notebook could not open: ${librarySession.saveError ?? 'Local storage failed.'}`
+            : 'Opening local notebook…'}
+        </div>
+        <footer className="app-page-shell-footer">
+          <span>Opening</span>
+          <span>Workspace: Notebook</span>
+          <span>{saveStatusLabel}</span>
+        </footer>
+      </section>
+    );
+  }
+
   return (
       <section className="app-page app-page--notebook" data-testid="notebook-page">
         <header className="app-page-shell-header">REZANOVA CLASSWIZ CALCULATOR</header>
@@ -231,7 +268,10 @@ function NotebookPageContent({
           <main className="notebook-canvas" data-testid="notebook-canvas">
             <div className="notebook-canvas-header">
               <div className="notebook-canvas-heading-row">
-                <span>Math-aware document</span>
+                <div className="notebook-canvas-heading-tools">
+                  <NotebookFileBackstage session={librarySession} />
+                  <span>Math-aware document</span>
+                </div>
                 <div className="notebook-drawer-toggles">
                   <button
                     data-notebook-transient-trigger={outlineDrawer.id}
@@ -266,10 +306,29 @@ function NotebookPageContent({
                     ? `${documentAnalysis.wordCount.toLocaleString()} ${documentAnalysis.wordCount === 1 ? 'word' : 'words'}`
                     : 'Counting words…'}
                 </span>
-                <span title="Durable local saving begins in the next Notebook milestone">
-                  Session only
-                </span>
+                <span>{saveStatusLabel}</span>
               </div>
+              {librarySession.saveStatus === 'failed' ? (
+                <div className="notebook-save-failure" role="alert">
+                  <div>
+                    <strong>Save failed</strong>
+                    <span>{librarySession.saveError ?? 'The local copy could not be updated.'}</span>
+                  </div>
+                  <button type="button" onClick={() => void librarySession.saveNow()}>Retry</button>
+                  <button
+                    type="button"
+                    disabled={!librarySession.packageAvailable}
+                    onClick={() => void librarySession.exportPortable().then((output) => {
+                      downloadNotebookPackage(output.bytes, `Recovery - ${output.fileName}`);
+                    })}
+                  >
+                    Export recovery copy
+                  </button>
+                  <button type="button" onClick={() => requestNotebookWorkspaceClose(instanceId)}>
+                    Close without saving
+                  </button>
+                </div>
+              ) : null}
               {isLargeDocument ? (
                 <div className="notebook-large-document-notice" role="status">
                   Large notebook — Draft view is active to protect responsiveness.
@@ -349,7 +408,7 @@ function NotebookPageContent({
         <footer className="app-page-shell-footer">
           <span>{isLargeDocument ? 'Draft view' : 'Ready'}</span>
           <span>Workspace: Notebook</span>
-          <span>Session only</span>
+          <span>{saveStatusLabel}</span>
         </footer>
       </section>
   );

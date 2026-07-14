@@ -20,14 +20,14 @@ type IdleWindow = Window & typeof globalThis & {
   cancelIdleCallback?: (handle: number) => void;
 };
 
-export function useNotebookDocumentAnalysis(document: NotebookRichDocument) {
+export function useNotebookDocumentAnalysis(document: NotebookRichDocument | null) {
   const [analysis, setAnalysis] = useState<NotebookDocumentAnalysis | null>(null);
 
   useEffect(() => {
     const idleWindow = window as IdleWindow;
     let cancelled = false;
     const analyze = () => {
-      if (cancelled) {
+      if (cancelled || !document) {
         return;
       }
       setAnalysis({
@@ -36,6 +36,9 @@ export function useNotebookDocumentAnalysis(document: NotebookRichDocument) {
         structurallyValid: isNotebookRichDocument(document),
       });
     };
+    if (!document) {
+      return undefined;
+    }
     const idleHandle = idleWindow.requestIdleCallback?.(analyze, { timeout: 250 });
     const timeoutHandle = idleHandle === undefined
       ? window.setTimeout(analyze, 0)
@@ -52,5 +55,5 @@ export function useNotebookDocumentAnalysis(document: NotebookRichDocument) {
     };
   }, [document]);
 
-  return analysis?.documentId === document.id ? analysis : null;
+  return document && analysis?.documentId === document.id ? analysis : null;
 }

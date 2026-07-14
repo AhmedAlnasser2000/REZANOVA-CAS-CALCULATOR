@@ -1,8 +1,10 @@
 import {
   NOTEBOOK_SURFACE_STATE_KIND,
   type NotebookDocument,
+  type NotebookLibrarySurfaceState,
   type NotebookRichSurfaceState,
 } from '../types';
+import { isNotebookLibraryId } from '../persistence/contracts';
 import { migrateNotebookDocumentV1 } from './migrate-v1';
 import { migrateNotebookDocumentV2 } from './migrate-v2';
 import { migrateNotebookDocumentV3 } from './migrate-v3';
@@ -37,6 +39,39 @@ export function createNotebookRichSurfaceState(
     kind: NOTEBOOK_SURFACE_STATE_KIND,
     document: createNotebookRichDocument(options),
   };
+}
+
+export function createNotebookLibrarySurfaceState(options: {
+  libraryId: string;
+  revision: number;
+  title: string;
+}): NotebookLibrarySurfaceState {
+  const state: NotebookLibrarySurfaceState = {
+    kind: NOTEBOOK_SURFACE_STATE_KIND,
+    ...options,
+  };
+  if (!isNotebookLibrarySurfaceState(state)) {
+    throw new TypeError('Notebook library surface state is invalid.');
+  }
+  return state;
+}
+
+export function isNotebookLibrarySurfaceState(
+  value: unknown,
+): value is NotebookLibrarySurfaceState {
+  return isRecord(value)
+    && value.kind === NOTEBOOK_SURFACE_STATE_KIND
+    && isNotebookLibraryId(value.libraryId)
+    && Number.isSafeInteger(value.revision)
+    && Number(value.revision) >= 1
+    && typeof value.title === 'string'
+    && value.document === undefined;
+}
+
+export function notebookLibrarySurfaceStateFromSlot(
+  value: unknown,
+): NotebookLibrarySurfaceState | null {
+  return isNotebookLibrarySurfaceState(value) ? value : null;
 }
 
 export function notebookRichSurfaceStateFromSlot(

@@ -153,7 +153,7 @@ export function isNotebookSurfaceState(value: unknown): value is NotebookLegacyS
     value
       && typeof value === 'object'
       && (value as NotebookSurfaceState).kind === NOTEBOOK_SURFACE_STATE_KIND
-      && (value as NotebookSurfaceState).document?.version === NOTEBOOK_DTO_VERSION,
+      && (value as NotebookLegacySurfaceState).document?.version === NOTEBOOK_DTO_VERSION,
   );
 }
 
