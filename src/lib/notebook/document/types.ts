@@ -1,6 +1,6 @@
 import type { NotebookWorkspaceTarget } from '../types';
 
-export const NOTEBOOK_RICH_DOCUMENT_VERSION = 10 as const;
+export const NOTEBOOK_RICH_DOCUMENT_VERSION = 11 as const;
 export const NOTEBOOK_FONT_SIZE_MIN = 50;
 export const NOTEBOOK_FONT_SIZE_MAX = 249;
 
@@ -76,7 +76,7 @@ export type NotebookPageSetup = {
   orientation: NotebookPageOrientation;
   marginsPt: NotebookPageMarginsPt;
 };
-export type NotebookHeaderFooterSettings = {
+export type NotebookLegacyHeaderFooterSettings = {
   headerText: string;
   footerText: string;
   differentFirstPage: boolean;
@@ -85,6 +85,29 @@ export type NotebookHeaderFooterSettings = {
     position: NotebookPageNumberPosition;
     startAt: number;
   };
+};
+export type NotebookPageNumberNode = {
+  type: 'pageNumber';
+  marks?: NotebookRichMark[];
+};
+export type NotebookRunningMatterInlineNode = NotebookRichTextNode | NotebookPageNumberNode;
+export type NotebookRunningMatterParagraph = {
+  type: 'paragraph';
+  content?: NotebookRunningMatterInlineNode[];
+};
+export type NotebookRunningMatterContent = NotebookRunningMatterParagraph[];
+export type NotebookRunningMatterRegions = {
+  left: NotebookRunningMatterContent;
+  center: NotebookRunningMatterContent;
+  right: NotebookRunningMatterContent;
+};
+export type NotebookHeaderFooterSettings = {
+  defaultHeader: NotebookRunningMatterRegions;
+  defaultFooter: NotebookRunningMatterRegions;
+  firstPageHeader: NotebookRunningMatterRegions;
+  firstPageFooter: NotebookRunningMatterRegions;
+  differentFirstPage: boolean;
+  pageNumberStart: number;
 };
 export type NotebookParagraphFormat = {
   alignment?: NotebookTextAlignment;
@@ -324,13 +347,19 @@ export type NotebookRichDocumentV7 = NotebookRichDocumentBase & {
 export type NotebookRichDocumentV8 = NotebookRichDocumentBase & {
   version: 8;
   pageSetup: NotebookPageSetup;
-  headerFooter: NotebookHeaderFooterSettings;
+  headerFooter: NotebookLegacyHeaderFooterSettings;
 };
 
 export type NotebookRichDocumentV9 = NotebookRichDocumentBase & {
   version: 9;
   pageSetup: NotebookPageSetup;
-  headerFooter: NotebookHeaderFooterSettings;
+  headerFooter: NotebookLegacyHeaderFooterSettings;
+};
+
+export type NotebookRichDocumentV10 = NotebookRichDocumentBase & {
+  version: 10;
+  pageSetup: NotebookPageSetup;
+  headerFooter: NotebookLegacyHeaderFooterSettings;
 };
 
 export type NotebookDocumentSummary = {

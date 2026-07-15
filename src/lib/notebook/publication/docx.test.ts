@@ -32,10 +32,11 @@ describe('Notebook DOCX publication', () => {
       ...base,
       pageSetup: { paperSize: 'letter', orientation: 'landscape', marginsPt: { top: 54, right: 54, bottom: 54, left: 54 } },
       headerFooter: {
-        headerText: 'Calculus',
-        footerText: 'Rezanova',
+        ...structuredClone(base.headerFooter),
+        defaultHeader: { ...base.headerFooter.defaultHeader, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Calculus', marks: [{ type: 'bold' }] }] }] },
+        defaultFooter: { ...base.headerFooter.defaultFooter, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Rezanova' }] }], right: [{ type: 'paragraph', content: [{ type: 'pageNumber', marks: [{ type: 'underline' }, { type: 'textStyle', color: '#335577', fontSize: 120 }] }] }] },
         differentFirstPage: true,
-        pageNumbering: { enabled: true, position: 'right', startAt: 3 },
+        pageNumberStart: 3,
       },
       content: [
         {
@@ -115,6 +116,14 @@ describe('Notebook DOCX publication', () => {
     expect(contentTypesXml).toContain('image/svg+xml');
     expect(zip.file('word/header1.xml')).not.toBeNull();
     expect(zip.file('word/footer1.xml')).not.toBeNull();
+    const runningMatterXml = (await Promise.all(Object.keys(zip.files)
+      .filter((name) => /^word\/(?:header|footer)\d+\.xml$/u.test(name))
+      .map((name) => zip.file(name)!.async('string')))).join('\n');
+    expect(runningMatterXml).toContain('Calculus');
+    expect(runningMatterXml).toContain('<w:b/>');
+    expect(runningMatterXml).toContain('PAGE');
+    expect(runningMatterXml).toContain('<w:u w:val="single"/>');
+    expect(runningMatterXml).toContain('<w:color w:val="335577"/>');
     expect([...Object.keys(zip.files)].some((name) => name.endsWith('.svg'))).toBe(true);
     expect([...Object.keys(zip.files)].some((name) => name.endsWith('.png'))).toBe(true);
   });

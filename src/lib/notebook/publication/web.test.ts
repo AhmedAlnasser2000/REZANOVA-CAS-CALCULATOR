@@ -22,8 +22,9 @@ async function fixture() {
     ...base,
     pageSetup: { paperSize: 'letter', orientation: 'landscape', marginsPt: { top: 54, right: 48, bottom: 54, left: 48 } },
     headerFooter: {
-      headerText: 'Calculus & analysis', footerText: 'Offline publication', differentFirstPage: false,
-      pageNumbering: { enabled: true, position: 'right', startAt: 1 },
+      ...structuredClone(base.headerFooter),
+      defaultHeader: { ...base.headerFooter.defaultHeader, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Calculus & analysis' }] }] },
+      defaultFooter: { ...base.headerFooter.defaultFooter, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Offline publication' }] }], right: [{ type: 'paragraph', content: [{ type: 'pageNumber', marks: [{ type: 'bold' }, { type: 'textStyle', color: '#335577' }] }] }] },
     },
     content: [
       {
@@ -105,6 +106,10 @@ describe('Notebook Web publication', () => {
     expect(html).toContain('<math xmlns="http://www.w3.org/1998/Math/MathML"');
     expect(html).toContain('<video controls preload="metadata" loop');
     expect(html).toContain('<track src="assets/');
+    expect(html).toContain('Calculus &amp; analysis');
+    expect(html).toContain('Offline publication');
+    expect(html).toContain('web-page-number');
+    expect(html).toContain('<strong><span class="web-page-number"');
     expect(html).toContain('is-square-left');
     expect(html).not.toMatch(/\b(?:src|href)=["'](?:file:|https?:|data:|blob:)/u);
     expect(html).not.toContain('serviceWorker');
@@ -116,6 +121,10 @@ describe('Notebook Web publication', () => {
     expect(css).toContain('aspect-ratio: 1.25');
     expect(css).toContain(`aspect-ratio: ${16 / 9}`);
     expect(css).toContain('transform: rotate(137deg)');
+    expect(css).toContain('color: #335577');
+    expect(projection.compatibility.findings).toContainEqual(expect.objectContaining({
+      message: expect.stringContaining('omits live page numbers on screen'),
+    }));
     const assetFiles = Object.keys(zip.files).filter((name) => name.startsWith('assets/') && !name.endsWith('/'));
     expect(assetFiles).toHaveLength(5);
     expect(assetFiles.every((name) => /^assets\/[a-f0-9]{64}\.(?:jpg|png|svg|webp|mp4|webm|vtt)$/u.test(name))).toBe(true);

@@ -21,7 +21,7 @@ import {
 const fixedNow = () => new Date('2026-07-11T12:00:00.000Z');
 
 describe('Notebook rich document model', () => {
-  it('creates an app-owned version 10 document with default print geometry', () => {
+  it('creates an app-owned version 11 document with default print geometry', () => {
     const document = createNotebookRichDocument({
       idPrefix: 'rich-test',
       now: fixedNow,
@@ -105,12 +105,11 @@ describe('Notebook rich document model', () => {
       orientation: 'landscape',
       marginsPt: { top: 36, right: 54, bottom: 36, left: 54 },
     };
-    document.headerFooter = {
-      headerText: 'Calculus notes',
-      footerText: 'Rezanova',
-      differentFirstPage: true,
-      pageNumbering: { enabled: true, position: 'right', startAt: 3 },
-    };
+    document.headerFooter.defaultHeader.left = [{ type: 'paragraph', content: [{ type: 'text', text: 'Calculus notes' }] }];
+    document.headerFooter.defaultFooter.left = [{ type: 'paragraph', content: [{ type: 'text', text: 'Rezanova' }] }];
+    document.headerFooter.defaultFooter.right = [{ type: 'paragraph', content: [{ type: 'pageNumber' }] }];
+    document.headerFooter.differentFirstPage = true;
+    document.headerFooter.pageNumberStart = 3;
     document.content = [{ type: 'pageBreak', id: 'break.1' }];
     expect(isNotebookRichDocument(document)).toBe(true);
 
@@ -125,8 +124,30 @@ describe('Notebook rich document model', () => {
     expect(isNotebookRichDocument(invalidMargins)).toBe(false);
 
     const invalidNumbering = structuredClone(document);
-    invalidNumbering.headerFooter.pageNumbering.startAt = 0;
+    invalidNumbering.headerFooter.pageNumberStart = 0;
     expect(isNotebookRichDocument(invalidNumbering)).toBe(false);
+
+    const unsupportedRunningMatter = structuredClone(document) as unknown as {
+      headerFooter: { defaultHeader: { left: Array<Record<string, unknown>> } };
+    };
+    unsupportedRunningMatter.headerFooter.defaultHeader.left = [{
+      type: 'heading', content: [{ type: 'text', text: 'Not allowed' }],
+    }];
+    expect(isNotebookRichDocument(unsupportedRunningMatter)).toBe(false);
+
+    const oversizedRunningMatter = structuredClone(document);
+    oversizedRunningMatter.headerFooter.defaultHeader.left = [{
+      type: 'paragraph', content: [{ type: 'text', text: 'x'.repeat(4097) }],
+    }];
+    expect(isNotebookRichDocument(oversizedRunningMatter)).toBe(false);
+
+    const invalidPageField = structuredClone(document) as unknown as {
+      headerFooter: { defaultFooter: { right: Array<Record<string, unknown>> } };
+    };
+    invalidPageField.headerFooter.defaultFooter.right = [{
+      type: 'paragraph', content: [{ type: 'pageNumber', text: '4' }],
+    }];
+    expect(isNotebookRichDocument(invalidPageField)).toBe(false);
 
     const nestedBreak = structuredClone(document);
     nestedBreak.content = [{

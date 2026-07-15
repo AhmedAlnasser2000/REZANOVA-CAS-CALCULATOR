@@ -4,10 +4,12 @@ type StoredPageNotebook = {
   document?: {
     content?: Array<{ type?: string }>;
     headerFooter?: {
+      defaultFooter?: Record<string, unknown>;
+      defaultHeader?: Record<string, unknown>;
       differentFirstPage?: boolean;
-      footerText?: string;
-      headerText?: string;
-      pageNumbering?: { enabled?: boolean; position?: string; startAt?: number };
+      firstPageFooter?: Record<string, unknown>;
+      firstPageHeader?: Record<string, unknown>;
+      pageNumberStart?: number;
     };
     pageSetup?: {
       marginsPt?: { bottom?: number; left?: number; right?: number; top?: number };
@@ -91,7 +93,7 @@ async function expectPopoverInsideViewport(page: Page, dialogName: string) {
   expect(bounds.keyboardOverlap).toBe(false);
 }
 
-test('Notebook V10 persists one-editor page layout and renders two physical sheets', async ({ page }) => {
+test('Notebook V11 directly authors running matter and renders two physical sheets', async ({ page }) => {
   await page.setViewportSize({ width: 2400, height: 1050 });
   await openBlankNotebook(page);
   const editor = page.getByLabel('Notebook rich document');
@@ -111,27 +113,42 @@ test('Notebook V10 persists one-editor page layout and renders two physical shee
   await tabs.getByRole('tab', { name: 'Home' }).click();
   await toolbar.getByRole('button', { name: 'Bold' }).click();
   await expect(editor.locator('strong')).toHaveText('Limit laws begin with a stable local argument.');
+  await page.keyboard.press('ArrowRight');
+
+  const firstSheet = await page.locator('.notebook-page-sheet').first().boundingBox();
+  expect(firstSheet).not.toBeNull();
+  await page.mouse.dblclick(firstSheet!.x + firstSheet!.width / 2, firstSheet!.y + 18);
+  let runningEditor = page.getByLabel('Running matter editor');
+  await runningEditor.fill('Calculus I');
+  await attachScreenshot(page, 'notebook-running-matter-editing');
+  await tabs.getByRole('tab', { name: 'Header & Footer' }).click();
+  await toolbar.getByRole('button', { name: 'Edit footer' }).click();
+  await toolbar.getByRole('button', { name: 'left region' }).click();
+  runningEditor = page.getByLabel('Running matter editor');
+  await runningEditor.fill('Limit laws');
+  await toolbar.getByRole('button', { name: 'right region' }).click();
+  await toolbar.getByRole('button', { name: 'Insert page number at caret' }).click();
+  await toolbar.getByLabel('Starting page number').fill('4');
+  await toolbar.getByRole('checkbox', { name: 'Different first page' }).check();
+  await toolbar.getByRole('button', { name: 'Close Header and Footer' }).click();
 
   await tabs.getByRole('tab', { name: 'Layout' }).click();
-  await toolbar.getByRole('button', { name: 'Header, footer, and page numbering' }).click();
-  await expectPopoverInsideViewport(page, 'Header and footer settings');
-  const runningMatter = page.getByRole('dialog', { name: 'Header and footer settings' });
-  await runningMatter.getByLabel('Header text').fill('Calculus I');
-  await runningMatter.getByLabel('Footer text').fill('Limit laws');
-  await runningMatter.getByRole('checkbox', { name: 'Different first page' }).check();
-  await runningMatter.getByRole('checkbox', { name: 'Show page numbers' }).check();
-  await runningMatter.getByLabel('Page number position').selectOption('right');
-  await runningMatter.getByLabel('Starting page number').fill('4');
-  await runningMatter.getByRole('button', { name: 'Apply' }).click();
-
   await toolbar.getByRole('button', { name: 'Insert page break' }).click();
   await expect(editor.locator('[data-notebook-page-break]')).toHaveCount(1);
+  const authoredText = editor.locator('strong');
+  await expect(authoredText).toBeVisible();
+  await authoredText.scrollIntoViewIfNeeded();
+  await expect.poll(() => authoredText.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    const hit = document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+    return hit === element || element.contains(hit);
+  })).toBe(true);
   await expect(page.getByText('Page 1 of 2')).toBeVisible();
   await expect(page.locator('.notebook-page-sheet')).toHaveCount(2);
-  await expect(page.locator('.notebook-page-sheet').nth(0).locator('header')).toBeEmpty();
-  await expect(page.locator('.notebook-page-sheet').nth(1).locator('header')).toHaveText('Calculus I');
-  await expect(page.locator('.notebook-page-sheet').nth(1).locator('footer')).toContainText('Limit laws');
-  await expect(page.locator('.notebook-page-sheet').nth(1).locator('footer b')).toHaveText('5');
+  await expect(page.locator('.notebook-page-sheet').nth(0).locator('.notebook-running-matter.is-header')).toBeEmpty();
+  await expect(page.locator('.notebook-page-sheet').nth(1).locator('.notebook-running-matter.is-header')).toHaveText('Calculus I');
+  await expect(page.locator('.notebook-page-sheet').nth(1).locator('.notebook-running-matter.is-footer')).toContainText('Limit laws');
+  await expect(page.locator('.notebook-page-sheet').nth(1).locator('.notebook-running-page-number')).toHaveText('5');
 
   await page.keyboard.press('Control+S');
   await expect(page.getByText('Saved locally').first()).toBeVisible();
@@ -159,10 +176,24 @@ test('Notebook V10 persists one-editor page layout and renders two physical shee
     };
   })).toEqual({
     headerFooter: {
+      defaultFooter: {
+        center: [{ type: 'paragraph' }],
+        left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Limit laws' }] }],
+        right: [{ type: 'paragraph', content: [{ type: 'pageNumber' }] }],
+      },
+      defaultHeader: {
+        center: [{ type: 'paragraph', content: [{ type: 'text', text: 'Calculus I' }] }],
+        left: [{ type: 'paragraph' }],
+        right: [{ type: 'paragraph' }],
+      },
       differentFirstPage: true,
-      footerText: 'Limit laws',
-      headerText: 'Calculus I',
-      pageNumbering: { enabled: true, position: 'right', startAt: 4 },
+      firstPageFooter: {
+        center: [{ type: 'paragraph' }], left: [{ type: 'paragraph' }], right: [{ type: 'paragraph' }],
+      },
+      firstPageHeader: {
+        center: [{ type: 'paragraph' }], left: [{ type: 'paragraph' }], right: [{ type: 'paragraph' }],
+      },
+      pageNumberStart: 4,
     },
     pageBreaks: 1,
     pageSetup: {
@@ -170,7 +201,7 @@ test('Notebook V10 persists one-editor page layout and renders two physical shee
       orientation: 'landscape',
       paperSize: 'letter',
     },
-    version: 10,
+    version: 11,
   });
 
   for (const width of [2400, 1440, 1100]) {

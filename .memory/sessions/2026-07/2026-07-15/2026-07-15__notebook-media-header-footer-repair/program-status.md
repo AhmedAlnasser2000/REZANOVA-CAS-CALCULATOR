@@ -25,11 +25,11 @@
 
 | Gate | Kind | Status |
 | --- | --- | --- |
-| `NOTEBOOK-MEDIA-INTERACTION-REPAIR1` | ui | verified; commit approval pending |
-| `NOTEBOOK-HEADER-FOOTER-DIRECT-AUTHORING1` | ui/document | pending |
+| `NOTEBOOK-MEDIA-INTERACTION-REPAIR1` | ui | committed as `c0e68941` |
+| `NOTEBOOK-HEADER-FOOTER-DIRECT-AUTHORING1` | ui/document | verified; approved commit pending |
 
 ## Current Handoff
 
-- `NOTEBOOK-MEDIA-INTERACTION-REPAIR1` is implemented and focused evidence passes. Its selective commit is waiting for explicit user approval.
-- `NOTEBOOK-HEADER-FOOTER-DIRECT-AUTHORING1` has not started and must remain separate from the V10 media repair.
+- `NOTEBOOK-MEDIA-INTERACTION-REPAIR1` is committed as `c0e68941`.
+- `NOTEBOOK-HEADER-FOOTER-DIRECT-AUTHORING1` is implemented and focused-verified. V11 direct formatted running matter, live page fields, one temporary editor, and publication round trips are ready for the already approved selective commit.
 - Concurrent Linear Algebra and Statistics changes, shared package files, and `test-results/` remain outside the Notebook candidate.

@@ -10,7 +10,6 @@ import { useRef, useState } from 'react';
 import {
   NOTEBOOK_MARGIN_PRESETS_PT,
   notebookMarginPreset,
-  type NotebookHeaderFooterSettings,
   type NotebookMarginPreset,
   type NotebookPageSetup,
 } from '../../../../lib/notebook';
@@ -30,28 +29,24 @@ function numericMargin(value: string) {
 
 export function NotebookLayoutControls({
   editor,
-  headerFooter,
   pageSetup,
   viewMode,
-  onChangeHeaderFooter,
+  onEditHeaderFooter,
   onChangePageSetup,
   onInsertPageBreak,
   onViewModeChange,
 }: {
   editor: Editor;
-  headerFooter: NotebookHeaderFooterSettings;
   pageSetup: NotebookPageSetup;
   viewMode: NotebookViewMode;
-  onChangeHeaderFooter: (next: NotebookHeaderFooterSettings) => void;
+  onEditHeaderFooter: () => void;
   onChangePageSetup: (next: NotebookPageSetup) => void;
   onInsertPageBreak: () => void;
   onViewModeChange: (mode: NotebookViewMode) => void;
 }) {
   const marginsLayer = useNotebookTransientLayer({ id: 'notebook-custom-margins' });
-  const runningMatterLayer = useNotebookTransientLayer({ id: 'notebook-header-footer' });
   const selectionRef = useRef<NotebookToolbarSelection | null>(null);
   const [marginDraft, setMarginDraft] = useState(pageSetup.marginsPt);
-  const [runningDraft, setRunningDraft] = useState(headerFooter);
   const marginPreset = notebookMarginPreset(pageSetup.marginsPt);
 
   function rememberSelection() {
@@ -73,12 +68,6 @@ export function NotebookLayoutControls({
     rememberSelection();
     setMarginDraft(pageSetup.marginsPt);
     marginsLayer.open();
-  }
-
-  function openRunningMatter() {
-    rememberSelection();
-    setRunningDraft(headerFooter);
-    runningMatterLayer.open();
   }
 
   return (
@@ -189,48 +178,11 @@ export function NotebookLayoutControls({
         ) : null}
       </div>
       <button
-        data-notebook-transient-trigger={runningMatterLayer.id}
         type="button"
         aria-label="Header, footer, and page numbering"
-        aria-expanded={runningMatterLayer.isOpen}
         onMouseDown={(event) => event.preventDefault()}
-        onClick={openRunningMatter}
+        onClick={onEditHeaderFooter}
       ><PanelTop aria-hidden="true" size={16} /><span>Header & footer</span></button>
-      {runningMatterLayer.isOpen ? (
-        <NotebookFloatingLayer
-          layerId={runningMatterLayer.id}
-          className="notebook-layout-popover notebook-running-matter-popover"
-          role="dialog"
-          aria-label="Header and footer settings"
-        >
-          <strong>Header and footer</strong>
-          <label><span>Header text</span><input value={runningDraft.headerText} onChange={(event) => setRunningDraft((current) => ({ ...current, headerText: event.target.value }))} /></label>
-          <label><span>Footer text</span><input value={runningDraft.footerText} onChange={(event) => setRunningDraft((current) => ({ ...current, footerText: event.target.value }))} /></label>
-          <label className="notebook-layout-check"><input type="checkbox" checked={runningDraft.differentFirstPage} onChange={(event) => setRunningDraft((current) => ({ ...current, differentFirstPage: event.target.checked }))} /><span>Different first page</span></label>
-          <label className="notebook-layout-check"><input type="checkbox" checked={runningDraft.pageNumbering.enabled} onChange={(event) => setRunningDraft((current) => ({ ...current, pageNumbering: { ...current.pageNumbering, enabled: event.target.checked } }))} /><span>Show page numbers</span></label>
-          <div className="notebook-page-number-settings">
-            <label><span>Position</span><select aria-label="Page number position" value={runningDraft.pageNumbering.position} onChange={(event) => setRunningDraft((current) => ({ ...current, pageNumbering: { ...current.pageNumbering, position: event.target.value as NotebookHeaderFooterSettings['pageNumbering']['position'] } }))}><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></label>
-            <label><span>Start at</span><input aria-label="Starting page number" type="number" min="1" max="9999" value={runningDraft.pageNumbering.startAt || ''} onChange={(event) => setRunningDraft((current) => ({ ...current, pageNumbering: { ...current.pageNumbering, startAt: event.target.value === '' ? 0 : Math.max(1, Math.min(9999, Number(event.target.value) || 1)) } }))} /></label>
-          </div>
-          <footer>
-            <button type="button" onClick={() => {
-              runningMatterLayer.close(false);
-              restoreSelection();
-            }}>Cancel</button>
-            <button type="button" onClick={() => {
-              onChangeHeaderFooter({
-                ...runningDraft,
-                pageNumbering: {
-                  ...runningDraft.pageNumbering,
-                  startAt: Math.max(1, Math.min(9999, runningDraft.pageNumbering.startAt || 1)),
-                },
-              });
-              runningMatterLayer.close(false);
-              restoreSelection();
-            }}>Apply</button>
-          </footer>
-        </NotebookFloatingLayer>
-      ) : null}
       <button
         type="button"
         aria-label="Insert page break"

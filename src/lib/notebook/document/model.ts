@@ -20,6 +20,8 @@ import {
   type NotebookParagraphFormat,
   type NotebookPageSetup,
   type NotebookHeaderFooterSettings,
+  type NotebookLegacyHeaderFooterSettings,
+  type NotebookRunningMatterContent,
   type NotebookRichBlockNode,
   type NotebookRichDocument,
   type NotebookRichDocumentV2,
@@ -30,6 +32,7 @@ import {
   type NotebookRichDocumentV7,
   type NotebookRichDocumentV8,
   type NotebookRichDocumentV9,
+  type NotebookRichDocumentV10,
   type NotebookRichMark,
 } from './types';
 import {
@@ -81,8 +84,7 @@ export function createNotebookRichDocument(
       marginsPt: { ...DEFAULT_NOTEBOOK_PAGE_SETUP.marginsPt },
     },
     headerFooter: {
-      ...DEFAULT_NOTEBOOK_HEADER_FOOTER,
-      pageNumbering: { ...DEFAULT_NOTEBOOK_HEADER_FOOTER.pageNumbering },
+      ...structuredClone(DEFAULT_NOTEBOOK_HEADER_FOOTER),
     },
   };
 }
@@ -186,7 +188,7 @@ function isPageSetup(value: unknown): value is NotebookPageSetup {
   return geometry.usableWidth >= 72 && geometry.usableHeight >= 72;
 }
 
-function isHeaderFooter(value: unknown): value is NotebookHeaderFooterSettings {
+function isLegacyHeaderFooter(value: unknown): value is NotebookLegacyHeaderFooterSettings {
   if (!isRecord(value)
     || !Object.keys(value).every((key) => [
       'headerText',
@@ -210,6 +212,84 @@ function isHeaderFooter(value: unknown): value is NotebookHeaderFooterSettings {
     && Number.isInteger(value.pageNumbering.startAt)
     && Number(value.pageNumbering.startAt) >= 1
     && Number(value.pageNumbering.startAt) <= 9999;
+}
+
+function isRunningMatterMark(value: unknown): value is NotebookRichMark {
+  if (!isRecord(value) || typeof value.type !== 'string') return false;
+  if (value.type === 'bold' || value.type === 'italic' || value.type === 'strike'
+    || value.type === 'underline') {
+    return Object.keys(value).length === 1;
+  }
+  if (value.type === 'highlight') {
+    return Object.keys(value).every((key) => ['type', 'color'].includes(key))
+      && (value.color === undefined || typeof value.color === 'string');
+  }
+  if (value.type === 'textStyle') {
+    return Object.keys(value).every((key) => ['type', 'color', 'fontSize'].includes(key))
+      && (value.color === undefined || typeof value.color === 'string')
+      && (value.fontSize === undefined || isNotebookFontSize(value.fontSize));
+  }
+  return false;
+}
+
+function isRunningMatterContent(value: unknown): value is NotebookRunningMatterContent {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 16) return false;
+  let characters = 0;
+  let inlineCount = 0;
+  const valid = value.every((paragraph) => {
+    if (!isRecord(paragraph)
+      || paragraph.type !== 'paragraph'
+      || !Object.keys(paragraph).every((key) => ['type', 'content'].includes(key))
+      || (paragraph.content !== undefined && !Array.isArray(paragraph.content))) {
+      return false;
+    }
+    return (paragraph.content ?? []).every((inline) => {
+      inlineCount += 1;
+      if (!isRecord(inline)
+        || !Object.keys(inline).every((key) => ['type', 'text', 'marks'].includes(key))
+        || (inline.marks !== undefined && (!Array.isArray(inline.marks)
+          || !inline.marks.every(isRunningMatterMark)))) {
+        return false;
+      }
+      if (inline.type === 'pageNumber') {
+        return inline.text === undefined;
+      }
+      if (inline.type !== 'text' || typeof inline.text !== 'string') return false;
+      characters += inline.text.length;
+      return true;
+    });
+  });
+  return valid && characters <= 4096 && inlineCount <= 256;
+}
+
+function isRunningMatterRegions(value: unknown) {
+  return isRecord(value)
+    && Object.keys(value).length === 3
+    && Object.keys(value).every((key) => ['left', 'center', 'right'].includes(key))
+    && isRunningMatterContent(value.left)
+    && isRunningMatterContent(value.center)
+    && isRunningMatterContent(value.right);
+}
+
+function isHeaderFooter(value: unknown): value is NotebookHeaderFooterSettings {
+  return isRecord(value)
+    && Object.keys(value).length === 6
+    && Object.keys(value).every((key) => [
+      'defaultHeader',
+      'defaultFooter',
+      'firstPageHeader',
+      'firstPageFooter',
+      'differentFirstPage',
+      'pageNumberStart',
+    ].includes(key))
+    && isRunningMatterRegions(value.defaultHeader)
+    && isRunningMatterRegions(value.defaultFooter)
+    && isRunningMatterRegions(value.firstPageHeader)
+    && isRunningMatterRegions(value.firstPageFooter)
+    && typeof value.differentFirstPage === 'boolean'
+    && Number.isInteger(value.pageNumberStart)
+    && Number(value.pageNumberStart) >= 1
+    && Number(value.pageNumberStart) <= 9999;
 }
 
 function isRichBlockNode(
@@ -635,7 +715,7 @@ export function isNotebookRichDocumentV8(value: unknown): value is NotebookRichD
       node, true, true, true, true, true, false, true, false,
     ))
     && isPageSetup(value.pageSetup)
-    && isHeaderFooter(value.headerFooter);
+    && isLegacyHeaderFooter(value.headerFooter);
 }
 
 export function isNotebookRichDocumentV9(value: unknown): value is NotebookRichDocumentV9 {
@@ -662,7 +742,25 @@ export function isNotebookRichDocumentV9(value: unknown): value is NotebookRichD
       node, true, true, true, true, true, true, true, false,
     ))
     && isPageSetup(value.pageSetup)
-    && isHeaderFooter(value.headerFooter);
+    && isLegacyHeaderFooter(value.headerFooter);
+}
+
+export function isNotebookRichDocumentV10(value: unknown): value is NotebookRichDocumentV10 {
+  return isRecord(value)
+    && value.version === 10
+    && Object.keys(value).every((key) => [
+      'version', 'id', 'title', 'createdAt', 'updatedAt', 'selectedNodeId',
+      'content', 'pageSetup', 'headerFooter',
+    ].includes(key))
+    && typeof value.id === 'string'
+    && typeof value.title === 'string'
+    && typeof value.createdAt === 'string'
+    && typeof value.updatedAt === 'string'
+    && (typeof value.selectedNodeId === 'string' || value.selectedNodeId === null)
+    && Array.isArray(value.content)
+    && value.content.every((node) => isRichBlockNode(node))
+    && isPageSetup(value.pageSetup)
+    && isLegacyHeaderFooter(value.headerFooter);
 }
 
 export function countNotebookBlocks(nodes: readonly NotebookRichBlockNode[]): number {

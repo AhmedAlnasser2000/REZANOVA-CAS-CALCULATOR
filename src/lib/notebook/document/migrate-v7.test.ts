@@ -24,18 +24,14 @@ describe('Notebook rich document V7 migration', () => {
 
     expect(isNotebookRichDocumentV7(version7)).toBe(true);
     const migrated = migrateNotebookDocumentV7(version7);
-    expect(migrated.version).toBe(10);
+    expect(migrated.version).toBe(11);
     expect(migrated.content).toEqual(version7.content);
     expect(migrated.pageSetup).toEqual({
       paperSize: 'a4',
       orientation: 'portrait',
       marginsPt: { top: 72, right: 72, bottom: 72, left: 72 },
     });
-    expect(migrated.headerFooter.pageNumbering).toEqual({
-      enabled: false,
-      position: 'center',
-      startAt: 1,
-    });
+    expect(migrated.headerFooter.pageNumberStart).toBe(1);
     expect(isNotebookRichDocument(migrated)).toBe(true);
   });
 

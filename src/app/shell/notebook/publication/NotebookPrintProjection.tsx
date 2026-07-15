@@ -17,6 +17,7 @@ import {
   type NotebookRichBlockNode,
   type NotebookRichMark,
 } from '../../../../lib/notebook';
+import { NotebookRunningMatterView } from '../canvas/NotebookRunningMatter';
 
 type PageFragment = {
   fragment: number;
@@ -313,8 +314,15 @@ export function NotebookPrintProjection({
     <div className="notebook-print-preview" data-testid="notebook-print-projection">
       {pages.map((page) => {
         const firstPage = page === 1;
-        const blankRunningContent = firstPage && projection.headerFooter.differentFirstPage;
-        const pageNumber = projection.headerFooter.pageNumbering.startAt + page - 1;
+        const useFirst = firstPage && projection.headerFooter.differentFirstPage;
+        const pageNumber = projection.headerFooter.pageNumberStart
+          + (isRepaginated ? pages.indexOf(page) : page - 1);
+        const header = useFirst
+          ? projection.headerFooter.firstPageHeader
+          : projection.headerFooter.defaultHeader;
+        const footer = useFirst
+          ? projection.headerFooter.firstPageFooter
+          : projection.headerFooter.defaultFooter;
         const pageFragments = fragments.filter((fragment) => fragment.page === page);
         return (
           <article
@@ -330,7 +338,13 @@ export function NotebookPrintProjection({
               '--notebook-print-width': `${geometry.width}pt`,
             } as CSSProperties}
           >
-            <header>{blankRunningContent ? '' : projection.headerFooter.headerText}</header>
+            <header className="notebook-print-running-matter">
+              {(['left', 'center', 'right'] as const).map((region) => (
+                <span className={`is-${region}`} key={region}>
+                  <NotebookRunningMatterView content={header[region]} pageNumber={pageNumber} />
+                </span>
+              ))}
+            </header>
             <div className="notebook-print-page-body">
               {pageFragments.map((fragment) => {
                 const node = nodes.get(fragment.id);
@@ -363,13 +377,12 @@ export function NotebookPrintProjection({
                 );
               })}
             </div>
-            <footer>
-              <span>{blankRunningContent ? '' : projection.headerFooter.footerText}</span>
-              {!blankRunningContent && projection.headerFooter.pageNumbering.enabled ? (
-                <b className={`is-${projection.headerFooter.pageNumbering.position}`}>
-                  {isRepaginated ? projection.headerFooter.pageNumbering.startAt + pages.indexOf(page) : pageNumber}
-                </b>
-              ) : null}
+            <footer className="notebook-print-running-matter">
+              {(['left', 'center', 'right'] as const).map((region) => (
+                <span className={`is-${region}`} key={region}>
+                  <NotebookRunningMatterView content={footer[region]} pageNumber={pageNumber} />
+                </span>
+              ))}
             </footer>
           </article>
         );

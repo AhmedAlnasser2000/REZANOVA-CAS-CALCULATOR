@@ -32,6 +32,8 @@ import type {
   NotebookParagraphFormat,
   NotebookRichBlockNode,
   NotebookRichMark,
+  NotebookRunningMatterContent,
+  NotebookRunningMatterRegions,
 } from '../document/types';
 import { convertNotebookLatexToOmml } from './docx-math';
 import {
@@ -152,11 +154,10 @@ function paragraphOptions(format?: NotebookParagraphFormat) {
   };
 }
 
-function textRun(text: string, marks: readonly NotebookRichMark[] = []) {
+function textRunFormatting(marks: readonly NotebookRichMark[] = []) {
   const textStyle = marks.find((mark) => mark.type === 'textStyle');
   const highlight = marks.find((mark) => mark.type === 'highlight');
-  return new TextRun({
-    text,
+  return {
     bold: marks.some((mark) => mark.type === 'bold'),
     italics: marks.some((mark) => mark.type === 'italic'),
     strike: marks.some((mark) => mark.type === 'strike'),
@@ -168,6 +169,47 @@ function textRun(text: string, marks: readonly NotebookRichMark[] = []) {
       ? Math.round(22 * textStyle.fontSize / 100)
       : undefined,
     highlight: highlight?.type === 'highlight' ? 'yellow' : undefined,
+  } as const;
+}
+
+function textRun(text: string, marks: readonly NotebookRichMark[] = []) {
+  return new TextRun({ text, ...textRunFormatting(marks) });
+}
+
+function runningMatterChildren(
+  content: NotebookRunningMatterContent,
+  region: 'left' | 'center' | 'right',
+): Paragraph[] {
+  return content.map((paragraph) => new Paragraph({
+    children: (paragraph.content ?? []).map((inline) => inline.type === 'pageNumber'
+      ? new TextRun({
+          children: [PageNumber.CURRENT],
+          ...textRunFormatting(inline.marks),
+        })
+      : textRun(inline.text, inline.marks)),
+    spacing: { after: 0 },
+    alignment: alignment(region),
+  }));
+}
+
+function runningMatterTable(regions: NotebookRunningMatterRegions) {
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    borders: {
+      top: { style: BorderStyle.NIL, size: 0, color: 'FFFFFF' },
+      bottom: { style: BorderStyle.NIL, size: 0, color: 'FFFFFF' },
+      left: { style: BorderStyle.NIL, size: 0, color: 'FFFFFF' },
+      right: { style: BorderStyle.NIL, size: 0, color: 'FFFFFF' },
+      insideHorizontal: { style: BorderStyle.NIL, size: 0, color: 'FFFFFF' },
+      insideVertical: { style: BorderStyle.NIL, size: 0, color: 'FFFFFF' },
+    },
+    rows: [new TableRow({
+      children: (['left', 'center', 'right'] as const).map((region) => new TableCell({
+        children: runningMatterChildren(regions[region], region),
+        width: { size: 33.33, type: WidthType.PERCENTAGE },
+      })),
+    })],
   });
 }
 
@@ -482,14 +524,6 @@ export async function buildNotebookDocx(
     });
   }
   const geometry = notebookPageGeometry(projection.pageSetup);
-  const headerText = projection.headerFooter.headerText;
-  const footerChildren: ParagraphChild[] = [];
-  if (projection.headerFooter.footerText) footerChildren.push(new TextRun(projection.headerFooter.footerText));
-  if (projection.headerFooter.pageNumbering.enabled) {
-    if (footerChildren.length) footerChildren.push(new TextRun('  '));
-    footerChildren.push(new TextRun({ children: [PageNumber.CURRENT] }));
-  }
-  const footerAlignment = alignment(projection.headerFooter.pageNumbering.position);
   const context: RenderContext = { assets, labels: collectLabels(projection.content), mathFallbacks };
   const document = new Document({
     title: projection.title,
@@ -507,17 +541,21 @@ export async function buildNotebookDocx(
             bottom: `${projection.pageSetup.marginsPt.bottom}pt`,
             left: `${projection.pageSetup.marginsPt.left}pt`,
           },
-          pageNumbers: { start: projection.headerFooter.pageNumbering.startAt },
+          pageNumbers: { start: projection.headerFooter.pageNumberStart },
         },
       },
-      headers: headerText ? {
-        default: new Header({ children: [new Paragraph(headerText)] }),
-        first: projection.headerFooter.differentFirstPage ? new Header({ children: [new Paragraph('')] }) : undefined,
-      } : undefined,
-      footers: footerChildren.length ? {
-        default: new Footer({ children: [new Paragraph({ children: footerChildren, alignment: footerAlignment })] }),
-        first: projection.headerFooter.differentFirstPage ? new Footer({ children: [new Paragraph('')] }) : undefined,
-      } : undefined,
+      headers: {
+        default: new Header({ children: [runningMatterTable(projection.headerFooter.defaultHeader)] }),
+        first: projection.headerFooter.differentFirstPage
+          ? new Header({ children: [runningMatterTable(projection.headerFooter.firstPageHeader)] })
+          : undefined,
+      },
+      footers: {
+        default: new Footer({ children: [runningMatterTable(projection.headerFooter.defaultFooter)] }),
+        first: projection.headerFooter.differentFirstPage
+          ? new Footer({ children: [runningMatterTable(projection.headerFooter.firstPageFooter)] })
+          : undefined,
+      },
       children: renderNodes(projection.content, context),
     }],
   });

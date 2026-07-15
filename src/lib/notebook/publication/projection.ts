@@ -2,7 +2,7 @@ import {
   collectNotebookAssetIds,
   isNotebookRichDocument,
 } from '../document/model';
-import type { NotebookRichBlockNode } from '../document/types';
+import type { NotebookHeaderFooterSettings, NotebookRichBlockNode } from '../document/types';
 import {
   cloneNotebookStoredRecordV1,
   isNotebookAssetMetadataV1,
@@ -145,6 +145,7 @@ function requiredAssetIds(
 
 function compatibilityReport(
   content: readonly NotebookRichBlockNode[],
+  headerFooter: NotebookHeaderFooterSettings,
   request: NotebookExportRequest,
   additional: readonly NotebookCompatibilityFindingV1[],
 ): NotebookCompatibilityReportV1 {
@@ -186,6 +187,23 @@ function compatibilityReport(
     findings.push({
       kind: 'layout-approximation',
       message: 'Selected Sections are repaginated as a new PDF publication.',
+    });
+  }
+  if (request.format === 'web') {
+    const runningSets = [
+      headerFooter.defaultHeader,
+      headerFooter.defaultFooter,
+      headerFooter.firstPageHeader,
+      headerFooter.firstPageFooter,
+    ];
+    const hasPageField = runningSets.some((regions) => (
+      (['left', 'center', 'right'] as const).some((region) => regions[region].some(
+        (paragraph) => paragraph.content?.some((inline) => inline.type === 'pageNumber'),
+      ))
+    ));
+    if (hasPageField) findings.push({
+      kind: 'layout-approximation',
+      message: 'Responsive Web output omits live page numbers on screen; print CSS requests page counters where the browser supports them.',
     });
   }
   additional.forEach((finding) => {
@@ -271,6 +289,7 @@ export async function buildNotebookPublicationProjection(
     sourceLayout: cloneValue(options.layout),
     compatibility: compatibilityReport(
       content,
+      record.document.headerFooter,
       request,
       options.compatibilityFindings ?? [],
     ),

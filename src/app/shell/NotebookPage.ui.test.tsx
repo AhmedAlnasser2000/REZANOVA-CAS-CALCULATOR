@@ -154,7 +154,7 @@ describe('NotebookPage', () => {
     expect(screen.getByTestId('notebook-canvas')).toBeInTheDocument();
     expect(screen.queryByTestId('notebook-inspector')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Restore block inspector' })).toBeInTheDocument();
-    expect(screen.getAllByText('Saved locally')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Saved locally')).not.toHaveLength(0);
     const titleStrip = document.querySelector('.app-page-shell-header--notebook');
     expect(titleStrip).toHaveTextContent('Limits Notebook');
     expect(titleStrip).not.toHaveTextContent('REZANOVA CLASSWIZ CALCULATOR');
@@ -264,7 +264,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Control>}s{/Control}');
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const storedDocument = await readOnlyStoredDocument(libraryService);
-    expect(storedDocument.version).toBe(10);
+    expect(storedDocument.version).toBe(11);
     const persistedContainer = storedDocument.content.find((node) => node.type === 'semanticBlock');
     expect(persistedContainer).toMatchObject({
       type: 'semanticBlock',
@@ -432,9 +432,7 @@ describe('NotebookPage', () => {
     const onSurfaceState = vi.fn();
     const libraryService = createNotebookLibraryService();
     render(<NotebookHarness libraryService={libraryService} onSurfaceState={onSurfaceState} />);
-    const canvas = await screen.findByLabelText('Notebook rich document');
-    const toolbar = screen.getByLabelText('Notebook formatting toolbar');
-
+    const canvas = await screen.findByLabelText('Notebook rich document'); const toolbar = screen.getByLabelText('Notebook formatting toolbar');
     await user.click(canvas);
     await user.type(canvas, 'Alpha{Enter}Beta');
     await user.keyboard('{Control>}a{/Control}');
@@ -490,7 +488,6 @@ describe('NotebookPage', () => {
     render(<NotebookHarness libraryService={libraryService} />);
     const canvas = await screen.findByLabelText('Notebook rich document');
     const toolbar = screen.getByLabelText('Notebook formatting toolbar');
-
     expect(screen.getByTestId('notebook-template-start')).toBeInTheDocument();
     await user.click(canvas);
     await user.click(within(toolbar).getByRole('button', { name: 'Increase indent' }));
@@ -618,50 +615,51 @@ describe('NotebookPage', () => {
     expect(within(toolbar).getByLabelText('Paper size')).toHaveValue('letter');
     await user.selectOptions(within(toolbar).getByLabelText('Page orientation'), 'landscape');
     await user.selectOptions(within(toolbar).getByLabelText('Page margins'), 'narrow');
-
     await user.click(screen.getByRole('tab', { name: 'Home' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Bold' }));
     expect(canvas.querySelector('strong')).toHaveTextContent('A selected opening paragraph');
-
     await user.click(screen.getByRole('tab', { name: 'Layout' }));
     await user.click(within(toolbar).getByRole('button', {
       name: 'Header, footer, and page numbering',
     }));
-    const runningMatter = screen.getByRole('dialog', { name: 'Header and footer settings' });
-    await user.type(within(runningMatter).getByLabelText('Header text'), 'Limits course');
-    await user.type(within(runningMatter).getByLabelText('Footer text'), 'Draft notes');
-    await user.click(within(runningMatter).getByRole('checkbox', { name: 'Show page numbers' }));
-    await user.selectOptions(within(runningMatter).getByLabelText('Page number position'), 'right');
-    await user.clear(within(runningMatter).getByLabelText('Starting page number'));
-    await user.type(within(runningMatter).getByLabelText('Starting page number'), '4');
-    await user.click(within(runningMatter).getByRole('button', { name: 'Apply' }));
-    expect(document.querySelector('.notebook-page-sheet header')).toHaveTextContent('Limits course');
-    expect(document.querySelector('.notebook-page-sheet footer')).toHaveTextContent('Draft notes4');
-
+    let runningEditor = await screen.findByLabelText('Running matter editor');
+    await user.type(runningEditor, 'Limits course');
+    await user.keyboard('{Control>}a{/Control}');
+    await user.click(screen.getByRole('tab', { name: 'Home' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Bold' }));
+    await user.click(screen.getByRole('tab', { name: 'Header & Footer' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Edit footer' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'left region' }));
+    runningEditor = await screen.findByLabelText('Running matter editor');
+    await user.type(runningEditor, 'Draft notes');
+    await user.click(within(toolbar).getByRole('button', { name: 'right region' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Insert page number at caret' }));
+    await user.clear(within(toolbar).getByLabelText('Starting page number'));
+    await user.type(within(toolbar).getByLabelText('Starting page number'), '4');
+    await user.click(within(toolbar).getByRole('button', { name: 'Close Header and Footer' }));
+    await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
+    await waitFor(() => expect(document.body).not.toHaveTextContent('Limits course'));
+    await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
+    await waitFor(() => expect(document.body).toHaveTextContent('Limits course'));
+    await user.click(screen.getByRole('tab', { name: 'Layout' })); await user.click(within(toolbar).getByRole('button', { name: 'Header, footer, and page numbering' }));
+    await user.click(within(toolbar).getByRole('checkbox', { name: 'Different first page' })); await user.click(within(toolbar).getByRole('button', { name: 'Close Header and Footer' }));
+    await user.click(screen.getByRole('tab', { name: 'Layout' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Insert page break' }));
     expect(canvas.querySelector('[data-notebook-page-break]')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText('Page 1 of 2')).toBeInTheDocument());
-
     await user.click(screen.getByRole('tab', { name: 'Home' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Undo' }));
     expect(canvas.querySelector('[data-notebook-page-break]')).not.toBeInTheDocument();
     await user.click(within(toolbar).getByRole('button', { name: 'Redo' }));
     expect(canvas.querySelector('[data-notebook-page-break]')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('tab', { name: 'Layout' }));
-    await user.click(within(toolbar).getByRole('button', {
-      name: 'Header, footer, and page numbering',
-    }));
-    const firstPageSettings = screen.getByRole('dialog', { name: 'Header and footer settings' });
-    await user.click(within(firstPageSettings).getByRole('checkbox', {
-      name: 'Different first page',
-    }));
-    await user.click(within(firstPageSettings).getByRole('button', { name: 'Apply' }));
-    const sheetHeaders = document.querySelectorAll('.notebook-page-sheet header');
+    await waitFor(() => expect(document.querySelectorAll('.notebook-page-sheet')).toHaveLength(2));
+    const sheetHeaders = document.querySelectorAll('.notebook-page-sheet .notebook-running-matter.is-header');
     expect(sheetHeaders).toHaveLength(2);
-    expect(sheetHeaders[0]).toBeEmptyDOMElement();
+    expect(sheetHeaders[0]).not.toHaveTextContent('Limits course');
     expect(sheetHeaders[1]).toHaveTextContent('Limits course');
 
+    await user.click(screen.getByRole('tab', { name: 'Layout' }));
     await user.click(within(toolbar).getByRole('button', { name: 'Draft' }));
     expect(document.querySelector('.notebook-page-stage')).toHaveClass('is-draft');
     expect(screen.getByText('Draft view')).toBeInTheDocument();
@@ -672,19 +670,25 @@ describe('NotebookPage', () => {
     await waitFor(() => expect(screen.getAllByText('Saved locally').length).toBeGreaterThan(0));
     const stored = await readOnlyStoredDocument(libraryService);
     expect(stored).toMatchObject({
-      version: 10,
+      version: 11,
       pageSetup: {
         paperSize: 'letter',
         orientation: 'landscape',
         marginsPt: { top: 36, right: 36, bottom: 36, left: 36 },
       },
       headerFooter: {
-        headerText: 'Limits course',
-        footerText: 'Draft notes',
         differentFirstPage: true,
-        pageNumbering: { enabled: true, position: 'right', startAt: 4 },
+        pageNumberStart: 4,
       },
     });
+    expect(stored.headerFooter.defaultHeader.center[0]?.content).toEqual([
+      { type: 'text', text: 'Limits course', marks: [{ type: 'bold' }] },
+    ]);
+    expect(stored.headerFooter.defaultFooter.left[0]?.content)
+      .toEqual([{ type: 'text', text: 'Draft notes' }]);
+    expect(stored.headerFooter.defaultFooter.right[0]?.content).toEqual([
+      { type: 'pageNumber' },
+    ]);
     expect(stored.content.some((node) => node.type === 'pageBreak')).toBe(true);
   });
 
@@ -1416,14 +1420,12 @@ describe('NotebookPage', () => {
         : []
     ))).size).toBe(3);
 
-    const pauseCount = pauseSpy.mock.calls.length;
-    const revokeCount = revokeSpy.mock.calls.length;
+    const pauseCount = pauseSpy.mock.calls.length; const revokeCount = revokeSpy.mock.calls.length;
     unmount();
     expect(pauseSpy.mock.calls.length).toBeGreaterThan(pauseCount);
     expect(revokeSpy.mock.calls.length).toBeGreaterThan(revokeCount);
     pauseSpy.mockRestore();
     revokeSpy.mockRestore();
-
   });
 
   it('creates, nests, renames, and collapses visible document sections', async () => {
@@ -1464,8 +1466,7 @@ describe('NotebookPage', () => {
     expect(sectionEntries).toHaveLength(2);
     expect(sectionEntries[1]).toHaveAttribute('data-outline-depth', '1');
 
-    const transfer = new Map<string, string>();
-    const dataTransfer = {
+    const transfer = new Map<string, string>(); const dataTransfer = {
       dropEffect: 'none',
       effectAllowed: 'all',
       getData: (type: string) => transfer.get(type) ?? '',
@@ -1492,8 +1493,8 @@ describe('NotebookPage', () => {
       .filter((entry) => entry.textContent?.includes('Worked examples'))).toHaveLength(0);
     expect(within(firstSection).getByRole('button', { name: 'Expand Untitled section' }))
       .toBeInTheDocument();
-    expect(within(screen.getByLabelText('Notebook outline'))
-      .queryByRole('button', { name: /Expand Untitled section|Collapse Untitled section/ }))
-      .toBeNull();
+    expect(within(screen.getByLabelText('Notebook outline')).queryByRole('button', {
+      name: /Expand Untitled section|Collapse Untitled section/,
+    })).toBeNull();
   });
 });

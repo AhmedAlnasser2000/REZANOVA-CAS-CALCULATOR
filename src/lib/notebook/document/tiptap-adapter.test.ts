@@ -245,10 +245,11 @@ describe('Notebook Tiptap adapter', () => {
         marginsPt: { top: 36, right: 54, bottom: 36, left: 54 },
       },
       headerFooter: {
-        headerText: 'Limits',
-        footerText: 'Chapter 2',
+        ...structuredClone(base.headerFooter),
+        defaultHeader: { ...base.headerFooter.defaultHeader, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Limits' }] }] },
+        defaultFooter: { ...base.headerFooter.defaultFooter, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Chapter 2' }] }], right: [{ type: 'paragraph', content: [{ type: 'pageNumber' }] }] },
         differentFirstPage: true,
-        pageNumbering: { enabled: true, position: 'right', startAt: 5 },
+        pageNumberStart: 5,
       },
       content: [
         { type: 'paragraph', id: 'paragraph.before' },

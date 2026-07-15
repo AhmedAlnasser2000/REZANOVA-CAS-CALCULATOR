@@ -262,7 +262,7 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
     placement: 'square-left',
     resizedAbovePreset: true,
     trackCount: 1,
-    version: 10,
+    version: 11,
     widthPercent: expect.any(Number),
   });
 

@@ -302,6 +302,42 @@
   min-height: auto;
 }
 
+.notebook-rich-toolbar[data-ribbon-tab='header-footer'] .notebook-ribbon-group {
+  padding-inline: 14px;
+}
+
+.notebook-rich-toolbar[data-ribbon-tab='header-footer'] .notebook-ribbon-group-tools {
+  gap: 7px;
+}
+
+.notebook-rich-toolbar[data-ribbon-tab='header-footer'] button:has(> span) {
+  width: auto;
+  min-width: 58px;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.notebook-rich-toolbar[data-ribbon-tab='header-footer'] .notebook-layout-check {
+  display: inline-flex;
+  min-width: 150px;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.notebook-rich-toolbar[data-ribbon-tab='header-footer'] .notebook-layout-field {
+  min-width: 86px;
+}
+
+.notebook-rich-toolbar[data-ribbon-tab='header-footer'] .notebook-layout-field input {
+  width: 86px;
+  min-height: 30px;
+  border: 1px solid var(--notebook-border);
+  border-radius: 5px;
+  padding: 4px 7px;
+  background: #071516;
+  color: #f1f5ed;
+}
+
 .notebook-page-number-settings {
   display: grid;
   grid-template-columns: 1fr 100px;
@@ -1072,35 +1108,100 @@
   box-shadow: 0 11px 28px rgba(0, 0, 0, 0.26);
 }
 
-.notebook-page-sheet > header,
-.notebook-page-sheet > footer {
+.notebook-running-matter {
   position: absolute;
   right: var(--notebook-page-margin-right-px, 48px);
   left: var(--notebook-page-margin-left-px, 48px);
-  min-height: 20px;
-  overflow: hidden;
+  min-height: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
   color: var(--page-subtle);
   font: 0.68rem 'IBM Plex Mono', monospace;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  pointer-events: auto;
 }
 
-.notebook-page-sheet > header {
+.notebook-running-matter.is-header {
   top: calc(var(--notebook-page-margin-top-px, 48px) * 0.34);
 }
 
-.notebook-page-sheet > footer {
+.notebook-running-matter.is-footer {
   bottom: calc(var(--notebook-page-margin-bottom-px, 48px) * 0.28);
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
 }
 
-.notebook-page-sheet > footer > span { grid-column: 1 / -1; }
-.notebook-page-sheet > footer > b { grid-row: 1; font-weight: 500; }
-.notebook-page-sheet > footer > b.is-left { grid-column: 1; justify-self: start; }
-.notebook-page-sheet > footer > b.is-center { grid-column: 2; justify-self: center; }
-.notebook-page-sheet > footer > b.is-right { grid-column: 3; justify-self: end; }
+.notebook-running-matter-region {
+  min-width: 0;
+  min-height: 24px;
+  padding: 3px 5px;
+  border: 1px dashed transparent;
+  white-space: normal;
+}
+
+.notebook-running-matter-region.is-left { text-align: left; }
+.notebook-running-matter-region.is-center { text-align: center; }
+.notebook-running-matter-region.is-right { text-align: right; }
+
+.notebook-running-matter-region:hover {
+  border-color: rgba(184, 212, 156, 0.34);
+}
+
+.notebook-running-matter-region.is-editing {
+  border-color: var(--page-accent);
+  background: rgba(184, 212, 156, 0.08);
+  color: var(--page-ink);
+  outline: 1px solid rgba(184, 212, 156, 0.28);
+}
+
+.notebook-running-matter-line {
+  display: block;
+  min-height: 1em;
+}
+
+.notebook-running-matter-editor,
+.notebook-running-matter-editor p {
+  min-height: 1em;
+  margin: 0;
+  outline: 0;
+}
+
+.notebook-running-matter-editor [data-notebook-page-number] {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 0.25em;
+  border-radius: 3px;
+  background: rgba(184, 212, 156, 0.18);
+  color: var(--page-accent);
+}
+
+.notebook-rich-scroll-region.is-running-matter-editing .notebook-rich-editor-host {
+  opacity: 0.36;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.notebook-rich-scroll-region.is-running-matter-editing .notebook-page-sheets {
+  z-index: 2;
+}
+
+.notebook-rich-scroll-region.is-running-matter-editing .notebook-page-sheet {
+  background: transparent;
+  box-shadow: none;
+}
+
+.notebook-running-matter-warning {
+  position: sticky;
+  z-index: 24;
+  bottom: 16px;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 0 auto 16px;
+  padding: 8px 12px;
+  border: 1px solid #d3ad63;
+  border-radius: 6px;
+  background: #2d281b;
+  color: #f0d699;
+  font-size: 0.78rem;
+}
 
 .notebook-rich-editor-host {
   position: relative;

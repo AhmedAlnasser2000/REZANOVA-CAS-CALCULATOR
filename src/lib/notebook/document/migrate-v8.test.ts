@@ -38,7 +38,20 @@ describe('Notebook rich document V8 migration', () => {
 
     expect(isNotebookRichDocumentV8(version8)).toBe(true);
     const migrated = migrateNotebookDocumentV8(version8);
-    expect(migrated).toEqual({ ...version8, version: 10 });
+    expect(migrated).toMatchObject({
+      ...version8,
+      version: 11,
+      headerFooter: {
+        differentFirstPage: true,
+        pageNumberStart: 4,
+      },
+    });
+    expect(migrated.headerFooter.defaultHeader.left[0]?.content).toEqual([
+      { type: 'text', text: 'Limits' },
+    ]);
+    expect(migrated.headerFooter.defaultFooter.right[0]?.content).toEqual([
+      { type: 'pageNumber' },
+    ]);
     expect(isNotebookRichDocument(migrated)).toBe(true);
   });
 

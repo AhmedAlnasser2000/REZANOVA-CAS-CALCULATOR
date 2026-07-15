@@ -125,7 +125,7 @@ describe('IndexedDB Notebook persistence ports', () => {
     expect(await ports.library.listVersions(record.libraryId)).toEqual([]);
   });
 
-  it('hydrates V6 through V9 records and snapshots through the V10 browser contract', async () => {
+  it('hydrates V6 through V9 records and snapshots through the V11 browser contract', async () => {
     const name = 'legacy-v6-v9';
     const databaseName = `notebook-persistence-${name}`;
     const indexedDb = new IDBFactory();
@@ -141,6 +141,11 @@ describe('IndexedDB Notebook persistence ports', () => {
       if (version < 8) {
         delete legacy.document.pageSetup;
         delete legacy.document.headerFooter;
+      } else {
+        legacy.document.headerFooter = {
+          headerText: '', footerText: '', differentFirstPage: false,
+          pageNumbering: { enabled: false, position: 'center', startAt: 1 },
+        };
       }
       return legacy;
     });
@@ -163,10 +168,10 @@ describe('IndexedDB Notebook persistence ports', () => {
 
     for (const legacy of legacyRecords) {
       const loaded = await ports.library.load(legacy.libraryId);
-      expect(loaded?.document.version).toBe(10);
+      expect(loaded?.document.version).toBe(11);
       expect(loaded?.document.content).toEqual(legacy.document.content);
       const versions = await ports.library.listVersions(legacy.libraryId);
-      expect(versions[0]?.record.document.version).toBe(10);
+      expect(versions[0]?.record.document.version).toBe(11);
       expect(versions[0]?.record.document.content).toEqual(legacy.document.content);
     }
   });

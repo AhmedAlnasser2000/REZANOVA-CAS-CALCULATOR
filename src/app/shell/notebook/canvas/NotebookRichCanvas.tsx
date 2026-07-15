@@ -11,7 +11,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-
 import {
   readClipboardEventFile,
 } from '../../../../lib/clipboard';
@@ -63,7 +62,10 @@ import {
   type NotebookPaginationMetrics,
   type NotebookViewMode,
 } from './useNotebookPagination';
-import { NotebookPageSheets } from './NotebookPageSheets';
+import {
+  NotebookPageSheets,
+  type NotebookRunningMatterTarget,
+} from './NotebookPageSheets';
 import { useNotebookMathFieldController } from '../math-field';
 import { NotebookFloatingLayer, useNotebookTransientLayer } from '../transient-ui';
 import {
@@ -76,7 +78,6 @@ import {
   isNotebookVideoFile,
   useNotebookVideoAuthoring,
 } from './useNotebookVideoAuthoring';
-
 type NotebookRichCanvasProps = {
   activeRibbonTab: NotebookRibbonTab;
   assetPort: NotebookAssetPort;
@@ -97,9 +98,7 @@ type NotebookRichCanvasProps = {
   onViewModeChange: (mode: NotebookViewMode) => void;
   viewMode: NotebookViewMode;
 };
-
 export type { NotebookMediaStatus } from './NotebookDirectMediaCanvasCoordinator';
-
 type PendingImageInsert = {
   mode: 'insert';
   bytes: Uint8Array;
@@ -108,18 +107,14 @@ type PendingImageInsert = {
   selection: NotebookToolbarSelection;
   insertionPosition?: number;
 };
-
 type PendingImageEdit = {
   mode: 'edit';
   nodeId: string;
   initial: NotebookImageDetails;
 };
-
 type PendingImageDialog = PendingImageInsert | PendingImageEdit;
-
 const NOTEBOOK_IMMEDIATE_SYNC_NODE_SIZE_MAX = 150_000;
 const NOTEBOOK_LARGE_DOCUMENT_SYNC_DELAY_MS = 350;
-
 function selectedParagraphSuggestion(editor: Editor | null) {
   if (!editor) {
     return null;
@@ -136,7 +131,6 @@ function selectedParagraphSuggestion(editor: Editor | null) {
     to: selection.from + candidate.end,
   } : null;
 }
-
 function selectedProseRange(editor: Editor): NotebookProseSelection | null {
   const { selection } = editor.state;
   if (!(selection instanceof TextSelection || selection instanceof AllSelection) || selection.empty) {
@@ -150,7 +144,6 @@ function selectedProseRange(editor: Editor): NotebookProseSelection | null {
   });
   return containsText ? { from: selection.from, to: selection.to } : null;
 }
-
 function isPristineNotebook(editor: Editor) {
   const paragraph = editor.state.doc.firstChild;
   if (editor.state.doc.childCount !== 1 || paragraph?.type.name !== 'paragraph') {
@@ -163,7 +156,6 @@ function isPristineNotebook(editor: Editor) {
     && paragraph.attrs.notebookSpaceAfterPt == null
     && paragraph.attrs.notebookLeftIndentPt == null;
 }
-
 export function NotebookRichCanvas({
   activeRibbonTab,
   assetPort,
@@ -204,6 +196,21 @@ export function NotebookRichCanvas({
   const [pendingImageDialog, setPendingImageDialog] = useState<PendingImageDialog | null>(null);
   const [imageBusy, setImageBusy] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [runningMatterTarget, setRunningMatterTarget] = useState<NotebookRunningMatterTarget | null>(null);
+  const [runningMatterDraft, setRunningMatterDraft] = useState(document.headerFooter);
+  const [runningMatterEditor, setRunningMatterEditor] = useState<Editor | null>(null);
+  const [runningMatterOverflow, setRunningMatterOverflow] = useState(false);
+  const runningMatterOriginalRef = useRef(document.headerFooter);
+  const runningMatterSessionRef = useRef({
+    target: runningMatterTarget,
+    draft: runningMatterDraft,
+    original: runningMatterOriginalRef.current,
+  });
+  runningMatterSessionRef.current = {
+    target: runningMatterTarget,
+    draft: runningMatterDraft,
+    original: runningMatterOriginalRef.current,
+  };
   const templateMenu = useNotebookTransientLayer({ id: 'notebook-starter-templates' });
   const imageDialog = useNotebookTransientLayer({ id: 'notebook-image-details' });
   const imageDialogIsOpen = imageDialog.isOpen;
@@ -224,7 +231,6 @@ export function NotebookRichCanvas({
     pageStageRef,
     viewMode,
   });
-
   const extensions = useMemo(
     () => createNotebookExtensions(onOpenMathInTool, assetPort, {
       cropMode: imageCropMode,
@@ -319,7 +325,6 @@ export function NotebookRichCanvas({
     editor,
     onInserted: onVideoInserted,
   });
-
   const paginationMetrics = useNotebookPagination({
     editor,
     pageSetup: document.pageSetup,
@@ -329,15 +334,56 @@ export function NotebookRichCanvas({
     viewMode,
     onChange: onPaginationChange,
   });
-
+  const commitRunningMatter = useCallback(() => {
+    if (!runningMatterTarget) return;
+    const draft = runningMatterSessionRef.current.draft;
+    if (JSON.stringify(draft) !== JSON.stringify(runningMatterOriginalRef.current)) {
+      editor.view.dispatch(
+        editor.state.tr.setDocAttribute('notebookHeaderFooter', draft),
+      );
+    }
+    setRunningMatterTarget(null);
+    setRunningMatterEditor(null);
+    setRunningMatterOverflow(false);
+  }, [editor, runningMatterTarget]);
   useEffect(() => {
     editorRef.current = editor;
     return () => {
+      const session = runningMatterSessionRef.current;
+      if (session.target && !editor.isDestroyed
+        && JSON.stringify(session.draft) !== JSON.stringify(session.original)) {
+        editor.view.dispatch(editor.state.tr.setDocAttribute('notebookHeaderFooter', session.draft));
+      }
       if (editorRef.current === editor) {
         editorRef.current = null;
       }
     };
   }, [editor]);
+
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    editor.setEditable(!runningMatterTarget);
+  }, [editor, runningMatterTarget]);
+  useEffect(() => {
+    if (!runningMatterTarget || activeRibbonTab === 'header-footer' || activeRibbonTab === 'home') return;
+    commitRunningMatter();
+  }, [activeRibbonTab, commitRunningMatter, runningMatterTarget]);
+
+  useEffect(() => {
+    if (runningMatterTarget) return;
+    setRunningMatterDraft(document.headerFooter);
+  }, [document.headerFooter, runningMatterTarget]);
+
+  useEffect(() => {
+    if (!runningMatterTarget) return undefined;
+    const commitBeforeSave = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        commitRunningMatter();
+      }
+    };
+    window.addEventListener('keydown', commitBeforeSave, true);
+    return () => window.removeEventListener('keydown', commitBeforeSave, true);
+  }, [commitRunningMatter, runningMatterTarget]);
 
   useEffect(() => {
     setPaginationMetrics(paginationMetrics);
@@ -570,9 +616,38 @@ export function NotebookRichCanvas({
   }
 
   function changeHeaderFooter(headerFooter: NotebookHeaderFooterSettings) {
+    if (runningMatterTarget) {
+      runningMatterSessionRef.current = { ...runningMatterSessionRef.current, draft: headerFooter };
+      setRunningMatterDraft(headerFooter);
+      return;
+    }
     editor.view.dispatch(
       editor.state.tr.setDocAttribute('notebookHeaderFooter', headerFooter),
     );
+  }
+
+  function beginRunningMatter(target?: NotebookRunningMatterTarget) {
+    const pageIndex = target?.pageIndex ?? Math.max(0, paginationMetrics.currentPage - 1);
+    const scope = pageIndex === 0 && documentRef.current.headerFooter.differentFirstPage
+      ? 'first'
+      : 'default';
+    runningMatterOriginalRef.current = documentRef.current.headerFooter;
+    setRunningMatterDraft(structuredClone(documentRef.current.headerFooter));
+    setRunningMatterTarget(target ?? { pageIndex, kind: 'header', region: 'center', scope });
+    if (viewMode !== 'print') onViewModeChange('print');
+    onSelectRibbonTab('header-footer');
+  }
+
+  function selectRibbonTab(tab: NotebookRibbonTab) {
+    if (runningMatterTarget && tab !== 'header-footer' && tab !== 'home') commitRunningMatter();
+    onSelectRibbonTab(tab);
+  }
+
+  function navigateRunningMatter(
+    next: Partial<Pick<NotebookRunningMatterTarget, 'kind' | 'region'>>,
+  ) {
+    setRunningMatterEditor(null);
+    setRunningMatterTarget((current) => current ? { ...current, ...next } : current);
   }
 
   async function stageImage(file: File, insertionPosition?: number) {
@@ -693,7 +768,7 @@ export function NotebookRichCanvas({
   }
 
   const contextualSelection = notebookEditorSelection(editor);
-  const contextualTab = contextualSelection?.type === 'imageFigure'
+  const contextualTab = runningMatterTarget ? 'header-footer' : contextualSelection?.type === 'imageFigure'
     ? 'picture-format'
     : contextualSelection?.type === 'videoFigure' ? 'video-format' : null;
 
@@ -704,13 +779,13 @@ export function NotebookRichCanvas({
         contextualTab={contextualTab}
         editor={editor}
         fileControl={fileControl}
-        hasProseSelection={Boolean(proseSelection)}
-        headerFooter={document.headerFooter}
+        hasProseSelection={Boolean(runningMatterEditor || proseSelection)}
+        headerFooter={runningMatterTarget ? runningMatterDraft : document.headerFooter}
         pageSetup={document.pageSetup}
         viewMode={viewMode}
         onChangeHeaderFooter={changeHeaderFooter}
         onChangePageSetup={changePageSetup}
-        onSelectTab={onSelectRibbonTab}
+        onSelectTab={selectRibbonTab}
         onInsertDisplayMath={() => insertNotebookDisplayMath(editor, {
           onInserted: setPendingMathFocusId,
         })}
@@ -728,11 +803,51 @@ export function NotebookRichCanvas({
         onInsertPageBreak={() => insertNotebookPageBreak(editor)}
         onViewModeChange={onViewModeChange}
         onRequestPalette={requestPalette}
+        runningMatterEditor={runningMatterEditor}
+        runningMatterTarget={runningMatterTarget}
+        onBeginHeaderFooter={() => beginRunningMatter()}
+        onCloseHeaderFooter={() => {
+          commitRunningMatter();
+          onSelectRibbonTab('home');
+        }}
+        onNavigateRunningMatter={navigateRunningMatter}
       />
       <div
         ref={scrollRegionRef}
-        className="notebook-rich-scroll-region"
+        className={`notebook-rich-scroll-region${runningMatterTarget ? ' is-running-matter-editing' : ''}`}
         data-empty={isBlank ? 'true' : 'false'}
+        onDoubleClick={(event) => {
+          if (runningMatterTarget && event.target instanceof Node && editor.view.dom.contains(event.target)) {
+            commitRunningMatter();
+            onSelectRibbonTab('home');
+            return;
+          }
+          if (runningMatterTarget || viewMode !== 'print' || !pageStageRef.current) return;
+          const stage = pageStageRef.current;
+          const bounds = stage.getBoundingClientRect();
+          const style = getComputedStyle(stage);
+          const marginTop = Number.parseFloat(style.getPropertyValue('--notebook-page-margin-top-px')) || 72;
+          const marginBottom = Number.parseFloat(style.getPropertyValue('--notebook-page-margin-bottom-px')) || 72;
+          const relativeY = event.clientY - bounds.top;
+          const stride = paginationMetrics.pageHeightPx + paginationMetrics.pageGapPx;
+          const pageIndex = Math.max(0, Math.min(
+            paginationMetrics.pageCount - 1,
+            Math.floor(relativeY / stride),
+          ));
+          const pageY = relativeY - pageIndex * stride;
+          const kind = pageY <= marginTop
+            ? 'header'
+            : pageY >= paginationMetrics.pageHeightPx - marginBottom ? 'footer' : null;
+          if (!kind) return;
+          const relativeX = Math.max(0, Math.min(bounds.width - 1, event.clientX - bounds.left));
+          const region = relativeX < bounds.width / 3
+            ? 'left'
+            : relativeX < bounds.width * 2 / 3 ? 'center' : 'right';
+          const scope = pageIndex === 0 && documentRef.current.headerFooter.differentFirstPage
+            ? 'first'
+            : 'default';
+          beginRunningMatter({ pageIndex, kind, region, scope });
+        }}
         onDragOver={(event) => {
           if (event.dataTransfer.files.length > 0) event.preventDefault();
         }}
@@ -771,12 +886,26 @@ export function NotebookRichCanvas({
         >
           {viewMode === 'print' ? (
             <NotebookPageSheets
-              headerFooter={document.headerFooter}
+              activeTarget={runningMatterTarget}
+              headerFooter={runningMatterTarget ? runningMatterDraft : document.headerFooter}
               metrics={paginationMetrics}
+              onChangeDraft={setRunningMatterDraft}
+              onEditor={setRunningMatterEditor}
+              onEnter={beginRunningMatter}
+              onRequestClose={() => {
+                commitRunningMatter();
+                onSelectRibbonTab('home');
+              }}
+              onOverflowChange={setRunningMatterOverflow}
             />
           ) : null}
           <EditorContent className="notebook-rich-editor-host" editor={editor} />
         </div>
+        {runningMatterOverflow ? (
+          <div className="notebook-running-matter-warning" role="status">
+            Running matter exceeds the current margin band. Content is preserved.
+          </div>
+        ) : null}
         {isBlank ? (
           <div className="notebook-template-start" data-testid="notebook-template-start">
             <div>
@@ -837,12 +966,10 @@ export function NotebookRichCanvas({
           onConfirm={(details) => void confirmImageDetails(details)}
         />
       ) : null}
-      <NotebookSelectionToolbar
-        key={paletteRequest?.nonce ?? 0}
-        editor={editor}
-        paletteRequest={paletteRequest}
-        selection={proseSelection}
-      />
+      {!runningMatterTarget ? <NotebookSelectionToolbar
+        key={paletteRequest?.nonce ?? 0} editor={editor}
+        paletteRequest={paletteRequest} selection={proseSelection}
+      /> : null}
       {suggestion ? (
         <div className="notebook-math-suggestion" data-testid="notebook-math-suggestion">
           <div>

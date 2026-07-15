@@ -59,13 +59,18 @@ test('Notebook PDF publication previews exact pages and stays readable across la
   await page.keyboard.type('Limit laws remain selectable in the publication projection.');
   await tabs.getByRole('tab', { name: 'Layout' }).click();
   await toolbar.getByRole('button', { name: 'Header, footer, and page numbering' }).click();
-  const runningMatter = page.getByRole('dialog', { name: 'Header and footer settings' });
-  await runningMatter.getByLabel('Header text').fill('Calculus notes');
-  await runningMatter.getByLabel('Footer text').fill('Rezanova');
-  await runningMatter.getByRole('checkbox', { name: 'Show page numbers' }).check();
-  await runningMatter.getByLabel('Page number position').selectOption('right');
-  await runningMatter.getByLabel('Starting page number').fill('3');
-  await runningMatter.getByRole('button', { name: 'Apply' }).click();
+  let runningEditor = page.getByLabel('Running matter editor');
+  await runningEditor.fill('Calculus notes');
+  await tabs.getByRole('tab', { name: 'Header & Footer' }).click();
+  await toolbar.getByRole('button', { name: 'Edit footer' }).click();
+  await toolbar.getByRole('button', { name: 'left region' }).click();
+  runningEditor = page.getByLabel('Running matter editor');
+  await runningEditor.fill('Rezanova');
+  await toolbar.getByRole('button', { name: 'right region' }).click();
+  await toolbar.getByRole('button', { name: 'Insert page number at caret' }).click();
+  await toolbar.getByLabel('Starting page number').fill('3');
+  await toolbar.getByRole('button', { name: 'Close Header and Footer' }).click();
+  await tabs.getByRole('tab', { name: 'Layout' }).click();
   await toolbar.getByRole('button', { name: 'Insert page break' }).click();
   await expect(page.getByText('Page 1 of 2')).toBeVisible();
 
@@ -78,7 +83,7 @@ test('Notebook PDF publication previews exact pages and stays readable across la
   await expect(page.getByTestId('notebook-print-projection')).toBeVisible();
   await expect(page.locator('.notebook-print-page')).toHaveCount(2);
   await expect(page.locator('.notebook-print-page').nth(0).locator('header')).toHaveText('Calculus notes');
-  await expect(page.locator('.notebook-print-page').nth(1).locator('footer b')).toHaveText('4');
+  await expect(page.locator('.notebook-print-page').nth(1).locator('.notebook-running-page-number')).toHaveText('4');
 
   for (const width of [2400, 1440, 1100]) {
     await page.setViewportSize({ width, height: 1000 });

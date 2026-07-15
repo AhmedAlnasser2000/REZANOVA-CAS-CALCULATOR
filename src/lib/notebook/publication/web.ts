@@ -7,6 +7,7 @@ import type {
   NotebookParagraphFormat,
   NotebookRichBlockNode,
   NotebookRichMark,
+  NotebookRunningMatterContent,
 } from '../document/types';
 import type {
   NotebookCompatibilityFindingV1,
@@ -79,6 +80,10 @@ math { font-family: "Cambria Math", "STIX Two Math", serif; }
 .align-justify { text-align: justify; }
 .decorative-caption { font-style: italic; }
 .cwiz-notebook > footer { clear: both; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid #d9ded7; }
+.web-running-matter { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.web-running-matter .is-center { text-align: center; }
+.web-running-matter .is-right { text-align: right; }
+.web-page-number { display: none; }
 @media (max-width: 700px) {
   body { font-size: 16px; }
   .cwiz-notebook { width: 100%; margin: 0; padding: 24px 18px; box-shadow: none; }
@@ -88,6 +93,8 @@ math { font-family: "Cambria Math", "STIX Two Math", serif; }
   :root, body { background: #fff; }
   .cwiz-notebook { width: auto; margin: 0; padding: 0; box-shadow: none; }
   .page-break { break-after: page; border: 0; }
+  .web-page-number { display: inline; }
+  .web-page-number::after { content: counter(page); }
   .semantic, .media, .evidence { break-inside: avoid; }
   video { display: none !important; }
   .video-note { display: block; }
@@ -194,14 +201,35 @@ function markClasses(marks: readonly NotebookRichMark[], styles: StyleRegistry) 
   return declarations.length ? styles.add(`mark:${declarations.join(';')}`, declarations.join('; ')) : '';
 }
 
-function textHtml(text: string, marks: readonly NotebookRichMark[] = [], styles: StyleRegistry) {
-  let html = escapeHtml(text);
+function markedHtml(source: string, marks: readonly NotebookRichMark[], styles: StyleRegistry) {
+  let html = source;
   if (marks.some((mark) => mark.type === 'bold')) html = `<strong>${html}</strong>`;
   if (marks.some((mark) => mark.type === 'italic')) html = `<em>${html}</em>`;
   if (marks.some((mark) => mark.type === 'underline')) html = `<u>${html}</u>`;
   if (marks.some((mark) => mark.type === 'strike')) html = `<s>${html}</s>`;
   const className = markClasses(marks, styles);
   return className ? `<span class="${className}">${html}</span>` : html;
+}
+
+function textHtml(text: string, marks: readonly NotebookRichMark[] = [], styles: StyleRegistry) {
+  return markedHtml(escapeHtml(text), marks, styles);
+}
+
+function runningMatterHtml(content: NotebookRunningMatterContent, styles: StyleRegistry) {
+  return content.map((paragraph) => `<p>${(paragraph.content ?? []).map((inline) => (
+    inline.type === 'pageNumber'
+      ? markedHtml('<span class="web-page-number" aria-hidden="true"></span>', inline.marks ?? [], styles)
+      : textHtml(inline.text, inline.marks, styles)
+  )).join('')}</p>`).join('');
+}
+
+function runningRegionsHtml(
+  regions: NotebookPublicationProjectionV1['headerFooter']['defaultHeader'],
+  styles: StyleRegistry,
+) {
+  return `<div class="web-running-matter">${(['left', 'center', 'right'] as const).map((region) => (
+    `<div class="is-${region}">${runningMatterHtml(regions[region], styles)}</div>`
+  )).join('')}</div>`;
 }
 
 function inlineHtml(content: readonly NotebookInlineNode[] | undefined, styles: StyleRegistry) {
@@ -361,12 +389,8 @@ export async function buildNotebookWebPackage(
     styles,
   };
   const body = projection.content.map((node) => renderNode(node, context)).join('');
-  const header = projection.headerFooter.headerText
-    ? `<p>${escapeHtml(projection.headerFooter.headerText)}</p>`
-    : '';
-  const footer = projection.headerFooter.footerText
-    ? `<p>${escapeHtml(projection.headerFooter.footerText)}</p>`
-    : '';
+  const header = runningRegionsHtml(projection.headerFooter.defaultHeader, styles);
+  const footer = runningRegionsHtml(projection.headerFooter.defaultFooter, styles);
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; media-src 'self'; style-src 'self'; script-src 'none'; object-src 'none'; frame-src 'none'; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">

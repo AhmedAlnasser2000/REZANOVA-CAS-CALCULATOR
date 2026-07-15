@@ -292,14 +292,14 @@
   padding-top: 4pt;
 }
 
-.notebook-print-page > footer b {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+.notebook-print-running-matter {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.notebook-print-page > footer b.is-left { left: 0; transform: none; }
-.notebook-print-page > footer b.is-right { right: 0; left: auto; transform: none; }
+.notebook-print-running-matter > .is-left { text-align: left; }
+.notebook-print-running-matter > .is-center { text-align: center; }
+.notebook-print-running-matter > .is-right { text-align: right; }
 
 .notebook-print-page-body {
   position: absolute;

@@ -1,10 +1,12 @@
 import type {
   NotebookHeaderFooterSettings,
   NotebookImagePlacement,
+  NotebookLegacyHeaderFooterSettings,
   NotebookPageMarginsPt,
   NotebookPageOrientation,
   NotebookPageSetup,
   NotebookPaperSize,
+  NotebookRunningMatterRegions,
 } from './types';
 
 export const NOTEBOOK_MIN_WRAPPED_TEXT_COLUMN_PT = 180;
@@ -36,7 +38,7 @@ export const DEFAULT_NOTEBOOK_PAGE_SETUP: NotebookPageSetup = {
   marginsPt: { ...NOTEBOOK_MARGIN_PRESETS_PT.normal },
 };
 
-export const DEFAULT_NOTEBOOK_HEADER_FOOTER: NotebookHeaderFooterSettings = {
+export const DEFAULT_NOTEBOOK_HEADER_FOOTER_V10: NotebookLegacyHeaderFooterSettings = {
   headerText: '',
   footerText: '',
   differentFirstPage: false,
@@ -45,6 +47,23 @@ export const DEFAULT_NOTEBOOK_HEADER_FOOTER: NotebookHeaderFooterSettings = {
     position: 'center',
     startAt: 1,
   },
+};
+
+export function createEmptyNotebookRunningMatterRegions(): NotebookRunningMatterRegions {
+  return {
+    left: [{ type: 'paragraph' as const }],
+    center: [{ type: 'paragraph' as const }],
+    right: [{ type: 'paragraph' as const }],
+  };
+}
+
+export const DEFAULT_NOTEBOOK_HEADER_FOOTER: NotebookHeaderFooterSettings = {
+  defaultHeader: createEmptyNotebookRunningMatterRegions(),
+  defaultFooter: createEmptyNotebookRunningMatterRegions(),
+  firstPageHeader: createEmptyNotebookRunningMatterRegions(),
+  firstPageFooter: createEmptyNotebookRunningMatterRegions(),
+  differentFirstPage: false,
+  pageNumberStart: 1,
 };
 
 export function notebookPageDimensionsPt(

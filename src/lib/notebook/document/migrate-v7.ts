@@ -1,5 +1,5 @@
 import {
-  DEFAULT_NOTEBOOK_HEADER_FOOTER,
+  DEFAULT_NOTEBOOK_HEADER_FOOTER_V10,
   DEFAULT_NOTEBOOK_PAGE_SETUP,
 } from './page-layout';
 import { migrateNotebookDocumentV8 } from './migrate-v8';
@@ -21,8 +21,8 @@ export function migrateNotebookDocumentV7(
       marginsPt: { ...DEFAULT_NOTEBOOK_PAGE_SETUP.marginsPt },
     },
     headerFooter: {
-      ...DEFAULT_NOTEBOOK_HEADER_FOOTER,
-      pageNumbering: { ...DEFAULT_NOTEBOOK_HEADER_FOOTER.pageNumbering },
+      ...DEFAULT_NOTEBOOK_HEADER_FOOTER_V10,
+      pageNumbering: { ...DEFAULT_NOTEBOOK_HEADER_FOOTER_V10.pageNumbering },
     },
   };
   return migrateNotebookDocumentV8(version8);

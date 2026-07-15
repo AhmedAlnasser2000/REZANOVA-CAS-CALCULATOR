@@ -48,9 +48,14 @@ describe('Notebook rich document V9 migration', () => {
     };
 
     expect(isNotebookRichDocumentV9(version9)).toBe(true);
-    expect(migrateNotebookDocumentV9(version9)).toEqual({ ...version9, version: 10 });
-    expect(migrateNotebookRichDocument(version9)).toEqual({ ...version9, version: 10 });
-    expect(isNotebookRichDocument(migrateNotebookDocumentV9(version9))).toBe(true);
+    const migrated = migrateNotebookDocumentV9(version9);
+    expect(migrated).toMatchObject({
+      ...version9,
+      version: 11,
+      headerFooter: { differentFirstPage: false, pageNumberStart: 1 },
+    });
+    expect(migrateNotebookRichDocument(version9)).toEqual(migrated);
+    expect(isNotebookRichDocument(migrated)).toBe(true);
   });
 
   it('strictly rejects V10-only indentation and direct-media fields in V9', () => {

@@ -21,10 +21,10 @@ function fixture() {
   const document: NotebookRichDocument = {
     ...base,
     headerFooter: {
-      headerText: 'Calculus notes',
-      footerText: 'Rezanova',
-      differentFirstPage: false,
-      pageNumbering: { enabled: true, position: 'right', startAt: 3 },
+      ...structuredClone(base.headerFooter),
+      defaultHeader: { ...base.headerFooter.defaultHeader, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Calculus notes' }] }] },
+      defaultFooter: { ...base.headerFooter.defaultFooter, left: [{ type: 'paragraph', content: [{ type: 'text', text: 'Rezanova' }] }], right: [{ type: 'paragraph', content: [{ type: 'pageNumber' }] }] },
+      pageNumberStart: 3,
     },
     content: [
       { type: 'paragraph', id: 'intro', content: [{ type: 'text', text: 'A printable introduction.' }] },

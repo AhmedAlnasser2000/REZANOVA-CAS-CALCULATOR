@@ -19,7 +19,7 @@ import {
   Undo2,
   Video,
 } from 'lucide-react';
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 
 import {
   NOTEBOOK_SEMANTIC_DEFINITIONS,
@@ -51,6 +51,8 @@ import {
 } from './NotebookLayoutControls';
 import { NotebookPictureFormatControls } from './NotebookPictureFormatControls';
 import { NotebookVideoFormatControls } from './NotebookVideoFormatControls';
+import { insertNotebookRunningPageNumber } from './notebook-running-matter';
+import type { NotebookRunningMatterTarget } from './NotebookPageSheets';
 
 type NotebookParagraphStyle = 'normal' | 'heading-1' | 'heading-2' | 'heading-3' | 'mixed';
 
@@ -150,6 +152,36 @@ function RibbonGroup({
   );
 }
 
+function PageNumberStartField({ value, onChange }: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(value));
+  const commit = () => {
+    const next = Math.max(1, Math.min(9999, Number(draft) || 1));
+    setDraft(String(next));
+    onChange(next);
+  };
+  const changeDraft = (next: string) => {
+    setDraft(next);
+    const parsed = Number(next);
+    if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 9999) onChange(parsed);
+  };
+  return <label className="notebook-layout-field">
+    <span>Start at</span>
+    <input
+      aria-label="Starting page number"
+      type="number"
+      min="1"
+      max="9999"
+      value={draft}
+      onBlur={commit}
+      onChange={(event) => changeDraft(event.target.value)}
+      onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
+    />
+  </label>;
+}
+
 export function NotebookRichToolbar({
   activeTab,
   editor,
@@ -175,12 +207,17 @@ export function NotebookRichToolbar({
   onInsertPageBreak,
   onViewModeChange,
   onRequestPalette,
+  runningMatterEditor = null,
+  runningMatterTarget = null,
+  onBeginHeaderFooter,
+  onCloseHeaderFooter,
+  onNavigateRunningMatter,
 }: {
   activeTab: NotebookRibbonTab;
   editor: Editor;
   fileControl: ReactNode;
   hasProseSelection: boolean;
-  contextualTab?: Extract<NotebookRibbonTab, 'picture-format' | 'video-format'> | null;
+  contextualTab?: Extract<NotebookRibbonTab, 'picture-format' | 'video-format' | 'header-footer'> | null;
   onSelectTab: (tab: NotebookRibbonTab) => void;
   onInsertDisplayMath: () => void;
   onInsertInlineMath: () => void;
@@ -200,11 +237,17 @@ export function NotebookRichToolbar({
   onInsertPageBreak: () => void;
   onViewModeChange: (mode: NotebookViewMode) => void;
   onRequestPalette: (mode: NotebookPaletteMode) => void;
+  runningMatterEditor?: Editor | null;
+  runningMatterTarget?: NotebookRunningMatterTarget | null;
+  onBeginHeaderFooter: () => void;
+  onCloseHeaderFooter: () => void;
+  onNavigateRunningMatter: (next: Partial<Pick<NotebookRunningMatterTarget, 'kind' | 'region'>>) => void;
 }) {
   const semanticMenu = useNotebookTransientLayer({ id: 'notebook-academic-container-menu' });
   const paragraphStyleMenu = useNotebookTransientLayer({ id: 'notebook-paragraph-style-menu' });
   const paragraphStyleSelectionRef = useRef<NotebookToolbarSelection | null>(null);
-  const paragraphStyle = activeParagraphStyle(editor);
+  const formattingEditor = runningMatterEditor ?? editor;
+  const paragraphStyle = activeParagraphStyle(formattingEditor);
 
   function applyParagraphStyle(style: Exclude<NotebookParagraphStyle, 'mixed'>) {
     const chain = restoreNotebookToolbarSelection(editor, paragraphStyleSelectionRef.current);
@@ -234,7 +277,8 @@ export function NotebookRichToolbar({
     ? 'Picture Format'
     : activeTab === 'video-format'
       ? 'Video Format'
-      : activeTab === 'insert' ? 'Insert' : activeTab === 'layout' ? 'Layout' : 'Home';
+      : activeTab === 'header-footer' ? 'Header & Footer'
+        : activeTab === 'insert' ? 'Insert' : activeTab === 'layout' ? 'Layout' : 'Home';
 
   return (
     <div className="notebook-rich-ribbon">
@@ -292,6 +336,18 @@ export function NotebookRichToolbar({
               onClick={() => selectRibbonTab('video-format')}
             >Video Format</button>
           ) : null}
+          {contextualTab === 'header-footer' ? (
+            <button
+              id="notebook-ribbon-tab-header-footer"
+              type="button"
+              role="tab"
+              className="is-contextual"
+              aria-controls="notebook-ribbon-panel"
+              aria-selected={activeTab === 'header-footer'}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectRibbonTab('header-footer')}
+            >Header & Footer</button>
+          ) : null}
         </div>
       </div>
       <div
@@ -305,47 +361,51 @@ export function NotebookRichToolbar({
         {activeTab === 'home' ? <>
           <RibbonGroup label="Font">
         <ToolButton
-          active={editor.isActive('bold')}
+          active={formattingEditor.isActive('bold')}
           label="Bold"
-          onClick={() => editor.chain().focus().toggleBold().run()}
+          onClick={() => formattingEditor.chain().focus().toggleBold().run()}
         ><Bold size={16} /></ToolButton>
         <ToolButton
-          active={editor.isActive('italic')}
+          active={formattingEditor.isActive('italic')}
           label="Italic"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
+          onClick={() => formattingEditor.chain().focus().toggleItalic().run()}
         ><Italic size={16} /></ToolButton>
         <ToolButton
-          active={editor.isActive('strike')}
+          active={formattingEditor.isActive('strike')}
           label="Strikethrough"
-          onClick={() => editor.chain().focus().toggleStrike().run()}
+          onClick={() => formattingEditor.chain().focus().toggleStrike().run()}
         ><Strikethrough size={16} /></ToolButton>
         <ToolButton
-          active={editor.isActive('underline')}
+          active={formattingEditor.isActive('underline')}
           label="Underline"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          onClick={() => formattingEditor.chain().focus().toggleUnderline().run()}
         ><Underline size={16} /></ToolButton>
         <ToolButton
           disabled={!hasProseSelection}
-          active={editor.isActive('highlight')}
+          active={formattingEditor.isActive('highlight')}
           label="Highlight"
-          onClick={() => onRequestPalette('highlight')}
+          onClick={() => runningMatterEditor
+            ? runningMatterEditor.chain().focus().toggleHighlight({ color: '#40573a' }).run()
+            : onRequestPalette('highlight')}
         ><Highlighter size={16} /></ToolButton>
         <ToolButton
           disabled={!hasProseSelection}
           label="Text color"
-          onClick={() => onRequestPalette('text-color')}
+          onClick={() => runningMatterEditor
+            ? runningMatterEditor.chain().focus().setColor('#c5dda9').run()
+            : onRequestPalette('text-color')}
         ><Palette size={16} /></ToolButton>
         <NotebookFontSizeControl
           label="Selected text font size"
-          value={activeFontSize(editor)}
-          onApply={(fontSize) => editor.chain().focus().setMark('textStyle', { fontSize }).run()}
-          onReset={() => editor.chain().focus().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()}
+          value={activeFontSize(formattingEditor)}
+          onApply={(fontSize) => formattingEditor.chain().focus().setMark('textStyle', { fontSize }).run()}
+          onReset={() => formattingEditor.chain().focus().setMark('textStyle', { fontSize: null }).removeEmptyTextStyle().run()}
         />
           </RibbonGroup>
-          <RibbonGroup label="Paragraph">
+          {!runningMatterEditor ? <RibbonGroup label="Paragraph">
             <NotebookParagraphControls editor={editor} />
-          </RibbonGroup>
-          <RibbonGroup label="Styles">
+          </RibbonGroup> : null}
+          {!runningMatterEditor ? <RibbonGroup label="Styles">
             <div className="notebook-paragraph-style">
           <button
             data-notebook-transient-trigger={paragraphStyleMenu.id}
@@ -393,12 +453,12 @@ export function NotebookRichToolbar({
             </NotebookFloatingLayer>
           ) : null}
             </div>
-          </RibbonGroup>
+          </RibbonGroup> : null}
           <RibbonGroup label="Edit" className="is-history">
-            <ToolButton label="Undo" onClick={() => editor.chain().focus().undo().run()}>
+            <ToolButton label="Undo" onClick={() => formattingEditor.chain().focus().undo().run()}>
               <Undo2 size={16} />
             </ToolButton>
-            <ToolButton label="Redo" onClick={() => editor.chain().focus().redo().run()}>
+            <ToolButton label="Redo" onClick={() => formattingEditor.chain().focus().redo().run()}>
               <Redo2 size={16} />
             </ToolButton>
           </RibbonGroup>
@@ -477,10 +537,9 @@ export function NotebookRichToolbar({
             <RibbonGroup label="Page setup" className="is-page-setup">
               <NotebookLayoutControls
                 editor={editor}
-                headerFooter={headerFooter}
                 pageSetup={pageSetup}
                 viewMode={viewMode}
-                onChangeHeaderFooter={onChangeHeaderFooter}
+                onEditHeaderFooter={onBeginHeaderFooter}
                 onChangePageSetup={onChangePageSetup}
                 onInsertPageBreak={onInsertPageBreak}
                 onViewModeChange={onViewModeChange}
@@ -517,6 +576,29 @@ export function NotebookRichToolbar({
             onRemovePoster={onRemoveVideoPoster}
             onRemoveTrack={onRemoveVideoTrack}
           />
+        ) : null}
+        {activeTab === 'header-footer' && runningMatterEditor && runningMatterTarget ? (
+          <>
+            <RibbonGroup label="Navigate">
+              <ToolButton active={runningMatterTarget.kind === 'header'} label="Edit header" onClick={() => onNavigateRunningMatter({ kind: 'header' })}><span>Header</span></ToolButton>
+              <ToolButton active={runningMatterTarget.kind === 'footer'} label="Edit footer" onClick={() => onNavigateRunningMatter({ kind: 'footer' })}><span>Footer</span></ToolButton>
+              {(['left', 'center', 'right'] as const).map((region) => (
+                <ToolButton key={region} active={runningMatterTarget.region === region} label={`${region} region`} onClick={() => onNavigateRunningMatter({ region })}><span>{region[0]!.toUpperCase()}</span></ToolButton>
+              ))}
+            </RibbonGroup>
+            <RibbonGroup label="Options">
+              <label className="notebook-layout-check"><input type="checkbox" checked={headerFooter.differentFirstPage} onChange={(event) => onChangeHeaderFooter({ ...headerFooter, differentFirstPage: event.target.checked })} /><span>Different first page</span></label>
+              <ToolButton label="Insert page number at caret" onClick={() => insertNotebookRunningPageNumber(runningMatterEditor)}><span>Page number</span></ToolButton>
+              <PageNumberStartField
+                key={headerFooter.pageNumberStart}
+                value={headerFooter.pageNumberStart}
+                onChange={(pageNumberStart) => onChangeHeaderFooter({ ...headerFooter, pageNumberStart })}
+              />
+            </RibbonGroup>
+            <RibbonGroup label="Close">
+              <ToolButton label="Close Header and Footer" onClick={onCloseHeaderFooter}><span>Close</span></ToolButton>
+            </RibbonGroup>
+          </>
         ) : null}
       </div>
     </div>
