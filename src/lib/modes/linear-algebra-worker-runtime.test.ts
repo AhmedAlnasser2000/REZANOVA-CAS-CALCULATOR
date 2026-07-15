@@ -94,6 +94,14 @@ const matrixRequest: RunMatrixModeRequest = {
   activeMatrixRightId: 'matrix-b',
 };
 
+const definitenessMatrixRequest: RunMatrixModeRequest = {
+  operation: 'definiteA',
+  matrixA: [[2, -1], [-1, 2]],
+  matrixB: [[1, 0], [0, 1]],
+  editorExpressionLatex: '\\operatorname{definite}\\left(A\\right)',
+  matrixOperandLatexA: 'A',
+};
+
 const vectorRequest: RunVectorModeRequest = {
   operation: 'angle',
   vectorA: [1, 0],
@@ -245,6 +253,33 @@ describe('Matrix and Vector worker runtime shells', () => {
     expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
       kind: 'worker',
       hostId: 'vector-worker-runtime',
+      terminalStatus: 'completed',
+    });
+  });
+
+  it('carries definiteness through the unchanged Matrix worker and OOE shell', async () => {
+    expect(buildMatrixOoeSnapshot(definitenessMatrixRequest).request).toMatchObject({
+      operation: 'definiteA',
+      matrixA: definitenessMatrixRequest.matrixA,
+    });
+    const result = await runMatrixModeWithOoePilot(definitenessMatrixRequest, {
+      commitPolicy: 'alwaysCommit',
+      createWorker: () => new FakeWorkspaceWorker('complete', runCanonicalMatrixMode),
+    });
+    expect(result.payload).toEqual(runCanonicalMatrixMode(definitenessMatrixRequest));
+    expect(result.payload).toMatchObject({
+      kind: 'success',
+      canonicalResult: {
+        version: 2,
+        primary: {
+          kind: 'math',
+          value: { canonicalLatex: '\\operatorname{definite}(A)=\\text{Positive definite}' },
+        },
+      },
+    });
+    expect(result.ooe.linearAlgebraHostExecution).toMatchObject({
+      kind: 'worker',
+      hostId: 'matrix-worker-runtime',
       terminalStatus: 'completed',
     });
   });

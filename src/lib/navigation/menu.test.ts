@@ -118,6 +118,8 @@ describe('workspace keypad overlays', () => {
       .toBe('\\operatorname{invertible}\\left(#0\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-invertible')?.layers?.shift)
       .toMatchObject({ label: 'profile', latex: '\\operatorname{profile}\\left(#0\\right)' });
+    expect(matrixRows.flat().find((button) => button.id === 'linear-invertible')?.layers?.ctrl)
+      .toMatchObject({ label: 'definite', latex: '\\operatorname{definite}\\left(#0\\right)' });
     expect(matrixRows.flat().find((button) => button.id === 'linear-inverse')?.layers?.shift?.latex)
       .toBe('\\operatorname{mpow}\\left(#0,#?\\right)');
     expect(matrixRows.flat().find((button) => button.id === 'linear-qr')?.latex)

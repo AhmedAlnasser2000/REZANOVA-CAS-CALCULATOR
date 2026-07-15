@@ -49,6 +49,7 @@ describe('parseLinearAlgebraEditorLatex', () => {
     expect(parsed('\\operatorname{col}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'columnSpace' });
     expect(parsed('\\operatorname{basis}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'basis' });
     expect(parsed('\\operatorname{profile}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'profile' });
+    expect(parsed('\\operatorname{definite}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'definiteness' });
     expect(parsed('\\operatorname{lu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
     expect(parsed('\\operatorname{LU}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'lu' });
     expect(parsed('\\operatorname{plu}\\left(A\\right)', 'matrix')).toMatchObject({ kind: 'unary', operator: 'plu' });

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "acceptedReason": "VECTOR-GEOMETRIC-MEASURES1 registers current V2 and V3 canonical attach helpers as native document wrappers and preserves Statistics V2 authority after consolidation.",
+  "acceptedReason": "MATRIX-SYMMETRIC-POSITIVE-DEFINITE1 adds the strict V2 Matrix definiteness owner path and canonical evidence forwarders.",
   "registryDigest": "eba50f74665771ea4d5f",
   "laneFloors": {
     "anti-regression-evidence": {
@@ -687,9 +687,9 @@
         "7b39416da465e1dfce70:1",
         "192018f9d1755654a67d:1",
         "03a343c9a2bf325c5ad0:1",
-        "689299ee58bf99d930b2:1",
-        "59720f6aa3c8b9213c2f:1",
-        "518544bfcf68ac56ce7e:1",
+        "102106c2c4b1990af637:1",
+        "102106c2c4b1990af637:2",
+        "102106c2c4b1990af637:3",
         "d263fd990ee8e29ed468:1",
         "65262d7ef9fa07e8dc72:1",
         "1ae33380a7063d0377fe:1"

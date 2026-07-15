@@ -136,7 +136,7 @@ describe('MATH-GOLDEN0 shipped behavior corpus', () => {
 
     expect(new Set(ids).size).toBe(ids.length);
     expect(goldenCases.length).toBeGreaterThanOrEqual(43);
-    expect(goldenCases).toHaveLength(44);
+    expect(goldenCases).toHaveLength(45);
 
     for (const workspace of launcherWorkspaces) {
       expect(

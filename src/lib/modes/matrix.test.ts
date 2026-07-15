@@ -336,6 +336,23 @@ describe('runMatrixMode', () => {
     }
   });
 
+  it('labels and proves definiteness runs directly', () => {
+    const result = runMatrixMode({
+      operation: 'definiteA',
+      matrixA: [[2, -1], [-1, 2]],
+      matrixB: [[5, 6], [7, 8]],
+    });
+
+    expect(result.title).toBe('definite(A)');
+    expect(result.kind).toBe('success');
+    if (result.kind === 'success') {
+      expect(result.canonicalResult?.version).toBe(2);
+      expect(result.exactLatex).toBe('\\operatorname{definite}(A)=\\text{Positive definite}');
+      expect(result.detailSections?.[0]?.title).toBe('Exact Principal-Minor Evidence');
+      expect(detailMathValues(result)).toHaveLength(3);
+    }
+  });
+
   it('adds an explicit Equation action for deferred eigen polynomial roots', () => {
     const result = runMatrixMode({
       operation: 'eigenA',

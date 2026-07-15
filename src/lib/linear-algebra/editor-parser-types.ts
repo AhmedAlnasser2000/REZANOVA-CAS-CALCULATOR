@@ -27,6 +27,7 @@ export type LinearAlgebraUnaryOperator =
   | 'qr'
   | 'invertibility'
   | 'profile'
+  | 'definiteness'
   | 'eigen'
   | 'diagonalization'
   | 'transpose'

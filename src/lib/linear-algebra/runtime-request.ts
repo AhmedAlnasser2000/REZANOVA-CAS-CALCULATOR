@@ -113,6 +113,10 @@ export function matrixActionLabel(operation: MatrixOperation, leftName: string, 
       return `${leftName}⁻¹`;
     case 'inverseB':
       return `${rightName}⁻¹`;
+    case 'definiteA':
+      return `definite(${leftName})`;
+    case 'definiteB':
+      return `definite(${rightName})`;
     default:
       return matrixOperationLabel(operation);
   }

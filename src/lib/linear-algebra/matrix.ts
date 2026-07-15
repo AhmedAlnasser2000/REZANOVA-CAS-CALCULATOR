@@ -34,6 +34,7 @@ import { runMatrixDiagonalization, runMatrixSpectralPower } from './matrix-diago
 import { runMatrixEigen } from './matrix-eigen';
 import { runMatrixInvertibility } from './matrix-invertibility';
 import { runMatrixLinearMapProfile } from './matrix-linear-map-profile';
+import { runMatrixDefiniteness } from './matrix-definiteness';
 import { runMatrixLu, runMatrixLuSolve, runMatrixPlu, runMatrixPluSolve } from './matrix-lu';
 import { runMatrixMultiRhsSolve } from './matrix-multi-rhs';
 import { runMatrixColumnProjection, runMatrixLeastSquares, runMatrixQr } from './matrix-qr';
@@ -288,6 +289,26 @@ function exactProfileResponse(req: MatrixRequest): MatrixResponse | null {
   if (req.operation === 'profileB') {
     return req.matrixB
       ? runMatrixLinearMapProfile({
+          label: matrixLabelB(req),
+          matrix: req.matrixB,
+          exactMatrix: req.exactMatrixB,
+        })
+      : { warnings: [], error: 'Matrix B is incomplete.' };
+  }
+  return null;
+}
+
+function definitenessResponse(req: MatrixRequest): MatrixResponse | null {
+  if (req.operation === 'definiteA') {
+    return runMatrixDefiniteness({
+      label: matrixLabelA(req),
+      matrix: req.matrixA,
+      exactMatrix: req.exactMatrixA,
+    });
+  }
+  if (req.operation === 'definiteB') {
+    return req.matrixB
+      ? runMatrixDefiniteness({
           label: matrixLabelB(req),
           matrix: req.matrixB,
           exactMatrix: req.exactMatrixB,
@@ -739,6 +760,11 @@ function runMatrixOperationInternal(req: MatrixRequest): MatrixResponse {
   const profileResponse = exactProfileResponse(req);
   if (profileResponse) {
     return profileResponse;
+  }
+
+  const definiteResponse = definitenessResponse(req);
+  if (definiteResponse) {
+    return definiteResponse;
   }
 
   const basisResponse = exactBasisResponse(req);

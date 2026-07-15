@@ -57,6 +57,7 @@ describe('KEYBOARD_PAGE_SPECS', () => {
     const calculusPage = KEYBOARD_PAGE_SPECS.find((page) => page.id === 'calculus');
 
     expect(matrixVecPage?.rows.flat().some((key) => key.id === 'lin-matrix-template')).toBe(true);
+    expect(matrixVecPage?.rows.flat().some((key) => key.id === 'lin-definite')).toBe(true);
     expect(calculusPage?.rows.flat().some((key) => key.id === 'lin-matrix-template')).toBe(false);
   });
 });

@@ -142,6 +142,10 @@ export function matrixOperationLabel(operation: MatrixOperation, form?: MatrixSy
       return 'profile(A)';
     case 'profileB':
       return 'profile(B)';
+    case 'definiteA':
+      return 'definite(A)';
+    case 'definiteB':
+      return 'definite(B)';
     case 'eigenA':
       return 'eigen(A)';
     case 'eigenB':

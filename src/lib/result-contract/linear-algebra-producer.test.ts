@@ -126,6 +126,23 @@ describe('Linear Algebra canonical result producers', () => {
     ))).toBe(true);
   });
 
+  it('attaches producer-proven V2 MathJSON to exact definiteness evidence', () => {
+    const outcome = runMatrixMode({
+      operation: 'definiteA',
+      matrixA: [[2, -1], [-1, 2]],
+      matrixB: [[1, 0], [0, 1]],
+    });
+    expect(outcome.kind).toBe('success');
+    if (outcome.kind !== 'success' || !outcome.canonicalResult) {
+      throw new Error('Expected definiteness canonical result.');
+    }
+    expect(outcome.canonicalResult.version).toBe(2);
+    expect(collectCanonicalMathLeaves(outcome.canonicalResult)).toHaveLength(4);
+    expect(collectCanonicalMathLeaves(outcome.canonicalResult).every((entry) => (
+      entry.value.mathJson !== undefined
+    ))).toBe(true);
+  });
+
   it('proves every Gram-Schmidt replay leaf from exact Vector evidence', () => {
     const outcome = runVectorMode({
       operation: 'gramSchmidtUV',

@@ -40,6 +40,9 @@ describe('Linear algebra editor source', () => {
     expect(within(matrixAGrid).getAllByRole('textbox')).toHaveLength(9);
     setMathFieldLatex('main-editor', 'A+B');
     await waitFor(() => expect(screen.getByTestId('main-editor')).toHaveAttribute('data-value', 'A+B'));
+    await user.click(screen.getByTestId('keypad-layer-ctrl'));
+    expect(screen.getByTestId('keypad-linear-invertible')).toHaveTextContent('definite');
+    await user.click(screen.getByTestId('keypad-layer-base'));
 
     await openLauncherApp(user, 'Linear', 'Vector');
     await screen.findByText('Vector Workspace');

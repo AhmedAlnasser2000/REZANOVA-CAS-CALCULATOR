@@ -26,6 +26,7 @@ describe('guide search', () => {
     expect(searchGuide('dot', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
     expect(searchGuide('Gram-Schmidt', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
     expect(searchGuide('parallelogramArea', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
+    expect(searchGuide('definite(A)', ACTIVE_CAPABILITIES).some((result) => result.id === 'linear-algebra-matrix-vector')).toBe(true)
   })
 
   it('finds active Trigonometry and Statistics articles that were added after the initial Guide page', () => {

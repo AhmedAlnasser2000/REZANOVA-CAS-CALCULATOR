@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "STATISTICS-PROBABILITY1 records event notation, probability or density, expected value, and standard deviation as producer-owned MathJSON.",
+  "reason": "MATRIX-SYMMETRIC-POSITIVE-DEFINITE1 adds one strict V2 route with exact principal-minor and tolerance-labelled spectral evidence.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -31,6 +31,7 @@
     "geometry.line-equation",
     "geometry.shape-2d",
     "geometry.triangle",
+    "matrix.definiteness",
     "matrix.determinant",
     "matrix.inverse",
     "matrix.linear-system",
@@ -63,13 +64,13 @@
   ],
   "exemptionIds": [],
   "totals": {
-    "evidence": 144,
+    "evidence": 145,
     "replayFixtures": 100,
-    "goldenCases": 44,
-    "bytes": 114813,
+    "goldenCases": 45,
+    "bytes": 116263,
     "maxBytes": 2753,
-    "leaves": 455,
-    "proven": 455,
+    "leaves": 459,
+    "proven": 459,
     "exempt": 0,
     "missing": 0
   },
@@ -390,6 +391,17 @@
       "maxBytes": 384,
       "leaves": 1,
       "proven": 1,
+      "exempt": 0,
+      "missing": 0
+    },
+    "matrix.definiteness": {
+      "evidence": 1,
+      "replayFixtures": 0,
+      "goldenCases": 1,
+      "bytes": 1450,
+      "maxBytes": 1450,
+      "leaves": 4,
+      "proven": 4,
       "exempt": 0,
       "missing": 0
     },

@@ -11,7 +11,7 @@ const MATRIX_OPERATIONS = [
   'luSolveA', 'luSolveB', 'pluSolveA', 'pluSolveB', 'multiRhsSolve', 'qrA',
   'qrB', 'columnProjectionA', 'columnProjectionB', 'leastSquaresA',
   'leastSquaresB', 'invertibilityA', 'invertibilityB', 'profileA', 'profileB',
-  'eigenA', 'eigenB', 'diagonalizeA', 'diagonalizeB', 'spectralPowerA',
+  'definiteA', 'definiteB', 'eigenA', 'eigenB', 'diagonalizeA', 'diagonalizeB', 'spectralPowerA',
   'spectralPowerB', 'linearSystem',
 ] as const satisfies readonly MatrixOperation[];
 
@@ -55,8 +55,8 @@ function vectorRequest(operation: VectorOperation): RunVectorModeRequest {
 }
 
 describe('Linear Algebra canonical authority', () => {
-  it('keeps the immutable 48 Matrix selectors on canonical result V2', () => {
-    expect(MATRIX_OPERATIONS).toHaveLength(48);
+  it('keeps all 50 Matrix selectors on canonical result V2', () => {
+    expect(MATRIX_OPERATIONS).toHaveLength(50);
     for (const operation of MATRIX_OPERATIONS) {
       const outcome = runMatrixMode(matrixRequest(operation));
       expect(outcome.kind, operation).not.toBe('prompt');

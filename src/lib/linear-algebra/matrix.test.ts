@@ -768,6 +768,23 @@ describe('runMatrixOperation', () => {
     });
   });
 
+  it('routes exact and decimal definiteness through the Matrix producer', () => {
+    const exact = runMatrixOperation({
+      operation: 'definiteA',
+      matrixA: [[2, -1], [-1, 2]],
+      matrixB,
+    });
+    const decimal = runMatrixOperation({
+      operation: 'definiteB',
+      matrixA,
+      matrixB: [[1.5, 0], [0, -0.5]],
+    });
+
+    expect(exact.resultLatex).toContain('\\text{Positive definite}');
+    expect(decimal.resultLatex).toContain('\\text{Indefinite}');
+    expect(decimal.detailSections?.[0]?.title).toBe('Tolerance-Labeled Spectral Evidence');
+  });
+
   it('stops on incomplete, mismatched, singular, and non-square requests', () => {
     expect(runMatrixOperation({ operation: 'add', matrixA: [], matrixB }).error).toBe(
       'Matrix A is incomplete.',

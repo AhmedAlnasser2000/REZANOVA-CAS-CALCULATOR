@@ -344,6 +344,8 @@ const matrixOperationSchema = z.enum([
   'invertibilityB',
   'profileA',
   'profileB',
+  'definiteA',
+  'definiteB',
   'eigenA',
   'eigenB',
   'diagonalizeA',

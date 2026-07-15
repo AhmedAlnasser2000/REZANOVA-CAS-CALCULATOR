@@ -887,6 +887,7 @@ export const KEYBOARD_PAGE_SPECS: KeyboardPageSpec[] = [
             modeVisibility: ['matrix'],
           },
         ),
+        insertTemplateKey('lin-definite', 'definite', '\\operatorname{definite}\\left(#0\\right)', LINEAR, 'matrixVec', 'insert', { duplicateGroup: 'linear-definite', lessonRef: 'milestone-04-linear-algebra-core', modeVisibility: ['matrix'] }),
         insertTemplateKey(
           'lin-dot',
           'dot',

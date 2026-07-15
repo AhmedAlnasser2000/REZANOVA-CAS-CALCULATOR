@@ -679,6 +679,22 @@ export const goldenCases: GoldenCase[] = [
     },
   },
   {
+    id: 'matrix-definiteness-positive',
+    lane: 'matrix-definiteness',
+    mode: 'matrix',
+    request: {
+      operation: 'definiteA',
+      matrixA: [[2, -1], [-1, 2]],
+      matrixB: [[1, 0], [0, 1]],
+    },
+    expected: {
+      kind: 'success',
+      exactEquals: '\\operatorname{definite}(A)=\\text{Positive definite}',
+      detailTitlesInclude: ['Exact Principal-Minor Evidence', 'Classification Criterion'],
+      detailLinesInclude: ['All 3 nonempty principal minors were evaluated exactly.'],
+    },
+  },
+  {
     id: 'vector-dependent-independence-relation',
     lane: 'vector-foundations',
     mode: 'vector',

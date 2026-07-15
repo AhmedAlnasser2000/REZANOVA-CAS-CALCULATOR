@@ -381,6 +381,19 @@ describe('history entry schema', () => {
     });
 
     expect(parseHistoryEntry({
+      id: 'matrix-seed-definite',
+      mode: 'matrix',
+      inputLatex: '\\operatorname{definite}\\left(A\\right)',
+      resultLatex: '\\operatorname{definite}(A)=\\text{Positive definite}',
+      matrixSeed: {
+        operation: 'definiteA',
+        matrixA: [[2, -1], [-1, 2]],
+        matrixB: [[1, 0], [0, 1]],
+      },
+      timestamp: '2026-07-15T00:00:00.000Z',
+    }).matrixSeed?.operation).toBe('definiteA');
+
+    expect(parseHistoryEntry({
       id: 'matrix-seed-rref',
       mode: 'matrix',
       inputLatex: '\\operatorname{rref}\\left(A\\right)',

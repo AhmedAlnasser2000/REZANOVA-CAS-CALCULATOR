@@ -119,6 +119,8 @@ function normalizeLatex(latex: string): string {
     .replace(/\\operatorname\{span\}/g, 'span')
     .replace(/\\operatorname\{independent\}/g, 'independent')
     .replace(/\\operatorname\{profile\}/g, 'profile')
+    .replace(/\\operatorname\{definite\}/g, 'definite')
+    .replace(/\\operatorname\{Definite\}/g, 'definite')
     .replace(/\\operatorname\{angle\}/g, 'angle')
     .replace(/\\operatorname\{(parallel|distance|parallelogramArea|triangleArea|volume)\}/g, '$1')
     .replace(/\\det/g, 'det')
@@ -562,6 +564,7 @@ function parseExpression(input: string, options: LinearAlgebraEditorParseOptions
     ['qr', 'qr'],
     ['invertible', 'invertibility'],
     ['profile', 'profile'],
+    ['definite', 'definiteness'],
     ['eigen', 'eigen'],
     ['diag', 'diagonalization'],
     ['norm', 'norm'],

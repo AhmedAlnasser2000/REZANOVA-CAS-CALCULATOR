@@ -70,6 +70,7 @@ export function matrixMathJsonRouteForOperation(
     || operation === 'rrefA' || operation === 'rrefB') return 'matrix.rank';
   if (operation === 'linearSystem') return 'matrix.linear-system';
   if (operation === 'profileA' || operation === 'profileB') return 'matrix.profile';
+  if (operation === 'definiteA' || operation === 'definiteB') return 'matrix.definiteness';
   return 'matrix.matrix-arithmetic';
 }
 
