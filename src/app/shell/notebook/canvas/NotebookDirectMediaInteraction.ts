@@ -33,6 +33,9 @@ export type NotebookMediaCrop = {
 export type NotebookMediaPreview = {
   widthPercent: number;
   displayAspectRatio: number;
+  /** Gesture-only dimensions. These are never written to the document. */
+  renderedWidthPx?: number;
+  renderedHeightPx?: number;
   rotation?: number;
   crop?: NotebookMediaCrop;
 };
@@ -101,6 +104,7 @@ type DirectMediaInteractionOptions = {
   displayAspectRatio?: number;
   editor: Editor;
   frameRef: RefObject<HTMLElement | null>;
+  lockedAspectRatio?: number;
   mediaType: NotebookMediaKind;
   minimumSizePx?: number;
   nodeId: string;
@@ -253,8 +257,69 @@ function mediaPreview(
   return {
     widthPercent,
     displayAspectRatio: clamp(ratio, 0.1, 10),
+    renderedWidthPx: layout.width,
+    renderedHeightPx: layout.height,
     ...(options.rotation === undefined ? {} : { rotation: normalizeRotation(options.rotation) }),
     ...(options.crop ? { crop: normalizeNotebookMediaCrop(options.crop) } : {}),
+  };
+}
+
+type ResizeRectangleInput = {
+  handle: NotebookMediaResizeHandle;
+  height: number;
+  lockedAspectRatio?: number;
+  maximumHeight: number;
+  maximumWidth: number;
+  minimumSize: number;
+  movementX: number;
+  movementY: number;
+  width: number;
+};
+
+/**
+ * Computes the single content rectangle used by media, its selection border,
+ * and its handles. Images lock only corners; videos supply lockedAspectRatio
+ * so every handle remains proportional.
+ */
+export function resizeNotebookMediaRectangle(input: ResizeRectangleInput) {
+  const vector = handleVector(input.handle);
+  const lockedRatio = typeof input.lockedAspectRatio === 'number'
+    ? clamp(input.lockedAspectRatio, 0.1, 10)
+    : undefined;
+  const currentRatio = clamp(input.width / Math.max(1, input.height), 0.1, 10);
+  const ratio = lockedRatio ?? currentRatio;
+  let width = input.width;
+  let height = input.height;
+
+  if (lockedRatio || isCornerHandle(input.handle)) {
+    const widthScale = input.width > 0 ? input.movementX / input.width : 0;
+    const heightScale = input.height > 0 ? input.movementY / input.height : 0;
+    let scale: number;
+    if (vector.horizontal === 0) {
+      scale = 1 + heightScale;
+    } else if (vector.vertical === 0) {
+      scale = 1 + widthScale;
+    } else {
+      scale = 1 + (Math.abs(widthScale) >= Math.abs(heightScale) ? widthScale : heightScale);
+    }
+    const minimumWidth = Math.max(input.minimumSize, input.minimumSize * ratio);
+    const maximumWidth = Math.min(input.maximumWidth, input.maximumHeight * ratio);
+    width = clamp(input.width * scale, minimumWidth, Math.max(minimumWidth, maximumWidth));
+    height = width / ratio;
+  } else if (vector.horizontal !== 0) {
+    width = input.width + input.movementX;
+  } else {
+    height = input.height + input.movementY;
+  }
+
+  if (!lockedRatio && !isCornerHandle(input.handle)) {
+    width = clamp(width, input.minimumSize, input.maximumWidth);
+    height = clamp(height, input.minimumSize, input.maximumHeight);
+  }
+
+  return {
+    width: Math.max(input.minimumSize, Math.min(input.maximumWidth, width)),
+    height: Math.max(input.minimumSize, Math.min(input.maximumHeight, height)),
   };
 }
 
@@ -331,23 +396,19 @@ function resizedPreview(
   const screenDeltaY = event.clientY - gesture.startClientY;
   const deltaX = (screenDeltaX * cosine + screenDeltaY * sine) * vector.horizontal;
   const deltaY = (-screenDeltaX * sine + screenDeltaY * cosine) * vector.vertical;
-  let width = gesture.layoutWidth;
-  let height = gesture.layoutHeight;
-
-  if (isCornerHandle(handle)) {
-    const widthScale = gesture.layoutWidth > 0 ? deltaX / gesture.layoutWidth : 0;
-    const heightScale = gesture.layoutHeight > 0 ? deltaY / gesture.layoutHeight : 0;
-    const scale = 1 + (Math.abs(widthScale) >= Math.abs(heightScale) ? widthScale : heightScale);
-    width = gesture.layoutWidth * scale;
-    height = gesture.layoutHeight * scale;
-  } else if (vector.horizontal !== 0) {
-    width = gesture.layoutWidth + deltaX;
-  } else {
-    height = gesture.layoutHeight + deltaY;
-  }
-
-  width = clamp(width, minimumSize, maximumWidth);
-  height = clamp(height, minimumSize, maximumHeight);
+  let { width, height } = resizeNotebookMediaRectangle({
+    handle,
+    width: gesture.layoutWidth,
+    height: gesture.layoutHeight,
+    movementX: deltaX,
+    movementY: deltaY,
+    minimumSize,
+    maximumWidth,
+    maximumHeight,
+    ...(typeof options.lockedAspectRatio === 'number'
+      ? { lockedAspectRatio: options.lockedAspectRatio }
+      : {}),
+  });
   ({ width, height } = fitRotatedFrame(
     width,
     height,
@@ -362,13 +423,13 @@ function resizedPreview(
     width = height * displayAspectRatio;
   }
   displayAspectRatio = clamp(width / height, 0.1, 10);
-  const widthPercent = vector.horizontal === 0
-    ? gesture.initial.widthPercent
-    : clamp(Math.round((width / contentWidth) * 100), 10, 100);
+  const widthPercent = clamp(Math.round((width / contentWidth) * 100), 10, 100);
   return {
     ...gesture.initial,
     widthPercent,
     displayAspectRatio: round(displayAspectRatio),
+    renderedWidthPx: round(width),
+    renderedHeightPx: round(height),
   };
 }
 
@@ -448,6 +509,18 @@ function attributesForGesture(gesture: Gesture, preview: NotebookMediaPreview) {
   return attributes;
 }
 
+function interactionFrame(gesture: Gesture, preview: NotebookMediaPreview | null) {
+  if (!preview?.renderedWidthPx || !preview.renderedHeightPx || gesture.mode !== 'resize') {
+    return frameSnapshot(gesture.frame);
+  }
+  return {
+    left: gesture.frame.left,
+    top: gesture.frame.top,
+    width: preview.renderedWidthPx,
+    height: preview.renderedHeightPx,
+  };
+}
+
 export function useNotebookDirectMediaInteraction(options: DirectMediaInteractionOptions) {
   const gestureRef = useRef<Gesture | null>(null);
   const previewRef = useRef<NotebookMediaPreview | null>(null);
@@ -466,7 +539,7 @@ export function useNotebookDirectMediaInteraction(options: DirectMediaInteractio
       interaction: gesture.mode,
       phase,
       pointer: pointerSnapshot(event),
-      frame: frameSnapshot(gesture.frame),
+      frame: interactionFrame(gesture, nextPreview),
       preview: nextPreview,
     });
   }, [options]);

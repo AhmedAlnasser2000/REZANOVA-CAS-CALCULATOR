@@ -1071,7 +1071,7 @@ describe('NotebookPage', () => {
     fireEvent.pointerDown(rotatedEastHandle, { button: 0, clientX: 500, clientY: 250, pointerId: 46 });
     fireEvent.pointerMove(figure, { clientX: 500, clientY: 350, pointerId: 46 });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
-      .getPropertyValue('--notebook-image-width')).toBe('75%'));
+      .getPropertyValue('--notebook-image-width')).toBe('600px'));
     fireEvent.keyDown(window, { key: 'Escape' });
     await waitFor(() => expect(screen.getByTestId('notebook-image-figure').style
       .getPropertyValue('--notebook-image-width')).toBe('63%'));
@@ -1337,7 +1337,7 @@ describe('NotebookPage', () => {
     await user.keyboard('{Escape}');
     await waitFor(() => expect(presentation).not.toHaveClass('is-theater'));
     await user.click(within(figure).getByRole('button', { name: 'Enter fullscreen' }));
-    await waitFor(() => expect(presentation).toHaveClass('is-theater'));
+    await waitFor(() => expect(presentation.className).toBe('notebook-video-presentation is-fullscreen'));
     expect(document.fullscreenElement).toBe(presentation);
     expect(figure.querySelector('video')).toBe(videoElement);
     await user.keyboard('{Escape}');
@@ -1398,7 +1398,7 @@ describe('NotebookPage', () => {
         widthPercent: 63,
         alignment: 'left',
         placement: 'square-left',
-        displayAspectRatio: 1.667,
+        displayAspectRatio: 1.778,
         loop: true,
         posterAssetId: expect.stringMatching(/^sha256:/),
         tracks: [expect.objectContaining({

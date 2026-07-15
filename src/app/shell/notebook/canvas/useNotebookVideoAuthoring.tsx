@@ -200,7 +200,10 @@ export function useNotebookVideoAuthoring({
           widthPercent: null,
           alignment: null,
           placement: null,
-          displayAspectRatio: null,
+          displayAspectRatio: Math.max(
+            0.1,
+            Math.min(10, Math.round((pending.inspection.width / pending.inspection.height) * 1000) / 1000),
+          ),
           loop: details.loop || null,
         },
       };

@@ -74,15 +74,26 @@ export function createNotebookVideoNodeView(
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const frameRef = useRef<HTMLDivElement | null>(null);
     const presentationRef = useRef<HTMLDivElement | null>(null);
+    const audioInitializedRef = useRef(false);
     const fullscreenModeRef = useRef<NotebookVideoFullscreenMode>(null);
     const fullscreenRequestIdRef = useRef(0);
     const fullscreenEntryRequestRef = useRef<number | null>(null);
+    const fullscreenReturnModeRef = useRef<'inline' | 'theater'>('inline');
+    const controlsHideTimerRef = useRef<number | null>(null);
+    const controlsHoveredRef = useRef(false);
+    const controlsFocusedRef = useRef(false);
     const nodeId = String(node.attrs.id ?? 'notebook.video');
     const assetId = String(node.attrs.assetId ?? '');
     const posterAssetId = typeof node.attrs.posterAssetId === 'string'
       ? node.attrs.posterAssetId
       : null;
     const serializedTracks = JSON.stringify(node.attrs.tracks ?? null);
+    const rawDisplayAspectRatio = Number(node.attrs.displayAspectRatio);
+    const displayAspectRatio = Number.isFinite(rawDisplayAspectRatio)
+      && rawDisplayAspectRatio >= 0.1
+      && rawDisplayAspectRatio <= 10
+      ? rawDisplayAspectRatio
+      : undefined;
     const tracks = useMemo(
       () => videoTracks(JSON.parse(serializedTracks) as unknown),
       [serializedTracks],
@@ -101,6 +112,11 @@ export function createNotebookVideoNodeView(
     const [theaterMode, setTheaterMode] = useState(false);
     const [fullscreenMode, setFullscreenMode] = useState<NotebookVideoFullscreenMode>(null);
     const [fullscreenPending, setFullscreenPending] = useState(false);
+    const [sourceAspectRatio, setSourceAspectRatio] = useState<number | undefined>(displayAspectRatio);
+    const [controlsVisible, setControlsVisible] = useState(true);
+    const [controlsHovered, setControlsHovered] = useState(false);
+    const [controlsFocused, setControlsFocused] = useState(false);
+    const [theaterBounds, setTheaterBounds] = useState<CSSProperties>();
     const videoNumber = useEditorState({
       editor,
       selector: ({ editor: currentEditor }) => {
@@ -124,6 +140,7 @@ export function createNotebookVideoNodeView(
       setCurrentTime(0);
       setDuration(0);
       setIsPlaying(false);
+      audioInitializedRef.current = false;
 
       async function resolveAsset(assetIdentity: string) {
         const nativeUrl = await assetPort.resolveUrl?.(assetIdentity);
@@ -194,6 +211,79 @@ export function createNotebookVideoNodeView(
       setIsPlaying(!video.paused && !video.ended);
     }, []);
 
+    const normalizeSourceProportions = useCallback(() => {
+      const video = videoRef.current;
+      if (!video?.videoWidth || !video.videoHeight) return;
+      const ratio = Math.max(
+        0.1,
+        Math.min(10, Math.round((video.videoWidth / video.videoHeight) * 1000) / 1000),
+      );
+      setSourceAspectRatio(ratio);
+      if (displayAspectRatio !== undefined && Math.abs(displayAspectRatio - ratio) < 0.001) return;
+      const position = getPos();
+      if (typeof position !== 'number') return;
+      const current = editor.state.doc.nodeAt(position);
+      if (!current || current.type.name !== 'videoFigure') return;
+      const transaction = editor.state.tr.setNodeMarkup(position, undefined, {
+        ...current.attrs,
+        displayAspectRatio: ratio,
+      });
+      transaction.setMeta('addToHistory', false);
+      editor.view.dispatch(transaction);
+    }, [displayAspectRatio, editor, getPos]);
+
+    const clearControlsTimer = useCallback(() => {
+      if (controlsHideTimerRef.current !== null) {
+        window.clearTimeout(controlsHideTimerRef.current);
+        controlsHideTimerRef.current = null;
+      }
+    }, []);
+
+    const revealControls = useCallback(() => {
+      clearControlsTimer();
+      setControlsVisible(true);
+      if (!isPlaying || controlsHoveredRef.current || controlsFocusedRef.current) return;
+      controlsHideTimerRef.current = window.setTimeout(() => {
+        controlsHideTimerRef.current = null;
+        setControlsVisible(false);
+      }, 2500);
+    }, [clearControlsTimer, isPlaying]);
+
+    useEffect(() => {
+      if (!isPlaying || controlsHovered || controlsFocused) {
+        clearControlsTimer();
+        setControlsVisible(true);
+        return undefined;
+      }
+      revealControls();
+      return clearControlsTimer;
+    }, [clearControlsTimer, controlsFocused, controlsHovered, isPlaying, revealControls]);
+
+    useEffect(() => clearControlsTimer, [clearControlsTimer]);
+
+    const measureTheaterBounds = useCallback(() => {
+      const page = presentationRef.current?.closest<HTMLElement>('.app-page--notebook');
+      if (!page) return;
+      const rect = page.getBoundingClientRect();
+      const surface = page.closest<HTMLElement>('.active-surface--page');
+      const scale = Number.parseFloat(
+        surface ? getComputedStyle(surface).getPropertyValue('--page-ui-scale') : '1',
+      ) || 1;
+      setTheaterBounds({
+        top: rect.top / scale,
+        left: rect.left / scale,
+        width: rect.width / scale,
+        height: rect.height / scale,
+      });
+    }, []);
+
+    useEffect(() => {
+      if (!theaterMode || fullscreenMode !== null) return undefined;
+      measureTheaterBounds();
+      window.addEventListener('resize', measureTheaterBounds);
+      return () => window.removeEventListener('resize', measureTheaterBounds);
+    }, [fullscreenMode, measureTheaterBounds, theaterMode]);
+
     const applyCaptionTrack = useCallback((nextIndex: number | null) => {
       const textTracks = videoRef.current?.textTracks;
       if (!textTracks) return;
@@ -225,7 +315,7 @@ export function createNotebookVideoNodeView(
       }
       fullscreenModeRef.current = null;
       setFullscreenMode(null);
-      setTheaterMode(false);
+      setTheaterMode(mode === null ? false : fullscreenReturnModeRef.current === 'theater');
     }, []);
 
     const toggleTheater = useCallback(() => {
@@ -233,9 +323,10 @@ export function createNotebookVideoNodeView(
       if (theaterMode || fullscreenModeRef.current) {
         void closePresentation();
       } else {
+        measureTheaterBounds();
         setTheaterMode(true);
       }
-    }, [closePresentation, fullscreenPending, theaterMode]);
+    }, [closePresentation, fullscreenPending, measureTheaterBounds, theaterMode]);
 
     const toggleFullscreen = useCallback(() => {
       if (fullscreenModeRef.current) {
@@ -247,7 +338,7 @@ export function createNotebookVideoNodeView(
       const requestId = fullscreenRequestIdRef.current + 1;
       fullscreenRequestIdRef.current = requestId;
       fullscreenEntryRequestRef.current = requestId;
-      setTheaterMode(true);
+      fullscreenReturnModeRef.current = theaterMode ? 'theater' : 'inline';
       setFullscreenPending(true);
       const requestIsCurrent = () => fullscreenRequestIdRef.current === requestId;
       const settleRequest = () => {
@@ -289,7 +380,7 @@ export function createNotebookVideoNodeView(
           if (!requestIsCurrent() || document.fullscreenElement !== presentation) {
             if (requestIsCurrent()) {
               fullscreenRequestIdRef.current += 1;
-              setTheaterMode(false);
+              setTheaterMode(fullscreenReturnModeRef.current === 'theater');
             }
             if (document.fullscreenElement === presentation) {
               await document.exitFullscreen?.().catch(() => {});
@@ -305,10 +396,10 @@ export function createNotebookVideoNodeView(
           }
         })
         .finally(settleRequest);
-    }, [closePresentation, fullscreenPending]);
+    }, [closePresentation, fullscreenPending, theaterMode]);
 
     useEffect(() => {
-      if (!theaterMode && !fullscreenMode) return undefined;
+      if (!theaterMode && !fullscreenMode && !fullscreenPending) return undefined;
       const onKeyDown = (event: KeyboardEvent) => {
         if (event.key !== 'Escape') return;
         event.preventDefault();
@@ -317,7 +408,7 @@ export function createNotebookVideoNodeView(
       };
       window.addEventListener('keydown', onKeyDown, true);
       return () => window.removeEventListener('keydown', onKeyDown, true);
-    }, [closePresentation, fullscreenMode, theaterMode]);
+    }, [closePresentation, fullscreenMode, fullscreenPending, theaterMode]);
 
     useEffect(() => {
       const onFullscreenChange = () => {
@@ -331,7 +422,7 @@ export function createNotebookVideoNodeView(
             setFullscreenPending(false);
           }
           setFullscreenMode(null);
-          setTheaterMode(false);
+          setTheaterMode(fullscreenReturnModeRef.current === 'theater');
         }
       };
       document.addEventListener('fullscreenchange', onFullscreenChange);
@@ -419,16 +510,11 @@ export function createNotebookVideoNodeView(
     const widthPercent = Number.isFinite(rawWidthPercent)
       ? Math.min(100, Math.max(10, Math.round(rawWidthPercent)))
       : 100;
-    const rawDisplayAspectRatio = Number(node.attrs.displayAspectRatio);
-    const displayAspectRatio = Number.isFinite(rawDisplayAspectRatio)
-      && rawDisplayAspectRatio >= 0.1
-      && rawDisplayAspectRatio <= 10
-      ? rawDisplayAspectRatio
-      : undefined;
     const interaction = useNotebookDirectMediaInteraction({
       displayAspectRatio,
       editor,
       frameRef,
+      lockedAspectRatio: sourceAspectRatio ?? displayAspectRatio,
       mediaType: 'video',
       minimumSizePx: options.minimumSizePx,
       nodeId,
@@ -439,14 +525,21 @@ export function createNotebookVideoNodeView(
       widthPercent,
     });
     const effectiveWidthPercent = interaction.preview?.widthPercent ?? widthPercent;
-    const effectiveAspectRatio = interaction.preview?.displayAspectRatio ?? displayAspectRatio;
+    const effectiveAspectRatio = interaction.preview?.displayAspectRatio
+      ?? sourceAspectRatio
+      ?? displayAspectRatio;
     const style = {
-      '--notebook-video-width': `${effectiveWidthPercent}%`,
+      '--notebook-video-width': interaction.activeGesture === 'resize'
+        && interaction.preview?.renderedWidthPx
+        ? `${interaction.preview.renderedWidthPx}px`
+        : `${effectiveWidthPercent}%`,
       ...(effectiveAspectRatio === undefined
         ? {}
         : { '--notebook-media-display-aspect-ratio': String(effectiveAspectRatio) }),
     } as CSSProperties;
-    const isPresenting = theaterMode || fullscreenMode !== null;
+    const isFullscreen = fullscreenMode !== null;
+    const isTheater = theaterMode && !isFullscreen;
+    const isPresenting = isTheater || isFullscreen;
 
     return (
       <NodeViewWrapper
@@ -477,8 +570,10 @@ export function createNotebookVideoNodeView(
         </div>
         <div
           ref={presentationRef}
-          className={`notebook-video-presentation${isPresenting ? ' is-theater' : ''}`}
-          data-notebook-video-presentation={isPresenting ? 'true' : undefined}
+          className={`notebook-video-presentation${isTheater ? ' is-theater' : ''}${isFullscreen ? ' is-fullscreen' : ''}`}
+          data-notebook-video-presentation={isTheater ? 'theater' : isFullscreen ? 'fullscreen' : undefined}
+          style={isTheater ? theaterBounds : undefined}
+          onPointerMove={revealControls}
         >
           <div ref={frameRef} className="notebook-media-transform-shell notebook-media-transform-shell--video">
             <div
@@ -512,6 +607,14 @@ export function createNotebookVideoNodeView(
                       applyCaptionTrack(captionTrackIndex);
                     }}
                     onLoadedMetadata={() => {
+                      const video = videoRef.current;
+                      if (video && !audioInitializedRef.current) {
+                        video.defaultMuted = false;
+                        video.muted = false;
+                        video.volume = 1;
+                        audioInitializedRef.current = true;
+                      }
+                      normalizeSourceProportions();
                       syncPlaybackState();
                       applyCaptionTrack(captionTrackIndex);
                     }}
@@ -522,9 +625,7 @@ export function createNotebookVideoNodeView(
                     }}
                     onTimeUpdate={syncPlaybackState}
                     onVolumeChange={syncPlaybackState}
-                    style={effectiveAspectRatio === undefined
-                      ? undefined
-                      : { height: '100%', objectFit: 'fill' }}
+                    style={{ height: '100%', objectFit: 'contain' }}
                   >
                     {tracks.map((track, index) => (
                       <track
@@ -587,10 +688,33 @@ export function createNotebookVideoNodeView(
           </div>
           {loadState.status === 'ready' ? (
             <div
-              className="notebook-video-playback-controls"
+              className={`notebook-video-playback-controls${isPlaying && !controlsVisible && !controlsHovered && !controlsFocused ? ' is-hidden' : ''}`}
               role="group"
               aria-label="Video playback controls"
               onClick={(event) => event.stopPropagation()}
+              onFocusCapture={() => {
+                controlsFocusedRef.current = true;
+                setControlsFocused(true);
+                clearControlsTimer();
+                setControlsVisible(true);
+              }}
+              onBlurCapture={(event) => {
+                if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+                controlsFocusedRef.current = false;
+                setControlsFocused(false);
+                revealControls();
+              }}
+              onPointerEnter={() => {
+                controlsHoveredRef.current = true;
+                setControlsHovered(true);
+                clearControlsTimer();
+                setControlsVisible(true);
+              }}
+              onPointerLeave={() => {
+                controlsHoveredRef.current = false;
+                setControlsHovered(false);
+                revealControls();
+              }}
               onPointerDown={(event) => event.stopPropagation()}
             >
               <button

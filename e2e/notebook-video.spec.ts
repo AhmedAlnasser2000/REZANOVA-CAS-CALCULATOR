@@ -106,6 +106,17 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
   });
   await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.currentTime))
     .toBeGreaterThan(0.5);
+  await expect(video).toHaveJSProperty('muted', false);
+  await expect(video).toHaveJSProperty('volume', 1);
+  const playbackControls = figure.getByRole('group', { name: 'Video playback controls' });
+  await figure.getByRole('button', { name: 'Play video' }).click();
+  await expect(figure.getByRole('button', { name: 'Pause video' })).toBeVisible();
+  await figure.locator('.notebook-video-heading').click();
+  await page.mouse.move(2, 2);
+  await expect(playbackControls).toHaveClass(/is-hidden/, { timeout: 4_000 });
+  await video.hover();
+  await expect(playbackControls).not.toHaveClass(/is-hidden/);
+  await figure.getByRole('button', { name: 'Pause video' }).click();
 
   await toolbar.getByRole('button', { name: 'Set video width to 50%' }).click();
   await toolbar.getByRole('button', { name: 'Align video right' }).click();
@@ -124,6 +135,14 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
       y: videoFrameBounds.y + videoFrameBounds.height / 2,
     },
   );
+  const resizedVideoFrame = await videoFrame.boundingBox();
+  if (!resizedVideoFrame) throw new Error('Resized video frame is not visible.');
+  expect(resizedVideoFrame.width).toBeGreaterThan(videoFrameBounds.width);
+  expect(resizedVideoFrame.width / resizedVideoFrame.height).toBeCloseTo(16 / 9, 1);
+  const controlsBounds = await figure.getByRole('group', { name: 'Video playback controls' }).boundingBox();
+  if (!controlsBounds) throw new Error('Video controls are not visible.');
+  expect(controlsBounds.y + controlsBounds.height)
+    .toBeLessThanOrEqual(resizedVideoFrame.y + resizedVideoFrame.height);
   await expect(page.getByText(/^Page 1 · X \d+\.\d pt · Y \d+\.\d pt$/)).toBeVisible();
 
   const stageBounds = await page.locator('.notebook-page-stage').boundingBox();
@@ -168,9 +187,36 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
   const presentation = figure.locator('.notebook-video-presentation');
   await figure.getByRole('button', { name: 'Enter theater mode' }).click();
   await expect(presentation).toHaveClass(/is-theater/);
+  const theaterGeometry = await page.evaluate(() => {
+    const overlay = document.querySelector('.notebook-video-presentation.is-theater')!.getBoundingClientRect();
+    const notebook = document.querySelector('.app-page--notebook')!.getBoundingClientRect();
+    const tabs = document.querySelector('.workspace-tabs-shell')!.getBoundingClientRect();
+    const toolbar = document.querySelector('.notebook-rich-toolbar')!.getBoundingClientRect();
+    return {
+      notebookWidth: notebook.width,
+      overlayTop: overlay.top,
+      overlayWidth: overlay.width,
+      tabsBottom: tabs.bottom,
+      toolbarCovered: document.querySelector('.notebook-video-presentation')
+        ?.contains(document.elementFromPoint(toolbar.left + 10, toolbar.top + 10)) === true,
+    };
+  });
+  expect(theaterGeometry.overlayTop).toBeGreaterThanOrEqual(theaterGeometry.tabsBottom);
+  expect(Math.abs(theaterGeometry.overlayWidth - theaterGeometry.notebookWidth)).toBeLessThan(3);
+  expect(theaterGeometry.toolbarCovered).toBe(true);
   await attachScreenshot(page, 'notebook-video-theater');
   await page.keyboard.press('Escape');
   await expect(presentation).not.toHaveClass(/is-theater/);
+  await figure.getByRole('button', { name: 'Enter fullscreen' }).click();
+  await expect(presentation).toHaveClass(/is-fullscreen/);
+  await expect(presentation).not.toHaveClass(/is-theater/);
+  await expect.poll(() => presentation.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return [Math.round(bounds.width), Math.round(bounds.height)];
+  })).toEqual([2400, 1050]);
+  await attachScreenshot(page, 'notebook-video-fullscreen');
+  await page.keyboard.press('Escape');
+  await expect(presentation).not.toHaveClass(/is-fullscreen/);
 
   await page.keyboard.press('Control+S');
   await expect(page.getByText('Saved locally').first()).toBeVisible();
@@ -237,6 +283,6 @@ test('Notebook inserts, seeks, formats, and persists a local WebM video', async 
     (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
   });
   await expectVideoContained(page);
-  await expect(figure).toHaveCSS('outline-style', 'solid');
+  await expect(figure.locator('.notebook-media-transform-shell')).toHaveCSS('outline-style', 'solid');
   await attachScreenshot(page, 'notebook-video-forced-colors-130');
 });

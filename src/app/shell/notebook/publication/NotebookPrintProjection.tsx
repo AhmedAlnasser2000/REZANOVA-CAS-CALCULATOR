@@ -221,7 +221,7 @@ function PublicationNode({
       <figure className={`notebook-print-media notebook-print-video is-${node.alignment ?? 'center'} is-${node.placement ?? 'normal'}`} style={{ width: `${node.widthPercent ?? 100}%` }}>
         {node.posterAssetId ? <img alt="" src={assetUrls.get(node.posterAssetId)} style={{
           aspectRatio: node.displayAspectRatio,
-          objectFit: node.displayAspectRatio ? 'fill' : undefined,
+          objectFit: node.displayAspectRatio ? 'contain' : undefined,
         }} /> : null}
         <strong>{node.title}</strong>
         {node.description ? <p>{node.description}</p> : null}

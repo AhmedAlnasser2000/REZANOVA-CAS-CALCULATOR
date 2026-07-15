@@ -237,7 +237,10 @@ export function createNotebookImageNodeView(
       renderedContentWidth,
     );
     const figureStyle = {
-      '--notebook-image-width': `${effectiveWidthPercent}%`,
+      '--notebook-image-width': interaction.activeGesture === 'resize'
+        && interaction.preview?.renderedWidthPx
+        ? `${interaction.preview.renderedWidthPx}px`
+        : `${effectiveWidthPercent}%`,
       '--notebook-image-rotation': `${effectiveRotation}deg`,
       ...(effectiveAspectRatio === undefined
         ? {}

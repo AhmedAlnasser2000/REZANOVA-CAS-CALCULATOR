@@ -1108,6 +1108,11 @@
   min-height: 100%;
 }
 
+.notebook-rich-canvas:has(.notebook-video-presentation.is-theater) .notebook-rich-editor-host,
+.notebook-rich-canvas:has(.notebook-video-presentation.is-fullscreen) .notebook-rich-editor-host {
+  z-index: 20;
+}
+
 .notebook-empty-writing-prompt {
   position: absolute;
   z-index: 1;
@@ -1410,8 +1415,18 @@
 .notebook-rich-editor .ProseMirror-selectednode,
 .notebook-rich-inline-math.is-selected,
 .notebook-rich-display-math.is-selected,
-.notebook-rich-evidence.is-selected,
-.notebook-image-figure.is-selected {
+.notebook-rich-evidence.is-selected {
+  outline: 2px solid var(--notebook-accent);
+  outline-offset: 2px;
+}
+
+.notebook-image-figure.ProseMirror-selectednode,
+.notebook-video-figure.ProseMirror-selectednode {
+  outline: none;
+}
+
+.notebook-image-figure.is-selected > .notebook-media-transform-shell,
+.notebook-video-figure.is-selected .notebook-media-transform-shell--video {
   outline: 2px solid var(--notebook-accent);
   outline-offset: 2px;
 }
@@ -1579,8 +1594,10 @@
 .notebook-video-frame video {
   display: block;
   width: 100%;
+  height: 100%;
   max-height: 70vh;
   background: #000;
+  object-fit: contain;
 }
 
 .notebook-video-frame video.is-playback-error {
@@ -1590,39 +1607,59 @@
 
 .notebook-video-presentation {
   position: relative;
+  container-name: notebook-video-player;
+  container-type: inline-size;
 }
 
 .notebook-video-presentation.is-theater {
   position: fixed;
   z-index: 1200;
-  inset: 16px;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 12px;
+  place-items: center;
   padding: clamp(12px, 2vw, 28px);
-  border: 1px solid var(--notebook-border-strong);
-  border-radius: 10px;
-  background: rgba(4, 11, 12, 0.98);
-  box-shadow: 0 22px 64px rgba(0, 0, 0, 0.58);
+  background: rgba(4, 11, 12, 0.985);
+  box-shadow: 0 0 0 1px var(--notebook-border-strong);
 }
 
-.notebook-video-presentation.is-theater .notebook-media-transform-shell--video {
+.notebook-video-presentation.is-fullscreen,
+.notebook-video-presentation:fullscreen {
+  position: fixed;
+  z-index: 1400;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: clamp(8px, 1.5vw, 24px);
+  background: #000;
+}
+
+.notebook-video-presentation.is-theater .notebook-media-transform-shell--video,
+.notebook-video-presentation.is-fullscreen .notebook-media-transform-shell--video,
+.notebook-video-presentation:fullscreen .notebook-media-transform-shell--video {
+  width: min(100%, 1400px);
+  height: 100%;
   min-height: 0;
   display: grid;
   place-items: center;
+  outline: none !important;
 }
 
-.notebook-video-presentation.is-theater .notebook-video-frame {
-  width: min(100%, 1400px);
-  max-height: calc(100dvh - 180px);
+.notebook-video-presentation.is-theater .notebook-video-frame,
+.notebook-video-presentation.is-fullscreen .notebook-video-frame,
+.notebook-video-presentation:fullscreen .notebook-video-frame {
+  width: 100%;
+  max-height: 100%;
   min-height: 0;
+  border: 0;
+  background: #000;
 }
 
-.notebook-video-presentation.is-theater .notebook-video-frame video {
+.notebook-video-presentation.is-theater .notebook-video-frame video,
+.notebook-video-presentation.is-fullscreen .notebook-video-frame video,
+.notebook-video-presentation:fullscreen .notebook-video-frame video {
   width: 100%;
   height: 100%;
-  max-height: calc(100dvh - 180px);
+  max-height: 100%;
   object-fit: contain !important;
 }
 
@@ -1657,17 +1694,31 @@
 }
 
 .notebook-video-playback-controls {
+  position: absolute;
+  z-index: 8;
+  right: 8px;
+  bottom: 8px;
+  left: 8px;
   display: flex;
   min-width: 0;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 7px;
   padding: 7px;
   border: 1px solid var(--notebook-border);
   border-radius: 7px;
   background: color-mix(in srgb, var(--notebook-panel-strong) 92%, transparent);
   color: var(--page-ink);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.notebook-video-playback-controls.is-hidden {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
 }
 
 .notebook-video-playback-controls button {
@@ -1709,7 +1760,7 @@
 }
 
 .notebook-video-seek {
-  min-width: 86px;
+  min-width: 0;
   flex: 1 1 150px;
   accent-color: var(--notebook-accent);
 }
@@ -1742,6 +1793,18 @@
   opacity: 0.58;
 }
 
+@container notebook-video-player (max-width: 560px) {
+  .notebook-video-time,
+  .notebook-video-volume {
+    display: none;
+  }
+
+  .notebook-video-playback-controls {
+    gap: 4px;
+    padding: 5px;
+  }
+}
+
 .notebook-video-loading,
 .notebook-video-missing {
   display: flex;
@@ -1757,6 +1820,11 @@
   margin-top: 7px;
   font-size: 0.82rem;
   line-height: 1.45;
+}
+
+.notebook-video-presentation.is-theater + figcaption,
+.notebook-video-presentation.is-fullscreen + figcaption {
+  display: none;
 }
 
 .notebook-media-direct-controls {
@@ -2298,6 +2366,7 @@
   .notebook-image-frame,
   .notebook-video-frame,
   .notebook-video-presentation.is-theater,
+  .notebook-video-presentation.is-fullscreen,
   .notebook-video-playback-controls,
   .notebook-video-playback-error {
     border-color: CanvasText;
@@ -2364,10 +2433,8 @@
     color: CanvasText;
   }
 
-  .notebook-image-figure.is-selected,
-  .notebook-rich-editor .notebook-image-figure.ProseMirror-selectednode,
-  .notebook-video-figure.is-selected,
-  .notebook-rich-editor .notebook-video-figure.ProseMirror-selectednode {
+  .notebook-image-figure.is-selected > .notebook-media-transform-shell,
+  .notebook-video-figure.is-selected .notebook-media-transform-shell--video {
     outline: 2px solid Highlight;
     outline-offset: 2px;
     forced-color-adjust: auto;

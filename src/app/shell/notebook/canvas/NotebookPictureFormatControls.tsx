@@ -363,6 +363,17 @@ export function NotebookPictureFormatControls({
               updateImage({ rotation: nextRotation === 0 ? null : nextRotation });
             }}
           ><RotateCw aria-hidden="true" size={16} /></button>
+          <button
+            type="button"
+            disabled={typeof attrs.displayAspectRatio !== 'number'}
+            aria-label="Reset image proportions"
+            title="Reset proportions to the source image"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              rememberTarget();
+              updateImage({ displayAspectRatio: null });
+            }}
+          ><Scaling aria-hidden="true" size={16} /></button>
         </div>
         <span className="notebook-ribbon-group-label">Crop & Rotate</span>
       </section>

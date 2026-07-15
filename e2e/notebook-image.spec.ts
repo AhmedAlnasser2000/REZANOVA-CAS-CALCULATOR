@@ -177,7 +177,7 @@ test('Notebook inserts a durable safe SVG figure and exposes contextual Picture 
     (element as HTMLElement).style.setProperty('--page-ui-scale', '1.3');
   });
   await expectImageContained(page);
-  await expect(figure).toHaveCSS('outline-style', 'solid');
+  await expect(figure.locator('.notebook-media-transform-shell')).toHaveCSS('outline-style', 'solid');
   await attachScreenshot(page, 'notebook-image-forced-colors-130');
 });
 
@@ -262,6 +262,15 @@ test('Picture Format persists page-aware wrap, crop, rotation, size, and alignme
       y: resizeFrame.y + resizeFrame.height / 2,
     },
   );
+  const stretchedFrame = await imageFrame.boundingBox();
+  if (!stretchedFrame) throw new Error('Stretched image frame is not visible.');
+  expect(stretchedFrame.width).toBeGreaterThan(resizeFrame.width);
+  expect(Math.abs(stretchedFrame.height - resizeFrame.height)).toBeLessThan(2);
+  await toolbar.getByRole('button', { name: 'Reset image proportions' }).click();
+  const resetFrame = await imageFrame.boundingBox();
+  if (!resetFrame) throw new Error('Reset image frame is not visible.');
+  expect(Math.abs(resetFrame.width - stretchedFrame.width)).toBeLessThan(2);
+  expect(resetFrame.width / resetFrame.height).toBeCloseTo(16 / 9, 1);
 
   await toolbar.getByRole('button', { name: 'Crop image' }).click();
   const cropOverlay = page.getByTestId('notebook-image-crop-overlay');
@@ -324,7 +333,6 @@ test('Picture Format persists page-aware wrap, crop, rotation, size, and alignme
   })).toMatchObject({
     alignment: 'left',
     crop: { height: 1, width: expect.any(Number), x: expect.any(Number), y: 0 },
-    displayAspectRatio: expect.any(Number),
     placement: 'square-left',
     rotation: expect.any(Number),
     type: 'imageFigure',
@@ -348,7 +356,7 @@ test('Picture Format persists page-aware wrap, crop, rotation, size, and alignme
   });
   expect(storedImage?.crop?.x).toBeGreaterThan(0);
   expect(storedImage?.crop?.width).toBeLessThan(1);
-  expect(storedImage?.displayAspectRatio).toBeGreaterThan(0.1);
+  expect(storedImage?.displayAspectRatio).toBeUndefined();
   expect(storedImage?.widthPercent).toBeGreaterThan(50);
   expect(storedImage?.rotation).toBeGreaterThan(10);
   expect(storedImage?.rotation).toBeLessThan(85);
@@ -395,7 +403,7 @@ test('Picture Format persists page-aware wrap, crop, rotation, size, and alignme
   await expect(figure).toHaveAttribute('data-image-placement', 'normal');
   await expect(figure).toHaveAttribute('data-image-wrap-fallback', 'true');
   await expect(figure).toHaveCSS('float', 'none');
-  await expect(figure).toHaveCSS('outline-style', 'solid');
+  await expect(figure.locator('.notebook-media-transform-shell')).toHaveCSS('outline-style', 'solid');
   await attachScreenshot(page, 'notebook-picture-format-forced-colors-130');
   await page.getByRole('button', { name: 'Wrap text: Square Left' }).click();
   await expect(page.getByRole('menu', { name: 'Picture wrapping' }).getByRole('status'))
