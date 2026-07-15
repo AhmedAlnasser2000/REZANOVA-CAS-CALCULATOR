@@ -3,6 +3,12 @@ import { describe, expect, it, vi } from 'vitest';
 import type { StatisticsVisualizationPayloadV1 } from '../../types/calculator';
 import { WorkspaceLowerPanel } from './WorkspaceLowerPanel';
 
+vi.mock('./statistics/StatisticsEChart', () => ({
+  StatisticsEChart: ({ view }: { view: { ariaDescription: string } }) => (
+    <div data-testid="statistics-visualization-chart" aria-label={view.ariaDescription} />
+  ),
+}));
+
 const rows = [[{ id: 'one', label: '1', variant: 'digit' as const, latex: '1' }]];
 
 const payload: StatisticsVisualizationPayloadV1 = {

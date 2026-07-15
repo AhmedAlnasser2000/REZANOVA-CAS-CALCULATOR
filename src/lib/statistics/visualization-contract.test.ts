@@ -4,6 +4,7 @@ import {
   cloneStatisticsVisualizationPayloadV1,
   isStatisticsVisualizationPayloadV1,
   STATISTICS_VISUALIZATION_MAX_POINTS,
+  STATISTICS_VISUALIZATION_MAX_WEIGHTED_VALUES,
 } from './visualization-contract';
 
 function histogramPayload(): StatisticsVisualizationPayloadV1 {
@@ -50,11 +51,52 @@ describe('Statistics visualization contract', () => {
       views: [{
         ...histogramPayload().views[0],
         weightedValues: Array.from(
-          { length: STATISTICS_VISUALIZATION_MAX_POINTS + 1 },
+          { length: STATISTICS_VISUALIZATION_MAX_WEIGHTED_VALUES + 1 },
           (_, value) => ({ value, weight: 1 }),
         ),
       }],
     })).toBe(false);
+
+    expect(isStatisticsVisualizationPayloadV1({
+      version: 1,
+      defaultKind: 'normalCurve',
+      views: [{
+        kind: 'normalCurve',
+        title: 'Normal distribution',
+        xLabel: 'Value',
+        yLabel: 'Density',
+        ariaDescription: 'Normal distribution.',
+        eventNotation: 'X < 0',
+        points: Array.from(
+          { length: STATISTICS_VISUALIZATION_MAX_POINTS + 1 },
+          (_, x) => ({ x, density: 0, selected: false }),
+        ),
+        table: { columns: ['Value'], rows: [], totalRows: 0 },
+      }],
+    })).toBe(false);
+  });
+
+  it('rejects incomplete box summaries and non-finite Normal markers', () => {
+    const histogram = histogramPayload().views[0];
+    expect(isStatisticsVisualizationPayloadV1({
+      version: 1,
+      defaultKind: 'boxPlot',
+      views: [{ ...histogram, kind: 'boxPlot', boxSummary: undefined }],
+    })).toBe(false);
+    expect(isStatisticsVisualizationPayloadV1({
+      version: 1,
+      defaultKind: 'normalCurve',
+      views: [{
+        kind: 'normalCurve',
+        title: 'Normal distribution',
+        xLabel: 'Value',
+        yLabel: 'Density',
+        ariaDescription: 'Normal distribution.',
+        eventNotation: 'X = 0',
+        points: [],
+        marker: { x: 0, density: Number.NaN, label: 'Marker' },
+        table: { columns: ['Value'], rows: [], totalRows: 0 },
+      }],
+    })).toBe(false);
   });
 });
-

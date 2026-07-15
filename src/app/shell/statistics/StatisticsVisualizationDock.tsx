@@ -8,6 +8,7 @@ import type {
   StatisticsVisualizationPayloadV1,
 } from '../../../types/calculator';
 import { KeypadPanel, type KeypadPanelProps } from '../KeypadPanel';
+import { StatisticsEChart } from './StatisticsEChart';
 
 const VISUALIZATION_LABELS: Record<StatisticsVisualizationKind, string> = {
   histogram: 'Histogram',
@@ -125,15 +126,7 @@ export function StatisticsVisualizationDock({
             <KeypadPanel {...keypadProps} />
           </div>
         ) : activeView ? (
-          <div
-            className="statistics-visualization-chart-placeholder"
-            data-testid="statistics-visualization-chart"
-            role="img"
-            aria-label={activeView.ariaDescription}
-          >
-            <BarChart3 aria-hidden="true" size={32} />
-            <strong>{activeView.title}</strong>
-          </div>
+          <StatisticsEChart view={activeView} histogramBinCount={histogramBinCount} />
         ) : (
           <div className="statistics-visualization-empty" data-testid="statistics-visualization-empty">
             <BarChart3 aria-hidden="true" size={30} />

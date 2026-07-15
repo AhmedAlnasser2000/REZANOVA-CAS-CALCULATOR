@@ -27,6 +27,35 @@ export type StatisticsDistributionEvaluation = {
   explanation?: string;
 };
 
+export function statisticsDistributionCdf(
+  distribution: StatisticsDistributionInput,
+  x: number,
+) {
+  if (distribution.kind === 'binomial') return binomial.cdf(x, distribution.n, distribution.p);
+  if (distribution.kind === 'poisson') return poisson.cdf(x, distribution.lambda);
+  return normal.cdf(x, distribution.mean, distribution.standardDeviation);
+}
+
+export function statisticsDistributionMassOrDensity(
+  distribution: StatisticsDistributionInput,
+  x: number,
+) {
+  if (distribution.kind === 'binomial') return binomial.pmf(x, distribution.n, distribution.p);
+  if (distribution.kind === 'poisson') return poisson.pmf(x, distribution.lambda);
+  return normal.pdf(x, distribution.mean, distribution.standardDeviation);
+}
+
+export function statisticsDistributionQuantile(
+  distribution: StatisticsDistributionInput,
+  probability: number,
+) {
+  if (distribution.kind === 'binomial') {
+    return binomial.quantile(probability, distribution.n, distribution.p);
+  }
+  if (distribution.kind === 'poisson') return poisson.quantile(probability, distribution.lambda);
+  return normal.quantile(probability, distribution.mean, distribution.standardDeviation);
+}
+
 function clampProbability(value: number) {
   if (value <= 0) return 0;
   if (value >= 1) return 1;
@@ -109,8 +138,8 @@ export function evaluateStatisticsDistribution(
   if (distribution.kind === 'binomial') {
     const value = discreteProbability(
       event,
-      (x) => binomial.pmf(x, distribution.n, distribution.p),
-      (x) => binomial.cdf(x, distribution.n, distribution.p),
+      (x) => statisticsDistributionMassOrDensity(distribution, x),
+      (x) => statisticsDistributionCdf(distribution, x),
     );
     return {
       value: clampProbability(value),
@@ -124,8 +153,8 @@ export function evaluateStatisticsDistribution(
   if (distribution.kind === 'poisson') {
     const value = discreteProbability(
       event,
-      (x) => poisson.pmf(x, distribution.lambda),
-      (x) => poisson.cdf(x, distribution.lambda),
+      (x) => statisticsDistributionMassOrDensity(distribution, x),
+      (x) => statisticsDistributionCdf(distribution, x),
     );
     return {
       value: clampProbability(value),
@@ -138,8 +167,8 @@ export function evaluateStatisticsDistribution(
 
   const evaluated = continuousProbability(
     event,
-    (x) => normal.pdf(x, distribution.mean, distribution.standardDeviation),
-    (x) => normal.cdf(x, distribution.mean, distribution.standardDeviation),
+    (x) => statisticsDistributionMassOrDensity(distribution, x),
+    (x) => statisticsDistributionCdf(distribution, x),
   );
   return {
     ...evaluated,

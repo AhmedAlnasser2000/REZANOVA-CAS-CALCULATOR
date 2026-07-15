@@ -19,6 +19,7 @@ import {
   statisticsMathJsonRouteForRequest,
   statisticsV2MathResolverFromOwnedLeaves,
 } from './math-values';
+import { buildStatisticsVisualizationPayloadV1 } from './visualization-payload';
 
 export type StatisticsModeRunPayload = {
   outcome: VersionedResultProducerDraft;
@@ -55,11 +56,15 @@ export function buildStatisticsModeRunPayload(
           leaves: mathJsonLeaves,
         })
       : undefined), 'Statistics');
+  const visualization = parsed.ok && ownedOutcome.kind === 'success'
+    ? buildStatisticsVisualizationPayloadV1(parsed.request)
+    : undefined;
 
   return {
     outcome: ownedOutcome,
     parsed,
     replayScreen,
+    ...(visualization ? { visualization } : {}),
     ...(parsed.ok
       ? {
           replaySeed: {

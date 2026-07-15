@@ -2,10 +2,12 @@ import type {
   StatisticsVisualizationPayloadV1,
   StatisticsVisualizationTableV1,
   StatisticsVisualizationViewV1,
+  StatisticsWeightedDataVisualizationV1,
 } from '../../types/calculator';
 
 export const STATISTICS_VISUALIZATION_MAX_VIEWS = 4;
 export const STATISTICS_VISUALIZATION_MAX_POINTS = 2_000;
+export const STATISTICS_VISUALIZATION_MAX_WEIGHTED_VALUES = 10_000;
 export const STATISTICS_VISUALIZATION_MAX_TABLE_ROWS = 500;
 
 function finite(value: unknown): value is number {
@@ -37,13 +39,32 @@ function validPoints(points: readonly unknown[], predicate: (point: unknown) => 
   return points.length <= STATISTICS_VISUALIZATION_MAX_POINTS && points.every(predicate);
 }
 
+function validBoxSummary(
+  summary: StatisticsWeightedDataVisualizationV1['boxSummary'],
+) {
+  return summary !== undefined
+    && finite(summary.min)
+    && finite(summary.lowerWhisker)
+    && finite(summary.q1)
+    && finite(summary.median)
+    && finite(summary.q3)
+    && finite(summary.upperWhisker)
+    && finite(summary.max)
+    && finite(summary.lowerFence)
+    && finite(summary.upperFence)
+    && summary.outliers.length <= STATISTICS_VISUALIZATION_MAX_POINTS
+    && summary.outliers.every(finite);
+}
+
 function validView(view: StatisticsVisualizationViewV1) {
   if (!validBase(view)) return false;
   switch (view.kind) {
     case 'histogram':
     case 'boxPlot':
     case 'frequencyBars':
-      return validPoints(view.weightedValues, (point) => {
+      return (view.kind !== 'boxPlot' || validBoxSummary(view.boxSummary))
+        && view.weightedValues.length <= STATISTICS_VISUALIZATION_MAX_WEIGHTED_VALUES
+        && view.weightedValues.every((point) => {
         const value = point as { value?: unknown; weight?: unknown };
         return finite(value.value) && finite(value.weight) && value.weight > 0;
       });
@@ -57,7 +78,11 @@ function validView(view: StatisticsVisualizationViewV1) {
             && typeof value.selected === 'boolean';
         });
     case 'normalCurve':
-      return validPoints(view.points, (point) => {
+      return (view.marker === undefined
+          || (finite(view.marker.x)
+            && finite(view.marker.density)
+            && typeof view.marker.label === 'string'))
+        && validPoints(view.points, (point) => {
         const value = point as { x?: unknown; density?: unknown; selected?: unknown };
         return finite(value.x) && finite(value.density) && typeof value.selected === 'boolean';
       });
@@ -112,4 +137,3 @@ export function cloneStatisticsVisualizationPayloadV1(
   }
   return structuredClone(payload);
 }
-

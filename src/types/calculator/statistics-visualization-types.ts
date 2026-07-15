@@ -33,9 +33,11 @@ export type StatisticsWeightedDataVisualizationV1 = StatisticsVisualizationViewB
   weightedValues: readonly { value: number; weight: number }[];
   boxSummary?: {
     min: number;
+    lowerWhisker: number;
     q1: number;
     median: number;
     q3: number;
+    upperWhisker: number;
     max: number;
     lowerFence: number;
     upperFence: number;
