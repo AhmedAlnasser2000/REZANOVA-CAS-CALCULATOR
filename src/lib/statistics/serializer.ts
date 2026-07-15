@@ -83,8 +83,8 @@ export function serializeStatisticsRequest(
         : `frequency(freq=${serializeFrequencyRows(request.rows)})`;
     case 'meanInference':
       return request.source === 'dataset'
-        ? `meanInference(values=${serializeValues(request.values)}, mode=${request.mode}, level=${filledValue(request.level)}${request.mode === 'test' && request.mu0 ? `, mu0=${filledValue(request.mu0)}` : ''})`
-        : `meanInference(freq=${serializeFrequencyRows(request.rows)}, mode=${request.mode}, level=${filledValue(request.level)}${request.mode === 'test' && request.mu0 ? `, mu0=${filledValue(request.mu0)}` : ''})`;
+        ? `meanInference(values=${serializeValues(request.values)}, mode=${request.mode}, level=${filledValue(request.level)}${request.mode === 'test' && request.mu0 ? `, mu0=${filledValue(request.mu0)}, alternative=${request.alternative ?? 'twoSided'}` : ''})`
+        : `meanInference(freq=${serializeFrequencyRows(request.rows)}, mode=${request.mode}, level=${filledValue(request.level)}${request.mode === 'test' && request.mu0 ? `, mu0=${filledValue(request.mu0)}, alternative=${request.alternative ?? 'twoSided'}` : ''})`;
     case 'binomial':
       return `binomial(n=${filledValue(request.n)}, p=${filledValue(request.p)}, ${serializeProbabilityEvent(request)})`;
     case 'normal':
@@ -166,6 +166,7 @@ export function buildStatisticsStructuredDraft(
               mode: state.meanInference.mode,
               level: state.meanInference.level,
               mu0: state.meanInference.mode === 'test' ? state.meanInference.mu0.trim() || undefined : undefined,
+              alternative: state.meanInference.mode === 'test' ? state.meanInference.alternative : undefined,
             }
           : {
               kind: 'meanInference',
@@ -174,6 +175,7 @@ export function buildStatisticsStructuredDraft(
               mode: state.meanInference.mode,
               level: state.meanInference.level,
               mu0: state.meanInference.mode === 'test' ? state.meanInference.mu0.trim() || undefined : undefined,
+              alternative: state.meanInference.mode === 'test' ? state.meanInference.alternative : undefined,
             },
       );
     case 'binomial':

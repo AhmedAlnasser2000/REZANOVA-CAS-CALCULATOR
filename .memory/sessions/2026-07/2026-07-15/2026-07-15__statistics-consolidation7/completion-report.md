@@ -20,11 +20,12 @@
 - `STATISTICS-DATA-SUMMARY1` is implemented and verified.
 - `STATISTICS-PROBABILITY1` is implemented and verified.
 - `STATISTICS-RELATIONSHIPS1` is implemented and verified.
-- Gates 5-7 remain in the approved Statistics consolidation program.
+- `STATISTICS-INFERENCE1` is implemented and verified.
+- Gates 6-7 remain in the approved Statistics consolidation program.
 - Plotting, diagrams, histograms, distribution charts, and scatter plots remain excluded until Gate 7 closes.
 
 ## Next Checkpoint
 
-- Continue with `STATISTICS-INFERENCE1`.
+- Continue with `STATISTICS-GUIDED-EXPRESSION1`.
 - Standing user approval covers all seven named gate commits.
 - Do not push.

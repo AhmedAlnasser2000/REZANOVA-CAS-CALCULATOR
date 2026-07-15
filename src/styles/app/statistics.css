@@ -320,6 +320,32 @@
   align-items: start;
 }
 
+.statistics-inference-layout {
+  display: grid;
+  grid-template-columns: minmax(25rem, 1.25fr) minmax(18rem, 0.75fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.statistics-inference-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.statistics-inference-options label {
+  min-width: 0;
+}
+
+.statistics-inference-options select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--control-surface);
+  color: var(--control-text);
+  padding: 0 10px;
+}
+
 .statistics-relationships-form {
   display: grid;
   gap: 1rem;
@@ -364,6 +390,7 @@
 @media (max-width: 760px) {
   .statistics-probability-layout,
   .statistics-relationships-layout,
+  .statistics-inference-layout,
   .statistics-select-grid,
   .statistics-bound-grid {
     grid-template-columns: minmax(0, 1fr);

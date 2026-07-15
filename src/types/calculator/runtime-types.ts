@@ -13,6 +13,7 @@ import type {
   IntegralKind,
   LimitTargetKind,
   MathNotationDisplay,
+  MeanTestAlternative,
   ModeId,
   LegacyEquationAnswerMode,
   NumericNotationMode,
@@ -616,6 +617,7 @@ export type MeanInferenceState = {
   mode: 'ci' | 'test';
   level: string;
   mu0: string;
+  alternative: MeanTestAlternative;
 };
 export type StatisticsSourceSyncState = {
   datasetStale: boolean;
@@ -766,8 +768,8 @@ export type StatisticsRequest =
   | { kind: 'binomial'; n: string; p: string; x?: string; mode?: BinomialState['mode']; event?: StatisticsProbabilityEvent; lower?: string; upper?: string; lowerBound?: 'inclusive' | 'exclusive'; upperBound?: 'inclusive' | 'exclusive' }
   | { kind: 'normal'; mean: string; standardDeviation: string; x?: string; mode?: NormalState['mode']; event?: StatisticsProbabilityEvent; lower?: string; upper?: string; lowerBound?: 'inclusive' | 'exclusive'; upperBound?: 'inclusive' | 'exclusive' }
   | { kind: 'poisson'; lambda: string; x?: string; mode?: PoissonState['mode']; event?: StatisticsProbabilityEvent; lower?: string; upper?: string; lowerBound?: 'inclusive' | 'exclusive'; upperBound?: 'inclusive' | 'exclusive' }
-  | { kind: 'meanInference'; source: 'dataset'; values: string[]; mode: MeanInferenceState['mode']; level: string; mu0?: string }
-  | { kind: 'meanInference'; source: 'frequencyTable'; rows: FrequencyRow[]; mode: MeanInferenceState['mode']; level: string; mu0?: string }
+  | { kind: 'meanInference'; source: 'dataset'; values: string[]; mode: MeanInferenceState['mode']; level: string; mu0?: string; alternative?: MeanTestAlternative }
+  | { kind: 'meanInference'; source: 'frequencyTable'; rows: FrequencyRow[]; mode: MeanInferenceState['mode']; level: string; mu0?: string; alternative?: MeanTestAlternative }
   | { kind: 'regression'; points: RegressionPoint[] }
   | { kind: 'correlation'; points: RegressionPoint[] };
 export type StatisticsParseResult =

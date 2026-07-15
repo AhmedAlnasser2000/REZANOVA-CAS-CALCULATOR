@@ -15,6 +15,13 @@ import {
   parseInferenceLevel,
   type MeanInferenceSummary,
 } from './inference';
+import {
+  meanAlternativeLabel,
+  meanAlternativeSymbol,
+  meanConfidenceInterpretationSection,
+  meanInferenceAssumptionsSection,
+  meanTestInterpretationSection,
+} from './inference-readback';
 import { parseStatisticsDraft } from './parser';
 import {
   correlationQualitySection,
@@ -493,7 +500,7 @@ function meanInferenceOutcome(
 ): StatisticsEvaluation {
   const level = parseInferenceLevel(request.level);
   if (level === null) {
-    return statisticsError('Mean inference level must be a decimal between 0 and 1, such as 0.95.');
+    return statisticsError('Mean inference level must be a decimal or percent such as 0.95 or 95%.');
   }
 
   const summary = request.source === 'dataset'
@@ -528,6 +535,8 @@ function meanInferenceOutcome(
         `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
         `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
         `n=${summary.summary.count}`,
+        `SE=${numberToLatex(result.standardError)}`,
+        `df=${summary.summary.count - 1}`,
         `t_{\\mathrm{critical}}=${numberToLatex(result.criticalValue)}`,
         `ME=${numberToLatex(result.marginOfError)}`,
         `CI=${numberToLatex(result.lowerBound)}\\le\\mu\\le${numberToLatex(result.upperBound)}`,
@@ -535,6 +544,10 @@ function meanInferenceOutcome(
     return profileStatisticsResult({
       exactLatex,
       approxText: `${formatStatisticsNumber(level * 100)}% CI: (${formatStatisticsNumber(result.lowerBound)}, ${formatStatisticsNumber(result.upperBound)})`,
+      detailSections: [
+        meanConfidenceInterpretationSection({ level, result }),
+        meanInferenceAssumptionsSection(summary.summary),
+      ],
       warnings: [],
       mathJsonLeaves: confidenceIntervalMathJsonLeaves({
         canonicalLatex: exactLatex,
@@ -549,26 +562,42 @@ function meanInferenceOutcome(
     return statisticsError('Mean hypothesis tests need a finite numeric mu0 value.');
   }
 
-  const result = computeMeanHypothesisTest(summary.summary, level, mu0);
+  const alternative = request.alternative ?? 'twoSided';
+  const result = computeMeanHypothesisTest(summary.summary, level, mu0, alternative);
   if (!result) {
     return statisticsError('Mean hypothesis tests need at least two numeric observations.');
   }
 
-  const tStatisticLatex = Number.isFinite(result.tStatistic) ? numberToLatex(result.tStatistic) : '\\infty';
-  const tStatisticApprox = Number.isFinite(result.tStatistic) ? formatStatisticsNumber(result.tStatistic) : 'infinity';
+  const tStatisticLatex = Number.isFinite(result.tStatistic)
+    ? numberToLatex(result.tStatistic)
+    : result.tStatistic < 0 ? '-\\infty' : '\\infty';
+  const tStatisticApprox = Number.isFinite(result.tStatistic)
+    ? formatStatisticsNumber(result.tStatistic)
+    : result.tStatistic < 0 ? '-infinity' : 'infinity';
+  const alternativeLabel = alternative === 'twoSided'
+    ? 'two-sided'
+    : alternative === 'less'
+      ? 'left-tailed'
+      : 'right-tailed';
 
   const exactLatex = [
+      `H_0=(\\mu=${numberToLatex(mu0)})`,
+      `H_a=(\\mu${meanAlternativeSymbol(alternative)}${numberToLatex(mu0)})`,
       `\\bar{x}=${numberToLatex(summary.summary.mean)}`,
-      `\\mu_0=${numberToLatex(mu0)}`,
       `s=${numberToLatex(summary.summary.sampleStandardDeviation)}`,
-      `n=${summary.summary.count}`,
+      `SE=${numberToLatex(result.standardError)}`,
+      `df=${summary.summary.count - 1}`,
       `t=${tStatisticLatex}`,
       `p=${numberToLatex(result.pValue)}`,
       `\\alpha=${numberToLatex(result.alpha)}`,
     ].join(',\\ ');
   return profileStatisticsResult({
     exactLatex,
-    approxText: `two-sided t-test: t=${tStatisticApprox}, p=${formatStatisticsNumber(result.pValue)}, ${result.rejectNull ? 'reject H0' : 'fail to reject H0'}`,
+    approxText: `${alternativeLabel} t-test: t=${tStatisticApprox}, p=${formatStatisticsNumber(result.pValue)}, ${result.rejectNull ? 'reject H0' : 'fail to reject H0'}; mean is tested as ${meanAlternativeLabel(alternative)} ${formatStatisticsNumber(mu0)}`,
+    detailSections: [
+      meanTestInterpretationSection({ alternative, mu0, result }),
+      meanInferenceAssumptionsSection(summary.summary),
+    ],
     warnings: [],
     mathJsonLeaves: meanTestMathJsonLeaves({
       canonicalLatex: exactLatex,
@@ -577,6 +606,8 @@ function meanInferenceOutcome(
       tStatistic: result.tStatistic,
       pValue: result.pValue,
       alpha: result.alpha,
+      standardError: result.standardError,
+      alternative,
     }),
   });
 }

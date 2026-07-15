@@ -115,6 +115,45 @@ describe('statistics core', () => {
     }
     expect(ci.approxText).toContain('CI');
     expect(test.approxText).toContain('two-sided t-test');
+    expect(ci.exactLatex).toContain('SE=');
+    expect(ci.exactLatex).toContain('df=');
+    expect(test.exactLatex).toContain('H_a=');
+    expect(test.detailSections?.map((section) => section.title)).toEqual([
+      'Decision and interpretation',
+      'Assumptions and checks',
+    ]);
+  });
+
+  it('runs percent-level one-sided mean tests', () => {
+    const less = runStatisticsCoreDraft(
+      'meanInference(values={10,11,12,13,14}, mode=test, level=95%, mu0=15, alternative=less)',
+      { screenHint: 'meanInference', workingSourceHint: 'dataset' },
+    ).outcome;
+
+    expect(less.kind).toBe('success');
+    if (less.kind !== 'success') throw new Error('Expected one-sided mean test to succeed');
+    expect(less.approxText).toContain('left-tailed t-test');
+    expect(less.exactLatex).toContain('\\mu<15');
+    expect(less.approxText).toContain('reject H0');
+  });
+
+  it('keeps list and compact-frequency mean inference equivalent', () => {
+    const list = runStatisticsCoreDraft(
+      'meanInference(values={1,1,2,2,2}, mode=ci, level=0.95)',
+      { screenHint: 'meanInference', workingSourceHint: 'dataset' },
+    ).outcome;
+    const frequency = runStatisticsCoreDraft(
+      'meanInference(freq={1:2,2:3}, mode=ci, level=0.95)',
+      { screenHint: 'meanInference', workingSourceHint: 'frequencyTable' },
+    ).outcome;
+
+    expect(list.kind).toBe('success');
+    expect(frequency.kind).toBe('success');
+    if (list.kind !== 'success' || frequency.kind !== 'success') {
+      throw new Error('Expected equivalent mean confidence intervals');
+    }
+    expect(frequency.exactLatex).toBe(list.exactLatex);
+    expect(frequency.approxText).toBe(list.approxText);
   });
 
   it('returns controlled errors for invalid statistics input', () => {

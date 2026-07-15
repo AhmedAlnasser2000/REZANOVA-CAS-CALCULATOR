@@ -662,6 +662,7 @@ export function useStatisticsRuntime({
           mode: request.mode,
           level: request.level,
           mu0: request.mu0 ?? '',
+          alternative: request.alternative ?? 'twoSided',
         });
       }
       return;

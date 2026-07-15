@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "reason": "MATRIX-SVD-PINVERSE-CONDITIONING1 adds one strict V2 numerical-decomposition route with producer-owned SVD diagnostics and pseudoinverse evidence.",
+  "reason": "STATISTICS-INFERENCE1 expands producer-proven one-sample mean CI and hypothesis-test evidence with standard error, degrees of freedom, hypotheses, and directional decisions.",
   "routeIds": [
     "calculate.ans",
     "calculate.arithmetic",
@@ -68,7 +68,7 @@
     "evidence": 146,
     "replayFixtures": 100,
     "goldenCases": 46,
-    "bytes": 118417,
+    "bytes": 120115,
     "maxBytes": 2753,
     "leaves": 466,
     "proven": 466,
@@ -509,8 +509,8 @@
       "evidence": 2,
       "replayFixtures": 1,
       "goldenCases": 1,
-      "bytes": 1196,
-      "maxBytes": 598,
+      "bytes": 2894,
+      "maxBytes": 1447,
       "leaves": 2,
       "proven": 2,
       "exempt": 0,

@@ -14,21 +14,22 @@
 - verified_by_agent_family: sol
 - attribution_basis: live
 
-## Gate 4 Result
+## Gate 5 Result
 
-- milestone: `STATISTICS-RELATIONSHIPS1`
+- milestone: `STATISTICS-INFERENCE1`
 - gates: backend and ui
 - status: verified pass
-- next milestone: `STATISTICS-INFERENCE1`
+- next milestone: `STATISTICS-GUIDED-EXPRESSION1`
 
 ## Evidence
 
-- Focused Statistics core passed 9/9 and Statistics runtime UI passed 12/12.
-- Incremental TypeScript, production build, focused lint, diff hygiene, and the 1,914-file size ratchet passed.
-- Chromium passed one-keystroke focus retention, one shared paired dataset across both analyses, real Correlation and Regression results, expanded residual diagnostics, desktop composition, and mobile stacking.
-- Regression/Correlation producers remain strict V2 and unchanged; no canonical baseline update or new result route was required.
+- Focused inference/parser/core/engine/schema tests passed 30/30 and Statistics runtime UI passed 12/12.
+- Result-contract passed 114/114; strict V2 enforcement, MathJSON coverage, display inversion, History replay, print hygiene, focused lint, diff hygiene, and the 1,922-file size ratchet passed.
+- An isolated production TypeScript/Vite build from `HEAD` plus only Gate 5 files passed with 3,729 modules transformed. The live build reports only concurrent Notebook V11 header/footer test drift.
+- Chromium passed percent-level one-sided inference, shared list/frequency editing, compact frequency evaluation, focus retention, real result details, desktop composition, 390px mobile stacking, and no horizontal overflow.
+- The accepted strict V2 corpus remains 146 evidence cases and 466/466 proven leaves with zero exemptions or missing leaves; Statistics inference evidence grows from 1,196 to 2,894 serialized bytes.
 
 ## Protected Worktree
 
-- Concurrent Matrix definiteness and Notebook media-header work, shared baselines, and untracked `test-results/` remain untouched.
+- Concurrent Notebook V11 running-matter work and untracked `test-results/` remain untouched. The already committed Matrix corpus required only a literal print-hygiene count repair from 44 to 46.
 - No push is authorized.

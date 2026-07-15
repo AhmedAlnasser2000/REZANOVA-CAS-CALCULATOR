@@ -225,11 +225,11 @@
           "branchRows": 0,
           "systemRows": 0,
           "periodicBranches": 0,
-          "detailSections": 0,
+          "detailSections": 2,
           "actions": 0,
           "tableRows": 0
         },
-        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+        "normalizedLatex": "canonicalResult.primaryMath.canonicalLatex=\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ SE=1.378405,\\ df=4,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
       }
     }
   ]

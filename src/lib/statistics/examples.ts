@@ -70,6 +70,7 @@ export const DEFAULT_MEAN_INFERENCE_STATE: MeanInferenceState = {
   mode: 'ci',
   level: '0.95',
   mu0: '15',
+  alternative: 'twoSided',
 };
 
 export const DEFAULT_REGRESSION_STATE: RegressionState = {

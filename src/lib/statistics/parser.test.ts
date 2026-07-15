@@ -101,6 +101,21 @@ describe('statistics parser', () => {
     expect(statisticsRequestToScreen(parsed.request)).toBe('meanInference');
   });
 
+  it('parses directional mean tests and defaults legacy tests to two-sided', () => {
+    const directional = parseStatisticsDraft(
+      'meanInference(values={10,12,14}, mode=test, level=95%, mu0=15, alternative=less)',
+    );
+    const legacy = parseStatisticsDraft(
+      'meanInference(values={10,12,14}, mode=test, level=0.95, mu0=15)',
+    );
+
+    expect(directional.ok).toBe(true);
+    expect(legacy.ok).toBe(true);
+    if (!directional.ok || !legacy.ok) throw new Error('Expected mean tests to parse');
+    expect(directional.request).toMatchObject({ alternative: 'less', level: '95%' });
+    expect(legacy.request).toMatchObject({ alternative: 'twoSided' });
+  });
+
   it('fails cleanly for unsupported free-form statistics input', () => {
     const parsed = parseStatisticsDraft('\\sin\\left(x\\right)');
     expect(parsed.ok).toBe(false);

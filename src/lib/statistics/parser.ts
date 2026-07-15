@@ -61,6 +61,20 @@ function parseDistributionMode<TMode extends string>(value: string | undefined, 
   return allowed.includes(normalized) ? normalized : null;
 }
 
+function parseMeanTestAlternative(value: string | undefined) {
+  if (!value) return 'twoSided' as const;
+  switch (value.trim().toLowerCase().replaceAll(/[_\s-]/g, '')) {
+    case 'twosided':
+      return 'twoSided' as const;
+    case 'less':
+      return 'less' as const;
+    case 'greater':
+      return 'greater' as const;
+    default:
+      return null;
+  }
+}
+
 type ParsedProbabilityEventFields = {
   event: StatisticsProbabilityEvent;
   x?: string;
@@ -294,6 +308,7 @@ function parseStructured(source: string): StatisticsParseResult | null {
     const mode = parseDistributionMode(valueFor(assignments, 'mode'), ['ci', 'test'] as const);
     const level = valueFor(assignments, 'level', 'confidence', 'confidencelevel', 'significancelevel');
     const mu0 = valueFor(assignments, 'mu0', 'nullmean', 'nullmu');
+    const alternative = parseMeanTestAlternative(valueFor(assignments, 'alternative', 'ha'));
     const values = valueFor(assignments, 'values');
     const freq = valueFor(assignments, 'freq', 'frequencytable');
 
@@ -311,6 +326,13 @@ function parseStructured(source: string): StatisticsParseResult | null {
       };
     }
 
+    if (mode === 'test' && !alternative) {
+      return {
+        ok: false,
+        error: 'meanInference(..., mode=test, ...) alternative must be twoSided, less, or greater.',
+      };
+    }
+
     if (values) {
       return {
         ok: true,
@@ -321,6 +343,7 @@ function parseStructured(source: string): StatisticsParseResult | null {
           mode,
           level,
           mu0,
+          alternative: mode === 'test' ? alternative ?? 'twoSided' : undefined,
         },
         style: 'structured',
       };
@@ -344,6 +367,7 @@ function parseStructured(source: string): StatisticsParseResult | null {
           mode,
           level,
           mu0,
+          alternative: mode === 'test' ? alternative ?? 'twoSided' : undefined,
         },
         style: 'structured',
       };

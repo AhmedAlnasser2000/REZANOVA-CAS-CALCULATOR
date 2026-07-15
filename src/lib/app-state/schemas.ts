@@ -165,6 +165,24 @@ const statisticsRegressionPointSchema = z.object({
   x: z.string(),
   y: z.string(),
 });
+const statisticsProbabilityEventSchema = z.enum([
+  'exactly',
+  'density',
+  'lessThan',
+  'atMost',
+  'moreThan',
+  'atLeast',
+  'between',
+]);
+const statisticsProbabilityBoundSchema = z.enum(['inclusive', 'exclusive']);
+const statisticsProbabilityEventFields = {
+  x: z.string().optional(),
+  event: statisticsProbabilityEventSchema.optional(),
+  lower: z.string().optional(),
+  upper: z.string().optional(),
+  lowerBound: statisticsProbabilityBoundSchema.optional(),
+  upperBound: statisticsProbabilityBoundSchema.optional(),
+};
 const statisticsRequestSchema = z.union([
   z.object({
     kind: z.literal('dataset'),
@@ -194,21 +212,21 @@ const statisticsRequestSchema = z.union([
     kind: z.literal('binomial'),
     n: z.string(),
     p: z.string(),
-    x: z.string(),
-    mode: z.enum(['pmf', 'cdf']),
+    ...statisticsProbabilityEventFields,
+    mode: z.enum(['pmf', 'cdf']).optional(),
   }),
   z.object({
     kind: z.literal('normal'),
     mean: z.string(),
     standardDeviation: z.string(),
-    x: z.string(),
-    mode: z.enum(['pdf', 'cdf']),
+    ...statisticsProbabilityEventFields,
+    mode: z.enum(['pdf', 'cdf']).optional(),
   }),
   z.object({
     kind: z.literal('poisson'),
     lambda: z.string(),
-    x: z.string(),
-    mode: z.enum(['pmf', 'cdf']),
+    ...statisticsProbabilityEventFields,
+    mode: z.enum(['pmf', 'cdf']).optional(),
   }),
   z.object({
     kind: z.literal('meanInference'),
@@ -217,6 +235,7 @@ const statisticsRequestSchema = z.union([
     mode: z.enum(['ci', 'test']),
     level: z.string(),
     mu0: z.string().optional(),
+    alternative: z.enum(['twoSided', 'less', 'greater']).optional(),
   }),
   z.object({
     kind: z.literal('meanInference'),
@@ -225,6 +244,7 @@ const statisticsRequestSchema = z.union([
     mode: z.enum(['ci', 'test']),
     level: z.string(),
     mu0: z.string().optional(),
+    alternative: z.enum(['twoSided', 'less', 'greater']).optional(),
   }),
   z.object({
     kind: z.literal('regression'),

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "acceptedReason": "VECTOR-GEOMETRIC-MEASURES1 accepts exact geometric measures and bounded 3D orientation readback.",
-  "caseCount": 44,
+  "acceptedReason": "STATISTICS-INFERENCE1 adds standard-error and degrees-of-freedom evidence to the one-sample mean confidence interval.",
+  "caseCount": 46,
   "workspaceCounts": {
     "calculate": 23,
     "equation": 6,
@@ -9,7 +9,7 @@
     "trigonometry": 2,
     "geometry": 2,
     "statistics": 2,
-    "matrix": 2,
+    "matrix": 4,
     "vector": 3,
     "table": 2
   },
@@ -20,7 +20,7 @@
     "trigonometry": 2,
     "geometry": 2,
     "statistics": 2,
-    "matrix": 2,
+    "matrix": 4,
     "vector": 3,
     "table": 2
   },
@@ -992,7 +992,7 @@
         {
           "path": "canonicalResult.primaryMath.canonicalLatex",
           "kind": "primary-answer",
-          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
+          "value": "\\bar{x}=16,\\ s=3.082207,\\ n=5,\\ SE=1.378405,\\ df=4,\\ t_{\\mathrm{critical}}=2.776445,\\ ME=3.827065,\\ CI=12.172935\\le\\mu\\le19.827065"
         }
       ]
     },
@@ -1114,6 +1114,77 @@
           "path": "canonicalResult.details[4].lines[1][1].math.canonicalLatex",
           "kind": "detail-math-part",
           "value": "\\left\\{1,2\\right\\}"
+        }
+      ]
+    },
+    {
+      "id": "matrix-definiteness-positive",
+      "workspace": "matrix",
+      "outcomeKind": "success",
+      "title": "definite(A)",
+      "fragments": [
+        {
+          "path": "canonicalResult.primaryMath.canonicalLatex",
+          "kind": "primary-answer",
+          "value": "\\operatorname{definite}(A)=\\text{Positive definite}"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\begin{bmatrix}2\\\\3\\end{bmatrix}"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\begin{bmatrix}3\\\\0\\\\0\\end{bmatrix}"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\begin{bmatrix}1\\\\0\\\\2\\end{bmatrix}"
+        }
+      ]
+    },
+    {
+      "id": "matrix-pseudoinverse-rank-one",
+      "workspace": "matrix",
+      "outcomeKind": "success",
+      "title": "pinv(A)",
+      "fragments": [
+        {
+          "path": "canonicalResult.primaryMath.canonicalLatex",
+          "kind": "primary-answer",
+          "value": "\\operatorname{pinv}\\left(A\\right)\\approx \\begin{bmatrix}0.12 & 0.16\\\\0 & 0\\end{bmatrix}"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\operatorname{svd}\\left(A\\right)\\approx \\begin{bmatrix}5\\\\0\\end{bmatrix}"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\operatorname{threshold}\\left(A\\right)\\approx 1.11022\\times 10^{-15}"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[2][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\operatorname{nrank}\\left(A\\right)=1"
+        },
+        {
+          "path": "canonicalResult.details[0].lines[3][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\operatorname{cond}\\left(A\\right)= \\infty"
+        },
+        {
+          "path": "canonicalResult.details[1].lines[0][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "A\\cdot\\operatorname{pinv}\\left(A\\right)\\cdot A\\approx A"
+        },
+        {
+          "path": "canonicalResult.details[1].lines[1][1].math.canonicalLatex",
+          "kind": "detail-math-part",
+          "value": "\\rho_{\\mathrm{pinv}}\\approx 1.25607\\times 10^{-15}"
         }
       ]
     },

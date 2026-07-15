@@ -1,5 +1,4 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react';
-import { SignedNumberDraftInput } from '../../components/SignedNumberDraftInput';
 import type {
   BinomialState,
   FrequencyTable,
@@ -14,6 +13,7 @@ import type {
   StatsDataset,
 } from '../../types/calculator';
 import { StatisticsDataSummaryPanel } from './statistics/StatisticsDataSummaryPanel';
+import { StatisticsInferencePanel } from './statistics/StatisticsInferencePanel';
 import { StatisticsProbabilityPanel } from './statistics/StatisticsProbabilityPanel';
 import { StatisticsRelationshipsPanel } from './statistics/StatisticsRelationshipsPanel';
 
@@ -192,7 +192,14 @@ function StatisticsWorkspace({
             label: 'Relationships',
             description: 'Use one paired dataset for a least-squares line or Pearson correlation.',
           }
-        : routeMeta;
+        : activeSection === 'inference'
+          ? {
+              ...routeMeta,
+              breadcrumb: ['Statistics', 'Inference'],
+              label: 'Inference',
+              description: 'Estimate or test one population mean with a Student t procedure.',
+            }
+          : routeMeta;
 
   return (
     <section className={`mode-panel ${isMenuOpen ? 'statistics-menu-panel' : 'statistics-panel'}`}>
@@ -327,148 +334,30 @@ function StatisticsWorkspace({
           onCopyExpression={onCopyWorkbenchExpression}
           expression={workbenchExpression}
         />
-      ) : screen === 'dataEntry' || screen === 'descriptive' || screen === 'frequency' || screen === 'meanInference' ? (
-        <div className="grid-two">
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>
-                {screen === 'dataEntry'
-                  ? 'Dataset'
-                  : screen === 'descriptive'
-                    ? 'Descriptive Source'
-                    : screen === 'frequency'
-                      ? 'Frequency Source'
-                      : 'Inference Source'}
-              </strong>
-              <span className="equation-badge">
-                {screen !== 'dataEntry' && workingSource === 'frequencyTable'
-                  ? `${filledFrequencyRowCount} rows`
-                  : `${dataset.values.length} values`}
-              </span>
-            </div>
-            {screen !== 'dataEntry' ? (
-              <div className="guide-chip-row">
-                <button
-                  className={`guide-chip ${workingSource === 'dataset' ? 'is-active' : ''}`}
-                  onClick={() => onSwitchSource('dataset')}
-                >
-                  Use Dataset
-                </button>
-                <button
-                  className={`guide-chip ${workingSource === 'frequencyTable' ? 'is-active' : ''}`}
-                  onClick={() => onSwitchSource('frequencyTable')}
-                >
-                  Use Table
-                </button>
-              </div>
-            ) : null}
-            {screen !== 'dataEntry' ? (
-              <p className="equation-hint">{sourceSyncSummary}</p>
-            ) : null}
-            {screen === 'meanInference' ? (
-              <>
-                <div className="guide-chip-row">
-                  <button
-                    className={`guide-chip ${meanInferenceState.mode === 'ci' ? 'is-active' : ''}`}
-                    onClick={() => setMeanInferenceState((currentState) => ({ ...currentState, mode: 'ci' }))}
-                  >
-                    Confidence Interval
-                  </button>
-                  <button
-                    className={`guide-chip ${meanInferenceState.mode === 'test' ? 'is-active' : ''}`}
-                    onClick={() => setMeanInferenceState((currentState) => ({ ...currentState, mode: 'test' }))}
-                  >
-                    Two-Sided Test
-                  </button>
-                </div>
-                <div className="statistics-input-grid">
-                  <label>
-                    <span>Level</span>
-                    <SignedNumberDraftInput
-                      ref={statisticsMeanInferenceLevelRef}
-                      value={meanInferenceState.level}
-                      onValueChange={(value) => setMeanInferenceState((currentState) => ({ ...currentState, level: value }))}
-                      className="statistics-cell-input"
-                    />
-                  </label>
-                  {meanInferenceState.mode === 'test' ? (
-                    <label>
-                      <span>mu0</span>
-                      <SignedNumberDraftInput
-                        value={meanInferenceState.mu0}
-                        onValueChange={(value) => setMeanInferenceState((currentState) => ({ ...currentState, mu0: value }))}
-                        className="statistics-cell-input"
-                      />
-                    </label>
-                  ) : null}
-                </div>
-              </>
-            ) : null}
-            <label className="statistics-text-block">
-              <span>{screen === 'meanInference' ? 'Dataset values' : 'Values'}</span>
-              <textarea
-                ref={datasetRef}
-                className="statistics-textarea"
-                value={datasetText}
-                onChange={(event) => onUpdateDataset(event.target.value)}
-                placeholder="12, 15, 15, 18, 20"
-              />
-            </label>
-            <div className="guide-chip-row">
-              <button className="guide-chip" onClick={onImportDatasetIntoFrequencyTable}>
-                Build Table from Dataset
-              </button>
-              <button className="guide-chip" onClick={onExpandTableToDataset}>
-                Expand Table -&gt; Dataset
-              </button>
-              <button className="guide-chip" onClick={onUseInStatistics}>
-                Use in Statistics
-              </button>
-            </div>
-            <p className="equation-hint">
-              The top Statistics editor is the executable request surface. These dataset and table controls seed it when you press EXE/F1 or Use in Statistics.
-            </p>
-          </div>
-          <div className="editor-card">
-            <div className="card-title-row">
-              <strong>Frequency Table</strong>
-              <span className="equation-badge">{filledFrequencyRowCount} rows</span>
-            </div>
-            <div className="statistics-table-labels" aria-hidden="true">
-              <span>Value</span>
-              <span>Freq</span>
-              <span>Action</span>
-            </div>
-            <div className="statistics-edit-table">
-              {frequencyTable.rows.map((row, index) => (
-                <div key={`statistics-frequency-${index}`} className="statistics-edit-row">
-                  <SignedNumberDraftInput
-                    ref={index === 0 ? statisticsFrequencyValueRef : undefined}
-                    className="statistics-cell-input"
-                    value={row.value}
-                    onValueChange={(value) => onUpdateFrequencyRow(index, 'value', value)}
-                  />
-                  <SignedNumberDraftInput
-                    className="statistics-cell-input"
-                    value={row.frequency}
-                    onValueChange={(value) => onUpdateFrequencyRow(index, 'frequency', value)}
-                  />
-                  <button onClick={() => onRemoveFrequencyRow(index)}>Remove</button>
-                </div>
-              ))}
-            </div>
-            <div className="display-card-actions">
-              <button onClick={onAddFrequencyRow}>Add Row</button>
-              <button onClick={onCopyWorkbenchExpression}>Copy Expr</button>
-            </div>
-            {screen === 'dataEntry' ? (
-              <div className="statistics-summary-card">
-                <strong>Current Dataset</strong>
-                <p>{datasetText || 'No dataset values entered yet.'}</p>
-              </div>
-            ) : null}
-          </div>
-        </div>
+      ) : activeSection === 'inference' && screen === 'meanInference' ? (
+        <StatisticsInferencePanel
+          state={meanInferenceState}
+          setState={setMeanInferenceState}
+          workingSource={workingSource}
+          onSwitchSource={onSwitchSource}
+          datasetText={datasetText}
+          datasetValueCount={dataset.values.length}
+          datasetRef={datasetRef}
+          onUpdateDataset={onUpdateDataset}
+          frequencyTable={frequencyTable}
+          filledFrequencyRowCount={filledFrequencyRowCount}
+          frequencyValueRef={statisticsFrequencyValueRef}
+          onUpdateFrequencyRow={onUpdateFrequencyRow}
+          onRemoveFrequencyRow={onRemoveFrequencyRow}
+          onAddFrequencyRow={onAddFrequencyRow}
+          sourceSyncSummary={sourceSyncSummary}
+          onImportDatasetIntoFrequencyTable={onImportDatasetIntoFrequencyTable}
+          onExpandTableToDataset={onExpandTableToDataset}
+          levelRef={statisticsMeanInferenceLevelRef}
+          expression={workbenchExpression}
+          onEditExpression={onUseInStatistics}
+          onCopyExpression={onCopyWorkbenchExpression}
+        />
       ) : screen === 'regression' || screen === 'correlation' ? (
         <StatisticsRelationshipsPanel
           state={relationshipsState}

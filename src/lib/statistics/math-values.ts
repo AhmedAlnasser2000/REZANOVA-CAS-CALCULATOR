@@ -1,4 +1,4 @@
-import type { StatisticsRequest } from '../../types/calculator';
+import type { MeanTestAlternative, StatisticsRequest } from '../../types/calculator';
 import {
   requireProvenCanonicalMathValueV2,
   type CanonicalResultV2MathResolver,
@@ -129,6 +129,7 @@ export function confidenceIntervalMathJsonLeaves(input: {
   summary: MeanInferenceSummary;
   result: {
     criticalValue: number;
+    standardError: number;
     marginOfError: number;
     lowerBound: number;
     upperBound: number;
@@ -141,6 +142,8 @@ export function confidenceIntervalMathJsonLeaves(input: {
       ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
       ['Equal', 's', statisticsMathNumber(input.summary.sampleStandardDeviation)],
       ['Equal', 'n', input.summary.count],
+      ['Equal', ['InvisibleOperator', 'S', 'E'], statisticsMathNumber(input.result.standardError)],
+      ['Equal', 'df', input.summary.count - 1],
       ['Equal', ['Subscript', 't', 'critical'], statisticsMathNumber(input.result.criticalValue)],
       ['Equal', ['InvisibleOperator', 'M', 'E'], statisticsMathNumber(input.result.marginOfError)],
       ['LessEqual',
@@ -160,18 +163,27 @@ export function meanTestMathJsonLeaves(input: {
   tStatistic: number;
   pValue: number;
   alpha: number;
+  standardError: number;
+  alternative: MeanTestAlternative;
 }) {
   if (input.summary.sampleStandardDeviation === null) return [];
   const tValue = Number.isFinite(input.tStatistic)
     ? statisticsMathNumber(input.tStatistic)
-    : 'PositiveInfinity';
+    : input.tStatistic < 0 ? 'NegativeInfinity' : 'PositiveInfinity';
+  const alternativeRelation = input.alternative === 'twoSided'
+    ? ['NotEqual', 'mu', statisticsMathNumber(input.mu0)]
+    : input.alternative === 'less'
+      ? ['Less', 'mu', statisticsMathNumber(input.mu0)]
+      : ['Greater', 'mu', statisticsMathNumber(input.mu0)];
   return primaryMathJsonLeaf(
     input.canonicalLatex,
     mathSequence(
+      ['Equal', ['Subscript', 'H', 0], ['Equal', 'mu', statisticsMathNumber(input.mu0)]],
+      ['Equal', ['Subscript', 'H', 'a'], alternativeRelation],
       ['Equal', ['Mean', 'x'], statisticsMathNumber(input.summary.mean)],
-      ['Equal', ['Subscript', 'mu', 0], statisticsMathNumber(input.mu0)],
       ['Equal', 's', statisticsMathNumber(input.summary.sampleStandardDeviation)],
-      ['Equal', 'n', input.summary.count],
+      ['Equal', ['InvisibleOperator', 'S', 'E'], statisticsMathNumber(input.standardError)],
+      ['Equal', 'df', input.summary.count - 1],
       ['Equal', 't', tValue],
       ['Equal', 'p', statisticsMathNumber(input.pValue)],
       ['Equal', 'alpha', statisticsMathNumber(input.alpha)],

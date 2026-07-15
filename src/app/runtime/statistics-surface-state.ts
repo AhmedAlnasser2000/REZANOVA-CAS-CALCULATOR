@@ -71,7 +71,10 @@ export function copyStatisticsSurfaceState(state: StatisticsSurfaceState): Stati
     binomialState: { ...DEFAULT_BINOMIAL_STATE, ...state.binomialState },
     normalState: { ...DEFAULT_NORMAL_STATE, ...state.normalState },
     poissonState: { ...DEFAULT_POISSON_STATE, ...state.poissonState },
-    meanInferenceState: { ...state.meanInferenceState },
+    meanInferenceState: {
+      ...state.meanInferenceState,
+      alternative: state.meanInferenceState.alternative ?? 'twoSided',
+    },
     relationshipsState: {
       analysis: relationshipsState.analysis,
       points: relationshipsState.points.map((point) => ({ ...point })),

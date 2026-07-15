@@ -110,7 +110,7 @@ const PROBABILITY_ENTRIES: StatisticsMenuEntry[] = [
 ];
 
 const INFERENCE_ENTRIES: StatisticsMenuEntry[] = [
-  { id: 'meanInference', label: 'Mean', description: 'One-sample mean confidence intervals and two-sided t tests', hotkey: '1', target: 'meanInference' },
+  { id: 'meanInference', label: 'Mean', description: 'One-sample mean confidence intervals and t tests', hotkey: '1', target: 'meanInference' },
 ];
 
 const ROUTE_META: Record<StatisticsScreen, StatisticsRouteMeta> = {
@@ -208,8 +208,8 @@ const ROUTE_META: Record<StatisticsScreen, StatisticsRouteMeta> = {
     screen: 'meanInference',
     label: 'Mean Inference',
     breadcrumb: ['Statistics', 'Inference', 'Mean'],
-    description: 'Run a one-sample mean confidence interval or a two-sided t test from the active data source.',
-    helpText: 'Choose Dataset or Table as the source, set CI or Test, enter level and mu0 when needed, then press EXE or F1.',
+    description: 'Run a one-sample mean confidence interval or directional t test from the active data source.',
+    helpText: 'Choose List or Frequency Table, set the goal, level, null mean, and alternative when needed, then press EXE or F1.',
     guideArticleId: 'statistics-inference',
     focusTarget: 'guidedForm',
     editorMode: 'editable',
